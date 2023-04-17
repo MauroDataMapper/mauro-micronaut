@@ -27,4 +27,8 @@ class TermRelationshipType {
     Integer version
 
     String label
+
+    Boolean parentRelationship
+
+    Boolean childRelationship
 }
