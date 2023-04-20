@@ -22,12 +22,12 @@ class TermRelationshipTypeController {
     TermRelationshipTypeRepository termRelationshipTypeRepository
 
     @Get('/{id}')
-    Mono<Term> show(UUID terminologyId, UUID id) {
+    Mono<TermRelationshipType> show(UUID terminologyId, UUID id) {
         termRelationshipTypeRepository.findByTerminologyIdAndId(terminologyId, id)
     }
 
     @Post
-    Mono<Term> create(UUID terminologyId, @Body TermRelationshipType termRelationshipType) {
+    Mono<TermRelationshipType> create(UUID terminologyId, @Body TermRelationshipType termRelationshipType) {
         terminologyRepository.findById(terminologyId).flatMap {Terminology terminology ->
             termRelationshipType.terminology = terminology
             termRelationshipTypeRepository.save(termRelationshipType)
@@ -35,7 +35,7 @@ class TermRelationshipTypeController {
     }
 
     @Put('/{id}')
-    Mono<Term> update(UUID terminologyId, UUID id, @Body TermRelationshipType termRelationshipType) {
+    Mono<TermRelationshipType> update(UUID terminologyId, UUID id, @Body TermRelationshipType termRelationshipType) {
         termRelationshipTypeRepository.findByTerminologyIdAndId(terminologyId, id).flatMap {TermRelationshipType existing ->
             existing.properties.each {
                 if (!DISALLOWED_PROPERTIES.contains(it.key)) {
@@ -47,7 +47,7 @@ class TermRelationshipTypeController {
     }
 
     @Get
-    Mono<List<Term>> list(UUID terminologyId) {
+    Mono<List<TermRelationshipType>> list(UUID terminologyId) {
         terminologyRepository.findById(terminologyId).map {
             it.termRelationshipTypes
         }

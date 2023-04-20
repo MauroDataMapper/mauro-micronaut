@@ -6,11 +6,11 @@ import io.micronaut.data.repository.reactive.ReactorPageableRepository
 import reactor.core.publisher.Mono
 
 @R2dbcRepository(dialect = Dialect.POSTGRES)
-abstract class TermRepository implements ReactorPageableRepository<Term, UUID> {
+abstract class TermRelationshipRepository implements ReactorPageableRepository<TermRelationship, UUID> {
 
-    abstract Mono<Term> findByTerminologyIdAndId(UUID terminologyId, UUID id)
+    abstract Mono<TermRelationship> findByTerminologyIdAndId(UUID terminologyId, UUID id)
 
-    abstract Mono<Boolean> existsByTerminologyIdAndId(UUID terminologyId, UUID id)
+    abstract Mono<TermRelationship> readByTerminologyIdAndId(UUID terminologyId, UUID id)
 
     abstract Mono<Long> deleteByTerminologyId(UUID terminologyId)
 }
