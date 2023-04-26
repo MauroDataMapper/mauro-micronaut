@@ -34,4 +34,7 @@ class Terminology {
 
     @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'terminology')
     List<TermRelationshipType> termRelationshipTypes
+
+    @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'terminology')
+    List<TermRelationship> termRelationships
 }

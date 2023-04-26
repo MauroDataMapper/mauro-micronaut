@@ -9,6 +9,7 @@ import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.Index
 import io.micronaut.data.annotation.Indexes
 import io.micronaut.data.annotation.MappedEntity
+import io.micronaut.data.annotation.Relation
 import io.micronaut.data.annotation.Version
 
 @CompileStatic
@@ -38,9 +39,11 @@ class Term {
     @Nullable
     String url
 
+    @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'terminology')
     @Nullable
     List<TermRelationship> sourceTermRelationships
 
+    @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'terminology')
     @Nullable
     List<TermRelationship> targetTermRelationships
 }

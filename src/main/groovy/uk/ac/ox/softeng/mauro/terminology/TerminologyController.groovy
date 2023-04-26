@@ -7,8 +7,10 @@ import io.micronaut.http.annotation.Delete
 import io.micronaut.http.annotation.Get
 import io.micronaut.http.annotation.Post
 import io.micronaut.http.annotation.Put
+import io.micronaut.json.tree.JsonObject
 import jakarta.inject.Inject
 import reactor.core.publisher.Mono
+import reactor.util.function.Tuple3
 
 import javax.transaction.Transactional
 
@@ -37,10 +39,10 @@ class TerminologyController {
     }
 
     @Put('/{id}')
-    Mono<Terminology> update(UUID id, @Body Terminology terminology) {
+    Mono<Terminology> update(UUID id, @Body Terminology terminology, @Body JsonObject body) {
         terminologyRepository.readById(id).flatMap {Terminology existing ->
             existing.properties.each {
-                if (!DISALLOWED_PROPERTIES.contains(it.key)) {
+                if (!DISALLOWED_PROPERTIES.contains(it.key) && body.get(it.key)) {
                     existing[it.key] = terminology[it.key]
                 }
             }
@@ -49,7 +51,7 @@ class TerminologyController {
     }
 
     @Get
-    Mono<List<TerminologyRepository>> list() {
+    Mono<List<Terminology>> list() {
         terminologyRepository.findAll().collectList()
     }
 
@@ -57,11 +59,11 @@ class TerminologyController {
     @Delete('/{id}')
     Mono<Long> delete(UUID id, @Nullable @Body Terminology terminology) {
         if (terminology?.version == null) {
-            terminologyRepository.deleteById(id).zipWith(termRepository.deleteByTerminologyId(id), termRelationshipTypeRepository.deleteByTerminologyId(id), Tuple3::getV1)
+            terminologyRepository.deleteById(id).zipWith(termRepository.deleteByTerminologyId(id), termRelationshipTypeRepository.deleteByTerminologyId(id), Tuple3::getT1)
         } else {
             terminology.id = id
             terminologyRepository.delete(terminology).zipWith(termRepository.deleteByTerminologyId(id), termRelationshipTypeRepository.deleteByTerminologyId(id),
-                                                              Tuple3::getV1)
+                                                              Tuple3::getT1)
         }
     }
 }

@@ -11,6 +11,7 @@ abstract class TerminologyRepository implements ReactorPageableRepository<Termin
 
     @Join(value = 'terms', type = Join.Type.LEFT_FETCH)
     @Join(value = 'termRelationshipTypes', type = Join.Type.LEFT_FETCH)
+    @Join(value = 'termRelationships', type = Join.Type.LEFT_FETCH)
     abstract Mono<Terminology> findById(UUID id)
 
     abstract Mono<Terminology> readById(UUID id)

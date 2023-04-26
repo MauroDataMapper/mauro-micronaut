@@ -7,6 +7,7 @@ import io.micronaut.http.annotation.Delete
 import io.micronaut.http.annotation.Get
 import io.micronaut.http.annotation.Post
 import io.micronaut.http.annotation.Put
+import io.micronaut.json.tree.JsonObject
 import jakarta.inject.Inject
 import reactor.core.publisher.Mono
 
@@ -35,10 +36,10 @@ class TermRelationshipTypeController {
     }
 
     @Put('/{id}')
-    Mono<TermRelationshipType> update(UUID terminologyId, UUID id, @Body TermRelationshipType termRelationshipType) {
+    Mono<TermRelationshipType> update(UUID terminologyId, UUID id, @Body TermRelationshipType termRelationshipType, @Body JsonObject body) {
         termRelationshipTypeRepository.findByTerminologyIdAndId(terminologyId, id).flatMap {TermRelationshipType existing ->
             existing.properties.each {
-                if (!DISALLOWED_PROPERTIES.contains(it.key)) {
+                if (!DISALLOWED_PROPERTIES.contains(it.key) && body.get(it.key)) {
                     existing[it.key] = termRelationshipType[it.key]
                 }
             }

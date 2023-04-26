@@ -7,6 +7,7 @@ import io.micronaut.http.annotation.Delete
 import io.micronaut.http.annotation.Get
 import io.micronaut.http.annotation.Post
 import io.micronaut.http.annotation.Put
+import io.micronaut.json.tree.JsonObject
 import jakarta.inject.Inject
 import reactor.core.publisher.Mono
 
@@ -35,10 +36,10 @@ class TermController {
     }
 
     @Put('/{id}')
-    Mono<Term> update(UUID terminologyId, UUID id, @Body Term term) {
+    Mono<Term> update(UUID terminologyId, UUID id, @Body Term term, @Body JsonObject body) {
         termRepository.findByTerminologyIdAndId(terminologyId, id).flatMap {Term existing ->
             existing.properties.each {
-                if (!DISALLOWED_PROPERTIES.contains(it.key)) {
+                if (!DISALLOWED_PROPERTIES.contains(it.key) && body.get(it.key)) {
                     existing[it.key] = term[it.key]
                 }
             }
@@ -61,6 +62,11 @@ class TermController {
             term.id = id
             termRepository.delete(term)
         }
+    }
+
+    @Get('/tree/{?id}')
+    Mono<List<Term>> tree(UUID terminologyId, @Nullable UUID id) {
+        termRepository.childTermsByParent(terminologyId, id).collectList()
     }
 
 }
