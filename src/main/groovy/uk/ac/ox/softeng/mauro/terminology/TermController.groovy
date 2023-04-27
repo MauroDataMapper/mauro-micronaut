@@ -1,10 +1,12 @@
 package uk.ac.ox.softeng.mauro.terminology
 
 import io.micronaut.core.annotation.Nullable
+import io.micronaut.core.annotation.Order
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Delete
 import io.micronaut.http.annotation.Get
+import io.micronaut.http.annotation.PathVariable
 import io.micronaut.http.annotation.Post
 import io.micronaut.http.annotation.Put
 import io.micronaut.json.tree.JsonObject
@@ -64,9 +66,8 @@ class TermController {
         }
     }
 
-    @Get('/tree/{?id}')
-    Mono<List<Term>> tree(UUID terminologyId, @Nullable UUID id) {
-        termRepository.childTermsByParent(terminologyId, id).collectList()
-    }
-
+//    @Get('/tree/{/id}')
+//    Mono<List<Term>> tree(UUID terminologyId, @Nullable UUID id) {
+//        termRepository.childTermsByParent(terminologyId, id).collectList()
+//    }
 }

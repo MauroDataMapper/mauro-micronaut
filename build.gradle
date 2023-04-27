@@ -2,7 +2,7 @@ plugins {
     id("groovy")
     id("com.github.johnrengelman.shadow") version "7.1.2"
     id("io.micronaut.application") version "3.7.4"
-    id("io.micronaut.test-resources") version "3.7.4"
+//    id("io.micronaut.test-resources") version "3.7.4"
 }
 
 version = "0.1"
@@ -25,8 +25,9 @@ dependencies {
     runtimeOnly("ch.qos.logback:logback-classic")
     runtimeOnly("org.postgresql:r2dbc-postgresql")
     implementation("io.r2dbc:r2dbc-pool")
-    testResourcesService("org.postgresql:postgresql")
+//    testResourcesService("org.postgresql:postgresql")
     implementation("io.micronaut:micronaut-validation")
+    implementation("io.micronaut:micronaut-management")
 
 }
 

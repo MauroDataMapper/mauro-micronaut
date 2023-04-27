@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.terminology
 
+import uk.ac.ox.softeng.mauro.model.Model
+
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.Introspected
 import io.micronaut.core.annotation.Nullable
@@ -15,7 +17,7 @@ import io.micronaut.data.annotation.Version
 @Introspected
 @MappedEntity
 @Indexes(@Index(columns = ['label'], unique = true))
-class Terminology {
+class Terminology extends Model {
 
     @Id
     @GeneratedValue
