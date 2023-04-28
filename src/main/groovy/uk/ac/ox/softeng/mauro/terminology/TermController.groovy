@@ -66,8 +66,8 @@ class TermController {
         }
     }
 
-//    @Get('/tree/{/id}')
-//    Mono<List<Term>> tree(UUID terminologyId, @Nullable UUID id) {
-//        termRepository.childTermsByParent(terminologyId, id).collectList()
-//    }
+    @Get('/tree{/id}')
+    Mono<List<Term>> tree(UUID terminologyId, @Nullable UUID id) {
+        termRepository.childTermsByParent(terminologyId, id).collectList()
+    }
 }
