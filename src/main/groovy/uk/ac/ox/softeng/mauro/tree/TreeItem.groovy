@@ -14,7 +14,7 @@ class TreeItem {
 
     List<TreeItem> children
 
-    Boolean getHasChildren() {
+    Boolean isHasChildren() {
         children != null && !children.isEmpty()
     }
 }
