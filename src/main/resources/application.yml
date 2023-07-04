@@ -29,3 +29,6 @@ endpoints:
   routes:
     enabled: true
     sensitive: false
+jackson:
+  serialization:
+    writeDatesAsTimestamps: false

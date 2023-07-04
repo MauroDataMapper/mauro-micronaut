@@ -24,15 +24,12 @@ class Term extends ModelItem<Terminology> {
     @Transient
     String domainType = 'Term'
 
-    @Id
-    @GeneratedValue
-    UUID id
+    String label = code && definition && code == definition ? code :
+                   code && definition ? "${code}: ${definition}" :
+                   null
 
     @JsonIgnore
     Terminology terminology
-
-    @Version
-    Integer version
 
     String code
 
@@ -40,10 +37,11 @@ class Term extends ModelItem<Terminology> {
     String definition
 
     @Nullable
-    String description
-
-    @Nullable
     String url
+
+    Boolean isParent
+
+    Integer depth
 
     @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'terminology')
     @Nullable

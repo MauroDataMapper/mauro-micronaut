@@ -10,7 +10,6 @@ import io.micronaut.http.annotation.Put
 import io.micronaut.json.tree.JsonObject
 import jakarta.inject.Inject
 import reactor.core.publisher.Mono
-import reactor.util.function.Tuple3
 
 import javax.transaction.Transactional
 
@@ -35,6 +34,7 @@ class TerminologyController {
 
     @Post
     Mono<Terminology> create(@Body Terminology terminology) {
+        terminology.createdBy = 'USER'
         terminologyRepository.save(terminology)
     }
 
@@ -59,11 +59,14 @@ class TerminologyController {
     @Delete('/{id}')
     Mono<Long> delete(UUID id, @Nullable @Body Terminology terminology) {
         if (terminology?.version == null) {
-            terminologyRepository.deleteById(id).zipWith(termRepository.deleteByTerminologyId(id), termRelationshipTypeRepository.deleteByTerminologyId(id), Tuple3::getT1)
+            Mono.zip(terminologyRepository.deleteById(id), termRepository.deleteByTerminologyId(id), termRelationshipTypeRepository.deleteByTerminologyId(id)).map {
+                it.getT1()
+            }
         } else {
             terminology.id = id
-            terminologyRepository.delete(terminology).zipWith(termRepository.deleteByTerminologyId(id), termRelationshipTypeRepository.deleteByTerminologyId(id),
-                                                              Tuple3::getT1)
+            Mono.zip(terminologyRepository.delete(terminology), termRepository.deleteByTerminologyId(id), termRelationshipTypeRepository.deleteByTerminologyId(id)).map {
+                it.getT1()
+            }
         }
     }
 }
