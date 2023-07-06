@@ -13,9 +13,10 @@ repositories {
 }
 
 dependencies {
-    compileOnly("io.micronaut.openapi:micronaut-openapi:5.0.0-M11") {
+    compileOnly("io.micronaut.openapi:micronaut-openapi") {
 //        exclude group: 'org.slf4j'
     }
+    compileOnly("io.swagger.core.v3:swagger-annotations")
     compileOnly("io.micronaut.data:micronaut-data-processor")
     compileOnly("io.micronaut.validation:micronaut-validation-processor")
     implementation("io.micronaut:micronaut-http-client")
