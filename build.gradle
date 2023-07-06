@@ -1,7 +1,7 @@
 plugins {
     id("groovy")
-    id("com.github.johnrengelman.shadow") version "7.1.2"
-    id("io.micronaut.application") version "3.7.4"
+    id("com.github.johnrengelman.shadow") version "8.1.1"
+    id("io.micronaut.application") version "4.0.0-M6"
 //    id("io.micronaut.test-resources") version "3.7.4"
 }
 
@@ -13,10 +13,11 @@ repositories {
 }
 
 dependencies {
-    compileOnly("io.micronaut.openapi:micronaut-openapi:4.8.7") {
-        exclude group: 'org.slf4j'
+    compileOnly("io.micronaut.openapi:micronaut-openapi:5.0.0-M11") {
+//        exclude group: 'org.slf4j'
     }
     compileOnly("io.micronaut.data:micronaut-data-processor")
+    compileOnly("io.micronaut.validation:micronaut-validation-processor")
     implementation("io.micronaut:micronaut-http-client")
     implementation("io.micronaut:micronaut-jackson-databind")
     implementation("io.micronaut.data:micronaut-data-r2dbc")
@@ -29,8 +30,9 @@ dependencies {
     runtimeOnly("org.postgresql:r2dbc-postgresql")
     implementation("io.r2dbc:r2dbc-pool")
 //    testResourcesService("org.postgresql:postgresql")
-    implementation("io.micronaut:micronaut-validation")
+    implementation("io.micronaut.validation:micronaut-validation")
     implementation("io.micronaut:micronaut-management")
+    runtimeOnly("org.yaml:snakeyaml")
 
 }
 

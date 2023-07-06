@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.Introspected
 import io.micronaut.core.annotation.Nullable
-import io.micronaut.core.annotation.Order
 import io.micronaut.data.annotation.DateCreated
 import io.micronaut.data.annotation.DateUpdated
 import io.micronaut.data.annotation.GeneratedValue
@@ -17,9 +16,9 @@ import io.micronaut.data.annotation.Version
 import java.time.OffsetDateTime
 
 @CompileStatic
-@Introspected
 @MappedEntity
 @Indexes(@Index(columns = ['label'], unique = true))
+@Introspected
 abstract class Model {
 
     @Id

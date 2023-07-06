@@ -8,10 +8,9 @@ import io.micronaut.http.annotation.Get
 import io.micronaut.http.annotation.Post
 import io.micronaut.http.annotation.Put
 import io.micronaut.json.tree.JsonObject
+import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
 import reactor.core.publisher.Mono
-
-import javax.transaction.Transactional
 
 @Controller('/terminologies')
 class TerminologyController {
