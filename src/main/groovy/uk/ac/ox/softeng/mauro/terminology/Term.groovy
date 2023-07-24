@@ -21,9 +21,17 @@ class Term extends ModelItem<Terminology> {
     @Transient
     String domainType = 'Term'
 
-    String label = code && definition && code == definition ? code :
+    /*String label = code && definition && code == definition ? code :
                    code && definition ? "${code}: ${definition}" :
-                   null
+                   null*/
+
+    String label
+
+    String getLabel() {
+        code && definition && code == definition ? code :
+        code && definition ? "${code}: ${definition}" :
+        null
+    }
 
     @JsonIgnore
     Terminology terminology
