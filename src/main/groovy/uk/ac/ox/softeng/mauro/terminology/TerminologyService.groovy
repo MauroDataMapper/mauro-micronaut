@@ -16,6 +16,22 @@ class TerminologyService implements ModelService<Terminology, Term> {
         domainType.toLowerCase() in ['terminology', 'terminologies']
     }
 
+    List<Term> childTermsByParent(Terminology fullTerminology, UUID id) {
+        Map<UUID, Term> terms = fullTerminology.terms.collectEntries {[it.id, it]}
+        Map<UUID, TermRelationshipType> termRelationshipTypes = fullTerminology.termRelationshipTypes.collectEntries {[it.id, it]}
+        Map<UUID, TermRelationshipType> parentTermRelationshipTypes = termRelationshipTypes.findAll {it.value.parentRelationship}
+        Map<UUID, TermRelationshipType> childTermRelationshipTypes = termRelationshipTypes.findAll {it.value.childRelationship}
+        Map<UUID, TermRelationship> parentChildTermRelationships = fullTerminology.termRelationships.findAll {parentTermRelationshipTypes.containsKey(it.relationshipType.id) || childTermRelationshipTypes.containsKey(it.relationshipType.id)}
+
+        if (id) {
+            fullTerminology.terms.collect {Term term ->
+
+            }
+        } else {
+
+        }
+    }
+
     List<TreeItem> buildTree(Terminology fullTerminology, Term root, Integer depth = null) {
         Map<UUID, Term> terms = fullTerminology.terms.collectEntries {[it.id, it]}
         Map<UUID, TermRelationshipType> termRelationshipTypes = fullTerminology.termRelationshipTypes.collectEntries {[it.id, it]}

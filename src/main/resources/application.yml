@@ -1,6 +1,8 @@
 micronaut:
   application:
     name: sandbox
+  server:
+    port: 8088
   router:
     static-resources:
       swagger:
