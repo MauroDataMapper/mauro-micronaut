@@ -19,7 +19,7 @@ class TerminologyService implements ModelService<Terminology, Term> {
     List<Term> childTermsByParent(Terminology fullTerminology, UUID id) {
         Map<UUID, Term> terms = fullTerminology.terms.collectEntries {[it.id, it]}
         Map<UUID, TermRelationshipType> termRelationshipTypes = fullTerminology.termRelationshipTypes.collectEntries {[it.id, it]}
-        Map<UUID, TermRelationshipType> parentTermRelationshipTypes = termRelationshipTypes.findAll {it.value.parentRelationship}
+        Map<UUID, TermRelationshipType> parentTermRelationshipTypes = termRelationshipTypes.findAll {it.value.parentalRelationship}
         Map<UUID, TermRelationshipType> childTermRelationshipTypes = termRelationshipTypes.findAll {it.value.childRelationship}
         Map<UUID, TermRelationship> parentChildTermRelationships = fullTerminology.termRelationships.findAll {parentTermRelationshipTypes.containsKey(it.relationshipType.id) || childTermRelationshipTypes.containsKey(it.relationshipType.id)}
 
@@ -49,7 +49,7 @@ class TerminologyService implements ModelService<Terminology, Term> {
                     childTerms[parent.id] = [child]
                 }
             }
-            if (termRelationshipTypes[it.relationshipType.id].parentRelationship) {
+            if (termRelationshipTypes[it.relationshipType.id].parentalRelationship) {
                 child = terms[it.targetTerm.id]
                 parent = terms[it.sourceTerm.id]
                 if (parent.id in childTerms) {

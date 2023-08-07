@@ -7,6 +7,7 @@ import io.micronaut.data.annotation.Query
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.r2dbc.annotation.R2dbcRepository
 import io.micronaut.data.repository.reactive.ReactorPageableRepository
+import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 
 @R2dbcRepository(dialect = Dialect.POSTGRES)
@@ -86,7 +87,7 @@ abstract class TerminologyRepository implements ReactorPageableRepository<Termin
         terminology_term_relationship_types_."created_by"          AS term_relationship_types_created_by,
         terminology_term_relationship_types_."aliases_string"      AS term_relationship_types_aliases_string,
         terminology_term_relationship_types_."terminology_id"      AS term_relationship_types_terminology_id,
-        terminology_term_relationship_types_."parent_relationship" AS term_relationship_types_parent_relationship,
+        terminology_term_relationship_types_."parental_relationship" AS term_relationship_types_parental_relationship,
         terminology_term_relationship_types_."child_relationship"  AS term_relationship_types_child_relationship
         FROM "terminology" terminology_
     LEFT JOIN "term" terminology_terms_ ON terminology_."id" = terminology_terms_."terminology_id"
@@ -99,6 +100,8 @@ abstract class TerminologyRepository implements ReactorPageableRepository<Termin
     abstract Mono<Terminology> findById(UUID id)
 
     abstract Mono<Terminology> readById(UUID id)
+
+    abstract Flux<Terminology> readAllByFolderId(UUID folderId)
 
     @Override
     Boolean handles(Class clazz) {

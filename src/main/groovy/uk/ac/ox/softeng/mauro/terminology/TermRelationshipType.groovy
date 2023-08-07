@@ -22,7 +22,7 @@ class TermRelationshipType extends ModelItem<Terminology> {
     @JsonIgnore
     Terminology terminology
 
-    Boolean parentRelationship
+    Boolean parentalRelationship
 
     Boolean childRelationship
 }

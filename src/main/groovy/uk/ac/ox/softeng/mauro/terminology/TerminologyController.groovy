@@ -12,7 +12,7 @@ import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
 import reactor.core.publisher.Mono
 
-@Controller('/terminologies')
+@Controller
 class TerminologyController {
 
     final static List<String> DISALLOWED_PROPERTIES = ['class', 'id']
@@ -26,18 +26,19 @@ class TerminologyController {
     @Inject
     TermRelationshipTypeRepository termRelationshipTypeRepository
 
-    @Get('/{id}')
+    @Get('/terminologies/{id}')
     Mono<Terminology> show(UUID id) {
         terminologyRepository.findById(id)
     }
 
-    @Post
-    Mono<Terminology> create(@Body Terminology terminology) {
+    @Post('/folders/{folderId}/terminologies')
+    Mono<Terminology> create(UUID folderId, @Body Terminology terminology) {
+        terminology.folderId = folderId
         terminology.createdBy = 'USER'
         terminologyRepository.save(terminology)
     }
 
-    @Put('/{id}')
+    @Put('/terminologies/{id}')
     Mono<Terminology> update(UUID id, @Body Terminology terminology, @Body JsonObject body) {
         terminologyRepository.readById(id).flatMap {Terminology existing ->
             existing.properties.each {
@@ -49,13 +50,13 @@ class TerminologyController {
         }
     }
 
-    @Get
-    Mono<List<Terminology>> list() {
-        terminologyRepository.findAll().collectList()
+    @Get('/folders/{folderId}/terminologies')
+    Mono<List<Terminology>> list(UUID folderId) {
+        terminologyRepository.readAllByFolderId(folderId).collectList()
     }
 
     @Transactional // this is necessary here, otherwise there are multiple transactions
-    @Delete('/{id}')
+    @Delete('/terminologies/{id}')
     Mono<Long> delete(UUID id, @Nullable @Body Terminology terminology) {
         if (terminology?.version == null) {
             Mono.zip(terminologyRepository.deleteById(id), termRepository.deleteByTerminologyId(id), termRelationshipTypeRepository.deleteByTerminologyId(id)).map {

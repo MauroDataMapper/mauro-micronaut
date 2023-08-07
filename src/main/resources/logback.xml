@@ -14,5 +14,6 @@
     </root>
 
     <logger name="io.micronaut.data" level="trace" />
+    <logger name="io.micronaut" level="trace" />
 
 </configuration>

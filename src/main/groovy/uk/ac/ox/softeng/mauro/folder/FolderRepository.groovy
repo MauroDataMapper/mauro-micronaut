@@ -16,6 +16,8 @@ abstract class FolderRepository implements ReactorPageableRepository<Folder, UUI
 
     abstract Mono<Folder> readById(UUID id)
 
+    abstract Mono<Folder> readByIdAndVersion(UUID id, Integer version)
+
     @Override
     Boolean handles(Class clazz) {
         clazz == Folder

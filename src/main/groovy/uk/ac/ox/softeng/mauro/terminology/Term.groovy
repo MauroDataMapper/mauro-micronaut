@@ -44,8 +44,10 @@ class Term extends ModelItem<Terminology> {
     @Nullable
     String url
 
+    @Nullable
     Boolean isParent
 
+    @Nullable
     Integer depth
 
     @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'terminology')
