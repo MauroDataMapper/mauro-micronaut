@@ -1,12 +1,13 @@
 package uk.ac.ox.softeng.mauro.terminology
 
 import uk.ac.ox.softeng.mauro.model.ModelService
+import uk.ac.ox.softeng.mauro.model.version.FinaliseData
 import uk.ac.ox.softeng.mauro.tree.TreeItem
 
 import jakarta.inject.Singleton
 
 @Singleton
-class TerminologyService implements ModelService<Terminology, Term> {
+class TerminologyService extends ModelService<Terminology, Term> {
 
     Boolean handles(Class clazz) {
         clazz == Terminology

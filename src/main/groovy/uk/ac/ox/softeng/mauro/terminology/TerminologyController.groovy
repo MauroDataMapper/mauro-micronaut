@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.terminology
 
+import uk.ac.ox.softeng.mauro.model.version.FinaliseData
+
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.annotation.Controller
@@ -25,6 +27,9 @@ class TerminologyController {
 
     @Inject
     TermRelationshipTypeRepository termRelationshipTypeRepository
+
+    @Inject
+    TerminologyService terminologyService
 
     @Get('/terminologies/{id}')
     Mono<Terminology> show(UUID id) {
@@ -67,6 +72,14 @@ class TerminologyController {
             Mono.zip(terminologyRepository.delete(terminology), termRepository.deleteByTerminologyId(id), termRelationshipTypeRepository.deleteByTerminologyId(id)).map {
                 it.getT1()
             }
+        }
+    }
+
+    @Transactional
+    @Put('/terminologies/{id}/finalise')
+    Mono<Terminology> finalise(UUID id, @Body FinaliseData finaliseData) {
+        terminologyRepository.findById(id).flatMap {Terminology terminology ->
+            terminologyService.finaliseModel(terminology, finaliseData.version, finaliseData.versionChangeType, finaliseData.versionTag)
         }
     }
 }

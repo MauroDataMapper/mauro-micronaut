@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.model
 
+import uk.ac.ox.softeng.mauro.model.version.ModelVersion
+
 import com.fasterxml.jackson.annotation.JsonProperty
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.Introspected
@@ -11,7 +13,10 @@ import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.Index
 import io.micronaut.data.annotation.Indexes
 import io.micronaut.data.annotation.MappedEntity
+import io.micronaut.data.annotation.TypeDef
 import io.micronaut.data.annotation.Version
+import io.micronaut.data.model.DataType
+import jakarta.persistence.Column
 
 import java.time.OffsetDateTime
 
@@ -79,7 +84,7 @@ abstract class Model {
     String branchName
 
     @Nullable
-    String modelVersion
+    ModelVersion modelVersion
 
     @Nullable
     String modelVersionTag
