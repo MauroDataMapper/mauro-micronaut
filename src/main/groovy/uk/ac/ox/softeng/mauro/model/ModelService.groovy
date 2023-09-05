@@ -17,7 +17,7 @@ abstract class ModelService<M extends Model, I extends ModelItem<M>> {
     M finaliseModel(M model, ModelVersion requestedModelVersion, VersionChangeType versionChangeType, String versionTag) {
         model.finalised = true
         model.dateFinalised = OffsetDateTime.now()
-        model.modelVersion = requestedModelVersion ?: model.modelVersion.nextVersion(versionChangeType) //getNextModelVersion(model, requestedModelVersion, versionChangeType)
+        model.modelVersion = requestedModelVersion ?: (model.modelVersion ?: new ModelVersion()).nextVersion(versionChangeType) //getNextModelVersion(model, requestedModelVersion, versionChangeType)
         model.modelVersionTag = versionTag
 
         model

@@ -13,7 +13,7 @@ import io.micronaut.data.annotation.Relation
 @MappedEntity
 class Folder extends Model {
 
-    String modelType = Folder.simpleName
+//    String modelType = Folder.simpleName
 
     @Nullable
     Folder parentFolder

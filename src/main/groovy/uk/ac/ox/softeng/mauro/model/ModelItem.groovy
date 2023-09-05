@@ -19,42 +19,9 @@ import java.time.OffsetDateTime
 @CompileStatic
 @Introspected
 @MappedEntity
-abstract class ModelItem<M extends Model> implements Ordered {
-
-    @Id
-    @GeneratedValue
-    UUID id
-
-    @Version
-    Integer version
-
-    @DateCreated
-    OffsetDateTime dateCreated
-
-    @DateUpdated
-    OffsetDateTime lastUpdated
-
-    String label
+abstract class ModelItem<M extends Model> extends AdministeredItem implements Ordered {
 
     @MappedProperty('idx')
     @JsonProperty('index')
     int order
-
-    @Nullable
-    String description
-
-    @Nullable
-    String path // should be Path type
-
-    @Nullable
-    UUID breadcrumbTreeId // should be BreadcrumbTree type
-
-    @Nullable
-    String createdBy
-
-    @Nullable
-    String aliasesString
-
-    @Transient
-    String domainType
 }

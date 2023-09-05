@@ -79,7 +79,8 @@ class TerminologyController {
     @Put('/terminologies/{id}/finalise')
     Mono<Terminology> finalise(UUID id, @Body FinaliseData finaliseData) {
         terminologyRepository.findById(id).flatMap {Terminology terminology ->
-            terminologyService.finaliseModel(terminology, finaliseData.version, finaliseData.versionChangeType, finaliseData.versionTag)
+            Terminology finalised = terminologyService.finaliseModel(terminology, finaliseData.version, finaliseData.versionChangeType, finaliseData.versionTag)
+            terminologyRepository.update(finalised)
         }
     }
 }

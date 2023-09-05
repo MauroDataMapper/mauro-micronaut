@@ -21,36 +21,7 @@ import jakarta.persistence.Column
 import java.time.OffsetDateTime
 
 @CompileStatic
-@MappedEntity
-@Indexes(@Index(columns = ['label'], unique = true))
-@Introspected
-abstract class Model {
-
-    @Id
-    @GeneratedValue
-    UUID id
-
-    @Version
-    Integer version
-
-    @DateCreated
-    OffsetDateTime dateCreated
-
-    @DateUpdated
-    @JsonProperty
-    OffsetDateTime lastUpdated
-
-    @Nullable
-    String createdBy
-
-    @Nullable
-    String path // should be Path type
-
-    @Nullable
-    String aliasesString
-
-    @Nullable
-    UUID breadcrumbTreeId // should be BreadcrumbTree type
+abstract class Model extends AdministeredItem {
 
     Boolean finalised = false
 
@@ -64,7 +35,7 @@ abstract class Model {
 
     Boolean readableByAuthenticatedUsers = false
 
-    String modelType
+    String modelType = domainType
 
     @Nullable
     String organisation
@@ -88,9 +59,4 @@ abstract class Model {
 
     @Nullable
     String modelVersionTag
-
-    String label
-
-    @Nullable
-    String description
 }
