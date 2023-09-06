@@ -11,7 +11,10 @@ import io.micronaut.data.annotation.Index
 import io.micronaut.data.annotation.Indexes
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Version
+import io.micronaut.validation.Validated
 import jakarta.persistence.Transient
+import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.Pattern
 
 import java.time.OffsetDateTime
 
@@ -31,6 +34,8 @@ abstract class AdministeredItem {
     @DateUpdated
     OffsetDateTime lastUpdated
 
+    @NotBlank
+    @Pattern(regexp = /[^\$@]*/, message = 'Cannot contain $, | or @')
     String label
 
     @Nullable

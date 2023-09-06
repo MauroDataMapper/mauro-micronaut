@@ -3,6 +3,8 @@ package uk.ac.ox.softeng.mauro.tree
 import uk.ac.ox.softeng.mauro.model.Model
 import uk.ac.ox.softeng.mauro.model.ModelRepository
 import uk.ac.ox.softeng.mauro.model.ModelService
+import uk.ac.ox.softeng.mauro.terminology.TerminologyRepository
+import uk.ac.ox.softeng.mauro.terminology.TerminologyService
 
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Get
@@ -14,6 +16,9 @@ class TreeItemController {
 
     @Inject
     List<ModelService> modelServices
+
+    @Inject
+    TerminologyRepository terminologyRepository
 
     @Inject
     List<ModelRepository> modelRepositories

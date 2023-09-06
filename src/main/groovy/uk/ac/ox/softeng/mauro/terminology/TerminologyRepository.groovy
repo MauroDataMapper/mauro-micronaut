@@ -2,11 +2,13 @@ package uk.ac.ox.softeng.mauro.terminology
 
 import uk.ac.ox.softeng.mauro.model.ModelRepository
 
+import io.micronaut.core.annotation.NonNull
 import io.micronaut.data.annotation.Join
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.r2dbc.annotation.R2dbcRepository
 import io.micronaut.data.repository.reactive.ReactorPageableRepository
+import jakarta.validation.Valid
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 
@@ -14,11 +16,11 @@ import reactor.core.publisher.Mono
 abstract class TerminologyRepository implements ReactorPageableRepository<Terminology, UUID>, ModelRepository<Terminology> {
 
 
-//    @Query('''SELECT terminology.*, term.*, term_relationship.*, term_relationship_type.*
-//FROM terminology
-//LEFT JOIN term ON terminology.id = term.terminology_id
-//LEFT JOIN term_relationship ON term.id IN (source_term_id, target_term_id)
-//LEFT JOIN term_relationship_type ON terminology.id = term_relationship_type.terminology_id''')
+    //    @Query('''SELECT terminology.*, term.*, term_relationship.*, term_relationship_type.*
+    //FROM terminology
+    //LEFT JOIN term ON terminology.id = term.terminology_id
+    //LEFT JOIN term_relationship ON term.id IN (source_term_id, target_term_id)
+    //LEFT JOIN term_relationship_type ON terminology.id = term_relationship_type.terminology_id''')
     //        terminology_term_relationships_."terminology_id"           AS term_relationships_terminology_id,
     @Query('''SELECT terminology_."id",
         terminology_."version",
@@ -91,7 +93,8 @@ abstract class TerminologyRepository implements ReactorPageableRepository<Termin
         terminology_term_relationship_types_."child_relationship"  AS term_relationship_types_child_relationship
         FROM "terminology" terminology_
     LEFT JOIN "term" terminology_terms_ ON terminology_."id" = terminology_terms_."terminology_id"
-    LEFT JOIN "term_relationship" terminology_term_relationships_ ON terminology_terms_.id IN (terminology_term_relationships_.source_term_id, terminology_term_relationships_.target_term_id)
+    LEFT JOIN "term_relationship" terminology_term_relationships_ ON terminology_terms_.id IN (terminology_term_relationships_.source_term_id, 
+    terminology_term_relationships_.target_term_id)
     LEFT JOIN "term_relationship_type" terminology_term_relationship_types_ ON terminology_."id" = terminology_term_relationship_types_."terminology_id"
     WHERE (terminology_."id" = :id)''')
     @Join(value = 'terms', type = Join.Type.LEFT_FETCH)
@@ -102,6 +105,11 @@ abstract class TerminologyRepository implements ReactorPageableRepository<Termin
     abstract Mono<Terminology> readById(UUID id)
 
     abstract Flux<Terminology> readAllByFolderId(UUID folderId)
+
+    @Override
+    @NonNull
+    @Valid
+    abstract Mono<Terminology> save(@NonNull @Valid Terminology terminology)
 
     @Override
     Boolean handles(Class clazz) {

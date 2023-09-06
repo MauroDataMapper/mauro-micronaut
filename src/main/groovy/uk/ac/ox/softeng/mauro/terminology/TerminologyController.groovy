@@ -2,6 +2,7 @@ package uk.ac.ox.softeng.mauro.terminology
 
 import uk.ac.ox.softeng.mauro.model.version.FinaliseData
 
+import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.annotation.Controller
@@ -12,6 +13,7 @@ import io.micronaut.http.annotation.Put
 import io.micronaut.json.tree.JsonObject
 import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
+import jakarta.validation.Valid
 import reactor.core.publisher.Mono
 
 @Controller
@@ -37,7 +39,7 @@ class TerminologyController {
     }
 
     @Post('/folders/{folderId}/terminologies')
-    Mono<Terminology> create(UUID folderId, @Body Terminology terminology) {
+    Mono<Terminology> create(UUID folderId, @Body @Valid @NonNull Terminology terminology) {
         terminology.folderId = folderId
         terminology.createdBy = 'USER'
         terminologyRepository.save(terminology)
