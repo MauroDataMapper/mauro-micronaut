@@ -2,12 +2,16 @@ package uk.ac.ox.softeng.mauro.folder
 
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.Nullable
+import io.micronaut.http.HttpRequest
+import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Delete
 import io.micronaut.http.annotation.Get
 import io.micronaut.http.annotation.Post
 import io.micronaut.http.annotation.Put
+import io.micronaut.http.client.exceptions.HttpClientResponseException
+import io.micronaut.http.exceptions.HttpStatusException
 import io.micronaut.json.tree.JsonObject
 import jakarta.inject.Inject
 import jakarta.persistence.EntityNotFoundException
@@ -37,7 +41,8 @@ class FolderController {
     }
 
     @Put('/{id}')
-    Mono<Folder> update(UUID id, @Body Folder folder, @Body JsonObject body) {
+    Mono<Folder> update(UUID id, HttpRequest request, @Body Folder folder) {
+        JsonObject body = request.getBody(JsonObject).get()
         folderRepository.readById(id).flatMap {Folder existing ->
             existing.properties.each {
                 if (!DISALLOWED_PROPERTIES.contains(it.key) && body.get(it.key)) {
