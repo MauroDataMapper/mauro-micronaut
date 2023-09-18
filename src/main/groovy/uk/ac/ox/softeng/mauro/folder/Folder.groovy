@@ -28,18 +28,18 @@ class Folder extends Model {
 
     @Transient
     String organisation
-//
-//    @Transient
-//    @Override
-//    Folder getFolder() {
-//        parentFolder
-//    }
-//
-//    @Transient
-//    @Override
-//    void setFolder(Folder folder) {
-//        parentFolder = folder
-//    }
+
+    @Transient
+    @Override
+    Folder getFolder() {
+        parentFolder
+    }
+
+    @Transient
+    @Override
+    void setFolder(Folder folder) {
+        parentFolder = folder
+    }
 
     @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'parentFolder')
     List<Folder> childFolders

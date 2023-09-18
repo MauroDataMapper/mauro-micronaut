@@ -38,10 +38,10 @@ class TermController {
     }
 
     @Put('/{id}')
-    Mono<Term> update(UUID terminologyId, UUID id, @Body Term term, @Body JsonObject body) {
+    Mono<Term> update(UUID terminologyId, UUID id, @Body Term term) {
         termRepository.findByTerminologyIdAndId(terminologyId, id).flatMap {Term existing ->
             existing.properties.each {
-                if (!DISALLOWED_PROPERTIES.contains(it.key) && body.get(it.key)) {
+                if (!DISALLOWED_PROPERTIES.contains(it.key) && term[it.key] != null) {
                     existing[it.key] = term[it.key]
                 }
             }

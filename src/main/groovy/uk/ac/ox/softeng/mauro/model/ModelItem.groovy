@@ -23,5 +23,10 @@ abstract class ModelItem<M extends Model> extends AdministeredItem implements Or
 
     @MappedProperty('idx')
     @JsonProperty('index')
-    int order
+    Integer order
+
+    @Override
+    int getOrder() {
+        order
+    }
 }

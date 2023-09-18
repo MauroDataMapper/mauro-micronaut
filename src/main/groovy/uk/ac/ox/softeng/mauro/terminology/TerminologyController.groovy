@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.terminology
 
+import uk.ac.ox.softeng.mauro.folder.Folder
+import uk.ac.ox.softeng.mauro.folder.FolderRepository
 import uk.ac.ox.softeng.mauro.model.version.FinaliseData
 
 import io.micronaut.core.annotation.NonNull
@@ -25,6 +27,9 @@ class TerminologyController {
     TerminologyRepository terminologyRepository
 
     @Inject
+    FolderRepository folderRepository
+
+    @Inject
     TermRepository termRepository
 
     @Inject
@@ -40,16 +45,18 @@ class TerminologyController {
 
     @Post('/folders/{folderId}/terminologies')
     Mono<Terminology> create(UUID folderId, @Body @Valid @NonNull Terminology terminology) {
-        terminology.folderId = folderId
-        terminology.createdBy = 'USER'
-        terminologyRepository.save(terminology)
+        folderRepository.readById(folderId).flatMap {Folder folder ->
+            terminology.folder = folder
+            terminology.createdBy = 'USER'
+            terminologyRepository.save(terminology)
+        }
     }
 
     @Put('/terminologies/{id}')
-    Mono<Terminology> update(UUID id, @Body Terminology terminology, @Body JsonObject body) {
+    Mono<Terminology> update(UUID id, @Body Terminology terminology) {
         terminologyRepository.readById(id).flatMap {Terminology existing ->
             existing.properties.each {
-                if (!DISALLOWED_PROPERTIES.contains(it.key) && body.get(it.key)) {
+                if (!DISALLOWED_PROPERTIES.contains(it.key) && terminology[it.key] != null) {
                     existing[it.key] = terminology[it.key]
                 }
             }

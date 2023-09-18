@@ -1,5 +1,6 @@
 package uk.ac.ox.softeng.mauro.model
 
+import uk.ac.ox.softeng.mauro.folder.Folder
 import uk.ac.ox.softeng.mauro.model.version.ModelVersion
 
 import com.fasterxml.jackson.annotation.JsonProperty
@@ -46,7 +47,7 @@ abstract class Model extends AdministeredItem {
     String author
 
     @Nullable
-    UUID folderId // -> Folder
+    Folder folder
 
     @Nullable
     UUID authorityId // -> Authority

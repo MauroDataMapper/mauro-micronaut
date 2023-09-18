@@ -41,11 +41,10 @@ class FolderController {
     }
 
     @Put('/{id}')
-    Mono<Folder> update(UUID id, HttpRequest request, @Body Folder folder) {
-        JsonObject body = request.getBody(JsonObject).get()
+    Mono<Folder> update(UUID id, @Body Folder folder) {
         folderRepository.readById(id).flatMap {Folder existing ->
             existing.properties.each {
-                if (!DISALLOWED_PROPERTIES.contains(it.key) && body.get(it.key)) {
+                if (!DISALLOWED_PROPERTIES.contains(it.key) && folder[it.key] != null) {
                     existing[it.key] = folder[it.key]
                 }
             }

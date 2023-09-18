@@ -42,10 +42,10 @@ class TermRelationshipController {
     }
 
     @Put('/{id}')
-    Mono<TermRelationship> update(UUID terminologyId, UUID id, @Body TermRelationship termRelationship, @Body JsonObject body) {
+    Mono<TermRelationship> update(UUID terminologyId, UUID id, @Body TermRelationship termRelationship) {
         termRelationshipRepository.findByTerminologyIdAndId(terminologyId, id).flatMap {TermRelationship existing ->
             existing.properties.each {
-                if (!DISALLOWED_PROPERTIES.contains(it.key) && body.get(it.key)) {
+                if (!DISALLOWED_PROPERTIES.contains(it.key) && termRelationship[it.key] != null) {
                     existing[it.key] = termRelationship[it.key]
                 }
             }
