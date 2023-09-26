@@ -6,6 +6,7 @@ import io.micronaut.data.annotation.Join
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.r2dbc.annotation.R2dbcRepository
 import io.micronaut.data.repository.reactive.ReactorPageableRepository
+import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 
 @R2dbcRepository(dialect = Dialect.POSTGRES)
@@ -14,9 +15,14 @@ abstract class FolderRepository implements ReactorPageableRepository<Folder, UUI
     @Join(value = 'childFolders', type = Join.Type.LEFT_FETCH)
     abstract Mono<Folder> findById(UUID id)
 
+    @Join(value = 'childFolders', type = Join.Type.LEFT_FETCH)
+    abstract Mono<Folder> findByIdAndVersion(UUID id, Integer version)
+
     abstract Mono<Folder> readById(UUID id)
 
     abstract Mono<Folder> readByIdAndVersion(UUID id, Integer version)
+
+    abstract Flux<Folder> findAllByParentFolder(Folder folder)
 
     @Override
     Boolean handles(Class clazz) {
