@@ -1,5 +1,6 @@
 package uk.ac.ox.softeng.mauro.model
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.Introspected
@@ -12,6 +13,7 @@ import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.MappedProperty
 import io.micronaut.data.annotation.Version
+import jakarta.persistence.Column
 import jakarta.persistence.Transient
 
 import java.time.OffsetDateTime
@@ -21,12 +23,20 @@ import java.time.OffsetDateTime
 @MappedEntity
 abstract class ModelItem<M extends Model> extends AdministeredItem implements Ordered {
 
-    @MappedProperty('idx')
     @JsonProperty('index')
-    Integer order
+    @Nullable(inherited = true)
+    Integer idx
 
     @Override
+    @Transient
+    @JsonIgnore
     int getOrder() {
-        order
+        idx
+    }
+
+    @Transient
+    @JsonIgnore
+    void setOrder(int order) {
+        idx = order
     }
 }

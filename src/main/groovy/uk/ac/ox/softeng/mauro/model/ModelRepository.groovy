@@ -1,8 +1,9 @@
 package uk.ac.ox.softeng.mauro.model
 
+import io.micronaut.data.repository.reactive.ReactorPageableRepository
 import reactor.core.publisher.Mono
 
-trait ModelRepository<M extends Model> {
+trait ModelRepository<M extends Model> implements ReactorPageableRepository<M, UUID> {
 
     abstract Mono<M> findById(UUID id)
 

@@ -4,6 +4,7 @@ import uk.ac.ox.softeng.mauro.model.ModelItem
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import groovy.transform.CompileStatic
+import io.micronaut.context.annotation.Bean
 import io.micronaut.core.annotation.Introspected
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.annotation.Index
@@ -12,7 +13,6 @@ import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Relation
 import jakarta.persistence.Transient
 
-@CompileStatic
 @Introspected
 @MappedEntity
 @Indexes([@Index(columns = ['terminology_id', 'code'], unique = true)])

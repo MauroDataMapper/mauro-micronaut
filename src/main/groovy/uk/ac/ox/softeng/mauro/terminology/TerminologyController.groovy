@@ -3,7 +3,10 @@ package uk.ac.ox.softeng.mauro.terminology
 import uk.ac.ox.softeng.mauro.folder.Folder
 import uk.ac.ox.softeng.mauro.folder.FolderRepository
 import uk.ac.ox.softeng.mauro.model.version.FinaliseData
+import uk.ac.ox.softeng.mauro.web.ListResponse
+import uk.ac.ox.softeng.mauro.web.ModelController
 
+import groovy.transform.InheritConstructors
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.annotation.Body
@@ -19,15 +22,13 @@ import jakarta.validation.Valid
 import reactor.core.publisher.Mono
 
 @Controller
-class TerminologyController {
+class TerminologyController extends ModelController<Terminology> {
 
     final static List<String> DISALLOWED_PROPERTIES = ['class', 'id']
 
-    @Inject
-    TerminologyRepository terminologyRepository
+//    @Inject
+//    TerminologyRepository terminologyRepository
 
-    @Inject
-    FolderRepository folderRepository
 
     @Inject
     TermRepository termRepository
@@ -38,19 +39,23 @@ class TerminologyController {
     @Inject
     TerminologyService terminologyService
 
-    @Get('/terminologies/{id}')
-    Mono<Terminology> show(UUID id) {
-        terminologyRepository.findById(id)
+    TerminologyController(TerminologyRepository terminologyRepository, FolderRepository folderRepository) {
+        super(Terminology, terminologyRepository, folderRepository)
     }
 
-    @Post('/folders/{folderId}/terminologies')
-    Mono<Terminology> create(UUID folderId, @Body @Valid @NonNull Terminology terminology) {
-        folderRepository.readById(folderId).flatMap {Folder folder ->
-            terminology.folder = folder
-            terminology.createdBy = 'USER'
-            terminologyRepository.save(terminology)
-        }
-    }
+//    @Get('/terminologies/{id}')
+//    Mono<Terminology> show(UUID id) {
+//        terminologyRepository.findById(id)
+//    }
+
+//    @Post('/folders/{folderId}/terminologies')
+//    Mono<Terminology> create(UUID folderId, @Body @Valid @NonNull Terminology terminology) {
+//        folderRepository.readById(folderId).flatMap {Folder folder ->
+//            terminology.folder = folder
+//            terminology.createdBy = 'USER'
+//            terminologyRepository.save(terminology)
+//        }
+//    }
 
     @Put('/terminologies/{id}')
     Mono<Terminology> update(UUID id, @Body Terminology terminology) {
@@ -64,9 +69,14 @@ class TerminologyController {
         }
     }
 
+    @Get('/terminologies')
+    Mono<ListResponse<Terminology>> listAll() {
+        terminologyRepository.findAll().collectList().map {ListResponse.from(it)}
+    }
+
     @Get('/folders/{folderId}/terminologies')
-    Mono<List<Terminology>> list(UUID folderId) {
-        terminologyRepository.readAllByFolderId(folderId).collectList()
+    Mono<ListResponse<Terminology>> list(UUID folderId) {
+        terminologyRepository.readAllByFolderId(folderId).collectList().map {ListResponse.from(it)}
     }
 
     @Transactional // this is necessary here, otherwise there are multiple transactions

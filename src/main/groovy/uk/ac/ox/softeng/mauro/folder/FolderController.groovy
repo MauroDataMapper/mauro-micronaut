@@ -37,14 +37,14 @@ class FolderController {
     }
 
     @Post
-    Mono<Folder> create(@Body Folder folder) {
+    Mono<Folder> createRoot(@Body Folder folder) {
         folder.createdBy = 'USER'
         folderRepository.save(folder)
     }
 
     @Transactional
     @Post('/{parentId}/folders')
-    Mono<Folder> createChild(UUID parentId, @Body Folder folder) {
+    Mono<Folder> create(UUID parentId, @Body Folder folder) {
         folder.createdBy = 'USER'
         folderRepository.readById(parentId).flatMap {Folder parent ->
             folder.parentFolder = parent
@@ -69,15 +69,37 @@ class FolderController {
         update(id, folder)
     }
 
+    @Transactional
+    @Put('/{id}/folder/{destination}')
+    Mono<Folder> moveFolder(UUID id, String destination) {
+        folderRepository.readById(id).flatMap {Folder existing ->
+            if (destination == 'root') {
+                existing.folder = null
+                folderRepository.update(existing)
+            } else {
+                UUID destinationId
+                try {
+                    destinationId = UUID.fromString(destination)
+                } catch (IllegalArgumentException ignored) {
+                    throw new HttpStatusException(HttpStatus.BAD_REQUEST, 'Destination not a valid UUID')
+                }
+                folderRepository.readById(destinationId).flatMap {Folder destinationFolder ->
+                    existing.folder = destinationFolder
+                    folderRepository.update(existing)
+                }
+            }
+        }
+    }
+
     @Get
-    Mono<ListResponse> list() {
+    Mono<ListResponse<Folder>> listAll() {
         folderRepository.findAll().collectList().map {
             ListResponse.from(it)
         }
     }
 
     @Get('/{parentId}/folders')
-    Mono<ListResponse> childList(UUID parentId) {
+    Mono<ListResponse<Folder>> list(UUID parentId) {
         folderRepository.readById(parentId).flatMap {Folder parent ->
             folderRepository.findAllByParentFolder(parent).collectList()
         }.map {

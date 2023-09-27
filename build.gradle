@@ -2,7 +2,8 @@ plugins {
     id("groovy")
     id("com.github.johnrengelman.shadow") version "8.1.1"
     id("io.micronaut.application") version "4.0.3"
-//    id("io.micronaut.test-resources") version "3.7.4"
+    id("io.micronaut.aot") version "4.0.3"
+    //    id("io.micronaut.test-resources") version "3.7.4"
 }
 
 version = "0.1"
@@ -14,7 +15,7 @@ repositories {
 
 dependencies {
     compileOnly("io.micronaut.openapi:micronaut-openapi") {
-//        exclude group: 'org.slf4j'
+        //        exclude group: 'org.slf4j'
     }
     compileOnly("io.swagger.core.v3:swagger-annotations")
     compileOnly("io.micronaut.data:micronaut-data-processor")
@@ -30,7 +31,7 @@ dependencies {
     runtimeOnly("ch.qos.logback:logback-classic")
     runtimeOnly("org.postgresql:r2dbc-postgresql")
     implementation("io.r2dbc:r2dbc-pool")
-//    testResourcesService("org.postgresql:postgresql")
+    //    testResourcesService("org.postgresql:postgresql")
     implementation("io.micronaut.validation:micronaut-validation")
     implementation("io.micronaut:micronaut-management")
     runtimeOnly("org.yaml:snakeyaml")
@@ -53,6 +54,17 @@ micronaut {
     processing {
         incremental(true)
         annotations("uk.ac.ox.softeng.mauro.*")
+    }
+    aot {
+        // Please review carefully the optimizations enabled below
+        // Check https://micronaut-projects.github.io/micronaut-aot/latest/guide/ for more details
+        optimizeServiceLoading = false
+        convertYamlToJava = false
+        precomputeOperations = true
+        cacheEnvironment = true
+        optimizeClassLoading = true
+        deduceEnvironment = true
+        optimizeNetty = true
     }
 }
 
