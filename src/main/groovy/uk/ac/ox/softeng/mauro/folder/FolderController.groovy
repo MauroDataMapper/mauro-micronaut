@@ -12,8 +12,8 @@ import io.micronaut.http.annotation.Get
 import io.micronaut.http.annotation.Post
 import io.micronaut.http.annotation.Put
 import io.micronaut.http.exceptions.HttpStatusException
+import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
-import jakarta.transaction.Transactional
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 
@@ -101,7 +101,7 @@ class FolderController {
     @Get('/{parentId}/folders')
     Mono<ListResponse<Folder>> list(UUID parentId) {
         folderRepository.readById(parentId).flatMap {Folder parent ->
-            folderRepository.findAllByParentFolder(parent).collectList()
+            folderRepository.readAllByParentFolder(parent).collectList()
         }.map {
             ListResponse.from(it)
         }
@@ -118,7 +118,8 @@ class FolderController {
                 it.first()
             }
         } else {
-            folderRepository.findByIdAndVersion(id, folder.version).switchIfEmpty(Mono.error(new HttpStatusException(HttpStatus.NOT_FOUND, 'Folder not found for id and version'))).expand {
+            folderRepository.findByIdAndVersion(id, folder.version).switchIfEmpty(
+                Mono.error(new HttpStatusException(HttpStatus.NOT_FOUND, 'Folder not found for id and version'))).expand {
                 if (it.childFolders) Flux.fromIterable(it.childFolders).flatMap {folderRepository.readById(it.id)}
                 else Flux.empty()
             }.flatMapSequential {folderRepository.deleteById(it.id)}.collectList().map {

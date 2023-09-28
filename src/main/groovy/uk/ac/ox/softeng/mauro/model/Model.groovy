@@ -3,6 +3,7 @@ package uk.ac.ox.softeng.mauro.model
 import uk.ac.ox.softeng.mauro.folder.Folder
 import uk.ac.ox.softeng.mauro.model.version.ModelVersion
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.Introspected
@@ -47,6 +48,7 @@ abstract class Model extends AdministeredItem {
     String author
 
     @Nullable
+    @JsonIgnore
     Folder folder
 
     @Nullable

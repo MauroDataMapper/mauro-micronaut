@@ -9,6 +9,8 @@ import uk.ac.ox.softeng.mauro.web.ModelController
 import groovy.transform.InheritConstructors
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
+import io.micronaut.http.HttpResponse
+import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Delete
@@ -26,9 +28,7 @@ class TerminologyController extends ModelController<Terminology> {
 
     final static List<String> DISALLOWED_PROPERTIES = ['class', 'id']
 
-//    @Inject
-//    TerminologyRepository terminologyRepository
-
+    TerminologyRepository terminologyRepository
 
     @Inject
     TermRepository termRepository
@@ -41,57 +41,38 @@ class TerminologyController extends ModelController<Terminology> {
 
     TerminologyController(TerminologyRepository terminologyRepository, FolderRepository folderRepository) {
         super(Terminology, terminologyRepository, folderRepository)
+        this.terminologyRepository = terminologyRepository
     }
 
-//    @Get('/terminologies/{id}')
-//    Mono<Terminology> show(UUID id) {
-//        terminologyRepository.findById(id)
-//    }
+    @Get('/terminologies/{id}')
+    Mono<Terminology> show(UUID id) {
+        super.show(id)
+    }
 
-//    @Post('/folders/{folderId}/terminologies')
-//    Mono<Terminology> create(UUID folderId, @Body @Valid @NonNull Terminology terminology) {
-//        folderRepository.readById(folderId).flatMap {Folder folder ->
-//            terminology.folder = folder
-//            terminology.createdBy = 'USER'
-//            terminologyRepository.save(terminology)
-//        }
-//    }
+    @Post('/folders/{folderId}/terminologies')
+    Mono<Terminology> create(UUID folderId, @Body @NonNull Terminology terminology) {
+        super.create(folderId, terminology)
+    }
 
     @Put('/terminologies/{id}')
-    Mono<Terminology> update(UUID id, @Body Terminology terminology) {
-        terminologyRepository.readById(id).flatMap {Terminology existing ->
-            existing.properties.each {
-                if (!DISALLOWED_PROPERTIES.contains(it.key) && terminology[it.key] != null) {
-                    existing[it.key] = terminology[it.key]
-                }
-            }
-            terminologyRepository.update(existing)
-        }
+    Mono<Terminology> update(UUID id, @Body @NonNull Terminology terminology) {
+        super.update(id, terminology)
     }
 
-    @Get('/terminologies')
-    Mono<ListResponse<Terminology>> listAll() {
-        terminologyRepository.findAll().collectList().map {ListResponse.from(it)}
+    @Transactional
+    @Delete('/terminologies/{id}')
+    Mono<HttpStatus> delete(UUID id, @Body @Nullable Terminology terminology) {
+        super.delete(id, terminology)
     }
 
     @Get('/folders/{folderId}/terminologies')
     Mono<ListResponse<Terminology>> list(UUID folderId) {
-        terminologyRepository.readAllByFolderId(folderId).collectList().map {ListResponse.from(it)}
+        super.list(folderId)
     }
 
-    @Transactional // this is necessary here, otherwise there are multiple transactions
-    @Delete('/terminologies/{id}')
-    Mono<Long> delete(UUID id, @Nullable @Body Terminology terminology) {
-        if (terminology?.version == null) {
-            Mono.zip(terminologyRepository.deleteById(id), termRepository.deleteByTerminologyId(id), termRelationshipTypeRepository.deleteByTerminologyId(id)).map {
-                it.getT1()
-            }
-        } else {
-            terminology.id = id
-            Mono.zip(terminologyRepository.delete(terminology), termRepository.deleteByTerminologyId(id), termRelationshipTypeRepository.deleteByTerminologyId(id)).map {
-                it.getT1()
-            }
-        }
+    @Get('/terminologies')
+    Mono<ListResponse<Terminology>> listAll() {
+        super.listAll()
     }
 
     @Transactional
