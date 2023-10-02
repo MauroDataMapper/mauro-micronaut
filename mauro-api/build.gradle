@@ -70,9 +70,6 @@ micronaut {
 }
 
 
-
-
-
 dependencies {
     implementation project(':mauro-domain')
     implementation project(':mauro-persistence')
