@@ -1,5 +1,6 @@
 package uk.ac.ox.softeng.mauro.model
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.Introspected
 import io.micronaut.core.annotation.Nullable
@@ -35,7 +36,7 @@ abstract class AdministeredItem {
     OffsetDateTime lastUpdated
 
     @NotBlank
-    @Pattern(regexp = /[^\$@]*/, message = 'Cannot contain $, | or @')
+    @Pattern(regexp = /[^\$@|]*/, message = 'Cannot contain $, | or @')
     String label
 
     @Nullable
@@ -55,4 +56,14 @@ abstract class AdministeredItem {
 
     @Nullable
     UUID breadcrumbTreeId // should be BreadcrumbTree type
+
+    @Transient
+    @JsonIgnore
+    abstract AdministeredItem getParent()
+
+    @Transient
+    @JsonIgnore
+    Model getOwner() {
+        parent.owner
+    }
 }

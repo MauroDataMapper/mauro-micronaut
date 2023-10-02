@@ -1,5 +1,6 @@
 package uk.ac.ox.softeng.mauro.terminology
 
+import uk.ac.ox.softeng.mauro.model.Model
 import uk.ac.ox.softeng.mauro.model.ModelItem
 
 import com.fasterxml.jackson.annotation.JsonIgnore
@@ -27,4 +28,11 @@ class TermRelationship extends ModelItem<Terminology> {
     Term targetTerm
 
     TermRelationshipType relationshipType
+
+    @Override
+    @Transient
+    @JsonIgnore
+    Terminology getParent() {
+        terminology
+    }
 }

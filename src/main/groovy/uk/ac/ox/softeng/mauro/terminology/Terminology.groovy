@@ -13,9 +13,7 @@ import io.micronaut.data.annotation.Relation
 @Introspected
 @MappedEntity
 class Terminology extends Model {
-
-//    String modelType = Terminology.simpleName
-
+    
     @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'terminology')
     List<Term> terms
 

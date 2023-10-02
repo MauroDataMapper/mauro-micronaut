@@ -33,7 +33,7 @@ dependencies {
     implementation("io.r2dbc:r2dbc-pool")
     //    testResourcesService("org.postgresql:postgresql")
     implementation("io.micronaut.validation:micronaut-validation")
-    implementation("io.micronaut:micronaut-management")
+//    implementation("io.micronaut:micronaut-management")
     runtimeOnly("org.yaml:snakeyaml")
 
 }

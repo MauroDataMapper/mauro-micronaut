@@ -20,6 +20,7 @@ import io.micronaut.data.annotation.Version
 import io.micronaut.data.model.DataType
 import jakarta.persistence.Column
 
+import java.beans.Transient
 import java.time.OffsetDateTime
 
 @CompileStatic
@@ -33,16 +34,16 @@ abstract class Model extends AdministeredItem {
     @Nullable
     String documentationVersion
 
-    Boolean readableByEveryone = false
+    Boolean readableByEveryone
 
-    Boolean readableByAuthenticatedUsers = false
+    Boolean readableByAuthenticatedUsers
 
     String modelType = domainType
 
     @Nullable
     String organisation
 
-    Boolean deleted = false
+    Boolean deleted
 
     @Nullable
     String author
@@ -62,4 +63,11 @@ abstract class Model extends AdministeredItem {
 
     @Nullable
     String modelVersionTag
+
+    @Override
+    @Transient
+    @JsonIgnore
+    Folder getParent() {
+        folder
+    }
 }

@@ -24,7 +24,11 @@ import reactor.core.publisher.Mono
 @Slf4j
 abstract class ModelController<M extends Model> {
 
-    final static List<String> DISALLOWED_PROPERTIES = ['class', 'id']
+    static List<String> DISALLOWED_PROPERTIES = ['class', 'id']
+
+    static List<String> getDISALLOWED_PROPERTIES() {
+        DISALLOWED_PROPERTIES
+    }
 
     ModelRepository<M> modelRepository
 
@@ -76,8 +80,10 @@ abstract class ModelController<M extends Model> {
     }
 
     Mono<ListResponse<M>> list(UUID folderId) {
-        modelRepository.readAllByFolderId(folderId).collectList().map {
-            ListResponse.from(it)
+        folderRepository.readById(folderId).flatMap {Folder folder ->
+            modelRepository.readAllByFolder(folder).collectList().map {
+                ListResponse.from(it)
+            }
         }
     }
 

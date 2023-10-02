@@ -8,8 +8,6 @@ import jakarta.validation.Valid
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 
-import java.lang.reflect.Executable
-
 trait ModelRepository<M extends Model> implements ReactorPageableRepository<M, UUID> {
 
     Mono<M> findById(UUID id) {

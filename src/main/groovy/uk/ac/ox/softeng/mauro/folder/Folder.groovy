@@ -57,4 +57,18 @@ class Folder extends Model {
 
     @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'parentFolder')
     List<Folder> childFolders
+
+    @Override
+    @Transient
+    @JsonIgnore
+    Folder getParent() {
+        parentFolder
+    }
+
+    @Override
+    @Transient
+    @JsonIgnore
+    Folder getOwner() {
+        parentFolder ? parentFolder : this
+    }
 }

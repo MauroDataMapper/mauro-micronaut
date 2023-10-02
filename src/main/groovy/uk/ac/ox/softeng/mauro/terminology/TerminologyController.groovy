@@ -26,7 +26,12 @@ import reactor.core.publisher.Mono
 @Controller
 class TerminologyController extends ModelController<Terminology> {
 
-    final static List<String> DISALLOWED_PROPERTIES = ['class', 'id']
+    static List<String> DISALLOWED_PROPERTIES = ['class', 'id']
+
+    @Override
+    static List<String> getDISALLOWED_PROPERTIES() {
+        DISALLOWED_PROPERTIES
+    }
 
     TerminologyRepository terminologyRepository
 

@@ -1,5 +1,6 @@
 package uk.ac.ox.softeng.mauro.terminology
 
+import uk.ac.ox.softeng.mauro.model.Model
 import uk.ac.ox.softeng.mauro.model.ModelItem
 
 import com.fasterxml.jackson.annotation.JsonIgnore
@@ -57,4 +58,11 @@ class Term extends ModelItem<Terminology> {
     @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'terminology')
     @Nullable
     List<TermRelationship> targetTermRelationships
+
+    @Override
+    @Transient
+    @JsonIgnore
+    Terminology getParent() {
+        terminology
+    }
 }
