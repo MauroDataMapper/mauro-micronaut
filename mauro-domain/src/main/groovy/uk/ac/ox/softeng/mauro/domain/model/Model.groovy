@@ -14,7 +14,7 @@ import java.time.OffsetDateTime
 @CompileStatic
 abstract class Model extends AdministeredItem {
 
-    Boolean finalised = false
+    Boolean finalised
 
     @Nullable
     OffsetDateTime dateFinalised

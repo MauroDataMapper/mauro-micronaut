@@ -11,7 +11,9 @@ import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.Index
 import io.micronaut.data.annotation.Indexes
 import io.micronaut.data.annotation.MappedEntity
+import io.micronaut.data.annotation.TypeDef
 import io.micronaut.data.annotation.Version
+import io.micronaut.data.model.DataType
 import io.micronaut.validation.Validated
 import jakarta.persistence.Transient
 import jakarta.validation.constraints.NotBlank
@@ -52,7 +54,8 @@ abstract class AdministeredItem {
     String createdBy
 
     @Nullable
-    String path // should be Path type
+    @TypeDef(type = DataType.STRING, converter = Path.PathConverter)
+    Path path // should be Path type
 
     @Nullable
     UUID breadcrumbTreeId // should be BreadcrumbTree type

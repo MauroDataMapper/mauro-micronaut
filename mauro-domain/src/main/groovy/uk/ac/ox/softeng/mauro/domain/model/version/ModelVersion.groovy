@@ -83,13 +83,13 @@ class ModelVersion implements Comparable<ModelVersion> {
 
     static ModelVersion from(String versionStr) {
 
-        if (!versionStr) throw new IllegalStateException('Must have a version')
+        if (!versionStr) throw new IllegalArgumentException('Must have a version')
 
         if (versionStr == 'SNAPSHOT') return new ModelVersion(major: 0, minor: 0, patch: 0, snapshot: true)
 
         Matcher m = VERSION_PATTERN.matcher(versionStr)
         if (!m.matches()) {
-            throw new IllegalStateException("Version '${versionStr}' does not match the expected pattern")
+            throw new IllegalArgumentException("Version '${versionStr}' does not match the expected pattern")
         }
 
         new ModelVersion(major: m.group(2).toInteger(),
