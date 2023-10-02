@@ -9,39 +9,7 @@ group = "uk.ac.ox.softeng.mauro"
 repositories {
     mavenCentral()
 }
-
-dependencies {
-    compileOnly("io.micronaut.openapi:micronaut-openapi") {
-        //        exclude group: 'org.slf4j'
-    }
-    compileOnly("io.swagger.core.v3:swagger-annotations")
-    compileOnly("io.micronaut.data:micronaut-data-processor")
-    compileOnly("io.micronaut.validation:micronaut-validation-processor")
-    implementation("io.micronaut:micronaut-http-client")
-    implementation("io.micronaut:micronaut-jackson-databind")
-    implementation("io.micronaut.data:micronaut-data-r2dbc")
-    implementation("io.micronaut.groovy:micronaut-runtime-groovy")
-    implementation("io.micronaut.reactor:micronaut-reactor")
-    implementation("io.micronaut.reactor:micronaut-reactor-http-client")
-    implementation("jakarta.annotation:jakarta.annotation-api")
-    compileOnly("io.micronaut:micronaut-http-validation")
-    runtimeOnly("ch.qos.logback:logback-classic")
-    runtimeOnly("org.postgresql:r2dbc-postgresql")
-    implementation("io.r2dbc:r2dbc-pool")
-    //    testResourcesService("org.postgresql:postgresql")
-    implementation("io.micronaut.validation:micronaut-validation")
-//    implementation("io.micronaut:micronaut-management")
-    runtimeOnly("org.yaml:snakeyaml")
-
-}
-
-
-application {
-    mainClass.set("uk.ac.ox.softeng.mauro.Application")
-}
 java {
     sourceCompatibility = JavaVersion.toVersion("17")
     targetCompatibility = JavaVersion.toVersion("17")
 }
-
-

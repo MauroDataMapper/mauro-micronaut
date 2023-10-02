@@ -7,7 +7,8 @@ import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.Nullable
 import uk.ac.ox.softeng.mauro.domain.model.version.ModelVersion
 
-import java.beans.Transient
+import jakarta.persistence.Transient
+
 import java.time.OffsetDateTime
 
 @CompileStatic

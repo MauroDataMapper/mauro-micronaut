@@ -41,7 +41,7 @@ dependencies {
 
 
 application {
-    mainClass.set("uk.ac.ox.softeng.mauro.Application")
+    mainClass.set("uk.ac.ox.softeng.mauro.controller.Application")
 }
 java {
     sourceCompatibility = JavaVersion.toVersion("17")
