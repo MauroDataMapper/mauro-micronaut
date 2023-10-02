@@ -1,0 +1,52 @@
+plugins {
+    id("groovy")
+    id("com.github.johnrengelman.shadow") version "8.1.1"
+    id("io.micronaut.library") version "4.1.1"
+    id("maven-publish")
+
+}
+
+version = "0.1"
+group = "uk.ac.ox.softeng.mauro"
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compileOnly("io.micronaut.data:micronaut-data-processor")
+    compileOnly("io.micronaut.validation:micronaut-validation-processor")
+    implementation("io.micronaut:micronaut-jackson-databind")
+    implementation("io.micronaut.data:micronaut-data-r2dbc")
+    implementation("io.micronaut.groovy:micronaut-runtime-groovy")
+    runtimeOnly("ch.qos.logback:logback-classic")
+    runtimeOnly("org.postgresql:r2dbc-postgresql")
+    implementation("io.r2dbc:r2dbc-pool")
+    //    testResourcesService("org.postgresql:postgresql")
+    implementation("io.micronaut.validation:micronaut-validation")
+    runtimeOnly("org.yaml:snakeyaml")
+
+}
+
+java {
+    sourceCompatibility = JavaVersion.toVersion("17")
+    targetCompatibility = JavaVersion.toVersion("17")
+    withJavadocJar()
+    withSourcesJar()
+
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            groupId = 'uk.ac.ox.softeng.mauro'
+            artifactId = 'mauro-persistence'
+            version = "0.0.1-SNAPSHOT"
+            from components.java
+        }
+    }
+}
+
+dependencies {
+    implementation project(':mauro-domain')
+}
