@@ -1,6 +1,9 @@
 plugins {
     id("groovy")
     id("com.github.johnrengelman.shadow") version "8.1.1"
+    id("io.micronaut.application") version "4.0.3"
+    id("io.micronaut.aot") version "4.0.3"
+    //    id("io.micronaut.test-resources") version "3.7.4"
 }
 
 version = "0.1"
@@ -30,7 +33,8 @@ dependencies {
     implementation("io.r2dbc:r2dbc-pool")
     //    testResourcesService("org.postgresql:postgresql")
     implementation("io.micronaut.validation:micronaut-validation")
-//    implementation("io.micronaut:micronaut-management")
+    implementation("io.micronaut:micronaut-management")
+    compileOnly("io.micronaut:micronaut-inject-groovy")
     runtimeOnly("org.yaml:snakeyaml")
 
 }
@@ -44,4 +48,32 @@ java {
     targetCompatibility = JavaVersion.toVersion("17")
 }
 
+graalvmNative.toolchainDetection = false
+micronaut {
+    runtime("netty")
+    testRuntime("spock2")
+    processing {
+        incremental(true)
+        annotations("uk.ac.ox.softeng.mauro.*")
+    }
+    aot {
+        // Please review carefully the optimizations enabled below
+        // Check https://micronaut-projects.github.io/micronaut-aot/latest/guide/ for more details
+        optimizeServiceLoading = false
+        convertYamlToJava = false
+        precomputeOperations = true
+        cacheEnvironment = true
+        optimizeClassLoading = true
+        deduceEnvironment = true
+        optimizeNetty = true
+    }
+}
 
+
+
+
+
+dependencies {
+    implementation project(':mauro-domain')
+    implementation project(':mauro-persistence')
+}

@@ -1,3 +1,6 @@
 
 rootProject.name="sandbox"
 
+include 'mauro-domain'
+include 'mauro-persistence'
+include 'mauro-api'
