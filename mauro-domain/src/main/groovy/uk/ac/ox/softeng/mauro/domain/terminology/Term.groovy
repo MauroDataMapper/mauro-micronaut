@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.domain.terminology
 
+import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
+
 import com.fasterxml.jackson.annotation.JsonIgnore
 import io.micronaut.core.annotation.Introspected
 import io.micronaut.core.annotation.Nullable
@@ -10,6 +12,9 @@ import io.micronaut.data.annotation.Relation
 import jakarta.persistence.Transient
 import uk.ac.ox.softeng.mauro.domain.model.ModelItem
 
+import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.Pattern
+
 @Introspected
 @MappedEntity
 @Indexes([@Index(columns = ['terminology_id', 'code'], unique = true)])
@@ -18,10 +23,7 @@ class Term extends ModelItem<Terminology> {
     @Transient
     String domainType = 'Term'
 
-    /*String label = code && definition && code == definition ? code :
-                   code && definition ? "${code}: ${definition}" :
-                   null*/
-
+    @Pattern(regexp = /[^\$@|]*/, message = 'Cannot contain $, | or @')
     String label
 
     String getLabel() {
@@ -33,9 +35,11 @@ class Term extends ModelItem<Terminology> {
     @JsonIgnore
     Terminology terminology
 
+    @NotBlank
+    @Pattern(regexp = /[^\$@|]*/, message = 'Cannot contain $, | or @')
     String code
 
-    @Nullable
+    @NotBlank
     String definition
 
     @Nullable
@@ -60,5 +64,12 @@ class Term extends ModelItem<Terminology> {
     @JsonIgnore
     Terminology getParent() {
         terminology
+    }
+
+    @Override
+    @Transient
+    @JsonIgnore
+    String getPathPrefix() {
+        'tm'
     }
 }

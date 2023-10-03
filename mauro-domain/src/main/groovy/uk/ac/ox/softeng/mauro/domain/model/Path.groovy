@@ -1,21 +1,26 @@
 package uk.ac.ox.softeng.mauro.domain.model
 
+import com.fasterxml.jackson.annotation.JsonValue
+import com.fasterxml.jackson.databind.util.StdConverter
 import io.micronaut.context.annotation.Prototype
+import io.micronaut.core.annotation.Introspected
 import io.micronaut.core.convert.ConversionContext
 import io.micronaut.data.model.runtime.convert.AttributeConverter
 
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
+@Introspected
 class Path {
 
+    @JsonValue
     String pathString
 
     List<PathNode> nodes
 
     void setPathString(String pathString) {
         this.pathString = pathString
-        nodes = pathString.split(/\|/).collect {PathNode.from(it)}
+        nodes = pathString?.split(/\|/)?.collect {PathNode.from(it)}
     }
 
     void setNodes(List<PathNode> nodes) {
@@ -25,6 +30,13 @@ class Path {
 
     String toString() {
         pathString
+    }
+
+    Path join(PathNode node) {
+        Path joined = new Path(nodes: nodes, pathString: pathString)
+        joined.@nodes += node
+        joined.@pathString += '|' + node.toString()
+        joined
     }
 
     static class PathNode {
@@ -42,7 +54,7 @@ class Path {
         }
 
         static PathNode from(String str) {
-            Pattern nodePattern = ~/^(?<prefix>\w\w):(?<identifier>.*)(\$(?<modelIdentifier>.*))(@(?<attribute>.*))$/
+            Pattern nodePattern = ~/^(?<prefix>\w\w):(?<identifier>.*)(\$(?<modelIdentifier>.*))?(@(?<attribute>.*))?$/
             Matcher matcher = str =~ nodePattern
             if (!matcher.matches()) {
                 throw new IllegalArgumentException('String [' + str + '] is not a valid PathNode')

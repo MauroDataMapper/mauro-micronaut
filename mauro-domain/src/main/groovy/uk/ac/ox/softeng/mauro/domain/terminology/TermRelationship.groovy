@@ -34,4 +34,18 @@ class TermRelationship extends ModelItem<Terminology> {
     Terminology getParent() {
         terminology
     }
+
+    @Override
+    @Transient
+    @JsonIgnore
+    String getPathPrefix() {
+        'tr'
+    }
+
+    @Override
+    @Transient
+    @JsonIgnore
+    String getPathIdentifier() {
+        "$sourceTerm.code.$label.$targetTerm.code"
+    }
 }

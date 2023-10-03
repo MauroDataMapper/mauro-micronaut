@@ -40,6 +40,9 @@ class Folder extends Model {
     @Transient
     String author
 
+    @Nullable
+    String branchName = null
+
     @JsonIgnore
     @Transient
     @Override
@@ -68,6 +71,20 @@ class Folder extends Model {
     @Transient
     @JsonIgnore
     Folder getOwner() {
-        parentFolder ? parentFolder : this
+        parentFolder ? parentFolder.owner : this
+    }
+
+    @Override
+    @Transient
+    @JsonIgnore
+    String getPathPrefix() {
+        'fo'
+    }
+
+    @Override
+    @Transient
+    @JsonIgnore
+    String getPathModelIdentifier() {
+        null
     }
 }

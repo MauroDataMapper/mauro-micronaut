@@ -18,10 +18,20 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 @Slf4j
 abstract class ModelController<M extends Model> {
 
-    static List<String> DISALLOWED_PROPERTIES = ['class', 'id']
+    /**
+     * Properties disallowed in a simple update request.
+     */
+    static List<String> getDisallowedProperties() {
+        ['id', 'version', 'dateCreated', 'lastUpdated', 'domainType', 'createdBy', 'path', /*'breadcrumbTree',*/ 'parent', /*'owner'*/] +
+        ['finalised', 'dateFinalised', 'readableByEveryone', 'readableByAuthenticatedUsers', 'modelType', 'deleted', 'folder', /*'authority',*/ 'branchName',
+         'modelVersion', 'modelVersionTag']
+    }
 
-    static List<String> getDISALLOWED_PROPERTIES() {
-        DISALLOWED_PROPERTIES
+    /**
+     * Properties disallowed in a simple create request.
+     */
+    static List<String> getDisallowedCreateProperties() {
+        disallowedProperties - ['readableByEveryone', 'readableByAuthenticatedUsers']
     }
 
     ModelRepository<M> modelRepository
@@ -40,18 +50,34 @@ abstract class ModelController<M extends Model> {
         modelRepository.findById(id)
     }
 
-    Mono<M> create(UUID folderId, @Body @Valid @NonNull M model) {
+    @Transactional
+    Mono<M> create(UUID folderId, @Body @NonNull M model) {
+        M defaultModel = modelClass.getDeclaredConstructor().newInstance()
+        disallowedCreateProperties.each {String key ->
+            if (model[key] != defaultModel[key]) {
+                throw new HttpStatusException(HttpStatus.BAD_REQUEST, 'Property [' + key + '] cannot be set directly')
+            }
+        }
+
         folderRepository.readById(folderId).flatMap {Folder folder ->
             model.folder = folder
             model.createdBy = 'USER'
+            model.updatePath()
             modelRepository.save(model)
         }
     }
 
     Mono<M> update(UUID id, @Body @NonNull M model) {
+        M defaultModel = modelClass.getDeclaredConstructor().newInstance()
+        disallowedProperties.each {String key ->
+            if (model[key] != defaultModel[key]) {
+                throw new HttpStatusException(HttpStatus.BAD_REQUEST, 'Property [' + key + '] cannot be set directly')
+            }
+        }
+
         modelRepository.readById(id).flatMap {M existing ->
             existing.properties.each {
-                if (!DISALLOWED_PROPERTIES.contains(it.key) && model[it.key] != null) {
+                if (!disallowedProperties.contains(it.key) && model[it.key] != null) {
                     existing[it.key] = model[it.key]
                 }
             }
@@ -61,7 +87,7 @@ abstract class ModelController<M extends Model> {
 
     @Transactional
     Mono<HttpStatus> delete(UUID id, @Body @Nullable M model) {
-        M deleteModel = modelClass.newInstance()
+        M deleteModel = modelClass.getDeclaredConstructor().newInstance()
         deleteModel.id = id
         deleteModel.version = model?.version
         modelRepository.deleteWithContent(deleteModel).map {Boolean deleted ->

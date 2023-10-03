@@ -1,6 +1,9 @@
 package uk.ac.ox.softeng.mauro.domain.model
 
+import uk.ac.ox.softeng.mauro.exception.MauroInternalException
+
 import com.fasterxml.jackson.annotation.JsonIgnore
+import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.Introspected
 import io.micronaut.core.annotation.Nullable
@@ -53,7 +56,6 @@ abstract class AdministeredItem {
     @Nullable
     String createdBy
 
-    @Nullable
     @TypeDef(type = DataType.STRING, converter = Path.PathConverter)
     Path path // should be Path type
 
@@ -68,5 +70,40 @@ abstract class AdministeredItem {
     @JsonIgnore
     Model getOwner() {
         parent.owner
+    }
+
+    @Transient
+    @JsonIgnore
+    String getPathPrefix() {
+        null
+    }
+
+    @Transient
+    @JsonIgnore
+    String getPathIdentifier() {
+        label
+    }
+
+    @Transient
+    @JsonIgnore
+    String getPathModelIdentifier() {
+        null
+    }
+
+    /**
+     * Recalculate this item's Path from its parent.
+     */
+    Path updatePath() {
+        if (!pathPrefix) throw new MauroInternalException('Class [' + this.class.simpleName + '] is not Pathable')
+        if (parent) {
+            Path parentPath = parent.path
+            if (!parentPath) throw new MauroInternalException('Parent does not have Path or it is not loaded')
+            path = parentPath.join(new Path.PathNode(prefix: pathPrefix, identifier: pathIdentifier, modelIdentifier: pathModelIdentifier))
+            return path
+        } else {
+            path = new Path()
+            path.nodes = [new Path.PathNode(prefix: pathPrefix, identifier: pathIdentifier, modelIdentifier: pathModelIdentifier)]
+            return path
+        }
     }
 }

@@ -1,10 +1,12 @@
 package uk.ac.ox.softeng.mauro.controller.folder
 
+import uk.ac.ox.softeng.mauro.controller.model.ModelController
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.persistence.folder.FolderRepository
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 import groovy.util.logging.Slf4j
+import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.Body
@@ -21,16 +23,18 @@ import reactor.core.publisher.Mono
 
 @Slf4j
 @Controller('/folders')
-class FolderController {
+class FolderController extends ModelController<Folder> {
 
-    final static List<String> DISALLOWED_PROPERTIES = ['class', 'id']
-
-    @Inject
     FolderRepository folderRepository
+
+    FolderController(FolderRepository folderRepository) {
+        super(Folder, folderRepository, folderRepository)
+        this.folderRepository = folderRepository
+    }
 
     @Get('/{id}')
     Mono<Folder> show(UUID id) {
-        folderRepository.findById(id)
+        super.show(id)
     }
 
     @Get('/{parentId}/folders/{id}')
@@ -40,37 +44,35 @@ class FolderController {
 
     @Post
     Mono<Folder> createRoot(@Body Folder folder) {
+        Folder defaultFolder = modelClass.getDeclaredConstructor().newInstance()
+        disallowedCreateProperties.each {String key ->
+            if (folder[key] != defaultFolder[key]) {
+                throw new HttpStatusException(HttpStatus.BAD_REQUEST, 'Property [' + key + '] cannot be set directly')
+            }
+        }
+
         folder.createdBy = 'USER'
+        folder.updatePath()
         folderRepository.save(folder)
     }
 
     @Transactional
     @Post('/{parentId}/folders')
-    Mono<Folder> create(UUID parentId, @Body Folder folder) {
-        folder.createdBy = 'USER'
-        folderRepository.readById(parentId).flatMap {Folder parent ->
-            folder.parentFolder = parent
-            folderRepository.save(folder)
-        }
+    Mono<Folder> create(UUID parentId, @Body @NonNull Folder folder) {
+        super.create(parentId, folder)
     }
 
     @Put('/{id}')
-    Mono<Folder> update(UUID id, @Body Folder folder) {
-        folderRepository.readById(id).flatMap {Folder existing ->
-            existing.properties.each {
-                if (!DISALLOWED_PROPERTIES.contains(it.key) && folder[it.key] != null) {
-                    existing[it.key] = folder[it.key]
-                }
-            }
-            folderRepository.update(existing)
-        }
+    Mono<Folder> update(UUID id, @Body @NonNull Folder folder) {
+        super.update(id, folder)
     }
 
     @Put('/{parentId}/folders/{id}')
-    Mono<Folder> updateChild(UUID parentId, UUID id, @Body Folder folder) {
-        update(id, folder)
+    Mono<Folder> updateChild(UUID parentId, UUID id, @Body @NonNull Folder folder) {
+        super.update(id, folder)
     }
 
+    // Todo: needs repository method 'updateWithContent'
     @Transactional
     @Put('/{id}/folder/{destination}')
     Mono<Folder> moveFolder(UUID id, String destination) {
@@ -109,6 +111,8 @@ class FolderController {
         }
     }
 
+
+    // Todo: needs repository method 'deleteWithContent'
     @Transactional
     @Delete('/{id}')
     Mono<Long> delete(UUID id, @Nullable @Body Folder folder) {

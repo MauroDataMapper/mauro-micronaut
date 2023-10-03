@@ -14,7 +14,7 @@ import java.time.OffsetDateTime
 @CompileStatic
 abstract class Model extends AdministeredItem {
 
-    Boolean finalised
+    Boolean finalised = false
 
     @Nullable
     OffsetDateTime dateFinalised
@@ -22,16 +22,16 @@ abstract class Model extends AdministeredItem {
     @Nullable
     String documentationVersion
 
-    Boolean readableByEveryone
+    Boolean readableByEveryone = false
 
-    Boolean readableByAuthenticatedUsers
+    Boolean readableByAuthenticatedUsers = false
 
     String modelType = domainType
 
     @Nullable
     String organisation
 
-    Boolean deleted
+    Boolean deleted = false
 
     @Nullable
     String author
@@ -44,7 +44,7 @@ abstract class Model extends AdministeredItem {
     UUID authorityId // -> Authority
 
     @Nullable
-    String branchName
+    String branchName = 'main'
 
     @Nullable
     ModelVersion modelVersion
@@ -58,4 +58,19 @@ abstract class Model extends AdministeredItem {
     Folder getParent() {
         folder
     }
+
+    @Override
+    @Transient
+    @JsonIgnore
+    String getPathModelIdentifier() {
+        modelVersion ?: branchName
+    }
+
+    /**
+     * For a model which has all its associations loaded, return a collection of all its child items.
+     * The collection should be in tree order, so that Paths can be updated in order through the items.
+     */
+    @Transient
+    @JsonIgnore
+    abstract Collection<AdministeredItem> getAllContents()
 }

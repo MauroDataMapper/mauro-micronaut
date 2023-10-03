@@ -25,20 +25,7 @@ import reactor.core.publisher.Mono
 @Controller
 class TerminologyController extends ModelController<Terminology> {
 
-    static List<String> DISALLOWED_PROPERTIES = ['class', 'id']
-
-    @Override
-    static List<String> getDISALLOWED_PROPERTIES() {
-        DISALLOWED_PROPERTIES
-    }
-
     TerminologyRepository terminologyRepository
-
-    @Inject
-    TermRepository termRepository
-
-    @Inject
-    TermRelationshipTypeRepository termRelationshipTypeRepository
 
     @Inject
     TerminologyService terminologyService
@@ -53,6 +40,7 @@ class TerminologyController extends ModelController<Terminology> {
         super.show(id)
     }
 
+    @Transactional
     @Post('/folders/{folderId}/terminologies')
     Mono<Terminology> create(UUID folderId, @Body @NonNull Terminology terminology) {
         super.create(folderId, terminology)

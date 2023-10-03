@@ -32,4 +32,11 @@ class TermRelationshipType extends ModelItem<Terminology> {
     Terminology getParent() {
         terminology
     }
+
+    @Override
+    @Transient
+    @JsonIgnore
+    String getPathPrefix() {
+        'trt'
+    }
 }
