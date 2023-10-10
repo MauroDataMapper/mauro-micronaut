@@ -55,8 +55,15 @@ abstract class Model extends AdministeredItem {
     @Override
     @Transient
     @JsonIgnore
-    Folder getParent() {
-        folder
+    AdministeredItem getParent() {
+        null
+    }
+
+    @Override
+    @Transient
+    @JsonIgnore
+    Model getOwner() {
+        this
     }
 
     @Override

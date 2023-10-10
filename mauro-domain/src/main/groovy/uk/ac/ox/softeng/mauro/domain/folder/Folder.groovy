@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.domain.folder
 
+import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
+
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import groovy.transform.CompileStatic
@@ -86,5 +88,12 @@ class Folder extends Model {
     @JsonIgnore
     String getPathModelIdentifier() {
         null
+    }
+
+    @Override
+    @Transient
+    @JsonIgnore
+    Collection<AdministeredItem> getAllContents() {
+        childFolders as Collection<AdministeredItem>
     }
 }

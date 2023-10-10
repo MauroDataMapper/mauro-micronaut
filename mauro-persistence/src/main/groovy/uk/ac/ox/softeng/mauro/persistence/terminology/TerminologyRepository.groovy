@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.persistence.terminology
 
+import uk.ac.ox.softeng.mauro.domain.folder.Folder
+
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.data.annotation.Join
 import io.micronaut.data.annotation.Query
@@ -104,7 +106,7 @@ abstract class TerminologyRepository implements ReactorPageableRepository<Termin
 
     abstract Mono<Terminology> readById(UUID id)
 
-    abstract Flux<Terminology> readAllByFolderId(UUID folderId)
+    abstract Flux<Terminology> readAllByFolder(Folder folder)
 
     @Override
     abstract Mono<Terminology> save(@Valid @NonNull Terminology terminology)

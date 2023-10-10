@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.persistence.terminology
 
+import uk.ac.ox.softeng.mauro.persistence.model.ModelItemRepository
+
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.model.query.builder.sql.Dialect
@@ -10,13 +12,18 @@ import reactor.core.publisher.Mono
 import uk.ac.ox.softeng.mauro.domain.terminology.Term
 
 @R2dbcRepository(dialect = Dialect.POSTGRES)
-abstract class TermRepository implements ReactorPageableRepository<Term, UUID> {
+abstract class TermRepository implements ReactorPageableRepository<Term, UUID>, ModelItemRepository<Term> {
 
     abstract Mono<Term> findByTerminologyIdAndId(UUID terminologyId, UUID id)
 
     abstract Mono<Boolean> existsByTerminologyIdAndId(UUID terminologyId, UUID id)
 
     abstract Mono<Long> deleteByTerminologyId(UUID terminologyId)
+
+    @Override
+    Mono<Long> deleteByOwnerId(UUID ownerId) {
+        deleteByTerminologyId(ownerId)
+    }
 
     @Query('''SELECT * FROM term
               WHERE term.terminology_id=:terminologyId
@@ -25,4 +32,14 @@ abstract class TermRepository implements ReactorPageableRepository<Term, UUID> {
               OR (:id IS NULL AND NOT EXISTS (SELECT * FROM term_relationship tr JOIN term_relationship_type trt ON tr.relationship_type_id=trt.id AND ((tr.target_term_id=term.id AND trt.parental_relationship) OR (tr.source_term_id=term.id AND trt.child_relationship)) AND tr.terminology_id=:terminologyId AND trt.terminology_id=:terminologyId))''')
     abstract Flux<Term> childTermsByParent(UUID terminologyId, @Nullable UUID id)
 
+
+    @Override
+    Boolean handles(Class clazz) {
+        clazz == Term
+    }
+
+    @Override
+    Boolean handles(String domainType) {
+        domainType.toLowerCase() in ['term', 'terms']
+    }
 }
