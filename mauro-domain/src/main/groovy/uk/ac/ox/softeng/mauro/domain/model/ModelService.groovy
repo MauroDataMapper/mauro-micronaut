@@ -6,13 +6,25 @@ import uk.ac.ox.softeng.mauro.domain.tree.TreeItem
 
 import java.time.OffsetDateTime
 
-abstract class ModelService<M extends Model, I extends ModelItem<M>> {
+abstract class ModelService<M extends Model> {
 
-    abstract List<TreeItem> buildTree(M fullTerminology, I root, Integer depth)
-    abstract List<TreeItem> buildTree(M fullTerminology, I root)
+//    abstract List<TreeItem> buildTree(M fullTerminology, I root, Integer depth)
+//    abstract List<TreeItem> buildTree(M fullTerminology, I root)
 
     abstract Boolean handles(Class clazz)
     abstract Boolean handles(String domainType)
+
+    M updateDerived(M model) {
+        updatePaths(model)
+        model
+    }
+
+    M updatePaths(M model) {
+        model.getAllContents().each {AdministeredItem item ->
+            item.updatePath()
+        }
+        model
+    }
 
     M finaliseModel(M model, ModelVersion requestedModelVersion, VersionChangeType versionChangeType, String versionTag) {
         model.finalised = true

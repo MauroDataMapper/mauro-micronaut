@@ -74,7 +74,7 @@ abstract class Model extends AdministeredItem {
     }
 
     /**
-     * For a model which has all its associations loaded, return a collection of all its child items.
+     * For a model which has all its associations loaded, return a collection of all its direct child items.
      * The collection should be in tree order, so that Paths can be updated in order through the items.
      */
     @Transient

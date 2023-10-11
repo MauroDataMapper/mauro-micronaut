@@ -73,6 +73,7 @@ class FolderController extends ModelController<Folder> {
     }
 
     // Todo: needs repository method 'updateWithContent'
+    // needs to recursively update all child folders
     @Transactional
     @Put('/{id}/folder/{destination}')
     Mono<Folder> moveFolder(UUID id, String destination) {

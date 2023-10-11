@@ -1,6 +1,8 @@
 package uk.ac.ox.softeng.mauro.controller.model
 
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
+import uk.ac.ox.softeng.mauro.domain.model.ModelService
+
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
@@ -16,21 +18,25 @@ import uk.ac.ox.softeng.mauro.persistence.model.ModelRepository
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @Slf4j
-abstract class ModelController<M extends Model> {
+abstract class ModelController<M extends Model> extends AdministeredItemController<M> {
 
-    /**
-     * Properties disallowed in a simple update request.
-     */
-    static List<String> getDisallowedProperties() {
-        ['id', 'version', 'dateCreated', 'lastUpdated', 'domainType', 'createdBy', 'path', /*'breadcrumbTree',*/ 'parent', /*'owner'*/] +
+    @Override
+    List<String> getDisallowedProperties() {
+        super.disallowedProperties +
         ['finalised', 'dateFinalised', 'readableByEveryone', 'readableByAuthenticatedUsers', 'modelType', 'deleted', 'folder', /*'authority',*/ 'branchName',
          'modelVersion', 'modelVersionTag']
+    }
+
+    @Override
+    List<String> getCascadeUpdateProperties() {
+        super.cascadeUpdateProperties +
+        ['finalised', 'branchName', 'modelVersion']
     }
 
     /**
      * Properties disallowed in a simple create request.
      */
-    static List<String> getDisallowedCreateProperties() {
+    List<String> getDisallowedCreateProperties() {
         disallowedProperties - ['readableByEveryone', 'readableByAuthenticatedUsers']
     }
 
@@ -38,12 +44,15 @@ abstract class ModelController<M extends Model> {
 
     FolderRepository folderRepository
 
+    ModelService<M> modelService
+
     Class<M> modelClass
 
-    ModelController(Class<M> modelClass, ModelRepository<M> modelRepository, FolderRepository folderRepository) {
+    ModelController(Class<M> modelClass, ModelRepository<M> modelRepository, FolderRepository folderRepository, ModelService<M> modelService) {
         this.modelClass = modelClass
         this.modelRepository = modelRepository
         this.folderRepository = folderRepository
+        this.modelService = modelService
     }
 
     Mono<M> show(UUID id) {
@@ -74,14 +83,49 @@ abstract class ModelController<M extends Model> {
                 throw new HttpStatusException(HttpStatus.BAD_REQUEST, 'Property [' + key + '] cannot be set directly')
             }
         }
+        model.properties.each {
+            if (it.value instanceof Collection || it.value instanceof Map) {
+                model[it.key] = null
+            }
+        }
 
-        modelRepository.readById(id).flatMap {M existing ->
-            existing.properties.each {
-                if (!disallowedProperties.contains(it.key) && model[it.key] != null) {
-                    existing[it.key] = model[it.key]
+        boolean cascadeUpdate = cascadeUpdateProperties.any {model[it] != null}
+        boolean doUpdate
+        if (cascadeUpdate) {
+            boolean doCascadeUpdate
+            modelRepository.findById(id).flatMap {M existing ->
+                existing.properties.each {
+                    if (!disallowedProperties.contains(it.key) && model[it.key] != null) {
+                        if (existing[it.key] != model[it.key]) {
+                            existing[it.key] = model[it.key]
+                            doUpdate = true
+                            if (cascadeUpdateProperties.contains(it.key)) doCascadeUpdate = true
+                        }
+                    }
+                }
+                if (doUpdate) {
+                    if (doCascadeUpdate) {
+                        modelService.updateDerived(existing)
+                        modelRepository.updateWithContent(existing)
+                    } else {
+                        modelRepository.update(existing)
+                    }
                 }
             }
-            modelRepository.update(existing)
+        } else {
+            modelRepository.readById(id).flatMap {M existing ->
+                existing.properties.each {
+                    if (!disallowedProperties.contains(it.key) && model[it.key] != null) {
+                        if (existing[it.key] != model[it.key]) {
+                            existing[it.key] = model[it.key]
+                            doUpdate = true
+                        }
+                    }
+                }
+                if (doUpdate) {
+                    modelRepository.update(existing)
+                }
+            }
         }
     }
 
@@ -112,4 +156,6 @@ abstract class ModelController<M extends Model> {
             ListResponse.from(it)
         }
     }
+
+
 }
