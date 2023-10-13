@@ -18,6 +18,8 @@ dependencies {
     implementation("io.micronaut.validation:micronaut-validation")
     implementation("io.micronaut:micronaut-jackson-databind")
 
+    testImplementation "io.micronaut.test:micronaut-test-spock"
+
 }
 
 java {
@@ -38,6 +40,9 @@ publishing {
     }
 }
 
+test {
+    useJUnitPlatform()
+}
 
 
 

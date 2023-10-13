@@ -1,6 +1,7 @@
 package uk.ac.ox.softeng.mauro.domain.terminology
 
 import com.fasterxml.jackson.annotation.JsonIgnore
+import groovy.transform.MapConstructor
 import io.micronaut.core.annotation.Introspected
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.annotation.Index
@@ -12,6 +13,7 @@ import uk.ac.ox.softeng.mauro.domain.model.ModelItem
 
 @Introspected
 @MappedEntity
+@MapConstructor(includeSuperFields = true, includeSuperProperties = true)
 @Indexes([@Index(columns = ['terminology_id', 'code'], unique = true)])
 class Term extends ModelItem<Terminology> {
 
@@ -61,4 +63,39 @@ class Term extends ModelItem<Terminology> {
     Terminology getParent() {
         terminology
     }
+
+    /****
+     * Methods for building a tree-like DSL
+     */
+
+
+    static Term build(Map args, @DelegatesTo(value = Term.class, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+        new Term(args).tap(closure)
+    }
+
+    static Term build(@DelegatesTo(value = Term.class, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+        build [:], closure
+    }
+
+    String code(String code) {
+        this.code = code
+    }
+
+    String definition(String definition) {
+        this.definition = definition
+    }
+
+    String url(String url) {
+        this.url = url
+    }
+
+    Boolean isParent(Boolean isParent) {
+        this.isParent = isParent
+    }
+
+    Integer depth(Integer depth) {
+        this.depth = depth
+    }
+
+
 }

@@ -2,6 +2,7 @@ package uk.ac.ox.softeng.mauro.domain.model.version
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import com.fasterxml.jackson.databind.util.StdConverter
+import groovy.transform.MapConstructor
 import io.micronaut.core.convert.ConversionContext
 import io.micronaut.data.annotation.TypeDef
 import io.micronaut.data.model.DataType
@@ -11,6 +12,7 @@ import java.util.regex.Matcher
 import java.util.regex.Pattern
 
 @JsonDeserialize(converter = ModelVersionConverter)
+@MapConstructor(includeSuperFields = true, includeSuperProperties = true)
 @TypeDef(type = DataType.STRING, converter = ModelVersionConverter)
 class ModelVersion implements Comparable<ModelVersion> {
     int major
@@ -98,4 +100,35 @@ class ModelVersion implements Comparable<ModelVersion> {
                          snapshot: m.group(7) ? true : false
         )
     }
+
+    static ModelVersion build(Map args, @DelegatesTo(value = ModelVersion.class, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+        new ModelVersion(args).tap(closure)
+    }
+
+    static ModelVersion build(@DelegatesTo(value = ModelVersion.class, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+        build [:], closure
+    }
+
+    int major(int major) {
+        this.major = major
+        return major
+    }
+
+    int minor(int minor) {
+        this.minor = minor
+        return minor
+    }
+
+    int patch(int patch) {
+        this.patch = patch
+        return patch
+    }
+
+    boolean snapshot(boolean snapshot) {
+        this.snapshot = snapshot
+        return snapshot
+    }
+
+
+
 }

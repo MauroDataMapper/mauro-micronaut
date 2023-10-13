@@ -2,6 +2,7 @@ package uk.ac.ox.softeng.mauro.domain.model
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import groovy.transform.CompileStatic
+import groovy.transform.MapConstructor
 import io.micronaut.core.annotation.Introspected
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.annotation.DateCreated
@@ -66,4 +67,46 @@ abstract class AdministeredItem {
     Model getOwner() {
         parent.owner
     }
+
+    UUID id(UUID id) {
+        this.id = id
+    }
+
+    UUID id(String id) {
+        this.id = UUID.fromString(id)
+    }
+
+
+    String label(String label) {
+        this.label = label
+    }
+
+    OffsetDateTime dateCreated(OffsetDateTime dateCreated) {
+        this.dateCreated = dateCreated
+    }
+
+    OffsetDateTime dateCreated(String dateCreated) {
+        this.dateCreated = OffsetDateTime.parse(dateCreated)
+    }
+
+    OffsetDateTime lastUpdated(OffsetDateTime lastUpdated) {
+        this.lastUpdated = lastUpdated
+    }
+
+    OffsetDateTime lastUpdated(String lastUpdated) {
+        this.lastUpdated = OffsetDateTime.parse(lastUpdated)
+    }
+
+    String description(String description) {
+        this.description = description
+    }
+
+    String aliasesString(String aliasesString) {
+        this.aliasesString = aliasesString
+    }
+
+    String createdBy(String createdBy) {
+        this.createdBy = createdBy
+    }
+
 }
