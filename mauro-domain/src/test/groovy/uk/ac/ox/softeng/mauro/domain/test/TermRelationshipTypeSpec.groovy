@@ -1,11 +1,14 @@
 package uk.ac.ox.softeng.mauro.domain.test
 
+import groovy.transform.CompileStatic
 import spock.lang.Specification
-import uk.ac.ox.softeng.mauro.domain.terminology.Term
 import uk.ac.ox.softeng.mauro.domain.terminology.TermRelationshipType
 
-class TermRelationshipTypeSpec extends Specification{
-
+/**
+ * TermRelationshipTypeSpec is a class for testing functionality relating to the TermRelationshipType class
+ * @see TermRelationshipType
+ */
+class TermRelationshipTypeSpec extends Specification {
 
     def "Test the DSL for creating objects"() {
 

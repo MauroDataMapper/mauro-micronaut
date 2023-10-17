@@ -1,11 +1,15 @@
 package uk.ac.ox.softeng.mauro.domain.test
 
+import groovy.transform.CompileStatic
 import spock.lang.Specification
 import uk.ac.ox.softeng.mauro.domain.terminology.Term
 import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
 
+/**
+ * TerminologySpec is a class for testing functionality relating to the Terminology class
+ * @see Terminology
+ */
 class TerminologySpec extends Specification {
-
 
     def "Test the DSL for creating objects"() {
 
@@ -54,6 +58,5 @@ class TerminologySpec extends Specification {
             ["B15.0", "B15.9"].contains(termRelationship.targetTerm.code)
         }
     }
-
 
 }

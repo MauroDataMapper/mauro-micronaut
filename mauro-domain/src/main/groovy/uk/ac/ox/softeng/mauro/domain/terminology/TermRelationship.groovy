@@ -1,4 +1,3 @@
-
 package uk.ac.ox.softeng.mauro.domain.terminology
 
 import com.fasterxml.jackson.annotation.JsonIgnore
@@ -11,11 +10,21 @@ import io.micronaut.data.annotation.MappedEntity
 import jakarta.persistence.Transient
 import uk.ac.ox.softeng.mauro.domain.model.ModelItem
 
+/**
+ * A TermRelationship defines a relation of a given type between two terms within a terminology.
+ * <p>
+ * A relationship belongs to a Terminology and defines a relation between two terms within that same terminology.
+ * The type of the relationship is also defined within the same context - many relationships can exist of the same type.
+ */
 @CompileStatic
 @Introspected
 @MappedEntity
 @MapConstructor(includeSuperFields = true, includeSuperProperties = true)
-@Indexes([@Index(columns = ['terminology_id']), @Index(columns = ['source_term_id']), @Index(columns = ['target_term_id']), @Index(columns = ['relationship_type_id'])])
+@Indexes([
+        @Index(columns = ['terminology_id']),
+        @Index(columns = ['source_term_id']),
+        @Index(columns = ['target_term_id']),
+        @Index(columns = ['relationship_type_id'])])
 class TermRelationship extends ModelItem<Terminology> {
 
     @Transient
@@ -37,21 +46,23 @@ class TermRelationship extends ModelItem<Terminology> {
         terminology
     }
 
-    static TermRelationship build(Map args, @DelegatesTo(value = TermRelationship.class, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+    static TermRelationship build(
+            Map args,
+            @DelegatesTo(value = TermRelationship, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
         new TermRelationship(args).tap(closure)
     }
 
-    static TermRelationship build(@DelegatesTo(value = TermRelationship.class, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+    static TermRelationship build(
+            @DelegatesTo(value = TermRelationship, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
         build [:], closure
     }
-
 
     Term sourceTerm(Term sourceTerm) {
         this.sourceTerm = sourceTerm
     }
 
     Term sourceTerm(String sourceTermCode) {
-        this.sourceTerm = terminology.terms.find {it.code == sourceTermCode}
+        this.sourceTerm = terminology.terms.find { it.code == sourceTermCode }
     }
 
     Term targetTerm(Term targetTerm) {
@@ -59,7 +70,7 @@ class TermRelationship extends ModelItem<Terminology> {
     }
 
     Term targetTerm(String targetTermCode) {
-        this.targetTerm = terminology.terms.find {it.code == targetTermCode}
+        this.targetTerm = terminology.terms.find { it.code == targetTermCode }
     }
 
     TermRelationshipType relationshipType(TermRelationshipType relationshipType) {
@@ -67,9 +78,8 @@ class TermRelationship extends ModelItem<Terminology> {
     }
 
     TermRelationshipType relationshipType(String relationshipTypeLabel) {
-        this.relationshipType = terminology.termRelationshipTypes.find {it.label == relationshipTypeLabel}
+        this.relationshipType = terminology.termRelationshipTypes.
+                find { it.label == relationshipTypeLabel }
     }
-
-
 
 }

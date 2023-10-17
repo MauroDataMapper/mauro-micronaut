@@ -1,4 +1,3 @@
-
 package uk.ac.ox.softeng.mauro.domain.terminology
 
 import com.fasterxml.jackson.annotation.JsonIgnore
@@ -11,6 +10,14 @@ import io.micronaut.data.annotation.MappedEntity
 import jakarta.persistence.Transient
 import uk.ac.ox.softeng.mauro.domain.model.ModelItem
 
+/**
+ * A TermRelationshipType defines a kind of relationship between terms with a terminology.
+ * <p>
+ * The TermRelationshipType is identified by its label, and so labels must be distinct within a Terminology.
+ * A relationship type may be flagged as conforming to the notion of 'is broader than' (parentalRelationship),
+ * or 'is narrower than' (childRelationship), which may assist with reasoning, and helps the interface to present
+ * a tree of terms.
+ */
 @CompileStatic
 @Introspected
 @MappedEntity
@@ -43,14 +50,15 @@ class TermRelationshipType extends ModelItem<Terminology> {
         this.childRelationship = childRelationship
     }
 
-    static TermRelationshipType build(Map args, @DelegatesTo(value = TermRelationshipType.class, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+    static TermRelationshipType build(
+            Map args,
+            @DelegatesTo(value = TermRelationshipType, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
         new TermRelationshipType(args).tap(closure)
     }
 
-    static TermRelationshipType build(@DelegatesTo(value = TermRelationshipType.class, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+    static TermRelationshipType build(
+            @DelegatesTo(value = TermRelationshipType, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
         build [:], closure
     }
-
-
 
 }

@@ -1,10 +1,14 @@
 package uk.ac.ox.softeng.mauro.domain.test
 
+import groovy.transform.CompileStatic
 import spock.lang.Specification
 import uk.ac.ox.softeng.mauro.domain.terminology.Term
 
-class TermSpec extends Specification{
-
+/**
+ * TermSpec is a class for testing functionality relating to the Term class
+ * @see Term
+ */
+class TermSpec extends Specification {
 
     def "Test the DSL for creating objects"() {
 
@@ -28,5 +32,4 @@ class TermSpec extends Specification{
         term2.definition == term3.definition
 
     }
-
 }

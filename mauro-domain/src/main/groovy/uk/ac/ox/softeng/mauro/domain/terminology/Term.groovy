@@ -1,6 +1,7 @@
 package uk.ac.ox.softeng.mauro.domain.terminology
 
 import com.fasterxml.jackson.annotation.JsonIgnore
+import groovy.transform.CompileStatic
 import groovy.transform.MapConstructor
 import io.micronaut.core.annotation.Introspected
 import io.micronaut.core.annotation.Nullable
@@ -11,6 +12,15 @@ import io.micronaut.data.annotation.Relation
 import jakarta.persistence.Transient
 import uk.ac.ox.softeng.mauro.domain.model.ModelItem
 
+/**
+ * A term describes a value with a code and a meaning, within the context of a terminology.
+ * <p>
+ * Relationships may be defined between terms, and they may be re-used as part of a codeset - a collection of terms
+ * taken from one or more terminologies.
+ *
+ * @see Terminology
+ */
+@CompileStatic
 @Introspected
 @MappedEntity
 @MapConstructor(includeSuperFields = true, includeSuperProperties = true)
@@ -68,12 +78,13 @@ class Term extends ModelItem<Terminology> {
      * Methods for building a tree-like DSL
      */
 
-
-    static Term build(Map args, @DelegatesTo(value = Term.class, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+    static Term build(
+            Map args,
+            @DelegatesTo(value = Term, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
         new Term(args).tap(closure)
     }
 
-    static Term build(@DelegatesTo(value = Term.class, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+    static Term build(@DelegatesTo(value = Term, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
         build [:], closure
     }
 
@@ -96,6 +107,5 @@ class Term extends ModelItem<Terminology> {
     Integer depth(Integer depth) {
         this.depth = depth
     }
-
 
 }

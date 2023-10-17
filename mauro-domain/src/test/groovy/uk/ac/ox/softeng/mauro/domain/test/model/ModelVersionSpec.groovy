@@ -1,11 +1,15 @@
 package uk.ac.ox.softeng.mauro.domain.test.model
 
+import groovy.transform.CompileStatic
 import spock.lang.Specification
 import uk.ac.ox.softeng.mauro.domain.model.version.ModelVersion
 import uk.ac.ox.softeng.mauro.domain.model.version.VersionChangeType
 
+/**
+ * ModelVersionSpec is a class for testing functionality relating to the ModelVersion class
+ * @see ModelVersion
+ */
 class ModelVersionSpec extends Specification {
-
 
     def "Test the DSL for creating objects"() {
 
@@ -54,6 +58,4 @@ class ModelVersionSpec extends Specification {
         modelVersion1.nextVersion(VersionChangeType.PATCH).toString() == "1.2.4"
 
     }
-
-
 }
