@@ -6,9 +6,17 @@ import io.micronaut.context.annotation.Prototype
 import io.micronaut.core.convert.ConversionContext
 import io.micronaut.data.model.runtime.convert.AttributeConverter
 
+/**
+ * A ModelVersionConverter is a utility for converting ModelVersions to and from Strings, for the JSON conversion
+ * using Jackson.
+ *
+ * @see ModelVersion
+ */
 @CompileStatic
 @Prototype
-class ModelVersionConverter extends StdConverter<String, ModelVersion> implements AttributeConverter<ModelVersion, String> {
+class ModelVersionConverter extends StdConverter<String, ModelVersion>
+        implements AttributeConverter<ModelVersion, String> {
+
     @Override
     ModelVersion convert(String value) {
         ModelVersion.from(value)
