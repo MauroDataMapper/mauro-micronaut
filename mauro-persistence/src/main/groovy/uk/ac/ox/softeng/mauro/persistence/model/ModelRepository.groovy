@@ -15,9 +15,6 @@ import uk.ac.ox.softeng.mauro.domain.model.Model
 
 trait ModelRepository<M extends Model> implements ReactorPageableRepository<M, UUID>, AdministeredItemRepository<M> {
 
-    @Inject
-    List<AdministeredItemRepository> administeredItemRepositories
-
     Mono<M> findById(UUID id) {
         throw new UnsupportedOperationException('Method should be overridden with appropriate joins defined')
     }
@@ -34,21 +31,5 @@ trait ModelRepository<M extends Model> implements ReactorPageableRepository<M, U
 
     Mono<M> update(@Valid @NonNull M model) {
         throw new UnsupportedOperationException('Method should be overridden with @Valid and @NonNull added')
-    }
-
-    @Transactional
-    Mono<M> updateWithContent(@Valid @NonNull M model) {
-        Collection<AdministeredItem> contents = model.getAllContents()
-        contents.each {
-            if (it.id != model.id) throw new MauroInternalException('Content must belong to model being updated')
-        }
-        Mono.zip(update(model), Mono.zip(contents.collect {getRepository(it).update(it)}, {})).map {it.getT1()}
-    }
-
-    abstract Mono<Boolean> deleteWithContent(@NonNull M model)
-
-    @NonNull
-    AdministeredItemRepository getRepository(AdministeredItem item) {
-        administeredItemRepositories.find {it.handles(item.class)}
     }
 }

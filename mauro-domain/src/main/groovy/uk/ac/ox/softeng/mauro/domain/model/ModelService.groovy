@@ -8,9 +8,6 @@ import java.time.OffsetDateTime
 
 abstract class ModelService<M extends Model> {
 
-//    abstract List<TreeItem> buildTree(M fullTerminology, I root, Integer depth)
-//    abstract List<TreeItem> buildTree(M fullTerminology, I root)
-
     abstract Boolean handles(Class clazz)
     abstract Boolean handles(String domainType)
 
@@ -20,6 +17,7 @@ abstract class ModelService<M extends Model> {
     }
 
     M updatePaths(M model) {
+        model.updatePath()
         model.getAllContents().each {AdministeredItem item ->
             item.updatePath()
         }

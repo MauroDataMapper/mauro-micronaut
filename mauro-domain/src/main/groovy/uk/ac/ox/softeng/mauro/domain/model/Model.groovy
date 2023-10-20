@@ -41,7 +41,7 @@ abstract class Model extends AdministeredItem {
     Folder folder
 
     @Nullable
-    UUID authorityId // -> Authority
+    UUID authority // -> Authority
 
     @Nullable
     String branchName = 'main'
@@ -55,7 +55,7 @@ abstract class Model extends AdministeredItem {
     @Override
     @Transient
     @JsonIgnore
-    AdministeredItem getParent() {
+    Model getParent() {
         null
     }
 
@@ -75,7 +75,7 @@ abstract class Model extends AdministeredItem {
 
     /**
      * For a model which has all its associations loaded, return a collection of all its direct child items.
-     * The collection should be in tree order, so that Paths can be updated in order through the items.
+     * The collection does not have to be in any particular order.
      */
     @Transient
     @JsonIgnore

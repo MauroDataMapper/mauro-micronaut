@@ -2,7 +2,9 @@ package uk.ac.ox.softeng.mauro.controller.folder
 
 import uk.ac.ox.softeng.mauro.controller.model.ModelController
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
+import uk.ac.ox.softeng.mauro.domain.folder.FolderService
 import uk.ac.ox.softeng.mauro.persistence.folder.FolderRepository
+import uk.ac.ox.softeng.mauro.persistence.model.ModelContentRepository
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 import groovy.util.logging.Slf4j
@@ -27,8 +29,8 @@ class FolderController extends ModelController<Folder> {
 
     FolderRepository folderRepository
 
-    FolderController(FolderRepository folderRepository) {
-        super(Folder, folderRepository, folderRepository)
+    FolderController(FolderRepository folderRepository, ModelContentRepository<Folder> folderContentRepository, FolderService folderService) {
+        super(Folder, folderRepository, folderContentRepository, folderRepository, folderService)
         this.folderRepository = folderRepository
     }
 
@@ -46,7 +48,7 @@ class FolderController extends ModelController<Folder> {
     Mono<Folder> createRoot(@Body Folder folder) {
         Folder defaultFolder = modelClass.getDeclaredConstructor().newInstance()
         disallowedCreateProperties.each {String key ->
-            if (folder[key] != defaultFolder[key]) {
+            if (defaultFolder.hasProperty(key).properties.setter && folder[key] != defaultFolder[key]) {
                 throw new HttpStatusException(HttpStatus.BAD_REQUEST, 'Property [' + key + '] cannot be set directly')
             }
         }

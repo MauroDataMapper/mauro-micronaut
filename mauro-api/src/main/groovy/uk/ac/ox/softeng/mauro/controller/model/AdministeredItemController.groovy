@@ -9,7 +9,7 @@ abstract class AdministeredItemController<I extends AdministeredItem> {
      * Properties disallowed in a simple update request.
      */
     List<String> getDisallowedProperties() {
-        ['id', 'version', 'dateCreated', 'lastUpdated', 'domainType', 'createdBy', 'path', /*'breadcrumbTree',*/ 'parent', /*'owner'*/]
+        ['id', 'version', 'dateCreated', 'lastUpdated', 'domainType', 'createdBy', 'path', /*'breadcrumbTree',*/ 'parent', 'owner']
     }
 
     /**

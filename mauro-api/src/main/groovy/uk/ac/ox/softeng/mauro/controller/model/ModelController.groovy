@@ -2,6 +2,7 @@ package uk.ac.ox.softeng.mauro.controller.model
 
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.domain.model.ModelService
+import uk.ac.ox.softeng.mauro.persistence.model.ModelContentRepository
 
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
@@ -11,19 +12,25 @@ import io.micronaut.http.annotation.Body
 import io.micronaut.http.exceptions.HttpStatusException
 import io.micronaut.transaction.annotation.Transactional
 import jakarta.validation.Valid
+import org.slf4j.LoggerFactory
 import reactor.core.publisher.Mono
 import uk.ac.ox.softeng.mauro.domain.model.Model
 import uk.ac.ox.softeng.mauro.persistence.folder.FolderRepository
 import uk.ac.ox.softeng.mauro.persistence.model.ModelRepository
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
+import reactor.util.Logger
+import reactor.util.Loggers
+
 @Slf4j
 abstract class ModelController<M extends Model> extends AdministeredItemController<M> {
+
+//    static Logger log = Loggers.getLogger(this.class)
 
     @Override
     List<String> getDisallowedProperties() {
         super.disallowedProperties +
-        ['finalised', 'dateFinalised', 'readableByEveryone', 'readableByAuthenticatedUsers', 'modelType', 'deleted', 'folder', /*'authority',*/ 'branchName',
+        ['finalised', 'dateFinalised', 'readableByEveryone', 'readableByAuthenticatedUsers', 'modelType', 'deleted', 'folder', 'authority', 'branchName',
          'modelVersion', 'modelVersionTag']
     }
 
@@ -40,17 +47,20 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         disallowedProperties - ['readableByEveryone', 'readableByAuthenticatedUsers']
     }
 
+    Class<M> modelClass
+
     ModelRepository<M> modelRepository
+
+    ModelContentRepository<M> modelContentRepository
 
     FolderRepository folderRepository
 
     ModelService<M> modelService
 
-    Class<M> modelClass
-
-    ModelController(Class<M> modelClass, ModelRepository<M> modelRepository, FolderRepository folderRepository, ModelService<M> modelService) {
+    ModelController(Class<M> modelClass, ModelRepository<M> modelRepository, ModelContentRepository<M> modelContentRepository, FolderRepository folderRepository, ModelService<M> modelService) {
         this.modelClass = modelClass
         this.modelRepository = modelRepository
+        this.modelContentRepository = modelContentRepository
         this.folderRepository = folderRepository
         this.modelService = modelService
     }
@@ -63,7 +73,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     Mono<M> create(UUID folderId, @Body @NonNull M model) {
         M defaultModel = modelClass.getDeclaredConstructor().newInstance()
         disallowedCreateProperties.each {String key ->
-            if (model[key] != defaultModel[key]) {
+            if (defaultModel.hasProperty(key).properties.setter && model[key] != defaultModel[key]) {
                 throw new HttpStatusException(HttpStatus.BAD_REQUEST, 'Property [' + key + '] cannot be set directly')
             }
         }
@@ -79,23 +89,25 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     Mono<M> update(UUID id, @Body @NonNull M model) {
         M defaultModel = modelClass.getDeclaredConstructor().newInstance()
         disallowedProperties.each {String key ->
-            if (model[key] != defaultModel[key]) {
+            if (defaultModel.hasProperty(key).properties.setter && model[key] != defaultModel[key]) {
                 throw new HttpStatusException(HttpStatus.BAD_REQUEST, 'Property [' + key + '] cannot be set directly')
             }
         }
         model.properties.each {
-            if (it.value instanceof Collection || it.value instanceof Map) {
+            if (defaultModel.hasProperty(it.key).properties.setter && (it.value instanceof Collection || it.value instanceof Map)) {
                 model[it.key] = null
             }
         }
 
         boolean cascadeUpdate = cascadeUpdateProperties.any {model[it] != null}
         boolean doUpdate
+        log.debug "ModelController::update cascadeUpdate=$cascadeUpdate, doUpdate=$doUpdate"
+        def log = log // https://github.com/micronaut-projects/micronaut-core/issues/4933
         if (cascadeUpdate) {
             boolean doCascadeUpdate
             modelRepository.findById(id).flatMap {M existing ->
                 existing.properties.each {
-                    if (!disallowedProperties.contains(it.key) && model[it.key] != null) {
+                    if (!disallowedProperties.contains(it.key) && model[it.key] != null && defaultModel.hasProperty(it.key).properties.setter) {
                         if (existing[it.key] != model[it.key]) {
                             existing[it.key] = model[it.key]
                             doUpdate = true
@@ -105,17 +117,19 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
                 }
                 if (doUpdate) {
                     if (doCascadeUpdate) {
+                        log.debug 'ModelController - do cascade update'
                         modelService.updateDerived(existing)
-                        modelRepository.updateWithContent(existing)
+                        return modelContentRepository.updateWithContent(existing)
                     } else {
-                        modelRepository.update(existing)
+                        log.debug 'ModelController - do update (no cascade changes)'
+                        return modelRepository.update(existing)
                     }
                 }
             }
         } else {
             modelRepository.readById(id).flatMap {M existing ->
                 existing.properties.each {
-                    if (!disallowedProperties.contains(it.key) && model[it.key] != null) {
+                    if (!disallowedProperties.contains(it.key) && model[it.key] != null && defaultModel.hasProperty(it.key).properties.setter) {
                         if (existing[it.key] != model[it.key]) {
                             existing[it.key] = model[it.key]
                             doUpdate = true
@@ -123,7 +137,8 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
                     }
                 }
                 if (doUpdate) {
-                    modelRepository.update(existing)
+                    log.debug 'ModelController - do update (no cascade)'
+                    return modelRepository.update(existing)
                 }
             }
         }
@@ -134,7 +149,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         M deleteModel = modelClass.getDeclaredConstructor().newInstance()
         deleteModel.id = id
         deleteModel.version = model?.version
-        modelRepository.deleteWithContent(deleteModel).map {Boolean deleted ->
+        modelContentRepository.deleteWithContent(deleteModel).map {Boolean deleted ->
             if (deleted) {
                 HttpStatus.NO_CONTENT
             } else {

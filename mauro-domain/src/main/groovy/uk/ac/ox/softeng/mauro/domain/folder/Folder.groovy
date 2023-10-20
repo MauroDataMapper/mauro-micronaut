@@ -60,7 +60,7 @@ class Folder extends Model {
     }
 
     @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'parentFolder')
-    List<Folder> childFolders
+    List<Folder> childFolders = []
 
     @Override
     @Transient
@@ -94,6 +94,7 @@ class Folder extends Model {
     @Transient
     @JsonIgnore
     Collection<AdministeredItem> getAllContents() {
+        childFolders?.each {it.parentFolder = this}
         childFolders as Collection<AdministeredItem>
     }
 }

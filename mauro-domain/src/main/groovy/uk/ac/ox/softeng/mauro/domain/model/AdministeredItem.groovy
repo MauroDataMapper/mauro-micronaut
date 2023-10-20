@@ -94,16 +94,19 @@ abstract class AdministeredItem {
      * Recalculate this item's Path from its parent.
      */
     Path updatePath() {
-        if (!pathPrefix) throw new MauroInternalException('Class [' + this.class.simpleName + '] is not Pathable')
-        if (parent) {
-            Path parentPath = parent.path
-            if (!parentPath) throw new MauroInternalException('Parent does not have Path or it is not loaded')
-            path = parentPath.join(new Path.PathNode(prefix: pathPrefix, identifier: pathIdentifier, modelIdentifier: pathModelIdentifier))
-            return path
-        } else {
-            path = new Path()
-            path.nodes = [new Path.PathNode(prefix: pathPrefix, identifier: pathIdentifier, modelIdentifier: pathModelIdentifier)]
-            return path
+        if (!pathPrefix) throw new MauroInternalException("Class [${this.class.simpleName}] is not Pathable")
+        final int pathLimit = 256
+        List<Path.PathNode> pathNodes = []
+        int i = 0
+        AdministeredItem node = this
+        while (node && i < pathLimit) {
+            pathNodes.add(0, new Path.PathNode(prefix: node.pathPrefix, identifier: node.pathIdentifier, modelIdentifier: node.pathModelIdentifier))
+            i++; node = node.parent
+            if (i >= pathLimit) throw new MauroInternalException("Path exceeded maximum depth of [$pathLimit]")
         }
+
+        path = new Path()
+        path.nodes = pathNodes
+        path
     }
 }

@@ -6,7 +6,7 @@ import uk.ac.ox.softeng.mauro.domain.tree.TreeItem
 import jakarta.inject.Singleton
 
 @Singleton
-class TerminologyService extends ModelService<Terminology, Term> {
+class TerminologyService extends ModelService<Terminology> {
 
     Boolean handles(Class clazz) {
         clazz == Terminology
