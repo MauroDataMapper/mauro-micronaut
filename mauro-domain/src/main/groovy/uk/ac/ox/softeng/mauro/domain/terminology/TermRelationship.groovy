@@ -1,6 +1,8 @@
 
 package uk.ac.ox.softeng.mauro.domain.terminology
 
+import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
+
 import com.fasterxml.jackson.annotation.JsonIgnore
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.Introspected
@@ -33,6 +35,13 @@ class TermRelationship extends ModelItem<Terminology> {
     @JsonIgnore
     Terminology getParent() {
         terminology
+    }
+
+    @Override
+    @Transient
+    @JsonIgnore
+    void setParent(AdministeredItem terminology) {
+        this.terminology = (Terminology) terminology
     }
 
     @Override

@@ -25,8 +25,6 @@ import reactor.util.Loggers
 @Slf4j
 abstract class ModelController<M extends Model> extends AdministeredItemController<M> {
 
-//    static Logger log = Loggers.getLogger(this.class)
-
     @Override
     List<String> getDisallowedProperties() {
         super.disallowedProperties +
@@ -99,47 +97,20 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
             }
         }
 
-        boolean cascadeUpdate = cascadeUpdateProperties.any {model[it] != null}
         boolean doUpdate
-        log.debug "ModelController::update cascadeUpdate=$cascadeUpdate, doUpdate=$doUpdate"
         def log = log // https://github.com/micronaut-projects/micronaut-core/issues/4933
-        if (cascadeUpdate) {
-            boolean doCascadeUpdate
-            modelRepository.findById(id).flatMap {M existing ->
-                existing.properties.each {
-                    if (!disallowedProperties.contains(it.key) && model[it.key] != null && defaultModel.hasProperty(it.key).properties.setter) {
-                        if (existing[it.key] != model[it.key]) {
-                            existing[it.key] = model[it.key]
-                            doUpdate = true
-                            if (cascadeUpdateProperties.contains(it.key)) doCascadeUpdate = true
-                        }
-                    }
-                }
-                if (doUpdate) {
-                    if (doCascadeUpdate) {
-                        log.debug 'ModelController - do cascade update'
-                        modelService.updateDerived(existing)
-                        return modelContentRepository.updateWithContent(existing)
-                    } else {
-                        log.debug 'ModelController - do update (no cascade changes)'
-                        return modelRepository.update(existing)
+        modelRepository.readById(id).flatMap {M existing ->
+            existing.properties.each {
+                if (!disallowedProperties.contains(it.key) && model[it.key] != null && defaultModel.hasProperty(it.key).properties.setter) {
+                    if (existing[it.key] != model[it.key]) {
+                        existing[it.key] = model[it.key]
+                        doUpdate = true
                     }
                 }
             }
-        } else {
-            modelRepository.readById(id).flatMap {M existing ->
-                existing.properties.each {
-                    if (!disallowedProperties.contains(it.key) && model[it.key] != null && defaultModel.hasProperty(it.key).properties.setter) {
-                        if (existing[it.key] != model[it.key]) {
-                            existing[it.key] = model[it.key]
-                            doUpdate = true
-                        }
-                    }
-                }
-                if (doUpdate) {
-                    log.debug 'ModelController - do update (no cascade)'
-                    return modelRepository.update(existing)
-                }
+            if (doUpdate) {
+                log.debug 'ModelController - do update (no cascade)'
+                modelRepository.update(existing)
             }
         }
     }

@@ -69,6 +69,13 @@ class Term extends ModelItem<Terminology> {
     @Override
     @Transient
     @JsonIgnore
+    void setParent(AdministeredItem terminology) {
+        this.terminology = (Terminology) terminology
+    }
+
+    @Override
+    @Transient
+    @JsonIgnore
     String getPathPrefix() {
         'tm'
     }

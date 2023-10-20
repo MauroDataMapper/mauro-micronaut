@@ -37,6 +37,9 @@ class Terminology extends Model {
     @JsonIgnore
     Collection<AdministeredItem> getAllContents() {
         List<AdministeredItem> items = []
+        terms?.each {it.terminology = this}
+        termRelationshipTypes?.each {it.terminology = this}
+        termRelationships?.each {it.terminology = this}
         items.addAll(terms)
         items.addAll(termRelationshipTypes)
         items.addAll(termRelationships.findAll {terms.id.contains(it.id)})

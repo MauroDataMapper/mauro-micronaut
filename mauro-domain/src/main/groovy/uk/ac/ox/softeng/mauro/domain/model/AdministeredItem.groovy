@@ -57,6 +57,7 @@ abstract class AdministeredItem {
     String createdBy
 
     @TypeDef(type = DataType.STRING, converter = Path.PathConverter)
+    @Transient
     Path path // should be Path type
 
     @Nullable
@@ -65,6 +66,10 @@ abstract class AdministeredItem {
     @Transient
     @JsonIgnore
     abstract AdministeredItem getParent()
+
+    @Transient
+    @JsonIgnore
+    abstract void setParent(AdministeredItem parent)
 
     @Transient
     @JsonIgnore

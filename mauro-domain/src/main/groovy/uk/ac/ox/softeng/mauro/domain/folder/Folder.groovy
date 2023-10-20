@@ -72,6 +72,13 @@ class Folder extends Model {
     @Override
     @Transient
     @JsonIgnore
+    void setParent(AdministeredItem folder) {
+        parentFolder = (Folder) folder
+    }
+
+    @Override
+    @Transient
+    @JsonIgnore
     Folder getOwner() {
         parentFolder ? parentFolder.owner : this
     }
