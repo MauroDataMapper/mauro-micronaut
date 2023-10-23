@@ -1,8 +1,12 @@
 package uk.ac.ox.softeng.mauro.controller.model
 
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
-import uk.ac.ox.softeng.mauro.domain.model.ModelService
+import uk.ac.ox.softeng.mauro.domain.model.Model
+import uk.ac.ox.softeng.mauro.persistence.folder.FolderRepository
+import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemRepository
 import uk.ac.ox.softeng.mauro.persistence.model.ModelContentRepository
+import uk.ac.ox.softeng.mauro.persistence.model.ModelRepository
+import uk.ac.ox.softeng.mauro.web.ListResponse
 
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
@@ -11,16 +15,9 @@ import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.exceptions.HttpStatusException
 import io.micronaut.transaction.annotation.Transactional
-import jakarta.validation.Valid
-import org.slf4j.LoggerFactory
 import reactor.core.publisher.Mono
-import uk.ac.ox.softeng.mauro.domain.model.Model
-import uk.ac.ox.softeng.mauro.persistence.folder.FolderRepository
-import uk.ac.ox.softeng.mauro.persistence.model.ModelRepository
-import uk.ac.ox.softeng.mauro.web.ListResponse
 
-import reactor.util.Logger
-import reactor.util.Loggers
+import java.util.function.BiFunction
 
 @Slf4j
 abstract class ModelController<M extends Model> extends AdministeredItemController<M> {
@@ -38,110 +35,77 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         ['finalised', 'branchName', 'modelVersion']
     }
 
-    /**
-     * Properties disallowed in a simple create request.
-     */
+    @Override
     List<String> getDisallowedCreateProperties() {
         disallowedProperties - ['readableByEveryone', 'readableByAuthenticatedUsers']
     }
 
-    Class<M> modelClass
-
-    ModelRepository<M> modelRepository
-
-    ModelContentRepository<M> modelContentRepository
-
-    FolderRepository folderRepository
-
-    ModelService<M> modelService
-
-    ModelController(Class<M> modelClass, ModelRepository<M> modelRepository, ModelContentRepository<M> modelContentRepository, FolderRepository folderRepository, ModelService<M> modelService) {
-        this.modelClass = modelClass
-        this.modelRepository = modelRepository
-        this.modelContentRepository = modelContentRepository
-        this.folderRepository = folderRepository
-        this.modelService = modelService
+    ModelController(Class<M> modelClass, ModelRepository<M> modelRepository, FolderRepository folderRepository, ModelContentRepository<M> modelContentRepository) {
+        super(modelClass, modelRepository, (AdministeredItemRepository<M>) folderRepository, modelContentRepository)
+        this.itemClass = modelClass
+        this.administeredItemRepository = modelRepository
+        this.parentItemRepository = folderRepository
+        this.administeredItemContentRepository = modelContentRepository
     }
 
     Mono<M> show(UUID id) {
-        modelRepository.findById(id)
-    }
-
-    @Transactional
-    Mono<M> create(UUID folderId, @Body @NonNull M model) {
-        M defaultModel = modelClass.getDeclaredConstructor().newInstance()
-        disallowedCreateProperties.each {String key ->
-            if (defaultModel.hasProperty(key).properties.setter && model[key] != defaultModel[key]) {
-                throw new HttpStatusException(HttpStatus.BAD_REQUEST, 'Property [' + key + '] cannot be set directly')
+        modelRepository.findById(id).flatMap {M model ->
+            pathRepository.readParentItems(model).map {
+                model.updatePath()
+                model
             }
-        }
-
-        folderRepository.readById(folderId).flatMap {Folder folder ->
-            model.folder = folder
-            model.createdBy = 'USER'
-            model.updatePath()
-            modelRepository.save(model)
         }
     }
 
     Mono<M> update(UUID id, @Body @NonNull M model) {
-        M defaultModel = modelClass.getDeclaredConstructor().newInstance()
-        disallowedProperties.each {String key ->
-            if (defaultModel.hasProperty(key).properties.setter && model[key] != defaultModel[key]) {
-                throw new HttpStatusException(HttpStatus.BAD_REQUEST, 'Property [' + key + '] cannot be set directly')
-            }
-        }
-        model.properties.each {
-            if (defaultModel.hasProperty(it.key).properties.setter && (it.value instanceof Collection || it.value instanceof Map)) {
-                model[it.key] = null
-            }
-        }
-
-        boolean doUpdate
-        def log = log // https://github.com/micronaut-projects/micronaut-core/issues/4933
-        modelRepository.readById(id).flatMap {M existing ->
-            existing.properties.each {
-                if (!disallowedProperties.contains(it.key) && model[it.key] != null && defaultModel.hasProperty(it.key).properties.setter) {
-                    if (existing[it.key] != model[it.key]) {
-                        existing[it.key] = model[it.key]
-                        doUpdate = true
-                    }
-                }
-            }
-            if (doUpdate) {
-                log.debug 'ModelController - do update (no cascade)'
-                modelRepository.update(existing)
-            }
-        }
+        update(null, id, model)
     }
 
     @Transactional
-    Mono<HttpStatus> delete(UUID id, @Body @Nullable M model) {
-        M deleteModel = modelClass.getDeclaredConstructor().newInstance()
-        deleteModel.id = id
-        deleteModel.version = model?.version
-        modelContentRepository.deleteWithContent(deleteModel).map {Boolean deleted ->
-            if (deleted) {
-                HttpStatus.NO_CONTENT
+    Mono<M> moveFolder(UUID id, String destination) {
+        modelRepository.readById(id).flatMap {M existing ->
+            if (destination == 'root') {
+                existing.folder = null
+                pathRepository.readParentItems(existing).flatMap {
+                    existing.updatePath()
+                    modelRepository.update(existing)
+                }
             } else {
-                throw new HttpStatusException(HttpStatus.NOT_FOUND, 'Not found for deletion')
+                UUID destinationId
+                try {
+                    destinationId = UUID.fromString(destination)
+                } catch (IllegalArgumentException _) {
+                    throw new HttpStatusException(HttpStatus.BAD_REQUEST, 'Destination not "root" or a valid UUID')
+                }
+                folderRepository.readById(destinationId).flatMap {Folder folder ->
+                    existing.folder = folder
+                    pathRepository.readParentItems(existing).flatMap {
+                        existing.updatePath()
+                        modelRepository.update(existing)
+                    }
+                }
             }
         }
     }
 
-    Mono<ListResponse<M>> list(UUID folderId) {
-        folderRepository.readById(folderId).flatMap {Folder folder ->
-            modelRepository.readAllByFolder(folder).collectList().map {
-                ListResponse.from(it)
-            }
-        }
+    Mono<HttpStatus> delete(UUID id, @Body @Nullable M model) {
+        delete(null, id, model)
     }
 
     Mono<ListResponse<M>> listAll() {
-        modelRepository.readAll().collectList().map {
-            ListResponse.from(it)
+        modelRepository.readAll().flatMap {M model ->
+            Mono.zip(Mono.just(model), pathRepository.readParentItems(model), (BiFunction<M, ?, M>) {it, _ -> it})
+        }.collectList().map {List<M> models ->
+            models.each {it.updatePath()}
+            ListResponse.from(models)
         }
     }
 
+    protected ModelRepository<M> getModelRepository() {
+        (ModelRepository<M>) administeredItemRepository
+    }
 
+    protected FolderRepository getFolderRepository() {
+        (FolderRepository) parentItemRepository
+    }
 }

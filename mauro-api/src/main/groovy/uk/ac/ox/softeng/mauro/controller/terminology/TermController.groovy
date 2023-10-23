@@ -1,6 +1,14 @@
 package uk.ac.ox.softeng.mauro.controller.terminology
 
+import uk.ac.ox.softeng.mauro.controller.model.AdministeredItemController
+import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemContentRepository
+import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemRepository
+import uk.ac.ox.softeng.mauro.persistence.model.ModelContentRepository
+import uk.ac.ox.softeng.mauro.web.ListResponse
+
+import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
+import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Delete
@@ -15,56 +23,38 @@ import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
 import uk.ac.ox.softeng.mauro.persistence.terminology.TerminologyRepository
 
 @Controller('/terminologies/{terminologyId}/terms')
-class TermController {
+class TermController extends AdministeredItemController<Term, Terminology> {
 
-    final static List<String> DISALLOWED_PROPERTIES = ['class', 'id']
-
-    @Inject
-    TerminologyRepository terminologyRepository
-
-    @Inject
     TermRepository termRepository
+
+    TermController(TermRepository termRepository, TerminologyRepository terminologyRepository, AdministeredItemContentRepository<Term> administeredItemContentRepository) {
+        super(Term, termRepository, terminologyRepository, administeredItemContentRepository)
+        this.termRepository = termRepository
+    }
 
     @Get('/{id}')
     Mono<Term> show(UUID terminologyId, UUID id) {
-        termRepository.findByTerminologyIdAndId(terminologyId, id)
+        super.show(terminologyId, id)
     }
 
     @Post
-    Mono<Term> create(UUID terminologyId, @Body Term term) {
-        terminologyRepository.findById(terminologyId).flatMap { Terminology terminology ->
-            term.terminology = terminology
-            termRepository.save(term)
-        }
+    Mono<Term> create(UUID terminologyId, @Body @NonNull Term term) {
+        super.create(terminologyId, term)
     }
 
     @Put('/{id}')
-    Mono<Term> update(UUID terminologyId, UUID id, @Body Term term) {
-        termRepository.findByTerminologyIdAndId(terminologyId, id).flatMap {Term existing ->
-            existing.properties.each {
-                if (!DISALLOWED_PROPERTIES.contains(it.key) && term[it.key] != null) {
-                    existing[it.key] = term[it.key]
-                }
-            }
-            termRepository.update(existing)
-        }
-    }
-
-    @Get
-    Mono<List<Term>> list(UUID terminologyId) {
-        terminologyRepository.findById(terminologyId).map {
-            it.terms
-        }
+    Mono<Term> update(UUID terminologyId, UUID id, @Body @NonNull Term term) {
+        super.update(terminologyId, id, term)
     }
 
     @Delete('/{id}')
-    Mono<Long> delete(UUID id, @Nullable @Body Term term) {
-        if (term?.version == null) {
-            termRepository.deleteById(id)
-        } else {
-            term.id = id
-            termRepository.delete(term)
-        }
+    Mono<HttpStatus> delete(UUID terminologyId, UUID id, @Body @Nullable Term term) {
+        super.delete(terminologyId, id, term)
+    }
+
+    @Get
+    Mono<ListResponse<Term>> list(UUID terminologyId) {
+        super.list(terminologyId)
     }
 
     @Get('/tree{/id}')

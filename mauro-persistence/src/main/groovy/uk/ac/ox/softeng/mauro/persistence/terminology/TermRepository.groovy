@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.persistence.terminology
 
+import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
+import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
 import uk.ac.ox.softeng.mauro.persistence.model.ModelItemRepository
 
 import io.micronaut.core.annotation.Nullable
@@ -16,9 +18,28 @@ abstract class TermRepository implements ReactorPageableRepository<Term, UUID>, 
 
     abstract Mono<Term> findByTerminologyIdAndId(UUID terminologyId, UUID id)
 
+    abstract Mono<Term> readByTerminologyIdAndId(UUID terminologyId, UUID id)
+
     abstract Mono<Boolean> existsByTerminologyIdAndId(UUID terminologyId, UUID id)
 
     abstract Mono<Long> deleteByTerminologyId(UUID terminologyId)
+
+    abstract Flux<Term> readAllByTerminology(Terminology terminology)
+
+    @Override
+    Mono<Term> findByParentIdAndId(UUID parentId, UUID id) {
+        findByTerminologyIdAndId(parentId, id)
+    }
+
+    @Override
+    Mono<Term> readByParentIdAndId(UUID parentId, UUID id) {
+        readByTerminologyIdAndId(parentId, id)
+    }
+
+    @Override
+    Flux<Term> readAllByParent(AdministeredItem parent) {
+        readAllByTerminology((Terminology) parent)
+    }
 
     @Override
     Mono<Long> deleteByOwnerId(UUID ownerId) {

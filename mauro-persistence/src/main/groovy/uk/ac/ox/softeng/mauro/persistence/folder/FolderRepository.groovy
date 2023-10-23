@@ -1,5 +1,6 @@
 package uk.ac.ox.softeng.mauro.persistence.folder
 
+import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.data.annotation.Join
@@ -19,11 +20,16 @@ abstract class FolderRepository implements ReactorPageableRepository<Folder, UUI
     abstract Mono<Folder> findById(UUID id)
 
     @Join(value = 'childFolders', type = Join.Type.LEFT_FETCH)
+    abstract Mono<Folder> findByParentFolderIdAndId(UUID parentFolderId, UUID id)
+
+    @Join(value = 'childFolders', type = Join.Type.LEFT_FETCH)
     abstract Mono<Folder> findByIdAndVersion(UUID id, Integer version)
 
     abstract Mono<Folder> readById(UUID id)
 
     abstract Mono<Folder> readByIdAndVersion(UUID id, Integer version)
+
+    abstract Mono<Folder> readByParentFolderIdAndId(UUID parentFolderId, UUID id)
 
     abstract Flux<Folder> readAllByParentFolder(Folder folder)
 
@@ -31,8 +37,24 @@ abstract class FolderRepository implements ReactorPageableRepository<Folder, UUI
 
     abstract Mono<Folder> update(@Valid @NonNull Folder folder)
 
+    @Override
+    Mono<Folder> findByParentIdAndId(UUID parentId, UUID id) {
+        findByParentFolderIdAndId(parentId, id)
+    }
+
+    @Override
+    Mono<Folder> readByParentIdAndId(UUID parentId, UUID id) {
+        readByParentFolderIdAndId(parentId, id)
+    }
+
+    @Override
     Flux<Folder> readAllByFolder(Folder folder) {
         readAllByParentFolder(folder)
+    }
+
+    @Override
+    Flux<Folder> readAllByParent(AdministeredItem parent) {
+        readAllByParentFolder((Folder) parent)
     }
 
     @Override

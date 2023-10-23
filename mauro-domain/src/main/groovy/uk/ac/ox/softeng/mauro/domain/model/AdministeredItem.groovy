@@ -96,7 +96,7 @@ abstract class AdministeredItem {
     }
 
     /**
-     * Recalculate this item's Path from its parent.
+     * Recalculate this item's Path from its parents.
      */
     Path updatePath() {
         if (!pathPrefix) throw new MauroInternalException("Class [${this.class.simpleName}] is not Pathable")

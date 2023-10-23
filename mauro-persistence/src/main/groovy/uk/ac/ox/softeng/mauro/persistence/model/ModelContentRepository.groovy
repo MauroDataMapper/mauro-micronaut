@@ -12,7 +12,7 @@ import jakarta.validation.Valid
 import reactor.core.publisher.Mono
 
 @Slf4j
-class ModelContentRepository<M extends Model> {
+class ModelContentRepository<M extends Model> extends AdministeredItemContentRepository<M> {
 
     @Inject
     List<AdministeredItemRepository> administeredItemRepositories

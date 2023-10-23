@@ -2,6 +2,7 @@ package uk.ac.ox.softeng.mauro.controller.terminology
 
 import uk.ac.ox.softeng.mauro.domain.model.version.FinaliseData
 import uk.ac.ox.softeng.mauro.persistence.folder.FolderRepository
+import uk.ac.ox.softeng.mauro.persistence.model.ModelContentRepository
 import uk.ac.ox.softeng.mauro.persistence.terminology.TermRelationshipTypeRepository
 import uk.ac.ox.softeng.mauro.persistence.terminology.TermRepository
 import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
@@ -30,8 +31,8 @@ class TerminologyController extends ModelController<Terminology> {
     @Inject
     TerminologyService terminologyService
 
-    TerminologyController(TerminologyRepository terminologyRepository, FolderRepository folderRepository) {
-        super(Terminology, terminologyRepository, folderRepository)
+    TerminologyController(TerminologyRepository terminologyRepository, FolderRepository folderRepository, ModelContentRepository<Terminology> modelContentRepository) {
+        super(Terminology, terminologyRepository, folderRepository, modelContentRepository)
         this.terminologyRepository = terminologyRepository
     }
 
