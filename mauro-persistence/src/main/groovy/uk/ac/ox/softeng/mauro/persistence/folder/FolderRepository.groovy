@@ -33,10 +33,6 @@ abstract class FolderRepository implements ReactorPageableRepository<Folder, UUI
 
     abstract Flux<Folder> readAllByParentFolder(Folder folder)
 
-    abstract Mono<Folder> save(@Valid @NonNull Folder folder)
-
-    abstract Mono<Folder> update(@Valid @NonNull Folder folder)
-
     @Override
     Mono<Folder> findByParentIdAndId(UUID parentId, UUID id) {
         findByParentFolderIdAndId(parentId, id)

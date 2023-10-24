@@ -19,17 +19,7 @@ trait ModelRepository<M extends Model> implements ReactorPageableRepository<M, U
         throw new UnsupportedOperationException('Method should be overridden with appropriate joins defined')
     }
 
-    abstract Mono<M> readById(UUID id)
-
     abstract Flux<M> readAllByFolder(Folder folder)
 
     abstract Flux<M> readAll()
-
-    Mono<M> save(@Valid @NonNull M model) {
-        throw new UnsupportedOperationException('Method should be overridden with @Valid and @NonNull added')
-    }
-
-    Mono<M> update(@Valid @NonNull M model) {
-        throw new UnsupportedOperationException('Method should be overridden with @Valid and @NonNull added')
-    }
 }

@@ -18,9 +18,6 @@ import uk.ac.ox.softeng.mauro.domain.model.ModelItem
 @Indexes([@Index(columns = ['terminology_id']), @Index(columns = ['source_term_id']), @Index(columns = ['target_term_id']), @Index(columns = ['relationship_type_id'])])
 class TermRelationship extends ModelItem<Terminology> {
 
-    @Transient
-    String domainType = TermRelationship.simpleName
-
     @JsonIgnore
     Terminology terminology
 
@@ -29,6 +26,11 @@ class TermRelationship extends ModelItem<Terminology> {
     Term targetTerm
 
     TermRelationshipType relationshipType
+
+    @Override
+    String getLabel() {
+        relationshipType.label
+    }
 
     @Override
     @Transient

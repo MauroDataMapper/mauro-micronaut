@@ -40,9 +40,9 @@ class Terminology extends Model {
         terms?.each {it.terminology = this}
         termRelationshipTypes?.each {it.terminology = this}
         termRelationships?.each {it.terminology = this}
-        items.addAll(terms)
-        items.addAll(termRelationshipTypes)
-        items.addAll(termRelationships.findAll {terms.id.contains(it.id)})
+        if (terms) items.addAll(terms)
+        if (termRelationshipTypes) items.addAll(termRelationshipTypes)
+        if (termRelationships) items.addAll(termRelationships.findAll {terms?.id?.contains(it.id)})
         items
     }
 }

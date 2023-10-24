@@ -5,6 +5,7 @@ import uk.ac.ox.softeng.mauro.domain.model.Model
 import uk.ac.ox.softeng.mauro.exception.MauroInternalException
 
 import groovy.util.logging.Slf4j
+import io.micronaut.context.annotation.Bean
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
@@ -12,6 +13,7 @@ import jakarta.validation.Valid
 import reactor.core.publisher.Mono
 
 @Slf4j
+@Bean
 class ModelContentRepository<M extends Model> extends AdministeredItemContentRepository<M> {
 
     @Inject

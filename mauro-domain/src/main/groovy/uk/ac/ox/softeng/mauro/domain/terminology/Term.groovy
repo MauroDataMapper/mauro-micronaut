@@ -20,12 +20,7 @@ import jakarta.validation.constraints.Pattern
 @Indexes([@Index(columns = ['terminology_id', 'code'], unique = true)])
 class Term extends ModelItem<Terminology> {
 
-    @Transient
-    String domainType = 'Term'
-
-    @Pattern(regexp = /[^\$@|]*/, message = 'Cannot contain $, | or @')
-    String label
-
+    @Override
     String getLabel() {
         code && definition && code == definition ? code :
         code && definition ? "${code}: ${definition}" :
@@ -78,5 +73,12 @@ class Term extends ModelItem<Terminology> {
     @JsonIgnore
     String getPathPrefix() {
         'tm'
+    }
+
+    @Override
+    @Transient
+    @JsonIgnore
+    String getPathIdentifier() {
+        code
     }
 }

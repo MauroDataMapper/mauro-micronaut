@@ -22,7 +22,7 @@ dependencies {
     runtimeOnly("ch.qos.logback:logback-classic")
     runtimeOnly("org.postgresql:r2dbc-postgresql")
     implementation("io.r2dbc:r2dbc-pool")
-    //    testResourcesService("org.postgresql:postgresql")
+//    testResourcesService("org.postgresql:postgresql")
     implementation("io.micronaut.validation:micronaut-validation")
     runtimeOnly("org.yaml:snakeyaml")
 

@@ -1,7 +1,9 @@
 package uk.ac.ox.softeng.mauro.controller.terminology
 
 import uk.ac.ox.softeng.mauro.controller.model.AdministeredItemController
+import uk.ac.ox.softeng.mauro.domain.terminology.Term
 import uk.ac.ox.softeng.mauro.domain.terminology.TermRelationship
+import uk.ac.ox.softeng.mauro.domain.terminology.TermRelationshipType
 import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
 import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemContentRepository
 import uk.ac.ox.softeng.mauro.persistence.terminology.TermRelationshipRepository
@@ -54,8 +56,11 @@ class TermRelationshipController extends AdministeredItemController<TermRelation
 
         Mono.zip(terminologyRepository.readById(terminologyId), termRepository.readByTerminologyIdAndId(terminologyId, termRelationship.sourceTerm.id),
                  termRepository.readByTerminologyIdAndId(terminologyId, termRelationship.targetTerm.id),
-                 termRelationshipTypeRepository.readByTerminologyIdAndId(terminologyId, termRelationship.relationshipType.id)).flatMap {Tuple4<Terminology, ?, ?, ?> tuple ->
+                 termRelationshipTypeRepository.readByTerminologyIdAndId(terminologyId, termRelationship.relationshipType.id)).flatMap {Tuple4<Terminology, Term, Term, TermRelationshipType> tuple ->
             Terminology terminology = tuple.getT1()
+            termRelationship.sourceTerm = tuple.getT2()
+            termRelationship.targetTerm = tuple.getT3()
+            termRelationship.relationshipType = tuple.getT4()
 
             createEntity(terminology, termRelationship)
         }
@@ -70,7 +75,12 @@ class TermRelationshipController extends AdministeredItemController<TermRelation
 
             Mono.zip(terminologyRepository.readById(terminologyId), termRepository.readByTerminologyIdAndId(terminologyId, termRelationship.sourceTerm.id),
                      termRepository.readByTerminologyIdAndId(terminologyId, termRelationship.targetTerm.id),
-                     termRelationshipTypeRepository.readByTerminologyIdAndId(terminologyId, termRelationship.relationshipType.id)).flatMap {Tuple4 tuple ->
+                     termRelationshipTypeRepository.readByTerminologyIdAndId(terminologyId, termRelationship.relationshipType.id)).flatMap {Tuple4<Terminology, Term, Term, TermRelationshipType> tuple ->
+                termRelationship.terminology = tuple.getT1()
+                termRelationship.sourceTerm = tuple.getT2()
+                termRelationship.targetTerm = tuple.getT3()
+                termRelationship.relationshipType = tuple.getT4()
+
                 updateEntity(existing, termRelationship)
             }
         }

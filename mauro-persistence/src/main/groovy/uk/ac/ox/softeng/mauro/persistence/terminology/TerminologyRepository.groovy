@@ -119,12 +119,6 @@ abstract class TerminologyRepository implements ReactorPageableRepository<Termin
     abstract Flux<Terminology> readAllByFolder(Folder folder)
 
     @Override
-    abstract Mono<Terminology> save(@Valid @NonNull Terminology terminology)
-
-    @Override
-    abstract Mono<Terminology> update(@Valid @NonNull Terminology terminology)
-
-    @Override
     Mono<Terminology> readByParentIdAndId(UUID parentId, UUID id) {
         readByFolderIdAndId(parentId, id)
     }

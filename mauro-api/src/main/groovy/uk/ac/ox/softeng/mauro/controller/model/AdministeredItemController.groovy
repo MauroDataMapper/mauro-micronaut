@@ -141,9 +141,10 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
     Mono<ListResponse<I>> list(UUID parentId) {
         parentItemRepository.readById(parentId).flatMap {P parent ->
             administeredItemRepository.readAllByParent(parent).flatMap {I item ->
-                Mono.zip(Mono.just(item), pathRepository.readParentItems(item), (BiFunction) {it, _ -> it})
-            }.collectList().map {
-                ListResponse.from(it)
+                Mono.zip(Mono.just(item), pathRepository.readParentItems(item), (BiFunction<I, ?, I>) {it, _ -> it})
+            }.collectList().map {List<I> items ->
+                items.each {it.updatePath()}
+                ListResponse.from(items)
             }
         }
     }
