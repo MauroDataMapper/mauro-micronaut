@@ -74,39 +74,52 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
         cleanBody(item)
 
         parentItemRepository.readById(parentId).flatMap {P parent ->
-            item.parent = parent
-            item.createdBy = 'USER'
-            pathRepository.readParentItems(item).flatMap {
-                item.updatePath()
-                administeredItemRepository.save(item)
-            }
+            createEntity(parent, item)
+        }
+    }
+
+    protected Mono<I> createEntity(P parent, @Body @NonNull I cleanItem) {
+        cleanItem.parent = parent
+        cleanItem.createdBy = 'USER'
+        pathRepository.readParentItems(cleanItem).flatMap {
+            cleanItem.updatePath()
+            administeredItemRepository.save(cleanItem)
         }
     }
 
     Mono<I> update(UUID parentId, UUID id, @Body @NonNull I item) {
         cleanBody(item)
 
-        boolean hasChanged
         administeredItemRepository.readById(id).flatMap {I existing ->
-            existing.properties.each {
-                if (!disallowedProperties.contains(it.key) && item[it.key] != null && existing.hasProperty(it.key).properties.setter) {
-                    if (existing[it.key] != item[it.key]) {
-                        existing[it.key] = item[it.key]
-                        hasChanged = true
-                    }
+            updateEntity(existing, item)
+        }
+    }
+
+    protected boolean updateProperties(I existing, I cleanItem) {
+        boolean hasChanged
+        existing.properties.each {
+            if (!disallowedProperties.contains(it.key) && cleanItem[it.key] != null && existing.hasProperty(it.key).properties.setter) {
+                if (existing[it.key] != cleanItem[it.key]) {
+                    existing[it.key] = cleanItem[it.key]
+                    hasChanged = true
                 }
             }
+        }
+        return hasChanged
+    }
 
-            if (hasChanged) {
-                pathRepository.readParentItems(existing).flatMap {
-                    existing.updatePath()
-                    administeredItemRepository.update(existing)
-                }
-            } else {
-                pathRepository.readParentItems(existing).map {
-                    existing.updatePath()
-                    existing
-                }
+    protected Mono<I> updateEntity(I existing, @Body @NonNull I cleanItem) {
+        boolean hasChanged = updateProperties(existing, cleanItem)
+
+        if (hasChanged) {
+            pathRepository.readParentItems(existing).flatMap {
+                existing.updatePath()
+                administeredItemRepository.update(existing)
+            }
+        } else {
+            pathRepository.readParentItems(existing).map {
+                existing.updatePath()
+                existing
             }
         }
     }

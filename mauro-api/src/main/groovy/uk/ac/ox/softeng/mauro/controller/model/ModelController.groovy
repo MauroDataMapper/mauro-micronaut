@@ -20,7 +20,7 @@ import reactor.core.publisher.Mono
 import java.util.function.BiFunction
 
 @Slf4j
-abstract class ModelController<M extends Model> extends AdministeredItemController<M> {
+abstract class ModelController<M extends Model> extends AdministeredItemController<M, Folder> {
 
     @Override
     List<String> getDisallowedProperties() {
