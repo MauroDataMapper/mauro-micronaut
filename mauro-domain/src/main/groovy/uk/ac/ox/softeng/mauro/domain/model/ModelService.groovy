@@ -1,14 +1,20 @@
 package uk.ac.ox.softeng.mauro.domain.model
 
+import groovy.transform.CompileStatic
 import uk.ac.ox.softeng.mauro.domain.model.version.ModelVersion
 import uk.ac.ox.softeng.mauro.domain.model.version.VersionChangeType
 import uk.ac.ox.softeng.mauro.domain.tree.TreeItem
 
 import java.time.OffsetDateTime
 
+/**
+ * A Service class that provides utility functions for working with data models.
+ */
+@CompileStatic
 abstract class ModelService<M extends Model> {
 
     abstract Boolean handles(Class clazz)
+
     abstract Boolean handles(String domainType)
 
     M updateDerived(M model) {
@@ -27,7 +33,9 @@ abstract class ModelService<M extends Model> {
     M finaliseModel(M model, ModelVersion requestedModelVersion, VersionChangeType versionChangeType, String versionTag) {
         model.finalised = true
         model.dateFinalised = OffsetDateTime.now()
-        model.modelVersion = requestedModelVersion ?: (model.modelVersion ?: new ModelVersion()).nextVersion(versionChangeType) //getNextModelVersion(model, requestedModelVersion, versionChangeType)
+
+        model.modelVersion = requestedModelVersion ?: (model.modelVersion ?: new ModelVersion([:])).nextVersion(versionChangeType)
+        // getNextModelVersion(model, requestedModelVersion, versionChangeType)
         model.modelVersionTag = versionTag
 
         model

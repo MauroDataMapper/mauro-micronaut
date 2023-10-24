@@ -4,6 +4,7 @@ import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.model.Model
 import uk.ac.ox.softeng.mauro.exception.MauroInternalException
 
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.context.annotation.Bean
 import io.micronaut.core.annotation.NonNull
@@ -13,6 +14,7 @@ import jakarta.validation.Valid
 import reactor.core.publisher.Mono
 
 @Slf4j
+@CompileStatic
 @Bean
 class ModelContentRepository<M extends Model> extends AdministeredItemContentRepository<M> {
 
@@ -34,7 +36,7 @@ class ModelContentRepository<M extends Model> extends AdministeredItemContentRep
         contents.each {
             if (it.owner != model) throw new MauroInternalException('Content must belong to model being deleted')
         }
-        Mono.zip(delete(model), Mono.zip(contents.collect {getRepository(it).delete(it)}, {}).defaultIfEmpty(Optional.empty())).map {it.getT1()}
+        Mono.zip(delete(model), Mono.zip(contents.collect {getRepository(it).delete(it)}, {Optional.empty()}).defaultIfEmpty(Optional.empty())).map {it.getT1()}
     }
 
     @NonNull

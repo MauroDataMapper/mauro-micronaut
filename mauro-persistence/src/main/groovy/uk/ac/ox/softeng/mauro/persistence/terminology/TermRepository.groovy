@@ -4,6 +4,7 @@ import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
 import uk.ac.ox.softeng.mauro.persistence.model.ModelItemRepository
 
+import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.model.query.builder.sql.Dialect
@@ -13,6 +14,7 @@ import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import uk.ac.ox.softeng.mauro.domain.terminology.Term
 
+@CompileStatic
 @R2dbcRepository(dialect = Dialect.POSTGRES)
 abstract class TermRepository implements ReactorPageableRepository<Term, UUID>, ModelItemRepository<Term> {
 

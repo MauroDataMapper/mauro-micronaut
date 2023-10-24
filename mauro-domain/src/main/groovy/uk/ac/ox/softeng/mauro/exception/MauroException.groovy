@@ -1,5 +1,8 @@
 package uk.ac.ox.softeng.mauro.exception
 
+import groovy.transform.CompileStatic
+
+@CompileStatic
 abstract class MauroException extends RuntimeException {
 
     MauroException(String message) {

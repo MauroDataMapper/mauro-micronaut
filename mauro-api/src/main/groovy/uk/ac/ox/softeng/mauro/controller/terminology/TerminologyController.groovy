@@ -10,6 +10,8 @@ import uk.ac.ox.softeng.mauro.persistence.terminology.TerminologyRepository
 import uk.ac.ox.softeng.mauro.domain.terminology.TerminologyService
 import uk.ac.ox.softeng.mauro.web.ListResponse
 import uk.ac.ox.softeng.mauro.controller.model.ModelController
+
+import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpStatus
@@ -24,6 +26,7 @@ import jakarta.inject.Inject
 import reactor.core.publisher.Mono
 
 @Controller
+@CompileStatic
 class TerminologyController extends ModelController<Terminology> {
 
     TerminologyRepository terminologyRepository

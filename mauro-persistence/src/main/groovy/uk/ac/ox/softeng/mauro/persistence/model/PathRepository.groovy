@@ -2,6 +2,7 @@ package uk.ac.ox.softeng.mauro.persistence.model
 
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 
+import groovy.transform.CompileStatic
 import io.micronaut.context.annotation.Bean
 import io.micronaut.core.annotation.NonNull
 import jakarta.inject.Inject
@@ -9,6 +10,7 @@ import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 
 @Bean
+@CompileStatic
 class PathRepository {
 
     @Inject

@@ -3,6 +3,7 @@ plugins {
     id("com.github.johnrengelman.shadow") version "8.1.1"
     id("maven-publish")
     id("io.micronaut.library") version "4.1.1"
+    id("codenarc")
 }
 
 version = "0.1"
@@ -17,6 +18,8 @@ dependencies {
     compileOnly("io.micronaut.data:micronaut-data-processor")
     implementation("io.micronaut.validation:micronaut-validation")
     implementation("io.micronaut:micronaut-jackson-databind")
+
+    testImplementation "io.micronaut.test:micronaut-test-spock"
 
 }
 
@@ -38,6 +41,21 @@ publishing {
     }
 }
 
+test {
+    useJUnitPlatform()
+}
 
+codenarc {
+    toolVersion = "3.3.0-groovy-4.0"
+    configFile = rootProject.file("config/codenarc/codenarc.groovy")
+}
 
+codenarcMain {
+    compilationClasspath = sourceSets.main.compileClasspath + sourceSets.main.output
+}
 
+codenarcTest {
+    compilationClasspath = codenarcMain.compilationClasspath + sourceSets.test.compileClasspath + sourceSets.test.output
+}
+
+[codenarcMain, codenarcTest]*.ignoreFailures = true

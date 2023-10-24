@@ -1,4 +1,4 @@
-package uk.ac.ox.softeng.mauro
+package uk.ac.ox.softeng.mauro.testing
 
 import io.micronaut.runtime.EmbeddedApplication
 import io.micronaut.test.extensions.spock.annotation.MicronautTest

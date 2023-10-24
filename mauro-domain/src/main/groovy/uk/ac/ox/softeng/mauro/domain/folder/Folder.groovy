@@ -13,6 +13,16 @@ import io.micronaut.data.annotation.Relation
 import jakarta.persistence.Transient
 import uk.ac.ox.softeng.mauro.domain.model.Model
 
+/**
+ * A folder is a container for models, and, in the case of a VersionedFolder, may be a model in its own right.
+ * <p>
+ * Each model must be stored in a folder, and folders may contain other folders (subfolders).
+ * Folders must be uniquely named within their parent folder (or the root, if it is a top-level folder), and may
+ * be known by other names.
+ * A folder may also specify user access control rules for its contents - the user groups with permission to read
+ * or write models within.  Folder privileges propagate to the folders below.
+ */
+
 @CompileStatic
 @Introspected
 @MappedEntity
@@ -28,6 +38,7 @@ class Folder extends Model {
     @Transient
     String modelType = domainType
 
+    @SuppressWarnings('PropertyName')
     @MappedProperty('class')
     @JsonProperty('class')
     @Nullable

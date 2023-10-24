@@ -2,6 +2,7 @@ package uk.ac.ox.softeng.mauro.persistence.folder
 
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 
+import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.data.annotation.Join
 import io.micronaut.data.model.query.builder.sql.Dialect
@@ -13,6 +14,7 @@ import reactor.core.publisher.Mono
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.persistence.model.ModelRepository
 
+@CompileStatic
 @R2dbcRepository(dialect = Dialect.POSTGRES)
 abstract class FolderRepository implements ReactorPageableRepository<Folder, UUID>, ModelRepository<Folder> {
 

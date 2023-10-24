@@ -2,6 +2,7 @@ package uk.ac.ox.softeng.mauro.domain.model
 
 import com.fasterxml.jackson.annotation.JsonValue
 import com.fasterxml.jackson.databind.util.StdConverter
+import groovy.transform.CompileStatic
 import io.micronaut.context.annotation.Prototype
 import io.micronaut.core.annotation.Introspected
 import io.micronaut.core.convert.ConversionContext
@@ -11,6 +12,7 @@ import java.util.regex.Matcher
 import java.util.regex.Pattern
 
 @Introspected
+@CompileStatic
 class Path {
 
     @JsonValue

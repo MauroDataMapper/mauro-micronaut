@@ -12,6 +12,7 @@ import uk.ac.ox.softeng.mauro.persistence.terminology.TermRepository
 import uk.ac.ox.softeng.mauro.persistence.terminology.TerminologyRepository
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
+import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpStatus
@@ -25,6 +26,7 @@ import jakarta.inject.Inject
 import reactor.core.publisher.Mono
 import reactor.util.function.Tuple4
 
+@CompileStatic
 @Controller('/terminologies/{terminologyId}/termRelationships')
 class TermRelationshipController extends AdministeredItemController<TermRelationship, Terminology> {
 

@@ -8,6 +8,7 @@ import uk.ac.ox.softeng.mauro.persistence.model.ModelContentRepository
 import uk.ac.ox.softeng.mauro.persistence.model.PathRepository
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
@@ -24,6 +25,7 @@ import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 
 @Slf4j
+@CompileStatic
 @Controller('/folders')
 class FolderController extends ModelController<Folder> {
 

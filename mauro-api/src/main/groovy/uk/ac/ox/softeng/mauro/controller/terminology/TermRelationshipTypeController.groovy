@@ -8,6 +8,7 @@ import uk.ac.ox.softeng.mauro.persistence.terminology.TermRelationshipTypeReposi
 import uk.ac.ox.softeng.mauro.persistence.terminology.TerminologyRepository
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
+import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpStatus
@@ -19,6 +20,7 @@ import io.micronaut.http.annotation.Post
 import io.micronaut.http.annotation.Put
 import reactor.core.publisher.Mono
 
+@CompileStatic
 @Controller('/terminologies/{terminologyId}/termRelationshipTypes')
 class TermRelationshipTypeController extends AdministeredItemController<TermRelationshipType, Terminology> {
 

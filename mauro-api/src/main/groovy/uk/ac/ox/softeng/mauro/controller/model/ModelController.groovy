@@ -1,6 +1,7 @@
 package uk.ac.ox.softeng.mauro.controller.model
 
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
+import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.model.Model
 import uk.ac.ox.softeng.mauro.persistence.folder.FolderRepository
 import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemRepository
@@ -8,6 +9,7 @@ import uk.ac.ox.softeng.mauro.persistence.model.ModelContentRepository
 import uk.ac.ox.softeng.mauro.persistence.model.ModelRepository
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
@@ -20,6 +22,7 @@ import reactor.core.publisher.Mono
 import java.util.function.BiFunction
 
 @Slf4j
+@CompileStatic
 abstract class ModelController<M extends Model> extends AdministeredItemController<M, Folder> {
 
     @Override
@@ -41,7 +44,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     }
 
     ModelController(Class<M> modelClass, ModelRepository<M> modelRepository, FolderRepository folderRepository, ModelContentRepository<M> modelContentRepository) {
-        super(modelClass, modelRepository, (AdministeredItemRepository<M>) folderRepository, modelContentRepository)
+        super(modelClass, modelRepository, (AdministeredItemRepository<Folder>) folderRepository, modelContentRepository)
         this.itemClass = modelClass
         this.administeredItemRepository = modelRepository
         this.parentItemRepository = folderRepository
@@ -94,9 +97,9 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
 
     Mono<ListResponse<M>> listAll() {
         modelRepository.readAll().flatMap {M model ->
-            Mono.zip(Mono.just(model), pathRepository.readParentItems(model), (BiFunction<M, ?, M>) {it, _ -> it})
+            Mono.zip(Mono.just(model), pathRepository.readParentItems(model), (BiFunction<M, List<AdministeredItem>, M>) {it, _ -> it})
         }.collectList().map {List<M> models ->
-            models.each {it.updatePath()}
+            models.each {((Model) it).updatePath()}
             ListResponse.from(models)
         }
     }

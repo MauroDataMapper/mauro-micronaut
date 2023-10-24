@@ -3,7 +3,7 @@ plugins {
     id("com.github.johnrengelman.shadow") version "8.1.1"
     id("io.micronaut.library") version "4.1.1"
     id("maven-publish")
-
+    id("codenarc")
 }
 
 version = "0.1"
@@ -50,3 +50,18 @@ publishing {
 dependencies {
     implementation project(':mauro-domain')
 }
+
+codenarc {
+    toolVersion = "3.3.0-groovy-4.0"
+    configFile = rootProject.file("config/codenarc/codenarc.groovy")
+}
+
+codenarcMain {
+    compilationClasspath = sourceSets.main.compileClasspath + sourceSets.main.output
+}
+
+codenarcTest {
+    compilationClasspath = codenarcMain.compilationClasspath + sourceSets.test.compileClasspath + sourceSets.test.output
+}
+
+[codenarcMain, codenarcTest]*.ignoreFailures = true

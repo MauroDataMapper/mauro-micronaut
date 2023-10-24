@@ -9,7 +9,10 @@ import io.micronaut.core.order.Ordered
 import io.micronaut.data.annotation.MappedEntity
 import jakarta.persistence.Transient
 
-
+/**
+ * A ModelItem is a component of a model that is ordered - for example the data classes in a data model or the
+ * data elements within a data class.
+ */
 @CompileStatic
 @Introspected
 @MappedEntity

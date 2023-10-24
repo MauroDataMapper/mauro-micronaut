@@ -6,6 +6,7 @@ import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemRepository
 import uk.ac.ox.softeng.mauro.persistence.model.PathRepository
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
+import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpStatus
@@ -17,7 +18,7 @@ import reactor.core.publisher.Mono
 
 import java.util.function.BiFunction
 
-
+@CompileStatic
 abstract class AdministeredItemController<I extends AdministeredItem, P extends AdministeredItem> {
 
     /**
@@ -98,9 +99,10 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
     protected boolean updateProperties(I existing, I cleanItem) {
         boolean hasChanged
         existing.properties.each {
-            if (!disallowedProperties.contains(it.key) && cleanItem[it.key] != null && existing.hasProperty(it.key).properties.setter) {
-                if (existing[it.key] != cleanItem[it.key]) {
-                    existing[it.key] = cleanItem[it.key]
+            String key = it.key
+            if (!disallowedProperties.contains(key) && cleanItem[key] != null && existing.hasProperty(key).properties.setter) {
+                if (existing[key] != cleanItem[key]) {
+                    existing[key] = cleanItem[key]
                     hasChanged = true
                 }
             }
@@ -141,9 +143,9 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
     Mono<ListResponse<I>> list(UUID parentId) {
         parentItemRepository.readById(parentId).flatMap {P parent ->
             administeredItemRepository.readAllByParent(parent).flatMap {I item ->
-                Mono.zip(Mono.just(item), pathRepository.readParentItems(item), (BiFunction<I, ?, I>) {it, _ -> it})
+                Mono.zip(Mono.just(item), pathRepository.readParentItems(item), (BiFunction<I, List<AdministeredItem>, I>) {it, _ -> it})
             }.collectList().map {List<I> items ->
-                items.each {it.updatePath()}
+                items.each {((AdministeredItem) it).updatePath()}
                 ListResponse.from(items)
             }
         }
@@ -161,9 +163,10 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
 
         // Collection properties cannot be set in user requests as these might be used in services
         defaultItem.properties.each {
-            if (defaultItem.hasProperty(it.key).properties.setter && (it.value instanceof Collection || it.value instanceof Map)) {
-                if (item[it.key]) throw new HttpStatusException(HttpStatus.BAD_REQUEST, "Collection or Map $it.key cannot be set directly")
-                item[it.key] = null
+            String key = it.key
+            if (defaultItem.hasProperty(key).properties.setter && (it.value instanceof Collection || it.value instanceof Map)) {
+                if (item[key]) throw new HttpStatusException(HttpStatus.BAD_REQUEST, "Collection or Map $key cannot be set directly")
+                item[key] = null
             }
         }
 

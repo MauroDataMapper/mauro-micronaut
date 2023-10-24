@@ -6,6 +6,7 @@ import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemRepository
 import uk.ac.ox.softeng.mauro.persistence.model.ModelContentRepository
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
+import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpStatus
@@ -22,6 +23,7 @@ import uk.ac.ox.softeng.mauro.persistence.terminology.TermRepository
 import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
 import uk.ac.ox.softeng.mauro.persistence.terminology.TerminologyRepository
 
+@CompileStatic
 @Controller('/terminologies/{terminologyId}/terms')
 class TermController extends AdministeredItemController<Term, Terminology> {
 

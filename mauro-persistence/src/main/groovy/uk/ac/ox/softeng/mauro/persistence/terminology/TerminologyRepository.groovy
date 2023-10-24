@@ -3,6 +3,7 @@ package uk.ac.ox.softeng.mauro.persistence.terminology
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 
+import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.data.annotation.Join
 import io.micronaut.data.annotation.Query
@@ -15,6 +16,7 @@ import reactor.core.publisher.Mono
 import uk.ac.ox.softeng.mauro.persistence.model.ModelRepository
 import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
 
+@CompileStatic
 @R2dbcRepository(dialect = Dialect.POSTGRES)
 abstract class TerminologyRepository implements ReactorPageableRepository<Terminology, UUID>, ModelRepository<Terminology> {
 

@@ -4,6 +4,7 @@ plugins {
     id("io.micronaut.application") version "4.0.3"
 //    id("io.micronaut.test-resources") version "4.0.3"
     id("io.micronaut.aot") version "4.0.3"
+    id("codenarc")
 }
 
 version = "0.1"
@@ -74,3 +75,18 @@ dependencies {
     implementation project(':mauro-domain')
     implementation project(':mauro-persistence')
 }
+
+codenarc {
+    toolVersion = "3.3.0-groovy-4.0"
+    configFile = rootProject.file("config/codenarc/codenarc.groovy")
+}
+
+codenarcMain {
+    compilationClasspath = sourceSets.main.compileClasspath + sourceSets.main.output
+}
+
+codenarcTest {
+    compilationClasspath = codenarcMain.compilationClasspath + sourceSets.test.compileClasspath + sourceSets.test.output
+}
+
+[codenarcMain, codenarcTest]*.ignoreFailures = true
