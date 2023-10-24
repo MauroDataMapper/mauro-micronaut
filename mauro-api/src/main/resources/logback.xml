@@ -16,6 +16,6 @@
     <logger name="io.micronaut.data" level="trace" />
     <logger name="io.micronaut" level="trace" />
 
-    <logger name="uk" level="trace" />
+    <logger name="uk.ac.ox.softeng" level="trace" />
 
 </configuration>
