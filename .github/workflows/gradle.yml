@@ -21,14 +21,37 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_USER: sandbox
+          POSTGRES_DB: sandbox
+          POSTGRES_PASSWORD: sandbox
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 1s
+          --health-timeout 5s
+          --health-retries 50
+        ports:
+          - 5432:5432
+
     steps:
+    - name: Set up Postgres extensions
+      run: PGPASSWORD=sandbox psql -h localhost -U sandbox -c 'CREATE EXTENSION IF NOT EXISTS "uuid-ossp"'
     - uses: actions/checkout@v3
     - name: Set up JDK 17
       uses: actions/setup-java@v3
       with:
         java-version: '17'
         distribution: 'temurin'
-    - name: Compile with Gradle
+    - name: Test with Gradle
       uses: gradle/gradle-build-action@v2
       with:
-        arguments: build
+        arguments: test
+    - name: Archive test report
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: test-report
+        path: '**/build/reports'
