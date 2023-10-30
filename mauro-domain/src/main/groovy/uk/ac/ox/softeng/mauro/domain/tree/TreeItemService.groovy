@@ -6,6 +6,7 @@ import uk.ac.ox.softeng.mauro.domain.model.Model
 import uk.ac.ox.softeng.mauro.domain.model.ModelItem
 import uk.ac.ox.softeng.mauro.domain.model.ModelService
 
+// TODO
 /**
  * TreeItemService provides utility methods for working with TreeItem objects
  * @see TreeItem

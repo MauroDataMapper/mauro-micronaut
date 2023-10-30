@@ -30,13 +30,6 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
     }
 
     /**
-     * Properties that trigger a cascaded update when updated.
-     */
-    List<String> getCascadeUpdateProperties() {
-        ['label', 'path']
-    }
-
-    /**
      * Properties disallowed in a simple create request.
      */
     List<String> getDisallowedCreateProperties() {

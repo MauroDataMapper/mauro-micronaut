@@ -33,12 +33,6 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     }
 
     @Override
-    List<String> getCascadeUpdateProperties() {
-        super.cascadeUpdateProperties +
-        ['finalised', 'branchName', 'modelVersion']
-    }
-
-    @Override
     List<String> getDisallowedCreateProperties() {
         disallowedProperties - ['readableByEveryone', 'readableByAuthenticatedUsers']
     }
