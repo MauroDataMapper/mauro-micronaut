@@ -1,9 +1,13 @@
 package uk.ac.ox.softeng.mauro.domain.model
 
+import uk.ac.ox.softeng.mauro.exception.MauroApplicationException
+
 import groovy.transform.CompileStatic
 import uk.ac.ox.softeng.mauro.domain.model.version.ModelVersion
 import uk.ac.ox.softeng.mauro.domain.model.version.VersionChangeType
 import uk.ac.ox.softeng.mauro.domain.tree.TreeItem
+
+import io.micronaut.core.annotation.Nullable
 
 import java.time.OffsetDateTime
 
@@ -30,12 +34,15 @@ abstract class ModelService<M extends Model> {
         model
     }
 
-    M finaliseModel(M model, ModelVersion requestedModelVersion, VersionChangeType versionChangeType, String versionTag) {
+    M finaliseModel(M model, @Nullable ModelVersion requestedModelVersion, @Nullable VersionChangeType versionChangeType, @Nullable String versionTag) {
+        if (!requestedModelVersion && !versionChangeType) throw new IllegalArgumentException('A version or versionChangeType must be specified to finalise a Model')
+        if (model.branchName != 'main') throw new MauroApplicationException("Cannot finalise Model [$model.label] as it is not on branch 'main'")
+        if (model.finalised) throw new MauroApplicationException("Cannot finalise Model [$model.label] as it is already finalised")
+
         model.finalised = true
         model.dateFinalised = OffsetDateTime.now()
 
         model.modelVersion = requestedModelVersion ?: (model.modelVersion ?: new ModelVersion([:])).nextVersion(versionChangeType)
-        // getNextModelVersion(model, requestedModelVersion, versionChangeType)
         model.modelVersionTag = versionTag
 
         model

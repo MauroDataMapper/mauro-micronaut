@@ -4,6 +4,7 @@ import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.databind.annotation.JsonSerialize
+import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
 import groovy.transform.MapConstructor
 import io.micronaut.core.annotation.Introspected
@@ -23,6 +24,7 @@ import uk.ac.ox.softeng.mauro.domain.model.ModelItem
  * a tree of terms.
  */
 @CompileStatic
+@AutoClone(excludes = 'terminology')
 @Introspected
 @MappedEntity
 @MapConstructor(includeSuperFields = true, includeSuperProperties = true, noArg = true)

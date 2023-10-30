@@ -3,6 +3,7 @@ package uk.ac.ox.softeng.mauro.domain.terminology
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 
 import com.fasterxml.jackson.annotation.JsonIgnore
+import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
 import groovy.transform.MapConstructor
 import io.micronaut.core.annotation.Introspected
@@ -19,6 +20,7 @@ import uk.ac.ox.softeng.mauro.domain.model.ModelItem
  * The type of the relationship is also defined within the same context - many relationships can exist of the same type.
  */
 @CompileStatic
+@AutoClone(excludes = ['terminology'])
 @Introspected
 @MappedEntity
 @MapConstructor(includeSuperFields = true, includeSuperProperties = true, noArg = true)

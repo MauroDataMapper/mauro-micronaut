@@ -3,6 +3,7 @@ package uk.ac.ox.softeng.mauro.domain.terminology
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 
 import com.fasterxml.jackson.annotation.JsonIgnore
+import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
 import groovy.transform.MapConstructor
 import io.micronaut.core.annotation.Introspected
@@ -16,6 +17,7 @@ import jakarta.persistence.Transient
  * A Terminology is a model that describes a number of terms, and some relationships between them.
  */
 @CompileStatic
+@AutoClone
 @Introspected
 @MappedEntity
 @MapConstructor(includeSuperFields = true, includeSuperProperties = true, noArg = true)
@@ -49,6 +51,23 @@ class Terminology extends Model {
         if (termRelationshipTypes) items.addAll(termRelationshipTypes)
         if (termRelationships) items.addAll(termRelationships.findAll {terms?.id?.contains(it.id)})
         items
+    }
+
+    @Override
+    Terminology clone() {
+        Terminology cloned = (Terminology) super.clone()
+        cloned.terms = terms.collect {it.clone().tap {it.parent = cloned}}
+        cloned.termRelationshipTypes = termRelationshipTypes.collect {it.clone().tap {it.parent = cloned}}
+        cloned.termRelationships = termRelationships.collect {
+            it.clone().tap {TermRelationship tr ->
+                tr.relationshipType = cloned.termRelationshipTypes.find {it.label == tr.relationshipType.label}
+                tr.sourceTerm = cloned.terms.find {it.code == tr.sourceTerm.code}
+                tr.targetTerm = cloned.terms.find {it.code == tr.targetTerm.code}
+                tr.parent = cloned
+            }
+        }
+
+        cloned
     }
 
     /****

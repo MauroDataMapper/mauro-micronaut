@@ -3,6 +3,7 @@ package uk.ac.ox.softeng.mauro.domain.model
 import uk.ac.ox.softeng.mauro.exception.MauroInternalException
 
 import com.fasterxml.jackson.annotation.JsonIgnore
+import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.annotation.DateCreated
@@ -27,6 +28,7 @@ import java.time.OffsetDateTime
  */
 
 @CompileStatic
+@AutoClone(excludes = ['id', 'version'])
 abstract class AdministeredItem {
 
     /**
