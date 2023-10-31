@@ -11,7 +11,7 @@ import jakarta.inject.Singleton
  */
 @CompileStatic
 @Singleton
-class TerminologyService extends ModelService<Terminology, Term> {
+class TerminologyService extends ModelService<Terminology> {
 
     Boolean handles(Class clazz) {
         clazz == Terminology

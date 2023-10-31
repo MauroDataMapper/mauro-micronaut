@@ -19,6 +19,9 @@ endpoints:
   routes:
     enabled: true
     sensitive: false
+  beans:
+    enabled: true
+    sensitive: false
 jackson:
   serialization:
     writeDatesAsTimestamps: false

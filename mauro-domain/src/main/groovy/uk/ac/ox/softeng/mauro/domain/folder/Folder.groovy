@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.domain.folder
 
+import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
+
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import groovy.transform.CompileStatic
@@ -51,6 +53,9 @@ class Folder extends Model {
     @Transient
     String author
 
+    @Nullable
+    String branchName = null
+
     @JsonIgnore
     @Transient
     @Override
@@ -66,7 +71,7 @@ class Folder extends Model {
     }
 
     @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'parentFolder')
-    List<Folder> childFolders
+    List<Folder> childFolders = []
 
     @Override
     @Transient
@@ -78,7 +83,36 @@ class Folder extends Model {
     @Override
     @Transient
     @JsonIgnore
+    void setParent(AdministeredItem folder) {
+        parentFolder = (Folder) folder
+    }
+
+    @Override
+    @Transient
+    @JsonIgnore
     Folder getOwner() {
-        parentFolder ?: this
+        parentFolder ? parentFolder.owner : this
+    }
+
+    @Override
+    @Transient
+    @JsonIgnore
+    String getPathPrefix() {
+        'fo'
+    }
+
+    @Override
+    @Transient
+    @JsonIgnore
+    String getPathModelIdentifier() {
+        null
+    }
+
+    @Override
+    @Transient
+    @JsonIgnore
+    Collection<AdministeredItem> getAllContents() {
+        childFolders?.each {it.parentFolder = this}
+        childFolders as Collection<AdministeredItem>
     }
 }

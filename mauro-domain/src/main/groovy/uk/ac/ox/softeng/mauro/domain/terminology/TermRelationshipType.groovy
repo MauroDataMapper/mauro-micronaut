@@ -1,9 +1,14 @@
 package uk.ac.ox.softeng.mauro.domain.terminology
 
+import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
+
 import com.fasterxml.jackson.annotation.JsonIgnore
+import com.fasterxml.jackson.databind.annotation.JsonSerialize
+import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
 import groovy.transform.MapConstructor
 import io.micronaut.core.annotation.Introspected
+import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.annotation.Index
 import io.micronaut.data.annotation.Indexes
 import io.micronaut.data.annotation.MappedEntity
@@ -19,20 +24,20 @@ import uk.ac.ox.softeng.mauro.domain.model.ModelItem
  * a tree of terms.
  */
 @CompileStatic
+@AutoClone(excludes = 'terminology')
 @Introspected
 @MappedEntity
-@MapConstructor(includeSuperFields = true, includeSuperProperties = true)
+@MapConstructor(includeSuperFields = true, includeSuperProperties = true, noArg = true)
 @Indexes([@Index(columns = ['terminology_id', 'label'], unique = true)])
 class TermRelationshipType extends ModelItem<Terminology> {
-
-    @Transient
-    String domainType = TermRelationshipType.simpleName
 
     @JsonIgnore
     Terminology terminology
 
+    @Nullable
     Boolean parentalRelationship
 
+    @Nullable
     Boolean childRelationship
 
     @Override
@@ -41,6 +46,24 @@ class TermRelationshipType extends ModelItem<Terminology> {
     Terminology getParent() {
         terminology
     }
+
+    @Override
+    @Transient
+    @JsonIgnore
+    void setParent(AdministeredItem terminology) {
+        this.terminology = (Terminology) terminology
+    }
+
+    @Override
+    @Transient
+    @JsonIgnore
+    String getPathPrefix() {
+        'trt'
+    }
+
+    /****
+     * Methods for building a tree-like DSL
+     */
 
     Boolean parentalRelationship(Boolean parentalRelationship) {
         this.parentalRelationship = parentalRelationship
@@ -60,5 +83,4 @@ class TermRelationshipType extends ModelItem<Terminology> {
             @DelegatesTo(value = TermRelationshipType, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
         build [:], closure
     }
-
 }

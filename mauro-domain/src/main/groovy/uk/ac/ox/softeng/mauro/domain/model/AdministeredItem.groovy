@@ -1,19 +1,23 @@
 package uk.ac.ox.softeng.mauro.domain.model
 
+import uk.ac.ox.softeng.mauro.exception.MauroInternalException
+
 import com.fasterxml.jackson.annotation.JsonIgnore
+import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.annotation.DateCreated
 import io.micronaut.data.annotation.DateUpdated
 import io.micronaut.data.annotation.GeneratedValue
 import io.micronaut.data.annotation.Id
+import io.micronaut.data.annotation.TypeDef
 import io.micronaut.data.annotation.Version
+import io.micronaut.data.model.DataType
 import jakarta.persistence.Transient
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Pattern
 
 import java.time.OffsetDateTime
-
 /**
  * An AdministeredItem is an item stored in the catalogue.
  * <p>
@@ -24,6 +28,7 @@ import java.time.OffsetDateTime
  */
 
 @CompileStatic
+@AutoClone(excludes = ['id', 'version'])
 abstract class AdministeredItem {
 
     /**
@@ -43,14 +48,12 @@ abstract class AdministeredItem {
     /**
      * The date and time that this object was created
      */
-
     @DateCreated
     OffsetDateTime dateCreated
 
     /**
      * The date and time that this object was last updated.
      */
-
     @DateUpdated
     OffsetDateTime lastUpdated
 
@@ -93,8 +96,9 @@ abstract class AdministeredItem {
      * The path of oan object allows it to be navigated to from either the containing model, or the folder path within
      * a system.  This value is calculated on persistence and saved to allow easy lookup.
      */
-    @Nullable
-    String path // should be Path type
+    @TypeDef(type = DataType.STRING, converter = Path.PathConverter)
+    @Transient
+    Path path
 
     /**
      * The identifier of a breadcrumb tree object for navigation.
@@ -114,8 +118,64 @@ abstract class AdministeredItem {
      */
     @Transient
     @JsonIgnore
+    abstract void setParent(AdministeredItem parent)
+
+    /**
+     * Helper method for returning the owner of this object.
+     */
+    @Transient
+    @JsonIgnore
     Model getOwner() {
         parent.owner
+    }
+
+    /**
+     * The prefix used in this item's Path, if this item is pathable.
+     */
+    @Transient
+    @JsonIgnore
+    String getPathPrefix() {
+        null
+    }
+
+    /**
+     * The identifier (label) used in this item's Path, if this item is pathable.
+     */
+    @Transient
+    @JsonIgnore
+    String getPathIdentifier() {
+        label
+    }
+
+    /**
+     * The model identifier (version string or branch label) used in this item's Path, if this item is pathable.
+     */
+    @Transient
+    @JsonIgnore
+    String getPathModelIdentifier() {
+        null
+    }
+
+    /**
+     * Recalculate this item's Path from its parents. This item must have all its parent items loaded.
+     *
+     * @return The new Path
+     */
+    Path updatePath() {
+        if (!pathPrefix) throw new MauroInternalException("Class [${this.class.simpleName}] is not Pathable")
+        final int pathLimit = 256
+        List<Path.PathNode> pathNodes = []
+        int i = 0
+        AdministeredItem node = this
+        while (node && i < pathLimit) {
+            pathNodes.add(0, new Path.PathNode(prefix: node.pathPrefix, identifier: node.pathIdentifier, modelIdentifier: node.pathModelIdentifier))
+            i++; node = node.parent
+            if (i >= pathLimit) throw new MauroInternalException("Path exceeded maximum depth of [$pathLimit]")
+        }
+
+        path = new Path()
+        path.nodes = pathNodes
+        path
     }
 
     /**
@@ -217,5 +277,4 @@ abstract class AdministeredItem {
         this.createdBy = createdBy
         this.createdBy
     }
-
 }

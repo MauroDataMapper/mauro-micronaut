@@ -33,16 +33,16 @@ abstract class Model extends AdministeredItem {
     @Nullable
     String documentationVersion
 
-    Boolean readableByEveryone
+    Boolean readableByEveryone = false
 
-    Boolean readableByAuthenticatedUsers
+    Boolean readableByAuthenticatedUsers = false
 
     String modelType = domainType
 
     @Nullable
     String organisation
 
-    Boolean deleted
+    Boolean deleted = false
 
     @Nullable
     String author
@@ -52,10 +52,10 @@ abstract class Model extends AdministeredItem {
     Folder folder
 
     @Nullable
-    UUID authorityId // -> Authority
+    UUID authority // -> Authority
 
     @Nullable
-    String branchName
+    String branchName = 'main'
 
     @Nullable
     ModelVersion modelVersion
@@ -66,9 +66,38 @@ abstract class Model extends AdministeredItem {
     @Override
     @Transient
     @JsonIgnore
-    Folder getParent() {
-        folder
+    Model getParent() {
+        null
     }
+
+    @Override
+    @Transient
+    @JsonIgnore
+    void setParent(AdministeredItem parent) {
+        folder = (Folder) parent
+    }
+
+    @Override
+    @Transient
+    @JsonIgnore
+    Model getOwner() {
+        this
+    }
+
+    @Override
+    @Transient
+    @JsonIgnore
+    String getPathModelIdentifier() {
+        modelVersion ?: branchName
+    }
+
+    /**
+     * For a model which has all its associations loaded, return a collection of all its direct child items.
+     * The collection does not have to be in any particular order.
+     */
+    @Transient
+    @JsonIgnore
+    abstract Collection<AdministeredItem> getAllContents()
 
     /****
      * Methods for building a tree-like DSL

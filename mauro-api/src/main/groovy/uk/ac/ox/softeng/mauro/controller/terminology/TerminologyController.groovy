@@ -2,6 +2,7 @@ package uk.ac.ox.softeng.mauro.controller.terminology
 
 import uk.ac.ox.softeng.mauro.domain.model.version.FinaliseData
 import uk.ac.ox.softeng.mauro.persistence.folder.FolderRepository
+import uk.ac.ox.softeng.mauro.persistence.model.ModelContentRepository
 import uk.ac.ox.softeng.mauro.persistence.terminology.TermRelationshipTypeRepository
 import uk.ac.ox.softeng.mauro.persistence.terminology.TermRepository
 import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
@@ -9,6 +10,8 @@ import uk.ac.ox.softeng.mauro.persistence.terminology.TerminologyRepository
 import uk.ac.ox.softeng.mauro.domain.terminology.TerminologyService
 import uk.ac.ox.softeng.mauro.web.ListResponse
 import uk.ac.ox.softeng.mauro.controller.model.ModelController
+
+import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpStatus
@@ -23,28 +26,16 @@ import jakarta.inject.Inject
 import reactor.core.publisher.Mono
 
 @Controller
+@CompileStatic
 class TerminologyController extends ModelController<Terminology> {
-
-    static List<String> DISALLOWED_PROPERTIES = ['class', 'id']
-
-    @Override
-    static List<String> getDISALLOWED_PROPERTIES() {
-        DISALLOWED_PROPERTIES
-    }
 
     TerminologyRepository terminologyRepository
 
     @Inject
-    TermRepository termRepository
-
-    @Inject
-    TermRelationshipTypeRepository termRelationshipTypeRepository
-
-    @Inject
     TerminologyService terminologyService
 
-    TerminologyController(TerminologyRepository terminologyRepository, FolderRepository folderRepository) {
-        super(Terminology, terminologyRepository, folderRepository)
+    TerminologyController(TerminologyRepository terminologyRepository, FolderRepository folderRepository, ModelContentRepository<Terminology> modelContentRepository) {
+        super(Terminology, terminologyRepository, folderRepository, modelContentRepository)
         this.terminologyRepository = terminologyRepository
     }
 
@@ -53,6 +44,7 @@ class TerminologyController extends ModelController<Terminology> {
         super.show(id)
     }
 
+    @Transactional
     @Post('/folders/{folderId}/terminologies')
     Mono<Terminology> create(UUID folderId, @Body @NonNull Terminology terminology) {
         super.create(folderId, terminology)

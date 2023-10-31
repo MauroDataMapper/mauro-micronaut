@@ -1,6 +1,9 @@
 package uk.ac.ox.softeng.mauro.domain.terminology
 
+import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
+
 import com.fasterxml.jackson.annotation.JsonIgnore
+import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
 import groovy.transform.MapConstructor
 import io.micronaut.core.annotation.Introspected
@@ -17,18 +20,16 @@ import uk.ac.ox.softeng.mauro.domain.model.ModelItem
  * The type of the relationship is also defined within the same context - many relationships can exist of the same type.
  */
 @CompileStatic
+@AutoClone(excludes = ['terminology'])
 @Introspected
 @MappedEntity
-@MapConstructor(includeSuperFields = true, includeSuperProperties = true)
+@MapConstructor(includeSuperFields = true, includeSuperProperties = true, noArg = true)
 @Indexes([
         @Index(columns = ['terminology_id']),
         @Index(columns = ['source_term_id']),
         @Index(columns = ['target_term_id']),
         @Index(columns = ['relationship_type_id'])])
 class TermRelationship extends ModelItem<Terminology> {
-
-    @Transient
-    String domainType = TermRelationship.simpleName
 
     @JsonIgnore
     Terminology terminology
@@ -40,11 +41,41 @@ class TermRelationship extends ModelItem<Terminology> {
     TermRelationshipType relationshipType
 
     @Override
+    String getLabel() {
+        relationshipType.label
+    }
+
+    @Override
     @Transient
     @JsonIgnore
     Terminology getParent() {
         terminology
     }
+
+    @Override
+    @Transient
+    @JsonIgnore
+    void setParent(AdministeredItem terminology) {
+        this.terminology = (Terminology) terminology
+    }
+
+    @Override
+    @Transient
+    @JsonIgnore
+    String getPathPrefix() {
+        'tr'
+    }
+
+    @Override
+    @Transient
+    @JsonIgnore
+    String getPathIdentifier() {
+        "$sourceTerm.code.$label.$targetTerm.code"
+    }
+
+    /****
+     * Methods for building a tree-like DSL
+     */
 
     static TermRelationship build(
             Map args,
@@ -81,5 +112,4 @@ class TermRelationship extends ModelItem<Terminology> {
         this.relationshipType = terminology.termRelationshipTypes.
                 find { it.label == relationshipTypeLabel }
     }
-
 }

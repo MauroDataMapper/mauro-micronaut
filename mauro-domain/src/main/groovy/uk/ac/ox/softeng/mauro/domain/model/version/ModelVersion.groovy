@@ -108,7 +108,7 @@ class ModelVersion implements Comparable<ModelVersion> {
 
         Matcher m = VERSION_PATTERN.matcher(versionStr)
         if (!m.matches()) {
-            throw new IllegalStateException("Version '${versionStr}' does not match the expected pattern")
+            throw new IllegalArgumentException("Version '${versionStr}' does not match the expected pattern")
         }
 
         new ModelVersion(major: m.group(2).toInteger(),

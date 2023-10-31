@@ -26,7 +26,7 @@ abstract class ModelItem<M extends Model> extends AdministeredItem implements Or
     @Transient
     @JsonIgnore
     int getOrder() {
-        idx
+        idx ?: 0
     }
 
     @Transient

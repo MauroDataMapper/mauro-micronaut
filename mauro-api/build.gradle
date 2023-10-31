@@ -1,9 +1,10 @@
 plugins {
     id("groovy")
     id("com.github.johnrengelman.shadow") version "8.1.1"
-    id("io.micronaut.application") version "4.0.3"
-    id("io.micronaut.aot") version "4.0.3"
-    //    id("io.micronaut.test-resources") version "3.7.4"
+    id("io.micronaut.application") version "4.0.4"
+//    id("io.micronaut.test-resources") version "4.0.4"
+    id("io.micronaut.aot") version "4.0.4"
+    id("codenarc")
 }
 
 version = "0.1"
@@ -31,7 +32,7 @@ dependencies {
     runtimeOnly("ch.qos.logback:logback-classic")
     runtimeOnly("org.postgresql:r2dbc-postgresql")
     implementation("io.r2dbc:r2dbc-pool")
-    //    testResourcesService("org.postgresql:postgresql")
+//    testResourcesService("org.postgresql:postgresql")
     implementation("io.micronaut.validation:micronaut-validation")
     implementation("io.micronaut:micronaut-management")
     compileOnly("io.micronaut:micronaut-inject-groovy")
@@ -70,10 +71,22 @@ micronaut {
 }
 
 
-
-
-
 dependencies {
     implementation project(':mauro-domain')
     implementation project(':mauro-persistence')
 }
+
+codenarc {
+    toolVersion = "3.3.0-groovy-4.0"
+    configFile = rootProject.file("config/codenarc/codenarc.groovy")
+}
+
+codenarcMain {
+    compilationClasspath = sourceSets.main.compileClasspath + sourceSets.main.output
+}
+
+codenarcTest {
+    compilationClasspath = codenarcMain.compilationClasspath + sourceSets.test.compileClasspath + sourceSets.test.output
+}
+
+[codenarcMain, codenarcTest]*.ignoreFailures = true

@@ -1,9 +1,9 @@
 plugins {
     id("groovy")
     id("com.github.johnrengelman.shadow") version "8.1.1"
-    id("io.micronaut.library") version "4.1.1"
+    id("io.micronaut.library") version "4.1.2"
     id("maven-publish")
-
+    id("codenarc")
 }
 
 version = "0.1"
@@ -22,7 +22,7 @@ dependencies {
     runtimeOnly("ch.qos.logback:logback-classic")
     runtimeOnly("org.postgresql:r2dbc-postgresql")
     implementation("io.r2dbc:r2dbc-pool")
-    //    testResourcesService("org.postgresql:postgresql")
+//    testResourcesService("org.postgresql:postgresql")
     implementation("io.micronaut.validation:micronaut-validation")
     runtimeOnly("org.yaml:snakeyaml")
 
@@ -50,3 +50,18 @@ publishing {
 dependencies {
     implementation project(':mauro-domain')
 }
+
+codenarc {
+    toolVersion = "3.3.0-groovy-4.0"
+    configFile = rootProject.file("config/codenarc/codenarc.groovy")
+}
+
+codenarcMain {
+    compilationClasspath = sourceSets.main.compileClasspath + sourceSets.main.output
+}
+
+codenarcTest {
+    compilationClasspath = codenarcMain.compilationClasspath + sourceSets.test.compileClasspath + sourceSets.test.output
+}
+
+[codenarcMain, codenarcTest]*.ignoreFailures = true
