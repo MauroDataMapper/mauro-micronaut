@@ -3,6 +3,7 @@ package uk.ac.ox.softeng.mauro.controller.model
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.model.Model
+import uk.ac.ox.softeng.mauro.domain.model.version.FinaliseData
 import uk.ac.ox.softeng.mauro.persistence.folder.FolderRepository
 import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemRepository
 import uk.ac.ox.softeng.mauro.persistence.model.ModelContentRepository
@@ -97,6 +98,13 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
             ListResponse.from(models)
         }
     }
+
+//    @Transactional
+//    Mono<M> finalise(UUID id, @Body FinaliseData finaliseData) {
+//        modelRepository.findById(id).flatMap {M model ->
+//            M finalised = modelService.finaliseModel
+//        }
+//    }
 
     protected ModelRepository<M> getModelRepository() {
         (ModelRepository<M>) administeredItemRepository
