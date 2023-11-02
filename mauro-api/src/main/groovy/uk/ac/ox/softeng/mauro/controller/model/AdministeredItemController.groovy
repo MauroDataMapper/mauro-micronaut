@@ -72,9 +72,14 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
         }
     }
 
+    protected AdministeredItem updateCreationProperties(AdministeredItem item) {
+        item.createdBy = 'USER'
+        item
+    }
+
     protected Mono<I> createEntity(P parent, @Body @NonNull I cleanItem) {
         cleanItem.parent = parent
-        cleanItem.createdBy = 'USER'
+        updateCreationProperties(cleanItem)
         pathRepository.readParentItems(cleanItem).flatMap {
             cleanItem.updatePath()
             administeredItemRepository.save(cleanItem)

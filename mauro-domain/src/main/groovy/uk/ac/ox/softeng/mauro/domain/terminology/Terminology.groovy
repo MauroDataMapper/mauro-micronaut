@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
 import groovy.transform.MapConstructor
+import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.Introspected
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Relation
@@ -16,6 +17,7 @@ import jakarta.persistence.Transient
 /**
  * A Terminology is a model that describes a number of terms, and some relationships between them.
  */
+@Slf4j
 @CompileStatic
 @AutoClone
 @Introspected
@@ -55,6 +57,8 @@ class Terminology extends Model {
 
     @Override
     Terminology clone() {
+        log.debug '*** Terminology.clone() ***'
+
         Terminology cloned = (Terminology) super.clone()
         cloned.terms = terms.collect {it.clone().tap {it.parent = cloned}}
         cloned.termRelationshipTypes = termRelationshipTypes.collect {it.clone().tap {it.parent = cloned}}

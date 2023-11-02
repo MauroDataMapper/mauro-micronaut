@@ -47,4 +47,17 @@ abstract class ModelService<M extends Model> {
 
         model
     }
+
+    M createNewBranchModelVersion(M model, String branchName) {
+        M copy = (M) model.clone()
+
+        copy.finalised = false
+        copy.dateFinalised = null
+        copy.modelVersion = null
+        copy.modelVersionTag = null
+
+        copy.branchName = branchName
+
+        copy
+    }
 }
