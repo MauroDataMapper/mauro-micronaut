@@ -47,7 +47,6 @@ abstract class Model extends AdministeredItem {
     @Nullable
     String author
 
-    @Nullable
     @JsonIgnore
     Folder folder
 

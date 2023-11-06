@@ -73,6 +73,10 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
     }
 
     protected AdministeredItem updateCreationProperties(AdministeredItem item) {
+        item.id = null
+        item.version = null
+        item.dateCreated = null
+        item.lastUpdated = null
         item.createdBy = 'USER'
         item
     }

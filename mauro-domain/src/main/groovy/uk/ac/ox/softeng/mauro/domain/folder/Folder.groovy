@@ -3,6 +3,7 @@ package uk.ac.ox.softeng.mauro.domain.folder
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 
 import com.fasterxml.jackson.annotation.JsonIgnore
+import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.Introspected
@@ -12,6 +13,8 @@ import io.micronaut.data.annotation.MappedProperty
 import io.micronaut.data.annotation.Relation
 import jakarta.persistence.Transient
 import uk.ac.ox.softeng.mauro.domain.model.Model
+
+import jakarta.validation.constraints.Null
 
 /**
  * A folder is a container for models, and, in the case of a VersionedFolder, may be a model in its own right.
@@ -58,6 +61,7 @@ class Folder extends Model {
 
     @JsonIgnore
     @Transient
+    @Nullable
     @Override
     Folder getFolder() {
         parentFolder

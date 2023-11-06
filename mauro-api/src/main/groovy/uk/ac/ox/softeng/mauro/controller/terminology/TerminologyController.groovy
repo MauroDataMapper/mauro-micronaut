@@ -5,6 +5,7 @@ import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.model.version.CreateNewVersionData
 import uk.ac.ox.softeng.mauro.domain.model.version.FinaliseData
 import uk.ac.ox.softeng.mauro.persistence.folder.FolderRepository
+import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemRepository
 import uk.ac.ox.softeng.mauro.persistence.model.ModelContentRepository
 import uk.ac.ox.softeng.mauro.persistence.terminology.TermRelationshipTypeRepository
 import uk.ac.ox.softeng.mauro.persistence.terminology.TermRepository
@@ -15,6 +16,7 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 import uk.ac.ox.softeng.mauro.controller.model.ModelController
 
 import groovy.transform.CompileStatic
+import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpStatus
@@ -29,6 +31,7 @@ import jakarta.inject.Inject
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 
+@Slf4j
 @Controller
 @CompileStatic
 class TerminologyController extends ModelController<Terminology> {
@@ -37,6 +40,9 @@ class TerminologyController extends ModelController<Terminology> {
 
     @Inject
     TerminologyService terminologyService
+
+    @Inject
+    List<AdministeredItemRepository> administeredItemRepositories
 
     TerminologyController(TerminologyRepository terminologyRepository, FolderRepository folderRepository, ModelContentRepository<Terminology> modelContentRepository) {
         super(Terminology, terminologyRepository, folderRepository, modelContentRepository)
@@ -51,6 +57,7 @@ class TerminologyController extends ModelController<Terminology> {
     @Transactional
     @Post('/folders/{folderId}/terminologies')
     Mono<Terminology> create(UUID folderId, @Body @NonNull Terminology terminology) {
+        log.debug '*** TerminologyController.create ***'
         super.create(folderId, terminology)
     }
 
@@ -86,19 +93,23 @@ class TerminologyController extends ModelController<Terminology> {
 
     @Transactional
     @Put('/terminologies/{id}/newBranchModelVersion')
-    Mono<Terminology> newBranchModelVersion(UUID id, @Body @Nullable CreateNewVersionData createNewVersionData) {
+    Mono<Terminology> createNewBranchModelVersion(UUID id, @Body @Nullable CreateNewVersionData createNewVersionData) {
         if (!createNewVersionData) createNewVersionData = new CreateNewVersionData()
         terminologyRepository.findById(id).flatMap {Terminology existing ->
             Terminology copy = terminologyService.createNewBranchModelVersion(existing, createNewVersionData.branchName)
 
             createEntity(copy.folder, copy).flatMap {Terminology savedCopy ->
-                Flux.fromIterable(savedCopy.allContents).concatMap {AdministeredItem item ->
+                Flux.fromIterable(savedCopy.getAllContents()).concatMap {AdministeredItem item ->
+                    log.debug "*** Saving item [$item.id : $item.label] ***"
                     updateCreationProperties(item)
-
-                }
-
-                Mono.just(savedCopy)
+                    getRepository(item).save(item)
+                }.then(Mono.just(savedCopy))
             }
         }
+    }
+
+    @NonNull
+    AdministeredItemRepository getRepository(AdministeredItem item) {
+        administeredItemRepositories.find {it.handles(item.class)}
     }
 }
