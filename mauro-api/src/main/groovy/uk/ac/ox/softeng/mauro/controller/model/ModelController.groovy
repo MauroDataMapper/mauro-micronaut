@@ -4,6 +4,8 @@ import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.model.Model
 import uk.ac.ox.softeng.mauro.domain.model.version.FinaliseData
+import uk.ac.ox.softeng.mauro.export.ExportMetadata
+import uk.ac.ox.softeng.mauro.export.ExportModel
 import uk.ac.ox.softeng.mauro.persistence.folder.FolderRepository
 import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemRepository
 import uk.ac.ox.softeng.mauro.persistence.model.ModelContentRepository
@@ -20,6 +22,7 @@ import io.micronaut.http.exceptions.HttpStatusException
 import io.micronaut.transaction.annotation.Transactional
 import reactor.core.publisher.Mono
 
+import java.time.OffsetDateTime
 import java.util.function.BiFunction
 
 @Slf4j
@@ -47,7 +50,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     }
 
     Mono<M> show(UUID id) {
-        modelRepository.findById(id).flatMap {M model ->
+        modelRepository.readById(id).flatMap {M model ->
             pathRepository.readParentItems(model).map {
                 model.updatePath()
                 model

@@ -4,6 +4,8 @@ import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.model.version.CreateNewVersionData
 import uk.ac.ox.softeng.mauro.domain.model.version.FinaliseData
+import uk.ac.ox.softeng.mauro.export.ExportMetadata
+import uk.ac.ox.softeng.mauro.export.ExportModel
 import uk.ac.ox.softeng.mauro.persistence.folder.FolderRepository
 import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemRepository
 import uk.ac.ox.softeng.mauro.persistence.model.ModelContentRepository
@@ -12,24 +14,34 @@ import uk.ac.ox.softeng.mauro.persistence.terminology.TermRepository
 import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
 import uk.ac.ox.softeng.mauro.persistence.terminology.TerminologyRepository
 import uk.ac.ox.softeng.mauro.domain.terminology.TerminologyService
+import uk.ac.ox.softeng.mauro.web.ImportData
 import uk.ac.ox.softeng.mauro.web.ListResponse
 import uk.ac.ox.softeng.mauro.controller.model.ModelController
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
+import io.micronaut.http.HttpRequest
 import io.micronaut.http.HttpStatus
+import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.Body
+import io.micronaut.http.annotation.Consumes
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Delete
 import io.micronaut.http.annotation.Get
+import io.micronaut.http.annotation.Part
 import io.micronaut.http.annotation.Post
 import io.micronaut.http.annotation.Put
+import io.micronaut.http.client.multipart.MultipartBody
 import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
+import jakarta.validation.Valid
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
+
+import java.time.OffsetDateTime
 
 @Slf4j
 @Controller
@@ -43,6 +55,9 @@ class TerminologyController extends ModelController<Terminology> {
 
     @Inject
     List<AdministeredItemRepository> administeredItemRepositories
+
+    @Inject
+    ObjectMapper objectMapper
 
     TerminologyController(TerminologyRepository terminologyRepository, FolderRepository folderRepository, ModelContentRepository<Terminology> modelContentRepository) {
         super(Terminology, terminologyRepository, folderRepository, modelContentRepository)
@@ -107,6 +122,33 @@ class TerminologyController extends ModelController<Terminology> {
             }
         }
     }
+
+    @Get('/terminologies/{id}/export{/namespace}{/name}{/version}')
+    Mono<ExportModel> exportModel(UUID id, @Nullable String namespace, @Nullable String name, @Nullable String version) {
+        modelRepository.findById(id).map {Terminology terminology ->
+            new ExportModel(
+                exportMetadata: new ExportMetadata(
+                    namespace: 'uk.ac.ox.softeng.mauro',
+                    name: 'mauro-micronaut',
+                    version: 'SNAPSHOT',
+                    exportDate: OffsetDateTime.now(),
+                    exportedBy: 'USER@example.org'
+                ),
+                terminology: terminology
+            )
+        }
+    }
+
+    @Transactional
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @Post('/terminologies/import{/namespace}{/name}{/version}')
+    Mono<ListResponse<Terminology>> importModel(@Body Map<String, String> importMap, @Nullable String namespace, @Nullable String name, @Nullable String version) {
+//        Terminology terminology = importData.importFile.terminology
+        ExportModel importModel = objectMapper.readValue(importMap.importFile, ExportModel)
+        Mono.empty()
+    }
+
+
 
     @NonNull
     AdministeredItemRepository getRepository(AdministeredItem item) {

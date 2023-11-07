@@ -47,7 +47,7 @@ class FolderController extends ModelController<Folder> {
     Mono<Folder> create(@Body Folder folder) {
         cleanBody(folder)
 
-        folder.createdBy = 'USER'
+        folder.createdBy = 'USER@example.org'
         pathRepository.readParentItems(folder).flatMap {
             folder.updatePath()
             folderRepository.save(folder)

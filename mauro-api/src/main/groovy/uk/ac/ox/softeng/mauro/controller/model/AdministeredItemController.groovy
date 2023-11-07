@@ -77,7 +77,7 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
         item.version = null
         item.dateCreated = null
         item.lastUpdated = null
-        item.createdBy = 'USER'
+        item.createdBy = 'USER@example.org'
         item
     }
 

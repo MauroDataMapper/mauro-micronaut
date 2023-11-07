@@ -2,6 +2,7 @@ package uk.ac.ox.softeng.mauro.domain.model
 
 import uk.ac.ox.softeng.mauro.exception.MauroInternalException
 
+import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonIgnore
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
@@ -31,6 +32,8 @@ import java.time.OffsetDateTime
 @AutoClone(excludes = ['id', 'version'])
 abstract class AdministeredItem {
 
+    public static final String DATETIME_FORMAT = 'yyyy-MM-dd\'T\'HH:mm:ss.SSSXXX'
+
     /**
      * The identify of an object.  UUIDs should be universally unique.
      * Identities are usually created when the object is saved in the database, but can be manually set beforehand.
@@ -49,12 +52,14 @@ abstract class AdministeredItem {
      * The date and time that this object was created
      */
     @DateCreated
+    @JsonFormat(pattern = DATETIME_FORMAT)
     OffsetDateTime dateCreated
 
     /**
      * The date and time that this object was last updated.
      */
     @DateUpdated
+    @JsonFormat(pattern = DATETIME_FORMAT)
     OffsetDateTime lastUpdated
 
     /**
