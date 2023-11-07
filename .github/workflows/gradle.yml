@@ -57,7 +57,7 @@ jobs:
       if: success() || failure()
       with:
         name: Test Results
-        path: '**/build/test-reports/*.xml'
+        path: '**/build/test-results/**/*.xml'
         reporter: java-junit
 
     - name: Archive test report
@@ -65,4 +65,4 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: test-report
-        path: '**/build/test-reports/*.xml'
+        path: '**/build/test-results/**/*.xml'
