@@ -66,3 +66,25 @@ jobs:
       with:
         name: test-report
         path: '**/build/test-results/**/*.xml'
+
+    - name: MegaLinter
+      uses: oxsecurity/megalinter@v7
+      env:
+        # All available variables are described in documentation
+        # https://megalinter.io/configuration/
+        VALIDATE_ALL_CODEBASE: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }} # Validates all source when push on main, else just the git diff with main. Override with true if you always want to lint all sources
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        # ADD YOUR CUSTOM ENV VARIABLES HERE OR DEFINE THEM IN A FILE .mega-linter.yml AT THE ROOT OF YOUR REPOSITORY
+        # DISABLE: COPYPASTE,SPELL # Uncomment to disable copy-paste and spell checks
+        ENABLE_LINTERS: GROOVY_NPM_GROOVY_LINT
+        LINTER_RULES_PATH: 'config/codenarc'
+
+    # Upload MegaLinter artifacts
+    - name: Archive lint reports
+      if: ${{ success() }} || ${{ failure() }}
+      uses: actions/upload-artifact@v3
+      with:
+        name: MegaLinter reports
+        path: |
+          megalinter-reports
+          mega-linter.log
