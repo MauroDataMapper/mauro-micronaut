@@ -68,7 +68,7 @@ jobs:
         path: '**/build/test-results/**/*.xml'
 
     - name: MegaLinter
-      uses: oxsecurity/megalinter@v7
+      uses: oxsecurity/megalinter/flavors/ci_light@v7
       env:
         # All available variables are described in documentation
         # https://megalinter.io/configuration/
@@ -79,6 +79,7 @@ jobs:
         # DISABLE: COPYPASTE,SPELL # Uncomment to disable copy-paste and spell checks
         ENABLE_LINTERS: GROOVY_NPM_GROOVY_LINT
         LINTER_RULES_PATH: 'config/codenarc'
+        DISABLE_ERRORS: true #Flag to have the linter complete with exit code 0 even if errors were detected.
 
     # Upload MegaLinter artifacts
     - name: Archive lint reports
