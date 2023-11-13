@@ -1,5 +1,8 @@
 package uk.ac.ox.softeng.mauro.domain.model
 
+import uk.ac.ox.softeng.mauro.domain.authority.Authority
+import uk.ac.ox.softeng.mauro.domain.security.Owner
+
 import groovy.transform.NamedParams
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 
@@ -23,7 +26,7 @@ import java.time.OffsetDateTime
  * All models must be stored within a folder.
  */
 @CompileStatic
-abstract class Model extends AdministeredItem {
+abstract class Model extends AdministeredItem implements Owner {
 
     Boolean finalised = false
 
@@ -51,7 +54,7 @@ abstract class Model extends AdministeredItem {
     Folder folder
 
     @Nullable
-    UUID authority // -> Authority
+    UUID authority
 
     @Nullable
     String branchName = 'main'

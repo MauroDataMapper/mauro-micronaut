@@ -31,6 +31,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
 
     @Override
     List<String> getDisallowedProperties() {
+        log.debug '***** ModelController::getDisallowedProperties *****'
         super.disallowedProperties +
         ['finalised', 'dateFinalised', 'readableByEveryone', 'readableByAuthenticatedUsers', 'modelType', 'deleted', 'folder', 'authority', 'branchName',
          'modelVersion', 'modelVersionTag']
