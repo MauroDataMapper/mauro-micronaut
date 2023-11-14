@@ -1,9 +1,11 @@
 package uk.ac.ox.softeng.mauro.domain.model
 
+import uk.ac.ox.softeng.mauro.domain.security.SecurableResource
 import uk.ac.ox.softeng.mauro.exception.MauroInternalException
 
 import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonIgnore
+import com.fasterxml.jackson.annotation.JsonProperty
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.Nullable
@@ -33,6 +35,7 @@ import java.time.OffsetDateTime
 abstract class AdministeredItem {
 
     public static final String DATETIME_FORMAT = 'yyyy-MM-dd\'T\'HH:mm:ss.SSSXXX'
+    public static final String DATETIME_FORMAT_DESERIALIZE = 'yyyy-MM-dd\'T\'HH:mm:ss[.SSS][.SS][.S]XXX'
 
     /**
      * The identify of an object.  UUIDs should be universally unique.
@@ -52,15 +55,37 @@ abstract class AdministeredItem {
      * The date and time that this object was created
      */
     @DateCreated
+    private OffsetDateTime dateCreated
+
     @JsonFormat(pattern = DATETIME_FORMAT)
-    OffsetDateTime dateCreated
+    OffsetDateTime getDateCreated() {
+        dateCreated
+    }
+
+    @JsonFormat(pattern = DATETIME_FORMAT_DESERIALIZE)
+    void setDateCreated(OffsetDateTime dateCreated) {
+        this.dateCreated = dateCreated
+    }
+
+//    @DateCreated
+//    @JsonFormat(pattern = DATETIME_FORMAT)
+//    OffsetDateTime dateCreated
 
     /**
      * The date and time that this object was last updated.
      */
     @DateUpdated
+    private OffsetDateTime lastUpdated
+
     @JsonFormat(pattern = DATETIME_FORMAT)
-    OffsetDateTime lastUpdated
+    OffsetDateTime getLastUpdated() {
+        lastUpdated
+    }
+
+    @JsonFormat(pattern = DATETIME_FORMAT_DESERIALIZE)
+    void setLastUpdated(OffsetDateTime lastUpdated) {
+        this.lastUpdated = lastUpdated
+    }
 
     /**
      * The label of an object.  Labels are used as identifiers within a context and so need to be unique within
@@ -130,7 +155,7 @@ abstract class AdministeredItem {
      */
     @Transient
     @JsonIgnore
-    Model getOwner() {
+    SecurableResource getOwner() {
         parent.owner
     }
 

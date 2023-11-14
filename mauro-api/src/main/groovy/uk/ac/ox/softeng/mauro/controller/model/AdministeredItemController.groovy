@@ -154,7 +154,7 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
     }
 
     protected I cleanBody(I item) {
-        I defaultItem = itemClass.getDeclaredConstructor().newInstance()
+        I defaultItem = (I) item.class.getDeclaredConstructor().newInstance()
 
         // Disallowed properties cannot be set by user request
         disallowedCreateProperties.each {String key ->

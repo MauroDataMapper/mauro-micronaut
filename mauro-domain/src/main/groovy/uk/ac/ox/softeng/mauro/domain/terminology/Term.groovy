@@ -2,7 +2,9 @@ package uk.ac.ox.softeng.mauro.domain.terminology
 
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 
+import com.fasterxml.jackson.annotation.JsonIdentityInfo
 import com.fasterxml.jackson.annotation.JsonIgnore
+import com.fasterxml.jackson.annotation.ObjectIdGenerators
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
 import groovy.transform.MapConstructor
@@ -32,6 +34,7 @@ import jakarta.validation.constraints.Pattern
 @MappedEntity
 @MapConstructor(includeSuperFields = true, includeSuperProperties = true, noArg = true)
 @Indexes([@Index(columns = ['terminology_id', 'code'], unique = true)])
+@JsonIdentityInfo(property = 'code', generator = ObjectIdGenerators.PropertyGenerator)
 class Term extends ModelItem<Terminology> {
 
     @Override

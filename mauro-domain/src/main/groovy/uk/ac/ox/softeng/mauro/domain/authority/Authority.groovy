@@ -9,9 +9,9 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
 import groovy.transform.MapConstructor
+import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.MappedEntity
-
-import java.beans.Transient
+import jakarta.persistence.Transient
 
 @CompileStatic
 @AutoClone
@@ -19,11 +19,11 @@ import java.beans.Transient
 @MapConstructor(includeSuperFields = true, includeSuperProperties = true, noArg = true)
 class Authority extends AdministeredItem implements SecurableResource {
 
+    String url
+
     Boolean readableByEveryone = false
 
     Boolean readableByAuthenticatedUsers = false
-
-    String url
 
     @Override
     @Transient

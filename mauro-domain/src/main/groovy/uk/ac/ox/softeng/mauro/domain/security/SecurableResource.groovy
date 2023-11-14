@@ -1,10 +1,16 @@
 package uk.ac.ox.softeng.mauro.domain.security
 
-interface SecurableResource {
+import groovy.transform.CompileStatic
+import io.micronaut.core.annotation.Introspected
+import io.micronaut.data.annotation.Id
 
-    UUID id
+@CompileStatic
+@Introspected
+trait SecurableResource {
 
-    Boolean readableByEveryone
+    abstract UUID getId()
 
-    Boolean readableByAuthenticatedUsers
+    abstract Boolean getReadableByEveryone()
+
+    abstract Boolean getReadableByAuthenticatedUsers()
 }
