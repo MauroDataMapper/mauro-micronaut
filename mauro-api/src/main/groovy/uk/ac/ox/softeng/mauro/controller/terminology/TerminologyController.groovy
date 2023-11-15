@@ -9,12 +9,9 @@ import uk.ac.ox.softeng.mauro.export.ExportModel
 import uk.ac.ox.softeng.mauro.persistence.folder.FolderRepository
 import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemRepository
 import uk.ac.ox.softeng.mauro.persistence.model.ModelContentRepository
-import uk.ac.ox.softeng.mauro.persistence.terminology.TermRelationshipTypeRepository
-import uk.ac.ox.softeng.mauro.persistence.terminology.TermRepository
 import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
 import uk.ac.ox.softeng.mauro.persistence.terminology.TerminologyRepository
 import uk.ac.ox.softeng.mauro.domain.terminology.TerminologyService
-import uk.ac.ox.softeng.mauro.web.ImportData
 import uk.ac.ox.softeng.mauro.web.ListResponse
 import uk.ac.ox.softeng.mauro.controller.model.ModelController
 
@@ -23,7 +20,6 @@ import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
-import io.micronaut.http.HttpRequest
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.Body
@@ -31,13 +27,10 @@ import io.micronaut.http.annotation.Consumes
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Delete
 import io.micronaut.http.annotation.Get
-import io.micronaut.http.annotation.Part
 import io.micronaut.http.annotation.Post
 import io.micronaut.http.annotation.Put
-import io.micronaut.http.client.multipart.MultipartBody
 import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
-import jakarta.validation.Valid
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 
@@ -143,9 +136,26 @@ class TerminologyController extends ModelController<Terminology> {
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Post('/terminologies/import{/namespace}{/name}{/version}')
     Mono<ListResponse<Terminology>> importModel(@Body Map<String, String> importMap, @Nullable String namespace, @Nullable String name, @Nullable String version) {
+        log.info '** start importModel **'
 //        Terminology terminology = importData.importFile.terminology
         ExportModel importModel = objectMapper.readValue(importMap.importFile, ExportModel)
-        Mono.empty()
+        log.info '*** imported JSON model ***'
+        Terminology imported = importModel.terminology
+        updateCreationProperties(imported)
+        log.info '* start updateCreationProperties *'
+        imported.getAllContents().each {updateCreationProperties(it)}
+        log.info '* finish updateCreationProperties *'
+
+        UUID folderId = UUID.fromString(importMap.folderId)
+
+        folderRepository.readById(folderId).flatMap {Folder folder ->
+            imported.folder = folder
+            log.info '** about to saveWithContentBatched... **'
+            modelContentRepository.saveWithAssociations(imported).flatMap {Terminology savedImported ->
+                log.info '** finished saveWithContentBatched **'
+                show(savedImported.id).map {ListResponse.from([it])}
+            }
+        }
     }
 
     @NonNull

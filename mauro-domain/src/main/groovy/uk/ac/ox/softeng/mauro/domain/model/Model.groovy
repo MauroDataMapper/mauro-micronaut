@@ -96,7 +96,7 @@ abstract class Model extends AdministeredItem implements SecurableResource {
 
     /**
      * For a model which has all its associations loaded, return a collection of all its direct child items.
-     * The collection does not have to be in any particular order.
+     * The collection should be ordered so that all the items can be saved in order.
      */
     @Transient
     @JsonIgnore

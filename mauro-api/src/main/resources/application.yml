@@ -14,10 +14,10 @@ micronaut:
       swagger-ui:
         paths: classpath:META-INF/swagger/views/swagger-ui
         mapping: /swagger-ui/**
-netty:
-  default:
-    allocator:
-      max-order: 3
+#netty:
+#  default:
+#    allocator:
+#      max-order: 3
 endpoints:
   routes:
     enabled: true

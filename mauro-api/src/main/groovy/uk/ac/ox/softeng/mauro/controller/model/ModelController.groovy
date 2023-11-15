@@ -42,11 +42,14 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         disallowedProperties - ['readableByEveryone', 'readableByAuthenticatedUsers']
     }
 
+    ModelContentRepository<M> modelContentRepository
+
     ModelController(Class<M> modelClass, ModelRepository<M> modelRepository, FolderRepository folderRepository, ModelContentRepository<M> modelContentRepository) {
         super(modelClass, modelRepository, (AdministeredItemRepository<Folder>) folderRepository, modelContentRepository)
         this.itemClass = modelClass
         this.administeredItemRepository = modelRepository
         this.parentItemRepository = folderRepository
+        this.modelContentRepository = modelContentRepository
         this.administeredItemContentRepository = modelContentRepository
     }
 

@@ -1,6 +1,7 @@
 package uk.ac.ox.softeng.mauro.domain.terminology
 
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
+import uk.ac.ox.softeng.mauro.domain.model.ModelItem
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonManagedReference
@@ -52,8 +53,14 @@ class Terminology extends Model {
         termRelationships?.each {it.terminology = this}
         if (terms) items.addAll(terms)
         if (termRelationshipTypes) items.addAll(termRelationshipTypes)
-        if (termRelationships) items.addAll(termRelationships.findAll {terms?.id?.contains(it.id)})
+        if (termRelationships) items.addAll(termRelationships)
         items
+    }
+
+    @Transient
+    @JsonIgnore
+    List<List<? extends ModelItem<Terminology>>> getAllAssociations() {
+        [terms, termRelationshipTypes, termRelationships]
     }
 
     @Override

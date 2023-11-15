@@ -102,7 +102,7 @@ abstract class AdministeredItem {
      * The textual description of an object.  Descriptions can be formatted in plain text, markdown or HTML.
      */
     @Nullable
-    String description
+    public String description
 
     /**
      * A list of other names for this object, separated by semi-colons.  These do not have to be unique.
