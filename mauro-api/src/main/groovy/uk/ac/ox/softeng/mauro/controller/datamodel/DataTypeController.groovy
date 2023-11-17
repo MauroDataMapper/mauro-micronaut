@@ -3,10 +3,13 @@ package uk.ac.ox.softeng.mauro.controller.datamodel
 import uk.ac.ox.softeng.mauro.controller.model.AdministeredItemController
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
+import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.terminology.Term
 import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
+import uk.ac.ox.softeng.mauro.exception.MauroInternalException
 import uk.ac.ox.softeng.mauro.persistence.datamodel.DataModelRepository
 import uk.ac.ox.softeng.mauro.persistence.datamodel.DataTypeRepository
+import uk.ac.ox.softeng.mauro.persistence.datamodel.EnumerationValueRepository
 import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemContentRepository
 import uk.ac.ox.softeng.mauro.persistence.terminology.TermRepository
 import uk.ac.ox.softeng.mauro.persistence.terminology.TerminologyRepository
@@ -22,6 +25,8 @@ import io.micronaut.http.annotation.Delete
 import io.micronaut.http.annotation.Get
 import io.micronaut.http.annotation.Post
 import io.micronaut.http.annotation.Put
+import jakarta.inject.Inject
+import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 
 @CompileStatic
@@ -29,6 +34,9 @@ import reactor.core.publisher.Mono
 class DataTypeController extends AdministeredItemController<DataType, DataModel> {
 
     DataTypeRepository dataTypeRepository
+
+    @Inject
+    EnumerationValueRepository enumerationValueRepository
 
     DataTypeController(DataTypeRepository dataTypeRepository, DataModelRepository dataModelRepository, AdministeredItemContentRepository<DataType> administeredItemContentRepository) {
         super(DataType, dataTypeRepository, dataModelRepository, administeredItemContentRepository)
@@ -42,7 +50,12 @@ class DataTypeController extends AdministeredItemController<DataType, DataModel>
 
     @Post
     Mono<DataType> create(UUID dataModelId, @Body @NonNull DataType dataType) {
-        super.create(dataModelId, dataType)
+        super.create(dataModelId, dataType).flatMap { dt ->
+            Flux.fromIterable(dataType.enumerationValues).flatMap {enumValue ->
+                    enumValue.enumerationType = (DataType) dt
+                    return enumerationValueRepository.save(enumValue)
+                }.then(Mono.just(dt))
+        }
     }
 
     @Put('/{id}')

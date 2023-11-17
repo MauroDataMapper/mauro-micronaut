@@ -25,6 +25,9 @@ class DataModelIntegrationSpec extends BaseIntegrationSpec {
     @Shared
     UUID dataTypeId2
 
+    @Shared
+    UUID dataTypeId3
+
     void 'test data model'() {
         given:
         def response = POST('/folders', [label: 'Test folder'])
@@ -42,14 +45,14 @@ class DataModelIntegrationSpec extends BaseIntegrationSpec {
 
     void 'test data types'() {
         when:
-        def response = POST("/dataModels/$dataModelId/dataTypes", [label: 'string', description: 'character string of variable length'])
+        def response = POST("/dataModels/$dataModelId/dataTypes", [label: 'string', description: 'character string of variable length',domainType: 'PrimitiveType'])
         dataTypeId1 = UUID.fromString(response.id)
 
         then:
         response.label == 'string'
 
         when:
-        response = POST("/dataModels/$dataModelId/dataTypes", [label: 'integer', description: 'a whole number, may be positive or negative, with no maximum or minimum'])
+        response = POST("/dataModels/$dataModelId/dataTypes", [label: 'integer', description: 'a whole number, may be positive or negative, with no maximum or minimum',domainType: 'PrimitiveType'])
         dataTypeId2 = UUID.fromString(response.id)
 
         then:
@@ -62,6 +65,23 @@ class DataModelIntegrationSpec extends BaseIntegrationSpec {
         response
         response.count == 2
         response.items.path.sort() == ['dm:Test data model$main|dt:integer', 'dm:Test data model$main|dt:string']
+        response.items.domainType == ['PrimitiveType', 'PrimitiveType']
+
+        when:
+        response = POST("/dataModels/$dataModelId/dataTypes",
+                        [label: 'Yes/No',
+                         description: 'Either a yes or a no',
+                         domainType: 'EnumerationType',
+                         enumerationValues: [
+                             [key: 'Y', value: 'Yes'],
+                             [key: 'N', value: 'No']
+                         ]])
+        dataTypeId3 = UUID.fromString(response.id)
+
+        then:
+        response.label == 'Yes/No'
+        response.domainType == 'EnumerationType'
+
     }
 
 

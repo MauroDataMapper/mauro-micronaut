@@ -13,7 +13,7 @@ abstract class ItemController<I extends Item> {
      * Properties disallowed in a simple update request.
      */
     List<String> getDisallowedProperties() {
-        ['class', 'id', 'dateCreated', 'lastUpdated', 'domainType', 'createdBy']
+        ['class', 'id', 'dateCreated', 'lastUpdated', 'createdBy']
     }
 
     /**

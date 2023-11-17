@@ -65,21 +65,42 @@ class DataModel extends Model {
         build [:], closure
     }
 
-    DataType dataType(DataType dataType) {
-        this.dataTypes.add(dataType)
-        dataType.dataModel = this
-        dataType
+    DataType primitiveType(DataType primitiveType) {
+        this.dataTypes.add(primitiveType)
+        primitiveType.dataModel = this
+        primitiveType.dataTypeKind = DataType.DataTypeKind.PRIMITIVE_TYPE
+        primitiveType
     }
 
-    DataType dataType(Map args, @DelegatesTo(value = DataType, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
+    DataType primitiveType(Map args, @DelegatesTo(value = DataType, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
         DataType dt = DataType.build(args, closure)
         dt.dataModel = this
         this.dataTypes.add(dt)
+        dt.dataTypeKind = DataType.DataTypeKind.PRIMITIVE_TYPE
         dt
     }
 
-    DataType dataType(@DelegatesTo(value = DataType, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
-        dataType [:], closure
+    DataType primitiveType(@DelegatesTo(value = DataType, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
+        primitiveType [:], closure
+    }
+
+    DataType enumerationType(DataType enumerationType) {
+        this.dataTypes.add(enumerationType)
+        enumerationType.dataModel = this
+        enumerationType.dataTypeKind = DataType.DataTypeKind.ENUMERATION_TYPE
+        enumerationType
+    }
+
+    DataType enumerationType(Map args, @DelegatesTo(value = DataType, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
+        DataType dt = DataType.build(args, closure)
+        dt.dataModel = this
+        this.dataTypes.add(dt)
+        dt.dataTypeKind = DataType.DataTypeKind.ENUMERATION_TYPE
+        dt
+    }
+
+    DataType enumerationType(@DelegatesTo(value = DataType, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
+        enumerationType [:], closure
     }
 
 }
