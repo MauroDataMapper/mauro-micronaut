@@ -35,8 +35,6 @@ import uk.ac.ox.softeng.mauro.domain.model.ModelItem
 @JsonIdentityInfo(property = 'label', generator = ObjectIdGenerators.PropertyGenerator)
 class TermRelationshipType extends ModelItem<Terminology> {
 
-    String label
-
     @JsonIgnore
     Terminology terminology
 

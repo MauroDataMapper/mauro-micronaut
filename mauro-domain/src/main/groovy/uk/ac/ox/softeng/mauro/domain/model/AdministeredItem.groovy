@@ -102,7 +102,7 @@ abstract class AdministeredItem {
      * The textual description of an object.  Descriptions can be formatted in plain text, markdown or HTML.
      */
     @Nullable
-    public String description
+    String description
 
     /**
      * A list of other names for this object, separated by semi-colons.  These do not have to be unique.
@@ -174,7 +174,7 @@ abstract class AdministeredItem {
     @Transient
     @JsonIgnore
     String getPathIdentifier() {
-        label
+        this.label
     }
 
     /**

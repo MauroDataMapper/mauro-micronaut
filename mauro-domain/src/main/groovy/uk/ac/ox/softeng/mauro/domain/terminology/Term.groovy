@@ -43,7 +43,7 @@ class Term extends ModelItem<Terminology> {
         code && definition ? "${code}: ${definition}" :
         null
 
-        label.substring(0, Math.min(label.length(), 200))
+//        label.substring(0, Math.min(label.length(), 200))
     }
 
     @JsonIgnore
@@ -56,13 +56,13 @@ class Term extends ModelItem<Terminology> {
     @NotBlank
     String definition
 
-    String getDefinition() {
-        definition?.substring(0, Math.min(definition.length(), 200))
-    }
-
-    String getDescription() {
-        this.@description?.substring(0, Math.min(this.@description.length(), 200))
-    }
+//    String getDefinition() {
+//        definition?.substring(0, Math.min(definition.length(), 200))
+//    }
+//
+//    String getDescription() {
+//        this.@description?.substring(0, Math.min(this.@description.length(), 200))
+//    }
 
     @Nullable
     String url
