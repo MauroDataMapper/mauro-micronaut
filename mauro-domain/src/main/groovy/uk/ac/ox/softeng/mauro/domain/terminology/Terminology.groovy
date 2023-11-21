@@ -10,6 +10,8 @@ import groovy.transform.CompileStatic
 import groovy.transform.MapConstructor
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.Introspected
+import io.micronaut.data.annotation.Index
+import io.micronaut.data.annotation.Indexes
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Relation
 import uk.ac.ox.softeng.mauro.domain.model.Model
@@ -23,8 +25,9 @@ import jakarta.persistence.Transient
 @CompileStatic
 @AutoClone
 @Introspected
-@MappedEntity
+@MappedEntity(schema = 'terminology')
 @MapConstructor(includeSuperFields = true, includeSuperProperties = true, noArg = true)
+@Indexes([@Index(columns = ['folder_id', 'label', 'branch_name', 'model_version'], unique = true)])
 class Terminology extends Model {
 
     @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'terminology')

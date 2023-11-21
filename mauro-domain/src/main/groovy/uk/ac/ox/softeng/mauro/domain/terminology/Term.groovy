@@ -31,7 +31,7 @@ import jakarta.validation.constraints.Pattern
 @CompileStatic
 @AutoClone(excludes = ['terminology', 'sourceTermRelationships', 'targetTermRelationships'])
 @Introspected
-@MappedEntity
+@MappedEntity(schema = 'terminology')
 @MapConstructor(includeSuperFields = true, includeSuperProperties = true, noArg = true)
 @Indexes([@Index(columns = ['terminology_id', 'code'], unique = true)])
 @JsonIdentityInfo(property = 'code', generator = ObjectIdGenerators.PropertyGenerator)

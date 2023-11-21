@@ -7,8 +7,10 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
 import groovy.transform.CompileStatic
+import io.micronaut.data.annotation.Indexes
 import io.micronaut.core.annotation.Introspected
 import io.micronaut.core.annotation.Nullable
+import io.micronaut.data.annotation.Index
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.MappedProperty
 import io.micronaut.data.annotation.Relation
@@ -29,7 +31,8 @@ import jakarta.validation.constraints.Null
 
 @CompileStatic
 @Introspected
-@MappedEntity
+@MappedEntity(schema = 'core')
+@Indexes([@Index(columns = ['parent_folder_id'])])
 class Folder extends Model {
 
     @JsonIgnore

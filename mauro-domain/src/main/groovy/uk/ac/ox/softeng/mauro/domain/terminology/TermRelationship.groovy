@@ -26,7 +26,7 @@ import uk.ac.ox.softeng.mauro.domain.model.ModelItem
 @CompileStatic
 @AutoClone(excludes = ['terminology'])
 @Introspected
-@MappedEntity
+@MappedEntity(schema = 'terminology')
 @MapConstructor(includeSuperFields = true, includeSuperProperties = true, noArg = true)
 @Indexes([
         @Index(columns = ['terminology_id']),

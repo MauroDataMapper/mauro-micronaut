@@ -84,7 +84,15 @@ abstract class TerminologyRepository implements ReactorPageableRepository<Termin
         terminology_term_relationship_types_."aliases_string"      AS term_relationship_types_aliases_string,
         terminology_term_relationship_types_."terminology_id"      AS term_relationship_types_terminology_id,
         terminology_term_relationship_types_."parental_relationship" AS term_relationship_types_parental_relationship,
-        terminology_term_relationship_types_."child_relationship"  AS term_relationship_types_child_relationship,
+        terminology_term_relationship_types_."child_relationship"  AS term_relationship_types_child_relationship
+        FROM terminology."terminology" terminology_
+    LEFT JOIN terminology."term" terminology_terms_ ON terminology_."id" = terminology_terms_."terminology_id"
+    LEFT JOIN terminology."term_relationship" terminology_term_relationships_ ON terminology_terms_.id IN (terminology_term_relationships_.source_term_id,
+    terminology_term_relationships_.target_term_id)
+    LEFT JOIN terminology."term_relationship_type" terminology_term_relationship_types_ ON terminology_."id" = terminology_term_relationship_types_."terminology_id"
+    WHERE (terminology_."id" = :id)'''
+/*
+
         terminology_authority_."id" AS authority_id,
         terminology_authority_."version" AS authority_version,
         terminology_authority_."date_created" AS authority_date_created,
@@ -96,13 +104,10 @@ abstract class TerminologyRepository implements ReactorPageableRepository<Termin
         terminology_authority_."created_by" AS authority_created_by,
         terminology_authority_."breadcrumb_tree_id" AS authority_breadcrumb_tree_id,
         terminology_authority_."url" AS authority_url
-        FROM "terminology" terminology_
-    LEFT JOIN "term" terminology_terms_ ON terminology_."id" = terminology_terms_."terminology_id"
-    LEFT JOIN "term_relationship" terminology_term_relationships_ ON terminology_terms_.id IN (terminology_term_relationships_.source_term_id,
-    terminology_term_relationships_.target_term_id)
-    LEFT JOIN "term_relationship_type" terminology_term_relationship_types_ ON terminology_."id" = terminology_term_relationship_types_."terminology_id"
-    LEFT JOIN "terminology" terminology_authority_ ON terminology_."authority_id" = terminology_authority_."id"
-    WHERE (terminology_."id" = :id)'''
+
+        LEFT JOIN core."authority" terminology_authority_ ON terminology_."authority_id" = terminology_authority_."id"
+
+ */
 
     //    @Query('''SELECT terminology.*, term.*, term_relationship.*, term_relationship_type.*
     //FROM terminology
@@ -111,14 +116,14 @@ abstract class TerminologyRepository implements ReactorPageableRepository<Termin
     //LEFT JOIN term_relationship_type ON terminology.id = term_relationship_type.terminology_id''')
     //        terminology_term_relationships_."terminology_id"           AS term_relationships_terminology_id,
     @Query(FIND_QUERY_SQL)
-    @Join(value = 'authority', type = Join.Type.LEFT_FETCH)
+//    @Join(value = 'authority', type = Join.Type.LEFT_FETCH)
     @Join(value = 'terms', type = Join.Type.LEFT_FETCH)
     @Join(value = 'termRelationshipTypes', type = Join.Type.LEFT_FETCH)
     @Join(value = 'termRelationships', type = Join.Type.LEFT_FETCH)
     abstract Mono<Terminology> findById(UUID id)
 
     @Query(FIND_QUERY_SQL)
-    @Join(value = 'authority', type = Join.Type.LEFT_FETCH)
+//    @Join(value = 'authority', type = Join.Type.LEFT_FETCH)
     @Join(value = 'terms', type = Join.Type.LEFT_FETCH)
     @Join(value = 'termRelationshipTypes', type = Join.Type.LEFT_FETCH)
     @Join(value = 'termRelationships', type = Join.Type.LEFT_FETCH)

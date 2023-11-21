@@ -15,7 +15,7 @@ import jakarta.persistence.Transient
 
 @CompileStatic
 @AutoClone
-@MappedEntity
+@MappedEntity(schema = 'core')
 @MapConstructor(includeSuperFields = true, includeSuperProperties = true, noArg = true)
 class Authority extends AdministeredItem implements SecurableResource {
 

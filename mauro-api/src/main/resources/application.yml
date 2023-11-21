@@ -46,7 +46,7 @@ r2dbc:
       url: r2dbc:pool://localhost:5432/sandbox
       username: sandbox
       password: sandbox
-#      schema-generate: CREATE_DROP
+      schema-generate: CREATE_DROP
       dialect: POSTGRES
       db-type: postgres
       options:
@@ -57,3 +57,8 @@ flyway:
     default:
       enabled: true
       baselineOnMigrate: true
+      fail-on-missing-locations: true
+      clean-schema: true
+      schemas:
+        - core
+        - terminology

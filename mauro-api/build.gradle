@@ -1,9 +1,9 @@
 plugins {
     id("groovy")
     id("com.github.johnrengelman.shadow") version "8.1.1"
-    id("io.micronaut.application") version "4.0.4"
-//    id("io.micronaut.test-resources") version "4.0.4"
-    id("io.micronaut.aot") version "4.0.4"
+    id("io.micronaut.application") version "4.2.0"
+//    id("io.micronaut.test-resources") version "4.2.0"
+    id("io.micronaut.aot") version "4.2.0"
     id("codenarc")
 }
 
@@ -40,6 +40,7 @@ dependencies {
     implementation("io.micronaut.flyway:micronaut-flyway")
     runtimeOnly("org.postgresql:postgresql")
     runtimeOnly("org.flywaydb:flyway-core")
+    implementation("io.micronaut.sql:micronaut-jdbc-hikari")
 }
 
 
