@@ -21,7 +21,7 @@ import jakarta.persistence.Transient
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Pattern
 
-import java.time.OffsetDateTime
+import java.time.Instant
 /**
  * An AdministeredItem is an item stored in the catalogue.
  * <p>
@@ -35,8 +35,8 @@ import java.time.OffsetDateTime
 @AutoClone(excludes = ['id', 'version'])
 abstract class AdministeredItem {
 
-    public static final String DATETIME_FORMAT = 'yyyy-MM-dd\'T\'HH:mm:ss.SSSXXX'
-    public static final String DATETIME_FORMAT_DESERIALIZE = 'yyyy-MM-dd\'T\'HH:mm:ss[.SSS][.SS][.S]XXX'
+    public static final String DATETIME_FORMAT = 'yyyy-MM-dd\'T\'HH:mm:ss.SSSZ'
+    public static final String DATETIME_FORMAT_DESERIALIZE = 'yyyy-MM-dd\'T\'HH:mm:ss[.SSSSSS][.SSSSS][.SSSS][.SSS][.SS][.S][XXX]'
 
     /**
      * The identify of an object.  UUIDs should be universally unique.
@@ -56,35 +56,35 @@ abstract class AdministeredItem {
      * The date and time that this object was created
      */
     @DateCreated
-    private OffsetDateTime dateCreated
+    private Instant dateCreated
 
-    @JsonFormat(pattern = DATETIME_FORMAT)
-    OffsetDateTime getDateCreated() {
+//    @JsonFormat(pattern = DATETIME_FORMAT)
+    Instant getDateCreated() {
         dateCreated
     }
 
-    @JsonFormat(pattern = DATETIME_FORMAT_DESERIALIZE)
-    void setDateCreated(OffsetDateTime dateCreated) {
+//    @JsonFormat(pattern = DATETIME_FORMAT_DESERIALIZE)
+    void setDateCreated(Instant dateCreated) {
         this.dateCreated = dateCreated
     }
 
 //    @DateCreated
 //    @JsonFormat(pattern = DATETIME_FORMAT)
-//    OffsetDateTime dateCreated
+//    Instant dateCreated
 
     /**
      * The date and time that this object was last updated.
      */
     @DateUpdated
-    private OffsetDateTime lastUpdated
+    private Instant lastUpdated
 
-    @JsonFormat(pattern = DATETIME_FORMAT)
-    OffsetDateTime getLastUpdated() {
+//    @JsonFormat(pattern = DATETIME_FORMAT)
+    Instant getLastUpdated() {
         lastUpdated
     }
 
-    @JsonFormat(pattern = DATETIME_FORMAT_DESERIALIZE)
-    void setLastUpdated(OffsetDateTime lastUpdated) {
+//    @JsonFormat(pattern = DATETIME_FORMAT_DESERIALIZE)
+    void setLastUpdated(Instant lastUpdated) {
         this.lastUpdated = lastUpdated
     }
 
@@ -244,7 +244,7 @@ abstract class AdministeredItem {
      *
      * @see #dateCreated
      */
-    OffsetDateTime dateCreated(OffsetDateTime dateCreated) {
+    Instant dateCreated(Instant dateCreated) {
         this.dateCreated = dateCreated
         this.dateCreated
     }
@@ -254,8 +254,8 @@ abstract class AdministeredItem {
      *
      * @see #dateCreated
      */
-    OffsetDateTime dateCreated(String dateCreated) {
-        this.dateCreated = OffsetDateTime.parse(dateCreated)
+    Instant dateCreated(String dateCreated) {
+        this.dateCreated = Instant.parse(dateCreated)
         this.dateCreated
     }
 
@@ -264,7 +264,7 @@ abstract class AdministeredItem {
      *
      * @see #lastUpdated
      */
-    OffsetDateTime lastUpdated(OffsetDateTime lastUpdated) {
+    Instant lastUpdated(Instant lastUpdated) {
         this.lastUpdated = lastUpdated
         this.lastUpdated
     }
@@ -274,8 +274,8 @@ abstract class AdministeredItem {
      *
      * @see #lastUpdated
      */
-    OffsetDateTime lastUpdated(String lastUpdated) {
-        this.lastUpdated = OffsetDateTime.parse(lastUpdated)
+    Instant lastUpdated(String lastUpdated) {
+        this.lastUpdated = Instant.parse(lastUpdated)
         this.lastUpdated
     }
 

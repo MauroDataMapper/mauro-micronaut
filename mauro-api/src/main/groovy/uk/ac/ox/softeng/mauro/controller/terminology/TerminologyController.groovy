@@ -34,7 +34,7 @@ import jakarta.inject.Inject
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 
-import java.time.OffsetDateTime
+import java.time.Instant
 
 @Slf4j
 @Controller
@@ -124,7 +124,7 @@ class TerminologyController extends ModelController<Terminology> {
                     namespace: 'uk.ac.ox.softeng.mauro',
                     name: 'mauro-micronaut',
                     version: 'SNAPSHOT',
-                    exportDate: OffsetDateTime.now(),
+                    exportDate: Instant.now(),
                     exportedBy: 'USER@example.org'
                 ),
                 terminology: terminology

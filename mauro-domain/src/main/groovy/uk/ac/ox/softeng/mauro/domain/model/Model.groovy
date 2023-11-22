@@ -16,7 +16,7 @@ import io.micronaut.data.annotation.Index
 import io.micronaut.data.annotation.Indexes
 import jakarta.persistence.Transient
 
-import java.time.OffsetDateTime
+import java.time.Instant
 
 /**
  * A model in Mauro is a document containing a description of existing data, or a specification concerning the
@@ -34,7 +34,7 @@ abstract class Model extends AdministeredItem implements SecurableResource {
     Boolean finalised = false
 
     @Nullable
-    OffsetDateTime dateFinalised
+    Instant dateFinalised
 
     @Nullable
     String documentationVersion
@@ -113,7 +113,7 @@ abstract class Model extends AdministeredItem implements SecurableResource {
         this.finalised
     }
 
-    OffsetDateTime dateFinalised(OffsetDateTime dateFinalised) {
+    Instant dateFinalised(Instant dateFinalised) {
         this.dateFinalised = dateFinalised
         this.dateFinalised
     }

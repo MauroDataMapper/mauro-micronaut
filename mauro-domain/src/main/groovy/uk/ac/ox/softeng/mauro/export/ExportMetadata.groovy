@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonFormat
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.Introspected
 
-import java.time.OffsetDateTime
+import java.time.Instant
 
 @CompileStatic
 @Introspected
@@ -19,7 +19,7 @@ class ExportMetadata {
     String version
 
     @JsonFormat(pattern = AdministeredItem.DATETIME_FORMAT)
-    OffsetDateTime exportDate
+    Instant exportDate
 
     String exportedBy
 }

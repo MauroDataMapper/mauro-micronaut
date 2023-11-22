@@ -9,7 +9,7 @@ import uk.ac.ox.softeng.mauro.domain.tree.TreeItem
 
 import io.micronaut.core.annotation.Nullable
 
-import java.time.OffsetDateTime
+import java.time.Instant
 
 /**
  * A Service class that provides utility functions for working with data models.
@@ -40,7 +40,7 @@ abstract class ModelService<M extends Model> {
         if (model.finalised) throw new MauroApplicationException("Cannot finalise Model [$model.label] as it is already finalised")
 
         model.finalised = true
-        model.dateFinalised = OffsetDateTime.now()
+        model.dateFinalised = Instant.now()
 
         model.modelVersion = requestedModelVersion ?: (model.modelVersion ?: new ModelVersion([:])).nextVersion(versionChangeType)
         model.modelVersionTag = versionTag
