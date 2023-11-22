@@ -1,7 +1,12 @@
 package uk.ac.ox.softeng.mauro.datamodel
 
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
+import uk.ac.ox.softeng.mauro.domain.datamodel.EnumerationValue
 import uk.ac.ox.softeng.mauro.testing.BaseIntegrationSpec
+import uk.ac.ox.softeng.mauro.web.ListResponse
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import io.micronaut.runtime.EmbeddedApplication
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
@@ -9,6 +14,9 @@ import spock.lang.Shared
 
 @MicronautTest
 class DataModelIntegrationSpec extends BaseIntegrationSpec {
+
+    @Inject
+    ObjectMapper objectMapper
 
     @Inject
     EmbeddedApplication<?> application
@@ -29,46 +37,45 @@ class DataModelIntegrationSpec extends BaseIntegrationSpec {
     UUID dataTypeId3
 
     void 'test data model'() {
+
         given:
-        def response = POST('/folders', [label: 'Test folder'])
-        folderId = UUID.fromString(response.id)
+        DataModel response = (DataModel) POST('/folders', [label: 'Test folder'], DataModel)
+        folderId = response.id
 
         when:
-        response = POST("/folders/$folderId/dataModels", [label: 'Test data model'])
-        dataModelId = UUID.fromString(response.id)
+        response = (DataModel) POST("/folders/$folderId/dataModels", [label: 'Test data model'], DataModel)
+        dataModelId = response.id
 
         then:
-        response
         response.label == 'Test data model'
-        response.path == 'dm:Test data model$main'
+        response.path.toString() == 'dm:Test data model$main'
     }
 
     void 'test data types'() {
         when:
-        def response = POST("/dataModels/$dataModelId/dataTypes", [label: 'string', description: 'character string of variable length',domainType: 'PrimitiveType'])
-        dataTypeId1 = UUID.fromString(response.id)
+        DataModel response = (DataModel) POST("/dataModels/$dataModelId/dataTypes", [label: 'string', description: 'character string of variable length',domainType: 'PrimitiveType'], DataModel)
+        dataTypeId1 = response.id
 
         then:
         response.label == 'string'
 
         when:
-        response = POST("/dataModels/$dataModelId/dataTypes", [label: 'integer', description: 'a whole number, may be positive or negative, with no maximum or minimum',domainType: 'PrimitiveType'])
-        dataTypeId2 = UUID.fromString(response.id)
+        DataType dataTypeResponse = (DataType) POST("/dataModels/$dataModelId/dataTypes", [label: 'integer', description: 'a whole number, may be positive or negative, with no maximum or minimum', domainType: 'PrimitiveType'], DataType)
+        dataTypeId2 = dataTypeResponse.id
 
         then:
         response.label == 'integer'
 
         when:
-        response = GET("/dataModels/$dataModelId/dataTypes")
+        ListResponse<DataType> dataTypesListResponse = (ListResponse<DataType>) GET("/dataModels/$dataModelId/dataTypes", ListResponse<DataType>)
 
         then:
-        response
-        response.count == 2
-        response.items.path.sort() == ['dm:Test data model$main|dt:integer', 'dm:Test data model$main|dt:string']
-        response.items.domainType == ['PrimitiveType', 'PrimitiveType']
+        dataTypesListResponse.count == 2
+        dataTypesListResponse.items.path.sort().collect {it.toString()} == ['dm:Test data model$main|dt:integer', 'dm:Test data model$main|dt:string']
+        dataTypesListResponse.items.domainType == ['PrimitiveType', 'PrimitiveType']
 
         when:
-        response = POST("/dataModels/$dataModelId/dataTypes",
+        dataTypeResponse = (DataType) POST("/dataModels/$dataModelId/dataTypes",
                         [label: 'Yes/No',
                          description: 'Either a yes or a no',
                          domainType: 'EnumerationType',
@@ -76,11 +83,45 @@ class DataModelIntegrationSpec extends BaseIntegrationSpec {
                              [key: 'Y', value: 'Yes'],
                              [key: 'N', value: 'No']
                          ]])
-        dataTypeId3 = UUID.fromString(response.id)
+        dataTypeId3 = dataTypeResponse.id
 
         then:
-        response.label == 'Yes/No'
-        response.domainType == 'EnumerationType'
+        dataTypeResponse.label == 'Yes/No'
+        dataTypeResponse.domainType == 'EnumerationType'
+
+    }
+
+    void 'test enumeration values'() {
+        when:
+        DataType dataTypeResponse = (DataType) POST("/dataModels/$dataModelId/dataTypes", [label: 'Boolean', description: 'Either true or false',domainType: 'EnumerationType'], DataType)
+        UUID enumerationTypeId = dataTypeResponse.id
+
+        then:
+        dataTypeResponse.label == 'Boolean'
+
+        when:
+        EnumerationValue enumerationValueResponse = (EnumerationValue) POST("/dataModels/$dataModelId/dataTypes/$enumerationTypeId/enumerationValues", [key: 'T', value: 'True'], EnumerationValue)
+
+        then:
+        enumerationValueResponse.label == 'T'
+        enumerationValueResponse.domainType == 'EnumerationValue'
+
+        when:
+        enumerationValueResponse = (EnumerationValue) POST("/dataModels/$dataModelId/dataTypes/$enumerationTypeId/enumerationValues", [key: 'F', value: 'False'], EnumerationValue)
+
+        then:
+        enumerationValueResponse.label == 'F'
+        enumerationValueResponse.domainType == 'EnumerationValue'
+
+        when:
+        ListResponse<EnumerationValue> enumerationValueListResponse = (ListResponse<EnumerationValue>) GET("/dataModels/$dataModelId/dataTypes/$enumerationTypeId/enumerationValues", ListResponse<EnumerationValue>)
+
+        then:
+        System.err.println(enumerationValueListResponse)
+        enumerationValueListResponse.count == 2
+
+        enumerationValueListResponse.items.find { it -> it.key == 'T' } != null
+        enumerationValueListResponse.items.find { it -> it.key == 'F' } != null
 
     }
 

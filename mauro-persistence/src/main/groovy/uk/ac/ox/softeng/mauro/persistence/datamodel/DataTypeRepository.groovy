@@ -7,6 +7,7 @@ import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.persistence.model.ModelItemRepository
 
 import io.micronaut.core.annotation.NonNull
+import io.micronaut.data.annotation.Join
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.r2dbc.annotation.R2dbcRepository
 
@@ -19,8 +20,10 @@ import reactor.core.publisher.Mono
 @R2dbcRepository(dialect = Dialect.POSTGRES)
 abstract class DataTypeRepository implements ReactorPageableRepository<DataType, UUID>, ModelItemRepository<DataType> {
 
+    @Join(value = 'enumerationValues', type = Join.Type.LEFT_FETCH)
     abstract Mono<DataType> findByDataModelIdAndId(UUID dataModelId, UUID id)
 
+    @Join(value = 'enumerationValues', type = Join.Type.LEFT_FETCH)
     abstract Mono<DataType> readByDataModelIdAndId(UUID dataModelId, UUID id)
 
     abstract Mono<Boolean> existsByDataModelIdAndId(UUID dataModelId, UUID id)
@@ -32,11 +35,13 @@ abstract class DataTypeRepository implements ReactorPageableRepository<DataType,
     abstract Mono<DataType> save(@Valid @NonNull DataType item)
 
     @Override
+    @Join(value = 'enumerationValues', type = Join.Type.LEFT_FETCH)
     Mono<DataType> findByParentIdAndId(UUID parentId, UUID id) {
         findByDataModelIdAndId(parentId, id)
     }
 
     @Override
+    @Join(value = 'enumerationValues', type = Join.Type.LEFT_FETCH)
     Mono<DataType> readByParentIdAndId(UUID parentId, UUID id) {
         readByDataModelIdAndId(parentId, id)
     }
