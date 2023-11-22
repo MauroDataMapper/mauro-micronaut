@@ -100,19 +100,20 @@ class TerminologyIntegrationSpec extends BaseIntegrationSpec {
         termRelationshipResponse.label == 'Test relationship type'
 
         when:
-        def tree = GET("/terminologies/$terminologyId/terms/tree", List<Map<String, Object>>)
-
-        then:
-        tree
-        tree.size() == 1
-        tree.first().code == 'TEST-2'
-
-        when:
         List<TreeItem> treeItemList = (List<TreeItem>) GET("/terminologies/$terminologyId/terms/tree", List<TreeItem>)
 
         then:
         treeItemList
         treeItemList.size() == 1
+        treeItemList.first().code == 'TEST-2'
+
+        when:
+        treeItemList = (List<TreeItem>) GET("/terminologies/$terminologyId/terms/tree/$termId2", List<TreeItem>)
+
+        then:
+        treeItemList
+        treeItemList.size() == 1
+
         treeItemList.first().code == 'TEST-2'
 
         when:
