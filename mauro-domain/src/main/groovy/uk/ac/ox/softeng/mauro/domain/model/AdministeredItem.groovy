@@ -4,30 +4,11 @@ import uk.ac.ox.softeng.mauro.domain.facet.Metadata
 import uk.ac.ox.softeng.mauro.domain.security.SecurableResource
 import uk.ac.ox.softeng.mauro.exception.MauroInternalException
 
-import com.fasterxml.jackson.annotation.JsonAlias
-import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonIgnore
-<<<<<<< HEAD
-import com.fasterxml.jackson.annotation.JsonProperty
-=======
-import com.fasterxml.jackson.annotation.JsonTypeInfo
->>>>>>> b870e06 (DataModels, DataTypes, EnumerationValues, and deserializing API responses in tests)
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
-import groovy.transform.Sortable
-import io.micronaut.core.annotation.Introspected
 import io.micronaut.core.annotation.Nullable
-import io.micronaut.data.annotation.DateCreated
-import io.micronaut.data.annotation.DateUpdated
-import io.micronaut.data.annotation.GeneratedValue
-import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.Relation
-import io.micronaut.data.annotation.TypeDef
-import io.micronaut.data.annotation.Version
-import io.micronaut.data.annotation.sql.ColumnTransformer
-import io.micronaut.data.model.DataType
-import jakarta.persistence.Column
 import jakarta.persistence.Transient
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Pattern
@@ -78,8 +59,6 @@ abstract class AdministeredItem extends Item {
      * The path of oan object allows it to be navigated to from either the containing model, or the folder path within
      * a system.  This value is calculated on persistence and saved to allow easy lookup.
      */
-    @JsonDeserialize(converter = Path.PathConverter)
-    @TypeDef(type = DataType.STRING, converter = Path.PathConverter)
     @Transient
     Path path
 

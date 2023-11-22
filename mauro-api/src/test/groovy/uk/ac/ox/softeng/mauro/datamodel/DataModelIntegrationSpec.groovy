@@ -53,18 +53,18 @@ class DataModelIntegrationSpec extends BaseIntegrationSpec {
 
     void 'test data types'() {
         when:
-        DataModel response = (DataModel) POST("/dataModels/$dataModelId/dataTypes", [label: 'string', description: 'character string of variable length',domainType: 'PrimitiveType'], DataModel)
-        dataTypeId1 = response.id
+        DataType dataTypeResponse = (DataType) POST("/dataModels/$dataModelId/dataTypes", [label: 'string', description: 'character string of variable length',domainType: 'PrimitiveType'], DataType)
+        dataTypeId1 = dataTypeResponse.id
 
         then:
-        response.label == 'string'
+        dataTypeResponse.label == 'string'
 
         when:
-        DataType dataTypeResponse = (DataType) POST("/dataModels/$dataModelId/dataTypes", [label: 'integer', description: 'a whole number, may be positive or negative, with no maximum or minimum', domainType: 'PrimitiveType'], DataType)
+        dataTypeResponse = (DataType) POST("/dataModels/$dataModelId/dataTypes", [label: 'integer', description: 'a whole number, may be positive or negative, with no maximum or minimum', domainType: 'PrimitiveType'], DataType)
         dataTypeId2 = dataTypeResponse.id
 
         then:
-        response.label == 'integer'
+        dataTypeResponse.label == 'integer'
 
         when:
         ListResponse<DataType> dataTypesListResponse = (ListResponse<DataType>) GET("/dataModels/$dataModelId/dataTypes", ListResponse<DataType>)
@@ -82,7 +82,7 @@ class DataModelIntegrationSpec extends BaseIntegrationSpec {
                          enumerationValues: [
                              [key: 'Y', value: 'Yes'],
                              [key: 'N', value: 'No']
-                         ]])
+                         ]], DataType)
         dataTypeId3 = dataTypeResponse.id
 
         then:

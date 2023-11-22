@@ -91,7 +91,7 @@ class Path {
     }
 
     @Prototype
-    static class PathConverter extends StdConverter<String, Path> implements AttributeConverter<Path, String> {
+    static class PathConverter implements AttributeConverter<Path, String> {
         @Override
         String convertToPersistedValue(Path path, ConversionContext context) {
             path ? path.toString() : null
@@ -104,11 +104,5 @@ class Path {
             path
         }
 
-        @Override
-        Path convert(String value) {
-            Path path = new Path()
-            path.pathString = value
-            path
-        }
     }
 }
