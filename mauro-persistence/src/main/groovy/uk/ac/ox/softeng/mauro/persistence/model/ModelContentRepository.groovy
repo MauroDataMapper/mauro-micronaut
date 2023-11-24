@@ -1,10 +1,12 @@
 package uk.ac.ox.softeng.mauro.persistence.model
 
+import uk.ac.ox.softeng.mauro.domain.facet.Metadata
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.model.Model
 import uk.ac.ox.softeng.mauro.domain.model.ModelItem
 import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
 import uk.ac.ox.softeng.mauro.exception.MauroInternalException
+import uk.ac.ox.softeng.mauro.persistence.facet.MetadataRepository
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
@@ -24,6 +26,9 @@ class ModelContentRepository<M extends Model> extends AdministeredItemContentRep
     @Inject
     List<AdministeredItemRepository> administeredItemRepositories
 
+    @Inject
+    MetadataRepository metadataRepository
+
     @Transactional
     Mono<M> updateWithContent(@Valid @NonNull M model) {
         Collection<AdministeredItem> contents = model.getAllContents()
@@ -42,9 +47,9 @@ class ModelContentRepository<M extends Model> extends AdministeredItemContentRep
         }
         log.info '** saveWithContent before save **'
         getRepository(model).save(model).flatMap {AdministeredItem savedModel ->
-//            Mono.just(contents).flatMapIterable {AdministeredItem item ->
-//                getRepository(item).save(item)
-//            }.then(Mono.just((M) savedModel))
+            //            Mono.just(contents).flatMapIterable {AdministeredItem item ->
+            //                getRepository(item).save(item)
+            //            }.then(Mono.just((M) savedModel))
             int i = 0
             Flux.fromIterable(contents).concatMap {AdministeredItem item ->
                 i += 1
@@ -59,9 +64,21 @@ class ModelContentRepository<M extends Model> extends AdministeredItemContentRep
         getRepository(terminology).save(terminology).flatMap {AdministeredItem savedModel ->
             Flux.fromIterable(associations).concatMap {association ->
                 if (association) {
-                    getRepository(association.first()).saveAll(association)
+                    getRepository(association.first()).saveAll(association).flatMap {
+                        saveAllFacets(it)
+                    }
                 }
             }.then(Mono.just(savedModel))
+        }
+    }
+
+    Flux<Metadata> saveAllFacets(@NonNull AdministeredItem item) {
+        if (item.metadata) {
+            item.metadata.each {it.multiFacetAwareItem = item}
+            log.debug "item.metadata = $item.metadata"
+            log.debug "item.metadata.first() = ${item.metadata.first().properties}"
+
+            metadataRepository.saveAll(item.metadata)
         }
     }
 

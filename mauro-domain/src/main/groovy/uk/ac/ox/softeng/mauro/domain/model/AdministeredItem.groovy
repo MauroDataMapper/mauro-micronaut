@@ -1,5 +1,6 @@
 package uk.ac.ox.softeng.mauro.domain.model
 
+import uk.ac.ox.softeng.mauro.domain.facet.Metadata
 import uk.ac.ox.softeng.mauro.domain.security.SecurableResource
 import uk.ac.ox.softeng.mauro.exception.MauroInternalException
 
@@ -8,11 +9,13 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
+import io.micronaut.core.annotation.Introspected
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.annotation.DateCreated
 import io.micronaut.data.annotation.DateUpdated
 import io.micronaut.data.annotation.GeneratedValue
 import io.micronaut.data.annotation.Id
+import io.micronaut.data.annotation.Relation
 import io.micronaut.data.annotation.TypeDef
 import io.micronaut.data.annotation.Version
 import io.micronaut.data.model.DataType
@@ -136,6 +139,10 @@ abstract class AdministeredItem {
      */
     @Nullable
     UUID breadcrumbTreeId // should be BreadcrumbTree type
+
+    @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'multiFacetAwareItem')
+    @Nullable
+    List<Metadata> metadata = []
 
     /**
      * Helper method for returning the parent of this object, if one exists.
