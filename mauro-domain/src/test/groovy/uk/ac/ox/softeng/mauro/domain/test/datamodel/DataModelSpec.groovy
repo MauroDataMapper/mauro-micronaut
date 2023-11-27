@@ -1,5 +1,6 @@
 package uk.ac.ox.softeng.mauro.domain.test.datamodel
 
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
 import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
@@ -42,18 +43,48 @@ class DataModelSpec extends Specification {
                 enumerationValue(key: 'N', value: 'No')
             }
 
+            dataClass {
+                label 'My First DataClass'
+                description 'Here is the description of the first DataClass'
+            }
+
+            dataClass {
+                label 'My Second DataClass'
+                description 'Here is the description of the second DataClass'
+
+                dataClass {
+                    label 'My Third DataClass'
+                    description 'Here is the description of the third DataClass'
+
+                    dataElement {
+                        label 'A data element'
+                        description 'Something about the data element here...'
+                        dataType 'Yes/No'
+                    }
+                    dataElement {
+                        label 'Another data element'
+                        description 'Something about the data element here...'
+                        primitiveType {
+                            label 'date'
+                            description 'A date'
+
+                        }
+                    }
+                }
+            }
+
         }
 
         then:
-        dataModel1.dataTypes.size() == 4
+        dataModel1.dataTypes.size() == 5
 
         dataModel1.dataTypes.findAll {
             it.domainType == 'PrimitiveType'
-        }.size() == 3
+        }.size() == 4
 
         dataModel1.dataTypes.findAll {
             it.dataTypeKind == DataType.DataTypeKind.PRIMITIVE_TYPE
-        }.size() == 3
+        }.size() == 4
 
         dataModel1.dataTypes.findAll {
             it.domainType == 'EnumerationType'
@@ -71,6 +102,25 @@ class DataModelSpec extends Specification {
             it.domainType == 'EnumerationType'
         }.enumerationValues.key.sort() == ['N', 'Y']
 
+        dataModel1.dataClasses.size() == 3
+        dataModel1.dataClasses.find {
+            it.label == 'My First DataClass'
+        }
+
+        DataClass dataClass2 = dataModel1.dataClasses.find {
+            it.label == 'My Second DataClass'
+        }
+        dataClass2.dataClasses.size() == 1
+        DataClass dataClass3 = dataClass2.dataClasses.find {
+            it.label == 'My Third DataClass'
+        }
+
+        dataModel1.getChildDataClasses().size() == 2
+
+        dataClass3.dataElements.size() == 2
+        dataClass3.dataElements.every {
+            it.dataType
+        }
 
     }
 
