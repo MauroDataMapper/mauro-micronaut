@@ -25,6 +25,10 @@ class DataModel extends Model {
     @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'dataModel')
     List<DataType> dataTypes = []
 
+    @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'dataModel')
+    List<DataClass> dataClasses = []
+
+
     @Override
     @Transient
     @JsonIgnore
@@ -38,9 +42,18 @@ class DataModel extends Model {
     Collection<AdministeredItem> getAllContents() {
         List<AdministeredItem> items = []
         dataTypes?.each {it.dataModel = this}
+        dataClasses?.each {it.dataModel = this}
         if (dataTypes) items.addAll(dataTypes)
+        if (dataClasses) items.addAll(dataClasses)
         items
     }
+
+    @Transient
+    @JsonIgnore
+    List<DataClass> getChildDataClasses() {
+        dataClasses.findAll{ !it.parentDataClass}
+    }
+
 
     @Override
     DataModel clone() {
@@ -101,6 +114,23 @@ class DataModel extends Model {
 
     DataType enumerationType(@DelegatesTo(value = DataType, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
         enumerationType [:], closure
+    }
+
+
+    DataClass dataClass(DataClass dataClass) {
+        this.dataClasses.add(dataClass)
+        dataClass.dataModel = this
+        dataClass
+    }
+
+    DataClass dataClass(Map args, @DelegatesTo(value = DataClass, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
+        DataClass dataClass = DataClass.build(args + [dataModel: this], closure)
+        this.dataClasses.add(dataClass)
+        dataClass
+    }
+
+    DataClass dataClass(@DelegatesTo(value = DataClass, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
+        dataClass [:], closure
     }
 
 }

@@ -1,5 +1,6 @@
 package uk.ac.ox.softeng.mauro.datamodel
 
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
 import uk.ac.ox.softeng.mauro.domain.datamodel.EnumerationValue
@@ -35,6 +36,12 @@ class DataModelIntegrationSpec extends BaseIntegrationSpec {
 
     @Shared
     UUID dataTypeId3
+
+    @Shared
+    UUID dataClassId1
+
+    @Shared
+    UUID dataClassId2
 
     void 'test data model'() {
 
@@ -88,6 +95,30 @@ class DataModelIntegrationSpec extends BaseIntegrationSpec {
         then:
         dataTypeResponse.label == 'Yes/No'
         dataTypeResponse.domainType == 'EnumerationType'
+
+    }
+
+    void 'test data classes'() {
+        when:
+        DataClass dataClassResponse = (DataClass) POST("/dataModels/$dataModelId/dataClasses", [label: 'First data class', description: 'The first data class'], DataClass)
+        dataClassId1 = dataClassResponse.id
+
+        then:
+        dataClassResponse.label == 'First data class'
+
+        when:
+        dataClassResponse = (DataClass) POST("/dataModels/$dataModelId/dataClasses", [label: 'Second data class', description: 'The second data class'], DataClass)
+        dataClassId2 = dataClassResponse.id
+
+        then:
+        dataClassResponse.label == 'Second data class'
+
+        when:
+        ListResponse<DataClass> dataClassListResponse = (ListResponse<DataClass>) GET("/dataModels/$dataModelId/dataClasses", ListResponse<DataClass>)
+
+        then:
+        dataClassListResponse.count == 2
+        dataClassListResponse.items.path.sort().collect {it.toString()} == ['dm:Test data model$main|dc:First data class', 'dm:Test data model$main|dc:Second data class']
 
     }
 
