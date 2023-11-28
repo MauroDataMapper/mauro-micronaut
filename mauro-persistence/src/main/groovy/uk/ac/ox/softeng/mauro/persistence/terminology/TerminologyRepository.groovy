@@ -115,12 +115,25 @@ abstract class TerminologyRepository implements ReactorPageableRepository<Termin
     //LEFT JOIN term_relationship ON term.id IN (source_term_id, target_term_id)
     //LEFT JOIN term_relationship_type ON terminology.id = term_relationship_type.terminology_id''')
     //        terminology_term_relationships_."terminology_id"           AS term_relationships_terminology_id,
-    @Query(FIND_QUERY_SQL)
-//    @Join(value = 'authority', type = Join.Type.LEFT_FETCH)
-    @Join(value = 'terms', type = Join.Type.LEFT_FETCH)
-    @Join(value = 'termRelationshipTypes', type = Join.Type.LEFT_FETCH)
-    @Join(value = 'termRelationships', type = Join.Type.LEFT_FETCH)
-    abstract Mono<Terminology> findById(UUID id)
+//    @Query(FIND_QUERY_SQL)
+////    @Join(value = 'authority', type = Join.Type.LEFT_FETCH)
+//    @Join(value = 'terms', type = Join.Type.LEFT_FETCH)
+//    @Join(value = 'termRelationshipTypes', type = Join.Type.LEFT_FETCH)
+//    @Join(value = 'termRelationships', type = Join.Type.LEFT_FETCH)
+//    abstract Mono<Terminology> findById(UUID id)
+//
+//    Mono<Terminology> findById(UUID id) {
+//        findTerminologyFacetDTOById(id) as Mono<Terminology>
+//    }
+
+    Mono<Terminology> findById(UUID id) {
+        findTerminologyFacetDTOById(id) as Mono<Terminology>
+    }
+
+    @Query('''select *, (select json_agg(metadata) from core.metadata where multi_facet_aware_item_id = terminology.id) as metadata
+        from terminology.terminology
+        where terminology.id = :id''')
+    abstract Mono<TerminologyFacetDTO> findTerminologyFacetDTOById(UUID id)
 
     @Query(FIND_QUERY_SQL)
 //    @Join(value = 'authority', type = Join.Type.LEFT_FETCH)
@@ -129,6 +142,9 @@ abstract class TerminologyRepository implements ReactorPageableRepository<Termin
     @Join(value = 'termRelationships', type = Join.Type.LEFT_FETCH)
     abstract Mono<Terminology> findByFolderIdAndId(UUID folderId, UUID id)
 
+    @Query('''select *, (select json_agg(metadata) from core.metadata where multi_facet_aware_item_id = terminology.id) as metadata
+        from terminology.terminology
+        where terminology.id = :id''')
     abstract Mono<Terminology> readById(UUID id)
 
     abstract Mono<Terminology> readByFolderIdAndId(UUID folderId, UUID id)

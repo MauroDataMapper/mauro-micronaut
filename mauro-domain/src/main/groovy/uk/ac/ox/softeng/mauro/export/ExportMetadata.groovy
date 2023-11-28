@@ -18,7 +18,7 @@ class ExportMetadata {
 
     String version
 
-    @JsonFormat(pattern = AdministeredItem.DATETIME_FORMAT)
+//    @JsonFormat(pattern = AdministeredItem.DATETIME_FORMAT)
     Instant exportDate
 
     String exportedBy

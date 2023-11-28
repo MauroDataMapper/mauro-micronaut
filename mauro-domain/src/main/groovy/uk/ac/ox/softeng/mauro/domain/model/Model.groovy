@@ -63,6 +63,7 @@ abstract class Model extends AdministeredItem implements SecurableResource {
     String branchName = 'main'
 
     @Nullable
+    @Transient
     ModelVersion modelVersion
 
     @Nullable

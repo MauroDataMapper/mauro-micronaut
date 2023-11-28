@@ -38,7 +38,6 @@ import jakarta.validation.constraints.Pattern
 @MapConstructor(includeSuperFields = true, includeSuperProperties = true, noArg = true)
 @Indexes([@Index(columns = ['terminology_id', 'code'], unique = true)])
 @JsonIdentityInfo(property = 'code', generator = ObjectIdGenerators.PropertyGenerator)
-@JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
 class Term extends ModelItem<Terminology> {
 
     @Override

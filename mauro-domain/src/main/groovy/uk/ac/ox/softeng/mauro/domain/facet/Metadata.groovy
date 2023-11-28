@@ -21,7 +21,6 @@ import io.micronaut.data.model.DataType
 import java.time.Instant
 
 @CompileStatic
-@Introspected(classes = [Metadata, AdministeredItem])
 @MappedEntity(schema = 'core')
 @Indexes([@Index(columns = ['multi_facet_aware_item_id', 'namespace', 'key'], unique = true)])
 class Metadata extends Facet {

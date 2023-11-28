@@ -67,6 +67,8 @@ class ModelContentRepository<M extends Model> extends AdministeredItemContentRep
                     getRepository(association.first()).saveAll(association).flatMap {
                         saveAllFacets(it)
                     }
+                } else {
+                    Flux.empty()
                 }
             }.then(Mono.just(savedModel))
         }
@@ -74,11 +76,17 @@ class ModelContentRepository<M extends Model> extends AdministeredItemContentRep
 
     Flux<Metadata> saveAllFacets(@NonNull AdministeredItem item) {
         if (item.metadata) {
-            item.metadata.each {it.multiFacetAwareItem = item}
+            item.metadata.each {
+                it.multiFacetAwareItemDomainType = item.domainType
+                it.multiFacetAwareItemId = item.id
+                it.multiFacetAwareItem = item
+            }
             log.debug "item.metadata = $item.metadata"
             log.debug "item.metadata.first() = ${item.metadata.first().properties}"
 
             metadataRepository.saveAll(item.metadata)
+        } else {
+            Flux.empty()
         }
     }
 

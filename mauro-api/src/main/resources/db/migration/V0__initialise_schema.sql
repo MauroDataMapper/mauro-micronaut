@@ -16,6 +16,22 @@ CREATE TABLE core."authority" (
     "url"                             VARCHAR(255)     NOT NULL
 );
 
+-- Metadata
+CREATE TABLE "core"."metadata" (
+    "id"                                 UUID PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
+    "version"                            INTEGER          NOT NULL,
+    "date_created"                       TIMESTAMP,
+    "last_updated"                       TIMESTAMP,
+    "multi_facet_aware_item_domain_type" VARCHAR(255)     NOT NULL,
+    "multi_facet_aware_item_id"          UUID             NOT NULL,
+    "created_by"                         VARCHAR(255),
+    "namespace"                          TEXT             NOT NULL,
+    "key"                                TEXT             NOT NULL,
+    "value"                              TEXT             NOT NULL
+);
+CREATE UNIQUE INDEX "idx_metadata_multi_facet_aware_item_id_namespace_key" ON "core"."metadata" (multi_facet_aware_item_id, namespace, key);
+
+
 -- Folder
 CREATE TABLE core."folder" (
     "id"                              UUID PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
@@ -39,7 +55,6 @@ CREATE TABLE core."folder" (
     "class"                           VARCHAR(255)
 );
 CREATE INDEX "idx_folder_parent_folder_id" ON core."folder"(parent_folder_id);
-
 
 
 -- # Terminology
@@ -131,5 +146,32 @@ CREATE INDEX "idx_term_relationship_target_term_id" ON terminology."term_relatio
 CREATE INDEX "idx_term_relationship_relationship_type_id" ON terminology."term_relationship"(relationship_type_id);
 
 -- Test tables
-CREATE TABLE "test" ("id" UUID PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),"version" INTEGER NOT NULL,"date_created" TIMESTAMP,"last_updated" TIMESTAMP,"readable_by_everyone" BOOLEAN NOT NULL,"readable_by_authenticated_users" BOOLEAN NOT NULL,"label" VARCHAR(255) NOT NULL,"description" VARCHAR(255),"aliases_string" VARCHAR(255),"created_by" VARCHAR(255),"breadcrumb_tree_id" UUID,"finalised" BOOLEAN NOT NULL,"date_finalised" TIMESTAMP,"documentation_version" VARCHAR(255),"model_type" VARCHAR(255) NOT NULL,"organisation" VARCHAR(255),"deleted" BOOLEAN NOT NULL,"author" VARCHAR(255),"folder_id" UUID NOT NULL,"authority_id" UUID,"branch_name" VARCHAR(255),"model_version" VARCHAR(255),"model_version_tag" VARCHAR(255));
-CREATE TABLE "test_term" ("test_id" UUID NOT NULL,"term_id" UUID NOT NULL);
+CREATE TABLE "test" (
+    "id"                              UUID PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
+    "version"                         INTEGER          NOT NULL,
+    "date_created"                    TIMESTAMP,
+    "last_updated"                    TIMESTAMP,
+    "readable_by_everyone"            BOOLEAN          NOT NULL,
+    "readable_by_authenticated_users" BOOLEAN          NOT NULL,
+    "label"                           VARCHAR(255)     NOT NULL,
+    "description"                     VARCHAR(255),
+    "aliases_string"                  VARCHAR(255),
+    "created_by"                      VARCHAR(255),
+    "breadcrumb_tree_id"              UUID,
+    "finalised"                       BOOLEAN          NOT NULL,
+    "date_finalised"                  TIMESTAMP,
+    "documentation_version"           VARCHAR(255),
+    "model_type"                      VARCHAR(255)     NOT NULL,
+    "organisation"                    VARCHAR(255),
+    "deleted"                         BOOLEAN          NOT NULL,
+    "author"                          VARCHAR(255),
+    "folder_id"                       UUID             NOT NULL,
+    "authority_id"                    UUID,
+    "branch_name"                     VARCHAR(255),
+    "model_version"                   VARCHAR(255),
+    "model_version_tag"               VARCHAR(255)
+);
+CREATE TABLE "test_term" (
+    "test_id" UUID NOT NULL,
+    "term_id" UUID NOT NULL
+);

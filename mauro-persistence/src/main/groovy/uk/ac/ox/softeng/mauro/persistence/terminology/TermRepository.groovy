@@ -48,11 +48,11 @@ abstract class TermRepository implements ReactorPageableRepository<Term, UUID>, 
         deleteByTerminologyId(ownerId)
     }
 
-    @Query('''SELECT * FROM term
+    @Query('''SELECT * FROM terminology.term
               WHERE term.terminology_id=:terminologyId
-              AND (EXISTS (SELECT * FROM term_relationship tr JOIN term_relationship_type trt ON tr.relationship_type_id=trt.id AND tr.source_term_id=term.id AND tr.target_term_id=:id AND trt.child_relationship AND tr.terminology_id=:terminologyId AND trt.terminology_id=:terminologyId)
-              OR EXISTS (SELECT * FROM term_relationship tr JOIN term_relationship_type trt ON tr.relationship_type_id=trt.id AND tr.source_term_id=:id AND tr.target_term_id=term.id AND trt.parental_relationship AND tr.terminology_id=:terminologyId AND trt.terminology_id=:terminologyId))
-              OR (:id IS NULL AND NOT EXISTS (SELECT * FROM term_relationship tr JOIN term_relationship_type trt ON tr.relationship_type_id=trt.id AND ((tr.target_term_id=term.id AND trt.parental_relationship) OR (tr.source_term_id=term.id AND trt.child_relationship)) AND tr.terminology_id=:terminologyId AND trt.terminology_id=:terminologyId))''')
+              AND (EXISTS (SELECT * FROM terminology.term_relationship tr JOIN terminology.term_relationship_type trt ON tr.relationship_type_id=trt.id AND tr.source_term_id=term.id AND tr.target_term_id=:id AND trt.child_relationship AND tr.terminology_id=:terminologyId AND trt.terminology_id=:terminologyId)
+              OR EXISTS (SELECT * FROM terminology.term_relationship tr JOIN terminology.term_relationship_type trt ON tr.relationship_type_id=trt.id AND tr.source_term_id=:id AND tr.target_term_id=term.id AND trt.parental_relationship AND tr.terminology_id=:terminologyId AND trt.terminology_id=:terminologyId))
+              OR (:id IS NULL AND NOT EXISTS (SELECT * FROM terminology.term_relationship tr JOIN terminology.term_relationship_type trt ON tr.relationship_type_id=trt.id AND ((tr.target_term_id=term.id AND trt.parental_relationship) OR (tr.source_term_id=term.id AND trt.child_relationship)) AND tr.terminology_id=:terminologyId AND trt.terminology_id=:terminologyId))''')
     abstract Flux<Term> childTermsByParent(UUID terminologyId, @Nullable UUID id)
 
 

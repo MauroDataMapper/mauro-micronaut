@@ -22,38 +22,43 @@ import reactor.core.publisher.Mono
 
 @Controller
 @CompileStatic
-class TestController extends ModelController<Test> {
+class TestController /*extends ModelController<Test>*/ {
 
     @Inject
     ObjectMapper objectMapper
 
+    @Inject
     TestRepository testRepository
 
-    TestController(TestRepository testRepository, FolderRepository folderRepository, ModelContentRepository<Test> modelContentRepository) {
+    /*TestController(TestRepository testRepository, FolderRepository folderRepository, ModelContentRepository<Test> modelContentRepository) {
         super(Test, testRepository, folderRepository, modelContentRepository)
         this.testRepository = testRepository
-    }
+    }*/
 
     @Get('/test/{id}')
     Mono<Test> show(UUID id) {
-        super.show(id)
+//        super.show(id)
+        testRepository.findById(id)
     }
 
     @Get('/testAgg/{id}')
     Mono<TestDTO> showAgg(UUID id) {
-        testRepository.findTestDTOById(id).map {
+        testRepository.findTestDTOById(id)
+        /*testRepository.findTestDTOById(id)/*.map {
             List<Term> termsParsed = []
             it.terms.each {
                 termsParsed.add(objectMapper.treeToValue(it, Term))
             }
 
             it
-        }
+        }*/
+
     }
 
     @Transactional
     @Post('/folders/{folderId}/test')
     Mono<Test> create(UUID folderId, @Body @NonNull Test test) {
-        super.create(folderId, test)
+//        super.create(folderId, test)
+
     }
 }

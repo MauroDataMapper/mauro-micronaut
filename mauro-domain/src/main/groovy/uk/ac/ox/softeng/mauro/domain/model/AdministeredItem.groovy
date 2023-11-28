@@ -1,12 +1,15 @@
 package uk.ac.ox.softeng.mauro.domain.model
 
 import uk.ac.ox.softeng.mauro.domain.facet.Metadata
+import uk.ac.ox.softeng.mauro.domain.facet.MetadataAware
 import uk.ac.ox.softeng.mauro.domain.security.SecurableResource
 import uk.ac.ox.softeng.mauro.exception.MauroInternalException
 
+import com.fasterxml.jackson.annotation.JsonAlias
 import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.Introspected
@@ -36,7 +39,7 @@ import java.time.Instant
 
 @CompileStatic
 @AutoClone(excludes = ['id', 'version'])
-abstract class AdministeredItem {
+abstract class AdministeredItem implements MetadataAware {
 
     public static final String DATETIME_FORMAT = 'yyyy-MM-dd\'T\'HH:mm:ss.SSSZ'
     public static final String DATETIME_FORMAT_DESERIALIZE = 'yyyy-MM-dd\'T\'HH:mm:ss[.SSSSSS][.SSSSS][.SSSS][.SSS][.SS][.S][XXX]'
@@ -59,37 +62,37 @@ abstract class AdministeredItem {
      * The date and time that this object was created
      */
     @DateCreated
-    private Instant dateCreated
+    @JsonDeserialize(converter = InstantConverter)
+    @JsonAlias(['date_created'])
+    Instant dateCreated
 
-//    @JsonFormat(pattern = DATETIME_FORMAT)
-    Instant getDateCreated() {
-        dateCreated
-    }
-
-//    @JsonFormat(pattern = DATETIME_FORMAT_DESERIALIZE)
-    void setDateCreated(Instant dateCreated) {
-        this.dateCreated = dateCreated
-    }
-
-//    @DateCreated
-//    @JsonFormat(pattern = DATETIME_FORMAT)
-//    Instant dateCreated
+////    @JsonFormat(pattern = DATETIME_FORMAT)
+//    Instant getDateCreated() {
+//        dateCreated
+//    }
+//
+////    @JsonFormat(pattern = DATETIME_FORMAT_DESERIALIZE)
+//    void setDateCreated(Instant dateCreated) {
+//        this.dateCreated = dateCreated
+//    }
 
     /**
      * The date and time that this object was last updated.
      */
     @DateUpdated
-    private Instant lastUpdated
+    @JsonDeserialize(converter = InstantConverter)
+    @JsonAlias(['last_updated'])
+    Instant lastUpdated
 
-//    @JsonFormat(pattern = DATETIME_FORMAT)
-    Instant getLastUpdated() {
-        lastUpdated
-    }
-
-//    @JsonFormat(pattern = DATETIME_FORMAT_DESERIALIZE)
-    void setLastUpdated(Instant lastUpdated) {
-        this.lastUpdated = lastUpdated
-    }
+////    @JsonFormat(pattern = DATETIME_FORMAT)
+//    Instant getLastUpdated() {
+//        lastUpdated
+//    }
+//
+////    @JsonFormat(pattern = DATETIME_FORMAT_DESERIALIZE)
+//    void setLastUpdated(Instant lastUpdated) {
+//        this.lastUpdated = lastUpdated
+//    }
 
     /**
      * The label of an object.  Labels are used as identifiers within a context and so need to be unique within
@@ -140,8 +143,7 @@ abstract class AdministeredItem {
     @Nullable
     UUID breadcrumbTreeId // should be BreadcrumbTree type
 
-    @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'multiFacetAwareItem')
-    @Nullable
+    @Transient
     List<Metadata> metadata = []
 
     /**

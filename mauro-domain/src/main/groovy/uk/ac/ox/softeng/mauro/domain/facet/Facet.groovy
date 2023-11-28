@@ -13,15 +13,15 @@ import io.micronaut.data.annotation.GeneratedValue
 import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.MappedProperty
 import io.micronaut.data.annotation.Relation
-import io.micronaut.data.annotation.Transient
 import io.micronaut.data.annotation.TypeDef
 import io.micronaut.data.annotation.Version
 import io.micronaut.data.model.DataType
+import jakarta.persistence.Transient
 
 import java.time.Instant
 
 @CompileStatic
-@Introspected(classes = [Facet, AdministeredItem])
+//@Introspected(classes = [Facet, AdministeredItem])
 @AutoClone(excludes = ['id', 'version'])
 abstract class Facet {
 
@@ -38,11 +38,15 @@ abstract class Facet {
     @DateUpdated
     Instant lastUpdated
 
-    @Nullable
+//    @Nullable
     String multiFacetAwareItemDomainType
 
-    @TypeDef(type = DataType.UUID)
-    @MappedProperty('multi_facet_aware_item_id')
+    UUID multiFacetAwareItemId
+
+//    @TypeDef(type = DataType.UUID)
+//    @Relation(value = Relation.Kind.ONE_TO_ONE)
+//    @MappedProperty('multi_facet_aware_item_id')
+    @Transient
     AdministeredItem multiFacetAwareItem
 
     @Nullable
