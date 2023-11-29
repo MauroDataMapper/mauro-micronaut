@@ -43,6 +43,9 @@ class DataModelIntegrationSpec extends BaseIntegrationSpec {
     @Shared
     UUID dataClassId2
 
+    @Shared
+    UUID dataClassId3
+
     void 'test data model'() {
 
         given:
@@ -119,6 +122,39 @@ class DataModelIntegrationSpec extends BaseIntegrationSpec {
         then:
         dataClassListResponse.count == 2
         dataClassListResponse.items.path.sort().collect {it.toString()} == ['dm:Test data model$main|dc:First data class', 'dm:Test data model$main|dc:Second data class']
+
+        when:
+        dataClassResponse = (DataClass) POST("/dataModels/$dataModelId/dataClasses/$dataClassId2/dataClasses", [label: 'Third data class', description: 'The third data class'], DataClass)
+        dataClassId3 = dataClassResponse.id
+
+        then:
+        dataClassResponse.label == 'Third data class'
+
+        when:
+        dataClassListResponse = (ListResponse<DataClass>) GET("/dataModels/$dataModelId/dataClasses/$dataClassId2/dataClasses", ListResponse<DataClass>)
+
+        then:
+        dataClassListResponse.count == 1
+        dataClassListResponse.items.path.sort().collect {it.toString()} == ['dm:Test data model$main|dc:Second data class|dc:Third data class']
+
+        when:
+        dataClassResponse = (DataClass) PUT("/dataModels/$dataModelId/dataClasses/$dataClassId2/dataClasses/$dataClassId3", [label: 'Third data class (renamed)'], DataClass)
+        dataClassListResponse = (ListResponse<DataClass>) GET("/dataModels/$dataModelId/dataClasses/$dataClassId2/dataClasses", ListResponse<DataClass>)
+
+        then:
+        dataClassResponse.label == 'Third data class (renamed)'
+        dataClassListResponse.count == 1
+        dataClassListResponse.items.path.sort().collect {it.toString()} == ['dm:Test data model$main|dc:Second data class|dc:Third data class (renamed)']
+
+/*  todo
+        when:
+        Map response = DELETE("/dataModels/$dataModelId/dataClasses/$dataClassId2/dataClasses/$dataClassId3", [label: 'Third data class (renamed)'])
+        System.err.println(response)
+        dataClassListResponse = (ListResponse<DataClass>) GET("/dataModels/$dataModelId/dataClasses/$dataClassId2/dataClasses", ListResponse<DataClass>)
+        then:
+        dataClassListResponse.count == 0
+*/
+
 
     }
 

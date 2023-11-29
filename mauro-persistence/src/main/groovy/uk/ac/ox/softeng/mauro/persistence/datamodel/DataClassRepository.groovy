@@ -26,6 +26,8 @@ abstract class DataClassRepository implements ReactorPageableRepository<DataClas
 
     abstract Flux<DataClass> readAllByDataModel(DataModel dataModel)
 
+    abstract Flux<DataClass> readAllByDataModelIdAndParentDataClassId(UUID dataModelId, UUID parentDataClassId)
+
     abstract Mono<DataClass> save(@Valid @NonNull DataClass item)
 
     @Override
