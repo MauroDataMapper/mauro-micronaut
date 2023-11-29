@@ -2,6 +2,7 @@ package uk.ac.ox.softeng.mauro.domain.authority
 
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
+import uk.ac.ox.softeng.mauro.domain.model.Item
 import uk.ac.ox.softeng.mauro.domain.model.Model
 import uk.ac.ox.softeng.mauro.domain.security.SecurableResource
 
@@ -17,7 +18,7 @@ import jakarta.persistence.Transient
 @AutoClone
 @MappedEntity(schema = 'core')
 @MapConstructor(includeSuperFields = true, includeSuperProperties = true, noArg = true)
-class Authority extends AdministeredItem implements SecurableResource {
+class Authority extends Item implements SecurableResource {
 
     String url
 
@@ -25,24 +26,24 @@ class Authority extends AdministeredItem implements SecurableResource {
 
     Boolean readableByAuthenticatedUsers = false
 
-    @Override
-    @Transient
-    @JsonIgnore
-    AdministeredItem getParent() {
-        null
-    }
-
-    @Override
-    @Transient
-    @JsonIgnore
-    void setParent(AdministeredItem parent) {
-        null
-    }
-
-    @Override
-    @Transient
-    @JsonIgnore
-    Authority getOwner() {
-        this
-    }
+//    @Override
+//    @Transient
+//    @JsonIgnore
+//    AdministeredItem getParent() {
+//        null
+//    }
+//
+//    @Override
+//    @Transient
+//    @JsonIgnore
+//    void setParent(AdministeredItem parent) {
+//        null
+//    }
+//
+//    @Override
+//    @Transient
+//    @JsonIgnore
+//    Authority getOwner() {
+//        this
+//    }
 }

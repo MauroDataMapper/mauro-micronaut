@@ -55,7 +55,7 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
     }
 
     Mono<I> show(UUID parentId, UUID id) {
-        administeredItemRepository.findByParentIdAndId(parentId, id).flatMap {I item ->
+        administeredItemRepository.findById(id).flatMap {I item ->
             pathRepository.readParentItems(item).map {
                 item.updatePath()
                 item

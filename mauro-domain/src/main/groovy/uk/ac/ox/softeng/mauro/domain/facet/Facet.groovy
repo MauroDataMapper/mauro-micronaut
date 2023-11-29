@@ -1,6 +1,7 @@
 package uk.ac.ox.softeng.mauro.domain.facet
 
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
+import uk.ac.ox.softeng.mauro.domain.model.Item
 import uk.ac.ox.softeng.mauro.domain.terminology.Term
 
 import groovy.transform.AutoClone
@@ -21,34 +22,13 @@ import jakarta.persistence.Transient
 import java.time.Instant
 
 @CompileStatic
-//@Introspected(classes = [Facet, AdministeredItem])
-@AutoClone(excludes = ['id', 'version'])
-abstract class Facet {
+@AutoClone
+abstract class Facet extends Item {
 
-    @Id
-    @GeneratedValue
-    UUID id
-
-    @Version
-    Integer version
-
-    @DateCreated
-    Instant dateCreated
-
-    @DateUpdated
-    Instant lastUpdated
-
-//    @Nullable
     String multiFacetAwareItemDomainType
 
     UUID multiFacetAwareItemId
 
-//    @TypeDef(type = DataType.UUID)
-//    @Relation(value = Relation.Kind.ONE_TO_ONE)
-//    @MappedProperty('multi_facet_aware_item_id')
     @Transient
     AdministeredItem multiFacetAwareItem
-
-    @Nullable
-    String createdBy
 }

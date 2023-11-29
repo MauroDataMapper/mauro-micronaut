@@ -1,5 +1,6 @@
 package uk.ac.ox.softeng.mauro.domain.terminology
 
+import uk.ac.ox.softeng.mauro.domain.facet.Metadata
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.model.ModelItem
 
@@ -10,12 +11,16 @@ import groovy.transform.CompileStatic
 import groovy.transform.MapConstructor
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.Introspected
+import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.annotation.Index
 import io.micronaut.data.annotation.Indexes
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Relation
 import uk.ac.ox.softeng.mauro.domain.model.Model
 
+import io.micronaut.data.annotation.TypeDef
+import io.micronaut.data.annotation.sql.ColumnTransformer
+import io.micronaut.data.model.DataType
 import jakarta.persistence.Transient
 
 /**

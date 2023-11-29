@@ -10,6 +10,7 @@ import uk.ac.ox.softeng.mauro.persistence.folder.FolderRepository
 import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemRepository
 import uk.ac.ox.softeng.mauro.persistence.model.ModelContentRepository
 import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
+import uk.ac.ox.softeng.mauro.persistence.terminology.TerminologyContentRepository
 import uk.ac.ox.softeng.mauro.persistence.terminology.TerminologyRepository
 import uk.ac.ox.softeng.mauro.domain.terminology.TerminologyService
 import uk.ac.ox.softeng.mauro.web.ListResponse
@@ -43,6 +44,8 @@ class TerminologyController extends ModelController<Terminology> {
 
     TerminologyRepository terminologyRepository
 
+    TerminologyContentRepository terminologyContentRepository
+
     @Inject
     TerminologyService terminologyService
 
@@ -52,9 +55,10 @@ class TerminologyController extends ModelController<Terminology> {
     @Inject
     ObjectMapper objectMapper
 
-    TerminologyController(TerminologyRepository terminologyRepository, FolderRepository folderRepository, ModelContentRepository<Terminology> modelContentRepository) {
-        super(Terminology, terminologyRepository, folderRepository, modelContentRepository)
+    TerminologyController(TerminologyRepository terminologyRepository, FolderRepository folderRepository, TerminologyContentRepository terminologyContentRepository) {
+        super(Terminology, terminologyRepository, folderRepository, terminologyContentRepository)
         this.terminologyRepository = terminologyRepository
+        this.terminologyContentRepository = terminologyContentRepository
     }
 
     @Get('/terminologies/{id}')
@@ -118,7 +122,9 @@ class TerminologyController extends ModelController<Terminology> {
 
     @Get('/terminologies/{id}/export{/namespace}{/name}{/version}')
     Mono<ExportModel> exportModel(UUID id, @Nullable String namespace, @Nullable String name, @Nullable String version) {
-        modelRepository.findById(id).map {Terminology terminology ->
+        log.debug "*** exportModel start ${Instant.now()} ***"
+        terminologyContentRepository.findWithAssociations(id).map {Terminology terminology ->
+            log.debug "*** exportModel fetched ${Instant.now()} ***"
             new ExportModel(
                 exportMetadata: new ExportMetadata(
                     namespace: 'uk.ac.ox.softeng.mauro',

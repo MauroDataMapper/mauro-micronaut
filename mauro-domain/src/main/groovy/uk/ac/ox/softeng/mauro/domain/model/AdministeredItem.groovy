@@ -21,6 +21,7 @@ import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.Relation
 import io.micronaut.data.annotation.TypeDef
 import io.micronaut.data.annotation.Version
+import io.micronaut.data.annotation.sql.ColumnTransformer
 import io.micronaut.data.model.DataType
 import jakarta.persistence.Column
 import jakarta.persistence.Transient
@@ -38,61 +39,8 @@ import java.time.Instant
  */
 
 @CompileStatic
-@AutoClone(excludes = ['id', 'version'])
-abstract class AdministeredItem implements MetadataAware {
-
-    public static final String DATETIME_FORMAT = 'yyyy-MM-dd\'T\'HH:mm:ss.SSSZ'
-    public static final String DATETIME_FORMAT_DESERIALIZE = 'yyyy-MM-dd\'T\'HH:mm:ss[.SSSSSS][.SSSSS][.SSSS][.SSS][.SS][.S][XXX]'
-
-    /**
-     * The identify of an object.  UUIDs should be universally unique.
-     * Identities are usually created when the object is saved in the database, but can be manually set beforehand.
-    */
-    @Id
-    @GeneratedValue
-    UUID id
-
-    /**
-     * The version of an object - this is an internal number used for persistence purposes
-     */
-    @Version
-    Integer version
-
-    /**
-     * The date and time that this object was created
-     */
-    @DateCreated
-    @JsonDeserialize(converter = InstantConverter)
-    @JsonAlias(['date_created'])
-    Instant dateCreated
-
-////    @JsonFormat(pattern = DATETIME_FORMAT)
-//    Instant getDateCreated() {
-//        dateCreated
-//    }
-//
-////    @JsonFormat(pattern = DATETIME_FORMAT_DESERIALIZE)
-//    void setDateCreated(Instant dateCreated) {
-//        this.dateCreated = dateCreated
-//    }
-
-    /**
-     * The date and time that this object was last updated.
-     */
-    @DateUpdated
-    @JsonDeserialize(converter = InstantConverter)
-    @JsonAlias(['last_updated'])
-    Instant lastUpdated
-
-////    @JsonFormat(pattern = DATETIME_FORMAT)
-//    Instant getLastUpdated() {
-//        lastUpdated
-//    }
-//
-////    @JsonFormat(pattern = DATETIME_FORMAT_DESERIALIZE)
-//    void setLastUpdated(Instant lastUpdated) {
-//        this.lastUpdated = lastUpdated
-//    }
+@AutoClone
+abstract class AdministeredItem extends Item /*implements MetadataAware*/{
 
     /**
      * The label of an object.  Labels are used as identifiers within a context and so need to be unique within
@@ -100,7 +48,6 @@ abstract class AdministeredItem implements MetadataAware {
      * <p>
      *     A label cannot contain the characters `$`, `|` or `@`, since this values are used in the creation of paths.
      */
-
     @NotBlank
     @Pattern(regexp = /[^\$@|]*/, message = 'Cannot contain $, | or @')
     String label
@@ -122,12 +69,6 @@ abstract class AdministeredItem implements MetadataAware {
      */
     @Transient
     String domainType = this.class.simpleName
-
-    /**
-     * The email address / username of the user who created this object.
-     */
-    @Nullable
-    String createdBy
 
     /**
      * The path of oan object allows it to be navigated to from either the containing model, or the folder path within

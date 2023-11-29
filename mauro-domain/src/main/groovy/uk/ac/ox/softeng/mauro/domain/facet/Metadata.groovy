@@ -2,6 +2,7 @@ package uk.ac.ox.softeng.mauro.domain.facet
 
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 
+import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.Introspected
 import io.micronaut.core.annotation.Nullable
@@ -22,6 +23,7 @@ import java.time.Instant
 
 @CompileStatic
 @MappedEntity(schema = 'core')
+@AutoClone
 @Indexes([@Index(columns = ['multi_facet_aware_item_id', 'namespace', 'key'], unique = true)])
 class Metadata extends Facet {
 
