@@ -60,15 +60,22 @@ class DataClass extends ModelItem<DataModel> {
     @Override
     @Transient
     @JsonIgnore
-    DataModel getParent() {
-        dataModel
+    AdministeredItem getParent() {
+        parentDataClass?:dataModel
     }
 
     @Override
     @Transient
     @JsonIgnore
-    void setParent(AdministeredItem dataModel) {
-        this.dataModel = (DataModel) dataModel
+    void setParent(AdministeredItem parent) {
+        System.err.println("Setting parent...")
+        System.err.println(parent)
+        if(parent instanceof DataClass) {
+            this.parentDataClass = parent
+            this.dataModel = parentDataClass.dataModel
+        } else {
+            this.dataModel = (DataModel) parent
+        }
     }
 
     @Override
