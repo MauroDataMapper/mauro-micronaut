@@ -13,6 +13,8 @@ import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Relation
 import jakarta.persistence.Inheritance
 import jakarta.persistence.InheritanceType
+import jakarta.persistence.JoinColumn
+import jakarta.persistence.JoinTable
 import jakarta.persistence.Transient
 
 /**
@@ -50,6 +52,14 @@ class DataClass extends ModelItem<DataModel> {
 
     @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'dataClass')
     List<DataElement> dataElements = []
+
+    @Relation(value = Relation.Kind.MANY_TO_MANY)
+    @JoinTable(
+        name = "join_dataclass_to_extended_data_class",
+        joinColumns = @JoinColumn(name = "dataclass_id"),
+        inverseJoinColumns = @JoinColumn(name = "extended_dataclass_id"))
+    List<DataClass> extendsDataClasses = []
+
 
     @JsonIgnore
     @Nullable
@@ -145,6 +155,12 @@ class DataClass extends ModelItem<DataModel> {
     Integer minMultiplicity(Integer minMultiplicity) {
         this.minMultiplicity = minMultiplicity
         this.minMultiplicity
+    }
+
+    DataClass extendsDataClass(String dataClassLabel) {
+        DataClass foundDataClass = this.dataModel.dataClasses.findAll {it.label == dataClassLabel}.first()
+        this.extendsDataClasses.add(foundDataClass)
+        return foundDataClass
     }
 
 

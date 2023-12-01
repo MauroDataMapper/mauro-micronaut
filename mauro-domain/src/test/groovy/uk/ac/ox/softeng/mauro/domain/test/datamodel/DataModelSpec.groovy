@@ -55,7 +55,7 @@ class DataModelSpec extends Specification {
                 dataClass {
                     label 'My Third DataClass'
                     description 'Here is the description of the third DataClass'
-
+                    extendsDataClass 'My First DataClass'
                     dataElement {
                         label 'A data element'
                         description 'Something about the data element here...'
@@ -107,6 +107,10 @@ class DataModelSpec extends Specification {
             it.label == 'My First DataClass'
         }
 
+        DataClass dataClass1 = dataModel1.dataClasses.find {
+            it.label == 'My First DataClass'
+        }
+
         DataClass dataClass2 = dataModel1.dataClasses.find {
             it.label == 'My Second DataClass'
         }
@@ -121,6 +125,8 @@ class DataModelSpec extends Specification {
         dataClass3.dataElements.every {
             it.dataType
         }
+        dataClass3.extendsDataClasses.size() == 1
+        dataClass3.extendsDataClasses.first() == dataClass1
 
     }
 
