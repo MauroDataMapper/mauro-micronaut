@@ -1,177 +1,177 @@
 -- # Core
 
 -- Authority
-CREATE TABLE core."authority" (
-    "id"                              UUID PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
-    "version"                         INTEGER          NOT NULL,
-    "date_created"                    TIMESTAMP,
-    "last_updated"                    TIMESTAMP,
-    "readable_by_everyone"            BOOLEAN          NOT NULL,
-    "readable_by_authenticated_users" BOOLEAN          NOT NULL,
-    "label"                           TEXT             NOT NULL,
-    "description"                     TEXT,
-    "aliases_string"                  TEXT,
-    "created_by"                      VARCHAR(255),
-    "breadcrumb_tree_id"              UUID,
-    "url"                             VARCHAR(255)     NOT NULL
+create table core."authority" (
+    "id"                              uuid primary key not null default uuid_generate_v4(),
+    "version"                         integer          not null,
+    "date_created"                    timestamp,
+    "last_updated"                    timestamp,
+    "readable_by_everyone"            boolean          not null,
+    "readable_by_authenticated_users" boolean          not null,
+    "label"                           text             not null,
+    "description"                     text,
+    "aliases_string"                  text,
+    "created_by"                      varchar(255),
+    "breadcrumb_tree_id"              uuid,
+    "url"                             varchar(255)     not null
 );
 
 -- Metadata
-CREATE TABLE "core"."metadata" (
-    "id"                                 UUID PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
-    "version"                            INTEGER          NOT NULL,
-    "date_created"                       TIMESTAMP,
-    "last_updated"                       TIMESTAMP,
-    "multi_facet_aware_item_domain_type" VARCHAR(255)     NOT NULL,
-    "multi_facet_aware_item_id"          UUID             NOT NULL,
-    "created_by"                         VARCHAR(255),
-    "namespace"                          TEXT             NOT NULL,
-    "key"                                TEXT             NOT NULL,
-    "value"                              TEXT             NOT NULL
+create table "core"."metadata" (
+    "id"                                 uuid primary key not null default uuid_generate_v4(),
+    "version"                            integer          not null,
+    "date_created"                       timestamp,
+    "last_updated"                       timestamp,
+    "multi_facet_aware_item_domain_type" varchar(255)     not null,
+    "multi_facet_aware_item_id"          uuid             not null,
+    "created_by"                         varchar(255),
+    "namespace"                          text             not null,
+    "key"                                text             not null,
+    "value"                              text             not null
 );
-CREATE UNIQUE INDEX "idx_metadata_multi_facet_aware_item_id_namespace_key" ON "core"."metadata" (multi_facet_aware_item_id, namespace, key);
+create unique index "idx_metadata_multi_facet_aware_item_id_namespace_key" on "core"."metadata"(multi_facet_aware_item_id, namespace, key);
 
 
 -- Folder
-CREATE TABLE core."folder" (
-    "id"                              UUID PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
-    "version"                         INTEGER          NOT NULL,
-    "date_created"                    TIMESTAMP,
-    "last_updated"                    TIMESTAMP,
-    "readable_by_everyone"            BOOLEAN          NOT NULL,
-    "readable_by_authenticated_users" BOOLEAN          NOT NULL,
-    "label"                           TEXT             NOT NULL,
-    "description"                     TEXT,
-    "created_by"                      VARCHAR(255),
-    "finalised"                       BOOLEAN          NOT NULL,
-    "date_finalised"                  TIMESTAMP,
-    "documentation_version"           VARCHAR(255),
-    "deleted"                         BOOLEAN          NOT NULL,
-    "authority_id"                    UUID /*NOT NULL REFERENCES authority(id)*/,
-    "branch_name"                     VARCHAR(255),
-    "model_version"                   VARCHAR(255),
-    "model_version_tag"               VARCHAR(255),
-    "parent_folder_id"                UUID,
-    "class"                           VARCHAR(255)
+create table core."folder" (
+    "id"                              uuid primary key not null default uuid_generate_v4(),
+    "version"                         integer          not null,
+    "date_created"                    timestamp,
+    "last_updated"                    timestamp,
+    "readable_by_everyone"            boolean          not null,
+    "readable_by_authenticated_users" boolean          not null,
+    "label"                           text             not null,
+    "description"                     text,
+    "created_by"                      varchar(255),
+    "finalised"                       boolean          not null,
+    "date_finalised"                  timestamp,
+    "documentation_version"           varchar(255),
+    "deleted"                         boolean          not null,
+    "authority_id"                    uuid /*NOT NULL REFERENCES authority(id) initially deferred*/,
+    "branch_name"                     varchar(255),
+    "model_version"                   varchar(255),
+    "model_version_tag"               varchar(255),
+    "parent_folder_id"                uuid,
+    "class"                           varchar(255)
 );
-CREATE INDEX "idx_folder_parent_folder_id" ON core."folder"(parent_folder_id);
+create index "idx_folder_parent_folder_id" on core."folder"(parent_folder_id);
 
 
 -- # Terminology
 
-CREATE TABLE terminology."terminology" (
-    "id"                              UUID PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
-    "version"                         INTEGER          NOT NULL,
-    "date_created"                    TIMESTAMP,
-    "last_updated"                    TIMESTAMP,
-    "readable_by_everyone"            BOOLEAN          NOT NULL,
-    "readable_by_authenticated_users" BOOLEAN          NOT NULL,
-    "label"                           VARCHAR(255)     NOT NULL,
-    "description"                     VARCHAR(255),
-    "aliases_string"                  VARCHAR(255),
-    "created_by"                      VARCHAR(255),
-    "breadcrumb_tree_id"              UUID,
-    "finalised"                       BOOLEAN          NOT NULL,
-    "date_finalised"                  TIMESTAMP,
-    "documentation_version"           VARCHAR(255),
-    "model_type"                      VARCHAR(255)     NOT NULL,
-    "organisation"                    VARCHAR(255),
-    "deleted"                         BOOLEAN          NOT NULL,
-    "author"                          VARCHAR(255),
-    "folder_id"                       UUID             NOT NULL REFERENCES core.folder(id),
-    "authority_id"                    UUID /*NOT NULL REFERENCES authority(id)*/,
-    "branch_name"                     VARCHAR(255),
-    "model_version"                   VARCHAR(255),
-    "model_version_tag"               VARCHAR(255)
+create table terminology."terminology" (
+    "id"                              uuid primary key not null default uuid_generate_v4(),
+    "version"                         integer          not null,
+    "date_created"                    timestamp,
+    "last_updated"                    timestamp,
+    "readable_by_everyone"            boolean          not null,
+    "readable_by_authenticated_users" boolean          not null,
+    "label"                           varchar(255)     not null,
+    "description"                     varchar(255),
+    "aliases_string"                  varchar(255),
+    "created_by"                      varchar(255),
+    "breadcrumb_tree_id"              uuid,
+    "finalised"                       boolean          not null,
+    "date_finalised"                  timestamp,
+    "documentation_version"           varchar(255),
+    "model_type"                      varchar(255)     not null,
+    "organisation"                    varchar(255),
+    "deleted"                         boolean          not null,
+    "author"                          varchar(255),
+    "folder_id"                       uuid             not null references core.folder(id) initially deferred,
+    "authority_id"                    uuid /*NOT NULL REFERENCES authority(id) initially deferred*/,
+    "branch_name"                     varchar(255),
+    "model_version"                   varchar(255),
+    "model_version_tag"               varchar(255)
 );
-CREATE UNIQUE INDEX "idx_terminology_folder_id_label_branch_name_model_version" ON terminology."terminology"(folder_id, label, branch_name, model_version);
+create unique index "idx_terminology_folder_id_label_branch_name_model_version" on terminology."terminology"(folder_id, label, branch_name, model_version);
 
-CREATE TABLE terminology."term_relationship_type" (
-    "id"                    UUID PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
-    "version"               INTEGER          NOT NULL,
-    "date_created"          TIMESTAMP,
-    "last_updated"          TIMESTAMP,
-    "label"                 TEXT             NOT NULL,
-    "description"           TEXT,
-    "aliases_string"        VARCHAR(255),
-    "created_by"            VARCHAR(255),
-    "breadcrumb_tree_id"    UUID,
-    "idx"                   INTEGER,
-    "terminology_id"        UUID             NOT NULL REFERENCES terminology.terminology(id),
-    "parental_relationship" BOOLEAN,
-    "child_relationship"    BOOLEAN
+create table terminology."term_relationship_type" (
+    "id"                    uuid primary key not null default uuid_generate_v4(),
+    "version"               integer          not null,
+    "date_created"          timestamp,
+    "last_updated"          timestamp,
+    "label"                 text             not null,
+    "description"           text,
+    "aliases_string"        varchar(255),
+    "created_by"            varchar(255),
+    "breadcrumb_tree_id"    uuid,
+    "idx"                   integer,
+    "terminology_id"        uuid             not null references terminology.terminology(id) initially deferred,
+    "parental_relationship" boolean,
+    "child_relationship"    boolean
 );
-CREATE UNIQUE INDEX "idx_term_relationship_type_terminology_id_label" ON terminology."term_relationship_type"(terminology_id, label);
+create unique index "idx_term_relationship_type_terminology_id_label" on terminology."term_relationship_type"(terminology_id, label);
 
 
-CREATE TABLE terminology."term" (
-    "id"                 UUID PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
-    "version"            INTEGER          NOT NULL,
-    "date_created"       TIMESTAMP,
-    "last_updated"       TIMESTAMP,
-    "label"              TEXT             NOT NULL,
-    "description"        TEXT,
-    "aliases_string"     VARCHAR(255),
-    "created_by"         VARCHAR(255),
-    "breadcrumb_tree_id" UUID,
-    "idx"                INTEGER,
-    "terminology_id"     UUID             NOT NULL REFERENCES terminology.terminology(id),
-    "code"               VARCHAR(255)     NOT NULL,
-    "definition"         TEXT             NOT NULL,
-    "url"                VARCHAR(255),
-    "is_parent"          BOOLEAN,
-    "depth"              INTEGER
+create table terminology."term" (
+    "id"                 uuid primary key not null default uuid_generate_v4(),
+    "version"            integer          not null,
+    "date_created"       timestamp,
+    "last_updated"       timestamp,
+    "label"              text             not null,
+    "description"        text,
+    "aliases_string"     varchar(255),
+    "created_by"         varchar(255),
+    "breadcrumb_tree_id" uuid,
+    "idx"                integer,
+    "terminology_id"     uuid             not null references terminology.terminology(id) initially deferred,
+    "code"               varchar(255)     not null,
+    "definition"         text             not null,
+    "url"                varchar(255),
+    "is_parent"          boolean,
+    "depth"              integer
 );
-CREATE UNIQUE INDEX "idx_term_terminology_id_code" ON terminology."term"(terminology_id, code);
+create unique index "idx_term_terminology_id_code" on terminology."term"(terminology_id, code);
 
-CREATE TABLE terminology."term_relationship" (
-    "id"                   UUID PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
-    "version"              INTEGER          NOT NULL,
-    "date_created"         TIMESTAMP,
-    "last_updated"         TIMESTAMP,
-    "label"                TEXT             NOT NULL,
-    "description"          TEXT,
-    "aliases_string"       VARCHAR(255),
-    "created_by"           VARCHAR(255),
-    "breadcrumb_tree_id"   UUID,
-    "idx"                  INTEGER,
-    "terminology_id"       UUID             NOT NULL REFERENCES terminology.terminology(id),
-    "source_term_id"       UUID             NOT NULL REFERENCES terminology.term(id),
-    "target_term_id"       UUID             NOT NULL REFERENCES terminology.term(id),
-    "relationship_type_id" UUID             NOT NULL REFERENCES terminology.term_relationship_type(id)
+create table terminology."term_relationship" (
+    "id"                   uuid primary key not null default uuid_generate_v4(),
+    "version"              integer          not null,
+    "date_created"         timestamp,
+    "last_updated"         timestamp,
+    "label"                text             not null,
+    "description"          text,
+    "aliases_string"       varchar(255),
+    "created_by"           varchar(255),
+    "breadcrumb_tree_id"   uuid,
+    "idx"                  integer,
+    "terminology_id"       uuid             not null references terminology.terminology(id) initially deferred,
+    "source_term_id"       uuid             not null references terminology.term(id) initially deferred,
+    "target_term_id"       uuid             not null references terminology.term(id) initially deferred,
+    "relationship_type_id" uuid             not null references terminology.term_relationship_type(id) initially deferred
 );
-CREATE INDEX "idx_term_relationship_terminology_id" ON terminology."term_relationship"(terminology_id);
-CREATE INDEX "idx_term_relationship_source_term_id" ON terminology."term_relationship"(source_term_id);
-CREATE INDEX "idx_term_relationship_target_term_id" ON terminology."term_relationship"(target_term_id);
-CREATE INDEX "idx_term_relationship_relationship_type_id" ON terminology."term_relationship"(relationship_type_id);
+create index "idx_term_relationship_terminology_id" on terminology."term_relationship"(terminology_id);
+create index "idx_term_relationship_source_term_id" on terminology."term_relationship"(source_term_id);
+create index "idx_term_relationship_target_term_id" on terminology."term_relationship"(target_term_id);
+create index "idx_term_relationship_relationship_type_id" on terminology."term_relationship"(relationship_type_id);
 
 -- Test tables
-CREATE TABLE "test" (
-    "id"                              UUID PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
-    "version"                         INTEGER          NOT NULL,
-    "date_created"                    TIMESTAMP,
-    "last_updated"                    TIMESTAMP,
-    "readable_by_everyone"            BOOLEAN          NOT NULL,
-    "readable_by_authenticated_users" BOOLEAN          NOT NULL,
-    "label"                           VARCHAR(255)     NOT NULL,
-    "description"                     VARCHAR(255),
-    "aliases_string"                  VARCHAR(255),
-    "created_by"                      VARCHAR(255),
-    "breadcrumb_tree_id"              UUID,
-    "finalised"                       BOOLEAN          NOT NULL,
-    "date_finalised"                  TIMESTAMP,
-    "documentation_version"           VARCHAR(255),
-    "model_type"                      VARCHAR(255)     NOT NULL,
-    "organisation"                    VARCHAR(255),
-    "deleted"                         BOOLEAN          NOT NULL,
-    "author"                          VARCHAR(255),
-    "folder_id"                       UUID             NOT NULL,
-    "authority_id"                    UUID,
-    "branch_name"                     VARCHAR(255),
-    "model_version"                   VARCHAR(255),
-    "model_version_tag"               VARCHAR(255)
+create table "test" (
+    "id"                              uuid primary key not null default uuid_generate_v4(),
+    "version"                         integer          not null,
+    "date_created"                    timestamp,
+    "last_updated"                    timestamp,
+    "readable_by_everyone"            boolean          not null,
+    "readable_by_authenticated_users" boolean          not null,
+    "label"                           varchar(255)     not null,
+    "description"                     varchar(255),
+    "aliases_string"                  varchar(255),
+    "created_by"                      varchar(255),
+    "breadcrumb_tree_id"              uuid,
+    "finalised"                       boolean          not null,
+    "date_finalised"                  timestamp,
+    "documentation_version"           varchar(255),
+    "model_type"                      varchar(255)     not null,
+    "organisation"                    varchar(255),
+    "deleted"                         boolean          not null,
+    "author"                          varchar(255),
+    "folder_id"                       uuid             not null,
+    "authority_id"                    uuid,
+    "branch_name"                     varchar(255),
+    "model_version"                   varchar(255),
+    "model_version_tag"               varchar(255)
 );
-CREATE TABLE "test_term" (
-    "test_id" UUID NOT NULL,
-    "term_id" UUID NOT NULL
+create table "test_term" (
+    "test_id" uuid not null,
+    "term_id" uuid not null
 );

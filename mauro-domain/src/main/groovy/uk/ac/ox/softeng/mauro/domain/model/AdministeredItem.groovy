@@ -71,10 +71,11 @@ abstract class AdministeredItem extends Item /*implements MetadataAware*/{
     String domainType = this.class.simpleName
 
     /**
-     * The path of oan object allows it to be navigated to from either the containing model, or the folder path within
-     * a system.  This value is calculated on persistence and saved to allow easy lookup.
+     * The path of an object allows it to be navigated to from either the containing model, or the folder path within
+     * a system.  This value is calculated dynamically.
+     *
+     * @see #updatePath
      */
-    @TypeDef(type = DataType.STRING, converter = Path.PathConverter)
     @Transient
     Path path
 
@@ -84,7 +85,7 @@ abstract class AdministeredItem extends Item /*implements MetadataAware*/{
     @Nullable
     UUID breadcrumbTreeId // should be BreadcrumbTree type
 
-    @Transient
+    @Relation(Relation.Kind.ONE_TO_MANY)
     List<Metadata> metadata = []
 
     /**

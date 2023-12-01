@@ -125,6 +125,8 @@ class TerminologyController extends ModelController<Terminology> {
         log.debug "*** exportModel start ${Instant.now()} ***"
         terminologyContentRepository.findWithAssociations(id).map {Terminology terminology ->
             log.debug "*** exportModel fetched ${Instant.now()} ***"
+            terminology.setAssociations()
+            log.debug "*** setAssociations finished ${Instant.now()} ***"
             new ExportModel(
                 exportMetadata: new ExportMetadata(
                     namespace: 'uk.ac.ox.softeng.mauro',

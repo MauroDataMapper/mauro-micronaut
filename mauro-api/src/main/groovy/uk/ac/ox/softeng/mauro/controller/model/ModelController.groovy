@@ -54,7 +54,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     }
 
     Mono<M> show(UUID id) {
-        modelRepository.readById(id).flatMap {M model ->
+        modelRepository.findById(id).flatMap {M model ->
             pathRepository.readParentItems(model).map {
                 model.updatePath()
                 model

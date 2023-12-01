@@ -1,13 +1,9 @@
 package uk.ac.ox.softeng.mauro.domain.terminology
 
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
+import uk.ac.ox.softeng.mauro.domain.model.ModelItem
 
-import com.fasterxml.jackson.annotation.JsonIdentityInfo
 import com.fasterxml.jackson.annotation.JsonIgnore
-import com.fasterxml.jackson.annotation.ObjectIdGenerators
-import com.fasterxml.jackson.databind.PropertyNamingStrategies
-import com.fasterxml.jackson.databind.PropertyNamingStrategy
-import com.fasterxml.jackson.databind.annotation.JsonNaming
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
 import groovy.transform.MapConstructor
@@ -18,8 +14,6 @@ import io.micronaut.data.annotation.Indexes
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Relation
 import jakarta.persistence.Transient
-import uk.ac.ox.softeng.mauro.domain.model.ModelItem
-
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Pattern
 
@@ -37,16 +31,13 @@ import jakarta.validation.constraints.Pattern
 @MappedEntity(schema = 'terminology')
 @MapConstructor(includeSuperFields = true, includeSuperProperties = true, noArg = true)
 @Indexes([@Index(columns = ['terminology_id', 'code'], unique = true)])
-@JsonIdentityInfo(property = 'code', generator = ObjectIdGenerators.PropertyGenerator)
 class Term extends ModelItem<Terminology> {
 
     @Override
     String getLabel() {
-        String label = code && definition && code == definition ? code :
+        code && definition && code == definition ? code :
         code && definition ? "${code}: ${definition}" :
-        null
-
-//        label.substring(0, Math.min(label.length(), 200))
+        code
     }
 
     @JsonIgnore
@@ -58,14 +49,6 @@ class Term extends ModelItem<Terminology> {
 
     @NotBlank
     String definition
-
-//    String getDefinition() {
-//        definition?.substring(0, Math.min(definition.length(), 200))
-//    }
-//
-//    String getDescription() {
-//        this.@description?.substring(0, Math.min(this.@description.length(), 200))
-//    }
 
     @Nullable
     String url

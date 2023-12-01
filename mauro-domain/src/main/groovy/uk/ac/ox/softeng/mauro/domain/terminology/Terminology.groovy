@@ -1,26 +1,23 @@
 package uk.ac.ox.softeng.mauro.domain.terminology
 
-import uk.ac.ox.softeng.mauro.domain.facet.Metadata
+
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
+import uk.ac.ox.softeng.mauro.domain.model.Model
 import uk.ac.ox.softeng.mauro.domain.model.ModelItem
 
+import com.fasterxml.jackson.annotation.JsonIdentityInfo
 import com.fasterxml.jackson.annotation.JsonIgnore
-import com.fasterxml.jackson.annotation.JsonManagedReference
+import com.fasterxml.jackson.annotation.JsonPropertyOrder
+import com.fasterxml.jackson.annotation.ObjectIdGenerators
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
 import groovy.transform.MapConstructor
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.Introspected
-import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.annotation.Index
 import io.micronaut.data.annotation.Indexes
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Relation
-import uk.ac.ox.softeng.mauro.domain.model.Model
-
-import io.micronaut.data.annotation.TypeDef
-import io.micronaut.data.annotation.sql.ColumnTransformer
-import io.micronaut.data.model.DataType
 import jakarta.persistence.Transient
 
 /**
@@ -33,12 +30,15 @@ import jakarta.persistence.Transient
 @MappedEntity(schema = 'terminology')
 @MapConstructor(includeSuperFields = true, includeSuperProperties = true, noArg = true)
 @Indexes([@Index(columns = ['folder_id', 'label', 'branch_name', 'model_version'], unique = true)])
+@JsonPropertyOrder(['terms', 'termRelationshipTypes'])
 class Terminology extends Model {
 
     @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'terminology')
+    @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator, property = 'code')
     List<Term> terms = []
 
     @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'terminology')
+    @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator, property = 'label')
     List<TermRelationshipType> termRelationshipTypes = []
 
     @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'terminology')
@@ -69,6 +69,28 @@ class Terminology extends Model {
     @JsonIgnore
     List<List<? extends ModelItem<Terminology>>> getAllAssociations() {
         [terms, termRelationshipTypes, termRelationships]
+    }
+
+    @Transient
+    @JsonIgnore
+    Terminology setAssociations() {
+        Map<UUID, Term> termsMap = terms.collectEntries {[it.id, it]}
+        Map<UUID, TermRelationshipType> termRelationshipTypesMap = termRelationshipTypes.collectEntries {[it.id, it]}
+
+        terms.each {
+            it.parent = this
+        }
+        termRelationshipTypes.each {
+            it.parent = this
+        }
+        termRelationships.each {
+            it.parent = this
+            it.relationshipType = termRelationshipTypesMap[it.relationshipType.id]
+            it.sourceTerm = termsMap[it.sourceTerm.id]
+            it.targetTerm = termsMap[it.targetTerm.id]
+        }
+
+        this
     }
 
     @Override

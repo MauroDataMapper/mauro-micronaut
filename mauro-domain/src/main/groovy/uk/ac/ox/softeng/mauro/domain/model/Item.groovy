@@ -21,7 +21,7 @@ import java.time.Instant
 abstract class Item {
 
     /**
-     * The identify of an object.  UUIDs should be universally unique.
+     * The identity of an object.  UUIDs should be universally unique.
      * Identities are usually created when the object is saved in the database, but can be manually set beforehand.
      */
     @Id
