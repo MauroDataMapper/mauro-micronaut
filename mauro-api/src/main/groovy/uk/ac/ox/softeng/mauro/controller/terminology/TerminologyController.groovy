@@ -1,20 +1,19 @@
 package uk.ac.ox.softeng.mauro.controller.terminology
 
+import uk.ac.ox.softeng.mauro.controller.model.ModelController
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.model.version.CreateNewVersionData
 import uk.ac.ox.softeng.mauro.domain.model.version.FinaliseData
+import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
+import uk.ac.ox.softeng.mauro.domain.terminology.TerminologyService
 import uk.ac.ox.softeng.mauro.export.ExportMetadata
 import uk.ac.ox.softeng.mauro.export.ExportModel
 import uk.ac.ox.softeng.mauro.persistence.folder.FolderRepository
 import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemRepository
-import uk.ac.ox.softeng.mauro.persistence.model.ModelContentRepository
-import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
 import uk.ac.ox.softeng.mauro.persistence.terminology.TerminologyContentRepository
 import uk.ac.ox.softeng.mauro.persistence.terminology.TerminologyRepository
-import uk.ac.ox.softeng.mauro.domain.terminology.TerminologyService
 import uk.ac.ox.softeng.mauro.web.ListResponse
-import uk.ac.ox.softeng.mauro.controller.model.ModelController
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.transform.CompileStatic
@@ -44,6 +43,9 @@ class TerminologyController extends ModelController<Terminology> {
 
     TerminologyRepository terminologyRepository
 
+//    @Inject
+//    TerminologyDTORepository terminologyDTORepository
+
     TerminologyContentRepository terminologyContentRepository
 
     @Inject
@@ -63,7 +65,14 @@ class TerminologyController extends ModelController<Terminology> {
 
     @Get('/terminologies/{id}')
     Mono<Terminology> show(UUID id) {
-        super.show(id)
+        //        super.show(id)
+        terminologyRepository.findById(id).flatMap {Terminology  terminology ->
+//            Terminology terminology = (Terminology) model
+            pathRepository.readParentItems(terminology).map {
+                terminology.updatePath()
+                terminology
+            }
+        }
     }
 
     @Transactional
@@ -145,7 +154,7 @@ class TerminologyController extends ModelController<Terminology> {
     @Post('/terminologies/import{/namespace}{/name}{/version}')
     Mono<ListResponse<Terminology>> importModel(@Body Map<String, String> importMap, @Nullable String namespace, @Nullable String name, @Nullable String version) {
         log.info '** start importModel **'
-//        Terminology terminology = importData.importFile.terminology
+        //        Terminology terminology = importData.importFile.terminology
         ExportModel importModel = objectMapper.readValue(importMap.importFile, ExportModel)
         log.info '*** imported JSON model ***'
         Terminology imported = importModel.terminology

@@ -3,14 +3,14 @@ package uk.ac.ox.softeng.mauro.persistence.terminology
 
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
-import uk.ac.ox.softeng.mauro.persistence.terminology.dto.TerminologyDTO
+import uk.ac.ox.softeng.mauro.persistence.terminology.dto.TerminologyDTORepository
 
 import groovy.transform.CompileStatic
 import io.micronaut.data.annotation.Join
-import io.micronaut.data.annotation.Query
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.r2dbc.annotation.R2dbcRepository
 import io.micronaut.data.repository.reactive.ReactorPageableRepository
+import jakarta.inject.Inject
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import uk.ac.ox.softeng.mauro.persistence.model.ModelRepository
@@ -19,6 +19,9 @@ import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
 @CompileStatic
 @R2dbcRepository(dialect = Dialect.POSTGRES)
 abstract class TerminologyRepository implements ReactorPageableRepository<Terminology, UUID>, ModelRepository<Terminology> {
+
+    @Inject
+    TerminologyDTORepository terminologyDTORepository
 
     static final String FIND_QUERY_SQL = '''select terminology_.*,
         (select json_agg(metadata) from core.metadata where multi_facet_aware_item_id = terminology_.id) as metadata,
@@ -39,12 +42,12 @@ abstract class TerminologyRepository implements ReactorPageableRepository<Termin
         '''
 
     Mono<Terminology> findById(UUID id) {
-        findTerminologyDTOById(id) as Mono<Terminology>
+        terminologyDTORepository.findById(id) as Mono<Terminology>
     }
 
-    @Query(FIND_QUERY_SQL)
-    @Join(value = 'authority', type = Join.Type.LEFT_FETCH)
-    abstract Mono<TerminologyDTO> findTerminologyDTOById(UUID id)
+//    @Query(FIND_QUERY_SQL)
+//    @Join(value = 'authority', type = Join.Type.LEFT_FETCH)
+//    abstract Mono<TerminologyDTO> findTerminologyDTOById(UUID id)
 
     @Join(value = 'terms', type = Join.Type.LEFT_FETCH)
     @Join(value = 'termRelationshipTypes', type = Join.Type.LEFT_FETCH)
@@ -81,4 +84,5 @@ abstract class TerminologyRepository implements ReactorPageableRepository<Termin
     Boolean handles(String domainType) {
         domainType.toLowerCase() in ['terminology', 'terminologies']
     }
+
 }
