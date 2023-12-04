@@ -9,7 +9,7 @@ import jakarta.validation.Valid
 import reactor.core.publisher.Mono
 
 @CompileStatic
-abstract class ItemRepository<I extends Item> implements ReactorPageableRepository<I, UUID> {
+trait ItemRepository<I extends Item> implements ReactorPageableRepository<I, UUID> {
 
     Mono<I> findById(UUID id) {
         // Should be implemented by override with joins, possibly using a DTO

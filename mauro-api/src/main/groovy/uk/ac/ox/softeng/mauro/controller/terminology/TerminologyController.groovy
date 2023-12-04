@@ -49,9 +49,6 @@ class TerminologyController extends ModelController<Terminology> {
     TerminologyService terminologyService
 
     @Inject
-    List<AdministeredItemRepository> administeredItemRepositories
-
-    @Inject
     ObjectMapper objectMapper
 
     TerminologyController(TerminologyRepository terminologyRepository, FolderRepository folderRepository, TerminologyContentRepository terminologyContentRepository) {
@@ -96,27 +93,13 @@ class TerminologyController extends ModelController<Terminology> {
     @Transactional
     @Put('/terminologies/{id}/finalise')
     Mono<Terminology> finalise(UUID id, @Body FinaliseData finaliseData) {
-        terminologyRepository.findById(id).flatMap {Terminology terminology ->
-            Terminology finalised = terminologyService.finaliseModel(terminology, finaliseData.version, finaliseData.versionChangeType, finaliseData.versionTag)
-            terminologyRepository.update(finalised)
-        }
+        super.finalise(id, finaliseData)
     }
 
     @Transactional
     @Put('/terminologies/{id}/newBranchModelVersion')
     Mono<Terminology> createNewBranchModelVersion(UUID id, @Body @Nullable CreateNewVersionData createNewVersionData) {
-        if (!createNewVersionData) createNewVersionData = new CreateNewVersionData()
-        terminologyRepository.findById(id).flatMap {Terminology existing ->
-            Terminology copy = terminologyService.createNewBranchModelVersion(existing, createNewVersionData.branchName)
-
-            createEntity(copy.folder, copy).flatMap {Terminology savedCopy ->
-                Flux.fromIterable(savedCopy.getAllContents()).concatMap {AdministeredItem item ->
-                    log.debug "*** Saving item [$item.id : $item.label] ***"
-                    updateCreationProperties(item)
-                    getRepository(item).save(item)
-                }.then(Mono.just(savedCopy))
-            }
-        }
+        super.createNewBranchModelVersion(id, createNewVersionData)
     }
 
     @Get('/terminologies/{id}/export{/namespace}{/name}{/version}')
@@ -144,7 +127,6 @@ class TerminologyController extends ModelController<Terminology> {
     @Post('/terminologies/import{/namespace}{/name}{/version}')
     Mono<ListResponse<Terminology>> importModel(@Body Map<String, String> importMap, @Nullable String namespace, @Nullable String name, @Nullable String version) {
         log.info '** start importModel **'
-        //        Terminology terminology = importData.importFile.terminology
         ExportModel importModel = objectMapper.readValue(importMap.importFile, ExportModel)
         log.info '*** imported JSON model ***'
         Terminology imported = importModel.terminology
@@ -163,10 +145,5 @@ class TerminologyController extends ModelController<Terminology> {
                 show(savedImported.id).map {ListResponse.from([it])}
             }
         }
-    }
-
-    @NonNull
-    AdministeredItemRepository getRepository(AdministeredItem item) {
-        administeredItemRepositories.find {it.handles(item.class)}
     }
 }

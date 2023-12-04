@@ -16,7 +16,7 @@ import uk.ac.ox.softeng.mauro.persistence.model.ModelRepository
 
 @CompileStatic
 @R2dbcRepository(dialect = Dialect.POSTGRES)
-abstract class FolderRepository extends ModelRepository<Folder> implements ReactorPageableRepository<Folder, UUID> {
+abstract class FolderRepository implements ReactorPageableRepository<Folder, UUID>, ModelRepository<Folder> {
 
     @Join(value = 'childFolders', type = Join.Type.LEFT_FETCH)
     abstract Mono<Folder> findById(UUID id)

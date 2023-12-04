@@ -31,8 +31,8 @@ class TerminologyContentRepository extends ModelContentRepository<Terminology> {
 
     Mono<Terminology> findWithAssociations(UUID id) {
         terminologyRepository.findById(id).flatMap {
-            Mono.zip(termRepository.findAllByTerminology(it).collectList(), termRelationshipTypeRepository.readAllByTerminology(it).collectList(),
-                     termRelationshipRepository.readAllByTerminology(it).collectList()).map {Tuple3<List<Term>, List<TermRelationshipType>, List<TermRelationship>> tuple3 ->
+            Mono.zip(termRepository.findAllByTerminology(it).collectList(), termRelationshipTypeRepository.findAllByTerminology(it).collectList(),
+                     termRelationshipRepository.findAllByTerminology(it).collectList()).map {Tuple3<List<Term>, List<TermRelationshipType>, List<TermRelationship>> tuple3 ->
                 it.terms = tuple3.getT1()
                 it.termRelationshipTypes = tuple3.getT2()
                 it.termRelationships = tuple3.getT3()

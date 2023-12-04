@@ -3,6 +3,8 @@ package uk.ac.ox.softeng.mauro.controller.model
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.model.Model
+import uk.ac.ox.softeng.mauro.domain.model.ModelService
+import uk.ac.ox.softeng.mauro.domain.model.version.CreateNewVersionData
 import uk.ac.ox.softeng.mauro.domain.model.version.FinaliseData
 import uk.ac.ox.softeng.mauro.export.ExportMetadata
 import uk.ac.ox.softeng.mauro.export.ExportModel
@@ -20,6 +22,8 @@ import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.exceptions.HttpStatusException
 import io.micronaut.transaction.annotation.Transactional
+import jakarta.inject.Inject
+import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 
 import java.time.Instant
@@ -42,7 +46,12 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         disallowedProperties - ['readableByEveryone', 'readableByAuthenticatedUsers']
     }
 
+    @Inject
+    List<AdministeredItemRepository> administeredItemRepositories
+
     ModelContentRepository<M> modelContentRepository
+
+    ModelService<M> modelService
 
     ModelController(Class<M> modelClass, ModelRepository<M> modelRepository, FolderRepository folderRepository, ModelContentRepository<M> modelContentRepository) {
         super(modelClass, modelRepository, (AdministeredItemRepository<Folder>) folderRepository, modelContentRepository)
@@ -106,12 +115,29 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         }
     }
 
-//    @Transactional
-//    Mono<M> finalise(UUID id, @Body FinaliseData finaliseData) {
-//        modelRepository.findById(id).flatMap {M model ->
-//            M finalised = modelService.finaliseModel
-//        }
-//    }
+    @Transactional
+    Mono<M> finalise(UUID id, @Body FinaliseData finaliseData) {
+        modelRepository.findById(id).flatMap {M model ->
+            M finalised = modelService.finaliseModel(model, finaliseData.version, finaliseData.versionChangeType, finaliseData.versionTag)
+            modelRepository.update(finalised)
+        }
+    }
+
+    @Transactional
+    Mono<M> createNewBranchModelVersion(UUID id, @Body @Nullable CreateNewVersionData createNewVersionData) {
+        if (!createNewVersionData) createNewVersionData = new CreateNewVersionData()
+        modelRepository.findById(id).flatMap {M existing ->
+            M copy = modelService.createNewBranchModelVersion(existing, createNewVersionData.branchName)
+
+            createEntity(copy.folder, copy).flatMap {M savedCopy ->
+                Flux.fromIterable(savedCopy.getAllContents()).concatMap {AdministeredItem item ->
+                    log.debug "*** Saving item [$item.id : $item.label] ***"
+                    updateCreationProperties(item)
+                    getRepository(item).save(item)
+                }.then(Mono.just(savedCopy))
+            }
+        }
+    }
 
     protected ModelRepository<M> getModelRepository() {
         (ModelRepository<M>) administeredItemRepository
@@ -119,5 +145,10 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
 
     protected FolderRepository getFolderRepository() {
         (FolderRepository) parentItemRepository
+    }
+
+    @NonNull
+    AdministeredItemRepository getRepository(AdministeredItem item) {
+        administeredItemRepositories.find {it.handles(item.class)}
     }
 }

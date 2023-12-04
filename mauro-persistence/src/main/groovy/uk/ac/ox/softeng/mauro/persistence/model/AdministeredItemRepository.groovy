@@ -10,7 +10,7 @@ import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 
 @CompileStatic
-abstract class AdministeredItemRepository<I extends AdministeredItem> extends ItemRepository<I> implements ReactorPageableRepository<I, UUID> {
+trait AdministeredItemRepository<I extends AdministeredItem> implements ReactorPageableRepository<I, UUID>, ItemRepository<I> {
 
     abstract Mono<I> readById(UUID id)
 

@@ -24,13 +24,13 @@ class TreeItemController {
     List<ModelRepository> modelRepositories
 
     // TODO
-    @Get
-    Mono<List<TreeItem>> show(String domainType, UUID id) {
-        ModelRepository modelRepository = modelRepositories.find {it.handles(domainType)}
-        ModelService modelService = modelServices.find {it.handles(domainType)}
-
-        modelRepository.findById(id).map {
+//    @Get
+//    Mono<List<TreeItem>> show(String domainType, UUID id) {
+//        ModelRepository modelRepository = modelRepositories.find {it.handles(domainType)}
+//        ModelService modelService = modelServices.find {it.handles(domainType)}
+//
+//        modelRepository.findById(id).map {
 //            modelService.buildTree(it, null)
-        }
-    }
+//        }
+//    }
 }

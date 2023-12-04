@@ -9,7 +9,7 @@ import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 
 @CompileStatic
-abstract class ModelItemRepository<I extends ModelItem> extends AdministeredItemRepository<I> implements ReactorPageableRepository<I, UUID> {
+trait ModelItemRepository<I extends ModelItem> implements ReactorPageableRepository<I, UUID>, AdministeredItemRepository<I> {
 
     Flux<I> findAllByParent(AdministeredItem item) {
         // Should be implemented by override with joins, possibly using a DTO

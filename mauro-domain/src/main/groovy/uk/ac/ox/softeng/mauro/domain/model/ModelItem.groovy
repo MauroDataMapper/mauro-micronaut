@@ -15,7 +15,7 @@ import io.micronaut.data.annotation.MappedProperty
 @CompileStatic
 @Introspected
 @MappedEntity
-@Sortable(includes = ['order', 'label'])
+@Sortable(includes = ['order', 'label'], includeSuperProperties = true)
 abstract class ModelItem<M extends Model> extends AdministeredItem {
 
     @JsonProperty('index')

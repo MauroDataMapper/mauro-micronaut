@@ -56,9 +56,9 @@ class TermRelationshipController extends AdministeredItemController<TermRelation
     Mono<TermRelationship> create(UUID terminologyId, @Body @NonNull TermRelationship termRelationship) {
         cleanBody(termRelationship)
 
-        Mono.zip(terminologyRepository.readById(terminologyId), termRepository.readByTerminologyIdAndId(terminologyId, termRelationship.sourceTerm.id),
-                 termRepository.readByTerminologyIdAndId(terminologyId, termRelationship.targetTerm.id),
-                 termRelationshipTypeRepository.readByTerminologyIdAndId(terminologyId, termRelationship.relationshipType.id)).flatMap {Tuple4<Terminology, Term, Term, TermRelationshipType> tuple ->
+        Mono.zip(terminologyRepository.readById(terminologyId), termRepository.readById(termRelationship.sourceTerm.id),
+                 termRepository.readById(termRelationship.targetTerm.id),
+                 termRelationshipTypeRepository.readById(termRelationship.relationshipType.id)).flatMap {Tuple4<Terminology, Term, Term, TermRelationshipType> tuple ->
             Terminology terminology = tuple.getT1()
             termRelationship.sourceTerm = tuple.getT2()
             termRelationship.targetTerm = tuple.getT3()
@@ -72,12 +72,12 @@ class TermRelationshipController extends AdministeredItemController<TermRelation
     Mono<TermRelationship> update(UUID terminologyId, UUID id, @Body @NonNull TermRelationship termRelationship) {
         cleanBody(termRelationship)
 
-        termRelationshipRepository.findByTerminologyIdAndId(terminologyId, id).flatMap {TermRelationship existing ->
+        termRelationshipRepository.readById(id).flatMap {TermRelationship existing ->
             updateProperties(existing, termRelationship)
 
-            Mono.zip(terminologyRepository.readById(terminologyId), termRepository.readByTerminologyIdAndId(terminologyId, termRelationship.sourceTerm.id),
-                     termRepository.readByTerminologyIdAndId(terminologyId, termRelationship.targetTerm.id),
-                     termRelationshipTypeRepository.readByTerminologyIdAndId(terminologyId, termRelationship.relationshipType.id)).flatMap {Tuple4<Terminology, Term, Term, TermRelationshipType> tuple ->
+            Mono.zip(terminologyRepository.readById(terminologyId), termRepository.readById(termRelationship.sourceTerm.id),
+                     termRepository.readById(termRelationship.targetTerm.id),
+                     termRelationshipTypeRepository.readById(termRelationship.relationshipType.id)).flatMap {Tuple4<Terminology, Term, Term, TermRelationshipType> tuple ->
                 termRelationship.terminology = tuple.getT1()
                 termRelationship.sourceTerm = tuple.getT2()
                 termRelationship.targetTerm = tuple.getT3()

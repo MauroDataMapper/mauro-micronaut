@@ -16,7 +16,7 @@ import uk.ac.ox.softeng.mauro.domain.terminology.TermRelationshipType
 
 @CompileStatic
 @R2dbcRepository(dialect = Dialect.POSTGRES)
-abstract class TermRelationshipTypeRepository extends ModelItemRepository<TermRelationshipType> implements ReactorPageableRepository<TermRelationshipType, UUID> {
+abstract class TermRelationshipTypeRepository implements ReactorPageableRepository<TermRelationshipType, UUID>, ModelItemRepository<TermRelationshipType> {
 
     @Inject
     TermRelationshipTypeDTORepository termRelationshipTypeDTORepository

@@ -18,7 +18,7 @@ import reactor.core.publisher.Mono
 
 @CompileStatic
 @R2dbcRepository(dialect = Dialect.POSTGRES)
-abstract class TermRepository extends ModelItemRepository<Term> implements ReactorPageableRepository<Term, UUID> {
+abstract class TermRepository implements ReactorPageableRepository<Term, UUID>, ModelItemRepository<Term> {
 
     @Inject
     TermDTORepository termDTORepository
@@ -53,13 +53,11 @@ abstract class TermRepository extends ModelItemRepository<Term> implements React
 
     @Query('''select * from terminology.term
               where term.terminology_id=:terminologyId
-              and (exists (select * from terminology.term_relationship tr join terminology.term_relationship_type trt on tr.relationship_type_id=trt.id and tr.
-              source_term_id=term.id and tr.target_term_id=:id and trt.child_relationship and tr.terminology_id=:terminologyId and trt.terminology_id=:terminologyId)
-              or exists (select * from terminology.term_relationship tr join terminology.term_relationship_type trt on tr.relationship_type_id=trt.id and tr.
-              source_term_id=:id and tr.target_term_id=term.id and trt.parental_relationship and tr.terminology_id=:terminologyId and trt.terminology_id=:terminologyId))
+              and ((exists (select * from terminology.term_relationship tr join terminology.term_relationship_type trt on tr.relationship_type_id=trt.id and tr.source_term_id=term.id and tr.target_term_id=:id and trt.child_relationship and tr.terminology_id=:terminologyId and trt.terminology_id=:terminologyId)
+              or exists (select * from terminology.term_relationship tr join terminology.term_relationship_type trt on tr.relationship_type_id=trt.id and tr.source_term_id=:id and tr.target_term_id=term.id and trt.parental_relationship and tr.terminology_id=:terminologyId and trt.terminology_id=:terminologyId))
               or (:id is null and not exists (select * from terminology.term_relationship tr join terminology.term_relationship_type trt on tr.relationship_type_id=trt.id 
               and ((tr.target_term_id=term.id and trt.parental_relationship) or (tr.source_term_id=term.id and trt.child_relationship)) and tr.terminology_id=:terminologyId
-               and trt.terminology_id=:terminologyId))''')
+               and trt.terminology_id=:terminologyId)))''')
     abstract Flux<Term> readChildTermsByParent(UUID terminologyId, @Nullable UUID id)
 
     @Override
