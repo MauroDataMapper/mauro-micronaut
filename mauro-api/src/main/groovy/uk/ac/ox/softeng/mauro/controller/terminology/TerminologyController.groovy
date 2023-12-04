@@ -130,6 +130,7 @@ class TerminologyController extends ModelController<Terminology> {
         ExportModel importModel = objectMapper.readValue(importMap.importFile, ExportModel)
         log.info '*** imported JSON model ***'
         Terminology imported = importModel.terminology
+        imported.setAssociations()
         updateCreationProperties(imported)
         log.info '* start updateCreationProperties *'
         imported.getAllContents().each {updateCreationProperties(it)}
