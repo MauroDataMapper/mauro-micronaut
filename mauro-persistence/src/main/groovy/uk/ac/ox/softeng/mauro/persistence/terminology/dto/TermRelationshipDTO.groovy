@@ -1,7 +1,7 @@
 package uk.ac.ox.softeng.mauro.persistence.terminology.dto
 
 import uk.ac.ox.softeng.mauro.domain.facet.Metadata
-import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
+import uk.ac.ox.softeng.mauro.domain.terminology.TermRelationship
 import uk.ac.ox.softeng.mauro.persistence.model.dto.AdministeredItemDTO
 
 import groovy.transform.CompileStatic
@@ -15,12 +15,13 @@ import io.micronaut.data.model.DataType
 
 @CompileStatic
 @Introspected
-@MappedEntity(value = 'terminology', schema = 'terminology', alias = 'terminology_')
-class TerminologyDTO extends Terminology implements AdministeredItemDTO {
+@MappedEntity(value = 'term_relationship', schema = 'terminology', alias = 'term_relationship_')
+class TermRelationshipDTO extends TermRelationship implements AdministeredItemDTO {
 
     @Nullable
     @TypeDef(type = DataType.JSON)
     @MappedProperty
-    @ColumnTransformer(read = '(select json_agg(metadata) from core.metadata where multi_facet_aware_item_id = terminology_.id)')
+    @ColumnTransformer(read = '(select json_agg(metadata) from core.metadata where multi_facet_aware_item_id = term_relationship_.id)')
+    // could use @JsonRawValue if we need to speed up binding this from the DB
     List<Metadata> metadata = []
 }

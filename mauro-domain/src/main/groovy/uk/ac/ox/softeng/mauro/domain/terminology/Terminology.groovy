@@ -51,20 +51,6 @@ class Terminology extends Model {
         'te'
     }
 
-    @Override
-    @Transient
-    @JsonIgnore
-    Collection<AdministeredItem> getAllContents() {
-        List<AdministeredItem> items = []
-        terms?.each {it.terminology = this}
-        termRelationshipTypes?.each {it.terminology = this}
-        termRelationships?.each {it.terminology = this}
-        if (terms) items.addAll(terms)
-        if (termRelationshipTypes) items.addAll(termRelationshipTypes)
-        if (termRelationships) items.addAll(termRelationships)
-        items
-    }
-
     @Transient
     @JsonIgnore
     List<List<? extends ModelItem<Terminology>>> getAllAssociations() {
@@ -98,16 +84,7 @@ class Terminology extends Model {
         log.debug '*** Terminology.clone() ***'
 
         Terminology cloned = (Terminology) super.clone()
-        cloned.terms = terms.collect {it.clone().tap {it.parent = cloned}}
-        cloned.termRelationshipTypes = termRelationshipTypes.collect {it.clone().tap {it.parent = cloned}}
-        cloned.termRelationships = termRelationships.collect {
-            it.clone().tap {TermRelationship tr ->
-                tr.relationshipType = cloned.termRelationshipTypes.find {it.label == tr.relationshipType.label}
-                tr.sourceTerm = cloned.terms.find {it.code == tr.sourceTerm.code}
-                tr.targetTerm = cloned.terms.find {it.code == tr.targetTerm.code}
-                tr.parent = cloned
-            }
-        }
+        cloned.setAssociations()
 
         cloned
     }

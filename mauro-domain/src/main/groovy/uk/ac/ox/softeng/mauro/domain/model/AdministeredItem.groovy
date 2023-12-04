@@ -1,7 +1,6 @@
 package uk.ac.ox.softeng.mauro.domain.model
 
 import uk.ac.ox.softeng.mauro.domain.facet.Metadata
-import uk.ac.ox.softeng.mauro.domain.facet.MetadataAware
 import uk.ac.ox.softeng.mauro.domain.security.SecurableResource
 import uk.ac.ox.softeng.mauro.exception.MauroInternalException
 
@@ -40,7 +39,7 @@ import java.time.Instant
 
 @CompileStatic
 @AutoClone
-abstract class AdministeredItem extends Item /*implements MetadataAware*/{
+abstract class AdministeredItem extends Item {
 
     /**
      * The label of an object.  Labels are used as identifiers within a context and so need to be unique within
@@ -89,14 +88,16 @@ abstract class AdministeredItem extends Item /*implements MetadataAware*/{
     List<Metadata> metadata = []
 
     /**
-     * Helper method for returning the parent of this object, if one exists.
+     * Helper method for returning the parent of this object, if one exists and is loaded.
+     * <p>
+     *     The parent of an object is its direct ancestor in its path.
      */
     @Transient
     @JsonIgnore
     abstract AdministeredItem getParent()
 
     /**
-     * Helper method for returning the owning model of this object, if one exists.
+     * Helper method for setting the parent of this object.
      */
     @Transient
     @JsonIgnore
@@ -104,6 +105,8 @@ abstract class AdministeredItem extends Item /*implements MetadataAware*/{
 
     /**
      * Helper method for returning the owner of this object.
+     * <p>
+     *     The owner of an object is the root of an item's path, and is where permissions are set.
      */
     @Transient
     @JsonIgnore

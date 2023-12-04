@@ -1,4 +1,4 @@
-package uk.ac.ox.softeng.mauro.persistence.model
+package uk.ac.ox.softeng.mauro.persistence.model.dto
 
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 

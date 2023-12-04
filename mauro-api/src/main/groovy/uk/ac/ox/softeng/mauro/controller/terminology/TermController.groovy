@@ -2,8 +2,6 @@ package uk.ac.ox.softeng.mauro.controller.terminology
 
 import uk.ac.ox.softeng.mauro.controller.model.AdministeredItemController
 import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemContentRepository
-import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemRepository
-import uk.ac.ox.softeng.mauro.persistence.model.ModelContentRepository
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 import groovy.transform.CompileStatic
@@ -16,7 +14,6 @@ import io.micronaut.http.annotation.Delete
 import io.micronaut.http.annotation.Get
 import io.micronaut.http.annotation.Post
 import io.micronaut.http.annotation.Put
-import jakarta.inject.Inject
 import reactor.core.publisher.Mono
 import uk.ac.ox.softeng.mauro.domain.terminology.Term
 import uk.ac.ox.softeng.mauro.persistence.terminology.TermRepository
@@ -61,6 +58,6 @@ class TermController extends AdministeredItemController<Term, Terminology> {
 
     @Get('/tree{/id}')
     Mono<List<Term>> tree(UUID terminologyId, @Nullable UUID id) {
-        termRepository.childTermsByParent(terminologyId, id).collectList()
+        termRepository.readChildTermsByParent(terminologyId, id).collectList()
     }
 }

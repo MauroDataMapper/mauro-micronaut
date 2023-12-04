@@ -25,25 +25,4 @@ class Authority extends Item implements SecurableResource {
     Boolean readableByEveryone = false
 
     Boolean readableByAuthenticatedUsers = false
-
-//    @Override
-//    @Transient
-//    @JsonIgnore
-//    AdministeredItem getParent() {
-//        null
-//    }
-//
-//    @Override
-//    @Transient
-//    @JsonIgnore
-//    void setParent(AdministeredItem parent) {
-//        null
-//    }
-//
-//    @Override
-//    @Transient
-//    @JsonIgnore
-//    Authority getOwner() {
-//        this
-//    }
 }

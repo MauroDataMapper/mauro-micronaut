@@ -43,9 +43,6 @@ class TerminologyController extends ModelController<Terminology> {
 
     TerminologyRepository terminologyRepository
 
-//    @Inject
-//    TerminologyDTORepository terminologyDTORepository
-
     TerminologyContentRepository terminologyContentRepository
 
     @Inject
@@ -65,14 +62,7 @@ class TerminologyController extends ModelController<Terminology> {
 
     @Get('/terminologies/{id}')
     Mono<Terminology> show(UUID id) {
-        //        super.show(id)
-        terminologyRepository.findById(id).flatMap {Terminology  terminology ->
-//            Terminology terminology = (Terminology) model
-            pathRepository.readParentItems(terminology).map {
-                terminology.updatePath()
-                terminology
-            }
-        }
+        super.show(id)
     }
 
     @Transactional

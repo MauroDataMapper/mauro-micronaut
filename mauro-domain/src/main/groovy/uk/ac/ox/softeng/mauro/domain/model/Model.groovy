@@ -103,7 +103,17 @@ abstract class Model extends AdministeredItem implements SecurableResource {
      */
     @Transient
     @JsonIgnore
-    abstract Collection<AdministeredItem> getAllContents()
+    List<AdministeredItem> getAllContents() {
+        allAssociations.flatten() as List<AdministeredItem>
+    }
+
+    /**
+     * Return all persistent associations of the model.
+     * The associations should be ordered so that they can be saved in order.
+     */
+    @Transient
+    @JsonIgnore
+    abstract List<List<AdministeredItem>> getAllAssociations()
 
     /****
      * Methods for building a tree-like DSL

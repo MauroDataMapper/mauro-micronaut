@@ -119,8 +119,7 @@ class Folder extends Model {
     @Override
     @Transient
     @JsonIgnore
-    Collection<AdministeredItem> getAllContents() {
-        childFolders?.each {it.parentFolder = this}
-        childFolders as Collection<AdministeredItem>
+    List<List<AdministeredItem>> getAllAssociations() {
+        [childFolders] as List<List<AdministeredItem>>
     }
 }

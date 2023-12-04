@@ -32,7 +32,6 @@ import uk.ac.ox.softeng.mauro.domain.model.ModelItem
 @MappedEntity(schema = 'terminology')
 @MapConstructor(includeSuperFields = true, includeSuperProperties = true, noArg = true)
 @Indexes([@Index(columns = ['terminology_id', 'label'], unique = true)])
-//@JsonIdentityInfo(property = 'label', generator = ObjectIdGenerators.PropertyGenerator)
 class TermRelationshipType extends ModelItem<Terminology> {
 
     @JsonIgnore

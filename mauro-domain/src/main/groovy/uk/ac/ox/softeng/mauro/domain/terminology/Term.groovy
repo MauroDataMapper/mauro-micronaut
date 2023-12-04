@@ -98,7 +98,6 @@ class Term extends ModelItem<Terminology> {
     /****
      * Methods for building a tree-like DSL
      */
-
     static Term build(
             Map args,
             @DelegatesTo(value = Term, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {

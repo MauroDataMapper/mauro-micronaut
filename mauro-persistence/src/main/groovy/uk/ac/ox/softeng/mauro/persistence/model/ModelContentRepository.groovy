@@ -30,6 +30,7 @@ class ModelContentRepository<M extends Model> extends AdministeredItemContentRep
     MetadataRepository metadataRepository
 
     @Transactional
+    // WIP
     Mono<M> updateWithContent(@Valid @NonNull M model) {
         Collection<AdministeredItem> contents = model.getAllContents()
         contents.each {
@@ -39,6 +40,7 @@ class ModelContentRepository<M extends Model> extends AdministeredItemContentRep
     }
 
     @Transactional
+    // WIP
     Mono<M> saveWithContent(@NonNull M model) {
         log.info '** start saveWithContent... **'
         Collection<AdministeredItem> contents = model.getAllContents()
@@ -81,8 +83,6 @@ class ModelContentRepository<M extends Model> extends AdministeredItemContentRep
                 it.multiFacetAwareItemId = item.id
                 it.multiFacetAwareItem = item
             }
-            log.debug "item.metadata = $item.metadata"
-            log.debug "item.metadata.first() = ${item.metadata.first().properties}"
 
             metadataRepository.saveAll(item.metadata)
         } else {
