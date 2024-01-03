@@ -14,6 +14,9 @@ micronaut:
       swagger-ui:
         paths: classpath:META-INF/swagger/views/swagger-ui
         mapping: /swagger-ui/**
+  caches:
+    items-cache:
+      maximum-size: 100
 #netty:
 #  default:
 #    allocator:
@@ -26,6 +29,9 @@ endpoints:
     enabled: true
     sensitive: false
   flyway:
+    enabled: true
+    sensitive: false
+  caches:
     enabled: true
     sensitive: false
 jackson:

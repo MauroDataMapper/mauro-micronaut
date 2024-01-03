@@ -7,6 +7,8 @@ import uk.ac.ox.softeng.mauro.persistence.model.ModelItemRepository
 import uk.ac.ox.softeng.mauro.persistence.terminology.dto.TermDTORepository
 
 import groovy.transform.CompileStatic
+import io.micronaut.cache.annotation.CacheConfig
+import io.micronaut.cache.annotation.Cacheable
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.model.query.builder.sql.Dialect

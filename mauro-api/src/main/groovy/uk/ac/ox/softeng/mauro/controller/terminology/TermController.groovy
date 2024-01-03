@@ -5,6 +5,8 @@ import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemContentRepositor
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 import groovy.transform.CompileStatic
+import io.micronaut.cache.annotation.CacheConfig
+import io.micronaut.cache.annotation.Cacheable
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpStatus
