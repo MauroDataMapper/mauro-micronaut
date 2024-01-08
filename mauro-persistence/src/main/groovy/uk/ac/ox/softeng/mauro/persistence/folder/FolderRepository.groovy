@@ -29,7 +29,7 @@ abstract class FolderRepository implements ReactorPageableRepository<Folder, UUI
     }
 
     @Override
-    Boolean handles(Class clazz) {
-        clazz == Folder
+    Class getDomainClass() {
+        Folder
     }
 }

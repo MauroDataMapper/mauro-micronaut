@@ -26,9 +26,8 @@ abstract class TerminologyRepository implements ReactorPageableRepository<Termin
     Mono<Terminology> findById(UUID id) {
         terminologyDTORepository.findById(id) as Mono<Terminology>
     }
-
     @Override
-    Boolean handles(Class clazz) {
-        clazz == Terminology
+    Class getDomainClass() {
+        Terminology
     }
 }

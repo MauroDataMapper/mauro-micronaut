@@ -22,5 +22,9 @@ trait ItemRepository<I extends Item> implements ReactorPageableRepository<I, UUI
 
     abstract Mono<I> update(@Valid @NonNull I item)
 
-    abstract Boolean handles(Class clazz)
+    abstract Class<I> getDomainClass()
+
+    Boolean handles(Class clazz) {
+        clazz == domainClass
+    }
 }

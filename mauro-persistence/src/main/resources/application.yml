@@ -1,0 +1,4 @@
+ehcache:
+  caches:
+    items-cache:
+      enabled: true

@@ -7,7 +7,7 @@ import groovy.transform.SelfType
 
 @CompileStatic
 @SelfType(AdministeredItem)
-trait AdministeredItemDTO {
+trait AdministeredItemDTO implements Serializable {
 
     String getDomainType() {
         String domainType = this.class.simpleName

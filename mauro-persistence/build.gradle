@@ -25,7 +25,8 @@ dependencies {
 //    testResourcesService("org.postgresql:postgresql")
     implementation("io.micronaut.validation:micronaut-validation")
     implementation("io.micronaut.cache:micronaut-cache-core")
-    implementation("io.micronaut.cache:micronaut-cache-caffeine")
+//    implementation("io.micronaut.cache:micronaut-cache-caffeine")
+    implementation("io.micronaut.cache:micronaut-cache-ehcache")
     implementation("io.micronaut.cache:micronaut-cache-management")
     runtimeOnly("org.yaml:snakeyaml")
 

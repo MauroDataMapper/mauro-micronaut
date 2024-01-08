@@ -53,7 +53,7 @@ abstract class TermRelationshipRepository implements ReactorPageableRepository<T
     }
 
     @Override
-    Boolean handles(Class clazz) {
-        clazz == TermRelationship
+    Class getDomainClass() {
+        TermRelationship
     }
 }

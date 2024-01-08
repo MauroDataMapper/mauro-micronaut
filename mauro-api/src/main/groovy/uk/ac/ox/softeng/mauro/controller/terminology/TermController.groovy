@@ -1,12 +1,11 @@
 package uk.ac.ox.softeng.mauro.controller.terminology
 
 import uk.ac.ox.softeng.mauro.controller.model.AdministeredItemController
+import uk.ac.ox.softeng.mauro.persistence.cache.CacheableRepository.CacheableTermRepository
 import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemContentRepository
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 import groovy.transform.CompileStatic
-import io.micronaut.cache.annotation.CacheConfig
-import io.micronaut.cache.annotation.Cacheable
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpStatus
@@ -16,6 +15,7 @@ import io.micronaut.http.annotation.Delete
 import io.micronaut.http.annotation.Get
 import io.micronaut.http.annotation.Post
 import io.micronaut.http.annotation.Put
+import jakarta.inject.Inject
 import reactor.core.publisher.Mono
 import uk.ac.ox.softeng.mauro.domain.terminology.Term
 import uk.ac.ox.softeng.mauro.persistence.terminology.TermRepository

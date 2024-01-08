@@ -10,6 +10,7 @@ import io.micronaut.data.annotation.DateUpdated
 import io.micronaut.data.annotation.GeneratedValue
 import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.Version
+import jakarta.persistence.Transient
 
 import java.time.Instant
 
@@ -56,4 +57,10 @@ abstract class Item {
     @Nullable
     @JsonAlias(['created_by'])
     String createdBy
+
+    /**
+     * The domainType of an object is the (simple name of the) concrete class that it instantiates.
+     */
+    @Transient
+    String domainType = this.class.simpleName
 }

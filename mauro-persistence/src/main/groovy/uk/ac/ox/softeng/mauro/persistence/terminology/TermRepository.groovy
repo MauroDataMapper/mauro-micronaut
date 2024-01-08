@@ -3,10 +3,13 @@ package uk.ac.ox.softeng.mauro.persistence.terminology
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.terminology.Term
 import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
+import uk.ac.ox.softeng.mauro.persistence.cache.CacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.model.ModelItemRepository
 import uk.ac.ox.softeng.mauro.persistence.terminology.dto.TermDTORepository
 
 import groovy.transform.CompileStatic
+import groovy.transform.PackageScope
+import groovy.util.logging.Slf4j
 import io.micronaut.cache.annotation.CacheConfig
 import io.micronaut.cache.annotation.Cacheable
 import io.micronaut.core.annotation.Nullable
@@ -18,6 +21,7 @@ import jakarta.inject.Inject
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 
+@Slf4j
 @CompileStatic
 @R2dbcRepository(dialect = Dialect.POSTGRES)
 abstract class TermRepository implements ReactorPageableRepository<Term, UUID>, ModelItemRepository<Term> {
@@ -27,6 +31,7 @@ abstract class TermRepository implements ReactorPageableRepository<Term, UUID>, 
 
     @Override
     Mono<Term> findById(UUID id) {
+        log.debug 'TermRepository::findById'
         termDTORepository.findById(id) as Mono<Term>
     }
 
@@ -63,7 +68,7 @@ abstract class TermRepository implements ReactorPageableRepository<Term, UUID>, 
     abstract Flux<Term> readChildTermsByParent(UUID terminologyId, @Nullable UUID id)
 
     @Override
-    Boolean handles(Class clazz) {
-        clazz == Term
+    Class getDomainClass() {
+        Term
     }
 }

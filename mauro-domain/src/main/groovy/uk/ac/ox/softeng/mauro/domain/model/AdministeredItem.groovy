@@ -65,12 +65,6 @@ abstract class AdministeredItem extends Item {
     String aliasesString
 
     /**
-     * The domainType of an object is the (simple name of the) concrete class that it instantiates.
-     */
-    @Transient
-    String domainType = this.class.simpleName
-
-    /**
      * The path of an object allows it to be navigated to from either the containing model, or the folder path within
      * a system.  This value is calculated dynamically.
      *

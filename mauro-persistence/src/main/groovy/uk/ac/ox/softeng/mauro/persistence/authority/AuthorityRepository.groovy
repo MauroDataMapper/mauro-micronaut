@@ -12,11 +12,7 @@ import io.micronaut.data.repository.reactive.ReactorPageableRepository
 @R2dbcRepository(dialect = Dialect.POSTGRES)
 abstract class AuthorityRepository implements ReactorPageableRepository<Authority, UUID> {
 
-    Boolean handles(Class clazz) {
-        clazz == Authority
-    }
-
-    Boolean handles(String domainType) {
-        domainType.toLowerCase() in ['authority', 'authorities']
+    Class getDomainType() {
+        Authority
     }
 }
