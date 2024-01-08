@@ -24,6 +24,9 @@ class FolderIntegrationSpec extends BaseIntegrationSpec {
     UUID childFolderId
 
     void 'create folder'() {
+
+        // TODO
+
         when:
         def response = POST('/folders', [label: 'Test folder'])
         folderId = UUID.fromString(response.id)
