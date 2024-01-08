@@ -144,34 +144,3 @@ create index "idx_term_relationship_terminology_id" on terminology."term_relatio
 create index "idx_term_relationship_source_term_id" on terminology."term_relationship"(source_term_id);
 create index "idx_term_relationship_target_term_id" on terminology."term_relationship"(target_term_id);
 create index "idx_term_relationship_relationship_type_id" on terminology."term_relationship"(relationship_type_id);
-
--- Test tables
-create table "test" (
-    "id"                              uuid primary key not null default uuid_generate_v4(),
-    "version"                         integer          not null,
-    "date_created"                    timestamp,
-    "last_updated"                    timestamp,
-    "readable_by_everyone"            boolean          not null,
-    "readable_by_authenticated_users" boolean          not null,
-    "label"                           varchar(255)     not null,
-    "description"                     varchar(255),
-    "aliases_string"                  varchar(255),
-    "created_by"                      varchar(255),
-    "breadcrumb_tree_id"              uuid,
-    "finalised"                       boolean          not null,
-    "date_finalised"                  timestamp,
-    "documentation_version"           varchar(255),
-    "model_type"                      varchar(255)     not null,
-    "organisation"                    varchar(255),
-    "deleted"                         boolean          not null,
-    "author"                          varchar(255),
-    "folder_id"                       uuid             not null,
-    "authority_id"                    uuid,
-    "branch_name"                     varchar(255),
-    "model_version"                   varchar(255),
-    "model_version_tag"               varchar(255)
-);
-create table "test_term" (
-    "test_id" uuid not null,
-    "term_id" uuid not null
-);
