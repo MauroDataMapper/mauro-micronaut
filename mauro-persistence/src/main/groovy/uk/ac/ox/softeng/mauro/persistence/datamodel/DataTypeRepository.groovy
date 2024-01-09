@@ -35,18 +35,6 @@ abstract class DataTypeRepository implements ReactorPageableRepository<DataType,
     abstract Mono<DataType> save(@Valid @NonNull DataType item)
 
     @Override
-    @Join(value = 'enumerationValues', type = Join.Type.LEFT_FETCH)
-    Mono<DataType> findByParentIdAndId(UUID parentId, UUID id) {
-        findByDataModelIdAndId(parentId, id)
-    }
-
-    @Override
-    @Join(value = 'enumerationValues', type = Join.Type.LEFT_FETCH)
-    Mono<DataType> readByParentIdAndId(UUID parentId, UUID id) {
-        readByDataModelIdAndId(parentId, id)
-    }
-
-    @Override
     Flux<DataType> readAllByParent(AdministeredItem parent) {
         readAllByDataModel((DataModel) parent)
     }
@@ -60,11 +48,6 @@ abstract class DataTypeRepository implements ReactorPageableRepository<DataType,
     @Override
     Boolean handles(Class clazz) {
         clazz == DataType
-    }
-
-    @Override
-    Boolean handles(String domainType) {
-        domainType.toLowerCase() in ['datatype', 'datatypes']
     }
 
 }

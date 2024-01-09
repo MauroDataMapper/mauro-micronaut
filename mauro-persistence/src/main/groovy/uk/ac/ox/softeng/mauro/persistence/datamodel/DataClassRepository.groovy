@@ -31,16 +31,6 @@ abstract class DataClassRepository implements ReactorPageableRepository<DataClas
     abstract Mono<DataClass> save(@Valid @NonNull DataClass item)
 
     @Override
-    Mono<DataClass> findByParentIdAndId(UUID parentId, UUID id) {
-        findByDataModelIdAndId(parentId, id)
-    }
-
-    @Override
-    Mono<DataClass> readByParentIdAndId(UUID parentId, UUID id) {
-        readByDataModelIdAndId(parentId, id)
-    }
-
-    @Override
     Flux<DataClass> readAllByParent(AdministeredItem parent) {
         readAllByDataModel((DataModel) parent)
     }
@@ -54,11 +44,6 @@ abstract class DataClassRepository implements ReactorPageableRepository<DataClas
     @Override
     Boolean handles(Class clazz) {
         clazz == DataClass
-    }
-
-    @Override
-    Boolean handles(String domainType) {
-        domainType.toLowerCase() in ['dataclass', 'dataclasses']
     }
 
 }

@@ -3,6 +3,8 @@ package uk.ac.ox.softeng.mauro.domain.datamodel
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.model.Model
 import uk.ac.ox.softeng.mauro.domain.model.ModelItem
+import uk.ac.ox.softeng.mauro.domain.security.SecurableResource
+
 import com.fasterxml.jackson.annotation.JsonIgnore
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
@@ -105,7 +107,7 @@ class EnumerationValue extends ModelItem<DataModel> {
     @Transient
     @JsonIgnore
     @Override
-    Model getOwner() {
+    SecurableResource getOwner() {
         return this.enumerationType.owner
     }
 

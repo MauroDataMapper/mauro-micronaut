@@ -79,16 +79,6 @@ abstract class DataModelRepository implements ReactorPageableRepository<DataMode
     abstract Flux<DataModel> readAllByFolder(Folder folder)
 
     @Override
-    Mono<DataModel> readByParentIdAndId(UUID parentId, UUID id) {
-        readByFolderIdAndId(parentId, id)
-    }
-
-    @Override
-    Mono<DataModel> findByParentIdAndId(UUID parentId, UUID id) {
-        findByFolderIdAndId(parentId, id)
-    }
-
-    @Override
     Flux<DataModel> readAllByParent(AdministeredItem parent) {
         readAllByFolder((Folder) parent)
     }
@@ -96,10 +86,5 @@ abstract class DataModelRepository implements ReactorPageableRepository<DataMode
     @Override
     Boolean handles(Class clazz) {
         clazz == DataModel
-    }
-
-    @Override
-    Boolean handles(String domainType) {
-        domainType.toLowerCase() in ['datamodel', 'datamodels']
     }
 }
