@@ -16,7 +16,7 @@ import uk.ac.ox.softeng.mauro.domain.terminology.TermRelationshipType
 
 @CompileStatic
 @R2dbcRepository(dialect = Dialect.POSTGRES)
-abstract class TermRelationshipTypeRepository implements ReactorPageableRepository<TermRelationshipType, UUID>, ModelItemRepository<TermRelationshipType> {
+abstract class TermRelationshipTypeRepository implements  ModelItemRepository<TermRelationshipType> {
 
     @Inject
     TermRelationshipTypeDTORepository termRelationshipTypeDTORepository
@@ -43,7 +43,7 @@ abstract class TermRelationshipTypeRepository implements ReactorPageableReposito
 
     abstract Mono<Long> deleteByTerminologyId(UUID terminologyId)
 
-    @Override
+//    @Override
     Mono<Long> deleteByOwnerId(UUID ownerId) {
         deleteByTerminologyId(ownerId)
     }

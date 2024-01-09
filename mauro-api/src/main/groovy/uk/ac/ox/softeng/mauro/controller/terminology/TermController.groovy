@@ -1,7 +1,9 @@
 package uk.ac.ox.softeng.mauro.controller.terminology
 
-import uk.ac.ox.softeng.mauro.controller.model.AdministeredItemController
-import uk.ac.ox.softeng.mauro.persistence.cache.CacheableRepository.CacheableTermRepository
+
+import uk.ac.ox.softeng.mauro.controller.model.CacheableAdministeredItemController
+import uk.ac.ox.softeng.mauro.persistence.cache.CacheableAdministeredItemRepository
+import uk.ac.ox.softeng.mauro.persistence.cache.CacheableItemRepository
 import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemContentRepository
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
@@ -15,20 +17,17 @@ import io.micronaut.http.annotation.Delete
 import io.micronaut.http.annotation.Get
 import io.micronaut.http.annotation.Post
 import io.micronaut.http.annotation.Put
-import jakarta.inject.Inject
 import reactor.core.publisher.Mono
 import uk.ac.ox.softeng.mauro.domain.terminology.Term
-import uk.ac.ox.softeng.mauro.persistence.terminology.TermRepository
 import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
-import uk.ac.ox.softeng.mauro.persistence.terminology.TerminologyRepository
 
 @CompileStatic
 @Controller('/terminologies/{terminologyId}/terms')
-class TermController extends AdministeredItemController<Term, Terminology> {
+class TermController extends CacheableAdministeredItemController<Term, Terminology> {
 
-    TermRepository termRepository
+    CacheableAdministeredItemRepository.CacheableTermRepository termRepository
 
-    TermController(TermRepository termRepository, TerminologyRepository terminologyRepository, AdministeredItemContentRepository<Term> administeredItemContentRepository) {
+    TermController(CacheableAdministeredItemRepository.CacheableTermRepository termRepository, CacheableAdministeredItemRepository.CacheableTerminologyRepository terminologyRepository, AdministeredItemContentRepository<Term> administeredItemContentRepository) {
         super(Term, termRepository, terminologyRepository, administeredItemContentRepository)
         this.termRepository = termRepository
     }
@@ -58,8 +57,8 @@ class TermController extends AdministeredItemController<Term, Terminology> {
         super.list(terminologyId)
     }
 
-    @Get('/tree{/id}')
-    Mono<List<Term>> tree(UUID terminologyId, @Nullable UUID id) {
-        termRepository.readChildTermsByParent(terminologyId, id).collectList()
-    }
+//    @Get('/tree{/id}')
+//    Mono<List<Term>> tree(UUID terminologyId, @Nullable UUID id) {
+//        termRepository.readChildTermsByParent(terminologyId, id).collectList()
+//    }
 }

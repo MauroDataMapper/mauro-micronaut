@@ -3,15 +3,11 @@ package uk.ac.ox.softeng.mauro.persistence.terminology
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.terminology.Term
 import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
-import uk.ac.ox.softeng.mauro.persistence.cache.CacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.model.ModelItemRepository
 import uk.ac.ox.softeng.mauro.persistence.terminology.dto.TermDTORepository
 
 import groovy.transform.CompileStatic
-import groovy.transform.PackageScope
 import groovy.util.logging.Slf4j
-import io.micronaut.cache.annotation.CacheConfig
-import io.micronaut.cache.annotation.Cacheable
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.model.query.builder.sql.Dialect
@@ -24,7 +20,7 @@ import reactor.core.publisher.Mono
 @Slf4j
 @CompileStatic
 @R2dbcRepository(dialect = Dialect.POSTGRES)
-abstract class TermRepository implements ReactorPageableRepository<Term, UUID>, ModelItemRepository<Term> {
+abstract class TermRepository implements  ModelItemRepository<Term> {
 
     @Inject
     TermDTORepository termDTORepository
@@ -53,7 +49,7 @@ abstract class TermRepository implements ReactorPageableRepository<Term, UUID>, 
 
     abstract Mono<Long> deleteByTerminologyId(UUID terminologyId)
 
-    @Override
+//    @Override
     Mono<Long> deleteByOwnerId(UUID ownerId) {
         deleteByTerminologyId(ownerId)
     }

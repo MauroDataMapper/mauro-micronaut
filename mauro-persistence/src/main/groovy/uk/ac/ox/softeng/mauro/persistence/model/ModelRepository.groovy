@@ -10,7 +10,7 @@ import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 
 @CompileStatic
-trait ModelRepository<M extends Model> implements ReactorPageableRepository<M, UUID>,  AdministeredItemRepository<M> {
+trait ModelRepository<M extends Model> implements   AdministeredItemRepository<M> {
 
     abstract Flux<M> readAllByFolder(Folder folder)
 

@@ -6,6 +6,8 @@ import uk.ac.ox.softeng.mauro.domain.model.Model
 import uk.ac.ox.softeng.mauro.domain.model.ModelItem
 import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
 import uk.ac.ox.softeng.mauro.exception.MauroInternalException
+import uk.ac.ox.softeng.mauro.persistence.cache.CacheableAdministeredItemRepository
+import uk.ac.ox.softeng.mauro.persistence.cache.CacheableItemRepository
 import uk.ac.ox.softeng.mauro.persistence.facet.MetadataRepository
 
 import groovy.transform.CompileStatic
@@ -23,8 +25,11 @@ import reactor.core.publisher.Mono
 @Bean
 class ModelContentRepository<M extends Model> extends AdministeredItemContentRepository<M> {
 
-    @Inject
+//    @Inject
     List<AdministeredItemRepository> administeredItemRepositories
+
+    @Inject
+    List<CacheableAdministeredItemRepository> cacheableRepositories
 
     @Inject
     MetadataRepository metadataRepository
@@ -66,8 +71,8 @@ class ModelContentRepository<M extends Model> extends AdministeredItemContentRep
         getRepository(terminology).save(terminology).flatMap {AdministeredItem savedModel ->
             Flux.fromIterable(associations).concatMap {association ->
                 if (association) {
-                    getRepository(association.first()).saveAll(association).flatMap {
-                        saveAllFacets(it)
+                    getRepository(association.first()).saveAll(association as Iterable<AdministeredItem>).flatMap {
+                        saveAllFacets(it as AdministeredItem)
                     }
                 } else {
                     Flux.empty()
@@ -99,9 +104,14 @@ class ModelContentRepository<M extends Model> extends AdministeredItemContentRep
         Mono.zip(delete(model), Mono.zip(contents.collect {getRepository(it).delete(it)}, {Optional.empty()}).defaultIfEmpty(Optional.empty())).map {it.getT1()}
     }
 
+//    @NonNull
+//    AdministeredItemRepository getRepository(AdministeredItem item) {
+//        administeredItemRepositories.find {it.handles(item.class)}
+//    }
+
     @NonNull
-    AdministeredItemRepository getRepository(AdministeredItem item) {
-        administeredItemRepositories.find {it.handles(item.class)}
+    CacheableAdministeredItemRepository getRepository(AdministeredItem item) {
+        cacheableRepositories.find {it.handles(item.class)}
     }
 
     Mono<M> update(M model) {

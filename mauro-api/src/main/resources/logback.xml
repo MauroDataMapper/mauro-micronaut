@@ -15,7 +15,7 @@
 
     <logger name="io.micronaut.data" level="trace" />
     <logger name="io.micronaut.cache" level="trace" />
-    <logger name="io.micronaut" level="info" />
+    <logger name="io.micronaut" level="trace" />
 
     <logger name="org.flywaydb" level="info" />
 

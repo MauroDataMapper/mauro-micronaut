@@ -19,7 +19,7 @@ import java.time.Instant
  */
 @CompileStatic
 @AutoClone(excludes = ['id', 'version'])
-abstract class Item {
+abstract class Item implements Serializable {
 
     /**
      * The identity of an object.  UUIDs should be universally unique.

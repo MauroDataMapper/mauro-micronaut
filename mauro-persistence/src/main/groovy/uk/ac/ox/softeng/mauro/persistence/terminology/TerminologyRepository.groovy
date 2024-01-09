@@ -18,7 +18,7 @@ import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
 
 @CompileStatic
 @R2dbcRepository(dialect = Dialect.POSTGRES)
-abstract class TerminologyRepository implements ReactorPageableRepository<Terminology, UUID>, ModelRepository<Terminology> {
+abstract class TerminologyRepository implements  ModelRepository<Terminology> {
 
     @Inject
     TerminologyDTORepository terminologyDTORepository
