@@ -30,16 +30,6 @@ abstract class DataElementRepository implements ReactorPageableRepository<DataEl
     abstract Mono<DataElement> save(@Valid @NonNull DataElement item)
 
     @Override
-    Mono<DataElement> findByParentIdAndId(UUID parentId, UUID id) {
-        findByDataClassIdAndId(parentId, id)
-    }
-
-    @Override
-    Mono<DataElement> readByParentIdAndId(UUID parentId, UUID id) {
-        readByDataClassIdAndId(parentId, id)
-    }
-
-    @Override
     Flux<DataElement> readAllByParent(AdministeredItem parent) {
         readAllByDataClass((DataClass) parent)
     }
@@ -53,11 +43,6 @@ abstract class DataElementRepository implements ReactorPageableRepository<DataEl
     @Override
     Boolean handles(Class clazz) {
         clazz == DataElement
-    }
-
-    @Override
-    Boolean handles(String domainType) {
-        domainType.toLowerCase() in ['dataelement', 'dataelements']
     }
 
 }

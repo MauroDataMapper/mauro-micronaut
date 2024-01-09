@@ -30,16 +30,6 @@ abstract class EnumerationValueRepository implements ReactorPageableRepository<E
     abstract Mono<EnumerationValue> save(@Valid @NonNull EnumerationValue item)
 
     @Override
-    Mono<EnumerationValue> findByParentIdAndId(UUID parentId, UUID id) {
-        findByEnumerationTypeIdAndId(parentId, id)
-    }
-
-    @Override
-    Mono<EnumerationValue> readByParentIdAndId(UUID parentId, UUID id) {
-        readByEnumerationTypeIdAndId(parentId, id)
-    }
-
-    @Override
     Flux<EnumerationValue> readAllByParent(AdministeredItem parent) {
         readAllByEnumerationType((DataType) parent)
     }
@@ -53,11 +43,6 @@ abstract class EnumerationValueRepository implements ReactorPageableRepository<E
     @Override
     Boolean handles(Class clazz) {
         clazz == EnumerationValue
-    }
-
-    @Override
-    Boolean handles(String domainType) {
-        domainType.toLowerCase() in ['enumerationvalue', 'enumerationvalues']
     }
 
 }

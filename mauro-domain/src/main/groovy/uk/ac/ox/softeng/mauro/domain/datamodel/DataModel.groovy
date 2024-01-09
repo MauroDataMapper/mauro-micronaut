@@ -2,6 +2,7 @@ package uk.ac.ox.softeng.mauro.domain.datamodel
 
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.model.Model
+import uk.ac.ox.softeng.mauro.domain.model.ModelItem
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import groovy.transform.AutoClone
@@ -39,14 +40,10 @@ class DataModel extends Model {
     @Override
     @Transient
     @JsonIgnore
-    Collection<AdministeredItem> getAllContents() {
-        List<AdministeredItem> items = []
-        dataTypes?.each {it.dataModel = this}
-        dataClasses?.each {it.dataModel = this}
-        if (dataTypes) items.addAll(dataTypes)
-        if (dataClasses) items.addAll(dataClasses)
-        items
+    List<List<? extends ModelItem<DataModel>>> getAllAssociations() {
+        [dataTypes, dataClasses]
     }
+
 
     @Transient
     @JsonIgnore
