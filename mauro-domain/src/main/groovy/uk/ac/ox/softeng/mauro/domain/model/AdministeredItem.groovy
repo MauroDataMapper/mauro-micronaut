@@ -1,23 +1,34 @@
 package uk.ac.ox.softeng.mauro.domain.model
 
+import uk.ac.ox.softeng.mauro.domain.facet.Metadata
+import uk.ac.ox.softeng.mauro.domain.security.SecurableResource
 import uk.ac.ox.softeng.mauro.exception.MauroInternalException
 
+import com.fasterxml.jackson.annotation.JsonAlias
+import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonIgnore
+import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
+import groovy.transform.Sortable
+import io.micronaut.core.annotation.Introspected
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.annotation.DateCreated
 import io.micronaut.data.annotation.DateUpdated
 import io.micronaut.data.annotation.GeneratedValue
 import io.micronaut.data.annotation.Id
+import io.micronaut.data.annotation.Relation
 import io.micronaut.data.annotation.TypeDef
 import io.micronaut.data.annotation.Version
+import io.micronaut.data.annotation.sql.ColumnTransformer
 import io.micronaut.data.model.DataType
+import jakarta.persistence.Column
 import jakarta.persistence.Transient
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Pattern
 
-import java.time.OffsetDateTime
+import java.time.Instant
 /**
  * An AdministeredItem is an item stored in the catalogue.
  * <p>
@@ -28,34 +39,8 @@ import java.time.OffsetDateTime
  */
 
 @CompileStatic
-@AutoClone(excludes = ['id', 'version'])
-abstract class AdministeredItem {
-
-    /**
-     * The identify of an object.  UUIDs should be universally unique.
-     * Identities are usually created when the object is saved in the database, but can be manually set beforehand.
-    */
-    @Id
-    @GeneratedValue
-    UUID id
-
-    /**
-     * The version of an object - this is an internal number used for persistence purposes
-     */
-    @Version
-    Integer version
-
-    /**
-     * The date and time that this object was created
-     */
-    @DateCreated
-    OffsetDateTime dateCreated
-
-    /**
-     * The date and time that this object was last updated.
-     */
-    @DateUpdated
-    OffsetDateTime lastUpdated
+@AutoClone
+abstract class AdministeredItem extends Item {
 
     /**
      * The label of an object.  Labels are used as identifiers within a context and so need to be unique within
@@ -63,7 +48,6 @@ abstract class AdministeredItem {
      * <p>
      *     A label cannot contain the characters `$`, `|` or `@`, since this values are used in the creation of paths.
      */
-
     @NotBlank
     @Pattern(regexp = /[^\$@|]*/, message = 'Cannot contain $, | or @')
     String label
@@ -87,16 +71,11 @@ abstract class AdministeredItem {
     String domainType = this.class.simpleName
 
     /**
-     * The email address / username of the user who created this object.
+     * The path of an object allows it to be navigated to from either the containing model, or the folder path within
+     * a system.  This value is calculated dynamically.
+     *
+     * @see #updatePath
      */
-    @Nullable
-    String createdBy
-
-    /**
-     * The path of oan object allows it to be navigated to from either the containing model, or the folder path within
-     * a system.  This value is calculated on persistence and saved to allow easy lookup.
-     */
-    @TypeDef(type = DataType.STRING, converter = Path.PathConverter)
     @Transient
     Path path
 
@@ -106,15 +85,20 @@ abstract class AdministeredItem {
     @Nullable
     UUID breadcrumbTreeId // should be BreadcrumbTree type
 
+    @Relation(Relation.Kind.ONE_TO_MANY)
+    List<Metadata> metadata = []
+
     /**
-     * Helper method for returning the parent of this object, if one exists.
+     * Helper method for returning the parent of this object, if one exists and is loaded.
+     * <p>
+     *     The parent of an object is its direct ancestor in its path.
      */
     @Transient
     @JsonIgnore
     abstract AdministeredItem getParent()
 
     /**
-     * Helper method for returning the owning model of this object, if one exists.
+     * Helper method for setting the parent of this object.
      */
     @Transient
     @JsonIgnore
@@ -122,10 +106,12 @@ abstract class AdministeredItem {
 
     /**
      * Helper method for returning the owner of this object.
+     * <p>
+     *     The owner of an object is the root of an item's path, and is where permissions are set.
      */
     @Transient
     @JsonIgnore
-    Model getOwner() {
+    SecurableResource getOwner() {
         parent.owner
     }
 
@@ -144,7 +130,7 @@ abstract class AdministeredItem {
     @Transient
     @JsonIgnore
     String getPathIdentifier() {
-        label
+        this.label
     }
 
     /**
@@ -213,7 +199,7 @@ abstract class AdministeredItem {
      *
      * @see #dateCreated
      */
-    OffsetDateTime dateCreated(OffsetDateTime dateCreated) {
+    Instant dateCreated(Instant dateCreated) {
         this.dateCreated = dateCreated
         this.dateCreated
     }
@@ -223,8 +209,8 @@ abstract class AdministeredItem {
      *
      * @see #dateCreated
      */
-    OffsetDateTime dateCreated(String dateCreated) {
-        this.dateCreated = OffsetDateTime.parse(dateCreated)
+    Instant dateCreated(String dateCreated) {
+        this.dateCreated = Instant.parse(dateCreated)
         this.dateCreated
     }
 
@@ -233,7 +219,7 @@ abstract class AdministeredItem {
      *
      * @see #lastUpdated
      */
-    OffsetDateTime lastUpdated(OffsetDateTime lastUpdated) {
+    Instant lastUpdated(Instant lastUpdated) {
         this.lastUpdated = lastUpdated
         this.lastUpdated
     }
@@ -243,8 +229,8 @@ abstract class AdministeredItem {
      *
      * @see #lastUpdated
      */
-    OffsetDateTime lastUpdated(String lastUpdated) {
-        this.lastUpdated = OffsetDateTime.parse(lastUpdated)
+    Instant lastUpdated(String lastUpdated) {
+        this.lastUpdated = Instant.parse(lastUpdated)
         this.lastUpdated
     }
 

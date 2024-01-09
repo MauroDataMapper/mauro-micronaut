@@ -55,7 +55,7 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
     }
 
     Mono<I> show(UUID parentId, UUID id) {
-        administeredItemRepository.findByParentIdAndId(parentId, id).flatMap {I item ->
+        administeredItemRepository.findById(id).flatMap {I item ->
             pathRepository.readParentItems(item).map {
                 item.updatePath()
                 item
@@ -72,9 +72,18 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
         }
     }
 
+    protected AdministeredItem updateCreationProperties(AdministeredItem item) {
+        item.id = null
+        item.version = null
+        item.dateCreated = null
+        item.lastUpdated = null
+        item.createdBy = 'USER@example.org'
+        item
+    }
+
     protected Mono<I> createEntity(P parent, @Body @NonNull I cleanItem) {
         cleanItem.parent = parent
-        cleanItem.createdBy = 'USER'
+        updateCreationProperties(cleanItem)
         pathRepository.readParentItems(cleanItem).flatMap {
             cleanItem.updatePath()
             administeredItemRepository.save(cleanItem)
@@ -145,7 +154,7 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
     }
 
     protected I cleanBody(I item) {
-        I defaultItem = itemClass.getDeclaredConstructor().newInstance()
+        I defaultItem = (I) item.class.getDeclaredConstructor().newInstance()
 
         // Disallowed properties cannot be set by user request
         disallowedCreateProperties.each {String key ->

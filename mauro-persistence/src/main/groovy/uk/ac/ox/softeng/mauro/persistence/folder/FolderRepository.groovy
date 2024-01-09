@@ -21,29 +21,7 @@ abstract class FolderRepository implements ReactorPageableRepository<Folder, UUI
     @Join(value = 'childFolders', type = Join.Type.LEFT_FETCH)
     abstract Mono<Folder> findById(UUID id)
 
-    @Join(value = 'childFolders', type = Join.Type.LEFT_FETCH)
-    abstract Mono<Folder> findByParentFolderIdAndId(UUID parentFolderId, UUID id)
-
-    @Join(value = 'childFolders', type = Join.Type.LEFT_FETCH)
-    abstract Mono<Folder> findByIdAndVersion(UUID id, Integer version)
-
-    abstract Mono<Folder> readById(UUID id)
-
-    abstract Mono<Folder> readByIdAndVersion(UUID id, Integer version)
-
-    abstract Mono<Folder> readByParentFolderIdAndId(UUID parentFolderId, UUID id)
-
     abstract Flux<Folder> readAllByParentFolder(Folder folder)
-
-    @Override
-    Mono<Folder> findByParentIdAndId(UUID parentId, UUID id) {
-        findByParentFolderIdAndId(parentId, id)
-    }
-
-    @Override
-    Mono<Folder> readByParentIdAndId(UUID parentId, UUID id) {
-        readByParentFolderIdAndId(parentId, id)
-    }
 
     @Override
     Flux<Folder> readAllByFolder(Folder folder) {
@@ -51,17 +29,7 @@ abstract class FolderRepository implements ReactorPageableRepository<Folder, UUI
     }
 
     @Override
-    Flux<Folder> readAllByParent(AdministeredItem parent) {
-        readAllByParentFolder((Folder) parent)
-    }
-
-    @Override
     Boolean handles(Class clazz) {
         clazz == Folder
-    }
-
-    @Override
-    Boolean handles(String domainType) {
-        domainType.toLowerCase() in ['folder', 'folders']
     }
 }

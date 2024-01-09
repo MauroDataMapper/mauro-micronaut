@@ -1,0 +1,59 @@
+package uk.ac.ox.softeng.mauro.domain.model
+
+import com.fasterxml.jackson.annotation.JsonAlias
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize
+import groovy.transform.AutoClone
+import groovy.transform.CompileStatic
+import io.micronaut.core.annotation.Nullable
+import io.micronaut.data.annotation.DateCreated
+import io.micronaut.data.annotation.DateUpdated
+import io.micronaut.data.annotation.GeneratedValue
+import io.micronaut.data.annotation.Id
+import io.micronaut.data.annotation.Version
+
+import java.time.Instant
+
+/**
+ * Item is a base class for domain objects that can be stored in the database.
+ */
+@CompileStatic
+@AutoClone(excludes = ['id', 'version'])
+abstract class Item {
+
+    /**
+     * The identity of an object.  UUIDs should be universally unique.
+     * Identities are usually created when the object is saved in the database, but can be manually set beforehand.
+     */
+    @Id
+    @GeneratedValue
+    UUID id
+
+    /**
+     * The version of an object - this is an internal number used for persistence purposes
+     */
+    @Version
+    Integer version
+
+    /**
+     * The date and time that this object was created, as an instant in UTC.
+     */
+    @DateCreated
+    @JsonDeserialize(converter = InstantConverter)
+    @JsonAlias(['date_created'])
+    Instant dateCreated
+
+    /**
+     * The date and time that this object was last updated, as an instant in UTC.
+     */
+    @DateUpdated
+    @JsonDeserialize(converter = InstantConverter)
+    @JsonAlias(['last_updated'])
+    Instant lastUpdated
+
+    /**
+     * The email address / username of the user who created this object.
+     */
+    @Nullable
+    @JsonAlias(['created_by'])
+    String createdBy
+}

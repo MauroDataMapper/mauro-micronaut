@@ -22,7 +22,7 @@ class PathRepository {
             else Flux.empty()
         }.collectList().map {List<AdministeredItem> parents ->
             parents.eachWithIndex {AdministeredItem it, Integer i ->
-                it.parent = parents[i+1]
+                if (parents[i+1]) it.parent = parents[i+1]
             }
         }
     }

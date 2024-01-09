@@ -2,7 +2,10 @@ package uk.ac.ox.softeng.mauro.domain.terminology
 
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 
+import com.fasterxml.jackson.annotation.JsonIdentityInfo
 import com.fasterxml.jackson.annotation.JsonIgnore
+import com.fasterxml.jackson.annotation.ObjectIdGenerator
+import com.fasterxml.jackson.annotation.ObjectIdGenerators
 import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
@@ -26,7 +29,7 @@ import uk.ac.ox.softeng.mauro.domain.model.ModelItem
 @CompileStatic
 @AutoClone(excludes = 'terminology')
 @Introspected
-@MappedEntity
+@MappedEntity(schema = 'terminology')
 @MapConstructor(includeSuperFields = true, includeSuperProperties = true, noArg = true)
 @Indexes([@Index(columns = ['terminology_id', 'label'], unique = true)])
 class TermRelationshipType extends ModelItem<Terminology> {

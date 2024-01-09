@@ -1,5 +1,6 @@
 package uk.ac.ox.softeng.mauro.domain.model.version
 
+import com.fasterxml.jackson.annotation.JsonValue
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import groovy.transform.CompileStatic
 import groovy.transform.MapConstructor
@@ -69,6 +70,7 @@ class ModelVersion implements Comparable<ModelVersion> {
     }
 
     @Override
+    @JsonValue
     String toString() {
         if (major == 0 && minor == 0 && patch == 0 && snapshot) {
             return SNAPSHOT_INDICATOR

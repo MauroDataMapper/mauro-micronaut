@@ -1,5 +1,9 @@
 package uk.ac.ox.softeng.mauro.domain.model
 
+import uk.ac.ox.softeng.mauro.domain.authority.Authority
+import uk.ac.ox.softeng.mauro.domain.security.SecurableResource
+
+import com.fasterxml.jackson.annotation.JsonProperty
 import groovy.transform.NamedParams
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 
@@ -8,9 +12,11 @@ import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.Nullable
 import uk.ac.ox.softeng.mauro.domain.model.version.ModelVersion
 
+import io.micronaut.data.annotation.Index
+import io.micronaut.data.annotation.Indexes
 import jakarta.persistence.Transient
 
-import java.time.OffsetDateTime
+import java.time.Instant
 
 /**
  * A model in Mauro is a document containing a description of existing data, or a specification concerning the
@@ -23,12 +29,12 @@ import java.time.OffsetDateTime
  * All models must be stored within a folder.
  */
 @CompileStatic
-abstract class Model extends AdministeredItem {
+abstract class Model extends AdministeredItem implements SecurableResource {
 
     Boolean finalised = false
 
     @Nullable
-    OffsetDateTime dateFinalised
+    Instant dateFinalised
 
     @Nullable
     String documentationVersion
@@ -47,17 +53,17 @@ abstract class Model extends AdministeredItem {
     @Nullable
     String author
 
-    @Nullable
     @JsonIgnore
     Folder folder
 
     @Nullable
-    UUID authority // -> Authority
+    Authority authority
 
     @Nullable
     String branchName = 'main'
 
     @Nullable
+    @Transient
     ModelVersion modelVersion
 
     @Nullable
@@ -93,11 +99,21 @@ abstract class Model extends AdministeredItem {
 
     /**
      * For a model which has all its associations loaded, return a collection of all its direct child items.
-     * The collection does not have to be in any particular order.
+     * The collection should be ordered so that all the items can be saved in order.
      */
     @Transient
     @JsonIgnore
-    abstract Collection<AdministeredItem> getAllContents()
+    List<AdministeredItem> getAllContents() {
+        allAssociations.flatten() as List<AdministeredItem>
+    }
+
+    /**
+     * Return all persistent associations of the model.
+     * The associations should be ordered so that they can be saved in order.
+     */
+    @Transient
+    @JsonIgnore
+    abstract List<List<AdministeredItem>> getAllAssociations()
 
     /****
      * Methods for building a tree-like DSL
@@ -108,7 +124,7 @@ abstract class Model extends AdministeredItem {
         this.finalised
     }
 
-    OffsetDateTime dateFinalised(OffsetDateTime dateFinalised) {
+    Instant dateFinalised(Instant dateFinalised) {
         this.dateFinalised = dateFinalised
         this.dateFinalised
     }

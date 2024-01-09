@@ -1,6 +1,7 @@
 package uk.ac.ox.softeng.mauro.domain.terminology
 
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
+import uk.ac.ox.softeng.mauro.domain.model.ModelItem
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import groovy.transform.AutoClone
@@ -13,8 +14,6 @@ import io.micronaut.data.annotation.Indexes
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Relation
 import jakarta.persistence.Transient
-import uk.ac.ox.softeng.mauro.domain.model.ModelItem
-
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Pattern
 
@@ -29,7 +28,7 @@ import jakarta.validation.constraints.Pattern
 @CompileStatic
 @AutoClone(excludes = ['terminology', 'sourceTermRelationships', 'targetTermRelationships'])
 @Introspected
-@MappedEntity
+@MappedEntity(schema = 'terminology')
 @MapConstructor(includeSuperFields = true, includeSuperProperties = true, noArg = true)
 @Indexes([@Index(columns = ['terminology_id', 'code'], unique = true)])
 class Term extends ModelItem<Terminology> {
@@ -38,7 +37,7 @@ class Term extends ModelItem<Terminology> {
     String getLabel() {
         code && definition && code == definition ? code :
         code && definition ? "${code}: ${definition}" :
-        null
+        code
     }
 
     @JsonIgnore
@@ -99,7 +98,6 @@ class Term extends ModelItem<Terminology> {
     /****
      * Methods for building a tree-like DSL
      */
-
     static Term build(
             Map args,
             @DelegatesTo(value = Term, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {

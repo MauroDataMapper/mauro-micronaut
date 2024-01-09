@@ -1,32 +1,44 @@
 package uk.ac.ox.softeng.mauro.domain.terminology
 
-import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 
+import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
+import uk.ac.ox.softeng.mauro.domain.model.Model
+import uk.ac.ox.softeng.mauro.domain.model.ModelItem
+
+import com.fasterxml.jackson.annotation.JsonIdentityInfo
 import com.fasterxml.jackson.annotation.JsonIgnore
+import com.fasterxml.jackson.annotation.JsonPropertyOrder
+import com.fasterxml.jackson.annotation.ObjectIdGenerators
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
 import groovy.transform.MapConstructor
+import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.Introspected
+import io.micronaut.data.annotation.Index
+import io.micronaut.data.annotation.Indexes
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Relation
-import uk.ac.ox.softeng.mauro.domain.model.Model
-
 import jakarta.persistence.Transient
 
 /**
  * A Terminology is a model that describes a number of terms, and some relationships between them.
  */
+@Slf4j
 @CompileStatic
 @AutoClone
 @Introspected
-@MappedEntity
+@MappedEntity(schema = 'terminology')
 @MapConstructor(includeSuperFields = true, includeSuperProperties = true, noArg = true)
+@Indexes([@Index(columns = ['folder_id', 'label', 'branch_name', 'model_version'], unique = true)])
+@JsonPropertyOrder(['terms', 'termRelationshipTypes'])
 class Terminology extends Model {
 
     @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'terminology')
+    @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator, property = 'code')
     List<Term> terms = []
 
     @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'terminology')
+    @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator, property = 'label')
     List<TermRelationshipType> termRelationshipTypes = []
 
     @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'terminology')
@@ -39,33 +51,40 @@ class Terminology extends Model {
         'te'
     }
 
-    @Override
     @Transient
     @JsonIgnore
-    Collection<AdministeredItem> getAllContents() {
-        List<AdministeredItem> items = []
-        terms?.each {it.terminology = this}
-        termRelationshipTypes?.each {it.terminology = this}
-        termRelationships?.each {it.terminology = this}
-        if (terms) items.addAll(terms)
-        if (termRelationshipTypes) items.addAll(termRelationshipTypes)
-        if (termRelationships) items.addAll(termRelationships.findAll {terms?.id?.contains(it.id)})
-        items
+    List<List<? extends ModelItem<Terminology>>> getAllAssociations() {
+        [terms, termRelationshipTypes, termRelationships]
+    }
+
+    @Transient
+    @JsonIgnore
+    Terminology setAssociations() {
+        Map<UUID, Term> termsMap = terms.collectEntries {[it.id, it]}
+        Map<UUID, TermRelationshipType> termRelationshipTypesMap = termRelationshipTypes.collectEntries {[it.id, it]}
+
+        terms.each {
+            it.parent = this
+        }
+        termRelationshipTypes.each {
+            it.parent = this
+        }
+        termRelationships.each {
+            it.parent = this
+            it.relationshipType = termRelationshipTypesMap[it.relationshipType.id]
+            it.sourceTerm = termsMap[it.sourceTerm.id]
+            it.targetTerm = termsMap[it.targetTerm.id]
+        }
+
+        this
     }
 
     @Override
     Terminology clone() {
+        log.debug '*** Terminology.clone() ***'
+
         Terminology cloned = (Terminology) super.clone()
-        cloned.terms = terms.collect {it.clone().tap {it.parent = cloned}}
-        cloned.termRelationshipTypes = termRelationshipTypes.collect {it.clone().tap {it.parent = cloned}}
-        cloned.termRelationships = termRelationships.collect {
-            it.clone().tap {TermRelationship tr ->
-                tr.relationshipType = cloned.termRelationshipTypes.find {it.label == tr.relationshipType.label}
-                tr.sourceTerm = cloned.terms.find {it.code == tr.sourceTerm.code}
-                tr.targetTerm = cloned.terms.find {it.code == tr.targetTerm.code}
-                tr.parent = cloned
-            }
-        }
+        cloned.setAssociations()
 
         cloned
     }

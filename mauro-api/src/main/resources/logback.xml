@@ -14,8 +14,10 @@
     </root>
 
     <logger name="io.micronaut.data" level="trace" />
-    <logger name="io.micronaut" level="trace" />
+    <logger name="io.micronaut" level="info" />
 
-    <logger name="uk.ac.ox.softeng" level="trace" />
+    <logger name="org.flywaydb" level="info" />
+
+    <logger name="uk.ac.ox.softeng" level="debug" />
 
 </configuration>
