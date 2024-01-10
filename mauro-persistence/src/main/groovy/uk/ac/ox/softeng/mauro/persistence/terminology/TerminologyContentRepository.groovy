@@ -4,6 +4,10 @@ import uk.ac.ox.softeng.mauro.domain.terminology.Term
 import uk.ac.ox.softeng.mauro.domain.terminology.TermRelationship
 import uk.ac.ox.softeng.mauro.domain.terminology.TermRelationshipType
 import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
+import uk.ac.ox.softeng.mauro.persistence.cache.CacheableModelRepository.CacheableTerminologyRepository
+import uk.ac.ox.softeng.mauro.persistence.cache.CacheableAdministeredItemRepository.CacheableTermRepository
+import uk.ac.ox.softeng.mauro.persistence.cache.CacheableAdministeredItemRepository.CacheableTermRelationshipTypeRepository
+import uk.ac.ox.softeng.mauro.persistence.cache.CacheableAdministeredItemRepository.CacheableTermRelationshipRepository
 import uk.ac.ox.softeng.mauro.persistence.model.ModelContentRepository
 import uk.ac.ox.softeng.mauro.persistence.terminology.dto.TermDTO
 
@@ -18,21 +22,21 @@ import reactor.util.function.Tuple3
 class TerminologyContentRepository extends ModelContentRepository<Terminology> {
 
     @Inject
-    TerminologyRepository terminologyRepository
+    CacheableTerminologyRepository terminologyRepository
 
     @Inject
-    TermRepository termRepository
+    CacheableTermRepository termRepository
 
     @Inject
-    TermRelationshipTypeRepository termRelationshipTypeRepository
+    CacheableTermRelationshipTypeRepository termRelationshipTypeRepository
 
     @Inject
-    TermRelationshipRepository termRelationshipRepository
+    CacheableTermRelationshipRepository termRelationshipRepository
 
     Mono<Terminology> findWithAssociations(UUID id) {
         terminologyRepository.findById(id).flatMap {
-            Mono.zip(termRepository.findAllByTerminology(it).collectList(), termRelationshipTypeRepository.findAllByTerminology(it).collectList(),
-                     termRelationshipRepository.findAllByTerminology(it).collectList()).map {Tuple3<List<Term>, List<TermRelationshipType>, List<TermRelationship>> tuple3 ->
+            Mono.zip(termRepository.findAllByParent(it).collectList(), termRelationshipTypeRepository.findAllByParent(it).collectList(),
+                     termRelationshipRepository.findAllByParent(it).collectList()).map {Tuple3<List<Term>, List<TermRelationshipType>, List<TermRelationship>> tuple3 ->
                 it.terms = tuple3.getT1()
                 it.termRelationshipTypes = tuple3.getT2()
                 it.termRelationships = tuple3.getT3()

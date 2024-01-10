@@ -2,7 +2,8 @@ package uk.ac.ox.softeng.mauro.controller.terminology
 
 
 import uk.ac.ox.softeng.mauro.controller.model.CacheableAdministeredItemController
-import uk.ac.ox.softeng.mauro.persistence.cache.CacheableAdministeredItemRepository
+import uk.ac.ox.softeng.mauro.persistence.cache.CacheableAdministeredItemRepository.CacheableTermRepository
+import uk.ac.ox.softeng.mauro.persistence.cache.CacheableModelRepository.CacheableTerminologyRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.CacheableItemRepository
 import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemContentRepository
 import uk.ac.ox.softeng.mauro.web.ListResponse
@@ -25,9 +26,9 @@ import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
 @Controller('/terminologies/{terminologyId}/terms')
 class TermController extends CacheableAdministeredItemController<Term, Terminology> {
 
-    CacheableAdministeredItemRepository.CacheableTermRepository termRepository
+    CacheableTermRepository termRepository
 
-    TermController(CacheableAdministeredItemRepository.CacheableTermRepository termRepository, CacheableAdministeredItemRepository.CacheableTerminologyRepository terminologyRepository, AdministeredItemContentRepository<Term> administeredItemContentRepository) {
+    TermController(CacheableTermRepository termRepository, CacheableTerminologyRepository terminologyRepository, AdministeredItemContentRepository<Term> administeredItemContentRepository) {
         super(Term, termRepository, terminologyRepository, administeredItemContentRepository)
         this.termRepository = termRepository
     }
@@ -57,8 +58,8 @@ class TermController extends CacheableAdministeredItemController<Term, Terminolo
         super.list(terminologyId)
     }
 
-//    @Get('/tree{/id}')
-//    Mono<List<Term>> tree(UUID terminologyId, @Nullable UUID id) {
-//        termRepository.readChildTermsByParent(terminologyId, id).collectList()
-//    }
+    @Get('/tree{/id}')
+    Mono<List<Term>> tree(UUID terminologyId, @Nullable UUID id) {
+        termRepository.readChildTermsByParent(terminologyId, id).collectList()
+    }
 }

@@ -3,6 +3,7 @@ package uk.ac.ox.softeng.mauro.controller.folder
 import uk.ac.ox.softeng.mauro.controller.model.ModelController
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.domain.folder.FolderService
+import uk.ac.ox.softeng.mauro.persistence.cache.CacheableModelRepository.CacheableFolderRepository
 import uk.ac.ox.softeng.mauro.persistence.folder.FolderRepository
 import uk.ac.ox.softeng.mauro.persistence.model.ModelContentRepository
 import uk.ac.ox.softeng.mauro.persistence.model.PathRepository
@@ -29,7 +30,7 @@ import reactor.core.publisher.Mono
 @Controller('/folders')
 class FolderController extends ModelController<Folder> {
 
-    FolderController(FolderRepository folderRepository, ModelContentRepository<Folder> folderContentRepository) {
+    FolderController(CacheableFolderRepository folderRepository, ModelContentRepository<Folder> folderContentRepository) {
         super(Folder, folderRepository, folderRepository, folderContentRepository)
     }
 

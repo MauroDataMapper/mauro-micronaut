@@ -3,12 +3,15 @@ package uk.ac.ox.softeng.mauro.controller.terminology
 import uk.ac.ox.softeng.mauro.controller.model.AdministeredItemController
 import uk.ac.ox.softeng.mauro.domain.terminology.TermRelationshipType
 import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
+import uk.ac.ox.softeng.mauro.persistence.cache.CacheableModelRepository.CacheableTerminologyRepository
+import uk.ac.ox.softeng.mauro.persistence.cache.CacheableAdministeredItemRepository.CacheableTermRelationshipTypeRepository
 import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemContentRepository
 import uk.ac.ox.softeng.mauro.persistence.terminology.TermRelationshipTypeRepository
 import uk.ac.ox.softeng.mauro.persistence.terminology.TerminologyRepository
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 import groovy.transform.CompileStatic
+import io.micronaut.cache.annotation.Cacheable
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpStatus
@@ -24,7 +27,7 @@ import reactor.core.publisher.Mono
 @Controller('/terminologies/{terminologyId}/termRelationshipTypes')
 class TermRelationshipTypeController extends AdministeredItemController<TermRelationshipType, Terminology> {
 
-    TermRelationshipTypeController(TermRelationshipTypeRepository termRelationshipTypeRepository, TerminologyRepository terminologyRepository, AdministeredItemContentRepository<TermRelationshipType> administeredItemContentRepository) {
+    TermRelationshipTypeController(CacheableTermRelationshipTypeRepository termRelationshipTypeRepository, CacheableTerminologyRepository terminologyRepository, AdministeredItemContentRepository<TermRelationshipType> administeredItemContentRepository) {
         super(TermRelationshipType, termRelationshipTypeRepository, terminologyRepository, administeredItemContentRepository)
     }
 

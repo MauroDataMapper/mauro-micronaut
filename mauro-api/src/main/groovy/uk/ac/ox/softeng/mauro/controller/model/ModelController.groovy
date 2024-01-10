@@ -8,6 +8,9 @@ import uk.ac.ox.softeng.mauro.domain.model.version.CreateNewVersionData
 import uk.ac.ox.softeng.mauro.domain.model.version.FinaliseData
 import uk.ac.ox.softeng.mauro.export.ExportMetadata
 import uk.ac.ox.softeng.mauro.export.ExportModel
+import uk.ac.ox.softeng.mauro.persistence.cache.CacheableAdministeredItemRepository
+import uk.ac.ox.softeng.mauro.persistence.cache.CacheableModelRepository
+import uk.ac.ox.softeng.mauro.persistence.cache.CacheableModelRepository.CacheableFolderRepository
 import uk.ac.ox.softeng.mauro.persistence.folder.FolderRepository
 import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemRepository
 import uk.ac.ox.softeng.mauro.persistence.model.ModelContentRepository
@@ -16,6 +19,7 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
+import io.micronaut.cache.annotation.Cacheable
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpStatus
@@ -47,14 +51,14 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     }
 
     @Inject
-    List<AdministeredItemRepository> administeredItemRepositories
+    List<CacheableAdministeredItemRepository> administeredItemRepositories
 
     ModelContentRepository<M> modelContentRepository
 
     ModelService<M> modelService
 
-    ModelController(Class<M> modelClass, ModelRepository<M> modelRepository, FolderRepository folderRepository, ModelContentRepository<M> modelContentRepository) {
-        super(modelClass, modelRepository, (AdministeredItemRepository<Folder>) folderRepository, modelContentRepository)
+    ModelController(Class<M> modelClass, CacheableAdministeredItemRepository<M> modelRepository, CacheableFolderRepository folderRepository, ModelContentRepository<M> modelContentRepository) {
+        super(modelClass, modelRepository, folderRepository, modelContentRepository)
         this.itemClass = modelClass
         this.administeredItemRepository = modelRepository
         this.parentItemRepository = folderRepository
@@ -139,12 +143,12 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         }
     }
 
-    protected ModelRepository<M> getModelRepository() {
-        (ModelRepository<M>) administeredItemRepository
+    protected CacheableModelRepository<M> getModelRepository() {
+        (CacheableModelRepository<M>) administeredItemRepository
     }
 
-    protected FolderRepository getFolderRepository() {
-        (FolderRepository) parentItemRepository
+    protected CacheableFolderRepository getFolderRepository() {
+        (CacheableFolderRepository) parentItemRepository
     }
 
     @NonNull

@@ -1,12 +1,14 @@
 package uk.ac.ox.softeng.mauro.controller.model
 
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
+import uk.ac.ox.softeng.mauro.persistence.cache.CacheableAdministeredItemRepository
 import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemContentRepository
 import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemRepository
 import uk.ac.ox.softeng.mauro.persistence.model.PathRepository
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 import groovy.transform.CompileStatic
+import io.micronaut.cache.annotation.Cacheable
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpStatus
@@ -38,16 +40,16 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
 
     Class<I> itemClass
 
-    AdministeredItemRepository<I> administeredItemRepository
+    CacheableAdministeredItemRepository<I> administeredItemRepository
 
-    AdministeredItemRepository<P> parentItemRepository
+    CacheableAdministeredItemRepository<P> parentItemRepository
 
     AdministeredItemContentRepository<I> administeredItemContentRepository
 
     @Inject
     PathRepository pathRepository
 
-    AdministeredItemController(Class<I> itemClass, AdministeredItemRepository<I> administeredItemRepository, AdministeredItemRepository<P> parentItemRepository, AdministeredItemContentRepository<I> administeredItemContentRepository) {
+    AdministeredItemController(Class<I> itemClass, CacheableAdministeredItemRepository<I> administeredItemRepository, CacheableAdministeredItemRepository<P> parentItemRepository, AdministeredItemContentRepository<I> administeredItemContentRepository) {
         this.itemClass = itemClass
         this.administeredItemRepository = administeredItemRepository
         this.parentItemRepository = parentItemRepository

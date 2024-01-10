@@ -9,6 +9,9 @@ import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
 import uk.ac.ox.softeng.mauro.domain.terminology.TerminologyService
 import uk.ac.ox.softeng.mauro.export.ExportMetadata
 import uk.ac.ox.softeng.mauro.export.ExportModel
+import uk.ac.ox.softeng.mauro.persistence.cache.CacheableAdministeredItemRepository
+import uk.ac.ox.softeng.mauro.persistence.cache.CacheableModelRepository.CacheableTerminologyRepository
+import uk.ac.ox.softeng.mauro.persistence.cache.CacheableModelRepository.CacheableFolderRepository
 import uk.ac.ox.softeng.mauro.persistence.folder.FolderRepository
 import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemRepository
 import uk.ac.ox.softeng.mauro.persistence.terminology.TerminologyContentRepository
@@ -41,7 +44,7 @@ import java.time.Instant
 @CompileStatic
 class TerminologyController extends ModelController<Terminology> {
 
-    TerminologyRepository terminologyRepository
+    CacheableTerminologyRepository terminologyRepository
 
     TerminologyContentRepository terminologyContentRepository
 
@@ -51,7 +54,7 @@ class TerminologyController extends ModelController<Terminology> {
     @Inject
     ObjectMapper objectMapper
 
-    TerminologyController(TerminologyRepository terminologyRepository, FolderRepository folderRepository, TerminologyContentRepository terminologyContentRepository) {
+    TerminologyController(CacheableTerminologyRepository terminologyRepository, CacheableFolderRepository folderRepository, TerminologyContentRepository terminologyContentRepository) {
         super(Terminology, terminologyRepository, folderRepository, terminologyContentRepository)
         this.terminologyRepository = terminologyRepository
         this.terminologyContentRepository = terminologyContentRepository
