@@ -33,7 +33,7 @@ import jakarta.persistence.Transient
 @AutoClone(excludes = ['dataModel'])
 @Introspected
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
-@MappedEntity('data_class')
+@MappedEntity(schema = 'datamodel', value = 'data_class')
 @MapConstructor(includeSuperFields = true, includeSuperProperties = true, noArg = true)
 class DataClass extends ModelItem<DataModel> {
 

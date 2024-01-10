@@ -209,7 +209,115 @@ create table terminology."term_relationship"
     "target_term_id"       uuid             not null references terminology.term (id) initially deferred,
     "relationship_type_id" uuid             not null references terminology.term_relationship_type (id) initially deferred
 );
+
 create index "idx_term_relationship_terminology_id" on terminology."term_relationship" (terminology_id);
 create index "idx_term_relationship_source_term_id" on terminology."term_relationship" (source_term_id);
 create index "idx_term_relationship_target_term_id" on terminology."term_relationship" (target_term_id);
 create index "idx_term_relationship_relationship_type_id" on terminology."term_relationship" (relationship_type_id);
+
+-- # DataModel
+
+create table datamodel."data_model" (
+    "id"                              uuid primary key not null default uuid_generate_v4(),
+    "version"                         integer          not null,
+    "date_created"                    timestamp,
+    "last_updated"                    timestamp,
+    "readable_by_everyone"            boolean          not null,
+    "readable_by_authenticated_users" boolean          not null,
+    "label"                           text             not null,
+    "description"                     text,
+    "aliases_string"                  text,
+    "created_by"                      varchar(255),
+    "breadcrumb_tree_id"              uuid,
+    "finalised"                       boolean          not null,
+    "date_finalised"                  timestamp,
+    "documentation_version"           varchar(255),
+    "model_type"                      varchar(255)     not null,
+    "organisation"                    varchar(255),
+    "deleted"                         boolean          not null,
+    "author"                          varchar(255),
+    "folder_id"                       uuid             not null references core.folder(id) initially deferred,
+    "authority_id"                    uuid /*NOT NULL REFERENCES authority(id) initially deferred*/,
+    "branch_name"                     varchar(255),
+    "model_version"                   varchar(255),
+    "model_version_tag"               varchar(255)
+);
+
+
+create index "idx_data_model_folder_id" on datamodel."data_model"(folder_id);
+
+
+
+create table datamodel."data_class" (
+    "id"                              uuid primary key not null default uuid_generate_v4(),
+    "version"                         integer          not null,
+    "date_created"                    timestamp,
+    "last_updated"                    timestamp,
+    "breadcrumb_tree_id"              uuid,
+    "data_model_id"                   uuid             not null references datamodel.data_model(id) initially deferred,
+    "parent_data_class_id"            uuid             null references datamodel.data_class(id) initially deferred,
+    "idx"                             integer,          /* not null */
+    "created_by"                      varchar(255),
+    "label"                           text             not null,
+    "description"                     text,
+    "aliases_string"                  text,
+    "min_multiplicity"                integer,
+    "max_multiplicity"                integer,
+    "reference_class_id"              uuid             null references datamodel.data_class(id) initially deferred,
+    "model_resource_id"               uuid,
+    "model_resource_domain_type"      varchar(255)
+);
+
+create table datamodel."data_type" (
+    "id"                              uuid primary key not null default uuid_generate_v4(),
+    "version"                         integer          not null,
+    "date_created"                    timestamp,
+    "last_updated"                    timestamp,
+    "domain_type"                     varchar(15)      not null,
+    "breadcrumb_tree_id"              uuid,
+    "data_model_id"                   uuid             not null references datamodel.data_model(id) initially deferred,
+    "idx"                             integer,          /* not null */
+    "created_by"                      varchar(255),
+    "label"                           text             not null,
+    "description"                     text,
+    "aliases_string"                  text,
+    "units"                           varchar(255),
+    "reference_class_id"              uuid             null references datamodel.data_class(id) initially deferred,
+    "model_resource_id"               uuid,
+    "model_resource_domain_type"      varchar(255)
+);
+
+create table datamodel."data_element" (
+    "id"                              uuid primary key not null default uuid_generate_v4(),
+    "version"                         integer          not null,
+    "date_created"                    timestamp,
+    "last_updated"                    timestamp,
+    "breadcrumb_tree_id"              uuid,
+    "data_class_id"                   uuid             not null references datamodel.data_class(id) initially deferred,
+    "data_type_id"                    uuid             not null references datamodel.data_type(id) initially deferred,
+    "idx"                             integer,          /* not null */
+    "created_by"                      varchar(255),
+    "label"                           text             not null,
+    "description"                     text,
+    "aliases_string"                  text,
+    "min_multiplicity"                integer,
+    "max_multiplicity"                integer
+);
+
+
+create table datamodel."enumeration_value" (
+    "id"                              uuid primary key not null default uuid_generate_v4(),
+    "version"                         integer          not null,
+    "date_created"                    timestamp,
+    "last_updated"                    timestamp,
+    "breadcrumb_tree_id"              uuid,
+    "enumeration_type_id"             uuid             not null references datamodel.data_type(id) initially deferred,
+    "idx"                             integer,          /* not null */
+    "created_by"                      varchar(255),
+    "label"                           text             not null,
+    "description"                     text,
+    "aliases_string"                  text,
+    "category"                        text,
+    "key"                             text             not null,
+    "value"                           text
+);
