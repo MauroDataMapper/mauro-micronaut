@@ -1,7 +1,6 @@
 package uk.ac.ox.softeng.mauro.controller.terminology
 
-
-import uk.ac.ox.softeng.mauro.controller.model.CacheableAdministeredItemController
+import uk.ac.ox.softeng.mauro.controller.model.AdministeredItemController
 import uk.ac.ox.softeng.mauro.persistence.cache.CacheableAdministeredItemRepository.CacheableTermRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.CacheableModelRepository.CacheableTerminologyRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.CacheableItemRepository
@@ -24,7 +23,7 @@ import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
 
 @CompileStatic
 @Controller('/terminologies/{terminologyId}/terms')
-class TermController extends CacheableAdministeredItemController<Term, Terminology> {
+class TermController extends AdministeredItemController<Term, Terminology> {
 
     CacheableTermRepository termRepository
 

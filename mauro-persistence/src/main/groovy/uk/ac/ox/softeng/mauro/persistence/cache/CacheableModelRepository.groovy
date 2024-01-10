@@ -28,7 +28,7 @@ class CacheableModelRepository<M extends Model> extends CacheableAdministeredIte
 
     @Override
     Flux<M> readAllByFolder(Folder folder) {
-        readAllByParent(folder)
+        super.readAllByParent(folder)
     }
 
     // not cached

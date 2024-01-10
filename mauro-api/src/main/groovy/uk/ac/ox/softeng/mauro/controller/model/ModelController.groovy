@@ -82,11 +82,12 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     @Transactional
     Mono<M> moveFolder(UUID id, String destination) {
         modelRepository.readById(id).flatMap {M existing ->
+            AdministeredItem original = existing.clone()
             if (destination == 'root') {
                 existing.folder = null
                 pathRepository.readParentItems(existing).flatMap {
                     existing.updatePath()
-                    modelRepository.update(existing)
+                    modelRepository.update(original, existing)
                 }
             } else {
                 UUID destinationId
@@ -99,7 +100,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
                     existing.folder = folder
                     pathRepository.readParentItems(existing).flatMap {
                         existing.updatePath()
-                        modelRepository.update(existing)
+                        modelRepository.update(original, existing)
                     }
                 }
             }

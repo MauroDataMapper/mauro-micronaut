@@ -3,9 +3,9 @@ micronaut:
     name: sandbox
   server:
     port: 8088
-    max-request-size: 100mb
+    max-request-size: 100Mb
     multipart:
-      max-file-size: 100mb
+      max-file-size: 100Mb
   router:
     static-resources:
       swagger:
@@ -21,6 +21,9 @@ ehcache:
   caches:
     items-cache:
       enabled: true
+      heap:
+        max-size: 1Gb
+        size-of-max-object-size: 1000000
 #netty:
 #  default:
 #    allocator:

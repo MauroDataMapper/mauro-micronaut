@@ -85,7 +85,7 @@ class CacheableAdministeredItemRepository<I extends AdministeredItem> extends Ca
     }
 
     void invalidateOnUpdate(AdministeredItem oldItem, AdministeredItem newItem) {
-        if (oldItem.parent && oldItem.parent.id != newItem.parent.id) {
+        if (oldItem.parent && oldItem.parent.id != newItem.parent?.id) {
             invalidateOnUpdate(oldItem)
         }
         invalidateOnUpdate(newItem)
