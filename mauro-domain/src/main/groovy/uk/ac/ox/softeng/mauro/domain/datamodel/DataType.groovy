@@ -40,7 +40,7 @@ import jakarta.validation.constraints.NotNull
 @AutoClone(excludes = ['dataModel'])
 @Introspected
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
-@MappedEntity('data_type')
+@MappedEntity(schema = 'datamodel', value = 'data_type')
 @MapConstructor(includeSuperFields = true, includeSuperProperties = true, noArg = true)
 class DataType extends ModelItem<DataModel> {
 

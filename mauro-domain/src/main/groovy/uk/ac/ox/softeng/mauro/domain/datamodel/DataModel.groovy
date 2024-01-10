@@ -19,7 +19,7 @@ import jakarta.persistence.Transient
 @CompileStatic
 @AutoClone
 @Introspected
-@MappedEntity
+@MappedEntity(schema = 'datamodel')
 @MapConstructor(includeSuperFields = true, includeSuperProperties = true, noArg = true)
 class DataModel extends Model {
 

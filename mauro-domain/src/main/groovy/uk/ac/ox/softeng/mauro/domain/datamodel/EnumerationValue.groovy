@@ -28,7 +28,7 @@ import jakarta.validation.constraints.NotNull
 @CompileStatic
 @AutoClone(excludes = ['enumerationType'])
 @Introspected
-@MappedEntity
+@MappedEntity(schema = 'datamodel', value = 'enumeration_value')
 @MapConstructor(includeSuperFields = true, includeSuperProperties = true, noArg = true)
 @Indexes([@Index(columns = ['enumeration_value_id', 'category', 'key', 'value'], unique = true)])
 class EnumerationValue extends ModelItem<DataModel> {
