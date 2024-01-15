@@ -14,6 +14,11 @@ micronaut:
       swagger-ui:
         paths: classpath:META-INF/swagger/views/swagger-ui
         mapping: /swagger-ui/**
+  security:
+    authentication: session
+    redirect:
+      enabled: false
+
 #  caches:
 #    items-cache:
 #      maximum-size: 100
@@ -71,7 +76,7 @@ flyway:
       enabled: true
       baselineOnMigrate: true
       fail-on-missing-locations: true
-      clean-schema: false
+      clean-schema: true
       schemas:
         - core
         - terminology
