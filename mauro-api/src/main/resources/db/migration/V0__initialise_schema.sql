@@ -1,7 +1,8 @@
 -- # Core
 
 -- Authority
-create table core."authority" (
+create table core."authority"
+(
     "id"                              uuid primary key not null default uuid_generate_v4(),
     "version"                         integer          not null,
     "date_created"                    timestamp,
@@ -17,7 +18,8 @@ create table core."authority" (
 );
 
 -- Metadata
-create table "core"."metadata" (
+create table "core"."metadata"
+(
     "id"                                 uuid primary key not null default uuid_generate_v4(),
     "version"                            integer          not null,
     "date_created"                       timestamp,
@@ -29,11 +31,12 @@ create table "core"."metadata" (
     "key"                                text             not null,
     "value"                              text             not null
 );
-create unique index "idx_metadata_multi_facet_aware_item_id_namespace_key" on "core"."metadata"(multi_facet_aware_item_id, namespace, key);
+create unique index "idx_metadata_multi_facet_aware_item_id_namespace_key" on "core"."metadata" (multi_facet_aware_item_id, namespace, key);
 
 
 -- Folder
-create table core."folder" (
+create table core."folder"
+(
     "id"                              uuid primary key not null default uuid_generate_v4(),
     "version"                         integer          not null,
     "date_created"                    timestamp,
@@ -54,12 +57,39 @@ create table core."folder" (
     "parent_folder_id"                uuid,
     "class"                           varchar(255)
 );
-create index "idx_folder_parent_folder_id" on core."folder"(parent_folder_id);
+create index "idx_folder_parent_folder_id" on core."folder" (parent_folder_id);
 
+-- # Security
+
+create table security."catalogue_user"
+(
+    "id"               uuid primary key not null default uuid_generate_v4(),
+    "version"          integer          not null,
+    "date_created"     timestamp,
+    "last_updated"     timestamp,
+    "created_by"       varchar(255),
+    "email_address"    varchar(255)     not null,
+    "first_name"       varchar(255)     not null,
+    "last_name"        varchar(255)     not null,
+    "job_title"        varchar(255),
+    "organisation"     varchar(255),
+    "pending"          boolean          not null,
+    "disabled"         boolean          not null,
+    "profile_picture"  varchar(255)     not null,
+    "user_preferences" text,
+    "reset_token"      uuid,
+    "creation_method"  varchar(255)     not null,
+    "last_login"       timestamp,
+    "salt"             bytea            not null,
+    "password"         bytea,
+    "temp_password"    varchar(255)
+);
+create unique index "idx_catalogue_user_email_address_idx" on "security"."catalogue_user" (email_address);
 
 -- # Terminology
 
-create table terminology."terminology" (
+create table terminology."terminology"
+(
     "id"                              uuid primary key not null default uuid_generate_v4(),
     "version"                         integer          not null,
     "date_created"                    timestamp,
@@ -78,15 +108,16 @@ create table terminology."terminology" (
     "organisation"                    varchar(255),
     "deleted"                         boolean          not null,
     "author"                          varchar(255),
-    "folder_id"                       uuid             not null references core.folder(id) initially deferred,
+    "folder_id"                       uuid             not null references core.folder (id) initially deferred,
     "authority_id"                    uuid /*NOT NULL REFERENCES authority(id) initially deferred*/,
     "branch_name"                     varchar(255),
     "model_version"                   varchar(255),
     "model_version_tag"               varchar(255)
 );
-create unique index "idx_terminology_folder_id_label_branch_name_model_version" on terminology."terminology"(folder_id, label, branch_name, model_version);
+create unique index "idx_terminology_folder_id_label_branch_name_model_version" on terminology."terminology" (folder_id, label, branch_name, model_version);
 
-create table terminology."term_relationship_type" (
+create table terminology."term_relationship_type"
+(
     "id"                    uuid primary key not null default uuid_generate_v4(),
     "version"               integer          not null,
     "date_created"          timestamp,
@@ -97,14 +128,15 @@ create table terminology."term_relationship_type" (
     "created_by"            varchar(255),
     "breadcrumb_tree_id"    uuid,
     "idx"                   integer,
-    "terminology_id"        uuid             not null references terminology.terminology(id) initially deferred,
+    "terminology_id"        uuid             not null references terminology.terminology (id) initially deferred,
     "parental_relationship" boolean,
     "child_relationship"    boolean
 );
-create unique index "idx_term_relationship_type_terminology_id_label" on terminology."term_relationship_type"(terminology_id, label);
+create unique index "idx_term_relationship_type_terminology_id_label" on terminology."term_relationship_type" (terminology_id, label);
 
 
-create table terminology."term" (
+create table terminology."term"
+(
     "id"                 uuid primary key not null default uuid_generate_v4(),
     "version"            integer          not null,
     "date_created"       timestamp,
@@ -115,16 +147,17 @@ create table terminology."term" (
     "created_by"         varchar(255),
     "breadcrumb_tree_id" uuid,
     "idx"                integer,
-    "terminology_id"     uuid             not null references terminology.terminology(id) initially deferred,
+    "terminology_id"     uuid             not null references terminology.terminology (id) initially deferred,
     "code"               varchar(255)     not null,
     "definition"         text             not null,
     "url"                varchar(255),
     "is_parent"          boolean,
     "depth"              integer
 );
-create unique index "idx_term_terminology_id_code" on terminology."term"(terminology_id, code);
+create unique index "idx_term_terminology_id_code" on terminology."term" (terminology_id, code);
 
-create table terminology."term_relationship" (
+create table terminology."term_relationship"
+(
     "id"                   uuid primary key not null default uuid_generate_v4(),
     "version"              integer          not null,
     "date_created"         timestamp,
@@ -135,12 +168,12 @@ create table terminology."term_relationship" (
     "created_by"           varchar(255),
     "breadcrumb_tree_id"   uuid,
     "idx"                  integer,
-    "terminology_id"       uuid             not null references terminology.terminology(id) initially deferred,
-    "source_term_id"       uuid             not null references terminology.term(id) initially deferred,
-    "target_term_id"       uuid             not null references terminology.term(id) initially deferred,
-    "relationship_type_id" uuid             not null references terminology.term_relationship_type(id) initially deferred
+    "terminology_id"       uuid             not null references terminology.terminology (id) initially deferred,
+    "source_term_id"       uuid             not null references terminology.term (id) initially deferred,
+    "target_term_id"       uuid             not null references terminology.term (id) initially deferred,
+    "relationship_type_id" uuid             not null references terminology.term_relationship_type (id) initially deferred
 );
-create index "idx_term_relationship_terminology_id" on terminology."term_relationship"(terminology_id);
-create index "idx_term_relationship_source_term_id" on terminology."term_relationship"(source_term_id);
-create index "idx_term_relationship_target_term_id" on terminology."term_relationship"(target_term_id);
-create index "idx_term_relationship_relationship_type_id" on terminology."term_relationship"(relationship_type_id);
+create index "idx_term_relationship_terminology_id" on terminology."term_relationship" (terminology_id);
+create index "idx_term_relationship_source_term_id" on terminology."term_relationship" (source_term_id);
+create index "idx_term_relationship_target_term_id" on terminology."term_relationship" (target_term_id);
+create index "idx_term_relationship_relationship_type_id" on terminology."term_relationship" (relationship_type_id);

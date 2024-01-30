@@ -2,6 +2,7 @@ package uk.ac.ox.softeng.mauro.persistence.cache
 
 import uk.ac.ox.softeng.mauro.domain.facet.Metadata
 import uk.ac.ox.softeng.mauro.domain.model.Item
+import uk.ac.ox.softeng.mauro.domain.security.CatalogueUser
 import uk.ac.ox.softeng.mauro.persistence.facet.MetadataRepository
 import uk.ac.ox.softeng.mauro.persistence.model.ItemRepository
 
@@ -13,6 +14,7 @@ import io.micronaut.cache.annotation.Cacheable
 import io.micronaut.context.annotation.Bean
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
+import uk.ac.ox.softeng.mauro.persistence.security.CatalogueUserRepository
 
 @Slf4j
 @CompileStatic
@@ -105,6 +107,14 @@ class CacheableItemRepository<I extends Item> implements ItemRepository<I> {
     static class CacheableMetadataRepository extends CacheableItemRepository<Metadata> {
         CacheableMetadataRepository(MetadataRepository metadataRepository) {
             super(metadataRepository)
+        }
+    }
+
+    @Bean
+    @CompileStatic
+    static class CacheableCatalogueUserRepository extends CacheableItemRepository<CatalogueUser> {
+        CacheableCatalogueUserRepository(CatalogueUserRepository catalogueUserRepository) {
+            super(catalogueUserRepository)
         }
     }
 }

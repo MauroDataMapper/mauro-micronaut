@@ -1,9 +1,9 @@
 plugins {
     id("groovy")
     id("com.github.johnrengelman.shadow") version "8.1.1"
-    id("io.micronaut.application") version "4.2.0"
-//    id("io.micronaut.test-resources") version "4.2.0"
-    id("io.micronaut.aot") version "4.2.0"
+    id("io.micronaut.application") version "4.2.1"
+//    id("io.micronaut.test-resources") version "4.2.1"
+    id("io.micronaut.aot") version "4.2.1"
     id("codenarc")
 }
 
@@ -47,6 +47,8 @@ dependencies {
     implementation("io.micronaut.cache:micronaut-cache-management")
     implementation("io.micronaut.security:micronaut-security-session")
     compileOnly("io.micronaut.security:micronaut-security-annotations")
+    implementation group: 'org.apache.commons', name: 'commons-rng-simple', version: '1.5'
+    implementation group: 'org.apache.commons', name: 'commons-text', version: '1.10.0'
 }
 
 

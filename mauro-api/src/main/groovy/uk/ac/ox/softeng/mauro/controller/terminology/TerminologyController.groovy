@@ -1,5 +1,8 @@
 package uk.ac.ox.softeng.mauro.controller.terminology
 
+import io.micronaut.security.annotation.Secured
+import io.micronaut.security.authentication.Authentication
+import io.micronaut.security.rules.SecurityRule
 import uk.ac.ox.softeng.mauro.controller.model.ModelController
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
@@ -58,6 +61,12 @@ class TerminologyController extends ModelController<Terminology> {
         super(Terminology, terminologyRepository, folderRepository, terminologyContentRepository)
         this.terminologyRepository = terminologyRepository
         this.terminologyContentRepository = terminologyContentRepository
+    }
+
+    @Secured(SecurityRule.IS_AUTHENTICATED)
+    @Get('/test')
+    Mono<Map> authenticationTest(Authentication authentication) {
+        Mono.just(authentication.attributes)
     }
 
     @Get('/terminologies/{id}')
