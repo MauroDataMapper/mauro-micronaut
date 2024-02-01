@@ -75,7 +75,7 @@ create table security."catalogue_user"
     "organisation"     varchar(255),
     "pending"          boolean          not null,
     "disabled"         boolean          not null,
-    "profile_picture"  varchar(255)     not null,
+    "profile_picture"  varchar(255),
     "user_preferences" text,
     "reset_token"      uuid,
     "creation_method"  varchar(255)     not null,
@@ -84,7 +84,35 @@ create table security."catalogue_user"
     "password"         bytea,
     "temp_password"    varchar(255)
 );
-create unique index "idx_catalogue_user_email_address_idx" on "security"."catalogue_user" (email_address);
+create unique index "idx_catalogue_user_email_address" on "security"."catalogue_user" (trim(lower(email_address)));
+
+create table security."user_group"
+(
+    "id"               uuid primary key not null default uuid_generate_v4(),
+    "version"          integer          not null,
+    "date_created"     timestamp,
+    "last_updated"     timestamp,
+    "created_by"       varchar(255),
+    "name"             varchar(255)     not null,
+    "description"      text,
+    "undeletable"      boolean                   default false,
+    "application_role" varchar(255)
+)
+create unique index "idx_security_user_group_name" on security.user_group (trim(lower(name)));
+
+create table security."securable_resource_group_role"
+(
+    "id"                             uuid primary key not null default uuid_generate_v4(),
+    "version"                        integer          not null,
+    "date_created"                   timestamp,
+    "last_updated"                   timestamp,
+    "created_by"                     varchar(255),
+    "securable_resource_domain_type" varchar(255)     not null,
+    "securable_resource_id"          uuid             not null,
+    "user_group_id"                  uuid             not null references security.user_group (id) initially deferred,
+    "role"                           varchar(255)     not null
+)
+create unique index "idx_securable_resource_group_role_securable_resource_user_group_id" on security.securable_resource_group_role (securable_resource_domain_type, securable_resource_id, user_group_id);
 
 -- # Terminology
 

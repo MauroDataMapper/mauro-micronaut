@@ -68,7 +68,7 @@ r2dbc:
       url: r2dbc:pool://localhost:5432/sandbox
       username: sandbox
       password: sandbox
-      schema-generate: none
+      schema-generate: create
       dialect: POSTGRES
       db-type: postgres
       options:
