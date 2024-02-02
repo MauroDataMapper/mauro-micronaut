@@ -97,7 +97,7 @@ create table security."user_group"
     "description"      text,
     "undeletable"      boolean                   default false,
     "application_role" varchar(255)
-)
+);
 create unique index "idx_security_user_group_name" on security.user_group (trim(lower(name)));
 
 create table security."securable_resource_group_role"
@@ -111,8 +111,16 @@ create table security."securable_resource_group_role"
     "securable_resource_id"          uuid             not null,
     "user_group_id"                  uuid             not null references security.user_group (id) initially deferred,
     "role"                           varchar(255)     not null
-)
+);
 create unique index "idx_securable_resource_group_role_securable_resource_user_group_id" on security.securable_resource_group_role (securable_resource_domain_type, securable_resource_id, user_group_id);
+
+create table security."user_group_catalogue_user"
+(
+    "catalogue_user_id" uuid not null,
+    "user_group_id" uuid not null
+);
+create unique index "idx_user_group_catalogue_user_unique" on security.user_group_catalogue_user (catalogue_user_id, user_group_id);
+create index "idx_user_group_catalogue_user_user_group_id" on security.user_group_catalogue_user (user_group_id);
 
 -- # Terminology
 

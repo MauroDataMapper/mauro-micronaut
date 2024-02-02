@@ -24,7 +24,7 @@ class PathRepository {
     Mono<List<AdministeredItem>> readParentItems(AdministeredItem item) {
         Mono.just(item).expand {AdministeredItem it ->
             if (it.parent) getRepository(it.parent).readById(it.parent.id)
-            else Flux.empty()
+            else Mono.empty()
         }.collectList().map {List<AdministeredItem> parents ->
             parents.eachWithIndex {AdministeredItem it, Integer i ->
                 if (parents[i+1]) it.parent = parents[i+1]

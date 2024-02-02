@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.controller.folder
 
+import io.micronaut.security.annotation.Secured
+import io.micronaut.security.rules.SecurityRule
 import uk.ac.ox.softeng.mauro.controller.model.ModelController
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.domain.folder.FolderService
@@ -28,6 +30,7 @@ import reactor.core.publisher.Mono
 @Slf4j
 @CompileStatic
 @Controller('/folders')
+@Secured(SecurityRule.IS_AUTHENTICATED)
 class FolderController extends ModelController<Folder> {
 
     FolderController(CacheableFolderRepository folderRepository, ModelContentRepository<Folder> folderContentRepository) {

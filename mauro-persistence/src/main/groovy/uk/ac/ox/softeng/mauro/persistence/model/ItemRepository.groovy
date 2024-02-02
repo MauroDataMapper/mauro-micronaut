@@ -13,7 +13,7 @@ import reactor.core.publisher.Mono
 @CompileStatic
 trait ItemRepository<I extends Item> implements GenericRepository<I, UUID> {
 
-    // Should be implemented by override with joins, possibly using a DTO
+    // Should be implemented by override with facet joins, possibly using a DTO
     abstract Mono<I> findById(UUID id)
 
     abstract Mono<I> readById(UUID id)

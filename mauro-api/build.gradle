@@ -45,8 +45,12 @@ dependencies {
 //    implementation("io.micronaut.cache:micronaut-cache-caffeine")
     implementation("io.micronaut.cache:micronaut-cache-ehcache")
     implementation("io.micronaut.cache:micronaut-cache-management")
+
+    // Security
     implementation("io.micronaut.security:micronaut-security-session")
     compileOnly("io.micronaut.security:micronaut-security-annotations")
+    implementation("io.micrometer:context-propagation")
+
     implementation group: 'org.apache.commons', name: 'commons-rng-simple', version: '1.5'
     implementation group: 'org.apache.commons', name: 'commons-text', version: '1.10.0'
 }

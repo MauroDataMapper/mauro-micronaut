@@ -22,7 +22,7 @@ class UserGroup extends Item {
 
     Boolean undeletable
 
-    String applicationRole
+    ApplicationRole applicationRole
 
     @Relation(Relation.Kind.MANY_TO_MANY)
     Set<CatalogueUser> groupMembers = []

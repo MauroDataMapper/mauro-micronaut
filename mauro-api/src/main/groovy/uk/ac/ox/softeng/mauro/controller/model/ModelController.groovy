@@ -15,6 +15,7 @@ import uk.ac.ox.softeng.mauro.persistence.folder.FolderRepository
 import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemRepository
 import uk.ac.ox.softeng.mauro.persistence.model.ModelContentRepository
 import uk.ac.ox.softeng.mauro.persistence.model.ModelRepository
+import uk.ac.ox.softeng.mauro.security.AccessControlService
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 import groovy.transform.CompileStatic
@@ -53,6 +54,9 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     @Inject
     List<CacheableAdministeredItemRepository> administeredItemRepositories
 
+    @Inject
+    AccessControlService accessControlService
+
     ModelContentRepository<M> modelContentRepository
 
     ModelService<M> modelService
@@ -67,12 +71,14 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     }
 
     Mono<M> show(UUID id) {
-        modelRepository.findById(id).flatMap {M model ->
-            pathRepository.readParentItems(model).map {
-                model.updatePath()
-                model
+        modelRepository.findById(id).flatMap { M model ->
+            accessControlService.canRead(model).then {
+                pathRepository.readParentItems(model).map {
+                    model.updatePath()
+                    model
+                }
             }
-        }
+        } as Mono<M>
     }
 
     Mono<M> update(UUID id, @Body @NonNull M model) {

@@ -58,6 +58,7 @@ class CacheableItemRepository<I extends Item> implements ItemRepository<I> {
     }
 
     Mono<Long> delete(I item) {
+        invalidateOnDelete(item)
         repository.delete(item)
     }
 
@@ -78,7 +79,8 @@ class CacheableItemRepository<I extends Item> implements ItemRepository<I> {
     }
 
     void invalidateOnSave(Item item) {
-
+        invalidateCachedLookupById(FIND_BY_ID, domainType, item.id)
+        invalidateCachedLookupById(READ_BY_ID, domainType, item.id)
     }
 
     void invalidateOnUpdate(Item item) {

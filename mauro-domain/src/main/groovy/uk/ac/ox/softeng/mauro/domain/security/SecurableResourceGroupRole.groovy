@@ -17,5 +17,5 @@ class SecurableResourceGroupRole extends Item {
     UUID securableResourceId
 
     UserGroup userGroup
-    String role
+    Role role
 }
