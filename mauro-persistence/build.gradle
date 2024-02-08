@@ -1,67 +1,23 @@
-plugins {
-    id("groovy")
-    id("com.github.johnrengelman.shadow") version "8.1.1"
-    id("io.micronaut.library") version "4.1.2"
-    id("maven-publish")
-    id("codenarc")
-}
+buildscript {
+    repositories {
+        mavenLocal()
+        mavenCentral()
+        maven {url 'https://jenkins.cs.ox.ac.uk/artifactory/plugins-snapshot'}
+        maven {url 'https://jenkins.cs.ox.ac.uk/artifactory/plugins-release'}
 
-version = "0.1"
-group = "uk.ac.ox.softeng.mauro"
-
-repositories {
-    mavenCentral()
-}
-
-dependencies {
-    compileOnly("io.micronaut.data:micronaut-data-processor")
-    compileOnly("io.micronaut.validation:micronaut-validation-processor")
-    implementation("io.micronaut:micronaut-jackson-databind")
-    implementation("io.micronaut.data:micronaut-data-r2dbc")
-    implementation("io.micronaut.groovy:micronaut-runtime-groovy")
-    runtimeOnly("ch.qos.logback:logback-classic")
-    runtimeOnly("org.postgresql:r2dbc-postgresql")
-    implementation("io.r2dbc:r2dbc-pool")
-//    testResourcesService("org.postgresql:postgresql")
-    implementation("io.micronaut.validation:micronaut-validation")
-    runtimeOnly("org.yaml:snakeyaml")
-
-}
-
-java {
-    sourceCompatibility = JavaVersion.toVersion("17")
-    targetCompatibility = JavaVersion.toVersion("17")
-    withJavadocJar()
-    withSourcesJar()
-
-}
-
-publishing {
-    publications {
-        mavenJava(MavenPublication) {
-            groupId = 'uk.ac.ox.softeng.mauro'
-            artifactId = 'mauro-persistence'
-            version = "0.0.1-SNAPSHOT"
-            from components.java
-        }
+    }
+    dependencies {
+        classpath "uk.ac.ox.softeng.maurodatamapper.gradle:mdm-gradle-plugin:$mdmGradlePluginVersion"
     }
 }
 
-dependencies {
-    implementation project(':mauro-domain')
+plugins {
+    id 'groovy'
+    id 'com.github.johnrengelman.shadow' version '8.1.1'
+    id 'io.micronaut.library' version '4.3.1'
 }
 
-codenarc {
-    toolVersion = "3.3.0-groovy-4.0"
-    configFile = rootProject.file("config/codenarc/codenarc.groovy")
-}
+apply plugin: 'uk.ac.ox.softeng.maurodatamapper.gradle.mauro-gradle'
+apply plugin: 'info.solidsoft.pitest'
 
-codenarcMain {
-    compilationClasspath = sourceSets.main.compileClasspath + sourceSets.main.output
-}
-
-codenarcTest {
-    compilationClasspath = codenarcMain.compilationClasspath + sourceSets.test.compileClasspath + sourceSets.test.output
-}
-
-[codenarcMain, codenarcTest]*.ignoreFailures = true
+apply from: 'dependencies.gradle'

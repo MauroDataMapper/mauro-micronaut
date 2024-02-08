@@ -36,3 +36,14 @@
 - [https://r2dbc.io](https://r2dbc.io)
 
 
+## Testing
+
+Currently you will need to setup the database locally
+
+```shell
+psql -U postgres
+-- Create the development user
+postgres=# CREATE USER sandbox WITH SUPERUSER PASSWORD 'sandbox';
+-- Create the database
+postgres=# CREATE DATABASE sandbox OWNER sandbox;
+```

@@ -1,12 +1,14 @@
+package static_code_analysis
+
 ruleset {
 
     description '''
-        A Sample Groovy RuleSet containing all CodeNarc Rules, grouped by category.
-        You can use this as a template for your own custom RuleSet.
-        Just delete the rules that you don't want to include.
+       Micronaut-CodeNarc Project RuleSet
         '''
 
-    // rulesets/basic.xml
+    /*
+     rulesets/basic.xml
+     */
     AssertWithinFinallyBlock
     AssignmentInConditional
     BigDecimalInstantiation
@@ -52,7 +54,9 @@ ruleset {
     ReturnFromFinallyBlock
     ThrowExceptionFromFinallyBlock
 
-    // rulesets/braces.xml
+    /*
+     rulesets/braces.xml
+     */
     ElseBlockBraces
     ForStatementBraces
     IfStatementBraces
@@ -77,7 +81,9 @@ ruleset {
     // SpaceAfterCommentDelimiter -- No such rule?
     // SpaceBeforeCommentDelimiter -- No such rule?
 
-    // rulesets/concurrency.xml
+    /*
+     rulesets/concurrency.xml
+     */
     BusyWait
     DoubleCheckedLocking
     InconsistentPropertyLocking
@@ -106,7 +112,9 @@ ruleset {
     VolatileLongOrDoubleField
     WaitOutsideOfWhileLoop
 
-    // rulesets/convention.xml
+    /*
+    rulesets/convention.xml
+     */
     CompileStatic
     ConfusingTernary
     CouldBeElvis
@@ -135,7 +143,9 @@ ruleset {
     VariableTypeRequired
     VectorIsObsolete
 
-    // rulesets/design.xml
+    /*
+     rulesets/design.xml
+     */
     AbstractClassWithPublicConstructor
     // AbstractClassWithoutAbstractMethod - TODO: commented out because I think abstract is more explicit than a protected constructor
     AssignmentToStaticFieldFromInstanceMethod
@@ -162,19 +172,26 @@ ruleset {
     StatelessSingleton
     ToStringReturnsNull
 
-    // rulesets/dry.xml
+    /*
+     rulesets/dry.xml
+     */
     DuplicateListLiteral
     DuplicateMapLiteral
     DuplicateNumberLiteral
     DuplicateStringLiteral
 
-    // rulesets/enhanced.xml
-    // CloneWithoutCloneable
-    // JUnitAssertEqualsConstantActualValue
-    // MissingOverrideAnnotation
-    // UnsafeImplementationAsMap
+    /*
+     rulesets/enhanced.xml
+     * /
+    CloneWithoutCloneable
+    JUnitAssertEqualsConstantActualValue
+    MissingOverrideAnnotation
+    UnsafeImplementationAsMap
+    */
 
-    // rulesets/exceptions.xml
+    /*
+    rulesets/exceptions.xml
+     */
     CatchArrayIndexOutOfBoundsException
     CatchError
     CatchException
@@ -196,7 +213,9 @@ ruleset {
     ThrowRuntimeException
     ThrowThrowable
 
-    // rulesets/formatting.xml
+    /*
+    rulesets/formatting.xml
+     */
     BlankLineBeforePackage
     BlockEndsWithBlankLine
     BlockStartsWithBlankLine
@@ -211,7 +230,9 @@ ruleset {
     ConsecutiveBlankLines
     //FileEndsWithoutNewline
     Indentation
-    LineLength
+    LineLength {
+        length = 175
+    }
     MissingBlankLineAfterImports
     MissingBlankLineAfterPackage
     MissingBlankLineBeforeAnnotatedField
@@ -235,7 +256,9 @@ ruleset {
     SpaceInsideParentheses
     TrailingWhitespace
 
-    // rulesets/generic.xml
+    /*
+    rulesets/generic.xml
+     */
     IllegalClassMember
     IllegalClassReference
     IllegalPackageReference
@@ -246,7 +269,9 @@ ruleset {
     RequiredString
     StatelessClass
 
-    // rulesets/grails.xml
+    /*
+    rulesets/grails.xml
+     */
     GrailsDomainGormMethods
     GrailsDomainHasEquals
     GrailsDomainHasToString
@@ -260,7 +285,9 @@ ruleset {
     GrailsServletContextReference
     GrailsStatelessService
 
-    // rulesets/groovyism.xml
+    /*
+    rulesets/groovyism.xml
+     */
     AssignCollectionSort
     AssignCollectionUnique
     ClosureAsLastMethodParameter
@@ -295,7 +322,9 @@ ruleset {
     UseCollectMany
     UseCollectNested
 
-    // rulesets/imports.xml
+    /*
+    rulesets/imports.xml
+     */
     DuplicateImport
     ImportFromSamePackage
     ImportFromSunPackages
@@ -304,13 +333,17 @@ ruleset {
     UnnecessaryGroovyImport
     UnusedImport
 
-    // rulesets/jdbc.xml
+    /*
+    rulesets/jdbc.xml
+     */
     DirectConnectionManagement
     JdbcConnectionReference
     JdbcResultSetReference
     JdbcStatementReference
 
-    // rulesets/junit.xml
+    /*
+    rulesets/junit.xml
+     */
     ChainedTest
     CoupledTestCase
     JUnitAssertAlwaysFails
@@ -337,7 +370,9 @@ ruleset {
     UseAssertTrueInsteadOfAssertEquals
     UseAssertTrueInsteadOfNegation
 
-    // rulesets/logging.xml
+    /*
+    rulesets/logging.xml
+     */
     LoggerForDifferentClass
     LoggerWithWrongModifiers
     LoggingSwallowsStacktrace
@@ -347,7 +382,9 @@ ruleset {
     SystemErrPrint
     SystemOutPrint
 
-    // rulesets/naming.xml
+    /*
+    rulesets/naming.xml
+     */
     AbstractClassName
     ClassName
     ClassNameSameAsFilename
@@ -365,7 +402,9 @@ ruleset {
     PropertyName
     VariableName
 
-    // rulesets/security.xml
+    /*
+    rulesets/security.xml
+     */
     FileCreateTempFile
     InsecureRandom
     JavaIoPackageAccess
@@ -376,13 +415,17 @@ ruleset {
     SystemExit
     UnsafeArrayDeclaration
 
-    // rulesets/serialization.xml
+    /*
+    rulesets/serialization.xml
+     */
     EnumCustomSerializationIgnored
     SerialPersistentFields
     SerialVersionUID
     SerializableClassMustDefineSerialVersionUID
 
-    // rulesets/size.xml
+    /*
+     rulesets/size.xml
+     */
     // AbcMetric   // Requires the GMetrics jar - TODO: commented out for now because it's not currently helpful.
     ClassSize
     CrapMetric   // Requires the GMetrics jar and a Cobertura coverage file
@@ -392,7 +435,9 @@ ruleset {
     NestedBlockDepth
     ParameterCount
 
-    // rulesets/unnecessary.xml
+    /*
+    rulesets/unnecessary.xml
+     */
     AddEmptyString
     ConsecutiveLiteralAppends
     ConsecutiveStringConcatenation
@@ -440,7 +485,9 @@ ruleset {
     UnnecessaryToString
     UnnecessaryTransientModifier
 
-    // rulesets/unused.xml
+    /*
+    rulesets/unused.xml
+     */
     UnusedArray
     UnusedMethodParameter
     UnusedObject

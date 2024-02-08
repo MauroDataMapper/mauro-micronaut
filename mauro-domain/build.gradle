@@ -1,61 +1,23 @@
-plugins {
-    id("groovy")
-    id("com.github.johnrengelman.shadow") version "8.1.1"
-    id("maven-publish")
-    id("io.micronaut.library") version "4.1.2"
-    id("codenarc")
-}
+buildscript {
+    repositories {
+        mavenLocal()
+        mavenCentral()
+        maven {url 'https://jenkins.cs.ox.ac.uk/artifactory/plugins-snapshot'}
+        maven {url 'https://jenkins.cs.ox.ac.uk/artifactory/plugins-release'}
 
-version = "0.1"
-group = "uk.ac.ox.softeng.mauro"
-
-repositories {
-    mavenCentral()
-}
-
-dependencies {
-    runtimeOnly("ch.qos.logback:logback-classic")
-    compileOnly("io.micronaut.data:micronaut-data-processor")
-    implementation("io.micronaut.validation:micronaut-validation")
-    implementation("io.micronaut:micronaut-jackson-databind")
-
-    testImplementation "io.micronaut.test:micronaut-test-spock"
-
-}
-
-java {
-    sourceCompatibility = JavaVersion.toVersion("17")
-    targetCompatibility = JavaVersion.toVersion("17")
-    withJavadocJar()
-    withSourcesJar()
-}
-
-publishing {
-    publications {
-        mavenJava(MavenPublication) {
-            groupId = 'uk.ac.ox.softeng.mauro'
-            artifactId = 'mauro-domain'
-            version = "0.0.1-SNAPSHOT"
-            from components.java
-        }
+    }
+    dependencies {
+        classpath "uk.ac.ox.softeng.maurodatamapper.gradle:mdm-gradle-plugin:$mdmGradlePluginVersion"
     }
 }
 
-test {
-    useJUnitPlatform()
+plugins {
+    id 'groovy'
+    id 'com.github.johnrengelman.shadow' version '8.1.1'
+    id 'io.micronaut.library' version '4.3.1'
 }
 
-codenarc {
-    toolVersion = "3.3.0-groovy-4.0"
-    configFile = rootProject.file("config/codenarc/codenarc.groovy")
-}
+apply plugin: 'uk.ac.ox.softeng.maurodatamapper.gradle.mauro-gradle'
+apply plugin: 'info.solidsoft.pitest'
 
-codenarcMain {
-    compilationClasspath = sourceSets.main.compileClasspath + sourceSets.main.output
-}
-
-codenarcTest {
-    compilationClasspath = codenarcMain.compilationClasspath + sourceSets.test.compileClasspath + sourceSets.test.output
-}
-
-[codenarcMain, codenarcTest]*.ignoreFailures = true
+apply from: 'dependencies.gradle'

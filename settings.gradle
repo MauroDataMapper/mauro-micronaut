@@ -1,5 +1,5 @@
 
-rootProject.name="sandbox"
+rootProject.name="mauro-micronaut.ROOT"
 
 include 'mauro-domain'
 include 'mauro-persistence'

@@ -1,16 +1,116 @@
+import ox.softeng.gradle.Versions
+
+buildscript {
+    repositories {
+        mavenLocal()
+        mavenCentral()
+        maven {url 'https://jenkins.cs.ox.ac.uk/artifactory/plugins-snapshot'}
+        maven {url 'https://jenkins.cs.ox.ac.uk/artifactory/plugins-release'}
+
+    }
+    dependencies {
+        classpath "uk.ac.ox.softeng.maurodatamapper.gradle:mdm-gradle-plugin:$mdmGradlePluginVersion"
+    }
+}
+
 plugins {
-    id("groovy")
-    id("com.github.johnrengelman.shadow") version "8.1.1"
     id 'codenarc'
+    id 'jacoco'
+    id 'test-report-aggregation'
+    id 'jacoco-report-aggregation'
+    id 'info.solidsoft.pitest' version '1.15.0' apply false
 }
 
-version = "0.1"
-group = "uk.ac.ox.softeng.mauro"
+apply plugin: 'ox.softeng.ox-brc-base'
+apply plugin: 'info.solidsoft.pitest.aggregator'
 
-repositories {
-    mavenCentral()
+jacoco {
+    toolVersion = Versions.JACOCO_VERSION
 }
-java {
-    sourceCompatibility = JavaVersion.toVersion("17")
-    targetCompatibility = JavaVersion.toVersion("17")
+
+reporting {
+    reports {
+        testAggregateTestReport(AggregateTestReport) {
+            testType = TestSuiteType.UNIT_TEST
+        }
+        testCodeCoverageReport(JacocoCoverageReport) {
+            testType = TestSuiteType.UNIT_TEST
+        }
+    }
+}
+
+dependencies {
+    testReportAggregation subprojects
+    jacocoAggregation subprojects
+}
+
+tasks.named('pitestReportAggregate'){
+    dependsOn subprojects.collect {it.tasks.named('pitest')}
+}
+
+tasks.named('check') {
+    dependsOn 'pitestReportAggregate', 'testCodeCoverageReport', 'testAggregateTestReport'
+}
+
+subprojects {
+
+    repositories {
+        mavenLocal()
+        mavenCentral()
+    }
+
+    codenarc {
+        toolVersion = codenarcVersion
+        configFile = rootProject.file("config/codenarc/codenarc.groovy")
+    }
+
+    afterEvaluate {
+
+        pitest {
+            // export mutations.xml and line coverage for aggregation
+            outputFormats = ["XML", "HTML"]
+            exportLineCoverage = true
+            junit5PluginVersion = '1.2.1'
+            pitestVersion = '1.15.2'
+        }
+
+        publishing {
+            publications {
+                mavenJar(MavenPublication) {
+                    pom {
+                        name = project.name
+                        url = 'https://github.com/MauroDataMapper/mauro-micronaut'
+                        licenses {
+                            license {
+                                name = 'The Apache License, Version 2.0'
+                                url = 'https://github.com/MauroDataMapper/mauro-micronaut/LICENSE.txt'
+                            }
+                        }
+                        developers {
+                            developer {
+                                id = 'jameswelch'
+                                name = 'James Welch'
+                                email = 'james.welch@bdi.ox.ac.uk'
+                            }
+                            developer {
+                                id = 'joe-crawford'
+                                name = 'Joe Crawford'
+                                email = 'joseph.crawford@bdi.ox.ac.uk'
+                            }
+                            developer {
+                                id = 'olliefreeman'
+                                name = 'Oliver Freeman'
+                                email = 'ollie.freeman@gmail.com'
+                            }
+                        }
+                        scm {
+                            connection = 'git@github.com:MauroDataMapper/mauro-micronaut.git'
+                            developerConnection = 'git@github.com:MauroDataMapper/mauro-micronaut.git'
+                            url = 'https://github.com/MauroDataMapper/mauro-micronaut'
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
