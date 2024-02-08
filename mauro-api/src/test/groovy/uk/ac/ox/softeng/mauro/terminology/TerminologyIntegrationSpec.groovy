@@ -4,6 +4,7 @@ import uk.ac.ox.softeng.mauro.testing.BaseIntegrationSpec
 
 import io.micronaut.core.type.Argument
 import io.micronaut.runtime.EmbeddedApplication
+import io.micronaut.runtime.server.EmbeddedServer
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
 import spock.lang.Shared
@@ -12,7 +13,7 @@ import spock.lang.Shared
 class TerminologyIntegrationSpec extends BaseIntegrationSpec {
 
     @Inject
-    EmbeddedApplication<?> application
+    EmbeddedServer application
 
     @Shared
     UUID folderId

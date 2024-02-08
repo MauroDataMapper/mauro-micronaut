@@ -1,6 +1,7 @@
 package uk.ac.ox.softeng.mauro.testing
 
 import io.micronaut.runtime.EmbeddedApplication
+import io.micronaut.runtime.server.EmbeddedServer
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import spock.lang.Specification
 import jakarta.inject.Inject
@@ -9,7 +10,7 @@ import jakarta.inject.Inject
 class SandboxSpec extends Specification {
 
     @Inject
-    EmbeddedApplication<?> application
+    EmbeddedServer application
 
     void 'test it works'() {
         expect:
