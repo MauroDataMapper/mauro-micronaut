@@ -72,12 +72,12 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
 
     Mono<M> show(UUID id) {
         modelRepository.findById(id).flatMap { M model ->
-            accessControlService.canRead(model).then {
+            accessControlService.canRead(model).then(
                 pathRepository.readParentItems(model).map {
                     model.updatePath()
                     model
                 }
-            }
+            )
         } as Mono<M>
     }
 

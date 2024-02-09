@@ -47,27 +47,27 @@ class CacheableMetadataRepository implements ItemRepository<Metadata> {
     }
 
     Mono<Metadata> save(Metadata item) {
-        invalidateForItem(item).then {
-            repository.save(item)
-        }
+        invalidateForItem(item).then(
+                repository.save(item)
+        )
     }
 
     Flux<Metadata> saveAll(Iterable<Metadata> items) {
-        Flux.fromIterable(items).flatMap {invalidateForItem(it)}.thenMany {
-            repository.saveAll(items)
-        }
+        Flux.fromIterable(items).flatMap { invalidateForItem(it) }.thenMany(
+                repository.saveAll(items)
+        )
     }
 
     Mono<Metadata> update(Metadata item) {
-        invalidateForItem(item).then {
-            repository.update(item)
-        }
+        invalidateForItem(item).then(
+                repository.update(item)
+        )
     }
 
     Mono<Long> delete(Metadata item) {
-        invalidateForItem(item).then {
-            repository.delete(item)
-        }
+        invalidateForItem(item).then(
+                repository.delete(item)
+        )
     }
 
     /**
@@ -80,7 +80,7 @@ class CacheableMetadataRepository implements ItemRepository<Metadata> {
      */
     @Cacheable
     Mono<Metadata> cachedLookupById(String lookup, String domainType, UUID id) {
-        switch(lookup) {
+        switch (lookup) {
             case FIND_BY_ID -> repository.findById(id)
             case READ_BY_ID -> repository.readById(id)
         }
@@ -100,14 +100,14 @@ class CacheableMetadataRepository implements ItemRepository<Metadata> {
         invalidateCachedLookupById(FIND_BY_ID, item.multiFacetAwareItemDomainType, item.multiFacetAwareItemId)
 
         // invalidate findAll of the parent collection
-        getRepository(item.multiFacetAwareItemDomainType).readById(item.multiFacetAwareItemId).flatMap {AdministeredItem parent ->
+        getRepository(item.multiFacetAwareItemDomainType).readById(item.multiFacetAwareItemId).flatMap { AdministeredItem parent ->
             invalidateCachedLookupById(FIND_ALL_BY_PARENT, item.multiFacetAwareItemDomainType, parent.parent.id)
         }
     }
 
     @NonNull
     CacheableAdministeredItemRepository getRepository(String domainType) {
-        cacheableRepositories.find {it.domainType == domainType}
+        cacheableRepositories.find { it.domainType == domainType }
     }
 
     Class getDomainClass() {

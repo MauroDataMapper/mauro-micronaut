@@ -22,6 +22,7 @@ micronaut:
       login:
         enabled: true
         path: '/authentication/login'
+    reject-not-found: false
 
 #  caches:
 #    items-cache:
