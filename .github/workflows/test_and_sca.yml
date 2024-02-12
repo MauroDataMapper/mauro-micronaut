@@ -96,8 +96,8 @@ jobs:
         with:
           cache-read-only: false
 
-      - name: Run SCA
-        run: ./gradlew staticCodeAnalysis
+#      - name: Run SCA
+#        run: ./gradlew staticCodeAnalysis
 
       - name: MegaLinter
         uses: oxsecurity/megalinter/flavors/ci_light@v7

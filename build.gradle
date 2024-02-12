@@ -1,15 +1,9 @@
-import ox.softeng.gradle.Versions
+//import ox.softeng.gradle.Versions
 
 buildscript {
     repositories {
         mavenLocal()
         mavenCentral()
-        maven {url 'https://jenkins.cs.ox.ac.uk/artifactory/plugins-snapshot'}
-        maven {url 'https://jenkins.cs.ox.ac.uk/artifactory/plugins-release'}
-
-    }
-    dependencies {
-        classpath "uk.ac.ox.softeng.maurodatamapper.gradle:mdm-gradle-plugin:$mdmGradlePluginVersion"
     }
 }
 
@@ -21,11 +15,11 @@ plugins {
     id 'info.solidsoft.pitest' version '1.15.0' apply false
 }
 
-apply plugin: 'ox.softeng.ox-brc-base'
 apply plugin: 'info.solidsoft.pitest.aggregator'
 
-jacoco {
-    toolVersion = Versions.JACOCO_VERSION
+repositories {
+    mavenLocal()
+    mavenCentral()
 }
 
 reporting {
@@ -46,6 +40,10 @@ dependencies {
 
 tasks.named('pitestReportAggregate'){
     dependsOn subprojects.collect {it.tasks.named('pitest')}
+}
+
+task check {
+
 }
 
 tasks.named('check') {
@@ -74,43 +72,43 @@ subprojects {
             pitestVersion = '1.15.2'
         }
 
-        publishing {
-            publications {
-                mavenJar(MavenPublication) {
-                    pom {
-                        name = project.name
-                        url = 'https://github.com/MauroDataMapper/mauro-micronaut'
-                        licenses {
-                            license {
-                                name = 'The Apache License, Version 2.0'
-                                url = 'https://github.com/MauroDataMapper/mauro-micronaut/LICENSE.txt'
-                            }
-                        }
-                        developers {
-                            developer {
-                                id = 'jameswelch'
-                                name = 'James Welch'
-                                email = 'james.welch@bdi.ox.ac.uk'
-                            }
-                            developer {
-                                id = 'joe-crawford'
-                                name = 'Joe Crawford'
-                                email = 'joseph.crawford@bdi.ox.ac.uk'
-                            }
-                            developer {
-                                id = 'olliefreeman'
-                                name = 'Oliver Freeman'
-                                email = 'ollie.freeman@gmail.com'
-                            }
-                        }
-                        scm {
-                            connection = 'git@github.com:MauroDataMapper/mauro-micronaut.git'
-                            developerConnection = 'git@github.com:MauroDataMapper/mauro-micronaut.git'
-                            url = 'https://github.com/MauroDataMapper/mauro-micronaut'
-                        }
-                    }
-                }
-            }
-        }
+//        publishing {
+//            publications {
+//                mavenJar(MavenPublication) {
+//                    pom {
+//                        name = project.name
+//                        url = 'https://github.com/MauroDataMapper/mauro-micronaut'
+//                        licenses {
+//                            license {
+//                                name = 'The Apache License, Version 2.0'
+//                                url = 'https://github.com/MauroDataMapper/mauro-micronaut/LICENSE.txt'
+//                            }
+//                        }
+//                        developers {
+//                            developer {
+//                                id = 'jameswelch'
+//                                name = 'James Welch'
+//                                email = 'james.welch@bdi.ox.ac.uk'
+//                            }
+//                            developer {
+//                                id = 'joe-crawford'
+//                                name = 'Joe Crawford'
+//                                email = 'joseph.crawford@bdi.ox.ac.uk'
+//                            }
+//                            developer {
+//                                id = 'olliefreeman'
+//                                name = 'Oliver Freeman'
+//                                email = 'ollie.freeman@gmail.com'
+//                            }
+//                        }
+//                        scm {
+//                            connection = 'git@github.com:MauroDataMapper/mauro-micronaut.git'
+//                            developerConnection = 'git@github.com:MauroDataMapper/mauro-micronaut.git'
+//                            url = 'https://github.com/MauroDataMapper/mauro-micronaut'
+//                        }
+//                    }
+//                }
+//            }
+//        }
     }
 }

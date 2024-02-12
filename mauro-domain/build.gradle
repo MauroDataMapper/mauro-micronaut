@@ -2,22 +2,23 @@ buildscript {
     repositories {
         mavenLocal()
         mavenCentral()
-        maven {url 'https://jenkins.cs.ox.ac.uk/artifactory/plugins-snapshot'}
-        maven {url 'https://jenkins.cs.ox.ac.uk/artifactory/plugins-release'}
+//        maven {url 'https://jenkins.cs.ox.ac.uk/artifactory/plugins-snapshot'}
+//        maven {url 'https://jenkins.cs.ox.ac.uk/artifactory/plugins-release'}
 
     }
-    dependencies {
-        classpath "uk.ac.ox.softeng.maurodatamapper.gradle:mdm-gradle-plugin:$mdmGradlePluginVersion"
-    }
+//    dependencies {
+//        classpath "uk.ac.ox.softeng.maurodatamapper.gradle:mdm-gradle-plugin:$mdmGradlePluginVersion"
+//    }
 }
 
 plugins {
     id 'groovy'
+    id 'jacoco'
     id 'com.github.johnrengelman.shadow' version '8.1.1'
     id 'io.micronaut.library' version '4.3.1'
 }
 
-apply plugin: 'uk.ac.ox.softeng.maurodatamapper.gradle.mauro-gradle'
+//apply plugin: 'uk.ac.ox.softeng.maurodatamapper.gradle.mauro-gradle'
 apply plugin: 'info.solidsoft.pitest'
 
 apply from: 'dependencies.gradle'
