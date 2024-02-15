@@ -1,56 +1,52 @@
 package uk.ac.ox.softeng.mauro.persistence.terminology
 
+import groovy.transform.CompileStatic
+import groovy.util.logging.Slf4j
+import io.micronaut.core.annotation.Nullable
+import io.micronaut.data.annotation.Query
+import io.micronaut.data.jdbc.annotation.JdbcRepository
+import io.micronaut.data.model.query.builder.sql.Dialect
+import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.terminology.Term
 import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
 import uk.ac.ox.softeng.mauro.persistence.model.ModelItemRepository
 import uk.ac.ox.softeng.mauro.persistence.terminology.dto.TermDTORepository
 
-import groovy.transform.CompileStatic
-import groovy.util.logging.Slf4j
-import io.micronaut.core.annotation.Nullable
-import io.micronaut.data.annotation.Query
-import io.micronaut.data.model.query.builder.sql.Dialect
-import io.micronaut.data.r2dbc.annotation.R2dbcRepository
-import io.micronaut.data.repository.reactive.ReactorPageableRepository
-import jakarta.inject.Inject
-import reactor.core.publisher.Flux
-import reactor.core.publisher.Mono
-
 @Slf4j
 @CompileStatic
-@R2dbcRepository(dialect = Dialect.POSTGRES)
-abstract class TermRepository implements  ModelItemRepository<Term> {
+@JdbcRepository(dialect = Dialect.POSTGRES)
+abstract class TermRepository implements ModelItemRepository<Term> {
 
     @Inject
     TermDTORepository termDTORepository
 
     @Override
-    Mono<Term> findById(UUID id) {
+    Term findById(UUID id) {
         log.debug 'TermRepository::findById'
-        termDTORepository.findById(id) as Mono<Term>
+        termDTORepository.findById(id) as Term
     }
 
-    Flux<Term> findAllByTerminology(Terminology terminology) {
-        termDTORepository.findAllByTerminology(terminology) as Flux<Term>
+    List<Term> findAllByTerminology(Terminology terminology) {
+        termDTORepository.findAllByTerminology(terminology) as List<Term>
     }
 
     @Override
-    Flux<Term> findAllByParent(AdministeredItem parent) {
+    List<Term> findAllByParent(AdministeredItem parent) {
         findAllByTerminology((Terminology) parent)
     }
 
-    abstract Flux<Term> readAllByTerminology(Terminology terminology)
+    abstract List<Term> readAllByTerminology(Terminology terminology)
 
     @Override
-    Flux<Term> readAllByParent(AdministeredItem parent) {
+    List<Term> readAllByParent(AdministeredItem parent) {
         readAllByTerminology((Terminology) parent)
     }
 
-    abstract Mono<Long> deleteByTerminologyId(UUID terminologyId)
+    abstract Long deleteByTerminologyId(UUID terminologyId)
 
 //    @Override
-    Mono<Long> deleteByOwnerId(UUID ownerId) {
+    Long deleteByOwnerId(UUID ownerId) {
         deleteByTerminologyId(ownerId)
     }
 
@@ -61,7 +57,7 @@ abstract class TermRepository implements  ModelItemRepository<Term> {
               or (:id is null and not exists (select * from terminology.term_relationship tr join terminology.term_relationship_type trt on tr.relationship_type_id=trt.id 
               and ((tr.target_term_id=term.id and trt.parental_relationship) or (tr.source_term_id=term.id and trt.child_relationship)) and tr.terminology_id=:terminologyId
                and trt.terminology_id=:terminologyId)))''')
-    abstract Flux<Term> readChildTermsByParent(UUID terminologyId, @Nullable UUID id)
+    abstract List<Term> readChildTermsByParent(UUID terminologyId, @Nullable UUID id)
 
     @Override
     Class getDomainClass() {

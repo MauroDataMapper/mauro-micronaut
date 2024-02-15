@@ -12,7 +12,6 @@ import reactor.core.publisher.Mono
 import uk.ac.ox.softeng.mauro.domain.facet.Metadata
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.persistence.facet.MetadataRepository
-import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemRepository
 import uk.ac.ox.softeng.mauro.persistence.model.ItemRepository
 
 @Slf4j
@@ -36,20 +35,20 @@ class CacheableMetadataRepository implements ItemRepository<Metadata> {
         this.domainType = repository.domainClass.simpleName
     }
 
-    Mono<Metadata> findById(UUID id) {
+    Metadata findById(UUID id) {
         log.debug 'CacheableMetadataRepository::findById'
         cachedLookupById(FIND_BY_ID, domainType, id)
     }
 
-    Mono<Metadata> readById(UUID id) {
+    Metadata readById(UUID id) {
         log.debug 'CacheableMetadataRepository::readById'
         cachedLookupById(READ_BY_ID, domainType, id)
     }
 
-    Mono<Metadata> save(Metadata item) {
-        invalidateForItem(item).then(
-                repository.save(item)
-        )
+    Metadata save(Metadata item) {
+        Metadata saved = repository.save(item)
+        invalidateForItem(item)
+        saved
     }
 
     Flux<Metadata> saveAll(Iterable<Metadata> items) {
@@ -58,13 +57,13 @@ class CacheableMetadataRepository implements ItemRepository<Metadata> {
         )
     }
 
-    Mono<Metadata> update(Metadata item) {
+    Metadata update(Metadata item) {
         invalidateForItem(item).then(
                 repository.update(item)
         )
     }
 
-    Mono<Long> delete(Metadata item) {
+    Long delete(Metadata item) {
         invalidateForItem(item).then(
                 repository.delete(item)
         )

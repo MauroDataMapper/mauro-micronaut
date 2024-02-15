@@ -17,7 +17,7 @@ dependencies {
     compileOnly("io.micronaut.data:micronaut-data-processor")
     compileOnly("io.micronaut.validation:micronaut-validation-processor")
     implementation("io.micronaut:micronaut-jackson-databind")
-    implementation("io.micronaut.data:micronaut-data-r2dbc")
+    implementation("io.micronaut.data:micronaut-data-jdbc")
     implementation("io.micronaut.groovy:micronaut-runtime-groovy")
     runtimeOnly("ch.qos.logback:logback-classic")
     runtimeOnly("org.postgresql:r2dbc-postgresql")

@@ -1,19 +1,16 @@
 package uk.ac.ox.softeng.mauro.persistence.cache
 
-import uk.ac.ox.softeng.mauro.domain.facet.Metadata
-import uk.ac.ox.softeng.mauro.domain.model.Item
-import uk.ac.ox.softeng.mauro.domain.security.CatalogueUser
-import uk.ac.ox.softeng.mauro.persistence.facet.MetadataRepository
-import uk.ac.ox.softeng.mauro.persistence.model.ItemRepository
-
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.cache.annotation.CacheConfig
 import io.micronaut.cache.annotation.CacheInvalidate
 import io.micronaut.cache.annotation.Cacheable
 import io.micronaut.context.annotation.Bean
-import reactor.core.publisher.Flux
-import reactor.core.publisher.Mono
+import uk.ac.ox.softeng.mauro.domain.facet.Metadata
+import uk.ac.ox.softeng.mauro.domain.model.Item
+import uk.ac.ox.softeng.mauro.domain.security.CatalogueUser
+import uk.ac.ox.softeng.mauro.persistence.facet.MetadataRepository
+import uk.ac.ox.softeng.mauro.persistence.model.ItemRepository
 import uk.ac.ox.softeng.mauro.persistence.security.CatalogueUserRepository
 
 @Slf4j
@@ -32,32 +29,32 @@ class CacheableItemRepository<I extends Item> implements ItemRepository<I> {
         this.domainType = repository.domainClass.simpleName
     }
 
-    Mono<I> findById(UUID id) {
+    I findById(UUID id) {
         log.debug 'CacheableRepository::findById'
         cachedLookupById(FIND_BY_ID, domainType, id)
     }
 
-    Mono<I> readById(UUID id) {
+    I readById(UUID id) {
         log.debug 'CacheableRepository::readById'
         cachedLookupById(READ_BY_ID, domainType, id)
     }
 
-    Mono<I> save(I item) {
+    I save(I item) {
         invalidateOnSave(item)
         repository.save(item)
     }
 
-    Flux<I> saveAll(Iterable<I> items) {
+    List<I> saveAll(Iterable<I> items) {
         items.each {invalidateOnSave(it)}
         repository.saveAll(items)
     }
 
-    Mono<I> update(I item) {
+    I update(I item) {
         invalidateOnUpdate(item)
         repository.update(item)
     }
 
-    Mono<Long> delete(I item) {
+    Long delete(I item) {
         invalidateOnDelete(item)
         repository.delete(item)
     }
@@ -71,7 +68,7 @@ class CacheableItemRepository<I extends Item> implements ItemRepository<I> {
      * @return Mono of the object
      */
     @Cacheable
-    Mono<I> cachedLookupById(String lookup, String domainType, UUID id) {
+    I cachedLookupById(String lookup, String domainType, UUID id) {
         switch(lookup) {
             case FIND_BY_ID -> repository.findById(id)
             case READ_BY_ID -> repository.readById(id)

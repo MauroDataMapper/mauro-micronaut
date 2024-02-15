@@ -2,18 +2,17 @@ package uk.ac.ox.softeng.mauro.persistence.security
 
 import groovy.transform.CompileStatic
 import io.micronaut.data.annotation.Query
+import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.model.query.builder.sql.Dialect
-import io.micronaut.data.r2dbc.annotation.R2dbcRepository
-import reactor.core.publisher.Flux
 import uk.ac.ox.softeng.mauro.domain.security.UserGroup
 import uk.ac.ox.softeng.mauro.persistence.model.ItemRepository
 
 @CompileStatic
-@R2dbcRepository(dialect = Dialect.POSTGRES)
+@JdbcRepository(dialect = Dialect.POSTGRES)
 abstract class UserGroupRepository implements ItemRepository<UserGroup> {
 
     @Query('select * from security.user_group ug where exists (select * from security.user_group_catalogue_user ugcu where ug.id=ugcu.user_group_id and ugcu.catalogue_user_id = :catalogueUserId)')
-    abstract Flux<UserGroup> readAllByCatalogueUserId(UUID catalogueUserId)
+    abstract UserGroup readAllByCatalogueUserId(UUID catalogueUserId)
 
     @Override
     Class getDomainClass() {
