@@ -9,6 +9,7 @@ import io.micronaut.core.annotation.NonNull
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.r2dbc.annotation.R2dbcRepository
 import io.micronaut.data.repository.reactive.ReactorPageableRepository
+import jakarta.inject.Inject
 import jakarta.validation.Valid
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
@@ -16,6 +17,10 @@ import reactor.core.publisher.Mono
 @R2dbcRepository(dialect = Dialect.POSTGRES)
 
 abstract class DataClassRepository implements ReactorPageableRepository<DataClass, UUID>, ModelItemRepository<DataClass> {
+
+    @Inject
+    DataClassDTORepository dataClassDTORepository
+
     abstract Mono<DataClass> findByDataModelIdAndId(UUID dataModelId, UUID id)
 
     abstract Mono<DataClass> readByDataModelIdAndId(UUID dataModelId, UUID id)
