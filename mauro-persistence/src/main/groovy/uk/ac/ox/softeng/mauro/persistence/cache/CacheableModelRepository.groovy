@@ -1,18 +1,15 @@
 package uk.ac.ox.softeng.mauro.persistence.cache
 
-import uk.ac.ox.softeng.mauro.domain.folder.Folder
-import uk.ac.ox.softeng.mauro.domain.model.Model
-import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
-import uk.ac.ox.softeng.mauro.persistence.folder.FolderRepository
-import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemRepository
-import uk.ac.ox.softeng.mauro.persistence.model.ModelRepository
-import uk.ac.ox.softeng.mauro.persistence.terminology.TerminologyRepository
-
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.cache.annotation.CacheConfig
 import io.micronaut.context.annotation.Bean
-import reactor.core.publisher.Flux
+import uk.ac.ox.softeng.mauro.domain.folder.Folder
+import uk.ac.ox.softeng.mauro.domain.model.Model
+import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
+import uk.ac.ox.softeng.mauro.persistence.folder.FolderRepository
+import uk.ac.ox.softeng.mauro.persistence.model.ModelRepository
+import uk.ac.ox.softeng.mauro.persistence.terminology.TerminologyRepository
 
 @Slf4j
 @CompileStatic
@@ -27,13 +24,13 @@ class CacheableModelRepository<M extends Model> extends CacheableAdministeredIte
     }
 
     @Override
-    Flux<M> readAllByFolder(Folder folder) {
+    List<M> readAllByFolder(Folder folder) {
         super.readAllByParent(folder)
     }
 
     // not cached
     @Override
-    Flux<M> readAll() {
+    List<M> readAll() {
         repository.readAll()
     }
 

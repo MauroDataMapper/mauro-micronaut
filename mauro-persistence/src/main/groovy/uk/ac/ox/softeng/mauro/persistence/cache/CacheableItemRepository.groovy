@@ -16,10 +16,10 @@ import uk.ac.ox.softeng.mauro.persistence.security.CatalogueUserRepository
 @Slf4j
 @CompileStatic
 @CacheConfig(cacheNames = 'items-cache', keyGenerator = StringCacheKeyGenerator)
-class CacheableItemRepository<I extends Item> implements ItemRepository<I> {
+abstract class CacheableItemRepository<I extends Item> implements ItemRepository<I> {
 
-    private static final String FIND_BY_ID = 'find'
-    private static final String READ_BY_ID = 'read'
+    static final String FIND_BY_ID = 'find'
+    static final String READ_BY_ID = 'read'
 
     ItemRepository<I> repository
     String domainType
@@ -40,23 +40,27 @@ class CacheableItemRepository<I extends Item> implements ItemRepository<I> {
     }
 
     I save(I item) {
-        invalidateOnSave(item)
-        repository.save(item)
+        I saved = repository.save(item)
+        invalidate(item)
+        saved
     }
 
     List<I> saveAll(Iterable<I> items) {
-        items.each {invalidateOnSave(it)}
-        repository.saveAll(items)
+        List<I> saved = repository.saveAll(items)
+        items.each {invalidate(it)}
+        saved
     }
 
     I update(I item) {
-        invalidateOnUpdate(item)
-        repository.update(item)
+        I updated = repository.update(item)
+        invalidate(item)
+        updated
     }
 
     Long delete(I item) {
-        invalidateOnDelete(item)
-        repository.delete(item)
+        Long deleted = repository.delete(item)
+        invalidate(item)
+        deleted
     }
 
     /**
@@ -75,17 +79,7 @@ class CacheableItemRepository<I extends Item> implements ItemRepository<I> {
         }
     }
 
-    void invalidateOnSave(Item item) {
-        invalidateCachedLookupById(FIND_BY_ID, domainType, item.id)
-        invalidateCachedLookupById(READ_BY_ID, domainType, item.id)
-    }
-
-    void invalidateOnUpdate(Item item) {
-        invalidateCachedLookupById(FIND_BY_ID, domainType, item.id)
-        invalidateCachedLookupById(READ_BY_ID, domainType, item.id)
-    }
-
-    void invalidateOnDelete(Item item) {
+    void invalidate(I item) {
         invalidateCachedLookupById(FIND_BY_ID, domainType, item.id)
         invalidateCachedLookupById(READ_BY_ID, domainType, item.id)
     }

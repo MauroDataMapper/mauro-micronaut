@@ -1,7 +1,6 @@
 package uk.ac.ox.softeng.mauro.domain.model
 
 import com.fasterxml.jackson.annotation.JsonValue
-import com.fasterxml.jackson.databind.util.StdConverter
 import groovy.transform.CompileStatic
 import io.micronaut.context.annotation.Prototype
 import io.micronaut.core.annotation.Introspected
@@ -14,6 +13,8 @@ import java.util.regex.Pattern
 @Introspected
 @CompileStatic
 class Path {
+
+    final static int PATH_MAX_NODES = 256
 
     @JsonValue
     String pathString

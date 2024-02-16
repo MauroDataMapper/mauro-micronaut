@@ -1,34 +1,19 @@
 package uk.ac.ox.softeng.mauro.domain.model
 
+import com.fasterxml.jackson.annotation.JsonIgnore
+import groovy.transform.AutoClone
+import groovy.transform.CompileStatic
+import io.micronaut.core.annotation.Nullable
+import io.micronaut.data.annotation.Relation
+import jakarta.persistence.Transient
+import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.Pattern
 import uk.ac.ox.softeng.mauro.domain.facet.Metadata
 import uk.ac.ox.softeng.mauro.domain.security.SecurableResource
 import uk.ac.ox.softeng.mauro.exception.MauroInternalException
 
-import com.fasterxml.jackson.annotation.JsonAlias
-import com.fasterxml.jackson.annotation.JsonFormat
-import com.fasterxml.jackson.annotation.JsonIgnore
-import com.fasterxml.jackson.annotation.JsonProperty
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize
-import groovy.transform.AutoClone
-import groovy.transform.CompileStatic
-import groovy.transform.Sortable
-import io.micronaut.core.annotation.Introspected
-import io.micronaut.core.annotation.Nullable
-import io.micronaut.data.annotation.DateCreated
-import io.micronaut.data.annotation.DateUpdated
-import io.micronaut.data.annotation.GeneratedValue
-import io.micronaut.data.annotation.Id
-import io.micronaut.data.annotation.Relation
-import io.micronaut.data.annotation.TypeDef
-import io.micronaut.data.annotation.Version
-import io.micronaut.data.annotation.sql.ColumnTransformer
-import io.micronaut.data.model.DataType
-import jakarta.persistence.Column
-import jakarta.persistence.Transient
-import jakarta.validation.constraints.NotBlank
-import jakarta.validation.constraints.Pattern
-
 import java.time.Instant
+
 /**
  * An AdministeredItem is an item stored in the catalogue.
  * <p>
@@ -143,14 +128,13 @@ abstract class AdministeredItem extends Item {
      */
     Path updatePath() {
         if (!pathPrefix) throw new MauroInternalException("Class [${this.class.simpleName}] is not Pathable")
-        final int pathLimit = 256
         List<Path.PathNode> pathNodes = []
         int i = 0
         AdministeredItem node = this
-        while (node && i < pathLimit) {
+        while (node) {
             pathNodes.add(0, new Path.PathNode(prefix: node.pathPrefix, identifier: node.pathIdentifier, modelIdentifier: node.pathModelIdentifier))
             i++; node = node.parent
-            if (i >= pathLimit) throw new MauroInternalException("Path exceeded maximum depth of [$pathLimit]")
+            if (i > Path.PATH_MAX_NODES) throw new MauroInternalException("Path exceeded maximum depth of [$Path.PATH_MAX_NODES]")
         }
 
         path = new Path()
