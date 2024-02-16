@@ -6,10 +6,8 @@ import io.micronaut.cache.annotation.CacheConfig
 import io.micronaut.cache.annotation.CacheInvalidate
 import io.micronaut.cache.annotation.Cacheable
 import io.micronaut.context.annotation.Bean
-import uk.ac.ox.softeng.mauro.domain.facet.Metadata
 import uk.ac.ox.softeng.mauro.domain.model.Item
 import uk.ac.ox.softeng.mauro.domain.security.CatalogueUser
-import uk.ac.ox.softeng.mauro.persistence.facet.MetadataRepository
 import uk.ac.ox.softeng.mauro.persistence.model.ItemRepository
 import uk.ac.ox.softeng.mauro.persistence.security.CatalogueUserRepository
 
@@ -94,14 +92,6 @@ abstract class CacheableItemRepository<I extends Item> implements ItemRepository
     }
 
     // Cacheable Item Repository definitions
-
-    @Bean
-    @CompileStatic
-    static class CacheableMetadataRepository extends CacheableItemRepository<Metadata> {
-        CacheableMetadataRepository(MetadataRepository metadataRepository) {
-            super(metadataRepository)
-        }
-    }
 
     @Bean
     @CompileStatic

@@ -4,6 +4,7 @@ import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.cache.annotation.CacheConfig
 import io.micronaut.cache.annotation.CacheInvalidate
+import io.micronaut.context.annotation.Bean
 import io.micronaut.core.annotation.NonNull
 import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.domain.facet.Metadata
@@ -13,6 +14,7 @@ import uk.ac.ox.softeng.mauro.persistence.facet.MetadataRepository
 @Slf4j
 @CompileStatic
 @CacheConfig(cacheNames = 'items-cache', keyGenerator = StringCacheKeyGenerator)
+@Bean
 class CacheableMetadataRepository extends CacheableItemRepository<Metadata> {
 
     static final String FIND_ALL_BY_PARENT = 'findAll'

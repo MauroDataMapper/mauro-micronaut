@@ -60,28 +60,13 @@ class ModelContentRepository<M extends Model> extends AdministeredItemContentRep
 //        }
 //    }
 
-//    Mono<M> saveWithAssociations_old(@NonNull Terminology terminology) {
-//        List<List<? extends ModelItem<Terminology>>> associations = terminology.getAllAssociations()
-//        getRepository(terminology).save(terminology).flatMap {AdministeredItem savedModel ->
-//            Flux.fromIterable(associations).concatMap {association ->
-//                if (association) {
-//                    getRepository(association.first()).saveAll(association as Iterable<AdministeredItem>).flatMap {
-//                        saveAllFacets(it as AdministeredItem)
-//                    }
-//                } else {
-//                    Flux.empty()
-//                }
-//            }.then(Mono.just(savedModel))
-//        }
-//    }
-
     M saveWithAssociations(@NonNull Terminology terminology) {
         List<List<? extends ModelItem<Terminology>>> associations = terminology.getAllAssociations()
 
         M saved = (M) getRepository(terminology).save(terminology)
         associations.each {association ->
             if (association) {
-                List<? extends ModelItem<Terminology>> savedAssociation = getRepository(association.first()).saveAll(association)
+                List<AdministeredItem> savedAssociation = getRepository(association.first()).saveAll((List<AdministeredItem>) association)
                 savedAssociation.each {item ->
                     saveAllFacets((AdministeredItem) item)
                 }
@@ -102,15 +87,6 @@ class ModelContentRepository<M extends Model> extends AdministeredItemContentRep
         }
     }
 
-//    @Transactional
-//    Mono<Long> deleteWithContent_old(@NonNull M model) {
-//        Collection<AdministeredItem> contents = model.getAllContents()
-//        contents.each {
-//            if (it.owner != model) throw new MauroInternalException('Content must belong to model being deleted')
-//        }
-//        Mono.zip(delete(model), Mono.zip(contents.collect {getRepository(it).delete(it)}, {Optional.empty()}).defaultIfEmpty(Optional.empty())).map {it.getT1()}
-//    }
-
     Long deleteWithContent(@NonNull M model) {
         Collection<AdministeredItem> contents = model.getAllContents()
         contents.each {
@@ -120,11 +96,6 @@ class ModelContentRepository<M extends Model> extends AdministeredItemContentRep
         getRepository(model).delete(model)
     }
 
-//    @NonNull
-//    AdministeredItemRepository getRepository(AdministeredItem item) {
-//        administeredItemRepositories.find {it.handles(item.class)}
-//    }
-
     @NonNull
     CacheableAdministeredItemRepository getRepository(AdministeredItem item) {
         cacheableRepositories.find {it.handles(item.class)}
@@ -132,7 +103,7 @@ class ModelContentRepository<M extends Model> extends AdministeredItemContentRep
 
     M update(M model) {
         log.debug "ModelContentRepository::update $model.label $model.id"
-        getRepository(model).update(model)
+        (M) getRepository(model).update(model)
     }
 
     Long delete(M model) {

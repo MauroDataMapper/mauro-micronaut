@@ -19,17 +19,6 @@ class PathRepository {
     @Inject
     List<CacheableAdministeredItemRepository> cacheableRepositories
 
-//    Mono<List<AdministeredItem>> readParentItems_old(AdministeredItem item) {
-//        Mono.just(item).expand {AdministeredItem it ->
-//            if (it.parent) getRepository(it.parent).readById(it.parent.id)
-//            else Mono.empty()
-//        }.collectList().map {List<AdministeredItem> parents ->
-//            parents.eachWithIndex {AdministeredItem it, Integer i ->
-//                if (parents[i+1]) it.parent = parents[i+1]
-//            }
-//        }
-//    }
-
     List<AdministeredItem> readParentItems(AdministeredItem item) {
         List<AdministeredItem> items = []
         int i = 0
@@ -45,11 +34,6 @@ class PathRepository {
             if (items[j+1]) it.parent = items[j+1]
         }
     }
-
-//    @NonNull
-//    AdministeredItemRepository getRepository(AdministeredItem item) {
-//        administeredItemRepositories.find {it.handles(item.class)}
-//    }
 
     @NonNull
     AdministeredItemRepository getRepository(AdministeredItem item) {

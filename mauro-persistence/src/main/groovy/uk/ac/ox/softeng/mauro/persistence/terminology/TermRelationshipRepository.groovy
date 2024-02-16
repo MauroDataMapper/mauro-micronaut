@@ -1,6 +1,7 @@
 package uk.ac.ox.softeng.mauro.persistence.terminology
 
 import groovy.transform.CompileStatic
+import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.model.query.builder.sql.Dialect
 import jakarta.inject.Inject
@@ -18,26 +19,32 @@ abstract class TermRelationshipRepository implements ModelItemRepository<TermRel
     TermRelationshipDTORepository termRelationshipDTORepository
 
     @Override
+    @Nullable
     TermRelationship findById(UUID id) {
         termRelationshipDTORepository.findById(id) as TermRelationship
     }
 
+    @Nullable
     List<TermRelationship> findAllByTerminology(Terminology terminology) {
         termRelationshipDTORepository.findAllByTerminology(terminology) as List<TermRelationship>
     }
 
     @Override
+    @Nullable
     List<TermRelationship> findAllByParent(AdministeredItem parent) {
         findAllByTerminology((Terminology) parent)
     }
 
+    @Nullable
     abstract List<TermRelationship> readAllByTerminology(Terminology terminology)
 
     @Override
+    @Nullable
     List<TermRelationship> readAllByParent(AdministeredItem parent) {
         readAllByTerminology((Terminology) parent)
     }
 
+    @Nullable
     abstract Long deleteByTerminologyId(UUID terminologyId)
 
 //    @Override

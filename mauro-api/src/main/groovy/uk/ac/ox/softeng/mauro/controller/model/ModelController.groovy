@@ -20,7 +20,6 @@ import uk.ac.ox.softeng.mauro.persistence.cache.CacheableModelRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.CacheableModelRepository.CacheableFolderRepository
 import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemRepository
 import uk.ac.ox.softeng.mauro.persistence.model.ModelContentRepository
-import uk.ac.ox.softeng.mauro.security.AccessControlService
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @Slf4j
@@ -43,8 +42,8 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     @Inject
     List<CacheableAdministeredItemRepository> administeredItemRepositories
 
-    @Inject
-    AccessControlService accessControlService
+//    @Inject
+//    AccessControlService accessControlService
 
     ModelContentRepository<M> modelContentRepository
 
@@ -59,60 +58,18 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         this.administeredItemContentRepository = modelContentRepository
     }
 
-//    Mono<M> show(UUID id) {
-//        modelRepository.findById(id).flatMap { M model ->
-//            accessControlService.canRead(model).then(
-//                pathRepository.readParentItems(model).map {
-//                    model.updatePath()
-//                    model
-//                }
-//            )
-//        } as Mono<M>
-//    }
-
     M show(UUID id) {
         M model = modelRepository.findById(id)
+        if (!model) return null
         pathRepository.readParentItems(model)
         model.updatePath()
         model
     }
 
-//    Mono<M> update(UUID id, @Body @NonNull M model) {
-//        update(null, id, model)
-//    }
-
     @Transactional
     M update(UUID id, @Body @NonNull M model) {
         super.update(id, model)
     }
-
-//    @Transactional
-//    Mono<M> moveFolder_old(UUID id, String destination) {
-//        modelRepository.readById(id).flatMap {M existing ->
-//            AdministeredItem original = existing.clone()
-//            if (destination == 'root') {
-//                existing.folder = null
-//                pathRepository.readParentItems(existing).flatMap {
-//                    existing.updatePath()
-//                    modelRepository.update(original, existing)
-//                }
-//            } else {
-//                UUID destinationId
-//                try {
-//                    destinationId = UUID.fromString(destination)
-//                } catch (IllegalArgumentException _) {
-//                    throw new HttpStatusException(HttpStatus.BAD_REQUEST, 'Destination not "root" or a valid UUID')
-//                }
-//                folderRepository.readById(destinationId).flatMap {Folder folder ->
-//                    existing.folder = folder
-//                    pathRepository.readParentItems(existing).flatMap {
-//                        existing.updatePath()
-//                        modelRepository.update(original, existing)
-//                    }
-//                }
-//            }
-//        }
-//    }
 
     @Transactional
     M moveFolder(UUID id, String destination) {
@@ -124,7 +81,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
             UUID destinationId
             try {
                 destinationId = UUID.fromString(destination)
-            } catch (IllegalArgumentException _) {
+            } catch (IllegalArgumentException ignored) {
                 throw new HttpStatusException(HttpStatus.BAD_REQUEST, 'Destination not "root" or a valid UUID')
             }
             Folder folder = folderRepository.readById(destinationId)
@@ -135,22 +92,9 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         modelRepository.update(original, existing)
     }
 
-//    Mono<HttpStatus> delete(UUID id, @Body @Nullable M model) {
-//        delete(null, id, model)
-//    }
-
     HttpStatus delete(UUID id, @Body @Nullable M model) {
         super.delete(id, model)
     }
-
-//    Mono<ListResponse<M>> listAll() {
-//        modelRepository.readAll().flatMap {M model ->
-//            Mono.zip(Mono.just(model), pathRepository.readParentItems(model), (BiFunction<M, List<AdministeredItem>, M>) {it, _ -> it})
-//        }.collectList().map {List<M> models ->
-//            models.each {((Model) it).updatePath()}
-//            ListResponse.from(models)
-//        }
-//    }
 
     ListResponse<M> listAll() {
         List<M> models = modelRepository.readAll()
@@ -161,36 +105,12 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         ListResponse.from(models)
     }
 
-//    @Transactional
-//    Mono<M> finalise(UUID id, @Body FinaliseData finaliseData) {
-//        modelRepository.findById(id).flatMap {M model ->
-//            M finalised = modelService.finaliseModel(model, finaliseData.version, finaliseData.versionChangeType, finaliseData.versionTag)
-//            modelRepository.update(finalised)
-//        }
-//    }
-
     @Transactional
     M finalise(UUID id, @Body FinaliseData finaliseData) {
         M model = modelRepository.findById(id)
         M finalised = modelService.finaliseModel(model, finaliseData.version, finaliseData.versionChangeType, finaliseData.versionTag)
         modelRepository.update(finalised)
     }
-
-//    @Transactional
-//    Mono<M> createNewBranchModelVersion_old(UUID id, @Body @Nullable CreateNewVersionData createNewVersionData) {
-//        if (!createNewVersionData) createNewVersionData = new CreateNewVersionData()
-//        modelRepository.findById(id).flatMap {M existing ->
-//            M copy = modelService.createNewBranchModelVersion(existing, createNewVersionData.branchName)
-//
-//            createEntity(copy.folder, copy).flatMap {M savedCopy ->
-//                Flux.fromIterable(savedCopy.getAllContents()).concatMap {AdministeredItem item ->
-//                    log.debug "*** Saving item [$item.id : $item.label] ***"
-//                    updateCreationProperties(item)
-//                    getRepository(item).save(item)
-//                }.then(Mono.just(savedCopy))
-//            }
-//        }
-//    }
 
     @Transactional
     M createNewBranchModelVersion(UUID id, @Body @Nullable CreateNewVersionData createNewVersionData) {

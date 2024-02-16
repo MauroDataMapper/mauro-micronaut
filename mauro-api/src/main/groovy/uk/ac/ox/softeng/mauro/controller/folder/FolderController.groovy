@@ -6,8 +6,6 @@ import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.*
-import io.micronaut.security.annotation.Secured
-import io.micronaut.security.rules.SecurityRule
 import io.micronaut.transaction.annotation.Transactional
 import uk.ac.ox.softeng.mauro.controller.model.ModelController
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
@@ -18,7 +16,7 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 @Slf4j
 @CompileStatic
 @Controller('/folders')
-@Secured(SecurityRule.IS_AUTHENTICATED)
+//@Secured(SecurityRule.IS_ANONYMOUS)
 class FolderController extends ModelController<Folder> {
 
     FolderController(CacheableFolderRepository folderRepository, ModelContentRepository<Folder> folderContentRepository) {
@@ -34,17 +32,6 @@ class FolderController extends ModelController<Folder> {
     Folder show(UUID parentId, UUID id) {
         super.show(id)
     }
-
-//    @Post
-//    Mono<Folder> create(@Body Folder folder) {
-//        cleanBody(folder)
-//
-//        folder.createdBy = 'USER@example.org'
-//        pathRepository.readParentItems(folder).flatMap {
-//            folder.updatePath()
-//            folderRepository.save(folder)
-//        }
-//    }
 
     @Post
     Folder create(@Body Folder folder) {

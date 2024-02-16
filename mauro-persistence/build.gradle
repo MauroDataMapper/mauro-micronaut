@@ -20,8 +20,6 @@ dependencies {
     implementation("io.micronaut.data:micronaut-data-jdbc")
     implementation("io.micronaut.groovy:micronaut-runtime-groovy")
     runtimeOnly("ch.qos.logback:logback-classic")
-    runtimeOnly("org.postgresql:r2dbc-postgresql")
-    implementation("io.r2dbc:r2dbc-pool")
 //    testResourcesService("org.postgresql:postgresql")
     implementation("io.micronaut.validation:micronaut-validation")
     implementation("io.micronaut.cache:micronaut-cache-core")

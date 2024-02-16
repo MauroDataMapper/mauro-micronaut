@@ -22,23 +22,28 @@ abstract class TermRepository implements ModelItemRepository<Term> {
     TermDTORepository termDTORepository
 
     @Override
+    @Nullable
     Term findById(UUID id) {
         log.debug 'TermRepository::findById'
         termDTORepository.findById(id) as Term
     }
 
+    @Nullable
     List<Term> findAllByTerminology(Terminology terminology) {
         termDTORepository.findAllByTerminology(terminology) as List<Term>
     }
 
     @Override
+    @Nullable
     List<Term> findAllByParent(AdministeredItem parent) {
         findAllByTerminology((Terminology) parent)
     }
 
+    @Nullable
     abstract List<Term> readAllByTerminology(Terminology terminology)
 
     @Override
+    @Nullable
     List<Term> readAllByParent(AdministeredItem parent) {
         readAllByTerminology((Terminology) parent)
     }
@@ -57,6 +62,7 @@ abstract class TermRepository implements ModelItemRepository<Term> {
               or (:id is null and not exists (select * from terminology.term_relationship tr join terminology.term_relationship_type trt on tr.relationship_type_id=trt.id 
               and ((tr.target_term_id=term.id and trt.parental_relationship) or (tr.source_term_id=term.id and trt.child_relationship)) and tr.terminology_id=:terminologyId
                and trt.terminology_id=:terminologyId)))''')
+    @Nullable
     abstract List<Term> readChildTermsByParent(UUID terminologyId, @Nullable UUID id)
 
     @Override

@@ -2,6 +2,7 @@ package uk.ac.ox.softeng.mauro.persistence.model
 
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
+import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.repository.GenericRepository
 import jakarta.validation.Valid
 import uk.ac.ox.softeng.mauro.domain.model.Item
@@ -10,8 +11,10 @@ import uk.ac.ox.softeng.mauro.domain.model.Item
 trait ItemRepository<I extends Item> implements GenericRepository<I, UUID> {
 
     // Should be implemented by override with facet joins, possibly using a DTO
+    @Nullable
     abstract I findById(UUID id)
 
+    @Nullable
     abstract I readById(UUID id)
 
     abstract I save(@Valid @NonNull I item)

@@ -50,30 +50,12 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
         this.administeredItemContentRepository = administeredItemContentRepository
     }
 
-//    Mono<I> show(UUID parentId, UUID id) {
-//        administeredItemRepository.findById(id).flatMap {I item ->
-//            pathRepository.readParentItems(item).map {
-//                item.updatePath()
-//                item
-//            }
-//        }
-//    }
-
     I show(UUID id) {
         I item = administeredItemRepository.findById(id)
         pathRepository.readParentItems(item)
         item.updatePath()
         item
     }
-
-//    @Transactional
-//    Mono<I> create(UUID parentId, @Body @NonNull I item) {
-//        cleanBody(item)
-//
-//        parentItemRepository.readById(parentId).flatMap {P parent ->
-//            createEntity(parent, item)
-//        }
-//    }
 
     @Transactional
     I create(UUID parentId, @Body @NonNull I item) {
@@ -92,15 +74,6 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
         item
     }
 
-//    protected Mono<I> createEntity(P parent, @Body @NonNull I cleanItem) {
-//        cleanItem.parent = parent
-//        updateCreationProperties(cleanItem)
-//        pathRepository.readParentItems(cleanItem).flatMap {
-//            cleanItem.updatePath()
-//            administeredItemRepository.save(cleanItem)
-//        }
-//    }
-
     protected I createEntity(@NonNull P parent, @Body @NonNull I cleanItem) {
         cleanItem.parent = parent
         updateCreationProperties(cleanItem)
@@ -108,14 +81,6 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
         cleanItem.updatePath()
         administeredItemRepository.save(cleanItem)
     }
-
-//    Mono<I> update(UUID parentId, UUID id, @Body @NonNull I item) {
-//        cleanBody(item)
-//
-//        administeredItemRepository.readById(id).flatMap {I existing ->
-//            updateEntity(existing, item)
-//        }
-//    }
 
     I update(UUID id, @Body @NonNull I item) {
         cleanBody(item)
@@ -137,22 +102,6 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
         return hasChanged
     }
 
-//    protected Mono<I> updateEntity(I existing, @Body @NonNull I cleanItem) {
-//        boolean hasChanged = updateProperties(existing, cleanItem)
-//
-//        if (hasChanged) {
-//            pathRepository.readParentItems(existing).flatMap {
-//                existing.updatePath()
-//                administeredItemRepository.update(existing)
-//            }
-//        } else {
-//            pathRepository.readParentItems(existing).map {
-//                existing.updatePath()
-//                existing
-//            }
-//        }
-//    }
-
     protected I updateEntity(I existing, @NonNull I cleanItem) {
         boolean hasChanged = updateProperties(existing, cleanItem)
         pathRepository.readParentItems(existing)
@@ -164,20 +113,6 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
             existing
         }
     }
-
-//    @Transactional
-//    Mono<HttpStatus> delete(UUID parentId, UUID id, @Body @Nullable I item) {
-//        I itemToDelete = itemClass.getDeclaredConstructor().newInstance()
-//        itemToDelete.id = id
-//        itemToDelete.version = item?.version
-//        administeredItemContentRepository.deleteWithContent(itemToDelete).map {Long deleted ->
-//            if (deleted) {
-//                HttpStatus.NO_CONTENT
-//            } else {
-//                throw new HttpStatusException(HttpStatus.NOT_FOUND, 'Not found for deletion')
-//            }
-//        }
-//    }
 
     @Transactional
     HttpStatus delete(UUID id, @Body @Nullable I item) {
@@ -192,19 +127,9 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
         }
     }
 
-//    Mono<ListResponse<I>> list_old(UUID parentId) {
-//        parentItemRepository.readById(parentId).flatMap {P parent ->
-//            administeredItemRepository.readAllByParent(parent).flatMap {I item ->
-//                Mono.zip(Mono.just(item), pathRepository.readParentItems(item), (BiFunction<I, List<AdministeredItem>, I>) {it, _ -> it})
-//            }.collectList().map {List<I> items ->
-//                items.each {((AdministeredItem) it).updatePath()}
-//                ListResponse.from(items)
-//            }
-//        }
-//    }
-
     ListResponse<I> list(UUID parentId) {
         P parent = parentItemRepository.readById(parentId)
+        if (!parent) return null
         List<I> items = administeredItemRepository.readAllByParent(parent)
         items.each {
             pathRepository.readParentItems(it)
