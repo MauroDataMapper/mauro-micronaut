@@ -103,6 +103,5 @@ class Path {
             path.pathString = value
             path
         }
-
     }
 }

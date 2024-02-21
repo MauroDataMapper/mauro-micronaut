@@ -60,7 +60,24 @@ class DataModel extends Model {
         cloned
     }
 
-    /****
+    @Transient
+    @JsonIgnore
+    DataModel setAssociations() {
+        dataTypes.each {dataType ->
+            dataType.parent = this
+            dataType.enumerationValues.each {enumerationValue ->
+                enumerationValue.parent = dataType
+            }
+        }
+        dataClasses.each {
+            it.parent = this
+        }
+
+        this
+    }
+
+
+        /****
      * Methods for building a tree-like DSL
      */
 
