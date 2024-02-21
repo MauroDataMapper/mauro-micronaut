@@ -9,7 +9,7 @@ import io.micronaut.http.exceptions.HttpStatusException
 import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
-import uk.ac.ox.softeng.mauro.persistence.cache.CacheableAdministeredItemRepository
+import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemContentRepository
 import uk.ac.ox.softeng.mauro.persistence.model.PathRepository
 import uk.ac.ox.softeng.mauro.web.ListResponse
@@ -34,16 +34,16 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
 
     Class<I> itemClass
 
-    CacheableAdministeredItemRepository<I> administeredItemRepository
+    AdministeredItemCacheableRepository<I> administeredItemRepository
 
-    CacheableAdministeredItemRepository<P> parentItemRepository
+    AdministeredItemCacheableRepository<P> parentItemRepository
 
     AdministeredItemContentRepository<I> administeredItemContentRepository
 
     @Inject
     PathRepository pathRepository
 
-    AdministeredItemController(Class<I> itemClass, CacheableAdministeredItemRepository<I> administeredItemRepository, CacheableAdministeredItemRepository<P> parentItemRepository, AdministeredItemContentRepository<I> administeredItemContentRepository) {
+    AdministeredItemController(Class<I> itemClass, AdministeredItemCacheableRepository<I> administeredItemRepository, AdministeredItemCacheableRepository<P> parentItemRepository, AdministeredItemContentRepository<I> administeredItemContentRepository) {
         this.itemClass = itemClass
         this.administeredItemRepository = administeredItemRepository
         this.parentItemRepository = parentItemRepository

@@ -15,9 +15,9 @@ import uk.ac.ox.softeng.mauro.domain.model.Model
 import uk.ac.ox.softeng.mauro.domain.model.ModelService
 import uk.ac.ox.softeng.mauro.domain.model.version.CreateNewVersionData
 import uk.ac.ox.softeng.mauro.domain.model.version.FinaliseData
-import uk.ac.ox.softeng.mauro.persistence.cache.CacheableAdministeredItemRepository
-import uk.ac.ox.softeng.mauro.persistence.cache.CacheableModelRepository
-import uk.ac.ox.softeng.mauro.persistence.cache.CacheableModelRepository.CacheableFolderRepository
+import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository
+import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository
+import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemRepository
 import uk.ac.ox.softeng.mauro.persistence.model.ModelContentRepository
 import uk.ac.ox.softeng.mauro.web.ListResponse
@@ -40,7 +40,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     }
 
     @Inject
-    List<CacheableAdministeredItemRepository> administeredItemRepositories
+    List<AdministeredItemCacheableRepository> administeredItemRepositories
 
 //    @Inject
 //    AccessControlService accessControlService
@@ -49,7 +49,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
 
     ModelService<M> modelService
 
-    ModelController(Class<M> modelClass, CacheableAdministeredItemRepository<M> modelRepository, CacheableFolderRepository folderRepository, ModelContentRepository<M> modelContentRepository) {
+    ModelController(Class<M> modelClass, AdministeredItemCacheableRepository<M> modelRepository, FolderCacheableRepository folderRepository, ModelContentRepository<M> modelContentRepository) {
         super(modelClass, modelRepository, folderRepository, modelContentRepository)
         this.itemClass = modelClass
         this.administeredItemRepository = modelRepository
@@ -127,12 +127,12 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         savedCopy
     }
 
-    protected CacheableModelRepository<M> getModelRepository() {
-        (CacheableModelRepository<M>) administeredItemRepository
+    protected ModelCacheableRepository<M> getModelRepository() {
+        (ModelCacheableRepository<M>) administeredItemRepository
     }
 
-    protected CacheableFolderRepository getFolderRepository() {
-        (CacheableFolderRepository) parentItemRepository
+    protected FolderCacheableRepository getFolderRepository() {
+        (FolderCacheableRepository) parentItemRepository
     }
 
     @NonNull

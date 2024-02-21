@@ -14,11 +14,11 @@ import uk.ac.ox.softeng.mauro.persistence.terminology.TerminologyRepository
 @Slf4j
 @CompileStatic
 @CacheConfig(cacheNames = 'items-cache', keyGenerator = StringCacheKeyGenerator)
-class CacheableModelRepository<M extends Model> extends CacheableAdministeredItemRepository<M> implements ModelRepository<M> {
+class ModelCacheableRepository<M extends Model> extends AdministeredItemCacheableRepository<M> implements ModelRepository<M> {
 
     ModelRepository<M> repository
 
-    CacheableModelRepository(ModelRepository<M> itemRepository) {
+    ModelCacheableRepository(ModelRepository<M> itemRepository) {
         super(itemRepository)
         repository = itemRepository
     }
@@ -38,16 +38,16 @@ class CacheableModelRepository<M extends Model> extends CacheableAdministeredIte
 
     @Bean
     @CompileStatic
-    static class CacheableTerminologyRepository extends CacheableModelRepository<Terminology> {
-        CacheableTerminologyRepository(TerminologyRepository terminologyRepository) {
+    static class TerminologyCacheableRepository extends ModelCacheableRepository<Terminology> {
+        TerminologyCacheableRepository(TerminologyRepository terminologyRepository) {
             super(terminologyRepository)
         }
     }
 
     @Bean
     @CompileStatic
-    static class CacheableFolderRepository extends CacheableModelRepository<Folder> {
-        CacheableFolderRepository(FolderRepository folderRepository) {
+    static class FolderCacheableRepository extends ModelCacheableRepository<Folder> {
+        FolderCacheableRepository(FolderRepository folderRepository) {
             super(folderRepository)
         }
     }

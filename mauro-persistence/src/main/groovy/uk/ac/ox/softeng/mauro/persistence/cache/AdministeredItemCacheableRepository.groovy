@@ -19,14 +19,14 @@ import uk.ac.ox.softeng.mauro.persistence.terminology.TermRepository
 @Slf4j
 @CompileStatic
 @CacheConfig(cacheNames = 'items-cache', keyGenerator = StringCacheKeyGenerator)
-abstract class CacheableAdministeredItemRepository<I extends AdministeredItem> extends CacheableItemRepository<I> implements AdministeredItemRepository<I> {
+abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> extends ItemCacheableRepository<I> implements AdministeredItemRepository<I> {
 
     static final String FIND_ALL_BY_PARENT = 'findAll'
     static final String READ_ALL_BY_PARENT = 'readAll'
 
     AdministeredItemRepository<I> repository
 
-    CacheableAdministeredItemRepository(AdministeredItemRepository<I> itemRepository) {
+    AdministeredItemCacheableRepository(AdministeredItemRepository<I> itemRepository) {
         super(itemRepository)
         repository = itemRepository
     }
@@ -78,8 +78,8 @@ abstract class CacheableAdministeredItemRepository<I extends AdministeredItem> e
 
     @Bean
     @CompileStatic
-    static class CacheableTermRepository extends CacheableAdministeredItemRepository<Term> {
-        CacheableTermRepository(TermRepository termRepository) {
+    static class TermCacheableRepository extends AdministeredItemCacheableRepository<Term> {
+        TermCacheableRepository(TermRepository termRepository) {
             super(termRepository)
         }
 
@@ -91,16 +91,16 @@ abstract class CacheableAdministeredItemRepository<I extends AdministeredItem> e
 
     @Bean
     @CompileStatic
-    static class CacheableTermRelationshipRepository extends CacheableAdministeredItemRepository<TermRelationship> {
-        CacheableTermRelationshipRepository(TermRelationshipRepository termRelationshipRepository) {
+    static class TermRelationshipCacheableRepository extends AdministeredItemCacheableRepository<TermRelationship> {
+        TermRelationshipCacheableRepository(TermRelationshipRepository termRelationshipRepository) {
             super(termRelationshipRepository)
         }
     }
 
     @Bean
     @CompileStatic
-    static class CacheableTermRelationshipTypeRepository extends CacheableAdministeredItemRepository<TermRelationshipType> {
-        CacheableTermRelationshipTypeRepository(TermRelationshipTypeRepository termRelationshipTypeRepository) {
+    static class TermRelationshipTypeCacheableRepository extends AdministeredItemCacheableRepository<TermRelationshipType> {
+        TermRelationshipTypeCacheableRepository(TermRelationshipTypeRepository termRelationshipTypeRepository) {
             super(termRelationshipTypeRepository)
         }
     }

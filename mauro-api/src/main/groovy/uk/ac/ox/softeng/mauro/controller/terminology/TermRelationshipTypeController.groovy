@@ -8,8 +8,8 @@ import io.micronaut.http.annotation.*
 import uk.ac.ox.softeng.mauro.controller.model.AdministeredItemController
 import uk.ac.ox.softeng.mauro.domain.terminology.TermRelationshipType
 import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
-import uk.ac.ox.softeng.mauro.persistence.cache.CacheableAdministeredItemRepository.CacheableTermRelationshipTypeRepository
-import uk.ac.ox.softeng.mauro.persistence.cache.CacheableModelRepository.CacheableTerminologyRepository
+import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository.TermRelationshipTypeCacheableRepository
+import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.TerminologyCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemContentRepository
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
@@ -17,7 +17,7 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 @Controller('/terminologies/{terminologyId}/termRelationshipTypes')
 class TermRelationshipTypeController extends AdministeredItemController<TermRelationshipType, Terminology> {
 
-    TermRelationshipTypeController(CacheableTermRelationshipTypeRepository termRelationshipTypeRepository, CacheableTerminologyRepository terminologyRepository, AdministeredItemContentRepository<TermRelationshipType> administeredItemContentRepository) {
+    TermRelationshipTypeController(TermRelationshipTypeCacheableRepository termRelationshipTypeRepository, TerminologyCacheableRepository terminologyRepository, AdministeredItemContentRepository<TermRelationshipType> administeredItemContentRepository) {
         super(TermRelationshipType, termRelationshipTypeRepository, terminologyRepository, administeredItemContentRepository)
     }
 

@@ -4,10 +4,10 @@ import groovy.transform.CompileStatic
 import io.micronaut.context.annotation.Bean
 import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
-import uk.ac.ox.softeng.mauro.persistence.cache.CacheableAdministeredItemRepository.CacheableTermRelationshipRepository
-import uk.ac.ox.softeng.mauro.persistence.cache.CacheableAdministeredItemRepository.CacheableTermRelationshipTypeRepository
-import uk.ac.ox.softeng.mauro.persistence.cache.CacheableAdministeredItemRepository.CacheableTermRepository
-import uk.ac.ox.softeng.mauro.persistence.cache.CacheableModelRepository.CacheableTerminologyRepository
+import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository.TermCacheableRepository
+import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository.TermRelationshipCacheableRepository
+import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository.TermRelationshipTypeCacheableRepository
+import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.TerminologyCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.model.ModelContentRepository
 
 @CompileStatic
@@ -15,16 +15,16 @@ import uk.ac.ox.softeng.mauro.persistence.model.ModelContentRepository
 class TerminologyContentRepository extends ModelContentRepository<Terminology> {
 
     @Inject
-    CacheableTerminologyRepository terminologyRepository
+    TerminologyCacheableRepository terminologyRepository
 
     @Inject
-    CacheableTermRepository termRepository
+    TermCacheableRepository termRepository
 
     @Inject
-    CacheableTermRelationshipTypeRepository termRelationshipTypeRepository
+    TermRelationshipTypeCacheableRepository termRelationshipTypeRepository
 
     @Inject
-    CacheableTermRelationshipRepository termRelationshipRepository
+    TermRelationshipCacheableRepository termRelationshipRepository
 
     Terminology findWithAssociations(UUID id) {
         Terminology terminology = terminologyRepository.findById(id)

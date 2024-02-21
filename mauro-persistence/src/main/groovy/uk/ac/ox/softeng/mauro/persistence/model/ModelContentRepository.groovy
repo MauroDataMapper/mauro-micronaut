@@ -11,7 +11,7 @@ import uk.ac.ox.softeng.mauro.domain.model.Model
 import uk.ac.ox.softeng.mauro.domain.model.ModelItem
 import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
 import uk.ac.ox.softeng.mauro.exception.MauroInternalException
-import uk.ac.ox.softeng.mauro.persistence.cache.CacheableAdministeredItemRepository
+import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.facet.MetadataRepository
 
 @Slf4j
@@ -23,7 +23,7 @@ class ModelContentRepository<M extends Model> extends AdministeredItemContentRep
     List<AdministeredItemRepository> administeredItemRepositories
 
     @Inject
-    List<CacheableAdministeredItemRepository> cacheableRepositories
+    List<AdministeredItemCacheableRepository> cacheableRepositories
 
     @Inject
     MetadataRepository metadataRepository
@@ -97,7 +97,7 @@ class ModelContentRepository<M extends Model> extends AdministeredItemContentRep
     }
 
     @NonNull
-    CacheableAdministeredItemRepository getRepository(AdministeredItem item) {
+    AdministeredItemCacheableRepository getRepository(AdministeredItem item) {
         cacheableRepositories.find {it.handles(item.class)}
     }
 

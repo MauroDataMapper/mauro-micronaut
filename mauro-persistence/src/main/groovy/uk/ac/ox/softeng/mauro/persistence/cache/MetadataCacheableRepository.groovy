@@ -15,15 +15,15 @@ import uk.ac.ox.softeng.mauro.persistence.facet.MetadataRepository
 @CompileStatic
 @CacheConfig(cacheNames = 'items-cache', keyGenerator = StringCacheKeyGenerator)
 @Bean
-class CacheableMetadataRepository extends CacheableItemRepository<Metadata> {
+class MetadataCacheableRepository extends ItemCacheableRepository<Metadata> {
 
     static final String FIND_ALL_BY_PARENT = 'findAll'
     static final String READ_ALL_BY_PARENT = 'readAll'
 
     @Inject
-    List<CacheableAdministeredItemRepository> cacheableRepositories
+    List<AdministeredItemCacheableRepository> cacheableRepositories
 
-    CacheableMetadataRepository(MetadataRepository metadataRepository) {
+    MetadataCacheableRepository(MetadataRepository metadataRepository) {
         super(metadataRepository)
     }
 
@@ -46,7 +46,7 @@ class CacheableMetadataRepository extends CacheableItemRepository<Metadata> {
     }
 
     @NonNull
-    CacheableAdministeredItemRepository<AdministeredItem> getRepository(String domainType) {
+    AdministeredItemCacheableRepository<AdministeredItem> getRepository(String domainType) {
         cacheableRepositories.find {it.domainType == domainType}
     }
 

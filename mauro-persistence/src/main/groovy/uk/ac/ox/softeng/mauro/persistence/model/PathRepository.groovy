@@ -7,7 +7,7 @@ import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.model.Path
 import uk.ac.ox.softeng.mauro.exception.MauroInternalException
-import uk.ac.ox.softeng.mauro.persistence.cache.CacheableAdministeredItemRepository
+import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository
 
 @Bean
 @CompileStatic
@@ -17,7 +17,7 @@ class PathRepository {
     List<AdministeredItemRepository> administeredItemRepositories
 
     @Inject
-    List<CacheableAdministeredItemRepository> cacheableRepositories
+    List<AdministeredItemCacheableRepository> cacheableRepositories
 
     List<AdministeredItem> readParentItems(AdministeredItem item) {
         List<AdministeredItem> items = []

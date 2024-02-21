@@ -9,10 +9,10 @@ import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.controller.model.AdministeredItemController
 import uk.ac.ox.softeng.mauro.domain.terminology.TermRelationship
 import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
-import uk.ac.ox.softeng.mauro.persistence.cache.CacheableAdministeredItemRepository.CacheableTermRelationshipRepository
-import uk.ac.ox.softeng.mauro.persistence.cache.CacheableAdministeredItemRepository.CacheableTermRelationshipTypeRepository
-import uk.ac.ox.softeng.mauro.persistence.cache.CacheableAdministeredItemRepository.CacheableTermRepository
-import uk.ac.ox.softeng.mauro.persistence.cache.CacheableModelRepository.CacheableTerminologyRepository
+import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository.TermCacheableRepository
+import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository.TermRelationshipCacheableRepository
+import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository.TermRelationshipTypeCacheableRepository
+import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.TerminologyCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemContentRepository
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
@@ -20,17 +20,17 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 @Controller('/terminologies/{terminologyId}/termRelationships')
 class TermRelationshipController extends AdministeredItemController<TermRelationship, Terminology> {
 
-    CacheableTermRelationshipRepository termRelationshipRepository
+    TermRelationshipCacheableRepository termRelationshipRepository
 
-    CacheableTerminologyRepository terminologyRepository
-
-    @Inject
-    CacheableTermRepository termRepository
+    TerminologyCacheableRepository terminologyRepository
 
     @Inject
-    CacheableTermRelationshipTypeRepository termRelationshipTypeRepository
+    TermCacheableRepository termRepository
 
-    TermRelationshipController(CacheableTermRelationshipRepository termRelationshipRepository, CacheableTerminologyRepository terminologyRepository,
+    @Inject
+    TermRelationshipTypeCacheableRepository termRelationshipTypeRepository
+
+    TermRelationshipController(TermRelationshipCacheableRepository termRelationshipRepository, TerminologyCacheableRepository terminologyRepository,
                                AdministeredItemContentRepository<TermRelationship> administeredItemContentRepository) {
         super(TermRelationship, termRelationshipRepository, terminologyRepository, administeredItemContentRepository)
         this.termRelationshipRepository = termRelationshipRepository

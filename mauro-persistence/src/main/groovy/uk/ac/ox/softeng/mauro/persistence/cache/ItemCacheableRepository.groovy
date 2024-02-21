@@ -14,7 +14,7 @@ import uk.ac.ox.softeng.mauro.persistence.security.CatalogueUserRepository
 @Slf4j
 @CompileStatic
 @CacheConfig(cacheNames = 'items-cache', keyGenerator = StringCacheKeyGenerator)
-abstract class CacheableItemRepository<I extends Item> implements ItemRepository<I> {
+abstract class ItemCacheableRepository<I extends Item> implements ItemRepository<I> {
 
     static final String FIND_BY_ID = 'find'
     static final String READ_BY_ID = 'read'
@@ -22,7 +22,7 @@ abstract class CacheableItemRepository<I extends Item> implements ItemRepository
     ItemRepository<I> repository
     String domainType
 
-    CacheableItemRepository(ItemRepository<I> itemRepository) {
+    ItemCacheableRepository(ItemRepository<I> itemRepository) {
         this.repository = itemRepository
         this.domainType = repository.domainClass.simpleName
     }
@@ -95,8 +95,8 @@ abstract class CacheableItemRepository<I extends Item> implements ItemRepository
 
     @Bean
     @CompileStatic
-    static class CacheableCatalogueUserRepository extends CacheableItemRepository<CatalogueUser> {
-        CacheableCatalogueUserRepository(CatalogueUserRepository catalogueUserRepository) {
+    static class CatalogueUserCacheableRepository extends ItemCacheableRepository<CatalogueUser> {
+        CatalogueUserCacheableRepository(CatalogueUserRepository catalogueUserRepository) {
             super(catalogueUserRepository)
         }
     }

@@ -9,7 +9,7 @@ import io.micronaut.http.annotation.*
 import io.micronaut.transaction.annotation.Transactional
 import uk.ac.ox.softeng.mauro.controller.model.ModelController
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
-import uk.ac.ox.softeng.mauro.persistence.cache.CacheableModelRepository.CacheableFolderRepository
+import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.model.ModelContentRepository
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
@@ -19,7 +19,7 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 //@Secured(SecurityRule.IS_ANONYMOUS)
 class FolderController extends ModelController<Folder> {
 
-    FolderController(CacheableFolderRepository folderRepository, ModelContentRepository<Folder> folderContentRepository) {
+    FolderController(FolderCacheableRepository folderRepository, ModelContentRepository<Folder> folderContentRepository) {
         super(Folder, folderRepository, folderRepository, folderContentRepository)
     }
 
