@@ -1,11 +1,5 @@
 package uk.ac.ox.softeng.mauro.controller.model
 
-import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
-import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemContentRepository
-import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemRepository
-import uk.ac.ox.softeng.mauro.persistence.model.PathRepository
-import uk.ac.ox.softeng.mauro.web.ListResponse
-
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
@@ -14,9 +8,11 @@ import io.micronaut.http.annotation.Body
 import io.micronaut.http.exceptions.HttpStatusException
 import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
-import reactor.core.publisher.Mono
-
-import java.util.function.BiFunction
+import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
+import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository
+import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemContentRepository
+import uk.ac.ox.softeng.mauro.persistence.model.PathRepository
+import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @CompileStatic
 abstract class AdministeredItemController<I extends AdministeredItem, P extends AdministeredItem> {
@@ -38,38 +34,35 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
 
     Class<I> itemClass
 
-    AdministeredItemRepository<I> administeredItemRepository
+    AdministeredItemCacheableRepository<I> administeredItemRepository
 
-    AdministeredItemRepository<P> parentItemRepository
+    AdministeredItemCacheableRepository<P> parentItemRepository
 
     AdministeredItemContentRepository<I> administeredItemContentRepository
 
     @Inject
     PathRepository pathRepository
 
-    AdministeredItemController(Class<I> itemClass, AdministeredItemRepository<I> administeredItemRepository, AdministeredItemRepository<P> parentItemRepository, AdministeredItemContentRepository<I> administeredItemContentRepository) {
+    AdministeredItemController(Class<I> itemClass, AdministeredItemCacheableRepository<I> administeredItemRepository, AdministeredItemCacheableRepository<P> parentItemRepository, AdministeredItemContentRepository<I> administeredItemContentRepository) {
         this.itemClass = itemClass
         this.administeredItemRepository = administeredItemRepository
         this.parentItemRepository = parentItemRepository
         this.administeredItemContentRepository = administeredItemContentRepository
     }
 
-    Mono<I> show(UUID parentId, UUID id) {
-        administeredItemRepository.findById(id).flatMap {I item ->
-            pathRepository.readParentItems(item).map {
-                item.updatePath()
-                item
-            }
-        }
+    I show(UUID id) {
+        I item = administeredItemRepository.findById(id)
+        pathRepository.readParentItems(item)
+        item.updatePath()
+        item
     }
 
     @Transactional
-    Mono<I> create(UUID parentId, @Body @NonNull I item) {
+    I create(UUID parentId, @Body @NonNull I item) {
         cleanBody(item)
 
-        parentItemRepository.readById(parentId).flatMap {P parent ->
-            createEntity(parent, item)
-        }
+        P parent = parentItemRepository.readById(parentId)
+        createEntity(parent, item)
     }
 
     protected AdministeredItem updateCreationProperties(AdministeredItem item) {
@@ -81,21 +74,18 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
         item
     }
 
-    protected Mono<I> createEntity(P parent, @Body @NonNull I cleanItem) {
+    protected I createEntity(@NonNull P parent, @Body @NonNull I cleanItem) {
         cleanItem.parent = parent
         updateCreationProperties(cleanItem)
-        pathRepository.readParentItems(cleanItem).flatMap {
-            cleanItem.updatePath()
-            administeredItemRepository.save(cleanItem)
-        }
+        pathRepository.readParentItems(cleanItem)
+        cleanItem.updatePath()
+        administeredItemRepository.save(cleanItem)
     }
 
-    Mono<I> update(UUID parentId, UUID id, @Body @NonNull I item) {
+    I update(UUID id, @Body @NonNull I item) {
         cleanBody(item)
-
-        administeredItemRepository.readById(id).flatMap {I existing ->
-            updateEntity(existing, item)
-        }
+        I existing = administeredItemRepository.readById(id)
+        updateEntity(existing, item)
     }
 
     protected boolean updateProperties(I existing, I cleanItem) {
@@ -112,45 +102,42 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
         return hasChanged
     }
 
-    protected Mono<I> updateEntity(I existing, @Body @NonNull I cleanItem) {
+    protected I updateEntity(I existing, @NonNull I cleanItem) {
         boolean hasChanged = updateProperties(existing, cleanItem)
+        pathRepository.readParentItems(existing)
+        existing.updatePath()
 
         if (hasChanged) {
-            pathRepository.readParentItems(existing).flatMap {
-                existing.updatePath()
-                administeredItemRepository.update(existing)
-            }
+            administeredItemRepository.update(existing)
         } else {
-            pathRepository.readParentItems(existing).map {
-                existing.updatePath()
-                existing
-            }
+            existing
         }
     }
 
     @Transactional
-    Mono<HttpStatus> delete(UUID parentId, UUID id, @Body @Nullable I item) {
+    HttpStatus delete(UUID id, @Body @Nullable I item) {
         I itemToDelete = itemClass.getDeclaredConstructor().newInstance()
         itemToDelete.id = id
         itemToDelete.version = item?.version
-        administeredItemContentRepository.deleteWithContent(itemToDelete).map {Long deleted ->
-            if (deleted) {
-                HttpStatus.NO_CONTENT
-            } else {
-                throw new HttpStatusException(HttpStatus.NOT_FOUND, 'Not found for deletion')
-            }
+        Long deleted = administeredItemContentRepository.deleteWithContent(itemToDelete)
+        if (deleted) {
+            HttpStatus.NO_CONTENT
+        } else {
+            throw new HttpStatusException(HttpStatus.NOT_FOUND, 'Not found for deletion')
         }
     }
 
-    Mono<ListResponse<I>> list(UUID parentId) {
-        parentItemRepository.readById(parentId).flatMap {P parent ->
-            administeredItemRepository.readAllByParent(parent).flatMap {I item ->
-                Mono.zip(Mono.just(item), pathRepository.readParentItems(item), (BiFunction<I, List<AdministeredItem>, I>) {it, _ -> it})
-            }.collectList().map {List<I> items ->
-                items.each {((AdministeredItem) it).updatePath()}
-                ListResponse.from(items)
-            }
+    ListResponse<I> list(UUID parentId) {
+        P parent = parentItemRepository.readById(parentId)
+        if (!parent) return null
+        List<I> items = administeredItemRepository.readAllByParent(parent)
+        items.each {
+            pathRepository.readParentItems(it)
         }
+        items.each {
+            it.updatePath()
+        }
+        ListResponse.from(items)
     }
 
     protected I cleanBody(I item) {

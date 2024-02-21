@@ -3,9 +3,9 @@ micronaut:
     name: sandbox
   server:
     port: 8088
-    max-request-size: 100mb
+    max-request-size: 100Mb
     multipart:
-      max-file-size: 100mb
+      max-file-size: 100Mb
   router:
     static-resources:
       swagger:
@@ -14,6 +14,27 @@ micronaut:
       swagger-ui:
         paths: classpath:META-INF/swagger/views/swagger-ui
         mapping: /swagger-ui/**
+  security:
+    enabled: false # TODO: enable security
+    authentication: session
+    redirect:
+      enabled: false
+    endpoints:
+      login:
+        enabled: true
+        path: '/authentication/login'
+    reject-not-found: false
+
+#  caches:
+#    items-cache:
+#      maximum-size: 100
+ehcache:
+  caches:
+    items-cache:
+      enabled: true
+      heap:
+        max-size: 1Gb
+        size-of-max-object-size: 1000000
 #netty:
 #  default:
 #    allocator:
@@ -26,6 +47,9 @@ endpoints:
     enabled: true
     sensitive: false
   flyway:
+    enabled: true
+    sensitive: false
+  caches:
     enabled: true
     sensitive: false
 jackson:
@@ -61,4 +85,5 @@ flyway:
       clean-schema: false
       schemas:
         - core
+        - security
         - terminology

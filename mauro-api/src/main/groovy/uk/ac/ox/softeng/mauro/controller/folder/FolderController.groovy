@@ -1,88 +1,78 @@
 package uk.ac.ox.softeng.mauro.controller.folder
 
-import uk.ac.ox.softeng.mauro.controller.model.ModelController
-import uk.ac.ox.softeng.mauro.domain.folder.Folder
-import uk.ac.ox.softeng.mauro.domain.folder.FolderService
-import uk.ac.ox.softeng.mauro.persistence.folder.FolderRepository
-import uk.ac.ox.softeng.mauro.persistence.model.ModelContentRepository
-import uk.ac.ox.softeng.mauro.persistence.model.PathRepository
-import uk.ac.ox.softeng.mauro.web.ListResponse
-
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpStatus
-import io.micronaut.http.annotation.Body
-import io.micronaut.http.annotation.Controller
-import io.micronaut.http.annotation.Delete
-import io.micronaut.http.annotation.Get
-import io.micronaut.http.annotation.Post
-import io.micronaut.http.annotation.Put
-import io.micronaut.http.exceptions.HttpStatusException
+import io.micronaut.http.annotation.*
 import io.micronaut.transaction.annotation.Transactional
-import reactor.core.publisher.Flux
-import reactor.core.publisher.Mono
+import uk.ac.ox.softeng.mauro.controller.model.ModelController
+import uk.ac.ox.softeng.mauro.domain.folder.Folder
+import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
+import uk.ac.ox.softeng.mauro.persistence.model.ModelContentRepository
+import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @Slf4j
 @CompileStatic
 @Controller('/folders')
+//@Secured(SecurityRule.IS_ANONYMOUS)
 class FolderController extends ModelController<Folder> {
 
-    FolderController(FolderRepository folderRepository, ModelContentRepository<Folder> folderContentRepository) {
+    FolderController(FolderCacheableRepository folderRepository, ModelContentRepository<Folder> folderContentRepository) {
         super(Folder, folderRepository, folderRepository, folderContentRepository)
     }
 
     @Get('/{id}')
-    Mono<Folder> show(UUID id) {
+    Folder show(UUID id) {
         super.show(id)
     }
 
     @Get('/{parentId}/folders/{id}')
-    Mono<Folder> show(UUID parentId, UUID id) {
-        super.show(parentId, id)
+    Folder show(UUID parentId, UUID id) {
+        super.show(id)
     }
 
     @Post
-    Mono<Folder> create(@Body Folder folder) {
+    Folder create(@Body Folder folder) {
         cleanBody(folder)
+        updateCreationProperties(folder)
 
-        folder.createdBy = 'USER@example.org'
-        pathRepository.readParentItems(folder).flatMap {
-            folder.updatePath()
-            folderRepository.save(folder)
-        }
+        pathRepository.readParentItems(folder)
+        folder.updatePath()
+
+        folderRepository.save(folder)
     }
 
     @Transactional
     @Post('/{parentId}/folders')
-    Mono<Folder> create(UUID parentId, @Body @NonNull Folder folder) {
+    Folder create(UUID parentId, @Body @NonNull Folder folder) {
         super.create(parentId, folder)
     }
 
     @Put('/{id}')
-    Mono<Folder> update(UUID id, @Body @NonNull Folder folder) {
+    Folder update(UUID id, @Body @NonNull Folder folder) {
         super.update(id, folder)
     }
 
     @Put('/{parentId}/folders/{id}')
-    Mono<Folder> update(UUID parentId, UUID id, @Body @NonNull Folder folder) {
-        super.update(parentId, id, folder)
+    Folder update(UUID parentId, UUID id, @Body @NonNull Folder folder) {
+        super.update(id, folder)
     }
 
     @Transactional
     @Put('/{id}/folder/{destination}')
-    Mono<Folder> moveFolder(UUID id, String destination) {
+    Folder moveFolder(UUID id, String destination) {
         super.moveFolder(id, destination)
     }
 
     @Get
-    Mono<ListResponse<Folder>> listAll() {
+    ListResponse<Folder> listAll() {
         super.listAll()
     }
 
     @Get('/{parentId}/folders')
-    Mono<ListResponse<Folder>> list(UUID parentId) {
+    ListResponse<Folder> list(UUID parentId) {
         super.list(parentId)
     }
 
@@ -110,13 +100,13 @@ class FolderController extends ModelController<Folder> {
 
     @Transactional
     @Delete('/{id}')
-    Mono<HttpStatus> delete(UUID id, @Body @Nullable Folder folder) {
+    HttpStatus delete(UUID id, @Body @Nullable Folder folder) {
         super.delete(id, folder)
     }
 
     @Transactional
     @Delete('/{parentId}/folders/{id}')
-    Mono<HttpStatus> delete(UUID parentId, UUID id, @Body @Nullable Folder folder) {
-        super.delete(parentId, id, folder)
+    HttpStatus delete(UUID parentId, UUID id, @Body @Nullable Folder folder) {
+        super.delete(id, folder)
     }
 }

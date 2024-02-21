@@ -1,18 +1,18 @@
 package uk.ac.ox.softeng.mauro.persistence.model
 
+import groovy.transform.CompileStatic
+import io.micronaut.core.annotation.Nullable
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 
-import groovy.transform.CompileStatic
-import io.micronaut.core.annotation.NonNull
-import io.micronaut.data.repository.reactive.ReactorPageableRepository
-import jakarta.validation.Valid
-import reactor.core.publisher.Flux
-import reactor.core.publisher.Mono
-
 @CompileStatic
-trait AdministeredItemRepository<I extends AdministeredItem> implements ReactorPageableRepository<I, UUID>, ItemRepository<I> {
+trait AdministeredItemRepository<I extends AdministeredItem> implements ItemRepository<I> {
 
-    abstract Mono<I> readById(UUID id)
+    @Nullable
+    List<I> findAllByParent(AdministeredItem item) {
+        // Should be implemented by override with joins, possibly using a DTO
+        throw new UnsupportedOperationException('Method should be implemented')
+    }
 
-    abstract Flux<I> readAllByParent(AdministeredItem item)
+    @Nullable
+    abstract List<I> readAllByParent(AdministeredItem item)
 }
