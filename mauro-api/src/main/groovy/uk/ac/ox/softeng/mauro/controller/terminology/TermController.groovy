@@ -19,7 +19,7 @@ class TermController extends AdministeredItemController<Term, Terminology> {
 
     TermCacheableRepository termRepository
 
-    TermController(TermCacheableRepository termRepository, TerminologyCacheableRepository terminologyRepository, AdministeredItemContentRepository<Term> administeredItemContentRepository) {
+    TermController(TermCacheableRepository termRepository, TerminologyCacheableRepository terminologyRepository, AdministeredItemContentRepository administeredItemContentRepository) {
         super(Term, termRepository, terminologyRepository, administeredItemContentRepository)
         this.termRepository = termRepository
     }

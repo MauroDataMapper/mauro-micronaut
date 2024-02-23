@@ -31,7 +31,7 @@ class TermRelationshipController extends AdministeredItemController<TermRelation
     TermRelationshipTypeCacheableRepository termRelationshipTypeRepository
 
     TermRelationshipController(TermRelationshipCacheableRepository termRelationshipRepository, TerminologyCacheableRepository terminologyRepository,
-                               AdministeredItemContentRepository<TermRelationship> administeredItemContentRepository) {
+                               AdministeredItemContentRepository administeredItemContentRepository) {
         super(TermRelationship, termRelationshipRepository, terminologyRepository, administeredItemContentRepository)
         this.termRelationshipRepository = termRelationshipRepository
         this.terminologyRepository = terminologyRepository

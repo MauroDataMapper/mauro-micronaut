@@ -17,7 +17,7 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 @Controller('/terminologies/{terminologyId}/termRelationshipTypes')
 class TermRelationshipTypeController extends AdministeredItemController<TermRelationshipType, Terminology> {
 
-    TermRelationshipTypeController(TermRelationshipTypeCacheableRepository termRelationshipTypeRepository, TerminologyCacheableRepository terminologyRepository, AdministeredItemContentRepository<TermRelationshipType> administeredItemContentRepository) {
+    TermRelationshipTypeController(TermRelationshipTypeCacheableRepository termRelationshipTypeRepository, TerminologyCacheableRepository terminologyRepository, AdministeredItemContentRepository administeredItemContentRepository) {
         super(TermRelationshipType, termRelationshipTypeRepository, terminologyRepository, administeredItemContentRepository)
     }
 
