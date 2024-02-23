@@ -10,6 +10,7 @@ import io.micronaut.data.annotation.Index
 import io.micronaut.data.annotation.Indexes
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Relation
+import jakarta.persistence.ManyToMany
 import jakarta.persistence.Transient
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Pattern
@@ -69,6 +70,10 @@ class Term extends ModelItem<Terminology> {
     List<List<TermRelationship>> getAllAssociations() {
         [sourceTermRelationships, targetTermRelationships]
     }
+
+    @Nullable
+    @ManyToMany(mappedBy = "terms")
+    List<CodeSet> codeSets = []
 
     @Override
     @Transient
