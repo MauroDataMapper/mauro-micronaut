@@ -1,13 +1,10 @@
 package uk.ac.ox.softeng.mauro.domain.model
 
-import uk.ac.ox.softeng.mauro.exception.MauroApplicationException
-
 import groovy.transform.CompileStatic
+import io.micronaut.core.annotation.Nullable
 import uk.ac.ox.softeng.mauro.domain.model.version.ModelVersion
 import uk.ac.ox.softeng.mauro.domain.model.version.VersionChangeType
-import uk.ac.ox.softeng.mauro.domain.tree.TreeItem
-
-import io.micronaut.core.annotation.Nullable
+import uk.ac.ox.softeng.mauro.exception.MauroApplicationException
 
 import java.time.Instant
 
