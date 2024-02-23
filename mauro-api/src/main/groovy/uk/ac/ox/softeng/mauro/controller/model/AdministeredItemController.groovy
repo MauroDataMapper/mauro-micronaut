@@ -117,7 +117,7 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
 
     @Transactional
     HttpStatus delete(UUID id, @Body @Nullable I item) {
-        I itemToDelete = (I) administeredItemContentRepository.findWithContentById(id)
+        I itemToDelete = (I) administeredItemContentRepository.readWithContentById(id)
         if (item?.version) itemToDelete.version == item.version
         Long deleted = administeredItemContentRepository.deleteWithContent(itemToDelete)
         if (deleted) {
