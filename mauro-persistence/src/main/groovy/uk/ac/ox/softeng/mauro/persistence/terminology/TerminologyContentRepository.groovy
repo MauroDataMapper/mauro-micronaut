@@ -26,7 +26,7 @@ class TerminologyContentRepository extends ModelContentRepository<Terminology> {
     @Inject
     TermRelationshipCacheableRepository termRelationshipRepository
 
-    Terminology findWithAssociations(UUID id) {
+    Terminology findWithContentById(UUID id) {
         Terminology terminology = terminologyRepository.findById(id)
         terminology.terms = termRepository.findAllByParent(terminology)
         terminology.termRelationshipTypes = termRelationshipTypeRepository.findAllByParent(terminology)

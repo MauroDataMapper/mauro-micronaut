@@ -143,6 +143,16 @@ abstract class AdministeredItem extends Item {
     }
 
     /**
+     * Return all persistent associations of the AdministeredItem.
+     * The associations should be ordered so that they can be saved in order.
+     */
+    @Transient
+    @JsonIgnore
+    List<List<AdministeredItem>> getAllAssociations() {
+        []
+    }
+
+    /**
      * DSL helper method for setting the identifier.  Returns the identifier passed in.
      *
      * @see #id

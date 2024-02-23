@@ -103,7 +103,8 @@ class TerminologyController extends ModelController<Terminology> {
     @Get('/terminologies/{id}/export{/namespace}{/name}{/version}')
     ExportModel exportModel(UUID id, @Nullable String namespace, @Nullable String name, @Nullable String version) {
         log.debug "*** exportModel start ${Instant.now()} ***"
-        Terminology terminology = terminologyContentRepository.findWithAssociations(id)
+        Terminology terminology = terminologyContentRepository.
+                findWithContentById(id)
         log.debug "*** exportModel fetched ${Instant.now()} ***"
         terminology.setAssociations()
         log.debug "*** setAssociations finished ${Instant.now()} ***"
@@ -138,7 +139,7 @@ class TerminologyController extends ModelController<Terminology> {
         Folder folder = folderRepository.readById(folderId)
         imported.folder = folder
         log.info '** about to saveWithContentBatched... **'
-        Terminology savedImported = modelContentRepository.saveWithAssociations(imported)
+        Terminology savedImported = modelContentRepository.saveWithContent(imported)
         log.info '** finished saveWithContentBatched **'
         ListResponse.from([show(savedImported.id)])
     }
