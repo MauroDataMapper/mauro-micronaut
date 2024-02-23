@@ -22,6 +22,13 @@ class AdministeredItemContentRepository {
     AdministeredItemCacheableRepository administeredItemRepository
 
     /**
+     * Read AdministeredItem with all child Contents.
+     */
+    AdministeredItem readWithContentById(UUID id) {
+        administeredItemRepository.readById(id)
+    }
+
+    /**
      * Find AdministeredItem with all child Contents and Facets.
      */
     AdministeredItem findWithContentById(UUID id) {

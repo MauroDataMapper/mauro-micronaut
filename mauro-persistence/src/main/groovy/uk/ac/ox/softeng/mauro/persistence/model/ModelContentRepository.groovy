@@ -13,7 +13,6 @@ import uk.ac.ox.softeng.mauro.domain.model.Model
 @Bean
 class ModelContentRepository<M extends Model> extends AdministeredItemContentRepository {
 
-
     M saveWithContent(@NonNull M model) {
         List<List<AdministeredItem>> associations = model.getAllAssociations()
 
@@ -48,6 +47,4 @@ class ModelContentRepository<M extends Model> extends AdministeredItemContentRep
 
         metadataRepository.saveAll(metadata)
     }
-
-
 }
