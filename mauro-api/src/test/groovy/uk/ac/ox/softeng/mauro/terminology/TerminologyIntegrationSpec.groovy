@@ -46,6 +46,7 @@ class TerminologyIntegrationSpec extends BaseIntegrationSpec {
 
     void 'test terms'() {
         when:
+
         def response = POST("/terminologies/$terminologyId/terms", [code: 'TEST-1', definition: 'first term'])
         termId1 = UUID.fromString(response.id)
 

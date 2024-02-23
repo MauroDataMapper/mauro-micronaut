@@ -1,5 +1,6 @@
 package uk.ac.ox.softeng.mauro.domain.terminology
 
+import jakarta.persistence.ManyToMany
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.model.ModelItem
 
@@ -66,6 +67,10 @@ class Term extends ModelItem<Terminology> {
     @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'terminology')
     @Nullable
     List<TermRelationship> targetTermRelationships = []
+
+    @Nullable
+    @ManyToMany( mappedBy = "terms")
+    List<CodeSet> codeSets = []
 
     @Override
     @Transient
