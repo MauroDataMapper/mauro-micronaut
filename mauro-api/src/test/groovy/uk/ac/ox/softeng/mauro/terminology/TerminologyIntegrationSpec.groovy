@@ -121,6 +121,14 @@ class TerminologyIntegrationSpec extends BaseIntegrationSpec {
 
         then:
         treeItemList != null
+        treeItemList.size() == 1
+
+        when:
+        treeItemList = (List<TreeItem>) GET("/terminologies/$terminologyId/terms/tree/$termId1", List<TreeItem>)
+
+        then:
+        treeItemList != null
         treeItemList.size() == 0
+
     }
 }
