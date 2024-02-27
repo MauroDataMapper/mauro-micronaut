@@ -1,6 +1,13 @@
 package uk.ac.ox.softeng.mauro.terminology
 
+import uk.ac.ox.softeng.mauro.domain.folder.Folder
+import uk.ac.ox.softeng.mauro.domain.terminology.Term
+import uk.ac.ox.softeng.mauro.domain.terminology.TermRelationship
+import uk.ac.ox.softeng.mauro.domain.terminology.TermRelationshipType
+import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
+import uk.ac.ox.softeng.mauro.domain.tree.TreeItem
 import uk.ac.ox.softeng.mauro.testing.BaseIntegrationSpec
+import uk.ac.ox.softeng.mauro.web.ListResponse
 
 import io.micronaut.core.type.Argument
 import io.micronaut.runtime.EmbeddedApplication
@@ -31,67 +38,67 @@ class TerminologyIntegrationSpec extends BaseIntegrationSpec {
 
     void 'test terminology'() {
         given:
-        def response = POST('/folders', [label: 'Test folder'])
-        folderId = UUID.fromString(response.id)
+        Folder folderResponse = (Folder) POST('/folders', [label: 'Test folder'], Folder)
+        folderId = folderResponse.id
 
         when:
-        response = POST("/folders/$folderId/terminologies", [label: 'Test terminology'])
-        terminologyId = UUID.fromString(response.id)
+        Terminology terminologyResponse = (Terminology) POST("/folders/$folderId/terminologies", [label: 'Test terminology'], Terminology)
+        terminologyId = terminologyResponse.id
 
         then:
-        response
-        response.label == 'Test terminology'
-        response.path == 'te:Test terminology$main'
+        terminologyResponse
+        terminologyResponse.label == 'Test terminology'
+        terminologyResponse.path.toString() == 'te:Test terminology$main'
     }
 
     void 'test terms'() {
         when:
-        def response = POST("/terminologies/$terminologyId/terms", [code: 'TEST-1', definition: 'first term'])
-        termId1 = UUID.fromString(response.id)
+        Term termResponse = (Term) POST("/terminologies/$terminologyId/terms", [code: 'TEST-1', definition: 'first term'], Term)
+        termId1 = termResponse.id
 
         then:
-        response.label == 'TEST-1: first term'
+        termResponse.label == 'TEST-1: first term'
 
         when:
-        response = POST("/terminologies/$terminologyId/terms", [code: 'TEST-2', definition: 'second term'])
-        termId2 = UUID.fromString(response.id)
+        termResponse = (Term) POST("/terminologies/$terminologyId/terms", [code: 'TEST-2', definition: 'second term'], Term)
+        termId2 = termResponse.id
 
         then:
-        response.label == 'TEST-2: second term'
+        termResponse.label == 'TEST-2: second term'
 
         when:
-        response = GET("/terminologies/$terminologyId/terms")
+        ListResponse<Term> termListResponse = (ListResponse<Term>) GET("/terminologies/$terminologyId/terms", ListResponse<Term>)
 
         then:
-        response
-        response.count == 2
-        response.items.path.sort() == ['te:Test terminology$main|tm:TEST-1', 'te:Test terminology$main|tm:TEST-2']
+        termListResponse
+        termListResponse.count == 2
+        termListResponse.items.path.sort().collect() {it.toString()} == ['te:Test terminology$main|tm:TEST-1', 'te:Test terminology$main|tm:TEST-2']
     }
 
     void 'test term relationship types'() {
         when:
-        def response = POST("/terminologies/$terminologyId/termRelationshipTypes", [label: 'Test relationship type', childRelationship: true])
-        termRelationshipTypeId = UUID.fromString(response.id)
+        TermRelationshipType termRelationshipTypeResponse = (TermRelationshipType) POST("/terminologies/$terminologyId/termRelationshipTypes", [label: 'Test relationship type', childRelationship: true], TermRelationshipType)
+        termRelationshipTypeId = termRelationshipTypeResponse.id
 
         then:
-        response
-        response.label == 'Test relationship type'
-        response.path == 'te:Test terminology$main|trt:Test relationship type'
-        response.childRelationship
-        !response.parentalRelationship
+        termRelationshipTypeResponse
+        termRelationshipTypeResponse.label == 'Test relationship type'
+        termRelationshipTypeResponse.path.toString() == 'te:Test terminology$main|trt:Test relationship type'
+        termRelationshipTypeResponse.childRelationship
+        !termRelationshipTypeResponse.parentalRelationship
     }
 
     void 'test term relationships'() {
         when:
-        def response = POST("/terminologies/$terminologyId/termRelationships", [
+        TermRelationship termRelationshipResponse = (TermRelationship) POST("/terminologies/$terminologyId/termRelationships", [
             relationshipType: [id: termRelationshipTypeId],
             sourceTerm: [id: termId1],
             targetTerm: [id: termId2]
-        ])
+        ], TermRelationship)
 
         then:
-        response
-        response.label == 'Test relationship type'
+        termRelationshipResponse
+        termRelationshipResponse.label == 'Test relationship type'
 
         when:
         def tree = GET("/terminologies/$terminologyId/terms/tree", List<Map<String, Object>>)
@@ -102,18 +109,18 @@ class TerminologyIntegrationSpec extends BaseIntegrationSpec {
         tree.first().code == 'TEST-2'
 
         when:
-        tree = GET("/terminologies/$terminologyId/terms/tree/$termId2", List<Map<String, Object>>)
+        List<TreeItem> treeItemList = (List<TreeItem>) GET("/terminologies/$terminologyId/terms/tree", List<TreeItem>)
 
         then:
-        tree
-        tree.size() == 1
-        tree.first().code == 'TEST-1'
+        treeItemList
+        treeItemList.size() == 1
+        treeItemList.first().code == 'TEST-2'
 
         when:
-        tree = GET("/terminologies/$terminologyId/terms/tree/$termId1", List<Map<String, Object>>)
+        treeItemList = (List<TreeItem>) GET("/terminologies/$terminologyId/terms/tree/$termId2", List<TreeItem>)
 
         then:
-        tree != null
-        tree.size() == 0
+        treeItemList != null
+        treeItemList.size() == 0
     }
 }

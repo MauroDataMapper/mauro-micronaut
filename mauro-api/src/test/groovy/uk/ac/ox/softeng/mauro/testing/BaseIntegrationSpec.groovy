@@ -1,6 +1,5 @@
 package uk.ac.ox.softeng.mauro.testing
 
-import io.micronaut.core.type.Argument
 import io.micronaut.http.HttpRequest
 import io.micronaut.http.MediaType
 import io.micronaut.http.client.HttpClient
@@ -15,7 +14,11 @@ class BaseIntegrationSpec extends Specification {
     @Client('/')
     HttpClient client
 
-    Object GET(String uri, Class type = Map<String, Object>) {
+    Object GET(String uri) {
+        client.toBlocking().retrieve(HttpRequest.GET(uri), Map<String, Object>)
+    }
+
+    <T> T GET(String uri, Class<T> type) {
         client.toBlocking().retrieve(HttpRequest.GET(uri), type)
     }
 
@@ -27,7 +30,27 @@ class BaseIntegrationSpec extends Specification {
         client.toBlocking().retrieve(HttpRequest.POST(uri, body).contentType(MediaType.MULTIPART_FORM_DATA_TYPE), Map<String, Object>)
     }
 
+    <T> T POST(String uri, Map<String, Object> body, Class<T> type) {
+        client.toBlocking().retrieve(HttpRequest.POST(uri, body), type)
+    }
+
+
     Map<String, Object> PUT(String uri, Map<String, Object> body) {
         client.toBlocking().retrieve(HttpRequest.PUT(uri, body), Map<String, Object>)
     }
+
+    <T> T PUT(String uri, Map<String, Object> body, Class<T> type) {
+        client.toBlocking().retrieve(HttpRequest.PUT(uri, body), type)
+    }
+
+    Map<String, Object> DELETE(String uri, Map<String, Object> body) {
+        client.toBlocking().retrieve(HttpRequest.DELETE(uri, body), Map<String, Object>)
+    }
+
+    <T> T DELETE(String uri, Map<String, Object> body, Class<T> type) {
+        client.toBlocking().retrieve(HttpRequest.DELETE(uri, body), type)
+    }
+
+
+
 }

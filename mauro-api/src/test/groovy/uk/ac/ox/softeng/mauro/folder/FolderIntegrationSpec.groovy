@@ -1,6 +1,8 @@
 package uk.ac.ox.softeng.mauro.folder
 
+import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.testing.BaseIntegrationSpec
+import uk.ac.ox.softeng.mauro.web.ListResponse
 
 import io.micronaut.http.HttpRequest
 import io.micronaut.http.client.HttpClient
@@ -25,53 +27,55 @@ class FolderIntegrationSpec extends BaseIntegrationSpec {
 
     void 'create folder'() {
         when:
-        def response = POST('/folders', [label: 'Test folder'])
-        folderId = UUID.fromString(response.id)
+        Folder folderResponse = (Folder) POST('/folders', [label: 'Test folder'], Folder)
+        folderId = folderResponse.id
 
         then:
-        response
-        response.label == 'Test folder'
-        response.path == 'fo:Test folder'
+        folderResponse
+        folderResponse.label == 'Test folder'
+        folderResponse.path.toString() == 'fo:Test folder'
     }
 
     void 'create child folder'() {
         when:
-        def response = POST("/folders/$folderId/folders", [label: 'Test child folder'])
-        childFolderId = UUID.fromString(response.id)
+        Folder folderResponse = (Folder) POST("/folders/$folderId/folders", [label: 'Test child folder'], Folder)
+        childFolderId = folderResponse.id
 
         then:
-        response
-        response.label == 'Test child folder'
-        response.path == 'fo:Test folder|fo:Test child folder'
+        folderResponse
+        folderResponse.label == 'Test child folder'
+        folderResponse.path.toString() == 'fo:Test folder|fo:Test child folder'
     }
 
     void 'change child folder label'() {
         when:
-        def response = PUT("/folders/$folderId/folders/$childFolderId", [label: 'Updated child folder'])
+        Folder folderResponse = (Folder) PUT("/folders/$folderId/folders/$childFolderId", [label: 'Updated child folder'], Folder)
 
         then:
-        response
-        response.label == 'Updated child folder'
-        response.path == 'fo:Test folder|fo:Updated child folder'
+        folderResponse
+        folderResponse.label == 'Updated child folder'
+        folderResponse.path.toString() == 'fo:Test folder|fo:Updated child folder'
     }
 
     void 'change parent folder label'() {
         when:
-        def response = PUT("/folders/$folderId", [label: 'Updated folder'])
+        Folder folderResponse = (Folder) PUT("/folders/$folderId", [label: 'Updated folder'], Folder)
 
         then:
-        response
-        response.label == 'Updated folder'
-        response.path == 'fo:Updated folder'
+        folderResponse
+        folderResponse.id == folderId
+        folderResponse.label == 'Updated folder'
+        folderResponse.path.toString() == 'fo:Updated folder'
     }
 
     void 'list folders'() {
         when:
-        def response = GET('/folders')
+        ListResponse<Folder> folderListResponse = (ListResponse<Folder>) GET('/folders', ListResponse<Folder>)
+
 
         then:
-        response
-        response.count == 2
-        response.items.path.sort() == ['fo:Updated folder', 'fo:Updated folder|fo:Updated child folder']
+        folderListResponse
+        folderListResponse.count == 2
+        folderListResponse.items.path.sort().collect { it.toString()} == ['fo:Updated folder', 'fo:Updated folder|fo:Updated child folder']
     }
 }

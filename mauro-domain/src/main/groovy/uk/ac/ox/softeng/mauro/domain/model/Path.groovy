@@ -21,6 +21,15 @@ class Path {
 
     List<PathNode> nodes
 
+    protected Path() {
+
+    }
+
+    Path(String str) {
+        setPathString(str)
+    }
+
+
     void setPathString(String pathString) {
         this.pathString = pathString
         nodes = pathString?.split(/\|/)?.collect {PathNode.from(it)}
