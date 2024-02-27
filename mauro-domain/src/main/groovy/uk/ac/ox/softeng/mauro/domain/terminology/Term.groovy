@@ -10,7 +10,6 @@ import io.micronaut.data.annotation.Index
 import io.micronaut.data.annotation.Indexes
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Relation
-import jakarta.persistence.ManyToMany
 import jakarta.persistence.Transient
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Pattern
@@ -71,9 +70,8 @@ class Term extends ModelItem<Terminology> {
         [sourceTermRelationships, targetTermRelationships]
     }
 
-    @Nullable
-    @ManyToMany(mappedBy = "terms")
-    List<CodeSet> codeSets = []
+    @Relation(value = Relation.Kind.MANY_TO_MANY, mappedBy = 'terms')
+    Set<CodeSet> codeSets = []
 
     @Override
     @Transient
@@ -101,6 +99,16 @@ class Term extends ModelItem<Terminology> {
     @JsonIgnore
     String getPathIdentifier() {
         code
+    }
+
+    @Transient
+    @JsonIgnore
+    Term setAssociations() {
+        Map<UUID, CodeSet> codeSetsMap = codeSets.collectEntries {[it.id, it]}
+        codeSets.each {
+            it.parent = this
+        }
+        this
     }
 
     /****
@@ -134,5 +142,20 @@ class Term extends ModelItem<Terminology> {
 
     Integer depth(Integer depth) {
         this.depth = depth
+    }
+
+    @Override
+    String toString() {
+        return "Term{" +
+                "terminology=" + terminology +
+                ", code='" + code + '\'' +
+                ", definition='" + definition + '\'' +
+                ", url='" + url + '\'' +
+                ", isParent=" + isParent +
+                ", depth=" + depth +
+                ", sourceTermRelationships=" + sourceTermRelationships +
+                ", targetTermRelationships=" + targetTermRelationships +
+                ", codeSets=" + codeSets +
+                '}';
     }
 }
