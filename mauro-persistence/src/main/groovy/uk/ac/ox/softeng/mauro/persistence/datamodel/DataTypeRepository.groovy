@@ -4,50 +4,59 @@ import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
 
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
+import uk.ac.ox.softeng.mauro.persistence.datamodel.dto.DataTypeDTORepository
 import uk.ac.ox.softeng.mauro.persistence.model.ModelItemRepository
 
-import io.micronaut.core.annotation.NonNull
-import io.micronaut.data.annotation.Join
+import io.micronaut.core.annotation.Nullable
+import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.model.query.builder.sql.Dialect
-import io.micronaut.data.r2dbc.annotation.R2dbcRepository
-
-import io.micronaut.data.repository.reactive.ReactorPageableRepository
-import jakarta.validation.Valid
-import reactor.core.publisher.Flux
-import reactor.core.publisher.Mono
+import jakarta.inject.Inject
 
 
-@R2dbcRepository(dialect = Dialect.POSTGRES)
-abstract class DataTypeRepository implements ReactorPageableRepository<DataType, UUID>, ModelItemRepository<DataType> {
+@JdbcRepository(dialect = Dialect.POSTGRES)
+abstract class DataTypeRepository implements ModelItemRepository<DataType> {
 
-    @Join(value = 'enumerationValues', type = Join.Type.LEFT_FETCH)
-    abstract Mono<DataType> findByDataModelIdAndId(UUID dataModelId, UUID id)
-
-    @Join(value = 'enumerationValues', type = Join.Type.LEFT_FETCH)
-    abstract Mono<DataType> readByDataModelIdAndId(UUID dataModelId, UUID id)
-
-    abstract Mono<Boolean> existsByDataModelIdAndId(UUID dataModelId, UUID id)
-
-    abstract Mono<Long> deleteByDataModelId(UUID dataModelId)
-
-    abstract Flux<DataType> readAllByDataModel(DataModel dataModel)
-
-    abstract Mono<DataType> save(@Valid @NonNull DataType item)
+    @Inject
+    DataTypeDTORepository dataTypeDTORepository
 
     @Override
-    Flux<DataType> readAllByParent(AdministeredItem parent) {
+    @Nullable
+    DataType findById(UUID id) {
+        log.debug 'DataTypeRepository::findById'
+        dataTypeDTORepository.findById(id) as DataType
+    }
+
+    @Nullable
+    List<DataType> findAllByDataModel(DataModel dataModel) {
+        dataTypeDTORepository.findAllByDataModel(dataModel) as List<DataType>
+    }
+
+    @Override
+    @Nullable
+    List<DataType> findAllByParent(AdministeredItem parent) {
+        findAllByDataModel((DataModel) parent)
+    }
+
+    @Nullable
+    abstract List<DataType> readAllByDataModel(DataModel dataModel)
+
+    @Override
+    @Nullable
+    List<DataType> readAllByParent(AdministeredItem parent) {
         readAllByDataModel((DataModel) parent)
     }
 
-    @Override
-    Mono<Long> deleteByOwnerId(UUID ownerId) {
+    abstract Long deleteByDataModelId(UUID dataModelId)
+
+    //    @Override
+    Long deleteByOwnerId(UUID ownerId) {
         deleteByDataModelId(ownerId)
     }
 
-
     @Override
-    Boolean handles(Class clazz) {
-        clazz == DataType
+    Class getDomainClass() {
+        DataType
     }
+
 
 }

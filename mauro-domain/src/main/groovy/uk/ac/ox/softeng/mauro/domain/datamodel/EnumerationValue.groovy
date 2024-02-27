@@ -60,8 +60,8 @@ class EnumerationValue extends ModelItem<DataModel> {
     @Override
     @Transient
     @JsonIgnore
-    void setParent(AdministeredItem dataType) {
-        this.enumerationType = (DataType) dataType
+    void setParent(AdministeredItem dataModel) {
+        //this.enumerationType = (DataModel) dataModel
     }
 
     @Override

@@ -1,5 +1,14 @@
 package uk.ac.ox.softeng.mauro.persistence.cache
 
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataElement
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
+import uk.ac.ox.softeng.mauro.domain.datamodel.EnumerationValue
+import uk.ac.ox.softeng.mauro.persistence.datamodel.DataClassRepository
+import uk.ac.ox.softeng.mauro.persistence.datamodel.DataElementRepository
+import uk.ac.ox.softeng.mauro.persistence.datamodel.DataTypeRepository
+import uk.ac.ox.softeng.mauro.persistence.datamodel.EnumerationValueRepository
+
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.cache.annotation.CacheConfig
@@ -118,4 +127,48 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
             super(termRelationshipTypeRepository)
         }
     }
+
+    @Bean
+    @CompileStatic
+    static class DataClassCacheableRepository extends AdministeredItemCacheableRepository<DataClass> {
+        DataClassCacheableRepository(DataClassRepository dataClassRepository) {
+            super(dataClassRepository)
+        }
+
+        // not cached
+        List<DataClass> readAllByParentDataClass_Id(UUID parentDataClassId) {
+            ((DataClassRepository) repository).readAllByParentDataClass_Id(parentDataClassId)
+        }
+    }
+
+    @Bean
+    @CompileStatic
+    static class DataElementCacheableRepository extends AdministeredItemCacheableRepository<DataElement> {
+        DataElementCacheableRepository(DataElementRepository dataElementRepository) {
+            super(dataElementRepository)
+        }
+    }
+
+    @Bean
+    @CompileStatic
+    static class DataTypeCacheableRepository extends AdministeredItemCacheableRepository<DataType> {
+        DataTypeCacheableRepository(DataTypeRepository dataTypeRepository) {
+            super(dataTypeRepository)
+        }
+    }
+
+    @Bean
+    @CompileStatic
+    static class EnumerationValueCacheableRepository extends AdministeredItemCacheableRepository<EnumerationValue> {
+        EnumerationValueCacheableRepository(EnumerationValueRepository enumerationValueRepository) {
+            super(enumerationValueRepository)
+        }
+
+        // not cached
+        List<EnumerationValue> readAllByEnumerationType_Id(UUID enumerationTypeId) {
+            ((EnumerationValueRepository) repository).readAllByEnumerationType_Id(enumerationTypeId)
+        }
+
+    }
+
 }

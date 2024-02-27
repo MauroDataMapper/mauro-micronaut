@@ -132,14 +132,13 @@ abstract class AdministeredItem extends Item {
      */
     Path updatePath() {
         if (!pathPrefix) throw new MauroInternalException("Class [${this.class.simpleName}] is not Pathable")
-        final int pathLimit = 256
         List<Path.PathNode> pathNodes = []
         int i = 0
         AdministeredItem node = this
-        while (node && i < pathLimit) {
+        while (node) {
             pathNodes.add(0, new Path.PathNode(prefix: node.pathPrefix, identifier: node.pathIdentifier, modelIdentifier: node.pathModelIdentifier))
             i++; node = node.parent
-            if (i >= pathLimit) throw new MauroInternalException("Path exceeded maximum depth of [$pathLimit]")
+            if (i > Path.PATH_MAX_NODES) throw new MauroInternalException("Path exceeded maximum depth of [$Path.PATH_MAX_NODES]")
         }
 
         path = new Path()
