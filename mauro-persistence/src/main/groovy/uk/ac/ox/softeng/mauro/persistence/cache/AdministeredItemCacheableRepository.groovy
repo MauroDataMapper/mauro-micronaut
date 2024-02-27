@@ -5,8 +5,8 @@ import groovy.util.logging.Slf4j
 import io.micronaut.cache.annotation.CacheConfig
 import io.micronaut.cache.annotation.CacheInvalidate
 import io.micronaut.cache.annotation.Cacheable
-import io.micronaut.context.annotation.Bean
 import io.micronaut.core.annotation.Nullable
+import jakarta.inject.Singleton
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.terminology.Term
 import uk.ac.ox.softeng.mauro.domain.terminology.TermRelationship
@@ -76,8 +76,8 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
 
     // Cacheable Administered Item Repository definitions
 
-    @Bean
     @CompileStatic
+    @Singleton
     static class TermCacheableRepository extends AdministeredItemCacheableRepository<Term> {
         TermCacheableRepository(TermRepository termRepository) {
             super(termRepository)
@@ -89,16 +89,30 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
         }
     }
 
-    @Bean
     @CompileStatic
+    @Singleton
     static class TermRelationshipCacheableRepository extends AdministeredItemCacheableRepository<TermRelationship> {
         TermRelationshipCacheableRepository(TermRelationshipRepository termRelationshipRepository) {
             super(termRelationshipRepository)
         }
+
+        // not cached
+
+        List<TermRelationship> readAllBySourceTerm(Term sourceTerm) {
+            ((TermRelationshipRepository) repository).readAllBySourceTerm(sourceTerm)
+        }
+
+        List<TermRelationship> readAllByTargetTerm(Term targetTerm) {
+            ((TermRelationshipRepository) repository).readAllByTargetTerm(targetTerm)
+        }
+
+        List<TermRelationship> readAllByRelationshipType(TermRelationshipType relationshipType) {
+            ((TermRelationshipRepository) repository).readAllByRelationshipType(relationshipType)
+        }
     }
 
-    @Bean
     @CompileStatic
+    @Singleton
     static class TermRelationshipTypeCacheableRepository extends AdministeredItemCacheableRepository<TermRelationshipType> {
         TermRelationshipTypeCacheableRepository(TermRelationshipTypeRepository termRelationshipTypeRepository) {
             super(termRelationshipTypeRepository)

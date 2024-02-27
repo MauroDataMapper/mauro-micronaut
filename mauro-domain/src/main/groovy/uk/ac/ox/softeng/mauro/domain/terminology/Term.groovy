@@ -1,8 +1,5 @@
 package uk.ac.ox.softeng.mauro.domain.terminology
 
-import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
-import uk.ac.ox.softeng.mauro.domain.model.ModelItem
-
 import com.fasterxml.jackson.annotation.JsonIgnore
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
@@ -16,6 +13,8 @@ import io.micronaut.data.annotation.Relation
 import jakarta.persistence.Transient
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Pattern
+import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
+import uk.ac.ox.softeng.mauro.domain.model.ModelItem
 
 /**
  * A term describes a value with a code and a meaning, within the context of a terminology.
@@ -59,13 +58,17 @@ class Term extends ModelItem<Terminology> {
     @Nullable
     Integer depth
 
-    @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'terminology')
-    @Nullable
+    @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'sourceTerm')
     List<TermRelationship> sourceTermRelationships = []
 
-    @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'terminology')
-    @Nullable
+    @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'targetTerm')
     List<TermRelationship> targetTermRelationships = []
+
+    @Transient
+    @JsonIgnore
+    List<List<TermRelationship>> getAllAssociations() {
+        [sourceTermRelationships, targetTermRelationships]
+    }
 
     @Override
     @Transient

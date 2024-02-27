@@ -2,16 +2,20 @@ package uk.ac.ox.softeng.mauro.persistence.model
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
-import io.micronaut.context.annotation.Bean
 import io.micronaut.core.annotation.NonNull
+import jakarta.inject.Singleton
 import uk.ac.ox.softeng.mauro.domain.facet.Metadata
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.model.Model
 
 @Slf4j
 @CompileStatic
-@Bean
+@Singleton
 class ModelContentRepository<M extends Model> extends AdministeredItemContentRepository {
+
+    M findWithContentById(UUID id) {
+        (M) administeredItemRepository.findById(id)
+    }
 
     M saveWithContent(@NonNull M model) {
         List<List<AdministeredItem>> associations = model.getAllAssociations()
