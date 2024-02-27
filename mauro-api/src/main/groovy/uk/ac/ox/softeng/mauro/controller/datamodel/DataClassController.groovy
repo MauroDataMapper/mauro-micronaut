@@ -7,6 +7,8 @@ import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.terminology.Term
 import uk.ac.ox.softeng.mauro.domain.terminology.TermRelationshipType
 import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
+import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository.DataClassCacheableRepository
+import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.DataModelCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.datamodel.DataClassRepository
 import uk.ac.ox.softeng.mauro.persistence.datamodel.DataModelRepository
 import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemContentRepository
@@ -32,79 +34,70 @@ import java.util.function.BiFunction
 @Controller('/dataModels/{dataModelId}/dataClasses')
 class DataClassController extends AdministeredItemController<DataClass, DataModel> {
 
-    DataClassRepository dataClassRepository
+    DataClassCacheableRepository dataClassRepository
 
     @Inject
-    DataModelRepository dataModelRepository
+    DataModelCacheableRepository dataModelRepository
 
-    DataClassController(DataClassRepository dataClassRepository, DataModelRepository dataModelRepository, AdministeredItemContentRepository<DataClass> administeredItemContentRepository) {
+    DataClassController(DataClassCacheableRepository dataClassRepository, DataModelCacheableRepository dataModelRepository, AdministeredItemContentRepository<DataClass> administeredItemContentRepository) {
         super(DataClass, dataClassRepository, dataModelRepository, administeredItemContentRepository)
         this.dataClassRepository = dataClassRepository
     }
 
     @Get('/{id}')
-    Mono<DataClass> show(UUID dataModelId, UUID id) {
-        super.show(dataModelId, id)
+    DataClass show(UUID dataModelId, UUID id) {
+        super.show(id)
     }
 
     @Post
-    Mono<DataClass> create(UUID dataModelId, @Body @NonNull DataClass dataClass) {
-        return super.create(dataModelId, dataClass)
+    DataClass create(UUID dataModelId, @Body @NonNull DataClass dataClass) {
+        super.create(dataModelId, dataClass)
     }
 
     @Put('/{id}')
-    Mono<DataClass> update(UUID dataModelId, UUID id, @Body @NonNull DataClass dataClass) {
-        super.update(dataModelId, id, dataClass)
+    DataClass update(UUID dataModelId, UUID id, @Body @NonNull DataClass dataClass) {
+        super.update(id, dataClass)
     }
 
     @Delete('/{id}')
-    Mono<HttpStatus> delete(UUID dataModelId, UUID id, @Body @Nullable DataClass dataClass) {
-        super.delete(dataModelId, id, dataClass)
+    HttpStatus delete(UUID dataModelId, UUID id, @Body @Nullable DataClass dataClass) {
+        super.delete(id, dataClass)
     }
 
     @Get
-    Mono<ListResponse<DataClass>> list(UUID dataModelId) {
+    ListResponse<DataClass> list(UUID dataModelId) {
         super.list(dataModelId)
     }
 
     @Get('/{parentDataClassId}/dataClasses/{id}')
-    Mono<DataClass> show(UUID dataModelId, UUID parentDataClassId, UUID id) {
-        super.show(dataModelId, id)
+    DataClass show(UUID dataModelId, UUID parentDataClassId, UUID id) {
+        super.show(id)
     }
 
     @Post('/{parentDataClassId}/dataClasses')
-    Mono<DataClass> create(UUID dataModelId, UUID parentDataClassId, @Body @NonNull DataClass dataClass) {
+    DataClass create(UUID dataModelId, UUID parentDataClassId, @Body @NonNull DataClass dataClass) {
 
         cleanBody(dataClass)
-        Mono.zip(dataModelRepository.readById(dataModelId),
-            dataClassRepository.readByDataModelIdAndId(dataModelId, parentDataClassId)).flatMap {
-            Tuple2 <DataModel, DataClass> tuple2 ->
-                DataModel dataModel = tuple2.getT1()
-                dataClass.parentDataClass = tuple2.getT2()
-                createEntity(dataModel, dataClass)
-        }
-
-
+        DataModel dataModel = dataModelRepository.readById(dataModelId)
+        DataClass parentDataClass = dataClassRepository.readById(parentDataClassId)
+        dataClass.parentDataClass = parentDataClass
+        createEntity(dataModel, dataClass)
+        return dataClass
     }
 
     @Put('/{parentDataClassId}/dataClasses/{id}')
-    Mono<DataClass> update(UUID dataModelId, UUID parentDataClassId, UUID id, @Body @NonNull DataClass dataClass) {
-        super.update(dataModelId, id, dataClass)
+    DataClass update(UUID dataModelId, UUID parentDataClassId, UUID id, @Body @NonNull DataClass dataClass) {
+        super.update(id, dataClass)
     }
 
     @Delete('/{parentDataClassId}/dataClasses/{id}')
-    Mono<HttpStatus> delete(UUID dataModelId, UUID parentDataClassId, UUID id, @Body @Nullable DataClass dataClass) {
-        super.delete(dataModelId, id, dataClass)
+    HttpStatus delete(UUID dataModelId, UUID parentDataClassId, UUID id, @Body @Nullable DataClass dataClass) {
+        super.delete(id, dataClass)
     }
 
     @Get('/{parentDataClassId}/dataClasses')
-    Mono<ListResponse<DataClass>> list(UUID dataModelId, UUID parentDataClassId) {
-        dataClassRepository.readAllByDataModelIdAndParentDataClassId(dataModelId, parentDataClassId).flatMap {DataClass item ->
-            Mono.zip(Mono.just(item), pathRepository.readParentItems(item), (BiFunction<DataClass, List<AdministeredItem>, DataClass>) {it, _ -> it})
-        }.collectList().map {List<DataClass> items ->
-            items.each {((AdministeredItem) it).updatePath()}
-            ListResponse.from(items)
-        }
+    ListResponse<DataClass> list(UUID dataModelId, UUID parentDataClassId) {
+        ListResponse.from(dataClassRepository.readAllByParentDataClass_Id(parentDataClassId))
 
     }
 

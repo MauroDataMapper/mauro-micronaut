@@ -4,45 +4,70 @@ import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataElement
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
+import uk.ac.ox.softeng.mauro.domain.terminology.Term
+import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
+import uk.ac.ox.softeng.mauro.persistence.datamodel.dto.DataElementDTORepository
 import uk.ac.ox.softeng.mauro.persistence.model.ModelItemRepository
+import uk.ac.ox.softeng.mauro.persistence.terminology.dto.TermDTORepository
 
+import groovy.transform.CompileStatic
+import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
+import io.micronaut.core.annotation.Nullable
+import io.micronaut.data.annotation.Query
+import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.model.query.builder.sql.Dialect
-import io.micronaut.data.r2dbc.annotation.R2dbcRepository
 import io.micronaut.data.repository.reactive.ReactorPageableRepository
+import jakarta.inject.Inject
 import jakarta.validation.Valid
-import reactor.core.publisher.Flux
-import reactor.core.publisher.Mono
 
-@R2dbcRepository(dialect = Dialect.POSTGRES)
+@Slf4j
+@CompileStatic
+@JdbcRepository(dialect = Dialect.POSTGRES)
+abstract class DataElementRepository implements ModelItemRepository<DataElement> {
 
-abstract class DataElementRepository implements ReactorPageableRepository<DataElement, UUID>, ModelItemRepository<DataElement> {
-    abstract Mono<DataElement> findByDataClassIdAndId(UUID dataClassId, UUID id)
-
-    abstract Mono<DataElement> readByDataClassIdAndId(UUID dataClassId, UUID id)
-
-    abstract Mono<Boolean> existsByDataClassIdAndId(UUID dataClassId, UUID id)
-
-    abstract Mono<Long> deleteByDataClassId(UUID dataClassId)
-
-    abstract Flux<DataElement> readAllByDataClass(DataClass dataClass)
-
-    abstract Mono<DataElement> save(@Valid @NonNull DataElement item)
+    @Inject
+    DataElementDTORepository dataElementDTORepository
 
     @Override
-    Flux<DataElement> readAllByParent(AdministeredItem parent) {
+    @Nullable
+    DataElement findById(UUID id) {
+        log.debug 'DataElementRepository::findById'
+        dataElementDTORepository.findById(id) as DataElement
+    }
+
+    @Nullable
+    List<DataElement> findAllByDataClass(DataClass dataClass) {
+        dataElementDTORepository.findAllByDataClass(dataClass) as List<DataElement>
+    }
+
+    @Override
+    @Nullable
+    List<DataElement> findAllByParent(AdministeredItem parent) {
+        findAllByDataClass((DataClass) parent)
+    }
+
+    @Nullable
+    abstract List<DataElement> findAllByDataClassIn(Collection<DataClass> dataClasses)
+
+    @Nullable
+    abstract List<DataElement> readAllByDataClass(DataClass dataClass)
+
+    @Override
+    @Nullable
+    List<DataElement> readAllByParent(AdministeredItem parent) {
         readAllByDataClass((DataClass) parent)
     }
 
-    @Override
-    Mono<Long> deleteByOwnerId(UUID ownerId) {
+    abstract Long deleteByDataClassId(UUID dataClassId)
+
+    //    @Override
+    Long deleteByOwnerId(UUID ownerId) {
         deleteByDataClassId(ownerId)
     }
 
-
     @Override
-    Boolean handles(Class clazz) {
-        clazz == DataElement
+    Class getDomainClass() {
+        DataElement
     }
-
 }

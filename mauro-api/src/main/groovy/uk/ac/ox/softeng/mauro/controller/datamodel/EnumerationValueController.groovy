@@ -1,8 +1,13 @@
 package uk.ac.ox.softeng.mauro.controller.datamodel
 
 import uk.ac.ox.softeng.mauro.controller.model.AdministeredItemController
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
 import uk.ac.ox.softeng.mauro.domain.datamodel.EnumerationValue
+import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository.DataTypeCacheableRepository
+import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository.EnumerationValueCacheableRepository
+import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.DataModelCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.datamodel.DataTypeRepository
 import uk.ac.ox.softeng.mauro.persistence.datamodel.EnumerationValueRepository
 import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemContentRepository
@@ -23,41 +28,51 @@ import reactor.core.publisher.Mono
 
 @CompileStatic
 @Controller('/dataModels/{dataModelId}/dataTypes/{enumerationTypeId}/enumerationValues')
-class EnumerationValueController extends AdministeredItemController<EnumerationValue, DataType> {
+class EnumerationValueController extends AdministeredItemController<EnumerationValue, DataModel> {
 
     @Inject
-    DataTypeRepository dataTypeRepository
+    DataTypeCacheableRepository dataTypeRepository
 
-    EnumerationValueRepository enumerationValueRepository
+    @Inject
+    DataModelCacheableRepository dataModelRepository
 
-    EnumerationValueController(EnumerationValueRepository enumerationValueRepository, DataTypeRepository dataTypeRepository, AdministeredItemContentRepository<EnumerationValue> administeredItemContentRepository) {
-        super(EnumerationValue, enumerationValueRepository, dataTypeRepository, administeredItemContentRepository)
+    EnumerationValueCacheableRepository enumerationValueRepository
+
+    EnumerationValueController(EnumerationValueCacheableRepository enumerationValueRepository, DataModelCacheableRepository dataModelRepository, AdministeredItemContentRepository<EnumerationValue> administeredItemContentRepository) {
+        super(EnumerationValue, enumerationValueRepository, dataModelRepository, administeredItemContentRepository)
         this.enumerationValueRepository = enumerationValueRepository
     }
 
     @Get('/{id}')
-    Mono<EnumerationValue> show(UUID dataModelId, UUID enumerationTypeId, UUID id) {
-        super.show(enumerationTypeId, id)
+    EnumerationValue show(UUID dataModelId, UUID enumerationTypeId, UUID id) {
+        super.show(id)
     }
 
     @Post
-    Mono<EnumerationValue> create(UUID dataModelId, UUID enumerationTypeId, @Body @NonNull EnumerationValue enumerationValue) {
-        return super.create(enumerationTypeId, enumerationValue)
+    EnumerationValue create(UUID dataModelId, UUID enumerationTypeId, @Body @NonNull EnumerationValue enumerationValue) {
+
+        cleanBody(enumerationValue)
+        DataModel dataModel = dataModelRepository.readById(dataModelId)
+        DataType dataType = dataTypeRepository.readById(enumerationTypeId)
+        enumerationValue.enumerationType = dataType
+        createEntity(dataModel, enumerationValue)
+        return enumerationValue
     }
 
     @Put('/{id}')
-    Mono<EnumerationValue> update(UUID dataModelId, UUID enumerationTypeId, UUID id, @Body @NonNull EnumerationValue enumerationValue) {
-        super.update(enumerationTypeId, id, enumerationValue)
+    EnumerationValue update(UUID dataModelId, UUID enumerationTypeId, UUID id, @Body @NonNull EnumerationValue enumerationValue) {
+        super.update(id, enumerationValue)
     }
 
     @Delete('/{id}')
-    Mono<HttpStatus> delete(UUID dataModelId, UUID enumerationTypeId, UUID id, @Body @Nullable EnumerationValue enumerationValue) {
-        super.delete(enumerationTypeId, id, enumerationValue)
+    HttpStatus delete(UUID dataModelId, UUID enumerationTypeId, UUID id, @Body @Nullable EnumerationValue enumerationValue) {
+        super.delete(id, enumerationValue)
     }
 
     @Get
-    Mono<ListResponse<EnumerationValue>> list(UUID dataModelId, UUID enumerationTypeId) {
-        super.list(enumerationTypeId)
+    ListResponse<EnumerationValue> list(UUID dataModelId, UUID enumerationTypeId) {
+        ListResponse.from(enumerationValueRepository.readAllByEnumerationType_Id(enumerationTypeId))
+
     }
 
 }

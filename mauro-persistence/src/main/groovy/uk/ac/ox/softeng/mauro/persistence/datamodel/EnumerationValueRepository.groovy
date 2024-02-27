@@ -1,48 +1,65 @@
 package uk.ac.ox.softeng.mauro.persistence.datamodel
 
-import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
 import uk.ac.ox.softeng.mauro.domain.datamodel.EnumerationValue
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
+import uk.ac.ox.softeng.mauro.persistence.datamodel.dto.EnumerationValueDTORepository
 import uk.ac.ox.softeng.mauro.persistence.model.ModelItemRepository
 
-import io.micronaut.core.annotation.NonNull
+import groovy.transform.CompileStatic
+import groovy.util.logging.Slf4j
+import io.micronaut.core.annotation.Nullable
+import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.model.query.builder.sql.Dialect
-import io.micronaut.data.r2dbc.annotation.R2dbcRepository
-import io.micronaut.data.repository.reactive.ReactorPageableRepository
-import jakarta.validation.Valid
-import reactor.core.publisher.Flux
-import reactor.core.publisher.Mono
+import jakarta.inject.Inject
 
-@R2dbcRepository(dialect = Dialect.POSTGRES)
-abstract class EnumerationValueRepository implements ReactorPageableRepository<EnumerationValue, UUID>, ModelItemRepository<EnumerationValue> {
+@Slf4j
+@CompileStatic
+@JdbcRepository(dialect = Dialect.POSTGRES)
+abstract class EnumerationValueRepository implements ModelItemRepository<EnumerationValue> {
 
-    abstract Mono<EnumerationValue> findByEnumerationTypeIdAndId(UUID enumerationTypeId, UUID id)
-
-    abstract Mono<EnumerationValue> readByEnumerationTypeIdAndId(UUID enumerationTypeId, UUID id)
-
-    abstract Mono<Boolean> existsByEnumerationTypeIdAndId(UUID enumerationTypeId, UUID id)
-
-    abstract Mono<Long> deleteByEnumerationTypeId(UUID enumerationTypeId)
-
-    abstract Flux<EnumerationValue> readAllByEnumerationType(DataType dataType)
-
-    abstract Mono<EnumerationValue> save(@Valid @NonNull EnumerationValue item)
+    @Inject
+    EnumerationValueDTORepository enumerationValueDTORepository
 
     @Override
-    Flux<EnumerationValue> readAllByParent(AdministeredItem parent) {
+    @Nullable
+    EnumerationValue findById(UUID id) {
+        log.debug 'EnumerationValueRepository::findById'
+        enumerationValueDTORepository.findById(id) as EnumerationValue
+    }
+
+    @Nullable
+    List<EnumerationValue> findAllByEnumerationType(DataType dataType) {
+        enumerationValueDTORepository.findAllByEnumerationType(dataType) as List<EnumerationValue>
+    }
+
+    @Override
+    @Nullable
+    List<EnumerationValue> findAllByParent(AdministeredItem parent) {
+        findAllByEnumerationType((DataType) parent)
+    }
+
+    @Nullable
+    abstract List<EnumerationValue> readAllByEnumerationType(DataType dataType)
+
+    @Override
+    @Nullable
+    List<EnumerationValue> readAllByParent(AdministeredItem parent) {
         readAllByEnumerationType((DataType) parent)
     }
 
-    @Override
-    Mono<Long> deleteByOwnerId(UUID ownerId) {
+    abstract Long deleteByEnumerationTypeId(UUID dataTypeId)
+
+    //    @Override
+    Long deleteByOwnerId(UUID ownerId) {
         deleteByEnumerationTypeId(ownerId)
     }
 
-
     @Override
-    Boolean handles(Class clazz) {
-        clazz == EnumerationValue
+    Class getDomainClass() {
+        EnumerationValue
     }
 
+
+    abstract List<EnumerationValue> readAllByEnumerationType_Id(UUID enumerationTypeId)
 }

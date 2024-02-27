@@ -50,6 +50,11 @@ dependencies {
     compileOnly("io.micronaut.security:micronaut-security-annotations")
 //    implementation("io.micrometer:context-propagation")
 
+    testRuntimeOnly("org.testcontainers:testcontainers")
+    testRuntimeOnly("org.testcontainers:postgresql")
+    testRuntimeOnly("org.postgresql:postgresql")
+
+
     implementation group: 'org.apache.commons', name: 'commons-rng-simple', version: '1.5'
     implementation group: 'org.apache.commons', name: 'commons-text', version: '1.10.0'
 

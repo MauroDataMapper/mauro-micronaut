@@ -1,6 +1,5 @@
 package uk.ac.ox.softeng.mauro.persistence.datamodel.dto
 
-import uk.ac.ox.softeng.mauro.domain.datamodel.DataElement
 import uk.ac.ox.softeng.mauro.domain.datamodel.EnumerationValue
 import uk.ac.ox.softeng.mauro.domain.facet.Metadata
 import uk.ac.ox.softeng.mauro.persistence.model.dto.AdministeredItemDTO

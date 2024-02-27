@@ -49,6 +49,10 @@ endpoints:
   flyway:
     enabled: true
     sensitive: false
+  caches:
+    enabled: true
+    sensitive: false
+
 jackson:
   serialization:
     writeDatesAsTimestamps: false
@@ -84,3 +88,4 @@ flyway:
         - core
         - terminology
         - datamodel
+        - security
