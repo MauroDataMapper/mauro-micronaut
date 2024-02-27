@@ -5,7 +5,7 @@ import groovy.util.logging.Slf4j
 import io.micronaut.cache.annotation.CacheConfig
 import io.micronaut.cache.annotation.CacheInvalidate
 import io.micronaut.cache.annotation.Cacheable
-import io.micronaut.context.annotation.Bean
+import jakarta.inject.Singleton
 import uk.ac.ox.softeng.mauro.domain.model.Item
 import uk.ac.ox.softeng.mauro.domain.security.CatalogueUser
 import uk.ac.ox.softeng.mauro.persistence.model.ItemRepository
@@ -99,7 +99,7 @@ abstract class ItemCacheableRepository<I extends Item> implements ItemRepository
 
     // Cacheable Item Repository definitions
 
-    @Bean
+    @Singleton
     @CompileStatic
     static class CatalogueUserCacheableRepository extends ItemCacheableRepository<CatalogueUser> {
         CatalogueUserCacheableRepository(CatalogueUserRepository catalogueUserRepository) {

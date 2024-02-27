@@ -14,11 +14,13 @@ abstract class TermRelationshipDTORepository implements GenericRepository<TermRe
 
     @Join(value = 'sourceTerm', type = Join.Type.LEFT_FETCH)
     @Join(value = 'targetTerm', type = Join.Type.LEFT_FETCH)
+    @Join(value = 'relationshipType', type = Join.Type.LEFT_FETCH)
     @Nullable
     abstract TermRelationshipDTO findById(UUID id)
 
     @Join(value = 'sourceTerm', type = Join.Type.LEFT_FETCH)
     @Join(value = 'targetTerm', type = Join.Type.LEFT_FETCH)
+    @Join(value = 'relationshipType', type = Join.Type.LEFT_FETCH)
     @Nullable
     abstract List<TermRelationshipDTO> findAllByTerminology(Terminology terminology)
 }

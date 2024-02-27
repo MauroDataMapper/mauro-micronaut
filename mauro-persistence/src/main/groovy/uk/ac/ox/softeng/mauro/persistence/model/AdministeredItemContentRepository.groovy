@@ -1,16 +1,16 @@
 package uk.ac.ox.softeng.mauro.persistence.model
 
 import groovy.transform.CompileStatic
-import io.micronaut.context.annotation.Bean
 import io.micronaut.core.annotation.NonNull
 import jakarta.inject.Inject
+import jakarta.inject.Singleton
 import uk.ac.ox.softeng.mauro.domain.facet.Metadata
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.facet.MetadataRepository
 
-@Bean
 @CompileStatic
+@Singleton
 class AdministeredItemContentRepository {
 
     @Inject
@@ -22,17 +22,12 @@ class AdministeredItemContentRepository {
     AdministeredItemCacheableRepository administeredItemRepository
 
     /**
-     * Read AdministeredItem with all child Contents.
+     * Read AdministeredItem with all Contents.
+     *
+     * Contents includes Child and in some cases Sibling relationships.
      */
     AdministeredItem readWithContentById(UUID id) {
         administeredItemRepository.readById(id)
-    }
-
-    /**
-     * Find AdministeredItem with all child Contents and Facets.
-     */
-    AdministeredItem findWithContentById(UUID id) {
-        administeredItemRepository.findById(id)
     }
 
     /**

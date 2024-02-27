@@ -1,10 +1,5 @@
 package uk.ac.ox.softeng.mauro.domain.terminology
 
-
-import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
-import uk.ac.ox.softeng.mauro.domain.model.Model
-import uk.ac.ox.softeng.mauro.domain.model.ModelItem
-
 import com.fasterxml.jackson.annotation.JsonIdentityInfo
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonPropertyOrder
@@ -19,6 +14,8 @@ import io.micronaut.data.annotation.Indexes
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Relation
 import jakarta.persistence.Transient
+import uk.ac.ox.softeng.mauro.domain.model.Model
+import uk.ac.ox.softeng.mauro.domain.model.ModelItem
 
 /**
  * A Terminology is a model that describes a number of terms, and some relationships between them.
@@ -53,8 +50,8 @@ class Terminology extends Model {
 
     @Transient
     @JsonIgnore
-    List<List<? extends ModelItem<Terminology>>> getAllAssociations() {
-        [terms, termRelationshipTypes, termRelationships]
+    List<List<ModelItem<Terminology>>> getAllAssociations() {
+        [terms, termRelationshipTypes, termRelationships] as List<List<ModelItem<Terminology>>>
     }
 
     @Transient

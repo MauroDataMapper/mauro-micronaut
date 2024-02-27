@@ -3,7 +3,7 @@ package uk.ac.ox.softeng.mauro.persistence.cache
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.cache.annotation.CacheConfig
-import io.micronaut.context.annotation.Bean
+import jakarta.inject.Singleton
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.domain.model.Model
 import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
@@ -36,16 +36,16 @@ class ModelCacheableRepository<M extends Model> extends AdministeredItemCacheabl
 
     // Cacheable Model Repository definitions
 
-    @Bean
     @CompileStatic
+    @Singleton
     static class TerminologyCacheableRepository extends ModelCacheableRepository<Terminology> {
         TerminologyCacheableRepository(TerminologyRepository terminologyRepository) {
             super(terminologyRepository)
         }
     }
 
-    @Bean
     @CompileStatic
+    @Singleton
     static class FolderCacheableRepository extends ModelCacheableRepository<Folder> {
         FolderCacheableRepository(FolderRepository folderRepository) {
             super(folderRepository)

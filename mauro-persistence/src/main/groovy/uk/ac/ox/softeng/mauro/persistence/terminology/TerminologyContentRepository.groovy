@@ -1,8 +1,8 @@
 package uk.ac.ox.softeng.mauro.persistence.terminology
 
 import groovy.transform.CompileStatic
-import io.micronaut.context.annotation.Bean
 import jakarta.inject.Inject
+import jakarta.inject.Singleton
 import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
 import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository.TermCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository.TermRelationshipCacheableRepository
@@ -11,7 +11,7 @@ import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.Termino
 import uk.ac.ox.softeng.mauro.persistence.model.ModelContentRepository
 
 @CompileStatic
-@Bean
+@Singleton
 class TerminologyContentRepository extends ModelContentRepository<Terminology> {
 
     @Inject
