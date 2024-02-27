@@ -22,15 +22,12 @@ import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemRepository
 import uk.ac.ox.softeng.mauro.persistence.model.ModelContentRepository
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
-import java.net.http.HttpResponse
-
 @Slf4j
 @CompileStatic
 abstract class ModelController<M extends Model> extends AdministeredItemController<M, Folder> {
 
     @Override
     List<String> getDisallowedProperties() {
-        log.debug '***** ModelController::getDisallowedProperties *****'
         super.disallowedProperties +
         ['finalised', 'dateFinalised', 'readableByEveryone', 'readableByAuthenticatedUsers', 'modelType', 'deleted', 'folder', 'authority', 'branchName',
          'modelVersion', 'modelVersionTag']
@@ -95,7 +92,6 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     }
 
     HttpStatus delete(UUID id, @Body @Nullable M model) {
-        log.debug("deleting item: id : ${id}")
         model = show(id)
         if (model != null) {
             super.delete(id, model)

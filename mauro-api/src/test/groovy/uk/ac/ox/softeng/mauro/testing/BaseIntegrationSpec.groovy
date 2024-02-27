@@ -30,4 +30,8 @@ class BaseIntegrationSpec extends Specification {
     Map<String, Object> PUT(String uri, Map<String, Object> body) {
         client.toBlocking().retrieve(HttpRequest.PUT(uri, body), Map<String, Object>)
     }
+
+    Object PUT(URI uri, Map<String, Object> body) {
+        client.toBlocking().retrieve(HttpRequest.PUT(uri, body), Object.class)
+    }
 }

@@ -2,7 +2,6 @@ package uk.ac.ox.softeng.mauro.terminology
 
 import uk.ac.ox.softeng.mauro.testing.BaseIntegrationSpec
 
-import io.micronaut.core.type.Argument
 import io.micronaut.runtime.EmbeddedApplication
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
@@ -32,11 +31,11 @@ class TerminologyIntegrationSpec extends BaseIntegrationSpec {
     void 'test terminology'() {
         given:
         def response = POST('/folders', [label: 'Test folder'])
-        folderId = UUID.fromString(response.id)
+        folderId = UUID.fromString(response.id as String)
 
         when:
         response = POST("/folders/$folderId/terminologies", [label: 'Test terminology'])
-        terminologyId = UUID.fromString(response.id)
+        terminologyId = UUID.fromString(response.id as String)
 
         then:
         response
@@ -48,14 +47,14 @@ class TerminologyIntegrationSpec extends BaseIntegrationSpec {
         when:
 
         def response = POST("/terminologies/$terminologyId/terms", [code: 'TEST-1', definition: 'first term'])
-        termId1 = UUID.fromString(response.id)
+        termId1 = UUID.fromString(response.id as String)
 
         then:
         response.label == 'TEST-1: first term'
 
         when:
         response = POST("/terminologies/$terminologyId/terms", [code: 'TEST-2', definition: 'second term'])
-        termId2 = UUID.fromString(response.id)
+        termId2 = UUID.fromString(response.id as String)
 
         then:
         response.label == 'TEST-2: second term'
@@ -72,7 +71,7 @@ class TerminologyIntegrationSpec extends BaseIntegrationSpec {
     void 'test term relationship types'() {
         when:
         def response = POST("/terminologies/$terminologyId/termRelationshipTypes", [label: 'Test relationship type', childRelationship: true])
-        termRelationshipTypeId = UUID.fromString(response.id)
+        termRelationshipTypeId = UUID.fromString(response.id as String)
 
         then:
         response

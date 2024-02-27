@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.domain.terminology
 
+import groovy.util.logging.Slf4j
+import jakarta.persistence.FetchType
 import jakarta.persistence.ManyToMany
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.model.ModelItem
@@ -68,9 +70,9 @@ class Term extends ModelItem<Terminology> {
     @Nullable
     List<TermRelationship> targetTermRelationships = []
 
-    @Nullable
-    @ManyToMany( mappedBy = "terms")
-    List<CodeSet> codeSets = []
+    @Relation(value = Relation.Kind.MANY_TO_MANY, mappedBy = 'terms')
+    @ManyToMany(fetch = FetchType.EAGER)
+    Set<CodeSet> codeSets = []
 
     @Override
     @Transient
@@ -98,6 +100,16 @@ class Term extends ModelItem<Terminology> {
     @JsonIgnore
     String getPathIdentifier() {
         code
+    }
+
+    @Transient
+    @JsonIgnore
+    Term setAssociations() {
+        Map<UUID, CodeSet> codeSetsMap = codeSets.collectEntries {[it.id, it]}
+        codeSets.each {
+            it.parent = this
+        }
+        this
     }
 
     /****
@@ -131,5 +143,20 @@ class Term extends ModelItem<Terminology> {
 
     Integer depth(Integer depth) {
         this.depth = depth
+    }
+
+    @Override
+    String toString() {
+        return "Term{" +
+                "terminology=" + terminology +
+                ", code='" + code + '\'' +
+                ", definition='" + definition + '\'' +
+                ", url='" + url + '\'' +
+                ", isParent=" + isParent +
+                ", depth=" + depth +
+                ", sourceTermRelationships=" + sourceTermRelationships +
+                ", targetTermRelationships=" + targetTermRelationships +
+                ", codeSets=" + codeSets +
+                '}';
     }
 }
