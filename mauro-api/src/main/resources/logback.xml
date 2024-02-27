@@ -21,6 +21,6 @@
     <logger name="org.flywaydb" level="info" />
     <logger name="org.ehcache" level="info" />
 
-    <logger name="uk.ac.ox.softeng" level="debug" />
+    <logger name="uk.ac.ox.softeng.mauro" level="debug" />
 
 </configuration>

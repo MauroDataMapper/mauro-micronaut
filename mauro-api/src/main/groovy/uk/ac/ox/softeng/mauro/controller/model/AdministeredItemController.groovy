@@ -89,6 +89,11 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
         updateEntity(existing, item)
     }
 
+    I updateWithoutClean(UUID id, @Body @NonNull I item) {
+        I existing = administeredItemRepository.readById(id)
+        updateEntity(existing, item)
+    }
+
     protected boolean updateProperties(I existing, I cleanItem) {
         boolean hasChanged
         existing.properties.each {

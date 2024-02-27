@@ -34,7 +34,6 @@ class BaseIntegrationSpec extends Specification {
         client.toBlocking().retrieve(HttpRequest.POST(uri, body), type)
     }
 
-
     Map<String, Object> PUT(String uri, Map<String, Object> body) {
         client.toBlocking().retrieve(HttpRequest.PUT(uri, body), Map<String, Object>)
     }
@@ -50,7 +49,4 @@ class BaseIntegrationSpec extends Specification {
     <T> T DELETE(String uri, Map<String, Object> body, Class<T> type) {
         client.toBlocking().retrieve(HttpRequest.DELETE(uri, body), type)
     }
-
-
-
 }

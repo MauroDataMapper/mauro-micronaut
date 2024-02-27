@@ -2,11 +2,11 @@ package uk.ac.ox.softeng.mauro.controller.terminology
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.transform.CompileStatic
-import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.*
+import io.micronaut.http.exceptions.HttpStatusException
 import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.controller.model.ModelController
@@ -18,7 +18,6 @@ import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.terminology.CodeSetContentRepository
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
-@Slf4j
 @Controller
 @CompileStatic
 class CodeSetController extends ModelController<CodeSet> {
@@ -26,6 +25,9 @@ class CodeSetController extends ModelController<CodeSet> {
     ModelCacheableRepository.CodeSetCacheableRepository codeSetRepository
 
     CodeSetContentRepository codeSetContentRepository
+
+    @Inject
+    TermController termController
 
     @Inject
     CodeSetService codeSetService
@@ -39,10 +41,8 @@ class CodeSetController extends ModelController<CodeSet> {
         this.codeSetContentRepository = codeSetContentRepository
     }
 
-
     @Get(value = Paths.CODE_SET_BY_ID)
     CodeSet show(UUID id) {
-        log.debug("********   CodeSetController:  show  ${id}")
         super.show(id)
     }
 
@@ -57,10 +57,28 @@ class CodeSetController extends ModelController<CodeSet> {
         super.update(id, codeSet)
     }
 
+    @Put(value = Paths.ADD_TERM_TO_CODE_SET)
+    CodeSet addTerm(@NonNull UUID id,
+                    @NonNull UUID termId) {
+
+        def term = termController.show(termId)
+        if (term == null) {
+            throw new HttpStatusException(HttpStatus.NOT_FOUND, 'Term item not found')
+        }
+        def codeSet = super.show(id) as CodeSet
+        if (codeSet == null) {
+            throw new HttpStatusException(HttpStatus.NOT_FOUND, 'CodeSet item not found')
+        }
+
+        def codeSetToUpdate = new CodeSet().tap {
+            it.addTerm(term)
+        }
+        super.updateWithoutClean(id, codeSetToUpdate)
+    }
+
     @Transactional
     @Delete(value = Paths.CODE_SET_BY_ID)
     HttpStatus delete(UUID id, @Body @Nullable CodeSet codeSet) {
-        log.debug("**********  CodeSetController: deleting ${id}")
         super.delete(id, codeSet)
     }
 
@@ -71,7 +89,6 @@ class CodeSetController extends ModelController<CodeSet> {
 
     @Get(value = Paths.CODE_SETS)
     ListResponse<CodeSet> listAll() {
-        log.debug("********   CodeSetController:  listAll")
         super.listAll()
     }
 
