@@ -2,3 +2,23 @@ ehcache:
   caches:
     items-cache:
       enabled: true
+
+datasources:
+  default:
+    url: jdbc:postgresql://localhost:5432/sandbox
+    username: sandbox
+    password: sandbox
+    dialect: POSTGRES
+    db-type: postgres
+    driver-class-name: org.postgresql.Driver
+flyway:
+  datasources:
+    default:
+      enabled: true
+      baselineOnMigrate: true
+      fail-on-missing-locations: true
+      clean-schema: false
+      schemas:
+        - core
+        - security
+        - terminology
