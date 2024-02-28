@@ -54,4 +54,9 @@ class TermController extends AdministeredItemController<Term, Terminology> {
     List<Term> tree(UUID terminologyId, @Nullable UUID id) {
         termRepository.readChildTermsByParent(terminologyId, id)
     }
+
+    @Get("/{id}")
+    Term readById(UUID id){
+        termRepository.readById(id)
+    }
 }

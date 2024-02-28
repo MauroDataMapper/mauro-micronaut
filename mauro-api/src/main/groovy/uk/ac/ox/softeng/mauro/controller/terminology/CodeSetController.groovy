@@ -61,11 +61,11 @@ class CodeSetController extends ModelController<CodeSet> {
     CodeSet addTerm(@NonNull UUID id,
                     @NonNull UUID termId) {
 
-        def term = termController.show(termId)
+        def term = termController.readById(termId)
         if (term == null) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, 'Term item not found')
         }
-        def codeSet = super.show(id) as CodeSet
+        def codeSet = codeSetRepository.readById(id) as CodeSet
         if (codeSet == null) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, 'CodeSet item not found')
         }

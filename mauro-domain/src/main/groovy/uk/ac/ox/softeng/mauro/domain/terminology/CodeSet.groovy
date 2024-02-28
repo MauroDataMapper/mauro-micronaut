@@ -27,7 +27,6 @@ import uk.ac.ox.softeng.mauro.domain.model.ModelItem
 class CodeSet extends Model {
 
     @Relation(value = Relation.Kind.MANY_TO_MANY, cascade = Relation.Cascade.ALL)
-    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable (
             name = 'code_set_term',
             joinColumns = @JoinColumn( name = 'code_set_id'),
