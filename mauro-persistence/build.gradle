@@ -4,6 +4,8 @@ plugins {
     id("io.micronaut.library") version "4.1.2"
     id("maven-publish")
     id("codenarc")
+    id("java-library")
+    id("java-test-fixtures")
 }
 
 version = "0.1"
@@ -36,13 +38,14 @@ dependencies {
     runtimeOnly("org.yaml:snakeyaml")
 
     testImplementation("io.micronaut.test:micronaut-test-spock")
-    testImplementation("io.micronaut.sql:micronaut-jdbc-hikari")
+    testFixturesImplementation("io.micronaut.test:micronaut-test-spock")
+    testFixturesImplementation("io.micronaut.sql:micronaut-jdbc-hikari")
     testRuntimeOnly("org.testcontainers:testcontainers")
     testRuntimeOnly("org.testcontainers:postgresql")
     testRuntimeOnly("org.postgresql:postgresql")
 
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.2.0")
-    testImplementation("org.junit.jupiter:junit-jupiter-engine:5.2.0")
+    testFixturesImplementation("org.junit.jupiter:junit-jupiter-api:5.2.0")
+    testFixturesImplementation("org.junit.jupiter:junit-jupiter-engine:5.2.0")
 
 }
 

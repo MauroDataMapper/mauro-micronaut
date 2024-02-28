@@ -1,14 +1,19 @@
 package uk.ac.ox.softeng.mauro.terminology
 
+import uk.ac.ox.softeng.mauro.persistence.ContainerizedTest
 import uk.ac.ox.softeng.mauro.testing.BaseIntegrationSpec
 
 import io.micronaut.http.MediaType
 import io.micronaut.http.client.multipart.MultipartBody
-import io.micronaut.test.extensions.spock.annotation.MicronautTest
+import io.micronaut.runtime.EmbeddedApplication
+import jakarta.inject.Inject
 import spock.lang.Shared
 
-@MicronautTest
+@ContainerizedTest
 class TerminologyJsonImportExportSpec extends BaseIntegrationSpec {
+
+    @Inject
+    EmbeddedApplication<?> application
 
     @Shared
     UUID folderId
