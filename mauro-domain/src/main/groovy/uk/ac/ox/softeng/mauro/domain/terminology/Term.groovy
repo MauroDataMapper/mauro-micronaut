@@ -71,7 +71,6 @@ class Term extends ModelItem<Terminology> {
     List<TermRelationship> targetTermRelationships = []
 
     @Relation(value = Relation.Kind.MANY_TO_MANY, mappedBy = 'terms')
-    @ManyToMany(fetch = FetchType.EAGER)
     Set<CodeSet> codeSets = []
 
     @Override
