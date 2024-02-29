@@ -13,14 +13,14 @@
         <appender-ref ref="STDOUT" />
     </root>
 
+    <logger name="io.micronaut.cache" level="trace" />
+    <logger name="io.micronaut.data" level="trace" />
     <logger name="io.micronaut.cache" level="info" />
-    <logger name="io.micronaut.data" level="info" />
-    <logger name="io.micronaut.cache" level="info" />
-<!--    <logger name="io.micronaut" level="debug" />-->
+    <logger name="io.micronaut" level="info" />
 
     <logger name="org.flywaydb" level="info" />
-    <logger name="org.ehcache" level="info" />
+    <logger name="org.ehcache" level="error" />
 
-    <logger name="uk.ac.ox.softeng.mauro" level="debug" />
+    <logger name="uk.ac.ox.softeng" level="debug" />
 
 </configuration>

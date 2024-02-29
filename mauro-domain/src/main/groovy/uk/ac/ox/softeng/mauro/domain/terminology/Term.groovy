@@ -1,6 +1,5 @@
 package uk.ac.ox.softeng.mauro.domain.terminology
 
-import groovy.util.logging.Slf4j
 import jakarta.persistence.FetchType
 import jakarta.persistence.ManyToMany
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
@@ -62,13 +61,17 @@ class Term extends ModelItem<Terminology> {
     @Nullable
     Integer depth
 
-    @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'terminology')
-    @Nullable
+    @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'sourceTerm')
     List<TermRelationship> sourceTermRelationships = []
 
-    @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'terminology')
-    @Nullable
+    @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'targetTerm')
     List<TermRelationship> targetTermRelationships = []
+
+    @Transient
+    @JsonIgnore
+    List<List<TermRelationship>> getAllAssociations() {
+        [sourceTermRelationships, targetTermRelationships]
+    }
 
     @Relation(value = Relation.Kind.MANY_TO_MANY, mappedBy = 'terms')
     Set<CodeSet> codeSets = []
@@ -99,16 +102,6 @@ class Term extends ModelItem<Terminology> {
     @JsonIgnore
     String getPathIdentifier() {
         code
-    }
-
-    @Transient
-    @JsonIgnore
-    Term setAssociations() {
-        Map<UUID, CodeSet> codeSetsMap = codeSets.collectEntries {[it.id, it]}
-        codeSets.each {
-            it.parent = this
-        }
-        this
     }
 
     /****

@@ -2,11 +2,14 @@ package uk.ac.ox.softeng.mauro.persistence.terminology
 
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.Nullable
+import io.micronaut.data.annotation.Join
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.model.query.builder.sql.Dialect
 import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
+import uk.ac.ox.softeng.mauro.domain.terminology.Term
 import uk.ac.ox.softeng.mauro.domain.terminology.TermRelationship
+import uk.ac.ox.softeng.mauro.domain.terminology.TermRelationshipType
 import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
 import uk.ac.ox.softeng.mauro.persistence.model.ModelItemRepository
 import uk.ac.ox.softeng.mauro.persistence.terminology.dto.TermRelationshipDTORepository
@@ -17,6 +20,13 @@ abstract class TermRelationshipRepository implements ModelItemRepository<TermRel
 
     @Inject
     TermRelationshipDTORepository termRelationshipDTORepository
+
+    @Override
+    @Join(value = 'sourceTerm', type = Join.Type.LEFT_FETCH)
+    @Join(value = 'targetTerm', type = Join.Type.LEFT_FETCH)
+    @Join(value = 'relationshipType', type = Join.Type.LEFT_FETCH)
+    @Nullable
+    abstract TermRelationship readById(UUID id)
 
     @Override
     @Nullable
@@ -35,6 +45,9 @@ abstract class TermRelationshipRepository implements ModelItemRepository<TermRel
         findAllByTerminology((Terminology) parent)
     }
 
+    @Join(value = 'sourceTerm', type = Join.Type.LEFT_FETCH)
+    @Join(value = 'targetTerm', type = Join.Type.LEFT_FETCH)
+    @Join(value = 'relationshipType', type = Join.Type.LEFT_FETCH)
     @Nullable
     abstract List<TermRelationship> readAllByTerminology(Terminology terminology)
 
@@ -45,12 +58,13 @@ abstract class TermRelationshipRepository implements ModelItemRepository<TermRel
     }
 
     @Nullable
-    abstract Long deleteByTerminologyId(UUID terminologyId)
+    abstract List<TermRelationship> readAllBySourceTerm(Term sourceTerm)
 
-//    @Override
-    Long deleteByOwnerId(UUID ownerId) {
-        deleteByTerminologyId(ownerId)
-    }
+    @Nullable
+    abstract List<TermRelationship> readAllByTargetTerm(Term targetTerm)
+
+    @Nullable
+    abstract List<TermRelationship> readAllByRelationshipType(TermRelationshipType relationshipType)
 
     @Override
     Class getDomainClass() {

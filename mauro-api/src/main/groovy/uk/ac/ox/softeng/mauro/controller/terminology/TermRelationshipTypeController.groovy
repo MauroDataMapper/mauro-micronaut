@@ -10,15 +10,15 @@ import uk.ac.ox.softeng.mauro.domain.terminology.TermRelationshipType
 import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
 import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository.TermRelationshipTypeCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.TerminologyCacheableRepository
-import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemContentRepository
+import uk.ac.ox.softeng.mauro.persistence.terminology.TermRelationshipTypeContentRepository
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @CompileStatic
 @Controller('/terminologies/{terminologyId}/termRelationshipTypes')
 class TermRelationshipTypeController extends AdministeredItemController<TermRelationshipType, Terminology> {
 
-    TermRelationshipTypeController(TermRelationshipTypeCacheableRepository termRelationshipTypeRepository, TerminologyCacheableRepository terminologyRepository, AdministeredItemContentRepository<TermRelationshipType> administeredItemContentRepository) {
-        super(TermRelationshipType, termRelationshipTypeRepository, terminologyRepository, administeredItemContentRepository)
+    TermRelationshipTypeController(TermRelationshipTypeCacheableRepository termRelationshipTypeRepository, TerminologyCacheableRepository terminologyRepository, TermRelationshipTypeContentRepository termRelationshipTypeContentRepository) {
+        super(TermRelationshipType, termRelationshipTypeRepository, terminologyRepository, termRelationshipTypeContentRepository)
     }
 
     @Get('/{id}')

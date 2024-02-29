@@ -22,7 +22,7 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
      */
     List<String> getDisallowedProperties() {
         ['class'] +
-        ['id', 'version', 'dateCreated', 'lastUpdated', 'domainType', 'createdBy', 'path', /*'breadcrumbTree',*/ 'parent', 'owner']
+        ['id', 'dateCreated', 'lastUpdated', 'domainType', 'createdBy', 'path', /*'breadcrumbTree',*/ 'parent', 'owner']
     }
 
     /**
@@ -38,16 +38,17 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
 
     AdministeredItemCacheableRepository<P> parentItemRepository
 
-    AdministeredItemContentRepository<I> administeredItemContentRepository
+    AdministeredItemContentRepository administeredItemContentRepository
 
     @Inject
     PathRepository pathRepository
 
-    AdministeredItemController(Class<I> itemClass, AdministeredItemCacheableRepository<I> administeredItemRepository, AdministeredItemCacheableRepository<P> parentItemRepository, AdministeredItemContentRepository<I> administeredItemContentRepository) {
+    AdministeredItemController(Class<I> itemClass, AdministeredItemCacheableRepository<I> administeredItemRepository, AdministeredItemCacheableRepository<P> parentItemRepository, AdministeredItemContentRepository administeredItemContentRepository) {
         this.itemClass = itemClass
         this.administeredItemRepository = administeredItemRepository
         this.parentItemRepository = parentItemRepository
         this.administeredItemContentRepository = administeredItemContentRepository
+        this.administeredItemContentRepository.administeredItemRepository = administeredItemRepository
     }
 
     I show(UUID id) {
@@ -121,9 +122,8 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
 
     @Transactional
     HttpStatus delete(UUID id, @Body @Nullable I item) {
-        I itemToDelete = itemClass.getDeclaredConstructor().newInstance()
-        itemToDelete.id = id
-        itemToDelete.version = item?.version
+        I itemToDelete = (I) administeredItemContentRepository.readWithContentById(id)
+        if (item?.version) itemToDelete.version == item.version
         Long deleted = administeredItemContentRepository.deleteWithContent(itemToDelete)
         if (deleted) {
             HttpStatus.NO_CONTENT

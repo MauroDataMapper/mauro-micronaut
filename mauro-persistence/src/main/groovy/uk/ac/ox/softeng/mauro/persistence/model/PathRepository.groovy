@@ -1,16 +1,16 @@
 package uk.ac.ox.softeng.mauro.persistence.model
 
 import groovy.transform.CompileStatic
-import io.micronaut.context.annotation.Bean
 import io.micronaut.core.annotation.NonNull
 import jakarta.inject.Inject
+import jakarta.inject.Singleton
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.model.Path
 import uk.ac.ox.softeng.mauro.exception.MauroInternalException
 import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository
 
-@Bean
 @CompileStatic
+@Singleton
 class PathRepository {
 
     @Inject

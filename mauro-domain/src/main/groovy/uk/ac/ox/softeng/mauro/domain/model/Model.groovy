@@ -1,20 +1,14 @@
 package uk.ac.ox.softeng.mauro.domain.model
 
-import uk.ac.ox.softeng.mauro.domain.authority.Authority
-import uk.ac.ox.softeng.mauro.domain.security.SecurableResource
-
-import com.fasterxml.jackson.annotation.JsonProperty
-import groovy.transform.NamedParams
-import uk.ac.ox.softeng.mauro.domain.folder.Folder
-
 import com.fasterxml.jackson.annotation.JsonIgnore
 import groovy.transform.CompileStatic
+import groovy.transform.NamedParams
 import io.micronaut.core.annotation.Nullable
-import uk.ac.ox.softeng.mauro.domain.model.version.ModelVersion
-
-import io.micronaut.data.annotation.Index
-import io.micronaut.data.annotation.Indexes
 import jakarta.persistence.Transient
+import uk.ac.ox.softeng.mauro.domain.authority.Authority
+import uk.ac.ox.softeng.mauro.domain.folder.Folder
+import uk.ac.ox.softeng.mauro.domain.model.version.ModelVersion
+import uk.ac.ox.softeng.mauro.domain.security.SecurableResource
 
 import java.time.Instant
 
@@ -106,14 +100,6 @@ abstract class Model extends AdministeredItem implements SecurableResource {
     List<AdministeredItem> getAllContents() {
         allAssociations.flatten() as List<AdministeredItem>
     }
-
-    /**
-     * Return all persistent associations of the model.
-     * The associations should be ordered so that they can be saved in order.
-     */
-    @Transient
-    @JsonIgnore
-    abstract List<List<AdministeredItem>> getAllAssociations()
 
     /****
      * Methods for building a tree-like DSL

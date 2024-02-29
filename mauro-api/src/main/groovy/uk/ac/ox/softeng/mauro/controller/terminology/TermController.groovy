@@ -11,7 +11,7 @@ import uk.ac.ox.softeng.mauro.domain.terminology.Term
 import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
 import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository.TermCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.TerminologyCacheableRepository
-import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemContentRepository
+import uk.ac.ox.softeng.mauro.persistence.terminology.TermContentRepository
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @CompileStatic
@@ -20,8 +20,8 @@ class TermController extends AdministeredItemController<Term, Terminology> {
 
     TermCacheableRepository termRepository
 
-    TermController(TermCacheableRepository termRepository, TerminologyCacheableRepository terminologyRepository, AdministeredItemContentRepository<Term> administeredItemContentRepository) {
-        super(Term, termRepository, terminologyRepository, administeredItemContentRepository)
+    TermController(TermCacheableRepository termRepository, TerminologyCacheableRepository terminologyRepository, TermContentRepository termContentRepository) {
+        super(Term, termRepository, terminologyRepository, termContentRepository)
         this.termRepository = termRepository
     }
 

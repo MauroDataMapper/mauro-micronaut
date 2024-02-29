@@ -1,12 +1,6 @@
 package uk.ac.ox.softeng.mauro.domain.terminology
 
-import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
-
-import com.fasterxml.jackson.annotation.JsonIdentityInfo
 import com.fasterxml.jackson.annotation.JsonIgnore
-import com.fasterxml.jackson.annotation.ObjectIdGenerator
-import com.fasterxml.jackson.annotation.ObjectIdGenerators
-import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
 import groovy.transform.MapConstructor
@@ -15,7 +9,9 @@ import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.annotation.Index
 import io.micronaut.data.annotation.Indexes
 import io.micronaut.data.annotation.MappedEntity
+import io.micronaut.data.annotation.Relation
 import jakarta.persistence.Transient
+import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.model.ModelItem
 
 /**
@@ -42,6 +38,15 @@ class TermRelationshipType extends ModelItem<Terminology> {
 
     @Nullable
     Boolean childRelationship
+
+    @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'relationshipType')
+    List<TermRelationship> termRelationships = []
+
+    @Transient
+    @JsonIgnore
+    List<List<TermRelationship>> getAllAssociations() {
+        [termRelationships]
+    }
 
     @Override
     @Transient
