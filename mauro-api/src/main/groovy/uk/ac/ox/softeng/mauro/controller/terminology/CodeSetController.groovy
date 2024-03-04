@@ -2,6 +2,7 @@ package uk.ac.ox.softeng.mauro.controller.terminology
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.transform.CompileStatic
+import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpStatus
@@ -14,12 +15,14 @@ import uk.ac.ox.softeng.mauro.domain.model.version.CreateNewVersionData
 import uk.ac.ox.softeng.mauro.domain.model.version.FinaliseData
 import uk.ac.ox.softeng.mauro.domain.terminology.CodeSet
 import uk.ac.ox.softeng.mauro.domain.terminology.CodeSetService
+import uk.ac.ox.softeng.mauro.domain.terminology.Term
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.terminology.CodeSetContentRepository
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @Controller
 @CompileStatic
+@Slf4j
 class CodeSetController extends ModelController<CodeSet> {
 
     ModelCacheableRepository.CodeSetCacheableRepository codeSetRepository
@@ -61,11 +64,12 @@ class CodeSetController extends ModelController<CodeSet> {
     CodeSet addTerm(@NonNull UUID id,
                     @NonNull UUID termId) {
 
-        def term = termController.readById(termId)
+        Term term = termController.show(termId, true)
         if (term == null) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, 'Term item not found')
         }
-        def codeSet = codeSetRepository.readById(id) as CodeSet
+
+        CodeSet codeSet = codeSetRepository.readById(id) as CodeSet
         if (codeSet == null) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, 'CodeSet item not found')
         }
@@ -79,7 +83,20 @@ class CodeSetController extends ModelController<CodeSet> {
     @Transactional
     @Delete(value = Paths.CODE_SET_BY_ID)
     HttpStatus delete(UUID id, @Body @Nullable CodeSet codeSet) {
-        super.delete(id, codeSet)
+
+        CodeSet codeSetToDelete = codeSetRepository.readById(id)
+        if (codeSetToDelete == null) {
+            throw new HttpStatusException(HttpStatus.NOT_FOUND, "CodeSet $id not found for deletion");
+        }
+        Set<Term> associatedTerms = codeSetRepository.getTerms(id)
+        if (!associatedTerms.isEmpty()) {
+            log.debug("CodeSetController:delete $id: found number of associated terms: {}", associatedTerms.size());
+            codeSetRepository.removeTermAssociations(id)
+        }
+        Long result = codeSetRepository.delete(codeSetToDelete)
+
+        log.debug("CodeSetController:delete $id: deleted $result item")
+        return HttpStatus.NO_CONTENT
     }
 
     @Get(value = Paths.CODE_SETS_BY_FOLDER_ID)

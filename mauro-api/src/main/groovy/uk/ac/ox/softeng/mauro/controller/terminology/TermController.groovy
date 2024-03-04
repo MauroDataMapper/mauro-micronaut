@@ -1,7 +1,6 @@
 package uk.ac.ox.softeng.mauro.controller.terminology
 
 import groovy.transform.CompileStatic
-import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpStatus
@@ -24,10 +23,19 @@ class TermController extends AdministeredItemController<Term, Terminology> {
         super(Term, termRepository, terminologyRepository, termContentRepository)
         this.termRepository = termRepository
     }
-
+    /**
+     *
+     * @param id
+     * @param readOnly  readOnly.
+     * @return
+     */
     @Get('/{id}')
-    Term show(UUID terminologyId, UUID id) {
-        super.show(id)
+    Term show(UUID id, @Nullable Boolean readOnly) {
+        if (readOnly){
+            termRepository.readById(id)
+        } else {
+            super.show(id)
+        }
     }
 
     @Post
@@ -55,8 +63,4 @@ class TermController extends AdministeredItemController<Term, Terminology> {
         termRepository.readChildTermsByParent(terminologyId, id)
     }
 
-    @Get("/{id}")
-    Term readById(UUID id){
-        termRepository.readById(id)
-    }
 }

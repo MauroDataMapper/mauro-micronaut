@@ -3,10 +3,12 @@ package uk.ac.ox.softeng.mauro.persistence.cache
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.cache.annotation.CacheConfig
+import io.micronaut.context.annotation.Bean
 import jakarta.inject.Singleton
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.domain.model.Model
 import uk.ac.ox.softeng.mauro.domain.terminology.CodeSet
+import uk.ac.ox.softeng.mauro.domain.terminology.Term
 import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
 import uk.ac.ox.softeng.mauro.persistence.folder.FolderRepository
 import uk.ac.ox.softeng.mauro.persistence.model.ModelRepository
@@ -59,6 +61,14 @@ class ModelCacheableRepository<M extends Model> extends AdministeredItemCacheabl
     static class CodeSetCacheableRepository extends ModelCacheableRepository<CodeSet> {
        CodeSetCacheableRepository(CodeSetRepository codeSetRepository) {
             super(codeSetRepository)
+        }
+        // not cached
+        Long removeTermAssociations(UUID codeSetId) {
+            ((CodeSetRepository) repository).removeTermAssociations(codeSetId)
+        }
+        // not cached
+        Set<Term> getTerms(UUID codeSetId) {
+            ((CodeSetRepository) repository).getTerms(codeSetId)
         }
     }
 

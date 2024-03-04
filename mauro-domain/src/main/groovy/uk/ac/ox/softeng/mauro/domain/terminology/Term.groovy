@@ -73,6 +73,12 @@ class Term extends ModelItem<Terminology> {
     @Relation(value = Relation.Kind.MANY_TO_MANY, mappedBy = 'terms')
     Set<CodeSet> codeSets = []
 
+    @Transient
+    @JsonIgnore
+    Set<CodeSet> getCodeSets() {
+        codeSets
+    }
+
     @Override
     @Transient
     @JsonIgnore

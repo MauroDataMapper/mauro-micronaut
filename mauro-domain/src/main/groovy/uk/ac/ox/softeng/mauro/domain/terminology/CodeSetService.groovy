@@ -6,7 +6,7 @@ import uk.ac.ox.softeng.mauro.domain.model.ModelService
 import uk.ac.ox.softeng.mauro.domain.tree.TreeItem
 
 /**
- * The TerminologyService class provides utility functions for manipulating Terminology objects*/
+ * The CodeSet Service class provides utility functions for manipulating CodeSet objects*/
 @CompileStatic
 @Singleton
 class CodeSetService extends ModelService<CodeSet> {
