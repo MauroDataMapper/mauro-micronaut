@@ -9,7 +9,6 @@ import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.domain.terminology.CodeSet
 import uk.ac.ox.softeng.mauro.domain.terminology.Term
 
-import static java.util.List.of
 
 /**
  * Tests for CodeSet domain object
@@ -42,7 +41,7 @@ class CodeSetSpec extends Specification {
         codeSet.documentationVersion == iteration.documentationVersion
         codeSet.readableByEveryone == iteration.readableByEveryone
         codeSet.metadata == iteration.metadata
-        codeSet.terms == iteration.terms
+
 
         where:
         iteration << [

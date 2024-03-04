@@ -10,7 +10,9 @@ import io.micronaut.data.annotation.Index
 import io.micronaut.data.annotation.Indexes
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Relation
-import jakarta.persistence.*
+import jakarta.persistence.JoinColumn
+import jakarta.persistence.JoinTable
+import jakarta.persistence.Transient
 import uk.ac.ox.softeng.mauro.domain.model.Model
 import uk.ac.ox.softeng.mauro.domain.model.ModelItem
 
@@ -32,24 +34,9 @@ class CodeSet extends Model {
             joinColumns = @JoinColumn( name = 'code_set_id'),
             inverseJoinColumns = @JoinColumn (name = 'term_id')
     )
-    List<Term> terms = []
-
-    @Override
-    @Transient
     @JsonIgnore
-    List<List<? extends ModelItem<CodeSet>>> getAllAssociations() {
-        [terms] as List<List<? extends ModelItem<CodeSet>>>
-    }
+    Set<Term> terms = []
 
-    @Transient
-    @JsonIgnore
-    CodeSet setAssociations() {
-        Map<UUID, Term> termsMap = terms.collectEntries {[it.id, it]}
-        terms.each {
-            it.parent = this
-        }
-        this
-    }
     @Override
     @Transient
     @JsonIgnore
@@ -65,6 +52,12 @@ class CodeSet extends Model {
     CodeSet addTerm(Term term) {
         terms.add(term)
         this
+    }
+
+    @Transient
+    @JsonIgnore
+    List<List<ModelItem<CodeSet>>> getAllAssociations() {
+        [terms] as List<List<ModelItem<CodeSet>>>
     }
 
     @Override
