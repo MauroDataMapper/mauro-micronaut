@@ -83,20 +83,7 @@ class CodeSetController extends ModelController<CodeSet> {
     @Transactional
     @Delete(value = Paths.CODE_SET_BY_ID)
     HttpStatus delete(UUID id, @Body @Nullable CodeSet codeSet) {
-
-        CodeSet codeSetToDelete = codeSetRepository.readById(id)
-        if (codeSetToDelete == null) {
-            throw new HttpStatusException(HttpStatus.NOT_FOUND, "CodeSet $id not found for deletion");
-        }
-        Set<Term> associatedTerms = codeSetRepository.getTerms(id)
-        if (!associatedTerms.isEmpty()) {
-            log.debug("CodeSetController:delete $id: found number of associated terms: {}", associatedTerms.size());
-            codeSetRepository.removeTermAssociations(id)
-        }
-        Long result = codeSetRepository.delete(codeSetToDelete)
-
-        log.debug("CodeSetController:delete $id: deleted $result item")
-        return HttpStatus.NO_CONTENT
+        super.delete(id,codeSet)
     }
 
     @Get(value = Paths.CODE_SETS_BY_FOLDER_ID)
