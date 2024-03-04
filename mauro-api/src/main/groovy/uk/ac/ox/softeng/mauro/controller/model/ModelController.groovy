@@ -28,6 +28,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
 
     @Override
     List<String> getDisallowedProperties() {
+        log.debug '***** ModelController::getDisallowedProperties *****'
         super.disallowedProperties +
         ['finalised', 'dateFinalised', 'readableByEveryone', 'readableByAuthenticatedUsers', 'modelType', 'deleted', 'folder', 'authority', 'branchName',
          'modelVersion', 'modelVersionTag']
@@ -92,13 +93,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     }
 
     HttpStatus delete(UUID id, @Body @Nullable M model) {
-        model = show(id)
-        if (model != null) {
-            super.delete(id, model)
-        } else  {
-            throw new HttpStatusException(HttpStatus.NOT_FOUND, 'Item not found " ${id}')
-        }
-        return HttpStatus.NO_CONTENT
+        super.delete(id, model)
     }
 
     ListResponse<M> listAll() {
