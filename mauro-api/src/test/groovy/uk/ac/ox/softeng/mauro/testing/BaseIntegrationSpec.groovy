@@ -9,6 +9,10 @@ import jakarta.inject.Inject
 import spock.lang.Specification
 
 class BaseIntegrationSpec extends Specification {
+    public static final String FOLDERS_PATH = '/folders'
+    public static final String TERMINOLOGIES_PATH = "/terminologies"
+    public static final String TERMS_PATH = "/terms"
+    public static final String CODE_SET_PATH = "/codeSets"
 
     @Inject
     @Client('/')
@@ -21,7 +25,6 @@ class BaseIntegrationSpec extends Specification {
     <T> T GET(String uri, Class<T> type) {
         client.toBlocking().retrieve(HttpRequest.GET(uri), type)
     }
-
     Map<String, Object> POST(String uri, Map<String, Object> body) {
         client.toBlocking().retrieve(HttpRequest.POST(uri, body), Map<String, Object>)
     }
