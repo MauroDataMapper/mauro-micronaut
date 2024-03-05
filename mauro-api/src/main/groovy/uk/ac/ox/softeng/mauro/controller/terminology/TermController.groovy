@@ -1,6 +1,7 @@
 package uk.ac.ox.softeng.mauro.controller.terminology
 
 import groovy.transform.CompileStatic
+import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpStatus
@@ -18,6 +19,7 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @CompileStatic
 @Controller('/terminologies/{terminologyId}/terms')
+@Slf4j
 class TermController extends AdministeredItemController<Term, Terminology> {
 
     TermCacheableRepository termRepository
@@ -51,7 +53,10 @@ class TermController extends AdministeredItemController<Term, Terminology> {
 
     @Get
     ListResponse<Term> list(UUID terminologyId) {
-        super.list(terminologyId)
+        log.debug '** start list **'
+        ListResponse<Term> listResponse = super.list(terminologyId)
+        log.debug '** end list **'
+        listResponse
     }
 
     @Get("/tree{/id}")

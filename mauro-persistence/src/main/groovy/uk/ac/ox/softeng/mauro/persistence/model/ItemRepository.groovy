@@ -32,4 +32,8 @@ trait ItemRepository<I extends Item> implements GenericRepository<I, UUID> {
     Boolean handles(Class clazz) {
         domainClass.isAssignableFrom(clazz)
     }
+
+    Boolean handles(String domainType) {
+        domainClass.simpleName.equalsIgnoreCase(domainType) || (domainClass.simpleName + 's').equalsIgnoreCase(domainType)
+    }
 }
