@@ -28,12 +28,10 @@ abstract class ItemCacheableRepository<I extends Item> implements ItemRepository
     }
 
     I findById(UUID id) {
-        log.debug 'CacheableRepository::findById'
         cachedLookupById(FIND_BY_ID, domainType, id)
     }
 
     I readById(UUID id) {
-        log.debug 'CacheableRepository::readById'
         cachedLookupById(READ_BY_ID, domainType, id)
     }
 
@@ -95,6 +93,14 @@ abstract class ItemCacheableRepository<I extends Item> implements ItemRepository
 
     Class getDomainClass() {
         repository.domainClass
+    }
+
+    Boolean handles(Class clazz) {
+        repository.handles(clazz)
+    }
+
+    Boolean handles(String domainType) {
+        repository.handles(domainType)
     }
 
     // Cacheable Item Repository definitions
