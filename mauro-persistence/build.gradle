@@ -4,6 +4,8 @@ plugins {
     id("io.micronaut.library") version "4.1.2"
     id("maven-publish")
     id("codenarc")
+    id("java-library")
+    id("java-test-fixtures")
 }
 
 version = "0.1"
@@ -14,19 +16,36 @@ repositories {
 }
 
 dependencies {
+    implementation("io.micronaut.groovy:micronaut-runtime-groovy")
+    implementation("jakarta.annotation:jakarta.annotation-api")
+    implementation("io.micronaut:micronaut-management")
+    compileOnly("io.micronaut:micronaut-inject-groovy")
+
+    runtimeOnly("org.postgresql:postgresql")
+    runtimeOnly("org.flywaydb:flyway-core")
+
+    implementation("io.micronaut.flyway:micronaut-flyway")
     compileOnly("io.micronaut.data:micronaut-data-processor")
     compileOnly("io.micronaut.validation:micronaut-validation-processor")
     implementation("io.micronaut:micronaut-jackson-databind")
     implementation("io.micronaut.data:micronaut-data-jdbc")
     implementation("io.micronaut.groovy:micronaut-runtime-groovy")
     runtimeOnly("ch.qos.logback:logback-classic")
-//    testResourcesService("org.postgresql:postgresql")
     implementation("io.micronaut.validation:micronaut-validation")
     implementation("io.micronaut.cache:micronaut-cache-core")
-//    implementation("io.micronaut.cache:micronaut-cache-caffeine")
     implementation("io.micronaut.cache:micronaut-cache-ehcache")
     implementation("io.micronaut.cache:micronaut-cache-management")
     runtimeOnly("org.yaml:snakeyaml")
+
+    testImplementation("io.micronaut.test:micronaut-test-spock")
+    testFixturesImplementation("io.micronaut.test:micronaut-test-spock")
+    testFixturesImplementation("io.micronaut.sql:micronaut-jdbc-hikari")
+    testRuntimeOnly("org.testcontainers:testcontainers")
+    testRuntimeOnly("org.testcontainers:postgresql")
+    testRuntimeOnly("org.postgresql:postgresql")
+
+    testFixturesImplementation("org.junit.jupiter:junit-jupiter-api:5.2.0")
+    testFixturesImplementation("org.junit.jupiter:junit-jupiter-engine:5.2.0")
 
 }
 
@@ -36,6 +55,10 @@ java {
     withJavadocJar()
     withSourcesJar()
 
+}
+
+test {
+    useJUnitPlatform()
 }
 
 publishing {

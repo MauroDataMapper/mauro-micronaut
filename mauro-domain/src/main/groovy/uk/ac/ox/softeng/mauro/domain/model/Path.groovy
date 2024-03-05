@@ -21,6 +21,15 @@ class Path {
 
     List<PathNode> nodes
 
+    protected Path() {
+
+    }
+
+    Path(String str) {
+        setPathString(str)
+    }
+
+
     void setPathString(String pathString) {
         this.pathString = pathString
         nodes = pathString?.split(/\|/)?.collect {PathNode.from(it)}
@@ -57,7 +66,7 @@ class Path {
         }
 
         static PathNode from(String str) {
-            Pattern nodePattern = ~/^(?<prefix>\w\w):(?<identifier>.*)(\$(?<modelIdentifier>.*))?(@(?<attribute>.*))?$/
+            Pattern nodePattern = ~/^(?<prefix>\w\w\w?):(?<identifier>.*)(\$(?<modelIdentifier>.*))?(@(?<attribute>.*))?$/
             Matcher matcher = str =~ nodePattern
             if (!matcher.matches()) {
                 throw new IllegalArgumentException('String [' + str + '] is not a valid PathNode')
