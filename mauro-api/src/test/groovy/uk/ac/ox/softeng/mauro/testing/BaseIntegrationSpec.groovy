@@ -19,7 +19,11 @@ class BaseIntegrationSpec extends Specification {
     @Client('/')
     HttpClient client
 
-    Object GET(String uri, Class type = Map<String, Object>) {
+    Object GET(String uri) {
+        client.toBlocking().retrieve(HttpRequest.GET(uri), Map<String, Object>)
+    }
+
+    <T> T GET(String uri, Class<T> type) {
         client.toBlocking().retrieve(HttpRequest.GET(uri), type)
     }
     Map<String, Object> POST(String uri, Map<String, Object> body) {
@@ -44,6 +48,7 @@ class BaseIntegrationSpec extends Specification {
     }
 
 
+
     Map<String, Object> PUT(String uri, Object body) {
         client.toBlocking().retrieve(HttpRequest.PUT(uri, body), Map<String, Object>)
     }
@@ -51,4 +56,9 @@ class BaseIntegrationSpec extends Specification {
     Map<String,Object>  DELETE(String uri, Object body) {
         client.toBlocking().retrieve(HttpRequest.DELETE(uri, body), Map<String,Object>)
     }
+
+
+
+
+
 }
