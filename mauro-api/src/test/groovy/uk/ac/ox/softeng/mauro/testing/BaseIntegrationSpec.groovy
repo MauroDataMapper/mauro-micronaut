@@ -6,6 +6,7 @@ import io.micronaut.http.client.HttpClient
 import io.micronaut.http.client.annotation.Client
 import io.micronaut.http.client.multipart.MultipartBody
 import jakarta.inject.Inject
+import spock.lang.Shared
 import spock.lang.Specification
 
 class BaseIntegrationSpec extends Specification {
@@ -16,6 +17,7 @@ class BaseIntegrationSpec extends Specification {
 
     @Inject
     @Client('/')
+    @Shared
     HttpClient client
 
     Object GET(String uri) {
@@ -52,6 +54,10 @@ class BaseIntegrationSpec extends Specification {
 
     Map<String, Object> DELETE(String uri, Map<String, Object> body) {
         client.toBlocking().retrieve(HttpRequest.DELETE(uri, body), Map<String, Object>)
+    }
+
+    <T> T DELETE(String uri, Class<T> type) {
+        client.toBlocking().retrieve(HttpRequest.DELETE(uri), type)
     }
 
     <T> T DELETE(String uri, Map<String, Object> body, Class<T> type) {
