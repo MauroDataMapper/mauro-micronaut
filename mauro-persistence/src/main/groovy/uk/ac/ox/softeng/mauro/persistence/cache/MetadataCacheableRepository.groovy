@@ -42,7 +42,7 @@ class MetadataCacheableRepository extends ItemCacheableRepository<Metadata> {
 
         // invalidate findAll of the parent collection
         AdministeredItem parent = getRepository(item.multiFacetAwareItemDomainType).readById(item.multiFacetAwareItemId)
-        invalidateCachedLookupById(FIND_ALL_BY_PARENT, item.multiFacetAwareItemDomainType, parent.parent.id)
+        if (parent?.parent?.id) invalidateCachedLookupById(FIND_ALL_BY_PARENT, item.multiFacetAwareItemDomainType, parent.parent.id)
     }
 
     @NonNull

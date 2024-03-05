@@ -1,13 +1,12 @@
 package uk.ac.ox.softeng.mauro.folder
 
+import io.micronaut.runtime.EmbeddedApplication
+import jakarta.inject.Inject
+import spock.lang.Shared
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.persistence.ContainerizedTest
 import uk.ac.ox.softeng.mauro.testing.BaseIntegrationSpec
 import uk.ac.ox.softeng.mauro.web.ListResponse
-
-import io.micronaut.runtime.EmbeddedApplication
-import jakarta.inject.Inject
-import spock.lang.Shared
 
 @ContainerizedTest
 class FolderIntegrationSpec extends BaseIntegrationSpec {
@@ -67,7 +66,6 @@ class FolderIntegrationSpec extends BaseIntegrationSpec {
     void 'list folders'() {
         when:
         ListResponse<Folder> folderListResponse = (ListResponse<Folder>) GET('/folders', ListResponse<Folder>)
-
 
         then:
         folderListResponse
