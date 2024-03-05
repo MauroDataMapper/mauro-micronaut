@@ -10,6 +10,7 @@ import uk.ac.ox.softeng.mauro.exception.MauroInternalException
 import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository.DataTypeCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.DataModelCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.datamodel.DataModelRepository
+import uk.ac.ox.softeng.mauro.persistence.datamodel.DataTypeContentRepository
 import uk.ac.ox.softeng.mauro.persistence.datamodel.DataTypeRepository
 import uk.ac.ox.softeng.mauro.persistence.datamodel.EnumerationValueRepository
 import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemContentRepository
@@ -43,8 +44,8 @@ class DataTypeController extends AdministeredItemController<DataType, DataModel>
     @Inject
     EnumerationValueRepository enumerationValueRepository
 
-    DataTypeController(DataTypeCacheableRepository dataTypeRepository, DataModelCacheableRepository dataModelRepository, AdministeredItemContentRepository<DataType> administeredItemContentRepository) {
-        super(DataType, dataTypeRepository, dataModelRepository, administeredItemContentRepository)
+    DataTypeController(DataTypeCacheableRepository dataTypeRepository, DataModelCacheableRepository dataModelRepository, DataTypeContentRepository dataTypeContentRepository) {
+        super(DataType, dataTypeRepository, dataModelRepository, dataTypeContentRepository)
         this.dataTypeRepository = dataTypeRepository
     }
 

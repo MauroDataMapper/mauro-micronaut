@@ -9,6 +9,7 @@ import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableReposit
 import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository.EnumerationValueCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.DataModelCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.datamodel.DataTypeRepository
+import uk.ac.ox.softeng.mauro.persistence.datamodel.EnumerationValueContentRepository
 import uk.ac.ox.softeng.mauro.persistence.datamodel.EnumerationValueRepository
 import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemContentRepository
 import uk.ac.ox.softeng.mauro.web.ListResponse
@@ -38,8 +39,8 @@ class EnumerationValueController extends AdministeredItemController<EnumerationV
 
     EnumerationValueCacheableRepository enumerationValueRepository
 
-    EnumerationValueController(EnumerationValueCacheableRepository enumerationValueRepository, DataModelCacheableRepository dataModelRepository, AdministeredItemContentRepository<EnumerationValue> administeredItemContentRepository) {
-        super(EnumerationValue, enumerationValueRepository, dataModelRepository, administeredItemContentRepository)
+    EnumerationValueController(EnumerationValueCacheableRepository enumerationValueRepository, DataModelCacheableRepository dataModelRepository, EnumerationValueContentRepository enumerationValueContentRepository) {
+        super(EnumerationValue, enumerationValueRepository, dataModelRepository, enumerationValueContentRepository)
         this.enumerationValueRepository = enumerationValueRepository
     }
 

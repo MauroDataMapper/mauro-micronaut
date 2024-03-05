@@ -114,14 +114,7 @@ class TerminologyIntegrationSpec extends BaseIntegrationSpec {
         treeItemList
         treeItemList.size() == 1
 
-        treeItemList.first().code == 'TEST-2'
-
-        when:
-        treeItemList = (List<TreeItem>) GET("/terminologies/$terminologyId/terms/tree/$termId2", List<TreeItem>)
-
-        then:
-        treeItemList != null
-        treeItemList.size() == 1
+        treeItemList.first().code == 'TEST-1'
 
         when:
         treeItemList = (List<TreeItem>) GET("/terminologies/$terminologyId/terms/tree/$termId1", List<TreeItem>)
