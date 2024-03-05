@@ -18,7 +18,7 @@ abstract class TerminologyRepository implements ModelRepository<Terminology> {
 
     @Nullable
     Terminology findById(UUID id) {
-        terminologyDTORepository.findById(id) as Terminology
+        terminologyDTORepository.findById(id)
     }
 
     @Override
