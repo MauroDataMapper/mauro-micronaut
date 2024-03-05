@@ -36,6 +36,7 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
     PathRepository pathRepository
 
     AdministeredItemController(Class<I> itemClass, AdministeredItemCacheableRepository<I> administeredItemRepository, AdministeredItemCacheableRepository<P> parentItemRepository, AdministeredItemContentRepository administeredItemContentRepository) {
+        super(administeredItemRepository)
         this.itemClass = itemClass
         this.administeredItemRepository = administeredItemRepository
         this.parentItemRepository = parentItemRepository
@@ -45,8 +46,7 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
 
     I show(UUID id) {
         I item = administeredItemRepository.findById(id)
-        pathRepository.readParentItems(item)
-        item.updatePath()
+        updateDerivedProperties(item)
         item
     }
 
@@ -59,10 +59,11 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
     }
 
     protected I createEntity(@NonNull P parent, @NonNull I cleanItem) {
-        cleanItem.parent = parent
         updateCreationProperties(cleanItem)
-        pathRepository.readParentItems(cleanItem)
-        cleanItem.updatePath()
+
+        cleanItem.parent = parent
+
+        updateDerivedProperties(cleanItem)
         administeredItemRepository.save(cleanItem)
     }
 
@@ -79,8 +80,7 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
 
     protected I updateEntity(@NonNull I existing, @NonNull I cleanItem) {
         boolean hasChanged = updateProperties(existing, cleanItem)
-        pathRepository.readParentItems(existing)
-        existing.updatePath()
+        updateDerivedProperties(existing)
 
         if (hasChanged) {
             administeredItemRepository.update(existing)
@@ -106,11 +106,15 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
         if (!parent) return null
         List<I> items = administeredItemRepository.readAllByParent(parent)
         items.each {
-            pathRepository.readParentItems(it)
-        }
-        items.each {
-            it.updatePath()
+            updateDerivedProperties(it)
         }
         ListResponse.from(items)
+    }
+
+    protected I updateDerivedProperties(I item) {
+        pathRepository.readParentItems(item)
+        item.updatePath()
+
+        item
     }
 }
