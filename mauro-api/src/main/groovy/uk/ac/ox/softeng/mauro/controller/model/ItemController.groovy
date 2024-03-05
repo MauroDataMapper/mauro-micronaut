@@ -4,6 +4,7 @@ import groovy.transform.CompileStatic
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.exceptions.HttpStatusException
 import uk.ac.ox.softeng.mauro.domain.model.Item
+import uk.ac.ox.softeng.mauro.persistence.cache.ItemCacheableRepository
 
 @CompileStatic
 abstract class ItemController<I extends Item> {
@@ -20,6 +21,12 @@ abstract class ItemController<I extends Item> {
      */
     List<String> getDisallowedCreateProperties() {
         disallowedProperties
+    }
+
+    ItemCacheableRepository<I> itemRepository
+
+    ItemController(ItemCacheableRepository<I> itemRepository) {
+        this.itemRepository = itemRepository
     }
 
     protected I cleanBody(I item) {
