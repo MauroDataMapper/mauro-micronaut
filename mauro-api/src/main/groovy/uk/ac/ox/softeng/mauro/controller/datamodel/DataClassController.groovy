@@ -10,6 +10,7 @@ import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
 import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository.DataClassCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.DataModelCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.datamodel.DataClassRepository
+import uk.ac.ox.softeng.mauro.persistence.datamodel.DataModelContentRepository
 import uk.ac.ox.softeng.mauro.persistence.datamodel.DataModelRepository
 import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemContentRepository
 import uk.ac.ox.softeng.mauro.web.ListResponse
@@ -39,8 +40,8 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
     @Inject
     DataModelCacheableRepository dataModelRepository
 
-    DataClassController(DataClassCacheableRepository dataClassRepository, DataModelCacheableRepository dataModelRepository, AdministeredItemContentRepository<DataClass> administeredItemContentRepository) {
-        super(DataClass, dataClassRepository, dataModelRepository, administeredItemContentRepository)
+    DataClassController(DataClassCacheableRepository dataClassRepository, DataModelCacheableRepository dataModelRepository, DataModelContentRepository dataModelContentRepository) {
+        super(DataClass, dataClassRepository, dataModelRepository, dataModelContentRepository)
         this.dataClassRepository = dataClassRepository
     }
 

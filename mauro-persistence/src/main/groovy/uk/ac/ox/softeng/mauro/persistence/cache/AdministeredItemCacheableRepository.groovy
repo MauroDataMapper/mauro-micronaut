@@ -14,6 +14,7 @@ import groovy.util.logging.Slf4j
 import io.micronaut.cache.annotation.CacheConfig
 import io.micronaut.cache.annotation.CacheInvalidate
 import io.micronaut.cache.annotation.Cacheable
+import io.micronaut.context.annotation.Bean
 import io.micronaut.core.annotation.Nullable
 import jakarta.inject.Singleton
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem

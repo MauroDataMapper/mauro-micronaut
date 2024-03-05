@@ -137,7 +137,7 @@ class DataModelController extends ModelController<DataModel> {
         Folder folder = folderRepository.readById(folderId)
         imported.folder = folder
         log.info '** about to saveWithContentBatched... **'
-        DataModel savedImported = modelContentRepository.saveWithAssociations(imported)
+        DataModel savedImported = modelContentRepository.saveWithContent(imported)
         log.info '** finished saveWithContentBatched **'
         ListResponse.from([show(savedImported.id)])
     }
