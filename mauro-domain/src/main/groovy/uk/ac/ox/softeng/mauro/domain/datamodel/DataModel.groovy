@@ -1,5 +1,6 @@
 package uk.ac.ox.softeng.mauro.domain.datamodel
 
+import com.fasterxml.jackson.annotation.JsonAlias
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.model.Model
 import uk.ac.ox.softeng.mauro.domain.model.ModelItem
@@ -12,6 +13,8 @@ import io.micronaut.core.annotation.Introspected
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Relation
 import jakarta.persistence.Transient
+import uk.ac.ox.softeng.mauro.domain.terminology.Term
+import uk.ac.ox.softeng.mauro.domain.terminology.TermRelationshipType
 
 /**
  * A DataModel describes a data asset, or a data standard
@@ -26,8 +29,17 @@ class DataModel extends Model {
     @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'dataModel')
     List<DataType> dataTypes = []
 
+    @JsonAlias("childDataClasses") // for importing models exported from the Grails implementation
     @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'dataModel')
     List<DataClass> dataClasses = []
+
+    @Transient
+    @JsonIgnore
+    List<DataElement> dataElements = []
+
+    @Transient
+    @JsonIgnore
+    List<EnumerationValue> enumerationValues = []
 
 
     @Override
@@ -41,7 +53,7 @@ class DataModel extends Model {
     @Transient
     @JsonIgnore
     List<List<? extends ModelItem<DataModel>>> getAllAssociations() {
-        [dataTypes, dataClasses]
+        [dataTypes, dataClasses, dataElements, enumerationValues]
     }
 
 
@@ -63,14 +75,25 @@ class DataModel extends Model {
     @Transient
     @JsonIgnore
     DataModel setAssociations() {
+        Map<String, DataType> dataTypesMap = dataTypes.collectEntries {[it.label, it]}
+        System.err.println(dataTypesMap)
+
+
         dataTypes.each {dataType ->
             dataType.parent = this
             dataType.enumerationValues.each {enumerationValue ->
                 enumerationValue.parent = dataType
+                enumerationValues.add(enumerationValue)
             }
         }
-        dataClasses.each {
-            it.parent = this
+        dataClasses.each {dataClass ->
+            dataClass.parent = this
+            dataClass.dataElements.each {dataElement ->
+                dataElement.dataModel = this
+                this.dataElements.add(dataElement)
+                dataElement.dataClass = dataClass
+                dataElement.dataType = dataTypesMap[dataElement.dataType.label]
+            }
         }
 
         this

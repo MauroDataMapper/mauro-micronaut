@@ -26,8 +26,10 @@ class DataModelContentRepository extends ModelContentRepository<DataModel> {
     DataModel findWithAssociations(UUID id) {
         DataModel dataModel = dataModelRepository.findById(id)
         dataModel.dataClasses = dataClassRepository.findAllByParent(dataModel)
-        dataElementRepository.findAllByDataClassIn(dataModel.dataClasses).each {dataElement ->
+        if(dataModel.dataClasses) {
+            dataElementRepository.findAllByDataClassIn(dataModel.dataClasses).each {dataElement ->
 
+            }
         }
 
         dataModel.dataTypes = dataTypeRepository.findAllByParent(dataModel)
