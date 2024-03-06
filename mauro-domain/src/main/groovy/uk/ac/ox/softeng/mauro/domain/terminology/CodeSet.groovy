@@ -41,7 +41,7 @@ class CodeSet extends Model {
     @Transient
     @JsonIgnore
     String getPathPrefix() {
-        'co'
+        'cs'
     }
 
     @Override

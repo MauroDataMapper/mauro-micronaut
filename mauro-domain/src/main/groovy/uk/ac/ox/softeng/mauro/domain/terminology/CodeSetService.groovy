@@ -16,7 +16,7 @@ class CodeSetService extends ModelService<CodeSet> {
     }
 
     Boolean handles(String domainType) {
-        domainType.toLowerCase() in ['code_set']
+        domainType.toLowerCase() in ['codeSet', 'codeSets']
     }
 
 }

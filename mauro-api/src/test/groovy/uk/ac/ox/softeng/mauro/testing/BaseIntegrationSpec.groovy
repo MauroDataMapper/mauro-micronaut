@@ -52,4 +52,8 @@ class BaseIntegrationSpec extends Specification {
     <T> T DELETE(String uri, Map<String, Object> body, Class<T> type) {
         client.toBlocking().retrieve(HttpRequest.DELETE(uri, body), type)
     }
+
+    <T> T DELETE(String uri, Class<T> type) {
+        client.toBlocking().retrieve(HttpRequest.DELETE(uri), type)
+    }
 }
