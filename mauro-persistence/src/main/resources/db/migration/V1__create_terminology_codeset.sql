@@ -30,8 +30,8 @@ create unique index "idx_codeset_folder_id_label_branch_name_model_version" on t
 
 create table if not exists terminology."code_set_term"
 (
-   "term_id" uuid not null,
-    "code_set_id" uuid not null
+   "term_id" uuid not null references terminology.term (id) initially deferred,
+    "code_set_id" uuid not null references terminology.code_set (id) initially deferred
 );
 create unique index "idx_code_set_term_id_unique" on terminology.code_set_term (term_id, code_set_id);
 create index "idx_code_set_term_code_set_id" on terminology.code_set_term (code_set_id);
