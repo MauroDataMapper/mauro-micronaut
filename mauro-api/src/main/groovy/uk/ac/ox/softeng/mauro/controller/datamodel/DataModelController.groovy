@@ -127,6 +127,8 @@ class DataModelController extends ModelController<DataModel> {
         log.info '*** imported JSON model ***'
         DataModel imported = importModel.dataModel
         imported.setAssociations()
+        System.err.println(imported.enumerationValues.size())
+        System.err.println(imported.dataElements.size())
         updateCreationProperties(imported)
         log.info '* start updateCreationProperties *'
         imported.getAllContents().each {updateCreationProperties(it)}

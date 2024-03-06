@@ -13,5 +13,5 @@ abstract class DataTypeDTORepository implements GenericRepository<DataTypeDTO, U
 
     abstract DataTypeDTO findById(UUID id)
 
-    abstract DataTypeDTO findAllByDataModel(DataModel dataModel)
+    abstract List<DataTypeDTO> findAllByDataModel(DataModel dataModel)
 }

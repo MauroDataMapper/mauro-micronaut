@@ -41,6 +41,10 @@ class EnumerationValue extends ModelItem<DataModel> {
     @JsonIgnore
     DataType enumerationType
 
+    @JsonIgnore
+    @Transient
+    DataModel dataModel
+
     @Nullable
     String category
 

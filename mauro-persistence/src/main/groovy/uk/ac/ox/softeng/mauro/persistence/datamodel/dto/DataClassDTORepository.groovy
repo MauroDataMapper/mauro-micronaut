@@ -14,8 +14,8 @@ abstract class DataClassDTORepository implements GenericRepository<DataClassDTO,
 
     abstract DataClassDTO findById(UUID id)
 
-    abstract DataClassDTO findAllByDataModel(DataModel dataModel)
+    abstract List<DataClassDTO> findAllByDataModel(DataModel dataModel)
 
-    abstract DataClassDTO findAllByParentDataClass(DataClass parentDataClass)
+    abstract List<DataClassDTO> findAllByParentDataClass(DataClass parentDataClass)
 
 }

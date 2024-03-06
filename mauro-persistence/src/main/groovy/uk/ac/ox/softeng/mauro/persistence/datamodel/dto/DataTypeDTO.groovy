@@ -15,7 +15,7 @@ import io.micronaut.data.annotation.sql.ColumnTransformer
 
 @CompileStatic
 @Introspected
-@MappedEntity(value = 'term_relationship_type', schema = 'datamodel', alias = 'data_type_')
+@MappedEntity(value = 'data_type', schema = 'datamodel', alias = 'data_type_')
 class DataTypeDTO extends DataType implements AdministeredItemDTO {
 
     @Nullable
