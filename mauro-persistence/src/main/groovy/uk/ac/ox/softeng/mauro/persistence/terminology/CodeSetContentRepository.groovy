@@ -28,7 +28,6 @@ class CodeSetContentRepository extends ModelContentRepository<CodeSet> {
 
     @Override
     Long deleteWithContent(@NonNull AdministeredItem administeredItem) {
-        log.debug("CSCR:removeTermAssociations:  "+ (administeredItem as CodeSet).terms.size())
         codeSetRepository.removeTermAssociations((administeredItem as CodeSet).id)
         Long result = codeSetRepository.delete(administeredItem as CodeSet)
         log.debug("CSCR: removed $result codeSet $administeredItem.id")

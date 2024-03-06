@@ -52,13 +52,11 @@ class TerminologyController extends ModelController<Terminology> {
     @Secured(SecurityRule.IS_AUTHENTICATED)
     @Get('/test')
     Map authenticationTest(Authentication authentication) {
-        log.debug '*** TerminologyController.test ***'
         authentication.attributes
     }
 
     @Get('/terminologies/{id}')
     Terminology show(UUID id) {
-        log.debug '*** TerminologyController.get ***'
         super.show(id)
     }
 
@@ -77,7 +75,6 @@ class TerminologyController extends ModelController<Terminology> {
     @Transactional
     @Delete('/terminologies/{id}')
     HttpStatus delete(UUID id, @Body @Nullable Terminology terminology) {
-        log.debug '*** TerminologyController.delete ***'
         super.delete(id, terminology)
     }
 
@@ -88,7 +85,6 @@ class TerminologyController extends ModelController<Terminology> {
 
     @Get('/terminologies')
     ListResponse<Terminology> listAll() {
-        log.debug '*** TerminologyController. getall ***'
         super.listAll()
     }
 
