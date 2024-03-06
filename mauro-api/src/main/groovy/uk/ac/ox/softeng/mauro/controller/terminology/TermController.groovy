@@ -14,7 +14,7 @@ import uk.ac.ox.softeng.mauro.persistence.terminology.TermContentRepository
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @CompileStatic
-@Controller("/terminologies/{terminologyId}/terms")
+@Controller('/terminologies/{terminologyId}/terms')
 class TermController extends AdministeredItemController<Term, Terminology> {
 
     TermCacheableRepository termRepository
@@ -23,19 +23,10 @@ class TermController extends AdministeredItemController<Term, Terminology> {
         super(Term, termRepository, terminologyRepository, termContentRepository)
         this.termRepository = termRepository
     }
-    /**
-     *
-     * @param id
-     * @param readOnly  readOnly.
-     * @return
-     */
+
     @Get('/{id}')
-    Term show(UUID id, @Nullable Boolean readOnly) {
-        if (readOnly){
-            termRepository.readById(id)
-        } else {
-            super.show(id)
-        }
+    Term show(UUID terminologyId, UUID id) {
+        super.show(id)
     }
 
     @Post

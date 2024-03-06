@@ -16,8 +16,10 @@ import uk.ac.ox.softeng.mauro.domain.model.version.FinaliseData
 import uk.ac.ox.softeng.mauro.domain.terminology.CodeSet
 import uk.ac.ox.softeng.mauro.domain.terminology.CodeSetService
 import uk.ac.ox.softeng.mauro.domain.terminology.Term
+import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.terminology.CodeSetContentRepository
+import uk.ac.ox.softeng.mauro.persistence.terminology.TermRepository
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @Controller
@@ -30,7 +32,7 @@ class CodeSetController extends ModelController<CodeSet> {
     CodeSetContentRepository codeSetContentRepository
 
     @Inject
-    TermController termController
+    AdministeredItemCacheableRepository.TermCacheableRepository termRepository
 
     @Inject
     CodeSetService codeSetService
@@ -64,20 +66,18 @@ class CodeSetController extends ModelController<CodeSet> {
     CodeSet addTerm(@NonNull UUID id,
                     @NonNull UUID termId) {
 
-        Term term = termController.show(termId, true)
-        if (term == null) {
+        Term term = termRepository.readById(termId)
+        if (!term) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, 'Term item not found')
         }
 
         CodeSet codeSet = codeSetRepository.readById(id) as CodeSet
-        if (codeSet == null) {
+        if (!codeSet) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, 'CodeSet item not found')
         }
 
-        def codeSetToUpdate = new CodeSet().tap {
-            it.addTerm(term)
-        }
-        super.updateWithoutClean(id, codeSetToUpdate)
+        codeSet.addTerm(term)
+        super.updateWithoutClean(id, codeSet)
     }
 
     @Transactional

@@ -1,7 +1,6 @@
 package uk.ac.ox.softeng.mauro.terminology
 
-
-import io.micronaut.http.client.exceptions.HttpClientResponseException
+import io.micronaut.http.HttpStatus
 import io.micronaut.runtime.EmbeddedApplication
 import io.micronaut.test.annotation.Sql
 import jakarta.inject.Inject
@@ -39,7 +38,7 @@ class CodeSetIntegrationSpec extends BaseIntegrationSpec {
         then:
         response
         response.label == "Test code set"
-        response.path.toString() == 'co:Test code set$main'
+        response.path.toString() == 'cs:Test code set$main'
         response.description == "code set description"
         response.author == "A.N. Other"
         response.organisation == "uk.ac.gridpp.ral.org"
@@ -166,11 +165,12 @@ class CodeSetIntegrationSpec extends BaseIntegrationSpec {
 
         PUT("$CODE_SET_PATH/$codeSetId$TERMS_PATH/$termId", codeSet)
 
+
         when:
-        DELETE("$CODE_SET_PATH/$codeSetId", codeSet)
+        HttpStatus status = DELETE("$CODE_SET_PATH/$codeSetId", HttpStatus)
 
         then:
-        thrown(HttpClientResponseException)
+        status == HttpStatus.NO_CONTENT
 
     }
 
