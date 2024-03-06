@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.controller.facet
 
+import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemRepository
+
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
@@ -83,18 +85,22 @@ abstract class FacetController<I extends Facet> extends ItemController<I> {
     }
 
     protected AdministeredItem readAdministeredItem(String domainType, UUID domainId) {
-        AdministeredItemCacheableRepository administeredItemRepository = repositoryService.getAdministeredItemRepository(domainType)
-        if (!administeredItemRepository) throw new HttpStatusException(HttpStatus.NOT_FOUND, "Domain type [$domainType] not found")
+        AdministeredItemCacheableRepository administeredItemRepository = getAdministeredItemRepository(domainType)
         AdministeredItem administeredItem = administeredItemRepository.readById(domainId)
         if (!administeredItem) throw new HttpStatusException(HttpStatus.NOT_FOUND, 'AdministeredItem not found by ID')
         administeredItem
     }
 
     protected AdministeredItem findAdministeredItem(String domainType, UUID domainId) {
-        AdministeredItemCacheableRepository administeredItemRepository = repositoryService.getAdministeredItemRepository(domainType)
-        if (!administeredItemRepository) throw new HttpStatusException(HttpStatus.NOT_FOUND, "Domain type [$domainType] not found")
+        AdministeredItemCacheableRepository administeredItemRepository = getAdministeredItemRepository(domainType)
         AdministeredItem administeredItem = administeredItemRepository.findById(domainId)
         if (!administeredItem) throw new HttpStatusException(HttpStatus.NOT_FOUND, 'AdministeredItem not found by ID')
         administeredItem
+    }
+
+    protected AdministeredItemCacheableRepository getAdministeredItemRepository(String domainType) {
+        AdministeredItemCacheableRepository administeredItemRepository = repositoryService.getAdministeredItemRepository(domainType)
+        if (!administeredItemRepository) throw new HttpStatusException(HttpStatus.NOT_FOUND, "Domain type [$domainType] not found")
+        administeredItemRepository
     }
 }
