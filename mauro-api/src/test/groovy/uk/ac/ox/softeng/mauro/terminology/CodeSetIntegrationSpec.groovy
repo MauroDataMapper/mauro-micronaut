@@ -7,6 +7,7 @@ import jakarta.inject.Inject
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 import uk.ac.ox.softeng.mauro.domain.terminology.CodeSet
+import uk.ac.ox.softeng.mauro.domain.terminology.Term
 import uk.ac.ox.softeng.mauro.persistence.ContainerizedTest
 import uk.ac.ox.softeng.mauro.testing.BaseIntegrationSpec
 
@@ -164,7 +165,9 @@ class CodeSetIntegrationSpec extends BaseIntegrationSpec {
         def termId = UUID.fromString(termResponse.id)
 
         PUT("$CODE_SET_PATH/$codeSetId$TERMS_PATH/$termId", codeSet)
-
+        //verify
+        CodeSet codeSetWithTerm = GET("$CODE_SET_PATH/$codeSetId") as CodeSet
+        codeSetWithTerm.id == codeSetId
 
         when:
         HttpStatus status = DELETE("$CODE_SET_PATH/$codeSetId", HttpStatus)
@@ -172,6 +175,48 @@ class CodeSetIntegrationSpec extends BaseIntegrationSpec {
         then:
         status == HttpStatus.NO_CONTENT
 
+        when:
+        def codeSets = GET(CODE_SET_PATH )
+
+        then:
+        def codeSetIds = codeSets.items.id.collect()
+        !codeSetIds.contains(codeSetId.toString())
+    }
+
+
+    void 'test remove Term from codeSet'() {
+        given:
+        def response = POST("$FOLDERS_PATH/$folderId$CODE_SET_PATH", codeSet())
+        codeSetId = UUID.fromString(response.id as String)
+        CodeSet codeSet = codeSet() as CodeSet
+        codeSet.id = codeSetId
+
+        and:
+        def terminologyResponse = POST("$FOLDERS_PATH/$folderId$TERMINOLOGIES_PATH", terminology())
+        def terminologyId = UUID.fromString(terminologyResponse.id as String)
+        def termResponse = POST("$TERMINOLOGIES_PATH/$terminologyId$TERMS_PATH", termPayload())
+        def termId = UUID.fromString(termResponse.id as String)
+
+        //Associating term to codeSet
+        PUT("$CODE_SET_PATH/$codeSetId$TERMS_PATH/$termId", codeSet)
+
+        when:
+        CodeSet updated = DELETE("$CODE_SET_PATH/$codeSetId$TERMS_PATH/$termId", CodeSet)
+
+        then:
+        updated
+        updated.id == codeSetId
+
+        //Verify both term and codeSet exist after removing link between term and codeSet.
+        when:
+        Term existing = GET("$TERMINOLOGIES_PATH/$terminologyId$TERMS_PATH/$termId", Term)
+        CodeSet updateCodeSet = GET("$CODE_SET_PATH/$codeSetId", CodeSet)
+
+        then:
+        existing
+        existing.id == termId
+        updateCodeSet
+        updateCodeSet.id == codeSetId
     }
 
 
