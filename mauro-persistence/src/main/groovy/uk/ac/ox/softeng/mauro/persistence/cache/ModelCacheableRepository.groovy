@@ -61,6 +61,7 @@ class ModelCacheableRepository<M extends Model> extends AdministeredItemCacheabl
        CodeSetCacheableRepository(CodeSetRepository codeSetRepository) {
             super(codeSetRepository)
         }
+
     }
 
 }

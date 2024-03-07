@@ -33,6 +33,13 @@ abstract class CodeSetRepository implements ModelRepository<CodeSet> {
     @Query(''' delete from terminology.code_set_term cst where cst.code_set_id = :uuid ''')
     abstract Long removeTermAssociations(@NonNull UUID uuid)
 
+    /**
+     * Remove all associations from table code_set_terms
+     * @param id codeSetId
+     * @returns: number of rows deleted from code_set_terms
+     */
+    @Query(''' delete from terminology.code_set_term cst where cst.code_set_id = :uuid and cst.term_id = :termId ''')
+    abstract Long removeTerm(@NonNull UUID uuid, @NonNull UUID termId)
 
     @Query(''' select * from terminology.term t
     where exists (select term_id from terminology.code_set_term cst
