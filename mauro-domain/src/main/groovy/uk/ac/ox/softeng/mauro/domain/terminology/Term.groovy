@@ -107,16 +107,6 @@ class Term extends ModelItem<Terminology> {
         code
     }
 
-    @Transient
-    @JsonIgnore
-    Term setAssociations() {
-        Map<UUID, CodeSet> codeSetsMap = codeSets.collectEntries {[it.id, it]}
-        codeSets.each {
-            it.parent = this
-        }
-        this
-    }
-
     /****
      * Methods for building a tree-like DSL
      */
