@@ -25,6 +25,7 @@ class BaseIntegrationSpec extends Specification {
     <T> T GET(String uri, Class<T> type) {
         client.toBlocking().retrieve(HttpRequest.GET(uri), type)
     }
+
     Map<String, Object> POST(String uri, Map<String, Object> body) {
         client.toBlocking().retrieve(HttpRequest.POST(uri, body), Map<String, Object>)
     }
@@ -38,6 +39,10 @@ class BaseIntegrationSpec extends Specification {
     }
 
     Map<String, Object> PUT(String uri, Map<String, Object> body) {
+        client.toBlocking().retrieve(HttpRequest.PUT(uri, body), Map<String, Object>)
+    }
+
+    Map<String, Object> PUT(String uri, Object body) {
         client.toBlocking().retrieve(HttpRequest.PUT(uri, body), Map<String, Object>)
     }
 

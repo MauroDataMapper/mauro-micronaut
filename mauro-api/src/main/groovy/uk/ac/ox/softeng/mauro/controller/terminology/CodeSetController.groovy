@@ -19,7 +19,6 @@ import uk.ac.ox.softeng.mauro.domain.terminology.Term
 import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.terminology.CodeSetContentRepository
-import uk.ac.ox.softeng.mauro.persistence.terminology.TermRepository
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @Controller
@@ -71,7 +70,7 @@ class CodeSetController extends ModelController<CodeSet> {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, 'Term item not found')
         }
 
-        CodeSet codeSet = codeSetRepository.readById(id) as CodeSet
+        CodeSet codeSet = codeSetRepository.readById(id)
         if (!codeSet) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, 'CodeSet item not found')
         }
