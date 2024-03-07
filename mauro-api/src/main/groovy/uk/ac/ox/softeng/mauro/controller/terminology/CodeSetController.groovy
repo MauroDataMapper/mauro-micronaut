@@ -67,8 +67,14 @@ class CodeSetController extends ModelController<CodeSet> {
     CodeSet addTerm(@NonNull UUID id,
                     @NonNull UUID termId) {
 
-        Term term = (Term) get(termId, termRepository)
-        CodeSet codeSet = (CodeSet) get(id, codeSetRepository);
+        Term term = termRepository.readById(termId)
+        if (!term) {
+            throw new HttpStatusException(HttpStatus.NOT_FOUND, 'Term item not found')
+        }
+        CodeSet codeSet = codeSetRepository.readById(id)
+        if (!codeSet) {
+            throw new HttpStatusException(HttpStatus.NOT_FOUND, 'CodeSet item not found')
+        }
         codeSet.addTerm(term)
         super.updateWithoutClean(id, codeSet)
     }
@@ -83,11 +89,17 @@ class CodeSetController extends ModelController<CodeSet> {
     @Delete(value = Paths.TERM_TO_CODE_SET)
     CodeSet removeTermFromCodeSet(@NonNull UUID id,
                                   @NonNull UUID termId) {
-        (Term) get(termId, termRepository)
-        CodeSet retrieved = (CodeSet) get(id, codeSetRepository);
+        Term term = termRepository.readById(termId)
+        if (!term) {
+            throw new HttpStatusException(HttpStatus.NOT_FOUND, 'Term item not found')
+        }
+        CodeSet codeSet = codeSetRepository.readById(id)
+        if (!codeSet) {
+            throw new HttpStatusException(HttpStatus.NOT_FOUND, 'CodeSet item not found')
+        }
         codeSetContentRepository.codeSetRepository.removeTerm(id, termId)
         log.debug("Removed codeSet $id link to term : $termId.")
-        retrieved
+        codeSet
     }
 
     @Get(value = Paths.CODE_SETS_BY_FOLDER_ID)
@@ -110,11 +122,6 @@ class CodeSetController extends ModelController<CodeSet> {
     @Put(value = Paths.CODE_SET_NEW_BRANCH_MODEL_VERSION)
     CodeSet createNewBranchModelVersion(UUID id, @Body @Nullable CreateNewVersionData createNewVersionData) {
         super.createNewBranchModelVersion(id, createNewVersionData)
-    }
-
-    static AdministeredItem get(UUID id, AdministeredItemRepository repository) {
-        Optional.ofNullable(repository.readById(id)).orElseThrow(() ->
-                new HttpStatusException(HttpStatus.NOT_FOUND, 'item not found')) as AdministeredItem
     }
 
 }
