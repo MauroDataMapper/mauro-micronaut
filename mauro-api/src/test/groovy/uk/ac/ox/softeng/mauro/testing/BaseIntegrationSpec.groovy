@@ -32,11 +32,19 @@ class BaseIntegrationSpec extends Specification {
         client.toBlocking().retrieve(HttpRequest.POST(uri, body), Map<String, Object>)
     }
 
+    Map<String, Object> POST(String uri, Object body) {
+        client.toBlocking().retrieve(HttpRequest.POST(uri, body), Map<String, Object>)
+    }
+
     Map<String, Object> POST(String uri, MultipartBody body) {
         client.toBlocking().retrieve(HttpRequest.POST(uri, body).contentType(MediaType.MULTIPART_FORM_DATA_TYPE), Map<String, Object>)
     }
 
     <T> T POST(String uri, Map<String, Object> body, Class<T> type) {
+        client.toBlocking().retrieve(HttpRequest.POST(uri, body), type)
+    }
+
+    <T> T POST(String uri, Object body, Class<T> type) {
         client.toBlocking().retrieve(HttpRequest.POST(uri, body), type)
     }
 
@@ -52,7 +60,15 @@ class BaseIntegrationSpec extends Specification {
         client.toBlocking().retrieve(HttpRequest.PUT(uri, body), type)
     }
 
+    <T> T PUT(String uri, Object body, Class<T> type) {
+        client.toBlocking().retrieve(HttpRequest.PUT(uri, body), type)
+    }
+
     Map<String, Object> DELETE(String uri, Map<String, Object> body) {
+        client.toBlocking().retrieve(HttpRequest.DELETE(uri, body), Map<String, Object>)
+    }
+
+    Map<String, Object> DELETE(String uri, Object body) {
         client.toBlocking().retrieve(HttpRequest.DELETE(uri, body), Map<String, Object>)
     }
 
@@ -64,7 +80,7 @@ class BaseIntegrationSpec extends Specification {
         client.toBlocking().retrieve(HttpRequest.DELETE(uri, body), type)
     }
 
-    <T> T DELETE(String uri, Class<T> type) {
-        client.toBlocking().retrieve(HttpRequest.DELETE(uri), type)
+    <T> T DELETE(String uri, Object body, Class<T> type) {
+        client.toBlocking().retrieve(HttpRequest.DELETE(uri, body), type)
     }
 }
