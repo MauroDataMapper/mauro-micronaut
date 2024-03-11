@@ -11,7 +11,6 @@ import io.micronaut.http.exceptions.HttpStatusException
 import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.controller.model.ModelController
-import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.model.version.CreateNewVersionData
 import uk.ac.ox.softeng.mauro.domain.model.version.FinaliseData
 import uk.ac.ox.softeng.mauro.domain.terminology.CodeSet
@@ -19,7 +18,6 @@ import uk.ac.ox.softeng.mauro.domain.terminology.CodeSetService
 import uk.ac.ox.softeng.mauro.domain.terminology.Term
 import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository
-import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemRepository
 import uk.ac.ox.softeng.mauro.persistence.terminology.CodeSetContentRepository
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
@@ -76,7 +74,7 @@ class CodeSetController extends ModelController<CodeSet> {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, 'CodeSet item not found')
         }
         codeSet.addTerm(term)
-        super.updateWithoutClean(id, codeSet)
+        super.updateWithoutClean(id)
     }
 
     @Transactional
@@ -97,10 +95,16 @@ class CodeSetController extends ModelController<CodeSet> {
         if (!codeSet) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, 'CodeSet item not found')
         }
-        codeSetContentRepository.codeSetRepository.removeTerm(id, termId)
-        log.debug("Removed codeSet $id link to term : $termId.")
+        Term associatedTerm = codeSetContentRepository.codeSetRepository.getTerms(id).find(it ->it.id == termId)
+        if(associatedTerm) {
+            codeSetContentRepository.codeSetRepository.removeTerm(id, termId)
+            log.debug("Removed codeSet $id link to term : $termId.")
+        }else {
+            log.debug("No associated term $termId for codeSet: $id")
+        }
         codeSet
     }
+
 
     @Get(value = Paths.CODE_SETS_BY_FOLDER_ID)
     ListResponse<CodeSet> list(UUID folderId) {
@@ -108,9 +112,20 @@ class CodeSetController extends ModelController<CodeSet> {
     }
 
     @Get(value = Paths.CODE_SETS)
-    ListResponse<CodeSet> listAll() {
+    ListResponse<CodeSet> listTermsInCodeSet() {
         super.listAll()
     }
+
+    @Get(value = Paths.TERMS_IN_CODE_SET)
+    ListResponse<CodeSet> listAllTermsInCodeSet(@NonNull UUID id) {
+        CodeSet codeSet = codeSetRepository.readById(id)
+        if (!codeSet) {
+            throw new HttpStatusException(HttpStatus.NOT_FOUND, 'CodeSet item not found')
+        }
+        List<Term> associatedTerms = codeSetContentRepository.codeSetRepository.getTerms(id) as List<Term>
+        ListResponse.from(associatedTerms)
+    }
+
 
     @Transactional
     @Put(value = Paths.FINALISE_CODE_SETS)

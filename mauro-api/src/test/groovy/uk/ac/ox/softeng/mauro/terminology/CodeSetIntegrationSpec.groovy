@@ -26,7 +26,7 @@ class CodeSetIntegrationSpec extends BaseIntegrationSpec {
     @Shared
     UUID codeSetId
 
-    def setup(){
+    def setup() {
         def folderPayload = folder()
         def folderResponse = POST(FOLDERS_PATH, folderPayload)
         folderId = UUID.fromString(folderResponse.id as String)
@@ -95,7 +95,7 @@ class CodeSetIntegrationSpec extends BaseIntegrationSpec {
         def folderResp2 = POST(FOLDERS_PATH, [label: 'Test-folder-2'])
         def folderId2 = UUID.fromString(folderResp2.id as String)
         and:
-        def codeSetResp2 =POST("$FOLDERS_PATH/$folderId2$CODE_SET_PATH", codeSet())
+        def codeSetResp2 = POST("$FOLDERS_PATH/$folderId2$CODE_SET_PATH", codeSet())
         def codeSet2Id = UUID.fromString(codeSetResp2.id as String)
 
         when:
@@ -155,6 +155,7 @@ class CodeSetIntegrationSpec extends BaseIntegrationSpec {
         given:
         def response = POST("$FOLDERS_PATH/$folderId$CODE_SET_PATH", codeSet())
         codeSetId = UUID.fromString(response.id as String)
+
         CodeSet codeSet = codeSet()
         codeSet.id = codeSetId
 
@@ -176,15 +177,15 @@ class CodeSetIntegrationSpec extends BaseIntegrationSpec {
         status == HttpStatus.NO_CONTENT
 
         when:
-        def codeSets = GET(CODE_SET_PATH )
+        def codeSets = GET(CODE_SET_PATH)
 
         then:
         def codeSetIds = codeSets.items.id.collect()
         !codeSetIds.contains(codeSetId.toString())
+
     }
 
-
-    void 'test remove Term from codeSet'() {
+    void 'test getTermsForCodeSet'() {
         given:
         def response = POST("$FOLDERS_PATH/$folderId$CODE_SET_PATH", codeSet())
         codeSetId = UUID.fromString(response.id as String)
@@ -201,11 +202,103 @@ class CodeSetIntegrationSpec extends BaseIntegrationSpec {
         PUT("$CODE_SET_PATH/$codeSetId$TERMS_PATH/$termId", codeSet)
 
         when:
+        def getAllResp = GET("$CODE_SET_PATH/$codeSetId$TERMS_PATH")
+
+        then:
+        getAllResp
+        def terms = getAllResp.items
+        terms.size() == 1
+        terms.id.contains(termId.toString())
+        terms.domainType.contains('Term')
+    }
+
+    void 'test getTermsForCodeSet multiple terms'() {
+        given:
+        def response = POST("$FOLDERS_PATH/$folderId$CODE_SET_PATH", codeSet())
+        codeSetId = UUID.fromString(response.id as String)
+        CodeSet codeSet = codeSet() as CodeSet
+        codeSet.id = codeSetId
+
+        and:
+        def terminologyResponse = POST("$FOLDERS_PATH/$folderId$TERMINOLOGIES_PATH", terminology())
+        def terminologyId = UUID.fromString(terminologyResponse.id as String)
+
+        def termResponse1 = POST("$TERMINOLOGIES_PATH/$terminologyId$TERMS_PATH", termPayload())
+        def termId1 = UUID.fromString(termResponse1.id as String)
+
+        def termResponse2 = POST("$TERMINOLOGIES_PATH/$terminologyId$TERMS_PATH",
+                [code: 'code', definition: 'a defiintion'])
+        def termId2 = UUID.fromString(termResponse2.id as String)
+
+        //Associating term to codeSet
+        PUT("$CODE_SET_PATH/$codeSetId$TERMS_PATH/$termId1", codeSet)
+        PUT("$CODE_SET_PATH/$codeSetId$TERMS_PATH/$termId2", codeSet)
+
+        when:
+        def getAllResp = GET("$CODE_SET_PATH/$codeSetId$TERMS_PATH")
+
+        then:
+        getAllResp
+        def terms = getAllResp.items
+        terms.size() == 2
+        terms.id.contains(termId1.toString())
+        terms.id.contains(termId2.toString())
+    }
+
+    void 'test getTermsForCodeSet -no associated terms should return empty list '() {
+        given:
+        def response = POST("$FOLDERS_PATH/$folderId$CODE_SET_PATH", codeSet())
+        codeSetId = UUID.fromString(response.id as String)
+        CodeSet codeSet = codeSet() as CodeSet
+        codeSet.id = codeSetId
+
+        when:
+        def getAllResp = GET("$CODE_SET_PATH/$codeSetId$TERMS_PATH")
+
+        then:
+        getAllResp
+        getAllResp.items.size() == 0
+
+    }
+
+    void 'test remove Term from codeSet'() {
+        given:
+        def response = POST("$FOLDERS_PATH/$folderId$CODE_SET_PATH", codeSet())
+        codeSetId = UUID.fromString(response.id as String)
+        CodeSet codeSet = codeSet() as CodeSet
+        codeSet.id = codeSetId
+
+        and:
+        def terminologyResponse = POST("$FOLDERS_PATH/$folderId$TERMINOLOGIES_PATH", terminology())
+        def terminologyId = UUID.fromString(terminologyResponse.id as String)
+        def termResponse = POST("$TERMINOLOGIES_PATH/$terminologyId$TERMS_PATH", termPayload())
+        def termId = UUID.fromString(termResponse.id as String)
+
+        //Associating term to codeSet
+        PUT("$CODE_SET_PATH/$codeSetId$TERMS_PATH/$termId", codeSet)
+        //verify using codeset/terms endpoint
+        when:
+        def getTermsForCodeSet = GET("$CODE_SET_PATH/$codeSetId$TERMS_PATH")
+
+        then:
+        getTermsForCodeSet
+        getTermsForCodeSet.items.size() == 1
+        getTermsForCodeSet.items.id.contains(termId.toString())
+
+        when:
         CodeSet updated = DELETE("$CODE_SET_PATH/$codeSetId$TERMS_PATH/$termId", CodeSet)
 
         then:
         updated
         updated.id == codeSetId
+
+        //verify term is no longer associated with codeset
+        when:
+        def getTermsForCodeSetResp = GET("$CODE_SET_PATH/$codeSetId$TERMS_PATH")
+
+        then:
+        getTermsForCodeSetResp
+        getTermsForCodeSetResp.items.size() == 0
 
         //Verify both term and codeSet exist after removing link between term and codeSet.
         when:
