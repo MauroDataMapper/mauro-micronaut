@@ -36,9 +36,6 @@ class CodeSetController extends ModelController<CodeSet> {
     @Inject
     CodeSetService codeSetService
 
-    @Inject
-    ObjectMapper objectMapper
-
     CodeSetController(ModelCacheableRepository.CodeSetCacheableRepository codeSetRepository, ModelCacheableRepository.FolderCacheableRepository folderRepository, CodeSetContentRepository codeSetContentRepository) {
         super(CodeSet, codeSetRepository, folderRepository, codeSetContentRepository)
         this.codeSetRepository = codeSetRepository
@@ -112,7 +109,7 @@ class CodeSetController extends ModelController<CodeSet> {
     }
 
     @Get(value = Paths.CODE_SETS)
-    ListResponse<CodeSet> listTermsInCodeSet() {
+    ListResponse<CodeSet> listAll() {
         super.listAll()
     }
 
