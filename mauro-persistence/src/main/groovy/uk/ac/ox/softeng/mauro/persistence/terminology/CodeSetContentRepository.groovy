@@ -21,6 +21,9 @@ class CodeSetContentRepository extends ModelContentRepository<CodeSet> {
     @Override
     CodeSet readWithContentById(UUID id) {
         CodeSet codeSet = codeSetRepository.readById(id)
+        if (!codeSet){
+            return null
+        }
         codeSet.terms = codeSetRepository.getTerms(id)
         log.debug("CSCR:readWithContentById $id: found number of associated terms: {}", codeSet.terms.size())
         codeSet
