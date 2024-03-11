@@ -5,12 +5,15 @@ import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.*
+import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.controller.model.AdministeredItemController
+import uk.ac.ox.softeng.mauro.domain.terminology.CodeSet
 import uk.ac.ox.softeng.mauro.domain.terminology.Term
 import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
 import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository.TermCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.TerminologyCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.terminology.TermContentRepository
+import uk.ac.ox.softeng.mauro.persistence.terminology.TermRepository
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @CompileStatic
@@ -18,6 +21,8 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 class TermController extends AdministeredItemController<Term, Terminology> {
 
     TermCacheableRepository termRepository
+    @Inject
+    TermRepository termRepo
 
     TermController(TermCacheableRepository termRepository, TerminologyCacheableRepository terminologyRepository, TermContentRepository termContentRepository) {
         super(Term, termRepository, terminologyRepository, termContentRepository)
@@ -54,4 +59,9 @@ class TermController extends AdministeredItemController<Term, Terminology> {
         termRepository.readChildTermsByParent(terminologyId, id)
     }
 
+    @Get('/{id}/codeSets')
+    ListResponse<CodeSet> getCodeSetsForTerm(UUID id) {
+        List<CodeSet> codeSets = termRepo.getCodeSets(id)
+        ListResponse.from(codeSets)
+    }
 }

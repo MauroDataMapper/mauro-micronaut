@@ -9,11 +9,11 @@ import spock.lang.Shared
 import uk.ac.ox.softeng.mauro.domain.terminology.CodeSet
 import uk.ac.ox.softeng.mauro.domain.terminology.Term
 import uk.ac.ox.softeng.mauro.persistence.ContainerizedTest
-import uk.ac.ox.softeng.mauro.testing.BaseIntegrationSpec
+import uk.ac.ox.softeng.mauro.testing.CommonDataSpec
 
 @ContainerizedTest
 @Sql(scripts = "classpath:sql/tear-down.sql", phase = Sql.Phase.AFTER_EACH)
-class CodeSetIntegrationSpec extends BaseIntegrationSpec {
+class CodeSetIntegrationSpec extends CommonDataSpec {
 
     @Inject
     @AutoCleanup
@@ -310,29 +310,6 @@ class CodeSetIntegrationSpec extends BaseIntegrationSpec {
         existing.id == termId
         updateCodeSet
         updateCodeSet.id == codeSetId
-    }
-
-
-    def codeSet() {
-        [
-                label       : "Test code set",
-                description : "code set description",
-                author      : "A.N. Other",
-                organisation: "uk.ac.gridpp.ral.org"
-        ]
-    }
-
-    def folder() {
-        [label: 'Test folder']
-    }
-
-
-    def terminology() {
-        [label: 'Test terminology']
-    }
-
-    def termPayload() {
-        [code: 'B15.0', definition: 'Hepatitis A with hepatic coma']
     }
 
 }
