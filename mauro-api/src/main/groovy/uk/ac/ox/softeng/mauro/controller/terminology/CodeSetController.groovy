@@ -19,6 +19,7 @@ import uk.ac.ox.softeng.mauro.domain.terminology.Term
 import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.terminology.CodeSetContentRepository
+import uk.ac.ox.softeng.mauro.persistence.terminology.CodeSetRepository
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @Controller
@@ -27,6 +28,8 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 class CodeSetController extends ModelController<CodeSet> {
 
     ModelCacheableRepository.CodeSetCacheableRepository codeSetRepository
+    @Inject
+    CodeSetRepository codeSetRepositoryUnCached
 
     CodeSetContentRepository codeSetContentRepository
 
@@ -71,7 +74,7 @@ class CodeSetController extends ModelController<CodeSet> {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, 'CodeSet item not found')
         }
         codeSet.addTerm(term)
-        super.updateWithoutClean(id)
+        codeSetRepository.update(codeSet)
     }
 
     @Transactional
@@ -92,9 +95,9 @@ class CodeSetController extends ModelController<CodeSet> {
         if (!codeSet) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, 'CodeSet item not found')
         }
-        Term associatedTerm = codeSetContentRepository.codeSetRepository.getTerms(id).find(it ->it.id == termId)
+        Term associatedTerm = codeSetRepositoryUnCached.getTerms(id).find(it ->it.id == termId)
         if(associatedTerm) {
-            codeSetContentRepository.codeSetRepository.removeTerm(id, termId)
+            codeSetRepositoryUnCached.removeTerm(id, termId)
             log.debug("Removed codeSet $id link to term : $termId.")
         }else {
             log.debug("No associated term $termId for codeSet: $id")
