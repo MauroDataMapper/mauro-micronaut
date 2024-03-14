@@ -23,6 +23,9 @@ class DataModelContentRepository extends ModelContentRepository<DataModel> {
     @Inject
     DataElementRepository dataElementRepository
 
+    @Inject
+    EnumerationValueRepository enumerationValueRepository
+
     DataModel findWithAssociations(UUID id) {
         DataModel dataModel = dataModelRepository.findById(id)
         dataModel.dataClasses = dataClassRepository.findAllByParent(dataModel)

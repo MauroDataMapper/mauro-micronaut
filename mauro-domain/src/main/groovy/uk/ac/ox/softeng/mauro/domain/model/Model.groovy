@@ -183,4 +183,9 @@ abstract class Model extends AdministeredItem implements SecurableResource {
         this.modelVersionTag
     }
 
+    Folder folder(Folder folder) {
+        this.folder = folder
+        folder
+    }
+
 }

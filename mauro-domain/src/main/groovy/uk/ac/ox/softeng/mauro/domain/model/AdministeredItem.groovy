@@ -152,7 +152,7 @@ abstract class AdministeredItem extends Item {
      */
     @Transient
     @JsonIgnore
-    List<List<AdministeredItem>> getAllAssociations() {
+    List<Collection<AdministeredItem>> getAllAssociations() {
         []
     }
 
