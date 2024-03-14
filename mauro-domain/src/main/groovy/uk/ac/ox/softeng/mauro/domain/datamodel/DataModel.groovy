@@ -35,11 +35,11 @@ class DataModel extends Model {
 
     @Transient
     @JsonIgnore
-    List<DataElement> dataElements = []
+    Set<DataElement> dataElements = []
 
     @Transient
     @JsonIgnore
-    List<EnumerationValue> enumerationValues = []
+    Set<EnumerationValue> enumerationValues = []
 
 
     @Override
@@ -52,7 +52,7 @@ class DataModel extends Model {
     @Override
     @Transient
     @JsonIgnore
-    List<List<? extends ModelItem<DataModel>>> getAllAssociations() {
+    List<Collection<? extends ModelItem<DataModel>>> getAllAssociations() {
         [dataTypes, dataClasses, dataElements, enumerationValues]
     }
 
@@ -84,6 +84,8 @@ class DataModel extends Model {
             dataType.enumerationValues.each {enumerationValue ->
                 enumerationValue.parent = dataType
                 enumerationValues.add(enumerationValue)
+                enumerationValue.dataModel = this
+                this.enumerationValues.add(enumerationValue)
             }
         }
         dataClasses.each {dataClass ->
