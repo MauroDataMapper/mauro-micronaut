@@ -89,4 +89,4 @@ codenarcTest {
     compilationClasspath = codenarcMain.compilationClasspath + sourceSets.test.compileClasspath + sourceSets.test.output
 }
 
-[codenarcMain, codenarcTest]*.ignoreFailures = true
+[codenarcMain, codenarcTest, codenarcTestFixtures]*.ignoreFailures = true

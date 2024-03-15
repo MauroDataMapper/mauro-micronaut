@@ -5,6 +5,7 @@ import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
 import jakarta.inject.Singleton
 import uk.ac.ox.softeng.mauro.domain.facet.Metadata
+import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.model.Model
 
@@ -50,5 +51,22 @@ class ModelContentRepository<M extends Model> extends AdministeredItemContentRep
         }
 
         metadataRepository.saveAll(metadata)
+        saveSummaryMetadataFacets(items)
     }
+
+   void saveSummaryMetadataFacets(List<AdministeredItem> items) {
+       List<SummaryMetadata> summaryMetadata = []
+
+       items.each {item ->
+           if (item.summaryMetadata) {
+               item.summaryMetadata.each {
+                   it.multiFacetAwareItemDomainType = item.domainType
+                   it.multiFacetAwareItemId = item.id
+                   it.multiFacetAwareItem = item
+               }
+               summaryMetadata.addAll(item.summaryMetadata)
+           }
+       }
+       summaryMetadataRepository.saveAll(summaryMetadata)
+   }
 }

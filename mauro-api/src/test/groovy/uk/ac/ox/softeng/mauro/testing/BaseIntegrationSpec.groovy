@@ -10,6 +10,9 @@ import spock.lang.Shared
 import spock.lang.Specification
 
 class BaseIntegrationSpec extends Specification {
+    public static final String FOLDERS_PATH = '/folders'
+    public static final String SUMMARY_METADATA_PATH = '/summaryMetadata'
+
 
     @Inject
     @Client('/')
