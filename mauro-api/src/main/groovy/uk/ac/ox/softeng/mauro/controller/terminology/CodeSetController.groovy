@@ -1,6 +1,6 @@
 package uk.ac.ox.softeng.mauro.controller.terminology
 
-import com.fasterxml.jackson.databind.ObjectMapper
+
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
@@ -95,13 +95,7 @@ class CodeSetController extends ModelController<CodeSet> {
         if (!codeSet) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, 'CodeSet item not found')
         }
-        Term associatedTerm = codeSetRepositoryUnCached.getTerms(id).find(it ->it.id == termId)
-        if(associatedTerm) {
-            codeSetRepositoryUnCached.removeTerm(id, termId)
-            log.debug("Removed codeSet $id link to term : $termId.")
-        }else {
-            log.debug("No associated term $termId for codeSet: $id")
-        }
+        codeSetRepositoryUnCached.removeTerm(id, termId)
         codeSet
     }
 
