@@ -14,6 +14,7 @@ class BaseIntegrationSpec extends Specification {
     public static final String TERMINOLOGIES_PATH = "/terminologies"
     public static final String TERMS_PATH = "/terms"
     public static final String CODE_SET_PATH = "/codeSets"
+    public static final String SUMMARY_METADATA_PATH = '/summaryMetadata'
 
     @Inject
     @Client('/')
