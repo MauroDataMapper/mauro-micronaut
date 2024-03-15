@@ -124,18 +124,12 @@ class DataElement extends ModelItem<DataModel> {
     DataType enumerationType(DataType enumerationType) {
         this.dataType = enumerationType
         this.dataModel.dataTypes.add(enumerationType)
-        enumerationType.dataModel = this.dataModel
-        enumerationType.dataTypeKind = DataType.DataTypeKind.ENUMERATION_TYPE
         enumerationType
     }
 
     DataType enumerationType(Map args, @DelegatesTo(value = DataType, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
-        DataType dt = DataType.build(args, closure)
-        this.dataType = dt
-        this.dataModel.dataTypes.add(dt)
-        dt.dataModel = this.dataModel
-        dt.dataTypeKind = DataType.DataTypeKind.ENUMERATION_TYPE
-        dt
+        DataType dt = DataType.build(args + [dataModel: this.dataModel, dataTypeKind: DataType.DataTypeKind.ENUMERATION_TYPE], closure)
+        enumerationType(dt)
     }
 
     DataType enumerationType(@DelegatesTo(value = DataType, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {

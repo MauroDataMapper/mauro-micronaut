@@ -188,7 +188,6 @@ class DataModelIntegrationSpec extends BaseIntegrationSpec {
         ListResponse<EnumerationValue> enumerationValueListResponse = (ListResponse<EnumerationValue>) GET("/dataModels/$dataModelId/dataTypes/$enumerationTypeId/enumerationValues", ListResponse<EnumerationValue>)
 
         then:
-        System.err.println(enumerationValueListResponse)
         enumerationValueListResponse.count == 2
 
         enumerationValueListResponse.items.find { it -> it.key == 'T' } != null

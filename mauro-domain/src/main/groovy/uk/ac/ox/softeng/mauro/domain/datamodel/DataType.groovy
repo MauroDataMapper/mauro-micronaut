@@ -136,16 +136,16 @@ class DataType extends ModelItem<DataModel> {
     }
 
     EnumerationValue enumerationValue(EnumerationValue enumerationValue) {
-        this.enumerationValues.add(enumerationValue)
+        enumerationValues.add(enumerationValue)
         enumerationValue.enumerationType = this
+        dataModel.enumerationValues.add(enumerationValue)
+        enumerationValue.dataModel = dataModel
         enumerationValue
     }
 
     EnumerationValue enumerationValue(Map args, @DelegatesTo(value = EnumerationValue, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
-        EnumerationValue enumerationValue = EnumerationValue.build(args, closure)
-        enumerationValue.enumerationType = this
-        this.enumerationValues.add(enumerationValue)
-        enumerationValue
+        EnumerationValue enumValue = EnumerationValue.build(args, closure)
+        enumerationValue enumValue
     }
 
     EnumerationValue enumerationValue(@DelegatesTo(value = EnumerationValue, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {

@@ -7,6 +7,7 @@ import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableReposit
 import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemContentRepository
 
 import groovy.transform.CompileStatic
+import io.micronaut.data.annotation.Join
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
 
@@ -18,6 +19,7 @@ class DataTypeContentRepository extends AdministeredItemContentRepository {
     DataTypeCacheableRepository dataTypeCacheableRepository
 
     @Override
+    @Join(value = 'enumerationValues', type = Join.Type.LEFT_FETCH)
     DataType readWithContentById(UUID id) {
         DataType dataType = dataTypeCacheableRepository.readById(id)
 

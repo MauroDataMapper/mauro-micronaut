@@ -1,6 +1,7 @@
 package uk.ac.ox.softeng.mauro.persistence.datamodel.dto
 
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 
 import groovy.transform.CompileStatic
 import io.micronaut.data.jdbc.annotation.JdbcRepository
@@ -13,5 +14,6 @@ abstract class DataElementDTORepository implements GenericRepository<DataElement
 
     abstract DataElementDTO findById(UUID id)
 
-    abstract DataElementDTO findAllByDataClass(DataClass dataClass)
+    abstract List<DataElementDTO> findAllByDataClass(DataClass dataClass)
+
 }

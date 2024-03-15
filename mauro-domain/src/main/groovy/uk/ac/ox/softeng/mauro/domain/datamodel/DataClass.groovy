@@ -78,8 +78,6 @@ class DataClass extends ModelItem<DataModel> {
     @Transient
     @JsonIgnore
     void setParent(AdministeredItem parent) {
-        System.err.println("Setting parent...")
-        System.err.println(parent)
         if(parent instanceof DataClass) {
             this.parentDataClass = parent
             this.dataModel = parentDataClass.dataModel
@@ -113,7 +111,7 @@ class DataClass extends ModelItem<DataModel> {
         this.dataClasses.add(dataClass)
         dataClass.parentDataClass = this
         dataClass.dataModel = this.dataModel
-        this.dataModel.dataClasses.add(dataClass)
+        this.dataModel.allDataClasses.add(dataClass)
         dataClass
     }
 
@@ -121,7 +119,7 @@ class DataClass extends ModelItem<DataModel> {
         DataClass dataClass = build(args + [dataModel: this.dataModel], closure)
         this.dataClasses.add(dataClass)
         dataClass.parentDataClass = this
-        this.dataModel.dataClasses.add(dataClass)
+        dataModel.allDataClasses.add(dataClass)
         dataClass
     }
 
@@ -133,14 +131,13 @@ class DataClass extends ModelItem<DataModel> {
         this.dataElements.add(dataElement)
         dataElement.dataClass = this
         dataElement.dataModel = this.dataModel
+        dataModel.dataElements.add(dataElement)
         dataElement
     }
 
     DataElement dataElement(Map args, @DelegatesTo(value = DataElement, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
-        DataElement dataElement = DataElement.build(args + [dataModel: this.dataModel], closure)
-        this.dataElements.add(dataElement)
-        dataElement.dataClass = this
-        dataElement
+        DataElement dataElement1 = DataElement.build(args + [dataModel: this.dataModel], closure)
+        dataElement dataElement1
     }
 
     DataElement dataElement(@DelegatesTo(value = DataElement, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {

@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.persistence.datamodel
 
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataElement
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
@@ -24,6 +26,9 @@ class DataModelRepositorySpec extends Specification {
 
     @Inject
     AdministeredItemCacheableRepository.DataClassCacheableRepository dataClassRepository
+
+    @Inject
+    AdministeredItemCacheableRepository.DataElementCacheableRepository dataElementRepository
 
     @Inject
     AdministeredItemCacheableRepository.DataTypeCacheableRepository dataTypeRepository
@@ -64,12 +69,6 @@ class DataModelRepositorySpec extends Specification {
                 label "An import model"
                 description "The description goes here"
                 folder myFirstFolder
-                dataClass {
-                    label "First class"
-                }
-                dataClass {
-                    label "Second class"
-                }
                 enumerationType {
                     label "Boolean"
                     enumerationValue {
@@ -81,16 +80,39 @@ class DataModelRepositorySpec extends Specification {
                         value "False"
                     }
                 }
+                dataClass {
+                    label "First class"
+                }
+                dataClass {
+                    label "Second class"
+                    dataElement {
+                        label "My first Data Element"
+                        dataType "Boolean"
+                    }
+                }
             }
-            dataModel.setAssociations()
+            //dataModel.setAssociations()
         when:
             DataModel importedModel = dataModelContentRepository.saveWithContent(dataModel)
             importedModel = dataModelRepository.readById(importedModel.id)
         then:
             importedModel.label == "An import model"
+            importedModel.description == "The description goes here"
+
+            List<DataClass> allDataClasses = dataClassRepository.readAllByParent(importedModel)
+            allDataClasses.size() == 2
+
+
+            List<DataElement> allDataElements = dataElementRepository.readAllByParent(allDataClasses.find {it.label == "Second class"})
+
+            allDataElements.size() == 1
+            allDataElements.first().dataType.label == "Boolean"
+
+
             List<DataType> allDataTypes = dataTypeRepository.readAllByParent(importedModel)
             allDataTypes.size() == 1
             enumerationValueRepository.readAllByParent(allDataTypes.get(0)).size() == 2
+
 
 
     }
