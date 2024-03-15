@@ -5,9 +5,11 @@ import io.micronaut.core.annotation.NonNull
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
 import uk.ac.ox.softeng.mauro.domain.facet.Metadata
+import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.facet.MetadataRepository
+import uk.ac.ox.softeng.mauro.persistence.facet.SummaryMetadataRepository
 
 @CompileStatic
 @Singleton
@@ -18,6 +20,9 @@ class AdministeredItemContentRepository {
 
     @Inject
     MetadataRepository metadataRepository
+
+    @Inject
+    SummaryMetadataRepository summaryMetadataRepository
 
     AdministeredItemCacheableRepository administeredItemRepository
 
@@ -61,10 +66,21 @@ class AdministeredItemContentRepository {
         }
 
         metadataRepository.deleteAll(metadata)
+        deleteSummaryMetadata(items)
     }
 
     @NonNull
     AdministeredItemCacheableRepository getRepository(AdministeredItem item) {
         cacheableRepositories.find {it.handles(item.class)}
+    }
+
+    void deleteSummaryMetadata(List<AdministeredItem> items) {
+        List<SummaryMetadata> summaryMetadata = []
+        items.each { item ->
+            if (item.summaryMetadata){
+                summaryMetadata.addAll(item.summaryMetadata)
+            }
+        }
+        summaryMetadataRepository.deleteAll(summaryMetadata)
     }
 }
