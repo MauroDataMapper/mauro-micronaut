@@ -15,13 +15,21 @@ import uk.ac.ox.softeng.mauro.persistence.model.PathRepository
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @CompileStatic
-abstract class AdministeredItemController<I extends AdministeredItem, P extends AdministeredItem> extends ItemController<I> {
+abstract class AdministeredItemController<I extends AdministeredItem, P extends AdministeredItem> {
 
     /**
      * Properties disallowed in a simple update request.
      */
     List<String> getDisallowedProperties() {
-        super.getDisallowedProperties() + ['path', 'parent', 'owner']
+        ['class'] +
+        ['id', 'dateCreated', 'lastUpdated', 'domainType', 'createdBy', 'path', /*'breadcrumbTree',*/ 'parent', 'owner']
+    }
+
+    /**
+     * Properties disallowed in a simple create request.
+     */
+    List<String> getDisallowedCreateProperties() {
+        disallowedProperties
     }
 
     Class<I> itemClass
@@ -36,7 +44,6 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
     PathRepository pathRepository
 
     AdministeredItemController(Class<I> itemClass, AdministeredItemCacheableRepository<I> administeredItemRepository, AdministeredItemCacheableRepository<P> parentItemRepository, AdministeredItemContentRepository administeredItemContentRepository) {
-        super(administeredItemRepository)
         this.itemClass = itemClass
         this.administeredItemRepository = administeredItemRepository
         this.parentItemRepository = parentItemRepository
@@ -46,7 +53,8 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
 
     I show(UUID id) {
         I item = administeredItemRepository.findById(id)
-        updateDerivedProperties(item)
+        pathRepository.readParentItems(item)
+        item.updatePath()
         item
     }
 
@@ -58,12 +66,20 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
         createEntity(parent, item)
     }
 
-    protected I createEntity(@NonNull P parent, @NonNull I cleanItem) {
-        updateCreationProperties(cleanItem)
+    protected AdministeredItem updateCreationProperties(AdministeredItem item) {
+        item.id = null
+        item.version = null
+        item.dateCreated = null
+        item.lastUpdated = null
+        item.createdBy = 'USER@example.org'
+        item
+    }
 
+    protected I createEntity(@NonNull P parent, @Body @NonNull I cleanItem) {
         cleanItem.parent = parent
-
-        updateDerivedProperties(cleanItem)
+        updateCreationProperties(cleanItem)
+        pathRepository.readParentItems(cleanItem)
+        cleanItem.updatePath()
         administeredItemRepository.save(cleanItem)
     }
 
@@ -73,9 +89,25 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
         updateEntity(existing, item)
     }
 
-    protected I updateEntity(@NonNull I existing, @NonNull I cleanItem) {
+
+    protected boolean updateProperties(I existing, I cleanItem) {
+        boolean hasChanged
+        existing.properties.each {
+            String key = it.key
+            if (!disallowedProperties.contains(key) && cleanItem[key] != null && existing.hasProperty(key).properties.setter) {
+                if (existing[key] != cleanItem[key]) {
+                    existing[key] = cleanItem[key]
+                    hasChanged = true
+                }
+            }
+        }
+        return hasChanged
+    }
+
+    protected I updateEntity(I existing, @NonNull I cleanItem) {
         boolean hasChanged = updateProperties(existing, cleanItem)
-        updateDerivedProperties(existing)
+        pathRepository.readParentItems(existing)
+        existing.updatePath()
 
         if (hasChanged) {
             administeredItemRepository.update(existing)
@@ -87,7 +119,7 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
     @Transactional
     HttpStatus delete(UUID id, @Body @Nullable I item) {
         I itemToDelete = (I) administeredItemContentRepository.readWithContentById(id)
-        if (item?.version) itemToDelete.version = item.version
+        if (item?.version) itemToDelete.version == item.version
         Long deleted = administeredItemContentRepository.deleteWithContent(itemToDelete)
         if (deleted) {
             HttpStatus.NO_CONTENT
@@ -101,14 +133,32 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
         if (!parent) return null
         List<I> items = administeredItemRepository.readAllByParent(parent)
         items.each {
-            updateDerivedProperties(it)
+            pathRepository.readParentItems(it)
+        }
+        items.each {
+            it.updatePath()
         }
         ListResponse.from(items)
     }
 
-    protected I updateDerivedProperties(I item) {
-        pathRepository.readParentItems(item)
-        item.updatePath()
+    protected I cleanBody(I item) {
+        I defaultItem = (I) item.class.getDeclaredConstructor().newInstance()
+
+        // Disallowed properties cannot be set by user request
+        disallowedCreateProperties.each {String key ->
+            if (defaultItem.hasProperty(key).properties.setter && item[key] != defaultItem[key]) {
+                throw new HttpStatusException(HttpStatus.BAD_REQUEST, "Property $key cannot be set directly")
+            }
+        }
+
+        // Collection properties cannot be set in user requests as these might be used in services
+        defaultItem.properties.each {
+            String key = it.key
+            if (defaultItem.hasProperty(key).properties.setter && (it.value instanceof Collection || it.value instanceof Map)) {
+                if (item[key]) throw new HttpStatusException(HttpStatus.BAD_REQUEST, "Collection or Map $key cannot be set directly")
+                item[key] = null
+            }
+        }
 
         item
     }

@@ -26,7 +26,7 @@ class MetadataIntegrationSpec extends BaseIntegrationSpec {
     @Shared
     Map<String, String> metadataMap
 
-    void setupSpec() {
+    def setupSpec() {
         Folder folder = (Folder) POST('/folders', [label: 'Folder with Metadata'], Folder)
         folderId = folder.id
     }

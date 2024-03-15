@@ -99,7 +99,9 @@ abstract class FacetController<I extends Facet> extends ItemController<I> {
     }
 
     protected AdministeredItem findAdministeredItem(String domainType, UUID domainId) {
+        println ("AdministeredItem: findAdministeredItem. for domaintype: $domainType, id: $domainId" )
         AdministeredItemCacheableRepository administeredItemRepository = getAdministeredItemRepository(domainType)
+        println ("AdministeredRepo: $administeredItemRepository. calling find by id for domain $domainId")
         AdministeredItem administeredItem = administeredItemRepository.findById(domainId)
         if (!administeredItem) throw new HttpStatusException(HttpStatus.NOT_FOUND, 'AdministeredItem not found by ID')
         administeredItem

@@ -70,6 +70,15 @@ class Term extends ModelItem<Terminology> {
         [sourceTermRelationships, targetTermRelationships]
     }
 
+    @Relation(value = Relation.Kind.MANY_TO_MANY, mappedBy = 'terms')
+    Set<CodeSet> codeSets = []
+
+    @Transient
+    @JsonIgnore
+    Set<CodeSet> getCodeSets() {
+        codeSets
+    }
+
     @Override
     @Transient
     @JsonIgnore
@@ -129,5 +138,20 @@ class Term extends ModelItem<Terminology> {
 
     Integer depth(Integer depth) {
         this.depth = depth
+    }
+
+    @Override
+    String toString() {
+        return "Term{" +
+                "terminology=" + terminology +
+                ", code='" + code + '\'' +
+                ", definition='" + definition + '\'' +
+                ", url='" + url + '\'' +
+                ", isParent=" + isParent +
+                ", depth=" + depth +
+                ", sourceTermRelationships=" + sourceTermRelationships +
+                ", targetTermRelationships=" + targetTermRelationships +
+                ", codeSets=" + codeSets +
+                '}';
     }
 }

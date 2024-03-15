@@ -58,16 +58,13 @@ class SummaryMetadataIntegrationSpec extends BaseIntegrationSpec {
         summaryMetadataMap = [summaryMetadataType: SummaryMetadataType.MAP ]
 
         (SummaryMetadata) POST("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH", summaryMetadataMap, SummaryMetadata)
-
         when:
-        ListResponse<SummaryMetadata> response = GET("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH", ListResponse<SummaryMetadata>)
+        ListResponse<SummaryMetadata> response = (ListResponse<SummaryMetadata>) GET("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH", ListResponse<SummaryMetadata>)
 
         then:
         response
         response.count == 1
-        SummaryMetadata summaryMetadata = response.items.get(0) as SummaryMetadata
-        //for passing test. todo: fix folder
-//        summaryMetadata.summaryMetadataType == SummaryMetadataType.MAP
+        response.items.first().summaryMetadataType == SummaryMetadataType.MAP.name()
     }
 
     void 'get summaryMetadata by Id'() {

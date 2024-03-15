@@ -11,6 +11,9 @@ import spock.lang.Specification
 
 class BaseIntegrationSpec extends Specification {
     public static final String FOLDERS_PATH = '/folders'
+    public static final String TERMINOLOGIES_PATH = "/terminologies"
+    public static final String TERMS_PATH = "/terms"
+    public static final String CODE_SET_PATH = "/codeSets"
     public static final String SUMMARY_METADATA_PATH = '/summaryMetadata'
 
 
@@ -39,8 +42,11 @@ class BaseIntegrationSpec extends Specification {
         client.toBlocking().retrieve(HttpRequest.POST(uri, body), type)
     }
 
-
     Map<String, Object> PUT(String uri, Map<String, Object> body) {
+        client.toBlocking().retrieve(HttpRequest.PUT(uri, body), Map<String, Object>)
+    }
+
+    Map<String, Object> PUT(String uri, Object body) {
         client.toBlocking().retrieve(HttpRequest.PUT(uri, body), Map<String, Object>)
     }
 
@@ -52,14 +58,11 @@ class BaseIntegrationSpec extends Specification {
         client.toBlocking().retrieve(HttpRequest.DELETE(uri, body), Map<String, Object>)
     }
 
-    <T> T DELETE(String uri, Class<T> type) {
-        client.toBlocking().retrieve(HttpRequest.DELETE(uri), type)
-    }
-
     <T> T DELETE(String uri, Map<String, Object> body, Class<T> type) {
         client.toBlocking().retrieve(HttpRequest.DELETE(uri, body), type)
     }
 
-
-
+    <T> T DELETE(String uri, Class<T> type) {
+        client.toBlocking().retrieve(HttpRequest.DELETE(uri), type)
+    }
 }

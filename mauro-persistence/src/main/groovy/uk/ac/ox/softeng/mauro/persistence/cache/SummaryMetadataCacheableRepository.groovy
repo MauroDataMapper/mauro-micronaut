@@ -8,6 +8,7 @@ import io.micronaut.core.annotation.NonNull
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
+import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadataType
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.persistence.facet.SummaryMetadataRepository
 
@@ -47,7 +48,7 @@ class SummaryMetadataCacheableRepository extends ItemCacheableRepository<Summary
 
     @NonNull
     AdministeredItemCacheableRepository<AdministeredItem> getRepository(String domainType) {
-        cacheableRepositories.find {it.domainType == domainType}
+        cacheableRepositories.find { it.domainType == domainType }
     }
 
     Class getDomainClass() {
