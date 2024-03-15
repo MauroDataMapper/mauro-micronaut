@@ -102,7 +102,9 @@ class DataModelSpec extends Specification {
             it.domainType == 'EnumerationType'
         }.enumerationValues.key.sort() == ['N', 'Y']
 
-        dataModel1.dataClasses.size() == 3
+        dataModel1.dataClasses.size() == 2
+        dataModel1.allDataClasses.size() == 3
+
         dataModel1.dataClasses.find {
             it.label == 'My First DataClass'
         }
