@@ -53,6 +53,12 @@ abstract class ItemCacheableRepository<I extends Item> implements ItemRepository
         updated
     }
 
+    List<I> updateAll(Iterable<I> items) {
+        List<I> updated = repository.updateAll(items)
+        items.each { invalidate(it)}
+        updated
+    }
+
     Long delete(I item) {
         Long deleted = repository.delete(item)
         invalidate(item)

@@ -23,6 +23,8 @@ trait ItemRepository<I extends Item> implements GenericRepository<I, UUID> {
 
     abstract I update(@Valid @NonNull I item)
 
+    abstract List<I> updateAll(@Valid @NonNull Iterable<I> item)
+
     abstract Long delete(@NonNull I item)
 
     abstract Long deleteAll(@NonNull Iterable<I> items)

@@ -31,7 +31,6 @@ abstract class DataClassRepository implements ModelItemRepository<DataClass> {
 
     @Nullable
     List<DataClass> findAllByDataModel(DataModel dataModel) {
-        System.err.println(dataClassDTORepository.findAllByDataModel(dataModel))
         dataClassDTORepository.findAllByDataModel(dataModel) as List<DataClass>
     }
 

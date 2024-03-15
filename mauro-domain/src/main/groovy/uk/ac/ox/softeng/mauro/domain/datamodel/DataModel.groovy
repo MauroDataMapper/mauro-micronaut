@@ -35,7 +35,11 @@ class DataModel extends Model {
 
     @Transient
     @JsonIgnore
-    Set<DataElement> dataElements = []
+    Set<DataClass> allDataClasses = []
+
+    @Transient
+    @JsonIgnore
+    List<DataElement> dataElements = []
 
     @Transient
     @JsonIgnore
@@ -53,14 +57,14 @@ class DataModel extends Model {
     @Transient
     @JsonIgnore
     List<Collection<? extends ModelItem<DataModel>>> getAllAssociations() {
-        [dataTypes, dataClasses, dataElements, enumerationValues]
+        [dataTypes, enumerationValues, allDataClasses, dataElements]
     }
 
 
     @Transient
     @JsonIgnore
     List<DataClass> getChildDataClasses() {
-        dataClasses.findAll{ !it.parentDataClass}
+        dataClasses
     }
 
 
@@ -76,8 +80,6 @@ class DataModel extends Model {
     @JsonIgnore
     DataModel setAssociations() {
         Map<String, DataType> dataTypesMap = dataTypes.collectEntries {[it.label, it]}
-        System.err.println(dataTypesMap)
-
 
         dataTypes.each {dataType ->
             dataType.parent = this
@@ -88,18 +90,28 @@ class DataModel extends Model {
                 this.enumerationValues.add(enumerationValue)
             }
         }
-        dataClasses.each {dataClass ->
-            dataClass.parent = this
-            dataClass.dataElements.each {dataElement ->
-                dataElement.dataModel = this
-                this.dataElements.add(dataElement)
-                dataElement.dataClass = dataClass
-                dataElement.dataType = dataTypesMap[dataElement.dataType.label]
-            }
-        }
 
+        dataClasses.each {dataClass ->
+            setDataClassAssociations(dataClass, dataTypesMap)
+        }
         this
     }
+
+    void setDataClassAssociations(DataClass dataClass, Map<String, DataType> dataTypesMap) {
+        allDataClasses.add(dataClass)
+        dataClass.dataModel = this
+        dataClass.dataClasses.each { childDataClass ->
+            setDataClassAssociations(childDataClass, dataTypesMap)
+            childDataClass.parentDataClass = dataClass
+        }
+        dataClass.dataElements.each {dataElement ->
+            dataElement.dataModel = this
+            this.dataElements.add(dataElement)
+            dataElement.dataClass = dataClass
+            dataElement.dataType = dataTypesMap[dataElement.dataType.label]
+        }
+    }
+
 
 
         /****
@@ -125,11 +137,8 @@ class DataModel extends Model {
     }
 
     DataType primitiveType(Map args, @DelegatesTo(value = DataType, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
-        DataType dt = DataType.build(args, closure)
-        dt.dataModel = this
-        this.dataTypes.add(dt)
-        dt.dataTypeKind = DataType.DataTypeKind.PRIMITIVE_TYPE
-        dt
+        DataType dt = DataType.build(args + [dataModel: this, dataTypeKind: DataType.DataTypeKind.PRIMITIVE_TYPE], closure)
+        primitiveType dt
     }
 
     DataType primitiveType(@DelegatesTo(value = DataType, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
@@ -139,16 +148,12 @@ class DataModel extends Model {
     DataType enumerationType(DataType enumerationType) {
         this.dataTypes.add(enumerationType)
         enumerationType.dataModel = this
-        enumerationType.dataTypeKind = DataType.DataTypeKind.ENUMERATION_TYPE
         enumerationType
     }
 
     DataType enumerationType(Map args, @DelegatesTo(value = DataType, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
-        DataType dt = DataType.build(args, closure)
-        dt.dataModel = this
-        this.dataTypes.add(dt)
-        dt.dataTypeKind = DataType.DataTypeKind.ENUMERATION_TYPE
-        dt
+        DataType dt = DataType.build(args + [dataModel: this, dataTypeKind: DataType.DataTypeKind.ENUMERATION_TYPE], closure)
+        enumerationType(dt)
     }
 
     DataType enumerationType(@DelegatesTo(value = DataType, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
@@ -158,14 +163,14 @@ class DataModel extends Model {
 
     DataClass dataClass(DataClass dataClass) {
         this.dataClasses.add(dataClass)
+        this.allDataClasses.add(dataClass)
         dataClass.dataModel = this
         dataClass
     }
 
     DataClass dataClass(Map args, @DelegatesTo(value = DataClass, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
-        DataClass dataClass = DataClass.build(args + [dataModel: this], closure)
-        this.dataClasses.add(dataClass)
-        dataClass
+        DataClass dataClass1 = DataClass.build(args + [dataModel: this], closure)
+        dataClass dataClass1
     }
 
     DataClass dataClass(@DelegatesTo(value = DataClass, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {

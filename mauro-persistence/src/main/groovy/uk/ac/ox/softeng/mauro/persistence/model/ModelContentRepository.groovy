@@ -20,6 +20,7 @@ class ModelContentRepository<M extends Model> extends AdministeredItemContentRep
     M saveWithContent(@NonNull M model) {
         List<Collection<AdministeredItem>> associations = model.getAllAssociations()
         M saved = (M) getRepository(model).save(model)
+
         saveAllFacets(saved)
         associations.each {association ->
             if (association) {
