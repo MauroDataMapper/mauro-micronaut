@@ -5,7 +5,7 @@ import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Get
 import uk.ac.ox.softeng.mauro.domain.facet.Metadata
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
-import uk.ac.ox.softeng.mauro.persistence.cache.MetadataCacheableRepository
+import uk.ac.ox.softeng.mauro.persistence.cache.FacetCacheableRepository
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @CompileStatic
@@ -19,9 +19,9 @@ class MetadataController extends FacetController<Metadata> {
         super.getDisallowedProperties() + ['multiFacetAwareItemDomainType', 'multiFacetAwareItemId']
     }
 
-    MetadataCacheableRepository metadataRepository
+    FacetCacheableRepository.MetadataCacheableRepository metadataRepository
 
-    MetadataController(MetadataCacheableRepository metadataRepository) {
+    MetadataController(FacetCacheableRepository.MetadataCacheableRepository metadataRepository) {
         super(metadataRepository)
         this.metadataRepository = metadataRepository
     }

@@ -3,19 +3,19 @@ package uk.ac.ox.softeng.mauro.persistence.cache
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.cache.annotation.CacheConfig
-import io.micronaut.cache.annotation.CacheInvalidate
 import io.micronaut.core.annotation.NonNull
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
+import uk.ac.ox.softeng.mauro.domain.facet.Facet
 import uk.ac.ox.softeng.mauro.domain.facet.Metadata
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.persistence.facet.MetadataRepository
+import uk.ac.ox.softeng.mauro.persistence.model.ItemRepository
 
 @Slf4j
 @CompileStatic
 @CacheConfig(cacheNames = 'items-cache', keyGenerator = StringCacheKeyGenerator)
-@Singleton
-class MetadataCacheableRepository extends ItemCacheableRepository<Metadata> {
+abstract class FacetCacheableRepository<F extends Facet> extends ItemCacheableRepository<F> {
 
     static final String FIND_ALL_BY_PARENT = 'findAll'
     static final String READ_ALL_BY_PARENT = 'readAll'
@@ -23,17 +23,14 @@ class MetadataCacheableRepository extends ItemCacheableRepository<Metadata> {
     @Inject
     List<AdministeredItemCacheableRepository> cacheableRepositories
 
-    MetadataCacheableRepository(MetadataRepository metadataRepository) {
-        super(metadataRepository)
+    FacetCacheableRepository(ItemRepository<F> itemRepository) {
+        super(itemRepository)
     }
 
-    @CacheInvalidate
-    void invalidateCachedLookupById(String lookup, String domainType, UUID id) {
-        null
-    }
-
-    @Override
-    void invalidate(Metadata item) {
+    // commented out @Override due to compilation issue when using <F extends Facet>
+    // however <F extends Facet> instead of <I extends Facet> is needed otherwise @Inject doesn't work above
+    //@Override
+    void invalidate(F item) {
         // invalidate the metadata
         super.invalidate(item)
 
@@ -50,7 +47,13 @@ class MetadataCacheableRepository extends ItemCacheableRepository<Metadata> {
         cacheableRepositories.find {it.domainType == domainType}
     }
 
-    Class getDomainClass() {
-        repository.domainClass
+    // Cacheable Facet Repository definitions
+
+    @Singleton
+    @CompileStatic
+    static class MetadataCacheableRepository extends FacetCacheableRepository<Metadata> {
+        MetadataCacheableRepository(MetadataRepository metadataRepository) {
+            super(metadataRepository)
+        }
     }
 }
