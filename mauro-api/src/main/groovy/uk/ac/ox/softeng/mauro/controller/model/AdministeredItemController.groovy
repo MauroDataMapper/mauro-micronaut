@@ -21,19 +21,7 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
      * Properties disallowed in a simple update request.
      */
     List<String> getDisallowedProperties() {
-<<<<<<< HEAD
         super.getDisallowedProperties() + ['path', 'parent', 'owner']
-=======
-        ['class'] +
-        ['id', 'version', 'dateCreated', 'lastUpdated' /*, 'domainType' */, 'createdBy', 'path', /*'breadcrumbTree',*/ 'parent', 'owner']
-    }
-
-    /**
-     * Properties disallowed in a simple create request.
-     */
-    List<String> getDisallowedCreateProperties() {
-        disallowedProperties
->>>>>>> 711f722 (More WIP.  Get BaseIntegrationSpec working.  Fix controllers and associated tests.  Try out running tests in Postgres test containers)
     }
 
     Class<I> itemClass
@@ -123,25 +111,6 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
         pathRepository.readParentItems(item)
         item.updatePath()
 
-<<<<<<< HEAD
-=======
-        // Disallowed properties cannot be set by user request
-        disallowedCreateProperties.each {String key ->
-            if (defaultItem.hasProperty(key).properties.setter && item[key] != defaultItem[key]) {
-                throw new HttpStatusException(HttpStatus.BAD_REQUEST, "Property $key cannot be set directly")
-            }
-        }
-
-        // Collection properties cannot be set in user requests as these might be used in services
-        defaultItem.properties.each {
-            String key = it.key
-            if (defaultItem.hasProperty(key).properties.setter && (it.value instanceof Collection || it.value instanceof Map)) {
-                if (item[key]) throw new HttpStatusException(HttpStatus.BAD_REQUEST, "Collection or Map $key cannot be set directly")
-                item[key] = null
-            }
-        }
-
->>>>>>> 711f722 (More WIP.  Get BaseIntegrationSpec working.  Fix controllers and associated tests.  Try out running tests in Postgres test containers)
         item
     }
 }
