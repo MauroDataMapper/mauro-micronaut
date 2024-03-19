@@ -262,11 +262,11 @@ create table datamodel."data_class" (
     "description"                     text,
     "aliases_string"                  text,
     "min_multiplicity"                integer,
-    "max_multiplicity"                integer,
-    "reference_class_id"              uuid             null references datamodel.data_class(id) initially deferred,
-    "model_resource_id"               uuid,
-    "model_resource_domain_type"      varchar(255)
+    "max_multiplicity"                integer
 );
+
+create index "idx_data_class_data_model_id" on datamodel."data_class"(data_model_id);
+create index "idx_data_class_parent_data_class_id" on datamodel."data_class"(parent_data_class_id);
 
 create table datamodel."data_type" (
     "id"                              uuid primary key not null default uuid_generate_v4(),
@@ -287,6 +287,9 @@ create table datamodel."data_type" (
     "model_resource_domain_type"      varchar(255)
 );
 
+create index "idx_data_type_data_model_id" on datamodel."data_type"(data_model_id);
+create index "idx_data_type_reference_class_id" on datamodel."data_type"(reference_class_id);
+
 create table datamodel."data_element" (
     "id"                              uuid primary key not null default uuid_generate_v4(),
     "version"                         integer          not null,
@@ -303,6 +306,8 @@ create table datamodel."data_element" (
     "min_multiplicity"                integer,
     "max_multiplicity"                integer
 );
+create index "idx_data_element_data_class_id" on datamodel."data_element"(data_class_id);
+create index "idx_data_element_data_type_id" on datamodel."data_element"(data_type_id);
 
 
 create table datamodel."enumeration_value" (
@@ -321,3 +326,5 @@ create table datamodel."enumeration_value" (
     "key"                             text             not null,
     "value"                           text
 );
+
+create index "idx_enumeration_value_enumeration_type_id" on datamodel."enumeration_value"(enumeration_type_id);
