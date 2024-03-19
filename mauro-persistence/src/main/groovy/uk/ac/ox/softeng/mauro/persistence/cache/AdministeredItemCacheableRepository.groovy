@@ -167,7 +167,7 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
 
         // not cached
         List<EnumerationValue> readAllByEnumerationType_Id(UUID enumerationTypeId) {
-            ((EnumerationValueRepository) repository).readAllByEnumerationType_Id(enumerationTypeId)
+            ((EnumerationValueRepository) repository).readAllByEnumerationTypeId(enumerationTypeId)
         }
 
     }

@@ -61,5 +61,5 @@ abstract class EnumerationValueRepository implements ModelItemRepository<Enumera
     }
 
 
-    abstract List<EnumerationValue> readAllByEnumerationType_Id(UUID enumerationTypeId)
+    abstract List<EnumerationValue> readAllByEnumerationTypeId(UUID enumerationTypeId)
 }
