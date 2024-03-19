@@ -21,7 +21,6 @@ dependencies {
     compileOnly("io.swagger.core.v3:swagger-annotations")
     compileOnly("io.micronaut.data:micronaut-data-processor")
     compileOnly("io.micronaut.validation:micronaut-validation-processor")
-    implementation("jakarta.persistence:jakarta.persistence-api")
     implementation("io.micronaut.test:micronaut-test-core")
     implementation("io.micronaut:micronaut-http-client")
     implementation("io.micronaut:micronaut-jackson-databind")
