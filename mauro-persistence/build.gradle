@@ -1,7 +1,7 @@
 plugins {
     id("groovy")
     id("com.github.johnrengelman.shadow") version "8.1.1"
-    id("io.micronaut.library") version "4.1.2"
+    id("io.micronaut.library") version "4.3.4"
     id("maven-publish")
     id("codenarc")
     id("java-library")
@@ -22,7 +22,7 @@ dependencies {
     compileOnly("io.micronaut:micronaut-inject-groovy")
 
     runtimeOnly("org.postgresql:postgresql")
-    runtimeOnly("org.flywaydb:flyway-core")
+    runtimeOnly("org.flywaydb:flyway-database-postgresql")
 
     implementation("io.micronaut.flyway:micronaut-flyway")
     compileOnly("io.micronaut.data:micronaut-data-processor")
