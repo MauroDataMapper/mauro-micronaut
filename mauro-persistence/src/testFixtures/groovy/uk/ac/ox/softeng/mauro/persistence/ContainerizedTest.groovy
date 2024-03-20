@@ -13,7 +13,7 @@ import java.lang.annotation.Target
 @Property(name = "datasources.default.driver-class-name",
     value = "org.testcontainers.jdbc.ContainerDatabaseDriver")
 @Property(name = "datasources.default.url",
-    value = "jdbc:tc:postgresql:15.2-alpine:///db")
+    value = "jdbc:tc:postgresql:16-alpine:///db")
 @AnnotationCollector
 @Target(ElementType.TYPE)
 @Inherited
