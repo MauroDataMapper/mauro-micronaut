@@ -10,7 +10,7 @@ import uk.ac.ox.softeng.mauro.persistence.model.ItemRepository
 @JdbcRepository(dialect = Dialect.POSTGRES)
 abstract class SecurableResourceGroupRoleRepository implements ItemRepository<SecurableResourceGroupRole> {
 
-    abstract SecurableResourceGroupRole readAllBySecurableResourceDomainTypeAndSecurableResourceId(String securableResourceDomainType, UUID securableResourceId)
+    abstract List<SecurableResourceGroupRole> readAllBySecurableResourceDomainTypeAndSecurableResourceId(String securableResourceDomainType, UUID securableResourceId)
 
     @Override
     Class getDomainClass() {

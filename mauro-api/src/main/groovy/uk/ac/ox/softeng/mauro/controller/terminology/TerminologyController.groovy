@@ -12,26 +12,25 @@ import io.micronaut.http.server.types.files.StreamedFile
 import io.micronaut.scheduling.TaskExecutors
 import io.micronaut.scheduling.annotation.ExecuteOn
 import io.micronaut.security.annotation.Secured
-import io.micronaut.security.authentication.Authentication
 import io.micronaut.security.rules.SecurityRule
 import io.micronaut.transaction.annotation.Transactional
+import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.controller.model.ModelController
 import uk.ac.ox.softeng.mauro.domain.model.version.CreateNewVersionData
 import uk.ac.ox.softeng.mauro.domain.model.version.FinaliseData
+import uk.ac.ox.softeng.mauro.domain.security.Role
 import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
 import uk.ac.ox.softeng.mauro.domain.terminology.TerminologyService
-import uk.ac.ox.softeng.mauro.export.ExportMetadata
-import uk.ac.ox.softeng.mauro.export.ExportModel
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.TerminologyCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.terminology.TerminologyContentRepository
+import uk.ac.ox.softeng.mauro.security.AccessControlService
 import uk.ac.ox.softeng.mauro.web.ListResponse
-
-import java.time.Instant
 
 @Slf4j
 @Controller
 @CompileStatic
+@Secured(SecurityRule.IS_ANONYMOUS)
 class TerminologyController extends ModelController<Terminology> {
 
     TerminologyCacheableRepository terminologyRepository
@@ -39,6 +38,9 @@ class TerminologyController extends ModelController<Terminology> {
     TerminologyContentRepository terminologyContentRepository
 
     TerminologyService terminologyService
+
+    @Inject
+    AccessControlService accessControlService
 
     TerminologyController(TerminologyCacheableRepository terminologyRepository, FolderCacheableRepository folderRepository, TerminologyContentRepository terminologyContentRepository,
     TerminologyService terminologyService) {
@@ -49,9 +51,15 @@ class TerminologyController extends ModelController<Terminology> {
     }
 
     @Secured(SecurityRule.IS_AUTHENTICATED)
-    @Get('/test')
-    Map authenticationTest(Authentication authentication) {
-        authentication.attributes
+    @Get('/test/{id}')
+    Map authenticationTest(UUID id) {
+        Terminology terminology = show(id)
+        [
+                terminology: terminology,
+                authentication: accessControlService.userAuthentication,
+                canDoRole_READER: accessControlService.canDoRole(Role.READER, terminology),
+                canDoRole_EDITOR: accessControlService.canDoRole(Role.EDITOR, terminology)
+        ]
     }
 
     @Get('/terminologies/{id}')
