@@ -1,12 +1,10 @@
 package uk.ac.ox.softeng.mauro.persistence.folder.dto
 
-
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.Introspected
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.MappedProperty
-import io.micronaut.data.annotation.Relation
 import io.micronaut.data.annotation.TypeDef
 import io.micronaut.data.annotation.sql.ColumnTransformer
 import io.micronaut.data.model.DataType
