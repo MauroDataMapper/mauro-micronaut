@@ -72,6 +72,11 @@ publishing {
     }
 }
 
+test {
+    useJUnitPlatform()
+}
+
+
 dependencies {
     implementation project(':mauro-domain')
 }

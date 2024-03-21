@@ -3,12 +3,14 @@ package uk.ac.ox.softeng.mauro.persistence.cache
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.cache.annotation.CacheConfig
-import io.micronaut.context.annotation.Bean
 import jakarta.inject.Singleton
+import io.micronaut.context.annotation.Bean
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.domain.model.Model
 import uk.ac.ox.softeng.mauro.domain.terminology.CodeSet
 import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
+import uk.ac.ox.softeng.mauro.persistence.datamodel.DataModelRepository
 import uk.ac.ox.softeng.mauro.persistence.folder.FolderRepository
 import uk.ac.ox.softeng.mauro.persistence.model.ModelRepository
 import uk.ac.ox.softeng.mauro.persistence.terminology.CodeSetRepository
@@ -58,10 +60,17 @@ class ModelCacheableRepository<M extends Model> extends AdministeredItemCacheabl
     @Bean
     @CompileStatic
     static class CodeSetCacheableRepository extends ModelCacheableRepository<CodeSet> {
-       CodeSetCacheableRepository(CodeSetRepository codeSetRepository) {
+        CodeSetCacheableRepository(CodeSetRepository codeSetRepository) {
             super(codeSetRepository)
         }
+    }
 
+    @CompileStatic
+    @Singleton
+    static class DataModelCacheableRepository extends ModelCacheableRepository<DataModel> {
+        DataModelCacheableRepository(DataModelRepository dataModelRepository) {
+            super(dataModelRepository)
+        }
     }
 
 }

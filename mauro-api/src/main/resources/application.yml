@@ -3,9 +3,9 @@ micronaut:
     name: sandbox
   server:
     port: 8088
-    max-request-size: 100Mb
+    max-request-size: 100mb
     multipart:
-      max-file-size: 100Mb
+      max-file-size: 100mb
   router:
     static-resources:
       swagger:
@@ -52,6 +52,7 @@ endpoints:
   caches:
     enabled: true
     sensitive: false
+
 jackson:
   serialization:
     writeDatesAsTimestamps: false
@@ -85,5 +86,6 @@ flyway:
       clean-schema: false
       schemas:
         - core
-        - security
         - terminology
+        - datamodel
+        - security

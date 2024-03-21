@@ -29,7 +29,6 @@ class Path {
         setPathString(str)
     }
 
-
     void setPathString(String pathString) {
         this.pathString = pathString
         nodes = pathString?.split(/\|/)?.collect {PathNode.from(it)}

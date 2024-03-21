@@ -96,6 +96,7 @@ jobs:
           mega-linter.log
 
     - name: Send a stream message
+      if: ${{ success() }} || ${{ failure() }}
       uses: zulip/github-actions-zulip/send-message@v1
       with:
         api-key: ${{ secrets.ZULIP_API_KEY }}
@@ -104,4 +105,4 @@ jobs:
         to: "build/github-actions"
         type: "stream"
         topic: "${{github.repository}}"
-        content: "${{github.repository}} : **${{github.ref}}**\nGitHub Actions build result: **${{ job.status }}**\n${{ github.event.pull_request.html_url || github.event.head_commit.url }}"
+        content: "${{ job.status == 'success' && ':check_mark:' || ':cross_mark:' }} ${{github.repository}} : **${{github.ref}}**\nGitHub Actions build result: **${{ job.status }}**\n${{ github.event.pull_request.html_url || github.event.head_commit.url }}"

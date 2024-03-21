@@ -1,0 +1,62 @@
+package uk.ac.ox.softeng.mauro.persistence.datamodel
+
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
+
+import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
+import uk.ac.ox.softeng.mauro.persistence.datamodel.dto.DataTypeDTORepository
+import uk.ac.ox.softeng.mauro.persistence.model.ModelItemRepository
+
+import io.micronaut.core.annotation.Nullable
+import io.micronaut.data.jdbc.annotation.JdbcRepository
+import io.micronaut.data.model.query.builder.sql.Dialect
+import jakarta.inject.Inject
+
+
+@JdbcRepository(dialect = Dialect.POSTGRES)
+abstract class DataTypeRepository implements ModelItemRepository<DataType> {
+
+    @Inject
+    DataTypeDTORepository dataTypeDTORepository
+
+    @Override
+    @Nullable
+    DataType findById(UUID id) {
+        log.debug 'DataTypeRepository::findById'
+        dataTypeDTORepository.findById(id) as DataType
+    }
+
+    @Nullable
+    List<DataType> findAllByDataModel(DataModel dataModel) {
+        dataTypeDTORepository.findAllByDataModel(dataModel) as List<DataType>
+    }
+
+    @Override
+    @Nullable
+    List<DataType> findAllByParent(AdministeredItem parent) {
+        findAllByDataModel((DataModel) parent)
+    }
+
+    @Nullable
+    abstract List<DataType> readAllByDataModel(DataModel dataModel)
+
+    @Override
+    @Nullable
+    List<DataType> readAllByParent(AdministeredItem parent) {
+        readAllByDataModel((DataModel) parent)
+    }
+
+    abstract Long deleteByDataModelId(UUID dataModelId)
+
+    //    @Override
+    Long deleteByOwnerId(UUID ownerId) {
+        deleteByDataModelId(ownerId)
+    }
+
+    @Override
+    Class getDomainClass() {
+        DataType
+    }
+
+
+}

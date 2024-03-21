@@ -48,6 +48,7 @@ class Terminology extends Model {
         'te'
     }
 
+    @Override
     @Transient
     @JsonIgnore
     List<List<ModelItem<Terminology>>> getAllAssociations() {

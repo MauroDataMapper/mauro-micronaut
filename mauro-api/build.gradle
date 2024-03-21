@@ -21,6 +21,7 @@ dependencies {
     compileOnly("io.swagger.core.v3:swagger-annotations")
     compileOnly("io.micronaut.data:micronaut-data-processor")
     compileOnly("io.micronaut.validation:micronaut-validation-processor")
+    implementation("io.micronaut.test:micronaut-test-core")
     implementation("io.micronaut:micronaut-http-client")
     implementation("io.micronaut:micronaut-jackson-databind")
     implementation("io.micronaut.data:micronaut-data-jdbc")
@@ -47,6 +48,11 @@ dependencies {
     implementation("io.micronaut.security:micronaut-security-session")
     compileOnly("io.micronaut.security:micronaut-security-annotations")
 //    implementation("io.micrometer:context-propagation")
+
+    testRuntimeOnly("org.testcontainers:testcontainers")
+    testRuntimeOnly("org.testcontainers:postgresql")
+    testRuntimeOnly("org.postgresql:postgresql")
+
 
     implementation group: 'org.apache.commons', name: 'commons-rng-simple', version: '1.5'
     implementation group: 'org.apache.commons', name: 'commons-text', version: '1.10.0'

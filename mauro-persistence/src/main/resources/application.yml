@@ -11,6 +11,7 @@ datasources:
     dialect: POSTGRES
     db-type: postgres
     driver-class-name: org.postgresql.Driver
+
 flyway:
   datasources:
     default:
@@ -22,3 +23,4 @@ flyway:
         - core
         - security
         - terminology
+        - datamodel

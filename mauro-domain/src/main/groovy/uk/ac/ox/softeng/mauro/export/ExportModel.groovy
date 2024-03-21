@@ -1,5 +1,6 @@
 package uk.ac.ox.softeng.mauro.export
 
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
 
 import groovy.transform.CompileStatic
@@ -13,4 +14,7 @@ class ExportModel {
 
     Terminology terminology
     List<Terminology> terminologies
+
+    DataModel dataModel
+    List<DataModel> dataModels
 }

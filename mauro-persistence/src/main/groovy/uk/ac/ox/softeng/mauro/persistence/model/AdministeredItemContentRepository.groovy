@@ -39,7 +39,7 @@ class AdministeredItemContentRepository {
      * Delete AdministeredItem and all child Contents and Facets.
      */
     Long deleteWithContent(@NonNull AdministeredItem administeredItem) {
-        List<List<AdministeredItem>> associations = administeredItem.getAllAssociations()
+        List<Collection<AdministeredItem>> associations = administeredItem.getAllAssociations()
 
         // delete the association contents in reverse order
         associations.reverse().each {association ->
@@ -56,7 +56,7 @@ class AdministeredItemContentRepository {
         deleteAllFacets([item])
     }
 
-    Long deleteAllFacets(List<AdministeredItem> items) {
+    Long deleteAllFacets(Collection<AdministeredItem> items) {
         List<Metadata> metadata = []
 
         items.each {item ->
@@ -74,7 +74,7 @@ class AdministeredItemContentRepository {
         cacheableRepositories.find {it.handles(item.class)}
     }
 
-    void deleteSummaryMetadata(List<AdministeredItem> items) {
+    void deleteSummaryMetadata(Collection<AdministeredItem> items) {
         List<SummaryMetadata> summaryMetadata = []
         items.each { item ->
             if (item.summaryMetadata){

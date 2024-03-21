@@ -1,5 +1,10 @@
 package uk.ac.ox.softeng.mauro.domain.model
 
+import uk.ac.ox.softeng.mauro.domain.facet.Metadata
+import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
+import uk.ac.ox.softeng.mauro.domain.security.SecurableResource
+import uk.ac.ox.softeng.mauro.exception.MauroInternalException
+
 import com.fasterxml.jackson.annotation.JsonIgnore
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
@@ -8,13 +13,8 @@ import io.micronaut.data.annotation.Relation
 import jakarta.persistence.Transient
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Pattern
-import uk.ac.ox.softeng.mauro.domain.facet.Metadata
-import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
-import uk.ac.ox.softeng.mauro.domain.security.SecurableResource
-import uk.ac.ox.softeng.mauro.exception.MauroInternalException
 
 import java.time.Instant
-
 /**
  * An AdministeredItem is an item stored in the catalogue.
  * <p>
@@ -51,10 +51,14 @@ abstract class AdministeredItem extends Item {
     String aliasesString
 
     /**
-     * The path of an object allows it to be navigated to from either the containing model, or the folder path within
-     * a system.  This value is calculated dynamically.
-     *
-     * @see #updatePath
+     * The domainType of an object is the (simple name of the) concrete class that it instantiates.
+     */
+    @Transient
+    String domainType = this.class.simpleName
+
+    /**
+     * The path of oan object allows it to be navigated to from either the containing model, or the folder path within
+     * a system.  This value is calculated on persistence and saved to allow easy lookup.
      */
     @Transient
     Path path
@@ -152,7 +156,7 @@ abstract class AdministeredItem extends Item {
      */
     @Transient
     @JsonIgnore
-    List<List<AdministeredItem>> getAllAssociations() {
+    List<Collection<AdministeredItem>> getAllAssociations() {
         []
     }
 
