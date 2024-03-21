@@ -8,8 +8,10 @@ import jakarta.inject.Inject
 import jakarta.inject.Singleton
 import uk.ac.ox.softeng.mauro.domain.facet.Facet
 import uk.ac.ox.softeng.mauro.domain.facet.Metadata
+import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.persistence.facet.MetadataRepository
+import uk.ac.ox.softeng.mauro.persistence.facet.SummaryMetadataRepository
 import uk.ac.ox.softeng.mauro.persistence.model.ItemRepository
 
 @Slf4j
@@ -55,5 +57,13 @@ abstract class FacetCacheableRepository<F extends Facet> extends ItemCacheableRe
         MetadataCacheableRepository(MetadataRepository metadataRepository) {
             super(metadataRepository)
         }
+    }
+    @Singleton
+    @CompileStatic
+    static class SummaryMetadataCacheableRepository extends FacetCacheableRepository<SummaryMetadata> {
+        SummaryMetadataCacheableRepository(SummaryMetadataRepository summaryMetadataRepository) {
+            super(summaryMetadataRepository)
+        }
+
     }
 }
