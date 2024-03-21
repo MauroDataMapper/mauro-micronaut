@@ -7,8 +7,10 @@ import io.micronaut.cache.annotation.CacheInvalidate
 import io.micronaut.cache.annotation.Cacheable
 import jakarta.inject.Singleton
 import uk.ac.ox.softeng.mauro.domain.model.Item
+import uk.ac.ox.softeng.mauro.domain.model.SummaryMetadataReport
 import uk.ac.ox.softeng.mauro.domain.security.CatalogueUser
 import uk.ac.ox.softeng.mauro.persistence.model.ItemRepository
+import uk.ac.ox.softeng.mauro.persistence.model.SummaryMetadataReportRepository
 import uk.ac.ox.softeng.mauro.persistence.security.CatalogueUserRepository
 
 @Slf4j
@@ -116,6 +118,20 @@ abstract class ItemCacheableRepository<I extends Item> implements ItemRepository
     static class CatalogueUserCacheableRepository extends ItemCacheableRepository<CatalogueUser> {
         CatalogueUserCacheableRepository(CatalogueUserRepository catalogueUserRepository) {
             super(catalogueUserRepository)
+        }
+    }
+    @Singleton
+    @CompileStatic
+    static class SummaryMetadataReportCacheableRepository extends ItemCacheableRepository<SummaryMetadataReport> {
+        SummaryMetadataReportCacheableRepository(SummaryMetadataReportRepository summaryMetadataReportRepository) {
+            super(summaryMetadataReportRepository)
+        }
+
+        void cache(SummaryMetadataReport summaryMetadataReport) {
+            cachedLookupById(FIND_BY_ID, summaryMetadataReport.domainType, summaryMetadataReport.id)
+        }
+        SummaryMetadataReport readById(SummaryMetadataReport summaryMetadataReport, UUID id) {
+           cachedLookupById(FIND_BY_ID, summaryMetadataReport.domainType, id)
         }
     }
 }

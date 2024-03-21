@@ -1,6 +1,7 @@
 package uk.ac.ox.softeng.mauro.facet
 
-
+import io.micronaut.http.HttpStatus
+import io.micronaut.http.client.exceptions.HttpClientResponseException
 import io.micronaut.runtime.EmbeddedApplication
 import io.micronaut.test.annotation.Sql
 import jakarta.inject.Inject
@@ -13,7 +14,7 @@ import uk.ac.ox.softeng.mauro.testing.BaseIntegrationSpec
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @ContainerizedTest
-@Sql(scripts = "classpath:sql/tear-down-core.sql", phase = Sql.Phase.AFTER_EACH)
+@Sql(scripts = "classpath:sql/tear-down-summary-metadata.sql", phase = Sql.Phase.AFTER_EACH)
 class SummaryMetadataIntegrationSpec extends BaseIntegrationSpec {
 
     @Inject
@@ -34,15 +35,17 @@ class SummaryMetadataIntegrationSpec extends BaseIntegrationSpec {
     void 'list empty SummaryMetadata'() {
         when:
         def response =
-        GET("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH", ListResponse<SummaryMetadata>)
+                GET("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH", ListResponse<SummaryMetadata>)
 
         then:
         response.count == 0
     }
 
     void 'create summaryMetadata'() {
+        given:
+        summaryMetadataMap = [summaryMetadataType: SummaryMetadataType.STRING] as Map<String, String>
+
         when:
-        summaryMetadataMap = [summaryMetadataType: SummaryMetadataType.STRING]
         SummaryMetadata summaryMetadata = (SummaryMetadata) POST("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH",
                 summaryMetadataMap, SummaryMetadata)
 
@@ -55,36 +58,80 @@ class SummaryMetadataIntegrationSpec extends BaseIntegrationSpec {
 
     void 'list summaryMetadata'() {
         given:
-        summaryMetadataMap = [summaryMetadataType: SummaryMetadataType.MAP ]
-
+        summaryMetadataMap = [summaryMetadataType: SummaryMetadataType.MAP] as Map<String, String>
+        and:
         (SummaryMetadata) POST("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH", summaryMetadataMap, SummaryMetadata)
-
         when:
-        ListResponse<SummaryMetadata> response = GET("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH", ListResponse<SummaryMetadata>)
+        ListResponse<SummaryMetadata> response = (ListResponse<SummaryMetadata>) GET("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH", ListResponse<SummaryMetadata>)
 
         then:
         response
         response.count == 1
-        SummaryMetadata summaryMetadata = response.items.get(0) as SummaryMetadata
-        //for passing test. todo: fix folder
-//        summaryMetadata.summaryMetadataType == SummaryMetadataType.MAP
+        response.items.first().summaryMetadataType as String == SummaryMetadataType.MAP.name()
     }
 
     void 'get summaryMetadata by Id'() {
         given:
-        summaryMetadataMap = [summaryMetadataType: SummaryMetadataType.MAP ]
-
+        summaryMetadataMap = [summaryMetadataType: SummaryMetadataType.MAP] as Map<String, String>
+        and:
         SummaryMetadata summaryMetadata = (SummaryMetadata) POST("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH",
                 summaryMetadataMap, SummaryMetadata)
         summaryMetadataId = summaryMetadata.id
 
         when:
         SummaryMetadata saved = GET("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH/$summaryMetadataId",
-              SummaryMetadata)
+                SummaryMetadata)
 
         then:
         saved
         saved.id == summaryMetadataId
         saved.summaryMetadataType == SummaryMetadataType.MAP
+    }
+
+    void 'update summary metadata'() {
+        given:
+        summaryMetadataMap = [summaryMetadataType: SummaryMetadataType.NUMBER] as Map<String, String>
+
+        and:
+        SummaryMetadata summaryMetadata = (SummaryMetadata) POST("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH",
+                summaryMetadataMap, SummaryMetadata)
+        summaryMetadataId = summaryMetadata.id
+
+        when:
+        SummaryMetadata updated = (SummaryMetadata) PUT("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH/$summaryMetadataId",
+                [summaryMetadataType: SummaryMetadataType.STRING], SummaryMetadata)
+
+        then:
+        updated
+        updated.summaryMetadataType == SummaryMetadataType.STRING
+    }
+
+    void 'delete SummaryMetadata'() {
+        given:
+        summaryMetadataMap = [summaryMetadataType: SummaryMetadataType.MAP] as Map<String, String>
+        and:
+        SummaryMetadata summaryMetadata = (SummaryMetadata) POST("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH",
+                summaryMetadataMap, SummaryMetadata)
+        summaryMetadataId = summaryMetadata.id
+
+        when:
+        HttpStatus status = (HttpStatus) DELETE("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH/$summaryMetadataId", HttpStatus)
+
+        then:
+        status == HttpStatus.NO_CONTENT
+
+        when:
+        (SummaryMetadata) GET("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH/$summaryMetadataId", SummaryMetadata)
+
+        then: 'the show endpoint shows the update'
+        HttpClientResponseException exception = thrown()
+        exception.status == HttpStatus.NOT_FOUND
+
+        when:
+        ListResponse<SummaryMetadata> response = (ListResponse<SummaryMetadata>) GET("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH", ListResponse<SummaryMetadata>)
+
+        then: 'the list endpoint shows the update'
+        response
+        response.count == 0
     }
 }
