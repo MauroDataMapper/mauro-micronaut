@@ -27,7 +27,11 @@ class FolderDTO extends Folder implements AdministeredItemDTO {
     @Nullable
     @TypeDef(type = DataType.JSON)
     @MappedProperty
-    @ColumnTransformer(read = '(select json_agg(summary_metadata) from core.summary_metadata where multi_facet_aware_item_id = folder_.id)')
+    @ColumnTransformer(read = '''(select json_agg(summary_metadata) from (select *,
+                                               (select json_agg(summary_metadata_report)
+                                                from core.summary_metadata_report
+                                                where summary_metadata_id = summary_metadata.id) summary_metadata_reports
+                                        from core.summary_metadata) summary_metadata where multi_facet_aware_item_id = folder_.id)''')
     List<SummaryMetadata> summaryMetadata = []
 
 }
