@@ -1,6 +1,7 @@
 package uk.ac.ox.softeng.mauro.persistence.terminology.dto
 
 import uk.ac.ox.softeng.mauro.domain.facet.Metadata
+import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
 import uk.ac.ox.softeng.mauro.domain.terminology.Term
 import uk.ac.ox.softeng.mauro.persistence.model.dto.AdministeredItemDTO
 
@@ -24,4 +25,14 @@ class TermDTO extends Term implements AdministeredItemDTO {
     @ColumnTransformer(read = '(select json_agg(metadata) from core.metadata where multi_facet_aware_item_id = term_.id)')
     // could use @JsonRawValue if we need to speed up binding this from the DB
     List<Metadata> metadata = []
+
+    @Nullable
+    @TypeDef(type = DataType.JSON)
+    @MappedProperty
+    @ColumnTransformer(read = '''(select json_agg(summary_metadata) from (select *,
+                                    (select json_agg(summary_metadata_report)
+                                    from core.summary_metadata_report
+                                    where summary_metadata_id = summary_metadata.id) summary_metadata_reports
+                                    from core.summary_metadata) summary_metadata where multi_facet_aware_item_id = term_.id)''')
+    List<SummaryMetadata> summaryMetadata = []
 }
