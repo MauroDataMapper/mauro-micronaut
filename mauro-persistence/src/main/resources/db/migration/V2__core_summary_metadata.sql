@@ -21,4 +21,5 @@ create table if not exists core.summary_metadata_report (
     "report_value"                    text              not null,
     "summary_metadata_id"             uuid              not null references core.summary_metadata (id) initially deferred
 );
+create index "idx_summary_metadata_report_summary_metadata_id" on "core"."summary_metadata_report" (summary_metadata_id);
 

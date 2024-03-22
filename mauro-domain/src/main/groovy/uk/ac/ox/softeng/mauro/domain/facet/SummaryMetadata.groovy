@@ -7,6 +7,8 @@ import groovy.transform.CompileStatic
 import io.micronaut.data.annotation.Index
 import io.micronaut.data.annotation.Indexes
 import io.micronaut.data.annotation.MappedEntity
+import io.micronaut.data.annotation.Relation
+import uk.ac.ox.softeng.mauro.domain.model.SummaryMetadataReport
 
 @CompileStatic
 @MappedEntity(value = 'summary_metadata', schema = 'core', alias = 'summary_metadata_')
@@ -17,5 +19,9 @@ class SummaryMetadata extends Facet{
     @JsonAlias(['summary_metadata_type'])
     @JsonDeserialize(converter = SummaryMetadataType.SummaryMetadataTypeConverter)
     SummaryMetadataType summaryMetadataType
+
+    @JsonAlias(['summary_metadata_reports'])
+    @Relation(Relation.Kind.ONE_TO_MANY)
+    List<SummaryMetadataReport> summaryMetadataReports
 
 }

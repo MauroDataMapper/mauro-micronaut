@@ -9,6 +9,7 @@ import io.micronaut.data.annotation.TypeDef
 import io.micronaut.data.annotation.sql.ColumnTransformer
 import io.micronaut.data.model.DataType
 import uk.ac.ox.softeng.mauro.domain.facet.Metadata
+import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
 import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
 import uk.ac.ox.softeng.mauro.persistence.model.dto.AdministeredItemDTO
 
@@ -22,4 +23,14 @@ class TerminologyDTO extends Terminology implements AdministeredItemDTO {
     @MappedProperty
     @ColumnTransformer(read = '(select json_agg(metadata) from core.metadata where multi_facet_aware_item_id = terminology_.id)')
     List<Metadata> metadata = []
+
+    @Nullable
+    @TypeDef(type = DataType.JSON)
+    @MappedProperty
+    @ColumnTransformer(read = '''(select json_agg(summary_metadata) from (select *,
+                                    (select json_agg(summary_metadata_report)
+                                    from core.summary_metadata_report
+                                    where summary_metadata_id = summary_metadata.id) summary_metadata_reports
+                                    from core.summary_metadata) summary_metadata where multi_facet_aware_item_id = terminology_.id)''')
+    List<SummaryMetadata> summaryMetadata = []
 }

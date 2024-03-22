@@ -54,7 +54,7 @@ class SummaryMetadataReportIntegrationSpec extends BaseIntegrationSpec {
         summaryMetadataReport.summaryMetadataId == summaryMetadata.id
     }
 
-    void 'list summaryMetadata'() {
+    void 'list summaryMetadataReport'() {
         given:
         SummaryMetadataReport report1 = (SummaryMetadataReport) POST("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH/$summaryMetadata.id$SUMMARY_METADATA_REPORT_PATH",
                 [reportValue: 'test-report-value'], SummaryMetadataReport)
@@ -129,5 +129,19 @@ class SummaryMetadataReportIntegrationSpec extends BaseIntegrationSpec {
         HttpClientResponseException exception = thrown()
         exception.status == HttpStatus.NOT_FOUND
 
+    }
+
+    void 'list summaryMetadata - contains SummaryMetadataReport'() {
+        given:
+        SummaryMetadataReport report = (SummaryMetadataReport) POST("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH/$summaryMetadata.id$SUMMARY_METADATA_REPORT_PATH",
+                [reportValue: 'test-report-value'], SummaryMetadataReport)
+        when:
+        ListResponse<SummaryMetadata> metadataResponse = (ListResponse<SummaryMetadata>) GET("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH", ListResponse<SummaryMetadata>)
+
+        then:
+        metadataResponse
+        metadataResponse.count == 1
+        metadataResponse.items[0].summaryMetadataReports.size() == 1
+        metadataResponse.items[0].summaryMetadataReports[0].id == report.id.toString()
     }
 }
