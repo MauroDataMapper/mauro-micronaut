@@ -74,7 +74,8 @@ class CodeSetController extends ModelController<CodeSet> {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, 'CodeSet item not found')
         }
         codeSet.addTerm(term)
-        codeSetRepository.update(codeSet)
+        codeSetRepositoryUnCached.addTerm(id, termId)
+        codeSet
     }
 
     @Transactional

@@ -27,7 +27,7 @@ class SummaryMetadataIntegrationSpec extends BaseIntegrationSpec {
 
     Map<String, String> summaryMetadataMap
 
-    void setupSpec() {
+    void setup() {
         Folder folder = (Folder) POST("$FOLDERS_PATH", [label: 'Folder with SummaryMetadata'], Folder)
         folderId = folder.id
     }

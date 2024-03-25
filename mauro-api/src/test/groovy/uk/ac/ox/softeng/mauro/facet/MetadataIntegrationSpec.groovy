@@ -26,7 +26,7 @@ class MetadataIntegrationSpec extends BaseIntegrationSpec {
     @Shared
     Map<String, String> metadataMap
 
-    void setupSpec() {
+    void setup() {
         Folder folder = (Folder) POST('/folders', [label: 'Folder with Metadata'], Folder)
         folderId = folder.id
     }
@@ -53,6 +53,11 @@ class MetadataIntegrationSpec extends BaseIntegrationSpec {
     }
 
     void 'list metadata'() {
+        given:
+        metadataMap = [namespace: 'org.example', key: 'example_key', value: 'example_value']
+        Metadata metadata = (Metadata) POST("/folders/$folderId/metadata", metadataMap, Metadata)
+        metadataId = metadata.id
+
         when:
         ListResponse<Metadata> metadataList = (ListResponse<Metadata>) GET("/folders/$folderId/metadata", ListResponse<Metadata>)
 
@@ -65,23 +70,33 @@ class MetadataIntegrationSpec extends BaseIntegrationSpec {
     }
 
     void 'get metadata by id'() {
+        given:
+        metadataMap = [namespace: 'org.example', key: 'example_key', value: 'example_value']
+        Metadata metadata = (Metadata) POST("/folders/$folderId/metadata", metadataMap, Metadata)
+        metadataId = metadata.id
+
         when:
-        Metadata metadata = (Metadata) GET("/folders/$folderId/metadata/$metadataId", Metadata)
+        Metadata retrieved = (Metadata) GET("/folders/$folderId/metadata/$metadataId", Metadata)
 
         then:
-        metadata
-        metadata.namespace == metadataMap.namespace
-        metadata.key == metadataMap.key
-        metadata.value == metadataMap.value
+        retrieved
+        retrieved.namespace == metadataMap.namespace
+        retrieved.key == metadataMap.key
+        retrieved.value == metadataMap.value
     }
 
     void 'update metadata by id'() {
+        given:
+        metadataMap = [namespace: 'org.example', key: 'example_key', value: 'example_value']
+        Metadata metadata = (Metadata) POST("/folders/$folderId/metadata", metadataMap, Metadata)
+        metadataId = metadata.id
+
         when:
-        Metadata metadata = (Metadata) PUT("/folders/$folderId/metadata/$metadataId", [value: 'updated'], Metadata)
+        Metadata saved = (Metadata) PUT("/folders/$folderId/metadata/$metadataId", [value: 'updated'], Metadata)
 
         then:
-        metadata
-        metadata.value == 'updated'
+        saved
+        saved.value == 'updated'
 
         when:
         Metadata metadataUpdated = (Metadata) GET("/folders/$folderId/metadata/$metadataId", Metadata)
@@ -100,6 +115,11 @@ class MetadataIntegrationSpec extends BaseIntegrationSpec {
     }
 
     void 'delete metadata by id'() {
+        given:
+        metadataMap = [namespace: 'org.example', key: 'example_key', value: 'example_value']
+        Metadata metadata = (Metadata) POST("/folders/$folderId/metadata", metadataMap, Metadata)
+        metadataId = metadata.id
+
         when:
         HttpStatus status = (HttpStatus) DELETE("/folders/$folderId/metadata/$metadataId", HttpStatus)
 
@@ -107,7 +127,7 @@ class MetadataIntegrationSpec extends BaseIntegrationSpec {
         status == HttpStatus.NO_CONTENT
 
         when:
-        Metadata metadataDeleted = (Metadata) GET("/folders/$folderId/metadata/$metadataId", Metadata)
+        (Metadata) GET("/folders/$folderId/metadata/$metadataId", Metadata)
 
         then: 'the show endpoint shows the update'
         HttpClientResponseException exception = thrown()
