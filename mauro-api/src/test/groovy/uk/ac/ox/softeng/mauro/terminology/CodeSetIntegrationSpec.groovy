@@ -231,8 +231,8 @@ class CodeSetIntegrationSpec extends CommonDataSpec {
         def termId2 = UUID.fromString(termResponse2.id as String)
 
         //Associating term to codeSet
-        PUT("$CODE_SET_PATH/$codeSetId$TERMS_PATH/$termId1", codeSet)
-        PUT("$CODE_SET_PATH/$codeSetId$TERMS_PATH/$termId2", codeSet)
+        (CodeSet) PUT("$CODE_SET_PATH/$codeSetId$TERMS_PATH/$termId1", codeSet, CodeSet)
+        (CodeSet) PUT("$CODE_SET_PATH/$codeSetId$TERMS_PATH/$termId2", codeSet, CodeSet)
 
         when:
         def getAllResp = GET("$CODE_SET_PATH/$codeSetId$TERMS_PATH")

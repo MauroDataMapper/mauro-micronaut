@@ -6,6 +6,7 @@ import io.micronaut.cache.annotation.CacheConfig
 import io.micronaut.cache.annotation.CacheInvalidate
 import io.micronaut.cache.annotation.Cacheable
 import jakarta.inject.Singleton
+import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
 import uk.ac.ox.softeng.mauro.domain.model.Item
 import uk.ac.ox.softeng.mauro.domain.model.SummaryMetadataReport
 import uk.ac.ox.softeng.mauro.domain.security.CatalogueUser
@@ -130,8 +131,28 @@ abstract class ItemCacheableRepository<I extends Item> implements ItemRepository
         void cache(SummaryMetadataReport summaryMetadataReport) {
             cachedLookupById(FIND_BY_ID, summaryMetadataReport.domainType, summaryMetadataReport.id)
         }
+
         SummaryMetadataReport readById(SummaryMetadataReport summaryMetadataReport, UUID id) {
            cachedLookupById(FIND_BY_ID, summaryMetadataReport.domainType, id)
+        }
+
+        Long delete(SummaryMetadataReport summaryMetadataReport) {
+            Long deleted = repository.delete(summaryMetadataReport)
+            invalidateAssociatedSummaryMetadata(summaryMetadataReport)
+            invalidate(summaryMetadataReport)
+            deleted
+        }
+
+        SummaryMetadataReport update(SummaryMetadataReport summaryMetadataReport) {
+            SummaryMetadataReport updated = repository.update(summaryMetadataReport)
+            invalidateAssociatedSummaryMetadata(summaryMetadataReport)
+            invalidate(summaryMetadataReport)
+            updated
+        }
+
+        void invalidateAssociatedSummaryMetadata(SummaryMetadataReport summaryMetadataReport){
+            invalidateCachedLookupById(FIND_BY_ID, SummaryMetadata.class.getSimpleName(), summaryMetadataReport.getSummaryMetadataId())
+            invalidateCachedLookupById(READ_BY_ID, SummaryMetadata.class.getSimpleName(), summaryMetadataReport.getSummaryMetadataId())
         }
     }
 }

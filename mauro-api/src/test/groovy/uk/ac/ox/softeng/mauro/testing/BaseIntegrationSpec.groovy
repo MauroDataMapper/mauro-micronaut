@@ -57,14 +57,10 @@ class BaseIntegrationSpec extends Specification {
     Map<String, Object> PUT(String uri, Object body) {
         client.toBlocking().retrieve(HttpRequest.PUT(uri, body), Map<String, Object>)
     }
-
-    <T> T PUT(String uri, Map<String, Object> body, Class<T> type) {
+    <T> T PUT(String uri, Object body, Class<T> type ) {
         client.toBlocking().retrieve(HttpRequest.PUT(uri, body), type)
     }
 
-    <T> T PUT(String uri, Object body, Class<T> type) {
-        client.toBlocking().retrieve(HttpRequest.PUT(uri, body), type)
-    }
 
     Map<String, Object> DELETE(String uri, Map<String, Object> body) {
         client.toBlocking().retrieve(HttpRequest.DELETE(uri, body), Map<String, Object>)
