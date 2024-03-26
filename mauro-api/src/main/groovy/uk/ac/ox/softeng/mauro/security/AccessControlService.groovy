@@ -33,10 +33,20 @@ class AccessControlService {
     @Inject
     UserGroupRepository userGroupRepository
 
+    /**
+     * For a given Role and a Model, check if the current authenticated user can do the role on the model, by checking
+     * permissions on the model or inherited from any of its parents.
+     * @return if authorised, throw AuthorizationException otherwise
+     */
     void checkRole(Role role, Model model) {
         if (!canDoRole(role, model)) throw new AuthorizationException(userAuthentication)
     }
 
+    /**
+     * For a given Role and a Model, check if the current authenticated user can do the role on the model, by checking
+     * permissions on the model or inherited from any of its parents.
+     * @return true if authorised, false otherwise
+     */
     boolean canDoRole(@NonNull Role role, @NonNull Model model) {
         if (role <= Role.READER) {
             if (model.readableByEveryone) return true
@@ -49,6 +59,11 @@ class AccessControlService {
         parentModels.any {canDoRoleWithGroups(role, userGroups, it)}
     }
 
+    /**
+     * For a given Role, list of UserGroups, and a Model, check if a user who has membership in userGroups can do the
+     * role on the model, checking the permissions on the specific model only.
+     * @return true if authorised, false otherwise
+     */
     private boolean canDoRoleWithGroups(Role role, List<UserGroup> userGroups, Model model) {
         List<SecurableResourceGroupRole> securableResourceGroupRoles = securableResourceGroupRoleRepository.readAllBySecurableResourceDomainTypeAndSecurableResourceId(model.domainType, model.id)
         boolean canDoRole = securableResourceGroupRoles.find {SecurableResourceGroupRole securableResourceGroupRole ->
