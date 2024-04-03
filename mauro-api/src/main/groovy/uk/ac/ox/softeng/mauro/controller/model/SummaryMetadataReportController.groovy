@@ -47,7 +47,9 @@ class SummaryMetadataReportController extends ItemController<SummaryMetadataRepo
             throw new HttpStatusException(HttpStatus.NOT_FOUND, 'summaryMetadata not found: $summaryMetadataId')
         summaryMetadataReport.summaryMetadataId = summaryMetadata.id
         updateCreationProperties(summaryMetadataReport)
-        summaryMetadataReportCacheableRepository.save(summaryMetadataReport)
+        SummaryMetadataReport created = summaryMetadataReportCacheableRepository.save(summaryMetadataReport)
+        summaryMetadataCacheableRepository.invalidate(summaryMetadata)
+        created
     }
 
     @Get
