@@ -6,9 +6,12 @@ import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.*
 import io.micronaut.transaction.annotation.Transactional
+import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
+import uk.ac.ox.softeng.mauro.domain.model.SummaryMetadataReport
 import uk.ac.ox.softeng.mauro.persistence.cache.FacetCacheableRepository
+import uk.ac.ox.softeng.mauro.persistence.model.SummaryMetadataReportRepository
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @CompileStatic
@@ -17,6 +20,9 @@ class SummaryMetadataController extends FacetController<SummaryMetadata> {
 
 
     FacetCacheableRepository.SummaryMetadataCacheableRepository summaryMetadataRepository
+
+    @Inject
+    SummaryMetadataReportRepository summaryMetadataReportRepository
 
     /**
      * Properties disallowed in a simple update request.
@@ -43,7 +49,9 @@ class SummaryMetadataController extends FacetController<SummaryMetadata> {
 
     @Post
     SummaryMetadata create(String domainType, UUID domainId, @Body @NonNull SummaryMetadata summaryMetadata) {
-        super.create(domainType,domainId, summaryMetadata )
+        SummaryMetadata created = super.create(domainType,domainId, summaryMetadata )
+        super.invalidateCachedAdministeredItem(domainType, domainId)
+        created
     }
 
     @Put('/{id}')
@@ -54,6 +62,14 @@ class SummaryMetadataController extends FacetController<SummaryMetadata> {
     @Delete('/{id}')
     @Transactional
     HttpStatus delete(UUID id, @Body @Nullable SummaryMetadata summaryMetadata) {
+        deleteAnyAssociatedReports(id)
         super.delete(id, summaryMetadata)
+    }
+
+    void deleteAnyAssociatedReports(UUID summaryMetadataId) {
+        List<SummaryMetadataReport> savedSummaryMetadataReports = summaryMetadataReportRepository.findAllBySummaryMetadataId(summaryMetadataId)
+        if (savedSummaryMetadataReports) {
+            summaryMetadataReportRepository.deleteAll(savedSummaryMetadataReports)
+        }
     }
 }

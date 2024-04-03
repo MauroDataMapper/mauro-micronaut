@@ -1,6 +1,5 @@
 package uk.ac.ox.softeng.mauro.testing
 
-import spock.lang.Specification
 
 class CommonDataSpec extends BaseIntegrationSpec{
     def codeSet() {

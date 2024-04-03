@@ -9,6 +9,7 @@ import spock.lang.Shared
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadataType
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
+import uk.ac.ox.softeng.mauro.domain.model.SummaryMetadataReport
 import uk.ac.ox.softeng.mauro.persistence.ContainerizedTest
 import uk.ac.ox.softeng.mauro.testing.BaseIntegrationSpec
 import uk.ac.ox.softeng.mauro.web.ListResponse
@@ -133,5 +134,44 @@ class SummaryMetadataIntegrationSpec extends BaseIntegrationSpec {
         then: 'the list endpoint shows the update'
         response
         response.count == 0
+    }
+
+    void 'delete SummaryMetadata with reports'() {
+        given:
+        SummaryMetadata summaryMetadata = (SummaryMetadata) POST("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH",
+                [summaryMetadataType: SummaryMetadataType.MAP] , SummaryMetadata)
+
+        and:
+        SummaryMetadataReport summaryMetadataReport1  = (SummaryMetadataReport) POST("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH/$summaryMetadata.id$SUMMARY_METADATA_REPORT_PATH",
+                [reportValue: 'test-report-value-1'], SummaryMetadataReport)
+        SummaryMetadataReport summaryMetadataReport2 =(SummaryMetadataReport) POST("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH/$summaryMetadata.id$SUMMARY_METADATA_REPORT_PATH",
+                [reportValue: 'test-report-value-2'], SummaryMetadataReport)
+
+        ListResponse<SummaryMetadataReport> savedReports = (ListResponse<SummaryMetadataReport>) GET ("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH/$summaryMetadata.id$SUMMARY_METADATA_REPORT_PATH",
+                ListResponse<SummaryMetadataReport> )
+        savedReports
+        savedReports.count == 2
+        savedReports.items.id == List.of(summaryMetadataReport1.id, summaryMetadataReport2.id)
+
+        when:
+        HttpStatus status = (HttpStatus) DELETE("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH/$summaryMetadata.id", HttpStatus)
+
+        then:
+        status == HttpStatus.NO_CONTENT
+
+        when:
+        (SummaryMetadata) GET("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH/$summaryMetadata.id", SummaryMetadata)
+
+        then: 'the show endpoint shows the update'
+        HttpClientResponseException exception = thrown()
+        exception.status == HttpStatus.NOT_FOUND
+
+        when:
+        ListResponse<SummaryMetadataReport> reports = (ListResponse<SummaryMetadataReport>) GET ("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH/$summaryMetadata.id$SUMMARY_METADATA_REPORT_PATH",
+                ListResponse<SummaryMetadataReport> )
+
+        then: 'the list endpoint shows the update'
+        reports
+        reports.count == 0
     }
 }
