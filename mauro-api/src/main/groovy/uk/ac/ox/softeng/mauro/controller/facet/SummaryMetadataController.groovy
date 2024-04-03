@@ -11,18 +11,20 @@ import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.model.SummaryMetadataReport
 import uk.ac.ox.softeng.mauro.persistence.cache.FacetCacheableRepository
+import uk.ac.ox.softeng.mauro.persistence.cache.ItemCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.model.SummaryMetadataReportRepository
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @CompileStatic
 @Controller('/{domainType}/{domainId}/summaryMetadata')
 class SummaryMetadataController extends FacetController<SummaryMetadata> {
-
-
     FacetCacheableRepository.SummaryMetadataCacheableRepository summaryMetadataRepository
 
     @Inject
     SummaryMetadataReportRepository summaryMetadataReportRepository
+
+    @Inject
+    ItemCacheableRepository.SummaryMetadataReportCacheableRepository summaryMetadataReportCacheableRepository
 
     /**
      * Properties disallowed in a simple update request.
@@ -49,7 +51,7 @@ class SummaryMetadataController extends FacetController<SummaryMetadata> {
 
     @Post
     SummaryMetadata create(String domainType, UUID domainId, @Body @NonNull SummaryMetadata summaryMetadata) {
-        SummaryMetadata created = super.create(domainType,domainId, summaryMetadata )
+        SummaryMetadata created = super.create(domainType, domainId, summaryMetadata)
         super.invalidateCachedAdministeredItem(domainType, domainId)
         created
     }
@@ -69,7 +71,7 @@ class SummaryMetadataController extends FacetController<SummaryMetadata> {
     void deleteAnyAssociatedReports(UUID summaryMetadataId) {
         List<SummaryMetadataReport> savedSummaryMetadataReports = summaryMetadataReportRepository.findAllBySummaryMetadataId(summaryMetadataId)
         if (savedSummaryMetadataReports) {
-            summaryMetadataReportRepository.deleteAll(savedSummaryMetadataReports)
+            summaryMetadataReportCacheableRepository.deleteAll(savedSummaryMetadataReports)
         }
     }
 }
