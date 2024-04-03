@@ -15,7 +15,7 @@ import uk.ac.ox.softeng.mauro.testing.BaseIntegrationSpec
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @ContainerizedTest
-@Sql(scripts = "classpath:sql/tear-down-summary-metadata-report.sql", phase = Sql.Phase.AFTER_EACH)
+@Sql(scripts = "classpath:sql/tear-down-summary-metadata.sql", phase = Sql.Phase.AFTER_EACH)
 class SummaryMetadataReportIntegrationSpec extends BaseIntegrationSpec {
 
     @Inject
@@ -27,7 +27,7 @@ class SummaryMetadataReportIntegrationSpec extends BaseIntegrationSpec {
     @Shared
     SummaryMetadata summaryMetadata
 
-    void setupSpec() {
+    void setup() {
         Folder folder = (Folder) POST("$FOLDERS_PATH", [label: 'Folder with SummaryMetadata'], Folder)
         folderId = folder.id
         summaryMetadata = (SummaryMetadata) POST("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH",

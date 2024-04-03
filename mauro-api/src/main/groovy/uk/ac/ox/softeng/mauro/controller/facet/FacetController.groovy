@@ -102,4 +102,12 @@ abstract class FacetController<I extends Facet> extends ItemController<I> {
         if (!administeredItemRepository) throw new HttpStatusException(HttpStatus.NOT_FOUND, "Domain type [$domainType] not found")
         administeredItemRepository
     }
+
+    protected void invalidateCachedAdministeredItem(String domainType, UUID domainId ){
+        AdministeredItemCacheableRepository administeredItemRepository = getAdministeredItemRepository(domainType)
+        AdministeredItem administeredItem = administeredItemRepository.readById(domainId)
+        if (!administeredItem) throw new HttpStatusException(HttpStatus.NOT_FOUND, 'AdministeredItem not found by ID')
+        administeredItemRepository.invalidateCachedLookupById(ItemCacheableRepository.FIND_BY_ID,  domainType, domainId)
+        administeredItemRepository.invalidateCachedLookupById(ItemCacheableRepository.READ_BY_ID,  domainType, domainId)
+    }
 }
