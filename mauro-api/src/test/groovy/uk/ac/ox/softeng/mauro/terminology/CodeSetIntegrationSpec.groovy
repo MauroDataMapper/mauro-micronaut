@@ -5,6 +5,7 @@ import io.micronaut.runtime.EmbeddedApplication
 import io.micronaut.test.annotation.Sql
 import jakarta.inject.Inject
 import spock.lang.AutoCleanup
+import spock.lang.Ignore
 import spock.lang.Shared
 import uk.ac.ox.softeng.mauro.domain.terminology.CodeSet
 import uk.ac.ox.softeng.mauro.domain.terminology.Term
@@ -110,6 +111,26 @@ class CodeSetIntegrationSpec extends CommonDataSpec {
             getByFolderResp
             getByFolderResp.items.id == ["$codeSetId"]
         }
+    }
+    @Ignore
+    void 'test list multiple codesets ByFolderId'() {
+        given:
+        def response = POST("$FOLDERS_PATH/$folderId$CODE_SET_PATH", codeSet())
+        codeSetId = UUID.fromString(response.id as String)
+
+        when:
+        ListResponse<CodeSet> getByFolderResp =  (ListResponse<CodeSet>) GET("$FOLDERS_PATH/$folderId$CODE_SET_PATH")
+
+        then:
+        getByFolderResp.items.id == ["$codeSetId"]
+
+        when:
+        def codeSet2 = POST("$FOLDERS_PATH/$folderId$CODE_SET_PATH", codeSet())
+        def codeSet2Id = UUID.fromString(codeSet2.id as String)
+        ListResponse<CodeSet> folderResponse2 =  (ListResponse<CodeSet>) GET("$FOLDERS_PATH/$folderId$CODE_SET_PATH")
+
+        then:
+        folderResponse2.items.id == ["$codeSetId", "$codeSet2Id"]
     }
 
     void 'test update CodeSet'() {
