@@ -128,31 +128,25 @@ abstract class ItemCacheableRepository<I extends Item> implements ItemRepository
             super(summaryMetadataReportRepository)
         }
 
-        void cache(SummaryMetadataReport summaryMetadataReport) {
-            cachedLookupById(FIND_BY_ID, summaryMetadataReport.domainType, summaryMetadataReport.id)
-        }
-
-        SummaryMetadataReport readById(SummaryMetadataReport summaryMetadataReport, UUID id) {
-           cachedLookupById(FIND_BY_ID, summaryMetadataReport.domainType, id)
-        }
-
-        Long delete(SummaryMetadataReport summaryMetadataReport) {
+        Long delete(SummaryMetadataReport summaryMetadataReport, SummaryMetadata summaryMetadata, String domainType, UUID domainId) {
             Long deleted = repository.delete(summaryMetadataReport)
-            invalidateAssociatedSummaryMetadata(summaryMetadataReport)
-            invalidate(summaryMetadataReport)
+            invalidateChain(summaryMetadataReport, summaryMetadata, domainType, domainId)
             deleted
         }
 
-        SummaryMetadataReport update(SummaryMetadataReport summaryMetadataReport) {
+        SummaryMetadataReport update(SummaryMetadataReport summaryMetadataReport, SummaryMetadata summaryMetadata,
+                                     String domainType, UUID domainId)  {
             SummaryMetadataReport updated = repository.update(summaryMetadataReport)
-            invalidateAssociatedSummaryMetadata(summaryMetadataReport)
-            invalidate(summaryMetadataReport)
+            invalidateChain(updated,summaryMetadata, domainType, domainId)
             updated
         }
 
-        void invalidateAssociatedSummaryMetadata(SummaryMetadataReport summaryMetadataReport){
-            invalidateCachedLookupById(FIND_BY_ID, SummaryMetadata.class.getSimpleName(), summaryMetadataReport.getSummaryMetadataId())
-            invalidateCachedLookupById(READ_BY_ID, SummaryMetadata.class.getSimpleName(), summaryMetadataReport.getSummaryMetadataId())
+        private void invalidateChain(SummaryMetadataReport  summaryMetadataReport,SummaryMetadata summaryMetadata,
+                                     String domainType, UUID domainId) {
+            invalidate(summaryMetadataReport)
+            invalidateCachedLookupById(FIND_BY_ID, summaryMetadata.class.simpleName, summaryMetadata.id)
+            // invalidate attached parent of summaryMetadata
+            invalidateCachedLookupById(FIND_BY_ID, domainType, domainId)
         }
     }
 }

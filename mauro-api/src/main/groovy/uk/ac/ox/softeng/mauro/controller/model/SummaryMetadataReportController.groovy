@@ -47,9 +47,7 @@ class SummaryMetadataReportController extends ItemController<SummaryMetadataRepo
             throw new HttpStatusException(HttpStatus.NOT_FOUND, 'summaryMetadata not found: $summaryMetadataId')
         summaryMetadataReport.summaryMetadataId = summaryMetadata.id
         updateCreationProperties(summaryMetadataReport)
-        SummaryMetadataReport created = summaryMetadataReportCacheableRepository.save(summaryMetadataReport)
-        summaryMetadataCacheableRepository.invalidate(summaryMetadata)
-        created
+        summaryMetadataReportCacheableRepository.save(summaryMetadataReport)
     }
 
     @Get
@@ -69,8 +67,8 @@ class SummaryMetadataReportController extends ItemController<SummaryMetadataRepo
                                  @NonNull UUID id, @Body @NonNull SummaryMetadataReport summaryMetadataReport) {
         super.cleanBody(summaryMetadataReport)
         SummaryMetadataReport existing = summaryMetadataReportCacheableRepository.readById(id)
-        updateEntity(existing, summaryMetadataReport)
-        summaryMetadataReport
+        SummaryMetadataReport updated = updateEntity(existing, summaryMetadataReport, summaryMetadataId, domainType, domainId)
+        updated
     }
 
     @Delete('/{id}')
@@ -82,16 +80,20 @@ class SummaryMetadataReportController extends ItemController<SummaryMetadataRepo
             throw new HttpStatusException(HttpStatus.NOT_FOUND,
                     "Summary metadata report with id : $id not found, cannot delete")
         }
-        summaryMetadataReportCacheableRepository.delete(summaryMetadataReport)
+        SummaryMetadata summaryMetadata = summaryMetadataCacheableRepository.readById(summaryMetadataId)
+        summaryMetadataReportCacheableRepository.delete(summaryMetadataReport, summaryMetadata, domainType, domainId )
         HttpStatus.NO_CONTENT
     }
 
 
-    private SummaryMetadataReport updateEntity(@NonNull SummaryMetadataReport existing,
-                                               @NonNull SummaryMetadataReport cleaned) {
+    private SummaryMetadataReport updateEntity(SummaryMetadataReport existing,SummaryMetadataReport cleaned, UUID summaryMetadataId,
+    String domainType, UUID domainId) {
+
         boolean hasChanged = updateProperties(existing, cleaned)
         if (hasChanged) {
-            summaryMetadataReportRepository.update(existing)
+            SummaryMetadata summaryMetadata = summaryMetadataCacheableRepository.readById(summaryMetadataId)
+
+            summaryMetadataReportCacheableRepository.update(existing, summaryMetadata, domainType, domainId)
         } else {
             existing
         }
