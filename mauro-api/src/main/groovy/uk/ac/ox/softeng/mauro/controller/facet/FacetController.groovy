@@ -111,11 +111,4 @@ abstract class FacetController<I extends Facet> extends ItemController<I> {
         administeredItemRepository
     }
 
-    protected void invalidateCachedAdministeredItem(String domainType, UUID domainId ){
-        AdministeredItemCacheableRepository administeredItemRepository = getAdministeredItemRepository(domainType)
-        AdministeredItem administeredItem = administeredItemRepository.readById(domainId)
-        if (!administeredItem) throw new HttpStatusException(HttpStatus.NOT_FOUND, 'AdministeredItem not found by ID')
-        administeredItemRepository.invalidateCachedLookupById(ItemCacheableRepository.FIND_BY_ID,  domainType, domainId)
-        administeredItemRepository.invalidateCachedLookupById(ItemCacheableRepository.READ_BY_ID,  domainType, domainId)
-    }
 }
