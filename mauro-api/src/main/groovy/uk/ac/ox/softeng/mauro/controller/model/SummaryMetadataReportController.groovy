@@ -55,7 +55,6 @@ class SummaryMetadataReportController extends ItemController<SummaryMetadataRepo
     @Get
     ListResponse<SummaryMetadataReport> list(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID summaryMetadataId) {
         List<SummaryMetadataReport> summaryMetadataReportList = summaryMetadataReportRepository.findAllBySummaryMetadataId(summaryMetadataId)
-        summaryMetadataReportList.forEach(it -> summaryMetadataReportCacheableRepository.cache(it))
         ListResponse.from(summaryMetadataReportList)
     }
 

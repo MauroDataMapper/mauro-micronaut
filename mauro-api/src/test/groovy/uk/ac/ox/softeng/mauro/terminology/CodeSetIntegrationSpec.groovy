@@ -10,6 +10,7 @@ import uk.ac.ox.softeng.mauro.domain.terminology.CodeSet
 import uk.ac.ox.softeng.mauro.domain.terminology.Term
 import uk.ac.ox.softeng.mauro.persistence.ContainerizedTest
 import uk.ac.ox.softeng.mauro.testing.CommonDataSpec
+import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @ContainerizedTest
 @Sql(scripts = "classpath:sql/tear-down.sql", phase = Sql.Phase.AFTER_EACH)
@@ -99,8 +100,8 @@ class CodeSetIntegrationSpec extends CommonDataSpec {
         def codeSet2Id = UUID.fromString(codeSetResp2.id as String)
 
         when:
-        def getByFolder2Resp = GET("$FOLDERS_PATH/$folderId2$CODE_SET_PATH")
-        def getByFolderResp = GET("$FOLDERS_PATH/$folderId$CODE_SET_PATH")
+        ListResponse<CodeSet> getByFolder2Resp = (ListResponse<CodeSet>) GET("$FOLDERS_PATH/$folderId2$CODE_SET_PATH")
+        ListResponse<CodeSet> getByFolderResp =  (ListResponse<CodeSet>) GET("$FOLDERS_PATH/$folderId$CODE_SET_PATH")
 
         then:
         verifyAll {
