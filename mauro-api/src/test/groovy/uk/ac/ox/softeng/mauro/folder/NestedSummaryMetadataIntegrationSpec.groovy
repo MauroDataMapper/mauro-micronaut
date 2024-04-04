@@ -15,7 +15,7 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @ContainerizedTest
 @Sql(scripts = "classpath:sql/tear-down-summary-metadata.sql", phase = Sql.Phase.AFTER_EACH)
-class FolderNestedSummaryMetadataIntegrationSpec extends BaseIntegrationSpec {
+class NestedSummaryMetadataIntegrationSpec extends BaseIntegrationSpec {
 
     @Inject
     EmbeddedApplication<? extends EmbeddedApplication> application
@@ -104,13 +104,21 @@ class FolderNestedSummaryMetadataIntegrationSpec extends BaseIntegrationSpec {
         saved.id == summaryMetadataId
 
         when:
-        ListResponse<SummaryMetadataReport> savedReports = (ListResponse<SummaryMetadataReport>) GET ("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH/$summaryMetadata.id$SUMMARY_METADATA_REPORT_PATH",
-                ListResponse<SummaryMetadataReport> )
+        ListResponse<SummaryMetadataReport> savedReports = (ListResponse<SummaryMetadataReport>) GET("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH/$summaryMetadata.id$SUMMARY_METADATA_REPORT_PATH",
+                ListResponse<SummaryMetadataReport>)
 
         then:
         savedReports
         savedReports.count == 2
         savedReports.items.id == List.of(summaryMetadataReport1.id.toString(), summaryMetadataReport2.id.toString())
-    }
 
+        when:
+        SummaryMetadata savedSummaryMetadata = (SummaryMetadata) GET("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH/$summaryMetadata.id", SummaryMetadata)
+
+        then:
+        savedSummaryMetadata
+        savedSummaryMetadata.summaryMetadataReports
+        savedSummaryMetadata.summaryMetadataReports.size() == 2
+        savedSummaryMetadata.summaryMetadataReports.id == List.of(summaryMetadataReport1.id, summaryMetadataReport2.id)
+    }
 }

@@ -46,7 +46,14 @@ class SummaryMetadataController extends FacetController<SummaryMetadata> {
 
     @Get('/{id}')
     SummaryMetadata show(UUID id) {
-        super.show(id)
+        SummaryMetadata summaryMetadata = super.show(id) as SummaryMetadata
+        if (summaryMetadata) {
+            AdministeredItem administeredItem = findAdministeredItem(summaryMetadata.multiFacetAwareItemDomainType,
+                    summaryMetadata.multiFacetAwareItemId)
+            List<SummaryMetadata> summaryMetadataList = administeredItem.summaryMetadata
+            SummaryMetadata summaryMetadataWithReports = summaryMetadataList.find { it -> it.id == id }
+            summaryMetadataWithReports
+        }
     }
 
     @Post
