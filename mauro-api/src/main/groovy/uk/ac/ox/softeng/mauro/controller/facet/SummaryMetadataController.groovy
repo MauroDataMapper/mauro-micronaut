@@ -58,9 +58,7 @@ class SummaryMetadataController extends FacetController<SummaryMetadata> {
 
     @Post
     SummaryMetadata create(String domainType, UUID domainId, @Body @NonNull SummaryMetadata summaryMetadata) {
-        SummaryMetadata created = super.create(domainType, domainId, summaryMetadata)
-        summaryMetadataRepository.invalidate(created)
-        created
+       super.create(domainType, domainId, summaryMetadata)
     }
 
     @Put('/{id}')

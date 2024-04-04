@@ -11,12 +11,14 @@ import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadataType
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.domain.model.SummaryMetadataReport
 import uk.ac.ox.softeng.mauro.persistence.ContainerizedTest
-import uk.ac.ox.softeng.mauro.testing.BaseIntegrationSpec
+import uk.ac.ox.softeng.mauro.testing.CommonDataSpec
 import uk.ac.ox.softeng.mauro.web.ListResponse
+
+import java.time.Instant
 
 @ContainerizedTest
 @Sql(scripts = "classpath:sql/tear-down-summary-metadata.sql", phase = Sql.Phase.AFTER_EACH)
-class SummaryMetadataReportIntegrationSpec extends BaseIntegrationSpec {
+class SummaryMetadataReportIntegrationSpec extends CommonDataSpec {
 
     @Inject
     EmbeddedApplication<? extends EmbeddedApplication> application
@@ -45,21 +47,22 @@ class SummaryMetadataReportIntegrationSpec extends BaseIntegrationSpec {
     void 'create summaryMetadataReport'() {
         when:
         SummaryMetadataReport summaryMetadataReport = (SummaryMetadataReport) POST("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH/$summaryMetadata.id$SUMMARY_METADATA_REPORT_PATH",
-                [reportValue: 'test-report-value'], SummaryMetadataReport)
+               summaryMetadataReport(), SummaryMetadataReport)
 
         then:
         summaryMetadataReport
         summaryMetadataReport.id != null
         summaryMetadataReport.domainType == "SummaryMetadataReport"
         summaryMetadataReport.summaryMetadataId == summaryMetadata.id
+        summaryMetadataReport.reportDate == Instant.parse(REPORT_DATE)
     }
 
     void 'list summaryMetadataReport'() {
         given:
         SummaryMetadataReport report1 = (SummaryMetadataReport) POST("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH/$summaryMetadata.id$SUMMARY_METADATA_REPORT_PATH",
-                [reportValue: 'test-report-value'], SummaryMetadataReport)
+                summaryMetadataReport(), SummaryMetadataReport)
         SummaryMetadataReport report2 = (SummaryMetadataReport) POST("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH/$summaryMetadata.id$SUMMARY_METADATA_REPORT_PATH",
-                [reportValue: 'test-report-value'], SummaryMetadataReport)
+               summaryMetadataReport(), SummaryMetadataReport)
         when:
         ListResponse<SummaryMetadataReport> response = (ListResponse<SummaryMetadataReport>) GET("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH/$summaryMetadata.id$SUMMARY_METADATA_REPORT_PATH", ListResponse<SummaryMetadataReport>)
 
@@ -69,12 +72,13 @@ class SummaryMetadataReportIntegrationSpec extends BaseIntegrationSpec {
         response.items.id.collect() { it.toString() } == ["$report1.id", "$report2.id"] as List<String>
         response.items.summaryMetadataId.collect().unique() { it.toString() }.size() == 1
         response.items.summaryMetadataId.collect().unique() { it.toString() }[0] == "$summaryMetadata.id"
+        response.items.reportDate
     }
 
     void 'get summaryMetadataReport by Id'() {
         given:
         SummaryMetadataReport report = (SummaryMetadataReport) POST("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH/$summaryMetadata.id$SUMMARY_METADATA_REPORT_PATH",
-                [reportValue: 'test-report-value'], SummaryMetadataReport)
+           summaryMetadataReport(), SummaryMetadataReport)
 
         when:
         SummaryMetadataReport retrieved = GET("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH/$summaryMetadata.id$SUMMARY_METADATA_REPORT_PATH/$report.id",
@@ -84,6 +88,7 @@ class SummaryMetadataReportIntegrationSpec extends BaseIntegrationSpec {
         retrieved
         retrieved.id == report.id
         retrieved.summaryMetadataId == summaryMetadata.id
+        retrieved.reportDate == Instant.parse(REPORT_DATE)
     }
 
     void 'update summary metadata report by Id'() {
@@ -134,7 +139,7 @@ class SummaryMetadataReportIntegrationSpec extends BaseIntegrationSpec {
     void 'list summaryMetadata - contains SummaryMetadataReport'() {
         given:
         SummaryMetadataReport report = (SummaryMetadataReport) POST("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH/$summaryMetadata.id$SUMMARY_METADATA_REPORT_PATH",
-                [reportValue: 'test-report-value'], SummaryMetadataReport)
+                summaryMetadataReport(), SummaryMetadataReport)
         when:
         ListResponse<SummaryMetadata> metadataResponse = (ListResponse<SummaryMetadata>) GET("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH", ListResponse<SummaryMetadata>)
 
