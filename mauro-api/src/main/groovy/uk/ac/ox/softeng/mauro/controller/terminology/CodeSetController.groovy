@@ -47,8 +47,7 @@ class CodeSetController extends ModelController<CodeSet> {
 
     @Get(value = Paths.CODE_SET_BY_ID)
     CodeSet show(UUID id) {
-        CodeSet codeSet = super.show(id)
-        codeSet
+        super.show(id)
     }
 
     @Transactional
