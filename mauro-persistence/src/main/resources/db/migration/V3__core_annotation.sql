@@ -1,0 +1,18 @@
+-- # Core
+create table if not exists core."annotation" (
+    "id"                              uuid primary key not null default uuid_generate_v4(),
+    "version"                         integer          not null,
+    "date_created"                    timestamp,
+    "last_updated"                    timestamp,
+    "multi_facet_aware_item_domain_type" varchar(255)  not null,
+    "multi_facet_aware_item_id"       uuid             not null,
+    "parent_annotation_id"            uuid,
+    "created_by"                      text,
+    "label"                           text,
+    "description"                     text
+);
+create index "idx_annotation_multi_facet_aware_item_id" on "core"."annotation" (multi_facet_aware_item_id);
+
+create index "idx_annotation_parent_annodation_id" on "core"."annotation" (parent_annotation_id);
+
+

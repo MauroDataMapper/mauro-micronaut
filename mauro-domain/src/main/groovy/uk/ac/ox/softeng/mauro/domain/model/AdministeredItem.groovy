@@ -1,5 +1,6 @@
 package uk.ac.ox.softeng.mauro.domain.model
 
+import uk.ac.ox.softeng.mauro.domain.facet.Annotation
 import uk.ac.ox.softeng.mauro.domain.facet.Metadata
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
 import uk.ac.ox.softeng.mauro.domain.security.SecurableResource
@@ -74,6 +75,10 @@ abstract class AdministeredItem extends Item {
 
     @Relation(Relation.Kind.ONE_TO_MANY)
     List<SummaryMetadata> summaryMetadata = []
+
+
+    @Relation(Relation.Kind.ONE_TO_MANY)
+    List<Annotation> annotations = []
 
     /**
      * Helper method for returning the parent of this object, if one exists and is loaded.

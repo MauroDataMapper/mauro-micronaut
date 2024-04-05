@@ -16,6 +16,7 @@ class BaseIntegrationSpec extends Specification {
     public static final String CODE_SET_PATH = "/codeSets"
     public static final String SUMMARY_METADATA_PATH = '/summaryMetadata'
     public static final String SUMMARY_METADATA_REPORT_PATH = '/summaryMetadataReports'
+    public static final String ANNOTATION_PATH = '/annotations'
 
 
     @Inject
@@ -58,10 +59,14 @@ class BaseIntegrationSpec extends Specification {
     Map<String, Object> PUT(String uri, Object body) {
         client.toBlocking().retrieve(HttpRequest.PUT(uri, body), Map<String, Object>)
     }
-    <T> T PUT(String uri, Object body, Class<T> type ) {
+
+    <T> T PUT(String uri, Map<String, Object> body, Class<T> type) {
         client.toBlocking().retrieve(HttpRequest.PUT(uri, body), type)
     }
 
+    <T> T PUT(String uri, Object body, Class<T> type) {
+        client.toBlocking().retrieve(HttpRequest.PUT(uri, body), type)
+    }
 
     Map<String, Object> DELETE(String uri, Map<String, Object> body) {
         client.toBlocking().retrieve(HttpRequest.DELETE(uri, body), Map<String, Object>)
