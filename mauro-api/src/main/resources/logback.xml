@@ -13,10 +13,9 @@
         <appender-ref ref="STDOUT" />
     </root>
 
+    <logger name="io.micronaut" level="info" />
     <logger name="io.micronaut.cache" level="info" />
     <logger name="io.micronaut.data" level="info" />
-    <logger name="io.micronaut.cache" level="info" />
-    <logger name="io.micronaut" level="info" />
 
     <logger name="org.flywaydb" level="info" />
     <logger name="org.ehcache" level="info" />
