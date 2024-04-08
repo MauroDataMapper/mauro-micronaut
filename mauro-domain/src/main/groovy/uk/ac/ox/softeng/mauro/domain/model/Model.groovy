@@ -67,7 +67,7 @@ abstract class Model extends AdministeredItem implements SecurableResource {
     @Transient
     @JsonIgnore
     Model getParent() {
-        null
+        folder
     }
 
     @Override

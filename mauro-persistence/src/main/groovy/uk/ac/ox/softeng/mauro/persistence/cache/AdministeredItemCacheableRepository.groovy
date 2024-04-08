@@ -1,14 +1,5 @@
 package uk.ac.ox.softeng.mauro.persistence.cache
 
-import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
-import uk.ac.ox.softeng.mauro.domain.datamodel.DataElement
-import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
-import uk.ac.ox.softeng.mauro.domain.datamodel.EnumerationValue
-import uk.ac.ox.softeng.mauro.persistence.datamodel.DataClassRepository
-import uk.ac.ox.softeng.mauro.persistence.datamodel.DataElementRepository
-import uk.ac.ox.softeng.mauro.persistence.datamodel.DataTypeRepository
-import uk.ac.ox.softeng.mauro.persistence.datamodel.EnumerationValueRepository
-
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.cache.annotation.CacheConfig
@@ -17,10 +8,18 @@ import io.micronaut.cache.annotation.Cacheable
 import io.micronaut.context.annotation.Bean
 import io.micronaut.core.annotation.Nullable
 import jakarta.inject.Singleton
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataElement
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
+import uk.ac.ox.softeng.mauro.domain.datamodel.EnumerationValue
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.terminology.Term
 import uk.ac.ox.softeng.mauro.domain.terminology.TermRelationship
 import uk.ac.ox.softeng.mauro.domain.terminology.TermRelationshipType
+import uk.ac.ox.softeng.mauro.persistence.datamodel.DataClassRepository
+import uk.ac.ox.softeng.mauro.persistence.datamodel.DataElementRepository
+import uk.ac.ox.softeng.mauro.persistence.datamodel.DataTypeRepository
+import uk.ac.ox.softeng.mauro.persistence.datamodel.EnumerationValueRepository
 import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemRepository
 import uk.ac.ox.softeng.mauro.persistence.terminology.TermRelationshipRepository
 import uk.ac.ox.softeng.mauro.persistence.terminology.TermRelationshipTypeRepository
@@ -73,6 +72,7 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
         super.invalidate(item)
         // Invalidate collections that could contain the new item
         AdministeredItem parent = item.parent
+        log.debug "Invalidating parent of $item, parent is $item.parent"
         invalidateCachedLookupByParent(FIND_ALL_BY_PARENT, domainType, parent)
         invalidateCachedLookupByParent(READ_ALL_BY_PARENT, domainType, parent)
     }
