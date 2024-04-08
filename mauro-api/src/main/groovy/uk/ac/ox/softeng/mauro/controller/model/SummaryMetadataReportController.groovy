@@ -9,6 +9,7 @@ import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
 import reactor.util.annotation.NonNull
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
+import uk.ac.ox.softeng.mauro.domain.model.Item
 import uk.ac.ox.softeng.mauro.domain.model.SummaryMetadataReport
 import uk.ac.ox.softeng.mauro.persistence.cache.FacetCacheableRepository.SummaryMetadataCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.ItemCacheableRepository
@@ -67,7 +68,10 @@ class SummaryMetadataReportController extends ItemController<SummaryMetadataRepo
                                  @NonNull UUID id, @Body @NonNull SummaryMetadataReport summaryMetadataReport) {
         super.cleanBody(summaryMetadataReport)
         SummaryMetadataReport existing = summaryMetadataReportCacheableRepository.readById(id)
-        SummaryMetadataReport updated = updateEntity(existing, summaryMetadataReport, summaryMetadataId, domainType, domainId)
+        handleNonExistingItem(existing, id)
+        SummaryMetadata summaryMetadata = summaryMetadataCacheableRepository.readById(summaryMetadataId)
+        handleNonExistingItem(summaryMetadata, summaryMetadataId)
+        SummaryMetadataReport updated = updateEntity(existing, summaryMetadataReport, summaryMetadata)
         updated
     }
 
@@ -81,21 +85,24 @@ class SummaryMetadataReportController extends ItemController<SummaryMetadataRepo
                     "Summary metadata report with id : $id not found, cannot delete")
         }
         SummaryMetadata summaryMetadata = summaryMetadataCacheableRepository.readById(summaryMetadataId)
-        summaryMetadataReportCacheableRepository.delete(summaryMetadataReport, summaryMetadata, domainType, domainId )
+        handleNonExistingItem(summaryMetadata, summaryMetadataId)
+        summaryMetadataReportCacheableRepository.delete(summaryMetadataReport, summaryMetadata)
         HttpStatus.NO_CONTENT
     }
 
-
-    private SummaryMetadataReport updateEntity(SummaryMetadataReport existing,SummaryMetadataReport cleaned, UUID summaryMetadataId,
-    String domainType, UUID domainId) {
-
+    private SummaryMetadataReport updateEntity(SummaryMetadataReport existing, SummaryMetadataReport cleaned,
+                                               SummaryMetadata summaryMetadata) {
         boolean hasChanged = updateProperties(existing, cleaned)
         if (hasChanged) {
-            SummaryMetadata summaryMetadata = summaryMetadataCacheableRepository.readById(summaryMetadataId)
-
-            summaryMetadataReportCacheableRepository.update(existing, summaryMetadata, domainType, domainId)
+            summaryMetadataReportCacheableRepository.update(existing, summaryMetadata)
         } else {
             existing
+        }
+    }
+
+    private void handleNonExistingItem(Item item, UUID id) {
+        if (!item) {
+            throw new HttpStatusException(HttpStatus.NOT_FOUND, "Item $id not found ")
         }
     }
 }

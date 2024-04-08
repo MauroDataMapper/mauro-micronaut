@@ -46,7 +46,7 @@ abstract class ItemCacheableRepository<I extends Item> implements ItemRepository
 
     List<I> saveAll(Iterable<I> items) {
         List<I> saved = repository.saveAll(items)
-        items.each {invalidate(it)}
+        items.each { invalidate(it) }
         saved
     }
 
@@ -58,7 +58,7 @@ abstract class ItemCacheableRepository<I extends Item> implements ItemRepository
 
     List<I> updateAll(Iterable<I> items) {
         List<I> updated = repository.updateAll(items)
-        items.each { invalidate(it)}
+        items.each { invalidate(it) }
         updated
     }
 
@@ -70,7 +70,7 @@ abstract class ItemCacheableRepository<I extends Item> implements ItemRepository
 
     Long deleteAll(Iterable<I> items) {
         Long deleted = repository.deleteAll(items)
-        items.each {invalidate(it)}
+        items.each { invalidate(it) }
         deleted
     }
 
@@ -84,7 +84,7 @@ abstract class ItemCacheableRepository<I extends Item> implements ItemRepository
      */
     @Cacheable
     I cachedLookupById(String lookup, String domainType, UUID id) {
-        switch(lookup) {
+        switch (lookup) {
             case FIND_BY_ID -> repository.findById(id)
             case READ_BY_ID -> repository.readById(id)
         }
@@ -121,6 +121,7 @@ abstract class ItemCacheableRepository<I extends Item> implements ItemRepository
             super(catalogueUserRepository)
         }
     }
+
     @Singleton
     @CompileStatic
     static class SummaryMetadataReportCacheableRepository extends ItemCacheableRepository<SummaryMetadataReport> {
@@ -128,25 +129,24 @@ abstract class ItemCacheableRepository<I extends Item> implements ItemRepository
             super(summaryMetadataReportRepository)
         }
 
-        Long delete(SummaryMetadataReport summaryMetadataReport, SummaryMetadata summaryMetadata, String domainType, UUID domainId) {
+        Long delete(SummaryMetadataReport summaryMetadataReport, SummaryMetadata summaryMetadata) {
             Long deleted = repository.delete(summaryMetadataReport)
-            invalidateChain(summaryMetadataReport, summaryMetadata, domainType, domainId)
+            invalidateChain(summaryMetadataReport, summaryMetadata)
             deleted
         }
 
-        SummaryMetadataReport update(SummaryMetadataReport summaryMetadataReport, SummaryMetadata summaryMetadata,
-                                     String domainType, UUID domainId)  {
+        SummaryMetadataReport update(SummaryMetadataReport summaryMetadataReport, SummaryMetadata summaryMetadata) {
             SummaryMetadataReport updated = repository.update(summaryMetadataReport)
-            invalidateChain(updated,summaryMetadata, domainType, domainId)
+            invalidateChain(updated, summaryMetadata)
             updated
         }
 
-        private void invalidateChain(SummaryMetadataReport  summaryMetadataReport,SummaryMetadata summaryMetadata,
-                                     String domainType, UUID domainId) {
+        private void invalidateChain(SummaryMetadataReport summaryMetadataReport, SummaryMetadata summaryMetadata) {
             invalidate(summaryMetadataReport)
             invalidateCachedLookupById(FIND_BY_ID, summaryMetadata.class.simpleName, summaryMetadata.id)
             // invalidate attached parent of summaryMetadata
-            invalidateCachedLookupById(FIND_BY_ID, domainType, domainId)
+            invalidateCachedLookupById(FIND_BY_ID, summaryMetadata.multiFacetAwareItemDomainType,
+                    summaryMetadata.multiFacetAwareItemId)
         }
     }
 }
