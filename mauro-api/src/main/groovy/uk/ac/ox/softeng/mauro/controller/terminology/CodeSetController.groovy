@@ -11,6 +11,7 @@ import io.micronaut.http.exceptions.HttpStatusException
 import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.controller.model.ModelController
+import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.domain.model.version.CreateNewVersionData
 import uk.ac.ox.softeng.mauro.domain.model.version.FinaliseData
 import uk.ac.ox.softeng.mauro.domain.terminology.CodeSet
@@ -99,10 +100,11 @@ class CodeSetController extends ModelController<CodeSet> {
         codeSet
     }
 
-
     @Get(value = Paths.CODE_SETS_BY_FOLDER_ID)
     ListResponse<CodeSet> list(UUID folderId) {
-        super.list(folderId)
+        Folder folder = parentItemRepository.readById(folderId)
+        if (!folder) return null
+        ListResponse.from(codeSetRepositoryUnCached.readAllByFolder(folder))
     }
 
     @Get(value = Paths.CODE_SETS)

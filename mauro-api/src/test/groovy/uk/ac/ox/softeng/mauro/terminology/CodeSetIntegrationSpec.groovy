@@ -10,6 +10,7 @@ import uk.ac.ox.softeng.mauro.domain.terminology.CodeSet
 import uk.ac.ox.softeng.mauro.domain.terminology.Term
 import uk.ac.ox.softeng.mauro.persistence.ContainerizedTest
 import uk.ac.ox.softeng.mauro.testing.CommonDataSpec
+import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @ContainerizedTest
 @Sql(scripts = "classpath:sql/tear-down.sql", phase = Sql.Phase.AFTER_EACH)
@@ -99,8 +100,8 @@ class CodeSetIntegrationSpec extends CommonDataSpec {
         def codeSet2Id = UUID.fromString(codeSetResp2.id as String)
 
         when:
-        def getByFolder2Resp = GET("$FOLDERS_PATH/$folderId2$CODE_SET_PATH")
-        def getByFolderResp = GET("$FOLDERS_PATH/$folderId$CODE_SET_PATH")
+        ListResponse<CodeSet> getByFolder2Resp = (ListResponse<CodeSet>) GET("$FOLDERS_PATH/$folderId2$CODE_SET_PATH")
+        ListResponse<CodeSet> getByFolderResp =  (ListResponse<CodeSet>) GET("$FOLDERS_PATH/$folderId$CODE_SET_PATH")
 
         then:
         verifyAll {
@@ -109,6 +110,26 @@ class CodeSetIntegrationSpec extends CommonDataSpec {
             getByFolderResp
             getByFolderResp.items.id == ["$codeSetId"]
         }
+    }
+
+    void 'test list multiple codesets ByFolderId'() {
+        given:
+        def response = POST("$FOLDERS_PATH/$folderId$CODE_SET_PATH", codeSet())
+        codeSetId = UUID.fromString(response.id as String)
+
+        when:
+        ListResponse<CodeSet> getByFolderResp =  (ListResponse<CodeSet>) GET("$FOLDERS_PATH/$folderId$CODE_SET_PATH")
+
+        then:
+        getByFolderResp.items.id == ["$codeSetId"]
+
+        when:
+        def codeSet2 = POST("$FOLDERS_PATH/$folderId$CODE_SET_PATH", codeSet())
+        def codeSet2Id = UUID.fromString(codeSet2.id as String)
+        ListResponse<CodeSet> folderResponse2 =  (ListResponse<CodeSet>) GET("$FOLDERS_PATH/$folderId$CODE_SET_PATH")
+
+        then:
+        folderResponse2.items.id == ["$codeSetId", "$codeSet2Id"]
     }
 
     void 'test update CodeSet'() {
@@ -231,8 +252,8 @@ class CodeSetIntegrationSpec extends CommonDataSpec {
         def termId2 = UUID.fromString(termResponse2.id as String)
 
         //Associating term to codeSet
-        PUT("$CODE_SET_PATH/$codeSetId$TERMS_PATH/$termId1", codeSet)
-        PUT("$CODE_SET_PATH/$codeSetId$TERMS_PATH/$termId2", codeSet)
+        (CodeSet) PUT("$CODE_SET_PATH/$codeSetId$TERMS_PATH/$termId1", codeSet, CodeSet)
+        (CodeSet) PUT("$CODE_SET_PATH/$codeSetId$TERMS_PATH/$termId2", codeSet, CodeSet)
 
         when:
         def getAllResp = GET("$CODE_SET_PATH/$codeSetId$TERMS_PATH")
