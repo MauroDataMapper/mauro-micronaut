@@ -1,7 +1,6 @@
 package uk.ac.ox.softeng.mauro.controller.facet
 
 import groovy.transform.CompileStatic
-import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpStatus
@@ -11,14 +10,11 @@ import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.controller.model.ItemController
 import uk.ac.ox.softeng.mauro.domain.facet.Facet
-import uk.ac.ox.softeng.mauro.domain.facet.Metadata
-import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.ItemCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.service.RepositoryService
 
-@Slf4j
 @CompileStatic
 abstract class FacetController<I extends Facet> extends ItemController<I> {
 
@@ -40,14 +36,9 @@ abstract class FacetController<I extends Facet> extends ItemController<I> {
     @Post
     I create(String domainType, UUID domainId, @Body @NonNull I facet) {
         cleanBody(facet)
+
         AdministeredItem administeredItem = readAdministeredItem(domainType, domainId)
         createEntity(administeredItem, facet)
-        if ( facet instanceof SummaryMetadata){
-            (SummaryMetadata) facet as I
-        } else {
-            (Metadata) facet as I
-        }
-
     }
 
     protected I createEntity(@NonNull AdministeredItem administeredItem, @NonNull I cleanFacet) {

@@ -74,7 +74,7 @@ class AdministeredItemContentRepository {
         cacheableRepositories.find {it.handles(item.class)}
     }
 
-    void deleteSummaryMetadata(List<AdministeredItem> items) {
+    void deleteSummaryMetadata(Collection<AdministeredItem> items) {
         List<SummaryMetadata> summaryMetadata = []
         items.each { item ->
             if (item.summaryMetadata){
