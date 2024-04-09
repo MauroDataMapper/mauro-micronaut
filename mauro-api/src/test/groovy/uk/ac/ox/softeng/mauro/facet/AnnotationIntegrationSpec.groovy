@@ -58,6 +58,37 @@ class AnnotationIntegrationSpec extends CommonDataSpec {
         ]
     }
 
+    void 'get annotation by Id -should return annotation'() {
+        given:
+        Annotation annotation = (Annotation) POST("$FOLDERS_PATH/$folderId$ANNOTATION_PATH",
+                iteration, Annotation)
+
+        when:
+        Annotation saved = (Annotation) GET("$FOLDERS_PATH/$folderId$ANNOTATION_PATH/$annotation.id", Annotation)
+
+        then:
+        saved
+        saved.id == annotation.id
+
+        where:
+        iteration << [
+                annotationPayload('test label', 'test description')
+        ]
+    }
+
+    void 'get annotation by Id -should return 404 on invalid domain type/domainId parameters for annotation'() {
+        given:
+        UUID annotationId = UUID.randomUUID()
+        and:
+        Annotation annotation = (Annotation) POST("$FOLDERS_PATH/$folderId$ANNOTATION_PATH",
+                annotationPayload(), Annotation)
+        when:
+        (Annotation) GET("$FOLDERS_PATH/$annotationId$ANNOTATION_PATH/$annotation.id", Annotation)
+
+        then:
+        HttpClientResponseException exception = thrown()
+        exception.status == HttpStatus.NOT_FOUND
+    }
 
     @Unroll
     void 'create child annotation - should create'() {

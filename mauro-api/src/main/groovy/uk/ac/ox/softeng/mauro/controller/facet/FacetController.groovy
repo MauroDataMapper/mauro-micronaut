@@ -1,6 +1,5 @@
 package uk.ac.ox.softeng.mauro.controller.facet
 
-
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
@@ -103,4 +102,14 @@ abstract class FacetController<I extends Facet> extends ItemController<I> {
         administeredItemRepository
     }
 
+    protected I validate(String domainType, UUID domainId, UUID id) {
+        AdministeredItemCacheableRepository administeredItemRepository = getAdministeredItemRepository(domainType)
+        I facet = facetRepository.findById(id)
+        if (facet) {
+            if (facet.multiFacetAwareItemId != domainId || !administeredItemRepository.handles(domainType)){
+                throw new HttpStatusException(HttpStatus.NOT_FOUND, "DomainType or Domain Id not found for $id")
+            }
+        }
+        facet
+    }
 }

@@ -15,7 +15,7 @@ import uk.ac.ox.softeng.mauro.persistence.facet.AnnotationRepository
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @CompileStatic
-@Controller('/{domainType}/{domainId}/annotations')
+@Controller
 class AnnotationController extends FacetController<Annotation> {
 
     @Inject
@@ -40,30 +40,22 @@ class AnnotationController extends FacetController<Annotation> {
      * @param domainId
      * @return
      */
-    @Get
+    @Get('/{domainType}/{domainId}/annotations')
     ListResponse<Annotation> list(@NonNull String domainType, @NonNull UUID domainId) {
         AdministeredItem administeredItem = findAdministeredItem(domainType, domainId)
         ListResponse.from(administeredItem.annotations)
     }
 
-    @Get('/{id}')
-    Annotation show(UUID id) {
-        Annotation annotation = super.show(id) as Annotation
-        if (annotation) {
-            if (!annotation.parentAnnotationId) {
-                AdministeredItem administeredItem = findAdministeredItem(annotation.multiFacetAwareItemDomainType,
-                        annotation.multiFacetAwareItemId)
-                List<Annotation> annotations = administeredItem.annotations
-                annotation = annotations.find { it -> it.id == id }
-            }
-        }
-        annotation
+    @Get('/{domainType}/{domainId}/annotations/{id}')
+    Annotation show(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID id) {
+        Annotation validAnnotation = super.validate(domainType, domainId, id) as Annotation
+        Annotation nested = showNestedItem(id, validAnnotation)
+        nested
     }
 
-
-    @Post
+    @Post('/{domainType}/{domainId}/annotations')
     Annotation create(@NonNull String domainType, @NonNull UUID domainId, @Body @NonNull Annotation annotation) {
-       super.create(domainType, domainId, annotation) as Annotation
+        super.create(domainType, domainId, annotation) as Annotation
     }
 
     /**
@@ -74,35 +66,36 @@ class AnnotationController extends FacetController<Annotation> {
      * @param childAnnotation child annotation to create
      * @return newly created child
      */
-    @Post('/{annotationId}/annotations')
+    @Post('/{domainType}/{domainId}/annotations/{annotationId}/annotations')
     Annotation create(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID annotationId, @Body @NonNull Annotation childAnnotation) {
         super.cleanBody(childAnnotation)
-        Annotation annotation = annotationRepository.readById(annotationId)
-        if (!annotation)
-            throw new HttpStatusException(HttpStatus.BAD_REQUEST, 'Parent Annotation not found: $annotationId')
-        childAnnotation.parentAnnotationId = annotation.id
-        childAnnotation.multiFacetAwareItemId = annotation.multiFacetAwareItemId
-        childAnnotation.multiFacetAwareItemDomainType = annotation.multiFacetAwareItemDomainType
+        Annotation parent = super.validate(domainType, domainId, annotationId) as Annotation
+        if (!parent) throw new HttpStatusException(HttpStatus.BAD_REQUEST, 'Parent Annotation not found: $annotationId')
+        childAnnotation.parentAnnotationId = parent.id
+        childAnnotation.multiFacetAwareItemId = parent.multiFacetAwareItemId
+        childAnnotation.multiFacetAwareItemDomainType = parent.multiFacetAwareItemDomainType
         updateCreationProperties(childAnnotation)
         Annotation saved = annotationCacheableRepository.save(childAnnotation)
         saved
     }
 
-
     /**
      * Get child annotation
      * @param id parentId
-     * @param childId  note: if childId =parent, the nested parent is returned
+     * @param childId note: if childId = parent, the nested parent is returned
      * @return 'Child' annotation
      */
-    @Get('/{id}/annotations/{childId}')
-    Annotation getChildAnnotation(@NonNull UUID id, @NonNull UUID childId) {
-        show(childId)
+    @Get('/{domainType}/{domainId}/annotations/{id}/annotations/{childId}')
+    Annotation getChildAnnotation(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID id,
+                                  @NonNull UUID childId) {
+        show(domainType, domainId, childId)
     }
 
-    @Delete('/{id}')
+    @Delete('/{domainType}/{domainId}/annotations/{id}')
     @Transactional
-    HttpStatus delete(UUID id, @Body @Nullable Annotation annotation) {
+    HttpStatus delete(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID id,
+                      @Body @Nullable Annotation annotation) {
+        super.validate(domainType, domainId, id) as Annotation
         Annotation annotationToDelete = annotationCacheableRepository.findById(id)
         if (!annotationToDelete.parentAnnotationId) {
             Set<Annotation> annotationSet = annotationRepository.findAllChildrenById(id)
@@ -111,14 +104,31 @@ class AnnotationController extends FacetController<Annotation> {
         super.delete(id, annotation)
     }
 
-    @Delete('/{id}/annotations/{childId}')
+    @Delete('/{domainType}/{domainId}/annotations/{id}/annotations/{childId}')
     @Transactional
-    HttpStatus delete(UUID id, @NonNull UUID childId, @Body @Nullable Annotation annotation) {
+    HttpStatus delete(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID id,
+                      @NonNull UUID childId, @Body @Nullable Annotation annotation) {
+        super.validate(domainType, domainId, id) as Annotation
+        super.validate(domainType, domainId, childId) as Annotation
         Annotation child = annotationCacheableRepository.findById(childId)
-        if (!child.parentAnnotationId){
+        if (!child.parentAnnotationId) {
             throw new HttpStatusException(HttpStatus.BAD_REQUEST, "Child Annotation has no parent annotation")
         }
         super.delete(childId, annotation)
+    }
+
+    private Annotation showNestedItem(UUID id, Annotation annotation) {
+        if (annotation) {
+            if (!annotation.parentAnnotationId) {
+                AdministeredItem administeredItem = findAdministeredItem(annotation.multiFacetAwareItemDomainType,
+                        annotation.multiFacetAwareItemId)
+                List<Annotation> annotations = administeredItem.annotations
+                if (!annotations.isEmpty()) {
+                    annotation = annotations.find { it -> it.id == id }
+                }
+            }
+        }
+        annotation
     }
 
 }
