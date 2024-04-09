@@ -43,9 +43,7 @@ class SummaryMetadataReportController extends ItemController<SummaryMetadataRepo
     SummaryMetadataReport create(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID summaryMetadataId,
                                  @Body SummaryMetadataReport summaryMetadataReport) {
         super.cleanBody(summaryMetadataReport)
-        SummaryMetadata summaryMetadata = summaryMetadataCacheableRepository.readById(summaryMetadataId)
-        if (!summaryMetadata)
-            throw new HttpStatusException(HttpStatus.NOT_FOUND, 'summaryMetadata not found: $summaryMetadataId')
+        SummaryMetadata summaryMetadata = validateAndGet(domainType, domainId, summaryMetadataId)
         summaryMetadataReport.summaryMetadataId = summaryMetadata.id
         updateCreationProperties(summaryMetadataReport)
         summaryMetadataReportCacheableRepository.save(summaryMetadataReport)
@@ -53,6 +51,7 @@ class SummaryMetadataReportController extends ItemController<SummaryMetadataRepo
 
     @Get
     ListResponse<SummaryMetadataReport> list(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID summaryMetadataId) {
+        validateAndGet(domainType, domainId, summaryMetadataId)
         List<SummaryMetadataReport> summaryMetadataReportList = summaryMetadataReportRepository.findAllBySummaryMetadataId(summaryMetadataId)
         ListResponse.from(summaryMetadataReportList)
     }
@@ -60,6 +59,7 @@ class SummaryMetadataReportController extends ItemController<SummaryMetadataRepo
     @Get('/{id}')
     SummaryMetadataReport get(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID summaryMetadataId,
                               @NonNull UUID id) {
+        validateAndGet(domainType, domainId, summaryMetadataId)
         summaryMetadataReportCacheableRepository.findById(id)
     }
 
@@ -68,9 +68,8 @@ class SummaryMetadataReportController extends ItemController<SummaryMetadataRepo
                                  @NonNull UUID id, @Body @NonNull SummaryMetadataReport summaryMetadataReport) {
         super.cleanBody(summaryMetadataReport)
         SummaryMetadataReport existing = summaryMetadataReportCacheableRepository.readById(id)
-        handleNonExistingItem(existing, id)
-        SummaryMetadata summaryMetadata = summaryMetadataCacheableRepository.readById(summaryMetadataId)
-        handleNonExistingItem(summaryMetadata, summaryMetadataId)
+        throwNotFoundException(existing, id)
+        SummaryMetadata summaryMetadata = validateAndGet(domainType, domainId, summaryMetadataId)
         SummaryMetadataReport updated = updateEntity(existing, summaryMetadataReport, summaryMetadata)
         updated
     }
@@ -79,13 +78,11 @@ class SummaryMetadataReportController extends ItemController<SummaryMetadataRepo
     @Transactional
     HttpStatus delete(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID summaryMetadataId,
                       @NonNull UUID id) {
+        SummaryMetadata summaryMetadata = validateAndGet(domainType, domainId, summaryMetadataId)
         SummaryMetadataReport summaryMetadataReport = summaryMetadataReportCacheableRepository.readById(id)
         if (!summaryMetadataReport) {
-            throw new HttpStatusException(HttpStatus.NOT_FOUND,
-                    "Summary metadata report with id : $id not found, cannot delete")
+            throwNotFoundException(summaryMetadataReport, id)
         }
-        SummaryMetadata summaryMetadata = summaryMetadataCacheableRepository.readById(summaryMetadataId)
-        handleNonExistingItem(summaryMetadata, summaryMetadataId)
         summaryMetadataReportCacheableRepository.delete(summaryMetadataReport, summaryMetadata)
         HttpStatus.NO_CONTENT
     }
@@ -100,7 +97,18 @@ class SummaryMetadataReportController extends ItemController<SummaryMetadataRepo
         }
     }
 
-    private void handleNonExistingItem(Item item, UUID id) {
+    private SummaryMetadata validateAndGet(String domainType, UUID domainId, UUID summaryMetadataId) {
+        SummaryMetadata summaryMetadata = summaryMetadataCacheableRepository.readById(summaryMetadataId)
+        if (!summaryMetadata) {
+            throwNotFoundException(null, summaryMetadataId)
+        }
+        if (summaryMetadata.multiFacetAwareItemId != domainId || !summaryMetadataCacheableRepository.handles(domainType)) {
+            throwNotFoundException(summaryMetadata, summaryMetadataId)
+        }
+        summaryMetadata
+    }
+
+    private static void throwNotFoundException(Item item, UUID id) {
         if (!item) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, "Item $id not found ")
         }

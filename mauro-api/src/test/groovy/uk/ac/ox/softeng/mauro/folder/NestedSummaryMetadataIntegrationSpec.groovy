@@ -1,6 +1,5 @@
 package uk.ac.ox.softeng.mauro.folder
 
-
 import io.micronaut.runtime.EmbeddedApplication
 import io.micronaut.test.annotation.Sql
 import jakarta.inject.Inject

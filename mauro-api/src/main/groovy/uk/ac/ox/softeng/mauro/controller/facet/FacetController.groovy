@@ -102,7 +102,7 @@ abstract class FacetController<I extends Facet> extends ItemController<I> {
         administeredItemRepository
     }
 
-    protected I validate(String domainType, UUID domainId, UUID id) {
+    protected I validateAndGet(String domainType, UUID domainId, UUID id) {
         AdministeredItemCacheableRepository administeredItemRepository = getAdministeredItemRepository(domainType)
         I facet = facetRepository.findById(id)
         if (facet) {

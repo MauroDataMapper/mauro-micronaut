@@ -48,7 +48,7 @@ class AnnotationController extends FacetController<Annotation> {
 
     @Get('/{domainType}/{domainId}/annotations/{id}')
     Annotation show(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID id) {
-        Annotation validAnnotation = super.validate(domainType, domainId, id) as Annotation
+        Annotation validAnnotation = super.validateAndGet(domainType, domainId, id) as Annotation
         Annotation nested = showNestedItem(id, validAnnotation)
         nested
     }
@@ -69,7 +69,7 @@ class AnnotationController extends FacetController<Annotation> {
     @Post('/{domainType}/{domainId}/annotations/{annotationId}/annotations')
     Annotation create(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID annotationId, @Body @NonNull Annotation childAnnotation) {
         super.cleanBody(childAnnotation)
-        Annotation parent = super.validate(domainType, domainId, annotationId) as Annotation
+        Annotation parent = super.validateAndGet(domainType, domainId, annotationId) as Annotation
         if (!parent) throw new HttpStatusException(HttpStatus.BAD_REQUEST, 'Parent Annotation not found: $annotationId')
         childAnnotation.parentAnnotationId = parent.id
         childAnnotation.multiFacetAwareItemId = parent.multiFacetAwareItemId
@@ -95,8 +95,7 @@ class AnnotationController extends FacetController<Annotation> {
     @Transactional
     HttpStatus delete(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID id,
                       @Body @Nullable Annotation annotation) {
-        super.validate(domainType, domainId, id) as Annotation
-        Annotation annotationToDelete = annotationCacheableRepository.findById(id)
+        Annotation annotationToDelete = super.validateAndGet(domainType, domainId, id) as Annotation
         if (!annotationToDelete.parentAnnotationId) {
             Set<Annotation> annotationSet = annotationRepository.findAllChildrenById(id)
             annotationCacheableRepository.deleteAll(annotationSet)
@@ -108,9 +107,8 @@ class AnnotationController extends FacetController<Annotation> {
     @Transactional
     HttpStatus delete(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID id,
                       @NonNull UUID childId, @Body @Nullable Annotation annotation) {
-        super.validate(domainType, domainId, id) as Annotation
-        super.validate(domainType, domainId, childId) as Annotation
-        Annotation child = annotationCacheableRepository.findById(childId)
+        super.validateAndGet(domainType, domainId, id) as Annotation
+        Annotation child = super.validateAndGet(domainType, domainId, childId) as Annotation
         if (!child.parentAnnotationId) {
             throw new HttpStatusException(HttpStatus.BAD_REQUEST, "Child Annotation has no parent annotation")
         }

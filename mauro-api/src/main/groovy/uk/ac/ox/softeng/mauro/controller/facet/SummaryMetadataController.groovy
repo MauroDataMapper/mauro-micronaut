@@ -57,23 +57,23 @@ class SummaryMetadataController extends FacetController<SummaryMetadata> {
     }
 
     @Post
-    SummaryMetadata create(String domainType, UUID domainId, @Body @NonNull SummaryMetadata summaryMetadata) {
+    SummaryMetadata create(@NonNull String domainType, @NonNull UUID domainId, @Body @NonNull SummaryMetadata summaryMetadata) {
        super.create(domainType, domainId, summaryMetadata)
     }
 
     @Put('/{id}')
-    SummaryMetadata update(UUID id, @Body @NonNull SummaryMetadata summaryMetadata) {
+    SummaryMetadata update(@NonNull UUID id, @Body @NonNull SummaryMetadata summaryMetadata) {
         super.update(id, summaryMetadata)
     }
 
     @Delete('/{id}')
     @Transactional
-    HttpStatus delete(UUID id, @Body @Nullable SummaryMetadata summaryMetadata) {
+    HttpStatus delete(@NonNull UUID id, @Body @Nullable SummaryMetadata summaryMetadata) {
         deleteAnyAssociatedReports(id)
         super.delete(id, summaryMetadata)
     }
 
-    void deleteAnyAssociatedReports(UUID summaryMetadataId) {
+    private void deleteAnyAssociatedReports(UUID summaryMetadataId) {
         List<SummaryMetadataReport> savedSummaryMetadataReports = summaryMetadataReportRepository.findAllBySummaryMetadataId(summaryMetadataId)
         if (savedSummaryMetadataReports) {
             summaryMetadataReportCacheableRepository.deleteAll(savedSummaryMetadataReports)
