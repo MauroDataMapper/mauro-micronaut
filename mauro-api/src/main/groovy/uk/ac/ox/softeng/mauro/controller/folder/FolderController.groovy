@@ -9,9 +9,13 @@ import io.micronaut.http.annotation.*
 import io.micronaut.transaction.annotation.Transactional
 import uk.ac.ox.softeng.mauro.controller.model.ModelController
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
+import uk.ac.ox.softeng.mauro.export.ExportMetadata
+import uk.ac.ox.softeng.mauro.export.ExportModel
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.model.ModelContentRepository
 import uk.ac.ox.softeng.mauro.web.ListResponse
+
+import java.time.Instant
 
 @Slf4j
 @CompileStatic
@@ -108,5 +112,20 @@ class FolderController extends ModelController<Folder> {
     @Delete('/{parentId}/folders/{id}')
     HttpStatus delete(UUID parentId, UUID id, @Body @Nullable Folder folder) {
         super.delete(id, folder)
+    }
+
+    @Get('/{id}/export{/namespace}{/name}{/version}')
+    ExportModel exportModel(UUID id, @Nullable String namespace, @Nullable String name, @Nullable String version) {
+        Folder folder = show(id)
+        new ExportModel(
+                exportMetadata: new ExportMetadata(
+                        namespace: 'uk.ac.ox.softeng.mauro',
+                        name: 'mauro-micronaut',
+                        version: 'SNAPSHOT',
+                        exportDate: Instant.now(),
+                        exportedBy: 'USER@example.org'
+                ),
+                folder: folder
+        )
     }
 }

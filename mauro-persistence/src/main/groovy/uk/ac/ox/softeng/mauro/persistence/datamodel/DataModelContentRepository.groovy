@@ -41,8 +41,9 @@ class DataModelContentRepository extends ModelContentRepository<DataModel> {
         dataModel.dataClasses.each {dataClass ->
             dataClass.dataClasses = dataModel.allDataClasses.findAll{it.parentDataClass?.id == dataClass.id }.sort {it.order}
         }
-
-        dataModel.dataElements = dataElementRepository.findAllByDataClassIn(dataModel.allDataClasses)
+        if (!dataModel.allDataClasses.isEmpty()) {
+            dataModel.dataElements = dataElementRepository.findAllByDataClassIn(dataModel.allDataClasses)
+        }
         dataModel.dataElements.each {dataElement ->
             dataElement.dataClass = dataClassMap[dataElement.dataClass.id]
             dataElement.dataClass.dataElements.add(dataElement)

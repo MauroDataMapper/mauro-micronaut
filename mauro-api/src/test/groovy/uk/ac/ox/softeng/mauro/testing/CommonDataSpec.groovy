@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.testing
 
+import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadataType
+
 
 class CommonDataSpec extends BaseIntegrationSpec{
     public static final String REPORT_DATE = "2024-03-01T20:50:01.612Z"
@@ -34,4 +36,11 @@ class CommonDataSpec extends BaseIntegrationSpec{
     def annotationPayload(String label, String description) {
         [label: label, description: description ]
     }
+    def summaryMetadataPayload() {
+        [ summaryMetadataType: SummaryMetadataType.STRING]
+    }
+    def metadataPayload() {
+        [ namespace: 'org.example', key: 'example_key', value: 'example_value']
+    }
+
 }
