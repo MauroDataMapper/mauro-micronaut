@@ -43,6 +43,8 @@ dependencies {
 //    implementation("io.micronaut.cache:micronaut-cache-caffeine")
     implementation("io.micronaut.cache:micronaut-cache-ehcache")
     implementation("io.micronaut.cache:micronaut-cache-management")
+    testImplementation group: 'org.apache.groovy', name: 'groovy-json', version: '4.0.15'
+
 
     // Security
     implementation("io.micronaut.security:micronaut-security-session")
@@ -59,6 +61,7 @@ dependencies {
 
     testRuntimeOnly("org.testcontainers:testcontainers")
     testRuntimeOnly("org.testcontainers:postgresql")
+
 
 }
 
