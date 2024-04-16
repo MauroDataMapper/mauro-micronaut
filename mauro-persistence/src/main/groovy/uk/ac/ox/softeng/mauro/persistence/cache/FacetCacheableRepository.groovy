@@ -70,7 +70,7 @@ abstract class FacetCacheableRepository<F extends Facet> extends ItemCacheableRe
     @Singleton
     @CompileStatic
     static class AnnotationCacheableRepository extends FacetCacheableRepository<Annotation> {
-      AnnotationCacheableRepository(AnnotationRepository annotationRepository) {
+        AnnotationCacheableRepository(AnnotationRepository annotationRepository) {
             super(annotationRepository)
         }
 
@@ -79,6 +79,28 @@ abstract class FacetCacheableRepository<F extends Facet> extends ItemCacheableRe
         }
         Annotation readById( UUID id) {
             cachedLookupById(READ_BY_ID, Annotation.class.simpleName, id)
+        }
+
+        List<Annotation> saveAll(Iterable<Annotation> items) {
+            List<Annotation> savedChild = []
+            List<Annotation> savedList = []
+            Annotation saved
+            items.forEach { annotation ->
+                saved = repository.save(annotation)
+                if (annotation.childAnnotations) {
+                    annotation.childAnnotations.each { ch ->
+                        ch.parentAnnotationId = saved.id
+                    }
+                    savedChild.addAll(repository.saveAll(annotation.childAnnotations))
+                    savedChild.each {
+                        invalidate(it)
+                    }
+                }
+                savedList.add(saved)
+                invalidate(saved)
+            }
+            savedList.addAll(savedChild)
+            savedList
         }
     }
 }
