@@ -140,6 +140,10 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
         List<DataClass> readAllByParentDataClass_Id(UUID parentDataClassId) {
             ((DataClassRepository) repository).readAllByParentDataClass_Id(parentDataClassId)
         }
+        @Override
+        Boolean handles(String domainType) {
+            domainClass.simpleName.equalsIgnoreCase(domainType) || (domainClass.simpleName + 'es').equalsIgnoreCase(domainType)
+        }
     }
 
     @Bean

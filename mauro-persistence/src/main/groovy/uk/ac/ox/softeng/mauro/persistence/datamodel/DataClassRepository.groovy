@@ -65,4 +65,14 @@ abstract class DataClassRepository implements ModelItemRepository<DataClass> {
         DataClass
     }
 
+    @Override
+    Boolean handles(Class clazz) {
+        domainClass.isAssignableFrom(clazz)
+    }
+
+    @Override
+    Boolean handles(String domainType) {
+        domainClass.simpleName.equalsIgnoreCase(domainType) || (domainClass.simpleName + 'es').equalsIgnoreCase(domainType)
+    }
 }
+
