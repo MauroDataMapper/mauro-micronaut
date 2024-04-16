@@ -4,11 +4,11 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.util.logging.Slf4j
 import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.Consumes
+import uk.ac.ox.softeng.mauro.plugin.MauroPluginService
 import io.micronaut.http.exceptions.HttpStatusException
 import uk.ac.ox.softeng.mauro.controller.model.ModelController
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModelService
-import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.domain.model.version.CreateNewVersionData
 import uk.ac.ox.softeng.mauro.domain.model.version.FinaliseData
 import uk.ac.ox.softeng.mauro.export.ExportMetadata
@@ -16,6 +16,8 @@ import uk.ac.ox.softeng.mauro.export.ExportModel
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.DataModelCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.datamodel.DataModelContentRepository
+import uk.ac.ox.softeng.mauro.plugin.MauroPlugin
+import uk.ac.ox.softeng.mauro.plugin.importer.ModelImporterPlugin
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 import groovy.transform.CompileStatic
@@ -124,26 +126,14 @@ class DataModelController extends ModelController<DataModel> {
 
     @Transactional
     @Consumes(MediaType.MULTIPART_FORM_DATA)
-    @Post('/dataModels/import{/namespace}{/name}{/version}')
-    ListResponse<DataModel> importModel(@Body Map<String, String> importMap, @Nullable String namespace, @Nullable String name, @Nullable String version) {
-        log.info '** start importModel **'
-        ExportModel importModel = objectMapper.readValue(importMap.importFile, ExportModel)
-        DataModel imported = importModel.dataModel
-        imported.setAssociations()
-
-        updateCreationProperties(imported)
-        log.info '* start updateCreationProperties *'
-        imported.getAllContents().each {updateCreationProperties(it)}
-        log.info '* finish updateCreationProperties *'
-
-        UUID folderId = UUID.fromString(importMap.folderId)
-
-        Folder folder = folderRepository.readById(folderId)
-        imported.folder = folder
-        log.info '** about to saveWithContentBatched... **'
-        DataModel savedImported = modelContentRepository.saveWithContent(imported)
-        log.info '** finished saveWithContentBatched **'
-        ListResponse.from([show(savedImported.id)])
+    @Post('/dataModels/import/{namespace}/{name}{/version}')
+    ListResponse<DataModel> importModel(@Body Map<String, String> importMap, String namespace, String name, @Nullable String version) {
+        System.err.println(MauroPluginService.listPlugins())
+        System.err.println(MauroPluginService.listImporterPlugins())
+        System.err.println(MauroPluginService.listPlugins(ModelImporterPlugin))
+        MauroPlugin mauroPlugin = MauroPluginService.getPlugin(namespace, name, version)
+        System.err.println(mauroPlugin.displayName)
+        new ListResponse()
     }
 
 }

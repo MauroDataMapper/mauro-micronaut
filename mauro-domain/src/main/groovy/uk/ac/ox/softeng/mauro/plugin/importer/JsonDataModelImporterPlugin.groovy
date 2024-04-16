@@ -4,11 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.util.logging.Slf4j
 import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
-import uk.ac.ox.softeng.mauro.domain.datamodel.DataModelService
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.export.ExportModel
-import uk.ac.ox.softeng.mauro.plugin.importer.ImportParameters
-import uk.ac.ox.softeng.mauro.plugin.importer.ModelImporterPlugin
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @Slf4j
@@ -56,5 +53,10 @@ class JsonDataModelImporterPlugin implements ModelImporterPlugin<DataModel, Impo
     @Override
     Boolean handlesContentType(String contentType) {
         return contentType == 'application/mauro.datamodel+json'
+    }
+
+    @Override
+    Boolean canImportMultipleDomains() {
+        return true
     }
 }
