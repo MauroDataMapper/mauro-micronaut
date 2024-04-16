@@ -22,7 +22,6 @@ abstract class DataTypeRepository implements ModelItemRepository<DataType> {
     @Override
     @Nullable
     DataType findById(UUID id) {
-        log.debug 'DataTypeRepository::findById'
         dataTypeDTORepository.findById(id) as DataType
     }
 
