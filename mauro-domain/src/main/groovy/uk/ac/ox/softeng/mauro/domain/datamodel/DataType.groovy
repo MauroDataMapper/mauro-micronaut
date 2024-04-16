@@ -1,28 +1,18 @@
 package uk.ac.ox.softeng.mauro.domain.datamodel
 
-import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
-import uk.ac.ox.softeng.mauro.domain.model.ModelItem
-import uk.ac.ox.softeng.mauro.domain.terminology.Term
-
 import com.fasterxml.jackson.annotation.JsonIgnore
-import com.fasterxml.jackson.annotation.JsonSubTypes
-import com.fasterxml.jackson.annotation.JsonTypeInfo
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
 import groovy.transform.MapConstructor
 import io.micronaut.core.annotation.Introspected
 import io.micronaut.core.annotation.Nullable
-import io.micronaut.data.annotation.Index
-import io.micronaut.data.annotation.Indexes
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Relation
-import jakarta.persistence.DiscriminatorColumn
-import jakarta.persistence.Entity
 import jakarta.persistence.Inheritance
 import jakarta.persistence.InheritanceType
-import jakarta.persistence.MappedSuperclass
 import jakarta.persistence.Transient
-import jakarta.validation.constraints.NotNull
+import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
+import uk.ac.ox.softeng.mauro.domain.model.ModelItem
 
 /**
  * A datatype describes the range of values that a column or field in a dataset may take.  It may be one of the following kinds:
@@ -67,7 +57,7 @@ class DataType extends ModelItem<DataModel> {
     }
 
     // Remove the transient annotation here
-    String domainType
+    String domainType = getDomainType()
 
     @JsonIgnore
     DataModel dataModel

@@ -10,7 +10,6 @@ import uk.ac.ox.softeng.mauro.domain.datamodel.DataModelService
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.domain.model.version.CreateNewVersionData
 import uk.ac.ox.softeng.mauro.domain.model.version.FinaliseData
-import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
 import uk.ac.ox.softeng.mauro.export.ExportMetadata
 import uk.ac.ox.softeng.mauro.export.ExportModel
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.DataModelCacheableRepository
@@ -49,7 +48,7 @@ class DataModelController extends ModelController<DataModel> {
     ObjectMapper objectMapper
 
 
-    DataModelController(DataModelCacheableRepository dataModelRepository, FolderCacheableRepository folderRepository, DataModelContentRepository dataModelContentRepository ) {
+    DataModelController(DataModelCacheableRepository dataModelRepository, FolderCacheableRepository folderRepository, DataModelContentRepository dataModelContentRepository) {
         super(DataModel, dataModelRepository, folderRepository, dataModelContentRepository)
         this.dataModelRepository = dataModelRepository
         this.dataModelContentRepository = dataModelContentRepository
@@ -124,7 +123,6 @@ class DataModelController extends ModelController<DataModel> {
     ListResponse<DataModel> importModel(@Body Map<String, String> importMap, @Nullable String namespace, @Nullable String name, @Nullable String version) {
         log.info '** start importModel **'
         ExportModel importModel = objectMapper.readValue(importMap.importFile, ExportModel)
-        log.info '*** imported JSON model ***'
         DataModel imported = importModel.dataModel
         imported.setAssociations()
 

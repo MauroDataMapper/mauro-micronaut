@@ -44,4 +44,9 @@ class DataTypeDTO extends DataType implements AdministeredItemDTO {
                                                       multi_facet_aware_item_id = data_type_.id
                                                       and parent_annotation_id is null )''')
     List<Annotation> annotations = []
+
+    @Override
+    String getDomainType(){
+        super.getDomainType()
+    }
 }

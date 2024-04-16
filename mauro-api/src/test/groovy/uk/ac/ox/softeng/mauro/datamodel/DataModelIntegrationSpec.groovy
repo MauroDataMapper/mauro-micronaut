@@ -10,7 +10,6 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.micronaut.runtime.EmbeddedApplication
-import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
 import spock.lang.Shared
 
