@@ -4,6 +4,7 @@ import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
+import io.micronaut.data.exceptions.EmptyResultException
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.exceptions.HttpStatusException
@@ -59,7 +60,12 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     }
 
     M show(UUID id) {
-        M model = modelRepository.findById(id)
+        M model
+        try {
+            model = modelRepository.findById(id)
+        } catch (EmptyResultException e) {
+            throw new HttpStatusException(HttpStatus.NOT_FOUND, e.getMessage())
+        }
         if (!model) return null
         pathRepository.readParentItems(model)
         model.updatePath()
@@ -139,4 +145,9 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     AdministeredItemRepository getRepository(AdministeredItem item) {
         administeredItemRepositories.find {it.handles(item.class)}
     }
+
+    M showNested(UUID uuid) {
+        administeredItemRepository.findById(uuid)
+    }
+
 }

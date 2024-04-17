@@ -62,20 +62,19 @@ class AdministeredItemContentRepository {
         getRepository(administeredItem).delete(administeredItem)
     }
 
-    Long deleteAllFacets(@NonNull AdministeredItem item) {
+    void deleteAllFacets(@NonNull AdministeredItem item) {
         deleteAllFacets([item])
     }
 
-    Long deleteAllFacets(Collection<AdministeredItem> items) {
+    void deleteAllFacets(Collection<AdministeredItem> items) {
         List<Metadata> metadata = []
 
         items.each {item ->
             if (item.metadata) {
                 metadata.addAll(item.metadata)
+                metadataRepository.deleteAll(metadata)
             }
         }
-
-        metadataRepository.deleteAll(metadata)
         deleteSummaryMetadata(items)
         deleteAnnotations(items)
     }
@@ -96,10 +95,10 @@ class AdministeredItemContentRepository {
                     }
                     summaryMetadata.add(it)
                 }
+                summaryMetadataRepository.deleteAll(summaryMetadata)
+                summaryMetadataReportCacheableRepository.deleteAll(summaryMetadataReports)
             }
         }
-        summaryMetadataRepository.deleteAll(summaryMetadata)
-        summaryMetadataReportCacheableRepository.deleteAll(summaryMetadataReports)
     }
 
     void deleteAnnotations(Collection<AdministeredItem> items) {

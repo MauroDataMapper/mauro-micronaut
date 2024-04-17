@@ -97,6 +97,17 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
         }
     }
 
+    @Transactional
+    HttpStatus delete(@Body @Nullable I item, I current) {
+        if (current?.version) item.version = current.version
+        Long deleted = administeredItemContentRepository.deleteWithContent(item)
+        if (deleted) {
+            HttpStatus.NO_CONTENT
+        } else {
+            throw new HttpStatusException(HttpStatus.NOT_FOUND, 'Not found for deletion')
+        }
+    }
+
     ListResponse<I> list(UUID parentId) {
         P parent = parentItemRepository.readById(parentId)
         if (!parent) return null
