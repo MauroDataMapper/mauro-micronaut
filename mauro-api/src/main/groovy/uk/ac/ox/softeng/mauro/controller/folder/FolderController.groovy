@@ -40,7 +40,7 @@ class FolderController extends ModelController<Folder> {
     @Post
     Folder create(@Body Folder folder) {
         cleanBody(folder)
-        updateCreationProperties(folder)
+        folder.updateCreationProperties()
 
         pathRepository.readParentItems(folder)
         folder.updatePath()

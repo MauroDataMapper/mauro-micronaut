@@ -19,6 +19,9 @@ dependencies {
     implementation("io.micronaut.validation:micronaut-validation")
     implementation("io.micronaut:micronaut-jackson-databind")
 
+    // For parsing java dates / instants
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
+
     testImplementation "io.micronaut.test:micronaut-test-spock"
 
 }

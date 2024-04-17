@@ -2,14 +2,12 @@ package uk.ac.ox.softeng.mauro.plugin.importer
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.util.logging.Slf4j
-import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
-import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.export.ExportModel
-import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @Slf4j
-class JsonDataModelImporterPlugin implements ModelImporterPlugin<DataModel, ImportParameters> {
+
+class JsonDataModelImporterPlugin implements DataModelImporterPlugin<FileImportParameters> {
 
     String version = '4.0.0'
 
@@ -17,42 +15,42 @@ class JsonDataModelImporterPlugin implements ModelImporterPlugin<DataModel, Impo
 
     Boolean canImportMultipleDomains = true
 
-    @Inject
-    ObjectMapper objectMapper
+    static ObjectMapper objectMapper = new ObjectMapper()
 
-
-    @Override
-    DataModel importDomain(ImportParameters params) {
-        log.info '** start importModel **'
-        ExportModel importModel = objectMapper.readValue(params.importFile, ExportModel)
-        log.info '*** imported JSON model ***'
-        DataModel imported = importModel.dataModel
-        imported.setAssociations()
-
-        updateCreationProperties(imported)
-        log.info '* start updateCreationProperties *'
-        imported.getAllContents().each {updateCreationProperties(it)}
-        log.info '* finish updateCreationProperties *'
-
-        UUID folderId = UUID.fromString(importMap.folderId)
-
-        Folder folder = folderRepository.readById(folderId)
-        imported.folder = folder
-        log.info '** about to saveWithContentBatched... **'
-        DataModel savedImported = modelContentRepository.saveWithContent(imported)
-        log.info '** finished saveWithContentBatched **'
-        ListResponse.from([show(savedImported.id)])
-
+    static {
+        objectMapper.findAndRegisterModules()
     }
 
     @Override
-    List<DataModel> importDomains(ImportParameters params) {
+    DataModel importDomain(FileImportParameters params) {
+        log.info '** start importModel **'
+        ExportModel importModel = objectMapper.readValue(params.importFile.fileContents, ExportModel)
+        log.info '*** imported JSON model ***'
+
+        DataModel imported = importModel.dataModel
+        imported.setAssociations()
+        imported.updateCreationProperties()
+        log.info '* start updateCreationProperties *'
+        imported.getAllContents().each {it.updateCreationProperties()}
+        log.info '* finish updateCreationProperties *'
+
+
+        return imported
+    }
+
+    @Override
+    List<DataModel> importDomains(FileImportParameters params) {
         return null
     }
 
     @Override
     Boolean handlesContentType(String contentType) {
         return contentType == 'application/mauro.datamodel+json'
+    }
+
+    @Override
+    Class<FileImportParameters> importParametersClass() {
+        return FileImportParameters
     }
 
     @Override

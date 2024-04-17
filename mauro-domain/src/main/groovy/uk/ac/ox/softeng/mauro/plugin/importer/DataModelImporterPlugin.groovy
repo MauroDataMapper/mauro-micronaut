@@ -1,13 +1,14 @@
 package uk.ac.ox.softeng.mauro.plugin.importer
 
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.model.Model
 import uk.ac.ox.softeng.mauro.plugin.MauroPlugin
 
-trait ModelImporterPlugin <D extends Model, P extends ImportParameters> extends MauroPlugin {
+trait DataModelImporterPlugin <P extends ImportParameters> extends ModelImporterPlugin<DataModel, P> {
 
-    abstract D importDomain(P params)
+    abstract DataModel importDomain(P params)
 
-    abstract List<D> importDomains(P params)
+    abstract List<DataModel> importDomains(P params)
 
     abstract Boolean canImportMultipleDomains()
 

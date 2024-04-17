@@ -127,7 +127,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         M savedCopy = createEntity(copy.folder, copy)
         savedCopy.allContents.each {AdministeredItem item ->
             log.debug "*** Saving item [$item.id : $item.label] ***"
-            updateCreationProperties(item)
+            item.updateCreationProperties()
             getRepository(item).save(item)
         }
         savedCopy
