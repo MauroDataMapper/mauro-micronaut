@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.export
 
+import com.fasterxml.jackson.annotation.JsonAlias
+import com.fasterxml.jackson.annotation.JsonProperty
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 
 import com.fasterxml.jackson.annotation.JsonFormat
@@ -18,7 +20,17 @@ class ExportMetadata {
 
     String version
 
+    @JsonAlias("exportedOn")
     Instant exportDate
 
     String exportedBy
+
+
+    @JsonProperty("exporter")
+    private void unpackNestedExporter(Map<String,Object> exporter) {
+        this.namespace = exporter["namespace"]
+        this.name = exporter["name"]
+        this.version = exporter["version"]
+    }
+
 }

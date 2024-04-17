@@ -3,7 +3,7 @@ package uk.ac.ox.softeng.mauro.plugin.importer
 import uk.ac.ox.softeng.mauro.plugin.importer.config.ImportGroupConfig
 import uk.ac.ox.softeng.mauro.plugin.importer.config.ImportParameterConfig
 
-abstract class ImportParameters {
+class ImportParameters {
 
     @ImportParameterConfig(
             displayName = 'Folder',

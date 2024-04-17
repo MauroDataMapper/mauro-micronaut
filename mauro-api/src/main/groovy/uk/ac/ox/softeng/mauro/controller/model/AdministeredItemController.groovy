@@ -59,7 +59,7 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
     }
 
     protected I createEntity(@NonNull P parent, @NonNull I cleanItem) {
-        updateCreationProperties(cleanItem)
+        cleanItem.updateCreationProperties()
 
         cleanItem.parent = parent
 

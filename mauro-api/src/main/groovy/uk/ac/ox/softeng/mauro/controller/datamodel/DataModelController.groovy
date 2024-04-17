@@ -4,6 +4,17 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.util.logging.Slf4j
 import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.Consumes
+import io.micronaut.http.exceptions.HttpStatusException
+import io.micronaut.http.multipart.CompletedFileUpload
+import io.micronaut.http.multipart.CompletedPart
+import io.micronaut.http.server.multipart.MultipartBody
+import io.micronaut.scheduling.TaskExecutors
+import io.micronaut.scheduling.annotation.ExecuteOn
+import org.reactivestreams.Subscriber
+import org.reactivestreams.Subscription
+import reactor.core.publisher.Flux
+import reactor.core.publisher.Mono
+import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.plugin.MauroPluginService
 import io.micronaut.http.exceptions.HttpStatusException
 import uk.ac.ox.softeng.mauro.controller.model.ModelController
@@ -17,6 +28,9 @@ import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.DataMod
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.datamodel.DataModelContentRepository
 import uk.ac.ox.softeng.mauro.plugin.MauroPlugin
+import uk.ac.ox.softeng.mauro.plugin.importer.DataModelImporterPlugin
+import uk.ac.ox.softeng.mauro.plugin.importer.FileParameter
+import uk.ac.ox.softeng.mauro.plugin.importer.ImportParameters
 import uk.ac.ox.softeng.mauro.plugin.importer.ModelImporterPlugin
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
@@ -33,6 +47,7 @@ import io.micronaut.http.annotation.Put
 import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
 
+import java.nio.charset.StandardCharsets
 import java.time.Instant
 
 @Slf4j
@@ -125,15 +140,37 @@ class DataModelController extends ModelController<DataModel> {
     }
 
     @Transactional
+    @ExecuteOn(TaskExecutors.IO)
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Post('/dataModels/import/{namespace}/{name}{/version}')
-    ListResponse<DataModel> importModel(@Body Map<String, String> importMap, String namespace, String name, @Nullable String version) {
-        System.err.println(MauroPluginService.listPlugins())
-        System.err.println(MauroPluginService.listImporterPlugins())
-        System.err.println(MauroPluginService.listPlugins(ModelImporterPlugin))
-        MauroPlugin mauroPlugin = MauroPluginService.getPlugin(namespace, name, version)
-        System.err.println(mauroPlugin.displayName)
-        new ListResponse()
+    ListResponse<DataModel> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version) {
+
+        DataModelImporterPlugin mauroPlugin = MauroPluginService.getPlugin(DataModelImporterPlugin, namespace, name, version)
+
+        if(!mauroPlugin) {
+            throw new HttpStatusException(HttpStatus.BAD_REQUEST, "DataModel import plugin with namespace: ${namespace}, name: ${name} not found")
+        }
+
+        Map<String, Object> importMap = Flux.from(body).collectList().block().collectEntries { CompletedPart cp ->
+            if(cp instanceof CompletedFileUpload) {
+                return [cp.name, new FileParameter(cp.filename, cp.contentType.toString(), cp.bytes)]
+            } else {
+                return [cp.name, new String(cp.bytes, StandardCharsets.UTF_8)]
+            }
+
+        }
+
+        ImportParameters importParameters = objectMapper.convertValue(importMap, mauroPlugin.importParametersClass())
+
+        DataModel imported = mauroPlugin.importDomain(importParameters)
+
+        Folder folder = folderRepository.readById(importParameters.folderId)
+        imported.folder = folder
+        log.info '** about to saveWithContentBatched... **'
+        DataModel savedImported = modelContentRepository.saveWithContent(imported)
+        log.info '** finished saveWithContentBatched **'
+        ListResponse.from([show(savedImported.id)])
+
     }
 
 }

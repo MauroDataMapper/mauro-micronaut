@@ -129,9 +129,9 @@ class TerminologyController extends ModelController<Terminology> {
         log.info '*** imported JSON model ***'
         Terminology imported = importModel.terminology
         imported.setAssociations()
-        updateCreationProperties(imported)
+        imported.updateCreationProperties()
         log.info '* start updateCreationProperties *'
-        imported.getAllContents().each {updateCreationProperties(it)}
+        imported.getAllContents().each {it.updateCreationProperties()}
         log.info '* finish updateCreationProperties *'
 
         UUID folderId = UUID.fromString(importMap.folderId)

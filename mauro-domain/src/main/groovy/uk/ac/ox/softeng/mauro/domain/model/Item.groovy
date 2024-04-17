@@ -63,4 +63,12 @@ abstract class Item implements Serializable {
      */
     @Transient
     String domainType = this.class.simpleName
+
+    void updateCreationProperties() {
+        id = null
+        version = null
+        dateCreated = null
+        lastUpdated = null
+        createdBy = 'USER@example.org'
+    }
 }
