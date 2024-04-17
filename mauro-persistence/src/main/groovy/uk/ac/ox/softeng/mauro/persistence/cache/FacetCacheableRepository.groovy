@@ -6,10 +6,12 @@ import io.micronaut.cache.annotation.CacheConfig
 import io.micronaut.core.annotation.NonNull
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
+import uk.ac.ox.softeng.mauro.domain.facet.Annotation
 import uk.ac.ox.softeng.mauro.domain.facet.Facet
 import uk.ac.ox.softeng.mauro.domain.facet.Metadata
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
+import uk.ac.ox.softeng.mauro.persistence.facet.AnnotationRepository
 import uk.ac.ox.softeng.mauro.persistence.facet.MetadataRepository
 import uk.ac.ox.softeng.mauro.persistence.facet.SummaryMetadataRepository
 import uk.ac.ox.softeng.mauro.persistence.model.ItemRepository
@@ -64,6 +66,41 @@ abstract class FacetCacheableRepository<F extends Facet> extends ItemCacheableRe
         SummaryMetadataCacheableRepository(SummaryMetadataRepository summaryMetadataRepository) {
             super(summaryMetadataRepository)
         }
+    }
+    @Singleton
+    @CompileStatic
+    static class AnnotationCacheableRepository extends FacetCacheableRepository<Annotation> {
+        AnnotationCacheableRepository(AnnotationRepository annotationRepository) {
+            super(annotationRepository)
+        }
 
+        Annotation findById(UUID id) {
+            cachedLookupById(FIND_BY_ID, Annotation.class.simpleName, id)
+        }
+        Annotation readById( UUID id) {
+            cachedLookupById(READ_BY_ID, Annotation.class.simpleName, id)
+        }
+
+        List<Annotation> saveAll(Iterable<Annotation> items) {
+            List<Annotation> savedChild = []
+            List<Annotation> savedList = []
+            Annotation saved
+            items.forEach { annotation ->
+                saved = repository.save(annotation)
+                if (annotation.childAnnotations) {
+                    annotation.childAnnotations.each { ch ->
+                        ch.parentAnnotationId = saved.id
+                    }
+                    savedChild.addAll(repository.saveAll(annotation.childAnnotations))
+                    savedChild.each {
+                        invalidate(it)
+                    }
+                }
+                savedList.add(saved)
+                invalidate(saved)
+            }
+            savedList.addAll(savedChild)
+            savedList
+        }
     }
 }

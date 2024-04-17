@@ -9,7 +9,6 @@ enum SummaryMetadataType {
     NUMBER,
     STRING
 
-
     static class SummaryMetadataTypeConverter extends StdConverter<String, SummaryMetadataType> {
         @Override
         SummaryMetadataType convert(String value) {

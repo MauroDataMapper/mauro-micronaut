@@ -1,5 +1,6 @@
 package uk.ac.ox.softeng.mauro.domain.test.model
 
+import groovy.transform.CompileStatic
 import spock.lang.Specification
 import uk.ac.ox.softeng.mauro.domain.model.version.ModelVersion
 import uk.ac.ox.softeng.mauro.domain.model.version.VersionChangeType

@@ -141,6 +141,12 @@ abstract class ItemCacheableRepository<I extends Item> implements ItemRepository
             updated
         }
 
+        List<SummaryMetadataReport> saveAll(Iterable<SummaryMetadataReport> items) {
+            List<SummaryMetadataReport> saved = repository.saveAll(items)
+            items.each { invalidate(it) }
+            saved
+        }
+
         private void invalidateChain(SummaryMetadataReport summaryMetadataReport, SummaryMetadata summaryMetadata) {
             invalidate(summaryMetadataReport)
             invalidateCachedLookupById(FIND_BY_ID, summaryMetadata.class.simpleName, summaryMetadata.id)

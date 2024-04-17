@@ -162,16 +162,16 @@ class SummaryMetadataIntegrationSpec extends BaseIntegrationSpec {
         when:
         (SummaryMetadata) GET("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH/$summaryMetadata.id", SummaryMetadata)
 
-        then: 'the show endpoint shows the update'
+        then: '404 not found is returned, exception thrown'
         HttpClientResponseException exception = thrown()
         exception.status == HttpStatus.NOT_FOUND
 
         when:
-        ListResponse<SummaryMetadataReport> reports = (ListResponse<SummaryMetadataReport>) GET ("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH/$summaryMetadata.id$SUMMARY_METADATA_REPORT_PATH",
+        (ListResponse<SummaryMetadataReport>) GET ("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH/$summaryMetadata.id$SUMMARY_METADATA_REPORT_PATH",
                 ListResponse<SummaryMetadataReport> )
 
-        then: 'the list endpoint shows the update'
-        reports
-        reports.count == 0
+        then: '404 not found is returned, exception thrown'
+        exception = thrown()
+        exception.status == HttpStatus.NOT_FOUND
     }
 }

@@ -8,6 +8,7 @@ import io.micronaut.data.annotation.MappedProperty
 import io.micronaut.data.annotation.TypeDef
 import io.micronaut.data.annotation.sql.ColumnTransformer
 import io.micronaut.data.model.DataType
+import uk.ac.ox.softeng.mauro.domain.facet.Annotation
 import uk.ac.ox.softeng.mauro.domain.facet.Metadata
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
@@ -34,4 +35,14 @@ class FolderDTO extends Folder implements AdministeredItemDTO {
                                     from core.summary_metadata) summary_metadata where multi_facet_aware_item_id = folder_.id)''')
     List<SummaryMetadata> summaryMetadata = []
 
+    @Nullable
+    @TypeDef(type = DataType.JSON)
+    @MappedProperty
+    @ColumnTransformer(read = '''(select json_agg(annotation)  from (select *,
+                                (select json_agg(c) from core.annotation c
+                                where c.parent_annotation_id = annotation.id) child_annotations
+                                from core.annotation) annotation where
+                                                      multi_facet_aware_item_id = folder_.id
+                                                      and parent_annotation_id is null )''')
+    List<Annotation> annotations = []
 }

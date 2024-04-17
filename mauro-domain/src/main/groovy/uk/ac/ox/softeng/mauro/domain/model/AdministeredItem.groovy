@@ -1,5 +1,11 @@
 package uk.ac.ox.softeng.mauro.domain.model
 
+import uk.ac.ox.softeng.mauro.domain.facet.Annotation
+import uk.ac.ox.softeng.mauro.domain.facet.Metadata
+import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
+import uk.ac.ox.softeng.mauro.domain.security.SecurableResource
+import uk.ac.ox.softeng.mauro.exception.MauroInternalException
+
 import com.fasterxml.jackson.annotation.JsonIgnore
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
@@ -8,13 +14,8 @@ import io.micronaut.data.annotation.Relation
 import jakarta.persistence.Transient
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Pattern
-import uk.ac.ox.softeng.mauro.domain.facet.Metadata
-import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
-import uk.ac.ox.softeng.mauro.domain.security.SecurableResource
-import uk.ac.ox.softeng.mauro.exception.MauroInternalException
 
 import java.time.Instant
-
 /**
  * An AdministeredItem is an item stored in the catalogue.
  * <p>
@@ -74,6 +75,10 @@ abstract class AdministeredItem extends Item {
 
     @Relation(Relation.Kind.ONE_TO_MANY)
     List<SummaryMetadata> summaryMetadata = []
+
+
+    @Relation(Relation.Kind.ONE_TO_MANY)
+    List<Annotation> annotations = []
 
     /**
      * Helper method for returning the parent of this object, if one exists and is loaded.

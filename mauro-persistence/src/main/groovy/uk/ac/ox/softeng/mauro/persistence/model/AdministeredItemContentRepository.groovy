@@ -4,10 +4,14 @@ import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
+import uk.ac.ox.softeng.mauro.domain.facet.Annotation
 import uk.ac.ox.softeng.mauro.domain.facet.Metadata
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
+import uk.ac.ox.softeng.mauro.domain.model.SummaryMetadataReport
 import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository
+import uk.ac.ox.softeng.mauro.persistence.cache.FacetCacheableRepository
+import uk.ac.ox.softeng.mauro.persistence.cache.ItemCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.facet.MetadataRepository
 import uk.ac.ox.softeng.mauro.persistence.facet.SummaryMetadataRepository
 
@@ -23,6 +27,12 @@ class AdministeredItemContentRepository {
 
     @Inject
     SummaryMetadataRepository summaryMetadataRepository
+
+    @Inject
+    ItemCacheableRepository.SummaryMetadataReportCacheableRepository summaryMetadataReportCacheableRepository
+
+    @Inject
+    FacetCacheableRepository.AnnotationCacheableRepository annotationCacheableRepository
 
     AdministeredItemCacheableRepository administeredItemRepository
 
@@ -67,6 +77,7 @@ class AdministeredItemContentRepository {
 
         metadataRepository.deleteAll(metadata)
         deleteSummaryMetadata(items)
+        deleteAnnotations(items)
     }
 
     @NonNull
@@ -76,11 +87,33 @@ class AdministeredItemContentRepository {
 
     void deleteSummaryMetadata(Collection<AdministeredItem> items) {
         List<SummaryMetadata> summaryMetadata = []
+        List<SummaryMetadataReport> summaryMetadataReports = []
         items.each { item ->
             if (item.summaryMetadata){
-                summaryMetadata.addAll(item.summaryMetadata)
+                item.summaryMetadata.each {
+                    if (it.summaryMetadataReports){
+                        summaryMetadataReports.addAll(it.summaryMetadataReports)
+                    }
+                    summaryMetadata.add(it)
+                }
             }
         }
         summaryMetadataRepository.deleteAll(summaryMetadata)
+        summaryMetadataReportCacheableRepository.deleteAll(summaryMetadataReports)
+    }
+
+    void deleteAnnotations(Collection<AdministeredItem> items) {
+        List<Annotation> annotations = []
+        items.each { item ->
+            if (item.annotations) {
+                item.annotations.each {
+                    if (it.childAnnotations) {
+                        annotations.addAll(it.childAnnotations)
+                    }
+                    annotations.add(it)
+                }
+                annotationCacheableRepository.deleteAll(annotations)
+            }
+        }
     }
 }

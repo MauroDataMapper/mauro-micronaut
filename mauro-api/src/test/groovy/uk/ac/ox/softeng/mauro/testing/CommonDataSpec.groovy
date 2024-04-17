@@ -1,7 +1,9 @@
 package uk.ac.ox.softeng.mauro.testing
 
+
 class CommonDataSpec extends BaseIntegrationSpec{
     public static final String REPORT_DATE = "2024-03-01T20:50:01.612Z"
+
     def codeSet() {
         [
                 label       : "Test code set",
@@ -25,5 +27,11 @@ class CommonDataSpec extends BaseIntegrationSpec{
     }
     def summaryMetadataReport() {
         [ reportValue: 'test-report-value', reportDate: REPORT_DATE]
+    }
+    def annotationPayload() {
+        [label: 'test-label', description: 'test-annotation description']
+    }
+    def annotationPayload(String label, String description) {
+        [label: label, description: description ]
     }
 }
