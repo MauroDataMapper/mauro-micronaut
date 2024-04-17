@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.util.logging.Slf4j
 import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.Consumes
+import io.micronaut.http.exceptions.HttpStatusException
 import uk.ac.ox.softeng.mauro.controller.model.ModelController
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModelService
@@ -73,7 +74,11 @@ class DataModelController extends ModelController<DataModel> {
     @Transactional
     @Delete('/dataModels/{id}')
     HttpStatus delete(UUID id, @Body @Nullable DataModel dataModel) {
-        super.delete(id, dataModel)
+        DataModel model = super.showNested(id) as DataModel
+        if (!model){
+            throw new HttpStatusException(HttpStatus.NOT_FOUND, "Model not found, $id")
+        }
+        super.delete(model, dataModel)
     }
 
     @Get('/folders/{folderId}/dataModels')
