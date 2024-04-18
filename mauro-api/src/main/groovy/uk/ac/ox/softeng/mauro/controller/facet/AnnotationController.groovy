@@ -35,7 +35,7 @@ class AnnotationController extends FacetController<Annotation> {
     }
 
     /**
-     * Get annotation list -excludes annotations with parent_annotation_id
+     * Get annotation list
      * @param domainType
      * @param domainId
      * @return
@@ -70,7 +70,7 @@ class AnnotationController extends FacetController<Annotation> {
     Annotation create(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID annotationId, @Body @NonNull Annotation childAnnotation) {
         super.cleanBody(childAnnotation)
         Annotation parent = super.validateAndGet(domainType, domainId, annotationId) as Annotation
-        if (!parent) throw new HttpStatusException(HttpStatus.BAD_REQUEST, 'Parent Annotation not found: $annotationId')
+        if (!parent || parent.parentAnnotationId ) throw new HttpStatusException(HttpStatus.BAD_REQUEST, "Parent Annotation not found or has parent $annotationId")
         childAnnotation.parentAnnotationId = parent.id
         childAnnotation.multiFacetAwareItemId = parent.multiFacetAwareItemId
         childAnnotation.multiFacetAwareItemDomainType = parent.multiFacetAwareItemDomainType
