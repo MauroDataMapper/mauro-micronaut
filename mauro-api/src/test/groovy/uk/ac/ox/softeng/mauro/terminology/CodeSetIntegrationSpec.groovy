@@ -129,7 +129,7 @@ class CodeSetIntegrationSpec extends CommonDataSpec {
         ListResponse<CodeSet> folderResponse2 =  (ListResponse<CodeSet>) GET("$FOLDERS_PATH/$folderId$CODE_SET_PATH", ListResponse<CodeSet>)
 
         then:
-        folderResponse2.items.id == [codeSetId.toString(), codeSet2Id.toString()]
+        folderResponse2.items.id.sort() == [codeSetId.toString(), codeSet2Id.toString()].sort()
     }
 
     void 'test update CodeSet'() {
