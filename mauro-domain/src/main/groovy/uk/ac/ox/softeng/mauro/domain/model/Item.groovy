@@ -1,16 +1,14 @@
 package uk.ac.ox.softeng.mauro.domain.model
 
 import com.fasterxml.jackson.annotation.JsonAlias
+import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.Nullable
-import io.micronaut.data.annotation.DateCreated
-import io.micronaut.data.annotation.DateUpdated
-import io.micronaut.data.annotation.GeneratedValue
-import io.micronaut.data.annotation.Id
-import io.micronaut.data.annotation.Version
+import io.micronaut.data.annotation.*
 import jakarta.persistence.Transient
+import uk.ac.ox.softeng.mauro.domain.security.CatalogueUser
 
 import java.time.Instant
 
@@ -56,7 +54,14 @@ abstract class Item implements Serializable {
      */
     @Nullable
     @JsonAlias(['created_by'])
-    String createdBy
+    @MappedProperty('created_by')
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    CatalogueUser catalogueUser
+
+    @Transient
+    String getCreatedBy() {
+        catalogueUser.emailAddress
+    }
 
     /**
      * The domainType of an object is the (simple name of the) concrete class that it instantiates.

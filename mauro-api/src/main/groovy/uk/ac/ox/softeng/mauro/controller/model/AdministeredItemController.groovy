@@ -9,6 +9,7 @@ import io.micronaut.http.exceptions.HttpStatusException
 import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
+import uk.ac.ox.softeng.mauro.domain.security.Role
 import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemContentRepository
 import uk.ac.ox.softeng.mauro.persistence.model.PathRepository
@@ -46,6 +47,10 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
 
     I show(UUID id) {
         I item = administeredItemRepository.findById(id)
+        if (!item) return null
+
+        accessControlService.checkRole(Role.READER, item)
+
         updateDerivedProperties(item)
         item
     }
@@ -55,6 +60,9 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
         cleanBody(item)
 
         P parent = parentItemRepository.readById(parentId)
+
+        accessControlService.checkRole(Role.EDITOR, parent)
+
         createEntity(parent, item)
     }
 
@@ -70,6 +78,9 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
     I update(UUID id, @Body @NonNull I item) {
         cleanBody(item)
         I existing = administeredItemRepository.readById(id)
+
+        accessControlService.checkRole(Role.EDITOR, item)
+
         updateEntity(existing, item)
     }
 
@@ -88,6 +99,9 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
     @Transactional
     HttpStatus delete(UUID id, @Body @Nullable I item) {
         I itemToDelete = (I) administeredItemContentRepository.readWithContentById(id)
+
+        accessControlService.checkRole(Role.EDITOR, item)
+
         if (item?.version) itemToDelete.version = item.version
         Long deleted = administeredItemContentRepository.deleteWithContent(itemToDelete)
         if (deleted) {

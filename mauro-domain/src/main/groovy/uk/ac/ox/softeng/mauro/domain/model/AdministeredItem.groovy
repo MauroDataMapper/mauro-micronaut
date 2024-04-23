@@ -1,11 +1,5 @@
 package uk.ac.ox.softeng.mauro.domain.model
 
-import uk.ac.ox.softeng.mauro.domain.facet.Annotation
-import uk.ac.ox.softeng.mauro.domain.facet.Metadata
-import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
-import uk.ac.ox.softeng.mauro.domain.security.SecurableResource
-import uk.ac.ox.softeng.mauro.exception.MauroInternalException
-
 import com.fasterxml.jackson.annotation.JsonIgnore
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
@@ -14,8 +8,14 @@ import io.micronaut.data.annotation.Relation
 import jakarta.persistence.Transient
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Pattern
+import uk.ac.ox.softeng.mauro.domain.facet.Annotation
+import uk.ac.ox.softeng.mauro.domain.facet.Metadata
+import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
+import uk.ac.ox.softeng.mauro.domain.security.CatalogueUser
+import uk.ac.ox.softeng.mauro.exception.MauroInternalException
 
 import java.time.Instant
+
 /**
  * An AdministeredItem is an item stored in the catalogue.
  * <p>
@@ -114,7 +114,7 @@ abstract class AdministeredItem extends Item {
      */
     @Transient
     @JsonIgnore
-    SecurableResource getOwner() {
+    Model getOwner() {
         parent.owner
     }
 
@@ -268,12 +268,12 @@ abstract class AdministeredItem extends Item {
     }
 
     /**
-     * DSL helper method for setting the createdBy field.  Returns the createdBy string passed in.
+     * DSL helper method for setting the createdBy field.  Returns the createdBy user passed in.
      *
-     * @see #createdBy
+     * @see #catalogueUser
      */
-    String createdBy(String createdBy) {
-        this.createdBy = createdBy
-        this.createdBy
+    CatalogueUser createdBy(CatalogueUser createdBy) {
+        this.catalogueUser = createdBy
+        this.catalogueUser
     }
 }

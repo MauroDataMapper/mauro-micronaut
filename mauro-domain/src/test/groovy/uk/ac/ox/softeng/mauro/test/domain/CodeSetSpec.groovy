@@ -24,7 +24,7 @@ class CodeSetSpec extends Specification {
         when:
         def codeSet = new CodeSet()
         codeSet.label = iteration.label
-        codeSet.createdBy = iteration.createdBy
+        codeSet.catalogueUser = iteration.createdBy
         codeSet.folder = iteration.folder
         codeSet.authority = iteration.authority
         codeSet.documentationVersion = iteration.documentationVersion
@@ -35,7 +35,7 @@ class CodeSetSpec extends Specification {
         then:
         codeSet != null
         codeSet.label == iteration.label
-        codeSet.createdBy == iteration.createdBy
+        codeSet.catalogueUser == iteration.createdBy
         codeSet.folder == iteration.folder
         codeSet.authority == iteration.authority
         codeSet.documentationVersion == iteration.documentationVersion

@@ -8,10 +8,13 @@ import io.micronaut.security.authentication.AuthorizationException
 import io.micronaut.security.utils.SecurityService
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
+import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.model.Model
+import uk.ac.ox.softeng.mauro.domain.security.CatalogueUser
 import uk.ac.ox.softeng.mauro.domain.security.Role
 import uk.ac.ox.softeng.mauro.domain.security.SecurableResourceGroupRole
 import uk.ac.ox.softeng.mauro.domain.security.UserGroup
+import uk.ac.ox.softeng.mauro.persistence.cache.ItemCacheableRepository.CatalogueUserCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.model.PathRepository
 import uk.ac.ox.softeng.mauro.persistence.security.SecurableResourceGroupRoleRepository
 import uk.ac.ox.softeng.mauro.persistence.security.UserGroupRepository
@@ -33,13 +36,19 @@ class AccessControlService {
     @Inject
     UserGroupRepository userGroupRepository
 
+    @Inject
+    CatalogueUserCacheableRepository catalogueUserRepository
+
     /**
-     * For a given Role and a Model, check if the current authenticated user can do the role on the model, by checking
-     * permissions on the model or inherited from any of its parents.
+     * For a given Role and an AdministeredItem, check if the current authenticated user can do the role on the item,
+     * by checking permissions on the owner or inherited from any of its parents.
      * @return if authorised, throw AuthorizationException otherwise
      */
-    void checkRole(Role role, Model model) {
-        if (!canDoRole(role, model)) throw new AuthorizationException(userAuthentication)
+    void checkRole(@NonNull Role role, @NonNull AdministeredItem item) {
+        pathRepository.readParentItems(item)
+        Model owner = item.owner
+
+        if (!canDoRole(role, owner)) throw new AuthorizationException(userAuthentication)
     }
 
     /**
@@ -48,6 +57,8 @@ class AccessControlService {
      * @return true if authorised, false otherwise
      */
     boolean canDoRole(@NonNull Role role, @NonNull Model model) {
+        if (userAuthenticated && model.catalogueUser.id == getUserId()) return true
+
         if (role <= Role.READER) {
             if (model.readableByEveryone) return true
             if (model.readableByAuthenticatedUsers && userAuthenticated) return true
@@ -66,9 +77,7 @@ class AccessControlService {
      */
     private boolean canDoRoleWithGroups(Role role, List<UserGroup> userGroups, Model model) {
         List<SecurableResourceGroupRole> securableResourceGroupRoles = securableResourceGroupRoleRepository.readAllBySecurableResourceDomainTypeAndSecurableResourceId(model.domainType, model.id)
-        boolean canDoRole = securableResourceGroupRoles.find {SecurableResourceGroupRole securableResourceGroupRole ->
-            role <= securableResourceGroupRole.role &&
-                    securableResourceGroupRole.userGroup.id in userGroups.id
+        boolean canDoRole = securableResourceGroupRoles.find {SecurableResourceGroupRole securableResourceGroupRole -> role <= securableResourceGroupRole.role && securableResourceGroupRole.userGroup.id in userGroups.id
         }
         canDoRole
     }
@@ -83,5 +92,9 @@ class AccessControlService {
 
     UUID getUserId() {
         (UUID) userAuthentication.attributes.id
+    }
+
+    CatalogueUser getUser() {
+        catalogueUserRepository.findById(userId)
     }
 }
