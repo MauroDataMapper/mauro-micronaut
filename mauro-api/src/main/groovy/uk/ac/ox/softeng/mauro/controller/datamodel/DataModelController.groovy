@@ -62,12 +62,9 @@ class DataModelController extends ModelController<DataModel> {
     @Inject
     DataModelService dataModelService
 
-    @Inject
-    ObjectMapper objectMapper
 
-
-    DataModelController(DataModelCacheableRepository dataModelRepository, FolderCacheableRepository folderRepository, DataModelContentRepository dataModelContentRepository) {
-        super(DataModel, dataModelRepository, folderRepository, dataModelContentRepository)
+    DataModelController(DataModelCacheableRepository dataModelRepository, FolderCacheableRepository folderRepository, DataModelContentRepository dataModelContentRepository, ObjectMapper objectMapper ) {
+        super(DataModel, dataModelRepository, folderRepository, dataModelContentRepository, objectMapper)
         this.dataModelRepository = dataModelRepository
         this.dataModelContentRepository = dataModelContentRepository
     }
@@ -144,33 +141,7 @@ class DataModelController extends ModelController<DataModel> {
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Post('/dataModels/import/{namespace}/{name}{/version}')
     ListResponse<DataModel> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version) {
-
-        DataModelImporterPlugin mauroPlugin = MauroPluginService.getPlugin(DataModelImporterPlugin, namespace, name, version)
-
-        if(!mauroPlugin) {
-            throw new HttpStatusException(HttpStatus.BAD_REQUEST, "DataModel import plugin with namespace: ${namespace}, name: ${name} not found")
-        }
-
-        Map<String, Object> importMap = Flux.from(body).collectList().block().collectEntries { CompletedPart cp ->
-            if(cp instanceof CompletedFileUpload) {
-                return [cp.name, new FileParameter(cp.filename, cp.contentType.toString(), cp.bytes)]
-            } else {
-                return [cp.name, new String(cp.bytes, StandardCharsets.UTF_8)]
-            }
-
-        }
-
-        ImportParameters importParameters = objectMapper.convertValue(importMap, mauroPlugin.importParametersClass())
-
-        DataModel imported = mauroPlugin.importDomain(importParameters)
-
-        Folder folder = folderRepository.readById(importParameters.folderId)
-        imported.folder = folder
-        log.info '** about to saveWithContentBatched... **'
-        DataModel savedImported = modelContentRepository.saveWithContent(imported)
-        log.info '** finished saveWithContentBatched **'
-        ListResponse.from([show(savedImported.id)])
-
+        super.importModel(body, namespace, name, version)
     }
 
 }

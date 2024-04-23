@@ -1,4 +1,4 @@
-package uk.ac.ox.softeng.mauro.domain.test
+package uk.ac.ox.softeng.mauro.test.domain
 
 
 import spock.lang.Specification

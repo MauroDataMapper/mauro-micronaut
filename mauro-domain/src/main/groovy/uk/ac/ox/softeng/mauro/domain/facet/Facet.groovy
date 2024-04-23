@@ -21,6 +21,7 @@ abstract class Facet extends Item {
     UUID multiFacetAwareItemId
 
     @Transient
+    @JsonIgnore
     AdministeredItem multiFacetAwareItem
 
     @Transient

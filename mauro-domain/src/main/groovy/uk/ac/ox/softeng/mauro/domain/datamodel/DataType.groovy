@@ -77,6 +77,11 @@ class DataType extends ModelItem<DataModel> {
         dataTypeKind = DataTypeKind.fromString(domainType)
     }
 
+    void setDomainType(DataTypeKind domainType) {
+        super.setDomainType(domainType.stringValue)
+        dataTypeKind = domainType
+    }
+
     @Override
     @Transient
     @JsonIgnore
@@ -118,6 +123,11 @@ class DataType extends ModelItem<DataModel> {
 
     static DataType build(@DelegatesTo(value = DataType, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
         build [:], closure
+    }
+
+    String domainType(DataTypeKind dataTypeKind) {
+        setDomainType(dataTypeKind)
+        this.domainType
     }
 
     String units(String units) {

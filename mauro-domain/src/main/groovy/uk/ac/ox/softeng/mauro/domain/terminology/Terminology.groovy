@@ -57,7 +57,8 @@ class Terminology extends Model {
 
     @Transient
     @JsonIgnore
-    Terminology setAssociations() {
+    @Override
+    void setAssociations() {
         Map<UUID, Term> termsMap = terms.collectEntries {[it.id, it]}
         Map<UUID, TermRelationshipType> termRelationshipTypesMap = termRelationshipTypes.collectEntries {[it.id, it]}
 
