@@ -24,6 +24,13 @@ class DataTypeDTO extends DataType implements AdministeredItemDTO {
     @ColumnTransformer(read = '(select json_agg(metadata) from core.metadata where multi_facet_aware_item_id = data_type_.id)')
     List<Metadata> metadata = []
 
+
+    @Override
+    String getDomainType() {
+        this.dataTypeKind.stringValue
+    }
+
+
     @Nullable
     @TypeDef(type = io.micronaut.data.model.DataType.JSON)
     @MappedProperty
@@ -45,8 +52,5 @@ class DataTypeDTO extends DataType implements AdministeredItemDTO {
                                                       and parent_annotation_id is null )''')
     List<Annotation> annotations = []
 
-    @Override
-    String getDomainType(){
-        super.getDomainType()
-    }
+
 }

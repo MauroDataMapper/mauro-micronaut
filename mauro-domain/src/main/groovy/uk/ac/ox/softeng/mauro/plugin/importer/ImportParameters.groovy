@@ -3,6 +3,11 @@ package uk.ac.ox.softeng.mauro.plugin.importer
 import uk.ac.ox.softeng.mauro.plugin.importer.config.ImportGroupConfig
 import uk.ac.ox.softeng.mauro.plugin.importer.config.ImportParameterConfig
 
+import io.micronaut.http.multipart.CompletedFileUpload
+import io.micronaut.http.multipart.CompletedPart
+
+import java.nio.charset.StandardCharsets
+
 class ImportParameters {
 
     @ImportParameterConfig(

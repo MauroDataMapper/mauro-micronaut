@@ -44,6 +44,10 @@ class FileParameter {
         this.fileContents = Arrays.copyOf(fileContents, fileContents.size())
     }
 
+    //void setFileContents(ByteArrayInputStream fileContents) {
+    //    setFileContents(fileContents.readAllBytes())
+    //}
+
     InputStream getInputStream() {
         new ByteArrayInputStream(fileContents)
     }

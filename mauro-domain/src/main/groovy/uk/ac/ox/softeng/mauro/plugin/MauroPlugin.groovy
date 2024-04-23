@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.plugin
 
+import com.fasterxml.jackson.annotation.JsonIgnore
+
 trait MauroPlugin {
 
     String getNamespace() {
@@ -13,5 +15,12 @@ trait MauroPlugin {
     String version
 
     String displayName
+
+    @JsonIgnore
+    abstract PluginType getPluginType()
+
+    String getProviderType() {
+        pluginType.toString()
+    }
 
 }

@@ -25,4 +25,6 @@ class Authority extends Item implements SecurableResource {
     Boolean readableByEveryone = false
 
     Boolean readableByAuthenticatedUsers = false
+
+    String label
 }

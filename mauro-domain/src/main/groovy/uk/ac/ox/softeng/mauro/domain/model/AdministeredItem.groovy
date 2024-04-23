@@ -51,11 +51,22 @@ abstract class AdministeredItem extends Item {
     @Nullable
     String aliasesString
 
-    /**
-     * The domainType of an object is the (simple name of the) concrete class that it instantiates.
-     */
+
     @Transient
-    String domainType = this.class.simpleName
+    void setAliases(List<String> aliases) {
+        aliasesString = aliases?.join(";")
+    }
+
+    @Transient
+    List<String> getAliases() {
+        aliasesString?.split(";") as List
+    }
+
+    // TODO: Convert Classifiers into a proper domain
+    @Transient
+    List<Object> classifiers
+
+
 
     /**
      * The path of oan object allows it to be navigated to from either the containing model, or the folder path within

@@ -1,7 +1,5 @@
 package uk.ac.ox.softeng.mauro.plugin
 
-import uk.ac.ox.softeng.mauro.plugin.importer.ModelImporterPlugin
-
 class MauroPluginService {
 
     static ServiceLoader<MauroPlugin> mauroPlugins = ServiceLoader.load(MauroPlugin)
@@ -24,14 +22,32 @@ class MauroPluginService {
         }.sort {MauroPlugin plugin -> plugin.version}.first()
     }
 
+    static MauroPlugin getPlugin(String namespace, String name, String version) {
+        (MauroPlugin) mauroPlugins.find {
+            it.namespace == namespace && it.name == name && it.version == version
+        }
+    }
+
     static List<MauroPlugin> listPlugins() {
         mauroPlugins.asList()
     }
 
-    static List<MauroPlugin> listPlugins(Class<?> pluginType) {
+    static <P> List<P> listPlugins(Class<P> pluginType) {
         mauroPlugins.findAll {
             pluginType.isInstance(it)
         }
     }
+
+    static List<LinkedHashMap<String, String>> getModulesList() {
+        return (ModuleLayer.boot().modules().collect {
+            ["name"   : it.name,
+             "version": it.descriptor.version().get().toString()]
+        } +
+         listPlugins().collect {
+             ["name"   : it.name,
+              "version": it.version]
+         }).sort {it.name}
+    }
+
 
 }

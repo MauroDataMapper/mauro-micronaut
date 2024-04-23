@@ -104,7 +104,7 @@ class DataElement extends ModelItem<DataModel> {
         this.dataType = primitiveType
         this.dataModel.dataTypes.add(primitiveType)
         primitiveType.dataModel = this.dataModel
-        primitiveType.dataTypeKind = DataType.DataTypeKind.PRIMITIVE_TYPE
+        primitiveType.setDomainType(DataType.DataTypeKind.PRIMITIVE_TYPE)
         primitiveType
     }
 
@@ -113,7 +113,7 @@ class DataElement extends ModelItem<DataModel> {
         this.dataType = dt
         this.dataModel.dataTypes.add(dt)
         dt.dataModel = this.dataModel
-        dt.dataTypeKind = DataType.DataTypeKind.PRIMITIVE_TYPE
+        dt.setDomainType(DataType.DataTypeKind.PRIMITIVE_TYPE)
         dt
     }
 

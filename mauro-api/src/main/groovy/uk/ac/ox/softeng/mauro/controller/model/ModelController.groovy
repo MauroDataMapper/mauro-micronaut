@@ -1,5 +1,13 @@
 package uk.ac.ox.softeng.mauro.controller.model
 
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
+import uk.ac.ox.softeng.mauro.plugin.MauroPluginService
+import uk.ac.ox.softeng.mauro.plugin.importer.DataModelImporterPlugin
+import uk.ac.ox.softeng.mauro.plugin.importer.FileParameter
+import uk.ac.ox.softeng.mauro.plugin.importer.ImportParameters
+import uk.ac.ox.softeng.mauro.plugin.importer.ModelImporterPlugin
+
+import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
@@ -8,6 +16,9 @@ import io.micronaut.data.exceptions.EmptyResultException
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.exceptions.HttpStatusException
+import io.micronaut.http.multipart.CompletedFileUpload
+import io.micronaut.http.multipart.CompletedPart
+import io.micronaut.http.server.multipart.MultipartBody
 import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
@@ -22,6 +33,10 @@ import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.FolderC
 import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemRepository
 import uk.ac.ox.softeng.mauro.persistence.model.ModelContentRepository
 import uk.ac.ox.softeng.mauro.web.ListResponse
+
+import reactor.core.publisher.Flux
+
+import java.nio.charset.StandardCharsets
 
 @Slf4j
 @CompileStatic
@@ -50,13 +65,18 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
 
     ModelService<M> modelService
 
-    ModelController(Class<M> modelClass, AdministeredItemCacheableRepository<M> modelRepository, FolderCacheableRepository folderRepository, ModelContentRepository<M> modelContentRepository) {
+    @Inject // Doesn't inject?
+    ObjectMapper objectMapper
+
+
+    ModelController(Class<M> modelClass, AdministeredItemCacheableRepository<M> modelRepository, FolderCacheableRepository folderRepository, ModelContentRepository<M> modelContentRepository, ObjectMapper objectMapper) {
         super(modelClass, modelRepository, folderRepository, modelContentRepository)
         this.itemClass = modelClass
         this.administeredItemRepository = modelRepository
         this.parentItemRepository = folderRepository
         this.modelContentRepository = modelContentRepository
         this.administeredItemContentRepository = modelContentRepository
+        this.objectMapper = objectMapper
     }
 
     M show(UUID id) {
@@ -150,4 +170,44 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         administeredItemRepository.findById(uuid)
     }
 
+
+
+
+    <P extends ImportParameters> P readFromMultipartFormBody(MultipartBody body, Class<P> parametersClass) {
+        Map<String, Object> importMap = Flux.from(body).collectList().block().collectEntries {CompletedPart cp ->
+            if (cp instanceof CompletedFileUpload) {
+                return [cp.name, new FileParameter(cp.filename, cp.contentType.toString(), cp.bytes)]
+            } else {
+                return [cp.name, new String(cp.bytes, StandardCharsets.UTF_8)]
+            }
+
+        }
+
+
+        return objectMapper.convertValue(importMap, parametersClass)
+    }
+
+    ListResponse<M> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version) {
+
+        ModelImporterPlugin mauroPlugin = MauroPluginService.getPlugin(ModelImporterPlugin, namespace, name, version)
+
+        if(!mauroPlugin) {
+            throw new HttpStatusException(HttpStatus.BAD_REQUEST, "Model import plugin with namespace: ${namespace}, name: ${name} not found")
+        }
+
+        ImportParameters importParameters = readFromMultipartFormBody(body, mauroPlugin.importParametersClass())
+
+        List<M> imported = (List<M>) mauroPlugin.importModels(importParameters)
+
+        Folder folder = folderRepository.readById(importParameters.folderId)
+        List<M> saved = imported.collect { M imp ->
+            imp.folder = folder
+            log.info '** about to saveWithContentBatched... **'
+            M savedImported = modelContentRepository.saveWithContent(imp)
+            log.info '** finished saveWithContentBatched **'
+            savedImported
+        }
+
+        ListResponse.from(saved)
+    }
 }

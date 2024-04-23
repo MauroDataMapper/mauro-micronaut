@@ -1,1 +1,2 @@
-uk.ac.ox.softeng.mauro.plugin.importer.JsonDataModelImporterPlugin
+uk.ac.ox.softeng.mauro.plugin.importer.json.JsonDataModelImporterPlugin
+uk.ac.ox.softeng.mauro.plugin.importer.json.JsonTerminologyImporterPlugin
