@@ -60,7 +60,7 @@ abstract class Item implements Serializable {
 
     @Transient
     String getCreatedBy() {
-        catalogueUser.emailAddress
+        catalogueUser?.emailAddress
     }
 
     /**

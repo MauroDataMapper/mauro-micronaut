@@ -12,6 +12,7 @@ import io.micronaut.data.repository.GenericRepository
 abstract class TerminologyDTORepository implements GenericRepository<TerminologyDTO, UUID> {
 
     @Join(value = 'authority', type = Join.Type.LEFT_FETCH)
+    @Join(value = 'catalogueUser', type = Join.Type.LEFT_FETCH)
     @Nullable
     abstract TerminologyDTO findById(UUID id)
 }
