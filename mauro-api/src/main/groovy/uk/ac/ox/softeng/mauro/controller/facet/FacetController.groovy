@@ -117,7 +117,7 @@ abstract class FacetController<I extends Facet> extends ItemController<I> {
         AdministeredItemCacheableRepository administeredItemRepository = getAdministeredItemRepository(domainType)
         I facet = facetRepository.findById(id)
         if (facet) {
-            if (facet.multiFacetAwareItemId != domainId || !administeredItemRepository.handles(domainType)){
+            if (facet.multiFacetAwareItemId != domainId || !administeredItemRepository.handles(domainType)) {
                 throw new HttpStatusException(HttpStatus.NOT_FOUND, "DomainType or Domain Id not found for $id")
             }
         }

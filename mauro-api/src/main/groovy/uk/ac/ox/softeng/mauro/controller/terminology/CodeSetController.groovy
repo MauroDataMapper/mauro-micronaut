@@ -126,7 +126,6 @@ class CodeSetController extends ModelController<CodeSet> {
         ListResponse.from(associatedTerms)
     }
 
-
     @Transactional
     @Put(value = Paths.FINALISE_CODE_SETS)
     CodeSet finalise(UUID id, @Body FinaliseData finaliseData) {

@@ -111,8 +111,11 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
         }
     }
 
+    // TODO why separate method
     @Transactional
     HttpStatus delete(@Body @Nullable I item, I current) {
+        accessControlService.checkRole(Role.EDITOR, item)
+
         if (current?.version) item.version = current.version
         Long deleted = administeredItemContentRepository.deleteWithContent(item)
         if (deleted) {

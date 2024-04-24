@@ -10,6 +10,7 @@ import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.domain.facet.Annotation
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
+import uk.ac.ox.softeng.mauro.domain.security.Role
 import uk.ac.ox.softeng.mauro.persistence.cache.FacetCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.facet.AnnotationRepository
 import uk.ac.ox.softeng.mauro.web.ListResponse
@@ -19,7 +20,7 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 class AnnotationController extends FacetController<Annotation> {
 
     @Inject
-    AnnotationRepository annotationRepository
+    AnnotationRepository annotationRepositoryUncached
     /**
      * Properties disallowed in a simple update request.
      */
@@ -27,11 +28,11 @@ class AnnotationController extends FacetController<Annotation> {
         super.getDisallowedProperties() + ['multiFacetAwareItemDomainType', 'multiFacetAwareItemId']
     }
 
-    FacetCacheableRepository.AnnotationCacheableRepository annotationCacheableRepository
+    FacetCacheableRepository.AnnotationCacheableRepository annotationRepository
 
-    AnnotationController(FacetCacheableRepository.AnnotationCacheableRepository annotationCacheableRepository) {
-        super(annotationCacheableRepository)
-        this.annotationCacheableRepository = annotationCacheableRepository
+    AnnotationController(FacetCacheableRepository.AnnotationCacheableRepository annotationRepository) {
+        super(annotationRepository)
+        this.annotationRepository = annotationRepository
     }
 
     /**
@@ -43,11 +44,13 @@ class AnnotationController extends FacetController<Annotation> {
     @Get('/{domainType}/{domainId}/annotations')
     ListResponse<Annotation> list(@NonNull String domainType, @NonNull UUID domainId) {
         AdministeredItem administeredItem = findAdministeredItem(domainType, domainId)
+        accessControlService.checkRole(Role.READER, administeredItem)
         ListResponse.from(administeredItem.annotations)
     }
 
     @Get('/{domainType}/{domainId}/annotations/{id}')
     Annotation show(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID id) {
+        accessControlService.checkRole(Role.READER, readAdministeredItem(domainType, domainId))
         Annotation validAnnotation = super.validateAndGet(domainType, domainId, id) as Annotation
         Annotation nested = showNestedItem(id, validAnnotation)
         nested
@@ -68,6 +71,7 @@ class AnnotationController extends FacetController<Annotation> {
      */
     @Post('/{domainType}/{domainId}/annotations/{annotationId}/annotations')
     Annotation create(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID annotationId, @Body @NonNull Annotation childAnnotation) {
+        accessControlService.checkRole(Role.EDITOR, readAdministeredItem(domainType, domainId))
         super.cleanBody(childAnnotation)
         Annotation parent = super.validateAndGet(domainType, domainId, annotationId) as Annotation
         if (!parent || parent.parentAnnotationId ) throw new HttpStatusException(HttpStatus.BAD_REQUEST, "Parent Annotation not found or has parent $annotationId")
@@ -75,7 +79,7 @@ class AnnotationController extends FacetController<Annotation> {
         childAnnotation.multiFacetAwareItemId = parent.multiFacetAwareItemId
         childAnnotation.multiFacetAwareItemDomainType = parent.multiFacetAwareItemDomainType
         childAnnotation.updateCreationProperties()
-        Annotation saved = annotationCacheableRepository.save(childAnnotation)
+        Annotation saved = annotationRepository.save(childAnnotation)
         saved
     }
 
@@ -95,10 +99,11 @@ class AnnotationController extends FacetController<Annotation> {
     @Transactional
     HttpStatus delete(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID id,
                       @Body @Nullable Annotation annotation) {
+        accessControlService.checkRole(Role.EDITOR, readAdministeredItem(domainType, domainId))
         Annotation annotationToDelete = super.validateAndGet(domainType, domainId, id) as Annotation
         if (!annotationToDelete.parentAnnotationId) {
-            Set<Annotation> annotationSet = annotationRepository.findAllChildrenById(id)
-            annotationCacheableRepository.deleteAll(annotationSet)
+            Set<Annotation> annotationSet = annotationRepositoryUncached.findAllChildrenById(id)
+            annotationRepository.deleteAll(annotationSet)
         }
         super.delete(id, annotation)
     }
@@ -107,6 +112,7 @@ class AnnotationController extends FacetController<Annotation> {
     @Transactional
     HttpStatus delete(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID id,
                       @NonNull UUID childId, @Body @Nullable Annotation annotation) {
+        accessControlService.checkRole(Role.EDITOR, readAdministeredItem(domainType, domainId))
         super.validateAndGet(domainType, domainId, id) as Annotation
         Annotation child = super.validateAndGet(domainType, domainId, childId) as Annotation
         if (!child.parentAnnotationId) {
