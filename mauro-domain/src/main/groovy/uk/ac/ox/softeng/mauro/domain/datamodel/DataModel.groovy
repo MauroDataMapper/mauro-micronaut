@@ -26,11 +26,6 @@ import uk.ac.ox.softeng.mauro.domain.terminology.TermRelationshipType
 @MapConstructor(includeSuperFields = true, includeSuperProperties = true, noArg = true)
 class DataModel extends Model {
 
-    void setModelType(String modelType) {
-        modelType = DataModelType.values().find {it.label.toLowerCase() == modelType.toLowerCase()}?.label
-    }
-
-
     @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'dataModel')
     List<DataType> dataTypes = []
 
@@ -57,6 +52,11 @@ class DataModel extends Model {
     String getPathPrefix() {
         'dm'
     }
+
+    void setModelType(String modelType) {
+        modelType = DataModelType.values().find {it.label.toLowerCase() == modelType.toLowerCase()}?.label
+    }
+
 
     @Override
     @Transient

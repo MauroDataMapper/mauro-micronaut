@@ -54,6 +54,9 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     @Inject
     List<AdministeredItemCacheableRepository> administeredItemRepositories
 
+    @Inject
+    MauroPluginService mauroPluginService
+
 //    @Inject
 //    AccessControlService accessControlService
 
@@ -183,7 +186,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
 
     ListResponse<M> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version) {
 
-        ModelImporterPlugin mauroPlugin = MauroPluginService.getPlugin(ModelImporterPlugin, namespace, name, version)
+        ModelImporterPlugin mauroPlugin = mauroPluginService.getPlugin(ModelImporterPlugin, namespace, name, version)
 
         if(!mauroPlugin) {
             throw new HttpStatusException(HttpStatus.BAD_REQUEST, "Model import plugin with namespace: ${namespace}, name: ${name} not found")

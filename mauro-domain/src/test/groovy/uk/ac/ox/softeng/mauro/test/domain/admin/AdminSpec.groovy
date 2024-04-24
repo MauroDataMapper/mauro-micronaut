@@ -4,17 +4,22 @@ import uk.ac.ox.softeng.mauro.plugin.MauroPlugin
 import uk.ac.ox.softeng.mauro.plugin.MauroPluginService
 import uk.ac.ox.softeng.mauro.plugin.importer.ModelImporterPlugin
 
+import io.micronaut.test.extensions.spock.annotation.MicronautTest
+import jakarta.inject.Inject
 import spock.lang.Specification
 
 /**
- * Tests for CodeSet domain object
+ * Tests for Administration services
  */
+@MicronautTest
 class AdminSpec extends Specification {
 
+    @Inject
+    MauroPluginService mauroPluginService
 
     def "test the module list"() {
         when:
-            List modulesList = MauroPluginService.getModulesList()
+            List modulesList = mauroPluginService.getModulesList()
             String javaVersion = System.getProperty("java.version")
         then:
             modulesList.size() > 0
@@ -24,7 +29,7 @@ class AdminSpec extends Specification {
 
     def "test listing all plugins"() {
         when:
-            List pluginsList = MauroPluginService.listPlugins()
+            List pluginsList = mauroPluginService.listPlugins()
 
         then:
             pluginsList.size() == 2
@@ -40,14 +45,14 @@ class AdminSpec extends Specification {
             }
 
         when:
-            List importersList = MauroPluginService.listPlugins(ModelImporterPlugin)
+            List importersList = mauroPluginService.listPlugins(ModelImporterPlugin)
         then:
             importersList == pluginsList
     }
 
     def "test find plugin by name"() {
         when:
-        MauroPlugin plugin = MauroPluginService.getPlugin("uk.ac.ox.softeng.mauro.plugin.importer.json","JsonDataModelImporterPlugin")
+        MauroPlugin plugin = mauroPluginService.getPlugin("uk.ac.ox.softeng.mauro.plugin.importer.json","JsonDataModelImporterPlugin")
 
         then:
         plugin.displayName == "JSON DataModel Importer"
@@ -55,14 +60,14 @@ class AdminSpec extends Specification {
 
 
         when:
-            plugin = MauroPluginService.getPlugin("uk.ac.ox.softeng.mauro.plugin.importer.json","JsonDataModelImporterPlugin", "4.0.0")
+            plugin = mauroPluginService.getPlugin("uk.ac.ox.softeng.mauro.plugin.importer.json","JsonDataModelImporterPlugin", "4.0.0")
 
         then:
             plugin.displayName == "JSON DataModel Importer"
             plugin.version == "4.0.0"
 
         when:
-            plugin = MauroPluginService.getPlugin("uk.ac.ox.softeng.mauro.plugin.importer.json","JsonDataModelImporterPlugin", "3.0.0")
+            plugin = mauroPluginService.getPlugin("uk.ac.ox.softeng.mauro.plugin.importer.json","JsonDataModelImporterPlugin", "3.0.0")
 
         then:
             !plugin
