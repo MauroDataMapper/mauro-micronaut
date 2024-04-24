@@ -10,8 +10,11 @@ import uk.ac.ox.softeng.mauro.plugin.importer.FileParameter
 import uk.ac.ox.softeng.mauro.test.domain.datamodel.DataModelSpec
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import io.micronaut.test.extensions.spock.annotation.MicronautTest
+import jakarta.inject.Inject
 import spock.lang.Specification
 
+@MicronautTest
 class JsonDataModelImporterPluginSpec extends Specification  {
 
     static String NAMESPACE = "uk.ac.ox.softeng.mauro.plugin.importer.json"
@@ -19,6 +22,10 @@ class JsonDataModelImporterPluginSpec extends Specification  {
     static String VERSION = "4.0.0"
 
     ObjectMapper objectMapper = new ObjectMapper()
+
+    @Inject
+    MauroPluginService mauroPluginService
+
 
     def "test JSON data model import"() {
 
@@ -34,7 +41,7 @@ class JsonDataModelImporterPluginSpec extends Specification  {
             }
         }
 
-        DataModelImporterPlugin jsonImportPlugin = MauroPluginService.getPlugin(DataModelImporterPlugin, NAMESPACE, NAME, VERSION)
+        DataModelImporterPlugin jsonImportPlugin = mauroPluginService.getPlugin(DataModelImporterPlugin, NAMESPACE, NAME, VERSION)
         FileImportParameters fileImportParameters = new FileImportParameters()
         FileParameter fileParameter = new FileParameter()
         fileParameter.fileName = "import.json"

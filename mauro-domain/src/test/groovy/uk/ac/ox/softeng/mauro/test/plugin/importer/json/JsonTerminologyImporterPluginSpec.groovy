@@ -1,19 +1,19 @@
 package uk.ac.ox.softeng.mauro.test.plugin.importer.json
 
-import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
 import uk.ac.ox.softeng.mauro.export.ExportModel
 import uk.ac.ox.softeng.mauro.plugin.MauroPluginService
-import uk.ac.ox.softeng.mauro.plugin.importer.DataModelImporterPlugin
 import uk.ac.ox.softeng.mauro.plugin.importer.FileImportParameters
 import uk.ac.ox.softeng.mauro.plugin.importer.FileParameter
 import uk.ac.ox.softeng.mauro.plugin.importer.TerminologyImporterPlugin
-import uk.ac.ox.softeng.mauro.test.domain.datamodel.DataModelSpec
 import uk.ac.ox.softeng.mauro.test.domain.terminology.TerminologySpec
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import io.micronaut.test.extensions.spock.annotation.MicronautTest
+import jakarta.inject.Inject
 import spock.lang.Specification
 
+@MicronautTest
 class JsonTerminologyImporterPluginSpec extends Specification  {
 
     static String NAMESPACE = "uk.ac.ox.softeng.mauro.plugin.importer.json"
@@ -21,6 +21,9 @@ class JsonTerminologyImporterPluginSpec extends Specification  {
     static String VERSION = "4.0.0"
 
     ObjectMapper objectMapper = new ObjectMapper()
+
+    @Inject
+    MauroPluginService mauroPluginService
 
     def "test JSON terminology import"() {
 
@@ -36,7 +39,7 @@ class JsonTerminologyImporterPluginSpec extends Specification  {
             }
         }
 
-        TerminologyImporterPlugin jsonImportPlugin = MauroPluginService.getPlugin(TerminologyImporterPlugin, NAMESPACE, NAME, VERSION)
+        TerminologyImporterPlugin jsonImportPlugin = mauroPluginService.getPlugin(TerminologyImporterPlugin, NAMESPACE, NAME, VERSION)
         FileImportParameters fileImportParameters = new FileImportParameters()
         FileParameter fileParameter = new FileParameter()
         fileParameter.fileName = "import.json"

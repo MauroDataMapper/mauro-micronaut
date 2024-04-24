@@ -1,44 +1,49 @@
 package uk.ac.ox.softeng.mauro.plugin
 
+import io.micronaut.context.annotation.Bean
+import jakarta.inject.Inject
+
+@Bean
 class MauroPluginService {
 
-    static ServiceLoader<MauroPlugin> mauroPlugins = ServiceLoader.load(MauroPlugin)
+    @Inject
+    List<MauroPlugin> mauroPlugins
 
-    static <P extends MauroPlugin> P getPlugin(Class<P> cls, String namespace, String name, String version) {
+    <P extends MauroPlugin> P getPlugin(Class<P> cls, String namespace, String name, String version) {
         (P) mauroPlugins.find {
             cls.isInstance(it) && it.namespace == namespace && it.name == name && it.version == version
         }
     }
 
-    static <P extends MauroPlugin> P getPlugin(Class<P> cls, String namespace, String name) {
+    <P extends MauroPlugin> P getPlugin(Class<P> cls, String namespace, String name) {
         (P) mauroPlugins.findAll {
             cls.isInstance(it) && it.namespace == namespace && it.name == name
         }.sort {P plugin -> plugin.version}.first()
     }
 
-    static MauroPlugin getPlugin(String namespace, String name) {
+    MauroPlugin getPlugin(String namespace, String name) {
         (MauroPlugin) mauroPlugins.findAll {
             it.namespace == namespace && it.name == name
         }.sort {MauroPlugin plugin -> plugin.version}.first()
     }
 
-    static MauroPlugin getPlugin(String namespace, String name, String version) {
+    MauroPlugin getPlugin(String namespace, String name, String version) {
         (MauroPlugin) mauroPlugins.find {
             it.namespace == namespace && it.name == name && it.version == version
         }
     }
 
-    static List<MauroPlugin> listPlugins() {
+    List<MauroPlugin> listPlugins() {
         mauroPlugins.asList()
     }
 
-    static <P> List<P> listPlugins(Class<P> pluginType) {
+    <P> List<P> listPlugins(Class<P> pluginType) {
         mauroPlugins.findAll {
             pluginType.isInstance(it)
-        }
+        } as List<P>
     }
 
-    static List<LinkedHashMap<String, String>> getModulesList() {
+    List<LinkedHashMap<String, String>> getModulesList() {
         return (ModuleLayer.boot().modules().collect {
             ["name"   : it.name,
              "version": it.descriptor.version().get().toString()]
