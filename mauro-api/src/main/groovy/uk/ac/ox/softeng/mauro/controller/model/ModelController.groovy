@@ -100,7 +100,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     @Transactional
     M moveFolder(UUID id, String destination) {
         M existing = modelRepository.readById(id)
-        accessControlService.checkRole(Role.EDITOR, existing)
+        accessControlService.checkRole(Role.CONTAINER_ADMIN, existing)
         M original = (M) existing.clone()
         if (destination == 'root') {
             existing.folder = null

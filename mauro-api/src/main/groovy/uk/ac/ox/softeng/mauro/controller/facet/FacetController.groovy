@@ -11,6 +11,7 @@ import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.controller.model.ItemController
 import uk.ac.ox.softeng.mauro.domain.facet.Facet
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
+import uk.ac.ox.softeng.mauro.domain.security.Role
 import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.ItemCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.service.RepositoryService
@@ -30,7 +31,9 @@ abstract class FacetController<I extends Facet> extends ItemController<I> {
 
     @Get('/{id}')
     I show(UUID id) {
-        facetRepository.findById(id)
+        I facet = facetRepository.findById(id)
+        accessControlService.checkRole(Role.READER, readAdministeredItemForFacet(facet))
+        facet
     }
 
     @Post
@@ -38,6 +41,8 @@ abstract class FacetController<I extends Facet> extends ItemController<I> {
         cleanBody(facet)
 
         AdministeredItem administeredItem = readAdministeredItem(domainType, domainId)
+        accessControlService.checkRole(Role.EDITOR, administeredItem)
+
         createEntity(administeredItem, facet)
     }
 
@@ -55,6 +60,7 @@ abstract class FacetController<I extends Facet> extends ItemController<I> {
         cleanBody(facet)
 
         I existing = facetRepository.readById(id)
+        accessControlService.checkRole(Role.EDITOR, readAdministeredItemForFacet(existing))
 
         updateEntity(existing, facet)
     }
@@ -73,6 +79,7 @@ abstract class FacetController<I extends Facet> extends ItemController<I> {
     @Transactional
     HttpStatus delete(UUID id, @Body @Nullable I facet) {
         I facetToDelete = facetRepository.readById(id)
+        accessControlService.checkRole(Role.EDITOR, readAdministeredItemForFacet(facetToDelete))
         if (facet?.version) facetToDelete.version = facet.version
         Long deleted = facetRepository.delete(facetToDelete)
         if (deleted) {
@@ -80,6 +87,10 @@ abstract class FacetController<I extends Facet> extends ItemController<I> {
         } else {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, 'Not found for deletion')
         }
+    }
+
+    protected AdministeredItem readAdministeredItemForFacet(I facet) {
+        readAdministeredItem(facet.multiFacetAwareItemDomainType, facet.multiFacetAwareItemId)
     }
 
     protected AdministeredItem readAdministeredItem(String domainType, UUID domainId) {

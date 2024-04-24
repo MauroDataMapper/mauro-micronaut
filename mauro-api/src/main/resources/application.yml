@@ -1,3 +1,7 @@
+mauro:
+  security:
+    enabled: true
+
 micronaut:
   application:
     name: sandbox

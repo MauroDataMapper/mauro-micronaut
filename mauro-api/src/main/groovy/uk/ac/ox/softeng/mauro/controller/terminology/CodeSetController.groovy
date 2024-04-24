@@ -12,6 +12,7 @@ import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.controller.model.ModelController
 import uk.ac.ox.softeng.mauro.domain.model.version.CreateNewVersionData
 import uk.ac.ox.softeng.mauro.domain.model.version.FinaliseData
+import uk.ac.ox.softeng.mauro.domain.security.Role
 import uk.ac.ox.softeng.mauro.domain.terminology.CodeSet
 import uk.ac.ox.softeng.mauro.domain.terminology.CodeSetService
 import uk.ac.ox.softeng.mauro.domain.terminology.Term
@@ -70,10 +71,12 @@ class CodeSetController extends ModelController<CodeSet> {
         if (!term) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, 'Term item not found')
         }
+        accessControlService.checkRole(Role.READER, term)
         CodeSet codeSet = codeSetRepository.readById(id)
         if (!codeSet) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, 'CodeSet item not found')
         }
+        accessControlService.checkRole(Role.EDITOR, codeSet)
         codeSetRepositoryUnCached.addTerm(id, termId)
         codeSet
     }
@@ -96,6 +99,7 @@ class CodeSetController extends ModelController<CodeSet> {
         if (!codeSet) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, 'CodeSet item not found')
         }
+        accessControlService.checkRole(Role.EDITOR, codeSet)
         codeSetRepositoryUnCached.removeTerm(id, termId)
         codeSet
     }
@@ -117,6 +121,7 @@ class CodeSetController extends ModelController<CodeSet> {
         if (!codeSet) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, 'CodeSet item not found')
         }
+        accessControlService.checkRole(Role.READER, codeSet)
         List<Term> associatedTerms = codeSetContentRepository.codeSetRepository.getTerms(id) as List<Term>
         ListResponse.from(associatedTerms)
     }

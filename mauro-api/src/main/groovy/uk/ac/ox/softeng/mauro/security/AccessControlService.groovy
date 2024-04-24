@@ -2,8 +2,11 @@ package uk.ac.ox.softeng.mauro.security
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
+import io.micronaut.context.annotation.Property
 import io.micronaut.core.annotation.NonNull
+import io.micronaut.core.util.Toggleable
 import io.micronaut.security.authentication.Authentication
+import io.micronaut.security.authentication.AuthenticationException
 import io.micronaut.security.authentication.AuthorizationException
 import io.micronaut.security.utils.SecurityService
 import jakarta.inject.Inject
@@ -22,7 +25,7 @@ import uk.ac.ox.softeng.mauro.persistence.security.UserGroupRepository
 @CompileStatic
 @Singleton
 @Slf4j
-class AccessControlService {
+class AccessControlService implements Toggleable {
 
     @Inject
     SecurityService securityService
@@ -39,12 +42,17 @@ class AccessControlService {
     @Inject
     CatalogueUserCacheableRepository catalogueUserRepository
 
+    @Property(name = 'mauro.security.enabled', defaultValue = 'true')
+    private boolean enabled
+
     /**
      * For a given Role and an AdministeredItem, check if the current authenticated user can do the role on the item,
      * by checking permissions on the owner or inherited from any of its parents.
      * @return if authorised, throw AuthorizationException otherwise
      */
     void checkRole(@NonNull Role role, @NonNull AdministeredItem item) {
+        if (!enabled) return
+
         pathRepository.readParentItems(item)
         Model owner = item.owner
 
@@ -57,6 +65,7 @@ class AccessControlService {
      * @return true if authorised, false otherwise
      */
     boolean canDoRole(@NonNull Role role, @NonNull Model model) {
+        if (!enabled) return true
         if (userAuthenticated && model.catalogueUser.id == getUserId()) return true
 
         if (role <= Role.READER) {
@@ -87,6 +96,9 @@ class AccessControlService {
     }
 
     Authentication getUserAuthentication() {
+        if (!securityService.authenticated) {
+            throw new AuthenticationException('User is not authenticated')
+        }
         securityService.authentication.get()
     }
 
@@ -96,5 +108,9 @@ class AccessControlService {
 
     CatalogueUser getUser() {
         catalogueUserRepository.findById(userId)
+    }
+
+    boolean isEnabled() {
+        enabled
     }
 }

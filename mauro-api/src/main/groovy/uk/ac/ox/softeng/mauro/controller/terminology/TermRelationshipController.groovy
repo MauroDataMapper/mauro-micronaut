@@ -7,6 +7,7 @@ import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.*
 import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.controller.model.AdministeredItemController
+import uk.ac.ox.softeng.mauro.domain.security.Role
 import uk.ac.ox.softeng.mauro.domain.terminology.TermRelationship
 import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
 import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository.TermCacheableRepository
@@ -47,6 +48,8 @@ class TermRelationshipController extends AdministeredItemController<TermRelation
         cleanBody(termRelationship)
 
         Terminology terminology = terminologyRepository.readById(terminologyId)
+        accessControlService.checkRole(Role.EDITOR, terminology)
+
         termRelationship.sourceTerm = termRepository.readById(termRelationship.sourceTerm.id)
         termRelationship.targetTerm = termRepository.readById(termRelationship.targetTerm.id)
         termRelationship.relationshipType = termRelationshipTypeRepository.readById(termRelationship.relationshipType.id)
@@ -59,6 +62,7 @@ class TermRelationshipController extends AdministeredItemController<TermRelation
         cleanBody(termRelationship)
 
         TermRelationship existing = termRelationshipRepository.readById(id)
+        accessControlService.checkRole(Role.EDITOR, existing)
         updateProperties(existing, termRelationship)
 
         termRelationship.terminology = terminologyRepository.readById(terminologyId)
