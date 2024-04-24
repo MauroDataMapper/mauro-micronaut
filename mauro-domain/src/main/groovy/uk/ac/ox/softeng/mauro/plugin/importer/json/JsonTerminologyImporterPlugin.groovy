@@ -7,10 +7,10 @@ import uk.ac.ox.softeng.mauro.plugin.importer.TerminologyImporterPlugin
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.util.logging.Slf4j
-import io.micronaut.context.annotation.Bean
+import jakarta.inject.Singleton
 
 @Slf4j
-@Bean
+@Singleton
 class JsonTerminologyImporterPlugin implements TerminologyImporterPlugin<FileImportParameters> {
 
     String version = '4.0.0'

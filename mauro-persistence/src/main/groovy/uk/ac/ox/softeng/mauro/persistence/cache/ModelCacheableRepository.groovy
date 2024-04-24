@@ -4,7 +4,6 @@ import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.cache.annotation.CacheConfig
 import jakarta.inject.Singleton
-import io.micronaut.context.annotation.Bean
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.domain.model.Model
@@ -57,7 +56,7 @@ class ModelCacheableRepository<M extends Model> extends AdministeredItemCacheabl
         }
     }
 
-    @Bean
+    @Singleton
     @CompileStatic
     static class CodeSetCacheableRepository extends ModelCacheableRepository<CodeSet> {
         CodeSetCacheableRepository(CodeSetRepository codeSetRepository) {
