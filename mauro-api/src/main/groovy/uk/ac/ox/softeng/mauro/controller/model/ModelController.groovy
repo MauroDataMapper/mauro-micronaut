@@ -207,7 +207,9 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
             log.info '** finished saveWithContentBatched **'
             savedImported
         }
-
-        ListResponse.from(saved)
+        List<M> smallerResponse = saved.collect { model ->
+            show(model.id)
+        }
+        ListResponse.from(smallerResponse)
     }
 }
