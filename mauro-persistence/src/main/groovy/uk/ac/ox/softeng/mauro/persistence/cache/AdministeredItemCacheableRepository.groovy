@@ -5,7 +5,6 @@ import groovy.util.logging.Slf4j
 import io.micronaut.cache.annotation.CacheConfig
 import io.micronaut.cache.annotation.CacheInvalidate
 import io.micronaut.cache.annotation.Cacheable
-import io.micronaut.context.annotation.Bean
 import io.micronaut.core.annotation.Nullable
 import jakarta.inject.Singleton
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
@@ -129,7 +128,7 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
         }
     }
 
-    @Bean
+    @Singleton
     @CompileStatic
     static class DataClassCacheableRepository extends AdministeredItemCacheableRepository<DataClass> {
         DataClassCacheableRepository(DataClassRepository dataClassRepository) {
@@ -146,7 +145,7 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
         }
     }
 
-    @Bean
+    @Singleton
     @CompileStatic
     static class DataElementCacheableRepository extends AdministeredItemCacheableRepository<DataElement> {
         DataElementCacheableRepository(DataElementRepository dataElementRepository) {
@@ -154,7 +153,7 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
         }
     }
 
-    @Bean
+    @Singleton
     @CompileStatic
     static class DataTypeCacheableRepository extends AdministeredItemCacheableRepository<DataType> {
         DataTypeCacheableRepository(DataTypeRepository dataTypeRepository) {
@@ -162,7 +161,7 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
         }
     }
 
-    @Bean
+    @Singleton
     @CompileStatic
     static class EnumerationValueCacheableRepository extends AdministeredItemCacheableRepository<EnumerationValue> {
         EnumerationValueCacheableRepository(EnumerationValueRepository enumerationValueRepository) {

@@ -1,9 +1,9 @@
 package uk.ac.ox.softeng.mauro.plugin
 
-import io.micronaut.context.annotation.Bean
 import jakarta.inject.Inject
+import jakarta.inject.Singleton
 
-@Bean
+@Singleton
 class MauroPluginService {
 
     @Inject

@@ -8,10 +8,10 @@ import groovy.util.logging.Slf4j
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.export.ExportModel
 
-import io.micronaut.context.annotation.Bean
+import jakarta.inject.Singleton
 
 @Slf4j
-@Bean
+@Singleton
 class JsonDataModelImporterPlugin implements DataModelImporterPlugin<FileImportParameters> {
 
     String version = '4.0.0'
