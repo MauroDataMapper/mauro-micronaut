@@ -57,7 +57,7 @@ class DataType extends ModelItem<DataModel> {
     }
 
     // Remove the transient annotation here
-    String domainType = getDomainType()
+    String domainType
 
     @JsonIgnore
     DataModel dataModel

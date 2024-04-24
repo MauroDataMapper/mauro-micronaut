@@ -116,7 +116,7 @@ class DataModelJsonImportExportIntegrationSpec extends CommonDataSpec {
                 .addPart('importFile', 'file.json', MediaType.APPLICATION_JSON_TYPE, exportJson.bytes)
                 .build()
         when:
-        ListResponse<DataModel> response = (ListResponse<DataModel>) POST("$DATAMODELS_PATH$IMPORT_PATH/mauro/micronaut/SNAPSHOT", importRequest)
+        ListResponse<DataModel> response = (ListResponse<DataModel>) POST("$DATAMODELS_PATH$IMPORT_PATH/uk.ac.ox.softeng.mauro.plugin.importer.json/JsonDataModelImporterPlugin/4.0.0", importRequest)
 
         then:
         response
