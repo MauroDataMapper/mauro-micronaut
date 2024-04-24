@@ -1,6 +1,6 @@
 package uk.ac.ox.softeng.mauro.controller.folder
 
-import com.fasterxml.jackson.databind.ObjectMapper
+
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
@@ -24,8 +24,8 @@ import java.time.Instant
 //@Secured(SecurityRule.IS_ANONYMOUS)
 class FolderController extends ModelController<Folder> {
 
-    FolderController(FolderCacheableRepository folderRepository, ModelContentRepository<Folder> folderContentRepository, ObjectMapper objectMapper) {
-        super(Folder, folderRepository, folderRepository, folderContentRepository, objectMapper)
+    FolderController(FolderCacheableRepository folderRepository, ModelContentRepository<Folder> folderContentRepository) {
+        super(Folder, folderRepository, folderRepository, folderContentRepository)
     }
 
     @Get('/{id}')

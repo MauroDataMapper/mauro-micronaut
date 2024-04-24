@@ -1,22 +1,19 @@
 package uk.ac.ox.softeng.mauro.controller.datamodel
 
-import com.fasterxml.jackson.databind.ObjectMapper
+
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
+import io.micronaut.core.annotation.NonNull
+import io.micronaut.core.annotation.Nullable
+import io.micronaut.http.HttpStatus
 import io.micronaut.http.MediaType
-import io.micronaut.http.annotation.Consumes
+import io.micronaut.http.annotation.*
 import io.micronaut.http.exceptions.HttpStatusException
-import io.micronaut.http.multipart.CompletedFileUpload
-import io.micronaut.http.multipart.CompletedPart
 import io.micronaut.http.server.multipart.MultipartBody
 import io.micronaut.scheduling.TaskExecutors
 import io.micronaut.scheduling.annotation.ExecuteOn
-import org.reactivestreams.Subscriber
-import org.reactivestreams.Subscription
-import reactor.core.publisher.Flux
-import reactor.core.publisher.Mono
-import uk.ac.ox.softeng.mauro.domain.folder.Folder
-import uk.ac.ox.softeng.mauro.plugin.MauroPluginService
-import io.micronaut.http.exceptions.HttpStatusException
+import io.micronaut.transaction.annotation.Transactional
+import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.controller.model.ModelController
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModelService
@@ -27,27 +24,8 @@ import uk.ac.ox.softeng.mauro.export.ExportModel
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.DataModelCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.datamodel.DataModelContentRepository
-import uk.ac.ox.softeng.mauro.plugin.MauroPlugin
-import uk.ac.ox.softeng.mauro.plugin.importer.DataModelImporterPlugin
-import uk.ac.ox.softeng.mauro.plugin.importer.FileParameter
-import uk.ac.ox.softeng.mauro.plugin.importer.ImportParameters
-import uk.ac.ox.softeng.mauro.plugin.importer.ModelImporterPlugin
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
-import groovy.transform.CompileStatic
-import io.micronaut.core.annotation.NonNull
-import io.micronaut.core.annotation.Nullable
-import io.micronaut.http.HttpStatus
-import io.micronaut.http.annotation.Body
-import io.micronaut.http.annotation.Controller
-import io.micronaut.http.annotation.Delete
-import io.micronaut.http.annotation.Get
-import io.micronaut.http.annotation.Post
-import io.micronaut.http.annotation.Put
-import io.micronaut.transaction.annotation.Transactional
-import jakarta.inject.Inject
-
-import java.nio.charset.StandardCharsets
 import java.time.Instant
 
 @Slf4j
@@ -63,8 +41,8 @@ class DataModelController extends ModelController<DataModel> {
     DataModelService dataModelService
 
 
-    DataModelController(DataModelCacheableRepository dataModelRepository, FolderCacheableRepository folderRepository, DataModelContentRepository dataModelContentRepository, ObjectMapper objectMapper ) {
-        super(DataModel, dataModelRepository, folderRepository, dataModelContentRepository, objectMapper)
+    DataModelController(DataModelCacheableRepository dataModelRepository, FolderCacheableRepository folderRepository, DataModelContentRepository dataModelContentRepository) {
+        super(DataModel, dataModelRepository, folderRepository, dataModelContentRepository)
         this.dataModelRepository = dataModelRepository
         this.dataModelContentRepository = dataModelContentRepository
     }
