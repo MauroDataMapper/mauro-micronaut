@@ -1,12 +1,5 @@
 package uk.ac.ox.softeng.mauro.controller.model
 
-import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
-import uk.ac.ox.softeng.mauro.plugin.MauroPluginService
-import uk.ac.ox.softeng.mauro.plugin.importer.DataModelImporterPlugin
-import uk.ac.ox.softeng.mauro.plugin.importer.FileParameter
-import uk.ac.ox.softeng.mauro.plugin.importer.ImportParameters
-import uk.ac.ox.softeng.mauro.plugin.importer.ModelImporterPlugin
-
 import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
@@ -21,6 +14,7 @@ import io.micronaut.http.multipart.CompletedPart
 import io.micronaut.http.server.multipart.MultipartBody
 import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
+import reactor.core.publisher.Flux
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.model.Model
@@ -32,9 +26,11 @@ import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemRepository
 import uk.ac.ox.softeng.mauro.persistence.model.ModelContentRepository
+import uk.ac.ox.softeng.mauro.plugin.MauroPluginService
+import uk.ac.ox.softeng.mauro.plugin.importer.FileParameter
+import uk.ac.ox.softeng.mauro.plugin.importer.ImportParameters
+import uk.ac.ox.softeng.mauro.plugin.importer.ModelImporterPlugin
 import uk.ac.ox.softeng.mauro.web.ListResponse
-
-import reactor.core.publisher.Flux
 
 import java.nio.charset.StandardCharsets
 
@@ -68,18 +64,16 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
 
     ModelService<M> modelService
 
-    @Inject // Doesn't inject?
+    @Inject
     ObjectMapper objectMapper
 
-
-    ModelController(Class<M> modelClass, AdministeredItemCacheableRepository<M> modelRepository, FolderCacheableRepository folderRepository, ModelContentRepository<M> modelContentRepository, ObjectMapper objectMapper) {
+    ModelController(Class<M> modelClass, AdministeredItemCacheableRepository<M> modelRepository, FolderCacheableRepository folderRepository, ModelContentRepository<M> modelContentRepository) {
         super(modelClass, modelRepository, folderRepository, modelContentRepository)
         this.itemClass = modelClass
         this.administeredItemRepository = modelRepository
         this.parentItemRepository = folderRepository
         this.modelContentRepository = modelContentRepository
         this.administeredItemContentRepository = modelContentRepository
-        this.objectMapper = objectMapper
     }
 
     M show(UUID id) {

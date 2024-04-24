@@ -1,8 +1,6 @@
 package uk.ac.ox.softeng.mauro.controller.terminology
 
-import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
@@ -19,7 +17,6 @@ import io.micronaut.security.rules.SecurityRule
 import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.controller.model.ModelController
-import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.domain.model.version.CreateNewVersionData
 import uk.ac.ox.softeng.mauro.domain.model.version.FinaliseData
 import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
@@ -45,11 +42,8 @@ class TerminologyController extends ModelController<Terminology> {
     @Inject
     TerminologyService terminologyService
 
-    @Inject
-    ObjectMapper objectMapper
-
-    TerminologyController(TerminologyCacheableRepository terminologyRepository, FolderCacheableRepository folderRepository, TerminologyContentRepository terminologyContentRepository, ObjectMapper objectMapper) {
-        super(Terminology, terminologyRepository, folderRepository, terminologyContentRepository, objectMapper)
+    TerminologyController(TerminologyCacheableRepository terminologyRepository, FolderCacheableRepository folderRepository, TerminologyContentRepository terminologyContentRepository) {
+        super(Terminology, terminologyRepository, folderRepository, terminologyContentRepository)
         this.terminologyRepository = terminologyRepository
         this.terminologyContentRepository = terminologyContentRepository
     }

@@ -1,6 +1,6 @@
 package uk.ac.ox.softeng.mauro.controller.terminology
 
-import com.fasterxml.jackson.databind.ObjectMapper
+
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
@@ -28,6 +28,7 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 class CodeSetController extends ModelController<CodeSet> {
 
     ModelCacheableRepository.CodeSetCacheableRepository codeSetRepository
+
     @Inject
     CodeSetRepository codeSetRepositoryUnCached
 
@@ -39,8 +40,8 @@ class CodeSetController extends ModelController<CodeSet> {
     @Inject
     CodeSetService codeSetService
 
-    CodeSetController(ModelCacheableRepository.CodeSetCacheableRepository codeSetRepository, ModelCacheableRepository.FolderCacheableRepository folderRepository, CodeSetContentRepository codeSetContentRepository, ObjectMapper objectMapper) {
-        super(CodeSet, codeSetRepository, folderRepository, codeSetContentRepository, objectMapper)
+    CodeSetController(ModelCacheableRepository.CodeSetCacheableRepository codeSetRepository, ModelCacheableRepository.FolderCacheableRepository folderRepository, CodeSetContentRepository codeSetContentRepository) {
+        super(CodeSet, codeSetRepository, folderRepository, codeSetContentRepository)
         this.codeSetRepository = codeSetRepository
         this.codeSetContentRepository = codeSetContentRepository
     }
