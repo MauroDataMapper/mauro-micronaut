@@ -19,7 +19,7 @@ class ExportModel {
     List<Terminology> terminologies = []
 
     DataModel dataModel
-    List<DataModel> dataModels
+    List<DataModel> dataModels = []
 
     Folder folder
     List<Folder> folders = []
