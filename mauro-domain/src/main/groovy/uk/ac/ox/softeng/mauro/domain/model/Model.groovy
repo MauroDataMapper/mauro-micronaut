@@ -1,5 +1,6 @@
 package uk.ac.ox.softeng.mauro.domain.model
 
+import com.fasterxml.jackson.annotation.JsonAlias
 import com.fasterxml.jackson.annotation.JsonIgnore
 import groovy.transform.CompileStatic
 import groovy.transform.NamedParams
@@ -37,6 +38,7 @@ abstract class Model extends AdministeredItem implements SecurableResource {
 
     Boolean readableByAuthenticatedUsers = false
 
+    @JsonAlias('type')
     String modelType = domainType
 
     @Nullable
@@ -67,7 +69,7 @@ abstract class Model extends AdministeredItem implements SecurableResource {
     @Transient
     @JsonIgnore
     Model getParent() {
-        null
+        folder
     }
 
     @Override
@@ -100,6 +102,10 @@ abstract class Model extends AdministeredItem implements SecurableResource {
     List<AdministeredItem> getAllContents() {
         allAssociations.flatten() as List<AdministeredItem>
     }
+
+    @Transient
+    @JsonIgnore
+    abstract void setAssociations()
 
     /****
      * Methods for building a tree-like DSL

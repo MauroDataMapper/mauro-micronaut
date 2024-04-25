@@ -1,5 +1,6 @@
 package uk.ac.ox.softeng.mauro.controller.model
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
@@ -8,8 +9,12 @@ import io.micronaut.data.exceptions.EmptyResultException
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.exceptions.HttpStatusException
+import io.micronaut.http.multipart.CompletedFileUpload
+import io.micronaut.http.multipart.CompletedPart
+import io.micronaut.http.server.multipart.MultipartBody
 import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
+import reactor.core.publisher.Flux
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.model.Model
@@ -21,7 +26,13 @@ import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemRepository
 import uk.ac.ox.softeng.mauro.persistence.model.ModelContentRepository
+import uk.ac.ox.softeng.mauro.plugin.MauroPluginService
+import uk.ac.ox.softeng.mauro.plugin.importer.FileParameter
+import uk.ac.ox.softeng.mauro.plugin.importer.ImportParameters
+import uk.ac.ox.softeng.mauro.plugin.importer.ModelImporterPlugin
 import uk.ac.ox.softeng.mauro.web.ListResponse
+
+import java.nio.charset.StandardCharsets
 
 @Slf4j
 @CompileStatic
@@ -43,12 +54,18 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     @Inject
     List<AdministeredItemCacheableRepository> administeredItemRepositories
 
+    @Inject
+    MauroPluginService mauroPluginService
+
 //    @Inject
 //    AccessControlService accessControlService
 
     ModelContentRepository<M> modelContentRepository
 
     ModelService<M> modelService
+
+    @Inject
+    ObjectMapper objectMapper
 
     ModelController(Class<M> modelClass, AdministeredItemCacheableRepository<M> modelRepository, FolderCacheableRepository folderRepository, ModelContentRepository<M> modelContentRepository) {
         super(modelClass, modelRepository, folderRepository, modelContentRepository)
@@ -127,7 +144,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         M savedCopy = createEntity(copy.folder, copy)
         savedCopy.allContents.each {AdministeredItem item ->
             log.debug "*** Saving item [$item.id : $item.label] ***"
-            updateCreationProperties(item)
+            item.updateCreationProperties()
             getRepository(item).save(item)
         }
         savedCopy
@@ -150,4 +167,46 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         administeredItemRepository.findById(uuid)
     }
 
+
+
+
+    <P extends ImportParameters> P readFromMultipartFormBody(MultipartBody body, Class<P> parametersClass) {
+        Map<String, Object> importMap = Flux.from(body).collectList().block().collectEntries {CompletedPart cp ->
+            if (cp instanceof CompletedFileUpload) {
+                return [cp.name, new FileParameter(cp.filename, cp.contentType.toString(), cp.bytes)]
+            } else {
+                return [cp.name, new String(cp.bytes, StandardCharsets.UTF_8)]
+            }
+
+        }
+
+
+        return objectMapper.convertValue(importMap, parametersClass)
+    }
+
+    ListResponse<M> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version) {
+
+        ModelImporterPlugin mauroPlugin = mauroPluginService.getPlugin(ModelImporterPlugin, namespace, name, version)
+
+        if(!mauroPlugin) {
+            throw new HttpStatusException(HttpStatus.BAD_REQUEST, "Model import plugin with namespace: ${namespace}, name: ${name} not found")
+        }
+
+        ImportParameters importParameters = readFromMultipartFormBody(body, mauroPlugin.importParametersClass())
+
+        List<M> imported = (List<M>) mauroPlugin.importModels(importParameters)
+
+        Folder folder = folderRepository.readById(importParameters.folderId)
+        List<M> saved = imported.collect { M imp ->
+            imp.folder = folder
+            log.info '** about to saveWithContentBatched... **'
+            M savedImported = modelContentRepository.saveWithContent(imp)
+            log.info '** finished saveWithContentBatched **'
+            savedImported
+        }
+        List<M> smallerResponse = saved.collect { model ->
+            show(model.id)
+        }
+        ListResponse.from(smallerResponse)
+    }
 }

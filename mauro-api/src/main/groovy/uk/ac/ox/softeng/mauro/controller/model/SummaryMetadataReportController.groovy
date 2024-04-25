@@ -45,7 +45,7 @@ class SummaryMetadataReportController extends ItemController<SummaryMetadataRepo
         super.cleanBody(summaryMetadataReport)
         SummaryMetadata summaryMetadata = validateAndGet(domainType, domainId, summaryMetadataId)
         summaryMetadataReport.summaryMetadataId = summaryMetadata.id
-        updateCreationProperties(summaryMetadataReport)
+        summaryMetadataReport.updateCreationProperties()
         summaryMetadataReportCacheableRepository.save(summaryMetadataReport)
     }
 

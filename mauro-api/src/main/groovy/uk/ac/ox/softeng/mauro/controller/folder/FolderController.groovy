@@ -1,5 +1,6 @@
 package uk.ac.ox.softeng.mauro.controller.folder
 
+
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
@@ -40,7 +41,7 @@ class FolderController extends ModelController<Folder> {
     @Post
     Folder create(@Body Folder folder) {
         cleanBody(folder)
-        updateCreationProperties(folder)
+        folder.updateCreationProperties()
 
         pathRepository.readParentItems(folder)
         folder.updatePath()

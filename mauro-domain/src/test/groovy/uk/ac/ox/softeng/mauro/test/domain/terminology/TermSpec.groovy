@@ -1,4 +1,4 @@
-package uk.ac.ox.softeng.mauro.domain.test.terminology
+package uk.ac.ox.softeng.mauro.test.domain.terminology
 
 import groovy.transform.CompileStatic
 import spock.lang.Specification

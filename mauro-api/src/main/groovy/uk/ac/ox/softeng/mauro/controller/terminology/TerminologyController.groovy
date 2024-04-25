@@ -1,6 +1,6 @@
 package uk.ac.ox.softeng.mauro.controller.terminology
 
-import com.fasterxml.jackson.databind.ObjectMapper
+
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
@@ -8,13 +8,15 @@ import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.*
+import io.micronaut.http.server.multipart.MultipartBody
+import io.micronaut.scheduling.TaskExecutors
+import io.micronaut.scheduling.annotation.ExecuteOn
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.authentication.Authentication
 import io.micronaut.security.rules.SecurityRule
 import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.controller.model.ModelController
-import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.domain.model.version.CreateNewVersionData
 import uk.ac.ox.softeng.mauro.domain.model.version.FinaliseData
 import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
@@ -39,9 +41,6 @@ class TerminologyController extends ModelController<Terminology> {
 
     @Inject
     TerminologyService terminologyService
-
-    @Inject
-    ObjectMapper objectMapper
 
     TerminologyController(TerminologyCacheableRepository terminologyRepository, FolderCacheableRepository folderRepository, TerminologyContentRepository terminologyContentRepository) {
         super(Terminology, terminologyRepository, folderRepository, terminologyContentRepository)
@@ -121,6 +120,14 @@ class TerminologyController extends ModelController<Terminology> {
     }
 
     @Transactional
+    @ExecuteOn(TaskExecutors.IO)
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @Post('/terminologies/import/{namespace}/{name}{/version}')
+    ListResponse<Terminology> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version) {
+        super.importModel(body, namespace, name, version)
+    }
+/*
+    @Transactional
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Post('/terminologies/import{/namespace}{/name}{/version}')
     ListResponse<Terminology> importModel(@Body Map<String, String> importMap, @Nullable String namespace, @Nullable String name, @Nullable String version) {
@@ -129,9 +136,9 @@ class TerminologyController extends ModelController<Terminology> {
         log.info '*** imported JSON model ***'
         Terminology imported = importModel.terminology
         imported.setAssociations()
-        updateCreationProperties(imported)
+        imported.updateCreationProperties()
         log.info '* start updateCreationProperties *'
-        imported.getAllContents().each {updateCreationProperties(it)}
+        imported.getAllContents().each {it.updateCreationProperties()}
         log.info '* finish updateCreationProperties *'
 
         UUID folderId = UUID.fromString(importMap.folderId)
@@ -143,4 +150,6 @@ class TerminologyController extends ModelController<Terminology> {
         log.info '** finished saveWithContentBatched **'
         ListResponse.from([show(savedImported.id)])
     }
+
+ */
 }

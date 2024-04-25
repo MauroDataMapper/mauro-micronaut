@@ -48,7 +48,7 @@ class TerminologyJsonImportExportSpec extends BaseIntegrationSpec {
             .addPart('folderId', folderId.toString())
             .addPart('importFile', 'file.json', MediaType.APPLICATION_JSON_TYPE, exportJson.bytes)
             .build()
-        def request = POST('/terminologies/import/mauro/micronaut/SNAPSHOT', importRequest)
+        def request = POST('/terminologies/import/uk.ac.ox.softeng.mauro.plugin.importer.json/JsonTerminologyImporterPlugin/4.0.0', importRequest)
 
         when:
         UUID importedTerminologyId = UUID.fromString(request.items.first().id)

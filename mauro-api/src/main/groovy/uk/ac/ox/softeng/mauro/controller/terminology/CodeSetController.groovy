@@ -28,6 +28,7 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 class CodeSetController extends ModelController<CodeSet> {
 
     ModelCacheableRepository.CodeSetCacheableRepository codeSetRepository
+
     @Inject
     CodeSetRepository codeSetRepositoryUnCached
 

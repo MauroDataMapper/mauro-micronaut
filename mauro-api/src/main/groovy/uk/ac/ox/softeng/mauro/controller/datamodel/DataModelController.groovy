@@ -1,14 +1,22 @@
 package uk.ac.ox.softeng.mauro.controller.datamodel
 
-import com.fasterxml.jackson.databind.ObjectMapper
+
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
+import io.micronaut.core.annotation.NonNull
+import io.micronaut.core.annotation.Nullable
+import io.micronaut.http.HttpStatus
 import io.micronaut.http.MediaType
-import io.micronaut.http.annotation.Consumes
+import io.micronaut.http.annotation.*
 import io.micronaut.http.exceptions.HttpStatusException
+import io.micronaut.http.server.multipart.MultipartBody
+import io.micronaut.scheduling.TaskExecutors
+import io.micronaut.scheduling.annotation.ExecuteOn
+import io.micronaut.transaction.annotation.Transactional
+import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.controller.model.ModelController
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModelService
-import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.domain.model.version.CreateNewVersionData
 import uk.ac.ox.softeng.mauro.domain.model.version.FinaliseData
 import uk.ac.ox.softeng.mauro.export.ExportMetadata
@@ -17,19 +25,6 @@ import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.DataMod
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.datamodel.DataModelContentRepository
 import uk.ac.ox.softeng.mauro.web.ListResponse
-
-import groovy.transform.CompileStatic
-import io.micronaut.core.annotation.NonNull
-import io.micronaut.core.annotation.Nullable
-import io.micronaut.http.HttpStatus
-import io.micronaut.http.annotation.Body
-import io.micronaut.http.annotation.Controller
-import io.micronaut.http.annotation.Delete
-import io.micronaut.http.annotation.Get
-import io.micronaut.http.annotation.Post
-import io.micronaut.http.annotation.Put
-import io.micronaut.transaction.annotation.Transactional
-import jakarta.inject.Inject
 
 import java.time.Instant
 
@@ -44,9 +39,6 @@ class DataModelController extends ModelController<DataModel> {
 
     @Inject
     DataModelService dataModelService
-
-    @Inject
-    ObjectMapper objectMapper
 
 
     DataModelController(DataModelCacheableRepository dataModelRepository, FolderCacheableRepository folderRepository, DataModelContentRepository dataModelContentRepository) {
@@ -123,27 +115,11 @@ class DataModelController extends ModelController<DataModel> {
     }
 
     @Transactional
+    @ExecuteOn(TaskExecutors.IO)
     @Consumes(MediaType.MULTIPART_FORM_DATA)
-    @Post('/dataModels/import{/namespace}{/name}{/version}')
-    ListResponse<DataModel> importModel(@Body Map<String, String> importMap, @Nullable String namespace, @Nullable String name, @Nullable String version) {
-        log.info '** start importModel **'
-        ExportModel importModel = objectMapper.readValue(importMap.importFile, ExportModel)
-        DataModel imported = importModel.dataModel
-        imported.setAssociations()
-
-        updateCreationProperties(imported)
-        log.info '* start updateCreationProperties *'
-        imported.getAllContents().each {updateCreationProperties(it)}
-        log.info '* finish updateCreationProperties *'
-
-        UUID folderId = UUID.fromString(importMap.folderId)
-
-        Folder folder = folderRepository.readById(folderId)
-        imported.folder = folder
-        log.info '** about to saveWithContentBatched... **'
-        DataModel savedImported = modelContentRepository.saveWithContent(imported)
-        log.info '** finished saveWithContentBatched **'
-        ListResponse.from([show(savedImported.id)])
+    @Post('/dataModels/import/{namespace}/{name}{/version}')
+    ListResponse<DataModel> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version) {
+        super.importModel(body, namespace, name, version)
     }
 
 }

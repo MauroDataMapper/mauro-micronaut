@@ -53,6 +53,11 @@ class DataModel extends Model {
         'dm'
     }
 
+    void setModelType(String modelType) {
+        modelType = DataModelType.values().find {it.label.toLowerCase() == modelType.toLowerCase()}?.label
+    }
+
+
     @Override
     @Transient
     @JsonIgnore
@@ -78,7 +83,8 @@ class DataModel extends Model {
 
     @Transient
     @JsonIgnore
-    DataModel setAssociations() {
+    @Override
+    void setAssociations() {
         Map<String, DataType> dataTypesMap = dataTypes.collectEntries {[it.label, it]}
 
         dataTypes.each {dataType ->
@@ -114,7 +120,7 @@ class DataModel extends Model {
 
 
 
-        /****
+    /****
      * Methods for building a tree-like DSL
      */
 
@@ -129,10 +135,15 @@ class DataModel extends Model {
         build [:], closure
     }
 
+    String modelType(DataModelType dataModelType) {
+        this.modelType = dataModelType.label
+        this.modelType
+    }
+
     DataType primitiveType(DataType primitiveType) {
         this.dataTypes.add(primitiveType)
         primitiveType.dataModel = this
-        primitiveType.dataTypeKind = DataType.DataTypeKind.PRIMITIVE_TYPE
+        primitiveType.setDomainType(DataType.DataTypeKind.PRIMITIVE_TYPE)
         primitiveType
     }
 
@@ -148,6 +159,7 @@ class DataModel extends Model {
     DataType enumerationType(DataType enumerationType) {
         this.dataTypes.add(enumerationType)
         enumerationType.dataModel = this
+        enumerationType.setDomainType(DataType.DataTypeKind.ENUMERATION_TYPE)
         enumerationType
     }
 

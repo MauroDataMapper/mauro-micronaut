@@ -51,14 +51,7 @@ abstract class ItemController<I extends Item> {
         item
     }
 
-    protected Item updateCreationProperties(Item item) {
-        item.id = null
-        item.version = null
-        item.dateCreated = null
-        item.lastUpdated = null
-        item.createdBy = 'USER@example.org'
-        item
-    }
+
 
     protected boolean updateProperties(I existing, I cleanItem) {
         boolean hasChanged

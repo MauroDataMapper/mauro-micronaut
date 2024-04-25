@@ -6,12 +6,12 @@ import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableReposit
 import uk.ac.ox.softeng.mauro.persistence.model.ModelContentRepository
 
 import groovy.transform.CompileStatic
-import io.micronaut.context.annotation.Bean
 import io.micronaut.core.annotation.NonNull
 import jakarta.inject.Inject
+import jakarta.inject.Singleton
 
 @CompileStatic
-@Bean
+@Singleton
 class DataModelContentRepository extends ModelContentRepository<DataModel> {
 
     @Inject

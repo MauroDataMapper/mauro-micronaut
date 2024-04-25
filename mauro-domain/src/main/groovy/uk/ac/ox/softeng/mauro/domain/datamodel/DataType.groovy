@@ -57,7 +57,7 @@ class DataType extends ModelItem<DataModel> {
     }
 
     // Remove the transient annotation here
-    String domainType = getDomainType()
+    String domainType
 
     @JsonIgnore
     DataModel dataModel
@@ -75,6 +75,11 @@ class DataType extends ModelItem<DataModel> {
     void setDomainType(String domainType) {
         super.setDomainType(domainType)
         dataTypeKind = DataTypeKind.fromString(domainType)
+    }
+
+    void setDomainType(DataTypeKind domainType) {
+        super.setDomainType(domainType.stringValue)
+        dataTypeKind = domainType
     }
 
     @Override
@@ -118,6 +123,11 @@ class DataType extends ModelItem<DataModel> {
 
     static DataType build(@DelegatesTo(value = DataType, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
         build [:], closure
+    }
+
+    String domainType(DataTypeKind dataTypeKind) {
+        setDomainType(dataTypeKind)
+        this.domainType
     }
 
     String units(String units) {

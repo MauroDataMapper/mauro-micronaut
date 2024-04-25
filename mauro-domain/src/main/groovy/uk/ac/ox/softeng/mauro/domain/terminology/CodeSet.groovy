@@ -60,6 +60,14 @@ class CodeSet extends Model {
         [terms] as List<List<ModelItem<CodeSet>>>
     }
 
+    @Transient
+    @JsonIgnore
+    @Override
+    void setAssociations() {
+
+    }
+
+
     @Override
     String toString() {
         return super.toString() +

@@ -116,6 +116,16 @@ class Folder extends Model {
         null
     }
 
+    @Transient
+    @JsonIgnore
+    @Override
+    void setAssociations() {
+        childFolders.each { childFolder ->
+            childFolder.parentFolder = this
+            childFolder.setAssociations()
+        }
+    }
+
     @Override
     @Transient
     @JsonIgnore
