@@ -18,7 +18,6 @@ class DataElementContentRepository extends AdministeredItemContentRepository {
     @Override
     DataElement readWithContentById(UUID id) {
         DataElement dataElement = dataElementCacheableRepository.readById(id)
-
         dataElement
     }
 }

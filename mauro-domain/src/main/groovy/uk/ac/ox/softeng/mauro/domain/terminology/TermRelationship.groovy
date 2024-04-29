@@ -1,12 +1,8 @@
 package uk.ac.ox.softeng.mauro.domain.terminology
 
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
-
-import com.fasterxml.jackson.annotation.JsonBackReference
 import com.fasterxml.jackson.annotation.JsonIdentityInfo
-import com.fasterxml.jackson.annotation.JsonIdentityReference
 import com.fasterxml.jackson.annotation.JsonIgnore
-import com.fasterxml.jackson.annotation.JsonManagedReference
 import com.fasterxml.jackson.annotation.ObjectIdGenerators
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
@@ -15,7 +11,6 @@ import io.micronaut.core.annotation.Introspected
 import io.micronaut.data.annotation.Index
 import io.micronaut.data.annotation.Indexes
 import io.micronaut.data.annotation.MappedEntity
-import io.micronaut.data.annotation.Relation
 import jakarta.persistence.Transient
 import uk.ac.ox.softeng.mauro.domain.model.ModelItem
 

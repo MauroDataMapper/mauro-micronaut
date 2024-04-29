@@ -8,6 +8,7 @@ import uk.ac.ox.softeng.mauro.domain.datamodel.EnumerationValue
 import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository.DataTypeCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository.EnumerationValueCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.DataModelCacheableRepository
+import uk.ac.ox.softeng.mauro.persistence.datamodel.DataModelContentRepository
 import uk.ac.ox.softeng.mauro.persistence.datamodel.DataTypeRepository
 import uk.ac.ox.softeng.mauro.persistence.datamodel.EnumerationValueContentRepository
 import uk.ac.ox.softeng.mauro.persistence.datamodel.EnumerationValueRepository
@@ -29,7 +30,7 @@ import reactor.core.publisher.Mono
 
 @CompileStatic
 @Controller('/dataModels/{dataModelId}/dataTypes/{enumerationTypeId}/enumerationValues')
-class EnumerationValueController extends AdministeredItemController<EnumerationValue, DataModel> {
+class EnumerationValueController extends AdministeredItemController<EnumerationValue, DataType> {
 
     @Inject
     DataTypeCacheableRepository dataTypeRepository
@@ -39,8 +40,8 @@ class EnumerationValueController extends AdministeredItemController<EnumerationV
 
     EnumerationValueCacheableRepository enumerationValueRepository
 
-    EnumerationValueController(EnumerationValueCacheableRepository enumerationValueRepository, DataModelCacheableRepository dataModelRepository, EnumerationValueContentRepository enumerationValueContentRepository) {
-        super(EnumerationValue, enumerationValueRepository, dataModelRepository, enumerationValueContentRepository)
+    EnumerationValueController(EnumerationValueCacheableRepository enumerationValueRepository, DataTypeCacheableRepository dataTypeRepository, DataModelContentRepository dataModelContentRepository) {
+        super(EnumerationValue, enumerationValueRepository, dataTypeRepository, dataModelContentRepository)
         this.enumerationValueRepository = enumerationValueRepository
     }
 
@@ -53,10 +54,9 @@ class EnumerationValueController extends AdministeredItemController<EnumerationV
     EnumerationValue create(UUID dataModelId, UUID enumerationTypeId, @Body @NonNull EnumerationValue enumerationValue) {
 
         cleanBody(enumerationValue)
-        DataModel dataModel = dataModelRepository.readById(dataModelId)
         DataType dataType = dataTypeRepository.readById(enumerationTypeId)
         enumerationValue.enumerationType = dataType
-        createEntity(dataModel, enumerationValue)
+        createEntity(dataType, enumerationValue)
         return enumerationValue
     }
 
