@@ -33,7 +33,7 @@ import jakarta.validation.constraints.NotNull
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @MappedEntity(schema = 'datamodel', value = 'data_element')
 @MapConstructor(includeSuperFields = true, includeSuperProperties = true, noArg = true)
-class DataElement extends ModelItem<DataModel> {
+class DataElement extends ModelItem<DataClass> {
 
     @Nullable
     Integer minMultiplicity
@@ -55,15 +55,15 @@ class DataElement extends ModelItem<DataModel> {
     @Override
     @Transient
     @JsonIgnore
-    DataModel getParent() {
-        dataModel
+    DataClass getParent() {
+        this.dataClass
     }
 
     @Override
     @Transient
     @JsonIgnore
-    void setParent(AdministeredItem dataModel) {
-        this.dataModel = (DataModel) dataModel
+    void setParent(AdministeredItem dataClass) {
+        this.dataClass = (DataClass) dataClass
     }
 
     @Override

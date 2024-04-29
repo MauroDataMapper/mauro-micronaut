@@ -1,7 +1,6 @@
 package uk.ac.ox.softeng.mauro.domain.datamodel
 
 import com.fasterxml.jackson.annotation.JsonAlias
-import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.model.Model
 import uk.ac.ox.softeng.mauro.domain.model.ModelItem
 
@@ -13,8 +12,6 @@ import io.micronaut.core.annotation.Introspected
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Relation
 import jakarta.persistence.Transient
-import uk.ac.ox.softeng.mauro.domain.terminology.Term
-import uk.ac.ox.softeng.mauro.domain.terminology.TermRelationshipType
 
 /**
  * A DataModel describes a data asset, or a data standard

@@ -18,12 +18,13 @@ import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository.DataClassCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository.DataElementCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.DataModelCacheableRepository
+import uk.ac.ox.softeng.mauro.persistence.datamodel.DataClassContentRepository
 import uk.ac.ox.softeng.mauro.persistence.datamodel.DataModelContentRepository
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @CompileStatic
 @Controller('/dataModels/{dataModelId}/dataClasses/{dataClassId}/dataElements')
-class DataElementController extends AdministeredItemController<DataElement, DataModel> {
+class DataElementController extends AdministeredItemController<DataElement, DataClass> {
 
     DataElementCacheableRepository dataElementRepository
 
@@ -33,8 +34,8 @@ class DataElementController extends AdministeredItemController<DataElement, Data
     @Inject
     DataClassCacheableRepository dataClassRepository
 
-    DataElementController(DataElementCacheableRepository dataElementRepository, DataModelCacheableRepository dataModelRepository, DataModelContentRepository dataModelContentRepository) {
-        super(DataElement, dataElementRepository, dataModelRepository, dataModelContentRepository)
+    DataElementController(DataElementCacheableRepository dataElementRepository, DataClassCacheableRepository dataClassRepository, DataModelContentRepository dataModelContentRepository) {
+        super(DataElement, dataElementRepository, dataClassRepository, dataModelContentRepository)
         this.dataElementRepository = dataElementRepository
     }
 
@@ -49,7 +50,7 @@ class DataElementController extends AdministeredItemController<DataElement, Data
         DataModel dataModel = dataModelRepository.readById(dataModelId)
         DataClass dataClass = dataClassRepository.readById(dataClassId)
         dataElement.dataClass = dataClass
-        createEntity(dataModel, dataElement)
+        createEntity(dataClass, dataElement)
         return dataElement
 
     }

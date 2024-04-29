@@ -2,8 +2,6 @@ package uk.ac.ox.softeng.mauro.domain.tree
 
 import groovy.transform.CompileStatic
 import jakarta.inject.Inject
-import uk.ac.ox.softeng.mauro.domain.model.Model
-import uk.ac.ox.softeng.mauro.domain.model.ModelItem
 import uk.ac.ox.softeng.mauro.domain.model.ModelService
 
 // TODO

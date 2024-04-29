@@ -55,7 +55,7 @@ class DataModelIntegrationSpec extends BaseIntegrationSpec {
     UUID dataElementId2
 
     @Shared
-    UUID dataElementId3
+    UUID enumerationValueId
 
     void 'test data model'() {
 
@@ -245,6 +245,7 @@ class DataModelIntegrationSpec extends BaseIntegrationSpec {
 
         when:
         EnumerationValue enumerationValueResponse = (EnumerationValue) POST("/dataModels/$dataModelId/dataTypes/$enumerationTypeId/enumerationValues", [key: 'T', value: 'True'], EnumerationValue)
+        enumerationValueId = enumerationValueResponse.id
 
         then:
         enumerationValueResponse.label == 'T'
@@ -265,6 +266,24 @@ class DataModelIntegrationSpec extends BaseIntegrationSpec {
 
         enumerationValueListResponse.items.find { it -> it.key == 'T' } != null
         enumerationValueListResponse.items.find { it -> it.key == 'F' } != null
+
+        when:
+        enumerationValueResponse = (EnumerationValue) PUT("/dataModels/$dataModelId/dataTypes/$enumerationTypeId/enumerationValues/$enumerationValueId", [key: 'R', value: 'Renamed'], EnumerationValue)
+
+        then:
+        enumerationValueResponse.label == 'R'
+        enumerationValueResponse.domainType == 'EnumerationValue'
+
+        when:
+        enumerationValueListResponse = (ListResponse<EnumerationValue>) GET("/dataModels/$dataModelId/dataTypes/$enumerationTypeId/enumerationValues", ListResponse<EnumerationValue>)
+
+        then:
+        enumerationValueListResponse.count == 2
+
+        enumerationValueListResponse.items.find { it -> it.key == 'R' } != null
+        enumerationValueListResponse.items.find { it -> it.key == 'F' } != null
+
+
 
     }
 
