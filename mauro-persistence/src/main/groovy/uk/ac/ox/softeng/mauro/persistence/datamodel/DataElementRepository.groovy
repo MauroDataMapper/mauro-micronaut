@@ -3,6 +3,7 @@ package uk.ac.ox.softeng.mauro.persistence.datamodel
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataElement
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
+import uk.ac.ox.softeng.mauro.domain.datamodel.EnumerationValue
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.terminology.Term
 import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
@@ -73,4 +74,6 @@ abstract class DataElementRepository implements ModelItemRepository<DataElement>
     Class getDomainClass() {
         DataElement
     }
+
+    abstract List<DataElement> readAllByDataClassId(UUID dataClassId)
 }
