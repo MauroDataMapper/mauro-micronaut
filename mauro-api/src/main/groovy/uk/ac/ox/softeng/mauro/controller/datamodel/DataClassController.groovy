@@ -1,35 +1,19 @@
 package uk.ac.ox.softeng.mauro.controller.datamodel
 
-import uk.ac.ox.softeng.mauro.controller.model.AdministeredItemController
-import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
-import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
-import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
-import uk.ac.ox.softeng.mauro.domain.terminology.Term
-import uk.ac.ox.softeng.mauro.domain.terminology.TermRelationshipType
-import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
-import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository.DataClassCacheableRepository
-import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.DataModelCacheableRepository
-import uk.ac.ox.softeng.mauro.persistence.datamodel.DataClassRepository
-import uk.ac.ox.softeng.mauro.persistence.datamodel.DataModelContentRepository
-import uk.ac.ox.softeng.mauro.persistence.datamodel.DataModelRepository
-import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemContentRepository
-import uk.ac.ox.softeng.mauro.web.ListResponse
-
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpStatus
-import io.micronaut.http.annotation.Body
-import io.micronaut.http.annotation.Controller
-import io.micronaut.http.annotation.Delete
-import io.micronaut.http.annotation.Get
-import io.micronaut.http.annotation.Post
-import io.micronaut.http.annotation.Put
+import io.micronaut.http.annotation.*
 import jakarta.inject.Inject
-import reactor.core.publisher.Mono
-import reactor.util.function.Tuple2
-
-import java.util.function.BiFunction
+import uk.ac.ox.softeng.mauro.controller.model.AdministeredItemController
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
+import uk.ac.ox.softeng.mauro.domain.security.Role
+import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository.DataClassCacheableRepository
+import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.DataModelCacheableRepository
+import uk.ac.ox.softeng.mauro.persistence.datamodel.DataModelContentRepository
+import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @CompileStatic
 @Controller('/dataModels/{dataModelId}/dataClasses')
@@ -80,7 +64,9 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
 
         cleanBody(dataClass)
         DataModel dataModel = dataModelRepository.readById(dataModelId)
+        accessControlService.checkRole(Role.EDITOR, dataModel)
         DataClass parentDataClass = dataClassRepository.readById(parentDataClassId)
+        accessControlService.checkRole(Role.EDITOR, parentDataClass)
         dataClass.parentDataClass = parentDataClass
         createEntity(dataModel, dataClass)
         return dataClass
@@ -98,6 +84,8 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
 
     @Get('/{parentDataClassId}/dataClasses')
     ListResponse<DataClass> list(UUID dataModelId, UUID parentDataClassId) {
+        DataClass parentDataClass = dataClassRepository.readById(parentDataClassId)
+        accessControlService.checkRole(Role.READER, parentDataClass)
         ListResponse.from(dataClassRepository.readAllByParentDataClass_Id(parentDataClassId))
 
     }

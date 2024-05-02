@@ -227,6 +227,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         List<M> imported = (List<M>) mauroPlugin.importModels(importParameters)
 
         Folder folder = folderRepository.readById(importParameters.folderId)
+        accessControlService.checkRole(Role.EDITOR, folder)
         List<M> saved = imported.collect { M imp ->
             imp.folder = folder
             log.info '** about to saveWithContentBatched... **'

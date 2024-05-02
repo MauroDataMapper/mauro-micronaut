@@ -8,12 +8,17 @@ import io.micronaut.http.exceptions.HttpStatusException
 import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
 import reactor.util.annotation.NonNull
+import uk.ac.ox.softeng.mauro.domain.facet.Facet
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
+import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.model.Item
 import uk.ac.ox.softeng.mauro.domain.model.SummaryMetadataReport
+import uk.ac.ox.softeng.mauro.domain.security.Role
+import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.FacetCacheableRepository.SummaryMetadataCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.ItemCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.model.SummaryMetadataReportRepository
+import uk.ac.ox.softeng.mauro.persistence.service.RepositoryService
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @CompileStatic
@@ -23,8 +28,12 @@ class SummaryMetadataReportController extends ItemController<SummaryMetadataRepo
 
     @Inject
     SummaryMetadataReportRepository summaryMetadataReportRepository
+
     @Inject
     SummaryMetadataCacheableRepository summaryMetadataCacheableRepository
+
+    @Inject
+    RepositoryService repositoryService
 
     ItemCacheableRepository.SummaryMetadataReportCacheableRepository summaryMetadataReportCacheableRepository
     /**
@@ -44,6 +53,7 @@ class SummaryMetadataReportController extends ItemController<SummaryMetadataRepo
                                  @Body SummaryMetadataReport summaryMetadataReport) {
         super.cleanBody(summaryMetadataReport)
         SummaryMetadata summaryMetadata = validateAndGet(domainType, domainId, summaryMetadataId)
+        accessControlService.checkRole(Role.EDITOR, readAdministeredItemForFacet(summaryMetadata))
         summaryMetadataReport.summaryMetadataId = summaryMetadata.id
         summaryMetadataReport.updateCreationProperties()
         summaryMetadataReportCacheableRepository.save(summaryMetadataReport)
@@ -51,7 +61,8 @@ class SummaryMetadataReportController extends ItemController<SummaryMetadataRepo
 
     @Get
     ListResponse<SummaryMetadataReport> list(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID summaryMetadataId) {
-        validateAndGet(domainType, domainId, summaryMetadataId)
+        SummaryMetadata summaryMetadata = validateAndGet(domainType, domainId, summaryMetadataId)
+        accessControlService.checkRole(Role.READER, readAdministeredItemForFacet(summaryMetadata))
         List<SummaryMetadataReport> summaryMetadataReportList = summaryMetadataReportRepository.findAllBySummaryMetadataId(summaryMetadataId)
         ListResponse.from(summaryMetadataReportList)
     }
@@ -59,7 +70,8 @@ class SummaryMetadataReportController extends ItemController<SummaryMetadataRepo
     @Get('/{id}')
     SummaryMetadataReport get(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID summaryMetadataId,
                               @NonNull UUID id) {
-        validateAndGet(domainType, domainId, summaryMetadataId)
+        SummaryMetadata summaryMetadata = validateAndGet(domainType, domainId, summaryMetadataId)
+        accessControlService.checkRole(Role.READER, readAdministeredItemForFacet(summaryMetadata))
         summaryMetadataReportCacheableRepository.findById(id)
     }
 
@@ -70,6 +82,7 @@ class SummaryMetadataReportController extends ItemController<SummaryMetadataRepo
         SummaryMetadataReport existing = summaryMetadataReportCacheableRepository.readById(id)
         throwNotFoundException(existing, id)
         SummaryMetadata summaryMetadata = validateAndGet(domainType, domainId, summaryMetadataId)
+        accessControlService.checkRole(Role.EDITOR, readAdministeredItemForFacet(summaryMetadata))
         SummaryMetadataReport updated = updateEntity(existing, summaryMetadataReport, summaryMetadata)
         updated
     }
@@ -79,6 +92,7 @@ class SummaryMetadataReportController extends ItemController<SummaryMetadataRepo
     HttpStatus delete(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID summaryMetadataId,
                       @NonNull UUID id) {
         SummaryMetadata summaryMetadata = validateAndGet(domainType, domainId, summaryMetadataId)
+        accessControlService.checkRole(Role.EDITOR, readAdministeredItemForFacet(summaryMetadata))
         SummaryMetadataReport summaryMetadataReport = summaryMetadataReportCacheableRepository.readById(id)
         if (!summaryMetadataReport) {
             throwNotFoundException(summaryMetadataReport, id)
@@ -112,5 +126,22 @@ class SummaryMetadataReportController extends ItemController<SummaryMetadataRepo
         if (!item) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, "Item $id not found ")
         }
+    }
+
+    protected AdministeredItem readAdministeredItemForFacet(Facet facet) {
+        readAdministeredItem(facet.multiFacetAwareItemDomainType, facet.multiFacetAwareItemId)
+    }
+
+    protected AdministeredItem readAdministeredItem(String domainType, UUID domainId) {
+        AdministeredItemCacheableRepository administeredItemRepository = getAdministeredItemRepository(domainType)
+        AdministeredItem administeredItem = administeredItemRepository.readById(domainId)
+        if (!administeredItem) throw new HttpStatusException(HttpStatus.NOT_FOUND, 'AdministeredItem not found by ID')
+        administeredItem
+    }
+
+    protected AdministeredItemCacheableRepository getAdministeredItemRepository(String domainType) {
+        AdministeredItemCacheableRepository administeredItemRepository = repositoryService.getAdministeredItemRepository(domainType)
+        if (!administeredItemRepository) throw new HttpStatusException(HttpStatus.NOT_FOUND, "Domain type [$domainType] not found")
+        administeredItemRepository
     }
 }

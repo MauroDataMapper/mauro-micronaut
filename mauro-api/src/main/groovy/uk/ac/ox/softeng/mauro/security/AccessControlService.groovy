@@ -46,6 +46,16 @@ class AccessControlService implements Toggleable {
     private boolean enabled
 
     /**
+     * Check that a user is logged in.
+     * @return if logged in, throw AuthorizationException otherwise
+     */
+    void checkAuthenticated() {
+        if (!enabled) return
+
+        if (!userAuthenticated) throw new AuthorizationException(null)
+    }
+
+    /**
      * For a given Role and an AdministeredItem, check if the current authenticated user can do the role on the item,
      * by checking permissions on the owner or inherited from any of its parents.
      * @return if authorised, throw AuthorizationException otherwise
