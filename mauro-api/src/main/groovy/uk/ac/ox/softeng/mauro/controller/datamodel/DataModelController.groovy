@@ -17,6 +17,7 @@ import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.controller.model.ModelController
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModelService
+import uk.ac.ox.softeng.mauro.domain.diff.ObjectDiff
 import uk.ac.ox.softeng.mauro.domain.model.version.CreateNewVersionData
 import uk.ac.ox.softeng.mauro.domain.model.version.FinaliseData
 import uk.ac.ox.softeng.mauro.export.ExportMetadata
@@ -122,4 +123,19 @@ class DataModelController extends ModelController<DataModel> {
         super.importModel(body, namespace, name, version)
     }
 
+    @Get('/dataModels/{id}/diff/{otherId}')
+    ObjectDiff diffModels(@NonNull UUID id, @NonNull UUID otherId) {
+        DataModel dataModel = super.showNested(id) as DataModel
+        handleNotFoundError(dataModel, id)
+        DataModel otherDataModel = super.showNested(otherId) as DataModel
+        handleNotFoundError(otherDataModel, otherId)
+        ObjectDiff diff = dataModel.diff(otherDataModel)
+        diff
+    }
+
+    private void handleNotFoundError(DataModel dataModel, UUID id) {
+        if (!dataModel) {
+            throw new HttpStatusException(HttpStatus.NOT_FOUND, "Model not found, $id")
+        }
+    }
 }

@@ -28,4 +28,5 @@ abstract class Facet extends Item {
     @Transient
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     String domainType = this.class.simpleName
+
 }

@@ -8,6 +8,7 @@ import jakarta.inject.Inject
 import spock.lang.Shared
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
+import uk.ac.ox.softeng.mauro.domain.diff.ObjectDiff
 import uk.ac.ox.softeng.mauro.domain.facet.Annotation
 import uk.ac.ox.softeng.mauro.domain.facet.Metadata
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
@@ -53,7 +54,7 @@ class DataModelWithFacetsIntegrationSpec extends CommonDataSpec {
         Folder response = (Folder) POST("$FOLDERS_PATH", folder(), Folder)
         folderId = response.id
 
-        DataModel dataModelResponse = (DataModel) POST("$FOLDERS_PATH/$folderId$DATAMODELS_PATH", [label: 'Test data model'], DataModel)
+        DataModel dataModelResponse = (DataModel) POST("$FOLDERS_PATH/$folderId$DATAMODELS_PATH", [label: 'Test data model', description: 'test description', author: 'test author'], DataModel)
         dataModelId = dataModelResponse.id
 
         Metadata metadataResponse = (Metadata) POST("$DATAMODELS_PATH/$dataModelId$METADATA_PATH", metadataPayload(), Metadata)
@@ -75,6 +76,22 @@ class DataModelWithFacetsIntegrationSpec extends CommonDataSpec {
                 annotationPayload('child label', 'child description'), Annotation)
         childAnnotationId = childResp.id
     }
+
+    void 'test foo'(){
+
+        given:
+        DataModel retrieved = (DataModel) GET("$DATAMODELS_PATH/$dataModelId", DataModel)
+        DataModel other  = (DataModel) POST("$FOLDERS_PATH/$folderId$DATAMODELS_PATH", [label: 'Test other data model', description: 'test other description', author: 'test author other'], DataModel)
+
+        when:
+        ObjectDiff diff = (ObjectDiff) GET("$DATAMODELS_PATH/$dataModelId/diff/$other.id", ObjectDiff)
+        then:
+
+        diff
+
+        println(" toString: " + diff.toString())
+    }
+
 
     void 'test get data model with facets - should return all nested facets'() {
         when:
