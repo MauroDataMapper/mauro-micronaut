@@ -21,7 +21,7 @@ class AdminController {
 
     @Get('/modules')
     List<LinkedHashMap<String, String>> modules() {
-        accessControlService.checkAuthenticated()
+        accessControlService.checkAdministrator()
 
         mauroPluginService.getModulesList()
     }
@@ -29,7 +29,7 @@ class AdminController {
 
     @Get('/providers/importers')
     List<ModelImporterPlugin> importers() {
-        accessControlService.checkAuthenticated()
+        accessControlService.checkAdministrator()
 
         mauroPluginService.listPlugins(ModelImporterPlugin)
     }

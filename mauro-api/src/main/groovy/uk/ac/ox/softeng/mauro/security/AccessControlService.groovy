@@ -13,10 +13,7 @@ import jakarta.inject.Inject
 import jakarta.inject.Singleton
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.model.Model
-import uk.ac.ox.softeng.mauro.domain.security.CatalogueUser
-import uk.ac.ox.softeng.mauro.domain.security.Role
-import uk.ac.ox.softeng.mauro.domain.security.SecurableResourceGroupRole
-import uk.ac.ox.softeng.mauro.domain.security.UserGroup
+import uk.ac.ox.softeng.mauro.domain.security.*
 import uk.ac.ox.softeng.mauro.persistence.cache.ItemCacheableRepository.CatalogueUserCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.model.PathRepository
 import uk.ac.ox.softeng.mauro.persistence.security.SecurableResourceGroupRoleRepository
@@ -53,6 +50,22 @@ class AccessControlService implements Toggleable {
         if (!enabled) return
 
         if (!userAuthenticated) throw new AuthorizationException(null)
+    }
+
+    /**
+     * Check that a user is logged in and is an Administrator.
+     * @return if an admin is logged in, throw AuthorizationException otherwise
+     */
+    void checkAdministrator() {
+        checkAuthenticated()
+
+        List<UserGroup> userGroups = userGroupRepository.readAllByCatalogueUserId(userId)
+
+        if (userGroups.any {UserGroup userGroup -> userGroup.applicationRole == ApplicationRole.ADMIN}) {
+            return
+        }
+
+        throw new AuthorizationException(null)
     }
 
     /**
@@ -96,7 +109,8 @@ class AccessControlService implements Toggleable {
      */
     private boolean canDoRoleWithGroups(Role role, List<UserGroup> userGroups, Model model) {
         List<SecurableResourceGroupRole> securableResourceGroupRoles = securableResourceGroupRoleRepository.readAllBySecurableResourceDomainTypeAndSecurableResourceId(model.domainType, model.id)
-        boolean canDoRole = securableResourceGroupRoles.find {SecurableResourceGroupRole securableResourceGroupRole -> role <= securableResourceGroupRole.role && securableResourceGroupRole.userGroup.id in userGroups.id
+        boolean canDoRole = securableResourceGroupRoles.find {
+            SecurableResourceGroupRole securableResourceGroupRole -> role <= securableResourceGroupRole.role && securableResourceGroupRole.userGroup.id in userGroups.id
         }
         canDoRole
     }

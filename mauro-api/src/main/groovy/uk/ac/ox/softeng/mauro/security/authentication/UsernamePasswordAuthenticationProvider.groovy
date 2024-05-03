@@ -31,7 +31,10 @@ class UsernamePasswordAuthenticationProvider<B> implements HttpRequestAuthentica
 
             CatalogueUser catalogueUser = catalogueUserRepository.readByEmailAddress(emailAddress)
             boolean valid
-            if (catalogueUser) valid = new String(catalogueUser.password, 'UTF-8') == SecurityUtils.saltPassword(password, catalogueUser.salt)
+            if (catalogueUser) {
+                valid = (catalogueUser.tempPassword == password)
+                valid = valid || (new String(catalogueUser.password, 'UTF-8') == SecurityUtils.saltPassword(password, catalogueUser.salt))
+            }
 
             if (valid) {
                 log.info "Authentication successful for user [$catalogueUser.id] with email [$catalogueUser.emailAddress]"

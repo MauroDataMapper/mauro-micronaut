@@ -74,6 +74,6 @@ abstract class Item implements Serializable {
         version = null
         dateCreated = null
         lastUpdated = null
-        createdBy = 'USER@example.org'
+//        createdBy = 'USER@example.org' // TODO replace with current user
     }
 }
