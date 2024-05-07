@@ -124,9 +124,9 @@ abstract class Model<M extends Diffable> extends AdministeredItem implements Sec
             log.warn("Unable to diff this object domainType: ${this.domainType} with : ${other.domainType}")
             return null
         }
-        CollectionDTO lhs = DiffBuilder.createCollectionDiff(this.properties)
-        CollectionDTO rhs = DiffBuilder.createCollectionDiff(other.properties)
-     //   Map<String, Class<Diffable>> domainTypeToClassMap = []
+
+        CollectionDTO lhs = DiffBuilder.createCollectionDiff(DiffBuilder.MODEL_COLLECTION_KEYS, this.properties,)
+        CollectionDTO rhs = DiffBuilder.createCollectionDiff(DiffBuilder.MODEL_COLLECTION_KEYS, other.properties)
         ObjectDiff baseDiff = DiffBuilder.diff(this, other, lhs, rhs)
         baseDiff
     }

@@ -2,9 +2,6 @@ package uk.ac.ox.softeng.mauro.domain.diff
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
-import uk.ac.ox.softeng.mauro.domain.facet.Metadata
-import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
-import uk.ac.ox.softeng.mauro.domain.model.Item
 import uk.ac.ox.softeng.mauro.domain.model.Model
 
 @Slf4j
@@ -16,14 +13,22 @@ class DiffBuilder {
     static final String LAST_UPDATED_KEY = 'lastUpdated'
     static final String CLASS_KEY = 'class'
     static final String FOLDER_KEY = 'folder'
-    static final List<String> IGNORE_KEYS = [ID_KEY, DATE_CREATED_KEY, LAST_UPDATED_KEY, 'domainType', CLASS_KEY, FOLDER_KEY]
+    static final String DATE_FINALISED_KEY = 'dateFinalised'
+    static final String METADATA = 'metadata'
+    static final String ANNOTATION = 'annotations'
+    static final String DOMAIN_TYPE = 'domainType'
+    static final String RULE = 'rules'
+    static final List<String> IGNORE_KEYS = [ID_KEY, DATE_CREATED_KEY, LAST_UPDATED_KEY, DOMAIN_TYPE, CLASS_KEY, FOLDER_KEY]
+    static final List<String> MODEL_COLLECTION_KEYS = [METADATA, ANNOTATION, RULE]
 
-    static <K extends Diffable> ArrayDiff<K> arrayDiff(Class<Collection<K>> arrayClass) {
-        new ArrayDiff<K>(arrayClass)
+    static <K extends Diffable> ArrayDiff<K> arrayDiff() {
+        new ArrayDiff<K>()
     }
 
-    static CollectionDTO createCollectionDiff(Map<String, Object> modelProperties) {
-        Map<String, Object> collectionMap = modelProperties.findAll {!isNullKey(it.key) && isCollection(it.value) }
+    static CollectionDTO createCollectionDiff(List<String> collectionKeys, Map<String, Object> modelProperties) {
+        Map<String, Object> collectionMap = modelProperties.findAll {
+            !isNull(it) && isCollection(it.value) && isRequiredCollection(it.key, collectionKeys)
+        }
         CollectionDTO collectionDTO = new CollectionDTO()
         collectionMap.each { k, v -> collectionDTO.addField(k as String, v as Collection<Object>) }
         collectionDTO
@@ -32,12 +37,12 @@ class DiffBuilder {
     static ObjectDiff buildBaseDiff(Model lhs, Model rhs) {
         Map lhsMap = lhs.properties
         lhsMap.each { println("Map entry: ${it.key}, ${it.value}") }
-        lhsMap.removeAll { excluded(it) }
+        lhsMap.removeAll { excluded(it as Map.Entry<String, Object>) }
         Map leftStrFields = lhsMap.findAll { isAssignableFrom(it.value, String) }
         Map leftBooleanFields = lhsMap.findAll { isAssignableFrom(it.value, Boolean) }
 
         Map rhsMap = rhs.properties
-        rhsMap.removeAll { excluded(it) }
+        rhsMap.removeAll { excluded(it as Map.Entry<String, Object>) }
         Map<String, String> rightStrFields = rhsMap.findAll { isAssignableFrom(it.value, String) } as Map<String, String>
         Map<String, Boolean> rightBooleanFields = rhsMap.findAll { isAssignableFrom(it.value, Boolean) } as Map<String, Boolean>
 
@@ -49,68 +54,61 @@ class DiffBuilder {
         Class<Model> diffClass = lhs.getClass()
         ObjectDiff baseDiff = new ObjectDiff(diffClass, lhsId, rhsId)
         baseDiff.label = lhsMap.find { it.key == LABEL_KEY }.value
+        Map<String, Boolean> leftDateFinalised = lhsMap.find { it.key == DATE_FINALISED_KEY } as Map<String, Boolean>
+        Map<String, Boolean> rightDateFinalised = rhsMap.find { it.key == DATE_FINALISED_KEY } as Map<String, Boolean>
 
-        buildField(baseDiff, leftStrFields as Map<String, Object>, rightStrFields as Map<String, Object>)
+        buildStrings(baseDiff, leftStrFields as Map<String, Object>, rightStrFields as Map<String, Object>)
         buildField(baseDiff, leftBooleanFields as Map<String, Object>, rightBooleanFields as Map<String, Object>)
+        if ((leftDateFinalised || rightDateFinalised) && leftDateFinalised != rightDateFinalised) {
+            buildField(baseDiff, dateFinalised(lhsMap) as Map<String, Object>, dateFinalised(rhsMap) as Map<String, Object>)
+        }
+        baseDiff
     }
 
-    static <T extends Model> ObjectDiff diff(Model lhs, Model rhs, CollectionDTO lhsCollectionDTO, CollectionDTO rhsCollectionDTO) {
+    private static Map dateFinalised(Map map) {
+        map.find { it.key == DATE_FINALISED_KEY } as Map
+    }
+
+    static ObjectDiff diff(Model lhs, Model rhs, CollectionDTO lhsCollectionDTO, CollectionDTO rhsCollectionDTO) {
 
         ObjectDiff baseDiff = buildBaseDiff(lhs, rhs)
-
-        buildCollection(baseDiff, lhsCollectionDTO, rhsCollectionDTO)
+        buildCollection(baseDiff as ObjectDiff<Diffable>, lhsCollectionDTO, rhsCollectionDTO)
     }
 
-    static <K extends Diffable> CreationDiff<K> creationDiff(Class<K> objectClass) {
-        new CreationDiff<K>(objectClass)
-    }
-
-    static <K extends Diffable> DeletionDiff<K> deletionDiff(Class<K> objectClass) {
-        new DeletionDiff<K>(objectClass)
-    }
-
-
-    static boolean excluded(Map.Entry<Object, Object> it) {
-        IGNORE_KEYS.contains(it.key) || isNull(it)
-    }
-
-    static boolean isNull(Map.Entry<Object, Object> it) {
-        null == it.key || null == it.value
-    }
-    static boolean isNullKey(String key) {
-        null == key
-    }
-
-    static boolean isAssignableFrom(Object value, Class aClass) {
-        null != value && value.getClass().isAssignableFrom(aClass)
-    }
-
-    static <T extends Diffable> ObjectDiff buildField(ObjectDiff<T> objectDiff, Map<String, Object> lhsMap, Map<String, Object> rhsMap) {
+    static <T extends Diffable> ObjectDiff buildStrings(ObjectDiff<T> objectDiff, Map<String, Object> lhsMap, Map<String, Object> rhsMap) {
         lhsMap.each { k, v ->
             if (rhsMap[k] != v) {
-                FieldDiff fieldDiff = new FieldDiff(v.class, k as String, setLeft(v) as Diffable, setRight(rhsMap[k]) as Diffable)
+                FieldDiff fieldDiff = new FieldDiff(k as String, clean(v as String), clean(rhsMap[k] as String))
                 objectDiff.append(fieldDiff)
             }
         }
         objectDiff
     }
 
-    static ObjectDiff buildCollection(ObjectDiff<Diffable> objectDiff, CollectionDTO lhsCollectionDTO, CollectionDTO rhsCollectionDTO) {
-     //   params = params.collect {it instanceof Item ? it.id : it}
-        lhsCollectionDTO.fieldCollections.each{
-            println(" Each collection: it: $it.key, $it.value")
-            Collection<Object> rhs = rhsCollectionDTO.fieldCollections.find {
-                rhsIt ->
-                    println("lhsKEY: $it.key , rhsIt.key: $rhsIt.key")
-                    rhsIt.key == it.key
-            }.value ?: []
-            if (!it.value.isEmpty() || !rhs.isEmpty()) {
-               // it.key.handle
-              //  Class<Diffable> aClass = Class.forName(it.key) as Class<Diffable>
-              //  println("Class name: $aClass")
-                objectDiff.appendCollection(Metadata as Class<? extends Diffable>, it.key, it.value, rhs)
+    static ObjectDiff buildField(ObjectDiff objectDiff, Map<String, Object> lhsMap, Map<String, Object> rhsMap) {
+        lhsMap.each { k, v ->
+            if (rhsMap[k] != v) {
+                FieldDiff fieldDiff = new FieldDiff(k as String, v, rhsMap[k])
+                objectDiff.append(fieldDiff)
             }
-            println("hi")
+        }
+        objectDiff
+    }
+
+
+    static ObjectDiff buildCollection(ObjectDiff<Diffable> objectDiff, CollectionDTO lhsCollectionDTO, CollectionDTO rhsCollectionDTO) {
+        lhsCollectionDTO.fieldCollections.each {
+
+            Collection<Object> rhsValue = getRhsCollection(it.key, rhsCollectionDTO)
+
+            if (!it.value.isEmpty() || !rhsValue.isEmpty()) {
+                println(" collection key: $it.key, value: $it.value, rhs: $rhsValue")
+                String name = it.key
+                Collection lhsValue = it.value
+            //    objectDiff.appendCollection(it.key, it.value, rhsValue)
+                objectDiff.appendCollection(name, lhsValue, rhsValue)
+            }
+
         }
         objectDiff
     }
@@ -118,20 +116,25 @@ class DiffBuilder {
 
     static <F> Object setLeft(F lhs) {
         isAssignableFrom(lhs, String) ? clean(lhs as String) : lhs
+        this
     }
+
 
     static <F> Object setRight(F rhs) {
         isAssignableFrom(rhs, String) ? clean(rhs as String) : rhs
+        this
     }
 
-    // def void appendCollection(String s, List<SummaryMetadata> summaryMetadata1, List<SummaryMetadata> summaryMetadata2) {}
+    static boolean isAssignableFrom(Object value, Class aClass) {
+        null != value && value.getClass().isAssignableFrom(aClass)
+    }
 
 
-    private static String clean(String field) {
+    static String clean(String field) {
         field?.trim() ?: null
     }
 
-    private static boolean isCollection(Object value) {
+    static boolean isCollection(Object value) {
         if (value == null) {
             false
         } else {
@@ -141,4 +144,19 @@ class DiffBuilder {
         }
     }
 
+    static boolean excluded(Map.Entry<String, Object> it) {
+        IGNORE_KEYS.contains(it.key) || isNull(it)
+    }
+
+    static boolean isNull(Map.Entry<String, Object> it) {
+        null == it.key || null == it.value
+    }
+
+    static boolean isRequiredCollection(String key, List<String> requiredKeys) {
+        requiredKeys.contains(key)
+    }
+
+    static Collection<Object> getRhsCollection(String name, CollectionDTO rhsCollection) {
+        rhsCollection.fieldCollections.get(name) ?: []
+    }
 }

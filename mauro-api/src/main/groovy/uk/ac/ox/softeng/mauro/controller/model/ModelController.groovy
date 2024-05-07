@@ -131,7 +131,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     @Transactional
     M finalise(UUID id, @Body FinaliseData finaliseData) {
         M model = modelRepository.findById(id)
-        M finalised = modelService.finaliseModel(model, finaliseData.version, finaliseData.versionChangeType, finaliseData.versionTag)
+        M finalised = getModelService().finaliseModel(model, finaliseData.version, finaliseData.versionChangeType, finaliseData.versionTag)
         modelRepository.update(finalised)
     }
 

@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
 import jakarta.persistence.Transient
+import uk.ac.ox.softeng.mauro.domain.diff.Diffable
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.model.Item
 

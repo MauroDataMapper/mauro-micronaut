@@ -6,23 +6,19 @@ import groovy.transform.CompileStatic
 import uk.ac.ox.softeng.mauro.domain.model.Model
 
 @CompileStatic
-class FieldDiff<F> extends BiDirectionalDiff<F> {
+class FieldDiff<F> {
 
-    @JsonIgnore
     String name
+    F left
+    F right
 
-   // F left
-   // F right
     @JsonCreator
-    FieldDiff(Class<F> targetClass) {
-        super(targetClass)
-    }
+    FieldDiff(){}
 
-    FieldDiff(Class<F> targetClass, String name, F left, F right) {
-        super(targetClass)
+    FieldDiff( String name, F left, F right) {
         this.name = name
-        super.left = left
-        super.right = right
+        this.left = left
+        this.right = right
     }
 
     FieldDiff<F> name(String name) {
@@ -42,7 +38,7 @@ class FieldDiff<F> extends BiDirectionalDiff<F> {
         this
     }
 
-    @Override
+    @JsonIgnore
     Integer getNumberOfDiffs() {
         1
     }

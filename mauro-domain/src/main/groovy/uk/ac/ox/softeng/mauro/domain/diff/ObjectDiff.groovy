@@ -20,6 +20,7 @@ class ObjectDiff<T extends Diffable> {
     String leftId
     String rightId
     String label
+
     @JsonProperty("diffs")
     List<FieldDiff> diffs = []
 
@@ -31,28 +32,18 @@ class ObjectDiff<T extends Diffable> {
     }
 
 
-//    <K extends Diffable> ObjectDiff<K> appendField(FieldDiff fieldDiff) {
-//        diffs.add(fieldDiff)
-//        this
-//    }
-
-
-    def <K extends Diffable> ObjectDiff<T> appendCollection(Class<K> diffableClass, String name,
-                                                            Collection<Object> lhs, Collection<Object> rhs) {
-        List<K> diffableList = []
-        ArrayDiff<K> diff = DiffBuilder.arrayDiff(diffableList.class as Class<Collection<Diffable>>) as ArrayDiff<K>
+    def <K extends Diffable> ObjectDiff<T> appendCollection(String name, Collection<Object> lhs, Collection<Object> rhs) {
+        println("name: $name, lhs collection: $lhs, rhscollection: $rhs")
+        ArrayDiff<K> diff = DiffBuilder.arrayDiff() as ArrayDiff<K>
         diff.name = name
-        diff.left = lhs ?: []
-        diff.right = rhs ?: []
 
-        // If no lhs then all rhs have been created/added
         if (!lhs) {
-            return append(diff.createdObjects(rhs) as FieldDiff<Diffable>)
+            return append(diff.createdObjects(rhs) as FieldDiff)
         }
 
         // If no rhs then all lhs have been deleted/removed
         if (!rhs) {
-            return append(diff.deletedObjects(lhs) as FieldDiff<Diffable>)
+            return append(diff.deletedObjects(lhs) as FieldDiff)
         }
 
         Collection<K> deleted = []
@@ -115,9 +106,6 @@ class ObjectDiff<T extends Diffable> {
 
     }
 
-//    boolean isVersionedDiff() {
-//        versionedDiff ?: Path.from(left.pathPrefix, left.pathIdentifier).first().modelIdentifier
-//    }
 
 }
 

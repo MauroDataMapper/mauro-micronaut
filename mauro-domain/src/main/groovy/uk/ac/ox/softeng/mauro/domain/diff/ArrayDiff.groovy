@@ -10,8 +10,7 @@ class ArrayDiff<K extends Diffable> extends FieldDiff<Collection<K>> {
     Collection<Object> deleted
     Collection<Object> modified
 
-    ArrayDiff(Class<Collection<K>> targetArrayClass) {
-        super(targetArrayClass)
+    ArrayDiff() {
         created = []
         deleted = []
         modified = []
@@ -26,7 +25,7 @@ class ArrayDiff<K extends Diffable> extends FieldDiff<Collection<K>> {
         this.deleted = deleted
         this
     }
- 
+
 }
 
 
