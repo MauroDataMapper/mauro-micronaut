@@ -6,9 +6,9 @@ import groovy.transform.CompileStatic
 @CompileStatic
 class ArrayDiff<K extends Diffable> extends FieldDiff<Collection<K>> {
 
-    Collection<Object> created
-    Collection<Object> deleted
-    Collection<Object> modified
+    Collection<CollectionDiff> created
+    Collection<CollectionDiff> deleted
+    Collection<CollectionDiff> modified
 
     ArrayDiff() {
         created = []
@@ -16,12 +16,12 @@ class ArrayDiff<K extends Diffable> extends FieldDiff<Collection<K>> {
         modified = []
     }
 
-    ArrayDiff<K> createdObjects(Collection<Object> created) {
+    ArrayDiff<K> createdObjects(Collection<CollectionDiff> created) {
         this.created = created
         this
     }
 
-    ArrayDiff<K> deletedObjects(Collection<Object> deleted) {
+    ArrayDiff<K> deletedObjects(Collection<CollectionDiff> deleted) {
         this.deleted = deleted
         this
     }

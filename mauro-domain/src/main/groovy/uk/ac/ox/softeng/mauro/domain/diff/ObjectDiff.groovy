@@ -32,25 +32,35 @@ class ObjectDiff<T extends Diffable> {
     }
 
 
-    def <K extends Diffable> ObjectDiff<T> appendCollection(String name, Collection<Object> lhs, Collection<Object> rhs) {
-        println("name: $name, lhs collection: $lhs, rhscollection: $rhs")
+    def <K extends Diffable> ObjectDiff<T> appendCollection(String name, Collection<DiffableItem> lhs, Collection<DiffableItem> rhs) {
         ArrayDiff<K> diff = DiffBuilder.arrayDiff() as ArrayDiff<K>
         diff.name = name
-
         if (!lhs) {
-            return append(diff.createdObjects(rhs) as FieldDiff)
+            List<CollectionDiff> collectionDiffs = []
+            rhs.each {
+                DiffableItem rhsDiffableItem = (DiffableItem) (it)
+                CollectionDiff collectionDiff = rhsDiffableItem.fromItem()
+                collectionDiffs.add(collectionDiff)
+            }
+            return append(diff.createdObjects(collectionDiffs) as FieldDiff<Diffable>)
         }
 
         // If no rhs then all lhs have been deleted/removed
         if (!rhs) {
-            return append(diff.deletedObjects(lhs) as FieldDiff)
+            List<CollectionDiff> collectionDiffs = []
+            lhs.each {
+                DiffableItem lhsDiffableItem = (DiffableItem) (it)
+                CollectionDiff collectionDiff = lhsDiffableItem.fromItem()
+                collectionDiffs.add(collectionDiff)
+            }
+            return append(diff.deletedObjects(collectionDiffs) as FieldDiff<Diffable>)
         }
 
         Collection<K> deleted = []
 //        Collection<ObjectDiff> modified = []
 //
 //        // Assume all rhs have been created new
-         List<Object> created = new ArrayList<>(rhs)
+        List<Object> created = new ArrayList<>(rhs)
 //
 //        Map<String, K> lhsMap = lhs.collectEntries { [it.getDiffIdentifier(), it] }
 //        Map<String, K> rhsMap = rhs.collectEntries { [it.getDiffIdentifier(), it] }
@@ -91,12 +101,11 @@ class ObjectDiff<T extends Diffable> {
 
         // if (created || deleted || modified || addIfEmpty) {
         if (created || deleted) {
-            append(diff.createdObjects(created)
-                    .deletedObjects(deleted as Collection<Object>) as FieldDiff<Diffable>)
+            append(diff.createdObjects(created as Collection<CollectionDiff>)
+                    .deletedObjects(deleted as Collection<Object> as Collection<CollectionDiff>)  as FieldDiff<Diffable>)
             //    .withModifiedDiffs(modified))
 
         }
-        "end of appd collection"
         this
     }
 

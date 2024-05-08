@@ -30,13 +30,12 @@ class DiffBuilder {
             !isNull(it) && isCollection(it.value) && isRequiredCollection(it.key, collectionKeys)
         }
         CollectionDTO collectionDTO = new CollectionDTO()
-        collectionMap.each { k, v -> collectionDTO.addField(k as String, v as Collection<Object>) }
+        collectionMap.each { k, v -> collectionDTO.addField(k as String, v as Collection<DiffableItem>) }
         collectionDTO
     }
 
     static ObjectDiff buildBaseDiff(Model lhs, Model rhs) {
         Map lhsMap = lhs.properties
-        lhsMap.each { println("Map entry: ${it.key}, ${it.value}") }
         lhsMap.removeAll { excluded(it as Map.Entry<String, Object>) }
         Map leftStrFields = lhsMap.findAll { isAssignableFrom(it.value, String) }
         Map leftBooleanFields = lhsMap.findAll { isAssignableFrom(it.value, Boolean) }
@@ -98,14 +97,12 @@ class DiffBuilder {
 
     static ObjectDiff buildCollection(ObjectDiff<Diffable> objectDiff, CollectionDTO lhsCollectionDTO, CollectionDTO rhsCollectionDTO) {
         lhsCollectionDTO.fieldCollections.each {
-
-            Collection<Object> rhsValue = getRhsCollection(it.key, rhsCollectionDTO)
+            Collection<DiffableItem> rhsValue = getRhsCollection(it.key, rhsCollectionDTO)
 
             if (!it.value.isEmpty() || !rhsValue.isEmpty()) {
                 println(" collection key: $it.key, value: $it.value, rhs: $rhsValue")
                 String name = it.key
-                Collection lhsValue = it.value
-            //    objectDiff.appendCollection(it.key, it.value, rhsValue)
+                Collection<DiffableItem> lhsValue = it.value
                 objectDiff.appendCollection(name, lhsValue, rhsValue)
             }
 
@@ -156,7 +153,7 @@ class DiffBuilder {
         requiredKeys.contains(key)
     }
 
-    static Collection<Object> getRhsCollection(String name, CollectionDTO rhsCollection) {
+    static Collection<DiffableItem> getRhsCollection(String name, CollectionDTO rhsCollection) {
         rhsCollection.fieldCollections.get(name) ?: []
     }
 }

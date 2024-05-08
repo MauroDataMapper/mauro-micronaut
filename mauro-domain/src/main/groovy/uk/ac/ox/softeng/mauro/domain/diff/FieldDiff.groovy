@@ -21,25 +21,5 @@ class FieldDiff<F> {
         this.right = right
     }
 
-    FieldDiff<F> name(String name) {
-        this.name = name
-        this
-    }
 
-    FieldDiff<F> leftHandSide(F lhs) {
-        println("********* FieldDiff: lhs: Field LHS: $lhs")
-        (this.left = lhs) as FieldDiff<F>
-        this
-    }
-
-
-    FieldDiff<F> rightHandSide(F rhs) {
-        (this.right = rhs) as FieldDiff<F>
-        this
-    }
-
-    @JsonIgnore
-    Integer getNumberOfDiffs() {
-        1
-    }
 }
