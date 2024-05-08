@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.terminology
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import uk.ac.ox.softeng.mauro.export.ExportModel
 import uk.ac.ox.softeng.mauro.persistence.ContainerizedTest
 import uk.ac.ox.softeng.mauro.testing.BaseIntegrationSpec
 
@@ -18,8 +20,12 @@ class TerminologyJsonImportExportSpec extends BaseIntegrationSpec {
     @Shared
     UUID folderId
 
+    @Inject
+    ObjectMapper objectMapper
+
+
     @Shared
-    String exportJson
+    ExportModel exportModel
 
     void 'create terminology and export'() {
         given:
@@ -35,18 +41,18 @@ class TerminologyJsonImportExportSpec extends BaseIntegrationSpec {
         ])
 
         when:
-        String response = GET("/terminologies/$terminologyId/export", String)
-        exportJson = response
+        exportModel = GET("/terminologies/$terminologyId/export/uk.ac.ox.softeng.mauro.plugin.exporter.json/JsonTerminologyExporterPlugin/4.0.0", ExportModel)
 
         then:
-        response
+        exportModel.terminology.label == 'Test terminology'
+        exportModel.terminology.terms.code == ['TEST-1','TEST-2']
     }
 
     void 'import terminology and verify'() {
         given:
         MultipartBody importRequest = MultipartBody.builder()
             .addPart('folderId', folderId.toString())
-            .addPart('importFile', 'file.json', MediaType.APPLICATION_JSON_TYPE, exportJson.bytes)
+            .addPart('importFile', 'file.json', MediaType.APPLICATION_JSON_TYPE, objectMapper.writeValueAsBytes(exportModel))
             .build()
         def request = POST('/terminologies/import/uk.ac.ox.softeng.mauro.plugin.importer.json/JsonTerminologyImporterPlugin/4.0.0', importRequest)
 

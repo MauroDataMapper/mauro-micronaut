@@ -9,6 +9,7 @@ import io.micronaut.http.HttpStatus
 import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.*
 import io.micronaut.http.server.multipart.MultipartBody
+import io.micronaut.http.server.types.files.StreamedFile
 import io.micronaut.scheduling.TaskExecutors
 import io.micronaut.scheduling.annotation.ExecuteOn
 import io.micronaut.security.annotation.Secured
@@ -100,23 +101,8 @@ class TerminologyController extends ModelController<Terminology> {
     }
 
     @Get('/terminologies/{id}/export{/namespace}{/name}{/version}')
-    ExportModel exportModel(UUID id, @Nullable String namespace, @Nullable String name, @Nullable String version) {
-        log.debug "*** exportModel start ${Instant.now()} ***"
-        Terminology terminology = terminologyContentRepository.
-                findWithContentById(id)
-        log.debug "*** exportModel fetched ${Instant.now()} ***"
-        terminology.setAssociations()
-        log.debug "*** setAssociations finished ${Instant.now()} ***"
-        new ExportModel(
-                exportMetadata: new ExportMetadata(
-                        namespace: 'uk.ac.ox.softeng.mauro',
-                        name: 'mauro-micronaut',
-                        version: 'SNAPSHOT',
-                        exportDate: Instant.now(),
-                        exportedBy: 'USER@example.org'
-                ),
-                terminology: terminology
-        )
+    StreamedFile exportModel(UUID id, @Nullable String namespace, @Nullable String name, @Nullable String version) {
+        super.exportModel(id, namespace, name, version)
     }
 
     @Transactional

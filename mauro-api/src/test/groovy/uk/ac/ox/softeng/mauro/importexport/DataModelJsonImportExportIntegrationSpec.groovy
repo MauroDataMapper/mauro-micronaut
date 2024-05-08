@@ -84,7 +84,7 @@ class DataModelJsonImportExportIntegrationSpec extends CommonDataSpec {
 
     void 'test get export data model - should export model'() {
         when:
-        String json = GET("$DATAMODELS_PATH/$dataModelId$EXPORT_PATH", String)
+        String json = GET("$DATAMODELS_PATH/$dataModelId$EXPORT_PATH/uk.ac.ox.softeng.mauro.plugin.exporter.json/JsonDataModelExporterPlugin/4.0.0", String)
 
         then:
         json
@@ -107,7 +107,7 @@ class DataModelJsonImportExportIntegrationSpec extends CommonDataSpec {
 
     void 'test consume export data model  - should import'() {
         given:
-        String exportJson = GET("$DATAMODELS_PATH/$dataModelId$EXPORT_PATH", String)
+        String exportJson = GET("$DATAMODELS_PATH/$dataModelId$EXPORT_PATH/uk.ac.ox.softeng.mauro.plugin.exporter.json/JsonDataModelExporterPlugin/4.0.0", String)
         exportJson
 
         and:

@@ -2,6 +2,7 @@ package uk.ac.ox.softeng.mauro.controller.admin
 
 import uk.ac.ox.softeng.mauro.plugin.MauroPlugin
 import uk.ac.ox.softeng.mauro.plugin.MauroPluginService
+import uk.ac.ox.softeng.mauro.plugin.exporter.ModelExporterPlugin
 import uk.ac.ox.softeng.mauro.plugin.importer.ModelImporterPlugin
 
 import groovy.transform.CompileStatic
@@ -28,10 +29,9 @@ class AdminController {
     }
 
 
-/*
     @Get('/providers/exporters')
     List<ModelExporterPlugin> exporters() {
-        MauroPluginService.listPlugins(ModelExporterPlugin)
+        mauroPluginService.listPlugins(ModelExporterPlugin)
     }
-*/
+
 }

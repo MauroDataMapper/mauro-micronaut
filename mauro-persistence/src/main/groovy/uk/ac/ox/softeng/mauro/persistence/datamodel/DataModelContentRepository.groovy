@@ -29,7 +29,8 @@ class DataModelContentRepository extends ModelContentRepository<DataModel> {
     @Inject
     EnumerationValueRepository enumerationValueRepository
 
-    DataModel findWithAssociations(UUID id) {
+    @Override
+    DataModel findWithContentById(UUID id) {
         DataModel dataModel = dataModelRepository.findById(id)
         dataModel.allDataClasses = dataClassRepository.findAllByParent(dataModel) as Set
         dataModel.dataClasses = dataModel.allDataClasses.findAll{!it.parentDataClass }.sort {it.order}

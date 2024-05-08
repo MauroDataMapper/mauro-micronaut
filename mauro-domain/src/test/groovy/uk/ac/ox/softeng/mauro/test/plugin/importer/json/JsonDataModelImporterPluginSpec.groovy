@@ -21,7 +21,8 @@ class JsonDataModelImporterPluginSpec extends Specification  {
     static String NAME = "JsonDataModelImporterPlugin"
     static String VERSION = "4.0.0"
 
-    ObjectMapper objectMapper = new ObjectMapper()
+    @Inject
+    ObjectMapper objectMapper
 
     @Inject
     MauroPluginService mauroPluginService
