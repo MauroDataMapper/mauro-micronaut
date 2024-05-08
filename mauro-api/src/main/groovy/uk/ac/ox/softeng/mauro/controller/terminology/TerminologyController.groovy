@@ -30,7 +30,7 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 @Slf4j
 @Controller
 @CompileStatic
-@Secured(SecurityRule.IS_ANONYMOUS)
+@Secured(SecurityRule.IS_AUTHENTICATED)
 class TerminologyController extends ModelController<Terminology> {
 
     TerminologyCacheableRepository terminologyRepository

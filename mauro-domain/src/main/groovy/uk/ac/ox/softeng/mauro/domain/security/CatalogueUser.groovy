@@ -1,10 +1,13 @@
 package uk.ac.ox.softeng.mauro.domain.security
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize
+import com.fasterxml.jackson.databind.util.StdConverter
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
 import io.micronaut.data.annotation.Index
 import io.micronaut.data.annotation.Indexes
 import io.micronaut.data.annotation.MappedEntity
+import io.micronaut.data.annotation.Relation
 import uk.ac.ox.softeng.mauro.domain.model.Item
 
 import java.time.Instant
@@ -34,4 +37,14 @@ class CatalogueUser extends Item {
     byte[] password
     String tempPassword
 
+    @Relation(Relation.Kind.MANY_TO_MANY)
+    @JsonDeserialize(converter = CatalogueUserGroupsConverter)
+    Set<UserGroup> groups = []
+
+    static class CatalogueUserGroupsConverter extends StdConverter<List<UUID>, Set<UserGroup>> {
+        @Override
+        Set<UserGroup> convert(List<UUID> groupIds) {
+            groupIds.collect {new UserGroup(id: it)} as Set<UserGroup>
+        }
+    }
 }

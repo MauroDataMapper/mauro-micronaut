@@ -12,6 +12,8 @@ import io.micronaut.http.server.multipart.MultipartBody
 import io.micronaut.http.server.types.files.StreamedFile
 import io.micronaut.scheduling.TaskExecutors
 import io.micronaut.scheduling.annotation.ExecuteOn
+import io.micronaut.security.annotation.Secured
+import io.micronaut.security.rules.SecurityRule
 import io.micronaut.transaction.annotation.Transactional
 import uk.ac.ox.softeng.mauro.controller.model.ModelController
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
@@ -27,6 +29,7 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 @Slf4j
 @Controller
 @CompileStatic
+@Secured(SecurityRule.IS_AUTHENTICATED)
 class DataModelController extends ModelController<DataModel> {
 
     DataModelCacheableRepository dataModelRepository

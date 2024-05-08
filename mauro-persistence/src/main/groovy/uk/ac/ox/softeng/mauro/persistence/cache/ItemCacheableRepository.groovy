@@ -10,10 +10,12 @@ import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
 import uk.ac.ox.softeng.mauro.domain.model.Item
 import uk.ac.ox.softeng.mauro.domain.model.SummaryMetadataReport
 import uk.ac.ox.softeng.mauro.domain.security.CatalogueUser
+import uk.ac.ox.softeng.mauro.domain.security.SecurableResourceGroupRole
 import uk.ac.ox.softeng.mauro.domain.security.UserGroup
 import uk.ac.ox.softeng.mauro.persistence.model.ItemRepository
 import uk.ac.ox.softeng.mauro.persistence.model.SummaryMetadataReportRepository
 import uk.ac.ox.softeng.mauro.persistence.security.CatalogueUserRepository
+import uk.ac.ox.softeng.mauro.persistence.security.SecurableResourceGroupRoleRepository
 import uk.ac.ox.softeng.mauro.persistence.security.UserGroupRepository
 
 @Slf4j
@@ -115,6 +117,14 @@ abstract class ItemCacheableRepository<I extends Item> implements ItemRepository
     }
 
     // Cacheable Item Repository definitions
+
+    @Singleton
+    @CompileStatic
+    static class SecurableResourceGroupRoleCacheableRepository extends ItemCacheableRepository<SecurableResourceGroupRole> {
+        SecurableResourceGroupRoleCacheableRepository(SecurableResourceGroupRoleRepository securableResourceGroupRoleRepository) {
+            super(securableResourceGroupRoleRepository)
+        }
+    }
 
     @Singleton
     @CompileStatic

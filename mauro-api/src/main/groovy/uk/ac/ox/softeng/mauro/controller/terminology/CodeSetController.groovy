@@ -7,6 +7,8 @@ import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.*
 import io.micronaut.http.exceptions.HttpStatusException
+import io.micronaut.security.annotation.Secured
+import io.micronaut.security.rules.SecurityRule
 import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.controller.model.ModelController
@@ -25,6 +27,7 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 @Controller
 @CompileStatic
 @Slf4j
+@Secured(SecurityRule.IS_AUTHENTICATED)
 class CodeSetController extends ModelController<CodeSet> {
 
     ModelCacheableRepository.CodeSetCacheableRepository codeSetRepository

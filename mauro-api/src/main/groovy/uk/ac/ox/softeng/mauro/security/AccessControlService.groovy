@@ -59,13 +59,24 @@ class AccessControlService implements Toggleable {
     void checkAdministrator() {
         checkAuthenticated()
 
+        if (!administrator) {
+            throw new AuthorizationException(null)
+        }
+    }
+
+    /**
+     * @return true if user is an admin, false otherwise
+     */
+    boolean isAdministrator() {
+        if (!isUserAuthenticated()) return false
+
         List<UserGroup> userGroups = userGroupRepository.readAllByCatalogueUserId(userId)
 
         if (userGroups.any {UserGroup userGroup -> userGroup.applicationRole == ApplicationRole.ADMIN}) {
-            return
+            return true
         }
 
-        throw new AuthorizationException(null)
+        false
     }
 
     /**

@@ -6,6 +6,8 @@ import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.exceptions.HttpStatusException
+import io.micronaut.security.annotation.Secured
+import io.micronaut.security.rules.SecurityRule
 import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
@@ -16,6 +18,7 @@ import uk.ac.ox.softeng.mauro.persistence.model.PathRepository
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @CompileStatic
+@Secured(SecurityRule.IS_AUTHENTICATED)
 abstract class AdministeredItemController<I extends AdministeredItem, P extends AdministeredItem> extends ItemController<I> {
 
     /**

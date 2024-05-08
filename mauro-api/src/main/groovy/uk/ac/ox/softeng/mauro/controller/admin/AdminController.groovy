@@ -3,6 +3,8 @@ package uk.ac.ox.softeng.mauro.controller.admin
 import groovy.transform.CompileStatic
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Get
+import io.micronaut.security.annotation.Secured
+import io.micronaut.security.rules.SecurityRule
 import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.plugin.MauroPluginService
 import uk.ac.ox.softeng.mauro.plugin.exporter.ModelExporterPlugin
@@ -11,6 +13,7 @@ import uk.ac.ox.softeng.mauro.security.AccessControlService
 
 @CompileStatic
 @Controller('/admin')
+@Secured(SecurityRule.IS_AUTHENTICATED)
 class AdminController {
 
     @Inject

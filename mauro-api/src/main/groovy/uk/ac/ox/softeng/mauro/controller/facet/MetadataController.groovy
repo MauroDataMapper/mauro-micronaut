@@ -3,6 +3,8 @@ package uk.ac.ox.softeng.mauro.controller.facet
 import groovy.transform.CompileStatic
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Get
+import io.micronaut.security.annotation.Secured
+import io.micronaut.security.rules.SecurityRule
 import uk.ac.ox.softeng.mauro.domain.facet.Metadata
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.security.Role
@@ -11,6 +13,7 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @CompileStatic
 @Controller('/{domainType}/{domainId}/metadata')
+@Secured(SecurityRule.IS_AUTHENTICATED)
 class MetadataController extends FacetController<Metadata> {
 
     /**

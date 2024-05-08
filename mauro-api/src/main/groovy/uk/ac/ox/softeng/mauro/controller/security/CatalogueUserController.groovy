@@ -8,10 +8,14 @@ import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Post
 import io.micronaut.http.annotation.Put
 import io.micronaut.security.annotation.Secured
+import io.micronaut.security.authentication.AuthorizationException
 import io.micronaut.security.rules.SecurityRule
+import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.controller.model.ItemController
 import uk.ac.ox.softeng.mauro.domain.security.CatalogueUser
+import uk.ac.ox.softeng.mauro.domain.security.UserGroup
 import uk.ac.ox.softeng.mauro.persistence.cache.ItemCacheableRepository.CatalogueUserCacheableRepository
+import uk.ac.ox.softeng.mauro.persistence.security.UserGroupRepository
 import uk.ac.ox.softeng.mauro.security.utils.SecureRandomStringGenerator
 import uk.ac.ox.softeng.mauro.security.utils.SecurityUtils
 import uk.ac.ox.softeng.mauro.web.ChangePassword
@@ -24,11 +28,18 @@ class CatalogueUserController extends ItemController<CatalogueUser> {
 
     CatalogueUserCacheableRepository catalogueUserRepository
 
+    @Inject
+    UserGroupRepository userGroupRepository
+
     CatalogueUserController(CatalogueUserCacheableRepository catalogueUserRepository) {
         super(catalogueUserRepository)
         this.catalogueUserRepository = catalogueUserRepository
     }
 
+    @Override
+    List<String> getDisallowedProperties() {
+        super.getDisallowedProperties() + ['emailAddress', 'pending', 'disabled', 'resetToken', 'creationMethod', 'lastLogin', 'salt', 'password', 'tempPassword']
+    }
 
     @Post('/admin/catalogueUsers/adminRegister')
     CatalogueUser adminRegister(@Body @NonNull CatalogueUser newUser) {
@@ -57,5 +68,31 @@ class CatalogueUserController extends ItemController<CatalogueUser> {
         catalogueUserRepository.update(currentUser)
     }
 
-    @Put('/')
+    @Put('/catalogueUsers/{id}')
+    CatalogueUser update(@NonNull UUID id, @Body @NonNull CatalogueUser catalogueUser) {
+        Set<UserGroup> newGroups = catalogueUser.groups
+        catalogueUser.groups = null
+        cleanBody(catalogueUser)
+        CatalogueUser existing = catalogueUserRepository.readById(id)
+
+        if (!accessControlService.administrator || accessControlService.userId != existing.id) {
+            throw new AuthorizationException(accessControlService.userAuthentication)
+        }
+
+        boolean hasChanged = updateProperties(existing, catalogueUser)
+
+        if (hasChanged) {
+            catalogueUserRepository.update(existing)
+        }
+
+        List<UUID> existingUserGroupIds = userGroupRepository.readAllByCatalogueUserId(existing.id).id
+
+        List<UUID> newUserGroupIds = newGroups.collect {it.id}.findAll {it !in existingUserGroupIds}
+
+        newUserGroupIds.each {UUID userGroupId ->
+            userGroupRepository.addCatalogueUser(userGroupId, existing.id)
+        }
+
+        existing
+    }
 }

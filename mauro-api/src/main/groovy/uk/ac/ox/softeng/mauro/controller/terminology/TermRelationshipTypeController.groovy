@@ -5,6 +5,8 @@ import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.*
+import io.micronaut.security.annotation.Secured
+import io.micronaut.security.rules.SecurityRule
 import uk.ac.ox.softeng.mauro.controller.model.AdministeredItemController
 import uk.ac.ox.softeng.mauro.domain.terminology.TermRelationshipType
 import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
@@ -15,6 +17,7 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @CompileStatic
 @Controller('/terminologies/{terminologyId}/termRelationshipTypes')
+@Secured(SecurityRule.IS_AUTHENTICATED)
 class TermRelationshipTypeController extends AdministeredItemController<TermRelationshipType, Terminology> {
 
     TermRelationshipTypeController(TermRelationshipTypeCacheableRepository termRelationshipTypeRepository, TerminologyCacheableRepository terminologyRepository, TermRelationshipTypeContentRepository termRelationshipTypeContentRepository) {

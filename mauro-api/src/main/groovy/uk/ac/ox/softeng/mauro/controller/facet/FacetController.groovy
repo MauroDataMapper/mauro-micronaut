@@ -6,6 +6,8 @@ import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.*
 import io.micronaut.http.exceptions.HttpStatusException
+import io.micronaut.security.annotation.Secured
+import io.micronaut.security.rules.SecurityRule
 import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.controller.model.ItemController
@@ -17,6 +19,7 @@ import uk.ac.ox.softeng.mauro.persistence.cache.ItemCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.service.RepositoryService
 
 @CompileStatic
+@Secured(SecurityRule.IS_AUTHENTICATED)
 abstract class FacetController<I extends Facet> extends ItemController<I> {
 
     ItemCacheableRepository<I> facetRepository

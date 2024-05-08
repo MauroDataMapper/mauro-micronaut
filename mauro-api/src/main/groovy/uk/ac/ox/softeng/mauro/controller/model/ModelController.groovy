@@ -13,6 +13,8 @@ import io.micronaut.http.multipart.CompletedFileUpload
 import io.micronaut.http.multipart.CompletedPart
 import io.micronaut.http.server.multipart.MultipartBody
 import io.micronaut.http.server.types.files.StreamedFile
+import io.micronaut.security.annotation.Secured
+import io.micronaut.security.rules.SecurityRule
 import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
 import reactor.core.publisher.Flux
@@ -39,6 +41,7 @@ import java.nio.charset.StandardCharsets
 
 @Slf4j
 @CompileStatic
+@Secured(SecurityRule.IS_AUTHENTICATED)
 abstract class ModelController<M extends Model> extends AdministeredItemController<M, Folder> {
 
     @Override

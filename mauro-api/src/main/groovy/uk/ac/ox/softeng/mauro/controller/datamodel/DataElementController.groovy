@@ -5,6 +5,8 @@ import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.*
+import io.micronaut.security.annotation.Secured
+import io.micronaut.security.rules.SecurityRule
 import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.controller.model.AdministeredItemController
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
@@ -19,6 +21,7 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @CompileStatic
 @Controller('/dataModels/{dataModelId}/dataClasses/{dataClassId}/dataElements')
+@Secured(SecurityRule.IS_AUTHENTICATED)
 class DataElementController extends AdministeredItemController<DataElement, DataClass> {
 
     DataElementCacheableRepository dataElementRepository

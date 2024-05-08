@@ -5,6 +5,8 @@ import groovy.util.logging.Slf4j
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.*
 import io.micronaut.http.exceptions.HttpStatusException
+import io.micronaut.security.annotation.Secured
+import io.micronaut.security.rules.SecurityRule
 import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
 import reactor.util.annotation.NonNull
@@ -24,6 +26,7 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 @CompileStatic
 @Slf4j
 @Controller('/{domainType}/{domainId}/summaryMetadata/{summaryMetadataId}/summaryMetadataReports')
+@Secured(SecurityRule.IS_AUTHENTICATED)
 class SummaryMetadataReportController extends ItemController<SummaryMetadataReport> {
 
     @Inject
