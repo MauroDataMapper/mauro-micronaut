@@ -7,6 +7,9 @@ import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
 import groovy.transform.CompileStatic
 import groovy.transform.MapConstructor
 import io.micronaut.core.annotation.Introspected
+import uk.ac.ox.softeng.mauro.plugin.exporter.ModelExporterPlugin
+
+import java.time.Instant
 
 @CompileStatic
 @Introspected
@@ -23,6 +26,20 @@ class ExportModel {
 
     Folder folder
     List<Folder> folders = []
+
+    ExportModel() {
+
+    }
+
+    ExportModel(ModelExporterPlugin plugin) {
+        exportMetadata = new ExportMetadata(
+                namespace: plugin.namespace,
+                name: plugin.name,
+                version: plugin.version,
+                exportDate: Instant.now(),
+                exportedBy: "Anonymous User"
+        )
+    }
 
     /****
      * Methods for building a tree-like DSL

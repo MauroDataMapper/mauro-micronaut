@@ -182,7 +182,6 @@ class DataModelIntegrationSpec extends BaseIntegrationSpec {
 
         when:
         HttpStatus status = DELETE("/dataModels/$dataModelId/dataClasses/$dataClassId2/dataClasses/$dataClassId3", [label: 'Third data class (renamed)'], HttpStatus)
-        System.err.println(status)
         dataClassListResponse = (ListResponse<DataClass>) GET("/dataModels/$dataModelId/dataClasses/$dataClassId2/dataClasses", ListResponse<DataClass>)
         then:
         dataClassListResponse.count == 0
