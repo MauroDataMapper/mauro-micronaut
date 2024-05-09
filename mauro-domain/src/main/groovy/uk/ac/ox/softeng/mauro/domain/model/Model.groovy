@@ -11,6 +11,7 @@ import uk.ac.ox.softeng.mauro.domain.authority.Authority
 import uk.ac.ox.softeng.mauro.domain.diff.CollectionDTO
 import uk.ac.ox.softeng.mauro.domain.diff.DiffBuilder
 import uk.ac.ox.softeng.mauro.domain.diff.Diffable
+import uk.ac.ox.softeng.mauro.domain.diff.DiffableItem
 import uk.ac.ox.softeng.mauro.domain.diff.ObjectDiff
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.domain.model.version.ModelVersion
@@ -30,7 +31,7 @@ import java.time.Instant
  */
 @CompileStatic
 @Slf4j
-abstract class Model<M extends Diffable> extends AdministeredItem implements SecurableResource {
+abstract class Model<M extends DiffableItem> extends AdministeredItem implements SecurableResource {
 
     Boolean finalised = false
 

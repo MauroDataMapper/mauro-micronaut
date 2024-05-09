@@ -4,21 +4,18 @@ import com.fasterxml.jackson.annotation.JsonAlias
 import com.fasterxml.jackson.annotation.JsonIgnore
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
-import io.micronaut.data.annotation.Index
-import io.micronaut.data.annotation.Indexes
-import io.micronaut.data.annotation.MappedEntity
-import io.micronaut.data.annotation.Relation
-import io.micronaut.data.annotation.Transient
+import io.micronaut.data.annotation.*
 import uk.ac.ox.softeng.mauro.domain.diff.AnnotationDiff
 import uk.ac.ox.softeng.mauro.domain.diff.CollectionDiff
 import uk.ac.ox.softeng.mauro.domain.diff.DiffableItem
+import uk.ac.ox.softeng.mauro.domain.diff.ObjectDiff
 import uk.ac.ox.softeng.mauro.domain.security.CatalogueUser
 
 @CompileStatic
 @MappedEntity(value = 'annotation', schema = 'core', alias = 'annotation_')
 @AutoClone
 @Indexes([@Index(columns = ['multi_facet_aware_item_id'])])
-class Annotation extends Facet implements DiffableItem{
+class Annotation extends Facet {
 
     @JsonAlias(['parent_annotation_id'])
     UUID parentAnnotationId
@@ -35,8 +32,29 @@ class Annotation extends Facet implements DiffableItem{
     List<Annotation> childAnnotations
 
     @Override
+    @JsonIgnore
+    @Transient
     CollectionDiff fromItem() {
         println("Annotation: fromItem. id : $id")
         new AnnotationDiff(id, label)
     }
+
+    @Override
+    @JsonIgnore
+    @Transient
+    String getDiffIdentifier() {
+       label
+    }
+
+    @Override
+    @JsonIgnore
+    @Transient
+    ObjectDiff diff(DiffableItem other) {
+        return null
+    }
+
+//    @Override
+//    Integer getNumberOfDiffs() {
+//        return null
+//    }
 }

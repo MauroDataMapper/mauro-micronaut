@@ -12,11 +12,12 @@ import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.domain.model.SummaryMetadataReport
 import uk.ac.ox.softeng.mauro.persistence.ContainerizedTest
 import uk.ac.ox.softeng.mauro.testing.BaseIntegrationSpec
+import uk.ac.ox.softeng.mauro.testing.CommonDataSpec
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @ContainerizedTest
 @Sql(scripts = "classpath:sql/tear-down-summary-metadata.sql", phase = Sql.Phase.AFTER_EACH)
-class SummaryMetadataIntegrationSpec extends BaseIntegrationSpec {
+class SummaryMetadataIntegrationSpec extends CommonDataSpec {
 
     @Inject
     EmbeddedApplication<? extends EmbeddedApplication> application
@@ -44,7 +45,7 @@ class SummaryMetadataIntegrationSpec extends BaseIntegrationSpec {
 
     void 'create summaryMetadata'() {
         given:
-        summaryMetadataMap = [summaryMetadataType: SummaryMetadataType.STRING] as Map<String, String>
+        summaryMetadataMap = summaryMetadataPayload()
 
         when:
         SummaryMetadata summaryMetadata = (SummaryMetadata) POST("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH",
@@ -59,7 +60,7 @@ class SummaryMetadataIntegrationSpec extends BaseIntegrationSpec {
 
     void 'list summaryMetadata'() {
         given:
-        summaryMetadataMap = [summaryMetadataType: SummaryMetadataType.MAP] as Map<String, String>
+        summaryMetadataMap = summaryMetadataPayload()
         and:
         (SummaryMetadata) POST("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH", summaryMetadataMap, SummaryMetadata)
         when:
@@ -68,12 +69,13 @@ class SummaryMetadataIntegrationSpec extends BaseIntegrationSpec {
         then:
         response
         response.count == 1
-        response.items.first().summaryMetadataType as String == SummaryMetadataType.MAP.name()
+        response.items.first().summaryMetadataType as String == SummaryMetadataType.STRING.name()
     }
 
     void 'get summaryMetadata by Id'() {
         given:
-        summaryMetadataMap = [summaryMetadataType: SummaryMetadataType.MAP] as Map<String, String>
+        summaryMetadataMap = summaryMetadataPayload()
+
         and:
         SummaryMetadata summaryMetadata = (SummaryMetadata) POST("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH",
                 summaryMetadataMap, SummaryMetadata)
@@ -86,12 +88,12 @@ class SummaryMetadataIntegrationSpec extends BaseIntegrationSpec {
         then:
         saved
         saved.id == summaryMetadataId
-        saved.summaryMetadataType == SummaryMetadataType.MAP
+        saved.summaryMetadataType == SummaryMetadataType.STRING
     }
 
     void 'update summary metadata'() {
         given:
-        summaryMetadataMap = [summaryMetadataType: SummaryMetadataType.NUMBER] as Map<String, String>
+        summaryMetadataMap = summaryMetadataPayload()
 
         and:
         SummaryMetadata summaryMetadata = (SummaryMetadata) POST("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH",
@@ -109,7 +111,7 @@ class SummaryMetadataIntegrationSpec extends BaseIntegrationSpec {
 
     void 'delete SummaryMetadata'() {
         given:
-        summaryMetadataMap = [summaryMetadataType: SummaryMetadataType.MAP] as Map<String, String>
+        summaryMetadataMap = summaryMetadataPayload()
         and:
         SummaryMetadata summaryMetadata = (SummaryMetadata) POST("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH",
                 summaryMetadataMap, SummaryMetadata)
@@ -139,16 +141,16 @@ class SummaryMetadataIntegrationSpec extends BaseIntegrationSpec {
     void 'delete SummaryMetadata with reports'() {
         given:
         SummaryMetadata summaryMetadata = (SummaryMetadata) POST("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH",
-                [summaryMetadataType: SummaryMetadataType.MAP] , SummaryMetadata)
+                summaryMetadataPayload(), SummaryMetadata)
 
         and:
-        SummaryMetadataReport summaryMetadataReport1  = (SummaryMetadataReport) POST("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH/$summaryMetadata.id$SUMMARY_METADATA_REPORT_PATH",
+        SummaryMetadataReport summaryMetadataReport1 = (SummaryMetadataReport) POST("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH/$summaryMetadata.id$SUMMARY_METADATA_REPORT_PATH",
                 [reportValue: 'test-report-value-1'], SummaryMetadataReport)
-        SummaryMetadataReport summaryMetadataReport2 =(SummaryMetadataReport) POST("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH/$summaryMetadata.id$SUMMARY_METADATA_REPORT_PATH",
+        SummaryMetadataReport summaryMetadataReport2 = (SummaryMetadataReport) POST("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH/$summaryMetadata.id$SUMMARY_METADATA_REPORT_PATH",
                 [reportValue: 'test-report-value-2'], SummaryMetadataReport)
 
-        ListResponse<SummaryMetadataReport> savedReports = (ListResponse<SummaryMetadataReport>) GET ("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH/$summaryMetadata.id$SUMMARY_METADATA_REPORT_PATH",
-                ListResponse<SummaryMetadataReport> )
+        ListResponse<SummaryMetadataReport> savedReports = (ListResponse<SummaryMetadataReport>) GET("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH/$summaryMetadata.id$SUMMARY_METADATA_REPORT_PATH",
+                ListResponse<SummaryMetadataReport>)
         savedReports
         savedReports.count == 2
         savedReports.items.id == List.of(summaryMetadataReport1.id, summaryMetadataReport2.id)
@@ -167,8 +169,8 @@ class SummaryMetadataIntegrationSpec extends BaseIntegrationSpec {
         exception.status == HttpStatus.NOT_FOUND
 
         when:
-        (ListResponse<SummaryMetadataReport>) GET ("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH/$summaryMetadata.id$SUMMARY_METADATA_REPORT_PATH",
-                ListResponse<SummaryMetadataReport> )
+        (ListResponse<SummaryMetadataReport>) GET("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH/$summaryMetadata.id$SUMMARY_METADATA_REPORT_PATH",
+                ListResponse<SummaryMetadataReport>)
 
         then: '404 not found is returned, exception thrown'
         exception = thrown()

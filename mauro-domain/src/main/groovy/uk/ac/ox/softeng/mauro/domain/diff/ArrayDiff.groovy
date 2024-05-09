@@ -4,11 +4,11 @@ package uk.ac.ox.softeng.mauro.domain.diff
 import groovy.transform.CompileStatic
 
 @CompileStatic
-class ArrayDiff<K extends Diffable> extends FieldDiff<Collection<K>> {
+class ArrayDiff<K> extends FieldDiff<Collection<K>> {
 
-    Collection<CollectionDiff> created
-    Collection<CollectionDiff> deleted
-    Collection<CollectionDiff> modified
+    Collection<K> created
+    Collection<K> deleted
+    Collection<K> modified
 
     ArrayDiff() {
         created = []
@@ -16,14 +16,20 @@ class ArrayDiff<K extends Diffable> extends FieldDiff<Collection<K>> {
         modified = []
     }
 
-    ArrayDiff<K> createdObjects(Collection<CollectionDiff> created) {
+    ArrayDiff<K> createdObjects(Collection<K> created) {
         this.created = created
         this
     }
 
-    ArrayDiff<K> deletedObjects(Collection<CollectionDiff> deleted) {
+    ArrayDiff<K> deletedObjects(Collection<K> deleted) {
         this.deleted = deleted
         this
+    }
+
+    @Override
+    Integer getNumberOfDiffs() {
+        //  created.size() + deleted.size() + ((modified.sum { it.getNumberOfDiffs() } ?: 0) as Integer)
+        created.size() + deleted.size()
     }
 
 }

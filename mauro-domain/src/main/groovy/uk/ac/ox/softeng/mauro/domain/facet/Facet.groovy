@@ -5,14 +5,17 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
+import io.micronaut.core.annotation.Nullable
 import jakarta.persistence.Transient
-import uk.ac.ox.softeng.mauro.domain.diff.Diffable
+import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.Pattern
+import uk.ac.ox.softeng.mauro.domain.diff.DiffableItem
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.model.Item
 
 @CompileStatic
 @AutoClone
-abstract class Facet extends Item {
+abstract class Facet extends Item implements DiffableItem {
 
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     @JsonAlias(['multi_facet_aware_item_domain_type'])

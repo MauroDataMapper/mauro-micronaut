@@ -12,4 +12,5 @@ class AnnotationDiff extends CollectionDiff {
         super(id)
         this.label = label
     }
+
 }

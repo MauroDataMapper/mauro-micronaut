@@ -21,8 +21,8 @@ class DiffBuilder {
     static final List<String> IGNORE_KEYS = [ID_KEY, DATE_CREATED_KEY, LAST_UPDATED_KEY, DOMAIN_TYPE, CLASS_KEY, FOLDER_KEY]
     static final List<String> MODEL_COLLECTION_KEYS = [METADATA, ANNOTATION, RULE]
 
-    static <K extends Diffable> ArrayDiff<K> arrayDiff() {
-        new ArrayDiff<K>()
+    static <K> ArrayDiff arrayDiff() {
+        new ArrayDiff()
     }
 
     static CollectionDTO createCollectionDiff(List<String> collectionKeys, Map<String, Object> modelProperties) {
@@ -69,12 +69,11 @@ class DiffBuilder {
     }
 
     static ObjectDiff diff(Model lhs, Model rhs, CollectionDTO lhsCollectionDTO, CollectionDTO rhsCollectionDTO) {
-
         ObjectDiff baseDiff = buildBaseDiff(lhs, rhs)
-        buildCollection(baseDiff as ObjectDiff<Diffable>, lhsCollectionDTO, rhsCollectionDTO)
+        buildCollection(baseDiff as ObjectDiff<DiffableItem>, lhsCollectionDTO, rhsCollectionDTO)
     }
 
-    static <T extends Diffable> ObjectDiff buildStrings(ObjectDiff<T> objectDiff, Map<String, Object> lhsMap, Map<String, Object> rhsMap) {
+    static ObjectDiff buildStrings(ObjectDiff objectDiff, Map<String, Object> lhsMap, Map<String, Object> rhsMap) {
         lhsMap.each { k, v ->
             if (rhsMap[k] != v) {
                 FieldDiff fieldDiff = new FieldDiff(k as String, clean(v as String), clean(rhsMap[k] as String))
@@ -95,7 +94,7 @@ class DiffBuilder {
     }
 
 
-    static ObjectDiff buildCollection(ObjectDiff<Diffable> objectDiff, CollectionDTO lhsCollectionDTO, CollectionDTO rhsCollectionDTO) {
+    static ObjectDiff buildCollection(ObjectDiff<DiffableItem> objectDiff, CollectionDTO lhsCollectionDTO, CollectionDTO rhsCollectionDTO) {
         lhsCollectionDTO.fieldCollections.each {
             Collection<DiffableItem> rhsValue = getRhsCollection(it.key, rhsCollectionDTO)
 
@@ -111,16 +110,7 @@ class DiffBuilder {
     }
 
 
-    static <F> Object setLeft(F lhs) {
-        isAssignableFrom(lhs, String) ? clean(lhs as String) : lhs
-        this
-    }
 
-
-    static <F> Object setRight(F rhs) {
-        isAssignableFrom(rhs, String) ? clean(rhs as String) : rhs
-        this
-    }
 
     static boolean isAssignableFrom(Object value, Class aClass) {
         null != value && value.getClass().isAssignableFrom(aClass)

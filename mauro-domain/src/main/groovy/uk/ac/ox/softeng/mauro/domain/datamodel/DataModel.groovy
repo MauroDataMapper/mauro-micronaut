@@ -1,6 +1,7 @@
 package uk.ac.ox.softeng.mauro.domain.datamodel
 
 import com.fasterxml.jackson.annotation.JsonAlias
+import uk.ac.ox.softeng.mauro.domain.diff.ObjectDiff
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.model.Model
 import uk.ac.ox.softeng.mauro.domain.model.ModelItem
@@ -65,13 +66,11 @@ class DataModel extends Model {
         [dataTypes, enumerationValues, allDataClasses, dataElements]
     }
 
-
     @Transient
     @JsonIgnore
     List<DataClass> getChildDataClasses() {
         dataClasses
     }
-
 
     @Override
     DataModel clone() {
@@ -119,6 +118,9 @@ class DataModel extends Model {
     }
 
 
+    ObjectDiff diff(DataModel other){
+        super.diff(other)
+    }
 
     /****
      * Methods for building a tree-like DSL

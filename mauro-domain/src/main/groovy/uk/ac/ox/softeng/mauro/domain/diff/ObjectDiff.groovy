@@ -13,7 +13,7 @@ import uk.ac.ox.softeng.mauro.exception.MauroInternalException
 
 @CompileStatic
 @Introspected
-class ObjectDiff<T extends Diffable> {
+class ObjectDiff<T extends DiffableItem> {
     @JsonIgnore
     Class<T> targetClass
 
@@ -24,6 +24,7 @@ class ObjectDiff<T extends Diffable> {
     @JsonProperty("diffs")
     List<FieldDiff> diffs = []
 
+    boolean versionedDiff
 
     ObjectDiff(Class<T> targetClass, String leftId, String rightId) {
         this.targetClass = targetClass
@@ -31,42 +32,43 @@ class ObjectDiff<T extends Diffable> {
         this.rightId = rightId
     }
 
-
-    def <K extends Diffable> ObjectDiff<T> appendCollection(String name, Collection<DiffableItem> lhs, Collection<DiffableItem> rhs) {
-        ArrayDiff<K> diff = DiffBuilder.arrayDiff() as ArrayDiff<K>
+    def <K extends DiffableItem> ObjectDiff appendCollection(String name, Collection<DiffableItem> lhs, Collection<DiffableItem> rhs) {
+        ArrayDiff diff = DiffBuilder.arrayDiff() as ArrayDiff
         diff.name = name
         if (!lhs) {
-            List<CollectionDiff> collectionDiffs = []
-            rhs.each {
-                DiffableItem rhsDiffableItem = (DiffableItem) (it)
-                CollectionDiff collectionDiff = rhsDiffableItem.fromItem()
-                collectionDiffs.add(collectionDiff)
-            }
-            return append(diff.createdObjects(collectionDiffs) as FieldDiff<Diffable>)
+//            List<CollectionDiff> collectionDiffs = []
+//            rhs.each {
+//                DiffableItem rhsDiffableItem = (DiffableItem) (it)
+//                CollectionDiff collectionDiff = rhsDiffableItem.fromItem()
+//                collectionDiffs.add(collectionDiff)
+//            }
+            return append(diff.createdObjects(rhs))
+         //   return append(diff.createdObjects(collectionDiffs) as FieldDiff<DiffableItem>)
         }
 
         // If no rhs then all lhs have been deleted/removed
         if (!rhs) {
-            List<CollectionDiff> collectionDiffs = []
-            lhs.each {
-                DiffableItem lhsDiffableItem = (DiffableItem) (it)
-                CollectionDiff collectionDiff = lhsDiffableItem.fromItem()
-                collectionDiffs.add(collectionDiff)
-            }
-            return append(diff.deletedObjects(collectionDiffs) as FieldDiff<Diffable>)
+//            List<CollectionDiff> collectionDiffs = []
+//            lhs.each {
+//                DiffableItem lhsDiffableItem = (DiffableItem) (it)
+//                CollectionDiff collectionDiff = lhsDiffableItem.fromItem()
+//                collectionDiffs.add(collectionDiff)
+//            }
+          //  return append(diff.deletedObjects(collectionDiffs) as FieldDiff<DiffableItem>)
+            return append(diff.deletedObjects(lhs as Collection<K>) as FieldDiff)
         }
 
         Collection<K> deleted = []
-//        Collection<ObjectDiff> modified = []
-//
-//        // Assume all rhs have been created new
+        Collection<ObjectDiff> modified = []
+
+        // Assume all rhs have been created new
         List<Object> created = new ArrayList<>(rhs)
-//
-//        Map<String, K> lhsMap = lhs.collectEntries { [it.getDiffIdentifier(), it] }
-//        Map<String, K> rhsMap = rhs.collectEntries { [it.getDiffIdentifier(), it] }
-//        // This object diff is being performed on an object which has the concept of modelIdentifier, e.g branch name or version
-//        // If this is the case we want to make sure we ignore any versioning on sub contents as child versioning is controlled by the parent
-//        // This should only happen to models inside versioned folders, but we want to try and be more dynamic
+
+        Map<String, K> lhsMap = lhs.collectEntries { [it.getDiffIdentifier(), it] }
+        Map<String, K> rhsMap = rhs.collectEntries { [it.getDiffIdentifier(), it] }
+        // This object diff is being performed on an object which has the concept of modelIdentifier, e.g branch name or version
+        // If this is the case we want to make sure we ignore any versioning on sub contents as child versioning is controlled by the parent
+        // This should only happen to models inside versioned folders, but we want to try and be more dynamic
 //        if (isVersionedDiff()) {
 //            Path childPath = Path.from((MdmDomain) lhs.first())
 //            if (childPath.size() == 1 && childPath.first().modelIdentifier) {
@@ -84,15 +86,13 @@ class ObjectDiff<T extends Diffable> {
 //                // If robj then it exists and has not been created
 //                created.remove(rObj)
 //                // If we want to perform a diff on the actual elements themselves
-//                if (diffElements) {
-//                    ObjectDiff od = caching ?
-//                            lObj.diff(rObj, context, lhsDiffCache.getDiffCache(lObj.getPath()), rhsDiffCache.getDiffCache(rObj.getPath())) :
-//                            lObj.diff(rObj, context, null, null)
-//                    // If not equal then objects have been modified
-//                    if (!od.objectsAreIdentical()) {
-//                        modified.add(od)
-//                    }
+//
+//                ObjectDiff od = lObj.diff(rObj)
+//                // If not equal then objects have been modified
+//                if (!od.objectsAreIdentical()) {
+//                    modified.add(od)
 //                }
+//
 //            } else {
 //                // If no robj then object has been deleted from lhs
 //                deleted.add(lObj)
@@ -101,20 +101,28 @@ class ObjectDiff<T extends Diffable> {
 
         // if (created || deleted || modified || addIfEmpty) {
         if (created || deleted) {
-            append(diff.createdObjects(created as Collection<CollectionDiff>)
-                    .deletedObjects(deleted as Collection<Object> as Collection<CollectionDiff>)  as FieldDiff<Diffable>)
+            append(diff.createdObjects(created as FieldDiff as Collection)
+                    .deletedObjects(deleted as FieldDiff as Collection))
             //    .withModifiedDiffs(modified))
-
         }
         this
     }
 
-    def <K extends Diffable> ObjectDiff<T> append(FieldDiff<K> fieldDiff) {
+    def <K> ObjectDiff<T> append(FieldDiff<K> fieldDiff) {
         diffs.add(fieldDiff)
         this
 
     }
 
+    ObjectDiff<T> asVersionedDiff() {
+        versionedDiff = true
+        this
+    }
+
+//    @Override
+//    Integer getNumberOfDiffs() {
+//        diffs?.sum {it.getNumberOfDiffs()} as Integer ?: 0
+//    }
 
 }
 

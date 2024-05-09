@@ -37,7 +37,7 @@ class CommonDataSpec extends BaseIntegrationSpec{
         [label: label, description: description ]
     }
     def summaryMetadataPayload() {
-        [ summaryMetadataType: SummaryMetadataType.STRING]
+        [ summaryMetadataType: SummaryMetadataType.STRING, label: 'summary metadata label']
     }
     def metadataPayload() {
         [ namespace: 'org.example', key: 'example_key', value: 'example_value']
