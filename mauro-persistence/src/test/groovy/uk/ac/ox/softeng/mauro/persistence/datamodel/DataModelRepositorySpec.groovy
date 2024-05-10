@@ -5,10 +5,10 @@ import uk.ac.ox.softeng.mauro.domain.datamodel.DataElement
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
-import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
 import uk.ac.ox.softeng.mauro.persistence.ContainerizedTest
 import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository
+import uk.ac.ox.softeng.mauro.persistence.search.DataClassSearchDTO
 
 import jakarta.inject.Inject
 import spock.lang.Shared
@@ -25,7 +25,10 @@ class DataModelRepositorySpec extends Specification {
     ModelCacheableRepository.DataModelCacheableRepository dataModelRepository
 
     @Inject
-    AdministeredItemCacheableRepository.DataClassCacheableRepository dataClassRepository
+    AdministeredItemCacheableRepository.DataClassCacheableRepository dataClassCacheableRepository
+
+    @Inject
+    DataClassRepository dataClassRepository
 
     @Inject
     AdministeredItemCacheableRepository.DataElementCacheableRepository dataElementRepository
@@ -41,6 +44,9 @@ class DataModelRepositorySpec extends Specification {
 
     @Shared
     Folder myFirstFolder
+
+    @Shared
+    UUID dataModelId
 
     def TestDataModel() {
         given:
@@ -91,15 +97,16 @@ class DataModelRepositorySpec extends Specification {
                     }
                 }
             }
-            //dataModel.setAssociations()
+
         when:
             DataModel importedModel = dataModelContentRepository.saveWithContent(dataModel)
             importedModel = dataModelRepository.readById(importedModel.id)
+            dataModelId = importedModel.id
         then:
             importedModel.label == "An import model"
             importedModel.description == "The description goes here"
 
-            List<DataClass> allDataClasses = dataClassRepository.readAllByParent(importedModel)
+            List<DataClass> allDataClasses = dataClassCacheableRepository.readAllByParent(importedModel)
             allDataClasses.size() == 2
 
 
@@ -115,6 +122,57 @@ class DataModelRepositorySpec extends Specification {
 
 
 
+    }
+
+    def testSearch() {
+        setup:
+        DataModel importedModel = dataModelRepository.readById(dataModelId)
+        dataModelId = importedModel.id
+
+        /*
+        List<DataClass> allClasses = dataClassRepository.readAllByDataModel_Id(dataModelId)
+        then:
+        allClasses.size() == 3
+*/
+
+        expect:
+        dataClassRepository.readAllByDataModel_Id(dataModelId).each {
+            System.err.println(it.label)
+        }
+
+/*
+        then:
+        searchResults.each {
+            System.err.println("Rank: " + it.tsRank)
+        }
+
+        when:
+        searchResults = dataClassRepository.search("class")
+        then:
+        searchResults.size() == 3
+        searchResults.each {
+            System.err.println("Rank: " + it.tsRank)
+        }
+
+        when:
+        searchResults = dataClassRepository.search("first")
+        then:
+        searchResults.size() == 2
+        searchResults.label == ['First class', 'Twentieth class']
+
+        when:
+        searchResults = dataClassRepository.search("second")
+        then:
+        searchResults.size() == 1
+        searchResults.label == ['Second class']
+
+        when:
+        searchResults = dataClassRepository.search("nothing")
+        then:
+        searchResults.size() == 0
+
+
+ */
     }
 
 

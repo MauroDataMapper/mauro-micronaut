@@ -5,6 +5,7 @@ import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.persistence.datamodel.dto.DataClassDTORepository
 import uk.ac.ox.softeng.mauro.persistence.model.ModelItemRepository
+import uk.ac.ox.softeng.mauro.persistence.search.DataClassSearchDTO
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
@@ -43,6 +44,9 @@ abstract class DataClassRepository implements ModelItemRepository<DataClass> {
     @Nullable
     abstract List<DataClass> readAllByDataModel(DataModel dataModel)
 
+    @Nullable
+    abstract List<DataClass> readAllByDataModel_Id(UUID dataModelId)
+
 
     @Nullable
     abstract List<DataClass> readAllByParentDataClass_Id(UUID dataClassId)
@@ -74,5 +78,10 @@ abstract class DataClassRepository implements ModelItemRepository<DataClass> {
     Boolean handles(String domainType) {
         domainClass.simpleName.equalsIgnoreCase(domainType) || (domainClass.simpleName + 'es').equalsIgnoreCase(domainType)
     }
+
+
+    @Query(value = "select *, ts_rank(ts, to_tsquery('english', :searchTerm)) as ts_rank FROM datamodel.data_class WHERE ts @@ to_tsquery('english', :searchTerm) order by to_tsquery('english', :searchTerm)",
+    nativeQuery = true)
+    abstract List<DataClassSearchDTO> search(String searchTerm)
 }
 
