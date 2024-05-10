@@ -50,8 +50,14 @@ class DataModel extends Model {
         'dm'
     }
 
+    @Override
+    String getModelType() {
+        this.@modelType?:DataModelType.DATA_STANDARD
+    }
+
+
     void setModelType(String modelType) {
-        modelType = DataModelType.values().find {it.label.toLowerCase() == modelType.toLowerCase()}?.label
+        this.@modelType = DataModelType.values().find {it.label.toLowerCase() == modelType.toLowerCase()}?.label
     }
 
 

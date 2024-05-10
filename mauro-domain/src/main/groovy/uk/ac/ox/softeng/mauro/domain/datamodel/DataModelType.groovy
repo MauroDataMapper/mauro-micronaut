@@ -10,6 +10,7 @@ enum DataModelType {
         this.label = name
     }
 
+    @Override
     String toString() {
         label
     }

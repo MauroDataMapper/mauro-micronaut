@@ -39,7 +39,7 @@ abstract class Model extends AdministeredItem implements SecurableResource {
     Boolean readableByAuthenticatedUsers = false
 
     @JsonAlias('type')
-    String modelType = domainType
+    public String modelType
 
     @Nullable
     String organisation
@@ -84,6 +84,10 @@ abstract class Model extends AdministeredItem implements SecurableResource {
     @JsonIgnore
     Model getOwner() {
         this
+    }
+
+    String getModelType() {
+        this.@modelType?:domainType
     }
 
     @Override

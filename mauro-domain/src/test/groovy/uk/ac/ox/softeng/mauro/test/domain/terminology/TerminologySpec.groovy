@@ -55,6 +55,8 @@ class TerminologySpec extends Specification {
         testTerminology.termRelationshipTypes.size() == 1
         testTerminology.termRelationships.size() == 2
 
+        testTerminology.modelType == 'Terminology'
+
         testTerminology.termRelationships.each {termRelationship ->
             termRelationship.sourceTerm.code == "B15"
             ["B15.0", "B15.9"].contains(termRelationship.targetTerm.code)

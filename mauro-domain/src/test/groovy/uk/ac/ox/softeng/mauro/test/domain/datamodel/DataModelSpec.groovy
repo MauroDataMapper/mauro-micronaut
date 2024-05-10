@@ -2,6 +2,7 @@ package uk.ac.ox.softeng.mauro.test.domain.datamodel
 
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataModelType
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
 import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
 
@@ -133,6 +134,25 @@ class DataModelSpec extends Specification {
         dataClass3.extendsDataClasses.size() == 1
         dataClass3.extendsDataClasses.first() == dataClass1
 
+    }
+
+    def testModelType() {
+
+        when:
+        DataModel dm1 = DataModel.build {
+            modelType DataModelType.DATA_STANDARD
+        }
+
+        DataModel dm2 = DataModel.build {
+            modelType DataModelType.DATA_ASSET
+        }
+        DataModel dm3 = DataModel.build {
+        }
+
+        then:
+        dm1.modelType == 'Data Standard'
+        dm2.modelType == 'Data Asset'
+        dm3.modelType == 'Data Standard'
     }
 
 }
