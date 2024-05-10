@@ -1,5 +1,6 @@
 package uk.ac.ox.softeng.mauro.domain.model
 
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
 import uk.ac.ox.softeng.mauro.domain.facet.Annotation
 import uk.ac.ox.softeng.mauro.domain.facet.Metadata
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
@@ -267,6 +268,16 @@ abstract class AdministeredItem extends Item {
         this.aliasesString
     }
 
+    String alias(String alias) {
+        this.aliasesString += ";$aliasesString"
+        alias
+    }
+
+    String aliases(List<String> aliases) {
+        this.aliasesString = aliases?.join(";")
+        this.aliasesString
+    }
+
     /**
      * DSL helper method for setting the createdBy field.  Returns the createdBy string passed in.
      *
@@ -275,5 +286,25 @@ abstract class AdministeredItem extends Item {
     String createdBy(String createdBy) {
         this.createdBy = createdBy
         this.createdBy
+    }
+
+    Metadata metadata(Map args, @DelegatesTo(value = Metadata, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
+        Metadata metadata = Metadata.build(args + [multiFacetAwareItem: this], closure)
+        this.metadata.add(metadata)
+        metadata
+    }
+
+    Metadata metadata(@DelegatesTo(value = Metadata, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
+        metadata [:], closure
+    }
+
+    Annotation annotation(Map args, @DelegatesTo(value = Annotation, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
+        Annotation annotation = Annotation.build(args + [multiFacetAwareItem: this], closure)
+        this.annotations.add(annotation)
+        annotation
+    }
+
+    Annotation annotation(@DelegatesTo(value = Annotation, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
+        annotation [:], closure
     }
 }
