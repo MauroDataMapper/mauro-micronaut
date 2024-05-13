@@ -10,7 +10,7 @@ import jakarta.persistence.Transient
 import uk.ac.ox.softeng.mauro.domain.authority.Authority
 import uk.ac.ox.softeng.mauro.domain.diff.CollectionDTO
 import uk.ac.ox.softeng.mauro.domain.diff.DiffBuilder
-import uk.ac.ox.softeng.mauro.domain.diff.Diffable
+
 import uk.ac.ox.softeng.mauro.domain.diff.DiffableItem
 import uk.ac.ox.softeng.mauro.domain.diff.ObjectDiff
 import uk.ac.ox.softeng.mauro.domain.folder.Folder

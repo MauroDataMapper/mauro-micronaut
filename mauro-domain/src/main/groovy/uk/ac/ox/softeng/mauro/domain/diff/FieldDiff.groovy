@@ -1,6 +1,7 @@
 package uk.ac.ox.softeng.mauro.domain.diff
 
 import com.fasterxml.jackson.annotation.JsonCreator
+import com.fasterxml.jackson.annotation.JsonIgnore
 import groovy.transform.CompileStatic
 
 @CompileStatic
@@ -19,7 +20,7 @@ class FieldDiff<F> {
         this.right = right
     }
 
-
+    @JsonIgnore
     Integer getNumberOfDiffs() {
         1
     }

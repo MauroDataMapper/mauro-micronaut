@@ -17,7 +17,7 @@ import uk.ac.ox.softeng.mauro.domain.model.SummaryMetadataReport
 @MappedEntity(value = 'summary_metadata', schema = 'core', alias = 'summary_metadata_')
 @AutoClone
 @Indexes([@Index(columns = ['multi_facet_oaware_item_id'])])
-class SummaryMetadata extends Facet{
+class SummaryMetadata extends Facet implements DiffableItem<SummaryMetadata> {
 
     @NotBlank
     @Pattern(regexp = /[^\$@|]*/, message = 'Cannot contain $, | or @')
@@ -38,17 +38,20 @@ class SummaryMetadata extends Facet{
         return null
     }
 
+
     @Override
     @JsonIgnore
     @Transient
     String getDiffIdentifier() {
+        //toDo
         return null
     }
 
     @Override
     @JsonIgnore
     @Transient
-    ObjectDiff diff(DiffableItem other) {
+    ObjectDiff<SummaryMetadata> diff(SummaryMetadata other) {
+        //todo
         return null
     }
 }

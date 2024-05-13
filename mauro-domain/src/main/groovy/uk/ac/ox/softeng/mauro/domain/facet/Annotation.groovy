@@ -15,7 +15,7 @@ import uk.ac.ox.softeng.mauro.domain.security.CatalogueUser
 @MappedEntity(value = 'annotation', schema = 'core', alias = 'annotation_')
 @AutoClone
 @Indexes([@Index(columns = ['multi_facet_aware_item_id'])])
-class Annotation extends Facet {
+class Annotation extends Facet implements DiffableItem<Annotation>{
 
     @JsonAlias(['parent_annotation_id'])
     UUID parentAnnotationId
@@ -35,7 +35,6 @@ class Annotation extends Facet {
     @JsonIgnore
     @Transient
     CollectionDiff fromItem() {
-        println("Annotation: fromItem. id : $id")
         new AnnotationDiff(id, label)
     }
 
@@ -49,12 +48,8 @@ class Annotation extends Facet {
     @Override
     @JsonIgnore
     @Transient
-    ObjectDiff diff(DiffableItem other) {
+    ObjectDiff<Annotation> diff(Annotation other) {
+        //todo
         return null
     }
-
-//    @Override
-//    Integer getNumberOfDiffs() {
-//        return null
-//    }
 }
