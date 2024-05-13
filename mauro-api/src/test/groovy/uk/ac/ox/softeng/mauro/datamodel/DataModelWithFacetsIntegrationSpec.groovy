@@ -77,22 +77,7 @@ class DataModelWithFacetsIntegrationSpec extends CommonDataSpec {
         childAnnotationId = childResp.id
     }
 
-    void 'test foo'(){
-
-        given:
-        DataModel retrieved = (DataModel) GET("$DATAMODELS_PATH/$dataModelId", DataModel)
-        DataModel other  = (DataModel) POST("$FOLDERS_PATH/$folderId$DATAMODELS_PATH", [label: 'Test other data model', description: 'test other description', author: 'test author other'], DataModel)
-
-        when:
-        ObjectDiff diff = (ObjectDiff) GET("$DATAMODELS_PATH/$dataModelId/diff/$other.id", ObjectDiff)
-        then:
-
-        diff
-
-        println(" toString: " + diff.toString())
-    }
-
-
+   
     void 'test get data model with facets - should return all nested facets'() {
         when:
         DataModel retrieved = (DataModel) GET("$DATAMODELS_PATH/$dataModelId", DataModel)
