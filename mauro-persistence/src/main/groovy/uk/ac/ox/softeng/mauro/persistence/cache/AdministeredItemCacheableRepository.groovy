@@ -151,6 +151,12 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
         DataElementCacheableRepository(DataElementRepository dataElementRepository) {
             super(dataElementRepository)
         }
+
+        // not cached
+        List<DataElement> readAllByDataClass_Id(UUID dataClassId) {
+            ((DataElementRepository) repository).readAllByDataClassId(dataClassId)
+        }
+
     }
 
     @Singleton

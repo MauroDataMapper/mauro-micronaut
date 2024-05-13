@@ -59,12 +59,12 @@ jobs:
         path: '**/build/test-results/**/*.xml'
         reporter: java-junit
 
-    - name: Archive test report
-      if: always()
-      uses: actions/upload-artifact@v3
-      with:
-        name: test-report
-        path: '**/build/test-results/**/*.xml'
+#    - name: Archive test report
+#      if: always()
+#      uses: actions/upload-artifact@v3
+#      with:
+#        name: test-report
+#        path: '**/build/test-results/**/*.xml'
 
     - name: MegaLinter
       uses: oxsecurity/megalinter/flavors/ci_light@v7
@@ -87,14 +87,14 @@ jobs:
 
 
     # Upload MegaLinter artifacts
-    - name: Archive lint reports
-      if: ${{ success() }} || ${{ failure() }}
-      uses: actions/upload-artifact@v3
-      with:
-        name: MegaLinter reports
-        path: |
-          megalinter-reports
-          mega-linter.log
+#    - name: Archive lint reports
+#      if: ${{ success() }} || ${{ failure() }}
+#      uses: actions/upload-artifact@v3
+#      with:
+#        name: MegaLinter reports
+#        path: |
+#          megalinter-reports
+#          mega-linter.log
 
     - name: Send a stream message
       if: ${{ success() }} || ${{ failure() }}

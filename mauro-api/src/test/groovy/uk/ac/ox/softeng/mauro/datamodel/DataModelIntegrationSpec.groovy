@@ -1,6 +1,8 @@
 package uk.ac.ox.softeng.mauro.datamodel
 
+import io.micronaut.http.HttpStatus
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataElement
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
 import uk.ac.ox.softeng.mauro.domain.datamodel.EnumerationValue
@@ -45,6 +47,15 @@ class DataModelIntegrationSpec extends BaseIntegrationSpec {
 
     @Shared
     UUID dataClassId3
+
+    @Shared
+    UUID dataElementId1
+
+    @Shared
+    UUID dataElementId2
+
+    @Shared
+    UUID enumerationValueId
 
     void 'test data model'() {
 
@@ -149,17 +160,80 @@ class DataModelIntegrationSpec extends BaseIntegrationSpec {
         // TODO: Make this work!
         // dataClassListResponse.items.path.sort().collect {it.toString()} == ['dm:Test data model$main|dc:Second data class|dc:Third data class (renamed)']
 
-/*  todo
         when:
-        Map response = DELETE("/dataModels/$dataModelId/dataClasses/$dataClassId2/dataClasses/$dataClassId3", [label: 'Third data class (renamed)'])
-        System.err.println(response)
+        HttpStatus status = DELETE("/dataModels/$dataModelId/dataClasses/$dataClassId2/dataClasses/$dataClassId3", [label: 'Third data class (renamed)'], HttpStatus)
+        System.err.println(status)
         dataClassListResponse = (ListResponse<DataClass>) GET("/dataModels/$dataModelId/dataClasses/$dataClassId2/dataClasses", ListResponse<DataClass>)
         then:
         dataClassListResponse.count == 0
-*/
+
+    }
+
+
+    void 'test data elements'() {
+        when:
+        ListResponse<DataElement> dataElementListResponse = (ListResponse<DataElement>) GET("/dataModels/$dataModelId/dataClasses/$dataClassId1/dataElements")
+        then:
+        dataElementListResponse.count == 0
+
+        when:
+        DataElement dataElementResponse = (DataElement) POST("/dataModels/$dataModelId/dataClasses/$dataClassId1/dataElements", [label: 'First data element', description: 'The first data element', dataType: [id: dataTypeId1]], DataElement)
+        dataElementId1 = dataElementResponse.id
+
+        then:
+        dataElementResponse.label == 'First data element'
+
+        when:
+        dataElementListResponse = (ListResponse<DataElement>) GET("/dataModels/$dataModelId/dataClasses/$dataClassId1/dataElements")
+
+        then:
+        dataElementListResponse.count == 1
+
+        when:
+        dataElementResponse = (DataElement) POST("/dataModels/$dataModelId/dataClasses/$dataClassId1/dataElements", [label: 'Second data element', description: 'The second data element', dataType: [id: dataTypeId2]], DataElement)
+        dataElementId2 = dataElementResponse.id
+
+        then:
+        dataElementResponse.label == 'Second data element'
+
+        when:
+        dataElementListResponse = (ListResponse<DataElement>) GET("/dataModels/$dataModelId/dataClasses/$dataClassId1/dataElements")
+
+        then:
+        dataElementListResponse.count == 2
+        dataElementListResponse.items.label.sort() == ['First data element', 'Second data element']
+
+        when:
+        dataElementResponse = (DataElement) PUT("/dataModels/$dataModelId/dataClasses/$dataClassId1/dataElements/$dataElementId1", [label: 'Renamed data element', description: 'The second data element', dataType: [id: dataTypeId2]], DataElement)
+
+        then:
+        dataElementResponse.label == 'Renamed data element'
+
+        when:
+        dataElementListResponse = (ListResponse<DataElement>) GET("/dataModels/$dataModelId/dataClasses/$dataClassId1/dataElements")
+
+        then:
+        dataElementListResponse.count == 2
+        dataElementListResponse.items.label.sort() == ['Renamed data element', 'Second data element']
+
+        when:
+        HttpStatus status = (HttpStatus) DELETE("/dataModels/$dataModelId/dataClasses/$dataClassId1/dataElements/$dataElementId2", [label: ''], HttpStatus)
+
+        then:
+        status == HttpStatus.NO_CONTENT
+
+        when:
+        dataElementListResponse = (ListResponse<DataElement>) GET("/dataModels/$dataModelId/dataClasses/$dataClassId1/dataElements")
+
+        then:
+        dataElementListResponse.count == 1
+        dataElementListResponse.items.label.sort() == ['Renamed data element']
+
+
 
 
     }
+
 
     void 'test enumeration values'() {
         when:
@@ -171,6 +245,7 @@ class DataModelIntegrationSpec extends BaseIntegrationSpec {
 
         when:
         EnumerationValue enumerationValueResponse = (EnumerationValue) POST("/dataModels/$dataModelId/dataTypes/$enumerationTypeId/enumerationValues", [key: 'T', value: 'True'], EnumerationValue)
+        enumerationValueId = enumerationValueResponse.id
 
         then:
         enumerationValueResponse.label == 'T'
@@ -191,6 +266,24 @@ class DataModelIntegrationSpec extends BaseIntegrationSpec {
 
         enumerationValueListResponse.items.find { it -> it.key == 'T' } != null
         enumerationValueListResponse.items.find { it -> it.key == 'F' } != null
+
+        when:
+        enumerationValueResponse = (EnumerationValue) PUT("/dataModels/$dataModelId/dataTypes/$enumerationTypeId/enumerationValues/$enumerationValueId", [key: 'R', value: 'Renamed'], EnumerationValue)
+
+        then:
+        enumerationValueResponse.label == 'R'
+        enumerationValueResponse.domainType == 'EnumerationValue'
+
+        when:
+        enumerationValueListResponse = (ListResponse<EnumerationValue>) GET("/dataModels/$dataModelId/dataTypes/$enumerationTypeId/enumerationValues", ListResponse<EnumerationValue>)
+
+        then:
+        enumerationValueListResponse.count == 2
+
+        enumerationValueListResponse.items.find { it -> it.key == 'R' } != null
+        enumerationValueListResponse.items.find { it -> it.key == 'F' } != null
+
+
 
     }
 
