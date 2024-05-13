@@ -80,7 +80,7 @@ abstract class DataClassRepository implements ModelItemRepository<DataClass> {
     }
 
 
-    @Query(value = "select *, ts_rank(ts, to_tsquery('english', :searchTerm)) as ts_rank FROM datamodel.data_class WHERE ts @@ to_tsquery('english', :searchTerm) order by to_tsquery('english', :searchTerm)",
+    @Query(value = "select *, ts_rank(ts, to_tsquery('english', :searchTerm)) as ts_rank FROM datamodel.data_class WHERE ts @@ to_tsquery('english', :searchTerm) order by ts_rank(ts, to_tsquery('english', :searchTerm)) desc",
     nativeQuery = true)
     abstract List<DataClassSearchDTO> search(String searchTerm)
 }
