@@ -62,6 +62,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
 
     ModelContentRepository<M> modelContentRepository
 
+    @Inject
     ModelService<M> modelService
 
     @Inject
@@ -166,8 +167,6 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     M showNested(UUID uuid) {
         administeredItemRepository.findById(uuid)
     }
-
-
 
 
     <P extends ImportParameters> P readFromMultipartFormBody(MultipartBody body, Class<P> parametersClass) {
