@@ -75,3 +75,30 @@ ALTER TABLE core.folder ADD COLUMN ts tsvector
          setweight(to_tsvector('english', coalesce(description, '')), 'B')) STORED;
 
 CREATE INDEX folder_ts_idx ON core.folder USING GIN (ts);
+
+/* Create a generalised aggregation function to take a set of tsvectors and combine them into a single tsvector */
+CREATE AGGREGATE core.tsvector_agg(tsvector) (
+    STYPE = pg_catalog.tsvector,
+    SFUNC = pg_catalog.tsvector_concat,
+    INITCOND = ''
+    );
+
+create view core.search_domains as (
+    select id, 'DataType' as domain_type, label, description, ts, date_created, last_updated FROM datamodel.data_type
+    union
+    select id, 'DataClass' as domain_type, label, description, ts, date_created, last_updated FROM datamodel.data_class
+    union
+    select id, 'DataElement' as domain_type, label, description, ts, date_created, last_updated FROM datamodel.data_element
+    union
+    select id, 'DataModel' as domain_type, label, description, ts, date_created, last_updated FROM datamodel.data_model
+    union
+    select id, 'EnumerationValue' as domain_type, label, description, ts, date_created, last_updated FROM datamodel.enumeration_value
+    union
+    select id, 'Terminology' as domain_type, label, description, ts, date_created, last_updated FROM terminology.terminology
+    union
+    select id, 'Term' as domain_type, label, description, ts, date_created, last_updated FROM terminology.term
+    union
+    select id, 'CodeSet' as domain_type, label, description, ts, date_created, last_updated FROM terminology.code_set
+    union
+    select id, 'Folder' as domain_type, label, description, ts, date_created, last_updated FROM core.folder
+);

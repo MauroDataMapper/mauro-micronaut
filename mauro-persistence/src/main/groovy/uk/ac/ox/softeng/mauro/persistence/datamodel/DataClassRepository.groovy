@@ -5,12 +5,10 @@ import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.persistence.datamodel.dto.DataClassDTORepository
 import uk.ac.ox.softeng.mauro.persistence.model.ModelItemRepository
-import uk.ac.ox.softeng.mauro.persistence.search.DataClassSearchDTO
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.Nullable
-import io.micronaut.data.annotation.Query
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.model.query.builder.sql.Dialect
 import jakarta.inject.Inject
@@ -79,9 +77,5 @@ abstract class DataClassRepository implements ModelItemRepository<DataClass> {
         domainClass.simpleName.equalsIgnoreCase(domainType) || (domainClass.simpleName + 'es').equalsIgnoreCase(domainType)
     }
 
-
-    @Query(value = "select *, ts_rank(ts, to_tsquery('english', :searchTerm)) as ts_rank FROM datamodel.data_class WHERE ts @@ to_tsquery('english', :searchTerm) order by ts_rank(ts, to_tsquery('english', :searchTerm)) desc",
-    nativeQuery = true)
-    abstract List<DataClassSearchDTO> search(String searchTerm)
 }
 
