@@ -22,7 +22,6 @@ class FieldDiff<F> {
 
     @JsonIgnore
     Integer getNumberOfDiffs() {
-        1
+      1
     }
-
 }
