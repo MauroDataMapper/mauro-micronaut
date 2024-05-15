@@ -45,6 +45,7 @@ class DataModelController extends ModelController<DataModel> {
         super(DataModel, dataModelRepository, folderRepository, dataModelContentRepository)
         this.dataModelRepository = dataModelRepository
         this.dataModelContentRepository = dataModelContentRepository
+        super.modelService = this.dataModelService
     }
 
     @Get('/dataModels/{id}')

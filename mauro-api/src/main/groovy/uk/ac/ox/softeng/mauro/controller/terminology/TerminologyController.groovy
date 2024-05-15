@@ -46,6 +46,7 @@ class TerminologyController extends ModelController<Terminology> {
         super(Terminology, terminologyRepository, folderRepository, terminologyContentRepository)
         this.terminologyRepository = terminologyRepository
         this.terminologyContentRepository = terminologyContentRepository
+        super.modelService = terminologyService
     }
 
     @Secured(SecurityRule.IS_AUTHENTICATED)
