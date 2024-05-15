@@ -44,6 +44,7 @@ class CodeSetController extends ModelController<CodeSet> {
         super(CodeSet, codeSetRepository, folderRepository, codeSetContentRepository)
         this.codeSetRepository = codeSetRepository
         this.codeSetContentRepository = codeSetContentRepository
+        super.modelService = codeSetService
     }
 
     @Get(value = Paths.CODE_SET_BY_ID)
