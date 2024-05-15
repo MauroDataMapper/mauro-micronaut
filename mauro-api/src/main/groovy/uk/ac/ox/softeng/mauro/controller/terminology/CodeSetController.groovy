@@ -1,6 +1,5 @@
 package uk.ac.ox.softeng.mauro.controller.terminology
 
-
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
@@ -37,13 +36,14 @@ class CodeSetController extends ModelController<CodeSet> {
     @Inject
     AdministeredItemCacheableRepository.TermCacheableRepository termRepository
 
-    @Inject
     CodeSetService codeSetService
 
-    CodeSetController(ModelCacheableRepository.CodeSetCacheableRepository codeSetRepository, ModelCacheableRepository.FolderCacheableRepository folderRepository, CodeSetContentRepository codeSetContentRepository) {
-        super(CodeSet, codeSetRepository, folderRepository, codeSetContentRepository)
+    CodeSetController(ModelCacheableRepository.CodeSetCacheableRepository codeSetRepository, ModelCacheableRepository.FolderCacheableRepository folderRepository, CodeSetContentRepository codeSetContentRepository,
+                      CodeSetService  codeSetService) {
+        super(CodeSet, codeSetRepository, folderRepository, codeSetContentRepository ,codeSetService)
         this.codeSetRepository = codeSetRepository
         this.codeSetContentRepository = codeSetContentRepository
+        this.codeSetService = codeSetService
     }
 
     @Get(value = Paths.CODE_SET_BY_ID)

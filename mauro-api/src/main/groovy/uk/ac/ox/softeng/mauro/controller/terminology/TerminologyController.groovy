@@ -1,6 +1,5 @@
 package uk.ac.ox.softeng.mauro.controller.terminology
 
-
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
@@ -15,7 +14,6 @@ import io.micronaut.security.annotation.Secured
 import io.micronaut.security.authentication.Authentication
 import io.micronaut.security.rules.SecurityRule
 import io.micronaut.transaction.annotation.Transactional
-import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.controller.model.ModelController
 import uk.ac.ox.softeng.mauro.domain.model.version.CreateNewVersionData
 import uk.ac.ox.softeng.mauro.domain.model.version.FinaliseData
@@ -39,13 +37,14 @@ class TerminologyController extends ModelController<Terminology> {
 
     TerminologyContentRepository terminologyContentRepository
 
-    @Inject
     TerminologyService terminologyService
 
-    TerminologyController(TerminologyCacheableRepository terminologyRepository, FolderCacheableRepository folderRepository, TerminologyContentRepository terminologyContentRepository) {
-        super(Terminology, terminologyRepository, folderRepository, terminologyContentRepository)
+    TerminologyController(TerminologyCacheableRepository terminologyRepository, FolderCacheableRepository folderRepository, TerminologyContentRepository terminologyContentRepository,
+    TerminologyService terminologyService) {
+        super(Terminology, terminologyRepository, folderRepository, terminologyContentRepository, terminologyService)
         this.terminologyRepository = terminologyRepository
         this.terminologyContentRepository = terminologyContentRepository
+        this.terminologyService = terminologyService
     }
 
     @Secured(SecurityRule.IS_AUTHENTICATED)

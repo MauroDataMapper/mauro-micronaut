@@ -62,6 +62,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
 
     ModelContentRepository<M> modelContentRepository
 
+
     ModelService<M> modelService
 
     @Inject
@@ -74,6 +75,12 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         this.parentItemRepository = folderRepository
         this.modelContentRepository = modelContentRepository
         this.administeredItemContentRepository = modelContentRepository
+    }
+
+    ModelController(Class<M> modelClass, AdministeredItemCacheableRepository<M> modelRepository, FolderCacheableRepository folderRepository,
+                    ModelContentRepository<M> modelContentRepository, ModelService modelService) {
+        this(modelClass, modelRepository, folderRepository, modelContentRepository)
+        this.modelService = modelService
     }
 
     M show(UUID id) {
@@ -166,8 +173,6 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     M showNested(UUID uuid) {
         administeredItemRepository.findById(uuid)
     }
-
-
 
 
     <P extends ImportParameters> P readFromMultipartFormBody(MultipartBody body, Class<P> parametersClass) {
