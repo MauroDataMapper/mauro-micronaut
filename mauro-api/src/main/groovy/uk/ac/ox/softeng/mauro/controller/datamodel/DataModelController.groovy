@@ -1,6 +1,5 @@
 package uk.ac.ox.softeng.mauro.controller.datamodel
 
-
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
@@ -13,7 +12,6 @@ import io.micronaut.http.server.multipart.MultipartBody
 import io.micronaut.scheduling.TaskExecutors
 import io.micronaut.scheduling.annotation.ExecuteOn
 import io.micronaut.transaction.annotation.Transactional
-import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.controller.model.ModelController
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModelService
@@ -37,15 +35,14 @@ class DataModelController extends ModelController<DataModel> {
 
     DataModelContentRepository dataModelContentRepository
 
-    @Inject
     DataModelService dataModelService
 
-
-    DataModelController(DataModelCacheableRepository dataModelRepository, FolderCacheableRepository folderRepository, DataModelContentRepository dataModelContentRepository) {
-        super(DataModel, dataModelRepository, folderRepository, dataModelContentRepository)
+    DataModelController(DataModelCacheableRepository dataModelRepository, FolderCacheableRepository folderRepository, DataModelContentRepository dataModelContentRepository,
+    DataModelService dataModelService) {
+        super(DataModel, dataModelRepository, folderRepository, dataModelContentRepository, dataModelService)
         this.dataModelRepository = dataModelRepository
         this.dataModelContentRepository = dataModelContentRepository
-        super.modelService = this.dataModelService
+        this.dataModelService = dataModelService
     }
 
     @Get('/dataModels/{id}')
