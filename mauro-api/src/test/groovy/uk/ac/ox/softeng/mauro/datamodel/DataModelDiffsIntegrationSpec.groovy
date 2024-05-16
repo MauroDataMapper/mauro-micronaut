@@ -6,21 +6,23 @@ import io.micronaut.test.annotation.Sql
 import jakarta.inject.Inject
 import spock.lang.Shared
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
+import uk.ac.ox.softeng.mauro.domain.diff.AnnotationDiff
 import uk.ac.ox.softeng.mauro.domain.diff.ArrayDiff
 import uk.ac.ox.softeng.mauro.domain.diff.DiffBuilder
 import uk.ac.ox.softeng.mauro.domain.diff.ObjectDiff
 import uk.ac.ox.softeng.mauro.domain.facet.Annotation
 import uk.ac.ox.softeng.mauro.domain.facet.Metadata
+import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
+import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadataType
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.persistence.ContainerizedTest
 import uk.ac.ox.softeng.mauro.testing.CommonDataSpec
 
+import java.lang.runtime.ObjectMethods
+
 @ContainerizedTest
 @Sql(scripts = "classpath:sql/tear-down-datamodel.sql", phase = Sql.Phase.AFTER_EACH)
 class DataModelDiffsIntegrationSpec extends CommonDataSpec {
-
-    @Inject
-    ObjectMapper objectMapper
 
     @Inject
     EmbeddedApplication<?> application
@@ -40,7 +42,7 @@ class DataModelDiffsIntegrationSpec extends CommonDataSpec {
         Folder response = (Folder) POST("$FOLDERS_PATH", folder(), Folder)
         folderId = response.id
 
-        DataModel dataModelResponse = (DataModel) POST("$FOLDERS_PATH/$folderId$DATAMODELS_PATH", [label: 'Test data model', description: 'test description', author: 'test author'], DataModel)
+        DataModel dataModelResponse = (DataModel) POST("$FOLDERS_PATH/$folderId$DATAMODELS_PATH", dataModelPayload(), DataModel)
         dataModelId = dataModelResponse.id
 
         Metadata metadataResponse = (Metadata) POST("$DATAMODELS_PATH/$dataModelId$METADATA_PATH", metadataPayload(), Metadata)
@@ -57,7 +59,7 @@ class DataModelDiffsIntegrationSpec extends CommonDataSpec {
         (Metadata) POST("$DATAMODELS_PATH/$dataModelId$METADATA_PATH",
                 [namespace: 'org.example', key: 'example_key_2', value: 'example_value_2'], Metadata)
 
-       
+
         DataModel left = (DataModel) GET("$DATAMODELS_PATH/$dataModelId", DataModel)
 
         DataModel right = (DataModel) POST("$FOLDERS_PATH/$folderId$DATAMODELS_PATH", [label: 'Test other data model', description: 'test other description', author: 'test author other'], DataModel)
@@ -103,7 +105,6 @@ class DataModelDiffsIntegrationSpec extends CommonDataSpec {
         ObjectDiff diff = finalised.diff(right)
 
         then:
-        String output = objectMapper.writeValueAsString(diff)
         diff
         diff.label == left.label
         diff.diffs.size() == 10
@@ -124,5 +125,70 @@ class DataModelDiffsIntegrationSpec extends CommonDataSpec {
         metadataDiff.modified.numberOfDiffs.get(0) == 1
         metadataDiff.modified.diffs.size() == 1
         metadataDiff.modified.diffs.first().name.get(0) == 'value'
+    }
+
+    void 'test datamodel with annotations, modified, childAnnotations'() {
+        given:
+        DataModel right = (DataModel) POST("$FOLDERS_PATH/$folderId$DATAMODELS_PATH", dataModelPayload(), DataModel)
+
+        and:
+
+        (Annotation) POST("$DATAMODELS_PATH/$right.id$ANNOTATION_PATH",
+                [label: 'test-label', description: 'different test-annotation description'], Annotation)
+
+        //childAnnotation
+        Annotation child = (Annotation) POST("$DATAMODELS_PATH/$dataModelId$ANNOTATION_PATH/$annotationId$ANNOTATION_PATH",
+                annotationPayload('child label', 'child description'), Annotation)
+
+        DataModel left = (DataModel) GET("$DATAMODELS_PATH/$dataModelId", DataModel)
+
+        right = (DataModel) GET("$DATAMODELS_PATH/$right.id", DataModel)
+
+        when:
+        ObjectDiff diff = left.diff(right)
+        then:
+        diff
+        diff.label == left.label
+        diff.diffs.size() == 2
+        diff.getNumberOfDiffs() == 3
+        ArrayDiff<Collection> annotationsDiff = diff.diffs.find { it.name == DiffBuilder.ANNOTATION } as ArrayDiff<Collection>
+        annotationsDiff.name == DiffBuilder.ANNOTATION
+        annotationsDiff.created.isEmpty()
+        annotationsDiff.deleted.isEmpty()
+
+        annotationsDiff.modified.size() == 1
+        ObjectDiff childDiff = annotationsDiff.modified[0]
+        ArrayDiff<Collection> childAnnotations = childDiff.diffs.find { it.name == DiffBuilder.CHILD_ANNOTATIONS }
+        childAnnotations
+        childAnnotations.created.isEmpty()
+        childAnnotations.modified.isEmpty()
+        AnnotationDiff childAnnotationDiff = childAnnotations.deleted.first()
+        childAnnotationDiff.label == child.label
+        childAnnotationDiff.id == child.id
+    }
+
+    void 'test datamodel with same summaryMetadata (key= label) -should not appear in diff'() {
+        given:
+        DataModel right = (DataModel) POST("$FOLDERS_PATH/$folderId$DATAMODELS_PATH", dataModelPayload(), DataModel)
+
+        and:
+        POST("$DATAMODELS_PATH/$right.id$SUMMARY_METADATA_PATH", summaryMetadataPayload(), SummaryMetadata)
+
+        POST("$DATAMODELS_PATH/$dataModelId$SUMMARY_METADATA_PATH", summaryMetadataPayload(), SummaryMetadata)
+
+        DataModel left = (DataModel) GET("$DATAMODELS_PATH/$dataModelId", DataModel)
+
+        right = (DataModel) GET("$DATAMODELS_PATH/$right.id", DataModel)
+
+        when:
+        ObjectDiff diff = left.diff(right)
+
+        then:
+        diff
+
+        diff.label == left.label
+        ArrayDiff<Collection> summaryMetadataDiff = diff.diffs.find { it.name == DiffBuilder.SUMMARY_METADATA } as ArrayDiff<Collection>
+        !summaryMetadataDiff
+
     }
 }

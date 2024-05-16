@@ -9,7 +9,8 @@ import java.time.Instant
 @Slf4j
 @CompileStatic
 class DiffBuilder {
-    static final String LABEL_KEY = 'label'
+    static final String LABEL = 'label'
+    static final String DESCRIPTION = 'description'
     static final String ID_KEY = 'id'
     static final String DATE_CREATED_KEY = 'dateCreated'
     static final String LAST_UPDATED_KEY = 'lastUpdated'
@@ -19,8 +20,11 @@ class DiffBuilder {
     static final String ANNOTATION = 'annotations'
     static final String DOMAIN_TYPE = 'domainType'
     static final String RULE = 'rules'
+    static final String CHILD_ANNOTATIONS = 'childAnnotations'
+    static final String SUMMARY_METADATA = 'summaryMetadata'
+    static final String SUMMARY_METADATA_TYPE = 'summaryMetadataType'
     static final List<String> IGNORE_KEYS = [ID_KEY, DATE_CREATED_KEY, LAST_UPDATED_KEY, DOMAIN_TYPE, CLASS_KEY, FOLDER_KEY]
-    static final List<String> MODEL_COLLECTION_KEYS = [METADATA, ANNOTATION, RULE]
+    static final List<String> MODEL_COLLECTION_KEYS = [METADATA, ANNOTATION, RULE, SUMMARY_METADATA]
 
     static ArrayDiff arrayDiff() {
         new ArrayDiff()
@@ -56,7 +60,7 @@ class DiffBuilder {
         String rhsId = rhs.id ?: "Right:Unsaved_${rhs.domainType}"
         Class<Model> diffClass = lhs.getClass()
         ObjectDiff baseDiff = new ObjectDiff(diffClass, lhsId, rhsId)
-        baseDiff.label = lhsMap.find { it.key == LABEL_KEY }.value
+        baseDiff.label = lhsMap.find { it.key == LABEL }.value
 
         buildStrings(baseDiff, leftStrFields as Map<String, Object>, rightStrFields as Map<String, Object>)
         buildField(Boolean, baseDiff, leftBooleanFields as Map<String, Object>, rightBooleanFields as Map<String, Object>)
@@ -136,7 +140,7 @@ class DiffBuilder {
     }
 
     static boolean isNull(Map.Entry<String, Object> it) {
-        null == it.key || null == it.value
+        isNull(it.key) || isNull(it.value)
     }
 
     static boolean isRequiredCollection(String key, List<String> requiredKeys) {
@@ -145,5 +149,12 @@ class DiffBuilder {
 
     static Collection<DiffableItem> getRhsCollection(String name, CollectionDTO rhsCollection) {
         rhsCollection.fieldCollections.get(name) ?: []
+    }
+
+    static boolean isNullOrEmpty(String str) {
+        isNull(str) || str.allWhitespace
+    }
+    static boolean isNull(Object value) {
+        null == value
     }
 }

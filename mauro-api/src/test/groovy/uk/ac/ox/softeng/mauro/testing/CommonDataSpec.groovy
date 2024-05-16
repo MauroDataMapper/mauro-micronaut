@@ -43,4 +43,7 @@ class CommonDataSpec extends BaseIntegrationSpec{
         [ namespace: 'org.example', key: 'example_key', value: 'example_value']
     }
 
+    def dataModelPayload(){
+        [label: 'Test data model', description: 'test description', author: 'test author']
+    }
 }

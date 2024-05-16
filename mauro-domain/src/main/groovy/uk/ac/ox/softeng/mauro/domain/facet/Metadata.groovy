@@ -43,14 +43,12 @@ class Metadata extends Facet implements DiffableItem<Metadata> {
 
     @Override
     @JsonIgnore
-    @java.beans.Transient
+    @Transient
     ObjectDiff<Metadata> diff(Metadata other) {
         ObjectDiff od = DiffBuilder.objectDiff(Metadata)
                 .leftHandSide(id.toString(), this)
                 .rightHandSide(other.id.toString(), other)
-        if (this.value != other.value){
-            od.appendString('value', this.value, other.value)
-        }
+        od.appendString('value', this.value, other.value)
         od.namespace = this.namespace
         od.key = this.key
         od

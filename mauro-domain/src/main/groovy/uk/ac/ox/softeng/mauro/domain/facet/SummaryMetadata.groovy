@@ -9,8 +9,11 @@ import io.micronaut.data.annotation.*
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Pattern
 import uk.ac.ox.softeng.mauro.domain.diff.CollectionDiff
+import uk.ac.ox.softeng.mauro.domain.diff.DiffBuilder
 import uk.ac.ox.softeng.mauro.domain.diff.DiffableItem
+import uk.ac.ox.softeng.mauro.domain.diff.MetadataDiff
 import uk.ac.ox.softeng.mauro.domain.diff.ObjectDiff
+import uk.ac.ox.softeng.mauro.domain.diff.SummaryMetadataDiff
 import uk.ac.ox.softeng.mauro.domain.model.SummaryMetadataReport
 
 @CompileStatic
@@ -22,6 +25,8 @@ class SummaryMetadata extends Facet implements DiffableItem<SummaryMetadata> {
     @NotBlank
     @Pattern(regexp = /[^\$@|]*/, message = 'Cannot contain $, | or @')
     String label
+
+    String description
 
     @JsonAlias(['summary_metadata_type'])
     @JsonDeserialize(converter = SummaryMetadataType.SummaryMetadataTypeConverter)
@@ -35,23 +40,27 @@ class SummaryMetadata extends Facet implements DiffableItem<SummaryMetadata> {
     @JsonIgnore
     @Transient
     CollectionDiff fromItem() {
-        return null
+        new SummaryMetadataDiff(id, summaryMetadataType, label)
     }
-
 
     @Override
     @JsonIgnore
     @Transient
     String getDiffIdentifier() {
-        //toDo
-        return null
+        label
     }
 
     @Override
     @JsonIgnore
     @Transient
     ObjectDiff<SummaryMetadata> diff(SummaryMetadata other) {
-        //todo
-        return null
+        ObjectDiff<SummaryMetadata> base = DiffBuilder.objectDiff(SummaryMetadata)
+                .leftHandSide(id.toString(), this)
+                .rightHandSide(other.id.toString(), other)
+        base.label = this.label
+        base.appendString(DiffBuilder.DESCRIPTION, this.description, other.description)
+        base.appendString(DiffBuilder.SUMMARY_METADATA_TYPE, this.summaryMetadataType.name(), other.summaryMetadataType.name())
+        base
     }
+
 }

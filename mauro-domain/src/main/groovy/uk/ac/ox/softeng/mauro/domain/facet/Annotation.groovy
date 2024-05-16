@@ -7,6 +7,7 @@ import groovy.transform.CompileStatic
 import io.micronaut.data.annotation.*
 import uk.ac.ox.softeng.mauro.domain.diff.AnnotationDiff
 import uk.ac.ox.softeng.mauro.domain.diff.CollectionDiff
+import uk.ac.ox.softeng.mauro.domain.diff.DiffBuilder
 import uk.ac.ox.softeng.mauro.domain.diff.DiffableItem
 import uk.ac.ox.softeng.mauro.domain.diff.ObjectDiff
 import uk.ac.ox.softeng.mauro.domain.security.CatalogueUser
@@ -15,7 +16,7 @@ import uk.ac.ox.softeng.mauro.domain.security.CatalogueUser
 @MappedEntity(value = 'annotation', schema = 'core', alias = 'annotation_')
 @AutoClone
 @Indexes([@Index(columns = ['multi_facet_aware_item_id'])])
-class Annotation extends Facet implements DiffableItem<Annotation>{
+class Annotation extends Facet implements DiffableItem<Annotation> {
 
     @JsonAlias(['parent_annotation_id'])
     UUID parentAnnotationId
@@ -42,14 +43,22 @@ class Annotation extends Facet implements DiffableItem<Annotation>{
     @JsonIgnore
     @Transient
     String getDiffIdentifier() {
-       label
+        label
     }
 
     @Override
     @JsonIgnore
     @Transient
     ObjectDiff<Annotation> diff(Annotation other) {
-        //todo
-        return null
+        ObjectDiff<Annotation> base = DiffBuilder.objectDiff(Annotation)
+                .leftHandSide(id.toString(), this)
+                .rightHandSide(other.id.toString(), other)
+        base.label = this.label
+        base.appendString(DiffBuilder.DESCRIPTION, this.description, other.description)
+        if (!DiffBuilder.isNull(this.childAnnotations) ||!DiffBuilder.isNull(other.childAnnotations)) {
+            base.appendCollection('childAnnotations', this.childAnnotations as Collection<DiffableItem>, other.childAnnotations as Collection<DiffableItem>)
+        }
+        base
     }
+
 }

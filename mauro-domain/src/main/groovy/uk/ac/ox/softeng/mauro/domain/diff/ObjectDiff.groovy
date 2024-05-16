@@ -20,6 +20,10 @@ class ObjectDiff<T extends DiffableItem> {
 
     @Nullable
     String label
+    @Nullable
+    String namespace
+    @Nullable
+    String key
 
     @JsonProperty("diffs")
     List<FieldDiff> diffs = []
@@ -27,8 +31,6 @@ class ObjectDiff<T extends DiffableItem> {
     @JsonIgnore
     boolean versionedDiff
 
-    String namespace
-    String key
 
     ObjectDiff(Class<T> targetClass) {
         this.targetClass = targetClass
@@ -53,8 +55,12 @@ class ObjectDiff<T extends DiffableItem> {
     }
 
     ObjectDiff<T> appendString(final String fieldName, final String lhs, final String rhs) throws MauroInternalException {
-        FieldDiff fieldDiff = new FieldDiff(fieldName, DiffBuilder.clean(lhs), DiffBuilder.clean(rhs))
-        append(fieldDiff)
+        String lhsString = DiffBuilder.isNullOrEmpty(lhs) ? null : DiffBuilder.clean(lhs)
+        String rhsString = DiffBuilder.isNullOrEmpty(rhs) ? null : DiffBuilder.clean(rhs)
+        if (lhsString != rhsString) {
+            append(new FieldDiff(fieldName, lhsString, rhsString))
+        }
+        this
     }
 
     def <K extends DiffableItem> ObjectDiff appendCollection(String name, Collection<DiffableItem> lhs, Collection<DiffableItem> rhs) {
@@ -66,7 +72,7 @@ class ObjectDiff<T extends DiffableItem> {
 
         // If no rhs then all lhs have been deleted/removed
         if (!rhs) {
-            return append(diff.deletedObjects(lhs as Collection<K>) )
+            return append(diff.deletedObjects(lhs as Collection<K>))
         }
 
         Collection<K> deleted = []
@@ -101,7 +107,6 @@ class ObjectDiff<T extends DiffableItem> {
         }
 
         if (created || deleted || modified) {
-            // return append(diff.deletedObjects(lhs as Collection<K>) as FieldDiff)
             append(diff.createdObjects(created as Collection)
                     .deletedObjects(deleted as Collection)
                     .modifiedObjects(modified as Collection) as ArrayDiff)
