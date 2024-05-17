@@ -1,5 +1,6 @@
 package uk.ac.ox.softeng.mauro.plugin.importer.json
 
+import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
 import uk.ac.ox.softeng.mauro.export.ExportModel
 import uk.ac.ox.softeng.mauro.plugin.importer.FileImportParameters
@@ -17,11 +18,8 @@ class JsonTerminologyImporterPlugin implements TerminologyImporterPlugin<FileImp
 
     String displayName = 'JSON Terminology Importer'
 
-    static ObjectMapper objectMapper = new ObjectMapper()
-
-    static {
-        objectMapper.findAndRegisterModules()
-    }
+    @Inject
+    ObjectMapper objectMapper
 
     @Override
     List<Terminology> importDomain(FileImportParameters params) {
