@@ -47,6 +47,9 @@ class SecurableResourceGroupRoleController extends ItemController<SecurableResou
             accessControlService.checkRole(Role.CONTAINER_ADMIN, securableResource)
         } else {
             accessControlService.checkRole(Role.EDITOR, securableResource)
+            if (role >= Role.CONTAINER_ADMIN) {
+                throw new HttpStatusException(HttpStatus.BAD_REQUEST, 'Role CONTAINER_ADMIN is only applicable to Containers')
+            }
         }
 
         UserGroup userGroup = userGroupRepository.readById(userGroupId)

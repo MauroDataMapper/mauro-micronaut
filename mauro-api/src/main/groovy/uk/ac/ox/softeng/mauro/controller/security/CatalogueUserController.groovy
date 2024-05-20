@@ -60,6 +60,10 @@ class CatalogueUserController extends ItemController<CatalogueUser> {
 
     @Put('/catalogueUsers/currentUser/changePassword')
     CatalogueUser changePassword(@Body @NonNull ChangePassword changePasswordRequest) {
+        log.debug 'Request by user to change own password'
+
+        accessControlService.checkAuthenticated()
+
         CatalogueUser currentUser = accessControlService.user
 
         currentUser.password = SecurityUtils.getHash(changePasswordRequest.newPassword, currentUser.salt)
@@ -70,6 +74,10 @@ class CatalogueUserController extends ItemController<CatalogueUser> {
 
     @Put('/catalogueUsers/{id}')
     CatalogueUser update(@NonNull UUID id, @Body @NonNull CatalogueUser catalogueUser) {
+        log.debug 'Request to update CatalogueUser by ID'
+
+        accessControlService.checkAuthenticated()
+
         Set<UserGroup> newGroups = catalogueUser.groups
         catalogueUser.groups = null
         cleanBody(catalogueUser)
@@ -79,18 +87,25 @@ class CatalogueUserController extends ItemController<CatalogueUser> {
             throw new AuthorizationException(accessControlService.userAuthentication)
         }
 
+        // Only an Administrator can add a user to Groups
+        if (newGroups) {
+            accessControlService.checkAdministrator()
+        }
+
         boolean hasChanged = updateProperties(existing, catalogueUser)
 
         if (hasChanged) {
             catalogueUserRepository.update(existing)
         }
 
-        List<UUID> existingUserGroupIds = userGroupRepository.readAllByCatalogueUserId(existing.id).id
+        if (newGroups) {
+            List<UUID> existingUserGroupIds = userGroupRepository.readAllByCatalogueUserId(existing.id).id
 
-        List<UUID> newUserGroupIds = newGroups.collect {it.id}.findAll {it !in existingUserGroupIds}
+            List<UUID> newUserGroupIds = newGroups.collect {it.id}.findAll {it !in existingUserGroupIds}
 
-        newUserGroupIds.each {UUID userGroupId ->
-            userGroupRepository.addCatalogueUser(userGroupId, existing.id)
+            newUserGroupIds.each {UUID userGroupId ->
+                userGroupRepository.addCatalogueUser(userGroupId, existing.id)
+            }
         }
 
         existing
