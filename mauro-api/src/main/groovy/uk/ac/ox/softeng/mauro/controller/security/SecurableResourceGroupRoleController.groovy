@@ -5,6 +5,7 @@ import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.Controller
+import io.micronaut.http.annotation.Delete
 import io.micronaut.http.annotation.Post
 import io.micronaut.http.exceptions.HttpStatusException
 import io.micronaut.security.annotation.Secured
@@ -43,14 +44,7 @@ class SecurableResourceGroupRoleController extends ItemController<SecurableResou
     SecurableResourceGroupRole create(@NonNull String securableResourceDomainType, @NonNull UUID securableResourceId, @NonNull Role role, @NonNull UUID userGroupId) {
         AdministeredItem securableResource = readAdministeredItem(securableResourceDomainType, securableResourceId)
 
-        if (securableResource instanceof Folder) {
-            accessControlService.checkRole(Role.CONTAINER_ADMIN, securableResource)
-        } else {
-            accessControlService.checkRole(Role.EDITOR, securableResource)
-            if (role >= Role.CONTAINER_ADMIN) {
-                throw new HttpStatusException(HttpStatus.BAD_REQUEST, 'Role CONTAINER_ADMIN is only applicable to Containers')
-            }
-        }
+        checkCanEditRoleOnItem(role, securableResource)
 
         UserGroup userGroup = userGroupRepository.readById(userGroupId)
         if (!userGroup) {
@@ -65,6 +59,32 @@ class SecurableResourceGroupRoleController extends ItemController<SecurableResou
         )
 
         securableResourceGroupRoleRepository.save(securableResourceGroupRole)
+    }
+
+    @Delete('/{securableResourceDomainType}/{securableResourceId}/roles/{role}/userGroups/{userGroupId}')
+    HttpStatus delete(@NonNull String securableResourceDomainType, @NonNull UUID securableResourceId, @NonNull Role role, @NonNull UUID userGroupId) {
+        AdministeredItem securableResource = readAdministeredItem(securableResourceDomainType, securableResourceId)
+
+        checkCanEditRoleOnItem(role, securableResource)
+
+        Long deleted = securableResourceGroupRoleRepository.deleteBySecurableResourceDomainTypeAndSecurableResourceIdAndRoleAndUserGroupId(securableResourceDomainType, securableResourceId, role, userGroupId)
+
+        if (deleted) {
+            HttpStatus.NO_CONTENT
+        } else {
+            throw new HttpStatusException(HttpStatus.NOT_FOUND, 'Not found for deletion')
+        }
+    }
+
+    protected checkCanEditRoleOnItem(Role role, AdministeredItem securableResource) {
+        if (securableResource instanceof Folder) {
+            accessControlService.checkRole(Role.CONTAINER_ADMIN, securableResource)
+        } else {
+            accessControlService.checkRole(Role.EDITOR, securableResource)
+            if (role >= Role.CONTAINER_ADMIN) {
+                throw new HttpStatusException(HttpStatus.BAD_REQUEST, 'Role CONTAINER_ADMIN is only applicable to Containers')
+            }
+        }
     }
 
     protected AdministeredItem readAdministeredItem(String domainType, UUID domainId) {

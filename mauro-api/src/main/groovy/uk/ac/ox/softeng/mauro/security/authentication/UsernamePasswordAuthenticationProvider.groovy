@@ -12,7 +12,7 @@ import io.micronaut.security.authentication.provider.HttpRequestAuthenticationPr
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
 import uk.ac.ox.softeng.mauro.domain.security.CatalogueUser
-import uk.ac.ox.softeng.mauro.persistence.security.CatalogueUserRepository
+import uk.ac.ox.softeng.mauro.persistence.cache.ItemCacheableRepository
 import uk.ac.ox.softeng.mauro.security.utils.SecurityUtils
 
 @CompileStatic
@@ -21,7 +21,7 @@ import uk.ac.ox.softeng.mauro.security.utils.SecurityUtils
 class UsernamePasswordAuthenticationProvider<B> implements HttpRequestAuthenticationProvider<B> {
 
     @Inject
-    CatalogueUserRepository catalogueUserRepository
+    ItemCacheableRepository.CatalogueUserCacheableRepository catalogueUserRepository
 
     @Override
     AuthenticationResponse authenticate(@Nullable HttpRequest<B> requestContext, @NonNull AuthenticationRequest<String, String> authRequest) {

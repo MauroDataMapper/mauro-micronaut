@@ -14,8 +14,8 @@ import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.controller.model.ItemController
 import uk.ac.ox.softeng.mauro.domain.security.CatalogueUser
 import uk.ac.ox.softeng.mauro.domain.security.UserGroup
+import uk.ac.ox.softeng.mauro.persistence.cache.ItemCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.ItemCacheableRepository.CatalogueUserCacheableRepository
-import uk.ac.ox.softeng.mauro.persistence.security.UserGroupRepository
 import uk.ac.ox.softeng.mauro.security.utils.SecureRandomStringGenerator
 import uk.ac.ox.softeng.mauro.security.utils.SecurityUtils
 import uk.ac.ox.softeng.mauro.web.ChangePassword
@@ -29,7 +29,7 @@ class CatalogueUserController extends ItemController<CatalogueUser> {
     CatalogueUserCacheableRepository catalogueUserRepository
 
     @Inject
-    UserGroupRepository userGroupRepository
+    ItemCacheableRepository.UserGroupCacheableRepository userGroupRepository
 
     CatalogueUserController(CatalogueUserCacheableRepository catalogueUserRepository) {
         super(catalogueUserRepository)

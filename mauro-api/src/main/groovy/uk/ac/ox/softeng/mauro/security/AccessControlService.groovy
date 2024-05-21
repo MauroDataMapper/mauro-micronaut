@@ -4,6 +4,7 @@ import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.context.annotation.Property
 import io.micronaut.core.annotation.NonNull
+import io.micronaut.core.annotation.Nullable
 import io.micronaut.core.util.Toggleable
 import io.micronaut.security.authentication.Authentication
 import io.micronaut.security.authentication.AuthenticationException
@@ -14,10 +15,9 @@ import jakarta.inject.Singleton
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.model.Model
 import uk.ac.ox.softeng.mauro.domain.security.*
+import uk.ac.ox.softeng.mauro.persistence.cache.ItemCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.ItemCacheableRepository.CatalogueUserCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.model.PathRepository
-import uk.ac.ox.softeng.mauro.persistence.security.SecurableResourceGroupRoleRepository
-import uk.ac.ox.softeng.mauro.persistence.security.UserGroupRepository
 
 @CompileStatic
 @Singleton
@@ -25,21 +25,22 @@ import uk.ac.ox.softeng.mauro.persistence.security.UserGroupRepository
 class AccessControlService implements Toggleable {
 
     @Inject
+    @Nullable
     SecurityService securityService
 
     @Inject
     PathRepository pathRepository
 
     @Inject
-    SecurableResourceGroupRoleRepository securableResourceGroupRoleRepository
+    ItemCacheableRepository.SecurableResourceGroupRoleCacheableRepository securableResourceGroupRoleRepository
 
     @Inject
-    UserGroupRepository userGroupRepository
+    ItemCacheableRepository.UserGroupCacheableRepository userGroupRepository
 
     @Inject
     CatalogueUserCacheableRepository catalogueUserRepository
 
-    @Property(name = 'mauro.security.enabled', defaultValue = 'true')
+    @Property(name = 'micronaut.security.enabled', defaultValue = 'true')
     private boolean enabled
 
     /**

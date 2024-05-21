@@ -1,5 +1,6 @@
 package uk.ac.ox.softeng.mauro.domain.security
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import com.fasterxml.jackson.databind.util.StdConverter
 import groovy.transform.AutoClone
@@ -33,8 +34,13 @@ class CatalogueUser extends Item {
     String creationMethod
     Instant lastLogin
 
+    @JsonIgnore
     byte[] salt
+
+    @JsonIgnore
     byte[] password
+
+    @JsonIgnore
     String tempPassword
 
     @Relation(Relation.Kind.MANY_TO_MANY)
