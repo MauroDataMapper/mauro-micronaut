@@ -1,12 +1,13 @@
 package uk.ac.ox.softeng.mauro.datamodel.diff
 
-
+import com.fasterxml.jackson.databind.ObjectMapper
 import io.micronaut.runtime.EmbeddedApplication
 import io.micronaut.test.annotation.Sql
 import jakarta.inject.Inject
 import spock.lang.Shared
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
 import uk.ac.ox.softeng.mauro.domain.diff.ArrayDiff
 import uk.ac.ox.softeng.mauro.domain.diff.BaseCollectionDiff
 import uk.ac.ox.softeng.mauro.domain.diff.DiffBuilder
@@ -102,8 +103,31 @@ class DataModelSchemaDiffsIntegrationSpec extends CommonDataSpec {
         BaseCollectionDiff childDiff = child.created.first()
         childDiff.id== childDataClass.id
         childDiff.label == childDataClass.label
-
     }
 
+    void 'diff dataModels with dataType diffs'() {
+        given:
+        //modified comparison key = label
+        DataType leftDataType = (DataType) POST("$DATAMODELS_PATH/$leftDataModelId$DATATYPES_PATH", dataTypesPayload(), DataType)
 
+        and:
+        //Diff endpoint does not return nested ObjectDiffs using httpClient.
+        // Get with content fetches all data classes and nested objects in DM
+        DataModel left = (DataModel) GET("$DATAMODELS_PATH/allContent/$leftDataModelId", DataModel)
+        DataModel right = (DataModel) GET("$DATAMODELS_PATH/allContent/$rightDataModelId", DataModel)
+        when:
+        ObjectDiff diff = left.diff(right)
+
+        then:
+        diff
+        diff.numberOfDiffs == 3
+        diff.diffs.size() == 3
+        ArrayDiff<Collection> dataTypesDiff = diff.diffs.find {it.name == DiffBuilder.DATA_TYPE}
+        dataTypesDiff.created.isEmpty()
+        dataTypesDiff.modified.isEmpty()
+        dataTypesDiff.deleted.size() ==1
+        BaseCollectionDiff baseCollectionDiff =  dataTypesDiff.deleted.first()
+        baseCollectionDiff.id == leftDataType.id
+        baseCollectionDiff.label == leftDataType.label
+    }
 }

@@ -50,4 +50,8 @@ class CommonDataSpec extends BaseIntegrationSpec{
     def dataClassPayload(){
         [label: 'Test data class', description: 'test description', author: 'test author']
     }
+
+    def dataTypesPayload(){
+        [label: 'Test data type', domainType: 'primitiveType', units : 'kilograms']
+    }
 }
