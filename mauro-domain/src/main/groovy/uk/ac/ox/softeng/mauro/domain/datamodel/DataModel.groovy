@@ -59,7 +59,7 @@ class DataModel extends Model {
     @Transient
     @JsonIgnore
     List<Collection<? extends ModelItem<DataModel>>> getAllAssociations() {
-        [dataTypes, enumerationValues, allDataClasses, dataElements]
+        [dataTypes, enumerationValues, allDataClasses, dataElements] as List<Collection<? extends ModelItem<DataModel>>>
     }
 
 

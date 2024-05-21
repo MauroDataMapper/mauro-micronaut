@@ -28,9 +28,6 @@ class ObjectDiff<T extends DiffableItem> {
     @JsonProperty("diffs")
     List<FieldDiff> diffs = []
 
-    @JsonIgnore
-    boolean versionedDiff
-
 
     ObjectDiff(Class<T> targetClass) {
         this.targetClass = targetClass
@@ -62,6 +59,12 @@ class ObjectDiff<T extends DiffableItem> {
         }
         this
     }
+    ObjectDiff<T> appendNumber(final String fieldName, final Integer lhs, final Integer rhs) throws MauroInternalException {
+        if (lhs != rhs) {
+            append(new FieldDiff(fieldName, lhs, rhs))
+        }
+        this
+    }
 
     def <K extends DiffableItem> ObjectDiff appendCollection(String name, Collection<DiffableItem> lhs, Collection<DiffableItem> rhs) {
         ArrayDiff diff = DiffBuilder.arrayDiff() as ArrayDiff
@@ -82,7 +85,6 @@ class ObjectDiff<T extends DiffableItem> {
 
         Map<String, K> lhsMap = lhs.collectEntries { [it.getDiffIdentifier(), it] }
         Map<String, K> rhsMap = rhs.collectEntries { [it.getDiffIdentifier(), it] }
-
         //toDo versionedDiff, childPaths when versionedDiff
 
         lhsMap.each { di, lObj ->
@@ -114,15 +116,8 @@ class ObjectDiff<T extends DiffableItem> {
 
         this
     }
-
-    def <K> ObjectDiff<T> append(FieldDiff<K> fieldDiff) {
+    <K> ObjectDiff<T> append(FieldDiff<K> fieldDiff) {
         diffs.add(fieldDiff)
-        this
-
-    }
-
-    ObjectDiff<T> asVersionedDiff() {
-        versionedDiff = true
         this
     }
 

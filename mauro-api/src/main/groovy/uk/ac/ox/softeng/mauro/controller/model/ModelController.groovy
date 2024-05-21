@@ -173,11 +173,6 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         administeredItemRepositories.find {it.handles(item.class)}
     }
 
-    M showNested(UUID uuid) {
-        administeredItemRepository.findById(uuid)
-    }
-
-
     <P extends ImportParameters> P readFromMultipartFormBody(MultipartBody body, Class<P> parametersClass) {
         Map<String, Object> importMap = Flux.from(body).collectList().block().collectEntries {CompletedPart cp ->
             if (cp instanceof CompletedFileUpload) {

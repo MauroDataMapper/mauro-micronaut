@@ -62,7 +62,7 @@ class DataModelController extends ModelController<DataModel> {
     @Transactional
     @Delete('/dataModels/{id}')
     HttpStatus delete(UUID id, @Body @Nullable DataModel dataModel) {
-        DataModel model = super.showNested(id) as DataModel
+        DataModel model = super.show(id) as DataModel
         if (!model){
             throw new HttpStatusException(HttpStatus.NOT_FOUND, "Model not found, $id")
         }
@@ -106,12 +106,20 @@ class DataModelController extends ModelController<DataModel> {
 
     @Get('/dataModels/{id}/diff/{otherId}')
     ObjectDiff diffModels(@NonNull UUID id, @NonNull UUID otherId) {
-        DataModel dataModel = super.showNested(id) as DataModel
+        DataModel dataModel = modelContentRepository.findWithContentById(id)
+        dataModel.setAssociations()
         handleNotFoundError(dataModel, id)
-        DataModel otherDataModel = super.showNested(otherId) as DataModel
+        DataModel otherDataModel = modelContentRepository.findWithContentById(otherId)
+        otherDataModel.setAssociations()
         handleNotFoundError(otherDataModel, otherId)
-        ObjectDiff diff = dataModel.diff(otherDataModel)
-        diff
+        dataModel.diff(otherDataModel)
+    }
+
+    @Get('/dataModels/allContent/{id}')
+    DataModel showAllContent(@NonNull UUID id) {
+        DataModel dataModel = modelContentRepository.findWithContentById(id)
+        dataModel.setAssociations()
+        dataModel
     }
 
     private void handleNotFoundError(DataModel dataModel, UUID id) {

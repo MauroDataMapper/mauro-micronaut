@@ -1,20 +1,14 @@
 package uk.ac.ox.softeng.mauro.datamodel
 
-import io.micronaut.http.HttpStatus
-import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
-import uk.ac.ox.softeng.mauro.domain.datamodel.DataElement
-import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
-import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
-import uk.ac.ox.softeng.mauro.domain.datamodel.EnumerationValue
-import uk.ac.ox.softeng.mauro.domain.model.version.FinaliseData
-import uk.ac.ox.softeng.mauro.persistence.ContainerizedTest
-import uk.ac.ox.softeng.mauro.testing.BaseIntegrationSpec
-import uk.ac.ox.softeng.mauro.web.ListResponse
-
 import com.fasterxml.jackson.databind.ObjectMapper
+import io.micronaut.http.HttpStatus
 import io.micronaut.runtime.EmbeddedApplication
 import jakarta.inject.Inject
 import spock.lang.Shared
+import uk.ac.ox.softeng.mauro.domain.datamodel.*
+import uk.ac.ox.softeng.mauro.persistence.ContainerizedTest
+import uk.ac.ox.softeng.mauro.testing.BaseIntegrationSpec
+import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @ContainerizedTest
 class DataModelIntegrationSpec extends BaseIntegrationSpec {

@@ -1,28 +1,24 @@
-package uk.ac.ox.softeng.mauro.datamodel
+package uk.ac.ox.softeng.mauro.datamodel.diff
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import io.micronaut.runtime.EmbeddedApplication
 import io.micronaut.test.annotation.Sql
 import jakarta.inject.Inject
 import spock.lang.Shared
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
-import uk.ac.ox.softeng.mauro.domain.diff.AnnotationDiff
 import uk.ac.ox.softeng.mauro.domain.diff.ArrayDiff
+import uk.ac.ox.softeng.mauro.domain.diff.BaseCollectionDiff
 import uk.ac.ox.softeng.mauro.domain.diff.DiffBuilder
 import uk.ac.ox.softeng.mauro.domain.diff.ObjectDiff
 import uk.ac.ox.softeng.mauro.domain.facet.Annotation
 import uk.ac.ox.softeng.mauro.domain.facet.Metadata
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
-import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadataType
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.persistence.ContainerizedTest
 import uk.ac.ox.softeng.mauro.testing.CommonDataSpec
 
-import java.lang.runtime.ObjectMethods
-
 @ContainerizedTest
 @Sql(scripts = "classpath:sql/tear-down-datamodel.sql", phase = Sql.Phase.AFTER_EACH)
-class DataModelDiffsIntegrationSpec extends CommonDataSpec {
+class DataModelFacetDiffsIntegrationSpec extends CommonDataSpec {
 
     @Inject
     EmbeddedApplication<?> application
@@ -72,7 +68,7 @@ class DataModelDiffsIntegrationSpec extends CommonDataSpec {
         diff.label == left.label
         diff.diffs.size() == 6
         diff.getNumberOfDiffs() == 7
-        diff.diffs.each { [AUTHOR, DESCRIPTION, LABEL, PATH_IDENTIFIER].contains(it.name) }
+        diff.diffs.each { [AUTHOR, DiffBuilder.DESCRIPTION, DiffBuilder.LABEL, PATH_IDENTIFIER].contains(it.name) }
         ArrayDiff<Collection> annotationsDiff = diff.diffs.find { it -> it.name == DiffBuilder.ANNOTATION } as ArrayDiff<Collection>
         annotationsDiff.name == DiffBuilder.ANNOTATION
         annotationsDiff.deleted.size() == 1
@@ -109,10 +105,9 @@ class DataModelDiffsIntegrationSpec extends CommonDataSpec {
         diff.label == left.label
         diff.diffs.size() == 10
         diff.getNumberOfDiffs() == 10
-        diff.diffs.each { [AUTHOR, DESCRIPTION, LABEL, PATH_IDENTIFIER].contains(it.name) }
-        diff.diffs.each { [AUTHOR, DESCRIPTION, LABEL, PATH_IDENTIFIER, MODEL_VERSION_TAG, FINALISED, DATE_FINALISED].contains(it.name) }
+        diff.diffs.each { [AUTHOR, DiffBuilder.DESCRIPTION, DiffBuilder.LABEL,
+                           PATH_IDENTIFIER, MODEL_VERSION_TAG, FINALISED, DATE_FINALISED].contains(it.name) }
         ArrayDiff<Collection> annotationsDiff = diff.diffs.find { it -> it.name == DiffBuilder.ANNOTATION } as ArrayDiff<Collection>
-        annotationsDiff.name == DiffBuilder.ANNOTATION
         annotationsDiff.created.size() == 1
         annotationsDiff.deleted.isEmpty()
         annotationsDiff.modified.isEmpty()
@@ -142,6 +137,7 @@ class DataModelDiffsIntegrationSpec extends CommonDataSpec {
 
         DataModel left = (DataModel) GET("$DATAMODELS_PATH/$dataModelId", DataModel)
 
+
         right = (DataModel) GET("$DATAMODELS_PATH/$right.id", DataModel)
 
         when:
@@ -162,7 +158,7 @@ class DataModelDiffsIntegrationSpec extends CommonDataSpec {
         childAnnotations
         childAnnotations.created.isEmpty()
         childAnnotations.modified.isEmpty()
-        AnnotationDiff childAnnotationDiff = childAnnotations.deleted.first()
+        BaseCollectionDiff childAnnotationDiff = childAnnotations.deleted.first()
         childAnnotationDiff.label == child.label
         childAnnotationDiff.id == child.id
     }

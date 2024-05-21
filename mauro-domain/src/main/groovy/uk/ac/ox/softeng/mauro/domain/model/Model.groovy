@@ -126,7 +126,7 @@ abstract class Model<M extends DiffableItem> extends AdministeredItem implements
             return null
         }
 
-        CollectionDTO lhs = DiffBuilder.createCollectionDiff(DiffBuilder.MODEL_COLLECTION_KEYS, this.properties,)
+        CollectionDTO lhs = DiffBuilder.createCollectionDiff(DiffBuilder.MODEL_COLLECTION_KEYS, this.properties)
         CollectionDTO rhs = DiffBuilder.createCollectionDiff(DiffBuilder.MODEL_COLLECTION_KEYS, other.properties)
         ObjectDiff baseDiff = DiffBuilder.diff(this, other, lhs, rhs)
         baseDiff

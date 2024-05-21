@@ -46,4 +46,8 @@ class CommonDataSpec extends BaseIntegrationSpec{
     def dataModelPayload(){
         [label: 'Test data model', description: 'test description', author: 'test author']
     }
+
+    def dataClassPayload(){
+        [label: 'Test data class', description: 'test description', author: 'test author']
+    }
 }

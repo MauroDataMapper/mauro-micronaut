@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
 import io.micronaut.data.annotation.*
-import uk.ac.ox.softeng.mauro.domain.diff.AnnotationDiff
+import uk.ac.ox.softeng.mauro.domain.diff.BaseCollectionDiff
 import uk.ac.ox.softeng.mauro.domain.diff.CollectionDiff
 import uk.ac.ox.softeng.mauro.domain.diff.DiffBuilder
 import uk.ac.ox.softeng.mauro.domain.diff.DiffableItem
@@ -36,7 +36,7 @@ class Annotation extends Facet implements DiffableItem<Annotation> {
     @JsonIgnore
     @Transient
     CollectionDiff fromItem() {
-        new AnnotationDiff(id, label)
+        new BaseCollectionDiff(id, label)
     }
 
     @Override

@@ -23,8 +23,15 @@ class DiffBuilder {
     static final String CHILD_ANNOTATIONS = 'childAnnotations'
     static final String SUMMARY_METADATA = 'summaryMetadata'
     static final String SUMMARY_METADATA_TYPE = 'summaryMetadataType'
+    static final String DATA_CLASSES = 'dataClasses'
+    static final String DATA_TYPE = 'dataTypes'
+    static final String DATA_ELEMENT = 'dataElements'
+    static final String ALIASES_STRING = 'aliasesString'
+    static final String DATA_TYPE_PATH = 'dataTypePath'
+    static final String MIN_MULTIPILICITY = 'minMultiplicity'
+    static final String MAX_MULTIPILICITY = 'maxMultiplicity'
     static final List<String> IGNORE_KEYS = [ID_KEY, DATE_CREATED_KEY, LAST_UPDATED_KEY, DOMAIN_TYPE, CLASS_KEY, FOLDER_KEY]
-    static final List<String> MODEL_COLLECTION_KEYS = [METADATA, ANNOTATION, RULE, SUMMARY_METADATA]
+    static final List<String> MODEL_COLLECTION_KEYS = [METADATA, ANNOTATION, RULE, SUMMARY_METADATA, DATA_CLASSES, DATA_TYPE, DATA_ELEMENT]
 
     static ArrayDiff arrayDiff() {
         new ArrayDiff()
@@ -91,7 +98,6 @@ class DiffBuilder {
         objectDiff
     }
 
-
     static ObjectDiff buildField(Class<? extends Object> targetClass, ObjectDiff objectDiff, Map<String, Object> lhsMap, Map<String, Object> rhsMap) {
         if (!lhsMap.isEmpty()) {
             lhsMap.each { k, v ->
@@ -156,5 +162,9 @@ class DiffBuilder {
     }
     static boolean isNull(Object value) {
         null == value
+    }
+
+    static boolean isNullOrEmpty(Collection<Object> collection) {
+        isNull(collection) || collection.isEmpty()
     }
 }
