@@ -85,6 +85,27 @@ class FullTextSearchSpec extends Specification {
         "'first class'"     | ['First class']
     }
 
+    def "test prefix search results across all domains" () {
+        expect:
+        List<SearchDTO> searchResults = searchRepository.prefixSearch(searchTerm)
+        System.err.println(searchResults.label)
+        isSortedByLabel(searchResults)
+        searchResults.label == labels
+
+        where:
+
+        searchTerm          | labels
+        'f'                 | ['First class']
+        'a'                 | ['Another import model', 'An import model']
+        'first'             | ['First class']
+        'First'             | ['First class']
+        'class'             | []
+        'second'            | ['Second class']
+        'an import'         | ['An import model']
+        'nothing'           | []
+        'first class'       | ['First class']
+    }
+
     def "test search results across particular domains" () {
         expect:
         List<SearchDTO> searchResults = searchRepository.search(searchTerm, domainTypes)
@@ -103,11 +124,48 @@ class FullTextSearchSpec extends Specification {
         'nothing'           | []                    | []
     }
 
+    def "test prefix search results across particular domains" () {
+        expect:
+        List<SearchDTO> searchResults = searchRepository.prefixSearch(searchTerm, domainTypes)
+        System.err.println(searchResults.label)
+        isSortedByLabel(searchResults)
+        searchResults.label == labels
+
+        where:
+
+        searchTerm          | domainTypes                           | labels
+        'f'                 | []                                  | ['First class']
+        'a'                 | []                                  | ['Another import model', 'An import model']
+        'first'             | []                                  | ['First class']
+        'first'             | ['DataClass']                       | ['First class']
+        'first'             | ['DataModel']                       | []
+        'first'             | ['DataModel', 'DataElement']        | []
+        'first'             | ['DataClass', 'DataElement']        | ['First class']
+        'First'             | []                                  | ['First class']
+        'First'             | ['DataClass']                       | ['First class']
+        'First'             | ['DataModel']                       | []
+        'First'             | ['DataModel', 'DataElement']        | []
+        'First'             | ['DataClass', 'DataElement']        | ['First class']
+        'class'             | []                                  | []
+        'second'            | ['DataClass']                       | ['Second class']
+        'an import'         | ['DataModel']                       | ['An import model']
+        'nothing'           | []                                  | []
+        'first class'       | []                                  | ['First class']
+        'first class'       | ['DataClass']                       | ['First class']
+        'first class'       | ['DataElement']                     | []
+    }
+
 
     private boolean isSortedByRank(List<SearchDTO> results) {
         results.size() < 2 || (1..<results.size()).every {
             results[it - 1].tsRank > results[it].tsRank
             || (results[it - 1].tsRank == results[it].tsRank && results[it - 1].label <= results[it].label)
+        }
+    }
+
+    private boolean isSortedByLabel(List<SearchDTO> results) {
+        results.size() < 2 || (1..<results.size()).every {
+            (results[it - 1].label.compareToIgnoreCase(results[it].label) >= 0)
         }
     }
 
