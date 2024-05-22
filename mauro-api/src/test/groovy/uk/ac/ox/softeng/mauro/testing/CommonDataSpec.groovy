@@ -54,4 +54,5 @@ class CommonDataSpec extends BaseIntegrationSpec{
     def dataTypesPayload(){
         [label: 'Test data type', domainType: 'primitiveType', units : 'kilograms']
     }
+
 }

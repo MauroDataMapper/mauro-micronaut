@@ -6,6 +6,7 @@ import io.micronaut.test.annotation.Sql
 import jakarta.inject.Inject
 import spock.lang.Shared
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataElement
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
 import uk.ac.ox.softeng.mauro.domain.diff.ArrayDiff
@@ -15,6 +16,7 @@ import uk.ac.ox.softeng.mauro.domain.diff.ObjectDiff
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.persistence.ContainerizedTest
 import uk.ac.ox.softeng.mauro.testing.CommonDataSpec
+import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @ContainerizedTest
 @Sql(scripts = "classpath:sql/tear-down-datamodel.sql", phase = Sql.Phase.AFTER_EACH)
@@ -129,5 +131,43 @@ class DataModelSchemaDiffsIntegrationSpec extends CommonDataSpec {
         BaseCollectionDiff baseCollectionDiff =  dataTypesDiff.deleted.first()
         baseCollectionDiff.id == leftDataType.id
         baseCollectionDiff.label == leftDataType.label
+    }
+
+    //todo: dataelements not fetched in test. (Postman ok)
+    void 'diff dataModels with DataClasses and DataElements'() {
+        given:
+        //modified comparison key = label
+        DataClass leftDataClass = (DataClass) POST("$DATAMODELS_PATH/$leftDataModelId$DATACLASSES_PATH", dataClassPayload(), DataClass)
+        DataClass rightDataClass = (DataClass) POST("$DATAMODELS_PATH/$rightDataModelId$DATACLASSES_PATH", dataClassPayload(), DataClass)
+
+        DataType leftDataTypeResponse = (DataType)  POST("$DATAMODELS_PATH/$leftDataModelId$DATATYPES_PATH", dataTypesPayload(), DataType)
+        DataType rightDataTypeResponse = (DataType)  POST("$DATAMODELS_PATH/$rightDataModelId$DATATYPES_PATH", dataTypesPayload(), DataType)
+
+
+       DataElement leftDataElement = (DataElement)  POST("$DATAMODELS_PATH/$leftDataModelId$DATACLASSES_PATH/$leftDataClass.id$DATA_ELEMENTS_PATH",
+               [ label: 'data element', description:  'The first data element description', dataType: [id: leftDataTypeResponse.id]], DataElement)
+
+        and:
+        //Diff endpoint does not return nested ObjectDiffs using httpClient.
+        // Get with content fetches all data classes and nested objects in DM
+        def dataElementListResponse = (ListResponse<DataElement>) GET("/dataModels/$leftDataModelId/dataClasses/$leftDataClass.id/dataElements")
+        dataElementListResponse.count == 1
+
+        when:
+        def retrievedDataElement = dataElementListResponse.getItems().first()
+        //for readDataModel withContent:
+        then:
+        retrievedDataElement.dataType.id.toString() == leftDataTypeResponse.id.toString()
+
+        DataModel left = (DataModel) GET("$DATAMODELS_PATH/allContent/$leftDataModelId", DataModel)
+        DataModel right = (DataModel) GET("$DATAMODELS_PATH/allContent/$rightDataModelId", DataModel)
+        when:
+        ObjectDiff diff = left.diff(right)
+
+        //todo: dataElements -investigate why not being fetched by dataModel
+        then:
+        diff
+        ArrayDiff<Collection> dataElementsDiff = diff.diffs.find {it.name == DiffBuilder.DATA_ELEMENT}
+      //  dataElementsDiff
     }
 }

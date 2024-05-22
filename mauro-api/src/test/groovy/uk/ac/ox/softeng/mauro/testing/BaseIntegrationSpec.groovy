@@ -21,6 +21,7 @@ class BaseIntegrationSpec extends Specification {
     public static final String DATAMODELS_PATH = '/dataModels'
     public static final String DATACLASSES_PATH = '/dataClasses'
     public static final String DATATYPES_PATH = '/dataTypes'
+    public static final String DATA_ELEMENTS_PATH = '/dataElements'
     public static final String EXPORT_PATH = '/export'
     public static final String IMPORT_PATH = '/import'
     public static final String AUTHOR = 'author'

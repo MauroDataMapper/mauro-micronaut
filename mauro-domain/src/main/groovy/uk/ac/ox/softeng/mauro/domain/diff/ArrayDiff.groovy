@@ -20,7 +20,10 @@ class ArrayDiff<K> extends FieldDiff<Collection<K>> {
     ArrayDiff<K> createdObjects(Collection<K> createdItems) {
         createdItems.each{
             DiffableItem diffableItem = (DiffableItem) (it)
-            this.created.add(diffableItem.fromItem())
+            CollectionDiff collectionDiff = diffableItem.fromItem()
+            if( !this.created.contains(collectionDiff)) {
+                this.created.add(collectionDiff)
+            }
         }
         this
     }
@@ -28,7 +31,10 @@ class ArrayDiff<K> extends FieldDiff<Collection<K>> {
     ArrayDiff<K> deletedObjects(Collection<K> deletedItems) {
         deletedItems.each{
             DiffableItem diffableItem = (DiffableItem) (it)
-            this.deleted.add(diffableItem.fromItem())
+            CollectionDiff collectionDiff = diffableItem.fromItem()
+            if (! this.deleted.contains(collectionDiff)) {
+                this.deleted.add(diffableItem.fromItem())
+            }
         }
         this
     }

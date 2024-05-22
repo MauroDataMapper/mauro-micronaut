@@ -70,12 +70,12 @@ class ObjectDiff<T extends DiffableItem> {
         ArrayDiff diff = DiffBuilder.arrayDiff() as ArrayDiff
         diff.name = name
         if (!lhs) {
-            return append(diff.createdObjects(rhs as Collection<K>))
+            return append(diff.createdObjects(rhs.unique() as Collection<K>))
         }
 
         // If no rhs then all lhs have been deleted/removed
         if (!rhs) {
-            return append(diff.deletedObjects(lhs as Collection<K>))
+            return append(diff.deletedObjects(lhs.unique() as Collection<K>))
         }
 
         Collection<K> deleted = []
@@ -117,7 +117,9 @@ class ObjectDiff<T extends DiffableItem> {
         this
     }
     <K> ObjectDiff<T> append(FieldDiff<K> fieldDiff) {
-        diffs.add(fieldDiff)
+        if (!diffs.contains(fieldDiff)){
+            diffs.add(fieldDiff)
+        }
         this
     }
 
