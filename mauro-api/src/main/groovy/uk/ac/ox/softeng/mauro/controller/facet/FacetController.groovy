@@ -93,7 +93,7 @@ abstract class FacetController<I extends Facet> extends ItemController<I> {
     }
 
     protected AdministeredItem readAdministeredItemForFacet(I facet) {
-        readAdministeredItem(facet.multiFacetAwareItemDomainType, facet.multiFacetAwareItemId)
+        if (facet) readAdministeredItem(facet.multiFacetAwareItemDomainType, facet.multiFacetAwareItemId)
     }
 
     protected AdministeredItem readAdministeredItem(String domainType, UUID domainId) {

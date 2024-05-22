@@ -74,8 +74,9 @@ class SummaryMetadataController extends FacetController<SummaryMetadata> {
 
     @Delete('/{id}')
     @Transactional
-    HttpStatus delete(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID id, @Body @Nullable SummaryMetadata summaryMetadata) {
-        accessControlService.checkRole(Role.READER, readAdministeredItem(domainType, domainId))
+    @Override
+    HttpStatus delete(@NonNull UUID id, @Body @Nullable SummaryMetadata summaryMetadata) {
+        accessControlService.checkRole(Role.READER, readAdministeredItemForFacet(summaryMetadataRepository.readById(id)))
         deleteAnyAssociatedReports(id)
         super.delete(id, summaryMetadata)
     }
