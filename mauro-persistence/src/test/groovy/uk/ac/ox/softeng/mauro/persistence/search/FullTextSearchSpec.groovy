@@ -1,6 +1,6 @@
 package uk.ac.ox.softeng.mauro.persistence.search
 
-import spock.lang.Unroll
+
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.persistence.ContainerizedTest
@@ -11,9 +11,11 @@ import uk.ac.ox.softeng.mauro.persistence.datamodel.DataModelContentRepository
 import jakarta.inject.Inject
 import spock.lang.Shared
 import spock.lang.Specification
-import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchDTO
+import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchResultsDTO
 import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchRepository
 
+import java.time.LocalDate
+import java.sql.Date
 
 @ContainerizedTest
 class FullTextSearchSpec extends Specification {
@@ -66,7 +68,7 @@ class FullTextSearchSpec extends Specification {
 
     def "test search results across all domains" () {
         expect:
-        List<SearchDTO> searchResults = searchRepository.search(searchTerm)
+        List<SearchResultsDTO> searchResults = searchRepository.search(searchTerm)
         isSortedByRank(searchResults)
         searchResults.label == labels
 
@@ -87,7 +89,7 @@ class FullTextSearchSpec extends Specification {
 
     def "test prefix search results across all domains" () {
         expect:
-        List<SearchDTO> searchResults = searchRepository.prefixSearch(searchTerm)
+        List<SearchResultsDTO> searchResults = searchRepository.prefixSearch(searchTerm)
         System.err.println(searchResults.label)
         isSortedByLabel(searchResults)
         searchResults.label == labels
@@ -96,7 +98,7 @@ class FullTextSearchSpec extends Specification {
 
         searchTerm          | labels
         'f'                 | ['First class']
-        'a'                 | ['Another import model', 'An import model']
+        'a'                 | ['An import model', 'Another import model']
         'first'             | ['First class']
         'First'             | ['First class']
         'class'             | []
@@ -108,7 +110,7 @@ class FullTextSearchSpec extends Specification {
 
     def "test search results across particular domains" () {
         expect:
-        List<SearchDTO> searchResults = searchRepository.search(searchTerm, domainTypes)
+        List<SearchResultsDTO> searchResults = searchRepository.search(searchTerm, domainTypes)
         isSortedByRank(searchResults)
         searchResults.label == labels
 
@@ -125,17 +127,20 @@ class FullTextSearchSpec extends Specification {
     }
 
     def "test prefix search results across particular domains" () {
+
         expect:
-        List<SearchDTO> searchResults = searchRepository.prefixSearch(searchTerm, domainTypes)
-        System.err.println(searchResults.label)
+        List<SearchResultsDTO> searchResults = searchRepository.prefixSearch(searchTerm, domainTypes)
         isSortedByLabel(searchResults)
         searchResults.label == labels
+
+
+
 
         where:
 
         searchTerm          | domainTypes                           | labels
         'f'                 | []                                  | ['First class']
-        'a'                 | []                                  | ['Another import model', 'An import model']
+        'a'                 | []                                  | ['An import model', 'Another import model']
         'first'             | []                                  | ['First class']
         'first'             | ['DataClass']                       | ['First class']
         'first'             | ['DataModel']                       | []
@@ -156,16 +161,57 @@ class FullTextSearchSpec extends Specification {
     }
 
 
-    private boolean isSortedByRank(List<SearchDTO> results) {
+    def "Test searching with date parameters"() {
+        // Test dates
+        LocalDate today = LocalDate.now()
+        LocalDate tomorrow = today.plusDays(1)
+
+        expect:
+        List<SearchResultsDTO> searchResults = searchRepository.search(searchTerm, [])
+        List<SearchResultsDTO> searchResultsCreatedBeforeToday = searchRepository.search(searchTerm, [], Date.valueOf(today))
+        List<SearchResultsDTO> searchResultsCreatedBeforeTomorrow = searchRepository.search(searchTerm, [], Date.valueOf(tomorrow))
+        List<SearchResultsDTO> searchResultsCreatedAfterToday = searchRepository.search(searchTerm, [], null, Date.valueOf(today))
+        List<SearchResultsDTO> searchResultsCreatedAfterTomorrow = searchRepository.search(searchTerm, [], null, Date.valueOf(tomorrow))
+        List<SearchResultsDTO> searchResultsUpdatedBeforeToday = searchRepository.search(searchTerm, [], null, null, Date.valueOf(today))
+        List<SearchResultsDTO> searchResultsUpdatedBeforeTomorrow = searchRepository.search(searchTerm, [], null, null, Date.valueOf(tomorrow))
+        List<SearchResultsDTO> searchResultsUpdatedAfterToday = searchRepository.search(searchTerm, [], null, null, null, Date.valueOf(today))
+        List<SearchResultsDTO> searchResultsUpdatedAfterTomorrow = searchRepository.search(searchTerm, [], null, null, null, Date.valueOf(tomorrow))
+
+        searchResults.label == labels
+        searchResultsCreatedBeforeToday.label == []
+        searchResultsCreatedBeforeTomorrow.label == labels
+        searchResultsCreatedAfterToday.label == labels
+        searchResultsCreatedAfterTomorrow.label == []
+        searchResultsUpdatedBeforeToday.label == []
+        searchResultsUpdatedBeforeTomorrow.label == labels
+        searchResultsUpdatedAfterToday.label == labels
+        searchResultsUpdatedAfterTomorrow.label == []
+
+        where:
+        searchTerm          | labels
+        'first'             | ['First class', 'Twentieth class']
+        'class'             | ['First class', 'Second class', 'Twentieth class']
+        'classes'           | ['First class', 'Second class', 'Twentieth class']
+        'second'            | ['Second class']
+        'description'       | ['An import model', 'Twentieth class']
+        'import'            | ['Another import model', 'An import model']
+        'nothing'           | []
+        'first & class'     | ['First class', 'Twentieth class']
+        'first | class'     | ['First class', 'Second class', 'Twentieth class']
+        "'first class'"     | ['First class']
+
+    }
+
+    private boolean isSortedByRank(List<SearchResultsDTO> results) {
         results.size() < 2 || (1..<results.size()).every {
             results[it - 1].tsRank > results[it].tsRank
             || (results[it - 1].tsRank == results[it].tsRank && results[it - 1].label <= results[it].label)
         }
     }
 
-    private boolean isSortedByLabel(List<SearchDTO> results) {
+    private boolean isSortedByLabel(List<SearchResultsDTO> results) {
         results.size() < 2 || (1..<results.size()).every {
-            (results[it - 1].label.compareToIgnoreCase(results[it].label) >= 0)
+            (results[it - 1].label.compareToIgnoreCase(results[it].label) <= 0)
         }
     }
 

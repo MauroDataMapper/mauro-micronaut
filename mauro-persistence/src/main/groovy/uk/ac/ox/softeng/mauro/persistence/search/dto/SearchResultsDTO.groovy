@@ -7,7 +7,7 @@ import java.time.Instant
 
 @Introspected
 @CompileStatic
-class SearchDTO  {
+class SearchResultsDTO {
 
 
     UUID id
