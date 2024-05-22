@@ -5,6 +5,7 @@ import io.micronaut.http.MediaType
 import io.micronaut.http.client.HttpClient
 import io.micronaut.http.client.annotation.Client
 import io.micronaut.http.client.multipart.MultipartBody
+import io.micronaut.http.cookie.Cookie
 import jakarta.inject.Inject
 import spock.lang.Shared
 import spock.lang.Specification
@@ -36,67 +37,70 @@ class BaseIntegrationSpec extends Specification {
     @Shared
     HttpClient client
 
+    @Shared
+    Cookie sessionCookie
+
     Object GET(String uri) {
-        client.toBlocking().retrieve(HttpRequest.GET(uri), Map<String, Object>)
+        client.toBlocking().retrieve(HttpRequest.GET(uri).tap {if (sessionCookie) it.cookie(sessionCookie)}, Map<String, Object>)
     }
 
     <T> T GET(String uri, Class<T> type) {
-        client.toBlocking().retrieve(HttpRequest.GET(uri), type)
+        client.toBlocking().retrieve(HttpRequest.GET(uri).tap {if (sessionCookie) it.cookie(sessionCookie)}, type)
     }
 
     Map<String, Object> POST(String uri, Map<String, Object> body) {
-        client.toBlocking().retrieve(HttpRequest.POST(uri, body), Map<String, Object>)
+        client.toBlocking().retrieve(HttpRequest.POST(uri, body).tap {if (sessionCookie) it.cookie(sessionCookie)}, Map<String, Object>)
     }
 
     Map<String, Object> POST(String uri, Object body) {
-        client.toBlocking().retrieve(HttpRequest.POST(uri, body), Map<String, Object>)
+        client.toBlocking().retrieve(HttpRequest.POST(uri, body).tap {if (sessionCookie) it.cookie(sessionCookie)}, Map<String, Object>)
     }
 
     Map<String, Object> POST(String uri, MultipartBody body) {
-        client.toBlocking().retrieve(HttpRequest.POST(uri, body).contentType(MediaType.MULTIPART_FORM_DATA_TYPE), Map<String, Object>)
+        client.toBlocking().retrieve(HttpRequest.POST(uri, body).contentType(MediaType.MULTIPART_FORM_DATA_TYPE).tap {if (sessionCookie) it.cookie(sessionCookie)}, Map<String, Object>)
     }
 
     <T> T POST(String uri, Map<String, Object> body, Class<T> type) {
-        client.toBlocking().retrieve(HttpRequest.POST(uri, body), type)
+        client.toBlocking().retrieve(HttpRequest.POST(uri, body).tap {if (sessionCookie) it.cookie(sessionCookie)}, type)
     }
 
     <T> T POST(String uri, Object body, Class<T> type) {
-        client.toBlocking().retrieve(HttpRequest.POST(uri, body), type)
+        client.toBlocking().retrieve(HttpRequest.POST(uri, body).tap {if (sessionCookie) it.cookie(sessionCookie)}, type)
     }
 
     Map<String, Object> PUT(String uri, Map<String, Object> body) {
-        client.toBlocking().retrieve(HttpRequest.PUT(uri, body), Map<String, Object>)
+        client.toBlocking().retrieve(HttpRequest.PUT(uri, body).tap {if (sessionCookie) it.cookie(sessionCookie)}, Map<String, Object>)
     }
 
     Map<String, Object> PUT(String uri, Object body) {
-        client.toBlocking().retrieve(HttpRequest.PUT(uri, body), Map<String, Object>)
+        client.toBlocking().retrieve(HttpRequest.PUT(uri, body).tap {if (sessionCookie) it.cookie(sessionCookie)}, Map<String, Object>)
     }
 
     <T> T PUT(String uri, Map<String, Object> body, Class<T> type) {
-        client.toBlocking().retrieve(HttpRequest.PUT(uri, body), type)
+        client.toBlocking().retrieve(HttpRequest.PUT(uri, body).tap {if (sessionCookie) it.cookie(sessionCookie)}, type)
     }
 
     <T> T PUT(String uri, Object body, Class<T> type) {
-        client.toBlocking().retrieve(HttpRequest.PUT(uri, body), type)
+        client.toBlocking().retrieve(HttpRequest.PUT(uri, body).tap {if (sessionCookie) it.cookie(sessionCookie)}, type)
     }
 
     Map<String, Object> DELETE(String uri, Map<String, Object> body) {
-        client.toBlocking().retrieve(HttpRequest.DELETE(uri, body), Map<String, Object>)
+        client.toBlocking().retrieve(HttpRequest.DELETE(uri, body).tap {if (sessionCookie) it.cookie(sessionCookie)}, Map<String, Object>)
     }
 
     Map<String, Object> DELETE(String uri, Object body) {
-        client.toBlocking().retrieve(HttpRequest.DELETE(uri, body), Map<String, Object>)
+        client.toBlocking().retrieve(HttpRequest.DELETE(uri, body).tap {if (sessionCookie) it.cookie(sessionCookie)}, Map<String, Object>)
     }
 
     <T> T DELETE(String uri, Class<T> type) {
-        client.toBlocking().retrieve(HttpRequest.DELETE(uri), type)
+        client.toBlocking().retrieve(HttpRequest.DELETE(uri).tap {if (sessionCookie) it.cookie(sessionCookie)}, type)
     }
 
     <T> T DELETE(String uri, Map<String, Object> body, Class<T> type) {
-        client.toBlocking().retrieve(HttpRequest.DELETE(uri, body), type)
+        client.toBlocking().retrieve(HttpRequest.DELETE(uri, body).tap {if (sessionCookie) it.cookie(sessionCookie)}, type)
     }
 
     <T> T DELETE(String uri, Object body, Class<T> type) {
-        client.toBlocking().retrieve(HttpRequest.DELETE(uri, body), type)
+        client.toBlocking().retrieve(HttpRequest.DELETE(uri, body).tap {if (sessionCookie) it.cookie(sessionCookie)}, type)
     }
 }

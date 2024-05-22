@@ -189,7 +189,7 @@ abstract class ItemCacheableRepository<I extends Item> implements ItemRepository
         // not cached
 
         CatalogueUser readByEmailAddress(String emailAddress) {
-            ((CatalogueUserCacheableRepository) repository).readByEmailAddress(emailAddress)
+            ((CatalogueUserRepository) repository).readByEmailAddress(emailAddress)
         }
     }
 

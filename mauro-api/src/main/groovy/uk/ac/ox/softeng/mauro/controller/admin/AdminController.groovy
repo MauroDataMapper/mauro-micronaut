@@ -40,6 +40,8 @@ class AdminController {
 
     @Get('/providers/exporters')
     List<ModelExporterPlugin> exporters() {
+        accessControlService.checkAdministrator()
+
         mauroPluginService.listPlugins(ModelExporterPlugin)
     }
 

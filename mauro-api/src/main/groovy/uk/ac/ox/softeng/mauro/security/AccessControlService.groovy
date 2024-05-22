@@ -58,6 +58,8 @@ class AccessControlService implements Toggleable {
      * @return if an admin is logged in, throw AuthorizationException otherwise
      */
     void checkAdministrator() {
+        if (!enabled) return
+
         checkAuthenticated()
 
         if (!administrator) {
@@ -87,6 +89,9 @@ class AccessControlService implements Toggleable {
      */
     void checkRole(@NonNull Role role, @NonNull AdministeredItem item) {
         if (!enabled) return
+
+        // if item is null, allow access to continue, e.g. to return a not found message
+        if (!item) return
 
         pathRepository.readParentItems(item)
         Model owner = item.owner

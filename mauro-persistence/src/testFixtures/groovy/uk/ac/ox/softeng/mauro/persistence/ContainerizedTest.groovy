@@ -17,4 +17,4 @@ import java.lang.annotation.Target
 @AnnotationCollector
 @Target(ElementType.TYPE)
 @Inherited
-@interface ContainerizedTest { }
+@interface ContainerizedTest {}
