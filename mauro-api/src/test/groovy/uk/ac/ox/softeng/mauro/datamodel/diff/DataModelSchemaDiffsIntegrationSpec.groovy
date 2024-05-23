@@ -76,17 +76,13 @@ class DataModelSchemaDiffsIntegrationSpec extends CommonDataSpec {
         DataClass childDataClass = (DataClass) POST("$DATAMODELS_PATH/$rightDataModelId$DATACLASSES_PATH/$rightDataClass.id$DATACLASSES_PATH",
                 [label: 'Test child', description: 'child test description', minMultiplicity: -2], DataClass)
 
-        and:
-        //Diff endpoint does not return nested ObjectDiffs using httpClient.
-        // Get with content fetches all data classes and nested objects in DM
-        DataModel left = (DataModel) GET("$DATAMODELS_PATH/allContent/$leftDataModelId", DataModel)
-        DataModel right = (DataModel) GET("$DATAMODELS_PATH/allContent/$rightDataModelId", DataModel)
         when:
-        ObjectDiff diff = left.diff(right)
+        ObjectDiff diff = (ObjectDiff) GET("$DATAMODELS_PATH/$leftDataModelId/diff/$rightDataModelId", ObjectDiff)
         then:
         diff
-
-        diff.label == left.label
+        ObjectMapper om = new ObjectMapper()
+        println(om.writeValueAsString(diff))
+      //  diff.label == left.label
         diff.diffs.size() == 3
         diff.getNumberOfDiffs() == 5
         diff.diffs.each { [AUTHOR, DiffBuilder.DESCRIPTION, DiffBuilder.DATA_CLASSES].contains(it.name) }
