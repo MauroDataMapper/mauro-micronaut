@@ -1,6 +1,5 @@
 package uk.ac.ox.softeng.mauro.datamodel.diff
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import io.micronaut.runtime.EmbeddedApplication
 import io.micronaut.test.annotation.Sql
 import jakarta.inject.Inject
@@ -10,7 +9,6 @@ import uk.ac.ox.softeng.mauro.domain.datamodel.DataElement
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
 import uk.ac.ox.softeng.mauro.domain.diff.ArrayDiff
-import uk.ac.ox.softeng.mauro.domain.diff.BaseCollectionDiff
 import uk.ac.ox.softeng.mauro.domain.diff.DiffBuilder
 import uk.ac.ox.softeng.mauro.domain.diff.ObjectDiff
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
@@ -64,10 +62,10 @@ class DataModelSchemaDiffsIntegrationSpec extends CommonDataSpec {
         diff.diffs.each { ![DiffBuilder.DATA_CLASSES].contains(it.name) }
     }
 
-    void 'diff dataModels with same modified data class - should show differences'() {
+    void 'diff dataModels with same modified data class - should show diff with nested child data class '() {
         given:
         //modified comparison key = label
-        (DataClass) POST("$DATAMODELS_PATH/$leftDataModelId$DATACLASSES_PATH", dataClassPayload(), DataClass)
+        DataClass leftDataClass = (DataClass) POST("$DATAMODELS_PATH/$leftDataModelId$DATACLASSES_PATH", dataClassPayload(), DataClass)
 
         DataClass rightDataClass = (DataClass) POST("$DATAMODELS_PATH/$rightDataModelId$DATACLASSES_PATH",
                 [label: 'Test data class', description: 'other test description', minMultiplicity: -1], DataClass)
@@ -77,30 +75,24 @@ class DataModelSchemaDiffsIntegrationSpec extends CommonDataSpec {
                 [label: 'Test child', description: 'child test description', minMultiplicity: -2], DataClass)
 
         when:
-        ObjectDiff diff = (ObjectDiff) GET("$DATAMODELS_PATH/$leftDataModelId/diff/$rightDataModelId", ObjectDiff)
+        Map<String, Object> diff = GET("$DATAMODELS_PATH/$leftDataModelId/diff/$rightDataModelId", Map<String, Object>)
+
         then:
         diff
-        ObjectMapper om = new ObjectMapper()
-        println(om.writeValueAsString(diff))
-      //  diff.label == left.label
-        diff.diffs.size() == 3
-        diff.getNumberOfDiffs() == 5
-        diff.diffs.each { [AUTHOR, DiffBuilder.DESCRIPTION, DiffBuilder.DATA_CLASSES].contains(it.name) }
+        diff.count == 5
         ArrayDiff<Collection> dataClasses = diff.diffs.find { it -> it.name == DiffBuilder.DATA_CLASSES } as ArrayDiff<Collection>
         dataClasses.created.isEmpty()
         dataClasses.deleted.isEmpty()
-
-        dataClasses.modified.numberOfDiffs.first() == 3
-        dataClasses.modified.diffs.each { [DiffBuilder.DESCRIPTION, DiffBuilder.MIN_MULTIPILICITY, DiffBuilder.DATA_CLASSES].contains(it.name) }
-        ArrayDiff<Collection> child = dataClasses.modified.diffs.last().last()
-
+        dataClasses.modified.size() == 1
+        dataClasses.modified[0].count == 3
+        dataClasses.modified[0].diffs.each { [DiffBuilder.DESCRIPTION, DiffBuilder.MIN_MULTIPILICITY, DiffBuilder.DATA_CLASSES].contains(it.name) }
+        ArrayDiff<Collection> child = dataClasses.modified[0].diffs.find { it.name == DiffBuilder.DATA_CLASSES }
         child
         child.deleted.isEmpty()
         child.modified.isEmpty()
-
-        BaseCollectionDiff childDiff = child.created.first()
-        childDiff.id== childDataClass.id
-        childDiff.label == childDataClass.label
+        child.created.size() == 1
+        child.created[0].get(DiffBuilder.ID_KEY) == childDataClass.id.toString()
+        child.created[0].get(DiffBuilder.LABEL) == childDataClass.label
     }
 
     void 'diff dataModels with dataType diffs'() {
@@ -108,62 +100,60 @@ class DataModelSchemaDiffsIntegrationSpec extends CommonDataSpec {
         //modified comparison key = label
         DataType leftDataType = (DataType) POST("$DATAMODELS_PATH/$leftDataModelId$DATATYPES_PATH", dataTypesPayload(), DataType)
 
-        and:
-        //Diff endpoint does not return nested ObjectDiffs using httpClient.
-        // Get with content fetches all data classes and nested objects in DM
-        DataModel left = (DataModel) GET("$DATAMODELS_PATH/allContent/$leftDataModelId", DataModel)
-        DataModel right = (DataModel) GET("$DATAMODELS_PATH/allContent/$rightDataModelId", DataModel)
         when:
-        ObjectDiff diff = left.diff(right)
+        Map<String, Object> diffMap = GET("$DATAMODELS_PATH/$leftDataModelId/diff/$rightDataModelId", Map<String, Object>)
 
         then:
-        diff
-        diff.numberOfDiffs == 3
-        diff.diffs.size() == 3
-        ArrayDiff<Collection> dataTypesDiff = diff.diffs.find {it.name == DiffBuilder.DATA_TYPE}
+        diffMap
+        diffMap.count == 3
+        ArrayDiff<Collection> dataTypesDiff = diffMap.diffs.find { it.name == DiffBuilder.DATA_TYPE }
         dataTypesDiff.created.isEmpty()
         dataTypesDiff.modified.isEmpty()
-        dataTypesDiff.deleted.size() ==1
-        BaseCollectionDiff baseCollectionDiff =  dataTypesDiff.deleted.first()
-        baseCollectionDiff.id == leftDataType.id
-        baseCollectionDiff.label == leftDataType.label
+        dataTypesDiff.deleted.size() == 1
+
+        dataTypesDiff.deleted.size() == 1
+        dataTypesDiff.deleted[0].get(DiffBuilder.ID_KEY) == leftDataType.id.toString()
+        dataTypesDiff.deleted[0].get(DiffBuilder.LABEL) == leftDataType.label
     }
 
-    //todo: dataelements not fetched in test. (Postman ok)
+
     void 'diff dataModels with DataClasses and DataElements'() {
         given:
         //modified comparison key = label
         DataClass leftDataClass = (DataClass) POST("$DATAMODELS_PATH/$leftDataModelId$DATACLASSES_PATH", dataClassPayload(), DataClass)
         DataClass rightDataClass = (DataClass) POST("$DATAMODELS_PATH/$rightDataModelId$DATACLASSES_PATH", dataClassPayload(), DataClass)
 
-        DataType leftDataTypeResponse = (DataType)  POST("$DATAMODELS_PATH/$leftDataModelId$DATATYPES_PATH", dataTypesPayload(), DataType)
-        DataType rightDataTypeResponse = (DataType)  POST("$DATAMODELS_PATH/$rightDataModelId$DATATYPES_PATH", dataTypesPayload(), DataType)
+        DataType leftDataTypeResponse = (DataType) POST("$DATAMODELS_PATH/$leftDataModelId$DATATYPES_PATH", dataTypesPayload(), DataType)
+        DataType rightDataTypeResponse = (DataType) POST("$DATAMODELS_PATH/$rightDataModelId$DATATYPES_PATH", dataTypesPayload(), DataType)
 
 
-       DataElement leftDataElement = (DataElement)  POST("$DATAMODELS_PATH/$leftDataModelId$DATACLASSES_PATH/$leftDataClass.id$DATA_ELEMENTS_PATH",
-               [ label: 'data element', description:  'The first data element description', dataType: [id: leftDataTypeResponse.id]], DataElement)
+        DataElement leftDataElement = (DataElement) POST("$DATAMODELS_PATH/$leftDataModelId$DATACLASSES_PATH/$leftDataClass.id$DATA_ELEMENTS_PATH",
+                [label: 'data element', description: 'The first data element description', dataType: [id: leftDataTypeResponse.id]], DataElement)
 
+        //validation of dataElement on dataClass
         and:
-        //Diff endpoint does not return nested ObjectDiffs using httpClient.
-        // Get with content fetches all data classes and nested objects in DM
         def dataElementListResponse = (ListResponse<DataElement>) GET("/dataModels/$leftDataModelId/dataClasses/$leftDataClass.id/dataElements")
         dataElementListResponse.count == 1
 
         when:
         def retrievedDataElement = dataElementListResponse.getItems().first()
-        //for readDataModel withContent:
         then:
         retrievedDataElement.dataType.id.toString() == leftDataTypeResponse.id.toString()
 
-        DataModel left = (DataModel) GET("$DATAMODELS_PATH/allContent/$leftDataModelId", DataModel)
-        DataModel right = (DataModel) GET("$DATAMODELS_PATH/allContent/$rightDataModelId", DataModel)
         when:
-        ObjectDiff diff = left.diff(right)
+        Map<String, Object> diffMap = GET("$DATAMODELS_PATH/$leftDataModelId/diff/$rightDataModelId", Map<String, Object>)
 
-        //todo: dataElements -investigate why not being fetched by dataModel
         then:
-        diff
-        ArrayDiff<Collection> dataElementsDiff = diff.diffs.find {it.name == DiffBuilder.DATA_ELEMENT}
-      //  dataElementsDiff
+        diffMap
+        diffMap.diffs.each { [AUTHOR, DiffBuilder.DESCRIPTION, DiffBuilder.DATA_ELEMENT].contains(it.name) }
+        ArrayDiff<Collection> dataElementsDiff = diffMap.diffs.find { it.name == DiffBuilder.DATA_ELEMENT }
+        dataElementsDiff.created.isEmpty()
+        dataElementsDiff.modified.isEmpty()
+
+        dataElementsDiff.deleted.size() == 1
+        dataElementsDiff.deleted[0].each { [DiffBuilder.ID_KEY, DiffBuilder.LABEL].contains(it) }
+        dataElementsDiff.deleted[0].get(DiffBuilder.ID_KEY) == retrievedDataElement.id.toString()
+        dataElementsDiff.deleted[0].get(DiffBuilder.LABEL) == retrievedDataElement.label
     }
 }
+

@@ -115,8 +115,8 @@ class DataClass extends ModelItem<DataModel> implements DiffableItem<DataClass> 
         base.label = this.label
         base.appendString(DiffBuilder.DESCRIPTION, this.description, other.description)
         base.appendString(DiffBuilder.ALIASES_STRING, this.aliasesString, other.aliasesString)
-        base.appendNumber(DiffBuilder.MIN_MULTIPILICITY, this.minMultiplicity, other.minMultiplicity)
-        base.appendNumber(DiffBuilder.MAX_MULTIPILICITY, this.maxMultiplicity, other.maxMultiplicity)
+        base.appendField(DiffBuilder.MIN_MULTIPILICITY, this.minMultiplicity, other.minMultiplicity)
+        base.appendField(DiffBuilder.MAX_MULTIPILICITY, this.maxMultiplicity, other.maxMultiplicity)
         if (!DiffBuilder.isNullOrEmpty(this.dataClasses as Collection<Object>) || !DiffBuilder.isNullOrEmpty(other.dataClasses as Collection<Object>)) {
             base.appendCollection(DiffBuilder.DATA_CLASSES, this.dataClasses as Collection<DiffableItem>, other.dataClasses as Collection<DiffableItem>)
         }

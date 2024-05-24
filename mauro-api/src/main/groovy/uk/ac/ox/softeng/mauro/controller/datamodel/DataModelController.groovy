@@ -107,19 +107,12 @@ class DataModelController extends ModelController<DataModel> {
     @Get('/dataModels/{id}/diff/{otherId}')
     ObjectDiff diffModels(@NonNull UUID id, @NonNull UUID otherId) {
         DataModel dataModel = modelContentRepository.findWithContentById(id)
-        dataModel.setAssociations()
         handleNotFoundError(dataModel, id)
-        DataModel otherDataModel = modelContentRepository.findWithContentById(otherId)
-        otherDataModel.setAssociations()
-        handleNotFoundError(otherDataModel, otherId)
-        dataModel.diff(otherDataModel)
-    }
-
-    @Get('/dataModels/allContent/{id}')
-    DataModel showAllContent(@NonNull UUID id) {
-        DataModel dataModel = modelContentRepository.findWithContentById(id)
         dataModel.setAssociations()
-        dataModel
+        DataModel otherDataModel = modelContentRepository.findWithContentById(otherId)
+        handleNotFoundError(otherDataModel, otherId)
+        otherDataModel.setAssociations()
+        dataModel.diff(otherDataModel)
     }
 
     private void handleNotFoundError(DataModel dataModel, UUID id) {

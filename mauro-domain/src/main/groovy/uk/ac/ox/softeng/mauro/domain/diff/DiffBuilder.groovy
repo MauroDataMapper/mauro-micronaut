@@ -23,6 +23,7 @@ class DiffBuilder {
     static final String CHILD_ANNOTATIONS = 'childAnnotations'
     static final String SUMMARY_METADATA = 'summaryMetadata'
     static final String SUMMARY_METADATA_TYPE = 'summaryMetadataType'
+    static final String SUMMARY_METADATA_REPORT = 'summaryMetadataReports'
     static final String DATA_CLASSES = 'dataClasses'
     static final String DATA_TYPE = 'dataTypes'
     static final String DATA_ELEMENT = 'dataElements'
@@ -30,8 +31,10 @@ class DiffBuilder {
     static final String DATA_TYPE_PATH = 'dataTypePath'
     static final String MIN_MULTIPILICITY = 'minMultiplicity'
     static final String MAX_MULTIPILICITY = 'maxMultiplicity'
+    static final String VALUE = 'value'
+    static final String REPORT_DATE = 'reportDate'
     static final List<String> IGNORE_KEYS = [ID_KEY, DATE_CREATED_KEY, LAST_UPDATED_KEY, DOMAIN_TYPE, CLASS_KEY, FOLDER_KEY]
-    static final List<String> MODEL_COLLECTION_KEYS = [METADATA, ANNOTATION, RULE, SUMMARY_METADATA, DATA_CLASSES, DATA_TYPE, DATA_ELEMENT]
+    static final List<String> MODEL_COLLECTION_KEYS = [METADATA, ANNOTATION, RULE, SUMMARY_METADATA, SUMMARY_METADATA_REPORT, DATA_CLASSES, DATA_TYPE, DATA_ELEMENT]
 
     static ArrayDiff arrayDiff() {
         new ArrayDiff()
@@ -102,9 +105,8 @@ class DiffBuilder {
         if (!lhsMap.isEmpty()) {
             lhsMap.each { k, v ->
                 if (rhsMap[k] != v) {
-                    FieldDiff fieldDiff = new FieldDiff(k as String, targetClass instanceof String ? clean(v as String) :
-                            v, targetClass instanceof String ? clean(rhsMap[k] as String) : rhsMap[k])
-                    objectDiff.append(fieldDiff)
+                    objectDiff.appendField(k as String, targetClass instanceof String ? clean(v as String) : v,
+                            targetClass instanceof String ? clean(rhsMap[k] as String) : rhsMap[k])
                 }
             }
         }
@@ -113,8 +115,8 @@ class DiffBuilder {
         if (rhsKeys.disjoint(lhsKeys)) {
             rhsMap.keySet().each {
                 if (!lhsMap.keySet().contains(it)) {
-                    FieldDiff fieldDiff = new FieldDiff(it as String, null, rhsMap.get(it))
-                    objectDiff.append(fieldDiff)
+                    objectDiff.appendField(it as String, null, targetClass instanceof String ? clean(rhsMap.get(it) as String) :
+                            rhsMap.get(it))
                 }
             }
         }

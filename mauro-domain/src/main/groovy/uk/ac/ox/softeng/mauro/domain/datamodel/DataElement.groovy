@@ -103,8 +103,8 @@ class DataElement extends ModelItem<DataClass> implements DiffableItem<DataEleme
         base.appendString(DiffBuilder.DESCRIPTION, this.description, other.description)
         base.appendString(DiffBuilder.ALIASES_STRING, this.aliasesString, other.aliasesString)
         base.appendString(DiffBuilder.DATA_TYPE_PATH, this.dataType.path.toString(), other.dataType.path.toString())
-        base.appendNumber(DiffBuilder.MIN_MULTIPILICITY, this.minMultiplicity, other.minMultiplicity)
-        base.appendNumber(DiffBuilder.MAX_MULTIPILICITY, this.maxMultiplicity, other.maxMultiplicity)
+        base.appendField(DiffBuilder.MIN_MULTIPILICITY, this.minMultiplicity, other.minMultiplicity)
+        base.appendField(DiffBuilder.MAX_MULTIPILICITY, this.maxMultiplicity, other.maxMultiplicity)
     }
 
 

@@ -26,7 +26,7 @@ class ObjectDiff<T extends DiffableItem> {
     String key
 
     @JsonProperty("diffs")
-    List<FieldDiff> diffs = []
+    List<? extends FieldDiff> diffs = []
 
 
     ObjectDiff(Class<T> targetClass) {
@@ -54,12 +54,11 @@ class ObjectDiff<T extends DiffableItem> {
     ObjectDiff<T> appendString(final String fieldName, final String lhs, final String rhs) throws MauroInternalException {
         String lhsString = DiffBuilder.isNullOrEmpty(lhs) ? null : DiffBuilder.clean(lhs)
         String rhsString = DiffBuilder.isNullOrEmpty(rhs) ? null : DiffBuilder.clean(rhs)
-        if (lhsString != rhsString) {
-            append(new FieldDiff(fieldName, lhsString, rhsString))
-        }
+        appendField( fieldName, lhsString, rhsString)
         this
     }
-    ObjectDiff<T> appendNumber(final String fieldName, final Integer lhs, final Integer rhs) throws MauroInternalException {
+
+    <K> ObjectDiff<T> appendField(final String fieldName, K lhs, K rhs) throws MauroInternalException {
         if (lhs != rhs) {
             append(new FieldDiff(fieldName, lhs, rhs))
         }
@@ -116,8 +115,9 @@ class ObjectDiff<T extends DiffableItem> {
 
         this
     }
+
     <K> ObjectDiff<T> append(FieldDiff<K> fieldDiff) {
-        if (!diffs.contains(fieldDiff)){
+        if (!diffs.contains(fieldDiff)) {
             diffs.add(fieldDiff)
         }
         this

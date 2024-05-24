@@ -56,7 +56,7 @@ class Annotation extends Facet implements DiffableItem<Annotation> {
         base.label = this.label
         base.appendString(DiffBuilder.DESCRIPTION, this.description, other.description)
         if (!DiffBuilder.isNull(this.childAnnotations) ||!DiffBuilder.isNull(other.childAnnotations)) {
-            base.appendCollection('childAnnotations', this.childAnnotations as Collection<DiffableItem>, other.childAnnotations as Collection<DiffableItem>)
+            base.appendCollection(DiffBuilder.CHILD_ANNOTATIONS, this.childAnnotations as Collection<DiffableItem>, other.childAnnotations as Collection<DiffableItem>)
         }
         base
     }
