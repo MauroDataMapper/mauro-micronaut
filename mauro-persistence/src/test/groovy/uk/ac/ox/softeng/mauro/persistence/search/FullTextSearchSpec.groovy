@@ -37,12 +37,18 @@ class FullTextSearchSpec extends Specification {
     @Shared
     UUID folderId
 
+    @Shared
+    DataModel dataModel1
+
+    @Shared
+    DataModel dataModel2
+
     def setupSpec() {
         Folder myFirstFolder = folderRepository.save(new Folder(
             label: "My Search Folder"
         ))
 
-        DataModel dataModel1 = DataModel.build {
+        dataModel1 = DataModel.build {
             label "An import model"
             description "The description goes here"
             folder myFirstFolder
@@ -57,7 +63,7 @@ class FullTextSearchSpec extends Specification {
                 description "First description"
             }
         }
-        DataModel dataModel2 = DataModel.build {
+        dataModel2 = DataModel.build {
             label "Another import model"
             description ""
             folder myFirstFolder
@@ -90,7 +96,6 @@ class FullTextSearchSpec extends Specification {
     def "test prefix search results across all domains" () {
         expect:
         List<SearchResultsDTO> searchResults = searchRepository.prefixSearch(searchTerm)
-        System.err.println(searchResults.label)
         isSortedByLabel(searchResults)
         searchResults.label == labels
 
@@ -133,9 +138,6 @@ class FullTextSearchSpec extends Specification {
         isSortedByLabel(searchResults)
         searchResults.label == labels
 
-
-
-
         where:
 
         searchTerm          | domainTypes                           | labels
@@ -168,14 +170,14 @@ class FullTextSearchSpec extends Specification {
 
         expect:
         List<SearchResultsDTO> searchResults = searchRepository.search(searchTerm, [])
-        List<SearchResultsDTO> searchResultsCreatedBeforeToday = searchRepository.search(searchTerm, [], Date.valueOf(today))
-        List<SearchResultsDTO> searchResultsCreatedBeforeTomorrow = searchRepository.search(searchTerm, [], Date.valueOf(tomorrow))
-        List<SearchResultsDTO> searchResultsCreatedAfterToday = searchRepository.search(searchTerm, [], null, Date.valueOf(today))
-        List<SearchResultsDTO> searchResultsCreatedAfterTomorrow = searchRepository.search(searchTerm, [], null, Date.valueOf(tomorrow))
-        List<SearchResultsDTO> searchResultsUpdatedBeforeToday = searchRepository.search(searchTerm, [], null, null, Date.valueOf(today))
-        List<SearchResultsDTO> searchResultsUpdatedBeforeTomorrow = searchRepository.search(searchTerm, [], null, null, Date.valueOf(tomorrow))
-        List<SearchResultsDTO> searchResultsUpdatedAfterToday = searchRepository.search(searchTerm, [], null, null, null, Date.valueOf(today))
-        List<SearchResultsDTO> searchResultsUpdatedAfterTomorrow = searchRepository.search(searchTerm, [], null, null, null, Date.valueOf(tomorrow))
+        List<SearchResultsDTO> searchResultsCreatedBeforeToday = searchRepository.search(searchTerm, [], null, Date.valueOf(today))
+        List<SearchResultsDTO> searchResultsCreatedBeforeTomorrow = searchRepository.search(searchTerm, [], null, Date.valueOf(tomorrow))
+        List<SearchResultsDTO> searchResultsCreatedAfterToday = searchRepository.search(searchTerm, [], null, null, Date.valueOf(today))
+        List<SearchResultsDTO> searchResultsCreatedAfterTomorrow = searchRepository.search(searchTerm, [], null, null, Date.valueOf(tomorrow))
+        List<SearchResultsDTO> searchResultsUpdatedBeforeToday = searchRepository.search(searchTerm, [], null, null, null, Date.valueOf(today))
+        List<SearchResultsDTO> searchResultsUpdatedBeforeTomorrow = searchRepository.search(searchTerm, [], null, null, null, Date.valueOf(tomorrow))
+        List<SearchResultsDTO> searchResultsUpdatedAfterToday = searchRepository.search(searchTerm, [], null, null, null, null, Date.valueOf(today))
+        List<SearchResultsDTO> searchResultsUpdatedAfterTomorrow = searchRepository.search(searchTerm, [], null, null, null, null, Date.valueOf(tomorrow))
 
         searchResults.label == labels
         searchResultsCreatedBeforeToday.label == []
@@ -201,6 +203,46 @@ class FullTextSearchSpec extends Specification {
         "'first class'"     | ['First class']
 
     }
+
+    def "test search results within a model" () {
+        expect:
+        List<SearchResultsDTO> searchResults = searchRepository.search(searchTerm, [], modelId)
+        isSortedByRank(searchResults)
+        searchResults.label == labels
+
+        where:
+
+        searchTerm          | modelId               | labels
+        'first'             | null                  | ['First class', 'Twentieth class']
+        'first'             | dataModel1.id         | ['First class', 'Twentieth class']
+        'first'             | dataModel2.id         | []
+        'class'             | null                  | ['First class', 'Second class', 'Twentieth class']
+        'class'             | dataModel1.id         | ['First class', 'Second class', 'Twentieth class']
+        'class'             | dataModel2.id         | []
+        'import'            | null                  | ['Another import model', 'An import model']
+        'import'            | dataModel1.id         | ['An import model']
+        'import'            | dataModel2.id         | ['Another import model']
+    }
+
+    def "test prefix search results within a model" () {
+
+        expect:
+        List<SearchResultsDTO> searchResults = searchRepository.prefixSearch(searchTerm, [], dataModelId)
+        isSortedByLabel(searchResults)
+        searchResults.label == labels
+
+        where:
+
+        searchTerm          | dataModelId                         | labels
+        'f'                 | null                                | ['First class']
+        'f'                 | dataModel1.id                       | ['First class']
+        'f'                 | dataModel2.id                       | []
+        'a'                 | null                                | ['An import model', 'Another import model']
+        'a'                 | dataModel1.id                       | ['An import model']
+        'a'                 | dataModel2.id                       | ['Another import model']
+    }
+
+
 
     private boolean isSortedByRank(List<SearchResultsDTO> results) {
         results.size() < 2 || (1..<results.size()).every {

@@ -83,22 +83,98 @@ CREATE AGGREGATE core.tsvector_agg(tsvector) (
     INITCOND = ''
     );
 
-create view core.search_domains as (
-    select id, 'DataType' as domain_type, label, description, ts, date_created, last_updated FROM datamodel.data_type
-    union
-    select id, 'DataClass' as domain_type, label, description, ts, date_created, last_updated FROM datamodel.data_class
-    union
-    select id, 'DataElement' as domain_type, label, description, ts, date_created, last_updated FROM datamodel.data_element
-    union
-    select id, 'DataModel' as domain_type, label, description, ts, date_created, last_updated FROM datamodel.data_model
-    union
-    select id, 'EnumerationValue' as domain_type, label, description, ts, date_created, last_updated FROM datamodel.enumeration_value
-    union
-    select id, 'Terminology' as domain_type, label, description, ts, date_created, last_updated FROM terminology.terminology
-    union
-    select id, 'Term' as domain_type, label, description, ts, date_created, last_updated FROM terminology.term
-    union
-    select id, 'CodeSet' as domain_type, label, description, ts, date_created, last_updated FROM terminology.code_set
-    union
-    select id, 'Folder' as domain_type, label, description, ts, date_created, last_updated FROM core.folder
-);
+create view search_domains(id, domain_type, label, description, ts, date_created, last_updated, model_id) as
+(SELECT data_type.id,
+       'DataType'::text AS domain_type,
+       data_type.label,
+       data_type.description,
+       data_type.ts,
+       data_type.date_created,
+       data_type.last_updated,
+       data_type.data_model_id as model_id
+FROM datamodel.data_type
+UNION
+SELECT data_class.id,
+       'DataClass'::text AS domain_type,
+       data_class.label,
+       data_class.description,
+       data_class.ts,
+       data_class.date_created,
+       data_class.last_updated,
+       data_class.data_model_id as model_id
+FROM datamodel.data_class
+UNION
+(SELECT data_element.id,
+        'DataElement'::text AS domain_type,
+        data_element.label,
+        data_element.description,
+        data_element.ts,
+        data_element.date_created,
+        data_element.last_updated,
+        data_class.data_model_id as model_id
+ FROM datamodel.data_element
+          inner join datamodel.data_class on data_element.data_class_id = data_class.id)
+UNION
+SELECT data_model.id,
+       'DataModel'::text AS domain_type,
+       data_model.label,
+       data_model.description,
+       data_model.ts,
+       data_model.date_created,
+       data_model.last_updated,
+       data_model.id as model_id
+FROM datamodel.data_model
+UNION
+(SELECT enumeration_value.id,
+        'EnumerationValue'::text AS domain_type,
+        enumeration_value.label,
+        enumeration_value.description,
+        enumeration_value.ts,
+        enumeration_value.date_created,
+        enumeration_value.last_updated,
+        data_type.data_model_id as model_id
+ FROM datamodel.enumeration_value
+          inner join datamodel.data_type on enumeration_value.enumeration_type_id = data_type.id)
+UNION
+SELECT terminology.id,
+       'Terminology'::text AS domain_type,
+       terminology.label,
+       terminology.description,
+       terminology.ts,
+       terminology.date_created,
+       terminology.last_updated,
+       terminology.id as model_id
+FROM terminology.terminology
+UNION
+SELECT term.id,
+       'Term'::text AS domain_type,
+       term.label,
+       term.description,
+       term.ts,
+       term.date_created,
+       term.last_updated,
+       term.terminology_id as model_id
+FROM terminology.term
+UNION
+SELECT code_set.id,
+       'CodeSet'::text AS domain_type,
+       code_set.label,
+       code_set.description,
+       code_set.ts,
+       code_set.date_created,
+       code_set.last_updated,
+       code_set.id as model_id
+FROM terminology.code_set
+UNION
+SELECT folder.id,
+       'Folder'::text AS domain_type,
+       folder.label,
+       folder.description,
+       folder.ts,
+       folder.date_created,
+       folder.last_updated,
+       null as model_id
+FROM core.folder)
+;
+
+

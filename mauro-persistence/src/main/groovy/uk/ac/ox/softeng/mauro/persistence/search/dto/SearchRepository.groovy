@@ -31,17 +31,17 @@ abstract class SearchRepository implements GenericRepository<SearchResultsDTO, U
 
         where  (metadata.ts @@ to_tsquery('english', :searchTerm) or search_domains.ts @@ to_tsquery('english', :searchTerm)) 
                 and ( (:domainTypes) is null or search_domains.domain_type in (:domainTypes)) 
+                and (:modelId is null or search_domains.model_id = :modelId)
                 and ( cast(:createdBefore as date) is null or :createdBefore > search_domains.date_created)
                 and ( cast(:createdAfter as date) is null or :createdAfter <= search_domains.date_created)
                 and ( cast(:lastUpdatedBefore as date) is null or :lastUpdatedBefore > search_domains.last_updated)
                 and ( cast(:lastUpdatedAfter as date) is null or :lastUpdatedAfter <= search_domains.last_updated)
-
         group by search_domains.id, search_domains.domain_type, search_domains.label, 
                 search_domains.description, search_domains.ts, search_domains.date_created, search_domains.last_updated
 
         order by ts_rank(tsvector_concat(core.tsvector_agg(metadata.ts), search_domains.ts), to_tsquery('english', :searchTerm), 1) desc, label asc''',
     nativeQuery = true)
-    abstract List<SearchResultsDTO> search(String searchTerm, List<String> domainTypes = [], @Nullable Date createdBefore = null, @Nullable Date createdAfter = null, @Nullable Date lastUpdatedBefore = null, @Nullable Date lastUpdatedAfter = null)
+    abstract List<SearchResultsDTO> search(String searchTerm, List<String> domainTypes = [], @Nullable UUID modelId = null, @Nullable Date createdBefore = null, @Nullable Date createdAfter = null, @Nullable Date lastUpdatedBefore = null, @Nullable Date lastUpdatedAfter = null)
 
     @Query(value = '''
         select search_domains.id,
@@ -55,6 +55,7 @@ abstract class SearchRepository implements GenericRepository<SearchResultsDTO, U
 
         where  search_domains.label ilike :searchTerm || '%'
                 and ( (:domainTypes) is null or search_domains.domain_type in (:domainTypes)) 
+                and (:modelId is null or search_domains.model_id = :modelId)
                 and ( cast(:createdBefore as date) is null or :createdBefore > search_domains.date_created)
                 and ( cast(:createdAfter as date) is null or :createdAfter <= search_domains.date_created)
                 and ( cast(:lastUpdatedBefore as date) is null or :lastUpdatedBefore > search_domains.last_updated)
@@ -64,6 +65,6 @@ abstract class SearchRepository implements GenericRepository<SearchResultsDTO, U
 
         order by search_domains.label asc''',
             nativeQuery = true)
-    abstract List<SearchResultsDTO> prefixSearch(String searchTerm, List<String> domainTypes = [], @Nullable Date createdBefore = null, @Nullable Date createdAfter = null, @Nullable Date lastUpdatedBefore = null, @Nullable Date lastUpdatedAfter = null)
+    abstract List<SearchResultsDTO> prefixSearch(String searchTerm, List<String> domainTypes = [], @Nullable UUID modelId = null, @Nullable Date createdBefore = null, @Nullable Date createdAfter = null, @Nullable Date lastUpdatedBefore = null, @Nullable Date lastUpdatedAfter = null)
 
 }
