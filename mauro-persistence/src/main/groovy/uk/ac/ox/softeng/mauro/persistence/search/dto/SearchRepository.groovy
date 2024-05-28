@@ -41,7 +41,7 @@ abstract class SearchRepository implements GenericRepository<SearchResultsDTO, U
 
         order by ts_rank(tsvector_concat(core.tsvector_agg(metadata.ts), search_domains.ts), to_tsquery('english', :searchTerm), 1) desc, label asc''',
     nativeQuery = true)
-    abstract List<SearchResultsDTO> search(String searchTerm, List<String> domainTypes = [], @Nullable UUID modelId = null, @Nullable Date createdBefore = null, @Nullable Date createdAfter = null, @Nullable Date lastUpdatedBefore = null, @Nullable Date lastUpdatedAfter = null)
+    abstract List<SearchResultsDTO> search(String searchTerm, @Nullable List<String> domainTypes = [], @Nullable UUID modelId = null, @Nullable Date createdBefore = null, @Nullable Date createdAfter = null, @Nullable Date lastUpdatedBefore = null, @Nullable Date lastUpdatedAfter = null)
 
     @Query(value = '''
         select search_domains.id,
@@ -65,6 +65,32 @@ abstract class SearchRepository implements GenericRepository<SearchResultsDTO, U
 
         order by search_domains.label asc''',
             nativeQuery = true)
-    abstract List<SearchResultsDTO> prefixSearch(String searchTerm, List<String> domainTypes = [], @Nullable UUID modelId = null, @Nullable Date createdBefore = null, @Nullable Date createdAfter = null, @Nullable Date lastUpdatedBefore = null, @Nullable Date lastUpdatedAfter = null)
+    abstract List<SearchResultsDTO> prefixSearch(String searchTerm, @Nullable List<String> domainTypes = [], @Nullable UUID modelId = null, @Nullable Date createdBefore = null, @Nullable Date createdAfter = null, @Nullable Date lastUpdatedBefore = null, @Nullable Date lastUpdatedAfter = null)
+
+    List<SearchResultsDTO> search(SearchRequestDTO searchRequestDTO) {
+        if(searchRequestDTO.prefixSearch) {
+            return prefixSearch(
+                    searchRequestDTO.searchTerm,
+                    searchRequestDTO.domainTypes,
+                    searchRequestDTO.withinModelId,
+                    searchRequestDTO.createdBefore,
+                    searchRequestDTO.createdAfter,
+                    searchRequestDTO.lastUpdatedBefore,
+                    searchRequestDTO.lastUpdatedAfter
+            )
+        } else {
+            return search(
+                    searchRequestDTO.searchTerm,
+                    searchRequestDTO.domainTypes,
+                    searchRequestDTO.withinModelId,
+                    searchRequestDTO.createdBefore,
+                    searchRequestDTO.createdAfter,
+                    searchRequestDTO.lastUpdatedBefore,
+                    searchRequestDTO.lastUpdatedAfter
+            )
+        }
+
+    }
+
 
 }
