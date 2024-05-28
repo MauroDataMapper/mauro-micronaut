@@ -125,15 +125,16 @@ abstract class Model<M extends DiffableItem> extends AdministeredItem implements
             log.warn("Unable to diff this object domainType: ${this.domainType} with : ${other.domainType}")
             return null
         }
-        if (this.id == other.id){
+        if (this.id != null && other.id != null && this.id == other.id){
             ObjectDiff sameDiff = DiffBuilder.newObjectDiff(this.getClass() as Class<Model>, this.id?.toString(), other.id?.toString())
             sameDiff.label = this.label
             sameDiff
+        } else {
+            CollectionDTO lhs = DiffBuilder.createCollectionDiff(DiffBuilder.MODEL_COLLECTION_KEYS, this.properties)
+            CollectionDTO rhs = DiffBuilder.createCollectionDiff(DiffBuilder.MODEL_COLLECTION_KEYS, other.properties)
+            ObjectDiff baseDiff = DiffBuilder.diff(this, other, lhs, rhs)
+            baseDiff
         }
-        CollectionDTO lhs = DiffBuilder.createCollectionDiff(DiffBuilder.MODEL_COLLECTION_KEYS, this.properties)
-        CollectionDTO rhs = DiffBuilder.createCollectionDiff(DiffBuilder.MODEL_COLLECTION_KEYS, other.properties)
-        ObjectDiff baseDiff = DiffBuilder.diff(this, other, lhs, rhs)
-        baseDiff
     }
 
     /****
