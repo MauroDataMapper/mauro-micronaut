@@ -7,11 +7,13 @@ import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.exceptions.EmptyResultException
 import io.micronaut.http.HttpStatus
+import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.exceptions.HttpStatusException
 import io.micronaut.http.multipart.CompletedFileUpload
 import io.micronaut.http.multipart.CompletedPart
 import io.micronaut.http.server.multipart.MultipartBody
+import io.micronaut.http.server.types.files.StreamedFile
 import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
 import reactor.core.publisher.Flux
@@ -27,6 +29,7 @@ import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.FolderC
 import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemRepository
 import uk.ac.ox.softeng.mauro.persistence.model.ModelContentRepository
 import uk.ac.ox.softeng.mauro.plugin.MauroPluginService
+import uk.ac.ox.softeng.mauro.plugin.exporter.ModelExporterPlugin
 import uk.ac.ox.softeng.mauro.plugin.importer.FileParameter
 import uk.ac.ox.softeng.mauro.plugin.importer.ImportParameters
 import uk.ac.ox.softeng.mauro.plugin.importer.ModelImporterPlugin
@@ -62,6 +65,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
 
     ModelContentRepository<M> modelContentRepository
 
+
     ModelService<M> modelService
 
     @Inject
@@ -74,6 +78,12 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         this.parentItemRepository = folderRepository
         this.modelContentRepository = modelContentRepository
         this.administeredItemContentRepository = modelContentRepository
+    }
+
+    ModelController(Class<M> modelClass, AdministeredItemCacheableRepository<M> modelRepository, FolderCacheableRepository folderRepository,
+                    ModelContentRepository<M> modelContentRepository, ModelService modelService) {
+        this(modelClass, modelRepository, folderRepository, modelContentRepository)
+        this.modelService = modelService
     }
 
     M show(UUID id) {
@@ -168,8 +178,6 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     }
 
 
-
-
     <P extends ImportParameters> P readFromMultipartFormBody(MultipartBody body, Class<P> parametersClass) {
         Map<String, Object> importMap = Flux.from(body).collectList().block().collectEntries {CompletedPart cp ->
             if (cp instanceof CompletedFileUpload) {
@@ -177,11 +185,25 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
             } else {
                 return [cp.name, new String(cp.bytes, StandardCharsets.UTF_8)]
             }
+        }
+        return objectMapper.convertValue(importMap, parametersClass)
+    }
 
+    StreamedFile exportModel(UUID modelId, String namespace, String name, @Nullable String version) {
+
+        ModelExporterPlugin mauroPlugin = mauroPluginService.getPlugin(ModelExporterPlugin, namespace, name, version)
+
+        if(!mauroPlugin) {
+            throw new HttpStatusException(HttpStatus.BAD_REQUEST, "Model export plugin with namespace: ${namespace}, name: ${name} not found")
         }
 
+        M existing = modelContentRepository.findWithContentById(modelId)
+        existing.setAssociations()
 
-        return objectMapper.convertValue(importMap, parametersClass)
+        byte[] fileContents =  mauroPlugin.exportModel(existing)
+        String filename = mauroPlugin.getFileName(existing)
+        new StreamedFile(new ByteArrayInputStream(fileContents), MediaType.APPLICATION_JSON_TYPE).attach(filename)
+
     }
 
     ListResponse<M> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version) {

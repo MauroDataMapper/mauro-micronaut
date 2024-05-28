@@ -1,6 +1,5 @@
 package uk.ac.ox.softeng.mauro.controller.datamodel
 
-
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
@@ -10,6 +9,7 @@ import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.*
 import io.micronaut.http.exceptions.HttpStatusException
 import io.micronaut.http.server.multipart.MultipartBody
+import io.micronaut.http.server.types.files.StreamedFile
 import io.micronaut.scheduling.TaskExecutors
 import io.micronaut.scheduling.annotation.ExecuteOn
 import io.micronaut.transaction.annotation.Transactional
@@ -19,8 +19,6 @@ import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModelService
 import uk.ac.ox.softeng.mauro.domain.model.version.CreateNewVersionData
 import uk.ac.ox.softeng.mauro.domain.model.version.FinaliseData
-import uk.ac.ox.softeng.mauro.export.ExportMetadata
-import uk.ac.ox.softeng.mauro.export.ExportModel
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.DataModelCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.datamodel.DataModelContentRepository
@@ -28,8 +26,6 @@ import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchRepository
 import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchRequestDTO
 import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchResultsDTO
 import uk.ac.ox.softeng.mauro.web.ListResponse
-
-import java.time.Instant
 
 @Slf4j
 @Controller
@@ -46,11 +42,12 @@ class DataModelController extends ModelController<DataModel> {
     @Inject
     DataModelService dataModelService
 
-
-    DataModelController(DataModelCacheableRepository dataModelRepository, FolderCacheableRepository folderRepository, DataModelContentRepository dataModelContentRepository) {
-        super(DataModel, dataModelRepository, folderRepository, dataModelContentRepository)
+    DataModelController(DataModelCacheableRepository dataModelRepository, FolderCacheableRepository folderRepository, DataModelContentRepository dataModelContentRepository,
+    DataModelService dataModelService) {
+        super(DataModel, dataModelRepository, folderRepository, dataModelContentRepository, dataModelService)
         this.dataModelRepository = dataModelRepository
         this.dataModelContentRepository = dataModelContentRepository
+        this.dataModelService = dataModelService
     }
 
     @Get('/dataModels/{id}')
@@ -116,22 +113,8 @@ class DataModelController extends ModelController<DataModel> {
     }
 
     @Get('/dataModels/{id}/export{/namespace}{/name}{/version}')
-    ExportModel exportModel(UUID id, @Nullable String namespace, @Nullable String name, @Nullable String version) {
-        log.debug "*** exportModel start ${Instant.now()} ***"
-        DataModel dataModel = dataModelContentRepository.findWithAssociations(id)
-        log.debug "*** exportModel fetched ${Instant.now()} ***"
-        dataModel.setAssociations()
-        log.debug "*** setAssociations finished ${Instant.now()} ***"
-        new ExportModel(
-                exportMetadata: new ExportMetadata(
-                        namespace: 'uk.ac.ox.softeng.mauro',
-                        name: 'mauro-micronaut',
-                        version: 'SNAPSHOT',
-                        exportDate: Instant.now(),
-                        exportedBy: 'USER@example.org'
-                ),
-                dataModel: dataModel
-        )
+    StreamedFile exportModel(UUID id, @Nullable String namespace, @Nullable String name, @Nullable String version) {
+        super.exportModel(id, namespace, name, version)
     }
 
     @Transactional

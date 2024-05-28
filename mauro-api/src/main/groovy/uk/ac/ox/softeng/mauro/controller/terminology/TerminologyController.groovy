@@ -1,6 +1,5 @@
 package uk.ac.ox.softeng.mauro.controller.terminology
 
-
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
@@ -9,6 +8,7 @@ import io.micronaut.http.HttpStatus
 import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.*
 import io.micronaut.http.server.multipart.MultipartBody
+import io.micronaut.http.server.types.files.StreamedFile
 import io.micronaut.scheduling.TaskExecutors
 import io.micronaut.scheduling.annotation.ExecuteOn
 import io.micronaut.security.annotation.Secured
@@ -21,8 +21,6 @@ import uk.ac.ox.softeng.mauro.domain.model.version.CreateNewVersionData
 import uk.ac.ox.softeng.mauro.domain.model.version.FinaliseData
 import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
 import uk.ac.ox.softeng.mauro.domain.terminology.TerminologyService
-import uk.ac.ox.softeng.mauro.export.ExportMetadata
-import uk.ac.ox.softeng.mauro.export.ExportModel
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.TerminologyCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchRepository
@@ -48,10 +46,12 @@ class TerminologyController extends ModelController<Terminology> {
     @Inject
     TerminologyService terminologyService
 
-    TerminologyController(TerminologyCacheableRepository terminologyRepository, FolderCacheableRepository folderRepository, TerminologyContentRepository terminologyContentRepository) {
-        super(Terminology, terminologyRepository, folderRepository, terminologyContentRepository)
+    TerminologyController(TerminologyCacheableRepository terminologyRepository, FolderCacheableRepository folderRepository, TerminologyContentRepository terminologyContentRepository,
+    TerminologyService terminologyService) {
+        super(Terminology, terminologyRepository, folderRepository, terminologyContentRepository, terminologyService)
         this.terminologyRepository = terminologyRepository
         this.terminologyContentRepository = terminologyContentRepository
+        this.terminologyService = terminologyService
     }
 
     @Secured(SecurityRule.IS_AUTHENTICATED)
@@ -119,23 +119,8 @@ class TerminologyController extends ModelController<Terminology> {
     }
 
     @Get('/terminologies/{id}/export{/namespace}{/name}{/version}')
-    ExportModel exportModel(UUID id, @Nullable String namespace, @Nullable String name, @Nullable String version) {
-        log.debug "*** exportModel start ${Instant.now()} ***"
-        Terminology terminology = terminologyContentRepository.
-                findWithContentById(id)
-        log.debug "*** exportModel fetched ${Instant.now()} ***"
-        terminology.setAssociations()
-        log.debug "*** setAssociations finished ${Instant.now()} ***"
-        new ExportModel(
-                exportMetadata: new ExportMetadata(
-                        namespace: 'uk.ac.ox.softeng.mauro',
-                        name: 'mauro-micronaut',
-                        version: 'SNAPSHOT',
-                        exportDate: Instant.now(),
-                        exportedBy: 'USER@example.org'
-                ),
-                terminology: terminology
-        )
+    StreamedFile exportModel(UUID id, @Nullable String namespace, @Nullable String name, @Nullable String version) {
+        super.exportModel(id, namespace, name, version)
     }
 
     @Transactional

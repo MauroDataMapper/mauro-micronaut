@@ -1,5 +1,6 @@
 package uk.ac.ox.softeng.mauro.plugin.importer.json
 
+import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.plugin.importer.DataModelImporterPlugin
 import uk.ac.ox.softeng.mauro.plugin.importer.FileImportParameters
 
@@ -20,11 +21,8 @@ class JsonDataModelImporterPlugin implements DataModelImporterPlugin<FileImportP
 
     Boolean canImportMultipleDomains = true
 
-    static ObjectMapper objectMapper = new ObjectMapper()
-
-    static {
-        objectMapper.findAndRegisterModules()
-    }
+    @Inject
+    ObjectMapper objectMapper
 
     @Override
     List<DataModel> importDomain(FileImportParameters params) {

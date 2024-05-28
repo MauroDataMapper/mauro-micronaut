@@ -6,6 +6,7 @@ import uk.ac.ox.softeng.mauro.domain.datamodel.DataElement
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
 import uk.ac.ox.softeng.mauro.domain.datamodel.EnumerationValue
+import uk.ac.ox.softeng.mauro.domain.model.version.FinaliseData
 import uk.ac.ox.softeng.mauro.persistence.ContainerizedTest
 import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchResultsDTO
 import uk.ac.ox.softeng.mauro.testing.BaseIntegrationSpec
@@ -71,6 +72,25 @@ class DataModelIntegrationSpec extends BaseIntegrationSpec {
         then:
         response.label == 'Test data model'
         response.path.toString() == 'dm:Test data model$main'
+    }
+
+    void 'test finalise data model'() {
+
+        given:
+        DataModel response = (DataModel) POST('/folders', [label: 'Test folder'], DataModel)
+        folderId = response.id
+
+        response = (DataModel) POST("/folders/$folderId/dataModels", [label: 'Test data model'], DataModel)
+        dataModelId = response.id
+
+        when:
+        DataModel finalised = (DataModel) PUT("/dataModels/$dataModelId/finalise", [versionChangeType: 'major', versionTag: 'random version tag'],
+                DataModel)
+
+        then:
+        finalised
+        finalised.finalised == true
+        finalised.dateFinalised
     }
 
     void 'test data types'() {
@@ -163,7 +183,6 @@ class DataModelIntegrationSpec extends BaseIntegrationSpec {
 
         when:
         HttpStatus status = DELETE("/dataModels/$dataModelId/dataClasses/$dataClassId2/dataClasses/$dataClassId3", [label: 'Third data class (renamed)'], HttpStatus)
-        System.err.println(status)
         dataClassListResponse = (ListResponse<DataClass>) GET("/dataModels/$dataModelId/dataClasses/$dataClassId2/dataClasses", ListResponse<DataClass>)
         then:
         dataClassListResponse.count == 0

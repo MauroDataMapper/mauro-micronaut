@@ -1,5 +1,8 @@
 package uk.ac.ox.softeng.mauro.datamodel
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import uk.ac.ox.softeng.mauro.export.ExportMetadata
+import uk.ac.ox.softeng.mauro.export.ExportModel
 import uk.ac.ox.softeng.mauro.persistence.ContainerizedTest
 import uk.ac.ox.softeng.mauro.testing.BaseIntegrationSpec
 
@@ -15,11 +18,14 @@ class DataModelJsonImportExportSpec extends BaseIntegrationSpec {
     @Inject
     EmbeddedApplication<?> application
 
+    @Inject
+    ObjectMapper objectMapper
+
     @Shared
     UUID folderId
 
     @Shared
-    String exportJson
+    ExportModel exportModel
 
     void 'create dataModel and export'() {
         given:
@@ -30,17 +36,18 @@ class DataModelJsonImportExportSpec extends BaseIntegrationSpec {
         UUID dataTypeId = UUID.fromString(POST("/dataModels/$dataModelId/dataTypes", [label: 'Test data type', domainType: 'PrimitiveType']).id)
 
         when:
-        String response = GET("/dataModels/$dataModelId/export", String)
-        exportJson = response
+        exportModel = GET("/dataModels/$dataModelId/export/uk.ac.ox.softeng.mauro.plugin.exporter.json/JsonDataModelExporterPlugin/4.0.0", ExportModel)
         then:
-        response
+        exportModel.dataModel.label == 'Test data model'
+        exportModel.dataModel.dataTypes.label == ['Test data type']
+        exportModel.dataModel.dataClasses.label == ['TEST-1', 'TEST-2']
     }
 
     void 'import dataModel and verify'() {
         given:
         MultipartBody importRequest = MultipartBody.builder()
             .addPart('folderId', folderId.toString())
-            .addPart('importFile', 'file.json', MediaType.APPLICATION_JSON_TYPE, exportJson.bytes)
+            .addPart('importFile', 'file.json', MediaType.APPLICATION_JSON_TYPE, objectMapper.writeValueAsBytes(exportModel))
             .build()
         def response = POST('/dataModels/import/uk.ac.ox.softeng.mauro.plugin.importer.json/JsonDataModelImporterPlugin/4.0.0', importRequest)
 
