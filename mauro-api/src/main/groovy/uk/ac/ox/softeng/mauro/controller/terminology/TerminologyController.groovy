@@ -25,6 +25,9 @@ import uk.ac.ox.softeng.mauro.export.ExportMetadata
 import uk.ac.ox.softeng.mauro.export.ExportModel
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.TerminologyCacheableRepository
+import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchRepository
+import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchRequestDTO
+import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchResultsDTO
 import uk.ac.ox.softeng.mauro.persistence.terminology.TerminologyContentRepository
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
@@ -38,6 +41,9 @@ class TerminologyController extends ModelController<Terminology> {
     TerminologyCacheableRepository terminologyRepository
 
     TerminologyContentRepository terminologyContentRepository
+
+    @Inject
+    SearchRepository searchRepository
 
     @Inject
     TerminologyService terminologyService
@@ -76,6 +82,19 @@ class TerminologyController extends ModelController<Terminology> {
     HttpStatus delete(UUID id, @Body @Nullable Terminology terminology) {
         super.delete(id, terminology)
     }
+
+    @Get('/terminologies/{id}/search{?requestDTO}')
+    ListResponse<SearchResultsDTO> searchGet(UUID id, @RequestBean SearchRequestDTO requestDTO) {
+        requestDTO.withinModelId = id
+        ListResponse.from(searchRepository.search(requestDTO))
+    }
+
+    @Post('/terminologies/{id}/search')
+    ListResponse<SearchResultsDTO> searchPost(UUID id, @Body SearchRequestDTO requestDTO) {
+        requestDTO.withinModelId = id
+        ListResponse.from(searchRepository.search(requestDTO))
+    }
+
 
     @Get('/folders/{folderId}/terminologies')
     ListResponse<Terminology> list(UUID folderId) {

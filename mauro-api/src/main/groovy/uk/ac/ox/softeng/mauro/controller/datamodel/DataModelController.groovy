@@ -24,6 +24,9 @@ import uk.ac.ox.softeng.mauro.export.ExportModel
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.DataModelCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.datamodel.DataModelContentRepository
+import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchRepository
+import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchRequestDTO
+import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchResultsDTO
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 import java.time.Instant
@@ -36,6 +39,9 @@ class DataModelController extends ModelController<DataModel> {
     DataModelCacheableRepository dataModelRepository
 
     DataModelContentRepository dataModelContentRepository
+
+    @Inject
+    SearchRepository searchRepository
 
     @Inject
     DataModelService dataModelService
@@ -72,6 +78,20 @@ class DataModelController extends ModelController<DataModel> {
         }
         super.delete(model, dataModel)
     }
+
+
+    @Get('/dataModels/{id}/search{?requestDTO}')
+    ListResponse<SearchResultsDTO> searchGet(UUID id, @RequestBean SearchRequestDTO requestDTO) {
+        requestDTO.withinModelId = id
+        ListResponse.from(searchRepository.search(requestDTO))
+    }
+
+    @Post('/dataModels/{id}/search')
+    ListResponse<SearchResultsDTO> searchPost(UUID id, @Body SearchRequestDTO requestDTO) {
+        requestDTO.withinModelId = id
+        ListResponse.from(searchRepository.search(requestDTO))
+    }
+
 
     @Get('/folders/{folderId}/dataModels')
     ListResponse<DataModel> list(UUID folderId) {
