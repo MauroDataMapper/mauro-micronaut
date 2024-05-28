@@ -110,8 +110,8 @@ class DataClass extends ModelItem<DataModel> implements DiffableItem<DataClass> 
     @Transient
     ObjectDiff<DataClass> diff(DataClass other) {
         ObjectDiff<DataClass> base = DiffBuilder.objectDiff(DataClass)
-                .leftHandSide(id.toString(), this)
-                .rightHandSide(other.id.toString(), other)
+                .leftHandSide(id?.toString(), this)
+                .rightHandSide(other.id?.toString(), other)
         base.label = this.label
         base.appendString(DiffBuilder.DESCRIPTION, this.description, other.description)
         base.appendString(DiffBuilder.ALIASES_STRING, this.aliasesString, other.aliasesString)

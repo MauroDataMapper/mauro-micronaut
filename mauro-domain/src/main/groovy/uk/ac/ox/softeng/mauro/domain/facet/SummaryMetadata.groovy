@@ -55,8 +55,8 @@ class SummaryMetadata extends Facet implements DiffableItem<SummaryMetadata> {
     @Transient
     ObjectDiff<SummaryMetadata> diff(SummaryMetadata other) {
         ObjectDiff<SummaryMetadata> base = DiffBuilder.objectDiff(SummaryMetadata)
-                .leftHandSide(id.toString(), this)
-                .rightHandSide(other.id.toString(), other)
+                .leftHandSide(id?.toString(), this)
+                .rightHandSide(other.id?.toString(), other)
         base.label = this.label
         base.appendString(DiffBuilder.DESCRIPTION, this.description, other.description)
         base.appendString(DiffBuilder.SUMMARY_METADATA_TYPE, this.summaryMetadataType.name(), other.summaryMetadataType.name())

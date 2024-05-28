@@ -39,6 +39,15 @@ class ObjectDiff<T extends DiffableItem> {
         this.rightId = rightId
     }
 
+    ObjectDiff<T> leftId(String leftId) {
+        this.leftId = leftId
+        this
+    }
+
+    ObjectDiff<T> rightId(String rightId) {
+        this.rightId = rightId
+        this
+    }
     ObjectDiff<T> leftHandSide(String leftId, T lhs) {
         this.leftId = leftId
         this.left = lhs

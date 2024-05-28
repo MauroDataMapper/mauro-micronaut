@@ -132,8 +132,8 @@ class DataType extends ModelItem<DataModel> implements DiffableItem<DataType> {
     @Transient
     ObjectDiff<DataType> diff(DataType other) {
         ObjectDiff<DataType> base = DiffBuilder.objectDiff(DataType)
-                .leftHandSide(id.toString(), this)
-                .rightHandSide(other.id.toString(), other)
+                .leftHandSide(id?.toString(), this)
+                .rightHandSide(other.id?.toString(), other)
         base.label = this.label
         base
     }

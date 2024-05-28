@@ -44,8 +44,8 @@ class SummaryMetadataReport extends Item implements DiffableItem<SummaryMetadata
     @Transient
     ObjectDiff<SummaryMetadataReport> diff(SummaryMetadataReport other) {
         ObjectDiff<SummaryMetadataReport> base = DiffBuilder.objectDiff(SummaryMetadataReport)
-                .leftHandSide(id.toString(), this)
-                .rightHandSide(other.id.toString(), other)
+                .leftHandSide(id?.toString(), this)
+                .rightHandSide(other.id?.toString(), other)
 
         base.appendString(DiffBuilder.VALUE, this.reportValue, other.reportValue)
         base.appendField(DiffBuilder.REPORT_DATE ,this.reportDate, other.reportDate)

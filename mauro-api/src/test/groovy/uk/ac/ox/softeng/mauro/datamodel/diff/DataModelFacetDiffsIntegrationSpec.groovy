@@ -189,8 +189,7 @@ class DataModelFacetDiffsIntegrationSpec extends CommonDataSpec {
 
         when:
         Map<String, Object> diffMap = GET("$DATAMODELS_PATH/$left.id/diff/$right.id", Map<String, Object>)
-        ObjectMapper objectMapper = new ObjectMapper()
-        println(objectMapper.writeValueAsString(diffMap))
+
         then:
         diffMap
         diffMap.get(DiffBuilder.LABEL) == left.label

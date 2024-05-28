@@ -69,13 +69,18 @@ class DiffBuilder {
         String lhsId = lhs.id ?: "Left:Unsaved_${lhs.domainType}"
         String rhsId = rhs.id ?: "Right:Unsaved_${rhs.domainType}"
         Class<Model> diffClass = lhs.getClass()
-        ObjectDiff baseDiff = new ObjectDiff(diffClass, lhsId, rhsId)
+        ObjectDiff baseDiff = newObjectDiff(diffClass, lhsId, rhsId)
         baseDiff.label = lhsMap.find { it.key == LABEL }.value
 
         buildStrings(baseDiff, leftStrFields as Map<String, Object>, rightStrFields as Map<String, Object>)
         buildField(Boolean, baseDiff, leftBooleanFields as Map<String, Object>, rightBooleanFields as Map<String, Object>)
         buildField(Instant, baseDiff, leftInstantFields as Map<String, Object>, rightInstantFields as Map<String, Object>)
         baseDiff
+    }
+
+    static ObjectDiff newObjectDiff(Class<Model> diffClass, String lhsId, String rhsId) {
+        ObjectDiff objectDiff = new ObjectDiff(diffClass).leftId(lhsId).rightId(rhsId)
+        objectDiff
     }
 
     static ObjectDiff diff(Model lhs, Model rhs, CollectionDTO lhsCollectionDTO, CollectionDTO rhsCollectionDTO) {
@@ -92,6 +97,15 @@ class DiffBuilder {
                 objectDiff.appendCollection(name, lhsValue, rhsValue)
             }
 
+        }
+        Set<String> rhsOnlyKeys = rhsCollectionDTO.fieldCollections.keySet()
+        //keys in RHS only not LHS
+        rhsOnlyKeys.removeAll(lhsCollectionDTO.fieldCollections.keySet())
+        rhsOnlyKeys.each {
+            Collection<DiffableItem> rhsValue = getRhsCollection(it, rhsCollectionDTO)
+            if (!rhsValue.isEmpty()) {
+                objectDiff.appendCollection(it, null, rhsValue)
+            }
         }
         objectDiff
     }
@@ -162,6 +176,7 @@ class DiffBuilder {
     static boolean isNullOrEmpty(String str) {
         isNull(str) || str.allWhitespace
     }
+
     static boolean isNull(Object value) {
         null == value
     }
