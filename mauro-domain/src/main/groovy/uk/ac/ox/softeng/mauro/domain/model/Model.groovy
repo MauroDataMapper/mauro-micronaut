@@ -126,7 +126,7 @@ abstract class Model<M extends DiffableItem> extends AdministeredItem implements
             return null
         }
         if (this.id == other.id){
-            ObjectDiff sameDiff = DiffBuilder.newObjectDiff(this.getClass() as Class<Model>, this.id.toString(), other.id.toString())
+            ObjectDiff sameDiff = DiffBuilder.newObjectDiff(this.getClass() as Class<Model>, this.id?.toString(), other.id?.toString())
             sameDiff.label = this.label
             sameDiff
         }
