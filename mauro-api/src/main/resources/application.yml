@@ -89,3 +89,19 @@ flyway:
         - terminology
         - datamodel
         - security
+javamail:
+  smtp:
+    host: smtp.gmail.com
+    port: 587
+    transportstrategy: SMTP_TLS
+  authentication:
+    username: 'user@gmail.com'
+    password: 'password'
+  properties:
+    mail:
+      smtp:
+        port: 587
+        auth: true
+        starttls:
+          enable: true
+        host: smtp.gmail.com
