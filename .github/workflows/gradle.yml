@@ -45,10 +45,13 @@ jobs:
       with:
         java-version: '17'
         distribution: 'temurin'
-    - name: Test with Gradle
+
+    - name: Setup Gradle
       uses: gradle/actions/setup-gradle@v3
+
+    - name: Test with Gradle
+      run: ./gradlew test
       with:
-        arguments: test
         cache-disabled: true
 
     - name: Test Report
@@ -97,7 +100,7 @@ jobs:
 #          mega-linter.log
 
     - name: Send a stream message
-      if: ${{ success() }} || ${{ failure() }}
+      if: success() || failure()
       uses: zulip/github-actions-zulip/send-message@v1
       with:
         api-key: ${{ secrets.ZULIP_API_KEY }}
