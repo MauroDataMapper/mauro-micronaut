@@ -89,7 +89,7 @@ class DataElement extends ModelItem<DataClass> implements DiffableItem<DataEleme
     @Transient
     @JsonIgnore
     String getDiffIdentifier() {
-        dataClass?.getDiffIdentifier()?.toString()
+        "${dataClass?.getDiffIdentifier()}/$this.pathIdentifier}"
     }
 
     @Override
