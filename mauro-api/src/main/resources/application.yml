@@ -90,18 +90,14 @@ flyway:
         - datamodel
         - security
 javamail:
-  smtp:
-    host: smtp.gmail.com
-    port: 587
-    transportstrategy: SMTP_TLS
   authentication:
-    username: 'user@gmail.com'
-    password: 'password'
+    username: $$username$$ # Replace me!
+    password: $$password$$ # Replace me!
   properties:
     mail:
       smtp:
-        port: 587
+        port: 587 # Replace me!
         auth: true
         starttls:
           enable: true
-        host: smtp.gmail.com
+        host: $$host$$ # Replace me!

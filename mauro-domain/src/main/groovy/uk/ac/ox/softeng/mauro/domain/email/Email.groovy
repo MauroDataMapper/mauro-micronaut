@@ -38,7 +38,7 @@ class Email {
     String subject
     String body
     String emailServiceUsed
-    OffsetDateTime dateTimeSent
+    OffsetDateTime dateTimeSent // This is non-nullable in the database, so it also represents the time of the last failure to send
     Boolean successfullySent
 
     @Nullable
