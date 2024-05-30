@@ -1,5 +1,6 @@
 package uk.ac.ox.softeng.mauro.domain.security
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
 import io.micronaut.data.annotation.Index
@@ -7,6 +8,7 @@ import io.micronaut.data.annotation.Indexes
 import io.micronaut.data.annotation.MappedEntity
 import uk.ac.ox.softeng.mauro.domain.model.Item
 
+import java.beans.Transient
 import java.time.Instant
 
 @CompileStatic
@@ -33,5 +35,11 @@ class CatalogueUser extends Item {
     byte[] salt
     byte[] password
     String tempPassword
+
+    @JsonIgnore
+    @Transient
+    String getFullName() {
+        "$firstName $lastName"
+    }
 
 }

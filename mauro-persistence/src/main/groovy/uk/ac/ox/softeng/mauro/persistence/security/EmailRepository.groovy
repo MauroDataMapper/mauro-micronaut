@@ -20,6 +20,8 @@ abstract class EmailRepository implements PageableRepository<Email, UUID> {
     @Nullable
     abstract Optional<Email> findById(UUID id)
 
+    abstract List<Email> readAll()
+
     @Nullable
     abstract Email readById(UUID id)
 

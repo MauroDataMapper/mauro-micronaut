@@ -1,6 +1,7 @@
 package uk.ac.ox.softeng.mauro.web
 
 import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.transform.CompileStatic
 
 /**
@@ -17,5 +18,11 @@ class ListResponse<T> {
 
     static ListResponse from(List items) {
         new ListResponse(count: items.size(), items: items ?: [])
+    }
+
+    void bindItems(ObjectMapper objectMapper, Class<T> clazz) {
+        items = items.collect { item ->
+            return objectMapper.convertValue(item, clazz)
+        }
     }
 }

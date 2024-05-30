@@ -1,18 +1,17 @@
 package uk.ac.ox.softeng.mauro.service.email
 
-import io.micronaut.email.DefaultEmailSender
-
-import io.micronaut.email.EmailSender
-import io.micronaut.email.MultipartBody
+import groovy.util.logging.Slf4j
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
 import uk.ac.ox.softeng.mauro.domain.email.Email
+import uk.ac.ox.softeng.mauro.domain.security.CatalogueUser
 import uk.ac.ox.softeng.mauro.persistence.security.EmailRepository
 import uk.ac.ox.softeng.mauro.plugin.MauroPluginService
 
 import java.time.OffsetDateTime
 
 @Singleton
+@Slf4j
 class EmailService {
 
     @Inject
@@ -22,27 +21,88 @@ class EmailService {
     EmailRepository emailRepository
 
     EmailPlugin getDefaultEmailPlugin() {
-        mauroPluginService.listPlugins(EmailPlugin).first()
+        // for now we'll assume that there's just one, or that we can arbitrarily sort and pick the first
+        mauroPluginService.listPlugins(EmailPlugin).sort().first()
     }
 
 
-    String sendEmail(Email email) {
+    void sendEmail(CatalogueUser catalogueUserRecipient, Email email, boolean async = true) throws Exception {
         EmailPlugin emailPlugin = getDefaultEmailPlugin()
-        System.err.println(emailPlugin.displayName)
         email.emailServiceUsed = emailPlugin.displayName
-        String response = emailPlugin.sendEmail(email)
-        System.err.println(response)
-        if(!response) {
-            email.successfullySent = true
-            email.dateTimeSent = OffsetDateTime.now()
-        } else {
-            email.successfullySent = false
-            email.failureReason = response
-        }
-        // Store email
-        emailRepository.save(email)
-        return response
+        email.sentToEmailAddress = catalogueUserRecipient.emailAddress
+        email.dateTimeSent = OffsetDateTime.now()
 
+        Closure emailSending = {
+            log.debug("Sending email to ${catalogueUserRecipient.emailAddress}...")
+            try {
+                emailPlugin.sendEmail(catalogueUserRecipient, email)
+                email.successfullySent = true
+                log.debug("Successfully sent email to ${catalogueUserRecipient.emailAddress}")
+                // Store email
+                emailRepository.save(email)
+            } catch (Exception e) {
+                email.successfullySent = false
+                email.failureReason = e.message
+                log.debug("Failed to send email to ${catalogueUserRecipient.emailAddress}")
+                log.error("Exception!", e)
+                // Store email
+                emailRepository.save(email)
+                // Forward the exception to the caller
+                throw e
+            }
+        }
+
+        if(async) {
+            Thread.start emailSending
+        } else {
+            emailSending.run()
+        }
+
+    }
+
+    void retrySendEmail(Email email, boolean async = true) throws Exception {
+        EmailPlugin emailPlugin = getDefaultEmailPlugin()
+        email.emailServiceUsed = emailPlugin.displayName
+        email.dateTimeSent = OffsetDateTime.now()
+
+        Closure emailSending = {
+            log.debug("Retry sending email to ${email.sentToEmailAddress}...")
+            try {
+                emailPlugin.retrySendEmail(email)
+                email.successfullySent = true
+                log.debug("Successfully sent email to ${email.sentToEmailAddress}")
+                // Store email
+                emailRepository.update(email)
+            } catch (Exception e) {
+                email.successfullySent = false
+                email.failureReason = e.message
+                log.debug("Failed to send email to ${email.sentToEmailAddress}")
+                log.error("Exception!", e)
+                // Store email
+                emailRepository.update(email)
+                // Forward the exception to the caller
+                throw e
+            }
+        }
+
+        if(async) {
+            Thread.start emailSending
+        } else {
+            emailSending.run()
+        }
+
+    }
+
+    void testConnection() throws Exception {
+        EmailPlugin emailPlugin = getDefaultEmailPlugin()
+        try {
+            emailPlugin.testConnection()
+        } catch(Exception e) {
+            log.debug("Failed to connect to email service")
+            log.error("Exception!", e)
+            // Forward the exception to the caller
+            throw e
+        }
     }
 
 
