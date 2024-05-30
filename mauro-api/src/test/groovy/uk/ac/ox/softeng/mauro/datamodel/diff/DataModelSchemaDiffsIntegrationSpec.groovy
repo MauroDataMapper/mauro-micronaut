@@ -1,5 +1,6 @@
 package uk.ac.ox.softeng.mauro.datamodel.diff
 
+
 import io.micronaut.runtime.EmbeddedApplication
 import io.micronaut.test.annotation.Sql
 import jakarta.inject.Inject
@@ -19,6 +20,9 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 @ContainerizedTest
 @Sql(scripts = "classpath:sql/tear-down-datamodel.sql", phase = Sql.Phase.AFTER_EACH)
 class DataModelSchemaDiffsIntegrationSpec extends CommonDataSpec {
+    static String NAME = 'name'
+    static String CREATED = 'created'
+    static String DELETED = 'deleted'
 
     @Inject
     EmbeddedApplication<?> application
@@ -161,46 +165,42 @@ class DataModelSchemaDiffsIntegrationSpec extends CommonDataSpec {
     }
 
 
-    void 'diff dataModels with DataClasses and DataElements -on LHS'() {
+    void 'diff dataModels with DataClasses and DataElements -the dataClass should show nested dataElement'() {
         given:
         //modified comparison key = label
         DataClass leftDataClass = (DataClass) POST("$DATAMODELS_PATH/$left.id$DATACLASSES_PATH", dataClassPayload(), DataClass)
         DataClass rightDataClass = (DataClass) POST("$DATAMODELS_PATH/$right.id$DATACLASSES_PATH", dataClassPayload(), DataClass)
 
         DataType leftDataTypeResponse = (DataType) POST("$DATAMODELS_PATH/$left.id$DATATYPES_PATH", dataTypesPayload(), DataType)
-        DataType rightDataTypeResponse = (DataType) POST("$DATAMODELS_PATH/$right.id$DATATYPES_PATH", dataTypesPayload(), DataType)
-
 
         DataElement leftDataElement = (DataElement) POST("$DATAMODELS_PATH/$left.id$DATACLASSES_PATH/$leftDataClass.id$DATA_ELEMENTS_PATH",
                 [label: 'data element', description: 'The first data element description', dataType: [id: leftDataTypeResponse.id]], DataElement)
-
-        //validation of dataElement on dataClass
-        and:
-        def dataElementListResponse = (ListResponse<DataElement>) GET("/dataModels/$left.id/dataClasses/$leftDataClass.id/dataElements")
-        dataElementListResponse.count == 1
-
-        when:
-        def retrievedDataElement = dataElementListResponse.getItems().first()
-        then:
-        retrievedDataElement.dataType.id.toString() == leftDataTypeResponse.id.toString()
 
         when:
         Map<String, Object> diffMap = GET("$DATAMODELS_PATH/$left.id/diff/$right.id", Map<String, Object>)
 
         then:
         diffMap
-        diffMap.diffs.each { [AUTHOR, DiffBuilder.DESCRIPTION, DiffBuilder.DATA_ELEMENT].contains(it.name) }
-        ArrayDiff<Collection> dataElementsDiff = diffMap.diffs.find { it.name == DiffBuilder.DATA_ELEMENT }
-        dataElementsDiff.created.isEmpty()
-        dataElementsDiff.modified.isEmpty()
+        diffMap.diffs.each { [AUTHOR, DiffBuilder.DESCRIPTION, DiffBuilder.DATA_CLASSES].contains(it.name) }
+        ArrayDiff<Collection> dataClassesDiff = diffMap.diffs.find { it.name == DiffBuilder.DATA_CLASSES }
+        dataClassesDiff.created.isEmpty()
+        dataClassesDiff.deleted.isEmpty()
+        dataClassesDiff.modified.size() == 1
+        dataClassesDiff.modified.diffs.size() == 1
+        dataClassesDiff.modified.diffs.each {
+            [NAME, DELETED].contains(it.name)
+        }
 
-        dataElementsDiff.deleted.size() == 1
-        dataElementsDiff.deleted[0].each { [DiffBuilder.ID_KEY, DiffBuilder.LABEL].contains(it) }
-        dataElementsDiff.deleted[0].get(DiffBuilder.ID_KEY) == retrievedDataElement.id.toString()
-        dataElementsDiff.deleted[0].get(DiffBuilder.LABEL) == retrievedDataElement.label
+        def nestedDataElement = dataClassesDiff.modified.diffs[0]
+        nestedDataElement.size() == 1
+        Map<String, Object> dataElementMap = nestedDataElement[0] as Map<String, Object>
+        dataElementMap.keySet().flatten().sort().containsAll([DELETED, NAME])
+        def dataElement = dataElementMap.get(DELETED)
+        dataElement[0].get(DiffBuilder.LABEL) == leftDataElement.label
+        dataElement[0].get(DiffBuilder.ID_KEY) == leftDataElement.id.toString()
     }
 
-    void 'diff dataModels with DataClasses and DataElements on RHS only -should give same counts as when on LHS'() {
+    void 'diff dataModels with DataClasses and nested DataElements on RHS  -should give same counts as when on LHS'() {
         given:
         //modified comparison key = label
         DataClass leftDataClass = (DataClass) POST("$DATAMODELS_PATH/$left.id$DATACLASSES_PATH", dataClassPayload(), DataClass)
@@ -228,15 +228,19 @@ class DataModelSchemaDiffsIntegrationSpec extends CommonDataSpec {
 
         then:
         diffMap
-        diffMap.diffs.each { [AUTHOR, DiffBuilder.DESCRIPTION, DiffBuilder.DATA_ELEMENT].contains(it.name) }
-        ArrayDiff<Collection> dataElementsDiff = diffMap.diffs.find { it.name == DiffBuilder.DATA_ELEMENT }
-        dataElementsDiff.deleted.isEmpty()
-        dataElementsDiff.modified.isEmpty()
+        diffMap.diffs.each { [AUTHOR, DiffBuilder.DESCRIPTION, DiffBuilder.DATA_CLASSES].contains(it.name) }
+        ArrayDiff<Collection> dataClassesDiff = diffMap.diffs.find { it.name == DiffBuilder.DATA_CLASSES } as ArrayDiff<Collection>
+        dataClassesDiff.deleted.isEmpty()
+        dataClassesDiff.created.isEmpty()
+        dataClassesDiff.modified.size() == 1
 
-        dataElementsDiff.created.size() == 1
-        dataElementsDiff.created[0].each { [DiffBuilder.ID_KEY, DiffBuilder.LABEL].contains(it) }
-        dataElementsDiff.created[0].get(DiffBuilder.ID_KEY) == retrievedDataElement.id.toString()
-        dataElementsDiff.created[0].get(DiffBuilder.LABEL) == retrievedDataElement.label
+        def nestedDataElement = dataClassesDiff.modified.diffs[0]
+        nestedDataElement.size() == 1
+        Map<String, Object> dataElementMap = nestedDataElement[0] as Map<String, Object>
+        dataElementMap.keySet().flatten().sort().containsAll([CREATED, NAME])
+        def dataElement = dataElementMap.get(CREATED)
+        dataElement[0].get(DiffBuilder.LABEL) == rightDataElement.label
+        dataElement[0].get(DiffBuilder.ID_KEY) == rightDataElement.id.toString()
     }
 }
 

@@ -120,6 +120,9 @@ class DataClass extends ModelItem<DataModel> implements DiffableItem<DataClass> 
         if (!DiffBuilder.isNullOrEmpty(this.dataClasses as Collection<Object>) || !DiffBuilder.isNullOrEmpty(other.dataClasses as Collection<Object>)) {
             base.appendCollection(DiffBuilder.DATA_CLASSES, this.dataClasses as Collection<DiffableItem>, other.dataClasses as Collection<DiffableItem>)
         }
+        if (!DiffBuilder.isNullOrEmpty(this.dataElements as Collection<Object>) || !DiffBuilder.isNullOrEmpty(other.dataElements  as Collection<Object>)) {
+            base.appendCollection(DiffBuilder.DATA_ELEMENTS, this.dataElements as Collection<DiffableItem>, other.dataElements as Collection<DiffableItem>)
+        }
         base
     }
 

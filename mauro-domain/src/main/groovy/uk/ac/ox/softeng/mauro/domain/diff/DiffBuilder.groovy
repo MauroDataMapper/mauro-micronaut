@@ -26,7 +26,7 @@ class DiffBuilder {
     static final String SUMMARY_METADATA_REPORT = 'summaryMetadataReports'
     static final String DATA_CLASSES = 'dataClasses'
     static final String DATA_TYPE = 'dataTypes'
-    static final String DATA_ELEMENT = 'dataElements'
+    static final String DATA_ELEMENTS = 'dataElements'
     static final String ALIASES_STRING = 'aliasesString'
     static final String DATA_TYPE_PATH = 'dataTypePath'
     static final String MIN_MULTIPILICITY = 'minMultiplicity'
@@ -34,7 +34,7 @@ class DiffBuilder {
     static final String VALUE = 'value'
     static final String REPORT_DATE = 'reportDate'
     static final List<String> IGNORE_KEYS = [ID_KEY, DATE_CREATED_KEY, LAST_UPDATED_KEY, DOMAIN_TYPE, CLASS_KEY, FOLDER_KEY]
-    static final List<String> MODEL_COLLECTION_KEYS = [METADATA, ANNOTATION, RULE, SUMMARY_METADATA, SUMMARY_METADATA_REPORT, DATA_CLASSES, DATA_TYPE, DATA_ELEMENT]
+    static final List<String> MODEL_COLLECTION_KEYS = [METADATA, ANNOTATION, RULE, SUMMARY_METADATA, SUMMARY_METADATA_REPORT, DATA_CLASSES, DATA_TYPE]
 
     static ArrayDiff arrayDiff() {
         new ArrayDiff()
