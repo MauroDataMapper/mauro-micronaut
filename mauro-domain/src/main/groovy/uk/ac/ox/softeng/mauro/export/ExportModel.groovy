@@ -134,5 +134,36 @@ class ExportModel {
         dataModels
     }
 
+    Folder folder(Folder folder) {
+        if (!this.folder && folders.size() == 0) {
+            this.folder = folder
+        } else {
+            if(this.folder) {
+                this.folders.add(this.folder)
+                this.folder = null
+            }
+            this.folders.add(folder)
+        }
+        folder
+    }
+
+    Folder folder(Map args, @DelegatesTo(value = Folder, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
+        Folder folder1 = Folder.build(args, closure)
+        folder folder1
+    }
+
+    Folder folder(@DelegatesTo(value = Folder, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
+        folder [:], closure
+    }
+
+    List<Folder> folders(List<Folder> folders) {
+        if(this.folder) {
+            this.folders.add(this.folder)
+            this.folder = null
+        }
+        this.folders.addAll(folders)
+        folders
+    }
+
 
 }

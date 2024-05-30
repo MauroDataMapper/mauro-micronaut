@@ -35,7 +35,7 @@ class AdminSpec extends Specification {
             List pluginsList = mauroPluginService.listPlugins()
 
         then:
-            pluginsList.size() == 4
+            pluginsList.size() == 6
             pluginsList.find {
                 it.name == "JsonDataModelImporterPlugin" &&
                 it.displayName == "JSON DataModel Importer" &&
@@ -47,6 +47,11 @@ class AdminSpec extends Specification {
                 it.version == "4.0.0"
             }
             pluginsList.find {
+                it.name == "JsonFolderImporterPlugin" &&
+                        it.displayName == "JSON Folder Importer" &&
+                        it.version == "4.0.0"
+            }
+            pluginsList.find {
                 it.name == "JsonDataModelExporterPlugin" &&
                         it.displayName == "JSON DataModel Exporter" &&
                         it.version == "4.0.0"
@@ -54,6 +59,11 @@ class AdminSpec extends Specification {
             pluginsList.find {
                 it.name == "JsonTerminologyExporterPlugin" &&
                         it.displayName == "JSON Terminology Exporter" &&
+                        it.version == "4.0.0"
+            }
+            pluginsList.find {
+                it.name == "JsonFolderExporterPlugin" &&
+                        it.displayName == "JSON Folder Exporter" &&
                         it.version == "4.0.0"
             }
 
