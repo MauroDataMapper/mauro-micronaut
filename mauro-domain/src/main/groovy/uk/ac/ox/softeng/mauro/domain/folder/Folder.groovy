@@ -3,6 +3,7 @@ package uk.ac.ox.softeng.mauro.domain.folder
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import groovy.transform.CompileStatic
+import groovy.transform.MapConstructor
 import io.micronaut.core.annotation.Introspected
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.annotation.*
@@ -19,10 +20,11 @@ import uk.ac.ox.softeng.mauro.domain.model.Model
  * A folder may also specify user access control rules for its contents - the user groups with permission to read
  * or write models within.  Folder privileges propagate to the folders below.
  */
-
+@CompileStatic
 @Introspected
 @MappedEntity(schema = 'core')
 @Indexes([@Index(columns = ['parent_folder_id'])])
+@MapConstructor(includeSuperFields = true, includeSuperProperties = true, noArg = true)
 class Folder extends Model {
 
     @JsonIgnore
