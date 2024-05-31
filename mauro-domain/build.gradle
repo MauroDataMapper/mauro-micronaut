@@ -24,7 +24,6 @@ dependencies {
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
 
     testImplementation "io.micronaut.test:micronaut-test-spock"
-
 }
 
 java {

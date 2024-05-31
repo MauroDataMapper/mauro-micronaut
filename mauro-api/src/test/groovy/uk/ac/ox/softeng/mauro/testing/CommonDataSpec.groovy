@@ -37,10 +37,22 @@ class CommonDataSpec extends BaseIntegrationSpec{
         [label: label, description: description ]
     }
     def summaryMetadataPayload() {
-        [ summaryMetadataType: SummaryMetadataType.STRING]
+        [ summaryMetadataType: SummaryMetadataType.STRING, label: 'summary metadata label']
     }
     def metadataPayload() {
         [ namespace: 'org.example', key: 'example_key', value: 'example_value']
+    }
+
+    def dataModelPayload(){
+        [label: 'Test data model', description: 'test description', author: 'test author']
+    }
+
+    def dataClassPayload(){
+        [label: 'Test data class', description: 'test description', author: 'test author']
+    }
+
+    def dataTypesPayload(){
+        [label: 'Test data type', domainType: 'primitiveType', units : 'kilograms']
     }
 
 }

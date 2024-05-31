@@ -33,7 +33,7 @@ class SummaryMetadataReportIntegrationSpec extends CommonDataSpec {
         Folder folder = (Folder) POST("$FOLDERS_PATH", [label: 'Folder with SummaryMetadata'], Folder)
         folderId = folder.id
         summaryMetadata = (SummaryMetadata) POST("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH",
-                [summaryMetadataType: SummaryMetadataType.STRING], SummaryMetadata)
+               summaryMetadataPayload(), SummaryMetadata)
     }
 
     void 'list empty SummaryMetadataReport'() {
