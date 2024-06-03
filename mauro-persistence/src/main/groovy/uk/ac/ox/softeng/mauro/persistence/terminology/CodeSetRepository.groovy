@@ -3,7 +3,6 @@ package uk.ac.ox.softeng.mauro.persistence.terminology
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
-import io.micronaut.data.annotation.Join
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.model.query.builder.sql.Dialect
@@ -59,4 +58,7 @@ abstract class CodeSetRepository implements ModelRepository<CodeSet> {
         CodeSet
     }
 
+    @Nullable
+    @Override
+    abstract List<CodeSet> findAllByFolderId(UUID folderId)
 }

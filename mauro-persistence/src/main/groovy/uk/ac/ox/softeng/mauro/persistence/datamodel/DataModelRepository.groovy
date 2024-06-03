@@ -26,4 +26,8 @@ abstract class DataModelRepository implements ModelRepository<DataModel> {
     Class getDomainClass() {
         DataModel
     }
+
+    @Override
+    @Nullable
+    abstract List<DataModel> findAllByFolderId(UUID folderId)
 }

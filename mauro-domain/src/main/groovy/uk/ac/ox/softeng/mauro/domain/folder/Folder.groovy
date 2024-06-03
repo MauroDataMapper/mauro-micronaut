@@ -8,8 +8,11 @@ import io.micronaut.core.annotation.Introspected
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.annotation.*
 import jakarta.persistence.Transient
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.model.Model
+import uk.ac.ox.softeng.mauro.domain.terminology.CodeSet
+import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
 
 /**
  * A folder is a container for models, and, in the case of a VersionedFolder, may be a model in its own right.
@@ -72,6 +75,15 @@ class Folder extends Model {
 
     @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'parentFolder')
     List<Folder> childFolders = []
+
+    @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'dataModel')
+    List<DataModel> dataModels = []
+
+    @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'terminology')
+    List<Terminology> terminologies = []
+
+    @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'codeSet')
+    List<CodeSet> codeSets = []
 
     @Override
     @Transient

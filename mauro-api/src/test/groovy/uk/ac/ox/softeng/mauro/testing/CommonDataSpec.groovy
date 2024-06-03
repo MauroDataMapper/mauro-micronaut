@@ -55,4 +55,11 @@ class CommonDataSpec extends BaseIntegrationSpec{
         [label: 'Test data type', domainType: 'primitiveType', units : 'kilograms']
     }
 
+    def termRelationshipType(){
+       [label: 'Test Term Relationship Type label', displayLabel: 'Random display label', parentalRelationship: false, childRelationship : false]
+    }
+
+    def term(){
+        [description : 'Test Term description', code: 'est', definition: 'doloreum-et-val', url : 'https://www.hello.com/test']
+    }
 }

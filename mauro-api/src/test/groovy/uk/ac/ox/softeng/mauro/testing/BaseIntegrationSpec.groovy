@@ -29,6 +29,7 @@ class BaseIntegrationSpec extends Specification {
     public static final String MODEL_VERSION_TAG = 'modelVersionTag'
     public static final String FINALISED = 'finalised'
     public static final String DATE_FINALISED = 'dateFinalised'
+    public static final String TERM_RELATIONSHIP_TYPES = "/termRelationshipTypes"
 
 
     @Inject

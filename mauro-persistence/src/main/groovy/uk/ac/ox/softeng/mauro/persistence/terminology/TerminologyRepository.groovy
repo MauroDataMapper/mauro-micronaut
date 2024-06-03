@@ -27,4 +27,7 @@ abstract class TerminologyRepository implements ModelRepository<Terminology> {
     Class getDomainClass() {
         Terminology
     }
+    @Override
+    @Nullable
+    abstract List<Terminology> findAllByFolderId(UUID folderId)
 }

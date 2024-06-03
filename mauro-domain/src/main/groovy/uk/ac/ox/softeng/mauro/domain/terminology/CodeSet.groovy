@@ -29,10 +29,10 @@ import uk.ac.ox.softeng.mauro.domain.model.ModelItem
 class CodeSet extends Model {
 
     @Relation(value = Relation.Kind.MANY_TO_MANY, cascade = Relation.Cascade.ALL)
-    @JoinTable (
+    @JoinTable(
             name = 'code_set_term',
-            joinColumns = @JoinColumn( name = 'code_set_id'),
-            inverseJoinColumns = @JoinColumn (name = 'term_id')
+            joinColumns = @JoinColumn(name = 'code_set_id'),
+            inverseJoinColumns = @JoinColumn(name = 'term_id')
     )
     @JsonIgnore
     Set<Term> terms = []
@@ -64,14 +64,17 @@ class CodeSet extends Model {
     @JsonIgnore
     @Override
     void setAssociations() {
-
+//        terms.each {
+//            it.codeSets.add(this)
+//        }
+       // todo: Don't do the above, causes: 1)stackoverflow error on codeSet.toString();  2)term.toString() -cannot evaluate
+        this
     }
 
 
     @Override
     String toString() {
-        return super.toString() +
-        " CodeSet{" +
+        return "CodeSet{" +
                 "terms=" + terms +
                 '}';
     }

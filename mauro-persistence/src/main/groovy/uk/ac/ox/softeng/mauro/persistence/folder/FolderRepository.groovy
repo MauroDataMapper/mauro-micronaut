@@ -34,4 +34,10 @@ abstract class FolderRepository implements ModelRepository<Folder> {
     Class getDomainClass() {
         Folder
     }
+
+    @Nullable
+    @Override
+    List<Folder> findAllByFolderId(UUID folderId){
+        findById(folderId) as List<Folder>
+    }
 }
