@@ -50,7 +50,7 @@ abstract class FacetController<I extends Facet> extends ItemController<I> {
     }
 
     protected I createEntity(@NonNull AdministeredItem administeredItem, @NonNull I cleanFacet) {
-        cleanFacet.updateCreationProperties()
+        updateCreationProperties(cleanFacet)
 
         cleanFacet.multiFacetAwareItemDomainType = administeredItem.domainType
         cleanFacet.multiFacetAwareItemId = administeredItem.id

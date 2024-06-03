@@ -106,6 +106,7 @@ class AccessControlService implements Toggleable {
      */
     boolean canDoRole(@NonNull Role role, @NonNull Model model) {
         if (!enabled) return true
+        if (userAuthenticated && isAdministrator()) return true
         if (userAuthenticated && model.catalogueUser.id == getUserId()) return true
 
         if (role <= Role.READER) {
@@ -148,6 +149,10 @@ class AccessControlService implements Toggleable {
     }
 
     CatalogueUser getUser() {
+        if (!enabled) return
+        if (!securityService.authenticated) {
+            throw new AuthenticationException('User is not authenticated')
+        }
         catalogueUserRepository.findById(userId)
     }
 

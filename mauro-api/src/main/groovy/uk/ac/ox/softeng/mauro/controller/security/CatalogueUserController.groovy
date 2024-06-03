@@ -83,7 +83,7 @@ class CatalogueUserController extends ItemController<CatalogueUser> {
         cleanBody(catalogueUser)
         CatalogueUser existing = catalogueUserRepository.readById(id)
 
-        if (!accessControlService.administrator || accessControlService.userId != existing.id) {
+        if (!accessControlService.administrator && accessControlService.userId != existing.id) {
             throw new AuthorizationException(accessControlService.userAuthentication)
         }
 

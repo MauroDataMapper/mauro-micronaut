@@ -60,10 +60,7 @@ abstract class ItemController<I extends Item> {
     }
 
     protected Item updateCreationProperties(Item item) {
-        item.id = null
-        item.version = null
-        item.dateCreated = null
-        item.lastUpdated = null
+        item.updateCreationProperties()
         item.catalogueUser = accessControlService.getUser()
         item
     }

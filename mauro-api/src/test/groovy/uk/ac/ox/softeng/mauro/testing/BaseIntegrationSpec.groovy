@@ -40,7 +40,7 @@ class BaseIntegrationSpec extends Specification {
     @Shared
     Cookie sessionCookie
 
-    Object GET(String uri) {
+    Map<String, Object> GET(String uri) {
         client.toBlocking().retrieve(HttpRequest.GET(uri).tap {if (sessionCookie) it.cookie(sessionCookie)}, Map<String, Object>)
     }
 
@@ -82,6 +82,10 @@ class BaseIntegrationSpec extends Specification {
 
     <T> T PUT(String uri, Object body, Class<T> type) {
         client.toBlocking().retrieve(HttpRequest.PUT(uri, body).tap {if (sessionCookie) it.cookie(sessionCookie)}, type)
+    }
+
+    Map<String, Object> DELETE(String uri) {
+        client.toBlocking().retrieve(HttpRequest.DELETE(uri).tap {if (sessionCookie) it.cookie(sessionCookie)}, Map<String, Object>)
     }
 
     Map<String, Object> DELETE(String uri, Map<String, Object> body) {

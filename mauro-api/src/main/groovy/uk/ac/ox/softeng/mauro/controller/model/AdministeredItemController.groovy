@@ -70,7 +70,7 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
     }
 
     protected I createEntity(@NonNull P parent, @NonNull I cleanItem) {
-        cleanItem.updateCreationProperties()
+        updateCreationProperties(cleanItem)
 
         cleanItem.parent = parent
 
@@ -82,7 +82,7 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
         cleanBody(item)
         I existing = administeredItemRepository.readById(id)
 
-        accessControlService.checkRole(Role.EDITOR, item)
+        accessControlService.checkRole(Role.EDITOR, existing)
 
         updateEntity(existing, item)
     }

@@ -52,8 +52,8 @@ class SecurableResourceGroupRoleController extends ItemController<SecurableResou
         }
 
         SecurableResourceGroupRole securableResourceGroupRole = new SecurableResourceGroupRole(
-                securableResourceDomainType: securableResourceDomainType,
-                securableResourceId: securableResourceId,
+                securableResourceDomainType: securableResource.domainType,
+                securableResourceId: securableResource.id,
                 role: role,
                 userGroup: userGroup
         )
@@ -67,7 +67,7 @@ class SecurableResourceGroupRoleController extends ItemController<SecurableResou
 
         checkCanEditRoleOnItem(role, securableResource)
 
-        Long deleted = securableResourceGroupRoleRepository.deleteBySecurableResourceDomainTypeAndSecurableResourceIdAndRoleAndUserGroupId(securableResourceDomainType, securableResourceId, role, userGroupId)
+        Long deleted = securableResourceGroupRoleRepository.deleteBySecurableResourceDomainTypeAndSecurableResourceIdAndRoleAndUserGroupId(securableResource.domainType, securableResource.id, role, userGroupId)
 
         if (deleted) {
             HttpStatus.NO_CONTENT

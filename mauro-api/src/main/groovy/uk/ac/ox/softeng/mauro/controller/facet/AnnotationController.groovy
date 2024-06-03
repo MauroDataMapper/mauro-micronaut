@@ -81,7 +81,7 @@ class AnnotationController extends FacetController<Annotation> {
         childAnnotation.parentAnnotationId = parent.id
         childAnnotation.multiFacetAwareItemId = parent.multiFacetAwareItemId
         childAnnotation.multiFacetAwareItemDomainType = parent.multiFacetAwareItemDomainType
-        childAnnotation.updateCreationProperties()
+        updateCreationProperties(childAnnotation)
         Annotation saved = annotationRepository.save(childAnnotation)
         saved
     }
