@@ -15,7 +15,7 @@ micronaut:
         paths: classpath:META-INF/swagger/views/swagger-ui
         mapping: /swagger-ui/**
   security:
-    enabled: false # TODO: enable security
+    enabled: false
     authentication: session
     redirect:
       enabled: false

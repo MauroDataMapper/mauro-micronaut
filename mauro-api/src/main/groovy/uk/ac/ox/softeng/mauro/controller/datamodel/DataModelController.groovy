@@ -7,6 +7,7 @@ import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.*
+import io.micronaut.http.exceptions.HttpStatusException
 import io.micronaut.http.server.multipart.MultipartBody
 import io.micronaut.http.server.types.files.StreamedFile
 import io.micronaut.scheduling.TaskExecutors
@@ -20,6 +21,7 @@ import uk.ac.ox.softeng.mauro.domain.datamodel.DataModelService
 import uk.ac.ox.softeng.mauro.domain.diff.ObjectDiff
 import uk.ac.ox.softeng.mauro.domain.model.version.CreateNewVersionData
 import uk.ac.ox.softeng.mauro.domain.model.version.FinaliseData
+import uk.ac.ox.softeng.mauro.domain.security.Role
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.DataModelCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.datamodel.DataModelContentRepository
@@ -106,9 +108,13 @@ class DataModelController extends ModelController<DataModel> {
     ObjectDiff diffModels(@NonNull UUID id, @NonNull UUID otherId) {
         DataModel dataModel = modelContentRepository.findWithContentById(id)
         handleNotFoundError(dataModel, id)
-        dataModel.setAssociations()
         DataModel otherDataModel = modelContentRepository.findWithContentById(otherId)
         handleNotFoundError(otherDataModel, otherId)
+
+        accessControlService.checkRole(Role.READER, dataModel)
+        accessControlService.checkRole(Role.READER, otherDataModel)
+
+        dataModel.setAssociations()
         otherDataModel.setAssociations()
         dataModel.diff(otherDataModel)
     }
