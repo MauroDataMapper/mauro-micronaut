@@ -7,7 +7,6 @@ import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.*
-import io.micronaut.http.exceptions.HttpStatusException
 import io.micronaut.http.server.multipart.MultipartBody
 import io.micronaut.http.server.types.files.StreamedFile
 import io.micronaut.scheduling.TaskExecutors
@@ -65,11 +64,7 @@ class DataModelController extends ModelController<DataModel> {
     @Transactional
     @Delete('/dataModels/{id}')
     HttpStatus delete(UUID id, @Body @Nullable DataModel dataModel) {
-        DataModel model = super.show(id) as DataModel
-        if (!model){
-            throw new HttpStatusException(HttpStatus.NOT_FOUND, "Model not found, $id")
-        }
-        super.delete(model, dataModel)
+        super.delete(id, dataModel)
     }
 
     @Get('/folders/{folderId}/dataModels')

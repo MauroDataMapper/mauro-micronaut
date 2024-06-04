@@ -13,7 +13,7 @@ import uk.ac.ox.softeng.mauro.domain.security.UserGroup
 import uk.ac.ox.softeng.mauro.persistence.SecuredContainerizedTest
 
 @SecuredContainerizedTest
-class EditorAccessIntegrationSpec extends SecuredIntegrationSpec {
+class ReaderAccessIntegrationSpec extends SecuredIntegrationSpec {
 
     @Inject
     EmbeddedApplication<?> application
@@ -25,20 +25,20 @@ class EditorAccessIntegrationSpec extends SecuredIntegrationSpec {
     UUID dataModelId
 
     @Shared
-    UUID editorsGroupId
+    UUID readersGroupId
 
-    void 'editor can read and edit but not delete a folder'() {
+    void 'reader can read but not delete or edit a folder'() {
         given:
         loginAdmin()
         Folder folder = (Folder) POST('/folders', [label: 'Admin folder'], Folder)
         folderId = folder.id
 
-        UserGroup editorsGroup = (UserGroup) POST('/userGroups', [name: 'Editors Group'], UserGroup)
-        editorsGroupId = editorsGroup.id
+        UserGroup editorsGroup = (UserGroup) POST('/userGroups', [name: 'Readers Group'], UserGroup)
+        readersGroupId = editorsGroup.id
 
-        CatalogueUser catalougeUserResponse = PUT("/catalogueUsers/$user.id", [groups: [editorsGroupId]], CatalogueUser)
+        CatalogueUser catalougeUserResponse = PUT("/catalogueUsers/$user.id", [groups: [readersGroupId]], CatalogueUser)
 
-        SecurableResourceGroupRole securableResourceGroupRole = (SecurableResourceGroupRole) POST("/folder/$folderId/roles/Editor/userGroups/$editorsGroupId", null, SecurableResourceGroupRole)
+        SecurableResourceGroupRole securableResourceGroupRole = (SecurableResourceGroupRole) POST("/folder/$folderId/roles/Reader/userGroups/$readersGroupId", null, SecurableResourceGroupRole)
 
         loginUser()
 
@@ -53,18 +53,18 @@ class EditorAccessIntegrationSpec extends SecuredIntegrationSpec {
         folder = (Folder) PUT("/folders/$folderId", [description: 'Updated'], Folder)
 
         then:
-        folder
-        folder.description == 'Updated'
+        HttpClientResponseException exception = thrown()
+        exception.status == HttpStatus.FORBIDDEN
 
         when:
         DELETE("/folders/$folderId")
 
         then:
-        HttpClientResponseException exception = thrown()
+        exception = thrown()
         exception.status == HttpStatus.FORBIDDEN
     }
 
-    void 'editor role is inherited on datamodel from folder'() {
+    void 'reader role is inherited on datamodel from folder'() {
         given:
         loginAdmin()
         DataModel dataModel = (DataModel) POST("/folders/$folderId/dataModels", [label: 'Admin data model'], DataModel)
@@ -83,23 +83,23 @@ class EditorAccessIntegrationSpec extends SecuredIntegrationSpec {
         dataModel = (DataModel) PUT("/dataModels/$dataModelId", [description: 'Updated'], DataModel)
 
         then:
-        dataModel
-        dataModel.description == 'Updated'
+        HttpClientResponseException exception = thrown()
+        exception.status == HttpStatus.FORBIDDEN
 
         when:
         DELETE("/dataModels/$dataModelId")
 
         then: 'deleting models requires container administrator role'
-        HttpClientResponseException exception = thrown()
+        exception = thrown()
         exception.status == HttpStatus.FORBIDDEN
     }
 
-    void 'editor actions are forbidden when securable resource group role is deleted'() {
+    void 'reader actions are forbidden when securable resource group role is deleted'() {
         given:
         loginAdmin()
         DataModel dataModel = (DataModel) POST("/folders/$folderId/dataModels", [label: 'Admin data model'], DataModel)
         dataModelId = dataModel.id
-        DELETE("/folder/$folderId/roles/EDITOR/userGroups/$editorsGroupId", HttpStatus)
+        DELETE("/folder/$folderId/roles/Reader/userGroups/$readersGroupId", HttpStatus)
 
         loginUser()
 
@@ -146,10 +146,10 @@ class EditorAccessIntegrationSpec extends SecuredIntegrationSpec {
         exception.status == HttpStatus.FORBIDDEN
     }
 
-    void 'editor role can be assigned directly at datamodel level'() {
+    void 'reader role can be assigned directly at datamodel level'() {
         given:
         loginAdmin()
-        POST("/dataModel/$dataModelId/roles/Editor/userGroups/$editorsGroupId", null, SecurableResourceGroupRole)
+        POST("/dataModel/$dataModelId/roles/Reader/userGroups/$readersGroupId", null, SecurableResourceGroupRole)
 
         loginUser()
 
@@ -185,8 +185,8 @@ class EditorAccessIntegrationSpec extends SecuredIntegrationSpec {
         dataModel = (DataModel) PUT("/dataModels/$dataModelId", [description: 'Updated again'], DataModel)
 
         then:
-        dataModel
-        dataModel.description == 'Updated again'
+        exception = thrown()
+        exception.status == HttpStatus.FORBIDDEN
 
         when:
         DELETE("/dataModels/$dataModelId")

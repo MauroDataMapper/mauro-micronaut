@@ -114,20 +114,6 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
         }
     }
 
-    // TODO why separate method
-    @Transactional
-    HttpStatus delete(@Body @Nullable I item, I current) {
-        accessControlService.checkRole(Role.EDITOR, item)
-
-        if (current?.version) item.version = current.version
-        Long deleted = administeredItemContentRepository.deleteWithContent(item)
-        if (deleted) {
-            HttpStatus.NO_CONTENT
-        } else {
-            throw new HttpStatusException(HttpStatus.NOT_FOUND, 'Not found for deletion')
-        }
-    }
-
     ListResponse<I> list(UUID parentId) {
         P parent = parentItemRepository.readById(parentId)
         if (!parent) return null
