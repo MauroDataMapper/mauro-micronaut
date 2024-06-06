@@ -13,6 +13,7 @@ import uk.ac.ox.softeng.mauro.controller.model.ModelController
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.folder.FolderContentRepository
+import uk.ac.ox.softeng.mauro.plugin.exporter.ModelExporterPlugin
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @Slf4j
@@ -114,6 +115,25 @@ class FolderController extends ModelController<Folder> {
 
     @Get('/{id}/export{/namespace}{/name}{/version}')
     StreamedFile exportModel(UUID id, @Nullable String namespace, @Nullable String name, @Nullable String version) {
-        super.exportModel(id, namespace, name, version)
+        ModelExporterPlugin mauroPlugin = getMauroExporterPlugin(namespace, name, version)
+        Folder existing = modelContentRepository.findWithContentById(id)
+        List<Folder> childFoldersWithContent = surfaceChildContent(existing.childFolders)
+        existing.childFolders = childFoldersWithContent
+        StreamedFile streamedFile = exportedModelData(mauroPlugin, existing)
+        streamedFile
+    }
+
+    private List<Folder> surfaceChildContent(List<Folder> folders) {
+        if (folders.isEmpty()){
+            folders
+        }
+        List<Folder> foldersWithContent = []
+        folders.each {
+            Folder retrieved = modelContentRepository.findWithContentById(it.id)
+            retrieved.setAssociations()
+            retrieved.childFolders = surfaceChildContent(retrieved.childFolders)
+            foldersWithContent.add(retrieved)
+        }
+        foldersWithContent
     }
 }

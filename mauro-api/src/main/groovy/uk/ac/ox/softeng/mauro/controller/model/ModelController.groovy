@@ -185,20 +185,13 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     }
 
     StreamedFile exportModel(UUID modelId, String namespace, String name, @Nullable String version) {
-
-        ModelExporterPlugin mauroPlugin = mauroPluginService.getPlugin(ModelExporterPlugin, namespace, name, version)
-
-        if(!mauroPlugin) {
-            throw new HttpStatusException(HttpStatus.BAD_REQUEST, "Model export plugin with namespace: ${namespace}, name: ${name} not found")
-        }
+        ModelExporterPlugin mauroPlugin = getMauroExporterPlugin(namespace, name, version)
 
         M existing = modelContentRepository.findWithContentById(modelId)
         existing.setAssociations()
 
-        byte[] fileContents =  mauroPlugin.exportModel(existing)
-        String filename = mauroPlugin.getFileName(existing)
-        new StreamedFile(new ByteArrayInputStream(fileContents), MediaType.APPLICATION_JSON_TYPE).attach(filename)
-
+        StreamedFile export = exportedModelData(mauroPlugin, existing)
+        export
     }
 
     ListResponse<M> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version) {
@@ -227,7 +220,20 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         ListResponse.from(smallerResponse)
     }
 
+    protected ModelExporterPlugin getMauroExporterPlugin(String namespace, String name, String version) {
+        ModelExporterPlugin mauroPlugin = mauroPluginService.getPlugin(ModelExporterPlugin, namespace, name, version)
+        if (!mauroPlugin) {
+            throw new HttpStatusException(HttpStatus.BAD_REQUEST, "Model export plugin with namespace: ${namespace}, name: ${name} not found")
+        }
+        mauroPlugin
+    }
 
+    protected StreamedFile exportedModelData(ModelExporterPlugin mauroPlugin, M existing) {
+        byte[] fileContents = mauroPlugin.exportModel(existing)
+        String filename = mauroPlugin.getFileName(existing)
+        new StreamedFile(new ByteArrayInputStream(fileContents), MediaType.APPLICATION_JSON_TYPE).attach(filename)
+
+    }
     protected void handleNotFoundError(M model, UUID id) {
         if (!model) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, "Model not found, $id")
