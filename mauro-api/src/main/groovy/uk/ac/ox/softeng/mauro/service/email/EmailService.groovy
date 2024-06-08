@@ -8,7 +8,8 @@ import uk.ac.ox.softeng.mauro.domain.security.CatalogueUser
 import uk.ac.ox.softeng.mauro.persistence.security.EmailRepository
 import uk.ac.ox.softeng.mauro.plugin.MauroPluginService
 
-import java.time.OffsetDateTime
+import java.time.Instant
+
 
 @Singleton
 @Slf4j
@@ -30,7 +31,7 @@ class EmailService {
         EmailPlugin emailPlugin = getDefaultEmailPlugin()
         email.emailServiceUsed = emailPlugin.displayName
         email.sentToEmailAddress = catalogueUserRecipient.emailAddress
-        email.dateTimeSent = OffsetDateTime.now()
+        email.dateTimeSent = Instant.now()
 
         Closure emailSending = {
             log.debug("Sending email to ${catalogueUserRecipient.emailAddress}...")
@@ -63,7 +64,7 @@ class EmailService {
     void retrySendEmail(Email email, boolean async = true) throws Exception {
         EmailPlugin emailPlugin = getDefaultEmailPlugin()
         email.emailServiceUsed = emailPlugin.displayName
-        email.dateTimeSent = OffsetDateTime.now()
+        email.dateTimeSent = Instant.now()
 
         Closure emailSending = {
             log.debug("Retry sending email to ${email.sentToEmailAddress}...")
