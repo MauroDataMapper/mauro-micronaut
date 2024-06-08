@@ -10,7 +10,7 @@ import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Version
 
-import java.time.OffsetDateTime
+import java.time.Instant
 
 @CompileStatic
 @AutoClone
@@ -38,7 +38,7 @@ class Email {
     String subject
     String body
     String emailServiceUsed
-    OffsetDateTime dateTimeSent // This is non-nullable in the database, so it also represents the time of the last failure to send
+    Instant dateTimeSent // This is non-nullable in the database, so it also represents the time of the last failure to send
     Boolean successfullySent
 
     @Nullable
@@ -78,7 +78,7 @@ class Email {
         this.emailServiceUsed
     }
 
-    OffsetDateTime dateTimeSent(OffsetDateTime dateTimeSent) {
+    Instant dateTimeSent(Instant dateTimeSent) {
         this.dateTimeSent = dateTimeSent
         this.dateTimeSent
     }
