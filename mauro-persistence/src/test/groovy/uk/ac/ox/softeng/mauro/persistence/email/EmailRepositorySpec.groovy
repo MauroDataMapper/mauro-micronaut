@@ -42,7 +42,8 @@ class EmailRepositorySpec extends Specification {
         retrievedEmail.sentToEmailAddress == testEmail.sentToEmailAddress
         retrievedEmail.subject == testEmail.subject
         retrievedEmail.body == testEmail.body
-        retrievedEmail.dateTimeSent == testEmail.dateTimeSent
+
+        retrievedEmail.dateTimeSent.toEpochMilli() ==  testEmail.dateTimeSent.toEpochMilli()
         retrievedEmail.successfullySent == testEmail.successfullySent
 
         when:
