@@ -9,6 +9,7 @@ import io.micronaut.data.annotation.Index
 import io.micronaut.data.annotation.Indexes
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Relation
+import jakarta.persistence.Transient
 import uk.ac.ox.softeng.mauro.domain.model.Item
 
 import java.time.Instant
@@ -53,4 +54,11 @@ class CatalogueUser extends Item {
             groupIds.collect {new UserGroup(id: it)} as Set<UserGroup>
         }
     }
+
+    @JsonIgnore
+    @Transient
+    String getFullName() {
+        "$firstName $lastName"
+    }
+
 }

@@ -93,3 +93,15 @@ flyway:
         - terminology
         - datamodel
         - security
+javamail:
+  authentication:
+    username: $$username$$ # Replace me!
+    password: $$password$$ # Replace me!
+  properties:
+    mail:
+      smtp:
+        port: 587 # Replace me!
+        auth: true
+        starttls:
+          enable: true
+        host: $$host$$ # Replace me!

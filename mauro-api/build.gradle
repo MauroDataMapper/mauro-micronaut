@@ -49,6 +49,11 @@ dependencies {
     implementation("io.micronaut.security:micronaut-security-session")
     compileOnly("io.micronaut.security:micronaut-security-annotations")
 
+    //Email
+    implementation("io.micronaut.email:micronaut-email-javamail")
+    runtimeOnly("org.eclipse.angus:angus-mail")
+
+
     testRuntimeOnly("org.testcontainers:testcontainers")
     testRuntimeOnly("org.testcontainers:postgresql")
     testRuntimeOnly("org.postgresql:postgresql")
