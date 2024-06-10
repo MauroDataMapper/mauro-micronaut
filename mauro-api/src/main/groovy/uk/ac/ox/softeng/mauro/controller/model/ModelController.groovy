@@ -141,7 +141,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     @Transactional
     M finalise(UUID id, @Body FinaliseData finaliseData) {
         M model = modelRepository.findById(id)
-        M finalised = modelService.finaliseModel(model, finaliseData.version, finaliseData.versionChangeType, finaliseData.versionTag)
+        M finalised = getModelService().finaliseModel(model, finaliseData.version, finaliseData.versionChangeType, finaliseData.versionTag)
         modelRepository.update(finalised)
     }
 
@@ -172,11 +172,6 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     AdministeredItemRepository getRepository(AdministeredItem item) {
         administeredItemRepositories.find {it.handles(item.class)}
     }
-
-    M showNested(UUID uuid) {
-        administeredItemRepository.findById(uuid)
-    }
-
 
     <P extends ImportParameters> P readFromMultipartFormBody(MultipartBody body, Class<P> parametersClass) {
         Map<String, Object> importMap = Flux.from(body).collectList().block().collectEntries {CompletedPart cp ->

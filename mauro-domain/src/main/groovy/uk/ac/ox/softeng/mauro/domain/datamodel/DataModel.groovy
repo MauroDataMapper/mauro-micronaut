@@ -59,7 +59,7 @@ class DataModel extends Model {
     @Transient
     @JsonIgnore
     List<Collection<? extends ModelItem<DataModel>>> getAllAssociations() {
-        [dataTypes, enumerationValues, allDataClasses, dataElements]
+        [dataTypes, enumerationValues, allDataClasses, dataElements] as List<Collection<? extends ModelItem<DataModel>>>
     }
 
 
@@ -111,7 +111,7 @@ class DataModel extends Model {
             dataElement.dataModel = this
             this.dataElements.add(dataElement)
             dataElement.dataClass = dataClass
-            dataElement.dataType = dataTypesMap[dataElement.dataType.label]
+            dataElement.dataType = dataTypesMap[dataElement?.dataType?.label]
         }
     }
 

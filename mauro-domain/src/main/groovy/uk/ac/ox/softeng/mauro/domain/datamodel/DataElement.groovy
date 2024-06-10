@@ -1,5 +1,10 @@
 package uk.ac.ox.softeng.mauro.domain.datamodel
 
+import uk.ac.ox.softeng.mauro.domain.diff.BaseCollectionDiff
+import uk.ac.ox.softeng.mauro.domain.diff.CollectionDiff
+import uk.ac.ox.softeng.mauro.domain.diff.DiffBuilder
+import uk.ac.ox.softeng.mauro.domain.diff.DiffableItem
+import uk.ac.ox.softeng.mauro.domain.diff.ObjectDiff
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.model.ModelItem
 
@@ -33,7 +38,7 @@ import jakarta.validation.constraints.NotNull
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @MappedEntity(schema = 'datamodel', value = 'data_element')
 @MapConstructor(includeSuperFields = true, includeSuperProperties = true, noArg = true)
-class DataElement extends ModelItem<DataClass> {
+class DataElement extends ModelItem<DataClass> implements DiffableItem<DataElement> {
 
     @Nullable
     Integer minMultiplicity
@@ -72,6 +77,36 @@ class DataElement extends ModelItem<DataClass> {
     String getPathPrefix() {
         'de'
     }
+
+    @Override
+    @Transient
+    @JsonIgnore
+    CollectionDiff fromItem() {
+        new BaseCollectionDiff(id, label)
+    }
+
+    @Override
+    @Transient
+    @JsonIgnore
+    String getDiffIdentifier() {
+        "${dataClass?.getDiffIdentifier()}/$this.pathIdentifier}"
+    }
+
+    @Override
+    @Transient
+    @JsonIgnore
+    ObjectDiff<DataElement> diff(DataElement other) {
+        ObjectDiff<DataElement> base = DiffBuilder.objectDiff(DataElement)
+                .leftHandSide(id?.toString(), this)
+                .rightHandSide(other.id?.toString(), other)
+        base.label = this.label
+        base.appendString(DiffBuilder.DESCRIPTION, this.description, other.description)
+        base.appendString(DiffBuilder.ALIASES_STRING, this.aliasesString, other.aliasesString)
+        base.appendString(DiffBuilder.DATA_TYPE_PATH, this.dataType.path?.toString(), other.dataType.path?.toString())
+        base.appendField(DiffBuilder.MIN_MULTIPILICITY, this.minMultiplicity, other.minMultiplicity)
+        base.appendField(DiffBuilder.MAX_MULTIPILICITY, this.maxMultiplicity, other.maxMultiplicity)
+    }
+
 
     /****
      * Methods for building a tree-like DSL
@@ -143,11 +178,11 @@ class DataElement extends ModelItem<DataClass> {
         dataType
     }
 
+
+
     DataType dataType(@DelegatesTo(value = DataElement, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
         dataType [:], closure
     }
-
-
 
     Integer maxMultiplicity(Integer maxMultiplicity) {
         this.maxMultiplicity = maxMultiplicity
@@ -158,5 +193,4 @@ class DataElement extends ModelItem<DataClass> {
         this.minMultiplicity = minMultiplicity
         this.minMultiplicity
     }
-
 }

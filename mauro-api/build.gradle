@@ -6,7 +6,6 @@ plugins {
     id("io.micronaut.aot") version "4.2.1"
     id("codenarc")
 }
-
 version = "0.1"
 group = "uk.ac.ox.softeng.mauro"
 
@@ -50,6 +49,11 @@ dependencies {
     implementation("io.micronaut.security:micronaut-security-session")
     compileOnly("io.micronaut.security:micronaut-security-annotations")
 //    implementation("io.micrometer:context-propagation")
+
+    //Email
+    implementation("io.micronaut.email:micronaut-email-javamail")
+    runtimeOnly("org.eclipse.angus:angus-mail")
+
 
     testRuntimeOnly("org.testcontainers:testcontainers")
     testRuntimeOnly("org.testcontainers:postgresql")

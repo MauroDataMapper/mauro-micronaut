@@ -1,8 +1,5 @@
 package uk.ac.ox.softeng.mauro.domain.datamodel
 
-import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
-import uk.ac.ox.softeng.mauro.domain.model.ModelItem
-
 import com.fasterxml.jackson.annotation.JsonIgnore
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
@@ -11,11 +8,10 @@ import io.micronaut.core.annotation.Introspected
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Relation
-import jakarta.persistence.Inheritance
-import jakarta.persistence.InheritanceType
-import jakarta.persistence.JoinColumn
-import jakarta.persistence.JoinTable
-import jakarta.persistence.Transient
+import jakarta.persistence.*
+import uk.ac.ox.softeng.mauro.domain.diff.*
+import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
+import uk.ac.ox.softeng.mauro.domain.model.ModelItem
 
 /**
  * A datatype describes the range of values that a column or field in a dataset may take.  It may be one of the following kinds:
@@ -35,7 +31,7 @@ import jakarta.persistence.Transient
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @MappedEntity(schema = 'datamodel', value = 'data_class')
 @MapConstructor(includeSuperFields = true, includeSuperProperties = true, noArg = true)
-class DataClass extends ModelItem<DataModel> {
+class DataClass extends ModelItem<DataModel> implements DiffableItem<DataClass> {
 
     @Nullable
     Integer minMultiplicity
@@ -93,17 +89,54 @@ class DataClass extends ModelItem<DataModel> {
         'dc'
     }
 
+    @Override
+    @JsonIgnore
+    @Transient
+    CollectionDiff fromItem() {
+        new BaseCollectionDiff(id, label)
+    }
+
+
+    @Override
+    @JsonIgnore
+    @Transient
+    String getDiffIdentifier() {
+        if (!parentDataClass) return this.pathIdentifier
+        "${parentDataClass.getDiffIdentifier()}/${this.pathIdentifier}"
+    }
+
+    @Override
+    @JsonIgnore
+    @Transient
+    ObjectDiff<DataClass> diff(DataClass other) {
+        ObjectDiff<DataClass> base = DiffBuilder.objectDiff(DataClass)
+                .leftHandSide(id?.toString(), this)
+                .rightHandSide(other.id?.toString(), other)
+        base.label = this.label
+        base.appendString(DiffBuilder.DESCRIPTION, this.description, other.description)
+        base.appendString(DiffBuilder.ALIASES_STRING, this.aliasesString, other.aliasesString)
+        base.appendField(DiffBuilder.MIN_MULTIPILICITY, this.minMultiplicity, other.minMultiplicity)
+        base.appendField(DiffBuilder.MAX_MULTIPILICITY, this.maxMultiplicity, other.maxMultiplicity)
+        if (!DiffBuilder.isNullOrEmpty(this.dataClasses as Collection<Object>) || !DiffBuilder.isNullOrEmpty(other.dataClasses as Collection<Object>)) {
+            base.appendCollection(DiffBuilder.DATA_CLASSES, this.dataClasses as Collection<DiffableItem>, other.dataClasses as Collection<DiffableItem>)
+        }
+        if (!DiffBuilder.isNullOrEmpty(this.dataElements as Collection<Object>) || !DiffBuilder.isNullOrEmpty(other.dataElements  as Collection<Object>)) {
+            base.appendCollection(DiffBuilder.DATA_ELEMENTS, this.dataElements as Collection<DiffableItem>, other.dataElements as Collection<DiffableItem>)
+        }
+        base
+    }
+
     /****
      * Methods for building a tree-like DSL
      */
 
     static DataClass build(
-        Map args,
-        @DelegatesTo(value = DataClass, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
+            Map args,
+            @DelegatesTo(value = DataClass, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
         new DataClass(args).tap(closure)
     }
 
-    static DataClass build(@DelegatesTo(value = DataClass, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
+    static DataClass build(@DelegatesTo(value = DataClass, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
         build [:], closure
     }
 
@@ -115,7 +148,7 @@ class DataClass extends ModelItem<DataModel> {
         dataClass
     }
 
-    DataClass dataClass(Map args, @DelegatesTo(value = DataClass, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
+    DataClass dataClass(Map args, @DelegatesTo(value = DataClass, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
         DataClass dataClass = build(args + [dataModel: this.dataModel], closure)
         this.dataClasses.add(dataClass)
         dataClass.parentDataClass = this
@@ -123,7 +156,7 @@ class DataClass extends ModelItem<DataModel> {
         dataClass
     }
 
-    DataClass dataClass(@DelegatesTo(value = DataClass, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
+    DataClass dataClass(@DelegatesTo(value = DataClass, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
         dataClass [:], closure
     }
 
@@ -135,12 +168,12 @@ class DataClass extends ModelItem<DataModel> {
         dataElement
     }
 
-    DataElement dataElement(Map args, @DelegatesTo(value = DataElement, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
+    DataElement dataElement(Map args, @DelegatesTo(value = DataElement, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
         DataElement dataElement1 = DataElement.build(args + [dataModel: this.dataModel], closure)
         dataElement dataElement1
     }
 
-    DataElement dataElement(@DelegatesTo(value = DataElement, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
+    DataElement dataElement(@DelegatesTo(value = DataElement, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
         dataElement [:], closure
     }
 
@@ -155,11 +188,8 @@ class DataClass extends ModelItem<DataModel> {
     }
 
     DataClass extendsDataClass(String dataClassLabel) {
-        DataClass foundDataClass = this.dataModel.dataClasses.findAll {it.label == dataClassLabel}.first()
+        DataClass foundDataClass = this.dataModel.dataClasses.findAll { it.label == dataClassLabel }.first()
         this.extendsDataClasses.add(foundDataClass)
         return foundDataClass
     }
-
-
-
 }

@@ -11,6 +11,7 @@ import io.micronaut.data.annotation.Relation
 import jakarta.persistence.Inheritance
 import jakarta.persistence.InheritanceType
 import jakarta.persistence.Transient
+import uk.ac.ox.softeng.mauro.domain.diff.*
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.model.ModelItem
 
@@ -32,7 +33,8 @@ import uk.ac.ox.softeng.mauro.domain.model.ModelItem
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @MappedEntity(schema = 'datamodel', value = 'data_type')
 @MapConstructor(includeSuperFields = true, includeSuperProperties = true, noArg = true)
-class DataType extends ModelItem<DataModel> {
+class DataType extends ModelItem<DataModel> implements DiffableItem<DataType> {
+
 
     enum DataTypeKind {
         PRIMITIVE_TYPE('PrimitiveType'),
@@ -109,6 +111,31 @@ class DataType extends ModelItem<DataModel> {
     @JsonIgnore
     String getPathPrefix() {
         'dt'
+    }
+
+    @Override
+    @JsonIgnore
+    @Transient
+    CollectionDiff fromItem() {
+        new BaseCollectionDiff(id, label)
+    }
+
+    @Override
+    @JsonIgnore
+    @Transient
+    String getDiffIdentifier() {
+        label
+    }
+
+    @Override
+    @JsonIgnore
+    @Transient
+    ObjectDiff<DataType> diff(DataType other) {
+        ObjectDiff<DataType> base = DiffBuilder.objectDiff(DataType)
+                .leftHandSide(id?.toString(), this)
+                .rightHandSide(other.id?.toString(), other)
+        base.label = this.label
+        base
     }
 
     /****

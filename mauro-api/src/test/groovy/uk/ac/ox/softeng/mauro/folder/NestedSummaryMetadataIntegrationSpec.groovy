@@ -5,16 +5,15 @@ import io.micronaut.test.annotation.Sql
 import jakarta.inject.Inject
 import spock.lang.Shared
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
-import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadataType
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.domain.model.SummaryMetadataReport
 import uk.ac.ox.softeng.mauro.persistence.ContainerizedTest
-import uk.ac.ox.softeng.mauro.testing.BaseIntegrationSpec
+import uk.ac.ox.softeng.mauro.testing.CommonDataSpec
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @ContainerizedTest
 @Sql(scripts = "classpath:sql/tear-down-summary-metadata.sql", phase = Sql.Phase.AFTER_EACH)
-class NestedSummaryMetadataIntegrationSpec extends BaseIntegrationSpec {
+class NestedSummaryMetadataIntegrationSpec extends CommonDataSpec {
 
     @Inject
     EmbeddedApplication<? extends EmbeddedApplication> application
@@ -38,7 +37,7 @@ class NestedSummaryMetadataIntegrationSpec extends BaseIntegrationSpec {
 
         and:
         SummaryMetadata summaryMetadata = (SummaryMetadata) POST("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH",
-                [summaryMetadataType: SummaryMetadataType.MAP], SummaryMetadata)
+                summaryMetadataPayload(), SummaryMetadata)
 
         when:
         retrieved = (Folder) GET("$FOLDERS_PATH/$folderId", Folder)
@@ -57,7 +56,7 @@ class NestedSummaryMetadataIntegrationSpec extends BaseIntegrationSpec {
 
         and:
         SummaryMetadata summaryMetadata = (SummaryMetadata) POST("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH",
-                [summaryMetadataType: SummaryMetadataType.MAP], SummaryMetadata)
+                summaryMetadataPayload(), SummaryMetadata)
         UUID summaryMetadataId = summaryMetadata.id
 
         and:
@@ -85,7 +84,7 @@ class NestedSummaryMetadataIntegrationSpec extends BaseIntegrationSpec {
 
         and:
         SummaryMetadata summaryMetadata = (SummaryMetadata) POST("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH",
-                [summaryMetadataType: SummaryMetadataType.MAP], SummaryMetadata)
+              summaryMetadataPayload(), SummaryMetadata)
         UUID summaryMetadataId = summaryMetadata.id
 
         and:

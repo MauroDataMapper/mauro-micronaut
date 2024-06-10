@@ -4,9 +4,15 @@ import com.fasterxml.jackson.annotation.JsonAlias
 import com.fasterxml.jackson.annotation.JsonIgnore
 import groovy.transform.CompileStatic
 import groovy.transform.NamedParams
+import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.Nullable
 import jakarta.persistence.Transient
 import uk.ac.ox.softeng.mauro.domain.authority.Authority
+import uk.ac.ox.softeng.mauro.domain.diff.CollectionDTO
+import uk.ac.ox.softeng.mauro.domain.diff.DiffBuilder
+
+import uk.ac.ox.softeng.mauro.domain.diff.DiffableItem
+import uk.ac.ox.softeng.mauro.domain.diff.ObjectDiff
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.domain.model.version.ModelVersion
 import uk.ac.ox.softeng.mauro.domain.security.SecurableResource
@@ -24,7 +30,8 @@ import java.time.Instant
  * All models must be stored within a folder.
  */
 @CompileStatic
-abstract class Model extends AdministeredItem implements SecurableResource {
+@Slf4j
+abstract class Model<M extends DiffableItem> extends AdministeredItem implements SecurableResource {
 
     Boolean finalised = false
 
@@ -107,6 +114,29 @@ abstract class Model extends AdministeredItem implements SecurableResource {
     @JsonIgnore
     abstract void setAssociations()
 
+    Boolean hasSameDomainType(Model other) {
+        boolean result = this.domainType == other.domainType && this.class == other.class
+        result
+    }
+
+
+    ObjectDiff diff(Model other) {
+        if (!this.hasSameDomainType(other)) {
+            log.warn("Unable to diff this object domainType: ${this.domainType} with : ${other.domainType}")
+            return null
+        }
+        if (this.id != null && other.id != null && this.id == other.id){
+            ObjectDiff sameDiff = DiffBuilder.newObjectDiff(this.getClass() as Class<Model>, this.id?.toString(), other.id?.toString())
+            sameDiff.label = this.label
+            sameDiff
+        } else {
+            CollectionDTO lhs = DiffBuilder.createCollectionDiff(DiffBuilder.MODEL_COLLECTION_KEYS, this.properties)
+            CollectionDTO rhs = DiffBuilder.createCollectionDiff(DiffBuilder.MODEL_COLLECTION_KEYS, other.properties)
+            ObjectDiff baseDiff = DiffBuilder.diff(this, other, lhs, rhs)
+            baseDiff
+        }
+    }
+
     /****
      * Methods for building a tree-like DSL
      */
@@ -168,13 +198,13 @@ abstract class Model extends AdministeredItem implements SecurableResource {
 
     ModelVersion modelVersion(
             @NamedParams Map args,
-            @DelegatesTo(value = ModelVersion, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
+            @DelegatesTo(value = ModelVersion, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
         this.modelVersion = ModelVersion.build(args, closure)
         this.modelVersion
     }
 
     ModelVersion modelVersion(
-            @DelegatesTo(value = ModelVersion, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
+            @DelegatesTo(value = ModelVersion, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
         this.modelVersion = ModelVersion.build([:], closure)
         this.modelVersion
     }

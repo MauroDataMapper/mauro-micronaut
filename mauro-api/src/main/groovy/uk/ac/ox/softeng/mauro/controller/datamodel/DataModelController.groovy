@@ -17,6 +17,7 @@ import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.controller.model.ModelController
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModelService
+import uk.ac.ox.softeng.mauro.domain.diff.ObjectDiff
 import uk.ac.ox.softeng.mauro.domain.model.version.CreateNewVersionData
 import uk.ac.ox.softeng.mauro.domain.model.version.FinaliseData
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.DataModelCacheableRepository
@@ -69,7 +70,7 @@ class DataModelController extends ModelController<DataModel> {
     @Transactional
     @Delete('/dataModels/{id}')
     HttpStatus delete(UUID id, @Body @Nullable DataModel dataModel) {
-        DataModel model = super.showNested(id) as DataModel
+        DataModel model = super.show(id) as DataModel
         if (!model){
             throw new HttpStatusException(HttpStatus.NOT_FOUND, "Model not found, $id")
         }
@@ -125,4 +126,20 @@ class DataModelController extends ModelController<DataModel> {
         super.importModel(body, namespace, name, version)
     }
 
+    @Get('/dataModels/{id}/diff/{otherId}')
+    ObjectDiff diffModels(@NonNull UUID id, @NonNull UUID otherId) {
+        DataModel dataModel = modelContentRepository.findWithContentById(id)
+        handleNotFoundError(dataModel, id)
+        dataModel.setAssociations()
+        DataModel otherDataModel = modelContentRepository.findWithContentById(otherId)
+        handleNotFoundError(otherDataModel, otherId)
+        otherDataModel.setAssociations()
+        dataModel.diff(otherDataModel)
+    }
+
+    private void handleNotFoundError(DataModel dataModel, UUID id) {
+        if (!dataModel) {
+            throw new HttpStatusException(HttpStatus.NOT_FOUND, "Model not found, $id")
+        }
+    }
 }
