@@ -17,9 +17,7 @@ import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.security.Role
 import uk.ac.ox.softeng.mauro.domain.security.SecurableResourceGroupRole
 import uk.ac.ox.softeng.mauro.domain.security.UserGroup
-import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.ItemCacheableRepository
-import uk.ac.ox.softeng.mauro.persistence.service.RepositoryService
 
 @CompileStatic
 @Slf4j
@@ -28,9 +26,6 @@ import uk.ac.ox.softeng.mauro.persistence.service.RepositoryService
 class SecurableResourceGroupRoleController extends ItemController<SecurableResourceGroupRole> {
 
     ItemCacheableRepository.SecurableResourceGroupRoleCacheableRepository securableResourceGroupRoleRepository
-
-    @Inject
-    RepositoryService repositoryService
 
     @Inject
     ItemCacheableRepository.UserGroupCacheableRepository userGroupRepository
@@ -85,18 +80,5 @@ class SecurableResourceGroupRoleController extends ItemController<SecurableResou
                 throw new HttpStatusException(HttpStatus.BAD_REQUEST, 'Role CONTAINER_ADMIN is only applicable to Containers')
             }
         }
-    }
-
-    protected AdministeredItem readAdministeredItem(String domainType, UUID domainId) {
-        AdministeredItemCacheableRepository administeredItemRepository = getAdministeredItemRepository(domainType)
-        AdministeredItem administeredItem = administeredItemRepository.readById(domainId)
-        if (!administeredItem) throw new HttpStatusException(HttpStatus.NOT_FOUND, 'AdministeredItem not found by ID')
-        administeredItem
-    }
-
-    protected AdministeredItemCacheableRepository getAdministeredItemRepository(String domainType) {
-        AdministeredItemCacheableRepository administeredItemRepository = repositoryService.getAdministeredItemRepository(domainType)
-        if (!administeredItemRepository) throw new HttpStatusException(HttpStatus.NOT_FOUND, "Domain type [$domainType] not found")
-        administeredItemRepository
     }
 }

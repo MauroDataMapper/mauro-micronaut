@@ -16,11 +16,9 @@ import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.model.Item
 import uk.ac.ox.softeng.mauro.domain.model.SummaryMetadataReport
 import uk.ac.ox.softeng.mauro.domain.security.Role
-import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.FacetCacheableRepository.SummaryMetadataCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.ItemCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.model.SummaryMetadataReportRepository
-import uk.ac.ox.softeng.mauro.persistence.service.RepositoryService
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @CompileStatic
@@ -34,9 +32,6 @@ class SummaryMetadataReportController extends ItemController<SummaryMetadataRepo
 
     @Inject
     SummaryMetadataCacheableRepository summaryMetadataCacheableRepository
-
-    @Inject
-    RepositoryService repositoryService
 
     ItemCacheableRepository.SummaryMetadataReportCacheableRepository summaryMetadataReportCacheableRepository
     /**
@@ -133,18 +128,5 @@ class SummaryMetadataReportController extends ItemController<SummaryMetadataRepo
 
     protected AdministeredItem readAdministeredItemForFacet(Facet facet) {
         readAdministeredItem(facet.multiFacetAwareItemDomainType, facet.multiFacetAwareItemId)
-    }
-
-    protected AdministeredItem readAdministeredItem(String domainType, UUID domainId) {
-        AdministeredItemCacheableRepository administeredItemRepository = getAdministeredItemRepository(domainType)
-        AdministeredItem administeredItem = administeredItemRepository.readById(domainId)
-        if (!administeredItem) throw new HttpStatusException(HttpStatus.NOT_FOUND, 'AdministeredItem not found by ID')
-        administeredItem
-    }
-
-    protected AdministeredItemCacheableRepository getAdministeredItemRepository(String domainType) {
-        AdministeredItemCacheableRepository administeredItemRepository = repositoryService.getAdministeredItemRepository(domainType)
-        if (!administeredItemRepository) throw new HttpStatusException(HttpStatus.NOT_FOUND, "Domain type [$domainType] not found")
-        administeredItemRepository
     }
 }

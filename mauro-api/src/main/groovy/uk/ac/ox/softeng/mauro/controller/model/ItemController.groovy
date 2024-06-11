@@ -6,8 +6,11 @@ import io.micronaut.http.exceptions.HttpStatusException
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
 import jakarta.inject.Inject
+import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.model.Item
+import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.ItemCacheableRepository
+import uk.ac.ox.softeng.mauro.persistence.service.RepositoryService
 import uk.ac.ox.softeng.mauro.security.AccessControlService
 
 @CompileStatic
@@ -16,6 +19,9 @@ abstract class ItemController<I extends Item> {
 
     @Inject
     AccessControlService accessControlService
+
+    @Inject
+    RepositoryService repositoryService
 
     /**
      * Properties disallowed in a simple update request.
@@ -77,5 +83,25 @@ abstract class ItemController<I extends Item> {
             }
         }
         return hasChanged
+    }
+
+    protected AdministeredItem readAdministeredItem(String domainType, UUID domainId) {
+        AdministeredItemCacheableRepository administeredItemRepository = getAdministeredItemRepository(domainType)
+        AdministeredItem administeredItem = administeredItemRepository.readById(domainId)
+        if (!administeredItem) throw new HttpStatusException(HttpStatus.NOT_FOUND, 'AdministeredItem not found by ID')
+        administeredItem
+    }
+
+    protected AdministeredItem findAdministeredItem(String domainType, UUID domainId) {
+        AdministeredItemCacheableRepository administeredItemRepository = getAdministeredItemRepository(domainType)
+        AdministeredItem administeredItem = administeredItemRepository.findById(domainId)
+        if (!administeredItem) throw new HttpStatusException(HttpStatus.NOT_FOUND, 'AdministeredItem not found by ID')
+        administeredItem
+    }
+
+    protected AdministeredItemCacheableRepository getAdministeredItemRepository(String domainType) {
+        AdministeredItemCacheableRepository administeredItemRepository = repositoryService.getAdministeredItemRepository(domainType)
+        if (!administeredItemRepository) throw new HttpStatusException(HttpStatus.NOT_FOUND, "Domain type [$domainType] not found")
+        administeredItemRepository
     }
 }
