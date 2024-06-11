@@ -5,7 +5,6 @@ import uk.ac.ox.softeng.mauro.domain.datamodel.DataElement
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
-import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
 import uk.ac.ox.softeng.mauro.persistence.ContainerizedTest
 import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository
@@ -25,7 +24,10 @@ class DataModelRepositorySpec extends Specification {
     ModelCacheableRepository.DataModelCacheableRepository dataModelRepository
 
     @Inject
-    AdministeredItemCacheableRepository.DataClassCacheableRepository dataClassRepository
+    AdministeredItemCacheableRepository.DataClassCacheableRepository dataClassCacheableRepository
+
+    @Inject
+    DataClassRepository dataClassRepository
 
     @Inject
     AdministeredItemCacheableRepository.DataElementCacheableRepository dataElementRepository
@@ -41,6 +43,9 @@ class DataModelRepositorySpec extends Specification {
 
     @Shared
     Folder myFirstFolder
+
+    @Shared
+    UUID dataModelId
 
     def TestDataModel() {
         given:
@@ -91,15 +96,16 @@ class DataModelRepositorySpec extends Specification {
                     }
                 }
             }
-            //dataModel.setAssociations()
+
         when:
             DataModel importedModel = dataModelContentRepository.saveWithContent(dataModel)
             importedModel = dataModelRepository.readById(importedModel.id)
+            dataModelId = importedModel.id
         then:
             importedModel.label == "An import model"
             importedModel.description == "The description goes here"
 
-            List<DataClass> allDataClasses = dataClassRepository.readAllByParent(importedModel)
+            List<DataClass> allDataClasses = dataClassCacheableRepository.readAllByParent(importedModel)
             allDataClasses.size() == 2
 
 
@@ -116,6 +122,5 @@ class DataModelRepositorySpec extends Specification {
 
 
     }
-
-
+    
 }

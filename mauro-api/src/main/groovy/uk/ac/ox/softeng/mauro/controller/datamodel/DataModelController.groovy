@@ -15,6 +15,7 @@ import io.micronaut.scheduling.annotation.ExecuteOn
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
 import io.micronaut.transaction.annotation.Transactional
+import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.controller.model.ModelController
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModelService
@@ -25,6 +26,9 @@ import uk.ac.ox.softeng.mauro.domain.security.Role
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.DataModelCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.datamodel.DataModelContentRepository
+import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchRepository
+import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchRequestDTO
+import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchResultsDTO
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @Slf4j
@@ -37,6 +41,10 @@ class DataModelController extends ModelController<DataModel> {
 
     DataModelContentRepository dataModelContentRepository
 
+    @Inject
+    SearchRepository searchRepository
+
+    @Inject
     DataModelService dataModelService
 
     DataModelController(DataModelCacheableRepository dataModelRepository, FolderCacheableRepository folderRepository, DataModelContentRepository dataModelContentRepository,
@@ -68,6 +76,20 @@ class DataModelController extends ModelController<DataModel> {
     HttpStatus delete(UUID id, @Body @Nullable DataModel dataModel) {
         super.delete(id, dataModel)
     }
+
+
+    @Get('/dataModels/{id}/search{?requestDTO}')
+    ListResponse<SearchResultsDTO> searchGet(UUID id, @RequestBean SearchRequestDTO requestDTO) {
+        requestDTO.withinModelId = id
+        ListResponse.from(searchRepository.search(requestDTO))
+    }
+
+    @Post('/dataModels/{id}/search')
+    ListResponse<SearchResultsDTO> searchPost(UUID id, @Body SearchRequestDTO requestDTO) {
+        requestDTO.withinModelId = id
+        ListResponse.from(searchRepository.search(requestDTO))
+    }
+
 
     @Get('/folders/{folderId}/dataModels')
     ListResponse<DataModel> list(UUID folderId) {

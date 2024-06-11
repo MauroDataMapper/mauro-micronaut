@@ -14,6 +14,7 @@ import io.micronaut.scheduling.annotation.ExecuteOn
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
 import io.micronaut.transaction.annotation.Transactional
+import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.controller.model.ModelController
 import uk.ac.ox.softeng.mauro.domain.model.version.CreateNewVersionData
 import uk.ac.ox.softeng.mauro.domain.model.version.FinaliseData
@@ -22,6 +23,9 @@ import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
 import uk.ac.ox.softeng.mauro.domain.terminology.TerminologyService
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.TerminologyCacheableRepository
+import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchRepository
+import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchRequestDTO
+import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchResultsDTO
 import uk.ac.ox.softeng.mauro.persistence.terminology.TerminologyContentRepository
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
@@ -35,6 +39,10 @@ class TerminologyController extends ModelController<Terminology> {
 
     TerminologyContentRepository terminologyContentRepository
 
+    @Inject
+    SearchRepository searchRepository
+
+    @Inject
     TerminologyService terminologyService
 
     TerminologyController(TerminologyCacheableRepository terminologyRepository, FolderCacheableRepository folderRepository, TerminologyContentRepository terminologyContentRepository,
@@ -79,6 +87,19 @@ class TerminologyController extends ModelController<Terminology> {
     HttpStatus delete(UUID id, @Body @Nullable Terminology terminology) {
         super.delete(id, terminology)
     }
+
+    @Get('/terminologies/{id}/search{?requestDTO}')
+    ListResponse<SearchResultsDTO> searchGet(UUID id, @RequestBean SearchRequestDTO requestDTO) {
+        requestDTO.withinModelId = id
+        ListResponse.from(searchRepository.search(requestDTO))
+    }
+
+    @Post('/terminologies/{id}/search')
+    ListResponse<SearchResultsDTO> searchPost(UUID id, @Body SearchRequestDTO requestDTO) {
+        requestDTO.withinModelId = id
+        ListResponse.from(searchRepository.search(requestDTO))
+    }
+
 
     @Get('/folders/{folderId}/terminologies')
     ListResponse<Terminology> list(UUID folderId) {
