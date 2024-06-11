@@ -53,18 +53,6 @@ class TerminologyController extends ModelController<Terminology> {
         this.terminologyService = terminologyService
     }
 
-    @Secured(SecurityRule.IS_AUTHENTICATED)
-    @Get('/test/{id}')
-    Map authenticationTest(UUID id) {
-        Terminology terminology = show(id)
-        [
-                terminology: terminology,
-                authentication: accessControlService.userAuthentication,
-                canDoRole_READER: accessControlService.canDoRole(Role.READER, terminology),
-                canDoRole_EDITOR: accessControlService.canDoRole(Role.EDITOR, terminology)
-        ]
-    }
-
     @Get('/terminologies/{id}')
     Terminology show(UUID id) {
         super.show(id)
@@ -91,12 +79,16 @@ class TerminologyController extends ModelController<Terminology> {
     @Get('/terminologies/{id}/search{?requestDTO}')
     ListResponse<SearchResultsDTO> searchGet(UUID id, @RequestBean SearchRequestDTO requestDTO) {
         requestDTO.withinModelId = id
+        Terminology terminology = terminologyRepository.readById(requestDTO.withinModelId)
+        accessControlService.checkRole(Role.READER, terminology)
         ListResponse.from(searchRepository.search(requestDTO))
     }
 
     @Post('/terminologies/{id}/search')
     ListResponse<SearchResultsDTO> searchPost(UUID id, @Body SearchRequestDTO requestDTO) {
         requestDTO.withinModelId = id
+        Terminology terminology = terminologyRepository.readById(requestDTO.withinModelId)
+        accessControlService.checkRole(Role.READER, terminology)
         ListResponse.from(searchRepository.search(requestDTO))
     }
 

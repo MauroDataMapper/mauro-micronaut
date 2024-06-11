@@ -81,12 +81,16 @@ class DataModelController extends ModelController<DataModel> {
     @Get('/dataModels/{id}/search{?requestDTO}')
     ListResponse<SearchResultsDTO> searchGet(UUID id, @RequestBean SearchRequestDTO requestDTO) {
         requestDTO.withinModelId = id
+        DataModel dataModel = dataModelRepository.readById(requestDTO.withinModelId)
+        accessControlService.checkRole(Role.READER, dataModel)
         ListResponse.from(searchRepository.search(requestDTO))
     }
 
     @Post('/dataModels/{id}/search')
     ListResponse<SearchResultsDTO> searchPost(UUID id, @Body SearchRequestDTO requestDTO) {
         requestDTO.withinModelId = id
+        DataModel dataModel = dataModelRepository.readById(requestDTO.withinModelId)
+        accessControlService.checkRole(Role.READER, dataModel)
         ListResponse.from(searchRepository.search(requestDTO))
     }
 

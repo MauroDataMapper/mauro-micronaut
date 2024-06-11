@@ -93,29 +93,28 @@ class AccessControlService implements Toggleable {
         // if item is null, allow access to continue, e.g. to return a not found message
         if (!item) return
 
-        pathRepository.readParentItems(item)
-        Model owner = item.owner
-
-        if (!canDoRole(role, owner)) throw new AuthorizationException(userAuthentication)
+        if (!canDoRole(role, item)) throw new AuthorizationException(userAuthentication)
     }
 
     /**
-     * For a given Role and a Model, check if the current authenticated user can do the role on the model, by checking
-     * permissions on the model or inherited from any of its parents.
+     * For a given Role and an AdministeredItem, return if the current authenticated user can do the role on the item,
+     * by checking permissions on the item or inherited from any of its parents.
      * @return true if authorised, false otherwise
      */
-    boolean canDoRole(@NonNull Role role, @NonNull Model model) {
+    boolean canDoRole(@NonNull Role role, @NonNull AdministeredItem item) {
         if (!enabled) return true
         if (userAuthenticated && isAdministrator()) return true
-        if (userAuthenticated && model.catalogueUser.id == getUserId()) return true
+        pathRepository.readParentItems(item)
+        Model owner = item.owner
+        if (userAuthenticated && owner.catalogueUser && owner.catalogueUser.id == getUserId()) return true
 
         if (role <= Role.READER) {
-            if (model.readableByEveryone) return true
-            if (model.readableByAuthenticatedUsers && userAuthenticated) return true
+            if (owner.readableByEveryone) return true
+            if (owner.readableByAuthenticatedUsers && userAuthenticated) return true
         }
 
         List<UserGroup> userGroups = userGroupRepository.readAllByCatalogueUserId(userId)
-        List<Model> parentModels = pathRepository.readParentItems(model) as List<Model>
+        List<Model> parentModels = pathRepository.readParentItems(owner) as List<Model>
 
         parentModels.any {canDoRoleWithGroups(role, userGroups, it)}
     }

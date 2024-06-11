@@ -8,6 +8,8 @@ import spock.lang.Shared
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.persistence.SecuredContainerizedTest
+import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchResultsDTO
+import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @SecuredContainerizedTest
 class AdminAccessIntegrationSpec extends SecuredIntegrationSpec {
@@ -145,5 +147,27 @@ class AdminAccessIntegrationSpec extends SecuredIntegrationSpec {
         then:
         dataModel
         dataModel.description == 'Updated'
+    }
+
+    void 'admin can search over all items'() {
+        given:
+        loginAdmin()
+
+        when:
+        ListResponse<SearchResultsDTO> searchResults = POST("/search", [searchTerm: 'Updated'], ListResponse<SearchResultsDTO>)
+
+        then:
+        searchResults.items.sort {[it.tsRank, it.label]}.label == ['Admin folder', 'User folder', 'Admin data model', 'User data model']
+    }
+
+    void 'non-admin user cannot search admin\'s items without permission'() {
+        given:
+        loginUser()
+
+        when:
+        ListResponse<SearchResultsDTO> searchResults = POST("/search", [searchTerm: 'Updated'], ListResponse<SearchResultsDTO>)
+
+        then:
+        searchResults.items.sort {[it.tsRank, it.label]}.label == ['User folder', 'User data model']
     }
 }
