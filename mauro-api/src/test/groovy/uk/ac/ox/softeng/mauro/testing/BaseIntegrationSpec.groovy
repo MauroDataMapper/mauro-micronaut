@@ -1,5 +1,6 @@
 package uk.ac.ox.softeng.mauro.testing
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import io.micronaut.http.HttpRequest
 import io.micronaut.http.MediaType
 import io.micronaut.http.client.HttpClient
@@ -8,6 +9,12 @@ import io.micronaut.http.client.multipart.MultipartBody
 import jakarta.inject.Inject
 import spock.lang.Shared
 import spock.lang.Specification
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
+import uk.ac.ox.softeng.mauro.domain.folder.Folder
+import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
+import uk.ac.ox.softeng.mauro.export.ExportModel
+import uk.ac.ox.softeng.mauro.plugin.importer.json.JsonDataModelImporterPlugin
+import uk.ac.ox.softeng.mauro.plugin.importer.json.JsonTerminologyImporterPlugin
 
 class BaseIntegrationSpec extends Specification {
     public static final String FOLDERS_PATH = '/folders'
@@ -31,6 +38,11 @@ class BaseIntegrationSpec extends Specification {
     public static final String DATE_FINALISED = 'dateFinalised'
     public static final String TERM_RELATIONSHIP_TYPES = "/termRelationshipTypes"
 
+    @Inject
+    JsonDataModelImporterPlugin jsonDataModelImporterPlugin
+
+    @Inject
+    JsonTerminologyImporterPlugin jsonTerminologyImporterPlugin
 
     @Inject
     @Client('/')
@@ -100,4 +112,43 @@ class BaseIntegrationSpec extends Specification {
     <T> T DELETE(String uri, Object body, Class<T> type) {
         client.toBlocking().retrieve(HttpRequest.DELETE(uri, body), type)
     }
+
+
+    /**
+     * Convenience method for importing a data model into the database for testing
+     */
+
+    UUID importDataModel(DataModel dataModelToImport, Folder folder) {
+        ExportModel exportModel = ExportModel.build {
+            dataModel dataModelToImport
+        }
+        MultipartBody importRequest = MultipartBody.builder()
+                .addPart('folderId', folder.id.toString())
+                .addPart('importFile', 'file.json', MediaType.APPLICATION_JSON_TYPE, objectMapper.writeValueAsBytes(exportModel))
+                .build()
+        String namespace = jsonDataModelImporterPlugin.namespace
+        String name = jsonDataModelImporterPlugin.name
+        String version = jsonDataModelImporterPlugin.version
+
+        Map<String, Object> response = POST("/dataModels/import/$namespace/$name/$version", importRequest)
+        UUID.fromString(response.items.first().id)
+    }
+
+    UUID importTerminology(Terminology terminologyToImport, Folder folder) {
+        ExportModel exportModel = ExportModel.build {
+            terminology  terminologyToImport
+        }
+        MultipartBody importRequest = MultipartBody.builder()
+                .addPart('folderId', folder.id.toString())
+                .addPart('importFile', 'file.json', MediaType.APPLICATION_JSON_TYPE, objectMapper.writeValueAsBytes(exportModel))
+                .build()
+        String namespace = jsonTerminologyImporterPlugin.namespace
+        String name = jsonTerminologyImporterPlugin.name
+        String version = jsonTerminologyImporterPlugin.version
+
+        Map<String, Object> response = POST("/terminologies/import/$namespace/$name/$version", importRequest)
+        UUID.fromString(response.items.first().id)
+    }
+
+
 }

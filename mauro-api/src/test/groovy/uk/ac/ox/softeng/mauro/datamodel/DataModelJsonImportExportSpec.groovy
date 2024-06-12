@@ -49,10 +49,10 @@ class DataModelJsonImportExportSpec extends BaseIntegrationSpec {
             .addPart('folderId', folderId.toString())
             .addPart('importFile', 'file.json', MediaType.APPLICATION_JSON_TYPE, objectMapper.writeValueAsBytes(exportModel))
             .build()
-        def request = POST('/dataModels/import/uk.ac.ox.softeng.mauro.plugin.importer.json/JsonDataModelImporterPlugin/4.0.0', importRequest)
+        def response = POST('/dataModels/import/uk.ac.ox.softeng.mauro.plugin.importer.json/JsonDataModelImporterPlugin/4.0.0', importRequest)
 
         when:
-        UUID importedDataModelId = UUID.fromString(request.items.first().id)
+        UUID importedDataModelId = UUID.fromString(response.items.first().id)
         def dataModel = GET("/dataModels/$importedDataModelId")
 
         then:

@@ -7,6 +7,7 @@ import jakarta.inject.Inject
 import spock.lang.Shared
 import uk.ac.ox.softeng.mauro.domain.datamodel.*
 import uk.ac.ox.softeng.mauro.persistence.ContainerizedTest
+import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchResultsDTO
 import uk.ac.ox.softeng.mauro.testing.BaseIntegrationSpec
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
@@ -296,7 +297,22 @@ class DataModelIntegrationSpec extends BaseIntegrationSpec {
         enumerationValueListResponse.items.find { it -> it.key == 'R' } != null
         enumerationValueListResponse.items.find { it -> it.key == 'F' } != null
 
+    }
 
+    void "test search within model"() {
+
+        expect:
+
+        ListResponse<SearchResultsDTO> searchResults = (ListResponse<SearchResultsDTO>) GET("/dataModels/$dataModelId/search?${queryParams}", ListResponse<SearchResultsDTO>)
+        searchResults.items.label == expectedLabels
+
+        where:
+
+        queryParams                                                     | expectedLabels
+        "searchTerm=first"                                              | ["First data class"]
+        "searchTerm=second"                                             | ["Second data class", "Renamed data element"]
+        "searchTerm=second&domainTypes=DataClass"                       | ["Second data class"]
+        "searchTerm=second&domainTypes=DataElement"                     | ["Renamed data element"]
 
     }
 

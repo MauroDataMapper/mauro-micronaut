@@ -7,6 +7,7 @@ import uk.ac.ox.softeng.mauro.domain.terminology.TermRelationshipType
 import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
 import uk.ac.ox.softeng.mauro.domain.tree.TreeItem
 import uk.ac.ox.softeng.mauro.persistence.ContainerizedTest
+import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchResultsDTO
 import uk.ac.ox.softeng.mauro.testing.BaseIntegrationSpec
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
@@ -124,4 +125,25 @@ class TerminologyIntegrationSpec extends BaseIntegrationSpec {
         treeItemList.size() == 0
 
     }
+
+    void "test search within model"() {
+
+        expect:
+
+        ListResponse<SearchResultsDTO> searchResults = (ListResponse<SearchResultsDTO>) GET("/terminologies/$terminologyId/search?${queryParams}", ListResponse<SearchResultsDTO>)
+        searchResults.items.label == expectedLabels
+
+        where:
+
+        queryParams                                                     | expectedLabels
+        "searchTerm=first"                                              | ["TEST-1: first term"]
+        "searchTerm=second"                                             | ["TEST-2: second term"]
+        "searchTerm=term"                                               | ["TEST-1: first term", "TEST-2: second term"]
+        "searchTerm=term&domainTypes=Term"                              | ["TEST-1: first term", "TEST-2: second term"]
+        "searchTerm=term&domainTypes=TermRelationship"                  | []
+        "searchTerm=test"                                               | ["Test terminology", "TEST-1: first term", "TEST-2: second term"]
+        "searchTerm=test&domainTypes=Terminology"                       | ["Test terminology"]
+
+    }
+
 }
