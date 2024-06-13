@@ -43,7 +43,8 @@ class CatalogueUserController extends ItemController<CatalogueUser> {
 
     @Post('/admin/catalogueUsers/adminRegister')
     CatalogueUser adminRegister(@Body @NonNull CatalogueUser newUser) {
-        log.debug 'Request to register a new user by admin'
+        log.info 'Request to register a new user by admin'
+        cleanBody(newUser)
 
         accessControlService.checkAdministrator()
 
@@ -60,7 +61,7 @@ class CatalogueUserController extends ItemController<CatalogueUser> {
 
     @Put('/catalogueUsers/currentUser/changePassword')
     CatalogueUser changePassword(@Body @NonNull ChangePassword changePasswordRequest) {
-        log.debug 'Request by user to change own password'
+        log.info 'Request by user to change own password'
 
         accessControlService.checkAuthenticated()
 
@@ -74,7 +75,8 @@ class CatalogueUserController extends ItemController<CatalogueUser> {
 
     @Put('/catalogueUsers/{id}')
     CatalogueUser update(@NonNull UUID id, @Body @NonNull CatalogueUser catalogueUser) {
-        log.debug 'Request to update CatalogueUser by ID'
+        log.info 'Request to update CatalogueUser by ID'
+        cleanBody(catalogueUser)
 
         accessControlService.checkAuthenticated()
 
