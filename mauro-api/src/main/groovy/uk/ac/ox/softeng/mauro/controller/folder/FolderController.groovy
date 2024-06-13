@@ -136,29 +136,7 @@ class FolderController extends ModelController<Folder> {
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Post('/import/{namespace}/{name}{/version}')
     ListResponse<Folder> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version) {
-        ListResponse<Folder> folderListResponse = super.importModel(body, namespace, name, version)
-        minimalResponse(folderListResponse)
-    }
-
-    private ListResponse<Folder> minimalResponse(ListResponse folderListResponse) {
-        folderListResponse.items.collect { it ->
-            FolderDTO folderDTO = it as FolderDTO
-            folderDTO.metadata.clear()
-            folderDTO.metadata = null
-            folderDTO.summaryMetadata.clear()
-            folderDTO.summaryMetadata = null
-            folderDTO.annotations.clear()
-            folderDTO.annotations = null
-            folderDTO.childFolders.clear()
-            folderDTO.childFolders = null
-            folderDTO.dataModels.clear()
-            folderDTO.dataModels = null
-            folderDTO.terminologies.clear()
-            folderDTO.terminologies = null
-            folderDTO.codeSets.clear()
-            folderDTO.codeSets = null
-        }
-        folderListResponse
+       super.importModel(body, namespace, name, version)
     }
 
 }
