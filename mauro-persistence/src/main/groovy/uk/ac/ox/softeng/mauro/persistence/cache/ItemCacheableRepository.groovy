@@ -7,6 +7,7 @@ import io.micronaut.cache.annotation.CacheInvalidate
 import io.micronaut.cache.annotation.Cacheable
 import io.micronaut.core.annotation.NonNull
 import jakarta.inject.Singleton
+import uk.ac.ox.softeng.mauro.domain.config.ApiProperty
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
 import uk.ac.ox.softeng.mauro.domain.model.Item
 import uk.ac.ox.softeng.mauro.domain.model.SummaryMetadataReport
@@ -14,6 +15,7 @@ import uk.ac.ox.softeng.mauro.domain.security.CatalogueUser
 import uk.ac.ox.softeng.mauro.domain.security.Role
 import uk.ac.ox.softeng.mauro.domain.security.SecurableResourceGroupRole
 import uk.ac.ox.softeng.mauro.domain.security.UserGroup
+import uk.ac.ox.softeng.mauro.persistence.config.ApiPropertyRepository
 import uk.ac.ox.softeng.mauro.persistence.model.ItemRepository
 import uk.ac.ox.softeng.mauro.persistence.model.SummaryMetadataReportRepository
 import uk.ac.ox.softeng.mauro.persistence.security.CatalogueUserRepository
@@ -190,6 +192,15 @@ abstract class ItemCacheableRepository<I extends Item> implements ItemRepository
 
         CatalogueUser readByEmailAddress(String emailAddress) {
             ((CatalogueUserRepository) repository).readByEmailAddress(emailAddress)
+        }
+    }
+
+    @Singleton
+    @CompileStatic
+    @CacheConfig(keyGenerator = StringCacheKeyGenerator)
+    static class ApiPropertyCacheableRepository extends ItemCacheableRepository<ApiProperty> {
+        ApiPropertyCacheableRepository(ApiPropertyRepository apiPropertyRepository) {
+            super(apiPropertyRepository)
         }
     }
 
