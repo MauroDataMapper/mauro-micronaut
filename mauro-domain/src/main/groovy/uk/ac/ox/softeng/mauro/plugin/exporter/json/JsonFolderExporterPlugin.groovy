@@ -25,7 +25,7 @@ class JsonFolderExporterPlugin implements FolderExporterPlugin {
     @Override
     byte[] exportModel(Folder model) {
         ExportModel exportModel = new ExportModel(this)
-        exportModel.folder = model
+        exportModel.folders.add(model)
         objectMapper.writeValueAsBytes(exportModel)
     }
 
@@ -42,7 +42,7 @@ class JsonFolderExporterPlugin implements FolderExporterPlugin {
     @Override
     byte[] exportModels(Collection<Folder> folders) {
         ExportModel exportModel = new ExportModel(this)
-        exportModel.folder = folders
+        exportModel.folders.addAll(folders)
         objectMapper.writeValueAsBytes(exportModel)
 
     }

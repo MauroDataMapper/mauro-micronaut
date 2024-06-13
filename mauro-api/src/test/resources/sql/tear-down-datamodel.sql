@@ -1,5 +1,4 @@
 delete from core.metadata;
-delete from core.annotation;
 delete from datamodel.data_type;
 delete from datamodel.data_element;
 delete from datamodel.data_class;

@@ -1,6 +1,6 @@
 package uk.ac.ox.softeng.mauro.testing
 
-import com.fasterxml.jackson.databind.ObjectMapper
+
 import io.micronaut.http.HttpRequest
 import io.micronaut.http.MediaType
 import io.micronaut.http.client.HttpClient
@@ -37,6 +37,13 @@ class BaseIntegrationSpec extends Specification {
     public static final String FINALISED = 'finalised'
     public static final String DATE_FINALISED = 'dateFinalised'
     public static final String TERM_RELATIONSHIP_TYPES = "/termRelationshipTypes"
+    public static final String TERM_RELATIONSHIP_PATH = "/termRelationships"
+    public static final String JSON_EXPORTER_NAMESPACE = '/uk.ac.ox.softeng.mauro.plugin.exporter.json'
+    public static final String JSON_EXPORTER_NAME = '/JsonFolderExporterPlugin'
+    public static final String JSON_EXPORTER_VERSION = '/4.0.0'
+    public static final String JSON_IMPORTER_NAMESPACE = '/uk.ac.ox.softeng.mauro.plugin.importer.json'
+    public static final String JSON_IMPORTER_NAME = '/JsonFolderImporterPlugin'
+    public static final String JSON_IMPORTER_VERSION = '/4.0.0'
 
     @Inject
     JsonDataModelImporterPlugin jsonDataModelImporterPlugin

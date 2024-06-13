@@ -81,12 +81,12 @@ class ModelContentRepository<M extends Model> extends AdministeredItemContentRep
 
     void saveAnnotations(List<AdministeredItem> items) {
         List<Annotation> annotations = []
-        items.each {item ->
+        items.each { item ->
             if (item.annotations) {
                 item.annotations.each {
                     updateMultiAwareData(item, it)
-                    if (it.childAnnotations){
-                        it.childAnnotations.forEach{child ->
+                    if (it.childAnnotations) {
+                        it.childAnnotations.forEach { child ->
                             updateMultiAwareData(item, child)
                             child.parentAnnotationId = it.id
                         }

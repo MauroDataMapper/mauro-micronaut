@@ -29,6 +29,6 @@ class MetadataController extends FacetController<Metadata> {
     @Get
     ListResponse<Metadata> list(String domainType, UUID domainId) {
         AdministeredItem administeredItem = findAdministeredItem(domainType, domainId)
-        ListResponse.from(administeredItem.metadata)
+        ListResponse.from(!administeredItem.metadata ? []: administeredItem.metadata)
     }
 }

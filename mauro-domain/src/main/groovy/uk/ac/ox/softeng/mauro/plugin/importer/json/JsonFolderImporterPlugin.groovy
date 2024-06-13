@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.util.logging.Slf4j
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
-import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
+import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.export.ExportModel
 import uk.ac.ox.softeng.mauro.plugin.JsonPluginConstants
 import uk.ac.ox.softeng.mauro.plugin.importer.FileImportParameters
@@ -24,7 +24,7 @@ class JsonFolderImporterPlugin implements FolderImporterPlugin<FileImportParamet
     ObjectMapper objectMapper
 
     @Override
-    List<DataModel> importDomain(FileImportParameters params) {
+    List<Folder> importDomain(FileImportParameters params) {
         log.info '** start importModel **'
         ExportModel importModel = objectMapper.readValue(params.importFile.fileContents, ExportModel)
         log.info '*** imported JSON model ***'
@@ -32,9 +32,8 @@ class JsonFolderImporterPlugin implements FolderImporterPlugin<FileImportParamet
         if(importModel.folder) {
             return [importModel.folder]
         } else {
-            return importModel.dataModels?:[]
+            return importModel.folders?:[]
         }
-
     }
 
     @Override

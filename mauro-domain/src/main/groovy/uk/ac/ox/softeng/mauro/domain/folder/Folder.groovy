@@ -128,6 +128,18 @@ class Folder extends Model {
             childFolder.parentFolder = this
             childFolder.setAssociations()
         }
+        dataModels.each {dataModel ->
+            dataModel.folder = this
+            dataModel.setAssociations()
+        }
+        terminologies.each {terminology ->
+            terminology.folder = this
+            terminology.setAssociations()
+        }
+        codeSets.each {codeSet ->
+            codeSet.folder = this
+            codeSet.setAssociations()
+        }
     }
 
     @Override

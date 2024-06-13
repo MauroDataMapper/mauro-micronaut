@@ -64,10 +64,6 @@ class CodeSet extends Model {
     @JsonIgnore
     @Override
     void setAssociations() {
-//        terms.each {
-//            it.codeSets.add(this)
-//        }
-       // todo: Don't do the above, causes: 1)stackoverflow error on codeSet.toString();  2)term.toString() -cannot evaluate
         this
     }
 

@@ -1,19 +1,26 @@
 package uk.ac.ox.softeng.mauro.controller.folder
 
-
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpStatus
+import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.*
+import io.micronaut.http.server.multipart.MultipartBody
 import io.micronaut.http.server.types.files.StreamedFile
+import io.micronaut.scheduling.TaskExecutors
+import io.micronaut.scheduling.annotation.ExecuteOn
 import io.micronaut.transaction.annotation.Transactional
+import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.controller.model.ModelController
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.folder.FolderContentRepository
+import uk.ac.ox.softeng.mauro.persistence.folder.dto.FolderDTO
 import uk.ac.ox.softeng.mauro.plugin.exporter.ModelExporterPlugin
+import uk.ac.ox.softeng.mauro.plugin.importer.ImportParameters
+import uk.ac.ox.softeng.mauro.plugin.importer.ModelImporterPlugin
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @Slf4j
@@ -21,6 +28,8 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 @Controller('/folders')
 //@Secured(SecurityRule.IS_ANONYMOUS)
 class FolderController extends ModelController<Folder> {
+    @Inject
+    FolderContentRepository folderContentRepository
 
     FolderController(FolderCacheableRepository folderRepository, FolderContentRepository folderContentRepository) {
         super(Folder, folderRepository, folderRepository, folderContentRepository)
@@ -115,25 +124,41 @@ class FolderController extends ModelController<Folder> {
 
     @Get('/{id}/export{/namespace}{/name}{/version}')
     StreamedFile exportModel(UUID id, @Nullable String namespace, @Nullable String name, @Nullable String version) {
-        ModelExporterPlugin mauroPlugin = getMauroExporterPlugin(namespace, name, version)
-        Folder existing = modelContentRepository.findWithContentById(id)
-        List<Folder> childFoldersWithContent = surfaceChildContent(existing.childFolders)
-        existing.childFolders = childFoldersWithContent
+        ModelExporterPlugin mauroPlugin = mauroPluginService.getPlugin(ModelExporterPlugin, namespace, name, version)
+        handlePluginNotFound(mauroPlugin, namespace, name)
+         Folder existing = folderContentRepository.findWithContentById(id)
         StreamedFile streamedFile = exportedModelData(mauroPlugin, existing)
         streamedFile
     }
 
-    private List<Folder> surfaceChildContent(List<Folder> folders) {
-        if (folders.isEmpty()){
-            folders
-        }
-        List<Folder> foldersWithContent = []
-        folders.each {
-            Folder retrieved = modelContentRepository.findWithContentById(it.id)
-            retrieved.setAssociations()
-            retrieved.childFolders = surfaceChildContent(retrieved.childFolders)
-            foldersWithContent.add(retrieved)
-        }
-        foldersWithContent
+    @Transactional
+    @ExecuteOn(TaskExecutors.IO)
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @Post('/import/{namespace}/{name}{/version}')
+    ListResponse<Folder> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version) {
+        ListResponse<Folder> folderListResponse = super.importModel(body, namespace, name, version)
+        minimalResponse(folderListResponse)
     }
+
+    private ListResponse<Folder> minimalResponse(ListResponse folderListResponse) {
+        folderListResponse.items.collect { it ->
+            FolderDTO folderDTO = it as FolderDTO
+            folderDTO.metadata.clear()
+            folderDTO.metadata = null
+            folderDTO.summaryMetadata.clear()
+            folderDTO.summaryMetadata = null
+            folderDTO.annotations.clear()
+            folderDTO.annotations = null
+            folderDTO.childFolders.clear()
+            folderDTO.childFolders = null
+            folderDTO.dataModels.clear()
+            folderDTO.dataModels = null
+            folderDTO.terminologies.clear()
+            folderDTO.terminologies = null
+            folderDTO.codeSets.clear()
+            folderDTO.codeSets = null
+        }
+        folderListResponse
+    }
+
 }
