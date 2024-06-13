@@ -6,6 +6,7 @@ import spock.lang.Unroll
 import uk.ac.ox.softeng.mauro.domain.authority.Authority
 import uk.ac.ox.softeng.mauro.domain.facet.Metadata
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
+import uk.ac.ox.softeng.mauro.domain.security.CatalogueUser
 import uk.ac.ox.softeng.mauro.domain.terminology.CodeSet
 import uk.ac.ox.softeng.mauro.domain.terminology.Term
 
@@ -24,7 +25,7 @@ class CodeSetSpec extends Specification {
         when:
         def codeSet = new CodeSet()
         codeSet.label = iteration.label
-        codeSet.createdBy = iteration.createdBy
+        codeSet.catalogueUser = new CatalogueUser(emailAddress: iteration.createdBy)
         codeSet.folder = iteration.folder
         codeSet.authority = iteration.authority
         codeSet.documentationVersion = iteration.documentationVersion

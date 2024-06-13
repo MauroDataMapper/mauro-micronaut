@@ -12,13 +12,13 @@ import io.micronaut.http.server.types.files.StreamedFile
 import io.micronaut.scheduling.TaskExecutors
 import io.micronaut.scheduling.annotation.ExecuteOn
 import io.micronaut.security.annotation.Secured
-import io.micronaut.security.authentication.Authentication
 import io.micronaut.security.rules.SecurityRule
 import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.controller.model.ModelController
 import uk.ac.ox.softeng.mauro.domain.model.version.CreateNewVersionData
 import uk.ac.ox.softeng.mauro.domain.model.version.FinaliseData
+import uk.ac.ox.softeng.mauro.domain.security.Role
 import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
 import uk.ac.ox.softeng.mauro.domain.terminology.TerminologyService
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
@@ -29,11 +29,10 @@ import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchResultsDTO
 import uk.ac.ox.softeng.mauro.persistence.terminology.TerminologyContentRepository
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
-import java.time.Instant
-
 @Slf4j
 @Controller
 @CompileStatic
+@Secured(SecurityRule.IS_AUTHENTICATED)
 class TerminologyController extends ModelController<Terminology> {
 
     TerminologyCacheableRepository terminologyRepository
@@ -52,12 +51,6 @@ class TerminologyController extends ModelController<Terminology> {
         this.terminologyRepository = terminologyRepository
         this.terminologyContentRepository = terminologyContentRepository
         this.terminologyService = terminologyService
-    }
-
-    @Secured(SecurityRule.IS_AUTHENTICATED)
-    @Get('/test')
-    Map authenticationTest(Authentication authentication) {
-        authentication.attributes
     }
 
     @Get('/terminologies/{id}')
@@ -86,12 +79,16 @@ class TerminologyController extends ModelController<Terminology> {
     @Get('/terminologies/{id}/search{?requestDTO}')
     ListResponse<SearchResultsDTO> searchGet(UUID id, @RequestBean SearchRequestDTO requestDTO) {
         requestDTO.withinModelId = id
+        Terminology terminology = terminologyRepository.readById(requestDTO.withinModelId)
+        accessControlService.checkRole(Role.READER, terminology)
         ListResponse.from(searchRepository.search(requestDTO))
     }
 
     @Post('/terminologies/{id}/search')
     ListResponse<SearchResultsDTO> searchPost(UUID id, @Body SearchRequestDTO requestDTO) {
         requestDTO.withinModelId = id
+        Terminology terminology = terminologyRepository.readById(requestDTO.withinModelId)
+        accessControlService.checkRole(Role.READER, terminology)
         ListResponse.from(searchRepository.search(requestDTO))
     }
 

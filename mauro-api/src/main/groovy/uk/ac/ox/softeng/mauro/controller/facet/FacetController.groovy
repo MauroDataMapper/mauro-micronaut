@@ -6,22 +6,21 @@ import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.*
 import io.micronaut.http.exceptions.HttpStatusException
+import io.micronaut.security.annotation.Secured
+import io.micronaut.security.rules.SecurityRule
 import io.micronaut.transaction.annotation.Transactional
-import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.controller.model.ItemController
 import uk.ac.ox.softeng.mauro.domain.facet.Facet
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
+import uk.ac.ox.softeng.mauro.domain.security.Role
 import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.ItemCacheableRepository
-import uk.ac.ox.softeng.mauro.persistence.service.RepositoryService
 
 @CompileStatic
+@Secured(SecurityRule.IS_AUTHENTICATED)
 abstract class FacetController<I extends Facet> extends ItemController<I> {
 
     ItemCacheableRepository<I> facetRepository
-
-    @Inject
-    RepositoryService repositoryService
 
     FacetController(ItemCacheableRepository<I> facetRepository) {
         super(facetRepository)
@@ -30,7 +29,9 @@ abstract class FacetController<I extends Facet> extends ItemController<I> {
 
     @Get('/{id}')
     I show(UUID id) {
-        facetRepository.findById(id)
+        I facet = facetRepository.findById(id)
+        accessControlService.checkRole(Role.READER, readAdministeredItemForFacet(facet))
+        facet
     }
 
     @Post
@@ -38,11 +39,13 @@ abstract class FacetController<I extends Facet> extends ItemController<I> {
         cleanBody(facet)
 
         AdministeredItem administeredItem = readAdministeredItem(domainType, domainId)
+        accessControlService.checkRole(Role.EDITOR, administeredItem)
+
         createEntity(administeredItem, facet)
     }
 
     protected I createEntity(@NonNull AdministeredItem administeredItem, @NonNull I cleanFacet) {
-        cleanFacet.updateCreationProperties()
+        updateCreationProperties(cleanFacet)
 
         cleanFacet.multiFacetAwareItemDomainType = administeredItem.domainType
         cleanFacet.multiFacetAwareItemId = administeredItem.id
@@ -55,6 +58,7 @@ abstract class FacetController<I extends Facet> extends ItemController<I> {
         cleanBody(facet)
 
         I existing = facetRepository.readById(id)
+        accessControlService.checkRole(Role.EDITOR, readAdministeredItemForFacet(existing))
 
         updateEntity(existing, facet)
     }
@@ -73,6 +77,7 @@ abstract class FacetController<I extends Facet> extends ItemController<I> {
     @Transactional
     HttpStatus delete(UUID id, @Body @Nullable I facet) {
         I facetToDelete = facetRepository.readById(id)
+        accessControlService.checkRole(Role.EDITOR, readAdministeredItemForFacet(facetToDelete))
         if (facet?.version) facetToDelete.version = facet.version
         Long deleted = facetRepository.delete(facetToDelete)
         if (deleted) {
@@ -82,31 +87,15 @@ abstract class FacetController<I extends Facet> extends ItemController<I> {
         }
     }
 
-    protected AdministeredItem readAdministeredItem(String domainType, UUID domainId) {
-        AdministeredItemCacheableRepository administeredItemRepository = getAdministeredItemRepository(domainType)
-        AdministeredItem administeredItem = administeredItemRepository.readById(domainId)
-        if (!administeredItem) throw new HttpStatusException(HttpStatus.NOT_FOUND, 'AdministeredItem not found by ID')
-        administeredItem
-    }
-
-    protected AdministeredItem findAdministeredItem(String domainType, UUID domainId) {
-        AdministeredItemCacheableRepository administeredItemRepository = getAdministeredItemRepository(domainType)
-        AdministeredItem administeredItem = administeredItemRepository.findById(domainId)
-        if (!administeredItem) throw new HttpStatusException(HttpStatus.NOT_FOUND, 'AdministeredItem not found by ID')
-        administeredItem
-    }
-
-    protected AdministeredItemCacheableRepository getAdministeredItemRepository(String domainType) {
-        AdministeredItemCacheableRepository administeredItemRepository = repositoryService.getAdministeredItemRepository(domainType)
-        if (!administeredItemRepository) throw new HttpStatusException(HttpStatus.NOT_FOUND, "Domain type [$domainType] not found")
-        administeredItemRepository
+    protected AdministeredItem readAdministeredItemForFacet(I facet) {
+        if (facet) readAdministeredItem(facet.multiFacetAwareItemDomainType, facet.multiFacetAwareItemId)
     }
 
     protected I validateAndGet(String domainType, UUID domainId, UUID id) {
         AdministeredItemCacheableRepository administeredItemRepository = getAdministeredItemRepository(domainType)
         I facet = facetRepository.findById(id)
         if (facet) {
-            if (facet.multiFacetAwareItemId != domainId || !administeredItemRepository.handles(domainType)){
+            if (facet.multiFacetAwareItemId != domainId || !administeredItemRepository.handles(domainType)) {
                 throw new HttpStatusException(HttpStatus.NOT_FOUND, "DomainType or Domain Id not found for $id")
             }
         }

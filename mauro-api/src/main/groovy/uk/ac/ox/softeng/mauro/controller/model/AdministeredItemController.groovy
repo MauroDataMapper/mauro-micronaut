@@ -6,15 +6,19 @@ import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.exceptions.HttpStatusException
+import io.micronaut.security.annotation.Secured
+import io.micronaut.security.rules.SecurityRule
 import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
+import uk.ac.ox.softeng.mauro.domain.security.Role
 import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemContentRepository
 import uk.ac.ox.softeng.mauro.persistence.model.PathRepository
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @CompileStatic
+@Secured(SecurityRule.IS_AUTHENTICATED)
 abstract class AdministeredItemController<I extends AdministeredItem, P extends AdministeredItem> extends ItemController<I> {
 
     /**
@@ -46,6 +50,10 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
 
     I show(UUID id) {
         I item = administeredItemRepository.findById(id)
+        if (!item) return null
+
+        accessControlService.checkRole(Role.READER, item)
+
         updateDerivedProperties(item)
         item
     }
@@ -55,11 +63,14 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
         cleanBody(item)
 
         P parent = parentItemRepository.readById(parentId)
+
+        accessControlService.checkRole(Role.EDITOR, parent)
+
         createEntity(parent, item)
     }
 
     protected I createEntity(@NonNull P parent, @NonNull I cleanItem) {
-        cleanItem.updateCreationProperties()
+        updateCreationProperties(cleanItem)
 
         cleanItem.parent = parent
 
@@ -70,6 +81,9 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
     I update(UUID id, @Body @NonNull I item) {
         cleanBody(item)
         I existing = administeredItemRepository.readById(id)
+
+        accessControlService.checkRole(Role.EDITOR, existing)
+
         updateEntity(existing, item)
     }
 
@@ -88,19 +102,11 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
     @Transactional
     HttpStatus delete(UUID id, @Body @Nullable I item) {
         I itemToDelete = (I) administeredItemContentRepository.readWithContentById(id)
+
+        accessControlService.checkRole(Role.EDITOR, item)
+
         if (item?.version) itemToDelete.version = item.version
         Long deleted = administeredItemContentRepository.deleteWithContent(itemToDelete)
-        if (deleted) {
-            HttpStatus.NO_CONTENT
-        } else {
-            throw new HttpStatusException(HttpStatus.NOT_FOUND, 'Not found for deletion')
-        }
-    }
-
-    @Transactional
-    HttpStatus delete(@Body @Nullable I item, I current) {
-        if (current?.version) item.version = current.version
-        Long deleted = administeredItemContentRepository.deleteWithContent(item)
         if (deleted) {
             HttpStatus.NO_CONTENT
         } else {
@@ -111,6 +117,7 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
     ListResponse<I> list(UUID parentId) {
         P parent = parentItemRepository.readById(parentId)
         if (!parent) return null
+        accessControlService.checkRole(Role.READER, parent)
         List<I> items = administeredItemRepository.readAllByParent(parent)
         items.each {
             updateDerivedProperties(it)

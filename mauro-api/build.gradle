@@ -1,9 +1,8 @@
 plugins {
     id("groovy")
     id("com.github.johnrengelman.shadow") version "8.1.1"
-    id("io.micronaut.application") version "4.2.1"
-//    id("io.micronaut.test-resources") version "4.2.1"
-    id("io.micronaut.aot") version "4.2.1"
+    id("io.micronaut.application") version "4.3.4"
+    id("io.micronaut.aot") version "4.3.4"
     id("codenarc")
 }
 version = "0.1"
@@ -36,7 +35,8 @@ dependencies {
     runtimeOnly("org.yaml:snakeyaml")
     implementation("io.micronaut.flyway:micronaut-flyway")
     runtimeOnly("org.postgresql:postgresql")
-    runtimeOnly("org.flywaydb:flyway-core")
+    runtimeOnly("org.flywaydb:flyway-database-postgresql")
+
     implementation("io.micronaut.sql:micronaut-jdbc-hikari")
      implementation("io.micronaut.cache:micronaut-cache-core")
 //    implementation("io.micronaut.cache:micronaut-cache-caffeine")
@@ -48,7 +48,6 @@ dependencies {
     // Security
     implementation("io.micronaut.security:micronaut-security-session")
     compileOnly("io.micronaut.security:micronaut-security-annotations")
-//    implementation("io.micrometer:context-propagation")
 
     //Email
     implementation("io.micronaut.email:micronaut-email-javamail")

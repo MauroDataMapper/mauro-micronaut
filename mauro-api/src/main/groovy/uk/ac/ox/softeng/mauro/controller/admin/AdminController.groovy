@@ -1,30 +1,36 @@
 package uk.ac.ox.softeng.mauro.controller.admin
 
+import groovy.transform.CompileStatic
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.Body
+import io.micronaut.http.annotation.Controller
+import io.micronaut.http.annotation.Get
 import io.micronaut.http.annotation.Post
 import io.micronaut.http.exceptions.HttpStatusException
+import io.micronaut.security.annotation.Secured
+import io.micronaut.security.rules.SecurityRule
+import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.domain.email.Email
 import uk.ac.ox.softeng.mauro.domain.security.CatalogueUser
 import uk.ac.ox.softeng.mauro.persistence.security.EmailRepository
 import uk.ac.ox.softeng.mauro.plugin.MauroPluginService
 import uk.ac.ox.softeng.mauro.plugin.exporter.ModelExporterPlugin
 import uk.ac.ox.softeng.mauro.plugin.importer.ModelImporterPlugin
-
-import groovy.transform.CompileStatic
-import io.micronaut.http.annotation.Controller
-import io.micronaut.http.annotation.Get
-import jakarta.inject.Inject
+import uk.ac.ox.softeng.mauro.security.AccessControlService
 import uk.ac.ox.softeng.mauro.service.email.EmailPlugin
 import uk.ac.ox.softeng.mauro.service.email.EmailService
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @CompileStatic
 @Controller('/admin')
+@Secured(SecurityRule.IS_AUTHENTICATED)
 class AdminController {
 
     @Inject
     MauroPluginService mauroPluginService
+
+    @Inject
+    AccessControlService accessControlService
 
     @Inject
     EmailService emailService
@@ -35,21 +41,26 @@ class AdminController {
         this.emailRepository = emailRepository
     }
 
-
     @Get('/modules')
     List<LinkedHashMap<String, String>> modules() {
+        accessControlService.checkAdministrator()
+
         mauroPluginService.getModulesList()
     }
 
 
     @Get('/providers/importers')
     List<ModelImporterPlugin> importers() {
+        accessControlService.checkAdministrator()
+
         mauroPluginService.listPlugins(ModelImporterPlugin)
     }
 
 
     @Get('/providers/exporters')
     List<ModelExporterPlugin> exporters() {
+        accessControlService.checkAdministrator()
+
         mauroPluginService.listPlugins(ModelExporterPlugin)
     }
 
@@ -67,14 +78,16 @@ class AdminController {
      */
     @Post('/email/sendTestEmail')
     Boolean sendTestEmail(@Body CatalogueUser catalogueUser) {
-        if(!catalogueUser.emailAddress) {
+        accessControlService.checkAdministrator()
+
+        if (!catalogueUser.emailAddress) {
             throw new HttpStatusException(HttpStatus.BAD_REQUEST, 'Please specify the email address of the recipient')
         }
-        if(!catalogueUser.firstName || !catalogueUser.lastName) {
+        if (!catalogueUser.firstName || !catalogueUser.lastName) {
             throw new HttpStatusException(HttpStatus.BAD_REQUEST, 'Please specify the first and last names of the recipient')
         }
 
-        try{
+        try {
             Email email = Email.build {
                 subject "Test email"
                 body "This is a test email to confirm that email functionality is working in Mauro Data Mapper."
@@ -92,6 +105,8 @@ class AdminController {
      */
     @Get('/email/testConnection')
     boolean testConnection() {
+        accessControlService.checkAdministrator()
+
         try {
             emailService.testConnection()
             return true
@@ -103,6 +118,8 @@ class AdminController {
 
     @Get('/emails')
     ListResponse<Email> list() {
+        accessControlService.checkAdministrator()
+
         ListResponse.from(emailRepository.readAll())
     }
 
@@ -112,9 +129,11 @@ class AdminController {
      */
     @Post('/emails/{emailId}/retry')
     boolean retryEmail(UUID emailId) {
-        try{
+        accessControlService.checkAdministrator()
+
+        try {
             Email email = emailRepository.findById(emailId).get()
-            if(!email) {
+            if (!email) {
                 throw new HttpStatusException(HttpStatus.BAD_REQUEST, "Email with id ${emailId.toString()} not found")
             }
             emailService.retrySendEmail(email, false)
@@ -123,6 +142,4 @@ class AdminController {
             throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.message)
         }
     }
-
-
 }

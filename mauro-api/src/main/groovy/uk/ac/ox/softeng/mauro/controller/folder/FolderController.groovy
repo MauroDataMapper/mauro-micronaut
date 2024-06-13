@@ -1,6 +1,5 @@
 package uk.ac.ox.softeng.mauro.controller.folder
 
-
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
@@ -8,6 +7,8 @@ import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.*
 import io.micronaut.http.server.types.files.StreamedFile
+import io.micronaut.security.annotation.Secured
+import io.micronaut.security.rules.SecurityRule
 import io.micronaut.transaction.annotation.Transactional
 import uk.ac.ox.softeng.mauro.controller.model.ModelController
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
@@ -18,7 +19,7 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 @Slf4j
 @CompileStatic
 @Controller('/folders')
-//@Secured(SecurityRule.IS_ANONYMOUS)
+@Secured(SecurityRule.IS_AUTHENTICATED)
 class FolderController extends ModelController<Folder> {
 
     FolderController(FolderCacheableRepository folderRepository, ModelContentRepository<Folder> folderContentRepository) {
@@ -38,7 +39,7 @@ class FolderController extends ModelController<Folder> {
     @Post
     Folder create(@Body Folder folder) {
         cleanBody(folder)
-        folder.updateCreationProperties()
+        updateCreationProperties(folder)
 
         pathRepository.readParentItems(folder)
         folder.updatePath()

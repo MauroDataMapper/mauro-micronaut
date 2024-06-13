@@ -5,7 +5,6 @@ import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
-import io.micronaut.data.exceptions.EmptyResultException
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.Body
@@ -14,6 +13,8 @@ import io.micronaut.http.multipart.CompletedFileUpload
 import io.micronaut.http.multipart.CompletedPart
 import io.micronaut.http.server.multipart.MultipartBody
 import io.micronaut.http.server.types.files.StreamedFile
+import io.micronaut.security.annotation.Secured
+import io.micronaut.security.rules.SecurityRule
 import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
 import reactor.core.publisher.Flux
@@ -23,6 +24,7 @@ import uk.ac.ox.softeng.mauro.domain.model.Model
 import uk.ac.ox.softeng.mauro.domain.model.ModelService
 import uk.ac.ox.softeng.mauro.domain.model.version.CreateNewVersionData
 import uk.ac.ox.softeng.mauro.domain.model.version.FinaliseData
+import uk.ac.ox.softeng.mauro.domain.security.Role
 import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
@@ -39,6 +41,7 @@ import java.nio.charset.StandardCharsets
 
 @Slf4j
 @CompileStatic
+@Secured(SecurityRule.IS_AUTHENTICATED)
 abstract class ModelController<M extends Model> extends AdministeredItemController<M, Folder> {
 
     @Override
@@ -59,9 +62,6 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
 
     @Inject
     MauroPluginService mauroPluginService
-
-//    @Inject
-//    AccessControlService accessControlService
 
     ModelContentRepository<M> modelContentRepository
 
@@ -87,16 +87,12 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     }
 
     M show(UUID id) {
-        M model
-        try {
-            model = modelRepository.findById(id)
-        } catch (EmptyResultException e) {
-            throw new HttpStatusException(HttpStatus.NOT_FOUND, e.getMessage())
-        }
-        if (!model) return null
-        pathRepository.readParentItems(model)
-        model.updatePath()
-        model
+        super.show(id)
+    }
+
+    @Transactional
+    M create(@NonNull UUID folderId, @Body @NonNull M model) {
+        super.create(folderId, model)
     }
 
     @Transactional
@@ -107,6 +103,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     @Transactional
     M moveFolder(UUID id, String destination) {
         M existing = modelRepository.readById(id)
+        accessControlService.checkRole(Role.CONTAINER_ADMIN, existing)
         M original = (M) existing.clone()
         if (destination == 'root') {
             existing.folder = null
@@ -118,6 +115,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
                 throw new HttpStatusException(HttpStatus.BAD_REQUEST, 'Destination not "root" or a valid UUID')
             }
             Folder folder = folderRepository.readById(destinationId)
+            accessControlService.checkRole(Role.EDITOR, folder)
             existing.folder = folder
         }
         pathRepository.readParentItems(existing)
@@ -126,11 +124,22 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     }
 
     HttpStatus delete(UUID id, @Body @Nullable M model) {
-        super.delete(id, model)
+        M modelToDelete = (M) modelContentRepository.readWithContentById(id)
+
+        accessControlService.checkRole(Role.CONTAINER_ADMIN, modelToDelete)
+
+        if (model?.version) modelToDelete.version = model.version
+        Long deleted = administeredItemContentRepository.deleteWithContent(modelToDelete)
+        if (deleted) {
+            HttpStatus.NO_CONTENT
+        } else {
+            throw new HttpStatusException(HttpStatus.NOT_FOUND, 'Not found for deletion')
+        }
     }
 
     ListResponse<M> listAll() {
         List<M> models = modelRepository.readAll()
+        models = models.findAll {accessControlService.canDoRole(Role.READER, it)}
         models.each {
             pathRepository.readParentItems(it)
             it.updatePath()
@@ -141,7 +150,10 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     @Transactional
     M finalise(UUID id, @Body FinaliseData finaliseData) {
         M model = modelRepository.findById(id)
-        M finalised = getModelService().finaliseModel(model, finaliseData.version, finaliseData.versionChangeType, finaliseData.versionTag)
+
+        accessControlService.checkRole(Role.EDITOR, model)
+
+        M finalised = modelService.finaliseModel(model, finaliseData.version, finaliseData.versionChangeType, finaliseData.versionTag)
         modelRepository.update(finalised)
     }
 
@@ -149,12 +161,16 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     M createNewBranchModelVersion(UUID id, @Body @Nullable CreateNewVersionData createNewVersionData) {
         if (!createNewVersionData) createNewVersionData = new CreateNewVersionData()
         M existing = modelRepository.findById(id)
+
+        accessControlService.checkRole(Role.EDITOR, existing)
+        accessControlService.checkRole(Role.EDITOR, existing.folder)
+
         M copy = modelService.createNewBranchModelVersion(existing, createNewVersionData.branchName)
 
         M savedCopy = createEntity(copy.folder, copy)
         savedCopy.allContents.each {AdministeredItem item ->
             log.debug "*** Saving item [$item.id : $item.label] ***"
-            item.updateCreationProperties()
+            updateCreationProperties(item)
             getRepository(item).save(item)
         }
         savedCopy
@@ -214,6 +230,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         List<M> imported = (List<M>) mauroPlugin.importModels(importParameters)
 
         Folder folder = folderRepository.readById(importParameters.folderId)
+        accessControlService.checkRole(Role.EDITOR, folder)
         List<M> saved = imported.collect { M imp ->
             imp.folder = folder
             log.info '** about to saveWithContentBatched... **'

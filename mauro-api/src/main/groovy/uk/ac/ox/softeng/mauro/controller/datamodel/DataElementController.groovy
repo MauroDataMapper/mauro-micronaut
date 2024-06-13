@@ -3,27 +3,25 @@ package uk.ac.ox.softeng.mauro.controller.datamodel
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
-import io.micronaut.http.annotation.Body
-import io.micronaut.http.annotation.Controller
 import io.micronaut.http.HttpStatus
-import io.micronaut.http.annotation.Delete
-import io.micronaut.http.annotation.Get
-import io.micronaut.http.annotation.Post
-import io.micronaut.http.annotation.Put
+import io.micronaut.http.annotation.*
+import io.micronaut.security.annotation.Secured
+import io.micronaut.security.rules.SecurityRule
 import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.controller.model.AdministeredItemController
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataElement
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
+import uk.ac.ox.softeng.mauro.domain.security.Role
 import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository.DataClassCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository.DataElementCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.DataModelCacheableRepository
-import uk.ac.ox.softeng.mauro.persistence.datamodel.DataClassContentRepository
 import uk.ac.ox.softeng.mauro.persistence.datamodel.DataModelContentRepository
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @CompileStatic
 @Controller('/dataModels/{dataModelId}/dataClasses/{dataClassId}/dataElements')
+@Secured(SecurityRule.IS_AUTHENTICATED)
 class DataElementController extends AdministeredItemController<DataElement, DataClass> {
 
     DataElementCacheableRepository dataElementRepository
@@ -48,7 +46,9 @@ class DataElementController extends AdministeredItemController<DataElement, Data
     DataElement create(UUID dataModelId, UUID dataClassId, @Body @NonNull DataElement dataElement) {
         cleanBody(dataElement)
         DataModel dataModel = dataModelRepository.readById(dataModelId)
+        accessControlService.checkRole(Role.EDITOR, dataModel)
         DataClass dataClass = dataClassRepository.readById(dataClassId)
+        accessControlService.checkRole(Role.EDITOR, dataClass)
         dataElement.dataClass = dataClass
         createEntity(dataClass, dataElement)
         return dataElement
@@ -67,6 +67,8 @@ class DataElementController extends AdministeredItemController<DataElement, Data
 
     @Get
     ListResponse<DataElement> list(UUID dataModelId, UUID dataClassId) {
+        DataClass dataClass = dataClassRepository.readById(dataClassId)
+        accessControlService.checkRole(Role.READER, dataClass)
         ListResponse.from(dataElementRepository.readAllByDataClass_Id(dataClassId))
     }
 

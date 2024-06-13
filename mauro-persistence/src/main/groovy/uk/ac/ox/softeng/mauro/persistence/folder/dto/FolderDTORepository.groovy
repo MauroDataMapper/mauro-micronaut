@@ -13,6 +13,7 @@ abstract class FolderDTORepository implements GenericRepository<FolderDTO, UUID>
 
     @Join(value = 'authority', type = Join.Type.LEFT_FETCH)
     @Join(value = 'childFolders', type = Join.Type.LEFT_FETCH)
+    @Join(value = 'catalogueUser', type = Join.Type.LEFT_FETCH)
     @Nullable
     abstract FolderDTO findById(UUID id)
 }

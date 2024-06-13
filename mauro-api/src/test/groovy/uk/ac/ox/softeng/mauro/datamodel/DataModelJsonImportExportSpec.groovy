@@ -1,16 +1,14 @@
 package uk.ac.ox.softeng.mauro.datamodel
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import uk.ac.ox.softeng.mauro.export.ExportMetadata
-import uk.ac.ox.softeng.mauro.export.ExportModel
-import uk.ac.ox.softeng.mauro.persistence.ContainerizedTest
-import uk.ac.ox.softeng.mauro.testing.BaseIntegrationSpec
-
 import io.micronaut.http.MediaType
 import io.micronaut.http.client.multipart.MultipartBody
 import io.micronaut.runtime.EmbeddedApplication
 import jakarta.inject.Inject
 import spock.lang.Shared
+import uk.ac.ox.softeng.mauro.export.ExportModel
+import uk.ac.ox.softeng.mauro.persistence.ContainerizedTest
+import uk.ac.ox.softeng.mauro.testing.BaseIntegrationSpec
 
 @ContainerizedTest
 class DataModelJsonImportExportSpec extends BaseIntegrationSpec {
@@ -40,7 +38,7 @@ class DataModelJsonImportExportSpec extends BaseIntegrationSpec {
         then:
         exportModel.dataModel.label == 'Test data model'
         exportModel.dataModel.dataTypes.label == ['Test data type']
-        exportModel.dataModel.dataClasses.label == ['TEST-1', 'TEST-2']
+        exportModel.dataModel.dataClasses.label.sort() == ['TEST-1', 'TEST-2'] // TODO add ordering to DataClasses, Elements, etc.
     }
 
     void 'import dataModel and verify'() {
