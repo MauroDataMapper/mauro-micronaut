@@ -4,11 +4,10 @@ import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
 import jakarta.inject.Inject
+import jakarta.inject.Singleton
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.terminology.CodeSet
 import uk.ac.ox.softeng.mauro.persistence.model.ModelContentRepository
-
-import jakarta.inject.Singleton
 
 @CompileStatic
 @Singleton
@@ -30,6 +29,7 @@ class CodeSetContentRepository extends ModelContentRepository<CodeSet> {
         codeSet
     }
 
+    // TODO methods here won't invalidate the cache
     @Override
     Long deleteWithContent(@NonNull AdministeredItem administeredItem) {
         codeSetRepository.removeTermAssociations((administeredItem as CodeSet).id)

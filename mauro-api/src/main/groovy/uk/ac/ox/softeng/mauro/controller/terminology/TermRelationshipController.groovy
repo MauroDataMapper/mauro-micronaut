@@ -5,8 +5,11 @@ import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.*
+import io.micronaut.security.annotation.Secured
+import io.micronaut.security.rules.SecurityRule
 import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.controller.model.AdministeredItemController
+import uk.ac.ox.softeng.mauro.domain.security.Role
 import uk.ac.ox.softeng.mauro.domain.terminology.TermRelationship
 import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
 import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository.TermCacheableRepository
@@ -18,6 +21,7 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @CompileStatic
 @Controller('/terminologies/{terminologyId}/termRelationships')
+@Secured(SecurityRule.IS_AUTHENTICATED)
 class TermRelationshipController extends AdministeredItemController<TermRelationship, Terminology> {
 
     TermRelationshipCacheableRepository termRelationshipRepository
@@ -47,6 +51,8 @@ class TermRelationshipController extends AdministeredItemController<TermRelation
         cleanBody(termRelationship)
 
         Terminology terminology = terminologyRepository.readById(terminologyId)
+        accessControlService.checkRole(Role.EDITOR, terminology)
+
         termRelationship.sourceTerm = termRepository.readById(termRelationship.sourceTerm.id)
         termRelationship.targetTerm = termRepository.readById(termRelationship.targetTerm.id)
         termRelationship.relationshipType = termRelationshipTypeRepository.readById(termRelationship.relationshipType.id)
@@ -59,6 +65,7 @@ class TermRelationshipController extends AdministeredItemController<TermRelation
         cleanBody(termRelationship)
 
         TermRelationship existing = termRelationshipRepository.readById(id)
+        accessControlService.checkRole(Role.EDITOR, existing)
         updateProperties(existing, termRelationship)
 
         termRelationship.terminology = terminologyRepository.readById(terminologyId)

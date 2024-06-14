@@ -9,6 +9,8 @@ import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.*
 import io.micronaut.http.server.multipart.MultipartBody
 import io.micronaut.http.server.types.files.StreamedFile
+import io.micronaut.security.annotation.Secured
+import io.micronaut.security.rules.SecurityRule
 import io.micronaut.scheduling.TaskExecutors
 import io.micronaut.scheduling.annotation.ExecuteOn
 import io.micronaut.transaction.annotation.Transactional
@@ -17,16 +19,13 @@ import uk.ac.ox.softeng.mauro.controller.model.ModelController
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.folder.FolderContentRepository
-import uk.ac.ox.softeng.mauro.persistence.folder.dto.FolderDTO
 import uk.ac.ox.softeng.mauro.plugin.exporter.ModelExporterPlugin
-import uk.ac.ox.softeng.mauro.plugin.importer.ImportParameters
-import uk.ac.ox.softeng.mauro.plugin.importer.ModelImporterPlugin
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @Slf4j
 @CompileStatic
 @Controller('/folders')
-//@Secured(SecurityRule.IS_ANONYMOUS)
+@Secured(SecurityRule.IS_AUTHENTICATED)
 class FolderController extends ModelController<Folder> {
     @Inject
     FolderContentRepository folderContentRepository
@@ -48,7 +47,7 @@ class FolderController extends ModelController<Folder> {
     @Post
     Folder create(@Body Folder folder) {
         cleanBody(folder)
-        folder.updateCreationProperties()
+        updateCreationProperties(folder)
 
         pathRepository.readParentItems(folder)
         folder.updatePath()

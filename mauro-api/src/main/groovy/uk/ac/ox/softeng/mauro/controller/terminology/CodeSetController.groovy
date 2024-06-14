@@ -7,11 +7,14 @@ import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.*
 import io.micronaut.http.exceptions.HttpStatusException
+import io.micronaut.security.annotation.Secured
+import io.micronaut.security.rules.SecurityRule
 import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.controller.model.ModelController
 import uk.ac.ox.softeng.mauro.domain.model.version.CreateNewVersionData
 import uk.ac.ox.softeng.mauro.domain.model.version.FinaliseData
+import uk.ac.ox.softeng.mauro.domain.security.Role
 import uk.ac.ox.softeng.mauro.domain.terminology.CodeSet
 import uk.ac.ox.softeng.mauro.domain.terminology.CodeSetService
 import uk.ac.ox.softeng.mauro.domain.terminology.Term
@@ -24,6 +27,7 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 @Controller
 @CompileStatic
 @Slf4j
+@Secured(SecurityRule.IS_AUTHENTICATED)
 class CodeSetController extends ModelController<CodeSet> {
 
     ModelCacheableRepository.CodeSetCacheableRepository codeSetRepository
@@ -70,10 +74,12 @@ class CodeSetController extends ModelController<CodeSet> {
         if (!term) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, 'Term item not found')
         }
+        accessControlService.checkRole(Role.READER, term)
         CodeSet codeSet = codeSetRepository.readById(id)
         if (!codeSet) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, 'CodeSet item not found')
         }
+        accessControlService.checkRole(Role.EDITOR, codeSet)
         codeSetRepositoryUnCached.addTerm(id, termId)
         codeSet
     }
@@ -96,6 +102,7 @@ class CodeSetController extends ModelController<CodeSet> {
         if (!codeSet) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, 'CodeSet item not found')
         }
+        accessControlService.checkRole(Role.EDITOR, codeSet)
         codeSetRepositoryUnCached.removeTerm(id, termId)
         codeSet
     }
@@ -117,10 +124,10 @@ class CodeSetController extends ModelController<CodeSet> {
         if (!codeSet) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, 'CodeSet item not found')
         }
+        accessControlService.checkRole(Role.READER, codeSet)
         List<Term> associatedTerms = codeSetContentRepository.codeSetRepository.getTerms(id) as List<Term>
         ListResponse.from(associatedTerms)
     }
-
 
     @Transactional
     @Put(value = Paths.FINALISE_CODE_SETS)

@@ -12,7 +12,7 @@ create table if not exists terminology.code_set
     "label"                           text             not null,
     "description"                     text,
     "aliases_string"                  text,
-    "created_by"                      varchar(255),
+    "created_by"                      uuid,
     "breadcrumb_tree_id"              uuid,
     "finalised"                       boolean          not null,
     "date_finalised"                  timestamp,

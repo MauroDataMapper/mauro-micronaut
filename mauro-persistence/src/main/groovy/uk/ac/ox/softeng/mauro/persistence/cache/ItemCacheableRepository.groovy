@@ -5,14 +5,20 @@ import groovy.util.logging.Slf4j
 import io.micronaut.cache.annotation.CacheConfig
 import io.micronaut.cache.annotation.CacheInvalidate
 import io.micronaut.cache.annotation.Cacheable
+import io.micronaut.core.annotation.NonNull
 import jakarta.inject.Singleton
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
 import uk.ac.ox.softeng.mauro.domain.model.Item
 import uk.ac.ox.softeng.mauro.domain.model.SummaryMetadataReport
 import uk.ac.ox.softeng.mauro.domain.security.CatalogueUser
+import uk.ac.ox.softeng.mauro.domain.security.Role
+import uk.ac.ox.softeng.mauro.domain.security.SecurableResourceGroupRole
+import uk.ac.ox.softeng.mauro.domain.security.UserGroup
 import uk.ac.ox.softeng.mauro.persistence.model.ItemRepository
 import uk.ac.ox.softeng.mauro.persistence.model.SummaryMetadataReportRepository
 import uk.ac.ox.softeng.mauro.persistence.security.CatalogueUserRepository
+import uk.ac.ox.softeng.mauro.persistence.security.SecurableResourceGroupRoleRepository
+import uk.ac.ox.softeng.mauro.persistence.security.UserGroupRepository
 
 @Slf4j
 @CompileStatic
@@ -116,9 +122,74 @@ abstract class ItemCacheableRepository<I extends Item> implements ItemRepository
 
     @Singleton
     @CompileStatic
+    @CacheConfig(cacheNames = 'security-cache', keyGenerator = StringCacheKeyGenerator)
+    static class SecurableResourceGroupRoleCacheableRepository extends ItemCacheableRepository<SecurableResourceGroupRole> {
+        SecurableResourceGroupRoleCacheableRepository(SecurableResourceGroupRoleRepository securableResourceGroupRoleRepository) {
+            super(securableResourceGroupRoleRepository)
+        }
+
+        @Override
+        @CacheInvalidate(all = true) // clear the whole cache on any insert/update/delete
+        void invalidateCachedLookupById(String lookup, String domainType, UUID id) {
+            null
+        }
+
+        @CacheInvalidate(all = true)
+        void invalidateAll() {}
+
+        @Cacheable
+        List<SecurableResourceGroupRole> readAllBySecurableResourceDomainTypeAndSecurableResourceId(String securableResourceDomainType, UUID securableResourceId) {
+            ((SecurableResourceGroupRoleRepository) repository).readAllBySecurableResourceDomainTypeAndSecurableResourceId(securableResourceDomainType, securableResourceId)
+        }
+
+        // not cached
+
+        Long deleteBySecurableResourceDomainTypeAndSecurableResourceIdAndRoleAndUserGroupId(String securableResourceDomainType, UUID securableResourceId, Role role, UUID userGroupId) {
+            invalidateAll()
+            ((SecurableResourceGroupRoleRepository) repository).deleteBySecurableResourceDomainTypeAndSecurableResourceIdAndRoleAndUserGroupId(securableResourceDomainType, securableResourceId, role, userGroupId)
+        }
+    }
+
+    @Singleton
+    @CompileStatic
+    @CacheConfig(cacheNames = 'security-cache', keyGenerator = StringCacheKeyGenerator)
+    static class UserGroupCacheableRepository extends ItemCacheableRepository<UserGroup> {
+        UserGroupCacheableRepository(UserGroupRepository userGroupRepository) {
+            super(userGroupRepository)
+        }
+
+        @Override
+        @CacheInvalidate(all = true) // clear the whole cache on any insert/update/delete
+        void invalidateCachedLookupById(String lookup, String domainType, UUID id) {
+            null
+        }
+
+        @CacheInvalidate(all = true)
+        void invalidateAll() {}
+
+        @Cacheable
+        List<UserGroup> readAllByCatalogueUserId(UUID catalogueUserId) {
+            ((UserGroupRepository) repository).readAllByCatalogueUserId(catalogueUserId)
+        }
+
+        UserGroup addCatalogueUser(@NonNull UUID uuid, @NonNull UUID catalogueUserId) {
+            invalidateAll()
+            ((UserGroupRepository) repository).addCatalogueUser(uuid, catalogueUserId)
+        }
+    }
+
+    @Singleton
+    @CompileStatic
+    @CacheConfig(keyGenerator = StringCacheKeyGenerator)
     static class CatalogueUserCacheableRepository extends ItemCacheableRepository<CatalogueUser> {
         CatalogueUserCacheableRepository(CatalogueUserRepository catalogueUserRepository) {
             super(catalogueUserRepository)
+        }
+
+        // not cached
+
+        CatalogueUser readByEmailAddress(String emailAddress) {
+            ((CatalogueUserRepository) repository).readByEmailAddress(emailAddress)
         }
     }
 

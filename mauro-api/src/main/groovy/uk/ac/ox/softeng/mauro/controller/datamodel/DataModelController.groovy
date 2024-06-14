@@ -12,6 +12,8 @@ import io.micronaut.http.server.multipart.MultipartBody
 import io.micronaut.http.server.types.files.StreamedFile
 import io.micronaut.scheduling.TaskExecutors
 import io.micronaut.scheduling.annotation.ExecuteOn
+import io.micronaut.security.annotation.Secured
+import io.micronaut.security.rules.SecurityRule
 import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.controller.model.ModelController
@@ -20,6 +22,7 @@ import uk.ac.ox.softeng.mauro.domain.datamodel.DataModelService
 import uk.ac.ox.softeng.mauro.domain.diff.ObjectDiff
 import uk.ac.ox.softeng.mauro.domain.model.version.CreateNewVersionData
 import uk.ac.ox.softeng.mauro.domain.model.version.FinaliseData
+import uk.ac.ox.softeng.mauro.domain.security.Role
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.DataModelCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.datamodel.DataModelContentRepository
@@ -31,6 +34,7 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 @Slf4j
 @Controller
 @CompileStatic
+@Secured(SecurityRule.IS_AUTHENTICATED)
 class DataModelController extends ModelController<DataModel> {
 
     DataModelCacheableRepository dataModelRepository
@@ -70,23 +74,23 @@ class DataModelController extends ModelController<DataModel> {
     @Transactional
     @Delete('/dataModels/{id}')
     HttpStatus delete(UUID id, @Body @Nullable DataModel dataModel) {
-        DataModel model = super.show(id) as DataModel
-        if (!model){
-            throw new HttpStatusException(HttpStatus.NOT_FOUND, "Model not found, $id")
-        }
-        super.delete(model, dataModel)
+        super.delete(id, dataModel)
     }
 
 
     @Get('/dataModels/{id}/search{?requestDTO}')
     ListResponse<SearchResultsDTO> searchGet(UUID id, @RequestBean SearchRequestDTO requestDTO) {
         requestDTO.withinModelId = id
+        DataModel dataModel = dataModelRepository.readById(requestDTO.withinModelId)
+        accessControlService.checkRole(Role.READER, dataModel)
         ListResponse.from(searchRepository.search(requestDTO))
     }
 
     @Post('/dataModels/{id}/search')
     ListResponse<SearchResultsDTO> searchPost(UUID id, @Body SearchRequestDTO requestDTO) {
         requestDTO.withinModelId = id
+        DataModel dataModel = dataModelRepository.readById(requestDTO.withinModelId)
+        accessControlService.checkRole(Role.READER, dataModel)
         ListResponse.from(searchRepository.search(requestDTO))
     }
 
@@ -130,9 +134,13 @@ class DataModelController extends ModelController<DataModel> {
     ObjectDiff diffModels(@NonNull UUID id, @NonNull UUID otherId) {
         DataModel dataModel = modelContentRepository.findWithContentById(id)
         handleNotFoundError(dataModel, id)
-        dataModel.setAssociations()
         DataModel otherDataModel = modelContentRepository.findWithContentById(otherId)
         handleNotFoundError(otherDataModel, otherId)
+
+        accessControlService.checkRole(Role.READER, dataModel)
+        accessControlService.checkRole(Role.READER, otherDataModel)
+
+        dataModel.setAssociations()
         otherDataModel.setAssociations()
         dataModel.diff(otherDataModel)
     }

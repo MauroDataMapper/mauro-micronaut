@@ -3,11 +3,19 @@ package uk.ac.ox.softeng.mauro.controller.model
 import groovy.transform.CompileStatic
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.exceptions.HttpStatusException
+import io.micronaut.security.annotation.Secured
+import io.micronaut.security.rules.SecurityRule
+import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.domain.model.Item
 import uk.ac.ox.softeng.mauro.persistence.cache.ItemCacheableRepository
+import uk.ac.ox.softeng.mauro.security.AccessControlService
 
 @CompileStatic
-abstract class ItemController<I extends Item> {
+@Secured(SecurityRule.IS_AUTHENTICATED)
+abstract class ItemController<I extends Item> implements AdministeredItemReader {
+
+    @Inject
+    AccessControlService accessControlService
 
     /**
      * Properties disallowed in a simple update request.
@@ -51,7 +59,11 @@ abstract class ItemController<I extends Item> {
         item
     }
 
-
+    protected Item updateCreationProperties(Item item) {
+        item.updateCreationProperties()
+        item.catalogueUser = accessControlService.getUser()
+        item
+    }
 
     protected boolean updateProperties(I existing, I cleanItem) {
         boolean hasChanged

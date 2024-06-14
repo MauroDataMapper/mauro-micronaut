@@ -59,8 +59,7 @@ class JsonFolderImporterPluginSpec extends Specification {
         importedModels[0].description == FolderSpec.DESCRIPTION
 
         def diffResult = importedModels.first().diff(testFolder)
-        diffResult.diffs.size() == 1
-        diffResult.diffs[0].getName() == "createdBy"
+        diffResult.diffs.isEmpty()
 
         importedModels.first().label == testFolder.label
         importedModels.first().description == testFolder.description
@@ -101,8 +100,7 @@ class JsonFolderImporterPluginSpec extends Specification {
         importedModels[0].description == FolderSpec.DESCRIPTION
 
         def diffResult = importedModels.first().diff(testFolder)
-        diffResult.diffs.size() == 1
-        diffResult.diffs[0].getName() == "createdBy"
+        diffResult.diffs.isEmpty()
 
         importedModels.first().label == testFolder.label
         importedModels.first().description == testFolder.description

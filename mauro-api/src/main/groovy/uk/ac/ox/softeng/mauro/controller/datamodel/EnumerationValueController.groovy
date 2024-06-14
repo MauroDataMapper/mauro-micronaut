@@ -1,35 +1,26 @@
 package uk.ac.ox.softeng.mauro.controller.datamodel
 
-import uk.ac.ox.softeng.mauro.controller.model.AdministeredItemController
-import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
-import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
-import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
-import uk.ac.ox.softeng.mauro.domain.datamodel.EnumerationValue
-import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository.DataTypeCacheableRepository
-import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository.EnumerationValueCacheableRepository
-import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.DataModelCacheableRepository
-import uk.ac.ox.softeng.mauro.persistence.datamodel.DataModelContentRepository
-import uk.ac.ox.softeng.mauro.persistence.datamodel.DataTypeRepository
-import uk.ac.ox.softeng.mauro.persistence.datamodel.EnumerationValueContentRepository
-import uk.ac.ox.softeng.mauro.persistence.datamodel.EnumerationValueRepository
-import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemContentRepository
-import uk.ac.ox.softeng.mauro.web.ListResponse
-
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpStatus
-import io.micronaut.http.annotation.Body
-import io.micronaut.http.annotation.Controller
-import io.micronaut.http.annotation.Delete
-import io.micronaut.http.annotation.Get
-import io.micronaut.http.annotation.Post
-import io.micronaut.http.annotation.Put
+import io.micronaut.http.annotation.*
+import io.micronaut.security.annotation.Secured
+import io.micronaut.security.rules.SecurityRule
 import jakarta.inject.Inject
-import reactor.core.publisher.Mono
+import uk.ac.ox.softeng.mauro.controller.model.AdministeredItemController
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
+import uk.ac.ox.softeng.mauro.domain.datamodel.EnumerationValue
+import uk.ac.ox.softeng.mauro.domain.security.Role
+import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository.DataTypeCacheableRepository
+import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository.EnumerationValueCacheableRepository
+import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.DataModelCacheableRepository
+import uk.ac.ox.softeng.mauro.persistence.datamodel.DataModelContentRepository
+import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @CompileStatic
 @Controller('/dataModels/{dataModelId}/dataTypes/{enumerationTypeId}/enumerationValues')
+@Secured(SecurityRule.IS_AUTHENTICATED)
 class EnumerationValueController extends AdministeredItemController<EnumerationValue, DataType> {
 
     @Inject
@@ -52,9 +43,9 @@ class EnumerationValueController extends AdministeredItemController<EnumerationV
 
     @Post
     EnumerationValue create(UUID dataModelId, UUID enumerationTypeId, @Body @NonNull EnumerationValue enumerationValue) {
-
         cleanBody(enumerationValue)
         DataType dataType = dataTypeRepository.readById(enumerationTypeId)
+        accessControlService.checkRole(Role.EDITOR, dataType)
         enumerationValue.enumerationType = dataType
         createEntity(dataType, enumerationValue)
         return enumerationValue
@@ -72,6 +63,8 @@ class EnumerationValueController extends AdministeredItemController<EnumerationV
 
     @Get
     ListResponse<EnumerationValue> list(UUID dataModelId, UUID enumerationTypeId) {
+        DataType enumerationType = dataTypeRepository.readById(enumerationTypeId)
+        accessControlService.checkRole(Role.EDITOR, enumerationType)
         ListResponse.from(enumerationValueRepository.readAllByEnumerationType_Id(enumerationTypeId))
 
     }
