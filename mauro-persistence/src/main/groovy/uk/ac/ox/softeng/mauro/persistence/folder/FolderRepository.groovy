@@ -6,6 +6,7 @@ import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.model.query.builder.sql.Dialect
 import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
+import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.persistence.folder.dto.FolderDTORepository
 import uk.ac.ox.softeng.mauro.persistence.model.ModelRepository
 
@@ -38,6 +39,6 @@ abstract class FolderRepository implements ModelRepository<Folder> {
     @Nullable
     @Override
     List<Folder> findAllByFolderId(UUID folderId){
-        findById(folderId) as List<Folder>
+        findAllByParent(folderId as AdministeredItem)
     }
 }

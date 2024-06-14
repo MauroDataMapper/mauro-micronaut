@@ -185,7 +185,7 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
 
         Term targetTerm = (Term) POST("$TERMINOLOGIES_PATH/$terminology.id$TERMS_PATH", [code: 'target code', definition: 'target term'], Term)
 
-        TermRelationship termRelationshipResponse = (TermRelationship) POST("/terminologies/$terminology.id/termRelationships",
+       (TermRelationship) POST("/terminologies/$terminology.id/termRelationships",
                 [
                         relationshipType: [id: termRelationshipType.id],
                         sourceTerm      : [id: sourceTerm.id],
@@ -268,6 +268,132 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
         importedMetadataResponse
         importedMetadataResponse.items.size() == 1
         importedMetadataResponse.items[0].id != metadataResponse.id
+
+        when:
+        ListResponse<Annotation> importedAnnotationResponse = (ListResponse<Annotation>) GET("$FOLDERS_PATH/$importedFolderId$ANNOTATION_PATH", ListResponse<Annotation>)
+
+        then:
+        importedAnnotationResponse
+        importedAnnotationResponse.items.size() == 1
+        String importedAnnotationId = importedAnnotationResponse.items[0].id
+        importedAnnotationResponse.items[0]?.id != annotation.id
+        importedAnnotationResponse.items[0]?.childAnnotations
+        importedAnnotationResponse.items[0]?.childAnnotations?.size() == 1
+        importedAnnotationResponse.items[0]?.childAnnotations[0].parentAnnotationId == importedAnnotationId
+        importedAnnotationResponse.items[0]?.childAnnotations[0].id != childAnnotation.id
+
+        when:
+        ListResponse<CodeSet> importedCodeSetResponse = (ListResponse<CodeSet>) GET("$FOLDERS_PATH/$importedFolderId$CODE_SET_PATH", ListResponse<CodeSet>)
+
+        then:
+        importedCodeSetResponse
+        importedCodeSetResponse.items.size() == 1
+        importedCodeSetResponse.items[0].id != codeSet.id
+
+        when:
+        ListResponse<Terminology> importedTerminologyResponse = (ListResponse<Terminology>) GET("$FOLDERS_PATH/$importedFolderId$TERMINOLOGIES_PATH", ListResponse<Terminology>)
+
+        then:
+        importedTerminologyResponse
+        importedTerminologyResponse.items.size() == 1
+        String importedTerminologyIdString = importedTerminologyResponse.items[0].id
+        importedTerminologyIdString != terminology.id
+
+        when:
+        ListResponse<TermRelationshipType> importedTermRelationshipTypeResponse =
+                (ListResponse<TermRelationshipType>) GET("$TERMINOLOGIES_PATH/$importedTerminologyIdString$TERM_RELATIONSHIP_TYPES", ListResponse<TermRelationshipType>)
+
+        then:
+        importedTermRelationshipTypeResponse
+        importedTermRelationshipTypeResponse.items.size() == 1
+        String importedTermRelationshipTypeIdString = importedTermRelationshipTypeResponse.items[0].id
+        importedTermRelationshipTypeIdString != termRelationshipType.id
+
+        when:
+        ListResponse<Term> importedTermsResponse = (ListResponse<Term>) GET("$TERMINOLOGIES_PATH/$importedTerminologyIdString$TERMS_PATH", ListResponse<Term>)
+
+        then:
+        importedTermsResponse
+        importedTermsResponse.items.size() == 2
+
+        importedTermsResponse.items.code.sort().collect { it.toString() } == ['source code', 'target code']
+        importedTermsResponse.items.id.sort().collect { it.toString() } != ["${sourceTerm.id}", "${targetTerm.id}"]
+
+        when:
+        ListResponse<TermRelationship> importedTermRelationship = (ListResponse<TermRelationship>) GET("$TERMINOLOGIES_PATH/$importedTerminologyIdString$TERM_RELATIONSHIP_PATH", ListResponse<TermRelationship>)
+        then:
+        importedTermRelationship
+        importedTermRelationship.items.size() == 1
+        importedTermRelationship.items[0].id != termRelationshipType.id
+        importedTermRelationship.items[0].sourceTerm.code == 'source code'
+        importedTermRelationship.items[0].targetTerm.code == 'target code'
+        importedTermRelationship.items[0].relationshipType.id == importedTermRelationshipTypeIdString
+    }
+
+
+    void 'test consume export folder- folder is not parent - should import'() {
+        given:
+
+        UUID childFolderId = UUID.fromString(POST("$FOLDERS_PATH/$folderId$FOLDERS_PATH", [label: 'child folder'],).id as String)
+
+        UUID childCodeSetId = UUID.fromString(POST("$FOLDERS_PATH/$childFolderId$CODE_SET_PATH", [label: 'codeset in child folder'],).id as String)
+
+        Annotation annotation = (Annotation) POST("$FOLDERS_PATH/$folderId$ANNOTATION_PATH", annotationPayload(), Annotation)
+        Annotation childAnnotation = (Annotation) POST("$FOLDERS_PATH/$folderId$ANNOTATION_PATH/$annotation.id$ANNOTATION_PATH", annotationPayload('childLabel', 'child-description'), Annotation)
+
+        CodeSet codeSet = (CodeSet) POST("$FOLDERS_PATH/$folderId$CODE_SET_PATH", codeSet(), CodeSet)
+
+        Terminology terminology = (Terminology) POST("$FOLDERS_PATH/$folderId$TERMINOLOGIES_PATH", terminology(), Terminology)
+
+        TermRelationshipType termRelationshipType = (TermRelationshipType) POST("$TERMINOLOGIES_PATH/$terminology.id$TERM_RELATIONSHIP_TYPES",
+                termRelationshipType(), TermRelationshipType)
+
+        Term sourceTerm = (Term) POST("$TERMINOLOGIES_PATH/$terminology.id$TERMS_PATH", [code: 'source code', definition: 'source term'], Term)
+
+        Term targetTerm = (Term) POST("$TERMINOLOGIES_PATH/$terminology.id$TERMS_PATH", [code: 'target code', definition: 'target term'], Term)
+
+        (TermRelationship) POST("/terminologies/$terminology.id/termRelationships",
+                [
+                        relationshipType: [id: termRelationshipType.id],
+                        sourceTerm      : [id: sourceTerm.id],
+                        targetTerm      : [id: targetTerm.id]], TermRelationship)
+
+
+        String exportJson = GET("$FOLDERS_PATH/$folderId$EXPORT_PATH$JSON_EXPORTER_NAMESPACE$JSON_EXPORTER_NAME$JSON_EXPORTER_VERSION", String)
+
+        MultipartBody importRequest = MultipartBody.builder()
+                .addPart('folderId', childFolderId.toString())
+                .addPart('importFile', 'file.json', MediaType.APPLICATION_JSON_TYPE, exportJson.bytes)
+                .build()
+
+        when:
+        ListResponse<Folder> response = (ListResponse<Folder>) POST("$FOLDERS_PATH$IMPORT_PATH$JSON_IMPORTER_NAMESPACE$JSON_IMPORTER_NAME$JSON_IMPORTER_VERSION", importRequest)
+
+        then:
+        response
+        UUID importedFolderId = UUID.fromString(response.items.id.first() as String)
+
+        when:
+        Folder importedFolder = (Folder) GET("$FOLDERS_PATH/$importedFolderId", Folder)
+
+        then:
+        importedFolder
+
+
+        when:
+        ListResponse<Folder> importedChildFolders = (ListResponse<Folder>) GET("$FOLDERS_PATH/$importedFolderId$FOLDERS_PATH", ListResponse<Folder>)
+        then:
+        importedChildFolders
+        importedChildFolders.items.size() == 1
+        String importedChildFolderId = importedChildFolders.items[0].id
+
+        when:
+        ListResponse<CodeSet> importedChildCodeSet = (ListResponse<CodeSet>) GET("$FOLDERS_PATH/$importedChildFolderId$CODE_SET_PATH", ListResponse<CodeSet>)
+        then:
+        importedChildCodeSet
+        importedChildCodeSet.items.size() == 1
+        importedChildCodeSet.items[0].id != childCodeSetId
+
 
         when:
         ListResponse<Annotation> importedAnnotationResponse = (ListResponse<Annotation>) GET("$FOLDERS_PATH/$importedFolderId$ANNOTATION_PATH", ListResponse<Annotation>)
