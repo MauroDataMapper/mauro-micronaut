@@ -1,0 +1,34 @@
+{
+  "sections": [
+    {
+      "label": "Profile Specification",
+      "description": "The details necessary for this Data Model to be used as the specification for a dynamic profile.",
+      "fields": [
+        {
+          "fieldName": "Metadata namespace",
+          "metadataPropertyName": "metadataNamespace",
+          "description": "The namespace under which properties of this profile will be stored",
+          "minMultiplicity": 1,
+          "maxMultiplicity": 1,
+          "dataType": "String"
+        },
+        {
+          "fieldName": "Applicable for domains",
+          "metadataPropertyName": "domainsApplicable",
+          "description": "Determines which types of catalogue item can be profiled using this profile.  For example, 'DataModel'.  Separate multiple domains with a semi-colon (';').  Leave blank to allow this profile to be applicable to any catalogue item.",
+          "minMultiplicity": 0,
+          "maxMultiplicity": 1,
+          "dataType": "String"
+        },
+        {
+          "fieldName": "Can be edited after finalisation",
+          "metadataPropertyName": "editableAfterFinalisation",
+          "description": "Defines if the profile can be edited after the model has been finalised. This defaults to false.",
+          "minMultiplicity": 0,
+          "maxMultiplicity": 1,
+          "dataType": "Boolean"
+        }
+      ]
+    }
+  ]
+}
