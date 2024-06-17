@@ -1,6 +1,5 @@
 package uk.ac.ox.softeng.mauro.domain.terminology
 
-import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import com.fasterxml.jackson.annotation.JsonIdentityInfo
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.ObjectIdGenerators
@@ -12,6 +11,7 @@ import io.micronaut.data.annotation.Index
 import io.micronaut.data.annotation.Indexes
 import io.micronaut.data.annotation.MappedEntity
 import jakarta.persistence.Transient
+import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.model.ModelItem
 
 /**
@@ -35,9 +35,9 @@ class TermRelationship extends ModelItem<Terminology> {
     @JsonIgnore
     Terminology terminology
 
-    @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator, property = 'code')
+    @JsonIdentityInfo(generator = TermJsonIdGenerator)
     Term sourceTerm
-    @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator, property = 'code')
+    @JsonIdentityInfo(generator = TermJsonIdGenerator)
     Term targetTerm
 
     @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator, property = 'label')

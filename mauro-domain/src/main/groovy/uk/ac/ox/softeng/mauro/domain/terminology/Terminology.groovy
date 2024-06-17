@@ -1,9 +1,6 @@
 package uk.ac.ox.softeng.mauro.domain.terminology
 
-import com.fasterxml.jackson.annotation.JsonIdentityInfo
-import com.fasterxml.jackson.annotation.JsonIgnore
-import com.fasterxml.jackson.annotation.JsonPropertyOrder
-import com.fasterxml.jackson.annotation.ObjectIdGenerators
+import com.fasterxml.jackson.annotation.*
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
 import groovy.transform.MapConstructor
@@ -31,7 +28,8 @@ import uk.ac.ox.softeng.mauro.domain.model.ModelItem
 class Terminology extends Model {
 
     @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'terminology')
-    @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator, property = 'code')
+    @JsonIdentityInfo(generator = TermJsonIdGenerator)
+    @JsonManagedReference
     List<Term> terms = []
 
     @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'terminology')

@@ -1,5 +1,6 @@
 package uk.ac.ox.softeng.mauro.domain.terminology
 
+import com.fasterxml.jackson.annotation.JsonBackReference
 import com.fasterxml.jackson.annotation.JsonIgnore
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
@@ -39,7 +40,7 @@ class Term extends ModelItem<Terminology> {
         code
     }
 
-    @JsonIgnore
+    @JsonBackReference
     Terminology terminology
 
     @NotBlank
