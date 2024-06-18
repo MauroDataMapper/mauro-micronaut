@@ -8,12 +8,14 @@ import uk.ac.ox.softeng.mauro.plugin.PluginType
 
 abstract class JsonBasedProfile implements Profile {
 
+    ObjectMapper objectMapper
+
     abstract String getJsonFileName()
 
-    JsonBasedProfile() {
-        ObjectReader objectReader = (new ObjectMapper()).readerForUpdating(this)
+    JsonBasedProfile(ObjectMapper objectMapper ) {
+        this.objectMapper = objectMapper
+        ObjectReader objectReader = this.objectMapper.readerForUpdating(this)
         objectReader.readValue(getClass().getClassLoader().getResourceAsStream(getJsonFileName()))
-
-        System.err.println(sections.size())
     }
+
 }

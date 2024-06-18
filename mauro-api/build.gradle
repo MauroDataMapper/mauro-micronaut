@@ -38,7 +38,11 @@ dependencies {
     runtimeOnly("org.flywaydb:flyway-database-postgresql")
 
     implementation("io.micronaut.sql:micronaut-jdbc-hikari")
-    testImplementation group: 'org.apache.groovy', name: 'groovy-json', version: '4.0.15'
+     implementation("io.micronaut.cache:micronaut-cache-core")
+//    implementation("io.micronaut.cache:micronaut-cache-caffeine")
+    implementation("io.micronaut.cache:micronaut-cache-ehcache")
+    implementation("io.micronaut.cache:micronaut-cache-management")
+    implementation group: 'org.apache.groovy', name: 'groovy-json', version: '4.0.19'
 
 
     // Security

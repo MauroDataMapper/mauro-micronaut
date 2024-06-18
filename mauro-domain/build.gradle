@@ -26,6 +26,7 @@ dependencies {
     // For importer parameters introspection
     implementation('org.apache.commons:commons-lang3:3.17.0')
 
+    implementation('org.apache.groovy:groovy-json:4.0.19')
     testImplementation "io.micronaut.test:micronaut-test-spock"
 }
 
