@@ -52,14 +52,15 @@ class JsonProfileSpec extends Specification {
         DataModel dm = DataModel.build {
             label "My first profiled data model"
             description "Hope this one works!"
+            metadata(ProfileSpecificationProfile.NAMESPACE,
+                    ["metadataNamespace":"com.test"])
         }
         then:
         profile.validate(dm) == []
 
         when:
         dm.metadata(ProfileSpecificationProfile.NAMESPACE,
-            ["metadataNamespace":"com.test",
-            "domainsApplicable":"DataModel;DataElement",
+            ["domainsApplicable":"DataModel;DataElement",
             "editableAfterFinalisation":"true"])
 
         then:
@@ -74,6 +75,8 @@ class JsonProfileSpec extends Specification {
         Terminology terminology = Terminology.build {
             label "My first profiled terminology"
             description "Hope this one works!"
+            metadata(ProfileSpecificationProfile.NAMESPACE,
+                    ["metadataNamespace":"com.test"])
         }
         List<String> errors = profile.validate(terminology)
         then:
