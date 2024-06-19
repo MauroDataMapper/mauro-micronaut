@@ -10,7 +10,7 @@ enum ProfileFieldDataType {
 
     BOOLEAN('boolean'),
     STRING('string'),
-    TEXT('text'),
+    TEXT('text'),   // like a string but makes a bigger box in the UI
     INT('int'),
     DECIMAL('decimal'),
     DATE('date'),
@@ -44,6 +44,9 @@ enum ProfileFieldDataType {
     }
 
     Boolean validateStringAgainstType(String input) {
+        if(!input || input == '') { // empty values are always valid against the data type
+            return true
+        }
         switch (label) {
             case 'boolean':
                 if(!["true", "t", "false", "f"].contains(input)) {
@@ -67,21 +70,21 @@ enum ProfileFieldDataType {
 
             case 'date':
                 try {
-                    DateUtils.parseDate(input, accptableDateFormats)
+                    DateUtils.parseDateStrictly(input, accptableDateFormats)
                 } catch (Exception ignored) {
                     return false
                 }
                 break
             case 'datetime':
                 try {
-                    DateUtils.parseDate(input, accptableDateTimeFormats)
+                    DateUtils.parseDateStrictly(input, accptableDateTimeFormats)
                 } catch (Exception ignored) {
                     return false
                 }
                 break
             case 'time':
                 try {
-                    DateUtils.parseDate(input, accptableTimeFormats)
+                    DateUtils.parseDateStrictly(input, accptableTimeFormats)
                 } catch (Exception ignored) {
                     return false
                 }

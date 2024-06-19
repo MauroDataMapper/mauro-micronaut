@@ -341,6 +341,18 @@ abstract class AdministeredItem extends Item {
         return metadata
     }
 
+    /**
+     * DSL helper method for adding to the metadata field.  Returns the metadata list passed in.
+     *
+     * @see #metadata
+     */
+    List<Metadata> metadata(String namespace, Map<String, String> keyValueMap) {
+        this.metadata.addAll(keyValueMap.collect { key, value ->
+            new Metadata(namespace: namespace, key: key, value: value)
+        })
+        return metadata
+    }
+
 
 
 }

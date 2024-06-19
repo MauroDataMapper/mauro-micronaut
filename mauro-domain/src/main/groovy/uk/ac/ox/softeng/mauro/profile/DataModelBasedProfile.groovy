@@ -4,8 +4,9 @@ import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataElement
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 
-abstract class DataModelBasedProfile implements Profile {
+class DataModelBasedProfile implements Profile {
 
+    String metadataNamespace
 
     DataModelBasedProfile(DataModel dataModel) {
         Map<String, String> metadataMap = dataModel.metadataAsMap(ProfileSpecificationProfile.NAMESPACE)
@@ -17,7 +18,7 @@ abstract class DataModelBasedProfile implements Profile {
             canBeEditedAfterFinalisation = Boolean.parseBoolean(metadataMap["canBeEditedAfterFinalisation"])
         }
         if(metadataMap["profileApplicableForDomains"]) {
-            profileApplicableForDomains = metadataMap["profileApplicableForDomains"].split(";")
+            profileApplicableForDomains = metadataMap["profileApplicableForDomains"].split(";").collect {it.trim()}
         }
         sections = dataModel.dataClasses.collect { sectionFromClass(it) }
 
@@ -40,7 +41,7 @@ abstract class DataModelBasedProfile implements Profile {
             minMultiplicity = dataElement.minMultiplicity
             maxMultiplicity = dataElement.maxMultiplicity
             if(dataElement.dataType.enumerationValues) {
-                allowedValues = dataElement.dataType.enumerationValues.collect {it.value}
+                allowedValues = dataElement.dataType.enumerationValues.collect {it.key}
                 dataType = ProfileFieldDataType.ENUMERATION
             } else {
                 dataType = ProfileFieldDataType.fromString(dataElement.dataType.label)
@@ -48,6 +49,7 @@ abstract class DataModelBasedProfile implements Profile {
                     dataType = ProfileFieldDataType.STRING
                 }
             }
+            metadataPropertyName = metadataMap["metadataPropertyName"]
             regularExpression = metadataMap["regularExpression"]
             defaultValue = metadataMap["defaultValue"]
             if(metadataMap["editableAfterFinalisation"]) {

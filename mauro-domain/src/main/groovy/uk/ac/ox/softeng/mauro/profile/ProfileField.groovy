@@ -25,16 +25,19 @@ class ProfileField {
 
     List<String> validate(String value) {
         List<String> errors = []
-        if(!dataType.validateStringAgainstType(value)) {
+        if(value && !dataType.validateStringAgainstType(value)) {
             errors.add ("Value '$value' does not match specified data type: ${dataType.label}")
         }
-        if(allowedValues && !allowedValues.contains(value)) {
-            errors.add("Value '$value' should be one of the provided values")
+        if(value && allowedValues && !allowedValues.contains(value)) {
+            errors.add("Value '$value' should be one of the provided values: $allowedValues")
         }
-        if(regularExpression && value.matches(regularExpression)) {
+        if(value && regularExpression && !value.matches(regularExpression)) {
             errors.add("Value '$value' should match the provided regular expression")
         }
-
+        if(!value && minMultiplicity > 0) {
+            errors.add("A value for field '$fieldName' must be provided")
+        }
+        // TODO: Something about Max Multiplicity
         return errors
     }
 
