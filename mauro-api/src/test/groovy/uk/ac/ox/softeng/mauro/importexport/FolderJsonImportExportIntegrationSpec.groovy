@@ -1,5 +1,6 @@
 package uk.ac.ox.softeng.mauro.importexport
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.json.JsonSlurper
 import io.micronaut.http.MediaType
 import io.micronaut.http.client.multipart.MultipartBody
@@ -28,6 +29,9 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
 
     @Inject
     EmbeddedApplication<?> application
+
+    @Inject
+    ObjectMapper objectMapper
 
     @Shared
     UUID folderId
@@ -451,5 +455,64 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
         importedTermRelationship.items[0].sourceTerm.code == 'source code'
         importedTermRelationship.items[0].targetTerm.code == 'target code'
         importedTermRelationship.items[0].relationshipType.id == importedTermRelationshipTypeIdString
+    }
+
+    void 'export and import folder with two terminologies with overlapping codes'() {
+        given:
+        UUID folderId = UUID.fromString(POST('/folders', [label: 'Two terminologies folder']).id)
+        UUID terminology1Id = UUID.fromString(POST("/folders/$folderId/terminologies", [label: 'First Terminology']).id)
+        UUID term1Id = UUID.fromString(POST("/terminologies/$terminology1Id/terms", [code: 'TEST', definition: 'first term']).id)
+        UUID terminology2Id = UUID.fromString(POST("/folders/$folderId/terminologies", [label: 'Second Terminology']).id)
+        UUID term2Id = UUID.fromString(POST("/terminologies/$terminology2Id/terms", [code: 'TEST', definition: 'second term']).id)
+
+        when:
+        Map<String, Object> export = GET("$FOLDERS_PATH/$folderId$EXPORT_PATH$JSON_EXPORTER_NAMESPACE$JSON_EXPORTER_NAME$JSON_EXPORTER_VERSION")
+
+        then:
+        export.folder.terminologies.size() == 2
+        export.folder.terminologies.find {it.label == 'First Terminology'}.terms.first().code == 'TEST'
+        export.folder.terminologies.find {it.label == 'First Terminology'}.terms.first().definition == 'first term'
+        export.folder.terminologies.find {it.label == 'Second Terminology'}.terms.first().code == 'TEST'
+        export.folder.terminologies.find {it.label == 'Second Terminology'}.terms.first().definition == 'second term'
+
+        when:
+        MultipartBody importRequest = MultipartBody.builder()
+            .addPart('folderId', folderId.toString())
+            .addPart('importFile', 'file.json', MediaType.APPLICATION_JSON_TYPE, objectMapper.writeValueAsBytes(export))
+            .build()
+        ListResponse<Folder> response = POST("$FOLDERS_PATH$IMPORT_PATH$JSON_IMPORTER_NAMESPACE$JSON_IMPORTER_NAME$JSON_IMPORTER_VERSION", importRequest) as ListResponse
+        UUID importedFolderId = UUID.fromString(response.items.first().id)
+
+        then:
+        response.count == 1
+        response.items.size() == 1
+        response.items.first().label == 'Two terminologies folder'
+        importedFolderId
+
+        when:
+        ListResponse<Terminology> importedTerminologies = GET("$FOLDERS_PATH/$importedFolderId$TERMINOLOGIES_PATH", ListResponse)
+        UUID importedTerminology1Id = UUID.fromString(importedTerminologies.items.find {it.label == 'First Terminology'}.id)
+        UUID importedTerminology2Id = UUID.fromString(importedTerminologies.items.find {it.label == 'Second Terminology'}.id)
+
+        then:
+        importedTerminologies.count == 2
+        importedTerminologies.items.find {it.label == 'First Terminology'}
+        importedTerminologies.items.find {it.label == 'Second Terminology'}
+
+        when:
+        ListResponse<Term> importedTerms = GET("$TERMINOLOGIES_PATH/$importedTerminology1Id$TERMS_PATH", ListResponse)
+
+        then:
+        importedTerms.count == 1
+        importedTerms.items.first().code == 'TEST'
+        importedTerms.items.first().definition == 'first term'
+
+        when:
+        importedTerms = GET("$TERMINOLOGIES_PATH/$importedTerminology2Id$TERMS_PATH", ListResponse)
+
+        then:
+        importedTerms.count == 1
+        importedTerms.items.first().code == 'TEST'
+        importedTerms.items.first().definition == 'second term'
     }
 }

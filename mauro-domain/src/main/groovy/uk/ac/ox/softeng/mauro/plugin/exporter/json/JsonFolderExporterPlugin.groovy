@@ -32,11 +32,11 @@ class JsonFolderExporterPlugin implements FolderExporterPlugin {
         addAllFoldersToMap(folder, foldersMap)
 
         ExportModel exportModel = new ExportModel(this)
-        exportModel.folders.add(folder)
+        exportModel.folder = folder
 
         Map<UUID, JsonNode> folderNodesMap = [:]
         JsonNode exportModelNode = objectMapper.valueToTree(exportModel)
-        exportModelNode.get('folders')?.asList()?.each {addAllFoldersToMap(it, folderNodesMap)}
+        addAllFoldersToMap(exportModelNode.get('folder'), folderNodesMap)
 
         // Export each Terminology as a separate object
         foldersMap.each {UUID folderId, Folder f ->

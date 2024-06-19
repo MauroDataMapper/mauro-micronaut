@@ -31,11 +31,11 @@ import uk.ac.ox.softeng.mauro.domain.model.ModelItem
 class Terminology extends Model {
 
     @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'terminology')
-    @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator, property = 'code')
+    @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator, property = 'code', scope = Term)
     List<Term> terms = []
 
     @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'terminology')
-    @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator, property = 'label')
+    @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator, property = 'label', scope = TermRelationshipType)
     List<TermRelationshipType> termRelationshipTypes = []
 
     @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'terminology')
