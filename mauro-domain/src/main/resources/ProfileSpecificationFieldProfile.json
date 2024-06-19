@@ -1,11 +1,10 @@
 {
-  "metadataNamespace": "uk.ac.ox.softeng.maurodatamapper.profile.dataelement",
   "profileApplicableForDomains": ["DataElement"],
   "canBeEditedAfterFinalisation": false,
   "sections": [
     {
-      "sectionName": "Profile Specification",
-      "sectionDescription": "The details necessary for this Data Element to define a field for a dynamic profile.",
+      "label": "Profile Specification",
+      "description": "The details necessary for this Data Element to define a field for a dynamic profile.",
       "fields": [
         {
           "fieldName": "Metadata Property Name",
@@ -37,8 +36,7 @@
           "description": "If the owning model is editable after finalisation, determines whether this field may be edited after the owning model has been finalised",
           "minMultiplicity": 1,
           "maxMultiplicity": 1,
-          "dataType": "Boolean",
-          "currentValue": "true"
+          "dataType": "Boolean"
         }
       ]
     }

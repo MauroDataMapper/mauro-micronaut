@@ -11,11 +11,7 @@ trait Profile extends MauroPlugin {
     boolean canBeEditedAfterFinalisation
     List<String> profileApplicableForDomains
 
-
-    List<String> applicableForDomains = []
-
     List<ProfileSection> sections = []
-
 
     @Override
     PluginType getPluginType() {
@@ -24,7 +20,7 @@ trait Profile extends MauroPlugin {
 
     List<String> validate(AdministeredItem item) {
         List<String> errors = []
-        if(!applicableForDomains.contains(item.class.name)) {
+        if(!profileApplicableForDomains.contains(item.class.name)) {
             errors.add("The profile '${displayName}' cannot be applied to an object of type '${item.class.name}'")
         }
         List<Metadata> profileMetadata = item.metadata.findAll {it.namespace == metadataNamespace }

@@ -6,6 +6,8 @@ import jakarta.inject.Singleton
 @Singleton
 class ProfileSpecificationFieldProfile extends JsonBasedProfile {
 
+    public static final String NAMESPACE = "uk.ac.ox.softeng.maurodatamapper.profile.dataelement"
+
     ProfileSpecificationFieldProfile(ObjectMapper objectMapper) {
         super(objectMapper)
     }
@@ -17,6 +19,8 @@ class ProfileSpecificationFieldProfile extends JsonBasedProfile {
 
     String version = "1.0.0"
 
-    String displayName = "Profile Specification Profile"
+    String displayName = "Profile Specification Field Profile"
+
+    String metadataNamespace = NAMESPACE
 
 }

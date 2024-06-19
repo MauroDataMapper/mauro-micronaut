@@ -8,6 +8,7 @@ import uk.ac.ox.softeng.mauro.plugin.PluginType
 @Singleton
 class ProfileSpecificationProfile extends JsonBasedProfile {
 
+    public final static String NAMESPACE = "uk.ac.ox.softeng.maurodatamapper.profile"
 
     ProfileSpecificationProfile(ObjectMapper objectMapper) {
         super(objectMapper)
@@ -21,6 +22,8 @@ class ProfileSpecificationProfile extends JsonBasedProfile {
     String version = "1.0.0"
 
     String displayName = "Profile Specification Profile"
+
+    String metadataNamespace = NAMESPACE
 
 
 }

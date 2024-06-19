@@ -171,6 +171,17 @@ abstract class AdministeredItem extends Item {
         path
     }
 
+    /* Helper method for dealing with metadata across different namespaces:
+        Given a namespace, return the metadata matching that namespace but as a map from keys to values
+     */
+
+    Map<String, String> metadataAsMap(String namespace) {
+        metadata.findAll {it.namespace == namespace}.collectEntries {
+            [it.key, it.value]
+        }
+    }
+
+
     /**
      * Return all persistent associations of the AdministeredItem.
      * The associations should be ordered so that they can be saved in order.
@@ -308,4 +319,28 @@ abstract class AdministeredItem extends Item {
         this.catalogueUser = createdBy
         this.catalogueUser
     }
+
+    /**
+     * DSL helper method for adding to the metadata field.  Returns the newly-created metadata item.
+     *
+     * @see #metadata
+     */
+    Metadata metadata(String namespace, String key, String value) {
+        Metadata md = Metadata.build (namespace: namespace, key: key, value: value)
+        this.metadata.add(md)
+        return md
+    }
+
+    /**
+     * DSL helper method for adding to the metadata field.  Returns the metadata list passed in.
+     *
+     * @see #metadata
+     */
+    List<Metadata> metadata(List<Metadata> metadata) {
+        this.metadata.addAll(metadata)
+        return metadata
+    }
+
+
+
 }

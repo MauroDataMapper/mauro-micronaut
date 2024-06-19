@@ -1,5 +1,4 @@
 {
-  "metadataNamespace": "uk.ac.ox.softeng.maurodatamapper.profile",
   "profileApplicableForDomains": ["DataModel"],
   "canBeEditedAfterFinalisation": false,
   "sections": [

@@ -3,6 +3,7 @@ package uk.ac.ox.softeng.mauro.domain.facet
 import com.fasterxml.jackson.annotation.JsonIgnore
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
+import groovy.transform.MapConstructor
 import io.micronaut.data.annotation.Index
 import io.micronaut.data.annotation.Indexes
 import io.micronaut.data.annotation.MappedEntity
@@ -18,6 +19,7 @@ import uk.ac.ox.softeng.mauro.domain.diff.ObjectDiff
 @MappedEntity(schema = 'core')
 @AutoClone
 @Indexes([@Index(columns = ['multi_facet_aware_item_id', 'namespace', 'key'], unique = true)])
+@MapConstructor(includeSuperFields = true, includeSuperProperties = true, noArg = true)
 class Metadata extends Facet implements DiffableItem<Metadata> {
 
     String namespace
@@ -53,4 +55,51 @@ class Metadata extends Facet implements DiffableItem<Metadata> {
         od.key = this.key
         od
     }
+
+    /****
+     * Methods for building a tree-like DSL
+     */
+
+    static Metadata build(
+            Map args,
+            @DelegatesTo(value = Metadata, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
+        new Metadata(args).tap(closure)
+    }
+
+    static Metadata build(
+            @DelegatesTo(value = Metadata, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
+        build [:], closure
+    }
+
+    /**
+     * DSL helper method for setting the namespace.  Returns the namespace passed in.
+     *
+     * @see #namespace
+     */
+    String namespace(String namespace) {
+        this.namespace = namespace
+        this.namespace
+    }
+
+    /**
+     * DSL helper method for setting the key.  Returns the key passed in.
+     *
+     * @see #key
+     */
+    String key(String key) {
+        this.key = key
+        this.key
+    }
+
+    /**
+     * DSL helper method for setting the value.  Returns the value passed in.
+     *
+     * @see #value
+     */
+    String value(String value) {
+        this.value = value
+        this.value
+    }
+
+
 }
