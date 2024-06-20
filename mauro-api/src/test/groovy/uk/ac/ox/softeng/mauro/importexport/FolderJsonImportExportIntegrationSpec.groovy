@@ -1,5 +1,6 @@
 package uk.ac.ox.softeng.mauro.importexport
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.json.JsonSlurper
 import io.micronaut.http.MediaType
 import io.micronaut.http.client.multipart.MultipartBody
@@ -28,6 +29,9 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
 
     @Inject
     EmbeddedApplication<?> application
+
+    @Inject
+    ObjectMapper objectMapper
 
     @Shared
     UUID folderId
@@ -75,44 +79,44 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
         json
         Map parsedJson = jsonSlurper.parseText(json) as Map
         parsedJson.exportMetadata
-        parsedJson.folders
-        parsedJson.folders.dataModels.size() == 1
-        parsedJson.folders.dataModels[0].id[0] == dataModelId.toString()
-        parsedJson.folders.dataModels[0].label[0] == 'Test data model'
-        parsedJson.folders.dataModels[0].dataTypes.size() == 1
-        parsedJson.folders.dataModels[0].dataTypes[0].label[0] == 'Test data type'
-        parsedJson.folders.dataModels[0].dataTypes[0].id[0] == dataTypeId.toString()
-        parsedJson.folders.dataModels[0].dataClasses.size() == 1
-        List<DataClass> dataClasses = parsedJson.folders.dataModels[0].dataClasses[0]
+        parsedJson.folder
+        parsedJson.folder.dataModels.size() == 1
+        parsedJson.folder.dataModels[0].id == dataModelId.toString()
+        parsedJson.folder.dataModels[0].label == 'Test data model'
+        parsedJson.folder.dataModels[0].dataTypes.size() == 1
+        parsedJson.folder.dataModels[0].dataTypes[0].label == 'Test data type'
+        parsedJson.folder.dataModels[0].dataTypes[0].id == dataTypeId.toString()
+        parsedJson.folder.dataModels[0].dataClasses.size() == 2
+        List<DataClass> dataClasses = parsedJson.folder.dataModels[0].dataClasses
         dataClasses.label.sort().collect { it.toString() } == ['TEST-1', 'TEST-2']
         dataClasses.id.sort().collect { it.toString() } == [ dataClass1Id.toString(), dataClass2Id.toString()].sort()
 
-        parsedJson.folders.metadata.size() == 1
-        parsedJson.folders.metadata[0].id[0] == metadataResponse.id.toString()
-        parsedJson.folders.summaryMetadata.size() == 1
-        parsedJson.folders.summaryMetadata[0].id[0] == summaryMetadataResponse.id.toString()
-        parsedJson.folders.summaryMetadata[0].summaryMetadataReports.size() == 1
-        parsedJson.folders.summaryMetadata[0].summaryMetadataReports[0].id[0] == reportResponse.id.toString()
+        parsedJson.folder.metadata.size() == 1
+        parsedJson.folder.metadata[0].id == metadataResponse.id.toString()
+        parsedJson.folder.summaryMetadata.size() == 1
+        parsedJson.folder.summaryMetadata[0].id == summaryMetadataResponse.id.toString()
+        parsedJson.folder.summaryMetadata[0].summaryMetadataReports.size() == 1
+        parsedJson.folder.summaryMetadata[0].summaryMetadataReports[0].id == reportResponse.id.toString()
 
-        parsedJson.folders.annotations.size() == 1
-        parsedJson.folders.annotations[0].id[0] == annotation.id.toString()
-        List<Annotation> childAnnotations = parsedJson.folders.annotations[0].childAnnotations[0]
+        parsedJson.folder.annotations.size() == 1
+        parsedJson.folder.annotations[0].id == annotation.id.toString()
+        List<Annotation> childAnnotations = parsedJson.folder.annotations[0].childAnnotations
         childAnnotations.size() == 1
         childAnnotations[0].id == childAnnotation.id.toString()
 
-        parsedJson.folders.terminologies.size() == 1
-        parsedJson.folders.terminologies[0].id[0] == terminology.id.toString()
+        parsedJson.folder.terminologies.size() == 1
+        parsedJson.folder.terminologies[0].id == terminology.id.toString()
 
-        List<TermRelationshipType> termRelationshipTypes = parsedJson.folders.terminologies[0].termRelationshipTypes
+        List<TermRelationshipType> termRelationshipTypes = parsedJson.folder.terminologies[0].termRelationshipTypes
         termRelationshipTypes.size() == 1
-        termRelationshipTypes[0].id[0] == termRelationshipType.id.toString()
-        List<Terminology> terminologies = parsedJson.folders.terminologies
+        termRelationshipTypes[0].id == termRelationshipType.id.toString()
+        List<Terminology> terminologies = parsedJson.folder.terminologies
         terminologies.size() == 1
         terminologies[0].terms.size() == 1
-        terminologies[0].terms[0].id[0] == term.id.toString()
+        terminologies[0].terms[0].id == term.id.toString()
 
-        parsedJson.folders.codeSets.size() == 1
-        parsedJson.folders.codeSets[0].id[0] == codeSet.id.toString()
+        parsedJson.folder.codeSets.size() == 1
+        parsedJson.folder.codeSets[0].id == codeSet.id.toString()
     }
 
     void 'get export folder -should export folder, with nested data and deep nesting of child folders'() {
@@ -133,21 +137,21 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
 
         Map parsedJson = jsonSlurper.parseText(json) as Map
         parsedJson.exportMetadata
-        parsedJson.folders
-        parsedJson.folders.dataModels.size() == 1
-        parsedJson.folders.dataModels[0].id[0] == dataModelId.toString()
+        parsedJson.folder
+        parsedJson.folder.dataModels.size() == 1
+        parsedJson.folder.dataModels[0].id == dataModelId.toString()
 
-        parsedJson.folders.childFolders.size() == 1
-        parsedJson.folders.childFolders[0].id[0] == childFolderId.toString()
-        parsedJson.folders.childFolders[0].dataModels.size() == 1
-        parsedJson.folders.childFolders[0].dataModels[0].id[0] == childDataModelId.toString()
-        parsedJson.folders.childFolders[0].dataModels[0].dataTypes.size() == 1
-        parsedJson.folders.childFolders[0].dataModels[0].dataTypes[0].id[0] == childDataModelTypeId.toString()
+        parsedJson.folder.childFolders.size() == 1
+        parsedJson.folder.childFolders[0].id == childFolderId.toString()
+        parsedJson.folder.childFolders[0].dataModels.size() == 1
+        parsedJson.folder.childFolders[0].dataModels[0].id == childDataModelId.toString()
+        parsedJson.folder.childFolders[0].dataModels[0].dataTypes.size() == 1
+        parsedJson.folder.childFolders[0].dataModels[0].dataTypes[0].id == childDataModelTypeId.toString()
 
-        parsedJson.folders.childFolders[0].childFolders.size() == 1
-        parsedJson.folders.childFolders[0].childFolders[0].id[0] == nestedChildFolderId.toString()
-        parsedJson.folders.childFolders[0].childFolders[0].dataModels.size() == 1
-        parsedJson.folders.childFolders[0].childFolders[0].dataModels[0].id[0] == nestedChildDataModelId.toString()
+        parsedJson.folder.childFolders[0].childFolders.size() == 1
+        parsedJson.folder.childFolders[0].childFolders[0].id == nestedChildFolderId.toString()
+        parsedJson.folder.childFolders[0].childFolders[0].dataModels.size() == 1
+        parsedJson.folder.childFolders[0].childFolders[0].dataModels[0].id == nestedChildDataModelId.toString()
     }
 
 
@@ -451,5 +455,123 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
         importedTermRelationship.items[0].sourceTerm.code == 'source code'
         importedTermRelationship.items[0].targetTerm.code == 'target code'
         importedTermRelationship.items[0].relationshipType.id == importedTermRelationshipTypeIdString
+    }
+
+    void 'export and import folder with two terminologies with overlapping codes'() {
+        given:
+        // create two terminologies each with different Terms with code TEST
+        UUID folderId = UUID.fromString(POST("$FOLDERS_PATH", [label: 'Two terminologies folder']).id)
+        UUID terminology1Id = UUID.fromString(POST("$FOLDERS_PATH/$folderId$TERMINOLOGIES_PATH", [label: 'First Terminology']).id)
+        UUID term1Id = UUID.fromString(POST("$TERMINOLOGIES_PATH/$terminology1Id$TERMS_PATH", [code: 'TEST', definition: 'first term']).id)
+        UUID terminology2Id = UUID.fromString(POST("$FOLDERS_PATH/$folderId$TERMINOLOGIES_PATH", [label: 'Second Terminology']).id)
+        UUID term2Id = UUID.fromString(POST("$TERMINOLOGIES_PATH/$terminology2Id$TERMS_PATH", [code: 'TEST', definition: 'second term']).id)
+
+        // also create two different term relationship types with label TEST
+        UUID termRelationshipType1Id = UUID.fromString(POST("$TERMINOLOGIES_PATH/$terminology1Id$TERM_RELATIONSHIP_TYPES", [label: 'TEST', childRelationship: true]).id)
+        UUID termRelationshipType2Id = UUID.fromString(POST("$TERMINOLOGIES_PATH/$terminology2Id$TERM_RELATIONSHIP_TYPES", [label: 'TEST', childRelationship: false]).id)
+        POST("$TERMINOLOGIES_PATH/$terminology1Id$TERM_RELATIONSHIP_PATH", [
+            relationshipType: [id: termRelationshipType1Id],
+            sourceTerm: [id: term1Id],
+            targetTerm: [id: term1Id]
+        ])
+        POST("$TERMINOLOGIES_PATH/$terminology2Id$TERM_RELATIONSHIP_PATH", [
+            relationshipType: [id: termRelationshipType2Id],
+            sourceTerm: [id: term2Id],
+            targetTerm: [id: term2Id]
+        ])
+
+        when:
+        Map<String, Object> export = GET("$FOLDERS_PATH/$folderId$EXPORT_PATH$JSON_EXPORTER_NAMESPACE$JSON_EXPORTER_NAME$JSON_EXPORTER_VERSION")
+
+        then:
+        export.folder.terminologies.size() == 2
+        export.folder.terminologies.find {it.label == 'First Terminology'}.terms.first().code == 'TEST'
+        export.folder.terminologies.find {it.label == 'First Terminology'}.terms.first().definition == 'first term'
+        export.folder.terminologies.find {it.label == 'Second Terminology'}.terms.first().code == 'TEST'
+        export.folder.terminologies.find {it.label == 'Second Terminology'}.terms.first().definition == 'second term'
+        export.folder.terminologies.find {it.label == 'First Terminology'}.termRelationshipTypes.first().label == 'TEST'
+        export.folder.terminologies.find {it.label == 'First Terminology'}.termRelationshipTypes.first().childRelationship == true
+        export.folder.terminologies.find {it.label == 'Second Terminology'}.termRelationshipTypes.first().label == 'TEST'
+        export.folder.terminologies.find {it.label == 'Second Terminology'}.termRelationshipTypes.first().childRelationship == false
+        export.folder.terminologies.find {it.label == 'First Terminology'}.termRelationships.first().sourceTerm == 'TEST'
+        export.folder.terminologies.find {it.label == 'First Terminology'}.termRelationships.first().targetTerm == 'TEST'
+        export.folder.terminologies.find {it.label == 'First Terminology'}.termRelationships.first().relationshipType == 'TEST'
+        export.folder.terminologies.find {it.label == 'Second Terminology'}.termRelationships.first().sourceTerm == 'TEST'
+        export.folder.terminologies.find {it.label == 'Second Terminology'}.termRelationships.first().targetTerm == 'TEST'
+        export.folder.terminologies.find {it.label == 'Second Terminology'}.termRelationships.first().relationshipType == 'TEST'
+
+        when:
+        MultipartBody importRequest = MultipartBody.builder()
+            .addPart('folderId', folderId.toString())
+            .addPart('importFile', 'file.json', MediaType.APPLICATION_JSON_TYPE, objectMapper.writeValueAsBytes(export))
+            .build()
+        ListResponse<Folder> response = POST("$FOLDERS_PATH$IMPORT_PATH$JSON_IMPORTER_NAMESPACE$JSON_IMPORTER_NAME$JSON_IMPORTER_VERSION", importRequest) as ListResponse
+        UUID importedFolderId = UUID.fromString(response.items.first().id)
+
+        then:
+        response.count == 1
+        response.items.size() == 1
+        response.items.first().label == 'Two terminologies folder'
+        importedFolderId
+
+        when:
+        ListResponse<Terminology> importedTerminologies = GET("$FOLDERS_PATH/$importedFolderId$TERMINOLOGIES_PATH", ListResponse)
+        UUID importedTerminology1Id = UUID.fromString(importedTerminologies.items.find {it.label == 'First Terminology'}.id)
+        UUID importedTerminology2Id = UUID.fromString(importedTerminologies.items.find {it.label == 'Second Terminology'}.id)
+
+        then:
+        importedTerminologies.count == 2
+        importedTerminologies.items.find {it.label == 'First Terminology'}
+        importedTerminologies.items.find {it.label == 'Second Terminology'}
+
+        when:
+        ListResponse<Term> importedTerms = GET("$TERMINOLOGIES_PATH/$importedTerminology1Id$TERMS_PATH", ListResponse)
+
+        then:
+        importedTerms.count == 1
+        importedTerms.items.first().code == 'TEST'
+        importedTerms.items.first().definition == 'first term'
+
+        when:
+        importedTerms = GET("$TERMINOLOGIES_PATH/$importedTerminology2Id$TERMS_PATH", ListResponse)
+
+        then:
+        importedTerms.count == 1
+        importedTerms.items.first().code == 'TEST'
+        importedTerms.items.first().definition == 'second term'
+
+        when:
+        ListResponse<TermRelationshipType> importedTermRelationshipTypes = GET("$TERMINOLOGIES_PATH/$importedTerminology1Id$TERM_RELATIONSHIP_TYPES", ListResponse)
+
+        then:
+        importedTermRelationshipTypes.count == 1
+        importedTermRelationshipTypes.items.first().label == 'TEST'
+        importedTermRelationshipTypes.items.first().childRelationship == true
+
+        when:
+        importedTermRelationshipTypes = GET("$TERMINOLOGIES_PATH/$importedTerminology2Id$TERM_RELATIONSHIP_TYPES", ListResponse)
+
+        then:
+        importedTermRelationshipTypes.count == 1
+        importedTermRelationshipTypes.items.first().label == 'TEST'
+        importedTermRelationshipTypes.items.first().childRelationship == false
+
+        when:
+        ListResponse<TermRelationship> importedTermRelationships = GET("$TERMINOLOGIES_PATH/$importedTerminology1Id$TERM_RELATIONSHIP_PATH", ListResponse)
+
+        then:
+        importedTermRelationships.count == 1
+        importedTermRelationships.items.first().sourceTerm.code == 'TEST'
+        importedTermRelationships.items.first().targetTerm.code == 'TEST'
+        importedTermRelationships.items.first().relationshipType.label == 'TEST'
+
+        when:
+        importedTermRelationships = GET("$TERMINOLOGIES_PATH/$importedTerminology2Id$TERM_RELATIONSHIP_PATH", ListResponse)
+
+        then:
+        importedTermRelationships.count == 1
+        importedTermRelationships.items.first().sourceTerm.code == 'TEST'
+        importedTermRelationships.items.first().targetTerm.code == 'TEST'
+        importedTermRelationships.items.first().relationshipType.label == 'TEST'
     }
 }

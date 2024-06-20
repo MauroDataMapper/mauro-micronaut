@@ -80,6 +80,7 @@ class Folder extends Model {
     List<DataModel> dataModels = []
 
     @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'terminology')
+    @JsonIgnore // have to parse separately due to internal references
     List<Terminology> terminologies = []
 
     @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'codeSet')
