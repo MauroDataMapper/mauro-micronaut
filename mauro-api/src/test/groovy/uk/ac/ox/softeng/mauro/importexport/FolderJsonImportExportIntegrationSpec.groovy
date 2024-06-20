@@ -79,44 +79,44 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
         json
         Map parsedJson = jsonSlurper.parseText(json) as Map
         parsedJson.exportMetadata
-        parsedJson.folders
-        parsedJson.folders.dataModels.size() == 1
-        parsedJson.folders.dataModels[0].id[0] == dataModelId.toString()
-        parsedJson.folders.dataModels[0].label[0] == 'Test data model'
-        parsedJson.folders.dataModels[0].dataTypes.size() == 1
-        parsedJson.folders.dataModels[0].dataTypes[0].label[0] == 'Test data type'
-        parsedJson.folders.dataModels[0].dataTypes[0].id[0] == dataTypeId.toString()
-        parsedJson.folders.dataModels[0].dataClasses.size() == 1
-        List<DataClass> dataClasses = parsedJson.folders.dataModels[0].dataClasses[0]
+        parsedJson.folder
+        parsedJson.folder.dataModels.size() == 1
+        parsedJson.folder.dataModels[0].id == dataModelId.toString()
+        parsedJson.folder.dataModels[0].label == 'Test data model'
+        parsedJson.folder.dataModels[0].dataTypes.size() == 1
+        parsedJson.folder.dataModels[0].dataTypes[0].label == 'Test data type'
+        parsedJson.folder.dataModels[0].dataTypes[0].id == dataTypeId.toString()
+        parsedJson.folder.dataModels[0].dataClasses.size() == 2
+        List<DataClass> dataClasses = parsedJson.folder.dataModels[0].dataClasses
         dataClasses.label.sort().collect { it.toString() } == ['TEST-1', 'TEST-2']
         dataClasses.id.sort().collect { it.toString() } == [ dataClass1Id.toString(), dataClass2Id.toString()].sort()
 
-        parsedJson.folders.metadata.size() == 1
-        parsedJson.folders.metadata[0].id[0] == metadataResponse.id.toString()
-        parsedJson.folders.summaryMetadata.size() == 1
-        parsedJson.folders.summaryMetadata[0].id[0] == summaryMetadataResponse.id.toString()
-        parsedJson.folders.summaryMetadata[0].summaryMetadataReports.size() == 1
-        parsedJson.folders.summaryMetadata[0].summaryMetadataReports[0].id[0] == reportResponse.id.toString()
+        parsedJson.folder.metadata.size() == 1
+        parsedJson.folder.metadata[0].id == metadataResponse.id.toString()
+        parsedJson.folder.summaryMetadata.size() == 1
+        parsedJson.folder.summaryMetadata[0].id == summaryMetadataResponse.id.toString()
+        parsedJson.folder.summaryMetadata[0].summaryMetadataReports.size() == 1
+        parsedJson.folder.summaryMetadata[0].summaryMetadataReports[0].id == reportResponse.id.toString()
 
-        parsedJson.folders.annotations.size() == 1
-        parsedJson.folders.annotations[0].id[0] == annotation.id.toString()
-        List<Annotation> childAnnotations = parsedJson.folders.annotations[0].childAnnotations[0]
+        parsedJson.folder.annotations.size() == 1
+        parsedJson.folder.annotations[0].id == annotation.id.toString()
+        List<Annotation> childAnnotations = parsedJson.folder.annotations[0].childAnnotations
         childAnnotations.size() == 1
         childAnnotations[0].id == childAnnotation.id.toString()
 
-        parsedJson.folders.terminologies.size() == 1
-        parsedJson.folders.terminologies[0].id[0] == terminology.id.toString()
+        parsedJson.folder.terminologies.size() == 1
+        parsedJson.folder.terminologies[0].id == terminology.id.toString()
 
-        List<TermRelationshipType> termRelationshipTypes = parsedJson.folders.terminologies[0].termRelationshipTypes
+        List<TermRelationshipType> termRelationshipTypes = parsedJson.folder.terminologies[0].termRelationshipTypes
         termRelationshipTypes.size() == 1
-        termRelationshipTypes[0].id[0] == termRelationshipType.id.toString()
-        List<Terminology> terminologies = parsedJson.folders.terminologies
+        termRelationshipTypes[0].id == termRelationshipType.id.toString()
+        List<Terminology> terminologies = parsedJson.folder.terminologies
         terminologies.size() == 1
         terminologies[0].terms.size() == 1
-        terminologies[0].terms[0].id[0] == term.id.toString()
+        terminologies[0].terms[0].id == term.id.toString()
 
-        parsedJson.folders.codeSets.size() == 1
-        parsedJson.folders.codeSets[0].id[0] == codeSet.id.toString()
+        parsedJson.folder.codeSets.size() == 1
+        parsedJson.folder.codeSets[0].id == codeSet.id.toString()
     }
 
     void 'get export folder -should export folder, with nested data and deep nesting of child folders'() {
@@ -137,21 +137,21 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
 
         Map parsedJson = jsonSlurper.parseText(json) as Map
         parsedJson.exportMetadata
-        parsedJson.folders
-        parsedJson.folders.dataModels.size() == 1
-        parsedJson.folders.dataModels[0].id[0] == dataModelId.toString()
+        parsedJson.folder
+        parsedJson.folder.dataModels.size() == 1
+        parsedJson.folder.dataModels[0].id == dataModelId.toString()
 
-        parsedJson.folders.childFolders.size() == 1
-        parsedJson.folders.childFolders[0].id[0] == childFolderId.toString()
-        parsedJson.folders.childFolders[0].dataModels.size() == 1
-        parsedJson.folders.childFolders[0].dataModels[0].id[0] == childDataModelId.toString()
-        parsedJson.folders.childFolders[0].dataModels[0].dataTypes.size() == 1
-        parsedJson.folders.childFolders[0].dataModels[0].dataTypes[0].id[0] == childDataModelTypeId.toString()
+        parsedJson.folder.childFolders.size() == 1
+        parsedJson.folder.childFolders[0].id == childFolderId.toString()
+        parsedJson.folder.childFolders[0].dataModels.size() == 1
+        parsedJson.folder.childFolders[0].dataModels[0].id == childDataModelId.toString()
+        parsedJson.folder.childFolders[0].dataModels[0].dataTypes.size() == 1
+        parsedJson.folder.childFolders[0].dataModels[0].dataTypes[0].id == childDataModelTypeId.toString()
 
-        parsedJson.folders.childFolders[0].childFolders.size() == 1
-        parsedJson.folders.childFolders[0].childFolders[0].id[0] == nestedChildFolderId.toString()
-        parsedJson.folders.childFolders[0].childFolders[0].dataModels.size() == 1
-        parsedJson.folders.childFolders[0].childFolders[0].dataModels[0].id[0] == nestedChildDataModelId.toString()
+        parsedJson.folder.childFolders[0].childFolders.size() == 1
+        parsedJson.folder.childFolders[0].childFolders[0].id == nestedChildFolderId.toString()
+        parsedJson.folder.childFolders[0].childFolders[0].dataModels.size() == 1
+        parsedJson.folder.childFolders[0].childFolders[0].dataModels[0].id == nestedChildDataModelId.toString()
     }
 
 
@@ -469,12 +469,12 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
         // also create two different term relationship types with label TEST
         UUID termRelationshipType1Id = UUID.fromString(POST("$TERMINOLOGIES_PATH/$terminology1Id$TERM_RELATIONSHIP_TYPES", [label: 'TEST', childRelationship: true]).id)
         UUID termRelationshipType2Id = UUID.fromString(POST("$TERMINOLOGIES_PATH/$terminology2Id$TERM_RELATIONSHIP_TYPES", [label: 'TEST', childRelationship: false]).id)
-        POST("$TERMINOLOGIES_PATH/$terminology1Id/termRelationships", [
+        POST("$TERMINOLOGIES_PATH/$terminology1Id$TERM_RELATIONSHIP_PATH", [
             relationshipType: [id: termRelationshipType1Id],
             sourceTerm: [id: term1Id],
             targetTerm: [id: term1Id]
         ])
-        POST("$TERMINOLOGIES_PATH/$terminology2Id/termRelationships", [
+        POST("$TERMINOLOGIES_PATH/$terminology2Id$TERM_RELATIONSHIP_PATH", [
             relationshipType: [id: termRelationshipType2Id],
             sourceTerm: [id: term2Id],
             targetTerm: [id: term2Id]
