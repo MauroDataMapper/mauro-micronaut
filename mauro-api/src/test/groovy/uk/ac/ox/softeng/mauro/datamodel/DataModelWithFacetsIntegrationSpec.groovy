@@ -77,7 +77,6 @@ class DataModelWithFacetsIntegrationSpec extends CommonDataSpec {
         childAnnotationId = childResp.id
     }
 
-   
     void 'test get data model with facets - should return all nested facets'() {
         when:
         DataModel retrieved = (DataModel) GET("$DATAMODELS_PATH/$dataModelId", DataModel)

@@ -48,7 +48,7 @@ class AnnotationController extends FacetController<Annotation> {
     ListResponse<Annotation> list(@NonNull String domainType, @NonNull UUID domainId) {
         AdministeredItem administeredItem = findAdministeredItem(domainType, domainId)
         accessControlService.checkRole(Role.READER, administeredItem)
-        ListResponse.from(administeredItem.annotations)
+        ListResponse.from(!administeredItem.annotations ? [] : administeredItem.annotations)
     }
 
     @Get('/{domainType}/{domainId}/annotations/{id}')

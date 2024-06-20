@@ -1,25 +1,24 @@
 package uk.ac.ox.softeng.mauro.test.plugin.importer.json
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import io.micronaut.test.extensions.spock.annotation.MicronautTest
+import jakarta.inject.Inject
+import spock.lang.Specification
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.export.ExportModel
-import uk.ac.ox.softeng.mauro.plugin.MauroPlugin
+import uk.ac.ox.softeng.mauro.plugin.JsonPluginConstants
 import uk.ac.ox.softeng.mauro.plugin.MauroPluginService
 import uk.ac.ox.softeng.mauro.plugin.importer.DataModelImporterPlugin
 import uk.ac.ox.softeng.mauro.plugin.importer.FileImportParameters
 import uk.ac.ox.softeng.mauro.plugin.importer.FileParameter
 import uk.ac.ox.softeng.mauro.test.domain.datamodel.DataModelSpec
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import io.micronaut.test.extensions.spock.annotation.MicronautTest
-import jakarta.inject.Inject
-import spock.lang.Specification
-
 @MicronautTest
 class JsonDataModelImporterPluginSpec extends Specification  {
 
-    static String NAMESPACE = "uk.ac.ox.softeng.mauro.plugin.importer.json"
-    static String NAME = "JsonDataModelImporterPlugin"
-    static String VERSION = "4.0.0"
+    static String NAMESPACE = JsonPluginConstants.NAMESPACE
+    static String NAME = JsonPluginConstants.JSON_DATA_MODEL_NAME
+    static String VERSION = JsonPluginConstants.VERSION
 
     @Inject
     ObjectMapper objectMapper

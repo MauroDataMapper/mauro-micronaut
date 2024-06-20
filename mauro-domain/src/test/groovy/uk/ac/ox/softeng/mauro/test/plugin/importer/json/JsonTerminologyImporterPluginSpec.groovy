@@ -2,6 +2,7 @@ package uk.ac.ox.softeng.mauro.test.plugin.importer.json
 
 import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
 import uk.ac.ox.softeng.mauro.export.ExportModel
+import uk.ac.ox.softeng.mauro.plugin.JsonPluginConstants
 import uk.ac.ox.softeng.mauro.plugin.MauroPluginService
 import uk.ac.ox.softeng.mauro.plugin.importer.FileImportParameters
 import uk.ac.ox.softeng.mauro.plugin.importer.FileParameter
@@ -16,9 +17,9 @@ import spock.lang.Specification
 @MicronautTest
 class JsonTerminologyImporterPluginSpec extends Specification  {
 
-    static String NAMESPACE = "uk.ac.ox.softeng.mauro.plugin.importer.json"
-    static String NAME = "JsonTerminologyImporterPlugin"
-    static String VERSION = "4.0.0"
+    static String NAMESPACE = JsonPluginConstants.NAMESPACE
+    static String NAME = JsonPluginConstants.JSON_TERMINOLOGY_NAME
+    static String VERSION = JsonPluginConstants.VERSION
 
     @Inject
     ObjectMapper objectMapper

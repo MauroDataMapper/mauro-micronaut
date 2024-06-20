@@ -3,6 +3,7 @@ package uk.ac.ox.softeng.mauro.persistence.cache
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.cache.annotation.CacheConfig
+import io.micronaut.core.annotation.Nullable
 import jakarta.inject.Singleton
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
@@ -38,7 +39,12 @@ class ModelCacheableRepository<M extends Model> extends AdministeredItemCacheabl
         repository.readAll()
     }
 
-    // Cacheable Model Repository definitions
+    @Override
+    @Nullable
+    List<M> findAllByFolderId(UUID folderId) {
+        return null
+    }
+// Cacheable Model Repository definitions
 
     @CompileStatic
     @Singleton

@@ -144,10 +144,4 @@ class DataModelController extends ModelController<DataModel> {
         otherDataModel.setAssociations()
         dataModel.diff(otherDataModel)
     }
-
-    private void handleNotFoundError(DataModel dataModel, UUID id) {
-        if (!dataModel) {
-            throw new HttpStatusException(HttpStatus.NOT_FOUND, "Model not found, $id")
-        }
-    }
 }

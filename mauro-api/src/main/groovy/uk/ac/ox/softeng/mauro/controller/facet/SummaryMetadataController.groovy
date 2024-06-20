@@ -46,7 +46,7 @@ class SummaryMetadataController extends FacetController<SummaryMetadata> {
     ListResponse<SummaryMetadata> list(String domainType, UUID domainId) {
         AdministeredItem administeredItem = findAdministeredItem(domainType, domainId)
         accessControlService.checkRole(Role.READER, administeredItem)
-        ListResponse.from(administeredItem.summaryMetadata)
+        ListResponse.from(!administeredItem.summaryMetadata ? [] : administeredItem.summaryMetadata)
     }
 
     @Get('/{id}')
@@ -64,7 +64,7 @@ class SummaryMetadataController extends FacetController<SummaryMetadata> {
 
     @Post
     SummaryMetadata create(@NonNull String domainType, @NonNull UUID domainId, @Body @NonNull SummaryMetadata summaryMetadata) {
-       super.create(domainType, domainId, summaryMetadata)
+        super.create(domainType, domainId, summaryMetadata)
     }
 
     @Put('/{id}')

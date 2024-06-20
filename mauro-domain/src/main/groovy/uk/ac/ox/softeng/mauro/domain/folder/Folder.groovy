@@ -1,23 +1,18 @@
 package uk.ac.ox.softeng.mauro.domain.folder
 
-import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
-
 import com.fasterxml.jackson.annotation.JsonIgnore
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties
-import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
 import groovy.transform.CompileStatic
-import io.micronaut.data.annotation.Indexes
+import groovy.transform.MapConstructor
 import io.micronaut.core.annotation.Introspected
 import io.micronaut.core.annotation.Nullable
-import io.micronaut.data.annotation.Index
-import io.micronaut.data.annotation.MappedEntity
-import io.micronaut.data.annotation.MappedProperty
-import io.micronaut.data.annotation.Relation
+import io.micronaut.data.annotation.*
 import jakarta.persistence.Transient
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
+import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.model.Model
-
-import jakarta.validation.constraints.Null
+import uk.ac.ox.softeng.mauro.domain.terminology.CodeSet
+import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
 
 /**
  * A folder is a container for models, and, in the case of a VersionedFolder, may be a model in its own right.
@@ -28,11 +23,11 @@ import jakarta.validation.constraints.Null
  * A folder may also specify user access control rules for its contents - the user groups with permission to read
  * or write models within.  Folder privileges propagate to the folders below.
  */
-
 @CompileStatic
 @Introspected
 @MappedEntity(schema = 'core')
 @Indexes([@Index(columns = ['parent_folder_id'])])
+@MapConstructor(includeSuperFields = true, includeSuperProperties = true, noArg = true)
 class Folder extends Model {
 
     @JsonIgnore
@@ -81,6 +76,16 @@ class Folder extends Model {
     @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'parentFolder')
     List<Folder> childFolders = []
 
+    @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'dataModel')
+    List<DataModel> dataModels = []
+
+    @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'terminology')
+    @JsonIgnore // have to parse separately due to internal references
+    List<Terminology> terminologies = []
+
+    @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'codeSet')
+    List<CodeSet> codeSets = []
+
     @Override
     @Transient
     @JsonIgnore
@@ -124,6 +129,18 @@ class Folder extends Model {
             childFolder.parentFolder = this
             childFolder.setAssociations()
         }
+        dataModels.each {dataModel ->
+            dataModel.folder = this
+            dataModel.setAssociations()
+        }
+        terminologies.each {terminology ->
+            terminology.folder = this
+            terminology.setAssociations()
+        }
+        codeSets.each {codeSet ->
+            codeSet.folder = this
+            codeSet.setAssociations()
+        }
     }
 
     @Override
@@ -131,5 +148,20 @@ class Folder extends Model {
     @JsonIgnore
     List<List<AdministeredItem>> getAllAssociations() {
         [childFolders] as List<List<AdministeredItem>>
+    }
+
+    /****
+     * Methods for building a tree-like DSL
+     */
+
+    static Folder build(
+            Map args,
+            @DelegatesTo(value = Folder, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
+        new Folder(args).tap(closure)
+    }
+
+    static Folder build(
+            @DelegatesTo(value = Folder, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
+        build [:], closure
     }
 }

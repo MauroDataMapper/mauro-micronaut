@@ -37,4 +37,9 @@ class CodeSetContentRepository extends ModelContentRepository<CodeSet> {
         log.debug("CSCR: removed $result codeSet $administeredItem.id")
         result
     }
+
+    @Override
+    CodeSet saveWithContent(@NonNull CodeSet codeSet) {
+        (CodeSet) super.saveWithContent(codeSet)
+    }
 }

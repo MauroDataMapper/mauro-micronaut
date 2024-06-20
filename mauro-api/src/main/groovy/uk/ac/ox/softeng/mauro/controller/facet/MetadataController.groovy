@@ -34,6 +34,6 @@ class MetadataController extends FacetController<Metadata> {
     ListResponse<Metadata> list(String domainType, UUID domainId) {
         AdministeredItem administeredItem = findAdministeredItem(domainType, domainId)
         accessControlService.checkRole(Role.READER, administeredItem)
-        ListResponse.from(administeredItem.metadata)
+        ListResponse.from(!administeredItem.metadata ? []: administeredItem.metadata)
     }
 }

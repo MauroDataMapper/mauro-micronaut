@@ -5,15 +5,21 @@ import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpStatus
+import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.*
+import io.micronaut.http.server.multipart.MultipartBody
 import io.micronaut.http.server.types.files.StreamedFile
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
+import io.micronaut.scheduling.TaskExecutors
+import io.micronaut.scheduling.annotation.ExecuteOn
 import io.micronaut.transaction.annotation.Transactional
+import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.controller.model.ModelController
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
-import uk.ac.ox.softeng.mauro.persistence.model.ModelContentRepository
+import uk.ac.ox.softeng.mauro.persistence.folder.FolderContentRepository
+import uk.ac.ox.softeng.mauro.plugin.exporter.ModelExporterPlugin
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @Slf4j
@@ -21,8 +27,10 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 @Controller('/folders')
 @Secured(SecurityRule.IS_AUTHENTICATED)
 class FolderController extends ModelController<Folder> {
+    @Inject
+    FolderContentRepository folderContentRepository
 
-    FolderController(FolderCacheableRepository folderRepository, ModelContentRepository<Folder> folderContentRepository) {
+    FolderController(FolderCacheableRepository folderRepository, FolderContentRepository folderContentRepository) {
         super(Folder, folderRepository, folderRepository, folderContentRepository)
     }
 
@@ -115,6 +123,19 @@ class FolderController extends ModelController<Folder> {
 
     @Get('/{id}/export{/namespace}{/name}{/version}')
     StreamedFile exportModel(UUID id, @Nullable String namespace, @Nullable String name, @Nullable String version) {
-        super.exportModel(id, namespace, name, version)
+        ModelExporterPlugin mauroPlugin = mauroPluginService.getPlugin(ModelExporterPlugin, namespace, name, version)
+        handlePluginNotFound(mauroPlugin, namespace, name)
+         Folder existing = folderContentRepository.findWithContentById(id)
+        StreamedFile streamedFile = exportedModelData(mauroPlugin, existing)
+        streamedFile
     }
+
+    @Transactional
+    @ExecuteOn(TaskExecutors.IO)
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @Post('/import/{namespace}/{name}{/version}')
+    ListResponse<Folder> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version) {
+       super.importModel(body, namespace, name, version)
+    }
+
 }

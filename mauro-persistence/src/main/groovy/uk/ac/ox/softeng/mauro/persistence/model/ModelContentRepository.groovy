@@ -8,6 +8,7 @@ import uk.ac.ox.softeng.mauro.domain.facet.Annotation
 import uk.ac.ox.softeng.mauro.domain.facet.Facet
 import uk.ac.ox.softeng.mauro.domain.facet.Metadata
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
+import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.model.Model
 import uk.ac.ox.softeng.mauro.domain.model.SummaryMetadataReport
@@ -80,12 +81,12 @@ class ModelContentRepository<M extends Model> extends AdministeredItemContentRep
 
     void saveAnnotations(List<AdministeredItem> items) {
         List<Annotation> annotations = []
-        items.each {item ->
+        items.each { item ->
             if (item.annotations) {
                 item.annotations.each {
                     updateMultiAwareData(item, it)
-                    if (it.childAnnotations){
-                        it.childAnnotations.forEach{child ->
+                    if (it.childAnnotations) {
+                        it.childAnnotations.forEach { child ->
                             updateMultiAwareData(item, child)
                             child.parentAnnotationId = it.id
                         }
@@ -95,6 +96,10 @@ class ModelContentRepository<M extends Model> extends AdministeredItemContentRep
                 annotationCacheableRepository.saveAll(annotations)
             }
         }
+    }
+
+    protected List<M> findAllModelsForFolder(ModelRepository modelRepository, Folder folder) {
+        modelRepository.findAllByFolderId(folder.id)
     }
 
     private void updateMultiAwareData(AdministeredItem item, Facet it) {

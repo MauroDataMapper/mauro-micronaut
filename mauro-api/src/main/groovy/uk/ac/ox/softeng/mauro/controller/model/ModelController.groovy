@@ -30,6 +30,7 @@ import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemRepository
 import uk.ac.ox.softeng.mauro.persistence.model.ModelContentRepository
+import uk.ac.ox.softeng.mauro.plugin.MauroPlugin
 import uk.ac.ox.softeng.mauro.plugin.MauroPluginService
 import uk.ac.ox.softeng.mauro.plugin.exporter.ModelExporterPlugin
 import uk.ac.ox.softeng.mauro.plugin.importer.FileParameter
@@ -168,7 +169,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         M copy = modelService.createNewBranchModelVersion(existing, createNewVersionData.branchName)
 
         M savedCopy = createEntity(copy.folder, copy)
-        savedCopy.allContents.each {AdministeredItem item ->
+        savedCopy.allContents.each { AdministeredItem item ->
             log.debug "*** Saving item [$item.id : $item.label] ***"
             updateCreationProperties(item)
             getRepository(item).save(item)
@@ -186,11 +187,11 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
 
     @NonNull
     AdministeredItemRepository getRepository(AdministeredItem item) {
-        administeredItemRepositories.find {it.handles(item.class)}
+        administeredItemRepositories.find { it.handles(item.class) }
     }
 
     <P extends ImportParameters> P readFromMultipartFormBody(MultipartBody body, Class<P> parametersClass) {
-        Map<String, Object> importMap = Flux.from(body).collectList().block().collectEntries {CompletedPart cp ->
+        Map<String, Object> importMap = Flux.from(body).collectList().block().collectEntries { CompletedPart cp ->
             if (cp instanceof CompletedFileUpload) {
                 return [cp.name, new FileParameter(cp.filename, cp.contentType.toString(), cp.bytes)]
             } else {
@@ -201,29 +202,20 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     }
 
     StreamedFile exportModel(UUID modelId, String namespace, String name, @Nullable String version) {
-
         ModelExporterPlugin mauroPlugin = mauroPluginService.getPlugin(ModelExporterPlugin, namespace, name, version)
-
-        if(!mauroPlugin) {
-            throw new HttpStatusException(HttpStatus.BAD_REQUEST, "Model export plugin with namespace: ${namespace}, name: ${name} not found")
-        }
+        handlePluginNotFound(mauroPlugin, namespace, name)
 
         M existing = modelContentRepository.findWithContentById(modelId)
         existing.setAssociations()
 
-        byte[] fileContents =  mauroPlugin.exportModel(existing)
-        String filename = mauroPlugin.getFileName(existing)
-        new StreamedFile(new ByteArrayInputStream(fileContents), MediaType.APPLICATION_JSON_TYPE).attach(filename)
-
+        StreamedFile export = exportedModelData(mauroPlugin, existing)
+        export
     }
 
     ListResponse<M> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version) {
 
         ModelImporterPlugin mauroPlugin = mauroPluginService.getPlugin(ModelImporterPlugin, namespace, name, version)
-
-        if(!mauroPlugin) {
-            throw new HttpStatusException(HttpStatus.BAD_REQUEST, "Model import plugin with namespace: ${namespace}, name: ${name} not found")
-        }
+        handlePluginNotFound(mauroPlugin, namespace, name)
 
         ImportParameters importParameters = readFromMultipartFormBody(body, mauroPlugin.importParametersClass())
 
@@ -242,5 +234,24 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
             show(model.id)
         }
         ListResponse.from(smallerResponse)
+    }
+
+    protected void handlePluginNotFound(MauroPlugin mauroPlugin, String namespace, String name) {
+        if (!mauroPlugin) {
+            throw new HttpStatusException(HttpStatus.BAD_REQUEST, "Model import plugin with namespace: ${namespace}, name: ${name} not found")
+        }
+    }
+
+
+    protected StreamedFile exportedModelData(ModelExporterPlugin mauroPlugin, M existing) {
+        byte[] fileContents = mauroPlugin.exportModel(existing)
+        String filename = mauroPlugin.getFileName(existing)
+        new StreamedFile(new ByteArrayInputStream(fileContents), MediaType.APPLICATION_JSON_TYPE).attach(filename)
+
+    }
+    protected void handleNotFoundError(M model, UUID id) {
+        if (!model) {
+            throw new HttpStatusException(HttpStatus.NOT_FOUND, "Model not found, $id")
+        }
     }
 }
