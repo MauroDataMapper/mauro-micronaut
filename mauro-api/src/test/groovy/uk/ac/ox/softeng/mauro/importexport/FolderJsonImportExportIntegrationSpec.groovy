@@ -459,11 +459,26 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
 
     void 'export and import folder with two terminologies with overlapping codes'() {
         given:
-        UUID folderId = UUID.fromString(POST('/folders', [label: 'Two terminologies folder']).id)
-        UUID terminology1Id = UUID.fromString(POST("/folders/$folderId/terminologies", [label: 'First Terminology']).id)
-        UUID term1Id = UUID.fromString(POST("/terminologies/$terminology1Id/terms", [code: 'TEST', definition: 'first term']).id)
-        UUID terminology2Id = UUID.fromString(POST("/folders/$folderId/terminologies", [label: 'Second Terminology']).id)
-        UUID term2Id = UUID.fromString(POST("/terminologies/$terminology2Id/terms", [code: 'TEST', definition: 'second term']).id)
+        // create two terminologies each with different Terms with code TEST
+        UUID folderId = UUID.fromString(POST("$FOLDERS_PATH", [label: 'Two terminologies folder']).id)
+        UUID terminology1Id = UUID.fromString(POST("$FOLDERS_PATH/$folderId$TERMINOLOGIES_PATH", [label: 'First Terminology']).id)
+        UUID term1Id = UUID.fromString(POST("$TERMINOLOGIES_PATH/$terminology1Id$TERMS_PATH", [code: 'TEST', definition: 'first term']).id)
+        UUID terminology2Id = UUID.fromString(POST("$FOLDERS_PATH/$folderId$TERMINOLOGIES_PATH", [label: 'Second Terminology']).id)
+        UUID term2Id = UUID.fromString(POST("$TERMINOLOGIES_PATH/$terminology2Id$TERMS_PATH", [code: 'TEST', definition: 'second term']).id)
+
+        // also create two different term relationship types with label TEST
+        UUID termRelationshipType1Id = UUID.fromString(POST("$TERMINOLOGIES_PATH/$terminology1Id$TERM_RELATIONSHIP_TYPES", [label: 'TEST', childRelationship: true]).id)
+        UUID termRelationshipType2Id = UUID.fromString(POST("$TERMINOLOGIES_PATH/$terminology2Id$TERM_RELATIONSHIP_TYPES", [label: 'TEST', childRelationship: false]).id)
+        POST("$TERMINOLOGIES_PATH/$terminology1Id/termRelationships", [
+            relationshipType: [id: termRelationshipType1Id],
+            sourceTerm: [id: term1Id],
+            targetTerm: [id: term1Id]
+        ])
+        POST("$TERMINOLOGIES_PATH/$terminology2Id/termRelationships", [
+            relationshipType: [id: termRelationshipType2Id],
+            sourceTerm: [id: term2Id],
+            targetTerm: [id: term2Id]
+        ])
 
         when:
         Map<String, Object> export = GET("$FOLDERS_PATH/$folderId$EXPORT_PATH$JSON_EXPORTER_NAMESPACE$JSON_EXPORTER_NAME$JSON_EXPORTER_VERSION")
@@ -474,6 +489,16 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
         export.folder.terminologies.find {it.label == 'First Terminology'}.terms.first().definition == 'first term'
         export.folder.terminologies.find {it.label == 'Second Terminology'}.terms.first().code == 'TEST'
         export.folder.terminologies.find {it.label == 'Second Terminology'}.terms.first().definition == 'second term'
+        export.folder.terminologies.find {it.label == 'First Terminology'}.termRelationshipTypes.first().label == 'TEST'
+        export.folder.terminologies.find {it.label == 'First Terminology'}.termRelationshipTypes.first().childRelationship == true
+        export.folder.terminologies.find {it.label == 'Second Terminology'}.termRelationshipTypes.first().label == 'TEST'
+        export.folder.terminologies.find {it.label == 'Second Terminology'}.termRelationshipTypes.first().childRelationship == false
+        export.folder.terminologies.find {it.label == 'First Terminology'}.termRelationships.first().sourceTerm == 'TEST'
+        export.folder.terminologies.find {it.label == 'First Terminology'}.termRelationships.first().targetTerm == 'TEST'
+        export.folder.terminologies.find {it.label == 'First Terminology'}.termRelationships.first().relationshipType == 'TEST'
+        export.folder.terminologies.find {it.label == 'Second Terminology'}.termRelationships.first().sourceTerm == 'TEST'
+        export.folder.terminologies.find {it.label == 'Second Terminology'}.termRelationships.first().targetTerm == 'TEST'
+        export.folder.terminologies.find {it.label == 'Second Terminology'}.termRelationships.first().relationshipType == 'TEST'
 
         when:
         MultipartBody importRequest = MultipartBody.builder()
@@ -514,5 +539,39 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
         importedTerms.count == 1
         importedTerms.items.first().code == 'TEST'
         importedTerms.items.first().definition == 'second term'
+
+        when:
+        ListResponse<TermRelationshipType> importedTermRelationshipTypes = GET("$TERMINOLOGIES_PATH/$importedTerminology1Id$TERM_RELATIONSHIP_TYPES", ListResponse)
+
+        then:
+        importedTermRelationshipTypes.count == 1
+        importedTermRelationshipTypes.items.first().label == 'TEST'
+        importedTermRelationshipTypes.items.first().childRelationship == true
+
+        when:
+        importedTermRelationshipTypes = GET("$TERMINOLOGIES_PATH/$importedTerminology2Id$TERM_RELATIONSHIP_TYPES", ListResponse)
+
+        then:
+        importedTermRelationshipTypes.count == 1
+        importedTermRelationshipTypes.items.first().label == 'TEST'
+        importedTermRelationshipTypes.items.first().childRelationship == false
+
+        when:
+        ListResponse<TermRelationship> importedTermRelationships = GET("$TERMINOLOGIES_PATH/$importedTerminology1Id$TERM_RELATIONSHIP_PATH", ListResponse)
+
+        then:
+        importedTermRelationships.count == 1
+        importedTermRelationships.items.first().sourceTerm.code == 'TEST'
+        importedTermRelationships.items.first().targetTerm.code == 'TEST'
+        importedTermRelationships.items.first().relationshipType.label == 'TEST'
+
+        when:
+        importedTermRelationships = GET("$TERMINOLOGIES_PATH/$importedTerminology2Id$TERM_RELATIONSHIP_PATH", ListResponse)
+
+        then:
+        importedTermRelationships.count == 1
+        importedTermRelationships.items.first().sourceTerm.code == 'TEST'
+        importedTermRelationships.items.first().targetTerm.code == 'TEST'
+        importedTermRelationships.items.first().relationshipType.label == 'TEST'
     }
 }
