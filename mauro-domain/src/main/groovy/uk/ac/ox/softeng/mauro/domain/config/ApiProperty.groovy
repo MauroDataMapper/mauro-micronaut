@@ -8,11 +8,10 @@ import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.annotation.Index
 import io.micronaut.data.annotation.Indexes
 import io.micronaut.data.annotation.MappedEntity
+import io.micronaut.data.annotation.MappedProperty
 import jakarta.validation.constraints.NotBlank
 import uk.ac.ox.softeng.mauro.domain.model.Item
 import uk.ac.ox.softeng.mauro.domain.security.CatalogueUser
-
-import java.beans.Transient
 
 @CompileStatic
 @MappedEntity(schema = 'core')
@@ -24,7 +23,7 @@ class ApiProperty extends Item {
 
     String value
 
-    Boolean publiclyVisisble
+    Boolean publiclyVisible
 
     @Nullable
     @NotBlank
@@ -32,11 +31,12 @@ class ApiProperty extends Item {
 
     @Nullable
     @JsonAlias(['last_updated_by'])
+    @MappedProperty('last_updated_by')
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     CatalogueUser lastUpdatedBy
 
-    @Transient
-    String getLastUpdatedBy() {
-        lastUpdatedBy?.emailAddress
-    }
+//    @Transient
+//    String getLastUpdatedBy() {
+//        lastUpdatedBy?.emailAddress
+//    }
 }

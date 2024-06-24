@@ -20,7 +20,7 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @CompileStatic
 @Controller('/{domainType}/{domainId}/summaryMetadata')
-@Secured(SecurityRule.IS_AUTHENTICATED)
+@Secured(SecurityRule.IS_ANONYMOUS)
 class SummaryMetadataController extends FacetController<SummaryMetadata> {
     FacetCacheableRepository.SummaryMetadataCacheableRepository summaryMetadataRepository
 

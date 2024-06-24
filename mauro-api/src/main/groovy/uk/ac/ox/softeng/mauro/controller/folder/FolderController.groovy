@@ -19,7 +19,7 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 @Slf4j
 @CompileStatic
 @Controller('/folders')
-@Secured(SecurityRule.IS_AUTHENTICATED)
+@Secured(SecurityRule.IS_ANONYMOUS)
 class FolderController extends ModelController<Folder> {
 
     FolderController(FolderCacheableRepository folderRepository, ModelContentRepository<Folder> folderContentRepository) {

@@ -34,7 +34,7 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 @Slf4j
 @Controller
 @CompileStatic
-@Secured(SecurityRule.IS_AUTHENTICATED)
+@Secured(SecurityRule.IS_ANONYMOUS)
 class DataModelController extends ModelController<DataModel> {
 
     DataModelCacheableRepository dataModelRepository

@@ -24,7 +24,7 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 @CompileStatic
 @Slf4j
 @Controller('/{domainType}/{domainId}/summaryMetadata/{summaryMetadataId}/summaryMetadataReports')
-@Secured(SecurityRule.IS_AUTHENTICATED)
+@Secured(SecurityRule.IS_ANONYMOUS)
 class SummaryMetadataReportController extends ItemController<SummaryMetadataReport> {
 
     @Inject

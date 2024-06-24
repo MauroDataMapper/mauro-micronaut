@@ -3,10 +3,7 @@ package uk.ac.ox.softeng.mauro.controller.security
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
-import io.micronaut.http.annotation.Body
-import io.micronaut.http.annotation.Controller
-import io.micronaut.http.annotation.Post
-import io.micronaut.http.annotation.Put
+import io.micronaut.http.annotation.*
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.authentication.AuthorizationException
 import io.micronaut.security.rules.SecurityRule
@@ -23,7 +20,7 @@ import uk.ac.ox.softeng.mauro.web.ChangePassword
 @CompileStatic
 @Slf4j
 @Controller
-@Secured(SecurityRule.IS_AUTHENTICATED)
+@Secured(SecurityRule.IS_ANONYMOUS)
 class CatalogueUserController extends ItemController<CatalogueUser> {
 
     CatalogueUserCacheableRepository catalogueUserRepository
@@ -111,5 +108,11 @@ class CatalogueUserController extends ItemController<CatalogueUser> {
         }
 
         existing
+    }
+
+    // todo Stub method to enable login with UI
+    @Get('/catalogueUsers/{id}/userPreferences')
+    String showUserPreferences(UUID id) {
+        ''
     }
 }

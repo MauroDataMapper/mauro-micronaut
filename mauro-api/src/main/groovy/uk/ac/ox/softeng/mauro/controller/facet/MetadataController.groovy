@@ -13,7 +13,7 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @CompileStatic
 @Controller('/{domainType}/{domainId}/metadata')
-@Secured(SecurityRule.IS_AUTHENTICATED)
+@Secured(SecurityRule.IS_ANONYMOUS)
 class MetadataController extends FacetController<Metadata> {
 
     /**

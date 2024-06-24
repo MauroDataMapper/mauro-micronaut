@@ -197,10 +197,28 @@ abstract class ItemCacheableRepository<I extends Item> implements ItemRepository
 
     @Singleton
     @CompileStatic
-    @CacheConfig(keyGenerator = StringCacheKeyGenerator)
+    @CacheConfig(cacheNames = 'api-property-cache', keyGenerator = StringCacheKeyGenerator)
     static class ApiPropertyCacheableRepository extends ItemCacheableRepository<ApiProperty> {
         ApiPropertyCacheableRepository(ApiPropertyRepository apiPropertyRepository) {
             super(apiPropertyRepository)
+        }
+
+        @Override
+        @CacheInvalidate(all = true) // clear the whole cache on any insert/update/delete
+        void invalidateCachedLookupById(String lookup, String domainType, UUID id) {
+            null
+        }
+
+        // todo cache doesn't distinguish between method names!
+
+        @Cacheable
+        List<ApiProperty> readByPubliclyVisibleTrue() {
+            ((ApiPropertyRepository) repository).readByPubliclyVisibleTrue()
+        }
+
+        @Cacheable
+        List<ApiProperty> readAll() {
+            ((ApiPropertyRepository) repository).readAll()
         }
     }
 
