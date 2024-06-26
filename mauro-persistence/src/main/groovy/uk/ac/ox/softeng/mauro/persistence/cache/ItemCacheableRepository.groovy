@@ -199,6 +199,10 @@ abstract class ItemCacheableRepository<I extends Item> implements ItemRepository
     @CompileStatic
     @CacheConfig(cacheNames = 'api-property-cache', keyGenerator = StringCacheKeyGenerator)
     static class ApiPropertyCacheableRepository extends ItemCacheableRepository<ApiProperty> {
+
+        static final String FIND_ALL_PUBLIC_API_PROPERTIES = 'findAllPublicApiProperties'
+        static final String FIND_ALL_API_PROPERTIES = 'findAllApiProperties'
+
         ApiPropertyCacheableRepository(ApiPropertyRepository apiPropertyRepository) {
             super(apiPropertyRepository)
         }
@@ -209,16 +213,20 @@ abstract class ItemCacheableRepository<I extends Item> implements ItemRepository
             null
         }
 
-        // todo cache doesn't distinguish between method names!
-
         @Cacheable
-        List<ApiProperty> readByPubliclyVisibleTrue() {
-            ((ApiPropertyRepository) repository).readByPubliclyVisibleTrue()
+        List<ApiProperty> cachedLookup(String lookup) {
+            switch (lookup) {
+                case FIND_ALL_PUBLIC_API_PROPERTIES -> ((ApiPropertyRepository) repository).findByPubliclyVisibleTrue()
+                case FIND_ALL_API_PROPERTIES -> ((ApiPropertyRepository) repository).findAll()
+            }
         }
 
-        @Cacheable
-        List<ApiProperty> readAll() {
-            ((ApiPropertyRepository) repository).readAll()
+        List<ApiProperty> findAllByPubliclyVisibleTrue() {
+            cachedLookup(FIND_ALL_PUBLIC_API_PROPERTIES)
+        }
+
+        List<ApiProperty> findAll() {
+            cachedLookup(FIND_ALL_API_PROPERTIES)
         }
     }
 

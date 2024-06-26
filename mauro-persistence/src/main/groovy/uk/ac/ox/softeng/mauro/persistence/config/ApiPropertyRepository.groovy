@@ -2,6 +2,7 @@ package uk.ac.ox.softeng.mauro.persistence.config
 
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.Nullable
+import io.micronaut.data.annotation.Join
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.model.query.builder.sql.Dialect
 import uk.ac.ox.softeng.mauro.domain.config.ApiProperty
@@ -17,8 +18,17 @@ abstract class ApiPropertyRepository implements ItemRepository<ApiProperty> {
     }
 
     @Nullable
-    abstract List<ApiProperty> readByPubliclyVisibleTrue()
+    @Join(value = 'catalogueUser', type = Join.Type.LEFT_FETCH)
+    @Join(value = 'lastUpdatedBy', type = Join.Type.LEFT_FETCH)
+    abstract ApiProperty findById(UUID id)
 
     @Nullable
-    abstract List<ApiProperty> readAll()
+    @Join(value = 'catalogueUser', type = Join.Type.LEFT_FETCH)
+    @Join(value = 'lastUpdatedBy', type = Join.Type.LEFT_FETCH)
+    abstract List<ApiProperty> findByPubliclyVisibleTrue()
+
+    @Nullable
+    @Join(value = 'catalogueUser', type = Join.Type.LEFT_FETCH)
+    @Join(value = 'lastUpdatedBy', type = Join.Type.LEFT_FETCH)
+    abstract List<ApiProperty> findAll()
 }

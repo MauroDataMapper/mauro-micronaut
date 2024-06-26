@@ -30,30 +30,25 @@ class ApiPropertyController extends ItemController<ApiProperty> {
 
     @Override
     List<String> getDisallowedProperties() {
-        super.getDisallowedProperties() + ['publiclyVisible', 'lastUpdatedBy']
-    }
-
-    @Override
-    List<String> getDisallowedCreateProperties() {
         super.getDisallowedProperties() + ['lastUpdatedBy']
     }
 
     @Get('/properties')
     ListResponse<ApiProperty> listPubliclyVisible() {
-        ListResponse.from(apiPropertyRepository.readByPubliclyVisibleTrue())
+        ListResponse.from(apiPropertyRepository.findAllByPubliclyVisibleTrue())
     }
 
     @Get('/admin/properties')
     ListResponse<ApiProperty> listAll() {
         accessControlService.checkAdministrator()
-        ListResponse.from(apiPropertyRepository.readAll())
+        ListResponse.from(apiPropertyRepository.findAll())
     }
 
     @Get('/admin/properties/{id}')
     ApiProperty show(UUID id) {
         accessControlService.checkAdministrator()
 
-        apiPropertyRepository.readById(id)
+        apiPropertyRepository.findById(id)
     }
 
     @Post('/admin/properties')

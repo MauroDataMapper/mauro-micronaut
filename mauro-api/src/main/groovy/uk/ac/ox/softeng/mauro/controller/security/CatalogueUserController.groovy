@@ -73,7 +73,6 @@ class CatalogueUserController extends ItemController<CatalogueUser> {
     @Put('/catalogueUsers/{id}')
     CatalogueUser update(@NonNull UUID id, @Body @NonNull CatalogueUser catalogueUser) {
         log.info 'Request to update CatalogueUser by ID'
-        cleanBody(catalogueUser)
 
         accessControlService.checkAuthenticated()
 
