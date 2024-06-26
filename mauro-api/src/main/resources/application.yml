@@ -30,39 +30,41 @@ micronaut:
         path: '/authentication/logout'
         get-allowed: true
     reject-not-found: false
-
-#  caches:
-#    items-cache:
-#      maximum-size: 100
-ehcache:
   caches:
     items-cache:
-      enabled: true
-      heap:
-        max-items: 10000
-        size-of-max-object-size: 1000000
-#netty:
-#  default:
-#    allocator:
-#      max-order: 3
+      initial-capacity: 10000
+      maximum-weight: 1_000_000_000
+      expire-after-write: 1h
+      record-stats: true
+    security-cache:
+      initial-capacity: 10000
+      maximum-weight: 1_000_000_000
+      expire-after-write: 1h
+      record-stats: true
+    api-property-cache:
+      initial-capacity: 1000
+      maximum-weight: 1_000_000_000
+      expire-after-write: 1h
+      record-stats: true
+
 endpoints:
   routes:
     enabled: true
-    sensitive: false
+    sensitive: true
   beans:
     enabled: true
-    sensitive: false
+    sensitive: true
   flyway:
     enabled: true
-    sensitive: false
+    sensitive: true
   caches:
     enabled: true
-    sensitive: false
+    sensitive: true
 
 jackson:
   serialization:
     writeDatesAsTimestamps: false
-# JDBC configuration needed for Flyway
+
 datasources:
   default:
     url: jdbc:postgresql://localhost:5432/sandbox
@@ -71,18 +73,7 @@ datasources:
     dialect: POSTGRES
     db-type: postgres
     driver-class-name: org.postgresql.Driver
-r2dbc:
-  datasources:
-    default:
-      url: r2dbc:pool://localhost:5432/sandbox
-      username: sandbox
-      password: sandbox
-      schema-generate: none
-      dialect: POSTGRES
-      db-type: postgres
-      options:
-        driver: pool
-        protocol: postgres
+
 flyway:
   datasources:
     default:
@@ -95,6 +86,7 @@ flyway:
         - terminology
         - datamodel
         - security
+
 javamail:
   authentication:
     username: $$username$$ # Replace me!
