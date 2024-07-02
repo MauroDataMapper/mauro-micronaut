@@ -3,10 +3,7 @@ package uk.ac.ox.softeng.mauro.controller.security
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
-import io.micronaut.http.annotation.Body
-import io.micronaut.http.annotation.Controller
-import io.micronaut.http.annotation.Post
-import io.micronaut.http.annotation.Put
+import io.micronaut.http.annotation.*
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.authentication.AuthorizationException
 import io.micronaut.security.rules.SecurityRule
@@ -23,7 +20,7 @@ import uk.ac.ox.softeng.mauro.web.ChangePassword
 @CompileStatic
 @Slf4j
 @Controller
-@Secured(SecurityRule.IS_AUTHENTICATED)
+@Secured(SecurityRule.IS_ANONYMOUS)
 class CatalogueUserController extends ItemController<CatalogueUser> {
 
     CatalogueUserCacheableRepository catalogueUserRepository
@@ -43,7 +40,8 @@ class CatalogueUserController extends ItemController<CatalogueUser> {
 
     @Post('/admin/catalogueUsers/adminRegister')
     CatalogueUser adminRegister(@Body @NonNull CatalogueUser newUser) {
-        log.debug 'Request to register a new user by admin'
+        log.info 'Request to register a new user by admin'
+        cleanBody(newUser)
 
         accessControlService.checkAdministrator()
 
@@ -60,7 +58,7 @@ class CatalogueUserController extends ItemController<CatalogueUser> {
 
     @Put('/catalogueUsers/currentUser/changePassword')
     CatalogueUser changePassword(@Body @NonNull ChangePassword changePasswordRequest) {
-        log.debug 'Request by user to change own password'
+        log.info 'Request by user to change own password'
 
         accessControlService.checkAuthenticated()
 
@@ -74,7 +72,7 @@ class CatalogueUserController extends ItemController<CatalogueUser> {
 
     @Put('/catalogueUsers/{id}')
     CatalogueUser update(@NonNull UUID id, @Body @NonNull CatalogueUser catalogueUser) {
-        log.debug 'Request to update CatalogueUser by ID'
+        log.info 'Request to update CatalogueUser by ID'
 
         accessControlService.checkAuthenticated()
 
@@ -109,5 +107,11 @@ class CatalogueUserController extends ItemController<CatalogueUser> {
         }
 
         existing
+    }
+
+    // todo Stub method to enable login with UI
+    @Get('/catalogueUsers/{id}/userPreferences')
+    String showUserPreferences(UUID id) {
+        ''
     }
 }

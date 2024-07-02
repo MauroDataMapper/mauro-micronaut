@@ -20,7 +20,7 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @CompileStatic
 @Controller('/dataModels/{dataModelId}/dataTypes/{enumerationTypeId}/enumerationValues')
-@Secured(SecurityRule.IS_AUTHENTICATED)
+@Secured(SecurityRule.IS_ANONYMOUS)
 class EnumerationValueController extends AdministeredItemController<EnumerationValue, DataType> {
 
     @Inject

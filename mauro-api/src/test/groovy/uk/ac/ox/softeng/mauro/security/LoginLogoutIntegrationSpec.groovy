@@ -14,19 +14,18 @@ class LoginLogoutIntegrationSpec extends SecuredIntegrationSpec {
     @Inject
     EmbeddedApplication<?> application
 
-    void 'not logged in user is unauthorized'() {
+    void 'not logged in user can only access public endpoints'() {
         when:
-        GET('/folders')
+        Map response = GET('/folders')
 
         then:
-        HttpClientResponseException exception = thrown()
-        exception.status == HttpStatus.UNAUTHORIZED
+        response
 
         when:
         GET('/admin/modules')
 
         then:
-        exception = thrown()
+        HttpClientResponseException exception = thrown()
         exception.status == HttpStatus.UNAUTHORIZED
     }
 
@@ -63,19 +62,18 @@ class LoginLogoutIntegrationSpec extends SecuredIntegrationSpec {
         exception.status == HttpStatus.OK
     }
 
-    void 'not logged in user is unauthorized'() {
+    void 'not logged in user can only access public endpoints'() {
         when:
-        GET('/folders')
+        Map response = GET('/folders')
 
         then:
-        HttpClientResponseException exception = thrown()
-        exception.status == HttpStatus.UNAUTHORIZED
+        response
 
         when:
         GET('/admin/modules')
 
         then:
-        exception = thrown()
+        HttpClientResponseException exception = thrown()
         exception.status == HttpStatus.UNAUTHORIZED
     }
 
@@ -100,7 +98,7 @@ class LoginLogoutIntegrationSpec extends SecuredIntegrationSpec {
 
         then:
         HttpClientResponseException exception = thrown()
-        exception.status == HttpStatus.UNAUTHORIZED
+        exception.status == HttpStatus.FORBIDDEN
     }
 
     void 'logout'() {
@@ -112,19 +110,18 @@ class LoginLogoutIntegrationSpec extends SecuredIntegrationSpec {
         exception.status == HttpStatus.OK
     }
 
-    void 'not logged in user is unauthorized'() {
+    void 'not logged in user can only access public endpoints'() {
         when:
-        GET('/folders')
+        Map response = GET('/folders')
 
         then:
-        HttpClientResponseException exception = thrown()
-        exception.status == HttpStatus.UNAUTHORIZED
+        response
 
         when:
         GET('/admin/modules')
 
         then:
-        exception = thrown()
+        HttpClientResponseException exception = thrown()
         exception.status == HttpStatus.UNAUTHORIZED
     }
 }

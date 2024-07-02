@@ -21,7 +21,7 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @CompileStatic
 @Controller('/terminologies/{terminologyId}/termRelationships')
-@Secured(SecurityRule.IS_AUTHENTICATED)
+@Secured(SecurityRule.IS_ANONYMOUS)
 class TermRelationshipController extends AdministeredItemController<TermRelationship, Terminology> {
 
     TermRelationshipCacheableRepository termRelationshipRepository

@@ -42,7 +42,7 @@ import java.nio.charset.StandardCharsets
 
 @Slf4j
 @CompileStatic
-@Secured(SecurityRule.IS_AUTHENTICATED)
+@Secured(SecurityRule.IS_ANONYMOUS)
 abstract class ModelController<M extends Model> extends AdministeredItemController<M, Folder> {
 
     @Override

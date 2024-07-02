@@ -63,7 +63,7 @@ class AccessControlService implements Toggleable {
         checkAuthenticated()
 
         if (!administrator) {
-            throw new AuthorizationException(null)
+            throw new AuthorizationException(userAuthentication)
         }
     }
 

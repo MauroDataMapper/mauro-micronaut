@@ -22,7 +22,7 @@ import uk.ac.ox.softeng.mauro.persistence.cache.ItemCacheableRepository
 @CompileStatic
 @Slf4j
 @Controller
-@Secured(SecurityRule.IS_AUTHENTICATED)
+@Secured(SecurityRule.IS_ANONYMOUS)
 class SecurableResourceGroupRoleController extends ItemController<SecurableResourceGroupRole> {
 
     ItemCacheableRepository.SecurableResourceGroupRoleCacheableRepository securableResourceGroupRoleRepository

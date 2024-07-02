@@ -23,7 +23,7 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 @CompileStatic
 @Controller('/terminologies/{terminologyId}/terms')
 @Slf4j
-@Secured(SecurityRule.IS_AUTHENTICATED)
+@Secured(SecurityRule.IS_ANONYMOUS)
 class TermController extends AdministeredItemController<Term, Terminology> {
 
     TermCacheableRepository termRepository
