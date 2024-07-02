@@ -113,6 +113,8 @@ class AccessControlService implements Toggleable {
             if (owner.readableByAuthenticatedUsers && userAuthenticated) return true
         }
 
+        if (!userAuthenticated) return false
+
         List<UserGroup> userGroups = userGroupRepository.readAllByCatalogueUserId(userId)
         List<Model> parentModels = pathRepository.readParentItems(owner) as List<Model>
 

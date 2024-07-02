@@ -45,93 +45,71 @@ class TreeService {
     CodeSetRepository codeSetRepository
 
     @CompileDynamic
-    List<TreeItem> buildTree(AdministeredItem item, boolean setHasChildren = true) {
+    List<TreeItem> buildTree(AdministeredItem item, boolean setChildren = true) {
         switch (item) {
-            case Folder -> buildTreeForFolder(item, setHasChildren)
+            case Folder -> buildTreeForFolder(item, setChildren)
 
-            case DataModel -> buildTreeForDataModel(item, setHasChildren)
-            case DataClass -> buildTreeForDataClass(item, setHasChildren)
+            case DataModel -> buildTreeForDataModel(item, setChildren)
+            case DataClass -> buildTreeForDataClass(item, setChildren)
 
-            case Terminology -> buildTreeForTerminology(item, setHasChildren)
-            case Term -> buildTreeForTerm(item, setHasChildren)
+            case Terminology -> buildTreeForTerminology(item, setChildren)
+            case Term -> buildTreeForTerm(item, setChildren)
 
             default -> throw new IllegalArgumentException("Can't get children for item of type [$item.domainType)]")
         }
     }
 
-    List<TreeItem> buildTreeForFolder(Folder folder, boolean setHasChildren = true) {
+    List<TreeItem> buildRootFolderTree(boolean setChildren = true) {
+        folderCacheableRepository.readAllRootFolders().collect {Folder folder ->
+            TreeItem.from(folder).tap {
+                if (setChildren) children = buildTree(folder, false)
+            }
+        }
+    }
+
+    List<TreeItem> buildTreeForFolder(Folder folder, boolean setChildren = true) {
         repositoryService.modelCacheableRepositories.collectMany {ModelCacheableRepository modelCacheableRepository ->
-            modelCacheableRepository.readAllByFolder(folder).collect {Model model ->
+            modelCacheableRepository.readAllByFolder(folder).sort {Model model -> model.label}.collect {Model model ->
                 TreeItem.from(model).tap {
-                    if (setHasChildren) hasChildren = buildTree(model, false)
+                    if (setChildren) children = buildTree(model, false)
                 }
             }
         }
     }
 
-    List<TreeItem> buildTreeForDataModel(DataModel dataModel, boolean setHasChildren = true) {
-        dataClassCacheableRepository.readAllByParent(dataModel).collect {DataClass dataClass ->
+    List<TreeItem> buildTreeForDataModel(DataModel dataModel, boolean setChildren = true) {
+        dataClassCacheableRepository.readAllByParent(dataModel).sort {it.label}.collect {DataClass dataClass ->
             TreeItem.from(dataClass).tap {
-                if (setHasChildren) hasChildren = buildTree(dataClass, false)
+                model = dataClass.dataModel
+                if (setChildren) children = buildTree(dataClass, false)
             }
         }
     }
 
-    List<TreeItem> buildTreeForDataClass(DataClass dataClass, boolean setHasChildren = true) {
-        dataClassCacheableRepository.readAllByParentDataClass_Id(dataClass.id).collect {DataClass childClass ->
+    List<TreeItem> buildTreeForDataClass(DataClass dataClass, boolean setChildren = true) {
+        dataClassCacheableRepository.readAllByParentDataClass_Id(dataClass.id).sort {it.label}.collect {DataClass childClass ->
             TreeItem.from(childClass).tap {
-                if (setHasChildren) hasChildren = buildTree(childClass, false)
+                model = childClass.dataModel
+                if (setChildren) children = buildTree(childClass, false)
             }
         }
     }
 
-    List<TreeItem> buildTreeForTerminology(Terminology terminology, boolean setHasChildren = true) {
-        termCacheableRepository.readChildTermsByParent(terminology.id, null).collect {Term term ->
+    List<TreeItem> buildTreeForTerminology(Terminology terminology, boolean setChildren = true) {
+        termCacheableRepository.readChildTermsByParent(terminology.id, null).sort {it.code}.collect {Term term ->
             TreeItem.from(term).tap {
-                if (setHasChildren) hasChildren = buildTree(term, false)
+                model = term.terminology
+                if (setChildren) children = buildTree(term, false)
             }
         }
     }
 
-    List<TreeItem> buildTreeForTerm(Term term, boolean setHasChildren = true) {
-        termCacheableRepository.readChildTermsByParent(term.terminology.id, term.id).collect {Term childTerm ->
-            TreeItem.from(term).tap {
-                if (setHasChildren) hasChildren = buildTree(childTerm, false)
+    List<TreeItem> buildTreeForTerm(Term term, boolean setChildren = true) {
+        termCacheableRepository.readChildTermsByParent(term.terminology.id, term.id).sort {it.code}.collect {Term childTerm ->
+            TreeItem.from(childTerm).tap {
+                model = childTerm.terminology
+                if (setChildren) children = buildTree(childTerm, false)
             }
         }
     }
-
-//    List<TreeItem> buildTreeForCodeSet(CodeSet codeSet, boolean setHasChildren = true) {
-//        codeSetRepository.getTerms(codeSet.id).collect {Term term ->
-//            TreeItem.from(term)
-//        }
-//    }
-
-//    boolean hasChildren(Model model) {
-//        switch (model) {
-//            case Folder -> hasChildren((Folder) model)
-//            case DataModel -> hasChildren((DataModel) model)
-//            case Terminology -> hasChildren((Terminology) model)
-//            case CodeSet -> hasChildren((CodeSet) model)
-//            default -> throw new IllegalArgumentException("Can't get children for model of type [$model.modelType)]")
-//        }
-//    }
-//
-//    boolean hasChildren(Folder folder) {
-//        repositoryService.modelCacheableRepositories.any {ModelCacheableRepository repository ->
-//            repository.readAllByFolder(folder)
-//        }
-//    }
-//
-//    boolean hasChildren(DataModel dataModel) {
-//        dataClassCacheableRepository.readAllByParent(dataModel)
-//    }
-//
-//    boolean hasChildren(Terminology terminology) {
-//        termCacheableRepository.readAllByParent(terminology)
-//    }
-//
-//    boolean hasChildren(CodeSet codeSet) {
-//        codeSetRepository.getTerms(codeSet.id)
-//    }
 }

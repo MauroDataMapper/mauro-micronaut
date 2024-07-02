@@ -30,4 +30,9 @@ abstract class TerminologyRepository implements ModelRepository<Terminology> {
     @Override
     @Nullable
     abstract List<Terminology> findAllByFolderId(UUID folderId)
+
+    @Override
+    Boolean handles(String domainType) {
+        domainType.toLowerCase() in ['terminology', 'terminologies']
+    }
 }
