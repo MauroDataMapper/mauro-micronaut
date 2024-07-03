@@ -24,7 +24,6 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 @Secured(SecurityRule.IS_AUTHENTICATED)
 class DataClassComponentController extends AdministeredItemController<DataClassComponent, DataFlow> {
 
-    AdministeredItemCacheableRepository.DataClassComponentCacheableRepository dataClassComponentCacheableRepository
 
     @Inject
     AdministeredItemCacheableRepository.DataClassCacheableRepository dataClassRepository
