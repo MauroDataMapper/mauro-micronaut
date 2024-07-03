@@ -103,13 +103,13 @@ class DataClassComponentController extends AdministeredItemController<DataClassC
                 handleError(HttpStatus.BAD_REQUEST,null, "Item already exists in table DataClassComponentTargetDataClass: $dataClassToAdd.id")
             }
             dataClassComponent.targetDataClasses.add(dataClassToAdd)
-            dataClassComponentRepository.addTargetDataClass(dataClassComponent, dataClassId)
+            dataClassComponentRepository.addTargetDataClass(dataClassComponent.id, dataClassId)
         } else if (type == Type.SOURCE) {
             if (dataClassComponent.sourceDataClasses.id.contains(dataClassToAdd.id)) {
                 handleError(HttpStatus.BAD_REQUEST, null, "Item already exists in table DataClassComponentSourceDataClass: $dataClassToAdd.id");
             }
             dataClassComponent.sourceDataClasses.add(dataClassToAdd)
-            dataClassComponentRepository.addSourceDataClass(dataClassComponent, dataClassId)
+            dataClassComponentRepository.addSourceDataClass(dataClassComponent.id, dataClassId)
         }
         dataClassComponent
     }
@@ -124,13 +124,13 @@ class DataClassComponentController extends AdministeredItemController<DataClassC
                 handleError(HttpStatus.NOT_FOUND,null, "Item does not exist in table DataClassComponentTargetDataClass: $dataClassId")
             }
             dataClassComponent.targetDataClasses.remove(dataClassToRemove)
-            return dataClassComponentRepository.removeTargetDataClass(dataClassComponent, dataClassId)
+            return dataClassComponentRepository.removeTargetDataClass(dataClassComponent.id, dataClassId)
         } else if (type == Type.SOURCE) {
             if (!dataClassComponent.sourceDataClasses.removeIf(dc -> dc.id == dataClassId)) {
                 handleError(HttpStatus.NOT_FOUND,null, "Item does not exist in table DataClassComponentSourceDataClass: $dataClassId")
             }
             dataClassComponent.sourceDataClasses.remove(dataClassToRemove)
-            return dataClassComponentRepository.removeSourceDataClass(dataClassComponent, dataClassId)
+            return dataClassComponentRepository.removeSourceDataClass(dataClassComponent.id, dataClassId)
         }
     }
 }

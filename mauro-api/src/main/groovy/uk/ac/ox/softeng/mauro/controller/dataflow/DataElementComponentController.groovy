@@ -108,14 +108,14 @@ class DataElementComponentController extends AdministeredItemController<DataElem
                 handleError(HttpStatus.BAD_REQUEST,null, "Item already exists in table DataClassComponentTargetDataClass: $dataElementToAdd.id")
             }
             dataElementComponent.targetDataElements.add(dataElementToAdd)
-            dataElementComponentRepository.addTargetDataElement(dataElementComponent, dataElementId)
+            dataElementComponentRepository.addTargetDataElement(dataElementComponent.id, dataElementId)
 
         } else if (type == Type.SOURCE) {
             if (dataElementComponent.sourceDataElements.id.contains(dataElementToAdd.id)) {
                 handleError(HttpStatus.BAD_REQUEST,null, "Item already exists in table DataClassComponentSourceDataClass: $dataElementToAdd.id")
             }
             dataElementComponent.sourceDataElements.add(dataElementToAdd)
-            dataElementComponentRepository.addSourceDataElement(dataElementComponent, dataElementId)
+            dataElementComponentRepository.addSourceDataElement(dataElementComponent.id, dataElementId)
         }
         dataElementComponent
     }
@@ -129,12 +129,12 @@ class DataElementComponentController extends AdministeredItemController<DataElem
             if (!dataElementComponent.targetDataElements.removeIf(de -> de.id == dataElementId)) {
                 handleError(HttpStatus.NOT_FOUND,null, "Item already exists in table DataClassComponentTargetDataElement: $dataElementId")
             }
-            return dataElementComponentRepository.removeTargetDataElement(dataElementComponent, dataElementId)
+            return dataElementComponentRepository.removeTargetDataElement(dataElementComponent.id, dataElementId)
         } else if (type == Type.SOURCE) {
             if (!dataElementComponent.sourceDataElements.removeIf(de -> de.id == dataElementId)) {
                 handleError(HttpStatus.NOT_FOUND,null, "Item already exists in table DataClassComponentSourceDataElement: $dataElementId")
             }
-            return dataElementComponentRepository.removeSourceDataElement(dataElementComponent, dataElementId)
+            return dataElementComponentRepository.removeSourceDataElement(dataElementComponent.id, dataElementId)
         }
     }
 }

@@ -2,7 +2,9 @@ package uk.ac.ox.softeng.mauro.persistence.dataflow
 
 import groovy.transform.CompileStatic
 import groovy.transform.MapConstructor
+import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
+import io.micronaut.data.annotation.Query
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.model.query.builder.sql.Dialect
 import jakarta.inject.Inject
@@ -10,6 +12,7 @@ import uk.ac.ox.softeng.mauro.domain.dataflow.DataClassComponent
 import uk.ac.ox.softeng.mauro.domain.dataflow.DataFlow
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
+import uk.ac.ox.softeng.mauro.persistence.dataflow.dto.DataClassComponentDTO
 import uk.ac.ox.softeng.mauro.persistence.dataflow.dto.DataClassComponentDTORepository
 import uk.ac.ox.softeng.mauro.persistence.model.ModelItemRepository
 
@@ -26,7 +29,6 @@ abstract class DataClassComponentRepository implements ModelItemRepository<DataC
         dataClassComponentDTORepository.findById(id) as DataClassComponent
     }
 
-
     @Nullable
     List<DataClassComponent> findAllByParent(AdministeredItem dataFlow) {
         findAllByDataFlow((DataFlow) dataFlow) as List<DataClassComponent>
@@ -42,49 +44,67 @@ abstract class DataClassComponentRepository implements ModelItemRepository<DataC
         readAllByDataFlow((DataFlow) parent)
     }
 
-    DataClassComponent addSourceDataClass(DataClassComponent dataClassComponent, UUID dataClassId) {
-        DataClassComponent persisted = dataClassComponentDTORepository.addSourceDataClass(dataClassComponent.id, dataClassId) as DataClassComponent
-        persisted
-    }
+    /**
+     * Add sourcedataClass to dataClassComponent
+     * * @param id            dataClassComponentId
+     * * @param dataClassId  dataClassId of source data class
+     * @returns: DataClassComponentDTO
+     */
+    @Query(''' insert into dataflow.data_class_component_source_data_class(data_class_component_id, data_class_id) values (:id, :dataClassId) ''')
+    abstract DataClassComponent addSourceDataClass(@NonNull UUID id, @NonNull UUID dataClassId)
 
-    DataClassComponent addTargetDataClass(DataClassComponent dataClassComponent, UUID dataClassId) {
-        DataClassComponent persisted = dataClassComponentDTORepository.addTargetDataClass(dataClassComponent.id, dataClassId) as DataClassComponent
-        persisted
-    }
+    /**
+     * Add target dataClass  to dataClassComponent
+     * * @param id            dataClassComponentId
+     * * @param dataClassId  dataClassId of target data class
+     * @returns: DataClassComponentDTO
+     */
+    @Query(''' insert into dataflow.data_class_component_target_data_class(data_class_component_id, data_class_id) values (:id, :dataClassId) ''')
+    abstract DataClassComponent addTargetDataClass(@NonNull UUID id, UUID dataClassId) //{
+
 
     Class getDomainClass() {
         DataClassComponent
     }
 
-    Long removeSourceDataClass(DataClassComponent dataClassComponent, UUID dataClassId) {
-        Long result = dataClassComponentDTORepository.removeSourceDataClass(dataClassComponent.id, dataClassId)
-        result
-    }
+    /**
+     * Remove dataClass from data_class_component_source_data_class
+     * * @param id           dataClassComponentId
+     * * @param dataClassId  dataClassId
+     * @returns: DataClassComponentDTO
+     */
+    @Query(''' delete from dataflow.data_class_component_source_data_class dccsdc where dccsdc.data_class_component_id = :id and dccsdc.data_class_id = :dataClassId ''')
+    abstract Long removeSourceDataClass(@NonNull UUID id, UUID dataClassId)
 
-    Long removeTargetDataClass(DataClassComponent dataClassComponent, UUID dataClassId) {
-        Long result = dataClassComponentDTORepository.removeTargetDataClass(dataClassComponent.id, dataClassId)
-        result
-    }
+
+    /**
+     * Remove  dataClass from data_class_component_target_data_class
+     * * @param id           dataClassComponentId
+     * * @param dataClassId  dataClassId
+     * @returns: DataClassComponentDTO
+     */
+    @Query(''' delete from dataflow.data_class_component_target_data_class dcctdc where dcctdc.data_class_component_id = :id and dcctdc.data_class_id = :dataClassId ''')
+    abstract Long removeTargetDataClass(@NonNull UUID id, UUID dataClassId)
 
     abstract List<DataClassComponent> readAllByDataFlow(DataFlow dataFlow)
 
 
-    List<DataClass> getDataClassesFromDataClassComponentToSourceDataClass(UUID id) {
-        dataClassComponentDTORepository.getDataClassesFromDataClassComponentToSourceDataClass(id)
-    }
+    @Query(''' select * from datamodel.data_class dc where exists (select data_class_id from dataflow.data_class_component_source_data_class s
+                where s.data_class_id = dc.id and s.data_class_component_id = :id) ''')
+    @Nullable
+    abstract List<DataClass> getDataClassesFromDataClassComponentToSourceDataClass(UUID id)
 
-    List<DataClass> getDataClassesFromDataClassComponentToTargetDataClass(UUID id) {
-        dataClassComponentDTORepository.getDataClassesFromDataClassComponentToTargetDataClass(id)
-    }
 
-    Long removeSourceDataClasses(UUID id) {
-        Long result = dataClassComponentDTORepository.removeSourceDataClasses(id)
-        result
-    }
+    @Query(''' select * from datamodel.data_class dc where exists (select data_class_id from dataflow.data_class_component_target_data_class t
+                where t.data_class_id = dc.id and t.data_class_component_id = :id) ''')
+    @Nullable
+    abstract List<DataClass> getDataClassesFromDataClassComponentToTargetDataClass(@NonNull UUID id)
 
-    Long removeTargetDataClasses(UUID id) {
-        Long result = dataClassComponentDTORepository.removeTargetDataClasses(id)
-        result
-    }
+    @Query(''' delete from dataflow.data_class_component_source_data_class s where s.data_class_component_id = :id ''')
+    abstract Long removeSourceDataClasses(@NonNull UUID id) //{
+
+    @Query(''' delete from dataflow.data_class_component_target_data_class t where t.data_class_component_id = :id ''')
+    abstract Long removeTargetDataClasses(@NonNull UUID id)
+
 }
 
