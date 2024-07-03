@@ -9,6 +9,7 @@ import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.model.Model
+import uk.ac.ox.softeng.mauro.domain.terminology.CodeSet
 import uk.ac.ox.softeng.mauro.domain.terminology.Term
 import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
 import uk.ac.ox.softeng.mauro.domain.tree.TreeItem
@@ -55,7 +56,9 @@ class TreeService {
             case Terminology -> buildTreeForTerminology(item, setChildren)
             case Term -> buildTreeForTerm(item, setChildren)
 
-            default -> throw new IllegalArgumentException("Can't get children for item of type [$item.domainType)]")
+            case CodeSet -> []
+
+            default -> throw new IllegalArgumentException("Can't build tree for item of type [$item.domainType)]")
         }
     }
 
@@ -68,7 +71,7 @@ class TreeService {
     }
 
     List<TreeItem> buildTreeForFolder(Folder folder, boolean setChildren = true) {
-        repositoryService.modelCacheableRepositories.collectMany {ModelCacheableRepository modelCacheableRepository ->
+        repositoryService.modelCacheableRepositories.sort(false) {it.class.simpleName}.collectMany {ModelCacheableRepository modelCacheableRepository ->
             modelCacheableRepository.readAllByFolder(folder).sort {Model model -> model.label}.collect {Model model ->
                 TreeItem.from(model).tap {
                     if (setChildren) children = buildTree(model, false)

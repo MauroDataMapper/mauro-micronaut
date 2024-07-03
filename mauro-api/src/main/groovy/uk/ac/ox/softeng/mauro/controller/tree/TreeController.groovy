@@ -38,6 +38,7 @@ class TreeController {
     List<TreeItem> folderTree(@Nullable UUID id) {
         if (id) {
             Folder folder = folderRepository.readById(id)
+            accessControlService.checkRole(Role.READER, folder)
             filterTreeByReadable(treeService.buildTree(folder))
         } else {
             filterTreeByReadable(treeService.buildRootFolderTree())
@@ -48,6 +49,7 @@ class TreeController {
     List<TreeItem> itemTree(String domainType, UUID id) {
         AdministeredItemCacheableRepository repository = repositoryService.getAdministeredItemRepository(domainType)
         AdministeredItem item = repository.readById(id)
+        accessControlService.checkRole(Role.READER, item)
         filterTreeByReadable(treeService.buildTree(item))
     }
 

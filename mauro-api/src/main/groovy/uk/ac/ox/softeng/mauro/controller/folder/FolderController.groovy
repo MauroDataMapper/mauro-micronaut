@@ -19,7 +19,6 @@ import uk.ac.ox.softeng.mauro.controller.model.ModelController
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.folder.FolderContentRepository
-import uk.ac.ox.softeng.mauro.persistence.service.TreeService
 import uk.ac.ox.softeng.mauro.plugin.exporter.ModelExporterPlugin
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
@@ -31,9 +30,6 @@ class FolderController extends ModelController<Folder> {
 
     @Inject
     FolderContentRepository folderContentRepository
-
-    @Inject
-    TreeService treeService
 
     FolderController(FolderCacheableRepository folderRepository, FolderContentRepository folderContentRepository) {
         super(Folder, folderRepository, folderRepository, folderContentRepository)

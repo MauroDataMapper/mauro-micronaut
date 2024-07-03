@@ -111,10 +111,11 @@ class AccessControlService implements Toggleable {
         List<Model> parentModels = pathRepository.readParentItems(owner) as List<Model>
 
         // allow Reader access if owning model or parents are publicly readable
-        if (role <= Role.READER) {
-            if (parentModels.any {Model model -> model.readableByEveryone || (model.readableByAuthenticatedUsers && userAuthenticated)}) {
-                return true
-            }
+        if (role <= Role.READER &&
+            parentModels.any {Model model ->
+                model.readableByEveryone || (model.readableByAuthenticatedUsers && userAuthenticated)
+            }) {
+            return true
         }
 
         if (!userAuthenticated) return false
