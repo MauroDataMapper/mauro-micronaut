@@ -93,6 +93,7 @@ flyway:
         - terminology
         - datamodel
         - security
+        - dataflow
 javamail:
   authentication:
     username: $$username$$ # Replace me!

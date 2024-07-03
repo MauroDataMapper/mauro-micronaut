@@ -1,0 +1,7 @@
+delete from dataflow.data_element_component_source_data_element;
+delete from dataflow.data_element_component_target_data_element;
+delete from dataflow.data_class_component_source_data_class;
+delete from dataflow.data_class_component_target_data_class;
+delete from dataflow.data_element_component;
+delete from dataflow.data_class_component;
+delete from dataflow.data_flow;
