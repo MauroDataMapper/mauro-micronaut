@@ -1,4 +1,4 @@
-package uk.ac.ox.softeng.mauro.test.domain.profile
+package uk.ac.ox.softeng.mauro.test.profile
 
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import spock.lang.Specification

@@ -1,4 +1,4 @@
-package uk.ac.ox.softeng.mauro.test.domain.profile
+package uk.ac.ox.softeng.mauro.test.profile
 
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
@@ -24,7 +24,7 @@ class DataModelProfileSpec extends Specification {
     MauroPluginService mauroPluginService
 
     @Shared
-    DataModel testProfileModel = DataModel.build {
+    static DataModel testProfileModel = DataModel.build {
         label "Asset management profile"
         description "Details pertaining to the management of data assets"
         metadata(ProfileSpecificationProfile.NAMESPACE,
