@@ -19,7 +19,7 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @CompileStatic
 @Controller('/dataModels/{dataModelId}/dataClasses')
-@Secured(SecurityRule.IS_AUTHENTICATED)
+@Secured(SecurityRule.IS_ANONYMOUS)
 class DataClassController extends AdministeredItemController<DataClass, DataModel> {
 
     DataClassCacheableRepository dataClassRepository

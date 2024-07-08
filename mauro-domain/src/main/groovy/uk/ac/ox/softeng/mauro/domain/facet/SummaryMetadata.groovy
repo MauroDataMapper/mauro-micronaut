@@ -8,18 +8,13 @@ import groovy.transform.CompileStatic
 import io.micronaut.data.annotation.*
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Pattern
-import uk.ac.ox.softeng.mauro.domain.diff.CollectionDiff
-import uk.ac.ox.softeng.mauro.domain.diff.DiffBuilder
-import uk.ac.ox.softeng.mauro.domain.diff.DiffableItem
-import uk.ac.ox.softeng.mauro.domain.diff.MetadataDiff
-import uk.ac.ox.softeng.mauro.domain.diff.ObjectDiff
-import uk.ac.ox.softeng.mauro.domain.diff.SummaryMetadataDiff
+import uk.ac.ox.softeng.mauro.domain.diff.*
 import uk.ac.ox.softeng.mauro.domain.model.SummaryMetadataReport
 
 @CompileStatic
 @MappedEntity(value = 'summary_metadata', schema = 'core', alias = 'summary_metadata_')
 @AutoClone
-@Indexes([@Index(columns = ['multi_facet_oaware_item_id'])])
+@Indexes([@Index(columns = ['multi_facet_aware_item_id'])])
 class SummaryMetadata extends Facet implements DiffableItem<SummaryMetadata> {
 
     @NotBlank
