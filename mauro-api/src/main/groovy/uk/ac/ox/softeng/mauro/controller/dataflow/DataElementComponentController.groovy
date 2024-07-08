@@ -8,15 +8,21 @@ import io.micronaut.http.annotation.*
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
 import jakarta.inject.Inject
+import org.jsoup.HttpStatusException
 import uk.ac.ox.softeng.mauro.controller.model.AdministeredItemController
 import uk.ac.ox.softeng.mauro.controller.terminology.Paths
 import uk.ac.ox.softeng.mauro.domain.dataflow.DataClassComponent
 import uk.ac.ox.softeng.mauro.domain.dataflow.DataElementComponent
+import uk.ac.ox.softeng.mauro.domain.dataflow.DataFlow
 import uk.ac.ox.softeng.mauro.domain.dataflow.Type
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataElement
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
+import uk.ac.ox.softeng.mauro.domain.security.Role
 import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository
+import uk.ac.ox.softeng.mauro.persistence.dataflow.DataClassComponentRepository
 import uk.ac.ox.softeng.mauro.persistence.dataflow.DataElementComponentContentRepository
 import uk.ac.ox.softeng.mauro.persistence.dataflow.DataElementComponentRepository
+import uk.ac.ox.softeng.mauro.persistence.dataflow.DataFlowRepository
 import uk.ac.ox.softeng.mauro.persistence.datamodel.DataElementRepository
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
@@ -24,7 +30,8 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 @Controller(Paths.DATA_ELEMENT_COMPONENT_ROUTE)
 @Secured(SecurityRule.IS_AUTHENTICATED)
 class DataElementComponentController extends AdministeredItemController<DataElementComponent, DataClassComponent> {
-
+    @Inject
+    DataClassComponentRepository dataClassComponentRepository
 
     @Inject
     DataElementRepository dataElementRepository
@@ -34,7 +41,8 @@ class DataElementComponentController extends AdministeredItemController<DataElem
 
     @Inject
     DataElementComponentContentRepository dataElementComponentContentRepository
-
+    @Inject
+    DataFlowRepository dataFlowRepository
 
     DataElementComponentController(AdministeredItemCacheableRepository.DataElementComponentCacheableRepository dataElementComponentRepository,
                                    AdministeredItemCacheableRepository.DataClassComponentCacheableRepository dataClassComponentRepository,
@@ -44,8 +52,11 @@ class DataElementComponentController extends AdministeredItemController<DataElem
 
 
     @Get(value = Paths.ID_ROUTE)
-    DataElementComponent show(@NonNull UUID id) {
-        super.show(id)
+    DataElementComponent show(@NonNull UUID dataFlowId, @NonNull UUID id) {
+        DataFlow dataFlow = dataFlowRepository.findById(dataFlowId)
+        DataElementComponent retrieved = super.show(id)
+        retrieved.dataClassComponent.dataFlow = dataFlow
+        retrieved
     }
 
     @Post
@@ -55,6 +66,8 @@ class DataElementComponentController extends AdministeredItemController<DataElem
 
     @Put(value = Paths.ID_ROUTE)
     DataElementComponent update(@NonNull UUID id, @Body @NonNull DataElementComponent dataElementComponent) {
+        DataElementComponent retrieved = dataElementComponentRepository.readById(id)
+        accessControlService.checkRole(Role.EDITOR, retrieved)
         super.update(id, dataElementComponent)
     }
 
@@ -69,68 +82,86 @@ class DataElementComponentController extends AdministeredItemController<DataElem
     }
 
     @Put(value = Paths.SOURCE_DATA_ELEMENT_ROUTE)
-    DataElementComponent update(@NonNull UUID id, @NonNull UUID dataElementId) {
-        DataElementComponent updated = addDataElement(Type.SOURCE, id, dataElementId)
+    DataElementComponent update(@NonNull UUID dataClassComponentId, @NonNull UUID id, @NonNull UUID dataElementId) {
+        DataElementComponent updated = addDataElement(Type.SOURCE, id, dataElementId, dataClassComponentId)
         updated
     }
 
     @Put(value = Paths.TARGET_DATA_ELEMENT_ROUTE)
-    DataElementComponent update(@NonNull UUID dataFlowId, @NonNull UUID id, @NonNull UUID dataElementId) {
-        DataElementComponent updated = addDataElement(Type.TARGET, id, dataElementId)
+    DataElementComponent update(@NonNull UUID dataFlowId, @NonNull UUID dataClassComponentId, @NonNull UUID id, @NonNull UUID dataElementId) {
+        DataElementComponent updated = addDataElement(Type.TARGET, id, dataElementId, dataClassComponentId)
         updated
     }
 
     @Delete(value = Paths.TARGET_DATA_ELEMENT_ROUTE)
     HttpStatus delete(@NonNull UUID id, @NonNull UUID dataElementId) {
-        long deleted = removeDataElement(Type.TARGET, id, dataElementId)
-        handleError(HttpStatus.NOT_FOUND,deleted, "Item with id: $id not found")
+        removeDataElement(Type.TARGET, id, dataElementId)
         return HttpStatus.NO_CONTENT
     }
 
     @Delete(value = Paths.SOURCE_DATA_ELEMENT_ROUTE)
     HttpStatus delete(@NonNull UUID dataFlowId, @NonNull UUID id, @NonNull UUID dataElementId) {
-        long deleted = removeDataElement(Type.SOURCE, id, dataElementId)
-        handleError(HttpStatus.NOT_FOUND,deleted, "Item with id: $id not found")
+        removeDataElement(Type.SOURCE, id, dataElementId)
         return HttpStatus.NO_CONTENT
     }
 
-    private DataElementComponent addDataElement(Type type, UUID id, UUID dataElementId) {
+    private DataElementComponent addDataElement(Type type, UUID id, UUID dataElementId, UUID parentId) {
         DataElement dataElementToAdd = dataElementRepository.readById(dataElementId)
         handleError(HttpStatus.NOT_FOUND, dataElementToAdd, "Item with id: $dataElementId not found")
         DataElementComponent dataElementComponent = dataElementComponentContentRepository.readWithContentById(id)
         handleError(HttpStatus.NOT_FOUND, dataElementToAdd, "Item with id: $id not found")
-        if (type == Type.TARGET) {
-            if (dataElementComponent.targetDataElements.id.contains(dataElementToAdd.id)) {
-                handleError(HttpStatus.BAD_REQUEST,null, "Item already exists in table DataClassComponentTargetDataClass: $dataElementToAdd.id")
-            }
-            dataElementComponent.targetDataElements.add(dataElementToAdd)
-            dataElementComponentRepository.addTargetDataElement(dataElementComponent.id, dataElementId)
 
-        } else if (type == Type.SOURCE) {
-            if (dataElementComponent.sourceDataElements.id.contains(dataElementToAdd.id)) {
-                handleError(HttpStatus.BAD_REQUEST,null, "Item already exists in table DataClassComponentSourceDataClass: $dataElementToAdd.id")
-            }
-            dataElementComponent.sourceDataElements.add(dataElementToAdd)
-            dataElementComponentRepository.addSourceDataElement(dataElementComponent.id, dataElementId)
+        DataClassComponent parent = dataClassComponentRepository.readById(parentId)
+        accessControlService.checkRole(Role.EDITOR, parent)
+        switch (type) {
+            case Type.TARGET:
+                if (dataElementComponent.targetDataElements.id.contains(dataElementToAdd.id)) {
+                    handleError(HttpStatus.BAD_REQUEST, null, "Item already exists in table DataClassComponentTargetDataClass: $dataElementToAdd.id")
+                }
+                dataElementComponent.targetDataElements.add(dataElementToAdd)
+                dataElementComponentRepository.addTargetDataElement(dataElementComponent.id, dataElementId)
+                break;
+            case Type.SOURCE:
+                if (dataElementComponent.sourceDataElements.id.contains(dataElementToAdd.id)) {
+                    handleError(HttpStatus.BAD_REQUEST, null, "Item already exists in table DataClassComponentSourceDataClass: $dataElementToAdd.id")
+                }
+                dataElementComponent.sourceDataElements.add(dataElementToAdd)
+                dataElementComponentRepository.addSourceDataElement(dataElementComponent.id, dataElementId)
+                break;
+            default:
+                handleError(HttpStatus.BAD_REQUEST, type, "Type must be source or target")
         }
+        super.invalidate(dataElementComponent)
         dataElementComponent
     }
 
-    private Long removeDataElement(Type type, UUID id, UUID dataElementId) {
+    private void removeDataElement(Type type, UUID id, UUID dataElementId) {
         DataElement dataElementToRemove = dataElementRepository.readById(dataElementId)
-        handleError(HttpStatus.NOT_FOUND,dataElementToRemove, "Item with id: $dataElementId not found")
+        handleError(HttpStatus.NOT_FOUND, dataElementToRemove, "Item with id: $dataElementId not found")
         DataElementComponent dataElementComponent = dataElementComponentContentRepository.readWithContentById(id)
         handleError(HttpStatus.NOT_FOUND, dataElementComponent, "Item with id: $id not found")
-        if (type == Type.TARGET) {
-            if (!dataElementComponent.targetDataElements.removeIf(de -> de.id == dataElementId)) {
-                handleError(HttpStatus.NOT_FOUND,null, "Item already exists in table DataClassComponentTargetDataElement: $dataElementId")
-            }
-            return dataElementComponentRepository.removeTargetDataElement(dataElementComponent.id, dataElementId)
-        } else if (type == Type.SOURCE) {
-            if (!dataElementComponent.sourceDataElements.removeIf(de -> de.id == dataElementId)) {
-                handleError(HttpStatus.NOT_FOUND,null, "Item already exists in table DataClassComponentSourceDataElement: $dataElementId")
-            }
-            return dataElementComponentRepository.removeSourceDataElement(dataElementComponent.id, dataElementId)
+
+        accessControlService.checkRole(Role.EDITOR, dataElementToRemove)
+        Long result
+        switch (type) {
+            case Type.TARGET:
+                if (!dataElementComponent.targetDataElements.removeIf(de -> de.id == dataElementId)) {
+                    handleError(HttpStatus.NOT_FOUND, null, "Item already exists in table DataClassComponentTargetDataElement: $dataElementId")
+                }
+                result = dataElementComponentRepository.removeTargetDataElement(dataElementComponent.id, dataElementId)
+                break
+            case Type.SOURCE:
+                if (!dataElementComponent.sourceDataElements.removeIf(de -> de.id == dataElementId)) {
+                    handleError(HttpStatus.NOT_FOUND, null, "Item already exists in table DataClassComponentSourceDataElement: $dataElementId")
+                }
+                result = dataElementComponentRepository.removeSourceDataElement(dataElementComponent.id, dataElementId)
+                break;
+            default:
+                handleError(HttpStatus.BAD_REQUEST, type, "Type must be source or target")
+                break;
         }
+        handleError(HttpStatus.NOT_FOUND, result, " Item with id: $id not found")
+        super.invalidate(dataElementComponent)
+        dataElementComponent
     }
 }

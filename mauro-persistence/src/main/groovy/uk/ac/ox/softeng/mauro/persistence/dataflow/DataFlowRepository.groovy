@@ -26,12 +26,10 @@ abstract class DataFlowRepository implements ModelItemRepository<DataFlow> {
     }
 
     @Nullable
-    @Query(''' select * from dataflow.data_flow where target_data_model_id = : dataModel.id ''')
     List<DataFlow> findAllByTarget(DataModel dataModel) {
         dataFlowDTORepository.findAllByTarget(dataModel) as List<DataFlow>
     }
     @Nullable
-    @Query(''' select * from dataflow.data_flow where target_data_model_id = : dataModel.id ''')
     List<DataFlow> findAllBySource(DataModel dataModel) {
         dataFlowDTORepository.findAllBySource(dataModel) as List<DataFlow>
     }

@@ -83,7 +83,7 @@ class CommonDataSpec extends BaseIntegrationSpec{
     }
 
     def dataFlowPayload(String sourceId){
-        [source: [id: sourceId], label: 'test label' ]
+        [source: [id: sourceId], label: 'test label', description: 'dataflow payload description ' ]
     }
 
 

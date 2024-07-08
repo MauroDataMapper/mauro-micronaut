@@ -55,10 +55,10 @@ class DataElementComponentIntegrationSpec extends CommonDataSpec {
         sourceId = ((DataModel) POST("$FOLDERS_PATH/$folderId$DATAMODELS_PATH", dataModelPayload('source label'), DataModel)).id
         targetId = ((DataModel) POST("$FOLDERS_PATH/$folderId$DATAMODELS_PATH", dataModelPayload('target label'), DataModel)).id
         
-        dataType = (DataType) POST("/dataModels/$sourceId/dataTypes", [label: 'integer', description: 'a whole number, may be positive or negative, with no maximum or minimum', domainType: 'PrimitiveType'], DataType)
+        dataType = (DataType) POST("$DATAMODELS_PATH/$sourceId/dataTypes", [label: 'integer', description: 'a whole number, may be positive or negative, with no maximum or minimum', domainType: 'PrimitiveType'], DataType)
         dataClassId = ((DataClass) POST("$DATAMODELS_PATH/$sourceId$DATACLASSES_PATH", dataClassPayload(), DataClass)).id
 
-        dataElementId = ((DataElement) POST("/dataModels/$sourceId/dataClasses/$dataClassId/dataElements", [label: 'First data element', description: 'The first data element', dataType: [id: dataType.id]], DataElement)).id
+        dataElementId = ((DataElement) POST("$DATAMODELS_PATH/$sourceId$DATACLASSES_PATH/$dataClassId$DATA_ELEMENTS_PATH", [label: 'First data element', description: 'The first data element', dataType: [id: dataType.id]], DataElement)).id
 
         dataFlowId = ((DataFlow) POST("$DATAMODELS_PATH/$targetId$DATA_FLOWS_PATH", dataFlowPayload(sourceId.toString()), DataFlow)).id
         dataClassComponentId = ((DataClassComponent) POST("$DATAMODELS_PATH/$sourceId$DATA_FLOWS_PATH/$dataFlowId$DATA_CLASS_COMPONENTS_PATH", dataModelPayload('test data class component label'), DataClassComponent)).id
@@ -103,21 +103,40 @@ class DataElementComponentIntegrationSpec extends CommonDataSpec {
 
         then:
         dataElementComponentString
+
+        when:
+        DataElementComponent dataElementComponent = (DataElementComponent) GET("$DATAMODELS_PATH/$sourceId$DATA_FLOWS_PATH/$dataFlowId$DATA_CLASS_COMPONENTS_PATH/$dataClassComponentId$DATA_ELEMENT_COMPONENTS_PATH/$dataElementComponentId", DataElementComponent)
+        then:
+        dataElementComponent
+        dataElementComponent.dataClassComponent
+        dataElementComponent.sourceDataElements
+        dataElementComponent.sourceDataElements.size() == 1
+        !dataElementComponent.targetDataElements
     }
+
 
     void 'should delete dataElement from DataElementComponent'() {
         given:
         UUID dataElementComponentId = ((DataElementComponent) POST("$DATAMODELS_PATH/$sourceId$DATA_FLOWS_PATH/$dataFlowId$DATA_CLASS_COMPONENTS_PATH/$dataClassComponentId$DATA_ELEMENT_COMPONENTS_PATH", dataModelPayload('test data class component label'), DataElementComponent)).id
         PUT("$DATAMODELS_PATH/$sourceId$DATA_FLOWS_PATH/$dataFlowId$DATA_CLASS_COMPONENTS_PATH/$dataClassComponentId$DATA_ELEMENT_COMPONENTS_PATH/$dataElementComponentId$SOURCE/$dataElementId", String)
 
+        DataElementComponent dataElementComponent = (DataElementComponent) GET("$DATAMODELS_PATH/$sourceId$DATA_FLOWS_PATH/$dataFlowId$DATA_CLASS_COMPONENTS_PATH/$dataClassComponentId$DATA_ELEMENT_COMPONENTS_PATH/$dataElementComponentId", DataElementComponent)
+        dataElementComponent.sourceDataElements
+        dataElementComponent.sourceDataElements.size() == 1
+
         when:
         HttpStatus httpStatus = DELETE("$DATAMODELS_PATH/$sourceId$DATA_FLOWS_PATH/$dataFlowId$DATA_CLASS_COMPONENTS_PATH/$dataClassComponentId$DATA_ELEMENT_COMPONENTS_PATH/$dataElementComponentId$SOURCE/$dataElementId", HttpStatus)
-
         then:
         httpStatus == HttpStatus.NO_CONTENT
+
+        when:
+        DataElementComponent updated = (DataElementComponent) GET("$DATAMODELS_PATH/$sourceId$DATA_FLOWS_PATH/$dataFlowId$DATA_CLASS_COMPONENTS_PATH/$dataClassComponentId$DATA_ELEMENT_COMPONENTS_PATH/$dataElementComponentId", DataElementComponent)
+        then:
+        updated
+        !updated.sourceDataElements
     }
 
-    void 'delete dataElement  from DataElementComponent -dataElement not associated -should throw NOT_FOUND'() {
+    void 'delete dataElement from DataElementComponent -dataElement not associated -should throw NOT_FOUND'() {
         given:
         UUID dataElementComponentId = ((DataElementComponent) POST("$DATAMODELS_PATH/$sourceId$DATA_FLOWS_PATH/$dataFlowId$DATA_CLASS_COMPONENTS_PATH/$dataClassComponentId$DATA_ELEMENT_COMPONENTS_PATH", dataModelPayload('test data class component label'), DataElementComponent)).id
         when:

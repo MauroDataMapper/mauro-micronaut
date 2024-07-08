@@ -14,11 +14,13 @@ abstract class DataElementComponentDTORepository implements GenericRepository<Da
 
 
     @Join(value = 'catalogueUser', type = Join.Type.LEFT_FETCH)
-    @Nullable
+    @Join(value = 'sourceDataElements', type = Join.Type.LEFT_FETCH)
+    @Join(value = 'targetDataElements', type = Join.Type.LEFT_FETCH)
     abstract List<DataElementComponentDTO> findAllByDataClassComponent(DataClassComponent dataClassComponent)
 
 
     @Join(value = 'catalogueUser', type = Join.Type.LEFT_FETCH)
-    @Nullable
+    @Join(value = 'sourceDataElements', type = Join.Type.LEFT_FETCH)
+    @Join(value = 'targetDataElements', type = Join.Type.LEFT_FETCH)
     abstract DataElementComponentDTO findById(UUID id)
 }

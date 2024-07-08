@@ -87,6 +87,19 @@ class DataClassComponentIntegrationSpec extends CommonDataSpec {
 
         then:
         dataClassComponentString
+
+        when:
+        DataClassComponent dataClassComponent = (DataClassComponent) GET("$DATAMODELS_PATH/$sourceId$DATA_FLOWS_PATH/$dataFlowId$DATA_CLASS_COMPONENTS_PATH/$dataClassComponentId", DataClassComponent)
+        then:
+        dataClassComponent
+        dataClassComponent.dataFlow.source
+        dataClassComponent.dataFlow.target
+        dataClassComponent.dataFlow.source.description
+        dataClassComponent.dataFlow.target.description
+
+        dataClassComponent.sourceDataClasses
+        dataClassComponent.sourceDataClasses.size() == 1
+        dataClassComponent.sourceDataClasses[0].id == dataClassSourceId
     }
 
     void 'should delete dataClass from DataClassComponent'() {
@@ -99,6 +112,11 @@ class DataClassComponentIntegrationSpec extends CommonDataSpec {
 
         then:
         httpStatus == HttpStatus.NO_CONTENT
+
+        DataClassComponent dataClassComponent = (DataClassComponent) GET("$DATAMODELS_PATH/$sourceId$DATA_FLOWS_PATH/$dataFlowId$DATA_CLASS_COMPONENTS_PATH/$dataClassComponentId", DataClassComponent)
+        dataClassComponent
+        !dataClassComponent.sourceDataClasses
+
     }
 
     void 'delete dataClass from DataClassComponent -dataClass not associated -should throw NOT_FOUND'() {

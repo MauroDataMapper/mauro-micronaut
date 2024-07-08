@@ -131,6 +131,11 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
 
         item
     }
+
+    protected void invalidate(I item){
+        administeredItemRepository.invalidate(item)
+    }
+
     protected void handleError(HttpStatus httpStatus, Object result, String message) {
         if (!result) {
             throw new HttpStatusException(httpStatus, message)

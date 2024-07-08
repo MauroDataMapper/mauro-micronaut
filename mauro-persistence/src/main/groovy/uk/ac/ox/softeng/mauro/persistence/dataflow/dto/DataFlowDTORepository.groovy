@@ -14,13 +14,17 @@ abstract class DataFlowDTORepository implements GenericRepository<DataFlowDTO, U
 
     @Nullable
     @Join(value = 'catalogueUser', type = Join.Type.LEFT_FETCH)
+    @Join(value = 'source', type = Join.Type.LEFT_FETCH)
+    @Join(value = 'target', type = Join.Type.LEFT_FETCH)
     abstract DataFlowDTO findById(UUID id)
 
     @Join(value = 'catalogueUser', type = Join.Type.LEFT_FETCH)
+    @Join(value = 'source', type = Join.Type.LEFT_FETCH)
     @Join(value = 'target', type = Join.Type.LEFT_FETCH)
     abstract List<DataFlowDTO> findAllByTarget(DataModel target)
 
     @Join(value = 'catalogueUser', type = Join.Type.LEFT_FETCH)
     @Join(value = 'source', type = Join.Type.LEFT_FETCH)
+    @Join(value = 'target', type = Join.Type.LEFT_FETCH)
     abstract List<DataFlowDTO> findAllBySource(DataModel source)
 }

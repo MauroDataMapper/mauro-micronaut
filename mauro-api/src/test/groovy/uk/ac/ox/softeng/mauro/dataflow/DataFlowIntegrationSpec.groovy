@@ -51,13 +51,14 @@ class DataFlowIntegrationSpec extends CommonDataSpec {
 
     void 'create dataflow -should create with same source and target'() {
         when:
-        DataFlow response = (DataFlow) POST("$DATAMODELS_PATH/$targetId$DATA_FLOWS_PATH", dataFlowPayload(targetId.toString()), DataFlow)
+        DataFlow response = (DataFlow) POST("$DATAMODELS_PATH/$targetId$DATA_FLOWS_PATH",dataFlowPayload(sourceId.toString()), DataFlow)
 
         then:
         response
         response.id
-        response.source.id == targetId
+        response.source.id == sourceId
         response.target.id == targetId
+        response.source.description == 'test description'
     }
 
     void 'create dataflow -should return http status NotFound when source not found'() {
