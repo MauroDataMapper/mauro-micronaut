@@ -5,6 +5,7 @@ import jakarta.inject.Inject
 import jakarta.inject.Singleton
 import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.ItemCacheableRepository
+import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository
 
 @CompileStatic
 @Singleton
@@ -15,6 +16,9 @@ class RepositoryService {
 
     @Inject
     List<AdministeredItemCacheableRepository> administeredItemCacheableRepositories
+
+    @Inject
+    List<ModelCacheableRepository> modelCacheableRepositories
 
     ItemCacheableRepository getRepository(Class clazz) {
         cacheableRepositories.find {it.handles(clazz)}
@@ -30,5 +34,13 @@ class RepositoryService {
 
     AdministeredItemCacheableRepository getAdministeredItemRepository(String domainType) {
         administeredItemCacheableRepositories.find {it.handles(domainType)}
+    }
+
+    ModelCacheableRepository getModelRepository(Class clazz) {
+        modelCacheableRepositories.find {it.handles(clazz)}
+    }
+
+    ModelCacheableRepository getModelRepository(String domainType) {
+        modelCacheableRepositories.find {it.handles(domainType)}
     }
 }

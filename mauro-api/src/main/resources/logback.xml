@@ -19,7 +19,6 @@
     <logger name="io.micronaut" level="info" />
 
     <logger name="org.flywaydb" level="info" />
-    <logger name="org.ehcache" level="info" />
 
     <logger name="uk.ac.ox.softeng.mauro" level="debug" />
 

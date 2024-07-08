@@ -25,10 +25,18 @@ abstract class FolderRepository implements ModelRepository<Folder> {
     @Nullable
     abstract List<Folder> readAllByParentFolder(Folder folder)
 
+    @Nullable
+    abstract List<Folder> readAllByParentFolderIsNull()
+
     @Override
     @Nullable
     List<Folder> readAllByFolder(Folder folder) {
         readAllByParentFolder(folder)
+    }
+
+    @Nullable
+    List<Folder> readAllRootFolders() {
+        readAllByParentFolderIsNull()
     }
 
     @Override
