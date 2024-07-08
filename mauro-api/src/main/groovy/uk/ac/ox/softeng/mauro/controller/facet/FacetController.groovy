@@ -17,7 +17,7 @@ import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableReposit
 import uk.ac.ox.softeng.mauro.persistence.cache.ItemCacheableRepository
 
 @CompileStatic
-@Secured(SecurityRule.IS_AUTHENTICATED)
+@Secured(SecurityRule.IS_ANONYMOUS)
 abstract class FacetController<I extends Facet> extends ItemController<I> {
 
     ItemCacheableRepository<I> facetRepository

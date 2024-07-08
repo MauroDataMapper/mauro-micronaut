@@ -18,7 +18,7 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 @Slf4j
 @CompileStatic
 @Controller('/')
-@Secured(SecurityRule.IS_AUTHENTICATED)
+@Secured(SecurityRule.IS_ANONYMOUS)
 class SearchController implements AdministeredItemReader {
 
     @Inject

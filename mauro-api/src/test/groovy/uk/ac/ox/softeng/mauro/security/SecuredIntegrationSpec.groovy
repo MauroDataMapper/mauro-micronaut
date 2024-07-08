@@ -3,6 +3,8 @@ package uk.ac.ox.softeng.mauro.security
 
 import io.micronaut.http.HttpRequest
 import io.micronaut.http.HttpResponse
+import io.micronaut.http.HttpStatus
+import io.micronaut.http.client.exceptions.HttpClientResponseException
 import jakarta.inject.Inject
 import spock.lang.Shared
 import uk.ac.ox.softeng.mauro.domain.security.ApplicationRole
@@ -94,5 +96,16 @@ abstract class SecuredIntegrationSpec extends BaseIntegrationSpec {
 
     HttpResponse loginUser() {
         loginUsernamePassword('user@example.com', 'password')
+    }
+
+    void logout() {
+        try {
+            GET('/authentication/logout')
+        } catch (HttpClientResponseException exception) {
+            if (exception.status != HttpStatus.OK) {
+                throw exception
+            }
+        }
+        sessionCookie = null
     }
 }

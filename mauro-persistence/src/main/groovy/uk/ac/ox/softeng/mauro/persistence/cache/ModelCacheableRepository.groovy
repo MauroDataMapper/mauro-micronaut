@@ -44,13 +44,19 @@ class ModelCacheableRepository<M extends Model> extends AdministeredItemCacheabl
     List<M> findAllByFolderId(UUID folderId) {
         return null
     }
-// Cacheable Model Repository definitions
+
+    // Cacheable Model Repository definitions
 
     @CompileStatic
     @Singleton
     static class TerminologyCacheableRepository extends ModelCacheableRepository<Terminology> {
         TerminologyCacheableRepository(TerminologyRepository terminologyRepository) {
             super(terminologyRepository)
+        }
+
+        @Override
+        Boolean handles(String domainType) {
+            repository.handles(domainType)
         }
     }
 
@@ -59,6 +65,12 @@ class ModelCacheableRepository<M extends Model> extends AdministeredItemCacheabl
     static class FolderCacheableRepository extends ModelCacheableRepository<Folder> {
         FolderCacheableRepository(FolderRepository folderRepository) {
             super(folderRepository)
+        }
+
+        // not cached
+
+        List<Folder> readAllRootFolders() {
+            ((FolderRepository) repository).readAllRootFolders()
         }
     }
 

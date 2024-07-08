@@ -11,7 +11,7 @@ import uk.ac.ox.softeng.mauro.persistence.cache.ItemCacheableRepository
 import uk.ac.ox.softeng.mauro.security.AccessControlService
 
 @CompileStatic
-@Secured(SecurityRule.IS_AUTHENTICATED)
+@Secured(SecurityRule.IS_ANONYMOUS)
 abstract class ItemController<I extends Item> implements AdministeredItemReader {
 
     @Inject
