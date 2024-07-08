@@ -33,8 +33,13 @@ import uk.ac.ox.softeng.mauro.domain.model.ModelItem
 @Introspected
 @MappedEntity(schema = 'datamodel', value = 'enumeration_value')
 @MapConstructor(includeSuperFields = true, includeSuperProperties = true, noArg = true)
-@Indexes([@Index(columns = ['enumeration_value_id', 'category', 'key', 'value'], unique = true)])
-class EnumerationValue extends ModelItem<DataModel> implements DiffableItem<EnumerationValue> {
+@Indexes([@Index(columns = ['enumeration_value_id'], unique = true),
+        @Index(columns = ['enumeration_type_id']),
+        @Index(columns = ['category']),
+        @Index(columns = ['key']),
+        @Index(columns = ['value'], unique = true)]
+)
+class EnumerationValue extends ModelItem<DataModel> {
 
     @Override
     String getLabel() {
@@ -42,6 +47,7 @@ class EnumerationValue extends ModelItem<DataModel> implements DiffableItem<Enum
     }
 
     @JsonIgnore
+    @NotNull
     DataType enumerationType
 
     @JsonIgnore

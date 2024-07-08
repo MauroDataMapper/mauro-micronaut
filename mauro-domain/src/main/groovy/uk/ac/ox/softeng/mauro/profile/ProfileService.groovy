@@ -15,13 +15,11 @@ class ProfileService {
         pluginService.listPlugins(Profile)
     }
 
-
     List<Profile> getProfilesForAdministeredItem(List<Profile> profiles, AdministeredItem item) {
         profiles.findAll { profile ->
             item.metadata.namespace.contains(profile.namespace)
         }
     }
-
 
 
 }

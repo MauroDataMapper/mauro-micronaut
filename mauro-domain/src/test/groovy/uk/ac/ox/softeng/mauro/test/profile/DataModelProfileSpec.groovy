@@ -2,121 +2,23 @@ package uk.ac.ox.softeng.mauro.test.profile
 
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
-import spock.lang.Shared
 import spock.lang.Specification
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
-import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
 import uk.ac.ox.softeng.mauro.plugin.MauroPluginService
 import uk.ac.ox.softeng.mauro.profile.DataModelBasedProfile
 import uk.ac.ox.softeng.mauro.profile.Profile
-import uk.ac.ox.softeng.mauro.profile.ProfileService
-import uk.ac.ox.softeng.mauro.profile.ProfileSpecificationFieldProfile
-import uk.ac.ox.softeng.mauro.profile.ProfileSpecificationProfile
+import uk.ac.ox.softeng.mauro.profile.test.DataModelBasedProfileTest
 
 @MicronautTest
 class DataModelProfileSpec extends Specification {
 
     @Inject
-    ProfileService profileService
-
-    @Inject
     MauroPluginService mauroPluginService
-
-    @Shared
-    static DataModel testProfileModel = DataModel.build {
-        label "Asset management profile"
-        description "Details pertaining to the management of data assets"
-        metadata(ProfileSpecificationProfile.NAMESPACE,
-                ["metadataNamespace": "com.test.assets",
-                 "profileApplicableForDomains": "DataModel; Terminology"])
-        primitiveType {
-            label "Decimal"
-        }
-        primitiveType {
-            label "Date"
-        }
-        primitiveType {
-            label "String"
-        }
-        primitiveType {
-            label "Boolean"
-        }
-        enumerationType {
-            label "Priority"
-            enumerationValue {
-                key "1"
-                value "High"
-            }
-            enumerationValue {
-                key "2"
-                value "Medium"
-            }
-            enumerationValue {
-                key "3"
-                value "Low"
-            }
-        }
-        dataClass {
-            label "Asset details"
-            description "Details of an asset"
-            dataElement {
-                label "Size"
-                description "Size of the asset (in TB)"
-                dataType "Decimal"
-                metadata(ProfileSpecificationFieldProfile.NAMESPACE,
-                        ["metadataPropertyName": "size"])
-            }
-            dataElement {
-                label "Priority"
-                description "Priority of the asset (High / Medium / Low)"
-                dataType "Priority"
-                metadata(ProfileSpecificationFieldProfile.NAMESPACE,
-                        ["metadataPropertyName": "priority"])
-            }
-            dataElement {
-                label "Contact email address"
-                description "Email address of the contact for this asset"
-                dataType "String"
-                metadata(ProfileSpecificationFieldProfile.NAMESPACE,
-                        ["metadataPropertyName": "contactEmail",
-                        "regularExpression": "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,6}\$"])
-            }
-            dataElement {
-                label "Is retired"
-                description "Whether or not this asset has been retired"
-                dataType "Boolean"
-                metadata(ProfileSpecificationFieldProfile.NAMESPACE,
-                        ["metadataPropertyName": "retired"])
-            }
-        }
-        dataClass {
-            label "Asset Creation"
-            description "Details of when an asset was created"
-            dataElement {
-                label "Created date"
-                description "Date the asset was created"
-                dataType "Date"
-                minMultiplicity 1
-                maxMultiplicity 1
-                metadata(ProfileSpecificationFieldProfile.NAMESPACE,
-                        ["metadataPropertyName": "createdDate"])
-            }
-            dataElement {
-                label "Deleted date"
-                description "Date the asset was deleted"
-                dataType "Date"
-                // Test one without creating a metadata property name and having it generated automatically
-//                metadata(ProfileSpecificationFieldProfile.NAMESPACE,
-//                        ["metadataPropertyName": "createdDate"])
-            }
-        }
-    }
-
 
     def "test construction of datamodel profile"() {
         when:
-        Profile dynamicProfile = new DataModelBasedProfile(testProfileModel)
+        Profile dynamicProfile = new DataModelBasedProfile(DataModelBasedProfileTest.testProfileModel)
 
         then:
         dynamicProfile.displayName == "Asset management profile"
@@ -148,7 +50,7 @@ class DataModelProfileSpec extends Specification {
                    "not-part-of-profile": "Something" // This bonus value won't be included in validation
             ])
         }
-        Profile dynamicProfile = new DataModelBasedProfile(testProfileModel)
+        Profile dynamicProfile = new DataModelBasedProfile(DataModelBasedProfileTest.testProfileModel)
 
         then:
         dynamicProfile.validate(dataModel) == []
@@ -169,7 +71,7 @@ class DataModelProfileSpec extends Specification {
                     "Asset Creation/Deleted date" : "19/06/2024"
             ])
         }
-        Profile dynamicProfile = new DataModelBasedProfile(testProfileModel)
+        Profile dynamicProfile = new DataModelBasedProfile(DataModelBasedProfileTest.testProfileModel)
         List<String> errors = dynamicProfile.validate(dataClass)
 
         then:

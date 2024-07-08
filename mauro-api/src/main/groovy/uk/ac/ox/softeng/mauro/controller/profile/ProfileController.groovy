@@ -4,19 +4,57 @@ import groovy.transform.CompileStatic
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Get
 import jakarta.inject.Inject
+import uk.ac.ox.softeng.mauro.persistence.profile.DynamicProfileService
+import uk.ac.ox.softeng.mauro.profile.DataModelBasedProfile
 import uk.ac.ox.softeng.mauro.profile.Profile
 import uk.ac.ox.softeng.mauro.profile.ProfileService
 
 @CompileStatic
-@Controller('/profiles')
+@Controller
 class ProfileController {
 
     @Inject
     ProfileService profileService
 
-    @Get('/providers')
+    @Inject
+    DynamicProfileService dynamicProfileService
+
+    private List<Profile> getAllProfiles() {
+        profileService.getStaticProfiles() + dynamicProfileService.getDynamicProfiles().collect {(Profile) it}
+    }
+
+    @Get('/profiles/providers/dynamic')
+    List<DataModelBasedProfile> dynamicProviders() {
+        dynamicProfileService.getDynamicProfiles()
+    }
+
+
+    @Get('/profiles/providers')
     List<Profile> providers() {
-        profileService.getStaticProfiles()
+        getAllProfiles()
+    }
+
+
+    @Get('/profiles/{namespace}/{name}/search')
+    Profile getProfileDetails(String namespace, String name) {
+        // TODO: I don't think this endpoint is actually used
+        return null
+    }
+
+    @Get('/{domainType}/{domainId}/profiles/{namespace}/{name}/search')
+    Profile getProfileDetails(String domainType, UUID domainId, String namespace, String name) {
+        // TODO: I don't think this endpoint is actually used
+        return null
+    }
+
+
+    @Get('/profiles/providers/{namespace}/{name}/{version}')
+    Profile getProfileDetails(String namespace, String name, String version) {
+        getAllProfiles().find {
+                    it.namespace == namespace &&
+                    it.name == name &&
+                    it.version == version
+        }
     }
 
 }

@@ -8,8 +8,11 @@ class DataModelBasedProfile implements Profile {
 
     String metadataNamespace
 
+    String name
+
     DataModelBasedProfile(DataModel dataModel) {
         Map<String, String> metadataMap = dataModel.metadataAsMap(ProfileSpecificationProfile.NAMESPACE)
+        name = dataModel.label
         displayName = dataModel.label
         version = dataModel.modelVersionTag?:dataModel.modelVersion
         description = dataModel.description
