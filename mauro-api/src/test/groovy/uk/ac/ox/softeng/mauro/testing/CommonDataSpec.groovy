@@ -62,4 +62,23 @@ class CommonDataSpec extends BaseIntegrationSpec{
     def term(){
         [description : 'Test Term description', code: 'est', definition: 'doloreum-et-val', url : 'https://www.hello.com/test']
     }
+
+    def referenceFilePayload(){
+        String fileContents = 'this is a string file contents'
+        [
+             fileName: 'reference file name',
+             "fileSize": fileContents.size(),
+             "fileContents": fileContents.bytes,
+             "fileType": "text/plain"
+         ]
+    }
+    def referenceFilePayload(String fileName){
+        String fileContents = 'this is a string file contents'
+        [
+                fileName: fileName,
+                "fileSize": fileContents.size(),
+                "fileContents": fileContents.bytes,
+                "fileType": "text/plain"
+        ]
+    }
 }

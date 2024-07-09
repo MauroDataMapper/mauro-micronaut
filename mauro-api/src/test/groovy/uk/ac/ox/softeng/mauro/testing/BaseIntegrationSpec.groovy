@@ -45,6 +45,7 @@ class BaseIntegrationSpec extends Specification {
     public static final String JSON_IMPORTER_NAMESPACE = '/uk.ac.ox.softeng.mauro.plugin.importer.json'
     public static final String JSON_IMPORTER_NAME = '/JsonFolderImporterPlugin'
     public static final String JSON_IMPORTER_VERSION = '/4.0.0'
+    public static final String REFERENCE_FILE_PATH = '/referenceFiles'
 
     @Inject
     JsonDataModelImporterPlugin jsonDataModelImporterPlugin

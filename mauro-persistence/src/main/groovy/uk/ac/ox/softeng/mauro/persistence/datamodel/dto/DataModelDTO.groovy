@@ -3,6 +3,7 @@ package uk.ac.ox.softeng.mauro.persistence.datamodel.dto
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.facet.Annotation
 import uk.ac.ox.softeng.mauro.domain.facet.Metadata
+import uk.ac.ox.softeng.mauro.domain.facet.ReferenceFile
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
 import uk.ac.ox.softeng.mauro.persistence.model.dto.AdministeredItemDTO
 
@@ -46,4 +47,11 @@ class DataModelDTO extends DataModel implements AdministeredItemDTO {
                                                       multi_facet_aware_item_id = data_model_.id
                                                       and parent_annotation_id is null )''')
     List<Annotation> annotations = []
+
+
+    @Nullable
+    @TypeDef(type = DataType.JSON)
+    @MappedProperty
+    @ColumnTransformer(read = '''(select json_agg(to_jsonb(reference_file) - 'file_contents') from core.reference_file where multi_facet_aware_item_id = data_model_.id)''')
+    List<ReferenceFile> referenceFiles = []
 }

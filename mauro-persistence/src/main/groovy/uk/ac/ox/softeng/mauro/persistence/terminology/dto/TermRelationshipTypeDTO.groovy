@@ -2,6 +2,7 @@ package uk.ac.ox.softeng.mauro.persistence.terminology.dto
 
 import uk.ac.ox.softeng.mauro.domain.facet.Annotation
 import uk.ac.ox.softeng.mauro.domain.facet.Metadata
+import uk.ac.ox.softeng.mauro.domain.facet.ReferenceFile
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
 import uk.ac.ox.softeng.mauro.domain.terminology.TermRelationshipType
 import uk.ac.ox.softeng.mauro.persistence.model.dto.AdministeredItemDTO
@@ -46,4 +47,10 @@ class TermRelationshipTypeDTO extends TermRelationshipType implements Administer
                                                       multi_facet_aware_item_id = term_relationship_type_.id
                                                       and parent_annotation_id is null )''')
     List<Annotation> annotations = []
+
+    @Nullable
+    @TypeDef(type = DataType.JSON)
+    @MappedProperty
+    @ColumnTransformer(read = '''(select json_agg(to_jsonb(reference_file) - 'file_contents') from core.reference_file where multi_facet_aware_item_id = term_relationship_type_.id)''')
+    List<ReferenceFile> referenceFiles = []
 }

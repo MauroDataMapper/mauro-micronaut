@@ -10,6 +10,7 @@ import io.micronaut.data.annotation.sql.ColumnTransformer
 import io.micronaut.data.model.DataType
 import uk.ac.ox.softeng.mauro.domain.facet.Annotation
 import uk.ac.ox.softeng.mauro.domain.facet.Metadata
+import uk.ac.ox.softeng.mauro.domain.facet.ReferenceFile
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.persistence.model.dto.AdministeredItemDTO
@@ -45,4 +46,12 @@ class FolderDTO extends Folder implements AdministeredItemDTO {
                                                       multi_facet_aware_item_id = folder_.id
                                                       and parent_annotation_id is null )''')
     List<Annotation> annotations = []
+
+
+
+    @Nullable
+    @TypeDef(type = DataType.JSON)
+    @MappedProperty
+    @ColumnTransformer(read = '''(select json_agg(to_jsonb(reference_file) - 'file_contents') from core.reference_file where multi_facet_aware_item_id = folder_.id)''')
+    List<ReferenceFile> referenceFiles = []
 }
