@@ -1,5 +1,8 @@
 package uk.ac.ox.softeng.mauro.controller.profile
 
+import uk.ac.ox.softeng.mauro.controller.model.AdministeredItemReader
+import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
+
 import groovy.transform.CompileStatic
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Get
@@ -11,7 +14,7 @@ import uk.ac.ox.softeng.mauro.profile.ProfileService
 
 @CompileStatic
 @Controller
-class ProfileController {
+class ProfileController implements AdministeredItemReader {
 
     @Inject
     ProfileService profileService
@@ -56,5 +59,19 @@ class ProfileController {
                     it.version == version
         }
     }
+
+    @Get('/{domainType}/{domainId}/profiles/used')
+    List<Profile> getUsedProfiles(String domainType, UUID domainId) {
+        AdministeredItem administeredItem = readAdministeredItem(domainType, domainId)
+        profileService.getUsedProfilesForAdministeredItem(getAllProfiles(), administeredItem)
+    }
+
+    @Get('/{domainType}/{domainId}/profiles/unused')
+    List<Profile> getUnusedProfiles(String domainType, UUID domainId) {
+        AdministeredItem administeredItem = readAdministeredItem(domainType, domainId)
+        profileService.getUnusedProfilesForAdministeredItem(getAllProfiles(), administeredItem)
+    }
+
+
 
 }
