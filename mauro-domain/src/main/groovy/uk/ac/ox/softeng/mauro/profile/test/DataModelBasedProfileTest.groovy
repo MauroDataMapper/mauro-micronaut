@@ -90,7 +90,7 @@ class DataModelBasedProfileTest {
                 dataType "Date"
                 // Test one without creating a metadata property name and having it generated automatically
 //                metadata(ProfileSpecificationFieldProfile.NAMESPACE,
-//                        ["metadataPropertyName": "createdDate"])
+//                        ["metadataPropertyName": "deletedDate"])
             }
         }
     }

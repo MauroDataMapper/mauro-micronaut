@@ -1,5 +1,6 @@
 package uk.ac.ox.softeng.mauro.persistence.profile
 
+import uk.ac.ox.softeng.mauro.persistence.datamodel.DataModelContentRepository
 import uk.ac.ox.softeng.mauro.persistence.datamodel.DataModelRepository
 import uk.ac.ox.softeng.mauro.profile.DataModelBasedProfile
 import uk.ac.ox.softeng.mauro.profile.ProfileSpecificationProfile
@@ -14,10 +15,14 @@ class DynamicProfileService {
     @Inject
     DataModelRepository dataModelRepository
 
+    @Inject
+    DataModelContentRepository dataModelContentRepository
+
 
     List<DataModelBasedProfile> getDynamicProfiles() {
         dataModelRepository.getAllModelsByNamespace(ProfileSpecificationProfile.NAMESPACE).collect {
-            dataModel -> new DataModelBasedProfile(dataModel)
+            dataModel -> new DataModelBasedProfile(
+                    dataModelContentRepository.findWithContentById(dataModel.id))
         }
     }
 

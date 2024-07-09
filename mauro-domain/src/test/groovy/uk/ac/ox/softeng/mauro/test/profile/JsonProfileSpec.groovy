@@ -24,15 +24,14 @@ class JsonProfileSpec extends Specification {
         mauroPluginService.listPlugins(Profile).size() == 2
         profileService.staticProfiles.size() == 2
 
-        profileService.staticProfiles.find {it.displayName == "Profile Specification Profile" }
-        profileService.staticProfiles.find {it.displayName == "Profile Specification Field Profile" }
+        profileService.staticProfiles.find { it.displayName == "Profile Specification Profile" }
+        profileService.staticProfiles.find { it.displayName == "Profile Specification Field Profile" }
     }
-
 
 
     def "test construction of json profile"() {
         when:
-        Profile p = profileService.staticProfiles.find {it.displayName == "Profile Specification Profile" }
+        Profile p = profileService.staticProfiles.find { it.displayName == "Profile Specification Profile" }
 
         then:
         p.metadataNamespace == ProfileSpecificationProfile.NAMESPACE
@@ -47,21 +46,21 @@ class JsonProfileSpec extends Specification {
     def "test validating an item against a profile - success"() {
 
         when:
-        Profile profile = profileService.staticProfiles.find {it.displayName == "Profile Specification Profile" }
+        Profile profile = profileService.staticProfiles.find { it.displayName == "Profile Specification Profile" }
 
         DataModel dm = DataModel.build {
             label "My first profiled data model"
             description "Hope this one works!"
             metadata(ProfileSpecificationProfile.NAMESPACE,
-                    ["metadataNamespace":"com.test"])
+                    ["metadataNamespace": "com.test"])
         }
         then:
         profile.validate(dm) == []
 
         when:
         dm.metadata(ProfileSpecificationProfile.NAMESPACE,
-            ["domainsApplicable":"DataModel;DataElement",
-            "editableAfterFinalisation":"true"])
+                ["domainsApplicable"        : "DataModel;DataElement",
+                 "editableAfterFinalisation": "true"])
 
         then:
         profile.validate(dm) == []
@@ -70,13 +69,13 @@ class JsonProfileSpec extends Specification {
     def "test validating an item against a profile - failure"() {
 
         when:
-        Profile profile = profileService.staticProfiles.find {it.displayName == "Profile Specification Profile" }
+        Profile profile = profileService.staticProfiles.find { it.displayName == "Profile Specification Profile" }
 
         Terminology terminology = Terminology.build {
             label "My first profiled terminology"
             description "Hope this one works!"
             metadata(ProfileSpecificationProfile.NAMESPACE,
-                    ["metadataNamespace":"com.test"])
+                    ["metadataNamespace": "com.test"])
         }
         List<String> errors = profile.validate(terminology)
         then:
@@ -88,15 +87,30 @@ class JsonProfileSpec extends Specification {
             label "My first profiled data model"
             description "Hope this one works!"
             metadata(ProfileSpecificationProfile.NAMESPACE,
-                    ["metadataNamespace":"com.test",
-                     "domainsApplicable":"DataModel;DataElement",
-                     "editableAfterFinalisation":"something"])
+                    ["metadataNamespace"        : "com.test",
+                     "domainsApplicable"        : "DataModel;DataElement",
+                     "editableAfterFinalisation": "something"])
         }
         errors = profile.validate(dm)
 
         then:
         errors.size() == 1
         errors.first().contains("does not match specified data type")
+
+    }
+
+    def "test get profile keys"() {
+        when:
+        Profile profile = profileService.staticProfiles.find { it.displayName == "Profile Specification Profile" }
+
+        then:
+        profile.getKeys() == ["domainsApplicable", "editableAfterFinalisation", "metadataNamespace"]
+
+        when:
+        profile = profileService.staticProfiles.find { it.displayName == "Profile Specification Field Profile" }
+
+        then:
+        profile.getKeys() == ["defaultValue", "editableAfterFinalisation", "metadataPropertyName", "regularExpression"]
 
     }
 }

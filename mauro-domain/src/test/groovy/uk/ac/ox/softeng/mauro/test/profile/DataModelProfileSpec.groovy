@@ -103,4 +103,13 @@ class DataModelProfileSpec extends Specification {
         errors.find { it == "Value '19/19/2024' does not match specified data type: date" }
     }
 
+    def "test get profile keys"() {
+        when:
+        Profile profile = new DataModelBasedProfile(DataModelBasedProfileTest.testProfileModel)
+
+        then:
+        profile.getKeys() == ["Asset Creation/Deleted date", "contactEmail", "createdDate", "priority", "retired", "size"]
+
+    }
+
 }

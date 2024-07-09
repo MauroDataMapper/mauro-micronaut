@@ -32,6 +32,7 @@ abstract class DataModelRepository implements ModelRepository<DataModel> {
     @Nullable
     abstract List<DataModel> findAllByFolderId(UUID folderId)
 
+    // TODO: This method really needs caching
     @Query(value = '''
         select * from datamodel.data_model where
    exists(select 1 from core.metadata

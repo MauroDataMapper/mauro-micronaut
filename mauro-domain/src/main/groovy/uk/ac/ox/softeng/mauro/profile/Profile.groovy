@@ -29,7 +29,27 @@ trait Profile extends MauroPlugin {
             errors.addAll(section.validate(item, profileMetadata))
         }
         return errors
+    }
 
+    boolean isApplicableForDomain(String domain) {
+        (profileApplicableForDomains == null ||
+                profileApplicableForDomains.size() == 0 ||
+                profileApplicableForDomains.contains(domain))
+    }
+
+    boolean isApplicableForDomain(AdministeredItem item) {
+        (profileApplicableForDomains == null ||
+                profileApplicableForDomains.size() == 0 ||
+                profileApplicableForDomains.contains(item.getDomainType()))
+    }
+
+
+    List<String> getKeys() {
+        sections.collect { section ->
+            section.fields.collect { field ->
+                field.getMetadataKey(section.label)
+            }
+        }.flatten().sort()
     }
 
 }

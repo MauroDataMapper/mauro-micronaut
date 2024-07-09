@@ -17,15 +17,16 @@ class ProfileService {
 
     List<Profile> getUsedProfilesForAdministeredItem(List<Profile> profiles, AdministeredItem item) {
         profiles.findAll { profile ->
-            item.metadata.namespace.contains(profile.namespace)
+            profile.isApplicableForDomain(item) &&
+            item.getMetadata().find{ it.namespace == profile.metadataNamespace }
         }
     }
 
     List<Profile> getUnusedProfilesForAdministeredItem(List<Profile> profiles, AdministeredItem item) {
         profiles.findAll { profile ->
-            !item.metadata.namespace.contains(profile.namespace)
+            profile.isApplicableForDomain(item) &&
+            !item.getMetadata().find{ it.namespace == profile.metadataNamespace }
         }
     }
-
 
 }

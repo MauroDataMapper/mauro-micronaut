@@ -176,9 +176,8 @@ abstract class AdministeredItem extends Item {
      */
 
     Map<String, String> metadataAsMap(String namespace) {
-        metadata.findAll {it.namespace == namespace}.collectEntries {
-            [it.key, it.value]
-        }
+        getMetadata().findAll { it.namespace == namespace }
+                .collectEntries {[it.key, it.value]}
     }
 
 
