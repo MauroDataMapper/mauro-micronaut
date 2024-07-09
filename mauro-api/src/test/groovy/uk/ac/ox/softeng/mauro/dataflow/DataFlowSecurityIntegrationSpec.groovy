@@ -31,8 +31,7 @@ class DataFlowSecurityIntegrationSpec extends SecuredIntegrationSpec {
 
     @Shared
     UUID targetId
-    @Shared
-    UUID userGroupId
+
 
     void setup() {
         loginAdmin()

@@ -79,6 +79,7 @@ class DataFlowController extends AdministeredItemController<DataFlow, DataModel>
             return super.list(dataModelId)
         }
         DataModel source = dataModelRepository.findById(dataModelId)
+        accessControlService.checkRole(Role.READER, source)
         handleError(HttpStatus.NOT_FOUND, source, "Item with id: $dataModelId not found")
         ListResponse.from(dataFlowRepository.findAllBySource(source))
     }

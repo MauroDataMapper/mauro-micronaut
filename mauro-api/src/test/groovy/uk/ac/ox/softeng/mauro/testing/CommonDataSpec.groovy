@@ -86,5 +86,9 @@ class CommonDataSpec extends BaseIntegrationSpec{
         [source: [id: sourceId], label: 'test label', description: 'dataflow payload description ' ]
     }
 
+    def genericModelPayload(String label){
+        [ label: 'test label', description: 'test  payload description ' ]
+    }
+
 
 }
