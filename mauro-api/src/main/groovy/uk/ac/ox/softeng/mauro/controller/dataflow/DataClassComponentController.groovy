@@ -28,7 +28,10 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 class DataClassComponentController extends AdministeredItemController<DataClassComponent, DataFlow> {
 
     @Inject
+    AdministeredItemCacheableRepository.DataClassComponentCacheableRepository dataClassComponentCacheableRepository
+    @Inject
     AdministeredItemCacheableRepository.DataClassCacheableRepository dataClassRepository
+
     @Inject
     DataClassComponentRepository dataClassComponentRepository
 
@@ -125,7 +128,7 @@ class DataClassComponentController extends AdministeredItemController<DataClassC
             default:
                 handleError(HttpStatus.BAD_REQUEST, type, "Type must be source or target")
         }
-        super.invalidate(dataClassComponent)
+        dataClassComponentCacheableRepository.invalidate(dataClassComponent)
         dataClassComponent
     }
 
@@ -155,7 +158,7 @@ class DataClassComponentController extends AdministeredItemController<DataClassC
 
         }
         handleError(HttpStatus.NOT_FOUND, result, "data class not found ,$dataClassId")
-        super.invalidate(dataClassComponent)
+        dataClassComponentCacheableRepository.invalidate(dataClassComponent)
         dataClassComponent
     }
 }

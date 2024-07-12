@@ -4,7 +4,6 @@ import groovy.transform.CompileStatic
 import groovy.transform.MapConstructor
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
-import io.micronaut.data.annotation.Join
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.model.query.builder.sql.Dialect
@@ -44,13 +43,6 @@ abstract class DataClassComponentRepository implements ModelItemRepository<DataC
         readAllByDataFlow((DataFlow) parent)
     }
 
-    @Override
-    @Nullable
-    @Join(value = 'catalogueUser', type = Join.Type.LEFT_FETCH)
-    @Join(value = 'dataFlow', type = Join.Type.LEFT_FETCH)
-    @Join(value = 'sourceDataClasses', type = Join.Type.LEFT_FETCH)
-    @Join(value = 'targetDataClasses', type = Join.Type.LEFT_FETCH)
-    abstract DataClassComponent readById(UUID id)
 
     /**
      * Add sourcedataClass to dataClassComponent

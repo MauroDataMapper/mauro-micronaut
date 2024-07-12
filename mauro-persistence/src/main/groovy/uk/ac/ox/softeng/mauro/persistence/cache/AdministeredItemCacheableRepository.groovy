@@ -202,7 +202,10 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
         DataClassComponentCacheableRepository(DataClassComponentRepository dataClassComponentRepository) {
             super(dataClassComponentRepository)
         }
-
+        @Override
+        void invalidate(DataClassComponent component){
+            super.invalidate(component)
+        }
     }
 
     @Singleton
@@ -210,6 +213,10 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
     static class DataElementComponentCacheableRepository extends AdministeredItemCacheableRepository<DataElementComponent> {
         DataElementComponentCacheableRepository(DataElementComponentRepository dataElementComponentRepository) {
             super(dataElementComponentRepository)
+        }
+        @Override
+        void invalidate(DataElementComponent component){
+            super.invalidate(component)
         }
     }
 }

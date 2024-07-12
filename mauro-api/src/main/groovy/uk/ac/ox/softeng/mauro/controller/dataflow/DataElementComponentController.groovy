@@ -8,7 +8,6 @@ import io.micronaut.http.annotation.*
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
 import jakarta.inject.Inject
-import org.jsoup.HttpStatusException
 import uk.ac.ox.softeng.mauro.controller.model.AdministeredItemController
 import uk.ac.ox.softeng.mauro.controller.terminology.Paths
 import uk.ac.ox.softeng.mauro.domain.dataflow.DataClassComponent
@@ -16,10 +15,8 @@ import uk.ac.ox.softeng.mauro.domain.dataflow.DataElementComponent
 import uk.ac.ox.softeng.mauro.domain.dataflow.DataFlow
 import uk.ac.ox.softeng.mauro.domain.dataflow.Type
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataElement
-import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
 import uk.ac.ox.softeng.mauro.domain.security.Role
 import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository
-import uk.ac.ox.softeng.mauro.persistence.dataflow.DataClassComponentRepository
 import uk.ac.ox.softeng.mauro.persistence.dataflow.DataElementComponentContentRepository
 import uk.ac.ox.softeng.mauro.persistence.dataflow.DataElementComponentRepository
 import uk.ac.ox.softeng.mauro.persistence.dataflow.DataFlowRepository
@@ -30,14 +27,15 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 @Controller(Paths.DATA_ELEMENT_COMPONENT_ROUTE)
 @Secured(SecurityRule.IS_AUTHENTICATED)
 class DataElementComponentController extends AdministeredItemController<DataElementComponent, DataClassComponent> {
+
     @Inject
-    DataClassComponentRepository dataClassComponentRepository
+    DataElementComponentRepository dataElementComponentRepository
 
     @Inject
     DataElementRepository dataElementRepository
 
     @Inject
-    DataElementComponentRepository dataElementComponentRepository
+    AdministeredItemCacheableRepository.DataElementComponentCacheableRepository dataElementComponentCacheableRepository
 
     @Inject
     DataElementComponentContentRepository dataElementComponentContentRepository
@@ -111,8 +109,7 @@ class DataElementComponentController extends AdministeredItemController<DataElem
         DataElementComponent dataElementComponent = dataElementComponentContentRepository.readWithContentById(id)
         handleError(HttpStatus.NOT_FOUND, dataElementToAdd, "Item with id: $id not found")
 
-        DataClassComponent parent = dataClassComponentRepository.readById(parentId)
-        accessControlService.checkRole(Role.EDITOR, parent)
+        accessControlService.checkRole(Role.EDITOR, dataElementComponent)
         switch (type) {
             case Type.TARGET:
                 if (dataElementComponent.targetDataElements.id.contains(dataElementToAdd.id)) {
@@ -131,7 +128,7 @@ class DataElementComponentController extends AdministeredItemController<DataElem
             default:
                 handleError(HttpStatus.BAD_REQUEST, type, "Type must be source or target")
         }
-        super.invalidate(dataElementComponent)
+        dataElementComponentCacheableRepository.invalidate(dataElementComponent)
         dataElementComponent
     }
 
@@ -161,7 +158,7 @@ class DataElementComponentController extends AdministeredItemController<DataElem
                 break;
         }
         handleError(HttpStatus.NOT_FOUND, result, " Item with id: $id not found")
-        super.invalidate(dataElementComponent)
+        dataElementComponentCacheableRepository.invalidate(dataElementComponent)
         dataElementComponent
     }
 }
