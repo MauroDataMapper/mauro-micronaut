@@ -60,7 +60,7 @@ abstract class DataClassComponentRepository implements ModelItemRepository<DataC
      * @returns: DataClassComponentDTO
      */
     @Query(''' insert into dataflow.data_class_component_target_data_class(data_class_component_id, data_class_id) values (:id, :dataClassId) ''')
-    abstract DataClassComponent addTargetDataClass(@NonNull UUID id, UUID dataClassId) //{
+    abstract DataClassComponent addTargetDataClass(@NonNull UUID id, UUID dataClassId)
 
 
     Class getDomainClass() {
@@ -92,19 +92,21 @@ abstract class DataClassComponentRepository implements ModelItemRepository<DataC
     @Query(''' select * from datamodel.data_class dc where exists (select data_class_id from dataflow.data_class_component_source_data_class s
                 where s.data_class_id = dc.id and s.data_class_component_id = :id) ''')
     @Nullable
-    abstract List<DataClass> getDataClassesFromDataClassComponentToSourceDataClass(UUID id)
+    abstract List<DataClass> findAllSourceDataClasses(UUID id)
 
 
     @Query(''' select * from datamodel.data_class dc where exists (select data_class_id from dataflow.data_class_component_target_data_class t
                 where t.data_class_id = dc.id and t.data_class_component_id = :id) ''')
     @Nullable
-    abstract List<DataClass> getDataClassesFromDataClassComponentToTargetDataClass(@NonNull UUID id)
+    abstract List<DataClass> findAllTargetDataClasses(@NonNull UUID id)
+
 
     @Query(''' delete from dataflow.data_class_component_source_data_class s where s.data_class_component_id = :id ''')
-    abstract Long removeSourceDataClasses(@NonNull UUID id) //{
+    @Nullable
+    abstract Long removeSourceDataClasses(@NonNull UUID id)
 
     @Query(''' delete from dataflow.data_class_component_target_data_class t where t.data_class_component_id = :id ''')
+    @Nullable
     abstract Long removeTargetDataClasses(@NonNull UUID id)
-
 }
 

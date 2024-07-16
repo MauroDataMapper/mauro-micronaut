@@ -7,9 +7,6 @@ import io.micronaut.cache.annotation.CacheInvalidate
 import io.micronaut.cache.annotation.Cacheable
 import io.micronaut.core.annotation.Nullable
 import jakarta.inject.Singleton
-import uk.ac.ox.softeng.mauro.domain.dataflow.DataClassComponent
-import uk.ac.ox.softeng.mauro.domain.dataflow.DataElementComponent
-import uk.ac.ox.softeng.mauro.domain.dataflow.DataFlow
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataElement
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
@@ -18,9 +15,6 @@ import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.terminology.Term
 import uk.ac.ox.softeng.mauro.domain.terminology.TermRelationship
 import uk.ac.ox.softeng.mauro.domain.terminology.TermRelationshipType
-import uk.ac.ox.softeng.mauro.persistence.dataflow.DataClassComponentRepository
-import uk.ac.ox.softeng.mauro.persistence.dataflow.DataElementComponentRepository
-import uk.ac.ox.softeng.mauro.persistence.dataflow.DataFlowRepository
 import uk.ac.ox.softeng.mauro.persistence.datamodel.DataClassRepository
 import uk.ac.ox.softeng.mauro.persistence.datamodel.DataElementRepository
 import uk.ac.ox.softeng.mauro.persistence.datamodel.DataTypeRepository
@@ -187,36 +181,4 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
 
     }
 
-    @Singleton
-    @CompileStatic
-    static class DataFlowCacheableRepository extends AdministeredItemCacheableRepository<DataFlow> {
-        DataFlowCacheableRepository(DataFlowRepository dataFlowRepository) {
-            super(dataFlowRepository)
-        }
-
-    }
-
-    @Singleton
-    @CompileStatic
-    static class DataClassComponentCacheableRepository extends AdministeredItemCacheableRepository<DataClassComponent> {
-        DataClassComponentCacheableRepository(DataClassComponentRepository dataClassComponentRepository) {
-            super(dataClassComponentRepository)
-        }
-        @Override
-        void invalidate(DataClassComponent component){
-            super.invalidate(component)
-        }
-    }
-
-    @Singleton
-    @CompileStatic
-    static class DataElementComponentCacheableRepository extends AdministeredItemCacheableRepository<DataElementComponent> {
-        DataElementComponentCacheableRepository(DataElementComponentRepository dataElementComponentRepository) {
-            super(dataElementComponentRepository)
-        }
-        @Override
-        void invalidate(DataElementComponent component){
-            super.invalidate(component)
-        }
-    }
 }

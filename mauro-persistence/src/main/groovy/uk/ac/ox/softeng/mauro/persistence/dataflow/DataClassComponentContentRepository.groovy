@@ -6,7 +6,6 @@ import jakarta.inject.Inject
 import jakarta.inject.Singleton
 import uk.ac.ox.softeng.mauro.domain.dataflow.DataClassComponent
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
-import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemContentRepository
 
 @CompileStatic
@@ -14,22 +13,30 @@ import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemContentRepositor
 class DataClassComponentContentRepository extends AdministeredItemContentRepository {
 
     @Inject
-    AdministeredItemCacheableRepository.DataClassComponentCacheableRepository dataClassComponentCacheableRepository
+    DataClassComponentRepository dataClassComponentRepository
 
     @Inject
-    DataClassComponentRepository dataClassComponentRepository
+    DataElementComponentContentRepository dataElementComponentContentRepository
+
+    @Inject
+    DataElementComponentRepository dataElementComponentRepository
 
     @Override
     DataClassComponent readWithContentById(UUID id) {
-        DataClassComponent dataClassComponent = dataClassComponentCacheableRepository.readById(id)
+        DataClassComponent dataClassComponent = dataClassComponentRepository.findById(id)
         if (!dataClassComponent) return null
-        dataClassComponent.sourceDataClasses = dataClassComponentRepository.getDataClassesFromDataClassComponentToSourceDataClass(dataClassComponent.id)
-        dataClassComponent.targetDataClasses = dataClassComponentRepository.getDataClassesFromDataClassComponentToTargetDataClass( dataClassComponent.id)
+        dataClassComponent.sourceDataClasses = dataClassComponentRepository.findAllSourceDataClasses(dataClassComponent.id)
+        dataClassComponent.targetDataClasses = dataClassComponentRepository.findAllTargetDataClasses(dataClassComponent.id)
+        dataClassComponent.dataElementComponents = dataElementComponentRepository.findAllByParent(dataClassComponent)
         dataClassComponent
     }
 
     @Override
     Long deleteWithContent(@NonNull AdministeredItem administeredItem) {
+        if ((administeredItem as DataClassComponent).dataElementComponents) {
+            dataElementComponentContentRepository.deleteAllSourceAndTargetDataElements((administeredItem as DataClassComponent).dataElementComponents)
+            dataElementComponentRepository.deleteAll( (administeredItem as DataClassComponent).dataElementComponents)
+        }
         if ((administeredItem as DataClassComponent).sourceDataClasses) {
             dataClassComponentRepository.removeSourceDataClasses(administeredItem.id)
         }

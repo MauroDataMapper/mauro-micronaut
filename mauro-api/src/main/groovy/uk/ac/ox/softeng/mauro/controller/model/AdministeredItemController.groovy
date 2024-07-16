@@ -12,8 +12,8 @@ import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.security.Role
-import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemContentRepository
+import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemRepository
 import uk.ac.ox.softeng.mauro.persistence.model.PathRepository
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
@@ -30,16 +30,16 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
 
     Class<I> itemClass
 
-    AdministeredItemCacheableRepository<I> administeredItemRepository
+    AdministeredItemRepository<I> administeredItemRepository
 
-    AdministeredItemCacheableRepository<P> parentItemRepository
+    AdministeredItemRepository<P> parentItemRepository
 
     AdministeredItemContentRepository administeredItemContentRepository
 
     @Inject
     PathRepository pathRepository
 
-    AdministeredItemController(Class<I> itemClass, AdministeredItemCacheableRepository<I> administeredItemRepository, AdministeredItemCacheableRepository<P> parentItemRepository, AdministeredItemContentRepository administeredItemContentRepository) {
+    AdministeredItemController(Class<I> itemClass, AdministeredItemRepository<I> administeredItemRepository, AdministeredItemRepository<P> parentItemRepository, AdministeredItemContentRepository administeredItemContentRepository) {
         super(administeredItemRepository)
         this.itemClass = itemClass
         this.administeredItemRepository = administeredItemRepository

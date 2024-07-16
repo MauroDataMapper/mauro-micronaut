@@ -21,6 +21,4 @@ abstract class DataClassComponentDTORepository implements GenericRepository<Data
     @Join(value = 'sourceDataClasses', type = Join.Type.LEFT_FETCH)
     @Join(value = 'targetDataClasses', type = Join.Type.LEFT_FETCH)
     abstract List<DataClassComponentDTO> findAllByDataFlowId(UUID uuid)
-
-
 }

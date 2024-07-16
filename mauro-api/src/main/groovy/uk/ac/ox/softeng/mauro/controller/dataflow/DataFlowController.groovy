@@ -5,10 +5,10 @@ import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.*
-import io.micronaut.http.exceptions.HttpStatusException
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
 import jakarta.inject.Inject
+import jakarta.transaction.Transactional
 import jakarta.validation.constraints.NotNull
 import uk.ac.ox.softeng.mauro.controller.model.AdministeredItemController
 import uk.ac.ox.softeng.mauro.controller.terminology.Paths
@@ -16,7 +16,6 @@ import uk.ac.ox.softeng.mauro.domain.dataflow.DataFlow
 import uk.ac.ox.softeng.mauro.domain.dataflow.Type
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.security.Role
-import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.dataflow.DataFlowContentRepository
 import uk.ac.ox.softeng.mauro.persistence.dataflow.DataFlowRepository
@@ -33,28 +32,22 @@ class DataFlowController extends AdministeredItemController<DataFlow, DataModel>
     DataFlowRepository dataFlowRepository
 
 
-    DataFlowController(AdministeredItemCacheableRepository.DataFlowCacheableRepository dataFlowCacheableRepository,
-                       ModelCacheableRepository.DataModelCacheableRepository dataModelRepository, DataFlowContentRepository dataFlowContentRepository) {
-        super(DataFlow, dataFlowCacheableRepository, dataModelRepository, dataFlowContentRepository)
+    DataFlowController(DataFlowRepository dataFlowRepository, ModelCacheableRepository.DataModelCacheableRepository dataModelRepository, DataFlowContentRepository dataFlowContentRepository) {
+        super(DataFlow, dataFlowRepository, dataModelRepository, dataFlowContentRepository)
     }
 
 
     @Get(value = Paths.ID_ROUTE)
-    DataFlow show(@NonNull UUID dataModelId, @NonNull UUID id) {
+    DataFlow show(@NonNull UUID id) {
         super.show(id)
     }
 
     @Post
     DataFlow create(@NonNull UUID dataModelId, @Body @NonNull DataFlow dataFlow) {
-        DataModel target = dataModelRepository.readById(dataModelId)
-        handleError(HttpStatus.NOT_FOUND, target, "Item with id: $dataModelId not found")
-        accessControlService.checkRole(Role.EDITOR, target)
-        DataModel retrievedSource = dataModelRepository.readById(dataFlow.source.id)
-        handleError(HttpStatus.NOT_FOUND, retrievedSource, "Item with id: $dataFlow.source.id not found")
-        dataFlow.source = retrievedSource
-        accessControlService.checkRole(Role.EDITOR, target)
-        dataFlow.target = target
-        createEntity(target, dataFlow)
+        DataModel source = dataModelRepository.findById(dataFlow.source.id)
+        handleError(HttpStatus.NOT_FOUND, source,"Datamodel not found : $dataFlow.source.id")
+        DataFlow created = super.create(dataModelId, dataFlow)
+        show(created.id)
     }
 
     @Put(value = Paths.ID_ROUTE)
@@ -64,12 +57,8 @@ class DataFlowController extends AdministeredItemController<DataFlow, DataModel>
 
 
     @Delete(value = Paths.ID_ROUTE)
+    @Transactional
     HttpStatus delete(@NonNull UUID dataModelId, @NonNull UUID id, @Body @Nullable DataFlow dataFlow) {
-        DataFlow retrieved = dataFlowRepository.readById(id)
-        handleError(HttpStatus.NOT_FOUND, retrieved, "Item with id: $id not found")
-        if (retrieved.target.id != dataModelId) {
-            throw new HttpStatusException(HttpStatus.BAD_REQUEST, "$dataModelId is not target dataModel for dataFlow $id")
-        }
         super.delete(id, dataFlow)
     }
 

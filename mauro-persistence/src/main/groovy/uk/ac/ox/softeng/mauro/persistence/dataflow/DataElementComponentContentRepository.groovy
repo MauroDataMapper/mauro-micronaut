@@ -6,7 +6,6 @@ import jakarta.inject.Inject
 import jakarta.inject.Singleton
 import uk.ac.ox.softeng.mauro.domain.dataflow.DataElementComponent
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
-import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemContentRepository
 
 @CompileStatic
@@ -14,14 +13,11 @@ import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemContentRepositor
 class DataElementComponentContentRepository extends AdministeredItemContentRepository {
 
     @Inject
-    AdministeredItemCacheableRepository.DataElementComponentCacheableRepository dataElementComponentCacheableRepository
-
-    @Inject
     DataElementComponentRepository dataElementComponentRepository
 
     @Override
     DataElementComponent readWithContentById(UUID id) {
-        DataElementComponent dataElementComponent = dataElementComponentCacheableRepository.readById(id)
+        DataElementComponent dataElementComponent = dataElementComponentRepository.readById(id)
         if (!dataElementComponent) return null
         dataElementComponent.sourceDataElements = dataElementComponentRepository.getSourceDataElements(dataElementComponent.id)
         dataElementComponent.targetDataElements = dataElementComponentRepository.getTargetDataElements(dataElementComponent.id)
@@ -32,7 +28,6 @@ class DataElementComponentContentRepository extends AdministeredItemContentRepos
     @Override
     Long deleteWithContent(@NonNull AdministeredItem administeredItem) {
         if ((administeredItem as DataElementComponent).sourceDataElements) {
-
             dataElementComponentRepository.removeSourceDataElements(administeredItem.id)
         }
         if ((administeredItem as DataElementComponent).targetDataElements) {
@@ -40,4 +35,12 @@ class DataElementComponentContentRepository extends AdministeredItemContentRepos
         }
         dataElementComponentRepository.delete(administeredItem as DataElementComponent)
     }
+
+    void deleteAllSourceAndTargetDataElements(List<DataElementComponent> dataElementComponents) {
+        dataElementComponents.each{
+            dataElementComponentRepository.removeSourceDataElements(it.id)
+            dataElementComponentRepository.removeTargetDataElements(it.id)
+        }
+    }
+
 }

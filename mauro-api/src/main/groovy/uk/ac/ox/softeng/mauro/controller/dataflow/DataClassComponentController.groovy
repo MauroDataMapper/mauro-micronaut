@@ -1,10 +1,13 @@
 package uk.ac.ox.softeng.mauro.controller.dataflow
 
 import groovy.transform.CompileStatic
+import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
+import io.micronaut.data.exceptions.EmptyResultException
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.*
+import io.micronaut.http.exceptions.HttpStatusException
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
 import jakarta.inject.Inject
@@ -21,14 +24,12 @@ import uk.ac.ox.softeng.mauro.persistence.dataflow.DataClassComponentRepository
 import uk.ac.ox.softeng.mauro.persistence.dataflow.DataFlowRepository
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
-
 @CompileStatic
 @Controller(Paths.DATA_CLASS_COMPONENTS_ROUTE)
+@Slf4j
 @Secured(SecurityRule.IS_AUTHENTICATED)
 class DataClassComponentController extends AdministeredItemController<DataClassComponent, DataFlow> {
 
-    @Inject
-    AdministeredItemCacheableRepository.DataClassComponentCacheableRepository dataClassComponentCacheableRepository
     @Inject
     AdministeredItemCacheableRepository.DataClassCacheableRepository dataClassRepository
 
@@ -41,19 +42,23 @@ class DataClassComponentController extends AdministeredItemController<DataClassC
     @Inject
     DataFlowRepository dataFlowRepository
 
-    DataClassComponentController(AdministeredItemCacheableRepository.DataClassComponentCacheableRepository dataClassComponentCacheableRepository,
-                                 AdministeredItemCacheableRepository.DataFlowCacheableRepository dataFlowRepository,
+    DataClassComponentController(DataClassComponentRepository dataClassComponentRepository,
+                                 DataFlowRepository dataFlowRepository,
                                  DataClassComponentContentRepository dataClassComponentContentRepository) {
-        super(DataClassComponent, dataClassComponentCacheableRepository, dataFlowRepository, dataClassComponentContentRepository)
+        super(DataClassComponent, dataClassComponentRepository, dataFlowRepository, dataClassComponentContentRepository)
     }
 
 
     @Get(value = Paths.ID_ROUTE)
     DataClassComponent show(@NonNull UUID dataFlowId, @NonNull UUID id) {
         DataFlow parent = dataFlowRepository.findById(dataFlowId)
-        DataClassComponent retrieved = super.show(id)
-        retrieved.dataFlow = parent
-        retrieved
+        try {
+            DataClassComponent retrieved = super.show(id)
+            retrieved.dataFlow = parent
+            retrieved
+        } catch (EmptyResultException e) {
+            throw new HttpStatusException(HttpStatus.NOT_FOUND, "Item not found : $id, $e")
+        }
     }
 
     @Post
@@ -63,8 +68,6 @@ class DataClassComponentController extends AdministeredItemController<DataClassC
 
     @Put(value = Paths.ID_ROUTE)
     DataClassComponent update(@NonNull UUID id, @Body @NonNull DataClassComponent dataClassComponent) {
-        DataClassComponent retrieved = dataClassComponentRepository.readById(id)
-        accessControlService.checkRole(Role.EDITOR, retrieved)
         super.update(id, dataClassComponent)
     }
 
@@ -80,13 +83,13 @@ class DataClassComponentController extends AdministeredItemController<DataClassC
 
     @Put(value = Paths.SOURCE_DATA_CLASS_ROUTE)
     DataClassComponent update(@NonNull UUID dataModelId, @NonNull UUID dataFlowId, @NonNull UUID id, @NonNull UUID dataClassId) {
-        DataClassComponent updated = addDataClass(Type.SOURCE, id, dataClassId, dataFlowId)
+        DataClassComponent updated = addDataClass(Type.SOURCE, id, dataClassId)
         updated
     }
 
     @Put(value = Paths.TARGET_DATA_CLASS_ROUTE)
     DataClassComponent update(@NonNull UUID dataFlowId, @NonNull UUID id, @NonNull UUID dataClassId) {
-        DataClassComponent updated = addDataClass(Type.TARGET, id, dataClassId, dataFlowId)
+        DataClassComponent updated = addDataClass(Type.TARGET, id, dataClassId)
         updated
     }
 
@@ -102,14 +105,14 @@ class DataClassComponentController extends AdministeredItemController<DataClassC
         return HttpStatus.NO_CONTENT
     }
 
-    private DataClassComponent addDataClass(Type type, UUID id, UUID dataClassId, UUID parentId) {
+    private DataClassComponent addDataClass(Type type, UUID id, UUID dataClassId) {
         DataClass dataClassToAdd = dataClassRepository.readById(dataClassId)
         handleError(HttpStatus.NOT_FOUND, dataClassToAdd, "Item with id: $id not found")
+        accessControlService.checkRole(Role.EDITOR, dataClassToAdd)
         DataClassComponent dataClassComponent = dataClassComponentContentRepository.readWithContentById(id)
         handleError(HttpStatus.NOT_FOUND, dataClassComponent, "Item with id: $id not found")
+        accessControlService.checkRole(Role.EDITOR, dataClassComponent)
 
-        DataFlow parent = dataFlowRepository.readById(parentId)
-        accessControlService.checkRole(Role.EDITOR, parent)
         switch (type) {
             case Type.TARGET:
                 if (dataClassComponent.targetDataClasses.id.contains(dataClassToAdd.id)) {
@@ -128,17 +131,17 @@ class DataClassComponentController extends AdministeredItemController<DataClassC
             default:
                 handleError(HttpStatus.BAD_REQUEST, type, "Type must be source or target")
         }
-        dataClassComponentCacheableRepository.invalidate(dataClassComponent)
         dataClassComponent
     }
 
     private DataClassComponent removeDataClass(Type type, UUID id, UUID dataClassId) {
         DataClass dataClassToRemove = dataClassRepository.readById(dataClassId)
         handleError(HttpStatus.NOT_FOUND, dataClassToRemove, "Item with id: $dataClassId not found")
+        accessControlService.checkRole(Role.EDITOR, dataClassToRemove)
         DataClassComponent dataClassComponent = dataClassComponentContentRepository.readWithContentById(id)
         handleError(HttpStatus.NOT_FOUND, dataClassComponent, "Item with id: $id not found")
+        accessControlService.checkRole(Role.EDITOR, dataClassComponent)
 
-        accessControlService.checkRole(Role.EDITOR, dataClassToRemove)
         Long result
         switch (type) {
             case Type.TARGET:
@@ -158,7 +161,6 @@ class DataClassComponentController extends AdministeredItemController<DataClassC
 
         }
         handleError(HttpStatus.NOT_FOUND, result, "data class not found ,$dataClassId")
-        dataClassComponentCacheableRepository.invalidate(dataClassComponent)
         dataClassComponent
     }
 }

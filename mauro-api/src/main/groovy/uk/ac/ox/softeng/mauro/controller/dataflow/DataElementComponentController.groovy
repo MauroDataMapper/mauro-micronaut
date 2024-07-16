@@ -3,8 +3,10 @@ package uk.ac.ox.softeng.mauro.controller.dataflow
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
+import io.micronaut.data.exceptions.EmptyResultException
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.*
+import io.micronaut.http.exceptions.HttpStatusException
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
 import jakarta.inject.Inject
@@ -16,7 +18,7 @@ import uk.ac.ox.softeng.mauro.domain.dataflow.DataFlow
 import uk.ac.ox.softeng.mauro.domain.dataflow.Type
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataElement
 import uk.ac.ox.softeng.mauro.domain.security.Role
-import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository
+import uk.ac.ox.softeng.mauro.persistence.dataflow.DataClassComponentRepository
 import uk.ac.ox.softeng.mauro.persistence.dataflow.DataElementComponentContentRepository
 import uk.ac.ox.softeng.mauro.persistence.dataflow.DataElementComponentRepository
 import uk.ac.ox.softeng.mauro.persistence.dataflow.DataFlowRepository
@@ -35,15 +37,12 @@ class DataElementComponentController extends AdministeredItemController<DataElem
     DataElementRepository dataElementRepository
 
     @Inject
-    AdministeredItemCacheableRepository.DataElementComponentCacheableRepository dataElementComponentCacheableRepository
-
-    @Inject
     DataElementComponentContentRepository dataElementComponentContentRepository
     @Inject
     DataFlowRepository dataFlowRepository
 
-    DataElementComponentController(AdministeredItemCacheableRepository.DataElementComponentCacheableRepository dataElementComponentRepository,
-                                   AdministeredItemCacheableRepository.DataClassComponentCacheableRepository dataClassComponentRepository,
+    DataElementComponentController(DataElementComponentRepository dataElementComponentRepository,
+                                   DataClassComponentRepository dataClassComponentRepository,
                                    DataElementComponentContentRepository dataElementComponentContentRepository) {
         super(DataElementComponent, dataElementComponentRepository, dataClassComponentRepository, dataElementComponentContentRepository)
     }
@@ -52,9 +51,13 @@ class DataElementComponentController extends AdministeredItemController<DataElem
     @Get(value = Paths.ID_ROUTE)
     DataElementComponent show(@NonNull UUID dataFlowId, @NonNull UUID id) {
         DataFlow dataFlow = dataFlowRepository.findById(dataFlowId)
-        DataElementComponent retrieved = super.show(id)
-        retrieved.dataClassComponent.dataFlow = dataFlow
-        retrieved
+        try {
+            DataElementComponent retrieved = super.show(id)
+            retrieved.dataClassComponent.dataFlow = dataFlow
+            retrieved
+        } catch (EmptyResultException e) {
+            throw new HttpStatusException(HttpStatus.NOT_FOUND, "Item not found : $id, $e")
+        }
     }
 
     @Post
@@ -64,8 +67,6 @@ class DataElementComponentController extends AdministeredItemController<DataElem
 
     @Put(value = Paths.ID_ROUTE)
     DataElementComponent update(@NonNull UUID id, @Body @NonNull DataElementComponent dataElementComponent) {
-        DataElementComponent retrieved = dataElementComponentRepository.readById(id)
-        accessControlService.checkRole(Role.EDITOR, retrieved)
         super.update(id, dataElementComponent)
     }
 
@@ -106,10 +107,12 @@ class DataElementComponentController extends AdministeredItemController<DataElem
     private DataElementComponent addDataElement(Type type, UUID id, UUID dataElementId, UUID parentId) {
         DataElement dataElementToAdd = dataElementRepository.readById(dataElementId)
         handleError(HttpStatus.NOT_FOUND, dataElementToAdd, "Item with id: $dataElementId not found")
+        accessControlService.checkRole(Role.EDITOR, dataElementToAdd)
+
         DataElementComponent dataElementComponent = dataElementComponentContentRepository.readWithContentById(id)
         handleError(HttpStatus.NOT_FOUND, dataElementToAdd, "Item with id: $id not found")
-
         accessControlService.checkRole(Role.EDITOR, dataElementComponent)
+
         switch (type) {
             case Type.TARGET:
                 if (dataElementComponent.targetDataElements.id.contains(dataElementToAdd.id)) {
@@ -128,13 +131,13 @@ class DataElementComponentController extends AdministeredItemController<DataElem
             default:
                 handleError(HttpStatus.BAD_REQUEST, type, "Type must be source or target")
         }
-        dataElementComponentCacheableRepository.invalidate(dataElementComponent)
         dataElementComponent
     }
 
     private void removeDataElement(Type type, UUID id, UUID dataElementId) {
         DataElement dataElementToRemove = dataElementRepository.readById(dataElementId)
         handleError(HttpStatus.NOT_FOUND, dataElementToRemove, "Item with id: $dataElementId not found")
+        accessControlService.checkRole(Role.EDITOR, dataElementToRemove)
         DataElementComponent dataElementComponent = dataElementComponentContentRepository.readWithContentById(id)
         handleError(HttpStatus.NOT_FOUND, dataElementComponent, "Item with id: $id not found")
 
@@ -158,7 +161,6 @@ class DataElementComponentController extends AdministeredItemController<DataElem
                 break;
         }
         handleError(HttpStatus.NOT_FOUND, result, " Item with id: $id not found")
-        dataElementComponentCacheableRepository.invalidate(dataElementComponent)
         dataElementComponent
     }
 }

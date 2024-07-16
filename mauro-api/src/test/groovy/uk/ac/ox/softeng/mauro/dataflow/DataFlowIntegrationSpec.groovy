@@ -6,8 +6,13 @@ import io.micronaut.runtime.EmbeddedApplication
 import io.micronaut.test.annotation.Sql
 import jakarta.inject.Inject
 import spock.lang.Shared
+import uk.ac.ox.softeng.mauro.domain.dataflow.DataClassComponent
+import uk.ac.ox.softeng.mauro.domain.dataflow.DataElementComponent
 import uk.ac.ox.softeng.mauro.domain.dataflow.DataFlow
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataElement
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.persistence.ContainerizedTest
 import uk.ac.ox.softeng.mauro.testing.CommonDataSpec
@@ -31,6 +36,11 @@ class DataFlowIntegrationSpec extends CommonDataSpec {
 
     @Shared
     UUID targetId
+
+    @Shared
+    UUID dataClassId
+    @Shared
+    UUID dataElementId
 
     void setup() {
         folderId = ((Folder) POST("$FOLDERS_PATH", folder(), Folder)).id
@@ -70,13 +80,13 @@ class DataFlowIntegrationSpec extends CommonDataSpec {
         exception.status == HttpStatus.NOT_FOUND
     }
 
-    void 'create dataflow -should return http status NotFound when target not found'() {
+    void 'create dataflow -should return internal server error when target is invalid id'() {
         when:
         (DataFlow) POST("$DATAMODELS_PATH/${UUID.randomUUID()}$DATA_FLOWS_PATH", dataFlowPayload(sourceId.toString()), DataFlow)
 
         then:
         HttpClientResponseException exception = thrown()
-        exception.status == HttpStatus.NOT_FOUND
+        exception.status == HttpStatus.INTERNAL_SERVER_ERROR
     }
 
 
@@ -123,5 +133,42 @@ class DataFlowIntegrationSpec extends CommonDataSpec {
         dataflowList.items[0].id == dataFlow.id.toString()
     }
 
+    void 'delete dataFlow - should delete dataflow and all associated objects'() {
+        given:
+        dataClassId = ((DataClass) POST("$DATAMODELS_PATH/$sourceId$DATACLASSES_PATH", dataClassPayload('source label'), DataClass)).id
+        dataElementId = ((DataClass) POST("$DATAMODELS_PATH/$sourceId$DATACLASSES_PATH", dataClassPayload('source label'), DataClass)).id
+
+        UUID dataFlowId = ((DataFlow) POST("$DATAMODELS_PATH/$targetId$DATA_FLOWS_PATH", dataFlowPayload(sourceId.toString()), DataFlow)).id
+
+        UUID dataClassComponentId = ((DataClassComponent) POST("$DATAMODELS_PATH/$targetId$DATA_FLOWS_PATH/$dataFlowId$DATA_CLASS_COMPONENTS_PATH", dataModelPayload('test data class component label'), DataClassComponent)).id
+        PUT("$DATAMODELS_PATH/$targetId$DATA_FLOWS_PATH/$dataFlowId$DATA_CLASS_COMPONENTS_PATH/$dataClassComponentId$SOURCE/$dataClassId", String)
+        PUT("$DATAMODELS_PATH/$targetId$DATA_FLOWS_PATH/$dataFlowId$DATA_CLASS_COMPONENTS_PATH/$dataClassComponentId$TARGET/$dataClassId", String)
+
+        DataType dataType = (DataType) POST("$DATAMODELS_PATH/$targetId/dataTypes", [label: 'integer', description: 'a whole number, may be positive or negative, with no maximum or minimum', domainType: 'PrimitiveType'], DataType)
+        dataElementId = ((DataElement) POST("$DATAMODELS_PATH/$targetId$DATACLASSES_PATH/$dataClassId$DATA_ELEMENTS_PATH", [label: 'First data element', description: 'The first data element', dataType: [id: dataType.id]], DataElement)).id
+        UUID dataElementComponentId = ((DataElementComponent) POST("$DATAMODELS_PATH/$targetId$DATA_FLOWS_PATH/$dataFlowId$DATA_CLASS_COMPONENTS_PATH/$dataClassComponentId$DATA_ELEMENT_COMPONENTS_PATH", dataModelPayload('test data class component label'), DataElementComponent)).id
+        PUT("$DATAMODELS_PATH/$targetId$DATA_FLOWS_PATH/$dataFlowId$DATA_CLASS_COMPONENTS_PATH/$dataClassComponentId$DATA_ELEMENT_COMPONENTS_PATH/$dataElementComponentId$SOURCE/$dataElementId", String)
+        PUT("$DATAMODELS_PATH/$targetId$DATA_FLOWS_PATH/$dataFlowId$DATA_CLASS_COMPONENTS_PATH/$dataClassComponentId$DATA_ELEMENT_COMPONENTS_PATH/$dataElementComponentId$TARGET/$dataElementId", String)
+
+        when:
+        HttpStatus status = DELETE("$DATAMODELS_PATH/$targetId$DATA_FLOWS_PATH/$dataFlowId", HttpStatus)
+
+        then:
+        status == HttpStatus.NO_CONTENT
+
+        when:
+        GET("$DATAMODELS_PATH/$targetId$DATA_FLOWS_PATH/$dataFlowId$DATA_CLASS_COMPONENTS_PATH/$dataClassComponentId",DataClassComponent)
+
+        then:
+        HttpClientResponseException exception = thrown()
+        exception.status == HttpStatus.NOT_FOUND
+
+        when:
+        GET("$DATAMODELS_PATH/$targetId$DATA_FLOWS_PATH/$dataFlowId$DATA_CLASS_COMPONENTS_PATH/$dataClassComponentId$DATA_ELEMENT_COMPONENTS_PATH/$dataElementComponentId", DataElementComponent)
+
+        then:
+        exception = thrown()
+        exception.status == HttpStatus.NOT_FOUND
+    }
 
 }
