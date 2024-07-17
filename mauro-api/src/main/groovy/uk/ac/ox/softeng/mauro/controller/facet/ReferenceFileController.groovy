@@ -57,11 +57,13 @@ class ReferenceFileController extends FacetController<ReferenceFile> {
 
     @Post('/{domainType}/{domainId}/referenceFiles')
     ReferenceFile create(@NonNull String domainType, @NonNull UUID domainId, @Body @NonNull ReferenceFile referenceFile) {
+        referenceFile.setFileSize()
         super.create(domainType, domainId, referenceFile)
     }
 
     @Put('/{domainType}/{domainId}/referenceFiles/{id}')
     ReferenceFile update(UUID domainId, @NonNull UUID id, @Body @NonNull ReferenceFile referenceFile) {
+        referenceFile.setFileSize()
         super.update(id, referenceFile)
     }
 

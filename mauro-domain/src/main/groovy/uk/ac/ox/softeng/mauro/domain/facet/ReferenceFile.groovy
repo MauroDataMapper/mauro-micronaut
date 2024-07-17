@@ -16,6 +16,10 @@ import jakarta.persistence.Transient
 @JsonIgnoreProperties(ignoreUnknown = true)
 class ReferenceFile extends CatalogueFile {
 
+    void setFileSize(){
+        this.fileSize = fileContents.size()
+    }
+
     @Override
     @JsonIgnore
     @Transient

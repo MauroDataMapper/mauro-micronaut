@@ -74,8 +74,8 @@ class ReferenceFileIntegrationSpec extends SecuredIntegrationSpec {
     void 'get referenceFile by Id -should return just fileContents  '() {
         given:
         loginAdmin()
-        String fileContent ="file contents string the quick brown fox jumped over the green hedge and over the gatepost."
-        ReferenceFile saved = (ReferenceFile) POST("$DATAMODELS_PATH/$dataModelId$REFERENCE_FILE_PATH", referenceFilePayload("testfile",fileContent), ReferenceFile)
+        String fileContent = "file contents string the quick brown fox jumped over the green hedge and over the gatepost."
+        ReferenceFile saved = (ReferenceFile) POST("$DATAMODELS_PATH/$dataModelId$REFERENCE_FILE_PATH", referenceFilePayload("testfile", fileContent), ReferenceFile)
         when:
         byte[] retrieved = (byte[]) GET("$DATAMODELS_PATH/$dataModelId$REFERENCE_FILE_PATH/$saved.id", byte[])
 
@@ -92,18 +92,25 @@ class ReferenceFileIntegrationSpec extends SecuredIntegrationSpec {
         exception.status == HttpStatus.FORBIDDEN
     }
 
-
     void 'update referenceFile -by adminUser only'() {
         given:
         loginAdmin()
         ReferenceFile saved = (ReferenceFile) POST("$DATAMODELS_PATH/$dataModelId$REFERENCE_FILE_PATH", referenceFilePayload(), ReferenceFile)
         String fileName = 'new file name'
+        String updatedFileContents = 'amn updated sentence .. it was a cold frostly dry morning when I started to walk to the woods'
         when:
-        ReferenceFile updated = (ReferenceFile) PUT("$DATAMODELS_PATH/$dataModelId$REFERENCE_FILE_PATH/$saved.id", referenceFilePayload(fileName), ReferenceFile)
+        ReferenceFile updated = (ReferenceFile) PUT("$DATAMODELS_PATH/$dataModelId$REFERENCE_FILE_PATH/$saved.id", referenceFilePayload(fileName, updatedFileContents), ReferenceFile)
 
         then:
         updated
         updated.fileName == fileName
+        updated.fileSize == updatedFileContents.size()
+        when:
+        byte[] retrieved = (byte[]) GET("$DATAMODELS_PATH/$dataModelId$REFERENCE_FILE_PATH/$saved.id", byte[])
+        then:
+
+        retrieved
+        retrieved == updatedFileContents.bytes
 
         when:
         logout()
