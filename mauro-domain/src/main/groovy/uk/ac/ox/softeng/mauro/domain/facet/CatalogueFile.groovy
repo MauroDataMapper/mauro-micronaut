@@ -7,7 +7,7 @@ import groovy.transform.CompileStatic
 
 @CompileStatic
 @AutoClone
-abstract class CatalogueFile extends Facet {
+abstract class CatalogueFile extends Facet implements CatalogueFileOutput{
     @JsonAlias(['file_contents'])
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     byte[] fileContents
@@ -17,5 +17,4 @@ abstract class CatalogueFile extends Facet {
     Long fileSize
     @JsonAlias(['file_type'])
     String fileType
-
 }

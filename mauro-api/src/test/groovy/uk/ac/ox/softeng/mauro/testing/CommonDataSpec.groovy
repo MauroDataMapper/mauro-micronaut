@@ -81,4 +81,12 @@ class CommonDataSpec extends BaseIntegrationSpec{
                 "fileType": "text/plain"
         ]
     }
+    def referenceFilePayload(String fileName,String content){
+        [
+                fileName: fileName,
+                "fileSize": content.size(),
+                "fileContents": content.bytes,
+                "fileType": "text/plain"
+        ]
+    }
 }

@@ -71,19 +71,17 @@ class ReferenceFileIntegrationSpec extends SecuredIntegrationSpec {
         exception.status == HttpStatus.FORBIDDEN
     }
 
-    void 'get referenceFile by Id -should return referenceFile '() {
+    void 'get referenceFile by Id -should return just fileContents  '() {
         given:
         loginAdmin()
-        ReferenceFile saved = (ReferenceFile) POST("$DATAMODELS_PATH/$dataModelId$REFERENCE_FILE_PATH", referenceFilePayload(), ReferenceFile)
+        String fileContent ="file contents string the quick brown fox jumped over the green hedge and over the gatepost."
+        ReferenceFile saved = (ReferenceFile) POST("$DATAMODELS_PATH/$dataModelId$REFERENCE_FILE_PATH", referenceFilePayload("testfile",fileContent), ReferenceFile)
         when:
-        ReferenceFile retrieved = (ReferenceFile) GET("$DATAMODELS_PATH/$dataModelId$REFERENCE_FILE_PATH/$saved.id", ReferenceFile)
+        byte[] retrieved = (byte[]) GET("$DATAMODELS_PATH/$dataModelId$REFERENCE_FILE_PATH/$saved.id", byte[])
 
         then:
         retrieved
-        retrieved.id == saved.id
-        retrieved.fileSize == saved.fileSize
-        retrieved.fileName == saved.fileName
-        retrieved.fileContents == saved.fileContents
+        retrieved == fileContent.bytes
 
         logout()
         when:

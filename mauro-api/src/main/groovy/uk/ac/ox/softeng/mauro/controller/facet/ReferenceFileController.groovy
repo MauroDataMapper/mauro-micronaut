@@ -49,10 +49,10 @@ class ReferenceFileController extends FacetController<ReferenceFile> {
      * @return ReferenceFile
      */
     @Get('/{domainType}/{domainId}/referenceFiles/{id}')
-    ReferenceFile show(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID id) {
+    byte[] show(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID id) {
         accessControlService.checkRole(Role.READER, readAdministeredItem(domainType, domainId))
         ReferenceFile validReferenceFile = super.validateAndGet(domainType, domainId, id) as ReferenceFile
-        validReferenceFile
+        validReferenceFile.fileContent()
     }
 
     @Post('/{domainType}/{domainId}/referenceFiles')
