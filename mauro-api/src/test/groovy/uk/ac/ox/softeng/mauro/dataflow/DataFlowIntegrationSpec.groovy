@@ -157,10 +157,16 @@ class DataFlowIntegrationSpec extends CommonDataSpec {
         status == HttpStatus.NO_CONTENT
 
         when:
-        GET("$DATAMODELS_PATH/$targetId$DATA_FLOWS_PATH/$dataFlowId$DATA_CLASS_COMPONENTS_PATH/$dataClassComponentId",DataClassComponent)
+        GET("$DATAMODELS_PATH/$targetId$DATA_FLOWS_PATH/$dataFlowId",DataFlow)
 
         then:
         HttpClientResponseException exception = thrown()
+        exception.status == HttpStatus.NOT_FOUND
+
+        when:
+        GET("$DATAMODELS_PATH/$targetId$DATA_FLOWS_PATH/$dataFlowId$DATA_CLASS_COMPONENTS_PATH/$dataClassComponentId",DataClassComponent)
+        then:
+        exception = thrown()
         exception.status == HttpStatus.NOT_FOUND
 
         when:
