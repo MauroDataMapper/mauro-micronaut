@@ -52,4 +52,18 @@ trait Profile extends MauroPlugin {
         }.flatten().sort()
     }
 
+    /**
+     * Used in the APIs for returning profiled items
+     * @param item
+     * @return
+     */
+    Map<String, Object> asMap(AdministeredItem administeredItem) {
+        [
+            id: administeredItem.id.toString(),
+            label: administeredItem.label,
+            domainType: administeredItem.domainType,
+            sections: sections.collect {it.asMap(administeredItem, getMetadataNamespace())}
+        ]
+    }
+
 }

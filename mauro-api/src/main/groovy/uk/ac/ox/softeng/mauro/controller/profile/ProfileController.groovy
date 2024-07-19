@@ -1,6 +1,7 @@
 package uk.ac.ox.softeng.mauro.controller.profile
 
 import io.micronaut.core.annotation.Nullable
+import io.micronaut.http.annotation.Body
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
 import uk.ac.ox.softeng.mauro.controller.model.AdministeredItemReader
@@ -10,6 +11,7 @@ import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import groovy.transform.CompileStatic
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Get
+import io.micronaut.http.annotation.Post
 import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.persistence.facet.MetadataRepository
 import uk.ac.ox.softeng.mauro.persistence.profile.DynamicProfileService
@@ -35,6 +37,15 @@ class ProfileController implements AdministeredItemReader {
     private List<Profile> getAllProfiles() {
         profileService.getStaticProfiles() + dynamicProfileService.getDynamicProfiles().collect {(Profile) it}
     }
+
+    private Profile getProfileByName(String namespace, String name, String version = null) {
+        getAllProfiles().find {
+            it.namespace == namespace &&
+                    it.name == name &&
+                    (!version || it.version == version)
+        }
+    }
+
 
     @Get('/profiles/providers/dynamic')
     List<DataModelBasedProfile> dynamicProviders() {
@@ -63,11 +74,7 @@ class ProfileController implements AdministeredItemReader {
 
     @Get('/profiles/providers/{namespace}/{name}/{version}')
     Profile getProfileDetails(String namespace, String name, String version) {
-        getAllProfiles().find {
-                    it.namespace == namespace &&
-                    it.name == name &&
-                    it.version == version
-        }
+        getProfileByName(namespace, name, version)
     }
 
     @Get('/{domainType}/{domainId}/profiles/used')
@@ -92,6 +99,30 @@ class ProfileController implements AdministeredItemReader {
         })
     }
 
+    @Get('/{domainType}/{domainId}/profile/{namespace}/{name}{/version}')
+    Map<String, Object> getProfiledItem(String domainType, UUID domainId, String namespace, String name, @Nullable String version) {
+        AdministeredItem administeredItem = readAdministeredItem(domainType, domainId)
+        Profile profile = getProfileByName(namespace, name, version)
+        profile.asMap(administeredItem)
+    }
+
+    @Post('/{domainType}/{domainId}/profile/{namespace}/{name}{/version}/validate')
+    Map<String, Object> validateProfile(String domainType, UUID domainId, String namespace, String name, @Nullable String version, @Body Map<String, String> bodyMap) {
+        AdministeredItem administeredItem = readAdministeredItem(domainType, domainId)
+        Profile profile = getProfileByName(namespace, name, version)
+
+        // Overwrite administered item with metadata items from the bodyMap
+        bodyMap.sections.each { section ->
+            section.fields.each { field ->
+
+            }
+        }
+
+
+
+    }
+
+
     // TODO: Refactor the UI so that this method isn't needed quite so often
     @Get('/metadata/namespaces{/prefix}')
     List<MetadataNamespaceDTO> getNamespaces(@Nullable String prefix) {
@@ -105,7 +136,6 @@ class ProfileController implements AdministeredItemReader {
             keys.addAll(profile.getKeys())
             namespacesAsMap[profile.metadataNamespace] = keys
         }
-
         namespacesAsMap
                 .findAll {!prefix || it.key.startsWith(prefix)}
                 .collect { namespace, keys ->

@@ -19,4 +19,17 @@ class ProfileSection {
         return errors
     }
 
+    /**
+     * Used in the APIs for returning profiled items
+     * @param item
+     * @return
+     */
+    Map<String, Object> asMap(AdministeredItem item, String profileNamespace) {
+        return [
+                name: label,
+                description: description,
+                fields: fields.collect {it.asMap(item, profileNamespace, label)}
+        ]
+    }
+
 }

@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.profile
 
+import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
+
 class ProfileField {
 
     String fieldName
@@ -39,6 +41,26 @@ class ProfileField {
         }
         // TODO: Something about Max Multiplicity
         return errors
+    }
+
+    /**
+     * Used in the APIs for returning profiled items
+     * @param item
+     * @return
+     */
+    Map<String, Object> asMap(AdministeredItem item, String profileNamespace, String sectionName) {
+        [
+            fieldName: fieldName,
+            metadataPropertyName: getMetadataKey(sectionName),
+            dataType: dataType.label,
+            maxMultiplicity: maxMultiplicity.toString(),
+            minMultiplicity: minMultiplicity.toString(),
+            uneditable: uneditable.toString(),
+            editableAfterFinalisation: editableAfterFinalisation.toString(),
+            derived: derived.toString(),
+            description: description,
+            currentValue: item.metadata.find {it.namespace == profileNamespace && it.key == getMetadataKey(sectionName)}?.value
+        ]
     }
 
 }
