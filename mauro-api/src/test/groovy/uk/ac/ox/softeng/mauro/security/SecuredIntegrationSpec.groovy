@@ -1,6 +1,5 @@
 package uk.ac.ox.softeng.mauro.security
 
-
 import io.micronaut.http.HttpRequest
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
@@ -12,9 +11,9 @@ import uk.ac.ox.softeng.mauro.domain.security.CatalogueUser
 import uk.ac.ox.softeng.mauro.domain.security.UserGroup
 import uk.ac.ox.softeng.mauro.persistence.cache.ItemCacheableRepository
 import uk.ac.ox.softeng.mauro.security.utils.SecureRandomStringGenerator
-import uk.ac.ox.softeng.mauro.testing.BaseIntegrationSpec
+import uk.ac.ox.softeng.mauro.testing.CommonDataSpec
 
-abstract class SecuredIntegrationSpec extends BaseIntegrationSpec {
+abstract class SecuredIntegrationSpec extends CommonDataSpec {
 
     @Inject
     @Shared

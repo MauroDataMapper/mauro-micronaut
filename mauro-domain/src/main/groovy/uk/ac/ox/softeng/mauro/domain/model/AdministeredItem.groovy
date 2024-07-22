@@ -10,6 +10,7 @@ import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Pattern
 import uk.ac.ox.softeng.mauro.domain.facet.Annotation
 import uk.ac.ox.softeng.mauro.domain.facet.Metadata
+import uk.ac.ox.softeng.mauro.domain.facet.ReferenceFile
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
 import uk.ac.ox.softeng.mauro.domain.security.CatalogueUser
 import uk.ac.ox.softeng.mauro.exception.MauroInternalException
@@ -90,6 +91,9 @@ abstract class AdministeredItem extends Item {
 
     @Relation(Relation.Kind.ONE_TO_MANY)
     List<Annotation> annotations = []
+
+    @Relation(Relation.Kind.ONE_TO_MANY)
+    List<ReferenceFile> referenceFiles = []
 
     /**
      * Helper method for returning the parent of this object, if one exists and is loaded.

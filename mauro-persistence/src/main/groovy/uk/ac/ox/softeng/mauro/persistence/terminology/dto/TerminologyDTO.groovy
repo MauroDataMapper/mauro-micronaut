@@ -10,6 +10,7 @@ import io.micronaut.data.annotation.sql.ColumnTransformer
 import io.micronaut.data.model.DataType
 import uk.ac.ox.softeng.mauro.domain.facet.Annotation
 import uk.ac.ox.softeng.mauro.domain.facet.Metadata
+import uk.ac.ox.softeng.mauro.domain.facet.ReferenceFile
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
 import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
 import uk.ac.ox.softeng.mauro.persistence.model.dto.AdministeredItemDTO
@@ -45,4 +46,10 @@ class TerminologyDTO extends Terminology implements AdministeredItemDTO {
                                                       multi_facet_aware_item_id = terminology_.id
                                                       and parent_annotation_id is null )''')
     List<Annotation> annotations = []
+
+    @Nullable
+    @TypeDef(type = DataType.JSON)
+    @MappedProperty
+    @ColumnTransformer(read = '''(select json_agg( jsonb_build_object('id', reference_file.id, 'file_name', reference_file.file_name, 'file_size', reference_file.file_size, 'file_type',reference_file.file_type) ) from core.reference_file where multi_facet_aware_item_id = terminology_.id)''')
+    List<ReferenceFile> referenceFiles = []
 }
