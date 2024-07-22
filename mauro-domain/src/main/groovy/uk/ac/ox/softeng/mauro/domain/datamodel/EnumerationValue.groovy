@@ -23,7 +23,7 @@ import uk.ac.ox.softeng.mauro.domain.model.ModelItem
  * @see uk.ac.ox.softeng.mauro.domain.terminology.Terminology
  */
 @CompileStatic
-@AutoClone(excludes = ['enumerationType'])
+@AutoClone(excludes = ['enumerationType', 'dataModel'])
 @Introspected
 @MappedEntity(schema = 'datamodel', value = 'enumeration_value')
 @MapConstructor(includeSuperFields = true, includeSuperProperties = true, noArg = true)

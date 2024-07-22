@@ -47,6 +47,8 @@ class CodeSet extends Model {
     @Override
     CodeSet clone() {
         CodeSet cloned = (CodeSet) super.clone()
+        cloned.setAssociations()
+        cloned
     }
 
     CodeSet addTerm(Term term) {
@@ -56,8 +58,8 @@ class CodeSet extends Model {
 
     @Transient
     @JsonIgnore
-    List<List<ModelItem<CodeSet>>> getAllAssociations() {
-        [terms] as List<List<ModelItem<CodeSet>>>
+    List<Collection<?extends ModelItem<CodeSet>>> getAllAssociations() {
+        [terms] as List<Collection<? extends ModelItem<CodeSet>>>
     }
 
     @Transient

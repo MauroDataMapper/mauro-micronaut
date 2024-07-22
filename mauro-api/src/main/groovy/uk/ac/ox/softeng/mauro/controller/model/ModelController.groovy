@@ -161,8 +161,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     @Transactional
     M createNewBranchModelVersion(UUID id, @Body @Nullable CreateNewVersionData createNewVersionData) {
         if (!createNewVersionData) createNewVersionData = new CreateNewVersionData()
-        M existing = modelRepository.findById(id)
-
+        M existing = modelContentRepository.findWithContentById(id)
         accessControlService.checkRole(Role.EDITOR, existing)
         accessControlService.checkRole(Role.EDITOR, existing.folder)
 

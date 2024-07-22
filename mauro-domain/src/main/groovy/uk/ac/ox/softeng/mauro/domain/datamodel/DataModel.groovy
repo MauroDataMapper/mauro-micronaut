@@ -1,9 +1,6 @@
 package uk.ac.ox.softeng.mauro.domain.datamodel
 
 import com.fasterxml.jackson.annotation.JsonAlias
-import uk.ac.ox.softeng.mauro.domain.model.Model
-import uk.ac.ox.softeng.mauro.domain.model.ModelItem
-
 import com.fasterxml.jackson.annotation.JsonIgnore
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
@@ -12,6 +9,8 @@ import io.micronaut.core.annotation.Introspected
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Relation
 import jakarta.persistence.Transient
+import uk.ac.ox.softeng.mauro.domain.model.Model
+import uk.ac.ox.softeng.mauro.domain.model.ModelItem
 
 /**
  * A DataModel describes a data asset, or a data standard
@@ -26,7 +25,8 @@ class DataModel extends Model {
     @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'dataModel')
     List<DataType> dataTypes = []
 
-    @JsonAlias("childDataClasses") // for importing models exported from the Grails implementation
+    @JsonAlias("childDataClasses")
+    // for importing models exported from the Grails implementation
     @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'dataModel')
     List<DataClass> dataClasses = []
 
@@ -51,7 +51,7 @@ class DataModel extends Model {
     }
 
     void setModelType(String modelType) {
-        modelType = DataModelType.values().find {it.label.toLowerCase() == modelType.toLowerCase()}?.label
+        modelType = DataModelType.values().find { it.label.toLowerCase() == modelType.toLowerCase() }?.label
     }
 
 
@@ -71,10 +71,45 @@ class DataModel extends Model {
 
 
     @Override
+    //can't use setAssociations to set cloned associations. need both original and cloned info
+    //this method does deep copy
     DataModel clone() {
+        Map<DataClass, DataClass> clonedDataClassLookup = [:]
+        Map<DataType, DataType> clonedDataTypeLookup = [:]
         DataModel cloned = (DataModel) super.clone()
-        cloned.dataTypes = dataTypes.collect {it.clone().tap {it.parent = cloned}}
 
+        cloned.dataTypes = dataTypes.collect {
+            DataType origDataType = it
+            it.clone().tap {
+                clonedDataTypeLookup.put(origDataType, it)
+                it.parent = cloned
+            }
+        }
+
+        cloned.allDataClasses = allDataClasses.collect {
+            DataClass orig = it
+            it.clone().tap {
+                it.dataModel = cloned
+                clonedDataClassLookup.put(orig, it)
+            }
+        } as Set<DataClass>
+
+        cloned.dataElements = dataElements.collect {
+            DataElement originalDataElement = it
+            it.clone().tap {
+                it.dataModel = cloned
+                it.parent = clonedDataClassLookup.get(originalDataElement.parent)
+                it.dataType = clonedDataTypeLookup.get(originalDataElement.dataType)
+            }
+        }
+
+        cloned.enumerationValues = enumerationValues.collect {
+            EnumerationValue origEnumerationValue = it
+            it.clone().tap {
+                it.dataModel = cloned
+                it.enumerationType = clonedDataTypeLookup.get(origEnumerationValue.enumerationType)
+            }
+        } as Set<EnumerationValue>
         cloned
     }
 
@@ -116,19 +151,18 @@ class DataModel extends Model {
     }
 
 
-
     /****
      * Methods for building a tree-like DSL
      */
 
     static DataModel build(
             Map args,
-            @DelegatesTo(value = DataModel, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
+            @DelegatesTo(value = DataModel, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
         new DataModel(args).tap(closure)
     }
 
     static DataModel build(
-            @DelegatesTo(value = DataModel, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
+            @DelegatesTo(value = DataModel, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
         build [:], closure
     }
 
@@ -144,12 +178,12 @@ class DataModel extends Model {
         primitiveType
     }
 
-    DataType primitiveType(Map args, @DelegatesTo(value = DataType, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
+    DataType primitiveType(Map args, @DelegatesTo(value = DataType, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
         DataType dt = DataType.build(args + [dataModel: this, dataTypeKind: DataType.DataTypeKind.PRIMITIVE_TYPE], closure)
         primitiveType dt
     }
 
-    DataType primitiveType(@DelegatesTo(value = DataType, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
+    DataType primitiveType(@DelegatesTo(value = DataType, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
         primitiveType [:], closure
     }
 
@@ -160,12 +194,12 @@ class DataModel extends Model {
         enumerationType
     }
 
-    DataType enumerationType(Map args, @DelegatesTo(value = DataType, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
+    DataType enumerationType(Map args, @DelegatesTo(value = DataType, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
         DataType dt = DataType.build(args + [dataModel: this, dataTypeKind: DataType.DataTypeKind.ENUMERATION_TYPE], closure)
         enumerationType(dt)
     }
 
-    DataType enumerationType(@DelegatesTo(value = DataType, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
+    DataType enumerationType(@DelegatesTo(value = DataType, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
         enumerationType [:], closure
     }
 
@@ -177,12 +211,12 @@ class DataModel extends Model {
         dataClass
     }
 
-    DataClass dataClass(Map args, @DelegatesTo(value = DataClass, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
+    DataClass dataClass(Map args, @DelegatesTo(value = DataClass, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
         DataClass dataClass1 = DataClass.build(args + [dataModel: this], closure)
         dataClass dataClass1
     }
 
-    DataClass dataClass(@DelegatesTo(value = DataClass, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
+    DataClass dataClass(@DelegatesTo(value = DataClass, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
         dataClass [:], closure
     }
 

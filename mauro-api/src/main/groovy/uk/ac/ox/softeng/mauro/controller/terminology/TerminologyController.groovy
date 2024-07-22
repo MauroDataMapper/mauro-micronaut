@@ -36,7 +36,7 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 class TerminologyController extends ModelController<Terminology> {
 
     TerminologyCacheableRepository terminologyRepository
-
+    @Inject
     TerminologyContentRepository terminologyContentRepository
 
     @Inject
