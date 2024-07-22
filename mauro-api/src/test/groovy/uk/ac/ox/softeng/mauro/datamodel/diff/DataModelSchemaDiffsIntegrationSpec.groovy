@@ -57,7 +57,7 @@ class DataModelSchemaDiffsIntegrationSpec extends CommonDataSpec {
         diff.numberOfDiffs == 0
     }
 
-    void 'diff dataModels with same data class - should have no differences'() {
+    void 'diff dataModels with same data class - data class should have no differences'() {
         given:
         //modified comparison key = label
         (DataClass) POST("$DATAMODELS_PATH/$left.id$DATACLASSES_PATH", dataClassPayload(), DataClass)
@@ -69,9 +69,9 @@ class DataModelSchemaDiffsIntegrationSpec extends CommonDataSpec {
 
         then:
         diff
-        diff.numberOfDiffs == 2
-        diff.diffs.size() == 2
-        diff.diffs.each { [AUTHOR, DiffBuilder.DESCRIPTION].contains(it.name) }
+        diff.numberOfDiffs == 4
+        diff.diffs.size() == 4
+        diff.diffs.each { [AUTHOR, DiffBuilder.DESCRIPTION, DiffBuilder.LABEL, PATH_IDENTIFIER].contains(it.name) }
         diff.diffs.each { ![DiffBuilder.DATA_CLASSES].contains(it.name) }
     }
 
@@ -92,7 +92,7 @@ class DataModelSchemaDiffsIntegrationSpec extends CommonDataSpec {
 
         then:
         diff
-        diff.count == 5
+        diff.count == 7
         ArrayDiff<Collection> dataClasses = diff.diffs.find { it -> it.name == DiffBuilder.DATA_CLASSES } as ArrayDiff<Collection>
         dataClasses.created.isEmpty()
         dataClasses.deleted.isEmpty()
@@ -126,7 +126,7 @@ class DataModelSchemaDiffsIntegrationSpec extends CommonDataSpec {
 
         then:
         diff
-        diff.count == 5
+        diff.count == 7
         ArrayDiff<Collection> dataClasses = diff.diffs.find { it -> it.name == DiffBuilder.DATA_CLASSES } as ArrayDiff<Collection>
         dataClasses.created.isEmpty()
         dataClasses.deleted.isEmpty()
@@ -153,7 +153,7 @@ class DataModelSchemaDiffsIntegrationSpec extends CommonDataSpec {
 
         then:
         diffMap
-        diffMap.count == 3
+        diffMap.count == 5
         ArrayDiff<Collection> dataTypesDiff = diffMap.diffs.find { it.name == DiffBuilder.DATA_TYPE }
         dataTypesDiff.created.isEmpty()
         dataTypesDiff.modified.isEmpty()

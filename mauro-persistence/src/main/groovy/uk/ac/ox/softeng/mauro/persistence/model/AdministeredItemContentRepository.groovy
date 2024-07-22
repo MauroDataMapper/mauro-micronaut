@@ -34,7 +34,7 @@ class AdministeredItemContentRepository {
     @Inject
     FacetCacheableRepository.AnnotationCacheableRepository annotationCacheableRepository
 
-    AdministeredItemCacheableRepository administeredItemRepository
+    AdministeredItemRepository administeredItemRepository
 
     /**
      * Read AdministeredItem with all Contents.

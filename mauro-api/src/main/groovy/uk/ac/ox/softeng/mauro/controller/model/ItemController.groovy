@@ -7,7 +7,7 @@ import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
 import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.domain.model.Item
-import uk.ac.ox.softeng.mauro.persistence.cache.ItemCacheableRepository
+import uk.ac.ox.softeng.mauro.persistence.model.ItemRepository
 import uk.ac.ox.softeng.mauro.security.AccessControlService
 
 @CompileStatic
@@ -31,9 +31,9 @@ abstract class ItemController<I extends Item> implements AdministeredItemReader 
         disallowedProperties
     }
 
-    ItemCacheableRepository<I> itemRepository
+    ItemRepository<I> itemRepository
 
-    ItemController(ItemCacheableRepository<I> itemRepository) {
+    ItemController(ItemRepository<I> itemRepository) {
         this.itemRepository = itemRepository
     }
 

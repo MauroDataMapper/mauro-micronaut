@@ -1,5 +1,6 @@
 package uk.ac.ox.softeng.mauro.testing
 
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadataType
 
 
@@ -44,14 +45,32 @@ class CommonDataSpec extends BaseIntegrationSpec{
     }
 
     def dataModelPayload(){
-        [label: 'Test data model', description: 'test description', author: 'test author']
+        dataModelPayload("test label ")
+
+    }
+    def dataModelPayload(String label){
+        [label: label, description: 'test description', author: 'test author']
+    }
+    def dataClassPayload() {
+        dataClassPayload('Test data class')
     }
 
-    def dataClassPayload(){
-        [label: 'Test data class', description: 'test description', author: 'test author']
+    def dataClassPayload(String label){
+        [label: label, description: 'test description', author: 'test author']
+    }
+
+    def dataElementPayload(String label, DataType dataType){
+        [label: label, description: 'test description', author: 'test author',
+        dataType: dataType]
     }
 
     def dataTypesPayload(){
+        [label: 'Test data type', domainType: 'primitiveType', units : 'kilograms']
+    }
+    def dataTypePayload1() {
+        [label: 'string', description: 'character string of variable length', domainType: 'PrimitiveType']
+    }
+    def dataTypePayload2(){
         [label: 'Test data type', domainType: 'primitiveType', units : 'kilograms']
     }
 
@@ -61,6 +80,14 @@ class CommonDataSpec extends BaseIntegrationSpec{
 
     def term(){
         [description : 'Test Term description', code: 'est', definition: 'doloreum-et-val', url : 'https://www.hello.com/test']
+    }
+
+    def dataFlowPayload(String sourceId){
+        [source: [id: sourceId], label: 'test label', description: 'dataflow payload description ' ]
+    }
+
+    def genericModelPayload(String label){
+        [ label: label, description: 'test  payload description ' ]
     }
 
     def referenceFilePayload(){
