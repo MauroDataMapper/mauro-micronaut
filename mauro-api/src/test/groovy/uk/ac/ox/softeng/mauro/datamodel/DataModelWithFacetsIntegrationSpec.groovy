@@ -8,9 +8,9 @@ import jakarta.inject.Inject
 import spock.lang.Shared
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
-import uk.ac.ox.softeng.mauro.domain.diff.ObjectDiff
 import uk.ac.ox.softeng.mauro.domain.facet.Annotation
 import uk.ac.ox.softeng.mauro.domain.facet.Metadata
+import uk.ac.ox.softeng.mauro.domain.facet.ReferenceFile
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.domain.model.SummaryMetadataReport
@@ -49,6 +49,10 @@ class DataModelWithFacetsIntegrationSpec extends CommonDataSpec {
     @Shared
     DataType dataType
 
+    @Shared
+    ReferenceFile referenceFile
+
+
 
     void setupSpec(){
         Folder response = (Folder) POST("$FOLDERS_PATH", folder(), Folder)
@@ -75,6 +79,13 @@ class DataModelWithFacetsIntegrationSpec extends CommonDataSpec {
         Annotation childResp = (Annotation) POST("$DATAMODELS_PATH/$dataModelId$ANNOTATION_PATH/$annotationId$ANNOTATION_PATH",
                 annotationPayload('child label', 'child description'), Annotation)
         childAnnotationId = childResp.id
+        String fileContent = "a  very long string the quick brown fox jumped over the dog"
+
+        referenceFile = (ReferenceFile) POST ("$DATAMODELS_PATH/$dataModelId$REFERENCE_FILE_PATH",
+                ["fileName": "test file name",
+                    "fileSize": fileContent.size(),
+                    "fileContents": fileContent.bytes,
+                    "fileType": "text/plain"], ReferenceFile)
     }
 
     void 'test get data model with facets - should return all nested facets'() {
@@ -96,6 +107,12 @@ class DataModelWithFacetsIntegrationSpec extends CommonDataSpec {
         retrieved.annotations.first().id == annotationId
         retrieved.annotations.first().childAnnotations.size() == 1
         retrieved.annotations.first().childAnnotations.first().parentAnnotationId == annotationId
+
+        retrieved.referenceFiles
+        retrieved.referenceFiles.size() == 1
+        retrieved.referenceFiles[0].id == referenceFile.id
+        !retrieved.referenceFiles[0].fileContents
+        retrieved.referenceFiles[0].fileSize == referenceFile.fileSize
     }
 
 

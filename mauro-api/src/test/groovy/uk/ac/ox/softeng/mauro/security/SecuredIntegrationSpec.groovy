@@ -1,6 +1,5 @@
 package uk.ac.ox.softeng.mauro.security
 
-
 import io.micronaut.http.HttpRequest
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus

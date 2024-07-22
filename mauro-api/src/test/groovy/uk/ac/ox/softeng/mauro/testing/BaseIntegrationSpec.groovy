@@ -50,6 +50,7 @@ class BaseIntegrationSpec extends Specification {
     public static final String DATA_ELEMENT_COMPONENTS_PATH = '/dataElementComponents'
     public static final String SOURCE = '/source'
     public static final String TARGET = '/target'
+    public static final String REFERENCE_FILE_PATH = '/referenceFiles'
 
     @Inject
     JsonDataModelImporterPlugin jsonDataModelImporterPlugin

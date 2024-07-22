@@ -87,8 +87,33 @@ class CommonDataSpec extends BaseIntegrationSpec{
     }
 
     def genericModelPayload(String label){
-        [ label: 'test label', description: 'test  payload description ' ]
+        [ label: label, description: 'test  payload description ' ]
     }
 
-
+    def referenceFilePayload(){
+        String fileContents = 'this is a string file contents'
+        [
+             fileName: 'reference file name',
+             "fileSize": fileContents.size(),
+             "fileContents": fileContents.bytes,
+             "fileType": "text/plain"
+         ]
+    }
+    def referenceFilePayload(String fileName){
+        String fileContents = 'this is a string file contents'
+        [
+                fileName: fileName,
+                "fileSize": fileContents.size(),
+                "fileContents": fileContents.bytes,
+                "fileType": "text/plain"
+        ]
+    }
+    def referenceFilePayload(String fileName,String content){
+        [
+                fileName: fileName,
+                "fileSize": content.size(),
+                "fileContents": content.bytes,
+                "fileType": "text/plain"
+        ]
+    }
 }
