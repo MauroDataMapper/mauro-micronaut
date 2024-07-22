@@ -50,15 +50,8 @@ class DataClassComponentController extends AdministeredItemController<DataClassC
 
 
     @Get(value = Paths.ID_ROUTE)
-    DataClassComponent show(@NonNull UUID dataFlowId, @NonNull UUID id) {
-        DataFlow parent = dataFlowRepository.findById(dataFlowId)
-        try {
-            DataClassComponent retrieved = super.show(id)
-            retrieved.dataFlow = parent
-            retrieved
-        } catch (EmptyResultException e) {
-            throw new HttpStatusException(HttpStatus.NOT_FOUND, "Item not found : $id, $e")
-        }
+    DataClassComponent show(@NonNull UUID dataFlowId, @NonNull UUID id){
+        super.show(id)
     }
 
     @Post

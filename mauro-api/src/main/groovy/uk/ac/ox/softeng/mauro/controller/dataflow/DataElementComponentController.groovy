@@ -50,14 +50,7 @@ class DataElementComponentController extends AdministeredItemController<DataElem
 
     @Get(value = Paths.ID_ROUTE)
     DataElementComponent show(@NonNull UUID dataFlowId, @NonNull UUID id) {
-        DataFlow dataFlow = dataFlowRepository.findById(dataFlowId)
-        try {
-            DataElementComponent retrieved = super.show(id)
-            retrieved.dataClassComponent.dataFlow = dataFlow
-            retrieved
-        } catch (EmptyResultException e) {
-            throw new HttpStatusException(HttpStatus.NOT_FOUND, "Item not found : $id, $e")
-        }
+       super.show(id)
     }
 
     @Post

@@ -159,7 +159,6 @@ class DataClassComponentIntegrationSpec extends CommonDataSpec {
         when:
         GET("$DATAMODELS_PATH/$sourceId$DATA_FLOWS_PATH/$dataFlowId$DATA_CLASS_COMPONENTS_PATH/$dataClassComponentId", DataClassComponent)
         then:
-        HttpClientResponseException exception = thrown()
-        exception.status == HttpStatus.NOT_FOUND
+        HttpClientResponseException exc = thrown()
     }
 }

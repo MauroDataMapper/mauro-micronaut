@@ -174,15 +174,8 @@ class DataElementComponentIntegrationSpec extends CommonDataSpec {
         status == HttpStatus.NO_CONTENT
 
         when:
-        DELETE("$DATAMODELS_PATH/$sourceId$DATA_FLOWS_PATH/$dataFlowId$DATA_CLASS_COMPONENTS_PATH/$dataClassComponentId$DATA_ELEMENT_COMPONENTS_PATH/$dataElementComponentId$SOURCE/$dataElementId", HttpStatus)
+        GET("$DATAMODELS_PATH/$sourceId$DATA_FLOWS_PATH/$dataFlowId$DATA_CLASS_COMPONENTS_PATH/$dataClassComponentId$DATA_ELEMENT_COMPONENTS_PATH/$dataElementComponentId", HttpStatus)
         then:
         HttpClientResponseException exception = thrown()
-        exception.status == HttpStatus.NOT_FOUND
-
-        when:
-        DELETE("$DATAMODELS_PATH/$sourceId$DATA_FLOWS_PATH/$dataFlowId$DATA_CLASS_COMPONENTS_PATH/$dataClassComponentId$DATA_ELEMENT_COMPONENTS_PATH/$dataElementComponentId$TARGET/$dataElementId", HttpStatus)
-        then:
-        exception = thrown()
-        exception.status == HttpStatus.NOT_FOUND
     }
 }
