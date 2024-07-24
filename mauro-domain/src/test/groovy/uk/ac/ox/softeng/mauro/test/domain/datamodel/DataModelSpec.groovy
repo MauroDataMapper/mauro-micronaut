@@ -17,6 +17,7 @@ class DataModelSpec extends Specification {
     static DataModel testDataModel = DataModel.build (label: 'My Test DataModel') {
         author 'James Welch'
         description 'This is an example of a data model corresponding to a scrape of a made-up database'
+        id UUID.randomUUID()
         primitiveType {
             label 'string'
             description 'character string'
@@ -43,28 +44,31 @@ class DataModelSpec extends Specification {
         dataClass {
             label 'My First DataClass'
             description 'Here is the description of the first DataClass'
+            id UUID.randomUUID()
         }
 
         dataClass {
             label 'My Second DataClass'
             description 'Here is the description of the second DataClass'
-
+            id UUID.randomUUID()
             dataClass {
                 label 'My Third DataClass'
                 description 'Here is the description of the third DataClass'
+                id UUID.randomUUID()
                 extendsDataClass 'My First DataClass'
                 dataElement {
                     label 'A data element'
                     description 'Something about the data element here...'
                     dataType 'Yes/No'
+                    id UUID.randomUUID()
                 }
                 dataElement {
                     label 'Another data element'
                     description 'Something about the data element here...'
+                    id UUID.randomUUID()
                     primitiveType {
                         label 'date'
                         description 'A date'
-
                     }
                 }
             }
@@ -133,7 +137,6 @@ class DataModelSpec extends Specification {
         }
         dataClass3.extendsDataClasses.size() == 1
         dataClass3.extendsDataClasses.first() == dataClass1
-
     }
 
     def 'clone the datamodel -should deep copy object and all modelitems'() {

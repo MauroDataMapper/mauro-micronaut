@@ -51,7 +51,7 @@ class DataModel extends Model {
     }
 
     void setModelType(String modelType) {
-        modelType = DataModelType.values().find { it.label.toLowerCase() == modelType.toLowerCase() }?.label
+        modelType = DataModelType.values().find {it.label.toLowerCase() == modelType.toLowerCase()}?.label
     }
 
 
@@ -71,45 +71,59 @@ class DataModel extends Model {
 
 
     @Override
-    //can't use setAssociations to set cloned associations. need both original and cloned info
-    //this method does deep copy
     DataModel clone() {
-        Map<DataClass, DataClass> clonedDataClassLookup = [:]
-        Map<DataType, DataType> clonedDataTypeLookup = [:]
         DataModel cloned = (DataModel) super.clone()
+        Map<DataClass, DataClass> clonedDataClassLookup = [:]
+        Map<DataClass, DataClass> clonedChildDataClassLookup = [:]
+        Map<DataElement, DataElement> clonedDataElementLookup = [:]
+        Map<DataType, DataType> clonedDataTypeLookup = [:]
+        Map<EnumerationValue, EnumerationValue> clonedEnumerationValueLookup = [:]
 
         cloned.dataTypes = dataTypes.collect {
-            DataType origDataType = it
-            it.clone().tap {
-                clonedDataTypeLookup.put(origDataType, it)
-                it.parent = cloned
+            it.clone().tap { clonedDT ->
+                clonedDataTypeLookup.put(it, clonedDT)
+                clonedDT.parent = cloned
+                clonedDT.enumerationValues.clear()
             }
         }
-
-        cloned.allDataClasses = allDataClasses.collect {
-            DataClass orig = it
-            it.clone().tap {
-                it.dataModel = cloned
-                clonedDataClassLookup.put(orig, it)
+        List<DataClass> clonedDataClasses = dataClasses.collect {
+            it.clone().tap { clonedDC ->
+                clonedDataClassLookup.put(it, clonedDC)
             }
-        } as Set<DataClass>
+        }
+        clonedDataClasses.each {
+            List<DataClass> clonedChildList = it.dataClasses.collect { child ->
+                child.clone().tap { clonedChild ->
+                    clonedChildDataClassLookup.put(child, clonedChild)
+                    clonedChild.parentDataClass = clonedDataClassLookup[child.parentDataClass]
+                    clonedChild.dataElements.clear()
+                }
+            }
+            it.dataClasses = clonedChildList
+        }
+        cloned.dataClasses = clonedDataClasses
+        List<DataClass> clonedChildren = clonedChildDataClassLookup.values() as List<DataClass>
+        clonedChildren.addAll(clonedDataClasses)
+        cloned.allDataClasses = clonedChildren as Set<DataClass>
 
         cloned.dataElements = dataElements.collect {
-            DataElement originalDataElement = it
-            it.clone().tap {
-                it.dataModel = cloned
-                it.parent = clonedDataClassLookup.get(originalDataElement.parent)
-                it.dataType = clonedDataTypeLookup.get(originalDataElement.dataType)
+            it.clone().tap { clonedDataElement ->
+                clonedDataElementLookup.put(it, clonedDataElement)
+                clonedDataElement.dataClass = it.dataClass.parent.domainType == DataClass.simpleName?
+                        clonedChildDataClassLookup[it.dataClass] : clonedDataClassLookup[it.dataClass]
+                clonedDataElement.dataModel = cloned
+                clonedDataElement.dataType = clonedDataTypeLookup[clonedDataElement.dataType]
             }
         }
-
         cloned.enumerationValues = enumerationValues.collect {
-            EnumerationValue origEnumerationValue = it
-            it.clone().tap {
-                it.dataModel = cloned
-                it.enumerationType = clonedDataTypeLookup.get(origEnumerationValue.enumerationType)
+            it.clone().tap{ clonedEV->
+                clonedEnumerationValueLookup.put(it, clonedEV)
+                clonedEV.dataModel = cloned
+                clonedEV.parent = clonedDataTypeLookup[it.parent]
             }
         } as Set<EnumerationValue>
+
+        cloned.setAssociations()
         cloned
     }
 

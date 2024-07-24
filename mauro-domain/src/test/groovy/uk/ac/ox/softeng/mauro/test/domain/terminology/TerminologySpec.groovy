@@ -69,7 +69,7 @@ class TerminologySpec extends Specification {
         given:
         Terminology original = testTerminology
         when:
-        Terminology cloned = testTerminology.clone()
+        Terminology cloned = original.clone()
         then:
 
         //clone clones entire object, all fields, including 'id'

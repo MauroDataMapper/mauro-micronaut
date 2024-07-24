@@ -33,7 +33,7 @@ import jakarta.validation.constraints.NotNull
  */
 
 @CompileStatic
-@AutoClone(excludes = ['dataModel'])
+@AutoClone(excludes = ['dataModel', 'dataType'])
 @Introspected
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @MappedEntity(schema = 'datamodel', value = 'data_element')

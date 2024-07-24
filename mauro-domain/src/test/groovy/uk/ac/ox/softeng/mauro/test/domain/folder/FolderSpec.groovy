@@ -39,7 +39,6 @@ class FolderSpec extends Specification {
         then:
         child
 
-
         Folder folder = TestModelData.testComplexFolder
         folder.childFolders.add(child)
         when:
