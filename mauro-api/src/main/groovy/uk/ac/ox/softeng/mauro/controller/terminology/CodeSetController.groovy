@@ -71,15 +71,11 @@ class CodeSetController extends ModelController<CodeSet> {
                     @NonNull UUID termId) {
 
         Term term = termRepository.readById(termId)
-        if (!term) {
-            throw new HttpStatusException(HttpStatus.NOT_FOUND, 'Term item not found')
-        }
         accessControlService.checkRole(Role.READER, term)
+        handleError(HttpStatus.NOT_FOUND, term, "Term item $termId not found")
         CodeSet codeSet = codeSetRepository.readById(id)
-        if (!codeSet) {
-            throw new HttpStatusException(HttpStatus.NOT_FOUND, 'CodeSet item not found')
-        }
         accessControlService.checkRole(Role.EDITOR, codeSet)
+        handleError(HttpStatus.NOT_FOUND, term, "CodeSet item $id not found")
         codeSetRepositoryUnCached.addTerm(id, termId)
         codeSet
     }
@@ -95,14 +91,10 @@ class CodeSetController extends ModelController<CodeSet> {
     CodeSet removeTermFromCodeSet(@NonNull UUID id,
                                   @NonNull UUID termId) {
         Term term = termRepository.readById(termId)
-        if (!term) {
-            throw new HttpStatusException(HttpStatus.NOT_FOUND, 'Term item not found')
-        }
+        handleError(HttpStatus.NOT_FOUND, term, "Term item $termId not found")
         CodeSet codeSet = codeSetRepository.readById(id)
-        if (!codeSet) {
-            throw new HttpStatusException(HttpStatus.NOT_FOUND, 'CodeSet item not found')
-        }
         accessControlService.checkRole(Role.EDITOR, codeSet)
+        handleError(HttpStatus.NOT_FOUND, term, "CodeSet item $id not found")
         codeSetRepositoryUnCached.removeTerm(id, termId)
         codeSet
     }
@@ -119,7 +111,7 @@ class CodeSetController extends ModelController<CodeSet> {
     }
 
     @Get(value = Paths.TERMS_IN_CODE_SET)
-    ListResponse<CodeSet> listAllTermsInCodeSet(@NonNull UUID id) {
+    ListResponse<Term> listAllTermsInCodeSet(@NonNull UUID id) {
         CodeSet codeSet = codeSetRepository.readById(id)
         if (!codeSet) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, 'CodeSet item not found')
@@ -138,7 +130,13 @@ class CodeSetController extends ModelController<CodeSet> {
     @Transactional
     @Put(value = Paths.CODE_SET_NEW_BRANCH_MODEL_VERSION)
     CodeSet createNewBranchModelVersion(UUID id, @Body @Nullable CreateNewVersionData createNewVersionData) {
-        super.createNewBranchModelVersion(id, createNewVersionData)
+        //new branchModelVersion must point to original's terms if any
+        CodeSet newBranchModelVersion = super.createNewBranchModelVersion(id, createNewVersionData) as CodeSet
+        List<Term> terms = codeSetContentRepository.codeSetRepository.getTerms(id) as List<Term>
+        terms.each{
+            addTerm(newBranchModelVersion.id, it.id)
+        }
+        newBranchModelVersion
     }
 
 }

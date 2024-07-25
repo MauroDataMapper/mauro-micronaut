@@ -98,10 +98,12 @@ class CodeSetSpec extends Specification {
         cloned.is(original)
         cloned.domainType.is(original.domainType)
         cloned.terms.size() == original.terms.size()
-        cloned.folder.id == original.folder.id
-        cloned.folder.label == original.folder.label
-        cloned.folder.description== original.folder.description
+        cloned.folder== original.folder
+        cloned.folder.is(original.folder)
+
+        cloned.terms.is(original.terms)
         cloned.terms.toSorted() ==  original.terms.toSorted()
+
         ObjectDiff objectDiff = original.diff(cloned)
         objectDiff.numberOfDiffs == 0
     }
