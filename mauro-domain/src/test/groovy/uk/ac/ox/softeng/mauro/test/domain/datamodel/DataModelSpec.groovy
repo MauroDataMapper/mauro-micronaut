@@ -14,7 +14,7 @@ import spock.lang.Specification
  */
 class DataModelSpec extends Specification {
 
-    static DataModel testDataModel = DataModel.build (label: 'My Test DataModel') {
+    static DataModel testDataModel = DataModel.build(label: 'My Test DataModel') {
         author 'James Welch'
         description 'This is an example of a data model corresponding to a scrape of a made-up database'
         id UUID.randomUUID()
@@ -77,11 +77,10 @@ class DataModelSpec extends Specification {
     }
 
 
-
     def "Test the DSL for creating objects"() {
 
         when:
-            testDataModel
+        testDataModel
 
         then:
         testDataModel.dataTypes.size() == 5
@@ -157,7 +156,7 @@ class DataModelSpec extends Specification {
         cloned.dataElements == original.dataElements
         !cloned.dataElements.is(original.dataElements)
 
-         cloned.enumerationValues == original.enumerationValues
+        cloned.enumerationValues == original.enumerationValues
         !cloned.enumerationValues.is(original.enumerationValues)  //groovy object equal
 
         cloned.allDataClasses.containsAll(cloned.dataElements.dataClass)
@@ -169,7 +168,8 @@ class DataModelSpec extends Specification {
 
         !cloned.dataElements.dataType.is(original.dataElements.dataType)
 
-        ObjectDiff objectDiff = testDataModel.diff(cloned)
+        ObjectDiff objectDiff = original.diff(cloned)
         objectDiff.numberOfDiffs == 0
     }
+
 }

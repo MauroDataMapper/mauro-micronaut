@@ -69,18 +69,19 @@ class DataModel extends Model {
         dataClasses
     }
 
-
     @Override
     DataModel clone() {
         DataModel cloned = (DataModel) super.clone()
+        cloned.updateCreationProperties()
         Map<DataClass, DataClass> clonedDataClassLookup = [:]
         Map<DataClass, DataClass> clonedChildDataClassLookup = [:]
         Map<DataElement, DataElement> clonedDataElementLookup = [:]
         Map<DataType, DataType> clonedDataTypeLookup = [:]
         Map<EnumerationValue, EnumerationValue> clonedEnumerationValueLookup = [:]
 
-        cloned.dataTypes = dataTypes.collect {
+        cloned.dataTypes = dataTypes.collect {it->
             it.clone().tap { clonedDT ->
+                clonedDT.updateCreationProperties()
                 clonedDataTypeLookup.put(it, clonedDT)
                 clonedDT.parent = cloned
                 clonedDT.enumerationValues.clear()
@@ -88,15 +89,18 @@ class DataModel extends Model {
         }
         List<DataClass> clonedDataClasses = dataClasses.collect {
             it.clone().tap { clonedDC ->
+                clonedDC.updateCreationProperties()
                 clonedDataClassLookup.put(it, clonedDC)
+                clonedDC.dataModel = cloned
             }
         }
         clonedDataClasses.each {
             List<DataClass> clonedChildList = it.dataClasses.collect { child ->
                 child.clone().tap { clonedChild ->
+                    clonedChild.updateCreationProperties()
                     clonedChildDataClassLookup.put(child, clonedChild)
-                    clonedChild.parentDataClass = clonedDataClassLookup[child.parentDataClass]
-                    clonedChild.dataElements.clear()
+                    clonedChild.parentDataClass = it
+                    clonedChild.dataModel = cloned
                 }
             }
             it.dataClasses = clonedChildList
@@ -108,15 +112,23 @@ class DataModel extends Model {
 
         cloned.dataElements = dataElements.collect {
             it.clone().tap { clonedDataElement ->
+                clonedDataElement.updateCreationProperties()
                 clonedDataElementLookup.put(it, clonedDataElement)
-                clonedDataElement.dataClass = it.dataClass.parent.domainType == DataClass.simpleName?
-                        clonedChildDataClassLookup[it.dataClass] : clonedDataClassLookup[it.dataClass]
+                Map<DataClass, DataClass> allDataClassLookup = clonedDataClassLookup
+                allDataClassLookup.putAll(clonedChildDataClassLookup)
+                clonedDataElement.dataClass = allDataClassLookup[dataClass]
                 clonedDataElement.dataModel = cloned
                 clonedDataElement.dataType = clonedDataTypeLookup[clonedDataElement.dataType]
             }
         }
+        cloned.allDataClasses.each {
+            it.dataElements = it.dataElements.collect { dataElementIt ->
+                clonedDataElementLookup[dataElementIt]
+            }
+        }
         cloned.enumerationValues = enumerationValues.collect {
-            it.clone().tap{ clonedEV->
+            it.clone().tap { clonedEV ->
+                clonedEV.updateCreationProperties()
                 clonedEnumerationValueLookup.put(it, clonedEV)
                 clonedEV.dataModel = cloned
                 clonedEV.parent = clonedDataTypeLookup[it.parent]
@@ -124,6 +136,7 @@ class DataModel extends Model {
         } as Set<EnumerationValue>
 
         cloned.setAssociations()
+        cloned.allDataClasses = cloned.allDataClasses.toSorted {it.parentDataClass} as Set<DataClass>
         cloned
     }
 
@@ -131,11 +144,11 @@ class DataModel extends Model {
     @JsonIgnore
     @Override
     void setAssociations() {
-        Map<String, DataType> dataTypesMap = dataTypes.collectEntries {[it.label, it]}
+        Map<String, DataType> dataTypesMap = dataTypes.collectEntries { [it.label, it] }
 
-        dataTypes.each {dataType ->
+        dataTypes.each { dataType ->
             dataType.parent = this
-            dataType.enumerationValues.each {enumerationValue ->
+            dataType.enumerationValues.each { enumerationValue ->
                 enumerationValue.parent = dataType
                 enumerationValues.add(enumerationValue)
                 enumerationValue.dataModel = this
@@ -143,7 +156,7 @@ class DataModel extends Model {
             }
         }
 
-        dataClasses.each {dataClass ->
+        dataClasses.each { dataClass ->
             setDataClassAssociations(dataClass, dataTypesMap)
         }
         this
@@ -156,11 +169,13 @@ class DataModel extends Model {
             setDataClassAssociations(childDataClass, dataTypesMap)
             childDataClass.parentDataClass = dataClass
         }
-        dataClass.dataElements.each {dataElement ->
+        dataClass.dataElements.each { dataElement ->
             dataElement.dataModel = this
-            this.dataElements.add(dataElement)
             dataElement.dataClass = dataClass
             dataElement.dataType = dataTypesMap[dataElement?.dataType?.label]
+            if (!this.dataElements.contains(dataElement)) {
+                this.dataElements.add(dataElement)
+            }
         }
     }
 
