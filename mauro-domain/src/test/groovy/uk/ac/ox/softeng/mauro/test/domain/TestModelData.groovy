@@ -1,6 +1,7 @@
 package uk.ac.ox.softeng.mauro.test.domain
 
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
+import uk.ac.ox.softeng.mauro.domain.facet.ReferenceFile
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.domain.terminology.CodeSet
 import uk.ac.ox.softeng.mauro.domain.terminology.Term
@@ -10,6 +11,7 @@ import uk.ac.ox.softeng.mauro.test.domain.terminology.TerminologySpec
 
 class TestModelData {
 
+    static final String FILE_CONTENTS_STRING = 'This is a string of words for a test file contents field in reference file'
     static Folder testFolder = new Folder().tap {
         id = UUID.randomUUID()
         label = 'folder label'
@@ -72,6 +74,15 @@ class TestModelData {
                 id  = UUID.randomUUID()
                 terms = [ childTerm ]
             }
+
+    static ReferenceFile testReferenceFile =  new ReferenceFile().tap {
+        id = UUID.randomUUID()
+        fileName = 'test file name'
+        fileType = 'text/plain'
+        fileContents =  FILE_CONTENTS_STRING.bytes
+        fileSize = fileContents.size()
+    }
+
 }
 
 

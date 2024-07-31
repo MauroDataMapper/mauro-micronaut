@@ -13,7 +13,7 @@ import uk.ac.ox.softeng.mauro.domain.model.SummaryMetadataReport
 
 @CompileStatic
 @MappedEntity(value = 'summary_metadata', schema = 'core', alias = 'summary_metadata_')
-@AutoClone
+@AutoClone(excludes = ['summaryMetadataType'])
 @Indexes([@Index(columns = ['multi_facet_aware_item_id'])])
 class SummaryMetadata extends Facet implements DiffableItem<SummaryMetadata> {
 
@@ -30,6 +30,13 @@ class SummaryMetadata extends Facet implements DiffableItem<SummaryMetadata> {
     @JsonAlias(['summary_metadata_reports'])
     @Relation(Relation.Kind.ONE_TO_MANY)
     List<SummaryMetadataReport> summaryMetadataReports
+
+    @Transient
+    @Override
+    @JsonIgnore
+    SummaryMetadata clone(){
+        super.clone() as SummaryMetadata
+    }
 
     @Override
     @JsonIgnore

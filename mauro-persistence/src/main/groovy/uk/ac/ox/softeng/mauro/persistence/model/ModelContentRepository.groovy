@@ -3,10 +3,13 @@ package uk.ac.ox.softeng.mauro.persistence.model
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
+import io.micronaut.http.HttpStatus
+import io.micronaut.http.exceptions.HttpStatusException
 import jakarta.inject.Singleton
 import uk.ac.ox.softeng.mauro.domain.facet.Annotation
 import uk.ac.ox.softeng.mauro.domain.facet.Facet
 import uk.ac.ox.softeng.mauro.domain.facet.Metadata
+import uk.ac.ox.softeng.mauro.domain.facet.ReferenceFile
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
@@ -51,10 +54,10 @@ class ModelContentRepository<M extends Model> extends AdministeredItemContentRep
                 metadata.addAll(item.metadata)
             }
         }
-
         metadataRepository.saveAll(metadata)
         saveSummaryMetadataFacets(items)
         saveAnnotations(items)
+        saveReferenceFiles(items)
     }
 
    void saveSummaryMetadataFacets(List<AdministeredItem> items) {
@@ -94,6 +97,23 @@ class ModelContentRepository<M extends Model> extends AdministeredItemContentRep
                 }
                 annotations.addAll(item.annotations)
                 annotationCacheableRepository.saveAll(annotations)
+            }
+        }
+    }
+
+    void saveReferenceFiles(List<AdministeredItem> items) {
+        List<ReferenceFile> referenceFiles = []
+        items.each { item ->
+            if (item.referenceFiles) {
+                item.referenceFiles.each {
+                    //get the fileContents which is deliberately not pulled back from the model DTOs
+                    ReferenceFile retrieved = referenceFileCacheableRepository.findById(it.id)
+                    if (!retrieved) throw new  HttpStatusException(HttpStatus.NOT_FOUND, "Not found for item $it.id")
+                    it.fileContents = retrieved.fileContent()
+                    updateMultiAwareData(item, it)
+                }
+                referenceFiles.addAll(item.referenceFiles)
+                referenceFileCacheableRepository.saveAll(referenceFiles)
             }
         }
     }

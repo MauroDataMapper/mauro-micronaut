@@ -12,6 +12,7 @@ import io.micronaut.security.rules.SecurityRule
 import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.controller.model.ModelController
+import uk.ac.ox.softeng.mauro.domain.diff.ObjectDiff
 import uk.ac.ox.softeng.mauro.domain.model.version.CreateNewVersionData
 import uk.ac.ox.softeng.mauro.domain.model.version.FinaliseData
 import uk.ac.ox.softeng.mauro.domain.security.Role
@@ -125,6 +126,22 @@ class CodeSetController extends ModelController<CodeSet> {
     @Put(value = Paths.FINALISE_CODE_SETS)
     CodeSet finalise(UUID id, @Body FinaliseData finaliseData) {
         super.finalise(id, finaliseData)
+    }
+
+
+    @Get('/codeSets/{id}/diff/{otherId}')
+    ObjectDiff diffModels(@NonNull UUID id, @NonNull UUID otherId) {
+        CodeSet codeSet = modelContentRepository.findWithContentById(id)
+        handleNotFoundError(codeSet, id)
+        CodeSet other = modelContentRepository.findWithContentById(otherId)
+        handleNotFoundError(other, otherId)
+
+        accessControlService.checkRole(Role.READER, codeSet)
+        accessControlService.checkRole(Role.READER, other)
+
+        codeSet.setAssociations()
+        other.setAssociations()
+        codeSet.diff(other)
     }
 
     @Transactional

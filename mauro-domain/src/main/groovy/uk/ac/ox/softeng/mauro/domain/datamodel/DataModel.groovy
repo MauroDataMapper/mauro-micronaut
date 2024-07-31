@@ -69,6 +69,8 @@ class DataModel extends Model {
         dataClasses
     }
 
+    @Transient
+    @JsonIgnore
     @Override
     DataModel clone() {
         DataModel cloned = (DataModel) super.clone()

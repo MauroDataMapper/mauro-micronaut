@@ -1,11 +1,13 @@
 package uk.ac.ox.softeng.mauro.terminology
 
 import io.micronaut.http.HttpStatus
+import io.micronaut.http.client.exceptions.HttpClientResponseException
 import io.micronaut.runtime.EmbeddedApplication
 import io.micronaut.test.annotation.Sql
 import jakarta.inject.Inject
 import spock.lang.AutoCleanup
 import spock.lang.Shared
+import uk.ac.ox.softeng.mauro.domain.facet.ReferenceFile
 import uk.ac.ox.softeng.mauro.domain.terminology.CodeSet
 import uk.ac.ox.softeng.mauro.domain.terminology.Term
 import uk.ac.ox.softeng.mauro.persistence.ContainerizedTest
@@ -180,6 +182,8 @@ class CodeSetIntegrationSpec extends CommonDataSpec {
         CodeSet codeSet = codeSet()
         codeSet.id = codeSetId
 
+        ReferenceFile referenceFile = (ReferenceFile) POST  ("$CODE_SET_PATH/$codeSetId$REFERENCE_FILE_PATH", referenceFilePayload(), ReferenceFile)
+
         and:
         def terminologyResponse = POST("$FOLDERS_PATH/$folderId$TERMINOLOGIES_PATH", terminology())
         def terminologyId = UUID.fromString(terminologyResponse.id as String)
@@ -203,6 +207,11 @@ class CodeSetIntegrationSpec extends CommonDataSpec {
         then:
         def codeSetIds = codeSets.items.id.collect()
         !codeSetIds.contains(codeSetId.toString())
+
+        when:
+        GET ("$CODE_SET_PATH/$codeSetId$REFERENCE_FILE_PATH/$referenceFile.id", ReferenceFile)
+        then:
+        HttpClientResponseException exception = thrown()
 
     }
 

@@ -4,6 +4,7 @@ package uk.ac.ox.softeng.mauro.test.domain.terminology
 import spock.lang.Specification
 import uk.ac.ox.softeng.mauro.domain.diff.ObjectDiff
 import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
+import uk.ac.ox.softeng.mauro.test.domain.TestModelData
 
 /**
  * TerminologySpec is a class for testing functionality relating to the Terminology class
@@ -68,6 +69,7 @@ class TerminologySpec extends Specification {
     void 'clone -should clone new terminology instance with new associations -deep copy of terminology and all its owning objects'() {
         given:
         Terminology original = testTerminology
+        original.referenceFiles = [TestModelData.testReferenceFile]
         when:
         Terminology cloned = original.clone()
         then:
@@ -83,6 +85,10 @@ class TerminologySpec extends Specification {
 
         cloned.termRelationships == original.termRelationships
         !cloned.termRelationships.is(original.termRelationships)
+
+        cloned.referenceFiles.size() == 1
+        original.referenceFiles.size() == 1
+        !cloned.referenceFiles.is(original.referenceFiles)
 
         ObjectDiff diff = cloned.diff(original)
         diff.numberOfDiffs == 0

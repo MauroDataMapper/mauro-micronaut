@@ -169,10 +169,13 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
 
         M savedCopy = createEntity(copy.folder, copy)
         savedCopy.allContents.each { AdministeredItem item ->
-            log.debug "*** Saving item [$item.id : $item.label] ***"
+            log.debug "*** Saving item [$item.id, $item.domainType : $item.label ] ***"
             updateCreationProperties(item)
-            getRepository(item).save(item)
+            AdministeredItemRepository repository = getRepository(item)
+            AdministeredItem saved = repository.save(item)
+            modelContentRepository.saveAllFacets(saved as AdministeredItem)
         }
+        modelContentRepository.saveAllFacets(savedCopy)
         savedCopy
     }
 

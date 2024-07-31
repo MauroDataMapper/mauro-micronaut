@@ -48,7 +48,7 @@ class DataModelSchemaDiffsIntegrationSpec extends CommonDataSpec {
 
     void 'diff same datamodel -should have no differences'() {
         when:
-        ObjectDiff diff = (ObjectDiff) GET("$DATAMODELS_PATH/$left.id/diff/$left.id", ObjectDiff)
+        ObjectDiff diff = (ObjectDiff) GET("$DATAMODELS_PATH/$left.id$DIFF/$left.id", ObjectDiff)
         then:
         diff
         diff.label == left.label
@@ -65,7 +65,7 @@ class DataModelSchemaDiffsIntegrationSpec extends CommonDataSpec {
         (DataClass) POST("$DATAMODELS_PATH/$right.id$DATACLASSES_PATH", dataClassPayload(), DataClass)
 
         when:
-        ObjectDiff diff = (ObjectDiff) GET("$DATAMODELS_PATH/$left.id/diff/$right.id", ObjectDiff)
+        ObjectDiff diff = (ObjectDiff) GET("$DATAMODELS_PATH/$left.id$DIFF/$right.id", ObjectDiff)
 
         then:
         diff
@@ -88,7 +88,7 @@ class DataModelSchemaDiffsIntegrationSpec extends CommonDataSpec {
                 [label: 'Test child', description: 'child test description', minMultiplicity: -2], DataClass)
 
         when:
-        Map<String, Object> diff = GET("$DATAMODELS_PATH/$left.id/diff/$right.id", Map<String, Object>)
+        Map<String, Object> diff = GET("$DATAMODELS_PATH/$left.id$DIFF/$right.id", Map<String, Object>)
 
         then:
         diff
@@ -122,7 +122,7 @@ class DataModelSchemaDiffsIntegrationSpec extends CommonDataSpec {
                 [label: 'Test child', description: 'child test description', minMultiplicity: -2], DataClass)
 
         when:
-        Map<String, Object> diff = GET("$DATAMODELS_PATH/$left.id/diff/$right.id", Map<String, Object>)
+        Map<String, Object> diff = GET("$DATAMODELS_PATH/$left.id$DIFF/$right.id", Map<String, Object>)
 
         then:
         diff
@@ -149,7 +149,7 @@ class DataModelSchemaDiffsIntegrationSpec extends CommonDataSpec {
         DataType leftDataType = (DataType) POST("$DATAMODELS_PATH/$left.id$DATATYPES_PATH", dataTypesPayload(), DataType)
 
         when:
-        Map<String, Object> diffMap = GET("$DATAMODELS_PATH/$left.id/diff/$right.id", Map<String, Object>)
+        Map<String, Object> diffMap = GET("$DATAMODELS_PATH/$left.id$DIFF/$right.id", Map<String, Object>)
 
         then:
         diffMap
@@ -177,7 +177,7 @@ class DataModelSchemaDiffsIntegrationSpec extends CommonDataSpec {
                 [label: 'data element', description: 'The first data element description', dataType: [id: leftDataTypeResponse.id]], DataElement)
 
         when:
-        Map<String, Object> diffMap = GET("$DATAMODELS_PATH/$left.id/diff/$right.id", Map<String, Object>)
+        Map<String, Object> diffMap = GET("$DATAMODELS_PATH/$left.id$DIFF/$right.id", Map<String, Object>)
 
         then:
         diffMap
@@ -224,7 +224,7 @@ class DataModelSchemaDiffsIntegrationSpec extends CommonDataSpec {
         retrievedDataElement.dataType.id.toString() == rightDataTypeResponse.id.toString()
 
         when:
-        Map<String, Object> diffMap = GET("$DATAMODELS_PATH/$left.id/diff/$right.id", Map<String, Object>)
+        Map<String, Object> diffMap = GET("$DATAMODELS_PATH/$left.id$DIFF/$right.id", Map<String, Object>)
 
         then:
         diffMap

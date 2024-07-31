@@ -107,7 +107,7 @@ abstract class Model<M extends DiffableItem> extends AdministeredItem implements
     @Transient
     @JsonIgnore
     List<AdministeredItem> getAllContents() {
-        allAssociations.flatten() as List<AdministeredItem>
+        getAllAssociations().flatten() as List<AdministeredItem>
     }
 
     @Transient

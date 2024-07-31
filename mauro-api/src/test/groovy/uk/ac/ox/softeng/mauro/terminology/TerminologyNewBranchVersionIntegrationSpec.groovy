@@ -1,17 +1,13 @@
 package uk.ac.ox.softeng.mauro.terminology
 
-
 import io.micronaut.runtime.EmbeddedApplication
 import io.micronaut.test.annotation.Sql
 import jakarta.inject.Inject
 import spock.lang.Shared
+import uk.ac.ox.softeng.mauro.domain.diff.DiffBuilder
+import uk.ac.ox.softeng.mauro.domain.facet.Annotation
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
-import uk.ac.ox.softeng.mauro.domain.terminology.Term
-
-import uk.ac.ox.softeng.mauro.domain.terminology.CodeSet
-import uk.ac.ox.softeng.mauro.domain.terminology.TermRelationship
-import uk.ac.ox.softeng.mauro.domain.terminology.TermRelationshipType
-import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
+import uk.ac.ox.softeng.mauro.domain.terminology.*
 import uk.ac.ox.softeng.mauro.persistence.ContainerizedTest
 import uk.ac.ox.softeng.mauro.testing.CommonDataSpec
 import uk.ac.ox.softeng.mauro.web.ListResponse
@@ -40,6 +36,11 @@ class TerminologyNewBranchVersionIntegrationSpec extends CommonDataSpec {
     @Shared
     UUID termRelationshipId
 
+    @Shared
+    Annotation annotation
+    @Shared
+    Annotation childAnnotation
+
     void setup() {
         folderId = ((Folder) POST("$FOLDERS_PATH", folder(), Folder)).id
         codeSet = (CodeSet) POST("$FOLDERS_PATH/$folderId$CODE_SET_PATH", codeSet(), CodeSet)
@@ -52,6 +53,8 @@ class TerminologyNewBranchVersionIntegrationSpec extends CommonDataSpec {
                 sourceTerm: [id: termId1],
                 targetTerm: [id: termId2]
         ], TermRelationship)).id
+        annotation = (Annotation) POST("$TERMINOLOGIES_PATH/$terminologyId$ANNOTATION_PATH", annotationPayload(), Annotation)
+        childAnnotation = (Annotation) POST("$TERMINOLOGIES_PATH/$terminologyId$ANNOTATION_PATH/$annotation.id$ANNOTATION_PATH", annotationPayload('child annotation label', 'test child description'), Annotation)
     }
 
 
@@ -112,6 +115,24 @@ class TerminologyNewBranchVersionIntegrationSpec extends CommonDataSpec {
 
         termRelationship.items.size() == 1
         termRelationship.items[0].id != termRelationshipId
+
+        when:
+        ListResponse<Annotation> annotations =  (ListResponse<Annotation>)  GET("$TERMINOLOGIES_PATH/$newBranchVersionTerminology.id$ANNOTATION_PATH", ListResponse<Annotation>)
+        then:
+        annotations
+        annotations.items.size() == 1
+        annotations.items[0].id != annotation.id
+        annotations.items[0].childAnnotations.size() == 1
+        annotations.items[0].childAnnotations[0].id != childAnnotation.id
+
+        when:
+        Map<String, Object> diffMap = GET("$TERMINOLOGIES_PATH/$terminologyId$DIFF/$newBranchVersionTerminology.id", Map<String, Object>)
+
+        then:
+        diffMap
+        //branchName and path will differ
+        diffMap.diffs.each { [DiffBuilder.BRANCH_NAME, DiffBuilder.PATH_MODEL_IDENTIFIER].contains(it.name) }
+        diffMap.count == 2
     }
 
 }

@@ -6,6 +6,7 @@ import jakarta.inject.Inject
 import jakarta.inject.Singleton
 import uk.ac.ox.softeng.mauro.domain.facet.Annotation
 import uk.ac.ox.softeng.mauro.domain.facet.Metadata
+import uk.ac.ox.softeng.mauro.domain.facet.ReferenceFile
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.model.SummaryMetadataReport
@@ -33,6 +34,9 @@ class AdministeredItemContentRepository {
 
     @Inject
     FacetCacheableRepository.AnnotationCacheableRepository annotationCacheableRepository
+
+    @Inject
+    FacetCacheableRepository.ReferenceFileCacheableRepository referenceFileCacheableRepository
 
     AdministeredItemRepository administeredItemRepository
 
@@ -77,6 +81,7 @@ class AdministeredItemContentRepository {
         }
         deleteSummaryMetadata(items)
         deleteAnnotations(items)
+        deleteReferenceFiles(items)
     }
 
     @NonNull
@@ -115,4 +120,14 @@ class AdministeredItemContentRepository {
             }
         }
     }
+
+     void deleteReferenceFiles(Collection<AdministeredItem> items) {
+         List<ReferenceFile> referenceFiles = []
+         items.each { item ->
+             if (item.referenceFiles) {
+                 referenceFiles.addAll(item.referenceFiles)
+                 referenceFileCacheableRepository.deleteAll(referenceFiles)
+             }
+         }
+     }
 }

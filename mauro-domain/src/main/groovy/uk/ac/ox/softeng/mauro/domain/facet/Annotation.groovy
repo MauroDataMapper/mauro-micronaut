@@ -32,6 +32,13 @@ class Annotation extends Facet implements DiffableItem<Annotation> {
     @Relation(Relation.Kind.ONE_TO_MANY)
     List<Annotation> childAnnotations
 
+    @Transient
+    @Override
+    @JsonIgnore
+    Annotation clone(){
+        super.clone() as Annotation
+    }
+
     @Override
     @JsonIgnore
     @Transient

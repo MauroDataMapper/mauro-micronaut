@@ -48,7 +48,7 @@ class DataModelDTO extends DataModel implements AdministeredItemDTO {
                                                       and parent_annotation_id is null )''')
     List<Annotation> annotations = []
 
-
+    //*** Warning - this suppresses the referenceFile.fileContents field
     @Nullable
     @TypeDef(type = DataType.JSON)
     @MappedProperty
