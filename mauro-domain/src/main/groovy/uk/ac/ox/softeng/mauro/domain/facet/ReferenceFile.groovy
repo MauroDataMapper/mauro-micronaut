@@ -35,13 +35,6 @@ class ReferenceFile extends CatalogueFile implements DiffableItem<ReferenceFile>
 
 
     @Override
-    @JsonIgnore
-    @Transient
-    ReferenceFile clone() {
-        super.clone() as ReferenceFile
-    }
-
-    @Override
     @Transient
     @JsonIgnore
     CollectionDiff fromItem() {

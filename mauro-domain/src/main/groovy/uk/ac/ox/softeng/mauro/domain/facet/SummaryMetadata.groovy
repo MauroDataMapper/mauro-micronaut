@@ -31,13 +31,6 @@ class SummaryMetadata extends Facet implements DiffableItem<SummaryMetadata> {
     @Relation(Relation.Kind.ONE_TO_MANY)
     List<SummaryMetadataReport> summaryMetadataReports
 
-    @Transient
-    @Override
-    @JsonIgnore
-    SummaryMetadata clone(){
-        super.clone() as SummaryMetadata
-    }
-
     @Override
     @JsonIgnore
     @Transient

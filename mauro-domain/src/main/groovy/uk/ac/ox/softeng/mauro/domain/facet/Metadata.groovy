@@ -26,13 +26,6 @@ class Metadata extends Facet implements DiffableItem<Metadata> {
 
     String value
 
-    @Transient
-    @Override
-    @JsonIgnore
-    Metadata clone(){
-        super.clone() as Metadata
-    }
-
     @Override
     @JsonIgnore
     @Transient
