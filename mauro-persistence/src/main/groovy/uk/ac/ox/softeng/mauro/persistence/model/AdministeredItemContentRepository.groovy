@@ -126,8 +126,8 @@ class AdministeredItemContentRepository {
          items.each { item ->
              if (item.referenceFiles) {
                  referenceFiles.addAll(item.referenceFiles)
-                 referenceFileCacheableRepository.deleteAll(referenceFiles)
              }
+             referenceFileCacheableRepository.deleteAll(referenceFiles)
          }
      }
 }

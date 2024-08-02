@@ -166,16 +166,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         accessControlService.checkRole(Role.EDITOR, existing.folder)
 
         M copy = modelService.createNewBranchModelVersion(existing, createNewVersionData.branchName)
-
-        M savedCopy = createEntity(copy.folder, copy)
-        savedCopy.allContents.each { AdministeredItem item ->
-            log.debug "*** Saving item [$item.id, $item.domainType : $item.label ] ***"
-            updateCreationProperties(item)
-            AdministeredItemRepository repository = getRepository(item)
-            AdministeredItem saved = repository.save(item)
-            modelContentRepository.saveAllFacets(saved as AdministeredItem)
-        }
-        modelContentRepository.saveAllFacets(savedCopy)
+        M savedCopy = modelContentRepository.saveWithContent(copy)
         savedCopy
     }
 

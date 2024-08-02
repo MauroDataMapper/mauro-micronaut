@@ -145,6 +145,7 @@ class Folder extends Model {
             }
         }
         cloned.codeSets = codeSets.collect {it.clone()}
+        cloned.setAssociations()
         cloned
     }
 

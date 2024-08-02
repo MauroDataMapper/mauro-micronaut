@@ -101,8 +101,8 @@ class FolderSpec extends Specification {
         originalTerms == clonedTerms
         Folder originalCodeSetFolder = folder.codeSets[0].folder
         Folder clonedCodeSetFolder = cloned.codeSets[0].folder
-        originalCodeSetFolder == clonedCodeSetFolder
-        originalCodeSetFolder.is(clonedCodeSetFolder)
+
+        !originalCodeSetFolder.is(clonedCodeSetFolder)
 
         ObjectDiff diff = folder.diff(cloned)
         diff.numberOfDiffs == 0

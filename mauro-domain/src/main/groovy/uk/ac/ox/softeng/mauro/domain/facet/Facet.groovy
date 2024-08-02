@@ -11,7 +11,7 @@ import uk.ac.ox.softeng.mauro.domain.model.Item
 
 @CompileStatic
 @AutoClone
-abstract class Facet<I extends Facet> extends Item {
+abstract class Facet extends Item {
 
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     @JsonAlias(['multi_facet_aware_item_domain_type'])
