@@ -128,20 +128,16 @@ class Folder extends Model {
         cloned.childFolders = childFolders.collect {
             it.clone().tap {
                 it.parentFolder = cloned
-                it.setAssociations()
             }
         }
         cloned.dataModels = dataModels.collect {
             it.clone().tap {
                 it.folder = cloned
-                //this dosen't work on datamodels. dataModel.clone() sets the associations
-                //it.setAssociations()
             }
         }
         cloned.terminologies = terminologies.collect {
             it.clone().tap {
                 it.folder = cloned
-                it.setAssociations()
             }
         }
         cloned.codeSets = codeSets.collect {it.clone()}

@@ -166,6 +166,9 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         accessControlService.checkRole(Role.EDITOR, existing.folder)
 
         M copy = modelService.createNewBranchModelVersion(existing, createNewVersionData.branchName)
+        copy.parent = existing.parent
+        updateCreationProperties(copy)
+        updateDerivedProperties(copy)
         M savedCopy = modelContentRepository.saveWithContent(copy)
         savedCopy
     }
