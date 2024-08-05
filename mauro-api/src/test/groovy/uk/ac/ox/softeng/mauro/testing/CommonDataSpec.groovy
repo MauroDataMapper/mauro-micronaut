@@ -1,8 +1,7 @@
 package uk.ac.ox.softeng.mauro.testing
 
-import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
-import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadataType
 
+import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadataType
 
 class CommonDataSpec extends BaseIntegrationSpec{
     public static final String REPORT_DATE = "2024-03-01T20:50:01.612Z"
@@ -59,9 +58,9 @@ class CommonDataSpec extends BaseIntegrationSpec{
         [label: label, description: 'test description', author: 'test author']
     }
 
-    def dataElementPayload(String label, DataType dataType){
+    def dataElementPayload(String label, UUID dataTypeId){
         [label: label, description: 'test description', author: 'test author',
-        dataType: dataType]
+        dataType: [ id: dataTypeId] ]
     }
 
     def dataTypesPayload(){

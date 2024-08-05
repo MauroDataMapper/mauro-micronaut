@@ -1,13 +1,12 @@
 package uk.ac.ox.softeng.mauro.persistence.datamodel
 
-import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
-import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
-import uk.ac.ox.softeng.mauro.persistence.model.ModelContentRepository
-
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
+import uk.ac.ox.softeng.mauro.persistence.model.ModelContentRepository
 
 @CompileStatic
 @Singleton
@@ -50,9 +49,9 @@ class DataModelContentRepository extends ModelContentRepository<DataModel> {
             dataElement.dataType = dataModel.dataTypes.find {it.id == dataElement.dataType.id}
         }
 
-
         dataModel
     }
+
 
     @Override
     DataModel saveWithContent(@NonNull DataModel model) {
