@@ -6,6 +6,7 @@ import jakarta.inject.Inject
 import spock.lang.Shared
 import uk.ac.ox.softeng.mauro.domain.diff.DiffBuilder
 import uk.ac.ox.softeng.mauro.domain.facet.Annotation
+import uk.ac.ox.softeng.mauro.domain.facet.ReferenceFile
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.domain.terminology.*
 import uk.ac.ox.softeng.mauro.persistence.ContainerizedTest
@@ -40,6 +41,8 @@ class TerminologyNewBranchVersionIntegrationSpec extends CommonDataSpec {
     Annotation annotation
     @Shared
     Annotation childAnnotation
+    @Shared
+    UUID  referenceFileId
 
     void setup() {
         folderId = ((Folder) POST("$FOLDERS_PATH", folder(), Folder)).id
@@ -55,6 +58,8 @@ class TerminologyNewBranchVersionIntegrationSpec extends CommonDataSpec {
         ], TermRelationship)).id
         annotation = (Annotation) POST("$TERMINOLOGIES_PATH/$terminologyId$ANNOTATION_PATH", annotationPayload(), Annotation)
         childAnnotation = (Annotation) POST("$TERMINOLOGIES_PATH/$terminologyId$ANNOTATION_PATH/$annotation.id$ANNOTATION_PATH", annotationPayload('child annotation label', 'test child description'), Annotation)
+        referenceFileId = ((ReferenceFile) POST("$TERMINOLOGIES_PATH/$terminologyId$REFERENCE_FILE_PATH", referenceFilePayload(), ReferenceFile)).id
+
     }
 
 
@@ -92,6 +97,10 @@ class TerminologyNewBranchVersionIntegrationSpec extends CommonDataSpec {
         terminologies
         terminologies.items.size() == 2
         terminologies.items.id.sort().containsAll([terminologyId.toString(), newBranchVersionTerminology.id.toString()].sort())
+
+        Terminology newBranchVersion = (Terminology) GET("$TERMINOLOGIES_PATH/$newBranchVersionTerminology.id", Terminology)
+        newBranchVersion.referenceFiles.size() == 1
+        newBranchVersion.referenceFiles[0].id != referenceFileId
 
         when:
         ListResponse<Term> newTerms = (ListResponse<Term>)  GET("$TERMINOLOGIES_PATH/$newBranchVersionTerminology.id$TERMS_PATH", ListResponse<Term>)
