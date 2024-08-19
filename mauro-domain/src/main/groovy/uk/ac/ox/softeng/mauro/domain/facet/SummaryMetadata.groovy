@@ -13,7 +13,7 @@ import uk.ac.ox.softeng.mauro.domain.model.SummaryMetadataReport
 
 @CompileStatic
 @MappedEntity(value = 'summary_metadata', schema = 'core', alias = 'summary_metadata_')
-@AutoClone(excludes = ['summaryMetadataType'])
+@AutoClone()
 @Indexes([@Index(columns = ['multi_facet_aware_item_id'])])
 class SummaryMetadata extends Facet implements DiffableItem<SummaryMetadata> {
 

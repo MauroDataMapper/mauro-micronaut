@@ -68,6 +68,7 @@ class CodeSetController extends ModelController<CodeSet> {
     }
 
     @Put(value = Paths.TERM_TO_CODE_SET)
+    @Transactional
     CodeSet addTerm(@NonNull UUID id,
                     @NonNull UUID termId) {
 

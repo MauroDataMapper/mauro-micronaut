@@ -106,10 +106,6 @@ class ModelContentRepository<M extends Model> extends AdministeredItemContentRep
         items.each { item ->
             if (item.referenceFiles) {
                 item.referenceFiles.each {
-                    //get the fileContents which is deliberately not pulled back from the model DTOs
-                    ReferenceFile retrieved = referenceFileCacheableRepository.findById(it.id)
-                    if (!retrieved) throw new  HttpStatusException(HttpStatus.NOT_FOUND, "Not found for item $it.id")
-                    it.fileContents = retrieved.fileContent()
                     updateMultiAwareData(item, it)
                 }
                 referenceFiles.addAll(item.referenceFiles)

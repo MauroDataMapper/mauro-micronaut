@@ -2,7 +2,10 @@ package uk.ac.ox.softeng.mauro.test.domain
 
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.facet.ReferenceFile
+import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
+import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadataType
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
+import uk.ac.ox.softeng.mauro.domain.model.SummaryMetadataReport
 import uk.ac.ox.softeng.mauro.domain.terminology.CodeSet
 import uk.ac.ox.softeng.mauro.domain.terminology.Term
 import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
@@ -83,6 +86,17 @@ class TestModelData {
         fileSize = fileContents.size()
     }
 
+    static SummaryMetadata testSummaryMetadata =  new SummaryMetadata().tap {
+        id = UUID.randomUUID()
+        label = 'test label'
+        description = 'test description'
+        summaryMetadataType = SummaryMetadataType.STRING
+    }
+
+    static SummaryMetadataReport testSummaryMetadataReport =  new SummaryMetadataReport().tap {
+        id = UUID.randomUUID()
+        reportValue  = 'test report value'
+    }
 }
 
 
