@@ -1,27 +1,17 @@
 package uk.ac.ox.softeng.mauro.persistence.datamodel
 
-import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
-import uk.ac.ox.softeng.mauro.domain.datamodel.DataElement
-import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
-import uk.ac.ox.softeng.mauro.domain.datamodel.EnumerationValue
-import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
-import uk.ac.ox.softeng.mauro.domain.terminology.Term
-import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
-import uk.ac.ox.softeng.mauro.persistence.datamodel.dto.DataElementDTORepository
-import uk.ac.ox.softeng.mauro.persistence.model.ModelItemRepository
-import uk.ac.ox.softeng.mauro.persistence.terminology.dto.TermDTORepository
-
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
-import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.annotation.Join
-import io.micronaut.data.annotation.Query
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.model.query.builder.sql.Dialect
-import io.micronaut.data.repository.reactive.ReactorPageableRepository
 import jakarta.inject.Inject
-import jakarta.validation.Valid
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataElement
+import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
+import uk.ac.ox.softeng.mauro.persistence.datamodel.dto.DataElementDTORepository
+import uk.ac.ox.softeng.mauro.persistence.model.ModelItemRepository
 
 @Slf4j
 @CompileStatic
@@ -50,7 +40,9 @@ abstract class DataElementRepository implements ModelItemRepository<DataElement>
     }
 
     @Nullable
-    abstract List<DataElement> findAllByDataClassIn(Collection<DataClass> dataClasses)
+   List<DataElement> findAllByDataClassIn(Collection<DataClass> dataClasses){
+        dataElementDTORepository.findAllByDataClassIn(dataClasses) as List<DataElement>
+    }
 
     @Nullable
     @Join(value = 'dataType', type = Join.Type.LEFT_FETCH)

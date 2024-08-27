@@ -1,6 +1,7 @@
 package uk.ac.ox.softeng.mauro.datamodel
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import groovy.json.JsonSlurper
 import io.micronaut.http.MediaType
 import io.micronaut.http.client.multipart.MultipartBody
 import io.micronaut.runtime.EmbeddedApplication
@@ -8,10 +9,10 @@ import jakarta.inject.Inject
 import spock.lang.Shared
 import uk.ac.ox.softeng.mauro.export.ExportModel
 import uk.ac.ox.softeng.mauro.persistence.ContainerizedTest
-import uk.ac.ox.softeng.mauro.testing.BaseIntegrationSpec
+import uk.ac.ox.softeng.mauro.testing.CommonDataSpec
 
 @ContainerizedTest
-class DataModelJsonImportExportSpec extends BaseIntegrationSpec {
+class DataModelJsonImportExportSpec extends CommonDataSpec {
 
     @Inject
     EmbeddedApplication<?> application
@@ -25,24 +26,42 @@ class DataModelJsonImportExportSpec extends BaseIntegrationSpec {
     @Shared
     ExportModel exportModel
 
+    @Shared
+    UUID dataModelId
+
+    JsonSlurper jsonSlurper = new JsonSlurper()
+
     void 'create dataModel and export'() {
         given:
-        folderId = UUID.fromString(POST('/folders', [label: 'Test folder']).id)
-        UUID dataModelId = UUID.fromString(POST("/folders/$folderId/dataModels", [label: 'Test data model']).id)
-        UUID dataClass1Id = UUID.fromString(POST("/dataModels/$dataModelId/dataClasses", [label: 'TEST-1', definition: 'first data class']).id)
-        UUID dataClass2Id = UUID.fromString(POST("/dataModels/$dataModelId/dataClasses", [label: 'TEST-2', definition: 'second data class']).id)
-        UUID dataTypeId = UUID.fromString(POST("/dataModels/$dataModelId/dataTypes", [label: 'Test data type', domainType: 'PrimitiveType']).id)
+        folderId = UUID.fromString(POST("$FOLDERS_PATH", [label: 'Test folder']).id)
+        dataModelId = UUID.fromString(POST("$FOLDERS_PATH/$folderId$DATAMODELS_PATH", [label: 'Test data model']).id)
+        UUID dataClass1Id = UUID.fromString(POST("$DATAMODELS_PATH/$dataModelId$DATACLASSES_PATH", [label: 'TEST-1', definition: 'first data class']).id)
+        UUID dataClass2Id = UUID.fromString(POST("$DATAMODELS_PATH/$dataModelId$DATACLASSES_PATH", [label: 'TEST-2', definition: 'second data class']).id)
+        UUID dataTypeId = UUID.fromString(POST("$DATAMODELS_PATH/$dataModelId$DATATYPES_PATH", [label: 'Test data type', domainType: 'PrimitiveType']).id)
+        UUID dataElementId = UUID.fromString(POST("$DATAMODELS_PATH/$dataModelId$DATACLASSES_PATH/$dataClass1Id$DATA_ELEMENTS_PATH",
+                dataElementPayload('dataElementLabel', dataTypeId)).id)
+        UUID summaryMetadataId = UUID.fromString(POST("$DATA_ELEMENTS_PATH/$dataElementId$SUMMARY_METADATA_PATH", summaryMetadataPayload()).id)
+        UUID summaryMetadataReportId = UUID.fromString(POST("$DATA_ELEMENTS_PATH/$dataElementId$SUMMARY_METADATA_PATH/$summaryMetadataId$SUMMARY_METADATA_REPORT_PATH", summaryMetadataReport()).id)
 
         when:
-        exportModel = GET("/dataModels/$dataModelId/export/uk.ac.ox.softeng.mauro.plugin.exporter.json/JsonDataModelExporterPlugin/4.0.0", ExportModel)
+        String json = GET("$DATAMODELS_PATH/$dataModelId$EXPORT_PATH$JSON_EXPORTER_NAMESPACE/JsonDataModelExporterPlugin$JSON_EXPORTER_VERSION", String)
+
         then:
-        exportModel.dataModel.label == 'Test data model'
-        exportModel.dataModel.dataTypes.label == ['Test data type']
-        exportModel.dataModel.dataClasses.label.sort() == ['TEST-1', 'TEST-2'] // TODO add ordering to DataClasses, Elements, etc.
+        json
+        Map parsedJson = jsonSlurper.parseText(json) as Map
+        parsedJson.exportMetadata
+        parsedJson.dataModel.id == dataModelId.toString()
+        parsedJson.dataModel.label == 'Test data model'
+        parsedJson.dataModel.dataClasses.size() == 2
+        parsedJson.dataModel.dataClasses.dataElements.flatten().id[0] == dataElementId.toString()
+        parsedJson.dataModel.dataClasses.dataElements.summaryMetadata.flatten().id[0] == summaryMetadataId.toString()
+        parsedJson.dataModel.dataClasses.dataElements.summaryMetadata.summaryMetadataReports.flatten().id[0] == summaryMetadataReportId.toString()
     }
 
     void 'import dataModel and verify'() {
         given:
+        exportModel = GET("$DATAMODELS_PATH/$dataModelId$EXPORT_PATH$JSON_EXPORTER_NAMESPACE/JsonDataModelExporterPlugin$JSON_EXPORTER_VERSION", ExportModel)
+
         MultipartBody importRequest = MultipartBody.builder()
             .addPart('folderId', folderId.toString())
             .addPart('importFile', 'file.json', MediaType.APPLICATION_JSON_TYPE, objectMapper.writeValueAsBytes(exportModel))
