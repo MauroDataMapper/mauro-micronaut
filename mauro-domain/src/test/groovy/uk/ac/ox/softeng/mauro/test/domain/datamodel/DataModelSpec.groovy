@@ -3,6 +3,7 @@ package uk.ac.ox.softeng.mauro.test.domain.datamodel
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
+import uk.ac.ox.softeng.mauro.domain.diff.ObjectDiff
 import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
 
 import spock.lang.Specification
@@ -13,9 +14,10 @@ import spock.lang.Specification
  */
 class DataModelSpec extends Specification {
 
-    static DataModel testDataModel = DataModel.build (label: 'My Test DataModel') {
+    static DataModel testDataModel = DataModel.build(label: 'My Test DataModel') {
         author 'James Welch'
         description 'This is an example of a data model corresponding to a scrape of a made-up database'
+        id UUID.randomUUID()
         primitiveType {
             label 'string'
             description 'character string'
@@ -42,28 +44,31 @@ class DataModelSpec extends Specification {
         dataClass {
             label 'My First DataClass'
             description 'Here is the description of the first DataClass'
+            id UUID.randomUUID()
         }
 
         dataClass {
             label 'My Second DataClass'
             description 'Here is the description of the second DataClass'
-
+            id UUID.randomUUID()
             dataClass {
                 label 'My Third DataClass'
                 description 'Here is the description of the third DataClass'
+                id UUID.randomUUID()
                 extendsDataClass 'My First DataClass'
                 dataElement {
                     label 'A data element'
                     description 'Something about the data element here...'
                     dataType 'Yes/No'
+                    id UUID.randomUUID()
                 }
                 dataElement {
                     label 'Another data element'
                     description 'Something about the data element here...'
+                    id UUID.randomUUID()
                     primitiveType {
                         label 'date'
                         description 'A date'
-
                     }
                 }
             }
@@ -72,11 +77,10 @@ class DataModelSpec extends Specification {
     }
 
 
-
     def "Test the DSL for creating objects"() {
 
         when:
-            testDataModel
+        testDataModel
 
         then:
         testDataModel.dataTypes.size() == 5
@@ -132,7 +136,40 @@ class DataModelSpec extends Specification {
         }
         dataClass3.extendsDataClasses.size() == 1
         dataClass3.extendsDataClasses.first() == dataClass1
+    }
 
+    def 'clone the datamodel -should deep copy object and all modelitems'() {
+        given:
+        DataModel original = testDataModel
+        when:
+        DataModel cloned = original.clone()
+
+        then:
+        !cloned.is(original)
+
+        cloned.dataTypes == original.dataTypes
+        !cloned.dataTypes.is(original.dataTypes)  //groovy object equality. cloned is not original
+
+        cloned.allDataClasses == original.allDataClasses
+        !cloned.allDataClasses.is(original.allDataClasses)
+
+        cloned.dataElements == original.dataElements
+        !cloned.dataElements.is(original.dataElements)
+
+        cloned.enumerationValues == original.enumerationValues
+        !cloned.enumerationValues.is(original.enumerationValues)  //groovy object equal
+
+        cloned.allDataClasses.containsAll(cloned.dataElements.dataClass)
+        original.allDataClasses.containsAll(original.dataElements.dataClass)
+
+        cloned.dataElements.dataType == original.dataElements.dataType
+        cloned.dataTypes.containsAll(cloned.dataElements.dataType)
+        original.dataTypes.containsAll(original.dataElements.dataType)
+
+        !cloned.dataElements.dataType.is(original.dataElements.dataType)
+
+        ObjectDiff objectDiff = original.diff(cloned)
+        objectDiff.numberOfDiffs == 0
     }
 
 }

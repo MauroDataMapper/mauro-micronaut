@@ -21,5 +21,6 @@
     <logger name="org.flywaydb" level="info" />
 
     <logger name="uk.ac.ox.softeng.mauro" level="debug" />
+    <logger name="org.codehaus.groovy" level="debug" />
 
 </configuration>

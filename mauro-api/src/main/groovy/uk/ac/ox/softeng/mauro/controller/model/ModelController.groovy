@@ -18,6 +18,7 @@ import io.micronaut.security.rules.SecurityRule
 import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
 import reactor.core.publisher.Flux
+import uk.ac.ox.softeng.mauro.domain.facet.ReferenceFile
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.model.Model
@@ -26,6 +27,7 @@ import uk.ac.ox.softeng.mauro.domain.model.version.CreateNewVersionData
 import uk.ac.ox.softeng.mauro.domain.model.version.FinaliseData
 import uk.ac.ox.softeng.mauro.domain.security.Role
 import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository
+import uk.ac.ox.softeng.mauro.persistence.cache.FacetCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemRepository
@@ -45,12 +47,15 @@ import java.nio.charset.StandardCharsets
 @Secured(SecurityRule.IS_ANONYMOUS)
 abstract class ModelController<M extends Model> extends AdministeredItemController<M, Folder> {
 
+    @Inject
+    FacetCacheableRepository.ReferenceFileCacheableRepository referenceFileCacheableRepository
+
     @Override
     List<String> getDisallowedProperties() {
         log.debug '***** ModelController::getDisallowedProperties *****'
         super.disallowedProperties +
-        ['finalised', 'dateFinalised', 'readableByEveryone', 'readableByAuthenticatedUsers', 'modelType', 'deleted', 'folder', 'authority', 'branchName',
-         'modelVersion', 'modelVersionTag']
+                ['finalised', 'dateFinalised', 'readableByEveryone', 'readableByAuthenticatedUsers', 'modelType', 'deleted', 'folder', 'authority', 'branchName',
+                 'modelVersion', 'modelVersionTag']
     }
 
     @Override
@@ -140,7 +145,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
 
     ListResponse<M> listAll() {
         List<M> models = modelRepository.readAll()
-        models = models.findAll {accessControlService.canDoRole(Role.READER, it)}
+        models = models.findAll { accessControlService.canDoRole(Role.READER, it) }
         models.each {
             pathRepository.readParentItems(it)
             it.updatePath()
@@ -161,19 +166,21 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     @Transactional
     M createNewBranchModelVersion(UUID id, @Body @Nullable CreateNewVersionData createNewVersionData) {
         if (!createNewVersionData) createNewVersionData = new CreateNewVersionData()
-        M existing = modelRepository.findById(id)
+        M existing = modelContentRepository.findWithContentById(id)
+        existing.setAssociations()
+        getReferenceFileFileContent(existing.getAllContents())
 
         accessControlService.checkRole(Role.EDITOR, existing)
         accessControlService.checkRole(Role.EDITOR, existing.folder)
 
         M copy = modelService.createNewBranchModelVersion(existing, createNewVersionData.branchName)
+        copy.parent = existing.parent
+        updateCreationProperties(copy)
+        updateDerivedProperties(copy)
 
-        M savedCopy = createEntity(copy.folder, copy)
-        savedCopy.allContents.each { AdministeredItem item ->
-            log.debug "*** Saving item [$item.id : $item.label] ***"
-            updateCreationProperties(item)
-            getRepository(item).save(item)
-        }
+        getReferenceFileFileContent([copy] as Collection<AdministeredItem>)
+
+        M savedCopy = modelContentRepository.saveWithContent(copy)
         savedCopy
     }
 
@@ -247,8 +254,23 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         byte[] fileContents = mauroPlugin.exportModel(existing)
         String filename = mauroPlugin.getFileName(existing)
         new StreamedFile(new ByteArrayInputStream(fileContents), MediaType.APPLICATION_JSON_TYPE).attach(filename)
-
     }
+
+    private void getReferenceFileFileContent(Collection<AdministeredItem> administeredItems) {
+        administeredItems.each {
+            if (it.referenceFiles) {
+                it.referenceFiles.each { referenceFile ->
+                    if (!referenceFile.fileContents) {
+                        log.debug("Model $it.id has reference files. file: $referenceFile.fileName, filecontents is $referenceFile.fileContents")
+                        ReferenceFile retrieved = referenceFileCacheableRepository.findById(referenceFile.id) as ReferenceFile
+                        if (!retrieved) throw new HttpStatusException(HttpStatus.NOT_FOUND, "Not found for item $it.id")
+                        referenceFile.fileContents = retrieved.fileContent()
+                    }
+                }
+            }
+        }
+    }
+
     protected void handleNotFoundError(M model, UUID id) {
         if (!model) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, "Model not found, $id")

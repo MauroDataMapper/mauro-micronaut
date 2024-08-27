@@ -47,6 +47,8 @@ class CodeSet extends Model {
     @Override
     CodeSet clone() {
         CodeSet cloned = (CodeSet) super.clone()
+        cloned.setAssociations()
+        cloned
     }
 
     CodeSet addTerm(Term term) {

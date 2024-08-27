@@ -11,6 +11,12 @@ import io.micronaut.data.annotation.Indexes
 import io.micronaut.data.annotation.MappedEntity
 import jakarta.persistence.Transient
 import jakarta.validation.constraints.NotNull
+import uk.ac.ox.softeng.mauro.domain.diff.BaseCollectionDiff
+import uk.ac.ox.softeng.mauro.domain.diff.CollectionDiff
+import uk.ac.ox.softeng.mauro.domain.diff.DiffBuilder
+import uk.ac.ox.softeng.mauro.domain.diff.DiffableItem
+
+import uk.ac.ox.softeng.mauro.domain.diff.ObjectDiff
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.model.ModelItem
 
@@ -23,12 +29,12 @@ import uk.ac.ox.softeng.mauro.domain.model.ModelItem
  * @see uk.ac.ox.softeng.mauro.domain.terminology.Terminology
  */
 @CompileStatic
-@AutoClone(excludes = ['enumerationType'])
+@AutoClone(excludes = ['enumerationType', 'dataModel'])
 @Introspected
 @MappedEntity(schema = 'datamodel', value = 'enumeration_value')
 @MapConstructor(includeSuperFields = true, includeSuperProperties = true, noArg = true)
 @Indexes([@Index(columns = ['enumeration_value_id', 'category', 'key', 'value'], unique = true)])
-class EnumerationValue extends ModelItem<DataModel> {
+class EnumerationValue extends ModelItem<DataModel> implements DiffableItem<EnumerationValue> {
 
     @Override
     String getLabel() {
@@ -77,6 +83,32 @@ class EnumerationValue extends ModelItem<DataModel> {
     @JsonIgnore
     String getPathIdentifier() {
         key
+    }
+    @Override
+    @Transient
+    @JsonIgnore
+    CollectionDiff fromItem() {
+        new BaseCollectionDiff(id,label)
+    }
+
+    @Override
+    @Transient
+    @JsonIgnore
+    String getDiffIdentifier() {
+        this.key
+    }
+
+    @Override
+    @Transient
+    @JsonIgnore
+    ObjectDiff<EnumerationValue> diff(EnumerationValue other) {
+        ObjectDiff<EnumerationValue> base = DiffBuilder.objectDiff(EnumerationValue)
+                .leftHandSide(id?.toString(), this)
+                .rightHandSide(other.id?.toString(), other)
+        base.label = this.label
+        base.appendString(DiffBuilder.DESCRIPTION, this.description, other.description)
+        base.appendString(DiffBuilder.ALIASES_STRING, this.aliasesString, other.aliasesString)
+        base.appendString(DiffBuilder.CATEGORY, this.category, other.category)
     }
 
     /****

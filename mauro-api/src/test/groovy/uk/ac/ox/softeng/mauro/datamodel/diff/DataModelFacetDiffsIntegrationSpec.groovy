@@ -57,7 +57,7 @@ class DataModelFacetDiffsIntegrationSpec extends CommonDataSpec {
         DataModel right = (DataModel) POST("$FOLDERS_PATH/$folderId$DATAMODELS_PATH", [label: 'Test other data model', description: 'test other description', author: 'test author other'], DataModel)
 
         when:
-        Map<String, Object> diffMap = GET("$DATAMODELS_PATH/$left.id/diff/$right.id", Map<String, Object>)
+        Map<String, Object> diffMap = GET("$DATAMODELS_PATH/$left.id$DIFF/$right.id", Map<String, Object>)
 
         then:
         diffMap
@@ -93,7 +93,7 @@ class DataModelFacetDiffsIntegrationSpec extends CommonDataSpec {
                 DataModel)
 
         when:
-        Map<String, Object> diffMap = GET("$DATAMODELS_PATH/$left.id/diff/$right.id", Map<String, Object>)
+        Map<String, Object> diffMap = GET("$DATAMODELS_PATH/$left.id$DIFF/$right.id", Map<String, Object>)
 
         then:
         diffMap
@@ -131,7 +131,7 @@ class DataModelFacetDiffsIntegrationSpec extends CommonDataSpec {
                 annotationPayload('child label', 'child description'), Annotation)
 
         when:
-        Map<String, Object> diffMap = GET("$DATAMODELS_PATH/$left.id/diff/$right.id", Map<String, Object>)
+        Map<String, Object> diffMap = GET("$DATAMODELS_PATH/$left.id$DIFF/$right.id", Map<String, Object>)
 
         then:
         diffMap
@@ -164,7 +164,7 @@ class DataModelFacetDiffsIntegrationSpec extends CommonDataSpec {
         POST("$DATAMODELS_PATH/$left.id$SUMMARY_METADATA_PATH", summaryMetadataPayload(), SummaryMetadata)
 
         when:
-        Map<String, Object> diffMap = GET("$DATAMODELS_PATH/$left.id/diff/$right.id", Map<String, Object>)
+        Map<String, Object> diffMap = GET("$DATAMODELS_PATH/$left.id$DIFF/$right.id", Map<String, Object>)
 
         then:
         diffMap
@@ -188,7 +188,7 @@ class DataModelFacetDiffsIntegrationSpec extends CommonDataSpec {
                 summaryMetadataReport(), SummaryMetadataReport)
 
         when:
-        Map<String, Object> diffMap = GET("$DATAMODELS_PATH/$left.id/diff/$right.id", Map<String, Object>)
+        Map<String, Object> diffMap = GET("$DATAMODELS_PATH/$left.id$DIFF/$right.id", Map<String, Object>)
 
         then:
         diffMap

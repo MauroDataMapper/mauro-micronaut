@@ -80,7 +80,8 @@ class Folder extends Model {
     List<DataModel> dataModels = []
 
     @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'terminology')
-    @JsonIgnore // have to parse separately due to internal references
+    @JsonIgnore
+    // have to parse separately due to internal references
     List<Terminology> terminologies = []
 
     @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'codeSet')
@@ -121,6 +122,29 @@ class Folder extends Model {
         null
     }
 
+    @Override
+    Folder clone() {
+        Folder cloned = (Folder) super.clone()
+        cloned.childFolders = childFolders.collect {
+            it.clone().tap {
+                it.parentFolder = cloned
+            }
+        }
+        cloned.dataModels = dataModels.collect {
+            it.clone().tap {
+                it.folder = cloned
+            }
+        }
+        cloned.terminologies = terminologies.collect {
+            it.clone().tap {
+                it.folder = cloned
+            }
+        }
+        cloned.codeSets = codeSets.collect {it.clone()}
+        cloned.setAssociations()
+        cloned
+    }
+
     @Transient
     @JsonIgnore
     @Override
@@ -129,15 +153,15 @@ class Folder extends Model {
             childFolder.parentFolder = this
             childFolder.setAssociations()
         }
-        dataModels.each {dataModel ->
+        dataModels.each { dataModel ->
             dataModel.folder = this
             dataModel.setAssociations()
         }
-        terminologies.each {terminology ->
+        terminologies.each { terminology ->
             terminology.folder = this
             terminology.setAssociations()
         }
-        codeSets.each {codeSet ->
+        codeSets.each { codeSet ->
             codeSet.folder = this
             codeSet.setAssociations()
         }
@@ -156,12 +180,12 @@ class Folder extends Model {
 
     static Folder build(
             Map args,
-            @DelegatesTo(value = Folder, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
+            @DelegatesTo(value = Folder, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
         new Folder(args).tap(closure)
     }
 
     static Folder build(
-            @DelegatesTo(value = Folder, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
+            @DelegatesTo(value = Folder, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
         build [:], closure
     }
 }

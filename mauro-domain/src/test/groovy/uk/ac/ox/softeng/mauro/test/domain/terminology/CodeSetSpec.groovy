@@ -1,15 +1,15 @@
-package uk.ac.ox.softeng.mauro.test.domain
-
+package uk.ac.ox.softeng.mauro.test.domain.terminology
 
 import spock.lang.Specification
 import spock.lang.Unroll
 import uk.ac.ox.softeng.mauro.domain.authority.Authority
+import uk.ac.ox.softeng.mauro.domain.diff.ObjectDiff
 import uk.ac.ox.softeng.mauro.domain.facet.Metadata
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.domain.security.CatalogueUser
 import uk.ac.ox.softeng.mauro.domain.terminology.CodeSet
 import uk.ac.ox.softeng.mauro.domain.terminology.Term
-
+import uk.ac.ox.softeng.mauro.test.domain.TestModelData
 
 /**
  * Tests for CodeSet domain object
@@ -76,7 +76,7 @@ class CodeSetSpec extends Specification {
                  documentationVersion: "version 1.1",
                  terms               :
                          [
-                                new Term().with {
+                                 new Term().with {
                                      code: "B15.0"
                                      definition: "Hepatitis A with hepatic coma"
                                  },
@@ -89,4 +89,23 @@ class CodeSetSpec extends Specification {
                 ]
         ]
     }
+
+    void 'clone -should clone object with same folder and terms '() {
+        given:
+        CodeSet original = TestModelData.testCodeSet
+        CodeSet cloned = original.clone()
+
+        cloned.is(original)
+        cloned.domainType.is(original.domainType)
+        cloned.terms.size() == original.terms.size()
+        cloned.folder== original.folder
+        cloned.folder.is(original.folder)
+
+        cloned.terms.is(original.terms)
+        cloned.terms.toSorted() ==  original.terms.toSorted()
+
+        ObjectDiff objectDiff = original.diff(cloned)
+        objectDiff.numberOfDiffs == 0
+    }
+
 }

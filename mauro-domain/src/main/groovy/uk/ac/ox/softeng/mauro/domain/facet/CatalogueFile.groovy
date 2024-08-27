@@ -1,6 +1,7 @@
 package uk.ac.ox.softeng.mauro.domain.facet
 
 import com.fasterxml.jackson.annotation.JsonAlias
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic

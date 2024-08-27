@@ -27,14 +27,23 @@ class DiffBuilder {
     static final String DATA_CLASSES = 'dataClasses'
     static final String DATA_TYPE = 'dataTypes'
     static final String DATA_ELEMENTS = 'dataElements'
+    static final String ENUMERATION_VALUES = 'enumerationValues'
+    static final String REFERENCE_FILES = 'referenceFiles'
     static final String ALIASES_STRING = 'aliasesString'
     static final String DATA_TYPE_PATH = 'dataTypePath'
     static final String MIN_MULTIPILICITY = 'minMultiplicity'
     static final String MAX_MULTIPILICITY = 'maxMultiplicity'
+    static final String CATEGORY = 'category'
     static final String VALUE = 'value'
     static final String REPORT_DATE = 'reportDate'
-    static final List<String> IGNORE_KEYS = [ID_KEY, DATE_CREATED_KEY, LAST_UPDATED_KEY, DOMAIN_TYPE, CLASS_KEY, FOLDER_KEY]
-    static final List<String> MODEL_COLLECTION_KEYS = [METADATA, ANNOTATION, RULE, SUMMARY_METADATA, SUMMARY_METADATA_REPORT, DATA_CLASSES, DATA_TYPE]
+    static final String LEFT_ID_KEY = 'leftId'
+    static final String RIGHT_ID_KEY = 'rightId'
+    static final String BRANCH_NAME = 'branchName'
+    static final String PATH_MODEL_IDENTIFIER = 'pathModelIdentifier'
+    static final String FILE_NAME = 'fileName'
+    static final List<String> IGNORE_KEYS = [ID_KEY, DATE_CREATED_KEY, LAST_UPDATED_KEY, DOMAIN_TYPE, CLASS_KEY, FOLDER_KEY, LEFT_ID_KEY, RIGHT_ID_KEY]
+    static final List<String> MODEL_COLLECTION_KEYS = [METADATA, ANNOTATION, RULE, SUMMARY_METADATA, SUMMARY_METADATA_REPORT, REFERENCE_FILES, DATA_CLASSES, DATA_TYPE, DATA_ELEMENTS,
+   ENUMERATION_VALUES, REFERENCE_FILES]
 
     static ArrayDiff arrayDiff() {
         new ArrayDiff()

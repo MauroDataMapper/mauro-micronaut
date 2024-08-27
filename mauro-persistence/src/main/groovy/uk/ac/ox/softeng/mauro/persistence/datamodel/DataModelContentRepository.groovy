@@ -2,7 +2,6 @@ package uk.ac.ox.softeng.mauro.persistence.datamodel
 
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
-import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.model.ModelContentRepository
 
 import groovy.transform.CompileStatic

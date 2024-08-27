@@ -16,7 +16,7 @@ import java.time.Instant
  * Item is a base class for domain objects that can be stored in the database.
  */
 @CompileStatic
-@AutoClone(excludes = ['id', 'version'])
+@AutoClone(excludes = ['id'])
 abstract class Item implements Serializable {
 
     /**

@@ -79,7 +79,7 @@ class CommonDataSpec extends BaseIntegrationSpec{
     }
 
     def term(){
-        [description : 'Test Term description', code: 'est', definition: 'doloreum-et-val', url : 'https://www.hello.com/test']
+        [ code: 'est', definition: 'doloreum-et-val']
     }
 
     def dataFlowPayload(String sourceId){

@@ -7,7 +7,6 @@ import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.*
-import io.micronaut.http.exceptions.HttpStatusException
 import io.micronaut.http.server.multipart.MultipartBody
 import io.micronaut.http.server.types.files.StreamedFile
 import io.micronaut.scheduling.TaskExecutors

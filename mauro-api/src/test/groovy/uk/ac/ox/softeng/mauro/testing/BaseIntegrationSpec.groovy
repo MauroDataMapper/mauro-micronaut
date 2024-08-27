@@ -51,6 +51,8 @@ class BaseIntegrationSpec extends Specification {
     public static final String SOURCE = '/source'
     public static final String TARGET = '/target'
     public static final String REFERENCE_FILE_PATH = '/referenceFiles'
+    public static final String NEW_BRANCH_MODEL_VERSION = '/newBranchModelVersion'
+    public static final String DIFF = '/diff'
 
     @Inject
     JsonDataModelImporterPlugin jsonDataModelImporterPlugin

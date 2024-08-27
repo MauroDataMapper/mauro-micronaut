@@ -181,6 +181,34 @@ abstract class AdministeredItem extends Item {
         []
     }
 
+
+    @Transient
+    @JsonIgnore
+    @Override
+    AdministeredItem clone()
+    {
+        AdministeredItem cloned = super.clone() as AdministeredItem
+
+        List<Metadata> clonedMetadata = getMetadata().collect { it.clone() }
+        cloned.metadata = clonedMetadata
+
+        List<Annotation> clonedAnnotations = getAnnotations().collect {
+            it.clone().tap {clonedAnnotation ->
+                List<Annotation> clonedChildren = clonedAnnotation.childAnnotations.collect {child ->
+                    child.clone()}
+                clonedAnnotation.childAnnotations = clonedChildren
+            }
+        }
+        cloned.annotations = clonedAnnotations
+
+        List<SummaryMetadata> clonedSummaryMetadata = getSummaryMetadata().collect{it.clone()}
+        cloned.summaryMetadata = clonedSummaryMetadata
+
+        List<ReferenceFile> clonedReferenceFiles = getReferenceFiles().collect {it.clone()}
+        cloned.referenceFiles = clonedReferenceFiles
+        cloned
+
+    }
     /**
      * DSL helper method for setting the identifier.  Returns the identifier passed in.
      *

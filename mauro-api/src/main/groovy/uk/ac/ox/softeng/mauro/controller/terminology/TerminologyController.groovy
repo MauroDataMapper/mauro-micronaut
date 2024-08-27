@@ -16,6 +16,7 @@ import io.micronaut.security.rules.SecurityRule
 import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.controller.model.ModelController
+import uk.ac.ox.softeng.mauro.domain.diff.ObjectDiff
 import uk.ac.ox.softeng.mauro.domain.model.version.CreateNewVersionData
 import uk.ac.ox.softeng.mauro.domain.model.version.FinaliseData
 import uk.ac.ox.softeng.mauro.domain.security.Role
@@ -36,7 +37,7 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 class TerminologyController extends ModelController<Terminology> {
 
     TerminologyCacheableRepository terminologyRepository
-
+    @Inject
     TerminologyContentRepository terminologyContentRepository
 
     @Inject
@@ -153,4 +154,19 @@ class TerminologyController extends ModelController<Terminology> {
     }
 
  */
+
+    @Get('/terminologies/{id}/diff/{otherId}')
+    ObjectDiff diffModels(@NonNull UUID id, @NonNull UUID otherId) {
+        Terminology terminology = modelContentRepository.findWithContentById(id)
+        handleNotFoundError(terminology, id)
+        Terminology other = modelContentRepository.findWithContentById(otherId)
+        handleNotFoundError(other, otherId)
+
+        accessControlService.checkRole(Role.READER, terminology)
+        accessControlService.checkRole(Role.READER, other)
+
+        terminology.setAssociations()
+        other.setAssociations()
+        terminology.diff(other)
+    }
 }

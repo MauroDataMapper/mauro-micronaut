@@ -1,4 +1,5 @@
 delete from core.metadata;
+delete from datamodel.enumeration_value;
 delete from datamodel.data_type;
 delete from datamodel.data_element;
 delete from datamodel.data_class;

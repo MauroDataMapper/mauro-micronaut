@@ -12,6 +12,7 @@ import io.micronaut.security.rules.SecurityRule
 import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.controller.model.ModelController
+import uk.ac.ox.softeng.mauro.domain.diff.ObjectDiff
 import uk.ac.ox.softeng.mauro.domain.model.version.CreateNewVersionData
 import uk.ac.ox.softeng.mauro.domain.model.version.FinaliseData
 import uk.ac.ox.softeng.mauro.domain.security.Role
@@ -67,19 +68,16 @@ class CodeSetController extends ModelController<CodeSet> {
     }
 
     @Put(value = Paths.TERM_TO_CODE_SET)
+    @Transactional
     CodeSet addTerm(@NonNull UUID id,
                     @NonNull UUID termId) {
 
         Term term = termRepository.readById(termId)
-        if (!term) {
-            throw new HttpStatusException(HttpStatus.NOT_FOUND, 'Term item not found')
-        }
         accessControlService.checkRole(Role.READER, term)
+        handleError(HttpStatus.NOT_FOUND, term, "Term item $termId not found")
         CodeSet codeSet = codeSetRepository.readById(id)
-        if (!codeSet) {
-            throw new HttpStatusException(HttpStatus.NOT_FOUND, 'CodeSet item not found')
-        }
         accessControlService.checkRole(Role.EDITOR, codeSet)
+        handleError(HttpStatus.NOT_FOUND, term, "CodeSet item $id not found")
         codeSetRepositoryUnCached.addTerm(id, termId)
         codeSet
     }
@@ -95,14 +93,10 @@ class CodeSetController extends ModelController<CodeSet> {
     CodeSet removeTermFromCodeSet(@NonNull UUID id,
                                   @NonNull UUID termId) {
         Term term = termRepository.readById(termId)
-        if (!term) {
-            throw new HttpStatusException(HttpStatus.NOT_FOUND, 'Term item not found')
-        }
+        handleError(HttpStatus.NOT_FOUND, term, "Term item $termId not found")
         CodeSet codeSet = codeSetRepository.readById(id)
-        if (!codeSet) {
-            throw new HttpStatusException(HttpStatus.NOT_FOUND, 'CodeSet item not found')
-        }
         accessControlService.checkRole(Role.EDITOR, codeSet)
+        handleError(HttpStatus.NOT_FOUND, term, "CodeSet item $id not found")
         codeSetRepositoryUnCached.removeTerm(id, termId)
         codeSet
     }
@@ -119,7 +113,7 @@ class CodeSetController extends ModelController<CodeSet> {
     }
 
     @Get(value = Paths.TERMS_IN_CODE_SET)
-    ListResponse<CodeSet> listAllTermsInCodeSet(@NonNull UUID id) {
+    ListResponse<Term> listAllTermsInCodeSet(@NonNull UUID id) {
         CodeSet codeSet = codeSetRepository.readById(id)
         if (!codeSet) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, 'CodeSet item not found')
@@ -135,10 +129,32 @@ class CodeSetController extends ModelController<CodeSet> {
         super.finalise(id, finaliseData)
     }
 
+
+    @Get('/codeSets/{id}/diff/{otherId}')
+    ObjectDiff diffModels(@NonNull UUID id, @NonNull UUID otherId) {
+        CodeSet codeSet = modelContentRepository.findWithContentById(id)
+        handleNotFoundError(codeSet, id)
+        CodeSet other = modelContentRepository.findWithContentById(otherId)
+        handleNotFoundError(other, otherId)
+
+        accessControlService.checkRole(Role.READER, codeSet)
+        accessControlService.checkRole(Role.READER, other)
+
+        codeSet.setAssociations()
+        other.setAssociations()
+        codeSet.diff(other)
+    }
+
     @Transactional
     @Put(value = Paths.CODE_SET_NEW_BRANCH_MODEL_VERSION)
     CodeSet createNewBranchModelVersion(UUID id, @Body @Nullable CreateNewVersionData createNewVersionData) {
-        super.createNewBranchModelVersion(id, createNewVersionData)
+        //new branchModelVersion must point to original's terms if any
+        CodeSet newBranchModelVersion = super.createNewBranchModelVersion(id, createNewVersionData) as CodeSet
+        List<Term> terms = codeSetContentRepository.codeSetRepository.getTerms(id) as List<Term>
+        terms.each{
+            addTerm(newBranchModelVersion.id, it.id)
+        }
+        newBranchModelVersion
     }
 
 }
