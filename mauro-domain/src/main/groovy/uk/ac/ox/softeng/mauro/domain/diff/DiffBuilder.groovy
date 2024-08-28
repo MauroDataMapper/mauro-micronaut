@@ -36,6 +36,7 @@ class DiffBuilder {
     static final String CATEGORY = 'category'
     static final String VALUE = 'value'
     static final String REPORT_DATE = 'reportDate'
+    static final String CLASSIFIERS = 'classifiers'
     static final String LEFT_ID_KEY = 'leftId'
     static final String RIGHT_ID_KEY = 'rightId'
     static final String BRANCH_NAME = 'branchName'

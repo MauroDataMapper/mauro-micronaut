@@ -14,13 +14,16 @@ import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.security.Role
 import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemContentRepository
 import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemRepository
+import uk.ac.ox.softeng.mauro.persistence.model.ModelItemRepository
 import uk.ac.ox.softeng.mauro.persistence.model.PathRepository
+import uk.ac.ox.softeng.mauro.persistence.service.RepositoryService
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @CompileStatic
 @Secured(SecurityRule.IS_ANONYMOUS)
 abstract class AdministeredItemController<I extends AdministeredItem, P extends AdministeredItem> extends ItemController<I> {
 
+    RepositoryService repositoryService
     /**
      * Properties disallowed in a simple update request.
      */
@@ -35,6 +38,8 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
     AdministeredItemRepository<P> parentItemRepository
 
     AdministeredItemContentRepository administeredItemContentRepository
+    @Inject
+    ModelItemRepository modelItemRepository
 
     @Inject
     PathRepository pathRepository
@@ -100,12 +105,15 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
     }
 
     @Transactional
-    HttpStatus delete(UUID id, @Body @Nullable I item) {
-        I itemToDelete = (I) administeredItemContentRepository.readWithContentById(id)
+    HttpStatus delete(@NonNull UUID id, @Body @Nullable I item, @NonNull UUID parentId) {
+        AdministeredItem parent = administeredItemRepository.findById(parentId)
+        handleError(HttpStatus.NOT_FOUND, parent, "Parent item not found $parentId")
+        I itemToDelete = (I) modelItemRepository.findWithContentById(id, parent )
 
         accessControlService.checkRole(Role.EDITOR, item)
 
         if (item?.version) itemToDelete.version = item.version
+
         Long deleted = administeredItemContentRepository.deleteWithContent(itemToDelete)
         if (deleted) {
             HttpStatus.NO_CONTENT

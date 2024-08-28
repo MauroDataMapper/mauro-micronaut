@@ -1,6 +1,7 @@
 package uk.ac.ox.softeng.mauro.persistence.terminology
 
 import groovy.transform.CompileStatic
+import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.model.query.builder.sql.Dialect
@@ -46,6 +47,13 @@ abstract class TermRelationshipTypeRepository implements ModelItemRepository<Ter
     @Nullable
     abstract Long deleteByTerminologyId(UUID terminologyId)
 
+    @Override
+    @Nullable
+    TermRelationshipType findWithContentById(@NonNull UUID id, @NonNull AdministeredItem parent){
+        TermRelationshipType termRelationshipType = findById(id)
+        termRelationshipType.parent = parent
+        termRelationshipType
+    }
 //    @Override
     Long deleteByOwnerId(UUID ownerId) {
         deleteByTerminologyId(ownerId)

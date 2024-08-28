@@ -7,6 +7,7 @@ import io.micronaut.cache.annotation.CacheInvalidate
 import io.micronaut.cache.annotation.Cacheable
 import io.micronaut.core.annotation.Nullable
 import jakarta.inject.Singleton
+import uk.ac.ox.softeng.mauro.domain.classifier.Classifier
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataElement
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
@@ -15,6 +16,7 @@ import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.terminology.Term
 import uk.ac.ox.softeng.mauro.domain.terminology.TermRelationship
 import uk.ac.ox.softeng.mauro.domain.terminology.TermRelationshipType
+import uk.ac.ox.softeng.mauro.persistence.classifier.ClassifierRepository
 import uk.ac.ox.softeng.mauro.persistence.datamodel.DataClassRepository
 import uk.ac.ox.softeng.mauro.persistence.datamodel.DataElementRepository
 import uk.ac.ox.softeng.mauro.persistence.datamodel.DataTypeRepository
@@ -177,6 +179,19 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
         // not cached
         List<EnumerationValue> readAllByEnumerationType_Id(UUID enumerationTypeId) {
             ((EnumerationValueRepository) repository).readAllByEnumerationTypeId(enumerationTypeId)
+        }
+
+    }
+
+    @Singleton
+    @CompileStatic
+    static class ClassifierCacheableRepository extends AdministeredItemCacheableRepository<Classifier> {
+        ClassifierCacheableRepository(ClassifierRepository classifierRepository) {
+            super(classifierRepository)
+        }
+
+        List<Classifier> readAllByParentClassifier_Id(UUID parentClassifierId) {
+            ((ClassifierRepository) repository).readAllByParentClassifier_Id(parentClassifierId)
         }
 
     }

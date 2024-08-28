@@ -1,6 +1,7 @@
 package uk.ac.ox.softeng.mauro.persistence.dataflow
 
 import groovy.transform.CompileStatic
+import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.model.query.builder.sql.Dialect
@@ -61,6 +62,12 @@ abstract class DataFlowRepository implements ModelItemRepository<DataFlow> {
         }
         dataFlow.dataClassComponents = dataClassComponents
         dataFlow
+    }
+
+   @Nullable
+    @Override
+    DataFlow findWithContentById(@NonNull UUID id, @NonNull AdministeredItem parent) {
+        readWithContentById(id)
     }
 
     @Override

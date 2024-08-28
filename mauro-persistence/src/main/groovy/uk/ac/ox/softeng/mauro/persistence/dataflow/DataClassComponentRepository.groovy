@@ -43,6 +43,13 @@ abstract class DataClassComponentRepository implements ModelItemRepository<DataC
         readAllByDataFlow((DataFlow) parent)
     }
 
+    @Override
+    @Nullable
+    DataClassComponent findWithContentById(@NonNull UUID id, @NonNull AdministeredItem parent) {
+        DataClassComponent dataClassComponent = findById(id)
+        dataClassComponent.parent = parent
+        dataClassComponent
+    }
 
     /**
      * Add sourcedataClass to dataClassComponent

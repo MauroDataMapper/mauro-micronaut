@@ -11,6 +11,7 @@ import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.terminology.CodeSet
 import uk.ac.ox.softeng.mauro.domain.terminology.Term
+import uk.ac.ox.softeng.mauro.domain.terminology.TermRelationship
 import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
 import uk.ac.ox.softeng.mauro.persistence.model.ModelItemRepository
 import uk.ac.ox.softeng.mauro.persistence.terminology.dto.TermDTORepository
@@ -57,6 +58,7 @@ abstract class TermRepository implements ModelItemRepository<Term> {
         deleteByTerminologyId(ownerId)
     }
 
+
     @Query('''select * from terminology.term
               where term.terminology_id=:terminologyId
               and ((exists (select * from terminology.term_relationship tr join terminology.term_relationship_type trt on tr.relationship_type_id=trt.id and tr.source_term_id=term.id and tr.target_term_id=:id and trt.child_relationship and tr.terminology_id=:terminologyId and trt.terminology_id=:terminologyId)
@@ -72,6 +74,14 @@ abstract class TermRepository implements ModelItemRepository<Term> {
                     where cst.term_id = :uuid and cst.code_set_id = cs.id) ''')
     @Nullable
     abstract List<CodeSet> getCodeSets(@NonNull UUID uuid)
+
+    @Override
+    @Nullable
+    Term findWithContentById(@NonNull UUID id, @NonNull AdministeredItem parent){
+        Term term = findById(id)
+        term.parent = parent
+        term
+    }
 
     @Override
     Class getDomainClass() {

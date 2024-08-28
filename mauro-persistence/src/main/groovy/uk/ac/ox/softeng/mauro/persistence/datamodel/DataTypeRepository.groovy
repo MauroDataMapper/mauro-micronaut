@@ -1,5 +1,6 @@
 package uk.ac.ox.softeng.mauro.persistence.datamodel
 
+import io.micronaut.core.annotation.NonNull
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
 
@@ -50,6 +51,14 @@ abstract class DataTypeRepository implements ModelItemRepository<DataType> {
     //    @Override
     Long deleteByOwnerId(UUID ownerId) {
         deleteByDataModelId(ownerId)
+    }
+
+    @NonNull
+    @Override
+    DataType findWithContentById(@NonNull UUID id, @NonNull AdministeredItem parent){
+        DataType dataType = findById(id)
+        dataType.parent = parent
+        dataType
     }
 
     @Override
