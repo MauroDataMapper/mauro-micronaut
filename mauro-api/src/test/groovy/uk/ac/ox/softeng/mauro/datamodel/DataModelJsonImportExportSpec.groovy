@@ -7,6 +7,13 @@ import io.micronaut.http.client.multipart.MultipartBody
 import io.micronaut.runtime.EmbeddedApplication
 import jakarta.inject.Inject
 import spock.lang.Shared
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataElement
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
+import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
+import uk.ac.ox.softeng.mauro.domain.folder.Folder
+import uk.ac.ox.softeng.mauro.domain.model.SummaryMetadataReport
 import uk.ac.ox.softeng.mauro.export.ExportModel
 import uk.ac.ox.softeng.mauro.persistence.ContainerizedTest
 import uk.ac.ox.softeng.mauro.testing.CommonDataSpec
@@ -33,15 +40,15 @@ class DataModelJsonImportExportSpec extends CommonDataSpec {
 
     void 'create dataModel and export'() {
         given:
-        folderId = UUID.fromString(POST("$FOLDERS_PATH", [label: 'Test folder']).id)
-        dataModelId = UUID.fromString(POST("$FOLDERS_PATH/$folderId$DATAMODELS_PATH", [label: 'Test data model']).id)
-        UUID dataClass1Id = UUID.fromString(POST("$DATAMODELS_PATH/$dataModelId$DATACLASSES_PATH", [label: 'TEST-1', definition: 'first data class']).id)
-        UUID dataClass2Id = UUID.fromString(POST("$DATAMODELS_PATH/$dataModelId$DATACLASSES_PATH", [label: 'TEST-2', definition: 'second data class']).id)
-        UUID dataTypeId = UUID.fromString(POST("$DATAMODELS_PATH/$dataModelId$DATATYPES_PATH", [label: 'Test data type', domainType: 'PrimitiveType']).id)
-        UUID dataElementId = UUID.fromString(POST("$DATAMODELS_PATH/$dataModelId$DATACLASSES_PATH/$dataClass1Id$DATA_ELEMENTS_PATH",
-                dataElementPayload('dataElementLabel', dataTypeId)).id)
-        UUID summaryMetadataId = UUID.fromString(POST("$DATA_ELEMENTS_PATH/$dataElementId$SUMMARY_METADATA_PATH", summaryMetadataPayload()).id)
-        UUID summaryMetadataReportId = UUID.fromString(POST("$DATA_ELEMENTS_PATH/$dataElementId$SUMMARY_METADATA_PATH/$summaryMetadataId$SUMMARY_METADATA_REPORT_PATH", summaryMetadataReport()).id)
+        folderId = ((Folder) POST("$FOLDERS_PATH", [label: 'Test folder'], Folder)).id
+        dataModelId = ((DataModel) POST("$FOLDERS_PATH/$folderId$DATAMODELS_PATH", [label: 'Test data model'], DataModel)).id
+        UUID dataClass1Id = ((DataClass) POST("$DATAMODELS_PATH/$dataModelId$DATACLASSES_PATH", [label: 'TEST-1', definition: 'first data class'], DataClass)).id
+        UUID dataClass2Id = ((DataClass) POST("$DATAMODELS_PATH/$dataModelId$DATACLASSES_PATH", [label: 'TEST-2', definition: 'second data class'], DataClass)).id
+        UUID dataTypeId = ((DataType) POST("$DATAMODELS_PATH/$dataModelId$DATATYPES_PATH", [label: 'Test data type', domainType: 'PrimitiveType'],DataType)).id
+        UUID dataElementId = ((DataElement) POST("$DATAMODELS_PATH/$dataModelId$DATACLASSES_PATH/$dataClass1Id$DATA_ELEMENTS_PATH",
+                [label: 'First data element', description: 'The first data element', dataType: [id: dataTypeId]], DataElement)).id
+        UUID summaryMetadataId = ((SummaryMetadata) (POST("$DATA_ELEMENTS_PATH/$dataElementId$SUMMARY_METADATA_PATH", summaryMetadataPayload(), SummaryMetadata))).id
+        UUID summaryMetadataReportId = ((SummaryMetadataReport) POST("$DATA_ELEMENTS_PATH/$dataElementId$SUMMARY_METADATA_PATH/$summaryMetadataId$SUMMARY_METADATA_REPORT_PATH", summaryMetadataReport(), SummaryMetadataReport)).id
 
         when:
         String json = GET("$DATAMODELS_PATH/$dataModelId$EXPORT_PATH$JSON_EXPORTER_NAMESPACE/JsonDataModelExporterPlugin$JSON_EXPORTER_VERSION", String)

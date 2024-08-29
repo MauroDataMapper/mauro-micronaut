@@ -185,19 +185,21 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     @Transactional
     M createNewBranchModelVersion(UUID id, @Body @Nullable CreateNewVersionData createNewVersionData) {
         if (!createNewVersionData) createNewVersionData = new CreateNewVersionData()
-        M existing = modelRepository.findById(id)
+        M existing = modelContentRepository.findWithContentById(id)
+        existing.setAssociations()
+        getReferenceFileFileContent(existing.getAllContents())
 
         accessControlService.checkRole(Role.EDITOR, existing)
         accessControlService.checkRole(Role.EDITOR, existing.folder)
 
         M copy = modelService.createNewBranchModelVersion(existing, createNewVersionData.branchName)
+        copy.parent = existing.parent
+        updateCreationProperties(copy)
+        updateDerivedProperties(copy)
 
-        M savedCopy = createEntity(copy.folder, copy)
-        savedCopy.allContents.each { AdministeredItem item ->
-            log.debug "*** Saving item [$item.id : $item.label] ***"
-            updateCreationProperties(item)
-            getRepository(item).save(item)
-        }
+        getReferenceFileFileContent([copy] as Collection<AdministeredItem>)
+
+        M savedCopy = modelContentRepository.saveWithContent(copy)
         savedCopy
     }
 
@@ -272,6 +274,20 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         new StreamedFile(new ByteArrayInputStream(fileContents), MediaType.APPLICATION_JSON_TYPE).attach(filename)
     }
 
+    private void getReferenceFileFileContent(Collection<AdministeredItem> administeredItems) {
+        administeredItems.each {
+            if (it.referenceFiles) {
+                it.referenceFiles.each { referenceFile ->
+                    if (!referenceFile.fileContents) {
+                        log.debug("Model $it.id has reference files. file: $referenceFile.fileName, filecontents is $referenceFile.fileContents")
+                        ReferenceFile retrieved = referenceFileCacheableRepository.findById(referenceFile.id) as ReferenceFile
+                        if (!retrieved) throw new HttpStatusException(HttpStatus.NOT_FOUND, "Not found for item $it.id")
+                        referenceFile.fileContents = retrieved.fileContent()
+                    }
+                }
+            }
+        }
+    }
 
     private List<Classifier> validateClassifiers(M model) {
         List<Classifier> classifierList = []

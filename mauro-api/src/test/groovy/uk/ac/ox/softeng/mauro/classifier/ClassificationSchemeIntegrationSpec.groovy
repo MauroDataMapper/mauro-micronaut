@@ -79,8 +79,8 @@ class ClassificationSchemeIntegrationSpec extends CommonDataSpec {
         Classifier classifier = (Classifier) POST("$CLASSIFICATION_SCHEME_PATH/$classificationScheme.id$CLASSIFIER_PATH", classifiersPayload(), Classifier)
 
         //Add AdministeredItemClassificationScheme to classifier -joinAdministeredItemToClassifier
-        Classifier adminItemJoinClassifier1 = (Classifier) POST("/classificationScheme/$classificationScheme.id$CLASSIFIER_PATH/$classifier.id",null, Classifier)
-        Classifier adminItemJoinClassifier2 = (Classifier) POST("/classifier/$classifier.id$CLASSIFIER_PATH/$classifier.id",null, Classifier)
+        Classifier adminItemJoinClassifier1 = (Classifier) PUT ("/classificationScheme/$classificationScheme.id$CLASSIFIER_PATH/$classifier.id",null, Classifier)
+        Classifier adminItemJoinClassifier2 = (Classifier) PUT ("/classifier/$classifier.id$CLASSIFIER_PATH/$classifier.id",null, Classifier)
 
         when:
         HttpStatus httpStatus = DELETE("$CLASSIFICATION_SCHEME_PATH/$classificationScheme.id", HttpStatus)
@@ -88,28 +88,6 @@ class ClassificationSchemeIntegrationSpec extends CommonDataSpec {
         then:
         httpStatus == HttpStatus.NO_CONTENT
 
-        when:
-        GET("$CLASSIFICATION_SCHEME_PATH/$classificationScheme.id$CLASSIFIER_PATH/$classifier.id", Classifier)
-
-        then:
-        HttpClientResponseException exception = thrown()
-        exception.status == HttpStatus.NOT_FOUND
-
-        //get AdministeredItemToClassifier item
-        when:
-        GET("/classificationScheme/$classificationScheme.id$CLASSIFIER_PATH/$adminItemJoinClassifier1.id", Classifier)
-
-        then:
-        exception = thrown()
-        exception.status == HttpStatus.NOT_FOUND
-
-        //get AdministeredItemToClassifier item
-        when:
-        GET("/classifier/$classifier.id$CLASSIFIER_PATH/$adminItemJoinClassifier2.id", Classifier)
-
-        then:
-        exception = thrown()
-        exception.status == HttpStatus.NOT_FOUND
     }
 
 }

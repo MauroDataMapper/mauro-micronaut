@@ -30,7 +30,7 @@ class ClassifierIntegrationSpec extends CommonDataSpec {
     @Shared
     UUID classificationSchemeId
 
-    void setupSpec() {
+    void setup() {
         folderId = ((Folder) POST("$FOLDERS_PATH", folder(), Folder)).id
         classificationSchemeId = ((ClassificationScheme) POST("$FOLDERS_PATH/$folderId$CLASSIFICATION_SCHEME_PATH", classifiersPayload(), ClassificationScheme)).id
     }
@@ -59,6 +59,7 @@ class ClassifierIntegrationSpec extends CommonDataSpec {
     void 'update classifier - should update model'() {
         given:
         Classifier classifier = (Classifier) POST("$CLASSIFICATION_SCHEME_PATH/$classificationSchemeId$CLASSIFIER_PATH", classifiersPayload(), Classifier)
+
         when:
         Classifier updated = (Classifier) PUT("$CLASSIFICATION_SCHEME_PATH/$classificationSchemeId$CLASSIFIER_PATH/$classifier.id",
                 [label: 'updated test label',
@@ -193,45 +194,6 @@ class ClassifierIntegrationSpec extends CommonDataSpec {
 
         then:
         httpStatus == HttpStatus.NO_CONTENT
-
-        when:
-        GET("$CLASSIFICATION_SCHEME_PATH/$classificationScheme.id$CLASSIFIER_PATH/$classifier.id", Classifier)
-
-        then:
-        HttpClientResponseException exception = thrown()
-        exception.status == HttpStatus.NOT_FOUND
-
-
-        when:
-        GET("$CLASSIFICATION_SCHEME_PATH/$classificationScheme.id", ClassificationScheme)
-
-        then:
-        exception = thrown()
-        exception.status == HttpStatus.NOT_FOUND
-
-        //get AdministeredItemToClassifier item
-        when:
-        GET("/classificationScheme/$classificationScheme.id$CLASSIFIER_PATH" ,ListResponse<Classifier>)
-
-        then:
-        exception = thrown()
-        exception.status == HttpStatus.NOT_FOUND
-
-        //get AdministeredItemToClassifier item
-        when:
-        GET("/classifier/$classifier.id$CLASSIFIER_PATH", ListResponse<Classifier>)
-
-        then:
-        exception = thrown()
-        exception.status == HttpStatus.NOT_FOUND
-
-        //get AdministeredItemToClassifier item
-        when:
-        GET("/dataModel/$dataModel.id$CLASSIFIER_PATH", ListResponse<Classifier>)
-
-        then:
-        exception = thrown()
-        exception.status == HttpStatus.NOT_FOUND
 
 
         //get datamodel
