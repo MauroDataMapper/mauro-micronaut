@@ -19,8 +19,8 @@ import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.security.Role
 import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository
-import uk.ac.ox.softeng.mauro.persistence.classifier.ClassificationSchemeContentRepository
 import uk.ac.ox.softeng.mauro.persistence.classifier.ClassificationSchemeRepository
+import uk.ac.ox.softeng.mauro.persistence.classifier.ClassifierContentRepository
 import uk.ac.ox.softeng.mauro.persistence.classifier.ClassifierRepository
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
@@ -43,8 +43,8 @@ class ClassifierController extends AdministeredItemController<Classifier, Classi
 
     ClassifierController(AdministeredItemCacheableRepository.ClassifierCacheableRepository classifierCacheableRepository,
                          ModelCacheableRepository.ClassificationSchemeCacheableRepository classificationSchemeCacheableRepository,
-                         ClassificationSchemeContentRepository classificationSchemeContentRepository) {
-        super(Classifier, classifierCacheableRepository, classificationSchemeCacheableRepository, classificationSchemeContentRepository)
+                         ClassifierContentRepository classifierContentRepository) {
+        super(Classifier, classifierCacheableRepository, classificationSchemeCacheableRepository, classifierContentRepository)
         this.classifierCacheableRepository = classifierCacheableRepository
         this.classificationSchemeCacheableRepository = classificationSchemeCacheableRepository
     }
@@ -69,7 +69,7 @@ class ClassifierController extends AdministeredItemController<Classifier, Classi
     @Delete(Paths.CLASSIFIERS_ROUTE_ID)
     @Transactional
     HttpStatus delete(@NonNull UUID classificationSchemeId, @NonNull UUID id, @Body @Nullable Classifier classifier) {
-        super.delete(id, classifier, classificationSchemeId)
+        super.delete(id, classifier)
     }
 
     @Get(Paths.CLASSIFIERS_ROUTE)
@@ -80,14 +80,6 @@ class ClassifierController extends AdministeredItemController<Classifier, Classi
     @Get(Paths.CHILD_CLASSIFIERS_ID_ROUTE)
     Classifier showChildClassifier(@NonNull UUID classificationSchemeId,@NonNull UUID parentClassifierId, @NonNull UUID childClassifierId) {
         show(childClassifierId)
-    }
-
-    @Get(Paths.CHILD_CLASSIFIERS_ROUTE)
-    ListResponse<Classifier> getChildClassifiers(@NonNull UUID classificationSchemeId, @NonNull UUID parentClassifierId ) {
-        Classifier parent = classifierRepository.readById(parentClassifierId)
-        handleError(HttpStatus.NOT_FOUND,parent, "Parent classifier $parentClassifierId not found")
-        accessControlService.checkRole(Role.READER, parent)
-        ListResponse.from(classifierRepository.readAllByParentClassifier_Id(parent.id))
     }
 
     /**
@@ -125,7 +117,7 @@ class ClassifierController extends AdministeredItemController<Classifier, Classi
 //        accessControlService.checkRole(Role.EDITOR, parentClassifier)
 //        Classifier childClassifier = classifierCacheableRepository.readById(childClassifierId)
 //        accessControlService.checkRole(Role.EDITOR, childClassifier)
-        super.delete(childClassifierId, classifier, parentClassifierId)
+        super.delete(childClassifierId, classifier)
     }
 
     @Get(Paths.CHILD_CLASSIFIERS_ROUTE)
@@ -180,7 +172,7 @@ class ClassifierController extends AdministeredItemController<Classifier, Classi
         Classifier classifierToDelete = classifierRepository.readById(id)
         handleError(HttpStatus.NOT_FOUND, classifierToDelete, "Classifier with id $id not found")
         accessControlService.checkRole(Role.EDITOR, classifierToDelete)
-        Long deleted = classifierRepository.deleteAdministeredItemClassifier(administeredItem, classifierToDelete.id)
+        Long deleted = classifierRepository.deleteJoinAdministeredItemToClassifier(administeredItem, classifierToDelete.id)
         if (deleted) {
             HttpStatus.NO_CONTENT
         } else {

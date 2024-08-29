@@ -50,7 +50,7 @@ abstract class ItemController<I extends Item> implements AdministeredItemReader 
         // Collection properties cannot be set in user requests as these might be used in services
         defaultItem.properties.each {
             String key = it.key
-            if (defaultItem.hasProperty(key).properties.setter && (it.value instanceof Collection || it.value instanceof Map)) {
+            if (defaultItem.hasProperty(key).properties.setter && it.value instanceof Map) {
                 if (item[key]) throw new HttpStatusException(HttpStatus.BAD_REQUEST, "Collection or Map $key cannot be set directly")
                 item[key] = null
             }

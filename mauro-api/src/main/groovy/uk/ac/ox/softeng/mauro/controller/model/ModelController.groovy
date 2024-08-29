@@ -18,6 +18,7 @@ import io.micronaut.security.rules.SecurityRule
 import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
 import reactor.core.publisher.Flux
+import uk.ac.ox.softeng.mauro.domain.classifier.Classifier
 import uk.ac.ox.softeng.mauro.domain.facet.ReferenceFile
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
@@ -30,6 +31,7 @@ import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableReposit
 import uk.ac.ox.softeng.mauro.persistence.cache.FacetCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
+import uk.ac.ox.softeng.mauro.persistence.classifier.ClassifierRepository
 import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemRepository
 import uk.ac.ox.softeng.mauro.persistence.model.ModelContentRepository
 import uk.ac.ox.softeng.mauro.plugin.MauroPlugin
@@ -50,12 +52,16 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     @Inject
     FacetCacheableRepository.ReferenceFileCacheableRepository referenceFileCacheableRepository
 
+    @Inject
+    ClassifierRepository classifierRepository
+
+
     @Override
     List<String> getDisallowedProperties() {
         log.debug '***** ModelController::getDisallowedProperties *****'
         super.disallowedProperties +
-                ['finalised', 'dateFinalised', 'readableByEveryone', 'readableByAuthenticatedUsers', 'modelType', 'deleted', 'folder', 'authority', 'branchName',
-                 'modelVersion', 'modelVersionTag']
+        ['finalised', 'dateFinalised', 'readableByEveryone', 'readableByAuthenticatedUsers', 'modelType', 'deleted', 'folder', 'authority', 'branchName',
+         'modelVersion', 'modelVersionTag']
     }
 
     @Override
@@ -98,12 +104,24 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
 
     @Transactional
     M create(@NonNull UUID folderId, @Body @NonNull M model) {
-        super.create(folderId, model)
+        M created = super.create(folderId, model) as M
+        created.classifiers = validateClassifiers(created)
+        created.classifiers.each {
+            classifierRepository.addAdministeredItem(created, it.id)
+        }
+        created
     }
 
     @Transactional
     M update(UUID id, @Body @NonNull M model) {
-        super.update(id, model)
+        M updated = super.update(id, model) as M
+        updated.classifiers =  validateClassifiers(updated)
+        updated.classifiers.each {
+            if (! classifierRepository.findByAdministeredItemAndClassifier(updated.domainType, updated.id, it.id)){
+                classifierRepository.addAdministeredItem(updated, it.id)
+            }
+        }
+        updated
     }
 
     @Transactional
@@ -129,8 +147,9 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         modelRepository.update(original, existing)
     }
 
+    @Transactional
     HttpStatus delete(UUID id, @Body @Nullable M model) {
-        M modelToDelete = (M) modelContentRepository.readWithContentById(id)
+        M modelToDelete = (M) modelContentRepository.findWithContentById(id)
 
         accessControlService.checkRole(Role.CONTAINER_ADMIN, modelToDelete)
 
@@ -166,21 +185,19 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     @Transactional
     M createNewBranchModelVersion(UUID id, @Body @Nullable CreateNewVersionData createNewVersionData) {
         if (!createNewVersionData) createNewVersionData = new CreateNewVersionData()
-        M existing = modelContentRepository.findWithContentById(id)
-        existing.setAssociations()
-        getReferenceFileFileContent(existing.getAllContents())
+        M existing = modelRepository.findById(id)
 
         accessControlService.checkRole(Role.EDITOR, existing)
         accessControlService.checkRole(Role.EDITOR, existing.folder)
 
         M copy = modelService.createNewBranchModelVersion(existing, createNewVersionData.branchName)
-        copy.parent = existing.parent
-        updateCreationProperties(copy)
-        updateDerivedProperties(copy)
 
-        getReferenceFileFileContent([copy] as Collection<AdministeredItem>)
-
-        M savedCopy = modelContentRepository.saveWithContent(copy)
+        M savedCopy = createEntity(copy.folder, copy)
+        savedCopy.allContents.each { AdministeredItem item ->
+            log.debug "*** Saving item [$item.id : $item.label] ***"
+            updateCreationProperties(item)
+            getRepository(item).save(item)
+        }
         savedCopy
     }
 
@@ -249,26 +266,24 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         }
     }
 
-
     protected StreamedFile exportedModelData(ModelExporterPlugin mauroPlugin, M existing) {
         byte[] fileContents = mauroPlugin.exportModel(existing)
         String filename = mauroPlugin.getFileName(existing)
         new StreamedFile(new ByteArrayInputStream(fileContents), MediaType.APPLICATION_JSON_TYPE).attach(filename)
     }
 
-    private void getReferenceFileFileContent(Collection<AdministeredItem> administeredItems) {
-        administeredItems.each {
-            if (it.referenceFiles) {
-                it.referenceFiles.each { referenceFile ->
-                    if (!referenceFile.fileContents) {
-                        log.debug("Model $it.id has reference files. file: $referenceFile.fileName, filecontents is $referenceFile.fileContents")
-                        ReferenceFile retrieved = referenceFileCacheableRepository.findById(referenceFile.id) as ReferenceFile
-                        if (!retrieved) throw new HttpStatusException(HttpStatus.NOT_FOUND, "Not found for item $it.id")
-                        referenceFile.fileContents = retrieved.fileContent()
-                    }
-                }
+
+    private List<Classifier> validateClassifiers(M model) {
+        List<Classifier> classifierList = []
+        if (model.classifiers) {
+            classifierList = model.classifiers.collect {
+                Classifier retrieved = classifierRepository.readById(it.id)
+                super.handleError(HttpStatus.NOT_FOUND, retrieved, "Item with id: $it.id not found")
+                accessControlService.checkRole(Role.EDITOR, retrieved)
+                retrieved
             }
         }
+        classifierList
     }
 
     protected void handleNotFoundError(M model, UUID id) {

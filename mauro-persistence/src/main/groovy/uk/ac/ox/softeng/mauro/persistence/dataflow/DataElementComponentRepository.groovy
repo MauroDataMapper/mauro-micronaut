@@ -90,11 +90,4 @@ abstract class DataElementComponentRepository implements ModelItemRepository<Dat
     @Query(''' delete from dataflow.data_element_component_target_data_element t where t.data_element_component_id = :id ''')
     abstract Long removeTargetDataElements(UUID id)
 
-    @Override
-    @Nullable
-    DataElementComponent findWithContentById(@NonNull UUID id, @NonNull AdministeredItem parent){
-        DataElementComponent dataElementComponent = findById(id)
-        dataElementComponent.parent = parent
-        dataElementComponent
-    }
 }

@@ -47,13 +47,7 @@ abstract class TermRelationshipTypeRepository implements ModelItemRepository<Ter
     @Nullable
     abstract Long deleteByTerminologyId(UUID terminologyId)
 
-    @Override
-    @Nullable
-    TermRelationshipType findWithContentById(@NonNull UUID id, @NonNull AdministeredItem parent){
-        TermRelationshipType termRelationshipType = findById(id)
-        termRelationshipType.parent = parent
-        termRelationshipType
-    }
+
 //    @Override
     Long deleteByOwnerId(UUID ownerId) {
         deleteByTerminologyId(ownerId)

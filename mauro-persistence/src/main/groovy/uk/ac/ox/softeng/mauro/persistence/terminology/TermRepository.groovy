@@ -76,14 +76,6 @@ abstract class TermRepository implements ModelItemRepository<Term> {
     abstract List<CodeSet> getCodeSets(@NonNull UUID uuid)
 
     @Override
-    @Nullable
-    Term findWithContentById(@NonNull UUID id, @NonNull AdministeredItem parent){
-        Term term = findById(id)
-        term.parent = parent
-        term
-    }
-
-    @Override
     Class getDomainClass() {
         Term
     }

@@ -4,6 +4,7 @@ import groovy.transform.CompileStatic
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
 import uk.ac.ox.softeng.mauro.domain.classifier.Classifier
+import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemContentRepository
 
 @CompileStatic
@@ -11,19 +12,15 @@ import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemContentRepositor
 class ClassifierContentRepository extends AdministeredItemContentRepository {
 
     @Inject
-    ClassifierRepository classifierRepository
+    AdministeredItemCacheableRepository.ClassifierCacheableRepository classifierCacheableRepository
 
-  //  @Override
-//    Classifier findWithContentById(UUID id) {
-//        Classifier classifier = classifierRepository.findById(id)
-//        classifier.childClassifiers = classifierRepository.findallByParent(classifier)
-//        classifier
-//    }
+    @Override
+    Classifier readWithContentById(UUID id) {
+        Classifier classifier = classifierCacheableRepository.readById(id)
+        if (!classifier.parentClassifier) {
+            classifier.childClassifiers = classifierCacheableRepository.readAllByParentClassifier_Id(classifier.id)
+        }
+        classifier
+    }
 
-//    @Override
-//    ClassificationScheme saveWithContent(@NonNull ClassificationScheme model) {
-//        ClassificationScheme saved = (ClassificationScheme) super.saveWithContent(model)
-//        classifierRepository.updateAll(saved.classifiers.findAll{ it.classificationScheme})
-//        saved
-//    }
 }

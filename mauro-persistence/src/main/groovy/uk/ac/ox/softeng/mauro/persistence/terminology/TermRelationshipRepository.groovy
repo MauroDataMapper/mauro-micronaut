@@ -1,13 +1,11 @@
 package uk.ac.ox.softeng.mauro.persistence.terminology
 
 import groovy.transform.CompileStatic
-import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.annotation.Join
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.model.query.builder.sql.Dialect
 import jakarta.inject.Inject
-import uk.ac.ox.softeng.mauro.domain.dataflow.DataFlow
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.terminology.Term
 import uk.ac.ox.softeng.mauro.domain.terminology.TermRelationship
@@ -22,9 +20,6 @@ abstract class TermRelationshipRepository implements ModelItemRepository<TermRel
 
     @Inject
     TermRelationshipDTORepository termRelationshipDTORepository
-
-    @Inject
-    TermRepository termRepository
 
     @Override
     @Join(value = 'sourceTerm', type = Join.Type.LEFT_FETCH)
@@ -70,17 +65,6 @@ abstract class TermRelationshipRepository implements ModelItemRepository<TermRel
 
     @Nullable
     abstract List<TermRelationship> readAllByRelationshipType(TermRelationshipType relationshipType)
-
-    @Override
-    @Nullable
-    TermRelationship findWithContentById(@NonNull UUID id, @NonNull AdministeredItem parent ){
-        TermRelationship termRelationship = findById(id)
-        termRelationship.terminology = parent as Terminology
-  //      termRelationship.sourceTerm =  termRepository.findById(termRelationship.)
-        termRelationship
-    }
-
-
 
 
     @Override

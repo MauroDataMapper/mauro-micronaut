@@ -64,12 +64,6 @@ abstract class DataFlowRepository implements ModelItemRepository<DataFlow> {
         dataFlow
     }
 
-   @Nullable
-    @Override
-    DataFlow findWithContentById(@NonNull UUID id, @NonNull AdministeredItem parent) {
-        readWithContentById(id)
-    }
-
     @Override
     @Nullable
     DataFlow readById(UUID id){

@@ -8,6 +8,7 @@ import io.micronaut.data.annotation.Relation
 import jakarta.persistence.Transient
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Pattern
+import uk.ac.ox.softeng.mauro.domain.classifier.Classifier
 import uk.ac.ox.softeng.mauro.domain.facet.Annotation
 import uk.ac.ox.softeng.mauro.domain.facet.Metadata
 import uk.ac.ox.softeng.mauro.domain.facet.ReferenceFile
@@ -63,10 +64,9 @@ abstract class AdministeredItem extends Item {
         aliasesString?.split(";") as List
     }
 
-    // TODO: Convert Classifiers into a proper domain
     @Transient
-    List<Object> classifiers
-
+    @Relation(Relation.Kind.ONE_TO_MANY)
+    List<Classifier> classifiers = []
 
 
     /**

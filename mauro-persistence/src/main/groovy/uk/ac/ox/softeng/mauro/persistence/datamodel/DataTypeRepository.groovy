@@ -53,13 +53,6 @@ abstract class DataTypeRepository implements ModelItemRepository<DataType> {
         deleteByDataModelId(ownerId)
     }
 
-    @NonNull
-    @Override
-    DataType findWithContentById(@NonNull UUID id, @NonNull AdministeredItem parent){
-        DataType dataType = findById(id)
-        dataType.parent = parent
-        dataType
-    }
 
     @Override
     Class getDomainClass() {

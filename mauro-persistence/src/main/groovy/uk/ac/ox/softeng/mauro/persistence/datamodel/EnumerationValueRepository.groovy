@@ -1,20 +1,17 @@
 package uk.ac.ox.softeng.mauro.persistence.datamodel
 
-import io.micronaut.core.annotation.NonNull
-import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
-import uk.ac.ox.softeng.mauro.domain.datamodel.EnumerationValue
-import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
-import uk.ac.ox.softeng.mauro.domain.terminology.TermRelationship
-import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
-import uk.ac.ox.softeng.mauro.persistence.datamodel.dto.EnumerationValueDTORepository
-import uk.ac.ox.softeng.mauro.persistence.model.ModelItemRepository
-
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
+import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.model.query.builder.sql.Dialect
 import jakarta.inject.Inject
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
+import uk.ac.ox.softeng.mauro.domain.datamodel.EnumerationValue
+import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
+import uk.ac.ox.softeng.mauro.persistence.datamodel.dto.EnumerationValueDTORepository
+import uk.ac.ox.softeng.mauro.persistence.model.ModelItemRepository
 
 @Slf4j
 @CompileStatic
@@ -66,13 +63,5 @@ abstract class EnumerationValueRepository implements ModelItemRepository<Enumera
 
     abstract List<EnumerationValue> readAllByEnumerationTypeId(UUID enumerationTypeId)
 
-
-    @Override
-    @Nullable
-    EnumerationValue findWithContentById(@NonNull UUID id, @NonNull AdministeredItem parent) {
-        EnumerationValue enumerationValue = findById(id)
-        enumerationValue.parent = parent
-        enumerationValue
-    }
 
 }

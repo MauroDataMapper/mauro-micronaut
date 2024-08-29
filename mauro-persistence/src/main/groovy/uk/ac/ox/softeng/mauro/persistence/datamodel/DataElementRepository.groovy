@@ -70,11 +70,4 @@ abstract class DataElementRepository implements ModelItemRepository<DataElement>
 
     abstract List<DataElement> readAllByDataClassId(UUID dataClassId)
 
-    @Override
-    @Nullable
-    DataElement findWithContentById(@NonNull UUID id, @NonNull AdministeredItem parent){
-        DataElement dataElement = findById(id)
-        dataElement.parent = parent
-        dataElement
-    }
 }

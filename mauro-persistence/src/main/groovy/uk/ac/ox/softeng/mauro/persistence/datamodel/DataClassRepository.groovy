@@ -63,13 +63,6 @@ abstract class DataClassRepository implements ModelItemRepository<DataClass> {
         deleteByDataModelId(ownerId)
     }
 
-    @Override
-    @Nullable
-    DataClass findWithContentById(@NonNull UUID id, @NonNull AdministeredItem parent){
-        DataClass dataClass = findById(id)
-        dataClass.parentDataClass = parent as DataClass
-        dataClass
-    }
 
     @Override
     Class getDomainClass() {

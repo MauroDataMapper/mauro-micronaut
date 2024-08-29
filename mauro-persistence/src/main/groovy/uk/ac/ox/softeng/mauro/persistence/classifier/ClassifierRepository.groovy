@@ -23,7 +23,7 @@ abstract class ClassifierRepository implements ModelItemRepository<Classifier> {
     @Override
     @Nullable
     Classifier findById(UUID id) {
-        classifierDTORepository.findById(id)
+        classifierDTORepository.findById(id) as Classifier
     }
 
     @Nullable
@@ -53,16 +53,13 @@ abstract class ClassifierRepository implements ModelItemRepository<Classifier> {
         classifierDTORepository.findAllByAdministeredItem(administeredItemDomainType, administeredItemId)
     }
 
-
-    Long deleteAllForAdministeredItem(String administeredItemDomainType, UUID administeredItemId) {
+    Long deleteAllJoinAdministeredItemToClassifier(String administeredItemDomainType, UUID administeredItemId) {
         classifierDTORepository.deleteAllForAdministeredItem(administeredItemDomainType, administeredItemId)
     }
 
     @Nullable
     abstract List<Classifier> readAllByClassificationScheme(ClassificationScheme classificationScheme)
 
-    @Nullable
-    abstract List<Classifier> readAllByClassificationScheme_Id(UUID classificationSchemeId)
 
     @Nullable
     abstract List<Classifier> readAllByParentClassifier_Id(UUID classifierId)
@@ -75,14 +72,13 @@ abstract class ClassifierRepository implements ModelItemRepository<Classifier> {
 
     abstract Long deleteByClassificationSchemeId(UUID classificationSchemeId)
 
-    Long deleteAdministeredItemClassifier(AdministeredItem administeredItem, UUID classifierId) {
+    Long deleteJoinAdministeredItemToClassifier(AdministeredItem administeredItem, UUID classifierId) {
         classifierDTORepository.deleteAdministeredItemClassifier(administeredItem.domainType, administeredItem.id, classifierId)
     }
 
-    Long deleteAllAdministeredItemsForClassifier(Classifier classifier){
+    Long deleteAllJoinAdministeredItemToClassifier(Classifier classifier){
         classifierDTORepository.deleteAllForClassifier(classifier.id)
     }
-
 
     //    @Override
     Long deleteByOwnerId(UUID ownerId) {
@@ -102,12 +98,5 @@ abstract class ClassifierRepository implements ModelItemRepository<Classifier> {
     List<Classifier> findAllByParent(Classifier classifier){
         classifierDTORepository.findAllByClassifier(classifier.id)
     }
-
-    @Override
-    Classifier findWithContentById(UUID id, AdministeredItem parent) {
-        Classifier classifier = findById(id)
-        classifier.childClassifiers = findAllByParent(classifier)
-        classifier
-     }
 }
 
