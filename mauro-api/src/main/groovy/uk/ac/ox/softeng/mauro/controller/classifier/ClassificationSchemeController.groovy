@@ -36,9 +36,8 @@ class ClassificationSchemeController extends ModelController<ClassificationSchem
     ClassificationSchemeContentRepository classificationSchemeContentRepository
 
 
-
     ClassificationSchemeController(ModelCacheableRepository.ClassificationSchemeCacheableRepository classificationSchemeCacheableRepository, FolderCacheableRepository folderRepository, ClassificationSchemeContentRepository classificationSchemeContentRepository) {
-        super(ClassificationScheme, classificationSchemeCacheableRepository, folderRepository,classificationSchemeContentRepository)
+        super(ClassificationScheme, classificationSchemeCacheableRepository, folderRepository, classificationSchemeContentRepository)
         this.classificationSchemeContentRepository = classificationSchemeContentRepository
     }
 
