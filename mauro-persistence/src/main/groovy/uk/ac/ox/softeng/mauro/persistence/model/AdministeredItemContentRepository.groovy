@@ -148,13 +148,16 @@ class AdministeredItemContentRepository {
         }
     }
 
-     void deleteReferenceFiles(Collection<AdministeredItem> items) {
-         List<ReferenceFile> referenceFiles = []
-         items.each { item ->
-             if (item.referenceFiles) {
-                 referenceFiles.addAll(item.referenceFiles)
-             }
-             referenceFileCacheableRepository.deleteAll(referenceFiles)
-         }
-     }
+    void deleteReferenceFiles(Collection<AdministeredItem> items) {
+        List<ReferenceFile> referenceFiles = []
+        items.each { item ->
+            if (item.referenceFiles) {
+                referenceFiles.addAll(item.referenceFiles)
+            }
+        }
+        referenceFiles.each {
+            referenceFileCacheableRepository.deleteById(it.id)
+        }
+    }
 }
+

@@ -76,11 +76,11 @@ class TerminologyNewBranchVersionIntegrationSpec extends CommonDataSpec {
         newBranchVersionCodeSet
 
         when:
-        ListResponse<Term> termsbyCodeSetList = (ListResponse<Term>)  GET("$CODE_SET_PATH/$newBranchVersionCodeSet.id$TERMS_PATH", ListResponse<Term>)
+        ListResponse<Term> termsByCodeSetList = (ListResponse<Term>)  GET("$CODE_SET_PATH/$newBranchVersionCodeSet.id$TERMS_PATH", ListResponse<Term>)
         then:
-        termsbyCodeSetList
-        termsbyCodeSetList.items.size() == 2
-        termsbyCodeSetList.items.id.sort().containsAll([termId1.toString(), termId2.toString()].sort())
+        termsByCodeSetList
+        termsByCodeSetList.items.size() == 2
+        termsByCodeSetList.items.id.sort().containsAll([termId1.toString(), termId2.toString()].sort())
     }
 
 

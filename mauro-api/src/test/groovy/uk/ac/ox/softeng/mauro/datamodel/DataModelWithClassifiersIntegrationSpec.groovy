@@ -3,7 +3,6 @@ package uk.ac.ox.softeng.mauro.datamodel
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.client.exceptions.HttpClientResponseException
 import io.micronaut.runtime.EmbeddedApplication
-import io.micronaut.test.annotation.Sql
 import jakarta.inject.Inject
 import spock.lang.Shared
 import uk.ac.ox.softeng.mauro.domain.classifier.ClassificationScheme
@@ -51,13 +50,13 @@ class DataModelWithClassifiersIntegrationSpec extends CommonDataSpec {
         created.classifiers[0].id == classifierId1
 
         when:
-        Classifier retrieved1 = (Classifier) GET("/dataModels/$created.id$CLASSIFIER_PATH/$classifierId1", Classifier)
+        Classifier retrieved1 = (Classifier) GET("$DATAMODELS_PATH/$created.id$CLASSIFIER_PATH/$classifierId1", Classifier)
         then:
         retrieved1
         retrieved1.id == classifierId1
 
         when:
-        GET("/dataModels/$created.id$CLASSIFIER_PATH/$classifierId2", Classifier)
+        GET("$DATAMODELS_PATH/$created.id$CLASSIFIER_PATH/$classifierId2", Classifier)
         then:
         HttpClientResponseException exception = thrown()
         exception.status == HttpStatus.NOT_FOUND
@@ -106,17 +105,48 @@ class DataModelWithClassifiersIntegrationSpec extends CommonDataSpec {
         updated.classifiers[0].id == classifierId2
 
         when:
-        Classifier retrieved = (Classifier) GET("/dataModels/$created.id$CLASSIFIER_PATH/$classifierId2", Classifier)
+        Classifier retrieved = (Classifier) GET("$DATAMODELS_PATH/$created.id$CLASSIFIER_PATH/$classifierId2", Classifier)
         then:
 
         retrieved
         retrieved.id == classifierId2
 
         when:
-        GET("/dataModels/$created.id$CLASSIFIER_PATH/$classifierId1", Classifier)
+        GET("$DATAMODELS_PATH/$created.id$CLASSIFIER_PATH/$classifierId1", Classifier)
         then:
         HttpClientResponseException exception = thrown()
         exception.status == HttpStatus.NOT_FOUND
     }
 
+
+    void 'delete datamodel with classifier and facets - should delete all items'() {
+        given:
+        DataModel dataModel  = (DataModel) POST("$FOLDERS_PATH/$folderId$DATAMODELS_PATH",
+                [label: 'test label',
+                 description: 'test description',
+                 author: 'an author',
+                 classifiers: [
+                         [id: classifierId1]]],  DataModel)
+
+        Metadata metadata = (Metadata) POST("$DATAMODELS_PATH/$dataModel.id$METADATA_PATH", metadataPayload(), Metadata)
+
+        when:
+        HttpStatus status = DELETE("$DATAMODELS_PATH/$dataModel.id", HttpStatus)
+        then:
+        status == HttpStatus.NO_CONTENT
+
+        when:
+        GET("$DATAMODELS_PATH/$dataModel.id/$metadata.id", Metadata)
+
+        then:
+        HttpClientResponseException exc = thrown()
+        exc.status == HttpStatus.NOT_FOUND
+
+        when:
+        GET("$DATAMODELS_PATH/$dataModel.id/$classifierId1", Classifier)
+
+        then:
+        exc = thrown()
+        exc.status == HttpStatus.NOT_FOUND
+    }
 }

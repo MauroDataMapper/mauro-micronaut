@@ -59,8 +59,8 @@ class TerminologyDTO extends Terminology implements AdministeredItemDTO {
     @MappedProperty
     @ColumnTransformer(read = '''( select json_agg(classifier)
                 from core.classifier
-                JOIN core.join_administered_item_to_classifier  on join_administered_item_to_classifier.classifier_id = core.classifier.id
-                and join_administered_item_to_classifier.administered_item_id = terminology_.id)''')
+                JOIN core.join_administered_item_to_classifier on join_administered_item_to_classifier.classifier_id = core.classifier.id
+                and join_administered_item_to_classifier.catalogue_item_id = terminology_.id)''')
     List<Classifier> classifiers = []
 
 }

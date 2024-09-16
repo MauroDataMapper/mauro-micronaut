@@ -148,13 +148,17 @@ class CodeSetController extends ModelController<CodeSet> {
     @Transactional
     @Put(value = Paths.CODE_SET_NEW_BRANCH_MODEL_VERSION)
     CodeSet createNewBranchModelVersion(UUID id, @Body @Nullable CreateNewVersionData createNewVersionData) {
-        //new branchModelVersion must point to original's terms if any
-        CodeSet newBranchModelVersion = super.createNewBranchModelVersion(id, createNewVersionData) as CodeSet
+        if (!createNewVersionData) createNewVersionData = new CreateNewVersionData()
+        CodeSet existing = super.getExistingWithContent(id) as CodeSet
+
+        CodeSet copy = createCopyModelWithAssociations(existing, createNewVersionData)
+        copy.terms.clear()
+        CodeSet savedCopy = modelContentRepository.saveWithContent(copy)
         List<Term> terms = codeSetContentRepository.codeSetRepository.getTerms(id) as List<Term>
         terms.each{
-            addTerm(newBranchModelVersion.id, it.id)
+            addTerm(savedCopy.id, it.id)
         }
-        newBranchModelVersion
+        savedCopy
     }
 
 }

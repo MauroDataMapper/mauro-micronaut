@@ -185,22 +185,32 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     @Transactional
     M createNewBranchModelVersion(UUID id, @Body @Nullable CreateNewVersionData createNewVersionData) {
         if (!createNewVersionData) createNewVersionData = new CreateNewVersionData()
-        M existing = modelContentRepository.findWithContentById(id)
-        existing.setAssociations()
-        getReferenceFileFileContent(existing.getAllContents())
+        M existing = getExistingWithContent(id)
 
-        accessControlService.checkRole(Role.EDITOR, existing)
-        accessControlService.checkRole(Role.EDITOR, existing.folder)
+        M copy = createCopyModelWithAssociations(existing, createNewVersionData)
 
+        M savedCopy = modelContentRepository.saveWithContent(copy)
+        savedCopy
+    }
+
+    protected M createCopyModelWithAssociations(M existing, CreateNewVersionData createNewVersionData) {
         M copy = modelService.createNewBranchModelVersion(existing, createNewVersionData.branchName)
         copy.parent = existing.parent
         updateCreationProperties(copy)
         updateDerivedProperties(copy)
 
         getReferenceFileFileContent([copy] as Collection<AdministeredItem>)
+        copy
+    }
 
-        M savedCopy = modelContentRepository.saveWithContent(copy)
-        savedCopy
+    protected M getExistingWithContent(UUID id) {
+        M existing = modelContentRepository.findWithContentById(id)
+        existing.setAssociations()
+        getReferenceFileFileContent(existing.getAllContents())
+
+        accessControlService.checkRole(Role.EDITOR, existing)
+        accessControlService.checkRole(Role.EDITOR, existing.folder)
+        existing
     }
 
     protected ModelCacheableRepository<M> getModelRepository() {
@@ -274,7 +284,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         new StreamedFile(new ByteArrayInputStream(fileContents), MediaType.APPLICATION_JSON_TYPE).attach(filename)
     }
 
-    private void getReferenceFileFileContent(Collection<AdministeredItem> administeredItems) {
+    protected void getReferenceFileFileContent(Collection<AdministeredItem> administeredItems) {
         administeredItems.each {
             if (it.referenceFiles) {
                 it.referenceFiles.each { referenceFile ->

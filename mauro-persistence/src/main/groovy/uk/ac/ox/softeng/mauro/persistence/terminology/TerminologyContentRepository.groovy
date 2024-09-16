@@ -39,6 +39,16 @@ class TerminologyContentRepository extends ModelContentRepository<Terminology> {
     }
 
     @Override
+    Terminology findWithContentById(UUID id) {
+        Terminology terminology = terminologyRepository.findById(id)
+        terminology.terms = termRepository.findAllByParent(terminology)
+        terminology.termRelationshipTypes = termRelationshipTypeRepository.findAllByParent(terminology)
+        terminology.termRelationships = termRelationshipRepository.findAllByParent(terminology)
+
+        terminology
+    }
+
+    @Override
     Terminology saveWithContent(@NonNull Terminology terminology) {
         (Terminology) super.saveWithContent(terminology)
     }
