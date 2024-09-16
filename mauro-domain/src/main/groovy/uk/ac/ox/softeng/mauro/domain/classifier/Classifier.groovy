@@ -105,39 +105,4 @@ class Classifier extends ModelItem<ClassificationScheme> implements DiffableItem
         base
     }
 
-//    /****
-//     * Methods for building a tree-like DSL
-//     */
-//
-//    static Classifier build(
-//            Map args,
-//            @DelegatesTo(value = Classifier, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
-//        new Classifier(args).tap(closure)
-//    }
-//
-//    static Classifier build(@DelegatesTo(value = Classifier, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
-//        build [:], closure
-//    }
-//
-//    Classifier classifier(Classifier classifier) {
-//        this.classifiers.add(classifier)
-//        classifier.parentClassifier = this
-//        classifier.classificationScheme = this.classificationScheme
-//        this.classificationScheme.classifiers.add(classifier)
-//        classifier
-//    }
-//
-//    Classifier dataClass(Map args, @DelegatesTo(value = Classifier, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
-//        Classifier dataClass = build(args + [dataModel: this.dataModel], closure)
-//        this.dataClasses.add(dataClass)
-//        dataClass.parentDataClass = this
-//        dataModel.allDataClasses.add(dataClass)
-//        dataClass
-//    }
-//
-//    Classifier dataClass(@DelegatesTo(value = Classifier, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
-//        dataClass [:], closure
-//    }
-
-
 }
