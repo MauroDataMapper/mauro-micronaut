@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.test.profile
 
+import uk.ac.ox.softeng.mauro.profile.applied.AppliedProfile
+
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
 import spock.lang.Specification
@@ -55,7 +57,7 @@ class JsonProfileSpec extends Specification {
                     ["metadataNamespace": "com.test"])
         }
         then:
-        profile.validate(dm) == []
+        new AppliedProfile(profile, dm).collateErrors() == []
 
         when:
         dm.metadata(ProfileSpecificationProfile.NAMESPACE,
@@ -63,7 +65,7 @@ class JsonProfileSpec extends Specification {
                  "editableAfterFinalisation": "true"])
 
         then:
-        profile.validate(dm) == []
+        new AppliedProfile(profile, dm).collateErrors() == []
     }
 
     def "test validating an item against a profile - failure"() {
@@ -77,7 +79,7 @@ class JsonProfileSpec extends Specification {
             metadata(ProfileSpecificationProfile.NAMESPACE,
                     ["metadataNamespace": "com.test"])
         }
-        List<String> errors = profile.validate(terminology)
+        List<String> errors = new AppliedProfile(profile, terminology).collateErrors()
         then:
         errors.size() == 1
         errors.first().contains("cannot be applied to an object of type")
@@ -91,7 +93,7 @@ class JsonProfileSpec extends Specification {
                      "domainsApplicable"        : "DataModel;DataElement",
                      "editableAfterFinalisation": "something"])
         }
-        errors = profile.validate(dm)
+        errors = new AppliedProfile(profile, dm).collateErrors()
 
         then:
         errors.size() == 1

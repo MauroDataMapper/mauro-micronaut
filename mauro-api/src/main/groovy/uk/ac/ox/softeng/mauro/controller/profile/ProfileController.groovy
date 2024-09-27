@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.controller.profile
 
+import uk.ac.ox.softeng.mauro.profile.applied.AppliedProfile
+
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.annotation.Body
 import io.micronaut.security.annotation.Secured
@@ -100,10 +102,10 @@ class ProfileController implements AdministeredItemReader {
     }
 
     @Get('/{domainType}/{domainId}/profile/{namespace}/{name}{/version}')
-    Map<String, Object> getProfiledItem(String domainType, UUID domainId, String namespace, String name, @Nullable String version) {
+    AppliedProfile getProfiledItem(String domainType, UUID domainId, String namespace, String name, @Nullable String version) {
         AdministeredItem administeredItem = readAdministeredItem(domainType, domainId)
         Profile profile = getProfileByName(namespace, name, version)
-        profile.asMap(administeredItem)
+        new AppliedProfile(profile, administeredItem)
     }
 
     @Post('/{domainType}/{domainId}/profile/{namespace}/{name}{/version}/validate')
@@ -113,11 +115,12 @@ class ProfileController implements AdministeredItemReader {
 
         // Overwrite administered item with metadata items from the bodyMap
         bodyMap.sections.each { section ->
-            section.fields.each { field ->
+            //section.fields.each { field ->
 
-            }
+            //}
         }
 
+        [:]
 
 
     }

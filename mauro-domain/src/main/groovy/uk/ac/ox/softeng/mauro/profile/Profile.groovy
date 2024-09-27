@@ -19,17 +19,7 @@ trait Profile extends MauroPlugin {
         return PluginType.Profile
     }
 
-    List<String> validate(AdministeredItem item) {
-        List<String> errors = []
-        if(!profileApplicableForDomains.contains(item.class.simpleName)) {
-            errors.add("The profile '${displayName}' cannot be applied to an object of type '${item.class.simpleName}'.  Allowed types are $profileApplicableForDomains'")
-        }
-        List<Metadata> profileMetadata = item.metadata.findAll {it.namespace == metadataNamespace }
-        sections.each { section ->
-            errors.addAll(section.validate(item, profileMetadata))
-        }
-        return errors
-    }
+
 
     boolean isApplicableForDomain(String domain) {
         (profileApplicableForDomains == null ||
@@ -50,20 +40,6 @@ trait Profile extends MauroPlugin {
                 field.getMetadataKey(section.label)
             }
         }.flatten().sort()
-    }
-
-    /**
-     * Used in the APIs for returning profiled items
-     * @param item
-     * @return
-     */
-    Map<String, Object> asMap(AdministeredItem administeredItem) {
-        [
-            id: administeredItem.id.toString(),
-            label: administeredItem.label,
-            domainType: administeredItem.domainType,
-            sections: sections.collect {it.asMap(administeredItem, getMetadataNamespace())}
-        ]
     }
 
 }

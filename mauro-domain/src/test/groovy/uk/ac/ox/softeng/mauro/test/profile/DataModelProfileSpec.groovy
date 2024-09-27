@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.test.profile
 
+import uk.ac.ox.softeng.mauro.profile.applied.AppliedProfile
+
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
 import spock.lang.Specification
@@ -53,7 +55,8 @@ class DataModelProfileSpec extends Specification {
         Profile dynamicProfile = new DataModelBasedProfile(DataModelBasedProfileTest.testProfileModel)
 
         then:
-        dynamicProfile.validate(dataModel) == []
+        new AppliedProfile(dynamicProfile, dataModel).collateErrors() == []
+
 
     }
 
@@ -72,7 +75,7 @@ class DataModelProfileSpec extends Specification {
             ])
         }
         Profile dynamicProfile = new DataModelBasedProfile(DataModelBasedProfileTest.testProfileModel)
-        List<String> errors = dynamicProfile.validate(dataClass)
+        List<String> errors = new AppliedProfile(dynamicProfile, dataClass).collateErrors()
 
         then:
         errors.size() == 1
@@ -91,7 +94,7 @@ class DataModelProfileSpec extends Specification {
                     "Asset Creation/Deleted date" : "19/19/2024"
             ])
         }
-        errors = dynamicProfile.validate(dataModel)
+        errors = new AppliedProfile(dynamicProfile, dataModel).collateErrors()
 
         then:
         errors.size() == 6
