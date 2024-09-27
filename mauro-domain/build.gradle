@@ -23,6 +23,9 @@ dependencies {
     // For parsing java dates / instants
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
 
+    // For importer parameters introspection
+    implementation('org.apache.commons:commons-lang3:3.17.0')
+
     testImplementation "io.micronaut.test:micronaut-test-spock"
 }
 
