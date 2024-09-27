@@ -210,7 +210,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
 
     StreamedFile exportModel(UUID modelId, String namespace, String name, @Nullable String version) {
         ModelExporterPlugin mauroPlugin = mauroPluginService.getPlugin(ModelExporterPlugin, namespace, name, version)
-        handlePluginNotFound(mauroPlugin, namespace, name)
+        mauroPluginService.handlePluginNotFound(mauroPlugin, namespace, name)
 
         M existing = modelContentRepository.findWithContentById(modelId)
         existing.setAssociations()
@@ -222,7 +222,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     ListResponse<M> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version) {
 
         ModelImporterPlugin mauroPlugin = mauroPluginService.getPlugin(ModelImporterPlugin, namespace, name, version)
-        handlePluginNotFound(mauroPlugin, namespace, name)
+        mauroPluginService.handlePluginNotFound(mauroPlugin, namespace, name)
 
         ImportParameters importParameters = readFromMultipartFormBody(body, mauroPlugin.importParametersClass())
 
@@ -241,12 +241,6 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
             show(model.id)
         }
         ListResponse.from(smallerResponse)
-    }
-
-    protected void handlePluginNotFound(MauroPlugin mauroPlugin, String namespace, String name) {
-        if (!mauroPlugin) {
-            throw new HttpStatusException(HttpStatus.BAD_REQUEST, "Model import plugin with namespace: ${namespace}, name: ${name} not found")
-        }
     }
 
 

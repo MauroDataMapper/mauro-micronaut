@@ -125,8 +125,8 @@ class FolderController extends ModelController<Folder> {
     @Get('/{id}/export{/namespace}{/name}{/version}')
     StreamedFile exportModel(UUID id, @Nullable String namespace, @Nullable String name, @Nullable String version) {
         ModelExporterPlugin mauroPlugin = mauroPluginService.getPlugin(ModelExporterPlugin, namespace, name, version)
-        handlePluginNotFound(mauroPlugin, namespace, name)
-         Folder existing = folderContentRepository.findWithContentById(id)
+        mauroPluginService.handlePluginNotFound(mauroPlugin, namespace, name)
+        Folder existing = folderContentRepository.findWithContentById(id)
         StreamedFile streamedFile = exportedModelData(mauroPlugin, existing)
         streamedFile
     }
