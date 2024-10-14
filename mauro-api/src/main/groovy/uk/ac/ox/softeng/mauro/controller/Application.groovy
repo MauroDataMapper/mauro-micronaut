@@ -19,13 +19,13 @@ import io.swagger.v3.oas.annotations.info.Info
 @CompileStatic
 class Application {
 
-    @ContextConfigurer
-    public static class Configurer implements ApplicationContextConfigurer {
-        @Override
-        public void configure(@NonNull ApplicationContextBuilder builder) {
-            builder.defaultEnvironments("dev");
-        }
-    }
+//    @ContextConfigurer
+//    public static class Configurer implements ApplicationContextConfigurer {
+//        @Override
+//        public void configure(@NonNull ApplicationContextBuilder builder) {
+//            builder.defaultEnvironments("dev");
+//        }
+//    }
     static void main(String[] args) {
         Micronaut.run(Application, args)
     }

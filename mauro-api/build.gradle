@@ -1,8 +1,8 @@
 plugins {
     id("groovy")
     id("com.github.johnrengelman.shadow") version "8.1.1"
-    id("io.micronaut.application") version "4.4.2"
-    id("io.micronaut.aot") version "4.4.2"
+    id("io.micronaut.application") version "4.3.4"
+    id("io.micronaut.aot") version "4.3.4"
     id("codenarc")
 }
 version = "0.1"
@@ -16,24 +16,6 @@ dependencies {
     compileOnly("io.micronaut.openapi:micronaut-openapi") {
         //        exclude group: 'org.slf4j'
     }
-
-// Security
-    implementation("io.micronaut.security:micronaut-security-session")
-    compileOnly("io.micronaut.security:micronaut-security-annotations")
-
-    implementation("io.micronaut.security:micronaut-security-jwt")
-    implementation("io.micronaut.security:micronaut-security-oauth2")
-    implementation("io.micronaut.serde:micronaut-serde-jackson")
-    implementation("io.micronaut.views:micronaut-views-fieldset")
-    implementation("io.micronaut.views:micronaut-views-thymeleaf")
-
-    compileOnly("io.micronaut.security:micronaut-security-annotations")
-    compileOnly("io.micronaut.serde:micronaut-serde-processor")
-
-//aot
-    aotPlugins platform("io.micronaut.platform:micronaut-platform:4.6.2")
-    aotPlugins("io.micronaut.security:micronaut-security-aot")
-
     compileOnly("io.swagger.core.v3:swagger-annotations")
     compileOnly("io.micronaut.data:micronaut-data-processor")
     compileOnly("io.micronaut.validation:micronaut-validation-processor")
@@ -59,7 +41,13 @@ dependencies {
     testImplementation group: 'org.apache.groovy', name: 'groovy-json', version: '4.0.15'
 
 
-
+    // Security
+    implementation("io.micronaut.security:micronaut-security-session")
+    compileOnly("io.micronaut.security:micronaut-security-annotations")
+    implementation("io.micronaut.security:micronaut-security-jwt")
+    implementation("io.micronaut.security:micronaut-security-oauth2")
+    implementation("io.micronaut.views:micronaut-views-fieldset")
+    implementation("io.micronaut.views:micronaut-views-thymeleaf")
 
     //Email
     implementation("io.micronaut.email:micronaut-email-javamail")
