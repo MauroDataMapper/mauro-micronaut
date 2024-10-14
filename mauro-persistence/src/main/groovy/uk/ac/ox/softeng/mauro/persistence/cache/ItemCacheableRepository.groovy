@@ -15,6 +15,7 @@ import uk.ac.ox.softeng.mauro.domain.security.CatalogueUser
 import uk.ac.ox.softeng.mauro.domain.security.Role
 import uk.ac.ox.softeng.mauro.domain.security.SecurableResourceGroupRole
 import uk.ac.ox.softeng.mauro.domain.security.UserGroup
+import uk.ac.ox.softeng.mauro.domain.security.openidconnect.OpenidConnectProvider
 import uk.ac.ox.softeng.mauro.persistence.config.ApiPropertyRepository
 import uk.ac.ox.softeng.mauro.persistence.model.ItemRepository
 import uk.ac.ox.softeng.mauro.persistence.model.SummaryMetadataReportRepository
@@ -263,4 +264,17 @@ abstract class ItemCacheableRepository<I extends Item> implements ItemRepository
                     summaryMetadata.multiFacetAwareItemId)
         }
     }
+
+    @Singleton
+    @CompileStatic
+    @CacheConfig(cacheNames = 'openidconnect-cache', keyGenerator = StringCacheKeyGenerator)
+    static class OpenidConnectProviderCacheableRepository extends ItemCacheableRepository<OpenidConnectProvider> {
+        OpenidConnectProviderCacheableRepository(OpenidConnectProviderCacheableRepository openidConnectProviderCacheableRepository) {
+            super(openidConnectProviderCacheableRepository)
+            // not cached
+            //
+
+        }
+    }
+
 }
