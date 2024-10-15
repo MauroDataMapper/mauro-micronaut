@@ -2,8 +2,8 @@ micronaut:
   server:
     port: 8088
   security:
-    enabled: true
-    authentication: idtoken
+#    enabled: true
+    authentication: cookie
     oauth2:
       clients:
         keycloak:
@@ -12,5 +12,15 @@ micronaut:
           openid.issuer: ${OIDC_ISSUER_DOMAIN:`http://localhost:9009`}/realms/${KEYCLOAK_REALM:master}
 
     endpoints:
+      login:
+        enabled: true
+        path: '/authentication/login'
       logout:
+        enabled: true
+        path: '/authentication/logout'
         get-allowed: true
+      oauth:
+        enabled: true
+      session:
+        enabled: true
+    reject-not-found: false

@@ -1,4 +1,4 @@
-package uk.ac.ox.softeng.mauro.security.openidconnect
+package uk.ac.ox.softeng.mauro.security.utils.openidconnect
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
