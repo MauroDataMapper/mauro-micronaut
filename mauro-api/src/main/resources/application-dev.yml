@@ -1,0 +1,16 @@
+micronaut:
+  server:
+    port: 8088
+  security:
+    enabled: true
+    authentication: idtoken
+    oauth2:
+      clients:
+        keycloak:
+          client-id: ${OAUTH_CLIENT_ID:sandbox}
+          client-secret: ${OAUTH_CLIENT_SECRET:EheMCg3f7UUTywzCW4j9a9cQf60NeOt9}
+          openid.issuer: ${OIDC_ISSUER_DOMAIN:`http://localhost:9009`}/realms/${KEYCLOAK_REALM:master}
+
+    endpoints:
+      logout:
+        get-allowed: true

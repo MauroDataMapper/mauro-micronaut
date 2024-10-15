@@ -44,6 +44,8 @@ dependencies {
     // Security
     implementation("io.micronaut.security:micronaut-security-session")
     compileOnly("io.micronaut.security:micronaut-security-annotations")
+    implementation("io.micronaut.security:micronaut-security-jwt")
+    implementation("io.micronaut.security:micronaut-security-oauth2")
 
     //Email
     implementation("io.micronaut.email:micronaut-email-javamail")

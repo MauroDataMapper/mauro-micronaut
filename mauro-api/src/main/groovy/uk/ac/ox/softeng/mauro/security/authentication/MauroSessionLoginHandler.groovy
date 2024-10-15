@@ -16,6 +16,7 @@ import io.micronaut.security.session.SessionLoginHandler
 import io.micronaut.session.Session
 import io.micronaut.session.SessionStore
 import jakarta.inject.Inject
+import jakarta.inject.Named
 import jakarta.inject.Singleton
 import uk.ac.ox.softeng.mauro.persistence.cache.ItemCacheableRepository.CatalogueUserCacheableRepository
 import uk.ac.ox.softeng.mauro.security.AccessControlService
@@ -23,6 +24,7 @@ import uk.ac.ox.softeng.mauro.security.AccessControlService
 @Singleton
 @Slf4j
 @Replaces(SessionLoginHandler)
+@Named('Session')
 class MauroSessionLoginHandler extends SessionLoginHandler {
 
     @Inject
