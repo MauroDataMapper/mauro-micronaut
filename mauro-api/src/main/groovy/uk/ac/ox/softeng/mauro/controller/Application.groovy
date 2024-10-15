@@ -1,11 +1,11 @@
 package uk.ac.ox.softeng.mauro.controller
 
+import groovy.transform.CompileStatic
 import io.micronaut.context.ApplicationContextBuilder
 import io.micronaut.context.ApplicationContextConfigurer
 import io.micronaut.context.annotation.ContextConfigurer
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.runtime.Micronaut
-import groovy.transform.CompileStatic
 import io.swagger.v3.oas.annotations.OpenAPIDefinition
 import io.swagger.v3.oas.annotations.info.Info
 
