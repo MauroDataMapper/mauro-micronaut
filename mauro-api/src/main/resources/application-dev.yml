@@ -3,9 +3,7 @@ micronaut:
     port: 8088
   security:
     enabled: true
-    authentication:
-      - idtoken
-
+    authentication: idtoken
     oauth2:
       clients:
         keycloak:

@@ -46,6 +46,8 @@ dependencies {
     compileOnly("io.micronaut.security:micronaut-security-annotations")
     implementation("io.micronaut.security:micronaut-security-jwt")
     implementation("io.micronaut.security:micronaut-security-oauth2")
+    implementation("io.micronaut.views:micronaut-views-fieldset")
+    implementation("io.micronaut.views:micronaut-views-thymeleaf")
 
 
     //Email
