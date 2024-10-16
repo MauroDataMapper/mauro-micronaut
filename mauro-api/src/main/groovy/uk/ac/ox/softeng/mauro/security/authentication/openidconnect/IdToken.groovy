@@ -8,4 +8,8 @@ import java.lang.annotation.RetentionPolicy
 @Qualifier
 @Retention(RetentionPolicy.RUNTIME)
 @interface IdToken {
+    @Qualifier
+    @Retention(RetentionPolicy.RUNTIME)
+    @interface Session {
+    }
 }

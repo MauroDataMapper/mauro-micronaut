@@ -3,14 +3,6 @@ micronaut:
     port: 8088
   security:
     enabled: true
-#    authentication: idtoken
-    oauth2:
-      clients:
-        keycloak:
-          client-id: ${OAUTH_CLIENT_ID:sandbox}
-          client-secret: ${OAUTH_CLIENT_SECRET:EheMCg3f7UUTywzCW4j9a9cQf60NeOt9}
-          openid.issuer: ${OIDC_ISSUER_DOMAIN:`http://localhost:9009`}/realms/${KEYCLOAK_REALM:master}
-
     endpoints:
       login:
         enabled: true
@@ -24,3 +16,17 @@ micronaut:
       session:
         enabled: true
       reject-not-found: false
+#    authentication: cookie
+    oauth2:
+      clients:
+        keycloak:
+          client-id: ${OAUTH_CLIENT_ID:sandbox}
+          client-secret: ${OAUTH_CLIENT_SECRET:EheMCg3f7UUTywzCW4j9a9cQf60NeOt9}
+          openid.issuer: ${OIDC_ISSUER_DOMAIN:`http://localhost:9009`}/realms/${KEYCLOAK_REALM:master}
+    token:
+      name-key: "user_id"
+      jwt:
+        cookie:
+          enabled: true
+          cookie-name: Authorization
+    reject-not-found: false

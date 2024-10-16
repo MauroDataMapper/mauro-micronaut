@@ -14,8 +14,9 @@
     </root>
 
     <logger name="io.micronaut.cache" level="debug" />
-    <logger name="io.micronaut.data" level="debug" />
-    <logger name="io.micronaut.data.query" level="trace" />
+    <logger name="io.micronaut.data" level="info" />
+    <logger name="io.micronaut.data.query" level="info" />
+    <logger name="io.micronaut.security" level="trace" />
     <logger name="io.micronaut" level="info" />
 
     <logger name="org.flywaydb" level="info" />

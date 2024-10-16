@@ -8,7 +8,8 @@ import uk.ac.ox.softeng.mauro.security.authentication.MauroSessionLoginHandler
 
 @Singleton
 @CompileStatic
-class MauroLoginHandler {
+class MauroLoginHandler  {
     @Inject @IdToken IdTokenLoginHandler idTokenLoginHandler
-    @Inject @Session MauroSessionLoginHandler mauroSessionLoginHandler
+    @Inject @IdToken.Session MauroSessionLoginHandler mauroSessionLoginHandler
+
 }
