@@ -5,6 +5,7 @@ import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Get
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
+import io.micronaut.views.View
 
 import static io.micronaut.security.rules.SecurityRule.IS_AUTHENTICATED
 
@@ -12,6 +13,7 @@ import static io.micronaut.security.rules.SecurityRule.IS_AUTHENTICATED
 @CompileStatic
 class HomeController {
     @Secured(SecurityRule.IS_ANONYMOUS)
+    @View("home")
     @Get
     public Map<String, Object> index() {
         [:]

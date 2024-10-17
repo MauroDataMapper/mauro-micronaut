@@ -21,7 +21,7 @@ class Application {
     @ContextConfigurer
     static class Configurer implements ApplicationContextConfigurer {
         @Override
-        public void configure(@NonNull ApplicationContextBuilder builder) {
+        void configure(@NonNull ApplicationContextBuilder builder) {
             builder.defaultEnvironments("dev");
         }
     }

@@ -27,7 +27,7 @@ dependencies {
     implementation("io.micronaut.reactor:micronaut-reactor")
     implementation("io.micronaut.reactor:micronaut-reactor-http-client")
     implementation("jakarta.annotation:jakarta.annotation-api")
-    compileOnly("io.micronaut:micronaut-http-validation")
+    annotationProcessor("io.micronaut:micronaut-http-validation")
     runtimeOnly("ch.qos.logback:logback-classic")
     implementation("io.micronaut.validation:micronaut-validation")
     implementation("io.micronaut:micronaut-management")
@@ -42,10 +42,17 @@ dependencies {
 
 
     // Security
-    implementation("io.micronaut.security:micronaut-security-session")
-    compileOnly("io.micronaut.security:micronaut-security-annotations")
+//    implementation("io.micronaut.security:micronaut-security-session")
+    annotationProcessor("io.micronaut.security:micronaut-security-annotations")
     implementation("io.micronaut.security:micronaut-security-jwt")
     implementation("io.micronaut.security:micronaut-security-oauth2")
+    implementation("io.micronaut.views:micronaut-views-fieldset")
+    implementation("io.micronaut.views:micronaut-views-thymeleaf")
+    aotPlugins platform("io.micronaut.platform:micronaut-platform:4.6.2")
+    aotPlugins("io.micronaut.security:micronaut-security-aot")
+    implementation("io.micronaut.serde:micronaut-serde-jackson")
+    compileOnly("io.micronaut.serde:micronaut-serde-processor")
+
 
     //Email
     implementation("io.micronaut.email:micronaut-email-javamail")
@@ -93,6 +100,8 @@ micronaut {
         optimizeClassLoading = true
         deduceEnvironment = true
         optimizeNetty = true
+        configurationProperties.put("micronaut.security.jwks.enabled","false")
+        configurationProperties.put("micronaut.security.openid-configuration.enabled","false")
     }
 }
 

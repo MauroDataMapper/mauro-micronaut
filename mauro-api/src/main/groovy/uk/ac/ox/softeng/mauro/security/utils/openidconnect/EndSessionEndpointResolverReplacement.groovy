@@ -3,6 +3,7 @@ package uk.ac.ox.softeng.mauro.security.utils.openidconnect
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.context.BeanContext
+import io.micronaut.context.annotation.Replaces
 import io.micronaut.security.config.SecurityConfiguration
 import io.micronaut.security.oauth2.client.OpenIdProviderMetadata
 import io.micronaut.security.oauth2.configuration.OauthClientConfiguration
@@ -15,10 +16,12 @@ import jakarta.inject.Singleton
 
 import java.util.function.Supplier
 
+
 @Singleton
 @CompileStatic
 @Slf4j
-class EndSessionEndpointResolverReplacement extends EndSessionEndpointResolver{
+@Replaces(EndSessionEndpointResolver.class)
+class EndSessionEndpointResolverReplacement extends EndSessionEndpointResolver {
     private TokenResolver tokenResolver
     private SecurityConfiguration securityConfiguration
     /**
@@ -29,19 +32,19 @@ class EndSessionEndpointResolverReplacement extends EndSessionEndpointResolver{
         super(beanContext)
         this.tokenResolver = tokenResolver
         this.securityConfiguration = securityConfiguration
+        log.debug("c'tor")
     }
 
     @Override
-    public Optional<EndSessionEndpoint> resolve(OauthClientConfiguration oauthClientConfiguration,
-                                                Supplier<OpenIdProviderMetadata> openIdProviderMetadata, EndSessionCallbackUrlBuilder endSessionCallbackUrlBuilder) {
-        log.debug("*********  calling resolve, oauthConfig: {}, openIdProviderMetadata: {}", oauthClientConfiguration.toString())
-
+    Optional<EndSessionEndpoint> resolve(OauthClientConfiguration oauthClientConfiguration,
+                                         Supplier<OpenIdProviderMetadata> openIdProviderMetadata,
+                                         EndSessionCallbackUrlBuilder endSessionCallbackUrlBuilder) {
+        log.debug("resolve")
         OktaEndSessionEndpoint endpt = new OktaEndSessionEndpoint(endSessionCallbackUrlBuilder,
                 oauthClientConfiguration,
                 openIdProviderMetadata,
                 securityConfiguration,
                 tokenResolver)
-
         return Optional.ofNullable(endpt as EndSessionEndpoint)
 
     }
