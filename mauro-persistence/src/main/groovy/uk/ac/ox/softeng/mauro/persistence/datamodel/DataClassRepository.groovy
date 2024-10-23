@@ -55,7 +55,7 @@ abstract class DataClassRepository implements ModelItemRepository<DataClass> {
     @Override
     @Nullable
     List<DataClass> readAllByParent(AdministeredItem parent) {
-        readAllByDataModelAndParentDataClassIsNull((DataModel) parent)
+        readAllByDataModel((DataModel) parent)
     }
 
     abstract Long deleteByDataModelId(UUID dataModelId)

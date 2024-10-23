@@ -81,9 +81,8 @@ class TreeService {
     }
 
     List<TreeItem> buildTreeForDataModel(DataModel dataModel, boolean setChildren = true) {
-        dataClassCacheableRepository.readAllByParent(dataModel)
+        dataClassCacheableRepository.readAllByDataModelAndParentDataClassIsNull(dataModel)
             .sort {it.label}
-            .findAll { !it.parentDataClass }
             .collect {DataClass dataClass ->
                 TreeItem.from(dataClass).tap {
                     model = dataClass.dataModel

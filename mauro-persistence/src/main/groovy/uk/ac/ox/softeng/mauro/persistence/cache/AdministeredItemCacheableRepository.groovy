@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.persistence.cache
 
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
+
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.cache.annotation.CacheConfig
@@ -139,6 +141,11 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
         List<DataClass> readAllByParentDataClass_Id(UUID parentDataClassId) {
             ((DataClassRepository) repository).readAllByParentDataClass_Id(parentDataClassId)
         }
+        // not cached
+        List<DataClass> readAllByDataModelAndParentDataClassIsNull(DataModel dataModel) {
+            ((DataClassRepository) repository).readAllByDataModelAndParentDataClassIsNull(dataModel)
+        }
+
         @Override
         Boolean handles(String domainType) {
             domainClass.simpleName.equalsIgnoreCase(domainType) || (domainClass.simpleName + 'es').equalsIgnoreCase(domainType)
