@@ -103,12 +103,12 @@ class NestedSummaryMetadataIntegrationSpec extends CommonDataSpec {
 
         when:
         ListResponse<SummaryMetadataReport> savedReports = (ListResponse<SummaryMetadataReport>) GET("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH/$summaryMetadata.id$SUMMARY_METADATA_REPORT_PATH",
-                ListResponse<SummaryMetadataReport>)
+                ListResponse, SummaryMetadataReport)
 
         then:
         savedReports
         savedReports.count == 2
-        savedReports.items.id == List.of(summaryMetadataReport1.id.toString(), summaryMetadataReport2.id.toString())
+        savedReports.items.id == List.of(summaryMetadataReport1.id, summaryMetadataReport2.id)
 
         when:
         SummaryMetadata savedSummaryMetadata = (SummaryMetadata) GET("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH/$summaryMetadata.id", SummaryMetadata)

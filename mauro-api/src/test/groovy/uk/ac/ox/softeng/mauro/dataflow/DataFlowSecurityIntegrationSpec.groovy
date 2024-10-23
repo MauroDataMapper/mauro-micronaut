@@ -76,7 +76,7 @@ class DataFlowSecurityIntegrationSpec extends SecuredIntegrationSpec {
 
         when:
         ListResponse<DataFlow> listResponse =
-                (ListResponse<DataFlow>) GET("$DATAMODELS_PATH/$targetId$DATA_FLOWS_PATH", ListResponse<DataFlow>)
+                (ListResponse<DataFlow>) GET("$DATAMODELS_PATH/$targetId$DATA_FLOWS_PATH", ListResponse, DataFlow)
         then:
         !listResponse
         exception = thrown()

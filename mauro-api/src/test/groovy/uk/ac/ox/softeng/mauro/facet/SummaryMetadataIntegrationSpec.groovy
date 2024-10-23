@@ -37,7 +37,7 @@ class SummaryMetadataIntegrationSpec extends CommonDataSpec {
     void 'list empty SummaryMetadata'() {
         when:
         def response =
-                GET("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH", ListResponse<SummaryMetadata>)
+                GET("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH", ListResponse, SummaryMetadata)
 
         then:
         response.count == 0
@@ -64,7 +64,7 @@ class SummaryMetadataIntegrationSpec extends CommonDataSpec {
         and:
         (SummaryMetadata) POST("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH", summaryMetadataMap, SummaryMetadata)
         when:
-        ListResponse<SummaryMetadata> response = (ListResponse<SummaryMetadata>) GET("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH", ListResponse<SummaryMetadata>)
+        ListResponse<SummaryMetadata> response = (ListResponse<SummaryMetadata>) GET("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH", ListResponse, SummaryMetadata)
 
         then:
         response
@@ -131,7 +131,7 @@ class SummaryMetadataIntegrationSpec extends CommonDataSpec {
         exception.status == HttpStatus.NOT_FOUND
 
         when:
-        ListResponse<SummaryMetadata> response = (ListResponse<SummaryMetadata>) GET("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH", ListResponse<SummaryMetadata>)
+        ListResponse<SummaryMetadata> response = (ListResponse<SummaryMetadata>) GET("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH", ListResponse, SummaryMetadata)
 
         then: 'the list endpoint shows the update'
         response
@@ -150,7 +150,7 @@ class SummaryMetadataIntegrationSpec extends CommonDataSpec {
                 [reportValue: 'test-report-value-2'], SummaryMetadataReport)
 
         ListResponse<SummaryMetadataReport> savedReports = (ListResponse<SummaryMetadataReport>) GET("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH/$summaryMetadata.id$SUMMARY_METADATA_REPORT_PATH",
-                ListResponse<SummaryMetadataReport>)
+                ListResponse, SummaryMetadataReport)
         savedReports
         savedReports.count == 2
         savedReports.items.id == List.of(summaryMetadataReport1.id, summaryMetadataReport2.id)
@@ -170,7 +170,7 @@ class SummaryMetadataIntegrationSpec extends CommonDataSpec {
 
         when:
         (ListResponse<SummaryMetadataReport>) GET("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH/$summaryMetadata.id$SUMMARY_METADATA_REPORT_PATH",
-                ListResponse<SummaryMetadataReport>)
+                ListResponse, SummaryMetadataReport)
 
         then: '404 not found is returned, exception thrown'
         exception = thrown()

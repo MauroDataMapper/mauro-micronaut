@@ -38,14 +38,14 @@ class ReferenceFileIntegrationSpec extends SecuredIntegrationSpec {
         loginAdmin()
         when:
         ListResponse<ReferenceFile> responses =
-                (ListResponse<ReferenceFile>) GET("$DATAMODELS_PATH/$dataModelId$REFERENCE_FILE_PATH", ListResponse<ReferenceFile>)
+                (ListResponse<ReferenceFile>) GET("$DATAMODELS_PATH/$dataModelId$REFERENCE_FILE_PATH", ListResponse, ReferenceFile)
 
         then:
         responses.items.isEmpty()
 
         when:
         loginUser()
-        (ListResponse<ReferenceFile>) GET("$DATAMODELS_PATH/$dataModelId$REFERENCE_FILE_PATH", ListResponse<ReferenceFile>)
+        (ListResponse<ReferenceFile>) GET("$DATAMODELS_PATH/$dataModelId$REFERENCE_FILE_PATH", ListResponse, ReferenceFile)
         then:
         HttpClientResponseException exception = thrown()
         exception.status == HttpStatus.FORBIDDEN
@@ -135,7 +135,7 @@ class ReferenceFileIntegrationSpec extends SecuredIntegrationSpec {
 
 
         when:
-        ListResponse<ReferenceFile> response = (ListResponse<ReferenceFile>) GET("$DATAMODELS_PATH/$dataModelId$REFERENCE_FILE_PATH", ListResponse<ReferenceFile>)
+        ListResponse<ReferenceFile> response = (ListResponse<ReferenceFile>) GET("$DATAMODELS_PATH/$dataModelId$REFERENCE_FILE_PATH", ListResponse, ReferenceFile)
 
         then: 'the list endpoint shows the update'
         response

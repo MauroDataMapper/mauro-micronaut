@@ -1,7 +1,11 @@
 package uk.ac.ox.softeng.mauro.domain.terminology
 
+import uk.ac.ox.softeng.mauro.util.DedupingObjectIdResolver
+
+import com.fasterxml.jackson.annotation.JsonBackReference
 import com.fasterxml.jackson.annotation.JsonIdentityInfo
 import com.fasterxml.jackson.annotation.JsonIgnore
+import com.fasterxml.jackson.annotation.JsonManagedReference
 import com.fasterxml.jackson.annotation.ObjectIdGenerators
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
@@ -35,12 +39,12 @@ class TermRelationship extends ModelItem<Terminology> {
     @JsonIgnore
     Terminology terminology
 
-    @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator, property = 'code', scope = Term)
+    @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator, property = 'code', scope = Term, resolver = DedupingObjectIdResolver)
     Term sourceTerm
-    @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator, property = 'code', scope = Term)
+    @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator, property = 'code', scope = Term, resolver = DedupingObjectIdResolver)
     Term targetTerm
 
-    @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator, property = 'label', scope = TermRelationshipType)
+    @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator, property = 'label', scope = TermRelationshipType, resolver = DedupingObjectIdResolver)
     TermRelationshipType relationshipType
 
     @Override

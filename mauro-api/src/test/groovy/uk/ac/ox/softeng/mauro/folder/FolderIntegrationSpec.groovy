@@ -65,11 +65,11 @@ class FolderIntegrationSpec extends BaseIntegrationSpec {
 
     void 'list folders'() {
         when:
-        ListResponse<Folder> folderListResponse = (ListResponse<Folder>) GET('/folders', ListResponse<Folder>)
+        ListResponse<Folder> folderListResponse = (ListResponse<Folder>) GET('/folders', ListResponse, Folder)
 
         then:
         folderListResponse
         folderListResponse.count == 2
-        folderListResponse.items.path.sort().collect { it.toString()} == ['fo:Updated folder', 'fo:Updated folder|fo:Updated child folder']
+        folderListResponse.items.path.collect { it.toString()}.sort() == ['fo:Updated folder', 'fo:Updated folder|fo:Updated child folder']
     }
 }

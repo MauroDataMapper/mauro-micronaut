@@ -1,6 +1,5 @@
 package uk.ac.ox.softeng.mauro.importexport
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.json.JsonSlurper
 import io.micronaut.http.MediaType
 import io.micronaut.http.client.multipart.MultipartBody
@@ -20,8 +19,6 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @ContainerizedTest
 class DataModelJsonImportExportIntegrationSpec extends CommonDataSpec {
-    @Inject
-    ObjectMapper objectMapper
 
     @Inject
     EmbeddedApplication<?> application
@@ -142,7 +139,7 @@ class DataModelJsonImportExportIntegrationSpec extends CommonDataSpec {
         children.first().parentAnnotationId == parentId
 
         when:
-        ListResponse<DataType> importedDataTypes = (ListResponse<DataType>)  GET("$DATAMODELS_PATH/$importedDataModelId$DATATYPES_PATH", ListResponse<DataType>)
+        ListResponse<DataType> importedDataTypes = (ListResponse<DataType>)  GET("$DATAMODELS_PATH/$importedDataModelId$DATATYPES_PATH", ListResponse, DataType)
         then:
         importedDataTypes
         importedDataTypes.count == 1
