@@ -6,6 +6,7 @@ import io.micronaut.runtime.EmbeddedApplication
 import jakarta.inject.Inject
 import spock.lang.Shared
 import uk.ac.ox.softeng.mauro.domain.datamodel.*
+import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.persistence.ContainerizedTest
 import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchResultsDTO
 import uk.ac.ox.softeng.mauro.testing.BaseIntegrationSpec
@@ -54,18 +55,43 @@ class DataModelIntegrationSpec extends BaseIntegrationSpec {
     UUID enumerationValueId
 
     void 'test data model'() {
-
         given:
-        DataModel response = (DataModel) POST('/folders', [label: 'Test folder'], DataModel)
+        Folder response = (Folder) POST('/folders', [label: 'Test folder'], Folder)
         folderId = response.id
 
         when:
-        response = (DataModel) POST("/folders/$folderId/dataModels", [label: 'Test data model'], DataModel)
-        dataModelId = response.id
+        Map dataModelResponse = POST("/folders/$folderId/dataModels", [label: 'Test data model'])
+        dataModelId = UUID.fromString(dataModelResponse.id)
 
         then:
-        response.label == 'Test data model'
-        response.path.toString() == 'dm:Test data model$main'
+        dataModelResponse.label == 'Test data model'
+        dataModelResponse.type == 'Data Asset'
+        dataModelResponse.path == 'dm:Test data model$main'
+
+        when:
+        dataModelResponse = GET("/dataModels/$dataModelId")
+
+        then:
+        dataModelResponse.label == 'Test data model'
+        dataModelResponse.type == 'Data Asset'
+        dataModelResponse.path == 'dm:Test data model$main'
+
+        when:
+        dataModelResponse = POST("/folders/$folderId/dataModels", [label: 'Test data standard', type: 'Data Standard'])
+        UUID dataStandardId = UUID.fromString(dataModelResponse.id)
+
+        then:
+        dataModelResponse.label == 'Test data standard'
+        dataModelResponse.type == 'Data Standard'
+        dataModelResponse.path == 'dm:Test data standard$main'
+
+        when:
+        dataModelResponse = GET("/dataModels/$dataStandardId")
+
+        then:
+        dataModelResponse.label == 'Test data standard'
+        dataModelResponse.type == 'Data Standard'
+        dataModelResponse.path == 'dm:Test data standard$main'
     }
 
     void 'test finalise data model'() {
