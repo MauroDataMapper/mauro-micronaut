@@ -107,7 +107,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         M created = super.create(folderId, model) as M
         created.classifiers = validateClassifiers(created)
         created.classifiers.each {
-            classifierRepository.addAdministeredItem(created, it.id)
+            classifierRepository.addAdministeredItem(created, it)
         }
         created
     }
@@ -118,7 +118,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         updated.classifiers =  validateClassifiers(updated)
         updated.classifiers.each {
             if (! classifierRepository.findByAdministeredItemAndClassifier(updated.domainType, updated.id, it.id)){
-                classifierRepository.addAdministeredItem(updated, it.id)
+                classifierRepository.addAdministeredItem(updated, it)
             }
         }
         updated

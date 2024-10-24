@@ -194,6 +194,37 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
             ((ClassifierRepository) repository).readAllByParentClassifier_Id(parentClassifierId)
         }
 
+        // not cached
+        UUID addAdministeredItem(AdministeredItem administeredItem, Classifier classifier) {
+            ((ClassifierRepository) repository).addAdministeredItem(administeredItem, classifier)
+
+            invalidate(classifier)
+
+            if (administeredItem?.id)
+                invalidateCachedLookupById(FIND_BY_ID, administeredItem.domainType, administeredItem.id)
+
+            if (administeredItem?.parent?.id)
+                invalidateCachedLookupById(FIND_ALL_BY_PARENT, administeredItem.parent.domainType,
+                        administeredItem.parent.id)
+        }
+
+        // not cached
+        Classifier findByAdministeredItemAndClassifier(String administeredItemDomainType, UUID administeredItemId, UUID classifierId) {
+            ((ClassifierRepository) repository).findByAdministeredItemAndClassifier(administeredItemDomainType, administeredItemId,
+                    classifierId)
+        }
+
+        // not cached
+        @Nullable
+        List<Classifier> findAllForAdministeredItem(AdministeredItem administeredItem) {
+            ((ClassifierRepository) repository).findAllForAdministeredItem(administeredItem.domainType, administeredItem.id)
+        }
+
+        // not cached
+        Long deleteJoinAdministeredItemToClassifier(AdministeredItem administeredItem, UUID classifierId) {
+            ((ClassifierRepository) repository).deleteJoinAdministeredItemToClassifier(administeredItem, classifierId)
+        }
+
     }
 
 }

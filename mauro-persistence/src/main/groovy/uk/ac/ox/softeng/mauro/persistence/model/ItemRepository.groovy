@@ -27,7 +27,6 @@ trait ItemRepository<I extends Item> implements GenericRepository<I, UUID> {
 
     abstract Long delete(@NonNull I item)
 
-    abstract Long deleteById(@NonNull UUID id)
 
     abstract Long deleteAll(@NonNull Iterable<I> items)
 

@@ -70,8 +70,7 @@ class DataModelController extends ModelController<DataModel> {
     @Put('/dataModels/{id}')
     @Transactional
     DataModel update(UUID id, @Body @NonNull DataModel dataModel) {
-        DataModel updated = super.update(id, dataModel) as DataModel
-        return dataModelRepository.findById(updated.id)
+        super.update(id, dataModel) as DataModel
     }
 
     @Transactional

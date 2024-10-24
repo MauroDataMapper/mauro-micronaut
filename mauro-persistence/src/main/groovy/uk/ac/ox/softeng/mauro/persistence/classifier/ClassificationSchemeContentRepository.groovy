@@ -6,6 +6,8 @@ import jakarta.inject.Inject
 import jakarta.inject.Singleton
 import uk.ac.ox.softeng.mauro.domain.classifier.ClassificationScheme
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
+import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository.ClassifierCacheableRepository
+import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.model.ModelContentRepository
 
 @CompileStatic
@@ -13,14 +15,14 @@ import uk.ac.ox.softeng.mauro.persistence.model.ModelContentRepository
 class ClassificationSchemeContentRepository extends ModelContentRepository<ClassificationScheme> {
 
     @Inject
-    ClassificationSchemeRepository classificationSchemeRepository
+    ModelCacheableRepository.ClassificationSchemeCacheableRepository classificationSchemeCacheableRepository
     @Inject
-    ClassifierRepository classifierRepository
+    ClassifierCacheableRepository classifierCacheableRepository
 
     @Override
     ClassificationScheme findWithContentById(UUID id) {
-        ClassificationScheme classificationScheme = classificationSchemeRepository.findById(id)
-        classificationScheme.classifiers = classifierRepository.findAllByClassificationScheme(classificationScheme)
+        ClassificationScheme classificationScheme = classificationSchemeCacheableRepository.findById(id)
+        classificationScheme.classifiers = classifierCacheableRepository.findAllByParent(classificationScheme)
         classificationScheme
     }
 

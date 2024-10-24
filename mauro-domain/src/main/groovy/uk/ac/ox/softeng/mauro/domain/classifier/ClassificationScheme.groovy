@@ -44,15 +44,11 @@ class ClassificationScheme extends Model {
     @Override
     ClassificationScheme clone() {
         ClassificationScheme cloned = (ClassificationScheme) super.clone()
-        Map<Classifier, Classifier> clonedClassifierLookup = [:]
-        Map<Classifier, Classifier> clonedChildClassifierLookup = [:]
         List<Classifier> clonedClassifiers = classifiers.collect { it ->
             it.clone().tap { clonedClassifier ->
                 clonedClassifier.classificationScheme = cloned
-                clonedClassifierLookup.put(it, clonedClassifier)
                 List<Classifier> clonedChildClassifiers = clonedClassifier.childClassifiers.collect { childClassifier ->
                     childClassifier.clone().tap {
-                        clonedChildClassifierLookup.put(childClassifier, it)
                         it.parentClassifier = clonedClassifier
                         it.classificationScheme = cloned
                     }
@@ -70,7 +66,7 @@ class ClassificationScheme extends Model {
     void setAssociations() {
         classifiers.each { classifier ->
             classifier.classificationScheme = this
-            classifier.childClassifiers.each {childClassifier ->
+            classifier.childClassifiers.each { childClassifier ->
                 childClassifier.parentClassifier = classifier
                 childClassifier.classificationScheme = this
                 childClassifier.parent = childClassifier.parentClassifier

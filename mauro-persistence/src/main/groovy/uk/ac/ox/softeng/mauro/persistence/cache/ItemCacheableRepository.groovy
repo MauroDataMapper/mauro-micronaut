@@ -76,12 +76,6 @@ abstract class ItemCacheableRepository<I extends Item> implements ItemRepository
         deleted
     }
 
-    Long deleteById(UUID id) {
-        Long deleted = repository.deleteById(id)
-        invalidate(id)
-        deleted
-    }
-
     Long deleteAll(Iterable<I> items) {
         Long deleted = repository.deleteAll(items)
         items.each { invalidate(it) }
@@ -106,15 +100,13 @@ abstract class ItemCacheableRepository<I extends Item> implements ItemRepository
 
     void invalidate(I item) {
         invalidate(item.id)
-       // invalidateCachedLookupById(FIND_BY_ID, domainType, item.id)
-        //invalidateCachedLookupById(READ_BY_ID, domainType, item.id)
+
     }
 
     void invalidate(UUID id) {
         invalidateCachedLookupById(FIND_BY_ID, domainType, id)
         invalidateCachedLookupById(READ_BY_ID, domainType, id)
     }
-
     @CacheInvalidate
     void invalidateCachedLookupById(String lookup, String domainType, UUID id) {
         null

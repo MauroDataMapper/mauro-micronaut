@@ -1,12 +1,9 @@
 package uk.ac.ox.softeng.mauro.classifier
 
 import io.micronaut.http.HttpStatus
-import io.micronaut.http.client.exceptions.HttpClientResponseException
-import io.micronaut.http.exceptions.HttpStatusException
 import io.micronaut.runtime.EmbeddedApplication
 import io.micronaut.test.annotation.Sql
 import jakarta.inject.Inject
-import org.codehaus.groovy.reflection.ClassLoaderForClassArtifacts
 import spock.lang.Shared
 import uk.ac.ox.softeng.mauro.domain.classifier.ClassificationScheme
 import uk.ac.ox.softeng.mauro.domain.classifier.Classifier

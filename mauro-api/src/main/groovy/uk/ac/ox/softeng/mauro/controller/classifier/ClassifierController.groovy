@@ -38,8 +38,6 @@ class ClassifierController extends AdministeredItemController<Classifier, Classi
     @Inject
     ClassificationSchemeRepository classificationSchemeRepository
 
-    @Inject
-    ClassifierRepository classifierRepository
 
     ClassifierController(AdministeredItemCacheableRepository.ClassifierCacheableRepository classifierCacheableRepository,
                          ModelCacheableRepository.ClassificationSchemeCacheableRepository classificationSchemeCacheableRepository,
@@ -112,11 +110,6 @@ class ClassifierController extends AdministeredItemController<Classifier, Classi
     @Transactional
     @Delete(Paths.CHILD_CLASSIFIERS_ID_ROUTE)
     HttpStatus delete(@NonNull UUID classificationSchemeId, @NonNull UUID parentClassifierId, @NonNull UUID childClassifierId, @Body @Nullable Classifier classifier) {
-//        accessControlService.checkRole(Role.EDITOR, readAdministeredItem(ClassificationScheme.class.simpleName, classificationSchemeId))
-//        Classifier parentClassifier = classifierCacheableRepository.readById(parentClassifierId)
-//        accessControlService.checkRole(Role.EDITOR, parentClassifier)
-//        Classifier childClassifier = classifierCacheableRepository.readById(childClassifierId)
-//        accessControlService.checkRole(Role.EDITOR, childClassifier)
         super.delete(childClassifierId, classifier)
     }
 
@@ -138,7 +131,7 @@ class ClassifierController extends AdministeredItemController<Classifier, Classi
         Classifier classifier = administeredItemRepository.findById(id)
         if (!classifier) return null
         accessControlService.checkRole(Role.READER, classifier)
-        classifierRepository.addAdministeredItem(administeredItem, classifier.id)
+        classifierCacheableRepository.addAdministeredItem(administeredItem, classifier)
         classifier
     }
 
@@ -150,7 +143,7 @@ class ClassifierController extends AdministeredItemController<Classifier, Classi
         accessControlService.checkRole(Role.READER, readAdministeredItem(Classifier.class.simpleName, id))
         AdministeredItem administeredItem = readAdministeredItem(administeredItemDomainType, administeredItemId)
         accessControlService.checkRole(Role.EDITOR, administeredItem)
-        Classifier classifier = classifierRepository.findByAdministeredItemAndClassifier(administeredItem.domainType, administeredItemId, id)
+        Classifier classifier = classifierCacheableRepository.findByAdministeredItemAndClassifier(administeredItem.domainType, administeredItemId, id)
         classifier
     }
 
@@ -161,7 +154,7 @@ class ClassifierController extends AdministeredItemController<Classifier, Classi
     ListResponse<Classifier> findAllAdministeredItemClassifiers(@NonNull String administeredItemDomainType, @NonNull UUID administeredItemId) {
         AdministeredItem administeredItem = findAdministeredItem(administeredItemDomainType, administeredItemId)
         accessControlService.checkRole(Role.EDITOR, readAdministeredItem(administeredItem.domainType, administeredItemId))
-        ListResponse.from(classifierRepository.findAllForAdministeredItem(administeredItem.domainType, administeredItemId))
+        ListResponse.from(classifierCacheableRepository.findAllForAdministeredItem(administeredItem))
     }
 
     @Delete(Paths.ADMINISTERED_ITEM_CLASSIFIER_ID_ROUTE)
@@ -169,10 +162,10 @@ class ClassifierController extends AdministeredItemController<Classifier, Classi
     HttpStatus delete(@NonNull String administeredItemDomainType, @NonNull UUID administeredItemId, @NonNull UUID id){
         AdministeredItem administeredItem = findAdministeredItem(administeredItemDomainType, administeredItemId)
         accessControlService.checkRole(Role.EDITOR, readAdministeredItem(administeredItem.domainType, administeredItemId))
-        Classifier classifierToDelete = classifierRepository.readById(id)
+        Classifier classifierToDelete = classifierCacheableRepository.readById(id)
         handleError(HttpStatus.NOT_FOUND, classifierToDelete, "Classifier with id $id not found")
         accessControlService.checkRole(Role.EDITOR, classifierToDelete)
-        Long deleted = classifierRepository.deleteJoinAdministeredItemToClassifier(administeredItem, classifierToDelete.id)
+        Long deleted = classifierCacheableRepository.deleteJoinAdministeredItemToClassifier(administeredItem, classifierToDelete.id)
         if (deleted) {
             HttpStatus.NO_CONTENT
         } else {

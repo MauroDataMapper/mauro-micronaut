@@ -38,9 +38,9 @@ abstract class ClassifierRepository implements ModelItemRepository<Classifier> {
     }
 
     @Nullable
-    UUID addAdministeredItem( AdministeredItem administeredItem, UUID classifierId){
-        log.debug("Adding to joinAdministeredItemToClassifier : administered item $administeredItem.id , classifier: $classifierId")
-        classifierDTORepository.addAdministeredItem(administeredItem.id, administeredItem.domainType, classifierId)
+    UUID addAdministeredItem( AdministeredItem administeredItem, Classifier classifier){
+        log.debug("Adding to joinAdministeredItemToClassifier : administered item $administeredItem.id , classifier: $classifier.id")
+        classifierDTORepository.addAdministeredItem(administeredItem.id, administeredItem.domainType, classifier.id)
     }
 
     @Nullable
@@ -53,9 +53,7 @@ abstract class ClassifierRepository implements ModelItemRepository<Classifier> {
         classifierDTORepository.findAllByAdministeredItem(administeredItemDomainType, administeredItemId)
     }
 
-    Long deleteAllJoinAdministeredItemToClassifier(String administeredItemDomainType, UUID administeredItemId) {
-        classifierDTORepository.deleteAllForAdministeredItem(administeredItemDomainType, administeredItemId)
-    }
+
 
     @Nullable
     abstract List<Classifier> readAllByClassificationScheme(ClassificationScheme classificationScheme)
@@ -80,10 +78,6 @@ abstract class ClassifierRepository implements ModelItemRepository<Classifier> {
         classifierDTORepository.deleteAllForClassifier(classifier.id)
     }
 
-    //    @Override
-    Long deleteByOwnerId(UUID ownerId) {
-        deleteByClassificationSchemeId(ownerId)
-    }
 
     @Override
     Class getDomainClass() {
