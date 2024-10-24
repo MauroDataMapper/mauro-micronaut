@@ -100,7 +100,6 @@ abstract class ItemCacheableRepository<I extends Item> implements ItemRepository
 
     void invalidate(I item) {
         invalidate(item.id)
-
     }
 
     void invalidate(UUID id) {

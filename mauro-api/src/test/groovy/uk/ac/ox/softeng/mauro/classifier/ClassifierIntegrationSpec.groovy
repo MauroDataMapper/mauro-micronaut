@@ -119,24 +119,19 @@ class ClassifierIntegrationSpec extends CommonDataSpec {
         Classifier classifier = (Classifier) POST("$CLASSIFICATION_SCHEME_PATH/$classificationSchemeId$CLASSIFIER_PATH", classifiersPayload(), Classifier)
 
         when:
-        Map<String, Object> response = (Map) PUT("/classifier/$classifier.id$CLASSIFIER_PATH/$classifier.id", Classifier)
+        //add folder as admin item to classifier
+        Map<String, Object> response = (Map) PUT("/folder/$folderId$CLASSIFIER_PATH/$classifier.id", Classifier)
 
         then:
         response
         response.get('id') == classifier.id.toString()
 
         when:
-        Classifier joinAdministeredItemToClassifierRetrieved = (Classifier) GET("/classifier/$classifier.id$CLASSIFIER_PATH/$classifier.id", Classifier)
+        Folder getFolderResponse = (Folder) GET("$FOLDERS_PATH/$folderId", Folder)
         then:
-        joinAdministeredItemToClassifierRetrieved
-        joinAdministeredItemToClassifierRetrieved.id == classifier.id
-
-        when:
-        ListResponse<Classifier> joinAdminToClassifiersList = (ListResponse<Classifier>) GET("/classifier/$classifier.id$CLASSIFIER_PATH", ListResponse<Classifier>)
-        then:
-        joinAdminToClassifiersList
-        joinAdminToClassifiersList.items.size() == 1
-
+        getFolderResponse
+        getFolderResponse.classifiers.size() == 1
+        getFolderResponse.classifiers.first().id == classifier.id
     }
 
 

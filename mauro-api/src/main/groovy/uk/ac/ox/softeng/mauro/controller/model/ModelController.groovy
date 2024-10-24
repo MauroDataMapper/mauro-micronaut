@@ -52,10 +52,6 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     @Inject
     FacetCacheableRepository.ReferenceFileCacheableRepository referenceFileCacheableRepository
 
-    @Inject
-    ClassifierRepository classifierRepository
-
-
     @Override
     List<String> getDisallowedProperties() {
         log.debug '***** ModelController::getDisallowedProperties *****'
@@ -104,24 +100,12 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
 
     @Transactional
     M create(@NonNull UUID folderId, @Body @NonNull M model) {
-        M created = super.create(folderId, model) as M
-        created.classifiers = validateClassifiers(created)
-        created.classifiers.each {
-            classifierRepository.addAdministeredItem(created, it)
-        }
-        created
+        super.create(folderId, model) as M
     }
 
     @Transactional
     M update(UUID id, @Body @NonNull M model) {
-        M updated = super.update(id, model) as M
-        updated.classifiers =  validateClassifiers(updated)
-        updated.classifiers.each {
-            if (! classifierRepository.findByAdministeredItemAndClassifier(updated.domainType, updated.id, it.id)){
-                classifierRepository.addAdministeredItem(updated, it)
-            }
-        }
-        updated
+        super.update(id, model) as M
     }
 
     @Transactional
@@ -297,19 +281,6 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
                 }
             }
         }
-    }
-
-    private List<Classifier> validateClassifiers(M model) {
-        List<Classifier> classifierList = []
-        if (model.classifiers) {
-            classifierList = model.classifiers.collect {
-                Classifier retrieved = classifierRepository.readById(it.id)
-                super.handleError(HttpStatus.NOT_FOUND, retrieved, "Item with id: $it.id not found")
-                accessControlService.checkRole(Role.EDITOR, retrieved)
-                retrieved
-            }
-        }
-        classifierList
     }
 
     protected void handleNotFoundError(M model, UUID id) {

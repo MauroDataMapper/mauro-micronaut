@@ -32,7 +32,7 @@ class ClassifierController extends AdministeredItemController<Classifier, Classi
 
     AdministeredItemCacheableRepository.ClassifierCacheableRepository classifierCacheableRepository
 
-    @Inject
+
     ModelCacheableRepository.ClassificationSchemeCacheableRepository classificationSchemeCacheableRepository
 
     @Inject
@@ -142,7 +142,7 @@ class ClassifierController extends AdministeredItemController<Classifier, Classi
     Classifier getAdministeredItemClassifier(@NonNull String administeredItemDomainType, @NonNull UUID administeredItemId, @NonNull UUID id) {
         accessControlService.checkRole(Role.READER, readAdministeredItem(Classifier.class.simpleName, id))
         AdministeredItem administeredItem = readAdministeredItem(administeredItemDomainType, administeredItemId)
-        accessControlService.checkRole(Role.EDITOR, administeredItem)
+        accessControlService.checkRole(Role.READER, administeredItem)
         Classifier classifier = classifierCacheableRepository.findByAdministeredItemAndClassifier(administeredItem.domainType, administeredItemId, id)
         classifier
     }
@@ -153,7 +153,7 @@ class ClassifierController extends AdministeredItemController<Classifier, Classi
     @Get(Paths.ADMINISTERED_ITEM_CLASSIFIER_ROUTE)
     ListResponse<Classifier> findAllAdministeredItemClassifiers(@NonNull String administeredItemDomainType, @NonNull UUID administeredItemId) {
         AdministeredItem administeredItem = findAdministeredItem(administeredItemDomainType, administeredItemId)
-        accessControlService.checkRole(Role.EDITOR, readAdministeredItem(administeredItem.domainType, administeredItemId))
+        accessControlService.checkRole(Role.READER, readAdministeredItem(administeredItem.domainType, administeredItemId))
         ListResponse.from(classifierCacheableRepository.findAllForAdministeredItem(administeredItem))
     }
 
@@ -161,7 +161,7 @@ class ClassifierController extends AdministeredItemController<Classifier, Classi
     @Transactional
     HttpStatus delete(@NonNull String administeredItemDomainType, @NonNull UUID administeredItemId, @NonNull UUID id){
         AdministeredItem administeredItem = findAdministeredItem(administeredItemDomainType, administeredItemId)
-        accessControlService.checkRole(Role.EDITOR, readAdministeredItem(administeredItem.domainType, administeredItemId))
+        accessControlService.checkRole(Role.READER, readAdministeredItem(administeredItem.domainType, administeredItemId))
         Classifier classifierToDelete = classifierCacheableRepository.readById(id)
         handleError(HttpStatus.NOT_FOUND, classifierToDelete, "Classifier with id $id not found")
         accessControlService.checkRole(Role.EDITOR, classifierToDelete)

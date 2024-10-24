@@ -89,6 +89,11 @@ abstract class ClassifierRepository implements ModelItemRepository<Classifier> {
         domainClass.isAssignableFrom(clazz)
     }
 
+
+    @Override
+    Boolean handles(String domainType) {
+        domainType.toLowerCase() in ['classifier', 'classifiers']
+    }
     List<Classifier> findAllByParent(Classifier classifier){
         classifierDTORepository.findAllByClassifier(classifier.id)
     }
