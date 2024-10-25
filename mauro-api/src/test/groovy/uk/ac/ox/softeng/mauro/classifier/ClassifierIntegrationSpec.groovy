@@ -119,6 +119,12 @@ class ClassifierIntegrationSpec extends CommonDataSpec {
         Classifier classifier = (Classifier) POST("$CLASSIFICATION_SCHEME_PATH/$classificationSchemeId$CLASSIFIER_PATH", classifiersPayload(), Classifier)
 
         when:
+        Folder getFolder = (Folder) GET ("$FOLDERS_PATH/$folderId", Folder)
+        then:
+        getFolder
+        getFolder.classifiers.isEmpty()
+
+        when:
         //add folder as admin item to classifier
         Map<String, Object> response = (Map) PUT("/folder/$folderId$CLASSIFIER_PATH/$classifier.id", Classifier)
 
