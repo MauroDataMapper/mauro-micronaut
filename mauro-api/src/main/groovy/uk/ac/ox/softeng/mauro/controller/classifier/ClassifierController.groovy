@@ -32,11 +32,7 @@ class ClassifierController extends AdministeredItemController<Classifier, Classi
 
     AdministeredItemCacheableRepository.ClassifierCacheableRepository classifierCacheableRepository
 
-
     ModelCacheableRepository.ClassificationSchemeCacheableRepository classificationSchemeCacheableRepository
-
-    @Inject
-    ClassificationSchemeRepository classificationSchemeRepository
 
 
     ClassifierController(AdministeredItemCacheableRepository.ClassifierCacheableRepository classifierCacheableRepository,
@@ -91,7 +87,7 @@ class ClassifierController extends AdministeredItemController<Classifier, Classi
     @Transactional
     Classifier create(@NonNull UUID classificationSchemeId, @NonNull UUID parentClassifierId, @Body @NonNull Classifier classifier) {
         cleanBody(classifier)
-        ClassificationScheme classificationScheme = classificationSchemeRepository.readById(classificationSchemeId)
+        ClassificationScheme classificationScheme = classificationSchemeCacheableRepository.readById(classificationSchemeId)
         handleError(HttpStatus.NOT_FOUND,classificationScheme, "Classification Scheme $classificationSchemeId not found")
         accessControlService.checkRole(Role.EDITOR, classificationScheme)
         Classifier parentClassifier = classifierCacheableRepository.readById(parentClassifierId)
@@ -161,7 +157,7 @@ class ClassifierController extends AdministeredItemController<Classifier, Classi
     @Transactional
     HttpStatus delete(@NonNull String administeredItemDomainType, @NonNull UUID administeredItemId, @NonNull UUID id){
         AdministeredItem administeredItem = findAdministeredItem(administeredItemDomainType, administeredItemId)
-        accessControlService.checkRole(Role.READER, readAdministeredItem(administeredItem.domainType, administeredItemId))
+        accessControlService.checkRole(Role.EDITOR, readAdministeredItem(administeredItem.domainType, administeredItemId))
         Classifier classifierToDelete = classifierCacheableRepository.readById(id)
         handleError(HttpStatus.NOT_FOUND, classifierToDelete, "Classifier with id $id not found")
         accessControlService.checkRole(Role.EDITOR, classifierToDelete)
