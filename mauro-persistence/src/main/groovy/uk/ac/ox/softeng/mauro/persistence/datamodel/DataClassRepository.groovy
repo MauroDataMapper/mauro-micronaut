@@ -43,6 +43,9 @@ abstract class DataClassRepository implements ModelItemRepository<DataClass> {
     abstract List<DataClass> readAllByDataModel(DataModel dataModel)
 
     @Nullable
+    abstract List<DataClass> readAllByDataModelAndParentDataClassIsNull(DataModel dataModel)
+
+    @Nullable
     abstract List<DataClass> readAllByDataModel_Id(UUID dataModelId)
 
 

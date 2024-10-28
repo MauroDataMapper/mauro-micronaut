@@ -120,18 +120,18 @@ class CodeSetIntegrationSpec extends CommonDataSpec {
         codeSetId = UUID.fromString(response.id as String)
 
         when:
-        ListResponse<CodeSet> getByFolderResp =  (ListResponse<CodeSet>) GET("$FOLDERS_PATH/$folderId$CODE_SET_PATH", ListResponse<CodeSet>)
+        ListResponse<CodeSet> getByFolderResp =  (ListResponse<CodeSet>) GET("$FOLDERS_PATH/$folderId$CODE_SET_PATH", ListResponse, CodeSet)
 
         then:
-        getByFolderResp.items.id == [codeSetId.toString()]
+        getByFolderResp.items.id == [codeSetId]
 
         when:
         def codeSet2 = POST("$FOLDERS_PATH/$folderId$CODE_SET_PATH", codeSet())
         def codeSet2Id = UUID.fromString(codeSet2.id as String)
-        ListResponse<CodeSet> folderResponse2 =  (ListResponse<CodeSet>) GET("$FOLDERS_PATH/$folderId$CODE_SET_PATH", ListResponse<CodeSet>)
+        ListResponse<CodeSet> folderResponse2 =  (ListResponse<CodeSet>) GET("$FOLDERS_PATH/$folderId$CODE_SET_PATH", ListResponse, CodeSet)
 
         then:
-        folderResponse2.items.id.sort() == [codeSetId.toString(), codeSet2Id.toString()].sort()
+        folderResponse2.items.id.sort() == [codeSetId, codeSet2Id].sort()
     }
 
     void 'test update CodeSet'() {

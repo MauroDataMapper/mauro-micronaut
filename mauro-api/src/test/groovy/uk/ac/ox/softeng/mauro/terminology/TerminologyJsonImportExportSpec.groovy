@@ -1,6 +1,5 @@
 package uk.ac.ox.softeng.mauro.terminology
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import uk.ac.ox.softeng.mauro.export.ExportModel
 import uk.ac.ox.softeng.mauro.persistence.ContainerizedTest
 import uk.ac.ox.softeng.mauro.testing.BaseIntegrationSpec
@@ -19,9 +18,6 @@ class TerminologyJsonImportExportSpec extends BaseIntegrationSpec {
 
     @Shared
     UUID folderId
-
-    @Inject
-    ObjectMapper objectMapper
 
 
     @Shared

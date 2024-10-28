@@ -1,6 +1,5 @@
 package uk.ac.ox.softeng.mauro.datamodel.diff
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import io.micronaut.runtime.EmbeddedApplication
 import io.micronaut.test.annotation.Sql
 import jakarta.inject.Inject

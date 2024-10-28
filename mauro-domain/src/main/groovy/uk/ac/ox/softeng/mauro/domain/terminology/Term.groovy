@@ -1,6 +1,8 @@
 package uk.ac.ox.softeng.mauro.domain.terminology
 
+import com.fasterxml.jackson.annotation.JsonBackReference
 import com.fasterxml.jackson.annotation.JsonIgnore
+import com.fasterxml.jackson.annotation.JsonManagedReference
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
 import groovy.transform.MapConstructor

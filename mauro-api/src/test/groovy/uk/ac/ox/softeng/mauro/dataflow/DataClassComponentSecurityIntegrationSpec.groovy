@@ -92,7 +92,7 @@ class DataClassComponentSecurityIntegrationSpec extends SecuredIntegrationSpec {
         logout()
         loginUser()
         when:
-        ListResponse<DataClassComponent> listResponse = (ListResponse<DataClassComponent>) GET("/dataModels/$targetId/dataFlows/$dataFlowId/dataClassComponents", ListResponse<DataClassComponent>)
+        ListResponse<DataClassComponent> listResponse = (ListResponse<DataClassComponent>) GET("/dataModels/$targetId/dataFlows/$dataFlowId/dataClassComponents", ListResponse, DataClassComponent)
 
         then:
         !listResponse
