@@ -89,7 +89,7 @@ class DataElementComponentIntegrationSpec extends CommonDataSpec {
         given:
         (DataElementComponent) POST("$DATAMODELS_PATH/$sourceId$DATA_FLOWS_PATH/$dataFlowId$DATA_CLASS_COMPONENTS_PATH/$dataClassComponentId$DATA_ELEMENT_COMPONENTS_PATH", dataModelPayload('test data class component label'), DataElementComponent)
         when:
-        ListResponse<DataElementComponent> listResponse = (ListResponse<DataElementComponent>) GET("$DATAMODELS_PATH/$sourceId$DATA_FLOWS_PATH/$dataFlowId$DATA_CLASS_COMPONENTS_PATH/$dataClassComponentId$DATA_ELEMENT_COMPONENTS_PATH", ListResponse<DataElementComponent>)
+        ListResponse<DataElementComponent> listResponse = (ListResponse<DataElementComponent>) GET("$DATAMODELS_PATH/$sourceId$DATA_FLOWS_PATH/$dataFlowId$DATA_CLASS_COMPONENTS_PATH/$dataClassComponentId$DATA_ELEMENT_COMPONENTS_PATH", ListResponse, DataElementComponent)
         then:
         listResponse
         listResponse.items.size() == 1

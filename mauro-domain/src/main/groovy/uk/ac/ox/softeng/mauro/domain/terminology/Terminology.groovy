@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.domain.terminology
 
+import uk.ac.ox.softeng.mauro.util.DedupingObjectIdResolver
+
 import com.fasterxml.jackson.annotation.JsonIdentityInfo
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonPropertyOrder
@@ -31,11 +33,11 @@ import uk.ac.ox.softeng.mauro.domain.model.ModelItem
 class Terminology extends Model {
 
     @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'terminology')
-    @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator, property = 'code', scope = Term)
+    @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator, property = 'code', scope = Term, resolver = DedupingObjectIdResolver)
     List<Term> terms = []
 
     @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'terminology')
-    @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator, property = 'label', scope = TermRelationshipType)
+    @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator, property = 'label', scope = TermRelationshipType, resolver = DedupingObjectIdResolver)
     List<TermRelationshipType> termRelationshipTypes = []
 
     @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'terminology')

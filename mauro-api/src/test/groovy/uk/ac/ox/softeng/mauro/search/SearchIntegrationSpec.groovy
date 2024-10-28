@@ -1,6 +1,5 @@
 package uk.ac.ox.softeng.mauro.search
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import jakarta.inject.Inject
 import spock.lang.Shared
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
@@ -16,9 +15,6 @@ class SearchIntegrationSpec extends BaseIntegrationSpec {
 
     @Inject
     DataModelContentRepository dataModelContentRepository
-
-    @Inject
-    ObjectMapper objectMapper
 
     @Shared
     UUID folderId
@@ -70,7 +66,7 @@ class SearchIntegrationSpec extends BaseIntegrationSpec {
 
         expect:
 
-        ListResponse<SearchResultsDTO> searchResults = (ListResponse<SearchResultsDTO>) GET("/search?${queryParams}", ListResponse<SearchResultsDTO>)
+        ListResponse<SearchResultsDTO> searchResults = (ListResponse<SearchResultsDTO>) GET("/search?${queryParams}", ListResponse, SearchResultsDTO)
         searchResults.items.label == expectedLabels
 
         where:

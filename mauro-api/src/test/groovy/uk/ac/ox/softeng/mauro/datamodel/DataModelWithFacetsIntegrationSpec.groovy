@@ -1,6 +1,5 @@
 package uk.ac.ox.softeng.mauro.datamodel
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.client.exceptions.HttpClientResponseException
 import io.micronaut.runtime.EmbeddedApplication
@@ -19,8 +18,6 @@ import uk.ac.ox.softeng.mauro.testing.CommonDataSpec
 
 @ContainerizedTest
 class DataModelWithFacetsIntegrationSpec extends CommonDataSpec {
-    @Inject
-    ObjectMapper objectMapper
 
     @Inject
     EmbeddedApplication<?> application

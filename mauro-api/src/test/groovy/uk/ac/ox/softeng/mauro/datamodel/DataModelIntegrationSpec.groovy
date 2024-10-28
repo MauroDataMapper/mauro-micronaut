@@ -1,6 +1,5 @@
 package uk.ac.ox.softeng.mauro.datamodel
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import io.micronaut.http.HttpStatus
 import io.micronaut.runtime.EmbeddedApplication
 import jakarta.inject.Inject
@@ -14,9 +13,6 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @ContainerizedTest
 class DataModelIntegrationSpec extends BaseIntegrationSpec {
-
-    @Inject
-    ObjectMapper objectMapper
 
     @Inject
     EmbeddedApplication<?> application
@@ -129,11 +125,11 @@ class DataModelIntegrationSpec extends BaseIntegrationSpec {
         dataTypeResponse.label == 'integer'
 
         when:
-        ListResponse<DataType> dataTypesListResponse = (ListResponse<DataType>) GET("/dataModels/$dataModelId/dataTypes", ListResponse<DataType>)
+        ListResponse<DataType> dataTypesListResponse = (ListResponse<DataType>) GET("/dataModels/$dataModelId/dataTypes", ListResponse, DataType)
 
         then:
         dataTypesListResponse.count == 2
-        dataTypesListResponse.items.path.sort().collect {it.toString()} == ['dm:Test data model$main|dt:integer', 'dm:Test data model$main|dt:string']
+        dataTypesListResponse.items.path.collect {it.toString()}.sort() == ['dm:Test data model$main|dt:integer', 'dm:Test data model$main|dt:string']
         dataTypesListResponse.items.domainType == ['PrimitiveType', 'PrimitiveType']
 
         when:
@@ -169,11 +165,11 @@ class DataModelIntegrationSpec extends BaseIntegrationSpec {
         dataClassResponse.label == 'Second data class'
 
         when:
-        ListResponse<DataClass> dataClassListResponse = (ListResponse<DataClass>) GET("/dataModels/$dataModelId/dataClasses", ListResponse<DataClass>)
+        ListResponse<DataClass> dataClassListResponse = (ListResponse<DataClass>) GET("/dataModels/$dataModelId/dataClasses", ListResponse, DataClass)
 
         then:
         dataClassListResponse.count == 2
-        dataClassListResponse.items.path.sort().collect {it.toString()} == ['dm:Test data model$main|dc:First data class', 'dm:Test data model$main|dc:Second data class']
+        dataClassListResponse.items.path.collect {it.toString()}.sort() == ['dm:Test data model$main|dc:First data class', 'dm:Test data model$main|dc:Second data class']
 
         when:
         dataClassResponse = (DataClass) POST("/dataModels/$dataModelId/dataClasses/$dataClassId2/dataClasses", [label: 'Third data class', description: 'The third data class'], DataClass)
@@ -183,7 +179,7 @@ class DataModelIntegrationSpec extends BaseIntegrationSpec {
         dataClassResponse.label == 'Third data class'
 
         when:
-        dataClassListResponse = (ListResponse<DataClass>) GET("/dataModels/$dataModelId/dataClasses/$dataClassId2/dataClasses", ListResponse<DataClass>)
+        dataClassListResponse = (ListResponse<DataClass>) GET("/dataModels/$dataModelId/dataClasses/$dataClassId2/dataClasses", ListResponse, DataClass)
 
         then:
         dataClassListResponse.count == 1
@@ -193,7 +189,7 @@ class DataModelIntegrationSpec extends BaseIntegrationSpec {
 
         when:
         dataClassResponse = (DataClass) PUT("/dataModels/$dataModelId/dataClasses/$dataClassId2/dataClasses/$dataClassId3", [label: 'Third data class (renamed)'], DataClass)
-        dataClassListResponse = (ListResponse<DataClass>) GET("/dataModels/$dataModelId/dataClasses/$dataClassId2/dataClasses", ListResponse<DataClass>)
+        dataClassListResponse = (ListResponse<DataClass>) GET("/dataModels/$dataModelId/dataClasses/$dataClassId2/dataClasses", ListResponse, DataClass)
 
         then:
         dataClassResponse.label == 'Third data class (renamed)'
@@ -203,7 +199,7 @@ class DataModelIntegrationSpec extends BaseIntegrationSpec {
 
         when:
         HttpStatus status = DELETE("/dataModels/$dataModelId/dataClasses/$dataClassId2/dataClasses/$dataClassId3", [label: 'Third data class (renamed)'], HttpStatus)
-        dataClassListResponse = (ListResponse<DataClass>) GET("/dataModels/$dataModelId/dataClasses/$dataClassId2/dataClasses", ListResponse<DataClass>)
+        dataClassListResponse = (ListResponse<DataClass>) GET("/dataModels/$dataModelId/dataClasses/$dataClassId2/dataClasses", ListResponse, DataClass)
         then:
         dataClassListResponse.count == 0
 
@@ -299,7 +295,7 @@ class DataModelIntegrationSpec extends BaseIntegrationSpec {
         enumerationValueResponse.domainType == 'EnumerationValue'
 
         when:
-        ListResponse<EnumerationValue> enumerationValueListResponse = (ListResponse<EnumerationValue>) GET("/dataModels/$dataModelId/dataTypes/$enumerationTypeId/enumerationValues", ListResponse<EnumerationValue>)
+        ListResponse<EnumerationValue> enumerationValueListResponse = (ListResponse<EnumerationValue>) GET("/dataModels/$dataModelId/dataTypes/$enumerationTypeId/enumerationValues", ListResponse, EnumerationValue)
 
         then:
         enumerationValueListResponse.count == 2
@@ -315,7 +311,7 @@ class DataModelIntegrationSpec extends BaseIntegrationSpec {
         enumerationValueResponse.domainType == 'EnumerationValue'
 
         when:
-        enumerationValueListResponse = (ListResponse<EnumerationValue>) GET("/dataModels/$dataModelId/dataTypes/$enumerationTypeId/enumerationValues", ListResponse<EnumerationValue>)
+        enumerationValueListResponse = (ListResponse<EnumerationValue>) GET("/dataModels/$dataModelId/dataTypes/$enumerationTypeId/enumerationValues", ListResponse, EnumerationValue)
 
         then:
         enumerationValueListResponse.count == 2
@@ -329,7 +325,7 @@ class DataModelIntegrationSpec extends BaseIntegrationSpec {
 
         expect:
 
-        ListResponse<SearchResultsDTO> searchResults = (ListResponse<SearchResultsDTO>) GET("/dataModels/$dataModelId/search?${queryParams}", ListResponse<SearchResultsDTO>)
+        ListResponse<SearchResultsDTO> searchResults = (ListResponse<SearchResultsDTO>) GET("/dataModels/$dataModelId/search?${queryParams}", ListResponse, SearchResultsDTO)
         searchResults.items.label == expectedLabels
 
         where:

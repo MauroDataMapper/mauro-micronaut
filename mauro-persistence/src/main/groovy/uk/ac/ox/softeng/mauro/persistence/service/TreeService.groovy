@@ -46,7 +46,7 @@ class TreeService {
     CodeSetRepository codeSetRepository
 
     @CompileDynamic
-    List<TreeItem> buildTree(AdministeredItem item, boolean setChildren = true) {
+    List<TreeItem>  buildTree(AdministeredItem item, boolean setChildren = true) {
         switch (item) {
             case Folder -> buildTreeForFolder(item, setChildren)
 
@@ -81,13 +81,16 @@ class TreeService {
     }
 
     List<TreeItem> buildTreeForDataModel(DataModel dataModel, boolean setChildren = true) {
-        dataClassCacheableRepository.readAllByParent(dataModel).sort {it.label}.collect {DataClass dataClass ->
-            TreeItem.from(dataClass).tap {
-                model = dataClass.dataModel
-                if (setChildren) children = buildTree(dataClass, false)
+        dataClassCacheableRepository.readAllByDataModelAndParentDataClassIsNull(dataModel)
+            .sort {it.label}
+            .collect {DataClass dataClass ->
+                TreeItem.from(dataClass).tap {
+                    model = dataClass.dataModel
+                    if (setChildren) children = buildTree(dataClass, false)
+                }
             }
-        }
     }
+
 
     List<TreeItem> buildTreeForDataClass(DataClass dataClass, boolean setChildren = true) {
         dataClassCacheableRepository.readAllByParentDataClass_Id(dataClass.id).sort {it.label}.collect {DataClass childClass ->

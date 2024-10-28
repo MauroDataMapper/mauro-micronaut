@@ -1,6 +1,8 @@
 package uk.ac.ox.softeng.mauro.testing
 
+import uk.ac.ox.softeng.mauro.web.ListResponse
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import io.micronaut.http.HttpRequest
 import io.micronaut.http.MediaType
 import io.micronaut.http.client.HttpClient
@@ -57,6 +59,9 @@ class BaseIntegrationSpec extends Specification {
     public static final String DIFF = '/diff'
 
     @Inject
+    ObjectMapper objectMapper
+
+    @Inject
     JsonDataModelImporterPlugin jsonDataModelImporterPlugin
 
     @Inject
@@ -74,8 +79,13 @@ class BaseIntegrationSpec extends Specification {
         client.toBlocking().retrieve(HttpRequest.GET(uri).tap { if (sessionCookie) it.cookie(sessionCookie) }, Map<String, Object>)
     }
 
-    <T> T GET(String uri, Class<T> type) {
-        client.toBlocking().retrieve(HttpRequest.GET(uri).tap { if (sessionCookie) it.cookie(sessionCookie) }, type)
+    <T> T GET(String uri, Class<T> type, Class internalType = null) {
+        def response = client.toBlocking().retrieve(HttpRequest.GET(uri).tap { if (sessionCookie) it.cookie(sessionCookie) }, type)
+        if(type == ListResponse && internalType) {
+            ((ListResponse) response).bindItems(objectMapper, internalType)
+        }
+        // TODO: Do something with List type here
+        response
     }
 
     Map<String, Object> POST(String uri, Map<String, Object> body) {

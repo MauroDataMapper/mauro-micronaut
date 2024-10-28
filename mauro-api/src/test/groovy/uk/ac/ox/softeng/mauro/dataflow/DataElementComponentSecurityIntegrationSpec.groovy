@@ -104,7 +104,7 @@ class DataElementComponentSecurityIntegrationSpec extends SecuredIntegrationSpec
         logout()
         loginUser()
         when:
-        (ListResponse<DataElementComponent>) GET("/dataModels/$targetId/dataFlows/$dataFlowId/dataClassComponents/$dataClassComponentId$DATA_ELEMENT_COMPONENTS_PATH", ListResponse<DataElementComponent>)
+        (ListResponse<DataElementComponent>) GET("/dataModels/$targetId/dataFlows/$dataFlowId/dataClassComponents/$dataClassComponentId$DATA_ELEMENT_COMPONENTS_PATH", ListResponse, DataElementComponent)
 
         then:
         HttpClientResponseException exception = thrown()

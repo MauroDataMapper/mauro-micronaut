@@ -1,6 +1,5 @@
 package uk.ac.ox.softeng.mauro.datamodel
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.json.JsonSlurper
 import io.micronaut.http.MediaType
 import io.micronaut.http.client.multipart.MultipartBody
@@ -24,9 +23,6 @@ class DataModelJsonImportExportSpec extends CommonDataSpec {
 
     @Inject
     EmbeddedApplication<?> application
-
-    @Inject
-    ObjectMapper objectMapper
 
     @Shared
     UUID folderId

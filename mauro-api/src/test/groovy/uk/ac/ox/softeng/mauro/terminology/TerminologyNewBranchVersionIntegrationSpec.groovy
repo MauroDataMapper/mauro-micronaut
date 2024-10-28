@@ -76,11 +76,11 @@ class TerminologyNewBranchVersionIntegrationSpec extends CommonDataSpec {
         newBranchVersionCodeSet
 
         when:
-        ListResponse<Term> termsByCodeSetList = (ListResponse<Term>)  GET("$CODE_SET_PATH/$newBranchVersionCodeSet.id$TERMS_PATH", ListResponse<Term>)
+        ListResponse<Term> termsbyCodeSetList = (ListResponse<Term>)  GET("$CODE_SET_PATH/$newBranchVersionCodeSet.id$TERMS_PATH", ListResponse, Term)
         then:
-        termsByCodeSetList
-        termsByCodeSetList.items.size() == 2
-        termsByCodeSetList.items.id.sort().containsAll([termId1.toString(), termId2.toString()].sort())
+        termsbyCodeSetList
+        termsbyCodeSetList.items.size() == 2
+        termsbyCodeSetList.items.id.sort() == [termId1, termId2].sort()
     }
 
 
@@ -92,25 +92,25 @@ class TerminologyNewBranchVersionIntegrationSpec extends CommonDataSpec {
         newBranchVersionTerminology
         newBranchVersionTerminology.id != terminologyId
         when:
-        ListResponse<Terminology> terminologies = (ListResponse<Terminology>)  GET("$FOLDERS_PATH/$folderId/$TERMINOLOGIES_PATH", ListResponse<Terminology>)
+        ListResponse<Terminology> terminologies = (ListResponse<Terminology>)  GET("$FOLDERS_PATH/$folderId/$TERMINOLOGIES_PATH", ListResponse, Terminology)
         then:
         terminologies
         terminologies.items.size() == 2
-        terminologies.items.id.sort().containsAll([terminologyId.toString(), newBranchVersionTerminology.id.toString()].sort())
+        terminologies.items.id.sort() == [terminologyId, newBranchVersionTerminology.id].sort()
 
         Terminology newBranchVersion = (Terminology) GET("$TERMINOLOGIES_PATH/$newBranchVersionTerminology.id", Terminology)
         newBranchVersion.referenceFiles.size() == 1
         newBranchVersion.referenceFiles[0].id != referenceFileId
 
         when:
-        ListResponse<Term> newTerms = (ListResponse<Term>)  GET("$TERMINOLOGIES_PATH/$newBranchVersionTerminology.id$TERMS_PATH", ListResponse<Term>)
+        ListResponse<Term> newTerms = (ListResponse<Term>)  GET("$TERMINOLOGIES_PATH/$newBranchVersionTerminology.id$TERMS_PATH", ListResponse, Term)
         then:
         newTerms
         List<UUID> newTermsIdsList = newTerms.items.id
         newTermsIdsList.disjoint([termId1, termId2])
 
         when:
-        ListResponse<TermRelationshipType> termRelationshipTypes =  (ListResponse<TermRelationshipType>)  GET("$TERMINOLOGIES_PATH/$newBranchVersionTerminology.id$TERM_RELATIONSHIP_TYPES", ListResponse<TermRelationshipType>)
+        ListResponse<TermRelationshipType> termRelationshipTypes =  (ListResponse<TermRelationshipType>)  GET("$TERMINOLOGIES_PATH/$newBranchVersionTerminology.id$TERM_RELATIONSHIP_TYPES", ListResponse, TermRelationshipType)
         then:
         termRelationshipTypes
 
@@ -118,7 +118,7 @@ class TerminologyNewBranchVersionIntegrationSpec extends CommonDataSpec {
         termRelationshipTypes.items[0].id != termRelationshipTypeId
 
         when:
-        ListResponse<TermRelationship> termRelationship =  (ListResponse<TermRelationship>)  GET("$TERMINOLOGIES_PATH/$newBranchVersionTerminology.id$TERM_RELATIONSHIP_PATH", ListResponse<TermRelationship>)
+        ListResponse<TermRelationship> termRelationship =  (ListResponse<TermRelationship>)  GET("$TERMINOLOGIES_PATH/$newBranchVersionTerminology.id$TERM_RELATIONSHIP_PATH", ListResponse, TermRelationship)
         then:
         termRelationship
 
@@ -126,7 +126,7 @@ class TerminologyNewBranchVersionIntegrationSpec extends CommonDataSpec {
         termRelationship.items[0].id != termRelationshipId
 
         when:
-        ListResponse<Annotation> annotations =  (ListResponse<Annotation>)  GET("$TERMINOLOGIES_PATH/$newBranchVersionTerminology.id$ANNOTATION_PATH", ListResponse<Annotation>)
+        ListResponse<Annotation> annotations =  (ListResponse<Annotation>)  GET("$TERMINOLOGIES_PATH/$newBranchVersionTerminology.id$ANNOTATION_PATH", ListResponse, Annotation)
         then:
         annotations
         annotations.items.size() == 1

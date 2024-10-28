@@ -111,26 +111,26 @@ class DataFlowIntegrationSpec extends CommonDataSpec {
         dataFlow
 
         when:
-        ListResponse<DataFlow> dataflowList = (ListResponse<DataFlow>) GET("$DATAMODELS_PATH/$targetId$DATA_FLOWS_PATH", ListResponse<DataFlow>)
+        ListResponse<DataFlow> dataflowList = (ListResponse<DataFlow>) GET("$DATAMODELS_PATH/$targetId$DATA_FLOWS_PATH", ListResponse, DataFlow)
 
         then:
         dataflowList
         dataflowList.items.size() == 1
-        dataflowList.items[0].id == dataFlow.id.toString()
-
-        when:
-        dataflowList = (ListResponse<DataFlow>) GET("$DATAMODELS_PATH/$targetId$DATA_FLOWS_PATH?type=target", ListResponse<DataFlow>)
-        then:
-        dataflowList
-        dataflowList.items.size() == 1
-        dataflowList.items[0].id == dataFlow.id.toString()
+        dataflowList.items[0].id == dataFlow.id
 
         when:
-        dataflowList = (ListResponse<DataFlow>) GET("$DATAMODELS_PATH/$sourceId$DATA_FLOWS_PATH?type=source", ListResponse<DataFlow>)
+        dataflowList = (ListResponse<DataFlow>) GET("$DATAMODELS_PATH/$targetId$DATA_FLOWS_PATH?type=target", ListResponse, DataFlow)
         then:
         dataflowList
         dataflowList.items.size() == 1
-        dataflowList.items[0].id == dataFlow.id.toString()
+        dataflowList.items[0].id == dataFlow.id
+
+        when:
+        dataflowList = (ListResponse<DataFlow>) GET("$DATAMODELS_PATH/$sourceId$DATA_FLOWS_PATH?type=source", ListResponse, DataFlow)
+        then:
+        dataflowList
+        dataflowList.items.size() == 1
+        dataflowList.items[0].id == dataFlow.id
     }
 
     void 'delete dataFlow - should delete dataflow and all associated objects'() {
