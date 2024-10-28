@@ -152,6 +152,9 @@ class ClassifierIntegrationSpec extends CommonDataSpec {
         Classifier joinAdministeredItemToClassifierRetrieved = (Classifier) GET("/dataModel/$dataModel.id$CLASSIFIER_PATH/$classifier.id", Classifier)
         joinAdministeredItemToClassifierRetrieved
 
+        and:
+        DataModel existingDataModel = (DataModel) GET("$DATAMODELS_PATH/$dataModel.id", DataModel)
+        existingDataModel.classifiers.size() == 1
 
         when:
         HttpStatus httpStatus = (HttpStatus) DELETE("/dataModel/$dataModel.id$CLASSIFIER_PATH/$classifier.id",  HttpStatus)
@@ -170,6 +173,7 @@ class ClassifierIntegrationSpec extends CommonDataSpec {
         then:
         retrievedDataModel
         retrievedDataModel.id == dataModel.id
+        retrievedDataModel.classifiers.isEmpty()
     }
 
     void 'delete classifier - should delete model and associations'() {
