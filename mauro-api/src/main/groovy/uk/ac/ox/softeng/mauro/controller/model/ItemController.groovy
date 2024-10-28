@@ -6,6 +6,7 @@ import io.micronaut.http.exceptions.HttpStatusException
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
 import jakarta.inject.Inject
+import uk.ac.ox.softeng.mauro.domain.classifier.Classifier
 import uk.ac.ox.softeng.mauro.domain.model.Item
 import uk.ac.ox.softeng.mauro.persistence.model.ItemRepository
 import uk.ac.ox.softeng.mauro.security.AccessControlService
@@ -50,13 +51,19 @@ abstract class ItemController<I extends Item> implements AdministeredItemReader 
         // Collection properties cannot be set in user requests as these might be used in services
         defaultItem.properties.each {
             String key = it.key
-            if (defaultItem.hasProperty(key).properties.setter && it.value instanceof Map) {
+            if (defaultItem.hasProperty(key).properties.setter
+                    && (isNotClassifiersCollection(key) && it.value instanceof Collection)
+                  || it.value instanceof Map) {
                 if (item[key]) throw new HttpStatusException(HttpStatus.BAD_REQUEST, "Collection or Map $key cannot be set directly")
                 item[key] = null
             }
         }
 
         item
+    }
+
+    protected boolean isNotClassifiersCollection(String key) {
+        !key.toLowerCase().contains(Classifier.class.simpleName.toLowerCase())
     }
 
     protected Item updateCreationProperties(Item item) {

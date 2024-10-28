@@ -53,7 +53,7 @@ create table if not exists core.join_administered_item_to_classifier (
     "classifier_id"                   uuid             not null references core.classifier(id) initially deferred
 );
 
-create index "idx_administered_item_id" on "core"."join_administered_item_to_classifier" (catalogue_item_id);
-create index "idx_classifier_id" on "core"."join_administered_item_to_classifier" (classifier_id);
+create index "idx_join_administered_item_id_to_classifier" on "core"."join_administered_item_to_classifier" (catalogue_item_id);
+create index "idx_join_administered_item_to_classifier_id" on "core"."join_administered_item_to_classifier" (classifier_id);
 create unique index "idx_join_admin_item_id_domainType_classifier_id" on "core"."join_administered_item_to_classifier" (catalogue_item_id, catalogue_item_domain_type, classifier_id);
 
