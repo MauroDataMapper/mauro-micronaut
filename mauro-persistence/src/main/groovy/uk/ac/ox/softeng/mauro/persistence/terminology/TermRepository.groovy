@@ -11,6 +11,7 @@ import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.terminology.CodeSet
 import uk.ac.ox.softeng.mauro.domain.terminology.Term
+import uk.ac.ox.softeng.mauro.domain.terminology.TermRelationship
 import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
 import uk.ac.ox.softeng.mauro.persistence.model.ModelItemRepository
 import uk.ac.ox.softeng.mauro.persistence.terminology.dto.TermDTORepository
@@ -56,6 +57,7 @@ abstract class TermRepository implements ModelItemRepository<Term> {
     Long deleteByOwnerId(UUID ownerId) {
         deleteByTerminologyId(ownerId)
     }
+
 
     @Query('''select * from terminology.term
               where term.terminology_id=:terminologyId

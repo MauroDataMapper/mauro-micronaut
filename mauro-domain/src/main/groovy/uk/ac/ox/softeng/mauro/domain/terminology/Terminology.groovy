@@ -74,7 +74,7 @@ class Terminology extends Model {
             it.parent = this
             it.relationshipType = termRelationshipTypesMap[it.relationshipType.id]
             it.sourceTerm = termsMap[it.sourceTerm.id]
-            it.targetTerm = termsMap[it.targetTerm.id]
+             it.targetTerm = termsMap[it.targetTerm.id]
         }
 
         this

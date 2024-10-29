@@ -2,6 +2,7 @@ package uk.ac.ox.softeng.mauro.persistence.datamodel
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
+import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.annotation.Join
 import io.micronaut.data.jdbc.annotation.JdbcRepository
@@ -68,4 +69,5 @@ abstract class DataElementRepository implements ModelItemRepository<DataElement>
     }
 
     abstract List<DataElement> readAllByDataClassId(UUID dataClassId)
+
 }

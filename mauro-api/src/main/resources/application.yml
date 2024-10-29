@@ -1,6 +1,10 @@
 micronaut:
   application:
     name: sandbox
+  http:
+    client:
+      read-timeout: 30m
+      connect-timeout: 30m
   server:
     port: 8088
     max-request-size: 100mb

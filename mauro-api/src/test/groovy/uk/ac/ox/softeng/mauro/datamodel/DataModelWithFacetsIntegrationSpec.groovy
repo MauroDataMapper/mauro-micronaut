@@ -134,6 +134,10 @@ class DataModelWithFacetsIntegrationSpec extends CommonDataSpec {
         retrieved.annotations.first().childAnnotations.size() == 1
         retrieved.annotations.first().childAnnotations.first().parentAnnotationId == annotationId
 
+        retrieved.referenceFiles
+        retrieved.referenceFiles.size() == 1
+        retrieved.referenceFiles.first().id == referenceFile.id
+
         when:
         HttpStatus httpStatus = DELETE("$DATAMODELS_PATH/$dataModelId", HttpStatus)
 

@@ -10,17 +10,21 @@ import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
 import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
+import uk.ac.ox.softeng.mauro.domain.classifier.Classifier
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.security.Role
+import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemContentRepository
 import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemRepository
 import uk.ac.ox.softeng.mauro.persistence.model.PathRepository
+import uk.ac.ox.softeng.mauro.persistence.service.RepositoryService
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @CompileStatic
 @Secured(SecurityRule.IS_ANONYMOUS)
 abstract class AdministeredItemController<I extends AdministeredItem, P extends AdministeredItem> extends ItemController<I> {
 
+    RepositoryService repositoryService
     /**
      * Properties disallowed in a simple update request.
      */
@@ -38,6 +42,7 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
 
     @Inject
     PathRepository pathRepository
+
 
     AdministeredItemController(Class<I> itemClass, AdministeredItemRepository<I> administeredItemRepository, AdministeredItemRepository<P> parentItemRepository, AdministeredItemContentRepository administeredItemContentRepository) {
         super(administeredItemRepository)
@@ -66,7 +71,16 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
 
         accessControlService.checkRole(Role.EDITOR, parent)
 
-        createEntity(parent, item)
+        I created = createEntity(parent, item)
+        created.classifiers = validateClassifiers(created)
+        created.classifiers.each {
+            getClassifierCacheableRepository(it.domainType).addAdministeredItem(item, it)
+        }
+        created
+    }
+
+    protected AdministeredItemCacheableRepository.ClassifierCacheableRepository getClassifierCacheableRepository(String domainType) {
+        getAdministeredItemRepository(domainType) as AdministeredItemCacheableRepository.ClassifierCacheableRepository
     }
 
     protected I createEntity(@NonNull P parent, @NonNull I cleanItem) {
@@ -84,7 +98,14 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
 
         accessControlService.checkRole(Role.EDITOR, existing)
 
-        updateEntity(existing, item)
+        I updated = updateEntity(existing, item)
+        updated.classifiers =  validateClassifiers(updated)
+        updated.classifiers.each {
+            if (!getClassifierCacheableRepository(it.domainType).findByAdministeredItemAndClassifier(updated.domainType, updated.id, it.id)) {
+               getClassifierCacheableRepository(it.domainType).addAdministeredItem(updated, it)
+            }
+        }
+        updated
     }
 
 
@@ -100,12 +121,13 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
     }
 
     @Transactional
-    HttpStatus delete(UUID id, @Body @Nullable I item) {
+    HttpStatus delete(@NonNull UUID id, @Body @Nullable I item) {
         I itemToDelete = (I) administeredItemContentRepository.readWithContentById(id)
 
         accessControlService.checkRole(Role.EDITOR, item)
 
         if (item?.version) itemToDelete.version = item.version
+
         Long deleted = administeredItemContentRepository.deleteWithContent(itemToDelete)
         if (deleted) {
             HttpStatus.NO_CONTENT
@@ -132,8 +154,20 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
         item
     }
 
+    protected List<Classifier> validateClassifiers(I item) {
+        List<Classifier> classifierList = []
+        if (item.classifiers) {
+            classifierList = item.classifiers.collect {
+                Classifier retrieved = getClassifierCacheableRepository(it.domainType).readById(it.id)
+                handleError(HttpStatus.NOT_FOUND, retrieved, "Item with id: $it.id not found")
+                accessControlService.checkRole(Role.EDITOR, retrieved)
+                retrieved
+            }
+        }
+        classifierList
+    }
 
-    protected void handleError(HttpStatus httpStatus, Object result, String message) {
+    protected static void handleError(HttpStatus httpStatus, Object result, String message) {
         if (!result) {
             throw new HttpStatusException(httpStatus, message)
         }

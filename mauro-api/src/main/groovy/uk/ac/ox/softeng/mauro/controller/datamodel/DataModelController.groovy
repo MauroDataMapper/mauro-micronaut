@@ -7,6 +7,7 @@ import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.*
+import io.micronaut.http.exceptions.HttpStatusException
 import io.micronaut.http.server.multipart.MultipartBody
 import io.micronaut.http.server.types.files.StreamedFile
 import io.micronaut.scheduling.TaskExecutors
@@ -62,12 +63,14 @@ class DataModelController extends ModelController<DataModel> {
     @Transactional
     @Post('/folders/{folderId}/dataModels')
     DataModel create(UUID folderId, @Body @NonNull DataModel dataModel) {
-        super.create(folderId, dataModel)
+        super.create(folderId, dataModel) as DataModel
     }
 
+
     @Put('/dataModels/{id}')
+    @Transactional
     DataModel update(UUID id, @Body @NonNull DataModel dataModel) {
-        super.update(id, dataModel)
+        super.update(id, dataModel) as DataModel
     }
 
     @Transactional

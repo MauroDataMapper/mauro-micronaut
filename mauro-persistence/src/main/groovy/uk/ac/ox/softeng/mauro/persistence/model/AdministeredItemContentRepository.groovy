@@ -4,6 +4,7 @@ import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
+import uk.ac.ox.softeng.mauro.domain.classifier.Classifier
 import uk.ac.ox.softeng.mauro.domain.facet.Annotation
 import uk.ac.ox.softeng.mauro.domain.facet.Metadata
 import uk.ac.ox.softeng.mauro.domain.facet.ReferenceFile
@@ -13,6 +14,7 @@ import uk.ac.ox.softeng.mauro.domain.model.SummaryMetadataReport
 import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.FacetCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.ItemCacheableRepository
+import uk.ac.ox.softeng.mauro.persistence.classifier.ClassifierRepository
 import uk.ac.ox.softeng.mauro.persistence.facet.MetadataRepository
 import uk.ac.ox.softeng.mauro.persistence.facet.SummaryMetadataRepository
 
@@ -38,6 +40,10 @@ class AdministeredItemContentRepository {
     @Inject
     FacetCacheableRepository.ReferenceFileCacheableRepository referenceFileCacheableRepository
 
+    @Inject
+    ClassifierRepository classifierRepository
+
+
     AdministeredItemRepository administeredItemRepository
 
     /**
@@ -50,7 +56,7 @@ class AdministeredItemContentRepository {
     }
 
     /**
-     * Delete AdministeredItem and all child Contents and Facets.
+     * Delete AdministeredItem and all child Contents and Facets and classifiers
      */
     Long deleteWithContent(@NonNull AdministeredItem administeredItem) {
         List<Collection<AdministeredItem>> associations = administeredItem.getAllAssociations()
@@ -58,12 +64,15 @@ class AdministeredItemContentRepository {
         // delete the association contents in reverse order
         associations.reverse().each {association ->
             if (association) {
-                getRepository(association.first()).deleteAll(association)
+                deleteAllJoinAdministeredItemToClassifier(association)
                 deleteAllFacets(association)
+                getRepository(association.first()).deleteAll(association)
             }
         }
         deleteAllFacets(administeredItem)
-        getRepository(administeredItem).delete(administeredItem)
+        deleteAllJoinAdministeredItemToClassifier(administeredItem)
+        Long result = getRepository(administeredItem).delete(administeredItem)
+        result
     }
 
     void deleteAllFacets(@NonNull AdministeredItem item) {
@@ -83,6 +92,24 @@ class AdministeredItemContentRepository {
         deleteAnnotations(items)
         deleteReferenceFiles(items)
     }
+
+    void deleteAllJoinAdministeredItemToClassifier(@NonNull AdministeredItem item) {
+        deleteAllJoinAdministeredItemToClassifier([item])
+    }
+
+    void deleteAllJoinAdministeredItemToClassifier(Collection<AdministeredItem> items) {
+        items.each { item ->
+            //when adminItem is classifier, delete all rows with that classifierId in the JoinAdministeredItemToClassifier table
+            if (item.domainType == Classifier.class.simpleName) {
+                classifierRepository.deleteAllJoinAdministeredItemToClassifier(item as Classifier)
+            } else {
+                if (item.classifiers) {
+                    item.classifiers.each{ classifierRepository.deleteJoinAdministeredItemToClassifier(item, it.id)}
+                }
+            }
+        }
+    }
+
 
     @NonNull
     AdministeredItemCacheableRepository getRepository(AdministeredItem item) {
@@ -121,13 +148,16 @@ class AdministeredItemContentRepository {
         }
     }
 
-     void deleteReferenceFiles(Collection<AdministeredItem> items) {
-         List<ReferenceFile> referenceFiles = []
-         items.each { item ->
-             if (item.referenceFiles) {
-                 referenceFiles.addAll(item.referenceFiles)
-             }
-             referenceFileCacheableRepository.deleteAll(referenceFiles)
-         }
-     }
+    void deleteReferenceFiles(Collection<AdministeredItem> items) {
+        List<ReferenceFile> referenceFiles = []
+        items.each { item ->
+            if (item.referenceFiles) {
+                referenceFiles.addAll(item.referenceFiles)
+            }
+        }
+        referenceFiles.each {
+            referenceFileCacheableRepository.deleteById(it.id)
+        }
+    }
 }
+

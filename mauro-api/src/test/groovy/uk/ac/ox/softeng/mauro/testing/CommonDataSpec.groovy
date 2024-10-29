@@ -1,7 +1,8 @@
 package uk.ac.ox.softeng.mauro.testing
 
-
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadataType
+
 
 class CommonDataSpec extends BaseIntegrationSpec{
     public static final String REPORT_DATE = "2024-03-01T20:50:01.612Z"
@@ -50,6 +51,7 @@ class CommonDataSpec extends BaseIntegrationSpec{
     def dataModelPayload(String label){
         [label: label, description: 'test description', author: 'test author']
     }
+
     def dataClassPayload() {
         dataClassPayload('Test data class')
     }
@@ -58,9 +60,9 @@ class CommonDataSpec extends BaseIntegrationSpec{
         [label: label, description: 'test description', author: 'test author']
     }
 
-    def dataElementPayload(String label, UUID dataTypeId){
+    def dataElementPayload(String label, DataType dataType){
         [label: label, description: 'test description', author: 'test author',
-        dataType: [ id: dataTypeId] ]
+        dataType: dataType]
     }
 
     def dataTypesPayload(){
@@ -78,7 +80,7 @@ class CommonDataSpec extends BaseIntegrationSpec{
     }
 
     def term(){
-        [ code: 'est', definition: 'doloreum-et-val']
+        [description : 'Test Term description', code: 'est', definition: 'doloreum-et-val', url : 'https://www.hello.com/test']
     }
 
     def dataFlowPayload(String sourceId){
@@ -113,6 +115,14 @@ class CommonDataSpec extends BaseIntegrationSpec{
                 "fileSize": content.size(),
                 "fileContents": content.bytes,
                 "fileType": "text/plain"
+        ]
+    }
+    def classifiersPayload(){
+        [
+            label: 'classifiers label',
+            description : 'random description ',
+            readableByEveryone: true,
+            readableByAuthenticatedUsers: true
         ]
     }
 }

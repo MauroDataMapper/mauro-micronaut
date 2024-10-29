@@ -4,6 +4,7 @@ import uk.ac.ox.softeng.mauro.domain.datamodel.DataElement
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
 import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository.DataTypeCacheableRepository
+import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemContentRepository
 
 import groovy.transform.CompileStatic
@@ -17,6 +18,9 @@ class DataTypeContentRepository extends AdministeredItemContentRepository {
 
     @Inject
     DataTypeCacheableRepository dataTypeCacheableRepository
+
+    @Inject
+    ModelCacheableRepository.DataModelCacheableRepository dataModelCacheableRepository
 
     @Override
     @Join(value = 'enumerationValues', type = Join.Type.LEFT_FETCH)

@@ -22,4 +22,6 @@ trait ModelRepository<M extends Model> implements AdministeredItemRepository<M> 
     }
     @Nullable
     abstract List<M> findAllByFolderId(UUID folderId)
+
+
 }

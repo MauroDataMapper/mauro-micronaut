@@ -5,6 +5,8 @@ import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.terminology.CodeSet
 import uk.ac.ox.softeng.mauro.persistence.model.ModelContentRepository
@@ -29,12 +31,18 @@ class CodeSetContentRepository extends ModelContentRepository<CodeSet> {
         codeSet
     }
 
-    // TODO methods here won't invalidate the cache
+    @Override
+    CodeSet findWithContentById(UUID id) {
+        CodeSet codeSet = codeSetRepository.findById(id)
+        codeSet.terms = codeSetRepository.getTerms(id)
+        codeSet
+    }
+
+    // TODO overridden code not invalidating cache
     @Override
     Long deleteWithContent(@NonNull AdministeredItem administeredItem) {
         codeSetRepository.removeTermAssociations((administeredItem as CodeSet).id)
-        Long result = codeSetRepository.delete(administeredItem as CodeSet)
-        log.debug("CSCR: removed $result codeSet $administeredItem.id")
+        Long result = super.deleteWithContent(administeredItem)
         result
     }
 

@@ -7,7 +7,7 @@ import java.lang.annotation.ElementType
 import java.lang.annotation.Inherited
 import java.lang.annotation.Target
 
-@MicronautTest(startApplication = true)
+@MicronautTest(startApplication = true,environments = 'local')
 @Containerized
 @AnnotationCollector()
 @Target(ElementType.TYPE)

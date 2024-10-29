@@ -8,6 +8,7 @@ import io.micronaut.data.annotation.MappedProperty
 import io.micronaut.data.annotation.TypeDef
 import io.micronaut.data.annotation.sql.ColumnTransformer
 import io.micronaut.data.model.DataType
+import uk.ac.ox.softeng.mauro.domain.classifier.Classifier
 import uk.ac.ox.softeng.mauro.domain.dataflow.DataFlow
 import uk.ac.ox.softeng.mauro.domain.facet.Annotation
 import uk.ac.ox.softeng.mauro.domain.facet.Metadata
@@ -47,4 +48,12 @@ class DataFlowDTO extends DataFlow implements AdministeredItemDTO {
                                                       and parent_annotation_id is null )''')
     List<Annotation> annotations = []
 
+    @Nullable
+    @TypeDef(type = DataType.JSON)
+    @MappedProperty
+    @ColumnTransformer(read = '''( select json_agg(classifier)
+                from core.classifier
+                JOIN core.join_administered_item_to_classifier on join_administered_item_to_classifier.classifier_id = core.classifier.id
+                and join_administered_item_to_classifier.catalogue_item_id = data_flow_.id)''')
+    List<Classifier> classifiers = []
 }
