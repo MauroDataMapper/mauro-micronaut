@@ -1,5 +1,6 @@
 package uk.ac.ox.softeng.mauro.persistence.datamodel
 
+import io.micronaut.core.annotation.NonNull
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
@@ -43,6 +44,9 @@ abstract class DataClassRepository implements ModelItemRepository<DataClass> {
     abstract List<DataClass> readAllByDataModel(DataModel dataModel)
 
     @Nullable
+    abstract List<DataClass> readAllByDataModelAndParentDataClassIsNull(DataModel dataModel)
+
+    @Nullable
     abstract List<DataClass> readAllByDataModel_Id(UUID dataModelId)
 
 
@@ -61,6 +65,7 @@ abstract class DataClassRepository implements ModelItemRepository<DataClass> {
     Long deleteByOwnerId(UUID ownerId) {
         deleteByDataModelId(ownerId)
     }
+
 
     @Override
     Class getDomainClass() {

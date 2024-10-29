@@ -33,7 +33,7 @@ class MetadataIntegrationSpec extends BaseIntegrationSpec {
 
     void 'list empty metadata'() {
         when:
-        ListResponse<Metadata> metadataList = (ListResponse<Metadata>) GET("/folders/$folderId/metadata", ListResponse<Metadata>)
+        ListResponse<Metadata> metadataList = (ListResponse<Metadata>) GET("/folders/$folderId/metadata", ListResponse, Metadata)
 
         then:
         metadataList.count == 0
@@ -59,7 +59,7 @@ class MetadataIntegrationSpec extends BaseIntegrationSpec {
         metadataId = metadata.id
 
         when:
-        ListResponse<Metadata> metadataList = (ListResponse<Metadata>) GET("/folders/$folderId/metadata", ListResponse<Metadata>)
+        ListResponse<Metadata> metadataList = (ListResponse<Metadata>) GET("/folders/$folderId/metadata", ListResponse, Metadata)
 
         then:
         metadataList
@@ -106,7 +106,7 @@ class MetadataIntegrationSpec extends BaseIntegrationSpec {
         metadataUpdated.value == 'updated'
 
         when:
-        ListResponse<Metadata> metadataList = (ListResponse<Metadata>) GET("/folders/$folderId/metadata", ListResponse<Metadata>)
+        ListResponse<Metadata> metadataList = (ListResponse<Metadata>) GET("/folders/$folderId/metadata", ListResponse, Metadata)
 
         then: 'the list endpoint shows the update'
         metadataList
@@ -134,7 +134,7 @@ class MetadataIntegrationSpec extends BaseIntegrationSpec {
         exception.status == HttpStatus.NOT_FOUND
 
         when:
-        ListResponse<Metadata> metadataList = (ListResponse<Metadata>) GET("/folders/$folderId/metadata", ListResponse<Metadata>)
+        ListResponse<Metadata> metadataList = (ListResponse<Metadata>) GET("/folders/$folderId/metadata", ListResponse, Metadata)
 
         then: 'the list endpoint shows the update'
         metadataList

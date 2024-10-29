@@ -5,11 +5,14 @@ import groovy.util.logging.Slf4j
 import io.micronaut.cache.annotation.CacheConfig
 import io.micronaut.core.annotation.Nullable
 import jakarta.inject.Singleton
+import uk.ac.ox.softeng.mauro.domain.classifier.ClassificationScheme
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
+import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.model.Model
 import uk.ac.ox.softeng.mauro.domain.terminology.CodeSet
 import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
+import uk.ac.ox.softeng.mauro.persistence.classifier.ClassificationSchemeRepository
 import uk.ac.ox.softeng.mauro.persistence.datamodel.DataModelRepository
 import uk.ac.ox.softeng.mauro.persistence.folder.FolderRepository
 import uk.ac.ox.softeng.mauro.persistence.model.ModelRepository
@@ -87,6 +90,14 @@ class ModelCacheableRepository<M extends Model> extends AdministeredItemCacheabl
     static class DataModelCacheableRepository extends ModelCacheableRepository<DataModel> {
         DataModelCacheableRepository(DataModelRepository dataModelRepository) {
             super(dataModelRepository)
+        }
+    }
+
+    @CompileStatic
+    @Singleton
+    static class ClassificationSchemeCacheableRepository extends ModelCacheableRepository<ClassificationScheme> {
+        ClassificationSchemeCacheableRepository(ClassificationSchemeRepository classificationSchemeRepository) {
+            super(classificationSchemeRepository as ModelRepository<ClassificationScheme>)
         }
     }
 

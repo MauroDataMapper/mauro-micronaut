@@ -99,10 +99,13 @@ abstract class ItemCacheableRepository<I extends Item> implements ItemRepository
     }
 
     void invalidate(I item) {
-        invalidateCachedLookupById(FIND_BY_ID, domainType, item.id)
-        invalidateCachedLookupById(READ_BY_ID, domainType, item.id)
+        invalidate(item.id)
     }
 
+    void invalidate(UUID id) {
+        invalidateCachedLookupById(FIND_BY_ID, domainType, id)
+        invalidateCachedLookupById(READ_BY_ID, domainType, id)
+    }
     @CacheInvalidate
     void invalidateCachedLookupById(String lookup, String domainType, UUID id) {
         null

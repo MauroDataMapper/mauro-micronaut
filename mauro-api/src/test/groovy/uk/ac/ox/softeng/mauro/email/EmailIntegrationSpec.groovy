@@ -1,6 +1,5 @@
 package uk.ac.ox.softeng.mauro.email
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.json.JsonSlurper
 import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.Get
@@ -25,8 +24,6 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @ContainerizedTest
 class EmailIntegrationSpec extends CommonDataSpec {
-    @Inject
-    ObjectMapper objectMapper
 
     @Inject
     EmbeddedApplication<?> application
@@ -34,7 +31,7 @@ class EmailIntegrationSpec extends CommonDataSpec {
 
     void 'test get email providers'() {
         when:
-        List<EmailPlugin> emailPlugins = GET('admin/providers/emailers', List<EmailPlugin>)
+        List<EmailPlugin> emailPlugins = GET('admin/providers/emailers', List, EmailPlugin)
         then:
         emailPlugins.size() == 1
         emailPlugins.find {it.displayName == 'Mock Email Plugin'}
@@ -65,8 +62,7 @@ class EmailIntegrationSpec extends CommonDataSpec {
         e.message == "Internal Server Error"
 
         when:
-        ListResponse<Email> allEmails = GET('admin/emails', ListResponse<Email>)
-        allEmails.bindItems(objectMapper, Email)
+        ListResponse<Email> allEmails = (ListResponse<Email>) GET('admin/emails', ListResponse, Email)
 
         then:
         allEmails.count == 2
@@ -83,7 +79,7 @@ class EmailIntegrationSpec extends CommonDataSpec {
         e.message == "Internal Server Error"
 
         when:
-        allEmails = GET('admin/emails', ListResponse<Email>)
+        allEmails = GET('admin/emails', ListResponse, Email)
         allEmails.bindItems(objectMapper, Email)
 
         then:

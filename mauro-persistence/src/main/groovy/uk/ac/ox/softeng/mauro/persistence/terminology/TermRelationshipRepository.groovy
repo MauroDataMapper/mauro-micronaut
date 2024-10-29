@@ -66,6 +66,7 @@ abstract class TermRelationshipRepository implements ModelItemRepository<TermRel
     @Nullable
     abstract List<TermRelationship> readAllByRelationshipType(TermRelationshipType relationshipType)
 
+
     @Override
     Class getDomainClass() {
         TermRelationship

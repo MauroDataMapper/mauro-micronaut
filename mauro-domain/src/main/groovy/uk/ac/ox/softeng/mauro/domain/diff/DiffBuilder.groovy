@@ -36,6 +36,7 @@ class DiffBuilder {
     static final String CATEGORY = 'category'
     static final String VALUE = 'value'
     static final String REPORT_DATE = 'reportDate'
+    static final String CLASSIFIERS = 'classifiers'
     static final String LEFT_ID_KEY = 'leftId'
     static final String RIGHT_ID_KEY = 'rightId'
     static final String BRANCH_NAME = 'branchName'
@@ -43,7 +44,7 @@ class DiffBuilder {
     static final String FILE_NAME = 'fileName'
     static final List<String> IGNORE_KEYS = [ID_KEY, DATE_CREATED_KEY, LAST_UPDATED_KEY, DOMAIN_TYPE, CLASS_KEY, FOLDER_KEY, LEFT_ID_KEY, RIGHT_ID_KEY]
     static final List<String> MODEL_COLLECTION_KEYS = [METADATA, ANNOTATION, RULE, SUMMARY_METADATA, SUMMARY_METADATA_REPORT, REFERENCE_FILES, DATA_CLASSES, DATA_TYPE, DATA_ELEMENTS,
-   ENUMERATION_VALUES, REFERENCE_FILES]
+   ENUMERATION_VALUES, REFERENCE_FILES, CLASSIFIERS]
 
     static ArrayDiff arrayDiff() {
         new ArrayDiff()

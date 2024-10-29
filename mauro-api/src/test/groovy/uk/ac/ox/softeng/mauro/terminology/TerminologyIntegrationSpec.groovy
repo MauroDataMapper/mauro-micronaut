@@ -67,12 +67,12 @@ class TerminologyIntegrationSpec extends BaseIntegrationSpec {
         termResponse.label == 'TEST-2: second term'
 
         when:
-        ListResponse<Term> termListResponse = (ListResponse<Term>) GET("/terminologies/$terminologyId/terms", ListResponse<Term>)
+        ListResponse<Term> termListResponse = (ListResponse<Term>) GET("/terminologies/$terminologyId/terms", ListResponse, Term)
 
         then:
         termListResponse
         termListResponse.count == 2
-        termListResponse.items.path.sort().collect() {it.toString()} == ['te:Test terminology$main|tm:TEST-1', 'te:Test terminology$main|tm:TEST-2']
+        termListResponse.items.path.collect{ it.toString() }.sort() == ['te:Test terminology$main|tm:TEST-1', 'te:Test terminology$main|tm:TEST-2']
     }
 
     void 'test term relationship types'() {
@@ -130,7 +130,7 @@ class TerminologyIntegrationSpec extends BaseIntegrationSpec {
 
         expect:
 
-        ListResponse<SearchResultsDTO> searchResults = (ListResponse<SearchResultsDTO>) GET("/terminologies/$terminologyId/search?${queryParams}", ListResponse<SearchResultsDTO>)
+        ListResponse<SearchResultsDTO> searchResults = (ListResponse<SearchResultsDTO>) GET("/terminologies/$terminologyId/search?${queryParams}", ListResponse, SearchResultsDTO)
         searchResults.items.label == expectedLabels
 
         where:

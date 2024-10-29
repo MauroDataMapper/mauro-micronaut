@@ -39,7 +39,7 @@ class SummaryMetadataReportIntegrationSpec extends CommonDataSpec {
     void 'list empty SummaryMetadataReport'() {
         when:
         def response =
-                GET("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH/$summaryMetadata.id$SUMMARY_METADATA_REPORT_PATH", ListResponse<SummaryMetadataReport>)
+                GET("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH/$summaryMetadata.id$SUMMARY_METADATA_REPORT_PATH", ListResponse, SummaryMetadataReport)
         then:
         response.count == 0
     }
@@ -64,14 +64,14 @@ class SummaryMetadataReportIntegrationSpec extends CommonDataSpec {
         SummaryMetadataReport report2 = (SummaryMetadataReport) POST("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH/$summaryMetadata.id$SUMMARY_METADATA_REPORT_PATH",
                summaryMetadataReport(), SummaryMetadataReport)
         when:
-        ListResponse<SummaryMetadataReport> response = (ListResponse<SummaryMetadataReport>) GET("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH/$summaryMetadata.id$SUMMARY_METADATA_REPORT_PATH", ListResponse<SummaryMetadataReport>)
+        ListResponse<SummaryMetadataReport> response = (ListResponse<SummaryMetadataReport>) GET("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH/$summaryMetadata.id$SUMMARY_METADATA_REPORT_PATH", ListResponse, SummaryMetadataReport)
 
         then:
         response
         response.count == 2
         response.items.id.collect() { it.toString() } == ["$report1.id", "$report2.id"] as List<String>
-        response.items.summaryMetadataId.collect().unique() { it.toString() }.size() == 1
-        response.items.summaryMetadataId.collect().unique() { it.toString() }[0] == "$summaryMetadata.id"
+        response.items.summaryMetadataId.collect().unique { it.toString() }.size() == 1
+        response.items.summaryMetadataId.collect().unique { it.toString() }[0].toString() == "$summaryMetadata.id"
         response.items.reportDate
     }
 
@@ -141,12 +141,12 @@ class SummaryMetadataReportIntegrationSpec extends CommonDataSpec {
         SummaryMetadataReport report = (SummaryMetadataReport) POST("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH/$summaryMetadata.id$SUMMARY_METADATA_REPORT_PATH",
                 summaryMetadataReport(), SummaryMetadataReport)
         when:
-        ListResponse<SummaryMetadata> metadataResponse = (ListResponse<SummaryMetadata>) GET("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH", ListResponse<SummaryMetadata>)
+        ListResponse<SummaryMetadata> metadataResponse = (ListResponse<SummaryMetadata>) GET("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH", ListResponse, SummaryMetadata)
 
         then:
         metadataResponse
         metadataResponse.count == 1
         metadataResponse.items[0].summaryMetadataReports.size() == 1
-        metadataResponse.items[0].summaryMetadataReports[0].id == report.id.toString()
+        metadataResponse.items[0].summaryMetadataReports[0].id == report.id
     }
 }

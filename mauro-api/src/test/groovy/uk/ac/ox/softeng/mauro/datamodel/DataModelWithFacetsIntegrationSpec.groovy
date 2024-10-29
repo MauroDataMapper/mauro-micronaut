@@ -1,6 +1,5 @@
 package uk.ac.ox.softeng.mauro.datamodel
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.client.exceptions.HttpClientResponseException
 import io.micronaut.runtime.EmbeddedApplication
@@ -19,8 +18,6 @@ import uk.ac.ox.softeng.mauro.testing.CommonDataSpec
 
 @ContainerizedTest
 class DataModelWithFacetsIntegrationSpec extends CommonDataSpec {
-    @Inject
-    ObjectMapper objectMapper
 
     @Inject
     EmbeddedApplication<?> application
@@ -136,6 +133,10 @@ class DataModelWithFacetsIntegrationSpec extends CommonDataSpec {
         retrieved.annotations.first().id == annotationId
         retrieved.annotations.first().childAnnotations.size() == 1
         retrieved.annotations.first().childAnnotations.first().parentAnnotationId == annotationId
+
+        retrieved.referenceFiles
+        retrieved.referenceFiles.size() == 1
+        retrieved.referenceFiles.first().id == referenceFile.id
 
         when:
         HttpStatus httpStatus = DELETE("$DATAMODELS_PATH/$dataModelId", HttpStatus)

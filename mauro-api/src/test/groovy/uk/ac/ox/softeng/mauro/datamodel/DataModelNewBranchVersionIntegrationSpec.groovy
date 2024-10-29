@@ -107,45 +107,61 @@ class DataModelNewBranchVersionIntegrationSpec extends CommonDataSpec {
         newBranchVersionDataModel.summaryMetadata[0].summaryMetadataReports[0].id  != summaryMetadataReportId
 
         when:
-        ListResponse<DataModel> dataModelsList = (ListResponse<DataModel>) GET("$FOLDERS_PATH/$folderId/$DATAMODELS_PATH", ListResponse<DataModel>)
+        ListResponse<DataModel> dataModelsList = (ListResponse<DataModel>) GET("$FOLDERS_PATH/$folderId/$DATAMODELS_PATH", ListResponse, DataModel)
+
         then:
         dataModelsList
         dataModelsList.items.size() == 2
-        dataModelsList.items.id.sort() == [dataModelId.toString(), newBranchVersionDataModel.id.toString()].sort()
+        dataModelsList.items.collect { it.id.toString() }.sort() == [dataModelId, newBranchVersionDataModel.id].collect { it.toString() }.sort()
 
         when:
-        ListResponse<DataClass> dataClassListResponse = (ListResponse<DataClass>) GET("$DATAMODELS_PATH/$newBranchVersionDataModel.id$DATACLASSES_PATH", ListResponse<DataClass>)
+        ListResponse<DataClass> dataClassListResponse = (ListResponse<DataClass>) GET("$DATAMODELS_PATH/$newBranchVersionDataModel.id$DATACLASSES_PATH", ListResponse, DataClass)
+
         then:
         dataClassListResponse
-        dataClassListResponse.items.size() == 3
-        dataClassListResponse.items.id.disjoint([dataClassId1, dataClassId2, dataClassId3])
+        // There should be two child classes here
+        dataClassListResponse.items.size() == 2
+        // Neither should be the original classes
+        dataClassListResponse.items.id.disjoint([dataClassId1, dataClassId2])
+        // But should have the same names
+        dataClassListResponse.items.label.sort() == ['First data class','Second data class']
+
+        when: // One should have a child class
+        UUID secondDataClassId = dataClassListResponse.items.find {it.label == 'Second data class'}.id
+        UUID firstDataClassId = dataClassListResponse.items.find {it.label == 'First data class'}.id
+        dataClassListResponse = (ListResponse<DataClass>) GET("$DATAMODELS_PATH/$newBranchVersionDataModel.id$DATACLASSES_PATH/${secondDataClassId.toString()}/dataClasses", ListResponse, DataClass)
+
+        then:
+        dataClassListResponse.items.size() == 1
+        dataClassListResponse.items.first().label == 'Third data class'
 
         when:
-        ListResponse<DataType> originalResp = (ListResponse<DataType>) GET("$DATAMODELS_PATH/$dataModelId$DATATYPES_PATH", ListResponse<DataType>)
+        ListResponse<DataType> originalResp = (ListResponse<DataType>) GET("$DATAMODELS_PATH/$dataModelId$DATATYPES_PATH", ListResponse, DataType)
         then:
         originalResp
         originalResp.items.size() == 4
-        originalResp.items.id.sort() == [dataTypeId1.toString(), dataTypeId2.toString(), dataTypeId3.toString(),enumerationTypeId.toString()].sort()
+        originalResp.items.id.sort() == [dataTypeId1, dataTypeId2, dataTypeId3,enumerationTypeId].sort()
 
         when:
-        ListResponse<DataType> dataTypesListResponse = (ListResponse<DataType>) GET("$DATAMODELS_PATH/$newBranchVersionDataModel.id$DATATYPES_PATH", ListResponse<DataType>)
+        ListResponse<DataType> dataTypesListResponse = (ListResponse<DataType>) GET("$DATAMODELS_PATH/$newBranchVersionDataModel.id$DATATYPES_PATH", ListResponse, DataType)
         then:
         dataTypesListResponse
         dataTypesListResponse.items.size() == 4
         dataTypesListResponse.items.id.disjoint([dataTypeId1, dataTypeId2, dataTypeId3, enumerationTypeId])
 
         when:
-        ListResponse<DataElement> dataElementListResponse = (ListResponse<DataElement>) GET("$DATAMODELS_PATH/$newBranchVersionDataModel.id$DATACLASSES_PATH/$dataClassId1/dataElements", ListResponse<DataElement>)
+        ListResponse<DataElement> dataElementListResponse = (ListResponse<DataElement>) GET("$DATAMODELS_PATH/$newBranchVersionDataModel.id$DATACLASSES_PATH/${firstDataClassId.toString()}/dataElements", ListResponse, DataElement)
 
         then:
         dataElementListResponse
 
         dataElementListResponse.items.size() == 2
         dataElementListResponse.items.id.disjoint([dataElementId1, dataElementId2])
+        dataElementListResponse.items.label.sort() == ['First data element', 'Second data element']
 
         //check nested facet in dataclass1 is cloned
 
-        ListResponse<DataClass> newBranchModelVersionDataClasses = (ListResponse<DataClass>) GET("$DATAMODELS_PATH/$newBranchVersionDataModel.id$DATACLASSES_PATH",ListResponse<DataClass>)
+        ListResponse<DataClass> newBranchModelVersionDataClasses = (ListResponse<DataClass>) GET("$DATAMODELS_PATH/$newBranchVersionDataModel.id$DATACLASSES_PATH",ListResponse, DataClass)
         then:
         List<UUID> newBranchModelVersionDataClassIds = newBranchModelVersionDataClasses.items.id
         DataClass retrieved = null

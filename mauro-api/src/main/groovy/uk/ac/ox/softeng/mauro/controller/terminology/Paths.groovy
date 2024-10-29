@@ -17,5 +17,16 @@ class Paths {
     public static final String DATA_ELEMENT_COMPONENT_ROUTE = '/dataModels/{dataModelId}/dataFlows/{dataFlowId}/dataClassComponents/{dataClassComponentId}/dataElementComponents'
     public static final String SOURCE_DATA_ELEMENT_ROUTE = '/{id}/source/{dataElementId}'
     public static final String TARGET_DATA_ELEMENT_ROUTE = '/{id}/target/{dataElementId}'
+    public static final String CLASSIFICATION_SCHEMES_ROUTE = '/classificationSchemes'
+    public static final String CLASSIFICATION_SCHEMES_ID_ROUTE = '/classificationSchemes/{id}'
+    public static final String FOLDER_CLASSIFICATION_SCHEMES_ROUTE = '/folders/{folderId}/classificationSchemes'
+    public static final String CLASSIFICATION_SCHEMES_BRANCH_MODEL_VERSION = '/classificationSchemes/{id}/newBranchModelVersion'
+    public static final String CLASSIFICATION_SCHEMES_DIFF = '/classificationSchemes/{id}/diff/{otherId}'
+    public static final String CHILD_CLASSIFIERS_ROUTE = '/classificationSchemes/{classificationSchemeId}/classifiers/{parentClassifierId}/classifiers'
+    public static final String CHILD_CLASSIFIERS_ID_ROUTE = '/classificationSchemes/{classificationSchemeId}/classifiers/{parentClassifierId}/classifiers/{childClassifierId}'
+    public static final String CLASSIFIERS_ROUTE = '/classificationSchemes/{classificationSchemeId}/classifiers'
+    public static final String CLASSIFIERS_ROUTE_ID = '/classificationSchemes/{classificationSchemeId}/classifiers/{id}'
+    public static final String ADMINISTERED_ITEM_CLASSIFIER_ID_ROUTE = '/{administeredItemDomainType}/{administeredItemId}/classifiers/{id}'
+    public static final String ADMINISTERED_ITEM_CLASSIFIER_ROUTE = '/{administeredItemDomainType}/{administeredItemId}/classifiers'
 
 }

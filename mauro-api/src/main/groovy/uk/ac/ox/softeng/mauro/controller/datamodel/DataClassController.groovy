@@ -54,7 +54,13 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
 
     @Get
     ListResponse<DataClass> list(UUID dataModelId) {
-        super.list(dataModelId)
+        DataModel dataModel = dataModelRepository.readById(dataModelId)
+        accessControlService.checkRole(Role.READER, dataModel)
+        List<DataClass> classes = dataClassRepository.readAllByDataModelAndParentDataClassIsNull(dataModel)
+        classes.each {
+            updateDerivedProperties(it)
+        }
+        ListResponse.from(classes)
     }
 
     @Get('/{parentDataClassId}/dataClasses/{id}')

@@ -2,11 +2,13 @@ package uk.ac.ox.softeng.mauro.domain.datamodel
 
 import com.fasterxml.jackson.annotation.JsonAlias
 import com.fasterxml.jackson.annotation.JsonIgnore
+import com.fasterxml.jackson.annotation.JsonProperty
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
 import groovy.transform.MapConstructor
 import io.micronaut.core.annotation.Introspected
 import io.micronaut.data.annotation.MappedEntity
+import io.micronaut.data.annotation.MappedProperty
 import io.micronaut.data.annotation.Relation
 import jakarta.persistence.Transient
 import uk.ac.ox.softeng.mauro.domain.model.Model
@@ -42,6 +44,12 @@ class DataModel extends Model {
     @JsonIgnore
     Set<EnumerationValue> enumerationValues = []
 
+    @Transient
+    String modelType = domainType
+
+    @JsonProperty('type')
+    @MappedProperty('model_type')
+    String dataModelType = DataModelType.DATA_ASSET.label
 
     @Override
     @Transient
@@ -50,8 +58,8 @@ class DataModel extends Model {
         'dm'
     }
 
-    void setModelType(String modelType) {
-        modelType = DataModelType.values().find {it.label.toLowerCase() == modelType.toLowerCase()}?.label
+    void setDataModelType(String dataModelType) {
+        this.dataModelType = DataModelType.values().find {it.label.toLowerCase() == dataModelType.toLowerCase()}?.label
     }
 
 
@@ -197,9 +205,9 @@ class DataModel extends Model {
         build [:], closure
     }
 
-    String modelType(DataModelType dataModelType) {
-        this.modelType = dataModelType.label
-        this.modelType
+    String dataModelType(DataModelType dataModelType) {
+        this.dataModelType = dataModelType.label
+        this.dataModelType
     }
 
     DataType primitiveType(DataType primitiveType) {

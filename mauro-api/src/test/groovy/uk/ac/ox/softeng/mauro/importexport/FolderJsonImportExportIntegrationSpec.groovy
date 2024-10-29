@@ -1,6 +1,5 @@
 package uk.ac.ox.softeng.mauro.importexport
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.json.JsonSlurper
 import io.micronaut.http.MediaType
 import io.micronaut.http.client.multipart.MultipartBody
@@ -29,9 +28,6 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
 
     @Inject
     EmbeddedApplication<?> application
-
-    @Inject
-    ObjectMapper objectMapper
 
     @Shared
     UUID folderId
@@ -214,56 +210,56 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
         importedFolder
 
         when:
-        ListResponse<DataModel> importedDataModelListResponse = (ListResponse<DataModel>) GET("$FOLDERS_PATH/$importedFolderId$DATAMODELS_PATH", ListResponse<DataModel>)
+        ListResponse<DataModel> importedDataModelListResponse = (ListResponse<DataModel>) GET("$FOLDERS_PATH/$importedFolderId$DATAMODELS_PATH", ListResponse, DataModel)
         then:
         importedDataModelListResponse
         importedDataModelListResponse.items.size() == 1
         importedDataModelListResponse.items[0].id != dataModelId
         String importedDataModelId = importedDataModelListResponse.items[0].id
         when:
-        ListResponse<DataType> importedDataTypesListResponse = (ListResponse<DataType>) GET("$DATAMODELS_PATH/$importedDataModelId$DATATYPES_PATH", ListResponse<DataType>)
+        ListResponse<DataType> importedDataTypesListResponse = (ListResponse<DataType>) GET("$DATAMODELS_PATH/$importedDataModelId$DATATYPES_PATH", ListResponse, DataType)
         then:
         importedDataTypesListResponse
         importedDataTypesListResponse.items.size() == 1
         importedDataTypesListResponse.items[0].id != dataTypeId
 
         when:
-        ListResponse<DataClass> importedDataClassesListResponse = (ListResponse<DataClass>) GET("$DATAMODELS_PATH/$importedDataModelId$DATACLASSES_PATH", ListResponse<DataClass>)
+        ListResponse<DataClass> importedDataClassesListResponse = (ListResponse<DataClass>) GET("$DATAMODELS_PATH/$importedDataModelId$DATACLASSES_PATH", ListResponse, DataClass)
         then:
         importedDataClassesListResponse.items.size() == 1
         importedDataClassesListResponse.items[0].label == 'TEST-1'
         importedDataClassesListResponse.items[0].id != dataClassId
 
         when:
-        ListResponse<SummaryMetadata> importedSummaryMetadataResponse = (ListResponse<SummaryMetadata>) GET("$FOLDERS_PATH/$importedFolderId$SUMMARY_METADATA_PATH", ListResponse<SummaryMetadata>)
+        ListResponse<SummaryMetadata> importedSummaryMetadataResponse = (ListResponse<SummaryMetadata>) GET("$FOLDERS_PATH/$importedFolderId$SUMMARY_METADATA_PATH", ListResponse, SummaryMetadata)
         then:
         importedSummaryMetadataResponse
         importedSummaryMetadataResponse.items.size() == 1
         importedSummaryMetadataResponse.items[0].id != summaryMetadataResponse.id
 
         when:
-        ListResponse<SummaryMetadataReport> importedReportResponse = (ListResponse<Metadata>) GET("$FOLDERS_PATH/$importedFolderId$METADATA_PATH", ListResponse<Metadata>)
+        ListResponse<SummaryMetadataReport> importedReportResponse = (ListResponse<Metadata>) GET("$FOLDERS_PATH/$importedFolderId$METADATA_PATH", ListResponse, Metadata)
         then:
         importedReportResponse
         importedReportResponse.items.size() == 1
         importedReportResponse.items[0].id != reportResponse.id
 
         when:
-        ListResponse<Folder> importedChildFolders = (ListResponse<Folder>) GET("$FOLDERS_PATH/$importedFolderId$FOLDERS_PATH", ListResponse<Folder>)
+        ListResponse<Folder> importedChildFolders = (ListResponse<Folder>) GET("$FOLDERS_PATH/$importedFolderId$FOLDERS_PATH", ListResponse, Folder)
         then:
         importedChildFolders
         importedChildFolders.items.size() == 1
         String importedChildFolderId = importedChildFolders.items[0].id
 
         when:
-        ListResponse<CodeSet> importedChildCodeSet = (ListResponse<CodeSet>) GET("$FOLDERS_PATH/$importedChildFolderId$CODE_SET_PATH", ListResponse<CodeSet>)
+        ListResponse<CodeSet> importedChildCodeSet = (ListResponse<CodeSet>) GET("$FOLDERS_PATH/$importedChildFolderId$CODE_SET_PATH", ListResponse, CodeSet)
         then:
         importedChildCodeSet
         importedChildCodeSet.items.size() == 1
         importedChildCodeSet.items[0].id != childCodeSetId
 
         when:
-        ListResponse<Metadata> importedMetadataResponse = (ListResponse<Metadata>) GET("$FOLDERS_PATH/$importedFolderId$METADATA_PATH", ListResponse<Metadata>)
+        ListResponse<Metadata> importedMetadataResponse = (ListResponse<Metadata>) GET("$FOLDERS_PATH/$importedFolderId$METADATA_PATH", ListResponse, Metadata)
 
         then:
         importedMetadataResponse
@@ -271,12 +267,12 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
         importedMetadataResponse.items[0].id != metadataResponse.id
 
         when:
-        ListResponse<Annotation> importedAnnotationResponse = (ListResponse<Annotation>) GET("$FOLDERS_PATH/$importedFolderId$ANNOTATION_PATH", ListResponse<Annotation>)
+        ListResponse<Annotation> importedAnnotationResponse = (ListResponse<Annotation>) GET("$FOLDERS_PATH/$importedFolderId$ANNOTATION_PATH", ListResponse, Annotation)
 
         then:
         importedAnnotationResponse
         importedAnnotationResponse.items.size() == 1
-        String importedAnnotationId = importedAnnotationResponse.items[0].id
+        UUID importedAnnotationId = importedAnnotationResponse.items[0].id
         importedAnnotationResponse.items[0]?.id != annotation.id
         importedAnnotationResponse.items[0]?.childAnnotations
         importedAnnotationResponse.items[0]?.childAnnotations?.size() == 1
@@ -284,7 +280,7 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
         importedAnnotationResponse.items[0]?.childAnnotations[0].id != childAnnotation.id
 
         when:
-        ListResponse<CodeSet> importedCodeSetResponse = (ListResponse<CodeSet>) GET("$FOLDERS_PATH/$importedFolderId$CODE_SET_PATH", ListResponse<CodeSet>)
+        ListResponse<CodeSet> importedCodeSetResponse = (ListResponse<CodeSet>) GET("$FOLDERS_PATH/$importedFolderId$CODE_SET_PATH", ListResponse, CodeSet)
 
         then:
         importedCodeSetResponse
@@ -292,7 +288,7 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
         importedCodeSetResponse.items[0].id != codeSet.id
 
         when:
-        ListResponse<Terminology> importedTerminologyResponse = (ListResponse<Terminology>) GET("$FOLDERS_PATH/$importedFolderId$TERMINOLOGIES_PATH", ListResponse<Terminology>)
+        ListResponse<Terminology> importedTerminologyResponse = (ListResponse<Terminology>) GET("$FOLDERS_PATH/$importedFolderId$TERMINOLOGIES_PATH", ListResponse, Terminology)
 
         then:
         importedTerminologyResponse
@@ -302,16 +298,16 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
 
         when:
         ListResponse<TermRelationshipType> importedTermRelationshipTypeResponse =
-                (ListResponse<TermRelationshipType>) GET("$TERMINOLOGIES_PATH/$importedTerminologyIdString$TERM_RELATIONSHIP_TYPES", ListResponse<TermRelationshipType>)
+                (ListResponse<TermRelationshipType>) GET("$TERMINOLOGIES_PATH/$importedTerminologyIdString$TERM_RELATIONSHIP_TYPES", ListResponse, TermRelationshipType)
 
         then:
         importedTermRelationshipTypeResponse
         importedTermRelationshipTypeResponse.items.size() == 1
-        String importedTermRelationshipTypeIdString = importedTermRelationshipTypeResponse.items[0].id
+        UUID importedTermRelationshipTypeIdString = importedTermRelationshipTypeResponse.items[0].id
         importedTermRelationshipTypeIdString != termRelationshipType.id
 
         when:
-        ListResponse<Term> importedTermsResponse = (ListResponse<Term>) GET("$TERMINOLOGIES_PATH/$importedTerminologyIdString$TERMS_PATH", ListResponse<Term>)
+        ListResponse<Term> importedTermsResponse = (ListResponse<Term>) GET("$TERMINOLOGIES_PATH/$importedTerminologyIdString$TERMS_PATH", ListResponse, Term)
 
         then:
         importedTermsResponse
@@ -321,7 +317,7 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
         importedTermsResponse.items.id.sort().collect { it.toString() } != ["${sourceTerm.id}", "${targetTerm.id}"]
 
         when:
-        ListResponse<TermRelationship> importedTermRelationship = (ListResponse<TermRelationship>) GET("$TERMINOLOGIES_PATH/$importedTerminologyIdString$TERM_RELATIONSHIP_PATH", ListResponse<TermRelationship>)
+        ListResponse<TermRelationship> importedTermRelationship = (ListResponse<TermRelationship>) GET("$TERMINOLOGIES_PATH/$importedTerminologyIdString$TERM_RELATIONSHIP_PATH", ListResponse, TermRelationship)
         then:
         importedTermRelationship
         importedTermRelationship.items.size() == 1
@@ -382,14 +378,14 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
 
 
         when:
-        ListResponse<Folder> importedChildFolders = (ListResponse<Folder>) GET("$FOLDERS_PATH/$importedFolderId$FOLDERS_PATH", ListResponse<Folder>)
+        ListResponse<Folder> importedChildFolders = (ListResponse<Folder>) GET("$FOLDERS_PATH/$importedFolderId$FOLDERS_PATH", ListResponse, Folder)
         then:
         importedChildFolders
         importedChildFolders.items.size() == 1
         String importedChildFolderId = importedChildFolders.items[0].id
 
         when:
-        ListResponse<CodeSet> importedChildCodeSet = (ListResponse<CodeSet>) GET("$FOLDERS_PATH/$importedChildFolderId$CODE_SET_PATH", ListResponse<CodeSet>)
+        ListResponse<CodeSet> importedChildCodeSet = (ListResponse<CodeSet>) GET("$FOLDERS_PATH/$importedChildFolderId$CODE_SET_PATH", ListResponse, CodeSet)
         then:
         importedChildCodeSet
         importedChildCodeSet.items.size() == 1
@@ -397,12 +393,12 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
 
 
         when:
-        ListResponse<Annotation> importedAnnotationResponse = (ListResponse<Annotation>) GET("$FOLDERS_PATH/$importedFolderId$ANNOTATION_PATH", ListResponse<Annotation>)
+        ListResponse<Annotation> importedAnnotationResponse = (ListResponse<Annotation>) GET("$FOLDERS_PATH/$importedFolderId$ANNOTATION_PATH", ListResponse, Annotation)
 
         then:
         importedAnnotationResponse
         importedAnnotationResponse.items.size() == 1
-        String importedAnnotationId = importedAnnotationResponse.items[0].id
+        UUID importedAnnotationId = importedAnnotationResponse.items[0].id
         importedAnnotationResponse.items[0]?.id != annotation.id
         importedAnnotationResponse.items[0]?.childAnnotations
         importedAnnotationResponse.items[0]?.childAnnotations?.size() == 1
@@ -410,7 +406,7 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
         importedAnnotationResponse.items[0]?.childAnnotations[0].id != childAnnotation.id
 
         when:
-        ListResponse<CodeSet> importedCodeSetResponse = (ListResponse<CodeSet>) GET("$FOLDERS_PATH/$importedFolderId$CODE_SET_PATH", ListResponse<CodeSet>)
+        ListResponse<CodeSet> importedCodeSetResponse = (ListResponse<CodeSet>) GET("$FOLDERS_PATH/$importedFolderId$CODE_SET_PATH", ListResponse, CodeSet)
 
         then:
         importedCodeSetResponse
@@ -418,7 +414,7 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
         importedCodeSetResponse.items[0].id != codeSet.id
 
         when:
-        ListResponse<Terminology> importedTerminologyResponse = (ListResponse<Terminology>) GET("$FOLDERS_PATH/$importedFolderId$TERMINOLOGIES_PATH", ListResponse<Terminology>)
+        ListResponse<Terminology> importedTerminologyResponse = (ListResponse<Terminology>) GET("$FOLDERS_PATH/$importedFolderId$TERMINOLOGIES_PATH", ListResponse, Terminology)
 
         then:
         importedTerminologyResponse
@@ -428,16 +424,16 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
 
         when:
         ListResponse<TermRelationshipType> importedTermRelationshipTypeResponse =
-                (ListResponse<TermRelationshipType>) GET("$TERMINOLOGIES_PATH/$importedTerminologyIdString$TERM_RELATIONSHIP_TYPES", ListResponse<TermRelationshipType>)
+                (ListResponse<TermRelationshipType>) GET("$TERMINOLOGIES_PATH/$importedTerminologyIdString$TERM_RELATIONSHIP_TYPES", ListResponse, TermRelationshipType)
 
         then:
         importedTermRelationshipTypeResponse
         importedTermRelationshipTypeResponse.items.size() == 1
-        String importedTermRelationshipTypeIdString = importedTermRelationshipTypeResponse.items[0].id
+        UUID importedTermRelationshipTypeIdString = importedTermRelationshipTypeResponse.items[0].id
         importedTermRelationshipTypeIdString != termRelationshipType.id
 
         when:
-        ListResponse<Term> importedTermsResponse = (ListResponse<Term>) GET("$TERMINOLOGIES_PATH/$importedTerminologyIdString$TERMS_PATH", ListResponse<Term>)
+        ListResponse<Term> importedTermsResponse = (ListResponse<Term>) GET("$TERMINOLOGIES_PATH/$importedTerminologyIdString$TERMS_PATH", ListResponse, Term)
 
         then:
         importedTermsResponse
@@ -447,7 +443,7 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
         importedTermsResponse.items.id.sort().collect { it.toString() } != ["${sourceTerm.id}", "${targetTerm.id}"]
 
         when:
-        ListResponse<TermRelationship> importedTermRelationship = (ListResponse<TermRelationship>) GET("$TERMINOLOGIES_PATH/$importedTerminologyIdString$TERM_RELATIONSHIP_PATH", ListResponse<TermRelationship>)
+        ListResponse<TermRelationship> importedTermRelationship = (ListResponse<TermRelationship>) GET("$TERMINOLOGIES_PATH/$importedTerminologyIdString$TERM_RELATIONSHIP_PATH", ListResponse, TermRelationship)
         then:
         importedTermRelationship
         importedTermRelationship.items.size() == 1
@@ -515,9 +511,9 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
         importedFolderId
 
         when:
-        ListResponse<Terminology> importedTerminologies = GET("$FOLDERS_PATH/$importedFolderId$TERMINOLOGIES_PATH", ListResponse)
-        UUID importedTerminology1Id = UUID.fromString(importedTerminologies.items.find {it.label == 'First Terminology'}.id)
-        UUID importedTerminology2Id = UUID.fromString(importedTerminologies.items.find {it.label == 'Second Terminology'}.id)
+        ListResponse<Terminology> importedTerminologies = GET("$FOLDERS_PATH/$importedFolderId$TERMINOLOGIES_PATH", ListResponse, Terminology)
+        UUID importedTerminology1Id = importedTerminologies.items.find {it.label == 'First Terminology'}.id
+        UUID importedTerminology2Id = importedTerminologies.items.find {it.label == 'Second Terminology'}.id
 
         then:
         importedTerminologies.count == 2
@@ -525,7 +521,7 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
         importedTerminologies.items.find {it.label == 'Second Terminology'}
 
         when:
-        ListResponse<Term> importedTerms = GET("$TERMINOLOGIES_PATH/$importedTerminology1Id$TERMS_PATH", ListResponse)
+        ListResponse<Term> importedTerms = GET("$TERMINOLOGIES_PATH/$importedTerminology1Id$TERMS_PATH", ListResponse, Term)
 
         then:
         importedTerms.count == 1
@@ -533,7 +529,7 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
         importedTerms.items.first().definition == 'first term'
 
         when:
-        importedTerms = GET("$TERMINOLOGIES_PATH/$importedTerminology2Id$TERMS_PATH", ListResponse)
+        importedTerms = GET("$TERMINOLOGIES_PATH/$importedTerminology2Id$TERMS_PATH", ListResponse, Term)
 
         then:
         importedTerms.count == 1
@@ -541,7 +537,7 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
         importedTerms.items.first().definition == 'second term'
 
         when:
-        ListResponse<TermRelationshipType> importedTermRelationshipTypes = GET("$TERMINOLOGIES_PATH/$importedTerminology1Id$TERM_RELATIONSHIP_TYPES", ListResponse)
+        ListResponse<TermRelationshipType> importedTermRelationshipTypes = GET("$TERMINOLOGIES_PATH/$importedTerminology1Id$TERM_RELATIONSHIP_TYPES", ListResponse, TermRelationshipType)
 
         then:
         importedTermRelationshipTypes.count == 1
@@ -549,7 +545,7 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
         importedTermRelationshipTypes.items.first().childRelationship == true
 
         when:
-        importedTermRelationshipTypes = GET("$TERMINOLOGIES_PATH/$importedTerminology2Id$TERM_RELATIONSHIP_TYPES", ListResponse)
+        importedTermRelationshipTypes = GET("$TERMINOLOGIES_PATH/$importedTerminology2Id$TERM_RELATIONSHIP_TYPES", ListResponse, TermRelationshipType)
 
         then:
         importedTermRelationshipTypes.count == 1
@@ -557,7 +553,7 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
         importedTermRelationshipTypes.items.first().childRelationship == false
 
         when:
-        ListResponse<TermRelationship> importedTermRelationships = GET("$TERMINOLOGIES_PATH/$importedTerminology1Id$TERM_RELATIONSHIP_PATH", ListResponse)
+        ListResponse<TermRelationship> importedTermRelationships = (ListResponse<TermRelationship>) GET("$TERMINOLOGIES_PATH/$importedTerminology1Id$TERM_RELATIONSHIP_PATH", ListResponse, TermRelationship)
 
         then:
         importedTermRelationships.count == 1

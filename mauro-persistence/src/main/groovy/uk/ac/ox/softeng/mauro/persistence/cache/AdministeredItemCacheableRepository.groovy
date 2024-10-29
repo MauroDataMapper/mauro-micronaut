@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.persistence.cache
 
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
+
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.cache.annotation.CacheConfig
@@ -7,6 +9,7 @@ import io.micronaut.cache.annotation.CacheInvalidate
 import io.micronaut.cache.annotation.Cacheable
 import io.micronaut.core.annotation.Nullable
 import jakarta.inject.Singleton
+import uk.ac.ox.softeng.mauro.domain.classifier.Classifier
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataElement
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
@@ -15,6 +18,7 @@ import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.terminology.Term
 import uk.ac.ox.softeng.mauro.domain.terminology.TermRelationship
 import uk.ac.ox.softeng.mauro.domain.terminology.TermRelationshipType
+import uk.ac.ox.softeng.mauro.persistence.classifier.ClassifierRepository
 import uk.ac.ox.softeng.mauro.persistence.datamodel.DataClassRepository
 import uk.ac.ox.softeng.mauro.persistence.datamodel.DataElementRepository
 import uk.ac.ox.softeng.mauro.persistence.datamodel.DataTypeRepository
@@ -139,6 +143,11 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
         List<DataClass> readAllByParentDataClass_Id(UUID parentDataClassId) {
             ((DataClassRepository) repository).readAllByParentDataClass_Id(parentDataClassId)
         }
+        // not cached
+        List<DataClass> readAllByDataModelAndParentDataClassIsNull(DataModel dataModel) {
+            ((DataClassRepository) repository).readAllByDataModelAndParentDataClassIsNull(dataModel)
+        }
+
         @Override
         Boolean handles(String domainType) {
             domainClass.simpleName.equalsIgnoreCase(domainType) || (domainClass.simpleName + 'es').equalsIgnoreCase(domainType)
@@ -177,6 +186,58 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
         // not cached
         List<EnumerationValue> readAllByEnumerationType_Id(UUID enumerationTypeId) {
             ((EnumerationValueRepository) repository).readAllByEnumerationTypeId(enumerationTypeId)
+        }
+
+    }
+
+    @Singleton
+    @CompileStatic
+    static class ClassifierCacheableRepository extends AdministeredItemCacheableRepository<Classifier> {
+        ClassifierCacheableRepository(ClassifierRepository classifierRepository) {
+            super(classifierRepository)
+        }
+
+        List<Classifier> readAllByParentClassifier_Id(UUID parentClassifierId) {
+            ((ClassifierRepository) repository).readAllByParentClassifier_Id(parentClassifierId)
+        }
+
+        // not cached
+        UUID addAdministeredItem(AdministeredItem administeredItem, Classifier classifier) {
+            ((ClassifierRepository) repository).addAdministeredItem(administeredItem, classifier)
+
+            invalidate(classifier)
+
+            if (administeredItem?.id)
+                invalidateCachedLookupById(FIND_BY_ID, administeredItem.domainType, administeredItem.id)
+
+            if (administeredItem?.parent?.id)
+                invalidateCachedLookupById(FIND_ALL_BY_PARENT, administeredItem.parent.domainType,
+                        administeredItem.parent.id)
+        }
+
+        // not cached
+        Classifier findByAdministeredItemAndClassifier(String administeredItemDomainType, UUID administeredItemId, UUID classifierId) {
+            ((ClassifierRepository) repository).findByAdministeredItemAndClassifier(administeredItemDomainType, administeredItemId,
+                    classifierId)
+        }
+
+        // not cached
+        @Nullable
+        List<Classifier> findAllForAdministeredItem(AdministeredItem administeredItem) {
+            ((ClassifierRepository) repository).findAllForAdministeredItem(administeredItem.domainType, administeredItem.id)
+        }
+
+        // not cached
+        Long deleteJoinAdministeredItemToClassifier(AdministeredItem administeredItem, UUID classifierId) {
+            Long deleted = ((ClassifierRepository) repository).deleteJoinAdministeredItemToClassifier(administeredItem, classifierId)
+
+            if (administeredItem?.id)
+                invalidateCachedLookupById(FIND_BY_ID, administeredItem.domainType, administeredItem.id)
+
+            if (administeredItem?.parent?.id)
+                invalidateCachedLookupById(FIND_ALL_BY_PARENT, administeredItem.parent.domainType,
+                        administeredItem.parent.id)
+            deleted
         }
 
     }

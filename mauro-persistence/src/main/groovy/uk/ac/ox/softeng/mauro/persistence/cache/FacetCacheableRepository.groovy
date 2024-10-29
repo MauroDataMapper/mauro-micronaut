@@ -115,5 +115,11 @@ abstract class FacetCacheableRepository<F extends Facet> extends ItemCacheableRe
         ReferenceFileCacheableRepository(ReferenceFileRepository referenceFileRepository) {
             super(referenceFileRepository)
         }
+
+        Long deleteById(UUID id) {
+            Long deleted = ((ReferenceFileRepository)repository).deleteById(id)
+            super.invalidate(id)
+            deleted
+        }
     }
 }

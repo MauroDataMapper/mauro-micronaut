@@ -33,7 +33,7 @@ class AnnotationIntegrationSpec extends CommonDataSpec {
     void 'list Annotations should return empty list'() {
         when:
         def response =
-                GET("$FOLDERS_PATH/$folderId$ANNOTATION_PATH", ListResponse<Annotation>)
+                GET("$FOLDERS_PATH/$folderId$ANNOTATION_PATH", ListResponse, Annotation)
         then:
         response.count == 0
     }
@@ -207,12 +207,12 @@ class AnnotationIntegrationSpec extends CommonDataSpec {
                 [label: 'child label', description: 'child description'], Annotation)
 
         when:
-        ListResponse<Annotation> parentList = (ListResponse<Annotation>) GET("$FOLDERS_PATH/$folderId$ANNOTATION_PATH", ListResponse<Annotation>)
+        ListResponse<Annotation> parentList = (ListResponse<Annotation>) GET("$FOLDERS_PATH/$folderId$ANNOTATION_PATH", ListResponse, Annotation)
         then:
         parentList
         parentList.count == 1
         parentList.items[0].childAnnotations.size() == 1
-        parentList.items[0].childAnnotations.id.get(0) == child.id.toString()
+        parentList.items[0].childAnnotations.id.get(0) == child.id
     }
 
 

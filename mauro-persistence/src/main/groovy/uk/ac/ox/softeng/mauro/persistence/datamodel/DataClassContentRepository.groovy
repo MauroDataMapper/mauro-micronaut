@@ -18,7 +18,12 @@ class DataClassContentRepository extends AdministeredItemContentRepository {
     @Override
     DataClass readWithContentById(UUID id) {
         DataClass dataClass = dataClassCacheableRepository.readById(id)
-
+        if (!dataClass.parentDataClass) {
+            dataClass.dataClasses = dataClassCacheableRepository.readAllByParentDataClass_Id( id)
+        }
+        //todo other dataclass associations
+        //eg dataElements
+        //extendsDataClass
         dataClass
     }
 }
