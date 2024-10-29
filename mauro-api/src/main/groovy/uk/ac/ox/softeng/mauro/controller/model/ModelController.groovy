@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.controller.model
 
+import uk.ac.ox.softeng.mauro.service.plugin.PluginService
+
 import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
@@ -223,7 +225,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
 
     StreamedFile exportModel(UUID modelId, String namespace, String name, @Nullable String version) {
         ModelExporterPlugin mauroPlugin = mauroPluginService.getPlugin(ModelExporterPlugin, namespace, name, version)
-        mauroPluginService.handlePluginNotFound(mauroPlugin, namespace, name)
+        PluginService.handlePluginNotFound(mauroPlugin, namespace, name)
 
         M existing = modelContentRepository.findWithContentById(modelId)
         existing.setAssociations()
@@ -235,7 +237,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     ListResponse<M> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version) {
 
         ModelImporterPlugin mauroPlugin = mauroPluginService.getPlugin(ModelImporterPlugin, namespace, name, version)
-        mauroPluginService.handlePluginNotFound(mauroPlugin, namespace, name)
+        PluginService.handlePluginNotFound(mauroPlugin, namespace, name)
 
         ImportParameters importParameters = readFromMultipartFormBody(body, mauroPlugin.importParametersClass())
 
@@ -256,11 +258,6 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         ListResponse.from(smallerResponse)
     }
 
-    protected void handlePluginNotFound(MauroPlugin mauroPlugin, String namespace, String name) {
-        if (!mauroPlugin) {
-            throw new HttpStatusException(HttpStatus.BAD_REQUEST, "Model import plugin with namespace: ${namespace}, name: ${name} not found")
-        }
-    }
 
     protected StreamedFile exportedModelData(ModelExporterPlugin mauroPlugin, M existing) {
         byte[] fileContents = mauroPlugin.exportModel(existing)
