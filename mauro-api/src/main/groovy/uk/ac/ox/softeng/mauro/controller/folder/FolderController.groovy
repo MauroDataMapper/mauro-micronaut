@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.controller.folder
 
+import uk.ac.ox.softeng.mauro.service.plugin.PluginService
+
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
@@ -125,8 +127,8 @@ class FolderController extends ModelController<Folder> {
     @Get('/{id}/export{/namespace}{/name}{/version}')
     StreamedFile exportModel(UUID id, @Nullable String namespace, @Nullable String name, @Nullable String version) {
         ModelExporterPlugin mauroPlugin = mauroPluginService.getPlugin(ModelExporterPlugin, namespace, name, version)
-        handlePluginNotFound(mauroPlugin, namespace, name)
-         Folder existing = folderContentRepository.findWithContentById(id)
+        PluginService.handlePluginNotFound(mauroPlugin, namespace, name)
+        Folder existing = folderContentRepository.findWithContentById(id)
         StreamedFile streamedFile = exportedModelData(mauroPlugin, existing)
         streamedFile
     }

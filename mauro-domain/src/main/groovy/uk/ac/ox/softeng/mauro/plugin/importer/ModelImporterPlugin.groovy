@@ -3,9 +3,15 @@ package uk.ac.ox.softeng.mauro.plugin.importer
 import uk.ac.ox.softeng.mauro.domain.model.Model
 import uk.ac.ox.softeng.mauro.plugin.MauroPlugin
 import uk.ac.ox.softeng.mauro.plugin.PluginType
+import uk.ac.ox.softeng.mauro.plugin.importer.config.ImportGroupConfig
+import uk.ac.ox.softeng.mauro.plugin.importer.config.ImportParameterConfig
 
 import com.fasterxml.jackson.annotation.JsonIgnore
+import groovy.transform.Memoized
 import groovy.util.logging.Slf4j
+import org.apache.commons.lang3.reflect.FieldUtils
+
+import java.lang.reflect.Field
 
 @Slf4j
 trait ModelImporterPlugin <D extends Model, P extends ImportParameters> extends MauroPlugin {
@@ -51,4 +57,50 @@ trait ModelImporterPlugin <D extends Model, P extends ImportParameters> extends 
     String getProviderType() {
         return "${getHandlesModelType().simpleName}${this.pluginType}"
     }
+
+    @Memoized
+    List<Map<String, Object>> calculateParameterGroups() {
+        List<Field> fields = FieldUtils.getAllFields(importParametersClass())
+            .findAll { it.isAnnotationPresent(ImportParameterConfig)
+                && !it.getAnnotation(ImportParameterConfig).hidden()
+            }
+
+        fields.collect {field ->
+            String fieldType
+            switch (field.getType().getSimpleName()) {
+                case 'FileParameter':
+                    fieldType = 'File'
+                    break
+                case 'UUID':
+                    fieldType = 'Folder'
+                    break
+                default:
+                    fieldType = field.getType().getSimpleName()
+            }
+            ImportParameterConfig config = field.getAnnotation(ImportParameterConfig)
+            if (config.password())
+                fieldType = 'Password'
+
+            return [
+                groupName: config.group().name(),
+                groupOrder: config.group().order(),
+                name: field.name,
+                type: fieldType,
+                order: config.order(),
+                optional: config.optional(),
+                displayName: config.displayName(),
+                description: config.description().join(config.descriptionJoinDelimiter())
+            ]
+        }
+        .groupBy {
+            it.groupName
+        }.collect {key, value ->
+            [name: key, parameters: value.sort {it.order}]
+        }.sort {
+            it.parameters.first().groupOrder
+        }
+
+        
+    }
+
 }
