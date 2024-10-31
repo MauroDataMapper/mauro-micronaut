@@ -21,10 +21,10 @@ micronaut:
         paths: classpath:META-INF/swagger/views/swagger-ui
         mapping: /swagger-ui/**
   security:
-    enabled: false
-    authentication: session
+    enabled: true
+#    authentication: session
     redirect:
-      enabled: false
+      enabled: true
     endpoints:
       login:
         enabled: true
@@ -34,6 +34,15 @@ micronaut:
         path: '/authentication/logout'
         get-allowed: true
     reject-not-found: false
+    authentication-provider-strategy: any
+    authentication: idtoken
+    oauth2:
+      clients:
+        keycloak:
+          client-id: mauro
+          client-secret: DoMFLSRgmTtbHe3U5a4SUvtfiJhyXkWY
+          openid:
+            issuer: http://localhost:9009/realms/master/
   caches:
     items-cache:
       initial-capacity: 10000

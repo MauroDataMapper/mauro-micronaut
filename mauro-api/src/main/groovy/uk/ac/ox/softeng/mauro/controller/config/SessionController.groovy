@@ -2,9 +2,11 @@ package uk.ac.ox.softeng.mauro.controller.config
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
+import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Get
 import io.micronaut.security.annotation.Secured
+import io.micronaut.security.authentication.Authentication
 import io.micronaut.security.rules.SecurityRule
 import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.security.AccessControlService
@@ -24,10 +26,27 @@ class SessionController {
             authenticatedSession: accessControlService.isUserAuthenticated()
         ]
     }
+
     @Get('/isApplicationAdministration')
     Map<String, Boolean> isApplicationAdministration() {
         [
             authenticatedSession: accessControlService.isAdministrator()
         ]
+    }
+
+    @Get('/authenticationDetails')
+    String authenticationDetails(@Nullable Authentication authentication) {
+        authentication.toString()
+    }
+
+    @Get('/checkAuthenticated')
+    @Secured(SecurityRule.IS_AUTHENTICATED)
+    String checkAuthenticated() {
+        'Authenticated'
+    }
+
+    @Get('/checkAnonymous')
+    String checkAnonymous() {
+        'Anonymous'
     }
 }
