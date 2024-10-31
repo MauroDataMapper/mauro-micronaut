@@ -35,8 +35,11 @@ class SessionController {
     }
 
     @Get('/authenticationDetails')
-    String authenticationDetails(@Nullable Authentication authentication) {
-        authentication.toString()
+    Map authenticationDetails(@Nullable Authentication authentication) {
+        [
+            isAuthenticated: authentication as Boolean,
+            attributes: authentication?.attributes
+        ]
     }
 
     @Get('/checkAuthenticated')

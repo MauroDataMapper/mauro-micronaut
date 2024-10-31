@@ -1,0 +1,36 @@
+package uk.ac.ox.softeng.mauro.security.authentication
+
+import groovy.util.logging.Slf4j
+import io.micronaut.context.annotation.Replaces
+import io.micronaut.security.authentication.AuthenticationException
+import io.micronaut.security.config.AuthenticationModeConfiguration
+import io.micronaut.security.oauth2.configuration.OpenIdAdditionalClaimsConfiguration
+import io.micronaut.security.oauth2.endpoint.token.response.DefaultOpenIdAuthenticationMapper
+import io.micronaut.security.oauth2.endpoint.token.response.OpenIdClaims
+import io.micronaut.security.oauth2.endpoint.token.response.OpenIdTokenResponse
+import jakarta.inject.Inject
+import jakarta.inject.Singleton
+import uk.ac.ox.softeng.mauro.domain.security.CatalogueUser
+import uk.ac.ox.softeng.mauro.persistence.cache.ItemCacheableRepository
+
+@Singleton
+@Slf4j
+@Replaces(DefaultOpenIdAuthenticationMapper)
+class MauroOpenIdAuthenticationMapper extends DefaultOpenIdAuthenticationMapper {
+
+    @Inject
+    ItemCacheableRepository.CatalogueUserCacheableRepository catalogueUserCacheableRepository
+
+    MauroOpenIdAuthenticationMapper(OpenIdAdditionalClaimsConfiguration openIdAdditionalClaimsConfiguration, AuthenticationModeConfiguration authenticationModeConfiguration) {
+        super(openIdAdditionalClaimsConfiguration, authenticationModeConfiguration)
+    }
+
+    @Override
+    Map<String, Object> buildAttributes(String providerName, OpenIdTokenResponse tokenResponse, OpenIdClaims openIdClaims) {
+        Map<String, Object> claims = super.buildAttributes(providerName, tokenResponse, openIdClaims)
+        if (!claims.email_verified) throw new AuthenticationException("Attempt to login with unverified email address! [${claims.email}]")
+        CatalogueUser user = catalogueUserCacheableRepository.readByEmailAddress((String) claims.email)
+        claims.id = user.id
+        claims
+    }
+}

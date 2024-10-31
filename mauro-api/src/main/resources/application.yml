@@ -22,7 +22,7 @@ micronaut:
         mapping: /swagger-ui/**
   security:
     enabled: true
-#    authentication: session
+    authentication: session
     redirect:
       enabled: true
     endpoints:
@@ -33,16 +33,18 @@ micronaut:
         enabled: true
         path: '/authentication/logout'
         get-allowed: true
+      oauth:
+        enabled: true
     reject-not-found: false
     authentication-provider-strategy: any
-    authentication: idtoken
+#    authentication: idtoken
     oauth2:
       clients:
         keycloak:
           client-id: mauro
           client-secret: DoMFLSRgmTtbHe3U5a4SUvtfiJhyXkWY
           openid:
-            issuer: http://localhost:9009/realms/master/
+            issuer: http://localhost:9009/realms/master
   caches:
     items-cache:
       initial-capacity: 10000
