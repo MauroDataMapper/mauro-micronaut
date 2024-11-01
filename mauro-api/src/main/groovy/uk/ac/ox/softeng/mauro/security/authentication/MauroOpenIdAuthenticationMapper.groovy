@@ -8,10 +8,12 @@ import io.micronaut.security.oauth2.configuration.OpenIdAdditionalClaimsConfigur
 import io.micronaut.security.oauth2.endpoint.token.response.DefaultOpenIdAuthenticationMapper
 import io.micronaut.security.oauth2.endpoint.token.response.OpenIdClaims
 import io.micronaut.security.oauth2.endpoint.token.response.OpenIdTokenResponse
+import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
 import uk.ac.ox.softeng.mauro.domain.security.CatalogueUser
 import uk.ac.ox.softeng.mauro.persistence.cache.ItemCacheableRepository
+import uk.ac.ox.softeng.mauro.security.utils.SecureRandomStringGenerator
 
 @Singleton
 @Slf4j
@@ -21,16 +23,37 @@ class MauroOpenIdAuthenticationMapper extends DefaultOpenIdAuthenticationMapper 
     @Inject
     ItemCacheableRepository.CatalogueUserCacheableRepository catalogueUserCacheableRepository
 
+
     MauroOpenIdAuthenticationMapper(OpenIdAdditionalClaimsConfiguration openIdAdditionalClaimsConfiguration, AuthenticationModeConfiguration authenticationModeConfiguration) {
         super(openIdAdditionalClaimsConfiguration, authenticationModeConfiguration)
     }
 
     @Override
+    @Transactional
     Map<String, Object> buildAttributes(String providerName, OpenIdTokenResponse tokenResponse, OpenIdClaims openIdClaims) {
         Map<String, Object> claims = super.buildAttributes(providerName, tokenResponse, openIdClaims)
         if (!claims.email_verified) throw new AuthenticationException("Attempt to login with unverified email address! [${claims.email}]")
-        CatalogueUser user = catalogueUserCacheableRepository.readByEmailAddress((String) claims.email)
+        CatalogueUser user = catalogueUserCacheableRepository.readByEmailAddress((String) claims.email)?: createUser(claims)
         claims.id = user.id
         claims
+    }
+
+    CatalogueUser createUser(Map<String, Object> claims) {
+        log.debug("user email address not found, add as new Catalogue user without session password: {}", claims.email)
+        CatalogueUser newUser = new CatalogueUser().tap {
+            pending = false
+            disabled = false
+            creationMethod = 'OPENID_REGISTER'
+            tempPassword = null
+            password = null
+            firstName = claims.given_name
+            lastName = claims.family_name
+            emailAddress = claims.email
+            salt = SecureRandomStringGenerator.generateSalt()
+        }
+
+        CatalogueUser saved = catalogueUserCacheableRepository.save(newUser)
+        catalogueUserCacheableRepository.invalidate(saved)
+        saved
     }
 }
