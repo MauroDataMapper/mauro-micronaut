@@ -24,7 +24,7 @@ micronaut:
     enabled: true
     authentication: session
     redirect:
-      enabled: true
+      enabled: false
     endpoints:
       login:
         enabled: true
@@ -42,7 +42,7 @@ micronaut:
       clients:
         keycloak:
           client-id: mauro
-          client-secret: DoMFLSRgmTtbHe3U5a4SUvtfiJhyXkWY
+          client-secret: 27wjHeD3szihjHolwgJ6QZPF7i9ZSuga
           openid:
             issuer: http://localhost:9009/realms/master
   caches:
