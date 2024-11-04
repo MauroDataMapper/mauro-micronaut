@@ -5,3 +5,5 @@ micronaut:
     client:
       read-timeout : 30m
       connect-timeout : 30m
+  security:
+    enabled: false

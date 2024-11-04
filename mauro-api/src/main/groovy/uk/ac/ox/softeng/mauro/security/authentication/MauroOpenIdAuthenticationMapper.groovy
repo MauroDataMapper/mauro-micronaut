@@ -39,7 +39,7 @@ class MauroOpenIdAuthenticationMapper extends DefaultOpenIdAuthenticationMapper 
     }
 
     CatalogueUser createUser(Map<String, Object> claims) {
-        log.debug("user email address not found, add as new Catalogue user without session password: {}", claims.email)
+        log.debug("User email address not found, adding new Catalogue user for : {}", claims.email)
         CatalogueUser newUser = new CatalogueUser().tap {
             pending = false
             disabled = false
