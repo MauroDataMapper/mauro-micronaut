@@ -1,6 +1,5 @@
 package uk.ac.ox.softeng.mauro.controller.security.openidprovider
 
-
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.context.annotation.Value
@@ -8,7 +7,6 @@ import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Get
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
-import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @CompileStatic
 @Slf4j
@@ -32,10 +30,10 @@ class OpenidProviderController {
     String imageUrl
 
     @Get()
-    ListResponse<OpenidConnectProvider> list() {
+    List<OpenidConnectProvider> list() {
         OpenidConnectProvider openidConnectProvider = new OpenidConnectProvider(openidProviderId, label, standardProvider, authorizationEndpoint,
                 imageUrl)
-        ListResponse.from(List.of(openidConnectProvider))
+        [openidConnectProvider]
     }
 
 
