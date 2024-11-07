@@ -34,11 +34,13 @@ class MauroOpenIdAuthenticationMapper extends DefaultOpenIdAuthenticationMapper 
     @Override
     @Transactional
     Map<String, Object> buildAttributes(String providerName, OpenIdTokenResponse tokenResponse, OpenIdClaims openIdClaims) {
+        log.debug("token response: {}, provider name: {}", tokenResponse.toString(), providerName)
         Map<String, Object> claims = super.buildAttributes(providerName, tokenResponse, openIdClaims)
         if (!claims.email_verified) authenticationException("Attempt to login with unverified email address! [${claims.email}]")
         CatalogueUser user = catalogueUserCacheableRepository.readByEmailAddress((String) claims.email)?: createUser(claims)
         if (!user) authenticationException("User does not exist for $claims.email")
         claims.id = user.id
+        log.debug("claims: id: {}", user.id)
         claims
     }
 

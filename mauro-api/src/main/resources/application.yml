@@ -24,7 +24,11 @@ micronaut:
     enabled: true
     authentication: session
     redirect:
-      enabled: false
+      enabled: true
+      login-success: http://localhost:4200/redirects/open-id-connect-redirect.html
+#      login-success: http://localhost:4200/#/catalogue/dataModel/all
+#      login-success: http://localhost:8088/
+
     endpoints:
       login:
         enabled: true
@@ -42,8 +46,8 @@ micronaut:
     openid-provider:
       id: b2092268-3014-4c24-a9cc-0913b2c63cfb
       label: Keycloak
-      standardProvider: true,
-      authorizationEndpoint: http://tvssnsdedm001.oxnet.nhs.uk:8095/realms/test/protocol/openid-connect/auth?scope=openid+email+profile&response_type=code&client_id=mdm&state=3b2e1535-5cae-49f7-83c3-0032aa7539c9&nonce=6ea24466-f8f4-3089-8881-e6b76eb70d5a
+      standardProvider: true
+      authorizationEndpoint: http://localhost:8088/oauth/login/keycloak
       imageUrl: https://upload.wikimedia.org/wikipedia/commons/2/29/Keycloak_Logo.png?20200311211229
     oauth2:
       clients:

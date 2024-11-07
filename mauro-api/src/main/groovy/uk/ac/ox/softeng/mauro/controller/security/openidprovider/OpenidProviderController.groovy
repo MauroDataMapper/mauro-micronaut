@@ -26,16 +26,17 @@ class OpenidProviderController {
     @Value('${micronaut.security.openid-provider.standardProvider:true}')
     boolean standardProvider
 
-    @Value('${micronaut.security.openid-provider.authorizationEndpoint:http://tvssnsdedm001.oxnet.nhs.uk:8095/realms/test/protocol/openid-connect/auth?scope=openid+email+profile&response_type=code&client_id=mdm&state=3b2e1535-5cae-49f7-83c3-0032aa7539c9&nonce=6ea24466-f8f4-3089-8881-e6b76eb70d5a}')
+    @Value('${micronaut.security.openid-provider.authorizationEndpoint:http://localhost:8088/oauth/login/keycloak}')
     String authorizationEndpoint
+
     @Value('${micronaut.security.openid-provider.imageUrl:https://upload.wikimedia.org/wikipedia/commons/2/29/Keycloak_Logo.png?20200311211229}')
     String imageUrl
 
     @Get()
-    ListResponse<OpenidConnectProvider> list() {
+    List<OpenidConnectProvider> list() {
         OpenidConnectProvider openidConnectProvider = new OpenidConnectProvider(openidProviderId, label, standardProvider, authorizationEndpoint,
                 imageUrl)
-        ListResponse.from(List.of(openidConnectProvider))
+        List.of(openidConnectProvider)
     }
 
 

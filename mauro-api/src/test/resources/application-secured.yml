@@ -12,3 +12,16 @@ micronaut:
     get-allowed: true
   redirect:
     enabled: false
+
+  oauth2:
+    clients:
+      keycloak:
+        client-id: mauro
+        client-secret: 27wjHeD3szihjHolwgJ6QZPF7i9ZSuga
+        openid:
+          issuer: http://localhost:9009/realms/master
+
+  http:
+    client:
+      read-timeout: 30m
+      connect-timeout: 30m
