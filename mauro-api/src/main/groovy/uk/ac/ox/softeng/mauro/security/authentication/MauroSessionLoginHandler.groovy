@@ -5,6 +5,7 @@ import io.micronaut.context.annotation.Replaces
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.core.util.functional.ThrowingSupplier
+import io.micronaut.http.HttpMethod
 import io.micronaut.http.HttpRequest
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
@@ -45,15 +46,23 @@ class MauroSessionLoginHandler extends SessionLoginHandler {
 
     @Override
     MutableHttpResponse<?> loginSuccess(Authentication authentication, HttpRequest<?> request) {
-       saveAuthenticationInSession(authentication, request)
-   //     if (loginSuccess == null || loginSuccess == '/') {
-        try {
-            CatalogueUser user = catalogueUserCacheableRepository.readById((UUID) authentication.attributes.id)
-            ShortenedCatalogueUser shortenedCatalogueUser = new ShortenedCatalogueUser(user.id, user.emailAddress, user.firstName,
-                    user.lastName, user.pending, user.disabled)
-            if (user.createdBy) shortenedCatalogueUser.createdBy = user.createdBy
-            else shortenedCatalogueUser.createdBy = user.emailAddress
-            return HttpResponse.ok(shortenedCatalogueUser)
+        if (request.path.contains("/authentication/login")) {
+            MutableHttpResponse defaultResponse = super.loginSuccess(authentication, request)
+            //if (defaultResponse.status == HttpStatus.OK || loginSuccess == '/') {
+                return HttpResponse.ok(catalogueUserCacheableRepository.readById((UUID) authentication.attributes.id))
+           // } else {
+          //      defaultResponse
+           // }
+        } else {
+            saveAuthenticationInSession(authentication, request)
+            //     if (loginSuccess == null || loginSuccess == '/') {
+            try {
+                CatalogueUser user = catalogueUserCacheableRepository.readById((UUID) authentication.attributes.id)
+                ShortenedCatalogueUser shortenedCatalogueUser = new ShortenedCatalogueUser(user.id, user.emailAddress, user.firstName,
+                        user.lastName, user.pending, user.disabled)
+                if (user.createdBy) shortenedCatalogueUser.createdBy = user.createdBy
+                else shortenedCatalogueUser.createdBy = user.emailAddress
+                return HttpResponse.ok(shortenedCatalogueUser)
 //        }
 //        try {
 //            MutableHttpResponse<?> response = HttpResponse.status(HttpStatus.SEE_OTHER);
@@ -62,10 +71,11 @@ class MauroSessionLoginHandler extends SessionLoginHandler {
 //            response.header('location', location.toString())
 //          //  response.getHeaders().location(loginSuccessUriSupplier(loginSuccess, request, response).get());
 //            response;
-        } catch (URISyntaxException e) {
-            return HttpResponse.serverError();
+            } catch (URISyntaxException e) {
+                return HttpResponse.serverError();
+            }
         }
-     }
+    }
 
     @Override
     MutableHttpResponse<?> loginFailed(AuthenticationResponse authenticationFailed, HttpRequest<?> request) {
@@ -80,8 +90,8 @@ class MauroSessionLoginHandler extends SessionLoginHandler {
 
     @NonNull
     protected ThrowingSupplier<URI, URISyntaxException> loginSuccessUriSupplier(@NonNull String loginSuccess,
-                                                                              HttpRequest<?> request,
-                                                                              @NonNull MutableHttpResponse<?> response) {
+                                                                                HttpRequest<?> request,
+                                                                                @NonNull MutableHttpResponse<?> response) {
         ThrowingSupplier<URI, URISyntaxException> uriSupplier = () -> new URI(loginSuccess);
         if (priorToLoginPersistence != null) {
             Optional<URI> originalUri = priorToLoginPersistence.getOriginalUri(request, response);
