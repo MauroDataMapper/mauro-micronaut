@@ -24,8 +24,8 @@ micronaut:
     enabled: true
     authentication: session
     redirect:
-      enabled: true
-      login-success: http://localhost:8088/session/authenticationDetails
+      enabled: false
+#      login-success: http://localhost:4200/redirects/open-id-connect-redirect.html
     endpoints:
       login:
         enabled: true
@@ -51,7 +51,7 @@ micronaut:
       clients:
         keycloak:
           client-id: mauro
-          client-secret: CdnHQq8tLzY6pp05oSBJ7B1cX1f2ixP1
+          client-secret: DoMFLSRgmTtbHe3U5a4SUvtfiJhyXkWY
           openid:
             issuer: http://localhost:9009/realms/master
   caches:
@@ -126,8 +126,7 @@ javamail:
 
 mauro:
   oauth:
+    login-success: http://localhost:4200/redirects/open-id-connect-redirect.html
     authorizationEndpoint:
     imageUrl:
     create-user: true
-
-
