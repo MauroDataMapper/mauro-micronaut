@@ -32,10 +32,10 @@ class OpenidProviderController {
     String imageUrl
 
     @Get()
-    ListResponse<OpenidConnectProvider> list() {
+    List<OpenidConnectProvider> list() {
         OpenidConnectProvider openidConnectProvider = new OpenidConnectProvider(openidProviderId, label, standardProvider, authorizationEndpoint,
                 imageUrl)
-        ListResponse.from(List.of(openidConnectProvider))
+        [openidConnectProvider]
     }
 
 
