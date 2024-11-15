@@ -24,11 +24,7 @@ micronaut:
     enabled: true
     authentication: session
     redirect:
-      enabled: true
-      login-success: http://localhost:4200/redirects/open-id-connect-redirect.html
-#      login-success: http://localhost:4200/#/catalogue/dataModel/all
-#      login-success: http://localhost:8088/
-
+      enabled: false
     endpoints:
       login:
         enabled: true
@@ -50,6 +46,7 @@ micronaut:
       authorizationEndpoint: http://localhost:8088/oauth/login/keycloak
       imageUrl: https://upload.wikimedia.org/wikipedia/commons/2/29/Keycloak_Logo.png?20200311211229
     oauth2:
+#      callback-uri: http://localhost:4200/redirects/open-id-connect-redirect.html
       clients:
         keycloak:
           client-id: mauro
@@ -125,3 +122,10 @@ javamail:
         starttls:
           enable: true
         host: $$host$$ # Replace me!
+
+mauro:
+  oauth:
+    login-success: http://localhost:4200/redirects/open-id-connect-redirect.html
+    authorizationEndpoint:
+    imageUrl:
+    create-user: true

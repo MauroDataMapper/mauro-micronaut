@@ -30,7 +30,7 @@ class SessionController {
     @Get('/isApplicationAdministration')
     Map<String, Boolean> isApplicationAdministration() {
         [
-            authenticatedSession: accessControlService.isAdministrator()
+            applicationAdministrationSession: accessControlService.isAdministrator()
         ]
     }
 
