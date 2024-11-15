@@ -15,7 +15,7 @@ import org.htmlunit.WebClient
 import org.jboss.resteasy.client.jaxrs.ResteasyClient
 import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder
 import org.jboss.resteasy.client.jaxrs.ResteasyWebTarget
-import org.junit.Ignore
+import spock.lang.Ignore
 import spock.lang.Shared
 import uk.ac.ox.softeng.mauro.persistence.SecuredContainerizedTest
 import uk.ac.ox.softeng.mauro.testing.BaseIntegrationSpec
