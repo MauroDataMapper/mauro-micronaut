@@ -50,9 +50,9 @@ micronaut:
       clients:
         keycloak:
           client-id: mauro
-          client-secret: 27wjHeD3szihjHolwgJ6QZPF7i9ZSuga
+          client-secret: ZBXabk0H3TbnOlCvD4nrWzfSf32Ibgsx
           openid:
-            issuer: http://localhost:9009/realms/master
+            issuer: http://localhost:9009/realms/mauro
   caches:
     items-cache:
       initial-capacity: 10000

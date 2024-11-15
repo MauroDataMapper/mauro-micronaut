@@ -90,13 +90,6 @@ abstract class SecuredIntegrationSpec extends CommonDataSpec {
     }
 
 
-    HttpResponse loginOpenid() {
-        HttpResponse response = client.toBlocking().exchange(HttpRequest.GET(
-                '/oauth/login/keycloak'), Map<String, Object>)
-        sessionCookie = response.getCookie('SESSION').get()
-        response
-    }
-
     HttpResponse loginAdmin() {
         loginUsernamePassword('admin@example.com', 'password')
     }

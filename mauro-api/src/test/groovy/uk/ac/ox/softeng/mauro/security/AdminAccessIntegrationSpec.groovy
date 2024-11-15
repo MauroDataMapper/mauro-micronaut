@@ -120,8 +120,7 @@ class AdminAccessIntegrationSpec extends SecuredIntegrationSpec {
         dataModelId = dataModel.id
 
         when:
-        loginOpenid()
-       // loginAdmin()
+        loginAdmin()
         folder = (Folder) GET("/folders/$folderId", Folder)
 
         then:
