@@ -14,22 +14,22 @@ import io.micronaut.security.rules.SecurityRule
 @Secured(SecurityRule.IS_ANONYMOUS)
 class OpenidProviderController {
 
-
-    @Value('${micronaut.security.openid-provider.id}')
+    @Value('${mauro.oauth.id}')
     String openidProviderId
 
-    @Value('${micronaut.security.openid-provider.label}')
+    @Value('${mauro.oauth.label}')
     String label
 
-    @Value('${micronaut.security.openid-provider.standardProvider}')
+    @Value('${mauro.oauth.standard-provider}')
     boolean standardProvider
 
-    @Value('${micronaut.security.openid-provider.authorizationEndpoint}')
+    @Value('${mauro.oauth.authorization-endpoint}')
     String authorizationEndpoint
-    @Value('${micronaut.security.openid-provider.imageUrl}')
+
+    @Value('${mauro.oauth.image-url}')
     String imageUrl
 
-    @Get()
+    @Get
     List<OpenidConnectProvider> list() {
         OpenidConnectProvider openidConnectProvider = new OpenidConnectProvider(openidProviderId, label, standardProvider, authorizationEndpoint,
                 imageUrl)

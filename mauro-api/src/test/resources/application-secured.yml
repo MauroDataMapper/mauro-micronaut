@@ -1,36 +1,37 @@
 micronaut:
   security:
     enabled: true
-    authentication: session
-    endpoints:
-      login:
-        enabled: true
-        path: '/authentication/login'
-    logout:
+    create-user: true
+  authentication: session
+  endpoints:
+    login:
       enabled: true
-      path: '/authentication/logout'
-      get-allowed: true
-    redirect:
-      enabled: false
-    create-user: true
+      path: '/authentication/login'
+  logout:
+    enabled: true
+    path: '/authentication/logout'
+    get-allowed: true
+  redirect:
 
-    oauth2:
-      clients:
-        keycloak:
-          #       creds valid with test/resources/realm.json which has realm 'mauro' and client 'mauro'
-          client-id: mauro
-          client-secret: ZBXabk0H3TbnOlCvD4nrWzfSf32Ibgsx
-          openid:
-            issuer: http://localhost:9009/realms/mauro
+    enabled: false
 
-  http:
-    client:
-      read-timeout: 30m
-      connect-timeout: 30m
+#  oauth2:
+#    clients:
+#      keycloak:
+#        #       creds valid with test/resources/realm.json which has realm 'mauro' and client 'mauro'
+#        client-id: mauro
+#        client-secret: ZBXabk0H3TbnOlCvD4nrWzfSf32Ibgsx
+#        openid:
+#          issuer: http://localhost:9009/realms/mauro
+#
+#  http:
+#    client:
+#      read-timeout: 30m
+#      connect-timeout: 30m
+#
+#mauro:
+#  oauth:
+#    login-success: http://localhost:4200/redirects/open-id-connect-redirect.html
+#    authorizationEndpoint:
+#    imageUrl:
 
-mauro:
-  oauth:
-    login-success: http://localhost:4200/redirects/open-id-connect-redirect.html
-    authorizationEndpoint:
-    imageUrl:
-    create-user: true
