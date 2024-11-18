@@ -1,14 +1,18 @@
 micronaut:
   security:
     enabled: true
-  authentication: session
-  endpoints:
-    login:
-      enabled: true
-      path: '/authentication/login'
-  logout:
-    enabled: true
-    path: '/authentication/logout'
-    get-allowed: true
-  redirect:
-    enabled: false
+    authentication: session
+    redirect:
+      enabled: false
+    endpoints:
+      login:
+        enabled: true
+        path: '/authentication/login'
+      logout:
+        enabled: true
+        path: '/authentication/logout'
+        get-allowed: true
+      oauth:
+        enabled: false
+    reject-not-found: false
+    authentication-provider-strategy: any

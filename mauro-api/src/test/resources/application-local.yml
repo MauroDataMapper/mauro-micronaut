@@ -1,9 +1,0 @@
-micronaut:
-  application:
-    name: sandbox
-  http:
-    client:
-      read-timeout : 30m
-      connect-timeout : 30m
-  security:
-    enabled: false
