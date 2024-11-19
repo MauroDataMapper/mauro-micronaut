@@ -1,5 +1,6 @@
 package uk.ac.ox.softeng.mauro.controller.profile
 
+import uk.ac.ox.softeng.mauro.plugin.MauroPluginService
 import uk.ac.ox.softeng.mauro.profile.applied.AppliedProfile
 
 import io.micronaut.core.annotation.Nullable
@@ -109,20 +110,11 @@ class ProfileController implements AdministeredItemReader {
     }
 
     @Post('/{domainType}/{domainId}/profile/{namespace}/{name}{/version}/validate')
-    Map<String, Object> validateProfile(String domainType, UUID domainId, String namespace, String name, @Nullable String version, @Body Map<String, String> bodyMap) {
-        AdministeredItem administeredItem = readAdministeredItem(domainType, domainId)
+    AppliedProfile validateProfile(String domainType, UUID domainId, String namespace, String name, @Nullable String version, @Body Map<String, String> bodyMap) {
+        //AdministeredItem administeredItem = readAdministeredItem(domainType, domainId)
         Profile profile = getProfileByName(namespace, name, version)
-
-        // Overwrite administered item with metadata items from the bodyMap
-        bodyMap.sections.each { section ->
-            //section.fields.each { field ->
-
-            //}
-        }
-
-        [:]
-
-
+        // Overwrite applied profile with metadata items from the bodyMap
+        new AppliedProfile(profile, bodyMap)
     }
 
 

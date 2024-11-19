@@ -32,6 +32,15 @@ class AppliedProfile implements Profile {
     List<String> errors = []
 
 
+    AppliedProfile(Profile profile, Map profileBody) {
+        this.sourceProfile = profile
+        this.sections = profile.sections.collect {profileSection ->
+            new AppliedProfileSection(profileSection, this,
+                                      profileBody["sections"].find { it.name == profileSection.label } as Map)
+        }
+        validate()
+    }
+
     AppliedProfile(Profile profile, AdministeredItem administeredItem) {
         this.sourceProfile = profile
         this.administeredItem = administeredItem
@@ -40,6 +49,7 @@ class AppliedProfile implements Profile {
         }
         validate()
     }
+
 
     void validate() {
         if (!profileApplicableForDomains.contains(administeredItem.class.simpleName)) {

@@ -94,6 +94,13 @@ class AppliedProfileField extends ProfileField {
         validate()
     }
 
+    AppliedProfileField(ProfileField profileField, AppliedProfileSection parentSection, Map fieldBody) {
+        this.sourceProfileField = profileField
+        this.parentSection = parentSection
+        this.currentValue = fieldBody.currentValue
+        validate()
+    }
+
     void validate() {
 
         if(currentValue && !dataType.validateStringAgainstType(currentValue)) {
