@@ -39,7 +39,7 @@ import uk.ac.ox.softeng.mauro.domain.model.ModelItem
         @Index(columns = ['key']),
         @Index(columns = ['value'], unique = true)]
 )
-class EnumerationValue extends ModelItem<DataModel> {
+class EnumerationValue extends ModelItem<DataModel> implements DiffableItem<EnumerationValue> {
 
     @Override
     String getLabel() {
