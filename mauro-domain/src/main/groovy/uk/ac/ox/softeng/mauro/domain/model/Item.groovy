@@ -3,7 +3,6 @@ package uk.ac.ox.softeng.mauro.domain.model
 import com.fasterxml.jackson.annotation.JsonAlias
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
-import com.fasterxml.jackson.databind.deser.std.UUIDDeserializer
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.Nullable
@@ -17,7 +16,7 @@ import java.time.Instant
  * Item is a base class for domain objects that can be stored in the database.
  */
 @CompileStatic
-@AutoClone(excludes = ['id'])
+@AutoClone
 abstract class Item implements Serializable {
 
     /**

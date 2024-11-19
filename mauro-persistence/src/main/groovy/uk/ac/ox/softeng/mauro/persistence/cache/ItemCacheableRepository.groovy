@@ -93,8 +93,8 @@ abstract class ItemCacheableRepository<I extends Item> implements ItemRepository
     @Cacheable
     I cachedLookupById(String lookup, String domainType, UUID id) {
         switch (lookup) {
-            case FIND_BY_ID -> repository.findById(id)
-            case READ_BY_ID -> repository.readById(id)
+            case FIND_BY_ID -> repository.findById(id)?.clone()
+            case READ_BY_ID -> repository.readById(id)?.clone()
         }
     }
 
@@ -219,8 +219,8 @@ abstract class ItemCacheableRepository<I extends Item> implements ItemRepository
         @Cacheable
         List<ApiProperty> cachedLookup(String lookup) {
             switch (lookup) {
-                case FIND_ALL_PUBLIC_API_PROPERTIES -> ((ApiPropertyRepository) repository).findByPubliclyVisibleTrue()
-                case FIND_ALL_API_PROPERTIES -> ((ApiPropertyRepository) repository).findAll()
+                case FIND_ALL_PUBLIC_API_PROPERTIES -> ((ApiPropertyRepository) repository).findByPubliclyVisibleTrue().collect {it.clone()}
+                case FIND_ALL_API_PROPERTIES -> ((ApiPropertyRepository) repository).findAll().collect {it.clone()}
             }
         }
 
