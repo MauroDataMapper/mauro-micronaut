@@ -45,7 +45,7 @@ micronaut:
 #          client-secret:
 #          openid:
 #            issuer:
-#    create-user: true
+
 
   caches:
     items-cache:
@@ -125,8 +125,7 @@ javamail:
 #    label: Keycloak
 #    standard-provider: true
 #    authorization-endpoint:
-#    image-url: https://upload.wikimedia.org/wikipedia/commons/2/29/Keycloak_Logo.png?20200311211229
-#    create-user:
+#    image-url:
 #    login-success:
 
-#  create-user: true
+#    create-user:

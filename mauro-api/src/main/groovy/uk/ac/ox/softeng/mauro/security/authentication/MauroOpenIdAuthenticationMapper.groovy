@@ -21,7 +21,7 @@ import uk.ac.ox.softeng.mauro.security.utils.SecureRandomStringGenerator
 @Replaces(DefaultOpenIdAuthenticationMapper)
 class MauroOpenIdAuthenticationMapper extends DefaultOpenIdAuthenticationMapper {
 
-    @Value('${micronaut.security.create-user}')
+    @Value('${mauro.oauth.create-user:false}')
     boolean createUser
 
     @Inject
@@ -62,7 +62,6 @@ class MauroOpenIdAuthenticationMapper extends DefaultOpenIdAuthenticationMapper 
                 salt = SecureRandomStringGenerator.generateSalt()
             }
             saved = catalogueUserCacheableRepository.save(newUser)
-            catalogueUserCacheableRepository.invalidate(saved)
         }
         saved
     }

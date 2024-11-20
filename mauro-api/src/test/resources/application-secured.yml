@@ -1,37 +1,24 @@
 micronaut:
   security:
     enabled: true
-    create-user: true
-  authentication: session
-  endpoints:
-    login:
-      enabled: true
-      path: '/authentication/login'
-  logout:
-    enabled: true
-    path: '/authentication/logout'
-    get-allowed: true
-  redirect:
+    authentication: session
+    redirect:
+      enabled: false
+    endpoints:
+      login:
+        enabled: true
+        path: '/authentication/login'
+      logout:
+        enabled: true
+        path: '/authentication/logout'
+        get-allowed: true
+      oauth:
+        enabled: false
+    reject-not-found: false
+    authentication-provider-strategy: any
 
-    enabled: false
 
-#  oauth2:
-#    clients:
-#      keycloak:
-#        #       creds valid with test/resources/realm.json which has realm 'mauro' and client 'mauro'
-#        client-id: mauro
-#        client-secret: ZBXabk0H3TbnOlCvD4nrWzfSf32Ibgsx
-#        openid:
-#          issuer: http://localhost:9009/realms/mauro
-#
-#  http:
-#    client:
-#      read-timeout: 30m
-#      connect-timeout: 30m
-#
-#mauro:
-#  oauth:
-#    login-success: http://localhost:4200/redirects/open-id-connect-redirect.html
-#    authorizationEndpoint:
-#    imageUrl:
-
+  http:
+    client:
+      read-timeout: 30m
+      connect-timeout: 30m
