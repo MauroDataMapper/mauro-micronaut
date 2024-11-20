@@ -2,9 +2,12 @@ package uk.ac.ox.softeng.mauro.controller.profile
 
 import uk.ac.ox.softeng.mauro.plugin.MauroPluginService
 import uk.ac.ox.softeng.mauro.profile.applied.AppliedProfile
+import uk.ac.ox.softeng.mauro.profile.applied.AppliedProfileField
 
 import io.micronaut.core.annotation.Nullable
+import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.Body
+import io.micronaut.http.exceptions.HttpStatusException
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
 import uk.ac.ox.softeng.mauro.controller.model.AdministeredItemReader
@@ -102,19 +105,21 @@ class ProfileController implements AdministeredItemReader {
         })
     }
 
-    @Get('/{domainType}/{domainId}/profile/{namespace}/{name}{/version}')
-    AppliedProfile getProfiledItem(String domainType, UUID domainId, String namespace, String name, @Nullable String version) {
-        AdministeredItem administeredItem = readAdministeredItem(domainType, domainId)
+    @Get('/{domainType}/{domainId}/profile/{namespace}/{name}/{version}')
+    AppliedProfile getProfiledItem(String domainType, UUID domainId, String namespace, String name, String version) {
+        AdministeredItem administeredItem = findAdministeredItem(domainType, domainId)
         Profile profile = getProfileByName(namespace, name, version)
+        handleProfileNotFound(profile, namespace, name, version)
         new AppliedProfile(profile, administeredItem)
     }
 
-    @Post('/{domainType}/{domainId}/profile/{namespace}/{name}{/version}/validate')
-    AppliedProfile validateProfile(String domainType, UUID domainId, String namespace, String name, @Nullable String version, @Body Map<String, String> bodyMap) {
-        //AdministeredItem administeredItem = readAdministeredItem(domainType, domainId)
+    @Post('/{domainType}/{domainId}/profile/{namespace}/{name}/{version}/validate')
+    AppliedProfile validateProfile(String domainType, UUID domainId, String namespace, String name, String version, @Body Map bodyMap) {
+        AdministeredItem administeredItem = readAdministeredItem(domainType, domainId)
         Profile profile = getProfileByName(namespace, name, version)
+        handleProfileNotFound(profile, namespace, name, version)
         // Overwrite applied profile with metadata items from the bodyMap
-        new AppliedProfile(profile, bodyMap)
+        new AppliedProfile(profile, administeredItem, bodyMap)
     }
 
 
@@ -141,6 +146,12 @@ class ProfileController implements AdministeredItemReader {
                                 keys: keys.sort()
                         )
                 }
+    }
+
+    static void handleProfileNotFound(Profile profile, String namespace, String name, String version) {
+        if (!profile) {
+            throw new HttpStatusException(HttpStatus.BAD_REQUEST, "Profile with namespace: ${namespace}, name: ${name} and version: ${version} not found")
+        }
     }
 
 }

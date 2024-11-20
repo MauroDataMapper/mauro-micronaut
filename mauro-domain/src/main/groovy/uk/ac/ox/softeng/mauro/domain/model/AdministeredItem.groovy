@@ -70,7 +70,7 @@ abstract class AdministeredItem extends Item {
 
 
     /**
-     * The path of oan object allows it to be navigated to from either the containing model, or the folder path within
+     * The path of an object allows it to be navigated to from either the containing model, or the folder path within
      * a system.  This value is calculated on persistence and saved to allow easy lookup.
      */
     @Transient

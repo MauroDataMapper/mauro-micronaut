@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.plugin
 
+import uk.ac.ox.softeng.mauro.profile.Profile
+
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.exceptions.HttpStatusException
 import jakarta.inject.Inject
@@ -54,12 +56,6 @@ class MauroPluginService {
              ["name"   : it.name,
               "version": it.version]
          }).sort {it.name}
-    }
-
-    static void handlePluginNotFound(MauroPlugin mauroPlugin, String namespace, String name) {
-        if (!mauroPlugin) {
-            throw new HttpStatusException(HttpStatus.BAD_REQUEST, "Model import plugin with namespace: ${namespace}, name: ${name} not found")
-        }
     }
 
 

@@ -11,6 +11,4 @@ class PluginService {
             throw new HttpStatusException(HttpStatus.BAD_REQUEST, "Model import plugin with namespace: ${namespace}, name: ${name} not found")
         }
     }
-
-
 }

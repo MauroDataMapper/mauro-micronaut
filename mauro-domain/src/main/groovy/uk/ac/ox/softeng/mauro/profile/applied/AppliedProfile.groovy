@@ -5,9 +5,13 @@ import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.plugin.MauroPlugin
 import uk.ac.ox.softeng.mauro.profile.Profile
 
+import com.fasterxml.jackson.annotation.JsonIgnore
+
 class AppliedProfile implements Profile {
 
+    @JsonIgnore
     private AdministeredItem administeredItem
+
     private Profile sourceProfile
 
     @Override
@@ -31,9 +35,12 @@ class AppliedProfile implements Profile {
 
     List<String> errors = []
 
+    // Empty constructor for JSON deserialisation
+    AppliedProfile() { }
 
-    AppliedProfile(Profile profile, Map profileBody) {
+    AppliedProfile(Profile profile, AdministeredItem administeredItem, Map profileBody) {
         this.sourceProfile = profile
+        this.administeredItem = administeredItem
         this.sections = profile.sections.collect {profileSection ->
             new AppliedProfileSection(profileSection, this,
                                       profileBody["sections"].find { it.name == profileSection.label } as Map)
@@ -52,9 +59,10 @@ class AppliedProfile implements Profile {
 
 
     void validate() {
-        if (!profileApplicableForDomains.contains(administeredItem.class.simpleName)) {
+        String typeName = administeredItem.getDomainType()
+        if (!profileApplicableForDomains.contains(typeName)) {
             errors.add(
-                "The profile '${displayName}' cannot be applied to an object of type '${administeredItem.class.simpleName}'.  Allowed types are $profileApplicableForDomains'")
+                "The profile '${displayName}' cannot be applied to an object of type '${administeredItem.class.simpleName}'.  Allowed types are $profileApplicableForDomains'".toString())
         }
     }
 

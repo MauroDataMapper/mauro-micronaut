@@ -5,13 +5,21 @@ import uk.ac.ox.softeng.mauro.profile.ProfileField
 import uk.ac.ox.softeng.mauro.profile.ProfileFieldDataType
 import uk.ac.ox.softeng.mauro.profile.ProfileSection
 
+import com.fasterxml.jackson.annotation.JsonIgnore
+
 class AppliedProfileField extends ProfileField {
 
+
     private ProfileField sourceProfileField
+
+    @JsonIgnore
     private AdministeredItem administeredItem
+
+    @JsonIgnore
     AppliedProfileSection parentSection
 
     String currentValue
+
     List<String> errors = []
 
     @Override
@@ -104,16 +112,16 @@ class AppliedProfileField extends ProfileField {
     void validate() {
 
         if(currentValue && !dataType.validateStringAgainstType(currentValue)) {
-            errors.add ("Value '$currentValue' does not match specified data type: ${dataType.label}")
+            errors.add ("Value '$currentValue' does not match specified data type: ${dataType.label}".toString())
         }
         if(currentValue && allowedValues && !allowedValues.contains(currentValue)) {
-            errors.add("Value '$currentValue' should be one of the provided values: $allowedValues")
+            errors.add("Value '$currentValue' should be one of the provided values: $allowedValues".toString())
         }
         if(currentValue && regularExpression && !currentValue.matches(regularExpression)) {
-            errors.add("Value '$currentValue' should match the provided regular expression")
+            errors.add("Value '$currentValue' should match the provided regular expression".toString())
         }
         if(!currentValue && minMultiplicity > 0) {
-            errors.add("A value for field '$fieldName' must be provided")
+            errors.add("A value for field '$fieldName' must be provided".toString())
         }
         // TODO: Something about Max Multiplicity
     }

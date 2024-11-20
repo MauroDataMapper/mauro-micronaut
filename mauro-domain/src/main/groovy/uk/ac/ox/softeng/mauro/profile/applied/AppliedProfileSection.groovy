@@ -3,10 +3,16 @@ package uk.ac.ox.softeng.mauro.profile.applied
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.profile.ProfileSection
 
+import com.fasterxml.jackson.annotation.JsonIgnore
+
 class AppliedProfileSection extends ProfileSection {
 
     private ProfileSection sourceProfileSection
+
+    @JsonIgnore
     private AdministeredItem administeredItem
+
+    @JsonIgnore
     AppliedProfile parentProfile
 
     @Override

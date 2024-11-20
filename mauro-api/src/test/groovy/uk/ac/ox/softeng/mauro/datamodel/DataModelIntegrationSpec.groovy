@@ -129,7 +129,7 @@ class DataModelIntegrationSpec extends BaseIntegrationSpec {
 
         then:
         dataTypesListResponse.count == 2
-        dataTypesListResponse.items.path.collect {it.toString()}.sort() == ['dm:Test data model$main|dt:integer', 'dm:Test data model$main|dt:string']
+        dataTypesListResponse.items.path.collect {it.toString()}.sort() == ['dm:Test data model$1.0.0|dt:integer', 'dm:Test data model$1.0.0|dt:string']
         dataTypesListResponse.items.domainType == ['PrimitiveType', 'PrimitiveType']
 
         when:
@@ -169,7 +169,7 @@ class DataModelIntegrationSpec extends BaseIntegrationSpec {
 
         then:
         dataClassListResponse.count == 2
-        dataClassListResponse.items.path.collect {it.toString()}.sort() == ['dm:Test data model$main|dc:First data class', 'dm:Test data model$main|dc:Second data class']
+        dataClassListResponse.items.path.collect {it.toString()}.sort() == ['dm:Test data model$1.0.0|dc:First data class', 'dm:Test data model$1.0.0|dc:Second data class']
 
         when:
         dataClassResponse = (DataClass) POST("/dataModels/$dataModelId/dataClasses/$dataClassId2/dataClasses", [label: 'Third data class', description: 'The third data class'], DataClass)
