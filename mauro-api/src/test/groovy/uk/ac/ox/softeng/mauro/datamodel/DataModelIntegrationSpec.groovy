@@ -244,6 +244,7 @@ class DataModelIntegrationSpec extends BaseIntegrationSpec {
 
         then:
         dataElementResponse.label == 'Renamed data element'
+        dataElementResponse.dataType.id == dataTypeId2
 
         when:
         dataElementListResponse = (ListResponse<DataElement>) GET("/dataModels/$dataModelId/dataClasses/$dataClassId1/dataElements")
