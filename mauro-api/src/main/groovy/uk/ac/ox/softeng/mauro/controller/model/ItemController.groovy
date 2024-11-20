@@ -42,7 +42,7 @@ abstract class ItemController<I extends Item> implements AdministeredItemReader 
         I defaultItem = (I) item.class.getDeclaredConstructor().newInstance()
 
         // Disallowed properties cannot be set by user request
-        disallowedCreateProperties.each {String key ->
+        disallowedCreateProperties.each { String key ->
             if (defaultItem.hasProperty(key).properties.setter && item[key] != defaultItem[key]) {
                 throw new HttpStatusException(HttpStatus.BAD_REQUEST, "Property $key cannot be set directly")
             }
@@ -77,9 +77,15 @@ abstract class ItemController<I extends Item> implements AdministeredItemReader 
         existing.properties.each {
             String key = it.key
             if (!disallowedProperties.contains(key) && cleanItem[key] != null && existing.hasProperty(key).properties.setter) {
-                if (existing[key] != cleanItem[key]) {
+                if ( (existing[key] instanceof Item || cleanItem[key] instanceof Item)
+                        && !existing[key].equals(cleanItem[key])) {
                     existing[key] = cleanItem[key]
                     hasChanged = true
+                } else {
+                    if (existing[key] != cleanItem[key]) {
+                        existing[key] = cleanItem[key]
+                        hasChanged = true
+                    }
                 }
             }
         }
