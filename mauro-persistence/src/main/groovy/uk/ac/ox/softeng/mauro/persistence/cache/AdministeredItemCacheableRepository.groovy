@@ -52,11 +52,15 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
         updated
     }
 
-    @Cacheable
     List<I> cachedLookupByParent(String lookup, String domainType, AdministeredItem parent) {
+        mutableCachedLookupByParent(lookup, domainType, parent).collect {it.clone()}
+    }
+
+    @Cacheable
+    List<I> mutableCachedLookupByParent(String lookup, String domainType, AdministeredItem parent) {
         switch (lookup) {
-            case FIND_ALL_BY_PARENT -> repository.findAllByParent(parent).collect {it.clone()}
-            case READ_ALL_BY_PARENT -> repository.readAllByParent(parent).collect {it.clone()}
+            case FIND_ALL_BY_PARENT -> repository.findAllByParent(parent)
+            case READ_ALL_BY_PARENT -> repository.readAllByParent(parent)
         }
     }
 
