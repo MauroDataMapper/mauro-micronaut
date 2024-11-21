@@ -1,7 +1,5 @@
 package uk.ac.ox.softeng.mauro.controller.model
 
-import uk.ac.ox.softeng.mauro.service.plugin.PluginService
-
 import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
@@ -20,7 +18,6 @@ import io.micronaut.security.rules.SecurityRule
 import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
 import reactor.core.publisher.Flux
-import uk.ac.ox.softeng.mauro.domain.classifier.Classifier
 import uk.ac.ox.softeng.mauro.domain.facet.ReferenceFile
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
@@ -33,15 +30,14 @@ import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableReposit
 import uk.ac.ox.softeng.mauro.persistence.cache.FacetCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
-import uk.ac.ox.softeng.mauro.persistence.classifier.ClassifierRepository
 import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemRepository
 import uk.ac.ox.softeng.mauro.persistence.model.ModelContentRepository
-import uk.ac.ox.softeng.mauro.plugin.MauroPlugin
 import uk.ac.ox.softeng.mauro.plugin.MauroPluginService
 import uk.ac.ox.softeng.mauro.plugin.exporter.ModelExporterPlugin
 import uk.ac.ox.softeng.mauro.plugin.importer.FileParameter
 import uk.ac.ox.softeng.mauro.plugin.importer.ImportParameters
 import uk.ac.ox.softeng.mauro.plugin.importer.ModelImporterPlugin
+import uk.ac.ox.softeng.mauro.service.plugin.PluginService
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 import java.nio.charset.StandardCharsets
@@ -161,7 +157,6 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     @Transactional
     M finalise(UUID id, @Body FinaliseData finaliseData) {
         M model = modelRepository.findById(id)
-
         accessControlService.checkRole(Role.EDITOR, model)
 
         M finalised = modelService.finaliseModel(model, finaliseData.version, finaliseData.versionChangeType, finaliseData.versionTag)

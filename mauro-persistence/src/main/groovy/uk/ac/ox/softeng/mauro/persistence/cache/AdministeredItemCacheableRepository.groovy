@@ -1,7 +1,5 @@
 package uk.ac.ox.softeng.mauro.persistence.cache
 
-import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
-
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.cache.annotation.CacheConfig
@@ -10,10 +8,7 @@ import io.micronaut.cache.annotation.Cacheable
 import io.micronaut.core.annotation.Nullable
 import jakarta.inject.Singleton
 import uk.ac.ox.softeng.mauro.domain.classifier.Classifier
-import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
-import uk.ac.ox.softeng.mauro.domain.datamodel.DataElement
-import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
-import uk.ac.ox.softeng.mauro.domain.datamodel.EnumerationValue
+import uk.ac.ox.softeng.mauro.domain.datamodel.*
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.terminology.Term
 import uk.ac.ox.softeng.mauro.domain.terminology.TermRelationship
@@ -60,8 +55,8 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
     @Cacheable
     List<I> cachedLookupByParent(String lookup, String domainType, AdministeredItem parent) {
         switch (lookup) {
-            case FIND_ALL_BY_PARENT -> repository.findAllByParent(parent)
-            case READ_ALL_BY_PARENT -> repository.readAllByParent(parent)
+            case FIND_ALL_BY_PARENT -> repository.findAllByParent(parent).collect {it.clone()}
+            case READ_ALL_BY_PARENT -> repository.readAllByParent(parent).collect {it.clone()}
         }
     }
 
