@@ -90,8 +90,12 @@ abstract class ItemCacheableRepository<I extends Item> implements ItemRepository
      * @param id Object UUID
      * @return Mono of the object
      */
-    @Cacheable
     I cachedLookupById(String lookup, String domainType, UUID id) {
+        mutableCachedLookupById(lookup, domainType, id)?.clone()
+    }
+
+    @Cacheable
+    I mutableCachedLookupById(String lookup, String domainType, UUID id) {
         switch (lookup) {
             case FIND_BY_ID -> repository.findById(id)
             case READ_BY_ID -> repository.readById(id)
@@ -142,8 +146,12 @@ abstract class ItemCacheableRepository<I extends Item> implements ItemRepository
         @CacheInvalidate(all = true)
         void invalidateAll() {}
 
-        @Cacheable
         List<SecurableResourceGroupRole> readAllBySecurableResourceDomainTypeAndSecurableResourceId(String securableResourceDomainType, UUID securableResourceId) {
+            mutableReadAllBySecurableResourceDomainTypeAndSecurableResourceId(securableResourceDomainType, securableResourceId).collect {it.clone()}
+        }
+
+        @Cacheable
+        List<SecurableResourceGroupRole> mutableReadAllBySecurableResourceDomainTypeAndSecurableResourceId(String securableResourceDomainType, UUID securableResourceId) {
             ((SecurableResourceGroupRoleRepository) repository).readAllBySecurableResourceDomainTypeAndSecurableResourceId(securableResourceDomainType, securableResourceId)
         }
 
@@ -172,8 +180,12 @@ abstract class ItemCacheableRepository<I extends Item> implements ItemRepository
         @CacheInvalidate(all = true)
         void invalidateAll() {}
 
-        @Cacheable
         List<UserGroup> readAllByCatalogueUserId(UUID catalogueUserId) {
+            mutableReadAllByCatalogueUserId(catalogueUserId).collect {it.clone()}
+        }
+
+        @Cacheable
+        List<UserGroup> mutableReadAllByCatalogueUserId(UUID catalogueUserId) {
             ((UserGroupRepository) repository).readAllByCatalogueUserId(catalogueUserId)
         }
 
@@ -216,8 +228,12 @@ abstract class ItemCacheableRepository<I extends Item> implements ItemRepository
             null
         }
 
-        @Cacheable
         List<ApiProperty> cachedLookup(String lookup) {
+            mutableCachedLookup(lookup).collect {it.clone()}
+        }
+
+        @Cacheable
+        List<ApiProperty> mutableCachedLookup(String lookup) {
             switch (lookup) {
                 case FIND_ALL_PUBLIC_API_PROPERTIES -> ((ApiPropertyRepository) repository).findByPubliclyVisibleTrue()
                 case FIND_ALL_API_PROPERTIES -> ((ApiPropertyRepository) repository).findAll()

@@ -82,7 +82,6 @@ class DataModel extends Model {
     @Override
     DataModel clone() {
         DataModel cloned = (DataModel) super.clone()
-        cloned.updateCreationProperties()
         Map<DataClass, DataClass> clonedDataClassLookup = [:]
         Map<DataClass, DataClass> clonedChildDataClassLookup = [:]
         Map<DataElement, DataElement> clonedDataElementLookup = [:]
@@ -91,7 +90,6 @@ class DataModel extends Model {
 
         cloned.dataTypes = dataTypes.collect {it->
             it.clone().tap { clonedDT ->
-                clonedDT.updateCreationProperties()
                 clonedDataTypeLookup.put(it, clonedDT)
                 clonedDT.parent = cloned
                 clonedDT.enumerationValues.clear()
@@ -99,7 +97,6 @@ class DataModel extends Model {
         }
         List<DataClass> clonedDataClasses = dataClasses.collect {
             it.clone().tap { clonedDC ->
-                clonedDC.updateCreationProperties()
                 clonedDataClassLookup.put(it, clonedDC)
                 clonedDC.dataModel = cloned
             }
@@ -107,7 +104,6 @@ class DataModel extends Model {
         clonedDataClasses.each {
             List<DataClass> clonedChildList = it.dataClasses.collect { child ->
                 child.clone().tap { clonedChild ->
-                    clonedChild.updateCreationProperties()
                     clonedChildDataClassLookup.put(child, clonedChild)
                     clonedChild.parentDataClass = it
                     clonedChild.dataModel = cloned
@@ -122,7 +118,6 @@ class DataModel extends Model {
 
         cloned.dataElements = dataElements.collect {
             it.clone().tap { clonedDataElement ->
-                clonedDataElement.updateCreationProperties()
                 clonedDataElementLookup.put(it, clonedDataElement)
                 Map<DataClass, DataClass> allDataClassLookup = clonedDataClassLookup
                 allDataClassLookup.putAll(clonedChildDataClassLookup)
@@ -138,7 +133,6 @@ class DataModel extends Model {
         }
         cloned.enumerationValues = enumerationValues.collect {
             it.clone().tap { clonedEV ->
-                clonedEV.updateCreationProperties()
                 clonedEnumerationValueLookup.put(it, clonedEV)
                 clonedEV.dataModel = cloned
                 clonedEV.parent = clonedDataTypeLookup[it.parent]
