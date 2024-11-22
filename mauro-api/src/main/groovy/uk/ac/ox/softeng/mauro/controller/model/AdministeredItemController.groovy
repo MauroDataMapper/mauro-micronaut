@@ -99,15 +99,10 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
         accessControlService.checkRole(Role.EDITOR, existing)
 
         I updated = updateEntity(existing, item)
-        updated.classifiers =  validateClassifiers(updated)
-        updated.classifiers.each {
-            if (!getClassifierCacheableRepository(it.domainType).findByAdministeredItemAndClassifier(updated.domainType, updated.id, it.id)) {
-               getClassifierCacheableRepository(it.domainType).addAdministeredItem(updated, it)
-            }
-        }
+
+        updated = updateClassifiers(updated)
         updated
     }
-
 
     protected I updateEntity(@NonNull I existing, @NonNull I cleanItem) {
         boolean hasChanged = updateProperties(existing, cleanItem)
@@ -119,6 +114,7 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
             existing
         }
     }
+
 
     @Transactional
     HttpStatus delete(@NonNull UUID id, @Body @Nullable I item) {
@@ -152,6 +148,16 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
         item.updatePath()
 
         item
+    }
+
+    protected I updateClassifiers(I updated) {
+        updated.classifiers = validateClassifiers(updated)
+        updated.classifiers.each {
+            if (!getClassifierCacheableRepository(it.domainType).findByAdministeredItemAndClassifier(updated.domainType, updated.id, it.id)) {
+                getClassifierCacheableRepository(it.domainType).addAdministeredItem(updated, it)
+            }
+        }
+        updated
     }
 
     protected List<Classifier> validateClassifiers(I item) {
