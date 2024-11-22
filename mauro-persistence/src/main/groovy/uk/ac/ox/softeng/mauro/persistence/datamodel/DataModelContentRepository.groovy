@@ -45,7 +45,7 @@ class DataModelContentRepository extends ModelContentRepository<DataModel> {
 
         Map<UUID, DataType> dataTypeMap = dataModel.dataTypes.collectEntries {[it.id, it]}
         if(dataModel.dataTypes) {
-            dataModel.enumerationValues = enumerationValueRepository.findAllByEnumerationTypeIn(dataModel.dataTypes)
+            dataModel.enumerationValues = enumerationValueRepository.readAllByEnumerationTypeIn(dataModel.dataTypes)
             dataModel.enumerationValues.each {enumerationValue ->
                 enumerationValue.enumerationType = dataTypeMap[enumerationValue.enumerationType.id]
                 enumerationValue.enumerationType.enumerationValues.add(enumerationValue)

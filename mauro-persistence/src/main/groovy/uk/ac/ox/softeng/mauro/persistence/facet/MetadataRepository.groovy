@@ -19,7 +19,7 @@ abstract class MetadataRepository implements ItemRepository<Metadata> {
 
 
 
-    @Query(value = '''select distinct namespace, key from core.metadata order by namespace;''', nativeQuery = true)
+    @Query(value = '''select distinct namespace, key from core.metadata order by namespace;''')
     abstract List<NamespaceDTO> getNamespaces()
 
     Map<String, Set<String>> getNamespaceKeys() {
