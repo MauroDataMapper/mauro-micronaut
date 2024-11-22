@@ -245,6 +245,15 @@ class DataModelIntegrationSpec extends BaseIntegrationSpec {
         then:
         dataElementResponse.label == 'Renamed data element'
         dataElementResponse.dataType.id == dataTypeId2
+        Integer minMultiplicity = dataElementResponse.minMultiplicity
+
+        when:
+        dataElementResponse = (DataElement) PUT("/dataModels/$dataModelId/dataClasses/$dataClassId1/dataElements/$dataElementId1", [ minMultiplicity: 5, dataType: [id: dataTypeId2]], DataElement)
+
+        then:
+        dataElementResponse.label == 'Renamed data element'
+        dataElementResponse.dataType.id == dataTypeId2
+        dataElementResponse.minMultiplicity != minMultiplicity
 
         when:
         dataElementListResponse = (ListResponse<DataElement>) GET("/dataModels/$dataModelId/dataClasses/$dataClassId1/dataElements")
