@@ -37,6 +37,7 @@ class BaseIntegrationSpec extends Specification {
     public static final String IMPORT_PATH = '/import'
     public static final String AUTHOR = 'author'
     public static final String PATH_IDENTIFIER = 'pathIdentifier'
+    public static final String PATH_MODEL_IDENTIFIER = 'pathModelIdentifier'
     public static final String MODEL_VERSION_TAG = 'modelVersionTag'
     public static final String FINALISED = 'finalised'
     public static final String DATE_FINALISED = 'dateFinalised'

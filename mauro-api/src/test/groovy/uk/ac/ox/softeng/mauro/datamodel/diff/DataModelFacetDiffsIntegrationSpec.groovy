@@ -97,10 +97,10 @@ class DataModelFacetDiffsIntegrationSpec extends CommonDataSpec {
         then:
         diffMap
         diffMap.label == left.label
-        diffMap.diffs.size() == 9
+        diffMap.diffs.size() == 10
         diffMap.diffs.each {
             [AUTHOR, DiffBuilder.DESCRIPTION, DiffBuilder.LABEL,
-             PATH_IDENTIFIER, MODEL_VERSION_TAG, FINALISED, DATE_FINALISED].contains(it.name)
+             PATH_IDENTIFIER, PATH_MODEL_IDENTIFIER, MODEL_VERSION_TAG, FINALISED, DATE_FINALISED].contains(it.name)
         }
         ArrayDiff<Collection> annotationsDiff = diffMap.diffs.find { it -> it.name == DiffBuilder.ANNOTATION } as ArrayDiff<Collection>
         annotationsDiff.created.size() == 1

@@ -1,4 +1,4 @@
-package uk.ac.ox.softeng.mauro.domain.test.facet
+package uk.ac.ox.softeng.mauro.test.domain.facet
 
 import spock.lang.Shared
 import spock.lang.Specification

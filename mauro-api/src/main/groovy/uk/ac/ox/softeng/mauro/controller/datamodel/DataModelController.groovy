@@ -29,6 +29,7 @@ import uk.ac.ox.softeng.mauro.persistence.datamodel.DataModelContentRepository
 import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchRepository
 import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchRequestDTO
 import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchResultsDTO
+import uk.ac.ox.softeng.mauro.plugin.importer.DataModelImporterPlugin
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @Slf4j
@@ -146,4 +147,10 @@ class DataModelController extends ModelController<DataModel> {
         otherDataModel.setAssociations()
         dataModel.diff(otherDataModel)
     }
+
+    @Get('/dataModels/providers/importers')
+    List<DataModelImporterPlugin> dataModelImporters() {
+        mauroPluginService.listPlugins(DataModelImporterPlugin)
+    }
+
 }

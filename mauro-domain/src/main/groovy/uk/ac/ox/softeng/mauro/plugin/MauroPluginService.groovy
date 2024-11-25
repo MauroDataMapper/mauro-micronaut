@@ -1,5 +1,9 @@
 package uk.ac.ox.softeng.mauro.plugin
 
+import uk.ac.ox.softeng.mauro.profile.Profile
+
+import io.micronaut.http.HttpStatus
+import io.micronaut.http.exceptions.HttpStatusException
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
 

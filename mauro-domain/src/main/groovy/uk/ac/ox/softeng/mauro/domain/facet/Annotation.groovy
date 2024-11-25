@@ -5,11 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
 import io.micronaut.data.annotation.*
-import uk.ac.ox.softeng.mauro.domain.diff.BaseCollectionDiff
-import uk.ac.ox.softeng.mauro.domain.diff.CollectionDiff
-import uk.ac.ox.softeng.mauro.domain.diff.DiffBuilder
-import uk.ac.ox.softeng.mauro.domain.diff.DiffableItem
-import uk.ac.ox.softeng.mauro.domain.diff.ObjectDiff
+import uk.ac.ox.softeng.mauro.domain.diff.*
 import uk.ac.ox.softeng.mauro.domain.security.CatalogueUser
 
 @CompileStatic
@@ -30,7 +26,7 @@ class Annotation extends Facet implements DiffableItem<Annotation> {
 
     @JsonAlias(['child_annotations'])
     @Relation(Relation.Kind.ONE_TO_MANY)
-    List<Annotation> childAnnotations
+    List<Annotation> childAnnotations = []
 
 
     @Override
