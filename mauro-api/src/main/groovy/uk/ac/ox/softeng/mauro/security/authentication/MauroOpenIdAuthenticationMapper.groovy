@@ -43,12 +43,13 @@ class MauroOpenIdAuthenticationMapper extends DefaultOpenIdAuthenticationMapper 
     }
 
     CatalogueUser createUser(Map<String, Object> claims) {
+        CatalogueUser saved
         if (createUser) {
             log.debug("User email address not found, adding new Catalogue user for : {}", claims.email)
             CatalogueUser newUser = new CatalogueUser().tap {
                 pending = false
                 disabled = false
-                creationMethod = 'OPENID_REGISTER'
+                creationMethod = 'OpenID-Connect'
                 tempPassword = null
                 password = null
                 firstName = claims.given_name
@@ -56,12 +57,9 @@ class MauroOpenIdAuthenticationMapper extends DefaultOpenIdAuthenticationMapper 
                 emailAddress = claims.email
                 salt = SecureRandomStringGenerator.generateSalt()
             }
-
-            CatalogueUser saved = catalogueUserCacheableRepository.save(newUser)
-            catalogueUserCacheableRepository.invalidate(saved)
-            saved
+            saved = catalogueUserCacheableRepository.save(newUser)
         }
-        null
+        saved
     }
 
     static void authenticationException(String message){
