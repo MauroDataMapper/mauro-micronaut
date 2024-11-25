@@ -32,6 +32,7 @@ class CatalogueUser extends Item {
     String profilePicture // should be UserImageFile type
     String userPreferences
     UUID resetToken
+
     String creationMethod
     Instant lastLogin
 

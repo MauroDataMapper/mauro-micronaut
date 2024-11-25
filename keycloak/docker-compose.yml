@@ -1,0 +1,29 @@
+version: "3.8"
+services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0.4
+    container_name: micronaut_keycloak
+    restart: "no"
+    environment:
+      KC_LOG_LEVEL: debug
+      KC_METRICS_ENABLED: true
+      KC_HEALTH_ENABLED: true
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: password
+      KC_CLIENT_ID: mauroadmin
+      KC_CLIENT_SECRET: ZBXabk0H3TbnOlCvD4nrWzfSf32Ibgsx
+      KC_REDIRECT_URI: http://localhost:8088/oauth/callback/keycloak
+      KEYCLOAK_FRONT_END_URL: http://localhost:9009/auth
+      KEYCLOAK_IMPORT: /opt/keycloak/data/import/realm.json
+
+    command:
+      - start-dev
+      - --import-realm
+    ports:
+      - 9009:8080
+
+    volumes:
+      - type: bind
+        source: ${PWD}/mauro-api/src/test/resources/keycloak/realm.json
+        target: /opt/keycloak/data/import/realm.json
+

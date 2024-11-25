@@ -45,6 +45,8 @@ micronaut:
 #          client-secret:
 #          openid:
 #            issuer:
+
+
   caches:
     items-cache:
       initial-capacity: 10000
@@ -120,9 +122,10 @@ javamail:
 #mauro:
 #  oauth:
 #    id:
-#    label:
-#    standard-provider:
+#    label: Keycloak
+#    standard-provider: true
 #    authorization-endpoint:
 #    image-url:
-#    create-user:
 #    login-success:
+
+#    create-user:

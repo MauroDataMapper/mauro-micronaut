@@ -21,7 +21,7 @@ import uk.ac.ox.softeng.mauro.security.utils.SecureRandomStringGenerator
 @Replaces(DefaultOpenIdAuthenticationMapper)
 class MauroOpenIdAuthenticationMapper extends DefaultOpenIdAuthenticationMapper {
 
-    @Value('${micronaut.security.create-user:true}')
+    @Value('${mauro.oauth.create-user:false}')
     boolean createUser
 
     @Inject
@@ -35,10 +35,14 @@ class MauroOpenIdAuthenticationMapper extends DefaultOpenIdAuthenticationMapper 
     @Transactional
     Map<String, Object> buildAttributes(String providerName, OpenIdTokenResponse tokenResponse, OpenIdClaims openIdClaims) {
         Map<String, Object> claims = super.buildAttributes(providerName, tokenResponse, openIdClaims)
+        //in theory this code is unreachable from openid provider
+        if (!claims.email) authenticationException("Attempt to login with no  email address specified!")
+
         if (!claims.email_verified) authenticationException("Attempt to login with unverified email address! [${claims.email}]")
-        CatalogueUser user = catalogueUserCacheableRepository.readByEmailAddress((String) claims.email)?: createUser(claims)
+        CatalogueUser user = catalogueUserCacheableRepository.readByEmailAddress((String) claims.email) ?: createUser(claims)
         if (!user) authenticationException("User does not exist for $claims.email")
         claims.id = user.id
+        log.debug("claims: id: {}", user.id)
         claims
     }
 
@@ -62,7 +66,7 @@ class MauroOpenIdAuthenticationMapper extends DefaultOpenIdAuthenticationMapper 
         saved
     }
 
-    static void authenticationException(String message){
+    static void authenticationException(String message) {
         throw new AuthenticationException(message)
     }
 }
