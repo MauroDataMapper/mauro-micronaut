@@ -15,4 +15,5 @@ abstract class DataElementDTORepository implements GenericRepository<DataElement
     abstract List<DataElementDTO> findAllByDataClass(DataClass dataClass)
 
     abstract List<DataElementDTO> findAllByDataClassIn(Collection<DataClass> dataClasses)
+
 }

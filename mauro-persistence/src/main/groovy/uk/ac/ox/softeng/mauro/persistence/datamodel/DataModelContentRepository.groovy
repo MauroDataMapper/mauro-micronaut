@@ -1,5 +1,11 @@
 package uk.ac.ox.softeng.mauro.persistence.datamodel
 
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
+import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository
+import uk.ac.ox.softeng.mauro.persistence.model.ModelContentRepository
+
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
 import jakarta.inject.Inject
@@ -37,6 +43,16 @@ class DataModelContentRepository extends ModelContentRepository<DataModel> {
 
         dataModel.dataTypes = dataTypeRepository.findAllByParent(dataModel)
 
+        Map<UUID, DataType> dataTypeMap = dataModel.dataTypes.collectEntries {[it.id, it]}
+        if(dataModel.dataTypes) {
+            dataModel.enumerationValues = enumerationValueRepository.readAllByEnumerationTypeIn(dataModel.dataTypes)
+            dataModel.enumerationValues.each {enumerationValue ->
+                enumerationValue.enumerationType = dataTypeMap[enumerationValue.enumerationType.id]
+                enumerationValue.enumerationType.enumerationValues.add(enumerationValue)
+                enumerationValue.dataModel = dataModel
+            }
+        }
+
         dataModel.dataClasses.each {dataClass ->
             dataClass.dataClasses = dataModel.allDataClasses.findAll{it.parentDataClass?.id == dataClass.id }.sort {it.order}
         }
@@ -46,7 +62,7 @@ class DataModelContentRepository extends ModelContentRepository<DataModel> {
         dataModel.dataElements.each {dataElement ->
             dataElement.dataClass = dataClassMap[dataElement.dataClass.id]
             dataElement.dataClass.dataElements.add(dataElement)
-            dataElement.dataType = dataModel.dataTypes.find {it.id == dataElement.dataType.id}
+            dataElement.dataType = dataTypeMap[dataElement.dataType.id]
         }
 
         dataModel

@@ -40,6 +40,9 @@ abstract class EnumerationValueRepository implements ModelItemRepository<Enumera
     }
 
     @Nullable
+    abstract Set<EnumerationValue> readAllByEnumerationTypeIn(Collection<DataType> dataTypes)
+
+    @Nullable
     abstract List<EnumerationValue> readAllByEnumerationType(DataType dataType)
 
     @Override

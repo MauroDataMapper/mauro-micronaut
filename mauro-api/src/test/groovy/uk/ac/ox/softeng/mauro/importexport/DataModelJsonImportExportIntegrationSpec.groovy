@@ -1,5 +1,6 @@
 package uk.ac.ox.softeng.mauro.importexport
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.json.JsonSlurper
 import io.micronaut.http.MediaType
 import io.micronaut.http.client.multipart.MultipartBody
@@ -13,9 +14,13 @@ import uk.ac.ox.softeng.mauro.domain.facet.Metadata
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.domain.model.SummaryMetadataReport
+import uk.ac.ox.softeng.mauro.export.ExportMetadata
+import uk.ac.ox.softeng.mauro.export.ExportModel
 import uk.ac.ox.softeng.mauro.persistence.ContainerizedTest
 import uk.ac.ox.softeng.mauro.testing.CommonDataSpec
 import uk.ac.ox.softeng.mauro.web.ListResponse
+
+import java.time.Instant
 
 @ContainerizedTest
 class DataModelJsonImportExportIntegrationSpec extends CommonDataSpec {
@@ -144,6 +149,32 @@ class DataModelJsonImportExportIntegrationSpec extends CommonDataSpec {
         importedDataTypes
         importedDataTypes.count == 1
         importedDataTypes.items.domainType.first() == dataType.domainType
+    }
+
+
+    static UUID importModelViaApi(UUID folderId, DataModel dataModel1, ObjectMapper objectMapper1) {
+
+        ExportModel exportModel = ExportModel.build {
+            dataModel dataModel1
+            exportMetadata {
+                namespace 'Test namespace'
+                name 'Test name'
+                version 'Test version'
+                exportDate Instant.now()
+                exportedBy "Anonymous User"
+            }
+        }
+        byte[] payload = objectMapper1.writeValueAsBytes(exportModel)
+
+
+        MultipartBody importRequest = MultipartBody.builder()
+                .addPart('folderId', folderId.toString())
+                .addPart('importFile', 'file.json', MediaType.APPLICATION_JSON_TYPE, payload)
+                .build()
+
+        ListResponse<DataModel> response = (ListResponse<DataModel>) POST("$DATAMODELS_PATH$IMPORT_PATH/uk.ac.ox.softeng.mauro.plugin.importer.json/JsonDataModelImporterPlugin/4.0.0".toString(), importRequest)
+        response.items[0].id
+
     }
 
 }
