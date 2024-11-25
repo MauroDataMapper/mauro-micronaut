@@ -42,6 +42,8 @@ class DiffBuilder {
     static final String BRANCH_NAME = 'branchName'
     static final String PATH_MODEL_IDENTIFIER = 'pathModelIdentifier'
     static final String FILE_NAME = 'fileName'
+    static final String LANGUAGE = 'language'
+    static final String REPRESENTATION = 'representation'
     static final List<String> IGNORE_KEYS = [ID_KEY, DATE_CREATED_KEY, LAST_UPDATED_KEY, DOMAIN_TYPE, CLASS_KEY, FOLDER_KEY, LEFT_ID_KEY, RIGHT_ID_KEY]
     static final List<String> MODEL_COLLECTION_KEYS = [METADATA, ANNOTATION, RULE, SUMMARY_METADATA, SUMMARY_METADATA_REPORT, REFERENCE_FILES, DATA_CLASSES, DATA_TYPE, DATA_ELEMENTS,
    ENUMERATION_VALUES, REFERENCE_FILES, CLASSIFIERS]
