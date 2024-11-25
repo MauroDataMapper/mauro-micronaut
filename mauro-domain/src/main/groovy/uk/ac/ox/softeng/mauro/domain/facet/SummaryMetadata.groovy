@@ -9,7 +9,6 @@ import io.micronaut.data.annotation.*
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Pattern
 import uk.ac.ox.softeng.mauro.domain.diff.*
-import uk.ac.ox.softeng.mauro.domain.model.SummaryMetadataReport
 
 @CompileStatic
 @MappedEntity(value = 'summary_metadata', schema = 'core', alias = 'summary_metadata_')

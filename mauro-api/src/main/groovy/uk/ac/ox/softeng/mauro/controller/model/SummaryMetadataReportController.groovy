@@ -14,7 +14,7 @@ import uk.ac.ox.softeng.mauro.domain.facet.Facet
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.model.Item
-import uk.ac.ox.softeng.mauro.domain.model.SummaryMetadataReport
+import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadataReport
 import uk.ac.ox.softeng.mauro.domain.security.Role
 import uk.ac.ox.softeng.mauro.persistence.cache.FacetCacheableRepository.SummaryMetadataCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.ItemCacheableRepository

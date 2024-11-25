@@ -1,4 +1,7 @@
-package uk.ac.ox.softeng.mauro.domain.model
+package uk.ac.ox.softeng.mauro.domain.facet
+
+import uk.ac.ox.softeng.mauro.domain.model.InstantConverter
+import uk.ac.ox.softeng.mauro.domain.model.Item
 
 import com.fasterxml.jackson.annotation.JsonAlias
 import com.fasterxml.jackson.annotation.JsonIgnore
