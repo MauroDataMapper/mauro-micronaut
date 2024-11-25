@@ -48,7 +48,7 @@ dependencies {
     implementation("io.micronaut.security:micronaut-security-oauth2")
     implementation("io.micronaut.security:micronaut-security-jwt")
 
-    testImplementation ('org.keycloak:keycloak-admin-client:26.0.0')
+    implementation group: 'org.jboss.resteasy', name: 'resteasy-client', version: '7.0.0.Alpha4'
     testImplementation group: 'org.htmlunit', name: 'htmlunit', version: '4.6.0'
     //Email
     implementation("io.micronaut.email:micronaut-email-javamail")

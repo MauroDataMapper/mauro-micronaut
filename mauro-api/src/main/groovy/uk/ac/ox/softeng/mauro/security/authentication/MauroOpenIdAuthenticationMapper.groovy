@@ -33,8 +33,8 @@ class MauroOpenIdAuthenticationMapper extends DefaultOpenIdAuthenticationMapper 
 
     @Override
     @Transactional
-    Map<String, Object> buildAttributes(String providerName, OpenIdTokenResponse tokenResponse, OpenIdClaims openIdClaims){
-    Map<String, Object> claims = super.buildAttributes(providerName, tokenResponse, openIdClaims)
+    Map<String, Object> buildAttributes(String providerName, OpenIdTokenResponse tokenResponse, OpenIdClaims openIdClaims) {
+        Map<String, Object> claims = super.buildAttributes(providerName, tokenResponse, openIdClaims)
         //in theory this code is unreachable from openid provider
         if (!claims.email) authenticationException("Attempt to login with no  email address specified!")
 
