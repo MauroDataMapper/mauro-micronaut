@@ -101,7 +101,7 @@ class TestModelData {
 
     static Rule testRule = new Rule().tap {
         id = UUID.randomUUID()
-        label = 'test rule'
+        name = 'test rule'
         description = 'test description'
     }
 }
