@@ -1,4 +1,4 @@
-package uk.ac.ox.softeng.mauro.model
+package uk.ac.ox.softeng.mauro.facet
 
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.client.exceptions.HttpClientResponseException
