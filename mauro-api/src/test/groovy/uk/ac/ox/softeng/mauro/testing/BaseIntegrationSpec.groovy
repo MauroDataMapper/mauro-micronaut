@@ -27,6 +27,8 @@ class BaseIntegrationSpec extends Specification {
     public static final String METADATA_PATH = '/metadata'
     public static final String SUMMARY_METADATA_PATH = '/summaryMetadata'
     public static final String SUMMARY_METADATA_REPORT_PATH = '/summaryMetadataReports'
+    public static final String RULE_PATH = '/rules'
+    public static final String RULE_REPRESENTATION_PATH = '/representations'
     public static final String ANNOTATION_PATH = '/annotations'
     public static final String DATAMODELS_PATH = '/dataModels'
     public static final String DATACLASSES_PATH = '/dataClasses'
