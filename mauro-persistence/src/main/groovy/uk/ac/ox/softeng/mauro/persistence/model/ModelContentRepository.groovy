@@ -1,5 +1,8 @@
 package uk.ac.ox.softeng.mauro.persistence.model
 
+import uk.ac.ox.softeng.mauro.domain.facet.Rule
+import uk.ac.ox.softeng.mauro.domain.facet.RuleRepresentation
+
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
@@ -54,6 +57,7 @@ class ModelContentRepository<M extends Model> extends AdministeredItemContentRep
         }
         metadataRepository.saveAll(metadata)
         saveSummaryMetadataFacets(items)
+        saveRules(items)
         saveAnnotations(items)
         saveReferenceFiles(items)
     }
@@ -79,6 +83,29 @@ class ModelContentRepository<M extends Model> extends AdministeredItemContentRep
            }
        }
    }
+
+    void saveRules(List<AdministeredItem> items) {
+        List<Rule> rules = []
+        List<RuleRepresentation> ruleRepresentations = []
+        Rule saved
+        items.each {item ->
+            if (item.rules) {
+                item.rules.each {
+                    updateMultiAwareData(item, it)
+                    saved = ruleRepository.save(it)
+                    if (it.ruleRepresentations) {
+                        it.ruleRepresentations.forEach {
+                            representation ->
+                                representation.ruleId = saved.id
+                        }
+                        ruleRepresentations.addAll(ruleRepresentationCacheableRepository.saveAll(it.ruleRepresentations))
+                    }
+                    rules.add(saved)
+                }
+            }
+        }
+    }
+
 
     void saveAnnotations(List<AdministeredItem> items) {
         List<Annotation> annotations = []
