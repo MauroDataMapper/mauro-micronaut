@@ -355,6 +355,24 @@ abstract class AdministeredItem extends Item {
         return metadata
     }
 
+    /**
+     * DSL helper method for adding to the summary metadata field.  Returns the summary metadata passed in.
+     *
+     * @see #metadata
+     */
+    SummaryMetadata summaryMetadata(SummaryMetadata summaryMetadata) {
+        this.summaryMetadata.add(summaryMetadata)
+        summaryMetadata
+    }
+
+    SummaryMetadata summaryMetadata(Map args, @DelegatesTo(value = SummaryMetadata, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+        SummaryMetadata summaryMetadata1 = SummaryMetadata.build(args, closure)
+        summaryMetadata summaryMetadata1
+    }
+
+    SummaryMetadata summaryMetadata(@DelegatesTo(value = SummaryMetadata, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+        summaryMetadata [:], closure
+    }
 
     /**
      * DSL helper method for adding to the summary metadata field.  Returns the summary metadata passed in.

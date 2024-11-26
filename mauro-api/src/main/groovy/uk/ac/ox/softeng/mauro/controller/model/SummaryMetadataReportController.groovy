@@ -18,7 +18,7 @@ import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadataReport
 import uk.ac.ox.softeng.mauro.domain.security.Role
 import uk.ac.ox.softeng.mauro.persistence.cache.FacetCacheableRepository.SummaryMetadataCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.ItemCacheableRepository
-import uk.ac.ox.softeng.mauro.persistence.model.SummaryMetadataReportRepository
+import uk.ac.ox.softeng.mauro.persistence.facet.SummaryMetadataReportRepository
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @CompileStatic
