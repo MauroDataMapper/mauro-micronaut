@@ -62,27 +62,27 @@ class ModelContentRepository<M extends Model> extends AdministeredItemContentRep
         saveReferenceFiles(items)
     }
 
-   void saveSummaryMetadataFacets(List<AdministeredItem> items) {
-       List<SummaryMetadata> summaryMetadata = []
-       List<SummaryMetadataReport> summaryMetadataReports = []
-       SummaryMetadata saved
-       items.each {item ->
-           if (item.summaryMetadata) {
-               item.summaryMetadata.each {
-                   updateMultiAwareData(item, it)
-                   saved = summaryMetadataRepository.save(it)
-                   if (it.summaryMetadataReports){
-                       it.summaryMetadataReports.forEach{
-                           report ->
-                               report.summaryMetadataId = saved.id
-                       }
-                       summaryMetadataReports.addAll(summaryMetadataReportCacheableRepository.saveAll(it.summaryMetadataReports))
-                   }
-                   summaryMetadata.add(saved)
-               }
-           }
-       }
-   }
+    void saveSummaryMetadataFacets(List<AdministeredItem> items) {
+        List<SummaryMetadata> summaryMetadata = []
+        List<SummaryMetadataReport> summaryMetadataReports = []
+        SummaryMetadata saved
+        items.each {item ->
+            if (item.summaryMetadata) {
+                item.summaryMetadata.each {
+                    updateMultiAwareData(item, it)
+                    saved = summaryMetadataRepository.save(it)
+                    if (it.summaryMetadataReports) {
+                        it.summaryMetadataReports.forEach {
+                            report ->
+                                report.summaryMetadataId = saved.id
+                        }
+                        summaryMetadataReports.addAll(summaryMetadataReportCacheableRepository.saveAll(it.summaryMetadataReports))
+                    }
+                    summaryMetadata.add(saved)
+                }
+            }
+        }
+    }
 
     void saveRules(List<AdministeredItem> items) {
         List<Rule> rules = []
@@ -109,12 +109,12 @@ class ModelContentRepository<M extends Model> extends AdministeredItemContentRep
 
     void saveAnnotations(List<AdministeredItem> items) {
         List<Annotation> annotations = []
-        items.each { item ->
+        items.each {item ->
             if (item.annotations) {
                 item.annotations.each {
                     updateMultiAwareData(item, it)
                     if (it.childAnnotations) {
-                        it.childAnnotations.forEach { child ->
+                        it.childAnnotations.forEach {child ->
                             updateMultiAwareData(item, child)
                             child.parentAnnotationId = it.id
                         }
@@ -128,7 +128,7 @@ class ModelContentRepository<M extends Model> extends AdministeredItemContentRep
 
     void saveReferenceFiles(List<AdministeredItem> items) {
         List<ReferenceFile> referenceFiles = []
-        items.each { item ->
+        items.each {item ->
             if (item.referenceFiles) {
                 item.referenceFiles.each {
                     updateMultiAwareData(item, it)

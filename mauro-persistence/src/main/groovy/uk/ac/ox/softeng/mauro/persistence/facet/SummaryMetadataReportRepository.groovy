@@ -1,4 +1,6 @@
-package uk.ac.ox.softeng.mauro.persistence.model
+package uk.ac.ox.softeng.mauro.persistence.facet
+
+import uk.ac.ox.softeng.mauro.persistence.model.ItemRepository
 
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull

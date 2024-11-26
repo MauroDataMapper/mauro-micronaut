@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
+import groovy.transform.MapConstructor
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Transient
 import uk.ac.ox.softeng.mauro.domain.diff.*
@@ -17,6 +18,7 @@ import java.time.Instant
 @CompileStatic
 @MappedEntity(value = 'summary_metadata_report', schema = 'core', alias = 'summary_metadata_report_')
 @AutoClone
+@MapConstructor(includeSuperFields = true, includeSuperProperties = true, noArg = true)
 class SummaryMetadataReport extends Item implements DiffableItem<SummaryMetadataReport> {
     @JsonAlias(['report_value'])
     String reportValue
@@ -53,6 +55,42 @@ class SummaryMetadataReport extends Item implements DiffableItem<SummaryMetadata
         base.appendString(DiffBuilder.VALUE, this.reportValue, other.reportValue)
         base.appendField(DiffBuilder.REPORT_DATE ,this.reportDate, other.reportDate)
         base
-
     }
+
+    /****
+     * Methods for building a tree-like DSL
+     */
+
+    static SummaryMetadataReport build(
+        Map args,
+        @DelegatesTo(value = SummaryMetadataReport, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+        new SummaryMetadataReport(args).tap(closure)
+    }
+
+    static SummaryMetadataReport build(
+        @DelegatesTo(value = SummaryMetadataReport, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+        build [:], closure
+    }
+
+    /**
+     * DSL helper method for setting the reportValue.  Returns the reportValue passed in.
+     *
+     * @see #reportValue
+     */
+    String reportValue(String reportValue) {
+        this.reportValue = reportValue
+        this.reportValue
+    }
+
+
+    /**
+     * DSL helper method for setting the date the date of this report.  Returns the date/time passed in.
+     *
+     * @see #reportDate
+     */
+    Instant reportDate(String reportDate) {
+        this.reportDate = Instant.parse(reportDate)
+        this.reportDate
+    }
+
 }
