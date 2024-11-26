@@ -1,5 +1,9 @@
 package uk.ac.ox.softeng.mauro.persistence.cache
 
+import uk.ac.ox.softeng.mauro.domain.facet.Rule
+import uk.ac.ox.softeng.mauro.domain.facet.RuleRepresentation
+import uk.ac.ox.softeng.mauro.persistence.facet.RuleRepresentationRepository
+
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.cache.annotation.CacheConfig
@@ -280,6 +284,40 @@ abstract class ItemCacheableRepository<I extends Item> implements ItemRepository
             // invalidate attached parent of summaryMetadata
             invalidateCachedLookupById(FIND_BY_ID, summaryMetadata.multiFacetAwareItemDomainType,
                     summaryMetadata.multiFacetAwareItemId)
+        }
+    }
+
+    @Singleton
+    @CompileStatic
+    static class RuleRepresentationCacheableRepository extends ItemCacheableRepository<RuleRepresentation> {
+        RuleRepresentationCacheableRepository(RuleRepresentationRepository ruleRepresentationRepository) {
+            super(ruleRepresentationRepository)
+        }
+
+        Long delete(RuleRepresentation ruleRepresentation, Rule rule) {
+            Long deleted = repository.delete(ruleRepresentation)
+            invalidateChain(ruleRepresentation, rule)
+            deleted
+        }
+
+        RuleRepresentation update(RuleRepresentation ruleRepresentation, Rule rule) {
+            RuleRepresentation updated = repository.update(ruleRepresentation)
+            invalidateChain(updated, rule)
+            updated
+        }
+
+        List<RuleRepresentation> saveAll(Iterable<RuleRepresentation> items) {
+            List<RuleRepresentation> saved = repository.saveAll(items)
+            items.each { invalidate(it) }
+            saved
+        }
+
+        private void invalidateChain(RuleRepresentation ruleRepresentation, Rule rule) {
+            invalidate(ruleRepresentation)
+            invalidateCachedLookupById(FIND_BY_ID, rule.class.simpleName, rule.id)
+            // invalidate attached parent of rule
+            invalidateCachedLookupById(FIND_BY_ID, rule.multiFacetAwareItemDomainType,
+                                       rule.multiFacetAwareItemId)
         }
     }
 }

@@ -11,12 +11,14 @@ import com.fasterxml.jackson.annotation.JsonAlias
 import com.fasterxml.jackson.annotation.JsonIgnore
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
+import groovy.transform.MapConstructor
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Transient
 
 @CompileStatic
 @MappedEntity(value = 'rule_representation', schema = 'core', alias = 'rule_representation_')
 @AutoClone
+@MapConstructor(includeSuperFields = true, includeSuperProperties = true, noArg = true)
 class RuleRepresentation extends Item implements DiffableItem<RuleRepresentation> {
     String language
 
@@ -51,4 +53,40 @@ class RuleRepresentation extends Item implements DiffableItem<RuleRepresentation
         base.appendString(DiffBuilder.REPRESENTATION ,this.representation, other.representation)
         base
     }
+
+    /****
+     * Methods for building a tree-like DSL
+     */
+
+    static RuleRepresentation build(
+        Map args,
+        @DelegatesTo(value = RuleRepresentation, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+        new RuleRepresentation(args).tap(closure)
+    }
+
+    static RuleRepresentation build(
+        @DelegatesTo(value = RuleRepresentation, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+        build [:], closure
+    }
+
+    /**
+     * DSL helper method for setting the language.  Returns the language passed in.
+     *
+     * @see #language
+     */
+    String language(String language) {
+        this.language = language
+        this.language
+    }
+
+    /**
+     * DSL helper method for setting the representation.  Returns the representation passed in.
+     *
+     * @see #representation
+     */
+    String representation(String representation) {
+        this.representation = representation
+        this.representation
+    }
+
 }
