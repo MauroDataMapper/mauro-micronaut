@@ -1,5 +1,8 @@
 package uk.ac.ox.softeng.mauro.persistence.cache
 
+import uk.ac.ox.softeng.mauro.domain.security.ApiKey
+import uk.ac.ox.softeng.mauro.persistence.security.ApiKeyRepository
+
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.cache.annotation.CacheConfig
@@ -91,7 +94,7 @@ abstract class ItemCacheableRepository<I extends Item> implements ItemRepository
      * @return Mono of the object
      */
     I cachedLookupById(String lookup, String domainType, UUID id) {
-        mutableCachedLookupById(lookup, domainType, id)?.clone()
+        mutableCachedLookupById(lookup, domainType, id)?.clone() as I
     }
 
     @Cacheable
@@ -207,6 +210,21 @@ abstract class ItemCacheableRepository<I extends Item> implements ItemRepository
 
         CatalogueUser readByEmailAddress(String emailAddress) {
             ((CatalogueUserRepository) repository).readByEmailAddress(emailAddress)
+        }
+    }
+
+    @Singleton
+    @CompileStatic
+    @CacheConfig(keyGenerator = StringCacheKeyGenerator)
+    static class ApiKeyCacheableRepository extends ItemCacheableRepository<ApiKey> {
+        ApiKeyCacheableRepository(ApiKeyRepository apiKeyRepository) {
+            super(apiKeyRepository)
+        }
+
+        // not cached
+
+        List<ApiKey> readByCatalogueUserId(UUID catalogueUserId) {
+            ((ApiKeyRepository) repository).readByCatalogueUserId(catalogueUserId)
         }
     }
 
