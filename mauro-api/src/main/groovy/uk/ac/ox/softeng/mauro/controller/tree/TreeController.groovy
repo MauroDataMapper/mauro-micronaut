@@ -4,6 +4,7 @@ import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Get
+import io.micronaut.http.annotation.QueryValue
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
 import jakarta.inject.Inject
@@ -35,29 +36,34 @@ class TreeController {
     AccessControlService accessControlService
 
     @Get('/folders{/id}')
-    List<TreeItem> folderTree(@Nullable UUID id) {
+    List<TreeItem> folderTree(@Nullable UUID id, @Nullable @QueryValue Boolean foldersOnly) {
+        List<TreeItem> treeItems = []
+        foldersOnly = foldersOnly ?: false
         if (id) {
             Folder folder = folderRepository.readById(id)
             accessControlService.checkRole(Role.READER, folder)
-            filterTreeByReadable(treeService.buildTree(folder))
+            treeItems = filterTreeByReadable(treeService.buildTree(folder, foldersOnly, true))
         } else {
-            filterTreeByReadable(treeService.buildRootFolderTree())
+            treeItems = filterTreeByReadable(treeService.buildRootFolderTree(foldersOnly))
         }
+        treeItems
     }
 
     @Get('/folders/{domainType}/{id}')
-    List<TreeItem> itemTree(String domainType, UUID id) {
+    List<TreeItem> itemTree(String domainType, UUID id, @Nullable @QueryValue Boolean foldersOnly) {
+        foldersOnly = foldersOnly ?: false
         AdministeredItemCacheableRepository repository = repositoryService.getAdministeredItemRepository(domainType)
         AdministeredItem item = repository.readById(id)
         accessControlService.checkRole(Role.READER, item)
-        filterTreeByReadable(treeService.buildTree(item))
+        List<TreeItem> treeItems = filterTreeByReadable(treeService.buildTree(item, domainType.contains(Folder.class.simpleName) ? foldersOnly : false, true))
+        treeItems
     }
 
     protected List<TreeItem> filterTreeByReadable(List<TreeItem> treeItems) {
-        treeItems.each {if (!it.item) throw new IllegalArgumentException('TreeItem must have item set for security check')}
-        treeItems = treeItems.findAll {accessControlService.canDoRole(Role.READER, it.item)}
+        treeItems.each { if (!it.item) throw new IllegalArgumentException('TreeItem must have item set for security check') }
+        treeItems = treeItems.findAll { accessControlService.canDoRole(Role.READER, it.item) }
         treeItems.each {
-            it.children = it.children.findAll {accessControlService.canDoRole(Role.READER, it.item)}
+            it.children = it.children.findAll { accessControlService.canDoRole(Role.READER, it.item) }
         }
         treeItems
     }

@@ -7,6 +7,7 @@ import jakarta.inject.Inject
 import spock.lang.Shared
 import uk.ac.ox.softeng.mauro.domain.security.SecurableResourceGroupRole
 import uk.ac.ox.softeng.mauro.domain.security.UserGroup
+import uk.ac.ox.softeng.mauro.domain.tree.TreeItem
 import uk.ac.ox.softeng.mauro.persistence.SecuredContainerizedTest
 import uk.ac.ox.softeng.mauro.security.SecuredIntegrationSpec
 
@@ -57,68 +58,81 @@ class TreeIntegrationSpec extends SecuredIntegrationSpec {
     void 'admin can access tree'() {
         when:
         loginAdmin()
-        List<Map<String, Object>> tree = GET('/tree/folders', List)
+        List<Map<String, Object>> tree = GET("/tree/folders?foldersOnly=$foldersOnly", List)
 
         then:
         tree
         tree.size() >= 1
-        tree.find {it.label == 'TreeIntegrationSpec root folder' && it.domainType == 'Folder' && it.hasChildren && UUID.fromString(it.id) == rootFolderId}
+        tree.find { it.label == 'TreeIntegrationSpec root folder' && it.domainType == 'Folder' && it.hasChildren && UUID.fromString(it.id) == rootFolderId }
 
         when:
-        tree = GET("/tree/folders/$rootFolderId", List)
+        tree = GET("/tree/folders/$rootFolderId?foldersOnly=$foldersOnly", List)
 
         then:
         tree
         tree.size() == 2
-        tree.find {it.label == 'TreeIntegrationSpec folder with contents' && it.domainType == 'Folder' && it.hasChildren && UUID.fromString(it.id) == folder1Id}
-        tree.find {it.label == 'TreeIntegrationSpec empty folder' && it.domainType == 'Folder' && !it.hasChildren && UUID.fromString(it.id) == folder2Id}
+        tree.find { it.label == 'TreeIntegrationSpec folder with contents' && it.domainType == 'Folder' && it.hasChildren == hasChildren && UUID.fromString(it.id) == folder1Id }
+        tree.find { it.label == 'TreeIntegrationSpec empty folder' && it.domainType == 'Folder' && !it.hasChildren  && UUID.fromString(it.id) == folder2Id }
 
         when:
-        tree = GET("/tree/folders/$folder1Id", List)
+        List<TreeItem> treeItems = (List<TreeItem>) GET("/tree/folders/$folder1Id?foldersOnly=$foldersOnly", List)
 
         then:
-        tree
-        tree.size() == 3
-        tree.find {it.label == 'TreeIntegrationSpec data model' && it.domainType == 'DataModel' && it.hasChildren && UUID.fromString(it.id) == dataModelId}
-        tree.find {it.label == 'TreeIntegrationSpec code set' && it.domainType == 'CodeSet' && !it.hasChildren && UUID.fromString(it.id) == codeSetId}
-        tree.find {it.label == 'TreeIntegrationSpec terminology' && it.domainType == 'Terminology' && !it.hasChildren && UUID.fromString(it.id) == terminologyId}
+        if (!treeItems.isEmpty()) {
+            treeItems.size() == treeSize
+            treeItems.find { it.label == 'TreeIntegrationSpec data model' && it.domainType == 'DataModel' && it.hasChildren && UUID.fromString(it.id) == dataModelId }
+            treeItems.find { it.label == 'TreeIntegrationSpec code set' && it.domainType == 'CodeSet' && !it.hasChildren && UUID.fromString(it.id) == codeSetId }
+            treeItems.find { it.label == 'TreeIntegrationSpec terminology' && it.domainType == 'Terminology' && !it.hasChildren && UUID.fromString(it.id) == terminologyId }
+        }
 
         when:
-        tree = GET("/tree/folders/codeSets/$codeSetId", List)
+        tree = GET("/tree/folders/codeSets/$codeSetId?foldersOnly=$foldersOnly", List)
 
         then:
         tree.size() == 0
 
         when:
-        tree = GET("/tree/folders/dataModels/$dataModelId", List)
+        tree = GET("/tree/folders/dataModels/$dataModelId?foldersOnly=$foldersOnly", List)
 
         then:
         tree
         tree.size() == 1
-        tree.find {it.label == 'data class' && it.domainType == 'DataClass' && !it.hasChildren && UUID.fromString(it.id) == dataClassId}
+        tree.find { it.label == 'data class' && it.domainType == 'DataClass' && !it.hasChildren && UUID.fromString(it.id) == dataClassId }
+
+        where:
+        foldersOnly | hasChildren | treeSize
+        null        | true        | 3
+        false       | true        | 3
+        true        | false       | 0
     }
 
     void 'non-admin user cannot see tree without permissions'() {
         when:
         loginUser()
-        List<Map<String, Object>> tree = GET('/tree/folders', List)
+        List<Map<String, Object>> tree = GET("/tree/folders?foldersOnly=$foldersOnly", List)
 
         then:
-        !tree.find {it.label == 'TreeIntegrationSpec root folder'}
+        !tree.find { it.label == 'TreeIntegrationSpec root folder' }
 
         when:
-        GET("/tree/folders/$rootFolderId", List)
+        GET("/tree/folders/$rootFolderId?foldersOnly=$foldersOnly", List)
 
         then:
         HttpClientResponseException exception = thrown()
         exception.status == HttpStatus.FORBIDDEN
 
         when:
-        GET("/tree/folders/dataModels/$dataModelId", List)
+        GET("/tree/folders/dataModels/$dataModelId?foldersOnly=$foldersOnly", List)
 
         then:
         exception = thrown()
         exception.status == HttpStatus.FORBIDDEN
+
+        where:
+        foldersOnly | _
+        null        | _
+        false       | _
+        true        | _
     }
 
     void 'non-admin user can see the tree when permissions are granted'() {
@@ -145,8 +159,8 @@ class TreeIntegrationSpec extends SecuredIntegrationSpec {
         then:
         tree
         tree.size() == 2
-        tree.find {it.label == 'TreeIntegrationSpec folder with contents' && it.domainType == 'Folder' && it.hasChildren && UUID.fromString(it.id) == folder1Id}
-        tree.find {it.label == 'TreeIntegrationSpec empty folder' && it.domainType == 'Folder' && !it.hasChildren && UUID.fromString(it.id) == folder2Id}
+        tree.find { it.label == 'TreeIntegrationSpec folder with contents' && it.domainType == 'Folder' && it.hasChildren && UUID.fromString(it.id) == folder1Id }
+        tree.find { it.label == 'TreeIntegrationSpec empty folder' && it.domainType == 'Folder' && !it.hasChildren && UUID.fromString(it.id) == folder2Id }
 
         when:
         tree = GET("/tree/folders/$folder1Id", List)
@@ -154,9 +168,9 @@ class TreeIntegrationSpec extends SecuredIntegrationSpec {
         then:
         tree
         tree.size() == 3
-        tree.find {it.label == 'TreeIntegrationSpec data model' && it.domainType == 'DataModel' && it.hasChildren && UUID.fromString(it.id) == dataModelId}
-        tree.find {it.label == 'TreeIntegrationSpec code set' && it.domainType == 'CodeSet' && !it.hasChildren && UUID.fromString(it.id) == codeSetId}
-        tree.find {it.label == 'TreeIntegrationSpec terminology' && it.domainType == 'Terminology' && !it.hasChildren && UUID.fromString(it.id) == terminologyId}
+        tree.find { it.label == 'TreeIntegrationSpec data model' && it.domainType == 'DataModel' && it.hasChildren && UUID.fromString(it.id) == dataModelId }
+        tree.find { it.label == 'TreeIntegrationSpec code set' && it.domainType == 'CodeSet' && !it.hasChildren && UUID.fromString(it.id) == codeSetId }
+        tree.find { it.label == 'TreeIntegrationSpec terminology' && it.domainType == 'Terminology' && !it.hasChildren && UUID.fromString(it.id) == terminologyId }
 
         when:
         tree = GET("/tree/folders/codeSets/$codeSetId", List)
@@ -181,20 +195,20 @@ class TreeIntegrationSpec extends SecuredIntegrationSpec {
 
         when:
         loginUser()
-        List<Map<String, Object>> tree = GET('/tree/folders', List)
+        List<Map<String, Object>> tree = GET("/tree/folders?foldersOnly=true", List)
 
         then:
-        !tree.find {it.label == 'TreeIntegrationSpec root folder'}
+        !tree.find { it.label == 'TreeIntegrationSpec root folder' }
 
         when:
-        GET("/tree/folders/$rootFolderId", List)
+        GET("/tree/folders/$rootFolderId?foldersOnly=true", List)
 
         then:
         HttpClientResponseException exception = thrown()
         exception.status == HttpStatus.FORBIDDEN
 
         when:
-        GET("/tree/folders/dataModels/$dataModelId", List)
+        GET("/tree/folders/dataModels/$dataModelId?foldersOnly=true", List)
 
         then:
         exception = thrown()
