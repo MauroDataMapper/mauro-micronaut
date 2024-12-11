@@ -1,0 +1,17 @@
+[
+  {
+    "sectionName": "Query Builder Core Table Profile",
+    "sectionDescription": "This profile defines the table that sits in the middle of the star schema. The query builder cohort query will use this table as it's main table.",
+    "fields": [
+      {
+        "fieldName": "Query Builder core table",
+        "metadataPropertyName": "queryBuilderCoreTable",
+        "description": "The name of the core table that is in the middle of the star schema. This should be written in the format schema.table, e.g patients.patient",
+        "minMultiplicity": 1,
+        "maxMultiplicity": 1,
+        "dataType": "string",
+        "editableAfterFinalisation": false
+      }
+    ]
+  }
+]

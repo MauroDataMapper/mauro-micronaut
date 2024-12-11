@@ -36,6 +36,7 @@ class SearchRequestDTO  {
     @Nullable
     List<UUID> classifiers // TODO: Implement support for this
 
-    // List<MetadataFields> profileFields // TODO: Implement support for this
+//    @Nullable
+//    List<ProfileField> profileFields // TODO: Implement support for this
 
 }

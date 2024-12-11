@@ -2,6 +2,7 @@ package uk.ac.ox.softeng.mauro.persistence.search.dto
 
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.Introspected
+import io.micronaut.data.annotation.Transient
 
 import java.time.Instant
 
@@ -20,6 +21,9 @@ class SearchResultsDTO {
 
     Float tsRank
 
+    @Deprecated
+    @Transient
+    UUID model
 
 
 }
