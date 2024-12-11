@@ -80,6 +80,7 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
         List<DataClass> classes = dataClassRepository.readAllByDataModelAndParentDataClassIsNull(dataModel)
         classes.each {
             updateDerivedProperties(it)
+//            it.model = dataModel.id
         }
         ListResponse<DataClass>.from(classes,params)
     }

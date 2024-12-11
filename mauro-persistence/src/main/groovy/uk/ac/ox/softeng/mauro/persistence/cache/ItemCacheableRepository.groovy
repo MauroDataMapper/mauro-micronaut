@@ -68,6 +68,7 @@ abstract class ItemCacheableRepository<I extends Item> implements ItemRepository
     }
 
     List<I> saveAll(Iterable<I> items) {
+        log.warn "saveAll $domainType"
         List<I> saved = repository.saveAll(items)
         items.each { invalidate(it) }
         saved

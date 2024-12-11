@@ -6,9 +6,9 @@ micronaut:
 
   server:
     port: 8088
-    max-request-size: 100mb
+    max-request-size: 1gb
     multipart:
-      max-file-size: 100mb
+      max-file-size: 1gb
     cors:
       enabled: true
   router:
@@ -20,7 +20,7 @@ micronaut:
         paths: classpath:META-INF/swagger/views/swagger-ui
         mapping: /swagger-ui/**
   security:
-    enabled: false
+    enabled: true
     authentication: session
     redirect:
       enabled: false
@@ -33,18 +33,17 @@ micronaut:
         path: '/authentication/logout'
         get-allowed: true
       oauth:
-        enabled: false
+        enabled: true
     reject-not-found: false
     authentication-provider-strategy: any
 #    Populate to enable OAuth2; see also mauro.oauth properties
-#    oauth2:
-#      clients:
-#        keycloak:
-#          client-id:
-#          client-secret:
-#          openid:
-#            issuer:
-
+    oauth2:
+      clients:
+        keycloak:
+          client-id: mdm
+          client-secret: 4b3b7290-7629-4b88-b310-df256adc8fed
+          openid:
+            issuer: http://localhost:8095/realms/test
 
   caches:
     items-cache:
@@ -118,5 +117,13 @@ mauro:
 #    authorization-endpoint:
 #    image-url:
 #    login-success:
-
 #    create-user:
+mauro:
+  oauth:
+    id: 00000000-0000-0000-0000-000000000000
+    label: Keycloak
+    standard-provider: true
+    authorization-endpoint: http://localhost:8088/oauth/login/keycloak
+    image-url: https://upload.wikimedia.org/wikipedia/commons/2/29/Keycloak_Logo.png?20200311211229
+    create-user: true
+    login-success: http://localhost:4201/redirects/open-id-connect-redirect.html

@@ -2,6 +2,7 @@ package uk.ac.ox.softeng.mauro.domain.model
 
 import com.fasterxml.jackson.annotation.JsonValue
 import groovy.transform.CompileStatic
+import groovy.transform.EqualsAndHashCode
 import io.micronaut.context.annotation.Prototype
 import io.micronaut.core.annotation.Introspected
 import io.micronaut.core.convert.ConversionContext
@@ -81,6 +82,14 @@ class Path {
         return null
     }
 
+    boolean modelSubpathEquals(Path path) {
+        List<PathNode> subPathNodes = this.nodes.takeWhile {it !instanceof Model}
+        List<PathNode> otherSubPathNodes = path.nodes.takeWhile {it !instanceof Model}
+
+        subPathNodes == otherSubPathNodes
+    }
+
+    @EqualsAndHashCode
     static class PathNode {
         String prefix
         String identifier

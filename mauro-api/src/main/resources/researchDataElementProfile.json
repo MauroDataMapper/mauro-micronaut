@@ -1,0 +1,150 @@
+{
+  "profileApplicableForDomains": ["DataElement"],
+  "sections": [
+    {
+      "label": "Identifiable Information",
+      "description": "Whether this column may contain identifiable or sensitive information, and any further details",
+      "fields": [
+        {
+          "fieldName": "Identifiable Data",
+          "metadataPropertyName": "identifiableData",
+          "description": "Indicative value to show whether this field contains identifiable information.  More detail is provided in the description field",
+          "minMultiplicity": 0,
+          "maxMultiplicity": 1,
+          "dataType": "enumeration",
+          "allowedValues": [
+            "Legally Restricted",
+            "Identifying",
+            "Pseudonymised",
+            "Maybe identifying",
+            "Anonymous"
+          ]
+        },
+        {
+          "fieldName": "More details...",
+          "metadataPropertyName": "identifiableDetails",
+          "description": "Further details to explain how the field may contain identifiable data, and any restrictions on its availability",
+          "minMultiplicity": 0,
+          "maxMultiplicity": 1,
+          "dataType": "text"
+        }
+      ]
+    },
+    {
+      "label": "Context",
+      "description": "The forwards- and backwards provenance of this field, along with conceptual data types ",
+      "fields": [
+        {
+          "fieldName": "Source System",
+          "metadataPropertyName": "sourceSystem",
+          "description": "The source system that this field originated from",
+          "minMultiplicity": 0,
+          "maxMultiplicity": 1,
+          "dataType": "enumeration",
+          "allowedValues": [
+            "ARIA (MedOnc)",
+            "ARIA (RadOnc)",
+            "Hicom",
+            "Orbit",
+            "Solus",
+            "SEND",
+            "Philips CareVue",
+            "BloodTrack",
+            "BadgerNet",
+            "InfoFlex",
+            "Janus",
+            "Xcelera",
+            "Xcelera Echo",
+            "ENDOBASE"
+          ]
+        },
+        {
+          "fieldName": "Target Dataset",
+          "metadataPropertyName": "targetDataset",
+          "description": "Any research or national datasets that this field is also used for",
+          "minMultiplicity": 0,
+          "maxMultiplicity": 1,
+          "dataType": "enumeration",
+          "allowedValues": [
+            "SUS",
+            "COSD",
+            "COSD Pathology",
+            "RTDS",
+            "SACT"
+          ]
+        },
+        {
+          "fieldName": "Terminology",
+          "metadataPropertyName": "terminology",
+          "description": "The name of any terminology that data from this field is taken from - e.g. SNOMED or ICD-10",
+          "minMultiplicity": 0,
+          "maxMultiplicity": 1,
+          "dataType": "enumeration",
+          "allowedValues": [
+            "SNOMED-CT",
+            "ICD-9",
+            "ICD-10",
+            "OPCS"
+          ]
+        },
+        {
+          "fieldName": "Data Dictionary Item",
+          "metadataPropertyName": "dataDictionaryItem",
+          "description": "A link to a field in the NHS Data Dictionary that this field is defined by",
+          "minMultiplicity": 0,
+          "maxMultiplicity": 1,
+          "dataType": "string"
+        },
+        {
+          "fieldName": "Sector of Care",
+          "metadataPropertyName": "careSector",
+          "description": "Whether this field is collected as part of Primary, Secondary or Tertiary care",
+          "minMultiplicity": 0,
+          "maxMultiplicity": 1,
+          "dataType": "enumeration",
+          "allowedValues": [
+            "Primary",
+            "Secondary",
+            "Tertiary"
+          ]
+        },
+        {
+          "fieldName": "Admission Route",
+          "metadataPropertyName": "admissionRoute",
+          "description": "The route of admission where this field is collected (where applicable)",
+          "minMultiplicity": 0,
+          "maxMultiplicity": 1,
+          "dataType": "enumeration",
+          "allowedValues": [
+            "Emergency",
+            "Maternity",
+            "In-patient",
+            "Out-patient"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "Warehousing details",
+      "description": "Details pertaining to this item within the Clinical Data Warehouse",
+      "fields": [
+        {
+          "fieldName": "Last Update",
+          "metadataPropertyName": "lastUpdated",
+          "description": "The date when this field was last updated from the source system",
+          "minMultiplicity": 0,
+          "maxMultiplicity": 1,
+          "dataType": "date"
+        },
+        {
+          "fieldName": "Database Name",
+          "metadataPropertyName": "databaseName",
+          "description": "The column name of this field within the warehouse database",
+          "minMultiplicity": 0,
+          "maxMultiplicity": 1,
+          "dataType": "string"
+        }
+      ]
+    }
+  ]
+}

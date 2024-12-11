@@ -7,9 +7,9 @@ import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.repository.GenericRepository
 import jakarta.inject.Singleton
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataElement
 
 import java.sql.Date
-import java.time.LocalDate
 
 @CompileStatic
 @Singleton
@@ -66,6 +66,21 @@ abstract class SearchRepository implements GenericRepository<SearchResultsDTO, U
         order by search_domains.label asc''',
             nativeQuery = true)
     abstract List<SearchResultsDTO> prefixSearch(String searchTerm, @Nullable List<String> domainTypes = [], @Nullable UUID modelId = null, @Nullable Date createdBefore = null, @Nullable Date createdAfter = null, @Nullable Date lastUpdatedBefore = null, @Nullable Date lastUpdatedAfter = null)
+
+    @Query(value = '''
+        select * from (SELECT de.*
+                       FROM datamodel.data_element de
+                            JOIN datamodel.data_class dc ON (de.data_class_id = dc.id)
+                       WHERE (:dataClassId IS NULL OR de.data_class_id = :dataClassId) AND (:dataModelId IS NULL OR dc.data_model_id = :dataModelId) AND
+                             ((de.label ILIKE '%' || :searchTerm || '%') OR (de.description ILIKE '%' || :searchTerm || '%') OR (dc.label ILIKE '%' || :searchTerm || '%') OR (dc.description ILIKE '%' || :searchTerm || '%'))
+                       UNION
+                       SELECT de.*
+                       FROM datamodel.data_element de
+                            JOIN datamodel.data_class dc ON (de.data_class_id = dc.id)
+                       WHERE (:dataClassId IS NULL OR de.data_class_id = :dataClassId) AND (:dataModelId IS NULL OR dc.data_model_id = :dataModelId) AND
+                             (de.ts @@ websearch_to_tsquery('english', :searchTerm) OR dc.ts @@ websearch_to_tsquery('english', :searchTerm))) results
+        order by ts_rank(results.ts, websearch_to_tsquery('english', :searchTerm)) desc, label, data_class_id''')
+    abstract List<DataElement> researchDataElementSearch(String searchTerm, @Nullable UUID dataClassId, @Nullable UUID dataModelId)
 
     List<SearchResultsDTO> search(SearchRequestDTO searchRequestDTO) {
         if(searchRequestDTO.prefixSearch) {
