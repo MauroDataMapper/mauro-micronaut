@@ -1,5 +1,6 @@
 package uk.ac.ox.softeng.mauro.controller.model
 
+import uk.ac.ox.softeng.mauro.api.model.ModelApi
 import uk.ac.ox.softeng.mauro.service.core.AuthorityService
 
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -47,7 +48,7 @@ import java.nio.charset.StandardCharsets
 @Slf4j
 @CompileStatic
 @Secured(SecurityRule.IS_ANONYMOUS)
-abstract class ModelController<M extends Model> extends AdministeredItemController<M, Folder> {
+abstract class ModelController<M extends Model> extends AdministeredItemController<M, Folder> implements ModelApi<M> {
 
     @Inject
     FacetCacheableRepository.ReferenceFileCacheableRepository referenceFileCacheableRepository

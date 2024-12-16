@@ -1,0 +1,83 @@
+package uk.ac.ox.softeng.mauro.api.classifier
+
+import uk.ac.ox.softeng.mauro.api.Paths
+import uk.ac.ox.softeng.mauro.api.model.AdministeredItemApi
+import uk.ac.ox.softeng.mauro.domain.classifier.ClassificationScheme
+import uk.ac.ox.softeng.mauro.domain.classifier.Classifier
+import uk.ac.ox.softeng.mauro.web.ListResponse
+
+import groovy.transform.CompileStatic
+import io.micronaut.core.annotation.NonNull
+import io.micronaut.core.annotation.Nullable
+import io.micronaut.http.HttpStatus
+import io.micronaut.http.annotation.Body
+import io.micronaut.http.annotation.Delete
+import io.micronaut.http.annotation.Get
+import io.micronaut.http.annotation.Header
+import io.micronaut.http.annotation.Post
+import io.micronaut.http.annotation.Put
+import io.micronaut.http.client.annotation.Client
+
+@CompileStatic
+@Client('${micronaut.http.services.mauro.url}')
+@Header(name='apiKey', value = '${micronaut.http.services.mauro.apikey}')
+interface ClassifierApi extends AdministeredItemApi<Classifier, ClassificationScheme> {
+
+    @Get(Paths.CLASSIFIERS_ROUTE_ID)
+    Classifier show(@NonNull UUID classificationSchemeId, @NonNull UUID id)
+
+    @Post(Paths.CLASSIFIERS_ROUTE)
+    Classifier create(@NonNull UUID classificationSchemeId, @Body @NonNull Classifier classifier)
+
+    @Put(Paths.CLASSIFIERS_ROUTE_ID)
+    Classifier update(@NonNull UUID classificationSchemeId, @NonNull UUID id, @Body @NonNull Classifier classifier)
+
+    @Delete(Paths.CLASSIFIERS_ROUTE_ID)
+    HttpStatus delete(@NonNull UUID classificationSchemeId, @NonNull UUID id, @Body @Nullable Classifier classifier)
+
+    @Get(Paths.CLASSIFIERS_ROUTE)
+    ListResponse<Classifier> list(UUID classificationSchemeId)
+
+    @Get(Paths.CHILD_CLASSIFIERS_ID_ROUTE)
+    Classifier showChildClassifier(@NonNull UUID classificationSchemeId,@NonNull UUID parentClassifierId, @NonNull UUID childClassifierId)
+
+    /**
+     * Create child classifier
+     * @param classificationSchemeId
+     * @param id              parent ClassifierId
+     * @param classifier      child
+     * @return
+     */
+    @Post(Paths.CHILD_CLASSIFIERS_ROUTE)
+    Classifier create(@NonNull UUID classificationSchemeId, @NonNull UUID parentClassifierId, @Body @NonNull Classifier classifier)
+
+    @Put(Paths.CHILD_CLASSIFIERS_ID_ROUTE)
+    Classifier update(@NonNull UUID classificationSchemeId, @NonNull UUID parentClassifierId, @NonNull UUID childClassifierId, @Body @NonNull Classifier classifier)
+
+    @Delete(Paths.CHILD_CLASSIFIERS_ID_ROUTE)
+    HttpStatus delete(@NonNull UUID classificationSchemeId, @NonNull UUID parentClassifierId, @NonNull UUID childClassifierId, @Body @Nullable Classifier classifier)
+
+    @Get(Paths.CHILD_CLASSIFIERS_ROUTE)
+    ListResponse<Classifier> list(@NonNull UUID classificationSchemeId, @NonNull UUID parentClassifierId)
+
+    /**
+     * Associate Classifier to administeredItem
+     */
+    @Put(Paths.ADMINISTERED_ITEM_CLASSIFIER_ID_ROUTE)
+    Classifier createAdministeredItemClassifier(@NonNull String administeredItemDomainType, @NonNull UUID administeredItemId, @NonNull UUID id)
+
+    /**
+     * Get Classifier for AdministeredItem
+     */
+    @Get(Paths.ADMINISTERED_ITEM_CLASSIFIER_ID_ROUTE)
+    Classifier getAdministeredItemClassifier(@NonNull String administeredItemDomainType, @NonNull UUID administeredItemId, @NonNull UUID id)
+
+    /**
+     * Get AdministeredItem classifiers
+     */
+    @Get(Paths.ADMINISTERED_ITEM_CLASSIFIER_ROUTE)
+    ListResponse<Classifier> findAllAdministeredItemClassifiers(@NonNull String administeredItemDomainType, @NonNull UUID administeredItemId)
+
+    @Delete(Paths.ADMINISTERED_ITEM_CLASSIFIER_ID_ROUTE)
+    HttpStatus delete(@NonNull String administeredItemDomainType, @NonNull UUID administeredItemId, @NonNull UUID id)
+}

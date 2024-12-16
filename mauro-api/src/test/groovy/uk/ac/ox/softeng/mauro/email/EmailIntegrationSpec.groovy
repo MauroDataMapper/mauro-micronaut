@@ -7,7 +7,7 @@ import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.domain.email.Email
 import uk.ac.ox.softeng.mauro.domain.security.CatalogueUser
 import uk.ac.ox.softeng.mauro.persistence.ContainerizedTest
-import uk.ac.ox.softeng.mauro.service.email.EmailPlugin
+import uk.ac.ox.softeng.mauro.plugin.EmailPlugin
 import uk.ac.ox.softeng.mauro.testing.CommonDataSpec
 import uk.ac.ox.softeng.mauro.web.ListResponse
 

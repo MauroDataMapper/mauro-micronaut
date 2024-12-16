@@ -1,5 +1,23 @@
 package uk.ac.ox.softeng.mauro.controller.datamodel
 
+import uk.ac.ox.softeng.mauro.api.datamodel.DataModelApi
+
+import groovy.transform.CompileStatic
+import groovy.util.logging.Slf4j
+import io.micronaut.core.annotation.NonNull
+import io.micronaut.core.annotation.Nullable
+import io.micronaut.http.HttpStatus
+import io.micronaut.http.MediaType
+import io.micronaut.http.annotation.*
+import io.micronaut.http.exceptions.HttpStatusException
+import io.micronaut.http.server.multipart.MultipartBody
+import io.micronaut.http.server.types.files.StreamedFile
+import io.micronaut.scheduling.TaskExecutors
+import io.micronaut.scheduling.annotation.ExecuteOn
+import io.micronaut.security.annotation.Secured
+import io.micronaut.security.rules.SecurityRule
+import io.micronaut.transaction.annotation.Transactional
+import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.ErrorHandler
 import uk.ac.ox.softeng.mauro.controller.model.ModelController
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
@@ -44,7 +62,7 @@ import jakarta.inject.Inject
 @Controller
 @CompileStatic
 @Secured(SecurityRule.IS_ANONYMOUS)
-class DataModelController extends ModelController<DataModel> {
+class DataModelController extends ModelController<DataModel> implements DataModelApi {
 
     DataModelCacheableRepository dataModelRepository
 

@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.controller.tree
 
+import uk.ac.ox.softeng.mauro.api.tree.TreeApi
+
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.annotation.Controller
@@ -21,7 +23,7 @@ import uk.ac.ox.softeng.mauro.security.AccessControlService
 @CompileStatic
 @Controller('/tree')
 @Secured(SecurityRule.IS_ANONYMOUS)
-class TreeController {
+class TreeController implements TreeApi {
 
     @Inject
     TreeService treeService

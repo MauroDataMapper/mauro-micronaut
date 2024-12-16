@@ -1,0 +1,82 @@
+plugins {
+    id 'groovy'
+    id("com.github.johnrengelman.shadow") version "8.1.1"
+    id("io.micronaut.library") version "4.3.4"
+    id("io.micronaut.aot") version "4.3.4"
+    id("maven-publish")
+    id("codenarc")
+}
+
+group = 'uk.ac.ox.softeng.mauro'
+version = '0.1'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation project(':mauro-domain')
+    implementation project(':mauro-persistence') // For the search DTOs
+    annotationProcessor "io.micronaut:micronaut-inject-java"
+    testImplementation platform('org.junit:junit-bom:5.10.0')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    implementation("io.micronaut.openapi:micronaut-openapi")
+    implementation("io.micronaut:micronaut-jackson-databind")
+    implementation 'io.micronaut:micronaut-http-client'
+    implementation 'io.micronaut:micronaut-http-server'
+    implementation "io.micronaut:micronaut-runtime"
+    implementation "io.micronaut:micronaut-inject"
+    implementation("io.micronaut.picocli:micronaut-picocli")
+    implementation("io.micronaut.security:micronaut-security")
+    annotationProcessor("info.picocli:picocli-codegen")
+
+
+}
+
+test {
+    useJUnitPlatform()
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            groupId = 'uk.ac.ox.softeng.mauro'
+            artifactId = 'mauro-client'
+            version = "0.0.1-SNAPSHOT"
+            from components.java
+        }
+    }
+}
+
+micronaut {
+    processing {
+        incremental(true)
+        annotations("*")
+    }
+    aot {
+        // Please review carefully the optimizations enabled below
+        // Check https://micronaut-projects.github.io/micronaut-aot/latest/guide/ for more details
+        optimizeServiceLoading = false
+        convertYamlToJava = false
+        precomputeOperations = true
+        cacheEnvironment = true
+        optimizeClassLoading = true
+        deduceEnvironment = true
+        optimizeNetty = true
+    }
+}
+
+codenarc {
+    toolVersion = "3.3.0-groovy-4.0"
+    configFile = rootProject.file("config/codenarc/codenarc.groovy")
+}
+
+codenarcMain {
+    compilationClasspath = sourceSets.main.compileClasspath + sourceSets.main.output
+}
+
+codenarcTest {
+    compilationClasspath = codenarcMain.compilationClasspath + sourceSets.test.compileClasspath + sourceSets.test.output
+}
+
+[codenarcMain, codenarcTest]*.ignoreFailures = true

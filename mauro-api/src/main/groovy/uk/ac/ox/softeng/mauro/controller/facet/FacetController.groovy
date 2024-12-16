@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.controller.facet
 
+import uk.ac.ox.softeng.mauro.api.facet.FacetApi
+
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
@@ -18,7 +20,7 @@ import uk.ac.ox.softeng.mauro.persistence.cache.ItemCacheableRepository
 
 @CompileStatic
 @Secured(SecurityRule.IS_ANONYMOUS)
-abstract class FacetController<I extends Facet> extends ItemController<I> {
+abstract class FacetController<I extends Facet> extends ItemController<I> implements FacetApi<I> {
 
     ItemCacheableRepository<I> facetRepository
 

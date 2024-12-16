@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.controller.config
 
+import uk.ac.ox.softeng.mauro.api.config.SessionApi
+
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.Nullable
@@ -15,7 +17,7 @@ import uk.ac.ox.softeng.mauro.security.AccessControlService
 @Slf4j
 @Controller('/session')
 @Secured(SecurityRule.IS_ANONYMOUS)
-class SessionController {
+class SessionController implements SessionApi {
 
     @Inject
     AccessControlService accessControlService

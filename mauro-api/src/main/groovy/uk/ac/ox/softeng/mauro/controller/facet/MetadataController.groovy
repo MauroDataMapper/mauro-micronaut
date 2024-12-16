@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.controller.facet
 
+import uk.ac.ox.softeng.mauro.api.facet.MetadataApi
+
 import groovy.transform.CompileStatic
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Get
@@ -14,7 +16,7 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 @CompileStatic
 @Controller('/{domainType}/{domainId}/metadata')
 @Secured(SecurityRule.IS_ANONYMOUS)
-class MetadataController extends FacetController<Metadata> {
+class MetadataController extends FacetController<Metadata> implements MetadataApi {
 
     /**
      * Properties disallowed in a simple update request.

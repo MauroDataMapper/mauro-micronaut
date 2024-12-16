@@ -1,6 +1,7 @@
 package uk.ac.ox.softeng.mauro.controller.dataflow
 
 import uk.ac.ox.softeng.mauro.ErrorHandler
+import uk.ac.ox.softeng.mauro.api.dataflow.DataFlowApi
 
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
@@ -13,7 +14,7 @@ import jakarta.inject.Inject
 import jakarta.transaction.Transactional
 import jakarta.validation.constraints.NotNull
 import uk.ac.ox.softeng.mauro.controller.model.AdministeredItemController
-import uk.ac.ox.softeng.mauro.Paths
+import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.domain.dataflow.DataFlow
 import uk.ac.ox.softeng.mauro.domain.dataflow.Type
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
@@ -26,7 +27,8 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 @CompileStatic
 @Controller(Paths.DATA_FLOW_ROUTE)
 @Secured(SecurityRule.IS_AUTHENTICATED)
-class DataFlowController extends AdministeredItemController<DataFlow, DataModel> {
+class DataFlowController extends AdministeredItemController<DataFlow, DataModel> implements DataFlowApi {
+
     @Inject
     ModelCacheableRepository.DataModelCacheableRepository dataModelRepository
 

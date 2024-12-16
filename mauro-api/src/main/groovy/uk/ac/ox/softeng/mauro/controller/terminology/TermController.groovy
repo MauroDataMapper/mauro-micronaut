@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.controller.terminology
 
+import uk.ac.ox.softeng.mauro.api.terminology.TermApi
+
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
@@ -24,7 +26,7 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 @Controller('/terminologies/{terminologyId}/terms')
 @Slf4j
 @Secured(SecurityRule.IS_ANONYMOUS)
-class TermController extends AdministeredItemController<Term, Terminology> {
+class TermController extends AdministeredItemController<Term, Terminology> implements TermApi {
 
     TermCacheableRepository termRepository
 

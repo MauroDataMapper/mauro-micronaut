@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.service.email
 
+import uk.ac.ox.softeng.mauro.plugin.EmailPlugin
+
 import io.micronaut.context.annotation.Property
 import io.micronaut.context.env.Environment
 import io.micronaut.email.Contact

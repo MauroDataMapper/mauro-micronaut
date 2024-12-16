@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.controller.facet
 
+import uk.ac.ox.softeng.mauro.api.facet.SummaryMetadataApi
+
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
@@ -21,7 +23,7 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 @CompileStatic
 @Controller('/{domainType}/{domainId}/summaryMetadata')
 @Secured(SecurityRule.IS_ANONYMOUS)
-class SummaryMetadataController extends FacetController<SummaryMetadata> {
+class SummaryMetadataController extends FacetController<SummaryMetadata> implements SummaryMetadataApi {
     FacetCacheableRepository.SummaryMetadataCacheableRepository summaryMetadataRepository
 
     @Inject

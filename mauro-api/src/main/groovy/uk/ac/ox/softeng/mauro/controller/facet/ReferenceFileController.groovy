@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.controller.facet
 
+import uk.ac.ox.softeng.mauro.api.facet.ReferenceFileApi
+
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
@@ -19,7 +21,7 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 @CompileStatic
 @Controller
 @Secured(SecurityRule.IS_AUTHENTICATED)
-class ReferenceFileController extends FacetController<ReferenceFile> {
+class ReferenceFileController extends FacetController<ReferenceFile> implements ReferenceFileApi {
 
     @Inject
     FacetCacheableRepository.ReferenceFileCacheableRepository referenceFileCacheableRepository

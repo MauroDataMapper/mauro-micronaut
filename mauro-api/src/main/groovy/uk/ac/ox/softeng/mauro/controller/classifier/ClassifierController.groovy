@@ -1,6 +1,7 @@
 package uk.ac.ox.softeng.mauro.controller.classifier
 
 import uk.ac.ox.softeng.mauro.ErrorHandler
+import uk.ac.ox.softeng.mauro.api.classifier.ClassifierApi
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
@@ -13,7 +14,7 @@ import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
 import jakarta.transaction.Transactional
 import uk.ac.ox.softeng.mauro.controller.model.AdministeredItemController
-import uk.ac.ox.softeng.mauro.Paths
+import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.domain.classifier.ClassificationScheme
 import uk.ac.ox.softeng.mauro.domain.classifier.Classifier
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
@@ -27,7 +28,7 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 @CompileStatic
 @Controller
 @Secured(SecurityRule.IS_ANONYMOUS)
-class ClassifierController extends AdministeredItemController<Classifier, ClassificationScheme> {
+class ClassifierController extends AdministeredItemController<Classifier, ClassificationScheme> implements ClassifierApi {
 
     AdministeredItemCacheableRepository.ClassifierCacheableRepository classifierCacheableRepository
 
@@ -64,6 +65,7 @@ class ClassifierController extends AdministeredItemController<Classifier, Classi
     HttpStatus delete(@NonNull UUID classificationSchemeId, @NonNull UUID id, @Body @Nullable Classifier classifier) {
         super.delete(id, classifier)
     }
+
 
     @Get(Paths.CLASSIFIERS_ROUTE)
     ListResponse<Classifier> list(UUID classificationSchemeId) {

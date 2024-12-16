@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.controller.profile
 
+import uk.ac.ox.softeng.mauro.api.profile.MetadataNamespaceDTO
+import uk.ac.ox.softeng.mauro.api.profile.ProfileApi
 import uk.ac.ox.softeng.mauro.domain.security.Role
 import uk.ac.ox.softeng.mauro.plugin.MauroPluginService
 import uk.ac.ox.softeng.mauro.profile.applied.AppliedProfile
@@ -31,7 +33,7 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 @CompileStatic
 @Controller
 @Secured(SecurityRule.IS_ANONYMOUS)
-class ProfileController implements AdministeredItemReader {
+class ProfileController implements AdministeredItemReader, ProfileApi {
 
     @Inject
     AccessControlService accessControlService

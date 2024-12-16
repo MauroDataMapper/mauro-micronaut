@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.controller.facet
 
+import uk.ac.ox.softeng.mauro.api.facet.AnnotationApi
+
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
@@ -20,7 +22,7 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 @CompileStatic
 @Controller
 @Secured(SecurityRule.IS_ANONYMOUS)
-class AnnotationController extends FacetController<Annotation> {
+class AnnotationController extends FacetController<Annotation> implements AnnotationApi {
 
     @Inject
     AnnotationRepository annotationRepositoryUncached

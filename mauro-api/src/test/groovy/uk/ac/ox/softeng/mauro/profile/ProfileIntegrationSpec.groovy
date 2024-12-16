@@ -1,12 +1,10 @@
 package uk.ac.ox.softeng.mauro.profile
 
-import uk.ac.ox.softeng.mauro.profile.applied.AppliedProfile
-import uk.ac.ox.softeng.mauro.profile.applied.AppliedProfileField
-import uk.ac.ox.softeng.mauro.profile.applied.AppliedProfileSection
+import uk.ac.ox.softeng.mauro.api.profile.MetadataNamespaceDTO
 
 import io.micronaut.runtime.EmbeddedApplication
 import jakarta.inject.Inject
-import uk.ac.ox.softeng.mauro.controller.profile.MetadataNamespaceDTO
+
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.persistence.ContainerizedTest
 import uk.ac.ox.softeng.mauro.profile.test.DataModelBasedProfileTest

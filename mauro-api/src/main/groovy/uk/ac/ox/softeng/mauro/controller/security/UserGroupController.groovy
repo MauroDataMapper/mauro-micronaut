@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.controller.security
 
+import uk.ac.ox.softeng.mauro.api.security.UserGroupApi
+
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
@@ -17,7 +19,7 @@ import uk.ac.ox.softeng.mauro.persistence.cache.ItemCacheableRepository
 @Slf4j
 @Controller
 @Secured(SecurityRule.IS_ANONYMOUS)
-class UserGroupController extends ItemController<UserGroup> {
+class UserGroupController extends ItemController<UserGroup> implements UserGroupApi {
 
     ItemCacheableRepository.UserGroupCacheableRepository userGroupRepository
 

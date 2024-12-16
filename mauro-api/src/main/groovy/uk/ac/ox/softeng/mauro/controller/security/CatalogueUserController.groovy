@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.controller.security
 
+import uk.ac.ox.softeng.mauro.api.security.CatalogueUserApi
+
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
@@ -21,7 +23,7 @@ import uk.ac.ox.softeng.mauro.web.ChangePassword
 @Slf4j
 @Controller
 @Secured(SecurityRule.IS_ANONYMOUS)
-class CatalogueUserController extends ItemController<CatalogueUser> {
+class CatalogueUserController extends ItemController<CatalogueUser> implements CatalogueUserApi {
 
     CatalogueUserCacheableRepository catalogueUserRepository
 

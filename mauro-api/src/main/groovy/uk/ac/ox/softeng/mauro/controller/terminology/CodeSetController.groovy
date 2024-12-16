@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.controller.terminology
 
+import uk.ac.ox.softeng.mauro.api.Paths
+import uk.ac.ox.softeng.mauro.api.terminology.CodeSetApi
 import uk.ac.ox.softeng.mauro.ErrorHandler
 
 import groovy.transform.CompileStatic
@@ -32,7 +34,7 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 @CompileStatic
 @Slf4j
 @Secured(SecurityRule.IS_ANONYMOUS)
-class CodeSetController extends ModelController<CodeSet> {
+class CodeSetController extends ModelController<CodeSet> implements CodeSetApi {
 
     ModelCacheableRepository.CodeSetCacheableRepository codeSetRepository
 

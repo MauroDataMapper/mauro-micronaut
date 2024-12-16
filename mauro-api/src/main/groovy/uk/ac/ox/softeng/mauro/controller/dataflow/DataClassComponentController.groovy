@@ -1,5 +1,6 @@
 package uk.ac.ox.softeng.mauro.controller.dataflow
 
+import uk.ac.ox.softeng.mauro.api.dataflow.DataClassComponentApi
 import uk.ac.ox.softeng.mauro.ErrorHandler
 
 import groovy.transform.CompileStatic
@@ -12,7 +13,7 @@ import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
 import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.controller.model.AdministeredItemController
-import uk.ac.ox.softeng.mauro.Paths
+import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.domain.dataflow.DataClassComponent
 import uk.ac.ox.softeng.mauro.domain.dataflow.DataFlow
 import uk.ac.ox.softeng.mauro.domain.dataflow.Type
@@ -28,7 +29,7 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 @Controller(Paths.DATA_CLASS_COMPONENTS_ROUTE)
 @Slf4j
 @Secured(SecurityRule.IS_AUTHENTICATED)
-class DataClassComponentController extends AdministeredItemController<DataClassComponent, DataFlow> {
+class DataClassComponentController extends AdministeredItemController<DataClassComponent, DataFlow> implements DataClassComponentApi {
 
     @Inject
     AdministeredItemCacheableRepository.DataClassCacheableRepository dataClassRepository

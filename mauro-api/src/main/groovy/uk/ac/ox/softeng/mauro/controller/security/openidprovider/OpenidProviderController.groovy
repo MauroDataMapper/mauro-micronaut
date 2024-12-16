@@ -1,5 +1,8 @@
 package uk.ac.ox.softeng.mauro.controller.security.openidprovider
 
+import uk.ac.ox.softeng.mauro.api.security.openidprovider.OpenidConnectProvider
+import uk.ac.ox.softeng.mauro.api.security.openidprovider.OpenidProviderApi
+
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.context.annotation.Value
@@ -12,7 +15,7 @@ import io.micronaut.security.rules.SecurityRule
 @Slf4j
 @Controller('/openidConnectProviders')
 @Secured(SecurityRule.IS_ANONYMOUS)
-class OpenidProviderController {
+class OpenidProviderController implements OpenidProviderApi {
 
     @Value('${mauro.oauth.id}')
     String openidProviderId
@@ -37,20 +40,4 @@ class OpenidProviderController {
     }
 
 
-    class OpenidConnectProvider {
-        UUID openidProviderId
-        String label
-        boolean standardProvider
-        String authorizationEndpoint
-        String imageUrl
-
-        OpenidConnectProvider(String openidProviderId, String label, boolean standardProvider,
-                              String authorizationEndpoint, String imageUrl) {
-            this.openidProviderId = UUID.fromString(openidProviderId)
-            this.label = label
-            this.standardProvider = standardProvider
-            this.authorizationEndpoint = authorizationEndpoint
-            this.imageUrl = imageUrl
-        }
-    }
 }

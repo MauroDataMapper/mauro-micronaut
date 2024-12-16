@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.controller.datamodel
 
+import uk.ac.ox.softeng.mauro.api.datamodel.DataClassApi
+
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
@@ -20,7 +22,7 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 @CompileStatic
 @Controller('/dataModels/{dataModelId}/dataClasses')
 @Secured(SecurityRule.IS_ANONYMOUS)
-class DataClassController extends AdministeredItemController<DataClass, DataModel> {
+class DataClassController extends AdministeredItemController<DataClass, DataModel> implements DataClassApi {
 
     DataClassCacheableRepository dataClassRepository
 

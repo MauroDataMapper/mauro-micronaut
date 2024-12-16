@@ -1,5 +1,6 @@
 package uk.ac.ox.softeng.mauro.controller.importer
 
+import uk.ac.ox.softeng.mauro.api.importer.ImporterApi
 import uk.ac.ox.softeng.mauro.plugin.MauroPluginService
 import uk.ac.ox.softeng.mauro.plugin.importer.ModelImporterPlugin
 import uk.ac.ox.softeng.mauro.service.plugin.PluginService
@@ -15,7 +16,7 @@ import jakarta.inject.Inject
 @CompileStatic
 @Controller()
 @Secured(SecurityRule.IS_ANONYMOUS)
-class ImporterController {
+class ImporterController implements ImporterApi {
 
     @Inject
     MauroPluginService mauroPluginService

@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.controller.terminology
 
+import uk.ac.ox.softeng.mauro.api.terminology.TermRelationshipApi
+
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
@@ -22,7 +24,7 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 @CompileStatic
 @Controller('/terminologies/{terminologyId}/termRelationships')
 @Secured(SecurityRule.IS_ANONYMOUS)
-class TermRelationshipController extends AdministeredItemController<TermRelationship, Terminology> {
+class TermRelationshipController extends AdministeredItemController<TermRelationship, Terminology> implements TermRelationshipApi {
 
     TermRelationshipCacheableRepository termRelationshipRepository
 

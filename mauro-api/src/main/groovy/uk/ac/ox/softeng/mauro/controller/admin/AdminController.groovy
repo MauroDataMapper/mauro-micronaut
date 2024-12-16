@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.controller.admin
 
+import uk.ac.ox.softeng.mauro.api.admin.AdminApi
+
 import groovy.transform.CompileStatic
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.Body
@@ -17,14 +19,14 @@ import uk.ac.ox.softeng.mauro.plugin.MauroPluginService
 import uk.ac.ox.softeng.mauro.plugin.exporter.ModelExporterPlugin
 import uk.ac.ox.softeng.mauro.plugin.importer.ModelImporterPlugin
 import uk.ac.ox.softeng.mauro.security.AccessControlService
-import uk.ac.ox.softeng.mauro.service.email.EmailPlugin
+import uk.ac.ox.softeng.mauro.plugin.EmailPlugin
 import uk.ac.ox.softeng.mauro.service.email.EmailService
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @CompileStatic
 @Controller('/admin')
 @Secured(SecurityRule.IS_ANONYMOUS)
-class AdminController {
+class AdminController implements AdminApi {
 
     @Inject
     MauroPluginService mauroPluginService
@@ -119,7 +121,7 @@ class AdminController {
     @Get('/emails')
     ListResponse<Email> list() {
         accessControlService.checkAdministrator()
-
+        System.err.println()
         ListResponse.from(emailRepository.readAll())
     }
 

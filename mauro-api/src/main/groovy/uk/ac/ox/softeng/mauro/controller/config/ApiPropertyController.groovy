@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.controller.config
 
+import uk.ac.ox.softeng.mauro.api.config.ApiPropertyApi
+
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
@@ -19,7 +21,7 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 @Slf4j
 @Controller
 @Secured(SecurityRule.IS_ANONYMOUS)
-class ApiPropertyController extends ItemController<ApiProperty> {
+class ApiPropertyController extends ItemController<ApiProperty> implements ApiPropertyApi {
 
     ItemCacheableRepository.ApiPropertyCacheableRepository apiPropertyRepository
 

@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.controller.security
 
+import uk.ac.ox.softeng.mauro.api.security.SecurableResourceGroupRoleApi
+
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
@@ -23,7 +25,7 @@ import uk.ac.ox.softeng.mauro.persistence.cache.ItemCacheableRepository
 @Slf4j
 @Controller
 @Secured(SecurityRule.IS_ANONYMOUS)
-class SecurableResourceGroupRoleController extends ItemController<SecurableResourceGroupRole> {
+class SecurableResourceGroupRoleController extends ItemController<SecurableResourceGroupRole> implements SecurableResourceGroupRoleApi {
 
     ItemCacheableRepository.SecurableResourceGroupRoleCacheableRepository securableResourceGroupRoleRepository
 

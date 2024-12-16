@@ -1,7 +1,11 @@
-package uk.ac.ox.softeng.mauro.controller.model
+package uk.ac.ox.softeng.mauro.controller.facet
+
+import uk.ac.ox.softeng.mauro.api.facet.SummaryMetadataReportApi
+import uk.ac.ox.softeng.mauro.controller.model.ItemController
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
+import io.micronaut.core.annotation.NonNull
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.*
 import io.micronaut.http.exceptions.HttpStatusException
@@ -9,7 +13,6 @@ import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
 import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
-import reactor.util.annotation.NonNull
 import uk.ac.ox.softeng.mauro.domain.facet.Facet
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
@@ -25,7 +28,7 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 @Slf4j
 @Controller('/{domainType}/{domainId}/summaryMetadata/{summaryMetadataId}/summaryMetadataReports')
 @Secured(SecurityRule.IS_ANONYMOUS)
-class SummaryMetadataReportController extends ItemController<SummaryMetadataReport> {
+class SummaryMetadataReportController extends ItemController<SummaryMetadataReport> implements SummaryMetadataReportApi {
 
     @Inject
     SummaryMetadataReportRepository summaryMetadataReportRepository

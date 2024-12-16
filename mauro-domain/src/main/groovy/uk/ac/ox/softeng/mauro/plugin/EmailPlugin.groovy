@@ -1,10 +1,8 @@
-package uk.ac.ox.softeng.mauro.service.email
+package uk.ac.ox.softeng.mauro.plugin
 
 import groovy.transform.CompileStatic
 import uk.ac.ox.softeng.mauro.domain.email.Email
 import uk.ac.ox.softeng.mauro.domain.security.CatalogueUser
-import uk.ac.ox.softeng.mauro.plugin.MauroPlugin
-import uk.ac.ox.softeng.mauro.plugin.PluginType
 
 @CompileStatic
 trait EmailPlugin extends MauroPlugin {

@@ -103,6 +103,7 @@ micronaut {
 
 dependencies {
     implementation project(':mauro-domain')
+    implementation project(':mauro-client')
     implementation project(':mauro-persistence')
     testImplementation testFixtures(project(':mauro-persistence'))     // Pull in the containerized testing definition
 }

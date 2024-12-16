@@ -1,5 +1,6 @@
 package uk.ac.ox.softeng.mauro.controller.terminology
 
+import uk.ac.ox.softeng.mauro.api.terminology.TerminologyApi
 import uk.ac.ox.softeng.mauro.ErrorHandler
 
 import groovy.transform.CompileStatic
@@ -36,7 +37,7 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 @Controller
 @CompileStatic
 @Secured(SecurityRule.IS_ANONYMOUS)
-class TerminologyController extends ModelController<Terminology> {
+class TerminologyController extends ModelController<Terminology> implements TerminologyApi {
 
     TerminologyCacheableRepository terminologyRepository
     @Inject

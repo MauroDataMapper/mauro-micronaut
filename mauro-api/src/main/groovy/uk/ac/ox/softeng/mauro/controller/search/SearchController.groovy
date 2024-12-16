@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.controller.search
 
+import uk.ac.ox.softeng.mauro.api.search.SearchApi
+
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.http.annotation.*
@@ -19,7 +21,7 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 @CompileStatic
 @Controller('/')
 @Secured(SecurityRule.IS_ANONYMOUS)
-class SearchController implements AdministeredItemReader {
+class SearchController implements AdministeredItemReader, SearchApi {
 
     @Inject
     SearchRepository searchRepository

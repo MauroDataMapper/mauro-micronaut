@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.controller.datamodel
 
+import uk.ac.ox.softeng.mauro.api.datamodel.EnumerationValueApi
+
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
@@ -21,7 +23,7 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 @CompileStatic
 @Controller('/dataModels/{dataModelId}/dataTypes/{enumerationTypeId}/enumerationValues')
 @Secured(SecurityRule.IS_ANONYMOUS)
-class EnumerationValueController extends AdministeredItemController<EnumerationValue, DataType> {
+class EnumerationValueController extends AdministeredItemController<EnumerationValue, DataType> implements EnumerationValueApi {
 
     @Inject
     DataTypeCacheableRepository dataTypeRepository

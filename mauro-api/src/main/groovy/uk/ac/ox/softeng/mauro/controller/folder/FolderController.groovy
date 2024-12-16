@@ -1,5 +1,6 @@
 package uk.ac.ox.softeng.mauro.controller.folder
 
+import uk.ac.ox.softeng.mauro.api.folder.FolderApi
 import uk.ac.ox.softeng.mauro.controller.model.ModelController
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
@@ -34,7 +35,7 @@ import jakarta.inject.Inject
 @CompileStatic
 @Controller('/folders')
 @Secured(SecurityRule.IS_ANONYMOUS)
-class FolderController extends ModelController<Folder> {
+class FolderController extends ModelController<Folder> implements FolderApi {
 
     @Inject
     FolderContentRepository folderContentRepository
