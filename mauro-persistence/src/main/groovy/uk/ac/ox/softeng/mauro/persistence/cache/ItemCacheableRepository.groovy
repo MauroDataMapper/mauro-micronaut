@@ -1,5 +1,6 @@
 package uk.ac.ox.softeng.mauro.persistence.cache
 
+import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.domain.facet.Rule
 import uk.ac.ox.softeng.mauro.domain.facet.RuleRepresentation
 import uk.ac.ox.softeng.mauro.persistence.facet.RuleRepresentationRepository
@@ -114,9 +115,10 @@ abstract class ItemCacheableRepository<I extends Item> implements ItemRepository
         invalidateCachedLookupById(FIND_BY_ID, domainType, id)
         invalidateCachedLookupById(READ_BY_ID, domainType, id)
     }
+
     @CacheInvalidate
     void invalidateCachedLookupById(String lookup, String domainType, UUID id) {
-        null
+        null // The '@CacheInvalidate' annotation does the work here
     }
 
     Class getDomainClass() {
@@ -256,6 +258,10 @@ abstract class ItemCacheableRepository<I extends Item> implements ItemRepository
     @Singleton
     @CompileStatic
     static class SummaryMetadataReportCacheableRepository extends ItemCacheableRepository<SummaryMetadataReport> {
+
+        @Inject FacetCacheableRepository.SummaryMetadataCacheableRepository summaryMetadataCacheableRepository
+
+
         SummaryMetadataReportCacheableRepository(SummaryMetadataReportRepository summaryMetadataReportRepository) {
             super(summaryMetadataReportRepository)
         }
@@ -280,16 +286,16 @@ abstract class ItemCacheableRepository<I extends Item> implements ItemRepository
 
         private void invalidateChain(SummaryMetadataReport summaryMetadataReport, SummaryMetadata summaryMetadata) {
             invalidate(summaryMetadataReport)
-            invalidateCachedLookupById(FIND_BY_ID, summaryMetadata.class.simpleName, summaryMetadata.id)
-            // invalidate attached parent of summaryMetadata
-            invalidateCachedLookupById(FIND_BY_ID, summaryMetadata.multiFacetAwareItemDomainType,
-                    summaryMetadata.multiFacetAwareItemId)
+            summaryMetadataCacheableRepository.invalidate(summaryMetadata)
         }
     }
 
     @Singleton
     @CompileStatic
     static class RuleRepresentationCacheableRepository extends ItemCacheableRepository<RuleRepresentation> {
+
+        @Inject FacetCacheableRepository.RuleCacheableRepository ruleCacheableRepository
+
         RuleRepresentationCacheableRepository(RuleRepresentationRepository ruleRepresentationRepository) {
             super(ruleRepresentationRepository)
         }
@@ -314,10 +320,7 @@ abstract class ItemCacheableRepository<I extends Item> implements ItemRepository
 
         private void invalidateChain(RuleRepresentation ruleRepresentation, Rule rule) {
             invalidate(ruleRepresentation)
-            invalidateCachedLookupById(FIND_BY_ID, rule.class.simpleName, rule.id)
-            // invalidate attached parent of rule
-            invalidateCachedLookupById(FIND_BY_ID, rule.multiFacetAwareItemDomainType,
-                                       rule.multiFacetAwareItemId)
+            ruleCacheableRepository.invalidate(rule)
         }
     }
 }

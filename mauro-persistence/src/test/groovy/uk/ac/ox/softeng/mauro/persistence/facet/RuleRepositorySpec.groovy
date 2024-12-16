@@ -1,10 +1,12 @@
 package uk.ac.ox.softeng.mauro.persistence.facet
 
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
+import uk.ac.ox.softeng.mauro.domain.facet.Rule
 import uk.ac.ox.softeng.mauro.domain.facet.RuleRepresentation
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.persistence.ContainerizedTest
 import uk.ac.ox.softeng.mauro.persistence.cache.FacetCacheableRepository
+import uk.ac.ox.softeng.mauro.persistence.cache.ItemCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.datamodel.DataModelContentRepository
 import uk.ac.ox.softeng.mauro.persistence.datamodel.DataModelRepository
@@ -34,20 +36,20 @@ class RuleRepositorySpec extends Specification {
     @Inject
     RuleRepresentationRepository ruleRepresentationRepository
 
+    @Inject
+    ItemCacheableRepository.RuleRepresentationCacheableRepository ruleRepresentationCacheableRepository
+
     @Shared
     Folder myFirstFolder
 
     @Shared
     UUID dataModelId
 
-    def TestRuleAndRepresentations() {
-        given:
-
+    void setup() {
         myFirstFolder = folderRepository.save(new Folder(
-            label: "My first Folder"
+                label: "My first Folder"
         ))
 
-        when:
         DataModel dataModel = DataModel.build {
             label "My first data model"
             description "Description here"
@@ -68,9 +70,11 @@ class RuleRepositorySpec extends Specification {
                 label "My first data class"
             }
         }
-
-
         dataModelId = dataModelContentRepository.saveWithContent(dataModel).id
+    }
+
+    def TestRuleAndRepresentations() {
+        when:
         DataModel retrievedDataModel = dataModelContentRepository.findWithContentById(dataModelId)
 
         then:
@@ -83,6 +87,27 @@ class RuleRepositorySpec extends Specification {
 
         retrievedDataModel.rules.first().ruleRepresentations.find { it.language == "English"}
         retrievedDataModel.rules.first().ruleRepresentations.find { it.language == "Java"}
+    }
+
+    def TestCacheInvalidation() {
+        when:
+        DataModel retrievedDataModel = dataModelContentRepository.findWithContentById(dataModelId)
+
+        then:
+        retrievedDataModel.rules.size() == 1
+
+        List<RuleRepresentation> ruleRepresentations = ruleRepresentationRepository.findAllByRuleId(retrievedDataModel.rules.first().id)
+
+        retrievedDataModel.rules.first().ruleRepresentations.size() == 2
+        UUID ruleId = retrievedDataModel.rules.first().id
+
+        when:
+        ruleRepresentationRepository.delete(retrievedDataModel.rules.first().ruleRepresentations.first())
+        retrievedDataModel = dataModelCacheableRepository.findById(retrievedDataModel.id)
+
+        then:
+        retrievedDataModel.rules.size() == 1
+        retrievedDataModel.rules.first().ruleRepresentations.size() == 1
     }
 
 }
