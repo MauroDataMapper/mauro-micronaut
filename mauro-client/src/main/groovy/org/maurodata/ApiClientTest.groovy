@@ -6,7 +6,6 @@ import uk.ac.ox.softeng.mauro.api.folder.FolderApi
 
 import io.micronaut.configuration.picocli.PicocliRunner
 import io.micronaut.http.client.HttpClient
-import io.micronaut.rxjava2.http.client.RxHttpClient
 import jakarta.inject.Inject
 import org.slf4j.Logger
 import picocli.CommandLine.Command
