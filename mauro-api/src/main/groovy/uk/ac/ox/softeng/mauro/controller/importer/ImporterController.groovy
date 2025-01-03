@@ -1,5 +1,6 @@
 package uk.ac.ox.softeng.mauro.controller.importer
 
+import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.importer.ImporterApi
 import uk.ac.ox.softeng.mauro.plugin.MauroPluginService
 import uk.ac.ox.softeng.mauro.plugin.importer.ModelImporterPlugin
@@ -23,7 +24,7 @@ class ImporterController implements ImporterApi {
 
 
     // TODO: Update interface to handle a more intelligent rendering of this information
-    @Get('/importer/parameters/{namespace}/{name}/{version}')
+    @Get(Paths.IMPORTER_PARAMS)
     Map<String, Object> getImporterParameters(String namespace, String name, @Nullable String version) {
 
         ModelImporterPlugin mauroPlugin = mauroPluginService.getPlugin(ModelImporterPlugin, namespace, name, version)

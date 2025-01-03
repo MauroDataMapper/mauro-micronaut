@@ -1,55 +1,52 @@
 package uk.ac.ox.softeng.mauro.api.datamodel
 
+import uk.ac.ox.softeng.mauro.api.MauroApi
+import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.model.AdministeredItemApi
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
-import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.annotation.Delete
 import io.micronaut.http.annotation.Get
-import io.micronaut.http.annotation.Header
 import io.micronaut.http.annotation.Post
 import io.micronaut.http.annotation.Put
-import io.micronaut.http.client.annotation.Client
 
-@CompileStatic
-@Client('${micronaut.http.services.mauro.url}/dataModels/{dataModelId}/dataClasses')
-@Header(name='apiKey', value = '${micronaut.http.services.mauro.apikey}')
+@MauroApi
 interface DataClassApi extends AdministeredItemApi<DataClass, DataModel> {
 
-    @Get('/{id}')
+    @Get(Paths.DATA_CLASS_ID)
     DataClass show(UUID dataModelId, UUID id)
 
-    @Post
+    @Post(Paths.DATA_CLASS_LIST)
     DataClass create(UUID dataModelId, @Body @NonNull DataClass dataClass)
 
-    @Put('/{id}')
+    @Put(Paths.DATA_CLASS_ID)
     DataClass update(UUID dataModelId, UUID id, @Body @NonNull DataClass dataClass)
 
-    @Delete('/{id}')
+    @Delete(Paths.DATA_CLASS_ID)
     HttpStatus delete(UUID dataModelId, UUID id, @Body @Nullable DataClass dataClass)
 
-    @Get
+    @Get(Paths.DATA_CLASS_LIST)
     ListResponse<DataClass> list(UUID dataModelId)
 
-    @Get('/{parentDataClassId}/dataClasses/{id}')
+    @Get(Paths.DATA_CLASS_CHILD_DATA_CLASS_ID)
     DataClass show(UUID dataModelId, UUID parentDataClassId, UUID id)
 
-    @Post('/{parentDataClassId}/dataClasses')
+    @Post(Paths.DATA_CLASS_CHILD_DATA_CLASS_LIST)
     DataClass create(UUID dataModelId, UUID parentDataClassId, @Body @NonNull DataClass dataClass)
 
-    @Put('/{parentDataClassId}/dataClasses/{id}')
+    @Put(Paths.DATA_CLASS_CHILD_DATA_CLASS_ID)
     DataClass update(UUID dataModelId, UUID parentDataClassId, UUID id, @Body @NonNull DataClass dataClass)
 
-    @Delete('/{parentDataClassId}/dataClasses/{id}')
+    @Delete(Paths.DATA_CLASS_CHILD_DATA_CLASS_ID)
     HttpStatus delete(UUID dataModelId, UUID parentDataClassId, UUID id, @Body @Nullable DataClass dataClass)
 
-    @Get('/{parentDataClassId}/dataClasses')
+    @Get(Paths.DATA_CLASS_CHILD_DATA_CLASS_LIST)
     ListResponse<DataClass> list(UUID dataModelId, UUID parentDataClassId)
 
 }

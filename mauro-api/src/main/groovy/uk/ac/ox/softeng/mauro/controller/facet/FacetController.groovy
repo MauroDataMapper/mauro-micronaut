@@ -29,8 +29,7 @@ abstract class FacetController<I extends Facet> extends ItemController<I> implem
         this.facetRepository = facetRepository
     }
 
-    @Get('/{id}')
-    I show(UUID id) {
+    I show(String domainType, UUID domainId, UUID id) {
         I facet = facetRepository.findById(id)
         accessControlService.checkRole(Role.READER, readAdministeredItemForFacet(facet))
         facet
@@ -55,8 +54,8 @@ abstract class FacetController<I extends Facet> extends ItemController<I> implem
         facetRepository.save(cleanFacet)
     }
 
-    @Put('/{id}')
-    I update(UUID id, @Body @NonNull I facet) {
+    /** Actually, we don't need to enforce this on all facets **/
+    protected I update(UUID id, @Body @NonNull I facet) {
         cleanBody(facet)
 
         I existing = facetRepository.readById(id)
@@ -77,10 +76,10 @@ abstract class FacetController<I extends Facet> extends ItemController<I> implem
 
     @Delete('/{id}')
     @Transactional
-    HttpStatus delete(UUID id, @Body @Nullable I facet) {
+    HttpStatus delete(UUID id) {
         I facetToDelete = facetRepository.readById(id)
         accessControlService.checkRole(Role.EDITOR, readAdministeredItemForFacet(facetToDelete))
-        if (facet?.version) facetToDelete.version = facet.version
+        if (facetToDelete?.version) facetToDelete.version = facetToDelete.version
         Long deleted = facetRepository.delete(facetToDelete)
         if (deleted) {
             HttpStatus.NO_CONTENT

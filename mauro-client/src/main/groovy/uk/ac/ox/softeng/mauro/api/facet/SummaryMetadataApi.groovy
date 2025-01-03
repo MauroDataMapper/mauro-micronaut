@@ -1,39 +1,34 @@
 package uk.ac.ox.softeng.mauro.api.facet
 
+import uk.ac.ox.softeng.mauro.api.MauroApi
+import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
-import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
-import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.annotation.Delete
 import io.micronaut.http.annotation.Get
-import io.micronaut.http.annotation.Header
 import io.micronaut.http.annotation.Post
 import io.micronaut.http.annotation.Put
-import io.micronaut.http.client.annotation.Client
 
-@CompileStatic
-@Client('${micronaut.http.services.mauro.url}/{domainType}/{domainId}/summaryMetadata')
-@Header(name='apiKey', value = '${micronaut.http.services.mauro.apikey}')
+@MauroApi
 interface SummaryMetadataApi extends FacetApi<SummaryMetadata> {
 
     @Get
     ListResponse<SummaryMetadata> list(String domainType, UUID domainId)
 
-    @Get('/{id}')
-    SummaryMetadata show(UUID id)
+    @Get(Paths.SUMMARY_METADATA_ID)
+    SummaryMetadata show(@NonNull String domainType, @NonNull UUID domainId, UUID id)
 
-    @Post
+    @Post(Paths.SUMMARY_METADATA_LIST)
     SummaryMetadata create(@NonNull String domainType, @NonNull UUID domainId, @Body @NonNull SummaryMetadata summaryMetadata)
 
-    @Put('/{id}')
-    SummaryMetadata update(@NonNull UUID id, @Body @NonNull SummaryMetadata summaryMetadata)
+    @Put(Paths.SUMMARY_METADATA_ID)
+    SummaryMetadata update(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID id, @Body @NonNull SummaryMetadata summaryMetadata)
 
-    @Delete('/{id}')
-    @Override
-    HttpStatus delete(@NonNull UUID id, @Body @Nullable SummaryMetadata summaryMetadata)
+    @Delete(Paths.SUMMARY_METADATA_ID)
+    HttpStatus delete(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID id)
 
 }

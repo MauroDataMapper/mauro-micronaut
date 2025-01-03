@@ -1,5 +1,6 @@
 package uk.ac.ox.softeng.mauro.controller.profile
 
+import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.profile.MetadataNamespaceDTO
 import uk.ac.ox.softeng.mauro.api.profile.ProfileApi
 import uk.ac.ox.softeng.mauro.domain.security.Role
@@ -62,51 +63,51 @@ class ProfileController implements AdministeredItemReader, ProfileApi {
     }
 
 
-    @Get('/profiles/providers/dynamic')
+    @Get(Paths.PROFILE_DYNAMIC_PROVIDERS)
     List<DataModelBasedProfile> dynamicProviders() {
         dynamicProfileService.getDynamicProfiles()
     }
 
 
-    @Get('/profiles/providers')
+    @Get(Paths.PROFILE_PROVIDERS)
     List<Profile> providers() {
         getAllProfiles()
     }
 
 
-    @Get('/profiles/{namespace}/{name}/search')
+    @Get(Paths.PROFILE_SEARCH)
     Profile getProfileDetails(String namespace, String name) {
         // TODO: I don't think this endpoint is actually used
         return null
     }
 
-    @Get('/{domainType}/{domainId}/profiles/{namespace}/{name}/search')
+    @Get(Paths.PROFILE_SEARCH_ITEM)
     Profile getProfileDetails(String domainType, UUID domainId, String namespace, String name) {
         // TODO: I don't think this endpoint is actually used
         return null
     }
 
 
-    @Get('/profiles/providers/{namespace}/{name}/{version}')
+    @Get(Paths.PROFILE_DETAILS)
     Profile getProfileDetails(String namespace, String name, String version) {
         getProfileByName(namespace, name, version)
     }
 
-    @Get('/{domainType}/{domainId}/profiles/used')
+    @Get(Paths.PROFILE_USED)
     List<Profile> getUsedProfiles(String domainType, UUID domainId) {
         AdministeredItem administeredItem = findAdministeredItem(domainType, domainId)
         accessControlService.checkRole(Role.READER, administeredItem)
         profileService.getUsedProfilesForAdministeredItem(getAllProfiles(), administeredItem)
     }
 
-    @Get('/{domainType}/{domainId}/profiles/unused')
+    @Get(Paths.PROFILE_UNUSED)
     List<Profile> getUnusedProfiles(String domainType, UUID domainId) {
         AdministeredItem administeredItem = findAdministeredItem(domainType, domainId)
         accessControlService.checkRole(Role.READER, administeredItem)
         profileService.getUnusedProfilesForAdministeredItem(getAllProfiles(), administeredItem)
     }
 
-    @Get('/{domainType}/{domainId}/profiles/otherMetadata')
+    @Get(Paths.PROFILE_OTHER_METADATA)
     ListResponse<Metadata> getOtherMetadata(String domainType, UUID domainId) {
         AdministeredItem administeredItem = findAdministeredItem(domainType, domainId)
         accessControlService.checkRole(Role.READER, administeredItem)
@@ -117,7 +118,7 @@ class ProfileController implements AdministeredItemReader, ProfileApi {
         })
     }
 
-    @Get('/{domainType}/{domainId}/profile/{namespace}/{name}/{version}')
+    @Get(Paths.PROFILE_ITEM)
     AppliedProfile getProfiledItem(String domainType, UUID domainId, String namespace, String name, String version) {
         AdministeredItem administeredItem = findAdministeredItem(domainType, domainId)
         accessControlService.checkRole(Role.READER, administeredItem)
@@ -126,7 +127,7 @@ class ProfileController implements AdministeredItemReader, ProfileApi {
         new AppliedProfile(profile, administeredItem)
     }
 
-    @Post('/{domainType}/{domainId}/profile/{namespace}/{name}/{version}/validate')
+    @Post(Paths.PROFILE_ITEM_VALIDATE)
     AppliedProfile validateProfile(String domainType, UUID domainId, String namespace, String name, String version, @Body Map bodyMap) {
         AdministeredItem administeredItem = readAdministeredItem(domainType, domainId)
         accessControlService.canDoRole(Role.READER, administeredItem)
@@ -138,7 +139,7 @@ class ProfileController implements AdministeredItemReader, ProfileApi {
 
 
     // TODO: Refactor the UI so that this method isn't needed quite so often
-    @Get('/metadata/namespaces{/prefix}')
+    @Get(Paths.PROFILE_NAMESPACES)
     List<MetadataNamespaceDTO> getNamespaces(@Nullable String prefix) {
 
         // First look through the database to find all the namespaces / keys in use

@@ -1,5 +1,6 @@
 package uk.ac.ox.softeng.mauro.controller.security
 
+import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.security.UserGroupApi
 
 import groovy.transform.CompileStatic
@@ -29,7 +30,7 @@ class UserGroupController extends ItemController<UserGroup> implements UserGroup
     }
 
     @Transactional
-    @Post('/userGroups')
+    @Post(Paths.USER_GROUP_LIST)
     UserGroup create(@Body @NonNull UserGroup userGroup) {
         accessControlService.checkAdministrator()
         userGroupRepository.save(userGroup)

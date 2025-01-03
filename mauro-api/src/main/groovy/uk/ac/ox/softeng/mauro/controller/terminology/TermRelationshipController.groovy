@@ -1,5 +1,6 @@
 package uk.ac.ox.softeng.mauro.controller.terminology
 
+import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.terminology.TermRelationshipApi
 
 import groovy.transform.CompileStatic
@@ -22,7 +23,7 @@ import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemContentRepositor
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @CompileStatic
-@Controller('/terminologies/{terminologyId}/termRelationships')
+@Controller
 @Secured(SecurityRule.IS_ANONYMOUS)
 class TermRelationshipController extends AdministeredItemController<TermRelationship, Terminology> implements TermRelationshipApi {
 
@@ -43,12 +44,12 @@ class TermRelationshipController extends AdministeredItemController<TermRelation
         this.terminologyRepository = terminologyRepository
     }
 
-    @Get('/{id}')
+    @Get(Paths.TERM_RELATIONSHIP_ID)
     TermRelationship show(UUID terminologyId, UUID id) {
         super.show(id)
     }
 
-    @Post
+    @Post(Paths.TERM_RELATIONSHIP_LIST)
     TermRelationship create(UUID terminologyId, @Body @NonNull TermRelationship termRelationship) {
         cleanBody(termRelationship)
 
@@ -62,7 +63,7 @@ class TermRelationshipController extends AdministeredItemController<TermRelation
         createEntity(terminology, termRelationship)
     }
 
-    @Put('/{id}')
+    @Put(Paths.TERM_RELATIONSHIP_ID)
     TermRelationship update(UUID terminologyId, UUID id, @Body @NonNull TermRelationship termRelationship) {
         cleanBody(termRelationship)
 
@@ -78,12 +79,12 @@ class TermRelationshipController extends AdministeredItemController<TermRelation
         updateEntity(existing, termRelationship)
     }
 
-    @Delete('/{id}')
+    @Delete(Paths.TERM_RELATIONSHIP_ID)
     HttpStatus delete(UUID terminologyId, UUID id, @Body @Nullable TermRelationship termRelationship) {
         super.delete(id, termRelationship)
     }
 
-    @Get
+    @Get(Paths.TERM_RELATIONSHIP_LIST)
     ListResponse<TermRelationship> list(UUID terminologyId) {
         super.list(terminologyId)
     }

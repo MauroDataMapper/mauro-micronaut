@@ -1,5 +1,6 @@
 package uk.ac.ox.softeng.mauro.controller.facet
 
+import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.facet.SummaryMetadataApi
 
 import groovy.transform.CompileStatic
@@ -21,7 +22,7 @@ import uk.ac.ox.softeng.mauro.persistence.facet.SummaryMetadataReportRepository
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @CompileStatic
-@Controller('/{domainType}/{domainId}/summaryMetadata')
+@Controller
 @Secured(SecurityRule.IS_ANONYMOUS)
 class SummaryMetadataController extends FacetController<SummaryMetadata> implements SummaryMetadataApi {
     FacetCacheableRepository.SummaryMetadataCacheableRepository summaryMetadataRepository
@@ -44,16 +45,16 @@ class SummaryMetadataController extends FacetController<SummaryMetadata> impleme
         this.summaryMetadataRepository = summaryMetadataRepository
     }
 
-    @Get
+    @Get(Paths.SUMMARY_METADATA_LIST)
     ListResponse<SummaryMetadata> list(String domainType, UUID domainId) {
         AdministeredItem administeredItem = findAdministeredItem(domainType, domainId)
         accessControlService.checkRole(Role.READER, administeredItem)
         ListResponse.from(!administeredItem.summaryMetadata ? [] : administeredItem.summaryMetadata)
     }
 
-    @Get('/{id}')
-    SummaryMetadata show(UUID id) {
-        SummaryMetadata summaryMetadata = super.show(id) as SummaryMetadata
+    @Get(Paths.SUMMARY_METADATA_ID)
+    SummaryMetadata show(@NonNull String domainType, @NonNull UUID domainId, UUID id) {
+        SummaryMetadata summaryMetadata = super.show(domainType, domainId, id) as SummaryMetadata
         if (summaryMetadata) {
             AdministeredItem administeredItem = findAdministeredItem(summaryMetadata.multiFacetAwareItemDomainType,
                     summaryMetadata.multiFacetAwareItemId)
@@ -64,23 +65,25 @@ class SummaryMetadataController extends FacetController<SummaryMetadata> impleme
         }
     }
 
-    @Post
+    @Post(Paths.SUMMARY_METADATA_LIST)
     SummaryMetadata create(@NonNull String domainType, @NonNull UUID domainId, @Body @NonNull SummaryMetadata summaryMetadata) {
         super.create(domainType, domainId, summaryMetadata)
     }
 
-    @Put('/{id}')
-    SummaryMetadata update(@NonNull UUID id, @Body @NonNull SummaryMetadata summaryMetadata) {
-        super.update(id, summaryMetadata)
+
+    @Override
+    @Put(Paths.SUMMARY_METADATA_ID)
+    SummaryMetadata update(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID id, @Body @NonNull SummaryMetadata summaryMetadata) {
+        update(id, summaryMetadata)
     }
 
-    @Delete('/{id}')
+    @Delete(Paths.SUMMARY_METADATA_ID)
     @Transactional
     @Override
-    HttpStatus delete(@NonNull UUID id, @Body @Nullable SummaryMetadata summaryMetadata) {
+    HttpStatus delete(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID id) {
         accessControlService.checkRole(Role.READER, readAdministeredItemForFacet(summaryMetadataRepository.readById(id)))
         deleteAnyAssociatedReports(id)
-        super.delete(id, summaryMetadata)
+        super.delete(id)
     }
 
     private void deleteAnyAssociatedReports(UUID summaryMetadataId) {

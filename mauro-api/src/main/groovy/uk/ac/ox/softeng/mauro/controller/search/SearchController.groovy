@@ -1,5 +1,6 @@
 package uk.ac.ox.softeng.mauro.controller.search
 
+import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.search.SearchApi
 
 import groovy.transform.CompileStatic
@@ -19,7 +20,7 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @Slf4j
 @CompileStatic
-@Controller('/')
+@Controller
 @Secured(SecurityRule.IS_ANONYMOUS)
 class SearchController implements AdministeredItemReader, SearchApi {
 
@@ -29,7 +30,7 @@ class SearchController implements AdministeredItemReader, SearchApi {
     @Inject
     AccessControlService accessControlService
 
-    @Get('/search{?requestDTO}')
+    @Get(Paths.SEARCH_GET)
     ListResponse<SearchResultsDTO> searchGet(@RequestBean SearchRequestDTO requestDTO) {
         List<SearchResultsDTO> searchResults = searchRepository.search(requestDTO)
         List<SearchResultsDTO> searchResultsReadable = searchResults.findAll {SearchResultsDTO result ->
@@ -39,7 +40,7 @@ class SearchController implements AdministeredItemReader, SearchApi {
         ListResponse.from(searchResultsReadable)
     }
 
-    @Post('/search')
+    @Post(Paths.SEARCH_POST)
     ListResponse<SearchResultsDTO> searchPost(@Body SearchRequestDTO requestDTO) {
         List<SearchResultsDTO> searchResults = searchRepository.search(requestDTO)
         List<SearchResultsDTO> searchResultsReadable = searchResults.findAll {SearchResultsDTO result ->

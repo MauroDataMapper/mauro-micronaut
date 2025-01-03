@@ -1,42 +1,37 @@
 package uk.ac.ox.softeng.mauro.api.datamodel
 
+import uk.ac.ox.softeng.mauro.api.MauroApi
+import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.model.AdministeredItemApi
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataElement
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
-import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.annotation.Delete
 import io.micronaut.http.annotation.Get
-import io.micronaut.http.annotation.Header
 import io.micronaut.http.annotation.Post
 import io.micronaut.http.annotation.Put
-import io.micronaut.http.client.annotation.Client
 
-
-@CompileStatic
-@Client('${micronaut.http.services.mauro.url}/dataModels/{dataModelId}/dataClasses/{dataClassId}/dataElements')
-@Header(name='apiKey', value = '${micronaut.http.services.mauro.apikey}')
+@MauroApi
 interface DataElementApi extends AdministeredItemApi<DataElement, DataClass> {
 
-    @Get('/{id}')
+    @Get(Paths.DATA_ELEMENT_ID)
     DataElement show(UUID dataModelId, UUID dataClassId, UUID id)
 
-    @Post
+    @Post(Paths.DATA_ELEMENT_LIST)
     DataElement create(UUID dataModelId, UUID dataClassId, @Body @NonNull DataElement dataElement)
 
-    @Put('/{id}')
+    @Put(Paths.DATA_ELEMENT_ID)
     DataElement update(UUID dataModelId, UUID dataClassId, UUID id, @Body @NonNull DataElement dataElement)
 
-    @Delete('/{id}')
+    @Delete(Paths.DATA_ELEMENT_ID)
     HttpStatus delete(UUID dataModelId, UUID dataClassId, UUID id, @Body @Nullable DataElement dataElement)
 
-    @Get
+    @Get(Paths.DATA_ELEMENT_LIST)
     ListResponse<DataElement> list(UUID dataModelId, UUID dataClassId)
-
 
 }

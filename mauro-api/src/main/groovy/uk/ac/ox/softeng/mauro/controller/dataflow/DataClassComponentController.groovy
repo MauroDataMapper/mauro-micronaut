@@ -26,7 +26,7 @@ import uk.ac.ox.softeng.mauro.persistence.dataflow.DataFlowRepository
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @CompileStatic
-@Controller(Paths.DATA_CLASS_COMPONENTS_ROUTE)
+@Controller()
 @Slf4j
 @Secured(SecurityRule.IS_AUTHENTICATED)
 class DataClassComponentController extends AdministeredItemController<DataClassComponent, DataFlow> implements DataClassComponentApi {
@@ -50,54 +50,55 @@ class DataClassComponentController extends AdministeredItemController<DataClassC
     }
 
 
-    @Get(value = Paths.ID_ROUTE)
-    DataClassComponent show(@NonNull UUID dataFlowId, @NonNull UUID id) {
+    @Get(Paths.DATA_FLOW_CLASS_COMPONENT_ID)
+    DataClassComponent show(@NonNull UUID dataModelId, @NonNull UUID dataFlowId, @NonNull UUID id) {
         super.show(id)
     }
 
-    @Post
-    DataClassComponent create(@NonNull UUID dataFlowId, @Body @NonNull DataClassComponent dataClassComponent) {
+    @Post(Paths.DATA_FLOW_CLASS_COMPONENT_LIST)
+    DataClassComponent create(@NonNull UUID dataModelId, @NonNull UUID dataFlowId, @Body @NonNull DataClassComponent dataClassComponent) {
         super.create(dataFlowId, dataClassComponent)
     }
 
-    @Put(value = Paths.ID_ROUTE)
-    DataClassComponent update(@NonNull UUID id, @Body @NonNull DataClassComponent dataClassComponent) {
+    @Put(Paths.DATA_FLOW_CLASS_COMPONENT_ID)
+    DataClassComponent update(@NonNull UUID dataModelId, @NonNull UUID dataFlowId, @NonNull UUID id, @Body @NonNull DataClassComponent dataClassComponent) {
         super.update(id, dataClassComponent)
     }
 
-    @Delete(value = Paths.ID_ROUTE)
-    HttpStatus delete(@NonNull UUID id, @Body @Nullable DataClassComponent dataClassComponent) {
+    @Delete(Paths.DATA_FLOW_CLASS_COMPONENT_ID)
+    HttpStatus delete(@NonNull UUID dataModelId, @NonNull UUID dataFlowId, @NonNull UUID id, @Body @Nullable DataClassComponent dataClassComponent) {
         super.delete(id, dataClassComponent)
     }
 
-    @Get
-    ListResponse<DataClassComponent> list(@NonNull UUID dataFlowId) {
+    @Get(Paths.DATA_FLOW_CLASS_COMPONENT_LIST)
+    ListResponse<DataClassComponent> list(@NonNull UUID dataModelId, @NonNull UUID dataFlowId) {
         super.list(dataFlowId)
     }
 
-    @Put(value = Paths.SOURCE_DATA_CLASS_ROUTE)
-    DataClassComponent update(@NonNull UUID dataModelId, @NonNull UUID dataFlowId, @NonNull UUID id, @NonNull UUID dataClassId) {
+    @Put(Paths.DATA_FLOW_CLASS_COMPONENT_SOURCE_CLASS)
+    DataClassComponent updateSource(@NonNull UUID dataModelId, @NonNull UUID dataFlowId, @NonNull UUID id, @NonNull UUID dataClassId) {
         DataClassComponent updated = addDataClass(Type.SOURCE, id, dataClassId)
         updated
     }
 
-    @Put(value = Paths.TARGET_DATA_CLASS_ROUTE)
-    DataClassComponent update(@NonNull UUID dataFlowId, @NonNull UUID id, @NonNull UUID dataClassId) {
+    @Put(Paths.DATA_FLOW_CLASS_COMPONENT_TARGET_CLASS)
+    DataClassComponent updateTarget(@NonNull UUID dataModelId, @NonNull UUID dataFlowId, @NonNull UUID id, @NonNull UUID dataClassId) {
         DataClassComponent updated = addDataClass(Type.TARGET, id, dataClassId)
         updated
     }
 
-    @Delete(value = Paths.TARGET_DATA_CLASS_ROUTE)
-    HttpStatus delete(@NonNull UUID id, @NonNull UUID dataClassId) {
+    @Delete(Paths.DATA_FLOW_CLASS_COMPONENT_SOURCE_CLASS)
+    HttpStatus deleteSource(@NonNull UUID dataModelId, @NonNull UUID dataFlowId, @NonNull UUID id, @NonNull UUID dataClassId) {
+        removeDataClass(Type.SOURCE, id, dataClassId)
+        return HttpStatus.NO_CONTENT
+    }
+
+    @Delete(Paths.DATA_FLOW_CLASS_COMPONENT_TARGET_CLASS)
+    HttpStatus deleteTarget(@NonNull UUID dataModelId, @NonNull UUID dataFlowId, @NonNull UUID id, @NonNull UUID dataClassId) {
         removeDataClass(Type.TARGET, id, dataClassId)
         return HttpStatus.NO_CONTENT
     }
 
-    @Delete(value = Paths.SOURCE_DATA_CLASS_ROUTE)
-    HttpStatus delete(@NonNull UUID dataFlowId, @NonNull UUID id, @NonNull UUID dataClassId) {
-        removeDataClass(Type.SOURCE, id, dataClassId)
-        return HttpStatus.NO_CONTENT
-    }
 
     private DataClassComponent addDataClass(Type type, UUID id, UUID dataClassId) {
         DataClass dataClassToAdd = dataClassRepository.readById(dataClassId)

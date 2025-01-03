@@ -25,7 +25,7 @@ import uk.ac.ox.softeng.mauro.persistence.dataflow.DataFlowRepository
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @CompileStatic
-@Controller(Paths.DATA_FLOW_ROUTE)
+@Controller
 @Secured(SecurityRule.IS_AUTHENTICATED)
 class DataFlowController extends AdministeredItemController<DataFlow, DataModel> implements DataFlowApi {
 
@@ -41,12 +41,12 @@ class DataFlowController extends AdministeredItemController<DataFlow, DataModel>
     }
 
 
-    @Get(value = Paths.ID_ROUTE)
-    DataFlow show(@NonNull UUID id) {
+    @Get(Paths.DATA_FLOW_ID)
+    DataFlow show(@NonNull UUID dataModelId, @NonNull UUID id) {
         super.show(id)
     }
 
-    @Post
+    @Post(Paths.DATA_FLOW_LIST)
     DataFlow create(@NonNull UUID dataModelId, @Body @NonNull DataFlow dataFlow) {
         DataModel source = dataModelRepository.findById(dataFlow.source.id)
         accessControlService.checkRole(Role.READER, source)
@@ -55,19 +55,19 @@ class DataFlowController extends AdministeredItemController<DataFlow, DataModel>
         show(created.id)
     }
 
-    @Put(value = Paths.ID_ROUTE)
-    DataFlow update(@NonNull UUID id, @Body @NonNull DataFlow dataFlow) {
+    @Put(Paths.DATA_FLOW_ID)
+    DataFlow update(@NonNull UUID dataModelId, @NonNull UUID id, @Body @NonNull DataFlow dataFlow) {
         super.update(id, dataFlow)
     }
 
 
-    @Delete(value = Paths.ID_ROUTE)
+    @Delete(Paths.DATA_FLOW_ID)
     @Transactional
     HttpStatus delete(@NonNull UUID dataModelId, @NonNull UUID id, @Body @Nullable DataFlow dataFlow) {
         super.delete(id, dataFlow)
     }
 
-    @Get
+    @Get(Paths.DATA_FLOW_LIST)
     ListResponse<DataFlow> list(@NotNull UUID dataModelId, @Nullable @QueryValue(Paths.TYPE_QUERY) Type type) {
         if (!type || type == Type.TARGET) {
             return super.list(dataModelId)

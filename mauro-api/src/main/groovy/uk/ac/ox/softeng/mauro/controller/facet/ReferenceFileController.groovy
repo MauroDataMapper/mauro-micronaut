@@ -1,5 +1,6 @@
 package uk.ac.ox.softeng.mauro.controller.facet
 
+import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.facet.ReferenceFileApi
 
 import groovy.transform.CompileStatic
@@ -37,7 +38,7 @@ class ReferenceFileController extends FacetController<ReferenceFile> implements 
     }
 
 
-    @Get('/{domainType}/{domainId}/referenceFiles')
+    @Get(Paths.REFERENCE_FILE_LIST)
     ListResponse<ReferenceFile> list(String domainType, UUID domainId) {
         AdministeredItem administeredItem = findAdministeredItem(domainType, domainId)
         accessControlService.checkRole(Role.READER, administeredItem)
@@ -50,32 +51,37 @@ class ReferenceFileController extends FacetController<ReferenceFile> implements 
      * @param id
      * @return ReferenceFile
      */
-    @Get('/{domainType}/{domainId}/referenceFiles/{id}')
-    byte[] show(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID id) {
+    @Get(Paths.REFERENCE_FILE_ID)
+    byte[] showAndReturnFile(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID id) {
         accessControlService.checkRole(Role.READER, readAdministeredItem(domainType, domainId))
         ReferenceFile validReferenceFile = super.validateAndGet(domainType, domainId, id) as ReferenceFile
         validReferenceFile.fileContent()
     }
 
-    @Post('/{domainType}/{domainId}/referenceFiles')
+
+    ReferenceFile show(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID id) {
+        // Unused override of interface
+        null
+    }
+
+    @Put(Paths.REFERENCE_FILE_ID)
+    ReferenceFile update(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID id, @Body @NonNull ReferenceFile referenceFile) {
+        super.update(id, referenceFile)
+    }
+
+
+    @Post(Paths.REFERENCE_FILE_LIST)
     ReferenceFile create(@NonNull String domainType, @NonNull UUID domainId, @Body @NonNull ReferenceFile referenceFile) {
         referenceFile.setFileSize()
         super.create(domainType, domainId, referenceFile)
     }
 
-    @Put('/{domainType}/{domainId}/referenceFiles/{id}')
-    ReferenceFile update(UUID domainId, @NonNull UUID id, @Body @NonNull ReferenceFile referenceFile) {
-        referenceFile.setFileSize()
-        super.update(id, referenceFile)
-    }
-
-    @Delete('/{domainType}/{domainId}/referenceFiles/{id}')
+    @Delete(Paths.REFERENCE_FILE_ID)
     @Transactional
-    HttpStatus delete(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID id,
-                      @Body @Nullable ReferenceFile referenceFile) {
+    HttpStatus delete(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID id) {
         accessControlService.checkRole(Role.EDITOR, readAdministeredItem(domainType, domainId))
         ReferenceFile referenceFileToDelete = super.validateAndGet(domainType, domainId, id) as ReferenceFile
-        super.delete(id, referenceFileToDelete )
+        super.delete(id)
     }
 
 }

@@ -56,23 +56,23 @@ class CodeSetController extends ModelController<CodeSet> implements CodeSetApi {
         this.codeSetService = codeSetService
     }
 
-    @Get(value = Paths.CODE_SET_BY_ID)
+    @Get(value = Paths.CODE_SET_ID)
     CodeSet show(UUID id) {
         super.show(id)
     }
 
     @Transactional
-    @Post(value = Paths.CODE_SETS_BY_FOLDER_ID)
+    @Post(value = Paths.FOLDER_LIST_CODE_SET)
     CodeSet create(UUID folderId, @Body @NonNull CodeSet codeSet) {
         super.create(folderId, codeSet)
     }
 
-    @Put(value = Paths.CODE_SET_BY_ID)
+    @Put(value = Paths.CODE_SET_ID)
     CodeSet update(UUID id, @Body @NonNull CodeSet codeSet) {
         super.update(id, codeSet)
     }
 
-    @Put(value = Paths.TERM_TO_CODE_SET)
+    @Put(value = Paths.CODE_SET_TERM_ID)
     @Transactional
     CodeSet addTerm(@NonNull UUID id,
                     @NonNull UUID termId) {
@@ -88,13 +88,13 @@ class CodeSetController extends ModelController<CodeSet> implements CodeSetApi {
     }
 
     @Transactional
-    @Delete(value = Paths.CODE_SET_BY_ID)
+    @Delete(value = Paths.CODE_SET_ID)
     HttpStatus delete(UUID id, @Body @Nullable CodeSet codeSet) {
         super.delete(id, codeSet)
     }
 
     @Transactional
-    @Delete(value = Paths.TERM_TO_CODE_SET)
+    @Delete(value = Paths.CODE_SET_TERM_ID)
     CodeSet removeTermFromCodeSet(@NonNull UUID id,
                                   @NonNull UUID termId) {
         Term term = termRepository.readById(termId)
@@ -107,17 +107,17 @@ class CodeSetController extends ModelController<CodeSet> implements CodeSetApi {
     }
 
 
-    @Get(value = Paths.CODE_SETS_BY_FOLDER_ID)
+    @Get(value = Paths.FOLDER_LIST_CODE_SET)
     ListResponse<CodeSet> list(UUID folderId) {
         super.list(folderId)
     }
 
-    @Get(value = Paths.CODE_SETS)
+    @Get(value = Paths.CODE_SET_LIST)
     ListResponse<CodeSet> listAll() {
         super.listAll()
     }
 
-    @Get(value = Paths.TERMS_IN_CODE_SET)
+    @Get(value = Paths.CODE_SET_TERM_LIST)
     ListResponse<Term> listAllTermsInCodeSet(@NonNull UUID id) {
         CodeSet codeSet = codeSetRepository.readById(id)
         if (!codeSet) {
@@ -129,7 +129,7 @@ class CodeSetController extends ModelController<CodeSet> implements CodeSetApi {
     }
 
     @Transactional
-    @Put(value = Paths.FINALISE_CODE_SETS)
+    @Put(value = Paths.CODE_SET_FINALISE)
     CodeSet finalise(UUID id, @Body FinaliseData finaliseData) {
         super.finalise(id, finaliseData)
     }

@@ -1,6 +1,8 @@
 package uk.ac.ox.softeng.mauro.controller.facet
 
+import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.facet.AnnotationApi
+import uk.ac.ox.softeng.mauro.domain.facet.Metadata
 
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
@@ -46,14 +48,14 @@ class AnnotationController extends FacetController<Annotation> implements Annota
      * @param domainId
      * @return
      */
-    @Get('/{domainType}/{domainId}/annotations')
+    @Get(Paths.ANNOTATION_LIST)
     ListResponse<Annotation> list(@NonNull String domainType, @NonNull UUID domainId) {
         AdministeredItem administeredItem = findAdministeredItem(domainType, domainId)
         accessControlService.checkRole(Role.READER, administeredItem)
         ListResponse.from(!administeredItem.annotations ? [] : administeredItem.annotations)
     }
 
-    @Get('/{domainType}/{domainId}/annotations/{id}')
+    @Get(Paths.ANNOTATION_ID)
     Annotation show(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID id) {
         accessControlService.checkRole(Role.READER, readAdministeredItem(domainType, domainId))
         Annotation validAnnotation = super.validateAndGet(domainType, domainId, id) as Annotation
@@ -61,7 +63,7 @@ class AnnotationController extends FacetController<Annotation> implements Annota
         nested
     }
 
-    @Post('/{domainType}/{domainId}/annotations')
+    @Post(Paths.ANNOTATION_LIST)
     Annotation create(@NonNull String domainType, @NonNull UUID domainId, @Body @NonNull Annotation annotation) {
         super.create(domainType, domainId, annotation) as Annotation
     }
@@ -74,7 +76,7 @@ class AnnotationController extends FacetController<Annotation> implements Annota
      * @param childAnnotation child annotation to create
      * @return newly created child
      */
-    @Post('/{domainType}/{domainId}/annotations/{annotationId}/annotations')
+    @Post(Paths.ANNOTATION_CHILD_LIST)
     Annotation create(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID annotationId, @Body @NonNull Annotation childAnnotation) {
         accessControlService.checkRole(Role.EDITOR, readAdministeredItem(domainType, domainId))
         super.cleanBody(childAnnotation)
@@ -94,36 +96,35 @@ class AnnotationController extends FacetController<Annotation> implements Annota
      * @param childId note: if childId = parent, the nested parent is returned
      * @return 'Child' annotation
      */
-    @Get('/{domainType}/{domainId}/annotations/{id}/annotations/{childId}')
-    Annotation getChildAnnotation(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID id,
-                                  @NonNull UUID childId) {
-        show(domainType, domainId, childId)
+    @Get(Paths.ANNOTATION_CHILD_ID)
+    Annotation getChildAnnotation(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID annotationId,
+                                  @NonNull UUID id) {
+        show(domainType, domainId, id)
     }
 
-    @Delete('/{domainType}/{domainId}/annotations/{id}')
+    @Delete(Paths.ANNOTATION_ID)
     @Transactional
-    HttpStatus delete(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID id,
-                      @Body @Nullable Annotation annotation) {
+    HttpStatus delete(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID id) {
         accessControlService.checkRole(Role.EDITOR, readAdministeredItem(domainType, domainId))
         Annotation annotationToDelete = super.validateAndGet(domainType, domainId, id) as Annotation
         if (!annotationToDelete.parentAnnotationId) {
             Set<Annotation> annotationSet = annotationRepositoryUncached.findAllChildrenById(id)
             annotationRepository.deleteAll(annotationSet)
         }
-        super.delete(id, annotation)
+        super.delete(id)
     }
 
-    @Delete('/{domainType}/{domainId}/annotations/{id}/annotations/{childId}')
+    @Delete(Paths.ANNOTATION_CHILD_ID)
     @Transactional
-    HttpStatus delete(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID id,
-                      @NonNull UUID childId, @Body @Nullable Annotation annotation) {
+    HttpStatus delete(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID annotationId,
+                      @NonNull UUID id) {
         accessControlService.checkRole(Role.EDITOR, readAdministeredItem(domainType, domainId))
-        super.validateAndGet(domainType, domainId, id) as Annotation
-        Annotation child = super.validateAndGet(domainType, domainId, childId) as Annotation
+        super.validateAndGet(domainType, domainId, annotationId) as Annotation
+        Annotation child = super.validateAndGet(domainType, domainId, id) as Annotation
         if (!child.parentAnnotationId) {
             throw new HttpStatusException(HttpStatus.BAD_REQUEST, "Child Annotation has no parent annotation")
         }
-        super.delete(childId, annotation)
+        super.delete(id)
     }
 
     private Annotation showNestedItem(UUID id, Annotation annotation) {

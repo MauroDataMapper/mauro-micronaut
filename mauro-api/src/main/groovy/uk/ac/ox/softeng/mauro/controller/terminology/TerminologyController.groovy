@@ -1,5 +1,6 @@
 package uk.ac.ox.softeng.mauro.controller.terminology
 
+import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.terminology.TerminologyApi
 import uk.ac.ox.softeng.mauro.ErrorHandler
 
@@ -57,30 +58,30 @@ class TerminologyController extends ModelController<Terminology> implements Term
         this.terminologyService = terminologyService
     }
 
-    @Get('/terminologies/{id}')
+    @Get(Paths.TERMINOLOGY_ID)
     Terminology show(UUID id) {
         super.show(id)
     }
 
     @Transactional
-    @Post('/folders/{folderId}/terminologies')
+    @Post(Paths.FOLDER_LIST_TERMINOLOGY)
     Terminology create(UUID folderId, @Body @NonNull Terminology terminology) {
         log.debug '*** TerminologyController.create ***'
         super.create(folderId, terminology)
     }
 
-    @Put('/terminologies/{id}')
+    @Put(Paths.TERMINOLOGY_ID)
     Terminology update(UUID id, @Body @NonNull Terminology terminology) {
         super.update(id, terminology)
     }
 
     @Transactional
-    @Delete('/terminologies/{id}')
+    @Delete(Paths.TERMINOLOGY_ID)
     HttpStatus delete(UUID id, @Body @Nullable Terminology terminology) {
         super.delete(id, terminology)
     }
 
-    @Get('/terminologies/{id}/search{?requestDTO}')
+    @Get(Paths.TERMINOLOGY_SEARCH_GET)
     ListResponse<SearchResultsDTO> searchGet(UUID id, @RequestBean SearchRequestDTO requestDTO) {
         requestDTO.withinModelId = id
         Terminology terminology = terminologyRepository.readById(requestDTO.withinModelId)
@@ -88,7 +89,7 @@ class TerminologyController extends ModelController<Terminology> implements Term
         ListResponse.from(searchRepository.search(requestDTO))
     }
 
-    @Post('/terminologies/{id}/search')
+    @Post(Paths.TERMINOLOGY_SEARCH_POST)
     ListResponse<SearchResultsDTO> searchPost(UUID id, @Body SearchRequestDTO requestDTO) {
         requestDTO.withinModelId = id
         Terminology terminology = terminologyRepository.readById(requestDTO.withinModelId)
@@ -97,29 +98,29 @@ class TerminologyController extends ModelController<Terminology> implements Term
     }
 
 
-    @Get('/folders/{folderId}/terminologies')
+    @Get(Paths.FOLDER_LIST_TERMINOLOGY)
     ListResponse<Terminology> list(UUID folderId) {
         super.list(folderId)
     }
 
-    @Get('/terminologies')
+    @Get(Paths.TERMINOLOGY_LIST)
     ListResponse<Terminology> listAll() {
         super.listAll()
     }
 
     @Transactional
-    @Put('/terminologies/{id}/finalise')
+    @Put(Paths.TERMINOLOGY_FINALISE)
     Terminology finalise(UUID id, @Body FinaliseData finaliseData) {
         super.finalise(id, finaliseData)
     }
 
     @Transactional
-    @Put('/terminologies/{id}/newBranchModelVersion')
+    @Put(Paths.TERMINOLOGY_NEW_BRANCH_MODEL_VERSION)
     Terminology createNewBranchModelVersion(UUID id, @Body @Nullable CreateNewVersionData createNewVersionData) {
         super.createNewBranchModelVersion(id, createNewVersionData)
     }
 
-    @Get('/terminologies/{id}/export{/namespace}{/name}{/version}')
+    @Get(Paths.TERMINOLOGY_EXPORT)
     StreamedFile exportModel(UUID id, @Nullable String namespace, @Nullable String name, @Nullable String version) {
         super.exportModel(id, namespace, name, version)
     }
@@ -127,7 +128,7 @@ class TerminologyController extends ModelController<Terminology> implements Term
     @Transactional
     @ExecuteOn(TaskExecutors.IO)
     @Consumes(MediaType.MULTIPART_FORM_DATA)
-    @Post('/terminologies/import/{namespace}/{name}{/version}')
+    @Post(Paths.TERMINOLOGY_IMPORT)
     ListResponse<Terminology> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version) {
         super.importModel(body, namespace, name, version)
     }
@@ -158,7 +159,7 @@ class TerminologyController extends ModelController<Terminology> implements Term
 
  */
 
-    @Get('/terminologies/{id}/diff/{otherId}')
+    @Get(Paths.TERMINOLOGY_DIFF)
     ObjectDiff diffModels(@NonNull UUID id, @NonNull UUID otherId) {
         Terminology terminology = modelContentRepository.findWithContentById(id)
 

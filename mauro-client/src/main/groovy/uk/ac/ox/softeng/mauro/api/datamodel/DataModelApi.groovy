@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.api.datamodel
 
+import uk.ac.ox.softeng.mauro.api.MauroApi
+import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.model.ModelApi
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.diff.ObjectDiff
@@ -10,7 +12,6 @@ import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchResultsDTO
 import uk.ac.ox.softeng.mauro.plugin.importer.DataModelImporterPlugin
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
-import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpStatus
@@ -19,67 +20,59 @@ import io.micronaut.http.annotation.Body
 import io.micronaut.http.annotation.Consumes
 import io.micronaut.http.annotation.Delete
 import io.micronaut.http.annotation.Get
-import io.micronaut.http.annotation.Header
 import io.micronaut.http.annotation.Post
 import io.micronaut.http.annotation.Put
 import io.micronaut.http.annotation.RequestBean
-import io.micronaut.http.client.annotation.Client
 import io.micronaut.http.server.multipart.MultipartBody
 import io.micronaut.http.server.types.files.StreamedFile
 import io.micronaut.scheduling.TaskExecutors
 import io.micronaut.scheduling.annotation.ExecuteOn
 
-@CompileStatic
-@Client('${micronaut.http.services.mauro.url}')
-@Header(name='apiKey', value = '${micronaut.http.services.mauro.apikey}')
+@MauroApi
 interface DataModelApi extends ModelApi<DataModel> {
 
-
-    @Get('/dataModels/{id}')
+    @Get(Paths.DATA_MODEL_ID_ROUTE)
     DataModel show(UUID id)
 
-    @Post('/folders/{folderId}/dataModels')
+    @Post(Paths.FOLDER_LIST_DATA_MODEL)
     DataModel create(UUID folderId, @Body @NonNull DataModel dataModel)
 
-
-    @Put('/dataModels/{id}')
+    @Put(Paths.DATA_MODEL_ID_ROUTE)
     DataModel update(UUID id, @Body @NonNull DataModel dataModel)
 
-    @Delete('/dataModels/{id}')
+    @Delete(Paths.DATA_MODEL_ID_ROUTE)
     HttpStatus delete(UUID id, @Body @Nullable DataModel dataModel)
 
-
-    @Get('/dataModels/{id}/search{?requestDTO}')
+    @Get(Paths.DATA_MODEL_SEARCH_GET)
     ListResponse<SearchResultsDTO> searchGet(UUID id, @RequestBean SearchRequestDTO requestDTO)
 
-    @Post('/dataModels/{id}/search')
+    @Post(Paths.DATA_MODEL_SEARCH_POST)
     ListResponse<SearchResultsDTO> searchPost(UUID id, @Body SearchRequestDTO requestDTO)
 
-
-    @Get('/folders/{folderId}/dataModels')
+    @Get(Paths.FOLDER_LIST_DATA_MODEL)
     ListResponse<DataModel> list(UUID folderId)
 
-    @Get('/dataModels')
+    @Get(Paths.DATA_MODEL_ROUTE)
     ListResponse<DataModel> listAll()
 
-    @Put('/dataModels/{id}/finalise')
+    @Put(Paths.DATA_MODEL_ID_FINALISE)
     DataModel finalise(UUID id, @Body FinaliseData finaliseData)
 
-    @Put('/dataModels/{id}/newBranchModelVersion')
+    @Put(Paths.DATA_MODEL_BRANCH_MODEL_VERSION)
     DataModel createNewBranchModelVersion(UUID id, @Body @Nullable CreateNewVersionData createNewVersionData)
 
-    @Get('/dataModels/{id}/export{/namespace}{/name}{/version}')
+    @Get(Paths.DATA_MODEL_EXPORT)
     StreamedFile exportModel(UUID id, @Nullable String namespace, @Nullable String name, @Nullable String version)
 
     @ExecuteOn(TaskExecutors.IO)
     @Consumes(MediaType.MULTIPART_FORM_DATA)
-    @Post('/dataModels/import/{namespace}/{name}{/version}')
+    @Post(Paths.DATA_MODEL_IMPORT)
     ListResponse<DataModel> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version)
 
-    @Get('/dataModels/{id}/diff/{otherId}')
+    @Get(Paths.DATA_MODEL_DIFF)
     ObjectDiff diffModels(@NonNull UUID id, @NonNull UUID otherId)
 
-    @Get('/dataModels/providers/importers')
+    @Get(Paths.DATA_MODEL_EXPORTERS)
     List<DataModelImporterPlugin> dataModelImporters()
 
 }

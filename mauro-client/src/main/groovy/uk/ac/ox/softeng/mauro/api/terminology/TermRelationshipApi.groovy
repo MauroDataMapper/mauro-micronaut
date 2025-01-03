@@ -1,39 +1,36 @@
 package uk.ac.ox.softeng.mauro.api.terminology
 
+import uk.ac.ox.softeng.mauro.api.MauroApi
+import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.model.AdministeredItemApi
 import uk.ac.ox.softeng.mauro.domain.terminology.TermRelationship
 import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
-import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.annotation.Delete
 import io.micronaut.http.annotation.Get
-import io.micronaut.http.annotation.Header
 import io.micronaut.http.annotation.Post
 import io.micronaut.http.annotation.Put
-import io.micronaut.http.client.annotation.Client
 
-@CompileStatic
-@Client('${micronaut.http.services.mauro.url}/terminologies/{terminologyId}/termRelationships')
-@Header(name='apiKey', value = '${micronaut.http.services.mauro.apikey}')
+@MauroApi
 interface TermRelationshipApi extends AdministeredItemApi<TermRelationship, Terminology> {
 
-    @Get('/{id}')
+    @Get(Paths.TERM_RELATIONSHIP_ID)
     TermRelationship show(UUID terminologyId, UUID id)
 
-    @Post
+    @Post(Paths.TERM_RELATIONSHIP_LIST)
     TermRelationship create(UUID terminologyId, @Body @NonNull TermRelationship termRelationship)
 
-    @Put('/{id}')
+    @Put(Paths.TERM_RELATIONSHIP_ID)
     TermRelationship update(UUID terminologyId, UUID id, @Body @NonNull TermRelationship termRelationship)
 
-    @Delete('/{id}')
+    @Delete(Paths.TERM_RELATIONSHIP_ID)
     HttpStatus delete(UUID terminologyId, UUID id, @Body @Nullable TermRelationship termRelationship)
 
-    @Get
+    @Get(Paths.TERM_RELATIONSHIP_LIST)
     ListResponse<TermRelationship> list(UUID terminologyId)
 }

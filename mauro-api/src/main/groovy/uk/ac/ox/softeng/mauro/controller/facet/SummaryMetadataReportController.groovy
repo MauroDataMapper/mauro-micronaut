@@ -1,5 +1,6 @@
 package uk.ac.ox.softeng.mauro.controller.facet
 
+import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.facet.SummaryMetadataReportApi
 import uk.ac.ox.softeng.mauro.controller.model.ItemController
 
@@ -26,7 +27,7 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @CompileStatic
 @Slf4j
-@Controller('/{domainType}/{domainId}/summaryMetadata/{summaryMetadataId}/summaryMetadataReports')
+@Controller
 @Secured(SecurityRule.IS_ANONYMOUS)
 class SummaryMetadataReportController extends ItemController<SummaryMetadataReport> implements SummaryMetadataReportApi {
 
@@ -49,7 +50,7 @@ class SummaryMetadataReportController extends ItemController<SummaryMetadataRepo
         this.summaryMetadataReportCacheableRepository = summaryMetadataReportCacheableRepository
     }
 
-    @Post
+    @Post(Paths.SUMMARY_METADATA_REPORTS_LIST)
     SummaryMetadataReport create(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID summaryMetadataId,
                                  @Body SummaryMetadataReport summaryMetadataReport) {
         super.cleanBody(summaryMetadataReport)
@@ -60,7 +61,7 @@ class SummaryMetadataReportController extends ItemController<SummaryMetadataRepo
         summaryMetadataReportCacheableRepository.save(summaryMetadataReport)
     }
 
-    @Get
+    @Get(Paths.SUMMARY_METADATA_REPORTS_LIST)
     ListResponse<SummaryMetadataReport> list(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID summaryMetadataId) {
         SummaryMetadata summaryMetadata = validateAndGet(domainType, domainId, summaryMetadataId)
         accessControlService.checkRole(Role.READER, readAdministeredItemForFacet(summaryMetadata))
@@ -68,7 +69,7 @@ class SummaryMetadataReportController extends ItemController<SummaryMetadataRepo
         ListResponse.from(summaryMetadataReportList)
     }
 
-    @Get('/{id}')
+    @Get(Paths.SUMMARY_METADATA_REPORTS_ID)
     SummaryMetadataReport get(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID summaryMetadataId,
                               @NonNull UUID id) {
         SummaryMetadata summaryMetadata = validateAndGet(domainType, domainId, summaryMetadataId)
@@ -76,7 +77,7 @@ class SummaryMetadataReportController extends ItemController<SummaryMetadataRepo
         summaryMetadataReportCacheableRepository.findById(id)
     }
 
-    @Put('/{id}')
+    @Put(Paths.SUMMARY_METADATA_REPORTS_ID)
     SummaryMetadataReport update(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID summaryMetadataId,
                                  @NonNull UUID id, @Body @NonNull SummaryMetadataReport summaryMetadataReport) {
         super.cleanBody(summaryMetadataReport)
@@ -88,7 +89,7 @@ class SummaryMetadataReportController extends ItemController<SummaryMetadataRepo
         updated
     }
 
-    @Delete('/{id}')
+    @Delete(Paths.SUMMARY_METADATA_REPORTS_ID)
     @Transactional
     HttpStatus delete(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID summaryMetadataId,
                       @NonNull UUID id) {

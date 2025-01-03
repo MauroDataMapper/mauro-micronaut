@@ -1,5 +1,6 @@
 package uk.ac.ox.softeng.mauro.controller.folder
 
+import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.folder.FolderApi
 import uk.ac.ox.softeng.mauro.controller.model.ModelController
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
@@ -33,7 +34,7 @@ import jakarta.inject.Inject
 
 @Slf4j
 @CompileStatic
-@Controller('/folders')
+@Controller
 @Secured(SecurityRule.IS_ANONYMOUS)
 class FolderController extends ModelController<Folder> implements FolderApi {
 
@@ -44,17 +45,17 @@ class FolderController extends ModelController<Folder> implements FolderApi {
         super(Folder, folderRepository, folderRepository, folderContentRepository)
     }
 
-    @Get('/{id}')
+    @Get(Paths.FOLDER_ID)
     Folder show(UUID id) {
         super.show(id)
     }
 
-    @Get('/{parentId}/folders/{id}')
+    @Get(Paths.CHILD_FOLDER_ID)
     Folder show(UUID parentId, UUID id) {
         super.show(id)
     }
 
-    @Post
+    @Post(Paths.FOLDER_LIST)
     Folder create(@Body Folder folder) {
         cleanBody(folder)
         updateCreationProperties(folder)
@@ -65,33 +66,33 @@ class FolderController extends ModelController<Folder> implements FolderApi {
     }
 
     @Transactional
-    @Post('/{parentId}/folders')
+    @Post(Paths.CHILD_FOLDER_LIST)
     Folder create(UUID parentId, @Body @NonNull Folder folder) {
         super.create(parentId, folder)
     }
 
-    @Put('/{id}')
+    @Put(Paths.FOLDER_ID)
     Folder update(UUID id, @Body @NonNull Folder folder) {
         super.update(id, folder)
     }
 
-    @Put('/{parentId}/folders/{id}')
+    @Put(Paths.CHILD_FOLDER_ID)
     Folder update(UUID parentId, UUID id, @Body @NonNull Folder folder) {
         super.update(id, folder)
     }
 
     @Transactional
-    @Put('/{id}/folder/{destination}')
+    @Put(Paths.FOLDER_MOVE)
     Folder moveFolder(UUID id, String destination) {
         super.moveFolder(id, destination)
     }
 
-    @Get
+    @Get(Paths.FOLDER_LIST)
     ListResponse<Folder> listAll() {
         super.listAll()
     }
 
-    @Get('/{parentId}/folders')
+    @Get(Paths.CHILD_FOLDER_LIST)
     ListResponse<Folder> list(UUID parentId) {
         super.list(parentId)
     }
@@ -119,18 +120,18 @@ class FolderController extends ModelController<Folder> implements FolderApi {
 //    }
 
     @Transactional
-    @Delete('/{id}')
+    @Delete(Paths.FOLDER_ID)
     HttpStatus delete(UUID id, @Body @Nullable Folder folder) {
         super.delete(id, folder)
     }
 
     @Transactional
-    @Delete('/{parentId}/folders/{id}')
+    @Delete(Paths.CHILD_FOLDER_ID)
     HttpStatus delete(UUID parentId, UUID id, @Body @Nullable Folder folder) {
         super.delete(id, folder)
     }
 
-    @Get('/{id}/export{/namespace}{/name}{/version}')
+    @Get(Paths.FOLDER_EXPORT)
     StreamedFile exportModel(UUID id, @Nullable String namespace, @Nullable String name, @Nullable String version) {
         ModelExporterPlugin mauroPlugin = mauroPluginService.getPlugin(ModelExporterPlugin, namespace, name, version)
         PluginService.handlePluginNotFound(mauroPlugin, namespace, name)
@@ -142,7 +143,7 @@ class FolderController extends ModelController<Folder> implements FolderApi {
     @Transactional
     @ExecuteOn(TaskExecutors.IO)
     @Consumes(MediaType.MULTIPART_FORM_DATA)
-    @Post('/import/{namespace}/{name}{/version}')
+    @Post(Paths.FOLDER_IMPORT)
     ListResponse<Folder> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version) {
        super.importModel(body, namespace, name, version)
     }

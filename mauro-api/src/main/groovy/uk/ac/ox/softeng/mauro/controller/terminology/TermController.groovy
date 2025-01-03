@@ -1,5 +1,6 @@
 package uk.ac.ox.softeng.mauro.controller.terminology
 
+import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.terminology.TermApi
 
 import groovy.transform.CompileStatic
@@ -23,7 +24,7 @@ import uk.ac.ox.softeng.mauro.persistence.terminology.TermRepository
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @CompileStatic
-@Controller('/terminologies/{terminologyId}/terms')
+@Controller
 @Slf4j
 @Secured(SecurityRule.IS_ANONYMOUS)
 class TermController extends AdministeredItemController<Term, Terminology> implements TermApi {
@@ -41,40 +42,40 @@ class TermController extends AdministeredItemController<Term, Terminology> imple
         this.termRepository = termRepository
     }
 
-    @Get('/{id}')
+    @Get(Paths.TERM_ID)
     Term show(UUID terminologyId, UUID id) {
         super.show(id)
     }
 
-    @Post
+    @Post(Paths.TERM_LIST)
     Term create(UUID terminologyId, @Body @NonNull Term term) {
         super.create(terminologyId, term)
     }
 
-    @Put('/{id}')
+    @Put(Paths.TERM_ID)
     Term update(UUID terminologyId, UUID id, @Body @NonNull Term term) {
         super.update(id, term)
     }
 
-    @Delete('/{id}')
+    @Delete(Paths.TERM_ID)
     HttpStatus delete(UUID terminologyId, UUID id, @Body @Nullable Term term) {
         super.delete(id, term)
     }
 
-    @Get
+    @Get(Paths.TERM_LIST)
     ListResponse<Term> list(UUID terminologyId) {
         super.list(terminologyId)
     }
 
-    @Get("/tree{/id}")
+    @Get(Paths.TERM_TREE)
     List<Term> tree(UUID terminologyId, @Nullable UUID id) {
         Terminology terminology = terminologyRepository.readById(terminologyId)
         accessControlService.checkRole(Role.READER, terminology)
         termRepository.readChildTermsByParent(terminologyId, id)
     }
 
-    @Get('/{id}/codeSets')
-    ListResponse<CodeSet> getCodeSetsForTerm(UUID id) {
+    @Get(Paths.TERM_CODE_SETS)
+    ListResponse<CodeSet> getCodeSetsForTerm(UUID terminologyId, UUID id) {
         List<CodeSet> codeSets = termRepositoryUncached.getCodeSets(id)
         codeSets = codeSets.findAll {accessControlService.canDoRole(Role.READER, it)}
         ListResponse.from(codeSets)

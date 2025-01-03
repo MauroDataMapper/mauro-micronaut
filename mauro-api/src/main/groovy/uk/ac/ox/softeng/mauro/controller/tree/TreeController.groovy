@@ -1,5 +1,6 @@
 package uk.ac.ox.softeng.mauro.controller.tree
 
+import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.tree.TreeApi
 
 import groovy.transform.CompileStatic
@@ -21,7 +22,7 @@ import uk.ac.ox.softeng.mauro.persistence.service.TreeService
 import uk.ac.ox.softeng.mauro.security.AccessControlService
 
 @CompileStatic
-@Controller('/tree')
+@Controller
 @Secured(SecurityRule.IS_ANONYMOUS)
 class TreeController implements TreeApi {
 
@@ -37,7 +38,7 @@ class TreeController implements TreeApi {
     @Inject
     AccessControlService accessControlService
 
-    @Get('/folders{/id}')
+    @Get(Paths.TREE_FOLDER)
     List<TreeItem> folderTree(@Nullable UUID id, @Nullable @QueryValue Boolean foldersOnly) {
         List<TreeItem> treeItems = []
         foldersOnly = foldersOnly ?: false
@@ -51,8 +52,8 @@ class TreeController implements TreeApi {
         treeItems
     }
 
-    @Get('/folders/{domainType}/{id}')
-    List<TreeItem> itemTree(String domainType, UUID id, @Nullable @QueryValue Boolean foldersOnly) {
+    @Get(Paths.TREE_ITEM)
+    List<TreeItem> itemTree(String domainType, UUID id, UUID id, @Nullable @QueryValue Boolean foldersOnly) {
         foldersOnly = foldersOnly ?: false
         AdministeredItemCacheableRepository repository = repositoryService.getAdministeredItemRepository(domainType)
         AdministeredItem item = repository.readById(id)

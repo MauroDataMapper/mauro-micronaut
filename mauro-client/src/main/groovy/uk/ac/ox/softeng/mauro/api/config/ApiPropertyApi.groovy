@@ -1,41 +1,38 @@
 package uk.ac.ox.softeng.mauro.api.config
 
+import uk.ac.ox.softeng.mauro.api.MauroApi
+import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.domain.config.ApiProperty
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
-import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.annotation.Delete
 import io.micronaut.http.annotation.Get
-import io.micronaut.http.annotation.Header
 import io.micronaut.http.annotation.Post
 import io.micronaut.http.annotation.Put
-import io.micronaut.http.client.annotation.Client
 
-@CompileStatic
-@Client('${micronaut.http.services.mauro.url}')
-@Header(name='apiKey', value = '${micronaut.http.services.mauro.apikey}')
+@MauroApi
 interface ApiPropertyApi {
 
-    @Get('/properties')
+    @Get(Paths.API_PROPERTY_LIST_PUBLIC)
     ListResponse<ApiProperty> listPubliclyVisible()
 
-    @Get('/admin/properties')
+    @Get(Paths.API_PROPERTY_LIST_ALL)
     ListResponse<ApiProperty> listAll()
 
-    @Get('/admin/properties/{id}')
+    @Get(Paths.API_PROPERTY_SHOW)
     ApiProperty show(UUID id)
 
-    @Post('/admin/properties')
+    @Post(Paths.API_PROPERTY_LIST_ALL)
     ApiProperty create(@Body @NonNull ApiProperty apiProperty)
 
-    @Put('/admin/properties/{id}')
+    @Put(Paths.API_PROPERTY_SHOW)
     ApiProperty update(UUID id, @Body @NonNull ApiProperty apiProperty)
 
-    @Delete('/admin/properties/{id}')
+    @Delete(Paths.API_PROPERTY_SHOW)
     HttpStatus delete(UUID id, @Body @Nullable ApiProperty apiProperty)
 
 }

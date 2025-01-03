@@ -26,7 +26,7 @@ import uk.ac.ox.softeng.mauro.persistence.datamodel.DataElementRepository
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @CompileStatic
-@Controller(Paths.DATA_ELEMENT_COMPONENT_ROUTE)
+@Controller()
 @Secured(SecurityRule.IS_AUTHENTICATED)
 class DataElementComponentController extends AdministeredItemController<DataElementComponent, DataClassComponent> implements DataElementComponentApi {
 
@@ -48,52 +48,52 @@ class DataElementComponentController extends AdministeredItemController<DataElem
     }
 
 
-    @Get(value = Paths.ID_ROUTE)
-    DataElementComponent show(@NonNull UUID dataFlowId, @NonNull UUID id) {
-        super.show(id)
+    @Get(value = Paths.DATA_FLOW_ELEMENT_COMPONENT_ID)
+    DataElementComponent show(@NonNull UUID dataModelId, @NonNull UUID dataFlowId, @NonNull UUID dataClassComponentId, @NonNull UUID id) {
+       super.show(id)
     }
 
-    @Post
-    DataElementComponent create(@NonNull UUID dataClassComponentId, @Body @NonNull DataElementComponent dataElementComponent) {
+    @Post(Paths.DATA_FLOW_ELEMENT_COMPONENT_LIST)
+    DataElementComponent create(@NonNull UUID dataModelId, @NonNull UUID dataFlowId, @NonNull UUID dataClassComponentId, @Body @NonNull DataElementComponent dataElementComponent) {
         super.create(dataClassComponentId, dataElementComponent)
     }
 
-    @Put(value = Paths.ID_ROUTE)
-    DataElementComponent update(@NonNull UUID id, @Body @NonNull DataElementComponent dataElementComponent) {
+    @Put(value = Paths.DATA_FLOW_ELEMENT_COMPONENT_ID)
+    DataElementComponent update(@NonNull UUID dataModelId, @NonNull UUID dataFlowId, @NonNull UUID dataClassComponentId, @NonNull UUID id, @Body @NonNull DataElementComponent dataElementComponent) {
         super.update(id, dataElementComponent)
     }
 
-    @Delete(value = Paths.ID_ROUTE)
-    HttpStatus delete(@NonNull UUID id, @Body @Nullable DataElementComponent dataElementComponent) {
+    @Delete(value = Paths.DATA_FLOW_ELEMENT_COMPONENT_ID)
+    HttpStatus delete(@NonNull UUID dataModelId, @NonNull UUID dataFlowId, @NonNull UUID dataClassComponentId, @NonNull UUID id, @Body @Nullable DataElementComponent dataElementComponent) {
         super.delete(id, dataElementComponent)
     }
 
-    @Get
-    ListResponse<DataElementComponent> list(@NonNull UUID dataClassComponentId) {
+    @Get(Paths.DATA_FLOW_ELEMENT_COMPONENT_LIST)
+    ListResponse<DataElementComponent> list(@NonNull UUID dataModelId, @NonNull UUID dataFlowId, @NonNull UUID dataClassComponentId) {
         super.list(dataClassComponentId)
     }
 
-    @Put(value = Paths.SOURCE_DATA_ELEMENT_ROUTE)
-    DataElementComponent update(@NonNull UUID dataClassComponentId, @NonNull UUID id, @NonNull UUID dataElementId) {
+    @Put(value = Paths.DATA_FLOW_ELEMENT_COMPONENT_SOURCE_ELEMENT)
+    DataElementComponent updateSource(@NonNull UUID dataModelId, @NonNull UUID dataFlowId, @NonNull UUID dataClassComponentId, @NonNull UUID id, @NonNull UUID dataElementId) {
         DataElementComponent updated = addDataElement(Type.SOURCE, id, dataElementId, dataClassComponentId)
         updated
     }
 
-    @Put(value = Paths.TARGET_DATA_ELEMENT_ROUTE)
-    DataElementComponent update(@NonNull UUID dataFlowId, @NonNull UUID dataClassComponentId, @NonNull UUID id, @NonNull UUID dataElementId) {
+    @Put(value = Paths.DATA_FLOW_ELEMENT_COMPONENT_TARGET_ELEMENT)
+    DataElementComponent updateTarget(@NonNull UUID dataModelId, @NonNull UUID dataFlowId, @NonNull UUID dataClassComponentId, @NonNull UUID id, @NonNull UUID dataElementId) {
         DataElementComponent updated = addDataElement(Type.TARGET, id, dataElementId, dataClassComponentId)
         updated
     }
 
-    @Delete(value = Paths.TARGET_DATA_ELEMENT_ROUTE)
-    HttpStatus delete(@NonNull UUID id, @NonNull UUID dataElementId) {
-        removeDataElement(Type.TARGET, id, dataElementId)
+    @Delete(value = Paths.DATA_FLOW_ELEMENT_COMPONENT_SOURCE_ELEMENT)
+    HttpStatus deleteSource(@NonNull UUID dataModelId, @NonNull UUID dataFlowId, @NonNull UUID dataClassComponentId, @NonNull UUID id, @NonNull UUID dataElementId) {
+        removeDataElement(Type.SOURCE, id, dataElementId)
         return HttpStatus.NO_CONTENT
     }
 
-    @Delete(value = Paths.SOURCE_DATA_ELEMENT_ROUTE)
-    HttpStatus delete(@NonNull UUID dataFlowId, @NonNull UUID id, @NonNull UUID dataElementId) {
-        removeDataElement(Type.SOURCE, id, dataElementId)
+    @Delete(value = Paths.DATA_FLOW_ELEMENT_COMPONENT_TARGET_ELEMENT)
+    HttpStatus deleteTarget(@NonNull UUID dataModelId, @NonNull UUID dataFlowId, @NonNull UUID dataClassComponentId, @NonNull UUID id, @NonNull UUID dataElementId) {
+        removeDataElement(Type.TARGET, id, dataElementId)
         return HttpStatus.NO_CONTENT
     }
 

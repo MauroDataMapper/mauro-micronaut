@@ -51,7 +51,7 @@ class ClassificationSchemeController extends ModelController<ClassificationSchem
     }
 
     @Transactional
-    @Post('/folders/{folderId}/classificationSchemes')
+    @Post(Paths.FOLDER_CLASSIFICATION_SCHEMES_ROUTE)
     ClassificationScheme create(UUID folderId, @Body @NonNull ClassificationScheme classificationScheme) {
         super.create(folderId, classificationScheme)
     }
@@ -85,7 +85,7 @@ class ClassificationSchemeController extends ModelController<ClassificationSchem
         super.createNewBranchModelVersion(id, createNewVersionData)
     }
 
-    @Get('/classificationSchemes/{id}/export{/namespace}{/name}{/version}')
+    @Get(Paths.CLASSIFICATION_SCHEMES_EXPORT)
     StreamedFile exportModel(UUID id, @Nullable String namespace, @Nullable String name, @Nullable String version) {
         super.exportModel(id, namespace, name, version)
     }
@@ -93,7 +93,7 @@ class ClassificationSchemeController extends ModelController<ClassificationSchem
     @Transactional
     @ExecuteOn(TaskExecutors.IO)
     @Consumes(MediaType.MULTIPART_FORM_DATA)
-    @Post('/classificationSchemes/import/{namespace}/{name}{/version}')
+    @Post(Paths.CLASSIFICATION_SCHEMES_IMPORT)
     ListResponse<ClassificationScheme> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version) {
         super.importModel(body, namespace, name, version)
     }

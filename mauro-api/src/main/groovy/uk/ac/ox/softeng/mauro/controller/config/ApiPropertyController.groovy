@@ -1,5 +1,6 @@
 package uk.ac.ox.softeng.mauro.controller.config
 
+import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.config.ApiPropertyApi
 
 import groovy.transform.CompileStatic
@@ -35,25 +36,25 @@ class ApiPropertyController extends ItemController<ApiProperty> implements ApiPr
         super.getDisallowedProperties() + ['lastUpdatedBy']
     }
 
-    @Get('/properties')
+    @Get(Paths.API_PROPERTY_LIST_PUBLIC)
     ListResponse<ApiProperty> listPubliclyVisible() {
         ListResponse.from(apiPropertyRepository.findAllByPubliclyVisibleTrue())
     }
 
-    @Get('/admin/properties')
+    @Get(Paths.API_PROPERTY_LIST_ALL)
     ListResponse<ApiProperty> listAll() {
         accessControlService.checkAdministrator()
         ListResponse.from(apiPropertyRepository.findAll())
     }
 
-    @Get('/admin/properties/{id}')
+    @Get(Paths.API_PROPERTY_SHOW)
     ApiProperty show(UUID id) {
         accessControlService.checkAdministrator()
 
         apiPropertyRepository.findById(id)
     }
 
-    @Post('/admin/properties')
+    @Post(Paths.API_PROPERTY_LIST_ALL)
     ApiProperty create(@Body @NonNull ApiProperty apiProperty) {
         accessControlService.checkAdministrator()
 
@@ -64,7 +65,7 @@ class ApiPropertyController extends ItemController<ApiProperty> implements ApiPr
         apiPropertyRepository.save(apiProperty)
     }
 
-    @Put('/admin/properties/{id}')
+    @Put(Paths.API_PROPERTY_SHOW)
     ApiProperty update(UUID id, @Body @NonNull ApiProperty apiProperty) {
         accessControlService.checkAdministrator()
 
@@ -80,7 +81,7 @@ class ApiPropertyController extends ItemController<ApiProperty> implements ApiPr
         }
     }
 
-    @Delete('/admin/properties/{id}')
+    @Delete(Paths.API_PROPERTY_SHOW)
     HttpStatus delete(UUID id, @Body @Nullable ApiProperty apiProperty) {
         accessControlService.checkAdministrator()
 

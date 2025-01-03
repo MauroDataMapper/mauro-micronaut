@@ -1,46 +1,43 @@
 package uk.ac.ox.softeng.mauro.api.terminology
 
+import uk.ac.ox.softeng.mauro.api.MauroApi
+import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.model.AdministeredItemApi
 import uk.ac.ox.softeng.mauro.domain.terminology.CodeSet
 import uk.ac.ox.softeng.mauro.domain.terminology.Term
 import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
-import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.annotation.Delete
 import io.micronaut.http.annotation.Get
-import io.micronaut.http.annotation.Header
 import io.micronaut.http.annotation.Post
 import io.micronaut.http.annotation.Put
-import io.micronaut.http.client.annotation.Client
 
-@CompileStatic
-@Client('${micronaut.http.services.mauro.url}/terminologies/{terminologyId}/terms')
-@Header(name='apiKey', value = '${micronaut.http.services.mauro.apikey}')
+@MauroApi
 interface TermApi extends AdministeredItemApi<Term, Terminology> {
 
-    @Get('/{id}')
+    @Get(Paths.TERM_ID)
     Term show(UUID terminologyId, UUID id)
 
-    @Post
+    @Post(Paths.TERM_LIST)
     Term create(UUID terminologyId, @Body @NonNull Term term)
 
-    @Put('/{id}')
+    @Put(Paths.TERM_ID)
     Term update(UUID terminologyId, UUID id, @Body @NonNull Term term)
 
-    @Delete('/{id}')
+    @Delete(Paths.TERM_ID)
     HttpStatus delete(UUID terminologyId, UUID id, @Body @Nullable Term term)
 
-    @Get
+    @Get(Paths.TERM_LIST)
     ListResponse<Term> list(UUID terminologyId)
 
-    @Get("/tree{/id}")
+    @Get(Paths.TERM_TREE)
     List<Term> tree(UUID terminologyId, @Nullable UUID id)
 
-    @Get('/{id}/codeSets')
-    ListResponse<CodeSet> getCodeSetsForTerm(UUID id)
+    @Get(Paths.TERM_CODE_SETS)
+    ListResponse<CodeSet> getCodeSetsForTerm(UUID terminologyId, UUID id)
 }

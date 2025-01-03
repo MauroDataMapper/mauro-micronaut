@@ -1,6 +1,8 @@
 package uk.ac.ox.softeng.mauro.api.terminology
 
+import uk.ac.ox.softeng.mauro.api.MauroApi
 import uk.ac.ox.softeng.mauro.api.Paths
+
 import uk.ac.ox.softeng.mauro.api.model.ModelApi
 import uk.ac.ox.softeng.mauro.domain.diff.ObjectDiff
 import uk.ac.ox.softeng.mauro.domain.model.version.CreateNewVersionData
@@ -9,56 +11,51 @@ import uk.ac.ox.softeng.mauro.domain.terminology.CodeSet
 import uk.ac.ox.softeng.mauro.domain.terminology.Term
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
-import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.annotation.Delete
 import io.micronaut.http.annotation.Get
-import io.micronaut.http.annotation.Header
 import io.micronaut.http.annotation.Post
 import io.micronaut.http.annotation.Put
-import io.micronaut.http.client.annotation.Client
 
-@CompileStatic
-@Client('${micronaut.http.services.mauro.url}')
-@Header(name='apiKey', value = '${micronaut.http.services.mauro.apikey}')
+@MauroApi
 interface CodeSetApi extends ModelApi<CodeSet> {
 
-    @Get(value = Paths.CODE_SET_BY_ID)
+    @Get(value = Paths.CODE_SET_ID)
     CodeSet show(UUID id)
 
-    @Post(value = Paths.CODE_SETS_BY_FOLDER_ID)
+    @Post(value = Paths.FOLDER_LIST_CODE_SET)
     CodeSet create(UUID folderId, @Body @NonNull CodeSet codeSet)
 
-    @Put(value = Paths.CODE_SET_BY_ID)
+    @Put(value = Paths.CODE_SET_ID)
     CodeSet update(UUID id, @Body @NonNull CodeSet codeSet)
 
-    @Put(value = Paths.TERM_TO_CODE_SET)
+    @Put(value = Paths.CODE_SET_TERM_ID)
     CodeSet addTerm(@NonNull UUID id,
                     @NonNull UUID termId)
 
-    @Delete(value = Paths.CODE_SET_BY_ID)
+    @Delete(value = Paths.CODE_SET_ID)
     HttpStatus delete(UUID id, @Body @Nullable CodeSet codeSet)
 
-    @Delete(value = Paths.TERM_TO_CODE_SET)
+    @Delete(value = Paths.CODE_SET_TERM_ID)
     CodeSet removeTermFromCodeSet(@NonNull UUID id,
                                   @NonNull UUID termId)
 
-    @Get(value = Paths.CODE_SETS_BY_FOLDER_ID)
+    @Get(value = Paths.FOLDER_LIST_CODE_SET)
     ListResponse<CodeSet> list(UUID folderId)
 
-    @Get(value = Paths.CODE_SETS)
+    @Get(value = Paths.CODE_SET_LIST)
     ListResponse<CodeSet> listAll()
 
-    @Get(value = Paths.TERMS_IN_CODE_SET)
+    @Get(value = Paths.CODE_SET_TERM_LIST)
     ListResponse<Term> listAllTermsInCodeSet(@NonNull UUID id)
 
-    @Put(value = Paths.FINALISE_CODE_SETS)
+    @Put(value = Paths.CODE_SET_FINALISE)
     CodeSet finalise(UUID id, @Body FinaliseData finaliseData)
 
-    @Get('/codeSets/{id}/diff/{otherId}')
+    @Get(Paths.CODE_SET_DIFF)
     ObjectDiff diffModels(@NonNull UUID id, @NonNull UUID otherId)
 
     @Put(value = Paths.CODE_SET_NEW_BRANCH_MODEL_VERSION)
