@@ -1,0 +1,18 @@
+{
+  "authority": {
+    "label": "Mauro Sandbox",
+    "url": "http://modelcatalogue.cs.ox.ac.uk/sandbox"
+  },
+  "lastUpdated": "2024-12-03T17:12:53.66Z",
+  "publishedModels": [
+    {
+      "modelId": "0b97751d-b6bf-476c-a9e6-95d3352e8008",
+      "label": "Northwind",
+      "version": "1.0.0",
+      "modelType": "DataModel",
+      "lastUpdated": "2024-12-03T17:12:53.66Z",
+      "dateCreated": "2022-11-04T13:43:17.711Z",
+      "datePublished": "2024-12-03T17:12:50.693Z"
+    }
+  ]
+}

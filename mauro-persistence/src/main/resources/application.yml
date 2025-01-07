@@ -20,3 +20,4 @@ flyway:
         - terminology
         - datamodel
         - dataflow
+        - federation

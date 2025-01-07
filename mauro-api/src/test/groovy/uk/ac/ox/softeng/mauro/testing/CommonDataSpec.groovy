@@ -125,4 +125,29 @@ class CommonDataSpec extends BaseIntegrationSpec{
             readableByAuthenticatedUsers: true
         ]
     }
+
+    def subscribedCataloguePayload(){
+        [
+            url: "https://maurosandbox.com/sandbox",
+            subscribedCatalogueType: 'Mauro JSON',
+            label: 'random label subscribedCatalogue',
+            subscribedCatalogueAuthenticationType: 'API Key',
+            refreshPeriod: 90,
+            apiKey: "b39d63d4-4fd4-494d-a491-3c778d89acae",
+            connectionTimeout: 30
+        ]
+    }
+    def subscribedCataloguePayload(String label){
+        [
+            url: "https://maurosandbox.com/sandbox",
+            subscribedCatalogueType: 'Mauro JSON',
+            label: label,
+            subscribedCatalogueAuthenticationType: 'API Key',
+            refreshPeriod: 90,
+            apiKey: "b39d63d4-4fd4-494d-a491-3c778d89acae",
+            connectionTimeout: 30
+        ]
+    }
+
+
 }

@@ -5,6 +5,13 @@ micronaut:
     client:
       read-timeout: 30m
       connect-timeout: 30m
+
+  federation:
+    subscribed-catalogues.max: 50
+    client:
+      read-timeout: 10s
+      connect-timeout: 10s
+
   server:
     port: 8088
     max-request-size: 100mb
@@ -104,6 +111,7 @@ flyway:
         - datamodel
         - security
         - dataflow
+        - federation
 
 javamail:
   authentication:

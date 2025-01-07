@@ -38,7 +38,7 @@ class JsonTerminologyImporterPlugin implements TerminologyImporterPlugin<FileImp
 
     @Override
     Boolean handlesContentType(String contentType) {
-        return contentType == 'application/mauro.datamodel+json'
+        return contentType == 'application/mauro.terminology+json'
     }
 
     @Override

@@ -58,6 +58,13 @@ class BaseIntegrationSpec extends Specification {
     public static final String CLASSIFIER_PATH = '/classifiers'
     public static final String NEW_BRANCH_MODEL_VERSION = '/newBranchModelVersion'
     public static final String DIFF = '/diff'
+    public static final String SUBSCRIBED_CATALOGUES_PATH = '/subscribedCatalogues'
+    public static final String ADMIN_SUBSCRIBED_CATALOGUES_PATH = '/admin/subscribedCatalogues'
+    public static final String TEST_CONNECTION = '/testConnection'
+    public static final String PUBLISHED_MODELS_PATH = '/published/models'
+    public static final String PUBLISHEDMODELS = '/publishedModels'
+    public static final String TYPES = '/types'
+    public static final String AUTHENTICATION_TYPES = '/authenticationTypes'
 
     @Inject
     ObjectMapper objectMapper

@@ -275,9 +275,4 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         }
     }
 
-    protected void handleNotFoundError(M model, UUID id) {
-        if (!model) {
-            throw new HttpStatusException(HttpStatus.NOT_FOUND, "Model not found, $id")
-        }
-    }
 }

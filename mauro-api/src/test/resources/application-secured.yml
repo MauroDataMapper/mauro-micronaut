@@ -17,8 +17,10 @@ micronaut:
     reject-not-found: false
     authentication-provider-strategy: any
 
-
   http:
     client:
       read-timeout: 30m
       connect-timeout: 30m
+
+  federation:
+    subscribed-catalogues.max: 1

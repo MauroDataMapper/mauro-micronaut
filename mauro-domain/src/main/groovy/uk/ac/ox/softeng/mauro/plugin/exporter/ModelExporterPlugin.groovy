@@ -17,6 +17,8 @@ trait ModelExporterPlugin<D extends Model> extends MauroPlugin {
 
     abstract String getFileExtension()
 
+    abstract String getContentType()
+
     @JsonIgnore
     PluginType getPluginType() {
         PluginType.Exporter

@@ -35,6 +35,9 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
     @Shared
     UUID dataModelId
 
+    @Shared
+    UUID codeSetId
+
     JsonSlurper jsonSlurper = new JsonSlurper()
 
     void setup() {
@@ -60,6 +63,7 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
         Annotation childAnnotation = (Annotation) POST("$FOLDERS_PATH/$folderId$ANNOTATION_PATH/$annotation.id$ANNOTATION_PATH", annotationPayload('childLabel', 'child-description'), Annotation)
 
         CodeSet codeSet = (CodeSet) POST("$FOLDERS_PATH/$folderId$CODE_SET_PATH", codeSet(), CodeSet)
+        codeSetId = codeSet.id
 
         Terminology terminology = (Terminology) POST("$FOLDERS_PATH/$folderId$TERMINOLOGIES_PATH", terminology(), Terminology)
 

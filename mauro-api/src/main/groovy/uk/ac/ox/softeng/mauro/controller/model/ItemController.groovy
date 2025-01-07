@@ -1,6 +1,7 @@
 package uk.ac.ox.softeng.mauro.controller.model
 
 import groovy.transform.CompileStatic
+import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.exceptions.HttpStatusException
 import io.micronaut.security.annotation.Secured
@@ -85,4 +86,11 @@ abstract class ItemController<I extends Item> implements AdministeredItemReader 
         }
         return hasChanged
     }
+
+    protected void handleNotFoundError(@Nullable Item item, UUID id) {
+        if (!item) {
+            throw new HttpStatusException(HttpStatus.NOT_FOUND, "Entity not found, $id")
+        }
+    }
+
 }

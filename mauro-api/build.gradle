@@ -32,6 +32,7 @@ dependencies {
     implementation("io.micronaut.validation:micronaut-validation")
     implementation("io.micronaut:micronaut-management")
     compileOnly("io.micronaut:micronaut-inject-groovy")
+    annotationProcessor("io.micronaut:micronaut-inject-groovy")
     runtimeOnly("org.yaml:snakeyaml")
     implementation("io.micronaut.flyway:micronaut-flyway")
     runtimeOnly("org.postgresql:postgresql")
