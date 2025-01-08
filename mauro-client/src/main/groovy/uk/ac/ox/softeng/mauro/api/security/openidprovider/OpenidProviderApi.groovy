@@ -1,15 +1,13 @@
 package uk.ac.ox.softeng.mauro.api.security.openidprovider
 
-import groovy.transform.CompileStatic
-import io.micronaut.http.annotation.Get
-import io.micronaut.http.annotation.Header
-import io.micronaut.http.client.annotation.Client
+import uk.ac.ox.softeng.mauro.api.MauroApi
+import uk.ac.ox.softeng.mauro.api.Paths
 
-@CompileStatic
-@Client('${micronaut.http.services.mauro.url}/openidConnectProviders')
-@Header(name='apiKey', value = '${micronaut.http.services.mauro.apikey}')
+import io.micronaut.http.annotation.Get
+
+@MauroApi
 interface OpenidProviderApi {
 
-    @Get
+    @Get(Paths.OPENID_PROVIDER_LIST)
     List<OpenidConnectProvider> list()
 }

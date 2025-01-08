@@ -96,3 +96,7 @@ codenarcTest {
 }
 
 [codenarcMain, codenarcTest, codenarcTestFixtures]*.ignoreFailures = true
+
+jar {
+    exclude("**/logback.xml")
+}

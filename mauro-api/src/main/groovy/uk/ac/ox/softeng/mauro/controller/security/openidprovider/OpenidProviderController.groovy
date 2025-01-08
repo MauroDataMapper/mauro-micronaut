@@ -1,5 +1,6 @@
 package uk.ac.ox.softeng.mauro.controller.security.openidprovider
 
+import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.security.openidprovider.OpenidConnectProvider
 import uk.ac.ox.softeng.mauro.api.security.openidprovider.OpenidProviderApi
 
@@ -13,7 +14,6 @@ import io.micronaut.security.rules.SecurityRule
 
 @CompileStatic
 @Slf4j
-@Controller('/openidConnectProviders')
 @Secured(SecurityRule.IS_ANONYMOUS)
 class OpenidProviderController implements OpenidProviderApi {
 
@@ -32,7 +32,7 @@ class OpenidProviderController implements OpenidProviderApi {
     @Value('${mauro.oauth.image-url}')
     String imageUrl
 
-    @Get
+    @Get(Paths.OPENID_PROVIDER_LIST)
     List<OpenidConnectProvider> list() {
         OpenidConnectProvider openidConnectProvider = new OpenidConnectProvider(openidProviderId, label, standardProvider, authorizationEndpoint,
                 imageUrl)

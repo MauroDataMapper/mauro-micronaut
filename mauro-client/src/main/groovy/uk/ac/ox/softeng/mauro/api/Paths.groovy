@@ -190,6 +190,10 @@ interface Paths {
     String SEARCH_GET = '/search{?requestDTO}'
     String SEARCH_POST = '/search'
 
+    /*
+    * OpenidProviderApi
+     */
+    String OPENID_PROVIDER_LIST = '/openidConnectProviders'
 
     /*
     * CatalogueUserApi
@@ -241,6 +245,16 @@ interface Paths {
     /*
     * TermApi
     */
+
+
+    /*
+    String TERM = "/terminologies/{terminologyId}/terms"
+    final String TERM_ID = TERM + "/{id}"
+    final String TERM_LIST = TERM + "/terms"
+    String TERM_TREE = TERM + "/tree{/id}"
+    String TERM_CODE_SETS = TERM_ID + "/codeSets"
+    */
+
     String TERM_ID = '/terminologies/{terminologyId}/terms/{id}'
     String TERM_LIST = '/terminologies/{terminologyId}/terms'
     String TERM_TREE = '/terminologies/{terminologyId}/terms/tree{/id}'
