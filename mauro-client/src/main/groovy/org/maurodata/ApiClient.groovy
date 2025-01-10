@@ -91,7 +91,7 @@ abstract class ApiClient implements Runnable {
     // Helper functions
     // TODO: Work out how to move these into the Api interfaces (traits?)
     Folder findOrCreateFolderByLabel(String label) {
-        Folder folder = folderApi.listAll().find {it.label = label}
+        Folder folder = folderApi.listAll().find {it.label == label}
         if(!folder) {
             folder = folderApi.create(new Folder(label: label))
         }
