@@ -1,5 +1,8 @@
 package uk.ac.ox.softeng.mauro.classifier
 
+import static uk.ac.ox.softeng.mauro.api.PathPopulation.populatePath
+import uk.ac.ox.softeng.mauro.api.Paths
+
 import io.micronaut.http.HttpStatus
 import io.micronaut.runtime.EmbeddedApplication
 import io.micronaut.test.annotation.Sql
@@ -24,47 +27,52 @@ class ClassificationSchemeIntegrationSpec extends CommonDataSpec {
 
 
     void setupSpec(){
-        folderId = ((Folder) POST("$FOLDERS_PATH", folder(), Folder)).id
+        folderId = ((Folder) POST(Paths.FOLDER_LIST, folder(), Folder)).id
     }
 
 
-    void 'list classification schemes -should return empty list'() {
+    void 'list classification schemes - should return empty list'() {
         when:
-        ListResponse<ClassificationScheme> listResponse = (ListResponse<ClassificationScheme>) GET("$CLASSIFICATION_SCHEME_PATH", ListResponse<ClassificationScheme>)
+        ListResponse<ClassificationScheme> listResponse = (ListResponse<ClassificationScheme>) GET(Paths.CLASSIFICATION_SCHEMES_LIST, ListResponse<ClassificationScheme>)
         then:
         listResponse
         listResponse.items.isEmpty()
     }
 
-    void 'add Classification scheme -should add'() {
+    void 'add Classification scheme - should add'(){
         when:
-        ClassificationScheme classificationScheme = (ClassificationScheme) POST("$FOLDERS_PATH/$folderId$CLASSIFICATION_SCHEME_PATH", classifiersPayload(), ClassificationScheme)
+        ClassificationScheme classificationScheme = (ClassificationScheme) POST(
+            populatePath(Paths.FOLDER_CLASSIFICATION_SCHEMES_ROUTE, ["folderId" : folderId]), classifiersPayload(), ClassificationScheme)
+
         then:
         classificationScheme
 
         when:
-        ClassificationScheme retrieved = GET("$CLASSIFICATION_SCHEME_PATH/$classificationScheme.id", ClassificationScheme)
+        ClassificationScheme retrieved = GET(populatePath(Paths.CLASSIFICATION_SCHEMES_ID_ROUTE, ['id':classificationScheme.id]), ClassificationScheme)
         then:
         retrieved
         retrieved.authority
     }
 
-    void 'get Classification scheme by ID -should return classification scheme'(){
+    void 'get Classification scheme by ID - should return classification scheme'(){
         given:
-        ClassificationScheme classificationScheme = (ClassificationScheme) POST("$FOLDERS_PATH/$folderId$CLASSIFICATION_SCHEME_PATH", classifiersPayload(), ClassificationScheme)
+        ClassificationScheme classificationScheme = (ClassificationScheme) POST(
+            populatePath(Paths.FOLDER_CLASSIFICATION_SCHEMES_ROUTE, ["folderId" : folderId]), classifiersPayload(), ClassificationScheme)
         when:
-        ClassificationScheme retrieved = GET("$CLASSIFICATION_SCHEME_PATH/$classificationScheme.id", ClassificationScheme)
+        ClassificationScheme retrieved = GET(
+            populatePath(Paths.CLASSIFICATION_SCHEMES_ID_ROUTE, ['id':classificationScheme.id]), ClassificationScheme)
 
         then:
         retrieved
         retrieved.authority
     }
 
-    void 'update classification scheme -should update model'() {
+    void 'update classification scheme - should update model'() {
         given:
         ClassificationScheme classificationScheme = (ClassificationScheme) POST("$FOLDERS_PATH/$folderId$CLASSIFICATION_SCHEME_PATH", classifiersPayload(), ClassificationScheme)
         when:
-        ClassificationScheme updated = (ClassificationScheme) PUT("$CLASSIFICATION_SCHEME_PATH/$classificationScheme.id",
+        ClassificationScheme updated = (ClassificationScheme) PUT(
+            populatePath(Paths.CLASSIFICATION_SCHEMES_ID_ROUTE, ['id': classificationScheme.id]),
                 [label: 'updated test label',
                  description: 'updated test description'],  ClassificationScheme)
         then:
@@ -74,18 +82,28 @@ class ClassificationSchemeIntegrationSpec extends CommonDataSpec {
         updated.authority
     }
 
-    void 'delete classification scheme -should delete model and associations'() {
+    void 'delete classification scheme - should delete model and associations'() {
         given:
         ClassificationScheme classificationScheme = (ClassificationScheme) POST("$FOLDERS_PATH/$folderId$CLASSIFICATION_SCHEME_PATH", classifiersPayload(), ClassificationScheme)
 
-        Classifier classifier = (Classifier) POST("$CLASSIFICATION_SCHEME_PATH/$classificationScheme.id$CLASSIFIER_PATH", classifiersPayload(), Classifier)
+        Classifier classifier = (Classifier) POST(
+            populatePath(Paths.CLASSIFIERS_ROUTE, [
+                'classificationSchemeId': classificationScheme.id]),
+            classifiersPayload(), Classifier)
 
         //Add AdministeredItemClassificationScheme to classifier -joinAdministeredItemToClassifier
-        Classifier adminItemJoinClassifier1 = (Classifier) PUT ("/classificationScheme/$classificationScheme.id$CLASSIFIER_PATH/$classifier.id",null, Classifier)
-        Classifier adminItemJoinClassifier2 = (Classifier) PUT ("/classifier/$classifier.id$CLASSIFIER_PATH/$classifier.id",null, Classifier)
-
+        Classifier adminItemJoinClassifier1 = (Classifier) PUT (
+            populatePath(Paths.ADMINISTERED_ITEM_CLASSIFIER_ID_ROUTE,
+                         ['administeredItemDomainType': 'classificationScheme',
+                          'administeredItemId': classificationScheme.id,
+                          'id': classifier.id ]), null, Classifier)
+        Classifier adminItemJoinClassifier2 = (Classifier) PUT (
+            populatePath(Paths.ADMINISTERED_ITEM_CLASSIFIER_ID_ROUTE,
+                         ['administeredItemDomainType': 'classifier',
+                          'administeredItemId': classifier.id,
+                          'id': classifier.id ]), null, Classifier)
         when:
-        HttpStatus httpStatus = DELETE("$CLASSIFICATION_SCHEME_PATH/$classificationScheme.id", HttpStatus)
+        HttpStatus httpStatus = DELETE(populatePath(Paths.CLASSIFICATION_SCHEMES_ID_ROUTE,['id': classificationScheme.id]), HttpStatus)
 
         then:
         httpStatus == HttpStatus.NO_CONTENT

@@ -21,7 +21,7 @@ interface Paths {
     /*
     * ClassificationSchemeApi
     */
-    String CLASSIFICATION_SCHEMES_ROUTE = '/classificationSchemes'
+    String CLASSIFICATION_SCHEMES_LIST = '/classificationSchemes'
     String CLASSIFICATION_SCHEMES_ID_ROUTE = '/classificationSchemes/{id}'
     String FOLDER_CLASSIFICATION_SCHEMES_ROUTE = '/folders/{folderId}/classificationSchemes'
     String CLASSIFICATION_SCHEMES_BRANCH_MODEL_VERSION = '/classificationSchemes/{id}/newBranchModelVersion'
@@ -280,4 +280,5 @@ interface Paths {
     String TREE_ITEM = '/tree/folders/{domainType}/{id}'
 
     String TYPE_QUERY = 'type'
+
 }

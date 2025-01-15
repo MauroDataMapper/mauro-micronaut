@@ -21,6 +21,7 @@ dependencies {
     annotationProcessor "io.micronaut:micronaut-inject-java"
     testImplementation platform('org.junit:junit-bom:5.10.0')
     testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation("io.micronaut.test:micronaut-test-spock")
     implementation("io.micronaut.openapi:micronaut-openapi")
     implementation("io.micronaut:micronaut-jackson-databind")
     implementation 'io.micronaut:micronaut-http-client'
@@ -30,7 +31,6 @@ dependencies {
     implementation("io.micronaut.picocli:micronaut-picocli")
     implementation("io.micronaut.security:micronaut-security")
     annotationProcessor("info.picocli:picocli-codegen")
-
     implementation("io.micronaut.rxjava2:micronaut-rxjava2-http-client")
 
 

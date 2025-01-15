@@ -42,7 +42,7 @@ interface ClassificationSchemeApi extends ModelApi<ClassificationScheme> {
     @Get(Paths.FOLDER_CLASSIFICATION_SCHEMES_ROUTE)
     ListResponse<ClassificationScheme> list(UUID folderId)
 
-    @Get(Paths.CLASSIFICATION_SCHEMES_ROUTE)
+    @Get(Paths.CLASSIFICATION_SCHEMES_LIST)
     ListResponse<ClassificationScheme> listAll()
 
 

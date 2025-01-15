@@ -73,7 +73,7 @@ class ClassificationSchemeController extends ModelController<ClassificationSchem
         super.list(folderId)
     }
 
-    @Get(Paths.CLASSIFICATION_SCHEMES_ROUTE)
+    @Get(Paths.CLASSIFICATION_SCHEMES_LIST)
     ListResponse<ClassificationScheme> listAll() {
         super.listAll()
     }
