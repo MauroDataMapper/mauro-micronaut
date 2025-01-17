@@ -75,4 +75,13 @@ class DataClassDTO extends DataClass implements AdministeredItemDTO {
                 JOIN core.join_administered_item_to_classifier on join_administered_item_to_classifier.classifier_id = core.classifier.id
                 and join_administered_item_to_classifier.catalogue_item_id = data_class_.id)''')
     List<Classifier> classifiers = []
+
+    @Nullable
+    @MappedProperty
+    @ColumnTransformer(read = '''( select json_agg(dc) from datamodel.join_dataclass_to_extended_data_class jdedc 
+                                    inner join datamodel.data_class dc on dc.id = jdedc.extended_dataclass_id
+                                    where jdedc.dataclass_id = data_class_.id )''')
+    @TypeDef(type=DataType.JSON)
+    List<DataClass> extendsDataClasses = []
+
 }

@@ -18,7 +18,12 @@ import spock.lang.Specification
 class DataModelRepositorySpec extends Specification {
 
     @Inject
+    @Shared
     DataModelContentRepository dataModelContentRepository
+
+    @Inject
+    @Shared
+    DataClassContentRepository dataClassContentRepository
 
     @Inject
     ModelCacheableRepository.DataModelCacheableRepository dataModelCacheableRepository
@@ -42,6 +47,7 @@ class DataModelRepositorySpec extends Specification {
     AdministeredItemCacheableRepository.EnumerationValueCacheableRepository enumerationValueRepository
 
     @Inject
+    @Shared
     ModelCacheableRepository.FolderCacheableRepository folderRepository
 
     @Shared
@@ -99,6 +105,8 @@ class DataModelRepositorySpec extends Specification {
                         label "My first Data Element"
                         dataType "Boolean"
                     }
+                    extendsDataClass "First class"
+                    metadata("Test ns", "Test key", "Test value")
                 }
             }
 
@@ -110,9 +118,11 @@ class DataModelRepositorySpec extends Specification {
             importedModel.label == "An import model"
             importedModel.description == "The description goes here"
 
-            List<DataClass> allDataClasses = dataClassCacheableRepository.readAllByParent(importedModel)
+            List<DataClass> allDataClasses = dataClassRepository.findAllByParent(importedModel)
             allDataClasses.size() == 2
 
+            allDataClasses.find {it.label == "Second class"}.extendsDataClasses.size() == 1
+            allDataClasses.find {it.label == "Second class"}.extendsDataClasses.first().label == "First class"
 
             List<DataElement> allDataElements = dataElementRepository.readAllByParent(allDataClasses.find {it.label == "Second class"})
 
