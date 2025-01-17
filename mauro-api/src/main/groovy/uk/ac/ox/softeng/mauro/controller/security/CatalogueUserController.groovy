@@ -56,6 +56,13 @@ class CatalogueUserController extends ItemController<CatalogueUser> {
         catalogueUserRepository.save(newUser)
     }
 
+    @Get('/catalogueUsers/currentUser')
+    CatalogueUser currentUser() {
+        log.info 'Request to get current logged in user'
+
+        accessControlService.user
+    }
+
     @Put('/catalogueUsers/currentUser/changePassword')
     CatalogueUser changePassword(@Body @NonNull ChangePassword changePasswordRequest) {
         log.info 'Request by user to change own password'

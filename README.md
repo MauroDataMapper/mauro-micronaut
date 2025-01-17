@@ -36,3 +36,19 @@
 - [https://r2dbc.io](https://r2dbc.io)
 
 
+
+## Feature http-security documentation
+
+- [Micronaut Security documentation](https://micronaut-projects.github.io/micronaut-security/latest/guide/)
+- Testing OAUTH login/keycloak -
+- Re KeycloakIntegrationSpec. -this uses local keycloak standalone instance with client,realm, users. Test is disabled for CI. 
+- To run locally, remove @Ignore, bring up keycloak instance via:
+-   docker compose up -d
+- This will instantiate keycloak instance with data in imported realm 'realm.json'. KeycloakIntegration test will run successfully.
+
+To bring down local keycloak: 
+  docker compose down
+Remember to reinstate @Ignore for CI builds
+
+  
+

@@ -16,6 +16,8 @@ trait MauroPlugin {
 
     String displayName
 
+    String description
+
     @JsonIgnore
     abstract PluginType getPluginType()
 

@@ -33,7 +33,20 @@ micronaut:
         enabled: true
         path: '/authentication/logout'
         get-allowed: true
+      oauth:
+        enabled: false
     reject-not-found: false
+    authentication-provider-strategy: any
+#    Populate to enable OAuth2; see also mauro.oauth properties
+#    oauth2:
+#      clients:
+#        keycloak:
+#          client-id:
+#          client-secret:
+#          openid:
+#            issuer:
+
+
   caches:
     items-cache:
       initial-capacity: 10000
@@ -91,6 +104,7 @@ flyway:
         - datamodel
         - security
         - dataflow
+
 javamail:
   authentication:
     username: $$username$$ # Replace me!
@@ -103,3 +117,15 @@ javamail:
         starttls:
           enable: true
         host: $$host$$ # Replace me!
+
+# Populate to enable OAuth2; see also micronaut.security properties
+#mauro:
+#  oauth:
+#    id:
+#    label: Keycloak
+#    standard-provider: true
+#    authorization-endpoint:
+#    image-url:
+#    login-success:
+
+#    create-user:

@@ -26,6 +26,7 @@ dependencies {
     // For importer parameters introspection
     implementation('org.apache.commons:commons-lang3:3.17.0')
 
+    implementation('org.apache.groovy:groovy-json:4.0.19')
     testImplementation "io.micronaut.test:micronaut-test-spock"
 }
 
@@ -37,8 +38,21 @@ java {
 }
 
 publishing {
+    repositories {
+        // The target repository
+        maven {
+            // The url of the repository, where the artifacts will be published
+            url = "https://maven.pkg.github.com/MauroDataMapper/mauro-package-repository"
+            credentials {
+                // The credentials (described in the next section)
+                username = project.findProperty("gpr.user")
+                password = project.findProperty("gpr.key")
+            }
+        }
+    }
+
     publications {
-        mavenJava(MavenPublication) {
+        gpr(MavenPublication) {
             groupId = 'uk.ac.ox.softeng.mauro'
             artifactId = 'mauro-domain'
             version = "0.0.1-SNAPSHOT"

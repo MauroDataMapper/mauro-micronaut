@@ -21,7 +21,10 @@ class DataModelRepositorySpec extends Specification {
     DataModelContentRepository dataModelContentRepository
 
     @Inject
-    ModelCacheableRepository.DataModelCacheableRepository dataModelRepository
+    ModelCacheableRepository.DataModelCacheableRepository dataModelCacheableRepository
+
+    @Inject
+    DataModelRepository dataModelRepository
 
     @Inject
     AdministeredItemCacheableRepository.DataClassCacheableRepository dataClassCacheableRepository
@@ -59,13 +62,12 @@ class DataModelRepositorySpec extends Specification {
             label "My first data model"
             description "Description here"
             folder myFirstFolder
-
         }
 
-        dataModelRepository.save(dataModel)
+        dataModelCacheableRepository.save(dataModel)
 
         then:
-        dataModelRepository.readAll().size() == 1
+        dataModelCacheableRepository.readAll().size() == 1
     }
 
     def testImport() {
@@ -99,7 +101,7 @@ class DataModelRepositorySpec extends Specification {
 
         when:
             DataModel importedModel = dataModelContentRepository.saveWithContent(dataModel)
-            importedModel = dataModelRepository.readById(importedModel.id)
+            importedModel = dataModelCacheableRepository.readById(importedModel.id)
             dataModelId = importedModel.id
         then:
             importedModel.label == "An import model"
@@ -118,8 +120,48 @@ class DataModelRepositorySpec extends Specification {
             List<DataType> allDataTypes = dataTypeRepository.readAllByParent(importedModel)
             allDataTypes.size() == 1
             enumerationValueRepository.readAllByParent(allDataTypes.get(0)).size() == 2
+    }
 
+    def "Test Retrieving Data Models by Namespace"() {
 
+        when:
+        dataModelContentRepository.saveWithContent(DataModel.build {
+            folder myFirstFolder
+            label "Data Model 1"
+            metadata ("namespace 1", "key 1", "value 1")
+            metadata ("namespace 1", "key 2", "value 2")
+        })
+        dataModelContentRepository.saveWithContent(DataModel.build {
+            folder myFirstFolder
+            label "Data Model 2"
+            metadata ("namespace 1", "key 1", "value 1")
+            metadata ("namespace 2", "key 2", "value 2")
+        })
+        dataModelContentRepository.saveWithContent(DataModel.build {
+            folder myFirstFolder
+            label "Data Model 3"
+            metadata ("namespace 2", "key 1", "value 1")
+            metadata ("namespace 2", "key 2", "value 2")
+        })
+
+        List<DataModel> dataModels = dataModelRepository.getAllModelsByNamespace("namespace 1")
+        //List<DataModel> dataModels = dataModelRepository.readAll()
+        then:
+        dataModels.size() == 2
+        dataModels.label.sort() == ["Data Model 1", "Data Model 2"]
+
+        when:
+        dataModels = dataModelRepository.getAllModelsByNamespace("namespace 2")
+
+        then:
+        dataModels.size() == 2
+        dataModels.label.sort() == ["Data Model 2", "Data Model 3"]
+
+        when:
+        dataModels = dataModelRepository.getAllModelsByNamespace("namespace 3")
+
+        then:
+        dataModels.size() == 0
 
     }
     

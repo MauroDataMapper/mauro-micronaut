@@ -89,6 +89,7 @@ abstract class SecuredIntegrationSpec extends CommonDataSpec {
         response
     }
 
+
     HttpResponse loginAdmin() {
         loginUsernamePassword('admin@example.com', 'password')
     }

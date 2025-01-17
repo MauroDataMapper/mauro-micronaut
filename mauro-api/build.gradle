@@ -38,13 +38,18 @@ dependencies {
     runtimeOnly("org.flywaydb:flyway-database-postgresql")
 
     implementation("io.micronaut.sql:micronaut-jdbc-hikari")
-    testImplementation group: 'org.apache.groovy', name: 'groovy-json', version: '4.0.15'
+    implementation group: 'org.apache.groovy', name: 'groovy-json', version: '4.0.19'
 
 
     // Security
     implementation("io.micronaut.security:micronaut-security-session")
     compileOnly("io.micronaut.security:micronaut-security-annotations")
+    // OpenID Connect
+    implementation("io.micronaut.security:micronaut-security-oauth2")
+    implementation("io.micronaut.security:micronaut-security-jwt")
 
+    implementation group: 'org.jboss.resteasy', name: 'resteasy-client', version: '7.0.0.Alpha4'
+    testImplementation group: 'org.htmlunit', name: 'htmlunit', version: '4.6.0'
     //Email
     implementation("io.micronaut.email:micronaut-email-javamail")
     runtimeOnly("org.eclipse.angus:angus-mail")

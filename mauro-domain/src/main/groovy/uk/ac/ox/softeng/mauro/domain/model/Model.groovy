@@ -64,7 +64,7 @@ abstract class Model<M extends DiffableItem> extends AdministeredItem implements
     String branchName = 'main'
 
     @Nullable
-    @Transient
+    //@Transient
     ModelVersion modelVersion
 
     @Nullable

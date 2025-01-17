@@ -70,7 +70,7 @@ abstract class AdministeredItem extends Item {
 
 
     /**
-     * The path of oan object allows it to be navigated to from either the containing model, or the folder path within
+     * The path of an object allows it to be navigated to from either the containing model, or the folder path within
      * a system.  This value is calculated on persistence and saved to allow easy lookup.
      */
     @Transient
@@ -170,6 +170,16 @@ abstract class AdministeredItem extends Item {
         path.nodes = pathNodes
         path
     }
+
+    /* Helper method for dealing with metadata across different namespaces:
+        Given a namespace, return the metadata matching that namespace but as a map from keys to values
+     */
+
+    Map<String, String> metadataAsMap(String namespace) {
+        getMetadata().findAll { it.namespace == namespace }
+                .collectEntries {[it.key, it.value]}
+    }
+
 
     /**
      * Return all persistent associations of the AdministeredItem.
@@ -308,4 +318,40 @@ abstract class AdministeredItem extends Item {
         this.catalogueUser = createdBy
         this.catalogueUser
     }
+
+    /**
+     * DSL helper method for adding to the metadata field.  Returns the newly-created metadata item.
+     *
+     * @see #metadata
+     */
+    Metadata metadata(String namespace, String key, String value) {
+        Metadata md = Metadata.build (namespace: namespace, key: key, value: value)
+        this.metadata.add(md)
+        return md
+    }
+
+    /**
+     * DSL helper method for adding to the metadata field.  Returns the metadata list passed in.
+     *
+     * @see #metadata
+     */
+    List<Metadata> metadata(List<Metadata> metadata) {
+        this.metadata.addAll(metadata)
+        return metadata
+    }
+
+    /**
+     * DSL helper method for adding to the metadata field.  Returns the metadata list passed in.
+     *
+     * @see #metadata
+     */
+    List<Metadata> metadata(String namespace, Map<String, String> keyValueMap) {
+        this.metadata.addAll(keyValueMap.collect { key, value ->
+            new Metadata(namespace: namespace, key: key, value: value)
+        })
+        return metadata
+    }
+
+
+
 }
