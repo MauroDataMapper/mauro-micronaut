@@ -1,5 +1,15 @@
 package uk.ac.ox.softeng.mauro.controller.facet
 
+import groovy.transform.CompileStatic
+import groovy.util.logging.Slf4j
+import io.micronaut.http.HttpStatus
+import io.micronaut.http.annotation.*
+import io.micronaut.http.exceptions.HttpStatusException
+import io.micronaut.security.annotation.Secured
+import io.micronaut.security.rules.SecurityRule
+import io.micronaut.transaction.annotation.Transactional
+import jakarta.inject.Inject
+import reactor.util.annotation.NonNull
 import uk.ac.ox.softeng.mauro.controller.model.ItemController
 import uk.ac.ox.softeng.mauro.domain.facet.Facet
 import uk.ac.ox.softeng.mauro.domain.facet.Rule
@@ -11,22 +21,6 @@ import uk.ac.ox.softeng.mauro.persistence.cache.FacetCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.ItemCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.facet.RuleRepresentationRepository
 import uk.ac.ox.softeng.mauro.web.ListResponse
-
-import groovy.transform.CompileStatic
-import groovy.util.logging.Slf4j
-import io.micronaut.http.HttpStatus
-import io.micronaut.http.annotation.Body
-import io.micronaut.http.annotation.Controller
-import io.micronaut.http.annotation.Delete
-import io.micronaut.http.annotation.Get
-import io.micronaut.http.annotation.Post
-import io.micronaut.http.annotation.Put
-import io.micronaut.http.exceptions.HttpStatusException
-import io.micronaut.security.annotation.Secured
-import io.micronaut.security.rules.SecurityRule
-import io.micronaut.transaction.annotation.Transactional
-import jakarta.inject.Inject
-import reactor.util.annotation.NonNull
 
 @CompileStatic
 @Slf4j
@@ -103,7 +97,7 @@ class RuleRepresentationController extends ItemController<RuleRepresentation> {
         if (!ruleRepresentation) {
             throwNotFoundException(ruleRepresentation, id)
         }
-        ruleRepresentationCacheableRepository.delete(ruleRepresentation, rule)
+        ruleRepresentationCacheableRepository.delete(ruleRepresentation)
         HttpStatus.NO_CONTENT
     }
 
@@ -111,7 +105,7 @@ class RuleRepresentationController extends ItemController<RuleRepresentation> {
                                                Rule summaryMetadata) {
         boolean hasChanged = updateProperties(existing, cleaned)
         if (hasChanged) {
-            ruleRepresentationCacheableRepository.update(existing, summaryMetadata)
+            ruleRepresentationCacheableRepository.update(existing)
         } else {
             existing
         }

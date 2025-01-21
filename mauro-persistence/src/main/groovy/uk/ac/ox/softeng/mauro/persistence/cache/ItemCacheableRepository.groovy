@@ -1,28 +1,27 @@
 package uk.ac.ox.softeng.mauro.persistence.cache
 
-import jakarta.inject.Inject
-import uk.ac.ox.softeng.mauro.domain.facet.Rule
-import uk.ac.ox.softeng.mauro.domain.facet.RuleRepresentation
-import uk.ac.ox.softeng.mauro.persistence.facet.RuleRepresentationRepository
-
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.cache.annotation.CacheConfig
 import io.micronaut.cache.annotation.CacheInvalidate
 import io.micronaut.cache.annotation.Cacheable
 import io.micronaut.core.annotation.NonNull
+import jakarta.inject.Inject
 import jakarta.inject.Singleton
 import uk.ac.ox.softeng.mauro.domain.config.ApiProperty
+import uk.ac.ox.softeng.mauro.domain.facet.Rule
+import uk.ac.ox.softeng.mauro.domain.facet.RuleRepresentation
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
-import uk.ac.ox.softeng.mauro.domain.model.Item
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadataReport
+import uk.ac.ox.softeng.mauro.domain.model.Item
 import uk.ac.ox.softeng.mauro.domain.security.CatalogueUser
 import uk.ac.ox.softeng.mauro.domain.security.Role
 import uk.ac.ox.softeng.mauro.domain.security.SecurableResourceGroupRole
 import uk.ac.ox.softeng.mauro.domain.security.UserGroup
 import uk.ac.ox.softeng.mauro.persistence.config.ApiPropertyRepository
-import uk.ac.ox.softeng.mauro.persistence.model.ItemRepository
+import uk.ac.ox.softeng.mauro.persistence.facet.RuleRepresentationRepository
 import uk.ac.ox.softeng.mauro.persistence.facet.SummaryMetadataReportRepository
+import uk.ac.ox.softeng.mauro.persistence.model.ItemRepository
 import uk.ac.ox.softeng.mauro.persistence.security.CatalogueUserRepository
 import uk.ac.ox.softeng.mauro.persistence.security.SecurableResourceGroupRoleRepository
 import uk.ac.ox.softeng.mauro.persistence.security.UserGroupRepository
@@ -300,26 +299,10 @@ abstract class ItemCacheableRepository<I extends Item> implements ItemRepository
             super(ruleRepresentationRepository)
         }
 
-        Long delete(RuleRepresentation ruleRepresentation, Rule rule) {
-            Long deleted = repository.delete(ruleRepresentation)
-            invalidateChain(ruleRepresentation, rule)
-            deleted
-        }
-
-        RuleRepresentation update(RuleRepresentation ruleRepresentation, Rule rule) {
-            RuleRepresentation updated = repository.update(ruleRepresentation)
-            invalidateChain(updated, rule)
-            updated
-        }
-
-        List<RuleRepresentation> saveAll(Iterable<RuleRepresentation> items) {
-            List<RuleRepresentation> saved = repository.saveAll(items)
-            items.each { invalidate(it) }
-            saved
-        }
-
-        private void invalidateChain(RuleRepresentation ruleRepresentation, Rule rule) {
-            invalidate(ruleRepresentation)
+        @Override
+        void invalidate(RuleRepresentation item) {
+            super.invalidate(item)
+            Rule rule = ruleCacheableRepository.readById(item.ruleId)
             ruleCacheableRepository.invalidate(rule)
         }
     }
