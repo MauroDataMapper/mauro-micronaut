@@ -74,4 +74,22 @@ class DataElementUpdateIntegrationSpec extends CommonDataSpec {
         exception.status == HttpStatus.BAD_REQUEST
     }
 
+    void 'test update data element -new changes to existing dataType should update'() {
+
+        when:
+        DataElement dataElement = (DataElement) PUT("$DATAMODELS_PATH/$dataModelId$DATACLASSES_PATH/$dataClassId$DATA_ELEMENTS_PATH/$dataElementId",
+            [label   : 'Renamed data element',
+             dataType:
+                 [id         : dataTypeId,
+                  label      : 'changed label primitive',
+                  description: 'changed datatype description'
+                 ]], DataElement)
+        then:
+        dataElement
+        dataElement.dataType
+        dataElement.label == 'Renamed data element'
+        dataElement.dataType.label == 'changed label primitive'
+        dataElement.dataType.description == 'changed datatype description'
+    }
+
 }

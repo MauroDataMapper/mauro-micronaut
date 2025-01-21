@@ -1,28 +1,35 @@
 package uk.ac.ox.softeng.mauro.controller.datamodel
 
+import uk.ac.ox.softeng.mauro.controller.model.AdministeredItemController
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataElement
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
+import uk.ac.ox.softeng.mauro.domain.security.Role
+import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository
+import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository.DataClassCacheableRepository
+import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository.DataElementCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository.DataTypeCacheableRepository
+import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.DataModelCacheableRepository
+import uk.ac.ox.softeng.mauro.persistence.datamodel.DataModelContentRepository
+import uk.ac.ox.softeng.mauro.web.ListResponse
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpStatus
-import io.micronaut.http.annotation.*
+import io.micronaut.http.annotation.Body
+import io.micronaut.http.annotation.Controller
+import io.micronaut.http.annotation.Delete
+import io.micronaut.http.annotation.Get
+import io.micronaut.http.annotation.Post
+import io.micronaut.http.annotation.Put
 import io.micronaut.http.exceptions.HttpStatusException
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
+import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
-import uk.ac.ox.softeng.mauro.controller.model.AdministeredItemController
-import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
-import uk.ac.ox.softeng.mauro.domain.datamodel.DataElement
-import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
-import uk.ac.ox.softeng.mauro.domain.security.Role
-import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository.DataClassCacheableRepository
-import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository.DataElementCacheableRepository
-import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.DataModelCacheableRepository
-import uk.ac.ox.softeng.mauro.persistence.datamodel.DataModelContentRepository
-import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @CompileStatic
 @Slf4j
@@ -32,19 +39,21 @@ class DataElementController extends AdministeredItemController<DataElement, Data
 
     DataElementCacheableRepository dataElementRepository
 
-    @Inject
-    DataModelCacheableRepository dataModelRepository
-
-    @Inject
     DataClassCacheableRepository dataClassRepository
 
-    @Inject
-    DataTypeCacheableRepository dataTypeCacheableRepository
+    DataModelCacheableRepository dataModelRepository
 
+    AdministeredItemCacheableRepository.DataTypeCacheableRepository dataTypeRepository
+
+    @Inject
     DataElementController(DataElementCacheableRepository dataElementRepository, DataClassCacheableRepository dataClassRepository,
-                          DataModelContentRepository dataModelContentRepository) {
+                          DataModelContentRepository dataModelContentRepository, DataModelCacheableRepository dataModelRepository,
+                          DataTypeCacheableRepository dataTypeRepository) {
         super(DataElement, dataElementRepository, dataClassRepository, dataModelContentRepository)
+        this.dataModelRepository = dataModelRepository
         this.dataElementRepository = dataElementRepository
+        this.dataClassRepository = dataClassRepository
+        this.dataTypeRepository = dataTypeRepository
     }
 
     @Get('/{id}')
@@ -65,18 +74,15 @@ class DataElementController extends AdministeredItemController<DataElement, Data
 
     }
 
+    @Transactional
     @Put('/{id}')
     DataElement update(UUID dataModelId, UUID dataClassId, UUID id, @Body @NonNull DataElement dataElement) {
         DataElement cleanItem = super.cleanBody(dataElement) as DataElement
         DataElement existing = administeredItemRepository.readById(id)
         accessControlService.checkRole(Role.EDITOR, existing)
-        existing = validateDataTypeChange(existing, dataElement)
-        boolean hasChanged = updateProperties(existing, cleanItem)
-        updateDerivedProperties(existing)
-        DataElement updated = existing
-        if (hasChanged) {
-            updated = administeredItemRepository.update(existing) as DataElement
-        }
+        verifyValidPayload(existing, cleanItem)
+        DataElement updated = updateDataType(cleanItem)
+        updated = updateEntity(existing, cleanItem)
         updated = updateClassifiers(updated)
         updated
     }
@@ -93,30 +99,96 @@ class DataElementController extends AdministeredItemController<DataElement, Data
         ListResponse.from(dataElementRepository.readAllByDataClass_Id(dataClassId))
     }
 
+
+    private DataElement updateDataType(DataElement updated) {
+        DataType existingDataType
+        if (updated.dataType?.id) {
+            existingDataType = dataTypeRepository.readById(updated.dataType.id)
+            handleError(HttpStatus.NOT_FOUND, existingDataType, "Datatype not found $updated.dataType.id")
+            updated.dataType.id = null   //clear for cleanBody
+            DataType cleanItem = cleanBody(updated.dataType)
+
+            boolean hasChanged = updateProperties(existingDataType, cleanItem)
+            updateDerivedProperties(existingDataType)
+            DataType result = existingDataType
+            if (hasChanged) {
+                result = dataTypeRepository.update(existingDataType)
+            }
+            updated.dataType = result
+        }
+        updated
+    }
+
+    private DataType cleanBody(DataType item) {
+        DataType defaultItem = (DataType) item.class.getDeclaredConstructor().newInstance()
+
+        // Disallowed properties cannot be set by user request
+        disallowedCreateProperties.each {String key ->
+            if (defaultItem.hasProperty(key).properties.setter && item[key] != defaultItem[key]) {
+                throw new HttpStatusException(HttpStatus.BAD_REQUEST, "Property $key cannot be set directly")
+            }
+        }
+
+        // Collection properties cannot be set in user requests as these might be used in services
+        defaultItem.properties.each {
+            String key = it.key
+            if (defaultItem.hasProperty(key).properties.setter
+                && (isNotClassifiersCollection(key) && it.value instanceof Collection)
+                || it.value instanceof Map) {
+                if (item[key]) throw new HttpStatusException(HttpStatus.BAD_REQUEST, "Collection or Map $key cannot be set directly")
+                item[key] = null
+            }
+        }
+        item
+    }
+
+    private boolean updateProperties(DataType existing, DataType cleanItem) {
+        boolean hasChanged
+        existing.properties.each {
+            String key = it.key
+            if (!disallowedProperties.contains(key) && cleanItem[key] != null && existing.hasProperty(key).properties.setter) {
+                if (existing[key] != cleanItem[key]) {
+                    existing[key] = cleanItem[key]
+                    hasChanged = true
+                }
+            }
+        }
+        return hasChanged
+    }
+
+    private DataType updateDerivedProperties(DataType dataType) {
+        pathRepository.readParentItems(dataType)
+        dataType.updatePath()
+        dataType
+    }
+
     /**
-     * DataType in DataElement Payload can be changed, but the DT must exist.
-     * Furthermore, the DT must have the same DM as the existing DT's DM
-     * @param existing
-     * @param dataElement
-     * @return existing, updated with new DTid
+     * Check datatypes are valid
+     * dataType must belong to same dataModel and exist
+
+     * throws RunTime Exception
      */
-    private DataElement validateDataTypeChange(DataElement existing, DataElement dataElement) {
-        if (!dataElement.dataType) return existing
-
-        DataType dataElementDataType = dataTypeCacheableRepository.readById(dataElement.dataType.id)
-        if (!dataElementDataType) {
-            throw new HttpStatusException(HttpStatus.BAD_REQUEST, "Datatype not found:  $dataElementDataType.id")
+    private void verifyValidPayload(DataElement existing, DataElement proposed) {
+        if (!proposed.dataType) return
+        DataType proposedDataType = dataTypeRepository.readById(proposed.dataType.id)
+        if (!proposedDataType) {
+            throw new HttpStatusException(HttpStatus.BAD_REQUEST, "Datatype not found:  $proposedDataType.id")
         }
-        DataModel dataElementDTDM = dataModelRepository.readById(dataElementDataType.dataModel.id)
+        DataModel proposedParent = dataModelRepository.readById(proposedDataType.dataModel.id)
 
-        DataType existingDataType = dataTypeCacheableRepository.readById(existing.dataType.id)
-        DataModel existingDTDM = dataModelRepository.readById(existingDataType.dataModel.id)
-        if (dataElementDTDM && dataElementDTDM.id != existingDTDM.id) {
+        if (!existing.dataType ) return
+
+        DataType existingDataType = dataTypeRepository.readById(existing.dataType.id)
+        if (!existingDataType) {
+            throw new HttpStatusException(HttpStatus.BAD_REQUEST, "Datatype not found:  $existingDataType.id")
+        }
+        DataModel existingParent = dataModelRepository.readById(existingDataType.dataModel.id)
+
+        if (existingParent.id != proposedParent.id) {
             throw new HttpStatusException(HttpStatus.BAD_REQUEST,
-                                          "DataElement Update payload -DataType's DataModel must be same as existing dataType datamodel $existingDTDM")
+                                          "DataElement Update payload -DataType's DataModel must be same as existing dataType datamodel $existingParent.id")
 
         }
-        existing.dataType = dataElement.dataType
-        existing
+
     }
 }
