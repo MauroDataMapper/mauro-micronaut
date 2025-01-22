@@ -1,5 +1,9 @@
 package uk.ac.ox.softeng.mauro.classifier
 
+import uk.ac.ox.softeng.mauro.api.classifier.ClassificationSchemeApi
+
+import io.micronaut.runtime.server.EmbeddedServer
+
 import static uk.ac.ox.softeng.mauro.api.PathPopulation.populatePath
 import uk.ac.ox.softeng.mauro.api.Paths
 
@@ -19,21 +23,19 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 @Sql(scripts = ["classpath:sql/tear-down-classifiers.sql"], phase = Sql.Phase.AFTER_EACH)
 class ClassificationSchemeIntegrationSpec extends CommonDataSpec {
 
-    @Inject
-    EmbeddedApplication<?> application
-
     @Shared
     UUID folderId
 
+    @Inject
+    ClassificationSchemeApi classificationSchemeApi
 
-    void setupSpec(){
+    void setup() {
         folderId = ((Folder) POST(Paths.FOLDER_LIST, folder(), Folder)).id
     }
 
-
     void 'list classification schemes - should return empty list'() {
         when:
-        ListResponse<ClassificationScheme> listResponse = (ListResponse<ClassificationScheme>) GET(Paths.CLASSIFICATION_SCHEMES_LIST, ListResponse<ClassificationScheme>)
+        ListResponse<ClassificationScheme> listResponse = classificationSchemeApi.listAll()
         then:
         listResponse
         listResponse.items.isEmpty()

@@ -1,10 +1,11 @@
 plugins {
     id 'groovy'
     id("com.github.johnrengelman.shadow") version "8.1.1"
-    id("io.micronaut.library") version "4.3.4"
-    id("io.micronaut.aot") version "4.3.4"
-    id("maven-publish")
     id("java-library")
+    id("java-test-fixtures")
+    id("io.micronaut.library") version "4.4.5"
+    id("io.micronaut.aot") version "4.4.5"
+    id("maven-publish")
     id("codenarc")
 }
 
@@ -18,8 +19,9 @@ repositories {
 dependencies {
     implementation project(':mauro-domain')
     implementation project(':mauro-persistence') // For the search DTOs
+
     annotationProcessor "io.micronaut:micronaut-inject-java"
-    testImplementation platform('org.junit:junit-bom:5.10.0')
+    annotationProcessor("io.micronaut:micronaut-inject-groovy")
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testImplementation("io.micronaut.test:micronaut-test-spock")
     implementation("io.micronaut.openapi:micronaut-openapi")
@@ -31,16 +33,26 @@ dependencies {
     implementation("io.micronaut.picocli:micronaut-picocli")
     implementation("io.micronaut.security:micronaut-security")
     annotationProcessor("info.picocli:picocli-codegen")
-    implementation("io.micronaut.rxjava2:micronaut-rxjava2-http-client")
 
 
+    testFixturesImplementation("io.micronaut.test:micronaut-test-spock")
+    testFixturesImplementation("io.micronaut.sql:micronaut-jdbc-hikari")
+    testFixturesImplementation('io.micronaut:micronaut-http-server')
+    testFixturesImplementation("org.junit.jupiter:junit-jupiter-api:5.2.0")
+    testFixturesImplementation("org.junit.jupiter:junit-jupiter-engine:5.2.0")
+
+}
+
+// This is necessary to ensure the TestApiClientFilter is turned into a bean and injectable
+micronaut {
+    processing {
+        sourceSets (sourceSets.testFixtures)
+    }
 }
 
 jar {
     exclude("**/logback.xml")
 }
-
-compileGroovy.dependsOn(compileJava)
 
 test {
     useJUnitPlatform()
@@ -57,24 +69,6 @@ publishing {
     }
 }
 
-micronaut {
-    processing {
-        incremental(true)
-        annotations("*")
-    }
-    aot {
-        // Please review carefully the optimizations enabled below
-        // Check https://micronaut-projects.github.io/micronaut-aot/latest/guide/ for more details
-        optimizeServiceLoading = false
-        convertYamlToJava = false
-        precomputeOperations = true
-        cacheEnvironment = true
-        optimizeClassLoading = true
-        deduceEnvironment = true
-        optimizeNetty = true
-    }
-}
-
 codenarc {
     toolVersion = "3.3.0-groovy-4.0"
     configFile = rootProject.file("config/codenarc/codenarc.groovy")
@@ -88,4 +82,4 @@ codenarcTest {
     compilationClasspath = codenarcMain.compilationClasspath + sourceSets.test.compileClasspath + sourceSets.test.output
 }
 
-[codenarcMain, codenarcTest]*.ignoreFailures = true
+[codenarcMain, codenarcTest, codenarcTestFixtures]*.ignoreFailures = true

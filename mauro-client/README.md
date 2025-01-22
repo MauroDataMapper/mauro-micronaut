@@ -10,7 +10,7 @@ The `build.gradle` at the root level: you need to include the micronaut library 
 ```aiignore
 plugins {
     id 'groovy'
-    id 'io.micronaut.library' version '4.3.4'
+    id 'io.micronaut.library' version '4.4.5'
 }
 ```
 

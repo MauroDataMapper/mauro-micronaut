@@ -8,6 +8,7 @@ import uk.ac.ox.softeng.mauro.domain.diff.ObjectDiff
 import uk.ac.ox.softeng.mauro.domain.model.version.CreateNewVersionData
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
+import io.micronaut.context.annotation.Replaces
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpStatus
@@ -24,6 +25,7 @@ import io.micronaut.scheduling.TaskExecutors
 import io.micronaut.scheduling.annotation.ExecuteOn
 
 @MauroApi
+@Replaces
 interface ClassificationSchemeApi extends ModelApi<ClassificationScheme> {
 
     @Get(Paths.CLASSIFICATION_SCHEMES_ID_ROUTE)

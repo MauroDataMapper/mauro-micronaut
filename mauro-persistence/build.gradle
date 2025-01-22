@@ -1,7 +1,7 @@
 plugins {
     id("groovy")
     id("com.github.johnrengelman.shadow") version "8.1.1"
-    id("io.micronaut.library") version "4.3.4"
+    id("io.micronaut.library") version "4.4.5"
     id("maven-publish")
     id("codenarc")
     id("java-library")
@@ -39,12 +39,12 @@ dependencies {
     runtimeOnly("org.yaml:snakeyaml")
 
     testImplementation("io.micronaut.test:micronaut-test-spock")
-    testFixturesImplementation("io.micronaut.test:micronaut-test-spock")
-    testFixturesImplementation("io.micronaut.sql:micronaut-jdbc-hikari")
     testRuntimeOnly("org.testcontainers:testcontainers")
     testRuntimeOnly("org.testcontainers:postgresql")
     testRuntimeOnly("org.postgresql:postgresql")
 
+    testFixturesImplementation("io.micronaut.test:micronaut-test-spock")
+    testFixturesImplementation("io.micronaut.sql:micronaut-jdbc-hikari")
     testFixturesImplementation("org.junit.jupiter:junit-jupiter-api:5.2.0")
     testFixturesImplementation("org.junit.jupiter:junit-jupiter-engine:5.2.0")
 
@@ -55,7 +55,6 @@ java {
     targetCompatibility = JavaVersion.toVersion("17")
     withJavadocJar()
     withSourcesJar()
-
 }
 
 test {
@@ -72,11 +71,6 @@ publishing {
         }
     }
 }
-
-test {
-    useJUnitPlatform()
-}
-
 
 dependencies {
     implementation project(':mauro-domain')
