@@ -46,7 +46,7 @@ class TreeService {
     CodeSetRepository codeSetRepository
 
     @CompileDynamic
-    List<TreeItem>  buildTree(AdministeredItem item, boolean foldersOnly, boolean setChildren) {
+    List<TreeItem> buildTree(AdministeredItem item, boolean foldersOnly, boolean setChildren) {
         switch (item) {
             case Folder -> buildTreeForFolder(item, foldersOnly, setChildren)
 
@@ -71,10 +71,15 @@ class TreeService {
     }
 
     List<TreeItem> buildTreeForFolder(Folder folder, boolean foldersOnly, boolean setChildren) {
-        if (foldersOnly){
-            getFolderOnlyTreeItems(folder,  foldersOnly, setChildren)
-        } else {
-            getTreeItems(folder, foldersOnly, setChildren)
+        getModelRepositories().collectMany {ModelCacheableRepository modelCacheableRepository ->
+            getModelsForFolder(modelCacheableRepository, folder as Folder)
+                .sort {Object model -> ((Model) model).label}
+                .findAll {Object model -> !foldersOnly || ((Model) model).domainType.contains(Folder.class.simpleName)}
+                .collect {Object model ->
+                    TreeItem.from((Model) model).tap {
+                        if (setChildren) children = buildTree(model as AdministeredItem, foldersOnly, false)
+                    }
+                }
         }
     }
 
@@ -99,7 +104,6 @@ class TreeService {
         }
     }
 
-
     List<TreeItem> buildTreeForTerminology(Terminology terminology, boolean setChildren = true) {
         termCacheableRepository.readChildTermsByParent(terminology.id, null).sort {it.code}.collect {Term term ->
             TreeItem.from(term).tap {
@@ -118,38 +122,11 @@ class TreeService {
         }
     }
 
-    protected List<TreeItem> getFolderOnlyTreeItems(folder, boolean foldersOnly, boolean setChildren) {
-        List<TreeItem> treeItems = []
-        treeItems = getModelRepositories().collectMany { ModelCacheableRepository modelCacheableRepository ->
-            getModelsForFolder(modelCacheableRepository, folder as Folder)
-                    .sort { Object model -> ((Model) model).label }
-                    .findAll { Object model -> ((Model) model).domainType.contains(Folder.class.simpleName) }
-                    .collect { Object model ->
-                        TreeItem.from((Model) model).tap {
-                            if (setChildren) children = buildTree(model as AdministeredItem, foldersOnly, false)
-                        }
-                    }
-        }
-        treeItems
-    }
-
-    protected List<TreeItem> getTreeItems(folder,  boolean foldersOnly, boolean setChildren) {
-        getModelRepositories().collectMany { ModelCacheableRepository modelCacheableRepository ->
-            getModelsForFolder(modelCacheableRepository, folder as Folder)
-                    .sort {  Object model -> ((Model) model).label }
-                    .collect { Object model ->
-                TreeItem.from((Model) model).tap {
-                    if (setChildren) children = buildTree(model as AdministeredItem, foldersOnly, false)
-                }
-            }
-        }
-    }
-
     protected static List getModelsForFolder(ModelCacheableRepository modelCacheableRepository, Folder folder) {
         modelCacheableRepository.readAllByFolder(folder)
     }
 
     protected List<ModelCacheableRepository> getModelRepositories() {
-        repositoryService.modelCacheableRepositories.sort(false) { it.class.simpleName }
+        repositoryService.modelCacheableRepositories.sort(false) {it.class.simpleName}
     }
 }
