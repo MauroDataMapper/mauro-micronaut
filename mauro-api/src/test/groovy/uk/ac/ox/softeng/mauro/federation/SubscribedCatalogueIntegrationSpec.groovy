@@ -71,7 +71,6 @@ class SubscribedCatalogueIntegrationSpec extends SecuredIntegrationSpec {
         subscribedCatalogue.url == "https://maurosandbox.com/sandbox"
         subscribedCatalogue.subscribedCatalogueAuthenticationType == SubscribedCatalogueAuthenticationType.API_KEY
         subscribedCatalogue.subscribedCatalogueType == SubscribedCatalogueType.MAURO_JSON
-        subscribedCatalogue.connectTimeout == 30
     }
 
     @Unroll

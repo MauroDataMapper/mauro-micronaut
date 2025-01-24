@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.controller.dataflow
 
+import uk.ac.ox.softeng.mauro.ErrorHandler
+
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
@@ -46,7 +48,7 @@ class DataFlowController extends AdministeredItemController<DataFlow, DataModel>
     DataFlow create(@NonNull UUID dataModelId, @Body @NonNull DataFlow dataFlow) {
         DataModel source = dataModelRepository.findById(dataFlow.source.id)
         accessControlService.checkRole(Role.READER, source)
-        handleError(HttpStatus.NOT_FOUND, source,"Datamodel not found : $dataFlow.source.id")
+        ErrorHandler.handleError(HttpStatus.NOT_FOUND, source, "Datamodel not found : $dataFlow.source.id")
         DataFlow created = super.create(dataModelId, dataFlow)
         show(created.id)
     }
@@ -69,7 +71,7 @@ class DataFlowController extends AdministeredItemController<DataFlow, DataModel>
             return super.list(dataModelId)
         }
         DataModel source = dataModelRepository.findById(dataModelId)
-        handleError(HttpStatus.NOT_FOUND, source, "Item with id: $dataModelId not found")
+        ErrorHandler.handleError(HttpStatus.NOT_FOUND, source, "Item with id: $dataModelId not found")
         List<DataFlow> sourceDataFlowList = dataFlowRepository.findAllBySource(source)
         ListResponse.from(sourceDataFlowList.findAll{accessControlService.canDoRole(Role.READER, it)})
     }

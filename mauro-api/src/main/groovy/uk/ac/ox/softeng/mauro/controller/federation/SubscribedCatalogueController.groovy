@@ -1,5 +1,6 @@
 package uk.ac.ox.softeng.mauro.controller.federation
 
+import uk.ac.ox.softeng.mauro.ErrorHandler
 import uk.ac.ox.softeng.mauro.controller.Paths
 import uk.ac.ox.softeng.mauro.controller.model.ItemController
 import uk.ac.ox.softeng.mauro.domain.federation.PublishedModel
@@ -23,6 +24,7 @@ import io.micronaut.http.annotation.Post
 import io.micronaut.http.annotation.Put
 import io.micronaut.http.annotation.QueryValue
 import io.micronaut.http.exceptions.HttpStatusException
+import io.micronaut.http.server.exceptions.HttpServerException
 import io.micronaut.scheduling.TaskExecutors
 import io.micronaut.scheduling.annotation.ExecuteOn
 import io.micronaut.security.annotation.Secured
@@ -59,7 +61,7 @@ class SubscribedCatalogueController extends ItemController<SubscribedCatalogue> 
 
     @Get(Paths.SUBSCRIBED_CATALOGUES_ID_ROUTE)
     SubscribedCatalogue show(@NonNull UUID subscribedCatalogueId) {
-        accessControlService.checkAdministrator()
+        accessControlService.checkAuthenticated()
         subscribedCatalogueCacheableRepository.findById(subscribedCatalogueId)
     }
 
@@ -71,7 +73,7 @@ class SubscribedCatalogueController extends ItemController<SubscribedCatalogue> 
         if (subscribedCatalogues.size() < max) {
             ListResponse.from(subscribedCatalogues)
         } else {
-            List altered = subscribedCatalogues.subList(0,max)
+            List altered = subscribedCatalogues.subList(0, max)
             ListResponse.from(subscribedCatalogues.subList(0, max))
         }
     }
@@ -86,6 +88,7 @@ class SubscribedCatalogueController extends ItemController<SubscribedCatalogue> 
     }
 
     @Put(Paths.ADMIN_SUBSCRIBED_CATALOGUES_ID_ROUTE)
+    @Transactional
     SubscribedCatalogue update(@NonNull UUID subscribedCatalogueId, @Body @NonNull SubscribedCatalogue subscribedCatalogue) {
         accessControlService.checkAdministrator()
         cleanBody(subscribedCatalogue)
@@ -117,10 +120,14 @@ class SubscribedCatalogueController extends ItemController<SubscribedCatalogue> 
         accessControlService.checkAdministrator()
 
         SubscribedCatalogue subscribedCatalogue = subscribedCatalogueCacheableRepository.findById(subscribedCatalogueId)
-        handleNotFoundError(subscribedCatalogue, subscribedCatalogueId)
-
-        getFederatedPublishedModels(subscribedCatalogue)
-        HttpStatus.OK
+        ErrorHandler.handleError(HttpStatus.NOT_FOUND, subscribedCatalogue, "Item $subscribedCatalogueId not found")
+        try {
+            List<PublishedModel> publishedModels = getFederatedPublishedModels(subscribedCatalogue)
+        } catch (Exception e) {
+            log.error(e.message)
+            throw new HttpServerException(e.message, e)
+        }
+        return HttpStatus.OK
     }
 
 
@@ -130,16 +137,18 @@ class SubscribedCatalogueController extends ItemController<SubscribedCatalogue> 
         accessControlService.checkAuthenticated()
 
         SubscribedCatalogue subscribedCatalogue = subscribedCatalogueCacheableRepository.findById(subscribedCatalogueId)
-        handleNotFoundError(subscribedCatalogue, subscribedCatalogueId)
+        ErrorHandler.handleError(HttpStatus.NOT_FOUND, subscribedCatalogue, "Item $subscribedCatalogueId not found")
         ListResponse.from(getFederatedPublishedModels(subscribedCatalogue))
     }
 
-    protected  List<PublishedModel> getFederatedPublishedModels(SubscribedCatalogue subscribedCatalogue) {
+    protected List<PublishedModel> getFederatedPublishedModels(SubscribedCatalogue subscribedCatalogue) {
+        List<PublishedModel> publishedModels = []
         try {
-            subscribedCatalogueService.getPublishedModelsWithAuthority(subscribedCatalogue)
-        } catch (Exception exception) {
-            throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error connecting to:  $subscribedCatalogue.url, reason: $exception.message")
+            publishedModels = subscribedCatalogueService.getPublishedModels(subscribedCatalogue)
+        } catch (Exception e) {
+            throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.message)
         }
+        publishedModels
     }
 
 }

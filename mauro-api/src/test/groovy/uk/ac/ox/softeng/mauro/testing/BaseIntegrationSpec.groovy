@@ -60,6 +60,7 @@ class BaseIntegrationSpec extends Specification {
     public static final String DIFF = '/diff'
     public static final String SUBSCRIBED_CATALOGUES_PATH = '/subscribedCatalogues'
     public static final String ADMIN_SUBSCRIBED_CATALOGUES_PATH = '/admin/subscribedCatalogues'
+    public static final String SUBSCRIBED_MODELS_PATH = '/subscribedModels'
     public static final String TEST_CONNECTION = '/testConnection'
     public static final String PUBLISHED_MODELS_PATH = '/published/models'
     public static final String PUBLISHEDMODELS = '/publishedModels'

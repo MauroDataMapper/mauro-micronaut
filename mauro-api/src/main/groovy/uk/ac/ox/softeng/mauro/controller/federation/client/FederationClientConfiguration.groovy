@@ -8,7 +8,7 @@ import io.micronaut.runtime.ApplicationConfiguration
 @ConfigurationProperties(PREFIX)
 @Replaces(HttpClientConfiguration)
 class FederationClientConfiguration extends HttpClientConfiguration {
-    static final String PREFIX = "federation.client";
+    static final String PREFIX = "micronaut.federation.client";
     static final String API_KEY_HEADER = 'apiKey'
     static final String API_PATH = 'api'
 

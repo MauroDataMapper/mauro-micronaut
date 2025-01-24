@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.controller.classifier
 
+import uk.ac.ox.softeng.mauro.ErrorHandler
+
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
@@ -85,10 +87,10 @@ class ClassifierController extends AdministeredItemController<Classifier, Classi
     Classifier create(@NonNull UUID classificationSchemeId, @NonNull UUID parentClassifierId, @Body @NonNull Classifier classifier) {
         cleanBody(classifier)
         ClassificationScheme classificationScheme = classificationSchemeCacheableRepository.readById(classificationSchemeId)
-        handleError(HttpStatus.NOT_FOUND,classificationScheme, "Classification Scheme $classificationSchemeId not found")
+        ErrorHandler.handleError(HttpStatus.NOT_FOUND, classificationScheme, "Classification Scheme $classificationSchemeId not found")
         accessControlService.checkRole(Role.EDITOR, classificationScheme)
         Classifier parentClassifier = classifierCacheableRepository.readById(parentClassifierId)
-        handleError(HttpStatus.NOT_FOUND, parentClassifier, "Parent Classifier $parentClassifierId not found")
+        ErrorHandler.handleError(HttpStatus.NOT_FOUND, parentClassifier, "Parent Classifier $parentClassifierId not found")
         accessControlService.checkRole(Role.EDITOR, parentClassifier)
         classifier.parentClassifier = parentClassifier
         return createEntity(classificationScheme, classifier)
@@ -156,7 +158,7 @@ class ClassifierController extends AdministeredItemController<Classifier, Classi
         AdministeredItem administeredItem = findAdministeredItem(administeredItemDomainType, administeredItemId)
         accessControlService.checkRole(Role.EDITOR, readAdministeredItem(administeredItem.domainType, administeredItemId))
         Classifier classifierToDelete = classifierCacheableRepository.readById(id)
-        handleError(HttpStatus.NOT_FOUND, classifierToDelete, "Classifier with id $id not found")
+        ErrorHandler.handleError(HttpStatus.NOT_FOUND, classifierToDelete, "Classifier with id $id not found")
         accessControlService.checkRole(Role.EDITOR, classifierToDelete)
         Long deleted = classifierCacheableRepository.deleteJoinAdministeredItemToClassifier(administeredItem, classifierToDelete.id)
         if (deleted) {

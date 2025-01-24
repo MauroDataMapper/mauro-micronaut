@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.controller.terminology
 
+import uk.ac.ox.softeng.mauro.ErrorHandler
+
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
@@ -158,9 +160,10 @@ class TerminologyController extends ModelController<Terminology> {
     @Get('/terminologies/{id}/diff/{otherId}')
     ObjectDiff diffModels(@NonNull UUID id, @NonNull UUID otherId) {
         Terminology terminology = modelContentRepository.findWithContentById(id)
-        handleNotFoundError(terminology, id)
+
+        ErrorHandler.handleError(HttpStatus.NOT_FOUND, terminology, "item not found : $id")
         Terminology other = modelContentRepository.findWithContentById(otherId)
-        handleNotFoundError(other, otherId)
+        ErrorHandler.handleError(HttpStatus.NOT_FOUND, terminology, "item not found : $otherId")
 
         accessControlService.checkRole(Role.READER, terminology)
         accessControlService.checkRole(Role.READER, other)

@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.controller.model
 
+import uk.ac.ox.softeng.mauro.ErrorHandler
+
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
@@ -159,7 +161,7 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
         if (item.classifiers) {
             classifierList = item.classifiers.collect {
                 Classifier retrieved = getClassifierCacheableRepository(it.domainType).readById(it.id)
-                handleError(HttpStatus.NOT_FOUND, retrieved, "Item with id: $it.id not found")
+                ErrorHandler.handleError(HttpStatus.NOT_FOUND, retrieved, " Item with id:  $it.id  not found ")
                 accessControlService.checkRole(Role.EDITOR, retrieved)
                 retrieved
             }
@@ -167,9 +169,4 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
         classifierList
     }
 
-    protected static void handleError(HttpStatus httpStatus, Object result, String message) {
-        if (!result) {
-            throw new HttpStatusException(httpStatus, message)
-        }
-    }
 }

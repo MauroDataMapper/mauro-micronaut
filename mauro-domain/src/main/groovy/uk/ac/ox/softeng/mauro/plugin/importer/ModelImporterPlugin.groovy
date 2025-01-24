@@ -49,7 +49,6 @@ trait ModelImporterPlugin <D extends Model, P extends ImportParameters> extends 
             importedModel.getAllContents().each {it.updateCreationProperties()}
             log.info '* finish updateCreationProperties *'
         }
-
         imported
     }
 

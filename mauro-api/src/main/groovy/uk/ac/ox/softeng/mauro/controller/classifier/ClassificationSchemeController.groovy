@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.controller.classifier
 
+import uk.ac.ox.softeng.mauro.ErrorHandler
+
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
@@ -97,9 +99,10 @@ class ClassificationSchemeController extends ModelController<ClassificationSchem
     @Get(Paths.CLASSIFICATION_SCHEMES_DIFF)
     ObjectDiff diffModels(@NonNull UUID id, @NonNull UUID otherId) {
         ClassificationScheme classificationScheme = modelContentRepository.findWithContentById(id)
-        handleNotFoundError(classificationScheme, id)
+        ErrorHandler.handleError(HttpStatus.NOT_FOUND, classificationScheme, "Item not found: $id")
         ClassificationScheme otherClassificationScheme = modelContentRepository.findWithContentById(otherId)
-        handleNotFoundError(otherClassificationScheme, otherId)
+        ErrorHandler.handleError(HttpStatus.NOT_FOUND, classificationScheme, "Item not found: $otherId")
+
 
         accessControlService.checkRole(Role.READER, classificationScheme)
         accessControlService.checkRole(Role.READER, otherClassificationScheme)

@@ -1,16 +1,16 @@
 package uk.ac.ox.softeng.mauro.controller.model
 
+import uk.ac.ox.softeng.mauro.domain.classifier.Classifier
+import uk.ac.ox.softeng.mauro.domain.model.Item
+import uk.ac.ox.softeng.mauro.persistence.model.ItemRepository
+import uk.ac.ox.softeng.mauro.security.AccessControlService
+
 import groovy.transform.CompileStatic
-import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.exceptions.HttpStatusException
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
 import jakarta.inject.Inject
-import uk.ac.ox.softeng.mauro.domain.classifier.Classifier
-import uk.ac.ox.softeng.mauro.domain.model.Item
-import uk.ac.ox.softeng.mauro.persistence.model.ItemRepository
-import uk.ac.ox.softeng.mauro.security.AccessControlService
 
 @CompileStatic
 @Secured(SecurityRule.IS_ANONYMOUS)
@@ -87,10 +87,5 @@ abstract class ItemController<I extends Item> implements AdministeredItemReader 
         return hasChanged
     }
 
-    protected void handleNotFoundError(@Nullable Item item, UUID id) {
-        if (!item) {
-            throw new HttpStatusException(HttpStatus.NOT_FOUND, "Entity not found, $id")
-        }
-    }
 
 }

@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.controller.dataflow
 
+import uk.ac.ox.softeng.mauro.ErrorHandler
+
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
@@ -48,7 +50,7 @@ class DataClassComponentController extends AdministeredItemController<DataClassC
 
 
     @Get(value = Paths.ID_ROUTE)
-    DataClassComponent show(@NonNull UUID dataFlowId, @NonNull UUID id){
+    DataClassComponent show(@NonNull UUID dataFlowId, @NonNull UUID id) {
         super.show(id)
     }
 
@@ -98,60 +100,59 @@ class DataClassComponentController extends AdministeredItemController<DataClassC
 
     private DataClassComponent addDataClass(Type type, UUID id, UUID dataClassId) {
         DataClass dataClassToAdd = dataClassRepository.readById(dataClassId)
-        handleError(HttpStatus.NOT_FOUND, dataClassToAdd, "Item with id: $id not found")
+        ErrorHandler.handleError(HttpStatus.NOT_FOUND, dataClassToAdd, "item not found : $id")
         accessControlService.checkRole(Role.EDITOR, dataClassToAdd)
         DataClassComponent dataClassComponent = dataClassComponentContentRepository.readWithContentById(id)
-        handleError(HttpStatus.NOT_FOUND, dataClassComponent, "Item with id: $id not found")
+        ErrorHandler.handleError(HttpStatus.NOT_FOUND, dataClassComponent, "item not found : $id")
         accessControlService.checkRole(Role.EDITOR, dataClassComponent)
 
         switch (type) {
             case Type.TARGET:
                 if (dataClassComponent.targetDataClasses.id.contains(dataClassToAdd.id)) {
-                    handleError(HttpStatus.BAD_REQUEST, null, "Item already exists in table DataClassComponentTargetDataClass: $dataClassToAdd.id")
+                    ErrorHandler.handleError(HttpStatus.BAD_REQUEST, "Item already exists in table DataClassComponentTargetDataClass: : $dataClassToAdd.id")
                 }
                 dataClassComponent.targetDataClasses.add(dataClassToAdd)
                 dataClassComponentRepository.addTargetDataClass(dataClassComponent.id, dataClassId)
                 break;
             case Type.SOURCE:
                 if (dataClassComponent.sourceDataClasses.id.contains(dataClassToAdd.id)) {
-                    handleError(HttpStatus.BAD_REQUEST, null, "Item already exists in table DataClassComponentSourceDataClass: $dataClassToAdd.id");
+                    ErrorHandler.handleError(HttpStatus.BAD_REQUEST, "Item already exists in table DataClassComponentSourceDataClass: : $dataClassToAdd.id")
                 }
                 dataClassComponent.sourceDataClasses.add(dataClassToAdd)
                 dataClassComponentRepository.addSourceDataClass(dataClassComponent.id, dataClassId)
                 break;
             default:
-                handleError(HttpStatus.BAD_REQUEST, type, "Type must be source or target")
+                ErrorHandler.handleError(HttpStatus.BAD_REQUEST, "$type Type must be source or target")
         }
         dataClassComponent
     }
 
     private DataClassComponent removeDataClass(Type type, UUID id, UUID dataClassId) {
         DataClass dataClassToRemove = dataClassRepository.readById(dataClassId)
-        handleError(HttpStatus.NOT_FOUND, dataClassToRemove, "Item with id: $dataClassId not found")
+        ErrorHandler.handleError(HttpStatus.NOT_FOUND, dataClassToRemove,"Item with id: $dataClassId not found")
         accessControlService.checkRole(Role.EDITOR, dataClassToRemove)
         DataClassComponent dataClassComponent = dataClassComponentContentRepository.readWithContentById(id)
-        handleError(HttpStatus.NOT_FOUND, dataClassComponent, "Item with id: $id not found")
+        ErrorHandler.handleError(HttpStatus.NOT_FOUND, dataClassToRemove,"Item with id: $id not found")
         accessControlService.checkRole(Role.EDITOR, dataClassComponent)
 
         Long result
         switch (type) {
             case Type.TARGET:
                 if (!dataClassComponent.targetDataClasses.removeIf(dc -> dc.id == dataClassId)) {
-                    handleError(HttpStatus.NOT_FOUND, null, "Item does not exist in table DataClassComponentTargetDataClass: $dataClassId")
+                    ErrorHandler.handleError(HttpStatus.NOT_FOUND, "Item does not exist in table DataClassComponentTargetDataClass: $dataClassId")
                 }
                 result = dataClassComponentRepository.removeTargetDataClass(dataClassComponent.id, dataClassId)
                 break;
             case Type.SOURCE:
                 if (!dataClassComponent.sourceDataClasses.removeIf(dc -> dc.id == dataClassId)) {
-                    handleError(HttpStatus.NOT_FOUND, null, "Item does not exist in table DataClassComponentSourceDataClass: $dataClassId")
+                    ErrorHandler.handleError(HttpStatus.NOT_FOUND, "Item does not exist in table DataClassComponentSourceDataClass: $dataClassId")
                 }
                 result = dataClassComponentRepository.removeSourceDataClass(dataClassComponent.id, dataClassId)
                 break;
             default:
-                handleError(HttpStatus.BAD_REQUEST, type, "Type must be source or target")
-
+                ErrorHandler.handleError(HttpStatus.BAD_REQUEST, "Type must be source or target")
+                break;
         }
-        handleError(HttpStatus.NOT_FOUND, result, "data class not found ,$dataClassId")
         dataClassComponent
     }
 }

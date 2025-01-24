@@ -19,26 +19,31 @@ class SubscribedCatalogueService {
 
     final FederationClient federationClient
     final SubscribedCatalogueConverterService subscribedCatalogueConverterService
-    final FederationClientConfiguration federationClientConfiguration
 
     @Inject
-    SubscribedCatalogueService(FederationClient federationClient, SubscribedCatalogueConverterService subscribedCatalogueConverterService,
-                               FederationClientConfiguration federationClientConfiguration) {
+    SubscribedCatalogueService(FederationClient federationClient, SubscribedCatalogueConverterService subscribedCatalogueConverterService) {
         this.federationClient = federationClient
         this.subscribedCatalogueConverterService = subscribedCatalogueConverterService
-        this.federationClientConfiguration = federationClientConfiguration
     }
 
-    List<PublishedModel> getPublishedModelsWithAuthority(SubscribedCatalogue subscribedCatalogue) {
-        federationClient.initHttpClient(subscribedCatalogue, federationClientConfiguration)
-        Map<String, Object> subscribedCatalogueModelsMap = federationClient.fetchFederatedClientDataAsMap(Paths.PUBLISHED_MODELS_ROUTE)
-        getConverterForSubscribedCatalogue(subscribedCatalogue).toPublishedModels(subscribedCatalogueModelsMap).v2
+    List<PublishedModel> getPublishedModels(SubscribedCatalogue subscribedCatalogue) {
+       getPublishedModelsWithAuthority(subscribedCatalogue).v2
+    }
 
+
+    protected Tuple2<Authority, List<PublishedModel>> getPublishedModelsWithAuthority(SubscribedCatalogue subscribedCatalogue) {
+        federationClient.initHttpClient(subscribedCatalogue)
+        Map<String, Object> subscribedCatalogueModelsMap = federationClient.fetchFederatedClientDataAsMap(Paths.PUBLISHED_MODELS_ROUTE)
+        getConverterForSubscribedCatalogue(subscribedCatalogue).toPublishedModels(subscribedCatalogueModelsMap)
     }
 
     private SubscribedCatalogueConverter getConverterForSubscribedCatalogue(SubscribedCatalogue subscribedCatalogue) {
         subscribedCatalogueConverterService.getSubscribedCatalogueConverter(subscribedCatalogue.subscribedCatalogueType)
     }
 
+    byte[] getBytesResourceExport(SubscribedCatalogue subscribedCatalogue,String resourceUrl) {
+        federationClient.initHttpClient(subscribedCatalogue)
+        federationClient.retrieveBytesFromClient(resourceUrl)
+    }
 }
 

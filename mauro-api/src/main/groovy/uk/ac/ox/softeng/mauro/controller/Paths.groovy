@@ -37,6 +37,7 @@ class Paths {
     public static final String SUBSCRIBED_CATALOGUES_ID_ROUTE  = '/subscribedCatalogues/{subscribedCatalogueId}'
     public static final String SUBSCRIBED_CATALOGUES_ROUTE  = '/subscribedCatalogues'
     public static final String SUBSCRIBED_MODELS_ROUTE  = '/subscribedCatalogues/{subscribedCatalogueId}/subscribedModels'
+    public static final String SUBSCRIBED_MODELS_NEWER_VERSIONS_ROUTE  = '/subscribedCatalogues/{subscribedCatalogueId}/subscribedModels/{id}/newerVersions'
     public static final String PUBLISHED_MODELS_ROUTE  = '/published/models'
     public static final String PUBLISHED_MODELS_NEWER_VERSIONS_ROUTE  = '/published/models/{id}/newerVersions'
 

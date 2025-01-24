@@ -1,16 +1,10 @@
 micronaut:
   application:
     name: sandbox
-  http:
-    client:
-      read-timeout: 30m
-      connect-timeout: 30m
-
   federation:
     subscribed-catalogues.max: 50
     client:
-      read-timeout: 10s
-      connect-timeout: 10s
+      connect-timeout: 11s
 
   server:
     port: 8088
