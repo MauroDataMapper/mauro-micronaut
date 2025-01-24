@@ -13,14 +13,12 @@ import uk.ac.ox.softeng.mauro.plugin.MauroPluginService
 import uk.ac.ox.softeng.mauro.plugin.exporter.ModelExporterPlugin
 import uk.ac.ox.softeng.mauro.plugin.importer.FileImportParameters
 import uk.ac.ox.softeng.mauro.plugin.importer.FileParameter
-import uk.ac.ox.softeng.mauro.plugin.importer.ImportParameters
 import uk.ac.ox.softeng.mauro.plugin.importer.ModelImporterPlugin
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.http.HttpStatus
 import jakarta.inject.Inject
-import jakarta.ws.rs.core.MediaType
 
 @CompileStatic
 @Slf4j
