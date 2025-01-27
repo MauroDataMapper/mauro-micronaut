@@ -9,7 +9,7 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
-import io.micronaut.http.HttpStatus
+import io.micronaut.http.HttpResponse
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.annotation.Delete
 import io.micronaut.http.annotation.Get
@@ -29,7 +29,7 @@ interface TermRelationshipApi extends AdministeredItemApi<TermRelationship, Term
     TermRelationship update(UUID terminologyId, UUID id, @Body @NonNull TermRelationship termRelationship)
 
     @Delete(Paths.TERM_RELATIONSHIP_ID)
-    HttpStatus delete(UUID terminologyId, UUID id, @Body @Nullable TermRelationship termRelationship)
+    HttpResponse delete(UUID terminologyId, UUID id, @Body @Nullable TermRelationship termRelationship)
 
     @Get(Paths.TERM_RELATIONSHIP_LIST)
     ListResponse<TermRelationship> list(UUID terminologyId)

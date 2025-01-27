@@ -8,10 +8,9 @@ import uk.ac.ox.softeng.mauro.domain.diff.ObjectDiff
 import uk.ac.ox.softeng.mauro.domain.model.version.CreateNewVersionData
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
-import io.micronaut.context.annotation.Replaces
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
-import io.micronaut.http.HttpStatus
+import io.micronaut.http.HttpResponse
 import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.annotation.Consumes
@@ -25,7 +24,7 @@ import io.micronaut.scheduling.TaskExecutors
 import io.micronaut.scheduling.annotation.ExecuteOn
 
 @MauroApi
-@Replaces
+
 interface ClassificationSchemeApi extends ModelApi<ClassificationScheme> {
 
     @Get(Paths.CLASSIFICATION_SCHEMES_ID_ROUTE)
@@ -38,7 +37,7 @@ interface ClassificationSchemeApi extends ModelApi<ClassificationScheme> {
     ClassificationScheme update(UUID id, @Body @NonNull ClassificationScheme classificationScheme)
 
     @Delete(Paths.CLASSIFICATION_SCHEMES_ID_ROUTE)
-    HttpStatus delete(UUID id, @Body @Nullable ClassificationScheme classificationScheme)
+    HttpResponse delete(UUID id, @Body @Nullable ClassificationScheme classificationScheme)
 
 
     @Get(Paths.FOLDER_CLASSIFICATION_SCHEMES_ROUTE)

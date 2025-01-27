@@ -6,7 +6,7 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
-import io.micronaut.http.HttpStatus
+import io.micronaut.http.HttpResponse
 import io.micronaut.http.annotation.Body
 
 @CompileStatic
@@ -18,7 +18,7 @@ interface AdministeredItemApi<I extends AdministeredItem, P extends Administered
 
     I update(UUID id, @Body @NonNull I item)
 
-    HttpStatus delete(@NonNull UUID id, @Body @Nullable I item)
+    HttpResponse delete(@NonNull UUID id, @Body @Nullable I item)
 
     ListResponse<I> list(UUID parentId)
 

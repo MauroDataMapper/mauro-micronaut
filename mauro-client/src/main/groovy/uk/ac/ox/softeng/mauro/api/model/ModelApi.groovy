@@ -10,7 +10,7 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
-import io.micronaut.http.HttpStatus
+import io.micronaut.http.HttpResponse
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.server.multipart.MultipartBody
 import io.micronaut.http.server.types.files.StreamedFile
@@ -24,7 +24,7 @@ interface ModelApi<M extends Model> extends AdministeredItemApi<M, Folder> {
 
     M moveFolder(UUID id, String destination)
 
-    HttpStatus delete(UUID id, @Body @Nullable M model)
+    HttpResponse delete(UUID id, @Body @Nullable M model)
 
     ListResponse<M> listAll()
 

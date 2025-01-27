@@ -281,4 +281,11 @@ interface Paths {
 
     String TYPE_QUERY = 'type'
 
+    /*
+    *   LoginApi
+    */
+    String LOGIN = '/authentication/login'
+    String LOGOUT = '/logout'
+
+
 }

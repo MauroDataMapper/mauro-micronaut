@@ -2,11 +2,10 @@ package uk.ac.ox.softeng.mauro.controller.facet
 
 import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.facet.AnnotationApi
-import uk.ac.ox.softeng.mauro.domain.facet.Metadata
 
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
-import io.micronaut.core.annotation.Nullable
+import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.*
 import io.micronaut.http.exceptions.HttpStatusException
@@ -104,7 +103,7 @@ class AnnotationController extends FacetController<Annotation> implements Annota
 
     @Delete(Paths.ANNOTATION_ID)
     @Transactional
-    HttpStatus delete(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID id) {
+    HttpResponse delete(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID id) {
         accessControlService.checkRole(Role.EDITOR, readAdministeredItem(domainType, domainId))
         Annotation annotationToDelete = super.validateAndGet(domainType, domainId, id) as Annotation
         if (!annotationToDelete.parentAnnotationId) {
@@ -116,7 +115,7 @@ class AnnotationController extends FacetController<Annotation> implements Annota
 
     @Delete(Paths.ANNOTATION_CHILD_ID)
     @Transactional
-    HttpStatus delete(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID annotationId,
+    HttpResponse delete(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID annotationId,
                       @NonNull UUID id) {
         accessControlService.checkRole(Role.EDITOR, readAdministeredItem(domainType, domainId))
         super.validateAndGet(domainType, domainId, annotationId) as Annotation

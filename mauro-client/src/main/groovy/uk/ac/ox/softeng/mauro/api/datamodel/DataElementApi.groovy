@@ -9,7 +9,7 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
-import io.micronaut.http.HttpStatus
+import io.micronaut.http.HttpResponse
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.annotation.Delete
 import io.micronaut.http.annotation.Get
@@ -29,7 +29,7 @@ interface DataElementApi extends AdministeredItemApi<DataElement, DataClass> {
     DataElement update(UUID dataModelId, UUID dataClassId, UUID id, @Body @NonNull DataElement dataElement)
 
     @Delete(Paths.DATA_ELEMENT_ID)
-    HttpStatus delete(UUID dataModelId, UUID dataClassId, UUID id, @Body @Nullable DataElement dataElement)
+    HttpResponse delete(UUID dataModelId, UUID dataClassId, UUID id, @Body @Nullable DataElement dataElement)
 
     @Get(Paths.DATA_ELEMENT_LIST)
     ListResponse<DataElement> list(UUID dataModelId, UUID dataClassId)

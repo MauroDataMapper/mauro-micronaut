@@ -8,7 +8,7 @@ import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
-import io.micronaut.http.HttpStatus
+import io.micronaut.http.HttpResponse
 import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.*
 import io.micronaut.http.server.multipart.MultipartBody
@@ -77,7 +77,7 @@ class TerminologyController extends ModelController<Terminology> implements Term
 
     @Transactional
     @Delete(Paths.TERMINOLOGY_ID)
-    HttpStatus delete(UUID id, @Body @Nullable Terminology terminology) {
+    HttpResponse delete(UUID id, @Body @Nullable Terminology terminology) {
         super.delete(id, terminology)
     }
 

@@ -7,7 +7,7 @@ import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
-import io.micronaut.http.HttpStatus
+import io.micronaut.http.HttpResponse
 import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.*
 import io.micronaut.http.server.multipart.MultipartBody
@@ -102,7 +102,7 @@ class DataModelController extends ModelController<DataModel> implements DataMode
 
     @Transactional
     @Delete(Paths.DATA_MODEL_ID_ROUTE)
-    HttpStatus delete(UUID id, @Body @Nullable DataModel dataModel) {
+    HttpResponse delete(UUID id, @Body @Nullable DataModel dataModel) {
         super.delete(id, dataModel)
     }
 

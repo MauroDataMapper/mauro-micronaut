@@ -5,8 +5,7 @@ import uk.ac.ox.softeng.mauro.api.facet.ReferenceFileApi
 
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
-import io.micronaut.core.annotation.Nullable
-import io.micronaut.http.HttpStatus
+import io.micronaut.http.HttpResponse
 import io.micronaut.http.annotation.*
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
@@ -78,7 +77,7 @@ class ReferenceFileController extends FacetController<ReferenceFile> implements 
 
     @Delete(Paths.REFERENCE_FILE_ID)
     @Transactional
-    HttpStatus delete(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID id) {
+    HttpResponse delete(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID id) {
         accessControlService.checkRole(Role.EDITOR, readAdministeredItem(domainType, domainId))
         ReferenceFile referenceFileToDelete = super.validateAndGet(domainType, domainId, id) as ReferenceFile
         super.delete(id)

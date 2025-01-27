@@ -4,9 +4,7 @@ import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.profile.MetadataNamespaceDTO
 import uk.ac.ox.softeng.mauro.api.profile.ProfileApi
 import uk.ac.ox.softeng.mauro.domain.security.Role
-import uk.ac.ox.softeng.mauro.plugin.MauroPluginService
 import uk.ac.ox.softeng.mauro.profile.applied.AppliedProfile
-import uk.ac.ox.softeng.mauro.profile.applied.AppliedProfileField
 
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpStatus

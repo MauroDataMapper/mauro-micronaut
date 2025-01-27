@@ -4,7 +4,7 @@ import uk.ac.ox.softeng.mauro.api.facet.FacetApi
 
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
-import io.micronaut.core.annotation.Nullable
+import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.*
 import io.micronaut.http.exceptions.HttpStatusException
@@ -76,13 +76,13 @@ abstract class FacetController<I extends Facet> extends ItemController<I> implem
 
     @Delete('/{id}')
     @Transactional
-    HttpStatus delete(UUID id) {
+    HttpResponse delete(UUID id) {
         I facetToDelete = facetRepository.readById(id)
         accessControlService.checkRole(Role.EDITOR, readAdministeredItemForFacet(facetToDelete))
         if (facetToDelete?.version) facetToDelete.version = facetToDelete.version
         Long deleted = facetRepository.delete(facetToDelete)
         if (deleted) {
-            HttpStatus.NO_CONTENT
+            HttpResponse.status(HttpStatus.NO_CONTENT)
         } else {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, 'Not found for deletion')
         }

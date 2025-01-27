@@ -6,8 +6,7 @@ import uk.ac.ox.softeng.mauro.domain.facet.Annotation
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 import io.micronaut.core.annotation.NonNull
-import io.micronaut.core.annotation.Nullable
-import io.micronaut.http.HttpStatus
+import io.micronaut.http.HttpResponse
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.annotation.Delete
 import io.micronaut.http.annotation.Get
@@ -53,9 +52,9 @@ interface AnnotationApi extends FacetApi<Annotation> {
                                   @NonNull UUID id)
 
     @Delete(Paths.ANNOTATION_ID)
-    HttpStatus delete(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID id)
+    HttpResponse delete(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID id)
 
     @Delete(Paths.ANNOTATION_CHILD_ID)
-    HttpStatus delete(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID annotationId,
+    HttpResponse delete(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID annotationId,
                       @NonNull UUID id)
 }

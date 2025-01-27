@@ -6,7 +6,7 @@ import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 import io.micronaut.core.annotation.NonNull
-import io.micronaut.http.HttpStatus
+import io.micronaut.http.HttpResponse
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.annotation.Delete
 import io.micronaut.http.annotation.Get
@@ -29,6 +29,6 @@ interface SummaryMetadataApi extends FacetApi<SummaryMetadata> {
     SummaryMetadata update(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID id, @Body @NonNull SummaryMetadata summaryMetadata)
 
     @Delete(Paths.SUMMARY_METADATA_ID)
-    HttpStatus delete(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID id)
+    HttpResponse delete(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID id)
 
 }

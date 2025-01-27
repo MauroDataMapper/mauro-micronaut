@@ -4,13 +4,11 @@ import uk.ac.ox.softeng.mauro.api.MauroApi
 import uk.ac.ox.softeng.mauro.domain.facet.Facet
 
 import io.micronaut.core.annotation.NonNull
-import io.micronaut.core.annotation.Nullable
-import io.micronaut.http.HttpStatus
+import io.micronaut.http.HttpResponse
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.annotation.Delete
 import io.micronaut.http.annotation.Get
 import io.micronaut.http.annotation.Post
-import io.micronaut.http.annotation.Put
 
 
 @MauroApi
@@ -28,6 +26,6 @@ interface FacetApi<I extends Facet> {
  */
 
     @Delete('/{id}')
-    HttpStatus delete(String domainType, UUID domainId, UUID id)
+    HttpResponse delete(String domainType, UUID domainId, UUID id)
 
 }

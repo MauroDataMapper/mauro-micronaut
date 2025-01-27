@@ -13,7 +13,7 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
-import io.micronaut.http.HttpStatus
+import io.micronaut.http.HttpResponse
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.annotation.Delete
 import io.micronaut.http.annotation.Get
@@ -37,7 +37,7 @@ interface CodeSetApi extends ModelApi<CodeSet> {
                     @NonNull UUID termId)
 
     @Delete(value = Paths.CODE_SET_ID)
-    HttpStatus delete(UUID id, @Body @Nullable CodeSet codeSet)
+    HttpResponse delete(UUID id, @Body @Nullable CodeSet codeSet)
 
     @Delete(value = Paths.CODE_SET_TERM_ID)
     CodeSet removeTermFromCodeSet(@NonNull UUID id,

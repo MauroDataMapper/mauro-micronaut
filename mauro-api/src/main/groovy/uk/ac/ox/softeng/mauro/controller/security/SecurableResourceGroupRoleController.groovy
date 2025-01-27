@@ -6,6 +6,7 @@ import uk.ac.ox.softeng.mauro.api.security.SecurableResourceGroupRoleApi
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
+import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Delete
@@ -60,7 +61,7 @@ class SecurableResourceGroupRoleController extends ItemController<SecurableResou
     }
 
     @Delete(Paths.SECURABLE_ROLE_GROUP_ID)
-    HttpStatus delete(@NonNull String securableResourceDomainType, @NonNull UUID securableResourceId, @NonNull Role role, @NonNull UUID userGroupId) {
+    HttpResponse delete(@NonNull String securableResourceDomainType, @NonNull UUID securableResourceId, @NonNull Role role, @NonNull UUID userGroupId) {
         AdministeredItem securableResource = readAdministeredItem(securableResourceDomainType, securableResourceId)
 
         checkCanEditRoleOnItem(role, securableResource)
@@ -68,7 +69,7 @@ class SecurableResourceGroupRoleController extends ItemController<SecurableResou
         Long deleted = securableResourceGroupRoleRepository.deleteBySecurableResourceDomainTypeAndSecurableResourceIdAndRoleAndUserGroupId(securableResource.domainType, securableResource.id, role, userGroupId)
 
         if (deleted) {
-            HttpStatus.NO_CONTENT
+            HttpResponse.status(HttpStatus.NO_CONTENT)
         } else {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, 'Not found for deletion')
         }

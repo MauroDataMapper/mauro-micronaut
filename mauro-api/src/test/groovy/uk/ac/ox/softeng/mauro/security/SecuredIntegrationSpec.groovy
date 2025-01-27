@@ -1,9 +1,10 @@
 package uk.ac.ox.softeng.mauro.security
 
+import uk.ac.ox.softeng.mauro.api.security.LoginApi
+
 import io.micronaut.http.HttpRequest
 import io.micronaut.http.HttpResponse
-import io.micronaut.http.HttpStatus
-import io.micronaut.http.client.exceptions.HttpClientResponseException
+import io.micronaut.security.authentication.UsernamePasswordCredentials
 import jakarta.inject.Inject
 import spock.lang.Shared
 import uk.ac.ox.softeng.mauro.domain.security.ApplicationRole
@@ -14,6 +15,8 @@ import uk.ac.ox.softeng.mauro.security.utils.SecureRandomStringGenerator
 import uk.ac.ox.softeng.mauro.testing.CommonDataSpec
 
 abstract class SecuredIntegrationSpec extends CommonDataSpec {
+
+    @Inject LoginApi loginApi
 
     @Inject
     @Shared
@@ -90,15 +93,17 @@ abstract class SecuredIntegrationSpec extends CommonDataSpec {
     }
 
 
-    HttpResponse loginAdmin() {
-        loginUsernamePassword('admin@example.com', 'password')
+    CatalogueUser loginAdmin() {
+        loginApi.login(new UsernamePasswordCredentials('admin@example.com', 'password'))
     }
 
-    HttpResponse loginUser() {
-        loginUsernamePassword('user@example.com', 'password')
+    CatalogueUser loginUser() {
+        loginApi.login(new UsernamePasswordCredentials('user@example.com', 'password'))
     }
 
     void logout() {
+        loginApi.logout()
+ /*
         try {
             GET('/authentication/logout')
         } catch (HttpClientResponseException exception) {
@@ -106,6 +111,9 @@ abstract class SecuredIntegrationSpec extends CommonDataSpec {
                 throw exception
             }
         }
+        // TODO : Do we need to clear the session cookie now?
         sessionCookie = null
+
+  */
     }
 }

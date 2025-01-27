@@ -6,6 +6,7 @@ import uk.ac.ox.softeng.mauro.ErrorHandler
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
+import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.*
 import io.micronaut.security.annotation.Secured
@@ -64,7 +65,7 @@ class DataElementComponentController extends AdministeredItemController<DataElem
     }
 
     @Delete(value = Paths.DATA_FLOW_ELEMENT_COMPONENT_ID)
-    HttpStatus delete(@NonNull UUID dataModelId, @NonNull UUID dataFlowId, @NonNull UUID dataClassComponentId, @NonNull UUID id, @Body @Nullable DataElementComponent dataElementComponent) {
+    HttpResponse delete(@NonNull UUID dataModelId, @NonNull UUID dataFlowId, @NonNull UUID dataClassComponentId, @NonNull UUID id, @Body @Nullable DataElementComponent dataElementComponent) {
         super.delete(id, dataElementComponent)
     }
 
@@ -86,15 +87,15 @@ class DataElementComponentController extends AdministeredItemController<DataElem
     }
 
     @Delete(value = Paths.DATA_FLOW_ELEMENT_COMPONENT_SOURCE_ELEMENT)
-    HttpStatus deleteSource(@NonNull UUID dataModelId, @NonNull UUID dataFlowId, @NonNull UUID dataClassComponentId, @NonNull UUID id, @NonNull UUID dataElementId) {
+    HttpResponse deleteSource(@NonNull UUID dataModelId, @NonNull UUID dataFlowId, @NonNull UUID dataClassComponentId, @NonNull UUID id, @NonNull UUID dataElementId) {
         removeDataElement(Type.SOURCE, id, dataElementId)
-        return HttpStatus.NO_CONTENT
+        return HttpResponse.status(HttpStatus.NO_CONTENT)
     }
 
     @Delete(value = Paths.DATA_FLOW_ELEMENT_COMPONENT_TARGET_ELEMENT)
-    HttpStatus deleteTarget(@NonNull UUID dataModelId, @NonNull UUID dataFlowId, @NonNull UUID dataClassComponentId, @NonNull UUID id, @NonNull UUID dataElementId) {
+    HttpResponse deleteTarget(@NonNull UUID dataModelId, @NonNull UUID dataFlowId, @NonNull UUID dataClassComponentId, @NonNull UUID id, @NonNull UUID dataElementId) {
         removeDataElement(Type.TARGET, id, dataElementId)
-        return HttpStatus.NO_CONTENT
+        return HttpResponse.status(HttpStatus.NO_CONTENT)
     }
 
     private DataElementComponent addDataElement(Type type, UUID id, UUID dataElementId, UUID parentId) {

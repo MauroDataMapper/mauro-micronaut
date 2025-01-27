@@ -7,7 +7,7 @@ import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
-import io.micronaut.http.HttpStatus
+import io.micronaut.http.HttpResponse
 import io.micronaut.http.annotation.*
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
@@ -58,7 +58,7 @@ class TermController extends AdministeredItemController<Term, Terminology> imple
     }
 
     @Delete(Paths.TERM_ID)
-    HttpStatus delete(UUID terminologyId, UUID id, @Body @Nullable Term term) {
+    HttpResponse delete(UUID terminologyId, UUID id, @Body @Nullable Term term) {
         super.delete(id, term)
     }
 

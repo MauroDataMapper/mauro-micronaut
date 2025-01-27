@@ -9,7 +9,7 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
-import io.micronaut.http.HttpStatus
+import io.micronaut.http.HttpResponse
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.annotation.Delete
 import io.micronaut.http.annotation.Get
@@ -29,7 +29,7 @@ interface DataClassApi extends AdministeredItemApi<DataClass, DataModel> {
     DataClass update(UUID dataModelId, UUID id, @Body @NonNull DataClass dataClass)
 
     @Delete(Paths.DATA_CLASS_ID)
-    HttpStatus delete(UUID dataModelId, UUID id, @Body @Nullable DataClass dataClass)
+    HttpResponse delete(UUID dataModelId, UUID id, @Body @Nullable DataClass dataClass)
 
     @Get(Paths.DATA_CLASS_LIST)
     ListResponse<DataClass> list(UUID dataModelId)
@@ -44,7 +44,7 @@ interface DataClassApi extends AdministeredItemApi<DataClass, DataModel> {
     DataClass update(UUID dataModelId, UUID parentDataClassId, UUID id, @Body @NonNull DataClass dataClass)
 
     @Delete(Paths.DATA_CLASS_CHILD_DATA_CLASS_ID)
-    HttpStatus delete(UUID dataModelId, UUID parentDataClassId, UUID id, @Body @Nullable DataClass dataClass)
+    HttpResponse delete(UUID dataModelId, UUID parentDataClassId, UUID id, @Body @Nullable DataClass dataClass)
 
     @Get(Paths.DATA_CLASS_CHILD_DATA_CLASS_LIST)
     ListResponse<DataClass> list(UUID dataModelId, UUID parentDataClassId)

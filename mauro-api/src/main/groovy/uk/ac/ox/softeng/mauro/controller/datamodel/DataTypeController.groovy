@@ -6,7 +6,7 @@ import uk.ac.ox.softeng.mauro.api.datamodel.DataTypeApi
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
-import io.micronaut.http.HttpStatus
+import io.micronaut.http.HttpResponse
 import io.micronaut.http.annotation.*
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
@@ -61,7 +61,7 @@ class DataTypeController extends AdministeredItemController<DataType, DataModel>
     }
 
     @Delete(Paths.DATA_TYPE_ID)
-    HttpStatus delete(UUID dataModelId, UUID id, @Body @Nullable DataType dataType) {
+    HttpResponse delete(UUID dataModelId, UUID id, @Body @Nullable DataType dataType) {
         super.delete(id, dataType)
     }
 

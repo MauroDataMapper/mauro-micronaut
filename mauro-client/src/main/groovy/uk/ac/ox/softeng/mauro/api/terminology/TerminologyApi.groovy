@@ -13,7 +13,7 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
-import io.micronaut.http.HttpStatus
+import io.micronaut.http.HttpResponse
 import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.annotation.Consumes
@@ -40,7 +40,7 @@ interface TerminologyApi extends ModelApi<Terminology> {
     Terminology update(UUID id, @Body @NonNull Terminology terminology)
 
     @Delete(Paths.TERMINOLOGY_ID)
-    HttpStatus delete(UUID id, @Body @Nullable Terminology terminology)
+    HttpResponse delete(UUID id, @Body @Nullable Terminology terminology)
 
     @Get(Paths.TERMINOLOGY_SEARCH_GET)
     ListResponse<SearchResultsDTO> searchGet(UUID id, @RequestBean SearchRequestDTO requestDTO)

@@ -1,7 +1,13 @@
 package uk.ac.ox.softeng.mauro.testing
 
+import uk.ac.ox.softeng.mauro.domain.classifier.ClassificationScheme
+import uk.ac.ox.softeng.mauro.domain.classifier.Classifier
+import uk.ac.ox.softeng.mauro.domain.dataflow.DataFlow
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadataType
+import uk.ac.ox.softeng.mauro.domain.folder.Folder
 
 
 class CommonDataSpec extends BaseIntegrationSpec {
@@ -16,8 +22,10 @@ class CommonDataSpec extends BaseIntegrationSpec {
         ]
     }
 
-    def folder() {
-        [label: 'Test folder']
+    Folder folder() {
+        Folder.build {
+            label 'Test folder'
+        }
     }
 
 
@@ -54,16 +62,17 @@ class CommonDataSpec extends BaseIntegrationSpec {
         dataModelPayload("test label ")
 
     }
-    def dataModelPayload(String label){
-        [label: label, description: 'test description', author: 'test author']
+
+    DataModel dataModelPayload(String label){
+        new DataModel(label: label, description: 'test description', author: 'test author')
     }
 
     def dataClassPayload() {
         dataClassPayload('Test data class')
     }
 
-    def dataClassPayload(String label){
-        [label: label, description: 'test description', author: 'test author']
+    DataClass dataClassPayload(String label){
+        new DataClass(label: label, description: 'test description')
     }
 
     def dataElementPayload(String label, DataType dataType){
@@ -89,8 +98,11 @@ class CommonDataSpec extends BaseIntegrationSpec {
         [description : 'Test Term description', code: 'est', definition: 'doloreum-et-val', url : 'https://www.hello.com/test']
     }
 
-    def dataFlowPayload(String sourceId){
-        [source: [id: sourceId], label: 'test label', description: 'dataflow payload description ' ]
+    DataFlow dataFlowPayload(UUID sourceId){
+        new DataFlow(
+            label: 'test label',
+            description: 'dataflow payload description ',
+            source: new DataModel(id: sourceId))
     }
 
     def genericModelPayload(String label){
@@ -123,13 +135,20 @@ class CommonDataSpec extends BaseIntegrationSpec {
                 "fileType": "text/plain"
         ]
     }
-    def classifiersPayload(){
-        [
-            label: 'classifiers label',
-            description : 'random description ',
-            readableByEveryone: true,
-            readableByAuthenticatedUsers: true
-        ]
+
+    ClassificationScheme classificationSchemePayload(){
+        new ClassificationScheme(
+                label: 'classifiers label',
+                description : 'random description',
+                readableByEveryone: true,
+                readableByAuthenticatedUsers: true)
+
+    }
+    Classifier classifierPayload(){
+        new Classifier(
+            label: 'classifier 1',
+            description : 'random description ')
+
     }
 
 

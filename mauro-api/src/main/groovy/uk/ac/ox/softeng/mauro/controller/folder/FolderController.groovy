@@ -14,7 +14,7 @@ import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
-import io.micronaut.http.HttpStatus
+import io.micronaut.http.HttpResponse
 import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.annotation.Consumes
@@ -121,13 +121,13 @@ class FolderController extends ModelController<Folder> implements FolderApi {
 
     @Transactional
     @Delete(Paths.FOLDER_ID)
-    HttpStatus delete(UUID id, @Body @Nullable Folder folder) {
+    HttpResponse delete(UUID id, @Body @Nullable Folder folder) {
         super.delete(id, folder)
     }
 
     @Transactional
     @Delete(Paths.CHILD_FOLDER_ID)
-    HttpStatus delete(UUID parentId, UUID id, @Body @Nullable Folder folder) {
+    HttpResponse delete(UUID parentId, UUID id, @Body @Nullable Folder folder) {
         super.delete(id, folder)
     }
 

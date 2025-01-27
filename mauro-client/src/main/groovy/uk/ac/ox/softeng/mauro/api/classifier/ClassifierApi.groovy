@@ -9,7 +9,7 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
-import io.micronaut.http.HttpStatus
+import io.micronaut.http.HttpResponse
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.annotation.Delete
 import io.micronaut.http.annotation.Get
@@ -29,7 +29,7 @@ interface ClassifierApi extends AdministeredItemApi<Classifier, ClassificationSc
     Classifier update(@NonNull UUID classificationSchemeId, @NonNull UUID id, @Body @NonNull Classifier classifier)
 
     @Delete(Paths.CLASSIFIERS_ROUTE_ID)
-    HttpStatus delete(@NonNull UUID classificationSchemeId, @NonNull UUID id, @Body @Nullable Classifier classifier)
+    HttpResponse delete(@NonNull UUID classificationSchemeId, @NonNull UUID id, @Body @Nullable Classifier classifier)
 
     @Get(Paths.CLASSIFIERS_ROUTE)
     ListResponse<Classifier> list(UUID classificationSchemeId)
@@ -51,7 +51,7 @@ interface ClassifierApi extends AdministeredItemApi<Classifier, ClassificationSc
     Classifier update(@NonNull UUID classificationSchemeId, @NonNull UUID parentClassifierId, @NonNull UUID childClassifierId, @Body @NonNull Classifier classifier)
 
     @Delete(Paths.CHILD_CLASSIFIERS_ID_ROUTE)
-    HttpStatus delete(@NonNull UUID classificationSchemeId, @NonNull UUID parentClassifierId, @NonNull UUID childClassifierId, @Body @Nullable Classifier classifier)
+    HttpResponse delete(@NonNull UUID classificationSchemeId, @NonNull UUID parentClassifierId, @NonNull UUID childClassifierId, @Body @Nullable Classifier classifier)
 
     @Get(Paths.CHILD_CLASSIFIERS_ROUTE)
     ListResponse<Classifier> list(@NonNull UUID classificationSchemeId, @NonNull UUID parentClassifierId)
@@ -75,5 +75,5 @@ interface ClassifierApi extends AdministeredItemApi<Classifier, ClassificationSc
     ListResponse<Classifier> findAllAdministeredItemClassifiers(@NonNull String administeredItemDomainType, @NonNull UUID administeredItemId)
 
     @Delete(Paths.ADMINISTERED_ITEM_CLASSIFIER_ID_ROUTE)
-    HttpStatus delete(@NonNull String administeredItemDomainType, @NonNull UUID administeredItemId, @NonNull UUID id)
+    HttpResponse delete(@NonNull String administeredItemDomainType, @NonNull UUID administeredItemId, @NonNull UUID id)
 }

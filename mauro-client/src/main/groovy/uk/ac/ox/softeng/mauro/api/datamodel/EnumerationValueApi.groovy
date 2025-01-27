@@ -9,7 +9,7 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
-import io.micronaut.http.HttpStatus
+import io.micronaut.http.HttpResponse
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.annotation.Delete
 import io.micronaut.http.annotation.Get
@@ -29,7 +29,7 @@ interface EnumerationValueApi extends AdministeredItemApi<EnumerationValue, Data
     EnumerationValue update(UUID dataModelId, UUID enumerationTypeId, UUID id, @Body @NonNull EnumerationValue enumerationValue)
 
     @Delete(Paths.ENUMERATION_VALUE_ID)
-    HttpStatus delete(UUID dataModelId, UUID enumerationTypeId, UUID id, @Body @Nullable EnumerationValue enumerationValue)
+    HttpResponse delete(UUID dataModelId, UUID enumerationTypeId, UUID id, @Body @Nullable EnumerationValue enumerationValue)
 
     @Get(Paths.ENUMERATION_VALUE_LIST)
     ListResponse<EnumerationValue> list(UUID dataModelId, UUID enumerationTypeId)

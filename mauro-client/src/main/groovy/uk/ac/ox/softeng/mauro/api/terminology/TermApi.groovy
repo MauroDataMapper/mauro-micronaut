@@ -10,7 +10,7 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
-import io.micronaut.http.HttpStatus
+import io.micronaut.http.HttpResponse
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.annotation.Delete
 import io.micronaut.http.annotation.Get
@@ -30,7 +30,7 @@ interface TermApi extends AdministeredItemApi<Term, Terminology> {
     Term update(UUID terminologyId, UUID id, @Body @NonNull Term term)
 
     @Delete(Paths.TERM_ID)
-    HttpStatus delete(UUID terminologyId, UUID id, @Body @Nullable Term term)
+    HttpResponse delete(UUID terminologyId, UUID id, @Body @Nullable Term term)
 
     @Get(Paths.TERM_LIST)
     ListResponse<Term> list(UUID terminologyId)

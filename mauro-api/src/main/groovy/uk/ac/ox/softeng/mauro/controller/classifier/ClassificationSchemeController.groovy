@@ -8,7 +8,7 @@ import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
-import io.micronaut.http.HttpStatus
+import io.micronaut.http.HttpResponse
 import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.*
 import io.micronaut.http.server.multipart.MultipartBody
@@ -63,7 +63,7 @@ class ClassificationSchemeController extends ModelController<ClassificationSchem
 
     @Transactional
     @Delete(Paths.CLASSIFICATION_SCHEMES_ID_ROUTE)
-    HttpStatus delete(UUID id, @Body @Nullable ClassificationScheme classificationScheme) {
+    HttpResponse delete(UUID id, @Body @Nullable ClassificationScheme classificationScheme) {
         super.delete(id, classificationScheme)
     }
 

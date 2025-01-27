@@ -6,7 +6,7 @@ import uk.ac.ox.softeng.mauro.domain.facet.ReferenceFile
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 import io.micronaut.core.annotation.NonNull
-import io.micronaut.http.HttpStatus
+import io.micronaut.http.HttpResponse
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.annotation.Delete
 import io.micronaut.http.annotation.Get
@@ -40,6 +40,6 @@ interface ReferenceFileApi extends FacetApi<ReferenceFile> {
     ReferenceFile create(@NonNull String domainType, @NonNull UUID domainId, @Body @NonNull ReferenceFile referenceFile)
 
     @Delete(Paths.REFERENCE_FILE_ID)
-    HttpStatus delete(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID id)
+    HttpResponse delete(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID id)
 
 }

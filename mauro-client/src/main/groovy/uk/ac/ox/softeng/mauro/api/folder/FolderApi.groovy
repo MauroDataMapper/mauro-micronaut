@@ -8,7 +8,7 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
-import io.micronaut.http.HttpStatus
+import io.micronaut.http.HttpResponse
 import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.annotation.Consumes
@@ -50,10 +50,10 @@ interface FolderApi extends ModelApi<Folder> {
     ListResponse<Folder> list(UUID parentId)
 
     @Delete(Paths.FOLDER_ID)
-    HttpStatus delete(UUID id, @Body @Nullable Folder folder)
+    HttpResponse delete(UUID id, @Body @Nullable Folder folder)
 
     @Delete(Paths.CHILD_FOLDER_ID)
-    HttpStatus delete(UUID parentId, UUID id, @Body @Nullable Folder folder)
+    HttpResponse delete(UUID parentId, UUID id, @Body @Nullable Folder folder)
 
     @Get(Paths.FOLDER_EXPORT)
     StreamedFile exportModel(UUID id, @Nullable String namespace, @Nullable String name, @Nullable String version)

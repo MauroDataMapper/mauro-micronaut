@@ -8,6 +8,7 @@ import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
+import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.*
 import io.micronaut.http.exceptions.HttpStatusException
@@ -89,7 +90,7 @@ class CodeSetController extends ModelController<CodeSet> implements CodeSetApi {
 
     @Transactional
     @Delete(value = Paths.CODE_SET_ID)
-    HttpStatus delete(UUID id, @Body @Nullable CodeSet codeSet) {
+    HttpResponse delete(UUID id, @Body @Nullable CodeSet codeSet) {
         super.delete(id, codeSet)
     }
 

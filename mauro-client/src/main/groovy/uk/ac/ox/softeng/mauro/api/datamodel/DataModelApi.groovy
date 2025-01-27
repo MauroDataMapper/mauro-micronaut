@@ -14,7 +14,7 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
-import io.micronaut.http.HttpStatus
+import io.micronaut.http.HttpResponse
 import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.annotation.Consumes
@@ -41,7 +41,7 @@ interface DataModelApi extends ModelApi<DataModel> {
     DataModel update(UUID id, @Body @NonNull DataModel dataModel)
 
     @Delete(Paths.DATA_MODEL_ID_ROUTE)
-    HttpStatus delete(UUID id, @Body @Nullable DataModel dataModel)
+    HttpResponse delete(UUID id, @Body @Nullable DataModel dataModel)
 
     @Get(Paths.DATA_MODEL_SEARCH_GET)
     ListResponse<SearchResultsDTO> searchGet(UUID id, @RequestBean SearchRequestDTO requestDTO)

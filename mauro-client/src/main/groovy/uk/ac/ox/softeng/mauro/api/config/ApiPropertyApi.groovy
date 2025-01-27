@@ -7,7 +7,7 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
-import io.micronaut.http.HttpStatus
+import io.micronaut.http.HttpResponse
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.annotation.Delete
 import io.micronaut.http.annotation.Get
@@ -33,6 +33,6 @@ interface ApiPropertyApi {
     ApiProperty update(UUID id, @Body @NonNull ApiProperty apiProperty)
 
     @Delete(Paths.API_PROPERTY_SHOW)
-    HttpStatus delete(UUID id, @Body @Nullable ApiProperty apiProperty)
+    HttpResponse delete(UUID id, @Body @Nullable ApiProperty apiProperty)
 
 }

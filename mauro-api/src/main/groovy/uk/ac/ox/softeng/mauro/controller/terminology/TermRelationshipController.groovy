@@ -6,7 +6,7 @@ import uk.ac.ox.softeng.mauro.api.terminology.TermRelationshipApi
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
-import io.micronaut.http.HttpStatus
+import io.micronaut.http.HttpResponse
 import io.micronaut.http.annotation.*
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
@@ -80,7 +80,7 @@ class TermRelationshipController extends AdministeredItemController<TermRelation
     }
 
     @Delete(Paths.TERM_RELATIONSHIP_ID)
-    HttpStatus delete(UUID terminologyId, UUID id, @Body @Nullable TermRelationship termRelationship) {
+    HttpResponse delete(UUID terminologyId, UUID id, @Body @Nullable TermRelationship termRelationship) {
         super.delete(id, termRelationship)
     }
 

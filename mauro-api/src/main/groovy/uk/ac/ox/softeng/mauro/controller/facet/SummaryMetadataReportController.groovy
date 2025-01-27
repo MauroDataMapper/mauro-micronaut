@@ -7,6 +7,7 @@ import uk.ac.ox.softeng.mauro.controller.model.ItemController
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
+import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.*
 import io.micronaut.http.exceptions.HttpStatusException
@@ -91,8 +92,8 @@ class SummaryMetadataReportController extends ItemController<SummaryMetadataRepo
 
     @Delete(Paths.SUMMARY_METADATA_REPORTS_ID)
     @Transactional
-    HttpStatus delete(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID summaryMetadataId,
-                      @NonNull UUID id) {
+    HttpResponse delete(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID summaryMetadataId,
+                        @NonNull UUID id) {
         SummaryMetadata summaryMetadata = validateAndGet(domainType, domainId, summaryMetadataId)
         accessControlService.checkRole(Role.EDITOR, readAdministeredItemForFacet(summaryMetadata))
         SummaryMetadataReport summaryMetadataReport = summaryMetadataReportCacheableRepository.readById(id)
@@ -100,7 +101,7 @@ class SummaryMetadataReportController extends ItemController<SummaryMetadataRepo
             throwNotFoundException(summaryMetadataReport, id)
         }
         summaryMetadataReportCacheableRepository.delete(summaryMetadataReport, summaryMetadata)
-        HttpStatus.NO_CONTENT
+        HttpResponse.status(HttpStatus.NO_CONTENT)
     }
 
     private SummaryMetadataReport updateEntity(SummaryMetadataReport existing, SummaryMetadataReport cleaned,

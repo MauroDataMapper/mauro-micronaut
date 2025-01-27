@@ -7,6 +7,7 @@ import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
+import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.*
 import io.micronaut.security.annotation.Secured
@@ -66,7 +67,7 @@ class DataClassComponentController extends AdministeredItemController<DataClassC
     }
 
     @Delete(Paths.DATA_FLOW_CLASS_COMPONENT_ID)
-    HttpStatus delete(@NonNull UUID dataModelId, @NonNull UUID dataFlowId, @NonNull UUID id, @Body @Nullable DataClassComponent dataClassComponent) {
+    HttpResponse delete(@NonNull UUID dataModelId, @NonNull UUID dataFlowId, @NonNull UUID id, @Body @Nullable DataClassComponent dataClassComponent) {
         super.delete(id, dataClassComponent)
     }
 
@@ -88,17 +89,16 @@ class DataClassComponentController extends AdministeredItemController<DataClassC
     }
 
     @Delete(Paths.DATA_FLOW_CLASS_COMPONENT_SOURCE_CLASS)
-    HttpStatus deleteSource(@NonNull UUID dataModelId, @NonNull UUID dataFlowId, @NonNull UUID id, @NonNull UUID dataClassId) {
+    HttpResponse deleteSource(@NonNull UUID dataModelId, @NonNull UUID dataFlowId, @NonNull UUID id, @NonNull UUID dataClassId) {
         removeDataClass(Type.SOURCE, id, dataClassId)
-        return HttpStatus.NO_CONTENT
+        HttpResponse.status(HttpStatus.NO_CONTENT)
     }
 
     @Delete(Paths.DATA_FLOW_CLASS_COMPONENT_TARGET_CLASS)
-    HttpStatus deleteTarget(@NonNull UUID dataModelId, @NonNull UUID dataFlowId, @NonNull UUID id, @NonNull UUID dataClassId) {
+    HttpResponse deleteTarget(@NonNull UUID dataModelId, @NonNull UUID dataFlowId, @NonNull UUID id, @NonNull UUID dataClassId) {
         removeDataClass(Type.TARGET, id, dataClassId)
-        return HttpStatus.NO_CONTENT
+        HttpResponse.status(HttpStatus.NO_CONTENT)
     }
-
 
     private DataClassComponent addDataClass(Type type, UUID id, UUID dataClassId) {
         DataClass dataClassToAdd = dataClassRepository.readById(dataClassId)

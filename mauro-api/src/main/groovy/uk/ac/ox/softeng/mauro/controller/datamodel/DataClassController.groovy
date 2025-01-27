@@ -6,7 +6,7 @@ import uk.ac.ox.softeng.mauro.api.datamodel.DataClassApi
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
-import io.micronaut.http.HttpStatus
+import io.micronaut.http.HttpResponse
 import io.micronaut.http.annotation.*
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
@@ -51,7 +51,7 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
     }
 
     @Delete(Paths.DATA_CLASS_ID)
-    HttpStatus delete(UUID dataModelId, UUID id, @Body @Nullable DataClass dataClass) {
+    HttpResponse delete(UUID dataModelId, UUID id, @Body @Nullable DataClass dataClass) {
         super.delete(id, dataClass)
     }
 
@@ -90,7 +90,7 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
     }
 
     @Delete(Paths.DATA_CLASS_CHILD_DATA_CLASS_ID)
-    HttpStatus delete(UUID dataModelId, UUID parentDataClassId, UUID id, @Body @Nullable DataClass dataClass) {
+    HttpResponse delete(UUID dataModelId, UUID parentDataClassId, UUID id, @Body @Nullable DataClass dataClass) {
         super.delete(id, dataClass)
     }
 

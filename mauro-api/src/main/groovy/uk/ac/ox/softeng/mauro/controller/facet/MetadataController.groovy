@@ -5,7 +5,7 @@ import uk.ac.ox.softeng.mauro.api.facet.MetadataApi
 
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
-import io.micronaut.http.HttpStatus
+import io.micronaut.http.HttpResponse
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Delete
@@ -66,7 +66,7 @@ class MetadataController extends FacetController<Metadata> implements MetadataAp
 
     @Override
     @Delete(Paths.METADATA_ID)
-    HttpStatus delete(String domainType, UUID domainId, UUID id) {
+    HttpResponse delete(String domainType, UUID domainId, UUID id) {
         super.delete(id)
     }
 }

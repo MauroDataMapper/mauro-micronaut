@@ -5,8 +5,7 @@ import uk.ac.ox.softeng.mauro.api.facet.SummaryMetadataApi
 
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
-import io.micronaut.core.annotation.Nullable
-import io.micronaut.http.HttpStatus
+import io.micronaut.http.HttpResponse
 import io.micronaut.http.annotation.*
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
@@ -80,7 +79,7 @@ class SummaryMetadataController extends FacetController<SummaryMetadata> impleme
     @Delete(Paths.SUMMARY_METADATA_ID)
     @Transactional
     @Override
-    HttpStatus delete(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID id) {
+    HttpResponse delete(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID id) {
         accessControlService.checkRole(Role.READER, readAdministeredItemForFacet(summaryMetadataRepository.readById(id)))
         deleteAnyAssociatedReports(id)
         super.delete(id)

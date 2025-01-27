@@ -6,7 +6,7 @@ import uk.ac.ox.softeng.mauro.domain.model.SummaryMetadataReport
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 import io.micronaut.core.annotation.NonNull
-import io.micronaut.http.HttpStatus
+import io.micronaut.http.HttpResponse
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.annotation.Delete
 import io.micronaut.http.annotation.Get
@@ -33,7 +33,7 @@ interface SummaryMetadataReportApi {
                                  @NonNull UUID id, @Body @NonNull SummaryMetadataReport summaryMetadataReport)
 
     @Delete(Paths.SUMMARY_METADATA_REPORTS_ID)
-    HttpStatus delete(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID summaryMetadataId,
-                      @NonNull UUID id)
+    HttpResponse delete(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID summaryMetadataId,
+                        @NonNull UUID id)
 
 }

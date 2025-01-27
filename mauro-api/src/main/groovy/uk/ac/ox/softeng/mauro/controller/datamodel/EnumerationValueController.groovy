@@ -5,7 +5,7 @@ import uk.ac.ox.softeng.mauro.api.datamodel.EnumerationValueApi
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
-import io.micronaut.http.HttpStatus
+import io.micronaut.http.HttpResponse
 import io.micronaut.http.annotation.*
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
@@ -59,7 +59,7 @@ class EnumerationValueController extends AdministeredItemController<EnumerationV
     }
 
     @Delete('/{id}')
-    HttpStatus delete(UUID dataModelId, UUID enumerationTypeId, UUID id, @Body @Nullable EnumerationValue enumerationValue) {
+    HttpResponse delete(UUID dataModelId, UUID enumerationTypeId, UUID id, @Body @Nullable EnumerationValue enumerationValue) {
         super.delete(id, enumerationValue)
     }
 

@@ -1,6 +1,8 @@
 package uk.ac.ox.softeng.mauro.classifier
 
 import uk.ac.ox.softeng.mauro.api.classifier.ClassificationSchemeApi
+import uk.ac.ox.softeng.mauro.api.classifier.ClassifierApi
+import uk.ac.ox.softeng.mauro.api.folder.FolderApi
 
 import io.micronaut.runtime.server.EmbeddedServer
 
@@ -26,11 +28,12 @@ class ClassificationSchemeIntegrationSpec extends CommonDataSpec {
     @Shared
     UUID folderId
 
-    @Inject
-    ClassificationSchemeApi classificationSchemeApi
+    @Inject ClassificationSchemeApi classificationSchemeApi
+    @Inject ClassifierApi classifierApi
+    @Inject FolderApi folderApi
 
     void setup() {
-        folderId = ((Folder) POST(Paths.FOLDER_LIST, folder(), Folder)).id
+        folderId = folderApi.create (folder()).id
     }
 
     void 'list classification schemes - should return empty list'() {
@@ -43,40 +46,36 @@ class ClassificationSchemeIntegrationSpec extends CommonDataSpec {
 
     void 'add Classification scheme - should add'(){
         when:
-        ClassificationScheme classificationScheme = (ClassificationScheme) POST(
-            populatePath(Paths.FOLDER_CLASSIFICATION_SCHEMES_ROUTE, ["folderId" : folderId]), classifiersPayload(), ClassificationScheme)
+        ClassificationScheme classificationScheme =
+            classificationSchemeApi.create(folderId, classificationSchemePayload())
 
         then:
         classificationScheme
 
         when:
-        ClassificationScheme retrieved = GET(populatePath(Paths.CLASSIFICATION_SCHEMES_ID_ROUTE, ['id':classificationScheme.id]), ClassificationScheme)
+        ClassificationScheme retrieved =
+            classificationSchemeApi.show(classificationScheme.id)
         then:
         retrieved
         retrieved.authority
     }
 
-    void 'get Classification scheme by ID - should return classification scheme'(){
-        given:
-        ClassificationScheme classificationScheme = (ClassificationScheme) POST(
-            populatePath(Paths.FOLDER_CLASSIFICATION_SCHEMES_ROUTE, ["folderId" : folderId]), classifiersPayload(), ClassificationScheme)
         when:
-        ClassificationScheme retrieved = GET(
-            populatePath(Paths.CLASSIFICATION_SCHEMES_ID_ROUTE, ['id':classificationScheme.id]), ClassificationScheme)
+        ListResponse<ClassificationScheme> classificationSchemes = classificationSchemeApi.listAll()
 
         then:
-        retrieved
-        retrieved.authority
+        classificationSchemes.items.size() == 1
     }
 
     void 'update classification scheme - should update model'() {
         given:
-        ClassificationScheme classificationScheme = (ClassificationScheme) POST("$FOLDERS_PATH/$folderId$CLASSIFICATION_SCHEME_PATH", classifiersPayload(), ClassificationScheme)
+        ClassificationScheme classificationScheme =
+            classificationSchemeApi.create(folderId, classificationSchemePayload())
         when:
-        ClassificationScheme updated = (ClassificationScheme) PUT(
-            populatePath(Paths.CLASSIFICATION_SCHEMES_ID_ROUTE, ['id': classificationScheme.id]),
-                [label: 'updated test label',
-                 description: 'updated test description'],  ClassificationScheme)
+        ClassificationScheme updated =
+            classificationSchemeApi.update(classificationScheme.id,
+                new ClassificationScheme(label: 'updated test label',
+                 description: 'updated test description'))
         then:
         updated
         updated.label == 'updated test label'
@@ -86,29 +85,25 @@ class ClassificationSchemeIntegrationSpec extends CommonDataSpec {
 
     void 'delete classification scheme - should delete model and associations'() {
         given:
-        ClassificationScheme classificationScheme = (ClassificationScheme) POST("$FOLDERS_PATH/$folderId$CLASSIFICATION_SCHEME_PATH", classifiersPayload(), ClassificationScheme)
+        ClassificationScheme classificationScheme =
+            classificationSchemeApi.create(folderId, classificationSchemePayload())
 
-        Classifier classifier = (Classifier) POST(
-            populatePath(Paths.CLASSIFIERS_ROUTE, [
-                'classificationSchemeId': classificationScheme.id]),
-            classifiersPayload(), Classifier)
+        Classifier classifier =
+            classifierApi.create(classificationScheme.id, classifierPayload())
 
         //Add AdministeredItemClassificationScheme to classifier -joinAdministeredItemToClassifier
-        Classifier adminItemJoinClassifier1 = (Classifier) PUT (
-            populatePath(Paths.ADMINISTERED_ITEM_CLASSIFIER_ID_ROUTE,
-                         ['administeredItemDomainType': 'classificationScheme',
-                          'administeredItemId': classificationScheme.id,
-                          'id': classifier.id ]), null, Classifier)
-        Classifier adminItemJoinClassifier2 = (Classifier) PUT (
-            populatePath(Paths.ADMINISTERED_ITEM_CLASSIFIER_ID_ROUTE,
-                         ['administeredItemDomainType': 'classifier',
-                          'administeredItemId': classifier.id,
-                          'id': classifier.id ]), null, Classifier)
+
+        classifierApi.createAdministeredItemClassifier('classificationScheme', classificationScheme.id, classifier.id)
+        classifierApi.createAdministeredItemClassifier('classifier', classifier.id, classifier.id)
+
         when:
-        HttpStatus httpStatus = DELETE(populatePath(Paths.CLASSIFICATION_SCHEMES_ID_ROUTE,['id': classificationScheme.id]), HttpStatus)
+        HttpStatus httpStatus =
+            classificationSchemeApi.delete(classificationScheme.id, classificationScheme)
 
         then:
         httpStatus == HttpStatus.NO_CONTENT
+
+        // TODO: Keep testing this result...
 
     }
 

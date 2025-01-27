@@ -7,6 +7,7 @@ import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
+import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.*
 import io.micronaut.http.exceptions.HttpStatusException
@@ -82,7 +83,7 @@ class ApiPropertyController extends ItemController<ApiProperty> implements ApiPr
     }
 
     @Delete(Paths.API_PROPERTY_SHOW)
-    HttpStatus delete(UUID id, @Body @Nullable ApiProperty apiProperty) {
+    HttpResponse delete(UUID id, @Body @Nullable ApiProperty apiProperty) {
         accessControlService.checkAdministrator()
 
         ApiProperty apiPropertyToDelete = apiPropertyRepository.readById(id)
@@ -90,7 +91,7 @@ class ApiPropertyController extends ItemController<ApiProperty> implements ApiPr
         if (apiProperty?.version) apiPropertyToDelete.version = apiProperty.version
         Long deleted = apiPropertyRepository.delete(apiPropertyToDelete)
         if (deleted) {
-            HttpStatus.NO_CONTENT
+            HttpResponse.status(HttpStatus.NO_CONTENT)
         } else {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, 'Not found for deletion')
         }

@@ -6,6 +6,7 @@ import uk.ac.ox.softeng.mauro.api.dataflow.DataFlowApi
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
+import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.*
 import io.micronaut.security.annotation.Secured
@@ -63,7 +64,7 @@ class DataFlowController extends AdministeredItemController<DataFlow, DataModel>
 
     @Delete(Paths.DATA_FLOW_ID)
     @Transactional
-    HttpStatus delete(@NonNull UUID dataModelId, @NonNull UUID id, @Body @Nullable DataFlow dataFlow) {
+    HttpResponse delete(@NonNull UUID dataModelId, @NonNull UUID id, @Body @Nullable DataFlow dataFlow) {
         super.delete(id, dataFlow)
     }
 

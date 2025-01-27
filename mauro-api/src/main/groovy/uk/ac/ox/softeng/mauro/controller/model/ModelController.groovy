@@ -8,6 +8,7 @@ import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
+import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.Body
@@ -135,15 +136,16 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     }
 
     @Transactional
-    HttpStatus delete(UUID id, @Body @Nullable M model) {
+    HttpResponse delete(UUID id, @Body @Nullable M model) {
         M modelToDelete = (M) modelContentRepository.findWithContentById(id)
 
         accessControlService.checkRole(Role.CONTAINER_ADMIN, modelToDelete)
 
+        // TODO: Do we need this next line?
         if (model?.version) modelToDelete.version = model.version
         Long deleted = administeredItemContentRepository.deleteWithContent(modelToDelete)
         if (deleted) {
-            HttpStatus.NO_CONTENT
+            HttpResponse.status(HttpStatus.NO_CONTENT)
         } else {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, 'Not found for deletion')
         }
