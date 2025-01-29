@@ -66,6 +66,15 @@ class TreeIntegrationSpec extends SecuredIntegrationSpec {
         tree.find { it.label == 'TreeIntegrationSpec root folder' && it.domainType == 'Folder' && it.hasChildren && UUID.fromString(it.id) == rootFolderId }
 
         when:
+        tree = GET("/tree/folders/$rootFolderId", List)
+
+        then:
+        tree
+        tree.size() == 2
+        tree.find { it.label == 'TreeIntegrationSpec folder with contents' && it.domainType == 'Folder' && it.hasChildren == hasChildren && UUID.fromString(it.id) == folder1Id }
+        tree.find { it.label == 'TreeIntegrationSpec empty folder' && it.domainType == 'Folder' && !it.hasChildren  && UUID.fromString(it.id) == folder2Id }
+
+        when:
         tree = GET("/tree/folders/$rootFolderId?foldersOnly=$foldersOnly", List)
 
         then:
