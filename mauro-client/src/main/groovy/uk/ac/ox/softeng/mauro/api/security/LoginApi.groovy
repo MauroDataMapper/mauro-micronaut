@@ -4,6 +4,7 @@ import uk.ac.ox.softeng.mauro.api.MauroApi
 import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.domain.security.CatalogueUser
 
+import io.micronaut.http.HttpResponse
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.annotation.Get
 import io.micronaut.http.annotation.Post
@@ -17,7 +18,7 @@ interface LoginApi {
     CatalogueUser login(@Body UsernamePasswordCredentials usernamePasswordCredentials)
 
     @Get(Paths.LOGOUT)
-    CatalogueUser logout()
+    HttpResponse logout()
 
 
 }

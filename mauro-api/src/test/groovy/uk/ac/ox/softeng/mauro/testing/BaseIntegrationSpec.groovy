@@ -7,6 +7,7 @@ import io.micronaut.http.HttpRequest
 import io.micronaut.http.MediaType
 import io.micronaut.http.MutableHttpRequest
 import io.micronaut.http.client.HttpClient
+import io.micronaut.http.client.annotation.Client
 import io.micronaut.http.client.multipart.MultipartBody
 import io.micronaut.http.cookie.Cookie
 import jakarta.inject.Inject
@@ -82,6 +83,7 @@ class BaseIntegrationSpec extends Specification {
     JsonTerminologyImporterPlugin jsonTerminologyImporterPlugin
 
     @Inject
+    @Client('/')
     @Shared
     HttpClient client
 

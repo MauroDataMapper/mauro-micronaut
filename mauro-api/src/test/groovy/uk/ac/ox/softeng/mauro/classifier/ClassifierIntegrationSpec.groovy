@@ -8,6 +8,7 @@ import uk.ac.ox.softeng.mauro.api.folder.FolderApi
 import uk.ac.ox.softeng.mauro.controller.Application
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadataType
 
+import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
 import io.micronaut.runtime.EmbeddedApplication
 import io.micronaut.test.annotation.Sql
@@ -179,10 +180,10 @@ class ClassifierIntegrationSpec extends CommonDataSpec {
         existingDataModel.classifiers.size() == 1
 
         when:
-        HttpStatus httpStatus = classifierApi.delete('dataModel',dataModel.id,classifier.id)
+        HttpResponse httpResponse = classifierApi.delete('dataModel', dataModel.id, classifier.id)
 
         then:
-        httpStatus == HttpStatus.NO_CONTENT
+        httpResponse.status == HttpStatus.NO_CONTENT
 
         when:
         Classifier existing = classifierApi.show(classificationSchemeId, classifier.id)
@@ -217,11 +218,11 @@ class ClassifierIntegrationSpec extends CommonDataSpec {
         classifierApi.createAdministeredItemClassifier('dataModel', dataModel.id, classifier.id)
 
         when:
-        HttpStatus httpStatus = classificationSchemeApi.delete(classificationSchemeId, new ClassificationScheme())
+        HttpResponse httpResponse = classificationSchemeApi.delete(classificationSchemeId, new ClassificationScheme())
 
 
         then:
-        httpStatus == HttpStatus.NO_CONTENT
+        httpResponse.status == HttpStatus.NO_CONTENT
 
 
         //get datamodel

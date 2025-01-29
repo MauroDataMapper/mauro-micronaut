@@ -1,5 +1,6 @@
 package uk.ac.ox.softeng.mauro.security
 
+import uk.ac.ox.softeng.mauro.domain.security.CatalogueUser
 
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
@@ -31,11 +32,11 @@ class LoginLogoutIntegrationSpec extends SecuredIntegrationSpec {
 
     void 'login as admin'() {
         when:
-        HttpResponse response = loginAdmin()
+        CatalogueUser user = loginAdmin()
 
         then:
-        response
-        response.body().emailAddress == 'admin@example.com'
+        user
+        user.emailAddress == 'admin@example.com'
     }
 
     void 'logged in administrator is authorized'() {
@@ -55,7 +56,7 @@ class LoginLogoutIntegrationSpec extends SecuredIntegrationSpec {
 
     void 'logout'() {
         when:
-        GET('/authentication/logout')
+        logout()
 
         then:
         HttpClientResponseException exception = thrown()
@@ -79,11 +80,11 @@ class LoginLogoutIntegrationSpec extends SecuredIntegrationSpec {
 
     void 'login as non-admin user'() {
         when:
-        HttpResponse response = loginUser()
+        CatalogueUser user = loginUser()
 
         then:
-        response
-        response.body().emailAddress == 'user@example.com'
+        user
+        user.emailAddress == 'user@example.com'
     }
 
     void 'logged in non-admin user is authorized for non-admin endpoints'() {
@@ -103,7 +104,7 @@ class LoginLogoutIntegrationSpec extends SecuredIntegrationSpec {
 
     void 'logout'() {
         when:
-        GET('/authentication/logout')
+        logout()
 
         then:
         HttpClientResponseException exception = thrown()

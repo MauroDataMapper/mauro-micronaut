@@ -1,5 +1,11 @@
 package uk.ac.ox.softeng.mauro.dataflow
 
+import uk.ac.ox.softeng.mauro.api.dataflow.DataClassComponentApi
+import uk.ac.ox.softeng.mauro.api.dataflow.DataFlowApi
+import uk.ac.ox.softeng.mauro.api.datamodel.DataClassApi
+import uk.ac.ox.softeng.mauro.api.datamodel.DataModelApi
+import uk.ac.ox.softeng.mauro.api.folder.FolderApi
+
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.client.exceptions.HttpClientResponseException
 import io.micronaut.runtime.EmbeddedApplication
@@ -22,9 +28,6 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
         "classpath:sql/tear-down-folder.sql"], phase = Sql.Phase.AFTER_EACH)
 class DataClassComponentSecurityIntegrationSpec extends SecuredIntegrationSpec {
 
-    @Inject
-    EmbeddedApplication<?> application
-
     @Shared
     UUID folderId
 
@@ -39,20 +42,32 @@ class DataClassComponentSecurityIntegrationSpec extends SecuredIntegrationSpec {
     @Shared
     UUID dataClassId
 
+    @Inject FolderApi folderApi
+    @Inject DataModelApi dataModelApi
+    @Inject DataClassApi dataClassApi
+    @Inject DataFlowApi dataFlowApi
+    @Inject DataClassComponentApi dataClassComponentApi
+
+
     void setup() {
         loginAdmin()
-        folderId = ((Folder) POST("$FOLDERS_PATH", [label: 'folder label root folder'], Folder)).id
-        sourceId = ((DataModel) POST("$FOLDERS_PATH/$folderId$DATAMODELS_PATH", dataModelPayload('source label'), DataModel)).id
-        targetId = ((DataModel) POST("$FOLDERS_PATH/$folderId$DATAMODELS_PATH", dataModelPayload('target label'), DataModel)).id
-        dataFlowId = ((DataFlow) POST("$DATAMODELS_PATH/$targetId$DATA_FLOWS_PATH", dataFlowPayload(sourceId.toString()), DataFlow)).id
-        dataClassId = ((DataClass) POST("$DATAMODELS_PATH/$targetId$DATACLASSES_PATH", dataClassPayload('test data class label'), DataClass)).id
+        folderId = folderApi.create(folder()).id
+        sourceId = dataModelApi.create(folderId, dataModelPayload('source label')).id
+        targetId = dataModelApi.create(folderId, dataModelPayload('target label')).id
+        dataFlowId = dataFlowApi.create(targetId, dataFlowPayload(sourceId)).id
+
+        dataClassId = dataModelApi.create(folderId, dataModelPayload('test data class label')).id
         logout()
     }
 
     void 'create dataClassComponent as admin user'() {
         when:
         loginAdmin()
-        UUID dataClassComponentId = ((DataClassComponent) POST("$DATAMODELS_PATH/$targetId$DATA_FLOWS_PATH/$dataFlowId$DATA_CLASS_COMPONENTS_PATH", genericModelPayload("data class component label"), DataClassComponent)).id
+        UUID dataClassComponentId =
+            dataClassComponentApi.create(sourceId, dataFlowId,
+                                         new DataClassComponent(
+                                             label: 'test data class component label',
+                                             description: 'test description')).id
 
         then:
         dataClassComponentId
@@ -61,13 +76,19 @@ class DataClassComponentSecurityIntegrationSpec extends SecuredIntegrationSpec {
     void 'should throw forbidden exception -when non admin user updates or accesses admin user created dataClassComponent'() {
         given:
         loginAdmin()
-        UUID dataClassComponentId = ((DataClassComponent) POST("$DATAMODELS_PATH/$targetId$DATA_FLOWS_PATH/$dataFlowId$DATA_CLASS_COMPONENTS_PATH", genericModelPayload("data class component label"), DataClassComponent)).id
+        UUID dataClassComponentId =
+            dataClassComponentApi.create(sourceId, dataFlowId,
+                                         new DataClassComponent(
+                                             label: 'test data class component label',
+                                             description: 'test description')).id
+
 
         and:
         logout()
         loginUser()
         when:
-        DataClassComponent dataClassComponent = (DataClassComponent) GET("$DATAMODELS_PATH/$targetId$DATA_FLOWS_PATH/$dataFlowId$DATA_CLASS_COMPONENTS_PATH/$dataClassComponentId", DataClassComponent)
+        DataClassComponent dataClassComponent =
+            dataClassComponentApi.show(targetId, dataFlowId, dataClassComponentId)
 
         then:
         !dataClassComponent
@@ -76,7 +97,9 @@ class DataClassComponentSecurityIntegrationSpec extends SecuredIntegrationSpec {
 
         when:
 
-        DataClassComponent updated = (DataClassComponent) PUT("$DATAMODELS_PATH/$targetId$DATA_FLOWS_PATH/$dataFlowId$DATA_CLASS_COMPONENTS_PATH/$dataClassComponentId", genericModelPayload('renamed label'), DataClassComponent)
+        DataClassComponent updated =
+            dataClassComponentApi.update(targetId, dataFlowId, dataClassComponentId,
+                                         new DataClassComponent(label: 'renamed label'))
         then:
         !updated
         exception = thrown()
@@ -86,7 +109,8 @@ class DataClassComponentSecurityIntegrationSpec extends SecuredIntegrationSpec {
     void 'should throw forbidden exception -when non admin user retrieves  admin created dataclasscomponent data'() {
         given:
         loginAdmin()
-        UUID dataClassComponentId = ((DataClassComponent) POST("$DATAMODELS_PATH/$targetId$DATA_FLOWS_PATH/$dataFlowId$DATA_CLASS_COMPONENTS_PATH", genericModelPayload("label text"), DataClassComponent)).id
+        UUID dataClassComponentId =
+            ((DataClassComponent) POST("$DATAMODELS_PATH/$targetId$DATA_FLOWS_PATH/$dataFlowId$DATA_CLASS_COMPONENTS_PATH", genericModelPayload("label text"), DataClassComponent)).id
 
         and:
         logout()

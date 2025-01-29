@@ -4,6 +4,7 @@ import uk.ac.ox.softeng.mauro.api.classifier.ClassificationSchemeApi
 import uk.ac.ox.softeng.mauro.api.classifier.ClassifierApi
 import uk.ac.ox.softeng.mauro.api.folder.FolderApi
 
+import io.micronaut.http.HttpResponse
 import io.micronaut.runtime.server.EmbeddedServer
 
 import static uk.ac.ox.softeng.mauro.api.PathPopulation.populatePath
@@ -97,11 +98,11 @@ class ClassificationSchemeIntegrationSpec extends CommonDataSpec {
         classifierApi.createAdministeredItemClassifier('classifier', classifier.id, classifier.id)
 
         when:
-        HttpStatus httpStatus =
+        HttpResponse httpResponse =
             classificationSchemeApi.delete(classificationScheme.id, classificationScheme)
 
         then:
-        httpStatus == HttpStatus.NO_CONTENT
+        httpResponse.status == HttpStatus.NO_CONTENT
 
         // TODO: Keep testing this result...
 

@@ -285,7 +285,7 @@ interface Paths {
     *   LoginApi
     */
     String LOGIN = '/authentication/login'
-    String LOGOUT = '/logout'
+    String LOGOUT = '/authentication/logout'
 
 
 }
