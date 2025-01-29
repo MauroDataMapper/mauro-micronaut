@@ -4,9 +4,14 @@ import io.micronaut.runtime.EmbeddedApplication
 import io.micronaut.test.annotation.Sql
 import jakarta.inject.Inject
 import spock.lang.Shared
+import uk.ac.ox.softeng.mauro.api.datamodel.DataModelApi
+import uk.ac.ox.softeng.mauro.api.facet.AnnotationApi
+import uk.ac.ox.softeng.mauro.api.facet.MetadataApi
+import uk.ac.ox.softeng.mauro.api.folder.FolderApi
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.diff.ArrayDiff
 import uk.ac.ox.softeng.mauro.domain.diff.DiffBuilder
+import uk.ac.ox.softeng.mauro.domain.diff.ObjectDiff
 import uk.ac.ox.softeng.mauro.domain.facet.Annotation
 import uk.ac.ox.softeng.mauro.domain.facet.Metadata
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
@@ -20,9 +25,6 @@ import uk.ac.ox.softeng.mauro.testing.CommonDataSpec
 @Sql(scripts = "classpath:sql/tear-down-datamodel.sql", phase = Sql.Phase.AFTER_EACH)
 class DataModelFacetDiffsIntegrationSpec extends CommonDataSpec {
 
-    @Inject
-    EmbeddedApplication<?> application
-
     @Shared
     UUID folderId
     @Shared
@@ -34,42 +36,46 @@ class DataModelFacetDiffsIntegrationSpec extends CommonDataSpec {
     @Shared
     UUID annotationId
 
+    @Inject FolderApi folderApi
+    @Inject DataModelApi dataModelApi
+    @Inject MetadataApi metadataApi
+    @Inject AnnotationApi annotationApi
+
     void setup() {
-        Folder response = (Folder) POST("$FOLDERS_PATH", folder(), Folder)
+        Folder response = folderApi.create(folder())
         folderId = response.id
 
-        left = (DataModel) POST("$FOLDERS_PATH/$folderId$DATAMODELS_PATH", dataModelPayload(), DataModel)
+        left = dataModelApi.create(folderId, dataModelPayload())
 
-        Metadata metadataResponse = (Metadata) POST("$DATAMODELS_PATH/$left.id$METADATA_PATH", metadataPayload(), Metadata)
+        Metadata metadataResponse = metadataApi.create("DataModel", left.id, metadataPayload())
         metadataId = metadataResponse.id
 
-        Annotation annotationResponse = (Annotation) POST("$DATAMODELS_PATH/$left.id/$ANNOTATION_PATH",
-                annotationPayload(), Annotation)
+        Annotation annotationResponse = annotationApi.create("DataModel", left.id, annotationPayload())
         annotationId = annotationResponse.id
     }
 
     void 'test datamodel diff - lhs has facets - diff should have deleted items only'() {
         given:
-        (Metadata) POST("$DATAMODELS_PATH/$left.id$METADATA_PATH",
-                [namespace: 'org.example', key: 'example_key_2', value: 'example_value_2'], Metadata)
+        metadataApi.create("DataModel", left.id, new Metadata(namespace: 'org.example', key: 'example_key_2', value: 'example_value_2'))
 
-        DataModel right = (DataModel) POST("$FOLDERS_PATH/$folderId$DATAMODELS_PATH", [label: 'Test other data model', description: 'test other description', author: 'test author other'], DataModel)
+        DataModel right = dataModelApi.create(folderId,
+                new DataModel(label: 'Test other data model', description: 'test other description', author: 'test author other'))
 
         when:
-        Map<String, Object> diffMap = GET("$DATAMODELS_PATH/$left.id$DIFF/$right.id", Map<String, Object>)
+        ObjectDiff objectDiff = dataModelApi.diffModels(left.id, right.id)
 
         then:
-        diffMap
-        diffMap.label == left.label
-        diffMap.diffs.size() == 6
-        diffMap.diffs.each { [AUTHOR, DiffBuilder.DESCRIPTION, DiffBuilder.LABEL, PATH_IDENTIFIER].contains(it.name) }
-        ArrayDiff<Collection> annotationsDiff = diffMap.diffs.find { it -> it.name == DiffBuilder.ANNOTATION } as ArrayDiff<Collection>
+        objectDiff
+        objectDiff.label == left.label
+        objectDiff.diffs.size() == 6
+        objectDiff.diffs.each { [AUTHOR, DiffBuilder.DESCRIPTION, DiffBuilder.LABEL, PATH_IDENTIFIER].contains(it.name) }
+        ArrayDiff<Collection> annotationsDiff = objectDiff.diffs.find { it -> it.name == DiffBuilder.ANNOTATION } as ArrayDiff<Collection>
         annotationsDiff.name == DiffBuilder.ANNOTATION
         annotationsDiff.deleted.size() == 1
         annotationsDiff.created.isEmpty()
         annotationsDiff.modified.isEmpty()
 
-        ArrayDiff<Collection> metadataDiff = diffMap.diffs.find { it -> it.name == DiffBuilder.METADATA } as ArrayDiff<Collection>
+        ArrayDiff<Collection> metadataDiff = objectDiff.diffs.find { it -> it.name == DiffBuilder.METADATA } as ArrayDiff<Collection>
 
         metadataDiff.name == DiffBuilder.METADATA
         metadataDiff.deleted.size() == 2

@@ -6,6 +6,8 @@ import uk.ac.ox.softeng.mauro.domain.dataflow.DataFlow
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
+import uk.ac.ox.softeng.mauro.domain.facet.Annotation
+import uk.ac.ox.softeng.mauro.domain.facet.Metadata
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadataType
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 
@@ -39,23 +41,32 @@ class CommonDataSpec extends BaseIntegrationSpec {
     def summaryMetadataReport() {
         [ reportValue: 'test-report-value', reportDate: REPORT_DATE]
     }
+
     def ruleRepresentation() {
         [ language: 'java', representation: 'age >= 0']
     }
-    def annotationPayload() {
-        [label: 'test-label', description: 'test-annotation description']
+
+    Annotation annotationPayload() {
+        new Annotation(label: 'test-label', description: 'test-annotation description')
     }
+
     def annotationPayload(String label, String description) {
         [label: label, description: description ]
     }
     def summaryMetadataPayload() {
         [ summaryMetadataType: SummaryMetadataType.STRING, label: 'summary metadata label']
     }
+
     def rulePayload() {
         [ description: 'My first rule description', name: 'rule name']
     }
-    def metadataPayload() {
-        [ namespace: 'org.example', key: 'example_key', value: 'example_value']
+
+    Metadata metadataPayload() {
+        Metadata.build {
+            namespace 'org.example'
+            key 'example_key'
+            value 'example_value'
+        }
     }
 
     def dataModelPayload(){

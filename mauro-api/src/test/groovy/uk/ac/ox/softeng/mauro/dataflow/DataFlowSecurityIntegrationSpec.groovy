@@ -6,6 +6,14 @@ import io.micronaut.runtime.EmbeddedApplication
 import io.micronaut.test.annotation.Sql
 import jakarta.inject.Inject
 import spock.lang.Shared
+import uk.ac.ox.softeng.mauro.api.dataflow.DataClassComponentApi
+import uk.ac.ox.softeng.mauro.api.dataflow.DataElementComponentApi
+import uk.ac.ox.softeng.mauro.api.dataflow.DataFlowApi
+import uk.ac.ox.softeng.mauro.api.datamodel.DataClassApi
+import uk.ac.ox.softeng.mauro.api.datamodel.DataElementApi
+import uk.ac.ox.softeng.mauro.api.datamodel.DataModelApi
+import uk.ac.ox.softeng.mauro.api.datamodel.DataTypeApi
+import uk.ac.ox.softeng.mauro.api.folder.FolderApi
 import uk.ac.ox.softeng.mauro.domain.dataflow.DataFlow
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
@@ -20,9 +28,6 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
         "classpath:sql/tear-down-folder.sql"], phase = Sql.Phase.AFTER_EACH)
 class DataFlowSecurityIntegrationSpec extends SecuredIntegrationSpec {
 
-    @Inject
-    EmbeddedApplication<?> application
-
     @Shared
     UUID folderId
 
@@ -32,19 +37,22 @@ class DataFlowSecurityIntegrationSpec extends SecuredIntegrationSpec {
     @Shared
     UUID targetId
 
+    @Inject FolderApi folderApi
+    @Inject DataModelApi dataModelApi
+    @Inject DataFlowApi dataFlowApi
 
     void setup() {
         loginAdmin()
-        folderId = ((Folder) POST("$FOLDERS_PATH", [label: 'folder label root folder'], Folder)).id
-        sourceId = ((DataModel) POST("$FOLDERS_PATH/$folderId$DATAMODELS_PATH", dataModelPayload('source label'), DataModel)).id
-        targetId = ((DataModel) POST("$FOLDERS_PATH/$folderId$DATAMODELS_PATH", dataModelPayload('target label'), DataModel)).id
+        folderId = folderApi.create(folder()).id
+        sourceId = dataModelApi.create(folderId, dataModelPayload('source label')).id
+        targetId = dataModelApi.create(folderId, dataModelPayload('target label')).id
         logout()
     }
 
     void 'create dataflow as admin user'() {
         when:
         loginAdmin()
-        UUID dataFlowId = ((DataFlow) POST("$DATAMODELS_PATH/$targetId$DATA_FLOWS_PATH", dataFlowPayload(sourceId.toString()), DataFlow)).id
+        UUID dataFlowId = dataFlowApi.create(targetId, dataFlowPayload(sourceId)).id
 
         then:
         dataFlowId
@@ -53,13 +61,13 @@ class DataFlowSecurityIntegrationSpec extends SecuredIntegrationSpec {
     void 'should throw forbidden exception -when non admin user updates or accesses admin user created dataflow'() {
         given:
         loginAdmin()
-        UUID dataFlowId = ((DataFlow) POST("$DATAMODELS_PATH/$targetId$DATA_FLOWS_PATH", dataFlowPayload(sourceId.toString()), DataFlow)).id
+        UUID dataFlowId = dataFlowApi.create(targetId, dataFlowPayload(sourceId)).id
 
         and:
         logout()
         loginUser()
         when:
-        DataFlow dataFlow = (DataFlow) GET("$DATAMODELS_PATH/$targetId$DATA_FLOWS_PATH/$dataFlowId", DataFlow)
+        DataFlow dataFlow = dataFlowApi.show(targetId, dataFlowId)
 
         then:
         !dataFlow
@@ -67,8 +75,9 @@ class DataFlowSecurityIntegrationSpec extends SecuredIntegrationSpec {
         exception.status == HttpStatus.FORBIDDEN
 
         when:
-        DataFlow updated = (DataFlow) PUT("$DATAMODELS_PATH/$targetId$DATA_FLOWS_PATH/$dataFlowId",
-                [source: [id: sourceId], diagramLayout: 'random diagram layout text'], DataFlow)
+        DataFlow updated = dataFlowApi.update(targetId, dataFlowId,
+                new DataFlow(source: new DataModel(id: sourceId),
+                        diagramLayout: 'random diagram layout text'))
         then:
         !updated
         exception = thrown()
@@ -86,8 +95,9 @@ class DataFlowSecurityIntegrationSpec extends SecuredIntegrationSpec {
         logout()
         loginAdmin()
         and:
-        updated = (DataFlow) PUT("$DATAMODELS_PATH/$targetId$DATA_FLOWS_PATH/$dataFlowId",
-                [source: [id: sourceId], diagramLayout: 'random diagram layout text'], DataFlow)
+        updated = dataFlowApi.update(targetId, dataFlowId,
+            new DataFlow(source: new DataModel(id: sourceId),
+                    diagramLayout: 'random diagram layout text'))
 
         then:
         updated

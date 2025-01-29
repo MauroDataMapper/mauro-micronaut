@@ -56,8 +56,9 @@ class DataClassComponentSecurityIntegrationSpec extends SecuredIntegrationSpec {
         targetId = dataModelApi.create(folderId, dataModelPayload('target label')).id
         dataFlowId = dataFlowApi.create(targetId, dataFlowPayload(sourceId)).id
 
-        dataClassId = dataModelApi.create(folderId, dataModelPayload('test data class label')).id
+        dataClassId = dataClassApi.create(sourceId, dataClassPayload()).id
         logout()
+
     }
 
     void 'create dataClassComponent as admin user'() {
@@ -110,13 +111,16 @@ class DataClassComponentSecurityIntegrationSpec extends SecuredIntegrationSpec {
         given:
         loginAdmin()
         UUID dataClassComponentId =
-            ((DataClassComponent) POST("$DATAMODELS_PATH/$targetId$DATA_FLOWS_PATH/$dataFlowId$DATA_CLASS_COMPONENTS_PATH", genericModelPayload("label text"), DataClassComponent)).id
+                dataClassComponentApi.create(sourceId, dataFlowId,
+                        new DataClassComponent(
+                                label: 'test data class component label',
+                                description: 'test description')).id
 
         and:
         logout()
         loginUser()
         when:
-        ListResponse<DataClassComponent> listResponse = (ListResponse<DataClassComponent>) GET("/dataModels/$targetId/dataFlows/$dataFlowId/dataClassComponents", ListResponse, DataClassComponent)
+        ListResponse<DataClassComponent> listResponse = dataClassComponentApi.list(targetId, dataFlowId)
 
         then:
         !listResponse
@@ -127,8 +131,8 @@ class DataClassComponentSecurityIntegrationSpec extends SecuredIntegrationSpec {
         logout()
         loginAdmin()
 
-        DataClassComponent updated = (DataClassComponent) PUT("$DATAMODELS_PATH/$targetId$DATA_FLOWS_PATH/$dataFlowId$DATA_CLASS_COMPONENTS_PATH/$dataClassComponentId",
-                [label: 'updated label text'], DataClassComponent)
+        DataClassComponent updated =
+                dataClassComponentApi.update(targetId, dataFlowId, dataClassComponentId, new DataClassComponent(label: 'updated label text'))
 
         then:
         updated
@@ -137,10 +141,8 @@ class DataClassComponentSecurityIntegrationSpec extends SecuredIntegrationSpec {
         logout()
         loginUser()
 
-         (DataClassComponent) PUT("$DATAMODELS_PATH/$targetId$DATA_FLOWS_PATH/$dataFlowId$DATA_CLASS_COMPONENTS_PATH/$dataClassComponentId",
-                [label: 'another update  label text'], DataClassComponent)
+        dataClassComponentApi.update(targetId, dataFlowId, dataClassComponentId, new DataClassComponent(label: 'another update  label text'))
         then:
-
         exception = thrown()
         exception.status == HttpStatus.FORBIDDEN
     }
@@ -148,40 +150,49 @@ class DataClassComponentSecurityIntegrationSpec extends SecuredIntegrationSpec {
     void ' non admin user -should not be able to add dataclass to dataclasscomponent'() {
         given:
         loginAdmin()
-        UUID dataClassComponentId = ((DataClassComponent) POST("$DATAMODELS_PATH/$targetId$DATA_FLOWS_PATH/$dataFlowId$DATA_CLASS_COMPONENTS_PATH", genericModelPayload("label text"), DataClassComponent)).id
+        UUID dataClassComponentId =
+                dataClassComponentApi.create(sourceId, dataFlowId,
+                        new DataClassComponent(
+                                label: 'test data class component label',
+                                description: 'test description')).id
 
         and:
         logout()
         loginUser()
         when:
-        (DataClassComponent) PUT("/dataModels/$targetId/dataFlows/$dataFlowId/dataClassComponents/$dataClassComponentId/target/$dataClassId", DataClassComponent)
+        DataClassComponent dataClassComponent = dataClassComponentApi.updateTarget(targetId, dataFlowId, dataClassComponentId, dataClassId)
 
         then:
-
         HttpClientResponseException exception = thrown()
         exception.status == HttpStatus.FORBIDDEN
+        !dataClassComponent
 
         when:
         logout()
         loginAdmin()
-        String dataClassComponentString = PUT("$DATAMODELS_PATH/$sourceId$DATA_FLOWS_PATH/$dataFlowId$DATA_CLASS_COMPONENTS_PATH/$dataClassComponentId$TARGET/$dataClassId", String)
+        dataClassComponent = dataClassComponentApi.updateTarget(targetId, dataFlowId, dataClassComponentId, dataClassId)
+
         then:
-        dataClassComponentString
+        dataClassComponent
     }
 
 
     void ' non admin user -should not be able to delete dataclass from dataclasscomponent'() {
         given:
         loginAdmin()
-        UUID dataClassComponentId = ((DataClassComponent) POST("$DATAMODELS_PATH/$targetId$DATA_FLOWS_PATH/$dataFlowId$DATA_CLASS_COMPONENTS_PATH", genericModelPayload("label text"), DataClassComponent)).id
+        UUID dataClassComponentId =
+                dataClassComponentApi.create(sourceId, dataFlowId,
+                        new DataClassComponent(
+                                label: 'test data class component label',
+                                description: 'test description')).id
 
         and:
-        PUT("$DATAMODELS_PATH/$sourceId$DATA_FLOWS_PATH/$dataFlowId$DATA_CLASS_COMPONENTS_PATH/$dataClassComponentId$TARGET/$dataClassId", String)
+        dataClassComponentApi.updateTarget(sourceId, dataFlowId, dataClassComponentId, dataClassId)
 
         when:
         logout()
         loginUser()
-        DELETE("$DATAMODELS_PATH/$sourceId$DATA_FLOWS_PATH/$dataFlowId$DATA_CLASS_COMPONENTS_PATH/$dataClassComponentId$TARGET/$dataClassId", HttpStatus)
+        dataClassComponentApi.deleteTarget(sourceId, dataFlowId, dataClassComponentId, dataClassId)
 
         then:
         HttpClientResponseException exception = thrown()

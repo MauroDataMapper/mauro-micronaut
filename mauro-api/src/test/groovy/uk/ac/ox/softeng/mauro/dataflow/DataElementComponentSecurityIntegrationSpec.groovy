@@ -1,11 +1,20 @@
 package uk.ac.ox.softeng.mauro.dataflow
 
+import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.client.exceptions.HttpClientResponseException
 import io.micronaut.runtime.EmbeddedApplication
 import io.micronaut.test.annotation.Sql
 import jakarta.inject.Inject
 import spock.lang.Shared
+import uk.ac.ox.softeng.mauro.api.dataflow.DataClassComponentApi
+import uk.ac.ox.softeng.mauro.api.dataflow.DataElementComponentApi
+import uk.ac.ox.softeng.mauro.api.dataflow.DataFlowApi
+import uk.ac.ox.softeng.mauro.api.datamodel.DataClassApi
+import uk.ac.ox.softeng.mauro.api.datamodel.DataElementApi
+import uk.ac.ox.softeng.mauro.api.datamodel.DataModelApi
+import uk.ac.ox.softeng.mauro.api.datamodel.DataTypeApi
+import uk.ac.ox.softeng.mauro.api.folder.FolderApi
 import uk.ac.ox.softeng.mauro.domain.dataflow.DataClassComponent
 import uk.ac.ox.softeng.mauro.domain.dataflow.DataElementComponent
 import uk.ac.ox.softeng.mauro.domain.dataflow.DataFlow
@@ -24,9 +33,6 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
         "classpath:sql/tear-down.sql",
         "classpath:sql/tear-down-folder.sql"], phase = Sql.Phase.AFTER_EACH)
 class DataElementComponentSecurityIntegrationSpec extends SecuredIntegrationSpec {
-
-    @Inject
-    EmbeddedApplication<?> application
 
     @Shared
     UUID folderId
@@ -49,17 +55,36 @@ class DataElementComponentSecurityIntegrationSpec extends SecuredIntegrationSpec
     @Shared
     UUID dataClassComponentId
 
+    @Inject FolderApi folderApi
+    @Inject DataModelApi dataModelApi
+    @Inject DataTypeApi dataTypeApi
+    @Inject DataClassApi dataClassApi
+    @Inject DataElementApi dataElementApi
+    @Inject DataFlowApi dataFlowApi
+    @Inject DataClassComponentApi dataClassComponentApi
+    @Inject DataElementComponentApi dataElementComponentApi
+
+
     void setup() {
         loginAdmin()
-        folderId = ((Folder) POST("$FOLDERS_PATH", [label: 'folder label root folder'], Folder)).id
-        sourceId = ((DataModel) POST("$FOLDERS_PATH/$folderId$DATAMODELS_PATH", dataModelPayload('source label'), DataModel)).id
-        targetId = ((DataModel) POST("$FOLDERS_PATH/$folderId$DATAMODELS_PATH", dataModelPayload('target label'), DataModel)).id
-        dataFlowId = ((DataFlow) POST("$DATAMODELS_PATH/$targetId$DATA_FLOWS_PATH", dataFlowPayload(sourceId.toString()), DataFlow)).id
+        folderId = folderApi.create(folder()).id
+        sourceId = dataModelApi.create(folderId, dataModelPayload('source label')).id
+        targetId = dataModelApi.create(folderId, dataModelPayload('target label')).id
 
-        dataType = (DataType) POST("$DATAMODELS_PATH/$sourceId/dataTypes", [label: 'integer', description: 'a whole number, may be positive or negative, with no maximum or minimum', domainType: 'PrimitiveType'], DataType)
-        dataClassId = ((DataClass) POST("$DATAMODELS_PATH/$sourceId$DATACLASSES_PATH", dataClassPayload(), DataClass)).id
-        dataClassComponentId = ((DataClassComponent) POST("$DATAMODELS_PATH/$sourceId$DATA_FLOWS_PATH/$dataFlowId$DATA_CLASS_COMPONENTS_PATH", genericModelPayload('data class component label'), DataClassComponent)).id
-        dataElementId = ((DataElement) POST("$DATAMODELS_PATH/$sourceId$DATACLASSES_PATH/$dataClassId$DATA_ELEMENTS_PATH", [label: 'First data element', description: 'The first data element', dataType: [id: dataType.id]], DataElement)).id
+        dataType = dataTypeApi.create(sourceId, new DataType(
+                label: 'integer',
+                description: 'a whole number, may be positive or negative, with no maximum or minimum',
+                dataTypeKind: DataType.DataTypeKind.PRIMITIVE_TYPE))
+
+        dataClassId = dataClassApi.create(sourceId, dataClassPayload()).id
+        dataElementId = dataElementApi.create(sourceId, dataClassId, new DataElement(
+                label: 'First data element',
+                description: 'The first data element',
+                dataType: dataType)).id
+
+        dataFlowId = dataFlowApi.create(targetId, dataFlowPayload(sourceId)).id
+        dataClassComponentId = dataClassComponentApi.create(
+                sourceId, dataFlowId, new DataClassComponent(label: 'test data class component label')).id
         logout()
     }
 
@@ -67,7 +92,8 @@ class DataElementComponentSecurityIntegrationSpec extends SecuredIntegrationSpec
         given:
         loginAdmin()
         when:
-        UUID dataElementComponentId = ((DataElementComponent) POST("$DATAMODELS_PATH/$sourceId$DATA_FLOWS_PATH/$dataFlowId$DATA_CLASS_COMPONENTS_PATH/$dataClassComponentId$DATA_ELEMENT_COMPONENTS_PATH", dataModelPayload('test data class component label'), DataElementComponent)).id
+        UUID dataElementComponentId =
+            dataElementComponentApi.create(sourceId, dataFlowId, dataClassComponentId, new DataElementComponent(label: 'test data element component')).id
 
         then:
         dataElementComponentId
@@ -76,20 +102,21 @@ class DataElementComponentSecurityIntegrationSpec extends SecuredIntegrationSpec
     void 'should throw forbidden exception -when non admin user updates or accesses admin user created dataElementComponent'() {
         given:
         loginAdmin()
-        UUID dataElementComponentId = ((DataElementComponent) POST("$DATAMODELS_PATH/$sourceId$DATA_FLOWS_PATH/$dataFlowId$DATA_CLASS_COMPONENTS_PATH/$dataClassComponentId$DATA_ELEMENT_COMPONENTS_PATH", dataModelPayload('test data class component label'), DataElementComponent)).id
+        UUID dataElementComponentId =
+                dataElementComponentApi.create(sourceId, dataFlowId, dataClassComponentId, new DataElementComponent(label: 'test data element component')).id
 
         and:
         logout()
         loginUser()
         when:
-        (DataElementComponent) GET("$DATAMODELS_PATH/$targetId$DATA_FLOWS_PATH/$dataFlowId$DATA_CLASS_COMPONENTS_PATH/$dataClassComponentId$DATA_ELEMENT_COMPONENTS_PATH/$dataElementComponentId", DataElementComponent)
+            dataElementComponentApi.show(sourceId,dataFlowId,dataClassComponentId,dataElementComponentId)
 
         then:
         HttpClientResponseException exception = thrown()
         exception.status == HttpStatus.FORBIDDEN
 
         when:
-        (DataElementComponent) PUT("$DATAMODELS_PATH/$targetId$DATA_FLOWS_PATH/$dataFlowId$DATA_CLASS_COMPONENTS_PATH/$dataClassComponentId$DATA_ELEMENT_COMPONENTS_PATH/$dataElementComponentId", genericModelPayload('renamed label'), DataElementComponent)
+        dataElementComponentApi.update(sourceId,dataFlowId,dataClassComponentId,dataElementComponentId, new DataElementComponent(label: 'renamed label'))
         then:
         exception = thrown()
         exception.status == HttpStatus.FORBIDDEN
@@ -98,13 +125,14 @@ class DataElementComponentSecurityIntegrationSpec extends SecuredIntegrationSpec
     void 'should throw forbidden exception -when non admin user retrieves  admin created dataclasscomponent data'() {
         given:
         loginAdmin()
-        UUID dataElementComponentId = ((DataElementComponent) POST("$DATAMODELS_PATH/$sourceId$DATA_FLOWS_PATH/$dataFlowId$DATA_CLASS_COMPONENTS_PATH/$dataClassComponentId$DATA_ELEMENT_COMPONENTS_PATH", dataModelPayload('test data class component label'), DataElementComponent)).id
+        UUID dataElementComponentId =
+            dataElementComponentApi.create(sourceId, dataFlowId, dataClassComponentId, new DataElementComponent(label: 'test data element component')).id
 
         and:
         logout()
         loginUser()
         when:
-        (ListResponse<DataElementComponent>) GET("/dataModels/$targetId/dataFlows/$dataFlowId/dataClassComponents/$dataClassComponentId$DATA_ELEMENT_COMPONENTS_PATH", ListResponse, DataElementComponent)
+        dataElementComponentApi.list(targetId,dataFlowId,dataClassComponentId)
 
         then:
         HttpClientResponseException exception = thrown()
@@ -114,8 +142,8 @@ class DataElementComponentSecurityIntegrationSpec extends SecuredIntegrationSpec
         logout()
         loginAdmin()
 
-        DataElementComponent updated = (DataElementComponent) PUT("$DATAMODELS_PATH/$targetId$DATA_FLOWS_PATH/$dataFlowId$DATA_CLASS_COMPONENTS_PATH/$dataClassComponentId$DATA_ELEMENT_COMPONENTS_PATH/$dataElementComponentId",
-                [label: 'updated label text'], DataElementComponent)
+        DataElementComponent updated =
+                dataElementComponentApi.update(sourceId,dataFlowId,dataClassComponentId,dataElementComponentId, new DataElementComponent(label: 'renamed label'))
 
         then:
         updated
@@ -124,8 +152,7 @@ class DataElementComponentSecurityIntegrationSpec extends SecuredIntegrationSpec
         logout()
         loginUser()
 
-        (DataElementComponent) PUT("$DATAMODELS_PATH/$targetId$DATA_FLOWS_PATH/$dataFlowId$DATA_CLASS_COMPONENTS_PATH/$dataClassComponentId$DATA_ELEMENT_COMPONENTS_PATH/$dataElementComponentId",
-                [label: 'another update  label text'], DataElementComponent)
+        dataElementComponentApi.update(sourceId,dataFlowId,dataClassComponentId,dataElementComponentId, new DataElementComponent(label: 'renamed label'))
 
         then:
         exception = thrown()
@@ -135,15 +162,15 @@ class DataElementComponentSecurityIntegrationSpec extends SecuredIntegrationSpec
     void ' non admin user -should not be able to add dataelement to dataelementcomponent'() {
         given:
         loginAdmin()
-        UUID dataElementComponentId = ((DataElementComponent) POST("$DATAMODELS_PATH/$sourceId$DATA_FLOWS_PATH/$dataFlowId$DATA_CLASS_COMPONENTS_PATH/$dataClassComponentId$DATA_ELEMENT_COMPONENTS_PATH", dataModelPayload('test data class component label'), DataElementComponent)).id
+        UUID dataElementComponentId =
+                dataElementComponentApi.create(sourceId, dataFlowId, dataClassComponentId, new DataElementComponent(label: 'test data element component')).id
 
         and:
         logout()
         loginUser()
         when:
 
-        (DataElementComponent) PUT("$DATAMODELS_PATH/$targetId$DATA_FLOWS_PATH/$dataFlowId$DATA_CLASS_COMPONENTS_PATH/$dataClassComponentId$DATA_ELEMENT_COMPONENTS_PATH/$dataElementComponentId$SOURCE/$dataElementId",
-                DataElementComponent)
+        dataElementComponentApi.updateSource(sourceId,dataFlowId,dataClassComponentId,dataElementComponentId,dataElementId)
 
         then:
 
@@ -153,26 +180,25 @@ class DataElementComponentSecurityIntegrationSpec extends SecuredIntegrationSpec
         when:
         logout()
         loginAdmin()
-        String dataElementComponentString = PUT("$DATAMODELS_PATH/$sourceId$DATA_FLOWS_PATH/$dataFlowId$DATA_CLASS_COMPONENTS_PATH/$dataClassComponentId$DATA_ELEMENT_COMPONENTS_PATH/$dataElementComponentId$SOURCE/$dataElementId", String)
-
+        DataElementComponent dataElementComponent = dataElementComponentApi.updateSource(sourceId,dataFlowId,dataClassComponentId,dataElementComponentId,dataElementId)
         then:
-        dataElementComponentString
+        dataElementComponent
     }
 
 
     void ' non admin user -should not be able to delete dataElement from dataElementComponent'() {
         given:
         loginAdmin()
-        UUID dataElementComponentId = ((DataElementComponent) POST("$DATAMODELS_PATH/$sourceId$DATA_FLOWS_PATH/$dataFlowId$DATA_CLASS_COMPONENTS_PATH/$dataClassComponentId$DATA_ELEMENT_COMPONENTS_PATH", dataModelPayload('test data class component label'), DataElementComponent)).id
+        UUID dataElementComponentId =
+                dataElementComponentApi.create(sourceId, dataFlowId, dataClassComponentId, new DataElementComponent(label: 'test data element component')).id
 
         and:
-        PUT("$DATAMODELS_PATH/$targetId$DATA_FLOWS_PATH/$dataFlowId$DATA_CLASS_COMPONENTS_PATH/$dataClassComponentId$DATA_ELEMENT_COMPONENTS_PATH/$dataElementComponentId$SOURCE/$dataElementId",
-                String)
+        dataElementComponentApi.updateSource(sourceId, dataFlowId, dataClassComponentId,dataElementComponentId,dataElementId)
 
         when:
         logout()
         loginUser()
-        DELETE("$DATAMODELS_PATH/$targetId$DATA_FLOWS_PATH/$dataFlowId$DATA_CLASS_COMPONENTS_PATH/$dataClassComponentId$DATA_ELEMENT_COMPONENTS_PATH/$dataElementComponentId$SOURCE/$dataElementId", HttpStatus)
+        HttpResponse httpResponse = dataElementComponentApi.deleteSource(sourceId, dataFlowId, dataClassComponentId, dataElementComponentId, dataElementId)
 
         then:
         HttpClientResponseException exception = thrown()
