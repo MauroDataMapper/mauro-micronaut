@@ -60,6 +60,7 @@ abstract class ItemCacheableRepository<I extends Item> implements ItemRepository
 
     I update(I item) {
         I updated = repository.update(item)
+        println("invalidating item $item.id, $item.domainType")
         invalidate(item)
         updated
     }
@@ -107,6 +108,7 @@ abstract class ItemCacheableRepository<I extends Item> implements ItemRepository
     }
 
     void invalidate(UUID id) {
+        println("invalidating id: $id, domainType: $domainType")
         invalidateCachedLookupById(FIND_BY_ID, domainType, id)
         invalidateCachedLookupById(READ_BY_ID, domainType, id)
     }

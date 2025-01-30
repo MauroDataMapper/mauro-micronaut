@@ -58,7 +58,11 @@ class DataElementController extends AdministeredItemController<DataElement, Data
 
     @Get('/{id}')
     DataElement show(UUID dataModelId, UUID dataClassId, UUID id) {
-        super.show(id)
+        DataElement dataElement = super.show(id) as DataElement
+        handleError(HttpStatus.NOT_FOUND, dataElement.dataType, "dataElement $dataElement.id  is missing dataType")
+        DataType dataType = dataTypeRepository.readById(dataElement.dataType?.id)
+        dataElement.dataType = dataType
+        dataElement
     }
 
     @Post
@@ -81,7 +85,7 @@ class DataElementController extends AdministeredItemController<DataElement, Data
         DataElement existing = administeredItemRepository.readById(id)
         accessControlService.checkRole(Role.EDITOR, existing)
         verifyValidPayload(existing, cleanItem)
-        DataElement updated = updateDataType(cleanItem)
+        DataElement updated = updateDataType(existing, cleanItem)
         updated = updateEntity(existing, cleanItem)
         updated = updateClassifiers(updated)
         updated
@@ -100,23 +104,24 @@ class DataElementController extends AdministeredItemController<DataElement, Data
     }
 
 
-    private DataElement updateDataType(DataElement updated) {
+    private DataElement updateDataType(DataElement existing, DataElement dataElementToUpdate) {
         DataType existingDataType
-        if (updated.dataType?.id) {
-            existingDataType = dataTypeRepository.readById(updated.dataType.id)
-            handleError(HttpStatus.NOT_FOUND, existingDataType, "Datatype not found $updated.dataType.id")
-            updated.dataType.id = null   //clear for cleanBody
-            DataType cleanItem = cleanBody(updated.dataType)
+        if (dataElementToUpdate.dataType?.id) {
+            existingDataType = dataTypeRepository.readById(dataElementToUpdate.dataType.id)
+            handleError(HttpStatus.NOT_FOUND, existingDataType, "Datatype not found $dataElementToUpdate.dataType.id")
+            dataElementToUpdate.dataType.id = null //clear for cleanBody
+            DataType cleanItem = cleanBody(dataElementToUpdate.dataType)
 
             boolean hasChanged = updateProperties(existingDataType, cleanItem)
             updateDerivedProperties(existingDataType)
             DataType result = existingDataType
             if (hasChanged) {
                 result = dataTypeRepository.update(existingDataType)
+                dataElementRepository.invalidate(existing) //invalidate cache
             }
-            updated.dataType = result
+            dataElementToUpdate.dataType = result
         }
-        updated
+        dataElementToUpdate
     }
 
     private DataType cleanBody(DataType item) {
@@ -176,7 +181,7 @@ class DataElementController extends AdministeredItemController<DataElement, Data
         }
         DataModel proposedParent = dataModelRepository.readById(proposedDataType.dataModel.id)
 
-        if (!existing.dataType ) return
+        if (!existing.dataType) return
 
         DataType existingDataType = dataTypeRepository.readById(existing.dataType.id)
         if (!existingDataType) {

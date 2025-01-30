@@ -75,6 +75,11 @@ class DataElementUpdateIntegrationSpec extends CommonDataSpec {
     }
 
     void 'test update data element -new changes to existing dataType should update'() {
+        given:
+        DataType existingDataType = (DataType) GET ("$DATAMODELS_PATH/$dataModelId$DATATYPES_PATH/$dataTypeId", DataType)
+        and:
+        !existingDataType.label
+        !existingDataType.description
 
         when:
         DataElement dataElement = (DataElement) PUT("$DATAMODELS_PATH/$dataModelId$DATACLASSES_PATH/$dataClassId$DATA_ELEMENTS_PATH/$dataElementId",
@@ -90,6 +95,22 @@ class DataElementUpdateIntegrationSpec extends CommonDataSpec {
         dataElement.label == 'Renamed data element'
         dataElement.dataType.label == 'changed label primitive'
         dataElement.dataType.description == 'changed datatype description'
+
+        when:
+        DataType retrieved =  (DataType) GET ("$DATAMODELS_PATH/$dataModelId$DATATYPES_PATH/$dataTypeId", DataType)
+
+        then:
+        retrieved
+        retrieved.label == 'changed label primitive'
+        retrieved.description == 'changed datatype description'
+
+        when:
+        DataElement retrievedDataElement = (DataElement) GET("$DATAMODELS_PATH/$dataModelId$DATACLASSES_PATH/$dataClassId$DATA_ELEMENTS_PATH/$dataElementId", DataElement)
+        then:
+        retrievedDataElement.label == 'Renamed data element'
+        retrievedDataElement.dataType.label == retrieved.label
+
+
     }
 
 }
