@@ -143,7 +143,7 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
         ListResponse.from(items)
     }
 
-    protected I updateDerivedProperties(I item) {
+    I updateDerivedProperties(I item) {
         pathRepository.readParentItems(item)
         item.updatePath()
 

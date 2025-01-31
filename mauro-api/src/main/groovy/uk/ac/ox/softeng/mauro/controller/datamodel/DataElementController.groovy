@@ -46,6 +46,8 @@ class DataElementController extends AdministeredItemController<DataElement, Data
     AdministeredItemCacheableRepository.DataTypeCacheableRepository dataTypeRepository
 
     @Inject
+    DataTypeController dataTypeController
+    @Inject
     DataElementController(DataElementCacheableRepository dataElementRepository, DataClassCacheableRepository dataClassRepository,
                           DataModelContentRepository dataModelContentRepository, DataModelCacheableRepository dataModelRepository,
                           DataTypeCacheableRepository dataTypeRepository) {
@@ -110,10 +112,10 @@ class DataElementController extends AdministeredItemController<DataElement, Data
             existingDataType = dataTypeRepository.readById(dataElementToUpdate.dataType.id)
             handleError(HttpStatus.NOT_FOUND, existingDataType, "Datatype not found $dataElementToUpdate.dataType.id")
             dataElementToUpdate.dataType.id = null //clear for cleanBody
-            DataType cleanItem = cleanBody(dataElementToUpdate.dataType)
+            DataType cleanItem = dataTypeController.cleanBody(dataElementToUpdate.dataType)
 
-            boolean hasChanged = updateProperties(existingDataType, cleanItem)
-            updateDerivedProperties(existingDataType)
+            boolean hasChanged = dataTypeController.updateProperties(existingDataType, cleanItem)
+            dataTypeController.updateDerivedProperties(existingDataType)
             DataType result = existingDataType
             if (hasChanged) {
                 result = dataTypeRepository.update(existingDataType)
@@ -122,49 +124,6 @@ class DataElementController extends AdministeredItemController<DataElement, Data
             dataElementToUpdate.dataType = result
         }
         dataElementToUpdate
-    }
-
-    private DataType cleanBody(DataType item) {
-        DataType defaultItem = (DataType) item.class.getDeclaredConstructor().newInstance()
-
-        // Disallowed properties cannot be set by user request
-        disallowedCreateProperties.each {String key ->
-            if (defaultItem.hasProperty(key).properties.setter && item[key] != defaultItem[key]) {
-                throw new HttpStatusException(HttpStatus.BAD_REQUEST, "Property $key cannot be set directly")
-            }
-        }
-
-        // Collection properties cannot be set in user requests as these might be used in services
-        defaultItem.properties.each {
-            String key = it.key
-            if (defaultItem.hasProperty(key).properties.setter
-                && (isNotClassifiersCollection(key) && it.value instanceof Collection)
-                || it.value instanceof Map) {
-                if (item[key]) throw new HttpStatusException(HttpStatus.BAD_REQUEST, "Collection or Map $key cannot be set directly")
-                item[key] = null
-            }
-        }
-        item
-    }
-
-    private boolean updateProperties(DataType existing, DataType cleanItem) {
-        boolean hasChanged
-        existing.properties.each {
-            String key = it.key
-            if (!disallowedProperties.contains(key) && cleanItem[key] != null && existing.hasProperty(key).properties.setter) {
-                if (existing[key] != cleanItem[key]) {
-                    existing[key] = cleanItem[key]
-                    hasChanged = true
-                }
-            }
-        }
-        return hasChanged
-    }
-
-    private DataType updateDerivedProperties(DataType dataType) {
-        pathRepository.readParentItems(dataType)
-        dataType.updatePath()
-        dataType
     }
 
     /**
