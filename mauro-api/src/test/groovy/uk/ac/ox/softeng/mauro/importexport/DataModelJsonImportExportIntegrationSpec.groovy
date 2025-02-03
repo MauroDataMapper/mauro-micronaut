@@ -3,7 +3,7 @@ package uk.ac.ox.softeng.mauro.importexport
 import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.json.JsonSlurper
 import io.micronaut.http.MediaType
-import io.micronaut.http.client.multipart.MultipartBody
+import io.micronaut.http.server.multipart.MultipartBody
 import io.micronaut.runtime.EmbeddedApplication
 import jakarta.inject.Inject
 import spock.lang.Shared

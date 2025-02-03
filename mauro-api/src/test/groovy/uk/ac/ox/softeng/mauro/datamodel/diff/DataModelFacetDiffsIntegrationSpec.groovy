@@ -1,5 +1,11 @@
 package uk.ac.ox.softeng.mauro.datamodel.diff
 
+import uk.ac.ox.softeng.mauro.api.facet.SummaryMetadataApi
+import uk.ac.ox.softeng.mauro.api.facet.SummaryMetadataReportApi
+import uk.ac.ox.softeng.mauro.domain.diff.FieldDiff
+import uk.ac.ox.softeng.mauro.domain.model.version.FinaliseData
+import uk.ac.ox.softeng.mauro.domain.model.version.VersionChangeType
+
 import io.micronaut.runtime.EmbeddedApplication
 import io.micronaut.test.annotation.Sql
 import jakarta.inject.Inject
@@ -40,6 +46,8 @@ class DataModelFacetDiffsIntegrationSpec extends CommonDataSpec {
     @Inject DataModelApi dataModelApi
     @Inject MetadataApi metadataApi
     @Inject AnnotationApi annotationApi
+    @Inject SummaryMetadataApi summaryMetadataApi
+    @Inject SummaryMetadataReportApi summaryMetadataReportApi
 
     void setup() {
         Folder response = folderApi.create(folder())
@@ -85,35 +93,42 @@ class DataModelFacetDiffsIntegrationSpec extends CommonDataSpec {
 
     void 'test datamodel RHS - diff should have created, modified, boolean, diffs only '() {
         given:
-        DataModel right = (DataModel) GET("$DATAMODELS_PATH/$left.id", DataModel)
+        DataModel right = dataModelApi.show(left.id)
 
-        DataModel left = (DataModel) POST("$FOLDERS_PATH/$folderId$DATAMODELS_PATH", [label: 'Test other data model', description: 'test other description', author: 'test author other'], DataModel)
+        DataModel left = dataModelApi.create(folderId,
+            new DataModel(label: 'Test other data model',
+                            description: 'test other description',
+                            author: 'test author other'))
 
         and:
-        Metadata metadataResponse = (Metadata) POST("$DATAMODELS_PATH/$left.id$METADATA_PATH", [namespace: 'org.example', key: 'example_key', value: 'different example_value'],
-                Metadata)
+        Metadata metadataResponse = metadataApi.create("DataModel", left.id,
+            new Metadata(namespace: 'org.example',
+                         key: 'example_key',
+                         value: 'different example_value'))
+
         metadataId = metadataResponse.id
 
-        (DataModel) PUT("$DATAMODELS_PATH/$left.id/finalise", [versionChangeType: 'major', versionTag: 'random version tag'],
-                DataModel)
+        dataModelApi.finalise(left.id,
+                              new FinaliseData(versionChangeType: VersionChangeType.MAJOR,
+                                               versionTag: 'random version tag'))
 
         when:
-        Map<String, Object> diffMap = GET("$DATAMODELS_PATH/$left.id$DIFF/$right.id", Map<String, Object>)
+        ObjectDiff objectDiff = dataModelApi.diffModels(left.id, right.id)
 
         then:
-        diffMap
-        diffMap.label == left.label
-        diffMap.diffs.size() == 10
-        diffMap.diffs.each {
+        objectDiff
+        objectDiff.label == left.label
+        objectDiff.diffs.size() == 10
+        objectDiff.diffs.each {
             [AUTHOR, DiffBuilder.DESCRIPTION, DiffBuilder.LABEL,
              PATH_IDENTIFIER, PATH_MODEL_IDENTIFIER, MODEL_VERSION_TAG, FINALISED, DATE_FINALISED].contains(it.name)
         }
-        ArrayDiff<Collection> annotationsDiff = diffMap.diffs.find { it -> it.name == DiffBuilder.ANNOTATION } as ArrayDiff<Collection>
+        ArrayDiff<Collection> annotationsDiff = objectDiff.diffs.find { it -> it.name == DiffBuilder.ANNOTATION } as ArrayDiff<Collection>
         annotationsDiff.created.size() == 1
         annotationsDiff.deleted.isEmpty()
         annotationsDiff.modified.isEmpty()
 
-        ArrayDiff<Collection> metadataDiff = diffMap.diffs.find { it -> it.name == DiffBuilder.METADATA } as ArrayDiff<Collection>
+        ArrayDiff<Collection> metadataDiff = objectDiff.diffs.find { it -> it.name == DiffBuilder.METADATA } as ArrayDiff<Collection>
         metadataDiff.name == DiffBuilder.METADATA
         metadataDiff.created.isEmpty()
         metadataDiff.deleted.isEmpty()
@@ -124,25 +139,28 @@ class DataModelFacetDiffsIntegrationSpec extends CommonDataSpec {
 
     void 'test datamodel with annotations, modified, childAnnotations'() {
         given:
-        DataModel right = (DataModel) POST("$FOLDERS_PATH/$folderId$DATAMODELS_PATH", dataModelPayload(), DataModel)
+        DataModel right =
+            dataModelApi.create(folderId, dataModelPayload())
 
         and:
 
-        (Annotation) POST("$DATAMODELS_PATH/$right.id$ANNOTATION_PATH",
-                [label: 'test-label', description: 'different test-annotation description'], Annotation)
+        annotationApi.create("DataModel", right.id,
+                new Annotation(
+                    label: 'test-label',
+                    description: 'different test-annotation description'))
 
         //childAnnotation
-        Annotation child = (Annotation) POST("$DATAMODELS_PATH/$left.id$ANNOTATION_PATH/$annotationId$ANNOTATION_PATH",
-                annotationPayload('child label', 'child description'), Annotation)
+        Annotation child = annotationApi.create("DataModel", left.id, annotationId,
+                annotationPayload('child label', 'child description'))
 
         when:
-        Map<String, Object> diffMap = GET("$DATAMODELS_PATH/$left.id$DIFF/$right.id", Map<String, Object>)
+        ObjectDiff objectDiff = dataModelApi.diffModels(left.id, right.id)
 
         then:
-        diffMap
-        diffMap.label == left.label
-        diffMap.diffs.size() == 2
-        ArrayDiff<Collection> annotationsDiff = diffMap.diffs.find { it.name == DiffBuilder.ANNOTATION } as ArrayDiff<Collection>
+        objectDiff
+        objectDiff.label == left.label
+        objectDiff.diffs.size() == 2
+        ArrayDiff<Collection> annotationsDiff = objectDiff.diffs.find { it.name == DiffBuilder.ANNOTATION } as ArrayDiff<Collection>
         annotationsDiff.name == DiffBuilder.ANNOTATION
         annotationsDiff.created.isEmpty()
         annotationsDiff.deleted.isEmpty()
@@ -160,45 +178,44 @@ class DataModelFacetDiffsIntegrationSpec extends CommonDataSpec {
 
     void 'test datamodel with same summaryMetadata (key= label) -should not appear in diff'() {
         given:
-        DataModel right = (DataModel) POST("$FOLDERS_PATH/$folderId$DATAMODELS_PATH", dataModelPayload(), DataModel)
+        DataModel right = dataModelApi.create(folderId, dataModelPayload())
 
         and:
         //2 same summaryMetadata payloads -for modified diff
-        POST("$DATAMODELS_PATH/$right.id$SUMMARY_METADATA_PATH", summaryMetadataPayload(), SummaryMetadata)
-
-        POST("$DATAMODELS_PATH/$left.id$SUMMARY_METADATA_PATH", summaryMetadataPayload(), SummaryMetadata)
+        summaryMetadataApi.create("DataModel",right.id, summaryMetadataPayload())
+        summaryMetadataApi.create("DataModel",left.id, summaryMetadataPayload())
 
         when:
-        Map<String, Object> diffMap = GET("$DATAMODELS_PATH/$left.id$DIFF/$right.id", Map<String, Object>)
+        ObjectDiff objectDiff = dataModelApi.diffModels(left.id, right.id)
 
         then:
-        diffMap
-        diffMap.label == left.label
-        ArrayDiff<Collection> summaryMetadataDiff = diffMap.diffs.find { it.name == DiffBuilder.SUMMARY_METADATA } as ArrayDiff<Collection>
+        objectDiff
+        objectDiff.label == left.label
+        ArrayDiff<Collection> summaryMetadataDiff = objectDiff.diffs.find { it.name == DiffBuilder.SUMMARY_METADATA } as ArrayDiff<Collection>
         !summaryMetadataDiff
 
     }
 
     void 'test datamodel with modified summaryMetadata and summaryMetadataReport -should show nested diff'() {
         given:
-        DataModel right = (DataModel) POST("$FOLDERS_PATH/$folderId$DATAMODELS_PATH", dataModelPayload(), DataModel)
+        DataModel right = dataModelApi.create(folderId, dataModelPayload())
 
         and:
-        POST("$DATAMODELS_PATH/$right.id$SUMMARY_METADATA_PATH", summaryMetadataPayload(), SummaryMetadata)
+        summaryMetadataApi.create("DataModel",right.id, summaryMetadataPayload())
 
-        SummaryMetadata leftSummaryMetadata = POST("$DATAMODELS_PATH/$left.id$SUMMARY_METADATA_PATH",
-                [summaryMetadataType: SummaryMetadataType.MAP, label: 'summary metadata label'], SummaryMetadata)
+        SummaryMetadata leftSummaryMetadata = summaryMetadataApi.create("DataModel",left.id,
+                    new SummaryMetadata(summaryMetadataType: SummaryMetadataType.MAP, label: 'summary metadata label'))
 
-        SummaryMetadataReport report = (SummaryMetadataReport) POST("$DATAMODELS_PATH/$left.id$SUMMARY_METADATA_PATH/$leftSummaryMetadata.id$SUMMARY_METADATA_REPORT_PATH",
-                summaryMetadataReport(), SummaryMetadataReport)
+        SummaryMetadataReport report = summaryMetadataReportApi.create("DataModel", left.id, leftSummaryMetadata.id,
+                summaryMetadataReport())
 
         when:
-        Map<String, Object> diffMap = GET("$DATAMODELS_PATH/$left.id$DIFF/$right.id", Map<String, Object>)
+        ObjectDiff objectDiff = dataModelApi.diffModels(left.id, right.id)
 
         then:
-        diffMap
-        diffMap.get(DiffBuilder.LABEL) == left.label
-        ArrayDiff<Collection> summaryMetadataDiff = diffMap.diffs.find { it.name == DiffBuilder.SUMMARY_METADATA } as ArrayDiff<Collection>
+        objectDiff
+        objectDiff.label == left.label
+        ArrayDiff<Collection> summaryMetadataDiff = objectDiff.diffs.find { it.name == DiffBuilder.SUMMARY_METADATA } as ArrayDiff<Collection>
 
         summaryMetadataDiff
         summaryMetadataDiff.created.isEmpty()
@@ -206,13 +223,13 @@ class DataModelFacetDiffsIntegrationSpec extends CommonDataSpec {
         summaryMetadataDiff.modified.size() == 1
         summaryMetadataDiff.modified[0].diffs.find { [DiffBuilder.SUMMARY_METADATA_REPORT, DiffBuilder.SUMMARY_METADATA_TYPE].contains(it.name) }
 
-        Map<String, String> summaryMetadataTypeDiffs = summaryMetadataDiff.modified[0].diffs.find { it.name == DiffBuilder.SUMMARY_METADATA_TYPE } as Map<String, String>
-        summaryMetadataTypeDiffs.get('left') == SummaryMetadataType.MAP.name()
-        summaryMetadataTypeDiffs.get('right') == SummaryMetadataType.STRING.name()
-        Map<String, Object> reportDiffs = summaryMetadataDiff.modified[0].diffs.find { it.name == DiffBuilder.SUMMARY_METADATA_REPORT } as Map<String, Object>
-        reportDiffs.size() == 2
-        reportDiffs.get('deleted').size() == 1
-        reportDiffs.get('deleted')[0].get(DiffBuilder.ID_KEY) == report.id.toString()
-        reportDiffs.get('deleted')[0].get(DiffBuilder.REPORT_DATE) == report.reportDate.toString()
+        FieldDiff summaryMetadataTypeDiffs = summaryMetadataDiff.modified[0].diffs.find { it.name == DiffBuilder.SUMMARY_METADATA_TYPE } as FieldDiff
+        summaryMetadataTypeDiffs.left == SummaryMetadataType.MAP.name()
+        summaryMetadataTypeDiffs.right == SummaryMetadataType.STRING.name()
+        ArrayDiff<Collection> reportDiffs = summaryMetadataDiff.modified[0].diffs.find { it.name == DiffBuilder.SUMMARY_METADATA_REPORT } as ArrayDiff<Collection>
+        //reportDiffs.size() == 2
+        reportDiffs.deleted.size() == 1
+        reportDiffs.deleted[0].get(DiffBuilder.ID_KEY) == report.id.toString()
+        reportDiffs.deleted[0].get(DiffBuilder.REPORT_DATE) == report.reportDate.toString()
     }
 }

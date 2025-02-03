@@ -103,7 +103,7 @@ interface Paths {
     String DATA_MODEL_EXPORT = '/dataModels/{id}/export{/namespace}{/name}{/version}'
     String DATA_MODEL_IMPORT = '/dataModels/import/{namespace}/{name}{/version}'
     String DATA_MODEL_DIFF = '/dataModels/{id}/diff/{otherId}'
-    String DATA_MODEL_SEARCH_GET = '/dataModels/{id}/search{?requestDTO}'
+    String DATA_MODEL_SEARCH_GET = '/dataModels/{id}/search{?requestDTO*}'
     String DATA_MODEL_SEARCH_POST = '/dataModels/{id}/search'
     String DATA_MODEL_EXPORTERS = '/dataModels/providers/importers'
 

@@ -61,7 +61,7 @@ interface TerminologyApi extends ModelApi<Terminology> {
     Terminology createNewBranchModelVersion(UUID id, @Body @Nullable CreateNewVersionData createNewVersionData)
 
     @Get(Paths.TERMINOLOGY_EXPORT)
-    StreamedFile exportModel(UUID id, @Nullable String namespace, @Nullable String name, @Nullable String version)
+    HttpResponse<byte[]> exportModel(UUID id, @Nullable String namespace, @Nullable String name, @Nullable String version)
 
     @ExecuteOn(TaskExecutors.IO)
     @Consumes(MediaType.MULTIPART_FORM_DATA)

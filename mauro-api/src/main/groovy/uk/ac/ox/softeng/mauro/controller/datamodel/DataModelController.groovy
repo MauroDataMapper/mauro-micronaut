@@ -5,13 +5,13 @@ import uk.ac.ox.softeng.mauro.api.datamodel.DataModelApi
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
+import io.micronaut.context.annotation.Parameter
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.*
 import io.micronaut.http.server.multipart.MultipartBody
-import io.micronaut.http.server.types.files.StreamedFile
 import io.micronaut.scheduling.TaskExecutors
 import io.micronaut.scheduling.annotation.ExecuteOn
 import io.micronaut.security.annotation.Secured
@@ -108,7 +108,8 @@ class DataModelController extends ModelController<DataModel> implements DataMode
 
 
     @Get(Paths.DATA_MODEL_SEARCH_GET)
-    ListResponse<SearchResultsDTO> searchGet(UUID id, @RequestBean SearchRequestDTO requestDTO) {
+    ListResponse<SearchResultsDTO> searchGet(UUID id, @Parameter @Nullable SearchRequestDTO requestDTO) {
+        System.err.println(requestDTO.searchTerm)
         requestDTO.withinModelId = id
         DataModel dataModel = dataModelRepository.readById(requestDTO.withinModelId)
         accessControlService.checkRole(Role.READER, dataModel)
@@ -147,7 +148,7 @@ class DataModelController extends ModelController<DataModel> implements DataMode
     }
 
     @Get(Paths.DATA_MODEL_EXPORT)
-    StreamedFile exportModel(UUID id, @Nullable String namespace, @Nullable String name, @Nullable String version) {
+    HttpResponse<byte[]> exportModel(UUID id, @Nullable String namespace, @Nullable String name, @Nullable String version) {
         super.exportModel(id, namespace, name, version)
     }
 

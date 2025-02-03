@@ -121,7 +121,7 @@ class TerminologyController extends ModelController<Terminology> implements Term
     }
 
     @Get(Paths.TERMINOLOGY_EXPORT)
-    StreamedFile exportModel(UUID id, @Nullable String namespace, @Nullable String name, @Nullable String version) {
+    HttpResponse<byte[]> exportModel(UUID id, @Nullable String namespace, @Nullable String name, @Nullable String version) {
         super.exportModel(id, namespace, name, version)
     }
 

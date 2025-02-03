@@ -51,7 +51,7 @@ interface ClassificationSchemeApi extends ModelApi<ClassificationScheme> {
     ClassificationScheme createNewBranchModelVersion(UUID id, @Body @Nullable CreateNewVersionData createNewVersionData)
 
     @Get(Paths.CLASSIFICATION_SCHEMES_EXPORT)
-    StreamedFile exportModel(UUID id, @Nullable String namespace, @Nullable String name, @Nullable String version)
+    HttpResponse<byte[]> exportModel(UUID id, @Nullable String namespace, @Nullable String name, @Nullable String version)
 
     @ExecuteOn(TaskExecutors.IO)
     @Consumes(MediaType.MULTIPART_FORM_DATA)

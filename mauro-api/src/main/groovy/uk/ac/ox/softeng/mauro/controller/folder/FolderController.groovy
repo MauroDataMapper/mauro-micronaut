@@ -24,7 +24,6 @@ import io.micronaut.http.annotation.Get
 import io.micronaut.http.annotation.Post
 import io.micronaut.http.annotation.Put
 import io.micronaut.http.server.multipart.MultipartBody
-import io.micronaut.http.server.types.files.StreamedFile
 import io.micronaut.scheduling.TaskExecutors
 import io.micronaut.scheduling.annotation.ExecuteOn
 import io.micronaut.security.annotation.Secured
@@ -132,12 +131,11 @@ class FolderController extends ModelController<Folder> implements FolderApi {
     }
 
     @Get(Paths.FOLDER_EXPORT)
-    StreamedFile exportModel(UUID id, @Nullable String namespace, @Nullable String name, @Nullable String version) {
+    HttpResponse<byte[]> exportModel(UUID id, @Nullable String namespace, @Nullable String name, @Nullable String version) {
         ModelExporterPlugin mauroPlugin = mauroPluginService.getPlugin(ModelExporterPlugin, namespace, name, version)
         PluginService.handlePluginNotFound(mauroPlugin, namespace, name)
         Folder existing = folderContentRepository.findWithContentById(id)
-        StreamedFile streamedFile = exportedModelData(mauroPlugin, existing)
-        streamedFile
+        createExportResponse(mauroPlugin, existing)
     }
 
     @Transactional
@@ -147,4 +145,5 @@ class FolderController extends ModelController<Folder> implements FolderApi {
     ListResponse<Folder> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version) {
        super.importModel(body, namespace, name, version)
     }
+
 }

@@ -56,7 +56,7 @@ interface FolderApi extends ModelApi<Folder> {
     HttpResponse delete(UUID parentId, UUID id, @Body @Nullable Folder folder)
 
     @Get(Paths.FOLDER_EXPORT)
-    StreamedFile exportModel(UUID id, @Nullable String namespace, @Nullable String name, @Nullable String version)
+    HttpResponse<byte[]> exportModel(UUID id, @Nullable String namespace, @Nullable String name, @Nullable String version)
 
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Post(Paths.FOLDER_IMPORT)

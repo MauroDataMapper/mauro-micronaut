@@ -12,8 +12,7 @@ import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.annotation.Body
-import io.micronaut.http.server.multipart.MultipartBody
-import io.micronaut.http.server.types.files.StreamedFile
+import io.micronaut.http.client.multipart.MultipartBody
 
 @CompileStatic
 interface ModelApi<M extends Model> extends AdministeredItemApi<M, Folder> {
@@ -32,8 +31,11 @@ interface ModelApi<M extends Model> extends AdministeredItemApi<M, Folder> {
 
     M createNewBranchModelVersion(UUID id, @Body @Nullable CreateNewVersionData createNewVersionData)
 
-    StreamedFile exportModel(UUID modelId, String namespace, String name, @Nullable String version)
+    HttpResponse<byte[]> exportModel(UUID modelId, String namespace, String name, @Nullable String version)
 
     ListResponse<M> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version)
+
+    // To be implemented by the controller
+    ListResponse<M> importModel(@Body io.micronaut.http.server.multipart.MultipartBody body, String namespace, String name, @Nullable String version)
 
 }

@@ -16,7 +16,7 @@ import io.micronaut.http.annotation.Put
 @MauroApi
 interface SummaryMetadataApi extends FacetApi<SummaryMetadata> {
 
-    @Get
+    @Get(Paths.SUMMARY_METADATA_LIST)
     ListResponse<SummaryMetadata> list(String domainType, UUID domainId)
 
     @Get(Paths.SUMMARY_METADATA_ID)

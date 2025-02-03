@@ -8,8 +8,12 @@ import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
 import uk.ac.ox.softeng.mauro.domain.facet.Annotation
 import uk.ac.ox.softeng.mauro.domain.facet.Metadata
+import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadataType
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
+import uk.ac.ox.softeng.mauro.domain.model.SummaryMetadataReport
+
+import java.time.Instant
 
 
 class CommonDataSpec extends BaseIntegrationSpec {
@@ -38,8 +42,9 @@ class CommonDataSpec extends BaseIntegrationSpec {
     def termPayload() {
         [code: 'B15.0', definition: 'Hepatitis A with hepatic coma']
     }
-    def summaryMetadataReport() {
-        [ reportValue: 'test-report-value', reportDate: REPORT_DATE]
+
+    SummaryMetadataReport summaryMetadataReport() {
+        new SummaryMetadataReport(reportValue: 'test-report-value', reportDate: Instant.now())
     }
 
     def ruleRepresentation() {
@@ -50,11 +55,13 @@ class CommonDataSpec extends BaseIntegrationSpec {
         new Annotation(label: 'test-label', description: 'test-annotation description')
     }
 
-    def annotationPayload(String label, String description) {
-        [label: label, description: description ]
+    Annotation annotationPayload(String label, String description) {
+        new Annotation(label: label, description: description)
     }
-    def summaryMetadataPayload() {
-        [ summaryMetadataType: SummaryMetadataType.STRING, label: 'summary metadata label']
+
+    SummaryMetadata summaryMetadataPayload() {
+        new SummaryMetadata( summaryMetadataType: SummaryMetadataType.STRING,
+                             label: 'summary metadata label')
     }
 
     def rulePayload() {
@@ -91,8 +98,11 @@ class CommonDataSpec extends BaseIntegrationSpec {
         dataType: dataType]
     }
 
-    def dataTypesPayload(){
-        [label: 'Test data type', domainType: 'primitiveType', units : 'kilograms']
+    DataType dataTypesPayload(){
+        new DataType(
+            label: 'Test data type',
+            dataTypeKind: DataType.DataTypeKind.PRIMITIVE_TYPE,
+            units : 'kilograms')
     }
     def dataTypePayload1() {
         [label: 'string', description: 'character string of variable length', domainType: 'PrimitiveType']
