@@ -1,6 +1,6 @@
-package uk.ac.ox.softeng.mauro.domain.federation.converter
+package uk.ac.ox.softeng.mauro.domain.facet.federation.converter
 
-import uk.ac.ox.softeng.mauro.domain.federation.SubscribedCatalogueType
+import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedCatalogueType
 
 import jakarta.inject.Inject
 import jakarta.inject.Singleton

@@ -1,10 +1,10 @@
 package uk.ac.ox.softeng.mauro.test.domain.federation
 
 import uk.ac.ox.softeng.mauro.domain.authority.Authority
-import uk.ac.ox.softeng.mauro.domain.federation.PublishedModel
-import uk.ac.ox.softeng.mauro.domain.federation.SubscribedCatalogueType
-import uk.ac.ox.softeng.mauro.domain.federation.converter.SubscribedCatalogueConverter
-import uk.ac.ox.softeng.mauro.domain.federation.converter.SubscribedCatalogueConverterService
+import uk.ac.ox.softeng.mauro.domain.facet.federation.PublishedModel
+import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedCatalogueType
+import uk.ac.ox.softeng.mauro.domain.facet.federation.converter.SubscribedCatalogueConverter
+import uk.ac.ox.softeng.mauro.domain.facet.federation.converter.SubscribedCatalogueConverterService
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
@@ -12,7 +12,9 @@ import jakarta.inject.Inject
 import spock.lang.Specification
 import spock.lang.Unroll
 
-import static uk.ac.ox.softeng.mauro.domain.federation.SubscribedCatalogueType.MAURO_JSON
+import java.time.Instant
+
+import static uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedCatalogueType.MAURO_JSON
 
 @MicronautTest
 class SubscribedCatalogueConverterServiceTest extends Specification {
@@ -65,6 +67,29 @@ class SubscribedCatalogueConverterServiceTest extends Specification {
         'src/test/resources/publishedModels.json'                      | 9                 | 'Mauro Sandbox'        | "http://modelcatalogue.cs.ox.ac.uk/sandbox"
         'src/test/resources/publishedModelsWithNoLinks.json'           | 0                 | 'Mauro Sandbox'        | "http://modelcatalogue.cs.ox.ac.uk/sandbox"
         'src/test/resources/publishedModelsNullAuthorityAndDates.json' | 9                 | null                   | null
+    }
+
+
+    @Unroll
+    void "subscribedCatalogueConverter -should convert #dataFile and  return publishedModelsNewerVersions with expected #lastUpdated date and #numberOfVersions"() {
+        given:
+        String jsonData = new File(dataFile).text
+        Map<String, Object> dataAsMap = mapper.readValue(jsonData, Map.class)
+
+        when:
+        Tuple2<Instant, List<PublishedModel>> publishedModelsNewerVersions =
+            subscribedCatalogueConverterService.getSubscribedCatalogueConverter(MAURO_JSON).publishedModelsNewerVersions(dataAsMap)
+
+        then:
+        publishedModelsNewerVersions
+        publishedModelsNewerVersions.v1 == Instant.parse(lastUpdated)
+        if (publishedModelsNewerVersions.v2) publishedModelsNewerVersions.v2.size() == numberOfVersions
+
+
+        where:
+        dataFile                                                     | lastUpdated                | numberOfVersions
+        'src/test/resources/publishedModelsNewerVersions.json'       | "2023-06-12T16:03:07.118Z" | 3
+        'src/test/resources/publishedModelsNewerVersionsNoData.json' | "2024-12-01T16:03:07.118Z" | 0
     }
 
 }

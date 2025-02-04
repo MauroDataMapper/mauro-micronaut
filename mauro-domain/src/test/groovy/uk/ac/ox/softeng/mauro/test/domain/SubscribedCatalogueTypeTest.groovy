@@ -1,6 +1,6 @@
 package uk.ac.ox.softeng.mauro.test.domain
 
-import uk.ac.ox.softeng.mauro.domain.federation.SubscribedCatalogueType
+import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedCatalogueType
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import spock.lang.Specification

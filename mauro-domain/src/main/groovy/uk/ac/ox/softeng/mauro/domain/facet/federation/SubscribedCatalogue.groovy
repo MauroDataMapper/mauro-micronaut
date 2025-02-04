@@ -1,4 +1,4 @@
-package uk.ac.ox.softeng.mauro.domain.federation
+package uk.ac.ox.softeng.mauro.domain.facet.federation
 
 import uk.ac.ox.softeng.mauro.domain.model.InstantConverter
 import uk.ac.ox.softeng.mauro.domain.model.Item
@@ -55,22 +55,22 @@ class SubscribedCatalogue extends Item implements SecurableResource{
     Boolean readableByAuthenticatedUsers = false
 
     @Nullable
-    @JsonProperty('api_key')
+    @JsonAlias('api_key')
     String apiKey
     @Nullable
-    @JsonProperty('token_url')
+    @JsonAlias('token_url')
     String tokenUrl
     @Nullable
-    @JsonProperty('client_id')
+    @JsonAlias('client_id')
     String clientId
     @Nullable
-    @JsonProperty('client_secret')
+    @JsonAlias('client_secret')
     String clientSecret
     @Nullable
-    @JsonProperty('access_token')
+    @JsonAlias('access_token')
     String accessToken
     @Nullable
-    @JsonProperty('access_token_expiry_time')
+    @JsonAlias('access_token_expiry_time')
     Instant accessTokenExpiryTime
 
     @DateUpdated
@@ -79,7 +79,7 @@ class SubscribedCatalogue extends Item implements SecurableResource{
     Instant lastRead
 
     @JsonAlias(['subscribed_models'])
-    @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'subscribedCatalogue', cascade = Relation.Cascade.ALL)
+    @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'subscribedCatalogue')
     List<SubscribedModel> subscribedModels = []
 
     @Transient

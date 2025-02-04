@@ -1,4 +1,4 @@
-package uk.ac.ox.softeng.mauro.domain.federation
+package uk.ac.ox.softeng.mauro.domain.facet.federation
 
 import uk.ac.ox.softeng.mauro.importdata.ImportMetadata
 
@@ -8,7 +8,6 @@ import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
-import jakarta.validation.constraints.NotNull
 
 @CompileStatic
 @Slf4j

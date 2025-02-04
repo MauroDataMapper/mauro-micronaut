@@ -32,14 +32,16 @@ class Paths {
     public static final String ADMIN_SUBSCRIBED_CATALOGUES_ID_ROUTE  = '/admin/subscribedCatalogues/{subscribedCatalogueId}'
     public static final String SUBSCRIBED_CATALOGUES_TYPES_ROUTE = '/subscribedCatalogues/types'
     public static final String SUBSCRIBED_CATALOGUES_AUTHENTICATION_TYPES_ROUTE = '/subscribedCatalogues/authenticationTypes'
-    public static final String SUBSCRIBED_CATALOGUES_TEST_CONNECTION_ROUTE = '/subscribedCatalogues/{subscribedCatalogueId}/testConnection'
+    public static final String ADMIN_SUBSCRIBED_CATALOGUES_TEST_CONNECTION_ROUTE = '/admin/subscribedCatalogues/{subscribedCatalogueId}/testConnection'
     public static final String SUBSCRIBED_CATALOGUES_PUBLISHED_MODELS_ROUTE = '/subscribedCatalogues/{subscribedCatalogueId}/publishedModels'
+    public static final String SUBSCRIBED_CATALOGUES_PUBLISHED_MODELS_NEWER_VERSIONS_ROUTE = '/subscribedCatalogues/{subscribedCatalogueId}/publishedModels/{publishedModelId}/newerVersions'
     public static final String SUBSCRIBED_CATALOGUES_ID_ROUTE  = '/subscribedCatalogues/{subscribedCatalogueId}'
     public static final String SUBSCRIBED_CATALOGUES_ROUTE  = '/subscribedCatalogues'
     public static final String SUBSCRIBED_MODELS_ROUTE  = '/subscribedCatalogues/{subscribedCatalogueId}/subscribedModels'
-    public static final String SUBSCRIBED_MODELS_NEWER_VERSIONS_ROUTE  = '/subscribedCatalogues/{subscribedCatalogueId}/subscribedModels/{id}/newerVersions'
+    public static final String SUBSCRIBED_MODELS_ID_ROUTE = '/subscribedCatalogues/{subscribedCatalogueId}/subscribedModels/{subscribedModelId}'
     public static final String PUBLISHED_MODELS_ROUTE  = '/published/models'
-    public static final String PUBLISHED_MODELS_NEWER_VERSIONS_ROUTE  = '/published/models/{id}/newerVersions'
+    public static final String NEWER_VERSIONS  = '/newerVersions'
+    public static final String PUBLISHED_MODELS_NEWER_VERSIONS_ROUTE  = '/published/models/{publishedModelId}/newerVersions'
 
 
 }

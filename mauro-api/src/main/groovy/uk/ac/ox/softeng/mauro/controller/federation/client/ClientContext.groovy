@@ -1,7 +1,7 @@
 package uk.ac.ox.softeng.mauro.controller.federation.client
 
-import uk.ac.ox.softeng.mauro.domain.federation.SubscribedCatalogue
-import uk.ac.ox.softeng.mauro.domain.federation.SubscribedCatalogueType
+import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedCatalogue
+import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedCatalogueType
 
 class ClientContext {
 

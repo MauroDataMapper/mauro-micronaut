@@ -1,7 +1,7 @@
 package uk.ac.ox.softeng.mauro.test.domain.federation
 
-import uk.ac.ox.softeng.mauro.domain.federation.SubscribedModel
-import uk.ac.ox.softeng.mauro.domain.federation.SubscribedModelFederationParams
+import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedModel
+import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedModelFederationParams
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.micronaut.test.extensions.spock.annotation.MicronautTest

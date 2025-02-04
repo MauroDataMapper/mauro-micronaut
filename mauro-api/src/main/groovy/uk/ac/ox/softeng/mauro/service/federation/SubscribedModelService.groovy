@@ -1,14 +1,18 @@
 package uk.ac.ox.softeng.mauro.service.federation
 
 import uk.ac.ox.softeng.mauro.ErrorHandler
-import uk.ac.ox.softeng.mauro.domain.federation.MauroLink
-import uk.ac.ox.softeng.mauro.domain.federation.PublishedModel
-import uk.ac.ox.softeng.mauro.domain.federation.SubscribedModel
-import uk.ac.ox.softeng.mauro.domain.federation.SubscribedModelFederationParams
+import uk.ac.ox.softeng.mauro.domain.facet.federation.MauroLink
+import uk.ac.ox.softeng.mauro.domain.facet.federation.PublishedModel
+import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedCatalogue
+import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedModel
+import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedModelFederationParams
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.domain.model.Model
 import uk.ac.ox.softeng.mauro.importdata.ImportMetadata
+import uk.ac.ox.softeng.mauro.persistence.cache.ItemCacheableRepository
+import uk.ac.ox.softeng.mauro.persistence.cache.ItemCacheableRepository.SubscribedModelCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.model.ModelContentRepository
+import uk.ac.ox.softeng.mauro.persistence.service.RepositoryService
 import uk.ac.ox.softeng.mauro.plugin.MauroPluginService
 import uk.ac.ox.softeng.mauro.plugin.exporter.ModelExporterPlugin
 import uk.ac.ox.softeng.mauro.plugin.importer.FileImportParameters
@@ -23,26 +27,32 @@ import jakarta.inject.Inject
 @CompileStatic
 @Slf4j
 class SubscribedModelService {
-    static final String IMPORT_FILE = 'importFile'
     public static final String APPLICATION_CONTENT_TYPE = 'application/'
     public static final String MAURO_DOT = 'mauro.'
     public static final String PLUS = '\\+'
-
+    final RepositoryService repositoryService
     final MauroPluginService mauroPluginService
     final SubscribedCatalogueService subscribedCatalogueService
     final ModelContentRepository<Model> modelContentRepository
+    final ItemCacheableRepository.SubscribedModelCacheableRepository subscribedModelCacheableRepository
 
     @Inject
-    SubscribedModelService(MauroPluginService mauroPluginService, SubscribedCatalogueService subscribedCatalogueService,
-                           ModelContentRepository<Model> modelContentRepository) {
+    SubscribedModelService(RepositoryService repositoryService, MauroPluginService mauroPluginService, SubscribedCatalogueService subscribedCatalogueService,
+                           ModelContentRepository<Model> modelContentRepository, SubscribedModelCacheableRepository subscribedModelCacheableRepository) {
+        this.repositoryService = repositoryService
         this.mauroPluginService = mauroPluginService
         this.subscribedCatalogueService = subscribedCatalogueService
         this.modelContentRepository = modelContentRepository
+        this.subscribedModelCacheableRepository = subscribedModelCacheableRepository
     }
 
 
+    List<PublishedModel> getPublishedModels(SubscribedCatalogue subscribedCatalogue) {
+        subscribedCatalogueService.getPublishedModels(subscribedCatalogue)
+    }
+
     PublishedModel getPublishedModelForSubscribedModel(SubscribedModel subscribedModel) {
-        List<PublishedModel> publishedModels = subscribedCatalogueService.getPublishedModels(subscribedModel.subscribedCatalogue)
+        List<PublishedModel> publishedModels = getPublishedModels(subscribedModel.subscribedCatalogue)
 
         // Atom feeds may allow multiple versions of an entry with the same ID
         return Optional.ofNullable(publishedModels
@@ -54,41 +64,39 @@ class SubscribedModelService {
                                         Folder folder,
                                         SubscribedModel subscribedModel) {
         log.debug("Exporting SubscribedModel: $subscribedModel.subscribedModelId")
-        try {
-            PublishedModel sourcePublishedModel = getPublishedModelForSubscribedModel(subscribedModel)
-            List<MauroLink> exportLinks = sourcePublishedModel?.links
 
-            MauroLink exportLink = findExportLink(exportLinks, subscribedModelFederationParams)
+        PublishedModel sourcePublishedModel = getPublishedModelForSubscribedModel(subscribedModel)
+        List<MauroLink> exportLinks = sourcePublishedModel?.links
 
-            ModelImporterPlugin mauroImporterPlugin = getImporterPlugin(subscribedModelFederationParams, exportLink.contentType)
-            ErrorHandler.handleError(HttpStatus.BAD_REQUEST, mauroImporterPlugin,"$mauroImporterPlugin  not found ")
+        MauroLink exportLink = findExportLink(exportLinks, subscribedModelFederationParams)
 
-            ModelExporterPlugin exporterPlugin = getExporterPlugin(subscribedModel.subscribedModelType)
-            ErrorHandler.handleError(HttpStatus.BAD_REQUEST, exporterPlugin,"$exporterPlugin  not found ")
+        ModelImporterPlugin mauroImporterPlugin = getImporterPlugin(subscribedModelFederationParams, exportLink.contentType)
+        ErrorHandler.handleError(HttpStatus.BAD_REQUEST, mauroImporterPlugin, "$mauroImporterPlugin  not found ")
+
+        ModelExporterPlugin exporterPlugin = getExporterPlugin(subscribedModel.subscribedModelType)
+        ErrorHandler.handleError(HttpStatus.BAD_REQUEST, exporterPlugin, "$exporterPlugin  not found ")
 
 
-            byte[] resourceBytes = subscribedCatalogueService.getBytesResourceExport(subscribedModel.subscribedCatalogue, exportLink.url)
+        byte[] resourceBytes = subscribedCatalogueService.getBytesResourceExport(subscribedModel.subscribedCatalogue, exportLink.url)
 
-            FileParameter fileParameter = new FileParameter(null, exportLink.contentType, resourceBytes)
-            FileImportParameters fileImportParameters = new FileImportParameters().tap {
-                importFile = fileParameter
-                folderId = folder.id
-                finalised = true
-                useDefaultAuthority = false
-                importAsNewBranchModelVersion = sourcePublishedModel?.modelVersion ? false : true
-            }
-            //todo: authority
-            List<Model> importedModels = (List<Model>) mauroImporterPlugin.importModels(fileImportParameters)
-            Model savedImported = importedModels?.first()
-            if (savedImported) {
-                savedImported.folder = folder
-                modelContentRepository.saveWithContent(savedImported as Model)
-            }
+        FileParameter fileParameter = new FileParameter(null, exportLink.contentType, resourceBytes)
+        FileImportParameters fileImportParameters = new FileImportParameters().tap {
+            importFile = fileParameter
+            folderId = folder.id
+            finalised = true
+            useDefaultAuthority = false
+            importAsNewBranchModelVersion = sourcePublishedModel?.modelVersion ? false : true
         }
-        catch (Exception e) {
-            ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, " Failed federatedModel import")
+        //todo: authority
+        List<Model> importedModels = (List<Model>) mauroImporterPlugin.importModels(fileImportParameters)
+        Model savedImported = importedModels?.first()
+        checkModelLabelAndVersionNotAlreadyImported(savedImported)
+        if (savedImported) {
+            savedImported.folder = folder
+            modelContentRepository.saveWithContent(savedImported as Model)
         }
     }
+
 
     private ModelExporterPlugin getExporterPlugin(String subscribedModelType) {
         mauroPluginService.listPlugins(ModelExporterPlugin).find {
@@ -117,12 +125,12 @@ class SubscribedModelService {
             mauroPluginService.getPlugin(ModelImporterPlugin, importMetadata.namespace, importMetadata.name, importMetadata.version)
         } else if (importMetadata.hasName() && importMetadata.hasNameSpace()) {
             mauroPluginService.getPlugin(ModelImporterPlugin, importMetadata.namespace, importMetadata.name)
-        }else null
+        } else null
     }
 
     private ModelImporterPlugin getImporterPluginForContentTypeOrUrl(String contentType) {
         String modelType = contentType.split(APPLICATION_CONTENT_TYPE)[1].split(MAURO_DOT)[1].split(PLUS)[0].toLowerCase()
-        if (!modelType){
+        if (!modelType) {
             modelType
         }
         mauroPluginService.listPlugins(ModelImporterPlugin).find {
@@ -130,5 +138,17 @@ class SubscribedModelService {
         }
     }
 
+    void checkModelLabelAndVersionNotAlreadyImported(Model model) {
+        Model existing = repositoryService.modelCacheableRepositories.find {it.domainType == model.domainType}
+            .readByLabelAndModelVersion(model.label, model.modelVersion)
+        if (existing != null) {
+            ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "Model already exists with label $model.label and model version $model.modelVersion")
+        }
+    }
+
+    Long deleteModels(SubscribedCatalogue subscribedCatalogue) {
+        subscribedModelCacheableRepository.deleteAll(subscribedModelCacheableRepository.findAllBySubscribedCatalogueId(subscribedCatalogue.id))
+
+    }
 }
 

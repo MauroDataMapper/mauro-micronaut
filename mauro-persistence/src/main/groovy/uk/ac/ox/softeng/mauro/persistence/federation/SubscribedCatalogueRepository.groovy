@@ -1,6 +1,6 @@
 package uk.ac.ox.softeng.mauro.persistence.federation
 
-import uk.ac.ox.softeng.mauro.domain.federation.SubscribedCatalogue
+import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedCatalogue
 import uk.ac.ox.softeng.mauro.persistence.model.ItemRepository
 
 import groovy.transform.CompileStatic

@@ -1,4 +1,4 @@
-package uk.ac.ox.softeng.mauro.domain.federation
+package uk.ac.ox.softeng.mauro.domain.facet.federation
 
 import uk.ac.ox.softeng.mauro.domain.model.Model
 import uk.ac.ox.softeng.mauro.plugin.MauroPluginService

@@ -2,16 +2,16 @@ package uk.ac.ox.softeng.mauro.service.federation
 
 import uk.ac.ox.softeng.mauro.controller.Paths
 import uk.ac.ox.softeng.mauro.controller.federation.client.FederationClient
-import uk.ac.ox.softeng.mauro.controller.federation.client.FederationClientConfiguration
-import uk.ac.ox.softeng.mauro.domain.authority.Authority
-import uk.ac.ox.softeng.mauro.domain.federation.PublishedModel
-import uk.ac.ox.softeng.mauro.domain.federation.SubscribedCatalogue
-import uk.ac.ox.softeng.mauro.domain.federation.converter.SubscribedCatalogueConverter
-import uk.ac.ox.softeng.mauro.domain.federation.converter.SubscribedCatalogueConverterService
+import uk.ac.ox.softeng.mauro.domain.facet.federation.PublishedModel
+import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedCatalogue
+import uk.ac.ox.softeng.mauro.domain.facet.federation.converter.SubscribedCatalogueConverter
+import uk.ac.ox.softeng.mauro.domain.facet.federation.converter.SubscribedCatalogueConverterService
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import jakarta.inject.Inject
+
+import java.time.Instant
 
 @CompileStatic
 @Slf4j
@@ -27,23 +27,24 @@ class SubscribedCatalogueService {
     }
 
     List<PublishedModel> getPublishedModels(SubscribedCatalogue subscribedCatalogue) {
-       getPublishedModelsWithAuthority(subscribedCatalogue).v2
+        Map<String, Object> subscribedCatalogueModelsMap = federationClient.fetchFederatedClientDataAsMap(subscribedCatalogue, Paths.PUBLISHED_MODELS_ROUTE)
+        getConverterForSubscribedCatalogue(subscribedCatalogue).toPublishedModels(subscribedCatalogueModelsMap).v2
+    }
+
+    Tuple2<Instant, List<PublishedModel>> getNewerVersionsForPublishedModels(SubscribedCatalogue subscribedCatalogue, UUID subscribedModelId) {
+        Map<String, Object> newerVersionsAsMap =
+            federationClient.fetchFederatedClientDataAsMap(subscribedCatalogue, "$Paths.PUBLISHED_MODELS_ROUTE/$subscribedModelId$Paths.NEWER_VERSIONS")
+        getConverterForSubscribedCatalogue(subscribedCatalogue).publishedModelsNewerVersions(newerVersionsAsMap)
     }
 
 
-    protected Tuple2<Authority, List<PublishedModel>> getPublishedModelsWithAuthority(SubscribedCatalogue subscribedCatalogue) {
-        federationClient.initHttpClient(subscribedCatalogue)
-        Map<String, Object> subscribedCatalogueModelsMap = federationClient.fetchFederatedClientDataAsMap(Paths.PUBLISHED_MODELS_ROUTE)
-        getConverterForSubscribedCatalogue(subscribedCatalogue).toPublishedModels(subscribedCatalogueModelsMap)
+    byte[] getBytesResourceExport(SubscribedCatalogue subscribedCatalogue, String resourceUrl) {
+        federationClient.clientSetup(subscribedCatalogue)
+        federationClient.retrieveBytesFromClient(subscribedCatalogue, resourceUrl)
     }
 
     private SubscribedCatalogueConverter getConverterForSubscribedCatalogue(SubscribedCatalogue subscribedCatalogue) {
         subscribedCatalogueConverterService.getSubscribedCatalogueConverter(subscribedCatalogue.subscribedCatalogueType)
-    }
-
-    byte[] getBytesResourceExport(SubscribedCatalogue subscribedCatalogue,String resourceUrl) {
-        federationClient.initHttpClient(subscribedCatalogue)
-        federationClient.retrieveBytesFromClient(resourceUrl)
     }
 }
 

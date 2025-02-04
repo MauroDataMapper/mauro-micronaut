@@ -1,8 +1,8 @@
 package uk.ac.ox.softeng.mauro.controller.federation
 
 import uk.ac.ox.softeng.mauro.controller.Paths
-import uk.ac.ox.softeng.mauro.domain.federation.PublishService
-import uk.ac.ox.softeng.mauro.domain.federation.PublishedModelResponse
+import uk.ac.ox.softeng.mauro.domain.facet.federation.PublishService
+import uk.ac.ox.softeng.mauro.domain.facet.federation.response.PublishedModelResponse
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.model.Model
 import uk.ac.ox.softeng.mauro.domain.security.Role
@@ -53,13 +53,13 @@ class PublishController {
 
 
     @Get(Paths.PUBLISHED_MODELS_NEWER_VERSIONS_ROUTE)
-    PublishedModelResponse newerVersions(@NonNull UUID id) {
+    PublishedModelResponse newerVersions(@NonNull UUID publishedModelId) {
         PublishedModelResponse publishedModelResponse
         try {
             List<Model> finalisedModels = getFinalisedModels()
-            Model publishedVersion = finalisedModels.find {it.id == id}
+            Model publishedVersion = finalisedModels.find {it.id == publishedModelId}
             if (!publishedVersion) {
-                throw new HttpStatusException(HttpStatus.NOT_FOUND, "Entity not found, $id")
+                throw new HttpStatusException(HttpStatus.NOT_FOUND, "Entity not found, $publishedModelId")
             }
             publishedModelResponse = new PublishedModelResponse(null, publishService.getPublishedModels(finalisedModels.findAll {
                 it.id != publishedVersion.id

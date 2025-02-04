@@ -1,8 +1,8 @@
 package uk.ac.ox.softeng.mauro.federation
 
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
-import uk.ac.ox.softeng.mauro.domain.federation.SubscribedCatalogue
-import uk.ac.ox.softeng.mauro.domain.federation.SubscribedModel
+import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedCatalogue
+import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedModel
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.persistence.SecuredContainerizedTest
 import uk.ac.ox.softeng.mauro.security.SecuredIntegrationSpec
@@ -43,7 +43,7 @@ class SubscribedModelIntegrationSpec extends SecuredIntegrationSpec {
 
 
     @Unroll
-    void 'logged in admin, - can create #payload for SubscribedCatalogue'() {
+    void 'logged in admin, - can create subscribed model #payload'() {
         given:
         loginAdmin()
         and:
@@ -73,7 +73,7 @@ class SubscribedModelIntegrationSpec extends SecuredIntegrationSpec {
     }
 
     @Unroll
-    void 'logged in user, - can create #payload for SubscribedCatalogue'() {
+    void 'logged in user, - can create subscribed model #payload'() {
         given:
         loginAdmin()
 
@@ -120,4 +120,142 @@ class SubscribedModelIntegrationSpec extends SecuredIntegrationSpec {
         exception.status == HttpStatus.UNAUTHORIZED
     }
 
+
+    void 'any user can retrieve subscribed model by id'() {
+        given:
+        loginAdmin()
+        SubscribedCatalogue subscribedCatalogue = (SubscribedCatalogue) POST("$ADMIN_SUBSCRIBED_CATALOGUES_PATH", subscribedCataloguePayload(), SubscribedCatalogue)
+        SubscribedModel subscribedModel = (SubscribedModel) POST("$SUBSCRIBED_CATALOGUES_PATH/$subscribedCatalogue.id$SUBSCRIBED_MODELS_PATH",
+                                                                 subscribedModelPayload(folderId) , SubscribedModel)
+        logout()
+
+        when:
+        loginUser()
+        SubscribedModel getResponse = (SubscribedModel) GET("$SUBSCRIBED_CATALOGUES_PATH/$subscribedCatalogue.id$SUBSCRIBED_MODELS_PATH/$subscribedModel.id",SubscribedModel)
+
+        then:
+        getResponse
+        logout()
+
+        loginAdmin()
+        when:
+        getResponse = (SubscribedModel) GET("$SUBSCRIBED_CATALOGUES_PATH/$subscribedCatalogue.id$SUBSCRIBED_MODELS_PATH/$subscribedModel.id",SubscribedModel)
+
+        then:
+        getResponse
+    }
+
+    void 'notLoggedIn -get subscribedModel by id - should get unauthorized exception'(){
+        given:
+        loginAdmin()
+        SubscribedCatalogue subscribedCatalogue = (SubscribedCatalogue) POST("$ADMIN_SUBSCRIBED_CATALOGUES_PATH", subscribedCataloguePayload(), SubscribedCatalogue)
+        SubscribedModel subscribedModel = (SubscribedModel) POST("$SUBSCRIBED_CATALOGUES_PATH/$subscribedCatalogue.id$SUBSCRIBED_MODELS_PATH",
+                                                                 subscribedModelPayload(folderId) , SubscribedModel)
+        logout()
+
+        when:
+        GET("$SUBSCRIBED_CATALOGUES_PATH/$subscribedCatalogue.id$SUBSCRIBED_MODELS_PATH/$subscribedModel.id",SubscribedModel)
+
+        then:
+        HttpClientResponseException exception = thrown()
+        exception.status == HttpStatus.UNAUTHORIZED
+
+    }
+
+
+    void 'importing subscribedModel - should not allow import when existing model exists with same label and modelVersion -throws Unprocessible Entity exception'(){
+        given:
+        loginAdmin()
+
+        and:
+        SubscribedCatalogue subscribedCatalogue = (SubscribedCatalogue) POST("$ADMIN_SUBSCRIBED_CATALOGUES_PATH", subscribedCataloguePayload(), SubscribedCatalogue)
+        POST("$SUBSCRIBED_CATALOGUES_PATH/$subscribedCatalogue.id$SUBSCRIBED_MODELS_PATH", subscribedModelPayload(folderId), SubscribedModel)
+        logout()
+        loginUser()
+
+        when:
+        POST("$SUBSCRIBED_CATALOGUES_PATH/$subscribedCatalogue.id$SUBSCRIBED_MODELS_PATH", subscribedModelPayload(folderId), SubscribedModel)
+
+        then:
+        HttpClientResponseException exception = thrown()
+        exception.status == HttpStatus.UNPROCESSABLE_ENTITY
+    }
+
+    void 'any user can retrieve subscribed model by id'() {
+        given:
+        loginAdmin()
+        SubscribedCatalogue subscribedCatalogue = (SubscribedCatalogue) POST("$ADMIN_SUBSCRIBED_CATALOGUES_PATH", subscribedCataloguePayload(), SubscribedCatalogue)
+        SubscribedModel subscribedModel = (SubscribedModel) POST("$SUBSCRIBED_CATALOGUES_PATH/$subscribedCatalogue.id$SUBSCRIBED_MODELS_PATH",
+                                                                 subscribedModelPayload(folderId) , SubscribedModel)
+        logout()
+
+        when:
+        loginUser()
+        SubscribedModel getResponse = (SubscribedModel) GET("$SUBSCRIBED_CATALOGUES_PATH/$subscribedCatalogue.id$SUBSCRIBED_MODELS_PATH/$subscribedModel.id",SubscribedModel)
+
+        then:
+        getResponse
+        logout()
+
+        loginAdmin()
+        when:
+        getResponse = (SubscribedModel) GET("$SUBSCRIBED_CATALOGUES_PATH/$subscribedCatalogue.id$SUBSCRIBED_MODELS_PATH/$subscribedModel.id",SubscribedModel)
+
+        then:
+        getResponse
+    }
+
+    void 'only adminUser can delete subscribed model'() {
+        given:
+        loginAdmin()
+        SubscribedCatalogue subscribedCatalogue = (SubscribedCatalogue) POST("$ADMIN_SUBSCRIBED_CATALOGUES_PATH", subscribedCataloguePayload(), SubscribedCatalogue)
+        SubscribedModel subscribedModel = (SubscribedModel) POST("$SUBSCRIBED_CATALOGUES_PATH/$subscribedCatalogue.id$SUBSCRIBED_MODELS_PATH",
+                                                                 subscribedModelPayload(folderId), SubscribedModel)
+        logout()
+        loginUser()
+
+        when:
+        DELETE("$SUBSCRIBED_CATALOGUES_PATH/$subscribedCatalogue.id$SUBSCRIBED_MODELS_PATH/$subscribedModel.id", HttpStatus)
+        then:
+        HttpClientResponseException exception = thrown()
+        exception.status == HttpStatus.FORBIDDEN
+
+        logout()
+        loginAdmin()
+
+        when:
+        HttpStatus httpStatus = DELETE("$SUBSCRIBED_CATALOGUES_PATH/$subscribedCatalogue.id$SUBSCRIBED_MODELS_PATH/$subscribedModel.id", HttpStatus)
+
+        then:
+        httpStatus == HttpStatus.NO_CONTENT
+    }
+
+    void 'Delete subscribedCatalogue. AdminUser can delete subscribedCatalogue and associated subscribedModels'() {
+        given:
+        loginAdmin()
+
+        SubscribedCatalogue created = (SubscribedCatalogue) POST("$ADMIN_SUBSCRIBED_CATALOGUES_PATH", subscribedCataloguePayload('label1'), SubscribedCatalogue)
+        UUID folderId = ((Folder) POST("$FOLDERS_PATH", folder(), Folder)).id
+        SubscribedModel subscribedModel = (SubscribedModel) POST("$SUBSCRIBED_CATALOGUES_PATH/$created.id$SUBSCRIBED_MODELS_PATH", subscribedModelPayload(folderId), SubscribedModel)
+
+        when:
+        HttpStatus httpStatus = DELETE("$ADMIN_SUBSCRIBED_CATALOGUES_PATH/$created.id", HttpStatus)
+
+        then:
+        httpStatus == HttpStatus.NO_CONTENT
+
+        when:
+        ListResponse<SubscribedCatalogue> listResponse  = (ListResponse) GET("$SUBSCRIBED_CATALOGUES_PATH", ListResponse)
+
+        then:
+        listResponse.items.isEmpty()
+
+
+        when:
+        ListResponse<SubscribedModel> subscribedModelListResponse = (ListResponse)GET("$SUBSCRIBED_CATALOGUES_PATH/$created.id$SUBSCRIBED_MODELS_PATH", ListResponse)
+
+        then:
+        subscribedModelListResponse.items.isEmpty()
+
+    }
 }

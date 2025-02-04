@@ -2,7 +2,7 @@ package uk.ac.ox.softeng.mauro.federation
 
 import uk.ac.ox.softeng.mauro.controller.federation.client.FederationClient
 import uk.ac.ox.softeng.mauro.controller.federation.client.FederationClientConfiguration
-import uk.ac.ox.softeng.mauro.domain.federation.SubscribedCatalogue
+import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedCatalogue
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.util.logging.Slf4j
@@ -16,7 +16,6 @@ import jakarta.inject.Singleton
 class MockFederationClient extends FederationClient {
 
     private FederationClientConfiguration federationClientConfiguration
-    private SubscribedCatalogue previousState
 
     private String jsonString
 
@@ -29,18 +28,24 @@ class MockFederationClient extends FederationClient {
     }
 
     @Override
-    void initHttpClient(SubscribedCatalogue subscribedCatalogue) {
-        previousState = subscribedCatalogue
+    void clientSetup(SubscribedCatalogue subscribedCatalogue) {
     }
 
     @Override
-    Map<String, Object> fetchFederatedClientDataAsMap(String requestPath) {
+    Map<String, Object> fetchFederatedClientDataAsMap(SubscribedCatalogue subscribedCatalogue, String requestPath) {
+        if (requestPath.endsWith("newerVersions")){
+            jsonString = getNewerVersionsTestData()
+        }
         Map<String, Object> federatedDataAsMap = objectMapper.readValue(jsonString, Map.class)
         federatedDataAsMap
     }
 
     @Override
-    byte[] retrieveBytesFromClient(String url) {
+    byte[] retrieveBytesFromClient(SubscribedCatalogue subscribedCatalogue,String url) {
         return new File('src/test/resources/federatedPublishedModelsBytesAsText.json').getBytes()
+    }
+
+    String getNewerVersionsTestData() {
+        jsonString = new File('src/test/resources/subscribedCataloguePublishedModelsNewerVersions.json').text
     }
 }

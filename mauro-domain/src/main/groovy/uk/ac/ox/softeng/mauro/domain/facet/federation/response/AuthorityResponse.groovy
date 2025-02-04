@@ -1,4 +1,4 @@
-package uk.ac.ox.softeng.mauro.domain.federation
+package uk.ac.ox.softeng.mauro.domain.facet.federation.response
 
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.Introspected

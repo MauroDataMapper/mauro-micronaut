@@ -1,7 +1,7 @@
 package uk.ac.ox.softeng.mauro.persistence.federation
 
 
-import uk.ac.ox.softeng.mauro.domain.federation.SubscribedModel
+import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedModel
 import uk.ac.ox.softeng.mauro.persistence.model.ItemRepository
 
 import groovy.transform.CompileStatic
@@ -24,6 +24,10 @@ abstract class SubscribedModelRepository implements ItemRepository<SubscribedMod
     @Nullable
     @Query('select * from federation.subscribed_model')
     abstract List<SubscribedModel> findAllBySubscribedCatalogueId(UUID uuid)
+
+    @Nullable
+    @Query('select * from federation.subscribed_model where id = :id  and subscribed_catalogue_id = :subscribedCatalogueId')
+    abstract SubscribedModel findByIdAndSubscribedCatalogueId(UUID id, UUID subscribedCatalogueId)
 
     @Override
     Class getDomainClass() {

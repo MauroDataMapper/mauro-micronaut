@@ -1,6 +1,6 @@
-package uk.ac.ox.softeng.mauro.domain.federation
+package uk.ac.ox.softeng.mauro.domain.facet.federation.response
 
-import uk.ac.ox.softeng.mauro.domain.authority.Authority
+import uk.ac.ox.softeng.mauro.domain.facet.federation.PublishedModel
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import groovy.transform.CompileStatic

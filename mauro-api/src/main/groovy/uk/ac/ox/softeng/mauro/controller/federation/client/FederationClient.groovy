@@ -1,8 +1,8 @@
 package uk.ac.ox.softeng.mauro.controller.federation.client
 
 import uk.ac.ox.softeng.mauro.ErrorHandler
-import uk.ac.ox.softeng.mauro.domain.federation.SubscribedCatalogue
-import uk.ac.ox.softeng.mauro.domain.federation.SubscribedCatalogueAuthenticationType
+import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedCatalogue
+import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedCatalogueAuthenticationType
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
@@ -25,7 +25,6 @@ class FederationClient {
     HttpClient httpClient
 
     private final FederationClientConfiguration federationClientConfiguration
-    private SubscribedCatalogue previousState
 
     private String contextPath
     private Map headersMap = [:]
@@ -35,26 +34,22 @@ class FederationClient {
         this.federationClientConfiguration = federationClientConfiguration
     }
 
-    void initHttpClient(SubscribedCatalogue subscribedCatalogue) {
-        if (!previousState || hasChanged(subscribedCatalogue)) {
-            this.contextPath = ClientContext.resolveContextPath(subscribedCatalogue)
-            this.httpClient = getFederatedClient(subscribedCatalogue)
-            log.debug("FederationClient: no previous state: setting context path $contextPath")
+    void clientSetup(SubscribedCatalogue subscribedCatalogue) {
+        this.contextPath = ClientContext.resolveContextPath(subscribedCatalogue)
+        this.httpClient = getFederatedClient(subscribedCatalogue)
+        log.debug("FederationClient: no previous state: setting context path $contextPath")
 
-            switch (subscribedCatalogue.subscribedCatalogueAuthenticationType) {
-                case SubscribedCatalogueAuthenticationType.API_KEY:
-                    headersMap.put(FederationClientConfiguration.API_KEY_HEADER, subscribedCatalogue.apiKey)
-                    break
-                default:
-                    break
-            }
-            previousState = subscribedCatalogue
-        } else {
-            log.debug("FederationClient: previous state found. skipping initClient")
+        switch (subscribedCatalogue.subscribedCatalogueAuthenticationType) {
+            case SubscribedCatalogueAuthenticationType.API_KEY:
+                headersMap.put(FederationClientConfiguration.API_KEY_HEADER, subscribedCatalogue.apiKey)
+                break
+            default:
+                break
         }
     }
 
-    Map<String, Object> fetchFederatedClientDataAsMap(String requestPath) {
+    Map<String, Object> fetchFederatedClientDataAsMap(SubscribedCatalogue subscribedCatalogue, String requestPath) {
+        clientSetup(subscribedCatalogue)
         String contextAndPath = resolvePath(requestPath)
         try {
             httpClient.toBlocking().retrieve((HttpRequest.GET(contextAndPath?.toURI())
@@ -66,7 +61,8 @@ class FederationClient {
         }
     }
 
-    byte[] retrieveBytesFromClient(String url) {
+    byte[] retrieveBytesFromClient(SubscribedCatalogue subscribedCatalogue, String url) {
+        clientSetup(subscribedCatalogue)
         try {
             httpClient.toBlocking().retrieve(HttpRequest.GET(url.toURI()).headers(headersMap), Argument.of(byte[])) as byte[]
         }
@@ -80,9 +76,6 @@ class FederationClient {
         return contextPath + requestPath
     }
 
-    private boolean hasChanged(SubscribedCatalogue subscribedCatalogue) {
-        previousState != subscribedCatalogue
-    }
 
     private HttpClient getFederatedClient(SubscribedCatalogue subscribedCatalogue) {
         return new DefaultHttpClient(subscribedCatalogue.url.toURI(), federationClientConfiguration)

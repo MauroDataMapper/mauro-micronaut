@@ -2,8 +2,8 @@ package uk.ac.ox.softeng.mauro.persistence.cache
 
 import uk.ac.ox.softeng.mauro.domain.config.ApiProperty
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
-import uk.ac.ox.softeng.mauro.domain.federation.SubscribedCatalogue
-import uk.ac.ox.softeng.mauro.domain.federation.SubscribedModel
+import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedCatalogue
+import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedModel
 import uk.ac.ox.softeng.mauro.domain.model.Item
 import uk.ac.ox.softeng.mauro.domain.model.SummaryMetadataReport
 import uk.ac.ox.softeng.mauro.domain.security.CatalogueUser
@@ -25,6 +25,7 @@ import io.micronaut.cache.annotation.CacheConfig
 import io.micronaut.cache.annotation.CacheInvalidate
 import io.micronaut.cache.annotation.Cacheable
 import io.micronaut.core.annotation.NonNull
+import io.micronaut.core.annotation.Nullable
 import jakarta.inject.Singleton
 
 @Slf4j
@@ -306,13 +307,20 @@ abstract class ItemCacheableRepository<I extends Item> implements ItemRepository
         SubscribedModelCacheableRepository(SubscribedModelRepository subscribedModelRepository) {
             super(subscribedModelRepository)
         }
-
+        @Nullable
         List<SubscribedModel> findAll(){
             ((SubscribedModelRepository) repository).findAll()
         }
 
+        @Nullable
         List<SubscribedModel> findAllBySubscribedCatalogueId(UUID subscribedCatalogueId){
             ((SubscribedModelRepository) repository).findAllBySubscribedCatalogueId(subscribedCatalogueId)
         }
+
+        @Nullable
+        SubscribedModel findBySubscribedModelIdAndSubscribedCatalogueId(UUID id, SubscribedCatalogue subscribedCatalogue) {
+            ((SubscribedModelRepository) repository).findByIdAndSubscribedCatalogueId(id, subscribedCatalogue.id)
+        }
+
     }
 }

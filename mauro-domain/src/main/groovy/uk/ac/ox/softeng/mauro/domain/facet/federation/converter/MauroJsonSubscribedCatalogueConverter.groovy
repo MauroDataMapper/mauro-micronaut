@@ -1,9 +1,9 @@
-package uk.ac.ox.softeng.mauro.domain.federation.converter
+package uk.ac.ox.softeng.mauro.domain.facet.federation.converter
 
 import uk.ac.ox.softeng.mauro.domain.authority.Authority
-import uk.ac.ox.softeng.mauro.domain.federation.MauroLink
-import uk.ac.ox.softeng.mauro.domain.federation.PublishedModel
-import uk.ac.ox.softeng.mauro.domain.federation.SubscribedCatalogueType
+import uk.ac.ox.softeng.mauro.domain.facet.federation.MauroLink
+import uk.ac.ox.softeng.mauro.domain.facet.federation.PublishedModel
+import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedCatalogueType
 import uk.ac.ox.softeng.mauro.domain.model.version.ModelVersion
 
 import groovy.util.logging.Slf4j
@@ -33,6 +33,13 @@ class MauroJsonSubscribedCatalogueConverter implements SubscribedCatalogueConver
 
         List<PublishedModel> publishedModels = (subscribedCatalogueModelsMap.publishedModels as List<Map<String, Object>>).collect {convertEntryToPublishedModel(it)}
         return new Tuple2(subscribedAuthority, publishedModels)
+    }
+
+    @Override
+    Tuple2<Instant, List<PublishedModel>> publishedModelsNewerVersions(Map<String,Object> newerVersionsMap){
+        Instant lastUpdated = Instant.parse(newerVersionsMap.lastUpdated as CharSequence)
+        List<PublishedModel> newerVersions = (newerVersionsMap.newerPublishedModels as List<Map<String, Object>>).collect {convertEntryToPublishedModel(it)}
+        return new Tuple2(lastUpdated, newerVersions)
     }
 
     protected PublishedModel convertEntryToPublishedModel(Map<String, Object> entry) {

@@ -3,12 +3,14 @@ package uk.ac.ox.softeng.mauro.controller.federation
 import uk.ac.ox.softeng.mauro.ErrorHandler
 import uk.ac.ox.softeng.mauro.controller.Paths
 import uk.ac.ox.softeng.mauro.controller.model.ItemController
-import uk.ac.ox.softeng.mauro.domain.federation.PublishedModel
-import uk.ac.ox.softeng.mauro.domain.federation.SubscribedCatalogue
-import uk.ac.ox.softeng.mauro.domain.federation.SubscribedCatalogueAuthenticationType
-import uk.ac.ox.softeng.mauro.domain.federation.SubscribedCatalogueType
+import uk.ac.ox.softeng.mauro.domain.facet.federation.PublishedModel
+import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedCatalogue
+import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedCatalogueAuthenticationType
+import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedCatalogueType
+import uk.ac.ox.softeng.mauro.domain.facet.federation.response.SubscribedCataloguesPublishedModelsNewerVersions
 import uk.ac.ox.softeng.mauro.persistence.cache.ItemCacheableRepository
 import uk.ac.ox.softeng.mauro.service.federation.SubscribedCatalogueService
+import uk.ac.ox.softeng.mauro.service.federation.SubscribedModelService
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 import groovy.transform.CompileStatic
@@ -19,6 +21,7 @@ import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.annotation.Controller
+import io.micronaut.http.annotation.Delete
 import io.micronaut.http.annotation.Get
 import io.micronaut.http.annotation.Post
 import io.micronaut.http.annotation.Put
@@ -32,6 +35,8 @@ import io.micronaut.security.rules.SecurityRule
 import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
 
+import java.time.Instant
+
 @Slf4j
 @Controller()
 @CompileStatic
@@ -44,13 +49,14 @@ class SubscribedCatalogueController extends ItemController<SubscribedCatalogue> 
     ItemCacheableRepository.SubscribedCatalogueCacheableRepository subscribedCatalogueCacheableRepository
 
     final SubscribedCatalogueService subscribedCatalogueService
-
+    final SubscribedModelService subscribedModelService
     @Inject
     SubscribedCatalogueController(ItemCacheableRepository.SubscribedCatalogueCacheableRepository subscribedCatalogueCacheableRepository,
-                                  SubscribedCatalogueService subscribedCatalogueService) {
+                                  SubscribedCatalogueService subscribedCatalogueService, SubscribedModelService subscribedModelService) {
         super(subscribedCatalogueCacheableRepository)
         this.subscribedCatalogueCacheableRepository = subscribedCatalogueCacheableRepository
         this.subscribedCatalogueService = subscribedCatalogueService
+        this.subscribedModelService = subscribedModelService
     }
 
     @Get(Paths.ADMIN_SUBSCRIBED_CATALOGUES_ROUTE)
@@ -114,7 +120,7 @@ class SubscribedCatalogueController extends ItemController<SubscribedCatalogue> 
         ListResponse.from(SubscribedCatalogueAuthenticationType.labels())
     }
 
-    @Get(Paths.SUBSCRIBED_CATALOGUES_TEST_CONNECTION_ROUTE)
+    @Get(Paths.ADMIN_SUBSCRIBED_CATALOGUES_TEST_CONNECTION_ROUTE)
     @ExecuteOn(TaskExecutors.BLOCKING)
     HttpStatus testConnection(@NonNull UUID subscribedCatalogueId) {
         accessControlService.checkAdministrator()
@@ -122,7 +128,7 @@ class SubscribedCatalogueController extends ItemController<SubscribedCatalogue> 
         SubscribedCatalogue subscribedCatalogue = subscribedCatalogueCacheableRepository.findById(subscribedCatalogueId)
         ErrorHandler.handleError(HttpStatus.NOT_FOUND, subscribedCatalogue, "Item $subscribedCatalogueId not found")
         try {
-            List<PublishedModel> publishedModels = getFederatedPublishedModels(subscribedCatalogue)
+            subscribedModelService.getPublishedModels(subscribedCatalogue)
         } catch (Exception e) {
             log.error(e.message)
             throw new HttpServerException(e.message, e)
@@ -138,17 +144,43 @@ class SubscribedCatalogueController extends ItemController<SubscribedCatalogue> 
 
         SubscribedCatalogue subscribedCatalogue = subscribedCatalogueCacheableRepository.findById(subscribedCatalogueId)
         ErrorHandler.handleError(HttpStatus.NOT_FOUND, subscribedCatalogue, "Item $subscribedCatalogueId not found")
-        ListResponse.from(getFederatedPublishedModels(subscribedCatalogue))
+        ListResponse.from(subscribedModelService.getPublishedModels(subscribedCatalogue))
     }
 
-    protected List<PublishedModel> getFederatedPublishedModels(SubscribedCatalogue subscribedCatalogue) {
-        List<PublishedModel> publishedModels = []
-        try {
-            publishedModels = subscribedCatalogueService.getPublishedModels(subscribedCatalogue)
-        } catch (Exception e) {
-            throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.message)
+    @Get(Paths.SUBSCRIBED_CATALOGUES_PUBLISHED_MODELS_NEWER_VERSIONS_ROUTE)
+    @ExecuteOn(TaskExecutors.BLOCKING)
+    SubscribedCataloguesPublishedModelsNewerVersions publishedModelsNewerVersions(@NonNull UUID subscribedCatalogueId, @NonNull UUID publishedModelId) {
+        accessControlService.checkAuthenticated()
+
+        SubscribedCatalogue subscribedCatalogue = subscribedCatalogueCacheableRepository.findById(subscribedCatalogueId)
+        ErrorHandler.handleError(HttpStatus.NOT_FOUND, subscribedCatalogue, "Item $subscribedCatalogueId not found")
+
+        Tuple2<Instant, List<PublishedModel>> result  = subscribedCatalogueService.getNewerVersionsForPublishedModels(subscribedCatalogue, publishedModelId)
+        new SubscribedCataloguesPublishedModelsNewerVersions().tap {
+            lastUpdated = result.v1
+            newerPublishedModels = result.v2 ?: []
         }
-        publishedModels
+    }
+
+
+    @Delete(Paths.ADMIN_SUBSCRIBED_CATALOGUES_ID_ROUTE)
+    @Transactional
+    HttpStatus delete(@NonNull UUID subscribedCatalogueId, @Body @Nullable SubscribedCatalogue subscribedCatalogue) {
+        accessControlService.checkAdministrator()
+
+        SubscribedCatalogue catalogueToDelete = subscribedCatalogueCacheableRepository.findById(subscribedCatalogueId)
+        ErrorHandler.handleError(HttpStatus.NOT_FOUND, catalogueToDelete, "Item $subscribedCatalogueId not found")
+        Long deletedCount = subscribedModelService.deleteModels(catalogueToDelete)
+        if (deletedCount) {
+            log.debug("Removed $deletedCount of associated models")
+        }
+        if (subscribedCatalogue?.version) catalogueToDelete.version = subscribedCatalogue.version
+        Long deleted = subscribedCatalogueCacheableRepository.delete(catalogueToDelete)
+        if (deleted) {
+            HttpStatus.NO_CONTENT
+        } else {
+            throw new HttpStatusException(HttpStatus.NOT_FOUND, 'Not found for deletion')
+        }
     }
 
 }

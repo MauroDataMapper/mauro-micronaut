@@ -1,9 +1,10 @@
 package uk.ac.ox.softeng.mauro.federation
 
-import uk.ac.ox.softeng.mauro.domain.federation.PublishedModel
-import uk.ac.ox.softeng.mauro.domain.federation.SubscribedCatalogue
-import uk.ac.ox.softeng.mauro.domain.federation.SubscribedCatalogueAuthenticationType
-import uk.ac.ox.softeng.mauro.domain.federation.SubscribedCatalogueType
+import uk.ac.ox.softeng.mauro.domain.facet.federation.PublishedModel
+import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedCatalogue
+import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedCatalogueAuthenticationType
+import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedCatalogueType
+import uk.ac.ox.softeng.mauro.domain.facet.federation.response.SubscribedCataloguesPublishedModelsNewerVersions
 import uk.ac.ox.softeng.mauro.persistence.SecuredContainerizedTest
 import uk.ac.ox.softeng.mauro.security.SecuredIntegrationSpec
 import uk.ac.ox.softeng.mauro.web.ListResponse
@@ -19,7 +20,7 @@ import spock.lang.Unroll
 @SecuredContainerizedTest
 @Sql(scripts = ["classpath:sql/tear-down-subscribed-catalogue.sql"], phase = Sql.Phase.AFTER_EACH)
 class SubscribedCatalogueIntegrationSpec extends SecuredIntegrationSpec {
-
+    static String TEST_MODEL_ID = "0b97751d-b6bf-476c-a9e6-95d3352e8008"
     @Inject
     EmbeddedApplication<?> application
     @Inject
@@ -71,6 +72,7 @@ class SubscribedCatalogueIntegrationSpec extends SecuredIntegrationSpec {
         subscribedCatalogue.url == "https://maurosandbox.com/sandbox"
         subscribedCatalogue.subscribedCatalogueAuthenticationType == SubscribedCatalogueAuthenticationType.API_KEY
         subscribedCatalogue.subscribedCatalogueType == SubscribedCatalogueType.MAURO_JSON
+        subscribedCatalogue.apiKey == 'b39d63d4-4fd4-494d-a491-3c778d89acae'
     }
 
     @Unroll
@@ -91,6 +93,26 @@ class SubscribedCatalogueIntegrationSpec extends SecuredIntegrationSpec {
         null        | HttpStatus.UNAUTHORIZED
     }
 
+    void 'any user - can retrieve subscribedCatalogue by id'() {
+        given:
+        loginAdmin()
+        SubscribedCatalogue subscribedCatalogue = (SubscribedCatalogue) POST("$ADMIN_SUBSCRIBED_CATALOGUES_PATH", subscribedCataloguePayload(), SubscribedCatalogue)
+
+        when:
+        SubscribedCatalogue retrieved = GET("$SUBSCRIBED_CATALOGUES_PATH/$subscribedCatalogue.id", SubscribedCatalogue)
+
+        then:
+        retrieved
+
+        logout()
+        loginUser()
+
+        when:
+        retrieved = GET("$SUBSCRIBED_CATALOGUES_PATH/$subscribedCatalogue.id", SubscribedCatalogue)
+        then:
+        retrieved
+    }
+
     void 'admin user - can test subscribedCatalogue connection'() {
         given:
         loginAdmin()
@@ -98,7 +120,7 @@ class SubscribedCatalogueIntegrationSpec extends SecuredIntegrationSpec {
         SubscribedCatalogue subscribedCatalogue = (SubscribedCatalogue) POST("$ADMIN_SUBSCRIBED_CATALOGUES_PATH", subscribedCataloguePayload(), SubscribedCatalogue)
 
         when:
-        HttpStatus httpStatus = GET("$SUBSCRIBED_CATALOGUES_PATH/$subscribedCatalogue.id$TEST_CONNECTION", HttpStatus)
+        HttpStatus httpStatus = GET("$ADMIN_SUBSCRIBED_CATALOGUES_PATH/$subscribedCatalogue.id$TEST_CONNECTION", HttpStatus)
 
         then:
         httpStatus == HttpStatus.OK
@@ -113,7 +135,7 @@ class SubscribedCatalogueIntegrationSpec extends SecuredIntegrationSpec {
         loginUser()
 
         when:
-        GET("$SUBSCRIBED_CATALOGUES_PATH/$subscribedCatalogue.id$TEST_CONNECTION", HttpStatus)
+        GET("$ADMIN_SUBSCRIBED_CATALOGUES_PATH/$subscribedCatalogue.id$TEST_CONNECTION", HttpStatus)
 
         then:
         HttpClientResponseException exception = thrown()
@@ -121,7 +143,7 @@ class SubscribedCatalogueIntegrationSpec extends SecuredIntegrationSpec {
 
         logout()
         when:
-        GET("$SUBSCRIBED_CATALOGUES_PATH/$subscribedCatalogue.id$TEST_CONNECTION", HttpStatus)
+        GET("$ADMIN_SUBSCRIBED_CATALOGUES_PATH/$subscribedCatalogue.id$TEST_CONNECTION", HttpStatus)
 
         then:
         exception = thrown()
@@ -163,6 +185,27 @@ class SubscribedCatalogueIntegrationSpec extends SecuredIntegrationSpec {
 
     }
 
+
+    void 'admin and logged in users- should return newerVersions output'() {
+        given:
+        loginAdmin()
+
+        SubscribedCatalogue subscribedCatalogue = (SubscribedCatalogue) POST("$ADMIN_SUBSCRIBED_CATALOGUES_PATH", subscribedCataloguePayload(), SubscribedCatalogue)
+
+        logout()
+        loginUser()
+
+        when:
+        SubscribedCataloguesPublishedModelsNewerVersions response =
+            (SubscribedCataloguesPublishedModelsNewerVersions ) GET("$SUBSCRIBED_CATALOGUES_PATH/$subscribedCatalogue.id$PUBLISHEDMODELS/$TEST_MODEL_ID/newerVersions",
+                                                                 SubscribedCataloguesPublishedModelsNewerVersions)
+        then:
+        response
+        response.lastUpdated.toString() == "2023-06-12T16:03:07.118Z"
+        response.newerPublishedModels.size() == 3
+    }
+
+
     void 'not logged in - subscribedCatalogue publishedModels endpoint -is unauthorized'() {
         given:
         loginAdmin()
@@ -179,7 +222,7 @@ class SubscribedCatalogueIntegrationSpec extends SecuredIntegrationSpec {
     }
 
 
-    void 'admin and logged in users -r - can return subscribedCatalogueTypes'() {
+    void 'admin and logged in users - can return subscribedCatalogueTypes'() {
         given:
         loginAdmin()
 
@@ -310,4 +353,29 @@ class SubscribedCatalogueIntegrationSpec extends SecuredIntegrationSpec {
         resp
         resp.items.size() == 1
     }
+
+    void 'only adminUser can delete subscribed catalogue'() {
+        given:
+        loginAdmin()
+
+        SubscribedCatalogue created = (SubscribedCatalogue) POST("$ADMIN_SUBSCRIBED_CATALOGUES_PATH", subscribedCataloguePayload('label1'), SubscribedCatalogue)
+
+        when:
+        HttpStatus httpStatus = DELETE("$ADMIN_SUBSCRIBED_CATALOGUES_PATH/$created.id", HttpStatus)
+
+        then:
+        httpStatus == HttpStatus.NO_CONTENT
+
+        logout()
+        loginUser()
+
+        when:
+        DELETE("$ADMIN_SUBSCRIBED_CATALOGUES_PATH/$created.id", HttpStatus)
+
+        then:
+        HttpClientResponseException httpClientResponseException = thrown()
+        httpClientResponseException.status == HttpStatus.FORBIDDEN
+
+    }
+
 }

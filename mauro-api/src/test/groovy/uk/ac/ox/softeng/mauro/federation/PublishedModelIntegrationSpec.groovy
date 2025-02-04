@@ -2,7 +2,7 @@ package uk.ac.ox.softeng.mauro.federation
 
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
-import uk.ac.ox.softeng.mauro.domain.federation.PublishedModelResponse
+import uk.ac.ox.softeng.mauro.domain.facet.federation.response.PublishedModelResponse
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.domain.terminology.CodeSet
 import uk.ac.ox.softeng.mauro.domain.terminology.Terminology

@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.persistence.cache
 
+import uk.ac.ox.softeng.mauro.domain.model.version.ModelVersion
+
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.cache.annotation.CacheConfig
@@ -50,6 +52,11 @@ class ModelCacheableRepository<M extends Model> extends AdministeredItemCacheabl
     @Override
     List<M> readAllByFinalisedTrue() {
         repository.readAllByFinalisedTrue()
+    }
+
+    @Override
+    M readByLabelAndModelVersion(String label, ModelVersion modelVersion){
+        repository.readByLabelAndModelVersion(label, modelVersion)
     }
 
     // Cacheable Model Repository definitions
