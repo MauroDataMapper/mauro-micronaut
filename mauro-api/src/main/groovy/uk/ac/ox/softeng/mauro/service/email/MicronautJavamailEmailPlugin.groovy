@@ -2,6 +2,7 @@ package uk.ac.ox.softeng.mauro.service.email
 
 import uk.ac.ox.softeng.mauro.plugin.EmailPlugin
 
+import com.fasterxml.jackson.annotation.JsonTypeName
 import io.micronaut.context.annotation.Property
 import io.micronaut.context.env.Environment
 import io.micronaut.email.Contact
@@ -15,6 +16,7 @@ import jakarta.mail.Transport
 import uk.ac.ox.softeng.mauro.domain.security.CatalogueUser
 
 @Singleton
+@JsonTypeName("MicronautJavamailEmailPlugin")
 class MicronautJavamailEmailPlugin implements EmailPlugin {
 
     @Inject

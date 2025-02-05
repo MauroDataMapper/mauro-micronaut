@@ -9,6 +9,7 @@ import uk.ac.ox.softeng.mauro.domain.model.version.VersionChangeType
 import io.micronaut.runtime.EmbeddedApplication
 import io.micronaut.test.annotation.Sql
 import jakarta.inject.Inject
+import jakarta.inject.Singleton
 import spock.lang.Shared
 import uk.ac.ox.softeng.mauro.api.datamodel.DataModelApi
 import uk.ac.ox.softeng.mauro.api.facet.AnnotationApi
@@ -28,6 +29,7 @@ import uk.ac.ox.softeng.mauro.persistence.ContainerizedTest
 import uk.ac.ox.softeng.mauro.testing.CommonDataSpec
 
 @ContainerizedTest
+@Singleton
 @Sql(scripts = "classpath:sql/tear-down-datamodel.sql", phase = Sql.Phase.AFTER_EACH)
 class DataModelFacetDiffsIntegrationSpec extends CommonDataSpec {
 
@@ -41,13 +43,6 @@ class DataModelFacetDiffsIntegrationSpec extends CommonDataSpec {
 
     @Shared
     UUID annotationId
-
-    @Inject FolderApi folderApi
-    @Inject DataModelApi dataModelApi
-    @Inject MetadataApi metadataApi
-    @Inject AnnotationApi annotationApi
-    @Inject SummaryMetadataApi summaryMetadataApi
-    @Inject SummaryMetadataReportApi summaryMetadataReportApi
 
     void setup() {
         Folder response = folderApi.create(folder())

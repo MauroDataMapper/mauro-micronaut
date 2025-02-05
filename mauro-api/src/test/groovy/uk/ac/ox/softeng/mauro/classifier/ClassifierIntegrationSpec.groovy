@@ -14,6 +14,7 @@ import io.micronaut.runtime.EmbeddedApplication
 import io.micronaut.test.annotation.Sql
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
+import jakarta.inject.Singleton
 import spock.lang.Shared
 import uk.ac.ox.softeng.mauro.domain.classifier.ClassificationScheme
 import uk.ac.ox.softeng.mauro.domain.classifier.Classifier
@@ -25,14 +26,9 @@ import uk.ac.ox.softeng.mauro.testing.CommonDataSpec
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @ContainerizedTest
+@Singleton
 @Sql(scripts = ["classpath:sql/tear-down-classifiers.sql"], phase = Sql.Phase.AFTER_EACH)
 class ClassifierIntegrationSpec extends CommonDataSpec {
-
-    @Inject ClassificationSchemeApi classificationSchemeApi
-    @Inject ClassifierApi classifierApi
-    @Inject FolderApi folderApi
-    @Inject DataModelApi dataModelApi
-    @Inject SummaryMetadataApi summaryMetadataApi
 
     @Shared
     UUID folderId

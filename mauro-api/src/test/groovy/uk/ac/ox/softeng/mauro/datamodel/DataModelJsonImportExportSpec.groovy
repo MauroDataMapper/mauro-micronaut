@@ -15,6 +15,7 @@ import io.micronaut.http.client.multipart.MultipartBody
 import io.micronaut.runtime.EmbeddedApplication
 import io.micronaut.serde.ObjectMapper
 import jakarta.inject.Inject
+import jakarta.inject.Singleton
 import spock.lang.Shared
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataElement
@@ -29,6 +30,7 @@ import uk.ac.ox.softeng.mauro.testing.CommonDataSpec
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @ContainerizedTest
+@Singleton
 class DataModelJsonImportExportSpec extends CommonDataSpec {
 
     @Shared
@@ -48,15 +50,6 @@ class DataModelJsonImportExportSpec extends CommonDataSpec {
 
     @Shared
     UUID dataElementId
-
-    @Inject FolderApi folderApi
-    @Inject DataModelApi dataModelApi
-    @Inject DataClassApi dataClassApi
-    @Inject DataTypeApi dataTypeApi
-    @Inject DataElementApi dataElementApi
-    @Inject EnumerationValueApi enumerationValueApi
-    @Inject SummaryMetadataApi summaryMetadataApi
-    @Inject SummaryMetadataReportApi summaryMetadataReportApi
 
 
     @Override

@@ -25,7 +25,7 @@ interface SummaryMetadataReportApi {
     ListResponse<SummaryMetadataReport> list(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID summaryMetadataId)
 
     @Get(Paths.SUMMARY_METADATA_REPORTS_ID)
-    SummaryMetadataReport get(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID summaryMetadataId,
+    SummaryMetadataReport show(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID summaryMetadataId,
                               @NonNull UUID id)
 
     @Put(Paths.SUMMARY_METADATA_REPORTS_ID)

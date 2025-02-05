@@ -3,6 +3,7 @@ package uk.ac.ox.softeng.mauro.folder
 import io.micronaut.runtime.EmbeddedApplication
 import io.micronaut.test.annotation.Sql
 import jakarta.inject.Inject
+import jakarta.inject.Singleton
 import spock.lang.Shared
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
@@ -12,11 +13,9 @@ import uk.ac.ox.softeng.mauro.testing.CommonDataSpec
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @ContainerizedTest
+@Singleton
 @Sql(scripts = "classpath:sql/tear-down-summary-metadata.sql", phase = Sql.Phase.AFTER_EACH)
 class NestedSummaryMetadataIntegrationSpec extends CommonDataSpec {
-
-    @Inject
-    EmbeddedApplication<? extends EmbeddedApplication> application
 
     @Shared
     UUID folderId
@@ -25,22 +24,21 @@ class NestedSummaryMetadataIntegrationSpec extends CommonDataSpec {
 
 
     void setup() {
-        Folder folder = (Folder) POST("$FOLDERS_PATH", [label: 'Folder with SummaryMetadata'], Folder)
+        Folder folder = folderApi.create(new Folder(label: 'Folder with SummaryMetadata'))
         folderId = folder.id
     }
 
 
     void 'create summaryMetadata - folder should show created object'() {
         given:
-        Folder retrieved = (Folder) GET("$FOLDERS_PATH/$folderId", Folder)
+        Folder retrieved = folderApi.show(folderId)
         !retrieved.summaryMetadata
 
         and:
-        SummaryMetadata summaryMetadata = (SummaryMetadata) POST("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH",
-                summaryMetadataPayload(), SummaryMetadata)
+        SummaryMetadata summaryMetadata = summaryMetadataApi.create("folder", folderId, summaryMetadataPayload())
 
         when:
-        retrieved = (Folder) GET("$FOLDERS_PATH/$folderId", Folder)
+        retrieved = folderApi.show(folderId)
 
         then:
         retrieved.summaryMetadata
@@ -51,21 +49,20 @@ class NestedSummaryMetadataIntegrationSpec extends CommonDataSpec {
 
     void 'create summaryMetadata with reports  - folder should show created nested objects'() {
         given:
-        Folder retrieved = (Folder) GET("$FOLDERS_PATH/$folderId", Folder)
+        Folder retrieved = folderApi.show(folderId)
         !retrieved.summaryMetadata
 
         and:
-        SummaryMetadata summaryMetadata = (SummaryMetadata) POST("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH",
-                summaryMetadataPayload(), SummaryMetadata)
+        SummaryMetadata summaryMetadata = summaryMetadataApi.create("folder", folderId, summaryMetadataPayload())
         UUID summaryMetadataId = summaryMetadata.id
 
         and:
-        SummaryMetadataReport summaryMetadataReport = (SummaryMetadataReport) POST("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH/$summaryMetadataId$SUMMARY_METADATA_REPORT_PATH",
-                [reportValue: 'test-report-value'], SummaryMetadataReport)
+        SummaryMetadataReport summaryMetadataReport = summaryMetadataReportApi.create("folder", folderId, summaryMetadataId,
+                new SummaryMetadataReport(reportValue: 'test-report-value'))
 
 
         when:
-        retrieved = (Folder) GET("$FOLDERS_PATH/$folderId", Folder)
+        retrieved = folderApi.show(folderId)
 
         then:
         retrieved.summaryMetadata
@@ -79,31 +76,29 @@ class NestedSummaryMetadataIntegrationSpec extends CommonDataSpec {
 
     void 'create summaryMetadata with reports  - summaryMetadata should show created reports'() {
         given:
-        Folder retrieved = (Folder) GET("$FOLDERS_PATH/$folderId", Folder)
+        Folder retrieved = folderApi.show(folderId)
         !retrieved.summaryMetadata
 
         and:
-        SummaryMetadata summaryMetadata = (SummaryMetadata) POST("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH",
-              summaryMetadataPayload(), SummaryMetadata)
+        SummaryMetadata summaryMetadata = summaryMetadataApi.create("folder", folderId, summaryMetadataPayload())
         UUID summaryMetadataId = summaryMetadata.id
 
         and:
-        SummaryMetadataReport summaryMetadataReport1 = (SummaryMetadataReport) POST("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH/$summaryMetadataId$SUMMARY_METADATA_REPORT_PATH",
-                [reportValue: 'test-report-value-1'], SummaryMetadataReport)
+        SummaryMetadataReport summaryMetadataReport1 = summaryMetadataReportApi.create("folder", folderId, summaryMetadataId,
+            new SummaryMetadataReport(reportValue: 'test-report-value-1'))
 
-        SummaryMetadataReport summaryMetadataReport2 = (SummaryMetadataReport) POST("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH/$summaryMetadataId$SUMMARY_METADATA_REPORT_PATH",
-                [reportValue: 'test-report-value-2'], SummaryMetadataReport)
+        SummaryMetadataReport summaryMetadataReport2 = summaryMetadataReportApi.create("folder", folderId, summaryMetadataId,
+            new SummaryMetadataReport(reportValue: 'test-report-value-2'))
 
         when:
-        SummaryMetadata saved = (SummaryMetadata) GET("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH/$summaryMetadataId", SummaryMetadata)
+        SummaryMetadata saved = summaryMetadataApi.show("folder", folderId, summaryMetadataId)
 
         then:
         saved
         saved.id == summaryMetadataId
 
         when:
-        ListResponse<SummaryMetadataReport> savedReports = (ListResponse<SummaryMetadataReport>) GET("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH/$summaryMetadata.id$SUMMARY_METADATA_REPORT_PATH",
-                ListResponse, SummaryMetadataReport)
+        ListResponse<SummaryMetadataReport> savedReports = summaryMetadataReportApi.list("folder", folderId, summaryMetadata.id)
 
         then:
         savedReports
@@ -111,7 +106,7 @@ class NestedSummaryMetadataIntegrationSpec extends CommonDataSpec {
         savedReports.items.id == List.of(summaryMetadataReport1.id, summaryMetadataReport2.id)
 
         when:
-        SummaryMetadata savedSummaryMetadata = (SummaryMetadata) GET("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH/$summaryMetadata.id", SummaryMetadata)
+        SummaryMetadata savedSummaryMetadata = summaryMetadataApi.show("folder", folderId, summaryMetadata.id)
 
         then:
         savedSummaryMetadata

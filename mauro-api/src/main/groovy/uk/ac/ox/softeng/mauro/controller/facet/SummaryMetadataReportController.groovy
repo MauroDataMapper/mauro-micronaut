@@ -71,7 +71,7 @@ class SummaryMetadataReportController extends ItemController<SummaryMetadataRepo
     }
 
     @Get(Paths.SUMMARY_METADATA_REPORTS_ID)
-    SummaryMetadataReport get(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID summaryMetadataId,
+    SummaryMetadataReport show(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID summaryMetadataId,
                               @NonNull UUID id) {
         SummaryMetadata summaryMetadata = validateAndGet(domainType, domainId, summaryMetadataId)
         accessControlService.checkRole(Role.READER, readAdministeredItemForFacet(summaryMetadata))

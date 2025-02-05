@@ -1,10 +1,15 @@
 package uk.ac.ox.softeng.mauro.facet
 
+import uk.ac.ox.softeng.mauro.api.facet.AnnotationApi
+import uk.ac.ox.softeng.mauro.api.folder.FolderApi
+
+import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.client.exceptions.HttpClientResponseException
 import io.micronaut.runtime.EmbeddedApplication
 import io.micronaut.test.annotation.Sql
 import jakarta.inject.Inject
+import jakarta.inject.Singleton
 import spock.lang.Shared
 import spock.lang.Unroll
 import uk.ac.ox.softeng.mauro.domain.facet.Annotation
@@ -14,26 +19,23 @@ import uk.ac.ox.softeng.mauro.testing.CommonDataSpec
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @ContainerizedTest
+@Singleton
 @Sql(scripts = "classpath:sql/tear-down-annotation.sql", phase = Sql.Phase.AFTER_EACH)
 class AnnotationIntegrationSpec extends CommonDataSpec {
-
-    @Inject
-    EmbeddedApplication<? extends EmbeddedApplication> application
 
     @Shared
     UUID folderId
 
 
-    void setupSpec() {
-        Folder folder = (Folder) POST("$FOLDERS_PATH", folder(), Folder)
+    void setup() {
+        Folder folder = folderApi.create(folder())
         folderId = folder.id
     }
 
     @Unroll()
     void 'list Annotations should return empty list'() {
         when:
-        def response =
-                GET("$FOLDERS_PATH/$folderId$ANNOTATION_PATH", ListResponse, Annotation)
+        ListResponse<Annotation> response = annotationApi.list("folder", folderId)
         then:
         response.count == 0
     }
@@ -41,8 +43,7 @@ class AnnotationIntegrationSpec extends CommonDataSpec {
     @Unroll
     void 'create annotation'() {
         when:
-        Annotation annotation = (Annotation) POST("$FOLDERS_PATH/$folderId$ANNOTATION_PATH",
-                iteration, Annotation)
+        Annotation annotation = annotationApi.create("folder", folderId, iteration)
 
         then:
         annotation
@@ -60,41 +61,33 @@ class AnnotationIntegrationSpec extends CommonDataSpec {
 
     void 'get annotation by Id -should return annotation'() {
         given:
-        Annotation annotation = (Annotation) POST("$FOLDERS_PATH/$folderId$ANNOTATION_PATH",
-                iteration, Annotation)
+        Annotation annotation = annotationApi.create("folder", folderId, annotationPayload('test label', 'test description'))
 
         when:
-        Annotation saved = (Annotation) GET("$FOLDERS_PATH/$folderId$ANNOTATION_PATH/$annotation.id", Annotation)
+        Annotation saved = annotationApi.show("folder", folderId, annotation.id)
 
         then:
         saved
         saved.id == annotation.id
 
-        where:
-        iteration << [
-                annotationPayload('test label', 'test description')
-        ]
     }
 
     void 'get annotation by Id -should return 404 on invalid domain type/domainId parameters for annotation'() {
         given:
-        UUID annotationId = UUID.randomUUID()
+        UUID incorrectFolderId = UUID.randomUUID()
         and:
-        Annotation annotation = (Annotation) POST("$FOLDERS_PATH/$folderId$ANNOTATION_PATH",
-                annotationPayload(), Annotation)
+        Annotation annotation = annotationApi.create("folder", folderId, annotationPayload())
         when:
-        (Annotation) GET("$FOLDERS_PATH/$annotationId$ANNOTATION_PATH/$annotation.id", Annotation)
+        annotation = annotationApi.show("folder", incorrectFolderId, annotation.id)
 
         then:
-        HttpClientResponseException exception = thrown()
-        exception.status == HttpStatus.NOT_FOUND
+        !annotation
     }
 
     @Unroll
     void 'create child annotation - should create'() {
         given:
-        Annotation parent = (Annotation) POST("$FOLDERS_PATH/$folderId$ANNOTATION_PATH",
-                annotationPayload('parent test label', 'parent test description'), Annotation)
+        Annotation parent = annotationApi.create("folder", folderId, annotationPayload('parent test label', 'parent test description'))
         and:
         parent
         parent.label == 'parent test label'
@@ -102,8 +95,7 @@ class AnnotationIntegrationSpec extends CommonDataSpec {
         !parent.parentAnnotationId
 
         when:
-        Annotation child = (Annotation) POST("$FOLDERS_PATH/$folderId$ANNOTATION_PATH/$parent.id$ANNOTATION_PATH",
-                iteration, Annotation)
+        Annotation child = annotationApi.create("folder", folderId, parent.id, iteration)
 
         then:
         child
@@ -124,8 +116,7 @@ class AnnotationIntegrationSpec extends CommonDataSpec {
         given:
         UUID nonExisting = UUID.fromString('0f14d0ab-9605-4a62-a9e4-5ed26688389b')
         when:
-        (Annotation) POST("$FOLDERS_PATH/$folderId$ANNOTATION_PATH/$nonExisting$ANNOTATION_PATH",
-                iteration, Annotation)
+        annotationApi.create("folder", folderId, nonExisting, iteration)
 
         then:
         HttpClientResponseException exception = thrown()
@@ -140,10 +131,9 @@ class AnnotationIntegrationSpec extends CommonDataSpec {
     @Unroll
     void 'get annotation by Id should show nested where appropriate'() {
         given:
-        Annotation annotation = (Annotation) POST("$FOLDERS_PATH/$folderId$ANNOTATION_PATH",
-                iteration, Annotation)
+        Annotation annotation = annotationApi.create("folder", folderId, iteration)
         when:
-        Annotation retrieved = (Annotation) GET("$FOLDERS_PATH/$folderId$ANNOTATION_PATH/$annotation.id", Annotation)
+        Annotation retrieved = annotationApi.show("folder", folderId, annotation.id)
 
         then:
         retrieved
@@ -154,10 +144,9 @@ class AnnotationIntegrationSpec extends CommonDataSpec {
         retrieved.description == iteration.description
 
         when:
-        Annotation child = (Annotation) POST("$FOLDERS_PATH/$folderId$ANNOTATION_PATH/$retrieved.id$ANNOTATION_PATH",
-                iteration, Annotation)
+        Annotation child = annotationApi.create("folder", folderId, retrieved.id, iteration)
         and:
-        retrieved = (Annotation) GET("$FOLDERS_PATH/$folderId$ANNOTATION_PATH/$annotation.id", Annotation)
+        retrieved = annotationApi.show("folder", folderId, annotation.id)
 
         then:
         retrieved
@@ -178,15 +167,13 @@ class AnnotationIntegrationSpec extends CommonDataSpec {
 
     void 'get child annotation - child is parent not child  -should return parent'() {
         given:
-        Annotation parent = (Annotation) POST("$FOLDERS_PATH/$folderId$ANNOTATION_PATH",
-                annotationPayload(), Annotation)
+        Annotation parent = annotationApi.create("folder", folderId, annotationPayload())
 
-        Annotation child = (Annotation) POST("$FOLDERS_PATH/$folderId$ANNOTATION_PATH/$parent.id$ANNOTATION_PATH",
-                annotationPayload('child label', 'child description'), Annotation)
+        Annotation child = annotationApi.create("folder", folderId, parent.id, annotationPayload('child label', 'child description'))
         when:
-        Annotation retrievedParent = (Annotation) GET("$FOLDERS_PATH/$folderId$ANNOTATION_PATH/$parent.id", Annotation)
+        Annotation retrievedParent = annotationApi.show("folder", folderId, parent.id)
 
-        Annotation retrieved = (Annotation) GET("$FOLDERS_PATH/$folderId$ANNOTATION_PATH/$parent.id$ANNOTATION_PATH/$parent.id", Annotation)
+        Annotation retrieved = annotationApi.getChildAnnotation("folder", folderId, parent.id, parent.id)
 
         then:
         retrievedParent
@@ -200,14 +187,13 @@ class AnnotationIntegrationSpec extends CommonDataSpec {
 
     void 'List annotations - should show nesting'() {
         given:
-        Annotation parent = (Annotation) POST("$FOLDERS_PATH/$folderId$ANNOTATION_PATH",
-                annotationPayload(), Annotation)
+        Annotation parent = annotationApi.create("folder",folderId, annotationPayload())
         and:
-        Annotation child = (Annotation) POST("$FOLDERS_PATH/$folderId$ANNOTATION_PATH/$parent.id$ANNOTATION_PATH",
-                [label: 'child label', description: 'child description'], Annotation)
+        Annotation child = annotationApi.create("folder", folderId, parent.id,
+                new Annotation(label: 'child label', description: 'child description'))
 
         when:
-        ListResponse<Annotation> parentList = (ListResponse<Annotation>) GET("$FOLDERS_PATH/$folderId$ANNOTATION_PATH", ListResponse, Annotation)
+        ListResponse<Annotation> parentList = annotationApi.list("folder", folderId)
         then:
         parentList
         parentList.count == 1
@@ -218,14 +204,12 @@ class AnnotationIntegrationSpec extends CommonDataSpec {
 
     void 'get annotation by Id - should return annotation when child '() {
         given:
-        Annotation parent = (Annotation) POST("$FOLDERS_PATH/$folderId$ANNOTATION_PATH",
-                annotationPayload(), Annotation)
+        Annotation parent = annotationApi.create("folder", folderId, annotationPayload())
         and:
-        Annotation child = (Annotation) POST("$FOLDERS_PATH/$folderId$ANNOTATION_PATH/$parent.id$ANNOTATION_PATH",
-                annotationPayload('child label', 'child description'), Annotation)
+        Annotation child = annotationApi.create("folder", folderId, parent.id, annotationPayload('child label', 'child description'))
 
         when:
-        Annotation annotation = (Annotation) GET("$FOLDERS_PATH/$folderId$ANNOTATION_PATH/$child.id", Annotation)
+        Annotation annotation = annotationApi.show("folder", folderId, child.id)
 
         then:
         annotation
@@ -236,47 +220,38 @@ class AnnotationIntegrationSpec extends CommonDataSpec {
     @Unroll
     void 'get child annotation by Id - should return child annotation'() {
         given:
-        Annotation parent = (Annotation) POST("$FOLDERS_PATH/$folderId$ANNOTATION_PATH",
-                annotationPayload(), Annotation)
+        Annotation parent = annotationApi.create("folder", folderId, annotationPayload())
         and:
-        Annotation child = (Annotation) POST("$FOLDERS_PATH/$folderId$ANNOTATION_PATH/$parent.id$ANNOTATION_PATH",
-                [label: 'child label', description: 'child description'], Annotation)
+        Annotation child = annotationApi.create("folder", folderId, parent.id, new Annotation(label: 'child label', description: 'child description'))
 
         when:
-        Annotation retrievedChild = (Annotation) GET("$FOLDERS_PATH/$folderId$ANNOTATION_PATH/$parent.id$ANNOTATION_PATH/$child.id", Annotation)
+        Annotation retrievedChild = annotationApi.getChildAnnotation("folder", folderId, parent.id, child.id)
 
         then:
         retrievedChild
         retrievedChild.id == retrievedChild.id
         retrievedChild.parentAnnotationId == parent.id
 
-        where:
-        iteration << [
-                annotationPayload('child test label', 'child test description')
-        ]
     }
 
     void 'delete child Annotation - should delete child'() {
         given:
-        Annotation parent = (Annotation) POST("$FOLDERS_PATH/$folderId$ANNOTATION_PATH",
-                annotationPayload(), Annotation)
+        Annotation parent = annotationApi.create("folder", folderId, annotationPayload())
         and:
-        Annotation child = (Annotation) POST("$FOLDERS_PATH/$folderId$ANNOTATION_PATH/$parent.id$ANNOTATION_PATH",
-                annotationPayload('child label', 'child description'), Annotation)
+        Annotation child = annotationApi.create("folder", folderId, parent.id, annotationPayload('child label', 'child description'))
         when:
-        HttpStatus status = (HttpStatus) DELETE("$FOLDERS_PATH/$folderId$ANNOTATION_PATH/$parent.id$ANNOTATION_PATH/$child.id", HttpStatus)
+        HttpResponse response = annotationApi.delete("folder", folderId, parent.id, child.id)
         then:
-        status == HttpStatus.NO_CONTENT
+        response.status == HttpStatus.NO_CONTENT
 
         when:
-        (Annotation) GET("$FOLDERS_PATH/$folderId$ANNOTATION_PATH/$parent.id$ANNOTATION_PATH/$child.id", Annotation)
+        Annotation annotation = annotationApi.getChildAnnotation("folder", folderId, parent.id, child.id)
 
         then: 'the show endpoint shows the update'
-        HttpClientResponseException exception = thrown()
-        exception.status == HttpStatus.NOT_FOUND
+        !annotation
 
         when:
-        Annotation retrievedParent = (Annotation) GET("$FOLDERS_PATH/$folderId$ANNOTATION_PATH/$parent.id", Annotation)
+        Annotation retrievedParent = annotationApi.show("folder", folderId, parent.id)
 
         then: 'the parent annotation should not show deleted child'
         retrievedParent
@@ -286,63 +261,54 @@ class AnnotationIntegrationSpec extends CommonDataSpec {
 
     void 'delete annotation - should delete self and related children'() {
         given:
-        Annotation parent = (Annotation) POST("$FOLDERS_PATH/$folderId$ANNOTATION_PATH",
-                annotationPayload(), Annotation)
+        Annotation parent = annotationApi.create("folder", folderId, annotationPayload())
         and:
-        Annotation child1 = (Annotation) POST("$FOLDERS_PATH/$folderId$ANNOTATION_PATH/$parent.id$ANNOTATION_PATH",
-                annotationPayload('child label 1', 'child description 1 '), Annotation)
-        Annotation child2 = (Annotation) POST("$FOLDERS_PATH/$folderId$ANNOTATION_PATH/$parent.id$ANNOTATION_PATH",
-                annotationPayload('child label 2 ', 'child description 2'), Annotation)
+        Annotation child1 = annotationApi.create("folder", folderId, parent.id, annotationPayload('child label 1', 'child description 1 '))
+        Annotation child2 = annotationApi.create("folder", folderId, parent.id, annotationPayload('child label 2 ', 'child description 2'))
         when:
-        HttpStatus status = (HttpStatus) DELETE("$FOLDERS_PATH/$folderId$ANNOTATION_PATH/$parent.id", HttpStatus)
+        HttpResponse response = annotationApi.delete("folder", folderId, parent.id)
 
         then:
-        status == HttpStatus.NO_CONTENT
+        response.status == HttpStatus.NO_CONTENT
 
         when:
-        (Annotation) GET("$FOLDERS_PATH/$folderId$ANNOTATION_PATH/$parent.id", Annotation)
+        Annotation annotation = annotationApi.show("folder", folderId, parent.id)
 
         then: 'the show endpoint shows the update'
-        HttpClientResponseException exception = thrown()
-        exception.status == HttpStatus.NOT_FOUND
+        !annotation
 
         when:
-        (Annotation) GET("$FOLDERS_PATH/$folderId$ANNOTATION_PATH/$parent.id/annotations/$child1.id", Annotation)
+        annotation = annotationApi.getChildAnnotation("folder", folderId, parent.id, child1.id)
 
         then: 'Child 1 is not found'
-        exception = thrown()
-        exception.status == HttpStatus.NOT_FOUND
+        !annotation
 
         when:
-        (Annotation) GET("$FOLDERS_PATH/$folderId$ANNOTATION_PATH/$parent.id/annotations/$child2.id", Annotation)
+        annotation = annotationApi.getChildAnnotation("folder", folderId, parent.id, child2.id)
 
         then: 'Child 2 is not found'
-        exception = thrown()
-        exception.status == HttpStatus.NOT_FOUND
+        !annotation
     }
 
     void 'delete Annotation - when annotation is child, should still delete'() {
         given:
-        Annotation parent = (Annotation) POST("$FOLDERS_PATH/$folderId$ANNOTATION_PATH",
-                annotationPayload(), Annotation)
+        Annotation parent = annotationApi.create("folder", folderId, annotationPayload())
         and:
-        Annotation child = (Annotation) POST("$FOLDERS_PATH/$folderId$ANNOTATION_PATH/$parent.id$ANNOTATION_PATH",
-                annotationPayload('child label', 'child description'), Annotation)
+        Annotation child = annotationApi.create("folder", folderId, parent.id, annotationPayload('child label', 'child description'))
         when:
-        HttpStatus status = (HttpStatus) DELETE("$FOLDERS_PATH/$folderId$ANNOTATION_PATH/$child.id", HttpStatus)
+        HttpResponse response = annotationApi.delete("folder", folderId, child.id)
 
         then:
-        status == HttpStatus.NO_CONTENT
+        response.status == HttpStatus.NO_CONTENT
 
         when:
-        (Annotation) GET("$FOLDERS_PATH/$folderId$ANNOTATION_PATH/$parent.id$ANNOTATION_PATH/$child.id", Annotation)
+        Annotation annotation = annotationApi.getChildAnnotation("folder", folderId, parent.id, child.id)
 
         then: 'the show endpoint shows the update'
-        HttpClientResponseException exception = thrown()
-        exception.status == HttpStatus.NOT_FOUND
+        !annotation
 
         when:
-        Annotation retrievedParent = (Annotation) GET("$FOLDERS_PATH/$folderId$ANNOTATION_PATH/$parent.id", Annotation)
+        Annotation retrievedParent = annotationApi.show("folder", folderId, parent.id)
 
         then: 'the parent annotation should not show deleted child'
         retrievedParent
@@ -351,14 +317,11 @@ class AnnotationIntegrationSpec extends CommonDataSpec {
 
     void 'delete Parent and child Annotations - when both ids are parent, should throw bad request'() {
         given:
-        Annotation parent = (Annotation) POST("$FOLDERS_PATH/$folderId$ANNOTATION_PATH",
-                annotationPayload(), Annotation)
+        Annotation parent = annotationApi.create("folder", folderId, annotationPayload())
         and:
-        Annotation child = (Annotation) POST("$FOLDERS_PATH/$folderId$ANNOTATION_PATH/$parent.id$ANNOTATION_PATH",
-                annotationPayload('child label', 'child description'), Annotation)
+        Annotation child = annotationApi.create("folder", folderId, parent.id, annotationPayload('child label', 'child description'))
         when:
-        (HttpStatus) DELETE("$FOLDERS_PATH/$folderId$ANNOTATION_PATH/$parent.id$ANNOTATION_PATH/$parent.id", HttpStatus)
-
+        annotationApi.delete("folder", folderId, parent.id, parent.id)
 
         then: 'bad request error'
         HttpClientResponseException exception = thrown()

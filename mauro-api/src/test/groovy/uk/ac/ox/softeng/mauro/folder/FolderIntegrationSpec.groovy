@@ -1,9 +1,12 @@
 package uk.ac.ox.softeng.mauro.folder
 
+import uk.ac.ox.softeng.mauro.testing.CommonDataSpec
+
 import uk.ac.ox.softeng.mauro.domain.authority.Authority
 
 import io.micronaut.runtime.EmbeddedApplication
 import jakarta.inject.Inject
+import jakarta.inject.Singleton
 import spock.lang.Shared
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.persistence.ContainerizedTest
@@ -11,10 +14,8 @@ import uk.ac.ox.softeng.mauro.testing.BaseIntegrationSpec
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @ContainerizedTest
-class FolderIntegrationSpec extends BaseIntegrationSpec {
-
-    @Inject
-    EmbeddedApplication<?> application
+@Singleton
+class FolderIntegrationSpec extends CommonDataSpec {
 
     @Shared
     UUID folderId
@@ -25,7 +26,7 @@ class FolderIntegrationSpec extends BaseIntegrationSpec {
 
     void 'create folder'() {
         when:
-        Folder folderResponse = (Folder) POST('/folders', [label: 'Test folder'], Folder)
+        Folder folderResponse = folderApi.create(new Folder(label: 'Test folder'))
         folderId = folderResponse.id
 
         then:
@@ -37,7 +38,7 @@ class FolderIntegrationSpec extends BaseIntegrationSpec {
 
     void 'create child folder'() {
         when:
-        Folder folderResponse = (Folder) POST("/folders/$folderId/folders", [label: 'Test child folder'], Folder)
+        Folder folderResponse = folderApi.create(folderId, new Folder(label: 'Test child folder'))
         childFolderId = folderResponse.id
 
         then:
@@ -49,7 +50,7 @@ class FolderIntegrationSpec extends BaseIntegrationSpec {
 
     void 'change child folder label'() {
         when:
-        Folder folderResponse = (Folder) PUT("/folders/$folderId/folders/$childFolderId", [label: 'Updated child folder'], Folder)
+        Folder folderResponse = folderApi.update(folderId, childFolderId, new Folder(label: 'Updated child folder'))
 
         then:
         folderResponse
@@ -60,7 +61,7 @@ class FolderIntegrationSpec extends BaseIntegrationSpec {
 
     void 'change parent folder label'() {
         when:
-        Folder folderResponse = (Folder) PUT("/folders/$folderId", [label: 'Updated folder'], Folder)
+        Folder folderResponse = folderApi.update(folderId, new Folder(label: 'Updated folder'))
 
         then:
         folderResponse
@@ -72,7 +73,7 @@ class FolderIntegrationSpec extends BaseIntegrationSpec {
 
     void 'list folders'() {
         when:
-        ListResponse<Folder> folderListResponse = (ListResponse<Folder>) GET('/folders', ListResponse, Folder)
+        ListResponse<Folder> folderListResponse = folderApi.listAll()
 
         then:
         folderListResponse

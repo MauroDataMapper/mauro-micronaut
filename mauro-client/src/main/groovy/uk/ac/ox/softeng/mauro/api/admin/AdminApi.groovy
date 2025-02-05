@@ -5,6 +5,7 @@ import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.domain.email.Email
 import uk.ac.ox.softeng.mauro.domain.security.CatalogueUser
 import uk.ac.ox.softeng.mauro.plugin.EmailPlugin
+import uk.ac.ox.softeng.mauro.plugin.MauroPluginDTO
 import uk.ac.ox.softeng.mauro.plugin.exporter.ModelExporterPlugin
 import uk.ac.ox.softeng.mauro.plugin.importer.ModelImporterPlugin
 import uk.ac.ox.softeng.mauro.web.ListResponse
@@ -21,14 +22,14 @@ interface AdminApi {
 
 
     @Get(Paths.ADMIN_IMPORTERS_LIST)
-    List<ModelImporterPlugin> importers()
+    List<MauroPluginDTO> importers()
 
 
     @Get(Paths.ADMIN_EXPORTERS_LIST)
-    List<ModelExporterPlugin> exporters()
+    List<MauroPluginDTO> exporters()
 
     @Get(Paths.ADMIN_EMAILERS_LIST)
-    List<EmailPlugin> emailers()
+    List<MauroPluginDTO> emailers()
 
 
     /**

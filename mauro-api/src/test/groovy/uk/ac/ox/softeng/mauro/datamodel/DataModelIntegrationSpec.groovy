@@ -9,11 +9,13 @@ import uk.ac.ox.softeng.mauro.api.folder.FolderApi
 import uk.ac.ox.softeng.mauro.domain.model.version.FinaliseData
 import uk.ac.ox.softeng.mauro.domain.model.version.VersionChangeType
 import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchRequestDTO
+import uk.ac.ox.softeng.mauro.testing.CommonDataSpec
 
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
 import io.micronaut.runtime.EmbeddedApplication
 import jakarta.inject.Inject
+import jakarta.inject.Singleton
 import spock.lang.Shared
 import uk.ac.ox.softeng.mauro.domain.datamodel.*
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
@@ -33,7 +35,8 @@ import jakarta.inject.Inject
 import spock.lang.Shared
 
 @ContainerizedTest
-class DataModelIntegrationSpec extends BaseIntegrationSpec {
+@Singleton
+class DataModelIntegrationSpec extends CommonDataSpec {
 
     @Shared
     UUID folderId
@@ -67,13 +70,6 @@ class DataModelIntegrationSpec extends BaseIntegrationSpec {
 
     @Shared
     UUID enumerationValueId
-
-    @Inject FolderApi folderApi
-    @Inject DataModelApi dataModelApi
-    @Inject DataClassApi dataClassApi
-    @Inject DataTypeApi dataTypeApi
-    @Inject DataElementApi dataElementApi
-    @Inject EnumerationValueApi enumerationValueApi
 
 
     void 'test data model'() {

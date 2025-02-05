@@ -71,6 +71,9 @@ class ReferenceFileController extends FacetController<ReferenceFile> implements 
 
     @Post(Paths.REFERENCE_FILE_LIST)
     ReferenceFile create(@NonNull String domainType, @NonNull UUID domainId, @Body @NonNull ReferenceFile referenceFile) {
+        System.err.println("Here")
+        System.err.println(new String(referenceFile.fileContent()))
+        System.err.println(referenceFile.fileName)
         referenceFile.setFileSize()
         super.create(domainType, domainId, referenceFile)
     }

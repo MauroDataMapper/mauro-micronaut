@@ -2,10 +2,12 @@ package uk.ac.ox.softeng.mauro.importexport
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.json.JsonSlurper
+import io.micronaut.http.HttpResponse
 import io.micronaut.http.MediaType
-import io.micronaut.http.server.multipart.MultipartBody
+import io.micronaut.http.client.multipart.MultipartBody
 import io.micronaut.runtime.EmbeddedApplication
 import jakarta.inject.Inject
+import jakarta.inject.Singleton
 import spock.lang.Shared
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
@@ -22,10 +24,8 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 import java.time.Instant
 
 @ContainerizedTest
+@Singleton
 class DataModelJsonImportExportIntegrationSpec extends CommonDataSpec {
-
-    @Inject
-    EmbeddedApplication<?> application
 
     @Shared
     UUID folderId
@@ -53,44 +53,41 @@ class DataModelJsonImportExportIntegrationSpec extends CommonDataSpec {
 
     JsonSlurper jsonSlurper = new JsonSlurper()
 
-    void setupSpec(){
+    void setup(){
 
-        Folder response = (Folder) POST("$FOLDERS_PATH", folder(), Folder)
+        Folder response = folderApi.create(folder())
         folderId = response.id
 
-        DataModel dataModelResponse = (DataModel) POST("$FOLDERS_PATH/$folderId$DATAMODELS_PATH", [label: 'Test data model'], DataModel)
+        DataModel dataModelResponse = dataModelApi.create(folderId, new DataModel(label: 'Test data model'))
         dataModelId = dataModelResponse.id
 
-        Metadata metadataResponse = (Metadata) POST("$DATAMODELS_PATH/$dataModelId$METADATA_PATH", metadataPayload(), Metadata)
+        Metadata metadataResponse = metadataApi.create("dataModel", dataModelId, metadataPayload())
         metadataId = metadataResponse.id
 
-        SummaryMetadata summaryMetadataResponse = (SummaryMetadata) POST("$DATAMODELS_PATH/$dataModelId$SUMMARY_METADATA_PATH",
-               summaryMetadataPayload(), SummaryMetadata)
+        SummaryMetadata summaryMetadataResponse = summaryMetadataApi.create("dataModel", dataModelId, summaryMetadataPayload())
         summaryMetadataId = summaryMetadataResponse.id
 
-        SummaryMetadataReport reportResponse = (SummaryMetadataReport) POST("$DATAMODELS_PATH/$dataModelId$SUMMARY_METADATA_PATH/$summaryMetadataId$SUMMARY_METADATA_REPORT_PATH",
-                summaryMetadataReport(), SummaryMetadataReport)
+        SummaryMetadataReport reportResponse = summaryMetadataReportApi.create("dataModel", dataModelId, summaryMetadataId, summaryMetadataReport())
         reportId = reportResponse.id
 
-        Annotation annotationResponse = (Annotation) POST("$DATAMODELS_PATH/$dataModelId/$ANNOTATION_PATH",
-                annotationPayload(), Annotation)
+        Annotation annotationResponse = annotationApi.create("dataModel", dataModelId, annotationPayload())
         annotationId = annotationResponse.id
 
-        Annotation childResp = (Annotation) POST("$DATAMODELS_PATH/$dataModelId$ANNOTATION_PATH/$annotationId$ANNOTATION_PATH",
-                annotationPayload('child label', 'child description'), Annotation)
+        Annotation childResp = annotationApi.create("dataModel", dataModelId, annotationId, annotationPayload('child label', 'child description'))
         childAnnotationId = childResp.id
 
-        dataType = (DataType) POST("$DATAMODELS_PATH/$dataModelId/dataTypes", [label: 'string', description: 'character string of variable length', domainType: 'PrimitiveType'], DataType)
+        dataType = dataTypeApi.create(dataModelId,
+            new DataType(label: 'string', description: 'character string of variable length', dataTypeKind: DataType.DataTypeKind.PRIMITIVE_TYPE))
     }
 
     void 'test get export data model - should export model'() {
         when:
-        String json = GET("$DATAMODELS_PATH/$dataModelId$EXPORT_PATH/uk.ac.ox.softeng.mauro.plugin.exporter.json/JsonDataModelExporterPlugin/4.0.0", String)
+        HttpResponse<byte[]> response = dataModelApi.exportModel(dataModelId, 'uk.ac.ox.softeng.mauro.plugin.exporter.json', 'JsonDataModelExporterPlugin', '4.0.0')
 
         then:
-        json
+        response.body()
 
-        Map parsedJson = jsonSlurper.parseText(json) as Map
+        Map parsedJson = jsonSlurper.parseText(new String(response.body())) as Map
         parsedJson.exportMetadata
 
         parsedJson.dataModel
@@ -108,23 +105,23 @@ class DataModelJsonImportExportIntegrationSpec extends CommonDataSpec {
 
     void 'test consume export data model  - should import'() {
         given:
-        String exportJson = GET("$DATAMODELS_PATH/$dataModelId$EXPORT_PATH/uk.ac.ox.softeng.mauro.plugin.exporter.json/JsonDataModelExporterPlugin/4.0.0", String)
-        exportJson
+        HttpResponse<byte[]> response = dataModelApi.exportModel(dataModelId, 'uk.ac.ox.softeng.mauro.plugin.exporter.json', 'JsonDataModelExporterPlugin', '4.0.0')
+        response.body()
 
         and:
         MultipartBody importRequest = MultipartBody.builder()
                 .addPart('folderId', folderId.toString())
-                .addPart('importFile', 'file.json', MediaType.APPLICATION_JSON_TYPE, exportJson.bytes)
+                .addPart('importFile', 'file.json', MediaType.APPLICATION_JSON_TYPE, response.body())
                 .build()
         when:
-        ListResponse<DataModel> response = (ListResponse<DataModel>) POST("$DATAMODELS_PATH$IMPORT_PATH/uk.ac.ox.softeng.mauro.plugin.importer.json/JsonDataModelImporterPlugin/4.0.0", importRequest)
+        ListResponse<DataModel> dataModelResponse = dataModelApi.importModel(importRequest, 'uk.ac.ox.softeng.mauro.plugin.importer.json', 'JsonDataModelImporterPlugin', '4.0.0')
 
         then:
-        response
-        UUID importedDataModelId = UUID.fromString(response.items.id.first() as String)
+        dataModelResponse
+        UUID importedDataModelId = dataModelResponse.items.first().id
 
         when:
-        DataModel importedDataModel = (DataModel) GET("$DATAMODELS_PATH/$importedDataModelId", DataModel)
+        DataModel importedDataModel = dataModelApi.show(importedDataModelId)
 
         then:
         importedDataModel
@@ -150,8 +147,8 @@ class DataModelJsonImportExportIntegrationSpec extends CommonDataSpec {
         importedDataTypes.items.domainType.first() == dataType.domainType
     }
 
-
-    static UUID importModelViaApi(UUID folderId, DataModel dataModel1, ObjectMapper objectMapper1) {
+    // TODO: Is this used, or could it be?
+    UUID importModelViaApi(UUID folderId, DataModel dataModel1, ObjectMapper objectMapper1) {
 
         ExportModel exportModel = ExportModel.build {
             dataModel dataModel1
@@ -171,7 +168,7 @@ class DataModelJsonImportExportIntegrationSpec extends CommonDataSpec {
                 .addPart('importFile', 'file.json', MediaType.APPLICATION_JSON_TYPE, payload)
                 .build()
 
-        ListResponse<DataModel> response = (ListResponse<DataModel>) POST("$DATAMODELS_PATH$IMPORT_PATH/uk.ac.ox.softeng.mauro.plugin.importer.json/JsonDataModelImporterPlugin/4.0.0".toString(), importRequest)
+        ListResponse<DataModel> response = dataModelApi.importModel(importRequest, 'uk.ac.ox.softeng.mauro.plugin.importer.json', 'JsonDataModelImporterPlugin', '4.0.0')
         response.items[0].id
 
     }

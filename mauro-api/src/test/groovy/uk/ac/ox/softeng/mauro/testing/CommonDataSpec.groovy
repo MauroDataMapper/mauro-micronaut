@@ -1,5 +1,37 @@
 package uk.ac.ox.softeng.mauro.testing
 
+import uk.ac.ox.softeng.mauro.api.admin.AdminApi
+import uk.ac.ox.softeng.mauro.api.classifier.ClassificationSchemeApi
+import uk.ac.ox.softeng.mauro.api.classifier.ClassifierApi
+import uk.ac.ox.softeng.mauro.api.config.ApiPropertyApi
+import uk.ac.ox.softeng.mauro.api.config.SessionApi
+import uk.ac.ox.softeng.mauro.api.dataflow.DataClassComponentApi
+import uk.ac.ox.softeng.mauro.api.dataflow.DataElementComponentApi
+import uk.ac.ox.softeng.mauro.api.dataflow.DataFlowApi
+import uk.ac.ox.softeng.mauro.api.datamodel.DataClassApi
+import uk.ac.ox.softeng.mauro.api.datamodel.DataElementApi
+import uk.ac.ox.softeng.mauro.api.datamodel.DataModelApi
+import uk.ac.ox.softeng.mauro.api.datamodel.DataTypeApi
+import uk.ac.ox.softeng.mauro.api.datamodel.EnumerationValueApi
+import uk.ac.ox.softeng.mauro.api.facet.AnnotationApi
+import uk.ac.ox.softeng.mauro.api.facet.MetadataApi
+import uk.ac.ox.softeng.mauro.api.facet.ReferenceFileApi
+import uk.ac.ox.softeng.mauro.api.facet.SummaryMetadataApi
+import uk.ac.ox.softeng.mauro.api.facet.SummaryMetadataReportApi
+import uk.ac.ox.softeng.mauro.api.folder.FolderApi
+import uk.ac.ox.softeng.mauro.api.importer.ImporterApi
+import uk.ac.ox.softeng.mauro.api.profile.ProfileApi
+import uk.ac.ox.softeng.mauro.api.search.SearchApi
+import uk.ac.ox.softeng.mauro.api.security.CatalogueUserApi
+import uk.ac.ox.softeng.mauro.api.security.SecurableResourceGroupRoleApi
+import uk.ac.ox.softeng.mauro.api.security.UserGroupApi
+import uk.ac.ox.softeng.mauro.api.security.openidprovider.OpenidProviderApi
+import uk.ac.ox.softeng.mauro.api.terminology.CodeSetApi
+import uk.ac.ox.softeng.mauro.api.terminology.TermApi
+import uk.ac.ox.softeng.mauro.api.terminology.TermRelationshipApi
+import uk.ac.ox.softeng.mauro.api.terminology.TermRelationshipTypeApi
+import uk.ac.ox.softeng.mauro.api.terminology.TerminologyApi
+import uk.ac.ox.softeng.mauro.api.tree.TreeApi
 import uk.ac.ox.softeng.mauro.domain.classifier.ClassificationScheme
 import uk.ac.ox.softeng.mauro.domain.classifier.Classifier
 import uk.ac.ox.softeng.mauro.domain.dataflow.DataFlow
@@ -8,24 +40,65 @@ import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
 import uk.ac.ox.softeng.mauro.domain.facet.Annotation
 import uk.ac.ox.softeng.mauro.domain.facet.Metadata
+import uk.ac.ox.softeng.mauro.domain.facet.ReferenceFile
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadataType
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.domain.model.SummaryMetadataReport
+import uk.ac.ox.softeng.mauro.domain.terminology.CodeSet
+import uk.ac.ox.softeng.mauro.domain.terminology.Term
+import uk.ac.ox.softeng.mauro.domain.terminology.TermRelationshipType
+import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
+
+import jakarta.inject.Inject
 
 import java.time.Instant
 
 
-class CommonDataSpec extends BaseIntegrationSpec {
-    public static final String REPORT_DATE = "2024-03-01T20:50:01.612Z"
+class CommonDataSpec extends BaseIntegrationSpec{
 
-    def codeSet() {
-        [
-            label       : "Test code set",
-            description : "code set description",
-            author      : "A.N. Other",
-            organisation: "uk.ac.gridpp.ral.org"
-        ]
+    @Inject AdminApi adminApi
+    @Inject ClassificationSchemeApi classificationSchemeApi
+    @Inject ClassifierApi classifierApi
+    @Inject ApiPropertyApi apiPropertyApi
+    @Inject SessionApi sessionApi
+    @Inject DataClassComponentApi dataClassComponentApi
+    @Inject DataElementComponentApi dataElementComponentApi
+    @Inject DataFlowApi dataFlowApi
+    @Inject DataClassApi dataClassApi
+    @Inject DataElementApi dataElementApi
+    @Inject DataModelApi dataModelApi
+    @Inject DataTypeApi dataTypeApi
+    @Inject EnumerationValueApi enumerationValueApi
+    @Inject AnnotationApi annotationApi
+    @Inject MetadataApi metadataApi
+    @Inject ReferenceFileApi referenceFileApi
+    @Inject SummaryMetadataApi summaryMetadataApi
+    @Inject SummaryMetadataReportApi summaryMetadataReportApi
+    @Inject FolderApi folderApi
+    @Inject ImporterApi importerApi
+    @Inject ProfileApi profileApi
+    @Inject SearchApi searchApi
+    @Inject OpenidProviderApi openidProviderApi
+    @Inject CatalogueUserApi catalogueUserApi
+    @Inject SecurableResourceGroupRoleApi securableResourceGroupRoleApi
+    @Inject UserGroupApi userGroupApi
+    @Inject CodeSetApi codeSetApi
+    @Inject TermApi termApi
+    @Inject TerminologyApi terminologyApi
+    @Inject TermRelationshipApi termRelationshipApi
+    @Inject TermRelationshipTypeApi termRelationshipTypeApi
+    @Inject TreeApi treeApi
+
+    public static final Instant REPORT_DATE = Instant.now()
+
+    CodeSet codeSet() {
+        new CodeSet(
+                label       : "Test code set",
+                description : "code set description",
+                author      : "A.N. Other",
+                organisation: "uk.ac.gridpp.ral.org"
+        )
     }
 
     Folder folder() {
@@ -35,16 +108,16 @@ class CommonDataSpec extends BaseIntegrationSpec {
     }
 
 
-    def terminology() {
-        [label: 'Test terminology']
+    Terminology terminology() {
+        new Terminology(label: 'Test terminology')
     }
 
-    def termPayload() {
-        [code: 'B15.0', definition: 'Hepatitis A with hepatic coma']
+    Term termPayload() {
+        new Term(code: 'B15.0', definition: 'Hepatitis A with hepatic coma')
     }
 
     SummaryMetadataReport summaryMetadataReport() {
-        new SummaryMetadataReport(reportValue: 'test-report-value', reportDate: Instant.now())
+        new SummaryMetadataReport(reportValue: 'test-report-value', reportDate: REPORT_DATE)
     }
 
     def ruleRepresentation() {
@@ -111,12 +184,18 @@ class CommonDataSpec extends BaseIntegrationSpec {
         [label: 'Test data type', domainType: 'primitiveType', units : 'kilograms']
     }
 
-    def termRelationshipType(){
-       [label: 'Test Term Relationship Type label', displayLabel: 'Random display label', parentalRelationship: false, childRelationship : false]
+    TermRelationshipType termRelationshipType(){
+       new TermRelationshipType(label: 'Test Term Relationship Type label',
+                                //displayLabel: 'Random display label',
+                                parentalRelationship: false,
+                                childRelationship : false)
     }
 
-    def term(){
-        [description : 'Test Term description', code: 'est', definition: 'doloreum-et-val', url : 'https://www.hello.com/test']
+    Term term(){
+        new Term(description : 'Test Term description',
+                 code: 'est',
+                 definition: 'doloreum-et-val',
+                 url : 'https://www.hello.com/test')
     }
 
     DataFlow dataFlowPayload(UUID sourceId){
@@ -130,31 +209,19 @@ class CommonDataSpec extends BaseIntegrationSpec {
         [ label: label, description: 'test  payload description ' ]
     }
 
-    def referenceFilePayload(){
-        String fileContents = 'this is a string file contents'
-        [
-             fileName: 'reference file name',
-             "fileSize": fileContents.size(),
-             "fileContents": fileContents.bytes,
-             "fileType": "text/plain"
-         ]
+    ReferenceFile referenceFilePayload(){
+        referenceFilePayload('reference file name')
     }
-    def referenceFilePayload(String fileName){
-        String fileContents = 'this is a string file contents'
-        [
-                fileName: fileName,
-                "fileSize": fileContents.size(),
-                "fileContents": fileContents.bytes,
-                "fileType": "text/plain"
-        ]
+    ReferenceFile referenceFilePayload(String fileName){
+        referenceFilePayload(fileName, 'this is a string file contents')
     }
-    def referenceFilePayload(String fileName,String content){
-        [
+    ReferenceFile referenceFilePayload(String fileName,String content){
+        new ReferenceFile(
                 fileName: fileName,
-                "fileSize": content.size(),
-                "fileContents": content.bytes,
-                "fileType": "text/plain"
-        ]
+                fileSize: content.size(),
+                fileContents: content.bytes,
+                fileType: "text/plain"
+        )
     }
 
     ClassificationScheme classificationSchemePayload(){

@@ -2,6 +2,7 @@ package uk.ac.ox.softeng.mauro.controller.admin
 
 import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.admin.AdminApi
+import uk.ac.ox.softeng.mauro.plugin.MauroPluginDTO
 
 import groovy.transform.CompileStatic
 import io.micronaut.http.HttpStatus
@@ -53,24 +54,24 @@ class AdminController implements AdminApi {
 
 
     @Get(Paths.ADMIN_IMPORTERS_LIST)
-    List<ModelImporterPlugin> importers() {
+    List<MauroPluginDTO> importers() {
         accessControlService.checkAdministrator()
 
-        mauroPluginService.listPlugins(ModelImporterPlugin)
+        mauroPluginService.listPluginsAsDTO(ModelImporterPlugin)
     }
 
 
     @Get(Paths.ADMIN_EXPORTERS_LIST)
-    List<ModelExporterPlugin> exporters() {
+    List<MauroPluginDTO> exporters() {
         accessControlService.checkAdministrator()
 
-        mauroPluginService.listPlugins(ModelExporterPlugin)
+        mauroPluginService.listPluginsAsDTO(ModelExporterPlugin)
     }
 
 
     @Get(Paths.ADMIN_EMAILERS_LIST)
-    List<EmailPlugin> emailers() {
-        mauroPluginService.listPlugins(EmailPlugin)
+    List<MauroPluginDTO> emailers() {
+        mauroPluginService.listPluginsAsDTO(EmailPlugin)
     }
 
 

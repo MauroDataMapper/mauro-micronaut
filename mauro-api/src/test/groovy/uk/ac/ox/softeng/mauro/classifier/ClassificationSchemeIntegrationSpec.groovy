@@ -6,6 +6,7 @@ import uk.ac.ox.softeng.mauro.api.folder.FolderApi
 
 import io.micronaut.http.HttpResponse
 import io.micronaut.runtime.server.EmbeddedServer
+import jakarta.inject.Singleton
 
 import static uk.ac.ox.softeng.mauro.api.PathPopulation.populatePath
 import uk.ac.ox.softeng.mauro.api.Paths
@@ -23,15 +24,12 @@ import uk.ac.ox.softeng.mauro.testing.CommonDataSpec
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @ContainerizedTest
+@Singleton
 @Sql(scripts = ["classpath:sql/tear-down-classifiers.sql"], phase = Sql.Phase.AFTER_EACH)
 class ClassificationSchemeIntegrationSpec extends CommonDataSpec {
 
     @Shared
     UUID folderId
-
-    @Inject ClassificationSchemeApi classificationSchemeApi
-    @Inject ClassifierApi classifierApi
-    @Inject FolderApi folderApi
 
     void setup() {
         folderId = folderApi.create (folder()).id

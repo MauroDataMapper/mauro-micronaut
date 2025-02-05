@@ -15,9 +15,9 @@ import io.micronaut.http.annotation.Consumes
 import io.micronaut.http.annotation.Delete
 import io.micronaut.http.annotation.Get
 import io.micronaut.http.annotation.Post
+import io.micronaut.http.annotation.Produces
 import io.micronaut.http.annotation.Put
-import io.micronaut.http.server.multipart.MultipartBody
-import io.micronaut.http.server.types.files.StreamedFile
+import io.micronaut.http.client.multipart.MultipartBody
 
 @MauroApi
 interface FolderApi extends ModelApi<Folder> {
@@ -58,7 +58,11 @@ interface FolderApi extends ModelApi<Folder> {
     @Get(Paths.FOLDER_EXPORT)
     HttpResponse<byte[]> exportModel(UUID id, @Nullable String namespace, @Nullable String name, @Nullable String version)
 
-    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @Produces(MediaType.MULTIPART_FORM_DATA)
     @Post(Paths.FOLDER_IMPORT)
     ListResponse<Folder> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version)
+
+    // This is the version that will be implemented by the controller
+    ListResponse<Folder> importModel(@Body io.micronaut.http.server.multipart.MultipartBody body, String namespace, String name, @Nullable String version)
+
 }

@@ -7,8 +7,6 @@ import uk.ac.ox.softeng.mauro.domain.security.CatalogueUser
 @CompileStatic
 trait EmailPlugin extends MauroPlugin {
 
-
-
     boolean enabled
 
     abstract boolean configure(Map props)

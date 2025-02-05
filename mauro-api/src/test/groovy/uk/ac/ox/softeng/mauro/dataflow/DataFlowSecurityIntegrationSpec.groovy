@@ -5,6 +5,7 @@ import io.micronaut.http.client.exceptions.HttpClientResponseException
 import io.micronaut.runtime.EmbeddedApplication
 import io.micronaut.test.annotation.Sql
 import jakarta.inject.Inject
+import jakarta.inject.Singleton
 import spock.lang.Shared
 import uk.ac.ox.softeng.mauro.api.dataflow.DataClassComponentApi
 import uk.ac.ox.softeng.mauro.api.dataflow.DataElementComponentApi
@@ -22,6 +23,7 @@ import uk.ac.ox.softeng.mauro.security.SecuredIntegrationSpec
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @SecuredContainerizedTest
+@Singleton
 @Sql(scripts = ["classpath:sql/tear-down-dataflow.sql",
         "classpath:sql/tear-down-datamodel.sql",
         "classpath:sql/tear-down.sql",
@@ -37,9 +39,6 @@ class DataFlowSecurityIntegrationSpec extends SecuredIntegrationSpec {
     @Shared
     UUID targetId
 
-    @Inject FolderApi folderApi
-    @Inject DataModelApi dataModelApi
-    @Inject DataFlowApi dataFlowApi
 
     void setup() {
         loginAdmin()

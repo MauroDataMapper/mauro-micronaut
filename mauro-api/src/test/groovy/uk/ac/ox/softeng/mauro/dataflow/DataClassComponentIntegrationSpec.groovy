@@ -13,6 +13,7 @@ import io.micronaut.http.hateoas.JsonError
 import io.micronaut.runtime.EmbeddedApplication
 import io.micronaut.test.annotation.Sql
 import jakarta.inject.Inject
+import jakarta.inject.Singleton
 import spock.lang.Shared
 import uk.ac.ox.softeng.mauro.domain.dataflow.DataClassComponent
 import uk.ac.ox.softeng.mauro.domain.dataflow.DataFlow
@@ -24,6 +25,7 @@ import uk.ac.ox.softeng.mauro.testing.CommonDataSpec
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @ContainerizedTest
+@Singleton
 @Sql(scripts = ["classpath:sql/tear-down-dataflow.sql",
         "classpath:sql/tear-down-datamodel.sql",
         "classpath:sql/tear-down.sql",
@@ -47,12 +49,6 @@ class DataClassComponentIntegrationSpec extends CommonDataSpec {
 
     @Shared
     UUID dataClassTargetId
-
-    @Inject FolderApi folderApi
-    @Inject DataModelApi dataModelApi
-    @Inject DataClassApi dataClassApi
-    @Inject DataFlowApi dataFlowApi
-    @Inject DataClassComponentApi dataClassComponentApi
 
     void setup() {
         folderId = folderApi.create(folder()).id

@@ -9,15 +9,15 @@ import io.micronaut.http.client.exceptions.HttpClientResponseException
 import io.micronaut.runtime.EmbeddedApplication
 import jakarta.inject.Inject
 import io.micronaut.security.authentication.UsernamePasswordCredentials
+import jakarta.inject.Singleton
 import spock.lang.Shared
 import uk.ac.ox.softeng.mauro.persistence.SecuredContainerizedTest
 import uk.ac.ox.softeng.mauro.security.SecuredIntegrationSpec
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @SecuredContainerizedTest
+@Singleton
 class ApiPropertyIntegrationSpec extends SecuredIntegrationSpec {
-
-    @Inject ApiPropertyApi apiPropertyApi
 
     @Shared
     UUID apiPropertyId
