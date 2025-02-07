@@ -20,7 +20,6 @@ import spock.lang.Unroll
 @SecuredContainerizedTest
 @Sql(scripts = ["classpath:sql/tear-down-subscribed-catalogue.sql"], phase = Sql.Phase.AFTER_EACH)
 class SubscribedCatalogueIntegrationSpec extends SecuredIntegrationSpec {
-    static String TEST_MODEL_ID = "0b97751d-b6bf-476c-a9e6-95d3352e8008"
     @Inject
     EmbeddedApplication<?> application
     @Inject
@@ -185,8 +184,8 @@ class SubscribedCatalogueIntegrationSpec extends SecuredIntegrationSpec {
 
     }
 
-
-    void 'admin and logged in users- should return newerVersions output'() {
+    @Unroll
+    void 'admin and logged in users- should return newerVersions output for #publishedModelId with #numberOfNewerVersions'() {
         given:
         loginAdmin()
 
@@ -197,12 +196,18 @@ class SubscribedCatalogueIntegrationSpec extends SecuredIntegrationSpec {
 
         when:
         SubscribedCataloguesPublishedModelsNewerVersions response =
-            (SubscribedCataloguesPublishedModelsNewerVersions ) GET("$SUBSCRIBED_CATALOGUES_PATH/$subscribedCatalogue.id$PUBLISHEDMODELS/$TEST_MODEL_ID/newerVersions",
-                                                                 SubscribedCataloguesPublishedModelsNewerVersions)
+            (SubscribedCataloguesPublishedModelsNewerVersions) GET("$SUBSCRIBED_CATALOGUES_PATH/$subscribedCatalogue.id$PUBLISHEDMODELS/$publishedModelId/newerVersions",
+                                                                   SubscribedCataloguesPublishedModelsNewerVersions)
         then:
         response
         response.lastUpdated.toString() == "2023-06-12T16:03:07.118Z"
-        response.newerPublishedModels.size() == 3
+        response.newerPublishedModels.size() == numberOfNewerVersions
+
+        where:
+        publishedModelId             | numberOfNewerVersions
+        TEST_MODEL_ID                | 3
+        UUID.randomUUID().toString() | 0
+
     }
 
 

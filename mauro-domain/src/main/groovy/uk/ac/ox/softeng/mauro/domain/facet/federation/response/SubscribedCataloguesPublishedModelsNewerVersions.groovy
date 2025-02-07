@@ -2,6 +2,8 @@ package uk.ac.ox.softeng.mauro.domain.facet.federation.response
 
 import uk.ac.ox.softeng.mauro.domain.facet.federation.PublishedModel
 
+import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.annotation.JsonProperty
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
@@ -11,14 +13,15 @@ import java.time.Instant
 
 @CompileStatic
 @Slf4j
+@JsonInclude(JsonInclude.Include.ALWAYS)
 class SubscribedCataloguesPublishedModelsNewerVersions {
     @NonNull
     @Transient
     Instant lastUpdated
 
     @Transient
-
-    List<PublishedModel> newerPublishedModels
+    @JsonProperty("newerPublishedModels")
+    List<PublishedModel> newerPublishedModels = new ArrayList<PublishedModel>()
 
 
 }

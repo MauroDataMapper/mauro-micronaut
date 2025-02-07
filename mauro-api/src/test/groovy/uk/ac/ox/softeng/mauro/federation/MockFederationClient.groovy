@@ -3,6 +3,7 @@ package uk.ac.ox.softeng.mauro.federation
 import uk.ac.ox.softeng.mauro.controller.federation.client.FederationClient
 import uk.ac.ox.softeng.mauro.controller.federation.client.FederationClientConfiguration
 import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedCatalogue
+import uk.ac.ox.softeng.mauro.testing.BaseIntegrationSpec
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.util.logging.Slf4j
@@ -33,8 +34,12 @@ class MockFederationClient extends FederationClient {
 
     @Override
     Map<String, Object> fetchFederatedClientDataAsMap(SubscribedCatalogue subscribedCatalogue, String requestPath) {
-        if (requestPath.endsWith("newerVersions")){
-            jsonString = getNewerVersionsTestData()
+        if (requestPath.endsWith("$BaseIntegrationSpec.TEST_MODEL_ID$BaseIntegrationSpec.NEWER_VERSIONS")){
+            jsonString = getNewerVersionsPopulatedTestData()
+        }else {
+            if (requestPath.endsWith("$BaseIntegrationSpec.NEWER_VERSIONS")){
+                jsonString = getEmptyNewerVersionsTestData()
+            }
         }
         Map<String, Object> federatedDataAsMap = objectMapper.readValue(jsonString, Map.class)
         federatedDataAsMap
@@ -45,7 +50,11 @@ class MockFederationClient extends FederationClient {
         return new File('src/test/resources/federatedPublishedModelsBytesAsText.json').getBytes()
     }
 
-    String getNewerVersionsTestData() {
+    String getNewerVersionsPopulatedTestData() {
         jsonString = new File('src/test/resources/subscribedCataloguePublishedModelsNewerVersions.json').text
+    }
+
+    String getEmptyNewerVersionsTestData(){
+        jsonString = new File ('src/test/resources/emptyNewerVersions.json').text
     }
 }

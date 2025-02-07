@@ -155,11 +155,7 @@ class SubscribedCatalogueController extends ItemController<SubscribedCatalogue> 
         SubscribedCatalogue subscribedCatalogue = subscribedCatalogueCacheableRepository.findById(subscribedCatalogueId)
         ErrorHandler.handleError(HttpStatus.NOT_FOUND, subscribedCatalogue, "Item $subscribedCatalogueId not found")
 
-        Tuple2<Instant, List<PublishedModel>> result  = subscribedCatalogueService.getNewerVersionsForPublishedModels(subscribedCatalogue, publishedModelId)
-        new SubscribedCataloguesPublishedModelsNewerVersions().tap {
-            lastUpdated = result.v1
-            newerPublishedModels = result.v2 ?: []
-        }
+        subscribedCatalogueService.getNewerVersionsForPublishedModels(subscribedCatalogue, publishedModelId)
     }
 
 

@@ -6,6 +6,7 @@ import uk.ac.ox.softeng.mauro.domain.facet.federation.PublishedModel
 import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedCatalogue
 import uk.ac.ox.softeng.mauro.domain.facet.federation.converter.SubscribedCatalogueConverter
 import uk.ac.ox.softeng.mauro.domain.facet.federation.converter.SubscribedCatalogueConverterService
+import uk.ac.ox.softeng.mauro.domain.facet.federation.response.SubscribedCataloguesPublishedModelsNewerVersions
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
@@ -31,11 +32,17 @@ class SubscribedCatalogueService {
         getConverterForSubscribedCatalogue(subscribedCatalogue).toPublishedModels(subscribedCatalogueModelsMap).v2
     }
 
-    Tuple2<Instant, List<PublishedModel>> getNewerVersionsForPublishedModels(SubscribedCatalogue subscribedCatalogue, UUID subscribedModelId) {
+
+    SubscribedCataloguesPublishedModelsNewerVersions getNewerVersionsForPublishedModels(SubscribedCatalogue subscribedCatalogue, UUID subscribedModelId) {
         Map<String, Object> newerVersionsAsMap =
             federationClient.fetchFederatedClientDataAsMap(subscribedCatalogue, "$Paths.PUBLISHED_MODELS_ROUTE/$subscribedModelId$Paths.NEWER_VERSIONS")
-        getConverterForSubscribedCatalogue(subscribedCatalogue).publishedModelsNewerVersions(newerVersionsAsMap)
+        Tuple2<Instant, List<PublishedModel>> publishedModelsTuple = getConverterForSubscribedCatalogue(subscribedCatalogue).publishedModelsNewerVersions(newerVersionsAsMap)
+        new SubscribedCataloguesPublishedModelsNewerVersions().tap {
+            lastUpdated = publishedModelsTuple.v1 ?: Instant.now()
+            newerPublishedModels = publishedModelsTuple.v2 ?: []
+        }
     }
+
 
 
     byte[] getBytesResourceExport(SubscribedCatalogue subscribedCatalogue, String resourceUrl) {

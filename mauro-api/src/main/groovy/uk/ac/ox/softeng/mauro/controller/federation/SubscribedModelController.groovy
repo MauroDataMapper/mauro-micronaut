@@ -66,7 +66,7 @@ class SubscribedModelController extends ItemController<SubscribedModel> {
         accessControlService.checkAuthenticated()
 
         SubscribedCatalogue subscribedCatalogue = subscribedCatalogueCacheableRepository.readById(subscribedCatalogueId)
-        ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, subscribedCatalogue,"Subscribed Catalogue not found $subscribedCatalogueId")
+        ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, subscribedCatalogue, "Subscribed Catalogue not found $subscribedCatalogueId")
 
         subscribedModelCacheableRepository.findBySubscribedModelIdAndSubscribedCatalogueId(subscribedModelId, subscribedCatalogue)
     }
@@ -78,11 +78,11 @@ class SubscribedModelController extends ItemController<SubscribedModel> {
         accessControlService.checkAuthenticated()
 
         SubscribedCatalogue subscribedCatalogue = subscribedCatalogueCacheableRepository.readById(subscribedCatalogueId)
-        ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, subscribedCatalogue,"Subscribed Catalogue not found $subscribedCatalogueId")
+        ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, subscribedCatalogue, "Subscribed Catalogue not found $subscribedCatalogueId")
 
         Folder folder = folderCacheableRepository.readById(subscribedModelFederationParams.subscribedModel?.folderId)
 
-        ErrorHandler.handleError(HttpStatus.NOT_FOUND, folder,"Entity not found, $subscribedModelFederationParams.subscribedModel.folderId")
+        ErrorHandler.handleError(HttpStatus.NOT_FOUND, folder, "Entity not found, $subscribedModelFederationParams.subscribedModel.folderId")
         //   accessControlService.checkRole(Role.READER, folder)
 
         SubscribedModel subscribedModel = subscribedModelFederationParams.subscribedModel

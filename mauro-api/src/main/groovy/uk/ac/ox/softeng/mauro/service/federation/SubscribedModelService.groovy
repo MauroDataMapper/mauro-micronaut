@@ -57,7 +57,7 @@ class SubscribedModelService {
         // Atom feeds may allow multiple versions of an entry with the same ID
         return Optional.ofNullable(publishedModels
                                        .findAll {pm -> pm.modelId == subscribedModel.subscribedModelId}
-                                       .sort {pm -> pm.lastUpdated}.last()).orElse(null)
+                                       .sort {pm -> pm.lastUpdated}?.last()).orElse(null)
     }
 
     Model exportFederatedModelAndImport(SubscribedModelFederationParams subscribedModelFederationParams,
