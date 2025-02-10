@@ -34,14 +34,14 @@ class ApiKeyController extends ItemController<ApiKey> {
 
     @Get()
     ListResponse<ApiKey> index(UUID userId) {
-        accessControlService.checkRoleForUser(Role.READER, userId)
+        accessControlService.checkAdminOrUser(userId)
         List<ApiKey> apiKeys = apiKeyCacheableRepository.readByCatalogueUserId(userId)
         ListResponse.from(apiKeys?: [])
     }
 
     @Post
     ApiKey create(UUID userId, @Body ApiKey apiKey) {
-        accessControlService.checkRoleForUser(Role.EDITOR, userId)
+        accessControlService.checkAdminOrUser(userId)
         cleanBody(apiKey)
         updateCreationProperties(apiKey)
         apiKey.catalogueUserId = userId
@@ -53,14 +53,14 @@ class ApiKeyController extends ItemController<ApiKey> {
 
     @Get('/{apiKeyId}')
     ApiKey show(UUID userId, UUID apiKeyId) {
-        accessControlService.checkRoleForUser(Role.READER, userId)
+        accessControlService.checkAdminOrUser(userId)
         List<ApiKey> apiKeys = apiKeyCacheableRepository.readByCatalogueUserId(userId)
         apiKeys.find { it.id == apiKeyId }
     }
 
     @Delete('/{apiKeyId}')
     HttpStatus delete(UUID userId, UUID apiKeyId) {
-        accessControlService.checkRoleForUser(Role.EDITOR, userId)
+        accessControlService.checkAdminOrUser(userId)
         List<ApiKey> apiKeys = apiKeyCacheableRepository.readByCatalogueUserId(userId)
         ApiKey apiKey = apiKeys.find { it.id == apiKeyId }
         apiKeyCacheableRepository.delete(apiKey)
@@ -69,7 +69,7 @@ class ApiKeyController extends ItemController<ApiKey> {
 
     @Put('/{apiKeyId}/enable')
     ApiKey enable(UUID userId, UUID apiKeyId) {
-        accessControlService.checkRoleForUser(Role.EDITOR, userId)
+        accessControlService.checkAdminOrUser(userId)
         List<ApiKey> apiKeys = apiKeyCacheableRepository.readByCatalogueUserId(userId)
         ApiKey apiKey = apiKeys.find { it.id == apiKeyId }
         apiKey.disabled = false
@@ -78,7 +78,7 @@ class ApiKeyController extends ItemController<ApiKey> {
 
     @Put('/{apiKeyId}/disable')
     ApiKey disable(UUID userId, UUID apiKeyId) {
-        accessControlService.checkRoleForUser(Role.EDITOR, userId)
+        accessControlService.checkAdminOrUser(userId)
         List<ApiKey> apiKeys = apiKeyCacheableRepository.readByCatalogueUserId(userId)
         ApiKey apiKey = apiKeys.find { it.id == apiKeyId }
         apiKey.disabled = true
@@ -87,7 +87,7 @@ class ApiKeyController extends ItemController<ApiKey> {
 
     @Put('/{apiKeyId}/refresh/{expireInDays}')
     ApiKey disable(UUID userId, UUID apiKeyId, long expireInDays) {
-        accessControlService.checkRoleForUser(Role.EDITOR, userId)
+        accessControlService.checkAdminOrUser(userId)
         List<ApiKey> apiKeys = apiKeyCacheableRepository.readByCatalogueUserId(userId)
         ApiKey apiKey = apiKeys.find { it.id == apiKeyId }
         apiKey.setExpiresInDays(expireInDays)

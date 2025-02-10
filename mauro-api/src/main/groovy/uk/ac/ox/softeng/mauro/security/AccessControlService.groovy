@@ -171,7 +171,7 @@ class AccessControlService implements Toggleable {
      * by checking permissions on the owner or inherited from any of its parents.
      * @return if authorised, throw AuthorizationException otherwise
      */
-    void checkRoleForUser(@NonNull Role role, UUID catalogueUserId = null) {
+    void checkAdminOrUser(UUID catalogueUserId = null) {
         if (!enabled) return
 
         if (!securityService.authenticated) {

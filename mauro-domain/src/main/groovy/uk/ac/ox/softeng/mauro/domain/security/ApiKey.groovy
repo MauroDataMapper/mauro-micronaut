@@ -1,17 +1,13 @@
 package uk.ac.ox.softeng.mauro.domain.security
 
 import uk.ac.ox.softeng.mauro.domain.model.InstantConverter
-import uk.ac.ox.softeng.mauro.domain.model.InstantDateConverter
 import uk.ac.ox.softeng.mauro.domain.model.Item
 
 import com.fasterxml.jackson.annotation.JsonAlias
-import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
-import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
 import groovy.transform.MapConstructor
-import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.annotation.Index
 import io.micronaut.data.annotation.Indexes
 import io.micronaut.data.annotation.MappedEntity
@@ -19,9 +15,7 @@ import io.micronaut.data.annotation.MappedProperty
 import jakarta.persistence.Transient
 
 import java.time.Instant
-import java.time.LocalDate
 import java.time.temporal.ChronoUnit
-import java.time.temporal.TemporalUnit
 
 
 @CompileStatic
@@ -35,7 +29,6 @@ class ApiKey extends Item {
     String name
 
     @JsonDeserialize(converter = InstantConverter)
-    //@JsonSerialize(converter = InstantDateConverter)
     Instant expiryDate
 
     Boolean refreshable = true
@@ -46,7 +39,6 @@ class ApiKey extends Item {
      */
     @JsonAlias(['catalogue_user_id'])
     @MappedProperty('catalogue_user_id')
-    //@JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     UUID catalogueUserId
 
     @Transient
