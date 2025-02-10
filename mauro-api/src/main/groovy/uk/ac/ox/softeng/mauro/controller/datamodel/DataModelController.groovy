@@ -109,7 +109,6 @@ class DataModelController extends ModelController<DataModel> implements DataMode
 
     @Get(Paths.DATA_MODEL_SEARCH_GET)
     ListResponse<SearchResultsDTO> searchGet(UUID id, @Parameter @Nullable SearchRequestDTO requestDTO) {
-        System.err.println(requestDTO.searchTerm)
         requestDTO.withinModelId = id
         DataModel dataModel = dataModelRepository.readById(requestDTO.withinModelId)
         accessControlService.checkRole(Role.READER, dataModel)

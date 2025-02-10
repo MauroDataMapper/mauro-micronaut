@@ -30,10 +30,10 @@ class SessionHandlerClientFilter {
 
     @ResponseFilter
     void sessionResponse(HttpResponse<?> response) {
-        System.err.println("Applying response filter: ${this.class}")
-        System.err.println(response.status())
+        log.trace("Applying response filter: ${this.class}")
+        log.trace("${response.status()}")
         lastStatus = response.status()
-        System.err.println(response.body())
+        log.trace("${response.body()}")
         Optional<Cookie> sessionCookie = response.getCookie('SESSION')
         if(sessionCookie) {
             sessionId = sessionCookie.get().value

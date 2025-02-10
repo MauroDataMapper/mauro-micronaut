@@ -42,17 +42,10 @@ class SearchController implements AdministeredItemReader, SearchApi {
 
     @Post(Paths.SEARCH_POST)
     ListResponse<SearchResultsDTO> searchPost(@Body SearchRequestDTO requestDTO) {
-        System.err.println("Post here")
-        System.err.println(requestDTO.withinModelId)
-        System.err.println(requestDTO.searchTerm)
-        System.err.println(requestDTO.domainTypes)
         List<SearchResultsDTO> searchResults = searchRepository.search(requestDTO)
         List<SearchResultsDTO> searchResultsReadable = searchResults.findAll {SearchResultsDTO result ->
             AdministeredItem item = readAdministeredItem(result.domainType, result.id)
             accessControlService.canDoRole(Role.READER, item)
-        }
-        searchResultsReadable.each {
-            System.err.println(it.label)
         }
         ListResponse.from(searchResultsReadable)
     }

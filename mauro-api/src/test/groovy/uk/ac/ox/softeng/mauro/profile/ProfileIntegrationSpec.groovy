@@ -11,7 +11,6 @@ import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.persistence.ContainerizedTest
 import uk.ac.ox.softeng.mauro.profile.test.DataModelBasedProfileTest
-import uk.ac.ox.softeng.mauro.testing.BaseIntegrationSpec
 
 import jakarta.inject.Singleton
 import spock.lang.Shared
@@ -105,7 +104,7 @@ class ProfileIntegrationSpec extends CommonDataSpec {
     void "test validate profile"() {
         when:
         String profileNamespace = "uk.ac.ox.softeng.mauro.profile"
-        String profileName = DataModelBasedProfileTest.testProfileModelName.replace(" ", "%20")
+        String profileName = DataModelBasedProfileTest.testProfileModelName
         String profileVersion = "1.0.0"
         Map requestBody =
             [sections: [
@@ -142,40 +141,44 @@ class ProfileIntegrationSpec extends CommonDataSpec {
                 ]
             ]]
 
-        Map responseMap = POST("/dataModel/$appliedProfileDataModelId/profile/$profileNamespace/$profileName/$profileVersion/validate", requestBody)
+        AppliedProfile appliedProfile = profileApi.validateProfile(
+            "dataModel", appliedProfileDataModelId, profileNamespace, profileName, profileVersion, requestBody)
 
         then:
-        !responseMap.errors
-        responseMap.sections.fields.flatten().every {
+        !appliedProfile.errors
+        appliedProfile.sections.fields.flatten().every {
             !it.errors
         }
 
         when:
         requestBody.sections[1].fields[0].currentValue = "Test"
-        responseMap = POST("/dataModel/$appliedProfileDataModelId/profile/$profileNamespace/$profileName/$profileVersion/validate", requestBody)
+        appliedProfile = profileApi.validateProfile(
+            "dataModel", appliedProfileDataModelId, profileNamespace, profileName, profileVersion, requestBody)
         then:
-        !responseMap.errors
-        responseMap.sections.fields.flatten().find {
+        !appliedProfile.errors
+        appliedProfile.sections.fields.flatten().find {
             it.metadataPropertyName == 'size' &&
             it.errors.size() == 1
         }
 
         when:
         requestBody.sections[1].fields[1].currentValue = "High"
-        responseMap = POST("/dataModel/$appliedProfileDataModelId/profile/$profileNamespace/$profileName/$profileVersion/validate", requestBody)
+        appliedProfile = profileApi.validateProfile(
+            "dataModel", appliedProfileDataModelId, profileNamespace, profileName, profileVersion, requestBody)
         then:
-        !responseMap.errors
-        responseMap.sections.fields.flatten().find {
+        !appliedProfile.errors
+        appliedProfile.sections.fields.flatten().find {
             it.metadataPropertyName == 'priority' &&
             it.errors.size() == 1
         }
 
         when:
         requestBody.sections[1].fields[2].currentValue = "test@test@test"
-        responseMap = POST("/dataModel/$appliedProfileDataModelId/profile/$profileNamespace/$profileName/$profileVersion/validate", requestBody)
+        appliedProfile = profileApi.validateProfile(
+            "dataModel", appliedProfileDataModelId, profileNamespace, profileName, profileVersion, requestBody)
         then:
-        !responseMap.errors
-        responseMap.sections.fields.flatten().find {
+        !appliedProfile.errors
+        appliedProfile.sections.fields.flatten().find {
             it.metadataPropertyName == 'contactEmail' &&
             it.errors.size() == 1
         }

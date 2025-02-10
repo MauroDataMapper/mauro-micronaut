@@ -124,7 +124,6 @@ class AdminController implements AdminApi {
     @Get(Paths.ADMIN_EMAILS)
     ListResponse<Email> listEmails() {
         accessControlService.checkAdministrator()
-        System.err.println()
         ListResponse.from(emailRepository.readAll())
     }
 

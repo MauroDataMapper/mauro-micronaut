@@ -52,18 +52,41 @@ import uk.ac.ox.softeng.mauro.domain.terminology.Term
 import uk.ac.ox.softeng.mauro.domain.terminology.TermRelationshipType
 import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
 import uk.ac.ox.softeng.mauro.export.ExportModel
+import uk.ac.ox.softeng.mauro.plugin.importer.json.JsonDataModelImporterPlugin
+import uk.ac.ox.softeng.mauro.plugin.importer.json.JsonTerminologyImporterPlugin
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import io.micronaut.http.MediaType
 import io.micronaut.http.client.multipart.MultipartBody
 import jakarta.inject.Inject
 import spock.lang.Shared
+import spock.lang.Specification
 
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 
 
-class CommonDataSpec extends BaseIntegrationSpec{
+class CommonDataSpec extends Specification {
+
+    public static final String AUTHOR = 'author'
+    public static final String PATH_IDENTIFIER = 'pathIdentifier'
+    public static final String PATH_MODEL_IDENTIFIER = 'pathModelIdentifier'
+    public static final String MODEL_VERSION_TAG = 'modelVersionTag'
+    public static final String FINALISED = 'finalised'
+    public static final String DATE_FINALISED = 'dateFinalised'
+
+    // Round up to deal with rounding errors in testing
+    public static final Instant REPORT_DATE = Instant.now().truncatedTo(ChronoUnit.SECONDS)
+
+    @Inject
+    JsonDataModelImporterPlugin jsonDataModelImporterPlugin
+
+    @Inject
+    JsonTerminologyImporterPlugin jsonTerminologyImporterPlugin
+
+    @Inject
+    ObjectMapper objectMapper
 
     @Shared @Inject AdminApi adminApi
     @Shared @Inject ClassificationSchemeApi classificationSchemeApi
@@ -102,10 +125,8 @@ class CommonDataSpec extends BaseIntegrationSpec{
     @Inject
     SessionHandlerClientFilter sessionHandlerClientFilter
 
+    @Shared @Inject LowLevelApi lowLevelApi
 
-
-    // Round up to deal with rounding errors in testing
-    public static final Instant REPORT_DATE = Instant.now().truncatedTo(ChronoUnit.SECONDS)
 
     CodeSet codeSet() {
         new CodeSet(
@@ -192,12 +213,6 @@ class CommonDataSpec extends BaseIntegrationSpec{
             dataTypeKind: DataType.DataTypeKind.PRIMITIVE_TYPE,
             units : 'kilograms')
     }
-    def dataTypePayload1() {
-        [label: 'string', description: 'character string of variable length', domainType: 'PrimitiveType']
-    }
-    def dataTypePayload2(){
-        [label: 'Test data type', domainType: 'primitiveType', units : 'kilograms']
-    }
 
     TermRelationshipType termRelationshipType(){
        new TermRelationshipType(label: 'Test Term Relationship Type label',
@@ -218,10 +233,6 @@ class CommonDataSpec extends BaseIntegrationSpec{
             label: 'test label',
             description: 'dataflow payload description ',
             source: new DataModel(id: sourceId))
-    }
-
-    def genericModelPayload(String label){
-        [ label: label, description: 'test  payload description ' ]
     }
 
     ReferenceFile referenceFilePayload(){

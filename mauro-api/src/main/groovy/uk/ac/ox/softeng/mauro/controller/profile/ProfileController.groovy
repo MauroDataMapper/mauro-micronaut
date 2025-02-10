@@ -105,9 +105,7 @@ class ProfileController implements AdministeredItemReader, ProfileApi {
         AdministeredItem administeredItem = findAdministeredItem(domainType, domainId)
         accessControlService.checkRole(Role.READER, administeredItem)
         profileService.getUnusedProfilesForAdministeredItem(getAllProfiles(), administeredItem)
-            .collect {System.err.println("Unused Profile: ${it.name}")
-                System.err.println("Unused Profile: ${it.class}")
-                MauroPluginDTO.fromPlugin(it) }
+            .collect {MauroPluginDTO.fromPlugin(it) }
     }
 
     @Get(Paths.PROFILE_OTHER_METADATA)

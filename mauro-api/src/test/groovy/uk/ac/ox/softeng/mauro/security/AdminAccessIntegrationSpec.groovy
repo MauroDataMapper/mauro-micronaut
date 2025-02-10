@@ -154,10 +154,6 @@ class AdminAccessIntegrationSpec extends SecuredIntegrationSpec {
         given:
         loginAdmin()
 
-        dataModelApi.listAll().each {
-            System.err.println(it.label)
-        }
-
         when:
         ListResponse<SearchResultsDTO> searchResults = searchApi.searchPost(new SearchRequestDTO(searchTerm: 'Updated'))
 
