@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.dataflow
 
+import uk.ac.ox.softeng.mauro.domain.dataflow.Type
+
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.client.exceptions.HttpClientResponseException
 import io.micronaut.runtime.EmbeddedApplication
@@ -84,7 +86,7 @@ class DataFlowSecurityIntegrationSpec extends SecuredIntegrationSpec {
 
         when:
         ListResponse<DataFlow> listResponse =
-                (ListResponse<DataFlow>) GET("$DATAMODELS_PATH/$targetId$DATA_FLOWS_PATH", ListResponse, DataFlow)
+                dataFlowApi.list(targetId, Type.TARGET)
         then:
         !listResponse
         exception = thrown()

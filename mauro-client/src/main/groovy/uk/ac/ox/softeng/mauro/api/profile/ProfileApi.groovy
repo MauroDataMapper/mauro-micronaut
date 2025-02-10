@@ -3,6 +3,7 @@ package uk.ac.ox.softeng.mauro.api.profile
 import uk.ac.ox.softeng.mauro.api.MauroApi
 import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.domain.facet.Metadata
+import uk.ac.ox.softeng.mauro.plugin.MauroPluginDTO
 import uk.ac.ox.softeng.mauro.profile.DataModelBasedProfile
 import uk.ac.ox.softeng.mauro.profile.Profile
 import uk.ac.ox.softeng.mauro.profile.applied.AppliedProfile
@@ -32,10 +33,10 @@ interface ProfileApi {
     Profile getProfileDetails(String namespace, String name, String version)
 
     @Get(Paths.PROFILE_USED)
-    List<Profile> getUsedProfiles(String domainType, UUID domainId)
+    List<MauroPluginDTO> getUsedProfiles(String domainType, UUID domainId)
 
     @Get(Paths.PROFILE_UNUSED)
-    List<Profile> getUnusedProfiles(String domainType, UUID domainId)
+    List<MauroPluginDTO> getUnusedProfiles(String domainType, UUID domainId)
 
     @Get(Paths.PROFILE_OTHER_METADATA)
     ListResponse<Metadata> getOtherMetadata(String domainType, UUID domainId)

@@ -187,7 +187,7 @@ interface Paths {
     /*
     * SearchApi
     */
-    String SEARCH_GET = '/search{?requestDTO}'
+    String SEARCH_GET = '/search{?requestDTO*}'
     String SEARCH_POST = '/search'
 
     /*
@@ -237,7 +237,7 @@ interface Paths {
     String TERMINOLOGY_NEW_BRANCH_MODEL_VERSION = '/terminologies/{id}/newBranchModelVersion'
     String FOLDER_LIST_TERMINOLOGY = '/folders/{folderId}/terminologies'
     String TERMINOLOGY_DIFF = '/terminologies/{id}/diff/{otherId}'
-    String TERMINOLOGY_SEARCH_GET = '/terminologies/{id}/search{?requestDTO}'
+    String TERMINOLOGY_SEARCH_GET = '/terminologies/{id}/search{?requestDTO*}'
     String TERMINOLOGY_SEARCH_POST = '/terminologies/{id}/search'
     String TERMINOLOGY_EXPORT = '/terminologies/{id}/export{/namespace}{/name}{/version}'
     String TERMINOLOGY_IMPORT = '/terminologies/import/{namespace}/{name}{/version}'

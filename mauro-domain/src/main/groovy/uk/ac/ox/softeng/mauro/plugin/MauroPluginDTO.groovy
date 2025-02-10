@@ -2,8 +2,10 @@ package uk.ac.ox.softeng.mauro.plugin
 
 import uk.ac.ox.softeng.mauro.plugin.exporter.ModelExporterPlugin
 import uk.ac.ox.softeng.mauro.plugin.importer.ModelImporterPlugin
+import uk.ac.ox.softeng.mauro.profile.Profile
 
 class MauroPluginDTO {
+    String name
     String version
     String displayName
     String description
@@ -22,9 +24,13 @@ class MauroPluginDTO {
     String fileExtension
     String handlesModelType
 
+    // Profile
+    String metadataNamespace
+    List<String> profileApplicableForDomains
 
     static MauroPluginDTO fromPlugin(MauroPlugin mauroPlugin) {
         new MauroPluginDTO().tap {
+            name = mauroPlugin.name
             version = mauroPlugin.version
             displayName = mauroPlugin.displayName
             description = mauroPlugin.description
@@ -42,6 +48,10 @@ class MauroPluginDTO {
                 canExportMultipleDomains = mauroPlugin.canExportMultipleDomains
                 fileExtension = mauroPlugin.fileExtension
                 handlesModelType = mauroPlugin.handlesModelType.name
+            }
+            if(mauroPlugin instanceof Profile) {
+                metadataNamespace = mauroPlugin.metadataNamespace
+                profileApplicableForDomains = mauroPlugin.profileApplicableForDomains
             }
         }
     }

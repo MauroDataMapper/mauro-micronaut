@@ -140,7 +140,7 @@ class DataModelJsonImportExportIntegrationSpec extends CommonDataSpec {
         children.first().parentAnnotationId == parentId
 
         when:
-        ListResponse<DataType> importedDataTypes = (ListResponse<DataType>)  GET("$DATAMODELS_PATH/$importedDataModelId$DATATYPES_PATH", ListResponse, DataType)
+        ListResponse<DataType> importedDataTypes = dataTypeApi.list(importedDataModelId)
         then:
         importedDataTypes
         importedDataTypes.count == 1

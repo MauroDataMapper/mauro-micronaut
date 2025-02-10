@@ -30,6 +30,7 @@ interface ReferenceFileApi extends FacetApi<ReferenceFile> {
      * @param id
      * @return ReferenceFile
      */
+    @Get(Paths.REFERENCE_FILE_ID)
     ReferenceFile show(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID id)
 
     @Put(Paths.REFERENCE_FILE_ID)

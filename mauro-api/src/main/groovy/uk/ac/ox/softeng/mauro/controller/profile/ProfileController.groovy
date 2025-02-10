@@ -4,6 +4,7 @@ import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.profile.MetadataNamespaceDTO
 import uk.ac.ox.softeng.mauro.api.profile.ProfileApi
 import uk.ac.ox.softeng.mauro.domain.security.Role
+import uk.ac.ox.softeng.mauro.plugin.MauroPluginDTO
 import uk.ac.ox.softeng.mauro.profile.applied.AppliedProfile
 
 import io.micronaut.core.annotation.Nullable
@@ -92,17 +93,21 @@ class ProfileController implements AdministeredItemReader, ProfileApi {
     }
 
     @Get(Paths.PROFILE_USED)
-    List<Profile> getUsedProfiles(String domainType, UUID domainId) {
+    List<MauroPluginDTO> getUsedProfiles(String domainType, UUID domainId) {
         AdministeredItem administeredItem = findAdministeredItem(domainType, domainId)
         accessControlService.checkRole(Role.READER, administeredItem)
         profileService.getUsedProfilesForAdministeredItem(getAllProfiles(), administeredItem)
+            .collect {MauroPluginDTO.fromPlugin(it) }
     }
 
     @Get(Paths.PROFILE_UNUSED)
-    List<Profile> getUnusedProfiles(String domainType, UUID domainId) {
+    List<MauroPluginDTO> getUnusedProfiles(String domainType, UUID domainId) {
         AdministeredItem administeredItem = findAdministeredItem(domainType, domainId)
         accessControlService.checkRole(Role.READER, administeredItem)
         profileService.getUnusedProfilesForAdministeredItem(getAllProfiles(), administeredItem)
+            .collect {System.err.println("Unused Profile: ${it.name}")
+                System.err.println("Unused Profile: ${it.class}")
+                MauroPluginDTO.fromPlugin(it) }
     }
 
     @Get(Paths.PROFILE_OTHER_METADATA)
@@ -122,7 +127,8 @@ class ProfileController implements AdministeredItemReader, ProfileApi {
         accessControlService.checkRole(Role.READER, administeredItem)
         Profile profile = getProfileByName(namespace, name, version)
         handleProfileNotFound(profile, namespace, name, version)
-        new AppliedProfile(profile, administeredItem)
+        def ap = new AppliedProfile(profile, administeredItem)
+        return ap
     }
 
     @Post(Paths.PROFILE_ITEM_VALIDATE)

@@ -1,6 +1,7 @@
 package uk.ac.ox.softeng.mauro.api
 
 import groovy.util.logging.Slf4j
+import io.micronaut.http.HttpStatus
 import io.micronaut.http.MutableHttpRequest
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.annotation.ClientFilter
@@ -16,6 +17,8 @@ class SessionHandlerClientFilter {
 
     String sessionId
 
+    HttpStatus lastStatus
+
     @RequestFilter
     void doFilter(MutableHttpRequest<?> request) {
         log.trace("Applying request filter: ${this.class}")
@@ -29,6 +32,7 @@ class SessionHandlerClientFilter {
     void sessionResponse(HttpResponse<?> response) {
         System.err.println("Applying response filter: ${this.class}")
         System.err.println(response.status())
+        lastStatus = response.status()
         System.err.println(response.body())
         Optional<Cookie> sessionCookie = response.getCookie('SESSION')
         if(sessionCookie) {

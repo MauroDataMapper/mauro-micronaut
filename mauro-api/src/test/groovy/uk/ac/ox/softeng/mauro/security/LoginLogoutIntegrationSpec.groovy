@@ -1,6 +1,9 @@
 package uk.ac.ox.softeng.mauro.security
 
+import uk.ac.ox.softeng.mauro.api.SessionHandlerClientFilter
+import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.domain.security.CatalogueUser
+import uk.ac.ox.softeng.mauro.web.ListResponse
 
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
@@ -9,21 +12,22 @@ import io.micronaut.runtime.EmbeddedApplication
 import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.persistence.SecuredContainerizedTest
 
+import jakarta.inject.Singleton
+
 @SecuredContainerizedTest
+@Singleton
 class LoginLogoutIntegrationSpec extends SecuredIntegrationSpec {
 
-    @Inject
-    EmbeddedApplication<?> application
 
     void 'not logged in user can only access public endpoints'() {
         when:
-        Map response = GET('/folders')
+        ListResponse<Folder> response = folderApi.listAll()
 
         then:
         response
 
         when:
-        GET('/admin/modules')
+        adminApi.modules()
 
         then:
         HttpClientResponseException exception = thrown()
@@ -41,37 +45,35 @@ class LoginLogoutIntegrationSpec extends SecuredIntegrationSpec {
 
     void 'logged in administrator is authorized'() {
         when:
-        List response = GET('/folders', List)
+        ListResponse<Folder> response = folderApi.listAll()
 
         then:
         response
 
         when:
-        response = GET('/admin/modules', List)
+        def modulesResponse = adminApi.modules()
 
         then:
-        response
-        response.size() > 4
+        modulesResponse
+        modulesResponse.size() > 4
     }
 
     void 'logout'() {
         when:
         logout()
-
         then:
-        HttpClientResponseException exception = thrown()
-        exception.status == HttpStatus.OK
+        sessionHandlerClientFilter.lastStatus == HttpStatus.OK
     }
 
     void 'not logged in user can only access public endpoints'() {
         when:
-        Map response = GET('/folders')
+        ListResponse<Folder> response = folderApi.listAll()
 
         then:
         response
 
         when:
-        GET('/admin/modules')
+        adminApi.modules()
 
         then:
         HttpClientResponseException exception = thrown()
@@ -89,13 +91,13 @@ class LoginLogoutIntegrationSpec extends SecuredIntegrationSpec {
 
     void 'logged in non-admin user is authorized for non-admin endpoints'() {
         when:
-        List response = GET('/folders', List)
+        ListResponse<Folder> response = folderApi.listAll()
 
         then:
         response
 
         when:
-        GET('/admin/modules', List)
+        adminApi.modules()
 
         then:
         HttpClientResponseException exception = thrown()
@@ -107,19 +109,18 @@ class LoginLogoutIntegrationSpec extends SecuredIntegrationSpec {
         logout()
 
         then:
-        HttpClientResponseException exception = thrown()
-        exception.status == HttpStatus.OK
+        sessionHandlerClientFilter.lastStatus == HttpStatus.OK
     }
 
     void 'not logged in user can only access public endpoints'() {
         when:
-        Map response = GET('/folders')
+        ListResponse<Folder> response = folderApi.listAll()
 
         then:
         response
 
         when:
-        GET('/admin/modules')
+        adminApi.modules()
 
         then:
         HttpClientResponseException exception = thrown()

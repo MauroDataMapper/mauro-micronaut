@@ -1,8 +1,14 @@
 package uk.ac.ox.softeng.mauro.terminology
 
+import uk.ac.ox.softeng.mauro.domain.folder.Folder
+import uk.ac.ox.softeng.mauro.domain.terminology.Term
+import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
+import uk.ac.ox.softeng.mauro.web.ListResponse
+
 import io.micronaut.runtime.EmbeddedApplication
 import io.micronaut.test.annotation.Sql
 import jakarta.inject.Inject
+import jakarta.inject.Singleton
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 import uk.ac.ox.softeng.mauro.domain.terminology.CodeSet
@@ -10,13 +16,9 @@ import uk.ac.ox.softeng.mauro.persistence.ContainerizedTest
 import uk.ac.ox.softeng.mauro.testing.CommonDataSpec
 
 @ContainerizedTest
+@Singleton
 @Sql(scripts = "classpath:sql/tear-down.sql", phase = Sql.Phase.AFTER_EACH)
 class TermCodeSetIntegrationSpec extends CommonDataSpec {
-
-    @Inject
-    @AutoCleanup
-    @Shared
-    EmbeddedApplication<?> application
 
     @Shared
     UUID folderId
@@ -28,40 +30,40 @@ class TermCodeSetIntegrationSpec extends CommonDataSpec {
     UUID termId
 
     def setup() {
-        def folderResponse = POST(FOLDERS_PATH, folder())
-        folderId = UUID.fromString(folderResponse.id as String)
-        def terminologyResp = POST("$FOLDERS_PATH/$folderId$TERMINOLOGIES_PATH", terminology())
-        terminologyId = UUID.fromString(terminologyResp.id as String)
+        Folder folderResponse = folderApi.create(folder())
+        folderId = folderResponse.id
+        Terminology terminologyResp = terminologyApi.create(folderId, terminology())
+        terminologyId = terminologyResp.id
 
-        def termResponse = POST("$TERMINOLOGIES_PATH/$terminologyId$TERMS_PATH", termPayload())
-        termId = UUID.fromString(termResponse.id as String)
+        Term termResponse = termApi.create(terminologyId, termPayload())
+        termId = termResponse.id
     }
 
     void 'test getCodeSetsForTerm'() {
         given:
-        def codeSetResp = POST("$FOLDERS_PATH/$folderId$CODE_SET_PATH", codeSet())
-        def codeSetId = UUID.fromString(codeSetResp.id as String)
+        CodeSet codeSetResp = codeSetApi.create(folderId, codeSet())
+        UUID codeSetId = codeSetResp.id
         and:
         //Associating term to codeSet
-        PUT("$CODE_SET_PATH/$codeSetId$TERMS_PATH/$termId", codeSetResp, CodeSet)
+        codeSetApi.addTerm(codeSetId, termId)
 
         when:
-        def getAllResp = GET("$TERMINOLOGIES_PATH/$terminologyId$TERMS_PATH/$termId$CODE_SET_PATH")
+        ListResponse<CodeSet> getAllResp = termApi.getCodeSetsForTerm(terminologyId, termId)
 
         then:
         getAllResp
-        def codeSets = getAllResp.items
+        List<CodeSet> codeSets = getAllResp.items
         codeSets.size() == 1
-        codeSets.id.contains(codeSetId.toString())
+        codeSets.id == [codeSetId]
         codeSets.domainType.contains('CodeSet')
     }
 
     void 'test getCodeSetsByTerm -no association -returns  empty list '() {
         given:
-        POST("$FOLDERS_PATH/$folderId$CODE_SET_PATH", codeSet())
+        codeSetApi.create(folderId, codeSet())
 
         when:
-        def getAllResp = GET("$TERMINOLOGIES_PATH/$terminologyId$TERMS_PATH/$termId$CODE_SET_PATH")
+        ListResponse<CodeSet> getAllResp = termApi.getCodeSetsForTerm(terminologyId, termId)
 
         then:
         getAllResp

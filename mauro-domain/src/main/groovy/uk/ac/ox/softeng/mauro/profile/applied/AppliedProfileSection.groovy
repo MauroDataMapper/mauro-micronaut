@@ -15,6 +15,10 @@ class AppliedProfileSection extends ProfileSection {
     @JsonIgnore
     AppliedProfile parentProfile
 
+    AppliedProfileSection() {}
+
+    List<AppliedProfileField> fields = []
+
     @Override
     String getLabel() {
         return sourceProfileSection.getLabel()

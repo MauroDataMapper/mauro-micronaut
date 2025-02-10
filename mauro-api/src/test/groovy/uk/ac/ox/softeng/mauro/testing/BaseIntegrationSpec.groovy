@@ -10,6 +10,7 @@ import io.micronaut.http.client.HttpClient
 import io.micronaut.http.client.annotation.Client
 import io.micronaut.http.client.multipart.MultipartBody
 import io.micronaut.http.cookie.Cookie
+import io.micronaut.runtime.EmbeddedApplication
 import jakarta.inject.Inject
 import spock.lang.Shared
 import spock.lang.Specification
@@ -236,7 +237,8 @@ class BaseIntegrationSpec extends Specification {
         Map<String, Object> response = POST("/terminologies/import/$namespace/$name/$version", importRequest)
         UUID.fromString(response.items.first().id)
     }
-    
+
+
     void addHeaders(MutableHttpRequest<Object> request) {
         if(apiKey)
             request.header('apiKey', apiKey.toString())

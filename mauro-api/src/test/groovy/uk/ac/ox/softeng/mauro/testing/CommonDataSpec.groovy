@@ -1,5 +1,6 @@
 package uk.ac.ox.softeng.mauro.testing
 
+import uk.ac.ox.softeng.mauro.api.SessionHandlerClientFilter
 import uk.ac.ox.softeng.mauro.api.admin.AdminApi
 import uk.ac.ox.softeng.mauro.api.classifier.ClassificationSchemeApi
 import uk.ac.ox.softeng.mauro.api.classifier.ClassifierApi
@@ -23,6 +24,7 @@ import uk.ac.ox.softeng.mauro.api.importer.ImporterApi
 import uk.ac.ox.softeng.mauro.api.profile.ProfileApi
 import uk.ac.ox.softeng.mauro.api.search.SearchApi
 import uk.ac.ox.softeng.mauro.api.security.CatalogueUserApi
+import uk.ac.ox.softeng.mauro.api.security.LoginApi
 import uk.ac.ox.softeng.mauro.api.security.SecurableResourceGroupRoleApi
 import uk.ac.ox.softeng.mauro.api.security.UserGroupApi
 import uk.ac.ox.softeng.mauro.api.security.openidprovider.OpenidProviderApi
@@ -49,46 +51,57 @@ import uk.ac.ox.softeng.mauro.domain.terminology.CodeSet
 import uk.ac.ox.softeng.mauro.domain.terminology.Term
 import uk.ac.ox.softeng.mauro.domain.terminology.TermRelationshipType
 import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
+import uk.ac.ox.softeng.mauro.export.ExportModel
+import uk.ac.ox.softeng.mauro.web.ListResponse
 
+import io.micronaut.http.MediaType
+import io.micronaut.http.client.multipart.MultipartBody
 import jakarta.inject.Inject
+import spock.lang.Shared
 
 import java.time.Instant
 
 
 class CommonDataSpec extends BaseIntegrationSpec{
 
-    @Inject AdminApi adminApi
-    @Inject ClassificationSchemeApi classificationSchemeApi
-    @Inject ClassifierApi classifierApi
-    @Inject ApiPropertyApi apiPropertyApi
-    @Inject SessionApi sessionApi
-    @Inject DataClassComponentApi dataClassComponentApi
-    @Inject DataElementComponentApi dataElementComponentApi
-    @Inject DataFlowApi dataFlowApi
-    @Inject DataClassApi dataClassApi
-    @Inject DataElementApi dataElementApi
-    @Inject DataModelApi dataModelApi
-    @Inject DataTypeApi dataTypeApi
-    @Inject EnumerationValueApi enumerationValueApi
-    @Inject AnnotationApi annotationApi
-    @Inject MetadataApi metadataApi
-    @Inject ReferenceFileApi referenceFileApi
-    @Inject SummaryMetadataApi summaryMetadataApi
-    @Inject SummaryMetadataReportApi summaryMetadataReportApi
-    @Inject FolderApi folderApi
-    @Inject ImporterApi importerApi
-    @Inject ProfileApi profileApi
-    @Inject SearchApi searchApi
-    @Inject OpenidProviderApi openidProviderApi
-    @Inject CatalogueUserApi catalogueUserApi
-    @Inject SecurableResourceGroupRoleApi securableResourceGroupRoleApi
-    @Inject UserGroupApi userGroupApi
-    @Inject CodeSetApi codeSetApi
-    @Inject TermApi termApi
-    @Inject TerminologyApi terminologyApi
-    @Inject TermRelationshipApi termRelationshipApi
-    @Inject TermRelationshipTypeApi termRelationshipTypeApi
-    @Inject TreeApi treeApi
+    @Shared @Inject AdminApi adminApi
+    @Shared @Inject ClassificationSchemeApi classificationSchemeApi
+    @Shared @Inject ClassifierApi classifierApi
+    @Shared @Inject ApiPropertyApi apiPropertyApi
+    @Shared @Inject SessionApi sessionApi
+    @Shared @Inject DataClassComponentApi dataClassComponentApi
+    @Shared @Inject DataElementComponentApi dataElementComponentApi
+    @Shared @Inject DataFlowApi dataFlowApi
+    @Shared @Inject DataClassApi dataClassApi
+    @Shared @Inject DataElementApi dataElementApi
+    @Shared @Inject DataModelApi dataModelApi
+    @Shared @Inject DataTypeApi dataTypeApi
+    @Shared @Inject EnumerationValueApi enumerationValueApi
+    @Shared @Inject AnnotationApi annotationApi
+    @Shared @Inject MetadataApi metadataApi
+    @Shared @Inject ReferenceFileApi referenceFileApi
+    @Shared @Inject SummaryMetadataApi summaryMetadataApi
+    @Shared @Inject SummaryMetadataReportApi summaryMetadataReportApi
+    @Shared @Inject FolderApi folderApi
+    @Shared @Inject ImporterApi importerApi
+    @Shared @Inject ProfileApi profileApi
+    @Shared @Inject SearchApi searchApi
+    @Shared @Inject OpenidProviderApi openidProviderApi
+    @Shared @Inject CatalogueUserApi catalogueUserApi
+    @Shared @Inject SecurableResourceGroupRoleApi securableResourceGroupRoleApi
+    @Shared @Inject UserGroupApi userGroupApi
+    @Shared @Inject CodeSetApi codeSetApi
+    @Shared @Inject TermApi termApi
+    @Shared @Inject TerminologyApi terminologyApi
+    @Shared @Inject TermRelationshipApi termRelationshipApi
+    @Shared @Inject TermRelationshipTypeApi termRelationshipTypeApi
+    @Shared @Inject TreeApi treeApi
+    @Shared @Inject LoginApi loginApi
+
+    @Inject
+    SessionHandlerClientFilter sessionHandlerClientFilter
+
+
 
     public static final Instant REPORT_DATE = Instant.now()
 
@@ -238,6 +251,45 @@ class CommonDataSpec extends BaseIntegrationSpec{
             description : 'random description ')
 
     }
+
+    /**
+     * Convenience method for importing a data model into the database for testing
+     */
+
+    UUID importDataModel(DataModel dataModelToImport, Folder folder) {
+        ExportModel exportModel = ExportModel.build {
+            dataModel dataModelToImport
+        }
+        MultipartBody importRequest = MultipartBody.builder()
+            .addPart('folderId', folder.id.toString())
+            .addPart('importFile', 'file.json', MediaType.APPLICATION_JSON_TYPE, objectMapper.writeValueAsBytes(exportModel))
+            .build()
+        String namespace = jsonDataModelImporterPlugin.namespace
+        String name = jsonDataModelImporterPlugin.name
+        String version = jsonDataModelImporterPlugin.version
+
+        ListResponse<DataModel> response = dataModelApi.importModel(importRequest, namespace, name, version)
+        response.items.first().id
+    }
+
+    UUID importTerminology(Terminology terminologyToImport, Folder folder) {
+        ExportModel exportModel = ExportModel.build {
+            terminology terminologyToImport
+        }
+        MultipartBody importRequest = MultipartBody.builder()
+            .addPart('folderId', folder.id.toString())
+            .addPart('importFile', 'file.json', MediaType.APPLICATION_JSON_TYPE, objectMapper.writeValueAsBytes(exportModel))
+            .build()
+        String namespace = jsonTerminologyImporterPlugin.namespace
+        String name = jsonTerminologyImporterPlugin.name
+        String version = jsonTerminologyImporterPlugin.version
+
+        ListResponse<Terminology> response = terminologyApi.importModel(importRequest, namespace, name, version)
+        response.items.first().id
+    }
+
+
+}
 
 
     def mauroJsonSubscribedCataloguePayload() {

@@ -11,19 +11,18 @@ import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchRequestDTO
 import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchResultsDTO
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
+import io.micronaut.context.annotation.Parameter
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.Body
-import io.micronaut.http.annotation.Consumes
 import io.micronaut.http.annotation.Delete
 import io.micronaut.http.annotation.Get
 import io.micronaut.http.annotation.Post
+import io.micronaut.http.annotation.Produces
 import io.micronaut.http.annotation.Put
-import io.micronaut.http.annotation.RequestBean
-import io.micronaut.http.server.multipart.MultipartBody
-import io.micronaut.http.server.types.files.StreamedFile
+import io.micronaut.http.client.multipart.MultipartBody
 import io.micronaut.scheduling.TaskExecutors
 import io.micronaut.scheduling.annotation.ExecuteOn
 
@@ -43,7 +42,7 @@ interface TerminologyApi extends ModelApi<Terminology> {
     HttpResponse delete(UUID id, @Body @Nullable Terminology terminology)
 
     @Get(Paths.TERMINOLOGY_SEARCH_GET)
-    ListResponse<SearchResultsDTO> searchGet(UUID id, @RequestBean SearchRequestDTO requestDTO)
+    ListResponse<SearchResultsDTO> searchGet(UUID id, @Parameter SearchRequestDTO requestDTO)
 
     @Post(Paths.TERMINOLOGY_SEARCH_POST)
     ListResponse<SearchResultsDTO> searchPost(UUID id, @Body SearchRequestDTO requestDTO)
@@ -64,10 +63,15 @@ interface TerminologyApi extends ModelApi<Terminology> {
     HttpResponse<byte[]> exportModel(UUID id, @Nullable String namespace, @Nullable String name, @Nullable String version)
 
     @ExecuteOn(TaskExecutors.IO)
-    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @Produces(MediaType.MULTIPART_FORM_DATA)
     @Post(Paths.TERMINOLOGY_IMPORT)
     ListResponse<Terminology> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version)
-/*
+
+    // This is the version that will be implemented by the controller
+    ListResponse<Terminology> importModel(@Body io.micronaut.http.server.multipart.MultipartBody body, String namespace, String name, @Nullable String version)
+
+
+    /*
     @Transactional
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Post('/terminologies/import{/namespace}{/name}{/version}')

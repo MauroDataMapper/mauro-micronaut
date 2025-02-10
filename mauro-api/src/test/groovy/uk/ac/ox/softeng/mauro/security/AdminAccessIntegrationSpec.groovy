@@ -1,9 +1,12 @@
 package uk.ac.ox.softeng.mauro.security
 
+import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchRequestDTO
+
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.client.exceptions.HttpClientResponseException
 import io.micronaut.runtime.EmbeddedApplication
 import jakarta.inject.Inject
+import jakarta.inject.Singleton
 import spock.lang.Shared
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
@@ -12,10 +15,8 @@ import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchResultsDTO
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @SecuredContainerizedTest
+@Singleton
 class AdminAccessIntegrationSpec extends SecuredIntegrationSpec {
-
-    @Inject
-    EmbeddedApplication<?> application
 
     @Shared
     UUID folderId
@@ -28,7 +29,7 @@ class AdminAccessIntegrationSpec extends SecuredIntegrationSpec {
         loginAdmin()
 
         when:
-        Folder folder = (Folder) POST('/folders', [label: 'Admin folder'], Folder)
+        Folder folder = folderApi.create(new Folder(label: 'Admin folder'))
         folderId = folder.id
 
         then:
@@ -36,7 +37,7 @@ class AdminAccessIntegrationSpec extends SecuredIntegrationSpec {
         folder.label == 'Admin folder'
 
         when:
-        DataModel dataModel = (DataModel) POST("/folders/$folderId/dataModels", [label: 'Admin data model'], DataModel)
+        DataModel dataModel = dataModelApi.create(folderId, new DataModel(label: 'Admin data model'))
         dataModelId = dataModel.id
 
         then:
@@ -49,28 +50,28 @@ class AdminAccessIntegrationSpec extends SecuredIntegrationSpec {
         loginAdmin()
 
         when:
-        Folder folder = (Folder) GET("/folders/$folderId", Folder)
+        Folder folder = folderApi.show(folderId)
 
         then:
         folder
         folder.label == 'Admin folder'
 
         when:
-        folder = (Folder) PUT("/folders/$folderId", [description: 'Updated'], Folder)
+        folder = folderApi.update(folderId, new Folder(description: 'Updated'))
 
         then:
         folder
         folder.description == 'Updated'
 
         when:
-        DataModel dataModel = (DataModel) GET("/dataModels/$dataModelId", DataModel)
+        DataModel dataModel = dataModelApi.show(dataModelId)
 
         then:
         dataModel
         dataModel.label == 'Admin data model'
 
         when:
-        dataModel = (DataModel) PUT("/dataModels/$dataModelId", [description: 'Updated'], DataModel)
+        dataModel = dataModelApi.update(dataModelId, new DataModel(description: 'Updated'))
 
         then:
         dataModel
@@ -83,28 +84,28 @@ class AdminAccessIntegrationSpec extends SecuredIntegrationSpec {
         loginUser()
 
         when:
-        GET("/folders/$folderId")
+        folderApi.show(folderId)
 
         then:
         HttpClientResponseException exception = thrown()
         exception.status == HttpStatus.FORBIDDEN
 
         when:
-        PUT("/folders/$folderId", [description: 'Updated'])
+        folderApi.update(folderId, new Folder(description: 'Updated'))
 
         then:
         exception = thrown()
         exception.status == HttpStatus.FORBIDDEN
 
         when:
-        GET("/dataModels/$dataModelId")
+        dataModelApi.show(dataModelId)
 
         then:
         exception = thrown()
         exception.status == HttpStatus.FORBIDDEN
 
         when:
-        PUT("/dataModels/$dataModelId", [description: 'Updated'])
+        dataModelApi.update(dataModelId, new DataModel(description: 'Updated'))
 
         then:
         exception = thrown()
@@ -114,35 +115,35 @@ class AdminAccessIntegrationSpec extends SecuredIntegrationSpec {
     void 'admin can read non-admin user\'s folder or datamodel'() {
         given:
         loginUser()
-        Folder folder = (Folder) POST('/folders', [label: 'User folder'], Folder)
+        Folder folder = folderApi.create(new Folder(label: 'User folder'))
         folderId = folder.id
-        DataModel dataModel = (DataModel) POST("/folders/$folderId/dataModels", [label: 'User data model'], DataModel)
+        DataModel dataModel = dataModelApi.create(folderId, new DataModel(label: 'User data model'))
         dataModelId = dataModel.id
 
         when:
         loginAdmin()
-        folder = (Folder) GET("/folders/$folderId", Folder)
+        folder = folderApi.show(folderId)
 
         then:
         folder
         folder.label == 'User folder'
 
         when:
-        folder = (Folder) PUT("/folders/$folderId", [description: 'Updated'], Folder)
+        folder = folderApi.update(folderId, new Folder(description: 'Updated'))
 
         then:
         folder
         folder.description == 'Updated'
 
         when:
-        dataModel = (DataModel) GET("/dataModels/$dataModelId", DataModel)
+        dataModel = dataModelApi.show(dataModelId)
 
         then:
         dataModel
         dataModel.label == 'User data model'
 
         when:
-        dataModel = (DataModel) PUT("/dataModels/$dataModelId", [description: 'Updated'], DataModel)
+        dataModel = dataModelApi.update(dataModelId, new DataModel(description: 'Updated'))
 
         then:
         dataModel
@@ -153,11 +154,15 @@ class AdminAccessIntegrationSpec extends SecuredIntegrationSpec {
         given:
         loginAdmin()
 
+        dataModelApi.listAll().each {
+            System.err.println(it.label)
+        }
+
         when:
-        ListResponse<SearchResultsDTO> searchResults = POST("/search", [searchTerm: 'Updated'], ListResponse<SearchResultsDTO>)
+        ListResponse<SearchResultsDTO> searchResults = searchApi.searchPost(new SearchRequestDTO(searchTerm: 'Updated'))
 
         then:
-        searchResults.items.sort {[it.tsRank, it.label]}.label == ['Admin folder', 'User folder', 'Admin data model', 'User data model']
+        searchResults.items.label == ['Admin folder', 'User folder', 'Admin data model', 'User data model']
     }
 
     void 'non-admin user cannot search admin\'s items without permission'() {
@@ -165,9 +170,9 @@ class AdminAccessIntegrationSpec extends SecuredIntegrationSpec {
         loginUser()
 
         when:
-        ListResponse<SearchResultsDTO> searchResults = POST("/search", [searchTerm: 'Updated'], ListResponse<SearchResultsDTO>)
+        ListResponse<SearchResultsDTO> searchResults = searchApi.searchPost(new SearchRequestDTO(searchTerm: 'Updated'))
 
         then:
-        searchResults.items.sort {[it.tsRank, it.label]}.label == ['User folder', 'User data model']
+        searchResults.items.label == ['User folder', 'User data model']
     }
 }

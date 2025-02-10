@@ -1,6 +1,5 @@
 package uk.ac.ox.softeng.mauro.profile
 
-import uk.ac.ox.softeng.mauro.domain.facet.Metadata
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.plugin.MauroPlugin
 import uk.ac.ox.softeng.mauro.plugin.PluginType

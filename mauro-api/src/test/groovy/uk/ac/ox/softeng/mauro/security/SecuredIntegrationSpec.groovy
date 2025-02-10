@@ -1,5 +1,6 @@
 package uk.ac.ox.softeng.mauro.security
 
+import uk.ac.ox.softeng.mauro.api.SessionHandlerClientFilter
 import uk.ac.ox.softeng.mauro.api.security.LoginApi
 
 import io.micronaut.http.HttpRequest
@@ -15,8 +16,6 @@ import uk.ac.ox.softeng.mauro.security.utils.SecureRandomStringGenerator
 import uk.ac.ox.softeng.mauro.testing.CommonDataSpec
 
 abstract class SecuredIntegrationSpec extends CommonDataSpec {
-
-    @Inject LoginApi loginApi
 
     @Inject
     @Shared
