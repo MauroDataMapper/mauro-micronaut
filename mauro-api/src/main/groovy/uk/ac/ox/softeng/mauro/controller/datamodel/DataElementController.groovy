@@ -27,6 +27,7 @@ import io.micronaut.http.annotation.Put
 import io.micronaut.http.exceptions.HttpStatusException
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
+import io.micronaut.transaction.annotation.Transactional
 
 @CompileStatic
 @Slf4j
@@ -71,6 +72,7 @@ class DataElementController extends AdministeredItemController<DataElement, Data
     }
 
     @Put('/{id}')
+    @Transactional
     DataElement update(UUID dataModelId, UUID dataClassId, UUID id, @Body @NonNull DataElement dataElement) {
         DataElement cleanItem = super.cleanBody(dataElement) as DataElement
         DataElement existing = administeredItemRepository.readById(id)
