@@ -173,6 +173,7 @@ class TreeIntegrationSpec extends SecuredIntegrationSpec {
         tree.find {it.label == 'data class' && it.domainType == 'DataClass' && !it.hasChildren && UUID.fromString(it.id) == dataClassId}
     }
 
+
     void 'non-admin user cannot see tree when permissions are removed'() {
         given:
         loginAdmin()
