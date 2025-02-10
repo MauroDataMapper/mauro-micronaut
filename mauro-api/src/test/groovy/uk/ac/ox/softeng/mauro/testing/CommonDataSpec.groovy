@@ -60,6 +60,7 @@ import jakarta.inject.Inject
 import spock.lang.Shared
 
 import java.time.Instant
+import java.time.temporal.ChronoUnit
 
 
 class CommonDataSpec extends BaseIntegrationSpec{
@@ -103,7 +104,8 @@ class CommonDataSpec extends BaseIntegrationSpec{
 
 
 
-    public static final Instant REPORT_DATE = Instant.now()
+    // Round up to deal with rounding errors in testing
+    public static final Instant REPORT_DATE = Instant.now().truncatedTo(ChronoUnit.SECONDS)
 
     CodeSet codeSet() {
         new CodeSet(
