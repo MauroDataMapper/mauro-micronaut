@@ -46,9 +46,9 @@ class TreeService {
     CodeSetRepository codeSetRepository
 
     @CompileDynamic
-    List<TreeItem>  buildTree(AdministeredItem item, boolean setChildren = true) {
+    List<TreeItem> buildTree(AdministeredItem item, boolean foldersOnly, boolean setChildren) {
         switch (item) {
-            case Folder -> buildTreeForFolder(item, setChildren)
+            case Folder -> buildTreeForFolder(item, foldersOnly, setChildren)
 
             case DataModel -> buildTreeForDataModel(item, setChildren)
             case DataClass -> buildTreeForDataClass(item, setChildren)
@@ -62,41 +62,44 @@ class TreeService {
         }
     }
 
-    List<TreeItem> buildRootFolderTree(boolean setChildren = true) {
+    List<TreeItem> buildRootFolderTree(boolean foldersOnly, boolean setChildren = true) {
         folderCacheableRepository.readAllRootFolders().collect {Folder folder ->
             TreeItem.from(folder).tap {
-                if (setChildren) children = buildTree(folder, false)
+                if (setChildren) children = buildTree(folder, foldersOnly, false)
             }
         }
     }
 
-    List<TreeItem> buildTreeForFolder(Folder folder, boolean setChildren = true) {
-        repositoryService.modelCacheableRepositories.sort(false) {it.class.simpleName}.collectMany {ModelCacheableRepository modelCacheableRepository ->
-            modelCacheableRepository.readAllByFolder(folder).sort {Model model -> model.label}.collect {Model model ->
-                TreeItem.from(model).tap {
-                    if (setChildren) children = buildTree(model, false)
+    List<TreeItem> buildTreeForFolder(Folder folder, boolean foldersOnly, boolean setChildren) {
+        getModelRepositories().collectMany {ModelCacheableRepository modelCacheableRepository ->
+            getModelsForFolder(modelCacheableRepository, folder as Folder)
+                .sort {Object model -> ((Model) model).label}
+                .findAll {Object model -> !foldersOnly || ((Model) model).domainType.contains(Folder.class.simpleName)}
+                .collect {Object model ->
+                    TreeItem.from((Model) model).tap {
+                        if (setChildren) children = buildTree(model as AdministeredItem, foldersOnly, false)
+                    }
                 }
-            }
         }
     }
 
     List<TreeItem> buildTreeForDataModel(DataModel dataModel, boolean setChildren = true) {
-        dataClassCacheableRepository.readAllByDataModelAndParentDataClassIsNull(dataModel)
+        List<TreeItem> treeItems = dataClassCacheableRepository.readAllByDataModelAndParentDataClassIsNull(dataModel)
             .sort {it.label}
             .collect {DataClass dataClass ->
                 TreeItem.from(dataClass).tap {
                     model = dataClass.dataModel
-                    if (setChildren) children = buildTree(dataClass, false)
+                    if (setChildren) children = buildTree(dataClass, false, false)
                 }
             }
+        treeItems
     }
-
 
     List<TreeItem> buildTreeForDataClass(DataClass dataClass, boolean setChildren = true) {
         dataClassCacheableRepository.readAllByParentDataClass_Id(dataClass.id).sort {it.label}.collect {DataClass childClass ->
             TreeItem.from(childClass).tap {
                 model = childClass.dataModel
-                if (setChildren) children = buildTree(childClass, false)
+                if (setChildren) children = buildTree(childClass, false, false)
             }
         }
     }
@@ -105,7 +108,7 @@ class TreeService {
         termCacheableRepository.readChildTermsByParent(terminology.id, null).sort {it.code}.collect {Term term ->
             TreeItem.from(term).tap {
                 model = term.terminology
-                if (setChildren) children = buildTree(term, false)
+                if (setChildren) children = buildTree(term, false, false)
             }
         }
     }
@@ -114,8 +117,16 @@ class TreeService {
         termCacheableRepository.readChildTermsByParent(term.terminology.id, term.id).sort {it.code}.collect {Term childTerm ->
             TreeItem.from(childTerm).tap {
                 model = childTerm.terminology
-                if (setChildren) children = buildTree(childTerm, false)
+                if (setChildren) children = buildTree(childTerm, false, false)
             }
         }
+    }
+
+    protected static List getModelsForFolder(ModelCacheableRepository modelCacheableRepository, Folder folder) {
+        modelCacheableRepository.readAllByFolder(folder)
+    }
+
+    protected List<ModelCacheableRepository> getModelRepositories() {
+        repositoryService.modelCacheableRepositories.sort(false) {it.class.simpleName}
     }
 }
