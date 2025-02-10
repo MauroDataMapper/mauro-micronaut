@@ -65,7 +65,7 @@ class TreeIntegrationSpec extends SecuredIntegrationSpec {
     void 'admin can access tree'() {
         when:
         loginAdmin()
-        List<TreeItem> tree = treeApi.folderTree(null)
+        List<TreeItem> tree = treeApi.folderTree(null, false)
 
         then:
         tree
@@ -73,7 +73,7 @@ class TreeIntegrationSpec extends SecuredIntegrationSpec {
         tree.find {it.label == 'TreeIntegrationSpec root folder' && it.domainType == 'Folder' && it.hasChildren && it.id == rootFolderId}
 
         when:
-        tree = treeApi.folderTree(rootFolderId)
+        tree = treeApi.folderTree(rootFolderId, false)
 
         then:
         tree
@@ -82,7 +82,7 @@ class TreeIntegrationSpec extends SecuredIntegrationSpec {
         tree.find {it.label == 'TreeIntegrationSpec empty folder' && it.domainType == 'Folder' && !it.hasChildren && it.id == folder2Id}
 
         when:
-        tree = treeApi.folderTree(folder1Id)
+        tree = treeApi.folderTree(folder1Id, false)
 
         then:
         tree
@@ -92,13 +92,13 @@ class TreeIntegrationSpec extends SecuredIntegrationSpec {
         tree.find {it.label == 'TreeIntegrationSpec terminology' && it.domainType == 'Terminology' && !it.hasChildren && it.id == terminologyId}
 
         when:
-        tree = treeApi.itemTree("codeSet",codeSetId)
+        tree = treeApi.itemTree("codeSet",codeSetId, false)
 
         then:
         tree.size() == 0
 
         when:
-        tree = treeApi.itemTree("dataModel", dataModelId)
+        tree = treeApi.itemTree("dataModel", dataModelId, false)
 
         then:
         tree
@@ -109,20 +109,20 @@ class TreeIntegrationSpec extends SecuredIntegrationSpec {
     void 'non-admin user cannot see tree without permissions'() {
         when:
         loginUser()
-        List<TreeItem> tree = treeApi.folderTree(null)
+        List<TreeItem> tree = treeApi.folderTree(null, false)
 
         then:
         !tree.find {it.label == 'TreeIntegrationSpec root folder'}
 
         when:
-        treeApi.folderTree(rootFolderId)
+        treeApi.folderTree(rootFolderId, false)
 
         then:
         HttpClientResponseException exception = thrown()
         exception.status == HttpStatus.FORBIDDEN
 
         when:
-        treeApi.itemTree("dataModel", dataModelId)
+        treeApi.itemTree("dataModel", dataModelId, false)
 
         then:
         exception = thrown()
@@ -140,7 +140,7 @@ class TreeIntegrationSpec extends SecuredIntegrationSpec {
 
         when:
         loginUser()
-        List<TreeItem> tree = treeApi.folderTree(null)
+        List<TreeItem> tree = treeApi.folderTree(null, false)
 
         then:
         tree
@@ -148,7 +148,7 @@ class TreeIntegrationSpec extends SecuredIntegrationSpec {
         tree.find {it.label == 'TreeIntegrationSpec root folder' && it.domainType == 'Folder' && it.hasChildren && it.id == rootFolderId}
 
         when:
-        tree = treeApi.folderTree(rootFolderId)
+        tree = treeApi.folderTree(rootFolderId, false)
 
         then:
         tree
@@ -157,7 +157,7 @@ class TreeIntegrationSpec extends SecuredIntegrationSpec {
         tree.find {it.label == 'TreeIntegrationSpec empty folder' && it.domainType == 'Folder' && !it.hasChildren && it.id == folder2Id}
 
         when:
-        tree = treeApi.folderTree(folder1Id)
+        tree = treeApi.folderTree(folder1Id, false)
 
         then:
         tree
@@ -167,13 +167,13 @@ class TreeIntegrationSpec extends SecuredIntegrationSpec {
         tree.find {it.label == 'TreeIntegrationSpec terminology' && it.domainType == 'Terminology' && !it.hasChildren && it.id == terminologyId}
 
         when:
-        tree = treeApi.itemTree("codeSet", codeSetId)
+        tree = treeApi.itemTree("codeSet", codeSetId, false)
 
         then:
         tree.size() == 0
 
         when:
-        tree = treeApi.itemTree("dataModel", dataModelId)
+        tree = treeApi.itemTree("dataModel", dataModelId, false)
 
         then:
         tree
@@ -190,20 +190,20 @@ class TreeIntegrationSpec extends SecuredIntegrationSpec {
 
         when:
         loginUser()
-        List<TreeItem> tree = treeApi.folderTree(null)
+        List<TreeItem> tree = treeApi.folderTree(null, false)
 
         then:
         !tree.find {it.label == 'TreeIntegrationSpec root folder'}
 
         when:
-        treeApi.folderTree(rootFolderId)
+        treeApi.folderTree(rootFolderId, false)
 
         then:
         HttpClientResponseException exception = thrown()
         exception.status == HttpStatus.FORBIDDEN
 
         when:
-        treeApi.itemTree("dataModel", dataModelId)
+        treeApi.itemTree("dataModel", dataModelId, false)
 
         then:
         exception = thrown()

@@ -6,14 +6,15 @@ import uk.ac.ox.softeng.mauro.domain.tree.TreeItem
 
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.annotation.Get
+import io.micronaut.http.annotation.QueryValue
 
 @MauroApi
 interface TreeApi {
 
     @Get(Paths.TREE_FOLDER)
-    List<TreeItem> folderTree(@Nullable UUID id)
+    List<TreeItem> folderTree(@Nullable UUID id, @Nullable @QueryValue Boolean foldersOnly)
 
     @Get(Paths.TREE_ITEM)
-    List<TreeItem> itemTree(String domainType, UUID id)
+    List<TreeItem> itemTree(String domainType, UUID id, @Nullable @QueryValue Boolean foldersOnly)
 
 }

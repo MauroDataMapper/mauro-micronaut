@@ -53,7 +53,7 @@ class TreeController implements TreeApi {
     }
 
     @Get(Paths.TREE_ITEM)
-    List<TreeItem> itemTree(String domainType, UUID id, UUID id, @Nullable @QueryValue Boolean foldersOnly) {
+    List<TreeItem> itemTree(String domainType, UUID id, @Nullable @QueryValue Boolean foldersOnly) {
         foldersOnly = foldersOnly ?: false
         AdministeredItemCacheableRepository repository = repositoryService.getAdministeredItemRepository(domainType)
         AdministeredItem item = repository.readById(id)
