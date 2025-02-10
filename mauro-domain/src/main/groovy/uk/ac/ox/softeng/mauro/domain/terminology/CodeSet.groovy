@@ -74,7 +74,7 @@ class CodeSet extends Model {
     String toString() {
         return "CodeSet{" +
                 "terms=" + terms +
-                '}';
+                '}'
     }
 
     boolean equals(o) {

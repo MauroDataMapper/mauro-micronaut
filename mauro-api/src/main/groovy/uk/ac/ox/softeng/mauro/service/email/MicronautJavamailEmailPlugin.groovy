@@ -20,7 +20,7 @@ import uk.ac.ox.softeng.mauro.domain.security.CatalogueUser
 class MicronautJavamailEmailPlugin implements EmailPlugin {
 
     @Inject
-    private Environment environment;
+    private Environment environment
 
     String version = '1.0.0'
 

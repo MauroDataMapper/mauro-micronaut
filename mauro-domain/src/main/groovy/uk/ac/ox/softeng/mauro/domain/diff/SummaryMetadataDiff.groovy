@@ -7,7 +7,7 @@ import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadataType
 class SummaryMetadataDiff extends CollectionDiff {
 
     String label
-    SummaryMetadataType summaryMetadataType;
+    SummaryMetadataType summaryMetadataType
 
     SummaryMetadataDiff(UUID id, SummaryMetadataType summaryMetadataType, String label) {
         super(id)

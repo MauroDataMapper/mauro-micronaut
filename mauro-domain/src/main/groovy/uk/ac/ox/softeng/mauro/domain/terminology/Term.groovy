@@ -154,6 +154,6 @@ class Term extends ModelItem<Terminology> {
                 ", sourceTermRelationships=" + sourceTermRelationships +
                 ", targetTermRelationships=" + targetTermRelationships +
                 ", codeSets=" + codeSets +
-                '}';
+                '}'
     }
 }

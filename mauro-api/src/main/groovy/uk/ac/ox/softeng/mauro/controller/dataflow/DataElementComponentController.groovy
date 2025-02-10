@@ -114,14 +114,14 @@ class DataElementComponentController extends AdministeredItemController<DataElem
                 }
                 dataElementComponent.targetDataElements.add(dataElementToAdd)
                 dataElementComponentRepository.addTargetDataElement(dataElementComponent.id, dataElementId)
-                break;
+                break
             case Type.SOURCE:
                 if (dataElementComponent.sourceDataElements.id.contains(dataElementToAdd.id)) {
                     ErrorHandler.handleError(HttpStatus.BAD_REQUEST, "Item already exists in table DataClassComponentSourceDataClass: $dataElementToAdd.id")
                 }
                 dataElementComponent.sourceDataElements.add(dataElementToAdd)
                 dataElementComponentRepository.addSourceDataElement(dataElementComponent.id, dataElementId)
-                break;
+                break
             default:
                 ErrorHandler.handleError(HttpStatus.BAD_REQUEST, "$type Type must be source or target")
         }
@@ -149,10 +149,10 @@ class DataElementComponentController extends AdministeredItemController<DataElem
                     ErrorHandler.handleError(HttpStatus.NOT_FOUND,  "Item already exists in table DataClassComponentSourceDataElement: $dataElementId")
                 }
                 result = dataElementComponentRepository.removeSourceDataElement(dataElementComponent.id, dataElementId)
-                break;
+                break
             default:
-                ErrorHandler.handleError(HttpStatus.BAD_REQUEST, "$type Type must be source or target")
-                break;
+                handleError(HttpStatus.BAD_REQUEST, type, "Type must be source or target")
+                break
         }
         dataElementComponent
     }

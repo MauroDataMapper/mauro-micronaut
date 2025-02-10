@@ -115,14 +115,14 @@ class DataClassComponentController extends AdministeredItemController<DataClassC
                 }
                 dataClassComponent.targetDataClasses.add(dataClassToAdd)
                 dataClassComponentRepository.addTargetDataClass(dataClassComponent.id, dataClassId)
-                break;
+                break
             case Type.SOURCE:
                 if (dataClassComponent.sourceDataClasses.id.contains(dataClassToAdd.id)) {
-                    ErrorHandler.handleError(HttpStatus.BAD_REQUEST, "Item already exists in table DataClassComponentSourceDataClass: : $dataClassToAdd.id")
+                    handleError(HttpStatus.BAD_REQUEST, null, "Item already exists in table DataClassComponentSourceDataClass: $dataClassToAdd.id")
                 }
                 dataClassComponent.sourceDataClasses.add(dataClassToAdd)
                 dataClassComponentRepository.addSourceDataClass(dataClassComponent.id, dataClassId)
-                break;
+                break
             default:
                 ErrorHandler.handleError(HttpStatus.BAD_REQUEST, "$type Type must be source or target")
         }
@@ -144,13 +144,13 @@ class DataClassComponentController extends AdministeredItemController<DataClassC
                     ErrorHandler.handleError(HttpStatus.NOT_FOUND, "Item does not exist in table DataClassComponentTargetDataClass: $dataClassId")
                 }
                 result = dataClassComponentRepository.removeTargetDataClass(dataClassComponent.id, dataClassId)
-                break;
+                break
             case Type.SOURCE:
                 if (!dataClassComponent.sourceDataClasses.removeIf(dc -> dc.id == dataClassId)) {
                     ErrorHandler.handleError(HttpStatus.NOT_FOUND, "Item does not exist in table DataClassComponentSourceDataClass: $dataClassId")
                 }
                 result = dataClassComponentRepository.removeSourceDataClass(dataClassComponent.id, dataClassId)
-                break;
+                break
             default:
                 ErrorHandler.handleError(HttpStatus.BAD_REQUEST, "Type must be source or target")
                 break;

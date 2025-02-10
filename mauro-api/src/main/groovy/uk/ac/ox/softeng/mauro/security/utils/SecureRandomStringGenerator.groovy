@@ -17,17 +17,17 @@
  */
 package uk.ac.ox.softeng.mauro.security.utils
 
-import org.apache.commons.rng.UniformRandomProvider;
-import org.apache.commons.rng.simple.RandomSource;
-import org.apache.commons.text.CharacterPredicates;
-import org.apache.commons.text.RandomStringGenerator;
+import org.apache.commons.rng.UniformRandomProvider
+import org.apache.commons.rng.simple.RandomSource
+import org.apache.commons.text.CharacterPredicates
+import org.apache.commons.text.RandomStringGenerator
 
-import java.nio.charset.Charset;
+import java.nio.charset.Charset
 
 /**
  * @since 07/08/2017
  */
-public class SecureRandomStringGenerator {
+class SecureRandomStringGenerator {
 
     private SecureRandomStringGenerator() {
     }
@@ -35,11 +35,11 @@ public class SecureRandomStringGenerator {
     /**
      * Codepoint for 0.
      */
-    public static final Integer MINIMUM_CODEPOINT = 49;
+    public static final Integer MINIMUM_CODEPOINT = 49
     /**
      * Codepoint for z.
      */
-    public static final Integer MAXIMUM_CODEPOINT = 122;
+    public static final Integer MAXIMUM_CODEPOINT = 122
 
     /**
      * Creates a {@link RandomStringGenerator} which will generate letters and digits ONLY which fall inside the following set
@@ -49,13 +49,13 @@ public class SecureRandomStringGenerator {
      *
      * @return RandomStringGenerator for generating alphanumeric strings.
      */
-    public static RandomStringGenerator alphanumericGenerator() {
-        UniformRandomProvider rng = RandomSource.MT.create();
+    static RandomStringGenerator alphanumericGenerator() {
+        UniformRandomProvider rng = RandomSource.MT.create()
         return new RandomStringGenerator.Builder()
                 .withinRange(MINIMUM_CODEPOINT, MAXIMUM_CODEPOINT)
                 .usingRandom(rng::nextInt)
                 .filteredBy(CharacterPredicates.LETTERS, CharacterPredicates.DIGITS)
-                .build();
+                .build()
     }
 
     /**
@@ -64,16 +64,16 @@ public class SecureRandomStringGenerator {
      *
      * @return RandomStringGenerator for generating alphanumeric strings including punctuation.
      */
-    public static RandomStringGenerator fullGenerator() {
-        UniformRandomProvider rng = RandomSource.MT.create();
+    static RandomStringGenerator fullGenerator() {
+        UniformRandomProvider rng = RandomSource.MT.create()
         return new RandomStringGenerator.Builder()
                 .withinRange(MINIMUM_CODEPOINT, MAXIMUM_CODEPOINT)
                 .usingRandom(rng::nextInt)
-                .build();
+                .build()
     }
 
-    public static byte[] generateSalt() {
-        return fullGenerator().generate(8).getBytes(Charset.defaultCharset());
+    static byte[] generateSalt() {
+        return fullGenerator().generate(8).getBytes(Charset.defaultCharset())
     }
 
 }
