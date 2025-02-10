@@ -6,7 +6,6 @@ import uk.ac.ox.softeng.mauro.domain.datamodel.DataElement
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
 import uk.ac.ox.softeng.mauro.domain.security.Role
-import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository.DataClassCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository.DataElementCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository.DataTypeCacheableRepository
@@ -28,8 +27,6 @@ import io.micronaut.http.annotation.Put
 import io.micronaut.http.exceptions.HttpStatusException
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
-import io.micronaut.transaction.annotation.Transactional
-import jakarta.inject.Inject
 
 @CompileStatic
 @Slf4j
@@ -43,28 +40,21 @@ class DataElementController extends AdministeredItemController<DataElement, Data
 
     DataModelCacheableRepository dataModelRepository
 
-    AdministeredItemCacheableRepository.DataTypeCacheableRepository dataTypeRepository
+    DataTypeCacheableRepository dataTypeRepository
 
-    @Inject
-    DataTypeController dataTypeController
-    @Inject
     DataElementController(DataElementCacheableRepository dataElementRepository, DataClassCacheableRepository dataClassRepository,
                           DataModelContentRepository dataModelContentRepository, DataModelCacheableRepository dataModelRepository,
-                          DataTypeCacheableRepository dataTypeRepository) {
+                         DataTypeCacheableRepository dataTypeCacheableRepository) {
         super(DataElement, dataElementRepository, dataClassRepository, dataModelContentRepository)
-        this.dataModelRepository = dataModelRepository
         this.dataElementRepository = dataElementRepository
+        this.dataModelRepository = dataModelRepository
         this.dataClassRepository = dataClassRepository
-        this.dataTypeRepository = dataTypeRepository
+        this.dataTypeRepository = dataTypeCacheableRepository
     }
 
     @Get('/{id}')
     DataElement show(UUID dataModelId, UUID dataClassId, UUID id) {
-        DataElement dataElement = super.show(id) as DataElement
-        handleError(HttpStatus.NOT_FOUND, dataElement.dataType, "dataElement $dataElement.id  is missing dataType")
-        DataType dataType = dataTypeRepository.readById(dataElement.dataType?.id)
-        dataElement.dataType = dataType
-        dataElement
+        super.show(id)
     }
 
     @Post
@@ -80,15 +70,13 @@ class DataElementController extends AdministeredItemController<DataElement, Data
 
     }
 
-    @Transactional
     @Put('/{id}')
     DataElement update(UUID dataModelId, UUID dataClassId, UUID id, @Body @NonNull DataElement dataElement) {
         DataElement cleanItem = super.cleanBody(dataElement) as DataElement
         DataElement existing = administeredItemRepository.readById(id)
         accessControlService.checkRole(Role.EDITOR, existing)
-        verifyValidPayload(existing, cleanItem)
-        DataElement updated = updateDataType(existing, cleanItem)
-        updated = updateEntity(existing, cleanItem)
+        existing = validateDataTypeChange(existing, dataElement)
+        DataElement updated = super.updateEntity(existing, cleanItem) as DataElement
         updated = updateClassifiers(updated)
         updated
     }
@@ -105,54 +93,30 @@ class DataElementController extends AdministeredItemController<DataElement, Data
         ListResponse.from(dataElementRepository.readAllByDataClass_Id(dataClassId))
     }
 
-
-    private DataElement updateDataType(DataElement existing, DataElement dataElementToUpdate) {
-        DataType existingDataType
-        if (dataElementToUpdate.dataType?.id) {
-            existingDataType = dataTypeRepository.readById(dataElementToUpdate.dataType.id)
-            handleError(HttpStatus.NOT_FOUND, existingDataType, "Datatype not found $dataElementToUpdate.dataType.id")
-            dataElementToUpdate.dataType.id = null //clear for cleanBody
-            DataType cleanItem = dataTypeController.cleanBody(dataElementToUpdate.dataType)
-
-            boolean hasChanged = dataTypeController.updateProperties(existingDataType, cleanItem)
-            dataTypeController.updateDerivedProperties(existingDataType)
-            DataType result = existingDataType
-            if (hasChanged) {
-                result = dataTypeRepository.update(existingDataType)
-                dataElementRepository.invalidate(existing) //invalidate cache
-            }
-            dataElementToUpdate.dataType = result
-        }
-        dataElementToUpdate
-    }
-
     /**
-     * Check datatypes are valid
-     * dataType must belong to same dataModel and exist
-
-     * throws RunTime Exception
+     * DataType in DataElement Payload can be changed, but the DT must exist.
+     * Furthermore, the DT must have the same DM as the existing DT's DM. This update does not update the DataType
+     * @param existing
+     * @param dataElement
+     * @return existing, updated with new DTid
      */
-    private void verifyValidPayload(DataElement existing, DataElement proposed) {
-        if (!proposed.dataType) return
-        DataType proposedDataType = dataTypeRepository.readById(proposed.dataType.id)
-        if (!proposedDataType) {
-            throw new HttpStatusException(HttpStatus.BAD_REQUEST, "Datatype not found:  $proposedDataType.id")
-        }
-        DataModel proposedParent = dataModelRepository.readById(proposedDataType.dataModel.id)
+    private DataElement validateDataTypeChange(DataElement existing, DataElement dataElement) {
+        if (!dataElement.dataType) return existing
 
-        if (!existing.dataType) return
+        DataType dataElementDataType = dataTypeRepository.readById(dataElement.dataType.id)
+        if (!dataElementDataType) {
+            throw new HttpStatusException(HttpStatus.BAD_REQUEST, "Datatype not found:  $dataElementDataType.id")
+        }
+        DataModel dataElementDTDM = dataModelRepository.readById(dataElementDataType.dataModel.id)
 
         DataType existingDataType = dataTypeRepository.readById(existing.dataType.id)
-        if (!existingDataType) {
-            throw new HttpStatusException(HttpStatus.BAD_REQUEST, "Datatype not found:  $existingDataType.id")
-        }
-        DataModel existingParent = dataModelRepository.readById(existingDataType.dataModel.id)
-
-        if (existingParent.id != proposedParent.id) {
+        DataModel existingDTDM = dataModelRepository.readById(existingDataType.dataModel.id)
+        if (dataElementDTDM && dataElementDTDM.id != existingDTDM.id) {
             throw new HttpStatusException(HttpStatus.BAD_REQUEST,
-                                          "DataElement Update payload -DataType's DataModel must be same as existing dataType datamodel $existingParent.id")
+                                          "DataElement Update payload -DataType's DataModel must be same as existing dataType datamodel $existingDTDM")
 
         }
-
+        existing.dataType = dataElement.dataType
+        existing
     }
 }

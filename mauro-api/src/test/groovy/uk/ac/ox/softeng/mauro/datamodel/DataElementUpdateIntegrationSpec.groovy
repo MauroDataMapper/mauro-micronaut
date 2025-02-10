@@ -68,49 +68,33 @@ class DataElementUpdateIntegrationSpec extends CommonDataSpec {
         UUID differentDataTypeId = ((DataType) POST("$DATAMODELS_PATH/$differentDataModelId$DATATYPES_PATH", dataTypesPayload(), DataType)).id
         when:
         PUT("$DATAMODELS_PATH/$dataModelId$DATACLASSES_PATH/$dataClassId$DATA_ELEMENTS_PATH/$dataElementId",
-                                                            [label: 'Renamed data element', dataType: [id: differentDataTypeId]], DataElement)
+            [label: 'Renamed data element', dataType: [id: differentDataTypeId]], DataElement)
         then:
         HttpClientResponseException exception = thrown()
         exception.status == HttpStatus.BAD_REQUEST
     }
 
-    void 'test update data element -new changes to existing dataType should update'() {
+    void 'test update data element - with another permitted datatype -should update'() {
         given:
-        DataType existingDataType = (DataType) GET ("$DATAMODELS_PATH/$dataModelId$DATATYPES_PATH/$dataTypeId", DataType)
-        and:
-        !existingDataType.label
-        !existingDataType.description
-
+        DataType secondDataType = (DataType) POST("$DATAMODELS_PATH/$dataModelId$DATATYPES_PATH",
+                                                  [label: 'second data type', domainType: 'primitiveType', units: 'lbs'], DataType)
         when:
-        DataElement dataElement = (DataElement) PUT("$DATAMODELS_PATH/$dataModelId$DATACLASSES_PATH/$dataClassId$DATA_ELEMENTS_PATH/$dataElementId",
-            [label   : 'Renamed data element',
-             dataType:
-                 [id         : dataTypeId,
-                  label      : 'changed label primitive',
-                  description: 'changed datatype description'
-                 ]], DataElement)
+        DataElement updated = (DataElement) PUT("$DATAMODELS_PATH/$dataModelId$DATACLASSES_PATH/$dataClassId$DATA_ELEMENTS_PATH/$dataElementId",
+                                                [label   : 'Renamed data element',
+                                                 dataType:
+                                                     [id: secondDataType.id]], DataElement)
         then:
-        dataElement
-        dataElement.dataType
-        dataElement.label == 'Renamed data element'
-        dataElement.dataType.label == 'changed label primitive'
-        dataElement.dataType.description == 'changed datatype description'
+        updated
+        updated.label == 'Renamed data element'
+        updated.dataType.id == secondDataType.id
 
         when:
-        DataType retrieved =  (DataType) GET ("$DATAMODELS_PATH/$dataModelId$DATATYPES_PATH/$dataTypeId", DataType)
+        DataElement retrieved = (DataElement) GET("$DATAMODELS_PATH/$dataModelId$DATACLASSES_PATH/$dataClassId$DATA_ELEMENTS_PATH/$dataElementId", DataElement)
 
         then:
         retrieved
-        retrieved.label == 'changed label primitive'
-        retrieved.description == 'changed datatype description'
-
-        when:
-        DataElement retrievedDataElement = (DataElement) GET("$DATAMODELS_PATH/$dataModelId$DATACLASSES_PATH/$dataClassId$DATA_ELEMENTS_PATH/$dataElementId", DataElement)
-        then:
-        retrievedDataElement.label == 'Renamed data element'
-        retrievedDataElement.dataType.label == retrieved.label
-
-
+        retrieved.dataType.id == secondDataType.id
+        retrieved.label == 'Renamed data element'
     }
 
 }
