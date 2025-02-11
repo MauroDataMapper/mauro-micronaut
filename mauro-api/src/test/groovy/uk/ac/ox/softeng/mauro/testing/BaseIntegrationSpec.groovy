@@ -5,6 +5,7 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.micronaut.http.HttpRequest
 import io.micronaut.http.MediaType
+import io.micronaut.http.MutableHttpRequest
 import io.micronaut.http.client.HttpClient
 import io.micronaut.http.client.annotation.Client
 import io.micronaut.http.client.multipart.MultipartBody
@@ -76,12 +77,19 @@ class BaseIntegrationSpec extends Specification {
     @Shared
     Cookie sessionCookie
 
+    @Shared
+    UUID apiKey
+
     Map<String, Object> GET(String uri) {
-        client.toBlocking().retrieve(HttpRequest.GET(uri).tap { if (sessionCookie) it.cookie(sessionCookie) }, Map<String, Object>)
+        client.toBlocking().retrieve(HttpRequest.GET(uri).tap {
+            addHeaders(it)
+        }, Map<String, Object>)
     }
 
     <T> T GET(String uri, Class<T> type, Class internalType = null) {
-        def response = client.toBlocking().retrieve(HttpRequest.GET(uri).tap { if (sessionCookie) it.cookie(sessionCookie) }, type)
+        def response = client.toBlocking().retrieve(HttpRequest.GET(uri).tap {
+            addHeaders(it)
+        }, type)
         if(type == ListResponse && internalType) {
             ((ListResponse) response).bindItems(objectMapper, internalType)
         }
@@ -90,63 +98,93 @@ class BaseIntegrationSpec extends Specification {
     }
 
     Map<String, Object> POST(String uri, Map<String, Object> body) {
-        client.toBlocking().retrieve(HttpRequest.POST(uri, body).tap { if (sessionCookie) it.cookie(sessionCookie) }, Map<String, Object>)
+        client.toBlocking().retrieve(HttpRequest.POST(uri, body).tap {
+            addHeaders(it)
+        }, Map<String, Object>)
     }
 
     Map<String, Object> POST(String uri, Object body) {
-        client.toBlocking().retrieve(HttpRequest.POST(uri, body).tap { if (sessionCookie) it.cookie(sessionCookie) }, Map<String, Object>)
+        client.toBlocking().retrieve(HttpRequest.POST(uri, body).tap {
+            addHeaders(it)
+        }, Map<String, Object>)
     }
 
     Map<String, Object> POST(String uri, MultipartBody body) {
-        client.toBlocking().retrieve(HttpRequest.POST(uri, body).contentType(MediaType.MULTIPART_FORM_DATA_TYPE).tap { if (sessionCookie) it.cookie(sessionCookie) }, Map<String, Object>)
+        client.toBlocking().retrieve(HttpRequest.POST(uri, body).contentType(MediaType.MULTIPART_FORM_DATA_TYPE).tap {
+            addHeaders(it)
+        }, Map<String, Object>)
     }
 
     <T> T POST(String uri, Map<String, Object> body, Class<T> type) {
-        client.toBlocking().retrieve(HttpRequest.POST(uri, body).tap { if (sessionCookie) it.cookie(sessionCookie) }, type)
+        client.toBlocking().retrieve(HttpRequest.POST(uri, body).tap {
+            addHeaders(it)
+        }, type)
     }
 
     <T> T POST(String uri, Object body, Class<T> type) {
-        client.toBlocking().retrieve(HttpRequest.POST(uri, body).tap { if (sessionCookie) it.cookie(sessionCookie) }, type)
+        client.toBlocking().retrieve(HttpRequest.POST(uri, body).tap {
+            addHeaders(it)
+        }, type)
     }
 
     Map<String, Object> PUT(String uri, Map<String, Object> body) {
-        client.toBlocking().retrieve(HttpRequest.PUT(uri, body).tap { if (sessionCookie) it.cookie(sessionCookie) }, Map<String, Object>)
+        client.toBlocking().retrieve(HttpRequest.PUT(uri, body).tap {
+            addHeaders(it)
+        }, Map<String, Object>)
     }
 
     Map<String, Object> PUT(String uri, Object body) {
-        client.toBlocking().retrieve(HttpRequest.PUT(uri, body).tap { if (sessionCookie) it.cookie(sessionCookie) }, Map<String, Object>)
+        client.toBlocking().retrieve(HttpRequest.PUT(uri, body).tap {
+            addHeaders(it)
+        }, Map<String, Object>)
     }
 
     <T> T PUT(String uri, Map<String, Object> body, Class<T> type) {
-        client.toBlocking().retrieve(HttpRequest.PUT(uri, body).tap { if (sessionCookie) it.cookie(sessionCookie) }, type)
+        client.toBlocking().retrieve(HttpRequest.PUT(uri, body).tap {
+            addHeaders(it)
+        }, type)
     }
 
     <T> T PUT(String uri, Object body, Class<T> type) {
-        client.toBlocking().retrieve(HttpRequest.PUT(uri, body).tap { if (sessionCookie) it.cookie(sessionCookie) }, type)
+        client.toBlocking().retrieve(HttpRequest.PUT(uri, body).tap {
+            addHeaders(it)
+        }, type)
     }
 
     Map<String, Object> DELETE(String uri) {
-        client.toBlocking().retrieve(HttpRequest.DELETE(uri).tap { if (sessionCookie) it.cookie(sessionCookie) }, Map<String, Object>)
+        client.toBlocking().retrieve(HttpRequest.DELETE(uri).tap {
+            addHeaders(it)
+        }, Map<String, Object>)
     }
 
     Map<String, Object> DELETE(String uri, Map<String, Object> body) {
-        client.toBlocking().retrieve(HttpRequest.DELETE(uri, body).tap { if (sessionCookie) it.cookie(sessionCookie) }, Map<String, Object>)
+        client.toBlocking().retrieve(HttpRequest.DELETE(uri, body).tap {
+            addHeaders(it)
+        }, Map<String, Object>)
     }
 
     Map<String, Object> DELETE(String uri, Object body) {
-        client.toBlocking().retrieve(HttpRequest.DELETE(uri, body).tap { if (sessionCookie) it.cookie(sessionCookie) }, Map<String, Object>)
+        client.toBlocking().retrieve(HttpRequest.DELETE(uri, body).tap {
+            addHeaders(it)
+        }, Map<String, Object>)
     }
 
     <T> T DELETE(String uri, Class<T> type) {
-        client.toBlocking().retrieve(HttpRequest.DELETE(uri).tap { if (sessionCookie) it.cookie(sessionCookie) }, type)
+        client.toBlocking().retrieve(HttpRequest.DELETE(uri).tap {
+            addHeaders(it)
+        }, type)
     }
 
     <T> T DELETE(String uri, Map<String, Object> body, Class<T> type) {
-        client.toBlocking().retrieve(HttpRequest.DELETE(uri, body).tap { if (sessionCookie) it.cookie(sessionCookie) }, type)
+        client.toBlocking().retrieve(HttpRequest.DELETE(uri, body).tap {
+            addHeaders(it)
+        }, type)
     }
 
     <T> T DELETE(String uri, Object body, Class<T> type) {
-        client.toBlocking().retrieve(HttpRequest.DELETE(uri, body).tap { if (sessionCookie) it.cookie(sessionCookie) }, type)
+        client.toBlocking().retrieve(HttpRequest.DELETE(uri, body).tap {
+            addHeaders(it)
+        }, type)
     }
 
 
@@ -184,6 +222,13 @@ class BaseIntegrationSpec extends Specification {
 
         Map<String, Object> response = POST("/terminologies/import/$namespace/$name/$version", importRequest)
         UUID.fromString(response.items.first().id)
+    }
+    
+    void addHeaders(MutableHttpRequest<Object> request) {
+        if(apiKey)
+            request.header('apiKey', apiKey.toString())
+        if (sessionCookie)
+            request.cookie(sessionCookie)
     }
 
 

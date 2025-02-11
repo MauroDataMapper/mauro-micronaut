@@ -96,6 +96,7 @@ class AccessControlService implements Toggleable {
         if (!canDoRole(role, item)) throw new AuthorizationException(userAuthentication)
     }
 
+
     /**
      * For a given Role and an AdministeredItem, return if the current authenticated user can do the role on the item,
      * by checking permissions on the item or inherited from any of its parents.
@@ -163,5 +164,27 @@ class AccessControlService implements Toggleable {
 
     boolean isEnabled() {
         enabled
+    }
+
+    /**
+     * For a given Role and an AdministeredItem, check if the current authenticated user can do the role on the item,
+     * by checking permissions on the owner or inherited from any of its parents.
+     * @return if authorised, throw AuthorizationException otherwise
+     */
+    void checkAdminOrUser(UUID catalogueUserId = null) {
+        if (!enabled) return
+
+        if (!securityService.authenticated) {
+            throw new AuthenticationException('User is not authenticated')
+        }
+
+        if(administrator)
+            return
+
+        if(catalogueUserId && user.id == catalogueUserId)
+            return
+
+
+        throw new AuthorizationException(userAuthentication)
     }
 }

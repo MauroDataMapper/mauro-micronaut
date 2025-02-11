@@ -36,7 +36,7 @@ class ReaderAccessIntegrationSpec extends SecuredIntegrationSpec {
         UserGroup editorsGroup = (UserGroup) POST('/userGroups', [name: 'Readers Group'], UserGroup)
         readersGroupId = editorsGroup.id
 
-        CatalogueUser catalougeUserResponse = PUT("/catalogueUsers/$user.id", [groups: [readersGroupId]], CatalogueUser)
+        CatalogueUser catalogueUserResponse = PUT("/catalogueUsers/$user.id", [groups: [readersGroupId]], CatalogueUser)
 
         SecurableResourceGroupRole securableResourceGroupRole = (SecurableResourceGroupRole) POST("/folder/$folderId/roles/Reader/userGroups/$readersGroupId", null, SecurableResourceGroupRole)
 
