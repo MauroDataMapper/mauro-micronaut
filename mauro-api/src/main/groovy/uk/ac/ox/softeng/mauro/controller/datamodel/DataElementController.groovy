@@ -45,7 +45,7 @@ class DataElementController extends AdministeredItemController<DataElement, Data
 
     DataElementController(DataElementCacheableRepository dataElementRepository, DataClassCacheableRepository dataClassRepository,
                           DataModelContentRepository dataModelContentRepository, DataModelCacheableRepository dataModelRepository,
-                         DataTypeCacheableRepository dataTypeCacheableRepository) {
+                          DataTypeCacheableRepository dataTypeCacheableRepository) {
         super(DataElement, dataElementRepository, dataClassRepository, dataModelContentRepository)
         this.dataElementRepository = dataElementRepository
         this.dataModelRepository = dataModelRepository
@@ -77,9 +77,15 @@ class DataElementController extends AdministeredItemController<DataElement, Data
         DataElement cleanItem = super.cleanBody(dataElement) as DataElement
         DataElement existing = administeredItemRepository.readById(id)
         accessControlService.checkRole(Role.EDITOR, existing)
+        boolean hasChanged = updateProperties(existing, cleanItem)
+        if (!hasChanged && dataElement?.dataType?.id != existing.dataType?.id) hasChanged = true
         existing = validateDataTypeChange(existing, dataElement)
-        DataElement updated = super.updateEntity(existing, cleanItem) as DataElement
-        updated = updateClassifiers(updated)
+        updateDerivedProperties(existing)
+        DataElement updated = existing
+        if (hasChanged) {
+            updated = administeredItemRepository.update(existing)
+            updated = updateClassifiers(updated)
+        }
         updated
     }
 

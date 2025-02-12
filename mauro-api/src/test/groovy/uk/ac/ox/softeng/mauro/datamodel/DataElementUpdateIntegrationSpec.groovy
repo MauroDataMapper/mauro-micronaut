@@ -14,9 +14,10 @@ import io.micronaut.runtime.EmbeddedApplication
 import io.micronaut.test.annotation.Sql
 import jakarta.inject.Inject
 import spock.lang.Shared
+import spock.lang.Unroll
 
 @ContainerizedTest
-@Sql(scripts = "classpath:sql/tear-down-dataelement.sql", phase = Sql.Phase.AFTER_EACH)
+@Sql(scripts = "classpath:sql/tear-down-dataelement.sql", phase = Sql.Phase.AFTER_ALL)
 class DataElementUpdateIntegrationSpec extends CommonDataSpec {
 
     @Inject
@@ -37,13 +38,20 @@ class DataElementUpdateIntegrationSpec extends CommonDataSpec {
     @Shared
     UUID dataElementId
 
-    void setup() {
+    @Shared
+    UUID secondDataTypeId
+
+    void setupSpec() {
         folderId = ((Folder) POST("$FOLDERS_PATH", folder(), Folder)).id
         dataModelId = ((DataModel) POST("$FOLDERS_PATH/$folderId$DATAMODELS_PATH", dataModelPayload(), DataModel)).id
         dataTypeId = ((DataType) POST("$DATAMODELS_PATH/$dataModelId$DATATYPES_PATH", dataTypesPayload(), DataType)).id
         dataClassId = ((DataClass) POST("$DATAMODELS_PATH/$dataModelId$DATACLASSES_PATH", dataClassPayload(), DataClass)).id
         dataElementId = ((DataElement) POST("$DATAMODELS_PATH/$dataModelId$DATACLASSES_PATH/$dataClassId$DATA_ELEMENTS_PATH",
                                             [label: 'First data element', description: 'The first data element', dataType: [id: dataTypeId]], DataElement)).id
+        secondDataTypeId = ((DataType) POST("$DATAMODELS_PATH/$dataModelId$DATATYPES_PATH",
+                                            [label: 'second data type', domainType: 'primitiveType', units: 'lbs'], DataType)).id
+
+        println("second data type id: $secondDataTypeId, original Data type id: $dataTypeId ")
     }
 
     void 'test update data element -no datatype in update Request -should update as expected'() {
@@ -74,27 +82,32 @@ class DataElementUpdateIntegrationSpec extends CommonDataSpec {
         exception.status == HttpStatus.BAD_REQUEST
     }
 
-    void 'test update data element - with another permitted datatype -should update'() {
-        given:
-        DataType secondDataType = (DataType) POST("$DATAMODELS_PATH/$dataModelId$DATATYPES_PATH",
-                                                  [label: 'second data type', domainType: 'primitiveType', units: 'lbs'], DataType)
+    @Unroll
+    void 'test update data element #dataElementPayload  -should/should not update with expected data'() {
         when:
         DataElement updated = (DataElement) PUT("$DATAMODELS_PATH/$dataModelId$DATACLASSES_PATH/$dataClassId$DATA_ELEMENTS_PATH/$dataElementId",
-                                                [label   : 'Renamed data element',
-                                                 dataType:
-                                                     [id: secondDataType.id]], DataElement)
+                                                dataElementPayload, DataElement)
         then:
         updated
-        updated.label == 'Renamed data element'
-        updated.dataType.id == secondDataType.id
+        updated.label == expectedLabel
+        updated.dataType.id == expectedDataTypeId
 
         when:
         DataElement retrieved = (DataElement) GET("$DATAMODELS_PATH/$dataModelId$DATACLASSES_PATH/$dataClassId$DATA_ELEMENTS_PATH/$dataElementId", DataElement)
 
         then:
         retrieved
-        retrieved.dataType.id == secondDataType.id
-        retrieved.label == 'Renamed data element'
+        retrieved.dataType.id == expectedDataTypeId
+        retrieved.label == expectedLabel
+
+        where:
+        dataElementPayload                                              | expectedDataTypeId | expectedLabel
+        [label: 'Renamed data element']                                 | dataTypeId         | 'Renamed data element'
+        [label: 'label data element', dataType: [id: secondDataTypeId]] | secondDataTypeId   | 'label data element'
+        [dataType: [id: dataTypeId]]                                    | dataTypeId         | 'label data element'
+        [dataType: [id: secondDataTypeId]]                              | secondDataTypeId   | 'label data element'
+        [label: 'data element label', dataType: [id: dataTypeId]]       | dataTypeId         | 'data element label'
+
     }
 
 }
