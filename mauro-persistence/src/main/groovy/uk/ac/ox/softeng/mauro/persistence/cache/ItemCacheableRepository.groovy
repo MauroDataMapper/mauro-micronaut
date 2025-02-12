@@ -6,6 +6,7 @@ import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedCatalogue
 import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedModel
 import uk.ac.ox.softeng.mauro.domain.model.Item
 import uk.ac.ox.softeng.mauro.domain.model.SummaryMetadataReport
+import uk.ac.ox.softeng.mauro.domain.security.ApiKey
 import uk.ac.ox.softeng.mauro.domain.security.CatalogueUser
 import uk.ac.ox.softeng.mauro.domain.security.Role
 import uk.ac.ox.softeng.mauro.domain.security.SecurableResourceGroupRole
@@ -15,6 +16,7 @@ import uk.ac.ox.softeng.mauro.persistence.federation.SubscribedCatalogueReposito
 import uk.ac.ox.softeng.mauro.persistence.federation.SubscribedModelRepository
 import uk.ac.ox.softeng.mauro.persistence.model.ItemRepository
 import uk.ac.ox.softeng.mauro.persistence.model.SummaryMetadataReportRepository
+import uk.ac.ox.softeng.mauro.persistence.security.ApiKeyRepository
 import uk.ac.ox.softeng.mauro.persistence.security.CatalogueUserRepository
 import uk.ac.ox.softeng.mauro.persistence.security.SecurableResourceGroupRoleRepository
 import uk.ac.ox.softeng.mauro.persistence.security.UserGroupRepository
@@ -97,7 +99,7 @@ abstract class ItemCacheableRepository<I extends Item> implements ItemRepository
      * @return Mono of the object
      */
     I cachedLookupById(String lookup, String domainType, UUID id) {
-        mutableCachedLookupById(lookup, domainType, id)?.clone()
+        mutableCachedLookupById(lookup, domainType, id)?.clone() as I
     }
 
     @Cacheable
@@ -213,6 +215,21 @@ abstract class ItemCacheableRepository<I extends Item> implements ItemRepository
 
         CatalogueUser readByEmailAddress(String emailAddress) {
             ((CatalogueUserRepository) repository).readByEmailAddress(emailAddress)
+        }
+    }
+
+    @Singleton
+    @CompileStatic
+    @CacheConfig(keyGenerator = StringCacheKeyGenerator)
+    static class ApiKeyCacheableRepository extends ItemCacheableRepository<ApiKey> {
+        ApiKeyCacheableRepository(ApiKeyRepository apiKeyRepository) {
+            super(apiKeyRepository)
+        }
+
+        // not cached
+
+        List<ApiKey> readByCatalogueUserId(UUID catalogueUserId) {
+            ((ApiKeyRepository) repository).readByCatalogueUserId(catalogueUserId)
         }
     }
 
