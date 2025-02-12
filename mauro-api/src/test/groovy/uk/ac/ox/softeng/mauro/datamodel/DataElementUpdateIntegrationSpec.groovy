@@ -51,7 +51,6 @@ class DataElementUpdateIntegrationSpec extends CommonDataSpec {
         secondDataTypeId = ((DataType) POST("$DATAMODELS_PATH/$dataModelId$DATATYPES_PATH",
                                             [label: 'second data type', domainType: 'primitiveType', units: 'lbs'], DataType)).id
 
-        println("second data type id: $secondDataTypeId, original Data type id: $dataTypeId ")
     }
 
     void 'test update data element -no datatype in update Request -should update as expected'() {
