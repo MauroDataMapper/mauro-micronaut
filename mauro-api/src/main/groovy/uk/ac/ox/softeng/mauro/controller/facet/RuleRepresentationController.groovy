@@ -103,7 +103,7 @@ class RuleRepresentationController extends ItemController<RuleRepresentation> {
         if (!ruleRepresentation) {
             throwNotFoundException(ruleRepresentation, id)
         }
-        ruleRepresentationCacheableRepository.delete(ruleRepresentation, rule)
+        ruleRepresentationCacheableRepository.delete(ruleRepresentation)
         HttpStatus.NO_CONTENT
     }
 
@@ -111,7 +111,7 @@ class RuleRepresentationController extends ItemController<RuleRepresentation> {
                                                Rule summaryMetadata) {
         boolean hasChanged = updateProperties(existing, cleaned)
         if (hasChanged) {
-            ruleRepresentationCacheableRepository.update(existing, summaryMetadata)
+            ruleRepresentationCacheableRepository.update(existing)
         } else {
             existing
         }

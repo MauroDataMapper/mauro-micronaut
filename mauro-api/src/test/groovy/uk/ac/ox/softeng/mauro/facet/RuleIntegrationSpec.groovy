@@ -1,5 +1,6 @@
 package uk.ac.ox.softeng.mauro.facet
 
+import io.micronaut.http.client.exceptions.HttpClientException
 import uk.ac.ox.softeng.mauro.domain.facet.Rule
 import uk.ac.ox.softeng.mauro.domain.facet.RuleRepresentation
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
@@ -106,6 +107,14 @@ class RuleIntegrationSpec extends CommonDataSpec {
         then:
         updated
         updated.name == 'new rule name'
+
+        when:
+        Rule retrieved = (Rule) GET("$FOLDERS_PATH/$folderId$RULE_PATH/$ruleId", Rule)
+
+        then:
+        retrieved
+        retrieved.name == 'new rule name'
+        retrieved.id == rule.id
     }
 
     void 'delete rule'() {
@@ -136,6 +145,46 @@ class RuleIntegrationSpec extends CommonDataSpec {
         response
         response.count == 0
     }
+
+    void 'delete report'() {
+        given:
+        Rule rule = (Rule) POST("$FOLDERS_PATH/$folderId$RULE_PATH",
+                rulePayload(), Rule)
+
+        and:
+        RuleRepresentation ruleRepresentation1 = (RuleRepresentation) POST("$FOLDERS_PATH/$folderId$RULE_PATH/$rule.id$RULE_REPRESENTATION_PATH",
+                [language: 'language-1'], RuleRepresentation)
+        RuleRepresentation ruleRepresentation2 = (RuleRepresentation) POST("$FOLDERS_PATH/$folderId$RULE_PATH/$rule.id$RULE_REPRESENTATION_PATH",
+                [language: 'language-2'], RuleRepresentation)
+
+        ListResponse<RuleRepresentation> savedReports = (ListResponse<RuleRepresentation>) GET("$FOLDERS_PATH/$folderId$RULE_PATH/$rule.id$RULE_REPRESENTATION_PATH",
+                ListResponse, RuleRepresentation)
+        savedReports
+        savedReports.count == 2
+        savedReports.items.id == List.of(ruleRepresentation1.id, ruleRepresentation2.id)
+
+        when:
+        HttpStatus status = (HttpStatus) DELETE("$FOLDERS_PATH/$folderId$RULE_PATH/${rule.id}/$RULE_REPRESENTATION_PATH/${ruleRepresentation1.id}", HttpStatus)
+
+        then:
+        status == HttpStatus.NO_CONTENT
+
+        when:
+        Rule ruleResponse = (Rule) GET("$FOLDERS_PATH/$folderId$RULE_PATH/$rule.id", Rule)
+
+        then:
+        ruleResponse.ruleRepresentations.size() == 1
+        ruleResponse.ruleRepresentations.id == [ruleRepresentation2.id]
+
+        when:
+        (RuleRepresentation) GET("$FOLDERS_PATH/$folderId$RULE_PATH/$rule.id$RULE_REPRESENTATION_PATH/${ruleRepresentation1.id}", RuleRepresentation)
+
+        then: '404 not found is returned, exception thrown'
+        HttpClientException exception = thrown()
+        exception.status == HttpStatus.NOT_FOUND
+
+    }
+
 
     void 'delete rule with reports'() {
         given:
@@ -174,5 +223,13 @@ class RuleIntegrationSpec extends CommonDataSpec {
         then: '404 not found is returned, exception thrown'
         exception = thrown()
         exception.status == HttpStatus.NOT_FOUND
+
+        when:
+        ListResponse<Rule> response = (ListResponse<Rule>) GET("$FOLDERS_PATH/$folderId$RULE_PATH", ListResponse, Rule)
+
+        then: 'no rules are found'
+        response
+        response.count == 0
+
     }
 }

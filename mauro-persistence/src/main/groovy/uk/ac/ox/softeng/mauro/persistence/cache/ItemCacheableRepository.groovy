@@ -318,26 +318,10 @@ abstract class ItemCacheableRepository<I extends Item> implements ItemRepository
             super(ruleRepresentationRepository)
         }
 
-        Long delete(RuleRepresentation ruleRepresentation, Rule rule) {
-            Long deleted = repository.delete(ruleRepresentation)
-            invalidateChain(ruleRepresentation, rule)
-            deleted
-        }
-
-        RuleRepresentation update(RuleRepresentation ruleRepresentation, Rule rule) {
-            RuleRepresentation updated = repository.update(ruleRepresentation)
-            invalidateChain(updated, rule)
-            updated
-        }
-
-        List<RuleRepresentation> saveAll(Iterable<RuleRepresentation> items) {
-            List<RuleRepresentation> saved = repository.saveAll(items)
-            items.each { invalidate(it) }
-            saved
-        }
-
-        private void invalidateChain(RuleRepresentation ruleRepresentation, Rule rule) {
-            invalidate(ruleRepresentation)
+        @Override
+        void invalidate(RuleRepresentation item) {
+            super.invalidate(item)
+            Rule rule = ruleCacheableRepository.readById(item.ruleId)
             ruleCacheableRepository.invalidate(rule)
         }
     }
