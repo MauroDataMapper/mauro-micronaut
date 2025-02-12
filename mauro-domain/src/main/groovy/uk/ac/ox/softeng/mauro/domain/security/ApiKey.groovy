@@ -34,6 +34,9 @@ class ApiKey extends Item {
     Boolean refreshable = true
     Boolean disabled = false
 
+    @Transient
+    Long expiresInDays
+
     /**
      * The owner of this API Key object.
      */
@@ -41,9 +44,12 @@ class ApiKey extends Item {
     @MappedProperty('catalogue_user_id')
     UUID catalogueUserId
 
-    @Transient
-    void setExpiresInDays(long days) {
-        expiryDate = Instant.now().plus(days, ChronoUnit.DAYS)
+    void updateExpiryDate() {
+        System.err.println("setting expires in days")
+        if(expiresInDays) {
+            expiryDate = Instant.now().plus(expiresInDays, ChronoUnit.DAYS)
+            expiresInDays = null
+        }
     }
 
     // TODO - this is included for UI compatability - can remove it after a change to the UI

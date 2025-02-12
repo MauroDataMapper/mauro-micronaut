@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.controller.security
 
+import uk.ac.ox.softeng.mauro.api.Paths
+import uk.ac.ox.softeng.mauro.api.security.ApiKeyApi
 import uk.ac.ox.softeng.mauro.controller.model.ItemController
 import uk.ac.ox.softeng.mauro.domain.security.ApiKey
 import uk.ac.ox.softeng.mauro.domain.security.Role
@@ -20,9 +22,9 @@ import io.micronaut.security.rules.SecurityRule
 
 @CompileStatic
 @Slf4j
-@Controller('/catalogueUsers/{userId}/apiKeys')
+@Controller
 @Secured(SecurityRule.IS_AUTHENTICATED)
-class ApiKeyController extends ItemController<ApiKey> {
+class ApiKeyController extends ItemController<ApiKey> implements ApiKeyApi {
 
     ItemCacheableRepository.ApiKeyCacheableRepository apiKeyCacheableRepository
 
@@ -32,14 +34,14 @@ class ApiKeyController extends ItemController<ApiKey> {
     }
 
 
-    @Get()
+    @Get(Paths.API_KEY_LIST)
     ListResponse<ApiKey> index(UUID userId) {
         accessControlService.checkAdminOrUser(userId)
         List<ApiKey> apiKeys = apiKeyCacheableRepository.readByCatalogueUserId(userId)
         ListResponse.from(apiKeys?: [])
     }
 
-    @Post
+    @Post(Paths.API_KEY_LIST)
     ApiKey create(UUID userId, @Body ApiKey apiKey) {
         accessControlService.checkAdminOrUser(userId)
         cleanBody(apiKey)
@@ -48,17 +50,18 @@ class ApiKeyController extends ItemController<ApiKey> {
         if(apiKey.disabled == null) {
             apiKey.disabled = false
         }
+        apiKey.updateExpiryDate()
         apiKeyCacheableRepository.save(apiKey)
     }
 
-    @Get('/{apiKeyId}')
+    @Get(Paths.API_KEY_ID)
     ApiKey show(UUID userId, UUID apiKeyId) {
         accessControlService.checkAdminOrUser(userId)
         List<ApiKey> apiKeys = apiKeyCacheableRepository.readByCatalogueUserId(userId)
         apiKeys.find { it.id == apiKeyId }
     }
 
-    @Delete('/{apiKeyId}')
+    @Delete(Paths.API_KEY_ID)
     HttpStatus delete(UUID userId, UUID apiKeyId) {
         accessControlService.checkAdminOrUser(userId)
         List<ApiKey> apiKeys = apiKeyCacheableRepository.readByCatalogueUserId(userId)
@@ -67,7 +70,7 @@ class ApiKeyController extends ItemController<ApiKey> {
         return HttpStatus.NO_CONTENT
     }
 
-    @Put('/{apiKeyId}/enable')
+    @Put(Paths.API_KEY_ENABLE)
     ApiKey enable(UUID userId, UUID apiKeyId) {
         accessControlService.checkAdminOrUser(userId)
         List<ApiKey> apiKeys = apiKeyCacheableRepository.readByCatalogueUserId(userId)
@@ -76,7 +79,7 @@ class ApiKeyController extends ItemController<ApiKey> {
         apiKeyCacheableRepository.update(apiKey)
     }
 
-    @Put('/{apiKeyId}/disable')
+    @Put(Paths.API_KEY_DISABLE)
     ApiKey disable(UUID userId, UUID apiKeyId) {
         accessControlService.checkAdminOrUser(userId)
         List<ApiKey> apiKeys = apiKeyCacheableRepository.readByCatalogueUserId(userId)
@@ -85,12 +88,13 @@ class ApiKeyController extends ItemController<ApiKey> {
         apiKeyCacheableRepository.update(apiKey)
     }
 
-    @Put('/{apiKeyId}/refresh/{expireInDays}')
-    ApiKey disable(UUID userId, UUID apiKeyId, long expireInDays) {
+    @Put(Paths.API_KEY_REFRESH)
+    ApiKey refresh(UUID userId, UUID apiKeyId, long expireInDays) {
         accessControlService.checkAdminOrUser(userId)
         List<ApiKey> apiKeys = apiKeyCacheableRepository.readByCatalogueUserId(userId)
         ApiKey apiKey = apiKeys.find { it.id == apiKeyId }
-        apiKey.setExpiresInDays(expireInDays)
+        apiKey.expiresInDays = expireInDays
+        apiKey.updateExpiryDate()
         apiKeyCacheableRepository.update(apiKey)
     }
 

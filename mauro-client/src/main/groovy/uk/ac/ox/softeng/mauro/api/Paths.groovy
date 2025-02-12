@@ -287,5 +287,12 @@ interface Paths {
     String LOGIN = '/authentication/login'
     String LOGOUT = '/authentication/logout'
 
-
+    /*
+    * ApiKeyApi
+    */
+    String API_KEY_LIST = '/catalogueUsers/{userId}/apiKeys'
+    String API_KEY_ID = '/catalogueUsers/{userId}/apiKeys/{apiKeyId}'
+    String API_KEY_ENABLE = '/catalogueUsers/{userId}/apiKeys/{apiKeyId}/enable'
+    String API_KEY_DISABLE = '/catalogueUsers/{userId}/apiKeys/{apiKeyId}/disable'
+    String API_KEY_REFRESH = '/catalogueUsers/{userId}/apiKeys/{apiKeyId}/refresh/{expireInDays}'
 }

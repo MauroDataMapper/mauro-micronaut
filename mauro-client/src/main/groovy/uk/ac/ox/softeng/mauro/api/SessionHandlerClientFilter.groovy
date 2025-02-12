@@ -19,13 +19,17 @@ class SessionHandlerClientFilter {
 
     HttpStatus lastStatus
 
+    UUID apiKey
+
     @RequestFilter
     void doFilter(MutableHttpRequest<?> request) {
         log.trace("Applying request filter: ${this.class}")
         if(sessionId) {
             request.cookie(Cookie.of('SESSION', sessionId))
         }
-
+        if(apiKey) {
+            request.header('apiKey', apiKey.toString())
+        }
     }
 
     @ResponseFilter

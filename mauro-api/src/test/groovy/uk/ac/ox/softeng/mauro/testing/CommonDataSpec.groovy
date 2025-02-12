@@ -23,6 +23,7 @@ import uk.ac.ox.softeng.mauro.api.folder.FolderApi
 import uk.ac.ox.softeng.mauro.api.importer.ImporterApi
 import uk.ac.ox.softeng.mauro.api.profile.ProfileApi
 import uk.ac.ox.softeng.mauro.api.search.SearchApi
+import uk.ac.ox.softeng.mauro.api.security.ApiKeyApi
 import uk.ac.ox.softeng.mauro.api.security.CatalogueUserApi
 import uk.ac.ox.softeng.mauro.api.security.LoginApi
 import uk.ac.ox.softeng.mauro.api.security.SecurableResourceGroupRoleApi
@@ -121,6 +122,7 @@ class CommonDataSpec extends Specification {
     @Shared @Inject TermRelationshipTypeApi termRelationshipTypeApi
     @Shared @Inject TreeApi treeApi
     @Shared @Inject LoginApi loginApi
+    @Shared @Inject ApiKeyApi apiKeyApi
 
     @Inject
     SessionHandlerClientFilter sessionHandlerClientFilter
@@ -301,6 +303,13 @@ class CommonDataSpec extends Specification {
         response.items.first().id
     }
 
+    void setApiKey(UUID apiKey) {
+        sessionHandlerClientFilter.apiKey = apiKey
+    }
+
+    void unsetApiKey() {
+        sessionHandlerClientFilter.apiKey = null
+    }
 
 }
 

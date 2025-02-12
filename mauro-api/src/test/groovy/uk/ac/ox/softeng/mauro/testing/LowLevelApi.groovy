@@ -1,5 +1,9 @@
 package uk.ac.ox.softeng.mauro.testing
 
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
+import uk.ac.ox.softeng.mauro.domain.folder.Folder
+import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
+import uk.ac.ox.softeng.mauro.export.ExportModel
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 import com.fasterxml.jackson.databind.ObjectMapper
