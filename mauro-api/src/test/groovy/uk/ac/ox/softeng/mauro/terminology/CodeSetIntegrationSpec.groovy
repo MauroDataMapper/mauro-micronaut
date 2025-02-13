@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.terminology
 
+import uk.ac.ox.softeng.mauro.domain.authority.Authority
+
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.client.exceptions.HttpClientResponseException
 import io.micronaut.runtime.EmbeddedApplication
@@ -29,7 +31,14 @@ class CodeSetIntegrationSpec extends CommonDataSpec {
     @Shared
     UUID codeSetId
 
-    def setup() {
+    @Shared
+    UUID defaultAuthorityId
+
+    void setupSpec(){
+        Authority authority  = ((ListResponse<Authority>) GET (AUTHORITIES_PATH, ListResponse<Authority>, Authority)).items?.first()
+        assert(authority.defaultAuthority == true)
+        defaultAuthorityId = authority.id
+
         def folderPayload = folder()
         def folderResponse = POST(FOLDERS_PATH, folderPayload)
         folderId = UUID.fromString(folderResponse.id as String)
@@ -46,6 +55,7 @@ class CodeSetIntegrationSpec extends CommonDataSpec {
         response.description == "code set description"
         response.author == "A.N. Other"
         response.organisation == "uk.ac.gridpp.ral.org"
+        response.authority.id == defaultAuthorityId.toString()
     }
 
 
@@ -64,6 +74,7 @@ class CodeSetIntegrationSpec extends CommonDataSpec {
         getResponse.description == codeSetPayload.description
         getResponse.organisation == codeSetPayload.organisation
         getResponse.author == codeSetPayload.author
+        getResponse.authority.id == defaultAuthorityId.toString()
     }
 
     void 'test codeSet listAll'() {
@@ -149,6 +160,7 @@ class CodeSetIntegrationSpec extends CommonDataSpec {
         putResponse
         putResponse.author == newAuthor
         UUID.fromString(putResponse.id as String) == codeSetId
+        putResponse.authority.id == defaultAuthorityId.toString()
     }
 
     void 'add Term to CodeSet'() {

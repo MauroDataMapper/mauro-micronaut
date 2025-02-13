@@ -36,7 +36,7 @@ class ClassificationSchemeIntegrationSpec extends CommonDataSpec {
         listResponse.items.isEmpty()
     }
 
-    void 'add Classification scheme -should add'(){
+    void 'add Classification scheme -should add'() {
         when:
         ClassificationScheme classificationScheme = (ClassificationScheme) POST("$FOLDERS_PATH/$folderId$CLASSIFICATION_SCHEME_PATH", classifiersPayload(), ClassificationScheme)
         then:
@@ -46,6 +46,7 @@ class ClassificationSchemeIntegrationSpec extends CommonDataSpec {
         ClassificationScheme retrieved = GET("$CLASSIFICATION_SCHEME_PATH/$classificationScheme.id", ClassificationScheme)
         then:
         retrieved
+        retrieved.authority
     }
 
     void 'get Classification scheme by ID -should return classification scheme'(){
@@ -56,6 +57,7 @@ class ClassificationSchemeIntegrationSpec extends CommonDataSpec {
 
         then:
         retrieved
+        retrieved.authority
     }
 
     void 'update classification scheme -should update model'() {
@@ -68,7 +70,8 @@ class ClassificationSchemeIntegrationSpec extends CommonDataSpec {
         then:
         updated
         updated.label == 'updated test label'
-        updated.description  == 'updated test description'
+        updated.description == 'updated test description'
+        updated.authority
     }
 
     void 'delete classification scheme -should delete model and associations'() {
