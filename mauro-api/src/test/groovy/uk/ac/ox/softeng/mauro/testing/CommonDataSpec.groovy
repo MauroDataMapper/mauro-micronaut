@@ -213,4 +213,11 @@ class CommonDataSpec extends BaseIntegrationSpec {
         ]
     }
 
+    def authorityPayload(){
+        [
+            url: "http://random.co.uk",
+            label: 'authority label'
+        ]
+    }
+
 }

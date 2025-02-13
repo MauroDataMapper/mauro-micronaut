@@ -14,7 +14,8 @@ create table core."authority"
     "aliases_string"                  text,
     "created_by"                      uuid,
     "breadcrumb_tree_id"              uuid,
-    "url"                             varchar(255)     not null
+    "url"                             varchar(255)     not null,
+    "default_authority"               boolean          default false
 );
 
 -- Metadata

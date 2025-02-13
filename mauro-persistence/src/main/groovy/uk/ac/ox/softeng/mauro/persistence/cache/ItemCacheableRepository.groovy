@@ -1,5 +1,6 @@
 package uk.ac.ox.softeng.mauro.persistence.cache
 
+import uk.ac.ox.softeng.mauro.domain.authority.Authority
 import uk.ac.ox.softeng.mauro.domain.config.ApiProperty
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
 import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedCatalogue
@@ -11,6 +12,7 @@ import uk.ac.ox.softeng.mauro.domain.security.CatalogueUser
 import uk.ac.ox.softeng.mauro.domain.security.Role
 import uk.ac.ox.softeng.mauro.domain.security.SecurableResourceGroupRole
 import uk.ac.ox.softeng.mauro.domain.security.UserGroup
+import uk.ac.ox.softeng.mauro.persistence.authority.AuthorityRepository
 import uk.ac.ox.softeng.mauro.persistence.config.ApiPropertyRepository
 import uk.ac.ox.softeng.mauro.persistence.federation.SubscribedCatalogueRepository
 import uk.ac.ox.softeng.mauro.persistence.federation.SubscribedModelRepository
@@ -339,5 +341,21 @@ abstract class ItemCacheableRepository<I extends Item> implements ItemRepository
             ((SubscribedModelRepository) repository).findByIdAndSubscribedCatalogueId(id, subscribedCatalogue.id)
         }
 
+    }
+
+    @CompileStatic
+    @Singleton
+    static class AuthorityCacheableRepository extends ItemCacheableRepository<Authority> {
+        AuthorityCacheableRepository(AuthorityRepository authorityRepository) {
+            super(authorityRepository)
+        }
+        @Nullable
+        Authority findByDefaultAuthority(boolean defaultAuthority){
+            ((AuthorityRepository) repository).findByDefaultAuthority(defaultAuthority)
+        }
+        @Nullable
+        List<Authority> findAll(){
+            ((AuthorityRepository) repository).findAll()
+        }
     }
 }

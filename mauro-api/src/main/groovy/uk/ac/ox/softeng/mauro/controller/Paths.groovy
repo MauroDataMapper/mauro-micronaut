@@ -42,6 +42,7 @@ class Paths {
     public static final String PUBLISHED_MODELS_ROUTE  = '/published/models'
     public static final String NEWER_VERSIONS  = '/newerVersions'
     public static final String PUBLISHED_MODELS_NEWER_VERSIONS_ROUTE  = '/published/models/{publishedModelId}/newerVersions'
+    public static final String AUTHORITIES_ROUTE  = '/authorities'
 
 
 }

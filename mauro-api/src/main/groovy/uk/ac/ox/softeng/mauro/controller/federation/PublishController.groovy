@@ -41,9 +41,9 @@ class PublishController {
     @Get(Paths.PUBLISHED_MODELS_ROUTE)
     PublishedModelResponse show() {
         PublishedModelResponse publishedModelResponse
-        //todo: Authority
+
         try {
-            List<Model> finalisedModels = getFinalisedModels()
+            List<Model> finalisedModels = getFinalisedModelsForDefaultAuthority()
             publishedModelResponse = new PublishedModelResponse(null, publishService.getPublishedModels(finalisedModels))
         } catch (AuthorizationException e) {
             publishedModelResponse = new PublishedModelResponse(null, Collections.emptyList())
@@ -56,7 +56,7 @@ class PublishController {
     PublishedModelResponse newerVersions(@NonNull UUID publishedModelId) {
         PublishedModelResponse publishedModelResponse
         try {
-            List<Model> finalisedModels = getFinalisedModels()
+            List<Model> finalisedModels = getFinalisedModelsForDefaultAuthority()
             Model publishedVersion = finalisedModels.find {it.id == publishedModelId}
             if (!publishedVersion) {
                 throw new HttpStatusException(HttpStatus.NOT_FOUND, "Entity not found, $publishedModelId")
@@ -72,11 +72,12 @@ class PublishController {
         publishedModelResponse
     }
 
-    protected List<Model> getFinalisedModels() throws AuthorizationException {
+    protected List<Model> getFinalisedModelsForDefaultAuthority() throws AuthorizationException {
         repositoryService.modelCacheableRepositories.sort(false) {
         }.collectMany {ModelCacheableRepository modelCacheableRepository ->
             modelCacheableRepository.readAllByFinalisedTrue()
                 .collect {
+                    ((Model) it).authority.defaultAuthority == true
                     accessControlService.checkRole(Role.READER, it as AdministeredItem)
                     it
                 }
