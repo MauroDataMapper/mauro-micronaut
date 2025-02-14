@@ -1,6 +1,7 @@
 package uk.ac.ox.softeng.mauro.service.federation
 
 import uk.ac.ox.softeng.mauro.ErrorHandler
+import uk.ac.ox.softeng.mauro.domain.authority.Authority
 import uk.ac.ox.softeng.mauro.domain.facet.federation.MauroLink
 import uk.ac.ox.softeng.mauro.domain.facet.federation.PublishedModel
 import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedCatalogue
@@ -18,6 +19,7 @@ import uk.ac.ox.softeng.mauro.plugin.exporter.ModelExporterPlugin
 import uk.ac.ox.softeng.mauro.plugin.importer.FileImportParameters
 import uk.ac.ox.softeng.mauro.plugin.importer.FileParameter
 import uk.ac.ox.softeng.mauro.plugin.importer.ModelImporterPlugin
+import uk.ac.ox.softeng.mauro.service.core.AuthorityService
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
@@ -35,24 +37,23 @@ class SubscribedModelService {
     final SubscribedCatalogueService subscribedCatalogueService
     final ModelContentRepository<Model> modelContentRepository
     final ItemCacheableRepository.SubscribedModelCacheableRepository subscribedModelCacheableRepository
+    final AuthorityService authorityService
 
     @Inject
     SubscribedModelService(RepositoryService repositoryService, MauroPluginService mauroPluginService, SubscribedCatalogueService subscribedCatalogueService,
-                           ModelContentRepository<Model> modelContentRepository, SubscribedModelCacheableRepository subscribedModelCacheableRepository) {
+                           ModelContentRepository<Model> modelContentRepository, SubscribedModelCacheableRepository subscribedModelCacheableRepository,
+                           AuthorityService authorityService) {
         this.repositoryService = repositoryService
         this.mauroPluginService = mauroPluginService
         this.subscribedCatalogueService = subscribedCatalogueService
         this.modelContentRepository = modelContentRepository
         this.subscribedModelCacheableRepository = subscribedModelCacheableRepository
+        this.authorityService = authorityService
     }
 
-
-    List<PublishedModel> getPublishedModels(SubscribedCatalogue subscribedCatalogue) {
-        subscribedCatalogueService.getPublishedModels(subscribedCatalogue)
-    }
 
     PublishedModel getPublishedModelForSubscribedModel(SubscribedModel subscribedModel) {
-        List<PublishedModel> publishedModels = getPublishedModels(subscribedModel.subscribedCatalogue)
+        List<PublishedModel> publishedModels = subscribedCatalogueService.getPublishedModels(subscribedModel.subscribedCatalogue)
 
         // Atom feeds may allow multiple versions of an entry with the same ID
         return Optional.ofNullable(publishedModels
@@ -87,7 +88,8 @@ class SubscribedModelService {
             useDefaultAuthority = false
             importAsNewBranchModelVersion = sourcePublishedModel?.modelVersion ? false : true
         }
-        //todo: authority
+
+        //Authority is not in importerparameters
         List<Model> importedModels = (List<Model>) mauroImporterPlugin.importModels(fileImportParameters)
         Model savedImported = importedModels?.first()
         checkModelLabelAndVersionNotAlreadyImported(savedImported)

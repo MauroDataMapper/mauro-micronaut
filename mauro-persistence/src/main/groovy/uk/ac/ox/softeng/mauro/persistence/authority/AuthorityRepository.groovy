@@ -21,6 +21,9 @@ abstract class AuthorityRepository implements ItemRepository<Authority> {
     @Query('select * from core.authority')
     abstract List<Authority> findAll()
 
+    @Query('select * from core.authority where label = :label')
+    abstract Authority findByLabel(String label)
+
     Class getDomainType() {
         Authority
     }
@@ -29,5 +32,6 @@ abstract class AuthorityRepository implements ItemRepository<Authority> {
     Class getDomainClass() {
         Authority
     }
+
 }
 

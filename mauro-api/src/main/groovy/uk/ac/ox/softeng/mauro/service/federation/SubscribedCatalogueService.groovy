@@ -2,6 +2,7 @@ package uk.ac.ox.softeng.mauro.service.federation
 
 import uk.ac.ox.softeng.mauro.controller.Paths
 import uk.ac.ox.softeng.mauro.controller.federation.client.FederationClient
+import uk.ac.ox.softeng.mauro.domain.authority.Authority
 import uk.ac.ox.softeng.mauro.domain.facet.federation.PublishedModel
 import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedCatalogue
 import uk.ac.ox.softeng.mauro.domain.facet.federation.converter.SubscribedCatalogueConverter
@@ -28,8 +29,7 @@ class SubscribedCatalogueService {
     }
 
     List<PublishedModel> getPublishedModels(SubscribedCatalogue subscribedCatalogue) {
-        Map<String, Object> subscribedCatalogueModelsMap = federationClient.fetchFederatedClientDataAsMap(subscribedCatalogue, Paths.PUBLISHED_MODELS_ROUTE)
-        getConverterForSubscribedCatalogue(subscribedCatalogue).toPublishedModels(subscribedCatalogueModelsMap).v2
+        getRemoteClientDataAsTuple(subscribedCatalogue, Paths.PUBLISHED_MODELS_ROUTE).v2
     }
 
 
@@ -43,15 +43,23 @@ class SubscribedCatalogueService {
         }
     }
 
-
-
     byte[] getBytesResourceExport(SubscribedCatalogue subscribedCatalogue, String resourceUrl) {
         federationClient.clientSetup(subscribedCatalogue)
         federationClient.retrieveBytesFromClient(subscribedCatalogue, resourceUrl)
     }
 
+    Authority getAuthority(SubscribedCatalogue subscribedCatalogue) {
+        getRemoteClientDataAsTuple(subscribedCatalogue, Paths.PUBLISHED_MODELS_ROUTE).v1
+    }
+
     private SubscribedCatalogueConverter getConverterForSubscribedCatalogue(SubscribedCatalogue subscribedCatalogue) {
         subscribedCatalogueConverterService.getSubscribedCatalogueConverter(subscribedCatalogue.subscribedCatalogueType)
     }
+
+    private Tuple2<Authority, List<PublishedModel>> getRemoteClientDataAsTuple(SubscribedCatalogue subscribedCatalogue, String path) {
+        Map<String, Object> subscribedCatalogueModelsMap = federationClient.fetchFederatedClientDataAsMap(subscribedCatalogue, path)
+        getConverterForSubscribedCatalogue(subscribedCatalogue).toPublishedModels(subscribedCatalogueModelsMap)
+    }
+
 }
 

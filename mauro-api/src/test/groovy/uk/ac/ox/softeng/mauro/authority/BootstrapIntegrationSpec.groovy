@@ -19,8 +19,8 @@ class BootstrapIntegrationSpec extends BaseIntegrationSpec {
         ListResponse<Authority> authorityListResponse = (ListResponse<Authority>) GET("$AUTHORITIES_PATH", ListResponse, Authority)
         then:
         authorityListResponse
-        authorityListResponse.items.size() == 1
-        Authority authority = authorityListResponse.items.first()
-        authority.defaultAuthority == true
+        !authorityListResponse.items.isEmpty()
+        Authority defaultAuthority = authorityListResponse.items.find{it.defaultAuthority == true}
+        defaultAuthority.defaultAuthority == true
     }
 }

@@ -357,5 +357,10 @@ abstract class ItemCacheableRepository<I extends Item> implements ItemRepository
         List<Authority> findAll(){
             ((AuthorityRepository) repository).findAll()
         }
+
+        Authority findByLabel(String label) {
+            ((AuthorityRepository) repository).findByLabel(label)
+        }
+
     }
 }

@@ -44,4 +44,8 @@ class AuthorityService {
     long delete(Authority authority) {
         authorityRepository.delete(authority)
     }
+
+    Authority findByLabel(String label) {
+        authorityRepository.findByLabel(label)
+    }
 }

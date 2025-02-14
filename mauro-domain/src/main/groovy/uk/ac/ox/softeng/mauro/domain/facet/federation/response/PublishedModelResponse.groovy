@@ -28,4 +28,6 @@ class PublishedModelResponse {
         this.authorityResponse = authorityResponse
         this.publishedModels = publishedModels
     }
+
+
 }

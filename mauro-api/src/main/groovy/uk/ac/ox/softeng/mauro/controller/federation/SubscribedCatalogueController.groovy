@@ -128,7 +128,7 @@ class SubscribedCatalogueController extends ItemController<SubscribedCatalogue> 
         SubscribedCatalogue subscribedCatalogue = subscribedCatalogueCacheableRepository.findById(subscribedCatalogueId)
         ErrorHandler.handleError(HttpStatus.NOT_FOUND, subscribedCatalogue, "Item $subscribedCatalogueId not found")
         try {
-            subscribedModelService.getPublishedModels(subscribedCatalogue)
+            subscribedCatalogueService.getPublishedModels(subscribedCatalogue)
         } catch (Exception e) {
             log.error(e.message)
             throw new HttpServerException(e.message, e)
@@ -144,7 +144,7 @@ class SubscribedCatalogueController extends ItemController<SubscribedCatalogue> 
 
         SubscribedCatalogue subscribedCatalogue = subscribedCatalogueCacheableRepository.findById(subscribedCatalogueId)
         ErrorHandler.handleError(HttpStatus.NOT_FOUND, subscribedCatalogue, "Item $subscribedCatalogueId not found")
-        ListResponse.from(subscribedModelService.getPublishedModels(subscribedCatalogue))
+        ListResponse.from(subscribedCatalogueService.getPublishedModels(subscribedCatalogue))
     }
 
     @Get(Paths.SUBSCRIBED_CATALOGUES_PUBLISHED_MODELS_NEWER_VERSIONS_ROUTE)

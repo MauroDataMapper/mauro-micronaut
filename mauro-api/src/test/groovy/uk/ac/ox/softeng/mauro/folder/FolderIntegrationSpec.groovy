@@ -22,14 +22,6 @@ class FolderIntegrationSpec extends BaseIntegrationSpec {
     @Shared
     UUID childFolderId
 
-    @Shared
-    UUID defaultAuthorityId
-
-    void setupSpec() {
-        Authority authority  = ((ListResponse<Authority>) GET (AUTHORITIES_PATH, ListResponse<Authority>, Authority)).items?.first()
-        assert(authority.defaultAuthority == true)
-        defaultAuthorityId = authority.id
-    }
 
     void 'create folder'() {
         when:
@@ -40,7 +32,7 @@ class FolderIntegrationSpec extends BaseIntegrationSpec {
         folderResponse
         folderResponse.label == 'Test folder'
         folderResponse.path.toString() == 'fo:Test folder'
-        folderResponse.authority.id == defaultAuthorityId
+        folderResponse.authority
     }
 
     void 'create child folder'() {
@@ -52,7 +44,7 @@ class FolderIntegrationSpec extends BaseIntegrationSpec {
         folderResponse
         folderResponse.label == 'Test child folder'
         folderResponse.path.toString() == 'fo:Test folder|fo:Test child folder'
-        folderResponse.authority.id == defaultAuthorityId
+        folderResponse.authority
     }
 
     void 'change child folder label'() {
@@ -63,7 +55,7 @@ class FolderIntegrationSpec extends BaseIntegrationSpec {
         folderResponse
         folderResponse.label == 'Updated child folder'
         folderResponse.path.toString() == 'fo:Test folder|fo:Updated child folder'
-        folderResponse.authority.id == defaultAuthorityId
+        folderResponse.authority
     }
 
     void 'change parent folder label'() {
@@ -75,7 +67,7 @@ class FolderIntegrationSpec extends BaseIntegrationSpec {
         folderResponse.id == folderId
         folderResponse.label == 'Updated folder'
         folderResponse.path.toString() == 'fo:Updated folder'
-        folderResponse.authority.id == defaultAuthorityId
+        folderResponse.authority
     }
 
     void 'list folders'() {

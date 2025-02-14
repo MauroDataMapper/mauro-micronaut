@@ -8,6 +8,7 @@ import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedModel
 import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedModelFederationParams
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.domain.model.Model
+import uk.ac.ox.softeng.mauro.domain.security.Role
 import uk.ac.ox.softeng.mauro.persistence.cache.ItemCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.ItemCacheableRepository.SubscribedCatalogueCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
