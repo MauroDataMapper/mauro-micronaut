@@ -9,6 +9,7 @@ import uk.ac.ox.softeng.mauro.domain.facet.Rule
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
 import uk.ac.ox.softeng.mauro.persistence.model.dto.AdministeredItemDTO
 
+import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.Introspected
 import io.micronaut.core.annotation.Nullable
@@ -20,6 +21,7 @@ import io.micronaut.data.model.DataType
 
 @CompileStatic
 @Introspected
+@AutoClone
 @MappedEntity(value = 'data_class', schema = 'datamodel', alias = 'data_class_')
 class DataClassDTO extends DataClass implements AdministeredItemDTO {
 

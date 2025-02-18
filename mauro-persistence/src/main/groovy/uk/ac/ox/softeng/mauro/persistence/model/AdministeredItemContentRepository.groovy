@@ -1,24 +1,25 @@
 package uk.ac.ox.softeng.mauro.persistence.model
 
-import uk.ac.ox.softeng.mauro.persistence.facet.RuleRepository
-
-import groovy.transform.CompileStatic
-import io.micronaut.core.annotation.NonNull
-import jakarta.inject.Inject
-import jakarta.inject.Singleton
 import uk.ac.ox.softeng.mauro.domain.classifier.Classifier
 import uk.ac.ox.softeng.mauro.domain.facet.Annotation
+import uk.ac.ox.softeng.mauro.domain.facet.Facet
 import uk.ac.ox.softeng.mauro.domain.facet.Metadata
 import uk.ac.ox.softeng.mauro.domain.facet.ReferenceFile
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
-import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadataReport
+import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.FacetCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.ItemCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.classifier.ClassifierRepository
 import uk.ac.ox.softeng.mauro.persistence.facet.MetadataRepository
+import uk.ac.ox.softeng.mauro.persistence.facet.RuleRepository
 import uk.ac.ox.softeng.mauro.persistence.facet.SummaryMetadataRepository
+
+import groovy.transform.CompileStatic
+import io.micronaut.core.annotation.NonNull
+import jakarta.inject.Inject
+import jakarta.inject.Singleton
 
 @CompileStatic
 @Singleton
@@ -167,5 +168,103 @@ class AdministeredItemContentRepository {
             referenceFileCacheableRepository.deleteById(it.id)
         }
     }
+
+    AdministeredItem saveWithContent(@NonNull AdministeredItem model) {
+        List<Collection<AdministeredItem>> associations = model.getAllAssociations()
+        AdministeredItem saved = (AdministeredItem) getRepository(model).save(model)
+
+        saveAllFacets(saved)
+        associations.each {association ->
+            if (association) {
+                Collection<AdministeredItem> savedAssociation = getRepository(association.first()).saveAll((Collection<AdministeredItem>) association)
+                saveAllFacets(savedAssociation)
+            }
+        }
+        saved
+    }
+
+    void saveAllFacets(@NonNull AdministeredItem item) {
+        saveAllFacets([item])
+    }
+
+    void saveAllFacets(List<AdministeredItem> items) {
+        List<Metadata> metadata = []
+
+        items.each {item ->
+            if (item.metadata) {
+                item.metadata.each {
+                    updateMultiAwareData(item, it)
+                }
+                metadata.addAll(item.metadata)
+            }
+        }
+        metadataRepository.saveAll(metadata)
+        saveSummaryMetadataFacets(items)
+        saveAnnotations(items)
+        saveReferenceFiles(items)
+    }
+
+    void saveSummaryMetadataFacets(List<AdministeredItem> items) {
+        List<SummaryMetadata> summaryMetadata = []
+        List<SummaryMetadataReport> summaryMetadataReports = []
+        SummaryMetadata saved
+        items.each {item ->
+            if (item.summaryMetadata) {
+                item.summaryMetadata.each {
+                    updateMultiAwareData(item, it)
+                    saved = summaryMetadataRepository.save(it)
+                    if (it.summaryMetadataReports){
+                        it.summaryMetadataReports.forEach{
+                            report ->
+                                report.summaryMetadataId = saved.id
+                        }
+                        summaryMetadataReports.addAll(summaryMetadataReportCacheableRepository.saveAll(it.summaryMetadataReports))
+                    }
+                    summaryMetadata.add(saved)
+                }
+            }
+        }
+    }
+
+    void saveAnnotations(List<AdministeredItem> items) {
+        List<Annotation> annotations = []
+        items.each { item ->
+            if (item.annotations) {
+                item.annotations.each {
+                    updateMultiAwareData(item, it)
+                    if (it.childAnnotations) {
+                        it.childAnnotations.forEach { child ->
+                            updateMultiAwareData(item, child)
+                            child.parentAnnotationId = it.id
+                        }
+                    }
+                }
+                annotations.addAll(item.annotations)
+                annotationCacheableRepository.saveAll(annotations)
+            }
+        }
+    }
+
+    void saveReferenceFiles(List<AdministeredItem> items) {
+        List<ReferenceFile> referenceFiles = []
+        items.each { item ->
+            if (item.referenceFiles) {
+                item.referenceFiles.each {
+                    updateMultiAwareData(item, it)
+                }
+                referenceFiles.addAll(item.referenceFiles)
+                referenceFileCacheableRepository.saveAll(referenceFiles)
+            }
+        }
+    }
+
+    private void updateMultiAwareData(AdministeredItem item, Facet it) {
+        it.multiFacetAwareItemDomainType = item.domainType
+        it.multiFacetAwareItemId = item.id
+        it.multiFacetAwareItem = item
+    }
+
+
+
 }
 

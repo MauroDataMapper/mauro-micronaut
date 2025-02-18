@@ -2,15 +2,6 @@ package uk.ac.ox.softeng.mauro.controller.datamodel
 
 import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.datamodel.DataClassApi
-
-import groovy.transform.CompileStatic
-import io.micronaut.core.annotation.NonNull
-import io.micronaut.core.annotation.Nullable
-import io.micronaut.http.HttpResponse
-import io.micronaut.http.annotation.*
-import io.micronaut.security.annotation.Secured
-import io.micronaut.security.rules.SecurityRule
-import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.controller.model.AdministeredItemController
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
@@ -19,6 +10,20 @@ import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableReposit
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.DataModelCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.datamodel.DataModelContentRepository
 import uk.ac.ox.softeng.mauro.web.ListResponse
+
+import groovy.transform.CompileStatic
+import io.micronaut.core.annotation.NonNull
+import io.micronaut.core.annotation.Nullable
+import io.micronaut.http.HttpResponse
+import io.micronaut.http.annotation.Body
+import io.micronaut.http.annotation.Controller
+import io.micronaut.http.annotation.Delete
+import io.micronaut.http.annotation.Get
+import io.micronaut.http.annotation.Post
+import io.micronaut.http.annotation.Put
+import io.micronaut.security.annotation.Secured
+import io.micronaut.security.rules.SecurityRule
+import jakarta.inject.Inject
 
 @CompileStatic
 @Controller
@@ -102,4 +107,21 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
 
     }
 
+    @Put('/{id}/extends/{otherModelId}/{otherClassId}')
+    DataClass createExtension(UUID id, UUID otherModelId, UUID otherClassId) {
+        DataClass sourceDataClass = dataClassRepository.readById(id)
+        accessControlService.checkRole(Role.EDITOR, sourceDataClass)
+        DataClass targetDataClass = dataClassRepository.readById(otherClassId)
+        dataClassRepository.createExtensionRelationship(sourceDataClass, targetDataClass)
+        dataClassRepository.findById(id)
+    }
+
+    @Delete('/{id}/extends/{otherModelId}/{otherClassId}')
+    DataClass deleteExtension(UUID id, UUID otherModelId, UUID otherClassId) {
+        DataClass sourceDataClass = dataClassRepository.readById(id)
+        accessControlService.checkRole(Role.EDITOR, sourceDataClass)
+        DataClass targetDataClass = dataClassRepository.readById(otherClassId)
+        dataClassRepository.deleteExtensionRelationship(sourceDataClass, targetDataClass)
+        dataClassRepository.findById(id)
+    }
 }
