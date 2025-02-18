@@ -56,7 +56,6 @@ class DataModelRepositorySpec extends Specification {
     @Shared
     UUID dataModelId
 
-
     void setup() {
         if (!myFirstFolder) {
             myFirstFolder = folderRepository.save(new Folder(
@@ -79,41 +78,27 @@ class DataModelRepositorySpec extends Specification {
         dataModelCacheableRepository.readAll().size() == 1
     }
 
-    def testImport() {
-        given:
+
+    def TestDataModel() {
+        when:
             DataModel dataModel = DataModel.build {
-                label "An import model"
-                description "The description goes here"
+                label "My first data model"
+                description "Description here"
                 folder myFirstFolder
-                enumerationType {
-                    label "Boolean"
-                    enumerationValue {
-                        key "T"
-                        value "True"
-                    }
-                    enumerationValue {
-                        key "F"
-                        value "False"
-                    }
-                }
-                dataClass {
-                    label "First class"
-                }
-                dataClass {
-                    label "Second class"
-                    dataElement {
-                        label "My first Data Element"
-                        dataType "Boolean"
-                    }
-                    extendsDataClass "First class"
-                    metadata("Test ns", "Test key", "Test value")
-                }
             }
 
+            dataModelCacheableRepository.save(dataModel)
+
+        then:
+            dataModelCacheableRepository.readAll().size() == 1
+    }
+
+    def testImportAndExportFromCacheableRepo() {
         when:
-            DataModel importedModel = dataModelContentRepository.saveWithContent(dataModel)
+            DataModel importedModel = dataModelContentRepository.saveWithContent(testDataModel(myFirstFolder))
             importedModel = dataModelCacheableRepository.readById(importedModel.id)
             dataModelId = importedModel.id
+
         then:
             importedModel.label == "An import model"
             importedModel.description == "The description goes here"
@@ -133,6 +118,35 @@ class DataModelRepositorySpec extends Specification {
             List<DataType> allDataTypes = dataTypeRepository.readAllByParent(importedModel)
             allDataTypes.size() == 1
             enumerationValueRepository.readAllByParent(allDataTypes.get(0)).size() == 2
+
+    }
+    def testImportAndFindWithContent() {
+        when:
+            DataModel importedModel = dataModelContentRepository.saveWithContent(testDataModel(myFirstFolder))
+
+            importedModel = dataModelContentRepository.findWithContentById(importedModel.id)
+            dataModelId = importedModel.id
+            List<DataElement> allDataElements = (List<DataElement>) importedModel.allDataClasses.dataElements.flatten()
+            List<DataType> allDataTypes = importedModel.dataTypes
+
+        then:
+            importedModel.label == "An import model"
+            importedModel.description == "The description goes here"
+
+            importedModel.allDataClasses.size() == 2
+
+            importedModel.allDataClasses.find {it.label == "Second class"}.extendsDataClasses.size() == 1
+            importedModel.allDataClasses.find {it.label == "Second class"}.extendsDataClasses.first().label == "First class"
+
+
+            allDataElements.size() == 1
+            allDataElements.first().dataType.label == "Boolean"
+
+
+            allDataTypes.size() == 1
+
+            allDataTypes.get(0).enumerationValues.size() == 2
+
     }
 
     def "Test Retrieving Data Models by Namespace"() {
@@ -177,5 +191,38 @@ class DataModelRepositorySpec extends Specification {
         dataModels.size() == 0
 
     }
-    
+
+    DataModel testDataModel(Folder testFolder) {
+        DataModel.build {
+            label "An import model"
+            description "The description goes here"
+            folder testFolder
+            enumerationType {
+                label "Boolean"
+                enumerationValue {
+                    key "T"
+                    value "True"
+                }
+                enumerationValue {
+                    key "F"
+                    value "False"
+                }
+            }
+            dataClass {
+                label "First class"
+            }
+            dataClass {
+                label "Second class"
+                dataElement {
+                    label "My first Data Element"
+                    dataType "Boolean"
+                }
+                extendsDataClass "First class"
+                metadata("Test ns", "Test key", "Test value")
+            }
+        }
+
+    }
+
+
 }

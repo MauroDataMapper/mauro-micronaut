@@ -57,6 +57,9 @@ abstract class DataClassRepository implements ModelItemRepository<DataClass> {
     @Nullable
     abstract List<DataClass> readAllByParentDataClass(DataClass parentDataClass)
 
+    @Query('''delete from datamodel.join_dataclass_to_extended_data_class jdcedc where jdcedc.dataclass_id = :dataClassId and jdcedc.extended_dataclass_id = :extendedDataClassId''')
+    abstract long deleteExtensionRelationship(@NonNull UUID dataClassId, @NonNull UUID extendedDataClassId)
+
     @Query('''delete from datamodel.join_dataclass_to_extended_data_class jdcedc where jdcedc.dataclass_id in (:dataClassIds)''')
     abstract long deleteExtensionRelationships(List<UUID> dataClassIds)
 
