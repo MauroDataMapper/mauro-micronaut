@@ -149,7 +149,7 @@ class SubscribedCatalogueController extends ItemController<SubscribedCatalogue> 
 
     @Get(Paths.SUBSCRIBED_CATALOGUES_PUBLISHED_MODELS_NEWER_VERSIONS_ROUTE)
     @ExecuteOn(TaskExecutors.BLOCKING)
-    SubscribedCataloguesPublishedModelsNewerVersions publishedModelsNewerVersions(@NonNull UUID subscribedCatalogueId, @NonNull UUID publishedModelId) {
+    SubscribedCataloguesPublishedModelsNewerVersions publishedModelsNewerVersions(@NonNull UUID subscribedCatalogueId, @NonNull String publishedModelId) {
         accessControlService.checkAuthenticated()
 
         SubscribedCatalogue subscribedCatalogue = subscribedCatalogueCacheableRepository.findById(subscribedCatalogueId)

@@ -9,6 +9,8 @@ class MauroLink {
     String url
     String contentType
 
+    MauroLink() {}
+
     MauroLink(String url, String contentType) {
         this.url = url
         this.contentType = contentType

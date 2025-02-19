@@ -5,9 +5,9 @@ import uk.ac.ox.softeng.mauro.controller.federation.client.FederationClient
 import uk.ac.ox.softeng.mauro.domain.authority.Authority
 import uk.ac.ox.softeng.mauro.domain.facet.federation.PublishedModel
 import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedCatalogue
-import uk.ac.ox.softeng.mauro.domain.facet.federation.converter.SubscribedCatalogueConverter
-import uk.ac.ox.softeng.mauro.domain.facet.federation.converter.SubscribedCatalogueConverterService
 import uk.ac.ox.softeng.mauro.domain.facet.federation.response.SubscribedCataloguesPublishedModelsNewerVersions
+import uk.ac.ox.softeng.mauro.service.federation.converter.SubscribedCatalogueConverter
+import uk.ac.ox.softeng.mauro.service.federation.converter.SubscribedCatalogueConverterService
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
@@ -33,13 +33,12 @@ class SubscribedCatalogueService {
     }
 
 
-    SubscribedCataloguesPublishedModelsNewerVersions getNewerVersionsForPublishedModels(SubscribedCatalogue subscribedCatalogue, UUID subscribedModelId) {
-        Map<String, Object> newerVersionsAsMap =
-            federationClient.fetchFederatedClientDataAsMap(subscribedCatalogue, "$Paths.PUBLISHED_MODELS_ROUTE/$subscribedModelId$Paths.NEWER_VERSIONS")
-        Tuple2<Instant, List<PublishedModel>> publishedModelsTuple = getConverterForSubscribedCatalogue(subscribedCatalogue).publishedModelsNewerVersions(newerVersionsAsMap)
+    SubscribedCataloguesPublishedModelsNewerVersions getNewerVersionsForPublishedModels(SubscribedCatalogue subscribedCatalogue, String publishedModelId) {
+        Tuple2<Instant, List<PublishedModel>> publishedModelsNewerVersionsTuple = getConverterForSubscribedCatalogue(subscribedCatalogue).publishedModelsNewerVersions(federationClient, subscribedCatalogue, publishedModelId)
+
         new SubscribedCataloguesPublishedModelsNewerVersions().tap {
-            lastUpdated = publishedModelsTuple.v1 ?: Instant.now()
-            newerPublishedModels = publishedModelsTuple.v2 ?: []
+            lastUpdated = publishedModelsNewerVersionsTuple.v1 ?: Instant.now() as Instant
+            newerPublishedModels = publishedModelsNewerVersionsTuple.v2 ?: []
         }
     }
 
@@ -57,8 +56,7 @@ class SubscribedCatalogueService {
     }
 
     private Tuple2<Authority, List<PublishedModel>> getRemoteClientDataAsTuple(SubscribedCatalogue subscribedCatalogue, String path) {
-        Map<String, Object> subscribedCatalogueModelsMap = federationClient.fetchFederatedClientDataAsMap(subscribedCatalogue, path)
-        getConverterForSubscribedCatalogue(subscribedCatalogue).toPublishedModels(subscribedCatalogueModelsMap)
+        getConverterForSubscribedCatalogue(subscribedCatalogue).getAuthorityAndPublishedModels(federationClient, subscribedCatalogue, path)
     }
 
 }

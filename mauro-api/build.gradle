@@ -40,6 +40,7 @@ dependencies {
 
     implementation("io.micronaut.sql:micronaut-jdbc-hikari")
     implementation group: 'org.apache.groovy', name: 'groovy-json', version: '4.0.19'
+    implementation group: 'org.apache.groovy', name: 'groovy-xml', version: '4.0.25'
 
 
     // Security

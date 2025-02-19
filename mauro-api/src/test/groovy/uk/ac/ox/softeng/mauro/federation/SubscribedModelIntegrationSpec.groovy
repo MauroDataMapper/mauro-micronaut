@@ -47,7 +47,7 @@ class SubscribedModelIntegrationSpec extends SecuredIntegrationSpec {
         given:
         loginAdmin()
         and:
-        SubscribedCatalogue subscribedCatalogue = (SubscribedCatalogue) POST("$ADMIN_SUBSCRIBED_CATALOGUES_PATH", subscribedCataloguePayload(), SubscribedCatalogue)
+        SubscribedCatalogue subscribedCatalogue = (SubscribedCatalogue) POST("$ADMIN_SUBSCRIBED_CATALOGUES_PATH", mauroJsonSubscribedCataloguePayload(), SubscribedCatalogue)
 
         when:
         SubscribedModel subscribedModel = (SubscribedModel) POST("$SUBSCRIBED_CATALOGUES_PATH/$subscribedCatalogue.id$SUBSCRIBED_MODELS_PATH",
@@ -78,7 +78,7 @@ class SubscribedModelIntegrationSpec extends SecuredIntegrationSpec {
         loginAdmin()
 
         and:
-        SubscribedCatalogue subscribedCatalogue = (SubscribedCatalogue) POST("$ADMIN_SUBSCRIBED_CATALOGUES_PATH", subscribedCataloguePayload(), SubscribedCatalogue)
+        SubscribedCatalogue subscribedCatalogue = (SubscribedCatalogue) POST("$ADMIN_SUBSCRIBED_CATALOGUES_PATH", mauroJsonSubscribedCataloguePayload(), SubscribedCatalogue)
         logout()
         loginUser()
 
@@ -110,7 +110,7 @@ class SubscribedModelIntegrationSpec extends SecuredIntegrationSpec {
     void 'not logged in, should not be able to create subscribed model'() {
         given:
         loginAdmin()
-        SubscribedCatalogue subscribedCatalogue = (SubscribedCatalogue) POST("$ADMIN_SUBSCRIBED_CATALOGUES_PATH", subscribedCataloguePayload(), SubscribedCatalogue)
+        SubscribedCatalogue subscribedCatalogue = (SubscribedCatalogue) POST("$ADMIN_SUBSCRIBED_CATALOGUES_PATH", mauroJsonSubscribedCataloguePayload(), SubscribedCatalogue)
         logout()
 
         when:
@@ -124,7 +124,7 @@ class SubscribedModelIntegrationSpec extends SecuredIntegrationSpec {
     void 'any user can retrieve subscribed model by id'() {
         given:
         loginAdmin()
-        SubscribedCatalogue subscribedCatalogue = (SubscribedCatalogue) POST("$ADMIN_SUBSCRIBED_CATALOGUES_PATH", subscribedCataloguePayload(), SubscribedCatalogue)
+        SubscribedCatalogue subscribedCatalogue = (SubscribedCatalogue) POST("$ADMIN_SUBSCRIBED_CATALOGUES_PATH", mauroJsonSubscribedCataloguePayload(), SubscribedCatalogue)
         SubscribedModel subscribedModel = (SubscribedModel) POST("$SUBSCRIBED_CATALOGUES_PATH/$subscribedCatalogue.id$SUBSCRIBED_MODELS_PATH",
                                                                  subscribedModelPayload(folderId) , SubscribedModel)
         logout()
@@ -148,7 +148,7 @@ class SubscribedModelIntegrationSpec extends SecuredIntegrationSpec {
     void 'notLoggedIn -get subscribedModel by id - should get unauthorized exception'(){
         given:
         loginAdmin()
-        SubscribedCatalogue subscribedCatalogue = (SubscribedCatalogue) POST("$ADMIN_SUBSCRIBED_CATALOGUES_PATH", subscribedCataloguePayload(), SubscribedCatalogue)
+        SubscribedCatalogue subscribedCatalogue = (SubscribedCatalogue) POST("$ADMIN_SUBSCRIBED_CATALOGUES_PATH", mauroJsonSubscribedCataloguePayload(), SubscribedCatalogue)
         SubscribedModel subscribedModel = (SubscribedModel) POST("$SUBSCRIBED_CATALOGUES_PATH/$subscribedCatalogue.id$SUBSCRIBED_MODELS_PATH",
                                                                  subscribedModelPayload(folderId) , SubscribedModel)
         logout()
@@ -168,7 +168,7 @@ class SubscribedModelIntegrationSpec extends SecuredIntegrationSpec {
         loginAdmin()
 
         and:
-        SubscribedCatalogue subscribedCatalogue = (SubscribedCatalogue) POST("$ADMIN_SUBSCRIBED_CATALOGUES_PATH", subscribedCataloguePayload(), SubscribedCatalogue)
+        SubscribedCatalogue subscribedCatalogue = (SubscribedCatalogue) POST("$ADMIN_SUBSCRIBED_CATALOGUES_PATH", mauroJsonSubscribedCataloguePayload(), SubscribedCatalogue)
         POST("$SUBSCRIBED_CATALOGUES_PATH/$subscribedCatalogue.id$SUBSCRIBED_MODELS_PATH", subscribedModelPayload(folderId), SubscribedModel)
         logout()
         loginUser()
@@ -184,7 +184,7 @@ class SubscribedModelIntegrationSpec extends SecuredIntegrationSpec {
     void 'any user can retrieve subscribed model by id'() {
         given:
         loginAdmin()
-        SubscribedCatalogue subscribedCatalogue = (SubscribedCatalogue) POST("$ADMIN_SUBSCRIBED_CATALOGUES_PATH", subscribedCataloguePayload(), SubscribedCatalogue)
+        SubscribedCatalogue subscribedCatalogue = (SubscribedCatalogue) POST("$ADMIN_SUBSCRIBED_CATALOGUES_PATH", mauroJsonSubscribedCataloguePayload(), SubscribedCatalogue)
         SubscribedModel subscribedModel = (SubscribedModel) POST("$SUBSCRIBED_CATALOGUES_PATH/$subscribedCatalogue.id$SUBSCRIBED_MODELS_PATH",
                                                                  subscribedModelPayload(folderId) , SubscribedModel)
         logout()
@@ -208,7 +208,7 @@ class SubscribedModelIntegrationSpec extends SecuredIntegrationSpec {
     void 'only adminUser can delete subscribed model'() {
         given:
         loginAdmin()
-        SubscribedCatalogue subscribedCatalogue = (SubscribedCatalogue) POST("$ADMIN_SUBSCRIBED_CATALOGUES_PATH", subscribedCataloguePayload(), SubscribedCatalogue)
+        SubscribedCatalogue subscribedCatalogue = (SubscribedCatalogue) POST("$ADMIN_SUBSCRIBED_CATALOGUES_PATH", mauroJsonSubscribedCataloguePayload(), SubscribedCatalogue)
         SubscribedModel subscribedModel = (SubscribedModel) POST("$SUBSCRIBED_CATALOGUES_PATH/$subscribedCatalogue.id$SUBSCRIBED_MODELS_PATH",
                                                                  subscribedModelPayload(folderId), SubscribedModel)
         logout()
@@ -234,7 +234,7 @@ class SubscribedModelIntegrationSpec extends SecuredIntegrationSpec {
         given:
         loginAdmin()
 
-        SubscribedCatalogue created = (SubscribedCatalogue) POST("$ADMIN_SUBSCRIBED_CATALOGUES_PATH", subscribedCataloguePayload('label1'), SubscribedCatalogue)
+        SubscribedCatalogue created = (SubscribedCatalogue) POST("$ADMIN_SUBSCRIBED_CATALOGUES_PATH", mauroJsonSubscribedCataloguePayload('label1'), SubscribedCatalogue)
         UUID folderId = ((Folder) POST("$FOLDERS_PATH", folder(), Folder)).id
         SubscribedModel subscribedModel = (SubscribedModel) POST("$SUBSCRIBED_CATALOGUES_PATH/$created.id$SUBSCRIBED_MODELS_PATH", subscribedModelPayload(folderId), SubscribedModel)
 

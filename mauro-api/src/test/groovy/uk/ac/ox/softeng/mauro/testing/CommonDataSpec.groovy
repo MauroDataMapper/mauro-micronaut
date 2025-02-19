@@ -137,11 +137,22 @@ class CommonDataSpec extends BaseIntegrationSpec {
         ]
     }
 
-    def subscribedCataloguePayload() {
+    def mauroJsonSubscribedCataloguePayload() {
         [
             url                                  : "https://maurosandbox.com/sandbox",
             subscribedCatalogueType              : 'Mauro JSON',
             label                                : 'random label subscribedCatalogue',
+            subscribedCatalogueAuthenticationType: 'API Key',
+            refreshPeriod                        : 90,
+            api_key                              : 'b39d63d4-4fd4-494d-a491-3c778d89acae'
+        ]
+    }
+
+    def atomSubscribedCataloguePayload(){
+        [
+            url                                  : "https://ontology.nhs.uk/production1/synd/syndication.xml",
+            subscribedCatalogueType              : 'ATOM',
+            label                                : 'atom label',
             subscribedCatalogueAuthenticationType: 'API Key',
             refreshPeriod                        : 90,
             api_key                              : 'b39d63d4-4fd4-494d-a491-3c778d89acae'
@@ -202,7 +213,7 @@ class CommonDataSpec extends BaseIntegrationSpec {
     }
 
 
-    def subscribedCataloguePayload(String label) {
+    def mauroJsonSubscribedCataloguePayload(String label) {
         [
             url                                  : "https://maurosandbox.com/sandbox",
             subscribedCatalogueType              : 'Mauro JSON',

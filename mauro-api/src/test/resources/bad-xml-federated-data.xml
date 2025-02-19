@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed
+	xmlns="http://www.w3.org/2005/Atom"
+	xmlns:ncts="http://ns.electronichealth.net.au/ncts/syndication/asf/extensions/1.0.0"
+	xmlns:onto="http://ontoserver.csiro.au/syndication/">
+	<title>release-candidate</title>
+	<link href="https://ontology.nhs.uk/production1/synd/syndication.xml" length="0" rel="self"/>
+	<link href="https://ontology.nhs.uk/production1/synd/syndication.xml" length="0" rel="alternate"/>
+	<updated>2025-02-17T04:02:20Z</updated>
+	<id>urn:uuid:03cba1b8-f753-3531-97d7-b9faa549019e</id>
+	<generator version="6.22.1">Ontoserver® 6.22.1, CSIRO</generator>
+	<entry>
+		<title>NHS NICIP to OPCS Map</title>
+		<category label="FHIR ConceptMap" scheme="http://ns.electronichealth.net.au/ncts/syndication/asf/scheme/1.0.0" term="FHIR_ConceptMap"/>
+		<id>urn:uuid:d6df5a0d-e69c-4adc-a4bc-e9150c92a187</id>
+
+
+	</entry
+
+	<ncts:atomSyndicationFormatProfile>http://ns.electronichealth.net.au/ncts/syndication/asf/profile/1.0.0</ncts:atomSyndicationFormatProfile>
+</feed>

@@ -39,8 +39,8 @@ class PublishedModel implements Comparable<PublishedModel> {
     @JsonAlias(['date_created'])
     Instant dateCreated
 
-
     @JsonDeserialize(converter = InstantConverter)
+    @Nullable
     Instant datePublished
 
     @Nullable
@@ -115,11 +115,28 @@ class PublishedModel implements Comparable<PublishedModel> {
         result = 31 * result + (modelVersionTag != null ? modelVersionTag.hashCode() : 0)
         result = 31 * result + (description != null ? description.hashCode() : 0)
         result = 31 * result + modelType.hashCode()
-        result = 31 * result + lastUpdated.hashCode()
+        result = 31 * result + (lastUpdated != null ? lastUpdated.hashCode() : 0)
         result = 31 * result + dateCreated.hashCode()
-        result = 31 * result + datePublished.hashCode()
+        result = 31 * result + (datePublished != null ? datePublished.hashCode() : 0)
         result = 31 * result + (author != null ? author.hashCode() : 0)
         return result
+    }
+
+    @Override
+    String toString() {
+        return "PublishedModel{" +
+               "modelId='" + modelId + '\'' +
+               ", modelLabel='" + modelLabel + '\'' +
+               ", modelVersion=" + modelVersion +
+               ", modelVersionTag='" + (modelVersionTag ? modelVersionTag: "") + '\'' +
+               ", description='" + (description ? description : "") + '\'' +
+               ", modelType='" + modelType + '\'' +
+               ", lastUpdated=" + lastUpdated +
+               ", dateCreated=" + dateCreated +
+               ", datePublished=" + (datePublished ? datePublished : null) +
+               ", author='" + (author ? author : "")  + '\'' +
+               ", links=" + links +
+               '}';
     }
 }
 

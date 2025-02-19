@@ -6,6 +6,8 @@ import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedCatalogueAuthent
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
+import groovy.xml.XmlSlurper
+import groovy.xml.slurpersupport.GPathResult
 import io.micronaut.core.type.Argument
 import io.micronaut.http.HttpRequest
 import io.micronaut.http.HttpStatus
@@ -13,8 +15,10 @@ import io.micronaut.http.client.HttpClient
 import io.micronaut.http.client.annotation.Client
 import io.micronaut.http.client.netty.DefaultHttpClient
 import io.micronaut.http.exceptions.HttpException
+import io.micronaut.http.server.exceptions.HttpServerException
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
+import org.xml.sax.SAXException
 
 @Slf4j
 @CompileStatic
@@ -37,7 +41,6 @@ class FederationClient {
     void clientSetup(SubscribedCatalogue subscribedCatalogue) {
         this.contextPath = ClientContext.resolveContextPath(subscribedCatalogue)
         this.httpClient = getFederatedClient(subscribedCatalogue)
-        log.debug("FederationClient: no previous state: setting context path $contextPath")
 
         switch (subscribedCatalogue.subscribedCatalogueAuthenticationType) {
             case SubscribedCatalogueAuthenticationType.API_KEY:
@@ -61,6 +64,11 @@ class FederationClient {
         }
     }
 
+    GPathResult getSubscribedCatalogueModelsFromAtomFeed() {
+        // Currently we use the ATOM feed which is XML and the micronaut client isnt designed to decode XML
+        retrieveXmlDataFromClient()
+    }
+
     byte[] retrieveBytesFromClient(SubscribedCatalogue subscribedCatalogue, String url) {
         clientSetup(subscribedCatalogue)
         try {
@@ -72,12 +80,36 @@ class FederationClient {
         }
     }
 
-    private String resolvePath(String requestPath) {
-        return contextPath + requestPath
+    GPathResult retrieveXmlDataFromClient() {
+        String body = fetchFederatedClientDataAsString()
+        try {
+            new XmlSlurper().parseText(body)
+        } catch (IOException | SAXException exception) {
+            throw new HttpServerException("Could not translate XML from endpoint ")
+        }
     }
 
+    private String fetchFederatedClientDataAsString() {
+        // String contextAndPath = resolvePath(requestPath)
+        // String result
+        try {
+            httpClient.toBlocking().retrieve(HttpRequest.GET(contextPath.toURI()).headers(headersMap), String)
+        }
+        catch (HttpException ex) {
+            log.error(ex.message)
+            throw new HttpServerException(ex.message)
+        }
+    }
+
+
+    private String resolvePath(String requestPath) {
+        !requestPath ? contextPath : contextPath + requestPath
+    }
 
     private HttpClient getFederatedClient(SubscribedCatalogue subscribedCatalogue) {
         return new DefaultHttpClient(subscribedCatalogue.url.toURI(), federationClientConfiguration)
     }
+
 }
+
+

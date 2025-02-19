@@ -7,6 +7,8 @@ import uk.ac.ox.softeng.mauro.testing.BaseIntegrationSpec
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.util.logging.Slf4j
+import groovy.xml.XmlSlurper
+import groovy.xml.slurpersupport.GPathResult
 import io.micronaut.context.annotation.Replaces
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
@@ -48,6 +50,11 @@ class MockFederationClient extends FederationClient {
     @Override
     byte[] retrieveBytesFromClient(SubscribedCatalogue subscribedCatalogue,String url) {
         return new File('src/test/resources/federatedPublishedModelsBytesAsText.json').getBytes()
+    }
+
+    @Override
+    GPathResult getSubscribedCatalogueModelsFromAtomFeed() {
+        return new XmlSlurper().parse(new File('src/test/resources/xml-federated-data.xml'))
     }
 
     String getNewerVersionsPopulatedTestData() {

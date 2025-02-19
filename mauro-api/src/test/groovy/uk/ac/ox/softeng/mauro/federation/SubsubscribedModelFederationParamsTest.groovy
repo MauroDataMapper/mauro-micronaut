@@ -1,4 +1,4 @@
-package uk.ac.ox.softeng.mauro.test.domain.federation
+package uk.ac.ox.softeng.mauro.federation
 
 import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedModel
 import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedModelFederationParams
