@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.persistence.classifier.dto
 
+import uk.ac.ox.softeng.mauro.domain.facet.Rule
+
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.Introspected
 import io.micronaut.core.annotation.Nullable
@@ -37,6 +39,16 @@ class ClassificationSchemeDTO extends ClassificationScheme implements Administer
                                     where summary_metadata_id = summary_metadata.id) summary_metadata_reports
                                     from core.summary_metadata) summary_metadata where multi_facet_aware_item_id = classification_scheme_.id)''')
     List<SummaryMetadata> summaryMetadata = []
+
+    @Nullable
+    @TypeDef(type = DataType.JSON)
+    @MappedProperty
+    @ColumnTransformer(read = '''(select json_agg(rule) from (select *,
+                                    (select json_agg(rule_representation)
+                                    from core.rule_representation
+                                    where rule_id = rule.id) rule_representations
+                                    from core.rule) rule where multi_facet_aware_item_id = classification_scheme_.id)''')
+    List<Rule> rules = []
 
     @Nullable
     @TypeDef(type = DataType.JSON)

@@ -31,6 +31,9 @@ class CommonDataSpec extends BaseIntegrationSpec{
     def summaryMetadataReport() {
         [ reportValue: 'test-report-value', reportDate: REPORT_DATE]
     }
+    def ruleRepresentation() {
+        [ language: 'java', representation: 'age >= 0']
+    }
     def annotationPayload() {
         [label: 'test-label', description: 'test-annotation description']
     }
@@ -39,6 +42,9 @@ class CommonDataSpec extends BaseIntegrationSpec{
     }
     def summaryMetadataPayload() {
         [ summaryMetadataType: SummaryMetadataType.STRING, label: 'summary metadata label']
+    }
+    def rulePayload() {
+        [ description: 'My first rule description', name: 'rule name']
     }
     def metadataPayload() {
         [ namespace: 'org.example', key: 'example_key', value: 'example_value']

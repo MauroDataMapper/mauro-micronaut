@@ -1,7 +1,12 @@
 package uk.ac.ox.softeng.mauro.persistence.cache
 
+import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.domain.security.ApiKey
 import uk.ac.ox.softeng.mauro.persistence.security.ApiKeyRepository
+
+import uk.ac.ox.softeng.mauro.domain.facet.Rule
+import uk.ac.ox.softeng.mauro.domain.facet.RuleRepresentation
+import uk.ac.ox.softeng.mauro.persistence.facet.RuleRepresentationRepository
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
@@ -13,14 +18,14 @@ import jakarta.inject.Singleton
 import uk.ac.ox.softeng.mauro.domain.config.ApiProperty
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
 import uk.ac.ox.softeng.mauro.domain.model.Item
-import uk.ac.ox.softeng.mauro.domain.model.SummaryMetadataReport
+import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadataReport
 import uk.ac.ox.softeng.mauro.domain.security.CatalogueUser
 import uk.ac.ox.softeng.mauro.domain.security.Role
 import uk.ac.ox.softeng.mauro.domain.security.SecurableResourceGroupRole
 import uk.ac.ox.softeng.mauro.domain.security.UserGroup
 import uk.ac.ox.softeng.mauro.persistence.config.ApiPropertyRepository
 import uk.ac.ox.softeng.mauro.persistence.model.ItemRepository
-import uk.ac.ox.softeng.mauro.persistence.model.SummaryMetadataReportRepository
+import uk.ac.ox.softeng.mauro.persistence.facet.SummaryMetadataReportRepository
 import uk.ac.ox.softeng.mauro.persistence.security.CatalogueUserRepository
 import uk.ac.ox.softeng.mauro.persistence.security.SecurableResourceGroupRoleRepository
 import uk.ac.ox.softeng.mauro.persistence.security.UserGroupRepository
@@ -113,9 +118,10 @@ abstract class ItemCacheableRepository<I extends Item> implements ItemRepository
         invalidateCachedLookupById(FIND_BY_ID, domainType, id)
         invalidateCachedLookupById(READ_BY_ID, domainType, id)
     }
+
     @CacheInvalidate
     void invalidateCachedLookupById(String lookup, String domainType, UUID id) {
-        null
+        null // The '@CacheInvalidate' annotation does the work here
     }
 
     Class getDomainClass() {
@@ -270,6 +276,10 @@ abstract class ItemCacheableRepository<I extends Item> implements ItemRepository
     @Singleton
     @CompileStatic
     static class SummaryMetadataReportCacheableRepository extends ItemCacheableRepository<SummaryMetadataReport> {
+
+        @Inject FacetCacheableRepository.SummaryMetadataCacheableRepository summaryMetadataCacheableRepository
+
+
         SummaryMetadataReportCacheableRepository(SummaryMetadataReportRepository summaryMetadataReportRepository) {
             super(summaryMetadataReportRepository)
         }
@@ -294,10 +304,25 @@ abstract class ItemCacheableRepository<I extends Item> implements ItemRepository
 
         private void invalidateChain(SummaryMetadataReport summaryMetadataReport, SummaryMetadata summaryMetadata) {
             invalidate(summaryMetadataReport)
-            invalidateCachedLookupById(FIND_BY_ID, summaryMetadata.class.simpleName, summaryMetadata.id)
-            // invalidate attached parent of summaryMetadata
-            invalidateCachedLookupById(FIND_BY_ID, summaryMetadata.multiFacetAwareItemDomainType,
-                    summaryMetadata.multiFacetAwareItemId)
+            summaryMetadataCacheableRepository.invalidate(summaryMetadata)
+        }
+    }
+
+    @Singleton
+    @CompileStatic
+    static class RuleRepresentationCacheableRepository extends ItemCacheableRepository<RuleRepresentation> {
+
+        @Inject FacetCacheableRepository.RuleCacheableRepository ruleCacheableRepository
+
+        RuleRepresentationCacheableRepository(RuleRepresentationRepository ruleRepresentationRepository) {
+            super(ruleRepresentationRepository)
+        }
+
+        @Override
+        void invalidate(RuleRepresentation item) {
+            super.invalidate(item)
+            Rule rule = ruleCacheableRepository.readById(item.ruleId)
+            ruleCacheableRepository.invalidate(rule)
         }
     }
 }
