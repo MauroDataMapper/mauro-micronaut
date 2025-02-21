@@ -10,7 +10,6 @@ import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedCatalogueType
 import groovy.util.logging.Slf4j
 import groovy.xml.slurpersupport.GPathResult
 import jakarta.inject.Singleton
-
 import java.time.Instant
 
 @Slf4j

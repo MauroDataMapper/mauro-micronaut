@@ -50,13 +50,16 @@ class DataModelRepositorySpec extends Specification {
     @Shared
     UUID dataModelId
 
+
+    void setup() {
+        if (!myFirstFolder) {
+            myFirstFolder = folderRepository.save(new Folder(
+                label: "My first Folder"
+            ))
+        }
+    }
+
     def TestDataModel() {
-        given:
-
-        myFirstFolder = folderRepository.save(new Folder(
-            label: "My first Folder"
-        ))
-
         when:
         DataModel dataModel = DataModel.build {
             label "My first data model"

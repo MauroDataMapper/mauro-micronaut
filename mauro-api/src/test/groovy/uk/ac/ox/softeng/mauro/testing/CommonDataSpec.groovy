@@ -28,33 +28,27 @@ class CommonDataSpec extends BaseIntegrationSpec {
     def termPayload() {
         [code: 'B15.0', definition: 'Hepatitis A with hepatic coma']
     }
-
     def summaryMetadataReport() {
-        [reportValue: 'test-report-value', reportDate: REPORT_DATE]
+        [ reportValue: 'test-report-value', reportDate: REPORT_DATE]
     }
-
     def annotationPayload() {
         [label: 'test-label', description: 'test-annotation description']
     }
-
     def annotationPayload(String label, String description) {
-        [label: label, description: description]
+        [label: label, description: description ]
     }
-
     def summaryMetadataPayload() {
-        [summaryMetadataType: SummaryMetadataType.STRING, label: 'summary metadata label']
+        [ summaryMetadataType: SummaryMetadataType.STRING, label: 'summary metadata label']
     }
-
     def metadataPayload() {
-        [namespace: 'org.example', key: 'example_key', value: 'example_value']
+        [ namespace: 'org.example', key: 'example_key', value: 'example_value']
     }
 
-    def dataModelPayload() {
+    def dataModelPayload(){
         dataModelPayload("test label ")
 
     }
-
-    def dataModelPayload(String label) {
+    def dataModelPayload(String label){
         [label: label, description: 'test description', author: 'test author']
     }
 
@@ -62,80 +56,76 @@ class CommonDataSpec extends BaseIntegrationSpec {
         dataClassPayload('Test data class')
     }
 
-    def dataClassPayload(String label) {
+    def dataClassPayload(String label){
         [label: label, description: 'test description', author: 'test author']
     }
 
-    def dataElementPayload(String label, DataType dataType) {
-        [label   : label, description: 'test description', author: 'test author',
-         dataType: dataType]
+    def dataElementPayload(String label, DataType dataType){
+        [label: label, description: 'test description', author: 'test author',
+        dataType: dataType]
     }
 
-    def dataTypesPayload() {
-        [label: 'Test data type', domainType: 'primitiveType', units: 'kilograms']
+    def dataTypesPayload(){
+        [label: 'Test data type', domainType: 'primitiveType', units : 'kilograms']
     }
-
     def dataTypePayload1() {
         [label: 'string', description: 'character string of variable length', domainType: 'PrimitiveType']
     }
-
-    def dataTypePayload2() {
-        [label: 'Test data type', domainType: 'primitiveType', units: 'kilograms']
+    def dataTypePayload2(){
+        [label: 'Test data type', domainType: 'primitiveType', units : 'kilograms']
     }
 
-    def termRelationshipType() {
-        [label: 'Test Term Relationship Type label', displayLabel: 'Random display label', parentalRelationship: false, childRelationship: false]
+    def termRelationshipType(){
+       [label: 'Test Term Relationship Type label', displayLabel: 'Random display label', parentalRelationship: false, childRelationship : false]
     }
 
-    def term() {
-        [description: 'Test Term description', code: 'est', definition: 'doloreum-et-val', url: 'https://www.hello.com/test']
+    def term(){
+        [description : 'Test Term description', code: 'est', definition: 'doloreum-et-val', url : 'https://www.hello.com/test']
     }
 
-    def dataFlowPayload(String sourceId) {
-        [source: [id: sourceId], label: 'test label', description: 'dataflow payload description ']
+    def dataFlowPayload(String sourceId){
+        [source: [id: sourceId], label: 'test label', description: 'dataflow payload description ' ]
     }
 
-    def genericModelPayload(String label) {
-        [label: label, description: 'test  payload description ']
+    def genericModelPayload(String label){
+        [ label: label, description: 'test  payload description ' ]
     }
 
-    def referenceFilePayload() {
+    def referenceFilePayload(){
         String fileContents = 'this is a string file contents'
         [
-            fileName      : 'reference file name',
-            "fileSize"    : fileContents.size(),
-            "fileContents": fileContents.bytes,
-            "fileType"    : "text/plain"
-        ]
+             fileName: 'reference file name',
+             "fileSize": fileContents.size(),
+             "fileContents": fileContents.bytes,
+             "fileType": "text/plain"
+         ]
     }
-
-    def referenceFilePayload(String fileName) {
+    def referenceFilePayload(String fileName){
         String fileContents = 'this is a string file contents'
         [
-            fileName      : fileName,
-            "fileSize"    : fileContents.size(),
-            "fileContents": fileContents.bytes,
-            "fileType"    : "text/plain"
+                fileName: fileName,
+                "fileSize": fileContents.size(),
+                "fileContents": fileContents.bytes,
+                "fileType": "text/plain"
         ]
     }
-
-    def referenceFilePayload(String fileName, String content) {
+    def referenceFilePayload(String fileName,String content){
         [
-            fileName      : fileName,
-            "fileSize"    : content.size(),
-            "fileContents": content.bytes,
-            "fileType"    : "text/plain"
+                fileName: fileName,
+                "fileSize": content.size(),
+                "fileContents": content.bytes,
+                "fileType": "text/plain"
         ]
     }
-
-    def classifiersPayload() {
+    def classifiersPayload(){
         [
-            label                       : 'classifiers label',
-            description                 : 'random description ',
-            readableByEveryone          : true,
+            label: 'classifiers label',
+            description : 'random description ',
+            readableByEveryone: true,
             readableByAuthenticatedUsers: true
         ]
     }
+
 
     def mauroJsonSubscribedCataloguePayload() {
         [
@@ -173,17 +163,11 @@ class CommonDataSpec extends BaseIntegrationSpec {
               subscribedModelType: 'DataModel',
               folderId           : folderId],
 
-             importerProviderService:
-                 [name: 'JsonDataModelImporterPlugin', namespace: 'uk.ac.ox.softeng.mauro.plugin.importer.json', version: '4.0.0']
+         importerProviderService:
+             [name: 'JsonDataModelImporterPlugin', namespace: 'uk.ac.ox.softeng.mauro.plugin.importer.json', version: '4.0.0']
         ]
     }
 
-    def importerProviderServicePayload() {
-        [
-            importerProviderService:
-                [name: 'JsonDataModelImporterPlugin', namespace: 'uk.ac.ox.softeng.mauro.plugin.importer.json', version: '4.0.0']
-        ]
-    }
 
     def subscribedModelAndUrlPayload(UUID folderId, String urlString) {
         [subscribedModel:
@@ -232,3 +216,5 @@ class CommonDataSpec extends BaseIntegrationSpec {
     }
 
 }
+
+

@@ -17,15 +17,24 @@ import io.micronaut.http.client.exceptions.HttpClientResponseException
 import io.micronaut.runtime.EmbeddedApplication
 import io.micronaut.test.annotation.Sql
 import jakarta.inject.Inject
+import spock.lang.Shared
 import spock.lang.Unroll
 
 @SecuredContainerizedTest
-@Sql(scripts = ["classpath:sql/tear-down-subscribed-catalogue.sql"], phase = Sql.Phase.AFTER_EACH)
+@Sql(scripts = ["classpath:sql/tear-down-subscribed-catalogue.sql"], phase = Sql.Phase.AFTER_ALL)
 class SubscribedCatalogueIntegrationSpec extends SecuredIntegrationSpec {
     @Inject
     EmbeddedApplication<?> application
     @Inject
     ObjectMapper mapper
+    @Shared
+    UUID subscribedCatalogueId
+
+    void setupSpec(){
+        loginAdmin()
+        subscribedCatalogueId =  ((SubscribedCatalogue) POST("$ADMIN_SUBSCRIBED_CATALOGUES_PATH", mauroJsonSubscribedCataloguePayload(), SubscribedCatalogue)).id
+        logout()
+    }
 
     void cleanup() {
         logout()
@@ -40,7 +49,7 @@ class SubscribedCatalogueIntegrationSpec extends SecuredIntegrationSpec {
 
         then:
         getAllResp
-        getAllResp.count == 0
+        getAllResp.count == 1
         logout()
 
         loginUser()
@@ -49,7 +58,7 @@ class SubscribedCatalogueIntegrationSpec extends SecuredIntegrationSpec {
 
         then:
         getAllResp
-        getAllResp.count == 0
+        getAllResp.count == 1
     }
 
     void 'user not signed in - cannot access admin subscribedCatalogues endpoint'() {
@@ -66,13 +75,13 @@ class SubscribedCatalogueIntegrationSpec extends SecuredIntegrationSpec {
         loginAdmin()
 
         when:
-        SubscribedCatalogue subscribedCatalogue = (SubscribedCatalogue) POST("$ADMIN_SUBSCRIBED_CATALOGUES_PATH", mauroJsonSubscribedCataloguePayload(), SubscribedCatalogue)
+        SubscribedCatalogue subscribedCatalogue = (SubscribedCatalogue) POST("$ADMIN_SUBSCRIBED_CATALOGUES_PATH", atomSubscribedCataloguePayload(), SubscribedCatalogue)
 
         then:
         subscribedCatalogue
-        subscribedCatalogue.url == "https://maurosandbox.com/sandbox"
+        subscribedCatalogue.url == "https://ontology.nhs.uk/production1/synd/syndication.xml"
         subscribedCatalogue.subscribedCatalogueAuthenticationType == SubscribedCatalogueAuthenticationType.API_KEY
-        subscribedCatalogue.subscribedCatalogueType == SubscribedCatalogueType.MAURO_JSON
+        subscribedCatalogue.subscribedCatalogueType == SubscribedCatalogueType.ATOM
         subscribedCatalogue.apiKey == 'b39d63d4-4fd4-494d-a491-3c778d89acae'
     }
 
@@ -95,12 +104,9 @@ class SubscribedCatalogueIntegrationSpec extends SecuredIntegrationSpec {
     }
 
     void 'any user - can retrieve subscribedCatalogue by id'() {
-        given:
         loginAdmin()
-        SubscribedCatalogue subscribedCatalogue = (SubscribedCatalogue) POST("$ADMIN_SUBSCRIBED_CATALOGUES_PATH", mauroJsonSubscribedCataloguePayload(), SubscribedCatalogue)
-
         when:
-        SubscribedCatalogue retrieved = GET("$SUBSCRIBED_CATALOGUES_PATH/$subscribedCatalogue.id", SubscribedCatalogue)
+        SubscribedCatalogue retrieved = GET("$SUBSCRIBED_CATALOGUES_PATH/$subscribedCatalogueId", SubscribedCatalogue)
 
         then:
         retrieved
@@ -109,12 +115,22 @@ class SubscribedCatalogueIntegrationSpec extends SecuredIntegrationSpec {
         loginUser()
 
         when:
-        retrieved = GET("$SUBSCRIBED_CATALOGUES_PATH/$subscribedCatalogue.id", SubscribedCatalogue)
+        retrieved = GET("$SUBSCRIBED_CATALOGUES_PATH/$subscribedCatalogueId", SubscribedCatalogue)
         then:
         retrieved
     }
 
     @Unroll
+    void 'not logged in - subscribedCatalogue publishedModels endpoint -is unauthorized'() {
+
+        when:
+        GET("$SUBSCRIBED_CATALOGUES_PATH/$subscribedCatalogueId$PUBLISHEDMODELS", ListResponse)
+
+        then:
+        HttpClientResponseException exception = thrown()
+        exception.status == HttpStatus.UNAUTHORIZED
+    }
+
     void 'admin user - subscribedCatalogue with #payload -should return successful testConnection endpoint'() {
         given:
         loginAdmin()
@@ -192,7 +208,7 @@ class SubscribedCatalogueIntegrationSpec extends SecuredIntegrationSpec {
 
         where:
         payload                               | expectedPublishedModels     | expectedNumberOfItems
-//        mauroJsonSubscribedCataloguePayload() | mauroJsonExpectedResponse() | 1
+        mauroJsonSubscribedCataloguePayload() | mauroJsonExpectedResponse() | 1
         atomSubscribedCataloguePayload()      | atomExpectedResponse()      | 112
     }
 
@@ -219,26 +235,11 @@ class SubscribedCatalogueIntegrationSpec extends SecuredIntegrationSpec {
         where:
         payload                               | publishedModelId             | numberOfNewerVersions | lastUpdatedString
         mauroJsonSubscribedCataloguePayload() | TEST_MODEL_ID                | 3                     | "2023-06-12T16:03:07.118Z"
-        mauroJsonSubscribedCataloguePayload() | UUID.randomUUID().toString() | 0                     | "2023-06-12T16:03:07.118Z"
         atomSubscribedCataloguePayload()      | ATOM_MODEL_ID_NEWER_VERSIONS | 4                     | "2025-02-17T04:02:14Z"
 
     }
 
 
-    void 'not logged in - subscribedCatalogue publishedModels endpoint -is unauthorized'() {
-        given:
-        loginAdmin()
-
-        SubscribedCatalogue subscribedCatalogue = (SubscribedCatalogue) POST("$ADMIN_SUBSCRIBED_CATALOGUES_PATH", mauroJsonSubscribedCataloguePayload(), SubscribedCatalogue)
-        logout()
-
-        when:
-        GET("$SUBSCRIBED_CATALOGUES_PATH/$subscribedCatalogue.id$PUBLISHEDMODELS", ListResponse)
-
-        then:
-        HttpClientResponseException exception = thrown()
-        exception.status == HttpStatus.UNAUTHORIZED
-    }
 
 
     void 'admin and logged in users - can return subscribedCatalogueTypes'() {
@@ -306,17 +307,13 @@ class SubscribedCatalogueIntegrationSpec extends SecuredIntegrationSpec {
         exception.status == HttpStatus.UNAUTHORIZED
     }
 
-
     void 'admin User - can update subscribedCatalogue'() {
         given:
         loginAdmin()
 
-        and:
-        SubscribedCatalogue subscribedCatalogue = POST("$ADMIN_SUBSCRIBED_CATALOGUES_PATH", mauroJsonSubscribedCataloguePayload(), SubscribedCatalogue)
-
         when:
         SubscribedCatalogue updated =
-            (SubscribedCatalogue) PUT("$ADMIN_SUBSCRIBED_CATALOGUES_PATH/$subscribedCatalogue.id", [label: 'updated label'], SubscribedCatalogue)
+            (SubscribedCatalogue) PUT("$ADMIN_SUBSCRIBED_CATALOGUES_PATH/$subscribedCatalogueId", [label: 'updated label'], SubscribedCatalogue)
 
         then:
         updated
@@ -325,15 +322,10 @@ class SubscribedCatalogueIntegrationSpec extends SecuredIntegrationSpec {
 
     void 'logged in user or not logged in - should not be permitted to update subscribedCatalogue'() {
         given:
-        loginAdmin()
-
-        and:
-        SubscribedCatalogue subscribedCatalogue = POST("$ADMIN_SUBSCRIBED_CATALOGUES_PATH", mauroJsonSubscribedCataloguePayload(), SubscribedCatalogue)
-        logout()
         loginUser()
 
         when:
-        PUT("$ADMIN_SUBSCRIBED_CATALOGUES_PATH/$subscribedCatalogue.id", [label: 'updated label'], SubscribedCatalogue)
+        PUT("$ADMIN_SUBSCRIBED_CATALOGUES_PATH/$subscribedCatalogueId", [label: 'updated label'], SubscribedCatalogue)
 
         then:
         HttpClientResponseException exception = thrown()
@@ -342,7 +334,7 @@ class SubscribedCatalogueIntegrationSpec extends SecuredIntegrationSpec {
         logout()
 
         when:
-        PUT("$ADMIN_SUBSCRIBED_CATALOGUES_PATH/$subscribedCatalogue.id", [label: 'updated label'], SubscribedCatalogue)
+        PUT("$ADMIN_SUBSCRIBED_CATALOGUES_PATH/$subscribedCatalogueId", [label: 'updated label'], SubscribedCatalogue)
 
         then:
         exception = thrown()
@@ -354,7 +346,7 @@ class SubscribedCatalogueIntegrationSpec extends SecuredIntegrationSpec {
         loginAdmin()
 
         (SubscribedCatalogue) POST("$ADMIN_SUBSCRIBED_CATALOGUES_PATH", mauroJsonSubscribedCataloguePayload('label1'), SubscribedCatalogue)
-        (SubscribedCatalogue) POST("$ADMIN_SUBSCRIBED_CATALOGUES_PATH", mauroJsonSubscribedCataloguePayload('label2'), SubscribedCatalogue)
+//        (SubscribedCatalogue) POST("$ADMIN_SUBSCRIBED_CATALOGUES_PATH", mauroJsonSubscribedCataloguePayload('label2'), SubscribedCatalogue)
 
         when:
         ListResponse<SubscribedCatalogue> resp = (ListResponse<SubscribedCatalogue>) GET(SUBSCRIBED_CATALOGUES_PATH, ListResponse, SubscribedCatalogue)

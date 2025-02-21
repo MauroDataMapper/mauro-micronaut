@@ -39,7 +39,7 @@ abstract class ItemController<I extends Item> implements AdministeredItemReader 
         this.itemRepository = itemRepository
     }
 
-    protected I cleanBody(I item) {
+    I cleanBody(I item) {
         I defaultItem = (I) item.class.getDeclaredConstructor().newInstance()
 
         // Disallowed properties cannot be set by user request
@@ -73,7 +73,7 @@ abstract class ItemController<I extends Item> implements AdministeredItemReader 
         item
     }
 
-    protected boolean updateProperties(I existing, I cleanItem) {
+    boolean updateProperties(I existing, I cleanItem) {
         boolean hasChanged
         existing.properties.each {
             String key = it.key

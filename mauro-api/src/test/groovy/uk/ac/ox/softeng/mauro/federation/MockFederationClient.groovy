@@ -18,16 +18,16 @@ import jakarta.inject.Singleton
 @Replaces(FederationClient)
 class MockFederationClient extends FederationClient {
 
-    private FederationClientConfiguration federationClientConfiguration
-
-    private String jsonString
+    private String publishedModelsString
+    private String newerVersionsString
 
     @Inject
     private ObjectMapper objectMapper
 
     MockFederationClient(FederationClientConfiguration federationClientConfiguration) {
         super(federationClientConfiguration)
-        jsonString = new File('src/test/resources/subscribedCataloguePublishedModels.json').text
+        publishedModelsString = new File('src/test/resources/subscribedCataloguePublishedModels.json').text
+        newerVersionsString = new File('src/test/resources/subscribedCataloguePublishedModelsNewerVersions.json').text
     }
 
     @Override
@@ -36,15 +36,11 @@ class MockFederationClient extends FederationClient {
 
     @Override
     Map<String, Object> fetchFederatedClientDataAsMap(SubscribedCatalogue subscribedCatalogue, String requestPath) {
-        if (requestPath.endsWith("$BaseIntegrationSpec.TEST_MODEL_ID$BaseIntegrationSpec.NEWER_VERSIONS")){
-            jsonString = getNewerVersionsPopulatedTestData()
-        }else {
-            if (requestPath.endsWith("$BaseIntegrationSpec.NEWER_VERSIONS")){
-                jsonString = getEmptyNewerVersionsTestData()
-            }
+        if (requestPath.endsWith("$BaseIntegrationSpec.TEST_MODEL_ID$BaseIntegrationSpec.NEWER_VERSIONS")) {
+            return objectMapper.readValue(newerVersionsString, Map.class)
+        } else {
+            return objectMapper.readValue(publishedModelsString, Map.class)
         }
-        Map<String, Object> federatedDataAsMap = objectMapper.readValue(jsonString, Map.class)
-        federatedDataAsMap
     }
 
     @Override
@@ -57,11 +53,4 @@ class MockFederationClient extends FederationClient {
         return new XmlSlurper().parse(new File('src/test/resources/xml-federated-data.xml'))
     }
 
-    String getNewerVersionsPopulatedTestData() {
-        jsonString = new File('src/test/resources/subscribedCataloguePublishedModelsNewerVersions.json').text
-    }
-
-    String getEmptyNewerVersionsTestData(){
-        jsonString = new File ('src/test/resources/emptyNewerVersions.json').text
-    }
 }

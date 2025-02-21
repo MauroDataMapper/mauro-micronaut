@@ -80,6 +80,7 @@ class FederationClient {
         }
     }
 
+
     GPathResult retrieveXmlDataFromClient() {
         String body = fetchFederatedClientDataAsString()
         try {
@@ -90,8 +91,6 @@ class FederationClient {
     }
 
     private String fetchFederatedClientDataAsString() {
-        // String contextAndPath = resolvePath(requestPath)
-        // String result
         try {
             httpClient.toBlocking().retrieve(HttpRequest.GET(contextPath.toURI()).headers(headersMap), String)
         }

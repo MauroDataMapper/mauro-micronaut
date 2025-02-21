@@ -27,15 +27,12 @@ import io.micronaut.http.annotation.Post
 import io.micronaut.http.annotation.Put
 import io.micronaut.http.annotation.QueryValue
 import io.micronaut.http.exceptions.HttpStatusException
-import io.micronaut.http.server.exceptions.HttpServerException
 import io.micronaut.scheduling.TaskExecutors
 import io.micronaut.scheduling.annotation.ExecuteOn
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
 import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
-
-import java.time.Instant
 
 @Slf4j
 @Controller()
@@ -85,15 +82,19 @@ class SubscribedCatalogueController extends ItemController<SubscribedCatalogue> 
     }
 
     @Post(Paths.ADMIN_SUBSCRIBED_CATALOGUES_ROUTE)
+    @ExecuteOn(TaskExecutors.BLOCKING)
     @Transactional
     SubscribedCatalogue create(@Body @NonNull SubscribedCatalogue subscribedCatalogue) {
         accessControlService.checkAdministrator()
         cleanBody(subscribedCatalogue)
         updateCreationProperties(subscribedCatalogue)
-        subscribedCatalogueCacheableRepository.save(subscribedCatalogue)
+        if (subscribedCatalogueService.validateRemote(subscribedCatalogue)) {
+            subscribedCatalogueCacheableRepository.save(subscribedCatalogue)
+        }
     }
 
     @Put(Paths.ADMIN_SUBSCRIBED_CATALOGUES_ID_ROUTE)
+    @ExecuteOn(TaskExecutors.BLOCKING)
     @Transactional
     SubscribedCatalogue update(@NonNull UUID subscribedCatalogueId, @Body @NonNull SubscribedCatalogue subscribedCatalogue) {
         accessControlService.checkAdministrator()
@@ -102,7 +103,9 @@ class SubscribedCatalogueController extends ItemController<SubscribedCatalogue> 
         SubscribedCatalogue existing = subscribedCatalogueCacheableRepository.readById(subscribedCatalogueId)
         boolean hasChanged = updateProperties(existing, subscribedCatalogue)
         if (hasChanged) {
-            subscribedCatalogueCacheableRepository.update(existing)
+            if (subscribedCatalogueService.validateRemote(existing)) {
+                return subscribedCatalogueCacheableRepository.update(existing)
+            }
         } else {
             existing
         }
@@ -127,13 +130,10 @@ class SubscribedCatalogueController extends ItemController<SubscribedCatalogue> 
 
         SubscribedCatalogue subscribedCatalogue = subscribedCatalogueCacheableRepository.findById(subscribedCatalogueId)
         ErrorHandler.handleError(HttpStatus.NOT_FOUND, subscribedCatalogue, "Item $subscribedCatalogueId not found")
-        try {
-            subscribedCatalogueService.getPublishedModels(subscribedCatalogue)
-        } catch (Exception e) {
-            log.error(e.message)
-            throw new HttpServerException(e.message, e)
+        if (subscribedCatalogueService.validateRemote(subscribedCatalogue)) {
+            return HttpStatus.OK
         }
-        return HttpStatus.OK
+        return HttpStatus.UNPROCESSABLE_ENTITY
     }
 
 

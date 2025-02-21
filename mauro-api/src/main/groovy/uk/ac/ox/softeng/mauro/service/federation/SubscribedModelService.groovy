@@ -79,8 +79,8 @@ class SubscribedModelService {
 
 
         byte[] resourceBytes = subscribedCatalogueService.getBytesResourceExport(subscribedModel.subscribedCatalogue, exportLink.url)
-
         FileParameter fileParameter = new FileParameter(null, exportLink.contentType, resourceBytes)
+
         FileImportParameters fileImportParameters = new FileImportParameters().tap {
             importFile = fileParameter
             folderId = folder.id
@@ -89,7 +89,7 @@ class SubscribedModelService {
             importAsNewBranchModelVersion = sourcePublishedModel?.modelVersion ? false : true
         }
 
-        //Authority is not in importerparameters
+        //grails compares remote and defaultAuthority -not in micronaut FileImportParams
         List<Model> importedModels = (List<Model>) mauroImporterPlugin.importModels(fileImportParameters)
         Model savedImported = importedModels?.first()
         checkModelLabelAndVersionNotAlreadyImported(savedImported)
