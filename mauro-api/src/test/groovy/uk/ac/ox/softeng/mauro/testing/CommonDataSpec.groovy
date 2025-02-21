@@ -68,12 +68,7 @@ class CommonDataSpec extends BaseIntegrationSpec{
     def dataTypesPayload(){
         [label: 'Test data type', domainType: 'primitiveType', units : 'kilograms']
     }
-    def dataTypePayload1() {
-        [label: 'string', description: 'character string of variable length', domainType: 'PrimitiveType']
-    }
-    def dataTypePayload2(){
-        [label: 'Test data type', domainType: 'primitiveType', units : 'kilograms']
-    }
+
 
     def termRelationshipType(){
        [label: 'Test Term Relationship Type label', displayLabel: 'Random display label', parentalRelationship: false, childRelationship : false]
