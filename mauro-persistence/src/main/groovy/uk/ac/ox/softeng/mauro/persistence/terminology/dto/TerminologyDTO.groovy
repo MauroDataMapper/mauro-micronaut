@@ -1,6 +1,6 @@
 package uk.ac.ox.softeng.mauro.persistence.terminology.dto
 
-import uk.ac.ox.softeng.mauro.domain.facet.Rule
+
 
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.Introspected
@@ -12,6 +12,8 @@ import io.micronaut.data.annotation.sql.ColumnTransformer
 import io.micronaut.data.model.DataType
 import uk.ac.ox.softeng.mauro.domain.classifier.Classifier
 import uk.ac.ox.softeng.mauro.domain.facet.Annotation
+import uk.ac.ox.softeng.mauro.domain.facet.Edit
+import uk.ac.ox.softeng.mauro.domain.facet.Rule
 import uk.ac.ox.softeng.mauro.domain.facet.Metadata
 import uk.ac.ox.softeng.mauro.domain.facet.ReferenceFile
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
@@ -22,6 +24,13 @@ import uk.ac.ox.softeng.mauro.persistence.model.dto.AdministeredItemDTO
 @Introspected
 @MappedEntity(value = 'terminology', schema = 'terminology', alias = 'terminology_')
 class TerminologyDTO extends Terminology implements AdministeredItemDTO {
+
+    @Nullable
+    @TypeDef(type = DataType.JSON)
+    @MappedProperty
+    @ColumnTransformer(read = '(select json_agg(edit) from core.edit where multi_facet_aware_item_id = terminology_.id)')
+    List<Edit> edits = []
+
 
     @Nullable
     @TypeDef(type = DataType.JSON)

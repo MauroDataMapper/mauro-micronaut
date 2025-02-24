@@ -29,7 +29,8 @@ dependencies {
     implementation("io.micronaut.reactor:micronaut-reactor-http-client")
     implementation("jakarta.annotation:jakarta.annotation-api")
     compileOnly("io.micronaut:micronaut-http-validation")
-    runtimeOnly("ch.qos.logback:logback-classic")
+    implementation("ch.qos.logback:logback-classic")
+    implementation("ch.qos.logback:logback-core")
     implementation("io.micronaut.validation:micronaut-validation")
     implementation("io.micronaut:micronaut-management")
     compileOnly("io.micronaut:micronaut-inject-groovy")
@@ -40,6 +41,7 @@ dependencies {
 
     implementation("io.micronaut.sql:micronaut-jdbc-hikari")
     implementation group: 'org.apache.groovy', name: 'groovy-json', version: '4.0.19'
+    implementation group: 'org.apache.groovy', name: 'groovy-templates', version: '4.0.19'
     implementation group: 'org.apache.groovy', name: 'groovy-xml', version: '4.0.25'
 
 
