@@ -4,6 +4,7 @@ import uk.ac.ox.softeng.mauro.domain.classifier.Classifier
 import uk.ac.ox.softeng.mauro.domain.facet.Annotation
 import uk.ac.ox.softeng.mauro.domain.facet.Metadata
 import uk.ac.ox.softeng.mauro.domain.facet.ReferenceFile
+import uk.ac.ox.softeng.mauro.domain.facet.Rule
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
 import uk.ac.ox.softeng.mauro.domain.terminology.TermRelationship
 import uk.ac.ox.softeng.mauro.persistence.model.dto.AdministeredItemDTO
@@ -38,6 +39,16 @@ class TermRelationshipDTO extends TermRelationship implements AdministeredItemDT
                                     where summary_metadata_id = summary_metadata.id) summary_metadata_reports
                                     from core.summary_metadata) summary_metadata where multi_facet_aware_item_id = term_relationship_.id)''')
     List<SummaryMetadata> summaryMetadata = []
+
+    @Nullable
+    @TypeDef(type = DataType.JSON)
+    @MappedProperty
+    @ColumnTransformer(read = '''(select json_agg(rule) from (select *,
+                                    (select json_agg(rule_representation)
+                                    from core.rule_representation
+                                    where rule_id = rule.id) rule_representations
+                                    from core.rule) rule where multi_facet_aware_item_id = term_relationship_.id)''')
+    List<Rule> rules = []
 
     @Nullable
     @TypeDef(type = DataType.JSON)

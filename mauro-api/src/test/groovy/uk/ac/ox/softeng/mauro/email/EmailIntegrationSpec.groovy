@@ -1,21 +1,10 @@
 package uk.ac.ox.softeng.mauro.email
 
-import groovy.json.JsonSlurper
-import io.micronaut.http.MediaType
-import io.micronaut.http.annotation.Get
-import io.micronaut.http.client.multipart.MultipartBody
+
 import io.micronaut.runtime.EmbeddedApplication
 import jakarta.inject.Inject
-import spock.lang.Ignore
-import spock.lang.Shared
-import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
-import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
+
 import uk.ac.ox.softeng.mauro.domain.email.Email
-import uk.ac.ox.softeng.mauro.domain.facet.Annotation
-import uk.ac.ox.softeng.mauro.domain.facet.Metadata
-import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
-import uk.ac.ox.softeng.mauro.domain.folder.Folder
-import uk.ac.ox.softeng.mauro.domain.model.SummaryMetadataReport
 import uk.ac.ox.softeng.mauro.domain.security.CatalogueUser
 import uk.ac.ox.softeng.mauro.persistence.ContainerizedTest
 import uk.ac.ox.softeng.mauro.service.email.EmailPlugin

@@ -13,6 +13,7 @@ import uk.ac.ox.softeng.mauro.domain.facet.Annotation
 import uk.ac.ox.softeng.mauro.domain.facet.Metadata
 import uk.ac.ox.softeng.mauro.domain.facet.ReferenceFile
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
+import uk.ac.ox.softeng.mauro.domain.facet.Rule
 import uk.ac.ox.softeng.mauro.domain.security.CatalogueUser
 import uk.ac.ox.softeng.mauro.exception.MauroInternalException
 
@@ -88,6 +89,8 @@ abstract class AdministeredItem extends Item {
     @Relation(Relation.Kind.ONE_TO_MANY)
     List<SummaryMetadata> summaryMetadata = []
 
+    @Relation(Relation.Kind.ONE_TO_MANY)
+    List<Rule> rules = []
 
     @Relation(Relation.Kind.ONE_TO_MANY)
     List<Annotation> annotations = []
@@ -350,6 +353,44 @@ abstract class AdministeredItem extends Item {
             new Metadata(namespace: namespace, key: key, value: value)
         })
         return metadata
+    }
+
+    /**
+     * DSL helper method for adding to the summary metadata field.  Returns the summary metadata passed in.
+     *
+     * @see #metadata
+     */
+    SummaryMetadata summaryMetadata(SummaryMetadata summaryMetadata) {
+        this.summaryMetadata.add(summaryMetadata)
+        summaryMetadata
+    }
+
+    SummaryMetadata summaryMetadata(Map args, @DelegatesTo(value = SummaryMetadata, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+        SummaryMetadata summaryMetadata1 = SummaryMetadata.build(args, closure)
+        summaryMetadata summaryMetadata1
+    }
+
+    SummaryMetadata summaryMetadata(@DelegatesTo(value = SummaryMetadata, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+        summaryMetadata [:], closure
+    }
+
+    /**
+     * DSL helper method for adding to the summary metadata field.  Returns the summary metadata passed in.
+     *
+     * @see #metadata
+     */
+    Rule rule(Rule rule) {
+        this.rules.add(rule)
+        rule
+    }
+
+    Rule rule(Map args, @DelegatesTo(value = Rule, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+        Rule rule1 = Rule.build(args, closure)
+        rule rule1
+    }
+
+    Rule rule(@DelegatesTo(value = Rule, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+        rule [:], closure
     }
 
 

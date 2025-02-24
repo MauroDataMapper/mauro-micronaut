@@ -1,10 +1,11 @@
 package uk.ac.ox.softeng.mauro.persistence.model
 
+import uk.ac.ox.softeng.mauro.domain.facet.Rule
+import uk.ac.ox.softeng.mauro.domain.facet.RuleRepresentation
+
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
-import io.micronaut.http.HttpStatus
-import io.micronaut.http.exceptions.HttpStatusException
 import jakarta.inject.Singleton
 import uk.ac.ox.softeng.mauro.domain.facet.Annotation
 import uk.ac.ox.softeng.mauro.domain.facet.Facet
@@ -14,7 +15,7 @@ import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.model.Model
-import uk.ac.ox.softeng.mauro.domain.model.SummaryMetadataReport
+import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadataReport
 
 @Slf4j
 @CompileStatic
@@ -56,40 +57,64 @@ class ModelContentRepository<M extends Model> extends AdministeredItemContentRep
         }
         metadataRepository.saveAll(metadata)
         saveSummaryMetadataFacets(items)
+        saveRules(items)
         saveAnnotations(items)
         saveReferenceFiles(items)
     }
 
-   void saveSummaryMetadataFacets(List<AdministeredItem> items) {
-       List<SummaryMetadata> summaryMetadata = []
-       List<SummaryMetadataReport> summaryMetadataReports = []
-       SummaryMetadata saved
-       items.each {item ->
-           if (item.summaryMetadata) {
-               item.summaryMetadata.each {
-                   updateMultiAwareData(item, it)
-                   saved = summaryMetadataRepository.save(it)
-                   if (it.summaryMetadataReports){
-                       it.summaryMetadataReports.forEach{
-                           report ->
-                               report.summaryMetadataId = saved.id
-                       }
-                       summaryMetadataReports.addAll(summaryMetadataReportCacheableRepository.saveAll(it.summaryMetadataReports))
-                   }
-                   summaryMetadata.add(saved)
-               }
-           }
-       }
-   }
+    void saveSummaryMetadataFacets(List<AdministeredItem> items) {
+        List<SummaryMetadata> summaryMetadata = []
+        List<SummaryMetadataReport> summaryMetadataReports = []
+        SummaryMetadata saved
+        items.each {item ->
+            if (item.summaryMetadata) {
+                item.summaryMetadata.each {
+                    updateMultiAwareData(item, it)
+                    saved = summaryMetadataRepository.save(it)
+                    if (it.summaryMetadataReports) {
+                        it.summaryMetadataReports.forEach {
+                            report ->
+                                report.summaryMetadataId = saved.id
+                        }
+                        summaryMetadataReports.addAll(summaryMetadataReportCacheableRepository.saveAll(it.summaryMetadataReports))
+                    }
+                    summaryMetadata.add(saved)
+                }
+            }
+        }
+    }
+
+    void saveRules(List<AdministeredItem> items) {
+        List<Rule> rules = []
+        List<RuleRepresentation> ruleRepresentations = []
+        Rule saved
+        items.each {item ->
+            if (item.rules) {
+                item.rules.each {
+                    updateMultiAwareData(item, it)
+                    saved = ruleRepository.save(it)
+                    if (it.ruleRepresentations) {
+                        it.ruleRepresentations.forEach {
+                            representation ->
+                                representation.ruleId = saved.id
+                        }
+                        ruleRepresentations.addAll(ruleRepresentationCacheableRepository.saveAll(it.ruleRepresentations))
+                    }
+                    rules.add(saved)
+                }
+            }
+        }
+    }
+
 
     void saveAnnotations(List<AdministeredItem> items) {
         List<Annotation> annotations = []
-        items.each { item ->
+        items.each {item ->
             if (item.annotations) {
                 item.annotations.each {
                     updateMultiAwareData(item, it)
                     if (it.childAnnotations) {
-                        it.childAnnotations.forEach { child ->
+                        it.childAnnotations.forEach {child ->
                             updateMultiAwareData(item, child)
                             child.parentAnnotationId = it.id
                         }
@@ -103,7 +128,7 @@ class ModelContentRepository<M extends Model> extends AdministeredItemContentRep
 
     void saveReferenceFiles(List<AdministeredItem> items) {
         List<ReferenceFile> referenceFiles = []
-        items.each { item ->
+        items.each {item ->
             if (item.referenceFiles) {
                 item.referenceFiles.each {
                     updateMultiAwareData(item, it)

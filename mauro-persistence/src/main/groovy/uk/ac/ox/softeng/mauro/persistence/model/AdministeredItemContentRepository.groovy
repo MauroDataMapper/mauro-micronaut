@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.persistence.model
 
+import uk.ac.ox.softeng.mauro.persistence.facet.RuleRepository
+
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
 import jakarta.inject.Inject
@@ -10,7 +12,7 @@ import uk.ac.ox.softeng.mauro.domain.facet.Metadata
 import uk.ac.ox.softeng.mauro.domain.facet.ReferenceFile
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
-import uk.ac.ox.softeng.mauro.domain.model.SummaryMetadataReport
+import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadataReport
 import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.FacetCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.ItemCacheableRepository
@@ -32,7 +34,13 @@ class AdministeredItemContentRepository {
     SummaryMetadataRepository summaryMetadataRepository
 
     @Inject
+    RuleRepository ruleRepository
+
+    @Inject
     ItemCacheableRepository.SummaryMetadataReportCacheableRepository summaryMetadataReportCacheableRepository
+
+    @Inject
+    ItemCacheableRepository.RuleRepresentationCacheableRepository ruleRepresentationCacheableRepository
 
     @Inject
     FacetCacheableRepository.AnnotationCacheableRepository annotationCacheableRepository

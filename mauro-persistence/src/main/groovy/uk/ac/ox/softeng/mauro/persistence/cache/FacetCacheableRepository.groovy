@@ -1,5 +1,8 @@
 package uk.ac.ox.softeng.mauro.persistence.cache
 
+import uk.ac.ox.softeng.mauro.domain.facet.Rule
+import uk.ac.ox.softeng.mauro.persistence.facet.RuleRepository
+
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.cache.annotation.CacheConfig
@@ -73,11 +76,20 @@ abstract class FacetCacheableRepository<F extends Facet> extends ItemCacheableRe
 
     @Singleton
     @CompileStatic
+    static class RuleCacheableRepository extends FacetCacheableRepository<Rule> {
+        RuleCacheableRepository(RuleRepository ruleRepository) {
+            super(ruleRepository)
+        }
+    }
+
+    @Singleton
+    @CompileStatic
     static class AnnotationCacheableRepository extends FacetCacheableRepository<Annotation> {
         AnnotationCacheableRepository(AnnotationRepository annotationRepository) {
             super(annotationRepository)
         }
 
+        // TODO: Are these overrides necessary?
         Annotation findById(UUID id) {
             cachedLookupById(FIND_BY_ID, Annotation.class.simpleName, id)
         }
