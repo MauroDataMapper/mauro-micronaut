@@ -62,4 +62,15 @@ class CatalogueUser extends Item {
         "$firstName $lastName"
     }
 
+    CatalogueUser() {}
+
+    CatalogueUser(String identity) {
+        this.id = UUID.fromString(identity)
+    }
+
+    CatalogueUser(UUID identity) {
+        this.id = identity
+    }
+
+
 }

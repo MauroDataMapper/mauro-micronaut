@@ -3,6 +3,7 @@ package uk.ac.ox.softeng.mauro.persistence.datamodel.dto
 import uk.ac.ox.softeng.mauro.domain.classifier.Classifier
 import uk.ac.ox.softeng.mauro.domain.datamodel.EnumerationValue
 import uk.ac.ox.softeng.mauro.domain.facet.Annotation
+import uk.ac.ox.softeng.mauro.domain.facet.Edit
 import uk.ac.ox.softeng.mauro.domain.facet.Metadata
 import uk.ac.ox.softeng.mauro.domain.facet.ReferenceFile
 import uk.ac.ox.softeng.mauro.domain.facet.Rule
@@ -22,6 +23,13 @@ import io.micronaut.data.model.DataType
 @Introspected
 @MappedEntity(value = 'enumeration_value', schema = 'datamodel', alias = 'enumeration_value_')
 class EnumerationValueDTO extends EnumerationValue implements AdministeredItemDTO {
+
+    @Nullable
+    @TypeDef(type = DataType.JSON)
+    @MappedProperty
+    @ColumnTransformer(read = '(select json_agg(edit) from core.edit where multi_facet_aware_item_id = enumeration_value_.id)')
+    List<Edit> edits = []
+
 
     @Nullable
     @TypeDef(type = DataType.JSON)

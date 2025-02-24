@@ -7,6 +7,8 @@ import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.folder.FolderContentRepository
 import uk.ac.ox.softeng.mauro.plugin.exporter.ModelExporterPlugin
+import uk.ac.ox.softeng.mauro.audit.Audit
+import uk.ac.ox.softeng.mauro.domain.facet.EditType
 import uk.ac.ox.softeng.mauro.service.plugin.PluginService
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
@@ -54,7 +56,7 @@ class FolderController extends ModelController<Folder> implements FolderApi {
         super.show(id)
     }
 
-    @Post(Paths.FOLDER_LIST)
+    @Post
     Folder create(@Body Folder folder) {
         cleanBody(folder)
         updateCreationProperties(folder)
@@ -64,18 +66,19 @@ class FolderController extends ModelController<Folder> implements FolderApi {
         folderRepository.save(folder)
     }
 
+    @Audit(title = EditType.CREATE, description = 'Created folder')
     @Transactional
     @Post(Paths.CHILD_FOLDER_LIST)
     Folder create(UUID parentId, @Body @NonNull Folder folder) {
         super.create(parentId, folder)
     }
 
-    @Put(Paths.FOLDER_ID)
+    @Put('/{id}')
     Folder update(UUID id, @Body @NonNull Folder folder) {
         super.update(id, folder)
     }
 
-    @Put(Paths.CHILD_FOLDER_ID)
+    @Put('/{parentId}/folders/{id}')
     Folder update(UUID parentId, UUID id, @Body @NonNull Folder folder) {
         super.update(id, folder)
     }
