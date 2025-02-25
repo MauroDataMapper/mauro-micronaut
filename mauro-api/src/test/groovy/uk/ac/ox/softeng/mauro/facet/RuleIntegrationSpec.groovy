@@ -1,6 +1,8 @@
 package uk.ac.ox.softeng.mauro.facet
 
+import io.micronaut.http.HttpResponse
 import io.micronaut.http.client.exceptions.HttpClientException
+import jakarta.inject.Singleton
 import uk.ac.ox.softeng.mauro.domain.facet.Rule
 import uk.ac.ox.softeng.mauro.domain.facet.RuleRepresentation
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
@@ -16,11 +18,9 @@ import jakarta.inject.Inject
 import spock.lang.Shared
 
 @ContainerizedTest
+@Singleton
 @Sql(scripts = "classpath:sql/tear-down-rule.sql", phase = Sql.Phase.AFTER_EACH)
 class RuleIntegrationSpec extends CommonDataSpec {
-
-    @Inject
-    EmbeddedApplication<? extends EmbeddedApplication> application
 
     @Shared
     UUID folderId
@@ -30,41 +30,35 @@ class RuleIntegrationSpec extends CommonDataSpec {
     Map<String, String> ruleMap
 
     void setup() {
-        Folder folder = (Folder) POST("$FOLDERS_PATH", [label: 'Folder with Rules'], Folder)
+        Folder folder = folderApi.create(new Folder(label: 'Folder with Rules'))
         folderId = folder.id
     }
 
     void 'list empty Rules'() {
         when:
         def response =
-                GET("$FOLDERS_PATH/$folderId$RULE_PATH", ListResponse, Rule)
+                ruleApi.list('folder', folderId)
 
         then:
         response.count == 0
     }
 
     void 'create rule'() {
-        given:
-        ruleMap = rulePayload()
 
         when:
-        Rule rule = (Rule) POST("$FOLDERS_PATH/$folderId$RULE_PATH",
-                                           ruleMap, Rule)
+        Rule rule = ruleApi.create('folder', folderId, rulePayload())
 
         then:
         rule
         rule.id != null
         rule.domainType == "Rule"
-        rule.name == ruleMap.name
+        rule.name == rulePayload().name
     }
 
     void 'list rules'() {
-        given:
-        ruleMap = rulePayload()
-        and:
-        (Rule) POST("$FOLDERS_PATH/$folderId$RULE_PATH", ruleMap, Rule)
         when:
-        ListResponse<Rule> response = (ListResponse<Rule>) GET("$FOLDERS_PATH/$folderId$RULE_PATH", ListResponse, Rule)
+        ruleApi.create('folder', folderId, rulePayload())
+        ListResponse<Rule> response = ruleApi.list('folder', folderId)
 
         then:
         response
@@ -73,17 +67,11 @@ class RuleIntegrationSpec extends CommonDataSpec {
     }
 
     void 'get rule by Id'() {
-        given:
-        ruleMap = rulePayload()
-
-        and:
-        Rule rule = (Rule) POST("$FOLDERS_PATH/$folderId$RULE_PATH",
-                ruleMap, Rule)
+        Rule rule = ruleApi.create('folder', folderId, rulePayload())
         ruleId = rule.id
 
         when:
-        Rule saved = GET("$FOLDERS_PATH/$folderId$RULE_PATH/$ruleId",
-                Rule)
+        Rule saved = ruleApi.show('folder', folderId, ruleId)
 
         then:
         saved
@@ -92,24 +80,18 @@ class RuleIntegrationSpec extends CommonDataSpec {
     }
 
     void 'update rule'() {
-        given:
-        ruleMap = rulePayload()
-
-        and:
-        Rule rule = (Rule) POST("$FOLDERS_PATH/$folderId$RULE_PATH",
-                ruleMap, Rule)
+        when:
+        Rule rule = ruleApi.create('folder', folderId, rulePayload())
         ruleId = rule.id
 
-        when:
-        Rule updated = (Rule) PUT("$FOLDERS_PATH/$folderId$RULE_PATH/$ruleId",
-                [name: 'new rule name'], Rule)
+        Rule updated = ruleApi.update('folder', folderId, ruleId, new Rule(name: 'new rule name'))
 
         then:
         updated
         updated.name == 'new rule name'
 
         when:
-        Rule retrieved = (Rule) GET("$FOLDERS_PATH/$folderId$RULE_PATH/$ruleId", Rule)
+        Rule retrieved = ruleApi.show('folder', folderId, ruleId)
 
         then:
         retrieved
@@ -118,114 +100,112 @@ class RuleIntegrationSpec extends CommonDataSpec {
     }
 
     void 'delete rule'() {
-        given:
-        ruleMap = rulePayload()
-        and:
-        Rule rule = (Rule) POST("$FOLDERS_PATH/$folderId$RULE_PATH",
-                ruleMap, Rule)
+        when:
+        Rule rule = ruleApi.create('folder', folderId, rulePayload())
         ruleId = rule.id
 
-        when:
-        HttpStatus status = (HttpStatus) DELETE("$FOLDERS_PATH/$folderId$RULE_PATH/$ruleId", HttpStatus)
+        HttpResponse response = ruleApi.delete('folder', folderId, ruleId)
 
         then:
-        status == HttpStatus.NO_CONTENT
+        response.status == HttpStatus.NO_CONTENT
 
         when:
-        (Rule) GET("$FOLDERS_PATH/$folderId$RULE_PATH/$ruleId", Rule)
+        Rule ruleResponse = ruleApi.show('folder', folderId, ruleId)
 
         then: 'the show endpoint shows the update'
-        HttpClientResponseException exception = thrown()
-        exception.status == HttpStatus.NOT_FOUND
+        !ruleResponse
 
         when:
-        ListResponse<Rule> response = (ListResponse<Rule>) GET("$FOLDERS_PATH/$folderId$RULE_PATH", ListResponse, Rule)
+        ListResponse<Rule> rulesResponse = ruleApi.list('folder', folderId)
 
         then: 'the list endpoint shows the update'
-        response
-        response.count == 0
+        rulesResponse
+        rulesResponse.count == 0
     }
 
     void 'delete report'() {
         given:
-        Rule rule = (Rule) POST("$FOLDERS_PATH/$folderId$RULE_PATH",
-                rulePayload(), Rule)
+        Rule rule = ruleApi.create('folder', folderId, rulePayload())
 
         and:
-        RuleRepresentation ruleRepresentation1 = (RuleRepresentation) POST("$FOLDERS_PATH/$folderId$RULE_PATH/$rule.id$RULE_REPRESENTATION_PATH",
-                [language: 'language-1'], RuleRepresentation)
-        RuleRepresentation ruleRepresentation2 = (RuleRepresentation) POST("$FOLDERS_PATH/$folderId$RULE_PATH/$rule.id$RULE_REPRESENTATION_PATH",
-                [language: 'language-2'], RuleRepresentation)
+        RuleRepresentation ruleRepresentation1 = ruleRepresentationApi.create(
+            'folder',
+            folderId,
+            rule.id,
+            new RuleRepresentation(language: 'language-1'))
+        RuleRepresentation ruleRepresentation2 = ruleRepresentationApi.create(
+            'folder',
+            folderId,
+            rule.id,
+            new RuleRepresentation(language: 'language-2'))
 
-        ListResponse<RuleRepresentation> savedReports = (ListResponse<RuleRepresentation>) GET("$FOLDERS_PATH/$folderId$RULE_PATH/$rule.id$RULE_REPRESENTATION_PATH",
-                ListResponse, RuleRepresentation)
+        ListResponse<RuleRepresentation> savedReports = ruleRepresentationApi.list('folder', folderId, rule.id)
         savedReports
         savedReports.count == 2
         savedReports.items.id == List.of(ruleRepresentation1.id, ruleRepresentation2.id)
 
         when:
-        HttpStatus status = (HttpStatus) DELETE("$FOLDERS_PATH/$folderId$RULE_PATH/${rule.id}/$RULE_REPRESENTATION_PATH/${ruleRepresentation1.id}", HttpStatus)
+        HttpResponse deleteResponse = ruleRepresentationApi.delete('folder', folderId, rule.id, ruleRepresentation1.id)
 
         then:
-        status == HttpStatus.NO_CONTENT
+        deleteResponse.status == HttpStatus.NO_CONTENT
 
         when:
-        Rule ruleResponse = (Rule) GET("$FOLDERS_PATH/$folderId$RULE_PATH/$rule.id", Rule)
+        Rule ruleResponse = ruleApi.show('folder', folderId, rule.id)
 
         then:
         ruleResponse.ruleRepresentations.size() == 1
         ruleResponse.ruleRepresentations.id == [ruleRepresentation2.id]
 
         when:
-        (RuleRepresentation) GET("$FOLDERS_PATH/$folderId$RULE_PATH/$rule.id$RULE_REPRESENTATION_PATH/${ruleRepresentation1.id}", RuleRepresentation)
+        ruleResponse = ruleRepresentationApi.show('folder', folderId, rule.id, ruleRepresentation1.id)
 
         then: '404 not found is returned, exception thrown'
-        HttpClientException exception = thrown()
-        exception.status == HttpStatus.NOT_FOUND
-
+        !ruleResponse
     }
 
 
     void 'delete rule with reports'() {
         given:
-        Rule rule = (Rule) POST("$FOLDERS_PATH/$folderId$RULE_PATH",
-                rulePayload(), Rule)
+        Rule rule = ruleApi.create('folder', folderId, rulePayload())
 
         and:
-        RuleRepresentation ruleRepresentation1 = (RuleRepresentation) POST("$FOLDERS_PATH/$folderId$RULE_PATH/$rule.id$RULE_REPRESENTATION_PATH",
-                                                                           [language: 'language-1'], RuleRepresentation)
-        RuleRepresentation ruleRepresentation2 = (RuleRepresentation) POST("$FOLDERS_PATH/$folderId$RULE_PATH/$rule.id$RULE_REPRESENTATION_PATH",
-                                                                           [language: 'language-2'], RuleRepresentation)
+        RuleRepresentation ruleRepresentation1 = ruleRepresentationApi.create(
+                'folder',
+                folderId,
+                rule.id,
+                new RuleRepresentation(language: 'language-1'))
+        RuleRepresentation ruleRepresentation2 = ruleRepresentationApi.create(
+                'folder',
+                folderId,
+                rule.id,
+                new RuleRepresentation(language: 'language-2'))
 
-        ListResponse<RuleRepresentation> savedReports = (ListResponse<RuleRepresentation>) GET("$FOLDERS_PATH/$folderId$RULE_PATH/$rule.id$RULE_REPRESENTATION_PATH",
-                ListResponse, RuleRepresentation)
+        ListResponse<RuleRepresentation> savedReports = ruleRepresentationApi.list('folder', folderId, rule.id)
         savedReports
         savedReports.count == 2
         savedReports.items.id == List.of(ruleRepresentation1.id, ruleRepresentation2.id)
 
         when:
-        HttpStatus status = (HttpStatus) DELETE("$FOLDERS_PATH/$folderId$RULE_PATH/$rule.id", HttpStatus)
+        HttpResponse deleteResponse = ruleApi.delete('folder', folderId, rule.id)
 
         then:
-        status == HttpStatus.NO_CONTENT
+        deleteResponse.status == HttpStatus.NO_CONTENT
 
         when:
-        (Rule) GET("$FOLDERS_PATH/$folderId$RULE_PATH/$rule.id", Rule)
+        Rule ruleResponse = ruleApi.show('folder', folderId, rule.id)
 
         then: '404 not found is returned, exception thrown'
-        HttpClientResponseException exception = thrown()
-        exception.status == HttpStatus.NOT_FOUND
+        !ruleResponse
 
         when:
-        (ListResponse<RuleRepresentation>) GET("$FOLDERS_PATH/$folderId$RULE_PATH/$rule.id$RULE_REPRESENTATION_PATH",
-                ListResponse, RuleRepresentation)
+        List<RuleRepresentation> representations = ruleRepresentationApi.list('folder', folderId, rule.id)
 
         then: '404 not found is returned, exception thrown'
-        exception = thrown()
-        exception.status == HttpStatus.NOT_FOUND
+        !representations
 
         when:
-        ListResponse<Rule> response = (ListResponse<Rule>) GET("$FOLDERS_PATH/$folderId$RULE_PATH", ListResponse, Rule)
+        ListResponse<Rule> response = ruleApi.list('folder', folderId)
 
         then: 'no rules are found'
         response

@@ -2,7 +2,7 @@ package uk.ac.ox.softeng.mauro.api.facet
 
 import uk.ac.ox.softeng.mauro.api.MauroApi
 import uk.ac.ox.softeng.mauro.api.Paths
-import uk.ac.ox.softeng.mauro.domain.model.SummaryMetadataReport
+import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadataReport
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 import io.micronaut.core.annotation.NonNull

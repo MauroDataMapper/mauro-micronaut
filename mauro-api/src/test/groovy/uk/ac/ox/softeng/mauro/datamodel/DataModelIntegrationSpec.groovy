@@ -324,7 +324,11 @@ class DataModelIntegrationSpec extends CommonDataSpec {
         Integer minMultiplicity = dataElementResponse.minMultiplicity
 
         when:
-        dataElementResponse = (DataElement) PUT("/dataModels/$dataModelId/dataClasses/$dataClassId1/dataElements/$dataElementId1", [ minMultiplicity: 5, dataType: [id: dataTypeId2]], DataElement)
+        dataElementResponse = dataElementApi.update(
+                dataModelId,
+                dataClassId1,
+                dataElementId1,
+                new DataElement(minMultiplicity: 5, dataType: new DataType(id: dataTypeId2)))
 
         then:
         dataElementResponse.label == 'Renamed data element'

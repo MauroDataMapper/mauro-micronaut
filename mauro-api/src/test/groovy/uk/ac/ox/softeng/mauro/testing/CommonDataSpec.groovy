@@ -17,6 +17,8 @@ import uk.ac.ox.softeng.mauro.api.datamodel.EnumerationValueApi
 import uk.ac.ox.softeng.mauro.api.facet.AnnotationApi
 import uk.ac.ox.softeng.mauro.api.facet.MetadataApi
 import uk.ac.ox.softeng.mauro.api.facet.ReferenceFileApi
+import uk.ac.ox.softeng.mauro.api.facet.RuleApi
+import uk.ac.ox.softeng.mauro.api.facet.RuleRepresentationApi
 import uk.ac.ox.softeng.mauro.api.facet.SummaryMetadataApi
 import uk.ac.ox.softeng.mauro.api.facet.SummaryMetadataReportApi
 import uk.ac.ox.softeng.mauro.api.folder.FolderApi
@@ -44,10 +46,12 @@ import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
 import uk.ac.ox.softeng.mauro.domain.facet.Annotation
 import uk.ac.ox.softeng.mauro.domain.facet.Metadata
 import uk.ac.ox.softeng.mauro.domain.facet.ReferenceFile
+import uk.ac.ox.softeng.mauro.domain.facet.Rule
+import uk.ac.ox.softeng.mauro.domain.facet.RuleRepresentation
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadataType
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
-import uk.ac.ox.softeng.mauro.domain.model.SummaryMetadataReport
+import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadataReport
 import uk.ac.ox.softeng.mauro.domain.terminology.CodeSet
 import uk.ac.ox.softeng.mauro.domain.terminology.Term
 import uk.ac.ox.softeng.mauro.domain.terminology.TermRelationshipType
@@ -107,6 +111,8 @@ class CommonDataSpec extends Specification {
     @Shared @Inject ReferenceFileApi referenceFileApi
     @Shared @Inject SummaryMetadataApi summaryMetadataApi
     @Shared @Inject SummaryMetadataReportApi summaryMetadataReportApi
+    @Shared @Inject RuleApi ruleApi
+    @Shared @Inject RuleRepresentationApi ruleRepresentationApi
     @Shared @Inject FolderApi folderApi
     @Shared @Inject ImporterApi importerApi
     @Shared @Inject ProfileApi profileApi
@@ -158,8 +164,8 @@ class CommonDataSpec extends Specification {
         new SummaryMetadataReport(reportValue: 'test-report-value', reportDate: REPORT_DATE)
     }
 
-    def ruleRepresentation() {
-        [ language: 'java', representation: 'age >= 0']
+    RuleRepresentation ruleRepresentation() {
+        new RuleRepresentation(language: 'java', representation: 'age >= 0')
     }
 
     Annotation annotationPayload() {
@@ -175,8 +181,8 @@ class CommonDataSpec extends Specification {
                              label: 'summary metadata label')
     }
 
-    def rulePayload() {
-        [ description: 'My first rule description', name: 'rule name']
+    Rule rulePayload() {
+        new Rule(description: 'My first rule description', name: 'rule name')
     }
 
     Metadata metadataPayload() {

@@ -134,6 +134,18 @@ interface Paths {
     String METADATA_ID = '/{domainType}/{domainId}/metadata/{id}'
 
     /*
+    * RuleApi
+    */
+    String RULE_LIST = '/{domainType}/{domainId}/rules'
+    String RULE_ID = '/{domainType}/{domainId}/rules/{id}'
+
+    /*
+    * RuleRepresentationApi
+    */
+    String RULE_REPRESENTATIONS_LIST = '/{domainType}/{domainId}/rules/{ruleId}/representations'
+    String RULE_REPRESENTATIONS_ID = '/{domainType}/{domainId}/rules/{ruleId}/representations/{id}'
+
+    /*
     * ReferenceFileApi
     */
     String REFERENCE_FILE_LIST = '/{domainType}/{domainId}/referenceFiles'
