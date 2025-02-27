@@ -11,6 +11,7 @@ import uk.ac.ox.softeng.mauro.persistence.SecuredContainerizedTest
 import uk.ac.ox.softeng.mauro.security.SecuredIntegrationSpec
 
 import io.micronaut.runtime.EmbeddedApplication
+import io.micronaut.runtime.server.EmbeddedServer
 import jakarta.inject.Inject
 import spock.lang.Shared
 
@@ -64,8 +65,13 @@ class PublishedModelIntegrationSpec extends SecuredIntegrationSpec {
         List<String> linksContentType = publishedModelResponse.publishedModels.collectMany {it.links.collect {it.contentType}}.toSorted()
         linksContentType.size() == 3
         linksContentType == List.of('application/mauro.codeset+json', 'application/mauro.datamodel+json', 'application/mauro.terminology+json')
-    }
 
+        List<String> linksUrl = publishedModelResponse.publishedModels.collectMany {it.links.collect {it.url}}.toSorted()
+        linksUrl.size() == 3
+        PublishedModel terminologyPublishedModel = publishedModelResponse.publishedModels.find{it.modelType == Terminology.class.simpleName }
+        terminologyPublishedModel.links?[0].url.contains(terminologyId.toString())
+    }
+    gi
     void 'admin user -get published modelsNewerVersions '() {
         given:
         loginAdmin()

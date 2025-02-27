@@ -39,7 +39,7 @@ class PublishService {
             ModelExporterPlugin.isInstance(it)
                 && ((ModelExporterPlugin) it).getHandlesModelType() == model.class
         }.sort().collect {mauroPlugin ->
-            new MauroLink("${uriString}/${modelUrlPath}/export/${mauroPlugin.namespace}/${mauroPlugin.name}/${mauroPlugin.version}",
+            new MauroLink("${uriString}/${modelUrlPath}/${model.id.toString()}/export/${mauroPlugin.namespace}/${mauroPlugin.name}/${mauroPlugin.version}",
                           ((ModelExporterPlugin) mauroPlugin).getContentType())
         }
         publishedModel
