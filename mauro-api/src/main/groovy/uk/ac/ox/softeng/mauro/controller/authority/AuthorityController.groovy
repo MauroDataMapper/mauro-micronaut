@@ -1,6 +1,6 @@
 package uk.ac.ox.softeng.mauro.controller.authority
 
-import uk.ac.ox.softeng.mauro.controller.Paths
+import uk.ac.ox.softeng.mauro.Paths
 import uk.ac.ox.softeng.mauro.controller.model.ItemController
 import uk.ac.ox.softeng.mauro.domain.authority.Authority
 import uk.ac.ox.softeng.mauro.service.core.AuthorityService

@@ -1,7 +1,7 @@
 package uk.ac.ox.softeng.mauro.controller.federation
 
 import uk.ac.ox.softeng.mauro.ErrorHandler
-import uk.ac.ox.softeng.mauro.controller.Paths
+import uk.ac.ox.softeng.mauro.Paths
 import uk.ac.ox.softeng.mauro.controller.model.ItemController
 import uk.ac.ox.softeng.mauro.domain.facet.federation.PublishedModel
 import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedCatalogue

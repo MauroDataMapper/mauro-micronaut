@@ -13,7 +13,7 @@ import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
 import jakarta.transaction.Transactional
 import uk.ac.ox.softeng.mauro.controller.model.AdministeredItemController
-import uk.ac.ox.softeng.mauro.controller.Paths
+import uk.ac.ox.softeng.mauro.Paths
 import uk.ac.ox.softeng.mauro.domain.classifier.ClassificationScheme
 import uk.ac.ox.softeng.mauro.domain.classifier.Classifier
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem

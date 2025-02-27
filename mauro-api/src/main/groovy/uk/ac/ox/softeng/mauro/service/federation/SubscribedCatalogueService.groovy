@@ -1,7 +1,7 @@
 package uk.ac.ox.softeng.mauro.service.federation
 
 import uk.ac.ox.softeng.mauro.ErrorHandler
-import uk.ac.ox.softeng.mauro.controller.Paths
+import uk.ac.ox.softeng.mauro.Paths
 import uk.ac.ox.softeng.mauro.controller.federation.client.FederationClient
 import uk.ac.ox.softeng.mauro.domain.authority.Authority
 import uk.ac.ox.softeng.mauro.domain.facet.federation.PublishedModel
@@ -9,8 +9,8 @@ import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedCatalogue
 import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedCatalogueType
 import uk.ac.ox.softeng.mauro.domain.facet.federation.response.SubscribedCataloguesPublishedModelsNewerVersions
 import uk.ac.ox.softeng.mauro.service.core.AuthorityService
-import uk.ac.ox.softeng.mauro.service.federation.converter.SubscribedCatalogueConverter
-import uk.ac.ox.softeng.mauro.service.federation.converter.SubscribedCatalogueConverterService
+import uk.ac.ox.softeng.mauro.controller.federation.converter.SubscribedCatalogueConverter
+import uk.ac.ox.softeng.mauro.controller.federation.converter.SubscribedCatalogueConverterService
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j

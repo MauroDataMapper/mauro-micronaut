@@ -1,6 +1,6 @@
-package uk.ac.ox.softeng.mauro.service.federation.converter
+package uk.ac.ox.softeng.mauro.controller.federation.converter
 
-import uk.ac.ox.softeng.mauro.controller.Paths
+import uk.ac.ox.softeng.mauro.Paths
 import uk.ac.ox.softeng.mauro.controller.federation.client.FederationClient
 import uk.ac.ox.softeng.mauro.domain.authority.Authority
 import uk.ac.ox.softeng.mauro.domain.facet.federation.MauroLink

@@ -1,4 +1,4 @@
-package uk.ac.ox.softeng.mauro.controller
+package uk.ac.ox.softeng.mauro
 
 class Paths {
     public static final String CODE_SETS = "/codeSets"

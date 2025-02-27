@@ -1,4 +1,4 @@
-package uk.ac.ox.softeng.mauro.service.federation.converter
+package uk.ac.ox.softeng.mauro.controller.federation.converter
 
 import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedCatalogueType
 

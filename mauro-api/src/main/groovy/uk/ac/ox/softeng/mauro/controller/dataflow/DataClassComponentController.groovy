@@ -12,7 +12,7 @@ import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
 import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.controller.model.AdministeredItemController
-import uk.ac.ox.softeng.mauro.controller.Paths
+import uk.ac.ox.softeng.mauro.Paths
 import uk.ac.ox.softeng.mauro.domain.dataflow.DataClassComponent
 import uk.ac.ox.softeng.mauro.domain.dataflow.DataFlow
 import uk.ac.ox.softeng.mauro.domain.dataflow.Type

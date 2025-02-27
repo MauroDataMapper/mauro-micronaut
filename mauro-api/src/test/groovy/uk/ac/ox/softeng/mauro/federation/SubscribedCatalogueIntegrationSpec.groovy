@@ -7,7 +7,7 @@ import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedCatalogueType
 import uk.ac.ox.softeng.mauro.domain.facet.federation.response.SubscribedCataloguesPublishedModelsNewerVersions
 import uk.ac.ox.softeng.mauro.persistence.SecuredContainerizedTest
 import uk.ac.ox.softeng.mauro.security.SecuredIntegrationSpec
-import uk.ac.ox.softeng.mauro.service.federation.converter.AtomSubscribedCatalogueConverter
+import uk.ac.ox.softeng.mauro.controller.federation.converter.AtomSubscribedCatalogueConverter
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 import com.fasterxml.jackson.databind.ObjectMapper
