@@ -71,7 +71,7 @@ class PublishedModelIntegrationSpec extends SecuredIntegrationSpec {
         PublishedModel terminologyPublishedModel = publishedModelResponse.publishedModels.find{it.modelType == Terminology.class.simpleName }
         terminologyPublishedModel.links?[0].url.contains(terminologyId.toString())
     }
-    gi
+    
     void 'admin user -get published modelsNewerVersions '() {
         given:
         loginAdmin()

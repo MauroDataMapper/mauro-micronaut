@@ -3,6 +3,10 @@ package uk.ac.ox.softeng.mauro.controller.federation.client
 import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedCatalogue
 import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedCatalogueType
 
+import groovy.transform.CompileStatic
+
+@Singleton
+@CompileStatic
 class ClientContext {
 
     static String resolveContextPath(SubscribedCatalogue subscribedCatalogue) {
