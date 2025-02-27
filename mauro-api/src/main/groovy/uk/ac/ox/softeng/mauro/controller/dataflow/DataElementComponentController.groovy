@@ -98,11 +98,11 @@ class DataElementComponentController extends AdministeredItemController<DataElem
 
     private DataElementComponent addDataElement(Type type, UUID id, UUID dataElementId, UUID parentId) {
         DataElement dataElementToAdd = dataElementRepository.readById(dataElementId)
-        ErrorHandler.handleError(HttpStatus.NOT_FOUND, dataElementToAdd, "Item with id: $dataElementId not found")
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, dataElementToAdd, "Item with id: $dataElementId not found")
         accessControlService.checkRole(Role.EDITOR, dataElementToAdd)
 
         DataElementComponent dataElementComponent = dataElementComponentContentRepository.readWithContentById(id)
-        ErrorHandler.handleError(HttpStatus.NOT_FOUND, dataElementComponent, "Item with id: $id not found")
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, dataElementComponent, "Item with id: $id not found")
         accessControlService.checkRole(Role.EDITOR, dataElementComponent)
 
         switch (type) {
@@ -128,10 +128,10 @@ class DataElementComponentController extends AdministeredItemController<DataElem
 
     private void removeDataElement(Type type, UUID id, UUID dataElementId) {
         DataElement dataElementToRemove = dataElementRepository.readById(dataElementId)
-        ErrorHandler.handleError(HttpStatus.NOT_FOUND, dataElementToRemove,"Item with id: $dataElementId not found")
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, dataElementToRemove,"Item with id: $dataElementId not found")
         accessControlService.checkRole(Role.EDITOR, dataElementToRemove)
         DataElementComponent dataElementComponent = dataElementComponentContentRepository.readWithContentById(id)
-        ErrorHandler.handleError(HttpStatus.NOT_FOUND, dataElementComponent,"Item with id: $id not found")
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, dataElementComponent,"Item with id: $id not found")
 
         accessControlService.checkRole(Role.EDITOR, dataElementToRemove)
         Long result

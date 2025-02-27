@@ -20,7 +20,6 @@ class BootstrapAuthority  {
     AuthorityService authorityService
 
     @EventListener
-    @Async
     void onApplicationEvent(final ServiceReadyEvent event) {
         if (!authorityService.getDefaultAuthority()) {
             createDefaultAuthority()

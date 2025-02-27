@@ -77,10 +77,10 @@ class CodeSetController extends ModelController<CodeSet> {
 
         Term term = termRepository.readById(termId)
         accessControlService.checkRole(Role.READER, term)
-        ErrorHandler.handleError(HttpStatus.NOT_FOUND, term, "Term item $termId not found")
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, term, "Term item $termId not found")
         CodeSet codeSet = codeSetRepository.readById(id)
         accessControlService.checkRole(Role.EDITOR, codeSet)
-        ErrorHandler.handleError(HttpStatus.NOT_FOUND, term, "CodeSet item $id not found")
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, term, "CodeSet item $id not found")
         codeSetRepositoryUnCached.addTerm(id, termId)
         codeSet
     }
@@ -96,10 +96,10 @@ class CodeSetController extends ModelController<CodeSet> {
     CodeSet removeTermFromCodeSet(@NonNull UUID id,
                                   @NonNull UUID termId) {
         Term term = termRepository.readById(termId)
-        ErrorHandler.handleError(HttpStatus.NOT_FOUND, term, "Term item $termId not found")
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, term, "Term item $termId not found")
         CodeSet codeSet = codeSetRepository.readById(id)
         accessControlService.checkRole(Role.EDITOR, codeSet)
-        ErrorHandler.handleError(HttpStatus.NOT_FOUND, term, "CodeSet item $id not found")
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, term, "CodeSet item $id not found")
         codeSetRepositoryUnCached.removeTerm(id, termId)
         codeSet
     }
@@ -136,9 +136,9 @@ class CodeSetController extends ModelController<CodeSet> {
     @Get('/codeSets/{id}/diff/{otherId}')
     ObjectDiff diffModels(@NonNull UUID id, @NonNull UUID otherId) {
         CodeSet codeSet = modelContentRepository.findWithContentById(id)
-        ErrorHandler.handleError(HttpStatus.NOT_FOUND, codeSet, "item not found : $id")
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, codeSet, "item not found : $id")
         CodeSet other = modelContentRepository.findWithContentById(otherId)
-        ErrorHandler.handleError(HttpStatus.NOT_FOUND, codeSet, "item not found : $otherId")
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, codeSet, "item not found : $otherId")
 
         accessControlService.checkRole(Role.READER, codeSet)
         accessControlService.checkRole(Role.READER, other)

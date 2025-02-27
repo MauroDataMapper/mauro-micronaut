@@ -40,7 +40,7 @@ import jakarta.inject.Inject
 @Secured(SecurityRule.IS_ANONYMOUS)
 class SubscribedCatalogueController extends ItemController<SubscribedCatalogue> {
 
-    @Value('${micronaut.federation.subscribed-catalogues.max}')
+    @Value('${mauro.federation.subscribed-catalogues.max}')
     int maxDefault
 
     ItemCacheableRepository.SubscribedCatalogueCacheableRepository subscribedCatalogueCacheableRepository
@@ -129,7 +129,7 @@ class SubscribedCatalogueController extends ItemController<SubscribedCatalogue> 
         accessControlService.checkAdministrator()
 
         SubscribedCatalogue subscribedCatalogue = subscribedCatalogueCacheableRepository.findById(subscribedCatalogueId)
-        ErrorHandler.handleError(HttpStatus.NOT_FOUND, subscribedCatalogue, "Item $subscribedCatalogueId not found")
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, subscribedCatalogue, "Item $subscribedCatalogueId not found")
         if (subscribedCatalogueService.validateRemote(subscribedCatalogue)) {
             return HttpStatus.OK
         }
@@ -143,7 +143,7 @@ class SubscribedCatalogueController extends ItemController<SubscribedCatalogue> 
         accessControlService.checkAuthenticated()
 
         SubscribedCatalogue subscribedCatalogue = subscribedCatalogueCacheableRepository.findById(subscribedCatalogueId)
-        ErrorHandler.handleError(HttpStatus.NOT_FOUND, subscribedCatalogue, "Item $subscribedCatalogueId not found")
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, subscribedCatalogue, "Item $subscribedCatalogueId not found")
         ListResponse.from(subscribedCatalogueService.getPublishedModels(subscribedCatalogue))
     }
 
@@ -153,7 +153,7 @@ class SubscribedCatalogueController extends ItemController<SubscribedCatalogue> 
         accessControlService.checkAuthenticated()
 
         SubscribedCatalogue subscribedCatalogue = subscribedCatalogueCacheableRepository.findById(subscribedCatalogueId)
-        ErrorHandler.handleError(HttpStatus.NOT_FOUND, subscribedCatalogue, "Item $subscribedCatalogueId not found")
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, subscribedCatalogue, "Item $subscribedCatalogueId not found")
 
         subscribedCatalogueService.getNewerVersionsForPublishedModels(subscribedCatalogue, publishedModelId)
     }
@@ -165,7 +165,7 @@ class SubscribedCatalogueController extends ItemController<SubscribedCatalogue> 
         accessControlService.checkAdministrator()
 
         SubscribedCatalogue catalogueToDelete = subscribedCatalogueCacheableRepository.findById(subscribedCatalogueId)
-        ErrorHandler.handleError(HttpStatus.NOT_FOUND, catalogueToDelete, "Item $subscribedCatalogueId not found")
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, catalogueToDelete, "Item $subscribedCatalogueId not found")
         Long deletedCount = subscribedModelService.deleteModels(catalogueToDelete)
         if (deletedCount) {
             log.debug("Removed $deletedCount of associated models")

@@ -144,9 +144,9 @@ class DataModelController extends ModelController<DataModel> {
     @Get('/dataModels/{id}/diff/{otherId}')
     ObjectDiff diffModels(@NonNull UUID id, @NonNull UUID otherId) {
         DataModel dataModel = modelContentRepository.findWithContentById(id)
-        ErrorHandler.handleError(HttpStatus.NOT_FOUND, dataModel, "item with $id not found")
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, dataModel, "item with $id not found")
         DataModel otherDataModel = modelContentRepository.findWithContentById(otherId)
-        ErrorHandler.handleError(HttpStatus.NOT_FOUND, dataModel, "item with $otherId not found")
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, dataModel, "item with $otherId not found")
 
         accessControlService.checkRole(Role.READER, dataModel)
         accessControlService.checkRole(Role.READER, otherDataModel)

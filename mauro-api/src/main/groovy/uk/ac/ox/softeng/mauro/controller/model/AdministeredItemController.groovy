@@ -167,7 +167,7 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
         if (item.classifiers) {
             classifierList = item.classifiers.collect {
                 Classifier retrieved = getClassifierCacheableRepository(it.domainType).readById(it.id)
-                ErrorHandler.handleError(HttpStatus.NOT_FOUND, retrieved, " Item with id:  $it.id  not found ")
+                ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, retrieved, " Item with id:  $it.id  not found ")
                 accessControlService.checkRole(Role.EDITOR, retrieved)
                 retrieved
             }

@@ -8,7 +8,6 @@ import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedModel
 import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedModelFederationParams
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.domain.model.Model
-import uk.ac.ox.softeng.mauro.domain.security.Role
 import uk.ac.ox.softeng.mauro.persistence.cache.ItemCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.ItemCacheableRepository.SubscribedCatalogueCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
@@ -67,7 +66,7 @@ class SubscribedModelController extends ItemController<SubscribedModel> {
         accessControlService.checkAuthenticated()
 
         SubscribedCatalogue subscribedCatalogue = subscribedCatalogueCacheableRepository.readById(subscribedCatalogueId)
-        ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, subscribedCatalogue, "Subscribed Catalogue not found $subscribedCatalogueId")
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.UNPROCESSABLE_ENTITY, subscribedCatalogue, "Subscribed Catalogue not found $subscribedCatalogueId")
 
         subscribedModelCacheableRepository.findBySubscribedModelIdAndSubscribedCatalogueId(subscribedModelId, subscribedCatalogue)
     }
@@ -79,11 +78,11 @@ class SubscribedModelController extends ItemController<SubscribedModel> {
         accessControlService.checkAuthenticated()
 
         SubscribedCatalogue subscribedCatalogue = subscribedCatalogueCacheableRepository.readById(subscribedCatalogueId)
-        ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, subscribedCatalogue, "Subscribed Catalogue not found $subscribedCatalogueId")
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.UNPROCESSABLE_ENTITY, subscribedCatalogue, "Subscribed Catalogue not found $subscribedCatalogueId")
 
         Folder folder = folderCacheableRepository.readById(subscribedModelFederationParams.subscribedModel?.folderId)
 
-        ErrorHandler.handleError(HttpStatus.NOT_FOUND, folder, "Entity not found, $subscribedModelFederationParams.subscribedModel.folderId")
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, folder, "Entity not found, $subscribedModelFederationParams.subscribedModel.folderId")
         //   accessControlService.checkRole(Role.READER, folder)
 
         SubscribedModel subscribedModel = subscribedModelFederationParams.subscribedModel
@@ -102,10 +101,10 @@ class SubscribedModelController extends ItemController<SubscribedModel> {
         accessControlService.checkAdministrator()
 
         SubscribedCatalogue subscribedCatalogue = subscribedCatalogueCacheableRepository.findById(subscribedCatalogueId)
-        ErrorHandler.handleError(HttpStatus.NOT_FOUND, subscribedCatalogue, "Item $subscribedCatalogueId not found")
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, subscribedCatalogue, "Item $subscribedCatalogueId not found")
 
         SubscribedModel subscribedModelToDelete = subscribedModelCacheableRepository.findById(subscribedModelId)
-        ErrorHandler.handleError(HttpStatus.NOT_FOUND, subscribedModelToDelete, "Item $subscribedModelId not found")
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, subscribedModelToDelete, "Item $subscribedModelId not found")
 
         if (subscribedModel?.version) subscribedModel.version = subscribedModel.version
         Long deleted = subscribedModelCacheableRepository.delete(subscribedModelToDelete)

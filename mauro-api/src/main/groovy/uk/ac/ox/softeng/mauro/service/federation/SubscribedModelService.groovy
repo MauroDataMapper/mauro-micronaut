@@ -72,10 +72,10 @@ class SubscribedModelService {
         MauroLink exportLink = findExportLink(exportLinks, subscribedModelFederationParams)
 
         ModelImporterPlugin mauroImporterPlugin = getImporterPlugin(subscribedModelFederationParams, exportLink.contentType)
-        ErrorHandler.handleError(HttpStatus.BAD_REQUEST, mauroImporterPlugin, "$mauroImporterPlugin  not found ")
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.BAD_REQUEST, mauroImporterPlugin, "$mauroImporterPlugin  not found ")
 
         ModelExporterPlugin exporterPlugin = getExporterPlugin(subscribedModel.subscribedModelType)
-        ErrorHandler.handleError(HttpStatus.BAD_REQUEST, exporterPlugin, "$exporterPlugin  not found ")
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.BAD_REQUEST, exporterPlugin, "$exporterPlugin  not found ")
 
 
         byte[] resourceBytes = subscribedCatalogueService.getBytesResourceExport(subscribedModel.subscribedCatalogue, exportLink.url)

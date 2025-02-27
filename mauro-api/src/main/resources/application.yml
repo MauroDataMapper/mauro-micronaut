@@ -1,8 +1,6 @@
 micronaut:
   application:
     name: sandbox
-  federation:
-    subscribed-catalogues.max: 50
     client:
       connect-timeout: 11s
 
@@ -73,7 +71,7 @@ endpoints:
     enabled: true
     sensitive: true
   flyway:
-    enabled: true
+    enabled: trues
     sensitive: true
   caches:
     enabled: true
@@ -120,8 +118,11 @@ javamail:
           enable: true
         host: $$host$$ # Replace me!
 
+mauro:
+  federation:
+    subscribed-catalogues.max: 50
+
 # Populate to enable OAuth2; see also micronaut.security properties
-#mauro:
 #  oauth:
 #    id:
 #    label: Keycloak

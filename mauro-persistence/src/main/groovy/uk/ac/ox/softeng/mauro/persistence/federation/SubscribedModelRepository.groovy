@@ -22,8 +22,8 @@ abstract class SubscribedModelRepository implements ItemRepository<SubscribedMod
     abstract List<SubscribedModel> findAll()
 
     @Nullable
-    @Query('select * from federation.subscribed_model')
-    abstract List<SubscribedModel> findAllBySubscribedCatalogueId(UUID uuid)
+    @Query('select * from federation.subscribed_model where subscribed_catalogue_id = :subscribedCatalogueId')
+    abstract List<SubscribedModel> findAllBySubscribedCatalogueId(UUID subscribedCatalogueId)
 
     @Nullable
     @Query('select * from federation.subscribed_model where id = :id  and subscribed_catalogue_id = :subscribedCatalogueId')

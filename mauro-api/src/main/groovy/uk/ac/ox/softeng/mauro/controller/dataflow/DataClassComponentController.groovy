@@ -100,10 +100,10 @@ class DataClassComponentController extends AdministeredItemController<DataClassC
 
     private DataClassComponent addDataClass(Type type, UUID id, UUID dataClassId) {
         DataClass dataClassToAdd = dataClassRepository.readById(dataClassId)
-        ErrorHandler.handleError(HttpStatus.NOT_FOUND, dataClassToAdd, "item not found : $id")
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, dataClassToAdd, "item not found : $id")
         accessControlService.checkRole(Role.EDITOR, dataClassToAdd)
         DataClassComponent dataClassComponent = dataClassComponentContentRepository.readWithContentById(id)
-        ErrorHandler.handleError(HttpStatus.NOT_FOUND, dataClassComponent, "item not found : $id")
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, dataClassComponent, "item not found : $id")
         accessControlService.checkRole(Role.EDITOR, dataClassComponent)
 
         switch (type) {
@@ -129,10 +129,10 @@ class DataClassComponentController extends AdministeredItemController<DataClassC
 
     private DataClassComponent removeDataClass(Type type, UUID id, UUID dataClassId) {
         DataClass dataClassToRemove = dataClassRepository.readById(dataClassId)
-        ErrorHandler.handleError(HttpStatus.NOT_FOUND, dataClassToRemove,"Item with id: $dataClassId not found")
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, dataClassToRemove,"Item with id: $dataClassId not found")
         accessControlService.checkRole(Role.EDITOR, dataClassToRemove)
         DataClassComponent dataClassComponent = dataClassComponentContentRepository.readWithContentById(id)
-        ErrorHandler.handleError(HttpStatus.NOT_FOUND, dataClassToRemove,"Item with id: $id not found")
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, dataClassToRemove,"Item with id: $id not found")
         accessControlService.checkRole(Role.EDITOR, dataClassComponent)
 
         Long result

@@ -346,7 +346,6 @@ class SubscribedCatalogueIntegrationSpec extends SecuredIntegrationSpec {
         loginAdmin()
 
         (SubscribedCatalogue) POST("$ADMIN_SUBSCRIBED_CATALOGUES_PATH", mauroJsonSubscribedCataloguePayload('label1'), SubscribedCatalogue)
-//        (SubscribedCatalogue) POST("$ADMIN_SUBSCRIBED_CATALOGUES_PATH", mauroJsonSubscribedCataloguePayload('label2'), SubscribedCatalogue)
 
         when:
         ListResponse<SubscribedCatalogue> resp = (ListResponse<SubscribedCatalogue>) GET(SUBSCRIBED_CATALOGUES_PATH, ListResponse, SubscribedCatalogue)

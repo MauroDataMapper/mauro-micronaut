@@ -22,5 +22,6 @@ micronaut:
       read-timeout: 30m
       connect-timeout: 30m
 
+mauro:
   federation:
     subscribed-catalogues.max: 1

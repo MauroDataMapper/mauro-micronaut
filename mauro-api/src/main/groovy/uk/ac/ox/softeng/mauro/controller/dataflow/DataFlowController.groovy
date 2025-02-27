@@ -48,7 +48,7 @@ class DataFlowController extends AdministeredItemController<DataFlow, DataModel>
     DataFlow create(@NonNull UUID dataModelId, @Body @NonNull DataFlow dataFlow) {
         DataModel source = dataModelRepository.findById(dataFlow.source.id)
         accessControlService.checkRole(Role.READER, source)
-        ErrorHandler.handleError(HttpStatus.NOT_FOUND, source, "Datamodel not found : $dataFlow.source.id")
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, source, "Datamodel not found : $dataFlow.source.id")
         DataFlow created = super.create(dataModelId, dataFlow)
         show(created.id)
     }
@@ -71,7 +71,7 @@ class DataFlowController extends AdministeredItemController<DataFlow, DataModel>
             return super.list(dataModelId)
         }
         DataModel source = dataModelRepository.findById(dataModelId)
-        ErrorHandler.handleError(HttpStatus.NOT_FOUND, source, "Item with id: $dataModelId not found")
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, source, "Item with id: $dataModelId not found")
         List<DataFlow> sourceDataFlowList = dataFlowRepository.findAllBySource(source)
         ListResponse.from(sourceDataFlowList.findAll{accessControlService.canDoRole(Role.READER, it)})
     }

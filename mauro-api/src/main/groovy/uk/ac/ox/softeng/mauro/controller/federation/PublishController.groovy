@@ -1,5 +1,6 @@
 package uk.ac.ox.softeng.mauro.controller.federation
 
+import uk.ac.ox.softeng.mauro.ErrorHandler
 import uk.ac.ox.softeng.mauro.controller.Paths
 import uk.ac.ox.softeng.mauro.domain.authority.Authority
 import uk.ac.ox.softeng.mauro.domain.facet.federation.PublishService
@@ -68,11 +69,10 @@ class PublishController {
         try {
             List<Model> finalisedModels = getFinalisedModelsForDefaultAuthority()
             Model publishedVersion = finalisedModels.find {it.id == publishedModelId}
-            if (!publishedVersion) {
-                throw new HttpStatusException(HttpStatus.NOT_FOUND, "Entity not found, $publishedModelId")
-            }
+            ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, publishedVersion, "Published model with Id $publishedModelId not found")
+
             publishedModelResponse = new PublishedModelResponse(null, publishService.getPublishedModels(finalisedModels.findAll {
-                it.id != publishedVersion.id && it.label == publishedVersion.label && it.version > publishedVersion.version
+                it.id != publishedVersion.id && it.label == publishedVersion.label && it.modelVersion > publishedVersion.modelVersion
             }))
         } catch (AuthorizationException e) {
             publishedModelResponse = new PublishedModelResponse(null, Collections.emptyList())

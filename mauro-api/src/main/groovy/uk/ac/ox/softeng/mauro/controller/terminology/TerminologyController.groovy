@@ -161,9 +161,9 @@ class TerminologyController extends ModelController<Terminology> {
     ObjectDiff diffModels(@NonNull UUID id, @NonNull UUID otherId) {
         Terminology terminology = modelContentRepository.findWithContentById(id)
 
-        ErrorHandler.handleError(HttpStatus.NOT_FOUND, terminology, "item not found : $id")
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, terminology, "item not found : $id")
         Terminology other = modelContentRepository.findWithContentById(otherId)
-        ErrorHandler.handleError(HttpStatus.NOT_FOUND, terminology, "item not found : $otherId")
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, terminology, "item not found : $otherId")
 
         accessControlService.checkRole(Role.READER, terminology)
         accessControlService.checkRole(Role.READER, other)

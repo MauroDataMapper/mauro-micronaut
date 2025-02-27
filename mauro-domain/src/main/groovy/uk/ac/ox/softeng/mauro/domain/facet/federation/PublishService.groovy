@@ -1,6 +1,8 @@
 package uk.ac.ox.softeng.mauro.domain.facet.federation
 
+
 import uk.ac.ox.softeng.mauro.domain.model.Model
+import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
 import uk.ac.ox.softeng.mauro.plugin.MauroPluginService
 import uk.ac.ox.softeng.mauro.plugin.exporter.ModelExporterPlugin
 
@@ -32,7 +34,7 @@ class PublishService {
         PublishedModel publishedModel = new PublishedModel(model.id.toString(),
                                                            model.label, model.modelVersion, model.modelVersionTag, model.description, model.modelType, model.lastUpdated,
                                                            model.dateCreated, model.author, [])
-        String modelUrlPath = StringUtils.uncapitalize(model.domainType) + 's'
+        String modelUrlPath = deduceModelUrlPath(model.domainType)
         publishedModel.links = mauroPluginService.mauroPlugins.findAll {
             ModelExporterPlugin.isInstance(it)
                 && ((ModelExporterPlugin) it).getHandlesModelType() == model.class
@@ -41,6 +43,11 @@ class PublishService {
                           ((ModelExporterPlugin) mauroPlugin).getContentType())
         }
         publishedModel
+    }
 
+    private static String deduceModelUrlPath(String domainType) {
+        if (domainType == Terminology.class.simpleName) {
+            return 'terminologies'
+        } else return StringUtils.uncapitalize(domainType) + 's'
     }
 }

@@ -2,6 +2,7 @@ package uk.ac.ox.softeng.mauro.federation
 
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
+import uk.ac.ox.softeng.mauro.domain.facet.federation.PublishedModel
 import uk.ac.ox.softeng.mauro.domain.facet.federation.response.PublishedModelResponse
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.domain.terminology.CodeSet
@@ -33,17 +34,14 @@ class PublishedModelIntegrationSpec extends SecuredIntegrationSpec {
     void setupSpec() {
         loginAdmin()
         folderId = ((Folder) POST("$FOLDERS_PATH", folder(), Folder)).id
-        dataModelId = ((DataModel) POST("$FOLDERS_PATH/$folderId$DATAMODELS_PATH", [label: 'PublishedModelIntegrationSpec data model'], DataModel)).id
-        ((DataClass) POST("$DATAMODELS_PATH/$dataModelId$DATACLASSES_PATH", [label: 'PublishedModelIntegrationSpec data class'], DataClass)).id
+        dataModelId = ((DataModel) POST("$FOLDERS_PATH/$folderId$DATAMODELS_PATH", [label: 'data model label'], DataModel)).id
+        ((DataClass) POST("$DATAMODELS_PATH/$dataModelId$DATACLASSES_PATH", [label: 'data class label'], DataClass)).id
 
-        terminologyId = ((Terminology) POST("$FOLDERS_PATH/$folderId$TERMINOLOGIES_PATH", [label: 'PublishedModelIntegrationSpecc terminology'], Terminology)).id
-        codeSetId = ((CodeSet) POST("$FOLDERS_PATH/$folderId$CODE_SET_PATH", [label: 'PublishedModelIntegrationcode set'], CodeSet)).id
-        (DataModel) PUT("$DATAMODELS_PATH/$dataModelId/finalise", [versionChangeType: 'major',
-                                                                                                  versionTag       : 'versionTagString'], DataModel)
-        (Terminology) PUT("$TERMINOLOGIES_PATH/$terminologyId/finalise", [versionChangeType: 'major',
-                                                                                                             versionTag       : 'versionTagString'], Terminology)
-        (CodeSet) PUT("$CODE_SET_PATH/$codeSetId/finalise", [versionChangeType: 'major',
-                                                                                        versionTag       : 'versionTagString'], CodeSet)
+        terminologyId = ((Terminology) POST("$FOLDERS_PATH/$folderId$TERMINOLOGIES_PATH", [label: 'terminology label'], Terminology)).id
+        codeSetId = ((CodeSet) POST("$FOLDERS_PATH/$folderId$CODE_SET_PATH", [label: 'code set label'], CodeSet)).id
+        (DataModel) PUT("$DATAMODELS_PATH/$dataModelId/finalise", [version: '1.0.0', versionChangeType: 'major', versionTag: 'versionTagString'], DataModel)
+        (Terminology) PUT("$TERMINOLOGIES_PATH/$terminologyId/finalise", [ version: '1.0.0', versionChangeType: 'major', versionTag: 'versionTagString'], Terminology)
+        (CodeSet) PUT("$CODE_SET_PATH/$codeSetId/finalise", [version: '1.0.0', versionChangeType: 'major', versionTag: 'versionTagString'], CodeSet)
 
         logout()
     }
@@ -55,18 +53,35 @@ class PublishedModelIntegrationSpec extends SecuredIntegrationSpec {
         List<String> sortedFinalisedModelIds = List.of(codeSetId.toString(), dataModelId.toString(), terminologyId.toString())
         .toSorted()
 
-
         when:
         PublishedModelResponse publishedModelResponse = (PublishedModelResponse) GET(PUBLISHED_MODELS_PATH, PublishedModelResponse)
 
         then:
         publishedModelResponse
         publishedModelResponse.publishedModels.size() == 3
-        List<String> publishedModelIds = publishedModelResponse.publishedModels.collect{it.modelId}.toSorted()
+        List<String> publishedModelIds = publishedModelResponse.publishedModels.collect {it.modelId}.toSorted()
         publishedModelIds == sortedFinalisedModelIds
-        List<String> linksContentType = publishedModelResponse.publishedModels.collectMany{ it.links.collect {it.contentType}}.toSorted()
+        List<String> linksContentType = publishedModelResponse.publishedModels.collectMany {it.links.collect {it.contentType}}.toSorted()
         linksContentType.size() == 3
-        linksContentType == List.of( 'application/mauro.codeset+json','application/mauro.datamodel+json','application/mauro.terminology+json')
+        linksContentType == List.of('application/mauro.codeset+json', 'application/mauro.datamodel+json', 'application/mauro.terminology+json')
+    }
+
+    void 'admin user -get published modelsNewerVersions '() {
+        given:
+        loginAdmin()
+        and:
+        Terminology newerVersion = (Terminology) PUT("$TERMINOLOGIES_PATH/$terminologyId/newBranchModelVersion", ['version': '1.0.1','branchName': 'main'], Terminology)
+        Terminology finalisedNewerVersion = (Terminology) PUT("$TERMINOLOGIES_PATH/$newerVersion.id/finalise", ['version': '2.0.0'], Terminology)
+
+        when:
+        PublishedModelResponse publishedModelResponse = (PublishedModelResponse) GET("$PUBLISHED_MODELS_PATH/$terminologyId/newerVersions", PublishedModelResponse)
+
+        then:
+        publishedModelResponse
+        publishedModelResponse.publishedModels.size() == 1
+        PublishedModel publishedModelNewerVersion = publishedModelResponse.publishedModels[0]
+        publishedModelNewerVersion.modelId == finalisedNewerVersion.id.toString()
+        publishedModelNewerVersion.modelVersion == finalisedNewerVersion.modelVersion
     }
 
     void 'logged in as user -get published models - should return not found'() {
@@ -74,7 +89,7 @@ class PublishedModelIntegrationSpec extends SecuredIntegrationSpec {
         when:
         loginUser()
 
-        PublishedModelResponse publishedModelResponse = (PublishedModelResponse)  GET(PUBLISHED_MODELS_PATH, PublishedModelResponse)
+        PublishedModelResponse publishedModelResponse = (PublishedModelResponse) GET(PUBLISHED_MODELS_PATH, PublishedModelResponse)
 
         then:
         publishedModelResponse
