@@ -1,6 +1,7 @@
 package uk.ac.ox.softeng.mauro.controller.terminology
 
 import uk.ac.ox.softeng.mauro.api.Paths
+import uk.ac.ox.softeng.mauro.api.model.PermissionsDTO
 import uk.ac.ox.softeng.mauro.api.terminology.CodeSetApi
 import uk.ac.ox.softeng.mauro.ErrorHandler
 import uk.ac.ox.softeng.mauro.audit.Audit
@@ -21,6 +22,7 @@ import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.controller.model.ModelController
 import uk.ac.ox.softeng.mauro.domain.diff.ObjectDiff
+import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.domain.model.version.CreateNewVersionData
 import uk.ac.ox.softeng.mauro.domain.model.version.FinaliseData
 import uk.ac.ox.softeng.mauro.domain.security.Role
@@ -59,14 +61,13 @@ class CodeSetController extends ModelController<CodeSet> implements CodeSetApi {
         this.codeSetService = codeSetService
     }
 
-    @Audit
     @Get(value = Paths.CODE_SET_ID)
     CodeSet show(UUID id) {
         super.show(id)
     }
 
-    @Transactional
     @Audit
+    @Transactional
     @Post(value = Paths.FOLDER_LIST_CODE_SET)
     CodeSet create(UUID folderId, @Body @NonNull CodeSet codeSet) {
         super.create(folderId, codeSet)
@@ -78,7 +79,7 @@ class CodeSetController extends ModelController<CodeSet> implements CodeSetApi {
         super.update(id, codeSet)
     }
 
-    @Audit(title = EditType.UPDATE, description = "Add term to CodeSet")
+    @Audit
     @Put(value = Paths.CODE_SET_TERM_ID)
     @Transactional
     CodeSet addTerm(@NonNull UUID id,
@@ -97,8 +98,9 @@ class CodeSetController extends ModelController<CodeSet> implements CodeSetApi {
     @Audit
     @Transactional
     @Delete(value = Paths.CODE_SET_ID)
-    HttpResponse delete(UUID id, @Body @Nullable CodeSet codeSet) {
-        super.delete(id, codeSet)
+    HttpResponse delete(UUID id, @Body @Nullable CodeSet codeSet, @Nullable @QueryValue Boolean permanent) {
+        permanent = permanent ?: true
+        super.delete(id, codeSet,permanent)
     }
 
     @Transactional
@@ -181,18 +183,44 @@ class CodeSetController extends ModelController<CodeSet> implements CodeSetApi {
         savedCopy
     }
 
-
-    //stub endpoint todo: actual
-    @Get('/codeSets/{id}/simpleModelVersionTree')
-    List<Map> simpleModelVersionTree(UUID id){
-        super.simpleModelVersionTree(id)
+    @Audit
+    @Put(Paths.CODE_SET_READ_BY_AUTHENTICATED)
+    @Transactional
+    CodeSet allowReadByAuthenticated(UUID id) {
+        super.putReadByAuthenticated(id) as CodeSet
     }
 
+    @Audit
+    @Transactional
+    @Delete(Paths.CODE_SET_READ_BY_AUTHENTICATED)
+    HttpResponse revokeReadByAuthenticated(UUID id) {
+        super.deleteReadByAuthenticated(id)
+    }
 
+    @Audit
+    @Put(Paths.CODE_SET_READ_BY_EVERYONE)
+    @Transactional
+    CodeSet allowReadByEveryone(UUID id) {
+        super.putReadByEveryone(id) as CodeSet
+    }
 
-    //todo: implement actual
-    @Get('/codeSets/{id}/permissions')
-    List<Map> permissions(UUID id) {
+    @Audit
+    @Transactional
+    @Delete(Paths.CODE_SET_READ_BY_EVERYONE)
+    HttpResponse revokeReadByEveryone(UUID id) {
+        super.deleteReadByEveryone(id)
+    }
+
+    @Get(Paths.CODE_SET_FOLDER_PERMISSIONS)
+    @Override
+    PermissionsDTO permissions(UUID id) {
         super.permissions(id)
+    }
+
+    @Get(Paths.CODE_SET_DOI)
+    @Override
+    Map doi(UUID id) {
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.SERVICE_UNAVAILABLE, "Doi", "Doi is not implemented")
+        return null
     }
 }

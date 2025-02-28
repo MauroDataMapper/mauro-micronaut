@@ -28,6 +28,9 @@ interface Paths {
     String CLASSIFICATION_SCHEMES_EXPORT = '/classificationSchemes/{id}/export{/namespace}{/name}{/version}'
     String CLASSIFICATION_SCHEMES_IMPORT = '/classificationSchemes/import/{namespace}/{name}{/version}'
     String CLASSIFICATION_SCHEMES_DIFF = '/classificationSchemes/{id}/diff/{otherId}'
+    String CLASSIFICATION_SCHEMES_READ_BY_AUTHENTICATED = '/classificationSchemes/{id}/readByAuthenticated'
+    String CLASSIFICATION_SCHEMES_READ_BY_EVERYONE = '/classificationSchemes/{id}/readByEveryone'
+    String CLASSIFICATION_SCHEMES_PERMISSIONS='/classificationSchemes/{id}/permissions'
 
     /*
     * ClassificationSchemeApi
@@ -86,12 +89,18 @@ interface Paths {
     String DATA_CLASS_CHILD_DATA_CLASS_LIST = '/dataModels/{dataModelId}/dataClasses/{parentDataClassId}/dataClasses'
     String DATA_CLASS_CHILD_DATA_CLASS_ID = '/dataModels/{dataModelId}/dataClasses/{parentDataClassId}/dataClasses/{id}'
     String DATA_CLASS_EXTENDS = '/dataModels/{dataModelId}/dataClasses/{id}/extends/{otherModelId}/{otherClassId}'
+    String DATA_CLASS_DOI = '/dataClasses/{id}/doi'
+    String DATA_CLASS_SEARCH = '/dataModels/{dataModelId}/dataClasses{?params*}'
+
 
     /*
     * DataElementApi
     */
     String DATA_ELEMENT_LIST = '/dataModels/{dataModelId}/dataClasses/{dataClassId}/dataElements'
     String DATA_ELEMENT_ID = '/dataModels/{dataModelId}/dataClasses/{dataClassId}/dataElements/{id}'
+    String DATA_ELEMENT_DOI = '/dataElements/{id}/doi'
+    String DATA_ELEMENT_SEARCH = '/dataModels/{dataModelId}/dataClasses/{dataClassId}/dataElements{?params*}'
+
 
     /*
     * DataModelApi
@@ -109,6 +118,19 @@ interface Paths {
     String DATA_MODEL_EXPORTERS = '/dataModels/providers/importers'
     String DATA_MODEL_SUBSET = '/dataModels/{id}/subset/{otherId}'
     String DATA_MODEL_INTERSECTS_MANY = '/dataModels/{id}/intersectsMany'
+    String DATA_MODEL_READ_BY_AUTHENTICATED = '/dataModels/{id}/readByAuthenticated'
+    String DATA_MODEL_READ_BY_EVERYONE = '/dataModels/{id}/readByEveryone'
+    String DATA_MODEL_VERSION_LINKS = '/dataModels/{id}/versionLinks'
+    String DATA_MODEL_SIMPLE_MODEL_VERSION_TREE= '/dataModels/{id}/simpleModelVersionTree'
+    String DATA_MODEL_MODEL_VERSION_TREE= '/dataModels/{id}/modelVersionTree'
+    String DATA_MODEL_CURRENT_MAIN_BRANCH= '/dataModels/{id}/currentMainBranch'
+    String DATA_MODEL_LATEST_MODEL_VERSION= '/dataModels/{id}/latestModelVersion'
+    String DATA_MODEL_LATEST_FINALISED_MODEL= '/dataModels/{id}/latestFinalisedModel'
+    String DATA_MODEL_COMMON_ANCESTOR='/dataModels/{id}/commonAncestor/{other_model_id}'
+    String DATA_MODEL_MERGE_DIFF='/dataModels/{id}/mergeDiff/{otherId}'
+    String DATA_MODEL_PERMISSIONS='/dataModels/{id}/permissions'
+    String DATA_MODEL_DOI = '/dataModels/{id}/doi'
+
 
     /*
     * DataTypeApi
@@ -121,7 +143,6 @@ interface Paths {
     */
     String ENUMERATION_VALUE_LIST = '/dataModels/{dataModelId}/dataTypes/{enumerationTypeId}/enumerationValues'
     String ENUMERATION_VALUE_ID = '/dataModels/{dataModelId}/dataTypes/{enumerationTypeId}/enumerationValues/{id}'
-
     /*
     * AnnotationApi
     */
@@ -170,6 +191,7 @@ interface Paths {
     * SummaryMetadataApi
     */
     String SUMMARY_METADATA_LIST = '/{domainType}/{domainId}/summaryMetadata'
+    String SUMMARY_METADATA_SEARCH = '/{domainType}/{domainId}/summaryMetadata{?params*}'
     String SUMMARY_METADATA_ID = '/{domainType}/{domainId}/summaryMetadata/{id}'
 
     /*
@@ -190,6 +212,31 @@ interface Paths {
     String FOLDER_MOVE = '/folders/{id}/folder/{destination}'
     String FOLDER_EXPORT = '/folders/{id}/export{/namespace}{/name}{/version}'
     String FOLDER_IMPORT = '/folders/import/{namespace}/{name}{/version}'
+
+    String FOLDER_READ_BY_AUTHENTICATED = '/folders/{id}/readByAuthenticated'
+    String FOLDER_READ_BY_EVERYONE = '/folders/{id}/readByEveryone'
+    String FOLDER_PERMISSIONS='/folders/{id}/permissions'
+    String FOLDER_DOI = '/folders/{id}/doi'
+
+
+
+    /*
+    * VersionedFolderApi
+     */
+    String VERSIONED_FOLDER_LIST = '/versionedFolders'
+    String VERSIONED_FOLDER_ID = '/versionedFolders/{id}'
+
+    String CHILD_VERSIONED_FOLDER_LIST = '/folders/{parentId}/versionedFolders'
+    String FOLDER_CHILD_VERSIONED_FOLDER_ID = '/folders/{parentId}/versionedFolders/{id}'
+
+    String VERSIONED_FOLDER_FINALISE = '/versionedFolders/{id}/finalise'
+    String VERSIONED_FOLDER_NEW_BRANCH_MODEL_VERSION = '/versionedFolders/{id}/newBranchModelVersion'
+
+    String VERSIONED_FOLDER_READ_BY_AUTHENTICATED = '/versionedFolders/{id}/readByAuthenticated'
+    String VERSIONED_FOLDER_READ_BY_EVERYONE = '/versionedFolders/{id}/readByEveryone'
+    String VERSIONED_FOLDER_PERMISSIONS='/versionedFolders/{id}/permissions'
+    String VERSIONED_FOLDER_DOI = '/versionedFolders/{id}/doi'
+
 
     /*
     * ImporterApi
@@ -254,6 +301,10 @@ interface Paths {
     String CODE_SET_NEW_BRANCH_MODEL_VERSION = '/codeSets/{id}/newBranchModelVersion'
     String FOLDER_LIST_CODE_SET = '/folders/{folderId}/codeSets'
     String CODE_SET_DIFF = '/codeSets/{id}/diff/{otherId}'
+    String CODE_SET_READ_BY_AUTHENTICATED = '/codeSets/{id}/readByAuthenticated'
+    String CODE_SET_READ_BY_EVERYONE = '/codeSets/{id}/readByEveryone'
+    String CODE_SET_FOLDER_PERMISSIONS='/codeSets/{id}/permissions'
+    String CODE_SET_DOI = '/codeSets/{id}/doi'
 
     /*
     * TerminologyApi
@@ -268,6 +319,15 @@ interface Paths {
     String TERMINOLOGY_SEARCH_POST = '/terminologies/{id}/search'
     String TERMINOLOGY_EXPORT = '/terminologies/{id}/export{/namespace}{/name}{/version}'
     String TERMINOLOGY_IMPORT = '/terminologies/import/{namespace}/{name}{/version}'
+    String TERMINOLOGY_READ_BY_AUTHENTICATED = '/terminologies/{id}/readByAuthenticated'
+    String TERMINOLOGY_READ_BY_EVERYONE = '/terminologies/{id}/readByEveryone'
+    String TERMINOLOGY_PERMISSIONS='/terminologies/{id}/permissions'
+    String TERMINOLOGY_LIST_IMPORTERS = '/terminologies/providers/importers'
+    String TERMINOLOGY_LIST_EXPORTERS = '/terminologies/providers/exporters'
+    String TERMINOLOGY_DOI = '/terminologies/{id}/doi'
+
+
+
 
     /*
     * TermApi
@@ -286,6 +346,7 @@ interface Paths {
     String TERM_LIST = '/terminologies/{terminologyId}/terms'
     String TERM_TREE = '/terminologies/{terminologyId}/terms/tree{/id}'
     String TERM_CODE_SETS = '/terminologies/{terminologyId}/terms/{id}/codeSets'
+    String TERM_DOI = '/terminologies/{id}/doi'
 
     /*
     * TermRelationshipsApi
@@ -305,6 +366,9 @@ interface Paths {
     */
     String TREE_FOLDER = '/tree/folders{/id}'
     String TREE_ITEM = '/tree/folders/{domainType}/{id}'
+    String TREE_ITEM_ANCESTORS = '/tree/folders/{domainType}/{id}/ancestors'
+    String TREE_FOLDER_ANCESTORS = '/tree/folders/{id}/ancestors'
+    String TREE_FOLDER_SEARCH = '/tree/folders/search/{searchTerm}'
 
     String TYPE_QUERY = 'type'
 

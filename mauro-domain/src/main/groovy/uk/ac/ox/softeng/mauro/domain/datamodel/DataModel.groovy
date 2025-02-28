@@ -13,6 +13,7 @@ import io.micronaut.data.annotation.Relation
 import jakarta.persistence.Transient
 import uk.ac.ox.softeng.mauro.domain.model.Model
 import uk.ac.ox.softeng.mauro.domain.model.ModelItem
+import uk.ac.ox.softeng.mauro.domain.security.Role
 
 /**
  * A DataModel describes a data asset, or a data standard
@@ -257,5 +258,4 @@ class DataModel extends Model {
     DataClass dataClass(@DelegatesTo(value = DataClass, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
         dataClass [:], closure
     }
-
 }

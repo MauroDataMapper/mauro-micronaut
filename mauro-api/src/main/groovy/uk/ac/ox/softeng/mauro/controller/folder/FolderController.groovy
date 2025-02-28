@@ -1,8 +1,12 @@
 package uk.ac.ox.softeng.mauro.controller.folder
 
+import io.micronaut.http.HttpStatus
+import io.micronaut.http.annotation.QueryValue
+import io.micronaut.http.annotation.RequestBean
+import uk.ac.ox.softeng.mauro.ErrorHandler
 import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.folder.FolderApi
-
+import uk.ac.ox.softeng.mauro.api.model.PermissionsDTO
 import uk.ac.ox.softeng.mauro.controller.model.ModelController
 import uk.ac.ox.softeng.mauro.domain.facet.EditType
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
@@ -26,7 +30,6 @@ import io.micronaut.http.annotation.Delete
 import io.micronaut.http.annotation.Get
 import io.micronaut.http.annotation.Post
 import io.micronaut.http.annotation.Put
-import io.micronaut.http.annotation.QueryValue
 import io.micronaut.http.server.multipart.MultipartBody
 import io.micronaut.scheduling.TaskExecutors
 import io.micronaut.scheduling.annotation.ExecuteOn
@@ -34,6 +37,15 @@ import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
 import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
+
+import uk.ac.ox.softeng.mauro.controller.model.ModelController
+import uk.ac.ox.softeng.mauro.domain.folder.Folder
+import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
+import uk.ac.ox.softeng.mauro.persistence.folder.FolderContentRepository
+import uk.ac.ox.softeng.mauro.plugin.exporter.ModelExporterPlugin
+import uk.ac.ox.softeng.mauro.web.ListResponse
+import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchRequestDTO
+import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchResultsDTO
 
 @Slf4j
 @CompileStatic
@@ -134,15 +146,17 @@ class FolderController extends ModelController<Folder> implements FolderApi {
     @Audit(level = Audit.AuditLevel.FILE_ONLY, deletedObjectDomainType = Folder)
     @Transactional
     @Delete(Paths.FOLDER_ID)
-    HttpResponse delete(UUID id, @Body @Nullable Folder folder) {
-        super.delete(id, folder)
+    HttpResponse delete(UUID id, @Body @Nullable Folder folder, @Nullable @QueryValue Boolean permanent) {
+        permanent = permanent ?: true
+        super.delete(id, folder, permanent)
     }
 
     @Transactional
     @Audit(deletedObjectDomainType = Folder, parentDomainType = Folder)
     @Delete(Paths.CHILD_FOLDER_ID)
-    HttpResponse delete(UUID parentId, UUID id, @Body @Nullable Folder folder) {
-        super.delete(id, folder)
+    HttpResponse delete(UUID parentId, UUID id, @Body @Nullable Folder folder, @Nullable @QueryValue Boolean permanent) {
+        permanent = permanent ?: true
+        super.delete(id, folder, permanent)
     }
 
     @Audit(title = EditType.EXPORT, description = 'Export folder')
@@ -163,11 +177,56 @@ class FolderController extends ModelController<Folder> implements FolderApi {
        super.importModel(body, namespace, name, version)
     }
 
+    @Get('/folder/search{?requestDTO}')
+    ListResponse<SearchResultsDTO> searchGet(@RequestBean SearchRequestDTO requestDTO) {
+        // TODO
+        return null
+    }
 
+    @Audit
+    @Post('/folder/search')
+    ListResponse<SearchResultsDTO>searchPost(@Body SearchRequestDTO requestDTO) {
+        // TODO
+        return null
+    }
 
-    //todo: implement actual
-    @Get('/folders/{id}/permissions')
-    List<Map> permissions(UUID id) {
+    @Audit
+    @Put(Paths.FOLDER_READ_BY_AUTHENTICATED)
+    @Transactional
+    Folder allowReadByAuthenticated(UUID id) {
+        super.putReadByAuthenticated(id) as Folder
+    }
+
+    @Audit
+    @Transactional
+    @Delete(Paths.FOLDER_READ_BY_AUTHENTICATED)
+    HttpResponse revokeReadByAuthenticated(UUID id) {
+        super.deleteReadByAuthenticated(id)
+    }
+
+    @Audit
+    @Put(Paths.FOLDER_READ_BY_EVERYONE)
+    @Transactional
+    Folder allowReadByEveryone(UUID id) {
+        super.putReadByEveryone(id) as Folder
+    }
+
+    @Audit
+    @Transactional
+    @Delete(Paths.FOLDER_READ_BY_EVERYONE)
+    HttpResponse revokeReadByEveryone(UUID id) {
+        super.deleteReadByEveryone(id)
+    }
+
+    @Get(Paths.FOLDER_PERMISSIONS)
+    @Override
+    PermissionsDTO permissions(UUID id) {
         super.permissions(id)
+    }
+    @Get(Paths.FOLDER_DOI)
+    @Override
+    Map doi(UUID id) {
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.SERVICE_UNAVAILABLE, "Doi", "Doi is not implemented")
+        return null
     }
 }

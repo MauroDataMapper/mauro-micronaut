@@ -107,9 +107,9 @@ class EnumerationValue extends ModelItem<DataModel> implements DiffableItem<Enum
                 .leftHandSide(id?.toString(), this)
                 .rightHandSide(other.id?.toString(), other)
         base.label = this.label
-        base.appendString(DiffBuilder.DESCRIPTION, this.description, other.description)
-        base.appendString(DiffBuilder.ALIASES_STRING, this.aliasesString, other.aliasesString)
-        base.appendString(DiffBuilder.CATEGORY, this.category, other.category)
+        base.appendString(DiffBuilder.DESCRIPTION, this.description, other.description, this, other)
+        base.appendString(DiffBuilder.ALIASES_STRING, this.aliasesString, other.aliasesString, this, other)
+        base.appendString(DiffBuilder.CATEGORY, this.category, other.category, this, other)
     }
 
     /****

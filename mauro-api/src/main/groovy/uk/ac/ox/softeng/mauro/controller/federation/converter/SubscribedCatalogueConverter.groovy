@@ -7,6 +7,7 @@ import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedCatalogue
 import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedCatalogueType
 
 import java.time.Instant
+import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.time.format.DateTimeParseException
 
@@ -23,8 +24,16 @@ trait SubscribedCatalogueConverter {
         try {
             return OffsetDateTime.parse(value).toInstant()
         } catch (DateTimeParseException ignored) {
-            // if timezone is missing, assume UTC (used for deserialising JSON from Postgres)
-            return OffsetDateTime.parse(value + 'Z').toInstant()
+            /*
+                if timezone is missing, assume it is a local date time (used for deserialising JSON from Postgres)
+                if this section of code is being hit, consider adding:
+                datasources:
+                    default:
+                        connection-init-sql: "SET TIME ZONE 'UTC'"
+
+                to mauro-api/src/main/resources/application.yml
+            */
+            return LocalDateTime.parse(value).toInstant(OffsetDateTime.now().getOffset())
         }
     }
 }

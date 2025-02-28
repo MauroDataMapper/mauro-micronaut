@@ -50,10 +50,10 @@ interface FolderApi extends ModelApi<Folder> {
     ListResponse<Folder> list(UUID parentId)
 
     @Delete(Paths.FOLDER_ID)
-    HttpResponse delete(UUID id, @Body @Nullable Folder folder)
+    HttpResponse delete(UUID id, @Body @Nullable Folder folder, @Nullable Boolean permanent)
 
     @Delete(Paths.CHILD_FOLDER_ID)
-    HttpResponse delete(UUID parentId, UUID id, @Body @Nullable Folder folder)
+    HttpResponse delete(UUID parentId, UUID id, @Body @Nullable Folder folder, @Nullable Boolean permanent)
 
     @Get(Paths.FOLDER_EXPORT)
     HttpResponse<byte[]> exportModel(UUID id, @Nullable String namespace, @Nullable String name, @Nullable String version)
@@ -65,4 +65,6 @@ interface FolderApi extends ModelApi<Folder> {
     // This is the version that will be implemented by the controller
     ListResponse<Folder> importModel(@Body io.micronaut.http.server.multipart.MultipartBody body, String namespace, String name, @Nullable String version)
 
+    @Get(Paths.FOLDER_DOI)
+    Map doi(UUID id)
 }

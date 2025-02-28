@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.controller.facet
 
+import io.micronaut.core.annotation.Nullable
+import uk.ac.ox.softeng.mauro.web.PaginationParams
 import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.facet.SummaryMetadataApi
 import uk.ac.ox.softeng.mauro.audit.Audit
@@ -46,11 +48,12 @@ class SummaryMetadataController extends FacetController<SummaryMetadata> impleme
     }
 
     @Audit
-    @Get(Paths.SUMMARY_METADATA_LIST)
-    ListResponse<SummaryMetadata> list(String domainType, UUID domainId) {
+    @Get(Paths.SUMMARY_METADATA_SEARCH)
+    ListResponse<SummaryMetadata> list(String domainType, UUID domainId, @Nullable PaginationParams params) {
         AdministeredItem administeredItem = findAdministeredItem(domainType, domainId)
         accessControlService.checkRole(Role.READER, administeredItem)
-        ListResponse.from(!administeredItem.summaryMetadata ? [] : administeredItem.summaryMetadata)
+
+        return ListResponse<SummaryMetadata>.from(administeredItem.summaryMetadata,params)
     }
 
     @Audit

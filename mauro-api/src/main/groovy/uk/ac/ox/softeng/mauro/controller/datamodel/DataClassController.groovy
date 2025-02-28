@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.controller.datamodel
 
+import io.micronaut.http.HttpStatus
+import uk.ac.ox.softeng.mauro.ErrorHandler
 import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.datamodel.DataClassApi
 import uk.ac.ox.softeng.mauro.audit.Audit
@@ -25,6 +27,7 @@ import io.micronaut.http.annotation.Put
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
 import jakarta.inject.Inject
+import uk.ac.ox.softeng.mauro.web.PaginationParams
 
 @CompileStatic
 @Controller
@@ -70,15 +73,15 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
     }
 
     @Audit
-    @Get(Paths.DATA_CLASS_LIST)
-    ListResponse<DataClass> list(UUID dataModelId) {
+    @Get(Paths.DATA_CLASS_SEARCH)
+    ListResponse<DataClass> list(UUID dataModelId, @Nullable PaginationParams params) {
         DataModel dataModel = dataModelRepository.readById(dataModelId)
         accessControlService.checkRole(Role.READER, dataModel)
         List<DataClass> classes = dataClassRepository.readAllByDataModelAndParentDataClassIsNull(dataModel)
         classes.each {
             updateDerivedProperties(it)
         }
-        ListResponse.from(classes)
+        ListResponse<DataClass>.from(classes,params)
     }
 
     @Audit
@@ -149,5 +152,12 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
         DataClass targetDataClass = dataClassRepository.readById(otherClassId)
         dataClassRepository.deleteExtensionRelationship(sourceDataClass, targetDataClass)
         dataClassRepository.findById(id)
+    }
+
+    @Get(Paths.DATA_CLASS_DOI)
+    @Override
+    Map doi(UUID id) {
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.SERVICE_UNAVAILABLE, "Doi", "Doi is not implemented")
+        return null
     }
 }

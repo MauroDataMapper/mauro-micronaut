@@ -27,6 +27,7 @@ import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.persistence.ContainerizedTest
 import uk.ac.ox.softeng.mauro.testing.CommonDataSpec
 import uk.ac.ox.softeng.mauro.web.ListResponse
+import uk.ac.ox.softeng.mauro.web.PaginationParams
 
 @ContainerizedTest
 @Singleton
@@ -240,7 +241,7 @@ class DataModelSchemaDiffsIntegrationSpec extends CommonDataSpec {
         //validation of dataElement on dataClass
         and:
         ListResponse<DataElement> dataElementListResponse =
-            dataElementApi.list(right.id, rightDataClass.id)
+            dataElementApi.list(right.id, rightDataClass.id, new PaginationParams())
         dataElementListResponse.count == 1
 
         when:

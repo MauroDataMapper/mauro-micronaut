@@ -34,6 +34,21 @@ create table "core"."metadata"
 );
 create unique index "idx_metadata_multi_facet_aware_item_id_namespace_key" on "core"."metadata" (multi_facet_aware_item_id, namespace, key);
 
+-- VersionLink
+create table "core"."version_link"
+(
+    "id"                                 uuid primary key not null default uuid_generate_v4(),
+    "version"                            integer          not null,
+    "date_created"                       timestamp with time zone,
+    "last_updated"                       timestamp with time zone,
+    "multi_facet_aware_item_domain_type" varchar(255)     not null,
+    "multi_facet_aware_item_id"          uuid             not null,
+    "created_by"                         uuid,
+    "version_link_type"                  varchar(255)     not null,
+    "target_model_id"                    uuid             not null,
+    "target_model_domain_type"           varchar(255)     not null
+);
+create unique index "idx_version_link_multi_facet_aware_item_id_target_model_id" on "core"."version_link" (multi_facet_aware_item_id, target_model_id);
 
 -- Folder
 create table core."folder"
@@ -50,6 +65,8 @@ create table core."folder"
     "finalised"                       boolean          not null,
     "date_finalised"                  timestamp with time zone,
     "documentation_version"           varchar(255),
+    "organisation"                    varchar(255),
+    "author"                          varchar(255),
     "deleted"                         boolean          not null,
     "authority_id"                    uuid /*NOT NULL REFERENCES authority(id) initially deferred*/,
     "branch_name"                     varchar(255),

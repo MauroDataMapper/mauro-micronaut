@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.controller.terminology
 
+import io.micronaut.http.HttpStatus
+import uk.ac.ox.softeng.mauro.ErrorHandler
 import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.terminology.TermApi
 import uk.ac.ox.softeng.mauro.audit.Audit
@@ -89,5 +91,10 @@ class TermController extends AdministeredItemController<Term, Terminology> imple
         ListResponse.from(codeSets)
     }
 
-
+    @Get(Paths.TERMINOLOGY_DOI)
+    @Override
+    Map doi(UUID id) {
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.SERVICE_UNAVAILABLE, "Doi", "Doi is not implemented")
+        return null
+    }
 }

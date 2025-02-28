@@ -25,6 +25,12 @@ import uk.ac.ox.softeng.mauro.persistence.model.dto.AdministeredItemDTO
 @MappedEntity(value = 'folder', schema = 'core', alias = 'folder_')
 class FolderDTO extends Folder implements AdministeredItemDTO {
 
+    @Override
+    String getDomainType()
+    {
+        return super.getDomainType()
+    }
+
     @Nullable
     @TypeDef(type = DataType.JSON)
     @MappedProperty

@@ -154,7 +154,7 @@ class DataModelWithFacetsIntegrationSpec extends CommonDataSpec {
         retrieved.referenceFiles.first().id == referenceFile.id
 
         when:
-        HttpResponse httpResponse = dataModelApi.delete(dataModelId, new DataModel())
+        HttpResponse httpResponse = dataModelApi.delete(dataModelId, new DataModel(),true)
 
         then:
         httpResponse.status == HttpStatus.NO_CONTENT
