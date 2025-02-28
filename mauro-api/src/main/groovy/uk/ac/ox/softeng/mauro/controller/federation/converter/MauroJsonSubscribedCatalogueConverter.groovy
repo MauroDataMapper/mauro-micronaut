@@ -56,7 +56,7 @@ class MauroJsonSubscribedCatalogueConverter implements SubscribedCatalogueConver
             modelType = entry.modelType
             if (entry.lastUpdated) lastUpdated = convert(entry.lastUpdated as String)
             if (entry.dateCreated) dateCreated = convert(entry.dateCreated as String)
-            if (entry.datePubished) datePublished = convert(entry.datePublished as String)
+            if (entry.datePublished) datePublished = convert(entry.datePublished as String)
             author = entry.author
             description = entry.description
             if (entry.links) links = entry.links.collect {link -> new MauroLink(link.url, link.contentType)}
