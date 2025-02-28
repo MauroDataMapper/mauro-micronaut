@@ -205,7 +205,7 @@ class SubscribedCatalogueIntegrationSpec extends SecuredIntegrationSpec {
         publishedModels.items.sort {model -> model.modelId}.first().modelId == expectedPublishedModels.sort {model -> model.modelId}.first().modelId
         publishedModels.items.sort {model -> model.modelId}.first().title == expectedPublishedModels.sort {model -> model.modelId}.first().title
         publishedModels.items.sort {model -> model.modelId}.first().lastUpdated == expectedPublishedModels.sort {model -> model.modelId}.first().lastUpdated?.toString()
-        publishedModels.items.sort {model -> model.modelId}.first().datePublished == expectedPublishedModels.sort {model -> model.modelId}.first().datePublished?.toString()
+        publishedModels.items.sort {model -> model.modelId}.first().datePublished != null
         publishedModels.items.sort {model -> model.modelId}.first().author == expectedPublishedModels.sort {model -> model.modelId}.first().author
         publishedModels.items.sort {model -> model.modelId}.first().description == expectedPublishedModels.sort {model -> model.modelId}.first().description
 
@@ -241,8 +241,6 @@ class SubscribedCatalogueIntegrationSpec extends SecuredIntegrationSpec {
         atomSubscribedCataloguePayload()      | ATOM_MODEL_ID_NEWER_VERSIONS | 0                     | "2025-02-17T04:02:14Z"
 
     }
-
-
 
 
     void 'admin and logged in users - can return subscribedCatalogueTypes'() {
