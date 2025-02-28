@@ -36,7 +36,7 @@ class MockFederationClient extends FederationClient {
 
     @Override
     Map<String, Object> fetchFederatedClientDataAsMap(SubscribedCatalogue subscribedCatalogue, String requestPath) {
-        if (requestPath.endsWith("$BaseIntegrationSpec.TEST_MODEL_ID$BaseIntegrationSpec.NEWER_VERSIONS")) {
+        if (requestPath.endsWith("$BaseIntegrationSpec.NEWER_VERSIONS")) {
             return objectMapper.readValue(newerVersionsString, Map.class)
         } else {
             return objectMapper.readValue(publishedModelsString, Map.class)
@@ -50,7 +50,7 @@ class MockFederationClient extends FederationClient {
 
     @Override
     GPathResult getSubscribedCatalogueModelsFromAtomFeed() {
-        return new XmlSlurper().parse(new File('src/test/resources/xml-federated-data.xml'))
+        return new XmlSlurper().parse(new File('src/test/resources/xml-federated-data-test.xml'))
     }
 
 }

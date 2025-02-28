@@ -69,10 +69,9 @@ class BaseIntegrationSpec extends Specification {
     public static final String PUBLISHEDMODELS = '/publishedModels'
     public static final String TYPES = '/types'
     public static final String AUTHENTICATION_TYPES = '/authenticationTypes'
-    public static final String TEST_MODEL_ID = "0b97751d-b6bf-476c-a9e6-95d3352e8008"
     public static final String NEWER_VERSIONS = "/newerVersions"
     public static final String AUTHORITIES_PATH = "/authorities"
-    public static final String ATOM_MODEL_ID_NEWER_VERSIONS = "urn:uuid:f016fa27-efef-4389-b895-dcce5615245f"
+
 
     @Inject
     ObjectMapper objectMapper

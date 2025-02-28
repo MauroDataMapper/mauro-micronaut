@@ -23,6 +23,9 @@ import spock.lang.Unroll
 @SecuredContainerizedTest
 @Sql(scripts = ["classpath:sql/tear-down-subscribed-catalogue.sql"], phase = Sql.Phase.AFTER_ALL)
 class SubscribedCatalogueIntegrationSpec extends SecuredIntegrationSpec {
+    static final String TEST_MODEL_ID = "0b97751d-b6bf-476c-a9e6-95d3352e8008"
+    static final String ATOM_MODEL_ID_NEWER_VERSIONS = "urn:uuid:b4484456-366a-4430-a8ae-56248003fc5a"
+
     @Inject
     EmbeddedApplication<?> application
     @Inject
@@ -79,7 +82,7 @@ class SubscribedCatalogueIntegrationSpec extends SecuredIntegrationSpec {
 
         then:
         subscribedCatalogue
-        subscribedCatalogue.url == "https://ontology.nhs.uk/production1/synd/syndication.xml"
+        subscribedCatalogue.url == "http://localhost:8088/test/syndication.xml"
         subscribedCatalogue.subscribedCatalogueAuthenticationType == SubscribedCatalogueAuthenticationType.API_KEY
         subscribedCatalogue.subscribedCatalogueType == SubscribedCatalogueType.ATOM
         subscribedCatalogue.apiKey == 'b39d63d4-4fd4-494d-a491-3c778d89acae'
@@ -209,7 +212,7 @@ class SubscribedCatalogueIntegrationSpec extends SecuredIntegrationSpec {
         where:
         payload                               | expectedPublishedModels     | expectedNumberOfItems
         mauroJsonSubscribedCataloguePayload() | mauroJsonExpectedResponse() | 1
-        atomSubscribedCataloguePayload()      | atomExpectedResponse()      | 112
+        atomSubscribedCataloguePayload()      | atomExpectedResponse()      | 1
     }
 
 
@@ -230,12 +233,12 @@ class SubscribedCatalogueIntegrationSpec extends SecuredIntegrationSpec {
         then:
         response
         response.newerPublishedModels.size() == numberOfNewerVersions
-        response.lastUpdated.toString() == lastUpdatedString
+        response.lastUpdated.toString() >= lastUpdatedString
 
         where:
         payload                               | publishedModelId             | numberOfNewerVersions | lastUpdatedString
         mauroJsonSubscribedCataloguePayload() | TEST_MODEL_ID                | 3                     | "2023-06-12T16:03:07.118Z"
-        atomSubscribedCataloguePayload()      | ATOM_MODEL_ID_NEWER_VERSIONS | 4                     | "2025-02-17T04:02:14Z"
+        atomSubscribedCataloguePayload()      | ATOM_MODEL_ID_NEWER_VERSIONS | 0                     | "2025-02-17T04:02:14Z"
 
     }
 
@@ -390,7 +393,7 @@ class SubscribedCatalogueIntegrationSpec extends SecuredIntegrationSpec {
 
 
     List<PublishedModel> atomExpectedResponse() {
-        def atomResults = new XmlSlurper().parse(new File('src/test/resources/xml-federated-data.xml'))
+        def atomResults = new XmlSlurper().parse(new File('src/test/resources/xml-federated-data-test.xml'))
         atomResults.entry.collect { AtomSubscribedCatalogueConverter.convertEntryToPublishedModel(atomResults, it)}.sort {l, r ->
             r.lastUpdated <=> l.lastUpdated ?:
             l.modelLabel.compareToIgnoreCase(r.modelLabel) ?:

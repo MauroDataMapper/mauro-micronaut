@@ -146,7 +146,7 @@ class CommonDataSpec extends BaseIntegrationSpec {
 
     def atomSubscribedCataloguePayload(){
         [
-            url                                  : "https://ontology.nhs.uk/production1/synd/syndication.xml",
+            url                                  : "http://localhost:8088/test/syndication.xml",
             subscribedCatalogueType              : 'ATOM',
             label                                : 'atom label',
             subscribedCatalogueAuthenticationType: 'API Key',
