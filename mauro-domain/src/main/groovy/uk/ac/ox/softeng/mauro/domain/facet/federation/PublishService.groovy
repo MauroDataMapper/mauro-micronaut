@@ -2,6 +2,7 @@ package uk.ac.ox.softeng.mauro.domain.facet.federation
 
 
 import uk.ac.ox.softeng.mauro.domain.model.Model
+import uk.ac.ox.softeng.mauro.domain.terminology.CodeSet
 import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
 import uk.ac.ox.softeng.mauro.plugin.MauroPluginService
 import uk.ac.ox.softeng.mauro.plugin.exporter.ModelExporterPlugin
@@ -48,6 +49,12 @@ class PublishService {
     private static String deduceModelUrlPath(String domainType) {
         if (domainType == Terminology.class.simpleName) {
             return 'terminologies'
-        } else return StringUtils.uncapitalize(domainType) + 's'
+        } else {
+            if (domainType == CodeSet.class.simpleName) {
+                return 'codeSets'
+            } else {
+                return StringUtils.uncapitalize(domainType) + 's'
+            }
+        }
     }
 }
