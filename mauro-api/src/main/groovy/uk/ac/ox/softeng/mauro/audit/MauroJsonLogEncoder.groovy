@@ -35,7 +35,6 @@ class MauroJsonLogEncoder extends EncoderBase<ILoggingEvent> {
         iLoggingEvent.keyValuePairs.each {keyValuePair ->
             response[keyValuePair.key] = keyValuePair.value
         }
-        System.err.println(objectMapper.writeValueAsString(response))
         (objectMapper.writeValueAsString(response) + '\n').bytes
     }
 
