@@ -35,6 +35,7 @@
         <appender-ref ref="STDOUT" />
     </root>
 
+    <!-- If this is set to debug, then tests for cache performance will fail! -->
     <logger name="io.micronaut.cache" level="info" />
     <logger name="io.micronaut.data" level="debug" />
     <logger name="io.micronaut.data.query" level="debug" />
