@@ -126,6 +126,48 @@ class AccessControlService implements Toggleable {
         parentModels.any {canDoRoleWithGroups(role, userGroups, it)}
     }
 
+    /**
+     * For all roles and an AdministeredItem, list the available roles (in permission order)
+     * the current authenticated user is authorised to apply to the item
+     * @return the list of Role
+     */
+    List<Role> listCanDoRoles(@NonNull AdministeredItem item)
+    {
+        final List<Role> allRoles=Arrays.asList(Role.values())
+
+        // All roles
+        if (!enabled) return allRoles
+        if (isAdministrator()) return allRoles
+        pathRepository.readParentItems(item)
+        final Model owner = item.owner
+        if (userAuthenticated && owner.catalogueUser && owner.catalogueUser.id == getUserId()) return allRoles
+
+        // Permitted roles
+        final List<Model> parentModels = pathRepository.readParentItems(owner) as List<Model>
+        final List<UserGroup> userGroups = userGroupRepository.readAllByCatalogueUserId(userId)
+
+        final List<Role> canDo=[];
+
+        for(Role role : allRoles)
+        {
+            if (role <= Role.READER &&
+                    parentModels.any {Model model ->
+                        model.readableByEveryone || (model.readableByAuthenticatedUsers && userAuthenticated)
+                    }){
+                canDo.add(role)
+            }
+
+            if (!userAuthenticated) break;
+
+            if( parentModels.any {canDoRoleWithGroups(role, userGroups, it)} )
+            {
+                canDo.add(role)
+            }
+        }
+
+        return canDo
+    }
+
     boolean isAuthenticatedAdministrator() {
         userAuthenticated && isAdministrator()
     }

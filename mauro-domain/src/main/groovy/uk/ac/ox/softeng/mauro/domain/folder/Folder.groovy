@@ -30,6 +30,8 @@ import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
 @MapConstructor(includeSuperFields = true, includeSuperProperties = true, noArg = true)
 class Folder extends Model {
 
+    { versionableFlag=false }
+
     @JsonIgnore
     @Nullable
     Folder parentFolder
@@ -44,19 +46,76 @@ class Folder extends Model {
     @MappedProperty('class')
     @JsonProperty('class')
     @Nullable
+    @JsonIgnore
     String class_
+
+    @JsonIgnore
+    void setClass_(final String class_)
+    {
+        this.class_=class_
+
+        if(this.class_!=null && "VersionedFolder" == this.class_)
+        {
+            setVersionable(true)
+        }
+        else
+        {
+            setVersionable(false)
+        }
+    }
+
+    @Transient
+    @Override
+    void setVersionable(final boolean versionable)
+    {
+        this.versionableFlag=versionable
+        if(versionable) {
+            this.class_ = "VersionedFolder"
+        }
+        else
+        {
+            this.class_ = null
+        }
+    }
+
+    @Transient
+    @Override
+    String getDomainType()
+    {
+        if(this.class_!=null && "VersionedFolder" == this.class_)
+        {
+            return "VersionedFolder"
+        }
+        else
+        {
+            return "Folder"
+        }
+    }
+
 
     @Transient
     UUID breadcrumbTreeId
 
-    @Transient
+    @Nullable
     String organisation
 
-    @Transient
+    @Nullable
     String author
 
+    // TODO: write a test for branch name
     @Nullable
-    String branchName = null
+    String branchName = 'main'
+    String getBranchName()
+    {
+        if(this.class_!=null && "VersionedFolder" == this.class_)
+        {
+            return branchName
+        }
+        else
+        {
+            return null
+        }
+    }
 
     @JsonIgnore
     @Transient
@@ -112,14 +171,25 @@ class Folder extends Model {
     @Transient
     @JsonIgnore
     String getPathPrefix() {
-        'fo'
+
+        if(isVersionable())
+        {
+            return 'vf'
+        }
+
+        return 'fo'
     }
 
     @Override
     @Transient
     @JsonIgnore
     String getPathModelIdentifier() {
-        null
+        if(!isVersionable())
+        {
+            return null
+        }
+        // I'm a model, you know what I mean
+        return super.getPathModelIdentifier()
     }
 
     @Override

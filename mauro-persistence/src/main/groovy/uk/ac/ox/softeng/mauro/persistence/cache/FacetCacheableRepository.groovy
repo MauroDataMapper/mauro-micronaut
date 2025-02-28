@@ -1,5 +1,9 @@
 package uk.ac.ox.softeng.mauro.persistence.cache
 
+import uk.ac.ox.softeng.mauro.domain.facet.Rule
+import uk.ac.ox.softeng.mauro.domain.facet.VersionLink
+import uk.ac.ox.softeng.mauro.persistence.facet.RuleRepository
+
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.cache.annotation.CacheConfig
@@ -20,6 +24,7 @@ import uk.ac.ox.softeng.mauro.persistence.facet.RuleRepository
 import uk.ac.ox.softeng.mauro.persistence.facet.MetadataRepository
 import uk.ac.ox.softeng.mauro.persistence.facet.ReferenceFileRepository
 import uk.ac.ox.softeng.mauro.persistence.facet.SummaryMetadataRepository
+import uk.ac.ox.softeng.mauro.persistence.facet.VersionLinkRepository
 import uk.ac.ox.softeng.mauro.persistence.model.ItemRepository
 
 @Slf4j
@@ -64,6 +69,14 @@ abstract class FacetCacheableRepository<F extends Facet> extends ItemCacheableRe
     static class MetadataCacheableRepository extends FacetCacheableRepository<Metadata> {
         MetadataCacheableRepository(MetadataRepository metadataRepository) {
             super(metadataRepository)
+        }
+    }
+
+    @Singleton
+    @CompileStatic
+    static class VersionLinkCacheableRepository extends FacetCacheableRepository<VersionLink> {
+        VersionLinkCacheableRepository(VersionLinkRepository versionLinkRepository) {
+            super(versionLinkRepository)
         }
     }
 

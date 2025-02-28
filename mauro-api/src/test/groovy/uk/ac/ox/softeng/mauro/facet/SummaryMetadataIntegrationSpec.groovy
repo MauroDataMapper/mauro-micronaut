@@ -15,6 +15,7 @@ import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadataReport
 import uk.ac.ox.softeng.mauro.persistence.ContainerizedTest
 import uk.ac.ox.softeng.mauro.testing.CommonDataSpec
 import uk.ac.ox.softeng.mauro.web.ListResponse
+import uk.ac.ox.softeng.mauro.web.PaginationParams
 
 @ContainerizedTest
 @Singleton
@@ -33,7 +34,7 @@ class SummaryMetadataIntegrationSpec extends CommonDataSpec {
 
     void 'list empty SummaryMetadata'() {
         when:
-        ListResponse<SummaryMetadata> response = summaryMetadataApi.list("folder", folderId)
+        ListResponse<SummaryMetadata> response = summaryMetadataApi.list("folder", folderId, new PaginationParams())
 
         then:
         response.count == 0
@@ -55,7 +56,7 @@ class SummaryMetadataIntegrationSpec extends CommonDataSpec {
         summaryMetadataApi.create("folder", folderId, summaryMetadataPayload())
 
         when:
-        ListResponse<SummaryMetadata> response = summaryMetadataApi.list("folder", folderId)
+        ListResponse<SummaryMetadata> response = summaryMetadataApi.list("folder", folderId, new PaginationParams())
 
         then:
         response
@@ -108,7 +109,7 @@ class SummaryMetadataIntegrationSpec extends CommonDataSpec {
         !summaryMetadata
 
         when:
-        ListResponse<SummaryMetadata> responseList = summaryMetadataApi.list("folder", folderId)
+        ListResponse<SummaryMetadata> responseList = summaryMetadataApi.list("folder", folderId, new PaginationParams())
 
         then: 'the list endpoint shows the update'
         responseList

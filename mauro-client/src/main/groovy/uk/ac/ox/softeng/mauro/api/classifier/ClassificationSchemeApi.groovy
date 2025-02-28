@@ -37,7 +37,7 @@ interface ClassificationSchemeApi extends ModelApi<ClassificationScheme> {
     ClassificationScheme update(UUID id, @Body @NonNull ClassificationScheme classificationScheme)
 
     @Delete(Paths.CLASSIFICATION_SCHEMES_ID_ROUTE)
-    HttpResponse delete(UUID id, @Body @Nullable ClassificationScheme classificationScheme)
+    HttpResponse delete(UUID id, @Body @Nullable ClassificationScheme classificationScheme, @Nullable Boolean permanent)
 
 
     @Get(Paths.FOLDER_CLASSIFICATION_SCHEMES_ROUTE)

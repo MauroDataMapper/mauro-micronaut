@@ -14,6 +14,7 @@ import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadataReport
 import uk.ac.ox.softeng.mauro.persistence.ContainerizedTest
 import uk.ac.ox.softeng.mauro.testing.CommonDataSpec
 import uk.ac.ox.softeng.mauro.web.ListResponse
+import uk.ac.ox.softeng.mauro.web.PaginationParams
 
 import java.time.Instant
 
@@ -136,7 +137,7 @@ class SummaryMetadataReportIntegrationSpec extends CommonDataSpec {
         SummaryMetadataReport report = summaryMetadataReportApi.create(
             "folder", folderId, summaryMetadata.id, summaryMetadataReport())
         when:
-        ListResponse<SummaryMetadata> metadataResponse = summaryMetadataApi.list("folder", folderId)
+        ListResponse<SummaryMetadata> metadataResponse = summaryMetadataApi.list("folder", folderId, new PaginationParams())
 
         then:
         metadataResponse

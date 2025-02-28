@@ -58,7 +58,7 @@ class ReaderAccessIntegrationSpec extends SecuredIntegrationSpec {
         exception.status == HttpStatus.FORBIDDEN
 
         when:
-        folderApi.delete(folderId, new Folder())
+        folderApi.delete(folderId, new Folder(),true)
 
         then:
         exception = thrown()
@@ -88,7 +88,7 @@ class ReaderAccessIntegrationSpec extends SecuredIntegrationSpec {
         exception.status == HttpStatus.FORBIDDEN
 
         when:
-        dataModelApi.delete(dataModelId, new DataModel())
+        dataModelApi.delete(dataModelId, new DataModel(),true)
 
         then: 'deleting models requires container administrator role'
         exception = thrown()
@@ -119,7 +119,7 @@ class ReaderAccessIntegrationSpec extends SecuredIntegrationSpec {
         exception.status == HttpStatus.FORBIDDEN
 
         when:
-        folderApi.delete(folderId, new Folder())
+        folderApi.delete(folderId, new Folder(),true)
 
         then:
         exception = thrown()
@@ -140,7 +140,7 @@ class ReaderAccessIntegrationSpec extends SecuredIntegrationSpec {
         exception.status == HttpStatus.FORBIDDEN
 
         when:
-        dataModelApi.delete(dataModelId, new DataModel())
+        dataModelApi.delete(dataModelId, new DataModel(),true)
 
         then:
         exception = thrown()
@@ -169,7 +169,7 @@ class ReaderAccessIntegrationSpec extends SecuredIntegrationSpec {
         exception.status == HttpStatus.FORBIDDEN
 
         when:
-        folderApi.delete(folderId, new Folder())
+        folderApi.delete(folderId, new Folder(),true)
 
         then:
         exception = thrown()
@@ -190,7 +190,7 @@ class ReaderAccessIntegrationSpec extends SecuredIntegrationSpec {
         exception.status == HttpStatus.FORBIDDEN
 
         when:
-        dataModelApi.delete(dataModelId, new DataModel())
+        dataModelApi.delete(dataModelId, new DataModel(),true)
 
         then:
         exception = thrown()

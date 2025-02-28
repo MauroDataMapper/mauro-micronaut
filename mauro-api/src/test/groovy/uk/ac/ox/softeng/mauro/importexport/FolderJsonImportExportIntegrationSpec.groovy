@@ -21,6 +21,7 @@ import uk.ac.ox.softeng.mauro.domain.terminology.*
 import uk.ac.ox.softeng.mauro.persistence.ContainerizedTest
 import uk.ac.ox.softeng.mauro.testing.CommonDataSpec
 import uk.ac.ox.softeng.mauro.web.ListResponse
+import uk.ac.ox.softeng.mauro.web.PaginationParams
 
 @ContainerizedTest
 @Singleton
@@ -224,7 +225,7 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
         importedDataTypesListResponse.items[0].id != dataTypeId
 
         when:
-        ListResponse<DataClass> importedDataClassesListResponse = dataClassApi.list(importedDataModelId)
+        ListResponse<DataClass> importedDataClassesListResponse = dataClassApi.list(importedDataModelId,new PaginationParams())
         then:
         importedDataClassesListResponse.items.size() == 1
         importedDataClassesListResponse.items[0].label == 'TEST-1'
@@ -238,7 +239,7 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
         importedMetadataResponse.items[0].id != metadataResponse.id
 
         when:
-        ListResponse<SummaryMetadata> importedSummaryMetadataResponse = summaryMetadataApi.list("folder", importedFolderId)
+        ListResponse<SummaryMetadata> importedSummaryMetadataResponse = summaryMetadataApi.list("folder", importedFolderId, new PaginationParams())
         then:
         importedSummaryMetadataResponse
         importedSummaryMetadataResponse.items.size() == 1

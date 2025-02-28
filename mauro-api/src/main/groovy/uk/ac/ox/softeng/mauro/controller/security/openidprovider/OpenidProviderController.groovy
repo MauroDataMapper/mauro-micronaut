@@ -16,10 +16,10 @@ import io.micronaut.security.rules.SecurityRule
 
 @CompileStatic
 @Slf4j
+@Controller
 @Secured(SecurityRule.IS_ANONYMOUS)
 @Controller
 class OpenidProviderController implements OpenidProviderApi {
-
 
     @Nullable
     @Value('${mauro.oauth.id}')
@@ -29,6 +29,7 @@ class OpenidProviderController implements OpenidProviderApi {
     @Value('${mauro.oauth.label}')
     String label
 
+    @Nullable
     @Value('${mauro.oauth.standard-provider}')
     Boolean standardProvider
 

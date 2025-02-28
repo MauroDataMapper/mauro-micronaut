@@ -1,0 +1,11 @@
+package uk.ac.ox.softeng.mauro.api.model
+
+class ModelVersionedRefDTO extends ModelRefDTO{
+
+    String branch // version model tree calls this branch
+    String branchName
+    String modelVersion
+    String modelVersionTag
+    String documentationVersion
+    String displayName
+}

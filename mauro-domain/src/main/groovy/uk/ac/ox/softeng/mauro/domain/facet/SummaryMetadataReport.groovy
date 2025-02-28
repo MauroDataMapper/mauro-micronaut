@@ -53,8 +53,8 @@ class SummaryMetadataReport extends Item implements DiffableItem<SummaryMetadata
                 .leftHandSide(id?.toString(), this)
                 .rightHandSide(other.id?.toString(), other)
 
-        base.appendString(DiffBuilder.VALUE, this.reportValue, other.reportValue)
-        base.appendField(DiffBuilder.REPORT_DATE ,this.reportDate, other.reportDate)
+        base.appendString(DiffBuilder.VALUE, this.reportValue, other.reportValue, this, other)
+        base.appendField(DiffBuilder.REPORT_DATE ,this.reportDate, other.reportDate, this, other)
         base
     }
 

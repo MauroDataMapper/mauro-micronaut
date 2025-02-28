@@ -3,8 +3,13 @@ package uk.ac.ox.softeng.mauro.controller.model
 import uk.ac.ox.softeng.mauro.ErrorHandler
 import uk.ac.ox.softeng.mauro.api.model.AdministeredItemApi
 import uk.ac.ox.softeng.mauro.domain.classifier.Classifier
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
+import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
+import uk.ac.ox.softeng.mauro.domain.model.Model
+import uk.ac.ox.softeng.mauro.domain.model.ModelItem
 import uk.ac.ox.softeng.mauro.domain.security.Role
+import uk.ac.ox.softeng.mauro.domain.security.SecurableResource
 import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemContentRepository
 import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemRepository
@@ -58,11 +63,11 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
     }
 
     I show(UUID id) {
-        I item
+        I item=null
         try {
             item = administeredItemRepository.findById(id)
         } catch (Exception e) {
-            ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, item, "Item with id ${id.toString()} not found")
+            ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, null, "Item with id ${id.toString()} not found")
         }
         ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, item, "Item with id ${id.toString()} not found")
         accessControlService.checkRole(Role.READER, item)
@@ -104,6 +109,10 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
         cleanBody(item)
         I existing = administeredItemRepository.readById(id)
 
+        if(existing==null) {
+            throw new HttpStatusException(HttpStatus.NOT_FOUND, "Object not found")
+        }
+
         accessControlService.checkRole(Role.EDITOR, existing)
 
         I updated = updateEntity(existing, item)
@@ -128,16 +137,18 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
     HttpResponse delete(@NonNull UUID id, @Body @Nullable I item) {
         I itemToDelete = (I) administeredItemContentRepository.readWithContentById(id)
 
+        if (itemToDelete == null) {
+            throw new HttpStatusException(HttpStatus.NOT_FOUND, "Object not found for deletion")
+        }
+
         accessControlService.checkRole(Role.EDITOR, item)
 
         if (item?.version) itemToDelete.version = item.version
 
-        Long deleted = administeredItemContentRepository.deleteWithContent(itemToDelete)
-        if (deleted) {
-            HttpResponse.status(HttpStatus.NO_CONTENT)
-        } else {
+        if (!administeredItemContentRepository.deleteWithContent(itemToDelete)) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, 'Not found for deletion')
         }
+        HttpResponse.status(HttpStatus.NO_CONTENT)
     }
 
     ListResponse<I> list(UUID parentId) {
@@ -155,6 +166,8 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
         pathRepository.readParentItems(item)
         item.updatePath()
         item.updateBreadcrumbs()
+
+        updateAvailableActions(item)
 
         item
     }
@@ -182,5 +195,67 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
         classifierList
     }
 
+    private void updateAvailableActions(I item) {
+
+        if(item.availableActions==null){item.availableActions=[]}
+
+        final List<Role> roles=accessControlService.listCanDoRoles(item)
+
+        item.availableActions.clear()
+
+        // Additions
+
+        item.availableActions.addAll( AvailableActions.getActionsForRolesPurpose(roles,AvailableActions.PURPOSE_STANDARD) )
+
+        if(item instanceof SecurableResource)
+        {
+            item.availableActions.addAll( AvailableActions.getActionsForRolesPurpose(roles, AvailableActions.PURPOSE_SECURABLE) )
+        }
+
+        if(item instanceof Folder)
+        {
+            item.availableActions.addAll( AvailableActions.getActionsForRolesPurpose(roles, AvailableActions.PURPOSE_FOLDER) )
+        }
+
+        if(item instanceof DataModel)
+        {
+            item.availableActions.addAll( AvailableActions.getActionsForRolesPurpose(roles, AvailableActions.PURPOSE_DATAMODEL) )
+        }
+
+        if(item instanceof ModelItem)
+        {
+            item.availableActions.removeAll(AvailableActions.PURPOSE_MODELITEM)
+        }
+
+        if(item instanceof Model) {
+            final Model itemAsModel = (Model) item
+            if (itemAsModel.isVersionable()) {
+                item.availableActions.addAll(AvailableActions.getActionsForRolesPurpose(roles, AvailableActions.PURPOSE_VERSIONING))
+            }
+            item.availableActions.addAll(AvailableActions.getActionsForRolesPurpose(roles, AvailableActions.PURPOSE_MODEL))
+        }
+
+        // Removals
+
+        if(item instanceof Model) {
+            final Model itemAsModel = (Model) item
+
+            if(itemAsModel.finalised)
+            {
+                item.availableActions.removeAll(AvailableActions.REMOVE_WHEN_FINALISED)
+            }
+        }
+
+        if(item instanceof ModelItem)
+        {
+            item.availableActions.removeAll(AvailableActions.REMOVE_FROM_MODEL_ITEM)
+        }
+
+        // TODO: mergeInto is removed if not a non-main draft
+
+        // It also doesn't appear to be offered for VersionedFolders
+        // in the grail implementation
+
+    }
 
 }

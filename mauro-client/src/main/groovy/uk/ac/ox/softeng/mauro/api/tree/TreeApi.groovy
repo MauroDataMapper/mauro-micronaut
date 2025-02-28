@@ -17,4 +17,10 @@ interface TreeApi {
     @Get(Paths.TREE_ITEM)
     List<TreeItem> itemTree(String domainType, UUID id, @Nullable @QueryValue Boolean foldersOnly)
 
+    @Get(Paths.TREE_ITEM_ANCESTORS)
+    TreeItem itemTreeAncestors(String domainType, UUID id)
+
+    @Get(Paths.TREE_FOLDER_ANCESTORS)
+    TreeItem folderTreeAncestors(UUID id)
+
 }

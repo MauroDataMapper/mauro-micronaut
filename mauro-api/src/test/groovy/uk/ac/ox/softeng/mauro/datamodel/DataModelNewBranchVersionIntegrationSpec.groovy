@@ -16,6 +16,7 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 import io.micronaut.test.annotation.Sql
 import jakarta.inject.Singleton
 import spock.lang.Shared
+import uk.ac.ox.softeng.mauro.web.PaginationParams
 
 @ContainerizedTest
 @Singleton
@@ -149,7 +150,7 @@ class DataModelNewBranchVersionIntegrationSpec extends CommonDataSpec {
         [dataModelId, newBranchVersionDataModel.id] as Set == dataModelsList.items.id as Set
 
         when:
-        ListResponse<DataClass> dataClassListResponse = dataClassApi.list(newBranchVersionDataModel.id)
+        ListResponse<DataClass> dataClassListResponse = dataClassApi.list(newBranchVersionDataModel.id, new PaginationParams())
 
         then:
         dataClassListResponse
@@ -185,7 +186,7 @@ class DataModelNewBranchVersionIntegrationSpec extends CommonDataSpec {
 
         when:
         ListResponse<DataElement> dataElementListResponse =
-            dataElementApi.list(newBranchVersionDataModel.id,firstDataClassId)
+            dataElementApi.list(newBranchVersionDataModel.id,firstDataClassId, new PaginationParams())
 
         then:
         dataElementListResponse
@@ -197,7 +198,7 @@ class DataModelNewBranchVersionIntegrationSpec extends CommonDataSpec {
         //check nested facet in dataclass1 is cloned
 
         ListResponse<DataClass> newBranchModelVersionDataClasses =
-            dataClassApi.list(newBranchVersionDataModel.id)
+            dataClassApi.list(newBranchVersionDataModel.id, new PaginationParams())
         then:
         List<UUID> newBranchModelVersionDataClassIds = newBranchModelVersionDataClasses.items.id
         DataClass retrieved = null

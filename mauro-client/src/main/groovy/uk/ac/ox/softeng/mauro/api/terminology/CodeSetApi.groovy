@@ -37,7 +37,7 @@ interface CodeSetApi extends ModelApi<CodeSet> {
                     @NonNull UUID termId)
 
     @Delete(value = Paths.CODE_SET_ID)
-    HttpResponse delete(UUID id, @Body @Nullable CodeSet codeSet)
+    HttpResponse delete(UUID id, @Body @Nullable CodeSet codeSet, @Nullable Boolean permanent)
 
     @Delete(value = Paths.CODE_SET_TERM_ID)
     CodeSet removeTermFromCodeSet(@NonNull UUID id,
@@ -60,4 +60,7 @@ interface CodeSetApi extends ModelApi<CodeSet> {
 
     @Put(value = Paths.CODE_SET_NEW_BRANCH_MODEL_VERSION)
     CodeSet createNewBranchModelVersion(UUID id, @Body @Nullable CreateNewVersionData createNewVersionData)
+
+    @Get(Paths.CODE_SET_DOI)
+    Map doi(UUID id)
 }

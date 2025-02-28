@@ -214,7 +214,7 @@ class ClassifierIntegrationSpec extends CommonDataSpec {
         classifierApi.createAdministeredItemClassifier('dataModel', dataModel.id, classifier.id)
 
         when:
-        HttpResponse httpResponse = classificationSchemeApi.delete(classificationSchemeId, new ClassificationScheme())
+        HttpResponse httpResponse = classificationSchemeApi.delete(classificationSchemeId, new ClassificationScheme(), true)
 
 
         then:

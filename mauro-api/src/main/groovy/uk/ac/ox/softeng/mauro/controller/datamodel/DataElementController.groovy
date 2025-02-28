@@ -1,5 +1,6 @@
 package uk.ac.ox.softeng.mauro.controller.datamodel
 
+import uk.ac.ox.softeng.mauro.ErrorHandler
 import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.audit.Audit
 import uk.ac.ox.softeng.mauro.domain.facet.EditType
@@ -28,6 +29,7 @@ import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableReposit
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.DataModelCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.datamodel.DataModelContentRepository
 import uk.ac.ox.softeng.mauro.web.ListResponse
+import uk.ac.ox.softeng.mauro.web.PaginationParams
 
 @CompileStatic
 @Slf4j
@@ -103,15 +105,15 @@ class DataElementController extends AdministeredItemController<DataElement, Data
     }
 
     @Audit
-    @Get(Paths.DATA_ELEMENT_LIST)
-    ListResponse<DataElement> list(UUID dataModelId, UUID dataClassId) {
+    @Get(Paths.DATA_ELEMENT_SEARCH)
+    ListResponse<DataElement> list(UUID dataModelId, UUID dataClassId, @Nullable PaginationParams params) {
         DataClass dataClass = dataClassRepository.readById(dataClassId)
         accessControlService.checkRole(Role.READER, dataClass)
         List<DataElement> dataElements = dataElementRepository.readAllByDataClass_Id(dataClassId)
         dataElements.each {
             updateDerivedProperties(it)
         }
-        ListResponse.from(dataElements)
+        ListResponse<DataElement>.from(dataElements, params)
     }
 
     /**
@@ -139,5 +141,12 @@ class DataElementController extends AdministeredItemController<DataElement, Data
         }
         existing.dataType = dataElement.dataType
         existing
+    }
+
+    @Get(Paths.DATA_ELEMENT_DOI)
+    @Override
+    Map doi(UUID id) {
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.SERVICE_UNAVAILABLE, "Doi", "Doi is not implemented")
+        return null
     }
 }

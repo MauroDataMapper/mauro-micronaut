@@ -142,7 +142,7 @@ class DataModelWithClassifiersIntegrationSpec extends CommonDataSpec {
         Metadata metadata = metadataApi.create("dataModels", dataModel.id, metadataPayload())
 
         when:
-        HttpResponse response = dataModelApi.delete(dataModel.id, new DataModel())
+        HttpResponse response = dataModelApi.delete(dataModel.id, new DataModel(),true)
         then:
         response.status == HttpStatus.NO_CONTENT
 
