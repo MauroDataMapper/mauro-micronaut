@@ -32,8 +32,26 @@ class AuditIntegrationSpec extends SecuredIntegrationSpec {
 
         then:
             editResponse.items.size() == 1
-            editResponse.items.first().description == 'Created folder'
-            editResponse.items.first().title == EditType.CREATE
+            editResponse.items.sort { it.dateCreated }.first().description == 'Created folder'
+            editResponse.items.sort { it.dateCreated }.first().title == EditType.CREATE
+
+        when:
+            PUT("/folders/${folderResponse.id}", [label: "Test folder (updated)"])
+            folderResponse2 = folderResponse2 = GET("/folders/${folderResponse.id}")
+
+        then:
+            folderResponse2.edits.size() == 2
+            folderResponse2.edits.sort { it.dateCreated }.last().description == 'Updated folder'
+            folderResponse2.edits.sort { it.dateCreated }.last().title == EditType.UPDATE.toString()
+
+        when:
+            editResponse = (ListResponse<Edit>) GET("/folders/${folderResponse.id}/edits", ListResponse, Edit)
+
+        then:
+            editResponse.items.size() == 2
+            editResponse.items.sort { it.dateCreated }.last().description == 'Updated folder'
+            editResponse.items.sort { it.dateCreated }.last().title == EditType.UPDATE
+
     }
 
 

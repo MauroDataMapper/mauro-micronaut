@@ -57,14 +57,18 @@ class AuditInterceptor implements MethodInterceptor<Object, Object>{
     @Override
     Object intercept(MethodInvocationContext<Object, Object> context) {
 
-        boolean doFileLog = (auditScope == AuditScope.ALL
-            || (auditScope == AuditScope.WRITE_ONLY &&
-                (
-                    context.getAnnotation(Post) || context.getAnnotation(Put) || context.getAnnotation(Delete)
-                ))
-        )
-        if(doFileLog) {
-            fileLog(context)
+        try {
+            boolean doFileLog = (auditScope == AuditScope.ALL
+                || (auditScope == AuditScope.WRITE_ONLY &&
+                    (
+                        context.getAnnotation(Post) || context.getAnnotation(Put) || context.getAnnotation(Delete)
+                    ))
+            )
+            if (doFileLog) {
+                fileLog(context)
+            }
+        } catch(Exception e) {
+            e.printStackTrace()
         }
 
         Object result = context.proceed()
@@ -109,7 +113,10 @@ class AuditInterceptor implements MethodInterceptor<Object, Object>{
         loggingEventBuilder = loggingEventBuilder.addKeyValue('parameters', context.parameterValueMap)
 
         if(accessControlService.user) {
-            loggingEventBuilder.addKeyValue('user', accessControlService.user)
+            String userEmailAddress = accessControlService.user.emailAddress
+            String userId = accessControlService.user.id.toString()
+            loggingEventBuilder.addKeyValue('userEmailAddress', userEmailAddress)
+            loggingEventBuilder.addKeyValue('userId', userId)
             loggingEventBuilder.addKeyValue('anonymous', false)
         } else {
             loggingEventBuilder.addKeyValue('anonymous', true)
