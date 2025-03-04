@@ -11,9 +11,10 @@ import uk.ac.ox.softeng.mauro.persistence.SecuredContainerizedTest
 import uk.ac.ox.softeng.mauro.security.SecuredIntegrationSpec
 
 import io.micronaut.runtime.EmbeddedApplication
-import io.micronaut.runtime.server.EmbeddedServer
 import jakarta.inject.Inject
 import spock.lang.Shared
+
+import java.time.Instant
 
 @SecuredContainerizedTest
 class PublishedModelIntegrationSpec extends SecuredIntegrationSpec {
@@ -31,10 +32,13 @@ class PublishedModelIntegrationSpec extends SecuredIntegrationSpec {
     UUID terminologyId
     @Shared
     UUID codeSetId
+    @Shared
+    Instant startTime
 
     void setupSpec() {
         loginAdmin()
         folderId = ((Folder) POST("$FOLDERS_PATH", folder(), Folder)).id
+        startTime = Instant.now()
         dataModelId = ((DataModel) POST("$FOLDERS_PATH/$folderId$DATAMODELS_PATH", [label: 'data model label'], DataModel)).id
         ((DataClass) POST("$DATAMODELS_PATH/$dataModelId$DATACLASSES_PATH", [label: 'data class label'], DataClass)).id
 
@@ -68,10 +72,12 @@ class PublishedModelIntegrationSpec extends SecuredIntegrationSpec {
 
         List<String> linksUrl = publishedModelResponse.publishedModels.collectMany {it.links.collect {it.url}}.toSorted()
         linksUrl.size() == 3
-        PublishedModel terminologyPublishedModel = publishedModelResponse.publishedModels.find{it.modelType == Terminology.class.simpleName }
-        terminologyPublishedModel.links?[0].url.contains(terminologyId.toString())
+        PublishedModel terminologyPublishedModel = publishedModelResponse.publishedModels.find {it.modelType == Terminology.class.simpleName}
+        terminologyPublishedModel.links ?[0].url.contains(terminologyId.toString())
+        terminologyPublishedModel.datePublished >= startTime
+        terminologyPublishedModel.lastUpdated >= startTime
     }
-    
+
     void 'admin user -get published modelsNewerVersions '() {
         given:
         loginAdmin()

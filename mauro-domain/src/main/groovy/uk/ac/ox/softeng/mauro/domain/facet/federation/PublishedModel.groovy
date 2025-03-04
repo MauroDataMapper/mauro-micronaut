@@ -51,7 +51,7 @@ class PublishedModel implements Comparable<PublishedModel> {
     }
 
     PublishedModel(String modelId, String modelLabel, ModelVersion modelVersion, String modelVersionTag, String description, String modelType, Instant lastUpdated,
-                   Instant dateCreated, String author, List<MauroLink> links) {
+                   Instant dateCreated, Instant dateFinalised,String author, List<MauroLink> links) {
         this.modelId = modelId
         this.modelLabel = modelLabel
         this.modelVersion = modelVersion
@@ -60,6 +60,7 @@ class PublishedModel implements Comparable<PublishedModel> {
         this.modelType = modelType
         this.lastUpdated = lastUpdated
         this.dateCreated = dateCreated
+        this.datePublished = dateFinalised
         this.author = author
         this.links = links
     }

@@ -34,7 +34,7 @@ class PublishService {
     PublishedModel getPublishedModel(Model model, String uriString) {
         PublishedModel publishedModel = new PublishedModel(model.id.toString(),
                                                            model.label, model.modelVersion, model.modelVersionTag, model.description, model.modelType, model.lastUpdated,
-                                                           model.dateCreated, model.author, [])
+                                                           model.dateCreated,model.dateFinalised, model.author, [])
         String modelUrlPath = deduceModelUrlPath(model.domainType)
         publishedModel.links = mauroPluginService.mauroPlugins.findAll {
             ModelExporterPlugin.isInstance(it)
