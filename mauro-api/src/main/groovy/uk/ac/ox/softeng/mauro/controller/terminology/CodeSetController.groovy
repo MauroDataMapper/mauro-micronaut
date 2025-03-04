@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.controller.terminology
 
+import uk.ac.ox.softeng.mauro.ErrorHandler
+
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
@@ -11,6 +13,7 @@ import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
 import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
+import uk.ac.ox.softeng.mauro.Paths
 import uk.ac.ox.softeng.mauro.controller.model.ModelController
 import uk.ac.ox.softeng.mauro.domain.diff.ObjectDiff
 import uk.ac.ox.softeng.mauro.domain.model.version.CreateNewVersionData
@@ -74,10 +77,10 @@ class CodeSetController extends ModelController<CodeSet> {
 
         Term term = termRepository.readById(termId)
         accessControlService.checkRole(Role.READER, term)
-        handleError(HttpStatus.NOT_FOUND, term, "Term item $termId not found")
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, term, "Term item $termId not found")
         CodeSet codeSet = codeSetRepository.readById(id)
         accessControlService.checkRole(Role.EDITOR, codeSet)
-        handleError(HttpStatus.NOT_FOUND, term, "CodeSet item $id not found")
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, term, "CodeSet item $id not found")
         codeSetRepositoryUnCached.addTerm(id, termId)
         codeSet
     }
@@ -93,10 +96,10 @@ class CodeSetController extends ModelController<CodeSet> {
     CodeSet removeTermFromCodeSet(@NonNull UUID id,
                                   @NonNull UUID termId) {
         Term term = termRepository.readById(termId)
-        handleError(HttpStatus.NOT_FOUND, term, "Term item $termId not found")
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, term, "Term item $termId not found")
         CodeSet codeSet = codeSetRepository.readById(id)
         accessControlService.checkRole(Role.EDITOR, codeSet)
-        handleError(HttpStatus.NOT_FOUND, term, "CodeSet item $id not found")
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, term, "CodeSet item $id not found")
         codeSetRepositoryUnCached.removeTerm(id, termId)
         codeSet
     }
@@ -133,9 +136,9 @@ class CodeSetController extends ModelController<CodeSet> {
     @Get('/codeSets/{id}/diff/{otherId}')
     ObjectDiff diffModels(@NonNull UUID id, @NonNull UUID otherId) {
         CodeSet codeSet = modelContentRepository.findWithContentById(id)
-        handleNotFoundError(codeSet, id)
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, codeSet, "item not found : $id")
         CodeSet other = modelContentRepository.findWithContentById(otherId)
-        handleNotFoundError(other, otherId)
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, codeSet, "item not found : $otherId")
 
         accessControlService.checkRole(Role.READER, codeSet)
         accessControlService.checkRole(Role.READER, other)

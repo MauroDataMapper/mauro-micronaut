@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.persistence.model
 
+import uk.ac.ox.softeng.mauro.domain.model.version.ModelVersion
+
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.Nullable
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
@@ -23,5 +25,9 @@ trait ModelRepository<M extends Model> implements AdministeredItemRepository<M> 
     @Nullable
     abstract List<M> findAllByFolderId(UUID folderId)
 
+    @Nullable
+    abstract List<M> readAllByFinalisedTrue()
 
+    @Nullable
+    abstract M readByLabelAndModelVersion(String label, ModelVersion modelVersion)
 }

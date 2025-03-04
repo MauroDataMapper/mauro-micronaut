@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed
+	xmlns="http://www.w3.org/2005/Atom"
+	xmlns:onto="http://anyserver/syndication/">
+	<title>release-candidate</title>
+  <link href="http://localhost:8088/test/syndication.xml" length="0" rel="self"/>:
+	<updated>2025-02-17T04:02:20Z</updated>
+	<id>urn:uuid:FE8CEFE6-D0DA-4132-8C5A-0632A6993B66</id>
+	<generator version="6.22.1">Ontoserver® 6.22.1, CSIRO</generator>
+	<entry>
+		<title>test data</title>
+		<category label="test labelp" scheme="http://any.server.net" term="test_term"/>
+		<id>urn:uuid:d6df5a0d-e69c-4adc-a4bc-e9150c92a187</id>
+		<author>
+			<email>any-email@mauro.micronaut.uk</email>
+			<name>AN other</name>
+			<uri>http://mauro-micronaut-test-xml-data.com</uri>
+		</author>
+		<rights>Copyright a copyright</rights>
+		<updated>2024-11-01T12:08:51Z</updated>
+		<published>2024-11-01T12:08:51Z</published>
+		<summary>test summary</summary>
+		<link href="https//localhost:8088/test/entry/D77476A1-8654-4B69-B579-93DB3467FDC1/artefact.json" rel="alternate" type="application/fhir+json"/>
+
+		<onto:permission code="restricted.read"/>
+		<source>
+			<title>NHS Digital data load feed</title>
+			<id>urn:uuid:b4484456-366a-4430-a8ae-56248003fc5a</id>
+			<link href="https://ontology.nhs.uk/syndication/feed/20241101_001_EXT_RC/syndication.xml" length="0" rel="alternate"/>
+		</source>
+	</entry>
+</feed>

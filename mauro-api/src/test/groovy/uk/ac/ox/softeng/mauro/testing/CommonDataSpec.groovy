@@ -4,15 +4,15 @@ import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadataType
 
 
-class CommonDataSpec extends BaseIntegrationSpec{
+class CommonDataSpec extends BaseIntegrationSpec {
     public static final String REPORT_DATE = "2024-03-01T20:50:01.612Z"
 
     def codeSet() {
         [
-                label       : "Test code set",
-                description : "code set description",
-                author      : "A.N. Other",
-                organisation: "uk.ac.gridpp.ral.org"
+            label       : "Test code set",
+            description : "code set description",
+            author      : "A.N. Other",
+            organisation: "uk.ac.gridpp.ral.org"
         ]
     }
 
@@ -74,7 +74,12 @@ class CommonDataSpec extends BaseIntegrationSpec{
     def dataTypesPayload(){
         [label: 'Test data type', domainType: 'primitiveType', units : 'kilograms']
     }
-
+    def dataTypePayload1() {
+        [label: 'string', description: 'character string of variable length', domainType: 'PrimitiveType']
+    }
+    def dataTypePayload2(){
+        [label: 'Test data type', domainType: 'primitiveType', units : 'kilograms']
+    }
 
     def termRelationshipType(){
        [label: 'Test Term Relationship Type label', displayLabel: 'Random display label', parentalRelationship: false, childRelationship : false]
@@ -126,4 +131,96 @@ class CommonDataSpec extends BaseIntegrationSpec{
             readableByAuthenticatedUsers: true
         ]
     }
+
+
+    def mauroJsonSubscribedCataloguePayload() {
+        [
+            url                                  : "https://maurosandbox.com/sandbox",
+            subscribedCatalogueType              : 'Mauro JSON',
+            label                                : 'random label subscribedCatalogue',
+            subscribedCatalogueAuthenticationType: 'API Key',
+            refreshPeriod                        : 90,
+            api_key                              : 'b39d63d4-4fd4-494d-a491-3c778d89acae'
+        ]
+    }
+
+    def atomSubscribedCataloguePayload(){
+        [
+            url                                  : "http://localhost:8088/test/syndication.xml",
+            subscribedCatalogueType              : 'ATOM',
+            label                                : 'atom label',
+            subscribedCatalogueAuthenticationType: 'API Key',
+            refreshPeriod                        : 90,
+            api_key                              : 'b39d63d4-4fd4-494d-a491-3c778d89acae'
+        ]
+    }
+
+    def subscribedModelPayload(UUID folderId) {
+        [subscribedModel:
+             [subscribedModelId  : '0b97751d-b6bf-476c-a9e6-95d3352e8008',
+              subscribedModelType: 'DataModel',
+              folderId           : folderId]
+        ]
+    }
+
+    def subscribedModelAndImporterProviderServicePayload(UUID folderId) {
+        [subscribedModel:
+             [subscribedModelId  : '0b97751d-b6bf-476c-a9e6-95d3352e8008',
+              subscribedModelType: 'DataModel',
+              folderId           : folderId],
+
+         importerProviderService:
+             [name: 'JsonDataModelImporterPlugin', namespace: 'uk.ac.ox.softeng.mauro.plugin.importer.json', version: '4.0.0']
+        ]
+    }
+
+
+    def subscribedModelAndUrlPayload(UUID folderId, String urlString) {
+        [subscribedModel:
+             [subscribedModelId  : '0b97751d-b6bf-476c-a9e6-95d3352e8008',
+              subscribedModelType: 'DataModel',
+              folderId           : folderId],
+
+         url            : urlString
+        ]
+    }
+
+    def subscribedModelUrlAndContentTypePayload(UUID folderId, String urlString, String contentType) {
+        [subscribedModel:
+             [subscribedModelId  : '0b97751d-b6bf-476c-a9e6-95d3352e8008',
+              subscribedModelType: 'DataModel',
+              folderId           : folderId],
+
+         url            : urlString,
+         contentType    : contentType
+        ]
+
+    }
+
+    def urlPayload() {
+        [url: "http://maurosandbox.com/sandbox/api/dataModels/0b97751d-b6bf-476c-a9e6-95d3352e8008/export/uk.ac.ox.softeng.maurodatamapper.datamodel.provider." +
+              "exporter/DataModelJsonExporterService/3.2"]
+    }
+
+
+    def mauroJsonSubscribedCataloguePayload(String label) {
+        [
+            url                                  : "https://maurosandbox.com/sandbox",
+            subscribedCatalogueType              : 'Mauro JSON',
+            label                                : label,
+            subscribedCatalogueAuthenticationType: 'API Key',
+            refreshPeriod                        : 90,
+            api_key                              : "b39d63d4-4fd4-494d-a491-3c778d89acae"
+        ]
+    }
+
+    def authorityPayload(){
+        [
+            url: "http://random.co.uk",
+            label: 'authority label'
+        ]
+    }
+
 }
+
+

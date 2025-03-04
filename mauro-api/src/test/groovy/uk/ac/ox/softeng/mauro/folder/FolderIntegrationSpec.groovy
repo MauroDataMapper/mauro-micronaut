@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.folder
 
+import uk.ac.ox.softeng.mauro.domain.authority.Authority
+
 import io.micronaut.runtime.EmbeddedApplication
 import jakarta.inject.Inject
 import spock.lang.Shared
@@ -20,6 +22,7 @@ class FolderIntegrationSpec extends BaseIntegrationSpec {
     @Shared
     UUID childFolderId
 
+
     void 'create folder'() {
         when:
         Folder folderResponse = (Folder) POST('/folders', [label: 'Test folder'], Folder)
@@ -29,6 +32,7 @@ class FolderIntegrationSpec extends BaseIntegrationSpec {
         folderResponse
         folderResponse.label == 'Test folder'
         folderResponse.path.toString() == 'fo:Test folder'
+        folderResponse.authority
     }
 
     void 'create child folder'() {
@@ -40,6 +44,7 @@ class FolderIntegrationSpec extends BaseIntegrationSpec {
         folderResponse
         folderResponse.label == 'Test child folder'
         folderResponse.path.toString() == 'fo:Test folder|fo:Test child folder'
+        folderResponse.authority
     }
 
     void 'change child folder label'() {
@@ -50,6 +55,7 @@ class FolderIntegrationSpec extends BaseIntegrationSpec {
         folderResponse
         folderResponse.label == 'Updated child folder'
         folderResponse.path.toString() == 'fo:Test folder|fo:Updated child folder'
+        folderResponse.authority
     }
 
     void 'change parent folder label'() {
@@ -61,6 +67,7 @@ class FolderIntegrationSpec extends BaseIntegrationSpec {
         folderResponse.id == folderId
         folderResponse.label == 'Updated folder'
         folderResponse.path.toString() == 'fo:Updated folder'
+        folderResponse.authority
     }
 
     void 'list folders'() {

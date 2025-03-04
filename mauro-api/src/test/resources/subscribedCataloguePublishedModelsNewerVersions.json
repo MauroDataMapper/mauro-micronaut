@@ -1,0 +1,152 @@
+{
+  "lastUpdated": "2023-06-12T16:03:07.118Z",
+  "newerPublishedModels": [
+    {
+      "modelId": "bf3c921f-4447-4553-8a1f-326958eabc10",
+      "label": "065000V1  Day 0 Vacination (VAC065 - All Groups)",
+      "version": "2.0.0",
+      "modelVersionTag": "v1.2",
+      "modelType": "DataModel",
+      "lastUpdated": "2023-06-12T15:12:13.916Z",
+      "dateCreated": "2023-06-12T15:12:13.916Z",
+      "datePublished": "2023-06-12T15:12:13.785Z",
+      "description": "VAC067 Vaccination CRF - Day 0 (Protocol v 5.0)",
+      "links": [
+        {
+          "contentType": "application/mauro.datamodel+json",
+          "url": "https://maurosandbox.com/sandbox/api/dataModels/bf3c921f-4447-4553-8a1f-326958eabc10/export/uk.ac.ox.softeng.maurodatamapper.datamodel.provider.exporter/DataModelJsonExporterService/3.2"
+        },
+        {
+          "contentType": "application/mauro.datamodel+pdf",
+          "url": "https://maurosandbox.com/sandbox/api/dataModels/bf3c921f-4447-4553-8a1f-326958eabc10/export/uk.ac.ox.softeng.maurodatamapper.plugins.explorer.provider.exporter/DataModelPdfExporterService/1.0"
+        },
+        {
+          "contentType": "application/mauro.datamodel+sql",
+          "url": "https://maurosandbox.com/sandbox/api/dataModels/bf3c921f-4447-4553-8a1f-326958eabc10/export/uk.ac.ox.softeng.maurodatamapper.plugins.explorer.provider.exporter/DataModelSqlExporterService/1.0"
+        },
+        {
+          "contentType": "application/mauro.datamodel+xml",
+          "url": "https://maurosandbox.com/sandbox/api/dataModels/bf3c921f-4447-4553-8a1f-326958eabc10/export/uk.ac.ox.softeng.maurodatamapper.datamodel.provider.exporter/DataModelXmlExporterService/5.2"
+        },
+        {
+          "contentType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          "url": "https://maurosandbox.com/sandbox/api/dataModels/bf3c921f-4447-4553-8a1f-326958eabc10/export/uk.ac.ox.softeng.maurodatamapper.plugins.excel.datamodel/ExcelDataModelExporterProviderService/5.3.0-SNAPSHOT"
+        },
+        {
+          "contentType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          "url": "https://maurosandbox.com/sandbox/api/dataModels/bf3c921f-4447-4553-8a1f-326958eabc10/export/uk.ac.ox.softeng.maurodatamapper.plugins.excel.datamodel/SimpleExcelDataModelExporterProviderService/5.3.0-SNAPSHOT"
+        },
+        {
+          "contentType": "application/vnd.ms-excel",
+          "url": "https://maurosandbox.com/sandbox/api/dataModels/bf3c921f-4447-4553-8a1f-326958eabc10/export/uk.ac.ox.softeng.maurodatamapper.plugins.excel.openclinica/OpenClinicaV3CrfDataModelExporterProviderService/1.0.0-SNAPSHOT"
+        },
+        {
+          "contentType": "application/fhir+json",
+          "url": "https://maurosandbox.com/sandbox/api/dataModels/bf3c921f-4447-4553-8a1f-326958eabc10/export/uk.ac.ox.softeng.maurodatamapper.plugins.fhir.datamodel/FhirDataModelExporterProviderService/2.4.0-SNAPSHOT"
+        },
+        {
+          "contentType": "application/xml",
+          "url": "https://maurosandbox.com/sandbox/api/dataModels/bf3c921f-4447-4553-8a1f-326958eabc10/export/uk.ac.ox.softeng.maurodatamapper.plugins.xsd.datamodel.provider.exporter/XsdExporterProviderService/1.3.0-SNAPSHOT"
+        }
+      ]
+    },
+    {
+      "modelId": "cffa45c0-5336-45b5-992d-53b0595e3bdb",
+      "label": "065000V1  Day 0 Vacination (VAC065 - All Groups)",
+      "version": "3.0.0",
+      "modelVersionTag": "D0 V1.1",
+      "modelType": "DataModel",
+      "lastUpdated": "2023-06-12T16:03:04.524Z",
+      "dateCreated": "2023-06-12T16:03:04.524Z",
+      "datePublished": "2023-06-12T16:03:04.393Z",
+      "description": "VAC065 Vaccination CRF - Day 0",
+      "links": [
+        {
+          "contentType": "application/mauro.datamodel+json",
+          "url": "https://maurosandbox.com/sandbox/api/dataModels/cffa45c0-5336-45b5-992d-53b0595e3bdb/export/uk.ac.ox.softeng.maurodatamapper.datamodel.provider.exporter/DataModelJsonExporterService/3.2"
+        },
+        {
+          "contentType": "application/mauro.datamodel+pdf",
+          "url": "https://maurosandbox.com/sandbox/api/dataModels/cffa45c0-5336-45b5-992d-53b0595e3bdb/export/uk.ac.ox.softeng.maurodatamapper.plugins.explorer.provider.exporter/DataModelPdfExporterService/1.0"
+        },
+        {
+          "contentType": "application/mauro.datamodel+sql",
+          "url": "https://maurosandbox.com/sandbox/api/dataModels/cffa45c0-5336-45b5-992d-53b0595e3bdb/export/uk.ac.ox.softeng.maurodatamapper.plugins.explorer.provider.exporter/DataModelSqlExporterService/1.0"
+        },
+        {
+          "contentType": "application/mauro.datamodel+xml",
+          "url": "https://maurosandbox.com/sandbox/api/dataModels/cffa45c0-5336-45b5-992d-53b0595e3bdb/export/uk.ac.ox.softeng.maurodatamapper.datamodel.provider.exporter/DataModelXmlExporterService/5.2"
+        },
+        {
+          "contentType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          "url": "https://maurosandbox.com/sandbox/api/dataModels/cffa45c0-5336-45b5-992d-53b0595e3bdb/export/uk.ac.ox.softeng.maurodatamapper.plugins.excel.datamodel/ExcelDataModelExporterProviderService/5.3.0-SNAPSHOT"
+        },
+        {
+          "contentType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          "url": "https://maurosandbox.com/sandbox/api/dataModels/cffa45c0-5336-45b5-992d-53b0595e3bdb/export/uk.ac.ox.softeng.maurodatamapper.plugins.excel.datamodel/SimpleExcelDataModelExporterProviderService/5.3.0-SNAPSHOT"
+        },
+        {
+          "contentType": "application/vnd.ms-excel",
+          "url": "https://maurosandbox.com/sandbox/api/dataModels/cffa45c0-5336-45b5-992d-53b0595e3bdb/export/uk.ac.ox.softeng.maurodatamapper.plugins.excel.openclinica/OpenClinicaV3CrfDataModelExporterProviderService/1.0.0-SNAPSHOT"
+        },
+        {
+          "contentType": "application/fhir+json",
+          "url": "https://maurosandbox.com/sandbox/api/dataModels/cffa45c0-5336-45b5-992d-53b0595e3bdb/export/uk.ac.ox.softeng.maurodatamapper.plugins.fhir.datamodel/FhirDataModelExporterProviderService/2.4.0-SNAPSHOT"
+        },
+        {
+          "contentType": "application/xml",
+          "url": "https://maurosandbox.com/sandbox/api/dataModels/cffa45c0-5336-45b5-992d-53b0595e3bdb/export/uk.ac.ox.softeng.maurodatamapper.plugins.xsd.datamodel.provider.exporter/XsdExporterProviderService/1.3.0-SNAPSHOT"
+        }
+      ]
+    },
+    {
+      "modelId": "09bae822-0f97-4240-a53f-f8133916d2e1",
+      "label": "065000V1  Day 0 Vacination (VAC065 - All Groups)",
+      "version": "4.0.0",
+      "modelVersionTag": "v1.2",
+      "modelType": "DataModel",
+      "lastUpdated": "2023-06-12T16:03:07.118Z",
+      "dateCreated": "2023-06-12T16:03:07.118Z",
+      "datePublished": "2023-06-12T16:03:06.987Z",
+      "description": "VAC067 Vaccination CRF - Day 0 (Protocol v 5.0)",
+      "links": [
+        {
+          "contentType": "application/mauro.datamodel+json",
+          "url": "https://maurosandbox.com/sandbox/api/dataModels/09bae822-0f97-4240-a53f-f8133916d2e1/export/uk.ac.ox.softeng.maurodatamapper.datamodel.provider.exporter/DataModelJsonExporterService/3.2"
+        },
+        {
+          "contentType": "application/mauro.datamodel+pdf",
+          "url": "https://maurosandbox.com/sandbox/api/dataModels/09bae822-0f97-4240-a53f-f8133916d2e1/export/uk.ac.ox.softeng.maurodatamapper.plugins.explorer.provider.exporter/DataModelPdfExporterService/1.0"
+        },
+        {
+          "contentType": "application/mauro.datamodel+sql",
+          "url": "https://maurosandbox.com/sandbox/api/dataModels/09bae822-0f97-4240-a53f-f8133916d2e1/export/uk.ac.ox.softeng.maurodatamapper.plugins.explorer.provider.exporter/DataModelSqlExporterService/1.0"
+        },
+        {
+          "contentType": "application/mauro.datamodel+xml",
+          "url": "https://maurosandbox.com/sandbox/api/dataModels/09bae822-0f97-4240-a53f-f8133916d2e1/export/uk.ac.ox.softeng.maurodatamapper.datamodel.provider.exporter/DataModelXmlExporterService/5.2"
+        },
+        {
+          "contentType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          "url": "https://maurosandbox.com/sandbox/api/dataModels/09bae822-0f97-4240-a53f-f8133916d2e1/export/uk.ac.ox.softeng.maurodatamapper.plugins.excel.datamodel/ExcelDataModelExporterProviderService/5.3.0-SNAPSHOT"
+        },
+        {
+          "contentType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          "url": "https://maurosandbox.com/sandbox/api/dataModels/09bae822-0f97-4240-a53f-f8133916d2e1/export/uk.ac.ox.softeng.maurodatamapper.plugins.excel.datamodel/SimpleExcelDataModelExporterProviderService/5.3.0-SNAPSHOT"
+        },
+        {
+          "contentType": "application/vnd.ms-excel",
+          "url": "https://maurosandbox.com/sandbox/api/dataModels/09bae822-0f97-4240-a53f-f8133916d2e1/export/uk.ac.ox.softeng.maurodatamapper.plugins.excel.openclinica/OpenClinicaV3CrfDataModelExporterProviderService/1.0.0-SNAPSHOT"
+        },
+        {
+          "contentType": "application/fhir+json",
+          "url": "https://maurosandbox.com/sandbox/api/dataModels/09bae822-0f97-4240-a53f-f8133916d2e1/export/uk.ac.ox.softeng.maurodatamapper.plugins.fhir.datamodel/FhirDataModelExporterProviderService/2.4.0-SNAPSHOT"
+        },
+        {
+          "contentType": "application/xml",
+          "url": "https://maurosandbox.com/sandbox/api/dataModels/09bae822-0f97-4240-a53f-f8133916d2e1/export/uk.ac.ox.softeng.maurodatamapper.plugins.xsd.datamodel.provider.exporter/XsdExporterProviderService/1.3.0-SNAPSHOT"
+        }
+      ]
+    }
+  ]
+}

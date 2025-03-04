@@ -1,10 +1,9 @@
 micronaut:
   application:
     name: sandbox
-  http:
     client:
-      read-timeout: 30m
-      connect-timeout: 30m
+      connect-timeout: 11s
+
   server:
     port: 8088
     max-request-size: 100mb
@@ -72,7 +71,7 @@ endpoints:
     enabled: true
     sensitive: true
   flyway:
-    enabled: true
+    enabled: trues
     sensitive: true
   caches:
     enabled: true
@@ -104,6 +103,7 @@ flyway:
         - datamodel
         - security
         - dataflow
+        - federation
 
 javamail:
   authentication:
@@ -118,8 +118,11 @@ javamail:
           enable: true
         host: $$host$$ # Replace me!
 
+mauro:
+  federation:
+    subscribed-catalogues.max: 50
+
 # Populate to enable OAuth2; see also micronaut.security properties
-#mauro:
 #  oauth:
 #    id:
 #    label: Keycloak

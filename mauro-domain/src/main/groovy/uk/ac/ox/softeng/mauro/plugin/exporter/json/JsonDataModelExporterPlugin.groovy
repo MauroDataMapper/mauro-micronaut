@@ -45,4 +45,9 @@ class JsonDataModelExporterPlugin implements DataModelExporterPlugin {
         objectMapper.writeValueAsBytes(exportModel)
 
     }
+
+    @Override
+    String getContentType() {
+        "application/mauro.${DataModel.class.simpleName.toLowerCase()}+json"
+    }
 }

@@ -104,7 +104,7 @@ class AccessControlService implements Toggleable {
      */
     boolean canDoRole(@NonNull Role role, @NonNull AdministeredItem item) {
         if (!enabled) return true
-        if (userAuthenticated && isAdministrator()) return true // always allow Administrator full access
+        if (isAdministrator()) return true // always allow Administrator full access
         pathRepository.readParentItems(item)
         Model owner = item.owner
         if (userAuthenticated && owner.catalogueUser && owner.catalogueUser.id == getUserId()) return true // always allow owner full access
@@ -124,6 +124,10 @@ class AccessControlService implements Toggleable {
         // allow role access according to owning model or parents
         List<UserGroup> userGroups = userGroupRepository.readAllByCatalogueUserId(userId)
         parentModels.any {canDoRoleWithGroups(role, userGroups, it)}
+    }
+
+    boolean isAuthenticatedAdministrator() {
+        userAuthenticated && isAdministrator()
     }
 
     /**

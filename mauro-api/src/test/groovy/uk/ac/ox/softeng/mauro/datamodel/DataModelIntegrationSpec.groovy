@@ -68,6 +68,8 @@ class DataModelIntegrationSpec extends BaseIntegrationSpec {
         dataModelResponse.label == 'Test data model'
         dataModelResponse.type == 'Data Asset'
         dataModelResponse.path == 'dm:Test data model$main'
+        dataModelResponse.authority
+
 
         when:
         dataModelResponse = GET("/dataModels/$dataModelId")
@@ -76,6 +78,7 @@ class DataModelIntegrationSpec extends BaseIntegrationSpec {
         dataModelResponse.label == 'Test data model'
         dataModelResponse.type == 'Data Asset'
         dataModelResponse.path == 'dm:Test data model$main'
+        dataModelResponse.authority
 
         when:
         dataModelResponse = POST("/folders/$folderId/dataModels", [label: 'Test data standard', type: 'Data Standard'])
@@ -85,6 +88,7 @@ class DataModelIntegrationSpec extends BaseIntegrationSpec {
         dataModelResponse.label == 'Test data standard'
         dataModelResponse.type == 'Data Standard'
         dataModelResponse.path == 'dm:Test data standard$main'
+        dataModelResponse.authority
 
         when:
         dataModelResponse = GET("/dataModels/$dataStandardId")
@@ -93,6 +97,7 @@ class DataModelIntegrationSpec extends BaseIntegrationSpec {
         dataModelResponse.label == 'Test data standard'
         dataModelResponse.type == 'Data Standard'
         dataModelResponse.path == 'dm:Test data standard$main'
+        dataModelResponse.authority
     }
 
     void 'test finalise data model'() {
@@ -112,6 +117,7 @@ class DataModelIntegrationSpec extends BaseIntegrationSpec {
         finalised
         finalised.finalised == true
         finalised.dateFinalised
+        finalised.authority
     }
 
     void 'test data types'() {

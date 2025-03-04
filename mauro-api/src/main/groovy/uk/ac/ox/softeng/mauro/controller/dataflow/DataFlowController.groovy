@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.controller.dataflow
 
+import uk.ac.ox.softeng.mauro.ErrorHandler
+
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
@@ -11,7 +13,7 @@ import jakarta.inject.Inject
 import jakarta.transaction.Transactional
 import jakarta.validation.constraints.NotNull
 import uk.ac.ox.softeng.mauro.controller.model.AdministeredItemController
-import uk.ac.ox.softeng.mauro.controller.terminology.Paths
+import uk.ac.ox.softeng.mauro.Paths
 import uk.ac.ox.softeng.mauro.domain.dataflow.DataFlow
 import uk.ac.ox.softeng.mauro.domain.dataflow.Type
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
@@ -46,7 +48,7 @@ class DataFlowController extends AdministeredItemController<DataFlow, DataModel>
     DataFlow create(@NonNull UUID dataModelId, @Body @NonNull DataFlow dataFlow) {
         DataModel source = dataModelRepository.findById(dataFlow.source.id)
         accessControlService.checkRole(Role.READER, source)
-        handleError(HttpStatus.NOT_FOUND, source,"Datamodel not found : $dataFlow.source.id")
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, source, "Datamodel not found : $dataFlow.source.id")
         DataFlow created = super.create(dataModelId, dataFlow)
         show(created.id)
     }
@@ -69,7 +71,7 @@ class DataFlowController extends AdministeredItemController<DataFlow, DataModel>
             return super.list(dataModelId)
         }
         DataModel source = dataModelRepository.findById(dataModelId)
-        handleError(HttpStatus.NOT_FOUND, source, "Item with id: $dataModelId not found")
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, source, "Item with id: $dataModelId not found")
         List<DataFlow> sourceDataFlowList = dataFlowRepository.findAllBySource(source)
         ListResponse.from(sourceDataFlowList.findAll{accessControlService.canDoRole(Role.READER, it)})
     }

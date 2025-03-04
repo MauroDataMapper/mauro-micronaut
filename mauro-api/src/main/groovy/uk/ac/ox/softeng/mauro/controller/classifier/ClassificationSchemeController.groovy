@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.controller.classifier
 
+import uk.ac.ox.softeng.mauro.ErrorHandler
+
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
@@ -15,7 +17,7 @@ import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
 import io.micronaut.transaction.annotation.Transactional
 import uk.ac.ox.softeng.mauro.controller.model.ModelController
-import uk.ac.ox.softeng.mauro.controller.terminology.Paths
+import uk.ac.ox.softeng.mauro.Paths
 import uk.ac.ox.softeng.mauro.domain.classifier.ClassificationScheme
 import uk.ac.ox.softeng.mauro.domain.diff.ObjectDiff
 import uk.ac.ox.softeng.mauro.domain.model.version.CreateNewVersionData
@@ -97,9 +99,10 @@ class ClassificationSchemeController extends ModelController<ClassificationSchem
     @Get(Paths.CLASSIFICATION_SCHEMES_DIFF)
     ObjectDiff diffModels(@NonNull UUID id, @NonNull UUID otherId) {
         ClassificationScheme classificationScheme = modelContentRepository.findWithContentById(id)
-        handleNotFoundError(classificationScheme, id)
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, classificationScheme, "Item not found: $id")
         ClassificationScheme otherClassificationScheme = modelContentRepository.findWithContentById(otherId)
-        handleNotFoundError(otherClassificationScheme, otherId)
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, classificationScheme, "Item not found: $otherId")
+
 
         accessControlService.checkRole(Role.READER, classificationScheme)
         accessControlService.checkRole(Role.READER, otherClassificationScheme)

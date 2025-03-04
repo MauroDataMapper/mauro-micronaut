@@ -29,7 +29,9 @@ class CodeSetIntegrationSpec extends CommonDataSpec {
     @Shared
     UUID codeSetId
 
-    def setup() {
+
+
+    void setupSpec(){
         def folderPayload = folder()
         def folderResponse = POST(FOLDERS_PATH, folderPayload)
         folderId = UUID.fromString(folderResponse.id as String)
@@ -46,6 +48,7 @@ class CodeSetIntegrationSpec extends CommonDataSpec {
         response.description == "code set description"
         response.author == "A.N. Other"
         response.organisation == "uk.ac.gridpp.ral.org"
+        response.authority
     }
 
 
@@ -64,6 +67,7 @@ class CodeSetIntegrationSpec extends CommonDataSpec {
         getResponse.description == codeSetPayload.description
         getResponse.organisation == codeSetPayload.organisation
         getResponse.author == codeSetPayload.author
+        getResponse.authority
     }
 
     void 'test codeSet listAll'() {
@@ -149,6 +153,7 @@ class CodeSetIntegrationSpec extends CommonDataSpec {
         putResponse
         putResponse.author == newAuthor
         UUID.fromString(putResponse.id as String) == codeSetId
+        putResponse.authority
     }
 
     void 'add Term to CodeSet'() {

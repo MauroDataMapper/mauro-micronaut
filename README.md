@@ -43,7 +43,7 @@
 - Testing OAUTH login/keycloak -
 - Re KeycloakIntegrationSpec. -this uses local keycloak standalone instance with client,realm, users. Test is disabled for CI. 
 - To run locally, remove @Ignore, bring up keycloak instance via:
--   docker compose up -d
+-   docker compose up -d  (note docker-compose script may need to be moved to under root )
 - This will instantiate keycloak instance with data in imported realm 'realm.json'. KeycloakIntegration test will run successfully.
 
 To bring down local keycloak: 

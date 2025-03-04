@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.controller.model
 
+import uk.ac.ox.softeng.mauro.service.core.AuthorityService
+
 import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
@@ -54,7 +56,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     List<String> getDisallowedProperties() {
         log.debug '***** ModelController::getDisallowedProperties *****'
         super.disallowedProperties +
-        ['finalised', 'dateFinalised', 'readableByEveryone', 'readableByAuthenticatedUsers', 'modelType', 'deleted', 'folder', 'authority', 'branchName',
+        ['finalised', 'dateFinalised', 'readableByEveryone', 'readableByAuthenticatedUsers', 'modelType', 'deleted', 'folder', 'branchName',
          'modelVersion', 'modelVersionTag']
     }
 
@@ -71,8 +73,9 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
 
     ModelContentRepository<M> modelContentRepository
 
-
     ModelService<M> modelService
+    @Inject
+    AuthorityService authorityService
 
     @Inject
     ObjectMapper objectMapper
@@ -98,6 +101,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
 
     @Transactional
     M create(@NonNull UUID folderId, @Body @NonNull M model) {
+        model.authority = authorityService.getDefaultAuthority()
         super.create(folderId, model) as M
     }
 
@@ -275,9 +279,4 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         }
     }
 
-    protected void handleNotFoundError(M model, UUID id) {
-        if (!model) {
-            throw new HttpStatusException(HttpStatus.NOT_FOUND, "Model not found, $id")
-        }
-    }
 }

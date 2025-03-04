@@ -1,20 +1,19 @@
 package uk.ac.ox.softeng.mauro.controller.dataflow
 
+import uk.ac.ox.softeng.mauro.ErrorHandler
+
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
-import io.micronaut.data.exceptions.EmptyResultException
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.*
-import io.micronaut.http.exceptions.HttpStatusException
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
 import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.controller.model.AdministeredItemController
-import uk.ac.ox.softeng.mauro.controller.terminology.Paths
+import uk.ac.ox.softeng.mauro.Paths
 import uk.ac.ox.softeng.mauro.domain.dataflow.DataClassComponent
 import uk.ac.ox.softeng.mauro.domain.dataflow.DataElementComponent
-import uk.ac.ox.softeng.mauro.domain.dataflow.DataFlow
 import uk.ac.ox.softeng.mauro.domain.dataflow.Type
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataElement
 import uk.ac.ox.softeng.mauro.domain.security.Role
@@ -50,7 +49,7 @@ class DataElementComponentController extends AdministeredItemController<DataElem
 
     @Get(value = Paths.ID_ROUTE)
     DataElementComponent show(@NonNull UUID dataFlowId, @NonNull UUID id) {
-       super.show(id)
+        super.show(id)
     }
 
     @Post
@@ -99,61 +98,60 @@ class DataElementComponentController extends AdministeredItemController<DataElem
 
     private DataElementComponent addDataElement(Type type, UUID id, UUID dataElementId, UUID parentId) {
         DataElement dataElementToAdd = dataElementRepository.readById(dataElementId)
-        handleError(HttpStatus.NOT_FOUND, dataElementToAdd, "Item with id: $dataElementId not found")
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, dataElementToAdd, "Item with id: $dataElementId not found")
         accessControlService.checkRole(Role.EDITOR, dataElementToAdd)
 
         DataElementComponent dataElementComponent = dataElementComponentContentRepository.readWithContentById(id)
-        handleError(HttpStatus.NOT_FOUND, dataElementToAdd, "Item with id: $id not found")
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, dataElementComponent, "Item with id: $id not found")
         accessControlService.checkRole(Role.EDITOR, dataElementComponent)
 
         switch (type) {
             case Type.TARGET:
                 if (dataElementComponent.targetDataElements.id.contains(dataElementToAdd.id)) {
-                    handleError(HttpStatus.BAD_REQUEST, null, "Item already exists in table DataClassComponentTargetDataClass: $dataElementToAdd.id")
+                    ErrorHandler.handleError(HttpStatus.BAD_REQUEST, "Item already exists in table DataClassComponentTargetDataClass: $dataElementToAdd.id")
                 }
                 dataElementComponent.targetDataElements.add(dataElementToAdd)
                 dataElementComponentRepository.addTargetDataElement(dataElementComponent.id, dataElementId)
                 break;
             case Type.SOURCE:
                 if (dataElementComponent.sourceDataElements.id.contains(dataElementToAdd.id)) {
-                    handleError(HttpStatus.BAD_REQUEST, null, "Item already exists in table DataClassComponentSourceDataClass: $dataElementToAdd.id")
+                    ErrorHandler.handleError(HttpStatus.BAD_REQUEST, "Item already exists in table DataClassComponentSourceDataClass: $dataElementToAdd.id")
                 }
                 dataElementComponent.sourceDataElements.add(dataElementToAdd)
                 dataElementComponentRepository.addSourceDataElement(dataElementComponent.id, dataElementId)
                 break;
             default:
-                handleError(HttpStatus.BAD_REQUEST, type, "Type must be source or target")
+                ErrorHandler.handleError(HttpStatus.BAD_REQUEST, "$type Type must be source or target")
         }
         dataElementComponent
     }
 
     private void removeDataElement(Type type, UUID id, UUID dataElementId) {
         DataElement dataElementToRemove = dataElementRepository.readById(dataElementId)
-        handleError(HttpStatus.NOT_FOUND, dataElementToRemove, "Item with id: $dataElementId not found")
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, dataElementToRemove,"Item with id: $dataElementId not found")
         accessControlService.checkRole(Role.EDITOR, dataElementToRemove)
         DataElementComponent dataElementComponent = dataElementComponentContentRepository.readWithContentById(id)
-        handleError(HttpStatus.NOT_FOUND, dataElementComponent, "Item with id: $id not found")
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, dataElementComponent,"Item with id: $id not found")
 
         accessControlService.checkRole(Role.EDITOR, dataElementToRemove)
         Long result
         switch (type) {
             case Type.TARGET:
                 if (!dataElementComponent.targetDataElements.removeIf(de -> de.id == dataElementId)) {
-                    handleError(HttpStatus.NOT_FOUND, null, "Item already exists in table DataClassComponentTargetDataElement: $dataElementId")
+                    ErrorHandler.handleError(HttpStatus.NOT_FOUND, "Item already exists in table DataClassComponentTargetDataElement: $dataElementId")
                 }
                 result = dataElementComponentRepository.removeTargetDataElement(dataElementComponent.id, dataElementId)
                 break
             case Type.SOURCE:
                 if (!dataElementComponent.sourceDataElements.removeIf(de -> de.id == dataElementId)) {
-                    handleError(HttpStatus.NOT_FOUND, null, "Item already exists in table DataClassComponentSourceDataElement: $dataElementId")
+                    ErrorHandler.handleError(HttpStatus.NOT_FOUND,  "Item already exists in table DataClassComponentSourceDataElement: $dataElementId")
                 }
                 result = dataElementComponentRepository.removeSourceDataElement(dataElementComponent.id, dataElementId)
                 break;
             default:
-                handleError(HttpStatus.BAD_REQUEST, type, "Type must be source or target")
+                ErrorHandler.handleError(HttpStatus.BAD_REQUEST, "$type Type must be source or target")
                 break;
         }
-        handleError(HttpStatus.NOT_FOUND, result, " Item with id: $id not found")
         dataElementComponent
     }
 }

@@ -88,4 +88,9 @@ class JsonFolderExporterPlugin implements FolderExporterPlugin {
         foldersMap[folder.id] = folder
         folder.childFolders.each {addAllFoldersToMap(it, foldersMap)}
     }
+
+    @Override
+    String getContentType() {
+        "application/mauro.${Folder.class.simpleName.toLowerCase()}+json"
+    }
 }

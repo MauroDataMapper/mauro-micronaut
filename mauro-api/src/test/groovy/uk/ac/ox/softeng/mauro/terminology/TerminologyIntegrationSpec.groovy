@@ -1,5 +1,6 @@
 package uk.ac.ox.softeng.mauro.terminology
 
+import uk.ac.ox.softeng.mauro.domain.authority.Authority
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.domain.terminology.Term
 import uk.ac.ox.softeng.mauro.domain.terminology.TermRelationship
@@ -49,6 +50,7 @@ class TerminologyIntegrationSpec extends BaseIntegrationSpec {
         terminologyResponse
         terminologyResponse.label == 'Test terminology'
         terminologyResponse.path.toString() == 'te:Test terminology$main'
+        terminologyResponse.authority
     }
 
     void 'test terms'() {
