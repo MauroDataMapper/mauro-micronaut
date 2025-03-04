@@ -307,4 +307,36 @@ interface Paths {
     String API_KEY_ENABLE = '/catalogueUsers/{userId}/apiKeys/{apiKeyId}/enable'
     String API_KEY_DISABLE = '/catalogueUsers/{userId}/apiKeys/{apiKeyId}/disable'
     String API_KEY_REFRESH = '/catalogueUsers/{userId}/apiKeys/{apiKeyId}/refresh/{expireInDays}'
+
+    /*
+    * AuthorityApi
+    */
+    String AUTHORITY_LIST = '/authorities'
+    String AUTHORITY_ID = '/authorities/{id}'
+
+    /*
+    * PublishApi
+    */
+    String PUBLISHED_MODELS = '/published/models'
+    String PUBLISHED_MODELS_NEWER_VERSIONS  = '/published/models/{publishedModelId}/newerVersions'
+
+    /*
+    * PublishApi
+    */
+    String ADMIN_SUBSCRIBED_CATALOGUES_LIST  = '/admin/subscribedCatalogues'
+    String ADMIN_SUBSCRIBED_CATALOGUES_ID  = '/admin/subscribedCatalogues/{subscribedCatalogueId}'
+    String ADMIN_SUBSCRIBED_CATALOGUES_TEST_CONNECTION = '/admin/subscribedCatalogues/{subscribedCatalogueId}/testConnection'
+
+    String SUBSCRIBED_CATALOGUES_ID  = '/subscribedCatalogues/{subscribedCatalogueId}'
+    String SUBSCRIBED_CATALOGUES_TYPES = '/subscribedCatalogues/types'
+    String SUBSCRIBED_CATALOGUES_AUTHENTICATION_TYPES = '/subscribedCatalogues/authenticationTypes'
+
+    String SUBSCRIBED_CATALOGUES_PUBLISHED_MODELS = '/subscribedCatalogues/{subscribedCatalogueId}/publishedModels'
+    String SUBSCRIBED_CATALOGUES_PUBLISHED_MODELS_NEWER_VERSIONS = '/subscribedCatalogues/{subscribedCatalogueId}/publishedModels/{publishedModelId}/newerVersions'
+    String SUBSCRIBED_CATALOGUES_LIST  = '/subscribedCatalogues'
+
+    String SUBSCRIBED_MODELS_LIST  = '/subscribedCatalogues/{subscribedCatalogueId}/subscribedModels'
+    String SUBSCRIBED_MODELS_ID = '/subscribedCatalogues/{subscribedCatalogueId}/subscribedModels/{subscribedModelId}'
+
+
 }

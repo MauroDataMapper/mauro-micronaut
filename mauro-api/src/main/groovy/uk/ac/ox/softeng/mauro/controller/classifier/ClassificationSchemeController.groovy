@@ -1,5 +1,6 @@
 package uk.ac.ox.softeng.mauro.controller.classifier
 
+import io.micronaut.http.HttpStatus
 import uk.ac.ox.softeng.mauro.api.classifier.ClassificationSchemeApi
 
 import uk.ac.ox.softeng.mauro.ErrorHandler

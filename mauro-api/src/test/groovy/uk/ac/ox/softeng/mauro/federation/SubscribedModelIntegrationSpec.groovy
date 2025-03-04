@@ -33,7 +33,7 @@ class SubscribedModelIntegrationSpec extends SecuredIntegrationSpec {
 
     void setupSpec() {
         loginAdmin()
-        folderId = ((Folder) POST("$FOLDERS_PATH", folder(), Folder)).id
+        folderId = folderApi.create(folder()).id
         logout()
     }
 
@@ -47,21 +47,20 @@ class SubscribedModelIntegrationSpec extends SecuredIntegrationSpec {
         given:
         loginAdmin()
         and:
-        SubscribedCatalogue subscribedCatalogue = (SubscribedCatalogue) POST("$ADMIN_SUBSCRIBED_CATALOGUES_PATH", mauroJsonSubscribedCataloguePayload(), SubscribedCatalogue)
+        SubscribedCatalogue subscribedCatalogue = subscribedCatalogueApi.create(mauroJsonSubscribedCataloguePayload())
 
         when:
-        SubscribedModel subscribedModel = (SubscribedModel) POST("$SUBSCRIBED_CATALOGUES_PATH/$subscribedCatalogue.id$SUBSCRIBED_MODELS_PATH",
-                                                                 payload, SubscribedModel)
+        SubscribedModel subscribedModel = subscribedModelApi.create(subscribedCatalogue.id, payload)
 
         then:
         subscribedModel
         subscribedModel.subscribedCatalogue.id == subscribedCatalogue.id
         subscribedModel.localModelId
 
-        ListResponse<DataModel> localDataModels = (ListResponse<DataModel>) GET("$DATAMODELS_PATH", ListResponse)
+        ListResponse<DataModel> localDataModels = dataModelApi.listAll()
         localDataModels
         localDataModels.items?.size() == 1
-        localDataModels.items.id.first() == subscribedModel.localModelId.toString()
+        localDataModels.items.id.first() == subscribedModel.localModelId
 
         where:
         payload                                                                                        | _

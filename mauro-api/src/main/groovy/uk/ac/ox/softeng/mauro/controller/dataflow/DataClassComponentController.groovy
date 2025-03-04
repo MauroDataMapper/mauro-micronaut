@@ -118,7 +118,7 @@ class DataClassComponentController extends AdministeredItemController<DataClassC
                 break
             case Type.SOURCE:
                 if (dataClassComponent.sourceDataClasses.id.contains(dataClassToAdd.id)) {
-                    handleError(HttpStatus.BAD_REQUEST, null, "Item already exists in table DataClassComponentSourceDataClass: $dataClassToAdd.id")
+                    ErrorHandler.handleErrorOnNullObject(HttpStatus.BAD_REQUEST, null, "Item already exists in table DataClassComponentSourceDataClass: $dataClassToAdd.id")
                 }
                 dataClassComponent.sourceDataClasses.add(dataClassToAdd)
                 dataClassComponentRepository.addSourceDataClass(dataClassComponent.id, dataClassId)

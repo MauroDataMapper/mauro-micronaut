@@ -151,7 +151,7 @@ class DataElementComponentController extends AdministeredItemController<DataElem
                 result = dataElementComponentRepository.removeSourceDataElement(dataElementComponent.id, dataElementId)
                 break
             default:
-                handleError(HttpStatus.BAD_REQUEST, type, "Type must be source or target")
+                ErrorHandler.handleErrorOnNullObject(HttpStatus.BAD_REQUEST, type, "Type must be source or target")
                 break
         }
         dataElementComponent

@@ -1,7 +1,9 @@
 package uk.ac.ox.softeng.mauro.controller.federation
 
+import io.micronaut.http.HttpResponse
 import uk.ac.ox.softeng.mauro.ErrorHandler
-import uk.ac.ox.softeng.mauro.Paths
+import uk.ac.ox.softeng.mauro.api.Paths
+import uk.ac.ox.softeng.mauro.api.federation.SubscribedCatalogueApi
 import uk.ac.ox.softeng.mauro.controller.model.ItemController
 import uk.ac.ox.softeng.mauro.domain.facet.federation.PublishedModel
 import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedCatalogue
@@ -35,10 +37,10 @@ import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
 
 @Slf4j
-@Controller()
+@Controller
 @CompileStatic
 @Secured(SecurityRule.IS_ANONYMOUS)
-class SubscribedCatalogueController extends ItemController<SubscribedCatalogue> {
+class SubscribedCatalogueController extends ItemController<SubscribedCatalogue> implements SubscribedCatalogueApi {
 
     @Value('${mauro.federation.subscribed-catalogues.max}')
     int maxDefault
@@ -56,19 +58,19 @@ class SubscribedCatalogueController extends ItemController<SubscribedCatalogue> 
         this.subscribedModelService = subscribedModelService
     }
 
-    @Get(Paths.ADMIN_SUBSCRIBED_CATALOGUES_ROUTE)
+    @Get(Paths.ADMIN_SUBSCRIBED_CATALOGUES_LIST)
     ListResponse<SubscribedCatalogue> listAll() {
         accessControlService.checkAuthenticated()
         ListResponse.from(subscribedCatalogueCacheableRepository.findAll())
     }
 
-    @Get(Paths.SUBSCRIBED_CATALOGUES_ID_ROUTE)
+    @Get(Paths.SUBSCRIBED_CATALOGUES_ID)
     SubscribedCatalogue show(@NonNull UUID subscribedCatalogueId) {
         accessControlService.checkAuthenticated()
         subscribedCatalogueCacheableRepository.findById(subscribedCatalogueId)
     }
 
-    @Get(Paths.SUBSCRIBED_CATALOGUES_ROUTE)
+    @Get(Paths.SUBSCRIBED_CATALOGUES_LIST)
     ListResponse<SubscribedCatalogue> listSubscribedCatalogues(@Nullable @QueryValue Integer max) {
         accessControlService.checkAuthenticated()
         max = max ?: maxDefault
@@ -81,7 +83,7 @@ class SubscribedCatalogueController extends ItemController<SubscribedCatalogue> 
         }
     }
 
-    @Post(Paths.ADMIN_SUBSCRIBED_CATALOGUES_ROUTE)
+    @Post(Paths.ADMIN_SUBSCRIBED_CATALOGUES_LIST)
     @ExecuteOn(TaskExecutors.BLOCKING)
     @Transactional
     SubscribedCatalogue create(@Body @NonNull SubscribedCatalogue subscribedCatalogue) {
@@ -93,7 +95,7 @@ class SubscribedCatalogueController extends ItemController<SubscribedCatalogue> 
         }
     }
 
-    @Put(Paths.ADMIN_SUBSCRIBED_CATALOGUES_ID_ROUTE)
+    @Put(Paths.ADMIN_SUBSCRIBED_CATALOGUES_ID)
     @ExecuteOn(TaskExecutors.BLOCKING)
     @Transactional
     SubscribedCatalogue update(@NonNull UUID subscribedCatalogueId, @Body @NonNull SubscribedCatalogue subscribedCatalogue) {
@@ -111,33 +113,33 @@ class SubscribedCatalogueController extends ItemController<SubscribedCatalogue> 
         }
     }
 
-    @Get(Paths.SUBSCRIBED_CATALOGUES_TYPES_ROUTE)
+    @Get(Paths.SUBSCRIBED_CATALOGUES_TYPES)
     ListResponse<SubscribedCatalogue> types() {
         accessControlService.checkAuthenticated()
         ListResponse.from(SubscribedCatalogueType.labels())
     }
 
-    @Get(Paths.SUBSCRIBED_CATALOGUES_AUTHENTICATION_TYPES_ROUTE)
+    @Get(Paths.SUBSCRIBED_CATALOGUES_AUTHENTICATION_TYPES)
     ListResponse<SubscribedCatalogue> authenticationTypes() {
         accessControlService.checkAdministrator()
         ListResponse.from(SubscribedCatalogueAuthenticationType.labels())
     }
 
-    @Get(Paths.ADMIN_SUBSCRIBED_CATALOGUES_TEST_CONNECTION_ROUTE)
+    @Get(Paths.ADMIN_SUBSCRIBED_CATALOGUES_TEST_CONNECTION)
     @ExecuteOn(TaskExecutors.BLOCKING)
-    HttpStatus testConnection(@NonNull UUID subscribedCatalogueId) {
+    HttpResponse testConnection(@NonNull UUID subscribedCatalogueId) {
         accessControlService.checkAdministrator()
 
         SubscribedCatalogue subscribedCatalogue = subscribedCatalogueCacheableRepository.findById(subscribedCatalogueId)
         ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, subscribedCatalogue, "Item $subscribedCatalogueId not found")
         if (subscribedCatalogueService.validateRemote(subscribedCatalogue)) {
-            return HttpStatus.OK
+            return HttpResponse.ok()
         }
-        return HttpStatus.UNPROCESSABLE_ENTITY
+        return HttpResponse.status(HttpStatus.UNPROCESSABLE_ENTITY)
     }
 
 
-    @Get(Paths.SUBSCRIBED_CATALOGUES_PUBLISHED_MODELS_ROUTE)
+    @Get(Paths.SUBSCRIBED_CATALOGUES_PUBLISHED_MODELS)
     @ExecuteOn(TaskExecutors.BLOCKING)
     ListResponse<PublishedModel> publishedModels(@NonNull UUID subscribedCatalogueId) {
         accessControlService.checkAuthenticated()
@@ -147,7 +149,7 @@ class SubscribedCatalogueController extends ItemController<SubscribedCatalogue> 
         ListResponse.from(subscribedCatalogueService.getPublishedModels(subscribedCatalogue))
     }
 
-    @Get(Paths.SUBSCRIBED_CATALOGUES_PUBLISHED_MODELS_NEWER_VERSIONS_ROUTE)
+    @Get(Paths.SUBSCRIBED_CATALOGUES_PUBLISHED_MODELS_NEWER_VERSIONS)
     @ExecuteOn(TaskExecutors.BLOCKING)
     SubscribedCataloguesPublishedModelsNewerVersions publishedModelsNewerVersions(@NonNull UUID subscribedCatalogueId, @NonNull String publishedModelId) {
         accessControlService.checkAuthenticated()
@@ -159,9 +161,9 @@ class SubscribedCatalogueController extends ItemController<SubscribedCatalogue> 
     }
 
 
-    @Delete(Paths.ADMIN_SUBSCRIBED_CATALOGUES_ID_ROUTE)
+    @Delete(Paths.ADMIN_SUBSCRIBED_CATALOGUES_ID)
     @Transactional
-    HttpStatus delete(@NonNull UUID subscribedCatalogueId, @Body @Nullable SubscribedCatalogue subscribedCatalogue) {
+    HttpResponse delete(@NonNull UUID subscribedCatalogueId, @Body @Nullable SubscribedCatalogue subscribedCatalogue) {
         accessControlService.checkAdministrator()
 
         SubscribedCatalogue catalogueToDelete = subscribedCatalogueCacheableRepository.findById(subscribedCatalogueId)
@@ -173,7 +175,7 @@ class SubscribedCatalogueController extends ItemController<SubscribedCatalogue> 
         if (subscribedCatalogue?.version) catalogueToDelete.version = subscribedCatalogue.version
         Long deleted = subscribedCatalogueCacheableRepository.delete(catalogueToDelete)
         if (deleted) {
-            HttpStatus.NO_CONTENT
+            HttpResponse.status(HttpStatus.NO_CONTENT)
         } else {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, 'Not found for deletion')
         }

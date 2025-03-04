@@ -2,6 +2,7 @@ package uk.ac.ox.softeng.mauro.testing
 
 import uk.ac.ox.softeng.mauro.api.SessionHandlerClientFilter
 import uk.ac.ox.softeng.mauro.api.admin.AdminApi
+import uk.ac.ox.softeng.mauro.api.authority.AuthorityApi
 import uk.ac.ox.softeng.mauro.api.classifier.ClassificationSchemeApi
 import uk.ac.ox.softeng.mauro.api.classifier.ClassifierApi
 import uk.ac.ox.softeng.mauro.api.config.ApiPropertyApi
@@ -21,6 +22,9 @@ import uk.ac.ox.softeng.mauro.api.facet.RuleApi
 import uk.ac.ox.softeng.mauro.api.facet.RuleRepresentationApi
 import uk.ac.ox.softeng.mauro.api.facet.SummaryMetadataApi
 import uk.ac.ox.softeng.mauro.api.facet.SummaryMetadataReportApi
+import uk.ac.ox.softeng.mauro.api.federation.PublishApi
+import uk.ac.ox.softeng.mauro.api.federation.SubscribedCatalogueApi
+import uk.ac.ox.softeng.mauro.api.federation.SubscribedModelApi
 import uk.ac.ox.softeng.mauro.api.folder.FolderApi
 import uk.ac.ox.softeng.mauro.api.importer.ImporterApi
 import uk.ac.ox.softeng.mauro.api.profile.ProfileApi
@@ -50,6 +54,11 @@ import uk.ac.ox.softeng.mauro.domain.facet.Rule
 import uk.ac.ox.softeng.mauro.domain.facet.RuleRepresentation
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadataType
+import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedCatalogue
+import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedCatalogueAuthenticationType
+import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedCatalogueType
+import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedModel
+import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedModelFederationParams
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadataReport
 import uk.ac.ox.softeng.mauro.domain.terminology.CodeSet
@@ -57,6 +66,7 @@ import uk.ac.ox.softeng.mauro.domain.terminology.Term
 import uk.ac.ox.softeng.mauro.domain.terminology.TermRelationshipType
 import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
 import uk.ac.ox.softeng.mauro.export.ExportModel
+import uk.ac.ox.softeng.mauro.importdata.ImportMetadata
 import uk.ac.ox.softeng.mauro.plugin.importer.json.JsonDataModelImporterPlugin
 import uk.ac.ox.softeng.mauro.plugin.importer.json.JsonTerminologyImporterPlugin
 import uk.ac.ox.softeng.mauro.web.ListResponse
@@ -129,6 +139,10 @@ class CommonDataSpec extends Specification {
     @Shared @Inject TreeApi treeApi
     @Shared @Inject LoginApi loginApi
     @Shared @Inject ApiKeyApi apiKeyApi
+    @Shared @Inject AuthorityApi authorityApi
+    @Shared @Inject SubscribedCatalogueApi subscribedCatalogueApi
+    @Shared @Inject SubscribedModelApi subscribedModelApi
+    @Shared @Inject PublishApi publishApi
 
     @Inject
     SessionHandlerClientFilter sessionHandlerClientFilter
@@ -317,70 +331,67 @@ class CommonDataSpec extends Specification {
         sessionHandlerClientFilter.apiKey = null
     }
 
-}
 
-
-    def mauroJsonSubscribedCataloguePayload() {
-        [
+    SubscribedCatalogue mauroJsonSubscribedCataloguePayload() {
+        new SubscribedCatalogue(
             url                                  : "https://maurosandbox.com/sandbox",
-            subscribedCatalogueType              : 'Mauro JSON',
+            subscribedCatalogueType              : SubscribedCatalogueType.MAURO_JSON,
             label                                : 'random label subscribedCatalogue',
-            subscribedCatalogueAuthenticationType: 'API Key',
+            subscribedCatalogueAuthenticationType: SubscribedCatalogueAuthenticationType.API_KEY,
             refreshPeriod                        : 90,
-            api_key                              : 'b39d63d4-4fd4-494d-a491-3c778d89acae'
-        ]
+            apiKey                               : 'b39d63d4-4fd4-494d-a491-3c778d89acae'
+        )
     }
 
-    def atomSubscribedCataloguePayload(){
-        [
+    SubscribedCatalogue atomSubscribedCataloguePayload(){
+        new SubscribedCatalogue(
             url                                  : "http://localhost:8088/test/syndication.xml",
-            subscribedCatalogueType              : 'ATOM',
+            subscribedCatalogueType              : SubscribedCatalogueType.ATOM,
             label                                : 'atom label',
-            subscribedCatalogueAuthenticationType: 'API Key',
+            subscribedCatalogueAuthenticationType: SubscribedCatalogueAuthenticationType.API_KEY,
             refreshPeriod                        : 90,
-            api_key                              : 'b39d63d4-4fd4-494d-a491-3c778d89acae'
-        ]
+            apiKey                               : 'b39d63d4-4fd4-494d-a491-3c778d89acae'
+        )
     }
 
-    def subscribedModelPayload(UUID folderId) {
-        [subscribedModel:
-             [subscribedModelId  : '0b97751d-b6bf-476c-a9e6-95d3352e8008',
+    SubscribedModelFederationParams subscribedModelPayload(UUID folderId) {
+        new SubscribedModelFederationParams(subscribedModel:
+             new SubscribedModel(subscribedModelId  : '0b97751d-b6bf-476c-a9e6-95d3352e8008',
               subscribedModelType: 'DataModel',
-              folderId           : folderId]
-        ]
+              folderId           : folderId)
+        )
     }
 
-    def subscribedModelAndImporterProviderServicePayload(UUID folderId) {
-        [subscribedModel:
-             [subscribedModelId  : '0b97751d-b6bf-476c-a9e6-95d3352e8008',
+    SubscribedModelFederationParams subscribedModelAndImporterProviderServicePayload(UUID folderId) {
+        new SubscribedModelFederationParams(subscribedModel:
+             new SubscribedModel(subscribedModelId  : '0b97751d-b6bf-476c-a9e6-95d3352e8008',
               subscribedModelType: 'DataModel',
-              folderId           : folderId],
+              folderId           : folderId),
 
-         importerProviderService:
-             [name: 'JsonDataModelImporterPlugin', namespace: 'uk.ac.ox.softeng.mauro.plugin.importer.json', version: '4.0.0']
-        ]
+         importMetadata: new ImportMetadata(name: 'JsonDataModelImporterPlugin', namespace: 'uk.ac.ox.softeng.mauro.plugin.importer.json', version: '4.0.0')
+        )
     }
 
 
-    def subscribedModelAndUrlPayload(UUID folderId, String urlString) {
-        [subscribedModel:
-             [subscribedModelId  : '0b97751d-b6bf-476c-a9e6-95d3352e8008',
+    SubscribedModelFederationParams subscribedModelAndUrlPayload(UUID folderId, String urlString) {
+        new SubscribedModelFederationParams(subscribedModel:
+             new SubscribedModel(subscribedModelId  : '0b97751d-b6bf-476c-a9e6-95d3352e8008',
               subscribedModelType: 'DataModel',
-              folderId           : folderId],
+              folderId           : folderId),
 
          url            : urlString
-        ]
+        )
     }
 
-    def subscribedModelUrlAndContentTypePayload(UUID folderId, String urlString, String contentType) {
-        [subscribedModel:
-             [subscribedModelId  : '0b97751d-b6bf-476c-a9e6-95d3352e8008',
+    SubscribedModelFederationParams subscribedModelUrlAndContentTypePayload(UUID folderId, String urlString, String contentType) {
+        new SubscribedModelFederationParams(subscribedModel:
+             new SubscribedModel(subscribedModelId  : '0b97751d-b6bf-476c-a9e6-95d3352e8008',
               subscribedModelType: 'DataModel',
-              folderId           : folderId],
+              folderId           : folderId),
 
          url            : urlString,
          contentType    : contentType
-        ]
+        )
 
     }
 

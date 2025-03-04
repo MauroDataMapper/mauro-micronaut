@@ -62,9 +62,9 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
         try {
             item = administeredItemRepository.findById(id)
         } catch (Exception e) {
-            handleError(HttpStatus.NOT_FOUND, null, "Item with id ${id.toString()} not found")
+            ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, null, "Item with id ${id.toString()} not found")
         }
-        handleError(HttpStatus.NOT_FOUND, item, "Item with id ${id.toString()} not found")
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, item, "Item with id ${id.toString()} not found")
         accessControlService.checkRole(Role.READER, item)
 
         updateDerivedProperties(item)

@@ -43,7 +43,7 @@ class ClassificationSchemeIntegrationSpec extends CommonDataSpec {
         listResponse.items.isEmpty()
     }
 
-    void 'add Classification scheme - should add'(){
+    void 'add Classification scheme - should add'() {
         when:
         ClassificationScheme classificationScheme =
             classificationSchemeApi.create(folderId, classificationSchemePayload())
@@ -57,7 +57,6 @@ class ClassificationSchemeIntegrationSpec extends CommonDataSpec {
         then:
         retrieved
         retrieved.authority
-    }
 
         when:
         ListResponse<ClassificationScheme> classificationSchemes = classificationSchemeApi.listAll()
