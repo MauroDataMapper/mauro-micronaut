@@ -85,9 +85,11 @@ class SubscribedCatalogueController extends ItemController<SubscribedCatalogue> 
     @ExecuteOn(TaskExecutors.BLOCKING)
     @Transactional
     SubscribedCatalogue create(@Body @NonNull SubscribedCatalogue subscribedCatalogue) {
+        log.info(">>>>>>>>>>Subscxribed catalogue. create")
         accessControlService.checkAdministrator()
         cleanBody(subscribedCatalogue)
         updateCreationProperties(subscribedCatalogue)
+        log.info(">>>>>>>>>>Subscxribed catalogue. after update creation properties")
         if (subscribedCatalogueService.validateRemote(subscribedCatalogue)) {
             subscribedCatalogueCacheableRepository.save(subscribedCatalogue)
         }

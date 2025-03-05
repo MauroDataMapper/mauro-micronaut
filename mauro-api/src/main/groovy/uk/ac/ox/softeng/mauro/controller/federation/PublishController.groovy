@@ -52,13 +52,14 @@ class PublishController {
             List<Model> finalisedModels = getFinalisedModelsForDefaultAuthority()
             Authority defaultAuthority = authorityService.getDefaultAuthority()
             publishedModelResponse = new PublishedModelResponse(new AuthorityResponse().tap {
-                label: defaultAuthority.label
-                url: defaultAuthority.url}, publishService.getPublishedModels(finalisedModels))
+                label = defaultAuthority.label
+                url = defaultAuthority.url
+            }, publishService.getPublishedModels(finalisedModels))
+            return publishedModelResponse
         }
-        catch (AuthorizationException e ) {
-            publishedModelResponse = new PublishedModelResponse(null, Collections.emptyList())
+        catch (Exception e) {
+            new PublishedModelResponse(null, Collections.emptyList())
         }
-        publishedModelResponse
     }
 
 

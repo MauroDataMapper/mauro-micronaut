@@ -279,4 +279,39 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         }
     }
 
+
+    //todo: implement actual
+
+    List<Map> simpleModelVersionTree(UUID id) {
+        [
+            [
+                id: id,
+                branch: 'main',
+                displayName: 'main'
+            ]
+        ] as List<Map>
+    }
+
+    //stub endpoint todo: actual
+    List<Map> edits(UUID id, Integer max){
+        [
+            [
+                count: 0,
+                items: []
+            ]
+        ] as List<Map>
+    }
+
+    List<Map> permissions(UUID id){
+        [
+            [
+                "readableByEveryone" : false,
+                "readableByAuthenticated" : false,
+                "readableByGroups" : [],
+                "writeableByGroups" : [],
+                "writeableByUsers" : []
+            ]
+        ] as List<Map>
+    }
+
 }

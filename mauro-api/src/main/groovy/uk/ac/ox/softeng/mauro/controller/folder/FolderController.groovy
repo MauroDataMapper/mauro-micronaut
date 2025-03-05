@@ -21,6 +21,7 @@ import io.micronaut.http.annotation.Delete
 import io.micronaut.http.annotation.Get
 import io.micronaut.http.annotation.Post
 import io.micronaut.http.annotation.Put
+import io.micronaut.http.annotation.QueryValue
 import io.micronaut.http.server.multipart.MultipartBody
 import io.micronaut.http.server.types.files.StreamedFile
 import io.micronaut.scheduling.TaskExecutors
@@ -144,5 +145,20 @@ class FolderController extends ModelController<Folder> {
     @Post('/import/{namespace}/{name}{/version}')
     ListResponse<Folder> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version) {
        super.importModel(body, namespace, name, version)
+    }
+
+
+    //stub endpoint todo: actual
+    @Get('/{id}/edits')
+    List<Map> edits(UUID id, @Nullable @QueryValue Integer max){
+        max ?: null
+        super.edits(id, max)
+    }
+
+
+    //todo: implement actual
+    @Get('/{id}/permissions')
+    List<Map> permissions(UUID id) {
+        super.permissions(id)
     }
 }

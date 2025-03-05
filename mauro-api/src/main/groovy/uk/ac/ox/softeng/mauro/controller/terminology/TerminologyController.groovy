@@ -172,4 +172,25 @@ class TerminologyController extends ModelController<Terminology> {
         other.setAssociations()
         terminology.diff(other)
     }
+
+    //stub endpoint todo: actual
+    @Get('/terminologies/{id}/simpleModelVersionTree')
+    List<Map> simpleModelVersionTree(UUID id){
+        super.simpleModelVersionTree(id)
+    }
+
+
+    //stub endpoint todo: actual
+    @Get('/terminologies/{id}/edits')
+    List<Map> edits(UUID id, @Nullable @QueryValue Integer max){
+        max ?: null
+        super.edits(id, max)
+    }
+
+
+    //todo: implement actual
+    @Get('/terminologies/{id}/permissions')
+    List<Map> permissions(UUID id) {
+        super.permissions(id)
+    }
 }

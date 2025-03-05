@@ -164,4 +164,26 @@ class CodeSetController extends ModelController<CodeSet> {
         savedCopy
     }
 
+
+    //stub endpoint todo: actual
+    @Get('/codeSets/{id}/simpleModelVersionTree')
+    List<Map> simpleModelVersionTree(UUID id){
+        super.simpleModelVersionTree(id)
+    }
+
+
+
+    //stub endpoint todo: actual
+    @Get('/codeSets/{id}/edits')
+    List<Map> edits(UUID id, @Nullable @QueryValue Integer max){
+        max ?: null
+        super.edits(id, max)
+    }
+
+
+    //todo: implement actual
+    @Get('/codeSets/{id}/permissions')
+    List<Map> permissions(UUID id) {
+        super.permissions(id)
+    }
 }

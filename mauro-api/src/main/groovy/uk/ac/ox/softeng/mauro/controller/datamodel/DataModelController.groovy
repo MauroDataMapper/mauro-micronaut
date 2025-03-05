@@ -30,6 +30,7 @@ import io.micronaut.http.annotation.Delete
 import io.micronaut.http.annotation.Get
 import io.micronaut.http.annotation.Post
 import io.micronaut.http.annotation.Put
+import io.micronaut.http.annotation.QueryValue
 import io.micronaut.http.annotation.RequestBean
 import io.micronaut.http.server.multipart.MultipartBody
 import io.micronaut.http.server.types.files.StreamedFile
@@ -161,4 +162,24 @@ class DataModelController extends ModelController<DataModel> {
         mauroPluginService.listPlugins(DataModelImporterPlugin)
     }
 
+    //stub endpoint todo: actual
+    @Get('/dataModels/{id}/simpleModelVersionTree')
+    List<Map> simpleModelVersionTree(UUID id){
+        super.simpleModelVersionTree(id)
+    }
+
+
+    //stub endpoint todo: actual
+    @Get('/dataModels/{id}/edits')
+    List<Map> edits(UUID id, @Nullable @QueryValue Integer max){
+        max ?: null
+        super.edits(id, max)
+    }
+
+
+    //todo: implement actual
+    @Get('/dataModels/{id}/permissions')
+    List<Map> permissions(UUID id) {
+        super.permissions(id)
+    }
 }
