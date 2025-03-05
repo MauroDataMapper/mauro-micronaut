@@ -114,15 +114,15 @@ class SubscribedCatalogueController extends ItemController<SubscribedCatalogue> 
     }
 
     @Get(Paths.SUBSCRIBED_CATALOGUES_TYPES)
-    ListResponse<SubscribedCatalogue> types() {
+    ListResponse<SubscribedCatalogueType> types() {
         accessControlService.checkAuthenticated()
-        ListResponse.from(SubscribedCatalogueType.labels())
+        ListResponse.from(SubscribedCatalogueType.values() as List)
     }
 
     @Get(Paths.SUBSCRIBED_CATALOGUES_AUTHENTICATION_TYPES)
-    ListResponse<SubscribedCatalogue> authenticationTypes() {
+    ListResponse<SubscribedCatalogueAuthenticationType> authenticationTypes() {
         accessControlService.checkAdministrator()
-        ListResponse.from(SubscribedCatalogueAuthenticationType.labels())
+        ListResponse.from(SubscribedCatalogueAuthenticationType.values() as List)
     }
 
     @Get(Paths.ADMIN_SUBSCRIBED_CATALOGUES_TEST_CONNECTION)

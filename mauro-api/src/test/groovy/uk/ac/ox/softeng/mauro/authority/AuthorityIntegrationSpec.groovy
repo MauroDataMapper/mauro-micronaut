@@ -5,23 +5,23 @@ import uk.ac.ox.softeng.mauro.persistence.SecuredContainerizedTest
 import uk.ac.ox.softeng.mauro.security.SecuredIntegrationSpec
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
+import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.client.exceptions.HttpClientResponseException
 import io.micronaut.runtime.EmbeddedApplication
 import io.micronaut.test.annotation.Sql
 import jakarta.inject.Inject
+import jakarta.inject.Singleton
 
+@Singleton
 @SecuredContainerizedTest
 @Sql(scripts = ["classpath:sql/tear-down-authority.sql"], phase = Sql.Phase.AFTER_ALL)
 class AuthorityIntegrationSpec extends SecuredIntegrationSpec {
 
-    @Inject
-    EmbeddedApplication<?> application
-
 
     void 'user not signed in - cannot access authority endpoint'() {
         when:
-        GET(AUTHORITIES_PATH, ListResponse<Authority>)
+        authorityApi.list()
 
         then:
         HttpClientResponseException exception = thrown()
@@ -32,21 +32,21 @@ class AuthorityIntegrationSpec extends SecuredIntegrationSpec {
         loginUser()
 
         when:
-        ListResponse<Authority> authorityListResponse = (ListResponse<Authority>) GET(AUTHORITIES_PATH, ListResponse, Authority)
+        ListResponse<Authority> authorityListResponse = authorityApi.list()
         then:
         authorityListResponse
         authorityListResponse.items.size() == 1
         Authority defaultAuthority = authorityListResponse.items.first()
 
         when:
-        Authority retrievedById = (Authority) GET("$AUTHORITIES_PATH/$defaultAuthority.id", Authority)
+        Authority retrievedById = authorityApi.show(defaultAuthority.id)
         then:
         retrievedById
 
         logout()
         loginAdmin()
         when:
-        retrievedById = (Authority) GET("$AUTHORITIES_PATH/$defaultAuthority.id", Authority)
+        retrievedById = authorityApi.show(defaultAuthority.id)
 
         then:
         retrievedById
@@ -60,7 +60,7 @@ class AuthorityIntegrationSpec extends SecuredIntegrationSpec {
         loginAdmin()
 
         when:
-        Authority created = (Authority) POST(AUTHORITIES_PATH, authorityPayload(), Authority)
+        Authority created = authorityApi.create(authorityPayload())
 
         then:
         created
@@ -70,7 +70,7 @@ class AuthorityIntegrationSpec extends SecuredIntegrationSpec {
         loginUser()
 
         when:
-        POST(AUTHORITIES_PATH, authorityPayload())
+        authorityApi.create(authorityPayload())
         then:
         HttpClientResponseException exception = thrown()
         exception.status == HttpStatus.FORBIDDEN
@@ -83,14 +83,14 @@ class AuthorityIntegrationSpec extends SecuredIntegrationSpec {
         given:
         loginAdmin()
 
-        Authority created = (Authority) POST(AUTHORITIES_PATH, authorityPayload(), Authority)
+        Authority created = authorityApi.create(authorityPayload())
 
         logout()
 
         loginUser()
 
         when:
-        PUT("$AUTHORITIES_PATH/$created.id", [label: 'updated authority payload'], Authority)
+        authorityApi.update(created.id, new Authority(label: 'updated authority payload'))
 
         then:
         HttpClientResponseException exception = thrown()
@@ -99,7 +99,7 @@ class AuthorityIntegrationSpec extends SecuredIntegrationSpec {
         logout()
         loginAdmin()
         when:
-        Authority updated = (Authority) PUT("$AUTHORITIES_PATH/$created.id", [label: 'updated authority payload'], Authority)
+        Authority updated = authorityApi.update(created.id, new Authority(label: 'updated authority payload'))
 
         then:
         updated
@@ -114,13 +114,13 @@ class AuthorityIntegrationSpec extends SecuredIntegrationSpec {
     void ' only Admin user can delete authority'() {
         given:
         loginAdmin()
-        Authority created = (Authority) POST(AUTHORITIES_PATH, authorityPayload(), Authority)
+        Authority created = authorityApi.create(authorityPayload())
 
         logout()
         loginUser()
 
         when:
-        DELETE("$AUTHORITIES_PATH/$created.id", HttpStatus)
+        authorityApi.delete(created.id, new Authority())
 
         then:
         HttpClientResponseException exception = thrown()
@@ -130,10 +130,10 @@ class AuthorityIntegrationSpec extends SecuredIntegrationSpec {
         loginAdmin()
 
         when:
-        HttpStatus httpStatus = DELETE("$AUTHORITIES_PATH/$created.id", HttpStatus)
+        HttpResponse httpResponse = authorityApi.delete(created.id, new Authority())
 
         then:
-        httpStatus == HttpStatus.NO_CONTENT
+        httpResponse.status == HttpStatus.NO_CONTENT
 
         logout()
     }

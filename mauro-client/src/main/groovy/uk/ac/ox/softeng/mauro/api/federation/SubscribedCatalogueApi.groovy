@@ -1,5 +1,8 @@
 package uk.ac.ox.softeng.mauro.api.federation
 
+import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedCatalogueAuthenticationType
+import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedCatalogueType
+
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpResponse
@@ -30,10 +33,10 @@ interface SubscribedCatalogueApi {
     SubscribedCatalogue update(@NonNull UUID subscribedCatalogueId, @Body @NonNull SubscribedCatalogue subscribedCatalogue)
 
     @Get(Paths.SUBSCRIBED_CATALOGUES_TYPES)
-    ListResponse<SubscribedCatalogue> types()
+    ListResponse<SubscribedCatalogueType> types()
 
     @Get(Paths.SUBSCRIBED_CATALOGUES_AUTHENTICATION_TYPES)
-    ListResponse<SubscribedCatalogue> authenticationTypes()
+    ListResponse<SubscribedCatalogueAuthenticationType> authenticationTypes()
 
     @Get(Paths.ADMIN_SUBSCRIBED_CATALOGUES_TEST_CONNECTION)
     HttpResponse testConnection(@NonNull UUID subscribedCatalogueId)

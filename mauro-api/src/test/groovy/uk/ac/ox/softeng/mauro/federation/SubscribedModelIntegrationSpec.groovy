@@ -8,6 +8,7 @@ import uk.ac.ox.softeng.mauro.persistence.SecuredContainerizedTest
 import uk.ac.ox.softeng.mauro.security.SecuredIntegrationSpec
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
+import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.client.exceptions.HttpClientResponseException
 import io.micronaut.runtime.EmbeddedApplication
@@ -77,13 +78,12 @@ class SubscribedModelIntegrationSpec extends SecuredIntegrationSpec {
         loginAdmin()
 
         and:
-        SubscribedCatalogue subscribedCatalogue = (SubscribedCatalogue) POST("$ADMIN_SUBSCRIBED_CATALOGUES_PATH", mauroJsonSubscribedCataloguePayload(), SubscribedCatalogue)
+        SubscribedCatalogue subscribedCatalogue = subscribedCatalogueApi.create(mauroJsonSubscribedCataloguePayload())
         logout()
         loginUser()
 
         when:
-        SubscribedModel subscribedModel = (SubscribedModel) POST("$SUBSCRIBED_CATALOGUES_PATH/$subscribedCatalogue.id$SUBSCRIBED_MODELS_PATH",
-                                                                 payload, SubscribedModel)
+        SubscribedModel subscribedModel = subscribedModelApi.create(subscribedCatalogue.id, payload)
 
         then:
         subscribedModel
@@ -93,10 +93,10 @@ class SubscribedModelIntegrationSpec extends SecuredIntegrationSpec {
         logout()
         loginAdmin()
 
-        ListResponse<DataModel> localDataModels = (ListResponse<DataModel>) GET("$DATAMODELS_PATH", ListResponse)
+        ListResponse<DataModel> localDataModels = dataModelApi.listAll()
         localDataModels
         localDataModels.items?.size() == 1
-        localDataModels.items.id.first() == subscribedModel.localModelId.toString()
+        localDataModels.items.id.first() == subscribedModel.localModelId
 
         where:
         payload                                                                                        | _
@@ -109,11 +109,11 @@ class SubscribedModelIntegrationSpec extends SecuredIntegrationSpec {
     void 'not logged in, should not be able to create subscribed model'() {
         given:
         loginAdmin()
-        SubscribedCatalogue subscribedCatalogue = (SubscribedCatalogue) POST("$ADMIN_SUBSCRIBED_CATALOGUES_PATH", mauroJsonSubscribedCataloguePayload(), SubscribedCatalogue)
+        SubscribedCatalogue subscribedCatalogue = subscribedCatalogueApi.create(mauroJsonSubscribedCataloguePayload())
         logout()
 
         when:
-        POST("$SUBSCRIBED_CATALOGUES_PATH/$subscribedCatalogue.id$SUBSCRIBED_MODELS_PATH", subscribedModelPayload(folderId), SubscribedModel)
+        subscribedModelApi.create(subscribedCatalogue.id, subscribedModelPayload(folderId))
         then:
         HttpClientResponseException exception = thrown()
         exception.status == HttpStatus.UNAUTHORIZED
@@ -123,14 +123,13 @@ class SubscribedModelIntegrationSpec extends SecuredIntegrationSpec {
     void 'any user can retrieve subscribed model by id'() {
         given:
         loginAdmin()
-        SubscribedCatalogue subscribedCatalogue = (SubscribedCatalogue) POST("$ADMIN_SUBSCRIBED_CATALOGUES_PATH", mauroJsonSubscribedCataloguePayload(), SubscribedCatalogue)
-        SubscribedModel subscribedModel = (SubscribedModel) POST("$SUBSCRIBED_CATALOGUES_PATH/$subscribedCatalogue.id$SUBSCRIBED_MODELS_PATH",
-                                                                 subscribedModelPayload(folderId) , SubscribedModel)
+        SubscribedCatalogue subscribedCatalogue = subscribedCatalogueApi.create(mauroJsonSubscribedCataloguePayload())
+        SubscribedModel subscribedModel = subscribedModelApi.create(subscribedCatalogue.id, subscribedModelPayload(folderId))
         logout()
 
         when:
         loginUser()
-        SubscribedModel getResponse = (SubscribedModel) GET("$SUBSCRIBED_CATALOGUES_PATH/$subscribedCatalogue.id$SUBSCRIBED_MODELS_PATH/$subscribedModel.id",SubscribedModel)
+        SubscribedModel getResponse = subscribedModelApi.show(subscribedCatalogue.id, subscribedModel.id)
 
         then:
         getResponse
@@ -138,7 +137,7 @@ class SubscribedModelIntegrationSpec extends SecuredIntegrationSpec {
 
         loginAdmin()
         when:
-        getResponse = (SubscribedModel) GET("$SUBSCRIBED_CATALOGUES_PATH/$subscribedCatalogue.id$SUBSCRIBED_MODELS_PATH/$subscribedModel.id",SubscribedModel)
+        getResponse = subscribedModelApi.show(subscribedCatalogue.id, subscribedModel.id)
 
         then:
         getResponse
@@ -147,13 +146,12 @@ class SubscribedModelIntegrationSpec extends SecuredIntegrationSpec {
     void 'notLoggedIn -get subscribedModel by id - should get unauthorized exception'(){
         given:
         loginAdmin()
-        SubscribedCatalogue subscribedCatalogue = (SubscribedCatalogue) POST("$ADMIN_SUBSCRIBED_CATALOGUES_PATH", mauroJsonSubscribedCataloguePayload(), SubscribedCatalogue)
-        SubscribedModel subscribedModel = (SubscribedModel) POST("$SUBSCRIBED_CATALOGUES_PATH/$subscribedCatalogue.id$SUBSCRIBED_MODELS_PATH",
-                                                                 subscribedModelPayload(folderId) , SubscribedModel)
+        SubscribedCatalogue subscribedCatalogue = subscribedCatalogueApi.create(mauroJsonSubscribedCataloguePayload())
+        SubscribedModel subscribedModel = subscribedModelApi.create(subscribedCatalogue.id, subscribedModelPayload(folderId))
         logout()
 
         when:
-        GET("$SUBSCRIBED_CATALOGUES_PATH/$subscribedCatalogue.id$SUBSCRIBED_MODELS_PATH/$subscribedModel.id",SubscribedModel)
+        subscribedModelApi.show(subscribedCatalogue.id, subscribedModel.id)
 
         then:
         HttpClientResponseException exception = thrown()
@@ -167,13 +165,13 @@ class SubscribedModelIntegrationSpec extends SecuredIntegrationSpec {
         loginAdmin()
 
         and:
-        SubscribedCatalogue subscribedCatalogue = (SubscribedCatalogue) POST("$ADMIN_SUBSCRIBED_CATALOGUES_PATH", mauroJsonSubscribedCataloguePayload(), SubscribedCatalogue)
-        POST("$SUBSCRIBED_CATALOGUES_PATH/$subscribedCatalogue.id$SUBSCRIBED_MODELS_PATH", subscribedModelPayload(folderId), SubscribedModel)
+        SubscribedCatalogue subscribedCatalogue = subscribedCatalogueApi.create(mauroJsonSubscribedCataloguePayload())
+        subscribedModelApi.create(subscribedCatalogue.id, subscribedModelPayload(folderId))
         logout()
         loginUser()
 
         when:
-        POST("$SUBSCRIBED_CATALOGUES_PATH/$subscribedCatalogue.id$SUBSCRIBED_MODELS_PATH", subscribedModelPayload(folderId), SubscribedModel)
+        subscribedModelApi.create(subscribedCatalogue.id, subscribedModelPayload(folderId))
 
         then:
         HttpClientResponseException exception = thrown()
@@ -183,14 +181,13 @@ class SubscribedModelIntegrationSpec extends SecuredIntegrationSpec {
     void 'any user can retrieve subscribed model by id'() {
         given:
         loginAdmin()
-        SubscribedCatalogue subscribedCatalogue = (SubscribedCatalogue) POST("$ADMIN_SUBSCRIBED_CATALOGUES_PATH", mauroJsonSubscribedCataloguePayload(), SubscribedCatalogue)
-        SubscribedModel subscribedModel = (SubscribedModel) POST("$SUBSCRIBED_CATALOGUES_PATH/$subscribedCatalogue.id$SUBSCRIBED_MODELS_PATH",
-                                                                 subscribedModelPayload(folderId) , SubscribedModel)
+        SubscribedCatalogue subscribedCatalogue = subscribedCatalogueApi.create(mauroJsonSubscribedCataloguePayload())
+        SubscribedModel subscribedModel = subscribedModelApi.create(subscribedCatalogue.id, subscribedModelPayload(folderId))
         logout()
 
         when:
         loginUser()
-        SubscribedModel getResponse = (SubscribedModel) GET("$SUBSCRIBED_CATALOGUES_PATH/$subscribedCatalogue.id$SUBSCRIBED_MODELS_PATH/$subscribedModel.id",SubscribedModel)
+        SubscribedModel getResponse = subscribedModelApi.show(subscribedCatalogue.id, subscribedModel.id)
 
         then:
         getResponse
@@ -198,7 +195,7 @@ class SubscribedModelIntegrationSpec extends SecuredIntegrationSpec {
 
         loginAdmin()
         when:
-        getResponse = (SubscribedModel) GET("$SUBSCRIBED_CATALOGUES_PATH/$subscribedCatalogue.id$SUBSCRIBED_MODELS_PATH/$subscribedModel.id",SubscribedModel)
+        getResponse = subscribedModelApi.show(subscribedCatalogue.id, subscribedModel.id)
 
         then:
         getResponse
@@ -207,14 +204,13 @@ class SubscribedModelIntegrationSpec extends SecuredIntegrationSpec {
     void 'only adminUser can delete subscribed model'() {
         given:
         loginAdmin()
-        SubscribedCatalogue subscribedCatalogue = (SubscribedCatalogue) POST("$ADMIN_SUBSCRIBED_CATALOGUES_PATH", mauroJsonSubscribedCataloguePayload(), SubscribedCatalogue)
-        SubscribedModel subscribedModel = (SubscribedModel) POST("$SUBSCRIBED_CATALOGUES_PATH/$subscribedCatalogue.id$SUBSCRIBED_MODELS_PATH",
-                                                                 subscribedModelPayload(folderId), SubscribedModel)
+        SubscribedCatalogue subscribedCatalogue = subscribedCatalogueApi.create(mauroJsonSubscribedCataloguePayload())
+        SubscribedModel subscribedModel = subscribedModelApi.create(subscribedCatalogue.id, subscribedModelPayload(folderId))
         logout()
         loginUser()
 
         when:
-        DELETE("$SUBSCRIBED_CATALOGUES_PATH/$subscribedCatalogue.id$SUBSCRIBED_MODELS_PATH/$subscribedModel.id", HttpStatus)
+        subscribedModelApi.delete(subscribedCatalogue.id, subscribedModel.id, new SubscribedModel())
         then:
         HttpClientResponseException exception = thrown()
         exception.status == HttpStatus.FORBIDDEN
@@ -223,35 +219,35 @@ class SubscribedModelIntegrationSpec extends SecuredIntegrationSpec {
         loginAdmin()
 
         when:
-        HttpStatus httpStatus = DELETE("$SUBSCRIBED_CATALOGUES_PATH/$subscribedCatalogue.id$SUBSCRIBED_MODELS_PATH/$subscribedModel.id", HttpStatus)
+        HttpResponse httpResponse = subscribedModelApi.delete(subscribedCatalogue.id, subscribedModel.id, new SubscribedModel())
 
         then:
-        httpStatus == HttpStatus.NO_CONTENT
+        httpResponse.status() == HttpStatus.NO_CONTENT
     }
 
     void 'Delete subscribedCatalogue. AdminUser can delete subscribedCatalogue and associated subscribedModels'() {
         given:
         loginAdmin()
 
-        SubscribedCatalogue created = (SubscribedCatalogue) POST("$ADMIN_SUBSCRIBED_CATALOGUES_PATH", mauroJsonSubscribedCataloguePayload('label1'), SubscribedCatalogue)
-        UUID folderId = ((Folder) POST("$FOLDERS_PATH", folder(), Folder)).id
-        SubscribedModel subscribedModel = (SubscribedModel) POST("$SUBSCRIBED_CATALOGUES_PATH/$created.id$SUBSCRIBED_MODELS_PATH", subscribedModelPayload(folderId), SubscribedModel)
+        SubscribedCatalogue created = subscribedCatalogueApi.create(mauroJsonSubscribedCataloguePayload('label1'))
+        UUID folderId = folderApi.create(folder()).id
+        SubscribedModel subscribedModel = subscribedModelApi.create(created.id, subscribedModelPayload(folderId))
 
         when:
-        HttpStatus httpStatus = DELETE("$ADMIN_SUBSCRIBED_CATALOGUES_PATH/$created.id", HttpStatus)
+        HttpResponse httpResponse = subscribedCatalogueApi.delete(created.id, new SubscribedCatalogue())
 
         then:
-        httpStatus == HttpStatus.NO_CONTENT
+        httpResponse.status() == HttpStatus.NO_CONTENT
 
         when:
-        ListResponse<SubscribedCatalogue> listResponse  = (ListResponse) GET("$SUBSCRIBED_CATALOGUES_PATH", ListResponse)
+        ListResponse<SubscribedCatalogue> listResponse  = subscribedCatalogueApi.listAll()
 
         then:
         listResponse.items.isEmpty()
 
 
         when:
-        ListResponse<SubscribedModel> subscribedModelListResponse = (ListResponse)GET("$SUBSCRIBED_CATALOGUES_PATH/$created.id$SUBSCRIBED_MODELS_PATH", ListResponse)
+        ListResponse<SubscribedModel> subscribedModelListResponse = subscribedModelApi.listAll(created.id)
 
         then:
         subscribedModelListResponse.items.isEmpty()

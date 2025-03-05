@@ -53,7 +53,7 @@ class DataModelJsonImportExportSpec extends CommonDataSpec {
 
 
     @Override
-    def dataElementPayload(String label, DataType dataType) {
+    DataElement dataElementPayload(String label, DataType dataType) {
         return super.dataElementPayload(label, dataType)
     }
     JsonSlurper jsonSlurper = new JsonSlurper()

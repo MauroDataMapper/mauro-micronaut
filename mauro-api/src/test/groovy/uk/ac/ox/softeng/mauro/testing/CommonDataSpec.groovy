@@ -41,10 +41,12 @@ import uk.ac.ox.softeng.mauro.api.terminology.TermRelationshipApi
 import uk.ac.ox.softeng.mauro.api.terminology.TermRelationshipTypeApi
 import uk.ac.ox.softeng.mauro.api.terminology.TerminologyApi
 import uk.ac.ox.softeng.mauro.api.tree.TreeApi
+import uk.ac.ox.softeng.mauro.domain.authority.Authority
 import uk.ac.ox.softeng.mauro.domain.classifier.ClassificationScheme
 import uk.ac.ox.softeng.mauro.domain.classifier.Classifier
 import uk.ac.ox.softeng.mauro.domain.dataflow.DataFlow
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataElement
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
 import uk.ac.ox.softeng.mauro.domain.facet.Annotation
@@ -207,7 +209,7 @@ class CommonDataSpec extends Specification {
         }
     }
 
-    def dataModelPayload(){
+    DataModel dataModelPayload(){
         dataModelPayload("test label ")
 
     }
@@ -216,7 +218,7 @@ class CommonDataSpec extends Specification {
         new DataModel(label: label, description: 'test description', author: 'test author')
     }
 
-    def dataClassPayload() {
+    DataClass dataClassPayload() {
         dataClassPayload('Test data class')
     }
 
@@ -224,9 +226,12 @@ class CommonDataSpec extends Specification {
         new DataClass(label: label, description: 'test description')
     }
 
-    def dataElementPayload(String label, DataType dataType){
-        [label: label, description: 'test description', author: 'test author',
-        dataType: dataType]
+    DataElement dataElementPayload(String label, DataType dataType){
+        new DataElement(
+            label: label,
+            description: 'test description',
+            author: 'test author',
+            dataType: dataType)
     }
 
     DataType dataTypesPayload(){
@@ -395,28 +400,23 @@ class CommonDataSpec extends Specification {
 
     }
 
-    def urlPayload() {
-        [url: "http://maurosandbox.com/sandbox/api/dataModels/0b97751d-b6bf-476c-a9e6-95d3352e8008/export/uk.ac.ox.softeng.maurodatamapper.datamodel.provider." +
-              "exporter/DataModelJsonExporterService/3.2"]
-    }
 
-
-    def mauroJsonSubscribedCataloguePayload(String label) {
-        [
+    SubscribedCatalogue mauroJsonSubscribedCataloguePayload(String label) {
+        new SubscribedCatalogue(
             url                                  : "https://maurosandbox.com/sandbox",
-            subscribedCatalogueType              : 'Mauro JSON',
+            subscribedCatalogueType              : SubscribedCatalogueType.MAURO_JSON,
             label                                : label,
-            subscribedCatalogueAuthenticationType: 'API Key',
+            subscribedCatalogueAuthenticationType: SubscribedCatalogueAuthenticationType.API_KEY,
             refreshPeriod                        : 90,
-            api_key                              : "b39d63d4-4fd4-494d-a491-3c778d89acae"
-        ]
+            apiKey                              : 'b39d63d4-4fd4-494d-a491-3c778d89acae'
+        )
     }
 
-    def authorityPayload(){
-        [
+    Authority authorityPayload(){
+        new Authority(
             url: "http://random.co.uk",
             label: 'authority label'
-        ]
+        )
     }
 
 }
