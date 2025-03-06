@@ -326,8 +326,8 @@ interface Paths {
     /*
     * PublishApi
     */
-    String PUBLISHED_MODELS = '/published/models'
-    String PUBLISHED_MODELS_NEWER_VERSIONS  = '/published/models/{publishedModelId}/newerVersions'
+    String PUBLISHED_MODELS = '/api/published/models'
+    String PUBLISHED_MODELS_NEWER_VERSIONS  = '/api/published/models/{publishedModelId}/newerVersions'
 
     /*
     * PublishApi

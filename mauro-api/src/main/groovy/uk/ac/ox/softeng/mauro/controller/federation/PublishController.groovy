@@ -28,8 +28,8 @@ import io.micronaut.security.rules.SecurityRule
 import jakarta.inject.Inject
 
 @Slf4j
-@Controller('/api')
 @CompileStatic
+@Controller
 @Secured(SecurityRule.IS_ANONYMOUS)
 class PublishController implements PublishApi {
     final RepositoryService repositoryService
