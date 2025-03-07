@@ -1,6 +1,8 @@
 package uk.ac.ox.softeng.mauro.controller.terminology
 
 import uk.ac.ox.softeng.mauro.ErrorHandler
+import uk.ac.ox.softeng.mauro.plugin.exporter.DataModelExporterPlugin
+import uk.ac.ox.softeng.mauro.plugin.exporter.TerminologyExporterPlugin
 import uk.ac.ox.softeng.mauro.plugin.importer.TerminologyImporterPlugin
 
 import groovy.transform.CompileStatic
@@ -174,6 +176,16 @@ class TerminologyController extends ModelController<Terminology> {
         terminology.diff(other)
     }
 
+    @Get('/terminologies/providers/importers')
+    List<TerminologyImporterPlugin> terminologyImporters() {
+        mauroPluginService.listPlugins(TerminologyImporterPlugin)
+    }
+
+    @Get('/terminologies/providers/exporters')
+    List<TerminologyExporterPlugin> terminologyExporters() {
+        mauroPluginService.listPlugins(TerminologyExporterPlugin)
+    }
+
     //stub endpoint todo: actual
     @Get('/terminologies/{id}/simpleModelVersionTree')
     List<Map> simpleModelVersionTree(UUID id){
@@ -195,9 +207,4 @@ class TerminologyController extends ModelController<Terminology> {
         super.permissions(id)
     }
 
-    @Get('/terminologies/providers/importers')
-    List<TerminologyImporterPlugin> terminologyImporters() {
-        List<TerminologyImporterPlugin> plugins = mauroPluginService.listPlugins(TerminologyImporterPlugin)
-        plugins
-    }
 }
