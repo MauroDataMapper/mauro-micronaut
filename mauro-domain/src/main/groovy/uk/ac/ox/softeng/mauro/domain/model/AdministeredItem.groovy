@@ -1,6 +1,7 @@
 package uk.ac.ox.softeng.mauro.domain.model
 
 import com.fasterxml.jackson.annotation.JsonIgnore
+import com.fasterxml.jackson.annotation.JsonInclude
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.Nullable
@@ -97,6 +98,11 @@ abstract class AdministeredItem extends Item {
 
     @Relation(Relation.Kind.ONE_TO_MANY)
     List<ReferenceFile> referenceFiles = []
+
+
+    @io.micronaut.data.annotation.Transient
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    List<String> availableActions = ["createModel"]
 
     /**
      * Helper method for returning the parent of this object, if one exists and is loaded.

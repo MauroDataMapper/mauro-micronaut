@@ -1,8 +1,6 @@
 package uk.ac.ox.softeng.mauro.controller.tree
 
-
 import groovy.transform.CompileStatic
-import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Get
@@ -27,7 +25,6 @@ class TreeController {
 
     @Inject
     TreeService treeService
-
 
     @Inject
     RepositoryService repositoryService

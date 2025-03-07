@@ -1,6 +1,7 @@
 package uk.ac.ox.softeng.mauro.controller.terminology
 
 import uk.ac.ox.softeng.mauro.ErrorHandler
+import uk.ac.ox.softeng.mauro.plugin.importer.TerminologyImporterPlugin
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
@@ -192,5 +193,11 @@ class TerminologyController extends ModelController<Terminology> {
     @Get('/terminologies/{id}/permissions')
     List<Map> permissions(UUID id) {
         super.permissions(id)
+    }
+
+    @Get('/terminologies/providers/importers')
+    List<TerminologyImporterPlugin> terminologyImporters() {
+        List<TerminologyImporterPlugin> plugins = mauroPluginService.listPlugins(TerminologyImporterPlugin)
+        plugins
     }
 }
