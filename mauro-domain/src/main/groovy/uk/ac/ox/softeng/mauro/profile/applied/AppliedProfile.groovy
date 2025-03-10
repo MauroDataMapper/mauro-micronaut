@@ -61,7 +61,7 @@ class AppliedProfile extends MauroPluginDTO {
 
     void validate() {
         String typeName = administeredItem.getDomainType()
-        if (!isApplicableForDomain(typeName)) {
+        if (!sourceProfile.isApplicableForDomain(typeName)) {
             errors.add(
                 "The profile '${displayName}' cannot be applied to an object of type '${administeredItem.class.simpleName}'.  Allowed types are $profileApplicableForDomains'".toString())
         }
