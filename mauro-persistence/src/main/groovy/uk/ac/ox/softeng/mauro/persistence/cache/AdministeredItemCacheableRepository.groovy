@@ -142,6 +142,12 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
         List<DataClass> readAllByParentDataClass_Id(UUID parentDataClassId) {
             ((DataClassRepository) repository).readAllByParentDataClass_Id(parentDataClassId)
         }
+
+        // not cached
+        List<DataClass> readAllByParentDataClass(DataClass parentDataClass) {
+            ((DataClassRepository) repository).readAllByParentDataClass(parentDataClass)
+        }
+
         // not cached
         List<DataClass> readAllByDataModelAndParentDataClassIsNull(DataModel dataModel) {
             ((DataClassRepository) repository).readAllByDataModelAndParentDataClassIsNull(dataModel)

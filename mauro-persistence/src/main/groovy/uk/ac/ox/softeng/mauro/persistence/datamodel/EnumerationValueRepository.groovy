@@ -2,7 +2,6 @@ package uk.ac.ox.softeng.mauro.persistence.datamodel
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
-import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.model.query.builder.sql.Dialect
@@ -41,6 +40,10 @@ abstract class EnumerationValueRepository implements ModelItemRepository<Enumera
 
     @Nullable
     abstract Set<EnumerationValue> readAllByEnumerationTypeIn(Collection<DataType> dataTypes)
+
+    Set<EnumerationValue> findAllByEnumerationTypeIn(Collection<DataType> dataTypes) {
+        enumerationValueDTORepository.findAllByEnumerationTypeIn(dataTypes) as Set<EnumerationValue>
+    }
 
     @Nullable
     abstract List<EnumerationValue> readAllByEnumerationType(DataType dataType)

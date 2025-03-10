@@ -1,16 +1,14 @@
 package uk.ac.ox.softeng.mauro.persistence.datamodel
 
-import uk.ac.ox.softeng.mauro.domain.datamodel.DataElement
+import groovy.transform.CompileStatic
+import jakarta.inject.Inject
+import jakarta.inject.Singleton
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
-import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository
+import uk.ac.ox.softeng.mauro.domain.datamodel.EnumerationValue
 import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository.DataTypeCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemContentRepository
-
-import groovy.transform.CompileStatic
-import io.micronaut.data.annotation.Join
-import jakarta.inject.Inject
-import jakarta.inject.Singleton
 
 @CompileStatic
 @Singleton
@@ -22,11 +20,29 @@ class DataTypeContentRepository extends AdministeredItemContentRepository {
     @Inject
     ModelCacheableRepository.DataModelCacheableRepository dataModelCacheableRepository
 
+    @Inject
+    EnumerationValueRepository enumerationValueRepository
+
     @Override
-    @Join(value = 'enumerationValues', type = Join.Type.LEFT_FETCH)
     DataType readWithContentById(UUID id) {
         DataType dataType = dataTypeCacheableRepository.readById(id)
 
         dataType
+    }
+
+    List<DataType> findAllWithContentByParent(DataModel dataModel) {
+        List<DataType> dataTypes = dataTypeCacheableRepository.findAllByParent(dataModel)
+
+        Map<UUID, DataType> dataTypeMap = dataTypes.collectEntries {[it.id, it]}
+        if (dataTypes) {
+            Set<EnumerationValue> enumerationValues = enumerationValueRepository.findAllByEnumerationTypeIn(dataTypes)
+            enumerationValues.each {enumerationValue ->
+                enumerationValue.enumerationType = dataTypeMap[enumerationValue.enumerationType.id]
+                enumerationValue.enumerationType.enumerationValues.add(enumerationValue)
+                enumerationValue.dataModel = dataModel
+            }
+        }
+
+        dataTypes
     }
 }

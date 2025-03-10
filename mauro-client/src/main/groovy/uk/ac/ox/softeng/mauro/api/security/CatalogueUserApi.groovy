@@ -1,15 +1,14 @@
 package uk.ac.ox.softeng.mauro.api.security
 
-import uk.ac.ox.softeng.mauro.api.MauroApi
-import uk.ac.ox.softeng.mauro.api.Paths
-import uk.ac.ox.softeng.mauro.domain.security.CatalogueUser
-import uk.ac.ox.softeng.mauro.web.ChangePassword
-
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.annotation.Get
 import io.micronaut.http.annotation.Post
 import io.micronaut.http.annotation.Put
+import uk.ac.ox.softeng.mauro.api.MauroApi
+import uk.ac.ox.softeng.mauro.api.Paths
+import uk.ac.ox.softeng.mauro.domain.security.CatalogueUser
+import uk.ac.ox.softeng.mauro.web.ChangePassword
 
 @MauroApi
 interface CatalogueUserApi {
@@ -19,6 +18,9 @@ interface CatalogueUserApi {
 
     @Get(Paths.USER_CURRENT_USER)
     CatalogueUser currentUser()
+
+    @Put(Paths.USER_ID)
+    CatalogueUser show(UUID id)
 
     @Put(Paths.USER_CHANGE_PASSWORD)
     CatalogueUser changePassword(@Body @NonNull ChangePassword changePasswordRequest)

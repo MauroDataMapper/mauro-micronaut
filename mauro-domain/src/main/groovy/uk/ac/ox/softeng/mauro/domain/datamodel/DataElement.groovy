@@ -1,14 +1,7 @@
 package uk.ac.ox.softeng.mauro.domain.datamodel
 
-import uk.ac.ox.softeng.mauro.domain.diff.BaseCollectionDiff
-import uk.ac.ox.softeng.mauro.domain.diff.CollectionDiff
-import uk.ac.ox.softeng.mauro.domain.diff.DiffBuilder
-import uk.ac.ox.softeng.mauro.domain.diff.DiffableItem
-import uk.ac.ox.softeng.mauro.domain.diff.ObjectDiff
-import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
-import uk.ac.ox.softeng.mauro.domain.model.ModelItem
-
 import com.fasterxml.jackson.annotation.JsonIgnore
+import com.fasterxml.jackson.annotation.JsonProperty
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
 import groovy.transform.MapConstructor
@@ -19,6 +12,10 @@ import jakarta.persistence.Inheritance
 import jakarta.persistence.InheritanceType
 import jakarta.persistence.Transient
 import jakarta.validation.constraints.NotNull
+import uk.ac.ox.softeng.mauro.domain.diff.*
+import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
+import uk.ac.ox.softeng.mauro.domain.model.Model
+import uk.ac.ox.softeng.mauro.domain.model.ModelItem
 
 /**
  * A datatype describes the range of values that a column or field in a dataset may take.  It may be one of the following kinds:
@@ -62,6 +59,27 @@ class DataElement extends ModelItem<DataClass> implements DiffableItem<DataEleme
     @JsonIgnore
     DataClass getParent() {
         this.dataClass
+    }
+
+    @Override
+    @Transient
+    @JsonIgnore
+    Model getOwner() {
+        dataModel ?: super.getOwner()
+    }
+
+    @Transient
+    @Deprecated
+    @JsonProperty('model')
+    UUID getModelId() {
+        dataModel?.id ?: owner?.id // backwards compatibility
+    }
+
+    @Transient
+    @Deprecated
+    @JsonProperty('dataClass')
+    UUID getDataClassId() {
+        dataClass?.id // backwards compatibility
     }
 
     @Override
