@@ -1,5 +1,23 @@
 package uk.ac.ox.softeng.mauro.controller.datamodel
 
+import uk.ac.ox.softeng.mauro.api.Paths
+import uk.ac.ox.softeng.mauro.api.datamodel.DataModelApi
+
+import groovy.transform.CompileStatic
+import groovy.util.logging.Slf4j
+import io.micronaut.context.annotation.Parameter
+import io.micronaut.core.annotation.NonNull
+import io.micronaut.core.annotation.Nullable
+import io.micronaut.http.HttpResponse
+import io.micronaut.http.MediaType
+import io.micronaut.http.annotation.*
+import io.micronaut.http.server.multipart.MultipartBody
+import io.micronaut.scheduling.TaskExecutors
+import io.micronaut.scheduling.annotation.ExecuteOn
+import io.micronaut.security.annotation.Secured
+import io.micronaut.security.rules.SecurityRule
+import io.micronaut.transaction.annotation.Transactional
+import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.ErrorHandler
 import uk.ac.ox.softeng.mauro.controller.model.ModelController
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
@@ -44,7 +62,7 @@ import jakarta.inject.Inject
 @Controller
 @CompileStatic
 @Secured(SecurityRule.IS_ANONYMOUS)
-class DataModelController extends ModelController<DataModel> {
+class DataModelController extends ModelController<DataModel> implements DataModelApi {
 
     DataModelCacheableRepository dataModelRepository
 
@@ -64,40 +82,40 @@ class DataModelController extends ModelController<DataModel> {
         this.dataModelService = dataModelService
     }
 
-    @Get('/dataModels/{id}')
+    @Get(Paths.DATA_MODEL_ID_ROUTE)
     DataModel show(UUID id) {
         super.show(id)
     }
 
     @Transactional
-    @Post('/folders/{folderId}/dataModels')
+    @Post(Paths.FOLDER_LIST_DATA_MODEL)
     DataModel create(UUID folderId, @Body @NonNull DataModel dataModel) {
         super.create(folderId, dataModel) as DataModel
     }
 
 
-    @Put('/dataModels/{id}')
+    @Put(Paths.DATA_MODEL_ID_ROUTE)
     @Transactional
     DataModel update(UUID id, @Body @NonNull DataModel dataModel) {
         super.update(id, dataModel) as DataModel
     }
 
     @Transactional
-    @Delete('/dataModels/{id}')
-    HttpStatus delete(UUID id, @Body @Nullable DataModel dataModel) {
+    @Delete(Paths.DATA_MODEL_ID_ROUTE)
+    HttpResponse delete(UUID id, @Body @Nullable DataModel dataModel) {
         super.delete(id, dataModel)
     }
 
 
-    @Get('/dataModels/{id}/search{?requestDTO}')
-    ListResponse<SearchResultsDTO> searchGet(UUID id, @RequestBean SearchRequestDTO requestDTO) {
+    @Get(Paths.DATA_MODEL_SEARCH_GET)
+    ListResponse<SearchResultsDTO> searchGet(UUID id, @Parameter @Nullable SearchRequestDTO requestDTO) {
         requestDTO.withinModelId = id
         DataModel dataModel = dataModelRepository.readById(requestDTO.withinModelId)
         accessControlService.checkRole(Role.READER, dataModel)
         ListResponse.from(searchRepository.search(requestDTO))
     }
 
-    @Post('/dataModels/{id}/search')
+    @Post(Paths.DATA_MODEL_SEARCH_POST)
     ListResponse<SearchResultsDTO> searchPost(UUID id, @Body SearchRequestDTO requestDTO) {
         requestDTO.withinModelId = id
         DataModel dataModel = dataModelRepository.readById(requestDTO.withinModelId)
@@ -106,42 +124,42 @@ class DataModelController extends ModelController<DataModel> {
     }
 
 
-    @Get('/folders/{folderId}/dataModels')
+    @Get(Paths.FOLDER_LIST_DATA_MODEL)
     ListResponse<DataModel> list(UUID folderId) {
         super.list(folderId)
     }
 
-    @Get('/dataModels')
+    @Get(Paths.DATA_MODEL_ROUTE)
     ListResponse<DataModel> listAll() {
         super.listAll()
     }
 
     @Transactional
-    @Put('/dataModels/{id}/finalise')
+    @Put(Paths.DATA_MODEL_ID_FINALISE)
     DataModel finalise(UUID id, @Body FinaliseData finaliseData) {
         super.finalise(id, finaliseData)
     }
 
     @Transactional
-    @Put('/dataModels/{id}/newBranchModelVersion')
+    @Put(Paths.DATA_MODEL_BRANCH_MODEL_VERSION)
     DataModel createNewBranchModelVersion(UUID id, @Body @Nullable CreateNewVersionData createNewVersionData) {
         super.createNewBranchModelVersion(id, createNewVersionData)
     }
 
-    @Get('/dataModels/{id}/export{/namespace}{/name}{/version}')
-    StreamedFile exportModel(UUID id, @Nullable String namespace, @Nullable String name, @Nullable String version) {
+    @Get(Paths.DATA_MODEL_EXPORT)
+    HttpResponse<byte[]> exportModel(UUID id, @Nullable String namespace, @Nullable String name, @Nullable String version) {
         super.exportModel(id, namespace, name, version)
     }
 
     @Transactional
     @ExecuteOn(TaskExecutors.IO)
     @Consumes(MediaType.MULTIPART_FORM_DATA)
-    @Post('/dataModels/import/{namespace}/{name}{/version}')
+    @Post(Paths.DATA_MODEL_IMPORT)
     ListResponse<DataModel> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version) {
         super.importModel(body, namespace, name, version)
     }
 
-    @Get('/dataModels/{id}/diff/{otherId}')
+    @Get(Paths.DATA_MODEL_DIFF)
     ObjectDiff diffModels(@NonNull UUID id, @NonNull UUID otherId) {
         DataModel dataModel = modelContentRepository.findWithContentById(id)
         ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, dataModel, "item with $id not found")
@@ -156,7 +174,7 @@ class DataModelController extends ModelController<DataModel> {
         dataModel.diff(otherDataModel)
     }
 
-    @Get('/dataModels/providers/importers')
+    @Get(Paths.DATA_MODEL_EXPORTERS)
     List<DataModelImporterPlugin> dataModelImporters() {
         mauroPluginService.listPlugins(DataModelImporterPlugin)
     }

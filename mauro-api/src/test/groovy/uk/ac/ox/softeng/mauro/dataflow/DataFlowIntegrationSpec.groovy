@@ -1,14 +1,25 @@
 package uk.ac.ox.softeng.mauro.dataflow
 
+import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.client.exceptions.HttpClientResponseException
 import io.micronaut.runtime.EmbeddedApplication
 import io.micronaut.test.annotation.Sql
 import jakarta.inject.Inject
+import jakarta.inject.Singleton
 import spock.lang.Shared
+import uk.ac.ox.softeng.mauro.api.dataflow.DataClassComponentApi
+import uk.ac.ox.softeng.mauro.api.dataflow.DataElementComponentApi
+import uk.ac.ox.softeng.mauro.api.dataflow.DataFlowApi
+import uk.ac.ox.softeng.mauro.api.datamodel.DataClassApi
+import uk.ac.ox.softeng.mauro.api.datamodel.DataElementApi
+import uk.ac.ox.softeng.mauro.api.datamodel.DataModelApi
+import uk.ac.ox.softeng.mauro.api.datamodel.DataTypeApi
+import uk.ac.ox.softeng.mauro.api.folder.FolderApi
 import uk.ac.ox.softeng.mauro.domain.dataflow.DataClassComponent
 import uk.ac.ox.softeng.mauro.domain.dataflow.DataElementComponent
 import uk.ac.ox.softeng.mauro.domain.dataflow.DataFlow
+import uk.ac.ox.softeng.mauro.domain.dataflow.Type
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataElement
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
@@ -19,14 +30,12 @@ import uk.ac.ox.softeng.mauro.testing.CommonDataSpec
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @ContainerizedTest
+@Singleton
 @Sql(scripts = ["classpath:sql/tear-down-dataflow.sql",
         "classpath:sql/tear-down-datamodel.sql",
         "classpath:sql/tear-down.sql",
         "classpath:sql/tear-down-folder.sql"], phase = Sql.Phase.AFTER_EACH)
 class DataFlowIntegrationSpec extends CommonDataSpec {
-
-    @Inject
-    EmbeddedApplication<?> application
 
     @Shared
     UUID folderId
@@ -43,14 +52,15 @@ class DataFlowIntegrationSpec extends CommonDataSpec {
     UUID dataElementId
 
     void setup() {
-        folderId = ((Folder) POST("$FOLDERS_PATH", folder(), Folder)).id
-        sourceId = ((DataModel) POST("$FOLDERS_PATH/$folderId$DATAMODELS_PATH", dataModelPayload('source label'), DataModel)).id
-        targetId = ((DataModel) POST("$FOLDERS_PATH/$folderId$DATAMODELS_PATH", dataModelPayload('target label'), DataModel)).id
+        folderId = folderApi.create(folder()).id
+        sourceId = dataModelApi.create(folderId, dataModelPayload('source label')).id
+        targetId = dataModelApi.create(folderId, dataModelPayload('target label')).id
     }
 
     void 'create dataflow -should create with different source and target'() {
         when:
-        DataFlow response = (DataFlow) POST("$DATAMODELS_PATH/$targetId$DATA_FLOWS_PATH", dataFlowPayload(sourceId.toString()), DataFlow)
+        DataFlow response =
+                dataFlowApi.create(targetId, dataFlowPayload(sourceId))
 
         then:
         response
@@ -61,28 +71,32 @@ class DataFlowIntegrationSpec extends CommonDataSpec {
 
     void 'create dataflow -should create with same source and target'() {
         when:
-        DataFlow response = (DataFlow) POST("$DATAMODELS_PATH/$targetId$DATA_FLOWS_PATH",dataFlowPayload(sourceId.toString()), DataFlow)
+        DataFlow response =
+                dataFlowApi.create(targetId, dataFlowPayload(targetId))
 
         then:
         response
         response.id
-        response.source.id == sourceId
+        response.source.id == targetId
         response.target.id == targetId
         response.source.description == 'test description'
     }
 
     void 'create dataflow -should return http status NotFound when source not found'() {
         when:
-        (DataFlow) POST("$DATAMODELS_PATH/$targetId$DATA_FLOWS_PATH", dataFlowPayload(UUID.randomUUID().toString()), DataFlow)
+        DataFlow response =
+                dataFlowApi.create(targetId, dataFlowPayload(UUID.randomUUID()))
 
         then:
-        HttpClientResponseException exception = thrown()
-        exception.status == HttpStatus.NOT_FOUND
+        !response
+        //HttpClientResponseException exception = thrown()
+        //exception.status == HttpStatus.NOT_FOUND
     }
 
     void 'create dataflow -should return internal server error when target is invalid id'() {
         when:
-        (DataFlow) POST("$DATAMODELS_PATH/${UUID.randomUUID()}$DATA_FLOWS_PATH", dataFlowPayload(sourceId.toString()), DataFlow)
+        DataFlow response =
+                dataFlowApi.create(UUID.randomUUID(), dataFlowPayload(sourceId))
 
         then:
         HttpClientResponseException exception = thrown()
@@ -92,13 +106,17 @@ class DataFlowIntegrationSpec extends CommonDataSpec {
 
     void 'update dataflow -should update item'() {
         given:
-        DataFlow response = (DataFlow) POST("$DATAMODELS_PATH/$targetId$DATA_FLOWS_PATH", dataFlowPayload(sourceId.toString()), DataFlow)
+        DataFlow response =
+                dataFlowApi.create(targetId, dataFlowPayload(sourceId))
+
         response
         !response.diagramLayout
 
         when:
-        DataFlow updated = (DataFlow) PUT("$DATAMODELS_PATH/$targetId$DATA_FLOWS_PATH/$response.id",
-                [source: [id: sourceId], diagramLayout: 'random diagram layout text'], DataFlow)
+        DataFlow updated = dataFlowApi.update(targetId, response.id,
+                new DataFlow(
+                        source: new DataModel(id: sourceId),
+                        diagramLayout: 'random diagram layout text'))
 
         then:
         updated
@@ -107,11 +125,12 @@ class DataFlowIntegrationSpec extends CommonDataSpec {
 
     void 'get dataFlow by dataModel -target and source'() {
         given:
-        DataFlow dataFlow = (DataFlow) POST("$DATAMODELS_PATH/$targetId$DATA_FLOWS_PATH", dataFlowPayload(sourceId.toString()), DataFlow)
+        DataFlow dataFlow =
+                dataFlowApi.create(targetId, dataFlowPayload(sourceId))
         dataFlow
 
         when:
-        ListResponse<DataFlow> dataflowList = (ListResponse<DataFlow>) GET("$DATAMODELS_PATH/$targetId$DATA_FLOWS_PATH", ListResponse, DataFlow)
+        ListResponse<DataFlow> dataflowList = dataFlowApi.list(targetId, null)
 
         then:
         dataflowList
@@ -119,14 +138,14 @@ class DataFlowIntegrationSpec extends CommonDataSpec {
         dataflowList.items[0].id == dataFlow.id
 
         when:
-        dataflowList = (ListResponse<DataFlow>) GET("$DATAMODELS_PATH/$targetId$DATA_FLOWS_PATH?type=target", ListResponse, DataFlow)
+        dataflowList = dataFlowApi.list(targetId, Type.TARGET)
         then:
         dataflowList
         dataflowList.items.size() == 1
         dataflowList.items[0].id == dataFlow.id
 
         when:
-        dataflowList = (ListResponse<DataFlow>) GET("$DATAMODELS_PATH/$sourceId$DATA_FLOWS_PATH?type=source", ListResponse, DataFlow)
+        dataflowList = dataflowList = dataFlowApi.list(sourceId, Type.SOURCE)
         then:
         dataflowList
         dataflowList.items.size() == 1
@@ -135,34 +154,40 @@ class DataFlowIntegrationSpec extends CommonDataSpec {
 
     void 'delete dataFlow - should delete dataflow and all associated objects'() {
         given:
-        dataClassId = ((DataClass) POST("$DATAMODELS_PATH/$sourceId$DATACLASSES_PATH", dataClassPayload('source label'), DataClass)).id
-        dataElementId = ((DataClass) POST("$DATAMODELS_PATH/$sourceId$DATACLASSES_PATH", dataClassPayload('source label'), DataClass)).id
+        dataClassId = dataClassApi.create(sourceId, dataClassPayload('source label')).id
 
-        UUID dataFlowId = ((DataFlow) POST("$DATAMODELS_PATH/$targetId$DATA_FLOWS_PATH", dataFlowPayload(sourceId.toString()), DataFlow)).id
+        UUID dataFlowId = dataFlowApi.create(targetId, dataFlowPayload(sourceId)).id
 
-        UUID dataClassComponentId = ((DataClassComponent) POST("$DATAMODELS_PATH/$targetId$DATA_FLOWS_PATH/$dataFlowId$DATA_CLASS_COMPONENTS_PATH", dataModelPayload('test data class component label'), DataClassComponent)).id
-        PUT("$DATAMODELS_PATH/$targetId$DATA_FLOWS_PATH/$dataFlowId$DATA_CLASS_COMPONENTS_PATH/$dataClassComponentId$SOURCE/$dataClassId", String)
-        PUT("$DATAMODELS_PATH/$targetId$DATA_FLOWS_PATH/$dataFlowId$DATA_CLASS_COMPONENTS_PATH/$dataClassComponentId$TARGET/$dataClassId", String)
+        UUID dataClassComponentId = dataClassComponentApi.create(targetId, dataFlowId, new DataClassComponent(label: 'test data class component label')).id
 
-        DataType dataType = (DataType) POST("$DATAMODELS_PATH/$targetId/dataTypes", [label: 'integer', description: 'a whole number, may be positive or negative, with no maximum or minimum', domainType: 'PrimitiveType'], DataType)
-        dataElementId = ((DataElement) POST("$DATAMODELS_PATH/$targetId$DATACLASSES_PATH/$dataClassId$DATA_ELEMENTS_PATH", [label: 'First data element', description: 'The first data element', dataType: [id: dataType.id]], DataElement)).id
-        UUID dataElementComponentId = ((DataElementComponent) POST("$DATAMODELS_PATH/$targetId$DATA_FLOWS_PATH/$dataFlowId$DATA_CLASS_COMPONENTS_PATH/$dataClassComponentId$DATA_ELEMENT_COMPONENTS_PATH", dataModelPayload('test data class component label'), DataElementComponent)).id
-        PUT("$DATAMODELS_PATH/$targetId$DATA_FLOWS_PATH/$dataFlowId$DATA_CLASS_COMPONENTS_PATH/$dataClassComponentId$DATA_ELEMENT_COMPONENTS_PATH/$dataElementComponentId$SOURCE/$dataElementId", String)
-        PUT("$DATAMODELS_PATH/$targetId$DATA_FLOWS_PATH/$dataFlowId$DATA_CLASS_COMPONENTS_PATH/$dataClassComponentId$DATA_ELEMENT_COMPONENTS_PATH/$dataElementComponentId$TARGET/$dataElementId", String)
+        dataClassComponentApi.updateSource(targetId,dataFlowId,dataClassComponentId,dataClassId)
+        dataClassComponentApi.updateTarget(targetId,dataFlowId,dataClassComponentId,dataClassId)
+
+        DataType dataType = dataTypeApi.create(sourceId, new DataType(
+                label: 'integer',
+                description: 'a whole number, may be positive or negative, with no maximum or minimum',
+                dataTypeKind: DataType.DataTypeKind.PRIMITIVE_TYPE))
+
+        dataElementId = dataElementApi.create(sourceId, dataClassId, new DataElement(
+                label: 'First data element',
+                description: 'The first data element',
+                dataType: dataType)).id
+
+        UUID dataElementComponentId = dataElementComponentApi.create(targetId, dataFlowId, dataClassComponentId, new DataElementComponent(label: 'test data class component label')).id
+        dataElementComponentApi.updateSource(targetId, dataFlowId, dataClassComponentId, dataElementComponentId, dataElementId)
+        dataElementComponentApi.updateTarget(targetId, dataFlowId, dataClassComponentId, dataElementComponentId, dataElementId)
 
         when:
-        HttpStatus status = DELETE("$DATAMODELS_PATH/$targetId$DATA_FLOWS_PATH/$dataFlowId", HttpStatus)
+        HttpResponse response = dataFlowApi.delete(targetId, dataFlowId, new DataFlow())
 
         then:
-        status == HttpStatus.NO_CONTENT
+        response.status == HttpStatus.NO_CONTENT
 
         when:
-        GET("$DATAMODELS_PATH/$targetId$DATA_FLOWS_PATH/$dataFlowId",DataFlow)
+        DataFlow dataFlow = dataFlowApi.show(targetId, dataFlowId)
 
         then:
-        HttpClientResponseException exception = thrown()
-        exception.status == HttpStatus.NOT_FOUND
-
+        !dataFlow
 
     }
 

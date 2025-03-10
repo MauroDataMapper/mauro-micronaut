@@ -1,10 +1,15 @@
 package uk.ac.ox.softeng.mauro.terminology
 
+import uk.ac.ox.softeng.mauro.domain.folder.Folder
+import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
+
+import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.client.exceptions.HttpClientResponseException
 import io.micronaut.runtime.EmbeddedApplication
 import io.micronaut.test.annotation.Sql
 import jakarta.inject.Inject
+import jakarta.inject.Singleton
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 import uk.ac.ox.softeng.mauro.domain.facet.ReferenceFile
@@ -15,13 +20,9 @@ import uk.ac.ox.softeng.mauro.testing.CommonDataSpec
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @ContainerizedTest
+@Singleton
 @Sql(scripts = "classpath:sql/tear-down.sql", phase = Sql.Phase.AFTER_EACH)
 class CodeSetIntegrationSpec extends CommonDataSpec {
-
-    @Inject
-    @AutoCleanup
-    @Shared
-    EmbeddedApplication<?> application
 
     @Shared
     UUID folderId
@@ -29,17 +30,13 @@ class CodeSetIntegrationSpec extends CommonDataSpec {
     @Shared
     UUID codeSetId
 
-
-
-    void setupSpec(){
-        def folderPayload = folder()
-        def folderResponse = POST(FOLDERS_PATH, folderPayload)
-        folderId = UUID.fromString(folderResponse.id as String)
+    def setup() {
+        folderId = folderApi.create(folder()).id
     }
 
     void 'test post'() {
         when:
-        def response = POST("$FOLDERS_PATH/$folderId$CODE_SET_PATH", codeSet())
+        def response = codeSetApi.create(folderId, codeSet())
 
         then:
         response
@@ -55,11 +52,11 @@ class CodeSetIntegrationSpec extends CommonDataSpec {
     void 'test codeSet getById'() {
         given:
         def codeSetPayload = codeSet()
-        def response = POST("$FOLDERS_PATH/$folderId$CODE_SET_PATH", codeSetPayload)
-        codeSetId = UUID.fromString(response.id as String)
+        def response = codeSetApi.create(folderId, codeSetPayload)
+        codeSetId = response.id
 
         when:
-        def getResponse = GET("$CODE_SET_PATH/$codeSetId")
+        CodeSet getResponse = codeSetApi.show(codeSetId)
 
         then:
         getResponse
@@ -72,67 +69,66 @@ class CodeSetIntegrationSpec extends CommonDataSpec {
 
     void 'test codeSet listAll'() {
         given:
-        def response = POST("$FOLDERS_PATH/$folderId$CODE_SET_PATH", codeSet())
-        codeSetId = UUID.fromString(response.id as String)
+        CodeSet response = codeSetApi.create(folderId, codeSet())
+        codeSetId = response.id
 
         and:
-        def folderResp2 = POST(FOLDERS_PATH, [label: 'Test-folder-2'])
-        def folderId2 = UUID.fromString(folderResp2.id as String)
+        Folder folderResp2 = folderApi.create(new Folder(label: 'Test-folder-2'))
+        UUID folderId2 = folderResp2.id
         and:
-        def codeSetResp2 = POST("$FOLDERS_PATH/$folderId2$CODE_SET_PATH", codeSet())
-        def codeSet2Id = UUID.fromString(codeSetResp2.id as String)
+        CodeSet codeSetResp2 = codeSetApi.create(folderId2, codeSet())
+        UUID codeSet2Id = codeSetResp2.id
 
         when:
-        def getAllResp = GET(CODE_SET_PATH)
+        ListResponse<CodeSet> getAllResp = codeSetApi.listAll()
 
         then:
         getAllResp != null
-        def actualIds = getAllResp.items.id.collect()
+        List<UUID> actualIds = getAllResp.items.id
         actualIds.size() == 2
-        actualIds.contains(codeSetId.toString())
-        actualIds.contains(codeSet2Id.toString())
+        actualIds.contains(codeSetId)
+        actualIds.contains(codeSet2Id)
 
     }
 
     void 'test listByFolderId'() {
         given:
-        def response = POST("$FOLDERS_PATH/$folderId$CODE_SET_PATH", codeSet())
-        codeSetId = UUID.fromString(response.id as String)
+        CodeSet response = codeSetApi.create(folderId, codeSet())
+        codeSetId = response.id
         and:
-        def folderResp2 = POST(FOLDERS_PATH, [label: 'Test-folder-2'])
-        def folderId2 = UUID.fromString(folderResp2.id as String)
+        Folder folderResp2 = folderApi.create(new Folder(label: 'Test-folder-2'))
+        UUID folderId2 = folderResp2.id
         and:
-        def codeSetResp2 = POST("$FOLDERS_PATH/$folderId2$CODE_SET_PATH", codeSet())
-        def codeSet2Id = UUID.fromString(codeSetResp2.id as String)
+        CodeSet codeSetResp2 = codeSetApi.create(folderId2, codeSet())
+        UUID codeSet2Id = codeSetResp2.id
 
         when:
-        ListResponse<CodeSet> getByFolder2Resp = (ListResponse<CodeSet>) GET("$FOLDERS_PATH/$folderId2$CODE_SET_PATH")
-        ListResponse<CodeSet> getByFolderResp =  (ListResponse<CodeSet>) GET("$FOLDERS_PATH/$folderId$CODE_SET_PATH")
+        ListResponse<CodeSet> getByFolder2Resp = codeSetApi.list(folderId2)
+        ListResponse<CodeSet> getByFolderResp =  codeSetApi.list(folderId)
 
         then:
-        verifyAll {
-            getByFolder2Resp
-            getByFolder2Resp.items.id == ["$codeSet2Id"]
-            getByFolderResp
-            getByFolderResp.items.id == ["$codeSetId"]
-        }
+        getByFolder2Resp
+        getByFolder2Resp.items.id == [codeSet2Id]
+        getByFolderResp
+        getByFolderResp.items.id == [codeSetId]
+
     }
 
     void 'test list multiple codesets ByFolderId'() {
         given:
-        def response = POST("$FOLDERS_PATH/$folderId$CODE_SET_PATH", codeSet())
-        codeSetId = UUID.fromString(response.id as String)
+        CodeSet response = codeSetApi.create(folderId, codeSet())
+        codeSetId = response.id
 
         when:
-        ListResponse<CodeSet> getByFolderResp =  (ListResponse<CodeSet>) GET("$FOLDERS_PATH/$folderId$CODE_SET_PATH", ListResponse, CodeSet)
+        ListResponse<CodeSet> getByFolderResp =  codeSetApi.list(folderId)
 
         then:
         getByFolderResp.items.id == [codeSetId]
 
         when:
-        def codeSet2 = POST("$FOLDERS_PATH/$folderId$CODE_SET_PATH", codeSet())
-        def codeSet2Id = UUID.fromString(codeSet2.id as String)
-        ListResponse<CodeSet> folderResponse2 =  (ListResponse<CodeSet>) GET("$FOLDERS_PATH/$folderId$CODE_SET_PATH", ListResponse, CodeSet)
+        CodeSet codeSet2 = codeSetApi.create(folderId, codeSet())
+        UUID codeSet2Id = codeSet2.id
+        ListResponse<CodeSet> folderResponse2 =  codeSetApi.list(folderId)
 
         then:
         folderResponse2.items.id.sort() == [codeSetId, codeSet2Id].sort()
@@ -140,155 +136,151 @@ class CodeSetIntegrationSpec extends CommonDataSpec {
 
     void 'test update CodeSet'() {
         given:
-        def response = POST("$FOLDERS_PATH/$folderId$CODE_SET_PATH", codeSet())
-        codeSetId = UUID.fromString(response.id as String)
+        CodeSet response = codeSetApi.create(folderId, codeSet())
+        codeSetId = response.id
         def newAuthor = 'New author name'
         CodeSet codeSet = codeSet()
         codeSet.author = newAuthor
 
         when:
-        def putResponse = PUT("$CODE_SET_PATH/$codeSetId", codeSet)
+        CodeSet putResponse = codeSetApi.update(codeSetId, codeSet)
 
         then:
         putResponse
         putResponse.author == newAuthor
-        UUID.fromString(putResponse.id as String) == codeSetId
+        putResponse.id == codeSetId
         putResponse.authority
     }
 
     void 'add Term to CodeSet'() {
         given:
-        CodeSet response = POST("$FOLDERS_PATH/$folderId$CODE_SET_PATH", codeSet(), CodeSet)
-        codeSetId = UUID.fromString(response.id as String)
+        CodeSet response = codeSetApi.create(folderId, codeSet())
+        codeSetId = response.id
         and:
-        def terminologyResponse = POST("$FOLDERS_PATH/$folderId$TERMINOLOGIES_PATH", terminology())
-        def terminologyId = UUID.fromString(terminologyResponse.id as String)
-        def termResponse = POST("$TERMINOLOGIES_PATH/$terminologyId$TERMS_PATH", termPayload())
-        def termId = UUID.fromString(termResponse.id as String)
+        Terminology terminologyResponse = terminologyApi.create(folderId, terminology())
+        UUID terminologyId = terminologyResponse.id
+        Term termResponse = termApi.create(terminologyId, termPayload())
+        UUID termId = termResponse.id
 
         when:
-        def putResponse = PUT("$CODE_SET_PATH/$codeSetId$TERMS_PATH/$termId", response)
+        CodeSet putResponse = codeSetApi.addTerm(codeSetId, termId)
 
         then:
-        verifyAll {
-            putResponse != null
-            def termGet = GET("$TERMINOLOGIES_PATH/$terminologyId$TERMS_PATH/$termId")
-            termGet != null
-            termId == UUID.fromString(termGet.id as String)
-            codeSetId == UUID.fromString(putResponse.id as String)
-        }
+        putResponse
+        Term termGet = termApi.show(terminologyId, termId)
+        termGet
+        termId == termGet.id
+        codeSetId == putResponse.id
     }
 
     void 'test delete codeSet with Term'() {
         given:
-        def response = POST("$FOLDERS_PATH/$folderId$CODE_SET_PATH", codeSet())
-        codeSetId = UUID.fromString(response.id as String)
+        CodeSet response = codeSetApi.create(folderId, codeSet())
+        codeSetId = response.id
 
         CodeSet codeSet = codeSet()
         codeSet.id = codeSetId
 
-        ReferenceFile referenceFile = (ReferenceFile) POST  ("$CODE_SET_PATH/$codeSetId$REFERENCE_FILE_PATH", referenceFilePayload(), ReferenceFile)
+        ReferenceFile referenceFile = referenceFileApi.create("codeSet", codeSetId, referenceFilePayload())
 
         and:
-        def terminologyResponse = POST("$FOLDERS_PATH/$folderId$TERMINOLOGIES_PATH", terminology())
-        def terminologyId = UUID.fromString(terminologyResponse.id as String)
-        def termResponse = POST("$TERMINOLOGIES_PATH/$terminologyId$TERMS_PATH", termPayload())
-        def termId = UUID.fromString(termResponse.id)
+        Terminology terminologyResponse = terminologyApi.create(folderId, terminology())
+        UUID terminologyId = terminologyResponse.id
+        Term termResponse = termApi.create(terminologyId, termPayload())
+        UUID termId = termResponse.id
 
-        PUT("$CODE_SET_PATH/$codeSetId$TERMS_PATH/$termId", codeSet)
+        codeSetApi.addTerm(codeSetId, termId)
         //verify
-        CodeSet codeSetWithTerm = GET("$CODE_SET_PATH/$codeSetId") as CodeSet
+        CodeSet codeSetWithTerm = codeSetApi.show(codeSetId)
         codeSetWithTerm.id == codeSetId
 
         when:
-        HttpStatus status = DELETE("$CODE_SET_PATH/$codeSetId", HttpStatus)
+        HttpResponse deleteResponse = codeSetApi.delete(codeSetId, new CodeSet())
 
         then:
-        status == HttpStatus.NO_CONTENT
+        deleteResponse.status == HttpStatus.NO_CONTENT
 
         when:
-        def codeSets = GET(CODE_SET_PATH)
+        ListResponse<CodeSet> codeSets = codeSetApi.listAll()
 
         then:
-        def codeSetIds = codeSets.items.id.collect()
-        !codeSetIds.contains(codeSetId.toString())
+        List<UUID> codeSetIds = codeSets.items.id.collect()
+        !codeSetIds.contains(codeSetId)
 
         when:
-        GET ("$CODE_SET_PATH/$codeSetId$REFERENCE_FILE_PATH/$referenceFile.id", ReferenceFile)
+        ReferenceFile refResp = referenceFileApi.show("codeSet", codeSetId, referenceFile.id)
         then:
-        HttpClientResponseException exception = thrown()
-
+        !refResp
     }
 
     void 'test getTermsForCodeSet'() {
         given:
-        def response = POST("$FOLDERS_PATH/$folderId$CODE_SET_PATH", codeSet())
-        codeSetId = UUID.fromString(response.id as String)
+        def response = codeSetApi.create(folderId, codeSet())
+        codeSetId = response.id
         CodeSet codeSet = codeSet() as CodeSet
         codeSet.id = codeSetId
 
         and:
-        def terminologyResponse = POST("$FOLDERS_PATH/$folderId$TERMINOLOGIES_PATH", terminology())
-        def terminologyId = UUID.fromString(terminologyResponse.id as String)
-        def termResponse = POST("$TERMINOLOGIES_PATH/$terminologyId$TERMS_PATH", termPayload())
-        def termId = UUID.fromString(termResponse.id as String)
+        Terminology terminologyResponse = terminologyApi.create(folderId, terminology())
+        UUID terminologyId = terminologyResponse.id
+        Term termResponse = termApi.create(terminologyId, termPayload())
+        UUID termId = termResponse.id
 
         //Associating term to codeSet
-        PUT("$CODE_SET_PATH/$codeSetId$TERMS_PATH/$termId", codeSet)
+        codeSetApi.addTerm(codeSetId, termId)
 
         when:
-        def getAllResp = GET("$CODE_SET_PATH/$codeSetId$TERMS_PATH")
+        ListResponse<Term> getAllResp = codeSetApi.listAllTermsInCodeSet(codeSetId)
 
         then:
         getAllResp
-        def terms = getAllResp.items
+        List<Term> terms = getAllResp.items
         terms.size() == 1
-        terms.id.contains(termId.toString())
+        terms.id.contains(termId)
         terms.domainType.contains('Term')
     }
 
     void 'test getTermsForCodeSet multiple terms'() {
         given:
-        def response = POST("$FOLDERS_PATH/$folderId$CODE_SET_PATH", codeSet())
+        CodeSet response = codeSetApi.create(folderId, codeSet())
         codeSetId = UUID.fromString(response.id as String)
         CodeSet codeSet = codeSet() as CodeSet
         codeSet.id = codeSetId
 
         and:
-        def terminologyResponse = POST("$FOLDERS_PATH/$folderId$TERMINOLOGIES_PATH", terminology())
-        def terminologyId = UUID.fromString(terminologyResponse.id as String)
+        Terminology terminologyResponse = terminologyApi.create(folderId, terminology())
+        UUID terminologyId = terminologyResponse.id
 
-        def termResponse1 = POST("$TERMINOLOGIES_PATH/$terminologyId$TERMS_PATH", termPayload())
-        def termId1 = UUID.fromString(termResponse1.id as String)
+        Term termResponse1 = termApi.create(terminologyId, termPayload())
+        UUID termId1 = termResponse1.id
 
-        def termResponse2 = POST("$TERMINOLOGIES_PATH/$terminologyId$TERMS_PATH",
-                [code: 'code', definition: 'a defiintion'])
-        def termId2 = UUID.fromString(termResponse2.id as String)
+        Term termResponse2 = termApi.create(terminologyId, new Term(code: 'code', definition: 'a defiintion'))
+        UUID termId2 = termResponse2.id
 
         //Associating term to codeSet
-        (CodeSet) PUT("$CODE_SET_PATH/$codeSetId$TERMS_PATH/$termId1", codeSet, CodeSet)
-        (CodeSet) PUT("$CODE_SET_PATH/$codeSetId$TERMS_PATH/$termId2", codeSet, CodeSet)
+        codeSetApi.addTerm(codeSetId, termId1)
+        codeSetApi.addTerm(codeSetId, termId2)
 
         when:
-        def getAllResp = GET("$CODE_SET_PATH/$codeSetId$TERMS_PATH")
+        ListResponse<Term> getAllResp = codeSetApi.listAllTermsInCodeSet(codeSetId)
 
         then:
         getAllResp
-        def terms = getAllResp.items
+        List<Term> terms = getAllResp.items
         terms.size() == 2
-        terms.id.contains(termId1.toString())
-        terms.id.contains(termId2.toString())
+        terms.id.contains(termId1)
+        terms.id.contains(termId2)
     }
 
     void 'test getTermsForCodeSet -no associated terms should return empty list '() {
         given:
-        def response = POST("$FOLDERS_PATH/$folderId$CODE_SET_PATH", codeSet())
-        codeSetId = UUID.fromString(response.id as String)
+        CodeSet response = codeSetApi.create(folderId, codeSet())
+        codeSetId = response.id
         CodeSet codeSet = codeSet() as CodeSet
         codeSet.id = codeSetId
 
         when:
-        def getAllResp = GET("$CODE_SET_PATH/$codeSetId$TERMS_PATH")
+        ListResponse<Term> getAllResp = codeSetApi.listAllTermsInCodeSet(codeSetId)
 
         then:
         getAllResp
@@ -298,30 +290,30 @@ class CodeSetIntegrationSpec extends CommonDataSpec {
 
     void 'test remove Term from codeSet'() {
         given:
-        def response = POST("$FOLDERS_PATH/$folderId$CODE_SET_PATH", codeSet())
-        codeSetId = UUID.fromString(response.id as String)
+        CodeSet response = codeSetApi.create(folderId, codeSet())
+        codeSetId = response.id
         CodeSet codeSet = codeSet() as CodeSet
         codeSet.id = codeSetId
 
         and:
-        def terminologyResponse = POST("$FOLDERS_PATH/$folderId$TERMINOLOGIES_PATH", terminology())
-        def terminologyId = UUID.fromString(terminologyResponse.id as String)
-        def termResponse = POST("$TERMINOLOGIES_PATH/$terminologyId$TERMS_PATH", termPayload())
-        def termId = UUID.fromString(termResponse.id as String)
+        Terminology terminologyResponse = terminologyApi.create(folderId, terminology())
+        UUID terminologyId = terminologyResponse.id
+        Term termResponse = termApi.create(terminologyId, termPayload())
+        UUID termId = termResponse.id
 
         //Associating term to codeSet
-        PUT("$CODE_SET_PATH/$codeSetId$TERMS_PATH/$termId", codeSet)
+        codeSetApi.addTerm(codeSetId, termId)
         //verify using codeset/terms endpoint
         when:
-        def getTermsForCodeSet = GET("$CODE_SET_PATH/$codeSetId$TERMS_PATH")
+        ListResponse<Term> getTermsForCodeSet = codeSetApi.listAllTermsInCodeSet(codeSetId)
 
         then:
         getTermsForCodeSet
         getTermsForCodeSet.items.size() == 1
-        getTermsForCodeSet.items.id.contains(termId.toString())
+        getTermsForCodeSet.items.id.contains(termId)
 
         when:
-        CodeSet updated = DELETE("$CODE_SET_PATH/$codeSetId$TERMS_PATH/$termId", CodeSet)
+        CodeSet updated = codeSetApi.removeTermFromCodeSet(codeSetId, termId)
 
         then:
         updated
@@ -329,7 +321,7 @@ class CodeSetIntegrationSpec extends CommonDataSpec {
 
         //verify term is no longer associated with codeset
         when:
-        def getTermsForCodeSetResp = GET("$CODE_SET_PATH/$codeSetId$TERMS_PATH")
+        ListResponse<Term> getTermsForCodeSetResp = codeSetApi.listAllTermsInCodeSet(codeSetId)
 
         then:
         getTermsForCodeSetResp
@@ -337,8 +329,8 @@ class CodeSetIntegrationSpec extends CommonDataSpec {
 
         //Verify both term and codeSet exist after removing link between term and codeSet.
         when:
-        Term existing = GET("$TERMINOLOGIES_PATH/$terminologyId$TERMS_PATH/$termId", Term)
-        CodeSet updateCodeSet = GET("$CODE_SET_PATH/$codeSetId", CodeSet)
+        Term existing = termApi.show(terminologyId, termId)
+        CodeSet updateCodeSet = codeSetApi.show(codeSetId)
 
         then:
         existing

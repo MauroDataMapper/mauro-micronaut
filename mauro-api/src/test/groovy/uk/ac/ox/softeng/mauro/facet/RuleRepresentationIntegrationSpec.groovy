@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.facet
 
+import io.micronaut.http.HttpResponse
+import jakarta.inject.Singleton
 import uk.ac.ox.softeng.mauro.domain.facet.Rule
 import uk.ac.ox.softeng.mauro.domain.facet.RuleRepresentation
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
@@ -19,11 +21,9 @@ import spock.lang.Shared
 import java.time.Instant
 
 @ContainerizedTest
+@Singleton
 @Sql(scripts = "classpath:sql/tear-down-rule.sql", phase = Sql.Phase.AFTER_EACH)
 class RuleRepresentationIntegrationSpec extends CommonDataSpec {
-
-    @Inject
-    EmbeddedApplication<? extends EmbeddedApplication> application
 
     @Shared
     UUID folderId
@@ -32,23 +32,25 @@ class RuleRepresentationIntegrationSpec extends CommonDataSpec {
     Rule rule
 
     void setup() {
-        Folder folder = (Folder) POST("$FOLDERS_PATH", [label: 'Folder with Rules'], Folder)
+        Folder folder = folderApi.create( new Folder(label: 'Folder with Rules'))
         folderId = folder.id
-        rule = (Rule) POST("$FOLDERS_PATH/$folderId$RULE_PATH", rulePayload(), Rule)
+        rule = ruleApi.create('folder', folderId, rulePayload())
     }
 
     void 'list empty Rule Representations'() {
         when:
-        def response =
-                GET("$FOLDERS_PATH/$folderId$RULE_PATH/$rule.id$RULE_REPRESENTATION_PATH", ListResponse, RuleRepresentation)
+        def response = ruleRepresentationApi.list('folder', folderId, rule.id)
         then:
         response.count == 0
     }
 
     void 'create Rule Representation'() {
         when:
-        RuleRepresentation ruleRepresentation = (RuleRepresentation) POST("$FOLDERS_PATH/$folderId$RULE_PATH/$rule.id$RULE_REPRESENTATION_PATH",
-                                                                          ruleRepresentation(), RuleRepresentation)
+        RuleRepresentation ruleRepresentation = ruleRepresentationApi.create(
+                'folder',
+                folderId,
+                rule.id,
+                ruleRepresentation())
 
         then:
         ruleRepresentation
@@ -60,17 +62,23 @@ class RuleRepresentationIntegrationSpec extends CommonDataSpec {
 
     void 'list Rule Representations'() {
         given:
-        RuleRepresentation ruleRepresentation1 = (RuleRepresentation) POST("$FOLDERS_PATH/$folderId$RULE_PATH/$rule.id$RULE_REPRESENTATION_PATH",
-                ruleRepresentation(), RuleRepresentation)
-        RuleRepresentation ruleRepresentation2 = (RuleRepresentation) POST("$FOLDERS_PATH/$folderId$RULE_PATH/$rule.id$RULE_REPRESENTATION_PATH",
-               ruleRepresentation(), RuleRepresentation)
+        RuleRepresentation ruleRepresentation1 = ruleRepresentationApi.create(
+                'folder',
+                folderId,
+                rule.id,
+                ruleRepresentation())
+        RuleRepresentation ruleRepresentation2 = ruleRepresentationApi.create(
+                'folder',
+                folderId,
+                rule.id,
+               ruleRepresentation())
         when:
-        ListResponse<RuleRepresentation> response = (ListResponse<RuleRepresentation>) GET("$FOLDERS_PATH/$folderId$RULE_PATH/$rule.id$RULE_REPRESENTATION_PATH", ListResponse, RuleRepresentation)
+        ListResponse<RuleRepresentation> response = ruleRepresentationApi.list('folder', folderId, rule.id)
 
         then:
         response
         response.count == 2
-        response.items.id.collect() { it.toString() } == ["$ruleRepresentation1.id", "$ruleRepresentation2.id"] as List<String>
+        response.items.id == [ruleRepresentation1.id, ruleRepresentation2.id]
         response.items.ruleId.collect().unique { it.toString() }.size() == 1
         response.items.ruleId.collect().unique { it.toString() }[0].toString() == "$rule.id"
         response.items.language
@@ -78,12 +86,14 @@ class RuleRepresentationIntegrationSpec extends CommonDataSpec {
 
     void 'get rule representation by Id'() {
         given:
-        RuleRepresentation report = (RuleRepresentation) POST("$FOLDERS_PATH/$folderId$RULE_PATH/$rule.id$RULE_REPRESENTATION_PATH",
-           ruleRepresentation(), RuleRepresentation)
+        RuleRepresentation report = ruleRepresentationApi.create(
+                'folder',
+                folderId,
+                rule.id,
+                ruleRepresentation())
 
         when:
-        RuleRepresentation retrieved = GET("$FOLDERS_PATH/$folderId$RULE_PATH/$rule.id$RULE_REPRESENTATION_PATH/$report.id",
-                                           RuleRepresentation)
+        RuleRepresentation retrieved = ruleRepresentationApi.show('folder', folderId, rule.id, report.id)
 
         then:
         retrieved
@@ -94,32 +104,44 @@ class RuleRepresentationIntegrationSpec extends CommonDataSpec {
 
     void 'update rule representation by Id'() {
         given:
-        RuleRepresentation report = (RuleRepresentation) POST("$FOLDERS_PATH/$folderId$RULE_PATH/$rule.id$RULE_REPRESENTATION_PATH",
-                [language: 'java'], RuleRepresentation)
-
-        and:
-        def dataAsMap =   [language: 'c++']
+        RuleRepresentation report = ruleRepresentationApi.create(
+                'folder',
+                folderId,
+                rule.id,
+                new RuleRepresentation(language: 'java'))
 
         when:
-        RuleRepresentation updated = (RuleRepresentation) PUT("$FOLDERS_PATH/$folderId$RULE_PATH/$rule.id$RULE_REPRESENTATION_PATH/$report.id",
-                dataAsMap, RuleRepresentation)
+        RuleRepresentation updated = ruleRepresentationApi.update(
+                'folder',
+                folderId,
+                rule.id,
+                report.id,
+                new RuleRepresentation(language: 'c++'))
         then:
         updated
-        updated.language ==  dataAsMap.get('language')
+        updated.language == 'c++'
     }
 
     void 'delete RuleRepresentation'() {
         given:
-        RuleRepresentation report = (RuleRepresentation) POST("$FOLDERS_PATH/$folderId$RULE_PATH/$rule.id$RULE_REPRESENTATION_PATH",
-                [language: 'java'], RuleRepresentation)
+        RuleRepresentation report = ruleRepresentationApi.create(
+                'folder',
+                folderId,
+                rule.id,
+                new RuleRepresentation(language: 'java'))
 
         when:
-        HttpStatus status = (HttpStatus) DELETE("$FOLDERS_PATH/$folderId$RULE_PATH/$rule.id$RULE_REPRESENTATION_PATH/$report.id", HttpStatus)
+        HttpResponse deleteResponse = ruleRepresentationApi.delete(
+                'folder',
+                folderId,
+                rule.id,
+                report.id)
 
         then:
-        status == HttpStatus.NO_CONTENT
+        deleteResponse.status == HttpStatus.NO_CONTENT
+
         when:
-        Rule retrieved = (Rule) GET("$FOLDERS_PATH/$folderId$RULE_PATH/$rule.id", Rule)
+        Rule retrieved = ruleApi.show('folder',  folderId, rule.id)
 
         then: 'Associated summary metadata is not affected'
         retrieved
@@ -129,20 +151,22 @@ class RuleRepresentationIntegrationSpec extends CommonDataSpec {
 
     void 'delete non existing Rule Representation - should throw exception with http status not found'() {
         when:
-        (HttpStatus) DELETE("$FOLDERS_PATH/$folderId$RULE_PATH/$rule.id$SUMMARY_METADATA_REPORT_PATH/$rule.id", HttpStatus)
+        HttpResponse deleteResponse = ruleRepresentationApi.delete('folder', folderId, rule.id, rule.id)
 
         then: 'not found exception should be thrown'
-        HttpClientResponseException exception = thrown()
-        exception.status == HttpStatus.NOT_FOUND
+        deleteResponse.status == HttpStatus.NOT_FOUND
 
     }
 
     void 'list rule - contains ruleRepresentation'() {
         given:
-        RuleRepresentation rep = (RuleRepresentation) POST("$FOLDERS_PATH/$folderId$RULE_PATH/$rule.id$RULE_REPRESENTATION_PATH",
-                ruleRepresentation(), RuleRepresentation)
+        RuleRepresentation rep = ruleRepresentationApi.create(
+                'folder',
+                folderId,
+                rule.id,
+                ruleRepresentation())
         when:
-        ListResponse<Rule> ruleResponse = (ListResponse<Rule>) GET("$FOLDERS_PATH/$folderId$RULE_PATH", ListResponse, Rule)
+        ListResponse<Rule> ruleResponse = ruleApi.list('folder', folderId)
 
         then:
         ruleResponse

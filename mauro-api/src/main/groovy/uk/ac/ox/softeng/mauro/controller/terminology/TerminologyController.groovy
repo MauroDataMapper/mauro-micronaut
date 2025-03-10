@@ -1,12 +1,15 @@
 package uk.ac.ox.softeng.mauro.controller.terminology
 
+import io.micronaut.http.HttpStatus
+import uk.ac.ox.softeng.mauro.api.Paths
+import uk.ac.ox.softeng.mauro.api.terminology.TerminologyApi
 import uk.ac.ox.softeng.mauro.ErrorHandler
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
-import io.micronaut.http.HttpStatus
+import io.micronaut.http.HttpResponse
 import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.*
 import io.micronaut.http.server.multipart.MultipartBody
@@ -36,7 +39,7 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 @Controller
 @CompileStatic
 @Secured(SecurityRule.IS_ANONYMOUS)
-class TerminologyController extends ModelController<Terminology> {
+class TerminologyController extends ModelController<Terminology> implements TerminologyApi {
 
     TerminologyCacheableRepository terminologyRepository
     @Inject
@@ -56,30 +59,30 @@ class TerminologyController extends ModelController<Terminology> {
         this.terminologyService = terminologyService
     }
 
-    @Get('/terminologies/{id}')
+    @Get(Paths.TERMINOLOGY_ID)
     Terminology show(UUID id) {
         super.show(id)
     }
 
     @Transactional
-    @Post('/folders/{folderId}/terminologies')
+    @Post(Paths.FOLDER_LIST_TERMINOLOGY)
     Terminology create(UUID folderId, @Body @NonNull Terminology terminology) {
         log.debug '*** TerminologyController.create ***'
         super.create(folderId, terminology)
     }
 
-    @Put('/terminologies/{id}')
+    @Put(Paths.TERMINOLOGY_ID)
     Terminology update(UUID id, @Body @NonNull Terminology terminology) {
         super.update(id, terminology)
     }
 
     @Transactional
-    @Delete('/terminologies/{id}')
-    HttpStatus delete(UUID id, @Body @Nullable Terminology terminology) {
+    @Delete(Paths.TERMINOLOGY_ID)
+    HttpResponse delete(UUID id, @Body @Nullable Terminology terminology) {
         super.delete(id, terminology)
     }
 
-    @Get('/terminologies/{id}/search{?requestDTO}')
+    @Get(Paths.TERMINOLOGY_SEARCH_GET)
     ListResponse<SearchResultsDTO> searchGet(UUID id, @RequestBean SearchRequestDTO requestDTO) {
         requestDTO.withinModelId = id
         Terminology terminology = terminologyRepository.readById(requestDTO.withinModelId)
@@ -87,7 +90,7 @@ class TerminologyController extends ModelController<Terminology> {
         ListResponse.from(searchRepository.search(requestDTO))
     }
 
-    @Post('/terminologies/{id}/search')
+    @Post(Paths.TERMINOLOGY_SEARCH_POST)
     ListResponse<SearchResultsDTO> searchPost(UUID id, @Body SearchRequestDTO requestDTO) {
         requestDTO.withinModelId = id
         Terminology terminology = terminologyRepository.readById(requestDTO.withinModelId)
@@ -96,37 +99,37 @@ class TerminologyController extends ModelController<Terminology> {
     }
 
 
-    @Get('/folders/{folderId}/terminologies')
+    @Get(Paths.FOLDER_LIST_TERMINOLOGY)
     ListResponse<Terminology> list(UUID folderId) {
         super.list(folderId)
     }
 
-    @Get('/terminologies')
+    @Get(Paths.TERMINOLOGY_LIST)
     ListResponse<Terminology> listAll() {
         super.listAll()
     }
 
     @Transactional
-    @Put('/terminologies/{id}/finalise')
+    @Put(Paths.TERMINOLOGY_FINALISE)
     Terminology finalise(UUID id, @Body FinaliseData finaliseData) {
         super.finalise(id, finaliseData)
     }
 
     @Transactional
-    @Put('/terminologies/{id}/newBranchModelVersion')
+    @Put(Paths.TERMINOLOGY_NEW_BRANCH_MODEL_VERSION)
     Terminology createNewBranchModelVersion(UUID id, @Body @Nullable CreateNewVersionData createNewVersionData) {
         super.createNewBranchModelVersion(id, createNewVersionData)
     }
 
-    @Get('/terminologies/{id}/export{/namespace}{/name}{/version}')
-    StreamedFile exportModel(UUID id, @Nullable String namespace, @Nullable String name, @Nullable String version) {
+    @Get(Paths.TERMINOLOGY_EXPORT)
+    HttpResponse<byte[]> exportModel(UUID id, @Nullable String namespace, @Nullable String name, @Nullable String version) {
         super.exportModel(id, namespace, name, version)
     }
 
     @Transactional
     @ExecuteOn(TaskExecutors.IO)
     @Consumes(MediaType.MULTIPART_FORM_DATA)
-    @Post('/terminologies/import/{namespace}/{name}{/version}')
+    @Post(Paths.TERMINOLOGY_IMPORT)
     ListResponse<Terminology> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version) {
         super.importModel(body, namespace, name, version)
     }
@@ -157,7 +160,7 @@ class TerminologyController extends ModelController<Terminology> {
 
  */
 
-    @Get('/terminologies/{id}/diff/{otherId}')
+    @Get(Paths.TERMINOLOGY_DIFF)
     ObjectDiff diffModels(@NonNull UUID id, @NonNull UUID otherId) {
         Terminology terminology = modelContentRepository.findWithContentById(id)
 

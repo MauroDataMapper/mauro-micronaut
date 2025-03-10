@@ -1,9 +1,12 @@
 package uk.ac.ox.softeng.mauro.controller.datamodel
 
+import uk.ac.ox.softeng.mauro.api.Paths
+import uk.ac.ox.softeng.mauro.api.datamodel.DataClassApi
+
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
-import io.micronaut.http.HttpStatus
+import io.micronaut.http.HttpResponse
 import io.micronaut.http.annotation.*
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
@@ -18,9 +21,9 @@ import uk.ac.ox.softeng.mauro.persistence.datamodel.DataModelContentRepository
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @CompileStatic
-@Controller('/dataModels/{dataModelId}/dataClasses')
+@Controller
 @Secured(SecurityRule.IS_ANONYMOUS)
-class DataClassController extends AdministeredItemController<DataClass, DataModel> {
+class DataClassController extends AdministeredItemController<DataClass, DataModel> implements DataClassApi {
 
     DataClassCacheableRepository dataClassRepository
 
@@ -32,27 +35,27 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
         this.dataClassRepository = dataClassRepository
     }
 
-    @Get('/{id}')
+    @Get(Paths.DATA_CLASS_ID)
     DataClass show(UUID dataModelId, UUID id) {
         super.show(id)
     }
 
-    @Post
+    @Post(Paths.DATA_CLASS_LIST)
     DataClass create(UUID dataModelId, @Body @NonNull DataClass dataClass) {
         super.create(dataModelId, dataClass)
     }
 
-    @Put('/{id}')
+    @Put(Paths.DATA_CLASS_ID)
     DataClass update(UUID dataModelId, UUID id, @Body @NonNull DataClass dataClass) {
         super.update(id, dataClass)
     }
 
-    @Delete('/{id}')
-    HttpStatus delete(UUID dataModelId, UUID id, @Body @Nullable DataClass dataClass) {
+    @Delete(Paths.DATA_CLASS_ID)
+    HttpResponse delete(UUID dataModelId, UUID id, @Body @Nullable DataClass dataClass) {
         super.delete(id, dataClass)
     }
 
-    @Get
+    @Get(Paths.DATA_CLASS_LIST)
     ListResponse<DataClass> list(UUID dataModelId) {
         DataModel dataModel = dataModelRepository.readById(dataModelId)
         accessControlService.checkRole(Role.READER, dataModel)
@@ -63,12 +66,12 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
         ListResponse.from(classes)
     }
 
-    @Get('/{parentDataClassId}/dataClasses/{id}')
+    @Get(Paths.DATA_CLASS_CHILD_DATA_CLASS_ID)
     DataClass show(UUID dataModelId, UUID parentDataClassId, UUID id) {
         super.show(id)
     }
 
-    @Post('/{parentDataClassId}/dataClasses')
+    @Post(Paths.DATA_CLASS_CHILD_DATA_CLASS_LIST)
     DataClass create(UUID dataModelId, UUID parentDataClassId, @Body @NonNull DataClass dataClass) {
 
         cleanBody(dataClass)
@@ -81,25 +84,22 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
         return dataClass
     }
 
-    @Put('/{parentDataClassId}/dataClasses/{id}')
+    @Put(Paths.DATA_CLASS_CHILD_DATA_CLASS_ID)
     DataClass update(UUID dataModelId, UUID parentDataClassId, UUID id, @Body @NonNull DataClass dataClass) {
         super.update(id, dataClass)
     }
 
-    @Delete('/{parentDataClassId}/dataClasses/{id}')
-    HttpStatus delete(UUID dataModelId, UUID parentDataClassId, UUID id, @Body @Nullable DataClass dataClass) {
+    @Delete(Paths.DATA_CLASS_CHILD_DATA_CLASS_ID)
+    HttpResponse delete(UUID dataModelId, UUID parentDataClassId, UUID id, @Body @Nullable DataClass dataClass) {
         super.delete(id, dataClass)
     }
 
-    @Get('/{parentDataClassId}/dataClasses')
+    @Get(Paths.DATA_CLASS_CHILD_DATA_CLASS_LIST)
     ListResponse<DataClass> list(UUID dataModelId, UUID parentDataClassId) {
         DataClass parentDataClass = dataClassRepository.readById(parentDataClassId)
         accessControlService.checkRole(Role.READER, parentDataClass)
         ListResponse.from(dataClassRepository.readAllByParentDataClass_Id(parentDataClassId))
 
     }
-
-
-
 
 }

@@ -27,14 +27,17 @@ class TreeItem {
     @JsonIgnore
     Model model
 
+    Boolean hasChildren
+
     UUID getModelId() {
         model?.id
     }
 
+    /*
     Boolean getHasChildren() {
         children != null ? children : null
     }
-
+*/
     static TreeItem from(AdministeredItem item) {
         new TreeItem(id: item.id, label: item.label, domainType: item.domainType, item: item)
     }

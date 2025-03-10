@@ -1,10 +1,12 @@
 package uk.ac.ox.softeng.mauro.facet
 
+import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.client.exceptions.HttpClientResponseException
 import io.micronaut.runtime.EmbeddedApplication
 import io.micronaut.test.annotation.Sql
 import jakarta.inject.Inject
+import jakarta.inject.Singleton
 import spock.lang.Shared
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadataType
@@ -15,74 +17,58 @@ import uk.ac.ox.softeng.mauro.testing.CommonDataSpec
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @ContainerizedTest
+@Singleton
 @Sql(scripts = "classpath:sql/tear-down-summary-metadata.sql", phase = Sql.Phase.AFTER_EACH)
 class SummaryMetadataIntegrationSpec extends CommonDataSpec {
-
-    @Inject
-    EmbeddedApplication<? extends EmbeddedApplication> application
 
     @Shared
     UUID folderId
 
     UUID summaryMetadataId
 
-    Map<String, String> summaryMetadataMap
-
     void setup() {
-        Folder folder = (Folder) POST("$FOLDERS_PATH", [label: 'Folder with SummaryMetadata'], Folder)
+        Folder folder = folderApi.create(new Folder(label: 'Folder with SummaryMetadata'))
         folderId = folder.id
     }
 
     void 'list empty SummaryMetadata'() {
         when:
-        def response =
-                GET("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH", ListResponse, SummaryMetadata)
+        ListResponse<SummaryMetadata> response = summaryMetadataApi.list("folder", folderId)
 
         then:
         response.count == 0
     }
 
     void 'create summaryMetadata'() {
-        given:
-        summaryMetadataMap = summaryMetadataPayload()
-
         when:
-        SummaryMetadata summaryMetadata = (SummaryMetadata) POST("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH",
-                summaryMetadataMap, SummaryMetadata)
+        SummaryMetadata summaryMetadata = summaryMetadataApi.create("folder", folderId, summaryMetadataPayload())
 
         then:
         summaryMetadata
         summaryMetadata.id != null
         summaryMetadata.domainType == "SummaryMetadata"
-        summaryMetadata.summaryMetadataType == summaryMetadataMap.summaryMetadataType
+        summaryMetadata.summaryMetadataType == SummaryMetadataType.STRING
     }
 
     void 'list summaryMetadata'() {
         given:
-        summaryMetadataMap = summaryMetadataPayload()
-        and:
-        (SummaryMetadata) POST("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH", summaryMetadataMap, SummaryMetadata)
+        summaryMetadataApi.create("folder", folderId, summaryMetadataPayload())
+
         when:
-        ListResponse<SummaryMetadata> response = (ListResponse<SummaryMetadata>) GET("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH", ListResponse, SummaryMetadata)
+        ListResponse<SummaryMetadata> response = summaryMetadataApi.list("folder", folderId)
 
         then:
         response
         response.count == 1
-        response.items.first().summaryMetadataType as String == SummaryMetadataType.STRING.name()
+        response.items.first().summaryMetadataType == SummaryMetadataType.STRING
     }
 
     void 'get summaryMetadata by Id'() {
-        given:
-        summaryMetadataMap = summaryMetadataPayload()
-
-        and:
-        SummaryMetadata summaryMetadata = (SummaryMetadata) POST("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH",
-                summaryMetadataMap, SummaryMetadata)
+        when:
+        SummaryMetadata summaryMetadata = summaryMetadataApi.create("folder", folderId, summaryMetadataPayload())
         summaryMetadataId = summaryMetadata.id
 
-        when:
-        SummaryMetadata saved = GET("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH/$summaryMetadataId",
-                SummaryMetadata)
+        SummaryMetadata saved = summaryMetadataApi.show("folder", folderId, summaryMetadataId)
 
         then:
         saved
@@ -92,87 +78,74 @@ class SummaryMetadataIntegrationSpec extends CommonDataSpec {
 
     void 'update summary metadata'() {
         given:
-        summaryMetadataMap = summaryMetadataPayload()
-
-        and:
-        SummaryMetadata summaryMetadata = (SummaryMetadata) POST("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH",
-                summaryMetadataMap, SummaryMetadata)
+        SummaryMetadata summaryMetadata = summaryMetadataApi.create("folder", folderId, summaryMetadataPayload())
         summaryMetadataId = summaryMetadata.id
 
         when:
-        SummaryMetadata updated = (SummaryMetadata) PUT("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH/$summaryMetadataId",
-                [summaryMetadataType: SummaryMetadataType.STRING], SummaryMetadata)
+        SummaryMetadata updated = summaryMetadataApi.update("folder", folderId, summaryMetadataId,
+                                                            new SummaryMetadata(summaryMetadataType: SummaryMetadataType.MAP))
 
         then:
         updated
-        updated.summaryMetadataType == SummaryMetadataType.STRING
+        updated.summaryMetadataType == SummaryMetadataType.MAP
     }
 
     void 'delete SummaryMetadata'() {
         given:
-        summaryMetadataMap = summaryMetadataPayload()
-        and:
-        SummaryMetadata summaryMetadata = (SummaryMetadata) POST("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH",
-                summaryMetadataMap, SummaryMetadata)
+        SummaryMetadata summaryMetadata = summaryMetadataApi.create("folder", folderId, summaryMetadataPayload())
         summaryMetadataId = summaryMetadata.id
 
         when:
-        HttpStatus status = (HttpStatus) DELETE("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH/$summaryMetadataId", HttpStatus)
+        HttpResponse response = summaryMetadataApi.delete("folder", folderId, summaryMetadataId)
 
         then:
-        status == HttpStatus.NO_CONTENT
+        response.status == HttpStatus.NO_CONTENT
 
         when:
-        (SummaryMetadata) GET("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH/$summaryMetadataId", SummaryMetadata)
+        summaryMetadata = summaryMetadataApi.show("folder", folderId, summaryMetadataId)
 
         then: 'the show endpoint shows the update'
-        HttpClientResponseException exception = thrown()
-        exception.status == HttpStatus.NOT_FOUND
+        !summaryMetadata
 
         when:
-        ListResponse<SummaryMetadata> response = (ListResponse<SummaryMetadata>) GET("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH", ListResponse, SummaryMetadata)
+        ListResponse<SummaryMetadata> responseList = summaryMetadataApi.list("folder", folderId)
 
         then: 'the list endpoint shows the update'
-        response
-        response.count == 0
+        responseList
+        responseList.count == 0
     }
 
     void 'delete SummaryMetadata with reports'() {
         given:
-        SummaryMetadata summaryMetadata = (SummaryMetadata) POST("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH",
-                summaryMetadataPayload(), SummaryMetadata)
+        SummaryMetadata summaryMetadata = summaryMetadataApi.create("folder", folderId, summaryMetadataPayload())
 
         and:
-        SummaryMetadataReport summaryMetadataReport1 = (SummaryMetadataReport) POST("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH/$summaryMetadata.id$SUMMARY_METADATA_REPORT_PATH",
-                [reportValue: 'test-report-value-1'], SummaryMetadataReport)
-        SummaryMetadataReport summaryMetadataReport2 = (SummaryMetadataReport) POST("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH/$summaryMetadata.id$SUMMARY_METADATA_REPORT_PATH",
-                [reportValue: 'test-report-value-2'], SummaryMetadataReport)
+        SummaryMetadataReport summaryMetadataReport1 =
+            summaryMetadataReportApi.create("folder", folderId, summaryMetadata.id, new SummaryMetadataReport(reportValue: 'test-report-value-1'))
+        SummaryMetadataReport summaryMetadataReport2 =
+            summaryMetadataReportApi.create("folder", folderId, summaryMetadata.id, new SummaryMetadataReport(reportValue: 'test-report-value-2'))
 
-        ListResponse<SummaryMetadataReport> savedReports = (ListResponse<SummaryMetadataReport>) GET("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH/$summaryMetadata.id$SUMMARY_METADATA_REPORT_PATH",
-                ListResponse, SummaryMetadataReport)
+        ListResponse<SummaryMetadataReport> savedReports = summaryMetadataReportApi.list("folder", folderId, summaryMetadata.id)
         savedReports
         savedReports.count == 2
         savedReports.items.id == List.of(summaryMetadataReport1.id, summaryMetadataReport2.id)
 
         when:
-        HttpStatus status = (HttpStatus) DELETE("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH/$summaryMetadata.id", HttpStatus)
+        HttpResponse response = summaryMetadataApi.delete("folder", folderId, summaryMetadata.id)
 
         then:
-        status == HttpStatus.NO_CONTENT
+        response.status == HttpStatus.NO_CONTENT
 
         when:
-        (SummaryMetadata) GET("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH/$summaryMetadata.id", SummaryMetadata)
+        SummaryMetadata summaryMetadataResponse = summaryMetadataApi.show("folder", folderId, summaryMetadata.id)
 
         then: '404 not found is returned, exception thrown'
-        HttpClientResponseException exception = thrown()
-        exception.status == HttpStatus.NOT_FOUND
+        !summaryMetadataResponse
 
         when:
-        (ListResponse<SummaryMetadataReport>) GET("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH/$summaryMetadata.id$SUMMARY_METADATA_REPORT_PATH",
-                ListResponse, SummaryMetadataReport)
+        ListResponse<SummaryMetadataReport> listResponse = summaryMetadataReportApi.list("folder", folderId, summaryMetadata.id)
 
         then: '404 not found is returned, exception thrown'
-        exception = thrown()
-        exception.status == HttpStatus.NOT_FOUND
+        !listResponse
     }
 }

@@ -1,9 +1,12 @@
 package uk.ac.ox.softeng.mauro.controller.datamodel
 
+import uk.ac.ox.softeng.mauro.api.Paths
+import uk.ac.ox.softeng.mauro.api.datamodel.DataTypeApi
+
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
-import io.micronaut.http.HttpStatus
+import io.micronaut.http.HttpResponse
 import io.micronaut.http.annotation.*
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
@@ -18,9 +21,9 @@ import uk.ac.ox.softeng.mauro.persistence.datamodel.EnumerationValueRepository
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @CompileStatic
-@Controller('/dataModels/{dataModelId}/dataTypes')
+@Controller
 @Secured(SecurityRule.IS_ANONYMOUS)
-class DataTypeController extends AdministeredItemController<DataType, DataModel> {
+class DataTypeController extends AdministeredItemController<DataType, DataModel> implements DataTypeApi {
 
     DataTypeCacheableRepository dataTypeRepository
 
@@ -35,12 +38,12 @@ class DataTypeController extends AdministeredItemController<DataType, DataModel>
         this.dataTypeRepository = dataTypeRepository
     }
 
-    @Get('/{id}')
+    @Get(Paths.DATA_TYPE_ID)
     DataType show(UUID dataModelId, UUID id) {
         super.show(id)
     }
 
-    @Post
+    @Post(Paths.DATA_TYPE_LIST)
     DataType create(UUID dataModelId, @Body @NonNull DataType dataType) {
         super.create(dataModelId, dataType)
         if(dataType.enumerationValues) {
@@ -52,17 +55,17 @@ class DataTypeController extends AdministeredItemController<DataType, DataModel>
         return dataType
     }
 
-    @Put('/{id}')
+    @Put(Paths.DATA_TYPE_ID)
     DataType update(UUID dataModelId, UUID id, @Body @NonNull DataType dataType) {
         super.update(id, dataType)
     }
 
-    @Delete('/{id}')
-    HttpStatus delete(UUID dataModelId, UUID id, @Body @Nullable DataType dataType) {
+    @Delete(Paths.DATA_TYPE_ID)
+    HttpResponse delete(UUID dataModelId, UUID id, @Body @Nullable DataType dataType) {
         super.delete(id, dataType)
     }
 
-    @Get
+    @Get(Paths.DATA_TYPE_LIST)
     ListResponse<DataType> list(UUID dataModelId) {
         super.list(dataModelId)
     }

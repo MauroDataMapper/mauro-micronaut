@@ -1,9 +1,10 @@
 plugins {
     id("groovy")
     id("com.github.johnrengelman.shadow") version "8.1.1"
-    id("io.micronaut.application") version "4.3.4"
-    id("io.micronaut.aot") version "4.3.4"
+    id("io.micronaut.application") version "4.4.5"
+    id("io.micronaut.aot") version "4.4.5"
     id("codenarc")
+    id("java-test-fixtures")
 }
 version = "0.1"
 group = "uk.ac.ox.softeng.mauro"
@@ -55,6 +56,7 @@ dependencies {
     implementation("io.micronaut.email:micronaut-email-javamail")
     runtimeOnly("org.eclipse.angus:angus-mail")
 
+    testImplementation ("io.micronaut:micronaut-inject-groovy")
 
     testRuntimeOnly("org.testcontainers:testcontainers")
     testRuntimeOnly("org.testcontainers:postgresql")
@@ -67,6 +69,10 @@ dependencies {
     testRuntimeOnly("org.testcontainers:testcontainers")
     testRuntimeOnly("org.testcontainers:postgresql")
 
+    testImplementation "io.micronaut.test:micronaut-test-spock"
+    testImplementation("org.spockframework:spock-core") {
+        exclude group: "org.codehaus.groovy", module: "groovy-all"
+    }
 
 }
 
@@ -103,7 +109,10 @@ micronaut {
 
 dependencies {
     implementation project(':mauro-domain')
+    implementation project(':mauro-client')
     implementation project(':mauro-persistence')
+
+    testImplementation testFixtures(project(':mauro-client'))          // Pull in the filter that overwrites the port
     testImplementation testFixtures(project(':mauro-persistence'))     // Pull in the containerized testing definition
 }
 

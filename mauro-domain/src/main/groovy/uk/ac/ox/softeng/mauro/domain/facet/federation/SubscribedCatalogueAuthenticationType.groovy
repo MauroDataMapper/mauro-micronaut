@@ -24,7 +24,7 @@ enum SubscribedCatalogueAuthenticationType {
     // This is the factory method and must be static
     static SubscribedCatalogueAuthenticationType fromString(String label) {
         return Optional
-            .ofNullable(LOOKUP_BY_LABEL.get(SubscribedCatalogueType.standardizeLabelStringCaseAndWhitespace(label)))
+            .ofNullable(LOOKUP_BY_LABEL.get(SubscribedCatalogueType.standardizeLabelStringCaseAndWhitespace(label))?:valueOf(label))
             .orElseThrow(() -> new IllegalArgumentException(label));
     }
 

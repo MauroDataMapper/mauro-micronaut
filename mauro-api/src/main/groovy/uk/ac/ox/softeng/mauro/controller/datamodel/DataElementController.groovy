@@ -1,5 +1,15 @@
 package uk.ac.ox.softeng.mauro.controller.datamodel
 
+import uk.ac.ox.softeng.mauro.api.datamodel.DataElementApi
+
+import groovy.transform.CompileStatic
+import io.micronaut.core.annotation.NonNull
+import io.micronaut.core.annotation.Nullable
+import io.micronaut.http.HttpResponse
+import io.micronaut.http.annotation.*
+import io.micronaut.security.annotation.Secured
+import io.micronaut.security.rules.SecurityRule
+import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.controller.model.AdministeredItemController
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataElement
@@ -33,7 +43,7 @@ import io.micronaut.transaction.annotation.Transactional
 @Slf4j
 @Controller('/dataModels/{dataModelId}/dataClasses/{dataClassId}/dataElements')
 @Secured(SecurityRule.IS_ANONYMOUS)
-class DataElementController extends AdministeredItemController<DataElement, DataClass> {
+class DataElementController extends AdministeredItemController<DataElement, DataClass> implements DataElementApi {
 
     DataElementCacheableRepository dataElementRepository
 
@@ -90,7 +100,7 @@ class DataElementController extends AdministeredItemController<DataElement, Data
     }
 
     @Delete('/{id}')
-    HttpStatus delete(UUID dataModelId, UUID dataClassId, UUID id, @Body @Nullable DataElement dataElement) {
+    HttpResponse delete(UUID dataModelId, UUID dataClassId, UUID id, @Body @Nullable DataElement dataElement) {
         super.delete(id, dataElement)
     }
 

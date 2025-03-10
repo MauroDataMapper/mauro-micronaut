@@ -1,0 +1,63 @@
+package uk.ac.ox.softeng.mauro.api.terminology
+
+import uk.ac.ox.softeng.mauro.api.MauroApi
+import uk.ac.ox.softeng.mauro.api.Paths
+
+import uk.ac.ox.softeng.mauro.api.model.ModelApi
+import uk.ac.ox.softeng.mauro.domain.diff.ObjectDiff
+import uk.ac.ox.softeng.mauro.domain.model.version.CreateNewVersionData
+import uk.ac.ox.softeng.mauro.domain.model.version.FinaliseData
+import uk.ac.ox.softeng.mauro.domain.terminology.CodeSet
+import uk.ac.ox.softeng.mauro.domain.terminology.Term
+import uk.ac.ox.softeng.mauro.web.ListResponse
+
+import io.micronaut.core.annotation.NonNull
+import io.micronaut.core.annotation.Nullable
+import io.micronaut.http.HttpResponse
+import io.micronaut.http.annotation.Body
+import io.micronaut.http.annotation.Delete
+import io.micronaut.http.annotation.Get
+import io.micronaut.http.annotation.Post
+import io.micronaut.http.annotation.Put
+
+@MauroApi
+interface CodeSetApi extends ModelApi<CodeSet> {
+
+    @Get(value = Paths.CODE_SET_ID)
+    CodeSet show(UUID id)
+
+    @Post(value = Paths.FOLDER_LIST_CODE_SET)
+    CodeSet create(UUID folderId, @Body @NonNull CodeSet codeSet)
+
+    @Put(value = Paths.CODE_SET_ID)
+    CodeSet update(UUID id, @Body @NonNull CodeSet codeSet)
+
+    @Put(value = Paths.CODE_SET_TERM_ID)
+    CodeSet addTerm(@NonNull UUID id,
+                    @NonNull UUID termId)
+
+    @Delete(value = Paths.CODE_SET_ID)
+    HttpResponse delete(UUID id, @Body @Nullable CodeSet codeSet)
+
+    @Delete(value = Paths.CODE_SET_TERM_ID)
+    CodeSet removeTermFromCodeSet(@NonNull UUID id,
+                                  @NonNull UUID termId)
+
+    @Get(value = Paths.FOLDER_LIST_CODE_SET)
+    ListResponse<CodeSet> list(UUID folderId)
+
+    @Get(value = Paths.CODE_SET_LIST)
+    ListResponse<CodeSet> listAll()
+
+    @Get(value = Paths.CODE_SET_TERM_LIST)
+    ListResponse<Term> listAllTermsInCodeSet(@NonNull UUID id)
+
+    @Put(value = Paths.CODE_SET_FINALISE)
+    CodeSet finalise(UUID id, @Body FinaliseData finaliseData)
+
+    @Get(Paths.CODE_SET_DIFF)
+    ObjectDiff diffModels(@NonNull UUID id, @NonNull UUID otherId)
+
+    @Put(value = Paths.CODE_SET_NEW_BRANCH_MODEL_VERSION)
+    CodeSet createNewBranchModelVersion(UUID id, @Body @Nullable CreateNewVersionData createNewVersionData)
+}

@@ -8,19 +8,19 @@ import uk.ac.ox.softeng.mauro.domain.terminology.TermRelationshipType
 import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
 import uk.ac.ox.softeng.mauro.domain.tree.TreeItem
 import uk.ac.ox.softeng.mauro.persistence.ContainerizedTest
+import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchRequestDTO
 import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchResultsDTO
-import uk.ac.ox.softeng.mauro.testing.BaseIntegrationSpec
+import uk.ac.ox.softeng.mauro.testing.CommonDataSpec
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 import io.micronaut.runtime.EmbeddedApplication
 import jakarta.inject.Inject
+import jakarta.inject.Singleton
 import spock.lang.Shared
 
 @ContainerizedTest
-class TerminologyIntegrationSpec extends BaseIntegrationSpec {
-
-    @Inject
-    EmbeddedApplication<?> application
+@Singleton
+class TerminologyIntegrationSpec extends CommonDataSpec {
 
     @Shared
     UUID folderId
@@ -39,11 +39,11 @@ class TerminologyIntegrationSpec extends BaseIntegrationSpec {
 
     void 'test terminology'() {
         given:
-        Folder folderResponse = (Folder) POST('/folders', [label: 'Test folder'], Folder)
+        Folder folderResponse = folderApi.create(new Folder(label: 'Test folder'))
         folderId = folderResponse.id
 
         when:
-        Terminology terminologyResponse = (Terminology) POST("/folders/$folderId/terminologies", [label: 'Test terminology'], Terminology)
+        Terminology terminologyResponse = terminologyApi.create(folderId, new Terminology(label: 'Test terminology'))
         terminologyId = terminologyResponse.id
 
         then:
@@ -55,21 +55,21 @@ class TerminologyIntegrationSpec extends BaseIntegrationSpec {
 
     void 'test terms'() {
         when:
-        Term termResponse = (Term) POST("/terminologies/$terminologyId/terms", [code: 'TEST-1', definition: 'first term'], Term)
+        Term termResponse = termApi.create(terminologyId, new Term(code: 'TEST-1', definition: 'first term'))
         termId1 = termResponse.id
 
         then:
         termResponse.label == 'TEST-1: first term'
 
         when:
-        termResponse = (Term) POST("/terminologies/$terminologyId/terms", [code: 'TEST-2', definition: 'second term'], Term)
+        termResponse = termApi.create(terminologyId, new Term(code: 'TEST-2', definition: 'second term'))
         termId2 = termResponse.id
 
         then:
         termResponse.label == 'TEST-2: second term'
 
         when:
-        ListResponse<Term> termListResponse = (ListResponse<Term>) GET("/terminologies/$terminologyId/terms", ListResponse, Term)
+        ListResponse<Term> termListResponse = termApi.list(terminologyId)
 
         then:
         termListResponse
@@ -79,7 +79,8 @@ class TerminologyIntegrationSpec extends BaseIntegrationSpec {
 
     void 'test term relationship types'() {
         when:
-        TermRelationshipType termRelationshipTypeResponse = (TermRelationshipType) POST("/terminologies/$terminologyId/termRelationshipTypes", [label: 'Test relationship type', childRelationship: true], TermRelationshipType)
+        TermRelationshipType termRelationshipTypeResponse = termRelationshipTypeApi.create(terminologyId,
+            new TermRelationshipType(label: 'Test relationship type', childRelationship: true))
         termRelationshipTypeId = termRelationshipTypeResponse.id
 
         then:
@@ -92,18 +93,19 @@ class TerminologyIntegrationSpec extends BaseIntegrationSpec {
 
     void 'test term relationships'() {
         when:
-        TermRelationship termRelationshipResponse = (TermRelationship) POST("/terminologies/$terminologyId/termRelationships", [
-            relationshipType: [id: termRelationshipTypeId],
-            sourceTerm: [id: termId1],
-            targetTerm: [id: termId2]
-        ], TermRelationship)
+        TermRelationship termRelationshipResponse =
+            termRelationshipApi.create(terminologyId, new TermRelationship(
+            relationshipType: new TermRelationshipType(id: termRelationshipTypeId),
+            sourceTerm: new Term(id: termId1),
+            targetTerm: new Term(id: termId2)
+        ))
 
         then:
         termRelationshipResponse
         termRelationshipResponse.label == 'Test relationship type'
 
         when:
-        List<TreeItem> treeItemList = (List<TreeItem>) GET("/terminologies/$terminologyId/terms/tree", List<TreeItem>)
+        List<TreeItem> treeItemList = termApi.tree(terminologyId, null)
 
         then:
         treeItemList
@@ -111,7 +113,7 @@ class TerminologyIntegrationSpec extends BaseIntegrationSpec {
         treeItemList.first().code == 'TEST-2'
 
         when:
-        treeItemList = (List<TreeItem>) GET("/terminologies/$terminologyId/terms/tree/$termId2", List<TreeItem>)
+        treeItemList = termApi.tree(terminologyId, termId2)
 
         then:
         treeItemList
@@ -120,7 +122,7 @@ class TerminologyIntegrationSpec extends BaseIntegrationSpec {
         treeItemList.first().code == 'TEST-1'
 
         when:
-        treeItemList = (List<TreeItem>) GET("/terminologies/$terminologyId/terms/tree/$termId1", List<TreeItem>)
+        treeItemList = termApi.tree(terminologyId, termId1)
 
         then:
         treeItemList != null
@@ -132,19 +134,19 @@ class TerminologyIntegrationSpec extends BaseIntegrationSpec {
 
         expect:
 
-        ListResponse<SearchResultsDTO> searchResults = (ListResponse<SearchResultsDTO>) GET("/terminologies/$terminologyId/search?${queryParams}", ListResponse, SearchResultsDTO)
+        ListResponse<SearchResultsDTO> searchResults = terminologyApi.searchGet(
+            terminologyId, new SearchRequestDTO(searchTerm: searchTerm, domainTypes: domainTypes))
         searchResults.items.label == expectedLabels
 
         where:
-
-        queryParams                                                     | expectedLabels
-        "searchTerm=first"                                              | ["TEST-1: first term"]
-        "searchTerm=second"                                             | ["TEST-2: second term"]
-        "searchTerm=term"                                               | ["TEST-1: first term", "TEST-2: second term"]
-        "searchTerm=term&domainTypes=Term"                              | ["TEST-1: first term", "TEST-2: second term"]
-        "searchTerm=term&domainTypes=TermRelationship"                  | []
-        "searchTerm=test"                                               | ["Test terminology", "TEST-1: first term", "TEST-2: second term"]
-        "searchTerm=test&domainTypes=Terminology"                       | ["Test terminology"]
+        searchTerm          | domainTypes                               | expectedLabels
+        "first"             | []                                        | ["TEST-1: first term"]
+        "second"            | []                                        | ["TEST-2: second term"]
+        "term"              | []                                        | ["TEST-1: first term", "TEST-2: second term"]
+        "term"              | ["Term"]                                  | ["TEST-1: first term", "TEST-2: second term"]
+        "term"              | ["TermRelationship"]                      | []
+        "test"              | []                                        | ["Test terminology", "TEST-1: first term", "TEST-2: second term"]
+        "test"              | ["Terminology"]                           | ["Test terminology"]
 
     }
 

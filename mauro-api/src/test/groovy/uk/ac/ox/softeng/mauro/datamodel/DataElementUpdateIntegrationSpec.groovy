@@ -1,5 +1,6 @@
 package uk.ac.ox.softeng.mauro.datamodel
 
+import jakarta.inject.Singleton
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataElement
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
@@ -17,11 +18,9 @@ import spock.lang.Shared
 import spock.lang.Unroll
 
 @ContainerizedTest
+@Singleton
 @Sql(scripts = "classpath:sql/tear-down-dataelement.sql", phase = Sql.Phase.AFTER_ALL)
 class DataElementUpdateIntegrationSpec extends CommonDataSpec {
-
-    @Inject
-    EmbeddedApplication<?> application
 
     @Shared
     UUID folderId
@@ -42,24 +41,21 @@ class DataElementUpdateIntegrationSpec extends CommonDataSpec {
     UUID secondDataTypeId
 
     void setupSpec() {
-        folderId = ((Folder) POST("$FOLDERS_PATH", folder(), Folder)).id
-        dataModelId = ((DataModel) POST("$FOLDERS_PATH/$folderId$DATAMODELS_PATH", dataModelPayload(), DataModel)).id
-        dataTypeId = ((DataType) POST("$DATAMODELS_PATH/$dataModelId$DATATYPES_PATH", dataTypesPayload(), DataType)).id
-        dataClassId = ((DataClass) POST("$DATAMODELS_PATH/$dataModelId$DATACLASSES_PATH", dataClassPayload(), DataClass)).id
-        dataElementId = ((DataElement) POST("$DATAMODELS_PATH/$dataModelId$DATACLASSES_PATH/$dataClassId$DATA_ELEMENTS_PATH",
-                                            [label: 'First data element', description: 'The first data element', dataType: [id: dataTypeId]], DataElement)).id
-        secondDataTypeId = ((DataType) POST("$DATAMODELS_PATH/$dataModelId$DATATYPES_PATH",
-                                            [label: 'second data type', domainType: 'primitiveType', units: 'lbs'], DataType)).id
+        folderId = folderApi.create(folder()).id
+        dataModelId = dataModelApi.create(folderId, dataModelPayload()).id
+        dataTypeId = dataTypeApi.create(dataModelId, dataTypesPayload()).id
+        dataClassId = dataClassApi.create(dataModelId, dataClassPayload()).id
+        dataElementId = dataElementApi.create(
+                dataModelId,
+                dataClassId,
+                new DataElement(label: 'First data element', description: 'The first data element', dataType: new DataType(id: dataTypeId))).id
+        secondDataTypeId = dataTypeApi.create(dataModelId, new DataType(label: 'second data type', dataTypeKind: DataType.DataTypeKind.PRIMITIVE_TYPE, units: 'lbs')).id
 
     }
 
     void 'test update data element -no datatype in update Request -should update as expected'() {
-        given:
-        DataElement dataElementResponse = (DataElement) PUT("$DATAMODELS_PATH/$dataModelId$DATACLASSES_PATH/$dataClassId$DATA_ELEMENTS_PATH/$dataElementId",
-                                                            [label: 'Renamed data element'], DataElement)
         when:
-        dataElementId = ((DataElement) POST("$DATAMODELS_PATH/$dataModelId$DATACLASSES_PATH/$dataClassId$DATA_ELEMENTS_PATH",
-                                            [label: 'First data element', description: 'The first data element', dataType: [id: dataTypeId]], DataElement)).id
+        DataElement dataElementResponse = dataElementApi.update(dataModelId, dataClassId,dataElementId, new DataElement(label: 'Renamed data element'))
         then:
         dataElementResponse
         dataElementResponse.label == 'Renamed data element'
@@ -68,14 +64,19 @@ class DataElementUpdateIntegrationSpec extends CommonDataSpec {
 
     void 'test update data element -new datatype has different datamodel -should throw exception'() {
         given:
-        dataElementId = ((DataElement) POST("$DATAMODELS_PATH/$dataModelId$DATACLASSES_PATH/$dataClassId$DATA_ELEMENTS_PATH",
-                                            [label: 'First data element', description: 'The first data element', dataType: [id: dataTypeId]], DataElement)).id
+        dataElementId = dataElementApi.create(
+                dataModelId,
+                dataClassId,
+                new DataElement(label: 'First data element', description: 'The first data element', dataType: new DataType(id: dataTypeId))).id
 
-        UUID differentDataModelId = ((DataModel) POST("$FOLDERS_PATH/$folderId$DATAMODELS_PATH", dataModelPayload(), DataModel)).id
-        UUID differentDataTypeId = ((DataType) POST("$DATAMODELS_PATH/$differentDataModelId$DATATYPES_PATH", dataTypesPayload(), DataType)).id
+        UUID differentDataModelId = dataModelApi.create(folderId, dataModelPayload()).id
+        UUID differentDataTypeId = dataTypeApi.create(differentDataModelId, dataTypesPayload()).id
         when:
-        PUT("$DATAMODELS_PATH/$dataModelId$DATACLASSES_PATH/$dataClassId$DATA_ELEMENTS_PATH/$dataElementId",
-            [label: 'Renamed data element', dataType: [id: differentDataTypeId]], DataElement)
+        dataElementApi.update(
+                dataModelId,
+                dataClassId,
+                dataElementId,
+                new DataElement(label: 'Renamed data element', dataType: new DataType(id: differentDataTypeId)))
         then:
         HttpClientResponseException exception = thrown()
         exception.status == HttpStatus.BAD_REQUEST
@@ -84,15 +85,14 @@ class DataElementUpdateIntegrationSpec extends CommonDataSpec {
     @Unroll
     void 'test update data element #dataElementPayload  -should/should not update with expected data'() {
         when:
-        DataElement updated = (DataElement) PUT("$DATAMODELS_PATH/$dataModelId$DATACLASSES_PATH/$dataClassId$DATA_ELEMENTS_PATH/$dataElementId",
-                                                dataElementPayload, DataElement)
+        DataElement updated = dataElementApi.update(dataModelId, dataClassId, dataElementId, dataElementPayload)
         then:
         updated
         updated.label == expectedLabel
         updated.dataType.id == expectedDataTypeId
 
         when:
-        DataElement retrieved = (DataElement) GET("$DATAMODELS_PATH/$dataModelId$DATACLASSES_PATH/$dataClassId$DATA_ELEMENTS_PATH/$dataElementId", DataElement)
+        DataElement retrieved = dataElementApi.show(dataModelId, dataClassId, dataElementId)
 
         then:
         retrieved
@@ -100,12 +100,12 @@ class DataElementUpdateIntegrationSpec extends CommonDataSpec {
         retrieved.label == expectedLabel
 
         where:
-        dataElementPayload                                              | expectedDataTypeId | expectedLabel
-        [label: 'Renamed data element']                                 | dataTypeId         | 'Renamed data element'
-        [label: 'label data element', dataType: [id: secondDataTypeId]] | secondDataTypeId   | 'label data element'
-        [dataType: [id: dataTypeId]]                                    | dataTypeId         | 'label data element'
-        [dataType: [id: secondDataTypeId]]                              | secondDataTypeId   | 'label data element'
-        [label: 'data element label', dataType: [id: dataTypeId]]       | dataTypeId         | 'data element label'
+        dataElementPayload                                                                         | expectedDataTypeId | expectedLabel
+        new DataElement(label: 'Renamed data element')                                             | dataTypeId         | 'Renamed data element'
+        new DataElement(label: 'label data element', dataType: new DataType(id: secondDataTypeId)) | secondDataTypeId   | 'label data element'
+        new DataElement(dataType: new DataType(id: dataTypeId))                                    | dataTypeId         | 'label data element'
+        new DataElement(dataType: new DataType(id: secondDataTypeId))                              | secondDataTypeId   | 'label data element'
+        new DataElement(label: 'data element label', dataType: new DataType(id: dataTypeId))       | dataTypeId         | 'data element label'
 
     }
 

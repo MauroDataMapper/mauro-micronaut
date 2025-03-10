@@ -1,11 +1,13 @@
 package uk.ac.ox.softeng.mauro.controller.classifier
 
 import uk.ac.ox.softeng.mauro.ErrorHandler
+import uk.ac.ox.softeng.mauro.api.classifier.ClassifierApi
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
+import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.*
 import io.micronaut.http.exceptions.HttpStatusException
@@ -13,7 +15,7 @@ import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
 import jakarta.transaction.Transactional
 import uk.ac.ox.softeng.mauro.controller.model.AdministeredItemController
-import uk.ac.ox.softeng.mauro.Paths
+import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.domain.classifier.ClassificationScheme
 import uk.ac.ox.softeng.mauro.domain.classifier.Classifier
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
@@ -27,7 +29,7 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 @CompileStatic
 @Controller
 @Secured(SecurityRule.IS_ANONYMOUS)
-class ClassifierController extends AdministeredItemController<Classifier, ClassificationScheme> {
+class ClassifierController extends AdministeredItemController<Classifier, ClassificationScheme> implements ClassifierApi {
 
     AdministeredItemCacheableRepository.ClassifierCacheableRepository classifierCacheableRepository
 
@@ -61,9 +63,10 @@ class ClassifierController extends AdministeredItemController<Classifier, Classi
 
     @Delete(Paths.CLASSIFIERS_ROUTE_ID)
     @Transactional
-    HttpStatus delete(@NonNull UUID classificationSchemeId, @NonNull UUID id, @Body @Nullable Classifier classifier) {
+    HttpResponse delete(@NonNull UUID classificationSchemeId, @NonNull UUID id, @Body @Nullable Classifier classifier) {
         super.delete(id, classifier)
     }
+
 
     @Get(Paths.CLASSIFIERS_ROUTE)
     ListResponse<Classifier> list(UUID classificationSchemeId) {
@@ -104,7 +107,7 @@ class ClassifierController extends AdministeredItemController<Classifier, Classi
 
     @Transactional
     @Delete(Paths.CHILD_CLASSIFIERS_ID_ROUTE)
-    HttpStatus delete(@NonNull UUID classificationSchemeId, @NonNull UUID parentClassifierId, @NonNull UUID childClassifierId, @Body @Nullable Classifier classifier) {
+    HttpResponse delete(@NonNull UUID classificationSchemeId, @NonNull UUID parentClassifierId, @NonNull UUID childClassifierId, @Body @Nullable Classifier classifier) {
         super.delete(childClassifierId, classifier)
     }
 
@@ -154,7 +157,7 @@ class ClassifierController extends AdministeredItemController<Classifier, Classi
 
     @Delete(Paths.ADMINISTERED_ITEM_CLASSIFIER_ID_ROUTE)
     @Transactional
-    HttpStatus delete(@NonNull String administeredItemDomainType, @NonNull UUID administeredItemId, @NonNull UUID id){
+    HttpResponse delete(@NonNull String administeredItemDomainType, @NonNull UUID administeredItemId, @NonNull UUID id){
         AdministeredItem administeredItem = findAdministeredItem(administeredItemDomainType, administeredItemId)
         accessControlService.checkRole(Role.EDITOR, readAdministeredItem(administeredItem.domainType, administeredItemId))
         Classifier classifierToDelete = classifierCacheableRepository.readById(id)
@@ -162,7 +165,7 @@ class ClassifierController extends AdministeredItemController<Classifier, Classi
         accessControlService.checkRole(Role.EDITOR, classifierToDelete)
         Long deleted = classifierCacheableRepository.deleteJoinAdministeredItemToClassifier(administeredItem, classifierToDelete.id)
         if (deleted) {
-            HttpStatus.NO_CONTENT
+            HttpResponse.status(HttpStatus.NO_CONTENT)
         } else {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, 'Not found for deletion')
         }

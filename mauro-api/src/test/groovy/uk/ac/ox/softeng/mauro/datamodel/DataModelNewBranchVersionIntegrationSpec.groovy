@@ -1,8 +1,21 @@
 package uk.ac.ox.softeng.mauro.datamodel
 
+import uk.ac.ox.softeng.mauro.api.datamodel.DataClassApi
+import uk.ac.ox.softeng.mauro.api.datamodel.DataElementApi
+import uk.ac.ox.softeng.mauro.api.datamodel.DataModelApi
+import uk.ac.ox.softeng.mauro.api.datamodel.DataTypeApi
+import uk.ac.ox.softeng.mauro.api.datamodel.EnumerationValueApi
+import uk.ac.ox.softeng.mauro.api.facet.ReferenceFileApi
+import uk.ac.ox.softeng.mauro.api.facet.SummaryMetadataApi
+import uk.ac.ox.softeng.mauro.api.facet.SummaryMetadataReportApi
+import uk.ac.ox.softeng.mauro.api.folder.FolderApi
+import uk.ac.ox.softeng.mauro.domain.diff.ObjectDiff
+import uk.ac.ox.softeng.mauro.domain.model.version.CreateNewVersionData
+
 import io.micronaut.runtime.EmbeddedApplication
 import io.micronaut.test.annotation.Sql
 import jakarta.inject.Inject
+import jakarta.inject.Singleton
 import spock.lang.Shared
 import uk.ac.ox.softeng.mauro.domain.datamodel.*
 import uk.ac.ox.softeng.mauro.domain.diff.DiffBuilder
@@ -15,11 +28,9 @@ import uk.ac.ox.softeng.mauro.testing.CommonDataSpec
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @ContainerizedTest
+@Singleton
 @Sql(scripts = ["classpath:sql/tear-down-datamodel.sql","classpath:sql/tear-down.sql"], phase = Sql.Phase.AFTER_EACH)
 class DataModelNewBranchVersionIntegrationSpec extends CommonDataSpec {
-
-    @Inject
-    EmbeddedApplication<?> application
 
     @Shared
     UUID folderId
@@ -60,43 +71,76 @@ class DataModelNewBranchVersionIntegrationSpec extends CommonDataSpec {
     UUID nestedReferenceFileId
 
     void setup() {
-        folderId = ((Folder) POST("$FOLDERS_PATH", folder(), Folder)).id
-        dataModel = (DataModel) POST("$FOLDERS_PATH/$folderId$DATAMODELS_PATH", dataModelPayload(), DataModel)
+        folderId = folderApi.create(folder()).id
+        dataModel = dataModelApi.create(folderId, dataModelPayload())
         dataModelId = dataModel.id
-        dataTypeId1 = ((DataType) POST("$DATAMODELS_PATH/$dataModelId$DATATYPES_PATH", [label: 'string', description: 'character string of variable length', domainType: 'PrimitiveType'], DataType)).id
+        dataTypeId1 = dataTypeApi.create(dataModelId,
+                 new DataType(label: 'string',
+                              description: 'character string of variable length',
+                              dataTypeKind: DataType.DataTypeKind.PRIMITIVE_TYPE)).id
 
 
-        dataTypeId2 = ((DataType) POST("$DATAMODELS_PATH/$dataModelId$DATATYPES_PATH", [label: 'integer', description: 'a whole number, may be positive or negative, with no maximum or minimum', domainType: 'PrimitiveType'], DataType)).id
+        dataTypeId2 = dataTypeApi.create(dataModelId,
+                 new DataType(label: 'integer',
+                              description: 'a whole number, may be positive or negative, with no maximum or minimum',
+                              dataTypeKind: DataType.DataTypeKind.PRIMITIVE_TYPE)).id
 
-        dataTypeId3 = ((DataType) POST("$DATAMODELS_PATH/$dataModelId$DATATYPES_PATH",
-                [label      : 'Yes/No',
-                 description: 'Either a yes or a no',
-                 domainType : 'EnumerationType'], DataType)).id
-
-
-        dataClassId1 = ((DataClass) POST("$DATAMODELS_PATH/$dataModelId$DATACLASSES_PATH", [label: 'First data class', description: 'The first data class'], DataClass)).id
-        dataClassId2 = ((DataClass) POST("$DATAMODELS_PATH/$dataModelId$DATACLASSES_PATH", [label: 'Second data class', description: 'The second data class'], DataClass)).id
-        dataClassId3 = ((DataClass) POST("$DATAMODELS_PATH/$dataModelId$DATACLASSES_PATH/$dataClassId2$DATACLASSES_PATH", [label: 'Third data class', description: 'The third data class'], DataClass)).id
-
-        dataElementId1 = ((DataElement) POST("$DATAMODELS_PATH/$dataModelId$DATACLASSES_PATH/$dataClassId1$DATA_ELEMENTS_PATH", [label: 'First data element', description: 'The first data element', dataType: [id: dataTypeId1]], DataElement)).id
-        dataElementId2 = ((DataElement) POST("$DATAMODELS_PATH/$dataModelId$DATACLASSES_PATH/$dataClassId1$DATA_ELEMENTS_PATH", [label: 'Second data element', description: 'The second data element', dataType: [id: dataTypeId2]], DataElement)).id
+        dataTypeId3 = dataTypeApi.create(dataModelId,
+                new DataType(label : 'Yes/No',
+                             description: 'Either a yes or a no',
+                             dataTypeKind : DataType.DataTypeKind.ENUMERATION_TYPE)).id
 
 
-        enumerationTypeId =  ((DataType) POST("/dataModels/$dataModelId/dataTypes", [label: 'Boolean', description: 'Either true or false',domainType: 'EnumerationType'], DataType)).id
-        enumerationValueId1 = ((EnumerationValue) POST("/dataModels/$dataModelId/dataTypes/$enumerationTypeId/enumerationValues", [key: 'T', value: 'True'], EnumerationValue)).id
+        dataClassId1 = dataClassApi.create(dataModelId,
+               new DataClass(label: 'First data class',
+                             description: 'The first data class')).id
 
-        enumerationValueId2 = ((EnumerationValue) POST("/dataModels/$dataModelId/dataTypes/$enumerationTypeId/enumerationValues", [key: 'F', value: 'False'], EnumerationValue)).id
+        dataClassId2 = dataClassApi.create(dataModelId,
+               new DataClass(label: 'Second data class',
+                             description: 'The second data class')).id
 
-        summaryMetadataId = ((SummaryMetadata) POST("$DATAMODELS_PATH/$dataModelId$SUMMARY_METADATA_PATH", summaryMetadataPayload(), SummaryMetadata)).id
-        summaryMetadataReportId = ((SummaryMetadataReport) POST("$DATAMODELS_PATH/$dataModelId$SUMMARY_METADATA_PATH/$summaryMetadataId$SUMMARY_METADATA_REPORT_PATH", summaryMetadataReport(), SummaryMetadataReport)).id
+        dataClassId3 = dataClassApi.create(dataModelId, dataClassId2,
+               new DataClass(label: 'Third data class',
+                             description: 'The third data class')).id
 
-        nestedReferenceFileId = ((ReferenceFile) POST("$DATACLASSES_PATH/$dataClassId1$REFERENCE_FILE_PATH", referenceFilePayload(), ReferenceFile)).id
+        dataElementId1 = dataElementApi.create(dataModelId, dataClassId1,
+               new DataElement(label: 'First data element',
+                               description: 'The first data element',
+                               dataType: new DataType(id: dataTypeId1))).id
+        dataElementId2 = dataElementApi.create(dataModelId, dataClassId1,
+               new DataElement(label: 'Second data element',
+                               description: 'The second data element',
+                               dataType: new DataType(id: dataTypeId2))).id
+
+
+        enumerationTypeId = dataTypeApi.create(dataModelId,
+               new DataType(label: 'Boolean',
+                            description: 'Either true or false',
+                            dataTypeKind: DataType.DataTypeKind.ENUMERATION_TYPE)).id
+
+        enumerationValueId1 = enumerationValueApi.create(dataModelId, enumerationTypeId,
+               new EnumerationValue(key: 'T', value: 'True')).id
+
+        enumerationValueId2 = enumerationValueApi.create(dataModelId, enumerationTypeId,
+                new EnumerationValue(key: 'F', value: 'False')).id
+
+        summaryMetadataId = summaryMetadataApi.create("dataModels", dataModelId,
+                                                      summaryMetadataPayload()).id
+        summaryMetadataReportId =
+            summaryMetadataReportApi.create(
+                "dataModels", dataModelId, summaryMetadataId, summaryMetadataReport()).id
+
+        nestedReferenceFileId =
+            referenceFileApi.create("dataClass", dataClassId1, referenceFilePayload()).id
     }
 
 
     void "test newBranchModelVersion -should create new datamodel and all associated objects"() {
         when:
-        DataModel newBranchVersionDataModel = (DataModel) PUT("$DATAMODELS_PATH/$dataModelId$NEW_BRANCH_MODEL_VERSION", [branchName: 'new branch name'], DataModel)
+        DataModel newBranchVersionDataModel =
+            dataModelApi.createNewBranchModelVersion(
+                dataModelId,
+                new CreateNewVersionData(branchName: 'new branch name' ))
 
         then:
         newBranchVersionDataModel
@@ -107,15 +151,15 @@ class DataModelNewBranchVersionIntegrationSpec extends CommonDataSpec {
         newBranchVersionDataModel.summaryMetadata[0].summaryMetadataReports[0].id  != summaryMetadataReportId
 
         when:
-        ListResponse<DataModel> dataModelsList = (ListResponse<DataModel>) GET("$FOLDERS_PATH/$folderId/$DATAMODELS_PATH", ListResponse, DataModel)
+        ListResponse<DataModel> dataModelsList = dataModelApi.list(folderId)
 
         then:
         dataModelsList
         dataModelsList.items.size() == 2
-        dataModelsList.items.collect { it.id.toString() }.sort() == [dataModelId, newBranchVersionDataModel.id].collect { it.toString() }.sort()
+        [dataModelId, newBranchVersionDataModel.id] as Set == dataModelsList.items.id as Set
 
         when:
-        ListResponse<DataClass> dataClassListResponse = (ListResponse<DataClass>) GET("$DATAMODELS_PATH/$newBranchVersionDataModel.id$DATACLASSES_PATH", ListResponse, DataClass)
+        ListResponse<DataClass> dataClassListResponse = dataClassApi.list(newBranchVersionDataModel.id)
 
         then:
         dataClassListResponse
@@ -129,28 +173,29 @@ class DataModelNewBranchVersionIntegrationSpec extends CommonDataSpec {
         when: // One should have a child class
         UUID secondDataClassId = dataClassListResponse.items.find {it.label == 'Second data class'}.id
         UUID firstDataClassId = dataClassListResponse.items.find {it.label == 'First data class'}.id
-        dataClassListResponse = (ListResponse<DataClass>) GET("$DATAMODELS_PATH/$newBranchVersionDataModel.id$DATACLASSES_PATH/${secondDataClassId.toString()}/dataClasses", ListResponse, DataClass)
+        dataClassListResponse = dataClassApi.list(newBranchVersionDataModel.id,secondDataClassId)
 
         then:
         dataClassListResponse.items.size() == 1
         dataClassListResponse.items.first().label == 'Third data class'
 
         when:
-        ListResponse<DataType> originalResp = (ListResponse<DataType>) GET("$DATAMODELS_PATH/$dataModelId$DATATYPES_PATH", ListResponse, DataType)
+        ListResponse<DataType> originalResp = dataTypeApi.list(dataModelId)
         then:
         originalResp
         originalResp.items.size() == 4
-        originalResp.items.id.sort() == [dataTypeId1, dataTypeId2, dataTypeId3,enumerationTypeId].sort()
+        originalResp.items.id as Set == [dataTypeId1, dataTypeId2, dataTypeId3,enumerationTypeId] as Set
 
         when:
-        ListResponse<DataType> dataTypesListResponse = (ListResponse<DataType>) GET("$DATAMODELS_PATH/$newBranchVersionDataModel.id$DATATYPES_PATH", ListResponse, DataType)
+        ListResponse<DataType> dataTypesListResponse = dataTypeApi.list(newBranchVersionDataModel.id)
         then:
         dataTypesListResponse
         dataTypesListResponse.items.size() == 4
         dataTypesListResponse.items.id.disjoint([dataTypeId1, dataTypeId2, dataTypeId3, enumerationTypeId])
 
         when:
-        ListResponse<DataElement> dataElementListResponse = (ListResponse<DataElement>) GET("$DATAMODELS_PATH/$newBranchVersionDataModel.id$DATACLASSES_PATH/${firstDataClassId.toString()}/dataElements", ListResponse, DataElement)
+        ListResponse<DataElement> dataElementListResponse =
+            dataElementApi.list(newBranchVersionDataModel.id,firstDataClassId)
 
         then:
         dataElementListResponse
@@ -161,13 +206,14 @@ class DataModelNewBranchVersionIntegrationSpec extends CommonDataSpec {
 
         //check nested facet in dataclass1 is cloned
 
-        ListResponse<DataClass> newBranchModelVersionDataClasses = (ListResponse<DataClass>) GET("$DATAMODELS_PATH/$newBranchVersionDataModel.id$DATACLASSES_PATH",ListResponse, DataClass)
+        ListResponse<DataClass> newBranchModelVersionDataClasses =
+            dataClassApi.list(newBranchVersionDataModel.id)
         then:
         List<UUID> newBranchModelVersionDataClassIds = newBranchModelVersionDataClasses.items.id
         DataClass retrieved = null
         when:
         newBranchModelVersionDataClassIds.find {
-            retrieved = (DataClass) GET("$DATAMODELS_PATH/$newBranchVersionDataModel.id$DATACLASSES_PATH/$it", DataClass)
+            retrieved = dataClassApi.show(newBranchVersionDataModel.id, it)
             !retrieved.referenceFiles.isEmpty()
         }
         then:
@@ -176,13 +222,14 @@ class DataModelNewBranchVersionIntegrationSpec extends CommonDataSpec {
 
 
         when:
-        Map<String, Object> diffMap = GET("$DATAMODELS_PATH/$dataModelId$DIFF/$newBranchVersionDataModel.id", Map<String, Object>)
+        ObjectDiff objectDiff =
+            dataModelApi.diffModels(dataModelId, newBranchVersionDataModel.id)
 
         then:
-        diffMap
-        diffMap.get(DiffBuilder.LABEL) == dataModel.label
-        diffMap.diffs.each { [DiffBuilder.BRANCH_NAME,  DiffBuilder.PATH_MODEL_IDENTIFIER].contains(it.name) }
+        objectDiff
+        objectDiff.label == dataModel.label
+        objectDiff.diffs.size() == 2
         //branchName and path will differ
-        diffMap.count == 2
+        objectDiff.diffs.name as Set == [DiffBuilder.BRANCH_NAME,  DiffBuilder.PATH_MODEL_IDENTIFIER] as Set
     }
 }

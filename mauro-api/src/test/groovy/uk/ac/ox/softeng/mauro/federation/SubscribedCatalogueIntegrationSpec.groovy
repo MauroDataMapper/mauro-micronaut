@@ -10,16 +10,20 @@ import uk.ac.ox.softeng.mauro.security.SecuredIntegrationSpec
 import uk.ac.ox.softeng.mauro.controller.federation.converter.AtomSubscribedCatalogueConverter
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
+import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.xml.XmlSlurper
+import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.client.exceptions.HttpClientResponseException
 import io.micronaut.runtime.EmbeddedApplication
 import io.micronaut.test.annotation.Sql
 import jakarta.inject.Inject
+import jakarta.inject.Singleton
 import spock.lang.Shared
 import spock.lang.Unroll
 
+@Singleton
 @SecuredContainerizedTest
 @Sql(scripts = ["classpath:sql/tear-down-subscribed-catalogue.sql"], phase = Sql.Phase.AFTER_ALL)
 class SubscribedCatalogueIntegrationSpec extends SecuredIntegrationSpec {
@@ -27,15 +31,13 @@ class SubscribedCatalogueIntegrationSpec extends SecuredIntegrationSpec {
     static final String ATOM_MODEL_ID_NEWER_VERSIONS = "urn:uuid:b4484456-366a-4430-a8ae-56248003fc5a"
 
     @Inject
-    EmbeddedApplication<?> application
-    @Inject
     ObjectMapper mapper
     @Shared
     UUID subscribedCatalogueId
 
     void setupSpec(){
         loginAdmin()
-        subscribedCatalogueId =  ((SubscribedCatalogue) POST("$ADMIN_SUBSCRIBED_CATALOGUES_PATH", mauroJsonSubscribedCataloguePayload(), SubscribedCatalogue)).id
+        subscribedCatalogueId =  subscribedCatalogueApi.create(mauroJsonSubscribedCataloguePayload()).id
         logout()
     }
 
@@ -48,7 +50,7 @@ class SubscribedCatalogueIntegrationSpec extends SecuredIntegrationSpec {
         loginAdmin()
 
         when:
-        Map<String, Object> getAllResp = GET(ADMIN_SUBSCRIBED_CATALOGUES_PATH)
+        ListResponse<SubscribedCatalogue> getAllResp = subscribedCatalogueApi.listAll()
 
         then:
         getAllResp
@@ -57,7 +59,7 @@ class SubscribedCatalogueIntegrationSpec extends SecuredIntegrationSpec {
 
         loginUser()
         when:
-        getAllResp = GET(ADMIN_SUBSCRIBED_CATALOGUES_PATH)
+        getAllResp = subscribedCatalogueApi.listAll()
 
         then:
         getAllResp
@@ -66,7 +68,7 @@ class SubscribedCatalogueIntegrationSpec extends SecuredIntegrationSpec {
 
     void 'user not signed in - cannot access admin subscribedCatalogues endpoint'() {
         when:
-        GET(ADMIN_SUBSCRIBED_CATALOGUES_PATH, ListResponse<SubscribedCatalogue>)
+        subscribedCatalogueApi.listAll()
 
         then:
         HttpClientResponseException exception = thrown()
@@ -78,7 +80,7 @@ class SubscribedCatalogueIntegrationSpec extends SecuredIntegrationSpec {
         loginAdmin()
 
         when:
-        SubscribedCatalogue subscribedCatalogue = (SubscribedCatalogue) POST("$ADMIN_SUBSCRIBED_CATALOGUES_PATH", atomSubscribedCataloguePayload(), SubscribedCatalogue)
+        SubscribedCatalogue subscribedCatalogue = subscribedCatalogueApi.create(atomSubscribedCataloguePayload())
 
         then:
         subscribedCatalogue
@@ -94,7 +96,7 @@ class SubscribedCatalogueIntegrationSpec extends SecuredIntegrationSpec {
         currentUser
 
         when:
-        POST("$ADMIN_SUBSCRIBED_CATALOGUES_PATH", mauroJsonSubscribedCataloguePayload(), SubscribedCatalogue)
+        subscribedCatalogueApi.create(mauroJsonSubscribedCataloguePayload())
 
         then:
         HttpClientResponseException exception = thrown()
@@ -109,7 +111,7 @@ class SubscribedCatalogueIntegrationSpec extends SecuredIntegrationSpec {
     void 'any user - can retrieve subscribedCatalogue by id'() {
         loginAdmin()
         when:
-        SubscribedCatalogue retrieved = GET("$SUBSCRIBED_CATALOGUES_PATH/$subscribedCatalogueId", SubscribedCatalogue)
+        SubscribedCatalogue retrieved = subscribedCatalogueApi.show(subscribedCatalogueId)
 
         then:
         retrieved
@@ -118,7 +120,7 @@ class SubscribedCatalogueIntegrationSpec extends SecuredIntegrationSpec {
         loginUser()
 
         when:
-        retrieved = GET("$SUBSCRIBED_CATALOGUES_PATH/$subscribedCatalogueId", SubscribedCatalogue)
+        retrieved = subscribedCatalogueApi.show(subscribedCatalogueId)
         then:
         retrieved
     }
@@ -127,7 +129,7 @@ class SubscribedCatalogueIntegrationSpec extends SecuredIntegrationSpec {
     void 'not logged in - subscribedCatalogue publishedModels endpoint -is unauthorized'() {
 
         when:
-        GET("$SUBSCRIBED_CATALOGUES_PATH/$subscribedCatalogueId$PUBLISHEDMODELS", ListResponse)
+        subscribedCatalogueApi.publishedModels(subscribedCatalogueId)
 
         then:
         HttpClientResponseException exception = thrown()
@@ -138,13 +140,13 @@ class SubscribedCatalogueIntegrationSpec extends SecuredIntegrationSpec {
         given:
         loginAdmin()
 
-        SubscribedCatalogue subscribedCatalogue = (SubscribedCatalogue) POST("$ADMIN_SUBSCRIBED_CATALOGUES_PATH", payload, SubscribedCatalogue)
+        SubscribedCatalogue subscribedCatalogue = subscribedCatalogueApi.create(payload)
 
         when:
-        HttpStatus httpStatus = GET("$ADMIN_SUBSCRIBED_CATALOGUES_PATH/$subscribedCatalogue.id$TEST_CONNECTION", HttpStatus)
+        HttpResponse httpResponse = subscribedCatalogueApi.testConnection(subscribedCatalogue.id)
 
         then:
-        httpStatus == HttpStatus.OK
+        httpResponse.status() == HttpStatus.OK
 
         where:
         payload                               | _
@@ -156,12 +158,12 @@ class SubscribedCatalogueIntegrationSpec extends SecuredIntegrationSpec {
     void 'non adminUsers test subscribedCatalogue connection - should return exception'() {
         given:
         loginAdmin()
-        SubscribedCatalogue subscribedCatalogue = (SubscribedCatalogue) POST("$ADMIN_SUBSCRIBED_CATALOGUES_PATH", mauroJsonSubscribedCataloguePayload(), SubscribedCatalogue)
+        SubscribedCatalogue subscribedCatalogue = subscribedCatalogueApi.create(mauroJsonSubscribedCataloguePayload())
         logout()
         loginUser()
 
         when:
-        GET("$ADMIN_SUBSCRIBED_CATALOGUES_PATH/$subscribedCatalogue.id$TEST_CONNECTION", HttpStatus)
+        subscribedCatalogueApi.testConnection(subscribedCatalogue.id)
 
         then:
         HttpClientResponseException exception = thrown()
@@ -169,7 +171,7 @@ class SubscribedCatalogueIntegrationSpec extends SecuredIntegrationSpec {
 
         logout()
         when:
-        GET("$ADMIN_SUBSCRIBED_CATALOGUES_PATH/$subscribedCatalogue.id$TEST_CONNECTION", HttpStatus)
+        subscribedCatalogueApi.testConnection(subscribedCatalogue.id)
 
         then:
         exception = thrown()
@@ -181,11 +183,10 @@ class SubscribedCatalogueIntegrationSpec extends SecuredIntegrationSpec {
         given:
         loginAdmin()
 
-        SubscribedCatalogue subscribedCatalogue = (SubscribedCatalogue) POST("$ADMIN_SUBSCRIBED_CATALOGUES_PATH", payload, SubscribedCatalogue)
+        SubscribedCatalogue subscribedCatalogue = subscribedCatalogueApi.create(payload)
 
         when:
-        ListResponse<PublishedModel> publishedModels = (ListResponse<PublishedModel>) GET("$SUBSCRIBED_CATALOGUES_PATH/$subscribedCatalogue.id$PUBLISHEDMODELS",
-                                                                                          ListResponse)
+        ListResponse<PublishedModel> publishedModels = subscribedCatalogueApi.publishedModels(subscribedCatalogue.id)
         then:
         publishedModels
 
@@ -197,14 +198,17 @@ class SubscribedCatalogueIntegrationSpec extends SecuredIntegrationSpec {
         loginUser()
 
         when:
-        publishedModels = (ListResponse<PublishedModel>) GET("$SUBSCRIBED_CATALOGUES_PATH/$subscribedCatalogue.id$PUBLISHEDMODELS",
-                                                             ListResponse)
+        publishedModels = subscribedCatalogueApi.publishedModels(subscribedCatalogue.id)
+        System.err.println(publishedModels.items.sort {model -> model.modelId}.first().lastUpdated.nano)
+        System.err.println(expectedPublishedModels.sort {model -> model.modelId}.first().lastUpdated.nano)
         then:
         publishedModels
+
+
         publishedModels.items.size() == expectedPublishedModels.size()
         publishedModels.items.sort {model -> model.modelId}.first().modelId == expectedPublishedModels.sort {model -> model.modelId}.first().modelId
         publishedModels.items.sort {model -> model.modelId}.first().title == expectedPublishedModels.sort {model -> model.modelId}.first().title
-        publishedModels.items.sort {model -> model.modelId}.first().lastUpdated == expectedPublishedModels.sort {model -> model.modelId}.first().lastUpdated?.toString()
+        publishedModels.items.sort {model -> model.modelId}.first().lastUpdated == expectedPublishedModels.sort {model -> model.modelId}.first().lastUpdated
         publishedModels.items.sort {model -> model.modelId}.first().datePublished != null
         publishedModels.items.sort {model -> model.modelId}.first().author == expectedPublishedModels.sort {model -> model.modelId}.first().author
         publishedModels.items.sort {model -> model.modelId}.first().description == expectedPublishedModels.sort {model -> model.modelId}.first().description
@@ -221,15 +225,13 @@ class SubscribedCatalogueIntegrationSpec extends SecuredIntegrationSpec {
         given:
         loginAdmin()
 
-        SubscribedCatalogue subscribedCatalogue = (SubscribedCatalogue) POST("$ADMIN_SUBSCRIBED_CATALOGUES_PATH", payload, SubscribedCatalogue)
+        SubscribedCatalogue subscribedCatalogue = subscribedCatalogueApi.create(payload)
 
         logout()
         loginUser()
 
         when:
-        SubscribedCataloguesPublishedModelsNewerVersions response =
-            (SubscribedCataloguesPublishedModelsNewerVersions) GET("$SUBSCRIBED_CATALOGUES_PATH/$subscribedCatalogue.id$PUBLISHEDMODELS/$publishedModelId/newerVersions",
-                                                                   SubscribedCataloguesPublishedModelsNewerVersions)
+        SubscribedCataloguesPublishedModelsNewerVersions response = subscribedCatalogueApi.publishedModelsNewerVersions(subscribedCatalogue.id, publishedModelId)
         then:
         response
         response.newerPublishedModels.size() == numberOfNewerVersions
@@ -248,8 +250,7 @@ class SubscribedCatalogueIntegrationSpec extends SecuredIntegrationSpec {
         loginAdmin()
 
         when:
-        ListResponse<SubscribedCatalogueType> catalogueTypeListResponse =
-            (ListResponse<SubscribedCatalogueType>) GET("$SUBSCRIBED_CATALOGUES_PATH$TYPES", ListResponse<SubscribedCatalogueType>)
+        ListResponse<SubscribedCatalogueType> catalogueTypeListResponse = subscribedCatalogueApi.types()
 
         then:
         catalogueTypeListResponse
@@ -258,7 +259,7 @@ class SubscribedCatalogueIntegrationSpec extends SecuredIntegrationSpec {
         logout()
         loginUser()
         when:
-        catalogueTypeListResponse = (ListResponse<SubscribedCatalogueType>) GET("$SUBSCRIBED_CATALOGUES_PATH$TYPES", ListResponse<SubscribedCatalogueType>)
+        catalogueTypeListResponse = subscribedCatalogueApi.types()
 
         then:
         catalogueTypeListResponse
@@ -267,7 +268,7 @@ class SubscribedCatalogueIntegrationSpec extends SecuredIntegrationSpec {
 
     void 'not logged in - getSubscribedCatalogueTypes - should throw UNAUTHORIZED '() {
         when:
-        GET("$SUBSCRIBED_CATALOGUES_PATH$TYPES", ListResponse<SubscribedCatalogueType>)
+        subscribedCatalogueApi.types()
 
         then:
         HttpClientResponseException exception = thrown()
@@ -279,8 +280,7 @@ class SubscribedCatalogueIntegrationSpec extends SecuredIntegrationSpec {
         loginAdmin()
 
         when:
-        ListResponse<SubscribedCatalogueAuthenticationType> authenticationTypeListResponse =
-            (ListResponse<SubscribedCatalogueAuthenticationType>) GET("$SUBSCRIBED_CATALOGUES_PATH$AUTHENTICATION_TYPES", ListResponse<SubscribedCatalogueAuthenticationType>)
+        ListResponse<SubscribedCatalogueAuthenticationType> authenticationTypeListResponse = subscribedCatalogueApi.authenticationTypes()
 
         then:
         authenticationTypeListResponse
@@ -292,7 +292,7 @@ class SubscribedCatalogueIntegrationSpec extends SecuredIntegrationSpec {
         loginUser()
 
         when:
-        GET("$SUBSCRIBED_CATALOGUES_PATH$AUTHENTICATION_TYPES", ListResponse<SubscribedCatalogueAuthenticationType>)
+        subscribedCatalogueApi.authenticationTypes()
 
         then:
         HttpClientResponseException exception = thrown()
@@ -301,7 +301,7 @@ class SubscribedCatalogueIntegrationSpec extends SecuredIntegrationSpec {
         logout()
 
         when:
-        GET("$SUBSCRIBED_CATALOGUES_PATH$AUTHENTICATION_TYPES", ListResponse<SubscribedCatalogueAuthenticationType>)
+        subscribedCatalogueApi.authenticationTypes()
 
         then:
         exception = thrown()
@@ -313,8 +313,7 @@ class SubscribedCatalogueIntegrationSpec extends SecuredIntegrationSpec {
         loginAdmin()
 
         when:
-        SubscribedCatalogue updated =
-            (SubscribedCatalogue) PUT("$ADMIN_SUBSCRIBED_CATALOGUES_PATH/$subscribedCatalogueId", [label: 'updated label'], SubscribedCatalogue)
+        SubscribedCatalogue updated = subscribedCatalogueApi.update(subscribedCatalogueId, new SubscribedCatalogue(label: 'updated label'))
 
         then:
         updated
@@ -326,7 +325,7 @@ class SubscribedCatalogueIntegrationSpec extends SecuredIntegrationSpec {
         loginUser()
 
         when:
-        PUT("$ADMIN_SUBSCRIBED_CATALOGUES_PATH/$subscribedCatalogueId", [label: 'updated label'], SubscribedCatalogue)
+        subscribedCatalogueApi.update(subscribedCatalogueId, new SubscribedCatalogue(label: 'updated label'))
 
         then:
         HttpClientResponseException exception = thrown()
@@ -335,7 +334,7 @@ class SubscribedCatalogueIntegrationSpec extends SecuredIntegrationSpec {
         logout()
 
         when:
-        PUT("$ADMIN_SUBSCRIBED_CATALOGUES_PATH/$subscribedCatalogueId", [label: 'updated label'], SubscribedCatalogue)
+        subscribedCatalogueApi.update(subscribedCatalogueId, new SubscribedCatalogue(label: 'updated label'))
 
         then:
         exception = thrown()
@@ -346,10 +345,10 @@ class SubscribedCatalogueIntegrationSpec extends SecuredIntegrationSpec {
         given:
         loginAdmin()
 
-        (SubscribedCatalogue) POST("$ADMIN_SUBSCRIBED_CATALOGUES_PATH", mauroJsonSubscribedCataloguePayload('label1'), SubscribedCatalogue)
+        subscribedCatalogueApi.create(mauroJsonSubscribedCataloguePayload('label1'))
 
         when:
-        ListResponse<SubscribedCatalogue> resp = (ListResponse<SubscribedCatalogue>) GET(SUBSCRIBED_CATALOGUES_PATH, ListResponse, SubscribedCatalogue)
+        ListResponse<SubscribedCatalogue> resp = subscribedCatalogueApi.listSubscribedCatalogues()
 
         then:
         resp
@@ -358,7 +357,7 @@ class SubscribedCatalogueIntegrationSpec extends SecuredIntegrationSpec {
 
         loginUser()
         when:
-        resp = (ListResponse<SubscribedCatalogue>) GET(SUBSCRIBED_CATALOGUES_PATH, ListResponse, SubscribedCatalogue)
+        resp = (ListResponse<SubscribedCatalogue>) subscribedCatalogueApi.listSubscribedCatalogues()
 
         then:
         resp
@@ -369,19 +368,19 @@ class SubscribedCatalogueIntegrationSpec extends SecuredIntegrationSpec {
         given:
         loginAdmin()
 
-        SubscribedCatalogue created = (SubscribedCatalogue) POST("$ADMIN_SUBSCRIBED_CATALOGUES_PATH", mauroJsonSubscribedCataloguePayload('label1'), SubscribedCatalogue)
+        SubscribedCatalogue created = subscribedCatalogueApi.create(mauroJsonSubscribedCataloguePayload('label1'))
 
         when:
-        HttpStatus httpStatus = DELETE("$ADMIN_SUBSCRIBED_CATALOGUES_PATH/$created.id", HttpStatus)
+        HttpResponse httpResponse = subscribedCatalogueApi.delete(created.id, new SubscribedCatalogue())
 
         then:
-        httpStatus == HttpStatus.NO_CONTENT
+        httpResponse.status() == HttpStatus.NO_CONTENT
 
         logout()
         loginUser()
 
         when:
-        DELETE("$ADMIN_SUBSCRIBED_CATALOGUES_PATH/$created.id", HttpStatus)
+        subscribedCatalogueApi.delete(created.id, new SubscribedCatalogue())
 
         then:
         HttpClientResponseException httpClientResponseException = thrown()
@@ -401,7 +400,10 @@ class SubscribedCatalogueIntegrationSpec extends SecuredIntegrationSpec {
     }
 
     List<PublishedModel> mauroJsonExpectedResponse() {
-        List<PublishedModel> result = mapper.readValue(new File('src/test/resources/mauroJsonPublishedModels.json').text, List<PublishedModel>)
+        //List<Object> list = mapper.readValue(new File('src/test/resources/mauroJsonPublishedModels.json').text, List<PublishedModel>)
+        //List<PublishedModel> result = list.collect {(PublishedModel) mapper.readValue(it, PublishedModel)}
+
+        List<PublishedModel> result = mapper.readValue(new File('src/test/resources/mauroJsonPublishedModels.json').text, new TypeReference<List<PublishedModel>>(){})
         result
     }
 }

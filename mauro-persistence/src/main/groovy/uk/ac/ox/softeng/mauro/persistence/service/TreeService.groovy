@@ -66,6 +66,7 @@ class TreeService {
         folderCacheableRepository.readAllRootFolders().collect {Folder folder ->
             TreeItem.from(folder).tap {
                 if (setChildren) children = buildTree(folder, foldersOnly, false)
+                hasChildren = children && children.size() > 0
             }
         }
     }
@@ -78,6 +79,7 @@ class TreeService {
                 .collect {Object model ->
                     TreeItem.from((Model) model).tap {
                         if (setChildren) children = buildTree(model as AdministeredItem, foldersOnly, false)
+                        hasChildren = children && children.size() > 0
                     }
                 }
         }
@@ -90,6 +92,7 @@ class TreeService {
                 TreeItem.from(dataClass).tap {
                     model = dataClass.dataModel
                     if (setChildren) children = buildTree(dataClass, false, false)
+                    hasChildren = children && children.size() > 0
                 }
             }
         treeItems
@@ -100,6 +103,7 @@ class TreeService {
             TreeItem.from(childClass).tap {
                 model = childClass.dataModel
                 if (setChildren) children = buildTree(childClass, false, false)
+                hasChildren = children && children.size() > 0
             }
         }
     }
@@ -109,6 +113,7 @@ class TreeService {
             TreeItem.from(term).tap {
                 model = term.terminology
                 if (setChildren) children = buildTree(term, false, false)
+                hasChildren = children && children.size() > 0
             }
         }
     }
@@ -118,6 +123,7 @@ class TreeService {
             TreeItem.from(childTerm).tap {
                 model = childTerm.terminology
                 if (setChildren) children = buildTree(childTerm, false, false)
+                hasChildren = children && children.size() > 0
             }
         }
     }

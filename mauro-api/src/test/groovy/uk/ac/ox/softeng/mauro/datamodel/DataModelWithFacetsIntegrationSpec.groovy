@@ -1,9 +1,25 @@
 package uk.ac.ox.softeng.mauro.datamodel
 
+import uk.ac.ox.softeng.mauro.api.classifier.ClassificationSchemeApi
+import uk.ac.ox.softeng.mauro.api.classifier.ClassifierApi
+import uk.ac.ox.softeng.mauro.api.datamodel.DataClassApi
+import uk.ac.ox.softeng.mauro.api.datamodel.DataElementApi
+import uk.ac.ox.softeng.mauro.api.datamodel.DataModelApi
+import uk.ac.ox.softeng.mauro.api.datamodel.DataTypeApi
+import uk.ac.ox.softeng.mauro.api.datamodel.EnumerationValueApi
+import uk.ac.ox.softeng.mauro.api.facet.AnnotationApi
+import uk.ac.ox.softeng.mauro.api.facet.MetadataApi
+import uk.ac.ox.softeng.mauro.api.facet.ReferenceFileApi
+import uk.ac.ox.softeng.mauro.api.facet.SummaryMetadataApi
+import uk.ac.ox.softeng.mauro.api.facet.SummaryMetadataReportApi
+import uk.ac.ox.softeng.mauro.api.folder.FolderApi
+
+import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.client.exceptions.HttpClientResponseException
 import io.micronaut.runtime.EmbeddedApplication
 import jakarta.inject.Inject
+import jakarta.inject.Singleton
 import spock.lang.Shared
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
@@ -17,10 +33,8 @@ import uk.ac.ox.softeng.mauro.persistence.ContainerizedTest
 import uk.ac.ox.softeng.mauro.testing.CommonDataSpec
 
 @ContainerizedTest
+@Singleton
 class DataModelWithFacetsIntegrationSpec extends CommonDataSpec {
-
-    @Inject
-    EmbeddedApplication<?> application
 
     @Shared
     UUID folderId
@@ -49,45 +63,46 @@ class DataModelWithFacetsIntegrationSpec extends CommonDataSpec {
     @Shared
     ReferenceFile referenceFile
 
-
-
-    void setupSpec(){
-        Folder response = (Folder) POST("$FOLDERS_PATH", folder(), Folder)
+    void setup(){
+        Folder response = folderApi.create(folder())
         folderId = response.id
 
-        DataModel dataModelResponse = (DataModel) POST("$FOLDERS_PATH/$folderId$DATAMODELS_PATH", [label: 'Test data model', description: 'test description', author: 'test author'], DataModel)
+        DataModel dataModelResponse = dataModelApi.create(folderId,
+              new DataModel(label: 'Test data model',
+                            description: 'test description',
+                            author: 'test author'))
         dataModelId = dataModelResponse.id
 
-        Metadata metadataResponse = (Metadata) POST("$DATAMODELS_PATH/$dataModelId$METADATA_PATH", metadataPayload(), Metadata)
+        Metadata metadataResponse = metadataApi.create("dataModel", dataModelId, metadataPayload())
         metadataId = metadataResponse.id
 
-        SummaryMetadata summaryMetadataResponse = (SummaryMetadata) POST("$DATAMODELS_PATH/$dataModelId$SUMMARY_METADATA_PATH",
-               summaryMetadataPayload(), SummaryMetadata)
+        SummaryMetadata summaryMetadataResponse =
+            summaryMetadataApi.create("dataModel", dataModelId, summaryMetadataPayload())
         summaryMetadataId = summaryMetadataResponse.id
 
-        SummaryMetadataReport reportResponse = (SummaryMetadataReport) POST("$DATAMODELS_PATH/$dataModelId$SUMMARY_METADATA_PATH/$summaryMetadataId$SUMMARY_METADATA_REPORT_PATH",
-                summaryMetadataReport(), SummaryMetadataReport)
+        SummaryMetadataReport reportResponse =
+            summaryMetadataReportApi.create("dataModel", dataModelId, summaryMetadataId,
+                summaryMetadataReport())
         reportId = reportResponse.id
 
-        Annotation annotationResponse = (Annotation) POST("$DATAMODELS_PATH/$dataModelId/$ANNOTATION_PATH",
-                annotationPayload(), Annotation)
+        Annotation annotationResponse = annotationApi.create("dataModel",dataModelId, annotationPayload())
         annotationId = annotationResponse.id
 
-        Annotation childResp = (Annotation) POST("$DATAMODELS_PATH/$dataModelId$ANNOTATION_PATH/$annotationId$ANNOTATION_PATH",
-                annotationPayload('child label', 'child description'), Annotation)
+        Annotation childResp = annotationApi.create("dataModel", dataModelId, annotationId,
+                annotationPayload('child label', 'child description'))
         childAnnotationId = childResp.id
         String fileContent = "a  very long string the quick brown fox jumped over the dog"
 
-        referenceFile = (ReferenceFile) POST ("$DATAMODELS_PATH/$dataModelId$REFERENCE_FILE_PATH",
-                ["fileName": "test file name",
-                    "fileSize": fileContent.size(),
-                    "fileContents": fileContent.bytes,
-                    "fileType": "text/plain"], ReferenceFile)
+        referenceFile = referenceFileApi.create("dataModel", dataModelId,
+                new ReferenceFile(fileName: "test file name",
+                    fileSize: fileContent.size(),
+                    fileContents: fileContent.bytes,
+                    fileType: "text/plain"))
     }
 
     void 'test get data model with facets - should return all nested facets'() {
         when:
-        DataModel retrieved = (DataModel) GET("$DATAMODELS_PATH/$dataModelId", DataModel)
+        DataModel retrieved = dataModelApi.show(dataModelId)
         then:
         retrieved
         retrieved.metadata
@@ -115,7 +130,7 @@ class DataModelWithFacetsIntegrationSpec extends CommonDataSpec {
 
     void 'test delete data model with facets - should delete model and all related facets'() {
         given:
-        DataModel retrieved = (DataModel) GET("$DATAMODELS_PATH/$dataModelId", DataModel)
+        DataModel retrieved = dataModelApi.show(dataModelId)
 
         and:
         retrieved
@@ -139,45 +154,41 @@ class DataModelWithFacetsIntegrationSpec extends CommonDataSpec {
         retrieved.referenceFiles.first().id == referenceFile.id
 
         when:
-        HttpStatus httpStatus = DELETE("$DATAMODELS_PATH/$dataModelId", HttpStatus)
+        HttpResponse httpResponse = dataModelApi.delete(dataModelId, new DataModel())
 
         then:
-        httpStatus == HttpStatus.NO_CONTENT
+        httpResponse.status == HttpStatus.NO_CONTENT
 
         when:
-        GET("$DATAMODELS_PATH/$dataModelId", DataModel)
+        def response = dataModelApi.show(dataModelId)
 
         then: 'the show endpoint shows the update'
-        HttpClientResponseException exception = thrown()
-        exception.status == HttpStatus.NOT_FOUND
+        !response
 
         when:
-        GET("$DATAMODELS_PATH/$dataModelId$METADATA_PATH/$metadataId", Metadata)
+        response = metadataApi.show("dataModel", dataModelId, metadataId)
 
         then: 'the show endpoint shows the update'
-        exception = thrown()
-        exception.status == HttpStatus.NOT_FOUND
+        !response
 
         when:
-        GET("$DATAMODELS_PATH/$dataModelId$SUMMARY_METADATA_PATH/$summaryMetadataId$SUMMARY_METADATA_REPORT_PATH/$reportId", SummaryMetadataReport)
+        response = summaryMetadataReportApi.show("dataModel", dataModelId, summaryMetadataId, reportId)
 
         then: 'the show endpoint shows the update'
-        exception = thrown()
-        exception.status == HttpStatus.NOT_FOUND
+        !response
 
         when:
-        GET("$DATAMODELS_PATH/$dataModelId$ANNOTATION_PATH/$annotationId", Annotation)
+        response = annotationApi.show("dataModel",dataModelId, annotationId)
 
         then: 'the show endpoint shows the update'
-        exception = thrown()
-        exception.status == HttpStatus.NOT_FOUND
+        !response
 
         when:
-        GET("$DATAMODELS_PATH/$dataModelId$ANNOTATION_PATH/$annotationId$ANNOTATION_PATH/$childAnnotationId", Annotation)
+        response = annotationApi.getChildAnnotation("dataModel", dataModelId, annotationId, childAnnotationId)
 
         then: 'the show endpoint shows the update'
-        exception = thrown()
-        exception.status == HttpStatus.NOT_FOUND
+        !response
+
     }
 
 }

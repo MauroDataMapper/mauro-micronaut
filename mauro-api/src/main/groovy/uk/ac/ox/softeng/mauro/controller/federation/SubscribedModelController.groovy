@@ -1,7 +1,8 @@
 package uk.ac.ox.softeng.mauro.controller.federation
 
+import io.micronaut.http.HttpResponse
 import uk.ac.ox.softeng.mauro.ErrorHandler
-import uk.ac.ox.softeng.mauro.Paths
+import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.controller.model.ItemController
 import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedCatalogue
 import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedModel
@@ -33,7 +34,7 @@ import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
 
 @Slf4j
-@Controller()
+@Controller
 @CompileStatic
 @Secured(SecurityRule.IS_ANONYMOUS)
 class SubscribedModelController extends ItemController<SubscribedModel> {
@@ -55,13 +56,13 @@ class SubscribedModelController extends ItemController<SubscribedModel> {
         this.subscribedModelService = subscribedModelService
     }
 
-    @Get(Paths.SUBSCRIBED_MODELS_ROUTE)
+    @Get(Paths.SUBSCRIBED_MODELS_LIST)
     ListResponse<SubscribedModel> listAll(@NonNull UUID subscribedCatalogueId) {
         accessControlService.checkAuthenticated()
         ListResponse.from(subscribedModelCacheableRepository.findAllBySubscribedCatalogueId(subscribedCatalogueId))
     }
 
-    @Get(Paths.SUBSCRIBED_MODELS_ID_ROUTE)
+    @Get(Paths.SUBSCRIBED_MODELS_ID)
     SubscribedModel show(@NonNull UUID subscribedCatalogueId, @NonNull UUID subscribedModelId) {
         accessControlService.checkAuthenticated()
 
@@ -71,7 +72,7 @@ class SubscribedModelController extends ItemController<SubscribedModel> {
         subscribedModelCacheableRepository.findBySubscribedModelIdAndSubscribedCatalogueId(subscribedModelId, subscribedCatalogue)
     }
 
-    @Post(Paths.SUBSCRIBED_MODELS_ROUTE)
+    @Post(Paths.SUBSCRIBED_MODELS_LIST)
     @ExecuteOn(TaskExecutors.BLOCKING)
     @Transactional
     SubscribedModel create(@NonNull UUID subscribedCatalogueId, @Body @NonNull SubscribedModelFederationParams subscribedModelFederationParams) {
@@ -95,9 +96,9 @@ class SubscribedModelController extends ItemController<SubscribedModel> {
         subscribedModelCacheableRepository.save(subscribedModel)
     }
 
-    @Delete(Paths.SUBSCRIBED_MODELS_ID_ROUTE)
+    @Delete(Paths.SUBSCRIBED_MODELS_ID)
     @Transactional
-    HttpStatus delete(@NonNull UUID subscribedCatalogueId, @NonNull UUID subscribedModelId, @Body @Nullable SubscribedModel subscribedModel) {
+    HttpResponse delete(@NonNull UUID subscribedCatalogueId, @NonNull UUID subscribedModelId, @Body @Nullable SubscribedModel subscribedModel) {
         accessControlService.checkAdministrator()
 
         SubscribedCatalogue subscribedCatalogue = subscribedCatalogueCacheableRepository.findById(subscribedCatalogueId)
@@ -109,7 +110,7 @@ class SubscribedModelController extends ItemController<SubscribedModel> {
         if (subscribedModel?.version) subscribedModel.version = subscribedModel.version
         Long deleted = subscribedModelCacheableRepository.delete(subscribedModelToDelete)
         if (deleted) {
-            HttpStatus.NO_CONTENT
+            HttpResponse.status(HttpStatus.NO_CONTENT)
         } else {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, 'Not found for deletion')
         }

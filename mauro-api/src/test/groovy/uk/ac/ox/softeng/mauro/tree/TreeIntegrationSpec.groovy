@@ -1,9 +1,19 @@
 package uk.ac.ox.softeng.mauro.tree
 
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
+import uk.ac.ox.softeng.mauro.domain.folder.Folder
+import uk.ac.ox.softeng.mauro.domain.security.CatalogueUser
+import uk.ac.ox.softeng.mauro.domain.security.Role
+import uk.ac.ox.softeng.mauro.domain.terminology.CodeSet
+import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
+import uk.ac.ox.softeng.mauro.domain.tree.TreeItem
+
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.client.exceptions.HttpClientResponseException
 import io.micronaut.runtime.EmbeddedApplication
 import jakarta.inject.Inject
+import jakarta.inject.Singleton
 import spock.lang.Shared
 import uk.ac.ox.softeng.mauro.domain.security.SecurableResourceGroupRole
 import uk.ac.ox.softeng.mauro.domain.security.UserGroup
@@ -11,10 +21,8 @@ import uk.ac.ox.softeng.mauro.persistence.SecuredContainerizedTest
 import uk.ac.ox.softeng.mauro.security.SecuredIntegrationSpec
 
 @SecuredContainerizedTest
+@Singleton
 class TreeIntegrationSpec extends SecuredIntegrationSpec {
-
-    @Inject
-    EmbeddedApplication<?> application
 
     @Shared
     UUID rootFolderId
@@ -42,79 +50,79 @@ class TreeIntegrationSpec extends SecuredIntegrationSpec {
 
     void setupSpec() {
         loginAdmin()
-        rootFolderId = UUID.fromString((String) POST('/folders', [label: 'TreeIntegrationSpec root folder']).id)
-        folder1Id = UUID.fromString((String) POST("/folders/$rootFolderId/folders", [label: 'TreeIntegrationSpec folder with contents']).id)
-        folder2Id = UUID.fromString((String) POST("/folders/$rootFolderId/folders", [label: 'TreeIntegrationSpec empty folder']).id)
+        rootFolderId = folderApi.create(new Folder(label: 'TreeIntegrationSpec root folder')).id
+        folder1Id = folderApi.create(rootFolderId, new Folder(label: 'TreeIntegrationSpec folder with contents')).id
+        folder2Id = folderApi.create(rootFolderId, new Folder(label: 'TreeIntegrationSpec empty folder')).id
 
-        dataModelId = UUID.fromString((String) POST("/folders/$folder1Id/dataModels", [label: 'TreeIntegrationSpec data model']).id)
-        dataClassId = UUID.fromString((String) POST("/dataModels/$dataModelId/dataClasses", [label: 'data class']).id)
+        dataModelId = dataModelApi.create(folder1Id, new DataModel(label: 'TreeIntegrationSpec data model')).id
+        dataClassId = dataClassApi.create(dataModelId, new DataClass(label: 'data class')).id
 
-        terminologyId = UUID.fromString((String) POST("/folders/$folder1Id/terminologies", [label: 'TreeIntegrationSpec terminology']).id)
-        codeSetId = UUID.fromString((String) POST("/folders/$folder1Id/codeSets", [label: 'TreeIntegrationSpec code set']).id)
+        terminologyId = terminologyApi.create(folder1Id, new Terminology(label: 'TreeIntegrationSpec terminology')).id
+        codeSetId = codeSetApi.create(folder1Id, new CodeSet(label: 'TreeIntegrationSpec code set')).id
         logout()
     }
 
     void 'admin can access tree'() {
         when:
         loginAdmin()
-        List<Map<String, Object>> tree = GET('/tree/folders', List)
+        List<TreeItem> tree = treeApi.folderTree(null, false)
 
         then:
         tree
         tree.size() >= 1
-        tree.find {it.label == 'TreeIntegrationSpec root folder' && it.domainType == 'Folder' && it.hasChildren && UUID.fromString(it.id) == rootFolderId}
+        tree.find {it.label == 'TreeIntegrationSpec root folder' && it.domainType == 'Folder' && it.hasChildren && it.id == rootFolderId}
 
         when:
-        tree = GET("/tree/folders/$rootFolderId", List)
+        tree = treeApi.folderTree(rootFolderId, false)
 
         then:
         tree
         tree.size() == 2
-        tree.find {it.label == 'TreeIntegrationSpec folder with contents' && it.domainType == 'Folder' && it.hasChildren && UUID.fromString(it.id) == folder1Id}
-        tree.find {it.label == 'TreeIntegrationSpec empty folder' && it.domainType == 'Folder' && !it.hasChildren && UUID.fromString(it.id) == folder2Id}
+        tree.find {it.label == 'TreeIntegrationSpec folder with contents' && it.domainType == 'Folder' && it.hasChildren && it.id == folder1Id}
+        tree.find {it.label == 'TreeIntegrationSpec empty folder' && it.domainType == 'Folder' && !it.hasChildren && it.id == folder2Id}
 
         when:
-        tree = GET("/tree/folders/$folder1Id", List)
+        tree = treeApi.folderTree(folder1Id, false)
 
         then:
         tree
         tree.size() == 3
-        tree.find {it.label == 'TreeIntegrationSpec data model' && it.domainType == 'DataModel' && it.hasChildren && UUID.fromString(it.id) == dataModelId}
-        tree.find {it.label == 'TreeIntegrationSpec code set' && it.domainType == 'CodeSet' && !it.hasChildren && UUID.fromString(it.id) == codeSetId}
-        tree.find {it.label == 'TreeIntegrationSpec terminology' && it.domainType == 'Terminology' && !it.hasChildren && UUID.fromString(it.id) == terminologyId}
+        tree.find {it.label == 'TreeIntegrationSpec data model' && it.domainType == 'DataModel' && it.hasChildren && it.id == dataModelId}
+        tree.find {it.label == 'TreeIntegrationSpec code set' && it.domainType == 'CodeSet' && !it.hasChildren && it.id == codeSetId}
+        tree.find {it.label == 'TreeIntegrationSpec terminology' && it.domainType == 'Terminology' && !it.hasChildren && it.id == terminologyId}
 
         when:
-        tree = GET("/tree/folders/codeSets/$codeSetId", List)
+        tree = treeApi.itemTree("codeSet",codeSetId, false)
 
         then:
         tree.size() == 0
 
         when:
-        tree = GET("/tree/folders/dataModels/$dataModelId", List)
+        tree = treeApi.itemTree("dataModel", dataModelId, false)
 
         then:
         tree
         tree.size() == 1
-        tree.find {it.label == 'data class' && it.domainType == 'DataClass' && !it.hasChildren && UUID.fromString(it.id) == dataClassId}
+        tree.find {it.label == 'data class' && it.domainType == 'DataClass' && !it.hasChildren && it.id == dataClassId}
     }
 
     void 'non-admin user cannot see tree without permissions'() {
         when:
         loginUser()
-        List<Map<String, Object>> tree = GET('/tree/folders', List)
+        List<TreeItem> tree = treeApi.folderTree(null, false)
 
         then:
         !tree.find {it.label == 'TreeIntegrationSpec root folder'}
 
         when:
-        GET("/tree/folders/$rootFolderId", List)
+        treeApi.folderTree(rootFolderId, false)
 
         then:
         HttpClientResponseException exception = thrown()
         exception.status == HttpStatus.FORBIDDEN
 
         when:
-        GET("/tree/folders/dataModels/$dataModelId", List)
+        treeApi.itemTree("dataModel", dataModelId, false)
 
         then:
         exception = thrown()
@@ -124,78 +132,78 @@ class TreeIntegrationSpec extends SecuredIntegrationSpec {
     void 'non-admin user can see the tree when permissions are granted'() {
         given:
         loginAdmin()
-        UserGroup readersGroup = (UserGroup) POST('/userGroups', [name: 'Readers Group'], UserGroup)
+        UserGroup readersGroup = userGroupApi.create(new UserGroup (name: 'Readers Group'))
         userGroupId = readersGroup.id
-        PUT("/catalogueUsers/$user.id", [groups: [readersGroup.id]])
-        POST("/folder/$rootFolderId/roles/Reader/userGroups/$readersGroup.id", null, SecurableResourceGroupRole)
+        catalogueUserApi.update(user.id, new CatalogueUser(groups: [readersGroup.id] ))
+        securableResourceGroupRoleApi.create("folder", rootFolderId, Role.READER, readersGroup.id)
         logout()
 
         when:
         loginUser()
-        List<Map<String, Object>> tree = GET('/tree/folders', List)
+        List<TreeItem> tree = treeApi.folderTree(null, false)
 
         then:
         tree
         tree.size() >= 1
-        tree.find {it.label == 'TreeIntegrationSpec root folder' && it.domainType == 'Folder' && it.hasChildren && UUID.fromString(it.id) == rootFolderId}
+        tree.find {it.label == 'TreeIntegrationSpec root folder' && it.domainType == 'Folder' && it.hasChildren && it.id == rootFolderId}
 
         when:
-        tree = GET("/tree/folders/$rootFolderId", List)
+        tree = treeApi.folderTree(rootFolderId, false)
 
         then:
         tree
         tree.size() == 2
-        tree.find {it.label == 'TreeIntegrationSpec folder with contents' && it.domainType == 'Folder' && it.hasChildren && UUID.fromString(it.id) == folder1Id}
-        tree.find {it.label == 'TreeIntegrationSpec empty folder' && it.domainType == 'Folder' && !it.hasChildren && UUID.fromString(it.id) == folder2Id}
+        tree.find {it.label == 'TreeIntegrationSpec folder with contents' && it.domainType == 'Folder' && it.hasChildren && it.id == folder1Id}
+        tree.find {it.label == 'TreeIntegrationSpec empty folder' && it.domainType == 'Folder' && !it.hasChildren && it.id == folder2Id}
 
         when:
-        tree = GET("/tree/folders/$folder1Id", List)
+        tree = treeApi.folderTree(folder1Id, false)
 
         then:
         tree
         tree.size() == 3
-        tree.find {it.label == 'TreeIntegrationSpec data model' && it.domainType == 'DataModel' && it.hasChildren && UUID.fromString(it.id) == dataModelId}
-        tree.find {it.label == 'TreeIntegrationSpec code set' && it.domainType == 'CodeSet' && !it.hasChildren && UUID.fromString(it.id) == codeSetId}
-        tree.find {it.label == 'TreeIntegrationSpec terminology' && it.domainType == 'Terminology' && !it.hasChildren && UUID.fromString(it.id) == terminologyId}
+        tree.find {it.label == 'TreeIntegrationSpec data model' && it.domainType == 'DataModel' && it.hasChildren && it.id == dataModelId}
+        tree.find {it.label == 'TreeIntegrationSpec code set' && it.domainType == 'CodeSet' && !it.hasChildren && it.id == codeSetId}
+        tree.find {it.label == 'TreeIntegrationSpec terminology' && it.domainType == 'Terminology' && !it.hasChildren && it.id == terminologyId}
 
         when:
-        tree = GET("/tree/folders/codeSets/$codeSetId", List)
+        tree = treeApi.itemTree("codeSet", codeSetId, false)
 
         then:
         tree.size() == 0
 
         when:
-        tree = GET("/tree/folders/dataModels/$dataModelId", List)
+        tree = treeApi.itemTree("dataModel", dataModelId, false)
 
         then:
         tree
         tree.size() == 1
-        tree.find {it.label == 'data class' && it.domainType == 'DataClass' && !it.hasChildren && UUID.fromString(it.id) == dataClassId}
+        tree.find {it.label == 'data class' && it.domainType == 'DataClass' && !it.hasChildren && it.id == dataClassId}
     }
 
 
     void 'non-admin user cannot see tree when permissions are removed'() {
         given:
         loginAdmin()
-        DELETE("/folder/$rootFolderId/roles/Reader/userGroups/$userGroupId", HttpStatus)
+        securableResourceGroupRoleApi.delete("folder", rootFolderId, Role.READER, userGroupId)
         logout()
 
         when:
         loginUser()
-        List<Map<String, Object>> tree = GET('/tree/folders', List)
+        List<TreeItem> tree = treeApi.folderTree(null, false)
 
         then:
         !tree.find {it.label == 'TreeIntegrationSpec root folder'}
 
         when:
-        GET("/tree/folders/$rootFolderId", List)
+        treeApi.folderTree(rootFolderId, false)
 
         then:
         HttpClientResponseException exception = thrown()
         exception.status == HttpStatus.FORBIDDEN
 
         when:
-        GET("/tree/folders/dataModels/$dataModelId", List)
+        treeApi.itemTree("dataModel", dataModelId, false)
 
         then:
         exception = thrown()

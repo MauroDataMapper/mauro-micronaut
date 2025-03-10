@@ -5,6 +5,10 @@ import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.facet.federation.PublishedModel
 import uk.ac.ox.softeng.mauro.domain.facet.federation.response.PublishedModelResponse
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
+import uk.ac.ox.softeng.mauro.domain.model.version.CreateNewVersionData
+import uk.ac.ox.softeng.mauro.domain.model.version.FinaliseData
+import uk.ac.ox.softeng.mauro.domain.model.version.ModelVersion
+import uk.ac.ox.softeng.mauro.domain.model.version.VersionChangeType
 import uk.ac.ox.softeng.mauro.domain.terminology.CodeSet
 import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
 import uk.ac.ox.softeng.mauro.persistence.SecuredContainerizedTest
@@ -12,15 +16,14 @@ import uk.ac.ox.softeng.mauro.security.SecuredIntegrationSpec
 
 import io.micronaut.runtime.EmbeddedApplication
 import jakarta.inject.Inject
+import jakarta.inject.Singleton
 import spock.lang.Shared
-
 import java.time.Instant
 
+
+@Singleton
 @SecuredContainerizedTest
 class PublishedModelIntegrationSpec extends SecuredIntegrationSpec {
-
-    @Inject
-    EmbeddedApplication<?> application
 
     @Shared
     UUID folderId
@@ -37,16 +40,16 @@ class PublishedModelIntegrationSpec extends SecuredIntegrationSpec {
 
     void setupSpec() {
         loginAdmin()
-        folderId = ((Folder) POST("$FOLDERS_PATH", folder(), Folder)).id
         startTime = Instant.now()
-        dataModelId = ((DataModel) POST("$FOLDERS_PATH/$folderId$DATAMODELS_PATH", [label: 'data model label'], DataModel)).id
-        ((DataClass) POST("$DATAMODELS_PATH/$dataModelId$DATACLASSES_PATH", [label: 'data class label'], DataClass)).id
+        folderId = folderApi.create(folder()).id
+        dataModelId = dataModelApi.create(folderId, new DataModel(label: 'data model label')).id
+        dataClassApi.create(dataModelId, new DataClass(label: 'data class label'))
 
-        terminologyId = ((Terminology) POST("$FOLDERS_PATH/$folderId$TERMINOLOGIES_PATH", [label: 'terminology label'], Terminology)).id
-        codeSetId = ((CodeSet) POST("$FOLDERS_PATH/$folderId$CODE_SET_PATH", [label: 'code set label'], CodeSet)).id
-        (DataModel) PUT("$DATAMODELS_PATH/$dataModelId/finalise", [version: '1.0.0', versionChangeType: 'major', versionTag: 'versionTagString'], DataModel)
-        (Terminology) PUT("$TERMINOLOGIES_PATH/$terminologyId/finalise", [ version: '1.0.0', versionChangeType: 'major', versionTag: 'versionTagString'], Terminology)
-        (CodeSet) PUT("$CODE_SET_PATH/$codeSetId/finalise", [version: '1.0.0', versionChangeType: 'major', versionTag: 'versionTagString'], CodeSet)
+        terminologyId = terminologyApi.create(folderId, new Terminology(label: 'terminology label')).id
+        codeSetId = codeSetApi.create(folderId, new CodeSet(label: 'code set label')).id
+        dataModelApi.finalise(dataModelId, new FinaliseData(version: ModelVersion.from('1.0.0'), versionChangeType: VersionChangeType.MAJOR, versionTag: 'versionTagString'))
+        terminologyApi.finalise(terminologyId, new FinaliseData(version: ModelVersion.from('1.0.0'), versionChangeType: VersionChangeType.MAJOR, versionTag: 'versionTagString'))
+        codeSetApi.finalise(codeSetId, new FinaliseData(version: ModelVersion.from('1.0.0'), versionChangeType: VersionChangeType.MAJOR, versionTag: 'versionTagString'))
 
         logout()
     }
@@ -59,7 +62,7 @@ class PublishedModelIntegrationSpec extends SecuredIntegrationSpec {
         .toSorted()
 
         when:
-        PublishedModelResponse publishedModelResponse = (PublishedModelResponse) GET(PUBLISHED_MODELS_PATH, PublishedModelResponse)
+        PublishedModelResponse publishedModelResponse = publishApi.show()
 
         then:
         publishedModelResponse
@@ -82,11 +85,11 @@ class PublishedModelIntegrationSpec extends SecuredIntegrationSpec {
         given:
         loginAdmin()
         and:
-        Terminology newerVersion = (Terminology) PUT("$TERMINOLOGIES_PATH/$terminologyId/newBranchModelVersion", ['version': '1.0.1','branchName': 'main'], Terminology)
-        Terminology finalisedNewerVersion = (Terminology) PUT("$TERMINOLOGIES_PATH/$newerVersion.id/finalise", ['version': '2.0.0'], Terminology)
+        Terminology newerVersion = terminologyApi.createNewBranchModelVersion(terminologyId, new CreateNewVersionData(label: '1.0.1', branchName: 'main' ))
+        Terminology finalisedNewerVersion = terminologyApi.finalise(newerVersion.id, new FinaliseData(version: ModelVersion.from('2.0.0')))
 
         when:
-        PublishedModelResponse publishedModelResponse = (PublishedModelResponse) GET("$PUBLISHED_MODELS_PATH/$terminologyId/newerVersions", PublishedModelResponse)
+        PublishedModelResponse publishedModelResponse = publishApi.newerVersions(terminologyId)
 
         then:
         publishedModelResponse
@@ -101,7 +104,7 @@ class PublishedModelIntegrationSpec extends SecuredIntegrationSpec {
         when:
         loginUser()
 
-        PublishedModelResponse publishedModelResponse = (PublishedModelResponse) GET(PUBLISHED_MODELS_PATH, PublishedModelResponse)
+        PublishedModelResponse publishedModelResponse = publishApi.show()
 
         then:
         publishedModelResponse

@@ -1,5 +1,23 @@
 package uk.ac.ox.softeng.mauro.datamodel
 
+import uk.ac.ox.softeng.mauro.api.datamodel.DataClassApi
+import uk.ac.ox.softeng.mauro.api.datamodel.DataElementApi
+import uk.ac.ox.softeng.mauro.api.datamodel.DataModelApi
+import uk.ac.ox.softeng.mauro.api.datamodel.DataTypeApi
+import uk.ac.ox.softeng.mauro.api.datamodel.EnumerationValueApi
+import uk.ac.ox.softeng.mauro.api.folder.FolderApi
+import uk.ac.ox.softeng.mauro.domain.model.version.FinaliseData
+import uk.ac.ox.softeng.mauro.domain.model.version.VersionChangeType
+import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchRequestDTO
+import uk.ac.ox.softeng.mauro.testing.CommonDataSpec
+
+import io.micronaut.http.HttpResponse
+import io.micronaut.http.HttpStatus
+import io.micronaut.runtime.EmbeddedApplication
+import jakarta.inject.Inject
+import jakarta.inject.Singleton
+import spock.lang.Shared
+import uk.ac.ox.softeng.mauro.domain.datamodel.*
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataElement
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
@@ -8,7 +26,6 @@ import uk.ac.ox.softeng.mauro.domain.datamodel.EnumerationValue
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.persistence.ContainerizedTest
 import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchResultsDTO
-import uk.ac.ox.softeng.mauro.testing.BaseIntegrationSpec
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 import io.micronaut.http.HttpStatus
@@ -17,10 +34,8 @@ import jakarta.inject.Inject
 import spock.lang.Shared
 
 @ContainerizedTest
-class DataModelIntegrationSpec extends BaseIntegrationSpec {
-
-    @Inject
-    EmbeddedApplication<?> application
+@Singleton
+class DataModelIntegrationSpec extends CommonDataSpec {
 
     @Shared
     UUID folderId
@@ -55,63 +70,63 @@ class DataModelIntegrationSpec extends BaseIntegrationSpec {
     @Shared
     UUID enumerationValueId
 
+
     void 'test data model'() {
         given:
-        Folder response = (Folder) POST('/folders', [label: 'Test folder'], Folder)
+        Folder response = folderApi.create(new Folder(label: 'Test folder'))
         folderId = response.id
 
         when:
-        Map dataModelResponse = POST("/folders/$folderId/dataModels", [label: 'Test data model'])
-        dataModelId = UUID.fromString(dataModelResponse.id)
+        DataModel dataModelResponse = dataModelApi.create(folderId, new DataModel(label: 'Test data model'))
+        dataModelId = dataModelResponse.id
 
         then:
         dataModelResponse.label == 'Test data model'
-        dataModelResponse.type == 'Data Asset'
-        dataModelResponse.path == 'dm:Test data model$main'
+        dataModelResponse.dataModelType == DataModelType.DATA_ASSET.label
+        dataModelResponse.path.toString() == 'dm:Test data model$main'
         dataModelResponse.authority
 
-
         when:
-        dataModelResponse = GET("/dataModels/$dataModelId")
+        dataModelResponse = dataModelApi.show(dataModelId)
 
         then:
         dataModelResponse.label == 'Test data model'
-        dataModelResponse.type == 'Data Asset'
-        dataModelResponse.path == 'dm:Test data model$main'
+        dataModelResponse.dataModelType == DataModelType.DATA_ASSET.label
+        dataModelResponse.path.toString() == 'dm:Test data model$main'
         dataModelResponse.authority
 
         when:
-        dataModelResponse = POST("/folders/$folderId/dataModels", [label: 'Test data standard', type: 'Data Standard'])
-        UUID dataStandardId = UUID.fromString(dataModelResponse.id)
+        dataModelResponse = dataModelApi.create(folderId, new DataModel(label: 'Test data standard', dataModelType: DataModelType.DATA_STANDARD.label))
+        UUID dataStandardId = dataModelResponse.id
 
         then:
         dataModelResponse.label == 'Test data standard'
-        dataModelResponse.type == 'Data Standard'
-        dataModelResponse.path == 'dm:Test data standard$main'
+        dataModelResponse.dataModelType == DataModelType.DATA_STANDARD.label
+        dataModelResponse.path.toString() == 'dm:Test data standard$main'
         dataModelResponse.authority
 
         when:
-        dataModelResponse = GET("/dataModels/$dataStandardId")
+        dataModelResponse = dataModelApi.show(dataStandardId)
 
         then:
         dataModelResponse.label == 'Test data standard'
-        dataModelResponse.type == 'Data Standard'
-        dataModelResponse.path == 'dm:Test data standard$main'
+        dataModelResponse.dataModelType == DataModelType.DATA_STANDARD.label
+        dataModelResponse.path.toString() == 'dm:Test data standard$main'
         dataModelResponse.authority
     }
 
     void 'test finalise data model'() {
 
         given:
-        DataModel response = (DataModel) POST('/folders', [label: 'Test folder'], DataModel)
+        Folder response = folderApi.create(new Folder(label: 'Test folder'))
         folderId = response.id
 
-        response = (DataModel) POST("/folders/$folderId/dataModels", [label: 'Test data model'], DataModel)
-        dataModelId = response.id
+        dataModelId = dataModelApi.create(folderId, new DataModel(label: 'Test data model')).id
 
         when:
-        DataModel finalised = (DataModel) PUT("/dataModels/$dataModelId/finalise", [versionChangeType: 'major', versionTag: 'random version tag'],
-                DataModel)
+        DataModel finalised = dataModelApi.finalise(
+            dataModelId,
+            new FinaliseData(versionChangeType: VersionChangeType.MAJOR, versionTag: 'random version tag'))
 
         then:
         finalised
@@ -122,21 +137,31 @@ class DataModelIntegrationSpec extends BaseIntegrationSpec {
 
     void 'test data types'() {
         when:
-        DataType dataTypeResponse = (DataType) POST("/dataModels/$dataModelId/dataTypes", [label: 'string', description: 'character string of variable length', domainType: 'PrimitiveType'], DataType)
+        DataType dataTypeResponse = dataTypeApi.create(
+            dataModelId, new DataType(
+            label: 'string',
+            description: 'character string of variable length',
+            dataTypeKind: DataType.DataTypeKind.PRIMITIVE_TYPE))
         dataTypeId1 = dataTypeResponse.id
 
         then:
         dataTypeResponse.label == 'string'
 
         when:
-        dataTypeResponse = (DataType) POST("/dataModels/$dataModelId/dataTypes", [label: 'integer', description: 'a whole number, may be positive or negative, with no maximum or minimum', domainType: 'PrimitiveType'], DataType)
+        dataTypeResponse =
+        dataTypeResponse = dataTypeApi.create(
+            dataModelId, new DataType(
+            label: 'integer',
+            description: 'a whole number, may be positive or negative, with no maximum or minimum',
+            dataTypeKind: DataType.DataTypeKind.PRIMITIVE_TYPE))
         dataTypeId2 = dataTypeResponse.id
 
         then:
         dataTypeResponse.label == 'integer'
 
         when:
-        ListResponse<DataType> dataTypesListResponse = (ListResponse<DataType>) GET("/dataModels/$dataModelId/dataTypes", ListResponse, DataType)
+        ListResponse<DataType> dataTypesListResponse =
+            dataTypeApi.list(dataModelId)
 
         then:
         dataTypesListResponse.count == 2
@@ -144,53 +169,67 @@ class DataModelIntegrationSpec extends BaseIntegrationSpec {
         dataTypesListResponse.items.domainType == ['PrimitiveType', 'PrimitiveType']
 
         when:
-        dataTypeResponse = (DataType) POST("/dataModels/$dataModelId/dataTypes",
-                        [label: 'Yes/No',
-                         description: 'Either a yes or a no',
-                         domainType: 'EnumerationType',
-/*                         enumerationValues: [
-                             [key: 'Y', value: 'Yes'],
-                             [key: 'N', value: 'No']] */
-                         ], DataType)
+        dataTypeResponse =
+            dataTypeApi.create(dataModelId, DataType.build(
+                dataTypeKind: DataType.DataTypeKind.ENUMERATION_TYPE)
+                {
+                    label 'Yes/No'
+                    description 'Either a yes or a no'
+/*                    enumerationValue {
+                        key 'Y'
+                        value 'Yes'
+                    }
+                    enumerationValue {
+                        key 'N'
+                        value 'No'
+                    }*/
+                })
         dataTypeId3 = dataTypeResponse.id
 
         then:
         dataTypeResponse.label == 'Yes/No'
         dataTypeResponse.domainType == 'EnumerationType'
-
     }
 
     void 'test data classes'() {
         when:
-        DataClass dataClassResponse = (DataClass) POST("/dataModels/$dataModelId/dataClasses", [label: 'First data class', description: 'The first data class'], DataClass)
+        DataClass dataClassResponse = dataClassApi.create(
+            dataModelId,
+            new DataClass(label: 'First data class', description: 'The first data class'))
         dataClassId1 = dataClassResponse.id
 
         then:
         dataClassResponse.label == 'First data class'
 
         when:
-        dataClassResponse = (DataClass) POST("/dataModels/$dataModelId/dataClasses", [label: 'Second data class', description: 'The second data class'], DataClass)
+        dataClassResponse = dataClassApi.create(
+            dataModelId,
+            new DataClass(label: 'Second data class', description: 'The second data class'))
         dataClassId2 = dataClassResponse.id
 
         then:
         dataClassResponse.label == 'Second data class'
 
         when:
-        ListResponse<DataClass> dataClassListResponse = (ListResponse<DataClass>) GET("/dataModels/$dataModelId/dataClasses", ListResponse, DataClass)
+        ListResponse<DataClass> dataClassListResponse =
+            dataClassApi.list(dataModelId)
 
         then:
         dataClassListResponse.count == 2
         dataClassListResponse.items.path.collect {it.toString()}.sort() == ['dm:Test data model$1.0.0|dc:First data class', 'dm:Test data model$1.0.0|dc:Second data class']
 
         when:
-        dataClassResponse = (DataClass) POST("/dataModels/$dataModelId/dataClasses/$dataClassId2/dataClasses", [label: 'Third data class', description: 'The third data class'], DataClass)
+        dataClassResponse = dataClassApi.create(
+            dataModelId,
+            dataClassId2,
+            new DataClass(label: 'Third data class', description: 'The third data class'))
         dataClassId3 = dataClassResponse.id
 
         then:
         dataClassResponse.label == 'Third data class'
 
         when:
-        dataClassListResponse = (ListResponse<DataClass>) GET("/dataModels/$dataModelId/dataClasses/$dataClassId2/dataClasses", ListResponse, DataClass)
+        dataClassListResponse = dataClassApi.list(dataModelId, dataClassId2)
 
         then:
         dataClassListResponse.count == 1
@@ -199,8 +238,12 @@ class DataModelIntegrationSpec extends BaseIntegrationSpec {
         // dataClassListResponse.items.path.sort().collect {it.toString()} == ['dm:Test data model$main|dc:Second data class|dc:Third data class']
 
         when:
-        dataClassResponse = (DataClass) PUT("/dataModels/$dataModelId/dataClasses/$dataClassId2/dataClasses/$dataClassId3", [label: 'Third data class (renamed)'], DataClass)
-        dataClassListResponse = (ListResponse<DataClass>) GET("/dataModels/$dataModelId/dataClasses/$dataClassId2/dataClasses", ListResponse, DataClass)
+        dataClassResponse = dataClassApi.update(
+            dataModelId,
+            dataClassId2,
+            dataClassId3,
+            new DataClass(label: 'Third data class (renamed)'))
+        dataClassListResponse = dataClassApi.list(dataModelId, dataClassId2)
 
         then:
         dataClassResponse.label == 'Third data class (renamed)'
@@ -209,8 +252,13 @@ class DataModelIntegrationSpec extends BaseIntegrationSpec {
         // dataClassListResponse.items.path.sort().collect {it.toString()} == ['dm:Test data model$main|dc:Second data class|dc:Third data class (renamed)']
 
         when:
-        HttpStatus status = DELETE("/dataModels/$dataModelId/dataClasses/$dataClassId2/dataClasses/$dataClassId3", [label: 'Third data class (renamed)'], HttpStatus)
-        dataClassListResponse = (ListResponse<DataClass>) GET("/dataModels/$dataModelId/dataClasses/$dataClassId2/dataClasses", ListResponse, DataClass)
+        HttpResponse response = dataClassApi.delete(
+            dataModelId,
+            dataClassId2,
+            dataClassId3,
+            new DataClass(label: 'Third data class (renamed)'))
+
+        dataClassListResponse = dataClassApi.list(dataModelId, dataClassId2)
         then:
         dataClassListResponse.count == 0
 
@@ -219,39 +267,56 @@ class DataModelIntegrationSpec extends BaseIntegrationSpec {
 
     void 'test data elements'() {
         when:
-        ListResponse<DataElement> dataElementListResponse = (ListResponse<DataElement>) GET("/dataModels/$dataModelId/dataClasses/$dataClassId1/dataElements")
+        ListResponse<DataElement> dataElementListResponse = dataElementApi.list(dataModelId, dataClassId1)
         then:
         dataElementListResponse.count == 0
 
         when:
-        DataElement dataElementResponse = (DataElement) POST("/dataModels/$dataModelId/dataClasses/$dataClassId1/dataElements", [label: 'First data element', description: 'The first data element', dataType: [id: dataTypeId1]], DataElement)
+        DataElement dataElementResponse = dataElementApi.create(
+            dataModelId,
+            dataClassId1,
+            new DataElement(
+                label: 'First data element',
+                description: 'The first data element',
+                dataType: new DataType(id: dataTypeId1)))
         dataElementId1 = dataElementResponse.id
 
         then:
         dataElementResponse.label == 'First data element'
 
         when:
-        dataElementListResponse = (ListResponse<DataElement>) GET("/dataModels/$dataModelId/dataClasses/$dataClassId1/dataElements")
+        dataElementListResponse = dataElementApi.list(dataModelId, dataClassId1)
 
         then:
         dataElementListResponse.count == 1
 
         when:
-        dataElementResponse = (DataElement) POST("/dataModels/$dataModelId/dataClasses/$dataClassId1/dataElements", [label: 'Second data element', description: 'The second data element', dataType: [id: dataTypeId2]], DataElement)
+        dataElementResponse = dataElementApi.create(
+            dataModelId,
+            dataClassId1,
+            new DataElement(label: 'Second data element',
+                            description: 'The second data element',
+                            dataType: new DataType(id: dataTypeId2)))
         dataElementId2 = dataElementResponse.id
 
         then:
         dataElementResponse.label == 'Second data element'
 
         when:
-        dataElementListResponse = (ListResponse<DataElement>) GET("/dataModels/$dataModelId/dataClasses/$dataClassId1/dataElements")
+        dataElementListResponse = dataElementApi.list(dataModelId, dataClassId1)
 
         then:
         dataElementListResponse.count == 2
         dataElementListResponse.items.label.sort() == ['First data element', 'Second data element']
 
         when:
-        dataElementResponse = (DataElement) PUT("/dataModels/$dataModelId/dataClasses/$dataClassId1/dataElements/$dataElementId1", [label: 'Renamed data element', description: 'The second data element', dataType: [id: dataTypeId2]], DataElement)
+        dataElementResponse = dataElementApi.update(
+            dataModelId,
+            dataClassId1,
+            dataElementId1,
+            new DataElement(label: 'Renamed data element',
+                            description: 'The second data element',
+                            dataType: new DataType(id: dataTypeId2)))
 
         then:
         dataElementResponse.label == 'Renamed data element'
@@ -259,7 +324,11 @@ class DataModelIntegrationSpec extends BaseIntegrationSpec {
         Integer minMultiplicity = dataElementResponse.minMultiplicity
 
         when:
-        dataElementResponse = (DataElement) PUT("/dataModels/$dataModelId/dataClasses/$dataClassId1/dataElements/$dataElementId1", [ minMultiplicity: 5, dataType: [id: dataTypeId2]], DataElement)
+        dataElementResponse = dataElementApi.update(
+                dataModelId,
+                dataClassId1,
+                dataElementId1,
+                new DataElement(minMultiplicity: 5, dataType: new DataType(id: dataTypeId2)))
 
         then:
         dataElementResponse.label == 'Renamed data element'
@@ -267,20 +336,24 @@ class DataModelIntegrationSpec extends BaseIntegrationSpec {
         dataElementResponse.minMultiplicity != minMultiplicity
 
         when:
-        dataElementListResponse = (ListResponse<DataElement>) GET("/dataModels/$dataModelId/dataClasses/$dataClassId1/dataElements")
+        dataElementListResponse = dataElementApi.list(dataModelId, dataClassId1)
 
         then:
         dataElementListResponse.count == 2
         dataElementListResponse.items.label.sort() == ['Renamed data element', 'Second data element']
 
         when:
-        HttpStatus status = (HttpStatus) DELETE("/dataModels/$dataModelId/dataClasses/$dataClassId1/dataElements/$dataElementId2", [label: ''], HttpStatus)
+        HttpResponse response = dataElementApi.delete(
+            dataModelId,
+            dataClassId1,
+            dataElementId2,
+            new DataElement())
 
         then:
-        status == HttpStatus.NO_CONTENT
+        response.status == HttpStatus.NO_CONTENT
 
         when:
-        dataElementListResponse = (ListResponse<DataElement>) GET("/dataModels/$dataModelId/dataClasses/$dataClassId1/dataElements")
+        dataElementListResponse = dataElementApi.list(dataModelId, dataClassId1)
 
         then:
         dataElementListResponse.count == 1
@@ -294,14 +367,21 @@ class DataModelIntegrationSpec extends BaseIntegrationSpec {
 
     void 'test enumeration values'() {
         when:
-        DataType dataTypeResponse = (DataType) POST("/dataModels/$dataModelId/dataTypes", [label: 'Boolean', description: 'Either true or false',domainType: 'EnumerationType'], DataType)
+        DataType dataTypeResponse = dataTypeApi.create(
+            dataModelId,
+            new DataType(label: 'Boolean',
+                         description: 'Either true or false',
+                         dataTypeKind: DataType.DataTypeKind.ENUMERATION_TYPE))
         UUID enumerationTypeId = dataTypeResponse.id
 
         then:
         dataTypeResponse.label == 'Boolean'
 
         when:
-        EnumerationValue enumerationValueResponse = (EnumerationValue) POST("/dataModels/$dataModelId/dataTypes/$enumerationTypeId/enumerationValues", [key: 'T', value: 'True'], EnumerationValue)
+        EnumerationValue enumerationValueResponse = enumerationValueApi.create(
+            dataModelId,
+            enumerationTypeId,
+            new EnumerationValue(key: 'T', value: 'True'))
         enumerationValueId = enumerationValueResponse.id
 
         then:
@@ -309,30 +389,38 @@ class DataModelIntegrationSpec extends BaseIntegrationSpec {
         enumerationValueResponse.domainType == 'EnumerationValue'
 
         when:
-        enumerationValueResponse = (EnumerationValue) POST("/dataModels/$dataModelId/dataTypes/$enumerationTypeId/enumerationValues", [key: 'F', value: 'False'], EnumerationValue)
+        enumerationValueResponse = enumerationValueApi.create(
+            dataModelId,
+            enumerationTypeId,
+            new EnumerationValue(key: 'F', value: 'False'))
 
         then:
         enumerationValueResponse.label == 'F'
         enumerationValueResponse.domainType == 'EnumerationValue'
 
         when:
-        ListResponse<EnumerationValue> enumerationValueListResponse = (ListResponse<EnumerationValue>) GET("/dataModels/$dataModelId/dataTypes/$enumerationTypeId/enumerationValues", ListResponse, EnumerationValue)
+        ListResponse<EnumerationValue> enumerationValueListResponse =
+            enumerationValueApi.list(dataModelId, enumerationTypeId)
 
         then:
         enumerationValueListResponse.count == 2
 
-        enumerationValueListResponse.items.find { it -> it.key == 'T' } != null
-        enumerationValueListResponse.items.find { it -> it.key == 'F' } != null
+        enumerationValueListResponse.items.find { it -> it.key == 'T' }
+        enumerationValueListResponse.items.find { it -> it.key == 'F' }
 
         when:
-        enumerationValueResponse = (EnumerationValue) PUT("/dataModels/$dataModelId/dataTypes/$enumerationTypeId/enumerationValues/$enumerationValueId", [key: 'R', value: 'Renamed'], EnumerationValue)
+        enumerationValueResponse = enumerationValueApi.update(
+            dataModelId,
+            enumerationTypeId,
+            enumerationValueId,
+            new EnumerationValue(key: 'R', value: 'Renamed'))
 
         then:
         enumerationValueResponse.label == 'R'
         enumerationValueResponse.domainType == 'EnumerationValue'
 
         when:
-        enumerationValueListResponse = (ListResponse<EnumerationValue>) GET("/dataModels/$dataModelId/dataTypes/$enumerationTypeId/enumerationValues", ListResponse, EnumerationValue)
+        enumerationValueListResponse = enumerationValueApi.list(dataModelId, enumerationTypeId)
 
         then:
         enumerationValueListResponse.count == 2
@@ -346,18 +434,20 @@ class DataModelIntegrationSpec extends BaseIntegrationSpec {
 
         expect:
 
-        ListResponse<SearchResultsDTO> searchResults = (ListResponse<SearchResultsDTO>) GET("/dataModels/$dataModelId/search?${queryParams}", ListResponse, SearchResultsDTO)
+        ListResponse<SearchResultsDTO> searchResults =
+            dataModelApi.searchGet(dataModelId,
+                new SearchRequestDTO(searchTerm: searchTerm, domainTypes: domainTypes))
+
         searchResults.items.label == expectedLabels
 
         where:
 
-        queryParams                                                     | expectedLabels
-        "searchTerm=first"                                              | ["First data class"]
-        "searchTerm=second"                                             | ["Second data class", "Renamed data element"]
-        "searchTerm=second&domainTypes=DataClass"                       | ["Second data class"]
-        "searchTerm=second&domainTypes=DataElement"                     | ["Renamed data element"]
+        searchTerm          | domainTypes                               | expectedLabels
+        "first"             | []                                        | ["First data class"]
+        "second"            | []                                        | ["Second data class", "Renamed data element"]
+        "second"            | ["DataClass"]                             | ["Second data class"]
+        "second"            | ["DataElement"]                           | ["Renamed data element"]
 
     }
-
 
 }

@@ -1,7 +1,7 @@
 package uk.ac.ox.softeng.mauro.service.federation
 
 import uk.ac.ox.softeng.mauro.ErrorHandler
-import uk.ac.ox.softeng.mauro.Paths
+import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.controller.federation.client.FederationClient
 import uk.ac.ox.softeng.mauro.domain.authority.Authority
 import uk.ac.ox.softeng.mauro.domain.facet.federation.PublishedModel
@@ -36,7 +36,7 @@ class SubscribedCatalogueService {
 
     boolean validateRemote(SubscribedCatalogue subscribedCatalogue){
         boolean result
-        Tuple2<Authority, List<PublishedModel>> remotePublishedModelsWithAuthority = getRemoteClientDataAsTuple(subscribedCatalogue, Paths.PUBLISHED_MODELS_ROUTE)
+        Tuple2<Authority, List<PublishedModel>> remotePublishedModelsWithAuthority = getRemoteClientDataAsTuple(subscribedCatalogue, Paths.PUBLISHED_MODELS)
         Authority defaultAuthority = authorityService.getDefaultAuthority()
         // For Mauro JSON catalogues, check that the remote catalogue has a name (Authority label)
         // For both Mauro JSON and Atom catalogues, check that the publishedModels list exists, however this may be empty
@@ -53,7 +53,7 @@ class SubscribedCatalogueService {
     }
 
     List<PublishedModel> getPublishedModels(SubscribedCatalogue subscribedCatalogue) {
-       getRemoteClientDataAsTuple(subscribedCatalogue, Paths.PUBLISHED_MODELS_ROUTE).v2
+       getRemoteClientDataAsTuple(subscribedCatalogue, Paths.PUBLISHED_MODELS).v2
     }
 
 

@@ -1,11 +1,13 @@
 package uk.ac.ox.softeng.mauro.importexport
 
 import groovy.json.JsonSlurper
+import io.micronaut.http.HttpResponse
 import io.micronaut.http.MediaType
 import io.micronaut.http.client.multipart.MultipartBody
 import io.micronaut.runtime.EmbeddedApplication
 import io.micronaut.test.annotation.Sql
 import jakarta.inject.Inject
+import jakarta.inject.Singleton
 import spock.lang.Shared
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
@@ -21,13 +23,11 @@ import uk.ac.ox.softeng.mauro.testing.CommonDataSpec
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @ContainerizedTest
+@Singleton
 @Sql(scripts = ["classpath:sql/tear-down-annotation.sql", "classpath:sql/tear-down-metadata.sql",
         "classpath:sql/tear-down-summary-metadata.sql", "classpath:sql/tear-down-datamodel.sql",
         "classpath:sql/tear-down.sql", "classpath:sql/tear-down-folder.sql"], phase = Sql.Phase.AFTER_EACH)
 class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
-
-    @Inject
-    EmbeddedApplication<?> application
 
     @Shared
     UUID folderId
@@ -41,43 +41,40 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
     JsonSlurper jsonSlurper = new JsonSlurper()
 
     void setup() {
-        folderId = UUID.fromString(POST("$FOLDERS_PATH", [label: 'Folder top level'],).id as String)
-        dataModelId = UUID.fromString(POST("$FOLDERS_PATH/$folderId$DATAMODELS_PATH", [label: 'Test data model']).id as String)
+        folderId = folderApi.create(new Folder(label: 'Folder top level')).id
+        dataModelId = dataModelApi.create(folderId, new DataModel(label: 'Test data model')).id
     }
 
     void 'create folder, dataModels, metadata, summaryMetadata, summaryMetadataReports, annotations, terminology, codeset and export'() {
         given:
-        UUID dataClass1Id = UUID.fromString(POST("$DATAMODELS_PATH/$dataModelId$DATACLASSES_PATH", [label: 'TEST-1', definition: 'first data class']).id as String)
-        UUID dataClass2Id = UUID.fromString(POST("$DATAMODELS_PATH/$dataModelId$DATACLASSES_PATH", [label: 'TEST-2', definition: 'second data class']).id as String)
-        UUID dataTypeId = UUID.fromString(POST("$DATAMODELS_PATH/$dataModelId$DATATYPES_PATH", [label: 'Test data type', domainType: 'PrimitiveType']).id as String)
+        UUID dataClass1Id = dataClassApi.create(dataModelId, new DataClass(label: 'TEST-1', description: 'first data class')).id
+        UUID dataClass2Id = dataClassApi.create(dataModelId, new DataClass(label: 'TEST-2', description: 'second data class')).id
+        UUID dataTypeId = dataTypeApi.create(dataModelId, new DataType(label: 'Test data type', dataTypeKind: DataType.DataTypeKind.PRIMITIVE_TYPE)).id
 
-        Metadata metadataResponse = (Metadata) POST("$FOLDERS_PATH/$folderId$METADATA_PATH", metadataPayload(), Metadata)
+        Metadata metadataResponse = metadataApi.create("folder", folderId, metadataPayload())
 
-        SummaryMetadata summaryMetadataResponse = (SummaryMetadata) POST("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH",
-                summaryMetadataPayload(), SummaryMetadata)
+        SummaryMetadata summaryMetadataResponse = summaryMetadataApi.create("folder", folderId, summaryMetadataPayload())
 
-        SummaryMetadataReport reportResponse = (SummaryMetadataReport) POST("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH/$summaryMetadataResponse.id$SUMMARY_METADATA_REPORT_PATH",
-                summaryMetadataReport(), SummaryMetadataReport)
+        SummaryMetadataReport reportResponse = summaryMetadataReportApi.create("folder", folderId, summaryMetadataResponse.id, summaryMetadataReport())
 
-        Annotation annotation = (Annotation) POST("$FOLDERS_PATH/$folderId$ANNOTATION_PATH", annotationPayload(), Annotation)
-        Annotation childAnnotation = (Annotation) POST("$FOLDERS_PATH/$folderId$ANNOTATION_PATH/$annotation.id$ANNOTATION_PATH", annotationPayload('childLabel', 'child-description'), Annotation)
+        Annotation annotation = annotationApi.create("folder", folderId, annotationPayload())
+        Annotation childAnnotation = annotationApi.create("folder", folderId, annotation.id, annotationPayload('childLabel', 'child-description'))
 
-        CodeSet codeSet = (CodeSet) POST("$FOLDERS_PATH/$folderId$CODE_SET_PATH", codeSet(), CodeSet)
+        CodeSet codeSet = codeSetApi.create(folderId, codeSet())
         codeSetId = codeSet.id
 
-        Terminology terminology = (Terminology) POST("$FOLDERS_PATH/$folderId$TERMINOLOGIES_PATH", terminology(), Terminology)
+        Terminology terminology = terminologyApi.create(folderId, terminology())
 
-        TermRelationshipType termRelationshipType = (TermRelationshipType) POST("$TERMINOLOGIES_PATH/$terminology.id$TERM_RELATIONSHIP_TYPES",
-                termRelationshipType(), TermRelationshipType)
+        TermRelationshipType termRelationshipType = termRelationshipTypeApi.create(terminology.id, termRelationshipType())
 
-        Term term = (Term) POST("$TERMINOLOGIES_PATH/$terminology.id$TERMS_PATH", term(), Term)
+        Term term = termApi.create(terminology.id, term())
 
         when:
-        String json = GET("$FOLDERS_PATH/$folderId$EXPORT_PATH$JSON_EXPORTER_NAMESPACE$JSON_EXPORTER_NAME$JSON_EXPORTER_VERSION", String)
+        HttpResponse<byte[]> exportResponse = folderApi.exportModel(folderId, 'uk.ac.ox.softeng.mauro.plugin.exporter.json', 'JsonFolderExporterPlugin', '4.0.0')
 
         then:
-        json
-        Map parsedJson = jsonSlurper.parseText(json) as Map
+        exportResponse.body()
+        Map parsedJson = jsonSlurper.parseText(new String(exportResponse.body())) as Map
         parsedJson.exportMetadata
         parsedJson.folder
         parsedJson.folder.dataModels.size() == 1
@@ -121,21 +118,22 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
 
     void 'get export folder -should export folder, with nested data and deep nesting of child folders'() {
         given:
-        UUID childFolderId = UUID.fromString(POST("$FOLDERS_PATH/$folderId$FOLDERS_PATH", [label: 'Test child folder 1st level']).id as String)
-        UUID nestedChildFolderId = UUID.fromString(POST("$FOLDERS_PATH/$childFolderId$FOLDERS_PATH", [label: 'Test nested child 2nd level folder']).id as String)
+        UUID childFolderId = folderApi.create(folderId, new Folder(label: 'Test child folder 1st level')).id
+        UUID nestedChildFolderId = folderApi.create(childFolderId, new Folder(label: 'Test nested child 2nd level folder')).id
 
         and:
-        UUID childDataModelId = UUID.fromString(POST("$FOLDERS_PATH/$childFolderId$DATAMODELS_PATH", [label: 'Test child 1st level folder']).id as String)
-        UUID nestedChildDataModelId = UUID.fromString(POST("$FOLDERS_PATH/$nestedChildFolderId$DATAMODELS_PATH", [label: 'Test nested child 2nd level folder']).id as String)
+        UUID childDataModelId = dataModelApi.create(childFolderId, new DataModel(label: 'Test child 1st level folder')).id
+        UUID nestedChildDataModelId = dataModelApi.create(nestedChildFolderId, new DataModel(label: 'Test nested child 2nd level folder')).id
 
-        UUID childDataModelTypeId = UUID.fromString(POST("$DATAMODELS_PATH/$childDataModelId$DATATYPES_PATH", [label: 'Test data type childData Model', domainType: 'PrimitiveType']).id as String)
+        UUID childDataModelTypeId = dataTypeApi.create(childDataModelId,
+            new DataType(label: 'Test data type childData Model', dataTypeKind: DataType.DataTypeKind.PRIMITIVE_TYPE)).id
 
         when:
-        String json = GET("$FOLDERS_PATH/$folderId$EXPORT_PATH$JSON_EXPORTER_NAMESPACE$JSON_EXPORTER_NAME$JSON_EXPORTER_VERSION", String)
+        HttpResponse<byte[]> exportResponse = folderApi.exportModel(folderId, 'uk.ac.ox.softeng.mauro.plugin.exporter.json', 'JsonFolderExporterPlugin', '4.0.0')
         then:
-        json
+        exportResponse.body()
 
-        Map parsedJson = jsonSlurper.parseText(json) as Map
+        Map parsedJson = jsonSlurper.parseText(new String(exportResponse.body())) as Map
         parsedJson.exportMetadata
         parsedJson.folder
         parsedJson.folder.dataModels.size() == 1
@@ -157,121 +155,119 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
 
     void 'test consume export folders  - should import'() {
         given:
-        UUID dataClassId = UUID.fromString(POST("$DATAMODELS_PATH/$dataModelId$DATACLASSES_PATH", [label: 'TEST-1', definition: 'first data class']).id as String)
-        UUID dataTypeId = UUID.fromString(POST("$DATAMODELS_PATH/$dataModelId$DATATYPES_PATH", [label: 'Test data type', domainType: 'PrimitiveType']).id as String)
+        UUID dataClassId = dataClassApi.create(dataModelId, new DataClass(label: 'TEST-1', description: 'first data class')).id
+        UUID dataTypeId = dataTypeApi.create(dataModelId, new DataType(label: 'Test data type', dataTypeKind: DataType.DataTypeKind.PRIMITIVE_TYPE)).id
 
-        UUID childFolderId = UUID.fromString(POST("$FOLDERS_PATH/$folderId$FOLDERS_PATH", [label: 'child folder'],).id as String)
+        UUID childFolderId = folderApi.create(folderId, new Folder(label: 'child folder')).id
 
-        UUID childCodeSetId = UUID.fromString(POST("$FOLDERS_PATH/$childFolderId$CODE_SET_PATH", [label: 'codeset in child folder'],).id as String)
+        UUID childCodeSetId = codeSetApi.create(childFolderId, new CodeSet(label: 'codeset in child folder')).id
 
-        Metadata metadataResponse = (Metadata) POST("$FOLDERS_PATH/$folderId$METADATA_PATH", metadataPayload(), Metadata)
+        Metadata metadataResponse = metadataApi.create("folder", folderId, metadataPayload())
 
-        SummaryMetadata summaryMetadataResponse = (SummaryMetadata) POST("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH",
-                summaryMetadataPayload(), SummaryMetadata)
+        SummaryMetadata summaryMetadataResponse = summaryMetadataApi.create("folder", folderId, summaryMetadataPayload())
 
-        SummaryMetadataReport reportResponse = (SummaryMetadataReport) POST("$FOLDERS_PATH/$folderId$SUMMARY_METADATA_PATH/$summaryMetadataResponse.id$SUMMARY_METADATA_REPORT_PATH",
-                summaryMetadataReport(), SummaryMetadataReport)
+        SummaryMetadataReport reportResponse = summaryMetadataReportApi.create("folder", folderId, summaryMetadataResponse.id, summaryMetadataReport())
 
-        Annotation annotation = (Annotation) POST("$FOLDERS_PATH/$folderId$ANNOTATION_PATH", annotationPayload(), Annotation)
-        Annotation childAnnotation = (Annotation) POST("$FOLDERS_PATH/$folderId$ANNOTATION_PATH/$annotation.id$ANNOTATION_PATH", annotationPayload('childLabel', 'child-description'), Annotation)
+        Annotation annotation = annotationApi.create("folder", folderId, annotationPayload())
+        Annotation childAnnotation = annotationApi.create("folder", folderId, annotation.id, annotationPayload('childLabel', 'child-description'))
 
-        CodeSet codeSet = (CodeSet) POST("$FOLDERS_PATH/$folderId$CODE_SET_PATH", codeSet(), CodeSet)
+        CodeSet codeSet = codeSetApi.create(folderId, codeSet())
 
-        Terminology terminology = (Terminology) POST("$FOLDERS_PATH/$folderId$TERMINOLOGIES_PATH", terminology(), Terminology)
+        Terminology terminology = terminologyApi.create(folderId, terminology())
 
-        TermRelationshipType termRelationshipType = (TermRelationshipType) POST("$TERMINOLOGIES_PATH/$terminology.id$TERM_RELATIONSHIP_TYPES",
-                termRelationshipType(), TermRelationshipType)
+        TermRelationshipType termRelationshipType = termRelationshipTypeApi.create(terminology.id, termRelationshipType())
 
-        Term sourceTerm = (Term) POST("$TERMINOLOGIES_PATH/$terminology.id$TERMS_PATH", [code: 'source code', definition: 'source term'], Term)
+        Term sourceTerm = termApi.create(terminology.id, new Term(code: 'source code', definition: 'source term'))
 
-        Term targetTerm = (Term) POST("$TERMINOLOGIES_PATH/$terminology.id$TERMS_PATH", [code: 'target code', definition: 'target term'], Term)
+        Term targetTerm = termApi.create(terminology.id, new Term(code: 'target code', definition: 'target term'))
 
-       (TermRelationship) POST("/terminologies/$terminology.id/termRelationships",
-                [
-                        relationshipType: [id: termRelationshipType.id],
-                        sourceTerm      : [id: sourceTerm.id],
-                        targetTerm      : [id: targetTerm.id]], TermRelationship)
+        termRelationshipApi.create(terminology.id,
+                new TermRelationship(
+                        relationshipType: new TermRelationshipType(id: termRelationshipType.id),
+                        sourceTerm      : new Term(id: sourceTerm.id),
+                        targetTerm      : new Term(id: targetTerm.id)))
 
 
-        String exportJson = GET("$FOLDERS_PATH/$folderId$EXPORT_PATH$JSON_EXPORTER_NAMESPACE$JSON_EXPORTER_NAME$JSON_EXPORTER_VERSION", String)
+        HttpResponse<byte[]> exportResponse = folderApi.exportModel(folderId, 'uk.ac.ox.softeng.mauro.plugin.exporter.json', 'JsonFolderExporterPlugin', '4.0.0')
+
 
         MultipartBody importRequest = MultipartBody.builder()
                 .addPart('folderId', folderId.toString())
-                .addPart('importFile', 'file.json', MediaType.APPLICATION_JSON_TYPE, exportJson.bytes)
+                .addPart('importFile', 'file.json', MediaType.APPLICATION_JSON_TYPE, exportResponse.body())
                 .build()
 
         when:
-        ListResponse<Folder> response = (ListResponse<Folder>) POST("$FOLDERS_PATH$IMPORT_PATH$JSON_IMPORTER_NAMESPACE$JSON_IMPORTER_NAME$JSON_IMPORTER_VERSION", importRequest)
+        ListResponse<Folder> response = folderApi.importModel(importRequest, 'uk.ac.ox.softeng.mauro.plugin.importer.json', 'JsonFolderImporterPlugin', '4.0.0')
 
         then:
         response
-        UUID importedFolderId = UUID.fromString(response.items.id.first() as String)
+        UUID importedFolderId = response.items.id.first()
 
         when:
-        Folder importedFolder = (Folder) GET("$FOLDERS_PATH/$importedFolderId", Folder)
+        Folder importedFolder = folderApi.show(importedFolderId)
 
         then:
         importedFolder
 
         when:
-        ListResponse<DataModel> importedDataModelListResponse = (ListResponse<DataModel>) GET("$FOLDERS_PATH/$importedFolderId$DATAMODELS_PATH", ListResponse, DataModel)
+        ListResponse<DataModel> importedDataModelListResponse = dataModelApi.list(importedFolderId)
         then:
         importedDataModelListResponse
         importedDataModelListResponse.items.size() == 1
         importedDataModelListResponse.items[0].id != dataModelId
-        String importedDataModelId = importedDataModelListResponse.items[0].id
+        UUID importedDataModelId = importedDataModelListResponse.items[0].id
         when:
-        ListResponse<DataType> importedDataTypesListResponse = (ListResponse<DataType>) GET("$DATAMODELS_PATH/$importedDataModelId$DATATYPES_PATH", ListResponse, DataType)
+        ListResponse<DataType> importedDataTypesListResponse = dataTypeApi.list(importedDataModelId)
         then:
         importedDataTypesListResponse
         importedDataTypesListResponse.items.size() == 1
         importedDataTypesListResponse.items[0].id != dataTypeId
 
         when:
-        ListResponse<DataClass> importedDataClassesListResponse = (ListResponse<DataClass>) GET("$DATAMODELS_PATH/$importedDataModelId$DATACLASSES_PATH", ListResponse, DataClass)
+        ListResponse<DataClass> importedDataClassesListResponse = dataClassApi.list(importedDataModelId)
         then:
         importedDataClassesListResponse.items.size() == 1
         importedDataClassesListResponse.items[0].label == 'TEST-1'
         importedDataClassesListResponse.items[0].id != dataClassId
 
         when:
-        ListResponse<SummaryMetadata> importedSummaryMetadataResponse = (ListResponse<SummaryMetadata>) GET("$FOLDERS_PATH/$importedFolderId$SUMMARY_METADATA_PATH", ListResponse, SummaryMetadata)
-        then:
-        importedSummaryMetadataResponse
-        importedSummaryMetadataResponse.items.size() == 1
-        importedSummaryMetadataResponse.items[0].id != summaryMetadataResponse.id
-
-        when:
-        ListResponse<SummaryMetadataReport> importedReportResponse = (ListResponse<Metadata>) GET("$FOLDERS_PATH/$importedFolderId$METADATA_PATH", ListResponse, Metadata)
-        then:
-        importedReportResponse
-        importedReportResponse.items.size() == 1
-        importedReportResponse.items[0].id != reportResponse.id
-
-        when:
-        ListResponse<Folder> importedChildFolders = (ListResponse<Folder>) GET("$FOLDERS_PATH/$importedFolderId$FOLDERS_PATH", ListResponse, Folder)
-        then:
-        importedChildFolders
-        importedChildFolders.items.size() == 1
-        String importedChildFolderId = importedChildFolders.items[0].id
-
-        when:
-        ListResponse<CodeSet> importedChildCodeSet = (ListResponse<CodeSet>) GET("$FOLDERS_PATH/$importedChildFolderId$CODE_SET_PATH", ListResponse, CodeSet)
-        then:
-        importedChildCodeSet
-        importedChildCodeSet.items.size() == 1
-        importedChildCodeSet.items[0].id != childCodeSetId
-
-        when:
-        ListResponse<Metadata> importedMetadataResponse = (ListResponse<Metadata>) GET("$FOLDERS_PATH/$importedFolderId$METADATA_PATH", ListResponse, Metadata)
-
+        ListResponse<Metadata> importedMetadataResponse = metadataApi.list("folder", importedFolderId)
         then:
         importedMetadataResponse
         importedMetadataResponse.items.size() == 1
         importedMetadataResponse.items[0].id != metadataResponse.id
 
         when:
-        ListResponse<Annotation> importedAnnotationResponse = (ListResponse<Annotation>) GET("$FOLDERS_PATH/$importedFolderId$ANNOTATION_PATH", ListResponse, Annotation)
+        ListResponse<SummaryMetadata> importedSummaryMetadataResponse = summaryMetadataApi.list("folder", importedFolderId)
+        then:
+        importedSummaryMetadataResponse
+        importedSummaryMetadataResponse.items.size() == 1
+        importedSummaryMetadataResponse.items[0].id != summaryMetadataResponse.id
+
+        when:
+        ListResponse<SummaryMetadataReport> importedReportResponse =
+            summaryMetadataReportApi.list("folder", importedFolderId, importedSummaryMetadataResponse.items[0].id)
+        then:
+        importedReportResponse
+        importedReportResponse.items.size() == 1
+        importedReportResponse.items[0].id != reportResponse.id
+
+        when:
+        ListResponse<Folder> importedChildFolders = folderApi.list(importedFolderId)
+        then:
+        importedChildFolders
+        importedChildFolders.items.size() == 1
+        UUID importedChildFolderId = importedChildFolders.items[0].id
+
+        when:
+        ListResponse<CodeSet> importedChildCodeSet = codeSetApi.list(importedChildFolderId)
+        then:
+        importedChildCodeSet
+        importedChildCodeSet.items.size() == 1
+        importedChildCodeSet.items[0].id != childCodeSetId
+
+        when:
+        ListResponse<Annotation> importedAnnotationResponse = annotationApi.list("folder", importedFolderId)
 
         then:
         importedAnnotationResponse
@@ -284,7 +280,7 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
         importedAnnotationResponse.items[0]?.childAnnotations[0].id != childAnnotation.id
 
         when:
-        ListResponse<CodeSet> importedCodeSetResponse = (ListResponse<CodeSet>) GET("$FOLDERS_PATH/$importedFolderId$CODE_SET_PATH", ListResponse, CodeSet)
+        ListResponse<CodeSet> importedCodeSetResponse = codeSetApi.list(importedFolderId)
 
         then:
         importedCodeSetResponse
@@ -292,104 +288,105 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
         importedCodeSetResponse.items[0].id != codeSet.id
 
         when:
-        ListResponse<Terminology> importedTerminologyResponse = (ListResponse<Terminology>) GET("$FOLDERS_PATH/$importedFolderId$TERMINOLOGIES_PATH", ListResponse, Terminology)
+        ListResponse<Terminology> importedTerminologyResponse = terminologyApi.list(importedFolderId)
 
         then:
         importedTerminologyResponse
         importedTerminologyResponse.items.size() == 1
-        String importedTerminologyIdString = importedTerminologyResponse.items[0].id
-        importedTerminologyIdString != terminology.id
+        UUID importedTerminologyId = importedTerminologyResponse.items[0].id
+        importedTerminologyId != terminology.id
 
         when:
         ListResponse<TermRelationshipType> importedTermRelationshipTypeResponse =
-                (ListResponse<TermRelationshipType>) GET("$TERMINOLOGIES_PATH/$importedTerminologyIdString$TERM_RELATIONSHIP_TYPES", ListResponse, TermRelationshipType)
+                termRelationshipTypeApi.list(importedTerminologyId)
 
         then:
         importedTermRelationshipTypeResponse
         importedTermRelationshipTypeResponse.items.size() == 1
-        UUID importedTermRelationshipTypeIdString = importedTermRelationshipTypeResponse.items[0].id
-        importedTermRelationshipTypeIdString != termRelationshipType.id
+        UUID importedTermRelationshipTypeId = importedTermRelationshipTypeResponse.items[0].id
+        importedTermRelationshipTypeId != termRelationshipType.id
 
         when:
-        ListResponse<Term> importedTermsResponse = (ListResponse<Term>) GET("$TERMINOLOGIES_PATH/$importedTerminologyIdString$TERMS_PATH", ListResponse, Term)
+        ListResponse<Term> importedTermsResponse = termApi.list(importedTerminologyId)
 
         then:
         importedTermsResponse
         importedTermsResponse.items.size() == 2
 
-        importedTermsResponse.items.code.sort().collect { it.toString() } == ['source code', 'target code']
-        importedTermsResponse.items.id.sort().collect { it.toString() } != ["${sourceTerm.id}", "${targetTerm.id}"]
+        importedTermsResponse.items.code.sort() == ['source code', 'target code']
+        importedTermsResponse.items.id.sort() != [sourceTerm.id, targetTerm.id]
 
         when:
-        ListResponse<TermRelationship> importedTermRelationship = (ListResponse<TermRelationship>) GET("$TERMINOLOGIES_PATH/$importedTerminologyIdString$TERM_RELATIONSHIP_PATH", ListResponse, TermRelationship)
+        ListResponse<TermRelationship> importedTermRelationship =
+            termRelationshipApi.list(importedTerminologyId)
         then:
         importedTermRelationship
         importedTermRelationship.items.size() == 1
         importedTermRelationship.items[0].id != termRelationshipType.id
         importedTermRelationship.items[0].sourceTerm.code == 'source code'
         importedTermRelationship.items[0].targetTerm.code == 'target code'
-        importedTermRelationship.items[0].relationshipType.id == importedTermRelationshipTypeIdString
+        importedTermRelationship.items[0].relationshipType.id == importedTermRelationshipTypeId
     }
 
 
     void 'test consume export folder- folder is not parent - should import'() {
         given:
 
-        UUID childFolderId = UUID.fromString(POST("$FOLDERS_PATH/$folderId$FOLDERS_PATH", [label: 'child folder'],).id as String)
+        UUID childFolderId = folderApi.create(folderId, new Folder(label: 'child folder')).id
 
-        UUID childCodeSetId = UUID.fromString(POST("$FOLDERS_PATH/$childFolderId$CODE_SET_PATH", [label: 'codeset in child folder'],).id as String)
+        UUID childCodeSetId = codeSetApi.create(childFolderId, new CodeSet(label: 'codeset in child folder')).id
 
-        Annotation annotation = (Annotation) POST("$FOLDERS_PATH/$folderId$ANNOTATION_PATH", annotationPayload(), Annotation)
-        Annotation childAnnotation = (Annotation) POST("$FOLDERS_PATH/$folderId$ANNOTATION_PATH/$annotation.id$ANNOTATION_PATH", annotationPayload('childLabel', 'child-description'), Annotation)
+        Annotation annotation = annotationApi.create("folder", folderId, annotationPayload())
+        Annotation childAnnotation =
+            annotationApi.create("folder", folderId, annotation.id, annotationPayload('childLabel', 'child-description'))
 
-        CodeSet codeSet = (CodeSet) POST("$FOLDERS_PATH/$folderId$CODE_SET_PATH", codeSet(), CodeSet)
+        CodeSet codeSet = codeSetApi.create(folderId, codeSet())
 
-        Terminology terminology = (Terminology) POST("$FOLDERS_PATH/$folderId$TERMINOLOGIES_PATH", terminology(), Terminology)
+        Terminology terminology = terminologyApi.create(folderId, terminology())
 
-        TermRelationshipType termRelationshipType = (TermRelationshipType) POST("$TERMINOLOGIES_PATH/$terminology.id$TERM_RELATIONSHIP_TYPES",
-                termRelationshipType(), TermRelationshipType)
+        TermRelationshipType termRelationshipType = termRelationshipTypeApi.create(terminology.id, termRelationshipType())
 
-        Term sourceTerm = (Term) POST("$TERMINOLOGIES_PATH/$terminology.id$TERMS_PATH", [code: 'source code', definition: 'source term'], Term)
+        Term sourceTerm = termApi.create(terminology.id, new Term(code: 'source code', definition: 'source term'))
 
-        Term targetTerm = (Term) POST("$TERMINOLOGIES_PATH/$terminology.id$TERMS_PATH", [code: 'target code', definition: 'target term'], Term)
+        Term targetTerm = termApi.create(terminology.id, new Term(code: 'target code', definition: 'target term'))
 
-        (TermRelationship) POST("/terminologies/$terminology.id/termRelationships",
-                [
-                        relationshipType: [id: termRelationshipType.id],
-                        sourceTerm      : [id: sourceTerm.id],
-                        targetTerm      : [id: targetTerm.id]], TermRelationship)
+        termRelationshipApi.create(terminology.id,
+                new TermRelationship(
+                        relationshipType: new TermRelationshipType(id: termRelationshipType.id),
+                        sourceTerm      : new Term(id: sourceTerm.id),
+                        targetTerm      : new Term(id: targetTerm.id)))
 
 
-        String exportJson = GET("$FOLDERS_PATH/$folderId$EXPORT_PATH$JSON_EXPORTER_NAMESPACE$JSON_EXPORTER_NAME$JSON_EXPORTER_VERSION", String)
+        HttpResponse<byte[]> exportResponse = folderApi.exportModel(folderId, 'uk.ac.ox.softeng.mauro.plugin.exporter.json', 'JsonFolderExporterPlugin', '4.0.0')
 
         MultipartBody importRequest = MultipartBody.builder()
                 .addPart('folderId', childFolderId.toString())
-                .addPart('importFile', 'file.json', MediaType.APPLICATION_JSON_TYPE, exportJson.bytes)
+                .addPart('importFile', 'file.json', MediaType.APPLICATION_JSON_TYPE, exportResponse.body())
                 .build()
 
         when:
-        ListResponse<Folder> response = (ListResponse<Folder>) POST("$FOLDERS_PATH$IMPORT_PATH$JSON_IMPORTER_NAMESPACE$JSON_IMPORTER_NAME$JSON_IMPORTER_VERSION", importRequest)
+        ListResponse<Folder> response = folderApi.importModel(importRequest, 'uk.ac.ox.softeng.mauro.plugin.importer.json', 'JsonFolderImporterPlugin', '4.0.0')
 
         then:
         response
-        UUID importedFolderId = UUID.fromString(response.items.id.first() as String)
+        UUID importedFolderId = response.items.first().id
 
         when:
-        Folder importedFolder = (Folder) GET("$FOLDERS_PATH/$importedFolderId", Folder)
+        Folder importedFolder = folderApi.show(importedFolderId)
 
         then:
         importedFolder
 
 
         when:
-        ListResponse<Folder> importedChildFolders = (ListResponse<Folder>) GET("$FOLDERS_PATH/$importedFolderId$FOLDERS_PATH", ListResponse, Folder)
+        ListResponse<Folder> importedChildFolders = folderApi.list(importedFolderId)
         then:
         importedChildFolders
         importedChildFolders.items.size() == 1
-        String importedChildFolderId = importedChildFolders.items[0].id
+        UUID importedChildFolderId = importedChildFolders.items[0].id
 
         when:
-        ListResponse<CodeSet> importedChildCodeSet = (ListResponse<CodeSet>) GET("$FOLDERS_PATH/$importedChildFolderId$CODE_SET_PATH", ListResponse, CodeSet)
+        ListResponse<CodeSet> importedChildCodeSet = codeSetApi.list(importedChildFolderId)
         then:
         importedChildCodeSet
         importedChildCodeSet.items.size() == 1
@@ -397,7 +394,7 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
 
 
         when:
-        ListResponse<Annotation> importedAnnotationResponse = (ListResponse<Annotation>) GET("$FOLDERS_PATH/$importedFolderId$ANNOTATION_PATH", ListResponse, Annotation)
+        ListResponse<Annotation> importedAnnotationResponse = annotationApi.list("folder", importedFolderId)
 
         then:
         importedAnnotationResponse
@@ -410,7 +407,7 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
         importedAnnotationResponse.items[0]?.childAnnotations[0].id != childAnnotation.id
 
         when:
-        ListResponse<CodeSet> importedCodeSetResponse = (ListResponse<CodeSet>) GET("$FOLDERS_PATH/$importedFolderId$CODE_SET_PATH", ListResponse, CodeSet)
+        ListResponse<CodeSet> importedCodeSetResponse = codeSetApi.list(importedFolderId)
 
         then:
         importedCodeSetResponse
@@ -418,70 +415,73 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
         importedCodeSetResponse.items[0].id != codeSet.id
 
         when:
-        ListResponse<Terminology> importedTerminologyResponse = (ListResponse<Terminology>) GET("$FOLDERS_PATH/$importedFolderId$TERMINOLOGIES_PATH", ListResponse, Terminology)
+        ListResponse<Terminology> importedTerminologyResponse = terminologyApi.list(importedFolderId)
 
         then:
         importedTerminologyResponse
         importedTerminologyResponse.items.size() == 1
-        String importedTerminologyIdString = importedTerminologyResponse.items[0].id
-        importedTerminologyIdString != terminology.id
+        UUID importedTerminologyId = importedTerminologyResponse.items[0].id
+        importedTerminologyId != terminology.id
 
         when:
         ListResponse<TermRelationshipType> importedTermRelationshipTypeResponse =
-                (ListResponse<TermRelationshipType>) GET("$TERMINOLOGIES_PATH/$importedTerminologyIdString$TERM_RELATIONSHIP_TYPES", ListResponse, TermRelationshipType)
+                termRelationshipTypeApi.list(importedTerminologyId)
 
         then:
         importedTermRelationshipTypeResponse
         importedTermRelationshipTypeResponse.items.size() == 1
-        UUID importedTermRelationshipTypeIdString = importedTermRelationshipTypeResponse.items[0].id
-        importedTermRelationshipTypeIdString != termRelationshipType.id
+        UUID importedTermRelationshipTypeId = importedTermRelationshipTypeResponse.items[0].id
+        importedTermRelationshipTypeId != termRelationshipType.id
 
         when:
-        ListResponse<Term> importedTermsResponse = (ListResponse<Term>) GET("$TERMINOLOGIES_PATH/$importedTerminologyIdString$TERMS_PATH", ListResponse, Term)
+        ListResponse<Term> importedTermsResponse = termApi.list(importedTerminologyId)
 
         then:
         importedTermsResponse
         importedTermsResponse.items.size() == 2
 
-        importedTermsResponse.items.code.sort().collect { it.toString() } == ['source code', 'target code']
-        importedTermsResponse.items.id.sort().collect { it.toString() } != ["${sourceTerm.id}", "${targetTerm.id}"]
+        importedTermsResponse.items.code.sort() == ['source code', 'target code']
+        importedTermsResponse.items.id.sort() != [sourceTerm.id, targetTerm.id].sort()
 
         when:
-        ListResponse<TermRelationship> importedTermRelationship = (ListResponse<TermRelationship>) GET("$TERMINOLOGIES_PATH/$importedTerminologyIdString$TERM_RELATIONSHIP_PATH", ListResponse, TermRelationship)
+        ListResponse<TermRelationship> importedTermRelationship = termRelationshipApi.list(importedTerminologyId)
         then:
         importedTermRelationship
         importedTermRelationship.items.size() == 1
         importedTermRelationship.items[0].id != termRelationshipType.id
         importedTermRelationship.items[0].sourceTerm.code == 'source code'
         importedTermRelationship.items[0].targetTerm.code == 'target code'
-        importedTermRelationship.items[0].relationshipType.id == importedTermRelationshipTypeIdString
+        importedTermRelationship.items[0].relationshipType.id == importedTermRelationshipTypeId
     }
 
     void 'export and import folder with two terminologies with overlapping codes'() {
         given:
         // create two terminologies each with different Terms with code TEST
-        UUID folderId = UUID.fromString(POST("$FOLDERS_PATH", [label: 'Two terminologies folder']).id)
-        UUID terminology1Id = UUID.fromString(POST("$FOLDERS_PATH/$folderId$TERMINOLOGIES_PATH", [label: 'First Terminology']).id)
-        UUID term1Id = UUID.fromString(POST("$TERMINOLOGIES_PATH/$terminology1Id$TERMS_PATH", [code: 'TEST', definition: 'first term']).id)
-        UUID terminology2Id = UUID.fromString(POST("$FOLDERS_PATH/$folderId$TERMINOLOGIES_PATH", [label: 'Second Terminology']).id)
-        UUID term2Id = UUID.fromString(POST("$TERMINOLOGIES_PATH/$terminology2Id$TERMS_PATH", [code: 'TEST', definition: 'second term']).id)
+        UUID folderId = folderApi.create(new Folder(label: 'Two terminologies folder')).id
+        UUID terminology1Id = terminologyApi.create(folderId, new Terminology(label: 'First Terminology')).id
+        UUID term1Id = termApi.create(terminology1Id, new Term(code: 'TEST', definition: 'first term')).id
+        UUID terminology2Id = terminologyApi.create(folderId, new Terminology(label: 'Second Terminology')).id
+        UUID term2Id = termApi.create(terminology2Id, new Term(code: 'TEST', definition: 'second term')).id
 
         // also create two different term relationship types with label TEST
-        UUID termRelationshipType1Id = UUID.fromString(POST("$TERMINOLOGIES_PATH/$terminology1Id$TERM_RELATIONSHIP_TYPES", [label: 'TEST', childRelationship: true]).id)
-        UUID termRelationshipType2Id = UUID.fromString(POST("$TERMINOLOGIES_PATH/$terminology2Id$TERM_RELATIONSHIP_TYPES", [label: 'TEST', childRelationship: false]).id)
-        POST("$TERMINOLOGIES_PATH/$terminology1Id$TERM_RELATIONSHIP_PATH", [
-            relationshipType: [id: termRelationshipType1Id],
-            sourceTerm: [id: term1Id],
-            targetTerm: [id: term1Id]
-        ])
-        POST("$TERMINOLOGIES_PATH/$terminology2Id$TERM_RELATIONSHIP_PATH", [
-            relationshipType: [id: termRelationshipType2Id],
-            sourceTerm: [id: term2Id],
-            targetTerm: [id: term2Id]
-        ])
+        UUID termRelationshipType1Id = termRelationshipTypeApi.create(
+            terminology1Id, new TermRelationshipType(label: 'TEST', childRelationship: true)).id
+        UUID termRelationshipType2Id = termRelationshipTypeApi.create(
+            terminology2Id, new TermRelationshipType(label: 'TEST', childRelationship: false)).id
+        termRelationshipApi.create(terminology1Id, new TermRelationship(
+            relationshipType: new TermRelationshipType(id: termRelationshipType1Id),
+            sourceTerm: new Term(id: term1Id),
+            targetTerm: new Term(id: term1Id)
+        ))
+        termRelationshipApi.create(terminology2Id, new TermRelationship(
+            relationshipType: new TermRelationshipType(id: termRelationshipType2Id),
+            sourceTerm: new Term(id: term2Id),
+            targetTerm: new Term(id: term2Id)
+        ))
 
         when:
-        Map<String, Object> export = GET("$FOLDERS_PATH/$folderId$EXPORT_PATH$JSON_EXPORTER_NAMESPACE$JSON_EXPORTER_NAME$JSON_EXPORTER_VERSION")
+        HttpResponse<byte[]> exportResponse = folderApi.exportModel(folderId, 'uk.ac.ox.softeng.mauro.plugin.exporter.json', 'JsonFolderExporterPlugin', '4.0.0')
+        Map export = jsonSlurper.parseText(new String(exportResponse.body())) as Map
 
         then:
         export.folder.terminologies.size() == 2
@@ -505,8 +505,8 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
             .addPart('folderId', folderId.toString())
             .addPart('importFile', 'file.json', MediaType.APPLICATION_JSON_TYPE, objectMapper.writeValueAsBytes(export))
             .build()
-        ListResponse<Folder> response = POST("$FOLDERS_PATH$IMPORT_PATH$JSON_IMPORTER_NAMESPACE$JSON_IMPORTER_NAME$JSON_IMPORTER_VERSION", importRequest) as ListResponse
-        UUID importedFolderId = UUID.fromString(response.items.first().id)
+        ListResponse<Folder> response = folderApi.importModel(importRequest, 'uk.ac.ox.softeng.mauro.plugin.importer.json', 'JsonFolderImporterPlugin', '4.0.0')
+        UUID importedFolderId = response.items.first().id
 
         then:
         response.count == 1
@@ -515,7 +515,7 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
         importedFolderId
 
         when:
-        ListResponse<Terminology> importedTerminologies = GET("$FOLDERS_PATH/$importedFolderId$TERMINOLOGIES_PATH", ListResponse, Terminology)
+        ListResponse<Terminology> importedTerminologies = terminologyApi.list(importedFolderId)
         UUID importedTerminology1Id = importedTerminologies.items.find {it.label == 'First Terminology'}.id
         UUID importedTerminology2Id = importedTerminologies.items.find {it.label == 'Second Terminology'}.id
 
@@ -525,7 +525,7 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
         importedTerminologies.items.find {it.label == 'Second Terminology'}
 
         when:
-        ListResponse<Term> importedTerms = GET("$TERMINOLOGIES_PATH/$importedTerminology1Id$TERMS_PATH", ListResponse, Term)
+        ListResponse<Term> importedTerms = termApi.list(importedTerminology1Id)
 
         then:
         importedTerms.count == 1
@@ -533,7 +533,7 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
         importedTerms.items.first().definition == 'first term'
 
         when:
-        importedTerms = GET("$TERMINOLOGIES_PATH/$importedTerminology2Id$TERMS_PATH", ListResponse, Term)
+        importedTerms = termApi.list(importedTerminology2Id)
 
         then:
         importedTerms.count == 1
@@ -541,7 +541,8 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
         importedTerms.items.first().definition == 'second term'
 
         when:
-        ListResponse<TermRelationshipType> importedTermRelationshipTypes = GET("$TERMINOLOGIES_PATH/$importedTerminology1Id$TERM_RELATIONSHIP_TYPES", ListResponse, TermRelationshipType)
+        ListResponse<TermRelationshipType> importedTermRelationshipTypes =
+            termRelationshipTypeApi.list(importedTerminology1Id)
 
         then:
         importedTermRelationshipTypes.count == 1
@@ -549,7 +550,7 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
         importedTermRelationshipTypes.items.first().childRelationship == true
 
         when:
-        importedTermRelationshipTypes = GET("$TERMINOLOGIES_PATH/$importedTerminology2Id$TERM_RELATIONSHIP_TYPES", ListResponse, TermRelationshipType)
+        importedTermRelationshipTypes = termRelationshipTypeApi.list(importedTerminology2Id)
 
         then:
         importedTermRelationshipTypes.count == 1
@@ -557,7 +558,7 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
         importedTermRelationshipTypes.items.first().childRelationship == false
 
         when:
-        ListResponse<TermRelationship> importedTermRelationships = (ListResponse<TermRelationship>) GET("$TERMINOLOGIES_PATH/$importedTerminology1Id$TERM_RELATIONSHIP_PATH", ListResponse, TermRelationship)
+        ListResponse<TermRelationship> importedTermRelationships = termRelationshipApi.list(importedTerminology1Id)
 
         then:
         importedTermRelationships.count == 1
@@ -566,7 +567,7 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
         importedTermRelationships.items.first().relationshipType.label == 'TEST'
 
         when:
-        importedTermRelationships = GET("$TERMINOLOGIES_PATH/$importedTerminology2Id$TERM_RELATIONSHIP_PATH", ListResponse)
+        importedTermRelationships = termRelationshipApi.list(importedTerminology2Id)
 
         then:
         importedTermRelationships.count == 1

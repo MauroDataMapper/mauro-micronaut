@@ -1,5 +1,16 @@
 package uk.ac.ox.softeng.mauro.classifier
 
+import uk.ac.ox.softeng.mauro.api.classifier.ClassificationSchemeApi
+import uk.ac.ox.softeng.mauro.api.classifier.ClassifierApi
+import uk.ac.ox.softeng.mauro.api.folder.FolderApi
+
+import io.micronaut.http.HttpResponse
+import io.micronaut.runtime.server.EmbeddedServer
+import jakarta.inject.Singleton
+
+import static uk.ac.ox.softeng.mauro.api.PathPopulation.populatePath
+import uk.ac.ox.softeng.mauro.api.Paths
+
 import io.micronaut.http.HttpStatus
 import io.micronaut.runtime.EmbeddedApplication
 import io.micronaut.test.annotation.Sql
@@ -13,60 +24,56 @@ import uk.ac.ox.softeng.mauro.testing.CommonDataSpec
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @ContainerizedTest
+@Singleton
 @Sql(scripts = ["classpath:sql/tear-down-classifiers.sql"], phase = Sql.Phase.AFTER_EACH)
 class ClassificationSchemeIntegrationSpec extends CommonDataSpec {
-
-    @Inject
-    EmbeddedApplication<?> application
 
     @Shared
     UUID folderId
 
-
-    void setupSpec(){
-        folderId = ((Folder) POST("$FOLDERS_PATH", folder(), Folder)).id
+    void setup() {
+        folderId = folderApi.create (folder()).id
     }
 
-
-    void 'list classification schemes -should return empty list'() {
+    void 'list classification schemes - should return empty list'() {
         when:
-        ListResponse<ClassificationScheme> listResponse = (ListResponse<ClassificationScheme>) GET("$CLASSIFICATION_SCHEME_PATH", ListResponse<ClassificationScheme>)
+        ListResponse<ClassificationScheme> listResponse = classificationSchemeApi.listAll()
         then:
         listResponse
         listResponse.items.isEmpty()
     }
 
-    void 'add Classification scheme -should add'() {
+    void 'add Classification scheme - should add'() {
         when:
-        ClassificationScheme classificationScheme = (ClassificationScheme) POST("$FOLDERS_PATH/$folderId$CLASSIFICATION_SCHEME_PATH", classifiersPayload(), ClassificationScheme)
+        ClassificationScheme classificationScheme =
+            classificationSchemeApi.create(folderId, classificationSchemePayload())
+
         then:
         classificationScheme
 
         when:
-        ClassificationScheme retrieved = GET("$CLASSIFICATION_SCHEME_PATH/$classificationScheme.id", ClassificationScheme)
+        ClassificationScheme retrieved =
+            classificationSchemeApi.show(classificationScheme.id)
         then:
         retrieved
         retrieved.authority
-    }
 
-    void 'get Classification scheme by ID -should return classification scheme'(){
-        given:
-        ClassificationScheme classificationScheme = (ClassificationScheme) POST("$FOLDERS_PATH/$folderId$CLASSIFICATION_SCHEME_PATH", classifiersPayload(), ClassificationScheme)
         when:
-        ClassificationScheme retrieved = GET("$CLASSIFICATION_SCHEME_PATH/$classificationScheme.id", ClassificationScheme)
+        ListResponse<ClassificationScheme> classificationSchemes = classificationSchemeApi.listAll()
 
         then:
-        retrieved
-        retrieved.authority
+        classificationSchemes.items.size() == 1
     }
 
-    void 'update classification scheme -should update model'() {
+    void 'update classification scheme - should update model'() {
         given:
-        ClassificationScheme classificationScheme = (ClassificationScheme) POST("$FOLDERS_PATH/$folderId$CLASSIFICATION_SCHEME_PATH", classifiersPayload(), ClassificationScheme)
+        ClassificationScheme classificationScheme =
+            classificationSchemeApi.create(folderId, classificationSchemePayload())
         when:
-        ClassificationScheme updated = (ClassificationScheme) PUT("$CLASSIFICATION_SCHEME_PATH/$classificationScheme.id",
-                [label: 'updated test label',
-                 description: 'updated test description'],  ClassificationScheme)
+        ClassificationScheme updated =
+            classificationSchemeApi.update(classificationScheme.id,
+                new ClassificationScheme(label: 'updated test label',
+                 description: 'updated test description'))
         then:
         updated
         updated.label == 'updated test label'
@@ -74,21 +81,27 @@ class ClassificationSchemeIntegrationSpec extends CommonDataSpec {
         updated.authority
     }
 
-    void 'delete classification scheme -should delete model and associations'() {
+    void 'delete classification scheme - should delete model and associations'() {
         given:
-        ClassificationScheme classificationScheme = (ClassificationScheme) POST("$FOLDERS_PATH/$folderId$CLASSIFICATION_SCHEME_PATH", classifiersPayload(), ClassificationScheme)
+        ClassificationScheme classificationScheme =
+            classificationSchemeApi.create(folderId, classificationSchemePayload())
 
-        Classifier classifier = (Classifier) POST("$CLASSIFICATION_SCHEME_PATH/$classificationScheme.id$CLASSIFIER_PATH", classifiersPayload(), Classifier)
+        Classifier classifier =
+            classifierApi.create(classificationScheme.id, classifierPayload())
 
         //Add AdministeredItemClassificationScheme to classifier -joinAdministeredItemToClassifier
-        Classifier adminItemJoinClassifier1 = (Classifier) PUT ("/classificationScheme/$classificationScheme.id$CLASSIFIER_PATH/$classifier.id",null, Classifier)
-        Classifier adminItemJoinClassifier2 = (Classifier) PUT ("/classifier/$classifier.id$CLASSIFIER_PATH/$classifier.id",null, Classifier)
+
+        classifierApi.createAdministeredItemClassifier('classificationScheme', classificationScheme.id, classifier.id)
+        classifierApi.createAdministeredItemClassifier('classifier', classifier.id, classifier.id)
 
         when:
-        HttpStatus httpStatus = DELETE("$CLASSIFICATION_SCHEME_PATH/$classificationScheme.id", HttpStatus)
+        HttpResponse httpResponse =
+            classificationSchemeApi.delete(classificationScheme.id, classificationScheme)
 
         then:
-        httpStatus == HttpStatus.NO_CONTENT
+        httpResponse.status == HttpStatus.NO_CONTENT
+
+        // TODO: Keep testing this result...
 
     }
 
