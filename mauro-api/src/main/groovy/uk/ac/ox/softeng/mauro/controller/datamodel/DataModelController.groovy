@@ -183,7 +183,9 @@ class DataModelController extends ModelController<DataModel> implements DataMode
     @Put(Paths.DATA_MODEL_SUBSET)
     SubsetData subset(UUID id, UUID otherId, @Body SubsetData subsetData) {
         DataModel dataModel = dataModelRepository.readById(id) // source i.e. rootDataModel
+        accessControlService.canDoRole(Role.READER, dataModel)
         DataModel otherDataModel = dataModelContentRepository.findWithContentById(otherId) // target i.e. request model
+        accessControlService.canDoRole(Role.EDITOR, otherDataModel)
 
         List<DataElement> additionDataElements = subsetData.additions.collect {dataElementCacheableRepository.findById(it)}
 
@@ -253,8 +255,11 @@ class DataModelController extends ModelController<DataModel> implements DataMode
     @Post(Paths.DATA_MODEL_INTERSECTS_MANY)
     ListResponse<IntersectsData> intersectsMany(UUID id, @Body IntersectsManyData intersectsManyData) {
         DataModel sourceDataModel = dataModelRepository.readById(id)
+        accessControlService.canDoRole(Role.READER, sourceDataModel)
         List<DataModel> targetDataModels = intersectsManyData.targetDataModelIds.collect {dataModelRepository.readById(it)}
+        targetDataModels.each {DataModel dataModel -> accessControlService.canDoRole(Role.READER, dataModel)}
         List<DataElement> dataElements = intersectsManyData.dataElementIds.collect {dataElementCacheableRepository.readById(it)}
+        dataElements.each {DataElement dataElement -> accessControlService.canDoRole(Role.READER, dataElement)}
 
         Map<UUID, List<DataElement>> targetDataModelsDataElementsMap = targetDataModels.collectEntries {[it.id, dataElementRepository.readAllByDataModelId(it.id)]}
 
