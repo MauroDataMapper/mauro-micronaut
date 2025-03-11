@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.plugin
 
+import uk.ac.ox.softeng.mauro.domain.diff.ArrayDiff
+
 import com.fasterxml.jackson.annotation.JsonIgnore
 
 trait MauroPlugin {

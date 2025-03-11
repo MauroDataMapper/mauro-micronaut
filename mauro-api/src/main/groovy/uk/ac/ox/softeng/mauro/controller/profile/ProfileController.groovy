@@ -1,9 +1,11 @@
 package uk.ac.ox.softeng.mauro.controller.profile
 
+import uk.ac.ox.softeng.mauro.api.Paths
+import uk.ac.ox.softeng.mauro.api.profile.MetadataNamespaceDTO
+import uk.ac.ox.softeng.mauro.api.profile.ProfileApi
 import uk.ac.ox.softeng.mauro.domain.security.Role
-import uk.ac.ox.softeng.mauro.plugin.MauroPluginService
+import uk.ac.ox.softeng.mauro.plugin.MauroPluginDTO
 import uk.ac.ox.softeng.mauro.profile.applied.AppliedProfile
-import uk.ac.ox.softeng.mauro.profile.applied.AppliedProfileField
 
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpStatus
@@ -31,7 +33,7 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 @CompileStatic
 @Controller
 @Secured(SecurityRule.IS_ANONYMOUS)
-class ProfileController implements AdministeredItemReader {
+class ProfileController implements AdministeredItemReader, ProfileApi {
 
     @Inject
     AccessControlService accessControlService
@@ -60,51 +62,53 @@ class ProfileController implements AdministeredItemReader {
     }
 
 
-    @Get('/profiles/providers/dynamic')
+    @Get(Paths.PROFILE_DYNAMIC_PROVIDERS)
     List<DataModelBasedProfile> dynamicProviders() {
         dynamicProfileService.getDynamicProfiles()
     }
 
 
-    @Get('/profiles/providers')
+    @Get(Paths.PROFILE_PROVIDERS)
     List<Profile> providers() {
         getAllProfiles()
     }
 
 
-    @Get('/profiles/{namespace}/{name}/search')
+    @Get(Paths.PROFILE_SEARCH)
     Profile getProfileDetails(String namespace, String name) {
         // TODO: I don't think this endpoint is actually used
         return null
     }
 
-    @Get('/{domainType}/{domainId}/profiles/{namespace}/{name}/search')
+    @Get(Paths.PROFILE_SEARCH_ITEM)
     Profile getProfileDetails(String domainType, UUID domainId, String namespace, String name) {
         // TODO: I don't think this endpoint is actually used
         return null
     }
 
 
-    @Get('/profiles/providers/{namespace}/{name}/{version}')
+    @Get(Paths.PROFILE_DETAILS)
     Profile getProfileDetails(String namespace, String name, String version) {
         getProfileByName(namespace, name, version)
     }
 
-    @Get('/{domainType}/{domainId}/profiles/used')
-    List<Profile> getUsedProfiles(String domainType, UUID domainId) {
+    @Get(Paths.PROFILE_USED)
+    List<MauroPluginDTO> getUsedProfiles(String domainType, UUID domainId) {
         AdministeredItem administeredItem = findAdministeredItem(domainType, domainId)
         accessControlService.checkRole(Role.READER, administeredItem)
         profileService.getUsedProfilesForAdministeredItem(getAllProfiles(), administeredItem)
+            .collect {MauroPluginDTO.fromPlugin(it) }
     }
 
-    @Get('/{domainType}/{domainId}/profiles/unused')
-    List<Profile> getUnusedProfiles(String domainType, UUID domainId) {
+    @Get(Paths.PROFILE_UNUSED)
+    List<MauroPluginDTO> getUnusedProfiles(String domainType, UUID domainId) {
         AdministeredItem administeredItem = findAdministeredItem(domainType, domainId)
         accessControlService.checkRole(Role.READER, administeredItem)
         profileService.getUnusedProfilesForAdministeredItem(getAllProfiles(), administeredItem)
+            .collect {MauroPluginDTO.fromPlugin(it) }
     }
 
-    @Get('/{domainType}/{domainId}/profiles/otherMetadata')
+    @Get(Paths.PROFILE_OTHER_METADATA)
     ListResponse<Metadata> getOtherMetadata(String domainType, UUID domainId) {
         AdministeredItem administeredItem = findAdministeredItem(domainType, domainId)
         accessControlService.checkRole(Role.READER, administeredItem)
@@ -115,16 +119,17 @@ class ProfileController implements AdministeredItemReader {
         })
     }
 
-    @Get('/{domainType}/{domainId}/profile/{namespace}/{name}/{version}')
+    @Get(Paths.PROFILE_ITEM)
     AppliedProfile getProfiledItem(String domainType, UUID domainId, String namespace, String name, String version) {
         AdministeredItem administeredItem = findAdministeredItem(domainType, domainId)
         accessControlService.checkRole(Role.READER, administeredItem)
         Profile profile = getProfileByName(namespace, name, version)
         handleProfileNotFound(profile, namespace, name, version)
-        new AppliedProfile(profile, administeredItem)
+        def ap = new AppliedProfile(profile, administeredItem)
+        return ap
     }
 
-    @Post('/{domainType}/{domainId}/profile/{namespace}/{name}/{version}/validate')
+    @Post(Paths.PROFILE_ITEM_VALIDATE)
     AppliedProfile validateProfile(String domainType, UUID domainId, String namespace, String name, String version, @Body Map bodyMap) {
         AdministeredItem administeredItem = readAdministeredItem(domainType, domainId)
         accessControlService.canDoRole(Role.READER, administeredItem)
@@ -136,7 +141,7 @@ class ProfileController implements AdministeredItemReader {
 
 
     // TODO: Refactor the UI so that this method isn't needed quite so often
-    @Get('/metadata/namespaces{/prefix}')
+    @Get(Paths.PROFILE_NAMESPACES)
     List<MetadataNamespaceDTO> getNamespaces(@Nullable String prefix) {
 
         // First look through the database to find all the namespaces / keys in use

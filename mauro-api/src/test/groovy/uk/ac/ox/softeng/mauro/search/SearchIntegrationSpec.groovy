@@ -1,17 +1,21 @@
 package uk.ac.ox.softeng.mauro.search
 
+import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchRequestDTO
+import uk.ac.ox.softeng.mauro.testing.CommonDataSpec
+
 import jakarta.inject.Inject
+import jakarta.inject.Singleton
 import spock.lang.Shared
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.persistence.ContainerizedTest
 import uk.ac.ox.softeng.mauro.persistence.datamodel.DataModelContentRepository
 import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchResultsDTO
-import uk.ac.ox.softeng.mauro.testing.BaseIntegrationSpec
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @ContainerizedTest
-class SearchIntegrationSpec extends BaseIntegrationSpec {
+@Singleton
+class SearchIntegrationSpec extends CommonDataSpec {
 
     @Inject
     DataModelContentRepository dataModelContentRepository
@@ -26,7 +30,7 @@ class SearchIntegrationSpec extends BaseIntegrationSpec {
     UUID dataModelId2
 
     void setupSpec() {
-        Folder folder = (Folder) POST("$FOLDERS_PATH", [label: 'Test Folder'], Folder)
+        Folder folder = folderApi.create(new Folder(label: 'Test Folder'))
         folderId = folder.id
 
         DataModel dataModel1 = DataModel.build {
@@ -66,19 +70,24 @@ class SearchIntegrationSpec extends BaseIntegrationSpec {
 
         expect:
 
-        ListResponse<SearchResultsDTO> searchResults = (ListResponse<SearchResultsDTO>) GET("/search?${queryParams}", ListResponse, SearchResultsDTO)
+        SearchRequestDTO searchRequestDTO = new SearchRequestDTO(
+            searchTerm: searchTerm,
+            domainTypes: domainTypes,
+            withinModelId: withinModelId)
+
+        ListResponse<SearchResultsDTO> searchResults = searchApi.searchGet(searchRequestDTO)
         searchResults.items.label == expectedLabels
 
         where:
 
-        queryParams                                                     | expectedLabels
-        "searchTerm=first"                                              | ["My first DataClass", "My First Test DataModel", "My first DataClass"]
-        "searchTerm=first&domainTypes=DataModel"                        | ["My First Test DataModel"]
-        "searchTerm=first&domainTypes=DataClass"                        | ["My first DataClass", "My first DataClass"]
-        "searchTerm=first&domainTypes=DataClass&domainTypes=DataModel"  | ["My first DataClass", "My First Test DataModel", "My first DataClass"]
-        "searchTerm=first&domainTypes=DataType"                         | []
-        "searchTerm=first&withinModelId=$dataModelId1"                  | ["My first DataClass", "My First Test DataModel"]
-        "searchTerm=first&withinModelId=$dataModelId2"                  | ["My first DataClass"]
+        searchTerm  | domainTypes                   | withinModelId | expectedLabels
+        "first"     | []                            | null          | ["My first DataClass", "My First Test DataModel", "My first DataClass"]
+        "first"     | ["DataModel"]                 | null          | ["My First Test DataModel"]
+        "first"     | ["DataClass"]                 | null          | ["My first DataClass", "My first DataClass"]
+        "first"     | ["DataClass", "DataModel"]    | null          | ["My first DataClass", "My First Test DataModel", "My first DataClass"]
+        "first"     | ["DataType"]                  | null          | []
+        "first"     | []                            | dataModelId1  | ["My first DataClass", "My First Test DataModel"]
+        "first"     | []                            | dataModelId2  | ["My first DataClass"]
 
     }
 }

@@ -3,7 +3,6 @@ package uk.ac.ox.softeng.mauro.federation
 import uk.ac.ox.softeng.mauro.controller.federation.client.FederationClient
 import uk.ac.ox.softeng.mauro.controller.federation.client.FederationClientConfiguration
 import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedCatalogue
-import uk.ac.ox.softeng.mauro.testing.BaseIntegrationSpec
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.util.logging.Slf4j
@@ -36,7 +35,7 @@ class MockFederationClient extends FederationClient {
 
     @Override
     Map<String, Object> fetchFederatedClientDataAsMap(SubscribedCatalogue subscribedCatalogue, String requestPath) {
-        if (requestPath.endsWith("$BaseIntegrationSpec.NEWER_VERSIONS")) {
+        if (requestPath.endsWith("/newerVersions")) {
             return objectMapper.readValue(newerVersionsString, Map.class)
         } else {
             return objectMapper.readValue(publishedModelsString, Map.class)

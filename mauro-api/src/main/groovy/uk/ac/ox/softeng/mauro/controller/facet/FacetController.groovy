@@ -1,8 +1,10 @@
 package uk.ac.ox.softeng.mauro.controller.facet
 
+import uk.ac.ox.softeng.mauro.api.facet.FacetApi
+
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
-import io.micronaut.core.annotation.Nullable
+import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.*
 import io.micronaut.http.exceptions.HttpStatusException
@@ -18,7 +20,7 @@ import uk.ac.ox.softeng.mauro.persistence.cache.ItemCacheableRepository
 
 @CompileStatic
 @Secured(SecurityRule.IS_ANONYMOUS)
-abstract class FacetController<I extends Facet> extends ItemController<I> {
+abstract class FacetController<I extends Facet> extends ItemController<I> implements FacetApi<I> {
 
     ItemCacheableRepository<I> facetRepository
 
@@ -27,8 +29,7 @@ abstract class FacetController<I extends Facet> extends ItemController<I> {
         this.facetRepository = facetRepository
     }
 
-    @Get('/{id}')
-    I show(UUID id) {
+    I show(String domainType, UUID domainId, UUID id) {
         I facet = facetRepository.findById(id)
         accessControlService.checkRole(Role.READER, readAdministeredItemForFacet(facet))
         facet
@@ -53,8 +54,8 @@ abstract class FacetController<I extends Facet> extends ItemController<I> {
         facetRepository.save(cleanFacet)
     }
 
-    @Put('/{id}')
-    I update(UUID id, @Body @NonNull I facet) {
+    /** Actually, we don't need to enforce this on all facets **/
+    protected I update(UUID id, @Body @NonNull I facet) {
         cleanBody(facet)
 
         I existing = facetRepository.readById(id)
@@ -75,13 +76,13 @@ abstract class FacetController<I extends Facet> extends ItemController<I> {
 
     @Delete('/{id}')
     @Transactional
-    HttpStatus delete(UUID id, @Body @Nullable I facet) {
+    HttpResponse delete(UUID id) {
         I facetToDelete = facetRepository.readById(id)
         accessControlService.checkRole(Role.EDITOR, readAdministeredItemForFacet(facetToDelete))
-        if (facet?.version) facetToDelete.version = facet.version
+        if (facetToDelete?.version) facetToDelete.version = facetToDelete.version
         Long deleted = facetRepository.delete(facetToDelete)
         if (deleted) {
-            HttpStatus.NO_CONTENT
+            HttpResponse.status(HttpStatus.NO_CONTENT)
         } else {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, 'Not found for deletion')
         }

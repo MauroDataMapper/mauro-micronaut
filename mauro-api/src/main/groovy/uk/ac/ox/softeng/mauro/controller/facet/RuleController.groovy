@@ -1,5 +1,8 @@
 package uk.ac.ox.softeng.mauro.controller.facet
 
+import io.micronaut.http.HttpResponse
+import uk.ac.ox.softeng.mauro.api.Paths
+import uk.ac.ox.softeng.mauro.api.facet.RuleApi
 import uk.ac.ox.softeng.mauro.domain.facet.Rule
 import uk.ac.ox.softeng.mauro.domain.facet.RuleRepresentation
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
@@ -11,8 +14,6 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
-import io.micronaut.core.annotation.Nullable
-import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Delete
@@ -25,9 +26,9 @@ import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
 
 @CompileStatic
-@Controller('/{domainType}/{domainId}/rules')
+@Controller
 @Secured(SecurityRule.IS_ANONYMOUS)
-class RuleController extends FacetController<Rule> {
+class RuleController extends FacetController<Rule> implements RuleApi {
     FacetCacheableRepository.RuleCacheableRepository ruleRepository
 
     @Inject
@@ -48,16 +49,16 @@ class RuleController extends FacetController<Rule> {
         this.ruleRepository = ruleRepository
     }
 
-    @Get
+    @Get(Paths.RULE_LIST)
     ListResponse<Rule> list(String domainType, UUID domainId) {
         AdministeredItem administeredItem = findAdministeredItem(domainType, domainId)
         accessControlService.checkRole(Role.READER, administeredItem)
         ListResponse.from(!administeredItem.rules ? [] : administeredItem.rules)
     }
 
-    @Get('/{id}')
-    Rule show(UUID id) {
-        Rule rule = super.show(id) as Rule
+    @Get(Paths.RULE_ID)
+    Rule show(@NonNull String domainType, @NonNull UUID domainId, UUID id) {
+        Rule rule = super.show(domainType, domainId, id) as Rule
         if (rule) {
             AdministeredItem administeredItem = findAdministeredItem(rule.multiFacetAwareItemDomainType,
                     rule.multiFacetAwareItemId)
@@ -68,23 +69,23 @@ class RuleController extends FacetController<Rule> {
         }
     }
 
-    @Post
+    @Post(Paths.RULE_LIST)
     Rule create(@NonNull String domainType, @NonNull UUID domainId, @Body @NonNull Rule rule) {
         super.create(domainType, domainId, rule)
     }
 
-    @Put('/{id}')
-    Rule update(@NonNull UUID id, @Body @NonNull Rule rule) {
+    @Put(Paths.RULE_ID)
+    Rule update(@NonNull String domainType, @NonNull UUID domainId, UUID id, @Body @NonNull Rule rule) {
         super.update(id, rule)
     }
 
-    @Delete('/{id}')
+    @Delete(Paths.RULE_ID)
     @Transactional
     @Override
-    HttpStatus delete(@NonNull UUID id, @Body @Nullable Rule rule) {
+    HttpResponse delete(@NonNull String domainType, @NonNull UUID domainId, UUID id) {
         accessControlService.checkRole(Role.READER, readAdministeredItemForFacet(ruleRepository.readById(id)))
         deleteAnyAssociatedRepresentations(id)
-        super.delete(id, rule)
+        super.delete(id)
     }
 
     private void deleteAnyAssociatedRepresentations(UUID ruleId) {

@@ -1,5 +1,8 @@
 package uk.ac.ox.softeng.mauro.controller.security
 
+import uk.ac.ox.softeng.mauro.api.Paths
+import uk.ac.ox.softeng.mauro.api.security.CatalogueUserApi
+
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
@@ -21,7 +24,7 @@ import uk.ac.ox.softeng.mauro.web.ChangePassword
 @Slf4j
 @Controller
 @Secured(SecurityRule.IS_ANONYMOUS)
-class CatalogueUserController extends ItemController<CatalogueUser> {
+class CatalogueUserController extends ItemController<CatalogueUser> implements CatalogueUserApi {
 
     CatalogueUserCacheableRepository catalogueUserRepository
 
@@ -38,7 +41,7 @@ class CatalogueUserController extends ItemController<CatalogueUser> {
         super.getDisallowedProperties() + ['emailAddress', 'pending', 'disabled', 'resetToken', 'creationMethod', 'lastLogin', 'salt', 'password', 'tempPassword']
     }
 
-    @Post('/admin/catalogueUsers/adminRegister')
+    @Post(Paths.USER_ADMIN_REGISTER)
     CatalogueUser adminRegister(@Body @NonNull CatalogueUser newUser) {
         log.info 'Request to register a new user by admin'
         cleanBody(newUser)
@@ -56,14 +59,14 @@ class CatalogueUserController extends ItemController<CatalogueUser> {
         catalogueUserRepository.save(newUser)
     }
 
-    @Get('/catalogueUsers/currentUser')
+    @Get(Paths.USER_CURRENT_USER)
     CatalogueUser currentUser() {
         log.info 'Request to get current logged in user'
 
         accessControlService.user
     }
 
-    @Put('/catalogueUsers/currentUser/changePassword')
+    @Put(Paths.USER_CHANGE_PASSWORD)
     CatalogueUser changePassword(@Body @NonNull ChangePassword changePasswordRequest) {
         log.info 'Request by user to change own password'
 
@@ -77,7 +80,7 @@ class CatalogueUserController extends ItemController<CatalogueUser> {
         catalogueUserRepository.update(currentUser)
     }
 
-    @Put('/catalogueUsers/{id}')
+    @Put(Paths.USER_ID)
     CatalogueUser update(@NonNull UUID id, @Body @NonNull CatalogueUser catalogueUser) {
         log.info 'Request to update CatalogueUser by ID'
 
@@ -117,7 +120,7 @@ class CatalogueUserController extends ItemController<CatalogueUser> {
     }
 
     // todo Stub method to enable login with UI
-    @Get('/catalogueUsers/{id}/userPreferences')
+    @Get(Paths.USER_PREFERENCES)
     String showUserPreferences(UUID id) {
         ''
     }

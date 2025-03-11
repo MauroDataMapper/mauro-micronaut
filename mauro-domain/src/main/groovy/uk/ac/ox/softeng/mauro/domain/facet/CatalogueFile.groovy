@@ -12,7 +12,7 @@ import io.micronaut.core.annotation.NonNull
 abstract class CatalogueFile extends Facet implements CatalogueFileOutput{
     @NonNull
     @JsonAlias(['file_contents'])
-    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    //@JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     byte[] fileContents
 
     @NonNull

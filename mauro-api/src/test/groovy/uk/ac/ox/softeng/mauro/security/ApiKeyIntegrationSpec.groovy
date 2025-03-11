@@ -1,5 +1,6 @@
 package uk.ac.ox.softeng.mauro.security
 
+import jakarta.inject.Singleton
 import uk.ac.ox.softeng.mauro.domain.email.Email
 import uk.ac.ox.softeng.mauro.domain.security.ApiKey
 import uk.ac.ox.softeng.mauro.domain.security.CatalogueUser
@@ -15,11 +16,9 @@ import jakarta.inject.Inject
 import spock.lang.Shared
 
 @SecuredContainerizedTest
+@Singleton
 @Sql(scripts = "classpath:sql/tear-down-api-key.sql", phase = Sql.Phase.AFTER_EACH)
 class ApiKeyIntegrationSpec extends SecuredIntegrationSpec {
-
-    @Inject
-    EmbeddedApplication<?> application
 
     @Shared
     UUID apiPropertyId
@@ -29,11 +28,11 @@ class ApiKeyIntegrationSpec extends SecuredIntegrationSpec {
         loginUser()
 
         when:
-        ApiKey response = POST("/catalogueUsers/$user.id/apiKeys", [
-            name         : "Test Key",
-            expiresInDays: 10,
-            refreshable  : true
-        ], ApiKey)
+        ApiKey response = apiKeyApi.create(user.id, new ApiKey(
+                name         : "Test Key",
+                expiresInDays: 10,
+                refreshable  : true
+        ))
 
         then:
         response.id
@@ -44,23 +43,23 @@ class ApiKeyIntegrationSpec extends SecuredIntegrationSpec {
 
         when:
         UUID newApiKeyId = response.id
-        ListResponse<ApiKey> apiKeys = GET("/catalogueUsers/$user.id/apiKeys", ListResponse, ApiKey)
+        ListResponse<ApiKey> apiKeys = apiKeyApi.index(user.id)
 
         then:
         apiKeys.count == 1
         apiKeys.items.find {it.name == "Test Key"}
 
         when:
-        PUT("/catalogueUsers/$user.id/apiKeys/$newApiKeyId/disable", [])
+        apiKeyApi.disable(user.id, newApiKeyId)
 
-        response = GET("/catalogueUsers/$user.id/apiKeys/$newApiKeyId", ApiKey)
+        response = apiKeyApi.show(user.id, newApiKeyId)
         then:
         response.disabled
 
         when:
-        PUT("/catalogueUsers/$user.id/apiKeys/$newApiKeyId/enable", [])
+        apiKeyApi.enable(user.id, newApiKeyId)
 
-        response = GET("/catalogueUsers/$user.id/apiKeys/$newApiKeyId", ApiKey)
+        response = apiKeyApi.show(user.id, newApiKeyId)
         then:
         !response.disabled
 
@@ -71,11 +70,11 @@ class ApiKeyIntegrationSpec extends SecuredIntegrationSpec {
         loginAdmin()
 
         when:
-        ApiKey response = POST("/catalogueUsers/$adminUser.id/apiKeys", [
+        ApiKey response = apiKeyApi.create(adminUser.id, new ApiKey(
             name         : "Test Key",
             expiresInDays: 10,
             refreshable  : true
-        ], ApiKey)
+        ))
 
         then:
         response.id
@@ -85,7 +84,7 @@ class ApiKeyIntegrationSpec extends SecuredIntegrationSpec {
         !response.expired
 
         when:
-        ListResponse<ApiKey> apiKeys = GET("/catalogueUsers/$adminUser.id/apiKeys", ListResponse, ApiKey)
+        ListResponse<ApiKey> apiKeys = apiKeyApi.index(adminUser.id)
 
         then:
         apiKeys.count == 1
@@ -99,11 +98,11 @@ class ApiKeyIntegrationSpec extends SecuredIntegrationSpec {
         loginUser()
 
         when:
-        ApiKey response = POST("/catalogueUsers/$adminUser.id/apiKeys", [
+        ApiKey response = apiKeyApi.create(adminUser.id, new ApiKey(
             name         : "Test Key For Another User",
             expiresInDays: 10,
             refreshable  : true
-        ], ApiKey)
+        ))
 
         then: 'the create endpoint returns forbidden'
         HttpClientResponseException exception = thrown()
@@ -116,11 +115,11 @@ class ApiKeyIntegrationSpec extends SecuredIntegrationSpec {
         loginAdmin()
 
         when:
-        ApiKey response = POST("/catalogueUsers/$user.id/apiKeys", [
+        ApiKey response = apiKeyApi.create(user.id, new ApiKey(
             name:  'Test Key For Another User',
             expiresInDays: 10,
             refreshable: true
-        ], ApiKey)
+        ))
 
         then:
         response.id
@@ -130,14 +129,14 @@ class ApiKeyIntegrationSpec extends SecuredIntegrationSpec {
         !response.expired
 
         when:
-        ListResponse<ApiKey> apiKeys = GET("/catalogueUsers/$user.id/apiKeys", ListResponse, ApiKey)
+        ListResponse<ApiKey> apiKeys = apiKeyApi.index(user.id)
 
         then:
         apiKeys.count == 1
         apiKeys.items.find {it.name == 'Test Key For Another User'}
 
         when:
-        apiKeys = GET("/catalogueUsers/$adminUser.id/apiKeys", ListResponse, ApiKey)
+        apiKeys = apiKeyApi.index(adminUser.id)
 
         then: 'But this hasnt created it for the admin user themselves'
         apiKeys.count == 0
@@ -150,47 +149,47 @@ class ApiKeyIntegrationSpec extends SecuredIntegrationSpec {
         loginUser()
 
         when:
-        ApiKey response = POST("/catalogueUsers/$user.id/apiKeys", [
+        ApiKey response = apiKeyApi.create(user.id, new ApiKey(
             name         : "Test Key",
             expiresInDays: 10,
             refreshable  : true
-        ], ApiKey)
+        ))
 
-        String apiKeyId = response.id
+        UUID apiKeyId = response.id
 
         logout()
 
         // Check a couple of endpoints are unavailable after logging out
 
-        GET("admin/emails")
+        adminApi.listEmails()
         then:
         def e = thrown(Exception)
         e.message == "Unauthorized"
 
         when:
-        GET("catalogueUsers/currentUser")
+        catalogueUserApi.currentUser()
 
         then:
         e = thrown(Exception)
         e.message == "User is not authenticated"
 
         when:
-        apiKey = UUID.fromString(apiKeyId)
-        CatalogueUser userResponse = (CatalogueUser) GET("catalogueUsers/currentUser", CatalogueUser)
+        setApiKey(apiKeyId)
+        CatalogueUser userResponse = catalogueUserApi.currentUser()
 
         then:
         userResponse.id == user.id
 
         when: // But we still can't get the email list which requires an administrator
-        ListResponse<Email> emailsResponse = (ListResponse<Email>) GET("admin/emails", ListResponse, Email)
+        ListResponse<Email> emailsResponse = adminApi.listEmails()
 
         then:
         e = thrown(Exception)
         e.message == "Forbidden"
 
         when: // when we remove the api key
-        apiKey = null
-        GET("catalogueUsers/currentUser")
+        unsetApiKey()
+        catalogueUserApi.currentUser()
 
         then: // we're back to being unauthenticated
         e = thrown(Exception)
@@ -202,46 +201,46 @@ class ApiKeyIntegrationSpec extends SecuredIntegrationSpec {
         loginAdmin()
 
         when:
-        ApiKey response = POST("/catalogueUsers/$adminUser.id/apiKeys", [
+        ApiKey response = apiKeyApi.create(adminUser.id, new ApiKey(
             name         : "Test Key",
             expiresInDays: 10,
             refreshable  : true
-        ], ApiKey)
+        ))
 
-        String apiKeyId = response.id
+        UUID apiKeyId = response.id
 
         logout()
 
         // Check a couple of endpoints are unavailable after logging out
 
-        GET("admin/emails")
+        adminApi.listEmails()
         then:
         def e = thrown(Exception)
         e.message == "Unauthorized"
 
         when:
-        GET("catalogueUsers/currentUser")
+        catalogueUserApi.currentUser()
 
         then:
         e = thrown(Exception)
         e.message == "User is not authenticated"
 
         when:
-        apiKey = UUID.fromString(apiKeyId)
-        CatalogueUser userResponse = (CatalogueUser) GET("catalogueUsers/currentUser", CatalogueUser)
+        setApiKey(apiKeyId)
+        CatalogueUser userResponse = catalogueUserApi.currentUser()
 
         then:
         userResponse.id == adminUser.id
 
         when: // But we still can't get the email list which requires an administrator
-        ListResponse<Email> emailsResponse = (ListResponse<Email>) GET("admin/emails", ListResponse, Email)
+        ListResponse<Email> emailsResponse = adminApi.listEmails()
 
         then:
         emailsResponse.count == 0
 
         when: // when we remove the api key
-        apiKey = null
-        GET("catalogueUsers/currentUser")
+        unsetApiKey()
+        catalogueUserApi.currentUser()
 
         then: // we're back to being unauthenticated
         e = thrown(Exception)
@@ -254,27 +253,27 @@ class ApiKeyIntegrationSpec extends SecuredIntegrationSpec {
         loginUser()
 
         when:
-        ApiKey response = POST("/catalogueUsers/$user.id/apiKeys", [
+        ApiKey response = apiKeyApi.create(user.id, new ApiKey(
             name         : "Test Key",
             expiresInDays: 10,
             refreshable  : true
-        ], ApiKey)
+        ))
 
-        String apiKeyId = response.id
+        UUID apiKeyId = response.id
 
         logout()
 
         // Check a couple of endpoints are unavailable after logging out
 
-        GET("catalogueUsers/currentUser")
+        catalogueUserApi.currentUser()
 
         then:
         def e = thrown(Exception)
         e.message == "User is not authenticated"
 
         when:
-        apiKey = UUID.randomUUID()
-        CatalogueUser userResponse = (CatalogueUser) GET("catalogueUsers/currentUser", CatalogueUser)
+        setApiKey(UUID.randomUUID())
+        CatalogueUser userResponse = catalogueUserApi.currentUser()
 
         then:
         e = thrown(Exception)
@@ -286,28 +285,28 @@ class ApiKeyIntegrationSpec extends SecuredIntegrationSpec {
         loginUser()
 
         when:
-        ApiKey response = POST("/catalogueUsers/$user.id/apiKeys", [
+        ApiKey response = apiKeyApi.create(user.id, new ApiKey(
             name         : "Test Key",
             expiresInDays: 10,
             refreshable  : true,
             disabled     : true
-        ], ApiKey)
+        ))
 
-        String apiKeyId = response.id
+        UUID apiKeyId = response.id
 
         logout()
 
         // Check a couple of endpoints are unavailable after logging out
 
-        GET("catalogueUsers/currentUser")
+        catalogueUserApi.currentUser()
 
         then:
         def e = thrown(Exception)
         e.message == "User is not authenticated"
 
         when:
-        apiKey = UUID.randomUUID()
-        CatalogueUser userResponse = (CatalogueUser) GET("catalogueUsers/currentUser", CatalogueUser)
+        setApiKey(apiKeyId)
+        CatalogueUser userResponse = catalogueUserApi.currentUser()
 
         then:
         e = thrown(Exception)
@@ -319,28 +318,28 @@ class ApiKeyIntegrationSpec extends SecuredIntegrationSpec {
         loginUser()
 
         when:
-        ApiKey response = POST("/catalogueUsers/$user.id/apiKeys", [
+        ApiKey response = apiKeyApi.create(user.id, new ApiKey(
             name         : "Test Key",
             expiresInDays: -1,
             refreshable  : true,
             disabled     : true
-        ], ApiKey)
+        ))
 
-        String apiKeyId = response.id
+        UUID apiKeyId = response.id
 
         logout()
 
         // Check a couple of endpoints are unavailable after logging out
 
-        GET("catalogueUsers/currentUser")
+        catalogueUserApi.currentUser()
 
         then:
         def e = thrown(Exception)
         e.message == "User is not authenticated"
 
         when:
-        apiKey = UUID.randomUUID()
-        CatalogueUser userResponse = (CatalogueUser) GET("catalogueUsers/currentUser", CatalogueUser)
+        setApiKey(apiKeyId)
+        CatalogueUser userResponse = catalogueUserApi.currentUser()
 
         then:
         e = thrown(Exception)

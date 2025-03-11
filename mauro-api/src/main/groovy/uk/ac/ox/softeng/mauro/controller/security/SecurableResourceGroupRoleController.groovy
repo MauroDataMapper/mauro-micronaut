@@ -1,8 +1,12 @@
 package uk.ac.ox.softeng.mauro.controller.security
 
+import uk.ac.ox.softeng.mauro.api.Paths
+import uk.ac.ox.softeng.mauro.api.security.SecurableResourceGroupRoleApi
+
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
+import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Delete
@@ -23,7 +27,7 @@ import uk.ac.ox.softeng.mauro.persistence.cache.ItemCacheableRepository
 @Slf4j
 @Controller
 @Secured(SecurityRule.IS_ANONYMOUS)
-class SecurableResourceGroupRoleController extends ItemController<SecurableResourceGroupRole> {
+class SecurableResourceGroupRoleController extends ItemController<SecurableResourceGroupRole> implements SecurableResourceGroupRoleApi {
 
     ItemCacheableRepository.SecurableResourceGroupRoleCacheableRepository securableResourceGroupRoleRepository
 
@@ -35,7 +39,7 @@ class SecurableResourceGroupRoleController extends ItemController<SecurableResou
         this.securableResourceGroupRoleRepository = securableResourceGroupRoleRepository
     }
 
-    @Post('/{securableResourceDomainType}/{securableResourceId}/roles/{role}/userGroups/{userGroupId}')
+    @Post(Paths.SECURABLE_ROLE_GROUP_ID)
     SecurableResourceGroupRole create(@NonNull String securableResourceDomainType, @NonNull UUID securableResourceId, @NonNull Role role, @NonNull UUID userGroupId) {
         AdministeredItem securableResource = readAdministeredItem(securableResourceDomainType, securableResourceId)
 
@@ -56,8 +60,8 @@ class SecurableResourceGroupRoleController extends ItemController<SecurableResou
         securableResourceGroupRoleRepository.save(securableResourceGroupRole)
     }
 
-    @Delete('/{securableResourceDomainType}/{securableResourceId}/roles/{role}/userGroups/{userGroupId}')
-    HttpStatus delete(@NonNull String securableResourceDomainType, @NonNull UUID securableResourceId, @NonNull Role role, @NonNull UUID userGroupId) {
+    @Delete(Paths.SECURABLE_ROLE_GROUP_ID)
+    HttpResponse delete(@NonNull String securableResourceDomainType, @NonNull UUID securableResourceId, @NonNull Role role, @NonNull UUID userGroupId) {
         AdministeredItem securableResource = readAdministeredItem(securableResourceDomainType, securableResourceId)
 
         checkCanEditRoleOnItem(role, securableResource)
@@ -65,7 +69,7 @@ class SecurableResourceGroupRoleController extends ItemController<SecurableResou
         Long deleted = securableResourceGroupRoleRepository.deleteBySecurableResourceDomainTypeAndSecurableResourceIdAndRoleAndUserGroupId(securableResource.domainType, securableResource.id, role, userGroupId)
 
         if (deleted) {
-            HttpStatus.NO_CONTENT
+            HttpResponse.status(HttpStatus.NO_CONTENT)
         } else {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, 'Not found for deletion')
         }

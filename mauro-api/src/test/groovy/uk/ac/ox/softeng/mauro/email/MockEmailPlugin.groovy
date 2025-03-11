@@ -5,7 +5,7 @@ import io.micronaut.context.annotation.Replaces
 import jakarta.inject.Singleton
 import uk.ac.ox.softeng.mauro.domain.email.Email
 import uk.ac.ox.softeng.mauro.domain.security.CatalogueUser
-import uk.ac.ox.softeng.mauro.service.email.EmailPlugin
+import uk.ac.ox.softeng.mauro.plugin.EmailPlugin
 import uk.ac.ox.softeng.mauro.service.email.MicronautJavamailEmailPlugin
 
 @Slf4j

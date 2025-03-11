@@ -1,9 +1,12 @@
 package uk.ac.ox.softeng.mauro.controller.terminology
 
+import uk.ac.ox.softeng.mauro.api.Paths
+import uk.ac.ox.softeng.mauro.api.terminology.TermRelationshipTypeApi
+
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
-import io.micronaut.http.HttpStatus
+import io.micronaut.http.HttpResponse
 import io.micronaut.http.annotation.*
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
@@ -16,36 +19,36 @@ import uk.ac.ox.softeng.mauro.persistence.terminology.TermRelationshipTypeConten
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @CompileStatic
-@Controller('/terminologies/{terminologyId}/termRelationshipTypes')
+@Controller
 @Secured(SecurityRule.IS_ANONYMOUS)
-class TermRelationshipTypeController extends AdministeredItemController<TermRelationshipType, Terminology> {
+class TermRelationshipTypeController extends AdministeredItemController<TermRelationshipType, Terminology> implements TermRelationshipTypeApi {
 
     TermRelationshipTypeController(TermRelationshipTypeCacheableRepository termRelationshipTypeRepository, TerminologyCacheableRepository terminologyRepository, TermRelationshipTypeContentRepository termRelationshipTypeContentRepository) {
         super(TermRelationshipType, termRelationshipTypeRepository, terminologyRepository, termRelationshipTypeContentRepository)
     }
 
-    @Get('/{id}')
+    @Get(Paths.TERM_RELATIONSHIP_TYPE_ID)
     TermRelationshipType show(UUID terminologyId, UUID id) {
         super.show(id)
     }
 
-    @Post
+    @Post(Paths.TERM_RELATIONSHIP_TYPE_LIST)
     TermRelationshipType create(UUID terminologyId, @Body @NonNull TermRelationshipType termRelationshipType) {
         super.create(terminologyId, termRelationshipType)
     }
 
-    @Put('/{id}')
+    @Put(Paths.TERM_RELATIONSHIP_TYPE_ID)
     TermRelationshipType update(UUID terminologyId, UUID id, @Body @NonNull TermRelationshipType termRelationshipType) {
         super.update(id, termRelationshipType)
     }
 
-    @Get
+    @Get(Paths.TERM_RELATIONSHIP_TYPE_LIST)
     ListResponse<TermRelationshipType> list(UUID terminologyId) {
         super.list(terminologyId)
     }
 
-    @Delete('/{id}')
-    HttpStatus delete(UUID terminologyId, UUID id, @Body @Nullable TermRelationshipType termRelationshipType) {
+    @Delete(Paths.TERM_RELATIONSHIP_TYPE_ID)
+    HttpResponse delete(UUID terminologyId, UUID id, @Body @Nullable TermRelationshipType termRelationshipType) {
         super.delete(id, termRelationshipType)
     }
 }

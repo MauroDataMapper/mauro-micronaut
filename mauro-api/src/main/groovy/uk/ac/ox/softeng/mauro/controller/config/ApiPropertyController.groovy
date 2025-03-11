@@ -1,9 +1,13 @@
 package uk.ac.ox.softeng.mauro.controller.config
 
+import uk.ac.ox.softeng.mauro.api.Paths
+import uk.ac.ox.softeng.mauro.api.config.ApiPropertyApi
+
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
+import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.*
 import io.micronaut.http.exceptions.HttpStatusException
@@ -19,7 +23,7 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 @Slf4j
 @Controller
 @Secured(SecurityRule.IS_ANONYMOUS)
-class ApiPropertyController extends ItemController<ApiProperty> {
+class ApiPropertyController extends ItemController<ApiProperty> implements ApiPropertyApi {
 
     ItemCacheableRepository.ApiPropertyCacheableRepository apiPropertyRepository
 
@@ -33,25 +37,25 @@ class ApiPropertyController extends ItemController<ApiProperty> {
         super.getDisallowedProperties() + ['lastUpdatedBy']
     }
 
-    @Get('/properties')
+    @Get(Paths.API_PROPERTY_LIST_PUBLIC)
     ListResponse<ApiProperty> listPubliclyVisible() {
         ListResponse.from(apiPropertyRepository.findAllByPubliclyVisibleTrue())
     }
 
-    @Get('/admin/properties')
+    @Get(Paths.API_PROPERTY_LIST_ALL)
     ListResponse<ApiProperty> listAll() {
         accessControlService.checkAdministrator()
         ListResponse.from(apiPropertyRepository.findAll())
     }
 
-    @Get('/admin/properties/{id}')
+    @Get(Paths.API_PROPERTY_SHOW)
     ApiProperty show(UUID id) {
         accessControlService.checkAdministrator()
 
         apiPropertyRepository.findById(id)
     }
 
-    @Post('/admin/properties')
+    @Post(Paths.API_PROPERTY_LIST_ALL)
     ApiProperty create(@Body @NonNull ApiProperty apiProperty) {
         accessControlService.checkAdministrator()
 
@@ -62,7 +66,7 @@ class ApiPropertyController extends ItemController<ApiProperty> {
         apiPropertyRepository.save(apiProperty)
     }
 
-    @Put('/admin/properties/{id}')
+    @Put(Paths.API_PROPERTY_SHOW)
     ApiProperty update(UUID id, @Body @NonNull ApiProperty apiProperty) {
         accessControlService.checkAdministrator()
 
@@ -78,8 +82,8 @@ class ApiPropertyController extends ItemController<ApiProperty> {
         }
     }
 
-    @Delete('/admin/properties/{id}')
-    HttpStatus delete(UUID id, @Body @Nullable ApiProperty apiProperty) {
+    @Delete(Paths.API_PROPERTY_SHOW)
+    HttpResponse delete(UUID id, @Body @Nullable ApiProperty apiProperty) {
         accessControlService.checkAdministrator()
 
         ApiProperty apiPropertyToDelete = apiPropertyRepository.readById(id)
@@ -87,7 +91,7 @@ class ApiPropertyController extends ItemController<ApiProperty> {
         if (apiProperty?.version) apiPropertyToDelete.version = apiProperty.version
         Long deleted = apiPropertyRepository.delete(apiPropertyToDelete)
         if (deleted) {
-            HttpStatus.NO_CONTENT
+            HttpResponse.status(HttpStatus.NO_CONTENT)
         } else {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, 'Not found for deletion')
         }

@@ -58,7 +58,7 @@ class MauroSessionLoginHandlerIntegrationSpec extends SecuredIntegrationSpec {
 
         @Override
         Cookies getCookies() {
-            return cookies;
+            return cookies
         }
 
         @Override

@@ -1,7 +1,7 @@
 package uk.ac.ox.softeng.mauro.service.federation
 
 import uk.ac.ox.softeng.mauro.ErrorHandler
-import uk.ac.ox.softeng.mauro.Paths
+import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.controller.federation.client.FederationClient
 import uk.ac.ox.softeng.mauro.domain.authority.Authority
 import uk.ac.ox.softeng.mauro.domain.facet.federation.PublishedModel
@@ -35,30 +35,25 @@ class SubscribedCatalogueService {
     }
 
     boolean validateRemote(SubscribedCatalogue subscribedCatalogue){
-        log.info(">>>>>>>>>>>.  validate remote start. subscribed ctalugue: $subscribedCatalogue.url")
         boolean result
-        Tuple2<Authority, List<PublishedModel>> remotePublishedModelsWithAuthority = getRemoteClientDataAsTuple(subscribedCatalogue, Paths.PUBLISHED_MODELS_ROUTE)
-        log.info(">>>>>>>>>  calling authorityservice for defaultAutbority")
+        Tuple2<Authority, List<PublishedModel>> remotePublishedModelsWithAuthority = getRemoteClientDataAsTuple(subscribedCatalogue, Paths.PUBLISHED_MODELS)
         Authority defaultAuthority = authorityService.getDefaultAuthority()
-        log.info(">>>>>>>>>  defaultAutbority: $defaultAuthority.label; $defaultAuthority.id")
         // For Mauro JSON catalogues, check that the remote catalogue has a name (Authority label)
         // For both Mauro JSON and Atom catalogues, check that the publishedModels list exists, however this may be empty
         if ((subscribedCatalogue.subscribedCatalogueType == SubscribedCatalogueType.MAURO_JSON && !remotePublishedModelsWithAuthority.v1.label) ||
             remotePublishedModelsWithAuthority.v2 == null) {
-
-            ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, 'Invalid subscription here: ')
+            ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, 'Invalid subscription')
         }
         if (remotePublishedModelsWithAuthority.v1.label == defaultAuthority.label && remotePublishedModelsWithAuthority.v1.url ==
             defaultAuthority.url) {
             ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, 'Invalid subscription -check authority ')
         }
         result = true
-        log.info(">>>>>>>>>>>.  remoteAuthority good ")
         result
     }
 
     List<PublishedModel> getPublishedModels(SubscribedCatalogue subscribedCatalogue) {
-       getRemoteClientDataAsTuple(subscribedCatalogue, Paths.PUBLISHED_MODELS_ROUTE).v2
+       getRemoteClientDataAsTuple(subscribedCatalogue, Paths.PUBLISHED_MODELS).v2
     }
 
 

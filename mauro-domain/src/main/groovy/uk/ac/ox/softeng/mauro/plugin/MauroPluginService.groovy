@@ -44,6 +44,14 @@ class MauroPluginService {
         } as List<P>
     }
 
+    <P> List<MauroPluginDTO> listPluginsAsDTO(Class<P> pluginType) {
+        mauroPlugins.findAll {
+            pluginType.isInstance(it)
+        }.collect {
+            MauroPluginDTO.fromPlugin(it)
+        }
+    }
+
     List<LinkedHashMap<String, String>> getModulesList() {
         return (ModuleLayer.boot().modules().collect {
             ["name"   : it.name,

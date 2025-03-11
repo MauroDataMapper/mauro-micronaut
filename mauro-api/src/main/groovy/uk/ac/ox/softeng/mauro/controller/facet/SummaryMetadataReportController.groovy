@@ -1,7 +1,13 @@
-package uk.ac.ox.softeng.mauro.controller.model
+package uk.ac.ox.softeng.mauro.controller.facet
+
+import uk.ac.ox.softeng.mauro.api.Paths
+import uk.ac.ox.softeng.mauro.api.facet.SummaryMetadataReportApi
+import uk.ac.ox.softeng.mauro.controller.model.ItemController
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
+import io.micronaut.core.annotation.NonNull
+import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.*
 import io.micronaut.http.exceptions.HttpStatusException
@@ -9,7 +15,6 @@ import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
 import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
-import reactor.util.annotation.NonNull
 import uk.ac.ox.softeng.mauro.domain.facet.Facet
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
@@ -23,9 +28,9 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @CompileStatic
 @Slf4j
-@Controller('/{domainType}/{domainId}/summaryMetadata/{summaryMetadataId}/summaryMetadataReports')
+@Controller
 @Secured(SecurityRule.IS_ANONYMOUS)
-class SummaryMetadataReportController extends ItemController<SummaryMetadataReport> {
+class SummaryMetadataReportController extends ItemController<SummaryMetadataReport> implements SummaryMetadataReportApi {
 
     @Inject
     SummaryMetadataReportRepository summaryMetadataReportRepository
@@ -46,7 +51,7 @@ class SummaryMetadataReportController extends ItemController<SummaryMetadataRepo
         this.summaryMetadataReportCacheableRepository = summaryMetadataReportCacheableRepository
     }
 
-    @Post
+    @Post(Paths.SUMMARY_METADATA_REPORTS_LIST)
     SummaryMetadataReport create(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID summaryMetadataId,
                                  @Body SummaryMetadataReport summaryMetadataReport) {
         super.cleanBody(summaryMetadataReport)
@@ -57,7 +62,7 @@ class SummaryMetadataReportController extends ItemController<SummaryMetadataRepo
         summaryMetadataReportCacheableRepository.save(summaryMetadataReport)
     }
 
-    @Get
+    @Get(Paths.SUMMARY_METADATA_REPORTS_LIST)
     ListResponse<SummaryMetadataReport> list(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID summaryMetadataId) {
         SummaryMetadata summaryMetadata = validateAndGet(domainType, domainId, summaryMetadataId)
         accessControlService.checkRole(Role.READER, readAdministeredItemForFacet(summaryMetadata))
@@ -65,15 +70,15 @@ class SummaryMetadataReportController extends ItemController<SummaryMetadataRepo
         ListResponse.from(summaryMetadataReportList)
     }
 
-    @Get('/{id}')
-    SummaryMetadataReport get(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID summaryMetadataId,
+    @Get(Paths.SUMMARY_METADATA_REPORTS_ID)
+    SummaryMetadataReport show(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID summaryMetadataId,
                               @NonNull UUID id) {
         SummaryMetadata summaryMetadata = validateAndGet(domainType, domainId, summaryMetadataId)
         accessControlService.checkRole(Role.READER, readAdministeredItemForFacet(summaryMetadata))
         summaryMetadataReportCacheableRepository.findById(id)
     }
 
-    @Put('/{id}')
+    @Put(Paths.SUMMARY_METADATA_REPORTS_ID)
     SummaryMetadataReport update(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID summaryMetadataId,
                                  @NonNull UUID id, @Body @NonNull SummaryMetadataReport summaryMetadataReport) {
         super.cleanBody(summaryMetadataReport)
@@ -85,10 +90,10 @@ class SummaryMetadataReportController extends ItemController<SummaryMetadataRepo
         updated
     }
 
-    @Delete('/{id}')
+    @Delete(Paths.SUMMARY_METADATA_REPORTS_ID)
     @Transactional
-    HttpStatus delete(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID summaryMetadataId,
-                      @NonNull UUID id) {
+    HttpResponse delete(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID summaryMetadataId,
+                        @NonNull UUID id) {
         SummaryMetadata summaryMetadata = validateAndGet(domainType, domainId, summaryMetadataId)
         accessControlService.checkRole(Role.EDITOR, readAdministeredItemForFacet(summaryMetadata))
         SummaryMetadataReport summaryMetadataReport = summaryMetadataReportCacheableRepository.readById(id)
@@ -96,7 +101,7 @@ class SummaryMetadataReportController extends ItemController<SummaryMetadataRepo
             throwNotFoundException(summaryMetadataReport, id)
         }
         summaryMetadataReportCacheableRepository.delete(summaryMetadataReport, summaryMetadata)
-        HttpStatus.NO_CONTENT
+        HttpResponse.status(HttpStatus.NO_CONTENT)
     }
 
     private SummaryMetadataReport updateEntity(SummaryMetadataReport existing, SummaryMetadataReport cleaned,

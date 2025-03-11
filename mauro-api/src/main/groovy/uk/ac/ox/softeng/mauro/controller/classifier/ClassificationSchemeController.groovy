@@ -1,23 +1,25 @@
 package uk.ac.ox.softeng.mauro.controller.classifier
 
+import io.micronaut.http.HttpStatus
+import uk.ac.ox.softeng.mauro.api.classifier.ClassificationSchemeApi
+
 import uk.ac.ox.softeng.mauro.ErrorHandler
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
-import io.micronaut.http.HttpStatus
+import io.micronaut.http.HttpResponse
 import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.*
 import io.micronaut.http.server.multipart.MultipartBody
-import io.micronaut.http.server.types.files.StreamedFile
 import io.micronaut.scheduling.TaskExecutors
 import io.micronaut.scheduling.annotation.ExecuteOn
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
 import io.micronaut.transaction.annotation.Transactional
 import uk.ac.ox.softeng.mauro.controller.model.ModelController
-import uk.ac.ox.softeng.mauro.Paths
+import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.domain.classifier.ClassificationScheme
 import uk.ac.ox.softeng.mauro.domain.diff.ObjectDiff
 import uk.ac.ox.softeng.mauro.domain.model.version.CreateNewVersionData
@@ -31,7 +33,7 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 @Controller
 @CompileStatic
 @Secured(SecurityRule.IS_ANONYMOUS)
-class ClassificationSchemeController extends ModelController<ClassificationScheme> {
+class ClassificationSchemeController extends ModelController<ClassificationScheme> implements ClassificationSchemeApi {
 
     ModelCacheableRepository.ClassificationSchemeCacheableRepository classificationSchemeCacheableRepository
 
@@ -49,7 +51,7 @@ class ClassificationSchemeController extends ModelController<ClassificationSchem
     }
 
     @Transactional
-    @Post('/folders/{folderId}/classificationSchemes')
+    @Post(Paths.FOLDER_CLASSIFICATION_SCHEMES_ROUTE)
     ClassificationScheme create(UUID folderId, @Body @NonNull ClassificationScheme classificationScheme) {
         super.create(folderId, classificationScheme)
     }
@@ -61,7 +63,7 @@ class ClassificationSchemeController extends ModelController<ClassificationSchem
 
     @Transactional
     @Delete(Paths.CLASSIFICATION_SCHEMES_ID_ROUTE)
-    HttpStatus delete(UUID id, @Body @Nullable ClassificationScheme classificationScheme) {
+    HttpResponse delete(UUID id, @Body @Nullable ClassificationScheme classificationScheme) {
         super.delete(id, classificationScheme)
     }
 
@@ -71,7 +73,7 @@ class ClassificationSchemeController extends ModelController<ClassificationSchem
         super.list(folderId)
     }
 
-    @Get(Paths.CLASSIFICATION_SCHEMES_ROUTE)
+    @Get(Paths.CLASSIFICATION_SCHEMES_LIST)
     ListResponse<ClassificationScheme> listAll() {
         super.listAll()
     }
@@ -83,15 +85,15 @@ class ClassificationSchemeController extends ModelController<ClassificationSchem
         super.createNewBranchModelVersion(id, createNewVersionData)
     }
 
-    @Get('/classificationSchemes/{id}/export{/namespace}{/name}{/version}')
-    StreamedFile exportModel(UUID id, @Nullable String namespace, @Nullable String name, @Nullable String version) {
+    @Get(Paths.CLASSIFICATION_SCHEMES_EXPORT)
+    HttpResponse<byte[]> exportModel(UUID id, @Nullable String namespace, @Nullable String name, @Nullable String version) {
         super.exportModel(id, namespace, name, version)
     }
 
     @Transactional
     @ExecuteOn(TaskExecutors.IO)
     @Consumes(MediaType.MULTIPART_FORM_DATA)
-    @Post('/classificationSchemes/import/{namespace}/{name}{/version}')
+    @Post(Paths.CLASSIFICATION_SCHEMES_IMPORT)
     ListResponse<ClassificationScheme> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version) {
         super.importModel(body, namespace, name, version)
     }

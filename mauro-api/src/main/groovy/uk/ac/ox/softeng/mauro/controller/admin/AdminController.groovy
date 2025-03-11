@@ -1,5 +1,9 @@
 package uk.ac.ox.softeng.mauro.controller.admin
 
+import uk.ac.ox.softeng.mauro.api.Paths
+import uk.ac.ox.softeng.mauro.api.admin.AdminApi
+import uk.ac.ox.softeng.mauro.plugin.MauroPluginDTO
+
 import groovy.transform.CompileStatic
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.Body
@@ -17,14 +21,14 @@ import uk.ac.ox.softeng.mauro.plugin.MauroPluginService
 import uk.ac.ox.softeng.mauro.plugin.exporter.ModelExporterPlugin
 import uk.ac.ox.softeng.mauro.plugin.importer.ModelImporterPlugin
 import uk.ac.ox.softeng.mauro.security.AccessControlService
-import uk.ac.ox.softeng.mauro.service.email.EmailPlugin
+import uk.ac.ox.softeng.mauro.plugin.EmailPlugin
 import uk.ac.ox.softeng.mauro.service.email.EmailService
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @CompileStatic
-@Controller('/admin')
+@Controller()
 @Secured(SecurityRule.IS_ANONYMOUS)
-class AdminController {
+class AdminController implements AdminApi {
 
     @Inject
     MauroPluginService mauroPluginService
@@ -41,7 +45,7 @@ class AdminController {
         this.emailRepository = emailRepository
     }
 
-    @Get('/modules')
+    @Get(Paths.ADMIN_MODULES_LIST)
     List<LinkedHashMap<String, String>> modules() {
         accessControlService.checkAdministrator()
 
@@ -49,24 +53,25 @@ class AdminController {
     }
 
 
-    @Get('/providers/importers')
-    List<ModelImporterPlugin> importers() {
+    @Get(Paths.ADMIN_IMPORTERS_LIST)
+    List<MauroPluginDTO> importers() {
         accessControlService.checkAdministrator()
 
-        mauroPluginService.listPlugins(ModelImporterPlugin)
+        mauroPluginService.listPluginsAsDTO(ModelImporterPlugin)
     }
 
 
-    @Get('/providers/exporters')
-    List<ModelExporterPlugin> exporters() {
+    @Get(Paths.ADMIN_EXPORTERS_LIST)
+    List<MauroPluginDTO> exporters() {
         accessControlService.checkAdministrator()
 
-        mauroPluginService.listPlugins(ModelExporterPlugin)
+        mauroPluginService.listPluginsAsDTO(ModelExporterPlugin)
     }
 
-    @Get('/providers/emailers')
-    List<EmailPlugin> emailers() {
-        mauroPluginService.listPlugins(EmailPlugin)
+
+    @Get(Paths.ADMIN_EMAILERS_LIST)
+    List<MauroPluginDTO> emailers() {
+        mauroPluginService.listPluginsAsDTO(EmailPlugin)
     }
 
 
@@ -76,7 +81,7 @@ class AdminController {
      * @param catalogueUser
      * @return
      */
-    @Post('/email/sendTestEmail')
+    @Post(Paths.ADMIN_EMAIL_SEND_TEST)
     Boolean sendTestEmail(@Body CatalogueUser catalogueUser) {
         accessControlService.checkAdministrator()
 
@@ -103,7 +108,7 @@ class AdminController {
      * This is a new endpoint which allows users to test the email connection without sending an email
      * @return
      */
-    @Get('/email/testConnection')
+    @Get(Paths.ADMIN_EMAIL_TEST_CONNECTION)
     boolean testConnection() {
         accessControlService.checkAdministrator()
 
@@ -116,10 +121,9 @@ class AdminController {
     }
 
 
-    @Get('/emails')
-    ListResponse<Email> list() {
+    @Get(Paths.ADMIN_EMAILS)
+    ListResponse<Email> listEmails() {
         accessControlService.checkAdministrator()
-
         ListResponse.from(emailRepository.readAll())
     }
 
@@ -127,7 +131,7 @@ class AdminController {
      * This is a new endpoint which allows administrators to retry sending an email (usually one which previously failed to send)
      * @return
      */
-    @Post('/emails/{emailId}/retry')
+    @Post(Paths.ADMIN_EMAIL_RETRY)
     boolean retryEmail(UUID emailId) {
         accessControlService.checkAdministrator()
 

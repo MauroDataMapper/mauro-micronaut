@@ -1,13 +1,14 @@
 package uk.ac.ox.softeng.mauro.controller.authority
 
-import uk.ac.ox.softeng.mauro.Paths
+import io.micronaut.http.HttpResponse
+import uk.ac.ox.softeng.mauro.api.Paths
+import uk.ac.ox.softeng.mauro.api.authority.AuthorityApi
 import uk.ac.ox.softeng.mauro.controller.model.ItemController
 import uk.ac.ox.softeng.mauro.domain.authority.Authority
 import uk.ac.ox.softeng.mauro.service.core.AuthorityService
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 import groovy.transform.CompileStatic
-import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpStatus
@@ -24,10 +25,9 @@ import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
 
 @CompileStatic
-@Slf4j
-@Controller(Paths.AUTHORITIES_ROUTE)
+@Controller
 @Secured(SecurityRule.IS_ANONYMOUS)
-class AuthorityController extends ItemController<Authority> {
+class AuthorityController extends ItemController<Authority> implements AuthorityApi {
     final AuthorityService authorityService
 
     @Inject
@@ -36,20 +36,20 @@ class AuthorityController extends ItemController<Authority> {
         this.authorityService = authorityService
     }
 
-    @Get(value = Paths.ID_ROUTE)
+    @Get(Paths.AUTHORITY_ID)
     Authority show(@NonNull UUID id) {
         accessControlService.checkAuthenticated()
         authorityService.find(id)
     }
 
-    @Get
+    @Get(Paths.AUTHORITY_LIST)
     ListResponse<Authority> list() {
         accessControlService.checkAuthenticated()
         ListResponse.from(authorityService.findAll())
     }
 
-    @Post
     @Transactional
+    @Post(Paths.AUTHORITY_LIST)
     Authority create(@Body @NonNull Authority authority) {
         accessControlService.checkAdministrator()
         Authority cleanedItem = cleanBody(authority)
@@ -57,7 +57,7 @@ class AuthorityController extends ItemController<Authority> {
         authorityService.create(cleanedItem)
     }
 
-    @Put(value = Paths.ID_ROUTE)
+    @Put(Paths.AUTHORITY_ID)
     Authority update(UUID id, @Body @NonNull Authority authority) {
         accessControlService.checkAdministrator()
         Authority cleanItem = cleanBody(authority)
@@ -71,15 +71,15 @@ class AuthorityController extends ItemController<Authority> {
 
 
     @Transactional
-    @Delete(value = Paths.ID_ROUTE)
-    HttpStatus delete(UUID id, @Body @Nullable Authority authority) {
+    @Delete(Paths.AUTHORITY_ID)
+    HttpResponse delete(UUID id, @Body @Nullable Authority authority) {
         accessControlService.checkAdministrator()
 
         Authority authorityToDelete = authorityService.readById(id)
         if (authorityToDelete?.version) authorityToDelete.version = authority.version
         Long deleted = authorityService.delete(authorityToDelete)
         if (deleted) {
-            HttpStatus.NO_CONTENT
+            HttpResponse.status(HttpStatus.NO_CONTENT)
         } else {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, 'Not found for deletion')
         }

@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.security
 
+import uk.ac.ox.softeng.mauro.testing.CommonDataSpec
+
 import io.micronaut.context.ApplicationContext
 import io.micronaut.context.annotation.Value
 import io.micronaut.http.HttpStatus
@@ -18,12 +20,11 @@ import org.jboss.resteasy.client.jaxrs.ResteasyWebTarget
 import spock.lang.Ignore
 import spock.lang.Shared
 import uk.ac.ox.softeng.mauro.persistence.SecuredContainerizedTest
-import uk.ac.ox.softeng.mauro.testing.BaseIntegrationSpec
 
 import java.nio.charset.Charset
 @Ignore
 @SecuredContainerizedTest
-class KeycloakIntegrationSpec extends BaseIntegrationSpec {
+class KeycloakIntegrationSpec extends CommonDataSpec {
 
     static String PASSWORD_GRANT_TYPE = 'password'
     static String OPEN_ID = 'openid'

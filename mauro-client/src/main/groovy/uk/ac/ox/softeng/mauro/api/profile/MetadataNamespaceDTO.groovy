@@ -1,8 +1,9 @@
-package uk.ac.ox.softeng.mauro.controller.profile
+package uk.ac.ox.softeng.mauro.api.profile
+
+import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 
 import groovy.transform.CompileStatic
 import groovy.transform.SelfType
-import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 
 @CompileStatic
 @SelfType(AdministeredItem)

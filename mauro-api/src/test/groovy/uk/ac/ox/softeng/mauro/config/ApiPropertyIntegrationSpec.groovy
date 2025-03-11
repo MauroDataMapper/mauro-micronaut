@@ -1,51 +1,54 @@
 package uk.ac.ox.softeng.mauro.config
 
+import uk.ac.ox.softeng.mauro.api.config.ApiPropertyApi
+import uk.ac.ox.softeng.mauro.api.security.LoginApi
+import uk.ac.ox.softeng.mauro.domain.config.ApiProperty
+
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.client.exceptions.HttpClientResponseException
 import io.micronaut.runtime.EmbeddedApplication
 import jakarta.inject.Inject
+import io.micronaut.security.authentication.UsernamePasswordCredentials
+import jakarta.inject.Singleton
 import spock.lang.Shared
 import uk.ac.ox.softeng.mauro.persistence.SecuredContainerizedTest
 import uk.ac.ox.softeng.mauro.security.SecuredIntegrationSpec
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @SecuredContainerizedTest
+@Singleton
 class ApiPropertyIntegrationSpec extends SecuredIntegrationSpec {
-
-    @Inject
-    EmbeddedApplication<?> application
 
     @Shared
     UUID apiPropertyId
 
     void 'only admin can create an api property'() {
         given:
+
         loginAdmin()
 
         when:
-        Map<String, Object> response = POST('/admin/properties', [
+        ApiProperty apiProperty = apiPropertyApi.create(new ApiProperty(
             key: 'org.example.key',
             value: 'test value',
             publiclyVisible: true,
-            category: 'test category'
-        ])
-        apiPropertyId = UUID.fromString(response.id)
+            category: 'test category'))
 
+        apiPropertyId = apiProperty.id
         then:
-        response
-        response.key == 'org.example.key'
-        response.value == 'test value'
-        response.publiclyVisible == true
-        response.category == 'test category'
+        apiProperty
+        apiProperty.key == 'org.example.key'
+        apiProperty.value == 'test value'
+        apiProperty.publiclyVisible == true
+        apiProperty.category == 'test category'
 
         when:
         loginUser()
-        POST('/admin/properties', [
+        apiPropertyApi.create(new ApiProperty(
             key: 'org.example.key2',
             value: 'test value',
             publiclyVisible: true,
-            category: 'test category'
-        ])
+            category: 'test category'))
 
         then:
         HttpClientResponseException exception = thrown()
@@ -54,14 +57,14 @@ class ApiPropertyIntegrationSpec extends SecuredIntegrationSpec {
 
     void 'anonymous user can read all public api properties'() {
         when:
-        ListResponse response = GET('/properties')
+        ListResponse response = apiPropertyApi.listPubliclyVisible()
 
         then:
         response
         response.count == 1
 
         when:
-        Map apiProperty = response.items.first()
+        ApiProperty apiProperty = response.items.first()
 
         then:
         apiProperty.key == 'org.example.key'
@@ -75,7 +78,8 @@ class ApiPropertyIntegrationSpec extends SecuredIntegrationSpec {
         loginAdmin()
 
         when:
-        Map<String, Object> response = PUT("/admin/properties/$apiPropertyId", [publiclyVisible: false, value: 'updated'])
+        ApiProperty response =
+            apiPropertyApi.update(apiPropertyId, new ApiProperty(publiclyVisible: false, value: 'updated'))
 
         then:
         response
@@ -85,21 +89,21 @@ class ApiPropertyIntegrationSpec extends SecuredIntegrationSpec {
         response.category == 'test category'
 
         when:
-        ListResponse allResponse = GET('/properties')
+        ListResponse allResponse = apiPropertyApi.listPubliclyVisible()
 
         then:
         allResponse.count == 0
         allResponse.items.isEmpty()
 
         when:
-        allResponse = GET('/admin/properties')
+        allResponse = apiPropertyApi.listAll()
 
         then:
         allResponse
         allResponse.count == 1
 
         when:
-        Map apiProperty = allResponse.items.first()
+        ApiProperty apiProperty = allResponse.items.first()
 
         then:
         apiProperty.key == 'org.example.key'

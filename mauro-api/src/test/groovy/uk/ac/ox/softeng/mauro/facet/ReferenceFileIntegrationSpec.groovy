@@ -1,10 +1,12 @@
 package uk.ac.ox.softeng.mauro.facet
 
+import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.client.exceptions.HttpClientResponseException
 import io.micronaut.runtime.EmbeddedApplication
 import io.micronaut.test.annotation.Sql
 import jakarta.inject.Inject
+import jakarta.inject.Singleton
 import spock.lang.Shared
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.facet.ReferenceFile
@@ -14,11 +16,9 @@ import uk.ac.ox.softeng.mauro.security.SecuredIntegrationSpec
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @SecuredContainerizedTest
+@Singleton
 @Sql(scripts = "classpath:sql/tear-down-reference-file.sql", phase = Sql.Phase.AFTER_EACH)
 class ReferenceFileIntegrationSpec extends SecuredIntegrationSpec {
-
-    @Inject
-    EmbeddedApplication<? extends EmbeddedApplication> application
 
     @Shared
     UUID folderId
@@ -28,8 +28,8 @@ class ReferenceFileIntegrationSpec extends SecuredIntegrationSpec {
 
     void setup() {
         loginAdmin()
-        folderId = ((Folder) POST("$FOLDERS_PATH", [label: 'Folder test'], Folder)).id
-        dataModelId = ((DataModel) POST("$FOLDERS_PATH/$folderId$DATAMODELS_PATH", dataModelPayload(), DataModel)).id
+        folderId = folderApi.create(new Folder(label: 'Folder test')).id
+        dataModelId = dataModelApi.create(folderId, dataModelPayload()).id
         logout()
     }
 
@@ -37,15 +37,14 @@ class ReferenceFileIntegrationSpec extends SecuredIntegrationSpec {
         given:
         loginAdmin()
         when:
-        ListResponse<ReferenceFile> responses =
-                (ListResponse<ReferenceFile>) GET("$DATAMODELS_PATH/$dataModelId$REFERENCE_FILE_PATH", ListResponse, ReferenceFile)
+        ListResponse<ReferenceFile> responses = referenceFileApi.list("dataModel", dataModelId)
 
         then:
         responses.items.isEmpty()
 
         when:
         loginUser()
-        (ListResponse<ReferenceFile>) GET("$DATAMODELS_PATH/$dataModelId$REFERENCE_FILE_PATH", ListResponse, ReferenceFile)
+        responses = referenceFileApi.list("dataModel", dataModelId)
         then:
         HttpClientResponseException exception = thrown()
         exception.status == HttpStatus.FORBIDDEN
@@ -56,7 +55,7 @@ class ReferenceFileIntegrationSpec extends SecuredIntegrationSpec {
         given:
         loginAdmin()
         when:
-        ReferenceFile saved = (ReferenceFile) POST("$DATAMODELS_PATH/$dataModelId$REFERENCE_FILE_PATH", referenceFilePayload(), ReferenceFile)
+        ReferenceFile saved = referenceFileApi.create("dataModel", dataModelId, referenceFilePayload())
 
         then:
         saved
@@ -65,7 +64,7 @@ class ReferenceFileIntegrationSpec extends SecuredIntegrationSpec {
         when:
         logout()
         loginUser()
-        (ReferenceFile) POST("$DATAMODELS_PATH/$dataModelId$REFERENCE_FILE_PATH", referenceFilePayload(), ReferenceFile)
+        referenceFileApi.create("dataModel", dataModelId, referenceFilePayload())
         then:
         HttpClientResponseException exception = thrown()
         exception.status == HttpStatus.FORBIDDEN
@@ -75,9 +74,9 @@ class ReferenceFileIntegrationSpec extends SecuredIntegrationSpec {
         given:
         loginAdmin()
         String fileContent = "file contents string the quick brown fox jumped over the green hedge and over the gatepost."
-        ReferenceFile saved = (ReferenceFile) POST("$DATAMODELS_PATH/$dataModelId$REFERENCE_FILE_PATH", referenceFilePayload("testfile", fileContent), ReferenceFile)
+        ReferenceFile saved = referenceFileApi.create("dataModel", dataModelId, referenceFilePayload("testfile", fileContent))
         when:
-        byte[] retrieved = (byte[]) GET("$DATAMODELS_PATH/$dataModelId$REFERENCE_FILE_PATH/$saved.id", byte[])
+        byte[] retrieved = referenceFileApi.showAndReturnFile("dataModel", dataModelId, saved.id)
 
         then:
         retrieved
@@ -86,7 +85,7 @@ class ReferenceFileIntegrationSpec extends SecuredIntegrationSpec {
         logout()
         when:
         loginUser()
-        GET("$DATAMODELS_PATH/$dataModelId$REFERENCE_FILE_PATH/$saved.id", ReferenceFile)
+        retrieved = referenceFileApi.showAndReturnFile("dataModel", dataModelId, saved.id)
         then:
         HttpClientResponseException exception = thrown()
         exception.status == HttpStatus.FORBIDDEN
@@ -95,18 +94,18 @@ class ReferenceFileIntegrationSpec extends SecuredIntegrationSpec {
     void 'update referenceFile -by adminUser only'() {
         given:
         loginAdmin()
-        ReferenceFile saved = (ReferenceFile) POST("$DATAMODELS_PATH/$dataModelId$REFERENCE_FILE_PATH", referenceFilePayload(), ReferenceFile)
+        ReferenceFile saved = referenceFileApi.create("dataModel", dataModelId, referenceFilePayload())
         String fileName = 'new file name'
-        String updatedFileContents = 'amn updated sentence .. it was a cold frostly dry morning when I started to walk to the woods'
+        String updatedFileContents = 'an updated sentence .. it was a cold frostly dry morning when I started to walk to the woods'
         when:
-        ReferenceFile updated = (ReferenceFile) PUT("$DATAMODELS_PATH/$dataModelId$REFERENCE_FILE_PATH/$saved.id", referenceFilePayload(fileName, updatedFileContents), ReferenceFile)
+        ReferenceFile updated = referenceFileApi.update("dataModel", dataModelId, saved.id, referenceFilePayload(fileName, updatedFileContents))
 
         then:
         updated
         updated.fileName == fileName
         updated.fileSize == updatedFileContents.size()
         when:
-        byte[] retrieved = (byte[]) GET("$DATAMODELS_PATH/$dataModelId$REFERENCE_FILE_PATH/$saved.id", byte[])
+        byte[] retrieved = referenceFileApi.showAndReturnFile("dataModel", dataModelId, saved.id)
         then:
 
         retrieved
@@ -115,7 +114,7 @@ class ReferenceFileIntegrationSpec extends SecuredIntegrationSpec {
         when:
         logout()
         loginUser()
-        (ReferenceFile) PUT("$DATAMODELS_PATH/$dataModelId$REFERENCE_FILE_PATH/$saved.id", referenceFilePayload(fileName), ReferenceFile)
+        referenceFileApi.update("dataModel", dataModelId, saved.id, referenceFilePayload(fileName))
 
         then:
         HttpClientResponseException exception = thrown()
@@ -125,26 +124,26 @@ class ReferenceFileIntegrationSpec extends SecuredIntegrationSpec {
     void 'delete referenceFile -by adminUser only'() {
         given:
         loginAdmin()
-        ReferenceFile saved = (ReferenceFile) POST("$DATAMODELS_PATH/$dataModelId$REFERENCE_FILE_PATH", referenceFilePayload(), ReferenceFile)
+        ReferenceFile saved = referenceFileApi.create("dataModel", dataModelId, referenceFilePayload())
 
         when:
-        HttpStatus status = (HttpStatus) DELETE("$DATAMODELS_PATH/$dataModelId$REFERENCE_FILE_PATH/$saved.id", HttpStatus)
+        HttpResponse response = referenceFileApi.delete("dataModel", dataModelId, saved.id)
 
         then:
-        status == HttpStatus.NO_CONTENT
+        response.status == HttpStatus.NO_CONTENT
 
 
         when:
-        ListResponse<ReferenceFile> response = (ListResponse<ReferenceFile>) GET("$DATAMODELS_PATH/$dataModelId$REFERENCE_FILE_PATH", ListResponse, ReferenceFile)
+        ListResponse<ReferenceFile> responseList = referenceFileApi.list("dataModel", dataModelId)
 
         then: 'the list endpoint shows the update'
-        response
-        response.items.isEmpty()
+        responseList
+        responseList.items.isEmpty()
 
         when:
         logout()
         loginUser()
-        (ReferenceFile) POST("$DATAMODELS_PATH/$dataModelId$REFERENCE_FILE_PATH", referenceFilePayload(), ReferenceFile)
+        referenceFileApi.create("dataModel", dataModelId, referenceFilePayload())
         then:
         HttpClientResponseException exception = thrown()
         exception.status == HttpStatus.FORBIDDEN

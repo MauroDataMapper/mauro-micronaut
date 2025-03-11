@@ -1,5 +1,8 @@
 package uk.ac.ox.softeng.mauro.controller.tree
 
+import uk.ac.ox.softeng.mauro.api.Paths
+import uk.ac.ox.softeng.mauro.api.tree.TreeApi
+
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.annotation.Controller
@@ -19,9 +22,9 @@ import uk.ac.ox.softeng.mauro.persistence.service.TreeService
 import uk.ac.ox.softeng.mauro.security.AccessControlService
 
 @CompileStatic
-@Controller('/tree')
+@Controller
 @Secured(SecurityRule.IS_ANONYMOUS)
-class TreeController {
+class TreeController implements TreeApi {
 
     @Inject
     TreeService treeService
@@ -35,7 +38,7 @@ class TreeController {
     @Inject
     AccessControlService accessControlService
 
-    @Get('/folders{/id}')
+    @Get(Paths.TREE_FOLDER)
     List<TreeItem> folderTree(@Nullable UUID id, @Nullable @QueryValue Boolean foldersOnly) {
         List<TreeItem> treeItems = []
         foldersOnly = foldersOnly ?: false
@@ -49,7 +52,7 @@ class TreeController {
         treeItems
     }
 
-    @Get('/folders/{domainType}/{id}')
+    @Get(Paths.TREE_ITEM)
     List<TreeItem> itemTree(String domainType, UUID id, @Nullable @QueryValue Boolean foldersOnly) {
         foldersOnly = foldersOnly ?: false
         AdministeredItemCacheableRepository repository = repositoryService.getAdministeredItemRepository(domainType)
@@ -63,9 +66,9 @@ class TreeController {
     @Get('/{catalogueItemDomainType}/{id}/ancestors')
     List<TreeItem> ancestors( String catalogueItemDomainType, UUID id) {
         List result = List.of(new TreeItem().tap {
-            id: id
-            catalogueItemDomainType : catalogueItemDomainType
-            label: 'stub treeItem label'
+            it.id
+            it.domainType = catalogueItemDomainType
+            it.label = 'stub treeItem label'
         })
         result
     }
@@ -74,27 +77,12 @@ class TreeController {
     @Get('/{catalogueItemDomainType}/{domainType}/{id}/ancestors')
     List<TreeItem> ancestors(String catalogueItemDomainType, String domainType, UUID id) {
         List result = List.of(new TreeItem().tap {
-            id: id
-            catalogueItemDomainType: catalogueItemDomainType
-            domainType: domainType
-            label: 'stub treeItem label'
+            it.id =  id
+            it.domainType = domainType
+            it.label = 'stub treeItem label'
         })
         result
     }
-
-
-    //todo: implement actual
-    @Get('/{catalogueItemDomainType}/{domainType}/{id}')
-    List<TreeItem> treeItems(String catalogueItemDomainType, String domainType, UUID id) {
-        List result = List.of(new TreeItem().tap {
-            id: id
-            domainType: domainType.toLowerCase()
-            label: 'stub treeItem label'
-        })
-        result
-    }
-
-
 
     protected List<TreeItem> filterTreeByReadable(List<TreeItem> treeItems) {
         treeItems.each {if (!it.item) throw new IllegalArgumentException('TreeItem must have item set for security check')}

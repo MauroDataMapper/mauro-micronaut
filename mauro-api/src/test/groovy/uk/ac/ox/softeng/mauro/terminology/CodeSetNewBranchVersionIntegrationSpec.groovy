@@ -1,9 +1,12 @@
 package uk.ac.ox.softeng.mauro.terminology
 
+import uk.ac.ox.softeng.mauro.domain.diff.ObjectDiff
+import uk.ac.ox.softeng.mauro.domain.model.version.CreateNewVersionData
 
 import io.micronaut.runtime.EmbeddedApplication
 import io.micronaut.test.annotation.Sql
 import jakarta.inject.Inject
+import jakarta.inject.Singleton
 import spock.lang.Shared
 import uk.ac.ox.softeng.mauro.domain.diff.DiffBuilder
 import uk.ac.ox.softeng.mauro.domain.facet.ReferenceFile
@@ -15,11 +18,10 @@ import uk.ac.ox.softeng.mauro.persistence.ContainerizedTest
 import uk.ac.ox.softeng.mauro.testing.CommonDataSpec
 
 @ContainerizedTest
+@Singleton
 @Sql(scripts = ["classpath:sql/tear-down.sql"], phase = Sql.Phase.AFTER_EACH)
 class CodeSetNewBranchVersionIntegrationSpec extends CommonDataSpec {
 
-    @Inject
-    EmbeddedApplication<?> application
     @Shared
     UUID folderId
     @Shared
@@ -33,21 +35,22 @@ class CodeSetNewBranchVersionIntegrationSpec extends CommonDataSpec {
 
 
     void setup() {
-        folderId = ((Folder) POST("$FOLDERS_PATH", folder(), Folder)).id
-        codeSetId = ((CodeSet) POST("$FOLDERS_PATH/$folderId$CODE_SET_PATH", codeSet(), CodeSet)).id
+        folderId = folderApi.create(folder()).id
+        codeSetId = codeSetApi.create(folderId, codeSet()).id
 
-        terminologyId = ((Terminology) POST("$FOLDERS_PATH/$folderId$TERMINOLOGIES_PATH", terminology(), Terminology)).id
+        terminologyId = terminologyApi.create(folderId, terminology()).id
 
-        termId = ((Term) POST("$TERMINOLOGIES_PATH/$terminologyId$TERMS_PATH", termPayload(), Term)).id
+        termId = termApi.create(terminologyId, termPayload()).id
         //add term to codeSet
-        (CodeSet) PUT("$CODE_SET_PATH/$codeSetId$TERMS_PATH/$termId", null, CodeSet)
+        codeSetApi.addTerm(codeSetId, termId)
 
-        referenceFileId = ((ReferenceFile) POST ("$CODE_SET_PATH/$codeSetId$REFERENCE_FILE_PATH", referenceFilePayload(), ReferenceFile)).id
+        referenceFileId = referenceFileApi.create("codeSet", codeSetId, referenceFilePayload()).id
     }
 
     void "test newBranchModelVersion -should clone new codeSet and facets (administered items), keeping original associations (terms)"() {
         when:
-        CodeSet newBranchVersion = (CodeSet) PUT("$CODE_SET_PATH/$codeSetId$NEW_BRANCH_MODEL_VERSION", [branchName: 'new branch name'], CodeSet)
+        CodeSet newBranchVersion = codeSetApi.createNewBranchModelVersion(
+            codeSetId, new CreateNewVersionData(branchName: 'new branch name'))
 
         then:
         newBranchVersion
@@ -56,13 +59,13 @@ class CodeSetNewBranchVersionIntegrationSpec extends CommonDataSpec {
         newBranchVersion.referenceFiles[0].id != referenceFileId
 
         when:
-        Map<String, Object> diffMap = GET("$CODE_SET_PATH/$codeSetId$DIFF/$newBranchVersion.id", Map<String, Object>)
+        ObjectDiff objectDiff = codeSetApi.diffModels(codeSetId, newBranchVersion.id)
 
         then:
-        diffMap
+        objectDiff
         //branchName and path will differ
-        diffMap.diffs.each { [DiffBuilder.BRANCH_NAME,  DiffBuilder.PATH_MODEL_IDENTIFIER].contains(it.name) }
-        diffMap.count == 2
+        objectDiff.diffs.each { [DiffBuilder.BRANCH_NAME,  DiffBuilder.PATH_MODEL_IDENTIFIER].contains(it.name) }
+        objectDiff.numberOfDiffs == 2
 
     }
 

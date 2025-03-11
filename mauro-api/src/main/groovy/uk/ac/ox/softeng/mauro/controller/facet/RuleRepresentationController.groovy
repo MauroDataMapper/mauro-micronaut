@@ -1,5 +1,8 @@
 package uk.ac.ox.softeng.mauro.controller.facet
 
+import io.micronaut.http.HttpResponse
+import uk.ac.ox.softeng.mauro.api.Paths
+import uk.ac.ox.softeng.mauro.api.facet.RuleRepresentationApi
 import uk.ac.ox.softeng.mauro.controller.model.ItemController
 import uk.ac.ox.softeng.mauro.domain.facet.Facet
 import uk.ac.ox.softeng.mauro.domain.facet.Rule
@@ -26,13 +29,13 @@ import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
 import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
-import reactor.util.annotation.NonNull
+import io.micronaut.core.annotation.NonNull
 
 @CompileStatic
 @Slf4j
 @Controller('/{domainType}/{domainId}/rules/{ruleId}/representations')
 @Secured(SecurityRule.IS_ANONYMOUS)
-class RuleRepresentationController extends ItemController<RuleRepresentation> {
+class RuleRepresentationController extends ItemController<RuleRepresentation> implements RuleRepresentationApi {
 
     @Inject
     RuleRepresentationRepository ruleRepresentationRepository
@@ -65,6 +68,15 @@ class RuleRepresentationController extends ItemController<RuleRepresentation> {
         ruleRepresentationCacheableRepository.save(ruleRepresentation)
     }
 
+    @Get(Paths.RULE_REPRESENTATIONS_ID)
+    RuleRepresentation show(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID ruleId,
+                               @NonNull UUID id) {
+        Rule rule = validateAndGet(domainType, domainId, ruleId)
+        accessControlService.checkRole(Role.READER, readAdministeredItemForFacet(rule))
+        ruleRepresentationCacheableRepository.findById(id)
+    }
+
+
     @Get
     ListResponse<Rule> list(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID ruleId) {
         Rule rule = validateAndGet(domainType, domainId, ruleId)
@@ -95,8 +107,8 @@ class RuleRepresentationController extends ItemController<RuleRepresentation> {
 
     @Delete('/{id}')
     @Transactional
-    HttpStatus delete(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID ruleId,
-                      @NonNull UUID id) {
+    HttpResponse delete(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID ruleId,
+                        @NonNull UUID id) {
         Rule rule = validateAndGet(domainType, domainId, ruleId)
         accessControlService.checkRole(Role.EDITOR, readAdministeredItemForFacet(rule))
         RuleRepresentation ruleRepresentation = ruleRepresentationCacheableRepository.readById(id)
@@ -104,11 +116,11 @@ class RuleRepresentationController extends ItemController<RuleRepresentation> {
             throwNotFoundException(ruleRepresentation, id)
         }
         ruleRepresentationCacheableRepository.delete(ruleRepresentation)
-        HttpStatus.NO_CONTENT
+        HttpResponse.status(HttpStatus.NO_CONTENT)
     }
 
     private RuleRepresentation updateEntity(RuleRepresentation existing, RuleRepresentation cleaned,
-                                               Rule summaryMetadata) {
+                                               Rule rule) {
         boolean hasChanged = updateProperties(existing, cleaned)
         if (hasChanged) {
             ruleRepresentationCacheableRepository.update(existing)

@@ -30,14 +30,17 @@ class TreeItem {
     @JsonIgnore
     Model model
 
+    Boolean hasChildren
+
     UUID getModelId() {
         model?.id
     }
 
+    /*
     Boolean getHasChildren() {
         children != null ? children : null
     }
-
+*/
     @Transient
     @JsonInclude(JsonInclude.Include.NON_NULL)
     List<String> availableActions = ["createModel"]

@@ -1,6 +1,6 @@
 package uk.ac.ox.softeng.mauro.controller.federation.converter
 
-import uk.ac.ox.softeng.mauro.Paths
+import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.controller.federation.client.FederationClient
 import uk.ac.ox.softeng.mauro.domain.authority.Authority
 import uk.ac.ox.softeng.mauro.domain.facet.federation.MauroLink
@@ -40,7 +40,7 @@ class MauroJsonSubscribedCatalogueConverter implements SubscribedCatalogueConver
     @Override
     Tuple2<Instant, List<PublishedModel>> publishedModelsNewerVersions(FederationClient federationClient, SubscribedCatalogue subscribedCatalogue, String publishedModelId){
         federationClient.clientSetup(subscribedCatalogue)
-        Map<String, Object> newerVersionsMap = federationClient.fetchFederatedClientDataAsMap(subscribedCatalogue, "$Paths.PUBLISHED_MODELS_ROUTE/$publishedModelId$Paths.NEWER_VERSIONS")
+        Map<String, Object> newerVersionsMap = federationClient.fetchFederatedClientDataAsMap(subscribedCatalogue, "$Paths.PUBLISHED_MODELS/$publishedModelId/newerVersions")
 
         Instant lastUpdated = Instant.parse(newerVersionsMap.lastUpdated as CharSequence)
         List<PublishedModel> newerVersions = (newerVersionsMap.newerPublishedModels as List<Map<String, Object>>).collect {convertEntryToPublishedModel(it)}

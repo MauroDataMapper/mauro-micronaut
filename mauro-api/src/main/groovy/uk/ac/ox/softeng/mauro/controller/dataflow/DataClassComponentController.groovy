@@ -1,18 +1,20 @@
 package uk.ac.ox.softeng.mauro.controller.dataflow
 
+import uk.ac.ox.softeng.mauro.api.dataflow.DataClassComponentApi
 import uk.ac.ox.softeng.mauro.ErrorHandler
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
+import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.*
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
 import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.controller.model.AdministeredItemController
-import uk.ac.ox.softeng.mauro.Paths
+import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.domain.dataflow.DataClassComponent
 import uk.ac.ox.softeng.mauro.domain.dataflow.DataFlow
 import uk.ac.ox.softeng.mauro.domain.dataflow.Type
@@ -25,10 +27,10 @@ import uk.ac.ox.softeng.mauro.persistence.dataflow.DataFlowRepository
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @CompileStatic
-@Controller(Paths.DATA_CLASS_COMPONENTS_ROUTE)
+@Controller()
 @Slf4j
 @Secured(SecurityRule.IS_AUTHENTICATED)
-class DataClassComponentController extends AdministeredItemController<DataClassComponent, DataFlow> {
+class DataClassComponentController extends AdministeredItemController<DataClassComponent, DataFlow> implements DataClassComponentApi {
 
     @Inject
     AdministeredItemCacheableRepository.DataClassCacheableRepository dataClassRepository
@@ -49,53 +51,53 @@ class DataClassComponentController extends AdministeredItemController<DataClassC
     }
 
 
-    @Get(value = Paths.ID_ROUTE)
-    DataClassComponent show(@NonNull UUID dataFlowId, @NonNull UUID id) {
+    @Get(Paths.DATA_FLOW_CLASS_COMPONENT_ID)
+    DataClassComponent show(@NonNull UUID dataModelId, @NonNull UUID dataFlowId, @NonNull UUID id) {
         super.show(id)
     }
 
-    @Post
-    DataClassComponent create(@NonNull UUID dataFlowId, @Body @NonNull DataClassComponent dataClassComponent) {
+    @Post(Paths.DATA_FLOW_CLASS_COMPONENT_LIST)
+    DataClassComponent create(@NonNull UUID dataModelId, @NonNull UUID dataFlowId, @Body @NonNull DataClassComponent dataClassComponent) {
         super.create(dataFlowId, dataClassComponent)
     }
 
-    @Put(value = Paths.ID_ROUTE)
-    DataClassComponent update(@NonNull UUID id, @Body @NonNull DataClassComponent dataClassComponent) {
+    @Put(Paths.DATA_FLOW_CLASS_COMPONENT_ID)
+    DataClassComponent update(@NonNull UUID dataModelId, @NonNull UUID dataFlowId, @NonNull UUID id, @Body @NonNull DataClassComponent dataClassComponent) {
         super.update(id, dataClassComponent)
     }
 
-    @Delete(value = Paths.ID_ROUTE)
-    HttpStatus delete(@NonNull UUID id, @Body @Nullable DataClassComponent dataClassComponent) {
+    @Delete(Paths.DATA_FLOW_CLASS_COMPONENT_ID)
+    HttpResponse delete(@NonNull UUID dataModelId, @NonNull UUID dataFlowId, @NonNull UUID id, @Body @Nullable DataClassComponent dataClassComponent) {
         super.delete(id, dataClassComponent)
     }
 
-    @Get
-    ListResponse<DataClassComponent> list(@NonNull UUID dataFlowId) {
+    @Get(Paths.DATA_FLOW_CLASS_COMPONENT_LIST)
+    ListResponse<DataClassComponent> list(@NonNull UUID dataModelId, @NonNull UUID dataFlowId) {
         super.list(dataFlowId)
     }
 
-    @Put(value = Paths.SOURCE_DATA_CLASS_ROUTE)
-    DataClassComponent update(@NonNull UUID dataModelId, @NonNull UUID dataFlowId, @NonNull UUID id, @NonNull UUID dataClassId) {
+    @Put(Paths.DATA_FLOW_CLASS_COMPONENT_SOURCE_CLASS)
+    DataClassComponent updateSource(@NonNull UUID dataModelId, @NonNull UUID dataFlowId, @NonNull UUID id, @NonNull UUID dataClassId) {
         DataClassComponent updated = addDataClass(Type.SOURCE, id, dataClassId)
         updated
     }
 
-    @Put(value = Paths.TARGET_DATA_CLASS_ROUTE)
-    DataClassComponent update(@NonNull UUID dataFlowId, @NonNull UUID id, @NonNull UUID dataClassId) {
+    @Put(Paths.DATA_FLOW_CLASS_COMPONENT_TARGET_CLASS)
+    DataClassComponent updateTarget(@NonNull UUID dataModelId, @NonNull UUID dataFlowId, @NonNull UUID id, @NonNull UUID dataClassId) {
         DataClassComponent updated = addDataClass(Type.TARGET, id, dataClassId)
         updated
     }
 
-    @Delete(value = Paths.TARGET_DATA_CLASS_ROUTE)
-    HttpStatus delete(@NonNull UUID id, @NonNull UUID dataClassId) {
-        removeDataClass(Type.TARGET, id, dataClassId)
-        return HttpStatus.NO_CONTENT
+    @Delete(Paths.DATA_FLOW_CLASS_COMPONENT_SOURCE_CLASS)
+    HttpResponse deleteSource(@NonNull UUID dataModelId, @NonNull UUID dataFlowId, @NonNull UUID id, @NonNull UUID dataClassId) {
+        removeDataClass(Type.SOURCE, id, dataClassId)
+        HttpResponse.status(HttpStatus.NO_CONTENT)
     }
 
-    @Delete(value = Paths.SOURCE_DATA_CLASS_ROUTE)
-    HttpStatus delete(@NonNull UUID dataFlowId, @NonNull UUID id, @NonNull UUID dataClassId) {
-        removeDataClass(Type.SOURCE, id, dataClassId)
-        return HttpStatus.NO_CONTENT
+    @Delete(Paths.DATA_FLOW_CLASS_COMPONENT_TARGET_CLASS)
+    HttpResponse deleteTarget(@NonNull UUID dataModelId, @NonNull UUID dataFlowId, @NonNull UUID id, @NonNull UUID dataClassId) {
+        removeDataClass(Type.TARGET, id, dataClassId)
+        HttpResponse.status(HttpStatus.NO_CONTENT)
     }
 
     private DataClassComponent addDataClass(Type type, UUID id, UUID dataClassId) {
@@ -113,14 +115,14 @@ class DataClassComponentController extends AdministeredItemController<DataClassC
                 }
                 dataClassComponent.targetDataClasses.add(dataClassToAdd)
                 dataClassComponentRepository.addTargetDataClass(dataClassComponent.id, dataClassId)
-                break;
+                break
             case Type.SOURCE:
                 if (dataClassComponent.sourceDataClasses.id.contains(dataClassToAdd.id)) {
-                    ErrorHandler.handleError(HttpStatus.BAD_REQUEST, "Item already exists in table DataClassComponentSourceDataClass: : $dataClassToAdd.id")
+                    ErrorHandler.handleErrorOnNullObject(HttpStatus.BAD_REQUEST, null, "Item already exists in table DataClassComponentSourceDataClass: $dataClassToAdd.id")
                 }
                 dataClassComponent.sourceDataClasses.add(dataClassToAdd)
                 dataClassComponentRepository.addSourceDataClass(dataClassComponent.id, dataClassId)
-                break;
+                break
             default:
                 ErrorHandler.handleError(HttpStatus.BAD_REQUEST, "$type Type must be source or target")
         }
@@ -142,13 +144,13 @@ class DataClassComponentController extends AdministeredItemController<DataClassC
                     ErrorHandler.handleError(HttpStatus.NOT_FOUND, "Item does not exist in table DataClassComponentTargetDataClass: $dataClassId")
                 }
                 result = dataClassComponentRepository.removeTargetDataClass(dataClassComponent.id, dataClassId)
-                break;
+                break
             case Type.SOURCE:
                 if (!dataClassComponent.sourceDataClasses.removeIf(dc -> dc.id == dataClassId)) {
                     ErrorHandler.handleError(HttpStatus.NOT_FOUND, "Item does not exist in table DataClassComponentSourceDataClass: $dataClassId")
                 }
                 result = dataClassComponentRepository.removeSourceDataClass(dataClassComponent.id, dataClassId)
-                break;
+                break
             default:
                 ErrorHandler.handleError(HttpStatus.BAD_REQUEST, "Type must be source or target")
                 break;

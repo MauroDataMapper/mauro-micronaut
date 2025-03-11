@@ -23,82 +23,32 @@ class AppliedProfileField extends ProfileField {
     List<String> errors = []
 
     @Override
-    String getFieldName() {
-        return sourceProfileField.getFieldName()
-    }
-
-    @Override
-    String getDescription() {
-        return sourceProfileField.getDescription()
-    }
-
-    @Override
     String getMetadataKey(String sectionName) {
-        return sourceProfileField.getMetadataKey(sectionName)
+        getMetadataPropertyName()?: "${sectionName}/${getFieldName()}"
     }
 
-    @Override
-    String getMetadataPropertyName() {
-        return sourceProfileField.getMetadataPropertyName()
-    }
-
-    @Override
-    Integer getMaxMultiplicity() {
-        return sourceProfileField.getMaxMultiplicity()
-    }
-
-    @Override
-    Integer getMinMultiplicity() {
-        return sourceProfileField.getMinMultiplicity()
-    }
-
-    @Override
-    List<String> getAllowedValues() {
-        return sourceProfileField.getAllowedValues()
-    }
-
-    @Override
-    String getRegularExpression() {
-        return sourceProfileField.getRegularExpression()
-    }
-
-    @Override
-    String getDefaultValue() {
-        return sourceProfileField.getDefaultValue()
-    }
-
-    @Override
-    ProfileFieldDataType getDataType() {
-        return sourceProfileField.getDataType()
-    }
-
-    @Override
-    Boolean getDerived() {
-        return sourceProfileField.getDerived()
-    }
-
-    @Override
-    Boolean getUneditable() {
-        return sourceProfileField.getUneditable()
-    }
-
-    @Override
-    Boolean getEditableAfterFinalisation() {
-        return sourceProfileField.getEditableAfterFinalisation()
-    }
-
-    @Override
-    String getDerivedFrom() {
-        return sourceProfileField.getDerivedFrom()
-    }
+    AppliedProfileField() {}
 
     AppliedProfileField(ProfileField profileField, AppliedProfileSection parentSection, AdministeredItem administeredItem) {
         this.sourceProfileField = profileField
         this.administeredItem = administeredItem
+        this.fieldName = profileField.fieldName
+        this.metadataPropertyName = profileField.metadataPropertyName
         this.parentSection = parentSection
         this.currentValue = administeredItem.metadata?.find {
             it.namespace == parentSection.parentProfile.metadataNamespace && it.key == getMetadataKey(parentSection.label)
         }?.value
+        this.description = profileField.description
+        this.maxMultiplicity = profileField.maxMultiplicity
+        this.minMultiplicity = profileField.minMultiplicity
+        this.allowedValues = profileField.allowedValues
+        this.regularExpression = profileField.regularExpression
+        this.defaultValue = profileField.defaultValue
+        this.dataType = profileField.dataType
+        this.derived = profileField.derived
+        this.uneditable = profileField.uneditable
+        this.editableAfterFinalisation = profileField.editableAfterFinalisation
+        this.derivedFrom = profileField.derivedFrom
         validate()
     }
 
@@ -106,6 +56,19 @@ class AppliedProfileField extends ProfileField {
         this.sourceProfileField = profileField
         this.parentSection = parentSection
         this.currentValue = fieldBody.currentValue
+        this.fieldName = profileField.fieldName
+        this.description = profileField.description
+        this.metadataPropertyName = profileField.metadataPropertyName
+        this.maxMultiplicity = profileField.maxMultiplicity
+        this.minMultiplicity = profileField.minMultiplicity
+        this.allowedValues = profileField.allowedValues
+        this.regularExpression = profileField.regularExpression
+        this.defaultValue = profileField.defaultValue
+        this.dataType = profileField.dataType
+        this.derived = profileField.derived
+        this.uneditable = profileField.uneditable
+        this.editableAfterFinalisation = profileField.editableAfterFinalisation
+        this.derivedFrom = profileField.derivedFrom
         validate()
     }
 

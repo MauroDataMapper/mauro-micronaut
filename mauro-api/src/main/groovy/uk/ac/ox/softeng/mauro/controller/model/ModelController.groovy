@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.controller.model
 
+import uk.ac.ox.softeng.mauro.api.model.ModelApi
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.service.core.AuthorityService
 
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -7,14 +9,14 @@ import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
+import io.micronaut.http.HttpHeaders
+import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
-import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.exceptions.HttpStatusException
 import io.micronaut.http.multipart.CompletedFileUpload
 import io.micronaut.http.multipart.CompletedPart
 import io.micronaut.http.server.multipart.MultipartBody
-import io.micronaut.http.server.types.files.StreamedFile
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
 import io.micronaut.transaction.annotation.Transactional
@@ -47,7 +49,7 @@ import java.nio.charset.StandardCharsets
 @Slf4j
 @CompileStatic
 @Secured(SecurityRule.IS_ANONYMOUS)
-abstract class ModelController<M extends Model> extends AdministeredItemController<M, Folder> {
+abstract class ModelController<M extends Model> extends AdministeredItemController<M, Folder> implements ModelApi<M> {
 
     @Inject
     FacetCacheableRepository.ReferenceFileCacheableRepository referenceFileCacheableRepository
@@ -134,15 +136,16 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     }
 
     @Transactional
-    HttpStatus delete(UUID id, @Body @Nullable M model) {
+    HttpResponse delete(UUID id, @Body @Nullable M model) {
         M modelToDelete = (M) modelContentRepository.findWithContentById(id)
 
         accessControlService.checkRole(Role.CONTAINER_ADMIN, modelToDelete)
 
+        // TODO: Do we need this next line?
         if (model?.version) modelToDelete.version = model.version
         Long deleted = administeredItemContentRepository.deleteWithContent(modelToDelete)
         if (deleted) {
-            HttpStatus.NO_CONTENT
+            HttpResponse.status(HttpStatus.NO_CONTENT)
         } else {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, 'Not found for deletion')
         }
@@ -222,15 +225,14 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         return objectMapper.convertValue(importMap, parametersClass)
     }
 
-    StreamedFile exportModel(UUID modelId, String namespace, String name, @Nullable String version) {
+    HttpResponse<byte[]> exportModel(UUID modelId, String namespace, String name, @Nullable String version) {
         ModelExporterPlugin mauroPlugin = mauroPluginService.getPlugin(ModelExporterPlugin, namespace, name, version)
         PluginService.handlePluginNotFound(mauroPlugin, namespace, name)
 
         M existing = modelContentRepository.findWithContentById(modelId)
         existing.setAssociations()
 
-        StreamedFile export = exportedModelData(mauroPlugin, existing)
-        export
+        createExportResponse(mauroPlugin, existing)
     }
 
     ListResponse<M> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version) {
@@ -243,7 +245,6 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         List<M> imported = (List<M>) mauroPlugin.importModels(importParameters)
 
         Folder folder = folderRepository.readById(importParameters.folderId)
-
         accessControlService.checkRole(Role.EDITOR, folder)
         List<M> saved = imported.collect { M imp ->
             imp.folder = folder
@@ -258,11 +259,8 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         ListResponse.from(smallerResponse)
     }
 
-
-    protected StreamedFile exportedModelData(ModelExporterPlugin mauroPlugin, M existing) {
-        byte[] fileContents = mauroPlugin.exportModel(existing)
-        String filename = mauroPlugin.getFileName(existing)
-        new StreamedFile(new ByteArrayInputStream(fileContents), MediaType.APPLICATION_JSON_TYPE).attach(filename)
+    ListResponse<DataModel> importModel(@Body io.micronaut.http.client.multipart.MultipartBody body, String namespace, String name, @Nullable String version) {
+        throw new Exception("Client version of importModel has been called")
     }
 
     protected void getReferenceFileFileContent(Collection<AdministeredItem> administeredItems) {
@@ -280,6 +278,16 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         }
     }
 
+
+
+    static protected HttpResponse<byte[]> createExportResponse(ModelExporterPlugin mauroPlugin, Model model) {
+        byte[] fileContents = mauroPlugin.exportModel(model)
+        String filename = mauroPlugin.getFileName(model)
+        HttpResponse
+            .ok(fileContents)
+            .header(HttpHeaders.CONTENT_LENGTH, Long.toString(fileContents.length))
+            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=${filename}")
+    }
 
     //todo: implement actual
 

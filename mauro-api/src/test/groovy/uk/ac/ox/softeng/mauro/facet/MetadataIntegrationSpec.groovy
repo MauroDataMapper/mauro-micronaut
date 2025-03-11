@@ -1,21 +1,24 @@
 package uk.ac.ox.softeng.mauro.facet
 
+import uk.ac.ox.softeng.mauro.api.facet.MetadataApi
+import uk.ac.ox.softeng.mauro.api.folder.FolderApi
+import uk.ac.ox.softeng.mauro.testing.CommonDataSpec
+
+import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.client.exceptions.HttpClientResponseException
 import io.micronaut.runtime.EmbeddedApplication
 import jakarta.inject.Inject
+import jakarta.inject.Singleton
 import spock.lang.Shared
 import uk.ac.ox.softeng.mauro.domain.facet.Metadata
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.persistence.ContainerizedTest
-import uk.ac.ox.softeng.mauro.testing.BaseIntegrationSpec
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @ContainerizedTest
-class MetadataIntegrationSpec extends BaseIntegrationSpec {
-
-    @Inject
-    EmbeddedApplication<?> application
+@Singleton
+class MetadataIntegrationSpec extends CommonDataSpec {
 
     @Shared
     UUID folderId
@@ -27,13 +30,13 @@ class MetadataIntegrationSpec extends BaseIntegrationSpec {
     Map<String, String> metadataMap
 
     void setup() {
-        Folder folder = (Folder) POST('/folders', [label: 'Folder with Metadata'], Folder)
+        Folder folder = folderApi.create(new Folder(label: 'Folder with Metadata'))
         folderId = folder.id
     }
 
     void 'list empty metadata'() {
         when:
-        ListResponse<Metadata> metadataList = (ListResponse<Metadata>) GET("/folders/$folderId/metadata", ListResponse, Metadata)
+        ListResponse<Metadata> metadataList = metadataApi.list("folder", folderId)
 
         then:
         metadataList.count == 0
@@ -41,72 +44,72 @@ class MetadataIntegrationSpec extends BaseIntegrationSpec {
 
     void 'create metadata'() {
         when:
-        metadataMap = [namespace: 'org.example', key: 'example_key', value: 'example_value']
-        Metadata metadata = (Metadata) POST("/folders/$folderId/metadata", metadataMap, Metadata)
+        Metadata metadata1 = new Metadata(namespace: 'org.example', key: 'example_key', value: 'example_value')
+        Metadata metadata = metadataApi.create("folder", folderId, metadata1)
         metadataId = metadata.id
 
         then:
         metadata
-        metadata.namespace == metadataMap.namespace
-        metadata.key == metadataMap.key
-        metadata.value == metadataMap.value
+        metadata.namespace == metadata1.namespace
+        metadata.key == metadata1.key
+        metadata.value == metadata1.value
     }
 
     void 'list metadata'() {
         given:
-        metadataMap = [namespace: 'org.example', key: 'example_key', value: 'example_value']
-        Metadata metadata = (Metadata) POST("/folders/$folderId/metadata", metadataMap, Metadata)
+        Metadata metadata1 = new Metadata(namespace: 'org.example', key: 'example_key', value: 'example_value')
+        Metadata metadata = metadataApi.create("folder", folderId, metadata1)
         metadataId = metadata.id
 
         when:
-        ListResponse<Metadata> metadataList = (ListResponse<Metadata>) GET("/folders/$folderId/metadata", ListResponse, Metadata)
+        ListResponse<Metadata> metadataList = metadataApi.list("folder", folderId)
 
         then:
         metadataList
         metadataList.count == 1
-        metadataList.items.first().namespace == metadataMap.namespace
-        metadataList.items.first().key == metadataMap.key
-        metadataList.items.first().value == metadataMap.value
+        metadataList.items.first().namespace == metadata1.namespace
+        metadataList.items.first().key == metadata1.key
+        metadataList.items.first().value == metadata1.value
     }
 
     void 'get metadata by id'() {
         given:
-        metadataMap = [namespace: 'org.example', key: 'example_key', value: 'example_value']
-        Metadata metadata = (Metadata) POST("/folders/$folderId/metadata", metadataMap, Metadata)
+        Metadata metadata1 = new Metadata(namespace: 'org.example', key: 'example_key', value: 'example_value')
+        Metadata metadata = metadataApi.create("folder", folderId, metadata1)
         metadataId = metadata.id
 
         when:
-        Metadata retrieved = (Metadata) GET("/folders/$folderId/metadata/$metadataId", Metadata)
+        Metadata retrieved = metadataApi.show("folder", folderId, metadataId)
 
         then:
         retrieved
-        retrieved.namespace == metadataMap.namespace
-        retrieved.key == metadataMap.key
-        retrieved.value == metadataMap.value
+        retrieved.namespace == metadata1.namespace
+        retrieved.key == metadata1.key
+        retrieved.value == metadata1.value
     }
 
     void 'update metadata by id'() {
         given:
-        metadataMap = [namespace: 'org.example', key: 'example_key', value: 'example_value']
-        Metadata metadata = (Metadata) POST("/folders/$folderId/metadata", metadataMap, Metadata)
+        Metadata metadata1 = new Metadata(namespace: 'org.example', key: 'example_key', value: 'example_value')
+        Metadata metadata = metadataApi.create("folder", folderId, metadata1)
         metadataId = metadata.id
 
         when:
-        Metadata saved = (Metadata) PUT("/folders/$folderId/metadata/$metadataId", [value: 'updated'], Metadata)
+        Metadata saved = metadataApi.update("folder", folderId, metadataId,new Metadata(value: 'updated'))
 
         then:
         saved
         saved.value == 'updated'
 
         when:
-        Metadata metadataUpdated = (Metadata) GET("/folders/$folderId/metadata/$metadataId", Metadata)
+        Metadata metadataUpdated = metadataApi.show("folder", folderId, metadataId)
 
         then: 'the show endpoint shows the update'
         metadataUpdated
         metadataUpdated.value == 'updated'
 
         when:
-        ListResponse<Metadata> metadataList = (ListResponse<Metadata>) GET("/folders/$folderId/metadata", ListResponse, Metadata)
+        ListResponse<Metadata> metadataList = metadataApi.list("folder", folderId)
 
         then: 'the list endpoint shows the update'
         metadataList
@@ -116,25 +119,24 @@ class MetadataIntegrationSpec extends BaseIntegrationSpec {
 
     void 'delete metadata by id'() {
         given:
-        metadataMap = [namespace: 'org.example', key: 'example_key', value: 'example_value']
-        Metadata metadata = (Metadata) POST("/folders/$folderId/metadata", metadataMap, Metadata)
+        Metadata metadata1 = new Metadata(namespace: 'org.example', key: 'example_key', value: 'example_value')
+        Metadata metadata = metadataApi.create("folder", folderId, metadata1)
         metadataId = metadata.id
 
         when:
-        HttpStatus status = (HttpStatus) DELETE("/folders/$folderId/metadata/$metadataId", HttpStatus)
+        HttpResponse response = metadataApi.delete("folder", folderId, metadataId)
 
         then:
-        status == HttpStatus.NO_CONTENT
+        response.status == HttpStatus.NO_CONTENT
 
         when:
-        (Metadata) GET("/folders/$folderId/metadata/$metadataId", Metadata)
+        Metadata metadata2 = metadataApi.show("folder", folderId, metadataId)
 
         then: 'the show endpoint shows the update'
-        HttpClientResponseException exception = thrown()
-        exception.status == HttpStatus.NOT_FOUND
+        !metadata2
 
         when:
-        ListResponse<Metadata> metadataList = (ListResponse<Metadata>) GET("/folders/$folderId/metadata", ListResponse, Metadata)
+        ListResponse<Metadata> metadataList = metadataApi.list("folder", folderId,)
 
         then: 'the list endpoint shows the update'
         metadataList

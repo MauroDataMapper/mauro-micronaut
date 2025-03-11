@@ -1,24 +1,24 @@
 package uk.ac.ox.softeng.mauro.profile
 
+import uk.ac.ox.softeng.mauro.api.profile.MetadataNamespaceDTO
+import uk.ac.ox.softeng.mauro.plugin.MauroPluginDTO
 import uk.ac.ox.softeng.mauro.profile.applied.AppliedProfile
-import uk.ac.ox.softeng.mauro.profile.applied.AppliedProfileField
-import uk.ac.ox.softeng.mauro.profile.applied.AppliedProfileSection
+import uk.ac.ox.softeng.mauro.testing.CommonDataSpec
 
 import io.micronaut.runtime.EmbeddedApplication
 import jakarta.inject.Inject
-import uk.ac.ox.softeng.mauro.controller.profile.MetadataNamespaceDTO
+
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.persistence.ContainerizedTest
 import uk.ac.ox.softeng.mauro.profile.test.DataModelBasedProfileTest
-import uk.ac.ox.softeng.mauro.testing.BaseIntegrationSpec
+
+import jakarta.inject.Singleton
 import spock.lang.Shared
 import spock.lang.Unroll
 
 @ContainerizedTest
-class ProfileIntegrationSpec extends BaseIntegrationSpec {
-
-    @Inject
-    EmbeddedApplication<?> application
+@Singleton
+class ProfileIntegrationSpec extends CommonDataSpec {
 
     @Shared
     UUID profileDataModelId
@@ -27,7 +27,7 @@ class ProfileIntegrationSpec extends BaseIntegrationSpec {
     UUID appliedProfileDataModelId
 
     void setupSpec() {
-        Folder folderResponse = (Folder) POST('/folders', [label: 'Test folder'], Folder)
+        Folder folderResponse = folderApi.create(new Folder(label: 'Test folder'))
         profileDataModelId = importDataModel(DataModelBasedProfileTest.testProfileModel, folderResponse)
         appliedProfileDataModelId = importDataModel(DataModelBasedProfileTest.testAppliedProfileModel, folderResponse)
     }
@@ -45,7 +45,7 @@ class ProfileIntegrationSpec extends BaseIntegrationSpec {
     void 'get namespaces'() {
         when:
 
-        List<MetadataNamespaceDTO> namespaces = (List<MetadataNamespaceDTO>) GET('/metadata/namespaces', List<MetadataNamespaceDTO>)
+        List<MetadataNamespaceDTO> namespaces = profileApi.getNamespaces(null)
 
         then:
         namespaces.size() == 3
@@ -66,9 +66,9 @@ class ProfileIntegrationSpec extends BaseIntegrationSpec {
     void "get used and unused profiles"() {
 
         expect:
-        List<Profile> unusedProfileResponse = (List<Profile>) GET("/dataModels/$modelId/profiles/unused", List<Profile>)
+        List<MauroPluginDTO> unusedProfileResponse = profileApi.getUnusedProfiles("dataModel", modelId)
         unusedProfileResponse.metadataNamespace == unusedProfiles
-        List<Profile> usedProfileResponse = (List<Profile>) GET("/dataModels/$modelId/profiles/used", List<Profile>)
+        List<MauroPluginDTO> usedProfileResponse = profileApi.getUsedProfiles("dataModel", modelId)
         usedProfileResponse.metadataNamespace == usedProfiles
 
         where:
@@ -82,17 +82,21 @@ class ProfileIntegrationSpec extends BaseIntegrationSpec {
     void "get profile details"() {
         when:
         String profileNamespace = "uk.ac.ox.softeng.mauro.profile"
-        String profileName = DataModelBasedProfileTest.testProfileModelName.replace(" ", "%20")
+        String profileName = DataModelBasedProfileTest.testProfileModelName
         String profileVersion = "1.0.0"
-        Map profileDetails = GET("/dataModel/$appliedProfileDataModelId/profile/$profileNamespace/$profileName/$profileVersion")
+        //Map profileDetails1 = GET("/dataModel/$appliedProfileDataModelId/profile/$profileNamespace/$profileName/$profileVersion")
+        AppliedProfile profileDetails = profileApi.getProfiledItem(
+            "dataModel", appliedProfileDataModelId, profileNamespace, profileName, profileVersion)
         then:
 
         !profileDetails.errors
         expectedPropertyMap.every {key, value ->
-            profileDetails.sections.fields.flatten().find {field ->
-                field.metadataPropertyName == key &&
-                field.currentValue == value &&
-                !field.errors
+            profileDetails.sections.find {section ->
+                section.fields.find {field ->
+                    field.metadataPropertyName == key &&
+                    field.currentValue == value &&
+                    !field.errors
+                }
             }
         }
     }
@@ -100,7 +104,7 @@ class ProfileIntegrationSpec extends BaseIntegrationSpec {
     void "test validate profile"() {
         when:
         String profileNamespace = "uk.ac.ox.softeng.mauro.profile"
-        String profileName = DataModelBasedProfileTest.testProfileModelName.replace(" ", "%20")
+        String profileName = DataModelBasedProfileTest.testProfileModelName
         String profileVersion = "1.0.0"
         Map requestBody =
             [sections: [
@@ -137,40 +141,44 @@ class ProfileIntegrationSpec extends BaseIntegrationSpec {
                 ]
             ]]
 
-        Map responseMap = POST("/dataModel/$appliedProfileDataModelId/profile/$profileNamespace/$profileName/$profileVersion/validate", requestBody)
+        AppliedProfile appliedProfile = profileApi.validateProfile(
+            "dataModel", appliedProfileDataModelId, profileNamespace, profileName, profileVersion, requestBody)
 
         then:
-        !responseMap.errors
-        responseMap.sections.fields.flatten().every {
+        !appliedProfile.errors
+        appliedProfile.sections.fields.flatten().every {
             !it.errors
         }
 
         when:
         requestBody.sections[1].fields[0].currentValue = "Test"
-        responseMap = POST("/dataModel/$appliedProfileDataModelId/profile/$profileNamespace/$profileName/$profileVersion/validate", requestBody)
+        appliedProfile = profileApi.validateProfile(
+            "dataModel", appliedProfileDataModelId, profileNamespace, profileName, profileVersion, requestBody)
         then:
-        !responseMap.errors
-        responseMap.sections.fields.flatten().find {
+        !appliedProfile.errors
+        appliedProfile.sections.fields.flatten().find {
             it.metadataPropertyName == 'size' &&
             it.errors.size() == 1
         }
 
         when:
         requestBody.sections[1].fields[1].currentValue = "High"
-        responseMap = POST("/dataModel/$appliedProfileDataModelId/profile/$profileNamespace/$profileName/$profileVersion/validate", requestBody)
+        appliedProfile = profileApi.validateProfile(
+            "dataModel", appliedProfileDataModelId, profileNamespace, profileName, profileVersion, requestBody)
         then:
-        !responseMap.errors
-        responseMap.sections.fields.flatten().find {
+        !appliedProfile.errors
+        appliedProfile.sections.fields.flatten().find {
             it.metadataPropertyName == 'priority' &&
             it.errors.size() == 1
         }
 
         when:
         requestBody.sections[1].fields[2].currentValue = "test@test@test"
-        responseMap = POST("/dataModel/$appliedProfileDataModelId/profile/$profileNamespace/$profileName/$profileVersion/validate", requestBody)
+        appliedProfile = profileApi.validateProfile(
+            "dataModel", appliedProfileDataModelId, profileNamespace, profileName, profileVersion, requestBody)
         then:
-        !responseMap.errors
-        responseMap.sections.fields.flatten().find {
+        !appliedProfile.errors
+        appliedProfile.sections.fields.flatten().find {
             it.metadataPropertyName == 'contactEmail' &&
             it.errors.size() == 1
         }

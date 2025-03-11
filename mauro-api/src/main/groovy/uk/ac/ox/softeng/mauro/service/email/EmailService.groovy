@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.service.email
 
+import uk.ac.ox.softeng.mauro.plugin.EmailPlugin
+
 import groovy.util.logging.Slf4j
 import jakarta.inject.Inject
 import jakarta.inject.Singleton

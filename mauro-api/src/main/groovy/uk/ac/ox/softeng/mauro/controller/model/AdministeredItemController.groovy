@@ -1,10 +1,12 @@
 package uk.ac.ox.softeng.mauro.controller.model
 
+import uk.ac.ox.softeng.mauro.api.model.AdministeredItemApi
 import uk.ac.ox.softeng.mauro.ErrorHandler
 
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
+import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.exceptions.HttpStatusException
@@ -24,7 +26,7 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @CompileStatic
 @Secured(SecurityRule.IS_ANONYMOUS)
-abstract class AdministeredItemController<I extends AdministeredItem, P extends AdministeredItem> extends ItemController<I> {
+abstract class AdministeredItemController<I extends AdministeredItem, P extends AdministeredItem> extends ItemController<I> implements AdministeredItemApi<I, P> {
 
     RepositoryService repositoryService
     /**
@@ -123,7 +125,7 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
 
 
     @Transactional
-    HttpStatus delete(@NonNull UUID id, @Body @Nullable I item) {
+    HttpResponse delete(@NonNull UUID id, @Body @Nullable I item) {
         I itemToDelete = (I) administeredItemContentRepository.readWithContentById(id)
 
         accessControlService.checkRole(Role.EDITOR, item)
@@ -132,7 +134,7 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
 
         Long deleted = administeredItemContentRepository.deleteWithContent(itemToDelete)
         if (deleted) {
-            HttpStatus.NO_CONTENT
+            HttpResponse.status(HttpStatus.NO_CONTENT)
         } else {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, 'Not found for deletion')
         }
