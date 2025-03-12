@@ -106,6 +106,8 @@ interface Paths {
     String DATA_MODEL_SEARCH_GET = '/dataModels/{id}/search{?requestDTO*}'
     String DATA_MODEL_SEARCH_POST = '/dataModels/{id}/search'
     String DATA_MODEL_EXPORTERS = '/dataModels/providers/importers'
+    String DATA_MODEL_SUBSET = '/dataModels/{id}/subset/{otherId}'
+    String DATA_MODEL_INTERSECTS_MANY = '/dataModels/{id}/intersectsMany'
 
     /*
     * DataTypeApi
@@ -192,7 +194,7 @@ interface Paths {
     String PROFILE_USED = '/{domainType}/{domainId}/profiles/used'
     String PROFILE_UNUSED = '/{domainType}/{domainId}/profiles/unused'
     String PROFILE_OTHER_METADATA = '/{domainType}/{domainId}/profiles/otherMetadata'
-    String PROFILE_ITEM = '/{domainType}/{domainId}/profile/{namespace}/{name}/{version}'
+    String PROFILE_ITEM = '/{domainType}/{domainId}/profile/{namespace}/{name}{/version}'
     String PROFILE_ITEM_VALIDATE = '/{domainType}/{domainId}/profile/{namespace}/{name}/{version}/validate'
     String PROFILE_NAMESPACES = '/metadata/namespaces{/prefix}'
 

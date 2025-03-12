@@ -1,8 +1,5 @@
 package uk.ac.ox.softeng.mauro.controller.security
 
-import uk.ac.ox.softeng.mauro.api.Paths
-import uk.ac.ox.softeng.mauro.api.security.CatalogueUserApi
-
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
@@ -11,6 +8,8 @@ import io.micronaut.security.annotation.Secured
 import io.micronaut.security.authentication.AuthorizationException
 import io.micronaut.security.rules.SecurityRule
 import jakarta.inject.Inject
+import uk.ac.ox.softeng.mauro.api.Paths
+import uk.ac.ox.softeng.mauro.api.security.CatalogueUserApi
 import uk.ac.ox.softeng.mauro.controller.model.ItemController
 import uk.ac.ox.softeng.mauro.domain.security.CatalogueUser
 import uk.ac.ox.softeng.mauro.domain.security.UserGroup
@@ -64,6 +63,17 @@ class CatalogueUserController extends ItemController<CatalogueUser> implements C
         log.info 'Request to get current logged in user'
 
         accessControlService.user
+    }
+
+    @Get(Paths.USER_ID)
+    CatalogueUser show(UUID id) {
+        accessControlService.checkAuthenticated()
+
+        if (!accessControlService.administrator && accessControlService.userId != id) {
+            throw new AuthorizationException(accessControlService.userAuthentication)
+        }
+
+        catalogueUserRepository.findById(id)
     }
 
     @Put(Paths.USER_CHANGE_PASSWORD)

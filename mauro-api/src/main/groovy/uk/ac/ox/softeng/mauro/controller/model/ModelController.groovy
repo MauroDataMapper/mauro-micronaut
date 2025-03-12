@@ -249,6 +249,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         List<M> saved = imported.collect { M imp ->
             imp.folder = folder
             log.info '** about to saveWithContentBatched... **'
+            updateCreationProperties(imp)
             M savedImported = modelContentRepository.saveWithContent(imp)
             log.info '** finished saveWithContentBatched **'
             savedImported

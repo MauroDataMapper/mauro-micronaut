@@ -7,11 +7,7 @@ import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
 import jakarta.inject.Singleton
-import uk.ac.ox.softeng.mauro.domain.facet.Annotation
-import uk.ac.ox.softeng.mauro.domain.facet.Facet
-import uk.ac.ox.softeng.mauro.domain.facet.Metadata
-import uk.ac.ox.softeng.mauro.domain.facet.ReferenceFile
-import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
+import uk.ac.ox.softeng.mauro.domain.facet.*
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.model.Model
@@ -38,6 +34,18 @@ class ModelContentRepository<M extends Model> extends AdministeredItemContentRep
             }
         }
         saved
+    }
+
+    M saveContentOnly(@NonNull M model) {
+        List<Collection<AdministeredItem>> associations = model.getAllAssociations()
+
+        associations.each {association ->
+            if (association) {
+                Collection<AdministeredItem> savedAssociation = getRepository(association.first()).saveAll((Collection<AdministeredItem>) association)
+                saveAllFacets(savedAssociation)
+            }
+        }
+        model
     }
 
     void saveAllFacets(@NonNull AdministeredItem item) {

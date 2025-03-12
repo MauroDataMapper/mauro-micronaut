@@ -154,6 +154,7 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
     I updateDerivedProperties(I item) {
         pathRepository.readParentItems(item)
         item.updatePath()
+        item.updateBreadcrumbs()
 
         item
     }

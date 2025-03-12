@@ -27,8 +27,7 @@ class DataModel extends Model {
     @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'dataModel')
     List<DataType> dataTypes = []
 
-    @JsonAlias("childDataClasses")
-    // for importing models exported from the Grails implementation
+    @JsonAlias("childDataClasses") // for importing models exported from the Grails implementation
     @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'dataModel')
     List<DataClass> dataClasses = []
 
