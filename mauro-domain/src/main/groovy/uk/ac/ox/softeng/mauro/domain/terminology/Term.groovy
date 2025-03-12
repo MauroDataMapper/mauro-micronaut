@@ -112,9 +112,10 @@ class Term extends ModelItem<Terminology> {
 
     @Transient
     @Deprecated
+    @Nullable
     @JsonProperty('model')
     UUID getModelId(){
-        terminology?.id ?: owner?.id
+        terminology?.id
     }
 
 
