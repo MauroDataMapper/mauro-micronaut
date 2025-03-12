@@ -76,9 +76,16 @@ class TermController extends AdministeredItemController<Term, Terminology> imple
 
     @Get(Paths.TERM_CODE_SETS)
     ListResponse<CodeSet> getCodeSetsForTerm(UUID terminologyId, UUID id) {
-        println(">>>>>>>>>>>>>>>>  term code sets  /terminologies/{terminologyId}/terms/{id}/codeSets ")
         List<CodeSet> codeSets = termRepositoryUncached.getCodeSets(id)
         codeSets = codeSets.findAll {accessControlService.canDoRole(Role.READER, it)}
         ListResponse.from(codeSets)
+    }
+
+
+    //stub endpoint todo: actual
+    @Get('/terms/{id}/edits')
+    List<Map> edits(UUID id, @Nullable @QueryValue Integer max){
+        max ?: null
+        super.edits(id, max)
     }
 }

@@ -175,9 +175,9 @@ class ClassifierController extends AdministeredItemController<Classifier, Classi
     @Get('/classifiers')
     List<Classifier> list() {
         List result = List.of(new Classifier().tap {
-            id: 'FC2EE3BB-D60F-4E33-89B3-52E422F10663'
-            domainType: 'Classifier'
-            label: 'stub classifier label'
+            id = UUID.randomUUID()
+            domainType =  'Classifier'
+            label =  'stub classifier label'
         })
         result
     }

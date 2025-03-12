@@ -301,15 +301,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         ] as List<Map>
     }
 
-    //stub endpoint todo: actual
-    List<Map> edits(UUID id, Integer max){
-        [
-            [
-                count: 0,
-                items: []
-            ]
-        ] as List<Map>
-    }
+
 
     List<Map> permissions(UUID id){
         [

@@ -63,22 +63,27 @@ class TreeController implements TreeApi {
     }
 
     //todo: implement actual
-    @Get('/{catalogueItemDomainType}/{id}/ancestors')
-    List<TreeItem> ancestors( String catalogueItemDomainType, UUID id) {
+    @Get('/tree/{domainType}/{id}/ancestors')
+    List<TreeItem> ancestors( String domainType, UUID id) {
         List result = List.of(new TreeItem().tap {
             it.id
-            it.domainType = catalogueItemDomainType
+            it.domainType = domainType
             it.label = 'stub treeItem label'
         })
         result
     }
 
     //todo: implement actual
-    @Get('/{catalogueItemDomainType}/{domainType}/{id}/ancestors')
-    List<TreeItem> ancestors(String catalogueItemDomainType, String domainType, UUID id) {
+    @Get('/tree/{domainType}/{modelItemType}/{id}/ancestors')
+    List<TreeItem> ancestors(String domainType, String modelItemType, UUID id) {
         List result = List.of(new TreeItem().tap {
             it.id =  id
             it.domainType = domainType
+            it.children =
+                [
+                    domainType : modelItemType,
+                ] as List<TreeItem>
+
             it.label = 'stub treeItem label'
         })
         result
