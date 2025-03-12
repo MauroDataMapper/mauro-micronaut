@@ -131,6 +131,7 @@ class FolderController extends ModelController<Folder> implements FolderApi {
     }
 
     @Transactional
+    @Audit(title=EditType.DELETE, description='Deleted Folder', parentDomainType = 'Folder')
     @Delete(Paths.CHILD_FOLDER_ID)
     HttpResponse delete(UUID parentId, UUID id, @Body @Nullable Folder folder) {
         super.delete(id, folder)
