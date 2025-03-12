@@ -75,15 +75,29 @@ class AuditInterceptor implements MethodInterceptor<Object, Object>{
 
         EditType title = context.getAnnotation(Audit).enumValue('title', EditType).get()
         String description = context.getAnnotation(Audit).stringValue('description').get()
+        Optional<String> parentDomainType = context.getAnnotation(Audit).stringValue('parentDomainType')
 
-        if(result instanceof AdministeredItem && accessControlService.user) {
-            editCacheableRepository.save(new Edit(
-                multiFacetAwareItemDomainType: result.domainType,
-                multiFacetAwareItemId: result.id,
-                title: title,
-                description: description,
-                catalogueUser: new CatalogueUser(id: accessControlService.user.id, emailAddress: accessControlService.user.emailAddress)
-            ))
+        if(accessControlService.user) {
+            String domainType
+            UUID itemId
+            if(context.getAnnotation(Delete) && parentDomainType.isPresent()) {
+                domainType = parentDomainType.get()
+                itemId = (UUID) context.getParameterValueMap()["parentId"]
+            }
+            else if(result instanceof AdministeredItem) {
+                domainType = result.domainType
+                itemId = result.id
+            }
+
+            if(domainType && itemId) {
+                editCacheableRepository.save(new Edit(
+                    multiFacetAwareItemDomainType: domainType,
+                    multiFacetAwareItemId: itemId,
+                    title: title,
+                    description: description,
+                    catalogueUser: new CatalogueUser(id: accessControlService.user.id, emailAddress: accessControlService.user.emailAddress)
+                ))
+            }
         } else if(!accessControlService.user) {
             log.error("Trying to insert a new edit log but an edit has been made with no user record present!")
         }
@@ -93,19 +107,19 @@ class AuditInterceptor implements MethodInterceptor<Object, Object>{
     void fileLog(MethodInvocationContext<Object, Object> context) {
         EditType title = context.getAnnotation(Audit).enumValue('title', EditType).get()
         String description = context.getAnnotation(Audit).stringValue('description').get()
-//        String path = ""
-//        if(context.getAnnotation(Post) && context.getAnnotation(Post).stringValue('value').isPresent()) {
-//            path = context.getAnnotation(Post).stringValue('value').get()
-//        }
-//        if(context.getAnnotation(Put) && context.getAnnotation(Put).stringValue('value').isPresent()) {
-//            path = context.getAnnotation(Put).stringValue('value').get()
-//        }
-//        if(context.getAnnotation(Delete) && context.getAnnotation(Delete).stringValue('value').isPresent()) {
-//            path = context.getAnnotation(Delete).stringValue('value').get()
-//        }
-
+        String path = ""
+        if(context.getAnnotation(Post) && context.getAnnotation(Post).stringValue('value').isPresent()) {
+            path = context.getAnnotation(Post).stringValue('value').get()
+        }
+        if(context.getAnnotation(Put) && context.getAnnotation(Put).stringValue('value').isPresent()) {
+            path = context.getAnnotation(Put).stringValue('value').get()
+        }
+        if(context.getAnnotation(Delete) && context.getAnnotation(Delete).stringValue('value').isPresent()) {
+            path = context.getAnnotation(Delete).stringValue('value').get()
+        }
+        System.err.println("Audit: $path")
         LoggingEventBuilder loggingEventBuilder = logger.atInfo()
-//        loggingEventBuilder.addKeyValue('path', path)
+        loggingEventBuilder.addKeyValue('path', path)
         loggingEventBuilder.addKeyValue('className', context.getDeclaringType().simpleName)
         loggingEventBuilder.addKeyValue('methodName', context.getExecutableMethod().name)
         loggingEventBuilder.addKeyValue('title', title)

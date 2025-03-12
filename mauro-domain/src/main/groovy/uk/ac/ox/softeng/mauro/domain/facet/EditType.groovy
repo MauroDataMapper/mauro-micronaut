@@ -22,7 +22,8 @@ enum EditType {
     MERGE,
     COPY,
     FINALISE,
-    CHANGELOG
+    CHANGELOG,
+    NO_TYPE
 
     static class EditTypeConverter extends StdConverter<String, EditType> {
 

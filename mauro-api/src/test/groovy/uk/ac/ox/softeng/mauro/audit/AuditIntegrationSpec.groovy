@@ -9,6 +9,7 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 
 import io.micronaut.runtime.EmbeddedApplication
 import jakarta.inject.Inject
+import spock.lang.Ignore
 
 @SecuredContainerizedTest
 class AuditIntegrationSpec extends SecuredIntegrationSpec {
@@ -17,42 +18,59 @@ class AuditIntegrationSpec extends SecuredIntegrationSpec {
     EmbeddedApplication<?> application
 
 
-    void "Test Audit annotation" () {
+    void "Test Audit annotation"() {
         when:
-            loginAdmin()
-            Folder folderResponse = folderApi.create(new Folder(label: 'Test folder'))
-            Folder folderResponse2 = folderApi.show(folderResponse.id)
+        loginAdmin()
+        Folder folderResponse = folderApi.create(new Folder(label: 'Test folder'))
+        Folder folderResponse2 = folderApi.show(folderResponse.id)
         then:
-            folderResponse2.edits.size() == 1
-            folderResponse2.edits.first().description == 'Created folder'
-            folderResponse2.edits.first().title == EditType.CREATE
-
-        when:
-            ListResponse<Edit> editResponse = editApi.list("folder", folderResponse.id)
-
-        then:
-            editResponse.items.size() == 1
-            editResponse.items.sort { it.dateCreated }.first().description == 'Created folder'
-            editResponse.items.sort { it.dateCreated }.first().title == EditType.CREATE
+        folderResponse2.edits.size() == 1
+        folderResponse2.edits.first().description == 'Created folder'
+        folderResponse2.edits.first().title == EditType.CREATE
 
         when:
-            folderApi.update(folderResponse.id, new Folder(label: "Test folder (updated)"))
-            folderResponse2 = folderResponse2 = folderApi.show(folderResponse.id)
+        ListResponse<Edit> editResponse = editApi.list("folder", folderResponse.id)
 
         then:
-            folderResponse2.edits.size() == 2
-            folderResponse2.edits.sort { it.dateCreated }.last().description == 'Updated folder'
-            folderResponse2.edits.sort { it.dateCreated }.last().title == EditType.UPDATE
+        editResponse.items.size() == 1
+        editResponse.items.sort {it.dateCreated}.first().description == 'Created folder'
+        editResponse.items.sort {it.dateCreated}.first().title == EditType.CREATE
 
         when:
-            editResponse = editApi.list("folder", folderResponse.id)
+        folderApi.update(folderResponse.id, new Folder(label: "Test folder (updated)"))
+        folderResponse2 = folderResponse2 = folderApi.show(folderResponse.id)
 
         then:
-            editResponse.items.size() == 2
-            editResponse.items.sort { it.dateCreated }.last().description == 'Updated folder'
-            editResponse.items.sort { it.dateCreated }.last().title == EditType.UPDATE
-            logout()
+        folderResponse2.edits.size() == 2
+        folderResponse2.edits.sort {it.dateCreated}.last().description == 'Updated folder'
+        folderResponse2.edits.sort {it.dateCreated}.last().title == EditType.UPDATE
+
+        when:
+        editResponse = editApi.list("folder", folderResponse.id)
+
+        then:
+        editResponse.items.size() == 2
+        editResponse.items.sort {it.dateCreated}.last().description == 'Updated folder'
+        editResponse.items.sort {it.dateCreated}.last().title == EditType.UPDATE
+        logout()
     }
 
+    @Ignore
+    void "Test Audit annotation on deletion"() {
+        when:
+        loginAdmin()
+        Folder folderResponse = folderApi.create(new Folder(label: 'Test folder'))
+        Folder childFolderResponse = folderApi.create(folderResponse.id, new Folder(label: 'Test folder'))
+        folderApi.delete(folderResponse.id, childFolderResponse.id, new Folder())
+        Folder folderResponse2 = folderApi.show(folderResponse.id)
 
+        then:
+        folderResponse2.edits.size() == 2
+        folderResponse2.edits.last().description == 'Created folder'
+        folderResponse2.edits.last().title == EditType.CREATE
+
+        folderResponse2.edits.first().description == 'Deleted folder'
+        folderResponse2.edits.first().title == EditType.DELETE
+
+    }
 }
