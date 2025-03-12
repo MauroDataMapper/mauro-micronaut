@@ -56,7 +56,8 @@ class FolderController extends ModelController<Folder> implements FolderApi {
         super.show(id)
     }
 
-    @Post
+    @Audit(title = EditType.CREATE, description = 'Created folder')
+    @Post(Paths.FOLDER_LIST)
     Folder create(@Body Folder folder) {
         cleanBody(folder)
         updateCreationProperties(folder)
@@ -73,12 +74,14 @@ class FolderController extends ModelController<Folder> implements FolderApi {
         super.create(parentId, folder)
     }
 
-    @Put('/{id}')
+    @Audit(title = EditType.UPDATE, description = "Updated folder")
+    @Put(Paths.FOLDER_ID)
     Folder update(UUID id, @Body @NonNull Folder folder) {
         super.update(id, folder)
     }
 
-    @Put('/{parentId}/folders/{id}')
+    @Audit(title = EditType.UPDATE, description = "Updated folder")
+    @Put(Paths.CHILD_FOLDER_ID)
     Folder update(UUID parentId, UUID id, @Body @NonNull Folder folder) {
         super.update(id, folder)
     }
