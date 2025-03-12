@@ -9,6 +9,7 @@ import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.*
+import io.micronaut.http.exceptions.HttpStatusException
 import io.micronaut.http.server.multipart.MultipartBody
 import io.micronaut.scheduling.TaskExecutors
 import io.micronaut.scheduling.annotation.ExecuteOn
@@ -188,6 +189,10 @@ class DataModelController extends ModelController<DataModel> implements DataMode
         accessControlService.canDoRole(Role.EDITOR, otherDataModel)
 
         List<DataElement> additionDataElements = subsetData.additions.collect {dataElementCacheableRepository.findById(it)}
+        additionDataElements.each {DataElement dataElement ->
+            pathRepository.readParentItems(dataElement)
+            if (dataElement.owner.id != dataModel.id) throw new HttpStatusException(HttpStatus.BAD_REQUEST, "Subset DataElements must be within the source DataModel")
+        }
 
         DataModel additionSubset = new DataModel()
 
@@ -259,7 +264,10 @@ class DataModelController extends ModelController<DataModel> implements DataMode
         List<DataModel> targetDataModels = intersectsManyData.targetDataModelIds.collect {dataModelRepository.readById(it)}
         targetDataModels.each {DataModel dataModel -> accessControlService.canDoRole(Role.READER, dataModel)}
         List<DataElement> dataElements = intersectsManyData.dataElementIds.collect {dataElementCacheableRepository.readById(it)}
-        dataElements.each {DataElement dataElement -> accessControlService.canDoRole(Role.READER, dataElement)}
+        dataElements.each {DataElement dataElement ->
+            pathRepository.readParentItems(dataElement)
+            if (dataElement.owner.id != sourceDataModel.id) throw new HttpStatusException(HttpStatus.BAD_REQUEST, "Intersection DataElements must be within the source DataModel")
+        }
 
         Map<UUID, List<DataElement>> targetDataModelsDataElementsMap = targetDataModels.collectEntries {[it.id, dataElementRepository.readAllByDataModelId(it.id)]}
 
