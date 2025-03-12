@@ -1,6 +1,7 @@
 package uk.ac.ox.softeng.mauro.domain.datamodel
 
 import com.fasterxml.jackson.annotation.JsonIgnore
+import com.fasterxml.jackson.annotation.JsonProperty
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
 import groovy.transform.MapConstructor
@@ -11,6 +12,7 @@ import io.micronaut.data.annotation.Relation
 import jakarta.persistence.*
 import uk.ac.ox.softeng.mauro.domain.diff.*
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
+import uk.ac.ox.softeng.mauro.domain.model.Model
 import uk.ac.ox.softeng.mauro.domain.model.ModelItem
 
 /**
@@ -68,6 +70,27 @@ class DataClass extends ModelItem<DataModel> implements DiffableItem<DataClass> 
     @JsonIgnore
     AdministeredItem getParent() {
         parentDataClass?:dataModel
+    }
+
+    @Override
+    @Transient
+    @JsonIgnore
+    Model getOwner() {
+        dataModel ?: super.getOwner()
+    }
+
+    @Transient
+    @Deprecated
+    @JsonProperty('model')
+    UUID getModelId() {
+        dataModel?.id // backwards compatibility
+    }
+
+    @Transient
+    @Deprecated
+    @JsonProperty('parentDataClass')
+    UUID getParentDataClassId() {
+        parentDataClass?.id // backwards compatibility
     }
 
     @Override

@@ -19,4 +19,8 @@ abstract class EnumerationValueDTORepository implements GenericRepository<Enumer
     @Join(value = 'catalogueUser', type = Join.Type.LEFT_FETCH)
     @Nullable
     abstract EnumerationValueDTO findAllByEnumerationType(DataType dataType)
+
+    @Join(value = 'catalogueUser', type = Join.Type.LEFT_FETCH)
+    @Nullable
+    abstract Set<EnumerationValueDTO> findAllByEnumerationTypeIn(Collection<DataType> dataTypes)
 }

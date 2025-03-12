@@ -3,28 +3,16 @@ package uk.ac.ox.softeng.mauro.dataflow
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.client.exceptions.HttpClientResponseException
-import io.micronaut.runtime.EmbeddedApplication
 import io.micronaut.test.annotation.Sql
-import jakarta.inject.Inject
 import jakarta.inject.Singleton
 import spock.lang.Shared
-import uk.ac.ox.softeng.mauro.api.dataflow.DataClassComponentApi
-import uk.ac.ox.softeng.mauro.api.dataflow.DataElementComponentApi
-import uk.ac.ox.softeng.mauro.api.dataflow.DataFlowApi
-import uk.ac.ox.softeng.mauro.api.datamodel.DataClassApi
-import uk.ac.ox.softeng.mauro.api.datamodel.DataElementApi
-import uk.ac.ox.softeng.mauro.api.datamodel.DataModelApi
-import uk.ac.ox.softeng.mauro.api.datamodel.DataTypeApi
-import uk.ac.ox.softeng.mauro.api.folder.FolderApi
 import uk.ac.ox.softeng.mauro.domain.dataflow.DataClassComponent
 import uk.ac.ox.softeng.mauro.domain.dataflow.DataElementComponent
 import uk.ac.ox.softeng.mauro.domain.dataflow.DataFlow
 import uk.ac.ox.softeng.mauro.domain.dataflow.Type
-import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataElement
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
-import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.persistence.ContainerizedTest
 import uk.ac.ox.softeng.mauro.testing.CommonDataSpec
 import uk.ac.ox.softeng.mauro.web.ListResponse
@@ -93,14 +81,14 @@ class DataFlowIntegrationSpec extends CommonDataSpec {
         //exception.status == HttpStatus.NOT_FOUND
     }
 
-    void 'create dataflow -should return internal server error when target is invalid id'() {
+    void 'create dataflow -should return error when target is invalid id'() {
         when:
         DataFlow response =
                 dataFlowApi.create(UUID.randomUUID(), dataFlowPayload(sourceId))
 
         then:
         HttpClientResponseException exception = thrown()
-        exception.status == HttpStatus.INTERNAL_SERVER_ERROR
+        exception.status == HttpStatus.BAD_REQUEST
     }
 
 

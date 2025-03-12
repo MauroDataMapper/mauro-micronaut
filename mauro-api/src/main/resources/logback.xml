@@ -15,7 +15,7 @@
 
     <logger name="io.micronaut.cache" level="info" />
     <logger name="io.micronaut.data" level="debug" />
-    <logger name="io.micronaut.data.query" level="trace" />
+    <logger name="io.micronaut.data.query" level="debug" />
     <logger name="io.micronaut" level="info" />
     <logger name="io.micronaut.http.client.netty" level="debug" />
     <logger name="io.micronaut.security" level="debug" />

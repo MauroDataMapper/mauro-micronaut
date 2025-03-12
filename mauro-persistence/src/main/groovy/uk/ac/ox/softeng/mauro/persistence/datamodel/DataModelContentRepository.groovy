@@ -1,17 +1,12 @@
 package uk.ac.ox.softeng.mauro.persistence.datamodel
 
-import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
-import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
-import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
-import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository
-import uk.ac.ox.softeng.mauro.persistence.model.ModelContentRepository
-
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
 import uk.ac.ox.softeng.mauro.persistence.model.ModelContentRepository
 
 @CompileStatic
@@ -73,6 +68,14 @@ class DataModelContentRepository extends ModelContentRepository<DataModel> {
     DataModel saveWithContent(@NonNull DataModel model) {
         DataModel saved = (DataModel) super.saveWithContent(model)
         dataClassRepository.updateAll(saved.allDataClasses.findAll { it.parentDataClass})
+        saved
+    }
+
+    @Override
+    DataModel saveContentOnly(@NonNull DataModel model) {
+        DataModel saved = (DataModel) super.saveContentOnly(model)
+        dataClassRepository.updateAll(saved.allDataClasses.findAll { it.parentDataClass})
+        dataElementRepository.updateAll(model.dataElements)
         saved
     }
 }

@@ -10,4 +10,9 @@ class ProfileSection {
 
     List<ProfileField> fields
 
+    @Deprecated
+    String getName() {
+        label
+    }
+
 }

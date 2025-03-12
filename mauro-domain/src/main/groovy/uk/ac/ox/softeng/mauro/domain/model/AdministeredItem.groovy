@@ -1,6 +1,7 @@
 package uk.ac.ox.softeng.mauro.domain.model
 
 import com.fasterxml.jackson.annotation.JsonIgnore
+import com.fasterxml.jackson.annotation.JsonInclude
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.Nullable
@@ -9,13 +10,10 @@ import jakarta.persistence.Transient
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Pattern
 import uk.ac.ox.softeng.mauro.domain.classifier.Classifier
-import uk.ac.ox.softeng.mauro.domain.facet.Annotation
-import uk.ac.ox.softeng.mauro.domain.facet.Metadata
-import uk.ac.ox.softeng.mauro.domain.facet.ReferenceFile
-import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
-import uk.ac.ox.softeng.mauro.domain.facet.Rule
+import uk.ac.ox.softeng.mauro.domain.facet.*
 import uk.ac.ox.softeng.mauro.domain.security.CatalogueUser
 import uk.ac.ox.softeng.mauro.exception.MauroInternalException
+import uk.ac.ox.softeng.mauro.profile.ProfileField
 
 import java.time.Instant
 
@@ -78,6 +76,12 @@ abstract class AdministeredItem extends Item {
     Path path
 
     /**
+     * A different representation of the item's path.
+     */
+    @Transient
+    List<Breadcrumb> breadcrumbs
+
+    /**
      * The identifier of a breadcrumb tree object for navigation.
      */
     @Nullable
@@ -122,7 +126,7 @@ abstract class AdministeredItem extends Item {
     @Transient
     @JsonIgnore
     Model getOwner() {
-        parent.owner
+        parent?.owner
     }
 
     /**
@@ -173,6 +177,29 @@ abstract class AdministeredItem extends Item {
         path.nodes = pathNodes
         path
     }
+
+    /**
+     * Recalculate this item's breadcrumbs from its parents. This item must have all its parent items loaded.
+     * @return The new breadcrumbs
+     */
+    List<Breadcrumb> updateBreadcrumbs() {
+        List<Breadcrumb> breadcrumbs = []
+        int i = 0
+        AdministeredItem node = this
+        while (node) {
+            breadcrumbs.add(new Breadcrumb(id: node.id, domainType: node.domainType, label: node.label, finalised: node instanceof Model ? node.finalised : null))
+            if (node.parent == node || node instanceof Model) break // root of Breadcrumbs is the nearest Model type parent of the item
+            i++; node = node.parent
+            if (i > Path.PATH_MAX_NODES) throw new MauroInternalException("Breadcrumbs exceeded maximum depth of [$Path.PATH_MAX_NODES]")
+        }
+
+        this.breadcrumbs = breadcrumbs.tail()
+        this.breadcrumbs
+    }
+
+    @Transient
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    List<ProfileField> profileFields
 
     /* Helper method for dealing with metadata across different namespaces:
         Given a namespace, return the metadata matching that namespace but as a map from keys to values
