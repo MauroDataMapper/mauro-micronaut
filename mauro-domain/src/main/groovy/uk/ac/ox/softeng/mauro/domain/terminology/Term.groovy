@@ -3,6 +3,7 @@ package uk.ac.ox.softeng.mauro.domain.terminology
 import com.fasterxml.jackson.annotation.JsonBackReference
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonManagedReference
+import com.fasterxml.jackson.annotation.JsonProperty
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
 import groovy.transform.MapConstructor
@@ -108,6 +109,14 @@ class Term extends ModelItem<Terminology> {
     String getPathIdentifier() {
         code
     }
+
+    @Transient
+    @Deprecated
+    @JsonProperty('model')
+    UUID getModelId(){
+        terminology?.id ?: owner?.id
+    }
+
 
     /****
      * Methods for building a tree-like DSL
