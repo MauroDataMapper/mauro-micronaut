@@ -20,15 +20,15 @@ class AuditIntegrationSpec extends SecuredIntegrationSpec {
     void "Test Audit annotation" () {
         when:
             loginAdmin()
-            Folder folderResponse = (Folder) POST('/folders', [label: 'Test folder'], Folder)
-            Map folderResponse2 = GET("/folders/${folderResponse.id}")
+            Folder folderResponse = folderApi.create(new Folder(label: 'Test folder'))
+            Folder folderResponse2 = folderApi.show(folderResponse.id)
         then:
             folderResponse2.edits.size() == 1
             folderResponse2.edits.first().description == 'Created folder'
-            folderResponse2.edits.first().title == EditType.CREATE.toString()
+            folderResponse2.edits.first().title == EditType.CREATE
 
         when:
-            ListResponse<Edit> editResponse = (ListResponse<Edit>) GET("/folders/${folderResponse.id}/edits", ListResponse, Edit)
+            ListResponse<Edit> editResponse = editApi.list("folder", folderResponse.id)
 
         then:
             editResponse.items.size() == 1
@@ -36,22 +36,22 @@ class AuditIntegrationSpec extends SecuredIntegrationSpec {
             editResponse.items.sort { it.dateCreated }.first().title == EditType.CREATE
 
         when:
-            PUT("/folders/${folderResponse.id}", [label: "Test folder (updated)"])
-            folderResponse2 = folderResponse2 = GET("/folders/${folderResponse.id}")
+            folderApi.update(folderResponse.id, new Folder(label: "Test folder (updated)"))
+            folderResponse2 = folderResponse2 = folderApi.show(folderResponse.id)
 
         then:
             folderResponse2.edits.size() == 2
             folderResponse2.edits.sort { it.dateCreated }.last().description == 'Updated folder'
-            folderResponse2.edits.sort { it.dateCreated }.last().title == EditType.UPDATE.toString()
+            folderResponse2.edits.sort { it.dateCreated }.last().title == EditType.UPDATE
 
         when:
-            editResponse = (ListResponse<Edit>) GET("/folders/${folderResponse.id}/edits", ListResponse, Edit)
+            editResponse = editApi.list("folder", folderResponse.id)
 
         then:
             editResponse.items.size() == 2
             editResponse.items.sort { it.dateCreated }.last().description == 'Updated folder'
             editResponse.items.sort { it.dateCreated }.last().title == EditType.UPDATE
-
+            logout()
     }
 
 
