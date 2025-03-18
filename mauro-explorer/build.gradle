@@ -22,6 +22,7 @@ dependencies {
     compileOnly("io.micronaut:micronaut-inject-groovy")
     compileOnly("io.micronaut.data:micronaut-data-processor")
     implementation("io.micronaut.data:micronaut-data-jdbc")
+    runtimeOnly("org.yaml:snakeyaml")
 }
 
 micronaut {

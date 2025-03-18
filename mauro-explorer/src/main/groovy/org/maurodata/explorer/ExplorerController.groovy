@@ -13,6 +13,7 @@ import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableReposit
 import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository.DataElementCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.DataModelCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
+import uk.ac.ox.softeng.mauro.persistence.datamodel.DataModelContentRepository
 import uk.ac.ox.softeng.mauro.persistence.explorer.ExplorerRepository
 import uk.ac.ox.softeng.mauro.persistence.model.PathRepository
 import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchRepository
@@ -20,6 +21,8 @@ import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchRequestDTO
 import uk.ac.ox.softeng.mauro.security.AccessControlService
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
+import com.fasterxml.jackson.annotation.JsonView
+import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.http.HttpStatus
@@ -36,6 +39,7 @@ import jakarta.inject.Inject
 @Slf4j
 @CompileStatic
 @Controller
+@JsonView(DataModel.BackwardsCompatibleView)
 @Secured(SecurityRule.IS_ANONYMOUS)
 class ExplorerController implements AdministeredItemReader {
 
@@ -44,6 +48,9 @@ class ExplorerController implements AdministeredItemReader {
 
     @Inject
     DataModelCacheableRepository dataModelCacheableRepository
+
+    @Inject
+    DataModelContentRepository dataModelContentRepository
 
     @Inject
     DataClassCacheableRepository dataClassCacheableRepository
@@ -98,7 +105,7 @@ class ExplorerController implements AdministeredItemReader {
     @Transactional
     @Get('/explorer/rootDataModel')
     DataModel rootDataModel() {
-        final String ROOT_DATA_MODEL_PATH = 'fo:Explorer Root Data Model|dm:TVS SDE Gold'
+        final String ROOT_DATA_MODEL_PATH = 'fo:Explorer Root Data Model|dm:TVS SDE Gold Export'
 
         Path rootDataModelPath = new Path(ROOT_DATA_MODEL_PATH)
         if (rootDataModelPath.nodes.prefix != ['fo', 'dm']) {
@@ -192,6 +199,14 @@ class ExplorerController implements AdministeredItemReader {
         }
 
         ListResponse.from(elements)
+    }
+
+    @CompileDynamic
+    @Get('/dataModels/{id}/hierarchy')
+    DataModel hierarchy(UUID id) {
+        DataModel dataModel = dataModelContentRepository.findWithContentById(id)
+        //accessControlService.checkRole(Role.READER, dataModel)
+        dataModel
     }
 
 //    @JsonInclude(JsonInclude.Include.NON_NULL)

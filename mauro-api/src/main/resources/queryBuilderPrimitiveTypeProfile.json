@@ -1,25 +1,29 @@
-[
-  {
-    "sectionName": "usage",
-    "sectionDescription": "Query Builder DataType options that can be mapped to the PrimitiveType. This allows Elements linked to the associated PrimitiveType to be available in the Mauro Data Explorer Query Builder.",
-    "fields": [
-      {
-        "fieldName": "QueryBuilderType",
-        "metadataPropertyName": "querybuildertype",
-        "description": "Which Query Builder DataType should be used for this PrimitiveType",
-        "minMultiplicity": 0,
-        "maxMultiplicity": 1,
-        "dataType": "enumeration",
-        "allowedValues": [
-          "boolean",
-          "date",
-          "integer",
-          "decimal",
-          "datetime",
-          "string",
-          "time"
-        ]
-      }
-    ]
-  }
-]
+{
+  "profileApplicableForDomains": ["DataType", "PrimitiveType"],
+  "canBeEditedAfterFinalisation": false,
+  "sections": [
+    {
+      "label": "usage",
+      "description": "Query Builder DataType options that can be mapped to the PrimitiveType. This allows Elements linked to the associated PrimitiveType to be available in the Mauro Data Explorer Query Builder.",
+      "fields": [
+        {
+          "fieldName": "QueryBuilderType",
+          "metadataPropertyName": "querybuildertype",
+          "description": "Which Query Builder DataType should be used for this PrimitiveType",
+          "minMultiplicity": 0,
+          "maxMultiplicity": 1,
+          "dataType": "enumeration",
+          "allowedValues": [
+            "boolean",
+            "date",
+            "integer",
+            "decimal",
+            "datetime",
+            "string",
+            "time"
+          ]
+        }
+      ]
+    }
+  ]
+}
