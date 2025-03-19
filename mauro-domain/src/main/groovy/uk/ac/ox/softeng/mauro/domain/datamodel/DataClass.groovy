@@ -58,6 +58,9 @@ class DataClass extends ModelItem<DataModel> implements DiffableItem<DataClass> 
         inverseJoinColumns = @JoinColumn(name = "extended_dataclass_id"))
     List<DataClass> extendsDataClasses = []
 
+    @Nullable
+    @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'reference_class_id')
+    List<ReferenceType> referenceTypes = []
 
     @JsonIgnore
     @Nullable

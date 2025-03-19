@@ -73,24 +73,27 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
 
     @Transactional
     I create(UUID parentId, @Body @NonNull I item) {
-        cleanBody(item)
-
-        P parent = parentItemRepository.readById(parentId)
-
-        accessControlService.checkRole(Role.EDITOR, parent)
+        I cleanItem = cleanBody(item)
+        P parent = validate(cleanItem, parentId)
 
         I created = createEntity(parent, item)
-        created.classifiers = validateClassifiers(created)
-        created.classifiers.each {
-            getClassifierCacheableRepository(it.domainType).addAdministeredItem(item, it)
-        }
+        created = validateAndAddClassifiers(created)
         created
+    }
+
+    protected P validate(I item, UUID parentId) {
+        cleanBody(item)
+        P parent = parentItemRepository.readById(parentId)
+        accessControlService.checkRole(Role.EDITOR, parent)
+        parent
     }
 
     protected AdministeredItemCacheableRepository.ClassifierCacheableRepository getClassifierCacheableRepository(String domainType) {
         getAdministeredItemRepository(domainType) as AdministeredItemCacheableRepository.ClassifierCacheableRepository
     }
-
+    protected AdministeredItemCacheableRepository.DataClassCacheableRepository getDataClassCacheableRepository(String domainType) {
+        getAdministeredItemRepository(domainType) as AdministeredItemCacheableRepository.DataClassCacheableRepository
+    }
     protected I createEntity(@NonNull P parent, @NonNull I cleanItem) {
         updateCreationProperties(cleanItem)
 
@@ -167,6 +170,14 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
             }
         }
         updated
+    }
+
+    protected I validateAndAddClassifiers(I item) {
+        item.classifiers = validateClassifiers(item)
+        item.classifiers.each {
+            getClassifierCacheableRepository(it.domainType).addAdministeredItem(item, it)
+        }
+        item
     }
 
     protected List<Classifier> validateClassifiers(I item) {
