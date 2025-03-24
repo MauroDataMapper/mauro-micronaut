@@ -1,16 +1,5 @@
 package uk.ac.ox.softeng.mauro.controller.profile
 
-import groovy.transform.CompileStatic
-import io.micronaut.core.annotation.Nullable
-import io.micronaut.http.HttpStatus
-import io.micronaut.http.annotation.Body
-import io.micronaut.http.annotation.Controller
-import io.micronaut.http.annotation.Get
-import io.micronaut.http.annotation.Post
-import io.micronaut.http.exceptions.HttpStatusException
-import io.micronaut.security.annotation.Secured
-import io.micronaut.security.rules.SecurityRule
-import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.profile.MetadataNamespaceDTO
 import uk.ac.ox.softeng.mauro.api.profile.ProfileApi
@@ -18,6 +7,7 @@ import uk.ac.ox.softeng.mauro.controller.model.AdministeredItemReader
 import uk.ac.ox.softeng.mauro.domain.facet.Metadata
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.security.Role
+import uk.ac.ox.softeng.mauro.persistence.cache.FacetCacheableRepository.MetadataCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.facet.MetadataRepository
 import uk.ac.ox.softeng.mauro.persistence.profile.DynamicProfileService
 import uk.ac.ox.softeng.mauro.plugin.MauroPluginDTO
@@ -28,9 +18,23 @@ import uk.ac.ox.softeng.mauro.profile.applied.AppliedProfile
 import uk.ac.ox.softeng.mauro.security.AccessControlService
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
+import groovy.transform.CompileStatic
+import groovy.util.logging.Slf4j
+import io.micronaut.core.annotation.Nullable
+import io.micronaut.http.HttpStatus
+import io.micronaut.http.annotation.Body
+import io.micronaut.http.annotation.Controller
+import io.micronaut.http.annotation.Get
+import io.micronaut.http.annotation.Post
+import io.micronaut.http.exceptions.HttpStatusException
+import io.micronaut.security.annotation.Secured
+import io.micronaut.security.rules.SecurityRule
+import jakarta.inject.Inject
+
 @CompileStatic
 @Controller
 @Secured(SecurityRule.IS_ANONYMOUS)
+@Slf4j
 class ProfileController implements AdministeredItemReader, ProfileApi {
 
     @Inject
@@ -44,6 +48,9 @@ class ProfileController implements AdministeredItemReader, ProfileApi {
 
     @Inject
     MetadataRepository metadataRepository
+
+    @Inject
+    MetadataCacheableRepository metadataCacheableRepository
 
     ProfileController() {}
 
@@ -84,7 +91,7 @@ class ProfileController implements AdministeredItemReader, ProfileApi {
     }
 
     @Get(Paths.PROFILE_DETAILS)
-    Profile getProfileDetails(String namespace, String name, String version) {
+    Profile getProfileDetails(String namespace, String name, @Nullable String version) {
         getProfileByName(namespace, name, version)
     }
 
@@ -135,6 +142,18 @@ class ProfileController implements AdministeredItemReader, ProfileApi {
         new AppliedProfile(profile, administeredItem, bodyMap)
     }
 
+    @Post(Paths.PROFILE_ITEM)
+    AppliedProfile applyProfile(String domainType, UUID domainId, String namespace, String name, @Nullable String version, @Body Map bodyMap) {
+        AdministeredItem administeredItem = readAdministeredItem(domainType, domainId)
+        accessControlService.canDoRole(Role.EDITOR, administeredItem)
+        Profile profile = getProfileByName(namespace, name, version)
+        handleProfileNotFound(profile, namespace, name, version)
+        // Overwrite applied profile with metadata items from the bodyMap
+        AppliedProfile appliedProfile = new AppliedProfile(profile, administeredItem, bodyMap)
+        List<Metadata> profileMetadata = appliedProfile.metadata
+        metadataCacheableRepository.saveAll(profileMetadata)
+        appliedProfile
+    }
 
     // TODO: Refactor the UI so that this method isn't needed quite so often
     @Get(Paths.PROFILE_NAMESPACES)
