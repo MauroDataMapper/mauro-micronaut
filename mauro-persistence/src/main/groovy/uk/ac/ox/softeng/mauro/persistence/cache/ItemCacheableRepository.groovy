@@ -1,13 +1,30 @@
 package uk.ac.ox.softeng.mauro.persistence.cache
 
-import io.micronaut.core.annotation.Nullable
-import jakarta.inject.Inject
-import uk.ac.ox.softeng.mauro.domain.security.ApiKey
-import uk.ac.ox.softeng.mauro.persistence.security.ApiKeyRepository
-
+import uk.ac.ox.softeng.mauro.domain.authority.Authority
+import uk.ac.ox.softeng.mauro.domain.config.ApiProperty
 import uk.ac.ox.softeng.mauro.domain.facet.Rule
 import uk.ac.ox.softeng.mauro.domain.facet.RuleRepresentation
+import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
+import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadataReport
+import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedCatalogue
+import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedModel
+import uk.ac.ox.softeng.mauro.domain.model.Item
+import uk.ac.ox.softeng.mauro.domain.security.ApiKey
+import uk.ac.ox.softeng.mauro.domain.security.CatalogueUser
+import uk.ac.ox.softeng.mauro.domain.security.Role
+import uk.ac.ox.softeng.mauro.domain.security.SecurableResourceGroupRole
+import uk.ac.ox.softeng.mauro.domain.security.UserGroup
+import uk.ac.ox.softeng.mauro.persistence.authority.AuthorityRepository
+import uk.ac.ox.softeng.mauro.persistence.config.ApiPropertyRepository
 import uk.ac.ox.softeng.mauro.persistence.facet.RuleRepresentationRepository
+import uk.ac.ox.softeng.mauro.persistence.facet.SummaryMetadataReportRepository
+import uk.ac.ox.softeng.mauro.persistence.federation.SubscribedCatalogueRepository
+import uk.ac.ox.softeng.mauro.persistence.federation.SubscribedModelRepository
+import uk.ac.ox.softeng.mauro.persistence.model.ItemRepository
+import uk.ac.ox.softeng.mauro.persistence.security.ApiKeyRepository
+import uk.ac.ox.softeng.mauro.persistence.security.CatalogueUserRepository
+import uk.ac.ox.softeng.mauro.persistence.security.SecurableResourceGroupRoleRepository
+import uk.ac.ox.softeng.mauro.persistence.security.UserGroupRepository
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
@@ -15,27 +32,9 @@ import io.micronaut.cache.annotation.CacheConfig
 import io.micronaut.cache.annotation.CacheInvalidate
 import io.micronaut.cache.annotation.Cacheable
 import io.micronaut.core.annotation.NonNull
+import io.micronaut.core.annotation.Nullable
+import jakarta.inject.Inject
 import jakarta.inject.Singleton
-import uk.ac.ox.softeng.mauro.domain.authority.Authority
-import uk.ac.ox.softeng.mauro.domain.config.ApiProperty
-import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
-import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedCatalogue
-import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedModel
-import uk.ac.ox.softeng.mauro.domain.model.Item
-import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadataReport
-import uk.ac.ox.softeng.mauro.domain.security.CatalogueUser
-import uk.ac.ox.softeng.mauro.domain.security.Role
-import uk.ac.ox.softeng.mauro.domain.security.SecurableResourceGroupRole
-import uk.ac.ox.softeng.mauro.domain.security.UserGroup
-import uk.ac.ox.softeng.mauro.persistence.authority.AuthorityRepository
-import uk.ac.ox.softeng.mauro.persistence.config.ApiPropertyRepository
-import uk.ac.ox.softeng.mauro.persistence.federation.SubscribedCatalogueRepository
-import uk.ac.ox.softeng.mauro.persistence.federation.SubscribedModelRepository
-import uk.ac.ox.softeng.mauro.persistence.model.ItemRepository
-import uk.ac.ox.softeng.mauro.persistence.facet.SummaryMetadataReportRepository
-import uk.ac.ox.softeng.mauro.persistence.security.CatalogueUserRepository
-import uk.ac.ox.softeng.mauro.persistence.security.SecurableResourceGroupRoleRepository
-import uk.ac.ox.softeng.mauro.persistence.security.UserGroupRepository
 
 @Slf4j
 @CompileStatic
@@ -68,7 +67,6 @@ abstract class ItemCacheableRepository<I extends Item> implements ItemRepository
     }
 
     List<I> saveAll(Iterable<I> items) {
-        log.warn "saveAll $domainType"
         List<I> saved = repository.saveAll(items)
         items.each { invalidate(it) }
         saved
