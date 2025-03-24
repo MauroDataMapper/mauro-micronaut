@@ -134,7 +134,6 @@ class ProfileController implements AdministeredItemReader, ProfileApi {
     @Audit
     @Get(Paths.PROFILE_ITEM)
     AppliedProfile getProfiledItem(String domainType, UUID domainId, String namespace, String name, @Nullable String version) {
-        log.info '*** getProfiledItem'
         AdministeredItem administeredItem = findAdministeredItem(domainType, domainId)
         accessControlService.checkRole(Role.READER, administeredItem)
         Profile profile = getProfileByName(namespace, name, version)
@@ -156,7 +155,6 @@ class ProfileController implements AdministeredItemReader, ProfileApi {
     @Audit
     @Post(Paths.PROFILE_ITEM)
     AppliedProfile applyProfile(String domainType, UUID domainId, String namespace, String name, @Nullable String version, @Body Map bodyMap) {
-        log.info '*** applyProfile'
         AdministeredItem administeredItem = readAdministeredItem(domainType, domainId)
         accessControlService.canDoRole(Role.EDITOR, administeredItem)
         Profile profile = getProfileByName(namespace, name, version)
