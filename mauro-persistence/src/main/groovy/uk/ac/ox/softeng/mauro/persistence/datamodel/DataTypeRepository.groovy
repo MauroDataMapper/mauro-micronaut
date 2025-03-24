@@ -1,9 +1,7 @@
 package uk.ac.ox.softeng.mauro.persistence.datamodel
 
-import io.micronaut.core.annotation.NonNull
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
-
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.persistence.datamodel.dto.DataTypeDTORepository
 import uk.ac.ox.softeng.mauro.persistence.model.ModelItemRepository
@@ -12,7 +10,6 @@ import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.model.query.builder.sql.Dialect
 import jakarta.inject.Inject
-
 
 @JdbcRepository(dialect = Dialect.POSTGRES)
 abstract class DataTypeRepository implements ModelItemRepository<DataType> {
@@ -59,5 +56,8 @@ abstract class DataTypeRepository implements ModelItemRepository<DataType> {
         DataType
     }
 
-
+    @Override
+    Boolean handles(String domainType) {
+        domainType.toLowerCase() in ['datatype', 'datatypes', 'primitivetype', 'primitivetypes', 'enumerationtype', 'enumerationtypes', 'referencetype', 'referencetypes', 'modeltype', 'modeltypes']
+    }
 }

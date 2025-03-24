@@ -16,6 +16,7 @@ import io.micronaut.security.rules.SecurityRule
 @CompileStatic
 @Slf4j
 @Secured(SecurityRule.IS_ANONYMOUS)
+@Controller
 class OpenidProviderController implements OpenidProviderApi {
 
 
