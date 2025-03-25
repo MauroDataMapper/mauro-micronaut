@@ -4,7 +4,12 @@ import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.profile.ProfileSection
 
 import com.fasterxml.jackson.annotation.JsonIgnore
+import groovy.transform.CompileDynamic
+import groovy.transform.CompileStatic
+import io.micronaut.core.annotation.Introspected
 
+@Introspected
+@CompileStatic
 class AppliedProfileSection extends ProfileSection {
 
     private ProfileSection sourceProfileSection
@@ -24,6 +29,11 @@ class AppliedProfileSection extends ProfileSection {
         return sourceProfileSection.getLabel()
     }
 
+    @Deprecated
+    String getName() {
+        label
+    }
+
     @Override
     String getDescription() {
         return sourceProfileSection.getDescription()
@@ -38,6 +48,7 @@ class AppliedProfileSection extends ProfileSection {
         }
     }
 
+    @CompileDynamic
     AppliedProfileSection(ProfileSection profileSection, AppliedProfile parentProfile, Map sectionBody) {
         this.sourceProfileSection = profileSection
         this.parentProfile = parentProfile

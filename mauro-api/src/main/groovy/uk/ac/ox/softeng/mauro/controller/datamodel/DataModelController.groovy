@@ -321,7 +321,7 @@ class DataModelController extends ModelController<DataModel> implements DataMode
             }
 
             [targetDataModelId, potentialIntersects.findAll {DataElement intersect ->
-                potentialTargetIntersects.find {intersect.breadcrumbs.reverse().tail().collect {new Tuple2(it.domainType, it.label)} == it.breadcrumbs.reverse().tail().collect {new Tuple2(it.domainType, it.label)}}
+                potentialTargetIntersects.find {intersect.breadcrumbs.tail().collect {new Tuple2(it.domainType, it.label)} == it.breadcrumbs.tail().collect {new Tuple2(it.domainType, it.label)}}
             }]
         }
 

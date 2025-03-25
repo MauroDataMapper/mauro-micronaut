@@ -138,13 +138,12 @@ class ProfileController implements AdministeredItemReader, ProfileApi {
         accessControlService.checkRole(Role.READER, administeredItem)
         Profile profile = getProfileByName(namespace, name, version)
         handleProfileNotFound(profile, namespace, name, version)
-        def ap = new AppliedProfile(profile, administeredItem)
-        return ap
+        new AppliedProfile(profile, administeredItem)
     }
 
     @Audit(level = Audit.AuditLevel.FILE_ONLY)
     @Post(Paths.PROFILE_ITEM_VALIDATE)
-    AppliedProfile validateProfile(String domainType, UUID domainId, String namespace, String name, String version, @Body Map bodyMap) {
+    AppliedProfile validateProfile(String domainType, UUID domainId, String namespace, String name, @Nullable String version, @Body Map bodyMap) {
         AdministeredItem administeredItem = readAdministeredItem(domainType, domainId)
         accessControlService.canDoRole(Role.READER, administeredItem)
         Profile profile = getProfileByName(namespace, name, version)

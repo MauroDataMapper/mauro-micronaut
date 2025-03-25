@@ -59,6 +59,7 @@ abstract class Item implements Serializable {
     @JsonAlias(['created_by'])
     @MappedProperty('created_by')
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    @JsonDeserialize(converter = CatalogueUser.StringCatalogueUserConverter)
     CatalogueUser catalogueUser
 
     @Transient
