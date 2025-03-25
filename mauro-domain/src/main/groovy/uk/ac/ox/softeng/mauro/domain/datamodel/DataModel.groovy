@@ -1,12 +1,8 @@
 package uk.ac.ox.softeng.mauro.domain.datamodel
 
-import uk.ac.ox.softeng.mauro.domain.model.Model
-import uk.ac.ox.softeng.mauro.domain.model.ModelItem
-
 import com.fasterxml.jackson.annotation.JsonAlias
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.fasterxml.jackson.annotation.JsonView
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
 import groovy.transform.MapConstructor
@@ -15,6 +11,8 @@ import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.MappedProperty
 import io.micronaut.data.annotation.Relation
 import jakarta.persistence.Transient
+import uk.ac.ox.softeng.mauro.domain.model.Model
+import uk.ac.ox.softeng.mauro.domain.model.ModelItem
 
 /**
  * A DataModel describes a data asset, or a data standard
@@ -63,6 +61,7 @@ class DataModel extends Model {
         this.dataModelType = DataModelType.values().find {it.label.toLowerCase() == dataModelType.toLowerCase()}?.label
     }
 
+
     @Override
     @Transient
     @JsonIgnore
@@ -70,8 +69,9 @@ class DataModel extends Model {
         [dataTypes, enumerationValues, allDataClasses, dataElements] as List<Collection<? extends ModelItem<DataModel>>>
     }
 
+
     @Transient
-    @JsonView(BackwardsCompatibleView)
+    @JsonIgnore
     List<DataClass> getChildDataClasses() {
         dataClasses
     }
@@ -258,7 +258,4 @@ class DataModel extends Model {
         dataClass [:], closure
     }
 
-    static class BackwardsCompatibleView {
-
-    }
 }

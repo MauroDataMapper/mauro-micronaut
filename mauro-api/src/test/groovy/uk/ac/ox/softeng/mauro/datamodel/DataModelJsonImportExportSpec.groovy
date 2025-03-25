@@ -137,6 +137,7 @@ class DataModelJsonImportExportSpec extends CommonDataSpec {
         dataClassResponse.extendsDataClasses.first().label == 'TEST-1'
         dataClasses.items.path.collect { it.toString()}.sort() == ['fo:Test folder|dm:Test data model$main|dc:TEST-1', 'fo:Test folder|dm:Test data model$main|dc:TEST-2']
         DataClass dataClass = dataClasses.items.find { it.path.toString().contains('fo:Test folder|dm:Test data model$main|dc:TEST-1')}
+
         UUID importedDataClassId = dataClass.id
 
         when:
