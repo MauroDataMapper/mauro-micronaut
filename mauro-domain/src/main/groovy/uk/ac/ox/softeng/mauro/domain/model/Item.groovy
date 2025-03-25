@@ -1,14 +1,20 @@
 package uk.ac.ox.softeng.mauro.domain.model
 
+import uk.ac.ox.softeng.mauro.domain.security.CatalogueUser
+
 import com.fasterxml.jackson.annotation.JsonAlias
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.Nullable
-import io.micronaut.data.annotation.*
+import io.micronaut.data.annotation.DateCreated
+import io.micronaut.data.annotation.DateUpdated
+import io.micronaut.data.annotation.GeneratedValue
+import io.micronaut.data.annotation.Id
+import io.micronaut.data.annotation.MappedProperty
+import io.micronaut.data.annotation.Version
 import jakarta.persistence.Transient
-import uk.ac.ox.softeng.mauro.domain.security.CatalogueUser
 
 import java.time.Instant
 
@@ -56,6 +62,7 @@ abstract class Item implements Serializable {
     @JsonAlias(['created_by'])
     @MappedProperty('created_by')
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    @JsonDeserialize(converter = CatalogueUser.StringCatalogueUserConverter)
     CatalogueUser catalogueUser
 
     @Transient

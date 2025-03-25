@@ -195,7 +195,7 @@ interface Paths {
     String PROFILE_UNUSED = '/{domainType}/{domainId}/profiles/unused'
     String PROFILE_OTHER_METADATA = '/{domainType}/{domainId}/profiles/otherMetadata'
     String PROFILE_ITEM = '/{domainType}/{domainId}/profile/{namespace}/{name}{/version}'
-    String PROFILE_ITEM_VALIDATE = '/{domainType}/{domainId}/profile/{namespace}/{name}/{version}/validate'
+    String PROFILE_ITEM_VALIDATE = '/{domainType}/{domainId}/profile/{namespace}/{name}{/version}/validate'
     String PROFILE_NAMESPACES = '/metadata/namespaces{/prefix}'
 
     /*

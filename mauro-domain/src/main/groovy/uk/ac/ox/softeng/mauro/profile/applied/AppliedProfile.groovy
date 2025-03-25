@@ -38,6 +38,18 @@ class AppliedProfile extends MauroPluginDTO {
 
     List<String> errors = []
 
+    UUID getId() {
+        administeredItem?.id
+    }
+
+    String getLabel() {
+        administeredItem?.label
+    }
+
+    String getDomainType() {
+        administeredItem?.domainType
+    }
+
     // Empty constructor for JSON deserialisation
     AppliedProfile() { }
 
