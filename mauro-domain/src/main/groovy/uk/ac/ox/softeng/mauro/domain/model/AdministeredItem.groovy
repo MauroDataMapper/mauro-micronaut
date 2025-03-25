@@ -198,7 +198,7 @@ abstract class AdministeredItem extends Item {
             if (i > Path.PATH_MAX_NODES) throw new MauroInternalException("Breadcrumbs exceeded maximum depth of [$Path.PATH_MAX_NODES]")
         }
 
-        this.breadcrumbs = breadcrumbs.tail()
+        this.breadcrumbs = breadcrumbs.tail().reverse()
         this.breadcrumbs
     }
 

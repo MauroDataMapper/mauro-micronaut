@@ -1,5 +1,6 @@
 package org.maurodata.explorer
 
+import uk.ac.ox.softeng.mauro.controller.datamodel.DataElementController
 import uk.ac.ox.softeng.mauro.controller.folder.FolderController
 import uk.ac.ox.softeng.mauro.controller.model.AdministeredItemReader
 import uk.ac.ox.softeng.mauro.controller.search.SearchController
@@ -66,6 +67,9 @@ class ExplorerController implements AdministeredItemReader {
 
     @Inject
     SearchController searchController
+
+    @Inject
+    DataElementController dataElementController
 
     @Inject
     PathRepository pathRepository
@@ -205,7 +209,8 @@ class ExplorerController implements AdministeredItemReader {
     @Get('/dataModels/{id}/hierarchy')
     DataModel hierarchy(UUID id) {
         DataModel dataModel = dataModelContentRepository.findWithContentById(id)
-        //accessControlService.checkRole(Role.READER, dataModel)
+        accessControlService.checkRole(Role.READER, dataModel)
+        dataModel.dataElements.each {dataElementController.updateDerivedProperties(it)}
         dataModel
     }
 
