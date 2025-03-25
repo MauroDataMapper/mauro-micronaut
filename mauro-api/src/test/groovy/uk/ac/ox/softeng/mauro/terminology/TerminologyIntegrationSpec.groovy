@@ -1,6 +1,6 @@
 package uk.ac.ox.softeng.mauro.terminology
 
-import uk.ac.ox.softeng.mauro.domain.authority.Authority
+
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.domain.terminology.Term
 import uk.ac.ox.softeng.mauro.domain.terminology.TermRelationship
@@ -13,8 +13,6 @@ import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchResultsDTO
 import uk.ac.ox.softeng.mauro.testing.CommonDataSpec
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
-import io.micronaut.runtime.EmbeddedApplication
-import jakarta.inject.Inject
 import jakarta.inject.Singleton
 import spock.lang.Shared
 
@@ -49,7 +47,7 @@ class TerminologyIntegrationSpec extends CommonDataSpec {
         then:
         terminologyResponse
         terminologyResponse.label == 'Test terminology'
-        terminologyResponse.path.toString() == 'te:Test terminology$main'
+        terminologyResponse.path.toString() == 'fo:Test folder|te:Test terminology$main'
         terminologyResponse.authority
     }
 
@@ -74,7 +72,7 @@ class TerminologyIntegrationSpec extends CommonDataSpec {
         then:
         termListResponse
         termListResponse.count == 2
-        termListResponse.items.path.collect{ it.toString() }.sort() == ['te:Test terminology$main|tm:TEST-1', 'te:Test terminology$main|tm:TEST-2']
+        termListResponse.items.path.collect{ it.toString() }.sort() == ['fo:Test folder|te:Test terminology$main|tm:TEST-1', 'fo:Test folder|te:Test terminology$main|tm:TEST-2']
     }
 
     void 'test term relationship types'() {
@@ -86,7 +84,7 @@ class TerminologyIntegrationSpec extends CommonDataSpec {
         then:
         termRelationshipTypeResponse
         termRelationshipTypeResponse.label == 'Test relationship type'
-        termRelationshipTypeResponse.path.toString() == 'te:Test terminology$main|trt:Test relationship type'
+        termRelationshipTypeResponse.path.toString() == 'fo:Test folder|te:Test terminology$main|trt:Test relationship type'
         termRelationshipTypeResponse.childRelationship
         !termRelationshipTypeResponse.parentalRelationship
     }
