@@ -84,6 +84,7 @@ class AppliedProfile extends MauroPluginDTO {
         return returnErrors
     }
 
+    @JsonIgnore
     List<Metadata> getMetadata() {
         sections.collect {AppliedProfileSection section ->
             section.fields.collect {AppliedProfileField field ->

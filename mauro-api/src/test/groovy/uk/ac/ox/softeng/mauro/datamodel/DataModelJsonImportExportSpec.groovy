@@ -1,5 +1,9 @@
 package uk.ac.ox.softeng.mauro.datamodel
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 7e97a36b (Include folders in paths)
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataElement
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
@@ -126,25 +130,24 @@ class DataModelJsonImportExportSpec extends CommonDataSpec {
         DataModel dataModel = dataModelApi.show(importedDataModelId)
 
         then:
-        dataModel.path.toString() == 'dm:Test data model$main'
+        dataModel.path.toString() == 'fo:Test folder|dm:Test data model$main'
 
         when:
         ListResponse<DataClass> dataClasses = dataClassApi.list(importedDataModelId)
 
         then:
-        dataClasses.items.path.collect {it.toString()}.sort() == ['dm:Test data model$main|dc:TEST-1', 'dm:Test data model$main|dc:TEST-2']
         DataClass dataClassResponse = dataClassApi.show(importedDataModelId, dataClasses.items.find { it.label == 'TEST-2'}.id)
         dataClassResponse.extendsDataClasses.size() == 1
         dataClassResponse.extendsDataClasses.first().label == 'TEST-1'
-
-        def dataClass = dataClasses.items.find { it.path.collect {it.toString()}.contains('dm:Test data model$main|dc:TEST-1')}
+        dataClasses.items.path.collect { it.toString()}.sort() == ['fo:Test folder|dm:Test data model$main|dc:TEST-1', 'fo:Test folder|dm:Test data model$main|dc:TEST-2']
+        DataClass dataClass = dataClasses.items.find { it.path.toString().contains('fo:Test folder|dm:Test data model$main|dc:TEST-1')}
         UUID importedDataClassId = dataClass.id
 
         when:
         ListResponse<DataType> dataTypes = dataTypeApi.list(importedDataModelId)
 
         then:
-        dataTypes.items.path.collect { it.toString()} == ['dm:Test data model$main|dt:Test data type']
+        dataTypes.items.path.collect { it.toString()} == ['fo:Test folder|dm:Test data model$main|dt:Test data type']
 
         when:
         ListResponse<DataElement> copyDataElements  = dataElementApi.list(

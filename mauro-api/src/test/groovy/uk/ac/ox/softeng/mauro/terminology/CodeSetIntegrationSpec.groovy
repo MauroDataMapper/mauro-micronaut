@@ -1,23 +1,19 @@
 package uk.ac.ox.softeng.mauro.terminology
 
-import uk.ac.ox.softeng.mauro.domain.folder.Folder
-import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
-
-import io.micronaut.http.HttpResponse
-import io.micronaut.http.HttpStatus
-import io.micronaut.http.client.exceptions.HttpClientResponseException
-import io.micronaut.runtime.EmbeddedApplication
-import io.micronaut.test.annotation.Sql
-import jakarta.inject.Inject
-import jakarta.inject.Singleton
-import spock.lang.AutoCleanup
-import spock.lang.Shared
 import uk.ac.ox.softeng.mauro.domain.facet.ReferenceFile
+import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.domain.terminology.CodeSet
 import uk.ac.ox.softeng.mauro.domain.terminology.Term
+import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
 import uk.ac.ox.softeng.mauro.persistence.ContainerizedTest
 import uk.ac.ox.softeng.mauro.testing.CommonDataSpec
 import uk.ac.ox.softeng.mauro.web.ListResponse
+
+import io.micronaut.http.HttpResponse
+import io.micronaut.http.HttpStatus
+import io.micronaut.test.annotation.Sql
+import jakarta.inject.Singleton
+import spock.lang.Shared
 
 @ContainerizedTest
 @Singleton
@@ -41,7 +37,7 @@ class CodeSetIntegrationSpec extends CommonDataSpec {
         then:
         response
         response.label == "Test code set"
-        response.path.toString() == 'cs:Test code set$main'
+        response.path.toString() == 'fo:Test folder|cs:Test code set$main'
         response.description == "code set description"
         response.author == "A.N. Other"
         response.organisation == "uk.ac.gridpp.ral.org"
