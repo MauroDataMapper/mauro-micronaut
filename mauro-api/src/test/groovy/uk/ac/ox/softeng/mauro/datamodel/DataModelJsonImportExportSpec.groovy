@@ -1,33 +1,23 @@
 package uk.ac.ox.softeng.mauro.datamodel
 
-import uk.ac.ox.softeng.mauro.api.datamodel.DataClassApi
-import uk.ac.ox.softeng.mauro.api.datamodel.DataElementApi
-import uk.ac.ox.softeng.mauro.api.datamodel.DataModelApi
-import uk.ac.ox.softeng.mauro.api.datamodel.DataTypeApi
-import uk.ac.ox.softeng.mauro.api.datamodel.EnumerationValueApi
-import uk.ac.ox.softeng.mauro.api.facet.SummaryMetadataApi
-import uk.ac.ox.softeng.mauro.api.facet.SummaryMetadataReportApi
-import uk.ac.ox.softeng.mauro.api.folder.FolderApi
 
-import groovy.json.JsonSlurper
-import io.micronaut.http.MediaType
-import io.micronaut.http.client.multipart.MultipartBody
-import io.micronaut.runtime.EmbeddedApplication
-import io.micronaut.serde.ObjectMapper
-import jakarta.inject.Inject
-import jakarta.inject.Singleton
-import spock.lang.Shared
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataElement
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
-import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadataReport
+import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.export.ExportModel
 import uk.ac.ox.softeng.mauro.persistence.ContainerizedTest
 import uk.ac.ox.softeng.mauro.testing.CommonDataSpec
 import uk.ac.ox.softeng.mauro.web.ListResponse
+
+import groovy.json.JsonSlurper
+import io.micronaut.http.MediaType
+import io.micronaut.http.client.multipart.MultipartBody
+import jakarta.inject.Singleton
+import spock.lang.Shared
 
 @ContainerizedTest
 @Singleton
@@ -135,14 +125,14 @@ class DataModelJsonImportExportSpec extends CommonDataSpec {
         DataModel dataModel = dataModelApi.show(importedDataModelId)
 
         then:
-        dataModel.path.toString() == 'dm:Test data model$main'
+        dataModel.path.toString() == 'fo:Test folder|dm:Test data model$main'
 
         when:
         ListResponse<DataClass> dataClasses = dataClassApi.list(importedDataModelId)
 
         then:
-        dataClasses.items.path.collect { it.toString()}.sort() == ['dm:Test data model$main|dc:TEST-1', 'dm:Test data model$main|dc:TEST-2']
-        DataClass dataClass = dataClasses.items.find { it.path.toString().contains('dm:Test data model$main|dc:TEST-1')}
+        dataClasses.items.path.collect { it.toString()}.sort() == ['fo:Test folder|dm:Test data model$main|dc:TEST-1', 'fo:Test folder|dm:Test data model$main|dc:TEST-2']
+        DataClass dataClass = dataClasses.items.find { it.path.toString().contains('fo:Test folder|dm:Test data model$main|dc:TEST-1')}
 
         UUID importedDataClassId = dataClass.id
 
@@ -150,7 +140,7 @@ class DataModelJsonImportExportSpec extends CommonDataSpec {
         ListResponse<DataType> dataTypes = dataTypeApi.list(importedDataModelId)
 
         then:
-        dataTypes.items.path.collect { it.toString()} == ['dm:Test data model$main|dt:Test data type']
+        dataTypes.items.path.collect { it.toString()} == ['fo:Test folder|dm:Test data model$main|dt:Test data type']
 
         when:
         ListResponse<DataElement> copyDataElements  = dataElementApi.list(
