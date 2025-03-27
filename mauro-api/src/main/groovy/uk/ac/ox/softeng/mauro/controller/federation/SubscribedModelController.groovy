@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.controller.federation
 
+import uk.ac.ox.softeng.mauro.audit.Audit
+
 import io.micronaut.http.HttpResponse
 import uk.ac.ox.softeng.mauro.ErrorHandler
 import uk.ac.ox.softeng.mauro.api.Paths
@@ -56,12 +58,14 @@ class SubscribedModelController extends ItemController<SubscribedModel> {
         this.subscribedModelService = subscribedModelService
     }
 
+    @Audit
     @Get(Paths.SUBSCRIBED_MODELS_LIST)
     ListResponse<SubscribedModel> listAll(@NonNull UUID subscribedCatalogueId) {
         accessControlService.checkAuthenticated()
         ListResponse.from(subscribedModelCacheableRepository.findAllBySubscribedCatalogueId(subscribedCatalogueId))
     }
 
+    @Audit
     @Get(Paths.SUBSCRIBED_MODELS_ID)
     SubscribedModel show(@NonNull UUID subscribedCatalogueId, @NonNull UUID subscribedModelId) {
         accessControlService.checkAuthenticated()
@@ -72,6 +76,7 @@ class SubscribedModelController extends ItemController<SubscribedModel> {
         subscribedModelCacheableRepository.findBySubscribedModelIdAndSubscribedCatalogueId(subscribedModelId, subscribedCatalogue)
     }
 
+    @Audit(level = Audit.AuditLevel.FILE_ONLY)
     @Post(Paths.SUBSCRIBED_MODELS_LIST)
     @ExecuteOn(TaskExecutors.BLOCKING)
     @Transactional
@@ -96,6 +101,7 @@ class SubscribedModelController extends ItemController<SubscribedModel> {
         subscribedModelCacheableRepository.save(subscribedModel)
     }
 
+    @Audit(level = Audit.AuditLevel.FILE_ONLY)
     @Delete(Paths.SUBSCRIBED_MODELS_ID)
     @Transactional
     HttpResponse delete(@NonNull UUID subscribedCatalogueId, @NonNull UUID subscribedModelId, @Body @Nullable SubscribedModel subscribedModel) {

@@ -1,5 +1,8 @@
 package uk.ac.ox.softeng.mauro.controller.datamodel
 
+import uk.ac.ox.softeng.mauro.audit.Audit
+import uk.ac.ox.softeng.mauro.domain.facet.EditType
+
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.context.annotation.Parameter
@@ -77,24 +80,27 @@ class DataModelController extends ModelController<DataModel> implements DataMode
         this.dataModelService = dataModelService
     }
 
+    @Audit
     @Get(Paths.DATA_MODEL_ID_ROUTE)
     DataModel show(UUID id) {
         super.show(id)
     }
 
+    @Audit
     @Transactional
     @Post(Paths.FOLDER_LIST_DATA_MODEL)
     DataModel create(UUID folderId, @Body @NonNull DataModel dataModel) {
         super.create(folderId, dataModel) as DataModel
     }
 
-
+    @Audit
     @Put(Paths.DATA_MODEL_ID_ROUTE)
     @Transactional
     DataModel update(UUID id, @Body @NonNull DataModel dataModel) {
         super.update(id, dataModel) as DataModel
     }
 
+    @Audit(level = Audit.AuditLevel.FILE_ONLY)
     @Transactional
     @Delete(Paths.DATA_MODEL_ID_ROUTE)
     HttpResponse delete(UUID id, @Body @Nullable DataModel dataModel) {
@@ -102,6 +108,7 @@ class DataModelController extends ModelController<DataModel> implements DataMode
     }
 
 
+    @Audit
     @Get(Paths.DATA_MODEL_SEARCH_GET)
     ListResponse<SearchResultsDTO> searchGet(UUID id, @Parameter @Nullable SearchRequestDTO requestDTO) {
         requestDTO.withinModelId = id
@@ -110,6 +117,7 @@ class DataModelController extends ModelController<DataModel> implements DataMode
         ListResponse.from(searchRepository.search(requestDTO))
     }
 
+    @Audit(level = Audit.AuditLevel.FILE_ONLY)
     @Post(Paths.DATA_MODEL_SEARCH_POST)
     ListResponse<SearchResultsDTO> searchPost(UUID id, @Body SearchRequestDTO requestDTO) {
         requestDTO.withinModelId = id
@@ -119,16 +127,19 @@ class DataModelController extends ModelController<DataModel> implements DataMode
     }
 
 
+    @Audit
     @Get(Paths.FOLDER_LIST_DATA_MODEL)
     ListResponse<DataModel> list(UUID folderId) {
         super.list(folderId)
     }
 
+    @Audit
     @Get(Paths.DATA_MODEL_ROUTE)
     ListResponse<DataModel> listAll() {
         super.listAll()
     }
 
+    @Audit(title = EditType.FINALISE, description = "Finalise data model")
     @Transactional
     @Put(Paths.DATA_MODEL_ID_FINALISE)
     DataModel finalise(UUID id, @Body FinaliseData finaliseData) {
@@ -136,11 +147,13 @@ class DataModelController extends ModelController<DataModel> implements DataMode
     }
 
     @Transactional
+    @Audit(title = EditType.COPY, description = "New version of data model")
     @Put(Paths.DATA_MODEL_BRANCH_MODEL_VERSION)
     DataModel createNewBranchModelVersion(UUID id, @Body @Nullable CreateNewVersionData createNewVersionData) {
         super.createNewBranchModelVersion(id, createNewVersionData)
     }
 
+    @Audit
     @Get(Paths.DATA_MODEL_EXPORT)
     HttpResponse<byte[]> exportModel(UUID id, @Nullable String namespace, @Nullable String name, @Nullable String version) {
         super.exportModel(id, namespace, name, version)
@@ -148,12 +161,14 @@ class DataModelController extends ModelController<DataModel> implements DataMode
 
     @Transactional
     @ExecuteOn(TaskExecutors.IO)
+    @Audit(title = EditType.IMPORT, description = "Import data model")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Post(Paths.DATA_MODEL_IMPORT)
     ListResponse<DataModel> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version) {
         super.importModel(body, namespace, name, version)
     }
 
+    @Audit
     @Get(Paths.DATA_MODEL_DIFF)
     ObjectDiff diffModels(@NonNull UUID id, @NonNull UUID otherId) {
         DataModel dataModel = modelContentRepository.findWithContentById(id)
@@ -169,6 +184,7 @@ class DataModelController extends ModelController<DataModel> implements DataMode
         dataModel.diff(otherDataModel)
     }
 
+    @Audit
     @Get(Paths.DATA_MODEL_EXPORTERS)
     List<DataModelImporterPlugin> dataModelImporters() {
         mauroPluginService.listPlugins(DataModelImporterPlugin)
@@ -181,6 +197,7 @@ class DataModelController extends ModelController<DataModel> implements DataMode
      * @param subsetData a list of source DataElement IDs to be copied
      * @return the IDs of the new DataElements in the target DataModel
      */
+    @Audit(title = EditType.UPDATE, description = "Subset data model")
     @Put(Paths.DATA_MODEL_SUBSET)
     SubsetData subset(UUID id, UUID otherId, @Body SubsetData subsetData) {
         DataModel dataModel = dataModelRepository.readById(id) // source i.e. rootDataModel
@@ -257,6 +274,7 @@ class DataModelController extends ModelController<DataModel> implements DataMode
      * @return {@link ListResponse} of {@link IntersectsData} containing the list of source DataElement IDs that intersected the target
      * DataModel
      */
+    @Audit(level = Audit.AuditLevel.FILE_ONLY)
     @Post(Paths.DATA_MODEL_INTERSECTS_MANY)
     ListResponse<IntersectsData> intersectsMany(UUID id, @Body IntersectsManyData intersectsManyData) {
         DataModel sourceDataModel = dataModelRepository.readById(id)

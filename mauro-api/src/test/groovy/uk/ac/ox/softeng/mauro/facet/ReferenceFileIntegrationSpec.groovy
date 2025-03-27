@@ -37,14 +37,14 @@ class ReferenceFileIntegrationSpec extends SecuredIntegrationSpec {
         given:
         loginAdmin()
         when:
-        ListResponse<ReferenceFile> responses = referenceFileApi.list("dataModel", dataModelId)
+        ListResponse<ReferenceFile> responses = referenceFileApi.list("DataModel", dataModelId)
 
         then:
         responses.items.isEmpty()
 
         when:
         loginUser()
-        responses = referenceFileApi.list("dataModel", dataModelId)
+        responses = referenceFileApi.list("DataModel", dataModelId)
         then:
         HttpClientResponseException exception = thrown()
         exception.status == HttpStatus.FORBIDDEN
@@ -55,7 +55,7 @@ class ReferenceFileIntegrationSpec extends SecuredIntegrationSpec {
         given:
         loginAdmin()
         when:
-        ReferenceFile saved = referenceFileApi.create("dataModel", dataModelId, referenceFilePayload())
+        ReferenceFile saved = referenceFileApi.create("DataModel", dataModelId, referenceFilePayload())
 
         then:
         saved
@@ -64,7 +64,7 @@ class ReferenceFileIntegrationSpec extends SecuredIntegrationSpec {
         when:
         logout()
         loginUser()
-        referenceFileApi.create("dataModel", dataModelId, referenceFilePayload())
+        referenceFileApi.create("DataModel", dataModelId, referenceFilePayload())
         then:
         HttpClientResponseException exception = thrown()
         exception.status == HttpStatus.FORBIDDEN
@@ -74,9 +74,9 @@ class ReferenceFileIntegrationSpec extends SecuredIntegrationSpec {
         given:
         loginAdmin()
         String fileContent = "file contents string the quick brown fox jumped over the green hedge and over the gatepost."
-        ReferenceFile saved = referenceFileApi.create("dataModel", dataModelId, referenceFilePayload("testfile", fileContent))
+        ReferenceFile saved = referenceFileApi.create("DataModel", dataModelId, referenceFilePayload("testfile", fileContent))
         when:
-        byte[] retrieved = referenceFileApi.showAndReturnFile("dataModel", dataModelId, saved.id)
+        byte[] retrieved = referenceFileApi.showAndReturnFile("DataModel", dataModelId, saved.id)
 
         then:
         retrieved
@@ -85,7 +85,7 @@ class ReferenceFileIntegrationSpec extends SecuredIntegrationSpec {
         logout()
         when:
         loginUser()
-        retrieved = referenceFileApi.showAndReturnFile("dataModel", dataModelId, saved.id)
+        retrieved = referenceFileApi.showAndReturnFile("DataModel", dataModelId, saved.id)
         then:
         HttpClientResponseException exception = thrown()
         exception.status == HttpStatus.FORBIDDEN
@@ -94,18 +94,18 @@ class ReferenceFileIntegrationSpec extends SecuredIntegrationSpec {
     void 'update referenceFile -by adminUser only'() {
         given:
         loginAdmin()
-        ReferenceFile saved = referenceFileApi.create("dataModel", dataModelId, referenceFilePayload())
+        ReferenceFile saved = referenceFileApi.create("DataModel", dataModelId, referenceFilePayload())
         String fileName = 'new file name'
         String updatedFileContents = 'an updated sentence .. it was a cold frostly dry morning when I started to walk to the woods'
         when:
-        ReferenceFile updated = referenceFileApi.update("dataModel", dataModelId, saved.id, referenceFilePayload(fileName, updatedFileContents))
+        ReferenceFile updated = referenceFileApi.update("DataModel", dataModelId, saved.id, referenceFilePayload(fileName, updatedFileContents))
 
         then:
         updated
         updated.fileName == fileName
         updated.fileSize == updatedFileContents.size()
         when:
-        byte[] retrieved = referenceFileApi.showAndReturnFile("dataModel", dataModelId, saved.id)
+        byte[] retrieved = referenceFileApi.showAndReturnFile("DataModel", dataModelId, saved.id)
         then:
 
         retrieved
@@ -114,7 +114,7 @@ class ReferenceFileIntegrationSpec extends SecuredIntegrationSpec {
         when:
         logout()
         loginUser()
-        referenceFileApi.update("dataModel", dataModelId, saved.id, referenceFilePayload(fileName))
+        referenceFileApi.update("DataModel", dataModelId, saved.id, referenceFilePayload(fileName))
 
         then:
         HttpClientResponseException exception = thrown()
@@ -124,17 +124,17 @@ class ReferenceFileIntegrationSpec extends SecuredIntegrationSpec {
     void 'delete referenceFile -by adminUser only'() {
         given:
         loginAdmin()
-        ReferenceFile saved = referenceFileApi.create("dataModel", dataModelId, referenceFilePayload())
+        ReferenceFile saved = referenceFileApi.create("DataModel", dataModelId, referenceFilePayload())
 
         when:
-        HttpResponse response = referenceFileApi.delete("dataModel", dataModelId, saved.id)
+        HttpResponse response = referenceFileApi.delete("DataModel", dataModelId, saved.id)
 
         then:
         response.status == HttpStatus.NO_CONTENT
 
 
         when:
-        ListResponse<ReferenceFile> responseList = referenceFileApi.list("dataModel", dataModelId)
+        ListResponse<ReferenceFile> responseList = referenceFileApi.list("DataModel", dataModelId)
 
         then: 'the list endpoint shows the update'
         responseList
@@ -143,7 +143,7 @@ class ReferenceFileIntegrationSpec extends SecuredIntegrationSpec {
         when:
         logout()
         loginUser()
-        referenceFileApi.create("dataModel", dataModelId, referenceFilePayload())
+        referenceFileApi.create("DataModel", dataModelId, referenceFilePayload())
         then:
         HttpClientResponseException exception = thrown()
         exception.status == HttpStatus.FORBIDDEN

@@ -17,13 +17,15 @@ import groovy.transform.CompileStatic
 enum EditType {
 
     CREATE,
+    IMPORT,
     UPDATE,
     DELETE,
     MERGE,
     COPY,
     FINALISE,
     CHANGELOG,
-    NO_TYPE
+    VIEW,
+    EXPORT
 
     static class EditTypeConverter extends StdConverter<String, EditType> {
 

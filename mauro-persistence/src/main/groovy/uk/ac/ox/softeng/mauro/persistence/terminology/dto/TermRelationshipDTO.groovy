@@ -27,7 +27,16 @@ class TermRelationshipDTO extends TermRelationship implements AdministeredItemDT
     @Nullable
     @TypeDef(type = DataType.JSON)
     @MappedProperty
-    @ColumnTransformer(read = '(select json_agg(edit) from core.edit where multi_facet_aware_item_id = term_relationship_.id)')
+    @ColumnTransformer(read = """(select json_agg(x) from
+        (select edit.id,
+                edit.title,
+                edit.description,
+                edit.date_created,
+                row_to_json(catalogue_user) as catalogue_user
+         from core.edit left join security.catalogue_user
+              on security.catalogue_user.id = core.edit.created_by
+         where multi_facet_aware_item_id = term_relationship_.id
+         group by edit.id, catalogue_user.id) x)""")
     List<Edit> edits = []
 
 

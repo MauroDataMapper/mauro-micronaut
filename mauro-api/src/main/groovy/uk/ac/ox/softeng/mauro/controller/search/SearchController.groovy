@@ -2,6 +2,7 @@ package uk.ac.ox.softeng.mauro.controller.search
 
 import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.search.SearchApi
+import uk.ac.ox.softeng.mauro.audit.Audit
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
@@ -30,6 +31,7 @@ class SearchController implements AdministeredItemReader, SearchApi {
     @Inject
     AccessControlService accessControlService
 
+    @Audit
     @Get(Paths.SEARCH_GET)
     ListResponse<SearchResultsDTO> searchGet(@RequestBean SearchRequestDTO requestDTO) {
         List<SearchResultsDTO> searchResults = searchRepository.search(requestDTO)
@@ -40,6 +42,7 @@ class SearchController implements AdministeredItemReader, SearchApi {
         ListResponse.from(searchResultsReadable)
     }
 
+    @Audit(level = Audit.AuditLevel.FILE_ONLY)
     @Post(Paths.SEARCH_POST)
     ListResponse<SearchResultsDTO> searchPost(@Body SearchRequestDTO requestDTO) {
         List<SearchResultsDTO> searchResults = searchRepository.search(requestDTO)

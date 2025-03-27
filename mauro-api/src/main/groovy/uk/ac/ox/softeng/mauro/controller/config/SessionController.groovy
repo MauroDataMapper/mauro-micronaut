@@ -2,6 +2,7 @@ package uk.ac.ox.softeng.mauro.controller.config
 
 import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.config.SessionApi
+import uk.ac.ox.softeng.mauro.audit.Audit
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
@@ -23,6 +24,7 @@ class SessionController implements SessionApi {
     @Inject
     AccessControlService accessControlService
 
+    @Audit
     @Get(Paths.SESSION_IS_AUTHENTICATED)
     Map<String, Boolean> isAuthenticated() {
         [
@@ -30,6 +32,7 @@ class SessionController implements SessionApi {
         ]
     }
 
+    @Audit
     @Get(Paths.SESSION_IS_APP_ADMIN)
     Map<String, Boolean> isApplicationAdministration() {
         [
@@ -37,6 +40,7 @@ class SessionController implements SessionApi {
         ]
     }
 
+    @Audit
     @Get(Paths.SESSION_AUTH_DETAILS)
     Map authenticationDetails(@Nullable Authentication authentication) {
         [
@@ -45,12 +49,14 @@ class SessionController implements SessionApi {
         ]
     }
 
+    @Audit
     @Get(Paths.SESSION_CHECK_AUTHENTICATED)
     @Secured(SecurityRule.IS_AUTHENTICATED)
     String checkAuthenticated() {
         'Authenticated'
     }
 
+    @Audit
     @Get(Paths.SESSION_CHECK_ANONYMOUS)
     String checkAnonymous() {
         'Anonymous'
