@@ -2,6 +2,7 @@ package uk.ac.ox.softeng.mauro.controller.facet
 
 import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.facet.ReferenceFileApi
+import uk.ac.ox.softeng.mauro.audit.Audit
 
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
@@ -37,6 +38,7 @@ class ReferenceFileController extends FacetController<ReferenceFile> implements 
     }
 
 
+    @Audit
     @Get(Paths.REFERENCE_FILE_LIST)
     ListResponse<ReferenceFile> list(String domainType, UUID domainId) {
         AdministeredItem administeredItem = findAdministeredItem(domainType, domainId)
@@ -50,6 +52,7 @@ class ReferenceFileController extends FacetController<ReferenceFile> implements 
      * @param id
      * @return ReferenceFile
      */
+    @Audit
     @Get(Paths.REFERENCE_FILE_ID)
     byte[] showAndReturnFile(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID id) {
         accessControlService.checkRole(Role.READER, readAdministeredItem(domainType, domainId))
@@ -63,18 +66,21 @@ class ReferenceFileController extends FacetController<ReferenceFile> implements 
         null
     }
 
+    @Audit
     @Put(Paths.REFERENCE_FILE_ID)
     ReferenceFile update(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID id, @Body @NonNull ReferenceFile referenceFile) {
         super.update(id, referenceFile)
     }
 
 
+    @Audit
     @Post(Paths.REFERENCE_FILE_LIST)
     ReferenceFile create(@NonNull String domainType, @NonNull UUID domainId, @Body @NonNull ReferenceFile referenceFile) {
         referenceFile.setFileSize()
         super.create(domainType, domainId, referenceFile)
     }
 
+    @Audit(deletedObjectDomainType = ReferenceFile)
     @Delete(Paths.REFERENCE_FILE_ID)
     @Transactional
     HttpResponse delete(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID id) {

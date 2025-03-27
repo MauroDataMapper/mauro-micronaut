@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.controller.federation
 
+import uk.ac.ox.softeng.mauro.audit.Audit
+
 import groovy.util.logging.Slf4j
 import uk.ac.ox.softeng.mauro.ErrorHandler
 import uk.ac.ox.softeng.mauro.api.Paths
@@ -45,6 +47,7 @@ class PublishController implements PublishApi {
         this.authorityService = authorityService
     }
 
+    @Audit
     @Get(Paths.PUBLISHED_MODELS)
     PublishedModelResponse show() {
         accessControlService.checkAuthenticated()
@@ -63,6 +66,7 @@ class PublishController implements PublishApi {
     }
 
 
+    @Audit
     @Get(Paths.PUBLISHED_MODELS_NEWER_VERSIONS)
     PublishedModelResponse newerVersions(@NonNull UUID publishedModelId) {
         PublishedModelResponse publishedModelResponse

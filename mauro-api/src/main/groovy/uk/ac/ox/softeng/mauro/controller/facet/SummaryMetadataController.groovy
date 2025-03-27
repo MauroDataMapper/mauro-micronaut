@@ -2,6 +2,7 @@ package uk.ac.ox.softeng.mauro.controller.facet
 
 import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.facet.SummaryMetadataApi
+import uk.ac.ox.softeng.mauro.audit.Audit
 
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
@@ -44,6 +45,7 @@ class SummaryMetadataController extends FacetController<SummaryMetadata> impleme
         this.summaryMetadataRepository = summaryMetadataRepository
     }
 
+    @Audit
     @Get(Paths.SUMMARY_METADATA_LIST)
     ListResponse<SummaryMetadata> list(String domainType, UUID domainId) {
         AdministeredItem administeredItem = findAdministeredItem(domainType, domainId)
@@ -51,6 +53,7 @@ class SummaryMetadataController extends FacetController<SummaryMetadata> impleme
         ListResponse.from(!administeredItem.summaryMetadata ? [] : administeredItem.summaryMetadata)
     }
 
+    @Audit
     @Get(Paths.SUMMARY_METADATA_ID)
     SummaryMetadata show(@NonNull String domainType, @NonNull UUID domainId, UUID id) {
         SummaryMetadata summaryMetadata = super.show(domainType, domainId, id) as SummaryMetadata
@@ -64,18 +67,20 @@ class SummaryMetadataController extends FacetController<SummaryMetadata> impleme
         }
     }
 
+    @Audit
     @Post(Paths.SUMMARY_METADATA_LIST)
     SummaryMetadata create(@NonNull String domainType, @NonNull UUID domainId, @Body @NonNull SummaryMetadata summaryMetadata) {
         super.create(domainType, domainId, summaryMetadata)
     }
 
-
+    @Audit
     @Override
     @Put(Paths.SUMMARY_METADATA_ID)
     SummaryMetadata update(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID id, @Body @NonNull SummaryMetadata summaryMetadata) {
         update(id, summaryMetadata)
     }
 
+    @Audit(deletedObjectDomainType = SummaryMetadata)
     @Delete(Paths.SUMMARY_METADATA_ID)
     @Transactional
     @Override

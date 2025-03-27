@@ -41,7 +41,6 @@ dependencies {
 
     implementation("io.micronaut.sql:micronaut-jdbc-hikari")
     implementation group: 'org.apache.groovy', name: 'groovy-json', version: '4.0.19'
-    implementation group: 'org.apache.groovy', name: 'groovy-templates', version: '4.0.19'
     implementation group: 'org.apache.groovy', name: 'groovy-xml', version: '4.0.25'
 
 
@@ -75,6 +74,8 @@ dependencies {
     testImplementation("org.spockframework:spock-core") {
         exclude group: "org.codehaus.groovy", module: "groovy-all"
     }
+
+    testImplementation 'org.reflections:reflections:0.10.2'
 
 }
 

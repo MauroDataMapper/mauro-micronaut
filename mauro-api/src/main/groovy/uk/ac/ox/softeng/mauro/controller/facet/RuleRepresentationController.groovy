@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.controller.facet
 
+import uk.ac.ox.softeng.mauro.audit.Audit
+
 import io.micronaut.http.HttpResponse
 import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.facet.RuleRepresentationApi
@@ -33,7 +35,7 @@ import io.micronaut.core.annotation.NonNull
 
 @CompileStatic
 @Slf4j
-@Controller('/{domainType}/{domainId}/rules/{ruleId}/representations')
+@Controller
 @Secured(SecurityRule.IS_ANONYMOUS)
 class RuleRepresentationController extends ItemController<RuleRepresentation> implements RuleRepresentationApi {
 
@@ -57,7 +59,8 @@ class RuleRepresentationController extends ItemController<RuleRepresentation> im
         this.ruleRepresentationCacheableRepository = ruleRepresentationCacheableRepository
     }
 
-    @Post
+    @Audit
+    @Post(Paths.RULE_REPRESENTATIONS_LIST)
     RuleRepresentation create(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID ruleId,
                                  @Body RuleRepresentation ruleRepresentation) {
         super.cleanBody(ruleRepresentation)
@@ -68,6 +71,7 @@ class RuleRepresentationController extends ItemController<RuleRepresentation> im
         ruleRepresentationCacheableRepository.save(ruleRepresentation)
     }
 
+    @Audit
     @Get(Paths.RULE_REPRESENTATIONS_ID)
     RuleRepresentation show(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID ruleId,
                                @NonNull UUID id) {
@@ -77,7 +81,8 @@ class RuleRepresentationController extends ItemController<RuleRepresentation> im
     }
 
 
-    @Get
+    @Audit
+    @Get(Paths.RULE_REPRESENTATIONS_LIST)
     ListResponse<Rule> list(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID ruleId) {
         Rule rule = validateAndGet(domainType, domainId, ruleId)
         accessControlService.checkRole(Role.READER, readAdministeredItemForFacet(rule))
@@ -85,15 +90,8 @@ class RuleRepresentationController extends ItemController<RuleRepresentation> im
         ListResponse.from(ruleRepresentationList)
     }
 
-    @Get('/{id}')
-    RuleRepresentation get(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID ruleId,
-                              @NonNull UUID id) {
-        Rule rule = validateAndGet(domainType, domainId, ruleId)
-        accessControlService.checkRole(Role.READER, readAdministeredItemForFacet(rule))
-        ruleRepresentationCacheableRepository.findById(id)
-    }
-
-    @Put('/{id}')
+    @Audit
+    @Put(Paths.RULE_REPRESENTATIONS_ID)
     RuleRepresentation update(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID ruleId,
                                  @NonNull UUID id, @Body @NonNull RuleRepresentation ruleRepresentation) {
         super.cleanBody(ruleRepresentation)
@@ -105,7 +103,8 @@ class RuleRepresentationController extends ItemController<RuleRepresentation> im
         updated
     }
 
-    @Delete('/{id}')
+    @Audit(deletedObjectDomainType = RuleRepresentation)
+    @Delete(Paths.RULE_REPRESENTATIONS_ID)
     @Transactional
     HttpResponse delete(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID ruleId,
                         @NonNull UUID id) {

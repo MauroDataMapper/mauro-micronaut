@@ -1,5 +1,8 @@
 package uk.ac.ox.softeng.mauro.controller.authority
 
+import uk.ac.ox.softeng.mauro.audit.Audit
+import uk.ac.ox.softeng.mauro.domain.facet.EditType
+
 import io.micronaut.http.HttpResponse
 import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.authority.AuthorityApi
@@ -36,18 +39,21 @@ class AuthorityController extends ItemController<Authority> implements Authority
         this.authorityService = authorityService
     }
 
+    @Audit
     @Get(Paths.AUTHORITY_ID)
     Authority show(@NonNull UUID id) {
         accessControlService.checkAuthenticated()
         authorityService.find(id)
     }
 
+    @Audit
     @Get(Paths.AUTHORITY_LIST)
     ListResponse<Authority> list() {
         accessControlService.checkAuthenticated()
         ListResponse.from(authorityService.findAll())
     }
 
+    @Audit
     @Transactional
     @Post(Paths.AUTHORITY_LIST)
     Authority create(@Body @NonNull Authority authority) {
@@ -57,6 +63,7 @@ class AuthorityController extends ItemController<Authority> implements Authority
         authorityService.create(cleanedItem)
     }
 
+    @Audit
     @Put(Paths.AUTHORITY_ID)
     Authority update(UUID id, @Body @NonNull Authority authority) {
         accessControlService.checkAdministrator()
@@ -69,7 +76,7 @@ class AuthorityController extends ItemController<Authority> implements Authority
         }
     }
 
-
+    @Audit(level = Audit.AuditLevel.FILE_ONLY)
     @Transactional
     @Delete(Paths.AUTHORITY_ID)
     HttpResponse delete(UUID id, @Body @Nullable Authority authority) {

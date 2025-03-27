@@ -2,6 +2,7 @@ package uk.ac.ox.softeng.mauro.controller.facet
 
 import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.facet.EditApi
+import uk.ac.ox.softeng.mauro.audit.Audit
 import uk.ac.ox.softeng.mauro.domain.facet.Edit
 import uk.ac.ox.softeng.mauro.domain.facet.Metadata
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
@@ -37,6 +38,7 @@ class EditController extends FacetController<Edit> implements EditApi {
         this.editRepository = editRepository
     }
 
+    @Audit
     @Override
     @Get(Paths.EDIT_LIST)
     ListResponse<Edit> list(String domainType, UUID domainId) {
@@ -45,6 +47,7 @@ class EditController extends FacetController<Edit> implements EditApi {
         ListResponse.from(!administeredItem.edits ? []: administeredItem.edits)
     }
 
+    @Audit
     @Get(Paths.EDIT_ID)
     Edit show(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID id) {
         accessControlService.checkRole(Role.READER, readAdministeredItem(domainType, domainId))
@@ -53,6 +56,7 @@ class EditController extends FacetController<Edit> implements EditApi {
     }
 
     @Override
+    @Audit(deletedObjectDomainType = Edit)
     @Delete(Paths.EDIT_ID)
     HttpResponse delete(String domainType, UUID domainId, UUID id) {
         super.delete(id)

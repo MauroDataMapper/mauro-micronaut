@@ -2,6 +2,7 @@ package uk.ac.ox.softeng.mauro.controller.terminology
 
 import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.terminology.TermRelationshipApi
+import uk.ac.ox.softeng.mauro.audit.Audit
 
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
@@ -44,11 +45,13 @@ class TermRelationshipController extends AdministeredItemController<TermRelation
         this.terminologyRepository = terminologyRepository
     }
 
+    @Audit
     @Get(Paths.TERM_RELATIONSHIP_ID)
     TermRelationship show(UUID terminologyId, UUID id) {
         super.show(id)
     }
 
+    @Audit
     @Post(Paths.TERM_RELATIONSHIP_LIST)
     TermRelationship create(UUID terminologyId, @Body @NonNull TermRelationship termRelationship) {
         cleanBody(termRelationship)
@@ -63,6 +66,7 @@ class TermRelationshipController extends AdministeredItemController<TermRelation
         createEntity(terminology, termRelationship)
     }
 
+    @Audit
     @Put(Paths.TERM_RELATIONSHIP_ID)
     TermRelationship update(UUID terminologyId, UUID id, @Body @NonNull TermRelationship termRelationship) {
         cleanBody(termRelationship)
@@ -79,11 +83,13 @@ class TermRelationshipController extends AdministeredItemController<TermRelation
         updateEntity(existing, termRelationship)
     }
 
+    @Audit(deletedObjectDomainType = TermRelationship, parentDomainType = Terminology, parentIdParamName = "terminologyId")
     @Delete(Paths.TERM_RELATIONSHIP_ID)
     HttpResponse delete(UUID terminologyId, UUID id, @Body @Nullable TermRelationship termRelationship) {
         super.delete(id, termRelationship)
     }
 
+    @Audit
     @Get(Paths.TERM_RELATIONSHIP_LIST)
     ListResponse<TermRelationship> list(UUID terminologyId) {
         super.list(terminologyId)

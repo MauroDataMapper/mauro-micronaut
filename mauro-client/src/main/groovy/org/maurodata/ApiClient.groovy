@@ -33,8 +33,14 @@ import uk.ac.ox.softeng.mauro.api.terminology.TermRelationshipTypeApi
 import uk.ac.ox.softeng.mauro.api.terminology.TerminologyApi
 import uk.ac.ox.softeng.mauro.api.tree.TreeApi
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
+import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
+import uk.ac.ox.softeng.mauro.plugin.exporter.json.JsonTerminologyExporterPlugin
+import uk.ac.ox.softeng.mauro.web.ListResponse
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import io.micronaut.configuration.picocli.PicocliRunner
+import io.micronaut.http.MediaType
+import io.micronaut.http.client.multipart.MultipartBody
 import jakarta.inject.Inject
 import org.slf4j.Logger
 import picocli.CommandLine.Command
@@ -46,6 +52,10 @@ import static org.slf4j.LoggerFactory.getLogger
 abstract class ApiClient implements Runnable {
 
     protected static final Logger log = getLogger(ApiClient)
+
+    @Inject ObjectMapper objectMapper
+
+    @Inject JsonTerminologyExporterPlugin jsonTerminologyExporterPlugin
 
     @Inject AdminApi adminApi
     @Inject ClassificationSchemeApi classificationSchemeApi
@@ -98,5 +108,20 @@ abstract class ApiClient implements Runnable {
         folder
     }
 
+
+    ListResponse<Terminology> importTerminology(UUID folderId, Terminology terminology) {
+
+        MultipartBody importRequest = MultipartBody.builder()
+            .addPart('folderId', folderId.toString())
+            .addPart('importFile', 'file.json', MediaType.APPLICATION_JSON_TYPE, jsonTerminologyExporterPlugin.exportModel(terminology))
+            .build()
+
+        terminologyApi.importModel(
+            importRequest,
+            'uk.ac.ox.softeng.mauro.plugin.importer.json',
+            'JsonTerminologyImporterPlugin',
+            '4.0.0')
+
+    }
 
 }

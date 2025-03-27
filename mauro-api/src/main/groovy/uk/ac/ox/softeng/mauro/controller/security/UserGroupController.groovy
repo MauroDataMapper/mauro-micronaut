@@ -2,6 +2,7 @@ package uk.ac.ox.softeng.mauro.controller.security
 
 import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.security.UserGroupApi
+import uk.ac.ox.softeng.mauro.audit.Audit
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
@@ -30,6 +31,7 @@ class UserGroupController extends ItemController<UserGroup> implements UserGroup
     }
 
     @Transactional
+    @Audit(level = Audit.AuditLevel.FILE_ONLY)
     @Post(Paths.USER_GROUP_LIST)
     UserGroup create(@Body @NonNull UserGroup userGroup) {
         accessControlService.checkAdministrator()
