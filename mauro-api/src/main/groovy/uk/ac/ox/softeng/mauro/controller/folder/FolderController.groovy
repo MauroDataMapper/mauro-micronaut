@@ -149,16 +149,8 @@ class FolderController extends ModelController<Folder> implements FolderApi {
 
 
 
-    //stub endpoint todo: actual
-    @Get('/{id}/edits')
-    List<Map> edits(UUID id, @Nullable @QueryValue Integer max){
-        max ?: null
-        super.edits(id, max)
-    }
-
-
     //todo: implement actual
-    @Get('/{id}/permissions')
+    @Get('/folders/{id}/permissions')
     List<Map> permissions(UUID id) {
         super.permissions(id)
     }

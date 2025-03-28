@@ -316,14 +316,6 @@ class DataModelController extends ModelController<DataModel> implements DataMode
     }
 
 
-    //stub endpoint todo: actual
-    @Get('/dataModels/{id}/edits')
-    List<Map> edits(UUID id, @Nullable @QueryValue Integer max){
-        max ?: null
-        super.edits(id, max)
-    }
-
-
     //todo: implement actual
     @Get('/dataModels/{id}/permissions')
     List<Map> permissions(UUID id) {

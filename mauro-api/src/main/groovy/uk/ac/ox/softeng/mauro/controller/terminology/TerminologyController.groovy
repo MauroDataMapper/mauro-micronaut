@@ -196,14 +196,6 @@ class TerminologyController extends ModelController<Terminology> implements Term
     }
 
 
-    //stub endpoint todo: actual
-    @Get('/terminologies/{id}/edits')
-    List<Map> edits(UUID id, @Nullable @QueryValue Integer max){
-        max ?: null
-        super.edits(id, max)
-    }
-
-
     //todo: implement actual
     @Get('/terminologies/{id}/permissions')
     List<Map> permissions(UUID id) {

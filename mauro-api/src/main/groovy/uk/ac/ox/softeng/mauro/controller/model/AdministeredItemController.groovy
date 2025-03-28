@@ -183,17 +183,4 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
     }
 
 
-    //stub endpoint todo: actual
-    List<Map> edits(UUID id, Integer max) {
-        [
-            [
-                count: 0,
-                items: [
-                    id : id
-                ]
-            ]
-        ] as List<Map>
-    }
-
-
 }

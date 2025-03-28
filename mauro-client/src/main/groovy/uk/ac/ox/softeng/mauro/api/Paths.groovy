@@ -136,6 +136,20 @@ interface Paths {
     String METADATA_ID = '/{domainType}/{domainId}/metadata/{id}'
 
     /*
+    * EditApi
+    */
+    String EDIT_LIST = '/{domainType}/{domainId}/edits'
+    String EDIT_ID = '/{domainType}/{domainId}/edits/{id}'
+
+
+    /*
+    * EditApi
+    */
+    String SEMANTIC_LINKS_LIST = '/{domainType}/{domainId}/semanticLinks'
+    String SEMANTIC_LINKS_ID = '/{domainType}/{domainId}/semanticLinks/{id}'
+
+
+    /*
     * RuleApi
     */
     String RULE_LIST = '/{domainType}/{domainId}/rules'

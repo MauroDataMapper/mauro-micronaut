@@ -82,10 +82,4 @@ class TermController extends AdministeredItemController<Term, Terminology> imple
     }
 
 
-    //stub endpoint todo: actual
-    @Get('/terms/{id}/edits')
-    List<Map> edits(UUID id, @Nullable @QueryValue Integer max){
-        max ?: null
-        super.edits(id, max)
-    }
 }

@@ -176,14 +176,6 @@ class CodeSetController extends ModelController<CodeSet> implements CodeSetApi {
 
 
 
-    //stub endpoint todo: actual
-    @Get('/codeSets/{id}/edits')
-    List<Map> edits(UUID id, @Nullable @QueryValue Integer max){
-        max ?: null
-        super.edits(id, max)
-    }
-
-
     //todo: implement actual
     @Get('/codeSets/{id}/permissions')
     List<Map> permissions(UUID id) {
