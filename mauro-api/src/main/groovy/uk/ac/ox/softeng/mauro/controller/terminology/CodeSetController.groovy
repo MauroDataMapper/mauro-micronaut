@@ -125,7 +125,7 @@ class CodeSetController extends ModelController<CodeSet> implements CodeSetApi {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, 'CodeSet item not found')
         }
         accessControlService.checkRole(Role.READER, codeSet)
-        List<Term> associatedTerms = codeSetContentRepository.codeSetRepository.getTerms(id) as List<Term>
+        List<Term> associatedTerms = codeSetContentRepository.codeSetRepository.getTerms(id).each{it.updateBreadcrumbs()} as List<Term>
         ListResponse.from(associatedTerms)
     }
 
