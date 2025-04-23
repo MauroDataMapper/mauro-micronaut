@@ -68,6 +68,10 @@ abstract class ClassifierRepository implements ModelItemRepository<Classifier> {
         readAllByClassificationScheme((ClassificationScheme) parent)
     }
 
+    @Nullable
+    abstract List<Classifier> readAllByClassificationScheme_Id(UUID classificationSchemeId)
+
+
     abstract Long deleteByClassificationSchemeId(UUID classificationSchemeId)
 
     Long deleteJoinAdministeredItemToClassifier(AdministeredItem administeredItem, UUID classifierId) {
