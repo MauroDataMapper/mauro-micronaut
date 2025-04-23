@@ -89,7 +89,6 @@ datasources:
     dialect: POSTGRES
     db-type: postgres
     driver-class-name: org.postgresql.Driver
-    connection-init-sql: "SET TIME ZONE 'UTC'"
 
 flyway:
   datasources:
