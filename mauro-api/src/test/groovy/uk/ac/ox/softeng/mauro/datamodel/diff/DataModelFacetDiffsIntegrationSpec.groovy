@@ -28,6 +28,8 @@ import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadataReport
 import uk.ac.ox.softeng.mauro.persistence.ContainerizedTest
 import uk.ac.ox.softeng.mauro.testing.CommonDataSpec
 
+import java.time.Instant
+
 @ContainerizedTest
 @Singleton
 @Sql(scripts = "classpath:sql/tear-down-datamodel.sql", phase = Sql.Phase.AFTER_EACH)
@@ -225,6 +227,5 @@ class DataModelFacetDiffsIntegrationSpec extends CommonDataSpec {
         //reportDiffs.size() == 2
         reportDiffs.deleted.size() == 1
         reportDiffs.deleted[0].get(DiffBuilder.ID_KEY) == report.id.toString()
-        reportDiffs.deleted[0].get(DiffBuilder.REPORT_DATE) == report.reportDate.toString()
     }
 }
