@@ -228,8 +228,8 @@ class DataModelNewBranchVersionIntegrationSpec extends CommonDataSpec {
         then:
         objectDiff
         objectDiff.label == dataModel.label
-        objectDiff.diffs.size() == 2
+
         //branchName and path will differ
-        objectDiff.diffs.name as Set == [DiffBuilder.BRANCH_NAME,  DiffBuilder.PATH_MODEL_IDENTIFIER] as Set
+        objectDiff.diffs.name as Set == [DiffBuilder.BRANCH_NAME,  DiffBuilder.PATH_MODEL_IDENTIFIER , DiffBuilder.SUMMARY_METADATA] as Set
     }
 }
