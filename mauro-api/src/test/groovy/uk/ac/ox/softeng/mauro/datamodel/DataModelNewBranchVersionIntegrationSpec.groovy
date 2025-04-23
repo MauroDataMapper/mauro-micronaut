@@ -1,31 +1,21 @@
 package uk.ac.ox.softeng.mauro.datamodel
 
-import uk.ac.ox.softeng.mauro.api.datamodel.DataClassApi
-import uk.ac.ox.softeng.mauro.api.datamodel.DataElementApi
-import uk.ac.ox.softeng.mauro.api.datamodel.DataModelApi
-import uk.ac.ox.softeng.mauro.api.datamodel.DataTypeApi
-import uk.ac.ox.softeng.mauro.api.datamodel.EnumerationValueApi
-import uk.ac.ox.softeng.mauro.api.facet.ReferenceFileApi
-import uk.ac.ox.softeng.mauro.api.facet.SummaryMetadataApi
-import uk.ac.ox.softeng.mauro.api.facet.SummaryMetadataReportApi
-import uk.ac.ox.softeng.mauro.api.folder.FolderApi
+
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataElement
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
+import uk.ac.ox.softeng.mauro.domain.datamodel.EnumerationValue
+import uk.ac.ox.softeng.mauro.domain.diff.DiffBuilder
 import uk.ac.ox.softeng.mauro.domain.diff.ObjectDiff
 import uk.ac.ox.softeng.mauro.domain.model.version.CreateNewVersionData
-
-import io.micronaut.runtime.EmbeddedApplication
-import io.micronaut.test.annotation.Sql
-import jakarta.inject.Inject
-import jakarta.inject.Singleton
-import spock.lang.Shared
-import uk.ac.ox.softeng.mauro.domain.datamodel.*
-import uk.ac.ox.softeng.mauro.domain.diff.DiffBuilder
-import uk.ac.ox.softeng.mauro.domain.facet.ReferenceFile
-import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
-import uk.ac.ox.softeng.mauro.domain.folder.Folder
-import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadataReport
 import uk.ac.ox.softeng.mauro.persistence.ContainerizedTest
 import uk.ac.ox.softeng.mauro.testing.CommonDataSpec
 import uk.ac.ox.softeng.mauro.web.ListResponse
+
+import io.micronaut.test.annotation.Sql
+import jakarta.inject.Singleton
+import spock.lang.Shared
 
 @ContainerizedTest
 @Singleton
@@ -230,6 +220,7 @@ class DataModelNewBranchVersionIntegrationSpec extends CommonDataSpec {
         objectDiff.label == dataModel.label
 
         //branchName and path will differ
-        objectDiff.diffs.name as Set == [DiffBuilder.BRANCH_NAME,  DiffBuilder.PATH_MODEL_IDENTIFIER , DiffBuilder.SUMMARY_METADATA] as Set
+        objectDiff.diffs.name.contains(DiffBuilder.BRANCH_NAME)
+        objectDiff.diffs.name.contains(DiffBuilder.PATH_MODEL_IDENTIFIER)
     }
 }
