@@ -1,17 +1,19 @@
 package uk.ac.ox.softeng.mauro.domain.facet
 
-import uk.ac.ox.softeng.mauro.domain.model.InstantConverter
+import uk.ac.ox.softeng.mauro.domain.diff.CollectionDiff
+import uk.ac.ox.softeng.mauro.domain.diff.DiffBuilder
+import uk.ac.ox.softeng.mauro.domain.diff.DiffableItem
+import uk.ac.ox.softeng.mauro.domain.diff.ObjectDiff
+import uk.ac.ox.softeng.mauro.domain.diff.SummaryMetadataReportDiff
 import uk.ac.ox.softeng.mauro.domain.model.Item
 
 import com.fasterxml.jackson.annotation.JsonAlias
 import com.fasterxml.jackson.annotation.JsonIgnore
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
 import groovy.transform.MapConstructor
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Transient
-import uk.ac.ox.softeng.mauro.domain.diff.*
 
 import java.time.Instant
 
@@ -26,7 +28,6 @@ class SummaryMetadataReport extends Item implements DiffableItem<SummaryMetadata
     @JsonAlias(['summary_metadata_id'])
     UUID summaryMetadataId
 
-    @JsonDeserialize(converter = InstantConverter)
     @JsonAlias(['report_date'])
     Instant reportDate
 
