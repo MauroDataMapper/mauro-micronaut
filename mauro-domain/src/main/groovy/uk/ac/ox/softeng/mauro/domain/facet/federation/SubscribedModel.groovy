@@ -1,11 +1,10 @@
 package uk.ac.ox.softeng.mauro.domain.facet.federation
 
-import uk.ac.ox.softeng.mauro.domain.model.InstantConverter
+
 import uk.ac.ox.softeng.mauro.domain.model.Item
 import uk.ac.ox.softeng.mauro.domain.security.SecurableResource
 
 import com.fasterxml.jackson.annotation.JsonAlias
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
 import groovy.transform.MapConstructor
@@ -45,7 +44,6 @@ class SubscribedModel extends Item implements SecurableResource{
     Boolean readableByAuthenticatedUsers = false
 
     @DateUpdated
-    @JsonDeserialize(converter = InstantConverter)
     @JsonAlias(['last_read'])
     Instant lastRead
 
