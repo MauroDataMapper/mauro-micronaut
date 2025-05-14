@@ -5,6 +5,8 @@ import uk.ac.ox.softeng.mauro.domain.facet.Annotation
 import uk.ac.ox.softeng.mauro.domain.facet.Facet
 import uk.ac.ox.softeng.mauro.domain.facet.Metadata
 import uk.ac.ox.softeng.mauro.domain.facet.ReferenceFile
+import uk.ac.ox.softeng.mauro.domain.facet.Rule
+import uk.ac.ox.softeng.mauro.domain.facet.RuleRepresentation
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadataReport
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
@@ -202,6 +204,7 @@ class AdministeredItemContentRepository {
         saveSummaryMetadataFacets(items)
         saveAnnotations(items)
         saveReferenceFiles(items)
+        saveRules(items)
     }
 
     void saveSummaryMetadataFacets(List<AdministeredItem> items) {
@@ -254,6 +257,28 @@ class AdministeredItemContentRepository {
                 }
                 referenceFiles.addAll(item.referenceFiles)
                 referenceFileCacheableRepository.saveAll(referenceFiles)
+            }
+        }
+    }
+
+    void saveRules(List<AdministeredItem> items) {
+        List<Rule> rules = []
+        List<RuleRepresentation> ruleRepresentations = []
+        Rule saved
+        items.each {item ->
+            if (item.rules) {
+                item.rules.each {
+                    updateMultiAwareData(item, it)
+                    saved = ruleRepository.save(it)
+                    if (it.ruleRepresentations) {
+                        it.ruleRepresentations.forEach {
+                            representation ->
+                                representation.ruleId = saved.id
+                        }
+                        ruleRepresentations.addAll(ruleRepresentationCacheableRepository.saveAll(it.ruleRepresentations))
+                    }
+                    rules.add(saved)
+                }
             }
         }
     }
