@@ -58,6 +58,7 @@ class DataModelJsonImportExportSpec extends CommonDataSpec {
         UUID dataClass2Id = dataClassApi.create(
             dataModelId,
             new DataClass(label: 'TEST-2', description: 'second data class')).id
+        dataClassApi.createExtension(dataModelId, dataClass2Id, dataModelId, dataClass1Id)
         UUID dataTypeId = dataTypeApi.create(
             dataModelId,
             new DataType(label: 'Test data type', dataTypeKind: DataType.DataTypeKind.PRIMITIVE_TYPE)).id
@@ -132,16 +133,13 @@ class DataModelJsonImportExportSpec extends CommonDataSpec {
         ListResponse<DataClass> dataClasses = dataClassApi.list(importedDataModelId)
 
         then:
-        dataClasses.items.path.sort() == ['dm:Test data model$main|dc:TEST-1', 'dm:Test data model$main|dc:TEST-2']
-        String test2Id = dataClasses.items.find { it.label == 'TEST-2'}.id
-        Map dataClassResponse = GET("/dataModels/$importedDataModelId/dataClasses/$test2Id")
-
+        dataClasses.items.path.collect {it.toString()}.sort() == ['dm:Test data model$main|dc:TEST-1', 'dm:Test data model$main|dc:TEST-2']
+        DataClass dataClassResponse = dataClassApi.show(importedDataModelId, dataClasses.items.find { it.label == 'TEST-2'}.id)
         dataClassResponse.extendsDataClasses.size() == 1
         dataClassResponse.extendsDataClasses.first().label == 'TEST-1'
 
-
-        def dataClass = dataClasses.items.find { it.path.contains('dm:Test data model$main|dc:TEST-1')}
-        UUID importedDataClassId = UUID.fromString(dataClass.id)
+        def dataClass = dataClasses.items.find { it.path.collect {it.toString()}.contains('dm:Test data model$main|dc:TEST-1')}
+        UUID importedDataClassId = dataClass.id
 
         when:
         ListResponse<DataType> dataTypes = dataTypeApi.list(importedDataModelId)

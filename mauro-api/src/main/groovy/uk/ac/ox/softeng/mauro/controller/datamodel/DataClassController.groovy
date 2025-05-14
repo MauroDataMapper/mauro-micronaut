@@ -107,8 +107,8 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
 
     }
 
-    @Put('/{id}/extends/{otherModelId}/{otherClassId}')
-    DataClass createExtension(UUID id, UUID otherModelId, UUID otherClassId) {
+    @Put(Paths.DATA_CLASS_EXTENDS)
+    DataClass createExtension(UUID dataModelId, UUID id, UUID otherModelId, UUID otherClassId) {
         DataClass sourceDataClass = dataClassRepository.readById(id)
         accessControlService.checkRole(Role.EDITOR, sourceDataClass)
         DataClass targetDataClass = dataClassRepository.readById(otherClassId)
@@ -116,8 +116,8 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
         dataClassRepository.findById(id)
     }
 
-    @Delete('/{id}/extends/{otherModelId}/{otherClassId}')
-    DataClass deleteExtension(UUID id, UUID otherModelId, UUID otherClassId) {
+    @Delete(Paths.DATA_CLASS_EXTENDS)
+    DataClass deleteExtension(UUID dataModelId, UUID id, UUID otherModelId, UUID otherClassId) {
         DataClass sourceDataClass = dataClassRepository.readById(id)
         accessControlService.checkRole(Role.EDITOR, sourceDataClass)
         DataClass targetDataClass = dataClassRepository.readById(otherClassId)
