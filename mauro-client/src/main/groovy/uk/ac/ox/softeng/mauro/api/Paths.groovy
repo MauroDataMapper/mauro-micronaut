@@ -85,6 +85,7 @@ interface Paths {
     String DATA_CLASS_ID = '/dataModels/{dataModelId}/dataClasses/{id}'
     String DATA_CLASS_CHILD_DATA_CLASS_LIST = '/dataModels/{dataModelId}/dataClasses/{parentDataClassId}/dataClasses'
     String DATA_CLASS_CHILD_DATA_CLASS_ID = '/dataModels/{dataModelId}/dataClasses/{parentDataClassId}/dataClasses/{id}'
+    String DATA_CLASS_EXTENDS = '/dataModels/{dataModelId}/dataClasses/{id}/extends/{otherModelId}/{otherClassId}'
 
     /*
     * DataElementApi

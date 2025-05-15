@@ -153,6 +153,20 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
             ((DataClassRepository) repository).readAllByDataModelAndParentDataClassIsNull(dataModel)
         }
 
+        // not cached
+        DataClass createExtensionRelationship(DataClass sourceDataClass, DataClass targetDataClass) {
+            invalidate(sourceDataClass)
+            ((DataClassRepository) repository).addDataClassExtensionRelationship(sourceDataClass.id, targetDataClass.id)
+
+        }
+
+        // not cached
+        long deleteExtensionRelationship(DataClass sourceDataClass, DataClass targetDataClass) {
+            invalidate(sourceDataClass)
+            ((DataClassRepository) repository).deleteExtensionRelationship(sourceDataClass.id, targetDataClass.id)
+        }
+
+
         @Override
         Boolean handles(String domainType) {
             domainClass.simpleName.equalsIgnoreCase(domainType) || (domainClass.simpleName + 'es').equalsIgnoreCase(domainType)

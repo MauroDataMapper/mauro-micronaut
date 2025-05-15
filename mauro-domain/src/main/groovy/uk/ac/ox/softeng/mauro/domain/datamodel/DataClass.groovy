@@ -1,5 +1,14 @@
 package uk.ac.ox.softeng.mauro.domain.datamodel
 
+import uk.ac.ox.softeng.mauro.domain.diff.BaseCollectionDiff
+import uk.ac.ox.softeng.mauro.domain.diff.CollectionDiff
+import uk.ac.ox.softeng.mauro.domain.diff.DiffBuilder
+import uk.ac.ox.softeng.mauro.domain.diff.DiffableItem
+import uk.ac.ox.softeng.mauro.domain.diff.ObjectDiff
+import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
+import uk.ac.ox.softeng.mauro.domain.model.Model
+import uk.ac.ox.softeng.mauro.domain.model.ModelItem
+
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import groovy.transform.AutoClone
@@ -10,10 +19,6 @@ import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Relation
 import jakarta.persistence.*
-import uk.ac.ox.softeng.mauro.domain.diff.*
-import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
-import uk.ac.ox.softeng.mauro.domain.model.Model
-import uk.ac.ox.softeng.mauro.domain.model.ModelItem
 
 /**
  * A datatype describes the range of values that a column or field in a dataset may take.  It may be one of the following kinds:
@@ -51,12 +56,16 @@ class DataClass extends ModelItem<DataModel> implements DiffableItem<DataClass> 
     @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'dataClass')
     List<DataElement> dataElements = []
 
-    @Relation(value = Relation.Kind.MANY_TO_MANY)
+    @Relation(value = Relation.Kind.MANY_TO_MANY, mappedBy = 'extendedBy')
     @JoinTable(
         name = "join_dataclass_to_extended_data_class",
         joinColumns = @JoinColumn(name = "dataclass_id"),
         inverseJoinColumns = @JoinColumn(name = "extended_dataclass_id"))
     List<DataClass> extendsDataClasses = []
+
+    @Relation(value = Relation.Kind.MANY_TO_MANY, mappedBy = 'extendsDataClasses')
+    @JsonIgnore
+    List<DataClass> extendedBy = []
 
 
     @JsonIgnore
@@ -214,6 +223,7 @@ class DataClass extends ModelItem<DataModel> implements DiffableItem<DataClass> 
     DataClass extendsDataClass(String dataClassLabel) {
         DataClass foundDataClass = this.dataModel.dataClasses.findAll { it.label == dataClassLabel }.first()
         this.extendsDataClasses.add(foundDataClass)
+        foundDataClass.extendedBy.add(this)
         return foundDataClass
     }
 }

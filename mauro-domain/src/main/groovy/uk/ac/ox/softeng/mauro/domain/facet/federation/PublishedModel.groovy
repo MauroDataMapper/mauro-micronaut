@@ -1,11 +1,10 @@
 package uk.ac.ox.softeng.mauro.domain.facet.federation
 
-import uk.ac.ox.softeng.mauro.domain.model.InstantConverter
+
 import uk.ac.ox.softeng.mauro.domain.model.version.ModelVersion
 
 import com.fasterxml.jackson.annotation.JsonAlias
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.Introspected
@@ -31,15 +30,12 @@ class PublishedModel implements Comparable<PublishedModel> {
     String description
     String modelType
     @DateUpdated
-    @JsonDeserialize(converter = InstantConverter)
     @JsonAlias(['last_updated'])
     Instant lastUpdated
     @DateCreated
-    @JsonDeserialize(converter = InstantConverter)
     @JsonAlias(['date_created'])
     Instant dateCreated
 
-    @JsonDeserialize(converter = InstantConverter)
     @Nullable
     Instant datePublished
 
