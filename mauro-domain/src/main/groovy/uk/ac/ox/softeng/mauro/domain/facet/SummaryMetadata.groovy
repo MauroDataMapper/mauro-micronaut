@@ -30,13 +30,13 @@ class SummaryMetadata extends Facet implements DiffableItem<SummaryMetadata> {
 
     @JsonAlias(['summary_metadata_reports'])
     @Relation(Relation.Kind.ONE_TO_MANY)
-    List<SummaryMetadataReport> summaryMetadataReports = []
+    Collection<SummaryMetadataReport> summaryMetadataReports = []
 
     @Override
     @JsonIgnore
     @Transient
     CollectionDiff fromItem() {
-        new SummaryMetadataDiff(id, summaryMetadataType, label)
+        new SummaryMetadataDiff(id, summaryMetadataType, label, summaryMetadataReports)
     }
 
     @Override
