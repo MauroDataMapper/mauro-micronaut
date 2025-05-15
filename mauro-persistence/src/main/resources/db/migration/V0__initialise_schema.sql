@@ -329,3 +329,11 @@ create table datamodel."enumeration_value" (
 );
 
 create index "idx_enumeration_value_enumeration_type_id" on datamodel."enumeration_value"(enumeration_type_id);
+
+create table datamodel."join_dataclass_to_extended_data_class" (
+    "dataclass_id"                    uuid            not null references datamodel.data_class(id),
+    "extended_dataclass_id"           uuid            not null references datamodel.data_class(id)
+);
+
+create index "idx_join_dataclass_to_extended_data_class_id" on datamodel."join_dataclass_to_extended_data_class"(dataclass_id);
+create index "idx_join_dataclass_to_extended_data_class_extended_dataclass_id" on datamodel."join_dataclass_to_extended_data_class"(extended_dataclass_id);

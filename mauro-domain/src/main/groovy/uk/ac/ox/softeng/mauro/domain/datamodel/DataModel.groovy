@@ -125,9 +125,15 @@ class DataModel extends Model {
                 clonedDataElement.dataType = clonedDataTypeLookup[clonedDataElement.dataType]
             }
         }
-        cloned.allDataClasses.each {
-            it.dataElements = it.dataElements.collect { dataElementIt ->
+        cloned.allDataClasses.each {dataClass ->
+            dataClass.dataElements = dataClass.dataElements.collect { dataElementIt ->
                 clonedDataElementLookup[dataElementIt]
+            }
+            dataClass.extendsDataClasses = dataClass.extendsDataClasses.collect {extendedDataClass ->
+                clonedDataClassLookup[extendedDataClass]
+            }
+            dataClass.extendedBy = dataClass.extendedBy.collect {extendsDataClass ->
+                clonedDataClassLookup[extendsDataClass]
             }
         }
         cloned.enumerationValues = enumerationValues.collect {
