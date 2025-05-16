@@ -2,6 +2,7 @@ package uk.ac.ox.softeng.mauro.controller.facet
 
 import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.facet.SummaryMetadataReportApi
+import uk.ac.ox.softeng.mauro.audit.Audit
 import uk.ac.ox.softeng.mauro.controller.model.ItemController
 
 import groovy.transform.CompileStatic
@@ -51,6 +52,7 @@ class SummaryMetadataReportController extends ItemController<SummaryMetadataRepo
         this.summaryMetadataReportCacheableRepository = summaryMetadataReportCacheableRepository
     }
 
+    @Audit
     @Post(Paths.SUMMARY_METADATA_REPORTS_LIST)
     SummaryMetadataReport create(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID summaryMetadataId,
                                  @Body SummaryMetadataReport summaryMetadataReport) {
@@ -62,6 +64,7 @@ class SummaryMetadataReportController extends ItemController<SummaryMetadataRepo
         summaryMetadataReportCacheableRepository.save(summaryMetadataReport)
     }
 
+    @Audit
     @Get(Paths.SUMMARY_METADATA_REPORTS_LIST)
     ListResponse<SummaryMetadataReport> list(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID summaryMetadataId) {
         SummaryMetadata summaryMetadata = validateAndGet(domainType, domainId, summaryMetadataId)
@@ -70,6 +73,7 @@ class SummaryMetadataReportController extends ItemController<SummaryMetadataRepo
         ListResponse.from(summaryMetadataReportList)
     }
 
+    @Audit
     @Get(Paths.SUMMARY_METADATA_REPORTS_ID)
     SummaryMetadataReport show(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID summaryMetadataId,
                               @NonNull UUID id) {
@@ -78,6 +82,7 @@ class SummaryMetadataReportController extends ItemController<SummaryMetadataRepo
         summaryMetadataReportCacheableRepository.findById(id)
     }
 
+    @Audit
     @Put(Paths.SUMMARY_METADATA_REPORTS_ID)
     SummaryMetadataReport update(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID summaryMetadataId,
                                  @NonNull UUID id, @Body @NonNull SummaryMetadataReport summaryMetadataReport) {
@@ -90,6 +95,7 @@ class SummaryMetadataReportController extends ItemController<SummaryMetadataRepo
         updated
     }
 
+    @Audit(deletedObjectDomainType = SummaryMetadataReport)
     @Delete(Paths.SUMMARY_METADATA_REPORTS_ID)
     @Transactional
     HttpResponse delete(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID summaryMetadataId,

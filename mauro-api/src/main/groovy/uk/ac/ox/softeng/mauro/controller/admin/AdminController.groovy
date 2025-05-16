@@ -2,6 +2,7 @@ package uk.ac.ox.softeng.mauro.controller.admin
 
 import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.admin.AdminApi
+import uk.ac.ox.softeng.mauro.audit.Audit
 import uk.ac.ox.softeng.mauro.plugin.MauroPluginDTO
 
 import groovy.transform.CompileStatic
@@ -45,6 +46,7 @@ class AdminController implements AdminApi {
         this.emailRepository = emailRepository
     }
 
+    @Audit
     @Get(Paths.ADMIN_MODULES_LIST)
     List<LinkedHashMap<String, String>> modules() {
         accessControlService.checkAdministrator()
@@ -53,6 +55,7 @@ class AdminController implements AdminApi {
     }
 
 
+    @Audit
     @Get(Paths.ADMIN_IMPORTERS_LIST)
     List<MauroPluginDTO> importers() {
         accessControlService.checkAdministrator()
@@ -60,7 +63,7 @@ class AdminController implements AdminApi {
         mauroPluginService.listPluginsAsDTO(ModelImporterPlugin)
     }
 
-
+    @Audit
     @Get(Paths.ADMIN_EXPORTERS_LIST)
     List<MauroPluginDTO> exporters() {
         accessControlService.checkAdministrator()
@@ -69,6 +72,7 @@ class AdminController implements AdminApi {
     }
 
 
+    @Audit
     @Get(Paths.ADMIN_EMAILERS_LIST)
     List<MauroPluginDTO> emailers() {
         mauroPluginService.listPluginsAsDTO(EmailPlugin)
@@ -81,6 +85,7 @@ class AdminController implements AdminApi {
      * @param catalogueUser
      * @return
      */
+    @Audit(level= Audit.AuditLevel.FILE_ONLY)
     @Post(Paths.ADMIN_EMAIL_SEND_TEST)
     Boolean sendTestEmail(@Body CatalogueUser catalogueUser) {
         accessControlService.checkAdministrator()
@@ -108,6 +113,7 @@ class AdminController implements AdminApi {
      * This is a new endpoint which allows users to test the email connection without sending an email
      * @return
      */
+    @Audit
     @Get(Paths.ADMIN_EMAIL_TEST_CONNECTION)
     boolean testConnection() {
         accessControlService.checkAdministrator()
@@ -120,7 +126,7 @@ class AdminController implements AdminApi {
         }
     }
 
-
+    @Audit
     @Get(Paths.ADMIN_EMAILS)
     ListResponse<Email> listEmails() {
         accessControlService.checkAdministrator()
@@ -131,6 +137,7 @@ class AdminController implements AdminApi {
      * This is a new endpoint which allows administrators to retry sending an email (usually one which previously failed to send)
      * @return
      */
+    @Audit(level= Audit.AuditLevel.FILE_ONLY)
     @Post(Paths.ADMIN_EMAIL_RETRY)
     boolean retryEmail(UUID emailId) {
         accessControlService.checkAdministrator()

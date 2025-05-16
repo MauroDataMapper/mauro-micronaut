@@ -105,126 +105,46 @@ class CommonDataSpec extends Specification {
     @Inject
     ObjectMapper objectMapper
 
-    @Shared
-    @Inject
-    AdminApi adminApi
-    @Shared
-    @Inject
-    ClassificationSchemeApi classificationSchemeApi
-    @Shared
-    @Inject
-    ClassifierApi classifierApi
-    @Shared
-    @Inject
-    ApiPropertyApi apiPropertyApi
-    @Shared
-    @Inject
-    SessionApi sessionApi
-    @Shared
-    @Inject
-    DataClassComponentApi dataClassComponentApi
-    @Shared
-    @Inject
-    DataElementComponentApi dataElementComponentApi
-    @Shared
-    @Inject
-    DataFlowApi dataFlowApi
-    @Shared
-    @Inject
-    DataClassApi dataClassApi
-    @Shared
-    @Inject
-    DataElementApi dataElementApi
-    @Shared
-    @Inject
-    DataModelApi dataModelApi
-    @Shared
-    @Inject
-    DataTypeApi dataTypeApi
-    @Shared
-    @Inject
-    EnumerationValueApi enumerationValueApi
-    @Shared
-    @Inject
-    AnnotationApi annotationApi
-    @Shared
-    @Inject
-    MetadataApi metadataApi
-    @Shared
-    @Inject
-    ReferenceFileApi referenceFileApi
-    @Shared
-    @Inject
-    SummaryMetadataApi summaryMetadataApi
-    @Shared
-    @Inject
-    SummaryMetadataReportApi summaryMetadataReportApi
-    @Shared
-    @Inject
-    RuleApi ruleApi
-    @Shared
-    @Inject
-    RuleRepresentationApi ruleRepresentationApi
-    @Shared
-    @Inject
-    FolderApi folderApi
-    @Shared
-    @Inject
-    ImporterApi importerApi
-    @Shared
-    @Inject
-    ProfileApi profileApi
-    @Shared
-    @Inject
-    SearchApi searchApi
-    @Shared
-    @Inject
-    OpenidProviderApi openidProviderApi
-    @Shared
-    @Inject
-    CatalogueUserApi catalogueUserApi
-    @Shared
-    @Inject
-    SecurableResourceGroupRoleApi securableResourceGroupRoleApi
-    @Shared
-    @Inject
-    UserGroupApi userGroupApi
-    @Shared
-    @Inject
-    CodeSetApi codeSetApi
-    @Shared
-    @Inject
-    TermApi termApi
-    @Shared
-    @Inject
-    TerminologyApi terminologyApi
-    @Shared
-    @Inject
-    TermRelationshipApi termRelationshipApi
-    @Shared
-    @Inject
-    TermRelationshipTypeApi termRelationshipTypeApi
-    @Shared
-    @Inject
-    TreeApi treeApi
-    @Shared
-    @Inject
-    LoginApi loginApi
-    @Shared
-    @Inject
-    ApiKeyApi apiKeyApi
-    @Shared
-    @Inject
-    AuthorityApi authorityApi
-    @Shared
-    @Inject
-    SubscribedCatalogueApi subscribedCatalogueApi
-    @Shared
-    @Inject
-    SubscribedModelApi subscribedModelApi
-    @Shared
-    @Inject
-    PublishApi publishApi
+    @Shared @Inject AdminApi adminApi
+    @Shared @Inject ClassificationSchemeApi classificationSchemeApi
+    @Shared @Inject ClassifierApi classifierApi
+    @Shared @Inject ApiPropertyApi apiPropertyApi
+    @Shared @Inject SessionApi sessionApi
+    @Shared @Inject DataClassComponentApi dataClassComponentApi
+    @Shared @Inject DataElementComponentApi dataElementComponentApi
+    @Shared @Inject DataFlowApi dataFlowApi
+    @Shared @Inject DataClassApi dataClassApi
+    @Shared @Inject DataElementApi dataElementApi
+    @Shared @Inject DataModelApi dataModelApi
+    @Shared @Inject DataTypeApi dataTypeApi
+    @Shared @Inject EnumerationValueApi enumerationValueApi
+    @Shared @Inject AnnotationApi annotationApi
+    @Shared @Inject MetadataApi metadataApi
+    @Shared @Inject ReferenceFileApi referenceFileApi
+    @Shared @Inject SummaryMetadataApi summaryMetadataApi
+    @Shared @Inject SummaryMetadataReportApi summaryMetadataReportApi
+    @Shared @Inject RuleApi ruleApi
+    @Shared @Inject RuleRepresentationApi ruleRepresentationApi
+    @Shared @Inject FolderApi folderApi
+    @Shared @Inject ImporterApi importerApi
+    @Shared @Inject ProfileApi profileApi
+    @Shared @Inject SearchApi searchApi
+    @Shared @Inject OpenidProviderApi openidProviderApi
+    @Shared @Inject CatalogueUserApi catalogueUserApi
+    @Shared @Inject SecurableResourceGroupRoleApi securableResourceGroupRoleApi
+    @Shared @Inject UserGroupApi userGroupApi
+    @Shared @Inject CodeSetApi codeSetApi
+    @Shared @Inject TermApi termApi
+    @Shared @Inject TerminologyApi terminologyApi
+    @Shared @Inject TermRelationshipApi termRelationshipApi
+    @Shared @Inject TermRelationshipTypeApi termRelationshipTypeApi
+    @Shared @Inject TreeApi treeApi
+    @Shared @Inject LoginApi loginApi
+    @Shared @Inject ApiKeyApi apiKeyApi
+    @Shared @Inject AuthorityApi authorityApi
+    @Shared @Inject SubscribedCatalogueApi subscribedCatalogueApi
+    @Shared @Inject SubscribedModelApi subscribedModelApi
+    @Shared @Inject PublishApi publishApi
 
     @Inject
     SessionHandlerClientFilter sessionHandlerClientFilter

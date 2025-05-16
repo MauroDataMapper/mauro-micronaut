@@ -2,6 +2,7 @@ package uk.ac.ox.softeng.mauro.controller.security
 
 import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.security.SecurableResourceGroupRoleApi
+import uk.ac.ox.softeng.mauro.audit.Audit
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
@@ -39,6 +40,7 @@ class SecurableResourceGroupRoleController extends ItemController<SecurableResou
         this.securableResourceGroupRoleRepository = securableResourceGroupRoleRepository
     }
 
+    @Audit(level = Audit.AuditLevel.FILE_ONLY)
     @Post(Paths.SECURABLE_ROLE_GROUP_ID)
     SecurableResourceGroupRole create(@NonNull String securableResourceDomainType, @NonNull UUID securableResourceId, @NonNull Role role, @NonNull UUID userGroupId) {
         AdministeredItem securableResource = readAdministeredItem(securableResourceDomainType, securableResourceId)
@@ -60,6 +62,7 @@ class SecurableResourceGroupRoleController extends ItemController<SecurableResou
         securableResourceGroupRoleRepository.save(securableResourceGroupRole)
     }
 
+    @Audit(level = Audit.AuditLevel.FILE_ONLY)
     @Delete(Paths.SECURABLE_ROLE_GROUP_ID)
     HttpResponse delete(@NonNull String securableResourceDomainType, @NonNull UUID securableResourceId, @NonNull Role role, @NonNull UUID userGroupId) {
         AdministeredItem securableResource = readAdministeredItem(securableResourceDomainType, securableResourceId)

@@ -121,6 +121,8 @@ javamail:
 mauro:
   federation:
     subscribed-catalogues.max: 50
+  audit:
+    scope: ALL
 
 # Populate to enable OAuth2; see also micronaut.security properties
 #  oauth:

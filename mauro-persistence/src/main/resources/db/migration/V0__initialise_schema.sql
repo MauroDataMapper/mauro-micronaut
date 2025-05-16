@@ -337,3 +337,15 @@ create table datamodel."join_dataclass_to_extended_data_class" (
 
 create index "idx_join_dataclass_to_extended_data_class_id" on datamodel."join_dataclass_to_extended_data_class"(dataclass_id);
 create index "idx_join_dataclass_to_extended_data_class_extended_dataclass_id" on datamodel."join_dataclass_to_extended_data_class"(extended_dataclass_id);
+
+create table "core"."edit" (
+    "id"                                 uuid primary key         not null default uuid_generate_v4(),
+    "version"                            integer                  not null,
+    "date_created"                       timestamp with time zone not null,
+    "last_updated"                       timestamp with time zone not null,
+    "multi_facet_aware_item_domain_type" varchar(255)             not null,
+    "multi_facet_aware_item_id"          uuid                     not null,
+    "created_by"                         uuid                     not null,
+    "description"                        text                     not null,
+    "title"                              varchar(255)             not null
+);
