@@ -1,11 +1,9 @@
 package uk.ac.ox.softeng.mauro.controller.federation
 
-import uk.ac.ox.softeng.mauro.audit.Audit
-
-import groovy.util.logging.Slf4j
 import uk.ac.ox.softeng.mauro.ErrorHandler
 import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.federation.PublishApi
+import uk.ac.ox.softeng.mauro.audit.Audit
 import uk.ac.ox.softeng.mauro.domain.authority.Authority
 import uk.ac.ox.softeng.mauro.domain.facet.federation.PublishService
 import uk.ac.ox.softeng.mauro.domain.facet.federation.response.AuthorityResponse
@@ -19,6 +17,7 @@ import uk.ac.ox.softeng.mauro.security.AccessControlService
 import uk.ac.ox.softeng.mauro.service.core.AuthorityService
 
 import groovy.transform.CompileStatic
+import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.Controller
@@ -29,8 +28,8 @@ import io.micronaut.security.rules.SecurityRule
 import jakarta.inject.Inject
 
 @Slf4j
-@Controller
 @CompileStatic
+@Controller
 @Secured(SecurityRule.IS_ANONYMOUS)
 class PublishController implements PublishApi {
     final RepositoryService repositoryService
@@ -56,13 +55,14 @@ class PublishController implements PublishApi {
             List<Model> finalisedModels = getFinalisedModelsForDefaultAuthority()
             Authority defaultAuthority = authorityService.getDefaultAuthority()
             publishedModelResponse = new PublishedModelResponse(new AuthorityResponse().tap {
-                label: defaultAuthority.label
-                url: defaultAuthority.url}, publishService.getPublishedModels(finalisedModels))
+                label = defaultAuthority.label
+                url = defaultAuthority.url
+            }, publishService.getPublishedModels(finalisedModels))
+            return publishedModelResponse
         }
-        catch (AuthorizationException e ) {
-            publishedModelResponse = new PublishedModelResponse(null, Collections.emptyList())
+        catch (Exception e) {
+            new PublishedModelResponse(null, Collections.emptyList())
         }
-        publishedModelResponse
     }
 
 

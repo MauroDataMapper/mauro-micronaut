@@ -65,6 +65,33 @@ class TreeController implements TreeApi {
         treeItems
     }
 
+    //todo: implement actual
+    @Get('/tree/{domainType}/{id}/ancestors')
+    List<TreeItem> ancestors( String domainType, UUID id) {
+        List result = List.of(new TreeItem().tap {
+            it.id
+            it.domainType = domainType
+            it.label = 'stub treeItem label'
+        })
+        result
+    }
+
+    //todo: implement actual
+    @Get('/tree/{domainType}/{modelItemType}/{id}/ancestors')
+    List<TreeItem> ancestors(String domainType, String modelItemType, UUID id) {
+        List result = List.of(new TreeItem().tap {
+            it.id =  id
+            it.domainType = domainType
+            it.children =
+                [
+                    domainType : modelItemType,
+                ] as List<TreeItem>
+
+            it.label = 'stub treeItem label'
+        })
+        result
+    }
+
     protected List<TreeItem> filterTreeByReadable(List<TreeItem> treeItems) {
         treeItems.each {if (!it.item) throw new IllegalArgumentException('TreeItem must have item set for security check')}
         treeItems = treeItems.findAll {accessControlService.canDoRole(Role.READER, it.item)}

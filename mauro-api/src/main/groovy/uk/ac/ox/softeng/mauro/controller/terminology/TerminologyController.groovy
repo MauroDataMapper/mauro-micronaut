@@ -7,6 +7,9 @@ import io.micronaut.http.HttpStatus
 import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.terminology.TerminologyApi
 import uk.ac.ox.softeng.mauro.ErrorHandler
+import uk.ac.ox.softeng.mauro.plugin.exporter.DataModelExporterPlugin
+import uk.ac.ox.softeng.mauro.plugin.exporter.TerminologyExporterPlugin
+import uk.ac.ox.softeng.mauro.plugin.importer.TerminologyImporterPlugin
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
@@ -191,4 +194,28 @@ class TerminologyController extends ModelController<Terminology> implements Term
         other.setAssociations()
         terminology.diff(other)
     }
+
+    @Get('/terminologies/providers/importers')
+    List<TerminologyImporterPlugin> terminologyImporters() {
+        mauroPluginService.listPlugins(TerminologyImporterPlugin)
+    }
+
+    @Get('/terminologies/providers/exporters')
+    List<TerminologyExporterPlugin> terminologyExporters() {
+        mauroPluginService.listPlugins(TerminologyExporterPlugin)
+    }
+
+    //stub endpoint todo: actual
+    @Get('/terminologies/{id}/simpleModelVersionTree')
+    List<Map> simpleModelVersionTree(UUID id){
+        super.simpleModelVersionTree(id)
+    }
+
+
+    //todo: implement actual
+    @Get('/terminologies/{id}/permissions')
+    List<Map> permissions(UUID id) {
+        super.permissions(id)
+    }
+
 }

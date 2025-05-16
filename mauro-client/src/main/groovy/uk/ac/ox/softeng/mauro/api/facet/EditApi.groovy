@@ -19,10 +19,6 @@ interface EditApi extends FacetApi<Edit> {
     @Get(Paths.EDIT_ID)
     Edit show(@NonNull String domainType, @NonNull UUID domainId, UUID id)
 
-    /*
-    @Post(Paths.METADATA_LIST)
-    Edit create(@NonNull String domainType, @NonNull UUID domainId, @Body @NonNull Edit edit)
-*/
     @Delete(Paths.EDIT_ID)
     HttpResponse delete(@NonNull String domainType, @NonNull UUID domainId, UUID id)
 

@@ -4,7 +4,6 @@ import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.facet.EditApi
 import uk.ac.ox.softeng.mauro.audit.Audit
 import uk.ac.ox.softeng.mauro.domain.facet.Edit
-import uk.ac.ox.softeng.mauro.domain.facet.Metadata
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.security.Role
 import uk.ac.ox.softeng.mauro.persistence.cache.FacetCacheableRepository

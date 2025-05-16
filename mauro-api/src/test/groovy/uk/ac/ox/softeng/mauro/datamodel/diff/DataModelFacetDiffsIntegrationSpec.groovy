@@ -1,34 +1,25 @@
 package uk.ac.ox.softeng.mauro.datamodel.diff
 
-import uk.ac.ox.softeng.mauro.api.facet.SummaryMetadataApi
-import uk.ac.ox.softeng.mauro.api.facet.SummaryMetadataReportApi
-import uk.ac.ox.softeng.mauro.domain.diff.FieldDiff
-import uk.ac.ox.softeng.mauro.domain.model.version.FinaliseData
-import uk.ac.ox.softeng.mauro.domain.model.version.VersionChangeType
 
-import io.micronaut.runtime.EmbeddedApplication
-import io.micronaut.test.annotation.Sql
-import jakarta.inject.Inject
-import jakarta.inject.Singleton
-import spock.lang.Shared
-import uk.ac.ox.softeng.mauro.api.datamodel.DataModelApi
-import uk.ac.ox.softeng.mauro.api.facet.AnnotationApi
-import uk.ac.ox.softeng.mauro.api.facet.MetadataApi
-import uk.ac.ox.softeng.mauro.api.folder.FolderApi
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.diff.ArrayDiff
 import uk.ac.ox.softeng.mauro.domain.diff.DiffBuilder
+import uk.ac.ox.softeng.mauro.domain.diff.FieldDiff
 import uk.ac.ox.softeng.mauro.domain.diff.ObjectDiff
 import uk.ac.ox.softeng.mauro.domain.facet.Annotation
 import uk.ac.ox.softeng.mauro.domain.facet.Metadata
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
+import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadataReport
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadataType
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
-import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadataReport
+import uk.ac.ox.softeng.mauro.domain.model.version.FinaliseData
+import uk.ac.ox.softeng.mauro.domain.model.version.VersionChangeType
 import uk.ac.ox.softeng.mauro.persistence.ContainerizedTest
 import uk.ac.ox.softeng.mauro.testing.CommonDataSpec
 
-import java.time.Instant
+import io.micronaut.test.annotation.Sql
+import jakarta.inject.Singleton
+import spock.lang.Shared
 
 @ContainerizedTest
 @Singleton
@@ -227,5 +218,6 @@ class DataModelFacetDiffsIntegrationSpec extends CommonDataSpec {
         //reportDiffs.size() == 2
         reportDiffs.deleted.size() == 1
         reportDiffs.deleted[0].get(DiffBuilder.ID_KEY) == report.id.toString()
+        reportDiffs.deleted[0].get(DiffBuilder.REPORT_DATE) == report.reportDate.toString()
     }
 }
