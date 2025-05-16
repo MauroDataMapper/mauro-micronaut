@@ -17,6 +17,7 @@ import uk.ac.ox.softeng.mauro.api.datamodel.DataTypeApi
 import uk.ac.ox.softeng.mauro.api.datamodel.EnumerationValueApi
 import uk.ac.ox.softeng.mauro.api.facet.AnnotationApi
 import uk.ac.ox.softeng.mauro.api.facet.MetadataApi
+import uk.ac.ox.softeng.mauro.api.facet.EditApi
 import uk.ac.ox.softeng.mauro.api.facet.ReferenceFileApi
 import uk.ac.ox.softeng.mauro.api.facet.RuleApi
 import uk.ac.ox.softeng.mauro.api.facet.RuleRepresentationApi
@@ -120,6 +121,7 @@ class CommonDataSpec extends Specification {
     @Shared @Inject EnumerationValueApi enumerationValueApi
     @Shared @Inject AnnotationApi annotationApi
     @Shared @Inject MetadataApi metadataApi
+    @Shared @Inject EditApi editApi
     @Shared @Inject ReferenceFileApi referenceFileApi
     @Shared @Inject SummaryMetadataApi summaryMetadataApi
     @Shared @Inject SummaryMetadataReportApi summaryMetadataReportApi
