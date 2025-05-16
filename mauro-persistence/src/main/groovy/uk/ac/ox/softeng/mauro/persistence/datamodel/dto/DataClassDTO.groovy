@@ -3,12 +3,14 @@ package uk.ac.ox.softeng.mauro.persistence.datamodel.dto
 import uk.ac.ox.softeng.mauro.domain.classifier.Classifier
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
 import uk.ac.ox.softeng.mauro.domain.facet.Annotation
+import uk.ac.ox.softeng.mauro.domain.facet.Edit
 import uk.ac.ox.softeng.mauro.domain.facet.Metadata
 import uk.ac.ox.softeng.mauro.domain.facet.ReferenceFile
 import uk.ac.ox.softeng.mauro.domain.facet.Rule
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
 import uk.ac.ox.softeng.mauro.persistence.model.dto.AdministeredItemDTO
 
+import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.Introspected
 import io.micronaut.core.annotation.Nullable
@@ -20,8 +22,24 @@ import io.micronaut.data.model.DataType
 
 @CompileStatic
 @Introspected
+@AutoClone
 @MappedEntity(value = 'data_class', schema = 'datamodel', alias = 'data_class_')
 class DataClassDTO extends DataClass implements AdministeredItemDTO {
+
+    @Nullable
+    @TypeDef(type = DataType.JSON)
+    @MappedProperty
+    @ColumnTransformer(read = """(select json_agg(x) from
+        (select edit.id,
+                edit.title,
+                edit.description,
+                edit.date_created,
+                row_to_json(catalogue_user) as catalogue_user
+         from core.edit left join security.catalogue_user
+              on security.catalogue_user.id = core.edit.created_by
+         where multi_facet_aware_item_id = data_class_.id
+         group by edit.id, catalogue_user.id) x)""")
+    List<Edit> edits = []
 
     @Nullable
     @TypeDef(type = DataType.JSON)
@@ -75,4 +93,13 @@ class DataClassDTO extends DataClass implements AdministeredItemDTO {
                 JOIN core.join_administered_item_to_classifier on join_administered_item_to_classifier.classifier_id = core.classifier.id
                 and join_administered_item_to_classifier.catalogue_item_id = data_class_.id)''')
     List<Classifier> classifiers = []
+
+    @Nullable
+    @MappedProperty
+    @ColumnTransformer(read = '''( select json_agg(dc) from datamodel.join_dataclass_to_extended_data_class jdedc 
+                                    inner join datamodel.data_class dc on dc.id = jdedc.extended_dataclass_id
+                                    where jdedc.dataclass_id = data_class_.id )''')
+    @TypeDef(type=DataType.JSON)
+    List<DataClass> extendsDataClasses = []
+
 }

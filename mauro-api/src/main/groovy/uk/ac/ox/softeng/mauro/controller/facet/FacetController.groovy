@@ -74,7 +74,6 @@ abstract class FacetController<I extends Facet> extends ItemController<I> implem
         }
     }
 
-    @Delete('/{id}')
     @Transactional
     HttpResponse delete(UUID id) {
         I facetToDelete = facetRepository.readById(id)

@@ -2,6 +2,7 @@ package uk.ac.ox.softeng.mauro.domain.model
 
 import uk.ac.ox.softeng.mauro.domain.classifier.Classifier
 import uk.ac.ox.softeng.mauro.domain.facet.Annotation
+import uk.ac.ox.softeng.mauro.domain.facet.Edit
 import uk.ac.ox.softeng.mauro.domain.facet.Metadata
 import uk.ac.ox.softeng.mauro.domain.facet.ReferenceFile
 import uk.ac.ox.softeng.mauro.domain.facet.Rule
@@ -91,6 +92,9 @@ abstract class AdministeredItem extends Item {
      */
     @Nullable
     UUID breadcrumbTreeId // should be BreadcrumbTree type
+
+    @Relation(Relation.Kind.ONE_TO_MANY)
+    List<Edit> edits = []
 
     @Relation(Relation.Kind.ONE_TO_MANY)
     List<Metadata> metadata = []

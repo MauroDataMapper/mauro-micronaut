@@ -2,6 +2,7 @@ package uk.ac.ox.softeng.mauro.controller.facet
 
 import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.facet.MetadataApi
+import uk.ac.ox.softeng.mauro.audit.Audit
 
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
@@ -39,6 +40,7 @@ class MetadataController extends FacetController<Metadata> implements MetadataAp
         this.metadataRepository = metadataRepository
     }
 
+    @Audit
     @Get(Paths.METADATA_LIST)
     ListResponse<Metadata> list(String domainType, UUID domainId) {
         AdministeredItem administeredItem = findAdministeredItem(domainType, domainId)
@@ -46,6 +48,7 @@ class MetadataController extends FacetController<Metadata> implements MetadataAp
         ListResponse.from(!administeredItem.metadata ? []: administeredItem.metadata)
     }
 
+    @Audit
     @Get(Paths.METADATA_ID)
     Metadata show(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID id) {
         accessControlService.checkRole(Role.READER, readAdministeredItem(domainType, domainId))
@@ -53,18 +56,21 @@ class MetadataController extends FacetController<Metadata> implements MetadataAp
         validMetadata
     }
 
+    @Audit
     @Put(Paths.METADATA_ID)
     Metadata update(@NonNull String domainType, @NonNull UUID domainId, UUID id, @Body @NonNull Metadata metadata) {
         super.update(id, metadata)
     }
 
 
+    @Audit
     @Post(Paths.METADATA_LIST)
     Metadata create(@NonNull String domainType, @NonNull UUID domainId, @Body @NonNull Metadata metadata) {
         super.create(domainType, domainId, metadata) as Metadata
     }
 
     @Override
+    @Audit(deletedObjectDomainType = Metadata)
     @Delete(Paths.METADATA_ID)
     HttpResponse delete(String domainType, UUID domainId, UUID id) {
         super.delete(id)

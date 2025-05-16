@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.controller.profile
 
+import uk.ac.ox.softeng.mauro.audit.Audit
+
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpStatus
@@ -60,34 +62,40 @@ class ProfileController implements AdministeredItemReader, ProfileApi {
     }
 
 
+    @Audit
     @Get(Paths.PROFILE_DYNAMIC_PROVIDERS)
     List<DataModelBasedProfile> dynamicProviders() {
         dynamicProfileService.getDynamicProfiles()
     }
 
 
+    @Audit
     @Get(Paths.PROFILE_PROVIDERS)
     List<Profile> providers() {
         getAllProfiles()
     }
 
 
+    @Audit
     @Get(Paths.PROFILE_SEARCH)
     Profile getProfileDetails(String namespace, String name) {
         getProfileByName(namespace, name)
     }
 
+    @Audit
     @Get(Paths.PROFILE_SEARCH_ITEM)
     Profile getProfileDetails(String domainType, UUID domainId, String namespace, String name) {
         // TODO: I don't think this endpoint is actually used
         return null
     }
 
+    @Audit
     @Get(Paths.PROFILE_DETAILS)
     Profile getProfileDetails(String namespace, String name, String version) {
         getProfileByName(namespace, name, version)
     }
 
+    @Audit
     @Get(Paths.PROFILE_USED)
     List<MauroPluginDTO> getUsedProfiles(String domainType, UUID domainId) {
         AdministeredItem administeredItem = findAdministeredItem(domainType, domainId)
@@ -96,6 +104,7 @@ class ProfileController implements AdministeredItemReader, ProfileApi {
             .collect {MauroPluginDTO.fromPlugin(it) }
     }
 
+    @Audit
     @Get(Paths.PROFILE_UNUSED)
     List<MauroPluginDTO> getUnusedProfiles(String domainType, UUID domainId) {
         AdministeredItem administeredItem = findAdministeredItem(domainType, domainId)
@@ -104,6 +113,7 @@ class ProfileController implements AdministeredItemReader, ProfileApi {
             .collect {MauroPluginDTO.fromPlugin(it) }
     }
 
+    @Audit
     @Get(Paths.PROFILE_OTHER_METADATA)
     ListResponse<Metadata> getOtherMetadata(String domainType, UUID domainId) {
         AdministeredItem administeredItem = findAdministeredItem(domainType, domainId)
@@ -115,6 +125,7 @@ class ProfileController implements AdministeredItemReader, ProfileApi {
         })
     }
 
+    @Audit
     @Get(Paths.PROFILE_ITEM)
     AppliedProfile getProfiledItem(String domainType, UUID domainId, String namespace, String name, @Nullable String version) {
         AdministeredItem administeredItem = findAdministeredItem(domainType, domainId)
@@ -125,6 +136,7 @@ class ProfileController implements AdministeredItemReader, ProfileApi {
         return ap
     }
 
+    @Audit(level = Audit.AuditLevel.FILE_ONLY)
     @Post(Paths.PROFILE_ITEM_VALIDATE)
     AppliedProfile validateProfile(String domainType, UUID domainId, String namespace, String name, String version, @Body Map bodyMap) {
         AdministeredItem administeredItem = readAdministeredItem(domainType, domainId)
@@ -137,6 +149,7 @@ class ProfileController implements AdministeredItemReader, ProfileApi {
 
 
     // TODO: Refactor the UI so that this method isn't needed quite so often
+    @Audit
     @Get(Paths.PROFILE_NAMESPACES)
     List<MetadataNamespaceDTO> getNamespaces(@Nullable String prefix) {
 

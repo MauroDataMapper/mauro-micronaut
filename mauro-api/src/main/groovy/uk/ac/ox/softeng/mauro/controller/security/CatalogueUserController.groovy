@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.controller.security
 
+import uk.ac.ox.softeng.mauro.audit.Audit
+
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
@@ -40,6 +42,7 @@ class CatalogueUserController extends ItemController<CatalogueUser> implements C
         super.getDisallowedProperties() + ['emailAddress', 'pending', 'disabled', 'resetToken', 'creationMethod', 'lastLogin', 'salt', 'password', 'tempPassword']
     }
 
+    @Audit(level = Audit.AuditLevel.FILE_ONLY)
     @Post(Paths.USER_ADMIN_REGISTER)
     CatalogueUser adminRegister(@Body @NonNull CatalogueUser newUser) {
         log.info 'Request to register a new user by admin'
@@ -58,6 +61,7 @@ class CatalogueUserController extends ItemController<CatalogueUser> implements C
         catalogueUserRepository.save(newUser)
     }
 
+    @Audit
     @Get(Paths.USER_CURRENT_USER)
     CatalogueUser currentUser() {
         log.info 'Request to get current logged in user'
@@ -65,6 +69,7 @@ class CatalogueUserController extends ItemController<CatalogueUser> implements C
         accessControlService.user
     }
 
+    @Audit
     @Get(Paths.USER_ID)
     CatalogueUser show(UUID id) {
         accessControlService.checkAuthenticated()
@@ -76,6 +81,7 @@ class CatalogueUserController extends ItemController<CatalogueUser> implements C
         catalogueUserRepository.findById(id)
     }
 
+    @Audit(level = Audit.AuditLevel.FILE_ONLY)
     @Put(Paths.USER_CHANGE_PASSWORD)
     CatalogueUser changePassword(@Body @NonNull ChangePassword changePasswordRequest) {
         log.info 'Request by user to change own password'
@@ -90,6 +96,7 @@ class CatalogueUserController extends ItemController<CatalogueUser> implements C
         catalogueUserRepository.update(currentUser)
     }
 
+    @Audit(level = Audit.AuditLevel.FILE_ONLY)
     @Put(Paths.USER_ID)
     CatalogueUser update(@NonNull UUID id, @Body @NonNull CatalogueUser catalogueUser) {
         log.info 'Request to update CatalogueUser by ID'
@@ -130,6 +137,7 @@ class CatalogueUserController extends ItemController<CatalogueUser> implements C
     }
 
     // todo Stub method to enable login with UI
+    @Audit
     @Get(Paths.USER_PREFERENCES)
     String showUserPreferences(UUID id) {
         ''

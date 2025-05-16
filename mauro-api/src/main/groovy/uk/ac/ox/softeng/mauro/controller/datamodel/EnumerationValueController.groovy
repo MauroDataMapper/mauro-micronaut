@@ -1,6 +1,10 @@
 package uk.ac.ox.softeng.mauro.controller.datamodel
 
+import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.datamodel.EnumerationValueApi
+import uk.ac.ox.softeng.mauro.audit.Audit
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
+import uk.ac.ox.softeng.mauro.domain.facet.EditType
 
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
@@ -21,7 +25,7 @@ import uk.ac.ox.softeng.mauro.persistence.datamodel.DataModelContentRepository
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @CompileStatic
-@Controller('/dataModels/{dataModelId}/dataTypes/{enumerationTypeId}/enumerationValues')
+@Controller
 @Secured(SecurityRule.IS_ANONYMOUS)
 class EnumerationValueController extends AdministeredItemController<EnumerationValue, DataType> implements EnumerationValueApi {
 
@@ -38,12 +42,14 @@ class EnumerationValueController extends AdministeredItemController<EnumerationV
         this.enumerationValueRepository = enumerationValueRepository
     }
 
-    @Get('/{id}')
+    @Audit
+    @Get(Paths.ENUMERATION_VALUE_ID)
     EnumerationValue show(UUID dataModelId, UUID enumerationTypeId, UUID id) {
         super.show(id)
     }
 
-    @Post
+    @Audit
+    @Post(Paths.ENUMERATION_VALUE_LIST)
     EnumerationValue create(UUID dataModelId, UUID enumerationTypeId, @Body @NonNull EnumerationValue enumerationValue) {
         cleanBody(enumerationValue)
         DataType dataType = dataTypeRepository.readById(enumerationTypeId)
@@ -53,17 +59,24 @@ class EnumerationValueController extends AdministeredItemController<EnumerationV
         return enumerationValue
     }
 
-    @Put('/{id}')
+    @Audit
+    @Put(Paths.ENUMERATION_VALUE_ID)
     EnumerationValue update(UUID dataModelId, UUID enumerationTypeId, UUID id, @Body @NonNull EnumerationValue enumerationValue) {
         super.update(id, enumerationValue)
     }
 
-    @Delete('/{id}')
+    @Audit(
+        parentDomainType = DataType,
+        parentIdParamName = 'enumerationTypeId',
+        deletedObjectDomainType = EnumerationValue
+    )
+    @Delete(Paths.ENUMERATION_VALUE_ID)
     HttpResponse delete(UUID dataModelId, UUID enumerationTypeId, UUID id, @Body @Nullable EnumerationValue enumerationValue) {
         super.delete(id, enumerationValue)
     }
 
-    @Get
+    @Audit
+    @Get(Paths.ENUMERATION_VALUE_LIST)
     ListResponse<EnumerationValue> list(UUID dataModelId, UUID enumerationTypeId) {
         DataType enumerationType = dataTypeRepository.readById(enumerationTypeId)
         accessControlService.checkRole(Role.EDITOR, enumerationType)

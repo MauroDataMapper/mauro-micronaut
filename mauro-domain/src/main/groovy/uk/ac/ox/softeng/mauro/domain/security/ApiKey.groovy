@@ -1,10 +1,9 @@
 package uk.ac.ox.softeng.mauro.domain.security
 
-import uk.ac.ox.softeng.mauro.domain.model.InstantConverter
+
 import uk.ac.ox.softeng.mauro.domain.model.Item
 
 import com.fasterxml.jackson.annotation.JsonAlias
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
 import groovy.transform.MapConstructor
@@ -17,7 +16,6 @@ import jakarta.persistence.Transient
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 
-
 @CompileStatic
 @MappedEntity(schema = 'security')
 @AutoClone
@@ -28,7 +26,6 @@ class ApiKey extends Item {
     //TODO: Rename this to 'label'
     String name
 
-    @JsonDeserialize(converter = InstantConverter)
     Instant expiryDate
 
     Boolean refreshable = true
@@ -45,7 +42,6 @@ class ApiKey extends Item {
     UUID catalogueUserId
 
     void updateExpiryDate() {
-        System.err.println("setting expires in days")
         if(expiresInDays) {
             expiryDate = Instant.now().plus(expiresInDays, ChronoUnit.DAYS)
             expiresInDays = null

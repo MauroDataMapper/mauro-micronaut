@@ -2,6 +2,8 @@ package uk.ac.ox.softeng.mauro.controller.classifier
 
 import uk.ac.ox.softeng.mauro.ErrorHandler
 import uk.ac.ox.softeng.mauro.api.classifier.ClassifierApi
+import uk.ac.ox.softeng.mauro.audit.Audit
+import uk.ac.ox.softeng.mauro.domain.facet.EditType
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
@@ -44,35 +46,44 @@ class ClassifierController extends AdministeredItemController<Classifier, Classi
         this.classificationSchemeCacheableRepository = classificationSchemeCacheableRepository
     }
 
+    @Audit
     @Get(Paths.CLASSIFIERS_ROUTE_ID)
     Classifier show(@NonNull UUID classificationSchemeId, @NonNull UUID id) {
         super.show(id)
     }
 
+    @Audit
     @Post(Paths.CLASSIFIERS_ROUTE)
     @Transactional
     Classifier create(@NonNull UUID classificationSchemeId, @Body @NonNull Classifier classifier) {
         super.create(classificationSchemeId, classifier)
     }
 
+    @Audit
     @Put(Paths.CLASSIFIERS_ROUTE_ID)
     @Transactional
     Classifier update(@NonNull UUID classificationSchemeId, @NonNull UUID id, @Body @NonNull Classifier classifier) {
         super.update(id, classifier)
     }
 
+    @Audit(
+        parentDomainType = ClassificationScheme,
+        parentIdParamName = 'classificationSchemeId',
+        deletedObjectDomainType = Classifier
+    )
     @Delete(Paths.CLASSIFIERS_ROUTE_ID)
     @Transactional
     HttpResponse delete(@NonNull UUID classificationSchemeId, @NonNull UUID id, @Body @Nullable Classifier classifier) {
         super.delete(id, classifier)
     }
 
-
+    @Audit
     @Get(Paths.CLASSIFIERS_ROUTE)
     ListResponse<Classifier> list(UUID classificationSchemeId) {
         super.list(classificationSchemeId)
     }
 
+    @Audit
     @Get(Paths.CHILD_CLASSIFIERS_ID_ROUTE)
     Classifier showChildClassifier(@NonNull UUID classificationSchemeId,@NonNull UUID parentClassifierId, @NonNull UUID childClassifierId) {
         show(childClassifierId)
@@ -85,6 +96,7 @@ class ClassifierController extends AdministeredItemController<Classifier, Classi
      * @param classifier      child
      * @return
      */
+    @Audit
     @Post(Paths.CHILD_CLASSIFIERS_ROUTE)
     @Transactional
     Classifier create(@NonNull UUID classificationSchemeId, @NonNull UUID parentClassifierId, @Body @NonNull Classifier classifier) {
@@ -99,6 +111,7 @@ class ClassifierController extends AdministeredItemController<Classifier, Classi
         return createEntity(classificationScheme, classifier)
     }
 
+    @Audit
     @Put(Paths.CHILD_CLASSIFIERS_ID_ROUTE)
     @Transactional
     Classifier update(@NonNull UUID classificationSchemeId, @NonNull UUID parentClassifierId, @NonNull UUID childClassifierId, @Body @NonNull Classifier classifier) {
@@ -106,11 +119,17 @@ class ClassifierController extends AdministeredItemController<Classifier, Classi
     }
 
     @Transactional
+    @Audit(
+        parentDomainType = Classifier,
+        parentIdParamName = 'parentClassifierId',
+        deletedObjectDomainType = Classifier
+    )
     @Delete(Paths.CHILD_CLASSIFIERS_ID_ROUTE)
     HttpResponse delete(@NonNull UUID classificationSchemeId, @NonNull UUID parentClassifierId, @NonNull UUID childClassifierId, @Body @Nullable Classifier classifier) {
         super.delete(childClassifierId, classifier)
     }
 
+    @Audit
     @Get(Paths.CHILD_CLASSIFIERS_ROUTE)
     ListResponse<Classifier> list(@NonNull UUID classificationSchemeId, @NonNull UUID parentClassifierId) {
         Classifier parentClassifier = classifierCacheableRepository.readById(parentClassifierId)
@@ -121,6 +140,7 @@ class ClassifierController extends AdministeredItemController<Classifier, Classi
     /**
      * Associate Classifier to administeredItem
      */
+    @Audit(title = EditType.UPDATE, description = "Classify element")
     @Put(Paths.ADMINISTERED_ITEM_CLASSIFIER_ID_ROUTE)
     @Transactional
     Classifier createAdministeredItemClassifier(@NonNull String administeredItemDomainType, @NonNull UUID administeredItemId, @NonNull UUID id) {
@@ -136,6 +156,7 @@ class ClassifierController extends AdministeredItemController<Classifier, Classi
     /**
      * Get Classifier for AdministeredItem
      */
+    @Audit
     @Get(Paths.ADMINISTERED_ITEM_CLASSIFIER_ID_ROUTE)
     Classifier getAdministeredItemClassifier(@NonNull String administeredItemDomainType, @NonNull UUID administeredItemId, @NonNull UUID id) {
         accessControlService.checkRole(Role.READER, readAdministeredItem(Classifier.class.simpleName, id))
@@ -148,6 +169,7 @@ class ClassifierController extends AdministeredItemController<Classifier, Classi
     /**
      * Get AdministeredItem classifiers
      */
+    @Audit
     @Get(Paths.ADMINISTERED_ITEM_CLASSIFIER_ROUTE)
     ListResponse<Classifier> findAllAdministeredItemClassifiers(@NonNull String administeredItemDomainType, @NonNull UUID administeredItemId) {
         AdministeredItem administeredItem = findAdministeredItem(administeredItemDomainType, administeredItemId)
@@ -155,6 +177,12 @@ class ClassifierController extends AdministeredItemController<Classifier, Classi
         ListResponse.from(classifierCacheableRepository.findAllForAdministeredItem(administeredItem))
     }
 
+    @Audit(
+        parentDomainType = Classifier,
+        parentIdParamName = 'id',
+        title = EditType.DELETE,
+        description = 'Unclassify item'
+    )
     @Delete(Paths.ADMINISTERED_ITEM_CLASSIFIER_ID_ROUTE)
     @Transactional
     HttpResponse delete(@NonNull String administeredItemDomainType, @NonNull UUID administeredItemId, @NonNull UUID id){

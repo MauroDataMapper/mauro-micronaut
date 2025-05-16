@@ -1,5 +1,8 @@
 package uk.ac.ox.softeng.mauro.controller.terminology
 
+import uk.ac.ox.softeng.mauro.audit.Audit
+import uk.ac.ox.softeng.mauro.domain.facet.EditType
+
 import io.micronaut.http.HttpStatus
 import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.terminology.TerminologyApi
@@ -62,11 +65,13 @@ class TerminologyController extends ModelController<Terminology> implements Term
         this.terminologyService = terminologyService
     }
 
+    @Audit
     @Get(Paths.TERMINOLOGY_ID)
     Terminology show(UUID id) {
         super.show(id)
     }
 
+    @Audit
     @Transactional
     @Post(Paths.FOLDER_LIST_TERMINOLOGY)
     Terminology create(UUID folderId, @Body @NonNull Terminology terminology) {
@@ -74,17 +79,20 @@ class TerminologyController extends ModelController<Terminology> implements Term
         super.create(folderId, terminology)
     }
 
+    @Audit
     @Put(Paths.TERMINOLOGY_ID)
     Terminology update(UUID id, @Body @NonNull Terminology terminology) {
         super.update(id, terminology)
     }
 
+    @Audit(deletedObjectDomainType = Terminology)
     @Transactional
     @Delete(Paths.TERMINOLOGY_ID)
     HttpResponse delete(UUID id, @Body @Nullable Terminology terminology) {
         super.delete(id, terminology)
     }
 
+    @Audit
     @Get(Paths.TERMINOLOGY_SEARCH_GET)
     ListResponse<SearchResultsDTO> searchGet(UUID id, @RequestBean SearchRequestDTO requestDTO) {
         requestDTO.withinModelId = id
@@ -93,6 +101,7 @@ class TerminologyController extends ModelController<Terminology> implements Term
         ListResponse.from(searchRepository.search(requestDTO))
     }
 
+    @Audit(level = Audit.AuditLevel.FILE_ONLY)
     @Post(Paths.TERMINOLOGY_SEARCH_POST)
     ListResponse<SearchResultsDTO> searchPost(UUID id, @Body SearchRequestDTO requestDTO) {
         requestDTO.withinModelId = id
@@ -102,33 +111,39 @@ class TerminologyController extends ModelController<Terminology> implements Term
     }
 
 
+    @Audit
     @Get(Paths.FOLDER_LIST_TERMINOLOGY)
     ListResponse<Terminology> list(UUID folderId) {
         super.list(folderId)
     }
 
+    @Audit
     @Get(Paths.TERMINOLOGY_LIST)
     ListResponse<Terminology> listAll() {
         super.listAll()
     }
 
     @Transactional
+    @Audit(title = EditType.FINALISE, description = "Finalise Terminology")
     @Put(Paths.TERMINOLOGY_FINALISE)
     Terminology finalise(UUID id, @Body FinaliseData finaliseData) {
         super.finalise(id, finaliseData)
     }
 
+    @Audit(title = EditType.COPY, description = "New Version of CodeSet")
     @Transactional
     @Put(Paths.TERMINOLOGY_NEW_BRANCH_MODEL_VERSION)
     Terminology createNewBranchModelVersion(UUID id, @Body @Nullable CreateNewVersionData createNewVersionData) {
         super.createNewBranchModelVersion(id, createNewVersionData)
     }
 
+    @Audit
     @Get(Paths.TERMINOLOGY_EXPORT)
     HttpResponse<byte[]> exportModel(UUID id, @Nullable String namespace, @Nullable String name, @Nullable String version) {
         super.exportModel(id, namespace, name, version)
     }
 
+    @Audit(title = EditType.IMPORT, description = "Import terminology")
     @Transactional
     @ExecuteOn(TaskExecutors.IO)
     @Consumes(MediaType.MULTIPART_FORM_DATA)
@@ -163,6 +178,7 @@ class TerminologyController extends ModelController<Terminology> implements Term
 
  */
 
+    @Audit
     @Get(Paths.TERMINOLOGY_DIFF)
     ObjectDiff diffModels(@NonNull UUID id, @NonNull UUID otherId) {
         Terminology terminology = modelContentRepository.findWithContentById(id)

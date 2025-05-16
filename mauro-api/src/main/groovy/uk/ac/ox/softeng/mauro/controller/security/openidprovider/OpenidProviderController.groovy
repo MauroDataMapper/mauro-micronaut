@@ -3,6 +3,7 @@ package uk.ac.ox.softeng.mauro.controller.security.openidprovider
 import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.security.openidprovider.OpenidConnectProvider
 import uk.ac.ox.softeng.mauro.api.security.openidprovider.OpenidProviderApi
+import uk.ac.ox.softeng.mauro.audit.Audit
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
@@ -37,6 +38,7 @@ class OpenidProviderController implements OpenidProviderApi {
     @Value('${mauro.oauth.image-url}')
     String imageUrl
 
+    @Audit
     @Get(Paths.OPENID_PROVIDER_LIST)
     List<OpenidConnectProvider> list() {
         OpenidConnectProvider openidConnectProvider = new OpenidConnectProvider(openidProviderId, label, standardProvider, authorizationEndpoint,

@@ -1,5 +1,6 @@
 package uk.ac.ox.softeng.mauro.federation
 
+import uk.ac.ox.softeng.mauro.controller.federation.converter.AtomSubscribedCatalogueConverter
 import uk.ac.ox.softeng.mauro.domain.facet.federation.PublishedModel
 import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedCatalogue
 import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedCatalogueAuthenticationType
@@ -7,7 +8,6 @@ import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedCatalogueType
 import uk.ac.ox.softeng.mauro.domain.facet.federation.response.SubscribedCataloguesPublishedModelsNewerVersions
 import uk.ac.ox.softeng.mauro.persistence.SecuredContainerizedTest
 import uk.ac.ox.softeng.mauro.security.SecuredIntegrationSpec
-import uk.ac.ox.softeng.mauro.controller.federation.converter.AtomSubscribedCatalogueConverter
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 import com.fasterxml.jackson.core.type.TypeReference
@@ -16,7 +16,6 @@ import groovy.xml.XmlSlurper
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.client.exceptions.HttpClientResponseException
-import io.micronaut.runtime.EmbeddedApplication
 import io.micronaut.test.annotation.Sql
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
@@ -199,8 +198,6 @@ class SubscribedCatalogueIntegrationSpec extends SecuredIntegrationSpec {
 
         when:
         publishedModels = subscribedCatalogueApi.publishedModels(subscribedCatalogue.id)
-        System.err.println(publishedModels.items.sort {model -> model.modelId}.first().lastUpdated.nano)
-        System.err.println(expectedPublishedModels.sort {model -> model.modelId}.first().lastUpdated.nano)
         then:
         publishedModels
 

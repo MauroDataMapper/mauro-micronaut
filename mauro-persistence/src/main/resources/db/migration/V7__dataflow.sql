@@ -1,8 +1,8 @@
 create table if not exists "dataflow"."data_flow" (
     "id"                              uuid primary key not null default uuid_generate_v4(),
     "version"                         integer          not null,
-    "date_created"                    timestamp,
-    "last_updated"                    timestamp,
+    "date_created"                    timestamp with time zone,
+    "last_updated"                    timestamp with time zone,
     "label"                           text             not null,
     "idx"                             integer,
     "source_id"                       uuid,
@@ -17,8 +17,8 @@ create table if not exists "dataflow"."data_flow" (
 create table if not exists "dataflow"."data_class_component" (
     "id"                              uuid primary key not null default uuid_generate_v4(),
     "version"                         integer       not null,
-    "date_created"                    timestamp,
-    "last_updated"                    timestamp,
+    "date_created"                    timestamp with time zone,
+    "last_updated"                    timestamp with time zone,
     "data_flow_id"                    uuid not null references dataflow.data_flow(id) initially deferred,
     "idx"                             integer,
     "label"                           text             not null,
@@ -33,8 +33,8 @@ create index "idx_data_class_component_data_flow_id" on "dataflow"."data_class_c
 create table if not exists "dataflow"."data_element_component" (
     "id"                              uuid primary key not null default uuid_generate_v4(),
     "version"                         integer          not null,
-    "date_created"                    timestamp,
-    "last_updated"                    timestamp,
+    "date_created"                    timestamp with time zone,
+    "last_updated"                    timestamp with time zone,
     "data_class_component_id"         uuid  not null references dataflow.data_class_component (id) initially deferred,
     "idx"                             integer,
     "label"                           text             not null,

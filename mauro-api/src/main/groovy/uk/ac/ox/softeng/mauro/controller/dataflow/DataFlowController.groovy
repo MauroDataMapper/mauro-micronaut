@@ -2,6 +2,9 @@ package uk.ac.ox.softeng.mauro.controller.dataflow
 
 import uk.ac.ox.softeng.mauro.ErrorHandler
 import uk.ac.ox.softeng.mauro.api.dataflow.DataFlowApi
+import uk.ac.ox.softeng.mauro.audit.Audit
+import uk.ac.ox.softeng.mauro.domain.dataflow.DataClassComponent
+import uk.ac.ox.softeng.mauro.domain.facet.EditType
 
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
@@ -42,11 +45,13 @@ class DataFlowController extends AdministeredItemController<DataFlow, DataModel>
     }
 
 
+    @Audit
     @Get(Paths.DATA_FLOW_ID)
     DataFlow show(@NonNull UUID dataModelId, @NonNull UUID id) {
         super.show(id)
     }
 
+    @Audit(level = Audit.AuditLevel.FILE_ONLY)
     @Post(Paths.DATA_FLOW_LIST)
     DataFlow create(@NonNull UUID dataModelId, @Body @NonNull DataFlow dataFlow) {
         DataModel source = dataModelRepository.findById(dataFlow.source.id)
@@ -56,18 +61,20 @@ class DataFlowController extends AdministeredItemController<DataFlow, DataModel>
         show(created.id)
     }
 
+    @Audit(level = Audit.AuditLevel.FILE_ONLY)
     @Put(Paths.DATA_FLOW_ID)
     DataFlow update(@NonNull UUID dataModelId, @NonNull UUID id, @Body @NonNull DataFlow dataFlow) {
         super.update(id, dataFlow)
     }
 
-
+    @Audit(level = Audit.AuditLevel.FILE_ONLY)
     @Delete(Paths.DATA_FLOW_ID)
     @Transactional
     HttpResponse delete(@NonNull UUID dataModelId, @NonNull UUID id, @Body @Nullable DataFlow dataFlow) {
         super.delete(id, dataFlow)
     }
 
+    @Audit
     @Get(Paths.DATA_FLOW_LIST)
     ListResponse<DataFlow> list(@NotNull UUID dataModelId, @Nullable @QueryValue(Paths.TYPE_QUERY) Type type) {
         if (!type || type == Type.TARGET) {

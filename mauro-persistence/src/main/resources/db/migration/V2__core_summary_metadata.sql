@@ -2,8 +2,8 @@
 create table if not exists core."summary_metadata" (
     "id"                              uuid primary key not null default uuid_generate_v4(),
     "version"                         integer          not null,
-    "date_created"                    timestamp,
-    "last_updated"                    timestamp,
+    "date_created"                    timestamp with time zone,
+    "last_updated"                    timestamp with time zone,
     "multi_facet_aware_item_domain_type" varchar(255)  not null,
     "multi_facet_aware_item_id"       uuid             not null,
     "created_by"                      varchar(255),
@@ -16,9 +16,9 @@ create unique index "idx_summary_metadata_multi_facet_aware_item_id_summary_meta
 create table if not exists core.summary_metadata_report (
     "id"                              uuid primary key not null default uuid_generate_v4(),
     "version"                         integer          not null,
-    "date_created"                    timestamp,
-    "last_updated"                    timestamp,
-    "report_date"                     timestamp,
+    "date_created"                    timestamp with time zone,
+    "last_updated"                    timestamp with time zone,
+    "report_date"                     timestamp with time zone,
     "created_by"                      varchar(255),
     "report_value"                    text              not null,
     "summary_metadata_id"             uuid              not null references core.summary_metadata (id) initially deferred

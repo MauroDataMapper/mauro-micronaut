@@ -2,6 +2,7 @@ package uk.ac.ox.softeng.mauro.controller.tree
 
 import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.tree.TreeApi
+import uk.ac.ox.softeng.mauro.audit.Audit
 
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.Nullable
@@ -38,6 +39,7 @@ class TreeController implements TreeApi {
     @Inject
     AccessControlService accessControlService
 
+    @Audit
     @Get(Paths.TREE_FOLDER)
     List<TreeItem> folderTree(@Nullable UUID id, @Nullable @QueryValue Boolean foldersOnly) {
         List<TreeItem> treeItems = []
@@ -52,6 +54,7 @@ class TreeController implements TreeApi {
         treeItems
     }
 
+    @Audit
     @Get(Paths.TREE_ITEM)
     List<TreeItem> itemTree(String domainType, UUID id, @Nullable @QueryValue Boolean foldersOnly) {
         foldersOnly = foldersOnly ?: false
