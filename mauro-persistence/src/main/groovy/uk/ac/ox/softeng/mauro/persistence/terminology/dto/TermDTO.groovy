@@ -2,6 +2,7 @@ package uk.ac.ox.softeng.mauro.persistence.terminology.dto
 
 import uk.ac.ox.softeng.mauro.domain.classifier.Classifier
 import uk.ac.ox.softeng.mauro.domain.facet.Annotation
+import uk.ac.ox.softeng.mauro.domain.facet.Edit
 import uk.ac.ox.softeng.mauro.domain.facet.Metadata
 import uk.ac.ox.softeng.mauro.domain.facet.ReferenceFile
 import uk.ac.ox.softeng.mauro.domain.facet.Rule
@@ -22,6 +23,22 @@ import io.micronaut.data.model.DataType
 @Introspected
 @MappedEntity(value = 'term', schema = 'terminology', alias = 'term_')
 class TermDTO extends Term implements AdministeredItemDTO {
+
+    @Nullable
+    @TypeDef(type = DataType.JSON)
+    @MappedProperty
+    @ColumnTransformer(read = """(select json_agg(x) from
+        (select edit.id,
+                edit.title,
+                edit.description,
+                edit.date_created,
+                row_to_json(catalogue_user) as catalogue_user
+         from core.edit left join security.catalogue_user
+              on security.catalogue_user.id = core.edit.created_by
+         where multi_facet_aware_item_id = term_.id
+         group by edit.id, catalogue_user.id) x)""")
+    List<Edit> edits = []
+
 
     @Nullable
     @TypeDef(type = DataType.JSON)

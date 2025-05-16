@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.domain.model
 
+import uk.ac.ox.softeng.mauro.domain.facet.Edit
+
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonInclude
 import groovy.transform.AutoClone
@@ -86,6 +88,9 @@ abstract class AdministeredItem extends Item {
      */
     @Nullable
     UUID breadcrumbTreeId // should be BreadcrumbTree type
+
+    @Relation(Relation.Kind.ONE_TO_MANY)
+    List<Edit> edits = []
 
     @Relation(Relation.Kind.ONE_TO_MANY)
     List<Metadata> metadata = []

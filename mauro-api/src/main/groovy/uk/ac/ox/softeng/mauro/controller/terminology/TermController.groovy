@@ -2,6 +2,7 @@ package uk.ac.ox.softeng.mauro.controller.terminology
 
 import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.terminology.TermApi
+import uk.ac.ox.softeng.mauro.audit.Audit
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
@@ -42,31 +43,37 @@ class TermController extends AdministeredItemController<Term, Terminology> imple
         this.termRepository = termRepository
     }
 
+    @Audit
     @Get(Paths.TERM_ID)
     Term show(UUID terminologyId, UUID id) {
         super.show(id)
     }
 
+    @Audit
     @Post(Paths.TERM_LIST)
     Term create(UUID terminologyId, @Body @NonNull Term term) {
         super.create(terminologyId, term)
     }
 
+    @Audit
     @Put(Paths.TERM_ID)
     Term update(UUID terminologyId, UUID id, @Body @NonNull Term term) {
         super.update(id, term)
     }
 
+    @Audit(deletedObjectDomainType = Term)
     @Delete(Paths.TERM_ID)
     HttpResponse delete(UUID terminologyId, UUID id, @Body @Nullable Term term) {
         super.delete(id, term)
     }
 
+    @Audit
     @Get(Paths.TERM_LIST)
     ListResponse<Term> list(UUID terminologyId) {
         super.list(terminologyId)
     }
 
+    @Audit
     @Get(Paths.TERM_TREE)
     List<Term> tree(UUID terminologyId, @Nullable UUID id) {
         Terminology terminology = terminologyRepository.readById(terminologyId)
@@ -74,6 +81,7 @@ class TermController extends AdministeredItemController<Term, Terminology> imple
         termRepository.readChildTermsByParent(terminologyId, id)
     }
 
+    @Audit
     @Get(Paths.TERM_CODE_SETS)
     ListResponse<CodeSet> getCodeSetsForTerm(UUID terminologyId, UUID id) {
         List<CodeSet> codeSets = termRepositoryUncached.getCodeSets(id)

@@ -2,6 +2,9 @@ package uk.ac.ox.softeng.mauro.controller.dataflow
 
 import uk.ac.ox.softeng.mauro.api.dataflow.DataClassComponentApi
 import uk.ac.ox.softeng.mauro.ErrorHandler
+import uk.ac.ox.softeng.mauro.audit.Audit
+import uk.ac.ox.softeng.mauro.domain.classifier.Classifier
+import uk.ac.ox.softeng.mauro.domain.facet.EditType
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
@@ -50,50 +53,58 @@ class DataClassComponentController extends AdministeredItemController<DataClassC
         super(DataClassComponent, dataClassComponentRepository, dataFlowRepository, dataClassComponentContentRepository)
     }
 
-
+    @Audit
     @Get(Paths.DATA_FLOW_CLASS_COMPONENT_ID)
     DataClassComponent show(@NonNull UUID dataModelId, @NonNull UUID dataFlowId, @NonNull UUID id) {
         super.show(id)
     }
 
+    @Audit(level = Audit.AuditLevel.FILE_ONLY)
     @Post(Paths.DATA_FLOW_CLASS_COMPONENT_LIST)
     DataClassComponent create(@NonNull UUID dataModelId, @NonNull UUID dataFlowId, @Body @NonNull DataClassComponent dataClassComponent) {
         super.create(dataFlowId, dataClassComponent)
     }
 
+    @Audit(level = Audit.AuditLevel.FILE_ONLY)
     @Put(Paths.DATA_FLOW_CLASS_COMPONENT_ID)
     DataClassComponent update(@NonNull UUID dataModelId, @NonNull UUID dataFlowId, @NonNull UUID id, @Body @NonNull DataClassComponent dataClassComponent) {
         super.update(id, dataClassComponent)
     }
 
+    @Audit(level = Audit.AuditLevel.FILE_ONLY)
     @Delete(Paths.DATA_FLOW_CLASS_COMPONENT_ID)
     HttpResponse delete(@NonNull UUID dataModelId, @NonNull UUID dataFlowId, @NonNull UUID id, @Body @Nullable DataClassComponent dataClassComponent) {
         super.delete(id, dataClassComponent)
     }
 
+    @Audit
     @Get(Paths.DATA_FLOW_CLASS_COMPONENT_LIST)
     ListResponse<DataClassComponent> list(@NonNull UUID dataModelId, @NonNull UUID dataFlowId) {
         super.list(dataFlowId)
     }
 
+    @Audit(level = Audit.AuditLevel.FILE_ONLY)
     @Put(Paths.DATA_FLOW_CLASS_COMPONENT_SOURCE_CLASS)
     DataClassComponent updateSource(@NonNull UUID dataModelId, @NonNull UUID dataFlowId, @NonNull UUID id, @NonNull UUID dataClassId) {
         DataClassComponent updated = addDataClass(Type.SOURCE, id, dataClassId)
         updated
     }
 
+    @Audit(level = Audit.AuditLevel.FILE_ONLY)
     @Put(Paths.DATA_FLOW_CLASS_COMPONENT_TARGET_CLASS)
     DataClassComponent updateTarget(@NonNull UUID dataModelId, @NonNull UUID dataFlowId, @NonNull UUID id, @NonNull UUID dataClassId) {
         DataClassComponent updated = addDataClass(Type.TARGET, id, dataClassId)
         updated
     }
 
+    @Audit(level = Audit.AuditLevel.FILE_ONLY)
     @Delete(Paths.DATA_FLOW_CLASS_COMPONENT_SOURCE_CLASS)
     HttpResponse deleteSource(@NonNull UUID dataModelId, @NonNull UUID dataFlowId, @NonNull UUID id, @NonNull UUID dataClassId) {
         removeDataClass(Type.SOURCE, id, dataClassId)
         HttpResponse.status(HttpStatus.NO_CONTENT)
     }
 
+    @Audit(level = Audit.AuditLevel.FILE_ONLY)
     @Delete(Paths.DATA_FLOW_CLASS_COMPONENT_TARGET_CLASS)
     HttpResponse deleteTarget(@NonNull UUID dataModelId, @NonNull UUID dataFlowId, @NonNull UUID id, @NonNull UUID dataClassId) {
         removeDataClass(Type.TARGET, id, dataClassId)

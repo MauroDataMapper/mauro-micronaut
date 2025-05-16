@@ -1,5 +1,9 @@
 package uk.ac.ox.softeng.mauro.controller.datamodel
 
+import uk.ac.ox.softeng.mauro.api.Paths
+import uk.ac.ox.softeng.mauro.audit.Audit
+import uk.ac.ox.softeng.mauro.domain.facet.EditType
+
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
@@ -27,7 +31,7 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @CompileStatic
 @Slf4j
-@Controller('/dataModels/{dataModelId}/dataClasses/{dataClassId}/dataElements')
+@Controller
 @Secured(SecurityRule.IS_ANONYMOUS)
 class DataElementController extends AdministeredItemController<DataElement, DataClass> implements DataElementApi {
 
@@ -49,12 +53,14 @@ class DataElementController extends AdministeredItemController<DataElement, Data
         this.dataTypeRepository = dataTypeCacheableRepository
     }
 
-    @Get('/{id}')
+    @Audit
+    @Get(Paths.DATA_ELEMENT_ID)
     DataElement show(UUID dataModelId, UUID dataClassId, UUID id) {
         super.show(id)
     }
 
-    @Post
+    @Audit
+    @Post(Paths.DATA_ELEMENT_LIST)
     DataElement create(UUID dataModelId, UUID dataClassId, @Body @NonNull DataElement dataElement) {
         cleanBody(dataElement)
         DataModel dataModel = dataModelRepository.readById(dataModelId)
@@ -67,7 +73,8 @@ class DataElementController extends AdministeredItemController<DataElement, Data
 
     }
 
-    @Put('/{id}')
+    @Audit
+    @Put(Paths.DATA_ELEMENT_ID)
     @Transactional
     DataElement update(UUID dataModelId, UUID dataClassId, UUID id, @Body @NonNull DataElement dataElement) {
         DataElement cleanItem = super.cleanBody(dataElement) as DataElement
@@ -85,12 +92,18 @@ class DataElementController extends AdministeredItemController<DataElement, Data
         updated
     }
 
-    @Delete('/{id}')
+    @Audit(
+        parentDomainType = DataClass,
+        parentIdParamName = 'dataClassId',
+        deletedObjectDomainType = DataElement
+    )
+    @Delete(Paths.DATA_ELEMENT_ID)
     HttpResponse delete(UUID dataModelId, UUID dataClassId, UUID id, @Body @Nullable DataElement dataElement) {
         super.delete(id, dataElement)
     }
 
-    @Get
+    @Audit
+    @Get(Paths.DATA_ELEMENT_LIST)
     ListResponse<DataElement> list(UUID dataModelId, UUID dataClassId) {
         DataClass dataClass = dataClassRepository.readById(dataClassId)
         accessControlService.checkRole(Role.READER, dataClass)

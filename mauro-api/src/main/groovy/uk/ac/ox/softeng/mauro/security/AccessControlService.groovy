@@ -41,7 +41,7 @@ class AccessControlService implements Toggleable {
     CatalogueUserCacheableRepository catalogueUserRepository
 
     @Property(name = 'micronaut.security.enabled', defaultValue = 'true')
-    private boolean enabled
+    boolean enabled
 
     /**
      * Check that a user is logged in.

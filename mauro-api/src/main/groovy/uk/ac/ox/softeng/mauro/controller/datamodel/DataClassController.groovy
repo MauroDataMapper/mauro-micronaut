@@ -2,6 +2,7 @@ package uk.ac.ox.softeng.mauro.controller.datamodel
 
 import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.datamodel.DataClassApi
+import uk.ac.ox.softeng.mauro.audit.Audit
 import uk.ac.ox.softeng.mauro.controller.model.AdministeredItemController
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
@@ -40,26 +41,35 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
         this.dataClassRepository = dataClassRepository
     }
 
+    @Audit
     @Get(Paths.DATA_CLASS_ID)
     DataClass show(UUID dataModelId, UUID id) {
         super.show(id)
     }
 
+    @Audit
     @Post(Paths.DATA_CLASS_LIST)
     DataClass create(UUID dataModelId, @Body @NonNull DataClass dataClass) {
         super.create(dataModelId, dataClass)
     }
 
+    @Audit
     @Put(Paths.DATA_CLASS_ID)
     DataClass update(UUID dataModelId, UUID id, @Body @NonNull DataClass dataClass) {
         super.update(id, dataClass)
     }
 
+    @Audit(
+        parentDomainType = DataModel,
+        parentIdParamName = 'dataModelId',
+        deletedObjectDomainType = DataClass
+    )
     @Delete(Paths.DATA_CLASS_ID)
     HttpResponse delete(UUID dataModelId, UUID id, @Body @Nullable DataClass dataClass) {
         super.delete(id, dataClass)
     }
 
+    @Audit
     @Get(Paths.DATA_CLASS_LIST)
     ListResponse<DataClass> list(UUID dataModelId) {
         DataModel dataModel = dataModelRepository.readById(dataModelId)
@@ -71,11 +81,13 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
         ListResponse.from(classes)
     }
 
+    @Audit
     @Get(Paths.DATA_CLASS_CHILD_DATA_CLASS_ID)
     DataClass show(UUID dataModelId, UUID parentDataClassId, UUID id) {
         super.show(id)
     }
 
+    @Audit
     @Post(Paths.DATA_CLASS_CHILD_DATA_CLASS_LIST)
     DataClass create(UUID dataModelId, UUID parentDataClassId, @Body @NonNull DataClass dataClass) {
 
@@ -89,16 +101,23 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
         return dataClass
     }
 
+    @Audit
     @Put(Paths.DATA_CLASS_CHILD_DATA_CLASS_ID)
     DataClass update(UUID dataModelId, UUID parentDataClassId, UUID id, @Body @NonNull DataClass dataClass) {
         super.update(id, dataClass)
     }
 
+    @Audit(
+        parentDomainType = DataClass,
+        parentIdParamName = 'parentDataClassId',
+        deletedObjectDomainType = DataClass
+    )
     @Delete(Paths.DATA_CLASS_CHILD_DATA_CLASS_ID)
     HttpResponse delete(UUID dataModelId, UUID parentDataClassId, UUID id, @Body @Nullable DataClass dataClass) {
         super.delete(id, dataClass)
     }
 
+    @Audit
     @Get(Paths.DATA_CLASS_CHILD_DATA_CLASS_LIST)
     ListResponse<DataClass> list(UUID dataModelId, UUID parentDataClassId) {
         DataClass parentDataClass = dataClassRepository.readById(parentDataClassId)
@@ -107,6 +126,7 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
 
     }
 
+    @Audit
     @Put(Paths.DATA_CLASS_EXTENDS)
     DataClass createExtension(UUID dataModelId, UUID id, UUID otherModelId, UUID otherClassId) {
         DataClass sourceDataClass = dataClassRepository.readById(id)
@@ -116,6 +136,12 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
         dataClassRepository.findById(id)
     }
 
+    @Audit(
+        parentDomainType = DataClass,
+        parentIdParamName = 'id',
+        deletedObjectDomainType = DataClass,
+        description = 'Delete DataClass extends relationship'
+    )
     @Delete(Paths.DATA_CLASS_EXTENDS)
     DataClass deleteExtension(UUID dataModelId, UUID id, UUID otherModelId, UUID otherClassId) {
         DataClass sourceDataClass = dataClassRepository.readById(id)

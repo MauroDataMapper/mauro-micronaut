@@ -2,6 +2,8 @@ package uk.ac.ox.softeng.mauro.controller.datamodel
 
 import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.datamodel.DataTypeApi
+import uk.ac.ox.softeng.mauro.audit.Audit
+import uk.ac.ox.softeng.mauro.domain.facet.EditType
 
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
@@ -38,11 +40,13 @@ class DataTypeController extends AdministeredItemController<DataType, DataModel>
         this.dataTypeRepository = dataTypeRepository
     }
 
+    @Audit
     @Get(Paths.DATA_TYPE_ID)
     DataType show(UUID dataModelId, UUID id) {
         super.show(id)
     }
 
+    @Audit
     @Post(Paths.DATA_TYPE_LIST)
     DataType create(UUID dataModelId, @Body @NonNull DataType dataType) {
         super.create(dataModelId, dataType)
@@ -55,16 +59,23 @@ class DataTypeController extends AdministeredItemController<DataType, DataModel>
         return dataType
     }
 
+    @Audit
     @Put(Paths.DATA_TYPE_ID)
     DataType update(UUID dataModelId, UUID id, @Body @NonNull DataType dataType) {
         super.update(id, dataType)
     }
 
+    @Audit(
+        parentDomainType = DataModel,
+        parentIdParamName = 'dataModelId',
+        deletedObjectDomainType = DataType
+    )
     @Delete(Paths.DATA_TYPE_ID)
     HttpResponse delete(UUID dataModelId, UUID id, @Body @Nullable DataType dataType) {
         super.delete(id, dataType)
     }
 
+    @Audit
     @Get(Paths.DATA_TYPE_LIST)
     ListResponse<DataType> list(UUID dataModelId) {
         super.list(dataModelId)

@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.controller.facet
 
+import uk.ac.ox.softeng.mauro.audit.Audit
+
 import io.micronaut.http.HttpResponse
 import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.facet.RuleApi
@@ -49,6 +51,7 @@ class RuleController extends FacetController<Rule> implements RuleApi {
         this.ruleRepository = ruleRepository
     }
 
+    @Audit
     @Get(Paths.RULE_LIST)
     ListResponse<Rule> list(String domainType, UUID domainId) {
         AdministeredItem administeredItem = findAdministeredItem(domainType, domainId)
@@ -56,6 +59,7 @@ class RuleController extends FacetController<Rule> implements RuleApi {
         ListResponse.from(!administeredItem.rules ? [] : administeredItem.rules)
     }
 
+    @Audit
     @Get(Paths.RULE_ID)
     Rule show(@NonNull String domainType, @NonNull UUID domainId, UUID id) {
         Rule rule = super.show(domainType, domainId, id) as Rule
@@ -69,16 +73,19 @@ class RuleController extends FacetController<Rule> implements RuleApi {
         }
     }
 
+    @Audit
     @Post(Paths.RULE_LIST)
     Rule create(@NonNull String domainType, @NonNull UUID domainId, @Body @NonNull Rule rule) {
         super.create(domainType, domainId, rule)
     }
 
+    @Audit
     @Put(Paths.RULE_ID)
     Rule update(@NonNull String domainType, @NonNull UUID domainId, UUID id, @Body @NonNull Rule rule) {
         super.update(id, rule)
     }
 
+    @Audit(deletedObjectDomainType = Rule)
     @Delete(Paths.RULE_ID)
     @Transactional
     @Override

@@ -42,7 +42,6 @@ class ApiKey extends Item {
     UUID catalogueUserId
 
     void updateExpiryDate() {
-        System.err.println("setting expires in days")
         if(expiresInDays) {
             expiryDate = Instant.now().plus(expiresInDays, ChronoUnit.DAYS)
             expiresInDays = null
