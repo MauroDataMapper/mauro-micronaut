@@ -9,14 +9,10 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Delete
-import io.micronaut.http.annotation.Get
 import io.micronaut.http.annotation.Post
 import io.micronaut.http.annotation.Put
-import io.micronaut.runtime.EmbeddedApplication
-import jakarta.inject.Inject
 import jakarta.inject.Singleton
 import org.reflections.Reflections
-import spock.lang.Ignore
 
 import java.lang.reflect.Method
 
@@ -79,9 +75,6 @@ class AuditIntegrationSpec extends SecuredIntegrationSpec {
 
         then:
         folderResponse2.edits.size() == 2
-        folderResponse2.edits.each {
-            System.err.println(it.description)
-        }
         folderResponse2.edits.find {it.description == 'Created Folder' && it.title == EditType.CREATE }
         folderResponse2.edits.find {it.description == 'Deleted Folder' && it.title == EditType.DELETE }
 

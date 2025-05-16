@@ -126,6 +126,7 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
 
     }
 
+    @Audit
     @Put(Paths.DATA_CLASS_EXTENDS)
     DataClass createExtension(UUID dataModelId, UUID id, UUID otherModelId, UUID otherClassId) {
         DataClass sourceDataClass = dataClassRepository.readById(id)
@@ -135,6 +136,12 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
         dataClassRepository.findById(id)
     }
 
+    @Audit(
+        parentDomainType = DataClass,
+        parentIdParamName = 'id',
+        deletedObjectDomainType = DataClass,
+        description = 'Delete DataClass extends relationship'
+    )
     @Delete(Paths.DATA_CLASS_EXTENDS)
     DataClass deleteExtension(UUID dataModelId, UUID id, UUID otherModelId, UUID otherClassId) {
         DataClass sourceDataClass = dataClassRepository.readById(id)

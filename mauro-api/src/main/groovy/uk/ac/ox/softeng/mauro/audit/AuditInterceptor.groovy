@@ -159,7 +159,7 @@ class AuditInterceptor implements MethodInterceptor<Object, Object>{
         if(actualDomainType == "PrimitiveType" || actualDomainType == "EnumerationType") {
             actualDomainType = "DataType"
         }
-        System.err.println(actualDomainType)
+        log.debug "replaced $domainType with $actualDomainType"
         editCacheableRepository.save(new Edit(
             multiFacetAwareItemDomainType: actualDomainType,
             multiFacetAwareItemId: itemId,
