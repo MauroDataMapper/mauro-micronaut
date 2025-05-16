@@ -1,5 +1,15 @@
 package uk.ac.ox.softeng.mauro.domain.model
 
+import uk.ac.ox.softeng.mauro.domain.classifier.Classifier
+import uk.ac.ox.softeng.mauro.domain.facet.Annotation
+import uk.ac.ox.softeng.mauro.domain.facet.Metadata
+import uk.ac.ox.softeng.mauro.domain.facet.ReferenceFile
+import uk.ac.ox.softeng.mauro.domain.facet.Rule
+import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
+import uk.ac.ox.softeng.mauro.domain.security.CatalogueUser
+import uk.ac.ox.softeng.mauro.exception.MauroInternalException
+import uk.ac.ox.softeng.mauro.profile.ProfileField
+
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonInclude
 import groovy.transform.AutoClone
@@ -9,11 +19,6 @@ import io.micronaut.data.annotation.Relation
 import jakarta.persistence.Transient
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Pattern
-import uk.ac.ox.softeng.mauro.domain.classifier.Classifier
-import uk.ac.ox.softeng.mauro.domain.facet.*
-import uk.ac.ox.softeng.mauro.domain.security.CatalogueUser
-import uk.ac.ox.softeng.mauro.exception.MauroInternalException
-import uk.ac.ox.softeng.mauro.profile.ProfileField
 
 import java.time.Instant
 
@@ -101,11 +106,6 @@ abstract class AdministeredItem extends Item {
 
     @Relation(Relation.Kind.ONE_TO_MANY)
     List<ReferenceFile> referenceFiles = []
-
-
-    @io.micronaut.data.annotation.Transient
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    List<String> availableActions = ["createModel"]
 
     /**
      * Helper method for returning the parent of this object, if one exists and is loaded.

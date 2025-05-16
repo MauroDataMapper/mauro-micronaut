@@ -16,8 +16,6 @@ import jakarta.inject.Inject
 @Secured(SecurityRule.IS_ANONYMOUS)
 abstract class ItemController<I extends Item> implements AdministeredItemReader {
 
-    static final String AVAILABLE_ACTIONS = 'availableActions'
-
     @Inject
     AccessControlService accessControlService
 
@@ -55,8 +53,8 @@ abstract class ItemController<I extends Item> implements AdministeredItemReader 
         defaultItem.properties.each {
             String key = it.key
             if (defaultItem.hasProperty(key).properties.setter
-                    && (isNotClassifiersCollection(key) && it.value instanceof Collection)
-                  && (!isAvailableActions(key) && it.value instanceof Map)) {
+                && (isNotClassifiersCollection(key) && it.value instanceof Collection)
+                || it.value instanceof Map) {
                 if (item[key]) throw new HttpStatusException(HttpStatus.BAD_REQUEST, "Collection or Map $key cannot be set directly")
                 item[key] = null
             }
@@ -69,9 +67,6 @@ abstract class ItemController<I extends Item> implements AdministeredItemReader 
         !key.toLowerCase().contains(Classifier.class.simpleName.toLowerCase())
     }
 
-    protected boolean isAvailableActions(String key) {
-        key == AVAILABLE_ACTIONS
-    }
     protected Item updateCreationProperties(Item item) {
         item.updateCreationProperties()
         item.catalogueUser = accessControlService.getUser()
