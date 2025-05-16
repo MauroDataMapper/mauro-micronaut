@@ -220,6 +220,10 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
             ((ClassifierRepository) repository).readAllByParentClassifier_Id(parentClassifierId)
         }
 
+        List<Classifier> readAllByClassificationScheme_Id(UUID classificationSchemeId) {
+            ((ClassifierRepository) repository).readAllByClassificationScheme_Id(classificationSchemeId)
+        }
+
         // not cached
         UUID addAdministeredItem(AdministeredItem administeredItem, Classifier classifier) {
             ((ClassifierRepository) repository).addAdministeredItem(administeredItem, classifier)

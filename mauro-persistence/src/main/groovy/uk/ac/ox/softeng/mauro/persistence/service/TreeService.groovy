@@ -1,5 +1,8 @@
 package uk.ac.ox.softeng.mauro.persistence.service
 
+import uk.ac.ox.softeng.mauro.domain.classifier.ClassificationScheme
+import uk.ac.ox.softeng.mauro.domain.classifier.Classifier
+
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import jakarta.inject.Inject
@@ -45,6 +48,9 @@ class TreeService {
     @Inject
     CodeSetRepository codeSetRepository
 
+    @Inject
+    AdministeredItemCacheableRepository.ClassifierCacheableRepository classifierCacheableRepository
+
     @CompileDynamic
     List<TreeItem> buildTree(AdministeredItem item, boolean foldersOnly, boolean setChildren) {
         switch (item) {
@@ -57,6 +63,9 @@ class TreeService {
             case Term -> buildTreeForTerm(item, setChildren)
 
             case CodeSet -> []
+
+            case ClassificationScheme -> buildTreeForClassificationScheme(item, setChildren)
+            case Classifier -> buildTreeForClassifier(item, setChildren)
 
             default -> throw new IllegalArgumentException("Can't build tree for item of type [$item.domainType)]")
         }
@@ -123,6 +132,27 @@ class TreeService {
             TreeItem.from(childTerm).tap {
                 model = childTerm.terminology
                 if (setChildren) children = buildTree(childTerm, false, false)
+                hasChildren = children && children.size() > 0
+            }
+        }
+    }
+
+    List<TreeItem> buildTreeForClassificationScheme(ClassificationScheme classificationScheme, boolean setChildren = true) {
+        List<TreeItem> treeItems = classifierCacheableRepository.readAllByClassificationScheme_Id(classificationScheme.id).sort {it.label}.collect {Classifier childClassifier ->
+            TreeItem.from(childClassifier).tap {
+                model = childClassifier.classificationScheme
+                if (setChildren) children = buildTree(childClassifier, false, false)
+                hasChildren = children && children.size() > 0
+            }
+        }
+        treeItems
+    }
+
+    List<TreeItem> buildTreeForClassifier(Classifier classifier, boolean setChildren = true) {
+        classifierCacheableRepository.readAllByParentClassifier_Id(classifier.id).sort {it.label}.collect {Classifier child ->
+            TreeItem.from(child).tap {
+                model = child.classificationScheme
+                if (setChildren) children = buildTree(child, false, false)
                 hasChildren = children && children.size() > 0
             }
         }

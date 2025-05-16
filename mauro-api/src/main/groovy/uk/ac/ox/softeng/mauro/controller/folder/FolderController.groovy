@@ -26,6 +26,7 @@ import io.micronaut.http.annotation.Delete
 import io.micronaut.http.annotation.Get
 import io.micronaut.http.annotation.Post
 import io.micronaut.http.annotation.Put
+import io.micronaut.http.annotation.QueryValue
 import io.micronaut.http.server.multipart.MultipartBody
 import io.micronaut.scheduling.TaskExecutors
 import io.micronaut.scheduling.annotation.ExecuteOn
@@ -162,4 +163,11 @@ class FolderController extends ModelController<Folder> implements FolderApi {
        super.importModel(body, namespace, name, version)
     }
 
+
+
+    //todo: implement actual
+    @Get('/folders/{id}/permissions')
+    List<Map> permissions(UUID id) {
+        super.permissions(id)
+    }
 }

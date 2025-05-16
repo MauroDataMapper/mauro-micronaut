@@ -1,24 +1,22 @@
 package uk.ac.ox.softeng.mauro.tree
 
+import uk.ac.ox.softeng.mauro.domain.classifier.ClassificationScheme
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.domain.security.CatalogueUser
 import uk.ac.ox.softeng.mauro.domain.security.Role
+import uk.ac.ox.softeng.mauro.domain.security.UserGroup
 import uk.ac.ox.softeng.mauro.domain.terminology.CodeSet
 import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
 import uk.ac.ox.softeng.mauro.domain.tree.TreeItem
+import uk.ac.ox.softeng.mauro.persistence.SecuredContainerizedTest
+import uk.ac.ox.softeng.mauro.security.SecuredIntegrationSpec
 
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.client.exceptions.HttpClientResponseException
-import io.micronaut.runtime.EmbeddedApplication
-import jakarta.inject.Inject
 import jakarta.inject.Singleton
 import spock.lang.Shared
-import uk.ac.ox.softeng.mauro.domain.security.SecurableResourceGroupRole
-import uk.ac.ox.softeng.mauro.domain.security.UserGroup
-import uk.ac.ox.softeng.mauro.persistence.SecuredContainerizedTest
-import uk.ac.ox.softeng.mauro.security.SecuredIntegrationSpec
 
 @SecuredContainerizedTest
 @Singleton
@@ -48,6 +46,9 @@ class TreeIntegrationSpec extends SecuredIntegrationSpec {
     @Shared
     UUID userGroupId
 
+    @Shared
+    UUID classificationSchemeId
+
     void setupSpec() {
         loginAdmin()
         rootFolderId = folderApi.create(new Folder(label: 'TreeIntegrationSpec root folder')).id
@@ -59,6 +60,7 @@ class TreeIntegrationSpec extends SecuredIntegrationSpec {
 
         terminologyId = terminologyApi.create(folder1Id, new Terminology(label: 'TreeIntegrationSpec terminology')).id
         codeSetId = codeSetApi.create(folder1Id, new CodeSet(label: 'TreeIntegrationSpec code set')).id
+        classificationSchemeId = classificationSchemeApi.create(folder1Id,  new ClassificationScheme(label: 'TreeIntegrationSpec classification scheme')).id
         logout()
     }
 
@@ -86,10 +88,11 @@ class TreeIntegrationSpec extends SecuredIntegrationSpec {
 
         then:
         tree
-        tree.size() == 3
+        tree.size() == 4
         tree.find {it.label == 'TreeIntegrationSpec data model' && it.domainType == 'DataModel' && it.hasChildren && it.id == dataModelId}
         tree.find {it.label == 'TreeIntegrationSpec code set' && it.domainType == 'CodeSet' && !it.hasChildren && it.id == codeSetId}
         tree.find {it.label == 'TreeIntegrationSpec terminology' && it.domainType == 'Terminology' && !it.hasChildren && it.id == terminologyId}
+        tree.find {it.label == 'TreeIntegrationSpec classification scheme' && it.domainType == 'ClassificationScheme' && !it.hasChildren && it.id == classificationSchemeId}
 
         when:
         tree = treeApi.itemTree("codeSet",codeSetId, false)
@@ -161,10 +164,11 @@ class TreeIntegrationSpec extends SecuredIntegrationSpec {
 
         then:
         tree
-        tree.size() == 3
+        tree.size() == 4
         tree.find {it.label == 'TreeIntegrationSpec data model' && it.domainType == 'DataModel' && it.hasChildren && it.id == dataModelId}
         tree.find {it.label == 'TreeIntegrationSpec code set' && it.domainType == 'CodeSet' && !it.hasChildren && it.id == codeSetId}
         tree.find {it.label == 'TreeIntegrationSpec terminology' && it.domainType == 'Terminology' && !it.hasChildren && it.id == terminologyId}
+        tree.find {it.label == 'TreeIntegrationSpec classification scheme' && it.domainType == 'ClassificationScheme' && !it.hasChildren && it.id == classificationSchemeId}
 
         when:
         tree = treeApi.itemTree("codeSet", codeSetId, false)

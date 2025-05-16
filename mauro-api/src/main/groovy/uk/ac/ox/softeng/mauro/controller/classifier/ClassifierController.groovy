@@ -198,4 +198,15 @@ class ClassifierController extends AdministeredItemController<Classifier, Classi
             throw new HttpStatusException(HttpStatus.NOT_FOUND, 'Not found for deletion')
         }
     }
+
+    //todo: temporary endpoint to align with UI
+    @Get('/classifiers')
+    List<Classifier> list() {
+        List result = List.of(new Classifier().tap {
+            id = UUID.randomUUID()
+            domainType =  'Classifier'
+            label =  'stub classifier label'
+        })
+        result
+    }
 }

@@ -1,28 +1,17 @@
 package uk.ac.ox.softeng.mauro.dataflow
 
-import uk.ac.ox.softeng.mauro.api.dataflow.DataClassComponentApi
-import uk.ac.ox.softeng.mauro.api.dataflow.DataFlowApi
-import uk.ac.ox.softeng.mauro.api.datamodel.DataClassApi
-import uk.ac.ox.softeng.mauro.api.datamodel.DataModelApi
-import uk.ac.ox.softeng.mauro.api.folder.FolderApi
+
+import uk.ac.ox.softeng.mauro.domain.dataflow.DataClassComponent
+import uk.ac.ox.softeng.mauro.persistence.ContainerizedTest
+import uk.ac.ox.softeng.mauro.testing.CommonDataSpec
+import uk.ac.ox.softeng.mauro.web.ListResponse
 
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.client.exceptions.HttpClientResponseException
-import io.micronaut.http.hateoas.JsonError
-import io.micronaut.runtime.EmbeddedApplication
 import io.micronaut.test.annotation.Sql
-import jakarta.inject.Inject
 import jakarta.inject.Singleton
 import spock.lang.Shared
-import uk.ac.ox.softeng.mauro.domain.dataflow.DataClassComponent
-import uk.ac.ox.softeng.mauro.domain.dataflow.DataFlow
-import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
-import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
-import uk.ac.ox.softeng.mauro.domain.folder.Folder
-import uk.ac.ox.softeng.mauro.persistence.ContainerizedTest
-import uk.ac.ox.softeng.mauro.testing.CommonDataSpec
-import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @ContainerizedTest
 @Singleton

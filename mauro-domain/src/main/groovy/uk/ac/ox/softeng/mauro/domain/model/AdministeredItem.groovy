@@ -1,6 +1,15 @@
 package uk.ac.ox.softeng.mauro.domain.model
 
+import uk.ac.ox.softeng.mauro.domain.classifier.Classifier
+import uk.ac.ox.softeng.mauro.domain.facet.Annotation
 import uk.ac.ox.softeng.mauro.domain.facet.Edit
+import uk.ac.ox.softeng.mauro.domain.facet.Metadata
+import uk.ac.ox.softeng.mauro.domain.facet.ReferenceFile
+import uk.ac.ox.softeng.mauro.domain.facet.Rule
+import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
+import uk.ac.ox.softeng.mauro.domain.security.CatalogueUser
+import uk.ac.ox.softeng.mauro.exception.MauroInternalException
+import uk.ac.ox.softeng.mauro.profile.ProfileField
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonInclude
@@ -11,11 +20,6 @@ import io.micronaut.data.annotation.Relation
 import jakarta.persistence.Transient
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Pattern
-import uk.ac.ox.softeng.mauro.domain.classifier.Classifier
-import uk.ac.ox.softeng.mauro.domain.facet.*
-import uk.ac.ox.softeng.mauro.domain.security.CatalogueUser
-import uk.ac.ox.softeng.mauro.exception.MauroInternalException
-import uk.ac.ox.softeng.mauro.profile.ProfileField
 
 import java.time.Instant
 
