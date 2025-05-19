@@ -1,14 +1,20 @@
 package uk.ac.ox.softeng.mauro.controller.datamodel
 
+import uk.ac.ox.softeng.mauro.ErrorHandler
 import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.datamodel.DataClassApi
 import uk.ac.ox.softeng.mauro.audit.Audit
 import uk.ac.ox.softeng.mauro.controller.model.AdministeredItemController
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataElement
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
+import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.security.Role
+import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository.DataClassCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.DataModelCacheableRepository
+import uk.ac.ox.softeng.mauro.persistence.datamodel.DataClassContentRepository
 import uk.ac.ox.softeng.mauro.persistence.datamodel.DataModelContentRepository
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
@@ -16,6 +22,7 @@ import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpResponse
+import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Delete
@@ -24,6 +31,7 @@ import io.micronaut.http.annotation.Post
 import io.micronaut.http.annotation.Put
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
+import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
 
 @CompileStatic
@@ -36,9 +44,22 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
     @Inject
     DataModelCacheableRepository dataModelRepository
 
-    DataClassController(DataClassCacheableRepository dataClassRepository, DataModelCacheableRepository dataModelRepository, DataModelContentRepository dataModelContentRepository) {
+    DataModelContentRepository dataModelContentRepository
+    DataClassContentRepository dataClassContentRepository
+
+    @Inject
+    AdministeredItemCacheableRepository.DataElementCacheableRepository dataElementCacheableRepository
+    @Inject
+    AdministeredItemCacheableRepository.DataTypeCacheableRepository dataTypeCacheableRepository
+
+    DataClassController(DataClassCacheableRepository dataClassRepository, DataModelCacheableRepository dataModelRepository,
+                        DataModelContentRepository dataModelContentRepository,
+                        DataClassContentRepository dataClassContentRepository) {
         super(DataClass, dataClassRepository, dataModelRepository, dataModelContentRepository)
+        this.dataModelRepository = dataModelRepository
         this.dataClassRepository = dataClassRepository
+        this.dataModelContentRepository = dataModelContentRepository
+        this.dataClassContentRepository = dataClassContentRepository
     }
 
     @Audit
@@ -149,5 +170,102 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
         DataClass targetDataClass = dataClassRepository.readById(otherClassId)
         dataClassRepository.deleteExtensionRelationship(sourceDataClass, targetDataClass)
         dataClassRepository.findById(id)
+    }
+
+    @Audit
+    @Post(Paths.DATA_CLASS_COPY)
+    @Transactional
+    DataClass copy(UUID dataModelId, UUID otherModelId, UUID dataClassId) {
+        DataModel dataModel = dataModelContentRepository.findWithContentById(dataModelId)
+        accessControlService.checkRole(Role.EDITOR, dataModel)
+        DataClass dataClass = dataClassContentRepository.readWithContentById(dataClassId)
+        accessControlService.canDoRole(Role.EDITOR, dataClass)
+        DataModel otherModel = dataModelRepository.readById(otherModelId)
+        accessControlService.canDoRole(Role.READER, otherModel)
+        //verify
+        if (dataClass.dataModel.id != otherModel.id) {
+            ErrorHandler.handleError(HttpStatus.NOT_FOUND, "Cannot find dataClass $dataClassId for dataModel $otherModelId")
+        }
+
+        DataClass copied = dataClass.clone()
+        copied.parentDataClass = null //do not keep existing source structure if source is child
+        copied.dataClasses = copyChildren(dataModel, copied)
+        copied.dataElements = createCopyDataElementsAndDataTypes(copied, dataModel)
+
+        DataClass savedCopy = createEntity(dataModel, copied)
+        savedCopy.dataClasses = saveChildren(savedCopy)
+        savedCopy.dataElements = saveDataElements(savedCopy)
+        savedCopy
+
+    }
+
+    protected List<DataClass> copyChildren(DataModel dataModel, DataClass copied) {
+        List<DataClass> children = copied.dataClasses.collect {child ->
+            child.clone().tap {copiedChild ->
+                copiedChild.updateCreationProperties()
+                super.updateDerivedProperties(copiedChild)
+                copiedChild.dataElements = createCopyDataElementsAndDataTypes(copiedChild, dataModel)
+                copiedChild.parentDataClass = copied
+                copiedChild.dataModel = dataModel
+            }
+        }
+        children
+    }
+
+    protected List<DataElement> createCopyDataElementsAndDataTypes(DataClass copied, DataModel target) {
+        copied.dataElements.collect {
+            it.clone().tap {copiedDE ->
+                if (copiedDE.dataType) {
+                    //target model does not have existing dataType? copy new DataType in target model
+                    copiedDE = setOrCreateNewDataType(target, it.dataType, copiedDE)
+                }
+                updateCreationProperties(copiedDE) as DataElement
+                updatePaths(copiedDE)
+                copiedDE.dataModel = target
+                copiedDE.dataClass = copied
+            }
+        }
+        copied.dataElements
+    }
+
+    AdministeredItem updatePaths(AdministeredItem item) {
+        pathRepository.readParentItems(item)
+        item.updatePath()
+        item.updateBreadcrumbs()
+        item
+    }
+
+    protected DataElement setOrCreateNewDataType(DataModel target, DataType dataType, DataElement copiedDE) {
+        DataType equivalentInTargetModel = target.dataTypes.find {targetModelDataType -> targetModelDataType.label == dataType.label}
+        if (equivalentInTargetModel) {
+            copiedDE.dataType = equivalentInTargetModel
+        } else {
+            DataType copiedDataType = copiedDE.dataType.clone()
+            copiedDataType.updateCreationProperties()
+            copiedDataType = updatePaths(copiedDataType) as DataType
+            copiedDataType.dataModel = target
+            copiedDE.dataType = copiedDataType
+        }
+        copiedDE
+    }
+
+
+    protected List<DataClass> saveChildren(DataClass saved) {
+        List<DataClass> savedChildren = dataClassRepository.saveAll(saved.dataClasses)
+        savedChildren.each {savedChild ->
+            savedChild.dataElements = saveDataElements(savedChild)
+            savedChild.parentDataClass = saved
+        }
+        dataClassRepository.saveAll(savedChildren)
+    }
+
+    protected List<DataElement> saveDataElements(DataClass saved) {
+        saved.dataElements.each {
+            it.dataClass = saved
+            if (!it.dataType.id) {
+                dataTypeCacheableRepository.save(it.dataType)
+            }
+        }
+        dataElementCacheableRepository.saveAll(saved.dataElements)
     }
 }
