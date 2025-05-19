@@ -32,7 +32,7 @@ class ClassificationSchemeIntegrationSpec extends CommonDataSpec {
     UUID folderId
 
     void setup() {
-        folderId = folderApi.create (folder()).id
+        folderId = folderApi.create(folder()).id
     }
 
     void 'list classification schemes - should return empty list'() {

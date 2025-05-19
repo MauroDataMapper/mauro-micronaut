@@ -49,4 +49,10 @@ interface DataClassApi extends AdministeredItemApi<DataClass, DataModel> {
     @Get(Paths.DATA_CLASS_CHILD_DATA_CLASS_LIST)
     ListResponse<DataClass> list(UUID dataModelId, UUID parentDataClassId)
 
+    @Put(Paths.DATA_CLASS_EXTENDS)
+    DataClass createExtension(UUID dataModelId, UUID id, UUID otherModelId, UUID otherClassId)
+
+    @Delete(Paths.DATA_CLASS_EXTENDS)
+    DataClass deleteExtension(UUID dataModelId, UUID id, UUID otherModelId, UUID otherClassId)
+
 }

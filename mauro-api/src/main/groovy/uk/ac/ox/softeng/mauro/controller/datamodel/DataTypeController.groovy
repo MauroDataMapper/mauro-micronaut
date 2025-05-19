@@ -3,35 +3,32 @@ package uk.ac.ox.softeng.mauro.controller.datamodel
 import uk.ac.ox.softeng.mauro.ErrorHandler
 import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.datamodel.DataTypeApi
-import uk.ac.ox.softeng.mauro.controller.model.AdministeredItemController
+import uk.ac.ox.softeng.mauro.audit.Audit
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
-import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
-import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
+import uk.ac.ox.softeng.mauro.domain.facet.EditType
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.model.Item
 import uk.ac.ox.softeng.mauro.domain.security.Role
-import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository.DataClassCacheableRepository
-import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository.DataTypeCacheableRepository
-import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.DataModelCacheableRepository
-import uk.ac.ox.softeng.mauro.persistence.datamodel.DataTypeContentRepository
-import uk.ac.ox.softeng.mauro.persistence.datamodel.EnumerationValueRepository
-import uk.ac.ox.softeng.mauro.web.ListResponse
+import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository
 
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
-import io.micronaut.http.annotation.Body
-import io.micronaut.http.annotation.Controller
-import io.micronaut.http.annotation.Delete
-import io.micronaut.http.annotation.Get
-import io.micronaut.http.annotation.Post
-import io.micronaut.http.annotation.Put
+import io.micronaut.http.annotation.*
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
 import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
+import uk.ac.ox.softeng.mauro.controller.model.AdministeredItemController
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
+import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository.DataTypeCacheableRepository
+import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.DataModelCacheableRepository
+import uk.ac.ox.softeng.mauro.persistence.datamodel.DataTypeContentRepository
+import uk.ac.ox.softeng.mauro.persistence.datamodel.EnumerationValueRepository
+import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @CompileStatic
 @Controller
@@ -46,15 +43,16 @@ class DataTypeController extends AdministeredItemController<DataType, DataModel>
     @Inject
     EnumerationValueRepository enumerationValueRepository
 
-    DataClassCacheableRepository dataClassRepository
+    AdministeredItemCacheableRepository.DataClassCacheableRepository dataClassRepository
 
     DataTypeController(DataTypeCacheableRepository dataTypeRepository, DataModelCacheableRepository dataModelRepository, DataTypeContentRepository dataTypeContentRepository,
-                       DataClassCacheableRepository dataClassRepository) {
+                       AdministeredItemCacheableRepository.DataClassCacheableRepository dataClassRepository) {
         super(DataType, dataTypeRepository, dataModelRepository, dataTypeContentRepository)
         this.dataTypeRepository = dataTypeRepository
         this.dataClassRepository = dataClassRepository
     }
 
+    @Audit
     @Get(Paths.DATA_TYPE_ID)
     DataType show(UUID dataModelId, UUID id) {
         DataType dataType
@@ -71,11 +69,12 @@ class DataTypeController extends AdministeredItemController<DataType, DataModel>
         dataType
     }
 
+    @Audit
     @Post(Paths.DATA_TYPE_LIST)
     @Transactional
     DataType create(UUID dataModelId, @Body @NonNull DataType dataType) {
         DataType cleanItem = super.cleanBody(dataType)
-        Item parent = super.validate(cleanItem,  dataModelId)
+        Item parent = super.validate(cleanItem, dataModelId)
         if (cleanItem.referenceClass) {
             cleanItem.referenceClass = validatedReferenceClass(dataType, parent)
         }
@@ -91,16 +90,23 @@ class DataTypeController extends AdministeredItemController<DataType, DataModel>
         created
     }
 
+    @Audit
     @Put(Paths.DATA_TYPE_ID)
     DataType update(UUID dataModelId, UUID id, @Body @NonNull DataType dataType) {
         super.update(id, dataType)
     }
 
+    @Audit(
+        parentDomainType = DataModel,
+        parentIdParamName = 'dataModelId',
+        deletedObjectDomainType = DataType
+    )
     @Delete(Paths.DATA_TYPE_ID)
     HttpResponse delete(UUID dataModelId, UUID id, @Body @Nullable DataType dataType) {
         super.delete(id, dataType)
     }
 
+    @Audit
     @Get(Paths.DATA_TYPE_LIST)
     ListResponse<DataType> list(UUID dataModelId) {
         Item parent = parentItemRepository.readById(dataModelId)

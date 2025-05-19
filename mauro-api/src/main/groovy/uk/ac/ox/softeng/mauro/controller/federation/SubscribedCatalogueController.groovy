@@ -1,9 +1,9 @@
 package uk.ac.ox.softeng.mauro.controller.federation
 
-import io.micronaut.http.HttpResponse
 import uk.ac.ox.softeng.mauro.ErrorHandler
 import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.federation.SubscribedCatalogueApi
+import uk.ac.ox.softeng.mauro.audit.Audit
 import uk.ac.ox.softeng.mauro.controller.model.ItemController
 import uk.ac.ox.softeng.mauro.domain.facet.federation.PublishedModel
 import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedCatalogue
@@ -20,6 +20,7 @@ import groovy.util.logging.Slf4j
 import io.micronaut.context.annotation.Value
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
+import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.annotation.Controller
@@ -58,18 +59,21 @@ class SubscribedCatalogueController extends ItemController<SubscribedCatalogue> 
         this.subscribedModelService = subscribedModelService
     }
 
+    @Audit
     @Get(Paths.ADMIN_SUBSCRIBED_CATALOGUES_LIST)
     ListResponse<SubscribedCatalogue> listAll() {
         accessControlService.checkAuthenticated()
         ListResponse.from(subscribedCatalogueCacheableRepository.findAll())
     }
 
+    @Audit
     @Get(Paths.SUBSCRIBED_CATALOGUES_ID)
     SubscribedCatalogue show(@NonNull UUID subscribedCatalogueId) {
         accessControlService.checkAuthenticated()
         subscribedCatalogueCacheableRepository.findById(subscribedCatalogueId)
     }
 
+    @Audit
     @Get(Paths.SUBSCRIBED_CATALOGUES_LIST)
     ListResponse<SubscribedCatalogue> listSubscribedCatalogues(@Nullable @QueryValue Integer max) {
         accessControlService.checkAuthenticated()
@@ -83,18 +87,23 @@ class SubscribedCatalogueController extends ItemController<SubscribedCatalogue> 
         }
     }
 
+    @Audit(level = Audit.AuditLevel.FILE_ONLY)
     @Post(Paths.ADMIN_SUBSCRIBED_CATALOGUES_LIST)
     @ExecuteOn(TaskExecutors.BLOCKING)
     @Transactional
     SubscribedCatalogue create(@Body @NonNull SubscribedCatalogue subscribedCatalogue) {
+        log.info("SubscribedCatalogueController create")
         accessControlService.checkAdministrator()
         cleanBody(subscribedCatalogue)
         updateCreationProperties(subscribedCatalogue)
+        log.info("SubscribedCatalogueController create - about to validateRemote")
         if (subscribedCatalogueService.validateRemote(subscribedCatalogue)) {
             subscribedCatalogueCacheableRepository.save(subscribedCatalogue)
         }
     }
 
+
+    @Audit(level = Audit.AuditLevel.FILE_ONLY)
     @Put(Paths.ADMIN_SUBSCRIBED_CATALOGUES_ID)
     @ExecuteOn(TaskExecutors.BLOCKING)
     @Transactional
@@ -113,18 +122,21 @@ class SubscribedCatalogueController extends ItemController<SubscribedCatalogue> 
         }
     }
 
+    @Audit
     @Get(Paths.SUBSCRIBED_CATALOGUES_TYPES)
     ListResponse<SubscribedCatalogueType> types() {
         accessControlService.checkAuthenticated()
         ListResponse.from(SubscribedCatalogueType.values() as List)
     }
 
+    @Audit
     @Get(Paths.SUBSCRIBED_CATALOGUES_AUTHENTICATION_TYPES)
     ListResponse<SubscribedCatalogueAuthenticationType> authenticationTypes() {
         accessControlService.checkAdministrator()
         ListResponse.from(SubscribedCatalogueAuthenticationType.values() as List)
     }
 
+    @Audit
     @Get(Paths.ADMIN_SUBSCRIBED_CATALOGUES_TEST_CONNECTION)
     @ExecuteOn(TaskExecutors.BLOCKING)
     HttpResponse testConnection(@NonNull UUID subscribedCatalogueId) {
@@ -139,6 +151,7 @@ class SubscribedCatalogueController extends ItemController<SubscribedCatalogue> 
     }
 
 
+    @Audit
     @Get(Paths.SUBSCRIBED_CATALOGUES_PUBLISHED_MODELS)
     @ExecuteOn(TaskExecutors.BLOCKING)
     ListResponse<PublishedModel> publishedModels(@NonNull UUID subscribedCatalogueId) {
@@ -149,6 +162,7 @@ class SubscribedCatalogueController extends ItemController<SubscribedCatalogue> 
         ListResponse.from(subscribedCatalogueService.getPublishedModels(subscribedCatalogue))
     }
 
+    @Audit
     @Get(Paths.SUBSCRIBED_CATALOGUES_PUBLISHED_MODELS_NEWER_VERSIONS)
     @ExecuteOn(TaskExecutors.BLOCKING)
     SubscribedCataloguesPublishedModelsNewerVersions publishedModelsNewerVersions(@NonNull UUID subscribedCatalogueId, @NonNull String publishedModelId) {
@@ -161,6 +175,7 @@ class SubscribedCatalogueController extends ItemController<SubscribedCatalogue> 
     }
 
 
+    @Audit(level = Audit.AuditLevel.FILE_ONLY)
     @Delete(Paths.ADMIN_SUBSCRIBED_CATALOGUES_ID)
     @Transactional
     HttpResponse delete(@NonNull UUID subscribedCatalogueId, @Body @Nullable SubscribedCatalogue subscribedCatalogue) {

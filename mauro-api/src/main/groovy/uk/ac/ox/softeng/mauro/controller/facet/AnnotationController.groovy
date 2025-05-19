@@ -2,6 +2,7 @@ package uk.ac.ox.softeng.mauro.controller.facet
 
 import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.facet.AnnotationApi
+import uk.ac.ox.softeng.mauro.audit.Audit
 
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
@@ -47,6 +48,7 @@ class AnnotationController extends FacetController<Annotation> implements Annota
      * @param domainId
      * @return
      */
+    @Audit
     @Get(Paths.ANNOTATION_LIST)
     ListResponse<Annotation> list(@NonNull String domainType, @NonNull UUID domainId) {
         AdministeredItem administeredItem = findAdministeredItem(domainType, domainId)
@@ -54,6 +56,7 @@ class AnnotationController extends FacetController<Annotation> implements Annota
         ListResponse.from(!administeredItem.annotations ? [] : administeredItem.annotations)
     }
 
+    @Audit
     @Get(Paths.ANNOTATION_ID)
     Annotation show(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID id) {
         accessControlService.checkRole(Role.READER, readAdministeredItem(domainType, domainId))
@@ -62,6 +65,7 @@ class AnnotationController extends FacetController<Annotation> implements Annota
         nested
     }
 
+    @Audit
     @Post(Paths.ANNOTATION_LIST)
     Annotation create(@NonNull String domainType, @NonNull UUID domainId, @Body @NonNull Annotation annotation) {
         super.create(domainType, domainId, annotation) as Annotation
@@ -75,6 +79,7 @@ class AnnotationController extends FacetController<Annotation> implements Annota
      * @param childAnnotation child annotation to create
      * @return newly created child
      */
+    @Audit
     @Post(Paths.ANNOTATION_CHILD_LIST)
     Annotation create(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID annotationId, @Body @NonNull Annotation childAnnotation) {
         accessControlService.checkRole(Role.EDITOR, readAdministeredItem(domainType, domainId))
@@ -95,12 +100,14 @@ class AnnotationController extends FacetController<Annotation> implements Annota
      * @param childId note: if childId = parent, the nested parent is returned
      * @return 'Child' annotation
      */
+    @Audit
     @Get(Paths.ANNOTATION_CHILD_ID)
     Annotation getChildAnnotation(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID annotationId,
                                   @NonNull UUID id) {
         show(domainType, domainId, id)
     }
 
+    @Audit(deletedObjectDomainType = Annotation)
     @Delete(Paths.ANNOTATION_ID)
     @Transactional
     HttpResponse delete(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID id) {
@@ -113,6 +120,7 @@ class AnnotationController extends FacetController<Annotation> implements Annota
         super.delete(id)
     }
 
+    @Audit(deletedObjectDomainType = Annotation)
     @Delete(Paths.ANNOTATION_CHILD_ID)
     @Transactional
     HttpResponse delete(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID annotationId,

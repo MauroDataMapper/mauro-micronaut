@@ -10,7 +10,7 @@ import spock.lang.Specification
 
 /**
  * DataModelSpec is a class for testing functionality relating to the DataModel class
- * @see Terminology
+ * @see DataModel
  */
 class DataModelSpec extends Specification {
 
@@ -161,6 +161,14 @@ class DataModelSpec extends Specification {
 
         cloned.allDataClasses.containsAll(cloned.dataElements.dataClass)
         original.allDataClasses.containsAll(original.dataElements.dataClass)
+
+        DataClass clonedDataClass1 = cloned.allDataClasses.find {it.label == 'My First DataClass'}
+        DataClass clonedDataClass3 = cloned.allDataClasses.find {it.label == "My Third DataClass"}
+        clonedDataClass3.extendsDataClasses.size() == 1
+        clonedDataClass3.extendsDataClasses.first().label == 'My First DataClass'
+        clonedDataClass3.extendsDataClasses.first().is(clonedDataClass1)
+        clonedDataClass1.extendedBy.size() == 1
+        clonedDataClass1.extendedBy.first().is(clonedDataClass3)
 
         cloned.dataElements.dataType == original.dataElements.dataType
         cloned.dataTypes.containsAll(cloned.dataElements.dataType)

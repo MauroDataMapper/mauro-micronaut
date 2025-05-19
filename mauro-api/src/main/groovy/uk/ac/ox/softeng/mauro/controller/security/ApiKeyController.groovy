@@ -2,6 +2,7 @@ package uk.ac.ox.softeng.mauro.controller.security
 
 import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.security.ApiKeyApi
+import uk.ac.ox.softeng.mauro.audit.Audit
 import uk.ac.ox.softeng.mauro.controller.model.ItemController
 import uk.ac.ox.softeng.mauro.domain.security.ApiKey
 import uk.ac.ox.softeng.mauro.domain.security.Role
@@ -34,6 +35,7 @@ class ApiKeyController extends ItemController<ApiKey> implements ApiKeyApi {
     }
 
 
+    @Audit
     @Get(Paths.API_KEY_LIST)
     ListResponse<ApiKey> index(UUID userId) {
         accessControlService.checkAdminOrUser(userId)
@@ -41,6 +43,7 @@ class ApiKeyController extends ItemController<ApiKey> implements ApiKeyApi {
         ListResponse.from(apiKeys?: [])
     }
 
+    @Audit(level = Audit.AuditLevel.FILE_ONLY)
     @Post(Paths.API_KEY_LIST)
     ApiKey create(UUID userId, @Body ApiKey apiKey) {
         accessControlService.checkAdminOrUser(userId)
@@ -54,6 +57,7 @@ class ApiKeyController extends ItemController<ApiKey> implements ApiKeyApi {
         apiKeyCacheableRepository.save(apiKey)
     }
 
+    @Audit
     @Get(Paths.API_KEY_ID)
     ApiKey show(UUID userId, UUID apiKeyId) {
         accessControlService.checkAdminOrUser(userId)
@@ -61,6 +65,7 @@ class ApiKeyController extends ItemController<ApiKey> implements ApiKeyApi {
         apiKeys.find { it.id == apiKeyId }
     }
 
+    @Audit(level = Audit.AuditLevel.FILE_ONLY)
     @Delete(Paths.API_KEY_ID)
     HttpStatus delete(UUID userId, UUID apiKeyId) {
         accessControlService.checkAdminOrUser(userId)
@@ -70,6 +75,7 @@ class ApiKeyController extends ItemController<ApiKey> implements ApiKeyApi {
         return HttpStatus.NO_CONTENT
     }
 
+    @Audit(level = Audit.AuditLevel.FILE_ONLY)
     @Put(Paths.API_KEY_ENABLE)
     ApiKey enable(UUID userId, UUID apiKeyId) {
         accessControlService.checkAdminOrUser(userId)
@@ -79,6 +85,7 @@ class ApiKeyController extends ItemController<ApiKey> implements ApiKeyApi {
         apiKeyCacheableRepository.update(apiKey)
     }
 
+    @Audit(level = Audit.AuditLevel.FILE_ONLY)
     @Put(Paths.API_KEY_DISABLE)
     ApiKey disable(UUID userId, UUID apiKeyId) {
         accessControlService.checkAdminOrUser(userId)
@@ -88,6 +95,7 @@ class ApiKeyController extends ItemController<ApiKey> implements ApiKeyApi {
         apiKeyCacheableRepository.update(apiKey)
     }
 
+    @Audit(level = Audit.AuditLevel.FILE_ONLY)
     @Put(Paths.API_KEY_REFRESH)
     ApiKey refresh(UUID userId, UUID apiKeyId, long expireInDays) {
         accessControlService.checkAdminOrUser(userId)

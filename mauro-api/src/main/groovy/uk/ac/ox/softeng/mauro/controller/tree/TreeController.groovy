@@ -2,6 +2,7 @@ package uk.ac.ox.softeng.mauro.controller.tree
 
 import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.tree.TreeApi
+import uk.ac.ox.softeng.mauro.audit.Audit
 
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.Nullable
@@ -38,6 +39,7 @@ class TreeController implements TreeApi {
     @Inject
     AccessControlService accessControlService
 
+    @Audit
     @Get(Paths.TREE_FOLDER)
     List<TreeItem> folderTree(@Nullable UUID id, @Nullable @QueryValue Boolean foldersOnly) {
         List<TreeItem> treeItems = []
@@ -52,6 +54,7 @@ class TreeController implements TreeApi {
         treeItems
     }
 
+    @Audit
     @Get(Paths.TREE_ITEM)
     List<TreeItem> itemTree(String domainType, UUID id, @Nullable @QueryValue Boolean foldersOnly) {
         foldersOnly = foldersOnly ?: false
@@ -60,6 +63,33 @@ class TreeController implements TreeApi {
         accessControlService.checkRole(Role.READER, item)
         List<TreeItem> treeItems = filterTreeByReadable(treeService.buildTree(item, domainType.contains(Folder.class.simpleName) ? foldersOnly : false, true))
         treeItems
+    }
+
+    //todo: implement actual
+    @Get('/tree/{domainType}/{id}/ancestors')
+    List<TreeItem> ancestors( String domainType, UUID id) {
+        List result = List.of(new TreeItem().tap {
+            it.id
+            it.domainType = domainType
+            it.label = 'stub treeItem label'
+        })
+        result
+    }
+
+    //todo: implement actual
+    @Get('/tree/{domainType}/{modelItemType}/{id}/ancestors')
+    List<TreeItem> ancestors(String domainType, String modelItemType, UUID id) {
+        List result = List.of(new TreeItem().tap {
+            it.id =  id
+            it.domainType = domainType
+            it.children =
+                [
+                    domainType : modelItemType,
+                ] as List<TreeItem>
+
+            it.label = 'stub treeItem label'
+        })
+        result
     }
 
     protected List<TreeItem> filterTreeByReadable(List<TreeItem> treeItems) {

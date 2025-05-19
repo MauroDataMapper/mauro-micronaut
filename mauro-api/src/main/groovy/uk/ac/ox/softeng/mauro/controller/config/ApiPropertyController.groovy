@@ -2,6 +2,7 @@ package uk.ac.ox.softeng.mauro.controller.config
 
 import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.config.ApiPropertyApi
+import uk.ac.ox.softeng.mauro.audit.Audit
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
@@ -37,17 +38,20 @@ class ApiPropertyController extends ItemController<ApiProperty> implements ApiPr
         super.getDisallowedProperties() + ['lastUpdatedBy']
     }
 
+    @Audit
     @Get(Paths.API_PROPERTY_LIST_PUBLIC)
     ListResponse<ApiProperty> listPubliclyVisible() {
         ListResponse.from(apiPropertyRepository.findAllByPubliclyVisibleTrue())
     }
 
+    @Audit
     @Get(Paths.API_PROPERTY_LIST_ALL)
     ListResponse<ApiProperty> listAll() {
         accessControlService.checkAdministrator()
         ListResponse.from(apiPropertyRepository.findAll())
     }
 
+    @Audit
     @Get(Paths.API_PROPERTY_SHOW)
     ApiProperty show(UUID id) {
         accessControlService.checkAdministrator()
@@ -55,6 +59,7 @@ class ApiPropertyController extends ItemController<ApiProperty> implements ApiPr
         apiPropertyRepository.findById(id)
     }
 
+    @Audit(level = Audit.AuditLevel.FILE_ONLY)
     @Post(Paths.API_PROPERTY_LIST_ALL)
     ApiProperty create(@Body @NonNull ApiProperty apiProperty) {
         accessControlService.checkAdministrator()
@@ -66,6 +71,7 @@ class ApiPropertyController extends ItemController<ApiProperty> implements ApiPr
         apiPropertyRepository.save(apiProperty)
     }
 
+    @Audit(level = Audit.AuditLevel.FILE_ONLY)
     @Put(Paths.API_PROPERTY_SHOW)
     ApiProperty update(UUID id, @Body @NonNull ApiProperty apiProperty) {
         accessControlService.checkAdministrator()
@@ -82,6 +88,7 @@ class ApiPropertyController extends ItemController<ApiProperty> implements ApiPr
         }
     }
 
+    @Audit(level = Audit.AuditLevel.FILE_ONLY)
     @Delete(Paths.API_PROPERTY_SHOW)
     HttpResponse delete(UUID id, @Body @Nullable ApiProperty apiProperty) {
         accessControlService.checkAdministrator()

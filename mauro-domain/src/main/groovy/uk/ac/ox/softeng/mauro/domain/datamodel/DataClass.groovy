@@ -51,12 +51,16 @@ class DataClass extends ModelItem<DataModel> implements DiffableItem<DataClass> 
     @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'dataClass')
     List<DataElement> dataElements = []
 
-    @Relation(value = Relation.Kind.MANY_TO_MANY)
+    @Relation(value = Relation.Kind.MANY_TO_MANY, mappedBy = 'extendedBy')
     @JoinTable(
         name = "join_dataclass_to_extended_data_class",
         joinColumns = @JoinColumn(name = "dataclass_id"),
         inverseJoinColumns = @JoinColumn(name = "extended_dataclass_id"))
     List<DataClass> extendsDataClasses = []
+
+    @Relation(value = Relation.Kind.MANY_TO_MANY, mappedBy = 'extendsDataClasses')
+    @JsonIgnore
+    List<DataClass> extendedBy = []
 
     @Nullable
     @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'reference_class_id')
@@ -217,6 +221,7 @@ class DataClass extends ModelItem<DataModel> implements DiffableItem<DataClass> 
     DataClass extendsDataClass(String dataClassLabel) {
         DataClass foundDataClass = this.dataModel.dataClasses.findAll { it.label == dataClassLabel }.first()
         this.extendsDataClasses.add(foundDataClass)
+        foundDataClass.extendedBy.add(this)
         return foundDataClass
     }
 }

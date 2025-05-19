@@ -2,11 +2,14 @@ package uk.ac.ox.softeng.mauro.controller.folder
 
 import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.folder.FolderApi
+
 import uk.ac.ox.softeng.mauro.controller.model.ModelController
+import uk.ac.ox.softeng.mauro.domain.facet.EditType
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.folder.FolderContentRepository
 import uk.ac.ox.softeng.mauro.plugin.exporter.ModelExporterPlugin
+import uk.ac.ox.softeng.mauro.audit.Audit
 import uk.ac.ox.softeng.mauro.service.plugin.PluginService
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
@@ -23,6 +26,7 @@ import io.micronaut.http.annotation.Delete
 import io.micronaut.http.annotation.Get
 import io.micronaut.http.annotation.Post
 import io.micronaut.http.annotation.Put
+import io.micronaut.http.annotation.QueryValue
 import io.micronaut.http.server.multipart.MultipartBody
 import io.micronaut.scheduling.TaskExecutors
 import io.micronaut.scheduling.annotation.ExecuteOn
@@ -44,16 +48,19 @@ class FolderController extends ModelController<Folder> implements FolderApi {
         super(Folder, folderRepository, folderRepository, folderContentRepository)
     }
 
+    @Audit
     @Get(Paths.FOLDER_ID)
     Folder show(UUID id) {
         super.show(id)
     }
 
+    @Audit
     @Get(Paths.CHILD_FOLDER_ID)
     Folder show(UUID parentId, UUID id) {
         super.show(id)
     }
 
+    @Audit
     @Post(Paths.FOLDER_LIST)
     Folder create(@Body Folder folder) {
         cleanBody(folder)
@@ -64,33 +71,39 @@ class FolderController extends ModelController<Folder> implements FolderApi {
         folderRepository.save(folder)
     }
 
+    @Audit
     @Transactional
     @Post(Paths.CHILD_FOLDER_LIST)
     Folder create(UUID parentId, @Body @NonNull Folder folder) {
         super.create(parentId, folder)
     }
 
+    @Audit
     @Put(Paths.FOLDER_ID)
     Folder update(UUID id, @Body @NonNull Folder folder) {
         super.update(id, folder)
     }
 
+    @Audit
     @Put(Paths.CHILD_FOLDER_ID)
     Folder update(UUID parentId, UUID id, @Body @NonNull Folder folder) {
         super.update(id, folder)
     }
 
+    @Audit(description = 'Move folder')
     @Transactional
     @Put(Paths.FOLDER_MOVE)
     Folder moveFolder(UUID id, String destination) {
         super.moveFolder(id, destination)
     }
 
+    @Audit
     @Get(Paths.FOLDER_LIST)
     ListResponse<Folder> listAll() {
         super.listAll()
     }
 
+    @Audit
     @Get(Paths.CHILD_FOLDER_LIST)
     ListResponse<Folder> list(UUID parentId) {
         super.list(parentId)
@@ -118,6 +131,7 @@ class FolderController extends ModelController<Folder> implements FolderApi {
 //        }
 //    }
 
+    @Audit(level = Audit.AuditLevel.FILE_ONLY, deletedObjectDomainType = Folder)
     @Transactional
     @Delete(Paths.FOLDER_ID)
     HttpResponse delete(UUID id, @Body @Nullable Folder folder) {
@@ -125,11 +139,13 @@ class FolderController extends ModelController<Folder> implements FolderApi {
     }
 
     @Transactional
+    @Audit(deletedObjectDomainType = Folder, parentDomainType = Folder)
     @Delete(Paths.CHILD_FOLDER_ID)
     HttpResponse delete(UUID parentId, UUID id, @Body @Nullable Folder folder) {
         super.delete(id, folder)
     }
 
+    @Audit(title = EditType.EXPORT, description = 'Export folder')
     @Get(Paths.FOLDER_EXPORT)
     HttpResponse<byte[]> exportModel(UUID id, @Nullable String namespace, @Nullable String name, @Nullable String version) {
         ModelExporterPlugin mauroPlugin = mauroPluginService.getPlugin(ModelExporterPlugin, namespace, name, version)
@@ -141,9 +157,17 @@ class FolderController extends ModelController<Folder> implements FolderApi {
     @Transactional
     @ExecuteOn(TaskExecutors.IO)
     @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @Audit(title = EditType.IMPORT, description = 'Import folder')
     @Post(Paths.FOLDER_IMPORT)
     ListResponse<Folder> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version) {
        super.importModel(body, namespace, name, version)
     }
 
+
+
+    //todo: implement actual
+    @Get('/folders/{id}/permissions')
+    List<Map> permissions(UUID id) {
+        super.permissions(id)
+    }
 }

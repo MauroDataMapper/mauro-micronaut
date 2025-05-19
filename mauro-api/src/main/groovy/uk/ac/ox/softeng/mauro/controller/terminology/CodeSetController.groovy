@@ -3,6 +3,8 @@ package uk.ac.ox.softeng.mauro.controller.terminology
 import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.terminology.CodeSetApi
 import uk.ac.ox.softeng.mauro.ErrorHandler
+import uk.ac.ox.softeng.mauro.audit.Audit
+import uk.ac.ox.softeng.mauro.domain.facet.EditType
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
@@ -57,22 +59,26 @@ class CodeSetController extends ModelController<CodeSet> implements CodeSetApi {
         this.codeSetService = codeSetService
     }
 
+    @Audit
     @Get(value = Paths.CODE_SET_ID)
     CodeSet show(UUID id) {
         super.show(id)
     }
 
     @Transactional
+    @Audit
     @Post(value = Paths.FOLDER_LIST_CODE_SET)
     CodeSet create(UUID folderId, @Body @NonNull CodeSet codeSet) {
         super.create(folderId, codeSet)
     }
 
+    @Audit
     @Put(value = Paths.CODE_SET_ID)
     CodeSet update(UUID id, @Body @NonNull CodeSet codeSet) {
         super.update(id, codeSet)
     }
 
+    @Audit(title = EditType.UPDATE, description = "Add term to CodeSet")
     @Put(value = Paths.CODE_SET_TERM_ID)
     @Transactional
     CodeSet addTerm(@NonNull UUID id,
@@ -88,6 +94,7 @@ class CodeSetController extends ModelController<CodeSet> implements CodeSetApi {
         codeSet
     }
 
+    @Audit
     @Transactional
     @Delete(value = Paths.CODE_SET_ID)
     HttpResponse delete(UUID id, @Body @Nullable CodeSet codeSet) {
@@ -95,6 +102,7 @@ class CodeSetController extends ModelController<CodeSet> implements CodeSetApi {
     }
 
     @Transactional
+    @Audit(title = EditType.UPDATE, description = "Remove term from CodeSet")
     @Delete(value = Paths.CODE_SET_TERM_ID)
     CodeSet removeTermFromCodeSet(@NonNull UUID id,
                                   @NonNull UUID termId) {
@@ -108,16 +116,19 @@ class CodeSetController extends ModelController<CodeSet> implements CodeSetApi {
     }
 
 
+    @Audit
     @Get(value = Paths.FOLDER_LIST_CODE_SET)
     ListResponse<CodeSet> list(UUID folderId) {
         super.list(folderId)
     }
 
+    @Audit
     @Get(value = Paths.CODE_SET_LIST)
     ListResponse<CodeSet> listAll() {
         super.listAll()
     }
 
+    @Audit
     @Get(value = Paths.CODE_SET_TERM_LIST)
     ListResponse<Term> listAllTermsInCodeSet(@NonNull UUID id) {
         CodeSet codeSet = codeSetRepository.readById(id)
@@ -125,17 +136,19 @@ class CodeSetController extends ModelController<CodeSet> implements CodeSetApi {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, 'CodeSet item not found')
         }
         accessControlService.checkRole(Role.READER, codeSet)
-        List<Term> associatedTerms = codeSetContentRepository.codeSetRepository.getTerms(id) as List<Term>
+        List<Term> associatedTerms = codeSetContentRepository.codeSetRepository.getTerms(id).each{it.updateBreadcrumbs()} as List<Term>
         ListResponse.from(associatedTerms)
     }
 
     @Transactional
+    @Audit(title = EditType.FINALISE, description = "Finalise CodeSet")
     @Put(value = Paths.CODE_SET_FINALISE)
     CodeSet finalise(UUID id, @Body FinaliseData finaliseData) {
         super.finalise(id, finaliseData)
     }
 
 
+    @Audit
     @Get('/codeSets/{id}/diff/{otherId}')
     ObjectDiff diffModels(@NonNull UUID id, @NonNull UUID otherId) {
         CodeSet codeSet = modelContentRepository.findWithContentById(id)
@@ -152,6 +165,7 @@ class CodeSetController extends ModelController<CodeSet> implements CodeSetApi {
     }
 
     @Transactional
+    @Audit(title = EditType.COPY, description = "New Version of CodeSet")
     @Put(value = Paths.CODE_SET_NEW_BRANCH_MODEL_VERSION)
     CodeSet createNewBranchModelVersion(UUID id, @Body @Nullable CreateNewVersionData createNewVersionData) {
         if (!createNewVersionData) createNewVersionData = new CreateNewVersionData()
@@ -167,4 +181,18 @@ class CodeSetController extends ModelController<CodeSet> implements CodeSetApi {
         savedCopy
     }
 
+
+    //stub endpoint todo: actual
+    @Get('/codeSets/{id}/simpleModelVersionTree')
+    List<Map> simpleModelVersionTree(UUID id){
+        super.simpleModelVersionTree(id)
+    }
+
+
+
+    //todo: implement actual
+    @Get('/codeSets/{id}/permissions')
+    List<Map> permissions(UUID id) {
+        super.permissions(id)
+    }
 }

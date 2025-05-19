@@ -29,7 +29,8 @@ dependencies {
     implementation("io.micronaut.reactor:micronaut-reactor-http-client")
     implementation("jakarta.annotation:jakarta.annotation-api")
     compileOnly("io.micronaut:micronaut-http-validation")
-    runtimeOnly("ch.qos.logback:logback-classic")
+    implementation("ch.qos.logback:logback-classic")
+    implementation("ch.qos.logback:logback-core")
     implementation("io.micronaut.validation:micronaut-validation")
     implementation("io.micronaut:micronaut-management")
     compileOnly("io.micronaut:micronaut-inject-groovy")
@@ -73,6 +74,8 @@ dependencies {
     testImplementation("org.spockframework:spock-core") {
         exclude group: "org.codehaus.groovy", module: "groovy-all"
     }
+
+    testImplementation 'org.reflections:reflections:0.10.2'
 
 }
 
