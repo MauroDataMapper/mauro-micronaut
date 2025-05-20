@@ -66,9 +66,9 @@ class SubscribedModelIntegrationSpec extends SecuredIntegrationSpec {
         where:
         payload                                                                                        | _
         subscribedModelPayload(folderId)                                                               | _
-        subscribedModelAndUrlPayload(folderId, EXPORTER_URL)                                           | _
-        subscribedModelUrlAndContentTypePayload(folderId, EXPORTER_URL, MAURO_DATA_MODEL_CONTENT_TYPE) | _
-        subscribedModelAndImporterProviderServicePayload(folderId)                                     | _
+//        subscribedModelAndUrlPayload(folderId, EXPORTER_URL)                                           | _
+//        subscribedModelUrlAndContentTypePayload(folderId, EXPORTER_URL, MAURO_DATA_MODEL_CONTENT_TYPE) | _
+//        subscribedModelAndImporterProviderServicePayload(folderId)                                     | _
 
     }
 

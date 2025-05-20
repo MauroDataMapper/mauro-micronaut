@@ -1,14 +1,5 @@
 package uk.ac.ox.softeng.mauro.domain.datamodel
 
-import uk.ac.ox.softeng.mauro.domain.diff.BaseCollectionDiff
-import uk.ac.ox.softeng.mauro.domain.diff.CollectionDiff
-import uk.ac.ox.softeng.mauro.domain.diff.DiffBuilder
-import uk.ac.ox.softeng.mauro.domain.diff.DiffableItem
-import uk.ac.ox.softeng.mauro.domain.diff.ObjectDiff
-import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
-import uk.ac.ox.softeng.mauro.domain.model.Model
-import uk.ac.ox.softeng.mauro.domain.model.ModelItem
-
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import groovy.transform.AutoClone
@@ -19,6 +10,10 @@ import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Relation
 import jakarta.persistence.*
+import uk.ac.ox.softeng.mauro.domain.diff.*
+import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
+import uk.ac.ox.softeng.mauro.domain.model.Model
+import uk.ac.ox.softeng.mauro.domain.model.ModelItem
 
 /**
  * A datatype describes the range of values that a column or field in a dataset may take.  It may be one of the following kinds:
@@ -67,6 +62,9 @@ class DataClass extends ModelItem<DataModel> implements DiffableItem<DataClass> 
     @JsonIgnore
     List<DataClass> extendedBy = []
 
+    @Nullable
+    @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'reference_class_id')
+    List<ReferenceType> referenceTypes = []
 
     @JsonIgnore
     @Nullable
