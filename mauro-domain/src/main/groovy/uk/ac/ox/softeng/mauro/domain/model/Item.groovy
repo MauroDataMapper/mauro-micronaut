@@ -4,6 +4,7 @@ import uk.ac.ox.softeng.mauro.domain.security.CatalogueUser
 
 import com.fasterxml.jackson.annotation.JsonAlias
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.Nullable
