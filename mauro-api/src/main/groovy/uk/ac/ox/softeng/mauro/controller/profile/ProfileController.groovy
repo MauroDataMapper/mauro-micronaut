@@ -152,6 +152,7 @@ class ProfileController implements AdministeredItemReader, ProfileApi {
         new AppliedProfile(profile, administeredItem, bodyMap)
     }
 
+    @Audit
     @Post(Paths.PROFILE_ITEM)
     AppliedProfile applyProfile(String domainType, UUID domainId, String namespace, String name, @Nullable String version, @Body Map bodyMap) {
         AdministeredItem administeredItem = readAdministeredItem(domainType, domainId)

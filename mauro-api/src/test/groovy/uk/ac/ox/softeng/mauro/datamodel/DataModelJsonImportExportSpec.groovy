@@ -1,9 +1,5 @@
 package uk.ac.ox.softeng.mauro.datamodel
 
-<<<<<<< HEAD
-=======
-
->>>>>>> 7e97a36b (Include folders in paths)
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataElement
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
