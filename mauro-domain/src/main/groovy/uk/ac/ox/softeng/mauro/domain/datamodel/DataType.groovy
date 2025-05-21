@@ -81,6 +81,14 @@ class DataType extends ModelItem<DataModel> implements DiffableItem<DataType> {
     @JsonProperty('reference_class_id')
     DataClass referenceClass
 
+    @Nullable
+    @MappedProperty('model_resource_domain_type')
+    String modelResourceDomainType
+
+    @Nullable
+    @MappedProperty('model_resource_id')
+    UUID modelResourceId
+
     @Override
     String getDomainType() {
         dataTypeKind?.toString()

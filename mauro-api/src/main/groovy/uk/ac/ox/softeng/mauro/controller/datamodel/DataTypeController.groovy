@@ -78,10 +78,10 @@ class DataTypeController extends AdministeredItemController<DataType, DataModel>
         if (cleanItem.referenceClass) {
             cleanItem.referenceClass = validatedReferenceClass(dataType, parent)
         }
-        DataType created = super.createEntity(parent, dataType)
+        DataType created = super.createEntity(parent, cleanItem)
         created = super.validateAndAddClassifiers(created)
 
-        if(dataType.enumerationValues) {
+        if (dataType.enumerationValues) {
             dataType.enumerationValues.each {enumValue ->
                 enumValue.enumerationType = (DataType) dataType
                 enumerationValueRepository.save(enumValue)
