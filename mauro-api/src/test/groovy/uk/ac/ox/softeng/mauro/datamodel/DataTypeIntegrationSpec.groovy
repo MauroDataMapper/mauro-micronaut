@@ -1,6 +1,5 @@
 package uk.ac.ox.softeng.mauro.datamodel
 
-
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
@@ -14,13 +13,13 @@ import io.micronaut.http.client.exceptions.HttpClientResponseException
 import io.micronaut.test.annotation.Sql
 import jakarta.inject.Singleton
 import spock.lang.Shared
-
+import spock.lang.Unroll
 
 @ContainerizedTest
 @Singleton
 @Sql(scripts = ["classpath:sql/tear-down-datamodel.sql"], phase = Sql.Phase.AFTER_EACH)
 class DataTypeIntegrationSpec extends CommonDataSpec {
-
+    static String DATATYPE_LABEL = 'test modelType dataType label'
     @Shared
     UUID folderId
 
@@ -164,6 +163,60 @@ class DataTypeIntegrationSpec extends CommonDataSpec {
 
         dataType2.referenceClass == dataClass2
     }
+
+    void 'create dataType with DataTypeKind modelType - should create'() {
+        when:
+        DataType created = dataTypeApi.create(
+            dataModelId,
+            new DataType(label: DATATYPE_LABEL,
+                         description: 'Test model type description',
+                         dataTypeKind: DataType.DataTypeKind.MODEL_TYPE,
+                         domainType: 'ModelType',
+                         modelResourceDomainType: Folder.class.simpleName,
+                         modelResourceId: folderId))
+        then:
+        created
+        created.domainType == DataType.DataTypeKind.MODEL_TYPE.stringValue
+        created.label == DATATYPE_LABEL
+        created.modelResourceDomainType == Folder.class.simpleName
+        created.modelResourceId == folderId
+
+        when:
+        DataType retrieved = dataTypeApi.show(dataModelId, created.id)
+        then:
+        retrieved
+        retrieved.modelResourceId == folderId
+        retrieved.modelResourceDomainType == Folder.class.simpleName
+
+        when:
+        HttpResponse response = dataTypeApi.delete(dataModelId, retrieved.id, retrieved)
+        then:
+        response.status() == HttpStatus.NO_CONTENT
+    }
+
+    @Unroll
+    void 'create dataType for #domainType, #modelResourceDomainType, #modelResourceId -should throw #expectedException'() {
+        when:
+        dataTypeApi.create(
+            dataModelId,
+            new DataType(label: DATATYPE_LABEL,
+                         description: 'Test model type description',
+                         dataTypeKind: DataType.DataTypeKind.MODEL_TYPE,
+                         domainType: domainType,
+                         modelResourceDomainType: modelResourceDomainType,
+                         modelResourceId: modelResourceId))
+        then:
+        HttpClientResponseException exception = thrown()
+        exception.status == expectedException
+
+        where:
+        domainType      | modelResourceDomainType    | modelResourceId   | expectedException
+        'ModelType'     | DataClass.class.simpleName | dataClassId1      | HttpStatus.BAD_REQUEST
+        'ModelType'     | _                          | UUID.randomUUID() | HttpStatus.BAD_REQUEST
+        'ReferenceType' | _                          | UUID.randomUUID() | HttpStatus.BAD_REQUEST
+    }
+
+
 
     void 'should delete dataType'() {
         given:

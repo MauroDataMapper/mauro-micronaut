@@ -98,7 +98,6 @@ class SubscribedModelController extends ItemController<SubscribedModel> {
         //todo versionLinks
         subscribedModel.localModelId = importedModel.id
         subscribedModel.subscribedModelType = importedModel.domainType
-        println(">>>>>>>>>>SubscribedModel type: $subscribedModel.domainType ")
         SubscribedModel saved = subscribedModelCacheableRepository.save(subscribedModel)
         saved
     }
