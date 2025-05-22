@@ -77,7 +77,7 @@ class DataTypeController extends AdministeredItemController<DataType, DataModel>
         DataType cleanItem = super.cleanBody(dataType) as DataType
         Item parent = super.validate(cleanItem, dataModelId)
         if (cleanItem.referenceClass) {
-            cleanItem.referenceClass = validatedReferenceClass(dataType, parent)
+            cleanItem.referenceClass = validatedReferenceClass(cleanItem, parent)
         }
         DataModelHelper.validateModelTypeFields(cleanItem)
         if (cleanItem.domainType == DataType.DataTypeKind.MODEL_TYPE.stringValue) {
