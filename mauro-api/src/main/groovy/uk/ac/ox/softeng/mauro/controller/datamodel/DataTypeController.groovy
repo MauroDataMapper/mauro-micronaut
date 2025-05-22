@@ -5,11 +5,12 @@ import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.datamodel.DataTypeApi
 import uk.ac.ox.softeng.mauro.audit.Audit
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
-import uk.ac.ox.softeng.mauro.domain.facet.EditType
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.model.Item
+import uk.ac.ox.softeng.mauro.domain.model.Model
 import uk.ac.ox.softeng.mauro.domain.security.Role
 import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository
+import uk.ac.ox.softeng.mauro.service.datamodel.DataModelHelper
 
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
@@ -73,15 +74,19 @@ class DataTypeController extends AdministeredItemController<DataType, DataModel>
     @Post(Paths.DATA_TYPE_LIST)
     @Transactional
     DataType create(UUID dataModelId, @Body @NonNull DataType dataType) {
-        DataType cleanItem = super.cleanBody(dataType)
+        DataType cleanItem = super.cleanBody(dataType) as DataType
         Item parent = super.validate(cleanItem, dataModelId)
         if (cleanItem.referenceClass) {
-            cleanItem.referenceClass = validatedReferenceClass(dataType, parent)
+            cleanItem.referenceClass = validatedReferenceClass(cleanItem, parent)
         }
-        DataType created = super.createEntity(parent, dataType)
-        created = super.validateAndAddClassifiers(created)
+        DataModelHelper.validateModelTypeFields(cleanItem)
+        if (cleanItem.domainType == DataType.DataTypeKind.MODEL_TYPE.stringValue) {
+            validateModelResource(cleanItem)
+        }
+        DataType created = super.createEntity(parent, cleanItem) as DataType
+        created = super.validateAndAddClassifiers(created) as DataType
 
-        if(dataType.enumerationValues) {
+        if (dataType.enumerationValues) {
             dataType.enumerationValues.each {enumValue ->
                 enumValue.enumerationType = (DataType) dataType
                 enumerationValueRepository.save(enumValue)
@@ -123,7 +128,7 @@ class DataTypeController extends AdministeredItemController<DataType, DataModel>
     private DataClass validatedReferenceClass(DataType dataType, AdministeredItem parent) {
         DataClass referenceClass = getReferenceDataClass(dataType.referenceClass?.id)
         if (referenceClass.dataModel.id != parent.id){
-            ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY," DataClass $referenceClass.id assigned to DataType must belong to same datamodel")
+            ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "DataClass $referenceClass.id assigned to DataType must belong to same datamodel")
         }
         DataType sameLabelInModel = dataTypeRepository.findAllByParent(parent).find {
             it.domainType == DataType.DataTypeKind.REFERENCE_TYPE.stringValue && it.label == dataType.label }
@@ -140,9 +145,16 @@ class DataTypeController extends AdministeredItemController<DataType, DataModel>
     }
 
     private DataType getReferenceClassProperties(DataType dataType) {
-        if (dataType.domainType == DataType.DataTypeKind.REFERENCE_TYPE.stringValue){
+        if (dataType.domainType == DataType.DataTypeKind.REFERENCE_TYPE.stringValue) {
             dataType.referenceClass = dataClassRepository.readById(dataType.referenceClass?.id)
         }
         dataType
+    }
+
+    private void validateModelResource(DataType dataType) {
+        AdministeredItem modelResource = super.readAdministeredItem(dataType.modelResourceDomainType, dataType.modelResourceId) as Model
+        if (!modelResource) {
+            ErrorHandler.handleError(HttpStatus.NOT_FOUND, "Item not found : $dataType.modelResourceId, $dataType.modelResourceDomainType")
+        }
     }
 }
