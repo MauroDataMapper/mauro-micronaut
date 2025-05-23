@@ -18,7 +18,6 @@ import io.micronaut.security.rules.SecurityRule
 @Slf4j
 @Controller
 @Secured(SecurityRule.IS_ANONYMOUS)
-@Controller
 class OpenidProviderController implements OpenidProviderApi {
 
     @Nullable
@@ -48,6 +47,5 @@ class OpenidProviderController implements OpenidProviderApi {
                 imageUrl)
         [openidConnectProvider]
     }
-
 
 }

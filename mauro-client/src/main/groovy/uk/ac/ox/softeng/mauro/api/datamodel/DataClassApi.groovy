@@ -6,6 +6,7 @@ import uk.ac.ox.softeng.mauro.api.model.AdministeredItemApi
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.web.ListResponse
+import uk.ac.ox.softeng.mauro.web.PaginationParams
 
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
@@ -15,7 +16,6 @@ import io.micronaut.http.annotation.Delete
 import io.micronaut.http.annotation.Get
 import io.micronaut.http.annotation.Post
 import io.micronaut.http.annotation.Put
-import uk.ac.ox.softeng.mauro.web.PaginationParams
 
 @MauroApi
 interface DataClassApi extends AdministeredItemApi<DataClass, DataModel> {
@@ -34,6 +34,9 @@ interface DataClassApi extends AdministeredItemApi<DataClass, DataModel> {
 
     @Get(Paths.DATA_CLASS_SEARCH)
     ListResponse<DataClass> list(UUID dataModelId, @Nullable PaginationParams params)
+
+    @Get(Paths.DATA_CLASS_SEARCH)
+    ListResponse<DataClass> list(UUID dataModelId)
 
     @Get(Paths.DATA_CLASS_CHILD_DATA_CLASS_ID)
     DataClass show(UUID dataModelId, UUID parentDataClassId, UUID id)

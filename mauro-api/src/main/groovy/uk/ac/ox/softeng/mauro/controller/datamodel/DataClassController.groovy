@@ -1,6 +1,5 @@
 package uk.ac.ox.softeng.mauro.controller.datamodel
 
-import io.micronaut.http.HttpStatus
 import uk.ac.ox.softeng.mauro.ErrorHandler
 import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.datamodel.DataClassApi
@@ -13,11 +12,13 @@ import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableReposit
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.DataModelCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.datamodel.DataModelContentRepository
 import uk.ac.ox.softeng.mauro.web.ListResponse
+import uk.ac.ox.softeng.mauro.web.PaginationParams
 
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpResponse
+import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Delete
@@ -27,7 +28,6 @@ import io.micronaut.http.annotation.Put
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
 import jakarta.inject.Inject
-import uk.ac.ox.softeng.mauro.web.PaginationParams
 
 @CompileStatic
 @Controller
@@ -74,7 +74,7 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
 
     @Audit
     @Get(Paths.DATA_CLASS_SEARCH)
-    ListResponse<DataClass> list(UUID dataModelId, @Nullable PaginationParams params) {
+    ListResponse<DataClass> list(UUID dataModelId, @Nullable PaginationParams params = new PaginationParams()) {
         DataModel dataModel = dataModelRepository.readById(dataModelId)
         accessControlService.checkRole(Role.READER, dataModel)
         List<DataClass> classes = dataClassRepository.readAllByDataModelAndParentDataClassIsNull(dataModel)

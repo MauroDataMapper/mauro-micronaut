@@ -1,6 +1,5 @@
 package uk.ac.ox.softeng.mauro.datamodel
 
-
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataElement
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
@@ -20,7 +19,6 @@ import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
 import jakarta.inject.Singleton
 import spock.lang.Shared
-import uk.ac.ox.softeng.mauro.web.PaginationParams
 
 @ContainerizedTest
 @Singleton
@@ -201,7 +199,7 @@ class DataModelIntegrationSpec extends CommonDataSpec {
 
         when:
         ListResponse<DataClass> dataClassListResponse =
-            dataClassApi.list(dataModelId, new PaginationParams())
+            dataClassApi.list(dataModelId)
 
         then:
         dataClassListResponse.count == 2
@@ -256,7 +254,7 @@ class DataModelIntegrationSpec extends CommonDataSpec {
 
     void 'test data elements'() {
         when:
-        ListResponse<DataElement> dataElementListResponse = dataElementApi.list(dataModelId, dataClassId1, new PaginationParams())
+        ListResponse<DataElement> dataElementListResponse = dataElementApi.list(dataModelId, dataClassId1)
         then:
         dataElementListResponse.count == 0
 
@@ -274,7 +272,7 @@ class DataModelIntegrationSpec extends CommonDataSpec {
         dataElementResponse.label == 'First data element'
 
         when:
-        dataElementListResponse = dataElementApi.list(dataModelId, dataClassId1, new PaginationParams())
+        dataElementListResponse = dataElementApi.list(dataModelId, dataClassId1)
 
         then:
         dataElementListResponse.count == 1
@@ -292,7 +290,7 @@ class DataModelIntegrationSpec extends CommonDataSpec {
         dataElementResponse.label == 'Second data element'
 
         when:
-        dataElementListResponse = dataElementApi.list(dataModelId, dataClassId1, new PaginationParams())
+        dataElementListResponse = dataElementApi.list(dataModelId, dataClassId1)
 
         then:
         dataElementListResponse.count == 2
@@ -325,7 +323,7 @@ class DataModelIntegrationSpec extends CommonDataSpec {
         dataElementResponse.minMultiplicity != minMultiplicity
 
         when:
-        dataElementListResponse = dataElementApi.list(dataModelId, dataClassId1, new PaginationParams())
+        dataElementListResponse = dataElementApi.list(dataModelId, dataClassId1)
 
         then:
         dataElementListResponse.count == 2
@@ -342,7 +340,7 @@ class DataModelIntegrationSpec extends CommonDataSpec {
         response.status == HttpStatus.NO_CONTENT
 
         when:
-        dataElementListResponse = dataElementApi.list(dataModelId, dataClassId1, new PaginationParams())
+        dataElementListResponse = dataElementApi.list(dataModelId, dataClassId1)
 
         then:
         dataElementListResponse.count == 1

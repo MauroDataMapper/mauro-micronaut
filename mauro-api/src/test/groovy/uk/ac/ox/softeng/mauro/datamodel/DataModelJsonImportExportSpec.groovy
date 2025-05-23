@@ -11,13 +11,13 @@ import uk.ac.ox.softeng.mauro.export.ExportModel
 import uk.ac.ox.softeng.mauro.persistence.ContainerizedTest
 import uk.ac.ox.softeng.mauro.testing.CommonDataSpec
 import uk.ac.ox.softeng.mauro.web.ListResponse
+import uk.ac.ox.softeng.mauro.web.PaginationParams
 
 import groovy.json.JsonSlurper
 import io.micronaut.http.MediaType
 import io.micronaut.http.client.multipart.MultipartBody
 import jakarta.inject.Singleton
 import spock.lang.Shared
-import uk.ac.ox.softeng.mauro.web.PaginationParams
 
 @ContainerizedTest
 @Singleton
@@ -130,7 +130,7 @@ class DataModelJsonImportExportSpec extends CommonDataSpec {
         dataModel.path.toString() == 'fo:Test folder|dm:Test data model$main'
 
         when:
-        ListResponse<DataClass> dataClasses = dataClassApi.list(importedDataModelId, new PaginationParams())
+        ListResponse<DataClass> dataClasses = dataClassApi.list(importedDataModelId)
 
         then:
         DataClass dataClassResponse = dataClassApi.show(importedDataModelId, dataClasses.items.find { it.label == 'TEST-2'}.id)
@@ -161,7 +161,7 @@ class DataModelJsonImportExportSpec extends CommonDataSpec {
 
         when:
         ListResponse<SummaryMetadata> copiedSummaryMetadata =
-            summaryMetadataApi.list("dataElement", copyDataElementId, new PaginationParams())
+            summaryMetadataApi.list("dataElement", copyDataElementId)
         then:
         copiedSummaryMetadata
         copiedSummaryMetadata.items.size() == 1

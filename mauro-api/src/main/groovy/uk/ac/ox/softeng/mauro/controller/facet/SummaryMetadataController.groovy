@@ -1,27 +1,32 @@
 package uk.ac.ox.softeng.mauro.controller.facet
 
-import io.micronaut.core.annotation.Nullable
-import uk.ac.ox.softeng.mauro.web.PaginationParams
 import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.facet.SummaryMetadataApi
 import uk.ac.ox.softeng.mauro.audit.Audit
-
-import groovy.transform.CompileStatic
-import io.micronaut.core.annotation.NonNull
-import io.micronaut.http.HttpResponse
-import io.micronaut.http.annotation.*
-import io.micronaut.security.annotation.Secured
-import io.micronaut.security.rules.SecurityRule
-import io.micronaut.transaction.annotation.Transactional
-import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
-import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadataReport
+import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.security.Role
 import uk.ac.ox.softeng.mauro.persistence.cache.FacetCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.ItemCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.facet.SummaryMetadataReportRepository
 import uk.ac.ox.softeng.mauro.web.ListResponse
+import uk.ac.ox.softeng.mauro.web.PaginationParams
+
+import groovy.transform.CompileStatic
+import io.micronaut.core.annotation.NonNull
+import io.micronaut.core.annotation.Nullable
+import io.micronaut.http.HttpResponse
+import io.micronaut.http.annotation.Body
+import io.micronaut.http.annotation.Controller
+import io.micronaut.http.annotation.Delete
+import io.micronaut.http.annotation.Get
+import io.micronaut.http.annotation.Post
+import io.micronaut.http.annotation.Put
+import io.micronaut.security.annotation.Secured
+import io.micronaut.security.rules.SecurityRule
+import io.micronaut.transaction.annotation.Transactional
+import jakarta.inject.Inject
 
 @CompileStatic
 @Controller
@@ -49,7 +54,7 @@ class SummaryMetadataController extends FacetController<SummaryMetadata> impleme
 
     @Audit
     @Get(Paths.SUMMARY_METADATA_SEARCH)
-    ListResponse<SummaryMetadata> list(String domainType, UUID domainId, @Nullable PaginationParams params) {
+    ListResponse<SummaryMetadata> list(String domainType, UUID domainId, @Nullable PaginationParams params = new PaginationParams()) {
         AdministeredItem administeredItem = findAdministeredItem(domainType, domainId)
         accessControlService.checkRole(Role.READER, administeredItem)
 
