@@ -1,8 +1,10 @@
 package uk.ac.ox.softeng.mauro.profile
 
-import uk.ac.ox.softeng.mauro.domain.facet.Metadata
-import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
+import groovy.transform.CompileStatic
+import io.micronaut.core.annotation.Introspected
 
+@Introspected
+@CompileStatic
 class ProfileSection {
 
     String label

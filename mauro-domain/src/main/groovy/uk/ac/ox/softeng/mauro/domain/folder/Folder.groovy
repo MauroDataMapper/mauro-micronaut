@@ -105,7 +105,7 @@ class Folder extends Model {
     @Transient
     @JsonIgnore
     Folder getOwner() {
-        parentFolder ? parentFolder.owner : this
+        this
     }
 
     @Override

@@ -177,7 +177,7 @@ abstract class AdministeredItem extends Item {
         AdministeredItem node = this
         while (node) {
             pathNodes.add(0, new Path.PathNode(prefix: node.pathPrefix, identifier: node.pathIdentifier, modelIdentifier: node.pathModelIdentifier))
-            if (node.owner == node) break // root of Path is the owner of the item
+            if (node.parent == node) break // disallow cycles
             i++; node = node.parent
             if (i > Path.PATH_MAX_NODES) throw new MauroInternalException("Path exceeded maximum depth of [$Path.PATH_MAX_NODES]")
         }
@@ -202,7 +202,7 @@ abstract class AdministeredItem extends Item {
             if (i > Path.PATH_MAX_NODES) throw new MauroInternalException("Breadcrumbs exceeded maximum depth of [$Path.PATH_MAX_NODES]")
         }
 
-        this.breadcrumbs = breadcrumbs.tail()
+        this.breadcrumbs = breadcrumbs.tail().reverse()
         this.breadcrumbs
     }
 
