@@ -3,7 +3,7 @@
 -- Authority
 create table core."authority"
 (
-    "id"                              uuid primary key not null default uuid_generate_v4(),
+    "id"                              uuid primary key not null default gen_random_uuid(),
     "version"                         integer          not null,
     "date_created"                    timestamp with time zone,
     "last_updated"                    timestamp with time zone,
@@ -21,7 +21,7 @@ create table core."authority"
 -- Metadata
 create table "core"."metadata"
 (
-    "id"                                 uuid primary key not null default uuid_generate_v4(),
+    "id"                                 uuid primary key not null default gen_random_uuid(),
     "version"                            integer          not null,
     "date_created"                       timestamp with time zone,
     "last_updated"                       timestamp with time zone,
@@ -53,7 +53,7 @@ create unique index "idx_version_link_multi_facet_aware_item_id_target_model_id"
 -- Folder
 create table core."folder"
 (
-    "id"                              uuid primary key not null default uuid_generate_v4(),
+    "id"                              uuid primary key not null default gen_random_uuid(),
     "version"                         integer          not null,
     "date_created"                    timestamp with time zone,
     "last_updated"                    timestamp with time zone,
@@ -81,7 +81,7 @@ create index "idx_folder_parent_folder_id" on core."folder" (parent_folder_id);
 
 create table security."catalogue_user"
 (
-    "id"               uuid primary key not null default uuid_generate_v4(),
+    "id"               uuid primary key not null default gen_random_uuid(),
     "version"          integer          not null,
     "date_created"     timestamp with time zone,
     "last_updated"     timestamp with time zone,
@@ -106,7 +106,7 @@ create unique index "idx_catalogue_user_email_address" on "security"."catalogue_
 
 create table security."user_group"
 (
-    "id"               uuid primary key not null default uuid_generate_v4(),
+    "id"               uuid primary key not null default gen_random_uuid(),
     "version"          integer          not null,
     "date_created"     timestamp with time zone,
     "last_updated"     timestamp with time zone,
@@ -120,7 +120,7 @@ create unique index "idx_security_user_group_name" on security.user_group (trim(
 
 create table security."securable_resource_group_role"
 (
-    "id"                             uuid primary key not null default uuid_generate_v4(),
+    "id"                             uuid primary key not null default gen_random_uuid(),
     "version"                        integer          not null,
     "date_created"                   timestamp with time zone,
     "last_updated"                   timestamp with time zone,
@@ -144,7 +144,7 @@ create index "idx_user_group_catalogue_user_user_group_id" on security.user_grou
 
 create table terminology."terminology"
 (
-    "id"                              uuid primary key not null default uuid_generate_v4(),
+    "id"                              uuid primary key not null default gen_random_uuid(),
     "version"                         integer          not null,
     "date_created"                    timestamp with time zone,
     "last_updated"                    timestamp with time zone,
@@ -172,7 +172,7 @@ create unique index "idx_terminology_folder_id_label_branch_name_model_version" 
 
 create table terminology."term_relationship_type"
 (
-    "id"                    uuid primary key not null default uuid_generate_v4(),
+    "id"                    uuid primary key not null default gen_random_uuid(),
     "version"               integer          not null,
     "date_created"          timestamp with time zone,
     "last_updated"          timestamp with time zone,
@@ -191,7 +191,7 @@ create unique index "idx_term_relationship_type_terminology_id_label" on termino
 
 create table terminology."term"
 (
-    "id"                 uuid primary key not null default uuid_generate_v4(),
+    "id"                 uuid primary key not null default gen_random_uuid(),
     "version"            integer          not null,
     "date_created"       timestamp with time zone,
     "last_updated"       timestamp with time zone,
@@ -212,7 +212,7 @@ create unique index "idx_term_terminology_id_code" on terminology."term" (termin
 
 create table terminology."term_relationship"
 (
-    "id"                   uuid primary key not null default uuid_generate_v4(),
+    "id"                   uuid primary key not null default gen_random_uuid(),
     "version"              integer          not null,
     "date_created"         timestamp with time zone,
     "last_updated"         timestamp with time zone,
@@ -236,7 +236,7 @@ create index "idx_term_relationship_relationship_type_id" on terminology."term_r
 -- # DataModel
 
 create table datamodel."data_model" (
-    "id"                              uuid primary key not null default uuid_generate_v4(),
+    "id"                              uuid primary key not null default gen_random_uuid(),
     "version"                         integer          not null,
     "date_created"                    timestamp with time zone,
     "last_updated"                    timestamp with time zone,
@@ -267,7 +267,7 @@ create index "idx_data_model_folder_id" on datamodel."data_model"(folder_id);
 
 
 create table datamodel."data_class" (
-    "id"                              uuid primary key not null default uuid_generate_v4(),
+    "id"                              uuid primary key not null default gen_random_uuid(),
     "version"                         integer          not null,
     "date_created"                    timestamp with time zone,
     "last_updated"                    timestamp with time zone,
@@ -287,7 +287,7 @@ create index "idx_data_class_data_model_id" on datamodel."data_class"(data_model
 create index "idx_data_class_parent_data_class_id" on datamodel."data_class"(parent_data_class_id);
 
 create table datamodel."data_type" (
-    "id"                              uuid primary key not null default uuid_generate_v4(),
+    "id"                              uuid primary key not null default gen_random_uuid(),
     "version"                         integer          not null,
     "date_created"                    timestamp with time zone,
     "last_updated"                    timestamp with time zone,
@@ -309,7 +309,7 @@ create index "idx_data_type_data_model_id" on datamodel."data_type"(data_model_i
 create index "idx_data_type_reference_class_id" on datamodel."data_type"(reference_class_id);
 
 create table datamodel."data_element" (
-    "id"                              uuid primary key not null default uuid_generate_v4(),
+    "id"                              uuid primary key not null default gen_random_uuid(),
     "version"                         integer          not null,
     "date_created"                    timestamp with time zone,
     "last_updated"                    timestamp with time zone,
@@ -329,7 +329,7 @@ create index "idx_data_element_data_type_id" on datamodel."data_element"(data_ty
 
 
 create table datamodel."enumeration_value" (
-    "id"                              uuid primary key not null default uuid_generate_v4(),
+    "id"                              uuid primary key not null default gen_random_uuid(),
     "version"                         integer          not null,
     "date_created"                    timestamp with time zone,
     "last_updated"                    timestamp with time zone,
@@ -356,7 +356,7 @@ create index "idx_join_dataclass_to_extended_data_class_id" on datamodel."join_d
 create index "idx_join_dataclass_to_extended_data_class_extended_dataclass_id" on datamodel."join_dataclass_to_extended_data_class"(extended_dataclass_id);
 
 create table "core"."edit" (
-    "id"                                 uuid primary key         not null default uuid_generate_v4(),
+    "id"                                 uuid primary key         not null default gen_random_uuid(),
     "version"                            integer                  not null,
     "date_created"                       timestamp with time zone not null,
     "last_updated"                       timestamp with time zone not null,

@@ -1,6 +1,6 @@
 -- # Core
 create table if not exists core."rule" (
-    "id"                                 uuid primary key not null default uuid_generate_v4(),
+    "id"                                 uuid primary key not null default gen_random_uuid(),
     "version"                            integer          not null,
     "date_created"                       timestamp with time zone,
     "last_updated"                       timestamp with time zone,
@@ -13,7 +13,7 @@ create table if not exists core."rule" (
 create unique index "idx_rule_multi_facet_aware_item_id_rule" on "core"."rule" (multi_facet_aware_item_id, name);
 
 create table if not exists core.rule_representation (
-    "id"                                 uuid primary key not null default uuid_generate_v4(),
+    "id"                                 uuid primary key not null default gen_random_uuid(),
     "version"                            integer          not null,
     "date_created"                       timestamp with time zone,
     "last_updated"                       timestamp with time zone,
