@@ -32,10 +32,10 @@ interface DataElementApi extends AdministeredItemApi<DataElement, DataClass> {
     @Delete(Paths.DATA_ELEMENT_ID)
     HttpResponse delete(UUID dataModelId, UUID dataClassId, UUID id, @Body @Nullable DataElement dataElement)
 
-    @Get(Paths.DATA_ELEMENT_SEARCH)
+    @Get(Paths.DATA_ELEMENT_LIST_PAGED)
     ListResponse<DataElement> list(UUID dataModelId, UUID dataClassId, @Nullable PaginationParams params)
 
-    @Get(Paths.DATA_ELEMENT_SEARCH)
+    @Get(Paths.DATA_ELEMENT_LIST_PAGED)
     ListResponse<DataElement> list(UUID dataModelId, UUID dataClassId)
 
     @Get(Paths.DATA_ELEMENT_DOI)
