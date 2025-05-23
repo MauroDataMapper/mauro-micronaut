@@ -1,22 +1,17 @@
 package uk.ac.ox.softeng.mauro.facet
 
-import io.micronaut.http.HttpResponse
-import io.micronaut.http.HttpStatus
-import io.micronaut.http.client.exceptions.HttpClientResponseException
-import io.micronaut.runtime.EmbeddedApplication
-import io.micronaut.test.annotation.Sql
-import jakarta.inject.Inject
-import jakarta.inject.Singleton
-import spock.lang.Shared
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
-import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadataReport
+import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.persistence.ContainerizedTest
 import uk.ac.ox.softeng.mauro.testing.CommonDataSpec
 import uk.ac.ox.softeng.mauro.web.ListResponse
-import uk.ac.ox.softeng.mauro.web.PaginationParams
 
-import java.time.Instant
+import io.micronaut.http.HttpResponse
+import io.micronaut.http.HttpStatus
+import io.micronaut.test.annotation.Sql
+import jakarta.inject.Singleton
+import spock.lang.Shared
 
 @ContainerizedTest
 @Singleton
@@ -137,7 +132,7 @@ class SummaryMetadataReportIntegrationSpec extends CommonDataSpec {
         SummaryMetadataReport report = summaryMetadataReportApi.create(
             "folder", folderId, summaryMetadata.id, summaryMetadataReport())
         when:
-        ListResponse<SummaryMetadata> metadataResponse = summaryMetadataApi.list("folder", folderId, new PaginationParams())
+        ListResponse<SummaryMetadata> metadataResponse = summaryMetadataApi.list("folder", folderId)
 
         then:
         metadataResponse

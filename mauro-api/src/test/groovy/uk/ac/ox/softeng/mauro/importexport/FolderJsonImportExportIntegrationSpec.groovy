@@ -1,27 +1,30 @@
 package uk.ac.ox.softeng.mauro.importexport
 
-import groovy.json.JsonSlurper
-import io.micronaut.http.HttpResponse
-import io.micronaut.http.MediaType
-import io.micronaut.http.client.multipart.MultipartBody
-import io.micronaut.runtime.EmbeddedApplication
-import io.micronaut.test.annotation.Sql
-import jakarta.inject.Inject
-import jakarta.inject.Singleton
-import spock.lang.Shared
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
 import uk.ac.ox.softeng.mauro.domain.facet.Annotation
 import uk.ac.ox.softeng.mauro.domain.facet.Metadata
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
-import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadataReport
-import uk.ac.ox.softeng.mauro.domain.terminology.*
+import uk.ac.ox.softeng.mauro.domain.folder.Folder
+import uk.ac.ox.softeng.mauro.domain.terminology.CodeSet
+import uk.ac.ox.softeng.mauro.domain.terminology.Term
+import uk.ac.ox.softeng.mauro.domain.terminology.TermRelationship
+import uk.ac.ox.softeng.mauro.domain.terminology.TermRelationshipType
+import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
 import uk.ac.ox.softeng.mauro.persistence.ContainerizedTest
 import uk.ac.ox.softeng.mauro.testing.CommonDataSpec
 import uk.ac.ox.softeng.mauro.web.ListResponse
 import uk.ac.ox.softeng.mauro.web.PaginationParams
+
+import groovy.json.JsonSlurper
+import io.micronaut.http.HttpResponse
+import io.micronaut.http.MediaType
+import io.micronaut.http.client.multipart.MultipartBody
+import io.micronaut.test.annotation.Sql
+import jakarta.inject.Singleton
+import spock.lang.Shared
 
 @ContainerizedTest
 @Singleton
@@ -239,7 +242,7 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
         importedMetadataResponse.items[0].id != metadataResponse.id
 
         when:
-        ListResponse<SummaryMetadata> importedSummaryMetadataResponse = summaryMetadataApi.list("folder", importedFolderId, new PaginationParams())
+        ListResponse<SummaryMetadata> importedSummaryMetadataResponse = summaryMetadataApi.list("folder", importedFolderId)
         then:
         importedSummaryMetadataResponse
         importedSummaryMetadataResponse.items.size() == 1

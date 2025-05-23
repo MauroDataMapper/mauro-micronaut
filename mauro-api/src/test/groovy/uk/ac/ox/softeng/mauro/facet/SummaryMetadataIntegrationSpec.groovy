@@ -1,21 +1,18 @@
 package uk.ac.ox.softeng.mauro.facet
 
-import io.micronaut.http.HttpResponse
-import io.micronaut.http.HttpStatus
-import io.micronaut.http.client.exceptions.HttpClientResponseException
-import io.micronaut.runtime.EmbeddedApplication
-import io.micronaut.test.annotation.Sql
-import jakarta.inject.Inject
-import jakarta.inject.Singleton
-import spock.lang.Shared
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
+import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadataReport
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadataType
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
-import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadataReport
 import uk.ac.ox.softeng.mauro.persistence.ContainerizedTest
 import uk.ac.ox.softeng.mauro.testing.CommonDataSpec
 import uk.ac.ox.softeng.mauro.web.ListResponse
-import uk.ac.ox.softeng.mauro.web.PaginationParams
+
+import io.micronaut.http.HttpResponse
+import io.micronaut.http.HttpStatus
+import io.micronaut.test.annotation.Sql
+import jakarta.inject.Singleton
+import spock.lang.Shared
 
 @ContainerizedTest
 @Singleton
@@ -34,7 +31,7 @@ class SummaryMetadataIntegrationSpec extends CommonDataSpec {
 
     void 'list empty SummaryMetadata'() {
         when:
-        ListResponse<SummaryMetadata> response = summaryMetadataApi.list("folder", folderId, new PaginationParams())
+        ListResponse<SummaryMetadata> response = summaryMetadataApi.list("folder", folderId)
 
         then:
         response.count == 0
@@ -56,7 +53,7 @@ class SummaryMetadataIntegrationSpec extends CommonDataSpec {
         summaryMetadataApi.create("folder", folderId, summaryMetadataPayload())
 
         when:
-        ListResponse<SummaryMetadata> response = summaryMetadataApi.list("folder", folderId, new PaginationParams())
+        ListResponse<SummaryMetadata> response = summaryMetadataApi.list("folder", folderId)
 
         then:
         response
@@ -109,7 +106,7 @@ class SummaryMetadataIntegrationSpec extends CommonDataSpec {
         !summaryMetadata
 
         when:
-        ListResponse<SummaryMetadata> responseList = summaryMetadataApi.list("folder", folderId, new PaginationParams())
+        ListResponse<SummaryMetadata> responseList = summaryMetadataApi.list("folder", folderId)
 
         then: 'the list endpoint shows the update'
         responseList
