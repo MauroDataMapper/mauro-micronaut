@@ -1,22 +1,5 @@
 package uk.ac.ox.softeng.mauro.controller.datamodel
 
-import groovy.transform.CompileStatic
-import groovy.util.logging.Slf4j
-import io.micronaut.context.annotation.Parameter
-import io.micronaut.core.annotation.NonNull
-import io.micronaut.core.annotation.Nullable
-import io.micronaut.http.HttpResponse
-import io.micronaut.http.HttpStatus
-import io.micronaut.http.MediaType
-import io.micronaut.http.annotation.*
-import io.micronaut.http.exceptions.HttpStatusException
-import io.micronaut.http.server.multipart.MultipartBody
-import io.micronaut.scheduling.TaskExecutors
-import io.micronaut.scheduling.annotation.ExecuteOn
-import io.micronaut.security.annotation.Secured
-import io.micronaut.security.rules.SecurityRule
-import io.micronaut.transaction.annotation.Transactional
-import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.ErrorHandler
 import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.datamodel.DataModelApi
@@ -30,10 +13,18 @@ import uk.ac.ox.softeng.mauro.api.model.VersionLinkDTO
 import uk.ac.ox.softeng.mauro.api.model.VersionLinkTargetDTO
 import uk.ac.ox.softeng.mauro.audit.Audit
 import uk.ac.ox.softeng.mauro.controller.model.ModelController
-import uk.ac.ox.softeng.mauro.domain.datamodel.*
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataElement
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataModelService
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
+import uk.ac.ox.softeng.mauro.domain.datamodel.IntersectsData
+import uk.ac.ox.softeng.mauro.domain.datamodel.IntersectsManyData
+import uk.ac.ox.softeng.mauro.domain.datamodel.SubsetData
 import uk.ac.ox.softeng.mauro.domain.diff.FieldDiff
 import uk.ac.ox.softeng.mauro.domain.diff.ObjectDiff
 import uk.ac.ox.softeng.mauro.domain.facet.EditType
+import uk.ac.ox.softeng.mauro.domain.facet.VersionLink
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.model.Model
 import uk.ac.ox.softeng.mauro.domain.model.Path
@@ -41,7 +32,6 @@ import uk.ac.ox.softeng.mauro.domain.model.version.CreateNewVersionData
 import uk.ac.ox.softeng.mauro.domain.model.version.FinaliseData
 import uk.ac.ox.softeng.mauro.domain.model.version.ModelVersion
 import uk.ac.ox.softeng.mauro.domain.security.Role
-import uk.ac.ox.softeng.mauro.exception.MauroInternalException
 import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository.DataElementCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository.DataTypeCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.DataModelCacheableRepository
@@ -49,15 +39,37 @@ import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.FolderC
 import uk.ac.ox.softeng.mauro.persistence.datamodel.DataElementRepository
 import uk.ac.ox.softeng.mauro.persistence.datamodel.DataModelContentRepository
 import uk.ac.ox.softeng.mauro.persistence.datamodel.DataTypeContentRepository
-import uk.ac.ox.softeng.mauro.persistence.facet.AnnotationRepository
-import uk.ac.ox.softeng.mauro.persistence.facet.VersionLinkRepository
 import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchRepository
 import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchRequestDTO
 import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchResultsDTO
 import uk.ac.ox.softeng.mauro.plugin.exporter.DataModelExporterPlugin
 import uk.ac.ox.softeng.mauro.plugin.importer.DataModelImporterPlugin
 import uk.ac.ox.softeng.mauro.web.ListResponse
-import uk.ac.ox.softeng.mauro.domain.facet.VersionLink
+
+import groovy.transform.CompileStatic
+import groovy.util.logging.Slf4j
+import io.micronaut.context.annotation.Parameter
+import io.micronaut.core.annotation.NonNull
+import io.micronaut.core.annotation.Nullable
+import io.micronaut.http.HttpResponse
+import io.micronaut.http.HttpStatus
+import io.micronaut.http.MediaType
+import io.micronaut.http.annotation.Body
+import io.micronaut.http.annotation.Consumes
+import io.micronaut.http.annotation.Controller
+import io.micronaut.http.annotation.Delete
+import io.micronaut.http.annotation.Get
+import io.micronaut.http.annotation.Post
+import io.micronaut.http.annotation.Put
+import io.micronaut.http.annotation.QueryValue
+import io.micronaut.http.exceptions.HttpStatusException
+import io.micronaut.http.server.multipart.MultipartBody
+import io.micronaut.scheduling.TaskExecutors
+import io.micronaut.scheduling.annotation.ExecuteOn
+import io.micronaut.security.annotation.Secured
+import io.micronaut.security.rules.SecurityRule
+import io.micronaut.transaction.annotation.Transactional
+import jakarta.inject.Inject
 
 @Slf4j
 @Controller
@@ -212,7 +224,7 @@ class DataModelController extends ModelController<DataModel> implements DataMode
      * @param subsetData a list of source DataElement IDs to be copied
      * @return the IDs of the new DataElements in the target DataModel
      */
-    @Audit
+    @Audit(title = EditType.UPDATE, description = "Subset data model")
     @Put(Paths.DATA_MODEL_SUBSET)
     DataModel subset(UUID id, UUID otherId, @Body SubsetData subsetData) {
         DataModel dataModel = dataModelRepository.readById(id) // source i.e. rootDataModel
@@ -286,7 +298,7 @@ class DataModelController extends ModelController<DataModel> implements DataMode
      * @return {@link ListResponse} of {@link IntersectsData} containing the list of source DataElement IDs that intersected the target
      * DataModel
      */
-    @Audit
+    @Audit(level = Audit.AuditLevel.FILE_ONLY)
     @Post(Paths.DATA_MODEL_INTERSECTS_MANY)
     ListResponse<IntersectsData> intersectsMany(UUID id, @Body IntersectsManyData intersectsManyData) {
         DataModel sourceDataModel = dataModelRepository.readById(id)
@@ -747,6 +759,11 @@ class DataModelController extends ModelController<DataModel> implements DataMode
     @Override
     PermissionsDTO permissions(UUID id) {
         super.permissions(id)
+    }
+
+    @Get('/dataModels/providers/exporters')
+    List<DataModelExporterPlugin> dataModelExporters() {
+        mauroPluginService.listPlugins(DataModelExporterPlugin)
     }
 
     @Get(Paths.DATA_MODEL_DOI)

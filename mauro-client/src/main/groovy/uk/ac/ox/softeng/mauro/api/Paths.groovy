@@ -99,7 +99,7 @@ interface Paths {
     String DATA_ELEMENT_LIST = '/dataModels/{dataModelId}/dataClasses/{dataClassId}/dataElements'
     String DATA_ELEMENT_ID = '/dataModels/{dataModelId}/dataClasses/{dataClassId}/dataElements/{id}'
     String DATA_ELEMENT_DOI = '/dataElements/{id}/doi'
-    String DATA_ELEMENT_SEARCH = '/dataModels/{dataModelId}/dataClasses/{dataClassId}/dataElements{?params*}'
+    String DATA_ELEMENT_LIST_PAGED = '/dataModels/{dataModelId}/dataClasses/{dataClassId}/dataElements{?params*}'
 
 
     /*
@@ -191,7 +191,7 @@ interface Paths {
     * SummaryMetadataApi
     */
     String SUMMARY_METADATA_LIST = '/{domainType}/{domainId}/summaryMetadata'
-    String SUMMARY_METADATA_SEARCH = '/{domainType}/{domainId}/summaryMetadata{?params*}'
+    String SUMMARY_METADATA_LIST_PAGED = '/{domainType}/{domainId}/summaryMetadata{?params*}'
     String SUMMARY_METADATA_ID = '/{domainType}/{domainId}/summaryMetadata/{id}'
 
     /*

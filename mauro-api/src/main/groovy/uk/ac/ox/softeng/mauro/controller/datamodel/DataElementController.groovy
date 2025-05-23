@@ -109,7 +109,7 @@ class DataElementController extends AdministeredItemController<DataElement, Data
     }
 
     @Audit
-    @Get(Paths.DATA_ELEMENT_SEARCH)
+    @Get(Paths.DATA_ELEMENT_LIST_PAGED)
     ListResponse<DataElement> list(UUID dataModelId, UUID dataClassId, @Nullable PaginationParams params = new PaginationParams()) {
         DataClass dataClass = dataClassRepository.readById(dataClassId)
         accessControlService.checkRole(Role.READER, dataClass)

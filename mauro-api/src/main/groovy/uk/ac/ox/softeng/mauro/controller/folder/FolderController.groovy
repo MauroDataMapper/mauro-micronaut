@@ -1,19 +1,18 @@
 package uk.ac.ox.softeng.mauro.controller.folder
 
-import io.micronaut.http.HttpStatus
-import io.micronaut.http.annotation.QueryValue
-import io.micronaut.http.annotation.RequestBean
 import uk.ac.ox.softeng.mauro.ErrorHandler
 import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.folder.FolderApi
 import uk.ac.ox.softeng.mauro.api.model.PermissionsDTO
+import uk.ac.ox.softeng.mauro.audit.Audit
 import uk.ac.ox.softeng.mauro.controller.model.ModelController
 import uk.ac.ox.softeng.mauro.domain.facet.EditType
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.folder.FolderContentRepository
+import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchRequestDTO
+import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchResultsDTO
 import uk.ac.ox.softeng.mauro.plugin.exporter.ModelExporterPlugin
-import uk.ac.ox.softeng.mauro.audit.Audit
 import uk.ac.ox.softeng.mauro.service.plugin.PluginService
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
@@ -22,6 +21,7 @@ import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpResponse
+import io.micronaut.http.HttpStatus
 import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.annotation.Consumes
@@ -30,6 +30,8 @@ import io.micronaut.http.annotation.Delete
 import io.micronaut.http.annotation.Get
 import io.micronaut.http.annotation.Post
 import io.micronaut.http.annotation.Put
+import io.micronaut.http.annotation.QueryValue
+import io.micronaut.http.annotation.RequestBean
 import io.micronaut.http.server.multipart.MultipartBody
 import io.micronaut.scheduling.TaskExecutors
 import io.micronaut.scheduling.annotation.ExecuteOn
@@ -37,15 +39,6 @@ import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
 import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
-
-import uk.ac.ox.softeng.mauro.controller.model.ModelController
-import uk.ac.ox.softeng.mauro.domain.folder.Folder
-import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
-import uk.ac.ox.softeng.mauro.persistence.folder.FolderContentRepository
-import uk.ac.ox.softeng.mauro.plugin.exporter.ModelExporterPlugin
-import uk.ac.ox.softeng.mauro.web.ListResponse
-import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchRequestDTO
-import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchResultsDTO
 
 @Slf4j
 @CompileStatic
@@ -218,6 +211,7 @@ class FolderController extends ModelController<Folder> implements FolderApi {
         super.deleteReadByEveryone(id)
     }
 
+    @Audit
     @Get(Paths.FOLDER_PERMISSIONS)
     @Override
     PermissionsDTO permissions(UUID id) {

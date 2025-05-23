@@ -1,28 +1,11 @@
 package uk.ac.ox.softeng.mauro.controller.classifier
 
-import io.micronaut.http.HttpStatus
-import uk.ac.ox.softeng.mauro.api.classifier.ClassificationSchemeApi
-
 import uk.ac.ox.softeng.mauro.ErrorHandler
-
-import groovy.transform.CompileStatic
-import groovy.util.logging.Slf4j
-import io.micronaut.core.annotation.NonNull
-import io.micronaut.core.annotation.Nullable
-import io.micronaut.http.HttpResponse
-import io.micronaut.http.MediaType
-import io.micronaut.http.annotation.*
-import io.micronaut.http.server.multipart.MultipartBody
-import io.micronaut.http.server.types.files.StreamedFile
-import io.micronaut.scheduling.TaskExecutors
-import io.micronaut.scheduling.annotation.ExecuteOn
-import io.micronaut.security.annotation.Secured
-import io.micronaut.security.rules.SecurityRule
-import io.micronaut.transaction.annotation.Transactional
+import uk.ac.ox.softeng.mauro.api.Paths
+import uk.ac.ox.softeng.mauro.api.classifier.ClassificationSchemeApi
 import uk.ac.ox.softeng.mauro.api.model.PermissionsDTO
 import uk.ac.ox.softeng.mauro.audit.Audit
 import uk.ac.ox.softeng.mauro.controller.model.ModelController
-import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.domain.classifier.ClassificationScheme
 import uk.ac.ox.softeng.mauro.domain.diff.ObjectDiff
 import uk.ac.ox.softeng.mauro.domain.facet.EditType
@@ -32,6 +15,28 @@ import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.classifier.ClassificationSchemeContentRepository
 import uk.ac.ox.softeng.mauro.web.ListResponse
+
+import groovy.transform.CompileStatic
+import groovy.util.logging.Slf4j
+import io.micronaut.core.annotation.NonNull
+import io.micronaut.core.annotation.Nullable
+import io.micronaut.http.HttpResponse
+import io.micronaut.http.HttpStatus
+import io.micronaut.http.MediaType
+import io.micronaut.http.annotation.Body
+import io.micronaut.http.annotation.Consumes
+import io.micronaut.http.annotation.Controller
+import io.micronaut.http.annotation.Delete
+import io.micronaut.http.annotation.Get
+import io.micronaut.http.annotation.Post
+import io.micronaut.http.annotation.Put
+import io.micronaut.http.annotation.QueryValue
+import io.micronaut.http.server.multipart.MultipartBody
+import io.micronaut.scheduling.TaskExecutors
+import io.micronaut.scheduling.annotation.ExecuteOn
+import io.micronaut.security.annotation.Secured
+import io.micronaut.security.rules.SecurityRule
+import io.micronaut.transaction.annotation.Transactional
 
 @Slf4j
 @Controller
@@ -49,6 +54,7 @@ class ClassificationSchemeController extends ModelController<ClassificationSchem
         this.classificationSchemeContentRepository = classificationSchemeContentRepository
     }
 
+    @Audit
     @Get(Paths.CLASSIFICATION_SCHEMES_ID_ROUTE)
     ClassificationScheme show(UUID id) {
         super.show(id)
@@ -75,12 +81,13 @@ class ClassificationSchemeController extends ModelController<ClassificationSchem
         super.delete(id, classificationScheme, permanent)
     }
 
-
+    @Audit
     @Get(Paths.FOLDER_CLASSIFICATION_SCHEMES_ROUTE)
     ListResponse<ClassificationScheme> list(UUID folderId) {
         super.list(folderId)
     }
 
+    @Audit
     @Get(Paths.CLASSIFICATION_SCHEMES_LIST)
     ListResponse<ClassificationScheme> listAll() {
         super.listAll()

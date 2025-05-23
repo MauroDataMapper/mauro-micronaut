@@ -24,15 +24,6 @@ trait SubscribedCatalogueConverter {
         try {
             return OffsetDateTime.parse(value).toInstant()
         } catch (DateTimeParseException ignored) {
-            /*
-                if timezone is missing, assume it is a local date time (used for deserialising JSON from Postgres)
-                if this section of code is being hit, consider adding:
-                datasources:
-                    default:
-                        connection-init-sql: "SET TIME ZONE 'UTC'"
-
-                to mauro-api/src/main/resources/application.yml
-            */
             return LocalDateTime.parse(value).toInstant(OffsetDateTime.now().getOffset())
         }
     }

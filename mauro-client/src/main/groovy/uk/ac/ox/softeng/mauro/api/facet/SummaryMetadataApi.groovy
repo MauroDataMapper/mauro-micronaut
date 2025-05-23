@@ -18,10 +18,10 @@ import io.micronaut.http.annotation.Put
 @MauroApi
 interface SummaryMetadataApi extends FacetApi<SummaryMetadata> {
 
-    @Get(Paths.SUMMARY_METADATA_SEARCH)
+    @Get(Paths.SUMMARY_METADATA_LIST_PAGED)
     ListResponse<SummaryMetadata> list(String domainType, UUID domainId, @Nullable PaginationParams params)
 
-    @Get(Paths.SUMMARY_METADATA_SEARCH)
+    @Get(Paths.SUMMARY_METADATA_LIST_PAGED)
     ListResponse<SummaryMetadata> list(String domainType, UUID domainId)
 
     @Get(Paths.SUMMARY_METADATA_ID)

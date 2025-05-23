@@ -1,28 +1,13 @@
 package uk.ac.ox.softeng.mauro.controller.terminology
 
+import uk.ac.ox.softeng.mauro.ErrorHandler
 import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.model.PermissionsDTO
 import uk.ac.ox.softeng.mauro.api.terminology.CodeSetApi
-import uk.ac.ox.softeng.mauro.ErrorHandler
 import uk.ac.ox.softeng.mauro.audit.Audit
-import uk.ac.ox.softeng.mauro.domain.facet.EditType
-
-import groovy.transform.CompileStatic
-import groovy.util.logging.Slf4j
-import io.micronaut.core.annotation.NonNull
-import io.micronaut.core.annotation.Nullable
-import io.micronaut.http.HttpResponse
-import io.micronaut.http.HttpStatus
-import io.micronaut.http.annotation.*
-import io.micronaut.http.exceptions.HttpStatusException
-import io.micronaut.security.annotation.Secured
-import io.micronaut.security.rules.SecurityRule
-import io.micronaut.transaction.annotation.Transactional
-import jakarta.inject.Inject
-import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.controller.model.ModelController
 import uk.ac.ox.softeng.mauro.domain.diff.ObjectDiff
-import uk.ac.ox.softeng.mauro.domain.folder.Folder
+import uk.ac.ox.softeng.mauro.domain.facet.EditType
 import uk.ac.ox.softeng.mauro.domain.model.version.CreateNewVersionData
 import uk.ac.ox.softeng.mauro.domain.model.version.FinaliseData
 import uk.ac.ox.softeng.mauro.domain.security.Role
@@ -34,6 +19,25 @@ import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.terminology.CodeSetContentRepository
 import uk.ac.ox.softeng.mauro.persistence.terminology.CodeSetRepository
 import uk.ac.ox.softeng.mauro.web.ListResponse
+
+import groovy.transform.CompileStatic
+import groovy.util.logging.Slf4j
+import io.micronaut.core.annotation.NonNull
+import io.micronaut.core.annotation.Nullable
+import io.micronaut.http.HttpResponse
+import io.micronaut.http.HttpStatus
+import io.micronaut.http.annotation.Body
+import io.micronaut.http.annotation.Controller
+import io.micronaut.http.annotation.Delete
+import io.micronaut.http.annotation.Get
+import io.micronaut.http.annotation.Post
+import io.micronaut.http.annotation.Put
+import io.micronaut.http.annotation.QueryValue
+import io.micronaut.http.exceptions.HttpStatusException
+import io.micronaut.security.annotation.Secured
+import io.micronaut.security.rules.SecurityRule
+import io.micronaut.transaction.annotation.Transactional
+import jakarta.inject.Inject
 
 @Controller
 @CompileStatic
@@ -61,6 +65,7 @@ class CodeSetController extends ModelController<CodeSet> implements CodeSetApi {
         this.codeSetService = codeSetService
     }
 
+    @Audit
     @Get(value = Paths.CODE_SET_ID)
     CodeSet show(UUID id) {
         super.show(id)
@@ -79,7 +84,7 @@ class CodeSetController extends ModelController<CodeSet> implements CodeSetApi {
         super.update(id, codeSet)
     }
 
-    @Audit
+    @Audit(title = EditType.UPDATE, description = "Add term to CodeSet")
     @Put(value = Paths.CODE_SET_TERM_ID)
     @Transactional
     CodeSet addTerm(@NonNull UUID id,
@@ -183,18 +188,10 @@ class CodeSetController extends ModelController<CodeSet> implements CodeSetApi {
         savedCopy
     }
 
-    @Audit
-    @Put(Paths.CODE_SET_READ_BY_AUTHENTICATED)
-    @Transactional
-    CodeSet allowReadByAuthenticated(UUID id) {
-        super.putReadByAuthenticated(id) as CodeSet
-    }
-
-    @Audit
-    @Transactional
-    @Delete(Paths.CODE_SET_READ_BY_AUTHENTICATED)
-    HttpResponse revokeReadByAuthenticated(UUID id) {
-        super.deleteReadByAuthenticated(id)
+    //stub endpoint todo: actual
+    @Get('/codeSets/{id}/simpleModelVersionTree')
+    List<Map> simpleModelVersionTree(UUID id){
+        super.simpleModelVersionTree(id)
     }
 
     @Audit
@@ -211,12 +208,14 @@ class CodeSetController extends ModelController<CodeSet> implements CodeSetApi {
         super.deleteReadByEveryone(id)
     }
 
+    @Audit
     @Get(Paths.CODE_SET_FOLDER_PERMISSIONS)
     @Override
     PermissionsDTO permissions(UUID id) {
         super.permissions(id)
     }
 
+    @Audit
     @Get(Paths.CODE_SET_DOI)
     @Override
     Map doi(UUID id) {

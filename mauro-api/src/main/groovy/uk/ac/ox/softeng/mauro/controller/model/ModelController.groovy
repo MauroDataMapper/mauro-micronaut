@@ -1,20 +1,40 @@
 package uk.ac.ox.softeng.mauro.controller.model
 
-import io.micronaut.http.annotation.QueryValue
 import uk.ac.ox.softeng.mauro.api.model.ModelApi
 import uk.ac.ox.softeng.mauro.api.model.ModelRefDTO
 import uk.ac.ox.softeng.mauro.api.model.PermissionsDTO
 import uk.ac.ox.softeng.mauro.api.model.VersionLinkDTO
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.diff.ArrayDiff
-import uk.ac.ox.softeng.mauro.domain.diff.DiffableItem
 import uk.ac.ox.softeng.mauro.domain.diff.FieldDiff
 import uk.ac.ox.softeng.mauro.domain.diff.ObjectDiff
+import uk.ac.ox.softeng.mauro.domain.facet.ReferenceFile
+import uk.ac.ox.softeng.mauro.domain.facet.VersionLink
+import uk.ac.ox.softeng.mauro.domain.folder.Folder
+import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
+import uk.ac.ox.softeng.mauro.domain.model.Model
+import uk.ac.ox.softeng.mauro.domain.model.ModelService
 import uk.ac.ox.softeng.mauro.domain.model.Path
+import uk.ac.ox.softeng.mauro.domain.model.version.CreateNewVersionData
+import uk.ac.ox.softeng.mauro.domain.model.version.FinaliseData
 import uk.ac.ox.softeng.mauro.domain.security.CatalogueUser
+import uk.ac.ox.softeng.mauro.domain.security.Role
 import uk.ac.ox.softeng.mauro.domain.security.UserGroup
+import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository
+import uk.ac.ox.softeng.mauro.persistence.cache.FacetCacheableRepository
+import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository
+import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.facet.VersionLinkRepository
+import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemRepository
+import uk.ac.ox.softeng.mauro.persistence.model.ModelContentRepository
+import uk.ac.ox.softeng.mauro.plugin.MauroPluginService
+import uk.ac.ox.softeng.mauro.plugin.exporter.ModelExporterPlugin
+import uk.ac.ox.softeng.mauro.plugin.importer.FileParameter
+import uk.ac.ox.softeng.mauro.plugin.importer.ImportParameters
+import uk.ac.ox.softeng.mauro.plugin.importer.ModelImporterPlugin
 import uk.ac.ox.softeng.mauro.service.core.AuthorityService
+import uk.ac.ox.softeng.mauro.service.plugin.PluginService
+import uk.ac.ox.softeng.mauro.web.ListResponse
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.transform.CompileStatic
@@ -34,31 +54,8 @@ import io.micronaut.security.rules.SecurityRule
 import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
 import reactor.core.publisher.Flux
-import uk.ac.ox.softeng.mauro.domain.facet.ReferenceFile
-import uk.ac.ox.softeng.mauro.domain.folder.Folder
-import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
-import uk.ac.ox.softeng.mauro.domain.model.Model
-import uk.ac.ox.softeng.mauro.domain.model.ModelService
-import uk.ac.ox.softeng.mauro.domain.model.version.CreateNewVersionData
-import uk.ac.ox.softeng.mauro.domain.model.version.FinaliseData
-import uk.ac.ox.softeng.mauro.domain.security.Role
-import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository
-import uk.ac.ox.softeng.mauro.persistence.cache.FacetCacheableRepository
-import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository
-import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
-import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemRepository
-import uk.ac.ox.softeng.mauro.persistence.model.ModelContentRepository
-import uk.ac.ox.softeng.mauro.plugin.MauroPluginService
-import uk.ac.ox.softeng.mauro.plugin.exporter.ModelExporterPlugin
-import uk.ac.ox.softeng.mauro.plugin.importer.FileParameter
-import uk.ac.ox.softeng.mauro.plugin.importer.ImportParameters
-import uk.ac.ox.softeng.mauro.plugin.importer.ModelImporterPlugin
-import uk.ac.ox.softeng.mauro.service.plugin.PluginService
-import uk.ac.ox.softeng.mauro.web.ListResponse
 
 import java.nio.charset.StandardCharsets
-
-import uk.ac.ox.softeng.mauro.domain.facet.VersionLink
 
 @Slf4j
 @CompileStatic
@@ -291,6 +288,18 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
 
         savedCopy
     }
+
+    //todo: implement actual
+    List<Map> simpleModelVersionTree(UUID id) {
+        [
+            [
+                id: id,
+                branch: 'main',
+                displayName: 'main'
+            ]
+        ] as List<Map>
+    }
+
 
     protected M createCopyModelWithAssociations(M existing, CreateNewVersionData createNewVersionData) {
         M copy = modelService.createNewBranchModelVersion(existing, createNewVersionData.branchName)
