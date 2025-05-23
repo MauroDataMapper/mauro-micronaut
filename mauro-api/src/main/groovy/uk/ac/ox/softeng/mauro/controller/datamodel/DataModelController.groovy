@@ -213,7 +213,7 @@ class DataModelController extends ModelController<DataModel> implements DataMode
      */
     @Audit(title = EditType.UPDATE, description = "Subset data model")
     @Put(Paths.DATA_MODEL_SUBSET)
-    SubsetData subset(UUID id, UUID otherId, @Body SubsetData subsetData) {
+    DataModel subset(UUID id, UUID otherId, @Body SubsetData subsetData) {
         DataModel dataModel = dataModelRepository.readById(id) // source i.e. rootDataModel
         accessControlService.canDoRole(Role.READER, dataModel)
         DataModel otherDataModel = dataModelContentRepository.findWithContentById(otherId) // target i.e. request model
@@ -274,10 +274,7 @@ class DataModelController extends ModelController<DataModel> implements DataMode
         log.debug "subset: saving additions to datamodel id [$additionSubset.id]"
         dataModelContentRepository.saveContentOnly(additionSubset)
 
-        new SubsetData(
-            additions: additionSubset.dataElements.id,
-            //deletions: [] TODO: implement deletion - not currently used by UI
-        )
+        dataModelRepository.findById(otherId)
     }
 
     /**
@@ -324,7 +321,7 @@ class DataModelController extends ModelController<DataModel> implements DataMode
             }
 
             [targetDataModelId, potentialIntersects.findAll {DataElement intersect ->
-                potentialTargetIntersects.find {intersect.breadcrumbs.reverse().tail().collect {new Tuple2(it.domainType, it.label)} == it.breadcrumbs.reverse().tail().collect {new Tuple2(it.domainType, it.label)}}
+                potentialTargetIntersects.find {intersect.breadcrumbs.tail().collect {new Tuple2(it.domainType, it.label)} == it.breadcrumbs.tail().collect {new Tuple2(it.domainType, it.label)}}
             }]
         }
 

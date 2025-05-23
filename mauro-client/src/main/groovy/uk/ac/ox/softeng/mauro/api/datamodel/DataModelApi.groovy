@@ -1,14 +1,5 @@
 package uk.ac.ox.softeng.mauro.api.datamodel
 
-import io.micronaut.context.annotation.Parameter
-import io.micronaut.core.annotation.NonNull
-import io.micronaut.core.annotation.Nullable
-import io.micronaut.http.HttpResponse
-import io.micronaut.http.MediaType
-import io.micronaut.http.annotation.*
-import io.micronaut.http.client.multipart.MultipartBody
-import io.micronaut.scheduling.TaskExecutors
-import io.micronaut.scheduling.annotation.ExecuteOn
 import uk.ac.ox.softeng.mauro.api.MauroApi
 import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.model.ModelApi
@@ -23,6 +14,21 @@ import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchRequestDTO
 import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchResultsDTO
 import uk.ac.ox.softeng.mauro.plugin.importer.DataModelImporterPlugin
 import uk.ac.ox.softeng.mauro.web.ListResponse
+
+import io.micronaut.context.annotation.Parameter
+import io.micronaut.core.annotation.NonNull
+import io.micronaut.core.annotation.Nullable
+import io.micronaut.http.HttpResponse
+import io.micronaut.http.MediaType
+import io.micronaut.http.annotation.Body
+import io.micronaut.http.annotation.Delete
+import io.micronaut.http.annotation.Get
+import io.micronaut.http.annotation.Post
+import io.micronaut.http.annotation.Produces
+import io.micronaut.http.annotation.Put
+import io.micronaut.http.client.multipart.MultipartBody
+import io.micronaut.scheduling.TaskExecutors
+import io.micronaut.scheduling.annotation.ExecuteOn
 
 @MauroApi
 interface DataModelApi extends ModelApi<DataModel> {
@@ -75,7 +81,7 @@ interface DataModelApi extends ModelApi<DataModel> {
     List<DataModelImporterPlugin> dataModelImporters()
 
     @Put(Paths.DATA_MODEL_SUBSET)
-    SubsetData subset(UUID id, UUID otherId, @Body SubsetData subsetData)
+    DataModel subset(UUID id, UUID otherId, @Body SubsetData subsetData)
 
     @Post(Paths.DATA_MODEL_INTERSECTS_MANY)
     ListResponse<IntersectsData> intersectsMany(UUID id, @Body IntersectsManyData intersectsManyData)

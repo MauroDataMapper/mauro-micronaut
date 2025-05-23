@@ -1,16 +1,23 @@
 package uk.ac.ox.softeng.mauro.datamodel
 
-import jakarta.inject.Inject
-import jakarta.inject.Singleton
-import spock.lang.Shared
 import uk.ac.ox.softeng.mauro.api.datamodel.DataModelApi
-import uk.ac.ox.softeng.mauro.domain.datamodel.*
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataElement
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
+import uk.ac.ox.softeng.mauro.domain.datamodel.EnumerationValue
+import uk.ac.ox.softeng.mauro.domain.datamodel.IntersectsData
+import uk.ac.ox.softeng.mauro.domain.datamodel.IntersectsManyData
+import uk.ac.ox.softeng.mauro.domain.datamodel.SubsetData
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.persistence.ContainerizedTest
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.datamodel.DataModelContentRepository
 import uk.ac.ox.softeng.mauro.testing.CommonDataSpec
 import uk.ac.ox.softeng.mauro.web.ListResponse
+
+import jakarta.inject.Inject
+import jakarta.inject.Singleton
+import spock.lang.Shared
 
 @ContainerizedTest
 @Singleton
@@ -129,10 +136,10 @@ class DataModelSubsetIntersectsSpec  extends CommonDataSpec {
         when: 'subset is created using empty datamodel'
         DataModel target = dataModelApi.create(folderId, new DataModel(label: 'Subset Target DataModel'))
         targetDataModelId = target.id
-        SubsetData response = dataModelApi.subset(dataModelId, targetDataModelId, new SubsetData(additions: [numericDataElementId, enumerationDataElementId]))
+        DataModel response = dataModelApi.subset(dataModelId, targetDataModelId, new SubsetData(additions: [numericDataElementId, enumerationDataElementId]))
 
         then: 'subset endpoint succeeds'
-        response.additions.size() == 2
+        response.id == targetDataModelId
 
         when: 'subset elements are queried'
         DataModel targetUpdated = dataModelContentRepository.findWithContentById(targetDataModelId)
@@ -147,10 +154,10 @@ class DataModelSubsetIntersectsSpec  extends CommonDataSpec {
 
         then: 'subset elements have correct paths and types'
         copiedNumericDataElement
-        copiedNumericDataElement.path.toString() == 'dm:Subset Target DataModel$main|dc:Third class|de:Test Data Element 2'
+        copiedNumericDataElement.path.toString() == 'fo:Test folder|dm:Subset Target DataModel$main|dc:Third class|de:Test Data Element 2'
         copiedNumericDataElement.dataType.label == 'Numeric'
         copiedEnumerationDataElement
-        copiedEnumerationDataElement.path.toString() == 'dm:Subset Target DataModel$main|dc:Third class|dc:Child class|de:Test Data Element 5'
+        copiedEnumerationDataElement.path.toString() == 'fo:Test folder|dm:Subset Target DataModel$main|dc:Third class|dc:Child class|de:Test Data Element 5'
         copiedEnumerationDataElement.dataType.label == 'Large EnumerationType'
 
         when: 'subset datatypes are queried'
@@ -160,11 +167,11 @@ class DataModelSubsetIntersectsSpec  extends CommonDataSpec {
         then: 'subset datatypes have correct paths and types'
         copiedBooleanDataType.dataTypeKind == DataType.DataTypeKind.PRIMITIVE_TYPE
         copiedBooleanDataType.label == 'Numeric'
-        copiedBooleanDataType.path.toString() == 'dm:Subset Target DataModel$main|dt:Numeric'
+        copiedBooleanDataType.path.toString() == 'fo:Test folder|dm:Subset Target DataModel$main|dt:Numeric'
 
         copiedEnumerationDataType.dataTypeKind == DataType.DataTypeKind.ENUMERATION_TYPE
         copiedEnumerationDataType.label == 'Large EnumerationType'
-        copiedEnumerationDataType.path.toString() == 'dm:Subset Target DataModel$main|dt:Large EnumerationType'
+        copiedEnumerationDataType.path.toString() == 'fo:Test folder|dm:Subset Target DataModel$main|dt:Large EnumerationType'
 
         when: 'subset enumerationvalues are queried'
         ListResponse<EnumerationValue> enumerationValuesResponse = enumerationValueApi.list(targetUpdated.id, copiedEnumerationDataType.id)
@@ -191,10 +198,10 @@ class DataModelSubsetIntersectsSpec  extends CommonDataSpec {
 
     void 'add more elements to subset model with subset'() {
         when:
-        SubsetData response = dataModelApi.subset(dataModelId, targetDataModelId, new SubsetData(additions: [stringDataElementId, numericDataElementId, booleanDataElementId]))
+        DataModel response = dataModelApi.subset(dataModelId, targetDataModelId, new SubsetData(additions: [stringDataElementId, numericDataElementId, booleanDataElementId]))
 
         then:
-        response.additions.size() == 2
+        response.id == targetDataModelId
 
         when:
         DataModel targetUpdated = dataModelContentRepository.findWithContentById(targetDataModelId)
@@ -218,16 +225,16 @@ class DataModelSubsetIntersectsSpec  extends CommonDataSpec {
 
         then: 'subset dataelements have correct path'
         copiedNumericDataElement
-        copiedNumericDataElement.path.toString() == 'dm:Subset Target DataModel$main|dc:Third class|de:Test Data Element 2'
+        copiedNumericDataElement.path.toString() == 'fo:Test folder|dm:Subset Target DataModel$main|dc:Third class|de:Test Data Element 2'
         copiedNumericDataElement.dataType.label == 'Numeric'
         copiedEnumerationDataElement
-        copiedEnumerationDataElement.path.toString() == 'dm:Subset Target DataModel$main|dc:Third class|dc:Child class|de:Test Data Element 5'
+        copiedEnumerationDataElement.path.toString() == 'fo:Test folder|dm:Subset Target DataModel$main|dc:Third class|dc:Child class|de:Test Data Element 5'
         copiedEnumerationDataElement.dataType.label == 'Large EnumerationType'
         copiedStringDataElement
-        copiedStringDataElement.path.toString() == 'dm:Subset Target DataModel$main|dc:Third class|dc:Child class|de:Test Data Element 4'
+        copiedStringDataElement.path.toString() == 'fo:Test folder|dm:Subset Target DataModel$main|dc:Third class|dc:Child class|de:Test Data Element 4'
         copiedStringDataElement.dataType.label == 'String'
         copiedBooleanDataElement
-        copiedBooleanDataElement.path.toString() == 'dm:Subset Target DataModel$main|dc:Second class|de:My first Data Element'
+        copiedBooleanDataElement.path.toString() == 'fo:Test folder|dm:Subset Target DataModel$main|dc:Second class|de:My first Data Element'
         copiedBooleanDataElement.dataType.label == 'Boolean'
     }
 }

@@ -12,8 +12,6 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 
 import io.micronaut.http.MediaType
 import io.micronaut.http.client.multipart.MultipartBody
-import io.micronaut.runtime.EmbeddedApplication
-import jakarta.inject.Inject
 import jakarta.inject.Singleton
 import spock.lang.Shared
 
@@ -71,13 +69,13 @@ class TerminologyJsonImportExportSpec extends CommonDataSpec {
         Terminology terminology = terminologyApi.show(importedTerminologyId)
 
         then:
-        terminology.path.toString() == 'te:Test terminology$main'
+        terminology.path.toString() == 'fo:Test folder|te:Test terminology$main'
 
         when:
         ListResponse<Term> terms = termApi.list(importedTerminologyId)
 
         then:
-        terms.items.path.collect { it.toString()}.sort() == ['te:Test terminology$main|tm:TEST-1', 'te:Test terminology$main|tm:TEST-2']
+        terms.items.path.collect { it.toString()}.sort() == ['fo:Test folder|te:Test terminology$main|tm:TEST-1', 'fo:Test folder|te:Test terminology$main|tm:TEST-2']
 
         when:
         ListResponse<TermRelationshipType> termRelationshipTypes =
@@ -85,7 +83,7 @@ class TerminologyJsonImportExportSpec extends CommonDataSpec {
 
         then:
         termRelationshipTypes.items.path.collect { it.toString()}
-            == ['te:Test terminology$main|trt:Test relationship type']
+            == ['fo:Test folder|te:Test terminology$main|trt:Test relationship type']
 
         when:
         List<Term> tree = termApi.tree(importedTerminologyId, null)
