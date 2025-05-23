@@ -1,31 +1,20 @@
 package uk.ac.ox.softeng.mauro.controller.datamodel
 
-import uk.ac.ox.softeng.mauro.audit.Audit
-import uk.ac.ox.softeng.mauro.domain.facet.EditType
-
-import groovy.transform.CompileStatic
-import groovy.util.logging.Slf4j
-import io.micronaut.context.annotation.Parameter
-import io.micronaut.core.annotation.NonNull
-import io.micronaut.core.annotation.Nullable
-import io.micronaut.http.HttpResponse
-import io.micronaut.http.HttpStatus
-import io.micronaut.http.MediaType
-import io.micronaut.http.annotation.*
-import io.micronaut.http.exceptions.HttpStatusException
-import io.micronaut.http.server.multipart.MultipartBody
-import io.micronaut.scheduling.TaskExecutors
-import io.micronaut.scheduling.annotation.ExecuteOn
-import io.micronaut.security.annotation.Secured
-import io.micronaut.security.rules.SecurityRule
-import io.micronaut.transaction.annotation.Transactional
-import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.ErrorHandler
 import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.datamodel.DataModelApi
+import uk.ac.ox.softeng.mauro.audit.Audit
 import uk.ac.ox.softeng.mauro.controller.model.ModelController
-import uk.ac.ox.softeng.mauro.domain.datamodel.*
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataElement
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataModelService
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
+import uk.ac.ox.softeng.mauro.domain.datamodel.IntersectsData
+import uk.ac.ox.softeng.mauro.domain.datamodel.IntersectsManyData
+import uk.ac.ox.softeng.mauro.domain.datamodel.SubsetData
 import uk.ac.ox.softeng.mauro.domain.diff.ObjectDiff
+import uk.ac.ox.softeng.mauro.domain.facet.EditType
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.model.Model
 import uk.ac.ox.softeng.mauro.domain.model.version.CreateNewVersionData
@@ -41,8 +30,33 @@ import uk.ac.ox.softeng.mauro.persistence.datamodel.DataTypeContentRepository
 import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchRepository
 import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchRequestDTO
 import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchResultsDTO
+import uk.ac.ox.softeng.mauro.plugin.exporter.DataModelExporterPlugin
 import uk.ac.ox.softeng.mauro.plugin.importer.DataModelImporterPlugin
 import uk.ac.ox.softeng.mauro.web.ListResponse
+
+import groovy.transform.CompileStatic
+import groovy.util.logging.Slf4j
+import io.micronaut.context.annotation.Parameter
+import io.micronaut.core.annotation.NonNull
+import io.micronaut.core.annotation.Nullable
+import io.micronaut.http.HttpResponse
+import io.micronaut.http.HttpStatus
+import io.micronaut.http.MediaType
+import io.micronaut.http.annotation.Body
+import io.micronaut.http.annotation.Consumes
+import io.micronaut.http.annotation.Controller
+import io.micronaut.http.annotation.Delete
+import io.micronaut.http.annotation.Get
+import io.micronaut.http.annotation.Post
+import io.micronaut.http.annotation.Put
+import io.micronaut.http.exceptions.HttpStatusException
+import io.micronaut.http.server.multipart.MultipartBody
+import io.micronaut.scheduling.TaskExecutors
+import io.micronaut.scheduling.annotation.ExecuteOn
+import io.micronaut.security.annotation.Secured
+import io.micronaut.security.rules.SecurityRule
+import io.micronaut.transaction.annotation.Transactional
+import jakarta.inject.Inject
 
 @Slf4j
 @Controller
@@ -199,7 +213,7 @@ class DataModelController extends ModelController<DataModel> implements DataMode
      */
     @Audit(title = EditType.UPDATE, description = "Subset data model")
     @Put(Paths.DATA_MODEL_SUBSET)
-    SubsetData subset(UUID id, UUID otherId, @Body SubsetData subsetData) {
+    DataModel subset(UUID id, UUID otherId, @Body SubsetData subsetData) {
         DataModel dataModel = dataModelRepository.readById(id) // source i.e. rootDataModel
         accessControlService.canDoRole(Role.READER, dataModel)
         DataModel otherDataModel = dataModelContentRepository.findWithContentById(otherId) // target i.e. request model
@@ -260,10 +274,7 @@ class DataModelController extends ModelController<DataModel> implements DataMode
         log.debug "subset: saving additions to datamodel id [$additionSubset.id]"
         dataModelContentRepository.saveContentOnly(additionSubset)
 
-        new SubsetData(
-            additions: additionSubset.dataElements.id,
-            //deletions: [] TODO: implement deletion - not currently used by UI
-        )
+        dataModelRepository.findById(otherId)
     }
 
     /**
@@ -310,7 +321,7 @@ class DataModelController extends ModelController<DataModel> implements DataMode
             }
 
             [targetDataModelId, potentialIntersects.findAll {DataElement intersect ->
-                potentialTargetIntersects.find {intersect.breadcrumbs.reverse().tail().collect {new Tuple2(it.domainType, it.label)} == it.breadcrumbs.reverse().tail().collect {new Tuple2(it.domainType, it.label)}}
+                potentialTargetIntersects.find {intersect.breadcrumbs.tail().collect {new Tuple2(it.domainType, it.label)} == it.breadcrumbs.tail().collect {new Tuple2(it.domainType, it.label)}}
             }]
         }
 
@@ -319,15 +330,22 @@ class DataModelController extends ModelController<DataModel> implements DataMode
         })
     }
 
-    // TODO: implement stub endpoint
+
+    @Get('/dataModels/providers/exporters')
+    List<DataModelExporterPlugin> dataModelExporters() {
+        mauroPluginService.listPlugins(DataModelExporterPlugin)
+    }
+
+    //stub endpoint todo: actual
     @Get('/dataModels/{id}/simpleModelVersionTree')
-    List<Map> simpleModelVersionTree(UUID id) {
-        [
-            [
-                id         : id,
-                branch     : 'main',
-                displayName: 'main'
-            ]
-        ] as List<Map>
+    List<Map> simpleModelVersionTree(UUID id){
+        super.simpleModelVersionTree(id)
+    }
+
+
+    //todo: implement actual
+    @Get('/dataModels/{id}/permissions')
+    List<Map> permissions(UUID id) {
+        super.permissions(id)
     }
 }

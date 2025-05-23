@@ -1,7 +1,16 @@
 package uk.ac.ox.softeng.mauro.controller.model
 
-import uk.ac.ox.softeng.mauro.api.model.AdministeredItemApi
 import uk.ac.ox.softeng.mauro.ErrorHandler
+import uk.ac.ox.softeng.mauro.api.model.AdministeredItemApi
+import uk.ac.ox.softeng.mauro.domain.classifier.Classifier
+import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
+import uk.ac.ox.softeng.mauro.domain.security.Role
+import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository
+import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemContentRepository
+import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemRepository
+import uk.ac.ox.softeng.mauro.persistence.model.PathRepository
+import uk.ac.ox.softeng.mauro.persistence.service.RepositoryService
+import uk.ac.ox.softeng.mauro.web.ListResponse
 
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
@@ -14,15 +23,6 @@ import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
 import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
-import uk.ac.ox.softeng.mauro.domain.classifier.Classifier
-import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
-import uk.ac.ox.softeng.mauro.domain.security.Role
-import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository
-import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemContentRepository
-import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemRepository
-import uk.ac.ox.softeng.mauro.persistence.model.PathRepository
-import uk.ac.ox.softeng.mauro.persistence.service.RepositoryService
-import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @CompileStatic
 @Secured(SecurityRule.IS_ANONYMOUS)
@@ -62,7 +62,7 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
         try {
             item = administeredItemRepository.findById(id)
         } catch (Exception e) {
-            ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, null, "Item with id ${id.toString()} not found")
+            ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, item, "Item with id ${id.toString()} not found")
         }
         ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, item, "Item with id ${id.toString()} not found")
         accessControlService.checkRole(Role.READER, item)
@@ -181,5 +181,6 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
         }
         classifierList
     }
+
 
 }

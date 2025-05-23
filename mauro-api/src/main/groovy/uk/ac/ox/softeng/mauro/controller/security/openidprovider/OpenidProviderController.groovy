@@ -8,6 +8,7 @@ import uk.ac.ox.softeng.mauro.audit.Audit
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.context.annotation.Value
+import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Get
 import io.micronaut.security.annotation.Secured
@@ -16,20 +17,26 @@ import io.micronaut.security.rules.SecurityRule
 @CompileStatic
 @Slf4j
 @Secured(SecurityRule.IS_ANONYMOUS)
+@Controller
 class OpenidProviderController implements OpenidProviderApi {
 
+
+    @Nullable
     @Value('${mauro.oauth.id}')
     String openidProviderId
 
+    @Nullable
     @Value('${mauro.oauth.label}')
     String label
 
     @Value('${mauro.oauth.standard-provider}')
-    boolean standardProvider
+    Boolean standardProvider
 
+    @Nullable
     @Value('${mauro.oauth.authorization-endpoint}')
     String authorizationEndpoint
 
+    @Nullable
     @Value('${mauro.oauth.image-url}')
     String imageUrl
 

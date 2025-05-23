@@ -1,9 +1,11 @@
 package uk.ac.ox.softeng.mauro.profile.applied
 
-import com.fasterxml.jackson.annotation.JsonIgnore
+import uk.ac.ox.softeng.mauro.domain.facet.Metadata
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.plugin.MauroPluginDTO
 import uk.ac.ox.softeng.mauro.profile.Profile
+
+import com.fasterxml.jackson.annotation.JsonIgnore
 
 class AppliedProfile extends MauroPluginDTO {
 
@@ -36,6 +38,18 @@ class AppliedProfile extends MauroPluginDTO {
 
     List<String> errors = []
 
+    UUID getId() {
+        administeredItem?.id
+    }
+
+    String getLabel() {
+        administeredItem?.label
+    }
+
+    String getDomainType() {
+        administeredItem?.domainType
+    }
+
     // Empty constructor for JSON deserialisation
     AppliedProfile() { }
 
@@ -44,7 +58,7 @@ class AppliedProfile extends MauroPluginDTO {
         this.administeredItem = administeredItem
         this.sections = profile.sections.collect {profileSection ->
             new AppliedProfileSection(profileSection, this,
-                                      profileBody["sections"].find { it.name == profileSection.label } as Map)
+                                      profileBody["sections"].find { it.name == profileSection.label || it.label == profileSection.label } as Map)
         }
         validate()
     }
@@ -63,7 +77,7 @@ class AppliedProfile extends MauroPluginDTO {
         String typeName = administeredItem.getDomainType()
         if (!sourceProfile.isApplicableForDomain(typeName)) {
             errors.add(
-                "The profile '${displayName}' cannot be applied to an object of type '${administeredItem.class.simpleName}'.  Allowed types are $profileApplicableForDomains'".toString())
+                "The profile '${displayName}' cannot be applied to an object of type '${typeName}'.  Allowed types are $profileApplicableForDomains'".toString())
         }
     }
 
@@ -82,5 +96,14 @@ class AppliedProfile extends MauroPluginDTO {
         return returnErrors
     }
 
+    @JsonIgnore
+    List<Metadata> getMetadata() {
+        sections.collect {AppliedProfileSection section ->
+            section.fields.collect {AppliedProfileField field ->
+                new Metadata(namespace: metadataNamespace, key: field.getMetadataKey(section.label), value: field.currentValue,
+                             multiFacetAwareItemDomainType: administeredItem.domainType, multiFacetAwareItemId: administeredItem.id)
+            }
+        }.flatten() as List<Metadata>
+    }
 
 }

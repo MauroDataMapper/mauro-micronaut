@@ -1,11 +1,9 @@
 package uk.ac.ox.softeng.mauro.controller.federation
 
-import uk.ac.ox.softeng.mauro.audit.Audit
-
-import io.micronaut.http.HttpResponse
 import uk.ac.ox.softeng.mauro.ErrorHandler
 import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.federation.SubscribedCatalogueApi
+import uk.ac.ox.softeng.mauro.audit.Audit
 import uk.ac.ox.softeng.mauro.controller.model.ItemController
 import uk.ac.ox.softeng.mauro.domain.facet.federation.PublishedModel
 import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedCatalogue
@@ -22,6 +20,7 @@ import groovy.util.logging.Slf4j
 import io.micronaut.context.annotation.Value
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
+import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.annotation.Controller
@@ -93,9 +92,11 @@ class SubscribedCatalogueController extends ItemController<SubscribedCatalogue> 
     @ExecuteOn(TaskExecutors.BLOCKING)
     @Transactional
     SubscribedCatalogue create(@Body @NonNull SubscribedCatalogue subscribedCatalogue) {
+        log.info("SubscribedCatalogueController create")
         accessControlService.checkAdministrator()
         cleanBody(subscribedCatalogue)
         updateCreationProperties(subscribedCatalogue)
+        log.info("SubscribedCatalogueController create - about to validateRemote")
         if (subscribedCatalogueService.validateRemote(subscribedCatalogue)) {
             subscribedCatalogueCacheableRepository.save(subscribedCatalogue)
         }

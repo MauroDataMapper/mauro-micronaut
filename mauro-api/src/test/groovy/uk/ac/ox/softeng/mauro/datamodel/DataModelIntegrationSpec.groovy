@@ -1,36 +1,24 @@
 package uk.ac.ox.softeng.mauro.datamodel
 
-import uk.ac.ox.softeng.mauro.api.datamodel.DataClassApi
-import uk.ac.ox.softeng.mauro.api.datamodel.DataElementApi
-import uk.ac.ox.softeng.mauro.api.datamodel.DataModelApi
-import uk.ac.ox.softeng.mauro.api.datamodel.DataTypeApi
-import uk.ac.ox.softeng.mauro.api.datamodel.EnumerationValueApi
-import uk.ac.ox.softeng.mauro.api.folder.FolderApi
-import uk.ac.ox.softeng.mauro.domain.model.version.FinaliseData
-import uk.ac.ox.softeng.mauro.domain.model.version.VersionChangeType
-import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchRequestDTO
-import uk.ac.ox.softeng.mauro.testing.CommonDataSpec
 
-import io.micronaut.http.HttpResponse
-import io.micronaut.http.HttpStatus
-import io.micronaut.runtime.EmbeddedApplication
-import jakarta.inject.Inject
-import jakarta.inject.Singleton
-import spock.lang.Shared
-import uk.ac.ox.softeng.mauro.domain.datamodel.*
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataElement
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataModelType
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
 import uk.ac.ox.softeng.mauro.domain.datamodel.EnumerationValue
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
+import uk.ac.ox.softeng.mauro.domain.model.version.FinaliseData
+import uk.ac.ox.softeng.mauro.domain.model.version.VersionChangeType
 import uk.ac.ox.softeng.mauro.persistence.ContainerizedTest
+import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchRequestDTO
 import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchResultsDTO
+import uk.ac.ox.softeng.mauro.testing.CommonDataSpec
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
+import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
-import io.micronaut.runtime.EmbeddedApplication
-import jakarta.inject.Inject
+import jakarta.inject.Singleton
 import spock.lang.Shared
 
 @ContainerizedTest
@@ -83,7 +71,7 @@ class DataModelIntegrationSpec extends CommonDataSpec {
         then:
         dataModelResponse.label == 'Test data model'
         dataModelResponse.dataModelType == DataModelType.DATA_ASSET.label
-        dataModelResponse.path.toString() == 'dm:Test data model$main'
+        dataModelResponse.path.toString() == 'fo:Test folder|dm:Test data model$main'
         dataModelResponse.authority
 
         when:
@@ -92,7 +80,7 @@ class DataModelIntegrationSpec extends CommonDataSpec {
         then:
         dataModelResponse.label == 'Test data model'
         dataModelResponse.dataModelType == DataModelType.DATA_ASSET.label
-        dataModelResponse.path.toString() == 'dm:Test data model$main'
+        dataModelResponse.path.toString() == 'fo:Test folder|dm:Test data model$main'
         dataModelResponse.authority
 
         when:
@@ -102,7 +90,7 @@ class DataModelIntegrationSpec extends CommonDataSpec {
         then:
         dataModelResponse.label == 'Test data standard'
         dataModelResponse.dataModelType == DataModelType.DATA_STANDARD.label
-        dataModelResponse.path.toString() == 'dm:Test data standard$main'
+        dataModelResponse.path.toString() == 'fo:Test folder|dm:Test data standard$main'
         dataModelResponse.authority
 
         when:
@@ -111,7 +99,7 @@ class DataModelIntegrationSpec extends CommonDataSpec {
         then:
         dataModelResponse.label == 'Test data standard'
         dataModelResponse.dataModelType == DataModelType.DATA_STANDARD.label
-        dataModelResponse.path.toString() == 'dm:Test data standard$main'
+        dataModelResponse.path.toString() == 'fo:Test folder|dm:Test data standard$main'
         dataModelResponse.authority
     }
 
@@ -165,7 +153,7 @@ class DataModelIntegrationSpec extends CommonDataSpec {
 
         then:
         dataTypesListResponse.count == 2
-        dataTypesListResponse.items.path.collect {it.toString()}.sort() == ['dm:Test data model$1.0.0|dt:integer', 'dm:Test data model$1.0.0|dt:string']
+        dataTypesListResponse.items.path.collect {it.toString()}.sort() == ['fo:Test folder|dm:Test data model$1.0.0|dt:integer', 'fo:Test folder|dm:Test data model$1.0.0|dt:string']
         dataTypesListResponse.items.domainType == ['PrimitiveType', 'PrimitiveType']
 
         when:
@@ -216,7 +204,7 @@ class DataModelIntegrationSpec extends CommonDataSpec {
 
         then:
         dataClassListResponse.count == 2
-        dataClassListResponse.items.path.collect {it.toString()}.sort() == ['dm:Test data model$1.0.0|dc:First data class', 'dm:Test data model$1.0.0|dc:Second data class']
+        dataClassListResponse.items.path.collect {it.toString()}.sort() == ['fo:Test folder|dm:Test data model$1.0.0|dc:First data class', 'fo:Test folder|dm:Test data model$1.0.0|dc:Second data class']
 
         when:
         dataClassResponse = dataClassApi.create(

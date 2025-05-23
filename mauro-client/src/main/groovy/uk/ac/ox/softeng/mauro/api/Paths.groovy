@@ -143,6 +143,12 @@ interface Paths {
     String EDIT_ID = '/{domainType}/{domainId}/edits/{id}'
 
     /*
+    * EditApi
+    */
+    String SEMANTIC_LINKS_LIST = '/{domainType}/{domainId}/semanticLinks'
+    String SEMANTIC_LINKS_ID = '/{domainType}/{domainId}/semanticLinks/{id}'
+
+    /*
     * RuleApi
     */
     String RULE_LIST = '/{domainType}/{domainId}/rules'
@@ -195,14 +201,14 @@ interface Paths {
     */
     String PROFILE_DYNAMIC_PROVIDERS = '/profiles/providers/dynamic'
     String PROFILE_PROVIDERS = '/profiles/providers'
-    String PROFILE_SEARCH = '/profiles/{namespace}/{name}/search'
+    String PROFILE_SEARCH = '/profiles/{namespace}/{name}'
     String PROFILE_SEARCH_ITEM = '/{domainType}/{domainId}/profiles/{namespace}/{name}/search'
-    String PROFILE_DETAILS = '/profiles/providers/{namespace}/{name}/{version}'
+    String PROFILE_DETAILS = '/profiles/providers/{namespace}/{name}{/version}'
     String PROFILE_USED = '/{domainType}/{domainId}/profiles/used'
     String PROFILE_UNUSED = '/{domainType}/{domainId}/profiles/unused'
     String PROFILE_OTHER_METADATA = '/{domainType}/{domainId}/profiles/otherMetadata'
     String PROFILE_ITEM = '/{domainType}/{domainId}/profile/{namespace}/{name}{/version}'
-    String PROFILE_ITEM_VALIDATE = '/{domainType}/{domainId}/profile/{namespace}/{name}/{version}/validate'
+    String PROFILE_ITEM_VALIDATE = '/{domainType}/{domainId}/profile/{namespace}/{name}{/version}/validate'
     String PROFILE_NAMESPACES = '/metadata/namespaces{/prefix}'
 
     /*
@@ -326,8 +332,8 @@ interface Paths {
     /*
     * PublishApi
     */
-    String PUBLISHED_MODELS = '/published/models'
-    String PUBLISHED_MODELS_NEWER_VERSIONS  = '/published/models/{publishedModelId}/newerVersions'
+    String PUBLISHED_MODELS = '/api/published/models'
+    String PUBLISHED_MODELS_NEWER_VERSIONS  = '/api/published/models/{publishedModelId}/newerVersions'
 
     /*
     * PublishApi

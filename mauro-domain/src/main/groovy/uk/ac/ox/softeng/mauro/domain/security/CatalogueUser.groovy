@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.domain.security
 
+import uk.ac.ox.softeng.mauro.domain.model.Item
+
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import com.fasterxml.jackson.databind.util.StdConverter
@@ -10,7 +12,6 @@ import io.micronaut.data.annotation.Indexes
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Relation
 import jakarta.persistence.Transient
-import uk.ac.ox.softeng.mauro.domain.model.Item
 
 import java.time.Instant
 
@@ -53,6 +54,13 @@ class CatalogueUser extends Item {
         @Override
         Set<UserGroup> convert(List<UUID> groupIds) {
             groupIds.collect {new UserGroup(id: it)} as Set<UserGroup>
+        }
+    }
+
+    static class StringCatalogueUserConverter extends StdConverter<String, CatalogueUser> {
+        @Override
+        CatalogueUser convert(String id) {
+            new CatalogueUser(id: UUID.fromString(id))
         }
     }
 
