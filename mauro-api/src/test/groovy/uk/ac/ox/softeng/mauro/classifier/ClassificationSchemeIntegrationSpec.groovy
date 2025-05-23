@@ -8,7 +8,6 @@ import io.micronaut.http.HttpResponse
 import io.micronaut.runtime.server.EmbeddedServer
 import jakarta.inject.Singleton
 
-import static uk.ac.ox.softeng.mauro.api.PathPopulation.populatePath
 import uk.ac.ox.softeng.mauro.api.Paths
 
 import io.micronaut.http.HttpStatus
