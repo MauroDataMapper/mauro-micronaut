@@ -16,7 +16,6 @@ import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
 import uk.ac.ox.softeng.mauro.persistence.ContainerizedTest
 import uk.ac.ox.softeng.mauro.testing.CommonDataSpec
 import uk.ac.ox.softeng.mauro.web.ListResponse
-import uk.ac.ox.softeng.mauro.web.PaginationParams
 
 import groovy.json.JsonSlurper
 import io.micronaut.http.HttpResponse
@@ -228,7 +227,7 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
         importedDataTypesListResponse.items[0].id != dataTypeId
 
         when:
-        ListResponse<DataClass> importedDataClassesListResponse = dataClassApi.list(importedDataModelId,new PaginationParams())
+        ListResponse<DataClass> importedDataClassesListResponse = dataClassApi.list(importedDataModelId)
         then:
         importedDataClassesListResponse.items.size() == 1
         importedDataClassesListResponse.items[0].label == 'TEST-1'

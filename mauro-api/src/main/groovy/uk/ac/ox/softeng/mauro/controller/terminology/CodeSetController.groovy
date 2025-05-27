@@ -209,6 +209,20 @@ class CodeSetController extends ModelController<CodeSet> implements CodeSetApi {
     }
 
     @Audit
+    @Put(Paths.CODE_SET_READ_BY_AUTHENTICATED)
+    @Transactional
+    CodeSet allowReadByAuthenticated(UUID id) {
+        super.putReadByAuthenticated(id) as CodeSet
+    }
+
+    @Audit
+    @Transactional
+    @Delete(Paths.CODE_SET_READ_BY_AUTHENTICATED)
+    HttpResponse revokeReadByAuthenticated(UUID id) {
+        super.deleteReadByAuthenticated(id)
+    }
+
+    @Audit
     @Get(Paths.CODE_SET_FOLDER_PERMISSIONS)
     @Override
     PermissionsDTO permissions(UUID id) {

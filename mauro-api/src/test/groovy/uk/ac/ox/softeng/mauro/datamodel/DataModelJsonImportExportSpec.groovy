@@ -11,7 +11,6 @@ import uk.ac.ox.softeng.mauro.export.ExportModel
 import uk.ac.ox.softeng.mauro.persistence.ContainerizedTest
 import uk.ac.ox.softeng.mauro.testing.CommonDataSpec
 import uk.ac.ox.softeng.mauro.web.ListResponse
-import uk.ac.ox.softeng.mauro.web.PaginationParams
 
 import groovy.json.JsonSlurper
 import io.micronaut.http.MediaType
@@ -149,8 +148,7 @@ class DataModelJsonImportExportSpec extends CommonDataSpec {
         when:
         ListResponse<DataElement> copyDataElements  = dataElementApi.list(
             importedDataModelId,
-            importedDataClassId,
-        new PaginationParams())
+            importedDataClassId)
 
         then:
         copyDataElements

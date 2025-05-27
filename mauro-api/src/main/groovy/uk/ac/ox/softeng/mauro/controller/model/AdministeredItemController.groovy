@@ -63,11 +63,11 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
     }
 
     I show(UUID id) {
-        I item=null
+        I item
         try {
             item = administeredItemRepository.findById(id)
         } catch (Exception e) {
-            ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, null, "Item with id ${id.toString()} not found")
+            ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, item, "Item with id ${id.toString()} not found")
         }
         ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, item, "Item with id ${id.toString()} not found")
         accessControlService.checkRole(Role.READER, item)
@@ -145,10 +145,12 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
 
         if (item?.version) itemToDelete.version = item.version
 
-        if (!administeredItemContentRepository.deleteWithContent(itemToDelete)) {
+        Long deleted = administeredItemContentRepository.deleteWithContent(itemToDelete)
+        if (deleted) {
+            HttpResponse.status(HttpStatus.NO_CONTENT)
+        } else {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, 'Not found for deletion')
         }
-        HttpResponse.status(HttpStatus.NO_CONTENT)
     }
 
     ListResponse<I> list(UUID parentId) {
