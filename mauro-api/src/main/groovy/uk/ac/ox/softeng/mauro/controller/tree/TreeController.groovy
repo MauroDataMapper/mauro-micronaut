@@ -1,33 +1,18 @@
 package uk.ac.ox.softeng.mauro.controller.tree
 
-import io.micronaut.http.HttpStatus
-import io.micronaut.http.exceptions.HttpStatusException
-import io.micronaut.security.authentication.AuthorizationException
 import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.tree.TreeApi
 import uk.ac.ox.softeng.mauro.audit.Audit
-
-import groovy.transform.CompileStatic
-import io.micronaut.core.annotation.Nullable
-import io.micronaut.http.annotation.Controller
-import io.micronaut.http.annotation.Get
-import io.micronaut.http.annotation.QueryValue
-import io.micronaut.security.annotation.Secured
-import io.micronaut.security.rules.SecurityRule
-import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
-import uk.ac.ox.softeng.mauro.domain.datamodel.DataElement
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.model.Item
-import uk.ac.ox.softeng.mauro.domain.model.Model
 import uk.ac.ox.softeng.mauro.domain.model.Path
 import uk.ac.ox.softeng.mauro.domain.security.Role
 import uk.ac.ox.softeng.mauro.domain.tree.TreeItem
 import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
-import uk.ac.ox.softeng.mauro.persistence.classifier.ClassifierContentRepository
 import uk.ac.ox.softeng.mauro.persistence.model.PathRepository
 import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchRepository
 import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchRequestDTO
@@ -35,6 +20,18 @@ import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchResultsDTO
 import uk.ac.ox.softeng.mauro.persistence.service.RepositoryService
 import uk.ac.ox.softeng.mauro.persistence.service.TreeService
 import uk.ac.ox.softeng.mauro.security.AccessControlService
+
+import groovy.transform.CompileStatic
+import io.micronaut.core.annotation.Nullable
+import io.micronaut.http.HttpStatus
+import io.micronaut.http.annotation.Controller
+import io.micronaut.http.annotation.Get
+import io.micronaut.http.annotation.QueryValue
+import io.micronaut.http.exceptions.HttpStatusException
+import io.micronaut.security.annotation.Secured
+import io.micronaut.security.authentication.AuthorizationException
+import io.micronaut.security.rules.SecurityRule
+import jakarta.inject.Inject
 
 @CompileStatic
 @Controller

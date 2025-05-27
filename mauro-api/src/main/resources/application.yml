@@ -20,7 +20,7 @@ micronaut:
         paths: classpath:META-INF/swagger/views/swagger-ui
         mapping: /swagger-ui/**
   security:
-    enabled: true
+    enabled: false
     authentication: session
     redirect:
       enabled: false
