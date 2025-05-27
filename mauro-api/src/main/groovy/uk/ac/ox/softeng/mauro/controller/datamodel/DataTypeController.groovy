@@ -156,5 +156,8 @@ class DataTypeController extends AdministeredItemController<DataType, DataModel>
         if (!modelResource) {
             ErrorHandler.handleError(HttpStatus.NOT_FOUND, "Item not found : $dataType.modelResourceId, $dataType.modelResourceDomainType")
         }
+        if (!modelResource.finalised){
+            ErrorHandler.handleError(HttpStatus.BAD_REQUEST, "Model resource is not finalised: $dataType.modelResourceId, $dataType.modelResourceDomainType")
+        }
     }
 }

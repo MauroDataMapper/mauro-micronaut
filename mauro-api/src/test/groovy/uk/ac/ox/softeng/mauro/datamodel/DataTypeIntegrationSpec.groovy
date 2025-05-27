@@ -3,6 +3,8 @@ package uk.ac.ox.softeng.mauro.datamodel
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
+import uk.ac.ox.softeng.mauro.domain.model.Model
+import uk.ac.ox.softeng.mauro.domain.terminology.CodeSet
 import uk.ac.ox.softeng.mauro.persistence.ContainerizedTest
 import uk.ac.ox.softeng.mauro.testing.CommonDataSpec
 import uk.ac.ox.softeng.mauro.web.ListResponse
@@ -164,7 +166,25 @@ class DataTypeIntegrationSpec extends CommonDataSpec {
         dataType2.referenceClass == dataClass2
     }
 
-    void 'create dataType with DataTypeKind modelType - should create'() {
+    void 'create dataType with DataTypeKind modelType and finalised- should create'() {
+        given:
+        CodeSet codeSet = codeSetApi.create(folderId, codeSet())
+
+        when:
+        dataTypeApi.create(
+            dataModelId,
+            new DataType(label: DATATYPE_LABEL,
+                         description: 'Test model type description',
+                         dataTypeKind: DataType.DataTypeKind.MODEL_TYPE,
+                         domainType: 'ModelType',
+                         modelResourceDomainType: CodeSet.class.simpleName,
+                         modelResourceId:  (codeSet as Model).id))
+        then:
+        HttpClientResponseException exception = thrown()
+        exception.status == HttpStatus.BAD_REQUEST
+
+        CodeSet finalised = codeSetApi.finalise(codeSet.id, finalisePayload())
+
         when:
         DataType created = dataTypeApi.create(
             dataModelId,
@@ -172,21 +192,22 @@ class DataTypeIntegrationSpec extends CommonDataSpec {
                          description: 'Test model type description',
                          dataTypeKind: DataType.DataTypeKind.MODEL_TYPE,
                          domainType: 'ModelType',
-                         modelResourceDomainType: Folder.class.simpleName,
-                         modelResourceId: folderId))
+                         modelResourceDomainType: CodeSet.class.simpleName,
+                         modelResourceId:  (finalised as Model).id))
+
         then:
         created
         created.domainType == DataType.DataTypeKind.MODEL_TYPE.stringValue
         created.label == DATATYPE_LABEL
-        created.modelResourceDomainType == Folder.class.simpleName
-        created.modelResourceId == folderId
+        created.modelResourceDomainType == CodeSet.class.simpleName
+        created.modelResourceId == (finalised as Model).id
 
         when:
         DataType retrieved = dataTypeApi.show(dataModelId, created.id)
         then:
         retrieved
-        retrieved.modelResourceId == folderId
-        retrieved.modelResourceDomainType == Folder.class.simpleName
+        retrieved.modelResourceId == codeSet.id
+        retrieved.modelResourceDomainType == CodeSet.class.simpleName
 
         when:
         HttpResponse response = dataTypeApi.delete(dataModelId, retrieved.id, retrieved)

@@ -64,6 +64,8 @@ import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedModel
 import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedModelFederationParams
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadataReport
+import uk.ac.ox.softeng.mauro.domain.model.version.FinaliseData
+import uk.ac.ox.softeng.mauro.domain.model.version.VersionChangeType
 import uk.ac.ox.softeng.mauro.domain.terminology.CodeSet
 import uk.ac.ox.softeng.mauro.domain.terminology.Term
 import uk.ac.ox.softeng.mauro.domain.terminology.TermRelationshipType
@@ -421,6 +423,10 @@ class CommonDataSpec extends Specification {
         )
     }
 
+
+    FinaliseData finalisePayload() {
+        new FinaliseData(versionChangeType: VersionChangeType.MAJOR, versionTag: 'random version tag')
+    }
 }
 
 
