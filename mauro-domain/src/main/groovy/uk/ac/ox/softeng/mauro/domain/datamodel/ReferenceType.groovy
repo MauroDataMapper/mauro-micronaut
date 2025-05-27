@@ -42,13 +42,9 @@ class ReferenceType extends ModelItem<DataType> implements DiffableItem<Referenc
             .leftHandSide(id?.toString(), this)
             .rightHandSide(other.id?.toString(), other)
         base.label = this.label
-        base.appendString(DiffBuilder.DESCRIPTION, this.description, other.description)
-        base.appendString(DiffBuilder.ALIASES_STRING, this.aliasesString, other.aliasesString)
+        base.appendString(DiffBuilder.DESCRIPTION, this.description, other.description, this, other)
+        base.appendString(DiffBuilder.ALIASES_STRING, this.aliasesString, other.aliasesString, this, other)
         //todo check diff
-
-//        base.appendString(DiffBuilder.DATA_TYPE_PATH, this.dataType.path?.toString(), other.dataType.path?.toString())
-//        base.appendField(DiffBuilder.MIN_MULTIPILICITY, this.minMultiplicity, other.minMultiplicity)
-//        base.appendField(DiffBuilder.MAX_MULTIPILICITY, this.maxMultiplicity, other.maxMultiplicity)
         base
     }
 
