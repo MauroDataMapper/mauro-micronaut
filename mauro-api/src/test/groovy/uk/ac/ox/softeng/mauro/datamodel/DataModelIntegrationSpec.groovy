@@ -1,6 +1,5 @@
 package uk.ac.ox.softeng.mauro.datamodel
 
-
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataElement
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel

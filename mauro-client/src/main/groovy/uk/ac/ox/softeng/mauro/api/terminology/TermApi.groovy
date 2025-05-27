@@ -40,4 +40,7 @@ interface TermApi extends AdministeredItemApi<Term, Terminology> {
 
     @Get(Paths.TERM_CODE_SETS)
     ListResponse<CodeSet> getCodeSetsForTerm(UUID terminologyId, UUID id)
+
+    @Get(Paths.TERM_DOI)
+    Map doi(UUID id)
 }

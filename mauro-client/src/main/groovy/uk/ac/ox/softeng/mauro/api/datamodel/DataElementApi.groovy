@@ -6,6 +6,7 @@ import uk.ac.ox.softeng.mauro.api.model.AdministeredItemApi
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataElement
 import uk.ac.ox.softeng.mauro.web.ListResponse
+import uk.ac.ox.softeng.mauro.web.PaginationParams
 
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
@@ -31,7 +32,12 @@ interface DataElementApi extends AdministeredItemApi<DataElement, DataClass> {
     @Delete(Paths.DATA_ELEMENT_ID)
     HttpResponse delete(UUID dataModelId, UUID dataClassId, UUID id, @Body @Nullable DataElement dataElement)
 
-    @Get(Paths.DATA_ELEMENT_LIST)
+    @Get(Paths.DATA_ELEMENT_LIST_PAGED)
+    ListResponse<DataElement> list(UUID dataModelId, UUID dataClassId, @Nullable PaginationParams params)
+
+    @Get(Paths.DATA_ELEMENT_LIST_PAGED)
     ListResponse<DataElement> list(UUID dataModelId, UUID dataClassId)
 
+    @Get(Paths.DATA_ELEMENT_DOI)
+    Map doi(UUID id)
 }

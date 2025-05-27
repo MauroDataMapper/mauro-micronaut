@@ -4,8 +4,10 @@ import uk.ac.ox.softeng.mauro.api.MauroApi
 import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
 import uk.ac.ox.softeng.mauro.web.ListResponse
+import uk.ac.ox.softeng.mauro.web.PaginationParams
 
 import io.micronaut.core.annotation.NonNull
+import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.annotation.Delete
@@ -16,7 +18,10 @@ import io.micronaut.http.annotation.Put
 @MauroApi
 interface SummaryMetadataApi extends FacetApi<SummaryMetadata> {
 
-    @Get(Paths.SUMMARY_METADATA_LIST)
+    @Get(Paths.SUMMARY_METADATA_LIST_PAGED)
+    ListResponse<SummaryMetadata> list(String domainType, UUID domainId, @Nullable PaginationParams params)
+
+    @Get(Paths.SUMMARY_METADATA_LIST_PAGED)
     ListResponse<SummaryMetadata> list(String domainType, UUID domainId)
 
     @Get(Paths.SUMMARY_METADATA_ID)

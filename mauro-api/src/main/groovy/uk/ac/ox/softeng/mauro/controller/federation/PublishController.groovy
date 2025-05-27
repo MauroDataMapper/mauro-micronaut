@@ -1,5 +1,6 @@
 package uk.ac.ox.softeng.mauro.controller.federation
 
+import groovy.util.logging.Slf4j
 import uk.ac.ox.softeng.mauro.ErrorHandler
 import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.federation.PublishApi
@@ -17,7 +18,6 @@ import uk.ac.ox.softeng.mauro.security.AccessControlService
 import uk.ac.ox.softeng.mauro.service.core.AuthorityService
 
 import groovy.transform.CompileStatic
-import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.Controller

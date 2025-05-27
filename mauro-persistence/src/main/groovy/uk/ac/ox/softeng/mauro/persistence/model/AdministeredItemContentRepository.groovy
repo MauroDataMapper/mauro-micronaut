@@ -17,6 +17,12 @@ import uk.ac.ox.softeng.mauro.persistence.classifier.ClassifierRepository
 import uk.ac.ox.softeng.mauro.persistence.facet.MetadataRepository
 import uk.ac.ox.softeng.mauro.persistence.facet.RuleRepository
 import uk.ac.ox.softeng.mauro.persistence.facet.SummaryMetadataRepository
+import uk.ac.ox.softeng.mauro.persistence.facet.VersionLinkRepository
+
+import groovy.transform.CompileStatic
+import io.micronaut.core.annotation.NonNull
+import jakarta.inject.Inject
+import jakarta.inject.Singleton
 
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
@@ -52,8 +58,13 @@ class AdministeredItemContentRepository {
     FacetCacheableRepository.ReferenceFileCacheableRepository referenceFileCacheableRepository
 
     @Inject
+    FacetCacheableRepository.VersionLinkCacheableRepository versionLinkCacheableRepository
+
+    @Inject
     ClassifierRepository classifierRepository
 
+    @Inject
+    VersionLinkRepository versionLinkRepository
 
     AdministeredItemRepository administeredItemRepository
 

@@ -2,6 +2,7 @@ package uk.ac.ox.softeng.mauro.persistence.search.dto
 
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.Introspected
+import jakarta.persistence.Transient
 
 import java.time.Instant
 
@@ -16,7 +17,8 @@ class SearchResultsDTO {
     String description
     Instant dateCreated
     Instant lastUpdated
-
+    @Transient
+    UUID modelId
 
     Float tsRank
 

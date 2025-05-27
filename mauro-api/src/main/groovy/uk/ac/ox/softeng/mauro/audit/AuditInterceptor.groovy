@@ -189,7 +189,7 @@ class AuditInterceptor implements MethodInterceptor<Object, Object>{
         if(!result) {
             return "Call to ${context.methodName}"
         }
-        String resultType = result.class.simpleName
+        String resultType = result.getClass().simpleName
         switch(annotationType(context)) {
             case "delete":
                 Class deletedObjectDomainType = (Class) auditConfig['deletedObjectDomainType']

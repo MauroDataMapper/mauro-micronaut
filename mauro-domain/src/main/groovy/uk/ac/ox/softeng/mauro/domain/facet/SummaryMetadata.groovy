@@ -54,8 +54,8 @@ class SummaryMetadata extends Facet implements DiffableItem<SummaryMetadata> {
                 .leftHandSide(id?.toString(), this)
                 .rightHandSide(other.id?.toString(), other)
         base.label = this.label
-        base.appendString(DiffBuilder.DESCRIPTION, this.description, other.description)
-        base.appendString(DiffBuilder.SUMMARY_METADATA_TYPE, this.summaryMetadataType.name(), other.summaryMetadataType.name())
+        base.appendString(DiffBuilder.DESCRIPTION, this.description, other.description, this, other)
+        base.appendString(DiffBuilder.SUMMARY_METADATA_TYPE, this.summaryMetadataType.name(), other.summaryMetadataType.name(), this, other)
         if (!DiffBuilder.isNull(this.summaryMetadataReports) ||!DiffBuilder.isNull(other.summaryMetadataReports)) {
             base.appendCollection(DiffBuilder.SUMMARY_METADATA_REPORT, this.summaryMetadataReports as Collection<DiffableItem>, other.summaryMetadataReports as Collection<DiffableItem>)
         }

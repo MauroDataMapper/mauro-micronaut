@@ -191,7 +191,7 @@ class CodeSetIntegrationSpec extends CommonDataSpec {
         codeSetWithTerm.id == codeSetId
 
         when:
-        HttpResponse deleteResponse = codeSetApi.delete(codeSetId, new CodeSet())
+        HttpResponse deleteResponse = codeSetApi.delete(codeSetId, new CodeSet(),true)
 
         then:
         deleteResponse.status == HttpStatus.NO_CONTENT

@@ -59,7 +59,7 @@ class Rule extends Facet implements DiffableItem<Rule> {
                 .leftHandSide(id?.toString(), this)
                 .rightHandSide(other.id?.toString(), other)
         base.label = this.name
-        base.appendString(DiffBuilder.DESCRIPTION, this.description, other.description)
+        base.appendString(DiffBuilder.DESCRIPTION, this.description, other.description, this, other)
         if (!DiffBuilder.isNull(this.ruleRepresentations) ||!DiffBuilder.isNull(other.ruleRepresentations)) {
             base.appendCollection(DiffBuilder.SUMMARY_METADATA_REPORT, this.ruleRepresentations as Collection<DiffableItem>, other.ruleRepresentations as Collection<DiffableItem>)
         }
