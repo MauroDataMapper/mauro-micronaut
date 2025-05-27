@@ -49,8 +49,8 @@ class RuleRepresentation extends Item implements DiffableItem<RuleRepresentation
                 .leftHandSide(id?.toString(), this)
                 .rightHandSide(other.id?.toString(), other)
 
-        base.appendString(DiffBuilder.LANGUAGE, this.language, other.language)
-        base.appendString(DiffBuilder.REPRESENTATION ,this.representation, other.representation)
+        base.appendString(DiffBuilder.LANGUAGE, this.language, other.language, this, other)
+        base.appendString(DiffBuilder.REPRESENTATION ,this.representation, other.representation, this, other)
         base
     }
 

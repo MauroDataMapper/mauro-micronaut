@@ -1,6 +1,7 @@
 package uk.ac.ox.softeng.mauro.api.model
 
-
+import io.micronaut.http.annotation.Delete
+import io.micronaut.http.annotation.Put
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.domain.model.Model
 import uk.ac.ox.softeng.mauro.domain.model.version.CreateNewVersionData
@@ -23,7 +24,7 @@ interface ModelApi<M extends Model> extends AdministeredItemApi<M, Folder> {
 
     M moveFolder(UUID id, String destination)
 
-    HttpResponse delete(UUID id, @Body @Nullable M model)
+    HttpResponse delete(UUID id, @Body @Nullable M model, @Nullable Boolean permanent)
 
     ListResponse<M> listAll()
 
@@ -38,4 +39,13 @@ interface ModelApi<M extends Model> extends AdministeredItemApi<M, Folder> {
     // To be implemented by the controller
     ListResponse<M> importModel(@Body io.micronaut.http.server.multipart.MultipartBody body, String namespace, String name, @Nullable String version)
 
+    M allowReadByAuthenticated(UUID id)
+
+    HttpResponse revokeReadByAuthenticated(UUID id)
+
+    M allowReadByEveryone(UUID id)
+
+    HttpResponse revokeReadByEveryone(UUID id)
+
+    PermissionsDTO permissions(UUID id)
 }

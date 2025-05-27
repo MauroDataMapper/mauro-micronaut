@@ -1,5 +1,6 @@
 package uk.ac.ox.softeng.mauro.controller.terminology
 
+import uk.ac.ox.softeng.mauro.api.model.PermissionsDTO
 import uk.ac.ox.softeng.mauro.audit.Audit
 import uk.ac.ox.softeng.mauro.domain.facet.EditType
 
@@ -31,6 +32,7 @@ import uk.ac.ox.softeng.mauro.domain.diff.ObjectDiff
 import uk.ac.ox.softeng.mauro.domain.model.version.CreateNewVersionData
 import uk.ac.ox.softeng.mauro.domain.model.version.FinaliseData
 import uk.ac.ox.softeng.mauro.domain.security.Role
+import uk.ac.ox.softeng.mauro.domain.terminology.CodeSet
 import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
 import uk.ac.ox.softeng.mauro.domain.terminology.TerminologyService
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
@@ -88,8 +90,9 @@ class TerminologyController extends ModelController<Terminology> implements Term
     @Audit(deletedObjectDomainType = Terminology)
     @Transactional
     @Delete(Paths.TERMINOLOGY_ID)
-    HttpResponse delete(UUID id, @Body @Nullable Terminology terminology) {
-        super.delete(id, terminology)
+    HttpResponse delete(UUID id, @Body @Nullable Terminology terminology, @Nullable @QueryValue Boolean permanent) {
+        permanent = permanent ?: true
+        super.delete(id, terminology,permanent)
     }
 
     @Audit
@@ -195,27 +198,54 @@ class TerminologyController extends ModelController<Terminology> implements Term
         terminology.diff(other)
     }
 
-    @Get('/terminologies/providers/importers')
+    @Audit
+    @Put(Paths.TERMINOLOGY_READ_BY_AUTHENTICATED)
+    @Transactional
+    Terminology allowReadByAuthenticated(UUID id) {
+        super.putReadByAuthenticated(id) as Terminology
+    }
+
+    @Audit
+    @Transactional
+    @Delete(Paths.TERMINOLOGY_READ_BY_AUTHENTICATED)
+    HttpResponse revokeReadByAuthenticated(UUID id) {
+        super.deleteReadByAuthenticated(id)
+    }
+
+    @Audit
+    @Put(Paths.TERMINOLOGY_READ_BY_EVERYONE)
+    @Transactional
+    Terminology allowReadByEveryone(UUID id) {
+        super.putReadByEveryone(id) as Terminology
+    }
+
+    @Audit
+    @Transactional
+    @Delete(Paths.TERMINOLOGY_READ_BY_EVERYONE)
+    HttpResponse revokeReadByEveryone(UUID id) {
+        super.deleteReadByEveryone(id)
+    }
+
+    @Get(Paths.TERMINOLOGY_LIST_IMPORTERS)
     List<TerminologyImporterPlugin> terminologyImporters() {
         mauroPluginService.listPlugins(TerminologyImporterPlugin)
     }
 
-    @Get('/terminologies/providers/exporters')
+    @Get(Paths.TERMINOLOGY_LIST_EXPORTERS)
     List<TerminologyExporterPlugin> terminologyExporters() {
         mauroPluginService.listPlugins(TerminologyExporterPlugin)
     }
 
-    //stub endpoint todo: actual
-    @Get('/terminologies/{id}/simpleModelVersionTree')
-    List<Map> simpleModelVersionTree(UUID id){
-        super.simpleModelVersionTree(id)
-    }
-
-
-    //todo: implement actual
-    @Get('/terminologies/{id}/permissions')
-    List<Map> permissions(UUID id) {
+    @Get(Paths.TERMINOLOGY_PERMISSIONS)
+    @Override
+    PermissionsDTO permissions(UUID id) {
         super.permissions(id)
     }
 
+    @Get(Paths.TERMINOLOGY_DOI)
+    @Override
+    Map doi(UUID id) {
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.SERVICE_UNAVAILABLE, "Doi", "Doi is not implemented")
+        return null
+    }
 }

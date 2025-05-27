@@ -1,17 +1,19 @@
 package uk.ac.ox.softeng.mauro.domain.model
 
-
+import com.fasterxml.jackson.annotation.JsonAlias
 import com.fasterxml.jackson.annotation.JsonIgnore
 import groovy.transform.CompileStatic
 import groovy.transform.NamedParams
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.Nullable
+import io.micronaut.data.annotation.Relation
 import jakarta.persistence.Transient
 import uk.ac.ox.softeng.mauro.domain.authority.Authority
 import uk.ac.ox.softeng.mauro.domain.diff.CollectionDTO
 import uk.ac.ox.softeng.mauro.domain.diff.DiffBuilder
 import uk.ac.ox.softeng.mauro.domain.diff.DiffableItem
 import uk.ac.ox.softeng.mauro.domain.diff.ObjectDiff
+import uk.ac.ox.softeng.mauro.domain.facet.VersionLink
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.domain.model.version.ModelVersion
 import uk.ac.ox.softeng.mauro.domain.security.SecurableResource
@@ -31,6 +33,8 @@ import java.time.Instant
 @CompileStatic
 @Slf4j
 abstract class Model<M extends DiffableItem> extends AdministeredItem implements SecurableResource {
+
+    public static final String DEFAULT_BRANCH_NAME = 'main'
 
     Boolean finalised = false
 
@@ -61,7 +65,7 @@ abstract class Model<M extends DiffableItem> extends AdministeredItem implements
     Authority authority
 
     @Nullable
-    String branchName = 'main'
+    String branchName = DEFAULT_BRANCH_NAME
 
     @Nullable
     //@Transient
@@ -69,6 +73,36 @@ abstract class Model<M extends DiffableItem> extends AdministeredItem implements
 
     @Nullable
     String modelVersionTag
+
+    @JsonIgnore
+    public boolean versionableFlag =true
+
+    @Transient
+    boolean isVersionable()
+    {
+        final List<Model> myAncestors= getAncestors()
+        Collections.reverse(myAncestors)
+
+        final Iterator<Model> models=myAncestors.iterator()
+        while(models.hasNext())
+        {
+            final Model ancestor=models.next()
+            if(ancestor instanceof Folder)
+            {
+                if(ancestor.@versionableFlag)
+                {
+                    return false
+                }
+            }
+        }
+        return versionableFlag
+    }
+
+    @Transient
+    void setVersionable(final boolean versionable)
+    {
+        this.versionableFlag=versionable
+    }
 
     @Override
     @Transient
@@ -95,7 +129,14 @@ abstract class Model<M extends DiffableItem> extends AdministeredItem implements
     @Transient
     @JsonIgnore
     String getPathModelIdentifier() {
-        modelVersion ?: branchName
+        final Model model=getModelWithVersion()
+
+        if(model!=null)
+        {
+            return model.@modelVersion!=null ? model.@modelVersion.toString() : model.@branchName
+        }
+
+        return this.@modelVersion!=null ? this.@modelVersion.toString() : this.@branchName
     }
 
     /**
@@ -127,6 +168,62 @@ abstract class Model<M extends DiffableItem> extends AdministeredItem implements
         CollectionDTO rhs = DiffBuilder.createCollectionDiff(DiffBuilder.MODEL_COLLECTION_KEYS, other.properties)
         ObjectDiff baseDiff = DiffBuilder.diff(this, other, lhs, rhs)
         baseDiff
+    }
+
+    @JsonIgnore
+    @Transient
+    List<Model> getAncestors()
+    {
+        final ArrayList<Model> myAncestors=new ArrayList<>(3)
+
+        final Model myParent=getParent()
+        if(myParent==null){return myAncestors}
+
+        myAncestors.add(myParent)
+        myAncestors.addAll(myParent.getAncestors())
+
+        return myAncestors
+    }
+
+    @JsonIgnore
+    @Transient
+    Model getModelWithVersion()
+    {
+        final List<Model> myAncestors= getAncestors()
+        Collections.reverse(myAncestors)
+
+        // Ignoring folders that are not versionable, find an ancestor
+        // that has a version
+
+        final Iterator<Model> it=myAncestors.iterator()
+        while(it.hasNext())
+        {
+            final Model model = it.next()
+            if(model instanceof Folder)
+            {
+                if(!model.@versionableFlag){continue}
+            }
+            if(model.@modelVersion!=null)
+            {
+                return model
+            }
+        }
+        return this
+    }
+
+    ModelVersion getModelVersion()
+    {
+        return getModelWithVersion().@modelVersion
+    }
+
+    String getBranchName()
+    {
+        return getModelWithVersion().@branchName
+    }
+
+    String getModelVersionTag()
+    {
+        return getModelWithVersion().@modelVersionTag
     }
 
     /****
@@ -216,4 +313,8 @@ abstract class Model<M extends DiffableItem> extends AdministeredItem implements
         folder
     }
 
+    /* VersionLinkAware */
+
+    @Relation(Relation.Kind.ONE_TO_MANY)
+    List<VersionLink> versionLinks=[]
 }

@@ -35,7 +35,6 @@ abstract class FacetController<I extends Facet> extends ItemController<I> implem
         facet
     }
 
-    @Post
     I create(String domainType, UUID domainId, @Body @NonNull I facet) {
         cleanBody(facet)
 
@@ -74,7 +73,6 @@ abstract class FacetController<I extends Facet> extends ItemController<I> implem
         }
     }
 
-    @Transactional
     HttpResponse delete(UUID id) {
         I facetToDelete = facetRepository.readById(id)
         accessControlService.checkRole(Role.EDITOR, readAdministeredItemForFacet(facetToDelete))

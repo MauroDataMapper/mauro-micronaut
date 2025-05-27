@@ -111,6 +111,9 @@ abstract class AdministeredItem extends Item {
     @Relation(Relation.Kind.ONE_TO_MANY)
     List<ReferenceFile> referenceFiles = []
 
+    @Transient
+    List<String> availableActions=[]
+
     /**
      * Helper method for returning the parent of this object, if one exists and is loaded.
      * <p>
@@ -182,9 +185,33 @@ abstract class AdministeredItem extends Item {
             if (i > Path.PATH_MAX_NODES) throw new MauroInternalException("Path exceeded maximum depth of [$Path.PATH_MAX_NODES]")
         }
 
-        path = new Path()
-        path.nodes = pathNodes
-        path
+        path = new Path(pathNodes)
+        return path
+    }
+
+    /**
+     * Recalculate this item's Path from its parents, all the way out to the edge of space
+     * This item must have all its parent items loaded. ( via pathRepository.readParentItems() )
+     *
+     * @return The new Path
+     */
+    @Transient
+    @JsonIgnore
+    Path getPathToEdge() {
+        if (!pathPrefix) throw new MauroInternalException("Class [${this.class.simpleName}] is not Pathable")
+        List<Path.PathNode> pathNodes = []
+        int i = 0
+        AdministeredItem node = this
+        while (node) {
+            pathNodes.add(0, new Path.PathNode(prefix: node.pathPrefix, identifier: node.pathIdentifier, modelIdentifier: node.pathModelIdentifier, node:node))
+            i++; node = node.parent
+            if (i > Path.PATH_MAX_NODES) throw new MauroInternalException("Path exceeded maximum depth of [$Path.PATH_MAX_NODES]")
+        }
+
+        Path pathToEdge=new Path()
+        pathToEdge.nodes = pathNodes
+
+        return pathToEdge
     }
 
     /**

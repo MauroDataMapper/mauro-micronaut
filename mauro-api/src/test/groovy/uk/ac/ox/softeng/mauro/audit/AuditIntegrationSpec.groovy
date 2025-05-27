@@ -70,7 +70,7 @@ class AuditIntegrationSpec extends SecuredIntegrationSpec {
         folderResponse2.edits.first().title == EditType.CREATE
 
         when:
-        folderApi.delete(folderResponse.id, childFolderResponse.id, new Folder())
+        folderApi.delete(folderResponse.id, childFolderResponse.id, new Folder(),true)
         folderResponse2 = folderApi.show(folderResponse.id)
 
         then:

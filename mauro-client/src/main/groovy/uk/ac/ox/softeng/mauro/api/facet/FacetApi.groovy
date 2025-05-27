@@ -14,10 +14,8 @@ import io.micronaut.http.annotation.Post
 @MauroApi
 interface FacetApi<I extends Facet> {
 
-    @Get('/{id}')
     I show(String domainType, UUID domainId, UUID id)
 
-    @Post
     I create(String domainType, UUID domainId, @Body @NonNull I facet)
 
 /*  Don't enforce this on facets
@@ -25,7 +23,6 @@ interface FacetApi<I extends Facet> {
     I update(String domainType, UUID domainId, UUID id, @Body @NonNull I facet)
  */
 
-    @Delete('/{id}')
     HttpResponse delete(String domainType, UUID domainId, UUID id)
 
 }

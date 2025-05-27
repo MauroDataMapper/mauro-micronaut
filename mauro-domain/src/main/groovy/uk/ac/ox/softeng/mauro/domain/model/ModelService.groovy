@@ -55,6 +55,11 @@ abstract class ModelService<M extends Model> {
 
         copy.branchName = branchName
 
+        copy.versionLinks = []
+
         copy
     }
+
+
+
 }

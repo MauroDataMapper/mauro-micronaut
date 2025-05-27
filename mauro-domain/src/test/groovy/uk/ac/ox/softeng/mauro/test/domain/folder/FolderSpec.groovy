@@ -1,8 +1,10 @@
 package uk.ac.ox.softeng.mauro.test.domain.folder
 
 import spock.lang.Specification
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.diff.ObjectDiff
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
+import uk.ac.ox.softeng.mauro.domain.model.version.ModelVersion
 import uk.ac.ox.softeng.mauro.domain.terminology.Term
 import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
 import uk.ac.ox.softeng.mauro.test.domain.TestModelData
@@ -106,5 +108,157 @@ class FolderSpec extends Specification {
 
         ObjectDiff diff = folder.diff(cloned)
         diff.numberOfDiffs == 0
+    }
+
+    def "Test non versioned folder with non versioned data model"()
+    {
+        given:
+            Folder folderWithoutVersion = Folder.build(label: "$LABEL", author: "$AUTHOR", description: "$DESCRIPTION") {}
+        DataModel dataModelWithoutVersion = DataModel.build(label: 'My Test DataModel with Version', id: UUID.randomUUID()) {}
+        when:
+            dataModelWithoutVersion.setParent(folderWithoutVersion)
+        then:
+            dataModelWithoutVersion.getModelVersion() == null &&
+            folderWithoutVersion.getModelVersion() == null &&
+            dataModelWithoutVersion.getPathModelIdentifier() == 'main' &&
+            folderWithoutVersion.getPathModelIdentifier() == null &&
+            folderWithoutVersion.isVersionable() == false
+    }
+
+    def "Test non versioned folder with non versioned sub folder"()
+    {
+        given:
+            Folder folderWithoutVersion = Folder.build(label: "$LABEL", author: "$AUTHOR", description: "$DESCRIPTION") {}
+            Folder subFolderWithoutVersion = Folder.build(label: "$LABEL", author: "$AUTHOR", description: "$DESCRIPTION") {}
+        when:
+            subFolderWithoutVersion.setParent(folderWithoutVersion)
+        then:
+            folderWithoutVersion.isVersionable() == false &&
+            subFolderWithoutVersion.isVersionable() == false &&
+            subFolderWithoutVersion.getModelVersion() == null &&
+            folderWithoutVersion.getModelVersion() == null &&
+            subFolderWithoutVersion.getPathModelIdentifier() == null &&
+            folderWithoutVersion.getPathModelIdentifier() == null
+    }
+
+    def "Test non versioned folder with versioned data model"()
+    {
+        given:
+            Folder folderWithoutVersion = Folder.build(label: "$LABEL", author: "$AUTHOR", description: "$DESCRIPTION") {}
+            DataModel dataModelWithVersion = DataModel.build(label: 'My Test DataModel with Version', id: UUID.randomUUID()) {}
+            ModelVersion modelVersion = ModelVersion.build(major: 2, minor: 3, patch: 0, snapshot: false){}
+            dataModelWithVersion.setModelVersion( modelVersion )
+        when:
+            dataModelWithVersion.setParent(folderWithoutVersion)
+        then:
+            folderWithoutVersion.getModelVersion() == null &&
+            dataModelWithVersion.getModelVersion() == modelVersion &&
+            dataModelWithVersion.getPathModelIdentifier() == "2.3.0" &&
+            folderWithoutVersion.getPathModelIdentifier() == null &&
+            dataModelWithVersion.isVersionable()
+    }
+
+    def "Test a versioned non-versionable folder "()
+    {
+        given:
+            Folder folderWithVersion = Folder.build(label: "$LABEL", author: "$AUTHOR", description: "$DESCRIPTION") {}
+            ModelVersion modelVersion1 = ModelVersion.build(major: 1, minor: 2, patch: 3, snapshot: true){}
+            folderWithVersion.setModelVersion( modelVersion1 )
+            folderWithVersion.setVersionable(false)
+
+        when:
+            true
+        then:
+            folderWithVersion.isVersionable() == false &&
+            folderWithVersion.getModelVersion() == modelVersion1 &&
+            folderWithVersion.getPathModelIdentifier() == null
+    }
+
+    def "Test a versioned versionable folder "()
+    {
+        given:
+        Folder folderWithVersion = Folder.build(label: "$LABEL", author: "$AUTHOR", description: "$DESCRIPTION") {}
+        ModelVersion modelVersion1 = ModelVersion.build(major: 1, minor: 2, patch: 3, snapshot: true){}
+        folderWithVersion.setModelVersion( modelVersion1 )
+        folderWithVersion.setVersionable(true)
+
+        when:
+        true
+        then:
+            folderWithVersion.isVersionable()  &&
+            folderWithVersion.getModelVersion() == modelVersion1 &&
+            folderWithVersion.getPathModelIdentifier() == "1.2.3-SNAPSHOT"
+    }
+
+    def "Test a versioned versionable folder with a versioned non-versionable sub folder"()
+    {
+        given:
+        Folder folderWithVersion = Folder.build(label: "$LABEL", author: "$AUTHOR", description: "$DESCRIPTION") {}
+        Folder subFolderWithVersion = Folder.build(label: "$LABEL", author: "$AUTHOR", description: "$DESCRIPTION") {}
+
+        ModelVersion modelVersion1 = ModelVersion.build(major: 1, minor: 2, patch: 3, snapshot: true){}
+        ModelVersion modelVersion2 = ModelVersion.build(major: 2, minor: 2, patch: 3, snapshot: false){}
+
+        folderWithVersion.setModelVersion( modelVersion1 )
+        subFolderWithVersion.setModelVersion( modelVersion2 )
+
+        folderWithVersion.setVersionable(true)
+
+        when:
+            subFolderWithVersion.setParent(folderWithVersion)
+        then:
+            folderWithVersion.getModelVersion() == modelVersion1 &&
+            subFolderWithVersion.getModelVersion() == modelVersion1 &&
+            subFolderWithVersion.getPathModelIdentifier() == null &&
+            folderWithVersion.getPathModelIdentifier() == "1.2.3-SNAPSHOT" &&
+            folderWithVersion.isVersionable() &&
+            subFolderWithVersion.isVersionable() == false
+    }
+
+    def "Test a versioned versionable folder with a versioned versionable sub folder"()
+    {
+        given:
+        Folder folderWithVersion = Folder.build(label: "$LABEL", author: "$AUTHOR", description: "$DESCRIPTION") {}
+        Folder subFolderWithVersion = Folder.build(label: "$LABEL", author: "$AUTHOR", description: "$DESCRIPTION") {}
+
+        ModelVersion modelVersion1 = ModelVersion.build(major: 1, minor: 2, patch: 3, snapshot: true){}
+        ModelVersion modelVersion2 = ModelVersion.build(major: 2, minor: 2, patch: 3, snapshot: false){}
+
+        folderWithVersion.setModelVersion( modelVersion1 )
+        subFolderWithVersion.setModelVersion( modelVersion2 )
+
+        folderWithVersion.setVersionable(true)
+        subFolderWithVersion.setVersionable(true)
+
+        when:
+        subFolderWithVersion.setParent(folderWithVersion)
+        then:
+        folderWithVersion.getModelVersion() == modelVersion1 &&
+                subFolderWithVersion.getModelVersion() == modelVersion1 &&
+                subFolderWithVersion.getPathModelIdentifier() == null &&
+                folderWithVersion.getPathModelIdentifier() == "1.2.3-SNAPSHOT" &&
+                folderWithVersion.isVersionable() &&
+                subFolderWithVersion.isVersionable() == false
+    }
+
+    def "Test a versioned non-versionable folder with a versioned datamodel"()
+    {
+        given:
+        Folder folderWithVersion = Folder.build(label: "$LABEL", author: "$AUTHOR", description: "$DESCRIPTION") {}
+        DataModel dataModelWithVersion = DataModel.build(label: 'My Test DataModel with Version', id: UUID.randomUUID()) {}
+
+        ModelVersion modelVersion1 = ModelVersion.build(major: 1, minor: 2, patch: 3, snapshot: true){}
+        ModelVersion modelVersion2 = ModelVersion.build(major: 2, minor: 2, patch: 3, snapshot: false){}
+
+        folderWithVersion.setModelVersion( modelVersion1 )
+        dataModelWithVersion.setModelVersion( modelVersion2 )
+
+        when:
+        dataModelWithVersion.setParent(folderWithVersion)
+        then:
+            folderWithVersion.getModelVersion() == modelVersion1 &&
+            dataModelWithVersion.getModelVersion() == modelVersion2 &&
+            dataModelWithVersion.getPathModelIdentifier() == "2.2.3" &&
+            folderWithVersion.getPathModelIdentifier() == null
     }
 }

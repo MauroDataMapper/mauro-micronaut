@@ -1,36 +1,42 @@
 package uk.ac.ox.softeng.mauro.controller.classifier
 
-import uk.ac.ox.softeng.mauro.audit.Audit
-import uk.ac.ox.softeng.mauro.domain.facet.EditType
-
-import io.micronaut.http.HttpStatus
-import uk.ac.ox.softeng.mauro.api.classifier.ClassificationSchemeApi
-
 import uk.ac.ox.softeng.mauro.ErrorHandler
-
-import groovy.transform.CompileStatic
-import groovy.util.logging.Slf4j
-import io.micronaut.core.annotation.NonNull
-import io.micronaut.core.annotation.Nullable
-import io.micronaut.http.HttpResponse
-import io.micronaut.http.MediaType
-import io.micronaut.http.annotation.*
-import io.micronaut.http.server.multipart.MultipartBody
-import io.micronaut.scheduling.TaskExecutors
-import io.micronaut.scheduling.annotation.ExecuteOn
-import io.micronaut.security.annotation.Secured
-import io.micronaut.security.rules.SecurityRule
-import io.micronaut.transaction.annotation.Transactional
-import uk.ac.ox.softeng.mauro.controller.model.ModelController
 import uk.ac.ox.softeng.mauro.api.Paths
+import uk.ac.ox.softeng.mauro.api.classifier.ClassificationSchemeApi
+import uk.ac.ox.softeng.mauro.api.model.PermissionsDTO
+import uk.ac.ox.softeng.mauro.audit.Audit
+import uk.ac.ox.softeng.mauro.controller.model.ModelController
 import uk.ac.ox.softeng.mauro.domain.classifier.ClassificationScheme
 import uk.ac.ox.softeng.mauro.domain.diff.ObjectDiff
+import uk.ac.ox.softeng.mauro.domain.facet.EditType
 import uk.ac.ox.softeng.mauro.domain.model.version.CreateNewVersionData
 import uk.ac.ox.softeng.mauro.domain.security.Role
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.classifier.ClassificationSchemeContentRepository
 import uk.ac.ox.softeng.mauro.web.ListResponse
+
+import groovy.transform.CompileStatic
+import groovy.util.logging.Slf4j
+import io.micronaut.core.annotation.NonNull
+import io.micronaut.core.annotation.Nullable
+import io.micronaut.http.HttpResponse
+import io.micronaut.http.HttpStatus
+import io.micronaut.http.MediaType
+import io.micronaut.http.annotation.Body
+import io.micronaut.http.annotation.Consumes
+import io.micronaut.http.annotation.Controller
+import io.micronaut.http.annotation.Delete
+import io.micronaut.http.annotation.Get
+import io.micronaut.http.annotation.Post
+import io.micronaut.http.annotation.Put
+import io.micronaut.http.annotation.QueryValue
+import io.micronaut.http.server.multipart.MultipartBody
+import io.micronaut.scheduling.TaskExecutors
+import io.micronaut.scheduling.annotation.ExecuteOn
+import io.micronaut.security.annotation.Secured
+import io.micronaut.security.rules.SecurityRule
+import io.micronaut.transaction.annotation.Transactional
 
 @Slf4j
 @Controller
@@ -54,8 +60,8 @@ class ClassificationSchemeController extends ModelController<ClassificationSchem
         super.show(id)
     }
 
-    @Transactional
     @Audit
+    @Transactional
     @Post(Paths.FOLDER_CLASSIFICATION_SCHEMES_ROUTE)
     ClassificationScheme create(UUID folderId, @Body @NonNull ClassificationScheme classificationScheme) {
         super.create(folderId, classificationScheme)
@@ -67,11 +73,12 @@ class ClassificationSchemeController extends ModelController<ClassificationSchem
         super.update(id, classificationScheme)
     }
 
-    @Audit(level = Audit.AuditLevel.FILE_ONLY)
+    @Audit
     @Transactional
     @Delete(Paths.CLASSIFICATION_SCHEMES_ID_ROUTE)
-    HttpResponse delete(UUID id, @Body @Nullable ClassificationScheme classificationScheme) {
-        super.delete(id, classificationScheme)
+    HttpResponse delete(UUID id, @Body @Nullable ClassificationScheme classificationScheme,@Nullable @QueryValue Boolean permanent) {
+        permanent = permanent ?: true
+        super.delete(id, classificationScheme, permanent)
     }
 
     @Audit
@@ -123,5 +130,39 @@ class ClassificationSchemeController extends ModelController<ClassificationSchem
         classificationScheme.setAssociations()
         otherClassificationScheme.setAssociations()
         classificationScheme.diff(otherClassificationScheme)
+    }
+
+    @Audit
+    @Put(Paths.CLASSIFICATION_SCHEMES_READ_BY_AUTHENTICATED)
+    @Transactional
+    ClassificationScheme allowReadByAuthenticated(UUID id) {
+        super.putReadByAuthenticated(id) as ClassificationScheme
+    }
+
+    @Audit
+    @Transactional
+    @Delete(Paths.CLASSIFICATION_SCHEMES_READ_BY_AUTHENTICATED)
+    HttpResponse revokeReadByAuthenticated(UUID id) {
+        super.deleteReadByAuthenticated(id)
+    }
+
+    @Audit
+    @Put(Paths.CLASSIFICATION_SCHEMES_READ_BY_EVERYONE)
+    @Transactional
+    ClassificationScheme allowReadByEveryone(UUID id) {
+        super.putReadByEveryone(id) as ClassificationScheme
+    }
+
+    @Audit
+    @Transactional
+    @Delete(Paths.CLASSIFICATION_SCHEMES_READ_BY_EVERYONE)
+    HttpResponse revokeReadByEveryone(UUID id) {
+        super.deleteReadByEveryone(id)
+    }
+
+    @Get(Paths.CLASSIFICATION_SCHEMES_PERMISSIONS)
+    @Override
+    PermissionsDTO permissions(UUID id) {
+        super.permissions(id)
     }
 }
