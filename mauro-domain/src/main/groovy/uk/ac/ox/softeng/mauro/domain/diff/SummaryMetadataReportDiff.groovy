@@ -1,18 +1,22 @@
 package uk.ac.ox.softeng.mauro.domain.diff
 
 import groovy.transform.CompileStatic
+import io.micronaut.core.annotation.NonNull
+import io.micronaut.core.annotation.Nullable
 
 import java.time.Instant
 
 @CompileStatic
 class SummaryMetadataReportDiff extends CollectionDiff {
-
+    @Nullable
     Instant reportDate
+    @NonNull
+    String reportValue
 
-    SummaryMetadataReportDiff(UUID id, Instant reportDate) {
+    SummaryMetadataReportDiff(UUID id, @Nullable Instant reportDate, @NonNull String reportValue) {
         super(id)
         this.reportDate = reportDate
+        this.reportValue = reportValue
     }
-
 
 }

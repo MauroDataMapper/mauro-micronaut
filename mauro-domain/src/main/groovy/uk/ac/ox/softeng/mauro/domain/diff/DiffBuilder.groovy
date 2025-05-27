@@ -35,6 +35,7 @@ class DiffBuilder {
     static final String MAX_MULTIPILICITY = 'maxMultiplicity'
     static final String CATEGORY = 'category'
     static final String VALUE = 'value'
+    static final String REPORT_VALUE = 'reportValue'
     static final String REPORT_DATE = 'reportDate'
     static final String CLASSIFIERS = 'classifiers'
     static final String LEFT_ID_KEY = 'leftId'

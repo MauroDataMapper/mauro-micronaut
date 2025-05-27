@@ -9,6 +9,9 @@ import uk.ac.ox.softeng.mauro.domain.diff.ArrayDiff
 import uk.ac.ox.softeng.mauro.domain.diff.DiffBuilder
 import uk.ac.ox.softeng.mauro.domain.diff.FieldDiff
 import uk.ac.ox.softeng.mauro.domain.diff.ObjectDiff
+import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
+import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadataReport
+import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadataType
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.persistence.ContainerizedTest
 import uk.ac.ox.softeng.mauro.testing.CommonDataSpec
@@ -257,5 +260,6 @@ class DataModelSchemaDiffsIntegrationSpec extends CommonDataSpec {
         dataElement[0].id == rightDataElement.id.toString()
     }
 }
+
 
 
