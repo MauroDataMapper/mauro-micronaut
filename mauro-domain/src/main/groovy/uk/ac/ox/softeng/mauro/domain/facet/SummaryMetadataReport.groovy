@@ -12,6 +12,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
 import groovy.transform.MapConstructor
+import io.micronaut.core.annotation.NonNull
+import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Transient
 
@@ -23,26 +25,29 @@ import java.time.Instant
 @MapConstructor(includeSuperFields = true, includeSuperProperties = true, noArg = true)
 class SummaryMetadataReport extends Item implements DiffableItem<SummaryMetadataReport> {
     @JsonAlias(['report_value'])
+    @NonNull
     String reportValue
 
     @JsonAlias(['summary_metadata_id'])
+    @NonNull
     UUID summaryMetadataId
 
     @JsonAlias(['report_date'])
+    @Nullable
     Instant reportDate
 
     @Override
     @JsonIgnore
     @Transient
     CollectionDiff fromItem() {
-        new SummaryMetadataReportDiff(id, reportDate)
+        new SummaryMetadataReportDiff(id, reportDate, reportValue)
     }
 
     @Override
     @JsonIgnore
     @Transient
     String getDiffIdentifier() {
-        reportDate
+        reportValue
     }
 
     @Override
@@ -53,8 +58,8 @@ class SummaryMetadataReport extends Item implements DiffableItem<SummaryMetadata
                 .leftHandSide(id?.toString(), this)
                 .rightHandSide(other.id?.toString(), other)
 
-        base.appendString(DiffBuilder.VALUE, this.reportValue, other.reportValue, this, other)
-        base.appendField(DiffBuilder.REPORT_DATE ,this.reportDate, other.reportDate, this, other)
+        base.appendString(DiffBuilder.REPORT_VALUE, this.reportValue, other.reportValue, this, other)
+        base.appendField(DiffBuilder.REPORT_DATE, this.reportDate, other.reportDate, this, other)
         base
     }
 

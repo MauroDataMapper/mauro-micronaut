@@ -184,6 +184,11 @@ class CommonDataSpec extends Specification {
         new SummaryMetadataReport(reportValue: 'test-report-value', reportDate: REPORT_DATE)
     }
 
+    SummaryMetadataReport summaryMetadataReport(String reportValue, Instant reportDate) {
+        new SummaryMetadataReport(reportValue: reportValue, reportDate: reportDate)
+    }
+
+
     RuleRepresentation ruleRepresentation() {
         new RuleRepresentation(language: 'java', representation: 'age >= 0')
     }
