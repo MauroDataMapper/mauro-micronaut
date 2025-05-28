@@ -239,7 +239,6 @@ class CommonDataSpec extends Specification {
         new DataElement(
             label: label,
             description: 'test description',
-            author: 'test author',
             dataType: dataType)
     }
 

@@ -6,11 +6,16 @@ import uk.ac.ox.softeng.mauro.api.datamodel.DataClassApi
 import uk.ac.ox.softeng.mauro.audit.Audit
 import uk.ac.ox.softeng.mauro.controller.model.AdministeredItemController
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataElement
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
 import uk.ac.ox.softeng.mauro.domain.security.Role
 import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository.DataClassCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.DataModelCacheableRepository
+import uk.ac.ox.softeng.mauro.persistence.datamodel.DataClassContentRepository
+import uk.ac.ox.softeng.mauro.persistence.datamodel.DataElementRepository
 import uk.ac.ox.softeng.mauro.persistence.datamodel.DataModelContentRepository
+import uk.ac.ox.softeng.mauro.persistence.datamodel.DataTypeRepository
 import uk.ac.ox.softeng.mauro.web.ListResponse
 import uk.ac.ox.softeng.mauro.web.PaginationParams
 
@@ -27,6 +32,7 @@ import io.micronaut.http.annotation.Post
 import io.micronaut.http.annotation.Put
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
+import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
 
 @CompileStatic
@@ -36,12 +42,19 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
 
     DataClassCacheableRepository dataClassRepository
 
-    @Inject
     DataModelCacheableRepository dataModelRepository
 
-    DataClassController(DataClassCacheableRepository dataClassRepository, DataModelCacheableRepository dataModelRepository, DataModelContentRepository dataModelContentRepository) {
-        super(DataClass, dataClassRepository, dataModelRepository, dataModelContentRepository)
+    DataTypeRepository dataTypeRepository
+
+    DataElementRepository dataElementRepository
+
+    DataClassController(DataClassCacheableRepository dataClassRepository, DataModelCacheableRepository dataModelRepository,
+                        DataClassContentRepository dataClassContentRepository, DataTypeRepository dataTypeRepository, DataElementRepository dataElementRepository) {
+        super(DataClass, dataClassRepository, dataModelRepository, dataClassContentRepository)
         this.dataClassRepository = dataClassRepository
+        this.dataModelRepository = dataModelRepository
+        this.dataTypeRepository = dataTypeRepository
+        this.dataElementRepository = dataElementRepository
     }
 
     @Audit
@@ -67,9 +80,21 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
         parentIdParamName = 'dataModelId',
         deletedObjectDomainType = DataClass
     )
+    
+    @Transactional
     @Delete(Paths.DATA_CLASS_ID)
     HttpResponse delete(UUID dataModelId, UUID id, @Body @Nullable DataClass dataClass) {
-        super.delete(id, dataClass)
+        HttpResponse deletedResponse = super.delete(id, dataClass)
+        List<DataType> dataTypes = dataTypeRepository.findAllByReferenceClass(dataClass).unique()
+        dataTypes.each {
+            List<DataElement> dataElementReferenced = dataElementRepository.readAllByDataType(it)
+            if (dataElementReferenced.isEmpty()) {
+                dataTypeRepository.delete(it)
+            } else {
+                ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "Cannot delete Data Class has associations - check dataElements")
+            }
+        }
+        deletedResponse
     }
 
     @Audit
