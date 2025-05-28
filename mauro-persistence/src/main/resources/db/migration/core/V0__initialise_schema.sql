@@ -37,7 +37,7 @@ create unique index "idx_metadata_multi_facet_aware_item_id_namespace_key" on "c
 -- VersionLink
 create table "core"."version_link"
 (
-    "id"                                 uuid primary key not null default uuid_generate_v4(),
+    "id"                                 uuid primary key not null default gen_random_uuid(),
     "version"                            integer          not null,
     "date_created"                       timestamp with time zone,
     "last_updated"                       timestamp with time zone,
