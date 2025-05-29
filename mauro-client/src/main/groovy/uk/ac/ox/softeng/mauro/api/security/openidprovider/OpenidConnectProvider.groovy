@@ -7,11 +7,11 @@ class OpenidConnectProvider {
     String authorizationEndpoint
     String imageUrl
 
-    OpenidConnectProvider(String openidProviderId, String label, boolean standardProvider,
+    OpenidConnectProvider(String openidProviderId, String label, Boolean standardProvider,
                           String authorizationEndpoint, String imageUrl) {
-        this.openidProviderId = UUID.fromString(openidProviderId)
+        if(openidProviderId!=null) this.openidProviderId = UUID.fromString(openidProviderId)
         this.label = label
-        this.standardProvider = standardProvider
+        if(standardProvider!=null) this.standardProvider = standardProvider
         this.authorizationEndpoint = authorizationEndpoint
         this.imageUrl = imageUrl
     }

@@ -16,6 +16,7 @@ import uk.ac.ox.softeng.mauro.domain.facet.Rule
 import uk.ac.ox.softeng.mauro.domain.facet.Metadata
 import uk.ac.ox.softeng.mauro.domain.facet.ReferenceFile
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
+import uk.ac.ox.softeng.mauro.domain.facet.VersionLink
 import uk.ac.ox.softeng.mauro.persistence.model.dto.AdministeredItemDTO
 
 @CompileStatic
@@ -90,4 +91,10 @@ class DataModelDTO extends DataModel implements AdministeredItemDTO {
                 JOIN core.join_administered_item_to_classifier on join_administered_item_to_classifier.classifier_id = core.classifier.id
                 and join_administered_item_to_classifier.catalogue_item_id = data_model_.id)''')
     List<Classifier> classifiers = []
+
+    @Nullable
+    @TypeDef(type = DataType.JSON)
+    @MappedProperty
+    @ColumnTransformer(read = '(select json_agg(version_link) from core.version_link where multi_facet_aware_item_id = data_model_.id)')
+    List<VersionLink> versionLinks = []
 }

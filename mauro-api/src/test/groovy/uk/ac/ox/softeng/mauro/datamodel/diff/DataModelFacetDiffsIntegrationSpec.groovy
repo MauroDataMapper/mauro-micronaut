@@ -179,7 +179,7 @@ class DataModelFacetDiffsIntegrationSpec extends CommonDataSpec {
         then:
         objectDiff
         objectDiff.label == left.label
-        ArrayDiff<Collection> summaryMetadataDiff = objectDiff.diffs.find { it.name == DiffBuilder.SUMMARY_METADATA } as ArrayDiff<Collection>
+        ArrayDiff<Collection> summaryMetadataDiff = objectDiff.diffs.find {it.name == DiffBuilder.SUMMARY_METADATA} as ArrayDiff<Collection>
         !summaryMetadataDiff
 
     }
@@ -194,8 +194,8 @@ class DataModelFacetDiffsIntegrationSpec extends CommonDataSpec {
         SummaryMetadata leftSummaryMetadata = summaryMetadataApi.create("DataModel",left.id,
                     new SummaryMetadata(summaryMetadataType: SummaryMetadataType.MAP, label: 'summary metadata label'))
 
-        SummaryMetadataReport report = summaryMetadataReportApi.create("DataModel", left.id, leftSummaryMetadata.id,
-                summaryMetadataReport())
+        SummaryMetadataReport leftReport = summaryMetadataReportApi.create("DataModel", left.id, leftSummaryMetadata.id,
+                summaryMetadataReport('left report label', REPORT_DATE))
 
         when:
         ObjectDiff objectDiff = dataModelApi.diffModels(left.id, right.id)
@@ -203,7 +203,7 @@ class DataModelFacetDiffsIntegrationSpec extends CommonDataSpec {
         then:
         objectDiff
         objectDiff.label == left.label
-        ArrayDiff<Collection> summaryMetadataDiff = objectDiff.diffs.find { it.name == DiffBuilder.SUMMARY_METADATA } as ArrayDiff<Collection>
+        ArrayDiff<Collection> summaryMetadataDiff = objectDiff.diffs.find {it.name == DiffBuilder.SUMMARY_METADATA} as ArrayDiff<Collection>
 
         summaryMetadataDiff
         summaryMetadataDiff.created.isEmpty()
@@ -214,10 +214,48 @@ class DataModelFacetDiffsIntegrationSpec extends CommonDataSpec {
         FieldDiff summaryMetadataTypeDiffs = summaryMetadataDiff.modified[0].diffs.find { it.name == DiffBuilder.SUMMARY_METADATA_TYPE } as FieldDiff
         summaryMetadataTypeDiffs.left == SummaryMetadataType.MAP.name()
         summaryMetadataTypeDiffs.right == SummaryMetadataType.STRING.name()
-        ArrayDiff<Collection> reportDiffs = summaryMetadataDiff.modified[0].diffs.find { it.name == DiffBuilder.SUMMARY_METADATA_REPORT } as ArrayDiff<Collection>
-        //reportDiffs.size() == 2
+
+        ArrayDiff<Collection> reportDiffs = summaryMetadataDiff.modified[0].diffs.find { it.name == DiffBuilder.SUMMARY_METADATA_REPORT }
         reportDiffs.deleted.size() == 1
-        reportDiffs.deleted[0].get(DiffBuilder.ID_KEY) == report.id.toString()
-        reportDiffs.deleted[0].get(DiffBuilder.REPORT_DATE) == report.reportDate.toString()
+        reportDiffs.deleted[0].get(DiffBuilder.ID_KEY) == leftReport.id.toString()
+        reportDiffs.deleted[0].get(DiffBuilder.REPORT_DATE) == leftReport.reportDate.toString()
+        reportDiffs.deleted[0].get(DiffBuilder.REPORT_VALUE) == leftReport.reportValue
+    }
+
+    void 'test datamodel - self does not have summaryMetadata -should show added/deleted '() {
+        given:
+        DataModel right = dataModelApi.create(folderId, dataModelPayload())
+
+        and:
+        SummaryMetadata rightSummaryMetadata = summaryMetadataApi.create("DataModel", right.id,
+                                                                        new SummaryMetadata(summaryMetadataType: SummaryMetadataType.MAP, label: 'summary metadata label right'))
+
+        SummaryMetadataReport rightReport = summaryMetadataReportApi.create("DataModel", right.id, rightSummaryMetadata.id,
+                                                                       summaryMetadataReport('right report label', REPORT_DATE))
+        SummaryMetadata leftSummaryMetadata = summaryMetadataApi.create("DataModel", left.id,
+                                                                         new SummaryMetadata(summaryMetadataType: SummaryMetadataType.MAP, label: 'summary metadata label left'))
+        SummaryMetadataReport leftReport = summaryMetadataReportApi.create("DataModel", left.id, leftSummaryMetadata.id,
+                                                                            summaryMetadataReport('left report label', REPORT_DATE))
+        when:
+        ObjectDiff objectDiff = dataModelApi.diffModels(left.id, right.id)
+        then:
+        objectDiff
+        objectDiff.label == left.label
+        ArrayDiff<Collection> summaryMetadataDiff = objectDiff.diffs.find {it.name == DiffBuilder.SUMMARY_METADATA} as ArrayDiff<Collection>
+
+        summaryMetadataDiff
+        summaryMetadataDiff.created.size() == 1
+        summaryMetadataDiff.deleted.size() == 1
+        summaryMetadataDiff.modified.isEmpty()
+
+        summaryMetadataDiff.created[0].get(DiffBuilder.SUMMARY_METADATA_REPORT).flatten().find {
+            it.reportDate == rightReport.reportDate
+            it.reportValue == rightReport.reportValue
+        }
+
+        summaryMetadataDiff.deleted[0].get(DiffBuilder.SUMMARY_METADATA_REPORT).flatten().find {
+            it.reportDate == leftReport.reportDate
+            it.reportValue == leftReport.reportValue
+        }
     }
 }

@@ -6,6 +6,7 @@ import io.micronaut.context.annotation.Prototype
 import io.micronaut.core.annotation.Introspected
 import io.micronaut.core.convert.ConversionContext
 import io.micronaut.data.model.runtime.convert.AttributeConverter
+import jakarta.persistence.Transient
 
 import java.util.regex.Matcher
 import java.util.regex.Pattern
@@ -29,9 +30,12 @@ class Path {
         setPathString(str)
     }
 
+    Path(List<PathNode> nodes){
+        setNodes(nodes)
+    }
+
     void setPathString(String pathString) {
-        this.pathString = pathString
-        nodes = pathString?.split(/\|/)?.collect {PathNode.from(it)}
+        setNodes( pathString?.split(/\|/)?.collect { PathNode.from(it) } )
     }
 
     void setNodes(List<PathNode> nodes) {
@@ -40,14 +44,41 @@ class Path {
     }
 
     String toString() {
-        pathString
+        return pathString
     }
 
     Path join(PathNode node) {
         Path joined = new Path(nodes: nodes, pathString: pathString)
         joined.@nodes += node
         joined.@pathString += '|' + node.toString()
-        joined
+        return joined
+    }
+
+    @Transient
+    Item findAncestorNodeItem(UUID ofUUID, String domainType)
+    {
+        // Find ofUUID
+        int at=-1
+        for(int i=0;i<this.nodes.size();i++)
+        {
+            Item node=this.nodes.get(i).node
+            if(node==null){continue}
+            if(node.id == ofUUID){at=i; break}
+        }
+
+        if(at<=0) {return null}
+
+        // Find the first node with domainType before at
+
+        for(int i=at-1;i>=0;i--) {
+            Item node=this.nodes.get(i).node
+            if(node==null){continue}
+            if(node.id !=null && node.domainType == domainType) {
+                return node
+            }
+        }
+
+        return null
     }
 
     static class PathNode {
@@ -55,6 +86,9 @@ class Path {
         String identifier
         String modelIdentifier
         String attribute
+
+        @Transient
+        Item node
 
         @Override
         String toString() {
@@ -65,7 +99,7 @@ class Path {
         }
 
         static PathNode from(String str) {
-            Pattern nodePattern = ~/^(?<prefix>\w\w\w?):(?<identifier>.*)(\$(?<modelIdentifier>.*))?(@(?<attribute>.*))?$/
+            Pattern nodePattern = ~/^(?<prefix>\w\w\w?):(?<identifier>[^@$]*)(\$(?<modelIdentifier>[^@]*))?(@(?<attribute>.*))?$/
             Matcher matcher = str =~ nodePattern
             if (!matcher.matches()) {
                 throw new IllegalArgumentException('String [' + str + '] is not a valid PathNode')
@@ -83,7 +117,7 @@ class Path {
 
             @Override
             PathNode convertToEntityValue(String value, ConversionContext context) {
-                value ? PathNode.from(value) : null
+                value ? from(value) : null
             }
 
         }

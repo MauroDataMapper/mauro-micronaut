@@ -1,5 +1,6 @@
 package uk.ac.ox.softeng.mauro.persistence.datamodel
 
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
@@ -26,6 +27,11 @@ abstract class DataTypeRepository implements ModelItemRepository<DataType> {
     @Nullable
     List<DataType> findAllByDataModel(DataModel dataModel) {
         dataTypeDTORepository.findAllByDataModel(dataModel) as List<DataType>
+    }
+
+    @Nullable
+    List<DataType> findAllByReferenceClass(DataClass referenceClass) {
+        dataTypeDTORepository.findAllByReferenceClass(referenceClass) as List<DataType>
     }
 
     @Override

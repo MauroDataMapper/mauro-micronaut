@@ -35,6 +35,7 @@ class DiffBuilder {
     static final String MAX_MULTIPILICITY = 'maxMultiplicity'
     static final String CATEGORY = 'category'
     static final String VALUE = 'value'
+    static final String REPORT_VALUE = 'reportValue'
     static final String REPORT_DATE = 'reportDate'
     static final String CLASSIFIERS = 'classifiers'
     static final String LEFT_ID_KEY = 'leftId'
@@ -85,9 +86,12 @@ class DiffBuilder {
         ObjectDiff baseDiff = newObjectDiff(diffClass, lhsId, rhsId)
         baseDiff.label = lhsMap.find { it.key == LABEL }.value
 
-        buildStrings(baseDiff, leftStrFields as Map<String, Object>, rightStrFields as Map<String, Object>)
-        buildField(Boolean, baseDiff, leftBooleanFields as Map<String, Object>, rightBooleanFields as Map<String, Object>)
-        buildField(Instant, baseDiff, leftInstantFields as Map<String, Object>, rightInstantFields as Map<String, Object>)
+        String lhsDiffIdentifier=lhs.getPathPrefix()+":"+lhs.getLabel()+'$'+lhs.getBranchName()
+        String rhsDiffIdentifier=rhs.getPathPrefix()+":"+rhs.getLabel()+'$'+rhs.getBranchName()
+
+        buildStrings(baseDiff, leftStrFields as Map<String, Object>, rightStrFields as Map<String, Object>, lhsDiffIdentifier, rhsDiffIdentifier)
+        buildField(Boolean, baseDiff, leftBooleanFields as Map<String, Object>, rightBooleanFields as Map<String, Object>, lhsDiffIdentifier, rhsDiffIdentifier)
+        buildField(Instant, baseDiff, leftInstantFields as Map<String, Object>, rightInstantFields as Map<String, Object>, lhsDiffIdentifier, rhsDiffIdentifier)
         baseDiff
     }
 
@@ -123,17 +127,17 @@ class DiffBuilder {
         objectDiff
     }
 
-    static ObjectDiff buildStrings(ObjectDiff objectDiff, Map<String, Object> lhsMap, Map<String, Object> rhsMap) {
-        buildField(String, objectDiff, lhsMap, rhsMap)
+    static ObjectDiff buildStrings(ObjectDiff objectDiff, Map<String, Object> lhsMap, Map<String, Object> rhsMap, String lhsDiffIdentifier, String rhsDiffIdentifier) {
+        buildField(String, objectDiff, lhsMap, rhsMap, lhsDiffIdentifier, rhsDiffIdentifier)
         objectDiff
     }
 
-    static ObjectDiff buildField(Class<? extends Object> targetClass, ObjectDiff objectDiff, Map<String, Object> lhsMap, Map<String, Object> rhsMap) {
+    static ObjectDiff buildField(Class<? extends Object> targetClass, ObjectDiff objectDiff, Map<String, Object> lhsMap, Map<String, Object> rhsMap, String lhsDiffIdentifier, String rhsDiffIdentifier) {
         if (!lhsMap.isEmpty()) {
             lhsMap.each { k, v ->
                 if (rhsMap[k] != v) {
                     objectDiff.appendField(k as String, targetClass instanceof String ? clean(v as String) : v,
-                            targetClass instanceof String ? clean(rhsMap[k] as String) : rhsMap[k])
+                            targetClass instanceof String ? clean(rhsMap[k] as String) : rhsMap[k], new DiffablePlaceholder(diffIdentifier: lhsDiffIdentifier+'@'+k), new DiffablePlaceholder(diffIdentifier: rhsDiffIdentifier+'@'+k))
                 }
             }
         }
@@ -143,7 +147,7 @@ class DiffBuilder {
             rhsMap.keySet().each {
                 if (!lhsMap.keySet().contains(it)) {
                     objectDiff.appendField(it as String, null, targetClass instanceof String ? clean(rhsMap.get(it) as String) :
-                            rhsMap.get(it))
+                            rhsMap.get(it), new DiffablePlaceholder(diffIdentifier: lhsDiffIdentifier+'@'+it), new DiffablePlaceholder(diffIdentifier: rhsDiffIdentifier+'@'+it))
                 }
             }
         }

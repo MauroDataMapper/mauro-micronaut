@@ -1,6 +1,7 @@
 package uk.ac.ox.softeng.mauro.datamodel
 
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataElement
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.domain.model.Model
@@ -238,8 +239,35 @@ class DataTypeIntegrationSpec extends CommonDataSpec {
     }
 
 
+    void 'delete dataClass - should raise error when datatype is referenced in other objects'() {
+        given:
+        DataType dataTypeResponse = dataTypeApi.create(
+            dataModelId,
+            new DataType(label: 'test Reference Type',
+                         description: 'Test Reference type description',
+                         dataTypeKind: DataType.DataTypeKind.REFERENCE_TYPE,
+                         referenceClass: [id: dataClassId1]))
 
-    void 'should delete dataType'() {
+        DataElement dataElement = dataElementApi.create(dataModelId, dataClassId1, dataElementPayload("dataElement label", dataTypeResponse))
+        when:
+        DataClass dataClass1 = dataClassApi.show(dataModelId, dataClassId1)
+        then:
+        dataClass1
+
+        when:
+        dataClassApi.delete(dataModelId, dataClassId1, dataClass1)
+        then:
+        HttpClientResponseException exception = thrown()
+        exception.status == HttpStatus.UNPROCESSABLE_ENTITY
+
+        when:
+        dataClass1 = dataClassApi.show(dataModelId, dataClassId1)
+        then:
+        dataClass1
+
+    }
+
+    void 'should delete dataType when no other references to dataType'() {
         given:
         dataTypeApi.list(dataModelId).count == 0
 
@@ -258,13 +286,13 @@ class DataTypeIntegrationSpec extends CommonDataSpec {
         httpResponse.status == HttpStatus.NO_CONTENT
     }
 
-    Object createAPI(UUID dataModelId, UUID referenceClassId) {
-
-        dataTypeApi.create(
-            dataModelId,
-            new DataType(label: 'test Reference Type',
-                         description: 'Test Reference type description',
-                         dataTypeKind: DataType.DataTypeKind.REFERENCE_TYPE,
-                         referenceClass: [id: referenceClassId]))
-    }
+//    Object createAPI(UUID dataModelId, UUID referenceClassId) {
+//
+//        dataTypeApi.create(
+//            dataModelId,
+//            new DataType(label: 'test Reference Type',
+//                         description: 'Test Reference type description',
+//                         dataTypeKind: DataType.DataTypeKind.REFERENCE_TYPE,
+//                         referenceClass: [id: referenceClassId]))
+//    }
 }

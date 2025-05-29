@@ -60,16 +60,16 @@ class ObjectDiff<T extends DiffableItem> {
         this
     }
 
-    ObjectDiff<T> appendString(final String fieldName, final String lhs, final String rhs) throws MauroInternalException {
+    ObjectDiff<T> appendString(final String fieldName, final String lhs, final String rhs, final DiffableItem lhsDiffableItem, final DiffableItem rhsDiffableItem) throws MauroInternalException {
         String lhsString = DiffBuilder.isNullOrEmpty(lhs) ? null : DiffBuilder.clean(lhs)
         String rhsString = DiffBuilder.isNullOrEmpty(rhs) ? null : DiffBuilder.clean(rhs)
-        appendField( fieldName, lhsString, rhsString)
+        appendField( fieldName, lhsString, rhsString, lhsDiffableItem, rhsDiffableItem)
         this
     }
 
-    <K> ObjectDiff<T> appendField(final String fieldName, K lhs, K rhs) throws MauroInternalException {
+    <K> ObjectDiff<T> appendField(final String fieldName, K lhs, K rhs, final DiffableItem lhsDiffableItem, final DiffableItem rhsDiffableItem) throws MauroInternalException {
         if (lhs != rhs) {
-            append(new FieldDiff(fieldName, lhs, rhs))
+            append(new FieldDiff(fieldName, lhs, rhs, lhsDiffableItem, rhsDiffableItem))
         }
         this
     }
@@ -139,6 +139,11 @@ class ObjectDiff<T extends DiffableItem> {
 
     private boolean objectsAreIdentical() {
         !getNumberOfDiffs()
+    }
+
+    String toString()
+    {
+        return "ObjectDiff: class: "+targetClass.getCanonicalName()+" label"+label+" leftId: "+leftId+" rightId: "+rightId+" diffs: "+diffs
     }
 
 }

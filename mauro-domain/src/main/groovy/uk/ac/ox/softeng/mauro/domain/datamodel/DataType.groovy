@@ -75,10 +75,8 @@ class DataType extends ModelItem<DataModel> implements DiffableItem<DataType> {
     @JsonIgnore
     DataTypeKind dataTypeKind
 
-
     @Nullable
     @MappedProperty('reference_class_id')
-    @JsonProperty('reference_class_id')
     DataClass referenceClass
 
     @Nullable

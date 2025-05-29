@@ -96,7 +96,7 @@ class ClassificationSchemeIntegrationSpec extends CommonDataSpec {
 
         when:
         HttpResponse httpResponse =
-            classificationSchemeApi.delete(classificationScheme.id, classificationScheme)
+            classificationSchemeApi.delete(classificationScheme.id, classificationScheme, true)
 
         then:
         httpResponse.status == HttpStatus.NO_CONTENT

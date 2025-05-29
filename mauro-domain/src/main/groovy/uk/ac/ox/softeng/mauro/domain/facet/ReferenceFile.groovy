@@ -55,7 +55,7 @@ class ReferenceFile extends CatalogueFile implements DiffableItem<ReferenceFile>
         ObjectDiff<ReferenceFile> base = DiffBuilder.objectDiff(ReferenceFile)
                 .leftHandSide(id?.toString(), this)
                 .rightHandSide(other.id?.toString(), other)
-        base.appendString(DiffBuilder.FILE_NAME, this.fileName, other.fileName)
+        base.appendString(DiffBuilder.FILE_NAME, this.fileName, other.fileName, this, other)
         base
     }
 }

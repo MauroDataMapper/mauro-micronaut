@@ -20,17 +20,30 @@ class FieldDiff<F> {
     F left
     F right
 
+    @JsonIgnore
+    DiffableItem lhsDiffableItem
+    @JsonIgnore
+    DiffableItem rhsDiffableItem
+
     @JsonCreator
     FieldDiff(){}
 
-    FieldDiff( String name, F left, F right) {
+    FieldDiff( String name, F left, F right, DiffableItem lhsDiffableItem, DiffableItem rhsDiffableItem) {
         this.name = name
         this.left = left
         this.right = right
+        this.lhsDiffableItem = lhsDiffableItem
+        this.rhsDiffableItem = rhsDiffableItem
     }
 
     @JsonIgnore
     Integer getNumberOfDiffs() {
       1
     }
+
+    String toString()
+    {
+        return "FieldDiff: "+name+" left="+left+" right="+right+" lhsDiffableItem="+lhsDiffableItem+" rhsDiffableItem="+rhsDiffableItem
+    }
+
 }

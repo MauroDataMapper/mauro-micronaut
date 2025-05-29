@@ -36,7 +36,7 @@ class SubscribedModelService {
     final MauroPluginService mauroPluginService
     final SubscribedCatalogueService subscribedCatalogueService
     final ModelContentRepository<Model> modelContentRepository
-    final ItemCacheableRepository.SubscribedModelCacheableRepository subscribedModelCacheableRepository
+    final SubscribedModelCacheableRepository subscribedModelCacheableRepository
     final AuthorityService authorityService
 
     @Inject

@@ -39,7 +39,7 @@ interface TerminologyApi extends ModelApi<Terminology> {
     Terminology update(UUID id, @Body @NonNull Terminology terminology)
 
     @Delete(Paths.TERMINOLOGY_ID)
-    HttpResponse delete(UUID id, @Body @Nullable Terminology terminology)
+    HttpResponse delete(UUID id, @Body @Nullable Terminology terminology, @Nullable Boolean permanent)
 
     @Get(Paths.TERMINOLOGY_SEARCH_GET)
     ListResponse<SearchResultsDTO> searchGet(UUID id, @Parameter SearchRequestDTO requestDTO)
@@ -80,4 +80,7 @@ interface TerminologyApi extends ModelApi<Terminology> {
 
     @Get(Paths.TERMINOLOGY_DIFF)
     ObjectDiff diffModels(@NonNull UUID id, @NonNull UUID otherId)
+
+    @Get(Paths.TERMINOLOGY_DOI)
+    Map doi(UUID id)
 }
