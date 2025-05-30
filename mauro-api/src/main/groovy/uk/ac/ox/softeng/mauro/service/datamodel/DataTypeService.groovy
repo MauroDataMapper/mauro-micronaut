@@ -39,8 +39,12 @@ class DataTypeService {
     }
 
 
-    private DataClass validatedReferenceClass(DataType dataType, AdministeredItem parent) {
-        DataClass referenceClass = getReferenceDataClass(dataType.referenceClass?.id)
+    protected DataClass validatedReferenceClass(DataType dataType, AdministeredItem parent) {
+        UUID referenceClassId = dataType.referenceClass?.id
+        if ( !referenceClassId){
+            ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "Error -ReferenceType datatype requires referenceClass")
+        }
+        DataClass referenceClass = getReferenceDataClass(referenceClassId)
         if (referenceClass.dataModel.id != parent.id) {
             ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "DataClass $referenceClass.id assigned to DataType must belong to same datamodel")
         }
@@ -53,7 +57,7 @@ class DataTypeService {
         referenceClass
     }
 
-    private DataClass getReferenceDataClass(@NonNull UUID dataClassId) {
+    protected DataClass getReferenceDataClass(@NonNull UUID dataClassId) {
         DataClass referenceClass = dataClassRepository.findById(dataClassId)
         ErrorHandler.handleErrorOnNullObject(HttpStatus.UNPROCESSABLE_ENTITY, referenceClass, "Cannot find reference class ")
         referenceClass

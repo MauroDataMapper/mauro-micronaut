@@ -94,7 +94,7 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
     @Delete(Paths.DATA_CLASS_ID)
     HttpResponse delete(UUID dataModelId, UUID id, @Body @Nullable DataClass dataClass) {
         HttpResponse deletedResponse = super.delete(id, dataClass)
-        List<DataType> dataTypes = dataTypeRepository.findAllByReferenceClass(dataClass)
+        List<DataType> dataTypes = dataTypeRepository.findAllByReferenceClassId(dataClass.id)
         dataTypes.each {
             List<DataElement> dataElementReferenced = dataElementRepository.readAllByDataType(it)
             if (dataElementReferenced.isEmpty()) {

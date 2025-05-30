@@ -8,7 +8,6 @@ import uk.ac.ox.softeng.mauro.security.SecuredIntegrationSpec
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 import io.micronaut.http.HttpResponse
-import io.micronaut.http.HttpStatus
 import io.micronaut.http.client.exceptions.HttpClientResponseException
 import io.micronaut.runtime.EmbeddedApplication
 import io.micronaut.test.annotation.Sql

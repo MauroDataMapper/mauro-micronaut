@@ -89,8 +89,7 @@ class DataTypeIntegrationSpec extends CommonDataSpec {
 
         when:
         DataType dataTypeResponse = dataTypeApi.create(
-            dataModelId,
-            new DataType(label: 'test Reference Type',
+            dataModelId,new DataType(label: 'test Reference Type',
                          description: 'Test Reference type description',
                          dataTypeKind: DataType.DataTypeKind.REFERENCE_TYPE,
                          referenceClass: [id: dataClassId1]))

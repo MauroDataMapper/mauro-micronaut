@@ -2,6 +2,7 @@ package uk.ac.ox.softeng.mauro.service.federation
 
 import uk.ac.ox.softeng.mauro.ErrorHandler
 import uk.ac.ox.softeng.mauro.domain.authority.Authority
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.facet.federation.MauroLink
 import uk.ac.ox.softeng.mauro.domain.facet.federation.PublishedModel
 import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedCatalogue
@@ -12,6 +13,7 @@ import uk.ac.ox.softeng.mauro.domain.model.Model
 import uk.ac.ox.softeng.mauro.importdata.ImportMetadata
 import uk.ac.ox.softeng.mauro.persistence.cache.ItemCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.ItemCacheableRepository.SubscribedModelCacheableRepository
+import uk.ac.ox.softeng.mauro.persistence.datamodel.DataModelContentRepository
 import uk.ac.ox.softeng.mauro.persistence.model.ModelContentRepository
 import uk.ac.ox.softeng.mauro.persistence.service.RepositoryService
 import uk.ac.ox.softeng.mauro.plugin.MauroPluginService
@@ -25,6 +27,7 @@ import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.http.HttpStatus
 import jakarta.inject.Inject
+import jakarta.persistence.ManyToOne
 
 @CompileStatic
 @Slf4j
@@ -38,6 +41,8 @@ class SubscribedModelService {
     final ModelContentRepository<Model> modelContentRepository
     final SubscribedModelCacheableRepository subscribedModelCacheableRepository
     final AuthorityService authorityService
+    @Inject
+    DataModelContentRepository dataModelContentRepository
 
     @Inject
     SubscribedModelService(RepositoryService repositoryService, MauroPluginService mauroPluginService, SubscribedCatalogueService subscribedCatalogueService,
@@ -95,7 +100,11 @@ class SubscribedModelService {
         checkModelLabelAndVersionNotAlreadyImported(savedImported)
         if (savedImported) {
             savedImported.folder = folder
-            modelContentRepository.saveWithContent(savedImported as Model)
+            if (savedImported.domainType == DataModel.class.simpleName ){
+                dataModelContentRepository.saveWithContent(savedImported as DataModel) as DataModel
+            } else {
+                modelContentRepository.saveWithContent(savedImported as Model)
+            }
         }
     }
 

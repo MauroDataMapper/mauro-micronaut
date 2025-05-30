@@ -1,5 +1,6 @@
 package uk.ac.ox.softeng.mauro.domain.datamodel
 
+import uk.ac.ox.softeng.mauro.domain.diff.BaseCollectionDiff
 import uk.ac.ox.softeng.mauro.domain.diff.CollectionDiff
 import uk.ac.ox.softeng.mauro.domain.diff.DiffBuilder
 import uk.ac.ox.softeng.mauro.domain.diff.DiffableItem
@@ -26,12 +27,12 @@ class ReferenceType extends ModelItem<DataType> implements DiffableItem<Referenc
 
     @Override
     CollectionDiff fromItem() {
-        return null
+        new BaseCollectionDiff(id, label)
     }
 
     @Override
     String getDiffIdentifier() {
-        return null
+        this.label
     }
 
     @Override

@@ -1,15 +1,5 @@
 package uk.ac.ox.softeng.mauro.persistence.model
 
-import uk.ac.ox.softeng.mauro.domain.facet.Annotation
-import uk.ac.ox.softeng.mauro.domain.facet.Metadata
-import uk.ac.ox.softeng.mauro.domain.facet.ReferenceFile
-import uk.ac.ox.softeng.mauro.domain.facet.Rule
-import uk.ac.ox.softeng.mauro.domain.facet.RuleRepresentation
-import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
-import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadataReport
-import uk.ac.ox.softeng.mauro.domain.folder.Folder
-import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
-import uk.ac.ox.softeng.mauro.domain.model.Model
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
@@ -35,11 +25,13 @@ class ModelContentRepository<M extends Model> extends AdministeredItemContentRep
         M saved = (M) getRepository(model).save(model)
 
         saveAllFacets(saved)
-        associations.each {association ->
-            if (association) {
-                Collection<AdministeredItem> savedAssociation = getRepository(association.first()).saveAll((Collection<AdministeredItem>) association)
-                saveAllFacets(savedAssociation)
-            }
+
+        List<AdministeredItem> flattenedItems = associations.flatten() as List<AdministeredItem>
+        flattenedItems.collect {
+           getRepository(it).save(it)
+        }
+        flattenedItems.collect {
+            saveAllFacets(it)
         }
         saved
     }

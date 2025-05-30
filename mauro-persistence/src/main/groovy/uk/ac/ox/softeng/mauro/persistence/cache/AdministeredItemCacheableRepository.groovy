@@ -206,8 +206,9 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
             super(dataTypeRepository)
         }
 
-        List<DataType> findAllByReferenceClass(DataClass dataClass) {
-            ((DataTypeRepository) repository).findAllByReferenceClass(dataClass).unique()
+        @Nullable
+        List<DataType> findAllByReferenceClassId(UUID referenceClassId) {
+            ((DataTypeRepository) repository).findAllByReferenceClassId(referenceClassId).unique()
         }
 
         @Override
