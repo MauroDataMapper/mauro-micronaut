@@ -103,12 +103,6 @@ javamail:
           enable: true
         host: $$host$$ # Replace me!
 
-mauro:
-  federation:
-    subscribed-catalogues.max: 50
-  audit:
-    scope: ALL
-
 # Populate to enable OAuth2; see also micronaut.security properties
 #  oauth:
 #    id:
@@ -119,6 +113,10 @@ mauro:
 #    login-success:
 #    create-user:
 mauro:
+  federation:
+    subscribed-catalogues.max: 50
+  audit:
+    scope: ALL
   oauth:
     id: 00000000-0000-0000-0000-000000000000
     label: Keycloak
