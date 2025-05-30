@@ -3,7 +3,6 @@ package uk.ac.ox.softeng.mauro.federation
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedCatalogue
 import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedModel
-import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.persistence.SecuredContainerizedTest
 import uk.ac.ox.softeng.mauro.security.SecuredIntegrationSpec
 import uk.ac.ox.softeng.mauro.web.ListResponse
@@ -66,9 +65,9 @@ class SubscribedModelIntegrationSpec extends SecuredIntegrationSpec {
         where:
         payload                                                                                        | _
         subscribedModelPayload(folderId)                                                               | _
-//        subscribedModelAndUrlPayload(folderId, EXPORTER_URL)                                           | _
-//        subscribedModelUrlAndContentTypePayload(folderId, EXPORTER_URL, MAURO_DATA_MODEL_CONTENT_TYPE) | _
-//        subscribedModelAndImporterProviderServicePayload(folderId)                                     | _
+        subscribedModelAndUrlPayload(folderId, EXPORTER_URL)                                           | _
+        subscribedModelUrlAndContentTypePayload(folderId, EXPORTER_URL, MAURO_DATA_MODEL_CONTENT_TYPE) | _
+        subscribedModelAndImporterProviderServicePayload(folderId)                                     | _
 
     }
 

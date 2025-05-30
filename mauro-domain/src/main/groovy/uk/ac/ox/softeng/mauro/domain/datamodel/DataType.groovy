@@ -20,6 +20,8 @@ import io.micronaut.data.annotation.MappedProperty
 import io.micronaut.data.annotation.Relation
 import jakarta.persistence.Inheritance
 import jakarta.persistence.InheritanceType
+import jakarta.persistence.JoinColumn
+import jakarta.persistence.ManyToOne
 import jakarta.persistence.Transient
 
 /**
@@ -75,10 +77,10 @@ class DataType extends ModelItem<DataModel> implements DiffableItem<DataType> {
     @JsonIgnore
     DataTypeKind dataTypeKind
 
-
     @Nullable
+    @ManyToOne
     @MappedProperty('reference_class_id')
-    @JsonProperty('reference_class_id')
+    @JoinColumn(name = 'reference_class_id')
     DataClass referenceClass
 
     @Nullable

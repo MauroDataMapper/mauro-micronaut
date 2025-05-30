@@ -54,6 +54,7 @@ cmake-build-*/
 # IntelliJ
 out/
 
+
 # mpeltonen/sbt-idea plugin
 .idea_modules/
 
@@ -155,3 +156,7 @@ Network Trash Folder
 Temporary Items
 .apdisk
 
+
+# logs
+logs/*
+mauro-api/logs/*
