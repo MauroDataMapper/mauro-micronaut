@@ -1,6 +1,6 @@
 -- # Federation subscribed_catalogue
 create table if not exists federation."subscribed_catalogue" (
-    "id"                              uuid primary key not null default uuid_generate_v4(),
+    "id"                              uuid primary key not null default gen_random_uuid(),
     "version"                         integer          not null,
     "date_created"                    timestamp with time zone,
     "last_updated"                    timestamp with time zone,
@@ -23,7 +23,7 @@ create table if not exists federation."subscribed_catalogue" (
 );
 
 create table if not exists federation."subscribed_model" (
-    "id"                              uuid primary key not null default uuid_generate_v4(),
+    "id"                              uuid primary key not null default gen_random_uuid(),
     "version"                         integer          not null,
     "date_created"                    timestamp with time zone,
     "last_updated"                    timestamp with time zone,

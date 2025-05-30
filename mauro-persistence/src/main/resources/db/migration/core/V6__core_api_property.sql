@@ -1,7 +1,7 @@
 -- API Property
 create table core.api_property
 (
-    "id"               uuid primary key not null default uuid_generate_v4(),
+    "id"               uuid primary key not null default gen_random_uuid(),
     "version"          integer          not null,
     "date_created"     timestamp with time zone,
     "last_updated"     timestamp with time zone,
