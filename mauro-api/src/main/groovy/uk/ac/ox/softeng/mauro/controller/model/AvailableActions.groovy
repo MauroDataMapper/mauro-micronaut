@@ -1,6 +1,13 @@
 package uk.ac.ox.softeng.mauro.controller.model
 
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
+import uk.ac.ox.softeng.mauro.domain.folder.Folder
+import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
+import uk.ac.ox.softeng.mauro.domain.model.Model
+import uk.ac.ox.softeng.mauro.domain.model.ModelItem
 import uk.ac.ox.softeng.mauro.domain.security.Role
+import uk.ac.ox.softeng.mauro.domain.security.SecurableResource
+import uk.ac.ox.softeng.mauro.security.AccessControlService
 
 class AvailableActions {
 
@@ -105,7 +112,7 @@ class AvailableActions {
         {
             Map<Role,List<String>> roleActions=[:]
 
-            roleActions.put(Role.EDITOR,[CHANGE_FOLDER_ACTION,CREATE_FOLDER,CREATE_VERSIONED_FOLDER])
+            roleActions.put(Role.EDITOR,[CHANGE_FOLDER_ACTION,CREATE_FOLDER,CREATE_VERSIONED_FOLDER,CREATE_MODEL,MOVE_TO_FOLDER,MOVE_TO_VERSIONED_FOLDER])
 
             PurposeRoleActions.put(PURPOSE_FOLDER,roleActions)
         }
@@ -165,4 +172,68 @@ class AvailableActions {
 
         return allActions
     }
+
+    static void updateAvailableActions(AdministeredItem item, AccessControlService accessControlService) {
+
+        if(item.availableActions==null){item.availableActions=[]}
+
+        final List<Role> roles=accessControlService.listCanDoRoles(item)
+
+        item.availableActions.clear()
+
+        // Additions
+
+        item.availableActions.addAll( AvailableActions.getActionsForRolesPurpose(roles,AvailableActions.PURPOSE_STANDARD) )
+
+        if(item instanceof SecurableResource)
+        {
+            item.availableActions.addAll( AvailableActions.getActionsForRolesPurpose(roles, AvailableActions.PURPOSE_SECURABLE) )
+        }
+
+        if(item instanceof Folder)
+        {
+            item.availableActions.addAll( AvailableActions.getActionsForRolesPurpose(roles, AvailableActions.PURPOSE_FOLDER) )
+        }
+
+        if(item instanceof DataModel)
+        {
+            item.availableActions.addAll( AvailableActions.getActionsForRolesPurpose(roles, AvailableActions.PURPOSE_DATAMODEL) )
+        }
+
+        if(item instanceof ModelItem)
+        {
+            item.availableActions.removeAll(AvailableActions.PURPOSE_MODELITEM)
+        }
+
+        if(item instanceof Model) {
+            final Model itemAsModel = (Model) item
+            if (itemAsModel.isVersionable()) {
+                item.availableActions.addAll(AvailableActions.getActionsForRolesPurpose(roles, AvailableActions.PURPOSE_VERSIONING))
+            }
+            item.availableActions.addAll(AvailableActions.getActionsForRolesPurpose(roles, AvailableActions.PURPOSE_MODEL))
+        }
+
+        // Removals
+
+        if(item instanceof Model) {
+            final Model itemAsModel = (Model) item
+
+            if(itemAsModel.finalised)
+            {
+                item.availableActions.removeAll(AvailableActions.REMOVE_WHEN_FINALISED)
+            }
+        }
+
+        if(item instanceof ModelItem)
+        {
+            item.availableActions.removeAll(AvailableActions.REMOVE_FROM_MODEL_ITEM)
+        }
+
+        // TODO: mergeInto is removed if not a non-main draft
+
+        // It also doesn't appear to be offered for VersionedFolders
+        // in the grail implementation
+    }
+
+
 }

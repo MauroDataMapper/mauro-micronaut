@@ -34,6 +34,8 @@ class TreeItem {
         model?.id
     }
 
+    List<String> availableActions=[]
+
     /*
     Boolean getHasChildren() {
         children != null ? children : null
@@ -41,6 +43,6 @@ class TreeItem {
 */
 
     static TreeItem from(AdministeredItem item) {
-        new TreeItem(id: item.id, label: item.label, domainType: item.domainType, item: item)
+        new TreeItem(id: item.id, label: item.label, domainType: item.domainType, item: item, availableActions: new ArrayList<String>(item.availableActions))
     }
 }
