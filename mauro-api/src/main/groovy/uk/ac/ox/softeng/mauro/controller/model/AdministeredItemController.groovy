@@ -169,7 +169,7 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
         item.updatePath()
         item.updateBreadcrumbs()
 
-        updateAvailableActions(item)
+        AvailableActions.updateAvailableActions(item, accessControlService)
 
         item
     }
@@ -196,68 +196,4 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
         }
         classifierList
     }
-
-    private void updateAvailableActions(I item) {
-
-        if(item.availableActions==null){item.availableActions=[]}
-
-        final List<Role> roles=accessControlService.listCanDoRoles(item)
-
-        item.availableActions.clear()
-
-        // Additions
-
-        item.availableActions.addAll( AvailableActions.getActionsForRolesPurpose(roles,AvailableActions.PURPOSE_STANDARD) )
-
-        if(item instanceof SecurableResource)
-        {
-            item.availableActions.addAll( AvailableActions.getActionsForRolesPurpose(roles, AvailableActions.PURPOSE_SECURABLE) )
-        }
-
-        if(item instanceof Folder)
-        {
-            item.availableActions.addAll( AvailableActions.getActionsForRolesPurpose(roles, AvailableActions.PURPOSE_FOLDER) )
-        }
-
-        if(item instanceof DataModel)
-        {
-            item.availableActions.addAll( AvailableActions.getActionsForRolesPurpose(roles, AvailableActions.PURPOSE_DATAMODEL) )
-        }
-
-        if(item instanceof ModelItem)
-        {
-            item.availableActions.removeAll(AvailableActions.PURPOSE_MODELITEM)
-        }
-
-        if(item instanceof Model) {
-            final Model itemAsModel = (Model) item
-            if (itemAsModel.isVersionable()) {
-                item.availableActions.addAll(AvailableActions.getActionsForRolesPurpose(roles, AvailableActions.PURPOSE_VERSIONING))
-            }
-            item.availableActions.addAll(AvailableActions.getActionsForRolesPurpose(roles, AvailableActions.PURPOSE_MODEL))
-        }
-
-        // Removals
-
-        if(item instanceof Model) {
-            final Model itemAsModel = (Model) item
-
-            if(itemAsModel.finalised)
-            {
-                item.availableActions.removeAll(AvailableActions.REMOVE_WHEN_FINALISED)
-            }
-        }
-
-        if(item instanceof ModelItem)
-        {
-            item.availableActions.removeAll(AvailableActions.REMOVE_FROM_MODEL_ITEM)
-        }
-
-        // TODO: mergeInto is removed if not a non-main draft
-
-        // It also doesn't appear to be offered for VersionedFolders
-        // in the grail implementation
-
-    }
-
 }
