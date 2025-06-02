@@ -3,6 +3,7 @@ plugins {
     id("com.github.johnrengelman.shadow") version "8.1.1"
     id("io.micronaut.application") version "4.4.5"
     id("io.micronaut.aot") version "4.4.5"
+    id("maven-publish")
     id("codenarc")
     id("java-test-fixtures")
 }
@@ -109,6 +110,16 @@ micronaut {
     }
 }
 
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            groupId = 'uk.ac.ox.softeng.mauro'
+            artifactId = 'mauro-api'
+            version = "0.0.1-SNAPSHOT"
+            from components.java
+        }
+    }
+}
 
 dependencies {
     implementation project(':mauro-domain')
