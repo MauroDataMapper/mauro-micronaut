@@ -157,7 +157,7 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
     @Get(Paths.DATA_CLASS_DOI)
     @Override
     Map doi(UUID id) {
-        ErrorHandler.handleErrorOnNullObject(HttpStatus.SERVICE_UNAVAILABLE, "Doi", "Doi is not implemented")
+        ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "Doi is not implemented")
         return null
     }
 }

@@ -35,7 +35,7 @@ class AdminSpec extends Specification {
             List pluginsList = mauroPluginService.listPlugins()
 
         then:
-            pluginsList.size() == 10
+            pluginsList.size() == 16
             pluginsList.find {
                 it.name == "JsonDataModelImporterPlugin" &&
                 it.displayName == "JSON DataModel Importer" &&
@@ -85,6 +85,36 @@ class AdminSpec extends Specification {
                 it.name == "JsonCodeSetImporterPlugin" &&
                 it.displayName == "JSON CodeSet Importer" &&
                 it.version == "4.0.0"
+            }
+            pluginsList.find {
+                it.name == "FormDataTypeProvider" &&
+                it.displayName == "Basic Form DataTypes" &&
+                it.version == "1.0.0"
+            }
+            pluginsList.find {
+                it.name == "PostgresDataTypeProviderService" &&
+                it.displayName == "PostgreSQL 9 DataTypes" &&
+                it.version == "7.3.0-SNAPSHOT"
+            }
+            pluginsList.find {
+                it.name == "DataTypeService" &&
+                it.displayName == "Basic Default DataTypes" &&
+                it.version == "1.0.0"
+            }
+            pluginsList.find {
+                it.name == "ProfileSpecificationDataTypeProvider" &&
+                it.displayName == "Profile Specification DataTypes" &&
+                it.version == "1.0.0"
+            }
+            pluginsList.find {
+                it.name == "OpenClinicaV3CrfDefaultDataTypeProviderService" &&
+                it.displayName == "OpenClinica 3.x CRF DataTypes" &&
+                it.version == "1.0.0-SNAPSHOT"
+            }
+            pluginsList.find {
+                it.name == "SqlServerDataTypeProviderService" &&
+                it.displayName == "Transact-SQL / MSSQL DataTypes" &&
+                it.version == "8.3.0-SNAPSHOT"
             }
 
         when:

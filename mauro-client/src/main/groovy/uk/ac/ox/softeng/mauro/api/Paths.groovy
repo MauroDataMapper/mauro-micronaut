@@ -30,7 +30,7 @@ interface Paths {
     String CLASSIFICATION_SCHEMES_DIFF = '/classificationSchemes/{id}/diff/{otherId}'
     String CLASSIFICATION_SCHEMES_READ_BY_AUTHENTICATED = '/classificationSchemes/{id}/readByAuthenticated'
     String CLASSIFICATION_SCHEMES_READ_BY_EVERYONE = '/classificationSchemes/{id}/readByEveryone'
-    String CLASSIFICATION_SCHEMES_PERMISSIONS='/classificationSchemes/{id}/permissions'
+    String CLASSIFICATION_SCHEMES_PERMISSIONS = '/classificationSchemes/{id}/permissions'
 
     /*
     * ClassificationSchemeApi
@@ -72,8 +72,10 @@ interface Paths {
     */
     String DATA_FLOW_ELEMENT_COMPONENT_ID = '/dataModels/{dataModelId}/dataFlows/{dataFlowId}/dataClassComponents/{dataClassComponentId}/dataElementComponents/{id}'
     String DATA_FLOW_ELEMENT_COMPONENT_LIST = '/dataModels/{dataModelId}/dataFlows/{dataFlowId}/dataClassComponents/{dataClassComponentId}/dataElementComponents'
-    String DATA_FLOW_ELEMENT_COMPONENT_SOURCE_ELEMENT = '/dataModels/{dataModelId}/dataFlows/{dataFlowId}/dataClassComponents/{dataClassComponentId}/dataElementComponents/{id}/source/{dataElementId}'
-    String DATA_FLOW_ELEMENT_COMPONENT_TARGET_ELEMENT = '/dataModels/{dataModelId}/dataFlows/{dataFlowId}/dataClassComponents/{dataClassComponentId}/dataElementComponents/{id}/target/{dataElementId}'
+    String DATA_FLOW_ELEMENT_COMPONENT_SOURCE_ELEMENT = '/dataModels/{dataModelId}/dataFlows/{dataFlowId}/dataClassComponents/{dataClassComponentId}/dataElementComponents' +
+                                                        '/{id}/source/{dataElementId}'
+    String DATA_FLOW_ELEMENT_COMPONENT_TARGET_ELEMENT = '/dataModels/{dataModelId}/dataFlows/{dataFlowId}/dataClassComponents/{dataClassComponentId}/dataElementComponents' +
+                                                        '/{id}/target/{dataElementId}'
 
     /*
     * DataFlowApi
@@ -121,15 +123,17 @@ interface Paths {
     String DATA_MODEL_READ_BY_AUTHENTICATED = '/dataModels/{id}/readByAuthenticated'
     String DATA_MODEL_READ_BY_EVERYONE = '/dataModels/{id}/readByEveryone'
     String DATA_MODEL_VERSION_LINKS = '/dataModels/{id}/versionLinks'
-    String DATA_MODEL_SIMPLE_MODEL_VERSION_TREE= '/dataModels/{id}/simpleModelVersionTree'
-    String DATA_MODEL_MODEL_VERSION_TREE= '/dataModels/{id}/modelVersionTree'
-    String DATA_MODEL_CURRENT_MAIN_BRANCH= '/dataModels/{id}/currentMainBranch'
-    String DATA_MODEL_LATEST_MODEL_VERSION= '/dataModels/{id}/latestModelVersion'
-    String DATA_MODEL_LATEST_FINALISED_MODEL= '/dataModels/{id}/latestFinalisedModel'
-    String DATA_MODEL_COMMON_ANCESTOR='/dataModels/{id}/commonAncestor/{other_model_id}'
-    String DATA_MODEL_MERGE_DIFF='/dataModels/{id}/mergeDiff/{otherId}'
-    String DATA_MODEL_PERMISSIONS='/dataModels/{id}/permissions'
+    String DATA_MODEL_SIMPLE_MODEL_VERSION_TREE = '/dataModels/{id}/simpleModelVersionTree'
+    String DATA_MODEL_MODEL_VERSION_TREE = '/dataModels/{id}/modelVersionTree'
+    String DATA_MODEL_CURRENT_MAIN_BRANCH = '/dataModels/{id}/currentMainBranch'
+    String DATA_MODEL_LATEST_MODEL_VERSION = '/dataModels/{id}/latestModelVersion'
+    String DATA_MODEL_LATEST_FINALISED_MODEL = '/dataModels/{id}/latestFinalisedModel'
+    String DATA_MODEL_COMMON_ANCESTOR = '/dataModels/{id}/commonAncestor/{other_model_id}'
+    String DATA_MODEL_MERGE_DIFF = '/dataModels/{id}/mergeDiff/{otherId}'
+    String DATA_MODEL_PERMISSIONS = '/dataModels/{id}/permissions'
     String DATA_MODEL_DOI = '/dataModels/{id}/doi'
+    String DATA_MODEL_DATATYPE_PROVIDERS = '/dataModels/providers/defaultDataTypeProviders'
+    String DATA_MODEL_TYPES = '/dataModels/types'
 
 
     /*
@@ -215,9 +219,8 @@ interface Paths {
 
     String FOLDER_READ_BY_AUTHENTICATED = '/folders/{id}/readByAuthenticated'
     String FOLDER_READ_BY_EVERYONE = '/folders/{id}/readByEveryone'
-    String FOLDER_PERMISSIONS='/folders/{id}/permissions'
+    String FOLDER_PERMISSIONS = '/folders/{id}/permissions'
     String FOLDER_DOI = '/folders/{id}/doi'
-
 
 
     /*
@@ -234,9 +237,16 @@ interface Paths {
 
     String VERSIONED_FOLDER_READ_BY_AUTHENTICATED = '/versionedFolders/{id}/readByAuthenticated'
     String VERSIONED_FOLDER_READ_BY_EVERYONE = '/versionedFolders/{id}/readByEveryone'
-    String VERSIONED_FOLDER_PERMISSIONS='/versionedFolders/{id}/permissions'
+    String VERSIONED_FOLDER_PERMISSIONS = '/versionedFolders/{id}/permissions'
     String VERSIONED_FOLDER_DOI = '/versionedFolders/{id}/doi'
 
+    String VERSIONED_FOLDER_SIMPLE_MODEL_VERSION_TREE = '/versionedFolders/{id}/simpleModelVersionTree'
+    String VERSIONED_FOLDER_MODEL_VERSION_TREE = '/versionedFolders/{id}/modelVersionTree'
+    String VERSIONED_FOLDER_CURRENT_MAIN_BRANCH = '/versionedFolders/{id}/currentMainBranch'
+    String VERSIONED_FOLDER_LATEST_MODEL_VERSION = '/versionedFolders/{id}/latestModelVersion'
+    String VERSIONED_FOLDER_LATEST_FINALISED_MODEL = '/versionedFolders/{id}/latestFinalisedModel'
+    String VERSIONED_FOLDER_COMMON_ANCESTOR = '/versionedFolders/{id}/commonAncestor/{other_model_id}'
+    String VERSIONED_FOLDER_MERGE_DIFF = '/versionedFolders/{id}/mergeDiff/{otherId}'
 
     /*
     * ImporterApi
@@ -303,7 +313,7 @@ interface Paths {
     String CODE_SET_DIFF = '/codeSets/{id}/diff/{otherId}'
     String CODE_SET_READ_BY_AUTHENTICATED = '/codeSets/{id}/readByAuthenticated'
     String CODE_SET_READ_BY_EVERYONE = '/codeSets/{id}/readByEveryone'
-    String CODE_SET_FOLDER_PERMISSIONS='/codeSets/{id}/permissions'
+    String CODE_SET_FOLDER_PERMISSIONS = '/codeSets/{id}/permissions'
     String CODE_SET_DOI = '/codeSets/{id}/doi'
 
     /*
@@ -321,12 +331,12 @@ interface Paths {
     String TERMINOLOGY_IMPORT = '/terminologies/import/{namespace}/{name}{/version}'
     String TERMINOLOGY_READ_BY_AUTHENTICATED = '/terminologies/{id}/readByAuthenticated'
     String TERMINOLOGY_READ_BY_EVERYONE = '/terminologies/{id}/readByEveryone'
-    String TERMINOLOGY_PERMISSIONS='/terminologies/{id}/permissions'
+    String TERMINOLOGY_PERMISSIONS = '/terminologies/{id}/permissions'
     String TERMINOLOGY_LIST_IMPORTERS = '/terminologies/providers/importers'
     String TERMINOLOGY_LIST_EXPORTERS = '/terminologies/providers/exporters'
     String TERMINOLOGY_DOI = '/terminologies/{id}/doi'
 
-
+    String TERMINOLOGY_SIMPLE_MODEL_VERSION_TREE = '/terminologies/{id}/simpleModelVersionTree'
 
 
     /*
@@ -346,7 +356,7 @@ interface Paths {
     String TERM_LIST = '/terminologies/{terminologyId}/terms'
     String TERM_TREE = '/terminologies/{terminologyId}/terms/tree{/id}'
     String TERM_CODE_SETS = '/terminologies/{terminologyId}/terms/{id}/codeSets'
-    String TERM_DOI = '/terminologies/{id}/doi'
+    String TERM_DOI = '/terms/{id}/doi'
 
     /*
     * TermRelationshipsApi
@@ -397,24 +407,24 @@ interface Paths {
     * PublishApi
     */
     String PUBLISHED_MODELS = '/api/published/models'
-    String PUBLISHED_MODELS_NEWER_VERSIONS  = '/api/published/models/{publishedModelId}/newerVersions'
+    String PUBLISHED_MODELS_NEWER_VERSIONS = '/api/published/models/{publishedModelId}/newerVersions'
 
     /*
     * PublishApi
     */
-    String ADMIN_SUBSCRIBED_CATALOGUES_LIST  = '/admin/subscribedCatalogues'
-    String ADMIN_SUBSCRIBED_CATALOGUES_ID  = '/admin/subscribedCatalogues/{subscribedCatalogueId}'
+    String ADMIN_SUBSCRIBED_CATALOGUES_LIST = '/admin/subscribedCatalogues'
+    String ADMIN_SUBSCRIBED_CATALOGUES_ID = '/admin/subscribedCatalogues/{subscribedCatalogueId}'
     String ADMIN_SUBSCRIBED_CATALOGUES_TEST_CONNECTION = '/admin/subscribedCatalogues/{subscribedCatalogueId}/testConnection'
 
-    String SUBSCRIBED_CATALOGUES_ID  = '/subscribedCatalogues/{subscribedCatalogueId}'
+    String SUBSCRIBED_CATALOGUES_ID = '/subscribedCatalogues/{subscribedCatalogueId}'
     String SUBSCRIBED_CATALOGUES_TYPES = '/subscribedCatalogues/types'
     String SUBSCRIBED_CATALOGUES_AUTHENTICATION_TYPES = '/subscribedCatalogues/authenticationTypes'
 
     String SUBSCRIBED_CATALOGUES_PUBLISHED_MODELS = '/subscribedCatalogues/{subscribedCatalogueId}/publishedModels'
     String SUBSCRIBED_CATALOGUES_PUBLISHED_MODELS_NEWER_VERSIONS = '/subscribedCatalogues/{subscribedCatalogueId}/publishedModels/{publishedModelId}/newerVersions'
-    String SUBSCRIBED_CATALOGUES_LIST  = '/subscribedCatalogues'
+    String SUBSCRIBED_CATALOGUES_LIST = '/subscribedCatalogues'
 
-    String SUBSCRIBED_MODELS_LIST  = '/subscribedCatalogues/{subscribedCatalogueId}/subscribedModels'
+    String SUBSCRIBED_MODELS_LIST = '/subscribedCatalogues/{subscribedCatalogueId}/subscribedModels'
     String SUBSCRIBED_MODELS_ID = '/subscribedCatalogues/{subscribedCatalogueId}/subscribedModels/{subscribedModelId}'
 
 

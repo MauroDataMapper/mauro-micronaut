@@ -39,6 +39,6 @@ class PathRepository {
 
     @NonNull
     AdministeredItemRepository getRepository(AdministeredItem item) {
-        cacheableRepositories.find {it.handles(item.class)} ?: administeredItemRepositories.find {it.handles(item.class)}
+        cacheableRepositories.find {it.handles(item.class) || it.handles(item.domainType)} ?: administeredItemRepositories.find {it.handles(item.class) || it.handles(item.domainType)}
     }
 }

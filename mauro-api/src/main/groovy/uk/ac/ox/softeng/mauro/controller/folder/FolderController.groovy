@@ -114,27 +114,27 @@ class FolderController extends ModelController<Folder> implements FolderApi {
         super.list(parentId)
     }
 
-//    // Todo: needs repository method 'deleteWithContent'
-//    @Transactional
-//    @Delete('/{id}')
-//    Mono<Long> delete(UUID id, @Nullable @Body Folder folder) {
-//        if (folder?.version == null) {
-//            folderRepository.findById(id).switchIfEmpty(Mono.error(new HttpStatusException(HttpStatus.NOT_FOUND, 'Folder not found for id'))).expand {
-//                if (it.childFolders) Flux.fromIterable(it.childFolders).flatMap {folderRepository.readById(it.id)}
-//                else Flux.empty()
-//            }.flatMapSequential {folderRepository.deleteById(it.id)}.collectList().map {
-//                it.first()
-//            }
-//        } else {
-//            folderRepository.findByIdAndVersion(id, folder.version).switchIfEmpty(
-//                Mono.error(new HttpStatusException(HttpStatus.NOT_FOUND, 'Folder not found for id and version'))).expand {
-//                if (it.childFolders) Flux.fromIterable(it.childFolders).flatMap {folderRepository.readById(it.id)}
-//                else Flux.empty()
-//            }.flatMapSequential {folderRepository.deleteById(it.id)}.collectList().map {
-//                it.first()
-//            }
-//        }
-//    }
+    //    // Todo: needs repository method 'deleteWithContent'
+    //    @Transactional
+    //    @Delete('/{id}')
+    //    Mono<Long> delete(UUID id, @Nullable @Body Folder folder) {
+    //        if (folder?.version == null) {
+    //            folderRepository.findById(id).switchIfEmpty(Mono.error(new HttpStatusException(HttpStatus.NOT_FOUND, 'Folder not found for id'))).expand {
+    //                if (it.childFolders) Flux.fromIterable(it.childFolders).flatMap {folderRepository.readById(it.id)}
+    //                else Flux.empty()
+    //            }.flatMapSequential {folderRepository.deleteById(it.id)}.collectList().map {
+    //                it.first()
+    //            }
+    //        } else {
+    //            folderRepository.findByIdAndVersion(id, folder.version).switchIfEmpty(
+    //                Mono.error(new HttpStatusException(HttpStatus.NOT_FOUND, 'Folder not found for id and version'))).expand {
+    //                if (it.childFolders) Flux.fromIterable(it.childFolders).flatMap {folderRepository.readById(it.id)}
+    //                else Flux.empty()
+    //            }.flatMapSequential {folderRepository.deleteById(it.id)}.collectList().map {
+    //                it.first()
+    //            }
+    //        }
+    //    }
 
     @Audit(level = Audit.AuditLevel.FILE_ONLY, deletedObjectDomainType = Folder)
     @Transactional
@@ -167,7 +167,7 @@ class FolderController extends ModelController<Folder> implements FolderApi {
     @Audit(title = EditType.IMPORT, description = 'Import folder')
     @Post(Paths.FOLDER_IMPORT)
     ListResponse<Folder> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version) {
-       super.importModel(body, namespace, name, version)
+        super.importModel(body, namespace, name, version)
     }
 
     @Get('/folder/search{?requestDTO}')
@@ -178,7 +178,7 @@ class FolderController extends ModelController<Folder> implements FolderApi {
 
     @Audit
     @Post('/folder/search')
-    ListResponse<SearchResultsDTO>searchPost(@Body SearchRequestDTO requestDTO) {
+    ListResponse<SearchResultsDTO> searchPost(@Body SearchRequestDTO requestDTO) {
         // TODO
         return null
     }
@@ -217,10 +217,11 @@ class FolderController extends ModelController<Folder> implements FolderApi {
     PermissionsDTO permissions(UUID id) {
         super.permissions(id)
     }
+
     @Get(Paths.FOLDER_DOI)
     @Override
     Map doi(UUID id) {
-        ErrorHandler.handleErrorOnNullObject(HttpStatus.SERVICE_UNAVAILABLE, "Doi", "Doi is not implemented")
+        ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "Doi is not implemented")
         return null
     }
 }

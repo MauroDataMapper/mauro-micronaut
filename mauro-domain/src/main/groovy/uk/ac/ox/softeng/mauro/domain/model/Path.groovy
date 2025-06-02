@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonValue
 import groovy.transform.CompileStatic
 import io.micronaut.context.annotation.Prototype
 import io.micronaut.core.annotation.Introspected
+import io.micronaut.core.annotation.Nullable
 import io.micronaut.core.convert.ConversionContext
 import io.micronaut.data.model.runtime.convert.AttributeConverter
 import jakarta.persistence.Transient
@@ -30,12 +31,12 @@ class Path {
         setPathString(str)
     }
 
-    Path(List<PathNode> nodes){
+    Path(List<PathNode> nodes) {
         setNodes(nodes)
     }
 
     void setPathString(String pathString) {
-        setNodes( pathString?.split(/\|/)?.collect { PathNode.from(it) } )
+        setNodes(pathString?.split(/\|/)?.collect {PathNode.from(it)})
     }
 
     void setNodes(List<PathNode> nodes) {
@@ -55,25 +56,23 @@ class Path {
     }
 
     @Transient
-    Item findAncestorNodeItem(UUID ofUUID, String domainType)
-    {
+    Item findAncestorNodeItem(UUID ofUUID, @Nullable String domainType) {
         // Find ofUUID
-        int at=-1
-        for(int i=0;i<this.nodes.size();i++)
-        {
-            Item node=this.nodes.get(i).node
-            if(node==null){continue}
-            if(node.id == ofUUID){at=i; break}
+        int at = -1
+        for (int i = 0; i < this.nodes.size(); i++) {
+            Item node = this.nodes.get(i).node
+            if (node == null) {continue}
+            if (node.id == ofUUID) {at = i; break}
         }
 
-        if(at<=0) {return null}
+        if (at <= 0) {return null}
 
         // Find the first node with domainType before at
 
-        for(int i=at-1;i>=0;i--) {
-            Item node=this.nodes.get(i).node
-            if(node==null){continue}
-            if(node.id !=null && node.domainType == domainType) {
+        for (int i = at - 1; i >= 0; i--) {
+            Item node = this.nodes.get(i).node
+            if (node == null) {continue}
+            if (node.id != null && (domainType == null || node.domainType == domainType)) {
                 return node
             }
         }

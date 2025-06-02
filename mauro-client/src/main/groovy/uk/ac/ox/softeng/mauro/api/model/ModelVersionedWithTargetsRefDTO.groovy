@@ -1,5 +1,8 @@
 package uk.ac.ox.softeng.mauro.api.model
 
+import com.fasterxml.jackson.annotation.JsonInclude
+
+@JsonInclude(JsonInclude.Include.ALWAYS)
 class ModelVersionedWithTargetsRefDTO extends ModelVersionedRefDTO{
 
     boolean isNewBranchModelVersion=false

@@ -48,7 +48,8 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
     PathRepository pathRepository
 
 
-    AdministeredItemController(Class<I> itemClass, AdministeredItemRepository<I> administeredItemRepository, AdministeredItemRepository<P> parentItemRepository, AdministeredItemContentRepository administeredItemContentRepository) {
+    AdministeredItemController(Class<I> itemClass, AdministeredItemRepository<I> administeredItemRepository, AdministeredItemRepository<P> parentItemRepository,
+                               AdministeredItemContentRepository administeredItemContentRepository) {
         super(administeredItemRepository)
         this.itemClass = itemClass
         this.administeredItemRepository = administeredItemRepository
@@ -96,10 +97,10 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
     }
 
     I update(UUID id, @Body @NonNull I item) {
-        cleanBody(item)
+        cleanBody(item, false)
         I existing = administeredItemRepository.readById(id)
 
-        if(existing==null) {
+        if (existing == null) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, "Object not found")
         }
 

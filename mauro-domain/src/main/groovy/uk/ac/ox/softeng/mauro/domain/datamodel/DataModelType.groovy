@@ -13,4 +13,8 @@ enum DataModelType {
     String toString() {
         label
     }
+
+    static List<String> labels() {
+        values().collect {it.label}
+    }
 }
