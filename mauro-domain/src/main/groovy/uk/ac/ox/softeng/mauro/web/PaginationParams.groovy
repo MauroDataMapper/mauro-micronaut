@@ -5,7 +5,7 @@ import io.micronaut.core.annotation.Introspected
 class PaginationParams {
     Integer offset = 0
     Integer max = 50
-    String sort = "id"
+    String sort = "label"
     String order = "asc"
     String label = null
     String description = null

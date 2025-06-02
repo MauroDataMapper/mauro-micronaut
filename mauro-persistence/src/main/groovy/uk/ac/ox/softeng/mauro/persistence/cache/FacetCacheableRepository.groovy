@@ -1,8 +1,22 @@
 package uk.ac.ox.softeng.mauro.persistence.cache
 
+import uk.ac.ox.softeng.mauro.domain.facet.Annotation
+import uk.ac.ox.softeng.mauro.domain.facet.Edit
+import uk.ac.ox.softeng.mauro.domain.facet.Facet
+import uk.ac.ox.softeng.mauro.domain.facet.Metadata
+import uk.ac.ox.softeng.mauro.domain.facet.ReferenceFile
 import uk.ac.ox.softeng.mauro.domain.facet.Rule
+import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
 import uk.ac.ox.softeng.mauro.domain.facet.VersionLink
+import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
+import uk.ac.ox.softeng.mauro.persistence.facet.AnnotationRepository
+import uk.ac.ox.softeng.mauro.persistence.facet.EditRepository
+import uk.ac.ox.softeng.mauro.persistence.facet.MetadataRepository
+import uk.ac.ox.softeng.mauro.persistence.facet.ReferenceFileRepository
 import uk.ac.ox.softeng.mauro.persistence.facet.RuleRepository
+import uk.ac.ox.softeng.mauro.persistence.facet.SummaryMetadataRepository
+import uk.ac.ox.softeng.mauro.persistence.facet.VersionLinkRepository
+import uk.ac.ox.softeng.mauro.persistence.model.ItemRepository
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
@@ -10,22 +24,6 @@ import io.micronaut.cache.annotation.CacheConfig
 import io.micronaut.core.annotation.NonNull
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
-import uk.ac.ox.softeng.mauro.domain.facet.Annotation
-import uk.ac.ox.softeng.mauro.domain.facet.Facet
-import uk.ac.ox.softeng.mauro.domain.facet.Metadata
-import uk.ac.ox.softeng.mauro.domain.facet.ReferenceFile
-import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
-import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
-import uk.ac.ox.softeng.mauro.persistence.facet.AnnotationRepository
-import uk.ac.ox.softeng.mauro.domain.facet.Edit
-import uk.ac.ox.softeng.mauro.persistence.facet.EditRepository
-import uk.ac.ox.softeng.mauro.domain.facet.Rule
-import uk.ac.ox.softeng.mauro.persistence.facet.RuleRepository
-import uk.ac.ox.softeng.mauro.persistence.facet.MetadataRepository
-import uk.ac.ox.softeng.mauro.persistence.facet.ReferenceFileRepository
-import uk.ac.ox.softeng.mauro.persistence.facet.SummaryMetadataRepository
-import uk.ac.ox.softeng.mauro.persistence.facet.VersionLinkRepository
-import uk.ac.ox.softeng.mauro.persistence.model.ItemRepository
 
 @Slf4j
 @CompileStatic
@@ -59,7 +57,7 @@ abstract class FacetCacheableRepository<F extends Facet> extends ItemCacheableRe
 
     @NonNull
     AdministeredItemCacheableRepository<AdministeredItem> getRepository(String domainType) {
-        cacheableRepositories.find { it.domainType == domainType }
+        cacheableRepositories.find {it.handles(domainType)}
     }
 
     // Cacheable Facet Repository definitions
