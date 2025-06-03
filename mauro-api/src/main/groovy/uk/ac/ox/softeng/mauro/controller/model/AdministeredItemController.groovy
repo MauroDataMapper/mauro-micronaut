@@ -3,13 +3,8 @@ package uk.ac.ox.softeng.mauro.controller.model
 import uk.ac.ox.softeng.mauro.ErrorHandler
 import uk.ac.ox.softeng.mauro.api.model.AdministeredItemApi
 import uk.ac.ox.softeng.mauro.domain.classifier.Classifier
-import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
-import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
-import uk.ac.ox.softeng.mauro.domain.model.Model
-import uk.ac.ox.softeng.mauro.domain.model.ModelItem
 import uk.ac.ox.softeng.mauro.domain.security.Role
-import uk.ac.ox.softeng.mauro.domain.security.SecurableResource
 import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemContentRepository
 import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemRepository
@@ -63,12 +58,7 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
     }
 
     I show(UUID id) {
-        I item
-        try {
-            item = administeredItemRepository.findById(id)
-        } catch (Exception e) {
-            ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, item, "Item with id ${id.toString()} not found")
-        }
+        I item = administeredItemRepository.findById(id)
         ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, item, "Item with id ${id.toString()} not found")
         accessControlService.checkRole(Role.READER, item)
 
