@@ -18,7 +18,11 @@ import io.micronaut.core.annotation.Introspected
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Relation
-import jakarta.persistence.*
+import jakarta.persistence.Inheritance
+import jakarta.persistence.InheritanceType
+import jakarta.persistence.JoinColumn
+import jakarta.persistence.JoinTable
+import jakarta.persistence.Transient
 
 /**
  * A datatype describes the range of values that a column or field in a dataset may take.  It may be one of the following kinds:
@@ -72,20 +76,18 @@ class DataClass extends ModelItem<DataModel> implements DiffableItem<DataClass> 
     @Nullable
     DataClass parentDataClass
 
-
-
     @Override
     @Transient
     @JsonIgnore
     AdministeredItem getParent() {
-        parentDataClass?:dataModel
+        parentDataClass ?: dataModel
     }
 
     @Override
     @Transient
     @JsonIgnore
     Model getOwner() {
-        dataModel ?: super.getOwner()
+        parentDataClass?.owner ?: dataModel ?: super.getOwner()
     }
 
     @Transient
