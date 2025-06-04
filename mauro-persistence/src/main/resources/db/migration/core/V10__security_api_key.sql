@@ -1,5 +1,5 @@
 create table security.api_key (
-    "id"                uuid primary key    not null default uuid_generate_v4(),
+    "id"                uuid primary key    not null default gen_random_uuid(),
     "version"           integer             not null,
     "refreshable"       boolean             not null,
     "date_created"      timestamp with time zone,

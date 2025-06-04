@@ -71,7 +71,7 @@ endpoints:
     enabled: true
     sensitive: true
   flyway:
-    enabled: trues
+    enabled: true
     sensitive: true
   caches:
     enabled: true
@@ -90,20 +90,6 @@ datasources:
     db-type: postgres
     driver-class-name: org.postgresql.Driver
 
-flyway:
-  datasources:
-    default:
-      enabled: true
-      baselineOnMigrate: true
-      fail-on-missing-locations: true
-      clean-schema: false
-      schemas:
-        - core
-        - terminology
-        - datamodel
-        - security
-        - dataflow
-        - federation
 
 javamail:
   authentication:
