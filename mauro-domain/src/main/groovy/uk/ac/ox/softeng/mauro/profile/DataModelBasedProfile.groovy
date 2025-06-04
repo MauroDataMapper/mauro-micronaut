@@ -43,11 +43,11 @@ class DataModelBasedProfile implements Profile {
             description = dataElement.description
             minMultiplicity = dataElement.minMultiplicity
             maxMultiplicity = dataElement.maxMultiplicity
-            if(dataElement.dataType.enumerationValues) {
-                allowedValues = dataElement.dataType.enumerationValues.collect {it.key}
+            if(dataElement.dataType?.enumerationValues) {
+                allowedValues = dataElement.dataType?.enumerationValues.collect {it.key}
                 dataType = ProfileFieldDataType.ENUMERATION
             } else {
-                dataType = ProfileFieldDataType.fromString(dataElement.dataType.label)
+                dataType = ProfileFieldDataType.fromString(dataElement.dataType?.label)
                 if(!dataType) { // We'll default to STRING
                     dataType = ProfileFieldDataType.STRING
                 }
