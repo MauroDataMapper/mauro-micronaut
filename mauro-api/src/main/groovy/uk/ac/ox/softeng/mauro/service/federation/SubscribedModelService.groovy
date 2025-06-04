@@ -1,7 +1,8 @@
 package uk.ac.ox.softeng.mauro.service.federation
 
 import uk.ac.ox.softeng.mauro.ErrorHandler
-import uk.ac.ox.softeng.mauro.domain.authority.Authority
+import uk.ac.ox.softeng.mauro.domain.classifier.ClassificationScheme
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.facet.federation.MauroLink
 import uk.ac.ox.softeng.mauro.domain.facet.federation.PublishedModel
 import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedCatalogue
@@ -9,11 +10,17 @@ import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedModel
 import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedModelFederationParams
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.domain.model.Model
+import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
 import uk.ac.ox.softeng.mauro.importdata.ImportMetadata
 import uk.ac.ox.softeng.mauro.persistence.cache.ItemCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.ItemCacheableRepository.SubscribedModelCacheableRepository
+import uk.ac.ox.softeng.mauro.persistence.classifier.ClassificationSchemeContentRepository
+import uk.ac.ox.softeng.mauro.persistence.datamodel.DataModelContentRepository
+import uk.ac.ox.softeng.mauro.persistence.folder.FolderContentRepository
 import uk.ac.ox.softeng.mauro.persistence.model.ModelContentRepository
 import uk.ac.ox.softeng.mauro.persistence.service.RepositoryService
+import uk.ac.ox.softeng.mauro.persistence.terminology.CodeSetContentRepository
+import uk.ac.ox.softeng.mauro.persistence.terminology.TerminologyContentRepository
 import uk.ac.ox.softeng.mauro.plugin.MauroPluginService
 import uk.ac.ox.softeng.mauro.plugin.exporter.ModelExporterPlugin
 import uk.ac.ox.softeng.mauro.plugin.importer.FileImportParameters
@@ -36,8 +43,16 @@ class SubscribedModelService {
     final MauroPluginService mauroPluginService
     final SubscribedCatalogueService subscribedCatalogueService
     final ModelContentRepository<Model> modelContentRepository
-    final ItemCacheableRepository.SubscribedModelCacheableRepository subscribedModelCacheableRepository
+    final SubscribedModelCacheableRepository subscribedModelCacheableRepository
     final AuthorityService authorityService
+
+    @Inject
+    DataModelContentRepository dataModelContentRepository
+    @Inject
+    FolderContentRepository folderContentRepository
+    @Inject
+    ClassificationSchemeContentRepository classificationSchemeContentRepository
+
 
     @Inject
     SubscribedModelService(RepositoryService repositoryService, MauroPluginService mauroPluginService, SubscribedCatalogueService subscribedCatalogueService,
@@ -95,7 +110,7 @@ class SubscribedModelService {
         checkModelLabelAndVersionNotAlreadyImported(savedImported)
         if (savedImported) {
             savedImported.folder = folder
-            modelContentRepository.saveWithContent(savedImported as Model)
+            saveModelWithContent(savedImported)
         }
     }
 
@@ -151,6 +166,21 @@ class SubscribedModelService {
     Long deleteModels(SubscribedCatalogue subscribedCatalogue) {
         subscribedModelCacheableRepository.deleteAll(subscribedModelCacheableRepository.findAllBySubscribedCatalogueId(subscribedCatalogue.id))
 
+    }
+
+    protected Model saveModelWithContent(Model model) {
+        switch (model.domainType) {
+            case DataModel.class.simpleName: dataModelContentRepository.saveWithContent((DataModel) model as DataModel)
+                break
+            case Folder.class.simpleName: folderContentRepository.saveWithContent((Folder) model as Folder)
+                break
+            case ClassificationScheme.class.simpleName: classificationSchemeContentRepository.saveWithContent((ClassificationScheme) model as ClassificationScheme)
+                break
+            default:
+                modelContentRepository.saveWithContent(model)
+                break
+        }
+        model
     }
 }
 

@@ -131,7 +131,7 @@ class DataTypeController extends AdministeredItemController<DataType, DataModel>
             ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "DataClass $referenceClass.id assigned to DataType must belong to same datamodel")
         }
         DataType sameLabelInModel = dataTypeRepository.findAllByParent(parent).find {
-            it.domainType == DataType.DataTypeKind.REFERENCE_TYPE.stringValue && it.label == dataType.label }
+            it.isReferenceType() && it.label == dataType.label }
         if (sameLabelInModel){
             ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "Label $dataType.label exists for ReferenceType")
         }
@@ -145,7 +145,7 @@ class DataTypeController extends AdministeredItemController<DataType, DataModel>
     }
 
     private DataType getReferenceClassProperties(DataType dataType) {
-        if (dataType.domainType == DataType.DataTypeKind.REFERENCE_TYPE.stringValue) {
+        if (dataType.isReferenceType()) {
             dataType.referenceClass = dataClassRepository.readById(dataType.referenceClass?.id)
         }
         dataType

@@ -136,6 +136,13 @@ class DataType extends ModelItem<DataModel> implements DiffableItem<DataType> {
         'dt'
     }
 
+    @Transient
+    @JsonIgnore
+    boolean isReferenceType() {
+        this.getDomainType() == DataTypeKind.REFERENCE_TYPE.stringValue
+    }
+
+
     @Override
     @JsonIgnore
     @Transient

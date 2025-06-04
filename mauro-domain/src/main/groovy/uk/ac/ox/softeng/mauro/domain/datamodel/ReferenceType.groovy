@@ -20,6 +20,11 @@ import jakarta.persistence.Transient
 @MapConstructor(includeSuperFields = true, includeSuperProperties = true, noArg = true)
 @Introspected
 class ReferenceType extends ModelItem<DataType> implements DiffableItem<ReferenceType> {
+
+    DataClass getReferenceClass(){
+        referenceClass
+    }
+
     @Override
     String getDomainType() {
         domainType = ReferenceType.simpleName

@@ -63,7 +63,7 @@ class DataClass extends ModelItem<DataModel> implements DiffableItem<DataClass> 
     List<DataClass> extendedBy = []
 
     @Nullable @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'referenceClass')
-    List<ReferenceType> referenceTypes = []
+    List<DataType> referenceTypes = []
 
     @JsonIgnore
     @Nullable

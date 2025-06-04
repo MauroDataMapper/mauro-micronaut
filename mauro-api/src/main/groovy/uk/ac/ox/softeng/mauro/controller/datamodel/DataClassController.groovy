@@ -33,7 +33,6 @@ import io.micronaut.http.annotation.Put
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
 import io.micronaut.transaction.annotation.Transactional
-import jakarta.inject.Inject
 
 @CompileStatic
 @Controller
@@ -84,8 +83,9 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
     @Transactional
     @Delete(Paths.DATA_CLASS_ID)
     HttpResponse delete(UUID dataModelId, UUID id, @Body @Nullable DataClass dataClass) {
-        HttpResponse deletedResponse = super.delete(id, dataClass)
-        List<DataType> dataTypes = dataTypeRepository.findAllByReferenceClass(dataClass).unique()
+        DataClass dataClassToDelete = dataClassRepository.readById(id)
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, dataClassToDelete, "DataClass $id not found")
+        List<DataType> dataTypes = dataTypeRepository.findAllByReferenceClass(dataClassToDelete).unique()
         dataTypes.each {
             List<DataElement> dataElementReferenced = dataElementRepository.readAllByDataType(it)
             if (dataElementReferenced.isEmpty()) {
@@ -94,6 +94,7 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
                 ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "Cannot delete Data Class has associations - check dataElements")
             }
         }
+        HttpResponse deletedResponse = super.delete(id, dataClass)
         deletedResponse
     }
 
