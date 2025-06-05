@@ -3,6 +3,7 @@ package uk.ac.ox.softeng.mauro.controller.tree
 import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.tree.TreeApi
 import uk.ac.ox.softeng.mauro.audit.Audit
+import uk.ac.ox.softeng.mauro.controller.model.AvailableActions
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
@@ -59,6 +60,7 @@ class TreeController implements TreeApi {
     @Audit
     @Get(Paths.TREE_FOLDER)
     List<TreeItem> folderTree(@Nullable UUID id, @Nullable @QueryValue Boolean foldersOnly) {
+
         List<TreeItem> treeItems = []
         foldersOnly = foldersOnly ?: false
         if (id) {
@@ -77,6 +79,8 @@ class TreeController implements TreeApi {
         foldersOnly = foldersOnly ?: false
         AdministeredItemCacheableRepository repository = repositoryService.getAdministeredItemRepository(domainType)
         AdministeredItem item = repository.readById(id)
+        AvailableActions.updateAvailableActions(item, accessControlService)
+
         accessControlService.checkRole(Role.READER, item)
         List<TreeItem> treeItems = filterTreeByReadable(treeService.buildTree(item, domainType.contains(Folder.class.simpleName) ? foldersOnly : false, true))
         treeItems
@@ -87,6 +91,12 @@ class TreeController implements TreeApi {
         treeItems = treeItems.findAll {accessControlService.canDoRole(Role.READER, it.item)}
         treeItems.each {
             it.children = it.children.findAll {accessControlService.canDoRole(Role.READER, it.item)}
+            AvailableActions.updateAvailableActions(it.item, accessControlService)
+            it.availableActions=new ArrayList<String>(it.item.availableActions)
+            it.children.each {
+                AvailableActions.updateAvailableActions(it.item, accessControlService)
+                it.availableActions=new ArrayList<String>(it.item.availableActions)
+            }
         }
         treeItems
     }

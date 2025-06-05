@@ -1,7 +1,7 @@
 package uk.ac.ox.softeng.mauro.service.federation
 
 import uk.ac.ox.softeng.mauro.ErrorHandler
-import uk.ac.ox.softeng.mauro.domain.authority.Authority
+import uk.ac.ox.softeng.mauro.domain.classifier.ClassificationScheme
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.facet.federation.MauroLink
 import uk.ac.ox.softeng.mauro.domain.facet.federation.PublishedModel
@@ -11,9 +11,10 @@ import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedModelFederationP
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.domain.model.Model
 import uk.ac.ox.softeng.mauro.importdata.ImportMetadata
-import uk.ac.ox.softeng.mauro.persistence.cache.ItemCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.ItemCacheableRepository.SubscribedModelCacheableRepository
+import uk.ac.ox.softeng.mauro.persistence.classifier.ClassificationSchemeContentRepository
 import uk.ac.ox.softeng.mauro.persistence.datamodel.DataModelContentRepository
+import uk.ac.ox.softeng.mauro.persistence.folder.FolderContentRepository
 import uk.ac.ox.softeng.mauro.persistence.model.ModelContentRepository
 import uk.ac.ox.softeng.mauro.persistence.service.RepositoryService
 import uk.ac.ox.softeng.mauro.plugin.MauroPluginService
@@ -27,7 +28,6 @@ import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.http.HttpStatus
 import jakarta.inject.Inject
-import jakarta.persistence.ManyToOne
 
 @CompileStatic
 @Slf4j
@@ -41,8 +41,14 @@ class SubscribedModelService {
     final ModelContentRepository<Model> modelContentRepository
     final SubscribedModelCacheableRepository subscribedModelCacheableRepository
     final AuthorityService authorityService
+
     @Inject
     DataModelContentRepository dataModelContentRepository
+    @Inject
+    FolderContentRepository folderContentRepository
+    @Inject
+    ClassificationSchemeContentRepository classificationSchemeContentRepository
+
 
     @Inject
     SubscribedModelService(RepositoryService repositoryService, MauroPluginService mauroPluginService, SubscribedCatalogueService subscribedCatalogueService,
@@ -100,11 +106,7 @@ class SubscribedModelService {
         checkModelLabelAndVersionNotAlreadyImported(savedImported)
         if (savedImported) {
             savedImported.folder = folder
-            if (savedImported.domainType == DataModel.class.simpleName ){
-                dataModelContentRepository.saveWithContent(savedImported as DataModel) as DataModel
-            } else {
-                modelContentRepository.saveWithContent(savedImported as Model)
-            }
+            saveModelWithContent(savedImported)
         }
     }
 
@@ -160,6 +162,21 @@ class SubscribedModelService {
     Long deleteModels(SubscribedCatalogue subscribedCatalogue) {
         subscribedModelCacheableRepository.deleteAll(subscribedModelCacheableRepository.findAllBySubscribedCatalogueId(subscribedCatalogue.id))
 
+    }
+
+    protected Model saveModelWithContent(Model model) {
+        switch (model.domainType) {
+            case DataModel.class.simpleName: dataModelContentRepository.saveWithContent((DataModel) model as DataModel)
+                break
+            case Folder.class.simpleName: folderContentRepository.saveWithContent((Folder) model as Folder)
+                break
+            case ClassificationScheme.class.simpleName: classificationSchemeContentRepository.saveWithContent((ClassificationScheme) model as ClassificationScheme)
+                break
+            default:
+                modelContentRepository.saveWithContent(model)
+                break
+        }
+        model
     }
 }
 

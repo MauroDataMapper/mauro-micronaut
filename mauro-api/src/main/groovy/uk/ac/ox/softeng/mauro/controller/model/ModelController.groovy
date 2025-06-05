@@ -1,5 +1,6 @@
 package uk.ac.ox.softeng.mauro.controller.model
 
+import uk.ac.ox.softeng.mauro.ErrorHandler
 import uk.ac.ox.softeng.mauro.api.model.ModelApi
 import uk.ac.ox.softeng.mauro.api.model.ModelRefDTO
 import uk.ac.ox.softeng.mauro.api.model.PermissionsDTO
@@ -20,6 +21,8 @@ import uk.ac.ox.softeng.mauro.domain.model.version.FinaliseData
 import uk.ac.ox.softeng.mauro.domain.security.CatalogueUser
 import uk.ac.ox.softeng.mauro.domain.security.Role
 import uk.ac.ox.softeng.mauro.domain.security.UserGroup
+import uk.ac.ox.softeng.mauro.domain.terminology.CodeSet
+import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
 import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.FacetCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository
@@ -27,6 +30,7 @@ import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.FolderC
 import uk.ac.ox.softeng.mauro.persistence.facet.VersionLinkRepository
 import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemRepository
 import uk.ac.ox.softeng.mauro.persistence.model.ModelContentRepository
+
 import uk.ac.ox.softeng.mauro.plugin.MauroPluginService
 import uk.ac.ox.softeng.mauro.plugin.exporter.ModelExporterPlugin
 import uk.ac.ox.softeng.mauro.plugin.importer.FileParameter
@@ -365,15 +369,28 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         List<M> imported = (List<M>) mauroPlugin.importModels(importParameters)
 
         Folder folder = folderRepository.readById(importParameters.folderId)
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, folder, "Folder with id $importParameters.folderId not found")
         accessControlService.checkRole(Role.EDITOR, folder)
-        List<M> saved = imported.collect { M imp ->
+        List<M> saved = imported.collect {M imp ->
             imp.folder = folder
             log.info '** about to saveWithContentBatched... **'
             updateCreationProperties(imp)
-            M savedImported = modelContentRepository.saveWithContent(imp)
-            log.info '** finished saveWithContentBatched **'
-            savedImported
+            switch (imp.getDomainType()) {
+                case DataModel.class.simpleName: saveDataModel((DataModel) imp)
+                    break
+                case Folder.class.simpleName: saveFolder((Folder) imp)
+                    break
+                case CodeSet.class.simpleName: saveCodeSet((CodeSet) imp)
+                    break
+                case Terminology.class.simpleName: saveTerminology((Terminology) imp)
+                    break
+                default:
+                    saveModel(imp)
+                    break
+            }
+
         }
+        log.info '** finished saveWithContentBatched **'
         List<M> smallerResponse = saved.collect { model ->
             show(model.id)
         }
@@ -666,5 +683,26 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         permissions.writeableByUsers=writeableByUsers
 
         return permissions
+    }
+
+    protected M saveDataModel(DataModel dataModel) {
+        DataModel savedImport = modelContentRepository.saveWithContent(dataModel as M) as DataModel
+        savedImport as M
+    }
+    protected M saveFolder(Folder folder) {
+        Folder savedImport = modelContentRepository.saveWithContent(folder as M) as Folder
+        savedImport as M
+    }
+    protected M saveCodeSet(CodeSet codeSet) {
+        CodeSet savedImport = modelContentRepository.saveWithContent(codeSet as M) as CodeSet
+        savedImport as M
+    }
+
+    protected M saveTerminology(Terminology terminology) {
+        Terminology savedImport = modelContentRepository.saveWithContent(terminology as M) as Terminology
+        savedImport as M
+    }
+    protected M saveModel(M model) {
+       modelContentRepository.saveWithContent(model)
     }
 }

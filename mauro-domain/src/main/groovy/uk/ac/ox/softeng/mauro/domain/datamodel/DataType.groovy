@@ -44,7 +44,6 @@ import jakarta.persistence.Transient
 @MapConstructor(includeSuperFields = true, includeSuperProperties = true, noArg = true)
 class DataType extends ModelItem<DataModel> implements DiffableItem<DataType> {
 
-
     enum DataTypeKind {
         PRIMITIVE_TYPE('PrimitiveType'),
         ENUMERATION_TYPE('EnumerationType'),
@@ -134,6 +133,19 @@ class DataType extends ModelItem<DataModel> implements DiffableItem<DataType> {
     @JsonIgnore
     String getPathPrefix() {
         'dt'
+    }
+
+    @Transient
+    @JsonIgnore
+    boolean isReferenceType() {
+        this.getDomainType().equalsIgnoreCase(DataTypeKind.REFERENCE_TYPE.stringValue)
+    }
+
+
+    @Transient
+    @JsonIgnore
+    boolean isModelType() {
+        this.getDomainType().equalsIgnoreCase(DataTypeKind.MODEL_TYPE.stringValue)
     }
 
     @Override

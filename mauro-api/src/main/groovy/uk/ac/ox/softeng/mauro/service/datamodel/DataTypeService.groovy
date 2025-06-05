@@ -4,6 +4,7 @@ import uk.ac.ox.softeng.mauro.ErrorHandler
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
+import uk.ac.ox.softeng.mauro.domain.model.Model
 import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository
 
 import groovy.transform.CompileStatic
@@ -24,7 +25,7 @@ class DataTypeService {
     }
 
     DataType validateDataType(DataType dataType, AdministeredItem parent) {
-        if (dataType.domainType == DataType.DataTypeKind.REFERENCE_TYPE.stringValue) {
+        if (dataType.isReferenceType()) {
             dataType.referenceClass = validatedReferenceClass(dataType, parent)
         }
         DataModelHelper.validateModelTypeFields(dataType)
@@ -32,9 +33,9 @@ class DataTypeService {
     }
 
    DataType getReferenceClassProperties(DataType dataType) {
-        if (dataType.domainType.toLowerCase() == DataType.DataTypeKind.REFERENCE_TYPE.stringValue.toLowerCase()) {
-            dataType.referenceClass = dataClassRepository.readById(dataType.referenceClass?.id)
-        }
+       if (dataType.isReferenceType()) {
+           dataType.referenceClass = dataClassRepository.readById(dataType.referenceClass?.id)
+       }
         dataType
     }
 
@@ -62,6 +63,5 @@ class DataTypeService {
         ErrorHandler.handleErrorOnNullObject(HttpStatus.UNPROCESSABLE_ENTITY, referenceClass, "Cannot find reference class ")
         referenceClass
     }
-
 
 }

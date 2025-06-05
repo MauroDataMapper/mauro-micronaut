@@ -1,6 +1,7 @@
 package uk.ac.ox.softeng.mauro.persistence.dataflow.dto
 
 import groovy.transform.CompileStatic
+import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.annotation.Join
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.model.query.builder.sql.Dialect
@@ -14,11 +15,13 @@ abstract class DataClassComponentDTORepository implements GenericRepository<Data
     @Join(value = 'dataFlow', type = Join.Type.LEFT_FETCH)
     @Join(value = 'sourceDataClasses', type = Join.Type.LEFT_FETCH)
     @Join(value = 'targetDataClasses', type = Join.Type.LEFT_FETCH)
+    @Nullable
     abstract DataClassComponentDTO findById(UUID id)
 
     @Join(value = 'catalogueUser', type = Join.Type.LEFT_FETCH)
     @Join(value = 'dataFlow', type = Join.Type.LEFT_FETCH)
     @Join(value = 'sourceDataClasses', type = Join.Type.LEFT_FETCH)
     @Join(value = 'targetDataClasses', type = Join.Type.LEFT_FETCH)
+    @Nullable
     abstract List<DataClassComponentDTO> findAllByDataFlowId(UUID uuid)
 }

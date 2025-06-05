@@ -1,5 +1,5 @@
 create table if not exists core."email" (
-    "id"                    uuid primary key not null default uuid_generate_v4(),
+    "id"                    uuid primary key not null default gen_random_uuid(),
     "version"               integer          not null,
     "sent_to_email_address" varchar(255)     not null,
     "successfully_sent"     boolean          not null,

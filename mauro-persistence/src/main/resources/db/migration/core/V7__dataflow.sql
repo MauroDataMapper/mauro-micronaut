@@ -1,5 +1,5 @@
 create table if not exists "dataflow"."data_flow" (
-    "id"                              uuid primary key not null default uuid_generate_v4(),
+    "id"                              uuid primary key not null default gen_random_uuid(),
     "version"                         integer          not null,
     "date_created"                    timestamp with time zone,
     "last_updated"                    timestamp with time zone,
@@ -15,7 +15,7 @@ create table if not exists "dataflow"."data_flow" (
 );
 
 create table if not exists "dataflow"."data_class_component" (
-    "id"                              uuid primary key not null default uuid_generate_v4(),
+    "id"                              uuid primary key not null default gen_random_uuid(),
     "version"                         integer       not null,
     "date_created"                    timestamp with time zone,
     "last_updated"                    timestamp with time zone,
@@ -31,7 +31,7 @@ create table if not exists "dataflow"."data_class_component" (
 create index "idx_data_class_component_data_flow_id" on "dataflow"."data_class_component" (data_flow_id);
 
 create table if not exists "dataflow"."data_element_component" (
-    "id"                              uuid primary key not null default uuid_generate_v4(),
+    "id"                              uuid primary key not null default gen_random_uuid(),
     "version"                         integer          not null,
     "date_created"                    timestamp with time zone,
     "last_updated"                    timestamp with time zone,

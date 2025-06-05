@@ -35,6 +35,11 @@ class ClassificationScheme extends Model {
     UUID breadcrumbTreeId
 
     @Override
+    String getDomainType(){
+        ClassificationScheme.simpleName
+    }
+
+    @Override
     @Transient
     @JsonIgnore
     List<Collection<? extends ModelItem<ClassificationScheme>>> getAllAssociations() {

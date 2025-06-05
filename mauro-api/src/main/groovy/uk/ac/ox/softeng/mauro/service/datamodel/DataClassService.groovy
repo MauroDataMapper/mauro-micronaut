@@ -1,5 +1,6 @@
 package uk.ac.ox.softeng.mauro.service.datamodel
 
+import uk.ac.ox.softeng.mauro.ErrorHandler
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataElement
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
@@ -10,6 +11,7 @@ import uk.ac.ox.softeng.mauro.persistence.datamodel.DataClassContentRepository
 import uk.ac.ox.softeng.mauro.persistence.model.PathRepository
 
 import groovy.transform.CompileStatic
+import io.micronaut.http.HttpStatus
 import jakarta.inject.Inject
 
 @CompileStatic
@@ -30,7 +32,6 @@ class DataClassService {
         this.dataTypeCacheableRepository = dataTypeCacheableRepository
     }
 
-
     List<DataClass> copyChildren(DataClass copied, DataModel parent) {
         List<DataClass> children = copied.dataClasses.collect {child ->
             child.clone().tap {copiedChild ->
@@ -48,6 +49,7 @@ class DataClassService {
     DataClass copyDataElementsAndDataTypes(DataClass savedCopy, DataModel target) {
         copyDataElementsAndDataTypes([savedCopy], target).first()
     }
+
     List<DataClass> copyDataElementsAndDataTypes(List<DataClass> savedChildren, DataModel target) {
         savedChildren.collect {child ->
             copyDataElementsAndDataTypes(child.dataElements, child, target)
@@ -91,6 +93,18 @@ class DataClassService {
         item.updatePath()
         item.updateBreadcrumbs()
         item
+    }
+
+    void deleteDanglingReferenceTypes(DataClass dataClassToDelete) {
+        List<DataType> dataTypes = dataTypeCacheableRepository.findAllByReferenceClass(dataClassToDelete).unique()
+        dataTypes.each {
+            List<DataElement> dataElementReferenced = dataElementCacheableRepository.readAllByDataType(it)
+            if (dataElementReferenced.isEmpty()) {
+                dataTypeCacheableRepository.delete(it)
+            } else {
+                ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "Cannot delete Data Class has associations - check dataElements")
+            }
+        }
     }
 
     protected void updateCreationProperties(AdministeredItem item) {

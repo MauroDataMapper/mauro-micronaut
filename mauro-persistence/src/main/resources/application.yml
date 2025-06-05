@@ -6,18 +6,3 @@ datasources:
     dialect: POSTGRES
     db-type: postgres
     driver-class-name: org.postgresql.Driver
-
-flyway:
-  datasources:
-    default:
-      enabled: true
-      baselineOnMigrate: true
-      fail-on-missing-locations: true
-      clean-schema: false
-      schemas:
-        - core
-        - security
-        - terminology
-        - datamodel
-        - dataflow
-        - federation

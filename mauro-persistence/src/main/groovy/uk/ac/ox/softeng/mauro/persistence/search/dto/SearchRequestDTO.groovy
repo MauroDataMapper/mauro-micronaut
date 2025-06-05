@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.persistence.search.dto
 
+import uk.ac.ox.softeng.mauro.web.PaginationParams
+
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.Introspected
 import io.micronaut.core.annotation.Nullable
@@ -8,7 +10,7 @@ import java.sql.Date
 
 @Introspected
 @CompileStatic
-class SearchRequestDTO  {
+class SearchRequestDTO extends PaginationParams {
 
     @Nullable
     String searchTerm

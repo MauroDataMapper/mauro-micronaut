@@ -63,26 +63,24 @@ class DataClass extends ModelItem<DataModel> implements DiffableItem<DataClass> 
     List<DataClass> extendedBy = []
 
     @Nullable @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'referenceClass')
-    List<DataType> dataTypes = []
+    List<DataType> referenceTypes = []
 
     @JsonIgnore
     @Nullable
     DataClass parentDataClass
 
-
-
     @Override
     @Transient
     @JsonIgnore
     AdministeredItem getParent() {
-        parentDataClass?:dataModel
+        parentDataClass ?: dataModel
     }
 
     @Override
     @Transient
     @JsonIgnore
     Model getOwner() {
-        dataModel ?: super.getOwner()
+        parentDataClass?.owner ?: dataModel ?: super.getOwner()
     }
 
     @Transient

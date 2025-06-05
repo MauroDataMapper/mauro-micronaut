@@ -1,6 +1,6 @@
 -- # Core
 create table if not exists core."summary_metadata" (
-    "id"                              uuid primary key not null default uuid_generate_v4(),
+    "id"                              uuid primary key not null default gen_random_uuid(),
     "version"                         integer          not null,
     "date_created"                    timestamp with time zone,
     "last_updated"                    timestamp with time zone,
@@ -14,7 +14,7 @@ create table if not exists core."summary_metadata" (
 create unique index "idx_summary_metadata_multi_facet_aware_item_id_summary_metadata_type" on "core"."summary_metadata" (multi_facet_aware_item_id, label, summary_metadata_type);
 
 create table if not exists core.summary_metadata_report (
-    "id"                              uuid primary key not null default uuid_generate_v4(),
+    "id"                              uuid primary key not null default gen_random_uuid(),
     "version"                         integer          not null,
     "date_created"                    timestamp with time zone,
     "last_updated"                    timestamp with time zone,
