@@ -24,11 +24,6 @@ import io.micronaut.core.annotation.NonNull
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
 
-import groovy.transform.CompileStatic
-import io.micronaut.core.annotation.NonNull
-import jakarta.inject.Inject
-import jakarta.inject.Singleton
-
 @CompileStatic
 @Singleton
 class AdministeredItemContentRepository {
@@ -102,14 +97,7 @@ class AdministeredItemContentRepository {
     }
 
     void deleteAllFacets(Collection<AdministeredItem> items) {
-        List<Metadata> metadata = []
-
-        items.each {item ->
-            if (item.metadata) {
-                metadata.addAll(item.metadata)
-                metadataRepository.deleteAll(metadata)
-            }
-        }
+        deleteMetadata(items)
         deleteSummaryMetadata(items)
         deleteAnnotations(items)
         deleteReferenceFiles(items)
@@ -138,6 +126,16 @@ class AdministeredItemContentRepository {
         cacheableRepositories.find {it.handles(item.class)}
     }
 
+    void deleteMetadata(Collection<AdministeredItem> items) {
+        List<Metadata> metadata = []
+        items.each {item ->
+            if (item.metadata) {
+                metadata.addAll(item.metadata)
+            }
+        }
+        metadataRepository.deleteAll(metadata)
+    }
+
     void deleteSummaryMetadata(Collection<AdministeredItem> items) {
         List<SummaryMetadata> summaryMetadata = []
         List<SummaryMetadataReport> summaryMetadataReports = []
@@ -149,10 +147,10 @@ class AdministeredItemContentRepository {
                     }
                     summaryMetadata.add(it)
                 }
-                summaryMetadataRepository.deleteAll(summaryMetadata)
-                summaryMetadataReportCacheableRepository.deleteAll(summaryMetadataReports)
             }
         }
+        summaryMetadataRepository.deleteAll(summaryMetadata)
+        summaryMetadataReportCacheableRepository.deleteAll(summaryMetadataReports)
     }
 
     void deleteAnnotations(Collection<AdministeredItem> items) {
@@ -165,9 +163,9 @@ class AdministeredItemContentRepository {
                     }
                     annotations.add(it)
                 }
-                annotationCacheableRepository.deleteAll(annotations)
             }
         }
+        annotationCacheableRepository.deleteAll(annotations)
     }
 
     void deleteReferenceFiles(Collection<AdministeredItem> items) {

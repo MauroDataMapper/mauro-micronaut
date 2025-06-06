@@ -14,7 +14,7 @@ import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableReposit
 import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository.DataElementCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository.DataTypeCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.DataModelCacheableRepository
-import uk.ac.ox.softeng.mauro.persistence.datamodel.DataModelContentRepository
+import uk.ac.ox.softeng.mauro.persistence.datamodel.DataElementContentRepository
 import uk.ac.ox.softeng.mauro.web.ListResponse
 import uk.ac.ox.softeng.mauro.web.PaginationParams
 
@@ -49,10 +49,12 @@ class DataElementController extends AdministeredItemController<DataElement, Data
 
     DataTypeCacheableRepository dataTypeRepository
 
+    DataElementContentRepository dataElementContentRepository
+
     DataElementController(DataElementCacheableRepository dataElementRepository, DataClassCacheableRepository dataClassRepository,
-                          DataModelContentRepository dataModelContentRepository, DataModelCacheableRepository dataModelRepository,
+                          DataElementContentRepository dataElementContentRepository, DataModelCacheableRepository dataModelRepository,
                           DataTypeCacheableRepository dataTypeCacheableRepository) {
-        super(DataElement, dataElementRepository, dataClassRepository, dataModelContentRepository)
+        super(DataElement, dataElementRepository, dataClassRepository, dataElementContentRepository)
         this.dataElementRepository = dataElementRepository
         this.dataModelRepository = dataModelRepository
         this.dataClassRepository = dataClassRepository
