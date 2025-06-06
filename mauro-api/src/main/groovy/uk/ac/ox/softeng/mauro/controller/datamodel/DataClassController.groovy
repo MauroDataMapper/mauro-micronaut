@@ -6,12 +6,16 @@ import uk.ac.ox.softeng.mauro.api.datamodel.DataClassApi
 import uk.ac.ox.softeng.mauro.audit.Audit
 import uk.ac.ox.softeng.mauro.controller.model.AdministeredItemController
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataElement
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
 import uk.ac.ox.softeng.mauro.domain.security.Role
 import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository.DataClassCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.DataModelCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.datamodel.DataClassContentRepository
+import uk.ac.ox.softeng.mauro.persistence.datamodel.DataElementRepository
 import uk.ac.ox.softeng.mauro.persistence.datamodel.DataModelContentRepository
+import uk.ac.ox.softeng.mauro.persistence.datamodel.DataTypeRepository
 import uk.ac.ox.softeng.mauro.service.datamodel.DataClassService
 import uk.ac.ox.softeng.mauro.web.ListResponse
 import uk.ac.ox.softeng.mauro.web.PaginationParams
@@ -38,7 +42,6 @@ import jakarta.inject.Inject
 class DataClassController extends AdministeredItemController<DataClass, DataModel> implements DataClassApi {
 
     DataClassCacheableRepository dataClassRepository
-
 
     DataModelCacheableRepository dataModelRepository
 
@@ -115,7 +118,6 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
     @Audit
     @Post(Paths.DATA_CLASS_CHILD_DATA_CLASS_LIST)
     DataClass create(UUID dataModelId, UUID parentDataClassId, @Body @NonNull DataClass dataClass) {
-
         cleanBody(dataClass)
         DataModel dataModel = dataModelRepository.readById(dataModelId)
         accessControlService.checkRole(Role.EDITOR, dataModel)

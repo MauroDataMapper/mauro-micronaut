@@ -4,8 +4,9 @@ import uk.ac.ox.softeng.mauro.ErrorHandler
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
-import uk.ac.ox.softeng.mauro.domain.model.Model
+import uk.ac.ox.softeng.mauro.domain.security.Role
 import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository
+import uk.ac.ox.softeng.mauro.security.AccessControlService
 
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
@@ -16,12 +17,15 @@ import jakarta.inject.Inject
 class DataTypeService {
     AdministeredItemCacheableRepository.DataTypeCacheableRepository dataTypeRepository
     AdministeredItemCacheableRepository.DataClassCacheableRepository dataClassRepository
+    AccessControlService accessControlService
 
     @Inject
     DataTypeService(AdministeredItemCacheableRepository.DataTypeCacheableRepository dataTypeRepository,
-                    AdministeredItemCacheableRepository.DataClassCacheableRepository dataClassRepository) {
+                    AdministeredItemCacheableRepository.DataClassCacheableRepository dataClassRepository,
+                   AccessControlService accessControlService) {
         this.dataTypeRepository = dataTypeRepository
         this.dataClassRepository = dataClassRepository
+        this.accessControlService = accessControlService
     }
 
     DataType validateDataType(DataType dataType, AdministeredItem parent) {
@@ -39,13 +43,13 @@ class DataTypeService {
         dataType
     }
 
-
     protected DataClass validatedReferenceClass(DataType dataType, AdministeredItem parent) {
         UUID referenceClassId = dataType.referenceClass?.id
         if ( !referenceClassId){
             ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "Error -ReferenceType datatype requires referenceClass")
         }
         DataClass referenceClass = getReferenceDataClass(referenceClassId)
+        accessControlService.checkRole(Role.READER, referenceClass)
         if (referenceClass.dataModel.id != parent.id) {
             ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "DataClass $referenceClass.id assigned to DataType must belong to same datamodel")
         }

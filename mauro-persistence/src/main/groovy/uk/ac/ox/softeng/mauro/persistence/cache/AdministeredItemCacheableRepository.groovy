@@ -207,11 +207,6 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
         }
 
         @Nullable
-        List<DataType> findAllByReferenceClassId(UUID referenceClassId) {
-            ((DataTypeRepository) repository).findAllByReferenceClassId(referenceClassId).unique()
-        }
-
-        @Nullable
         List<DataType> findAllByReferenceClass(DataClass referenceClass) {
             ((DataTypeRepository) repository).findAllByReferenceClass(referenceClass.id)
         }
@@ -220,7 +215,6 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
         Boolean handles(String domainType) {
             repository.handles(domainType)
         }
-
     }
 
     @Singleton

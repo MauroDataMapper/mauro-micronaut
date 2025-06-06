@@ -4,33 +4,35 @@ import uk.ac.ox.softeng.mauro.ErrorHandler
 import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.datamodel.DataTypeApi
 import uk.ac.ox.softeng.mauro.audit.Audit
-import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
+import uk.ac.ox.softeng.mauro.controller.model.AdministeredItemController
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.model.Item
 import uk.ac.ox.softeng.mauro.domain.model.Model
 import uk.ac.ox.softeng.mauro.domain.security.Role
-import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository
-import uk.ac.ox.softeng.mauro.service.datamodel.DataModelHelper
+import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository.DataTypeCacheableRepository
+import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.DataModelCacheableRepository
+import uk.ac.ox.softeng.mauro.persistence.datamodel.DataTypeContentRepository
+import uk.ac.ox.softeng.mauro.persistence.datamodel.EnumerationValueRepository
 import uk.ac.ox.softeng.mauro.service.datamodel.DataTypeService
+import uk.ac.ox.softeng.mauro.web.ListResponse
 
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
-import io.micronaut.http.annotation.*
+import io.micronaut.http.annotation.Body
+import io.micronaut.http.annotation.Controller
+import io.micronaut.http.annotation.Delete
+import io.micronaut.http.annotation.Get
+import io.micronaut.http.annotation.Post
+import io.micronaut.http.annotation.Put
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
 import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
-import uk.ac.ox.softeng.mauro.controller.model.AdministeredItemController
-import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
-import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
-import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository.DataTypeCacheableRepository
-import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.DataModelCacheableRepository
-import uk.ac.ox.softeng.mauro.persistence.datamodel.DataTypeContentRepository
-import uk.ac.ox.softeng.mauro.persistence.datamodel.EnumerationValueRepository
-import uk.ac.ox.softeng.mauro.web.ListResponse
 
 @CompileStatic
 @Controller
@@ -38,9 +40,6 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 class DataTypeController extends AdministeredItemController<DataType, DataModel> implements DataTypeApi {
 
     DataTypeCacheableRepository dataTypeRepository
-
-    @Inject
-    DataModelCacheableRepository dataModelRepository
 
     @Inject
     EnumerationValueRepository enumerationValueRepository
@@ -58,17 +57,12 @@ class DataTypeController extends AdministeredItemController<DataType, DataModel>
     @Get(Paths.DATA_TYPE_ID)
     DataType show(UUID dataModelId, UUID id) {
         DataType dataType
-        try {
-            dataType = administeredItemRepository.findById(id)
-        } catch (Exception e) {
-            ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, dataType, "Item with id ${id.toString()} not found")
-        }
+        dataType = administeredItemRepository.findById(id)
         ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, dataType, "Item with id ${id.toString()} not found")
         accessControlService.checkRole(Role.READER, dataType)
 
         updateDerivedProperties(dataType)
-        dataType = dataTypeService.getReferenceClassProperties(dataType)
-        dataType
+        dataTypeService.getReferenceClassProperties(dataType)
     }
 
     @Audit
@@ -104,9 +98,7 @@ class DataTypeController extends AdministeredItemController<DataType, DataModel>
         parentIdParamName = 'dataModelId',
         deletedObjectDomainType = DataType
     )
-
     @Delete(Paths.DATA_TYPE_ID)
-    @Transactional
     HttpResponse delete(UUID dataModelId, UUID id, @Body @Nullable DataType dataType) {
         super.delete(id, dataType)
     }
@@ -130,6 +122,7 @@ class DataTypeController extends AdministeredItemController<DataType, DataModel>
         if (!modelResource) {
             ErrorHandler.handleError(HttpStatus.NOT_FOUND, "Item not found : $dataType.modelResourceId, $dataType.modelResourceDomainType")
         }
+        accessControlService.checkRole(Role.READER, modelResource)
         if (!modelResource.finalised){
             ErrorHandler.handleError(HttpStatus.BAD_REQUEST, "Model resource is not finalised: $dataType.modelResourceId, $dataType.modelResourceDomainType")
         }
