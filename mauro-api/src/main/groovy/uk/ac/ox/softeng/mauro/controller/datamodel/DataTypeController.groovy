@@ -57,11 +57,7 @@ class DataTypeController extends AdministeredItemController<DataType, DataModel>
     @Get(Paths.DATA_TYPE_ID)
     DataType show(UUID dataModelId, UUID id) {
         DataType dataType
-        try {
-            dataType = administeredItemRepository.findById(id)
-        } catch (Exception e) {
-            ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, dataType, "Item with id ${id.toString()} not found")
-        }
+        dataType = administeredItemRepository.findById(id)
         ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, dataType, "Item with id ${id.toString()} not found")
         accessControlService.checkRole(Role.READER, dataType)
 

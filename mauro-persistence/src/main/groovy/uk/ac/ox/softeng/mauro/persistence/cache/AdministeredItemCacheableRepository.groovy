@@ -94,6 +94,7 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
         invalidate(newItem)
     }
 
+
     // Cacheable Administered Item Repository definitions
 
     @CompileStatic
@@ -193,6 +194,9 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
             ((DataElementRepository) repository).readAllByDataClassId(dataClassId)
         }
 
+        List<DataElement> readAllByDataType(DataType dataType) {
+            ((DataElementRepository) repository).readAllByDataType(dataType)
+        }
     }
 
     @Singleton
@@ -201,6 +205,10 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
         DataTypeCacheableRepository(DataTypeRepository dataTypeRepository) {
             super(dataTypeRepository)
         }
+
+       List<DataType> findAllByReferenceClass(DataClass dataClass){
+           ((DataTypeRepository) repository).findAllByReferenceClass(dataClass)
+       }
 
         @Override
         Boolean handles(String domainType) {

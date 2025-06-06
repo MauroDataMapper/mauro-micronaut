@@ -10,11 +10,11 @@ import uk.ac.ox.softeng.mauro.domain.datamodel.DataElement
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
 import uk.ac.ox.softeng.mauro.domain.security.Role
+import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository.DataClassCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.DataModelCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.datamodel.DataClassContentRepository
 import uk.ac.ox.softeng.mauro.persistence.datamodel.DataElementRepository
-import uk.ac.ox.softeng.mauro.persistence.datamodel.DataModelContentRepository
 import uk.ac.ox.softeng.mauro.persistence.datamodel.DataTypeRepository
 import uk.ac.ox.softeng.mauro.web.ListResponse
 import uk.ac.ox.softeng.mauro.web.PaginationParams
@@ -43,12 +43,13 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
 
     DataModelCacheableRepository dataModelRepository
 
-    DataTypeRepository dataTypeRepository
+    AdministeredItemCacheableRepository.DataTypeCacheableRepository  dataTypeRepository
 
-    DataElementRepository dataElementRepository
+    AdministeredItemCacheableRepository.DataElementCacheableRepository dataElementRepository
 
     DataClassController(DataClassCacheableRepository dataClassRepository, DataModelCacheableRepository dataModelRepository,
-                        DataClassContentRepository dataClassContentRepository, DataTypeRepository dataTypeRepository, DataElementRepository dataElementRepository) {
+                        DataClassContentRepository dataClassContentRepository, AdministeredItemCacheableRepository.DataTypeCacheableRepository dataTypeRepository,
+                        AdministeredItemCacheableRepository.DataElementCacheableRepository dataElementRepository) {
         super(DataClass, dataClassRepository, dataModelRepository, dataClassContentRepository)
         this.dataClassRepository = dataClassRepository
         this.dataModelRepository = dataModelRepository
