@@ -18,11 +18,7 @@ import io.micronaut.core.annotation.Introspected
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Relation
-import jakarta.persistence.Inheritance
-import jakarta.persistence.InheritanceType
-import jakarta.persistence.JoinColumn
-import jakarta.persistence.JoinTable
-import jakarta.persistence.Transient
+import jakarta.persistence.*
 
 /**
  * A datatype describes the range of values that a column or field in a dataset may take.  It may be one of the following kinds:
@@ -71,6 +67,8 @@ class DataClass extends ModelItem<DataModel> implements DiffableItem<DataClass> 
     @JsonIgnore
     List<DataClass> extendedBy = []
 
+    @Nullable @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'referenceClass')
+    List<DataType> referenceTypes = []
 
     @JsonIgnore
     @Nullable

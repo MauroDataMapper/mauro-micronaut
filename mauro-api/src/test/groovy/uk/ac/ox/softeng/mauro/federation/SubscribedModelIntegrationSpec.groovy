@@ -3,7 +3,6 @@ package uk.ac.ox.softeng.mauro.federation
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedCatalogue
 import uk.ac.ox.softeng.mauro.domain.facet.federation.SubscribedModel
-import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.persistence.SecuredContainerizedTest
 import uk.ac.ox.softeng.mauro.security.SecuredIntegrationSpec
 import uk.ac.ox.softeng.mauro.web.ListResponse

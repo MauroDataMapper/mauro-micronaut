@@ -67,7 +67,7 @@ class DataModel extends Model {
     @Transient
     @JsonIgnore
     List<Collection<? extends ModelItem<DataModel>>> getAllAssociations() {
-        [dataTypes, enumerationValues, allDataClasses, dataElements] as List<Collection<? extends ModelItem<DataModel>>>
+        [allDataClasses, dataTypes, enumerationValues, dataElements] as List<Collection<? extends ModelItem<DataModel>>>
     }
 
 
@@ -154,7 +154,8 @@ class DataModel extends Model {
     @JsonIgnore
     @Override
     void setAssociations() {
-        Map<String, DataType> dataTypesMap = dataTypes.collectEntries { [it.label, it] }
+        Map<String, DataType> dataTypesMap = dataTypes.collectEntries {[it.label, it]}
+        List<? extends DataType> referenceTypes = dataTypeReferenceTypes()
 
         dataTypes.each { dataType ->
             dataType.parent = this
@@ -167,19 +168,20 @@ class DataModel extends Model {
         }
 
         dataClasses.each { dataClass ->
-            setDataClassAssociations(dataClass, dataTypesMap)
+            setDataClassAssociations(dataClass, dataTypesMap, referenceTypes)
         }
         this
     }
 
-    void setDataClassAssociations(DataClass dataClass, Map<String, DataType> dataTypesMap) {
+    void setDataClassAssociations(DataClass dataClass, Map<String, DataType> dataTypesMap,
+                                 List<? extends DataType> referenceTypes) {
         allDataClasses.add(dataClass)
         dataClass.dataModel = this
-        dataClass.dataClasses.each { childDataClass ->
-            setDataClassAssociations(childDataClass, dataTypesMap)
+        dataClass.dataClasses.each {childDataClass ->
+            setDataClassAssociations(childDataClass, dataTypesMap, referenceTypes)
             childDataClass.parentDataClass = dataClass
         }
-        dataClass.dataElements.each { dataElement ->
+        dataClass.dataElements.each {dataElement ->
             dataElement.dataModel = this
             dataElement.dataClass = dataClass
             dataElement.dataType = dataTypesMap[dataElement?.dataType?.label]
@@ -187,6 +189,11 @@ class DataModel extends Model {
                 this.dataElements.add(dataElement)
             }
         }
+        dataClass.referenceTypes = referenceTypes.findAll{it.referenceClass?.id == dataClass.id } as List<DataType>
+    }
+
+     protected List<DataType> dataTypeReferenceTypes() {
+        dataTypes.findAll {it.isReferenceType()}
     }
 
 

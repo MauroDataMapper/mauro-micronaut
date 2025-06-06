@@ -98,7 +98,8 @@ class SubscribedModelController extends ItemController<SubscribedModel> {
         //todo versionLinks
         subscribedModel.localModelId = importedModel.id
         subscribedModel.subscribedModelType = importedModel.domainType
-        subscribedModelCacheableRepository.save(subscribedModel)
+        SubscribedModel saved = subscribedModelCacheableRepository.save(subscribedModel)
+        saved
     }
 
     @Audit(level = Audit.AuditLevel.FILE_ONLY)

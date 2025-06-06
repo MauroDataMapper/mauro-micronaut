@@ -1,17 +1,26 @@
 package uk.ac.ox.softeng.mauro.controller.datamodel
 
+import uk.ac.ox.softeng.mauro.ErrorHandler
 import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.datamodel.DataTypeApi
 import uk.ac.ox.softeng.mauro.audit.Audit
-import uk.ac.ox.softeng.mauro.domain.facet.EditType
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
+import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
+import uk.ac.ox.softeng.mauro.domain.model.Item
+import uk.ac.ox.softeng.mauro.domain.model.Model
+import uk.ac.ox.softeng.mauro.domain.security.Role
+import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository
+import uk.ac.ox.softeng.mauro.service.datamodel.DataModelHelper
 
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpResponse
+import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.*
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
+import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.controller.model.AdministeredItemController
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
@@ -35,28 +44,52 @@ class DataTypeController extends AdministeredItemController<DataType, DataModel>
     @Inject
     EnumerationValueRepository enumerationValueRepository
 
-    DataTypeController(DataTypeCacheableRepository dataTypeRepository, DataModelCacheableRepository dataModelRepository, DataTypeContentRepository dataTypeContentRepository) {
+    AdministeredItemCacheableRepository.DataClassCacheableRepository dataClassRepository
+
+    DataTypeController(DataTypeCacheableRepository dataTypeRepository, DataModelCacheableRepository dataModelRepository, DataTypeContentRepository dataTypeContentRepository,
+                       AdministeredItemCacheableRepository.DataClassCacheableRepository dataClassRepository) {
         super(DataType, dataTypeRepository, dataModelRepository, dataTypeContentRepository)
         this.dataTypeRepository = dataTypeRepository
+        this.dataClassRepository = dataClassRepository
     }
 
     @Audit
     @Get(Paths.DATA_TYPE_ID)
     DataType show(UUID dataModelId, UUID id) {
-        super.show(id)
+        DataType dataType
+        dataType = administeredItemRepository.findById(id)
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, dataType, "Item with id ${id.toString()} not found")
+        accessControlService.checkRole(Role.READER, dataType)
+
+        updateDerivedProperties(dataType)
+        dataType = getReferenceClassProperties(dataType)
+        dataType
     }
 
     @Audit
     @Post(Paths.DATA_TYPE_LIST)
+    @Transactional
     DataType create(UUID dataModelId, @Body @NonNull DataType dataType) {
-        super.create(dataModelId, dataType)
-        if(dataType.enumerationValues) {
+        DataType cleanItem = super.cleanBody(dataType) as DataType
+        Item parent = super.validate(cleanItem, dataModelId)
+
+        if (cleanItem.referenceClass) {
+            cleanItem.referenceClass = validatedReferenceClass(cleanItem, parent)
+        }
+        DataModelHelper.validateModelTypeFields(cleanItem)
+        if (cleanItem.domainType == DataType.DataTypeKind.MODEL_TYPE.stringValue) {
+            validateModelResource(cleanItem)
+        }
+        DataType created = super.createEntity(parent, cleanItem) as DataType
+        created = super.validateAndAddClassifiers(created) as DataType
+
+        if (dataType.enumerationValues) {
             dataType.enumerationValues.each {enumValue ->
                 enumValue.enumerationType = (DataType) dataType
                 enumerationValueRepository.save(enumValue)
             }
         }
-        return dataType
+        created
     }
 
     @Audit
@@ -78,7 +111,51 @@ class DataTypeController extends AdministeredItemController<DataType, DataModel>
     @Audit
     @Get(Paths.DATA_TYPE_LIST)
     ListResponse<DataType> list(UUID dataModelId) {
-        super.list(dataModelId)
+        Item parent = parentItemRepository.readById(dataModelId)
+        if (!parent) return null
+        accessControlService.checkRole(Role.READER, parent)
+        List<DataType> dataTypes = administeredItemRepository.readAllByParent(parent)
+        dataTypes.each {
+            updateDerivedProperties(it)
+            getReferenceClassProperties(it)
+        }
+        ListResponse.from(dataTypes)
     }
 
+    private DataClass validatedReferenceClass(DataType dataType, AdministeredItem parent) {
+        DataClass referenceClass = getReferenceDataClass(dataType.referenceClass?.id)
+        accessControlService.checkRole(Role.READER, referenceClass)
+        if (referenceClass.dataModel.id != parent.id){
+            ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "DataClass $referenceClass.id assigned to DataType must belong to same datamodel")
+        }
+        DataType sameLabelInModel = dataTypeRepository.findAllByParent(parent).find {
+            it.isReferenceType() && it.label == dataType.label }
+        if (sameLabelInModel){
+            ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "Label $dataType.label exists for ReferenceType")
+        }
+        referenceClass
+    }
+
+    private DataClass getReferenceDataClass(@NonNull UUID dataClassId) {
+        DataClass referenceClass = dataClassRepository.findById(dataClassId)
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.UNPROCESSABLE_ENTITY, referenceClass, "Cannot find reference class ")
+        referenceClass
+    }
+
+    private DataType getReferenceClassProperties(DataType dataType) {
+        if (dataType.isReferenceType()) {
+            dataType.referenceClass = dataClassRepository.readById(dataType.referenceClass?.id)
+        }
+        dataType
+    }
+
+    private void validateModelResource(DataType dataType) {
+        AdministeredItem modelResource = super.readAdministeredItem(dataType.modelResourceDomainType, dataType.modelResourceId) as Model
+        if (!modelResource) {
+            ErrorHandler.handleError(HttpStatus.NOT_FOUND, "Item not found : $dataType.modelResourceId, $dataType.modelResourceDomainType")
+        }
+        if (!modelResource.finalised){
+            ErrorHandler.handleError(HttpStatus.BAD_REQUEST, "Model resource is not finalised: $dataType.modelResourceId, $dataType.modelResourceDomainType")
+        }
+    }
 }

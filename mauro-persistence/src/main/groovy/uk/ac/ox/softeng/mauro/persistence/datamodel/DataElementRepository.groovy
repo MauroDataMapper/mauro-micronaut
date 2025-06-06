@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.persistence.datamodel
 
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
+
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.Nullable
@@ -46,6 +48,11 @@ abstract class DataElementRepository implements ModelItemRepository<DataElement>
     }
 
     @Nullable
+    List<DataElement> findAllByDataTypeIn(Collection<DataType> dataTypes) {
+        dataElementDTORepository.findAllByDataTypeIn(dataTypes) as List<DataElement>
+    }
+
+    @Nullable
     @Join(value = 'dataType', type = Join.Type.LEFT_FETCH)
     abstract List<DataElement> readAllByDataClass(DataClass dataClass)
 
@@ -60,6 +67,11 @@ abstract class DataElementRepository implements ModelItemRepository<DataElement>
     @Query('''select de.* from datamodel.data_element de join datamodel.data_class dc on (de.data_class_id=dc.id)
               where dc.data_model_id = :dataModelId''')
     abstract List<DataElement> readAllByDataModelId(UUID dataModelId)
+
+
+    @Nullable
+    @Join(value = 'dataType', type = Join.Type.LEFT_FETCH)
+    abstract List<DataElement> readAllByDataType(DataType dataType)
 
     abstract Long deleteByDataClassId(UUID dataClassId)
 

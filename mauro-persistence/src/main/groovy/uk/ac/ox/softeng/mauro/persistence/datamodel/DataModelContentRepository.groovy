@@ -67,13 +67,19 @@ class DataModelContentRepository extends ModelContentRepository<DataModel> {
     @Override
     DataModel saveWithContent(@NonNull DataModel model) {
         DataModel saved = (DataModel) super.saveWithContent(model)
-        dataClassRepository.updateAll(saved.allDataClasses.findAll { it.parentDataClass})
+        dataClassRepository.updateAll(saved.allDataClasses.findAll {dataClass ->
+            dataClass.referenceTypes.collect {
+                it.referenceClass = dataClass
+            }
+        })
+        dataClassRepository.updateAll(saved.allDataClasses.findAll {it.parentDataClass})
         dataClassRepository.deleteExtensionRelationships(saved.allDataClasses.collect {it.id})
         saved.allDataClasses.each {dataClass ->
             dataClass.extendsDataClasses.each {extendedDataClass ->
                 dataClassRepository.addDataClassExtensionRelationship(dataClass.id, extendedDataClass.id)
             }
         }
+        saved.dataTypes = dataTypeRepository.updateAll(saved.dataTypes.findAll {it.isReferenceType()})
         saved
     }
 

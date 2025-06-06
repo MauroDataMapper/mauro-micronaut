@@ -1,23 +1,10 @@
 package uk.ac.ox.softeng.mauro.controller.dataflow
 
-import uk.ac.ox.softeng.mauro.api.dataflow.DataClassComponentApi
 import uk.ac.ox.softeng.mauro.ErrorHandler
-import uk.ac.ox.softeng.mauro.audit.Audit
-import uk.ac.ox.softeng.mauro.domain.classifier.Classifier
-import uk.ac.ox.softeng.mauro.domain.facet.EditType
-
-import groovy.transform.CompileStatic
-import groovy.util.logging.Slf4j
-import io.micronaut.core.annotation.NonNull
-import io.micronaut.core.annotation.Nullable
-import io.micronaut.http.HttpResponse
-import io.micronaut.http.HttpStatus
-import io.micronaut.http.annotation.*
-import io.micronaut.security.annotation.Secured
-import io.micronaut.security.rules.SecurityRule
-import jakarta.inject.Inject
-import uk.ac.ox.softeng.mauro.controller.model.AdministeredItemController
 import uk.ac.ox.softeng.mauro.api.Paths
+import uk.ac.ox.softeng.mauro.api.dataflow.DataClassComponentApi
+import uk.ac.ox.softeng.mauro.audit.Audit
+import uk.ac.ox.softeng.mauro.controller.model.AdministeredItemController
 import uk.ac.ox.softeng.mauro.domain.dataflow.DataClassComponent
 import uk.ac.ox.softeng.mauro.domain.dataflow.DataFlow
 import uk.ac.ox.softeng.mauro.domain.dataflow.Type
@@ -25,9 +12,24 @@ import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
 import uk.ac.ox.softeng.mauro.domain.security.Role
 import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.dataflow.DataClassComponentContentRepository
-import uk.ac.ox.softeng.mauro.persistence.dataflow.DataClassComponentRepository
 import uk.ac.ox.softeng.mauro.persistence.dataflow.DataFlowRepository
 import uk.ac.ox.softeng.mauro.web.ListResponse
+
+import groovy.transform.CompileStatic
+import groovy.util.logging.Slf4j
+import io.micronaut.core.annotation.NonNull
+import io.micronaut.core.annotation.Nullable
+import io.micronaut.http.HttpResponse
+import io.micronaut.http.HttpStatus
+import io.micronaut.http.annotation.Body
+import io.micronaut.http.annotation.Controller
+import io.micronaut.http.annotation.Delete
+import io.micronaut.http.annotation.Get
+import io.micronaut.http.annotation.Post
+import io.micronaut.http.annotation.Put
+import io.micronaut.security.annotation.Secured
+import io.micronaut.security.rules.SecurityRule
+import jakarta.inject.Inject
 
 @CompileStatic
 @Controller()
@@ -38,19 +40,19 @@ class DataClassComponentController extends AdministeredItemController<DataClassC
     @Inject
     AdministeredItemCacheableRepository.DataClassCacheableRepository dataClassRepository
 
-    @Inject
-    DataClassComponentRepository dataClassComponentRepository
+    AdministeredItemCacheableRepository.DataClassComponentCacheableRepository dataClassComponentRepository
 
-    @Inject
     DataClassComponentContentRepository dataClassComponentContentRepository
 
-    @Inject
     DataFlowRepository dataFlowRepository
 
-    DataClassComponentController(DataClassComponentRepository dataClassComponentRepository,
+    DataClassComponentController(AdministeredItemCacheableRepository.DataClassComponentCacheableRepository dataClassComponentRepository,
                                  DataFlowRepository dataFlowRepository,
                                  DataClassComponentContentRepository dataClassComponentContentRepository) {
         super(DataClassComponent, dataClassComponentRepository, dataFlowRepository, dataClassComponentContentRepository)
+        this.dataClassComponentRepository = dataClassComponentRepository
+        this.dataClassComponentContentRepository = dataClassComponentContentRepository
+        this.dataFlowRepository = dataFlowRepository
     }
 
     @Audit

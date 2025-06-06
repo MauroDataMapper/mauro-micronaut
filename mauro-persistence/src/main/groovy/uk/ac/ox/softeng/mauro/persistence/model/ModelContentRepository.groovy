@@ -19,7 +19,6 @@ import uk.ac.ox.softeng.mauro.domain.facet.*
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.model.Model
-import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadataReport
 
 @Slf4j
 @CompileStatic

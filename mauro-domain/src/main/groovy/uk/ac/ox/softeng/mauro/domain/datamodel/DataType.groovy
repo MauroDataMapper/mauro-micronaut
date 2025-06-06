@@ -1,19 +1,28 @@
 package uk.ac.ox.softeng.mauro.domain.datamodel
 
+import uk.ac.ox.softeng.mauro.domain.diff.BaseCollectionDiff
+import uk.ac.ox.softeng.mauro.domain.diff.CollectionDiff
+import uk.ac.ox.softeng.mauro.domain.diff.DiffBuilder
+import uk.ac.ox.softeng.mauro.domain.diff.DiffableItem
+import uk.ac.ox.softeng.mauro.domain.diff.ObjectDiff
+import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
+import uk.ac.ox.softeng.mauro.domain.model.ModelItem
+
 import com.fasterxml.jackson.annotation.JsonIgnore
+import com.fasterxml.jackson.annotation.JsonProperty
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
 import groovy.transform.MapConstructor
 import io.micronaut.core.annotation.Introspected
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.annotation.MappedEntity
+import io.micronaut.data.annotation.MappedProperty
 import io.micronaut.data.annotation.Relation
 import jakarta.persistence.Inheritance
 import jakarta.persistence.InheritanceType
+import jakarta.persistence.JoinColumn
+import jakarta.persistence.ManyToOne
 import jakarta.persistence.Transient
-import uk.ac.ox.softeng.mauro.domain.diff.*
-import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
-import uk.ac.ox.softeng.mauro.domain.model.ModelItem
 
 /**
  * A datatype describes the range of values that a column or field in a dataset may take.  It may be one of the following kinds:
@@ -68,6 +77,20 @@ class DataType extends ModelItem<DataModel> implements DiffableItem<DataType> {
     @JsonIgnore
     DataTypeKind dataTypeKind
 
+    @Nullable
+    @ManyToOne
+    @MappedProperty('reference_class_id')
+    @JoinColumn(name = 'reference_class_id')
+    DataClass referenceClass
+
+    @Nullable
+    @MappedProperty('model_resource_domain_type')
+    String modelResourceDomainType
+
+    @Nullable
+    @MappedProperty('model_resource_id')
+    UUID modelResourceId
+
     @Override
     String getDomainType() {
         dataTypeKind?.toString()
@@ -112,6 +135,13 @@ class DataType extends ModelItem<DataModel> implements DiffableItem<DataType> {
     String getPathPrefix() {
         'dt'
     }
+
+    @Transient
+    @JsonIgnore
+    boolean isReferenceType() {
+        this.getDomainType() == DataTypeKind.REFERENCE_TYPE.stringValue
+    }
+
 
     @Override
     @JsonIgnore

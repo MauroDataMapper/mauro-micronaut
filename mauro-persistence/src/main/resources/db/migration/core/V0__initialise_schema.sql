@@ -306,7 +306,7 @@ create table datamodel."data_type" (
 );
 
 create index "idx_data_type_data_model_id" on datamodel."data_type"(data_model_id);
-create index "idx_data_type_reference_class_id" on datamodel."data_type"(reference_class_id);
+create index "idx_data_type_reference_class_id_not_null" on datamodel."data_type"(reference_class_id) where reference_class_id is not null;
 
 create table datamodel."data_element" (
     "id"                              uuid primary key not null default gen_random_uuid(),

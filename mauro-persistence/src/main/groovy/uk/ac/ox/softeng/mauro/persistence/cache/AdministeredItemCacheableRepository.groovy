@@ -1,6 +1,7 @@
 package uk.ac.ox.softeng.mauro.persistence.cache
 
 import uk.ac.ox.softeng.mauro.domain.classifier.Classifier
+import uk.ac.ox.softeng.mauro.domain.dataflow.DataClassComponent
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataElement
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
@@ -11,6 +12,7 @@ import uk.ac.ox.softeng.mauro.domain.terminology.Term
 import uk.ac.ox.softeng.mauro.domain.terminology.TermRelationship
 import uk.ac.ox.softeng.mauro.domain.terminology.TermRelationshipType
 import uk.ac.ox.softeng.mauro.persistence.classifier.ClassifierRepository
+import uk.ac.ox.softeng.mauro.persistence.dataflow.DataClassComponentRepository
 import uk.ac.ox.softeng.mauro.persistence.datamodel.DataClassRepository
 import uk.ac.ox.softeng.mauro.persistence.datamodel.DataElementRepository
 import uk.ac.ox.softeng.mauro.persistence.datamodel.DataTypeRepository
@@ -25,6 +27,7 @@ import groovy.util.logging.Slf4j
 import io.micronaut.cache.annotation.CacheConfig
 import io.micronaut.cache.annotation.CacheInvalidate
 import io.micronaut.cache.annotation.Cacheable
+import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import jakarta.inject.Singleton
 
@@ -90,6 +93,7 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
         }
         invalidate(newItem)
     }
+
 
     // Cacheable Administered Item Repository definitions
 
@@ -190,6 +194,9 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
             ((DataElementRepository) repository).readAllByDataClassId(dataClassId)
         }
 
+        List<DataElement> readAllByDataType(DataType dataType) {
+            ((DataElementRepository) repository).readAllByDataType(dataType)
+        }
     }
 
     @Singleton
@@ -198,6 +205,10 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
         DataTypeCacheableRepository(DataTypeRepository dataTypeRepository) {
             super(dataTypeRepository)
         }
+
+       List<DataType> findAllByReferenceClass(DataClass dataClass){
+           ((DataTypeRepository) repository).findAllByReferenceClass(dataClass)
+       }
 
         @Override
         Boolean handles(String domainType) {
@@ -275,4 +286,30 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
 
     }
 
+    @Singleton
+    @CompileStatic
+    static class DataClassComponentCacheableRepository extends AdministeredItemCacheableRepository<DataClassComponent> {
+        DataClassComponentCacheableRepository(DataClassComponentRepository dataClassComponentRepository) {
+            super(dataClassComponentRepository)
+        }
+
+        DataClassComponent addTargetDataClass(@NonNull UUID id, @NonNull UUID dataClassId) {
+            ((DataClassComponentRepository) repository).addTargetDataClass(id, dataClassId)
+        }
+        DataClassComponent addSourceDataClass(@NonNull UUID id, @NonNull UUID dataClassId) {
+            ((DataClassComponentRepository) repository).addSourceDataClass(id, dataClassId)
+        }
+
+        Long removeTargetDataClass(UUID id, UUID dataClassId) {
+            ((DataClassComponentRepository) repository).removeTargetDataClass(id, dataClassId)
+        }
+        Long removeSourceDataClass(UUID id, UUID dataClassId) {
+            ((DataClassComponentRepository) repository).removeSourceDataClass(id, dataClassId)
+        }
+
+        @Override
+        Boolean handles(String domainType) {
+            domainClass.simpleName.equalsIgnoreCase(domainType) || (domainClass.simpleName + 's').equalsIgnoreCase(domainType)
+        }
+    }
 }
