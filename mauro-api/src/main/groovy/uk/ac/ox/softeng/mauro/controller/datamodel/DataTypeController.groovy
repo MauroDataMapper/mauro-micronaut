@@ -72,6 +72,7 @@ class DataTypeController extends AdministeredItemController<DataType, DataModel>
     DataType create(UUID dataModelId, @Body @NonNull DataType dataType) {
         DataType cleanItem = super.cleanBody(dataType) as DataType
         Item parent = super.validate(cleanItem, dataModelId)
+
         if (cleanItem.referenceClass) {
             cleanItem.referenceClass = validatedReferenceClass(cleanItem, parent)
         }
@@ -123,6 +124,7 @@ class DataTypeController extends AdministeredItemController<DataType, DataModel>
 
     private DataClass validatedReferenceClass(DataType dataType, AdministeredItem parent) {
         DataClass referenceClass = getReferenceDataClass(dataType.referenceClass?.id)
+        accessControlService.checkRole(Role.READER, referenceClass)
         if (referenceClass.dataModel.id != parent.id){
             ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "DataClass $referenceClass.id assigned to DataType must belong to same datamodel")
         }
