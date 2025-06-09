@@ -64,6 +64,8 @@ abstract class DataTypeRepository implements ModelItemRepository<DataType> {
 
     @Override
     Boolean handles(String domainType) {
-        domainType.toLowerCase() in ['datatype', 'datatypes', 'primitivetype', 'primitivetypes', 'enumerationtype', 'enumerationtypes', 'referencetype', 'referencetypes', 'modeltype', 'modeltypes']
+        return domainType != null && domainType.toLowerCase() in
+               ['datatype', 'datatypes', 'primitivetype', 'primitivetypes', 'enumerationtype', 'enumerationtypes', 'referencetype', 'referencetypes', 'modeltype',
+                'modeltypes']
     }
 }

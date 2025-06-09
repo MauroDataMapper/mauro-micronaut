@@ -38,7 +38,7 @@ abstract class ClassifierRepository implements ModelItemRepository<Classifier> {
     }
 
     @Nullable
-    UUID addAdministeredItem( AdministeredItem administeredItem, Classifier classifier){
+    UUID addAdministeredItem(AdministeredItem administeredItem, Classifier classifier) {
         log.debug("Adding to joinAdministeredItemToClassifier : administered item $administeredItem.id , classifier: $classifier.id")
         classifierDTORepository.addAdministeredItem(administeredItem.id, administeredItem.domainType, classifier.id)
     }
@@ -52,7 +52,6 @@ abstract class ClassifierRepository implements ModelItemRepository<Classifier> {
     List<Classifier> findAllForAdministeredItem(String administeredItemDomainType, UUID administeredItemId) {
         classifierDTORepository.findAllByAdministeredItem(administeredItemDomainType, administeredItemId)
     }
-
 
 
     @Nullable
@@ -78,7 +77,7 @@ abstract class ClassifierRepository implements ModelItemRepository<Classifier> {
         classifierDTORepository.deleteAdministeredItemClassifier(administeredItem.domainType, administeredItem.id, classifierId)
     }
 
-    Long deleteAllJoinAdministeredItemToClassifier(Classifier classifier){
+    Long deleteAllJoinAdministeredItemToClassifier(Classifier classifier) {
         classifierDTORepository.deleteAllForClassifier(classifier.id)
     }
 
@@ -96,9 +95,10 @@ abstract class ClassifierRepository implements ModelItemRepository<Classifier> {
 
     @Override
     Boolean handles(String domainType) {
-        domainType.toLowerCase() in ['classifier', 'classifiers']
+        return domainType != null && domainType.toLowerCase() in ['classifier', 'classifiers']
     }
-    List<Classifier> findAllByParent(Classifier classifier){
+
+    List<Classifier> findAllByParent(Classifier classifier) {
         classifierDTORepository.findAllByClassifier(classifier.id)
     }
 }

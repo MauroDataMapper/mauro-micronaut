@@ -18,7 +18,7 @@ class TerminologyService extends ModelService<Terminology> {
     }
 
     Boolean handles(String domainType) {
-        domainType.toLowerCase() in ['terminology', 'terminologies']
+        return domainType != null && domainType.toLowerCase() in ['terminology', 'terminologies']
     }
 
     /*
@@ -49,9 +49,9 @@ class TerminologyService extends ModelService<Terminology> {
     */
 
     List<TreeItem> buildTree(Terminology fullTerminology, Term root, Integer depth = null) {
-        Map<UUID, Term> terms = fullTerminology.terms.collectEntries { [it.id, it] }
+        Map<UUID, Term> terms = fullTerminology.terms.collectEntries {[it.id, it]}
         Map<UUID, TermRelationshipType> termRelationshipTypes =
-                fullTerminology.termRelationshipTypes.collectEntries { [it.id, it] }
+            fullTerminology.termRelationshipTypes.collectEntries {[it.id, it]}
 
         Map<UUID, List<Term>> childTerms = [:]
 
@@ -85,18 +85,18 @@ class TerminologyService extends ModelService<Terminology> {
             results = tree.children
         } else {
             Set<UUID> childIds = childTerms.
-                    collectMany { it.value.collect { it.id } } as Set
-            Collection<Term> rootTerms = terms.values().findAll { !childIds.contains(it.id) }
+                collectMany {it.value.collect {it.id}} as Set
+            Collection<Term> rootTerms = terms.values().findAll {!childIds.contains(it.id)}
             stack = rootTerms.
-                    collect { new TreeItem(id: it.id, label: it.definition, domainType: it.domainType) }
+                collect {new TreeItem(id: it.id, label: it.definition, domainType: it.domainType)}
             results.addAll(stack)
         }
         Integer currentDepth = 0
         while (!stack.empty && (!depth || currentDepth < depth)) {
             TreeItem treeItem = stack.pop()
             treeItem.children = childTerms[treeItem.id].
-                    collect { new TreeItem(id: it.id, label: it.definition, domainType: it.domainType) }
-            treeItem.children.each { stack.push(it) }
+                collect {new TreeItem(id: it.id, label: it.definition, domainType: it.domainType)}
+            treeItem.children.each {stack.push(it)}
             currentDepth += 1
         }
 

@@ -233,7 +233,7 @@ class CodeSetController extends ModelController<CodeSet> implements CodeSetApi {
     @Get(Paths.CODE_SET_DOI)
     @Override
     Map doi(UUID id) {
-        ErrorHandler.handleErrorOnNullObject(HttpStatus.SERVICE_UNAVAILABLE, "Doi", "Doi is not implemented")
+        ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY,"Doi is not implemented")
         return null
     }
 }

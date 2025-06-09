@@ -334,7 +334,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
 
     @NonNull
     AdministeredItemRepository getRepository(AdministeredItem item) {
-        administeredItemRepositories.find { it.handles(item.class) }
+        administeredItemRepositories.find { it.handles(item.class) || it.handles(item.domainType)}
     }
 
     <P extends ImportParameters> P readFromMultipartFormBody(MultipartBody body, Class<P> parametersClass) {
@@ -364,6 +364,11 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         PluginService.handlePluginNotFound(mauroPlugin, namespace, name)
 
         ImportParameters importParameters = readFromMultipartFormBody(body, mauroPlugin.importParametersClass())
+
+        if(importParameters.folderId == null)
+        {
+            ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, importParameters.folderId, "Please choose the folder into which the Model/s should be imported.")
+        }
 
         List<M> imported = (List<M>) mauroPlugin.importModels(importParameters)
 

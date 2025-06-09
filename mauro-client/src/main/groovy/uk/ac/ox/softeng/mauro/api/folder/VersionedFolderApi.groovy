@@ -8,7 +8,11 @@ import io.micronaut.http.annotation.*
 import io.micronaut.http.client.multipart.MultipartBody
 import uk.ac.ox.softeng.mauro.api.MauroApi
 import uk.ac.ox.softeng.mauro.api.Paths
+import uk.ac.ox.softeng.mauro.api.model.MergeDiffDTO
 import uk.ac.ox.softeng.mauro.api.model.ModelApi
+import uk.ac.ox.softeng.mauro.api.model.ModelVersionDTO
+import uk.ac.ox.softeng.mauro.api.model.ModelVersionedRefDTO
+import uk.ac.ox.softeng.mauro.api.model.ModelVersionedWithTargetsRefDTO
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.domain.model.version.CreateNewVersionData
@@ -56,4 +60,25 @@ interface VersionedFolderApi extends ModelApi<Folder> {
 
     @Get(Paths.VERSIONED_FOLDER_DOI)
     Map doi(UUID id)
+
+    @Get(Paths.VERSIONED_FOLDER_SIMPLE_MODEL_VERSION_TREE)
+    List<ModelVersionedRefDTO> simpleModelVersionTree(UUID id, @Nullable Boolean branchesOnly)
+
+    @Get(Paths.VERSIONED_FOLDER_MODEL_VERSION_TREE)
+    List<ModelVersionedWithTargetsRefDTO> modelVersionTree(UUID id)
+
+    @Get(Paths.VERSIONED_FOLDER_CURRENT_MAIN_BRANCH)
+    Folder currentMainBranch(UUID id)
+
+    @Get(Paths.VERSIONED_FOLDER_LATEST_MODEL_VERSION)
+    ModelVersionDTO latestModelVersion(UUID id)
+
+    @Get(Paths.VERSIONED_FOLDER_LATEST_FINALISED_MODEL)
+    ModelVersionedRefDTO latestFinalisedModel(UUID id)
+
+    @Get(Paths.VERSIONED_FOLDER_COMMON_ANCESTOR)
+    Folder commonAncestor(UUID id, UUID other_model_id)
+
+    @Get(Paths.VERSIONED_FOLDER_MERGE_DIFF)
+    MergeDiffDTO mergeDiff(@NonNull UUID id, @NonNull UUID otherId)
 }

@@ -21,6 +21,7 @@ import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableReposit
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.DataModelCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
+import uk.ac.ox.softeng.mauro.persistence.model.PathRepository
 import uk.ac.ox.softeng.mauro.persistence.terminology.CodeSetRepository
 
 @CompileStatic
@@ -51,114 +52,210 @@ class TreeService {
     @Inject
     AdministeredItemCacheableRepository.ClassifierCacheableRepository classifierCacheableRepository
 
+    @Inject
+    PathRepository pathRepository
+
     @CompileDynamic
-    List<TreeItem> buildTree(AdministeredItem item, boolean foldersOnly, boolean setChildren) {
+    List<TreeItem> buildTree(AdministeredItem item, boolean foldersOnly, boolean setChildren, boolean lookForChildren) {
+
+        pathRepository.readParentItems(item)
+        item.updatePath()
+        item.updateBreadcrumbs()
+
         switch (item) {
-            case Folder -> buildTreeForFolder(item, foldersOnly, setChildren)
+            case Folder -> buildTreeForFolder(item, foldersOnly, setChildren, lookForChildren)
 
-            case DataModel -> buildTreeForDataModel(item, setChildren)
-            case DataClass -> buildTreeForDataClass(item, setChildren)
+            case DataModel -> buildTreeForDataModel(item, setChildren, lookForChildren)
+            case DataClass -> buildTreeForDataClass(item, setChildren, lookForChildren)
 
-            case Terminology -> buildTreeForTerminology(item, setChildren)
-            case Term -> buildTreeForTerm(item, setChildren)
+            case Terminology -> buildTreeForTerminology(item, setChildren, lookForChildren)
+            case Term -> buildTreeForTerm(item, setChildren, lookForChildren)
 
             case CodeSet -> []
 
-            case ClassificationScheme -> buildTreeForClassificationScheme(item, setChildren)
-            case Classifier -> buildTreeForClassifier(item, setChildren)
+            case ClassificationScheme -> buildTreeForClassificationScheme(item, setChildren, lookForChildren)
+            case Classifier -> buildTreeForClassifier(item, setChildren, lookForChildren)
 
             default -> throw new IllegalArgumentException("Can't build tree for item of type [$item.domainType)]")
         }
     }
 
-    List<TreeItem> buildRootFolderTree(boolean foldersOnly, boolean setChildren = true) {
+    List<TreeItem> buildRootFolderTree(boolean foldersOnly) {
         folderCacheableRepository.readAllRootFolders().collect {Folder folder ->
+
+            pathRepository.readParentItems(folder)
+            folder.updatePath()
+            folder.updateBreadcrumbs()
+
             TreeItem.from(folder).tap {
-                if (setChildren) children = buildTree(folder, foldersOnly, false)
-                hasChildren = children && children.size() > 0
+                List<TreeItem> theChildren = buildTree(folder, foldersOnly, false, false)
+                hasChildren = theChildren && theChildren.size() > 0
+                children = []
             }
         }
     }
 
-    List<TreeItem> buildTreeForFolder(Folder folder, boolean foldersOnly, boolean setChildren) {
-        getModelRepositories().collectMany {ModelCacheableRepository modelCacheableRepository ->
-            getModelsForFolder(modelCacheableRepository, folder as Folder)
-                .sort {Object model -> ((Model) model).label}
-                .findAll {Object model -> !foldersOnly || ((Model) model).domainType.contains(Folder.class.simpleName)}
-                .collect {Object model ->
-                    TreeItem.from((Model) model).tap {
-                        if (setChildren) children = buildTree(model as AdministeredItem, foldersOnly, false)
-                        hasChildren = children && children.size() > 0
+    List<TreeItem> buildTreeForFolder(Folder folder, boolean foldersOnly, boolean setChildren, boolean lookForChildren) {
+        pathRepository.readParentItems(folder)
+        folder.updatePath()
+        folder.updateBreadcrumbs()
+
+        List<TreeItem> treeItems = []
+        List<Model> models = new ArrayList<>()
+
+        getModelRepositories().forEach {ModelCacheableRepository modelCacheableRepository ->
+            models.addAll(getModelsForFolder(modelCacheableRepository, folder as Folder))
+        }
+
+        models.sort {Model model -> model.label}
+            .findAll {Model model -> !foldersOnly || model.domainType.contains(Folder.class.simpleName)}
+            .collect {Model model ->
+
+                pathRepository.readParentItems(model)
+                model.updatePath()
+                model.updateBreadcrumbs()
+
+                TreeItem treeItem = TreeItem.from(model).tap {
+
+                    List<TreeItem> theChildren
+                    if (lookForChildren) {
+                        theChildren = buildTree(model as AdministeredItem, foldersOnly, false, setChildren)
+                        if (setChildren) {children = theChildren} else {children = []}
+                        hasChildren = theChildren && theChildren.size() > 0
+                    } else {
+                        children = []
                     }
                 }
-        }
+                treeItems.add(treeItem)
+            }
+
+        return treeItems
     }
 
-    List<TreeItem> buildTreeForDataModel(DataModel dataModel, boolean setChildren = true) {
+    TreeItem buildTreeItemForThis(AdministeredItem administeredItem, boolean foldersOnly, boolean setChildren, boolean lookForChildren) {
+        pathRepository.readParentItems(administeredItem)
+        administeredItem.updatePath()
+        administeredItem.updateBreadcrumbs()
+
+        TreeItem treeItem = TreeItem.from(administeredItem).tap {
+
+            List<TreeItem> theChildren
+            if (lookForChildren) {
+                theChildren = buildTree(administeredItem as AdministeredItem, foldersOnly, false, setChildren)
+                if (setChildren) {children = theChildren} else {children = []}
+                hasChildren = theChildren && theChildren.size() > 0
+            } else {
+                children = []
+            }
+        }
+
+        return treeItem
+    }
+
+    List<TreeItem> buildTreeForDataModel(DataModel dataModel, boolean setChildren, boolean lookForChildren) {
         List<TreeItem> treeItems = dataClassCacheableRepository.readAllByDataModelAndParentDataClassIsNull(dataModel)
             .sort {it.label}
             .collect {DataClass dataClass ->
                 TreeItem.from(dataClass).tap {
                     model = dataClass.dataModel
-                    if (setChildren) children = buildTree(dataClass, false, false)
-                    hasChildren = children && children.size() > 0
+                    List<TreeItem> theChildren
+                    if (lookForChildren) {
+                        theChildren = buildTree(dataClass, false, false, setChildren)
+                        if (setChildren) {children = theChildren} else {children = []}
+                        hasChildren = theChildren && theChildren.size() > 0
+                    } else {
+                        children = []
+                    }
                 }
             }
         treeItems
     }
 
-    List<TreeItem> buildTreeForDataClass(DataClass dataClass, boolean setChildren = true) {
+    List<TreeItem> buildTreeForDataClass(DataClass dataClass, boolean setChildren, boolean lookForChildren) {
         dataClassCacheableRepository.readAllByParentDataClass_Id(dataClass.id).sort {it.label}.collect {DataClass childClass ->
             TreeItem.from(childClass).tap {
                 model = childClass.dataModel
-                if (setChildren) children = buildTree(childClass, false, false)
-                hasChildren = children && children.size() > 0
+
+                List<TreeItem> theChildren
+                if (lookForChildren) {
+                    theChildren = buildTree(childClass, false, false, setChildren)
+                    if (setChildren) {children = theChildren} else {children = []}
+                    hasChildren = theChildren && theChildren.size() > 0
+                } else {
+                    children = []
+                }
             }
         }
     }
 
-    List<TreeItem> buildTreeForTerminology(Terminology terminology, boolean setChildren = true) {
+    List<TreeItem> buildTreeForTerminology(Terminology terminology, boolean setChildren, boolean lookForChildren) {
         termCacheableRepository.readChildTermsByParent(terminology.id, null).sort {it.code}.collect {Term term ->
             TreeItem.from(term).tap {
                 model = term.terminology
-                if (setChildren) children = buildTree(term, false, false)
-                hasChildren = children && children.size() > 0
+
+                List<TreeItem> theChildren
+                if (lookForChildren) {
+                    theChildren = buildTree(term, false, false, setChildren)
+                    if (setChildren) {children = theChildren} else {children = []}
+                    hasChildren = theChildren && theChildren.size() > 0
+                } else {
+                    children = []
+                }
             }
         }
     }
 
-    List<TreeItem> buildTreeForTerm(Term term, boolean setChildren = true) {
+    List<TreeItem> buildTreeForTerm(Term term, boolean setChildren, boolean lookForChildren) {
         termCacheableRepository.readChildTermsByParent(term.terminology.id, term.id).sort {it.code}.collect {Term childTerm ->
             TreeItem.from(childTerm).tap {
                 model = childTerm.terminology
-                if (setChildren) children = buildTree(childTerm, false, false)
-                hasChildren = children && children.size() > 0
+                List<TreeItem> theChildren
+                if (lookForChildren) {
+                    theChildren = buildTree(childTerm, false, false, setChildren)
+                    if (setChildren) {children = theChildren} else {children = []}
+                    hasChildren = theChildren && theChildren.size() > 0
+                } else {
+                    children = []
+                }
             }
         }
     }
 
-    List<TreeItem> buildTreeForClassificationScheme(ClassificationScheme classificationScheme, boolean setChildren = true) {
-        List<TreeItem> treeItems = classifierCacheableRepository.readAllByClassificationScheme_Id(classificationScheme.id).sort {it.label}.collect {Classifier childClassifier ->
-            TreeItem.from(childClassifier).tap {
-                model = childClassifier.classificationScheme
-                if (setChildren) children = buildTree(childClassifier, false, false)
-                hasChildren = children && children.size() > 0
+    List<TreeItem> buildTreeForClassificationScheme(ClassificationScheme classificationScheme, boolean setChildren, boolean lookForChildren) {
+        List<TreeItem> treeItems =
+            classifierCacheableRepository.readAllByClassificationScheme_Id(classificationScheme.id).sort {it.label}.collect {Classifier childClassifier ->
+                TreeItem.from(childClassifier).tap {
+                    model = childClassifier.classificationScheme
+                    List<TreeItem> theChildren
+                    if (lookForChildren) {
+                        theChildren = buildTree(childClassifier, false, false, setChildren)
+                        if (setChildren) {children = theChildren} else {children = []}
+                        hasChildren = theChildren && theChildren.size() > 0
+                    } else {
+                        children = []
+                    }
+                }
             }
-        }
         treeItems
     }
 
-    List<TreeItem> buildTreeForClassifier(Classifier classifier, boolean setChildren = true) {
+    List<TreeItem> buildTreeForClassifier(Classifier classifier, boolean setChildren, boolean lookForChildren) {
         classifierCacheableRepository.readAllByParentClassifier_Id(classifier.id).sort {it.label}.collect {Classifier child ->
             TreeItem.from(child).tap {
                 model = child.classificationScheme
-                if (setChildren) children = buildTree(child, false, false)
-                hasChildren = children && children.size() > 0
+                List<TreeItem> theChildren
+                if (lookForChildren) {
+                    theChildren = buildTree(child, false, false, setChildren)
+                    if (setChildren) {children = theChildren} else {children = []}
+                    hasChildren = theChildren && theChildren.size() > 0
+                } else {
+                    children = []
+                }
             }
         }
     }
 
-    protected static List getModelsForFolder(ModelCacheableRepository modelCacheableRepository, Folder folder) {
+    protected static List<Model> getModelsForFolder(ModelCacheableRepository modelCacheableRepository, Folder folder) {
         modelCacheableRepository.readAllByFolder(folder)
     }
 

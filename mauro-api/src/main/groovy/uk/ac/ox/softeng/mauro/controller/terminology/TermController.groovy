@@ -91,10 +91,10 @@ class TermController extends AdministeredItemController<Term, Terminology> imple
         ListResponse.from(codeSets)
     }
 
-    @Get(Paths.TERMINOLOGY_DOI)
+    @Get(Paths.TERM_DOI)
     @Override
     Map doi(UUID id) {
-        ErrorHandler.handleErrorOnNullObject(HttpStatus.SERVICE_UNAVAILABLE, "Doi", "Doi is not implemented")
+        ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "Doi is not implemented")
         return null
     }
 }

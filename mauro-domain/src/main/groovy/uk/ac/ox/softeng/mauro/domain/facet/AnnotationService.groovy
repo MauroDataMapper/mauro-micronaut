@@ -15,6 +15,6 @@ class AnnotationService extends FacetService<Annotation> {
    }
 
    Boolean handles(String domainType){
-       domainType.toLowerCase() in ['annotation', 'annotations']
+       return domainType!=null && domainType.toLowerCase() in ['annotation', 'annotations']
    }
 }

@@ -46,7 +46,12 @@ abstract class FolderRepository implements ModelRepository<Folder> {
 
     @Nullable
     @Override
-    List<Folder> findAllByFolderId(UUID folderId){
+    List<Folder> findAllByFolderId(UUID folderId) {
         findAllByParent(folderId as AdministeredItem)
+    }
+
+    @Override
+    Boolean handles(String domainType) {
+        return domainType != null && domainType.toLowerCase() in ['folder', 'folders', 'versionedfolder', 'versionedfolders']
     }
 }

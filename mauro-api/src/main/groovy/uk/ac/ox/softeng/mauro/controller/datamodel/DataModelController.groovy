@@ -17,6 +17,7 @@ import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataElement
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModelService
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataModelType
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
 import uk.ac.ox.softeng.mauro.domain.datamodel.IntersectsData
 import uk.ac.ox.softeng.mauro.domain.datamodel.IntersectsManyData
@@ -42,6 +43,7 @@ import uk.ac.ox.softeng.mauro.persistence.datamodel.DataTypeContentRepository
 import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchRepository
 import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchRequestDTO
 import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchResultsDTO
+import uk.ac.ox.softeng.mauro.plugin.datatype.DataTypePlugin
 import uk.ac.ox.softeng.mauro.plugin.exporter.DataModelExporterPlugin
 import uk.ac.ox.softeng.mauro.plugin.importer.DataModelImporterPlugin
 import uk.ac.ox.softeng.mauro.web.ListResponse
@@ -769,7 +771,17 @@ class DataModelController extends ModelController<DataModel> implements DataMode
     @Get(Paths.DATA_MODEL_DOI)
     @Override
     Map doi(UUID id) {
-        ErrorHandler.handleErrorOnNullObject(HttpStatus.SERVICE_UNAVAILABLE, "Doi", "Doi is not implemented")
+        ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY,"Doi is not implemented")
         return null
+    }
+
+    @Override
+    List<DataTypePlugin> defaultDataTypeProviders() {
+        return mauroPluginService.listPlugins(DataTypePlugin)
+    }
+
+    @Override
+    List<String> dataModelTypes() {
+        return DataModelType.labels()
     }
 }

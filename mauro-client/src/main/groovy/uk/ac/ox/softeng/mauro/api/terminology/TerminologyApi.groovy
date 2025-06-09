@@ -3,6 +3,7 @@ package uk.ac.ox.softeng.mauro.api.terminology
 import uk.ac.ox.softeng.mauro.api.MauroApi
 import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.model.ModelApi
+import uk.ac.ox.softeng.mauro.api.model.ModelVersionedRefDTO
 import uk.ac.ox.softeng.mauro.domain.diff.ObjectDiff
 import uk.ac.ox.softeng.mauro.domain.model.version.CreateNewVersionData
 import uk.ac.ox.softeng.mauro.domain.model.version.FinaliseData
@@ -83,4 +84,7 @@ interface TerminologyApi extends ModelApi<Terminology> {
 
     @Get(Paths.TERMINOLOGY_DOI)
     Map doi(UUID id)
+
+    @Get(Paths.TERMINOLOGY_SIMPLE_MODEL_VERSION_TREE)
+    List<ModelVersionedRefDTO> simpleModelVersionTree(UUID id, @Nullable Boolean branchesOnly)
 }

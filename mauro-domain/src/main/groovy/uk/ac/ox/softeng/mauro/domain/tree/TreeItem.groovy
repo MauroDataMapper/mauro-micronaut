@@ -19,7 +19,6 @@ class TreeItem {
     String label
     String domainType
 
-    @JsonIgnore
     List<TreeItem> children
 
     @JsonIgnore
@@ -34,15 +33,14 @@ class TreeItem {
         model?.id
     }
 
-    List<String> availableActions=[]
+    List<String> availableActions = []
 
-    /*
-    Boolean getHasChildren() {
-        children != null ? children : null
-    }
-*/
+    String modelVersion
+    String modelVersionTag
+    String path
 
     static TreeItem from(AdministeredItem item) {
-        new TreeItem(id: item.id, label: item.label, domainType: item.domainType, item: item, availableActions: new ArrayList<String>(item.availableActions))
+        new TreeItem(id: item.id, label: item.label, domainType: item.domainType, item: item, availableActions: new ArrayList<String>(item.availableActions),
+                     path: item.updatePath().toString())
     }
 }
