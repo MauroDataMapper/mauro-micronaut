@@ -208,7 +208,7 @@ class AvailableActions {
 
         if(item instanceof ModelItem)
         {
-            item.availableActions.removeAll(AvailableActions.PURPOSE_MODELITEM)
+            item.availableActions.addAll( AvailableActions.getActionsForRolesPurpose(roles, AvailableActions.PURPOSE_MODELITEM) )
         }
 
         if(item instanceof Model) {

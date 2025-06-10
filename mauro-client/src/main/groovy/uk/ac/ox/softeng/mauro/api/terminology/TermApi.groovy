@@ -7,6 +7,7 @@ import uk.ac.ox.softeng.mauro.domain.terminology.CodeSet
 import uk.ac.ox.softeng.mauro.domain.terminology.Term
 import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
 import uk.ac.ox.softeng.mauro.web.ListResponse
+import uk.ac.ox.softeng.mauro.web.PaginationParams
 
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
@@ -35,11 +36,17 @@ interface TermApi extends AdministeredItemApi<Term, Terminology> {
     @Get(Paths.TERM_LIST)
     ListResponse<Term> list(UUID terminologyId)
 
+    @Get(Paths.TERM_LIST_PAGED)
+    ListResponse<Term> list(UUID terminologyId, @Nullable PaginationParams params)
+
     @Get(Paths.TERM_TREE)
     List<Term> tree(UUID terminologyId, @Nullable UUID id)
 
     @Get(Paths.TERM_CODE_SETS)
     ListResponse<CodeSet> getCodeSetsForTerm(UUID terminologyId, UUID id)
+
+    @Get(Paths.TERM_CODE_SETS_PAGED)
+    ListResponse<CodeSet> getCodeSetsForTerm(UUID terminologyId, UUID id, @Nullable PaginationParams params)
 
     @Get(Paths.TERM_DOI)
     Map doi(UUID id)

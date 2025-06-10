@@ -6,6 +6,7 @@ import uk.ac.ox.softeng.mauro.api.model.AdministeredItemApi
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
 import uk.ac.ox.softeng.mauro.web.ListResponse
+import uk.ac.ox.softeng.mauro.web.PaginationParams
 
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
@@ -34,4 +35,6 @@ interface DataTypeApi extends AdministeredItemApi<DataType, DataModel> {
     @Get(Paths.DATA_TYPE_LIST)
     ListResponse<DataType> list(UUID dataModelId)
 
+    @Get(Paths.DATA_TYPE_LIST_PAGED)
+    ListResponse<DataType> list(UUID dataModelId, @Nullable PaginationParams params)
 }

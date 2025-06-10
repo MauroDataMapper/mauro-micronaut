@@ -3,6 +3,7 @@ package uk.ac.ox.softeng.mauro.controller.config
 import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.config.ApiPropertyApi
 import uk.ac.ox.softeng.mauro.audit.Audit
+import uk.ac.ox.softeng.mauro.web.PaginationParams
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
@@ -39,14 +40,14 @@ class ApiPropertyController extends ItemController<ApiProperty> implements ApiPr
     }
 
     @Audit
-    @Get(Paths.API_PROPERTY_LIST_PUBLIC)
-    ListResponse<ApiProperty> listPubliclyVisible() {
-        ListResponse.from(apiPropertyRepository.findAllByPubliclyVisibleTrue())
+    @Get(Paths.API_PROPERTY_LIST_PUBLIC_PAGED)
+    ListResponse<ApiProperty> listPubliclyVisible(@Nullable PaginationParams params = new PaginationParams()) {
+        ListResponse.from(apiPropertyRepository.findAllByPubliclyVisibleTrue(), params)
     }
 
     @Audit
-    @Get(Paths.API_PROPERTY_LIST_ALL)
-    ListResponse<ApiProperty> listAll() {
+    @Get(Paths.API_PROPERTY_LIST_ALL_PAGED)
+    ListResponse<ApiProperty> listAll(@Nullable PaginationParams params = new PaginationParams()) {
         accessControlService.checkAdministrator()
         ListResponse.from(apiPropertyRepository.findAll())
     }

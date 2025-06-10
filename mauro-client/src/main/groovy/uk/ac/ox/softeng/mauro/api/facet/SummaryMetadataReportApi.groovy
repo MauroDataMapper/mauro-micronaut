@@ -4,8 +4,10 @@ import uk.ac.ox.softeng.mauro.api.MauroApi
 import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadataReport
 import uk.ac.ox.softeng.mauro.web.ListResponse
+import uk.ac.ox.softeng.mauro.web.PaginationParams
 
 import io.micronaut.core.annotation.NonNull
+import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.annotation.Delete
@@ -24,9 +26,12 @@ interface SummaryMetadataReportApi {
     @Get(Paths.SUMMARY_METADATA_REPORTS_LIST)
     ListResponse<SummaryMetadataReport> list(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID summaryMetadataId)
 
+    @Get(Paths.SUMMARY_METADATA_REPORTS_LIST_PAGED)
+    ListResponse<SummaryMetadataReport> list(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID summaryMetadataId, @Nullable PaginationParams params)
+
     @Get(Paths.SUMMARY_METADATA_REPORTS_ID)
     SummaryMetadataReport show(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID summaryMetadataId,
-                              @NonNull UUID id)
+                               @NonNull UUID id)
 
     @Put(Paths.SUMMARY_METADATA_REPORTS_ID)
     SummaryMetadataReport update(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID summaryMetadataId,

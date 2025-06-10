@@ -4,8 +4,10 @@ import uk.ac.ox.softeng.mauro.api.MauroApi
 import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.domain.facet.Annotation
 import uk.ac.ox.softeng.mauro.web.ListResponse
+import uk.ac.ox.softeng.mauro.web.PaginationParams
 
 import io.micronaut.core.annotation.NonNull
+import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.annotation.Delete
@@ -23,6 +25,9 @@ interface AnnotationApi extends FacetApi<Annotation> {
      */
     @Get(Paths.ANNOTATION_LIST)
     ListResponse<Annotation> list(@NonNull String domainType, @NonNull UUID domainId)
+
+    @Get(Paths.ANNOTATION_LIST_PAGED)
+    ListResponse<Annotation> list(@NonNull String domainType, @NonNull UUID domainId, @Nullable PaginationParams params)
 
     @Get(Paths.ANNOTATION_ID)
     Annotation show(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID id)
@@ -56,5 +61,5 @@ interface AnnotationApi extends FacetApi<Annotation> {
 
     @Delete(Paths.ANNOTATION_CHILD_ID)
     HttpResponse delete(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID annotationId,
-                      @NonNull UUID id)
+                        @NonNull UUID id)
 }

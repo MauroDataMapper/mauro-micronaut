@@ -5,6 +5,7 @@ import uk.ac.ox.softeng.mauro.api.dataflow.DataFlowApi
 import uk.ac.ox.softeng.mauro.audit.Audit
 import uk.ac.ox.softeng.mauro.domain.dataflow.DataClassComponent
 import uk.ac.ox.softeng.mauro.domain.facet.EditType
+import uk.ac.ox.softeng.mauro.web.PaginationParams
 
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
@@ -40,7 +41,8 @@ class DataFlowController extends AdministeredItemController<DataFlow, DataModel>
     DataFlowRepository dataFlowRepository
 
 
-    DataFlowController(DataFlowRepository dataFlowRepository, ModelCacheableRepository.DataModelCacheableRepository dataModelRepository, DataFlowContentRepository dataFlowContentRepository) {
+    DataFlowController(DataFlowRepository dataFlowRepository, ModelCacheableRepository.DataModelCacheableRepository dataModelRepository,
+                       DataFlowContentRepository dataFlowContentRepository) {
         super(DataFlow, dataFlowRepository, dataModelRepository, dataFlowContentRepository)
     }
 
@@ -75,15 +77,15 @@ class DataFlowController extends AdministeredItemController<DataFlow, DataModel>
     }
 
     @Audit
-    @Get(Paths.DATA_FLOW_LIST)
-    ListResponse<DataFlow> list(@NotNull UUID dataModelId, @Nullable @QueryValue(Paths.TYPE_QUERY) Type type) {
+    @Get(Paths.DATA_FLOW_LIST_PAGED)
+    ListResponse<DataFlow> list(@NotNull UUID dataModelId, @Nullable @QueryValue(Paths.TYPE_QUERY) Type type, @Nullable PaginationParams params = new PaginationParams()) {
         if (!type || type == Type.TARGET) {
             return super.list(dataModelId)
         }
         DataModel source = dataModelRepository.findById(dataModelId)
         ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, source, "Item with id: $dataModelId not found")
         List<DataFlow> sourceDataFlowList = dataFlowRepository.findAllBySource(source)
-        ListResponse.from(sourceDataFlowList.findAll{accessControlService.canDoRole(Role.READER, it)})
+        ListResponse.from(sourceDataFlowList.findAll {accessControlService.canDoRole(Role.READER, it)}, params)
     }
 
 }

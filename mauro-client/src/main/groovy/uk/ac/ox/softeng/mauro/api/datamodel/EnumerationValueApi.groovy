@@ -6,6 +6,7 @@ import uk.ac.ox.softeng.mauro.api.model.AdministeredItemApi
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
 import uk.ac.ox.softeng.mauro.domain.datamodel.EnumerationValue
 import uk.ac.ox.softeng.mauro.web.ListResponse
+import uk.ac.ox.softeng.mauro.web.PaginationParams
 
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
@@ -34,4 +35,6 @@ interface EnumerationValueApi extends AdministeredItemApi<EnumerationValue, Data
     @Get(Paths.ENUMERATION_VALUE_LIST)
     ListResponse<EnumerationValue> list(UUID dataModelId, UUID enumerationTypeId)
 
+    @Get(Paths.ENUMERATION_VALUE_LIST_PAGED)
+    ListResponse<EnumerationValue> list(UUID dataModelId, UUID enumerationTypeId, @Nullable PaginationParams params)
 }

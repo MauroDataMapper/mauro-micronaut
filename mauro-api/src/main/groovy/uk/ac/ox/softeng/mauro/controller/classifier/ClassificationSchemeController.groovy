@@ -15,6 +15,7 @@ import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.classifier.ClassificationSchemeContentRepository
 import uk.ac.ox.softeng.mauro.web.ListResponse
+import uk.ac.ox.softeng.mauro.web.PaginationParams
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
@@ -49,7 +50,8 @@ class ClassificationSchemeController extends ModelController<ClassificationSchem
     ClassificationSchemeContentRepository classificationSchemeContentRepository
 
 
-    ClassificationSchemeController(ModelCacheableRepository.ClassificationSchemeCacheableRepository classificationSchemeCacheableRepository, FolderCacheableRepository folderRepository, ClassificationSchemeContentRepository classificationSchemeContentRepository) {
+    ClassificationSchemeController(ModelCacheableRepository.ClassificationSchemeCacheableRepository classificationSchemeCacheableRepository,
+                                   FolderCacheableRepository folderRepository, ClassificationSchemeContentRepository classificationSchemeContentRepository) {
         super(ClassificationScheme, classificationSchemeCacheableRepository, folderRepository, classificationSchemeContentRepository)
         this.classificationSchemeContentRepository = classificationSchemeContentRepository
     }
@@ -76,24 +78,24 @@ class ClassificationSchemeController extends ModelController<ClassificationSchem
     @Audit
     @Transactional
     @Delete(Paths.CLASSIFICATION_SCHEMES_ID_ROUTE)
-    HttpResponse delete(UUID id, @Body @Nullable ClassificationScheme classificationScheme,@Nullable @QueryValue Boolean permanent) {
+    HttpResponse delete(UUID id, @Body @Nullable ClassificationScheme classificationScheme, @Nullable @QueryValue Boolean permanent) {
         permanent = permanent ?: true
         super.delete(id, classificationScheme, permanent)
     }
 
     @Audit
-    @Get(Paths.FOLDER_CLASSIFICATION_SCHEMES_ROUTE)
-    ListResponse<ClassificationScheme> list(UUID folderId) {
-        super.list(folderId)
+    @Get(Paths.FOLDER_CLASSIFICATION_SCHEMES_ROUTE_PAGED)
+    ListResponse<ClassificationScheme> list(UUID folderId, @Nullable PaginationParams params) {
+        super.list(folderId, params)
     }
 
     @Audit
-    @Get(Paths.CLASSIFICATION_SCHEMES_LIST)
-    ListResponse<ClassificationScheme> listAll() {
-        super.listAll()
+    @Get(Paths.CLASSIFICATION_SCHEMES_LIST_PAGED)
+    ListResponse<ClassificationScheme> listAll(@Nullable PaginationParams params = new PaginationParams()) {
+        super.listAll(params)
     }
 
-    @Audit(title= EditType.COPY, description = "Create new version of classification scheme")
+    @Audit(title = EditType.COPY, description = "Create new version of classification scheme")
     @Transactional
     @Put(Paths.CLASSIFICATION_SCHEMES_BRANCH_MODEL_VERSION)
     ClassificationScheme createNewBranchModelVersion(UUID id, @Body @Nullable CreateNewVersionData createNewVersionData) {
@@ -106,7 +108,7 @@ class ClassificationSchemeController extends ModelController<ClassificationSchem
         super.exportModel(id, namespace, name, version)
     }
 
-    @Audit(title= EditType.IMPORT, description = "Import classification scheme")
+    @Audit(title = EditType.IMPORT, description = "Import classification scheme")
     @Transactional
     @ExecuteOn(TaskExecutors.IO)
     @Consumes(MediaType.MULTIPART_FORM_DATA)

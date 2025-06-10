@@ -48,11 +48,11 @@ class Annotation extends Facet implements DiffableItem<Annotation> {
     @Transient
     ObjectDiff<Annotation> diff(Annotation other) {
         ObjectDiff<Annotation> base = DiffBuilder.objectDiff(Annotation)
-                .leftHandSide(id?.toString(), this)
-                .rightHandSide(other.id?.toString(), other)
+            .leftHandSide(id?.toString(), this)
+            .rightHandSide(other.id?.toString(), other)
         base.label = this.label
         base.appendString(DiffBuilder.DESCRIPTION, this.description, other.description, this, other)
-        if (!DiffBuilder.isNull(this.childAnnotations) ||!DiffBuilder.isNull(other.childAnnotations)) {
+        if (!DiffBuilder.isNull(this.childAnnotations) || !DiffBuilder.isNull(other.childAnnotations)) {
             base.appendCollection(DiffBuilder.CHILD_ANNOTATIONS, this.childAnnotations as Collection<DiffableItem>, other.childAnnotations as Collection<DiffableItem>)
         }
         base

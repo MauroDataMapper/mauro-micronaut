@@ -7,6 +7,7 @@ import uk.ac.ox.softeng.mauro.domain.facet.Metadata
 import uk.ac.ox.softeng.mauro.domain.facet.ReferenceFile
 import uk.ac.ox.softeng.mauro.domain.facet.Rule
 import uk.ac.ox.softeng.mauro.domain.facet.RuleRepresentation
+import uk.ac.ox.softeng.mauro.domain.facet.SemanticLink
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadataReport
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
@@ -54,6 +55,9 @@ class AdministeredItemContentRepository {
 
     @Inject
     FacetCacheableRepository.VersionLinkCacheableRepository versionLinkCacheableRepository
+
+    @Inject
+    FacetCacheableRepository.SemanticLinkCacheableRepository semanticLinkCacheableRepository
 
     @Inject
     ClassifierRepository classifierRepository
@@ -214,6 +218,7 @@ class AdministeredItemContentRepository {
         saveAnnotations(items)
         saveReferenceFiles(items)
         saveRules(items)
+        saveSemanticLinks(items)
     }
 
     void saveSummaryMetadataFacets(List<AdministeredItem> items) {
@@ -292,13 +297,23 @@ class AdministeredItemContentRepository {
         }
     }
 
+    void saveSemanticLinks(List<AdministeredItem> items) {
+        List<SemanticLink> semanticLinks = []
+        items.each { item ->
+            if (item.semanticLinks) {
+                item.semanticLinks.each {
+                    updateMultiAwareData(item, it)
+                }
+                semanticLinks.addAll(item.semanticLinks)
+                semanticLinkCacheableRepository.saveAll(semanticLinks)
+            }
+        }
+    }
+
     private void updateMultiAwareData(AdministeredItem item, Facet it) {
         it.multiFacetAwareItemDomainType = item.domainType
         it.multiFacetAwareItemId = item.id
         it.multiFacetAwareItem = item
     }
-
-
-
 }
 

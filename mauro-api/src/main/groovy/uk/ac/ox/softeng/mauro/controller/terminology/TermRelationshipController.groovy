@@ -3,6 +3,7 @@ package uk.ac.ox.softeng.mauro.controller.terminology
 import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.terminology.TermRelationshipApi
 import uk.ac.ox.softeng.mauro.audit.Audit
+import uk.ac.ox.softeng.mauro.web.PaginationParams
 
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
@@ -90,8 +91,8 @@ class TermRelationshipController extends AdministeredItemController<TermRelation
     }
 
     @Audit
-    @Get(Paths.TERM_RELATIONSHIP_LIST)
-    ListResponse<TermRelationship> list(UUID terminologyId) {
-        super.list(terminologyId)
+    @Get(Paths.TERM_RELATIONSHIP_LIST_PAGED)
+    ListResponse<TermRelationship> list(UUID terminologyId, @Nullable PaginationParams params = new PaginationParams()) {
+        super.list(terminologyId, params)
     }
 }

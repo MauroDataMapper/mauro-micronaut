@@ -114,7 +114,7 @@ class Term extends ModelItem<Terminology> {
     @Deprecated
     @Nullable
     @JsonProperty('model')
-    UUID getModelId(){
+    UUID getModelId() {
         terminology?.id
     }
 
@@ -123,12 +123,12 @@ class Term extends ModelItem<Terminology> {
      * Methods for building a tree-like DSL
      */
     static Term build(
-            Map args,
-            @DelegatesTo(value = Term, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
+        Map args,
+        @DelegatesTo(value = Term, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
         new Term(args).tap(closure)
     }
 
-    static Term build(@DelegatesTo(value = Term, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
+    static Term build(@DelegatesTo(value = Term, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
         build [:], closure
     }
 
@@ -155,15 +155,15 @@ class Term extends ModelItem<Terminology> {
     @Override
     String toString() {
         return "Term{" +
-                "terminology=" + terminology +
-                ", code='" + code + '\'' +
-                ", definition='" + definition + '\'' +
-                ", url='" + url + '\'' +
-                ", isParent=" + isParent +
-                ", depth=" + depth +
-                ", sourceTermRelationships=" + sourceTermRelationships +
-                ", targetTermRelationships=" + targetTermRelationships +
-                ", codeSets=" + codeSets +
-                '}'
+               "terminology=" + terminology +
+               ", code='" + code + '\'' +
+               ", definition='" + definition + '\'' +
+               ", url='" + url + '\'' +
+               ", isParent=" + isParent +
+               ", depth=" + depth +
+               ", sourceTermRelationships=" + sourceTermRelationships +
+               ", targetTermRelationships=" + targetTermRelationships +
+               ", codeSets=" + codeSets +
+               '}'
     }
 }

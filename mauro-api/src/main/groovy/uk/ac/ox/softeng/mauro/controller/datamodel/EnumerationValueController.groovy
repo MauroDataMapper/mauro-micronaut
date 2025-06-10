@@ -5,6 +5,7 @@ import uk.ac.ox.softeng.mauro.api.datamodel.EnumerationValueApi
 import uk.ac.ox.softeng.mauro.audit.Audit
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.facet.EditType
+import uk.ac.ox.softeng.mauro.web.PaginationParams
 
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
@@ -76,12 +77,11 @@ class EnumerationValueController extends AdministeredItemController<EnumerationV
     }
 
     @Audit
-    @Get(Paths.ENUMERATION_VALUE_LIST)
-    ListResponse<EnumerationValue> list(UUID dataModelId, UUID enumerationTypeId) {
+    @Get(Paths.ENUMERATION_VALUE_LIST_PAGED)
+    ListResponse<EnumerationValue> list(UUID dataModelId, UUID enumerationTypeId, @Nullable PaginationParams params = new PaginationParams()) {
         DataType enumerationType = dataTypeRepository.readById(enumerationTypeId)
         accessControlService.checkRole(Role.EDITOR, enumerationType)
-        ListResponse.from(enumerationValueRepository.readAllByEnumerationType_Id(enumerationTypeId))
-
+        ListResponse.from(enumerationValueRepository.readAllByEnumerationType_Id(enumerationTypeId),params)
     }
 
 }

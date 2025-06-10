@@ -6,6 +6,7 @@ import uk.ac.ox.softeng.mauro.domain.facet.Facet
 import uk.ac.ox.softeng.mauro.domain.facet.Metadata
 import uk.ac.ox.softeng.mauro.domain.facet.ReferenceFile
 import uk.ac.ox.softeng.mauro.domain.facet.Rule
+import uk.ac.ox.softeng.mauro.domain.facet.SemanticLink
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
 import uk.ac.ox.softeng.mauro.domain.facet.VersionLink
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
@@ -14,6 +15,7 @@ import uk.ac.ox.softeng.mauro.persistence.facet.EditRepository
 import uk.ac.ox.softeng.mauro.persistence.facet.MetadataRepository
 import uk.ac.ox.softeng.mauro.persistence.facet.ReferenceFileRepository
 import uk.ac.ox.softeng.mauro.persistence.facet.RuleRepository
+import uk.ac.ox.softeng.mauro.persistence.facet.SemanticLinkRepository
 import uk.ac.ox.softeng.mauro.persistence.facet.SummaryMetadataRepository
 import uk.ac.ox.softeng.mauro.persistence.facet.VersionLinkRepository
 import uk.ac.ox.softeng.mauro.persistence.model.ItemRepository
@@ -152,6 +154,35 @@ abstract class FacetCacheableRepository<F extends Facet> extends ItemCacheableRe
             Long deleted = ((ReferenceFileRepository)repository).deleteById(id)
             super.invalidate(id)
             deleted
+        }
+    }
+
+    @Singleton
+    @CompileStatic
+    static class SemanticLinkCacheableRepository extends FacetCacheableRepository<SemanticLink> {
+        SemanticLinkCacheableRepository(SemanticLinkRepository semanticLinkRepository) {
+            super(semanticLinkRepository)
+        }
+
+        SemanticLink findById(UUID id) {
+            cachedLookupById(FIND_BY_ID, SemanticLink.class.simpleName, id)
+        }
+
+        SemanticLink readById(UUID id) {
+            cachedLookupById(READ_BY_ID, SemanticLink.class.simpleName, id)
+        }
+
+        List<SemanticLink> saveAll(Iterable<SemanticLink> items) {
+            List<SemanticLink> savedChild = []
+            List<SemanticLink> savedList = []
+            SemanticLink saved
+            items.forEach { semanticLink ->
+                saved = repository.save(semanticLink)
+                savedList.add(saved)
+                invalidate(saved)
+            }
+            savedList.addAll(savedChild)
+            savedList
         }
     }
 }

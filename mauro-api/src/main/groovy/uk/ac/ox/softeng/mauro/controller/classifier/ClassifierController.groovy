@@ -4,6 +4,7 @@ import uk.ac.ox.softeng.mauro.ErrorHandler
 import uk.ac.ox.softeng.mauro.api.classifier.ClassifierApi
 import uk.ac.ox.softeng.mauro.audit.Audit
 import uk.ac.ox.softeng.mauro.domain.facet.EditType
+import uk.ac.ox.softeng.mauro.web.PaginationParams
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
@@ -84,16 +85,22 @@ class ClassifierController extends AdministeredItemController<Classifier, Classi
     }
 
     @Audit
+    @Get(Paths.CLASSIFIERS_ROUTE_PAGED)
+    ListResponse<Classifier> list(UUID classificationSchemeId, @Nullable PaginationParams params) {
+        super.list(classificationSchemeId, params)
+    }
+
+    @Audit
     @Get(Paths.CHILD_CLASSIFIERS_ID_ROUTE)
-    Classifier showChildClassifier(@NonNull UUID classificationSchemeId,@NonNull UUID parentClassifierId, @NonNull UUID childClassifierId) {
+    Classifier showChildClassifier(@NonNull UUID classificationSchemeId, @NonNull UUID parentClassifierId, @NonNull UUID childClassifierId) {
         show(childClassifierId)
     }
 
     /**
      * Create child classifier
      * @param classificationSchemeId
-     * @param id              parent ClassifierId
-     * @param classifier      child
+     * @param id parent ClassifierId
+     * @param classifier child
      * @return
      */
     @Audit
@@ -132,9 +139,15 @@ class ClassifierController extends AdministeredItemController<Classifier, Classi
     @Audit
     @Get(Paths.CHILD_CLASSIFIERS_ROUTE)
     ListResponse<Classifier> list(@NonNull UUID classificationSchemeId, @NonNull UUID parentClassifierId) {
+        list(classificationSchemeId, parentClassifierId, null)
+    }
+
+    @Audit
+    @Get(Paths.CHILD_CLASSIFIERS_ROUTE_PAGED)
+    ListResponse<Classifier> list(@NonNull UUID classificationSchemeId, @NonNull UUID parentClassifierId, @Nullable PaginationParams params) {
         Classifier parentClassifier = classifierCacheableRepository.readById(parentClassifierId)
         accessControlService.checkRole(Role.READER, parentClassifier)
-        ListResponse.from(classifierCacheableRepository.readAllByParentClassifier_Id(parentClassifierId))
+        ListResponse.from(classifierCacheableRepository.readAllByParentClassifier_Id(parentClassifierId), params)
     }
 
     /**
@@ -170,11 +183,12 @@ class ClassifierController extends AdministeredItemController<Classifier, Classi
      * Get AdministeredItem classifiers
      */
     @Audit
-    @Get(Paths.ADMINISTERED_ITEM_CLASSIFIER_ROUTE)
-    ListResponse<Classifier> findAllAdministeredItemClassifiers(@NonNull String administeredItemDomainType, @NonNull UUID administeredItemId) {
+    @Get(Paths.ADMINISTERED_ITEM_CLASSIFIER_ROUTE_PAGED)
+    ListResponse<Classifier> findAllAdministeredItemClassifiers(@NonNull String administeredItemDomainType, @NonNull UUID administeredItemId,
+                                                                @Nullable PaginationParams params = new PaginationParams()) {
         AdministeredItem administeredItem = findAdministeredItem(administeredItemDomainType, administeredItemId)
         accessControlService.checkRole(Role.READER, readAdministeredItem(administeredItem.domainType, administeredItemId))
-        ListResponse.from(classifierCacheableRepository.findAllForAdministeredItem(administeredItem))
+        ListResponse.from(classifierCacheableRepository.findAllForAdministeredItem(administeredItem), params)
     }
 
     @Audit(
@@ -185,7 +199,7 @@ class ClassifierController extends AdministeredItemController<Classifier, Classi
     )
     @Delete(Paths.ADMINISTERED_ITEM_CLASSIFIER_ID_ROUTE)
     @Transactional
-    HttpResponse delete(@NonNull String administeredItemDomainType, @NonNull UUID administeredItemId, @NonNull UUID id){
+    HttpResponse delete(@NonNull String administeredItemDomainType, @NonNull UUID administeredItemId, @NonNull UUID id) {
         AdministeredItem administeredItem = findAdministeredItem(administeredItemDomainType, administeredItemId)
         accessControlService.checkRole(Role.EDITOR, readAdministeredItem(administeredItem.domainType, administeredItemId))
         Classifier classifierToDelete = classifierCacheableRepository.readById(id)
@@ -204,8 +218,8 @@ class ClassifierController extends AdministeredItemController<Classifier, Classi
     List<Classifier> list() {
         List result = List.of(new Classifier().tap {
             id = UUID.randomUUID()
-            domainType =  'Classifier'
-            label =  'stub classifier label'
+            domainType = 'Classifier'
+            label = 'stub classifier label'
         })
         result
     }

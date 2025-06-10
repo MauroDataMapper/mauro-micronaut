@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.controller.terminology
 
+import uk.ac.ox.softeng.mauro.web.PaginationParams
+
 import io.micronaut.http.HttpStatus
 import uk.ac.ox.softeng.mauro.ErrorHandler
 import uk.ac.ox.softeng.mauro.api.Paths
@@ -70,9 +72,9 @@ class TermController extends AdministeredItemController<Term, Terminology> imple
     }
 
     @Audit
-    @Get(Paths.TERM_LIST)
-    ListResponse<Term> list(UUID terminologyId) {
-        super.list(terminologyId)
+    @Get(Paths.TERM_LIST_PAGED)
+    ListResponse<Term> list(UUID terminologyId, @Nullable PaginationParams params = new PaginationParams()) {
+        super.list(terminologyId, params)
     }
 
     @Audit
@@ -84,11 +86,11 @@ class TermController extends AdministeredItemController<Term, Terminology> imple
     }
 
     @Audit
-    @Get(Paths.TERM_CODE_SETS)
-    ListResponse<CodeSet> getCodeSetsForTerm(UUID terminologyId, UUID id) {
+    @Get(Paths.TERM_CODE_SETS_PAGED)
+    ListResponse<CodeSet> getCodeSetsForTerm(UUID terminologyId, UUID id, @Nullable PaginationParams params = new PaginationParams()) {
         List<CodeSet> codeSets = termRepositoryUncached.getCodeSets(id)
         codeSets = codeSets.findAll {accessControlService.canDoRole(Role.READER, it)}
-        ListResponse.from(codeSets)
+        ListResponse.from(codeSets, params)
     }
 
     @Get(Paths.TERM_DOI)

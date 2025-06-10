@@ -1,5 +1,7 @@
 package uk.ac.ox.softeng.mauro.web
 
+import uk.ac.ox.softeng.mauro.domain.terminology.Term
+
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.transform.CompileStatic
@@ -27,9 +29,9 @@ class ListResponse<T> {
         you want the search to be able to sort on that field
      */
 
-    private static Map<String,String> mappedProperties=[:]
-    static{
-        mappedProperties.put("idx","order");
+    private static Map<String, String> mappedProperties = [:]
+    static {
+        mappedProperties.put("idx", "order");
     }
 
     static ListResponse from(List items) {
@@ -38,13 +40,17 @@ class ListResponse<T> {
 
     static ListResponse from(List items, PaginationParams params) {
 
-        List filteredItems=filter(items, params)
+        if (params == null) {
+            return new ListResponse(count: items.size(), items: items ?: [])
+        }
+
+        List filteredItems = filter(items, params)
 
         return new ListResponse(count: filteredItems.size(), items: apply(filteredItems, params))
     }
 
     void bindItems(ObjectMapper objectMapper, Class<T> clazz) {
-        items = items.collect { item ->
+        items = items.collect {item ->
             return objectMapper.convertValue(item, clazz)
         }
     }
@@ -65,16 +71,24 @@ class ListResponse<T> {
             return input
         }
 
-        if(params.label || params.description) {
+        if (params.label || params.description || params.code || params.definition) {
             if (input.get(0) instanceof AdministeredItem) {
                 List<AdministeredItem> filterable = (List<AdministeredItem>) input
 
-                if(params.label) {
-                    filterable = filterable.findAll { it.label?.containsIgnoreCase(params.label) }
+                if (params.label) {
+                    filterable = filterable.findAll {it.label?.containsIgnoreCase(params.label)}
                 }
 
-                if(params.description) {
-                    filterable = filterable.findAll { it.description?.containsIgnoreCase(params.description) }
+                if (params.description) {
+                    filterable = filterable.findAll {it.description?.containsIgnoreCase(params.description)}
+                }
+
+                if (params.code) {
+                    filterable = filterable.findAll {it instanceof Term && ((Term) it).code?.containsIgnoreCase(params.code)}
+                }
+
+                if (params.definition) {
+                    filterable = filterable.findAll {it instanceof Term && ((Term) it).definition?.containsIgnoreCase(params.definition)}
                 }
 
                 return (List<T>) filterable
@@ -86,7 +100,7 @@ class ListResponse<T> {
 
     private static <T> List<T> apply(List<T> input, PaginationParams params) {
         if (input == null || input.isEmpty()) {return []}
-        if(params == null){return input}
+        if (params == null) {return input}
 
         Class<T> clazz = (Class<T>) input.get(0).getClass()
 
@@ -96,14 +110,11 @@ class ListResponse<T> {
         Comparator<T> comparator = buildComparator(sort, clazz)
 
         List<T> sorted
-        if(comparator==null)
-        {
+        if (comparator == null) {
             // Couldn't resolve the sort field to use
-            sorted=input
+            sorted = input
             System.err.println("Warning: unable to sort")
-        }
-        else
-        {
+        } else {
             sorted = input.toSorted(comparator)
         }
 
@@ -125,26 +136,25 @@ class ListResponse<T> {
     private static <T> Comparator<T> buildComparator(Sort sort, Class<T> clazz) {
         Comparator<T> comparator = null
 
-        sort.orderBy.each { Sort.Order order ->
+        sort.orderBy.each {Sort.Order order ->
             Comparator<T> next
 
             try {
                 String sortProp = order.property
-                final String mappedName=mappedProperties.get(sortProp)
-                if(mappedName!=null){sortProp=mappedName}
+                final String mappedName = mappedProperties.get(sortProp)
+                if (mappedName != null) {sortProp = mappedName}
 
                 next = Comparator.comparing(
-                        { T obj ->
+                    {T obj ->
 
-                            Field field = findFieldInHierarchy(obj.getClass(), sortProp)
-                            if(field==null)
-                            {
-                                return null
-                            }
-                            field.setAccessible(true)
-                            return field.get(obj) as Comparable
-                        },
-                        Comparator.nullsFirst(Comparator.naturalOrder())
+                        Field field = findFieldInHierarchy(obj.getClass(), sortProp)
+                        if (field == null) {
+                            return null
+                        }
+                        field.setAccessible(true)
+                        return field.get(obj) as Comparable
+                    },
+                    Comparator.nullsFirst(Comparator.naturalOrder())
                 )
 
                 if (order.direction == Sort.Order.Direction.DESC) {

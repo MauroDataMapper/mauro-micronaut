@@ -11,6 +11,7 @@ import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemRepository
 import uk.ac.ox.softeng.mauro.persistence.model.PathRepository
 import uk.ac.ox.softeng.mauro.persistence.service.RepositoryService
 import uk.ac.ox.softeng.mauro.web.ListResponse
+import uk.ac.ox.softeng.mauro.web.PaginationParams
 
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
@@ -147,15 +148,15 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
         }
     }
 
-    ListResponse<I> list(UUID parentId) {
+    ListResponse<I> list(UUID parentId, @Nullable PaginationParams params = new PaginationParams()) {
         P parent = parentItemRepository.readById(parentId)
         if (!parent) return null
         accessControlService.checkRole(Role.READER, parent)
         List<I> items = administeredItemRepository.readAllByParent(parent)
         items.each {
-            updateDerivedProperties(it)
+            updateDerivedProperties(it as I)
         }
-        ListResponse.from(items)
+        ListResponse.from(items,params)
     }
 
     I updateDerivedProperties(I item) {

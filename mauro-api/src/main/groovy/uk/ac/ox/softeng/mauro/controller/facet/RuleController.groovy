@@ -1,7 +1,9 @@
 package uk.ac.ox.softeng.mauro.controller.facet
 
 import uk.ac.ox.softeng.mauro.audit.Audit
+import uk.ac.ox.softeng.mauro.web.PaginationParams
 
+import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpResponse
 import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.facet.RuleApi
@@ -52,11 +54,11 @@ class RuleController extends FacetController<Rule> implements RuleApi {
     }
 
     @Audit
-    @Get(Paths.RULE_LIST)
-    ListResponse<Rule> list(String domainType, UUID domainId) {
+    @Get(Paths.RULE_LIST_PAGED)
+    ListResponse<Rule> list(String domainType, UUID domainId, @Nullable PaginationParams params = new PaginationParams()) {
         AdministeredItem administeredItem = findAdministeredItem(domainType, domainId)
         accessControlService.checkRole(Role.READER, administeredItem)
-        ListResponse.from(!administeredItem.rules ? [] : administeredItem.rules)
+        ListResponse.from(!administeredItem.rules ? [] : administeredItem.rules, params)
     }
 
     @Audit
@@ -65,10 +67,10 @@ class RuleController extends FacetController<Rule> implements RuleApi {
         Rule rule = super.show(domainType, domainId, id) as Rule
         if (rule) {
             AdministeredItem administeredItem = findAdministeredItem(rule.multiFacetAwareItemDomainType,
-                    rule.multiFacetAwareItemId)
+                                                                     rule.multiFacetAwareItemId)
             accessControlService.checkRole(Role.READER, administeredItem)
             List<Rule> ruleList = administeredItem.rules
-            Rule ruleWithReports = ruleList.find { it -> it.id == id }
+            Rule ruleWithReports = ruleList.find {it -> it.id == id}
             ruleWithReports
         }
     }

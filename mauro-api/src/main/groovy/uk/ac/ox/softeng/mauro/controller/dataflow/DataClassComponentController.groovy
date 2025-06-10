@@ -14,6 +14,7 @@ import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableReposit
 import uk.ac.ox.softeng.mauro.persistence.dataflow.DataClassComponentContentRepository
 import uk.ac.ox.softeng.mauro.persistence.dataflow.DataFlowRepository
 import uk.ac.ox.softeng.mauro.web.ListResponse
+import uk.ac.ox.softeng.mauro.web.PaginationParams
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
@@ -80,9 +81,9 @@ class DataClassComponentController extends AdministeredItemController<DataClassC
     }
 
     @Audit
-    @Get(Paths.DATA_FLOW_CLASS_COMPONENT_LIST)
-    ListResponse<DataClassComponent> list(@NonNull UUID dataModelId, @NonNull UUID dataFlowId) {
-        super.list(dataFlowId)
+    @Get(Paths.DATA_FLOW_CLASS_COMPONENT_LIST_PAGED)
+    ListResponse<DataClassComponent> list(@NonNull UUID dataModelId, @NonNull UUID dataFlowId, @Nullable PaginationParams params = new PaginationParams()) {
+        super.list(dataFlowId, params)
     }
 
     @Audit(level = Audit.AuditLevel.FILE_ONLY)
@@ -144,10 +145,10 @@ class DataClassComponentController extends AdministeredItemController<DataClassC
 
     private DataClassComponent removeDataClass(Type type, UUID id, UUID dataClassId) {
         DataClass dataClassToRemove = dataClassRepository.readById(dataClassId)
-        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, dataClassToRemove,"Item with id: $dataClassId not found")
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, dataClassToRemove, "Item with id: $dataClassId not found")
         accessControlService.checkRole(Role.EDITOR, dataClassToRemove)
         DataClassComponent dataClassComponent = dataClassComponentContentRepository.readWithContentById(id)
-        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, dataClassToRemove,"Item with id: $id not found")
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, dataClassToRemove, "Item with id: $id not found")
         accessControlService.checkRole(Role.EDITOR, dataClassComponent)
 
         Long result

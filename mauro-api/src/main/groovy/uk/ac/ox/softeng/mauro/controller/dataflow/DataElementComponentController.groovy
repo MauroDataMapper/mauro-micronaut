@@ -5,6 +5,7 @@ import uk.ac.ox.softeng.mauro.ErrorHandler
 import uk.ac.ox.softeng.mauro.audit.Audit
 import uk.ac.ox.softeng.mauro.domain.dataflow.DataFlow
 import uk.ac.ox.softeng.mauro.domain.facet.EditType
+import uk.ac.ox.softeng.mauro.web.PaginationParams
 
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
@@ -77,9 +78,9 @@ class DataElementComponentController extends AdministeredItemController<DataElem
     }
 
     @Audit
-    @Get(Paths.DATA_FLOW_ELEMENT_COMPONENT_LIST)
-    ListResponse<DataElementComponent> list(@NonNull UUID dataModelId, @NonNull UUID dataFlowId, @NonNull UUID dataClassComponentId) {
-        super.list(dataClassComponentId)
+    @Get(Paths.DATA_FLOW_ELEMENT_COMPONENT_LIST_PAGED)
+    ListResponse<DataElementComponent> list(@NonNull UUID dataModelId, @NonNull UUID dataFlowId, @NonNull UUID dataClassComponentId, @Nullable PaginationParams params = new PaginationParams()) {
+        super.list(dataClassComponentId,params)
     }
 
     @Audit(level = Audit.AuditLevel.FILE_ONLY)

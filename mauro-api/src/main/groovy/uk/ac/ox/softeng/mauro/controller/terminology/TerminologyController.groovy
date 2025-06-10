@@ -4,6 +4,7 @@ import uk.ac.ox.softeng.mauro.api.model.ModelVersionedRefDTO
 import uk.ac.ox.softeng.mauro.api.model.PermissionsDTO
 import uk.ac.ox.softeng.mauro.audit.Audit
 import uk.ac.ox.softeng.mauro.domain.facet.EditType
+import uk.ac.ox.softeng.mauro.web.PaginationParams
 
 import io.micronaut.http.HttpStatus
 import uk.ac.ox.softeng.mauro.api.Paths
@@ -124,9 +125,9 @@ class TerminologyController extends ModelController<Terminology> implements Term
     }
 
     @Audit
-    @Get(Paths.TERMINOLOGY_LIST)
-    ListResponse<Terminology> listAll() {
-        super.listAll()
+    @Get(Paths.TERMINOLOGY_LIST_PAGED)
+    ListResponse<Terminology> listAll(@Nullable PaginationParams params = new PaginationParams()) {
+        super.listAll(params)
     }
 
     @Transactional

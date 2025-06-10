@@ -1,6 +1,9 @@
 package uk.ac.ox.softeng.mauro.api.facet
 
+import uk.ac.ox.softeng.mauro.web.PaginationParams
+
 import io.micronaut.core.annotation.NonNull
+import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.annotation.*
 import uk.ac.ox.softeng.mauro.api.MauroApi
@@ -19,13 +22,16 @@ interface RuleRepresentationApi {
     @Get(Paths.RULE_REPRESENTATIONS_LIST)
     ListResponse<RuleRepresentation> list(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID ruleId)
 
+    @Get(Paths.RULE_REPRESENTATIONS_LIST_PAGED)
+    ListResponse<RuleRepresentation> list(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID ruleId, @Nullable PaginationParams params)
+
     @Get(Paths.RULE_REPRESENTATIONS_ID)
     RuleRepresentation show(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID ruleId,
-                              @NonNull UUID id)
+                            @NonNull UUID id)
 
     @Put(Paths.RULE_REPRESENTATIONS_ID)
     RuleRepresentation update(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID ruleId,
-                                 @NonNull UUID id, @Body @NonNull RuleRepresentation ruleRepresentation)
+                              @NonNull UUID id, @Body @NonNull RuleRepresentation ruleRepresentation)
 
     @Delete(Paths.RULE_REPRESENTATIONS_ID)
     HttpResponse delete(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID ruleId,

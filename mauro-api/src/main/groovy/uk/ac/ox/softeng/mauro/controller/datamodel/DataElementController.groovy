@@ -118,6 +118,10 @@ class DataElementController extends AdministeredItemController<DataElement, Data
         List<DataElement> dataElements = dataElementRepository.readAllByDataClass_Id(dataClassId)
         dataElements.each {
             updateDerivedProperties(it)
+            if(it.dataType)
+            {
+                it.dataType=dataTypeRepository.readById(it.dataType.id)
+            }
         }
         ListResponse<DataElement>.from(dataElements, params)
     }

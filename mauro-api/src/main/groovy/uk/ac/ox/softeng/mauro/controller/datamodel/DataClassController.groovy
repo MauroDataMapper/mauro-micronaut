@@ -43,7 +43,7 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
 
     DataModelCacheableRepository dataModelRepository
 
-    AdministeredItemCacheableRepository.DataTypeCacheableRepository  dataTypeRepository
+    AdministeredItemCacheableRepository.DataTypeCacheableRepository dataTypeRepository
 
     AdministeredItemCacheableRepository.DataElementCacheableRepository dataElementRepository
 
@@ -80,7 +80,7 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
         parentIdParamName = 'dataModelId',
         deletedObjectDomainType = DataClass
     )
-    
+
     @Transactional
     @Delete(Paths.DATA_CLASS_ID)
     HttpResponse delete(UUID dataModelId, UUID id, @Body @Nullable DataClass dataClass) {
@@ -108,7 +108,7 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
         classes.each {
             updateDerivedProperties(it)
         }
-        ListResponse<DataClass>.from(classes,params)
+        ListResponse<DataClass>.from(classes, params)
     }
 
     @Audit

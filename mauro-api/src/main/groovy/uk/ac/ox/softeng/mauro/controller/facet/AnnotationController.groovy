@@ -3,9 +3,11 @@ package uk.ac.ox.softeng.mauro.controller.facet
 import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.facet.AnnotationApi
 import uk.ac.ox.softeng.mauro.audit.Audit
+import uk.ac.ox.softeng.mauro.web.PaginationParams
 
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
+import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.*
@@ -49,11 +51,11 @@ class AnnotationController extends FacetController<Annotation> implements Annota
      * @return
      */
     @Audit
-    @Get(Paths.ANNOTATION_LIST)
-    ListResponse<Annotation> list(@NonNull String domainType, @NonNull UUID domainId) {
+    @Get(Paths.ANNOTATION_LIST_PAGED)
+    ListResponse<Annotation> list(@NonNull String domainType, @NonNull UUID domainId, @Nullable PaginationParams params = new PaginationParams()) {
         AdministeredItem administeredItem = findAdministeredItem(domainType, domainId)
         accessControlService.checkRole(Role.READER, administeredItem)
-        ListResponse.from(!administeredItem.annotations ? [] : administeredItem.annotations)
+        ListResponse.from(!administeredItem.annotations ? [] : administeredItem.annotations,params)
     }
 
     @Audit

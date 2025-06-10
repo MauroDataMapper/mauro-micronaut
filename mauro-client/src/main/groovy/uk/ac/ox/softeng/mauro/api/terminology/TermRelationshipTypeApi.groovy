@@ -6,6 +6,7 @@ import uk.ac.ox.softeng.mauro.api.model.AdministeredItemApi
 import uk.ac.ox.softeng.mauro.domain.terminology.TermRelationshipType
 import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
 import uk.ac.ox.softeng.mauro.web.ListResponse
+import uk.ac.ox.softeng.mauro.web.PaginationParams
 
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
@@ -30,6 +31,9 @@ interface TermRelationshipTypeApi extends AdministeredItemApi<TermRelationshipTy
 
     @Get(Paths.TERM_RELATIONSHIP_TYPE_LIST)
     ListResponse<TermRelationshipType> list(UUID terminologyId)
+
+    @Get(Paths.TERM_RELATIONSHIP_TYPE_LIST_PAGED)
+    ListResponse<TermRelationshipType> list(UUID terminologyId, @Nullable PaginationParams params)
 
     @Delete(Paths.TERM_RELATIONSHIP_TYPE_ID)
     HttpResponse delete(UUID terminologyId, UUID id, @Body @Nullable TermRelationshipType termRelationshipType)

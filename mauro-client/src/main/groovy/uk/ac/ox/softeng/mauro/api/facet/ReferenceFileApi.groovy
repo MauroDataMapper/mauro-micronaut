@@ -4,8 +4,10 @@ import uk.ac.ox.softeng.mauro.api.MauroApi
 import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.domain.facet.ReferenceFile
 import uk.ac.ox.softeng.mauro.web.ListResponse
+import uk.ac.ox.softeng.mauro.web.PaginationParams
 
 import io.micronaut.core.annotation.NonNull
+import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.annotation.Delete
@@ -19,11 +21,14 @@ interface ReferenceFileApi extends FacetApi<ReferenceFile> {
     @Get(Paths.REFERENCE_FILE_LIST)
     ListResponse<ReferenceFile> list(String domainType, UUID domainId)
 
+    @Get(Paths.REFERENCE_FILE_LIST_PAGED)
+    ListResponse<ReferenceFile> list(String domainType, UUID domainId, @Nullable PaginationParams params)
+
     @Get(Paths.REFERENCE_FILE_ID)
     byte[] showAndReturnFile(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID id)
 
 
-        /**
+    /**
      * getById
      * @param domainType
      * @param domainId

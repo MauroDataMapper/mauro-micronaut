@@ -11,6 +11,7 @@ import uk.ac.ox.softeng.mauro.domain.model.Model
 import uk.ac.ox.softeng.mauro.domain.security.Role
 import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository
 import uk.ac.ox.softeng.mauro.service.datamodel.DataModelHelper
+import uk.ac.ox.softeng.mauro.web.PaginationParams
 
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
@@ -109,8 +110,8 @@ class DataTypeController extends AdministeredItemController<DataType, DataModel>
     }
 
     @Audit
-    @Get(Paths.DATA_TYPE_LIST)
-    ListResponse<DataType> list(UUID dataModelId) {
+    @Get(Paths.DATA_TYPE_LIST_PAGED)
+    ListResponse<DataType> list(UUID dataModelId, @Nullable PaginationParams params = new PaginationParams()) {
         Item parent = parentItemRepository.readById(dataModelId)
         if (!parent) return null
         accessControlService.checkRole(Role.READER, parent)
@@ -119,7 +120,7 @@ class DataTypeController extends AdministeredItemController<DataType, DataModel>
             updateDerivedProperties(it)
             getReferenceClassProperties(it)
         }
-        ListResponse.from(dataTypes)
+        ListResponse.from(dataTypes,params)
     }
 
     private DataClass validatedReferenceClass(DataType dataType, AdministeredItem parent) {

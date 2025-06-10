@@ -8,9 +8,11 @@ import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.security.Role
 import uk.ac.ox.softeng.mauro.persistence.cache.FacetCacheableRepository
 import uk.ac.ox.softeng.mauro.web.ListResponse
+import uk.ac.ox.softeng.mauro.web.PaginationParams
 
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
+import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Delete
@@ -39,11 +41,11 @@ class EditController extends FacetController<Edit> implements EditApi {
 
     @Audit
     @Override
-    @Get(Paths.EDIT_LIST)
-    ListResponse<Edit> list(String domainType, UUID domainId) {
+    @Get(Paths.EDIT_LIST_PAGED)
+    ListResponse<Edit> list(String domainType, UUID domainId, @Nullable PaginationParams params = new PaginationParams()) {
         AdministeredItem administeredItem = findAdministeredItem(domainType, domainId)
         accessControlService.checkRole(Role.READER, administeredItem)
-        ListResponse.from(!administeredItem.edits ? []: administeredItem.edits)
+        ListResponse.from(!administeredItem.edits ? [] : administeredItem.edits, params)
     }
 
     @Audit

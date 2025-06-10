@@ -7,6 +7,7 @@ import uk.ac.ox.softeng.mauro.domain.facet.Edit
 import uk.ac.ox.softeng.mauro.domain.facet.Metadata
 import uk.ac.ox.softeng.mauro.domain.facet.ReferenceFile
 import uk.ac.ox.softeng.mauro.domain.facet.Rule
+import uk.ac.ox.softeng.mauro.domain.facet.SemanticLink
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
 import uk.ac.ox.softeng.mauro.persistence.model.dto.AdministeredItemDTO
 
@@ -102,4 +103,9 @@ class DataClassDTO extends DataClass implements AdministeredItemDTO {
     @TypeDef(type=DataType.JSON)
     List<DataClass> extendsDataClasses = []
 
+    @Nullable
+    @TypeDef(type = DataType.JSON)
+    @MappedProperty
+    @ColumnTransformer(read = '(select json_agg(semantic_link) from core.semantic_link where multi_facet_aware_item_id = data_class_.id)')
+    List<SemanticLink> semanticLinks = []
 }

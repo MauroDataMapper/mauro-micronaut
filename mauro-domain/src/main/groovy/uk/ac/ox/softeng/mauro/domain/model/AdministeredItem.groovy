@@ -6,6 +6,7 @@ import uk.ac.ox.softeng.mauro.domain.facet.Edit
 import uk.ac.ox.softeng.mauro.domain.facet.Metadata
 import uk.ac.ox.softeng.mauro.domain.facet.ReferenceFile
 import uk.ac.ox.softeng.mauro.domain.facet.Rule
+import uk.ac.ox.softeng.mauro.domain.facet.SemanticLink
 import uk.ac.ox.softeng.mauro.domain.facet.SummaryMetadata
 import uk.ac.ox.softeng.mauro.domain.security.CatalogueUser
 import uk.ac.ox.softeng.mauro.exception.MauroInternalException
@@ -91,7 +92,8 @@ abstract class AdministeredItem extends Item {
      * The identifier of a breadcrumb tree object for navigation.
      */
     @Nullable
-    UUID breadcrumbTreeId // should be BreadcrumbTree type
+    UUID breadcrumbTreeId
+    // should be BreadcrumbTree type
 
     @Relation(Relation.Kind.ONE_TO_MANY)
     List<Edit> edits = []
@@ -112,7 +114,10 @@ abstract class AdministeredItem extends Item {
     List<ReferenceFile> referenceFiles = []
 
     @Transient
-    List<String> availableActions=[]
+    List<String> availableActions = []
+
+    @Relation(Relation.Kind.ONE_TO_MANY)
+    List<SemanticLink> semanticLinks = []
 
     /**
      * Helper method for returning the parent of this object, if one exists and is loaded.
@@ -203,12 +208,12 @@ abstract class AdministeredItem extends Item {
         int i = 0
         AdministeredItem node = this
         while (node) {
-            pathNodes.add(0, new Path.PathNode(prefix: node.pathPrefix, identifier: node.pathIdentifier, modelIdentifier: node.pathModelIdentifier, node:node))
+            pathNodes.add(0, new Path.PathNode(prefix: node.pathPrefix, identifier: node.pathIdentifier, modelIdentifier: node.pathModelIdentifier, node: node))
             i++; node = node.parent
             if (i > Path.PATH_MAX_NODES) throw new MauroInternalException("Path exceeded maximum depth of [$Path.PATH_MAX_NODES]")
         }
 
-        Path pathToEdge=new Path()
+        Path pathToEdge = new Path()
         pathToEdge.nodes = pathNodes
 
         return pathToEdge
@@ -242,8 +247,8 @@ abstract class AdministeredItem extends Item {
      */
 
     Map<String, String> metadataAsMap(String namespace) {
-        getMetadata().findAll { it.namespace == namespace }
-                .collectEntries {[it.key, it.value]}
+        getMetadata().findAll {it.namespace == namespace}
+            .collectEntries {[it.key, it.value]}
     }
 
 
@@ -391,7 +396,7 @@ abstract class AdministeredItem extends Item {
      * @see #metadata
      */
     Metadata metadata(String namespace, String key, String value) {
-        Metadata md = Metadata.build (namespace: namespace, key: key, value: value)
+        Metadata md = Metadata.build(namespace: namespace, key: key, value: value)
         this.metadata.add(md)
         return md
     }
@@ -412,7 +417,7 @@ abstract class AdministeredItem extends Item {
      * @see #metadata
      */
     List<Metadata> metadata(String namespace, Map<String, String> keyValueMap) {
-        this.metadata.addAll(keyValueMap.collect { key, value ->
+        this.metadata.addAll(keyValueMap.collect {key, value ->
             new Metadata(namespace: namespace, key: key, value: value)
         })
         return metadata
@@ -455,7 +460,6 @@ abstract class AdministeredItem extends Item {
     Rule rule(@DelegatesTo(value = Rule, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
         rule [:], closure
     }
-
 
 
 }

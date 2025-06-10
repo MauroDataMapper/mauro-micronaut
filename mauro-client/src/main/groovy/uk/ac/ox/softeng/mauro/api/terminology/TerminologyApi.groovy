@@ -11,6 +11,7 @@ import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
 import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchRequestDTO
 import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchResultsDTO
 import uk.ac.ox.softeng.mauro.web.ListResponse
+import uk.ac.ox.softeng.mauro.web.PaginationParams
 
 import io.micronaut.context.annotation.Parameter
 import io.micronaut.core.annotation.NonNull
@@ -53,6 +54,9 @@ interface TerminologyApi extends ModelApi<Terminology> {
 
     @Get(Paths.TERMINOLOGY_LIST)
     ListResponse<Terminology> listAll()
+
+    @Get(Paths.TERMINOLOGY_LIST_PAGED)
+    ListResponse<Terminology> listAll(@Nullable PaginationParams params)
 
     @Put(Paths.TERMINOLOGY_FINALISE)
     Terminology finalise(UUID id, @Body FinaliseData finaliseData)

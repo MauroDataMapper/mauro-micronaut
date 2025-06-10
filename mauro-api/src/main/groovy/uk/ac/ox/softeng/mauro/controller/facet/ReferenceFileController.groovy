@@ -3,9 +3,11 @@ package uk.ac.ox.softeng.mauro.controller.facet
 import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.facet.ReferenceFileApi
 import uk.ac.ox.softeng.mauro.audit.Audit
+import uk.ac.ox.softeng.mauro.web.PaginationParams
 
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
+import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.annotation.*
 import io.micronaut.security.annotation.Secured
@@ -30,6 +32,7 @@ class ReferenceFileController extends FacetController<ReferenceFile> implements 
     ReferenceFileController(ItemCacheableRepository<ReferenceFile> facetRepository) {
         super(facetRepository)
     }
+
     /**
      * Properties disallowed in a simple update request.
      */
@@ -39,12 +42,13 @@ class ReferenceFileController extends FacetController<ReferenceFile> implements 
 
 
     @Audit
-    @Get(Paths.REFERENCE_FILE_LIST)
-    ListResponse<ReferenceFile> list(String domainType, UUID domainId) {
+    @Get(Paths.REFERENCE_FILE_LIST_PAGED)
+    ListResponse<ReferenceFile> list(String domainType, UUID domainId, @Nullable PaginationParams params = new PaginationParams()) {
         AdministeredItem administeredItem = findAdministeredItem(domainType, domainId)
         accessControlService.checkRole(Role.READER, administeredItem)
-        ListResponse.from(!administeredItem.referenceFiles ? []: administeredItem.referenceFiles)
+        ListResponse.from(!administeredItem.referenceFiles ? [] : administeredItem.referenceFiles, params)
     }
+
     /**
      * getById
      * @param domainType

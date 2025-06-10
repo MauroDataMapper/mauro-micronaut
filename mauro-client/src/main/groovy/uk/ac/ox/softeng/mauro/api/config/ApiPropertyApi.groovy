@@ -4,6 +4,7 @@ import uk.ac.ox.softeng.mauro.api.MauroApi
 import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.domain.config.ApiProperty
 import uk.ac.ox.softeng.mauro.web.ListResponse
+import uk.ac.ox.softeng.mauro.web.PaginationParams
 
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
@@ -20,8 +21,14 @@ interface ApiPropertyApi {
     @Get(Paths.API_PROPERTY_LIST_PUBLIC)
     ListResponse<ApiProperty> listPubliclyVisible()
 
+    @Get(Paths.API_PROPERTY_LIST_PUBLIC_PAGED)
+    ListResponse<ApiProperty> listPubliclyVisible(@Nullable PaginationParams params)
+
     @Get(Paths.API_PROPERTY_LIST_ALL)
     ListResponse<ApiProperty> listAll()
+
+    @Get(Paths.API_PROPERTY_LIST_ALL_PAGED)
+    ListResponse<ApiProperty> listAll(@Nullable PaginationParams params)
 
     @Get(Paths.API_PROPERTY_SHOW)
     ApiProperty show(UUID id)

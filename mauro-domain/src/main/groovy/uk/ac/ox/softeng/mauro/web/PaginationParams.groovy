@@ -26,4 +26,10 @@ class PaginationParams {
     @Nullable
     String description = null
 
+    @Nullable
+    String code = null
+
+    @Nullable
+    String definition = null
+
 }

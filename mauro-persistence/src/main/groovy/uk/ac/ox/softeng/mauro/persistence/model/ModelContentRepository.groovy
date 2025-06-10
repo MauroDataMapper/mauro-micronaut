@@ -76,6 +76,7 @@ class ModelContentRepository<M extends Model> extends AdministeredItemContentRep
         saveAnnotations(items)
         saveReferenceFiles(items)
         saveVersionLinks(items)
+        saveSemanticLinks(items)
     }
 
     void saveSummaryMetadataFacets(List<AdministeredItem> items) {
@@ -167,6 +168,19 @@ class ModelContentRepository<M extends Model> extends AdministeredItemContentRep
                     versionLinks.addAll(modelItem.versionLinks)
                     versionLinkCacheableRepository.saveAll(versionLinks)
                 }
+            }
+        }
+    }
+
+    void saveSemanticLinks(List<AdministeredItem> items) {
+        List<SemanticLink> SemanticLinks = []
+        items.each {item ->
+            if (item.semanticLinks) {
+                item.semanticLinks.each {
+                    updateMultiAwareData(item, it)
+                }
+                SemanticLinks.addAll(item.semanticLinks)
+                semanticLinkCacheableRepository.saveAll(SemanticLinks)
             }
         }
     }
