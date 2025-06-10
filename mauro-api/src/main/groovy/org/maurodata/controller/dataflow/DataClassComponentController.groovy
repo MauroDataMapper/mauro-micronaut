@@ -15,6 +15,8 @@ import org.maurodata.persistence.dataflow.DataClassComponentContentRepository
 import org.maurodata.persistence.dataflow.DataFlowRepository
 import org.maurodata.web.ListResponse
 
+import org.maurodata.web.PaginationParams
+
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
@@ -80,9 +82,10 @@ class DataClassComponentController extends AdministeredItemController<DataClassC
     }
 
     @Audit
-    @Get(Paths.DATA_FLOW_CLASS_COMPONENT_LIST)
-    ListResponse<DataClassComponent> list(@NonNull UUID dataModelId, @NonNull UUID dataFlowId) {
-        super.list(dataFlowId)
+    @Get(Paths.DATA_FLOW_CLASS_COMPONENT_LIST_PAGED)
+    ListResponse<DataClassComponent> list(@NonNull UUID dataModelId, @NonNull UUID dataFlowId, @Nullable PaginationParams params = new PaginationParams()) {
+        
+        super.list(dataFlowId, params)
     }
 
     @Audit(level = Audit.AuditLevel.FILE_ONLY)
@@ -124,30 +127,30 @@ class DataClassComponentController extends AdministeredItemController<DataClassC
         switch (type) {
             case Type.TARGET:
                 if (dataClassComponent.targetDataClasses.id.contains(dataClassToAdd.id)) {
-                    ErrorHandler.handleError(HttpStatus.BAD_REQUEST, "Item already exists in table DataClassComponentTargetDataClass: : $dataClassToAdd.id")
+                    ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "Item already exists in table DataClassComponentTargetDataClass: : $dataClassToAdd.id")
                 }
                 dataClassComponent.targetDataClasses.add(dataClassToAdd)
                 dataClassComponentRepository.addTargetDataClass(dataClassComponent.id, dataClassId)
                 break
             case Type.SOURCE:
                 if (dataClassComponent.sourceDataClasses.id.contains(dataClassToAdd.id)) {
-                    ErrorHandler.handleErrorOnNullObject(HttpStatus.BAD_REQUEST, null, "Item already exists in table DataClassComponentSourceDataClass: $dataClassToAdd.id")
+                    ErrorHandler.handleErrorOnNullObject(HttpStatus.UNPROCESSABLE_ENTITY, null, "Item already exists in table DataClassComponentSourceDataClass: $dataClassToAdd.id")
                 }
                 dataClassComponent.sourceDataClasses.add(dataClassToAdd)
                 dataClassComponentRepository.addSourceDataClass(dataClassComponent.id, dataClassId)
                 break
             default:
-                ErrorHandler.handleError(HttpStatus.BAD_REQUEST, "$type Type must be source or target")
+                ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "$type Type must be source or target")
         }
         dataClassComponent
     }
 
     private DataClassComponent removeDataClass(Type type, UUID id, UUID dataClassId) {
         DataClass dataClassToRemove = dataClassRepository.readById(dataClassId)
-        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, dataClassToRemove,"Item with id: $dataClassId not found")
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, dataClassToRemove, "Item with id: $dataClassId not found")
         accessControlService.checkRole(Role.EDITOR, dataClassToRemove)
         DataClassComponent dataClassComponent = dataClassComponentContentRepository.readWithContentById(id)
-        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, dataClassToRemove,"Item with id: $id not found")
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, dataClassToRemove, "Item with id: $id not found")
         accessControlService.checkRole(Role.EDITOR, dataClassComponent)
 
         Long result
@@ -165,7 +168,7 @@ class DataClassComponentController extends AdministeredItemController<DataClassC
                 result = dataClassComponentRepository.removeSourceDataClass(dataClassComponent.id, dataClassId)
                 break
             default:
-                ErrorHandler.handleError(HttpStatus.BAD_REQUEST, "Type must be source or target")
+                ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "Type must be source or target")
                 break;
         }
         dataClassComponent

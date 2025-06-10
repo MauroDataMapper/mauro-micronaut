@@ -6,6 +6,7 @@ import org.maurodata.api.model.AdministeredItemApi
 import org.maurodata.domain.classifier.ClassificationScheme
 import org.maurodata.domain.classifier.Classifier
 import org.maurodata.web.ListResponse
+import org.maurodata.web.PaginationParams
 
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
@@ -34,14 +35,17 @@ interface ClassifierApi extends AdministeredItemApi<Classifier, ClassificationSc
     @Get(Paths.CLASSIFIERS_ROUTE)
     ListResponse<Classifier> list(UUID classificationSchemeId)
 
+    @Get(Paths.CLASSIFIERS_ROUTE_PAGED)
+    ListResponse<Classifier> list(UUID classificationSchemeId, @Nullable PaginationParams params)
+
     @Get(Paths.CHILD_CLASSIFIERS_ID_ROUTE)
-    Classifier showChildClassifier(@NonNull UUID classificationSchemeId,@NonNull UUID parentClassifierId, @NonNull UUID childClassifierId)
+    Classifier showChildClassifier(@NonNull UUID classificationSchemeId, @NonNull UUID parentClassifierId, @NonNull UUID childClassifierId)
 
     /**
      * Create child classifier
      * @param classificationSchemeId
-     * @param id              parent ClassifierId
-     * @param classifier      child
+     * @param id parent ClassifierId
+     * @param classifier child
      * @return
      */
     @Post(Paths.CHILD_CLASSIFIERS_ROUTE)
@@ -55,6 +59,9 @@ interface ClassifierApi extends AdministeredItemApi<Classifier, ClassificationSc
 
     @Get(Paths.CHILD_CLASSIFIERS_ROUTE)
     ListResponse<Classifier> list(@NonNull UUID classificationSchemeId, @NonNull UUID parentClassifierId)
+
+    @Get(Paths.CHILD_CLASSIFIERS_ROUTE_PAGED)
+    ListResponse<Classifier> list(@NonNull UUID classificationSchemeId, @NonNull UUID parentClassifierId, @Nullable PaginationParams params)
 
     /**
      * Associate Classifier to administeredItem
@@ -73,6 +80,10 @@ interface ClassifierApi extends AdministeredItemApi<Classifier, ClassificationSc
      */
     @Get(Paths.ADMINISTERED_ITEM_CLASSIFIER_ROUTE)
     ListResponse<Classifier> findAllAdministeredItemClassifiers(@NonNull String administeredItemDomainType, @NonNull UUID administeredItemId)
+
+    @Get(Paths.ADMINISTERED_ITEM_CLASSIFIER_ROUTE_PAGED)
+    ListResponse<Classifier> findAllAdministeredItemClassifiers(@NonNull String administeredItemDomainType, @NonNull UUID administeredItemId,
+                                                                @Nullable PaginationParams params)
 
     @Delete(Paths.ADMINISTERED_ITEM_CLASSIFIER_ID_ROUTE)
     HttpResponse delete(@NonNull String administeredItemDomainType, @NonNull UUID administeredItemId, @NonNull UUID id)

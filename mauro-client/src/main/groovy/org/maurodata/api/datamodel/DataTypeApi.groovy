@@ -6,6 +6,7 @@ import org.maurodata.api.model.AdministeredItemApi
 import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.datamodel.DataType
 import org.maurodata.web.ListResponse
+import org.maurodata.web.PaginationParams
 
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
@@ -34,4 +35,6 @@ interface DataTypeApi extends AdministeredItemApi<DataType, DataModel> {
     @Get(Paths.DATA_TYPE_LIST)
     ListResponse<DataType> list(UUID dataModelId)
 
+    @Get(Paths.DATA_TYPE_LIST_PAGED)
+    ListResponse<DataType> list(UUID dataModelId, @Nullable PaginationParams params)
 }

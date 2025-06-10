@@ -55,6 +55,7 @@ class SummaryMetadataController extends FacetController<SummaryMetadata> impleme
     @Audit
     @Get(Paths.SUMMARY_METADATA_LIST_PAGED)
     ListResponse<SummaryMetadata> list(String domainType, UUID domainId, @Nullable PaginationParams params = new PaginationParams()) {
+        
         AdministeredItem administeredItem = findAdministeredItem(domainType, domainId)
         accessControlService.checkRole(Role.READER, administeredItem)
 

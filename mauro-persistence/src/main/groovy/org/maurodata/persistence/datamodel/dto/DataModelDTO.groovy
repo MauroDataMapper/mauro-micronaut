@@ -1,5 +1,7 @@
 package org.maurodata.persistence.datamodel.dto
 
+import org.maurodata.domain.facet.SemanticLink
+
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.Introspected
 import io.micronaut.core.annotation.Nullable
@@ -97,4 +99,10 @@ class DataModelDTO extends DataModel implements AdministeredItemDTO {
     @MappedProperty
     @ColumnTransformer(read = '(select json_agg(version_link) from core.version_link where multi_facet_aware_item_id = data_model_.id)')
     List<VersionLink> versionLinks = []
+
+    @Nullable
+    @TypeDef(type = DataType.JSON)
+    @MappedProperty
+    @ColumnTransformer(read = '(select json_agg(semantic_link) from core.semantic_link where multi_facet_aware_item_id = data_model_.id)')
+    List<SemanticLink> semanticLinks = []
 }

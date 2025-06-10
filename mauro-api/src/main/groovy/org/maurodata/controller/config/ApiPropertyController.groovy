@@ -4,6 +4,9 @@ import org.maurodata.api.Paths
 import org.maurodata.api.config.ApiPropertyApi
 import org.maurodata.audit.Audit
 
+import org.maurodata.web.PaginationParams
+
+
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
@@ -39,14 +42,16 @@ class ApiPropertyController extends ItemController<ApiProperty> implements ApiPr
     }
 
     @Audit
-    @Get(Paths.API_PROPERTY_LIST_PUBLIC)
-    ListResponse<ApiProperty> listPubliclyVisible() {
-        ListResponse.from(apiPropertyRepository.findAllByPubliclyVisibleTrue())
+    @Get(Paths.API_PROPERTY_LIST_PUBLIC_PAGED)
+    ListResponse<ApiProperty> listPubliclyVisible(@Nullable PaginationParams params = new PaginationParams()) {
+        
+        ListResponse.from(apiPropertyRepository.findAllByPubliclyVisibleTrue(), params)
     }
 
     @Audit
-    @Get(Paths.API_PROPERTY_LIST_ALL)
-    ListResponse<ApiProperty> listAll() {
+    @Get(Paths.API_PROPERTY_LIST_ALL_PAGED)
+    ListResponse<ApiProperty> listAll(@Nullable PaginationParams params = new PaginationParams()) {
+        
         accessControlService.checkAdministrator()
         ListResponse.from(apiPropertyRepository.findAll())
     }

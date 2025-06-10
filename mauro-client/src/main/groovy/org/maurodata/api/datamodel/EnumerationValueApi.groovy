@@ -6,6 +6,7 @@ import org.maurodata.api.model.AdministeredItemApi
 import org.maurodata.domain.datamodel.DataType
 import org.maurodata.domain.datamodel.EnumerationValue
 import org.maurodata.web.ListResponse
+import org.maurodata.web.PaginationParams
 
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
@@ -34,4 +35,6 @@ interface EnumerationValueApi extends AdministeredItemApi<EnumerationValue, Data
     @Get(Paths.ENUMERATION_VALUE_LIST)
     ListResponse<EnumerationValue> list(UUID dataModelId, UUID enumerationTypeId)
 
+    @Get(Paths.ENUMERATION_VALUE_LIST_PAGED)
+    ListResponse<EnumerationValue> list(UUID dataModelId, UUID enumerationTypeId, @Nullable PaginationParams params)
 }

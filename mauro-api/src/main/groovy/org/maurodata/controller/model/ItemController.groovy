@@ -46,7 +46,7 @@ abstract class ItemController<I extends Item> implements AdministeredItemReader 
             // Disallowed properties cannot be set by user request
             disallowedCreateProperties.each {String key ->
                 if (defaultItem.hasProperty(key)?.properties?.setter && item[key] != defaultItem[key]) {
-                    throw new HttpStatusException(HttpStatus.BAD_REQUEST, "Property $key cannot be set directly")
+                    throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Property $key cannot be set directly")
                 }
             }
         } else {
@@ -63,7 +63,7 @@ abstract class ItemController<I extends Item> implements AdministeredItemReader 
             if (defaultItem.hasProperty(key).properties.setter
                 && (isNotClassifiersCollection(key) && it.value instanceof Collection)
                 || it.value instanceof Map) {
-                if (item[key]) throw new HttpStatusException(HttpStatus.BAD_REQUEST, "Collection or Map $key cannot be set directly")
+                if (item[key]) throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Collection or Map $key cannot be set directly")
                 item[key] = null
             }
         }

@@ -3,6 +3,7 @@ package org.maurodata.controller.terminology
 import org.maurodata.api.Paths
 import org.maurodata.api.terminology.TermRelationshipApi
 import org.maurodata.audit.Audit
+import org.maurodata.web.PaginationParams
 
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
@@ -90,8 +91,9 @@ class TermRelationshipController extends AdministeredItemController<TermRelation
     }
 
     @Audit
-    @Get(Paths.TERM_RELATIONSHIP_LIST)
-    ListResponse<TermRelationship> list(UUID terminologyId) {
-        super.list(terminologyId)
+    @Get(Paths.TERM_RELATIONSHIP_LIST_PAGED)
+    ListResponse<TermRelationship> list(UUID terminologyId, @Nullable PaginationParams params = new PaginationParams()) {
+        
+        super.list(terminologyId, params)
     }
 }

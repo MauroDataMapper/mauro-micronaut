@@ -6,6 +6,8 @@ import org.maurodata.audit.Audit
 import org.maurodata.domain.dataflow.DataFlow
 import org.maurodata.domain.facet.EditType
 
+import org.maurodata.web.PaginationParams
+
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
@@ -55,7 +57,7 @@ class DataElementComponentController extends AdministeredItemController<DataElem
     @Audit
     @Get(value = Paths.DATA_FLOW_ELEMENT_COMPONENT_ID)
     DataElementComponent show(@NonNull UUID dataModelId, @NonNull UUID dataFlowId, @NonNull UUID dataClassComponentId, @NonNull UUID id) {
-       super.show(id)
+        super.show(id)
     }
 
     @Audit(level = Audit.AuditLevel.FILE_ONLY)
@@ -77,9 +79,10 @@ class DataElementComponentController extends AdministeredItemController<DataElem
     }
 
     @Audit
-    @Get(Paths.DATA_FLOW_ELEMENT_COMPONENT_LIST)
-    ListResponse<DataElementComponent> list(@NonNull UUID dataModelId, @NonNull UUID dataFlowId, @NonNull UUID dataClassComponentId) {
-        super.list(dataClassComponentId)
+    @Get(Paths.DATA_FLOW_ELEMENT_COMPONENT_LIST_PAGED)
+    ListResponse<DataElementComponent> list(@NonNull UUID dataModelId, @NonNull UUID dataFlowId, @NonNull UUID dataClassComponentId, @Nullable PaginationParams params = new PaginationParams()) {
+        
+        super.list(dataClassComponentId, params)
     }
 
     @Audit(level = Audit.AuditLevel.FILE_ONLY)
@@ -122,30 +125,30 @@ class DataElementComponentController extends AdministeredItemController<DataElem
         switch (type) {
             case Type.TARGET:
                 if (dataElementComponent.targetDataElements.id.contains(dataElementToAdd.id)) {
-                    ErrorHandler.handleError(HttpStatus.BAD_REQUEST, "Item already exists in table DataClassComponentTargetDataClass: $dataElementToAdd.id")
+                    ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "Item already exists in table DataClassComponentTargetDataClass: $dataElementToAdd.id")
                 }
                 dataElementComponent.targetDataElements.add(dataElementToAdd)
                 dataElementComponentRepository.addTargetDataElement(dataElementComponent.id, dataElementId)
                 break
             case Type.SOURCE:
                 if (dataElementComponent.sourceDataElements.id.contains(dataElementToAdd.id)) {
-                    ErrorHandler.handleError(HttpStatus.BAD_REQUEST, "Item already exists in table DataClassComponentSourceDataClass: $dataElementToAdd.id")
+                    ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "Item already exists in table DataClassComponentSourceDataClass: $dataElementToAdd.id")
                 }
                 dataElementComponent.sourceDataElements.add(dataElementToAdd)
                 dataElementComponentRepository.addSourceDataElement(dataElementComponent.id, dataElementId)
                 break
             default:
-                ErrorHandler.handleError(HttpStatus.BAD_REQUEST, "$type Type must be source or target")
+                ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "$type Type must be source or target")
         }
         dataElementComponent
     }
 
     private void removeDataElement(Type type, UUID id, UUID dataElementId) {
         DataElement dataElementToRemove = dataElementRepository.readById(dataElementId)
-        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, dataElementToRemove,"Item with id: $dataElementId not found")
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, dataElementToRemove, "Item with id: $dataElementId not found")
         accessControlService.checkRole(Role.EDITOR, dataElementToRemove)
         DataElementComponent dataElementComponent = dataElementComponentContentRepository.readWithContentById(id)
-        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, dataElementComponent,"Item with id: $id not found")
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, dataElementComponent, "Item with id: $id not found")
 
         accessControlService.checkRole(Role.EDITOR, dataElementToRemove)
         Long result
@@ -158,12 +161,12 @@ class DataElementComponentController extends AdministeredItemController<DataElem
                 break
             case Type.SOURCE:
                 if (!dataElementComponent.sourceDataElements.removeIf(de -> de.id == dataElementId)) {
-                    ErrorHandler.handleError(HttpStatus.NOT_FOUND,  "Item already exists in table DataClassComponentSourceDataElement: $dataElementId")
+                    ErrorHandler.handleError(HttpStatus.NOT_FOUND, "Item already exists in table DataClassComponentSourceDataElement: $dataElementId")
                 }
                 result = dataElementComponentRepository.removeSourceDataElement(dataElementComponent.id, dataElementId)
                 break
             default:
-                ErrorHandler.handleErrorOnNullObject(HttpStatus.BAD_REQUEST, type, "Type must be source or target")
+                ErrorHandler.handleErrorOnNullObject(HttpStatus.UNPROCESSABLE_ENTITY, type, "Type must be source or target")
                 break
         }
         dataElementComponent

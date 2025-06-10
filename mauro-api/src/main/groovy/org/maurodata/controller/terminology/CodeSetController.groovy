@@ -19,6 +19,7 @@ import org.maurodata.persistence.cache.ModelCacheableRepository
 import org.maurodata.persistence.terminology.CodeSetContentRepository
 import org.maurodata.persistence.terminology.CodeSetRepository
 import org.maurodata.web.ListResponse
+import org.maurodata.web.PaginationParams
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
@@ -57,9 +58,10 @@ class CodeSetController extends ModelController<CodeSet> implements CodeSetApi {
 
     CodeSetService codeSetService
 
-    CodeSetController(ModelCacheableRepository.CodeSetCacheableRepository codeSetRepository, ModelCacheableRepository.FolderCacheableRepository folderRepository, CodeSetContentRepository codeSetContentRepository,
-                      CodeSetService  codeSetService) {
-        super(CodeSet, codeSetRepository, folderRepository, codeSetContentRepository ,codeSetService)
+    CodeSetController(ModelCacheableRepository.CodeSetCacheableRepository codeSetRepository, ModelCacheableRepository.FolderCacheableRepository folderRepository,
+                      CodeSetContentRepository codeSetContentRepository,
+                      CodeSetService codeSetService) {
+        super(CodeSet, codeSetRepository, folderRepository, codeSetContentRepository, codeSetService)
         this.codeSetRepository = codeSetRepository
         this.codeSetContentRepository = codeSetContentRepository
         this.codeSetService = codeSetService
@@ -105,7 +107,7 @@ class CodeSetController extends ModelController<CodeSet> implements CodeSetApi {
     @Delete(value = Paths.CODE_SET_ID)
     HttpResponse delete(UUID id, @Body @Nullable CodeSet codeSet, @Nullable @QueryValue Boolean permanent) {
         permanent = permanent ?: true
-        super.delete(id, codeSet,permanent)
+        super.delete(id, codeSet, permanent)
     }
 
     @Transactional
@@ -130,21 +132,23 @@ class CodeSetController extends ModelController<CodeSet> implements CodeSetApi {
     }
 
     @Audit
-    @Get(value = Paths.CODE_SET_LIST)
-    ListResponse<CodeSet> listAll() {
-        super.listAll()
+    @Get(value = Paths.CODE_SET_LIST_PAGED)
+    ListResponse<CodeSet> listAll(@Nullable PaginationParams params = new PaginationParams()) {
+        
+        super.listAll(params)
     }
 
     @Audit
-    @Get(value = Paths.CODE_SET_TERM_LIST)
-    ListResponse<Term> listAllTermsInCodeSet(@NonNull UUID id) {
+    @Get(value = Paths.CODE_SET_TERM_LIST_PAGED)
+    ListResponse<Term> listAllTermsInCodeSet(@NonNull UUID id, @Nullable PaginationParams params = new PaginationParams()) {
+        
         CodeSet codeSet = codeSetRepository.readById(id)
         if (!codeSet) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, 'CodeSet item not found')
         }
         accessControlService.checkRole(Role.READER, codeSet)
-        List<Term> associatedTerms = codeSetContentRepository.codeSetRepository.getTerms(id).each{it.updateBreadcrumbs()} as List<Term>
-        ListResponse.from(associatedTerms)
+        List<Term> associatedTerms = codeSetContentRepository.codeSetRepository.getTerms(id).each { it.updateBreadcrumbs() } as List<Term>
+        ListResponse.from(associatedTerms, params)
     }
 
     @Transactional
@@ -182,7 +186,7 @@ class CodeSetController extends ModelController<CodeSet> implements CodeSetApi {
         copy.terms.clear()
         CodeSet savedCopy = modelContentRepository.saveWithContent(copy)
         List<Term> terms = codeSetContentRepository.codeSetRepository.getTerms(id) as List<Term>
-        terms.each{
+        terms.each {
             addTerm(savedCopy.id, it.id)
         }
         savedCopy
@@ -190,7 +194,7 @@ class CodeSetController extends ModelController<CodeSet> implements CodeSetApi {
 
     //stub endpoint todo: actual
     @Get('/codeSets/{id}/simpleModelVersionTree')
-    List<Map> simpleModelVersionTree(UUID id){
+    List<Map> simpleModelVersionTree(UUID id) {
         super.simpleModelVersionTree(id)
     }
 
@@ -233,7 +237,7 @@ class CodeSetController extends ModelController<CodeSet> implements CodeSetApi {
     @Get(Paths.CODE_SET_DOI)
     @Override
     Map doi(UUID id) {
-        ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY,"Doi is not implemented")
+        ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "Doi is not implemented")
         return null
     }
 }

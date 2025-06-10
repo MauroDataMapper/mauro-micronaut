@@ -133,7 +133,7 @@ class DataModelController extends ModelController<DataModel> implements DataMode
     @Delete(Paths.DATA_MODEL_ID_ROUTE)
     HttpResponse delete(UUID id, @Body @Nullable DataModel dataModel, @Nullable @QueryValue Boolean permanent) {
         permanent = permanent ?: true
-        super.delete(id, dataModel,permanent)
+        super.delete(id, dataModel, permanent)
     }
 
 
@@ -228,15 +228,17 @@ class DataModelController extends ModelController<DataModel> implements DataMode
     @Audit(title = EditType.UPDATE, description = "Subset data model")
     @Put(Paths.DATA_MODEL_SUBSET)
     DataModel subset(UUID id, UUID otherId, @Body SubsetData subsetData) {
-        DataModel dataModel = dataModelRepository.readById(id) // source i.e. rootDataModel
+        DataModel dataModel = dataModelRepository.readById(id)
+        // source i.e. rootDataModel
         accessControlService.canDoRole(Role.READER, dataModel)
-        DataModel otherDataModel = dataModelContentRepository.findWithContentById(otherId) // target i.e. request model
+        DataModel otherDataModel = dataModelContentRepository.findWithContentById(otherId)
+        // target i.e. request model
         accessControlService.canDoRole(Role.EDITOR, otherDataModel)
 
         List<DataElement> additionDataElements = subsetData.additions?.collect {dataElementCacheableRepository.findById(it)}
         additionDataElements?.each {DataElement dataElement ->
             pathRepository.readParentItems(dataElement)
-            if (dataElement.owner.id != dataModel.id) throw new HttpStatusException(HttpStatus.BAD_REQUEST, "Subset DataElements for Addition must be within the source DataModel")
+            if (dataElement.owner.id != dataModel.id) throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Subset DataElements for Addition must be within the source DataModel")
         }
 
         DataModel additionSubset = new DataModel()
@@ -246,9 +248,11 @@ class DataModelController extends ModelController<DataModel> implements DataMode
             log.debug "subset: processing data element addition for id [$dataElement.id], label [$dataElement.label]"
             List<AdministeredItem> parents = pathRepository.readParentItems(dataElement)
             List<DataClass> dataClassParents = parents.takeWhile {it !instanceof Model}.tail().reverse() as List<DataClass>
-            DataClass currentOtherModelOrAdditionParent = new DataClass(dataClasses: otherDataModel.dataClasses) // maintain as the copy of the parent of `DataClass child` in the otherDataModel
+            DataClass currentOtherModelOrAdditionParent = new DataClass(dataClasses: otherDataModel.dataClasses)
+            // maintain as the copy of the parent of `DataClass child` in the otherDataModel
             dataClassParents.each {DataClass child ->
-                DataClass otherModelOrAdditionChild = currentOtherModelOrAdditionParent?.dataClasses?.find {it.label == child.label} ?: additionSubset.dataClasses.find {it.id == child.id}
+                DataClass otherModelOrAdditionChild =
+                    currentOtherModelOrAdditionParent?.dataClasses?.find {it.label == child.label} ?: additionSubset.dataClasses.find {it.id == child.id}
                 if (otherModelOrAdditionChild) {
                     currentOtherModelOrAdditionParent = otherModelOrAdditionChild
                 } else {
@@ -292,7 +296,7 @@ class DataModelController extends ModelController<DataModel> implements DataMode
         List<DataElement> deletionDataElements = subsetData.deletions?.collect {dataElementCacheableRepository.findById(it)}
         deletionDataElements?.each {DataElement dataElement ->
             pathRepository.readParentItems(dataElement)
-            if (dataElement.owner.id != dataModel.id) throw new HttpStatusException(HttpStatus.BAD_REQUEST, "Subset DataElements for Deletion must be within the source DataModel")
+            if (dataElement.owner.id != dataModel.id) throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Subset DataElements for Deletion must be within the source DataModel")
         }
 
         otherDataModel = dataModelContentRepository.findWithContentById(otherId)
@@ -333,35 +337,40 @@ class DataModelController extends ModelController<DataModel> implements DataMode
         List<DataElement> dataElements = intersectsManyData.dataElementIds.collect {dataElementCacheableRepository.readById(it)}
         dataElements.each {DataElement dataElement ->
             pathRepository.readParentItems(dataElement)
-            if (dataElement.owner.id != sourceDataModel.id) throw new HttpStatusException(HttpStatus.BAD_REQUEST, "Intersection DataElements must be within the source DataModel")
+            if (dataElement.owner.id != sourceDataModel.id) throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
+                                                                                          "Intersection DataElements must be within the source DataModel")
         }
 
         Map<UUID, List<DataElement>> targetDataModelsDataElementsMap = targetDataModels.collectEntries {[it.id, dataElementRepository.readAllByDataModelId(it.id)]}
 
-        Map<UUID, List<DataElement>> potentialTargetDataModelsIntersects = targetDataModelsDataElementsMap.collectEntries {UUID targetDataModelId, List<DataElement> targetDataElements ->
-            [targetDataModelId, targetDataElements.findAll {dataElements.label.contains(it.label)}]
-        }
-
-        Map<UUID, List<DataElement>> dataElementsIntersects = potentialTargetDataModelsIntersects.collectEntries {UUID targetDataModelId, List<DataElement> targetDataElements ->
-            List<DataElement> potentialIntersects = dataElements.findAll {targetDataElements.label.contains(it.label)}
-            List<DataElement> potentialTargetIntersects = targetDataElements.findAll {potentialIntersects.label.contains(it.label)}
-
-            potentialTargetIntersects.each {DataElement dataElement ->
-                pathRepository.readParentItems(dataElement)
-                dataElement.updateBreadcrumbs()
+        Map<UUID, List<DataElement>> potentialTargetDataModelsIntersects =
+            targetDataModelsDataElementsMap.collectEntries {UUID targetDataModelId, List<DataElement> targetDataElements ->
+                [targetDataModelId, targetDataElements.findAll {dataElements.label.contains(it.label)}]
             }
 
-            potentialIntersects.each {DataElement dataElement ->
-                if (!dataElement.breadcrumbs) {
+        Map<UUID, List<DataElement>> dataElementsIntersects =
+            potentialTargetDataModelsIntersects.collectEntries {UUID targetDataModelId, List<DataElement> targetDataElements ->
+                List<DataElement> potentialIntersects = dataElements.findAll {targetDataElements.label.contains(it.label)}
+                List<DataElement> potentialTargetIntersects = targetDataElements.findAll {potentialIntersects.label.contains(it.label)}
+
+                potentialTargetIntersects.each {DataElement dataElement ->
                     pathRepository.readParentItems(dataElement)
                     dataElement.updateBreadcrumbs()
                 }
-            }
 
-            [targetDataModelId, potentialIntersects.findAll {DataElement intersect ->
-                potentialTargetIntersects.find {intersect.breadcrumbs.tail().collect {new Tuple2(it.domainType, it.label)} == it.breadcrumbs.tail().collect {new Tuple2(it.domainType, it.label)}}
-            }]
-        }
+                potentialIntersects.each {DataElement dataElement ->
+                    if (!dataElement.breadcrumbs) {
+                        pathRepository.readParentItems(dataElement)
+                        dataElement.updateBreadcrumbs()
+                    }
+                }
+
+                [targetDataModelId, potentialIntersects.findAll {DataElement intersect ->
+                    potentialTargetIntersects
+                        .find {intersect.breadcrumbs.tail().collect {new Tuple2(it.domainType, it.label)} == it.breadcrumbs.tail().collect {new Tuple2(it.domainType, it.
+                            label)}}
+                }]
+            }
 
         ListResponse.from(dataElementsIntersects.collect {UUID targetDataModelId, List<DataElement> intersects ->
             new IntersectsData(sourceDataModelId: sourceDataModel.id, targetDataModelId: targetDataModelId, intersects: intersects.id)
@@ -400,16 +409,15 @@ class DataModelController extends ModelController<DataModel> implements DataMode
     @Get(Paths.DATA_MODEL_VERSION_LINKS)
     ListResponse<VersionLinkDTO> listVersionLinks(UUID id) {
 
-        final Model model=super.show(id)
-        if(model==null) {
+        final Model model = super.show(id)
+        if (model == null) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, "Object not found")
         }
 
-        final List<VersionLinkDTO> versionList=new ArrayList<>()
+        final List<VersionLinkDTO> versionList = new ArrayList<>()
 
-        for(VersionLink versionLink : model.versionLinks)
-        {
-            versionList.add(super.constructVersionLinkDTO(model,versionLink))
+        for (VersionLink versionLink : model.versionLinks) {
+            versionList.add(super.constructVersionLinkDTO(model, versionLink))
         }
 
         return ListResponse.from(versionList)
@@ -421,15 +429,17 @@ class DataModelController extends ModelController<DataModel> implements DataMode
 
         branchesOnly = branchesOnly ?: false
 
-        final ArrayList<Model> allModels=populateVersionTree( id, branchesOnly, null)
+        final ArrayList<Model> allModels = populateVersionTree(id, branchesOnly, null)
 
         // Create object DTOs
 
-        final ArrayList<ModelVersionedRefDTO> simpleModelVersionTreeList=new ArrayList<>(allModels.size())
+        final ArrayList<ModelVersionedRefDTO> simpleModelVersionTreeList = new ArrayList<>(allModels.size())
 
-        for(Model model : allModels)
-        {
-            final ModelVersionedRefDTO modelVersionedRefDTO=new ModelVersionedRefDTO(id: model.id, branch: model.branchName, branchName: model.branchName, modelVersion: model.modelVersion?.toString(), modelVersionTag: model.modelVersionTag,documentationVersion: model.documentationVersion, displayName: model.pathModelIdentifier)
+        for (Model model : allModels) {
+            final ModelVersionedRefDTO modelVersionedRefDTO = new ModelVersionedRefDTO(id: model.id, branch: model.branchName, branchName: model.branchName,
+                                                                                       modelVersion: model.modelVersion?.toString(), modelVersionTag: model.modelVersionTag,
+                                                                                       documentationVersion: model.documentationVersion,
+                                                                                       displayName: model.pathModelIdentifier)
             simpleModelVersionTreeList.add(modelVersionedRefDTO)
         }
 
@@ -440,21 +450,25 @@ class DataModelController extends ModelController<DataModel> implements DataMode
     @Get(Paths.DATA_MODEL_MODEL_VERSION_TREE)
     List<ModelVersionedWithTargetsRefDTO> modelVersionTree(UUID id) {
 
-        final Map<UUID,Map<String,Boolean>> flags =[:]
-        final ArrayList<Model> allModels=super.populateVersionTree( id, false, flags)
+        final Map<UUID, Map<String, Boolean>> flags = [:]
+        final ArrayList<Model> allModels = super.populateVersionTree(id, false, flags)
 
         // Create object DTOs
 
-        final ArrayList<ModelVersionedWithTargetsRefDTO> modelVersionTreeList=new ArrayList<>(allModels.size())
+        final ArrayList<ModelVersionedWithTargetsRefDTO> modelVersionTreeList = new ArrayList<>(allModels.size())
 
-        for(Model model : allModels)
-        {
-            final ModelVersionedWithTargetsRefDTO modelVersionedWithTargetsRefDTO=new ModelVersionedWithTargetsRefDTO(id: model.id, branch: model.branchName, branchName: model.branchName, modelVersion: model.modelVersion?.toString(), modelVersionTag: model.modelVersionTag, documentationVersion: model.documentationVersion, displayName: model.pathModelIdentifier)
+        for (Model model : allModels) {
+            final ModelVersionedWithTargetsRefDTO modelVersionedWithTargetsRefDTO = new ModelVersionedWithTargetsRefDTO(id: model.id, branch: model.branchName,
+                                                                                                                        branchName: model.branchName,
+                                                                                                                        modelVersion: model.modelVersion?.toString(),
+                                                                                                                        modelVersionTag: model.modelVersionTag,
+                                                                                                                        documentationVersion: model.documentationVersion,
+                                                                                                                        displayName: model.pathModelIdentifier)
 
             // Have any flags been set during recursion?
-            final Map<String,Boolean> modelFlags=flags.get(modelVersionedWithTargetsRefDTO.id)
+            final Map<String, Boolean> modelFlags = flags.get(modelVersionedWithTargetsRefDTO.id)
 
-            if(modelFlags!=null) {
+            if (modelFlags != null) {
                 Boolean isNewBranchModelVersion = modelFlags.get("isNewBranchModelVersion")
                 Boolean isNewFork = modelFlags.get("isNewFork")
 
@@ -467,15 +481,14 @@ class DataModelController extends ModelController<DataModel> implements DataMode
 
             // Add in targets
 
-            if(model.versionLinks!=null && !model.versionLinks.isEmpty())
-            {
-                for(VersionLink childVersion: model.versionLinks) {
+            if (model.versionLinks != null && !model.versionLinks.isEmpty()) {
+                for (VersionLink childVersion : model.versionLinks) {
                     final UUID targetModelId = childVersion.targetModelId
                     if (targetModelId == null) {
                         continue
                     }
 
-                    final VersionLinkTargetDTO versionLinkTargetDTO=new VersionLinkTargetDTO(id: targetModelId, description: childVersion.description)
+                    final VersionLinkTargetDTO versionLinkTargetDTO = new VersionLinkTargetDTO(id: targetModelId, description: childVersion.description)
 
                     modelVersionedWithTargetsRefDTO.targets.add(versionLinkTargetDTO)
                 }
@@ -495,13 +508,11 @@ class DataModelController extends ModelController<DataModel> implements DataMode
         // main/draft version
         // and it downstream
 
-        final ArrayList<Model> allModels=populateVersionTree( id, true, null)
+        final ArrayList<Model> allModels = populateVersionTree(id, true, null)
 
-        for(int m=allModels.size()-1;m>=0;m--)
-        {
-            final Model givenModel=allModels.get(m)
-            if(givenModel.branchName == Model.DEFAULT_BRANCH_NAME)
-            {
+        for (int m = allModels.size() - 1; m >= 0; m--) {
+            final Model givenModel = allModels.get(m)
+            if (givenModel.branchName == Model.DEFAULT_BRANCH_NAME) {
                 return givenModel as DataModel
             }
         }
@@ -512,35 +523,30 @@ class DataModelController extends ModelController<DataModel> implements DataMode
     @Override
     @Get(Paths.DATA_MODEL_LATEST_MODEL_VERSION)
     ModelVersionDTO latestModelVersion(UUID id) {
-        final ArrayList<Model> allModels=populateVersionTree( id, false, null)
+        final ArrayList<Model> allModels = populateVersionTree(id, false, null)
 
-        if(allModels.size()==0)
-        {
+        if (allModels.size() == 0) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, "There are no models")
         }
 
-        ModelVersion highestVersion=null
+        ModelVersion highestVersion = null
 
-        for(int m=0;m<allModels.size();m++)
-        {
-            final Model givenModel=allModels.get(m)
-            final ModelVersion modelVersion=givenModel.modelVersion
-            if(modelVersion==null){continue}
+        for (int m = 0; m < allModels.size(); m++) {
+            final Model givenModel = allModels.get(m)
+            final ModelVersion modelVersion = givenModel.modelVersion
+            if (modelVersion == null) {continue}
 
-            if(highestVersion==null)
-            {
-                highestVersion=modelVersion
+            if (highestVersion == null) {
+                highestVersion = modelVersion
                 continue
             }
 
-            if(modelVersion > highestVersion)
-            {
-                highestVersion=modelVersion
+            if (modelVersion > highestVersion) {
+                highestVersion = modelVersion
             }
         }
 
-        if(highestVersion==null)
-        {
+        if (highestVersion == null) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, "There are no versioned models")
         }
 
@@ -550,50 +556,47 @@ class DataModelController extends ModelController<DataModel> implements DataMode
     @Override
     @Get(Paths.DATA_MODEL_LATEST_FINALISED_MODEL)
     ModelVersionedRefDTO latestFinalisedModel(UUID id) {
-        final ArrayList<Model> allModels=populateVersionTree( id, false, null)
+        final ArrayList<Model> allModels = populateVersionTree(id, false, null)
 
-        if(allModels.size()==0)
-        {
+        if (allModels.size() == 0) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, "There are no models")
         }
 
-        Model highestVersionModel=null
+        Model highestVersionModel = null
 
-        for(int m=0;m<allModels.size();m++)
-        {
-            final Model givenModel=allModels.get(m)
-            final ModelVersion modelVersion=givenModel.modelVersion
-            if(modelVersion==null){continue}
+        for (int m = 0; m < allModels.size(); m++) {
+            final Model givenModel = allModels.get(m)
+            final ModelVersion modelVersion = givenModel.modelVersion
+            if (modelVersion == null) {continue}
 
-            if(highestVersionModel==null)
-            {
-                highestVersionModel=givenModel
+            if (highestVersionModel == null) {
+                highestVersionModel = givenModel
                 continue
             }
 
-            if(modelVersion > highestVersionModel.modelVersion)
-            {
-                highestVersionModel=givenModel
+            if (modelVersion > highestVersionModel.modelVersion) {
+                highestVersionModel = givenModel
             }
         }
 
-        if(highestVersionModel==null)
-        {
+        if (highestVersionModel == null) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, "There are no versioned models")
         }
 
-        return new ModelVersionedRefDTO(id: highestVersionModel.id, domainType: highestVersionModel.domainType, label: highestVersionModel.label, branch: highestVersionModel.branchName, branchName: highestVersionModel.branchName, modelVersion: highestVersionModel.modelVersion?.toString(), modelVersionTag: highestVersionModel.modelVersionTag, documentationVersion: highestVersionModel.documentationVersion, displayName: highestVersionModel.pathModelIdentifier)
+        return new ModelVersionedRefDTO(id: highestVersionModel.id, domainType: highestVersionModel.domainType, label: highestVersionModel.label,
+                                        branch: highestVersionModel.branchName, branchName: highestVersionModel.branchName,
+                                        modelVersion: highestVersionModel.modelVersion?.toString(), modelVersionTag: highestVersionModel.modelVersionTag,
+                                        documentationVersion: highestVersionModel.documentationVersion, displayName: highestVersionModel.pathModelIdentifier)
     }
 
     @Get(Paths.DATA_MODEL_COMMON_ANCESTOR)
-    DataModel commonAncestor(UUID id, UUID other_model_id)
-    {
-        final DataModel left=show(id)
-        if(!left){throw new HttpStatusException(HttpStatus.NOT_FOUND, "No data model found for id [${left.id.toString()}]")}
-        final DataModel right=show(other_model_id)
-        if(!right){throw new HttpStatusException(HttpStatus.NOT_FOUND, "No data model found for id [${right.id.toString()}]")}
+    DataModel commonAncestor(UUID id, UUID other_model_id) {
+        final DataModel left = show(id)
+        if (!left) {throw new HttpStatusException(HttpStatus.NOT_FOUND, "No data model found for id [${left.id.toString()}]")}
+        final DataModel right = show(other_model_id)
+        if (!right) {throw new HttpStatusException(HttpStatus.NOT_FOUND, "No data model found for id [${right.id.toString()}]")}
 
-        return findCommonAncestorBetweenModels(left,right)
+        return findCommonAncestorBetweenModels(left, right)
     }
 
     @Get(Paths.DATA_MODEL_MERGE_DIFF)
@@ -607,7 +610,7 @@ class DataModelController extends ModelController<DataModel> implements DataMode
         accessControlService.checkRole(Role.READER, dataModelOne)
         accessControlService.checkRole(Role.READER, dataModelTwo)
 
-        final DataModel commonAncestor=findCommonAncestorBetweenModels(dataModelOne,dataModelTwo)
+        final DataModel commonAncestor = findCommonAncestorBetweenModels(dataModelOne, dataModelTwo)
 
         dataModelOne.setAssociations()
         dataModelTwo.setAssociations()
@@ -615,12 +618,12 @@ class DataModelController extends ModelController<DataModel> implements DataMode
 
         // For a merge, there are two diffs between the common ancestor and model being merged
 
-        final ObjectDiff objectDiffOne=commonAncestor.diff(dataModelOne)
-        final ObjectDiff objectDiffTwo=commonAncestor.diff(dataModelTwo)
+        final ObjectDiff objectDiffOne = commonAncestor.diff(dataModelOne)
+        final ObjectDiff objectDiffTwo = commonAncestor.diff(dataModelTwo)
 
         // Remove branchName differences since these are merges of branches
 
-        for(ObjectDiff objectDiff : ([objectDiffOne, objectDiffTwo] as List<ObjectDiff>)) {
+        for (ObjectDiff objectDiff : ([objectDiffOne, objectDiffTwo] as List<ObjectDiff>)) {
             final ArrayList<FieldDiff> diffsToRemove = new ArrayList<>(2)
             for (fieldDiff in objectDiff.diffs) {
                 if (fieldDiff.name == 'branchName') {
@@ -632,26 +635,25 @@ class DataModelController extends ModelController<DataModel> implements DataMode
 
         // recurse down through each diff and create a map of Path-> FieldDiff
 
-        Map<String, Map<String, FieldDiff>> flattenedDiffOne=flattenDiff(objectDiffOne)
-        Map<String, Map<String, FieldDiff>> flattenedDiffTwo=flattenDiff(objectDiffTwo)
+        Map<String, Map<String, FieldDiff>> flattenedDiffOne = flattenDiff(objectDiffOne)
+        Map<String, Map<String, FieldDiff>> flattenedDiffTwo = flattenDiff(objectDiffTwo)
 
         // Collate the set of all paths used as keys
 
-        final Map<String, FieldDiff> flattenedDiffOneCreated=flattenedDiffOne.get('created')
-        final Map<String, FieldDiff> flattenedDiffOneModified=flattenedDiffOne.get('modified')
-        final Map<String, FieldDiff> flattenedDiffOneDeleted=flattenedDiffOne.get('deleted')
+        final Map<String, FieldDiff> flattenedDiffOneCreated = flattenedDiffOne.get('created')
+        final Map<String, FieldDiff> flattenedDiffOneModified = flattenedDiffOne.get('modified')
+        final Map<String, FieldDiff> flattenedDiffOneDeleted = flattenedDiffOne.get('deleted')
 
-        final Map<String, FieldDiff> flattenedDiffTwoCreated=flattenedDiffTwo.get('created')
-        final Map<String, FieldDiff> flattenedDiffTwoModified=flattenedDiffTwo.get('modified')
-        final Map<String, FieldDiff> flattenedDiffTwoDeleted=flattenedDiffTwo.get('deleted')
+        final Map<String, FieldDiff> flattenedDiffTwoCreated = flattenedDiffTwo.get('created')
+        final Map<String, FieldDiff> flattenedDiffTwoModified = flattenedDiffTwo.get('modified')
+        final Map<String, FieldDiff> flattenedDiffTwoDeleted = flattenedDiffTwo.get('deleted')
 
-        final List<Map<String, FieldDiff>> flattenedDiffOneMapList=[flattenedDiffOneCreated,flattenedDiffOneModified,flattenedDiffOneDeleted]
-        final List<Map<String, FieldDiff>> flattenedDiffTwoMapList=[flattenedDiffTwoCreated,flattenedDiffTwoModified,flattenedDiffTwoDeleted]
+        final List<Map<String, FieldDiff>> flattenedDiffOneMapList = [flattenedDiffOneCreated, flattenedDiffOneModified, flattenedDiffOneDeleted]
+        final List<Map<String, FieldDiff>> flattenedDiffTwoMapList = [flattenedDiffTwoCreated, flattenedDiffTwoModified, flattenedDiffTwoDeleted]
 
-        final Set<String> allPaths=new LinkedHashSet<>()
-        for(Map<String, FieldDiff> pathToFieldDiff : flattenedDiffOneMapList + flattenedDiffTwoMapList)
-        {
-            final Set keys=pathToFieldDiff.keySet()
+        final Set<String> allPaths = new LinkedHashSet<>()
+        for (Map<String, FieldDiff> pathToFieldDiff : flattenedDiffOneMapList + flattenedDiffTwoMapList) {
+            final Set keys = pathToFieldDiff.keySet()
             allPaths.addAll(keys)
         }
 
@@ -661,10 +663,10 @@ class DataModelController extends ModelController<DataModel> implements DataMode
         pathNodes.add(0, new Path.PathNode(prefix: node.pathPrefix, identifier: node.pathIdentifier, modelIdentifier: node.pathModelIdentifier))
 
         final Path path = new Path(pathNodes)
-        final String sourcePath=path.toString()
+        final String sourcePath = path.toString()
 
-        final List<MergeFieldDiffDTO> diffs=[]
-        final MergeDiffDTO mergeDiffDTO=new MergeDiffDTO(sourceId: dataModelOne.id, targetId: dataModelTwo.id, path: sourcePath, label: dataModelOne.label, diffs: diffs)
+        final List<MergeFieldDiffDTO> diffs = []
+        final MergeDiffDTO mergeDiffDTO = new MergeDiffDTO(sourceId: dataModelOne.id, targetId: dataModelTwo.id, path: sourcePath, label: dataModelOne.label, diffs: diffs)
 
         // for each key, compare what needs to be done to merge
         // changes are only in conflict when the value of the ancestor, branch one, branch two all have
@@ -672,38 +674,29 @@ class DataModelController extends ModelController<DataModel> implements DataMode
         // For each distinct path, look up the value held in each of the three places and add it to a set
         // if the set has 3 values, there is a conflict, otherwise it a simple change
 
-        for(String key : allPaths)
-        {
-            FieldDiff fieldDiffOne=null
-            String _type='modification'
+        for (String key : allPaths) {
+            FieldDiff fieldDiffOne = null
+            String _type = 'modification'
             lookingInOne:
-            for(Map<String, FieldDiff> pathToFieldDiff : flattenedDiffOneMapList)
-            {
-                final foundFieldDiff=pathToFieldDiff.get(key)
-                if(foundFieldDiff!=null)
-                {
-                    fieldDiffOne=foundFieldDiff
-                    if(pathToFieldDiff == flattenedDiffOneCreated)
-                    {
-                        _type='creation'
-                    }
-                    else
-                    if(pathToFieldDiff == flattenedDiffOneDeleted)
-                    {
-                        _type='deletion'
+            for (Map<String, FieldDiff> pathToFieldDiff : flattenedDiffOneMapList) {
+                final foundFieldDiff = pathToFieldDiff.get(key)
+                if (foundFieldDiff != null) {
+                    fieldDiffOne = foundFieldDiff
+                    if (pathToFieldDiff == flattenedDiffOneCreated) {
+                        _type = 'creation'
+                    } else if (pathToFieldDiff == flattenedDiffOneDeleted) {
+                        _type = 'deletion'
                     }
                     break lookingInOne
                 }
             }
 
-            FieldDiff fieldDiffTwo=null
+            FieldDiff fieldDiffTwo = null
             lookingInTwo:
-            for(Map<String, FieldDiff> pathToFieldDiff : flattenedDiffTwoMapList)
-            {
-                final foundFieldDiff=pathToFieldDiff.get(key)
-                if(foundFieldDiff!=null)
-                {
-                    fieldDiffTwo=foundFieldDiff
+            for (Map<String, FieldDiff> pathToFieldDiff : flattenedDiffTwoMapList) {
+                final foundFieldDiff = pathToFieldDiff.get(key)
+                if (foundFieldDiff != null) {
+                    fieldDiffTwo = foundFieldDiff
                     break lookingInTwo
                 }
             }
@@ -716,49 +709,37 @@ class DataModelController extends ModelController<DataModel> implements DataMode
 
             // Establish the ancestorValue first, since it is the backstop value
 
-            if(fieldDiffOne!=null)
-            {
-                ancestorValue=fieldDiffOne.left
-                fieldName=fieldDiffOne.name
-            }
-            else
-            if(fieldDiffTwo!=null)
-            {
-                ancestorValue=fieldDiffTwo.left
-                fieldName=fieldDiffTwo.name
-            }
-            else
-            {
-                ancestorValue=null
-                fieldName=null
+            if (fieldDiffOne != null) {
+                ancestorValue = fieldDiffOne.left
+                fieldName = fieldDiffOne.name
+            } else if (fieldDiffTwo != null) {
+                ancestorValue = fieldDiffTwo.left
+                fieldName = fieldDiffTwo.name
+            } else {
+                ancestorValue = null
+                fieldName = null
             }
 
             // If there is a change, record the value
             // or else it is the same as the ancestor value
 
-            if(fieldDiffOne!=null)
-            {
-                fieldOneValue=fieldDiffOne.right
-            }
-            else
-            {
-                fieldOneValue=ancestorValue
+            if (fieldDiffOne != null) {
+                fieldOneValue = fieldDiffOne.right
+            } else {
+                fieldOneValue = ancestorValue
             }
 
-            if(fieldDiffTwo!=null)
-            {
-                fieldTwoValue=fieldDiffTwo.right
-            }
-            else
-            {
-                fieldTwoValue=ancestorValue
+            if (fieldDiffTwo != null) {
+                fieldTwoValue = fieldDiffTwo.right
+            } else {
+                fieldTwoValue = ancestorValue
             }
 
             // If a fieldValueOne or fieldValueTwo value do not exist and the ancestor value does, they are
             // no different from the ancestor value
-            final HashSet<Object> values=[fieldOneValue,fieldTwoValue,ancestorValue]
+            final HashSet<Object> values = [fieldOneValue, fieldTwoValue, ancestorValue]
 
-            final boolean isMergeConflict=values.size()==3
+            final boolean isMergeConflict = values.size() == 3
 
             // Because the target branch is branch two, we are only interested in
             // changes or conflicts coming from the source branch (branch one)
@@ -766,12 +747,12 @@ class DataModelController extends ModelController<DataModel> implements DataMode
             //                 | ---------------(Branch Two)-->
             //  (ancestor) --> | ---(Branch One)----^
 
-            if(!isMergeConflict && fieldDiffOne==null)
-            {
+            if (!isMergeConflict && fieldDiffOne == null) {
                 continue
             }
 
-            final MergeFieldDiffDTO mergeFieldDiffDTO=new MergeFieldDiffDTO(fieldName:fieldName,sourceValue: fieldOneValue, targetValue: fieldTwoValue, commonAncestorValue: ancestorValue, isMergeConflict: isMergeConflict, _type: _type)
+            final MergeFieldDiffDTO mergeFieldDiffDTO = new MergeFieldDiffDTO(fieldName: fieldName, sourceValue: fieldOneValue, targetValue: fieldTwoValue,
+                                                                              commonAncestorValue: ancestorValue, isMergeConflict: isMergeConflict, _type: _type)
 
             diffs.add(mergeFieldDiffDTO)
 
@@ -794,7 +775,7 @@ class DataModelController extends ModelController<DataModel> implements DataMode
     @Get(Paths.DATA_MODEL_DOI)
     @Override
     Map doi(UUID id) {
-        ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY,"Doi is not implemented")
+        ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "Doi is not implemented")
         return null
     }
 

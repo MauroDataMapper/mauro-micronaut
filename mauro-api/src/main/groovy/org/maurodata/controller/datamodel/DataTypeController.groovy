@@ -1,5 +1,7 @@
 package org.maurodata.controller.datamodel
 
+import org.maurodata.domain.model.Path
+import org.maurodata.persistence.cache.ModelCacheableRepository
 
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
@@ -33,6 +35,9 @@ import org.maurodata.persistence.datamodel.DataTypeContentRepository
 import org.maurodata.persistence.datamodel.EnumerationValueRepository
 import org.maurodata.service.datamodel.DataTypeService
 import org.maurodata.web.ListResponse
+import org.maurodata.persistence.cache.AdministeredItemCacheableRepository
+import org.maurodata.persistence.service.RepositoryService
+import org.maurodata.web.PaginationParams
 
 @CompileStatic
 @Controller
@@ -42,15 +47,25 @@ class DataTypeController extends AdministeredItemController<DataType, DataModel>
     DataTypeCacheableRepository dataTypeRepository
 
     @Inject
+    DataModelCacheableRepository dataModelRepository
+
+    @Inject
     EnumerationValueRepository enumerationValueRepository
+
+    @Inject
+    RepositoryService repositoryService
 
     final DataTypeService dataTypeService
 
-    @Inject
-    DataTypeController(DataTypeService dataTypeService, DataTypeCacheableRepository dataTypeRepository, DataModelCacheableRepository dataModelRepository, DataTypeContentRepository dataTypeContentRepository) {
+    AdministeredItemCacheableRepository.DataClassCacheableRepository dataClassRepository
+
+    DataTypeController(DataTypeService dataTypeService, DataTypeCacheableRepository dataTypeRepository, DataModelCacheableRepository dataModelRepository,
+                       DataTypeContentRepository dataTypeContentRepository,
+                       AdministeredItemCacheableRepository.DataClassCacheableRepository dataClassRepository) {
         super(DataType, dataTypeRepository, dataModelRepository, dataTypeContentRepository)
         this.dataTypeService = dataTypeService
         this.dataTypeRepository = dataTypeRepository
+        this.dataClassRepository = dataClassRepository
     }
 
     @Audit
@@ -69,12 +84,63 @@ class DataTypeController extends AdministeredItemController<DataType, DataModel>
     @Post(Paths.DATA_TYPE_LIST)
     @Transactional
     DataType create(UUID dataModelId, @Body @NonNull DataType dataType) {
+
         DataType cleanItem = super.cleanBody(dataType) as DataType
         Item parent = super.validate(cleanItem, dataModelId)
         cleanItem = dataTypeService.validateDataType(cleanItem, parent)
-        if (dataType.isModelType()) {
-            validateModelResource(dataType)
+
+        if (cleanItem.isReferenceType()) {
+            if (cleanItem.referenceClass.id == parent.id) {
+                ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "Data class element shouldn't reference it")
+            }
         }
+        if (dataType.isModelType()) {
+
+            // Either the dataType is finalised
+            // or this model and the data type are in the
+            // same versioned folder
+
+            ModelCacheableRepository domainRepository = repositoryService.getModelRepository(dataType.modelResourceDomainType)
+
+            AdministeredItem dataTypeAdministeredItem = (AdministeredItem) domainRepository.readById(dataType.modelResourceId)
+
+            pathRepository.readParentItems(dataTypeAdministeredItem)
+            pathRepository.readParentItems(parent)
+
+            Path pathToDataType = dataTypeAdministeredItem.getPathToEdge()
+            Path pathToDataModel = parent.getPathToEdge()
+
+            Item dataTypeVersionedFolder = pathToDataType.findAncestorNodeItem(dataType.modelResourceId, "VersionedFolder")
+            Item dataModelVersionedFolder = null
+
+            if (dataTypeVersionedFolder != null) {System.out.println(dataTypeVersionedFolder.toString());}
+
+            if (dataTypeVersionedFolder != null) {
+                dataModelVersionedFolder = pathToDataModel.findAncestorNodeItem(parent.id, "VersionedFolder")
+            }
+
+            if (dataTypeVersionedFolder == null || dataModelVersionedFolder == null || dataTypeVersionedFolder.id != dataModelVersionedFolder.id) {
+                validateModelResource(dataType)
+            }
+        }
+
+        // give it a label
+
+        if (!cleanItem.label) {
+            if (cleanItem.isReferenceType()) {
+                cleanItem.label = "Reference to ${cleanItem.referenceClass.label}"
+            } else if (cleanItem.modelResourceId) {
+                final UUID modelResourceId = cleanItem.modelResourceId
+                final String modelResourceDomainType = cleanItem.modelResourceDomainType
+
+                AdministeredItemCacheableRepository repository = repositoryService.getAdministeredItemRepository(modelResourceDomainType)
+
+                AdministeredItem item = (AdministeredItem) repository.readById(modelResourceId)
+
+                cleanItem.label = "Reference to ${item.label}"
+            }
+        }
+
         DataType created = super.createEntity(parent, cleanItem) as DataType
         created = super.validateAndAddClassifiers(created) as DataType
 
@@ -104,8 +170,9 @@ class DataTypeController extends AdministeredItemController<DataType, DataModel>
     }
 
     @Audit
-    @Get(Paths.DATA_TYPE_LIST)
-    ListResponse<DataType> list(UUID dataModelId) {
+    @Get(Paths.DATA_TYPE_LIST_PAGED)
+    ListResponse<DataType> list(UUID dataModelId, @Nullable PaginationParams params = new PaginationParams()) {
+
         Item parent = parentItemRepository.readById(dataModelId)
         if (!parent) return null
         accessControlService.checkRole(Role.READER, parent)
@@ -114,7 +181,7 @@ class DataTypeController extends AdministeredItemController<DataType, DataModel>
             updateDerivedProperties(it)
             dataTypeService.getReferenceClassProperties(it)
         }
-        ListResponse.from(dataTypes)
+        ListResponse.from(dataTypes, params)
     }
 
     protected void validateModelResource(DataType dataType) {
@@ -123,8 +190,8 @@ class DataTypeController extends AdministeredItemController<DataType, DataModel>
             ErrorHandler.handleError(HttpStatus.NOT_FOUND, "Item not found : $dataType.modelResourceId, $dataType.modelResourceDomainType")
         }
         accessControlService.checkRole(Role.READER, modelResource)
-        if (!modelResource.finalised){
-            ErrorHandler.handleError(HttpStatus.BAD_REQUEST, "Model resource is not finalised: $dataType.modelResourceId, $dataType.modelResourceDomainType")
+        if (!modelResource.finalised) {
+            ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "Model resource is not finalised: $dataType.modelResourceId, $dataType.modelResourceDomainType")
         }
     }
 }
