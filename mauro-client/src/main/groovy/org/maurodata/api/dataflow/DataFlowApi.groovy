@@ -7,6 +7,7 @@ import org.maurodata.domain.dataflow.DataFlow
 import org.maurodata.domain.dataflow.Type
 import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.web.ListResponse
+import org.maurodata.web.PaginationParams
 
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
@@ -36,5 +37,8 @@ interface DataFlowApi extends AdministeredItemApi<DataFlow, DataModel> {
 
     @Get(Paths.DATA_FLOW_LIST)
     ListResponse<DataFlow> list(@NonNull UUID dataModelId, @Nullable @QueryValue(Paths.TYPE_QUERY) Type type)
+
+    @Get(Paths.DATA_FLOW_LIST_PAGED)
+    ListResponse<DataFlow> list(@NonNull UUID dataModelId, @Nullable @QueryValue(Paths.TYPE_QUERY) Type type, @Nullable PaginationParams params)
 
 }

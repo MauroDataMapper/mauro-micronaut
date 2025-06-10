@@ -4,8 +4,11 @@ import org.maurodata.api.Paths
 import org.maurodata.api.facet.AnnotationApi
 import org.maurodata.audit.Audit
 
+import org.maurodata.web.PaginationParams
+
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
+import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.*
@@ -49,11 +52,12 @@ class AnnotationController extends FacetController<Annotation> implements Annota
      * @return
      */
     @Audit
-    @Get(Paths.ANNOTATION_LIST)
-    ListResponse<Annotation> list(@NonNull String domainType, @NonNull UUID domainId) {
+    @Get(Paths.ANNOTATION_LIST_PAGED)
+    ListResponse<Annotation> list(@NonNull String domainType, @NonNull UUID domainId, @Nullable PaginationParams params = new PaginationParams()) {
+        
         AdministeredItem administeredItem = findAdministeredItem(domainType, domainId)
         accessControlService.checkRole(Role.READER, administeredItem)
-        ListResponse.from(!administeredItem.annotations ? [] : administeredItem.annotations)
+        ListResponse.from(!administeredItem.annotations ? [] : administeredItem.annotations, params)
     }
 
     @Audit
@@ -85,7 +89,7 @@ class AnnotationController extends FacetController<Annotation> implements Annota
         accessControlService.checkRole(Role.EDITOR, readAdministeredItem(domainType, domainId))
         super.cleanBody(childAnnotation)
         Annotation parent = super.validateAndGet(domainType, domainId, annotationId) as Annotation
-        if (!parent || parent.parentAnnotationId ) throw new HttpStatusException(HttpStatus.BAD_REQUEST, "Parent Annotation not found or has parent $annotationId")
+        if (!parent || parent.parentAnnotationId) throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Parent Annotation not found or has parent $annotationId")
         childAnnotation.parentAnnotationId = parent.id
         childAnnotation.multiFacetAwareItemId = parent.multiFacetAwareItemId
         childAnnotation.multiFacetAwareItemDomainType = parent.multiFacetAwareItemDomainType
@@ -124,12 +128,12 @@ class AnnotationController extends FacetController<Annotation> implements Annota
     @Delete(Paths.ANNOTATION_CHILD_ID)
     @Transactional
     HttpResponse delete(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID annotationId,
-                      @NonNull UUID id) {
+                        @NonNull UUID id) {
         accessControlService.checkRole(Role.EDITOR, readAdministeredItem(domainType, domainId))
         super.validateAndGet(domainType, domainId, annotationId) as Annotation
         Annotation child = super.validateAndGet(domainType, domainId, id) as Annotation
         if (!child.parentAnnotationId) {
-            throw new HttpStatusException(HttpStatus.BAD_REQUEST, "Child Annotation has no parent annotation")
+            throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Child Annotation has no parent annotation")
         }
         super.delete(id)
     }

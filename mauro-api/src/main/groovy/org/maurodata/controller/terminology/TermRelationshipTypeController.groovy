@@ -4,6 +4,7 @@ import org.maurodata.api.Paths
 import org.maurodata.api.terminology.TermRelationshipTypeApi
 import org.maurodata.audit.Audit
 import org.maurodata.domain.terminology.TermRelationship
+import org.maurodata.web.PaginationParams
 
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
@@ -25,7 +26,8 @@ import org.maurodata.web.ListResponse
 @Secured(SecurityRule.IS_ANONYMOUS)
 class TermRelationshipTypeController extends AdministeredItemController<TermRelationshipType, Terminology> implements TermRelationshipTypeApi {
 
-    TermRelationshipTypeController(TermRelationshipTypeCacheableRepository termRelationshipTypeRepository, TerminologyCacheableRepository terminologyRepository, TermRelationshipTypeContentRepository termRelationshipTypeContentRepository) {
+    TermRelationshipTypeController(TermRelationshipTypeCacheableRepository termRelationshipTypeRepository, TerminologyCacheableRepository terminologyRepository,
+                                   TermRelationshipTypeContentRepository termRelationshipTypeContentRepository) {
         super(TermRelationshipType, termRelationshipTypeRepository, terminologyRepository, termRelationshipTypeContentRepository)
     }
 
@@ -48,9 +50,10 @@ class TermRelationshipTypeController extends AdministeredItemController<TermRela
     }
 
     @Audit
-    @Get(Paths.TERM_RELATIONSHIP_TYPE_LIST)
-    ListResponse<TermRelationshipType> list(UUID terminologyId) {
-        super.list(terminologyId)
+    @Get(Paths.TERM_RELATIONSHIP_TYPE_LIST_PAGED)
+    ListResponse<TermRelationshipType> list(UUID terminologyId, @Nullable PaginationParams params = new PaginationParams()) {
+        
+        super.list(terminologyId, params)
     }
 
     @Audit(deletedObjectDomainType = TermRelationshipType, parentDomainType = Terminology, parentIdParamName = "terminologyId")

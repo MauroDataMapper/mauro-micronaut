@@ -7,6 +7,7 @@ import org.maurodata.domain.facet.Edit
 import org.maurodata.domain.facet.Metadata
 import org.maurodata.domain.facet.ReferenceFile
 import org.maurodata.domain.facet.Rule
+import org.maurodata.domain.facet.SemanticLink
 import org.maurodata.domain.facet.SummaryMetadata
 import org.maurodata.persistence.model.dto.AdministeredItemDTO
 
@@ -99,7 +100,12 @@ class DataClassDTO extends DataClass implements AdministeredItemDTO {
     @ColumnTransformer(read = '''( select json_agg(dc) from datamodel.join_dataclass_to_extended_data_class jdedc 
                                     inner join datamodel.data_class dc on dc.id = jdedc.extended_dataclass_id
                                     where jdedc.dataclass_id = data_class_.id )''')
-    @TypeDef(type=DataType.JSON)
+    @TypeDef(type = DataType.JSON)
     List<DataClass> extendsDataClasses = []
 
+    @Nullable
+    @TypeDef(type = DataType.JSON)
+    @MappedProperty
+    @ColumnTransformer(read = '(select json_agg(semantic_link) from core.semantic_link where multi_facet_aware_item_id = data_class_.id)')
+    List<SemanticLink> semanticLinks = []
 }

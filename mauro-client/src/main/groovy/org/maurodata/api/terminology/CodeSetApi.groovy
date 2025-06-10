@@ -10,6 +10,7 @@ import org.maurodata.domain.model.version.FinaliseData
 import org.maurodata.domain.terminology.CodeSet
 import org.maurodata.domain.terminology.Term
 import org.maurodata.web.ListResponse
+import org.maurodata.web.PaginationParams
 
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
@@ -49,8 +50,14 @@ interface CodeSetApi extends ModelApi<CodeSet> {
     @Get(value = Paths.CODE_SET_LIST)
     ListResponse<CodeSet> listAll()
 
+    @Get(value = Paths.CODE_SET_LIST_PAGED)
+    ListResponse<CodeSet> listAll(@Nullable PaginationParams params)
+
     @Get(value = Paths.CODE_SET_TERM_LIST)
     ListResponse<Term> listAllTermsInCodeSet(@NonNull UUID id)
+
+    @Get(value = Paths.CODE_SET_TERM_LIST_PAGED)
+    ListResponse<Term> listAllTermsInCodeSet(@NonNull UUID id, @Nullable PaginationParams params)
 
     @Put(value = Paths.CODE_SET_FINALISE)
     CodeSet finalise(UUID id, @Body FinaliseData finaliseData)

@@ -12,10 +12,10 @@ class PaginationParams {
     Integer offset = 0
 
     @Nullable
-    Integer max = 50
+    Integer max = -1
 
     @Nullable
-    String sort = "label"
+    String sort = null
 
     @Nullable
     String order = "asc"
@@ -25,5 +25,11 @@ class PaginationParams {
 
     @Nullable
     String description = null
+
+    @Nullable
+    String code = null
+
+    @Nullable
+    String definition = null
 
 }

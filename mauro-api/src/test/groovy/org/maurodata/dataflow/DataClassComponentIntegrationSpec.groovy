@@ -154,7 +154,7 @@ class DataClassComponentIntegrationSpec extends CommonDataSpec {
         httpResponse.status == HttpStatus.NOT_FOUND
     }
 
-    void 'adding duplicate dataClass to DataClassComponent  -should throw BAD_REQUEST'() {
+    void 'adding duplicate dataClass to DataClassComponent  -should throw UNPROCESSABLE_ENTITY'() {
         given:
         UUID dataClassComponentId =
             dataClassComponentApi.create(sourceId, dataFlowId,
@@ -169,7 +169,7 @@ class DataClassComponentIntegrationSpec extends CommonDataSpec {
         dataClassComponentApi.updateTarget(sourceId, dataFlowId, dataClassComponentId, dataClassSourceId)
         then:
         HttpClientResponseException exception = thrown()
-        exception.status == HttpStatus.BAD_REQUEST
+        exception.status == HttpStatus.UNPROCESSABLE_ENTITY
     }
 
     void 'delete dataClassComponent -should delete associated source and target dataClasses'() {

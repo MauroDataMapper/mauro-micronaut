@@ -15,15 +15,15 @@ class DataModelHelper {
 
     static void validateModelTypeFields(DataType dataType) {
         if (isModelType(dataType)) {
-            if (!dataType.modelResourceDomainType && ! dataType.modelResourceId){
-                ErrorHandler.handleError(HttpStatus.BAD_REQUEST, "Check DataType modelResource fields: $dataType.modelResourceDomainType, $dataType.modelResourceId")
+            if (!dataType.modelResourceDomainType && !dataType.modelResourceId) {
+                ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "Check DataType modelResource fields: $dataType.modelResourceDomainType, $dataType.modelResourceId")
             }
             if (!isValidModelDomainType(dataType.modelResourceDomainType)) {
-                ErrorHandler.handleError(HttpStatus.BAD_REQUEST, "Check DataType modelResource fields: $dataType.modelResourceDomainType")
+                ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "Check DataType modelResource fields: $dataType.modelResourceDomainType")
             }
         } else {
             if (dataType.modelResourceId || dataType.modelResourceDomainType) {
-                ErrorHandler.handleError(HttpStatus.BAD_REQUEST, "Model resource Id or domainType not valid for domainType $dataType.domainType")
+                ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "Model resource Id or domainType not valid for domainType $dataType.domainType")
             }
         }
     }

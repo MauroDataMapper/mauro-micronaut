@@ -91,10 +91,10 @@ class AdminController implements AdminApi {
         accessControlService.checkAdministrator()
 
         if (!catalogueUser.emailAddress) {
-            throw new HttpStatusException(HttpStatus.BAD_REQUEST, 'Please specify the email address of the recipient')
+            throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, 'Please specify the email address of the recipient')
         }
         if (!catalogueUser.firstName || !catalogueUser.lastName) {
-            throw new HttpStatusException(HttpStatus.BAD_REQUEST, 'Please specify the first and last names of the recipient')
+            throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, 'Please specify the first and last names of the recipient')
         }
 
         try {
@@ -145,7 +145,7 @@ class AdminController implements AdminApi {
         try {
             Email email = emailRepository.findById(emailId).get()
             if (!email) {
-                throw new HttpStatusException(HttpStatus.BAD_REQUEST, "Email with id ${emailId.toString()} not found")
+                throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Email with id ${emailId.toString()} not found")
             }
             emailService.retrySendEmail(email, false)
             return true

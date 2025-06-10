@@ -6,6 +6,7 @@ import org.maurodata.domain.facet.Edit
 import org.maurodata.domain.facet.Metadata
 import org.maurodata.domain.facet.ReferenceFile
 import org.maurodata.domain.facet.Rule
+import org.maurodata.domain.facet.SemanticLink
 import org.maurodata.domain.facet.SummaryMetadata
 import org.maurodata.domain.security.CatalogueUser
 import org.maurodata.exception.MauroInternalException
@@ -112,7 +113,10 @@ abstract class AdministeredItem extends Item {
     List<ReferenceFile> referenceFiles = []
 
     @Transient
-    List<String> availableActions=[]
+    List<String> availableActions = []
+
+    @Relation(Relation.Kind.ONE_TO_MANY)
+    List<SemanticLink> semanticLinks = []
 
     /**
      * Helper method for returning the parent of this object, if one exists and is loaded.
@@ -203,12 +207,12 @@ abstract class AdministeredItem extends Item {
         int i = 0
         AdministeredItem node = this
         while (node) {
-            pathNodes.add(0, new Path.PathNode(prefix: node.pathPrefix, identifier: node.pathIdentifier, modelIdentifier: node.pathModelIdentifier, node:node))
+            pathNodes.add(0, new Path.PathNode(prefix: node.pathPrefix, identifier: node.pathIdentifier, modelIdentifier: node.pathModelIdentifier, node: node))
             i++; node = node.parent
             if (i > Path.PATH_MAX_NODES) throw new MauroInternalException("Path exceeded maximum depth of [$Path.PATH_MAX_NODES]")
         }
 
-        Path pathToEdge=new Path()
+        Path pathToEdge = new Path()
         pathToEdge.nodes = pathNodes
 
         return pathToEdge
@@ -224,7 +228,8 @@ abstract class AdministeredItem extends Item {
         AdministeredItem node = this
         while (node) {
             breadcrumbs.add(new Breadcrumb(id: node.id, domainType: node.domainType, label: node.label, finalised: node instanceof Model ? node.finalised : null))
-            if (node.parent == node || node instanceof Model) break // root of Breadcrumbs is the nearest Model type parent of the item
+            if (node.parent == node || node instanceof Model) break
+            // root of Breadcrumbs is the nearest Model type parent of the item
             i++; node = node.parent
             if (i > Path.PATH_MAX_NODES) throw new MauroInternalException("Breadcrumbs exceeded maximum depth of [$Path.PATH_MAX_NODES]")
         }
@@ -243,7 +248,7 @@ abstract class AdministeredItem extends Item {
 
     Map<String, String> metadataAsMap(String namespace) {
         getMetadata().findAll { it.namespace == namespace }
-                .collectEntries {[it.key, it.value]}
+                .collectEntries { [it.key, it.value] }
     }
 
 
@@ -263,7 +268,7 @@ abstract class AdministeredItem extends Item {
     AdministeredItem clone() {
         AdministeredItem cloned = super.clone() as AdministeredItem
 
-        List<Metadata> clonedMetadata = getMetadata().collect {it.clone()}
+        List<Metadata> clonedMetadata = getMetadata().collect { it.clone() }
         cloned.metadata = clonedMetadata
 
         List<Annotation> clonedAnnotations = getAnnotations().collect {
@@ -276,10 +281,10 @@ abstract class AdministeredItem extends Item {
         }
         cloned.annotations = clonedAnnotations
 
-        List<SummaryMetadata> clonedSummaryMetadata = getSummaryMetadata().collect {it.clone()}
+        List<SummaryMetadata> clonedSummaryMetadata = getSummaryMetadata().collect { it.clone() }
         cloned.summaryMetadata = clonedSummaryMetadata
 
-        List<ReferenceFile> clonedReferenceFiles = getReferenceFiles().collect {it.clone()}
+        List<ReferenceFile> clonedReferenceFiles = getReferenceFiles().collect { it.clone() }
         cloned.referenceFiles = clonedReferenceFiles
         cloned
 
@@ -391,7 +396,7 @@ abstract class AdministeredItem extends Item {
      * @see #metadata
      */
     Metadata metadata(String namespace, String key, String value) {
-        Metadata md = Metadata.build (namespace: namespace, key: key, value: value)
+        Metadata md = Metadata.build(namespace: namespace, key: key, value: value)
         this.metadata.add(md)
         return md
     }
@@ -455,7 +460,6 @@ abstract class AdministeredItem extends Item {
     Rule rule(@DelegatesTo(value = Rule, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
         rule [:], closure
     }
-
 
 
 }

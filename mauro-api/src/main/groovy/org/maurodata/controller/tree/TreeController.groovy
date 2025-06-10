@@ -123,7 +123,7 @@ class TreeController implements TreeApi {
 
         Item item = repository.readById(id)
         if (!item instanceof AdministeredItem) {
-            throw new HttpStatusException(HttpStatus.BAD_REQUEST, "$domainType cannot be used here")
+            throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "$domainType cannot be used here")
         }
 
         AdministeredItem aditem = (AdministeredItem) item
@@ -133,7 +133,7 @@ class TreeController implements TreeApi {
         pathRepository.readParentItems(aditem)
 
         Path path = aditem.getPathToEdge()
-        TreeItem currentParent = null
+        TreeItem currentParent = treeService.buildTreeItemForThis(aditem, false, false, false)
         UUID currentId = id
 
         for (; ;) {
