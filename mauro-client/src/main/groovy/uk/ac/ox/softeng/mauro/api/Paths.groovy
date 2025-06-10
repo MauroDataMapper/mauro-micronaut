@@ -130,6 +130,7 @@ interface Paths {
     String DATA_MODEL_COMMON_ANCESTOR='/dataModels/{id}/commonAncestor/{other_model_id}'
     String DATA_MODEL_MERGE_DIFF='/dataModels/{id}/mergeDiff/{otherId}'
     String DATA_MODEL_PERMISSIONS='/dataModels/{id}/permissions'
+    String DATA_MODEL_COPY_DATA_CLASS = '/dataModels/{id}/dataClasses/{{other_model_id}}/{{data_class_id}}'
     String DATA_MODEL_DOI = '/dataModels/{id}/doi'
 
 

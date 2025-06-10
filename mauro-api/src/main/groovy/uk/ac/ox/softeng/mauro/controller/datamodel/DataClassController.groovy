@@ -182,7 +182,7 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
     @Audit
     @Post(Paths.DATA_CLASS_COPY)
     @Transactional
-    DataClass copy(UUID dataModelId, UUID otherModelId, UUID dataClassId) {
+    DataClass copyDataClass(UUID dataModelId, UUID otherModelId, UUID dataClassId) {
         DataModel dataModel = dataModelContentRepository.findWithContentById(dataModelId)
         accessControlService.checkRole(Role.EDITOR, dataModel)
         DataClass dataClass = dataClassContentRepository.readWithContentById(dataClassId)
@@ -193,13 +193,13 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
         if (dataClass.dataModel.id != otherModel.id) {
             ErrorHandler.handleError(HttpStatus.NOT_FOUND, "Cannot find dataClass $dataClassId for dataModel $otherModelId")
         }
-
         DataClass copied = dataClass.clone()
         copied.parentDataClass = null //do not keep existing source structure if source is child
         DataClass savedCopy = createEntity(dataModel, copied)
-        savedCopy.dataClasses = dataClassService.copyChildren(savedCopy, dataModel)
-        savedCopy.dataClasses = dataClassService.copyDataElementsAndDataTypes(savedCopy.dataClasses, dataModel)
-        dataClassService.copyDataElementsAndDataTypes(savedCopy, dataModel)
+        savedCopy = dataClassService.copyReferenceTypes( savedCopy, dataModel)
+        savedCopy.dataClasses = dataClassService.copyChildren(savedCopy, savedCopy.dataClasses, dataModel)
+        savedCopy.dataElements = dataClassService.copyDataElementsAndDataTypes(savedCopy.dataElements, dataModel)
+        savedCopy
     }
 
     @Get(Paths.DATA_CLASS_DOI)

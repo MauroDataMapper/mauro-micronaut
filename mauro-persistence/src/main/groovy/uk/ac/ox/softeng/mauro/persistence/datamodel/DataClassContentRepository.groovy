@@ -50,6 +50,7 @@ class DataClassContentRepository extends AdministeredItemContentRepository {
         dataClass.extendsDataClasses = dataClassRepository.getDataClassExtensionRelationships(id)
         dataClass.extendsDataClasses.each {it.extendedBy.add(dataClass)}
 
+        dataClass.referenceTypes = dataTypeCacheableRepository.findAllByReferenceClass(dataClass)
         dataClass
     }
 

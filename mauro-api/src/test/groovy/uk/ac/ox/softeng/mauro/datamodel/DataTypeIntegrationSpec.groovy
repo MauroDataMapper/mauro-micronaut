@@ -49,7 +49,7 @@ class DataTypeIntegrationSpec extends CommonDataSpec {
         dataClassId2 = dataClassApi.create(dataModelId, dataClassPayload('data class 2 label')).id
     }
 
-    void 'create  dataType with DataTypeKind referenceType -payload  #referenceId fails validation -should throw Unprocessible entity exception'() {
+    void 'create  dataType with  DataTypeKind referenceType -payload  #referenceId fails validation -should throw Unprocessible entity exception'() {
         when:
         dataTypeApi.create(
             dataModelId,
