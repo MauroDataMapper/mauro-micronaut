@@ -1,4 +1,7 @@
-package uk.ac.ox.softeng.mauro.persistence.search.dto
+package uk.ac.ox.softeng.mauro.persistence.search
+
+import uk.ac.ox.softeng.mauro.domain.search.dto.SearchRequestDTO
+import uk.ac.ox.softeng.mauro.domain.search.dto.SearchResultsDTO
 
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.Nullable
@@ -9,7 +12,6 @@ import io.micronaut.data.repository.GenericRepository
 import jakarta.inject.Singleton
 
 import java.sql.Date
-import java.time.LocalDate
 
 @CompileStatic
 @Singleton

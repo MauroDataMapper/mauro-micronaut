@@ -8,8 +8,8 @@ import uk.ac.ox.softeng.mauro.domain.diff.ObjectDiff
 import uk.ac.ox.softeng.mauro.domain.model.version.CreateNewVersionData
 import uk.ac.ox.softeng.mauro.domain.model.version.FinaliseData
 import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
-import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchRequestDTO
-import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchResultsDTO
+import uk.ac.ox.softeng.mauro.domain.search.dto.SearchRequestDTO
+import uk.ac.ox.softeng.mauro.domain.search.dto.SearchResultsDTO
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
 import io.micronaut.context.annotation.Parameter

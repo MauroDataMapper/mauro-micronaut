@@ -10,7 +10,6 @@ import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.terminology.TerminologyApi
 import uk.ac.ox.softeng.mauro.ErrorHandler
 import uk.ac.ox.softeng.mauro.domain.model.Model
-import uk.ac.ox.softeng.mauro.plugin.exporter.DataModelExporterPlugin
 import uk.ac.ox.softeng.mauro.plugin.exporter.TerminologyExporterPlugin
 import uk.ac.ox.softeng.mauro.plugin.importer.TerminologyImporterPlugin
 
@@ -22,7 +21,6 @@ import io.micronaut.http.HttpResponse
 import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.*
 import io.micronaut.http.server.multipart.MultipartBody
-import io.micronaut.http.server.types.files.StreamedFile
 import io.micronaut.scheduling.TaskExecutors
 import io.micronaut.scheduling.annotation.ExecuteOn
 import io.micronaut.security.annotation.Secured
@@ -34,14 +32,13 @@ import uk.ac.ox.softeng.mauro.domain.diff.ObjectDiff
 import uk.ac.ox.softeng.mauro.domain.model.version.CreateNewVersionData
 import uk.ac.ox.softeng.mauro.domain.model.version.FinaliseData
 import uk.ac.ox.softeng.mauro.domain.security.Role
-import uk.ac.ox.softeng.mauro.domain.terminology.CodeSet
 import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
 import uk.ac.ox.softeng.mauro.domain.terminology.TerminologyService
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.TerminologyCacheableRepository
-import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchRepository
-import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchRequestDTO
-import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchResultsDTO
+import uk.ac.ox.softeng.mauro.persistence.search.SearchRepository
+import uk.ac.ox.softeng.mauro.domain.search.dto.SearchRequestDTO
+import uk.ac.ox.softeng.mauro.domain.search.dto.SearchResultsDTO
 import uk.ac.ox.softeng.mauro.persistence.terminology.TerminologyContentRepository
 import uk.ac.ox.softeng.mauro.web.ListResponse
 

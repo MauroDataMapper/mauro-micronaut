@@ -10,8 +10,8 @@ import uk.ac.ox.softeng.mauro.domain.facet.EditType
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.folder.FolderContentRepository
-import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchRequestDTO
-import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchResultsDTO
+import uk.ac.ox.softeng.mauro.domain.search.dto.SearchRequestDTO
+import uk.ac.ox.softeng.mauro.domain.search.dto.SearchResultsDTO
 import uk.ac.ox.softeng.mauro.plugin.exporter.ModelExporterPlugin
 import uk.ac.ox.softeng.mauro.service.plugin.PluginService
 import uk.ac.ox.softeng.mauro.web.ListResponse

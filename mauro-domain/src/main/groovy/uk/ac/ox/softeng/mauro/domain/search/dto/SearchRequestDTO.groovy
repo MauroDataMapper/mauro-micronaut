@@ -1,4 +1,4 @@
-package uk.ac.ox.softeng.mauro.persistence.search.dto
+package uk.ac.ox.softeng.mauro.domain.search.dto
 
 import uk.ac.ox.softeng.mauro.web.PaginationParams
 

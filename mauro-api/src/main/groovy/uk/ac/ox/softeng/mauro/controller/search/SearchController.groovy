@@ -13,9 +13,9 @@ import jakarta.inject.Inject
 import uk.ac.ox.softeng.mauro.controller.model.AdministeredItemReader
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.security.Role
-import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchRepository
-import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchRequestDTO
-import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchResultsDTO
+import uk.ac.ox.softeng.mauro.domain.search.dto.SearchRequestDTO
+import uk.ac.ox.softeng.mauro.domain.search.dto.SearchResultsDTO
+import uk.ac.ox.softeng.mauro.persistence.search.SearchRepository
 import uk.ac.ox.softeng.mauro.security.AccessControlService
 import uk.ac.ox.softeng.mauro.web.ListResponse
 

@@ -32,6 +32,8 @@ import uk.ac.ox.softeng.mauro.domain.model.Path
 import uk.ac.ox.softeng.mauro.domain.model.version.CreateNewVersionData
 import uk.ac.ox.softeng.mauro.domain.model.version.FinaliseData
 import uk.ac.ox.softeng.mauro.domain.model.version.ModelVersion
+import uk.ac.ox.softeng.mauro.domain.search.dto.SearchRequestDTO
+import uk.ac.ox.softeng.mauro.domain.search.dto.SearchResultsDTO
 import uk.ac.ox.softeng.mauro.domain.security.Role
 import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository.DataElementCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository.DataTypeCacheableRepository
@@ -40,9 +42,7 @@ import uk.ac.ox.softeng.mauro.persistence.cache.ModelCacheableRepository.FolderC
 import uk.ac.ox.softeng.mauro.persistence.datamodel.DataElementRepository
 import uk.ac.ox.softeng.mauro.persistence.datamodel.DataModelContentRepository
 import uk.ac.ox.softeng.mauro.persistence.datamodel.DataTypeContentRepository
-import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchRepository
-import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchRequestDTO
-import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchResultsDTO
+import uk.ac.ox.softeng.mauro.persistence.search.SearchRepository
 import uk.ac.ox.softeng.mauro.plugin.datatype.DataTypePlugin
 import uk.ac.ox.softeng.mauro.plugin.exporter.DataModelExporterPlugin
 import uk.ac.ox.softeng.mauro.plugin.importer.DataModelImporterPlugin

@@ -11,8 +11,8 @@ import uk.ac.ox.softeng.mauro.persistence.datamodel.DataModelContentRepository
 import jakarta.inject.Inject
 import spock.lang.Shared
 import spock.lang.Specification
-import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchResultsDTO
-import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchRepository
+import uk.ac.ox.softeng.mauro.domain.search.dto.SearchResultsDTO
+import uk.ac.ox.softeng.mauro.persistence.search.SearchRepository
 
 import java.time.LocalDate
 import java.sql.Date
