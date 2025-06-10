@@ -67,7 +67,10 @@ class AvailableActions {
             roleActions.put(Role.READER,[CREATE_NEW_VERSIONS_ACTION, NEW_FORK_MODEL_ACTION])
             roleActions.put(Role.EDITOR,[NEW_MODEL_VERSION_ACTION,
                                          NEW_DOCUMENTATION_ACTION,
-                                         NEW_BRANCH_MODEL_VERSION_ACTION])
+                                         NEW_BRANCH_MODEL_VERSION_ACTION,
+                                         FINALISE_ACTION,
+                                         MERGE_INTO_ACTION
+                                        ])
             roleActions.put(Role.CONTAINER_ADMIN,[
                                          FINALISED_EDIT_ACTIONS,
                                          FINALISED_READ_ACTIONS,
@@ -139,7 +142,10 @@ class AvailableActions {
                                                       SAVE_ACTION,
                                                       EDIT_DESCRIPTION_ACTION,
                                                       FINALISE_ACTION,
-                                                      MERGE_INTO_ACTION]
+                                                      MERGE_INTO_ACTION,
+                                                      CREATE_FOLDER,
+                                                      CREATE_VERSIONED_FOLDER,
+                                                      CREATE_MODEL]
 
     public static List<String> REMOVE_FROM_MODEL_ITEM=[SOFT_DELETE_ACTION,
                                                        FINALISE_ACTION]

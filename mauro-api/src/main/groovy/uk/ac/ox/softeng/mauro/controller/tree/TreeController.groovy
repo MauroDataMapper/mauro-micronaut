@@ -9,6 +9,7 @@ import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.domain.model.Item
+import uk.ac.ox.softeng.mauro.domain.model.Model
 import uk.ac.ox.softeng.mauro.domain.model.Path
 import uk.ac.ox.softeng.mauro.domain.security.Role
 import uk.ac.ox.softeng.mauro.domain.tree.TreeItem
@@ -61,12 +62,12 @@ class TreeController implements TreeApi {
     @Get(Paths.TREE_FOLDER)
     List<TreeItem> folderTree(@Nullable UUID id, @Nullable @QueryValue Boolean foldersOnly) {
 
-        List<TreeItem> treeItems = []
+        List<TreeItem> treeItems
         foldersOnly = foldersOnly ?: false
         if (id) {
             Folder folder = folderRepository.readById(id)
             accessControlService.checkRole(Role.READER, folder)
-            treeItems = filterTreeByReadable(treeService.buildTree(folder, foldersOnly, true))
+            treeItems = filterTreeByReadable(treeService.buildTree(folder, foldersOnly, false, true))
         } else {
             treeItems = filterTreeByReadable(treeService.buildRootFolderTree(foldersOnly))
         }
@@ -82,7 +83,7 @@ class TreeController implements TreeApi {
         AvailableActions.updateAvailableActions(item, accessControlService)
 
         accessControlService.checkRole(Role.READER, item)
-        List<TreeItem> treeItems = filterTreeByReadable(treeService.buildTree(item, domainType.contains(Folder.class.simpleName) ? foldersOnly : false, true))
+        List<TreeItem> treeItems = filterTreeByReadable(treeService.buildTree(item, domainType.contains(Folder.class.simpleName) ? foldersOnly : false, false, true))
         treeItems
     }
 
@@ -92,23 +93,36 @@ class TreeController implements TreeApi {
         treeItems.each {
             it.children = it.children.findAll {accessControlService.canDoRole(Role.READER, it.item)}
             AvailableActions.updateAvailableActions(it.item, accessControlService)
-            it.availableActions=new ArrayList<String>(it.item.availableActions)
+            if (it.item instanceof Model) {
+                it.modelVersion = ((Model) it.item).modelVersion
+                it.modelVersionTag = ((Model) it.item).modelVersionTag
+            }
+            it.availableActions = new ArrayList<String>(it.item.availableActions)
             it.children.each {
                 AvailableActions.updateAvailableActions(it.item, accessControlService)
-                it.availableActions=new ArrayList<String>(it.item.availableActions)
+                it.availableActions = new ArrayList<String>(it.item.availableActions)
+                if (it.item instanceof Model) {
+                    it.modelVersion = ((Model) it.item).modelVersion
+                    it.modelVersionTag = ((Model) it.item).modelVersionTag
+                }
             }
         }
         treeItems
     }
 
+    /*
+    This is actually a path of ancestors leading to this item.
+    This is not just folders
+    There must be no other siblings, the UI doesn't check where the item
+    is in the returned structure to determine the path
+     */
+
     @Get(Paths.TREE_ITEM_ANCESTORS)
-    TreeItem itemTreeAncestors(String domainType, UUID id)
-    {
+    TreeItem itemTreeAncestors(String domainType, UUID id) {
         AdministeredItemCacheableRepository repository = repositoryService.getAdministeredItemRepository(domainType)
 
         Item item = repository.readById(id)
-        if(!item instanceof AdministeredItem)
-        {
+        if (!item instanceof AdministeredItem) {
             throw new HttpStatusException(HttpStatus.BAD_REQUEST, "$domainType cannot be used here")
         }
 
@@ -119,34 +133,39 @@ class TreeController implements TreeApi {
         pathRepository.readParentItems(aditem)
 
         Path path = aditem.getPathToEdge()
+        TreeItem currentParent = null
+        UUID currentId = id
 
+        for (; ;) {
+            AdministeredItem parentAdministeredItem = (AdministeredItem) path.findAncestorNodeItem(currentId, null)
 
-        AdministeredItem parentFolder=(AdministeredItem) path.findAncestorNodeItem(id, 'Folder')
-        if(parentFolder==null)
-        {
-            parentFolder=(AdministeredItem) path.findAncestorNodeItem(id, 'VersionedFolder')
+            if (parentAdministeredItem == null) {
+                break
+            }
+
+            try {
+                accessControlService.checkRole(Role.READER, parentAdministeredItem)
+            }
+            catch (AuthorizationException ae) {
+                break
+            }
+
+            final TreeItem parentTreeItem = treeService.buildTreeItemForThis(parentAdministeredItem, false, false, false)
+            if (currentParent == null) {
+                currentParent = parentTreeItem
+            } else {
+                parentTreeItem.children = [currentParent]
+                parentTreeItem.hasChildren = true
+                currentParent = parentTreeItem
+            }
+            currentId = currentParent.id
         }
 
-        if(parentFolder==null)
-        {
-            throw new HttpStatusException(HttpStatus.NOT_FOUND, "Item $id does not have a parent folder")
-        }
-
-        accessControlService.checkRole(Role.READER, parentFolder)
-
-        List<TreeItem> treeItems = filterTreeByReadable(treeService.buildTree(parentFolder, false, true))
-
-        if(treeItems.isEmpty())
-        {
-            throw new HttpStatusException(HttpStatus.NOT_FOUND, "Item $id does not have a parent folder")
-        }
-
-        return treeItems.get(treeItems.size()-1)
+        return currentParent
     }
 
     @Get(Paths.TREE_FOLDER_ANCESTORS)
-    TreeItem folderTreeAncestors(UUID id)
-    {
+    TreeItem folderTreeAncestors(UUID id) {
         AdministeredItemCacheableRepository repository = repositoryService.getAdministeredItemRepository("folder")
 
         AdministeredItem aditem = (AdministeredItem) repository.readById(id)
@@ -156,93 +175,104 @@ class TreeController implements TreeApi {
         pathRepository.readParentItems(aditem)
 
         Path path = aditem.getPathToEdge()
+        TreeItem currentParent = null
+        UUID currentId = id
 
-        AdministeredItem parentFolder=(AdministeredItem) path.findAncestorNodeItem(id, 'Folder')
-        if(parentFolder==null)
-        {
-            parentFolder=(AdministeredItem) path.findAncestorNodeItem(id, 'VersionedFolder')
+        for (; ;) {
+            AdministeredItem parentAdministeredItem = (AdministeredItem) path.findAncestorNodeItem(currentId, null)
+
+            if (parentAdministeredItem == null) {
+                break
+            }
+
+            try {
+                accessControlService.checkRole(Role.READER, parentAdministeredItem)
+            }
+            catch (AuthorizationException ae) {
+                break
+            }
+
+            final TreeItem parentTreeItem = treeService.buildTreeItemForThis(parentAdministeredItem, false, false, false)
+            if (currentParent == null) {
+                currentParent = parentTreeItem
+            } else {
+                parentTreeItem.children = [currentParent]
+                parentTreeItem.hasChildren = true
+                currentParent = parentTreeItem
+            }
+            currentId = currentParent.id
         }
 
-        if(parentFolder==null)
-        {
-            parentFolder=aditem
-        }
-        else {
-            accessControlService.checkRole(Role.READER, parentFolder)
+        if (currentParent == null) {
+            currentParent = treeService.buildTreeItemForThis(aditem, true, false, true)
         }
 
-        List<TreeItem> treeItems = filterTreeByReadable(treeService.buildTree(parentFolder, false, true))
-
-        if(treeItems.isEmpty())
-        {
-            throw new HttpStatusException(HttpStatus.NOT_FOUND, "Item $id does not have a parent folder")
-        }
-
-        return treeItems.get(treeItems.size()-1)
+        return currentParent
     }
 
     @Audit
     @Get(Paths.TREE_FOLDER_SEARCH)
     List<SearchResultsDTO> itemTreeSearch(String searchTerm) {
 
-        SearchRequestDTO requestDTO=new SearchRequestDTO()
-        requestDTO.searchTerm=searchTerm
+        SearchRequestDTO requestDTO = new SearchRequestDTO()
+        requestDTO.searchTerm = searchTerm
 
-        List<SearchResultsDTO> results=searchRepository.search(requestDTO)
+        List<SearchResultsDTO> results = searchRepository.search(requestDTO)
 
-        Set<UUID> ids=[]
+        Set<UUID> ids = []
 
         List<SearchResultsDTO> resultItems = []
         throughResults:
-        for(int r=0;r<results.size();r++)
-        {
-            SearchResultsDTO searchResultsDTO=results.get(r)
-            String domainType=searchResultsDTO.domainType
+        for (int r = 0; r < results.size(); r++) {
+            SearchResultsDTO searchResultsDTO = results.get(r)
+            String domainType = searchResultsDTO.domainType
             AdministeredItemCacheableRepository repository = repositoryService.getAdministeredItemRepository(domainType)
-            if(repository==null){continue}
-            UUID id=searchResultsDTO.id
+            if (repository == null) {
+                continue
+            }
+            UUID id = searchResultsDTO.id
             Item item = repository.readById(id)
-            if(!item instanceof AdministeredItem){continue}
-            AdministeredItem adItem=(AdministeredItem) item
+            if (!item instanceof AdministeredItem) {
+                continue
+            }
+            AdministeredItem adItem = (AdministeredItem) item
             try {
                 accessControlService.checkRole(Role.READER, adItem)
             }
-            catch(AuthorizationException ae)
-            {
+            catch (AuthorizationException ae) {
                 continue throughResults
             }
 
             pathRepository.readParentItems(adItem)
 
-            if(adItem.owner == null){continue}
+            if (adItem.owner == null) {
+                continue
+            }
 
-            UUID modelId=adItem.owner.id
-            if(! (adItem instanceof DataClass || adItem instanceof DataModel || adItem instanceof Folder))
-            {
-                Float tsRank=searchResultsDTO.tsRank
+            UUID modelId = adItem.owner.id
+            if (!(adItem instanceof DataClass || adItem instanceof DataModel || adItem instanceof Folder)) {
+                Float tsRank = searchResultsDTO.tsRank
 
-                while(! (adItem instanceof DataClass || adItem instanceof DataModel || adItem instanceof Folder))
-                {
-                    adItem=adItem.getParent()
-                    if(adItem==null)
-                    {
+                while (!(adItem instanceof DataClass || adItem instanceof DataModel || adItem instanceof Folder)) {
+                    adItem = adItem.getParent()
+                    if (adItem == null) {
                         continue throughResults
                     }
                 }
 
-                searchResultsDTO=new SearchResultsDTO()
-                searchResultsDTO.id=adItem.id
-                searchResultsDTO.domainType=adItem.domainType
-                searchResultsDTO.label=adItem.label
-                searchResultsDTO.description=adItem.description
-                searchResultsDTO.dateCreated=adItem.dateCreated
-                searchResultsDTO.lastUpdated=adItem.lastUpdated
-                searchResultsDTO.tsRank=tsRank
+                searchResultsDTO = new SearchResultsDTO()
+                searchResultsDTO.id = adItem.id
+                searchResultsDTO.domainType = adItem.domainType
+                searchResultsDTO.label = adItem.label
+                searchResultsDTO.description = adItem.description
+                searchResultsDTO.dateCreated = adItem.dateCreated
+                searchResultsDTO.lastUpdated = adItem.lastUpdated
+                searchResultsDTO.tsRank = tsRank
             }
 
-            searchResultsDTO.modelId=modelId
+            searchResultsDTO.modelId = modelId
 
-            if(!ids.contains(searchResultsDTO.id)) {
+            if (!ids.contains(searchResultsDTO.id)) {
                 resultItems.addAll(searchResultsDTO)
                 ids.add(searchResultsDTO.id)
             }

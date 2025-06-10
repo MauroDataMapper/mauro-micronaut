@@ -136,7 +136,7 @@ class AdministeredItemContentRepository {
 
     @NonNull
     AdministeredItemCacheableRepository getRepository(AdministeredItem item) {
-        cacheableRepositories.find {it.handles(item.class)}
+        cacheableRepositories.find {it.handles(item.class) || it.handles(item.domainType)}
     }
 
     void deleteMetadata(Collection<AdministeredItem> items) {

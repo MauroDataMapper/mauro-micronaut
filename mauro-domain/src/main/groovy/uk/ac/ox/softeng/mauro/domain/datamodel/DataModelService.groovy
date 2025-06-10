@@ -17,7 +17,7 @@ class DataModelService extends ModelService<DataModel> {
     }
 
     Boolean handles(String domainType) {
-        domainType.toLowerCase() in ['datamodel', 'datamodels']
+        return domainType != null && domainType.toLowerCase() in ['datamodel', 'datamodels']
     }
 
 

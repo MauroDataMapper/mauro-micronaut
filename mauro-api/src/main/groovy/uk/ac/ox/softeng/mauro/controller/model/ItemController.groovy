@@ -23,7 +23,7 @@ abstract class ItemController<I extends Item> implements AdministeredItemReader 
      * Properties disallowed in a simple update request.
      */
     List<String> getDisallowedProperties() {
-        ['class_', 'class', 'id', 'dateCreated', 'lastUpdated', 'createdBy','versionable','domainType','version']
+        ['class_', 'class', 'id', 'dateCreated', 'lastUpdated', 'createdBy', 'versionable', 'domainType', 'version']
     }
 
     /**
@@ -39,13 +39,21 @@ abstract class ItemController<I extends Item> implements AdministeredItemReader 
         this.itemRepository = itemRepository
     }
 
-    I cleanBody(I item) {
+    I cleanBody(I item, boolean strictProperties = true) {
         I defaultItem = (I) item.class.getDeclaredConstructor().newInstance()
 
-        // Disallowed properties cannot be set by user request
-        disallowedCreateProperties.each {String key ->
-            if (defaultItem.hasProperty(key)?.properties?.setter && item[key] != defaultItem[key]) {
-                throw new HttpStatusException(HttpStatus.BAD_REQUEST, "Property $key cannot be set directly")
+        if (strictProperties) {
+            // Disallowed properties cannot be set by user request
+            disallowedCreateProperties.each {String key ->
+                if (defaultItem.hasProperty(key)?.properties?.setter && item[key] != defaultItem[key]) {
+                    throw new HttpStatusException(HttpStatus.BAD_REQUEST, "Property $key cannot be set directly")
+                }
+            }
+        } else {
+            disallowedCreateProperties.each {String key ->
+                if (defaultItem.hasProperty(key)?.properties?.setter && item[key] != null && item[key] != defaultItem[key]) {
+                    item[key] = null
+                }
             }
         }
 
@@ -86,6 +94,4 @@ abstract class ItemController<I extends Item> implements AdministeredItemReader 
         }
         return hasChanged
     }
-
-
 }

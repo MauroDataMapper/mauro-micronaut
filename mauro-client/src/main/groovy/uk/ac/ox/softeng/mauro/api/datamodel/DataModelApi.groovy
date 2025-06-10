@@ -9,6 +9,7 @@ import uk.ac.ox.softeng.mauro.api.model.ModelVersionedRefDTO
 import uk.ac.ox.softeng.mauro.api.model.ModelVersionedWithTargetsRefDTO
 import uk.ac.ox.softeng.mauro.api.model.VersionLinkDTO
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataModelType
 import uk.ac.ox.softeng.mauro.domain.datamodel.IntersectsData
 import uk.ac.ox.softeng.mauro.domain.datamodel.IntersectsManyData
 import uk.ac.ox.softeng.mauro.domain.datamodel.SubsetData
@@ -17,6 +18,7 @@ import uk.ac.ox.softeng.mauro.domain.model.version.CreateNewVersionData
 import uk.ac.ox.softeng.mauro.domain.model.version.FinaliseData
 import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchRequestDTO
 import uk.ac.ox.softeng.mauro.persistence.search.dto.SearchResultsDTO
+import uk.ac.ox.softeng.mauro.plugin.datatype.DataTypePlugin
 import uk.ac.ox.softeng.mauro.plugin.importer.DataModelImporterPlugin
 import uk.ac.ox.softeng.mauro.web.ListResponse
 
@@ -117,4 +119,10 @@ interface DataModelApi extends ModelApi<DataModel> {
 
     @Get(Paths.DATA_MODEL_DOI)
     Map doi(UUID id)
+
+    @Get(Paths.DATA_MODEL_DATATYPE_PROVIDERS)
+    List<DataTypePlugin> defaultDataTypeProviders()
+
+    @Get(Paths.DATA_MODEL_TYPES)
+    List<String> dataModelTypes()
 }

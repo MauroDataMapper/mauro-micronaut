@@ -5,6 +5,7 @@ enum PluginType {
     Importer,
     Exporter,
     Email,
-    Profile
+    Profile,
+    DataType
 
 }

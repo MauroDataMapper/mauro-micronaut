@@ -1,5 +1,6 @@
 package uk.ac.ox.softeng.mauro.controller.terminology
 
+import uk.ac.ox.softeng.mauro.api.model.ModelVersionedRefDTO
 import uk.ac.ox.softeng.mauro.api.model.PermissionsDTO
 import uk.ac.ox.softeng.mauro.audit.Audit
 import uk.ac.ox.softeng.mauro.domain.facet.EditType
@@ -8,6 +9,7 @@ import io.micronaut.http.HttpStatus
 import uk.ac.ox.softeng.mauro.api.Paths
 import uk.ac.ox.softeng.mauro.api.terminology.TerminologyApi
 import uk.ac.ox.softeng.mauro.ErrorHandler
+import uk.ac.ox.softeng.mauro.domain.model.Model
 import uk.ac.ox.softeng.mauro.plugin.exporter.DataModelExporterPlugin
 import uk.ac.ox.softeng.mauro.plugin.exporter.TerminologyExporterPlugin
 import uk.ac.ox.softeng.mauro.plugin.importer.TerminologyImporterPlugin
@@ -59,8 +61,9 @@ class TerminologyController extends ModelController<Terminology> implements Term
     @Inject
     TerminologyService terminologyService
 
-    TerminologyController(TerminologyCacheableRepository terminologyRepository, FolderCacheableRepository folderRepository, TerminologyContentRepository terminologyContentRepository,
-    TerminologyService terminologyService) {
+    TerminologyController(TerminologyCacheableRepository terminologyRepository, FolderCacheableRepository folderRepository,
+                          TerminologyContentRepository terminologyContentRepository,
+                          TerminologyService terminologyService) {
         super(Terminology, terminologyRepository, folderRepository, terminologyContentRepository, terminologyService)
         this.terminologyRepository = terminologyRepository
         this.terminologyContentRepository = terminologyContentRepository
@@ -92,7 +95,7 @@ class TerminologyController extends ModelController<Terminology> implements Term
     @Delete(Paths.TERMINOLOGY_ID)
     HttpResponse delete(UUID id, @Body @Nullable Terminology terminology, @Nullable @QueryValue Boolean permanent) {
         permanent = permanent ?: true
-        super.delete(id, terminology,permanent)
+        super.delete(id, terminology, permanent)
     }
 
     @Audit
@@ -154,32 +157,33 @@ class TerminologyController extends ModelController<Terminology> implements Term
     ListResponse<Terminology> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version) {
         super.importModel(body, namespace, name, version)
     }
-/*
-    @Transactional
-    @Consumes(MediaType.MULTIPART_FORM_DATA)
-    @Post('/terminologies/import{/namespace}{/name}{/version}')
-    ListResponse<Terminology> importModel(@Body Map<String, String> importMap, @Nullable String namespace, @Nullable String name, @Nullable String version) {
-        log.info '** start importModel **'
-        ExportModel importModel = objectMapper.readValue(importMap.importFile, ExportModel)
-        log.info '*** imported JSON model ***'
-        Terminology imported = importModel.terminology
-        imported.setAssociations()
-        imported.updateCreationProperties()
-        log.info '* start updateCreationProperties *'
-        imported.getAllContents().each {it.updateCreationProperties()}
-        log.info '* finish updateCreationProperties *'
 
-        UUID folderId = UUID.fromString(importMap.folderId)
+    /*
+        @Transactional
+        @Consumes(MediaType.MULTIPART_FORM_DATA)
+        @Post('/terminologies/import{/namespace}{/name}{/version}')
+        ListResponse<Terminology> importModel(@Body Map<String, String> importMap, @Nullable String namespace, @Nullable String name, @Nullable String version) {
+            log.info '** start importModel **'
+            ExportModel importModel = objectMapper.readValue(importMap.importFile, ExportModel)
+            log.info '*** imported JSON model ***'
+            Terminology imported = importModel.terminology
+            imported.setAssociations()
+            imported.updateCreationProperties()
+            log.info '* start updateCreationProperties *'
+            imported.getAllContents().each {it.updateCreationProperties()}
+            log.info '* finish updateCreationProperties *'
 
-        Folder folder = folderRepository.readById(folderId)
-        imported.folder = folder
-        log.info '** about to saveWithContentBatched... **'
-        Terminology savedImported = modelContentRepository.saveWithContent(imported)
-        log.info '** finished saveWithContentBatched **'
-        ListResponse.from([show(savedImported.id)])
-    }
+            UUID folderId = UUID.fromString(importMap.folderId)
 
- */
+            Folder folder = folderRepository.readById(folderId)
+            imported.folder = folder
+            log.info '** about to saveWithContentBatched... **'
+            Terminology savedImported = modelContentRepository.saveWithContent(imported)
+            log.info '** finished saveWithContentBatched **'
+            ListResponse.from([show(savedImported.id)])
+        }
+
+     */
 
     @Audit
     @Get(Paths.TERMINOLOGY_DIFF)
@@ -245,7 +249,31 @@ class TerminologyController extends ModelController<Terminology> implements Term
     @Get(Paths.TERMINOLOGY_DOI)
     @Override
     Map doi(UUID id) {
-        ErrorHandler.handleErrorOnNullObject(HttpStatus.SERVICE_UNAVAILABLE, "Doi", "Doi is not implemented")
+        ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "Doi is not implemented")
         return null
     }
+
+    @Override
+    @Get(Paths.TERMINOLOGY_SIMPLE_MODEL_VERSION_TREE)
+    List<ModelVersionedRefDTO> simpleModelVersionTree(UUID id, @Nullable Boolean branchesOnly) {
+
+        branchesOnly = branchesOnly ?: false
+
+        final ArrayList<Model> allModels = populateVersionTree(id, branchesOnly, null)
+
+        // Create object DTOs
+
+        final ArrayList<ModelVersionedRefDTO> simpleModelVersionTreeList = new ArrayList<>(allModels.size())
+
+        for (Model model : allModels) {
+            final ModelVersionedRefDTO modelVersionedRefDTO = new ModelVersionedRefDTO(id: model.id, branch: model.branchName, branchName: model.branchName,
+                                                                                       modelVersion: model.modelVersion?.toString(), modelVersionTag: model.modelVersionTag,
+                                                                                       documentationVersion: model.documentationVersion,
+                                                                                       displayName: model.pathModelIdentifier)
+            simpleModelVersionTreeList.add(modelVersionedRefDTO)
+        }
+
+        return simpleModelVersionTreeList
+    }
+
 }

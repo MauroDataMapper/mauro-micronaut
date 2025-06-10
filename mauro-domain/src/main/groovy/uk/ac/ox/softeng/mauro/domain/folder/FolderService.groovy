@@ -14,6 +14,6 @@ class FolderService extends ModelService<Folder> {
     }
 
     Boolean handles(String domainType) {
-        domainType.toLowerCase() in ['folder', 'folders']
+        return domainType != null && domainType.toLowerCase() in ['folder', 'folders']
     }
 }

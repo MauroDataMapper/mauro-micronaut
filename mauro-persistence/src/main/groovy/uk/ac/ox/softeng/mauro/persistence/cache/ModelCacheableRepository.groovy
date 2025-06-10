@@ -55,7 +55,7 @@ class ModelCacheableRepository<M extends Model> extends AdministeredItemCacheabl
     }
 
     @Override
-    M readByLabelAndModelVersion(String label, ModelVersion modelVersion){
+    M readByLabelAndModelVersion(String label, ModelVersion modelVersion) {
         repository.readByLabelAndModelVersion(label, modelVersion)
     }
 
@@ -79,6 +79,11 @@ class ModelCacheableRepository<M extends Model> extends AdministeredItemCacheabl
     static class FolderCacheableRepository extends ModelCacheableRepository<Folder> {
         FolderCacheableRepository(FolderRepository folderRepository) {
             super(folderRepository)
+        }
+
+        @Override
+        Boolean handles(String domainType) {
+            return domainType != null && domainType.toLowerCase() in ['folder', 'folders', 'versionedfolder', 'versionedfolders']
         }
 
         // not cached
