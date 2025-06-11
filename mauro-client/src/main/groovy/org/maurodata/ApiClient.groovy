@@ -1,41 +1,41 @@
 package org.maurodata
 
-import uk.ac.ox.softeng.mauro.api.admin.AdminApi
-import uk.ac.ox.softeng.mauro.api.classifier.ClassificationSchemeApi
-import uk.ac.ox.softeng.mauro.api.classifier.ClassifierApi
-import uk.ac.ox.softeng.mauro.api.config.ApiPropertyApi
-import uk.ac.ox.softeng.mauro.api.config.SessionApi
-import uk.ac.ox.softeng.mauro.api.dataflow.DataClassComponentApi
-import uk.ac.ox.softeng.mauro.api.dataflow.DataElementComponentApi
-import uk.ac.ox.softeng.mauro.api.dataflow.DataFlowApi
-import uk.ac.ox.softeng.mauro.api.datamodel.DataClassApi
-import uk.ac.ox.softeng.mauro.api.datamodel.DataElementApi
-import uk.ac.ox.softeng.mauro.api.datamodel.DataModelApi
-import uk.ac.ox.softeng.mauro.api.datamodel.DataTypeApi
-import uk.ac.ox.softeng.mauro.api.datamodel.EnumerationValueApi
-import uk.ac.ox.softeng.mauro.api.facet.AnnotationApi
-import uk.ac.ox.softeng.mauro.api.facet.MetadataApi
-import uk.ac.ox.softeng.mauro.api.facet.ReferenceFileApi
-import uk.ac.ox.softeng.mauro.api.facet.SummaryMetadataApi
-import uk.ac.ox.softeng.mauro.api.facet.SummaryMetadataReportApi
-import uk.ac.ox.softeng.mauro.api.folder.FolderApi
-import uk.ac.ox.softeng.mauro.api.importer.ImporterApi
-import uk.ac.ox.softeng.mauro.api.profile.ProfileApi
-import uk.ac.ox.softeng.mauro.api.search.SearchApi
-import uk.ac.ox.softeng.mauro.api.security.CatalogueUserApi
-import uk.ac.ox.softeng.mauro.api.security.SecurableResourceGroupRoleApi
-import uk.ac.ox.softeng.mauro.api.security.UserGroupApi
-import uk.ac.ox.softeng.mauro.api.security.openidprovider.OpenidProviderApi
-import uk.ac.ox.softeng.mauro.api.terminology.CodeSetApi
-import uk.ac.ox.softeng.mauro.api.terminology.TermApi
-import uk.ac.ox.softeng.mauro.api.terminology.TermRelationshipApi
-import uk.ac.ox.softeng.mauro.api.terminology.TermRelationshipTypeApi
-import uk.ac.ox.softeng.mauro.api.terminology.TerminologyApi
-import uk.ac.ox.softeng.mauro.api.tree.TreeApi
-import uk.ac.ox.softeng.mauro.domain.folder.Folder
-import uk.ac.ox.softeng.mauro.domain.terminology.Terminology
-import uk.ac.ox.softeng.mauro.plugin.exporter.json.JsonTerminologyExporterPlugin
-import uk.ac.ox.softeng.mauro.web.ListResponse
+import org.maurodata.api.admin.AdminApi
+import org.maurodata.api.classifier.ClassificationSchemeApi
+import org.maurodata.api.classifier.ClassifierApi
+import org.maurodata.api.config.ApiPropertyApi
+import org.maurodata.api.config.SessionApi
+import org.maurodata.api.dataflow.DataClassComponentApi
+import org.maurodata.api.dataflow.DataElementComponentApi
+import org.maurodata.api.dataflow.DataFlowApi
+import org.maurodata.api.datamodel.DataClassApi
+import org.maurodata.api.datamodel.DataElementApi
+import org.maurodata.api.datamodel.DataModelApi
+import org.maurodata.api.datamodel.DataTypeApi
+import org.maurodata.api.datamodel.EnumerationValueApi
+import org.maurodata.api.facet.AnnotationApi
+import org.maurodata.api.facet.MetadataApi
+import org.maurodata.api.facet.ReferenceFileApi
+import org.maurodata.api.facet.SummaryMetadataApi
+import org.maurodata.api.facet.SummaryMetadataReportApi
+import org.maurodata.api.folder.FolderApi
+import org.maurodata.api.importer.ImporterApi
+import org.maurodata.api.profile.ProfileApi
+import org.maurodata.api.search.SearchApi
+import org.maurodata.api.security.CatalogueUserApi
+import org.maurodata.api.security.SecurableResourceGroupRoleApi
+import org.maurodata.api.security.UserGroupApi
+import org.maurodata.api.security.openidprovider.OpenidProviderApi
+import org.maurodata.api.terminology.CodeSetApi
+import org.maurodata.api.terminology.TermApi
+import org.maurodata.api.terminology.TermRelationshipApi
+import org.maurodata.api.terminology.TermRelationshipTypeApi
+import org.maurodata.api.terminology.TerminologyApi
+import org.maurodata.api.tree.TreeApi
+import org.maurodata.domain.folder.Folder
+import org.maurodata.domain.terminology.Terminology
+import org.maurodata.plugin.exporter.json.JsonTerminologyExporterPlugin
+import org.maurodata.web.ListResponse
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.micronaut.configuration.picocli.PicocliRunner
@@ -118,7 +118,7 @@ abstract class ApiClient implements Runnable {
 
         terminologyApi.importModel(
             importRequest,
-            'uk.ac.ox.softeng.mauro.plugin.importer.json',
+            'org.maurodata.plugin.importer.json',
             'JsonTerminologyImporterPlugin',
             '4.0.0')
 
