@@ -18,7 +18,6 @@ repositories {
 
 dependencies {
     implementation project(':mauro-domain')
-    implementation project(':mauro-persistence') // For the search DTOs
 
     annotationProcessor "io.micronaut:micronaut-inject-java"
     annotationProcessor("io.micronaut:micronaut-inject-groovy")

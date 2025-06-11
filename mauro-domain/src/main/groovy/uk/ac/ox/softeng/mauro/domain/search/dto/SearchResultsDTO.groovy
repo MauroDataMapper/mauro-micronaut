@@ -1,4 +1,4 @@
-package uk.ac.ox.softeng.mauro.persistence.search.dto
+package uk.ac.ox.softeng.mauro.domain.search.dto
 
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.Introspected
