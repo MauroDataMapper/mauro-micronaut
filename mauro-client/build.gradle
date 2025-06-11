@@ -9,7 +9,7 @@ plugins {
     id("codenarc")
 }
 
-group = 'uk.ac.ox.softeng.mauro'
+group = 'org,maurodata'
 version = '0.1'
 
 repositories {
@@ -18,7 +18,6 @@ repositories {
 
 dependencies {
     implementation project(':mauro-domain')
-    implementation project(':mauro-persistence') // For the search DTOs
 
     annotationProcessor "io.micronaut:micronaut-inject-java"
     annotationProcessor("io.micronaut:micronaut-inject-groovy")
@@ -61,7 +60,7 @@ test {
 publishing {
     publications {
         mavenJava(MavenPublication) {
-            groupId = 'uk.ac.ox.softeng.mauro'
+            groupId = 'org,maurodata'
             artifactId = 'mauro-client'
             version = "0.0.1-SNAPSHOT"
             from components.java

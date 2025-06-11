@@ -1,0 +1,126 @@
+package org.maurodata.service.datamodel
+
+
+import groovy.transform.CompileStatic
+import groovy.util.logging.Slf4j
+import jakarta.inject.Inject
+import org.maurodata.domain.datamodel.DataClass
+import org.maurodata.domain.datamodel.DataElement
+import org.maurodata.domain.datamodel.DataModel
+import org.maurodata.domain.datamodel.DataType
+import org.maurodata.domain.model.AdministeredItem
+import org.maurodata.persistence.cache.AdministeredItemCacheableRepository
+import org.maurodata.persistence.datamodel.DataClassContentRepository
+import org.maurodata.persistence.model.PathRepository
+
+@CompileStatic
+@Slf4j
+class DataClassService {
+
+    PathRepository pathRepository
+    DataClassContentRepository dataClassContentRepository
+    AdministeredItemCacheableRepository.DataElementCacheableRepository dataElementCacheableRepository
+    AdministeredItemCacheableRepository.DataTypeCacheableRepository dataTypeCacheableRepository
+    AdministeredItemCacheableRepository.DataClassCacheableRepository dataClassCacheableRepository
+
+    @Inject
+    DataClassService(PathRepository pathRepository, DataClassContentRepository dataClassContentRepository,
+                     AdministeredItemCacheableRepository.DataElementCacheableRepository dataElementCacheableRepository,
+                     AdministeredItemCacheableRepository.DataTypeCacheableRepository dataTypeCacheableRepository,
+                     AdministeredItemCacheableRepository.DataClassCacheableRepository dataClassCacheableRepository) {
+        this.pathRepository = pathRepository
+        this.dataClassContentRepository = dataClassContentRepository
+        this.dataElementCacheableRepository = dataElementCacheableRepository
+        this.dataTypeCacheableRepository = dataTypeCacheableRepository
+        this.dataClassCacheableRepository = dataClassCacheableRepository
+    }
+
+    DataClass copyReferenceTypes(DataClass savedCopy, DataModel target) {
+        //cloned so these are old
+        List<DataType> copiedTargetDataTypes = []
+        savedCopy.referenceTypes.each {
+            DataType targetDataType = findDataTypeByLabelInTarget(it as DataType, target)
+            if (!targetDataType) {
+                copiedTargetDataTypes.add(createAndSave(it as DataType, target, savedCopy))
+            } else {
+                copiedTargetDataTypes.add(targetDataType)
+            }
+        }
+        savedCopy.referenceTypes = dataTypeCacheableRepository.updateAll(copiedTargetDataTypes) as List<DataType>
+        savedCopy
+    }
+
+    List<DataClass> copyChildren(DataClass copied, List<DataClass> children, DataModel target) {
+        List<DataClass> copiedChildren = []
+        children.each {child ->
+            child.clone().tap {copiedChild ->
+                copiedChild.updateCreationProperties()
+                updateDerivedProperties(copiedChild)
+                copiedChild.parentDataClass = copied
+                copiedChild.dataModel = target
+                copiedChild = copyReferenceTypes(copiedChild, target)
+                copiedChild.dataElements = copyDataElementsAndDataTypes(copiedChild.dataElements, target)
+                dataElementCacheableRepository.saveAll(copiedChild.dataElements)
+                copiedChildren.add(copiedChild)
+            }
+        }
+        copied.dataClasses = dataClassCacheableRepository.saveAll(copiedChildren)
+    }
+
+    List<DataElement> copyDataElementsAndDataTypes(List<DataElement> dataElements, DataModel target) {
+        List<DataElement> copiedDataElements = []
+        dataElements.each {dataElement ->
+            dataElement.clone().tap {copiedDE ->
+                if (copiedDE.dataType) {
+                    //target model does not have existing dataType? copy new DataType in target model
+                    copiedDE.dataType = setOrCreateNewDataType(target, copiedDE.dataType)
+                }
+                updateCreationProperties(copiedDE as AdministeredItem)
+                updateDerivedProperties(copiedDE)
+                copiedDE.dataModel = target
+                copiedDE.dataClass = dataClass
+                copiedDataElements.add(copiedDE)
+            }
+        }
+        dataElementCacheableRepository.saveAll(copiedDataElements)
+    }
+
+    protected DataType setOrCreateNewDataType(DataModel target, DataType dataType) {
+        DataType targetDataType = findDataTypeByLabelInTarget(dataType, target)
+        if (!targetDataType) {
+            targetDataType = createAndSave(dataType, target, null)
+        }
+        targetDataType
+    }
+
+
+    protected DataType createAndSave(DataType source, DataModel target, DataClass savedCopy) {
+        DataType copiedDataType = source.clone()
+        copiedDataType.updateCreationProperties()
+        copiedDataType = updateDerivedProperties(copiedDataType) as DataType
+        copiedDataType.referenceClass = savedCopy ?: null
+        copiedDataType.dataModel = target
+        log.info("Saving new datatype with label $copiedDataType.label to model $target.id: ")
+        DataType saved = dataTypeCacheableRepository.save(copiedDataType)
+        saved
+    }
+
+
+    protected static DataType findDataTypeByLabelInTarget(DataType dataType, DataModel target) {
+        target.dataTypes.find {targetModelDataType -> targetModelDataType.label == dataType.label}
+    }
+
+    protected AdministeredItem updateDerivedProperties(AdministeredItem item) {
+        pathRepository.readParentItems(item)
+        item.updatePath()
+        item.updateBreadcrumbs()
+        item
+    }
+
+    protected void updateCreationProperties(AdministeredItem item) {
+        item.id = null
+        item.version = null
+        item.dateCreated = null
+        item.lastUpdated = null
+    }
+}

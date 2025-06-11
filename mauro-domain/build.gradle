@@ -7,7 +7,7 @@ plugins {
 }
 
 version = "0.1"
-group = "uk.ac.ox.softeng.mauro"
+group = "org.maurodata"
 
 repositories {
     mavenCentral()
@@ -53,7 +53,7 @@ publishing {
 
     publications {
         gpr(MavenPublication) {
-            groupId = 'uk.ac.ox.softeng.mauro'
+            groupId = 'org.maurodata'
             artifactId = 'mauro-domain'
             version = "0.0.1-SNAPSHOT"
             from components.java
