@@ -110,7 +110,7 @@ class AuditIntegrationSpec extends SecuredIntegrationSpec {
 
     void "Test all Delete methods have description or domainType set"() {
         when:
-        Reflections reflections = new Reflections("uk.ac.ox.softeng.mauro")
+        Reflections reflections = new Reflections("org.maurodata")
         Set<Class> controllerClasses = reflections.getTypesAnnotatedWith(Controller).
             findAll{!it.name.endsWith("Intercepted")} as Set<Class>
 
