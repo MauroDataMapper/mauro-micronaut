@@ -432,8 +432,8 @@ class CommonDataSpec extends Specification {
         new FinaliseData(versionChangeType: VersionChangeType.MAJOR, versionTag: 'random version tag')
     }
 
-    DataType referenceTypeDataTypePayload(UUID dataClassId) {
-        new DataType(label: 'test Reference Type',
+    DataType referenceTypeDataTypePayload(UUID dataClassId, String label) {
+        new DataType(label: label,
                      description: 'Test Reference type description',
                      dataTypeKind: DataType.DataTypeKind.REFERENCE_TYPE,
                      referenceClass: [id: dataClassId])

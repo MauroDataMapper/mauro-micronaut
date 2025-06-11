@@ -1,17 +1,23 @@
 package uk.ac.ox.softeng.mauro.datamodel
 
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataElement
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
 import uk.ac.ox.softeng.mauro.domain.folder.Folder
 import uk.ac.ox.softeng.mauro.persistence.ContainerizedTest
-import uk.ac.ox.softeng.mauro.testing.BaseIntegrationSpec
+import uk.ac.ox.softeng.mauro.testing.CommonDataSpec
 
+import io.micronaut.http.HttpResponse
+import io.micronaut.http.HttpStatus
 import io.micronaut.runtime.EmbeddedApplication
+import io.micronaut.test.annotation.Sql
 import jakarta.inject.Inject
 import spock.lang.Shared
 
 @ContainerizedTest
-class DataClassIntegrationSpec extends BaseIntegrationSpec {
+@Sql(scripts = ["classpath:sql/tear-down-datamodel.sql", "classpath:sql/tear-down-folder.sql"], phase = Sql.Phase.AFTER_EACH)
+class DataClassIntegrationSpec extends CommonDataSpec {
 
     @Inject
     EmbeddedApplication<?> application
@@ -49,15 +55,15 @@ class DataClassIntegrationSpec extends BaseIntegrationSpec {
     @Shared
     UUID enumerationValueId
 
-    void 'test data class'() {
-        given:
-        Folder folder = (Folder) POST('/folders', [label: 'Test folder'], Folder)
-        DataModel dataModel = (DataModel) POST("/folders/$folder.id/dataModels", [label: 'Test data model'], DataModel)
+    void setup(){
+        Folder folder = folderApi.create(folder())
+        DataModel dataModel = dataModelApi.create(folder.id, dataModelPayload('Test data model'))
         dataModelId = dataModel.id
 
+    }
+    void 'test data class'() {
         when:
-
-        DataClass dataClass = (DataClass) POST("/dataModels/$dataModelId/dataClasses", [label: 'My first Data Class'], DataClass)
+        DataClass dataClass = dataClassApi.create(dataModelId, dataClassPayload('My first Data Class'))
 
         then:
         dataClass.label == 'My first Data Class'
@@ -66,42 +72,78 @@ class DataClassIntegrationSpec extends BaseIntegrationSpec {
 
     void 'test extend data class'() {
         given:
-            Folder folder = (Folder) POST('/folders', [label: 'Test folder'], Folder)
-            DataModel dataModel = (DataModel) POST("/folders/$folder.id/dataModels", [label: 'Test data model'], DataModel)
-            DataClass dataClass1 = (DataClass) POST("/dataModels/$dataModel.id/dataClasses", [label: 'My first Data Class'], DataClass)
-            DataClass dataClass2 = (DataClass) POST("/dataModels/$dataModel.id/dataClasses", [label: 'My second Data Class'], DataClass)
+        DataClass dataClass1 = dataClassApi.create(dataModelId, dataClassPayload('My first Data Class'))
+        DataClass dataClass2 = dataClassApi.create(dataModelId, dataClassPayload('My second Data Class'))
 
         when:
-            Map response = PUT("/dataModels/$dataModel.id/dataClasses/$dataClass2.id/extends/$dataModel.id/$dataClass1.id", null)
+        DataClass response = dataClassApi.createExtension(dataModelId, dataClass2.id, dataModelId, dataClass1.id)
 
         then:
-            response.label == 'My second Data Class'
-            response.extendsDataClasses.size() == 1
-            response.extendsDataClasses.first().label == 'My first Data Class'
+        response.label == 'My second Data Class'
+        response.extendsDataClasses.size() == 1
+        response.extendsDataClasses.first().label == 'My first Data Class'
 
         when:
-            response = GET("/dataModels/$dataModel.id/dataClasses/$dataClass2.id")
+        response = dataClassApi.show(dataModelId, dataClass2.id)
 
         then:
-            response.label == 'My second Data Class'
-            response.extendsDataClasses.size() == 1
-            response.extendsDataClasses.first().label == 'My first Data Class'
+        response.label == 'My second Data Class'
+        response.extendsDataClasses.size() == 1
+        response.extendsDataClasses.first().label == 'My first Data Class'
 
         when:
-            response = DELETE("/dataModels/$dataModel.id/dataClasses/$dataClass2.id/extends/$dataModel.id/$dataClass1.id")
+        response = dataClassApi.deleteExtension(dataModelId, dataClass2.id, dataModelId, dataClass1.id)
 
         then:
-            response.label == 'My second Data Class'
-            !response.extendsDataClasses
+        response.label == 'My second Data Class'
+        !response.extendsDataClasses
 
         when:
-            response = GET("/dataModels/$dataModel.id/dataClasses/$dataClass2.id")
+        response = dataClassApi.show(dataModelId, dataClass2.id)
+
 
         then:
-            response.label == 'My second Data Class'
-            !response.extendsDataClasses
+        response.label == 'My second Data Class'
+        !response.extendsDataClasses
 
     }
 
+    void 'test delete dataclass with children -should delete all associations'(){
+        given:
+        DataClass dataClass = dataClassApi.create(dataModelId, dataClassPayload('My first Data Class'))
+        DataClass child = dataClassApi.create(dataModelId, dataClass.id, dataClassPayload('child  Data Class'))
+        DataType reference = dataTypeApi.create(dataModelId, referenceTypeDataTypePayload(dataClass.id, 'dataclass reference label'))
+        DataType referenceChild = dataTypeApi.create(dataModelId, referenceTypeDataTypePayload(child.id, 'child reference label'))
+        DataElement dataElement = dataElementApi.create(dataModelId, dataClass.id, dataElementPayload('data type label', reference))
+
+        when:
+        HttpResponse httpResponse = dataClassApi.delete(dataModelId, dataClass.id, dataClass)
+        then:
+        httpResponse.status == HttpStatus.NO_CONTENT
+
+        when:
+        DataClass retrieved = dataClassApi.show(dataModelId, dataClass.id)
+        then:
+        !retrieved
+        when:
+        DataClass retrievedChild = dataClassApi.show(dataModelId, child.id)
+        then:
+        !retrievedChild
+
+        when:
+        DataElement retrievedDataElement = dataElementApi.show(dataModelId, dataClass.id, dataElement.id)
+        then:
+        !retrievedDataElement
+
+
+        when:
+        DataType referenceType = dataTypeApi.show(dataModelId, reference.id)
+        then:
+        !referenceType
+        when:
+        DataType referenceTypeChild = dataTypeApi.show(dataModelId, referenceChild.id)
+        then:
+        !referenceTypeChild
+    }
 
 }

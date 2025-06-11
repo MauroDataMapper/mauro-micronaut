@@ -53,7 +53,7 @@ class DataClassCopyIntegrationSpec extends CommonDataSpec {
         Terminology terminology = terminologyApi.create(folderId, terminology())
         terminologyApi.finalise(terminology.id, finalisePayload())
         dataClass = dataClassApi.create(dataModelId, dataClassPayload('source label'))
-        referenceTypeDataType = dataTypeApi.create(dataModelId, referenceTypeDataTypePayload(dataClass.id))
+        referenceTypeDataType = dataTypeApi.create(dataModelId, referenceTypeDataTypePayload(dataClass.id, 'datatype reference class label'))
         modelTypeDataType = dataTypeApi.create(dataModelId, modelTypeDataTypePayload(terminology.id, Terminology.class.simpleName))
         primitiveDataType = dataTypeApi.create(dataModelId, dataTypesPayload())
         childDataClass = dataClassApi.create(dataModelId, dataClass.id, dataClassPayload('child data class label'))

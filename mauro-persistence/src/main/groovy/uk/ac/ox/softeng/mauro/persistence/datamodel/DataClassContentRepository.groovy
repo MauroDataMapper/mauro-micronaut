@@ -1,7 +1,9 @@
 package uk.ac.ox.softeng.mauro.persistence.datamodel
 
+import uk.ac.ox.softeng.mauro.ErrorHandler
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataClass
 import uk.ac.ox.softeng.mauro.domain.datamodel.DataElement
+import uk.ac.ox.softeng.mauro.domain.datamodel.DataType
 import uk.ac.ox.softeng.mauro.domain.model.AdministeredItem
 import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository
 import uk.ac.ox.softeng.mauro.persistence.cache.AdministeredItemCacheableRepository.DataClassCacheableRepository
@@ -9,6 +11,7 @@ import uk.ac.ox.softeng.mauro.persistence.model.AdministeredItemContentRepositor
 
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
+import io.micronaut.http.HttpStatus
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
 
@@ -67,8 +70,7 @@ class DataClassContentRepository extends AdministeredItemContentRepository {
         dataClass.extendsDataClasses.each {extendedDataClass ->
             if(extendedDataClass.id) {
                 dataClassRepository.addDataClassExtensionRelationship(saved.id, extendedDataClass.id)
-            }
-            else if(extendedDataClass.label) {
+            } else if (extendedDataClass.label) {
                 if (dataClassMap[extendedDataClass.label]) {
                     UUID extendedDataClassId = dataClassMap[extendedDataClass.label].id
                     dataClassRepository.addDataClassExtensionRelationship(saved.id, extendedDataClassId)
@@ -78,6 +80,40 @@ class DataClassContentRepository extends AdministeredItemContentRepository {
         saved
     }
 
+    @Override
+    Long deleteWithContent(@NonNull AdministeredItem administeredItem) {
+        if ((administeredItem as DataClass).dataElements) {
+            List<DataElement> dataElements = (administeredItem as DataClass).dataElements
+            dataElements.each {
+                if (it.dataType.isReferenceType()) {
+                    deleteDanglingReferenceTypes(it.dataType.referenceClass)
+                }
+            }
+            dataElementCacheableRepository.deleteAll(dataElements)
+        }
+        if ((administeredItem as DataClass).dataClasses) {
+            List<DataClass> children = (administeredItem as DataClass).dataClasses
+            children.each {
+                deleteDanglingReferenceTypes(it)
+            }
+            dataClassCacheableRepository.deleteAll(children)
+        }
+        deleteDanglingReferenceTypes(administeredItem as DataClass)
+        dataClassCacheableRepository.delete(administeredItem as DataClass)
+    }
+
+    void deleteDanglingReferenceTypes(DataClass dataClassToDelete) {
+        List<DataType> dataTypes = dataTypeCacheableRepository.findAllByReferenceClass(dataClassToDelete).unique()
+        dataTypes.each {
+            List<DataElement> dataElementReferenced = dataElementCacheableRepository.readAllByDataType(it)
+            List<DataElement> dataElementReferences = dataElementReferenced.findAll {dataElement -> dataElement.dataClass != dataClassToDelete}.collect()
+            if (dataElementReferences.isEmpty()) {
+                dataTypeCacheableRepository.delete(it)
+            } else {
+                ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "Cannot delete Data Class has associations - check dataElements")
+            }
+        }
+    }
 
     protected List<DataElement> getDataTypes(DataClass dataClass) {
         dataClass.dataElements.collect {childDE ->

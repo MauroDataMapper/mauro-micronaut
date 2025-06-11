@@ -108,17 +108,6 @@ class DataClassService {
         saved
     }
 
-    void deleteDanglingReferenceTypes(DataClass dataClassToDelete) {
-        List<DataType> dataTypes = dataTypeCacheableRepository.findAllByReferenceClass(dataClassToDelete).unique()
-        dataTypes.each {
-            List<DataElement> dataElementReferenced = dataElementCacheableRepository.readAllByDataType(it)
-            if (dataElementReferenced.isEmpty()) {
-                dataTypeCacheableRepository.delete(it)
-            } else {
-                ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "Cannot delete Data Class has associations - check dataElements")
-            }
-        }
-    }
 
     protected static DataType findDataTypeByLabelInTarget(DataType dataType, DataModel target) {
         target.dataTypes.find {targetModelDataType -> targetModelDataType.label == dataType.label}

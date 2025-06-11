@@ -247,7 +247,8 @@ class DataTypeIntegrationSpec extends CommonDataSpec {
                          dataTypeKind: DataType.DataTypeKind.REFERENCE_TYPE,
                          referenceClass: [id: dataClassId1]))
 
-        DataElement dataElement = dataElementApi.create(dataModelId, dataClassId1, dataElementPayload("dataElement label", dataTypeResponse))
+
+        DataElement dataElement = dataElementApi.create(dataModelId, dataClassId2, dataElementPayload("dataElement label", dataTypeResponse))
         when:
         DataClass dataClass1 = dataClassApi.show(dataModelId, dataClassId1)
         then:
@@ -285,13 +286,5 @@ class DataTypeIntegrationSpec extends CommonDataSpec {
         httpResponse.status == HttpStatus.NO_CONTENT
     }
 
-//    Object createAPI(UUID dataModelId, UUID referenceClassId) {
-//
-//        dataTypeApi.create(
-//            dataModelId,
-//            new DataType(label: 'test Reference Type',
-//                         description: 'Test Reference type description',
-//                         dataTypeKind: DataType.DataTypeKind.REFERENCE_TYPE,
-//                         referenceClass: [id: referenceClassId]))
-//    }
+
 }

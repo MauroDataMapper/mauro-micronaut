@@ -15,6 +15,7 @@ import uk.ac.ox.softeng.mauro.web.ListResponse
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
+import io.micronaut.data.exceptions.EmptyResultException
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.Body
@@ -59,12 +60,19 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
     }
 
     I show(UUID id) {
-        I item = administeredItemRepository.findById(id)
+       I item
+        try {
+            item = administeredItemRepository.findById(id)
+        } catch (Exception e) {
+            if (e instanceof EmptyResultException){
+                ErrorHandler.handleError(HttpStatus.NOT_FOUND, "Item $id not found")
+            }
+        }
         ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, item, "Item with id ${id.toString()} not found")
         accessControlService.checkRole(Role.READER, item)
 
-        updateDerivedProperties(item)
-        item
+        updateDerivedProperties(item as I)
+        item as I
     }
 
     @Transactional
