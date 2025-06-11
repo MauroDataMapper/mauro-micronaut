@@ -36,13 +36,11 @@ class ModelContentRepository<M extends Model> extends AdministeredItemContentRep
         M saved = (M) getRepository(model).save(model)
 
         saveAllFacets(saved)
-
-        List<AdministeredItem> flattenedItems = associations.flatten() as List<AdministeredItem>
-        flattenedItems.collect {
-           getRepository(it).save(it)
-        }
-        flattenedItems.collect {
-            saveAllFacets(it)
+        associations.each {association ->
+            if (association) {
+                Collection<AdministeredItem> savedAssociation = getRepository(association.first()).saveAll((Collection<AdministeredItem>) association)
+                saveAllFacets(savedAssociation)
+            }
         }
         saved
     }
