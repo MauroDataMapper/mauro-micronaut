@@ -85,7 +85,7 @@ class DataElementController extends AdministeredItemController<DataElement, Data
     @Put(Paths.DATA_ELEMENT_ID)
     @Transactional
     DataElement update(UUID dataModelId, UUID dataClassId, UUID id, @Body @NonNull DataElement dataElement) {
-        DataElement cleanItem = super.cleanBody(dataElement) as DataElement
+        DataElement cleanItem = super.cleanBody(dataElement, false) as DataElement
         DataElement existing = administeredItemRepository.readById(id)
         accessControlService.checkRole(Role.EDITOR, existing)
         boolean hasChanged = updateProperties(existing, cleanItem)
