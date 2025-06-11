@@ -1,0 +1,83 @@
+package org.maurodata.service.federation
+
+import org.maurodata.ErrorHandler
+import org.maurodata.api.Paths
+import org.maurodata.controller.federation.client.FederationClient
+import org.maurodata.domain.authority.Authority
+import org.maurodata.domain.facet.federation.PublishedModel
+import org.maurodata.domain.facet.federation.SubscribedCatalogue
+import org.maurodata.domain.facet.federation.SubscribedCatalogueType
+import org.maurodata.domain.facet.federation.response.SubscribedCataloguesPublishedModelsNewerVersions
+import org.maurodata.service.core.AuthorityService
+import org.maurodata.controller.federation.converter.SubscribedCatalogueConverter
+import org.maurodata.controller.federation.converter.SubscribedCatalogueConverterService
+
+import groovy.transform.CompileStatic
+import groovy.util.logging.Slf4j
+import io.micronaut.http.HttpStatus
+import jakarta.inject.Inject
+
+import java.time.Instant
+
+@CompileStatic
+@Slf4j
+class SubscribedCatalogueService {
+
+    final FederationClient federationClient
+    final SubscribedCatalogueConverterService subscribedCatalogueConverterService
+    final AuthorityService authorityService
+
+    @Inject
+    SubscribedCatalogueService(FederationClient federationClient, SubscribedCatalogueConverterService subscribedCatalogueConverterService, AuthorityService authorityService) {
+        this.federationClient = federationClient
+        this.subscribedCatalogueConverterService = subscribedCatalogueConverterService
+        this.authorityService = authorityService
+    }
+
+    boolean validateRemote(SubscribedCatalogue subscribedCatalogue){
+        boolean result
+        Tuple2<Authority, List<PublishedModel>> remotePublishedModelsWithAuthority = getRemoteClientDataAsTuple(subscribedCatalogue, Paths.PUBLISHED_MODELS)
+        Authority defaultAuthority = authorityService.getDefaultAuthority()
+        // For Mauro JSON catalogues, check that the remote catalogue has a name (Authority label)
+        // For both Mauro JSON and Atom catalogues, check that the publishedModels list exists, however this may be empty
+        if ((subscribedCatalogue.subscribedCatalogueType == SubscribedCatalogueType.MAURO_JSON && !remotePublishedModelsWithAuthority.v1.label) ||
+            remotePublishedModelsWithAuthority.v2 == null) {
+            ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, 'Invalid subscription')
+        }
+        if (remotePublishedModelsWithAuthority.v1.label == defaultAuthority.label && remotePublishedModelsWithAuthority.v1.url ==
+            defaultAuthority.url) {
+            ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, 'Invalid subscription -check authority ')
+        }
+        result = true
+        result
+    }
+
+    List<PublishedModel> getPublishedModels(SubscribedCatalogue subscribedCatalogue) {
+       getRemoteClientDataAsTuple(subscribedCatalogue, Paths.PUBLISHED_MODELS).v2
+    }
+
+
+    SubscribedCataloguesPublishedModelsNewerVersions getNewerVersionsForPublishedModels(SubscribedCatalogue subscribedCatalogue, String publishedModelId) {
+        Tuple2<Instant, List<PublishedModel>> publishedModelsNewerVersionsTuple = getConverterForSubscribedCatalogue(subscribedCatalogue).publishedModelsNewerVersions(federationClient, subscribedCatalogue, publishedModelId)
+
+        new SubscribedCataloguesPublishedModelsNewerVersions().tap {
+            lastUpdated = publishedModelsNewerVersionsTuple.v1 ?: Instant.now() as Instant
+            newerPublishedModels = publishedModelsNewerVersionsTuple.v2 ?: []
+        }
+    }
+
+    byte[] getBytesResourceExport(SubscribedCatalogue subscribedCatalogue, String resourceUrl) {
+        federationClient.clientSetup(subscribedCatalogue)
+        federationClient.retrieveBytesFromClient(subscribedCatalogue, resourceUrl)
+    }
+
+    private SubscribedCatalogueConverter getConverterForSubscribedCatalogue(SubscribedCatalogue subscribedCatalogue) {
+        subscribedCatalogueConverterService.getSubscribedCatalogueConverter(subscribedCatalogue.subscribedCatalogueType)
+    }
+
+    private Tuple2<Authority, List<PublishedModel>> getRemoteClientDataAsTuple(SubscribedCatalogue subscribedCatalogue, String path) {
+        getConverterForSubscribedCatalogue(subscribedCatalogue).getAuthorityAndPublishedModels(federationClient, subscribedCatalogue, path)
+    }
+
+}
+

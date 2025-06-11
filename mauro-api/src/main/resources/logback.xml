@@ -10,7 +10,7 @@
             <totalSizeCap>1GB</totalSizeCap>
         </rollingPolicy>
 -->
-        <encoder class="uk.ac.ox.softeng.mauro.audit.MauroJsonLogEncoder">
+        <encoder class="org.maurodata.audit.MauroJsonLogEncoder">
         </encoder>
     </appender>
 
@@ -45,7 +45,7 @@
 
     <logger name="org.flywaydb" level="info" />
 
-    <logger name="uk.ac.ox.softeng.mauro" level="debug" />
+    <logger name="org,maurodata" level="debug" />
     <logger name="org.codehaus.groovy" level="debug" />
 
 </configuration>

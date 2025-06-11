@@ -1,0 +1,71 @@
+package org.maurodata.persistence.datamodel
+
+import org.maurodata.domain.datamodel.DataClass
+import org.maurodata.domain.datamodel.DataModel
+import org.maurodata.domain.datamodel.DataType
+import org.maurodata.domain.model.AdministeredItem
+import org.maurodata.persistence.datamodel.dto.DataTypeDTORepository
+import org.maurodata.persistence.model.ModelItemRepository
+
+import io.micronaut.core.annotation.Nullable
+import io.micronaut.data.jdbc.annotation.JdbcRepository
+import io.micronaut.data.model.query.builder.sql.Dialect
+import jakarta.inject.Inject
+
+@JdbcRepository(dialect = Dialect.POSTGRES)
+abstract class DataTypeRepository implements ModelItemRepository<DataType> {
+
+    @Inject
+    DataTypeDTORepository dataTypeDTORepository
+
+    @Override
+    @Nullable
+    DataType findById(UUID id) {
+        dataTypeDTORepository.findById(id) as DataType
+    }
+
+    @Nullable
+    List<DataType> findAllByDataModel(DataModel dataModel) {
+        dataTypeDTORepository.findAllByDataModel(dataModel) as List<DataType>
+    }
+
+    @Nullable
+    List<DataType> findAllByReferenceClass(DataClass referenceClass) {
+        dataTypeDTORepository.findAllByReferenceClass(referenceClass) as List<DataType>
+    }
+
+    @Override
+    @Nullable
+    List<DataType> findAllByParent(AdministeredItem parent) {
+        findAllByDataModel((DataModel) parent)
+    }
+
+    @Nullable
+    abstract List<DataType> readAllByDataModel(DataModel dataModel)
+
+    @Override
+    @Nullable
+    List<DataType> readAllByParent(AdministeredItem parent) {
+        readAllByDataModel((DataModel) parent)
+    }
+
+    abstract Long deleteByDataModelId(UUID dataModelId)
+
+    //    @Override
+    Long deleteByOwnerId(UUID ownerId) {
+        deleteByDataModelId(ownerId)
+    }
+
+
+    @Override
+    Class getDomainClass() {
+        DataType
+    }
+
+    @Override
+    Boolean handles(String domainType) {
+        return domainType != null && domainType.toLowerCase() in
+               ['datatype', 'datatypes', 'primitivetype', 'primitivetypes', 'enumerationtype', 'enumerationtypes', 'referencetype', 'referencetypes', 'modeltype',
+                'modeltypes']
+    }
+}

@@ -1,0 +1,113 @@
+package org.maurodata.controller.config
+
+import org.maurodata.api.Paths
+import org.maurodata.api.config.ApiPropertyApi
+import org.maurodata.audit.Audit
+
+import groovy.transform.CompileStatic
+import groovy.util.logging.Slf4j
+import io.micronaut.core.annotation.NonNull
+import io.micronaut.core.annotation.Nullable
+import io.micronaut.http.HttpResponse
+import io.micronaut.http.HttpStatus
+import io.micronaut.http.annotation.*
+import io.micronaut.http.exceptions.HttpStatusException
+import io.micronaut.security.annotation.Secured
+import io.micronaut.security.rules.SecurityRule
+import org.maurodata.controller.model.ItemController
+import org.maurodata.domain.config.ApiProperty
+import org.maurodata.domain.model.Item
+import org.maurodata.persistence.cache.ItemCacheableRepository
+import org.maurodata.web.ListResponse
+
+@CompileStatic
+@Slf4j
+@Controller
+@Secured(SecurityRule.IS_ANONYMOUS)
+class ApiPropertyController extends ItemController<ApiProperty> implements ApiPropertyApi {
+
+    ItemCacheableRepository.ApiPropertyCacheableRepository apiPropertyRepository
+
+    ApiPropertyController(ItemCacheableRepository.ApiPropertyCacheableRepository apiPropertyRepository) {
+        super(apiPropertyRepository)
+        this.apiPropertyRepository = apiPropertyRepository
+    }
+
+    @Override
+    List<String> getDisallowedProperties() {
+        super.getDisallowedProperties() + ['lastUpdatedBy']
+    }
+
+    @Audit
+    @Get(Paths.API_PROPERTY_LIST_PUBLIC)
+    ListResponse<ApiProperty> listPubliclyVisible() {
+        ListResponse.from(apiPropertyRepository.findAllByPubliclyVisibleTrue())
+    }
+
+    @Audit
+    @Get(Paths.API_PROPERTY_LIST_ALL)
+    ListResponse<ApiProperty> listAll() {
+        accessControlService.checkAdministrator()
+        ListResponse.from(apiPropertyRepository.findAll())
+    }
+
+    @Audit
+    @Get(Paths.API_PROPERTY_SHOW)
+    ApiProperty show(UUID id) {
+        accessControlService.checkAdministrator()
+
+        apiPropertyRepository.findById(id)
+    }
+
+    @Audit(level = Audit.AuditLevel.FILE_ONLY)
+    @Post(Paths.API_PROPERTY_LIST_ALL)
+    ApiProperty create(@Body @NonNull ApiProperty apiProperty) {
+        accessControlService.checkAdministrator()
+
+        cleanBody(apiProperty)
+
+        updateCreationProperties(apiProperty)
+
+        apiPropertyRepository.save(apiProperty)
+    }
+
+    @Audit(level = Audit.AuditLevel.FILE_ONLY)
+    @Put(Paths.API_PROPERTY_SHOW)
+    ApiProperty update(UUID id, @Body @NonNull ApiProperty apiProperty) {
+        accessControlService.checkAdministrator()
+
+        cleanBody(apiProperty)
+        ApiProperty existing = apiPropertyRepository.readById(id)
+
+        boolean hasChanged = updateProperties(existing, apiProperty)
+
+        if (hasChanged) {
+            apiPropertyRepository.update(existing)
+        } else {
+            existing
+        }
+    }
+
+    @Audit(level = Audit.AuditLevel.FILE_ONLY)
+    @Delete(Paths.API_PROPERTY_SHOW)
+    HttpResponse delete(UUID id, @Body @Nullable ApiProperty apiProperty) {
+        accessControlService.checkAdministrator()
+
+        ApiProperty apiPropertyToDelete = apiPropertyRepository.readById(id)
+
+        if (apiProperty?.version) apiPropertyToDelete.version = apiProperty.version
+        Long deleted = apiPropertyRepository.delete(apiPropertyToDelete)
+        if (deleted) {
+            HttpResponse.status(HttpStatus.NO_CONTENT)
+        } else {
+            throw new HttpStatusException(HttpStatus.NOT_FOUND, 'Not found for deletion')
+        }
+    }
+
+    @Override
+    protected ApiProperty updateCreationProperties(Item item) {
+        super.updateCreationProperties(item)
+        ((ApiProperty) item).lastUpdatedBy = accessControlService.user
+        (ApiProperty) item
+    }
+}
