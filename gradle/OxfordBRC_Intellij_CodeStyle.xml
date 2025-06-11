@@ -9,18 +9,12 @@
     </option>
     <option name="IMPORT_LAYOUT_TABLE">
       <value>
-        <package name="uk.ac.ox" withSubpackages="true" static="false" />
-        <emptyLine />
-        <package name="ox.softeng" withSubpackages="true" static="false" />
+        <package name="org.maurodata" withSubpackages="true" static="false" />
         <emptyLine />
         <package name="" withSubpackages="true" static="false" />
         <emptyLine />
         <package name="java" withSubpackages="true" static="false" />
         <package name="javax" withSubpackages="true" static="false" />
-        <emptyLine />
-        <package name="uk.ac.ox" withSubpackages="true" static="true" />
-        <emptyLine />
-        <package name="ox.softeng" withSubpackages="true" static="true" />
         <emptyLine />
         <package name="" withSubpackages="true" static="true" />
       </value>
@@ -36,18 +30,12 @@
     </option>
     <option name="IMPORT_LAYOUT_TABLE">
       <value>
-        <package name="uk.ac.ox" withSubpackages="true" static="false" />
-        <emptyLine />
-        <package name="ox.softeng" withSubpackages="true" static="false" />
+        <package name="org.maurodata" withSubpackages="true" static="false" />
         <emptyLine />
         <package name="" withSubpackages="true" static="false" />
         <emptyLine />
         <package name="java" withSubpackages="true" static="false" />
         <package name="javax" withSubpackages="true" static="false" />
-        <emptyLine />
-        <package name="uk.ac.ox" withSubpackages="true" static="true" />
-        <emptyLine />
-        <package name="ox.softeng" withSubpackages="true" static="true" />
         <emptyLine />
         <package name="" withSubpackages="true" static="true" />
       </value>

@@ -1,5 +1,5 @@
 applicationType: default
-defaultPackage: uk.ac.ox.softeng.mauro
+defaultPackage: org,maurodata
 testFramework: spock
 sourceLanguage: groovy
 buildTool: gradle

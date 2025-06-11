@@ -25,8 +25,8 @@ repositories {
 dependencies {
     implementation 'org.apache.groovy:groovy:4.0.14'
     
-    implementation 'uk.ac.ox.softeng.mauro:mauro-client:0.0.1-SNAPSHOT'
-    implementation 'uk.ac.ox.softeng.mauro:mauro-domain:0.0.1-SNAPSHOT'
+    implementation 'org,maurodata:mauro-client:0.0.1-SNAPSHOT'
+    implementation 'org,maurodata:mauro-domain:0.0.1-SNAPSHOT'
 }
 ```
 This will bring in the domain model and the generated declarative client.  Obviously the version numbers will need replacing to match the latest build / release 
@@ -81,8 +81,8 @@ Note that at the moment it's difficult to have two applications in the same clas
 ## A (slightly) more complicated example
 
 ```groovy
-import uk.ac.ox.softeng.mauro.domain.datamodel.DataModel
-import uk.ac.ox.softeng.mauro.domain.folder.Folder
+import org.maurodata.domain.datamodel.DataModel
+import org.maurodata.domain.folder.Folder
 
 import jakarta.inject.Singleton
 
