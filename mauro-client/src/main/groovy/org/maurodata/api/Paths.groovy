@@ -102,6 +102,8 @@ interface Paths {
     String DATA_ELEMENT_ID = '/dataModels/{dataModelId}/dataClasses/{dataClassId}/dataElements/{id}'
     String DATA_ELEMENT_DOI = '/dataElements/{id}/doi'
     String DATA_ELEMENT_LIST_PAGED = '/dataModels/{dataModelId}/dataClasses/{dataClassId}/dataElements{?params*}'
+    String DATA_ELEMENT_COPY = '/dataModels/{dataModelId}/dataClasses/dataElements/{dataClassId}/{otherModelId}/{otherDataClassId}/{dataElementId}'
+
 
 
     /*
