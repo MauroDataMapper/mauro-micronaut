@@ -237,4 +237,26 @@ class DataModelSubsetIntersectsSpec  extends CommonDataSpec {
         copiedBooleanDataElement.path.toString() == 'fo:Test folder|dm:Subset Target DataModel$main|dc:Second class|de:My first Data Element'
         copiedBooleanDataElement.dataType.label == 'Boolean'
     }
+
+    void 'delete elements from model with subset'() {
+        when:
+        DataModel response = dataModelApi.subset(dataModelId, targetDataModelId, new SubsetData(deletions: [stringDataElementId, enumerationDataElementId]))
+
+        then:
+        response.id == targetDataModelId
+
+        when:
+        DataModel targetUpdated = dataModelContentRepository.findWithContentById(targetDataModelId)
+
+        then:
+        targetUpdated.dataElements.size() == 2
+        targetUpdated.allDataClasses.size() == 3
+
+        and: 'get each dataelement in subset datamodel'
+        targetUpdated.dataElements.find {it.label == 'Test Data Element 2'}.id
+        targetUpdated.dataElements.find {it.label == 'My first Data Element'}.id
+        targetUpdated.allDataClasses.find {it.label == 'Second class'}.id
+        targetUpdated.allDataClasses.find {it.label == 'Third class'}.id
+        targetUpdated.allDataClasses.find {it.label == 'Child class'}.id
+    }
 }
