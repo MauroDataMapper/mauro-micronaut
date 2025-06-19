@@ -41,6 +41,7 @@ interface Paths {
     String CHILD_CLASSIFIERS_ID_ROUTE = '/classificationSchemes/{classificationSchemeId}/classifiers/{parentClassifierId}/classifiers/{childClassifierId}'
     String ADMINISTERED_ITEM_CLASSIFIER_ID_ROUTE = '/{administeredItemDomainType}/{administeredItemId}/classifiers/{id}'
     String ADMINISTERED_ITEM_CLASSIFIER_ROUTE = '/{administeredItemDomainType}/{administeredItemId}/classifiers'
+    String ALL_CLASSIFIERS_ROUTE = '/classifiers'
 
 
     /*

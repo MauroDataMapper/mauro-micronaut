@@ -199,14 +199,9 @@ class ClassifierController extends AdministeredItemController<Classifier, Classi
         }
     }
 
-    //todo: temporary endpoint to align with UI
-    @Get('/classifiers')
-    List<Classifier> list() {
-        List result = List.of(new Classifier().tap {
-            id = UUID.randomUUID()
-            domainType =  'Classifier'
-            label =  'stub classifier label'
-        })
-        result
+
+    @Get(Paths.ALL_CLASSIFIERS_ROUTE)
+    ListResponse<Classifier> listAllClassifiers() {
+        ListResponse.from(classifierCacheableRepository.findAll())
     }
 }

@@ -53,6 +53,9 @@ abstract class ClassifierRepository implements ModelItemRepository<Classifier> {
         classifierDTORepository.findAllByAdministeredItem(administeredItemDomainType, administeredItemId)
     }
 
+    @Nullable
+    abstract List<Classifier> findAll() 
+
 
     @Nullable
     abstract List<Classifier> readAllByClassificationScheme(ClassificationScheme classificationScheme)

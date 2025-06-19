@@ -299,7 +299,12 @@ class CommonDataSpec extends Specification {
             description : 'random description ')
 
     }
+    Classifier classifierPayload(String label){
+        new Classifier(
+            label: label,
+            description : 'random description ')
 
+    }
     /**
      * Convenience method for importing a data model into the database for testing
      */
