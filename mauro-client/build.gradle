@@ -9,9 +9,6 @@ plugins {
     id("codenarc")
 }
 
-group = 'org.maurodata'
-version = '0.1'
-
 repositories {
     mavenCentral()
 }
