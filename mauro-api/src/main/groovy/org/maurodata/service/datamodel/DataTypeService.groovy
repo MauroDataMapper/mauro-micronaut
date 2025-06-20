@@ -1,6 +1,5 @@
 package org.maurodata.service.datamodel
 
-
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.http.HttpStatus

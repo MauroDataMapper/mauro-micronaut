@@ -1,5 +1,9 @@
 package org.maurodata.persistence.model
 
+import groovy.transform.CompileStatic
+import groovy.util.logging.Slf4j
+import io.micronaut.core.annotation.NonNull
+import jakarta.inject.Singleton
 import org.maurodata.domain.facet.Annotation
 import org.maurodata.domain.facet.Facet
 import org.maurodata.domain.facet.Metadata
@@ -9,15 +13,6 @@ import org.maurodata.domain.facet.RuleRepresentation
 import org.maurodata.domain.facet.SummaryMetadata
 import org.maurodata.domain.facet.SummaryMetadataReport
 import org.maurodata.domain.facet.VersionLink
-import org.maurodata.domain.folder.Folder
-import org.maurodata.domain.model.AdministeredItem
-import org.maurodata.domain.model.Model
-
-import groovy.transform.CompileStatic
-import groovy.util.logging.Slf4j
-import io.micronaut.core.annotation.NonNull
-import jakarta.inject.Singleton
-import org.maurodata.domain.facet.*
 import org.maurodata.domain.folder.Folder
 import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.domain.model.Model
@@ -123,7 +118,6 @@ class ModelContentRepository<M extends Model> extends AdministeredItemContentRep
             }
         }
     }
-
 
     void saveAnnotations(List<AdministeredItem> items) {
         List<Annotation> annotations = []

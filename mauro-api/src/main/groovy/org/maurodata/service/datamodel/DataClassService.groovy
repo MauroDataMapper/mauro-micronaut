@@ -39,14 +39,14 @@ class DataClassService {
         //cloned so these are old
         List<DataType> copiedTargetDataTypes = []
         savedCopy.referenceTypes.each {
-            DataType targetDataType = findDataTypeByLabelInTarget(it as DataType, target)
+            DataType targetDataType = findDataTypeByLabelInTarget(it, target)
             if (!targetDataType) {
-                copiedTargetDataTypes.add(createAndSave(it as DataType, target, savedCopy))
+                copiedTargetDataTypes.add(createAndSave(it, target, savedCopy))
             } else {
                 copiedTargetDataTypes.add(targetDataType)
             }
         }
-        savedCopy.referenceTypes = dataTypeCacheableRepository.updateAll(copiedTargetDataTypes) as List<DataType>
+        savedCopy.referenceTypes = dataTypeCacheableRepository.updateAll(copiedTargetDataTypes)
         savedCopy
     }
 
@@ -75,7 +75,7 @@ class DataClassService {
                     //target model does not have existing dataType? copy new DataType in target model
                     copiedDE.dataType = setOrCreateNewDataType(target, copiedDE.dataType)
                 }
-                updateCreationProperties(copiedDE as AdministeredItem)
+                updateCreationProperties(copiedDE)
                 updateDerivedProperties(copiedDE)
                 copiedDE.dataModel = target
                 copiedDE.dataClass = dataClass
