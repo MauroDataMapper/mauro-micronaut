@@ -8,8 +8,6 @@ plugins {
     id("java-test-fixtures")
 }
 
-version = "0.1"
-group = "org.maurodata"
 
 repositories {
     mavenCentral()

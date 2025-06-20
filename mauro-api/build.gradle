@@ -7,8 +7,6 @@ plugins {
     id("codenarc")
     id("java-test-fixtures")
 }
-version = "0.1"
-group = "org.maurodata"
 
 repositories {
     mavenCentral()
@@ -95,7 +93,7 @@ micronaut {
     testRuntime("spock2")
     processing {
         incremental(true)
-        annotations("org,maurodata.*")
+        annotations("org.maurodata.*")
     }
     aot {
         // Please review carefully the optimizations enabled below

@@ -6,9 +6,6 @@ plugins {
     id("codenarc")
 }
 
-version = "0.1"
-group = "org.maurodata"
-
 repositories {
     mavenCentral()
 }
