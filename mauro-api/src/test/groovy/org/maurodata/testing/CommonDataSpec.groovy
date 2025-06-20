@@ -431,6 +431,21 @@ class CommonDataSpec extends Specification {
     FinaliseData finalisePayload() {
         new FinaliseData(versionChangeType: VersionChangeType.MAJOR, versionTag: 'random version tag')
     }
+
+    DataType referenceTypeDataTypePayload(UUID dataClassId) {
+        new DataType(label: 'test Reference Type',
+                     description: 'Test Reference type description',
+                     dataTypeKind: DataType.DataTypeKind.REFERENCE_TYPE,
+                     referenceClass: [id: dataClassId])
+    }
+
+     DataType modelTypeDataTypePayload(UUID modelId, String modelType) {
+         new DataType(label: 'test Model Resource Type',
+                      description: 'Test Model resourcde type description',
+                      dataTypeKind: DataType.DataTypeKind.MODEL_TYPE,
+                      modelResourceDomainType: modelType,
+                    modelResourceId: modelId)
+    }
 }
 
 

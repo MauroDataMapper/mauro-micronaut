@@ -93,7 +93,7 @@ interface Paths {
     String DATA_CLASS_EXTENDS = '/dataModels/{dataModelId}/dataClasses/{id}/extends/{otherModelId}/{otherClassId}'
     String DATA_CLASS_DOI = '/dataClasses/{id}/doi'
     String DATA_CLASS_SEARCH = '/dataModels/{dataModelId}/dataClasses{?params*}'
-
+    String DATA_CLASS_COPY = '/dataModels/{dataModelId}/dataClasses/{otherModelId}/{dataClassId}'
 
     /*
     * DataElementApi

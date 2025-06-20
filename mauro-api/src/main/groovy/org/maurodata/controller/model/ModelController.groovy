@@ -152,7 +152,8 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         existing.updatePath()
         modelRepository.update(original, existing)
     }
-
+    
+    @Transactional
     HttpResponse delete(UUID id, @Body @Nullable M model, @Nullable Boolean permanent) {
 
         M modelToDelete = (M) modelContentRepository.findWithContentById(id)

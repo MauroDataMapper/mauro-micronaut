@@ -1,14 +1,5 @@
 package org.maurodata.domain.datamodel
 
-import org.maurodata.domain.diff.BaseCollectionDiff
-import org.maurodata.domain.diff.CollectionDiff
-import org.maurodata.domain.diff.DiffBuilder
-import org.maurodata.domain.diff.DiffableItem
-import org.maurodata.domain.diff.ObjectDiff
-import org.maurodata.domain.model.AdministeredItem
-import org.maurodata.domain.model.Model
-import org.maurodata.domain.model.ModelItem
-
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import groovy.transform.AutoClone
@@ -18,7 +9,19 @@ import io.micronaut.core.annotation.Introspected
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Relation
-import jakarta.persistence.*
+import jakarta.persistence.Inheritance
+import jakarta.persistence.InheritanceType
+import jakarta.persistence.JoinColumn
+import jakarta.persistence.JoinTable
+import jakarta.persistence.Transient
+import org.maurodata.domain.diff.BaseCollectionDiff
+import org.maurodata.domain.diff.CollectionDiff
+import org.maurodata.domain.diff.DiffBuilder
+import org.maurodata.domain.diff.DiffableItem
+import org.maurodata.domain.diff.ObjectDiff
+import org.maurodata.domain.model.AdministeredItem
+import org.maurodata.domain.model.Model
+import org.maurodata.domain.model.ModelItem
 
 /**
  * A datatype describes the range of values that a column or field in a dataset may take.  It may be one of the following kinds:
@@ -68,6 +71,7 @@ class DataClass extends ModelItem<DataModel> implements DiffableItem<DataClass> 
     List<DataClass> extendedBy = []
 
     @Nullable @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'referenceClass')
+    @JsonIgnore
     List<DataType> referenceTypes = []
 
     @JsonIgnore

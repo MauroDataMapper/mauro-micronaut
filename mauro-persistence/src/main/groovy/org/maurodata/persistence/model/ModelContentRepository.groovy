@@ -124,7 +124,6 @@ class ModelContentRepository<M extends Model> extends AdministeredItemContentRep
         }
     }
 
-
     void saveAnnotations(List<AdministeredItem> items) {
         List<Annotation> annotations = []
         items.each {item ->

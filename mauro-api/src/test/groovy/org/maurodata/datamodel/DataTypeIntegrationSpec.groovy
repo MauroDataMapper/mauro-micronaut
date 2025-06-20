@@ -49,7 +49,7 @@ class DataTypeIntegrationSpec extends CommonDataSpec {
         dataClassId2 = dataClassApi.create(dataModelId, dataClassPayload('data class 2 label')).id
     }
 
-    void 'create  dataType with DataTypeKind referenceType -payload  #referenceId fails validation -should throw Unprocessible entity exception'() {
+    void 'create  dataType with  DataTypeKind referenceType -payload  #referenceId fails validation -should throw Unprocessible entity exception'() {
         when:
         dataTypeApi.create(
             dataModelId,
@@ -89,8 +89,7 @@ class DataTypeIntegrationSpec extends CommonDataSpec {
 
         when:
         DataType dataTypeResponse = dataTypeApi.create(
-            dataModelId,
-            new DataType(label: 'test Reference Type',
+            dataModelId,new DataType(label: 'test Reference Type',
                          description: 'Test Reference type description',
                          dataTypeKind: DataType.DataTypeKind.REFERENCE_TYPE,
                          referenceClass: [id: dataClassId1]))
@@ -248,7 +247,8 @@ class DataTypeIntegrationSpec extends CommonDataSpec {
                          dataTypeKind: DataType.DataTypeKind.REFERENCE_TYPE,
                          referenceClass: [id: dataClassId1]))
 
-        DataElement dataElement = dataElementApi.create(dataModelId, dataClassId1, dataElementPayload("dataElement label", dataTypeResponse))
+
+        dataElementApi.create(dataModelId, dataClassId2, dataElementPayload("dataElement label", dataTypeResponse))
         when:
         DataClass dataClass1 = dataClassApi.show(dataModelId, dataClassId1)
         then:
@@ -286,13 +286,5 @@ class DataTypeIntegrationSpec extends CommonDataSpec {
         httpResponse.status == HttpStatus.NO_CONTENT
     }
 
-//    Object createAPI(UUID dataModelId, UUID referenceClassId) {
-//
-//        dataTypeApi.create(
-//            dataModelId,
-//            new DataType(label: 'test Reference Type',
-//                         description: 'Test Reference type description',
-//                         dataTypeKind: DataType.DataTypeKind.REFERENCE_TYPE,
-//                         referenceClass: [id: referenceClassId]))
-//    }
+
 }

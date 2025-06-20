@@ -30,8 +30,8 @@ abstract class DataTypeRepository implements ModelItemRepository<DataType> {
     }
 
     @Nullable
-    List<DataType> findAllByReferenceClass(DataClass referenceClass) {
-        dataTypeDTORepository.findAllByReferenceClass(referenceClass) as List<DataType>
+    List<DataType> findAllByReferenceClassId(UUID referenceClassId) {
+        dataTypeDTORepository.findAllByReferenceClassId(referenceClassId) as List<DataType>
     }
 
     @Override
@@ -56,6 +56,10 @@ abstract class DataTypeRepository implements ModelItemRepository<DataType> {
         deleteByDataModelId(ownerId)
     }
 
+    @Nullable
+    List<DataType> findAllByReferenceClass(UUID referenceClassId) {
+        dataTypeDTORepository.findAllByReferenceClassId(referenceClassId)
+    }
 
     @Override
     Class getDomainClass() {
@@ -68,4 +72,5 @@ abstract class DataTypeRepository implements ModelItemRepository<DataType> {
                ['datatype', 'datatypes', 'primitivetype', 'primitivetypes', 'enumerationtype', 'enumerationtypes', 'referencetype', 'referencetypes', 'modeltype',
                 'modeltypes']
     }
+
 }

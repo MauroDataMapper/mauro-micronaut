@@ -13,7 +13,6 @@ import io.micronaut.data.annotation.Relation
 import jakarta.persistence.Transient
 import org.maurodata.domain.model.Model
 import org.maurodata.domain.model.ModelItem
-import org.maurodata.domain.security.Role
 
 /**
  * A DataModel describes a data asset, or a data standard
