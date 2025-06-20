@@ -9,7 +9,7 @@ plugins {
     id("codenarc")
 }
 
-group = 'org,maurodata'
+group = 'org.maurodata'
 version = '0.1'
 
 repositories {
@@ -60,7 +60,7 @@ test {
 publishing {
     publications {
         mavenJava(MavenPublication) {
-            groupId = 'org,maurodata'
+            groupId = 'org.maurodata'
             artifactId = 'mauro-client'
             version = "0.0.1-SNAPSHOT"
             from components.java
