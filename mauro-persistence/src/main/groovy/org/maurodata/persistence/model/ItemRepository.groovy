@@ -39,4 +39,6 @@ trait ItemRepository<I extends Item> implements GenericRepository<I, UUID> {
     Boolean handles(String domainType) {
         domainClass.simpleName.equalsIgnoreCase(domainType) || (domainClass.simpleName + 's').equalsIgnoreCase(domainType)
     }
+
+    abstract List<I> readAll()
 }

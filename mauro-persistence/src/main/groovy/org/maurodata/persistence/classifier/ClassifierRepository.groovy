@@ -104,5 +104,10 @@ abstract class ClassifierRepository implements ModelItemRepository<Classifier> {
     List<Classifier> findAllByParent(Classifier classifier) {
         classifierDTORepository.findAllByClassifier(classifier.id)
     }
+
+    List<Classifier> readAll(){
+        findAll()
+    }
+
 }
 

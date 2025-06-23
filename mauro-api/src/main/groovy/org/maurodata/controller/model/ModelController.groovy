@@ -249,13 +249,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     }
 
     ListResponse<M> listAll() {
-        List<M> models = modelRepository.readAll()
-        models = models.findAll { accessControlService.canDoRole(Role.READER, it) }
-        models.each {
-            pathRepository.readParentItems(it)
-            it.updatePath()
-        }
-        ListResponse.from(models)
+        super.listAll()
     }
 
     @Transactional

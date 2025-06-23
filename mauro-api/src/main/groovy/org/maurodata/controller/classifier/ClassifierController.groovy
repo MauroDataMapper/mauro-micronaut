@@ -202,10 +202,7 @@ class ClassifierController extends AdministeredItemController<Classifier, Classi
 
     @Get(Paths.ALL_CLASSIFIERS_ROUTE)
     ListResponse<Classifier> listAllClassifiers() {
-        List<Classifier> classifierList = classifierCacheableRepository.findAll()
-        classifierList.collect{
-            accessControlService.checkRole(Role.READER,it)
-        }
-        ListResponse.from(classifierList)
+        super.listAll()
+
     }
 }

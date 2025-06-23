@@ -97,6 +97,10 @@ abstract class ItemCacheableRepository<I extends Item> implements ItemRepository
         deleted
     }
 
+
+    List<I> readAll() {
+        repository.readAll()
+    }
     /**
      * Single method to perform all cached repository methods.
      * This allows all responses to be cached in a single cache which can have a configured maximum size.
