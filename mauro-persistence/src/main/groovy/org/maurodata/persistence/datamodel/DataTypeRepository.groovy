@@ -1,14 +1,15 @@
 package org.maurodata.persistence.datamodel
 
-import io.micronaut.core.annotation.Nullable
-import io.micronaut.data.jdbc.annotation.JdbcRepository
-import io.micronaut.data.model.query.builder.sql.Dialect
-import jakarta.inject.Inject
 import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.datamodel.DataType
 import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.persistence.datamodel.dto.DataTypeDTORepository
 import org.maurodata.persistence.model.ModelItemRepository
+
+import io.micronaut.core.annotation.Nullable
+import io.micronaut.data.jdbc.annotation.JdbcRepository
+import io.micronaut.data.model.query.builder.sql.Dialect
+import jakarta.inject.Inject
 
 @JdbcRepository(dialect = Dialect.POSTGRES)
 abstract class DataTypeRepository implements ModelItemRepository<DataType> {
@@ -26,6 +27,7 @@ abstract class DataTypeRepository implements ModelItemRepository<DataType> {
     List<DataType> findAllByDataModel(DataModel dataModel) {
         dataTypeDTORepository.findAllByDataModel(dataModel) as List<DataType>
     }
+
 
 
     @Override

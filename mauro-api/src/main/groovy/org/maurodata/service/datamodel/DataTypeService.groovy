@@ -84,10 +84,10 @@ class DataTypeService extends AdministeredItemService {
         dataTypeRepository.readById(dataTypeId)
     }
 
-
     protected DataClass getReferenceDataClass(@NonNull UUID dataClassId) {
         DataClass referenceClass = dataClassRepository.findById(dataClassId)
         ErrorHandler.handleErrorOnNullObject(HttpStatus.UNPROCESSABLE_ENTITY, referenceClass, "Cannot find reference class ")
         referenceClass
     }
+
 }

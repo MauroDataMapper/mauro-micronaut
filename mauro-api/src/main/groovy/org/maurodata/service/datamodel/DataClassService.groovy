@@ -1,6 +1,5 @@
 package org.maurodata.service.datamodel
 
-
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import jakarta.inject.Inject

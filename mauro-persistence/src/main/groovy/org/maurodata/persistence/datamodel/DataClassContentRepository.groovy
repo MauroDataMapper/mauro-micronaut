@@ -1,5 +1,6 @@
 package org.maurodata.persistence.datamodel
 
+import io.micronaut.http.HttpStatus
 import org.maurodata.ErrorHandler
 import org.maurodata.domain.datamodel.DataClass
 import org.maurodata.domain.datamodel.DataElement
@@ -9,8 +10,6 @@ import org.maurodata.persistence.cache.AdministeredItemCacheableRepository
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository.DataClassCacheableRepository
 
 import groovy.transform.CompileStatic
-import io.micronaut.core.annotation.NonNull
-import io.micronaut.http.HttpStatus
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
 import org.maurodata.persistence.model.AdministeredItemContentRepository
@@ -53,7 +52,7 @@ class DataClassContentRepository extends AdministeredItemContentRepository {
         dataClass.extendsDataClasses = dataClassRepository.getDataClassExtensionRelationships(id)
         dataClass.extendsDataClasses.each {it.extendedBy.add(dataClass)}
 
-        dataClass.referenceTypes = dataTypeCacheableRepository.findAllByReferenceClass(dataClass) as List<DataType>
+        dataClass.referenceTypes = dataTypeCacheableRepository.findAllByReferenceClass(dataClass)
         dataClass
     }
 
@@ -70,7 +69,8 @@ class DataClassContentRepository extends AdministeredItemContentRepository {
         dataClass.extendsDataClasses.each {extendedDataClass ->
             if(extendedDataClass.id) {
                 dataClassRepository.addDataClassExtensionRelationship(saved.id, extendedDataClass.id)
-            } else if (extendedDataClass.label) {
+            }
+            else if(extendedDataClass.label) {
                 if (dataClassMap[extendedDataClass.label]) {
                     UUID extendedDataClassId = dataClassMap[extendedDataClass.label].id
                     dataClassRepository.addDataClassExtensionRelationship(saved.id, extendedDataClassId)
@@ -81,7 +81,7 @@ class DataClassContentRepository extends AdministeredItemContentRepository {
     }
 
     @Override
-    Long deleteWithContent(@NonNull AdministeredItem administeredItem) {
+    Long deleteWithContent(AdministeredItem administeredItem) {
         if ((administeredItem as DataClass).dataElements) {
             List<DataElement> dataElements = (administeredItem as DataClass).dataElements
             dataElements.each {

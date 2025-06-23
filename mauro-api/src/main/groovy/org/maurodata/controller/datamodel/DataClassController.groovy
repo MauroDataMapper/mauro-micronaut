@@ -25,6 +25,7 @@ import org.maurodata.domain.datamodel.DataClass
 import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.security.Role
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository
+import org.maurodata.persistence.cache.ModelCacheableRepository
 import org.maurodata.persistence.cache.ModelCacheableRepository.DataModelCacheableRepository
 import org.maurodata.persistence.datamodel.DataClassContentRepository
 import org.maurodata.persistence.datamodel.DataModelContentRepository
@@ -39,7 +40,8 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
 
     AdministeredItemCacheableRepository.DataClassCacheableRepository dataClassRepository
 
-    DataModelCacheableRepository dataModelRepository
+    ModelCacheableRepository.DataModelCacheableRepository dataModelRepository
+
     DataModelContentRepository dataModelContentRepository
     DataClassContentRepository dataClassContentRepository
     DataClassService dataClassService

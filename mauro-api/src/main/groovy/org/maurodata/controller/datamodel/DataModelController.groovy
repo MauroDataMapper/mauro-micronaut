@@ -1,5 +1,29 @@
 package org.maurodata.controller.datamodel
 
+import groovy.transform.CompileStatic
+import groovy.util.logging.Slf4j
+import io.micronaut.context.annotation.Parameter
+import io.micronaut.core.annotation.NonNull
+import io.micronaut.core.annotation.Nullable
+import io.micronaut.http.HttpResponse
+import io.micronaut.http.HttpStatus
+import io.micronaut.http.MediaType
+import io.micronaut.http.annotation.Body
+import io.micronaut.http.annotation.Consumes
+import io.micronaut.http.annotation.Controller
+import io.micronaut.http.annotation.Delete
+import io.micronaut.http.annotation.Get
+import io.micronaut.http.annotation.Post
+import io.micronaut.http.annotation.Put
+import io.micronaut.http.annotation.QueryValue
+import io.micronaut.http.exceptions.HttpStatusException
+import io.micronaut.http.server.multipart.MultipartBody
+import io.micronaut.scheduling.TaskExecutors
+import io.micronaut.scheduling.annotation.ExecuteOn
+import io.micronaut.security.annotation.Secured
+import io.micronaut.security.rules.SecurityRule
+import io.micronaut.transaction.annotation.Transactional
+import jakarta.inject.Inject
 import org.maurodata.ErrorHandler
 import org.maurodata.api.Paths
 import org.maurodata.api.datamodel.DataModelApi
@@ -32,6 +56,8 @@ import org.maurodata.domain.model.Path
 import org.maurodata.domain.model.version.CreateNewVersionData
 import org.maurodata.domain.model.version.FinaliseData
 import org.maurodata.domain.model.version.ModelVersion
+import org.maurodata.domain.search.dto.SearchRequestDTO
+import org.maurodata.domain.search.dto.SearchResultsDTO
 import org.maurodata.domain.security.Role
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository.DataElementCacheableRepository
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository.DataTypeCacheableRepository
@@ -41,37 +67,10 @@ import org.maurodata.persistence.datamodel.DataElementRepository
 import org.maurodata.persistence.datamodel.DataModelContentRepository
 import org.maurodata.persistence.datamodel.DataTypeContentRepository
 import org.maurodata.persistence.search.SearchRepository
-import org.maurodata.domain.search.dto.SearchRequestDTO
-import org.maurodata.domain.search.dto.SearchResultsDTO
 import org.maurodata.plugin.datatype.DataTypePlugin
 import org.maurodata.plugin.exporter.DataModelExporterPlugin
 import org.maurodata.plugin.importer.DataModelImporterPlugin
 import org.maurodata.web.ListResponse
-
-import groovy.transform.CompileStatic
-import groovy.util.logging.Slf4j
-import io.micronaut.context.annotation.Parameter
-import io.micronaut.core.annotation.NonNull
-import io.micronaut.core.annotation.Nullable
-import io.micronaut.http.HttpResponse
-import io.micronaut.http.HttpStatus
-import io.micronaut.http.MediaType
-import io.micronaut.http.annotation.Body
-import io.micronaut.http.annotation.Consumes
-import io.micronaut.http.annotation.Controller
-import io.micronaut.http.annotation.Delete
-import io.micronaut.http.annotation.Get
-import io.micronaut.http.annotation.Post
-import io.micronaut.http.annotation.Put
-import io.micronaut.http.annotation.QueryValue
-import io.micronaut.http.exceptions.HttpStatusException
-import io.micronaut.http.server.multipart.MultipartBody
-import io.micronaut.scheduling.TaskExecutors
-import io.micronaut.scheduling.annotation.ExecuteOn
-import io.micronaut.security.annotation.Secured
-import io.micronaut.security.rules.SecurityRule
-import io.micronaut.transaction.annotation.Transactional
-import jakarta.inject.Inject
 
 @Slf4j
 @Controller
@@ -234,16 +233,16 @@ class DataModelController extends ModelController<DataModel> implements DataMode
         DataModel otherDataModel = dataModelContentRepository.findWithContentById(otherId) // target i.e. request model
         accessControlService.canDoRole(Role.EDITOR, otherDataModel)
 
-        List<DataElement> additionDataElements = subsetData.additions.collect {dataElementCacheableRepository.findById(it)}
-        additionDataElements.each {DataElement dataElement ->
+        List<DataElement> additionDataElements = subsetData.additions?.collect {dataElementCacheableRepository.findById(it)}
+        additionDataElements?.each {DataElement dataElement ->
             pathRepository.readParentItems(dataElement)
-            if (dataElement.owner.id != dataModel.id) throw new HttpStatusException(HttpStatus.BAD_REQUEST, "Subset DataElements must be within the source DataModel")
+            if (dataElement.owner.id != dataModel.id) throw new HttpStatusException(HttpStatus.BAD_REQUEST, "Subset DataElements for Addition must be within the source DataModel")
         }
 
         DataModel additionSubset = new DataModel()
 
         // copy missing DataElements and intermediate DataClasses into additionSubset
-        additionDataElements.each {DataElement dataElement ->
+        additionDataElements?.each {DataElement dataElement ->
             log.debug "subset: processing data element addition for id [$dataElement.id], label [$dataElement.label]"
             List<AdministeredItem> parents = pathRepository.readParentItems(dataElement)
             List<DataClass> dataClassParents = parents.takeWhile {it !instanceof Model}.tail().reverse() as List<DataClass>
@@ -288,6 +287,30 @@ class DataModelController extends ModelController<DataModel> implements DataMode
 
         log.debug "subset: saving additions to datamodel id [$additionSubset.id]"
         dataModelContentRepository.saveContentOnly(additionSubset)
+
+        // process DataElements for deletion
+        List<DataElement> deletionDataElements = subsetData.deletions?.collect {dataElementCacheableRepository.findById(it)}
+        deletionDataElements?.each {DataElement dataElement ->
+            pathRepository.readParentItems(dataElement)
+            if (dataElement.owner.id != dataModel.id) throw new HttpStatusException(HttpStatus.BAD_REQUEST, "Subset DataElements for Deletion must be within the source DataModel")
+        }
+
+        otherDataModel = dataModelContentRepository.findWithContentById(otherId)
+
+        deletionDataElements?.each {DataElement dataElement ->
+            log.debug "subset: processing data element deletion for id [$dataElement.id], label [$dataElement.label]"
+            List<AdministeredItem> parents = pathRepository.readParentItems(dataElement)
+            List<DataClass> dataClassParents = parents.takeWhile {it !instanceof Model}.tail().reverse() as List<DataClass>
+            DataClass currentOtherModelParent = new DataClass(dataClasses: otherDataModel.dataClasses)
+            dataClassParents.each {DataClass child ->
+                currentOtherModelParent = currentOtherModelParent?.dataClasses?.find {it.label == child.label}
+            }
+
+            DataElement targetDataElement = currentOtherModelParent.dataElements.find {it.label == dataElement.label}
+            if (targetDataElement) {
+                dataElementCacheableRepository.delete(targetDataElement)
+            }
+        }
 
         dataModelRepository.findById(otherId)
     }

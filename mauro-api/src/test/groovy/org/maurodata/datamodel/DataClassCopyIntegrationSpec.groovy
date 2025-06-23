@@ -1,5 +1,6 @@
 package org.maurodata.datamodel
 
+
 import io.micronaut.test.annotation.Sql
 import jakarta.inject.Singleton
 import org.maurodata.domain.datamodel.DataClass

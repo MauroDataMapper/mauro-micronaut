@@ -90,13 +90,14 @@ class DataElementController extends AdministeredItemController<DataElement, Data
         dataElement.dataClass = dataClass
         createEntity(dataClass, dataElement)
         return dataElement
+
     }
 
     @Audit
     @Put(Paths.DATA_ELEMENT_ID)
     @Transactional
     DataElement update(UUID dataModelId, UUID dataClassId, UUID id, @Body @NonNull DataElement dataElement) {
-        DataElement cleanItem = super.cleanBody(dataElement) as DataElement
+        DataElement cleanItem = super.cleanBody(dataElement, false) as DataElement
         DataElement existing = administeredItemRepository.readById(id)
         accessControlService.checkRole(Role.EDITOR, existing)
         boolean hasChanged = updateProperties(existing, cleanItem)
@@ -174,9 +175,10 @@ class DataElementController extends AdministeredItemController<DataElement, Data
     protected DataElement validateDataTypeChange(DataElement existing, DataElement dataElement) {
         if (!dataElement.dataType) return existing
 
-        DataType dataElementDataType = dataTypeService.readDataType(dataElement.dataType.id)
-        ErrorHandler.handleErrorOnNullObject( HttpStatus.BAD_REQUEST, dataElementDataType, "Datatype not found:  $dataElementDataType.id")
-
+        DataType dataElementDataType = dataTypeRepository.readById(dataElement.dataType.id)
+        if (!dataElementDataType) {
+            throw new HttpStatusException(HttpStatus.BAD_REQUEST, "Datatype not found:  $dataElementDataType.id")
+        }
         DataModel dataElementDTDM = dataModelRepository.readById(dataElementDataType.dataModel.id)
 
         DataType existingDataType = dataTypeService.readDataType(existing.dataType.id)
