@@ -93,7 +93,7 @@ micronaut {
     testRuntime("spock2")
     processing {
         incremental(true)
-        annotations("uk.ac.ox.softeng.mauro.*")
+        annotations("org.maurodata.*")
     }
     aot {
         // Please review carefully the optimizations enabled below

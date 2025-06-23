@@ -288,13 +288,5 @@ class DataTypeIntegrationSpec extends CommonDataSpec {
         httpResponse.status == HttpStatus.NO_CONTENT
     }
 
-//    Object createAPI(UUID dataModelId, UUID referenceClassId) {
-//
-//        dataTypeApi.create(
-//            dataModelId,
-//            new DataType(label: 'test Reference Type',
-//                         description: 'Test Reference type description',
-//                         dataTypeKind: DataType.DataTypeKind.REFERENCE_TYPE,
-//                         referenceClass: [id: referenceClassId]))
-//    }
+
 }
