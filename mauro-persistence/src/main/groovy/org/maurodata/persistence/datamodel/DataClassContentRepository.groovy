@@ -39,12 +39,12 @@ class DataClassContentRepository extends AdministeredItemContentRepository {
     @Override
     DataClass readWithContentById(UUID id) {
         DataClass dataClass = dataClassCacheableRepository.findById(id)
-        if (!dataClass.parentDataClass) {
-            dataClass.dataClasses = dataClassCacheableRepository.readAllByParentDataClass_Id(id)
-            dataClass.dataClasses.collect {
-                it.dataElements = dataElementCacheableRepository.readAllByDataClass_Id(it.id)
-                it.dataElements = getDataTypes(it)
-            }
+        dataClass.dataClasses = dataClassCacheableRepository.readAllByParentDataClass_Id(id)
+        dataClass.dataClasses.collect {
+            it.dataElements = dataElementCacheableRepository.readAllByDataClass_Id(it.id)
+            it.dataElements = getDataTypes(it)
+            DataClass dcWithContent = readWithContentById(it.id)
+            it.dataClasses = dcWithContent.dataClasses
         }
         dataClass.dataElements = dataElementCacheableRepository.readAllByDataClass_Id(id)
         dataClass.dataElements = getDataTypes(dataClass)
@@ -83,32 +83,44 @@ class DataClassContentRepository extends AdministeredItemContentRepository {
     @Override
     Long deleteWithContent(AdministeredItem administeredItem) {
         if ((administeredItem as DataClass).dataElements) {
-            List<DataElement> dataElements = (administeredItem as DataClass).dataElements
-            dataElements.each {
-                if (it.dataType.isReferenceType()) {
-                    deleteDanglingReferenceTypes(it.dataType.referenceClass)
-                }
-            }
-            dataElementCacheableRepository.deleteAll(dataElements)
+            deleteDataElements((administeredItem as DataClass).dataElements)
         }
         if ((administeredItem as DataClass).dataClasses) {
-            List<DataClass> children = (administeredItem as DataClass).dataClasses
-            children.each {
-                deleteDanglingReferenceTypes(it)
-            }
-            dataClassCacheableRepository.deleteAll(children)
+           deleteChildClasses((administeredItem as DataClass).dataClasses)
         }
         deleteDanglingReferenceTypes(administeredItem as DataClass)
         dataClassCacheableRepository.delete(administeredItem as DataClass)
     }
 
+    protected Long deleteDataElements(List<DataElement> dataElements) {
+        dataElements.each {
+            if (it.dataType.isReferenceType()) {
+                deleteDanglingReferenceTypes(it.dataType.referenceClass)
+            }
+        }
+        dataElementCacheableRepository.deleteAll(dataElements)
+    }
+
+    Long deleteChildClasses(List<DataClass> children) {
+        children.each {
+            if (it.dataClasses) {
+                deleteChildClasses(it.dataClasses)
+            }
+            deleteDanglingReferenceTypes(it)
+            if (it.dataElements){
+                deleteDataElements(it.dataElements)
+            }
+        }
+        dataClassCacheableRepository.deleteAll(children)
+    }
+
     void deleteDanglingReferenceTypes(DataClass dataClassToDelete) {
         List<DataType> dataTypes = dataTypeCacheableRepository.findAllByReferenceClass(dataClassToDelete).unique() as List<DataType>
         dataTypes.each {
-            List<DataElement> dataElementReferenced = dataElementCacheableRepository.readAllByDataType(it as org.maurodata.domain.datamodel.DataType)
+            List<DataElement> dataElementReferenced = dataElementCacheableRepository.readAllByDataType(it as DataType)
             List<DataElement> dataElementReferences = dataElementReferenced.findAll {dataElement -> dataElement.dataClass != dataClassToDelete}.collect()
             if (dataElementReferences.isEmpty()) {
-                dataTypeCacheableRepository.delete(it as org.maurodata.domain.datamodel.DataType)
+                dataTypeCacheableRepository.delete(it as DataType)
             } else {
                 ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "Cannot delete Data Class has associations - check dataElements")
             }
