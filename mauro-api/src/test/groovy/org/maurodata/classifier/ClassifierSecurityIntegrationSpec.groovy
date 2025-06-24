@@ -12,7 +12,7 @@ import spock.lang.Shared
 
 @SecuredContainerizedTest
 @Singleton
-@Sql(scripts = ["classpath:sql/tear-down-classifiers.sql"], phase = Sql.Phase.AFTER_EACH)
+@Sql(scripts = ["classpath:sql/tear-down-classifiers.sql"], phase = Sql.Phase.AFTER_ALL)
 class ClassifierSecurityIntegrationSpec extends SecuredIntegrationSpec {
 
     @Shared
@@ -28,7 +28,7 @@ class ClassifierSecurityIntegrationSpec extends SecuredIntegrationSpec {
     UUID classifierId2
 
 
-    void setup() {
+    void setupSpec() {
         loginAdmin()
         folderId = folderApi.create(folder()).id
         classificationSchemeId = classificationSchemeApi.create(folderId, classificationSchemePayload()).id
