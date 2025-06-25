@@ -67,9 +67,10 @@ import org.maurodata.persistence.datamodel.DataElementRepository
 import org.maurodata.persistence.datamodel.DataModelContentRepository
 import org.maurodata.persistence.datamodel.DataTypeContentRepository
 import org.maurodata.persistence.search.SearchRepository
-import org.maurodata.plugin.datatype.DataTypePlugin
+import org.maurodata.plugin.datatype.DefaultDataTypeProviderPlugin
 import org.maurodata.plugin.exporter.DataModelExporterPlugin
 import org.maurodata.plugin.importer.DataModelImporterPlugin
+import org.maurodata.service.plugin.PluginService
 import org.maurodata.web.ListResponse
 
 @Slf4j
@@ -117,8 +118,26 @@ class DataModelController extends ModelController<DataModel> implements DataMode
     @Audit
     @Transactional
     @Post(Paths.FOLDER_LIST_DATA_MODEL)
-    DataModel create(UUID folderId, @Body @NonNull DataModel dataModel) {
-        super.create(folderId, dataModel) as DataModel
+    DataModel create(UUID folderId, @Body @NonNull DataModel dataModel, @Nullable @QueryValue String defaultDataTypeProvider = null) {
+        // First try and get the default datatypes if applicable
+        List<DataType> importedDataTypes = []
+        if(defaultDataTypeProvider) {
+            DefaultDataTypeProviderPlugin defaultDataTypeProviderPlugin = mauroPluginService.getPlugin(DefaultDataTypeProviderPlugin, defaultDataTypeProvider)
+            PluginService.handlePluginNotFound(defaultDataTypeProviderPlugin, DefaultDataTypeProviderPlugin, defaultDataTypeProvider)
+            importedDataTypes.addAll(defaultDataTypeProviderPlugin.dataTypes)
+        }
+        DataModel newDataModel = super.create(folderId, dataModel) as DataModel
+        // If we previously got datatypes, now save them into the model
+        if(importedDataTypes.size() > 0) {
+            newDataModel.dataTypes = importedDataTypes
+            newDataModel.dataTypes.each {dataType ->
+                dataType.dataModel = newDataModel
+            }
+            dataModelContentRepository.saveContentOnly(newDataModel)
+        }
+        // Now set dataTypes to be empty for the response:
+        newDataModel.dataTypes = []
+        return newDataModel
     }
 
     @Audit
@@ -799,8 +818,8 @@ class DataModelController extends ModelController<DataModel> implements DataMode
     }
 
     @Override
-    List<DataTypePlugin> defaultDataTypeProviders() {
-        return mauroPluginService.listPlugins(DataTypePlugin)
+    List<DefaultDataTypeProviderPlugin> defaultDataTypeProviders() {
+        return mauroPluginService.listPlugins(DefaultDataTypeProviderPlugin)
     }
 
     @Override

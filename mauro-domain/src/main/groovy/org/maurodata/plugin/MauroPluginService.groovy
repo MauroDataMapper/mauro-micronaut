@@ -19,13 +19,19 @@ class MauroPluginService {
     <P extends MauroPlugin> P getPlugin(Class<P> cls, String namespace, String name) {
         (P) mauroPlugins.findAll {
             cls.isInstance(it) && it.namespace == namespace && it.name == name
-        }.sort {P plugin -> plugin.version}.first()
+        }.sort {P plugin -> plugin.version}?.find()
+    }
+
+    <P extends MauroPlugin> P getPlugin(Class<P> cls, String name) {
+        (P) mauroPlugins.findAll {
+            it.name == name
+        }.sort {P plugin -> plugin.version}?.find()
     }
 
     MauroPlugin getPlugin(String namespace, String name) {
         (MauroPlugin) mauroPlugins.findAll {
             it.namespace == namespace && it.name == name
-        }.sort {MauroPlugin plugin -> plugin.version}.first()
+        }.sort {MauroPlugin plugin -> plugin.version}?.find()
     }
 
     MauroPlugin getPlugin(String namespace, String name, String version) {
