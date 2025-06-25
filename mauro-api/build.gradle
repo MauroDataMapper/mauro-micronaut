@@ -10,6 +10,7 @@ plugins {
 
 repositories {
     mavenCentral()
+    mavenLocal()
 }
 
 dependencies {
@@ -76,6 +77,8 @@ dependencies {
 
     testImplementation 'org.reflections:reflections:0.10.2'
 
+    implementation 'org.maurodata.plugins:mauro-plugin-openclinica:0.0.1-SNAPSHOT'
+
 }
 
 
@@ -109,6 +112,17 @@ micronaut {
 }
 
 publishing {
+    repositories {
+        maven {
+            name = "MauroSnapshotRepository"
+            url = "https://mauro-repository.com/libs-snapshot-local"
+            credentials(PasswordCredentials)
+            authentication {
+                basic(BasicAuthentication)
+            }
+        }
+    }
+
     publications {
         mavenJava(MavenPublication) {
             groupId = 'org.maurodata'
