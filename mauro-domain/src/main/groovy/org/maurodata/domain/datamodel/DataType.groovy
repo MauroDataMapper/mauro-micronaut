@@ -1,15 +1,6 @@
 package org.maurodata.domain.datamodel
 
-import org.maurodata.domain.diff.BaseCollectionDiff
-import org.maurodata.domain.diff.CollectionDiff
-import org.maurodata.domain.diff.DiffBuilder
-import org.maurodata.domain.diff.DiffableItem
-import org.maurodata.domain.diff.ObjectDiff
-import org.maurodata.domain.model.AdministeredItem
-import org.maurodata.domain.model.ModelItem
-
 import com.fasterxml.jackson.annotation.JsonIgnore
-import com.fasterxml.jackson.annotation.JsonProperty
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
 import groovy.transform.MapConstructor
@@ -23,6 +14,13 @@ import jakarta.persistence.InheritanceType
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Transient
+import org.maurodata.domain.diff.BaseCollectionDiff
+import org.maurodata.domain.diff.CollectionDiff
+import org.maurodata.domain.diff.DiffBuilder
+import org.maurodata.domain.diff.DiffableItem
+import org.maurodata.domain.diff.ObjectDiff
+import org.maurodata.domain.model.AdministeredItem
+import org.maurodata.domain.model.ModelItem
 
 /**
  * A datatype describes the range of values that a column or field in a dataset may take.  It may be one of the following kinds:
@@ -43,7 +41,6 @@ import jakarta.persistence.Transient
 @MappedEntity(schema = 'datamodel', value = 'data_type')
 @MapConstructor(includeSuperFields = true, includeSuperProperties = true, noArg = true)
 class DataType extends ModelItem<DataModel> implements DiffableItem<DataType> {
-
 
     enum DataTypeKind {
         PRIMITIVE_TYPE('PrimitiveType'),
@@ -139,9 +136,15 @@ class DataType extends ModelItem<DataModel> implements DiffableItem<DataType> {
     @Transient
     @JsonIgnore
     boolean isReferenceType() {
-        this.getDomainType() == DataTypeKind.REFERENCE_TYPE.stringValue
+        this.getDomainType().equalsIgnoreCase(DataTypeKind.REFERENCE_TYPE.stringValue)
     }
 
+
+    @Transient
+    @JsonIgnore
+    boolean isModelType() {
+        this.getDomainType().equalsIgnoreCase(DataTypeKind.MODEL_TYPE.stringValue)
+    }
 
     @Override
     @JsonIgnore

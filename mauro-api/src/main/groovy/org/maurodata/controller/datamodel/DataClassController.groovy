@@ -1,23 +1,5 @@
 package org.maurodata.controller.datamodel
 
-import org.maurodata.ErrorHandler
-import org.maurodata.api.Paths
-import org.maurodata.api.datamodel.DataClassApi
-import org.maurodata.audit.Audit
-import org.maurodata.controller.model.AdministeredItemController
-import org.maurodata.domain.datamodel.DataClass
-import org.maurodata.domain.datamodel.DataElement
-import org.maurodata.domain.datamodel.DataModel
-import org.maurodata.domain.datamodel.DataType
-import org.maurodata.domain.security.Role
-import org.maurodata.persistence.cache.AdministeredItemCacheableRepository
-import org.maurodata.persistence.cache.AdministeredItemCacheableRepository.DataClassCacheableRepository
-import org.maurodata.persistence.cache.ModelCacheableRepository.DataModelCacheableRepository
-import org.maurodata.persistence.datamodel.DataClassContentRepository
-import org.maurodata.persistence.datamodel.DataElementRepository
-import org.maurodata.persistence.datamodel.DataTypeRepository
-import org.maurodata.web.ListResponse
-import org.maurodata.web.PaginationParams
 
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
@@ -33,28 +15,48 @@ import io.micronaut.http.annotation.Put
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
 import io.micronaut.transaction.annotation.Transactional
+import jakarta.inject.Inject
+import org.maurodata.ErrorHandler
+import org.maurodata.api.Paths
+import org.maurodata.api.datamodel.DataClassApi
+import org.maurodata.audit.Audit
+import org.maurodata.controller.model.AdministeredItemController
+import org.maurodata.domain.datamodel.DataClass
+import org.maurodata.domain.datamodel.DataModel
+import org.maurodata.domain.security.Role
+import org.maurodata.persistence.cache.AdministeredItemCacheableRepository
+import org.maurodata.persistence.cache.ModelCacheableRepository
+import org.maurodata.persistence.cache.ModelCacheableRepository.DataModelCacheableRepository
+import org.maurodata.persistence.datamodel.DataClassContentRepository
+import org.maurodata.persistence.datamodel.DataModelContentRepository
+import org.maurodata.service.datamodel.DataClassService
+import org.maurodata.web.ListResponse
+import org.maurodata.web.PaginationParams
 
 @CompileStatic
 @Controller
 @Secured(SecurityRule.IS_ANONYMOUS)
 class DataClassController extends AdministeredItemController<DataClass, DataModel> implements DataClassApi {
 
-    DataClassCacheableRepository dataClassRepository
+    AdministeredItemCacheableRepository.DataClassCacheableRepository dataClassRepository
 
-    DataModelCacheableRepository dataModelRepository
+    ModelCacheableRepository.DataModelCacheableRepository dataModelRepository
 
-    AdministeredItemCacheableRepository.DataTypeCacheableRepository  dataTypeRepository
+    DataModelContentRepository dataModelContentRepository
+    DataClassContentRepository dataClassContentRepository
+    DataClassService dataClassService
 
-    AdministeredItemCacheableRepository.DataElementCacheableRepository dataElementRepository
-
-    DataClassController(DataClassCacheableRepository dataClassRepository, DataModelCacheableRepository dataModelRepository,
-                        DataClassContentRepository dataClassContentRepository, AdministeredItemCacheableRepository.DataTypeCacheableRepository dataTypeRepository,
-                        AdministeredItemCacheableRepository.DataElementCacheableRepository dataElementRepository) {
+    @Inject
+    DataClassController(AdministeredItemCacheableRepository.DataClassCacheableRepository dataClassRepository, DataModelCacheableRepository dataModelRepository,
+                        DataModelContentRepository dataModelContentRepository,
+                        DataClassContentRepository dataClassContentRepository,
+                        DataClassService dataClassService) {
         super(DataClass, dataClassRepository, dataModelRepository, dataClassContentRepository)
-        this.dataClassRepository = dataClassRepository
+        this.dataClassService = dataClassService
         this.dataModelRepository = dataModelRepository
-        this.dataTypeRepository = dataTypeRepository
-        this.dataElementRepository = dataElementRepository
+        this.dataClassRepository = dataClassRepository
+        this.dataModelContentRepository = dataModelContentRepository
+        this.dataClassContentRepository = dataClassContentRepository
     }
 
     @Audit
@@ -86,15 +88,8 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
     HttpResponse delete(UUID dataModelId, UUID id, @Body @Nullable DataClass dataClass) {
         DataClass dataClassToDelete = dataClassRepository.readById(id)
         ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, dataClassToDelete, "DataClass $id not found")
-        List<DataType> dataTypes = dataTypeRepository.findAllByReferenceClass(dataClassToDelete).unique()
-        dataTypes.each {
-            List<DataElement> dataElementReferenced = dataElementRepository.readAllByDataType(it)
-            if (dataElementReferenced.isEmpty()) {
-                dataTypeRepository.delete(it)
-            } else {
-                ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "Cannot delete Data Class has associations - check dataElements")
-            }
-        }
+        dataClassService.deleteDanglingReferenceTypes(dataClassToDelete)
+
         HttpResponse deletedResponse = super.delete(id, dataClass)
         deletedResponse
     }
@@ -179,6 +174,30 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
         DataClass targetDataClass = dataClassRepository.readById(otherClassId)
         dataClassRepository.deleteExtensionRelationship(sourceDataClass, targetDataClass)
         dataClassRepository.findById(id)
+    }
+
+
+    @Audit
+    @Post(Paths.DATA_CLASS_COPY)
+    @Transactional
+    DataClass copyDataClass(UUID dataModelId, UUID otherModelId, UUID dataClassId) {
+        DataModel dataModel = dataModelContentRepository.findWithContentById(dataModelId)
+        accessControlService.checkRole(Role.EDITOR, dataModel)
+        DataClass dataClass = dataClassContentRepository.readWithContentById(dataClassId)
+        accessControlService.canDoRole(Role.EDITOR, dataClass)
+        DataModel otherModel = dataModelRepository.readById(otherModelId)
+        accessControlService.canDoRole(Role.READER, otherModel)
+        //verify
+        if (dataClass.dataModel.id != otherModel.id) {
+            ErrorHandler.handleError(HttpStatus.NOT_FOUND, "Cannot find dataClass $dataClassId for dataModel $otherModelId")
+        }
+        DataClass copied = dataClass.clone()
+        copied.parentDataClass = null //do not keep existing source structure if source is child
+        DataClass savedCopy = createEntity(dataModel, copied)
+        savedCopy = dataClassService.copyReferenceTypes( savedCopy, dataModel)
+        savedCopy.dataClasses = dataClassService.copyChildren(savedCopy, savedCopy.dataClasses, dataModel)
+        savedCopy.dataElements = dataClassService.copyDataElementsAndDataTypes(savedCopy.dataElements, dataModel)
+        savedCopy
     }
 
     @Get(Paths.DATA_CLASS_DOI)

@@ -300,7 +300,7 @@ create table datamodel."data_type" (
     "description"                     text,
     "aliases_string"                  text,
     "units"                           varchar(255),
-    "reference_class_id"              uuid             null references datamodel.data_class(id) initially deferred,
+    "reference_class_id"              uuid             references datamodel.data_class(id) initially deferred,
     "model_resource_id"               uuid,
     "model_resource_domain_type"      varchar(255)
 );

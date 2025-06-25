@@ -1,34 +1,37 @@
 package org.maurodata.controller.datamodel
 
-import org.maurodata.ErrorHandler
-import org.maurodata.api.Paths
-import org.maurodata.api.datamodel.DataTypeApi
-import org.maurodata.audit.Audit
-import org.maurodata.domain.datamodel.DataClass
-import org.maurodata.domain.model.AdministeredItem
-import org.maurodata.domain.model.Item
-import org.maurodata.domain.model.Model
-import org.maurodata.domain.security.Role
-import org.maurodata.persistence.cache.AdministeredItemCacheableRepository
-import org.maurodata.service.datamodel.DataModelHelper
 
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
-import io.micronaut.http.annotation.*
+import io.micronaut.http.annotation.Body
+import io.micronaut.http.annotation.Controller
+import io.micronaut.http.annotation.Delete
+import io.micronaut.http.annotation.Get
+import io.micronaut.http.annotation.Post
+import io.micronaut.http.annotation.Put
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
 import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
+import org.maurodata.ErrorHandler
+import org.maurodata.api.Paths
+import org.maurodata.api.datamodel.DataTypeApi
+import org.maurodata.audit.Audit
 import org.maurodata.controller.model.AdministeredItemController
 import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.datamodel.DataType
+import org.maurodata.domain.model.AdministeredItem
+import org.maurodata.domain.model.Item
+import org.maurodata.domain.model.Model
+import org.maurodata.domain.security.Role
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository.DataTypeCacheableRepository
 import org.maurodata.persistence.cache.ModelCacheableRepository.DataModelCacheableRepository
 import org.maurodata.persistence.datamodel.DataTypeContentRepository
 import org.maurodata.persistence.datamodel.EnumerationValueRepository
+import org.maurodata.service.datamodel.DataTypeService
 import org.maurodata.web.ListResponse
 
 @CompileStatic
@@ -39,18 +42,15 @@ class DataTypeController extends AdministeredItemController<DataType, DataModel>
     DataTypeCacheableRepository dataTypeRepository
 
     @Inject
-    DataModelCacheableRepository dataModelRepository
-
-    @Inject
     EnumerationValueRepository enumerationValueRepository
 
-    AdministeredItemCacheableRepository.DataClassCacheableRepository dataClassRepository
+    final DataTypeService dataTypeService
 
-    DataTypeController(DataTypeCacheableRepository dataTypeRepository, DataModelCacheableRepository dataModelRepository, DataTypeContentRepository dataTypeContentRepository,
-                       AdministeredItemCacheableRepository.DataClassCacheableRepository dataClassRepository) {
+    @Inject
+    DataTypeController(DataTypeService dataTypeService, DataTypeCacheableRepository dataTypeRepository, DataModelCacheableRepository dataModelRepository, DataTypeContentRepository dataTypeContentRepository) {
         super(DataType, dataTypeRepository, dataModelRepository, dataTypeContentRepository)
+        this.dataTypeService = dataTypeService
         this.dataTypeRepository = dataTypeRepository
-        this.dataClassRepository = dataClassRepository
     }
 
     @Audit
@@ -62,8 +62,7 @@ class DataTypeController extends AdministeredItemController<DataType, DataModel>
         accessControlService.checkRole(Role.READER, dataType)
 
         updateDerivedProperties(dataType)
-        dataType = getReferenceClassProperties(dataType)
-        dataType
+        dataTypeService.getReferenceClassProperties(dataType)
     }
 
     @Audit
@@ -72,13 +71,9 @@ class DataTypeController extends AdministeredItemController<DataType, DataModel>
     DataType create(UUID dataModelId, @Body @NonNull DataType dataType) {
         DataType cleanItem = super.cleanBody(dataType) as DataType
         Item parent = super.validate(cleanItem, dataModelId)
-
-        if (cleanItem.referenceClass) {
-            cleanItem.referenceClass = validatedReferenceClass(cleanItem, parent)
-        }
-        DataModelHelper.validateModelTypeFields(cleanItem)
-        if (cleanItem.domainType == DataType.DataTypeKind.MODEL_TYPE.stringValue) {
-            validateModelResource(cleanItem)
+        cleanItem = dataTypeService.validateDataType(cleanItem, parent)
+        if (dataType.isModelType()) {
+            validateModelResource(dataType)
         }
         DataType created = super.createEntity(parent, cleanItem) as DataType
         created = super.validateAndAddClassifiers(created) as DataType
@@ -117,43 +112,17 @@ class DataTypeController extends AdministeredItemController<DataType, DataModel>
         List<DataType> dataTypes = administeredItemRepository.readAllByParent(parent)
         dataTypes.each {
             updateDerivedProperties(it)
-            getReferenceClassProperties(it)
+            dataTypeService.getReferenceClassProperties(it)
         }
         ListResponse.from(dataTypes)
     }
 
-    private DataClass validatedReferenceClass(DataType dataType, AdministeredItem parent) {
-        DataClass referenceClass = getReferenceDataClass(dataType.referenceClass?.id)
-        accessControlService.checkRole(Role.READER, referenceClass)
-        if (referenceClass.dataModel.id != parent.id){
-            ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "DataClass $referenceClass.id assigned to DataType must belong to same datamodel")
-        }
-        DataType sameLabelInModel = dataTypeRepository.findAllByParent(parent).find {
-            it.isReferenceType() && it.label == dataType.label }
-        if (sameLabelInModel){
-            ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "Label $dataType.label exists for ReferenceType")
-        }
-        referenceClass
-    }
-
-    private DataClass getReferenceDataClass(@NonNull UUID dataClassId) {
-        DataClass referenceClass = dataClassRepository.findById(dataClassId)
-        ErrorHandler.handleErrorOnNullObject(HttpStatus.UNPROCESSABLE_ENTITY, referenceClass, "Cannot find reference class ")
-        referenceClass
-    }
-
-    private DataType getReferenceClassProperties(DataType dataType) {
-        if (dataType.isReferenceType()) {
-            dataType.referenceClass = dataClassRepository.readById(dataType.referenceClass?.id)
-        }
-        dataType
-    }
-
-    private void validateModelResource(DataType dataType) {
+    protected void validateModelResource(DataType dataType) {
         AdministeredItem modelResource = super.readAdministeredItem(dataType.modelResourceDomainType, dataType.modelResourceId) as Model
         if (!modelResource) {
             ErrorHandler.handleError(HttpStatus.NOT_FOUND, "Item not found : $dataType.modelResourceId, $dataType.modelResourceDomainType")
         }
+        accessControlService.checkRole(Role.READER, modelResource)
         if (!modelResource.finalised){
             ErrorHandler.handleError(HttpStatus.BAD_REQUEST, "Model resource is not finalised: $dataType.modelResourceId, $dataType.modelResourceDomainType")
         }

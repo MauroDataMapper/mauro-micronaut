@@ -59,6 +59,9 @@ interface DataClassApi extends AdministeredItemApi<DataClass, DataModel> {
     @Delete(Paths.DATA_CLASS_EXTENDS)
     DataClass deleteExtension(UUID dataModelId, UUID id, UUID otherModelId, UUID otherClassId)
 
+    @Post(Paths.DATA_CLASS_COPY)
+    DataClass copyDataClass(UUID dataModelId, UUID otherModelId, UUID dataClassId)
+
     @Get(Paths.DATA_CLASS_DOI)
     Map doi(UUID id)
 }

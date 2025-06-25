@@ -19,7 +19,7 @@ import org.maurodata.persistence.model.ModelItemRepository
 @Slf4j
 @CompileStatic
 @JdbcRepository(dialect = Dialect.POSTGRES)
-abstract class DataElementRepository implements ModelItemRepository<DataElement> {
+abstract class DataElementRepository implements  ModelItemRepository<DataElement> {
 
     @Inject
     DataElementDTORepository dataElementDTORepository

@@ -206,9 +206,10 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
             super(dataTypeRepository)
         }
 
-       List<DataType> findAllByReferenceClass(DataClass dataClass){
-           ((DataTypeRepository) repository).findAllByReferenceClass(dataClass)
-       }
+        @Nullable
+        List<DataType> findAllByReferenceClass(DataClass referenceClass) {
+            ((DataTypeRepository) repository).findAllByReferenceClass(referenceClass.id)
+        }
 
         @Override
         Boolean handles(String domainType) {
