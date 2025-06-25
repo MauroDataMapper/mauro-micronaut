@@ -46,6 +46,14 @@ publishing {
                 password = project.findProperty("gpr.key")
             }
         }
+        maven {
+            name = "MauroSnapshotRepository"
+            url = "https://mauro-repository.com/libs-snapshot-local"
+            credentials(PasswordCredentials)
+            authentication {
+                basic(BasicAuthentication)
+            }
+        }
     }
 
     publications {
