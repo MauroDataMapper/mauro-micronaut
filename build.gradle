@@ -2,6 +2,7 @@ plugins {
     id("groovy")
     id("com.github.johnrengelman.shadow") version "8.1.1"
     id 'codenarc'
+    id("maven-publish")
 }
 
 version = "0.0.1-SNAPSHOT"
@@ -13,4 +14,17 @@ repositories {
 java {
     sourceCompatibility = JavaVersion.toVersion("17")
     targetCompatibility = JavaVersion.toVersion("17")
+}
+
+publishing {
+    repositories {
+        maven {
+            name = "MauroSnapshotRepository"
+            url = "https://mauro-repository.com/libs-snapshot-local"
+            credentials(PasswordCredentials)
+            authentication {
+                basic(BasicAuthentication)
+            }
+        }
+    }
 }
