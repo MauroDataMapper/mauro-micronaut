@@ -293,6 +293,14 @@ class CommonDataSpec extends Specification {
                 readableByAuthenticatedUsers: true)
 
     }
+    ClassificationScheme classificationSchemePayload(boolean readableByEveryone, boolean readableByAuthenticatedUsers){
+        new ClassificationScheme(
+            label: 'classifiers label',
+            description : 'random description',
+            readableByEveryone: readableByEveryone,
+            readableByAuthenticatedUsers: readableByAuthenticatedUsers)
+
+    }
     Classifier classifierPayload(){
         new Classifier(
             label: 'classifier 1',
