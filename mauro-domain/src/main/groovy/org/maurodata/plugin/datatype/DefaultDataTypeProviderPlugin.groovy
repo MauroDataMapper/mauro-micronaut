@@ -1,21 +1,19 @@
 package org.maurodata.plugin.datatype
 
 import com.fasterxml.jackson.annotation.JsonIgnore
-import groovy.util.logging.Slf4j
+import org.maurodata.domain.datamodel.DataType
 import org.maurodata.plugin.MauroPlugin
 import org.maurodata.plugin.PluginType
 
-trait DataTypePlugin extends MauroPlugin {
+
+trait DefaultDataTypeProviderPlugin extends MauroPlugin {
 
     @JsonIgnore
     PluginType getPluginType() {
-        PluginType.DataType
+        PluginType.DefaultDataTypeProvider
     }
 
     @JsonIgnore
-    List<DefaultDataType> dataTypes
+    List<DataType> dataTypes
 
-    String getDisplayName() {
-        description
-    }
 }

@@ -1,5 +1,6 @@
 package org.maurodata.datamodel
 
+import io.micronaut.http.client.exceptions.HttpClientResponseException
 import org.maurodata.domain.datamodel.DataClass
 import org.maurodata.domain.datamodel.DataElement
 import org.maurodata.domain.datamodel.DataModel
@@ -436,5 +437,36 @@ class DataModelIntegrationSpec extends CommonDataSpec {
         "second"            | ["DataElement"]                           | ["Renamed data element"]
 
     }
+
+    void 'test create data model with default types'() {
+
+        when:
+        Folder response = folderApi.create(new Folder(label: 'Test folder'))
+        folderId = response.id
+
+        dataModelId = dataModelApi.create(folderId, new DataModel(label: 'Test data model'), 'ProfileSpecificationDataTypeProvider').id
+
+        ListResponse<DataType> dataTypes = dataTypeApi.list(dataModelId)
+
+        then:
+        dataTypes.count == 11
+        dataTypes.find {it.label == 'string' &&
+            it.description == 'short variable-length character string (plain-text)'}
+    }
+
+    void 'test create data model with default types and fail'() {
+
+        when:
+        Folder response = folderApi.create(new Folder(label: 'Test folder'))
+        folderId = response.id
+
+        DataModel dataModel = dataModelApi.create(folderId, new DataModel(label: 'Test data model'), 'UnknownDataTypeProvider')
+
+        then:
+        HttpClientResponseException exception = thrown()
+        exception.status == HttpStatus.BAD_REQUEST
+
+    }
+
 
 }

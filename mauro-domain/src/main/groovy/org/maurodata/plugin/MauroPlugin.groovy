@@ -1,7 +1,5 @@
 package org.maurodata.plugin
 
-import org.maurodata.domain.diff.ArrayDiff
-
 import com.fasterxml.jackson.annotation.JsonIgnore
 
 trait MauroPlugin {

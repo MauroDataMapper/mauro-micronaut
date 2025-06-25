@@ -1,30 +1,38 @@
 package org.maurodata.plugin.datatype
 
 import jakarta.inject.Singleton
+import org.maurodata.domain.datamodel.DataType
 
 @Singleton
-class ProfileSpecificationDataTypeProvider implements DataTypePlugin{
+class ProfileSpecificationDataTypeProvider implements DefaultDataTypeProviderPlugin{
 
     String name = "ProfileSpecificationDataTypeProvider"
+
+    String displayName = "Profile Specification DataTypes"
 
     String description = "Profile Specification DataTypes"
 
     String version = "1.0.0"
 
     @Override
-    List<DefaultDataType> getDataTypes() {
+    List<DataType> getDataTypes() {
         [
-                [label: 'boolean', description: 'logical Boolean [true/false)'],
-                [label: 'string', description: 'short variable-length character string (plain-text)'],
-                [label: 'text', description: 'long variable-length character string (may include html / markdown)'],
-                [label: 'int', description: 'integer'],
-                [label: 'decimal', description: 'decimal'],
-                [label: 'date', description: 'calendar date [year, month, day)'],
-                [label: 'datetime', description: 'date and time, excluding time zone'],
-                [label: 'time', description: 'time of day [no time zone)'],
-                [label: 'folder', description: 'pointer to a folder in this Mauro instance'],
-                [label: 'model', description: 'pointer to a model in this Mauro instance'],
-                [label: 'json', description: 'a text field containing valid json syntax']
-        ].collect {Map<String, String> properties -> new DefaultDataType(properties)}
+            'boolean' : 'logical Boolean [true/false)',
+            'string'  : 'short variable-length character string (plain-text)',
+            'text'    : 'long variable-length character string (may include html / markdown)',
+            'int'     : 'integer',
+            'decimal' : 'decimal',
+            'date'    : 'calendar date [year, month, day)',
+            'datetime': 'date and time, excluding time zone',
+            'time'    : 'time of day [no time zone)',
+            'folder'  : 'pointer to a folder in this Mauro instance',
+            'model'   : 'pointer to a model in this Mauro instance',
+            'json'    : 'a text field containing valid json syntax'
+        ].collect {
+            name, desc ->
+                new DataType(
+                    label: name, description: desc, dataTypeKind: DataType.DataTypeKind.PRIMITIVE_TYPE
+                )
+        }
     }
 }
