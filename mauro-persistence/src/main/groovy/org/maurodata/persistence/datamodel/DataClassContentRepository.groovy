@@ -18,7 +18,6 @@ import org.maurodata.persistence.model.AdministeredItemContentRepository
 @Singleton
 class DataClassContentRepository extends AdministeredItemContentRepository {
 
-    @Inject
     DataClassCacheableRepository dataClassCacheableRepository
 
     AdministeredItemCacheableRepository.DataElementCacheableRepository dataElementCacheableRepository
@@ -82,49 +81,42 @@ class DataClassContentRepository extends AdministeredItemContentRepository {
 
     @Override
     Long deleteWithContent(AdministeredItem administeredItem) {
+        Map<String, DataClass> deletedDataClassLookup = [:]
+        deletedDataClassLookup.put(administeredItem.label, administeredItem as DataClass)
         if ((administeredItem as DataClass).dataElements) {
             deleteDataElements((administeredItem as DataClass).dataElements)
         }
         if ((administeredItem as DataClass).dataClasses) {
-           deleteChildClasses((administeredItem as DataClass).dataClasses)
+           deleteChildClasses((administeredItem as DataClass).dataClasses, deletedDataClassLookup)
         }
-        deleteDanglingReferenceTypes(administeredItem as DataClass)
+        deleteDanglingReferenceTypes(deletedDataClassLookup)
         dataClassCacheableRepository.delete(administeredItem as DataClass)
     }
 
     protected Long deleteDataElements(List<DataElement> dataElements) {
-        dataElements.each {
-            if (it.dataType.isReferenceType()) {
-                deleteDanglingReferenceTypes(it.dataType.referenceClass)
-            }
-        }
         dataElementCacheableRepository.deleteAll(dataElements)
     }
-
-    Long deleteChildClasses(List<DataClass> children) {
+ 
+    protected Long deleteChildClasses(List<DataClass> children, Map<String, DataClass> deletedDataClassLookup) {
         children.each {
             if (it.dataClasses) {
-                deleteChildClasses(it.dataClasses)
+                deleteChildClasses(it.dataClasses, deletedDataClassLookup)
             }
-            deleteDanglingReferenceTypes(it)
             if (it.dataElements){
                 deleteDataElements(it.dataElements)
             }
+            deletedDataClassLookup.put(it.label, it)
         }
         dataClassCacheableRepository.deleteAll(children)
     }
 
-    void deleteDanglingReferenceTypes(DataClass dataClassToDelete) {
-        List<DataType> dataTypes = dataTypeCacheableRepository.findAllByReferenceClass(dataClassToDelete).unique() as List<DataType>
-        dataTypes.each {
-            List<DataElement> dataElementReferenced = dataElementCacheableRepository.readAllByDataType(it as DataType)
-            List<DataElement> dataElementReferences = dataElementReferenced.findAll {dataElement -> dataElement.dataClass != dataClassToDelete}.collect()
-            if (dataElementReferences.isEmpty()) {
-                dataTypeCacheableRepository.delete(it as DataType)
-            } else {
-                ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "Cannot delete Data Class has associations - check dataElements")
-            }
+    protected void deleteDanglingReferenceTypes(Map<String, DataClass> deletedDataClassLookup) {
+        List<DataType> dataTypes = dataTypeCacheableRepository.findByReferenceClassIn(deletedDataClassLookup.values() as List<DataClass>).unique() as List<DataType>
+        List<DataElement> referencedDataElements = dataElementCacheableRepository.readAllByDataTypeIn(dataTypes)
+        if (!referencedDataElements.isEmpty()){
+            ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "DataClass(es) referenced as ReferencedDataType in data elements")
         }
+        dataTypeCacheableRepository.deleteAll(dataTypes)
     }
 
     protected List<DataElement> getDataTypes(DataClass dataClass) {

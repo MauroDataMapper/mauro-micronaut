@@ -1,8 +1,8 @@
 package org.maurodata.datamodel
 
-
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
+import io.micronaut.http.client.exceptions.HttpClientResponseException
 import io.micronaut.test.annotation.Sql
 import jakarta.inject.Singleton
 import org.maurodata.domain.datamodel.DataClass
@@ -29,6 +29,8 @@ class DataClassDeleteIntegrationSpec extends CommonDataSpec {
     @Shared
     UUID dataClassId
 
+    @Shared
+    UUID dataClassId2
     @Shared
     UUID childDataClassId1
 
@@ -58,7 +60,8 @@ class DataClassDeleteIntegrationSpec extends CommonDataSpec {
     void setup() {
         folderId = folderApi.create(new Folder(label: 'Test folder')).id
         dataModelId = dataModelApi.create(folderId, dataModelPayload('data model label')).id
-        dataClassId = dataClassApi.create(dataModelId, dataClassPayload('source label')).id
+        dataClassId = dataClassApi.create(dataModelId, dataClassPayload('data class 1 label')).id
+        dataClassId2 = dataClassApi.create(dataModelId, dataClassPayload('data class 2 label')).id
         childDataClassId1 = dataClassApi.create(dataModelId, dataClassId, dataClassPayload('child data class 1 label')).id
         childDataClassId2 = dataClassApi.create(dataModelId, dataClassId, dataClassPayload('child data class 2 label')).id
         grandChildDataClassId1 = dataClassApi.create(dataModelId, childDataClassId1, dataClassPayload('grand child data class 1 label')).id
@@ -68,9 +71,34 @@ class DataClassDeleteIntegrationSpec extends CommonDataSpec {
 
         referenceTypeDataType = dataTypeApi.create(dataModelId, referenceTypeDataTypePayload(grandChildDataClassId1, 'datatype reference class label grandchild DC'))
         modelTypeDataType = dataTypeApi.create(dataModelId, modelTypeDataTypePayload(terminologyId, Terminology.class.simpleName))
-        childDataElement = dataElementApi.create(dataModelId, childDataClassId2, dataElementPayload("data element label childDC2", modelTypeDataType))
+        childDataElement = dataElementApi.create(dataModelId, childDataClassId2, dataElementPayload("data element label childDC2", referenceTypeDataType))
+        dataElement = dataElementApi.create(dataModelId, dataClassId2, dataElementPayload("data element label childDC2", modelTypeDataType))
     }
 
+
+    void 'should delete dataClass and associations'() {
+        given:
+        dataClassApi.list(dataModelId, dataClassId).items.size() > 0
+
+        and:
+        DataClass dataClass = dataClassApi.show(dataModelId, dataClassId)
+        when:
+        HttpResponse response = dataClassApi.delete(dataModelId, dataClassId, dataClass)
+
+        then:
+        response.status() == HttpStatus.NO_CONTENT
+
+        when:
+        ListResponse<DataClass> dataClassListResponse = dataClassApi.list(dataModelId, dataClassId)
+
+        then:
+        dataClassListResponse.items.isEmpty()
+
+        when:
+        DataType modelReferenceDataType = dataTypeApi.show(dataModelId, modelTypeDataType.id)
+        then:
+        modelReferenceDataType
+    }
 
     void 'should delete child dataClass 2 and associations'() {
         given:
@@ -94,33 +122,19 @@ class DataClassDeleteIntegrationSpec extends CommonDataSpec {
         DataType modelReferenceDataType = dataTypeApi.show(dataModelId, modelTypeDataType.id)
         then:
         modelReferenceDataType
-
-
     }
 
-    void 'should delete dataClass and associations'() {
+    void 'delete dataclass with dangling referenceType dataType used by other resources -should not delete - should throw exception'() {
         given:
-        DataClass dataClass = dataClassApi.show(dataModelId, dataClassId)
+        DataClass dataClass3 = dataClassApi.create(dataModelId, dataClassPayload("third label data class"))
+        dataElementApi.create(dataModelId, dataClass3.id, dataElementPayload('data element 3 payload', referenceTypeDataType))
 
         when:
-        HttpResponse response = dataClassApi.delete(dataModelId, dataClassId, dataClass)
+        dataClassApi.delete(dataModelId, dataClassId, null)
 
         then:
-        response.status() == HttpStatus.NO_CONTENT
-
-        when:
-        ListResponse<DataClass> dataClassListResponse = dataClassApi.list(dataModelId, dataClassId)
-
-        then:
-        dataClassListResponse.items.isEmpty()
-
-        when:
-        DataType modelReferenceDataType = dataTypeApi.show(dataModelId, modelTypeDataType.id)
-        then:
-        modelReferenceDataType
-
-
+        HttpClientResponseException exception = thrown()
+        exception.status == HttpStatus.UNPROCESSABLE_ENTITY
     }
-
 
 }
