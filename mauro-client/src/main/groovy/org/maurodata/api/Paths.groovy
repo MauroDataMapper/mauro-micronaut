@@ -113,6 +113,7 @@ interface Paths {
     String DATA_MODEL_ID_ROUTE = '/dataModels/{id}'
     String DATA_MODEL_ID_FINALISE = '/dataModels/{id}/finalise'
     String FOLDER_LIST_DATA_MODEL = '/folders/{folderId}/dataModels'
+    String CREATE_DATA_MODEL = '/folders/{folderId}/dataModels{?defaultDataTypeProvider}'
     String DATA_MODEL_BRANCH_MODEL_VERSION = '/dataModels/{id}/newBranchModelVersion'
     String DATA_MODEL_EXPORT = '/dataModels/{id}/export{/namespace}{/name}{/version}'
     String DATA_MODEL_IMPORT = '/dataModels/import/{namespace}/{name}{/version}'

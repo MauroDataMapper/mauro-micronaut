@@ -11,4 +11,10 @@ class PluginService {
             throw new HttpStatusException(HttpStatus.BAD_REQUEST, "Model import plugin with namespace: ${namespace}, name: ${name} not found")
         }
     }
+
+     static <P extends MauroPlugin> void handlePluginNotFound(MauroPlugin mauroPlugin, Class<P> pluginCls,  String name) {
+        if (!mauroPlugin) {
+            throw new HttpStatusException(HttpStatus.BAD_REQUEST, "Plugin with type with type: ${pluginCls.simpleName}, name: ${name} not found")
+        }
+    }
 }
