@@ -1,5 +1,6 @@
 package org.maurodata.api.datamodel
 
+import io.micronaut.http.annotation.QueryValue
 import org.maurodata.api.MauroApi
 import org.maurodata.api.Paths
 import org.maurodata.api.model.MergeDiffDTO
@@ -9,7 +10,6 @@ import org.maurodata.api.model.ModelVersionedRefDTO
 import org.maurodata.api.model.ModelVersionedWithTargetsRefDTO
 import org.maurodata.api.model.VersionLinkDTO
 import org.maurodata.domain.datamodel.DataModel
-import org.maurodata.domain.datamodel.DataModelType
 import org.maurodata.domain.datamodel.IntersectsData
 import org.maurodata.domain.datamodel.IntersectsManyData
 import org.maurodata.domain.datamodel.SubsetData
@@ -18,7 +18,7 @@ import org.maurodata.domain.model.version.CreateNewVersionData
 import org.maurodata.domain.model.version.FinaliseData
 import org.maurodata.domain.search.dto.SearchRequestDTO
 import org.maurodata.domain.search.dto.SearchResultsDTO
-import org.maurodata.plugin.datatype.DataTypePlugin
+import org.maurodata.plugin.datatype.DefaultDataTypeProviderPlugin
 import org.maurodata.plugin.importer.DataModelImporterPlugin
 import org.maurodata.web.ListResponse
 
@@ -43,7 +43,10 @@ interface DataModelApi extends ModelApi<DataModel> {
     @Get(Paths.DATA_MODEL_ID_ROUTE)
     DataModel show(UUID id)
 
-    @Post(Paths.FOLDER_LIST_DATA_MODEL)
+    @Post(Paths.CREATE_DATA_MODEL)
+    DataModel create(UUID folderId, @Body @NonNull DataModel dataModel, @Nullable @QueryValue String defaultDataTypeProvider)
+
+    @Post(Paths.CREATE_DATA_MODEL)
     DataModel create(UUID folderId, @Body @NonNull DataModel dataModel)
 
     @Put(Paths.DATA_MODEL_ID_ROUTE)
@@ -121,7 +124,7 @@ interface DataModelApi extends ModelApi<DataModel> {
     Map doi(UUID id)
 
     @Get(Paths.DATA_MODEL_DATATYPE_PROVIDERS)
-    List<DataTypePlugin> defaultDataTypeProviders()
+    List<DefaultDataTypeProviderPlugin> defaultDataTypeProviders()
 
     @Get(Paths.DATA_MODEL_TYPES)
     List<String> dataModelTypes()
