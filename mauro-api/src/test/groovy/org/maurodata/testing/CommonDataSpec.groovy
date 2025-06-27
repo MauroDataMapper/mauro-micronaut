@@ -21,6 +21,7 @@ import org.maurodata.api.facet.EditApi
 import org.maurodata.api.facet.ReferenceFileApi
 import org.maurodata.api.facet.RuleApi
 import org.maurodata.api.facet.RuleRepresentationApi
+import org.maurodata.api.facet.SemanticLinksApi
 import org.maurodata.api.facet.SummaryMetadataApi
 import org.maurodata.api.facet.SummaryMetadataReportApi
 import org.maurodata.api.federation.PublishApi
@@ -149,6 +150,7 @@ class CommonDataSpec extends Specification {
     @Shared @Inject SubscribedCatalogueApi subscribedCatalogueApi
     @Shared @Inject SubscribedModelApi subscribedModelApi
     @Shared @Inject PublishApi publishApi
+    @Shared @Inject SemanticLinksApi semanticLinksApi
 
     @Inject
     SessionHandlerClientFilter sessionHandlerClientFilter

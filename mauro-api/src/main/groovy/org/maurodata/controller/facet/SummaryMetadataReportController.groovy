@@ -4,10 +4,12 @@ import org.maurodata.api.Paths
 import org.maurodata.api.facet.SummaryMetadataReportApi
 import org.maurodata.audit.Audit
 import org.maurodata.controller.model.ItemController
+import org.maurodata.web.PaginationParams
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
+import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.*
@@ -65,18 +67,20 @@ class SummaryMetadataReportController extends ItemController<SummaryMetadataRepo
     }
 
     @Audit
-    @Get(Paths.SUMMARY_METADATA_REPORTS_LIST)
-    ListResponse<SummaryMetadataReport> list(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID summaryMetadataId) {
+    @Get(Paths.SUMMARY_METADATA_REPORTS_LIST_PAGED)
+    ListResponse<SummaryMetadataReport> list(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID summaryMetadataId,
+                                             @Nullable PaginationParams params = new PaginationParams()) {
+        
         SummaryMetadata summaryMetadata = validateAndGet(domainType, domainId, summaryMetadataId)
         accessControlService.checkRole(Role.READER, readAdministeredItemForFacet(summaryMetadata))
         List<SummaryMetadataReport> summaryMetadataReportList = summaryMetadataReportRepository.findAllBySummaryMetadataId(summaryMetadataId)
-        ListResponse.from(summaryMetadataReportList)
+        ListResponse.from(summaryMetadataReportList, params)
     }
 
     @Audit
     @Get(Paths.SUMMARY_METADATA_REPORTS_ID)
     SummaryMetadataReport show(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID summaryMetadataId,
-                              @NonNull UUID id) {
+                               @NonNull UUID id) {
         SummaryMetadata summaryMetadata = validateAndGet(domainType, domainId, summaryMetadataId)
         accessControlService.checkRole(Role.READER, readAdministeredItemForFacet(summaryMetadata))
         summaryMetadataReportCacheableRepository.findById(id)

@@ -61,8 +61,8 @@ class Terminology extends Model {
     @JsonIgnore
     @Override
     void setAssociations() {
-        Map<UUID, Term> termsMap = terms.collectEntries { [it.id, it] }
-        Map<UUID, TermRelationshipType> termRelationshipTypesMap = termRelationshipTypes.collectEntries { [it.id, it] }
+        Map<UUID, Term> termsMap = terms.collectEntries {[it.id, it]}
+        Map<UUID, TermRelationshipType> termRelationshipTypesMap = termRelationshipTypes.collectEntries {[it.id, it]}
 
         terms.each {
             it.parent = this
@@ -74,7 +74,7 @@ class Terminology extends Model {
             it.parent = this
             it.relationshipType = termRelationshipTypesMap[it.relationshipType.id]
             it.sourceTerm = termsMap[it.sourceTerm.id]
-             it.targetTerm = termsMap[it.targetTerm.id]
+            it.targetTerm = termsMap[it.targetTerm.id]
         }
 
         this
@@ -85,9 +85,9 @@ class Terminology extends Model {
         log.debug '*** Terminology.clone() ***'
 
         Terminology cloned = (Terminology) super.clone()
-        cloned.terms = cloned.terms.collect { it.clone() }
+        cloned.terms = cloned.terms.collect {it.clone()}
         cloned.termRelationshipTypes = cloned.termRelationshipTypes.collect {it.clone()}
-        cloned.termRelationships =  cloned.termRelationships.collect {it.clone()}
+        cloned.termRelationships = cloned.termRelationships.collect {it.clone()}
 
         cloned.setAssociations()
 
@@ -99,13 +99,13 @@ class Terminology extends Model {
      */
 
     static Terminology build(
-            Map args,
-            @DelegatesTo(value = Terminology, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+        Map args,
+        @DelegatesTo(value = Terminology, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
         new Terminology(args).tap(closure)
     }
 
     static Terminology build(
-            @DelegatesTo(value = Terminology, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+        @DelegatesTo(value = Terminology, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
         build [:], closure
     }
 
@@ -133,8 +133,8 @@ class Terminology extends Model {
     }
 
     TermRelationshipType termRelationshipType(
-            Map args,
-            @DelegatesTo(value = TermRelationshipType, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+        Map args,
+        @DelegatesTo(value = TermRelationshipType, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
         TermRelationshipType termRelationshipType = TermRelationshipType.build(args, closure)
         termRelationshipType.terminology = this
         this.termRelationshipTypes.add(termRelationshipType)
@@ -142,7 +142,7 @@ class Terminology extends Model {
     }
 
     TermRelationshipType termRelationshipType(
-            @DelegatesTo(value = TermRelationshipType, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+        @DelegatesTo(value = TermRelationshipType, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
         termRelationshipType [:], closure
     }
 
@@ -153,8 +153,8 @@ class Terminology extends Model {
     }
 
     TermRelationship termRelationship(
-            Map args,
-            @DelegatesTo(value = TermRelationship, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+        Map args,
+        @DelegatesTo(value = TermRelationship, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
         TermRelationship termRelationship = TermRelationship.build(args)
         termRelationship.terminology = this
         this.termRelationships.add(termRelationship)
@@ -162,7 +162,7 @@ class Terminology extends Model {
     }
 
     TermRelationship termRelationship(
-            @DelegatesTo(value = TermRelationship, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+        @DelegatesTo(value = TermRelationship, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
         termRelationship [:], closure
     }
 }

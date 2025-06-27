@@ -1,6 +1,7 @@
 package org.maurodata.domain.datamodel
 
 import com.fasterxml.jackson.annotation.JsonIgnore
+import com.fasterxml.jackson.annotation.JsonProperty
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
 import groovy.transform.MapConstructor
@@ -46,7 +47,7 @@ class DataType extends ModelItem<DataModel> implements DiffableItem<DataType> {
         PRIMITIVE_TYPE('PrimitiveType'),
         ENUMERATION_TYPE('EnumerationType'),
         REFERENCE_TYPE('ReferenceType'),
-        MODEL_TYPE('ModelType')
+        MODEL_TYPE('ModelDataType')
 
         public final String stringValue
 
@@ -169,6 +170,13 @@ class DataType extends ModelItem<DataModel> implements DiffableItem<DataType> {
                 .rightHandSide(other.id?.toString(), other)
         base.label = this.label
         base
+    }
+
+    @Transient
+    @Deprecated
+    @JsonProperty('model')
+    UUID getModelId() {
+        dataModel?.id ?: owner?.id // backwards compatibility
     }
 
     /****

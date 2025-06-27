@@ -7,6 +7,7 @@ import org.maurodata.domain.terminology.CodeSet
 import org.maurodata.domain.terminology.Term
 import org.maurodata.domain.terminology.Terminology
 import org.maurodata.web.ListResponse
+import org.maurodata.web.PaginationParams
 
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
@@ -35,11 +36,17 @@ interface TermApi extends AdministeredItemApi<Term, Terminology> {
     @Get(Paths.TERM_LIST)
     ListResponse<Term> list(UUID terminologyId)
 
+    @Get(Paths.TERM_LIST_PAGED)
+    ListResponse<Term> list(UUID terminologyId, @Nullable PaginationParams params)
+
     @Get(Paths.TERM_TREE)
     List<Term> tree(UUID terminologyId, @Nullable UUID id)
 
     @Get(Paths.TERM_CODE_SETS)
     ListResponse<CodeSet> getCodeSetsForTerm(UUID terminologyId, UUID id)
+
+    @Get(Paths.TERM_CODE_SETS_PAGED)
+    ListResponse<CodeSet> getCodeSetsForTerm(UUID terminologyId, UUID id, @Nullable PaginationParams params)
 
     @Get(Paths.TERM_DOI)
     Map doi(UUID id)

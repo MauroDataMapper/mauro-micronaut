@@ -79,7 +79,7 @@ class DataElementUpdateIntegrationSpec extends CommonDataSpec {
                 new DataElement(label: 'Renamed data element', dataType: new DataType(id: differentDataTypeId)))
         then:
         HttpClientResponseException exception = thrown()
-        exception.status == HttpStatus.BAD_REQUEST
+        exception.status == HttpStatus.UNPROCESSABLE_ENTITY
     }
 
     @Unroll

@@ -7,6 +7,7 @@ import org.maurodata.domain.classifier.ClassificationScheme
 import org.maurodata.domain.diff.ObjectDiff
 import org.maurodata.domain.model.version.CreateNewVersionData
 import org.maurodata.web.ListResponse
+import org.maurodata.web.PaginationParams
 
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
@@ -43,9 +44,14 @@ interface ClassificationSchemeApi extends ModelApi<ClassificationScheme> {
     @Get(Paths.FOLDER_CLASSIFICATION_SCHEMES_ROUTE)
     ListResponse<ClassificationScheme> list(UUID folderId)
 
+    @Get(Paths.FOLDER_CLASSIFICATION_SCHEMES_ROUTE_PAGED)
+    ListResponse<ClassificationScheme> list(UUID folderId, @Nullable PaginationParams params)
+
     @Get(Paths.CLASSIFICATION_SCHEMES_LIST)
     ListResponse<ClassificationScheme> listAll()
 
+    @Get(Paths.CLASSIFICATION_SCHEMES_LIST_PAGED)
+    ListResponse<ClassificationScheme> listAll(@Nullable PaginationParams params)
 
     @Put(Paths.CLASSIFICATION_SCHEMES_BRANCH_MODEL_VERSION)
     ClassificationScheme createNewBranchModelVersion(UUID id, @Body @Nullable CreateNewVersionData createNewVersionData)

@@ -73,6 +73,7 @@ class ModelContentRepository<M extends Model> extends AdministeredItemContentRep
         saveAnnotations(items)
         saveReferenceFiles(items)
         saveVersionLinks(items)
+        saveSemanticLinks(items)
     }
 
     void saveSummaryMetadataFacets(List<AdministeredItem> items) {
@@ -133,9 +134,9 @@ class ModelContentRepository<M extends Model> extends AdministeredItemContentRep
                     }
                 }
                 annotations.addAll(item.annotations)
-                annotationCacheableRepository.saveAll(annotations)
             }
         }
+        annotationCacheableRepository.saveAll(annotations)
     }
 
     void saveReferenceFiles(List<AdministeredItem> items) {
@@ -146,9 +147,9 @@ class ModelContentRepository<M extends Model> extends AdministeredItemContentRep
                     updateMultiAwareData(item, it)
                 }
                 referenceFiles.addAll(item.referenceFiles)
-                referenceFileCacheableRepository.saveAll(referenceFiles)
             }
         }
+        referenceFileCacheableRepository.saveAll(referenceFiles)
     }
 
     void saveVersionLinks(List<AdministeredItem> items) {
@@ -161,10 +162,23 @@ class ModelContentRepository<M extends Model> extends AdministeredItemContentRep
                         updateMultiAwareData(item, it)
                     }
                     versionLinks.addAll(modelItem.versionLinks)
-                    versionLinkCacheableRepository.saveAll(versionLinks)
                 }
             }
         }
+        versionLinkCacheableRepository.saveAll(versionLinks)
+    }
+
+    void saveSemanticLinks(List<AdministeredItem> items) {
+        List<SemanticLink> SemanticLinks = []
+        items.each {item ->
+            if (item.semanticLinks) {
+                item.semanticLinks.each {
+                    updateMultiAwareData(item, it)
+                }
+                SemanticLinks.addAll(item.semanticLinks)
+            }
+        }
+        semanticLinkCacheableRepository.saveAll(SemanticLinks)
     }
 
     protected List<M> findAllModelsForFolder(ModelRepository modelRepository, Folder folder) {

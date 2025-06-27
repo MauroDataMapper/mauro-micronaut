@@ -6,6 +6,7 @@ import org.maurodata.api.model.AdministeredItemApi
 import org.maurodata.domain.dataflow.DataClassComponent
 import org.maurodata.domain.dataflow.DataElementComponent
 import org.maurodata.web.ListResponse
+import org.maurodata.web.PaginationParams
 
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
@@ -33,6 +34,9 @@ interface DataElementComponentApi extends AdministeredItemApi<DataElementCompone
 
     @Get(Paths.DATA_FLOW_ELEMENT_COMPONENT_LIST)
     ListResponse<DataElementComponent> list(@NonNull UUID dataModelId, @NonNull UUID dataFlowId, @NonNull UUID dataClassComponentId)
+
+    @Get(Paths.DATA_FLOW_ELEMENT_COMPONENT_LIST_PAGED)
+    ListResponse<DataElementComponent> list(@NonNull UUID dataModelId, @NonNull UUID dataFlowId, @NonNull UUID dataClassComponentId, @Nullable PaginationParams params)
 
     @Put(Paths.DATA_FLOW_ELEMENT_COMPONENT_SOURCE_ELEMENT)
     DataElementComponent updateSource(@NonNull UUID dataModelId, @NonNull UUID dataFlowId, @NonNull UUID dataClassComponentId, @NonNull UUID id, @NonNull UUID dataElementId)
