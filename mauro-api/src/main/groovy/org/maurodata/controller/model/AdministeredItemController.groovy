@@ -11,6 +11,7 @@ import org.maurodata.persistence.model.AdministeredItemRepository
 import org.maurodata.persistence.model.PathRepository
 import org.maurodata.persistence.service.RepositoryService
 import org.maurodata.web.ListResponse
+import org.maurodata.web.PaginationParams
 
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
@@ -87,9 +88,11 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
     protected AdministeredItemCacheableRepository.ClassifierCacheableRepository getClassifierCacheableRepository(String domainType) {
         getAdministeredItemRepository(domainType) as AdministeredItemCacheableRepository.ClassifierCacheableRepository
     }
+
     protected AdministeredItemCacheableRepository.DataClassCacheableRepository getDataClassCacheableRepository(String domainType) {
         getAdministeredItemRepository(domainType) as AdministeredItemCacheableRepository.DataClassCacheableRepository
     }
+
     protected I createEntity(@NonNull P parent, @NonNull I cleanItem) {
         updateCreationProperties(cleanItem)
 
@@ -147,15 +150,16 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
         }
     }
 
-    ListResponse<I> list(UUID parentId) {
+    ListResponse<I> list(UUID parentId, @Nullable PaginationParams params = new PaginationParams()) {
+        
         P parent = parentItemRepository.readById(parentId)
         if (!parent) return null
         accessControlService.checkRole(Role.READER, parent)
         List<I> items = administeredItemRepository.readAllByParent(parent)
         items.each {
-            updateDerivedProperties(it)
+            updateDerivedProperties(it as I)
         }
-        ListResponse.from(items)
+        ListResponse.from(items, params)
     }
 
     ListResponse<I> listAll() {

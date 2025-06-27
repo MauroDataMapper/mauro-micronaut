@@ -84,7 +84,7 @@ class SecurableResourceGroupRoleController extends ItemController<SecurableResou
         } else {
             accessControlService.checkRole(Role.EDITOR, securableResource)
             if (role >= Role.CONTAINER_ADMIN) {
-                throw new HttpStatusException(HttpStatus.BAD_REQUEST, 'Role CONTAINER_ADMIN is only applicable to Containers')
+                throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, 'Role CONTAINER_ADMIN is only applicable to Containers')
             }
         }
     }

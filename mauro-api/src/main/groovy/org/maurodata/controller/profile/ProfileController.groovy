@@ -194,7 +194,7 @@ class ProfileController implements AdministeredItemReader, ProfileApi {
 
     static void handleProfileNotFound(Profile profile, String namespace, String name, String version) {
         if (!profile) {
-            throw new HttpStatusException(HttpStatus.BAD_REQUEST, "Profile with namespace: ${namespace}, name: ${name} and version: ${version} not found")
+            throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Profile with namespace: ${namespace}, name: ${name} and version: ${version} not found")
         }
     }
 

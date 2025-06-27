@@ -181,7 +181,7 @@ class DataTypeIntegrationSpec extends CommonDataSpec {
                          modelResourceId:  (codeSet as Model).id))
         then:
         HttpClientResponseException exception = thrown()
-        exception.status == HttpStatus.BAD_REQUEST
+        exception.status == HttpStatus.UNPROCESSABLE_ENTITY
 
         CodeSet finalised = codeSetApi.finalise(codeSet.id, finalisePayload())
 
@@ -232,9 +232,9 @@ class DataTypeIntegrationSpec extends CommonDataSpec {
 
         where:
         domainType      | modelResourceDomainType    | modelResourceId   | expectedException
-        'ModelType'     | DataClass.class.simpleName | dataClassId1      | HttpStatus.BAD_REQUEST
-        'ModelType'     | _                          | UUID.randomUUID() | HttpStatus.BAD_REQUEST
-        'ReferenceType' | _                          | UUID.randomUUID() | HttpStatus.BAD_REQUEST
+        'ModelType'     | DataClass.class.simpleName | dataClassId1      | HttpStatus.UNPROCESSABLE_ENTITY
+        'ModelType'     | _                          | UUID.randomUUID() | HttpStatus.UNPROCESSABLE_ENTITY
+        'ReferenceType' | _                          | UUID.randomUUID() | HttpStatus.UNPROCESSABLE_ENTITY
     }
 
 

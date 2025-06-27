@@ -11,8 +11,10 @@ import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.domain.security.Role
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository
 import org.maurodata.security.AccessControlService
+import jakarta.inject.Singleton
 
 @CompileStatic
+@Singleton
 class DataTypeService {
     AdministeredItemCacheableRepository.DataTypeCacheableRepository dataTypeRepository
     AdministeredItemCacheableRepository.DataClassCacheableRepository dataClassRepository

@@ -31,6 +31,8 @@ interface Paths {
     String CLASSIFICATION_SCHEMES_READ_BY_AUTHENTICATED = '/classificationSchemes/{id}/readByAuthenticated'
     String CLASSIFICATION_SCHEMES_READ_BY_EVERYONE = '/classificationSchemes/{id}/readByEveryone'
     String CLASSIFICATION_SCHEMES_PERMISSIONS = '/classificationSchemes/{id}/permissions'
+    String CLASSIFICATION_SCHEMES_LIST_PAGED = '/classificationSchemes{?params*}'
+    String FOLDER_CLASSIFICATION_SCHEMES_ROUTE_PAGED = '/folders/{folderId}/classificationSchemes{?params*}'
 
     /*
     * ClassificationSchemeApi
@@ -41,15 +43,18 @@ interface Paths {
     String CHILD_CLASSIFIERS_ID_ROUTE = '/classificationSchemes/{classificationSchemeId}/classifiers/{parentClassifierId}/classifiers/{childClassifierId}'
     String ADMINISTERED_ITEM_CLASSIFIER_ID_ROUTE = '/{administeredItemDomainType}/{administeredItemId}/classifiers/{id}'
     String ADMINISTERED_ITEM_CLASSIFIER_ROUTE = '/{administeredItemDomainType}/{administeredItemId}/classifiers'
+    String CLASSIFIERS_ROUTE_PAGED = '/classificationSchemes/{classificationSchemeId}/classifiers{?params*}'
+    String CHILD_CLASSIFIERS_ROUTE_PAGED = '/classificationSchemes/{classificationSchemeId}/classifiers/{parentClassifierId}/classifiers{?params*}'
+    String ADMINISTERED_ITEM_CLASSIFIER_ROUTE_PAGED = '/{administeredItemDomainType}/{administeredItemId}/classifiers{?params*}'
     String ALL_CLASSIFIERS_ROUTE = '/classifiers'
-
-
     /*
     * ApiPropertyApi
      */
     String API_PROPERTY_LIST_PUBLIC = '/properties'
     String API_PROPERTY_LIST_ALL = '/admin/properties'
     String API_PROPERTY_SHOW = '/admin/properties/{id}'
+    String API_PROPERTY_LIST_PUBLIC_PAGED = '/properties{?params*}'
+    String API_PROPERTY_LIST_ALL_PAGED = '/admin/properties{?params*}'
 
     /*
     * SessionApi
@@ -67,6 +72,7 @@ interface Paths {
     String DATA_FLOW_CLASS_COMPONENT_LIST = '/dataModels/{dataModelId}/dataFlows/{dataFlowId}/dataClassComponents'
     String DATA_FLOW_CLASS_COMPONENT_SOURCE_CLASS = '/dataModels/{dataModelId}/dataFlows/{dataFlowId}/dataClassComponents/{id}/source/{dataClassId}'
     String DATA_FLOW_CLASS_COMPONENT_TARGET_CLASS = '/dataModels/{dataModelId}/dataFlows/{dataFlowId}/dataClassComponents/{id}/target/{dataClassId}'
+    String DATA_FLOW_CLASS_COMPONENT_LIST_PAGED = '/dataModels/{dataModelId}/dataFlows/{dataFlowId}/dataClassComponents{?params*}'
 
     /*
     * DataElementComponentApi
@@ -77,12 +83,14 @@ interface Paths {
                                                         '/{id}/source/{dataElementId}'
     String DATA_FLOW_ELEMENT_COMPONENT_TARGET_ELEMENT = '/dataModels/{dataModelId}/dataFlows/{dataFlowId}/dataClassComponents/{dataClassComponentId}/dataElementComponents' +
                                                         '/{id}/target/{dataElementId}'
-
+    String DATA_FLOW_ELEMENT_COMPONENT_LIST_PAGED = '/dataModels/{dataModelId}/dataFlows/{dataFlowId}/dataClassComponents/{dataClassComponentId}/dataElementComponents' +
+                                                    '{?params*}'
     /*
     * DataFlowApi
     */
-    String DATA_FLOW_LIST = '/dataModels/{dataModelId}/dataFlows/'
+    String DATA_FLOW_LIST = '/dataModels/{dataModelId}/dataFlows'
     String DATA_FLOW_ID = '/dataModels/{dataModelId}/dataFlows/{id}'
+    String DATA_FLOW_LIST_PAGED = '/dataModels/{dataModelId}/dataFlows{?params*}'
 
     /*
     * DataClassApi
@@ -143,12 +151,15 @@ interface Paths {
     */
     String DATA_TYPE_LIST = '/dataModels/{dataModelId}/dataTypes'
     String DATA_TYPE_ID = '/dataModels/{dataModelId}/dataTypes/{id}'
+    String DATA_TYPE_LIST_PAGED = '/dataModels/{dataModelId}/dataTypes{?params*}'
 
     /*
     * EnumerationValueApi
     */
     String ENUMERATION_VALUE_LIST = '/dataModels/{dataModelId}/dataTypes/{enumerationTypeId}/enumerationValues'
     String ENUMERATION_VALUE_ID = '/dataModels/{dataModelId}/dataTypes/{enumerationTypeId}/enumerationValues/{id}'
+    String ENUMERATION_VALUE_LIST_PAGED = '/dataModels/{dataModelId}/dataTypes/{enumerationTypeId}/enumerationValues{?params*}'
+
     /*
     * AnnotationApi
     */
@@ -156,55 +167,63 @@ interface Paths {
     String ANNOTATION_ID = '/{domainType}/{domainId}/annotations/{id}'
     String ANNOTATION_CHILD_LIST = '/{domainType}/{domainId}/annotations/{annotationId}/annotations'
     String ANNOTATION_CHILD_ID = '/{domainType}/{domainId}/annotations/{annotationId}/annotations/{id}'
+    String ANNOTATION_LIST_PAGED = '/{domainType}/{domainId}/annotations{?params*}'
 
     /*
     * MetadataApi
     */
     String METADATA_LIST = '/{domainType}/{domainId}/metadata'
     String METADATA_ID = '/{domainType}/{domainId}/metadata/{id}'
+    String METADATA_LIST_PAGED = '/{domainType}/{domainId}/metadata{?params*}'
 
     /*
     * EditApi
     */
     String EDIT_LIST = '/{domainType}/{domainId}/edits'
     String EDIT_ID = '/{domainType}/{domainId}/edits/{id}'
+    String EDIT_LIST_PAGED = '/{domainType}/{domainId}/edits{?params*}'
 
     /*
     * EditApi
     */
     String SEMANTIC_LINKS_LIST = '/{domainType}/{domainId}/semanticLinks'
     String SEMANTIC_LINKS_ID = '/{domainType}/{domainId}/semanticLinks/{id}'
+    String SEMANTIC_LINKS_LIST_PAGED = '/{domainType}/{domainId}/semanticLinks{?params*}'
 
     /*
     * RuleApi
     */
     String RULE_LIST = '/{domainType}/{domainId}/rules'
     String RULE_ID = '/{domainType}/{domainId}/rules/{id}'
+    String RULE_LIST_PAGED = '/{domainType}/{domainId}/rules{?params*}'
 
     /*
     * RuleRepresentationApi
     */
     String RULE_REPRESENTATIONS_LIST = '/{domainType}/{domainId}/rules/{ruleId}/representations'
     String RULE_REPRESENTATIONS_ID = '/{domainType}/{domainId}/rules/{ruleId}/representations/{id}'
+    String RULE_REPRESENTATIONS_LIST_PAGED = '/{domainType}/{domainId}/rules/{ruleId}/representations{?params*}'
 
     /*
     * ReferenceFileApi
     */
     String REFERENCE_FILE_LIST = '/{domainType}/{domainId}/referenceFiles'
     String REFERENCE_FILE_ID = '/{domainType}/{domainId}/referenceFiles/{id}'
+    String REFERENCE_FILE_LIST_PAGED = '/{domainType}/{domainId}/referenceFiles{?params*}'
 
     /*
     * SummaryMetadataApi
     */
     String SUMMARY_METADATA_LIST = '/{domainType}/{domainId}/summaryMetadata'
-    String SUMMARY_METADATA_LIST_PAGED = '/{domainType}/{domainId}/summaryMetadata{?params*}'
     String SUMMARY_METADATA_ID = '/{domainType}/{domainId}/summaryMetadata/{id}'
+    String SUMMARY_METADATA_LIST_PAGED = '/{domainType}/{domainId}/summaryMetadata{?params*}'
 
     /*
     * SummaryMetadataReportsApi
     */
     String SUMMARY_METADATA_REPORTS_LIST = '/{domainType}/{domainId}/summaryMetadata/{summaryMetadataId}/summaryMetadataReports'
     String SUMMARY_METADATA_REPORTS_ID = '/{domainType}/{domainId}/summaryMetadata/{summaryMetadataId}/summaryMetadataReports/{id}'
+    String SUMMARY_METADATA_REPORTS_LIST_PAGED = '/{domainType}/{domainId}/summaryMetadata/{summaryMetadataId}/summaryMetadataReports{?params*}'
 
     /*
     * FolderApi
@@ -289,6 +308,8 @@ interface Paths {
     String USER_CHANGE_PASSWORD = '/catalogueUsers/currentUser/changePassword'
     String USER_ID = '/catalogueUsers/{id}'
     String USER_PREFERENCES = '/catalogueUsers/{id}/userPreferences'
+    String USER_IMAGE = '/catalogueUsers/{id}/image'
+
 
     /*
     * SecurableResourceGroupRoleApi
@@ -317,6 +338,8 @@ interface Paths {
     String CODE_SET_READ_BY_EVERYONE = '/codeSets/{id}/readByEveryone'
     String CODE_SET_FOLDER_PERMISSIONS = '/codeSets/{id}/permissions'
     String CODE_SET_DOI = '/codeSets/{id}/doi'
+    String CODE_SET_LIST_PAGED = '/codeSets{?params*}'
+    String CODE_SET_TERM_LIST_PAGED = '/codeSets/{id}/terms{?params*}'
 
     /*
     * TerminologyApi
@@ -339,6 +362,7 @@ interface Paths {
     String TERMINOLOGY_DOI = '/terminologies/{id}/doi'
 
     String TERMINOLOGY_SIMPLE_MODEL_VERSION_TREE = '/terminologies/{id}/simpleModelVersionTree'
+    String TERMINOLOGY_LIST_PAGED = '/terminologies{?params*}'
 
 
     /*
@@ -359,19 +383,22 @@ interface Paths {
     String TERM_TREE = '/terminologies/{terminologyId}/terms/tree{/id}'
     String TERM_CODE_SETS = '/terminologies/{terminologyId}/terms/{id}/codeSets'
     String TERM_DOI = '/terms/{id}/doi'
+    String TERM_LIST_PAGED = '/terminologies/{terminologyId}/terms{?params*}'
+    String TERM_CODE_SETS_PAGED = '/terminologies/{terminologyId}/terms/{id}/codeSets{?params*}'
 
     /*
     * TermRelationshipsApi
     */
     String TERM_RELATIONSHIP_LIST = '/terminologies/{terminologyId}/termRelationships'
     String TERM_RELATIONSHIP_ID = '/terminologies/{terminologyId}/termRelationships/{id}'
-
+    String TERM_RELATIONSHIP_LIST_PAGED = '/terminologies/{terminologyId}/termRelationships'
 
     /*
     * TermRelationshipTypeApi
     */
     String TERM_RELATIONSHIP_TYPE_LIST = '/terminologies/{terminologyId}/termRelationshipTypes'
     String TERM_RELATIONSHIP_TYPE_ID = '/terminologies/{terminologyId}/termRelationshipTypes/{id}'
+    String TERM_RELATIONSHIP_TYPE_LIST_PAGED = '/terminologies/{terminologyId}/termRelationshipTypes{?params*}'
 
     /*
     * TreeApi
@@ -429,5 +456,10 @@ interface Paths {
     String SUBSCRIBED_MODELS_LIST = '/subscribedCatalogues/{subscribedCatalogueId}/subscribedModels'
     String SUBSCRIBED_MODELS_ID = '/subscribedCatalogues/{subscribedCatalogueId}/subscribedModels/{subscribedModelId}'
 
-
+    /*
+    * Reference data models
+    * NOTE: for now this stubbed in FolderController and
+    */
+    String REFERENCE_DATA_MODELS_LIST = '/referenceDataModels'
+    String FOLDER_REFERENCE_DATA_MODELS= '/folders/{id}/referenceDataModels'
 }

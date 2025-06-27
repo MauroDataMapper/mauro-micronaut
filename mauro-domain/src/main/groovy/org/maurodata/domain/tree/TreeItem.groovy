@@ -27,10 +27,17 @@ class TreeItem {
     @JsonIgnore
     Model model
 
+    @JsonIgnore
+    AdministeredItem parent
+
     Boolean hasChildren
 
     UUID getModelId() {
         model?.id
+    }
+
+    UUID getParentId() {
+        parent?.id
     }
 
     List<String> availableActions = []
@@ -41,6 +48,6 @@ class TreeItem {
 
     static TreeItem from(AdministeredItem item) {
         new TreeItem(id: item.id, label: item.label, domainType: item.domainType, item: item, availableActions: new ArrayList<String>(item.availableActions),
-                     path: item.updatePath().toString())
+                     path: item.updatePath().toString(), model: item.getOwner(), parent: item.getParent())
     }
 }

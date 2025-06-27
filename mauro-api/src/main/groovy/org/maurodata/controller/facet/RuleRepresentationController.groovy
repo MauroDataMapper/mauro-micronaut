@@ -2,6 +2,7 @@ package org.maurodata.controller.facet
 
 import org.maurodata.audit.Audit
 
+import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpResponse
 import org.maurodata.api.Paths
 import org.maurodata.api.facet.RuleRepresentationApi
@@ -32,6 +33,7 @@ import io.micronaut.security.rules.SecurityRule
 import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
 import io.micronaut.core.annotation.NonNull
+import org.maurodata.web.PaginationParams
 
 @CompileStatic
 @Slf4j
@@ -62,7 +64,7 @@ class RuleRepresentationController extends ItemController<RuleRepresentation> im
     @Audit
     @Post(Paths.RULE_REPRESENTATIONS_LIST)
     RuleRepresentation create(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID ruleId,
-                                 @Body RuleRepresentation ruleRepresentation) {
+                              @Body RuleRepresentation ruleRepresentation) {
         super.cleanBody(ruleRepresentation)
         Rule rule = validateAndGet(domainType, domainId, ruleId)
         accessControlService.checkRole(Role.EDITOR, readAdministeredItemForFacet(rule))
@@ -74,7 +76,7 @@ class RuleRepresentationController extends ItemController<RuleRepresentation> im
     @Audit
     @Get(Paths.RULE_REPRESENTATIONS_ID)
     RuleRepresentation show(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID ruleId,
-                               @NonNull UUID id) {
+                            @NonNull UUID id) {
         Rule rule = validateAndGet(domainType, domainId, ruleId)
         accessControlService.checkRole(Role.READER, readAdministeredItemForFacet(rule))
         ruleRepresentationCacheableRepository.findById(id)
@@ -82,18 +84,19 @@ class RuleRepresentationController extends ItemController<RuleRepresentation> im
 
 
     @Audit
-    @Get(Paths.RULE_REPRESENTATIONS_LIST)
-    ListResponse<Rule> list(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID ruleId) {
+    @Get(Paths.RULE_REPRESENTATIONS_LIST_PAGED)
+    ListResponse<Rule> list(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID ruleId, @Nullable PaginationParams params = new PaginationParams()) {
+        
         Rule rule = validateAndGet(domainType, domainId, ruleId)
         accessControlService.checkRole(Role.READER, readAdministeredItemForFacet(rule))
         List<RuleRepresentation> ruleRepresentationList = ruleRepresentationRepository.findAllByRuleId(ruleId)
-        ListResponse.from(ruleRepresentationList)
+        ListResponse.from(ruleRepresentationList, params)
     }
 
     @Audit
     @Put(Paths.RULE_REPRESENTATIONS_ID)
     RuleRepresentation update(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID ruleId,
-                                 @NonNull UUID id, @Body @NonNull RuleRepresentation ruleRepresentation) {
+                              @NonNull UUID id, @Body @NonNull RuleRepresentation ruleRepresentation) {
         super.cleanBody(ruleRepresentation)
         RuleRepresentation existing = ruleRepresentationCacheableRepository.readById(id)
         throwNotFoundException(existing, id)
@@ -119,7 +122,7 @@ class RuleRepresentationController extends ItemController<RuleRepresentation> im
     }
 
     private RuleRepresentation updateEntity(RuleRepresentation existing, RuleRepresentation cleaned,
-                                               Rule rule) {
+                                            Rule rule) {
         boolean hasChanged = updateProperties(existing, cleaned)
         if (hasChanged) {
             ruleRepresentationCacheableRepository.update(existing)

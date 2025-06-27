@@ -5,6 +5,7 @@ import org.maurodata.api.datamodel.EnumerationValueApi
 import org.maurodata.audit.Audit
 import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.facet.EditType
+import org.maurodata.web.PaginationParams
 
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
@@ -66,9 +67,9 @@ class EnumerationValueController extends AdministeredItemController<EnumerationV
     }
 
     @Audit(
-        parentDomainType = DataType,
-        parentIdParamName = 'enumerationTypeId',
-        deletedObjectDomainType = EnumerationValue
+            parentDomainType = DataType,
+            parentIdParamName = 'enumerationTypeId',
+            deletedObjectDomainType = EnumerationValue
     )
     @Delete(Paths.ENUMERATION_VALUE_ID)
     HttpResponse delete(UUID dataModelId, UUID enumerationTypeId, UUID id, @Body @Nullable EnumerationValue enumerationValue) {
@@ -76,12 +77,12 @@ class EnumerationValueController extends AdministeredItemController<EnumerationV
     }
 
     @Audit
-    @Get(Paths.ENUMERATION_VALUE_LIST)
-    ListResponse<EnumerationValue> list(UUID dataModelId, UUID enumerationTypeId) {
+    @Get(Paths.ENUMERATION_VALUE_LIST_PAGED)
+    ListResponse<EnumerationValue> list(UUID dataModelId, UUID enumerationTypeId, @Nullable PaginationParams params = new PaginationParams()) {
+        
         DataType enumerationType = dataTypeRepository.readById(enumerationTypeId)
         accessControlService.checkRole(Role.EDITOR, enumerationType)
-        ListResponse.from(enumerationValueRepository.readAllByEnumerationType_Id(enumerationTypeId))
-
+        ListResponse.from(enumerationValueRepository.readAllByEnumerationType_Id(enumerationTypeId), params)
     }
 
 }

@@ -6,6 +6,7 @@ import org.maurodata.domain.facet.Facet
 import org.maurodata.domain.facet.Metadata
 import org.maurodata.domain.facet.ReferenceFile
 import org.maurodata.domain.facet.Rule
+import org.maurodata.domain.facet.SemanticLink
 import org.maurodata.domain.facet.SummaryMetadata
 import org.maurodata.domain.facet.VersionLink
 import org.maurodata.domain.model.AdministeredItem
@@ -17,6 +18,7 @@ import org.maurodata.persistence.facet.RuleRepository
 import org.maurodata.persistence.facet.SummaryMetadataRepository
 import org.maurodata.persistence.facet.VersionLinkRepository
 import org.maurodata.persistence.model.ItemRepository
+import org.maurodata.persistence.facet.SemanticLinkRepository
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
@@ -51,13 +53,17 @@ abstract class FacetCacheableRepository<F extends Facet> extends ItemCacheableRe
         invalidateCachedLookupById(FIND_BY_ID, item.multiFacetAwareItemDomainType, item.multiFacetAwareItemId)
 
         // invalidate findAll of the parent collection
-        AdministeredItem parent = getRepository(item.multiFacetAwareItemDomainType).readById(item.multiFacetAwareItemId)
-        if (parent?.parent?.id) invalidateCachedLookupById(FIND_ALL_BY_PARENT, item.multiFacetAwareItemDomainType, parent.parent.id)
+        AdministeredItemCacheableRepository<AdministeredItem> administeredItemAdministeredItemCacheableRepository = getRepository(item.multiFacetAwareItemDomainType)
+
+        if (administeredItemAdministeredItemCacheableRepository) {
+            AdministeredItem parent = getRepository(item.multiFacetAwareItemDomainType).readById(item.multiFacetAwareItemId)
+            if (parent?.parent?.id) invalidateCachedLookupById(FIND_ALL_BY_PARENT, item.multiFacetAwareItemDomainType, parent.parent.id)
+        }
     }
 
     @NonNull
     AdministeredItemCacheableRepository<AdministeredItem> getRepository(String domainType) {
-        cacheableRepositories.find {it.handles(domainType)}
+        cacheableRepositories.find { it.handles(domainType) }
     }
 
     // Cacheable Facet Repository definitions
@@ -149,9 +155,36 @@ abstract class FacetCacheableRepository<F extends Facet> extends ItemCacheableRe
         }
 
         Long deleteById(UUID id) {
-            Long deleted = ((ReferenceFileRepository)repository).deleteById(id)
+            Long deleted = ((ReferenceFileRepository) repository).deleteById(id)
             super.invalidate(id)
             deleted
+        }
+    }
+
+    @Singleton
+    @CompileStatic
+    static class SemanticLinkCacheableRepository extends FacetCacheableRepository<SemanticLink> {
+        SemanticLinkCacheableRepository(SemanticLinkRepository semanticLinkRepository) {
+            super(semanticLinkRepository)
+        }
+
+        SemanticLink findById(UUID id) {
+            cachedLookupById(FIND_BY_ID, SemanticLink.class.simpleName, id)
+        }
+
+        SemanticLink readById(UUID id) {
+            cachedLookupById(READ_BY_ID, SemanticLink.class.simpleName, id)
+        }
+
+        List<SemanticLink> saveAll(Iterable<SemanticLink> items) {
+            List<SemanticLink> savedList = []
+            SemanticLink saved
+            items.forEach { semanticLink ->
+                saved = repository.save(semanticLink)
+                savedList.add(saved)
+                invalidate(saved)
+            }
+            savedList
         }
     }
 }

@@ -1,6 +1,9 @@
 package org.maurodata.api.facet
 
+import org.maurodata.web.PaginationParams
+
 import io.micronaut.core.annotation.NonNull
+import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.annotation.*
 import org.maurodata.api.MauroApi
@@ -12,7 +15,10 @@ import org.maurodata.web.ListResponse
 interface RuleApi extends FacetApi<Rule> {
 
     @Get(Paths.RULE_LIST)
-    ListResponse<Rule> list(@NonNull String domainType, @NonNull UUID domainId )
+    ListResponse<Rule> list(@NonNull String domainType, @NonNull UUID domainId)
+
+    @Get(Paths.RULE_LIST_PAGED)
+    ListResponse<Rule> list(@NonNull String domainType, @NonNull UUID domainId, @Nullable PaginationParams params)
 
     @Get(Paths.RULE_ID)
     Rule show(@NonNull String domainType, @NonNull UUID domainId, UUID id)

@@ -2,6 +2,7 @@ package org.maurodata.controller.facet
 
 import org.maurodata.audit.Audit
 
+import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpResponse
 import org.maurodata.api.Paths
 import org.maurodata.api.facet.RuleApi
@@ -26,6 +27,7 @@ import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
 import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
+import org.maurodata.web.PaginationParams
 
 @CompileStatic
 @Controller
@@ -52,11 +54,12 @@ class RuleController extends FacetController<Rule> implements RuleApi {
     }
 
     @Audit
-    @Get(Paths.RULE_LIST)
-    ListResponse<Rule> list(String domainType, UUID domainId) {
+    @Get(Paths.RULE_LIST_PAGED)
+    ListResponse<Rule> list(String domainType, UUID domainId, @Nullable PaginationParams params = new PaginationParams()) {
+        
         AdministeredItem administeredItem = findAdministeredItem(domainType, domainId)
         accessControlService.checkRole(Role.READER, administeredItem)
-        ListResponse.from(!administeredItem.rules ? [] : administeredItem.rules)
+        ListResponse.from(!administeredItem.rules ? [] : administeredItem.rules, params)
     }
 
     @Audit

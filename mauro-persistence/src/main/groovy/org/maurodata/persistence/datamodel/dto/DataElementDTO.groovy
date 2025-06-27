@@ -1,5 +1,7 @@
 package org.maurodata.persistence.datamodel.dto
 
+import org.maurodata.domain.facet.SemanticLink
+
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.Introspected
 import io.micronaut.core.annotation.Nullable
@@ -93,4 +95,9 @@ class DataElementDTO extends DataElement implements AdministeredItemDTO {
                 and join_administered_item_to_classifier.catalogue_item_id = data_element_.id)''')
     List<Classifier> classifiers = []
 
+    @Nullable
+    @TypeDef(type = DataType.JSON)
+    @MappedProperty
+    @ColumnTransformer(read = '(select json_agg(semantic_link) from core.semantic_link where multi_facet_aware_item_id = data_element_.id)')
+    List<SemanticLink> semanticLinks = []
 }
