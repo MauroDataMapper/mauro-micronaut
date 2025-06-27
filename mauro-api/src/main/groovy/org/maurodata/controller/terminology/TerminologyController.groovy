@@ -4,6 +4,7 @@ import org.maurodata.api.model.ModelVersionedRefDTO
 import org.maurodata.api.model.PermissionsDTO
 import org.maurodata.audit.Audit
 import org.maurodata.domain.facet.EditType
+import org.maurodata.web.PaginationParams
 
 import io.micronaut.http.HttpStatus
 import org.maurodata.api.Paths
@@ -22,6 +23,7 @@ import io.micronaut.http.HttpResponse
 import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.*
 import io.micronaut.http.server.multipart.MultipartBody
+import io.micronaut.http.server.types.files.StreamedFile
 import io.micronaut.scheduling.TaskExecutors
 import io.micronaut.scheduling.annotation.ExecuteOn
 import io.micronaut.security.annotation.Secured
@@ -123,9 +125,10 @@ class TerminologyController extends ModelController<Terminology> implements Term
     }
 
     @Audit
-    @Get(Paths.TERMINOLOGY_LIST)
-    ListResponse<Terminology> listAll() {
-        super.listAll()
+    @Get(Paths.TERMINOLOGY_LIST_PAGED)
+    ListResponse<Terminology> listAll(@Nullable PaginationParams params = new PaginationParams()) {
+        
+        super.listAll(params)
     }
 
     @Transactional
@@ -266,9 +269,9 @@ class TerminologyController extends ModelController<Terminology> implements Term
 
         for (Model model : allModels) {
             final ModelVersionedRefDTO modelVersionedRefDTO = new ModelVersionedRefDTO(id: model.id, branch: model.branchName, branchName: model.branchName,
-                                                                                       modelVersion: model.modelVersion?.toString(), modelVersionTag: model.modelVersionTag,
-                                                                                       documentationVersion: model.documentationVersion,
-                                                                                       displayName: model.pathModelIdentifier)
+                    modelVersion: model.modelVersion?.toString(), modelVersionTag: model.modelVersionTag,
+                    documentationVersion: model.documentationVersion,
+                    displayName: model.pathModelIdentifier)
             simpleModelVersionTreeList.add(modelVersionedRefDTO)
         }
 

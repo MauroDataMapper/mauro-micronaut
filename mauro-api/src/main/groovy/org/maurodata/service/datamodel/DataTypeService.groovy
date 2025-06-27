@@ -13,9 +13,11 @@ import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.domain.security.Role
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository
 import org.maurodata.security.AccessControlService
+import jakarta.inject.Singleton
 import org.maurodata.service.core.AdministeredItemService
 
 @CompileStatic
+@Singleton
 @Slf4j
 class DataTypeService extends AdministeredItemService {
     AdministeredItemCacheableRepository.DataTypeCacheableRepository dataTypeRepository

@@ -4,4 +4,5 @@ class ModelRefDTO {
     UUID id
     String domainType
     String label
+    UUID model
 }

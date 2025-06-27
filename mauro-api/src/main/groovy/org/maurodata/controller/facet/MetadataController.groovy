@@ -3,9 +3,11 @@ package org.maurodata.controller.facet
 import org.maurodata.api.Paths
 import org.maurodata.api.facet.MetadataApi
 import org.maurodata.audit.Audit
+import org.maurodata.web.PaginationParams
 
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
+import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.annotation.Controller
@@ -41,11 +43,12 @@ class MetadataController extends FacetController<Metadata> implements MetadataAp
     }
 
     @Audit
-    @Get(Paths.METADATA_LIST)
-    ListResponse<Metadata> list(String domainType, UUID domainId) {
+    @Get(Paths.METADATA_LIST_PAGED)
+    ListResponse<Metadata> list(String domainType, UUID domainId, @Nullable PaginationParams params = new PaginationParams()) {
+        
         AdministeredItem administeredItem = findAdministeredItem(domainType, domainId)
         accessControlService.checkRole(Role.READER, administeredItem)
-        ListResponse.from(!administeredItem.metadata ? []: administeredItem.metadata)
+        ListResponse.from(!administeredItem.metadata ? [] : administeredItem.metadata, params)
     }
 
     @Audit

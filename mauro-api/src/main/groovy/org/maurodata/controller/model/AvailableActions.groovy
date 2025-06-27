@@ -12,13 +12,13 @@ import org.maurodata.security.AccessControlService
 class AvailableActions {
 
     // Purposes
-    public static String PURPOSE_VERSIONING="VERSIONING"
-    public static String PURPOSE_STANDARD="STANDARD"
-    public static String PURPOSE_SECURABLE="SECURABLE"
-    public static String PURPOSE_MODEL="MODEL"
-    public static String PURPOSE_FOLDER="FOLDER"
-    public static String PURPOSE_DATAMODEL="DATAMODEL"
-    public static String PURPOSE_MODELITEM="MODELITEM"
+    public static String PURPOSE_VERSIONING = "VERSIONING"
+    public static String PURPOSE_STANDARD = "STANDARD"
+    public static String PURPOSE_SECURABLE = "SECURABLE"
+    public static String PURPOSE_MODEL = "MODEL"
+    public static String PURPOSE_FOLDER = "FOLDER"
+    public static String PURPOSE_DATAMODEL = "DATAMODEL"
+    public static String PURPOSE_MODELITEM = "MODELITEM"
 
     // Actions
     public static final String SHOW_ACTION = 'show'
@@ -57,123 +57,121 @@ class AvailableActions {
     public static final String UPDATE_IGNORE_FINALISE = 'updateIgnoreFinalise'
 
 
-    static Map<String,Map<Role,List<String>>> PurposeRoleActions=[:]
+    static Map<String, Map<Role, List<String>>> PurposeRoleActions = [:]
 
     static {
 
         {
-            Map<Role,List<String>> roleActions=[:]
+            Map<Role, List<String>> roleActions = [:]
 
-            roleActions.put(Role.READER,[CREATE_NEW_VERSIONS_ACTION, NEW_FORK_MODEL_ACTION])
-            roleActions.put(Role.EDITOR,[NEW_MODEL_VERSION_ACTION,
-                                         NEW_DOCUMENTATION_ACTION,
-                                         NEW_BRANCH_MODEL_VERSION_ACTION,
-                                         FINALISE_ACTION,
-                                         MERGE_INTO_ACTION
-                                        ])
-            roleActions.put(Role.CONTAINER_ADMIN,[
-                                         FINALISED_EDIT_ACTIONS,
-                                         FINALISED_READ_ACTIONS,
-                                         SAVE_IGNORE_FINALISE,
-                                         UPDATE_IGNORE_FINALISE])
-            PurposeRoleActions.put(PURPOSE_VERSIONING,roleActions)
+            roleActions.put(Role.READER, [CREATE_NEW_VERSIONS_ACTION, NEW_FORK_MODEL_ACTION])
+            roleActions.put(Role.EDITOR, [NEW_MODEL_VERSION_ACTION,
+                                          NEW_DOCUMENTATION_ACTION,
+                                          NEW_BRANCH_MODEL_VERSION_ACTION,
+                                          FINALISE_ACTION,
+                                          MERGE_INTO_ACTION
+            ])
+            roleActions.put(Role.CONTAINER_ADMIN, [
+                    FINALISED_EDIT_ACTIONS,
+                    FINALISED_READ_ACTIONS,
+                    SAVE_IGNORE_FINALISE,
+                    UPDATE_IGNORE_FINALISE])
+            PurposeRoleActions.put(PURPOSE_VERSIONING, roleActions)
         }
 
         {
-            Map<Role,List<String>> roleActions=[:]
+            Map<Role, List<String>> roleActions = [:]
 
-            roleActions.put(Role.READER,[SHOW_ACTION])
-            roleActions.put(Role.REVIEWER,[COMMENT_ACTION])
-            roleActions.put(Role.AUTHOR,[EDIT_DESCRIPTION_ACTION])
-            roleActions.put(Role.EDITOR,[UPDATE_ACTION, SOFT_DELETE_ACTION, SAVE_ACTION])
-            roleActions.put(Role.CONTAINER_ADMIN,[DELETE_ACTION,DISABLE_ACTION])
+            roleActions.put(Role.READER, [SHOW_ACTION])
+            roleActions.put(Role.REVIEWER, [COMMENT_ACTION])
+            roleActions.put(Role.AUTHOR, [EDIT_DESCRIPTION_ACTION])
+            roleActions.put(Role.EDITOR, [UPDATE_ACTION, SOFT_DELETE_ACTION, SAVE_ACTION])
+            roleActions.put(Role.CONTAINER_ADMIN, [DELETE_ACTION, DISABLE_ACTION])
 
-            PurposeRoleActions.put(PURPOSE_STANDARD,roleActions)
+            PurposeRoleActions.put(PURPOSE_STANDARD, roleActions)
         }
 
         {
-            Map<Role,List<String>> roleActions=[:]
+            Map<Role, List<String>> roleActions = [:]
 
-            roleActions.put(Role.CONTAINER_ADMIN,[READ_BY_EVERYONE_ACTION,
-                                                  READ_BY_AUTHENTICATED_ACTION,
-                                                  SHOW_ACTION,
-                                                  UPDATE_ACTION,
-                                                  DELETE_ACTION,
-                                                  SAVE_ACTION])
+            roleActions.put(Role.CONTAINER_ADMIN, [READ_BY_EVERYONE_ACTION,
+                                                   READ_BY_AUTHENTICATED_ACTION,
+                                                   SHOW_ACTION,
+                                                   UPDATE_ACTION,
+                                                   DELETE_ACTION,
+                                                   SAVE_ACTION])
 
-            PurposeRoleActions.put(PURPOSE_SECURABLE,roleActions)
+            PurposeRoleActions.put(PURPOSE_SECURABLE, roleActions)
         }
 
         {
-            Map<Role,List<String>> roleActions=[:]
+            Map<Role, List<String>> roleActions = [:]
 
-            roleActions.put(Role.READER,[SUBSET_ACTION])
+            roleActions.put(Role.READER, [SUBSET_ACTION])
 
-            PurposeRoleActions.put(PURPOSE_MODEL,roleActions)
+            PurposeRoleActions.put(PURPOSE_MODEL, roleActions)
         }
 
         {
-            Map<Role,List<String>> roleActions=[:]
+            Map<Role, List<String>> roleActions = [:]
 
-            roleActions.put(Role.EDITOR,[CHANGE_FOLDER_ACTION,CREATE_FOLDER,CREATE_VERSIONED_FOLDER,CREATE_MODEL,MOVE_TO_FOLDER,MOVE_TO_VERSIONED_FOLDER])
+            roleActions.put(Role.EDITOR, [CHANGE_FOLDER_ACTION, CREATE_FOLDER, CREATE_VERSIONED_FOLDER, CREATE_MODEL, MOVE_TO_FOLDER, MOVE_TO_VERSIONED_FOLDER])
 
-            PurposeRoleActions.put(PURPOSE_FOLDER,roleActions)
+            PurposeRoleActions.put(PURPOSE_FOLDER, roleActions)
         }
 
         {
-            Map<Role,List<String>> roleActions=[:]
+            Map<Role, List<String>> roleActions = [:]
 
-            roleActions.put(Role.EDITOR,[CREATE_CONTAINER,CREATE_MODEL,MOVE_TO_FOLDER,MOVE_TO_CONTAINER,MOVE_TO_VERSIONED_FOLDER,CREATE_MODEL_ITEM])
+            roleActions.put(Role.EDITOR, [MOVE_TO_FOLDER, MOVE_TO_CONTAINER, MOVE_TO_VERSIONED_FOLDER, CREATE_MODEL_ITEM])
 
-            PurposeRoleActions.put(PURPOSE_DATAMODEL,roleActions)
+            PurposeRoleActions.put(PURPOSE_DATAMODEL, roleActions)
         }
 
         {
-            Map<Role,List<String>> roleActions=[:]
+            Map<Role, List<String>> roleActions = [:]
 
-            roleActions.put(Role.EDITOR,[CREATE_MODEL_ITEM])
+            roleActions.put(Role.EDITOR, [CREATE_MODEL_ITEM, DELETE_ACTION])
 
-            PurposeRoleActions.put(PURPOSE_MODELITEM,roleActions)
+            PurposeRoleActions.put(PURPOSE_MODELITEM, roleActions)
         }
 
     }
 
-    public static List<String> REMOVE_WHEN_FINALISED=[UPDATE_ACTION,
-                                                      SAVE_ACTION,
-                                                      EDIT_DESCRIPTION_ACTION,
-                                                      FINALISE_ACTION,
-                                                      MERGE_INTO_ACTION,
-                                                      CREATE_FOLDER,
-                                                      CREATE_VERSIONED_FOLDER,
-                                                      CREATE_MODEL]
+    public static List<String> REMOVE_WHEN_FINALISED = [UPDATE_ACTION,
+                                                        SAVE_ACTION,
+                                                        EDIT_DESCRIPTION_ACTION,
+                                                        FINALISE_ACTION,
+                                                        MERGE_INTO_ACTION,
+                                                        CREATE_FOLDER,
+                                                        CREATE_VERSIONED_FOLDER,
+                                                        CREATE_MODEL]
 
-    public static List<String> REMOVE_FROM_MODEL_ITEM=[SOFT_DELETE_ACTION,
-                                                       FINALISE_ACTION]
+    public static List<String> REMOVE_FROM_MODEL_ITEM = [SOFT_DELETE_ACTION,
+                                                         FINALISE_ACTION]
 
-    private static final List<String> empty_list=[]
+    private static final List<String> empty_list = []
 
 
-    static List<String> getActionsForRolePurpose(final Role role, final String purpose)
-    {
-        final Map<Role,List<String>> roleActions=PurposeRoleActions.get(purpose);
-        if(roleActions==null)
-        {
+    static List<String> getActionsForRolePurpose(final Role role, final String purpose) {
+        final Map<Role, List<String>> roleActions = PurposeRoleActions.get(purpose);
+        if (roleActions == null) {
             return empty_list
         }
 
-        final List<String> actions=roleActions.get(role)
-        if(actions!=null){return actions}
+        final List<String> actions = roleActions.get(role)
+        if (actions != null) {
+            return actions
+        }
 
         return empty_list
     }
 
-    static List<String> getActionsForRolesPurpose(final List<Role> roles, final String purpose)
-    {
-        final List<String> allActions=[]
+    static List<String> getActionsForRolesPurpose(final List<Role> roles, final String purpose) {
+        final List<String> allActions = []
 
-        for(role in roles)
-        {
-            allActions.addAll( getActionsForRolePurpose(role,purpose) )
+        for (role in roles) {
+            allActions.addAll(getActionsForRolePurpose(role, purpose))
         }
 
         return allActions
@@ -181,37 +179,35 @@ class AvailableActions {
 
     static void updateAvailableActions(AdministeredItem item, AccessControlService accessControlService) {
 
-        if(item.availableActions==null){item.availableActions=[]}
+        if (item.availableActions == null) {
+            item.availableActions = []
+        }
 
-        final List<Role> roles=accessControlService.listCanDoRoles(item)
+        final List<Role> roles = accessControlService.listCanDoRoles(item)
 
         item.availableActions.clear()
 
         // Additions
 
-        item.availableActions.addAll( AvailableActions.getActionsForRolesPurpose(roles,AvailableActions.PURPOSE_STANDARD) )
+        item.availableActions.addAll(AvailableActions.getActionsForRolesPurpose(roles, AvailableActions.PURPOSE_STANDARD))
 
-        if(item instanceof SecurableResource)
-        {
-            item.availableActions.addAll( AvailableActions.getActionsForRolesPurpose(roles, AvailableActions.PURPOSE_SECURABLE) )
+        if (item instanceof SecurableResource) {
+            item.availableActions.addAll(AvailableActions.getActionsForRolesPurpose(roles, AvailableActions.PURPOSE_SECURABLE))
         }
 
-        if(item instanceof Folder)
-        {
-            item.availableActions.addAll( AvailableActions.getActionsForRolesPurpose(roles, AvailableActions.PURPOSE_FOLDER) )
+        if (item instanceof Folder) {
+            item.availableActions.addAll(AvailableActions.getActionsForRolesPurpose(roles, AvailableActions.PURPOSE_FOLDER))
         }
 
-        if(item instanceof DataModel)
-        {
-            item.availableActions.addAll( AvailableActions.getActionsForRolesPurpose(roles, AvailableActions.PURPOSE_DATAMODEL) )
+        if (item instanceof DataModel) {
+            item.availableActions.addAll(AvailableActions.getActionsForRolesPurpose(roles, AvailableActions.PURPOSE_DATAMODEL))
         }
 
-        if(item instanceof ModelItem)
-        {
-            item.availableActions.removeAll(AvailableActions.PURPOSE_MODELITEM)
+        if (item instanceof ModelItem) {
+            item.availableActions.addAll(AvailableActions.getActionsForRolesPurpose(roles, AvailableActions.PURPOSE_MODELITEM))
         }
 
-        if(item instanceof Model) {
+        if (item instanceof Model) {
             final Model itemAsModel = (Model) item
             if (itemAsModel.isVersionable()) {
                 item.availableActions.addAll(AvailableActions.getActionsForRolesPurpose(roles, AvailableActions.PURPOSE_VERSIONING))
@@ -221,17 +217,15 @@ class AvailableActions {
 
         // Removals
 
-        if(item instanceof Model) {
+        if (item instanceof Model) {
             final Model itemAsModel = (Model) item
 
-            if(itemAsModel.finalised)
-            {
+            if (itemAsModel.finalised) {
                 item.availableActions.removeAll(AvailableActions.REMOVE_WHEN_FINALISED)
             }
         }
 
-        if(item instanceof ModelItem)
-        {
+        if (item instanceof ModelItem) {
             item.availableActions.removeAll(AvailableActions.REMOVE_FROM_MODEL_ITEM)
         }
 

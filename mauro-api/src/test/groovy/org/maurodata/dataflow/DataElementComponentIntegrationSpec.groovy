@@ -163,7 +163,7 @@ class DataElementComponentIntegrationSpec extends CommonDataSpec {
         httpResponse.status == HttpStatus.NOT_FOUND
     }
 
-    void 'adding duplicate dataElement DataElementComponent  -should throw BAD_REQUEST'() {
+    void 'adding duplicate dataElement DataElementComponent  -should throw UNPROCESSABLE_ENTITY'() {
         given:
         UUID dataElementComponentId =
             dataElementComponentApi.create(sourceId, dataFlowId, dataClassComponentId, new DataElementComponent(label: 'test data element component')).id
@@ -176,7 +176,7 @@ class DataElementComponentIntegrationSpec extends CommonDataSpec {
 
         then:
         HttpClientResponseException exception = thrown()
-        exception.status == HttpStatus.BAD_REQUEST
+        exception.status == HttpStatus.UNPROCESSABLE_ENTITY
     }
 
     void 'delete DataElementComponent -should delete associated source and target dataElements'() {

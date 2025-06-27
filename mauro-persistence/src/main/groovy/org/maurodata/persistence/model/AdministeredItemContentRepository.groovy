@@ -7,6 +7,7 @@ import org.maurodata.domain.facet.Metadata
 import org.maurodata.domain.facet.ReferenceFile
 import org.maurodata.domain.facet.Rule
 import org.maurodata.domain.facet.RuleRepresentation
+import org.maurodata.domain.facet.SemanticLink
 import org.maurodata.domain.facet.SummaryMetadata
 import org.maurodata.domain.facet.SummaryMetadataReport
 import org.maurodata.domain.model.AdministeredItem
@@ -56,6 +57,9 @@ class AdministeredItemContentRepository {
     FacetCacheableRepository.VersionLinkCacheableRepository versionLinkCacheableRepository
 
     @Inject
+    FacetCacheableRepository.SemanticLinkCacheableRepository semanticLinkCacheableRepository
+
+    @Inject
     ClassifierRepository classifierRepository
 
     @Inject
@@ -79,7 +83,7 @@ class AdministeredItemContentRepository {
         List<Collection<AdministeredItem>> associations = administeredItem.getAllAssociations()
 
         // delete the association contents in reverse order
-        associations.reverse().each {association ->
+        associations.reverse().each { association ->
             if (association) {
                 deleteAllJoinAdministeredItemToClassifier(association)
                 deleteAllFacets(association)
@@ -127,7 +131,7 @@ class AdministeredItemContentRepository {
                 classifierRepository.deleteAllJoinAdministeredItemToClassifier(item as Classifier)
             } else {
                 if (item.classifiers) {
-                    item.classifiers.each{ classifierRepository.deleteJoinAdministeredItemToClassifier(item, it.id)}
+                    item.classifiers.each { classifierRepository.deleteJoinAdministeredItemToClassifier(item, it.id) }
                 }
             }
         }
@@ -136,12 +140,12 @@ class AdministeredItemContentRepository {
 
     @NonNull
     AdministeredItemCacheableRepository getRepository(AdministeredItem item) {
-        cacheableRepositories.find {it.handles(item.class) || it.handles(item.domainType)}
+        cacheableRepositories.find { it.handles(item.class) || it.handles(item.domainType) }
     }
 
     void deleteMetadata(Collection<AdministeredItem> items) {
         List<Metadata> metadata = []
-        items.each {item ->
+        items.each { item ->
             if (item.metadata) {
                 metadata.addAll(item.metadata)
             }
@@ -153,9 +157,9 @@ class AdministeredItemContentRepository {
         List<SummaryMetadata> summaryMetadata = []
         List<SummaryMetadataReport> summaryMetadataReports = []
         items.each { item ->
-            if (item.summaryMetadata){
+            if (item.summaryMetadata) {
                 item.summaryMetadata.each {
-                    if (it.summaryMetadataReports){
+                    if (it.summaryMetadataReports) {
                         summaryMetadataReports.addAll(it.summaryMetadataReports)
                     }
                     summaryMetadata.add(it)
@@ -198,7 +202,7 @@ class AdministeredItemContentRepository {
         AdministeredItem saved = (AdministeredItem) getRepository(model).save(model)
 
         saveAllFacets(saved)
-        associations.each {association ->
+        associations.each { association ->
             if (association) {
                 Collection<AdministeredItem> savedAssociation = getRepository(association.first()).saveAll((Collection<AdministeredItem>) association)
                 saveAllFacets(savedAssociation)
@@ -214,7 +218,7 @@ class AdministeredItemContentRepository {
     void saveAllFacets(List<AdministeredItem> items) {
         List<Metadata> metadata = []
 
-        items.each {item ->
+        items.each { item ->
             if (item.metadata) {
                 item.metadata.each {
                     updateMultiAwareData(item, it)
@@ -227,19 +231,20 @@ class AdministeredItemContentRepository {
         saveAnnotations(items)
         saveReferenceFiles(items)
         saveRules(items)
+        saveSemanticLinks(items)
     }
 
     void saveSummaryMetadataFacets(List<AdministeredItem> items) {
         List<SummaryMetadata> summaryMetadata = []
         List<SummaryMetadataReport> summaryMetadataReports = []
         SummaryMetadata saved
-        items.each {item ->
+        items.each { item ->
             if (item.summaryMetadata) {
                 item.summaryMetadata.each {
                     updateMultiAwareData(item, it)
                     saved = summaryMetadataRepository.save(it)
-                    if (it.summaryMetadataReports){
-                        it.summaryMetadataReports.forEach{
+                    if (it.summaryMetadataReports) {
+                        it.summaryMetadataReports.forEach {
                             report ->
                                 report.summaryMetadataId = saved.id
                         }
@@ -265,9 +270,9 @@ class AdministeredItemContentRepository {
                     }
                 }
                 annotations.addAll(item.annotations)
-                annotationCacheableRepository.saveAll(annotations)
             }
         }
+        annotationCacheableRepository.saveAll(annotations)
     }
 
     void saveReferenceFiles(List<AdministeredItem> items) {
@@ -278,16 +283,16 @@ class AdministeredItemContentRepository {
                     updateMultiAwareData(item, it)
                 }
                 referenceFiles.addAll(item.referenceFiles)
-                referenceFileCacheableRepository.saveAll(referenceFiles)
             }
         }
+        referenceFileCacheableRepository.saveAll(referenceFiles)
     }
 
     void saveRules(List<AdministeredItem> items) {
         List<Rule> rules = []
         List<RuleRepresentation> ruleRepresentations = []
         Rule saved
-        items.each {item ->
+        items.each { item ->
             if (item.rules) {
                 item.rules.each {
                     updateMultiAwareData(item, it)
@@ -305,12 +310,24 @@ class AdministeredItemContentRepository {
         }
     }
 
+    void saveSemanticLinks(List<AdministeredItem> items) {
+        List<SemanticLink> semanticLinks = []
+        items.each { item ->
+            if (item.semanticLinks) {
+                item.semanticLinks.each {
+                    updateMultiAwareData(item, it)
+                }
+                semanticLinks.addAll(item.semanticLinks)
+            }
+        }
+        semanticLinkCacheableRepository.saveAll(semanticLinks)
+    }
+
     private void updateMultiAwareData(AdministeredItem item, Facet it) {
         it.multiFacetAwareItemDomainType = item.domainType
         it.multiFacetAwareItemId = item.id
         it.multiFacetAwareItem = item
     }
-
 
 
 }

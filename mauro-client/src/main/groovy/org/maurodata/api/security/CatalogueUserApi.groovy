@@ -1,6 +1,7 @@
 package org.maurodata.api.security
 
 import io.micronaut.core.annotation.NonNull
+import io.micronaut.http.HttpResponse
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.annotation.Get
 import io.micronaut.http.annotation.Post
@@ -31,4 +32,7 @@ interface CatalogueUserApi {
     // todo Stub method to enable login with UI
     @Get(Paths.USER_PREFERENCES)
     String showUserPreferences(UUID id)
+
+    @Get(Paths.USER_IMAGE)
+    HttpResponse<byte[]> userImage(UUID id)
 }

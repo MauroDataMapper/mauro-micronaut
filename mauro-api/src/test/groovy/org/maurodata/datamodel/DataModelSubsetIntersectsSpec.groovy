@@ -17,6 +17,7 @@ import org.maurodata.web.ListResponse
 
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
+import org.maurodata.web.PaginationParams
 import spock.lang.Shared
 
 @ContainerizedTest
@@ -180,6 +181,15 @@ class DataModelSubsetIntersectsSpec  extends CommonDataSpec {
         enumerationValuesResponse
         enumerationValuesResponse.count == 1000
         enumerationValuesResponse.items.key.toSet() == (1..1000).collect {"test_ev_$it".toString()}.toSet()
+
+        when: 'subset enumerationvalues are queried with pager'
+        ListResponse<EnumerationValue> enumerationValuesResponsePaged = enumerationValueApi.list(targetUpdated.id, copiedEnumerationDataType.id, new PaginationParams(max: 10))
+
+        then: 'paged enumerationvalues are correct and sorted by label ascending'
+        enumerationValuesResponsePaged
+        enumerationValuesResponsePaged.count == 1000
+        enumerationValuesResponsePaged.items.size() == 10
+        enumerationValuesResponsePaged.items.key.containsAll(["test_ev_1", "test_ev_10", "test_ev_100", "test_ev_1000", "test_ev_101", "test_ev_102", "test_ev_103", "test_ev_104", "test_ev_105", "test_ev_106"])
     }
 
     void 'get intersectsMany of original and subset model'() {

@@ -1,11 +1,16 @@
 package org.maurodata.persistence.model
 
+import groovy.transform.CompileStatic
+import groovy.util.logging.Slf4j
+import io.micronaut.core.annotation.NonNull
+import jakarta.inject.Singleton
 import org.maurodata.domain.facet.Annotation
 import org.maurodata.domain.facet.Facet
 import org.maurodata.domain.facet.Metadata
 import org.maurodata.domain.facet.ReferenceFile
 import org.maurodata.domain.facet.Rule
 import org.maurodata.domain.facet.RuleRepresentation
+import org.maurodata.domain.facet.SemanticLink
 import org.maurodata.domain.facet.SummaryMetadata
 import org.maurodata.domain.facet.SummaryMetadataReport
 import org.maurodata.domain.facet.VersionLink
@@ -78,6 +83,7 @@ class ModelContentRepository<M extends Model> extends AdministeredItemContentRep
         saveAnnotations(items)
         saveReferenceFiles(items)
         saveVersionLinks(items)
+        saveSemanticLinks(items)
     }
 
     void saveSummaryMetadataFacets(List<AdministeredItem> items) {
@@ -138,9 +144,9 @@ class ModelContentRepository<M extends Model> extends AdministeredItemContentRep
                     }
                 }
                 annotations.addAll(item.annotations)
-                annotationCacheableRepository.saveAll(annotations)
             }
         }
+        annotationCacheableRepository.saveAll(annotations)
     }
 
     void saveReferenceFiles(List<AdministeredItem> items) {
@@ -151,9 +157,9 @@ class ModelContentRepository<M extends Model> extends AdministeredItemContentRep
                     updateMultiAwareData(item, it)
                 }
                 referenceFiles.addAll(item.referenceFiles)
-                referenceFileCacheableRepository.saveAll(referenceFiles)
             }
         }
+        referenceFileCacheableRepository.saveAll(referenceFiles)
     }
 
     void saveVersionLinks(List<AdministeredItem> items) {
@@ -166,10 +172,23 @@ class ModelContentRepository<M extends Model> extends AdministeredItemContentRep
                         updateMultiAwareData(item, it)
                     }
                     versionLinks.addAll(modelItem.versionLinks)
-                    versionLinkCacheableRepository.saveAll(versionLinks)
                 }
             }
         }
+        versionLinkCacheableRepository.saveAll(versionLinks)
+    }
+
+    void saveSemanticLinks(List<AdministeredItem> items) {
+        List<SemanticLink> SemanticLinks = []
+        items.each {item ->
+            if (item.semanticLinks) {
+                item.semanticLinks.each {
+                    updateMultiAwareData(item, it)
+                }
+                SemanticLinks.addAll(item.semanticLinks)
+            }
+        }
+        semanticLinkCacheableRepository.saveAll(SemanticLinks)
     }
 
     protected List<M> findAllModelsForFolder(ModelRepository modelRepository, Folder folder) {

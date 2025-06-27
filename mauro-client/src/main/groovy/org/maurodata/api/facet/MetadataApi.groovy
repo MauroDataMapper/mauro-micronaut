@@ -4,8 +4,10 @@ import org.maurodata.api.MauroApi
 import org.maurodata.api.Paths
 import org.maurodata.domain.facet.Metadata
 import org.maurodata.web.ListResponse
+import org.maurodata.web.PaginationParams
 
 import io.micronaut.core.annotation.NonNull
+import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.annotation.Delete
@@ -17,7 +19,10 @@ import io.micronaut.http.annotation.Put
 interface MetadataApi extends FacetApi<Metadata> {
 
     @Get(Paths.METADATA_LIST)
-    ListResponse<Metadata> list(@NonNull String domainType, @NonNull UUID domainId )
+    ListResponse<Metadata> list(@NonNull String domainType, @NonNull UUID domainId)
+
+    @Get(Paths.METADATA_LIST_PAGED)
+    ListResponse<Metadata> list(@NonNull String domainType, @NonNull UUID domainId, @Nullable PaginationParams params)
 
     @Get(Paths.METADATA_ID)
     Metadata show(@NonNull String domainType, @NonNull UUID domainId, UUID id)

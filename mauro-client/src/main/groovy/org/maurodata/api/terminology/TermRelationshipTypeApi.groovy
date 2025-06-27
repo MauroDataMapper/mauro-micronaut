@@ -6,6 +6,7 @@ import org.maurodata.api.model.AdministeredItemApi
 import org.maurodata.domain.terminology.TermRelationshipType
 import org.maurodata.domain.terminology.Terminology
 import org.maurodata.web.ListResponse
+import org.maurodata.web.PaginationParams
 
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
@@ -30,6 +31,9 @@ interface TermRelationshipTypeApi extends AdministeredItemApi<TermRelationshipTy
 
     @Get(Paths.TERM_RELATIONSHIP_TYPE_LIST)
     ListResponse<TermRelationshipType> list(UUID terminologyId)
+
+    @Get(Paths.TERM_RELATIONSHIP_TYPE_LIST_PAGED)
+    ListResponse<TermRelationshipType> list(UUID terminologyId, @Nullable PaginationParams params)
 
     @Delete(Paths.TERM_RELATIONSHIP_TYPE_ID)
     HttpResponse delete(UUID terminologyId, UUID id, @Body @Nullable TermRelationshipType termRelationshipType)

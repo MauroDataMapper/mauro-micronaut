@@ -120,7 +120,7 @@ class AnnotationIntegrationSpec extends CommonDataSpec {
 
         then:
         HttpClientResponseException exception = thrown()
-        exception.status == HttpStatus.BAD_REQUEST
+        exception.status == HttpStatus.UNPROCESSABLE_ENTITY
 
         where:
         iteration << [
@@ -325,7 +325,7 @@ class AnnotationIntegrationSpec extends CommonDataSpec {
 
         then: 'bad request error'
         HttpClientResponseException exception = thrown()
-        exception.status == HttpStatus.BAD_REQUEST
+        exception.status == HttpStatus.UNPROCESSABLE_ENTITY
     }
 
 }

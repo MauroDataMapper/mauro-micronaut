@@ -8,7 +8,7 @@ import io.micronaut.http.exceptions.HttpStatusException
 class PluginService {
     static void handlePluginNotFound(MauroPlugin mauroPlugin, String namespace, String name) {
         if (!mauroPlugin) {
-            throw new HttpStatusException(HttpStatus.BAD_REQUEST, "Model import plugin with namespace: ${namespace}, name: ${name} not found")
+            throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Model import plugin with namespace: ${namespace}, name: ${name} not found")
         }
     }
 

@@ -125,13 +125,22 @@ class DataElementController extends AdministeredItemController<DataElement, Data
     @Audit
     @Get(Paths.DATA_ELEMENT_LIST_PAGED)
     ListResponse<DataElement> list(UUID dataModelId, UUID dataClassId, @Nullable PaginationParams params = new PaginationParams()) {
+
         DataClass dataClass = dataClassRepository.readById(dataClassId)
         accessControlService.checkRole(Role.READER, dataClass)
         List<DataElement> dataElements = dataElementRepository.readAllByDataClass_Id(dataClassId)
-        dataElements.each {
+
+        ListResponse<DataElement> theList = ListResponse<DataElement>.from(dataElements, params)
+
+        theList.items.each {Object that ->
+            DataElement it = (DataElement) that
             updateDerivedProperties(it)
+            if (it.dataType) {
+                it.dataType = dataTypeRepository.readById(it.dataType.id)
+            }
         }
-        ListResponse<DataElement>.from(dataElements, params)
+
+        return theList
     }
 
     @Audit
@@ -177,7 +186,7 @@ class DataElementController extends AdministeredItemController<DataElement, Data
 
         DataType dataElementDataType = dataTypeRepository.readById(dataElement.dataType.id)
         if (!dataElementDataType) {
-            throw new HttpStatusException(HttpStatus.BAD_REQUEST, "Datatype not found:  $dataElementDataType.id")
+            throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Datatype not found:  $dataElementDataType.id")
         }
         DataModel dataElementDTDM = dataModelRepository.readById(dataElementDataType.dataModel.id)
 
@@ -186,7 +195,7 @@ class DataElementController extends AdministeredItemController<DataElement, Data
 
         DataModel existingDTDM = dataModelRepository.readById(existingDataType.dataModel.id)
         if (dataElementDTDM && dataElementDTDM.id != existingDTDM.id) {
-            throw new HttpStatusException(HttpStatus.BAD_REQUEST,
+            throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
                                           "DataElement Update payload -DataType's DataModel must be same as existing dataType datamodel $existingDTDM")
         }
         existing.dataType = dataElement.dataType
