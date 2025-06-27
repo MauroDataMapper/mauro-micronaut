@@ -67,4 +67,18 @@ interface FolderApi extends ModelApi<Folder> {
 
     @Get(Paths.FOLDER_DOI)
     Map doi(UUID id)
+
+    @Put(Paths.FOLDER_READ_BY_EVERYONE)
+    Folder allowReadByEveryone(UUID id)
+
+    @Delete(Paths.FOLDER_READ_BY_EVERYONE)
+    HttpResponse revokeReadByEveryone(UUID id)
+
+    @Put(Paths.FOLDER_READ_BY_AUTHENTICATED)
+    Folder allowReadByAuthenticated(UUID id)
+
+    @Delete(Paths.FOLDER_READ_BY_AUTHENTICATED)
+    HttpResponse revokeReadByAuthenticated(UUID id)
+
+
 }
