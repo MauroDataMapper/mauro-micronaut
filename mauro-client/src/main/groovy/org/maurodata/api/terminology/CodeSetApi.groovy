@@ -70,4 +70,17 @@ interface CodeSetApi extends ModelApi<CodeSet> {
 
     @Get(Paths.CODE_SET_DOI)
     Map doi(UUID id)
+
+    @Put(Paths.CODE_SET_READ_BY_EVERYONE)
+    CodeSet allowReadByEveryone(UUID id)
+
+    @Delete(Paths.CODE_SET_READ_BY_EVERYONE)
+    HttpResponse revokeReadByEveryone(UUID id)
+
+    @Put(Paths.CODE_SET_READ_BY_AUTHENTICATED)
+    CodeSet allowReadByAuthenticated(UUID id)
+
+    @Delete(Paths.CODE_SET_READ_BY_AUTHENTICATED)
+    HttpResponse revokeReadByAuthenticated(UUID id)
+
 }

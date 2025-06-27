@@ -3,9 +3,7 @@ package org.maurodata.api.folder
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpResponse
-import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.*
-import io.micronaut.http.client.multipart.MultipartBody
 import org.maurodata.api.MauroApi
 import org.maurodata.api.Paths
 import org.maurodata.api.model.MergeDiffDTO
@@ -13,7 +11,6 @@ import org.maurodata.api.model.ModelApi
 import org.maurodata.api.model.ModelVersionDTO
 import org.maurodata.api.model.ModelVersionedRefDTO
 import org.maurodata.api.model.ModelVersionedWithTargetsRefDTO
-import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.folder.Folder
 import org.maurodata.domain.model.version.CreateNewVersionData
 import org.maurodata.domain.model.version.FinaliseData
@@ -81,4 +78,18 @@ interface VersionedFolderApi extends ModelApi<Folder> {
 
     @Get(Paths.VERSIONED_FOLDER_MERGE_DIFF)
     MergeDiffDTO mergeDiff(@NonNull UUID id, @NonNull UUID otherId)
+
+
+    @Put(Paths.VERSIONED_FOLDER_READ_BY_EVERYONE)
+    Folder allowReadByEveryone(UUID id)
+
+    @Delete(Paths.VERSIONED_FOLDER_READ_BY_EVERYONE)
+    HttpResponse revokeReadByEveryone(UUID id)
+
+    @Put(Paths.VERSIONED_FOLDER_READ_BY_AUTHENTICATED)
+    Folder allowReadByAuthenticated(UUID id)
+
+    @Delete(Paths.VERSIONED_FOLDER_READ_BY_AUTHENTICATED)
+    HttpResponse revokeReadByAuthenticated(UUID id)
+
 }
