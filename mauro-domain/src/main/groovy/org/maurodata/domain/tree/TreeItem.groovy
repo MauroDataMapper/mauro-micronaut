@@ -46,6 +46,11 @@ class TreeItem {
     String modelVersionTag
     String path
 
+    Boolean getFinalised() {
+        if (!(item instanceof Model)) {return null}
+        return ((Model) item).finalised
+    }
+
     static TreeItem from(AdministeredItem item) {
         new TreeItem(id: item.id, label: item.label, domainType: item.domainType, item: item, availableActions: new ArrayList<String>(item.availableActions),
                      path: item.updatePath().toString(), model: item.getOwner(), parent: item.getParent())
