@@ -5,7 +5,9 @@ import org.maurodata.api.model.ModelApi
 import org.maurodata.api.model.ModelRefDTO
 import org.maurodata.api.model.PermissionsDTO
 import org.maurodata.api.model.VersionLinkDTO
+import org.maurodata.domain.datamodel.DataClass
 import org.maurodata.domain.datamodel.DataModel
+import org.maurodata.domain.datamodel.DataType
 import org.maurodata.domain.diff.ArrayDiff
 import org.maurodata.domain.diff.FieldDiff
 import org.maurodata.domain.diff.ObjectDiff
@@ -14,6 +16,7 @@ import org.maurodata.domain.facet.VersionLink
 import org.maurodata.domain.folder.Folder
 import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.domain.model.Model
+import org.maurodata.domain.model.ModelItem
 import org.maurodata.domain.model.ModelService
 import org.maurodata.domain.model.Path
 import org.maurodata.domain.model.version.CreateNewVersionData
@@ -284,7 +287,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         final List<AdministeredItem> toSave = new LinkedList<>()
         toSave.add(existing)
         modelContentRepository.saveVersionLinks(toSave)
-
+        breakRecursiveBranches(savedCopy)
         savedCopy
     }
 
@@ -305,7 +308,6 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         copy.parent = existing.parent
         updateCreationProperties(copy)
         updateDerivedProperties(copy)
-
         getReferenceFileFileContent([copy] as Collection<AdministeredItem>)
         copy
     }
@@ -700,5 +702,61 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
 
     protected M saveModel(M model) {
         modelContentRepository.saveWithContent(model)
+    }
+
+    protected static void breakRecursiveBranches(Model model) {
+        if (model instanceof Folder) {
+            Folder f = (Folder) model
+
+            // Sub-Folders
+            List<Folder> subFolders = f.childFolders
+            if (subFolders && subFolders.size()) {
+                Iterator<Folder> subFolderIterator = subFolders.iterator()
+                while (subFolderIterator.hasNext()) {
+                    breakRecursiveBranches(subFolderIterator.next() as Folder)
+                }
+            }
+
+            // Data models
+            List<DataModel> dataModels = f.dataModels
+            if (dataModels && dataModels.size()) {
+                Iterator<DataModel> dataModelIterator = dataModels.iterator()
+                while (dataModelIterator.hasNext()) {
+                    breakRecursiveBranches(dataModelIterator.next() as Model)
+                }
+            }
+            return
+        }
+
+        if (model instanceof DataModel) {
+
+            DataModel dm = (DataModel) model
+
+            List<DataType> dataTypes = dm.dataTypes
+            if (dataTypes && dataTypes.size()) {
+                Iterator<DataType> dataTypeIterator = dataTypes.iterator()
+                while (dataTypeIterator.hasNext()) {
+                    breakRecursiveBranches(dataTypeIterator.next())
+                }
+            }
+        }
+    }
+
+    protected static void breakRecursiveBranches(DataType dataType) {
+
+        DataClass referenceClass = dataType.referenceClass
+
+        if (referenceClass) {
+            DataClass dc = new DataClass()
+
+            dc.tap {
+
+                dc.id = referenceClass.id
+                dc.label = referenceClass.label
+                dc.domainType = referenceClass.domainType
+            }
+
+            dataType.referenceClass = dc
+        }
     }
 }
