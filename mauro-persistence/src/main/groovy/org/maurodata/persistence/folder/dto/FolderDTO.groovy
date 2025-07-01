@@ -1,6 +1,6 @@
 package org.maurodata.persistence.folder.dto
 
-
+import org.maurodata.domain.facet.VersionLink
 
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.Introspected
@@ -99,4 +99,10 @@ class FolderDTO extends Folder implements AdministeredItemDTO {
                 JOIN core.join_administered_item_to_classifier on join_administered_item_to_classifier.classifier_id = core.classifier.id
                 and join_administered_item_to_classifier.catalogue_item_id = folder_.id)''')
     List<Classifier> classifiers = []
+
+    @Nullable
+    @TypeDef(type = DataType.JSON)
+    @MappedProperty
+    @ColumnTransformer(read = '(select json_agg(version_link) from core.version_link where multi_facet_aware_item_id = folder_.id)')
+    List<VersionLink> versionLinks = []
 }
