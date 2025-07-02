@@ -9,8 +9,8 @@ class MetadataDiff extends CollectionDiff{
     String key
     String value
 
-    MetadataDiff(UUID id, String namespace, String key, String value) {
-        super(id)
+    MetadataDiff(UUID id, String namespace, String key, String value, String diffIdentifier) {
+        super(id,diffIdentifier)
         this.namespace = namespace
         this.key = key
         this.value = value

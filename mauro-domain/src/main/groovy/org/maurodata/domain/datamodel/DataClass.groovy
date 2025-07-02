@@ -1,5 +1,8 @@
 package org.maurodata.domain.datamodel
 
+import org.maurodata.domain.model.ItemReference
+import org.maurodata.domain.model.ItemReferencer
+
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import groovy.transform.AutoClone
@@ -41,7 +44,7 @@ import org.maurodata.domain.model.ModelItem
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @MappedEntity(schema = 'datamodel', value = 'data_class')
 @MapConstructor(includeSuperFields = true, includeSuperProperties = true, noArg = true)
-class DataClass extends ModelItem<DataModel> implements DiffableItem<DataClass> {
+class DataClass extends ModelItem<DataModel> implements DiffableItem<DataClass>, ItemReferencer {
 
     @Nullable
     Integer minMultiplicity
@@ -70,7 +73,8 @@ class DataClass extends ModelItem<DataModel> implements DiffableItem<DataClass> 
     @JsonIgnore
     List<DataClass> extendedBy = []
 
-    @Nullable @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'referenceClass')
+    @Nullable
+    @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'referenceClass')
     @JsonIgnore
     List<DataType> referenceTypes = []
 
@@ -110,7 +114,7 @@ class DataClass extends ModelItem<DataModel> implements DiffableItem<DataClass> 
     @Transient
     @JsonIgnore
     void setParent(AdministeredItem parent) {
-        if(parent instanceof DataClass) {
+        if (parent instanceof DataClass) {
             this.parentDataClass = parent
             this.dataModel = parentDataClass.dataModel
         } else {
@@ -130,7 +134,7 @@ class DataClass extends ModelItem<DataModel> implements DiffableItem<DataClass> 
     @JsonIgnore
     @Transient
     CollectionDiff fromItem() {
-        new BaseCollectionDiff(id, label)
+        new BaseCollectionDiff(id, getDiffIdentifier(), label)
     }
 
 
@@ -138,27 +142,34 @@ class DataClass extends ModelItem<DataModel> implements DiffableItem<DataClass> 
     @JsonIgnore
     @Transient
     String getDiffIdentifier() {
-        if (!parentDataClass) return this.pathIdentifier
-        "${parentDataClass.getDiffIdentifier()}/${this.pathIdentifier}"
+        if (parentDataClass != null) {
+            return "${parentDataClass.diffIdentifier}|${getPathNodeString()}"
+        }
+        if (dataModel != null) {
+            return "${dataModel.getDiffIdentifier()}|${getPathNodeString()}"
+        }
+        return "${getPathNodeString()}"
     }
 
     @Override
     @JsonIgnore
     @Transient
-    ObjectDiff<DataClass> diff(DataClass other) {
+    ObjectDiff<DataClass> diff(DataClass other, String lhsPathRoot, String rhsPathRoot) {
         ObjectDiff<DataClass> base = DiffBuilder.objectDiff(DataClass)
-                .leftHandSide(id?.toString(), this)
-                .rightHandSide(other.id?.toString(), other)
+            .leftHandSide(id?.toString(), this)
+            .rightHandSide(other.id?.toString(), other)
         base.label = this.label
         base.appendString(DiffBuilder.DESCRIPTION, this.description, other.description, this, other)
         base.appendString(DiffBuilder.ALIASES_STRING, this.aliasesString, other.aliasesString, this, other)
         base.appendField(DiffBuilder.MIN_MULTIPILICITY, this.minMultiplicity, other.minMultiplicity, this, other)
         base.appendField(DiffBuilder.MAX_MULTIPILICITY, this.maxMultiplicity, other.maxMultiplicity, this, other)
         if (!DiffBuilder.isNullOrEmpty(this.dataClasses as Collection<Object>) || !DiffBuilder.isNullOrEmpty(other.dataClasses as Collection<Object>)) {
-            base.appendCollection(DiffBuilder.DATA_CLASSES, this.dataClasses as Collection<DiffableItem>, other.dataClasses as Collection<DiffableItem>)
+            base.appendCollection(DiffBuilder.DATA_CLASSES, this.dataClasses as Collection<DiffableItem>, other.dataClasses as Collection<DiffableItem>, lhsPathRoot,
+                                  rhsPathRoot)
         }
-        if (!DiffBuilder.isNullOrEmpty(this.dataElements as Collection<Object>) || !DiffBuilder.isNullOrEmpty(other.dataElements  as Collection<Object>)) {
-            base.appendCollection(DiffBuilder.DATA_ELEMENTS, this.dataElements as Collection<DiffableItem>, other.dataElements as Collection<DiffableItem>)
+        if (!DiffBuilder.isNullOrEmpty(this.dataElements as Collection<Object>) || !DiffBuilder.isNullOrEmpty(other.dataElements as Collection<Object>)) {
+            base.appendCollection(DiffBuilder.DATA_ELEMENTS, this.dataElements as Collection<DiffableItem>, other.dataElements as Collection<DiffableItem>, lhsPathRoot,
+                                  rhsPathRoot)
         }
         base
     }
@@ -168,8 +179,8 @@ class DataClass extends ModelItem<DataModel> implements DiffableItem<DataClass> 
      */
 
     static DataClass build(
-            Map args,
-            @DelegatesTo(value = DataClass, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+        Map args,
+        @DelegatesTo(value = DataClass, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
         new DataClass(args).tap(closure)
     }
 
@@ -225,9 +236,97 @@ class DataClass extends ModelItem<DataModel> implements DiffableItem<DataClass> 
     }
 
     DataClass extendsDataClass(String dataClassLabel) {
-        DataClass foundDataClass = this.dataModel.dataClasses.findAll { it.label == dataClassLabel }.first()
-        this.extendsDataClasses.add(foundDataClass)
-        foundDataClass.extendedBy.add(this)
+        DataClass foundDataClass = this.dataModel.dataClasses.findAll {it.label == dataClassLabel}.first()
+        if (foundDataClass != null) {
+            if (!this.extendsDataClasses.contains(foundDataClass)) {
+                this.extendsDataClasses.add(foundDataClass)
+            }
+            if (!foundDataClass.extendedBy.contains(this)) {
+                foundDataClass.extendedBy.add(this)
+            }
+        }
         return foundDataClass
+    }
+
+    @Transient
+    @JsonIgnore
+    @Override
+    List<ItemReference> getItemReferences() {
+        List<ItemReference> pathsBeingReferenced = []
+        if (dataClasses != null) {
+            dataClasses.forEach {DataClass dataClass ->
+                pathsBeingReferenced << ItemReference.from(dataClass)
+            }
+        }
+        if (dataElements != null) {
+            dataElements.forEach {DataElement dataElement ->
+                pathsBeingReferenced << ItemReference.from(dataElement)
+            }
+        }
+        if (referenceTypes != null) {
+            referenceTypes.forEach {DataType dataType ->
+                pathsBeingReferenced << ItemReference.from(dataType)
+            }
+        }
+        if (extendsDataClasses != null) {
+            extendsDataClasses.forEach {DataClass dataClass ->
+                pathsBeingReferenced << ItemReference.from(dataClass)
+            }
+        }
+        return pathsBeingReferenced
+    }
+
+    @Override
+    void replaceItemReferences(Map<UUID, ItemReference> replacements) {
+        if (dataClasses != null) {
+            final List<DataClass> replacement = []
+            dataClasses.forEach {DataClass dataClass ->
+                ItemReference replacementItemReference = replacements.get(dataClass.id)
+                if (replacementItemReference != null) {
+                    replacement.add((DataClass) replacementItemReference.theItem)
+                } else {
+                    replacement.add(dataClass)
+                }
+            }
+            dataClasses = replacement
+        }
+        if (dataElements != null) {
+            final List<DataElement> replacement = []
+            dataElements.forEach {DataElement dataElement ->
+                ItemReference replacementItemReference = replacements.get(dataElement.id)
+                if (replacementItemReference != null) {
+                    replacement.add((DataElement) replacementItemReference.theItem)
+                } else {
+                    replacement.add(dataElement)
+                }
+            }
+            dataElements = replacement
+        }
+        if (referenceTypes != null) {
+            final List<DataType> replacement = []
+            referenceTypes.forEach {DataType dataType ->
+                ItemReference replacementItemReference = replacements.get(dataType.id)
+                if (replacementItemReference != null) {
+                    replacement.add((DataType) replacementItemReference.theItem)
+                } else {
+                    replacement.add(dataType)
+                }
+            }
+            referenceTypes = replacement
+        }
+        if (extendsDataClasses != null) {
+            final List<DataClass> replacementSet = []
+            extendsDataClasses.forEach {DataClass dataClass ->
+                ItemReference replacementItemReference = replacements.get(dataClass.id)
+                if (replacementItemReference != null) {
+                    dataClass.extendedBy.remove(this)
+                    replacementSet.add((DataClass) replacementItemReference.theItem)
+                    ((DataClass) replacementItemReference.theItem).extendedBy.add(this)
+                } else {
+                    replacementSet.add(dataClass)
+                }
+            }
+            extendsDataClasses = replacementSet
+        }
     }
 }

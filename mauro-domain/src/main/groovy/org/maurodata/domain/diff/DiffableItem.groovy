@@ -5,7 +5,7 @@ trait DiffableItem<T extends DiffableItem> {
 
     abstract String getDiffIdentifier()
 
-    abstract ObjectDiff<T> diff(T other)
+    abstract ObjectDiff<T> diff(T other, String lhsPathRoot, String rhsPathRoot)
 
 
 }

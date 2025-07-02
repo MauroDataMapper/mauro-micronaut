@@ -23,4 +23,8 @@ abstract class SummaryMetadataReportRepository implements ItemRepository<Summary
     Class getDomainClass() {
         SummaryMetadataReport
     }
+
+    Boolean handlesPathPrefix(final String pathPrefix) {
+        'smr'.equalsIgnoreCase(pathPrefix)
+    }
 }

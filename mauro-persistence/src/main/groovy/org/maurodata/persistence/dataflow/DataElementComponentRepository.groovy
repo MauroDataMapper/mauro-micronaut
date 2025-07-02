@@ -30,6 +30,11 @@ abstract class DataElementComponentRepository implements ModelItemRepository<Dat
     }
     @Override
     @Nullable
+    List<DataElementComponent> findAllByParentAndPathIdentifier(UUID item,String pathIdentifier) {
+        dataElementComponentDTORepository.findAllByParentAndPathIdentifier(item,pathIdentifier)
+    }
+    @Override
+    @Nullable
     List<DataElementComponent> findAllByParent(AdministeredItem dataClassComponent) {
         findAllByDataClassComponent((DataClassComponent) dataClassComponent) as List<DataElementComponent>
     }
@@ -90,4 +95,7 @@ abstract class DataElementComponentRepository implements ModelItemRepository<Dat
     @Query(''' delete from dataflow.data_element_component_target_data_element t where t.data_element_component_id = :id ''')
     abstract Long removeTargetDataElements(UUID id)
 
+    Boolean handlesPathPrefix(final String pathPrefix) {
+        'dec'.equalsIgnoreCase(pathPrefix)
+    }
 }

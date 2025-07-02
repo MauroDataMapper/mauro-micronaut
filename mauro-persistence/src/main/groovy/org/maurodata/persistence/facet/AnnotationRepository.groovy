@@ -22,4 +22,8 @@ abstract class AnnotationRepository implements ItemRepository<Annotation> {
     Class getDomainClass() {
         Annotation
     }
+
+    Boolean handlesPathPrefix(final String pathPrefix) {
+        'ann'.equalsIgnoreCase(pathPrefix)
+    }
 }

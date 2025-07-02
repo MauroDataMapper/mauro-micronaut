@@ -32,4 +32,9 @@ class DataFlowContentRepository extends AdministeredItemContentRepository {
         }
         dataFlowRepository.delete(dataFlow)
     }
+
+    @Override
+    Boolean handles(Class clazz) {
+        return clazz.simpleName == 'DataFlow'
+    }
 }

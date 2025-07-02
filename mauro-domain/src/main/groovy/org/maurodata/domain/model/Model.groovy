@@ -1,5 +1,7 @@
 package org.maurodata.domain.model
 
+import org.maurodata.domain.datamodel.DataModel
+
 import com.fasterxml.jackson.annotation.JsonAlias
 import com.fasterxml.jackson.annotation.JsonIgnore
 import groovy.transform.CompileStatic
@@ -71,7 +73,7 @@ abstract class Model<M extends DiffableItem> extends AdministeredItem implements
     Authority authority
 
     @Nullable
-    String branchName = DEFAULT_BRANCH_NAME
+    protected String branchName = DEFAULT_BRANCH_NAME
 
     @Nullable
     //@Transient
@@ -134,6 +136,7 @@ abstract class Model<M extends DiffableItem> extends AdministeredItem implements
     @Override
     @Transient
     @JsonIgnore
+    @Nullable
     String getPathModelIdentifier() {
         final Model model=getModelWithVersion()
 
@@ -172,6 +175,7 @@ abstract class Model<M extends DiffableItem> extends AdministeredItem implements
         }
         CollectionDTO lhs = DiffBuilder.createCollectionDiff(DiffBuilder.MODEL_COLLECTION_KEYS, this.properties)
         CollectionDTO rhs = DiffBuilder.createCollectionDiff(DiffBuilder.MODEL_COLLECTION_KEYS, other.properties)
+
         ObjectDiff baseDiff = DiffBuilder.diff(this, other, lhs, rhs)
         baseDiff
     }
@@ -193,24 +197,15 @@ abstract class Model<M extends DiffableItem> extends AdministeredItem implements
 
     @JsonIgnore
     @Transient
-    Model getModelWithVersion()
-    {
-        final List<Model> myAncestors= getAncestors()
+    Model getModelWithVersion() {
+        final List<Model> myAncestors = getAncestors()
         Collections.reverse(myAncestors)
 
         // Ignoring folders that are not versionable, find an ancestor
         // that has a version
-
-        final Iterator<Model> it=myAncestors.iterator()
-        while(it.hasNext())
-        {
-            final Model model = it.next()
-            if(model instanceof Folder)
-            {
-                if(!model.@versionableFlag){continue}
-            }
-            if(model.@modelVersion!=null)
-            {
+        for (int m = 0; m < myAncestors.size(); m++) {
+            final Model model = myAncestors.get(m)
+            if ((model instanceof Folder || model instanceof DataModel) && model.@versionableFlag) {
                 return model
             }
         }
@@ -222,8 +217,11 @@ abstract class Model<M extends DiffableItem> extends AdministeredItem implements
         return getModelWithVersion().@modelVersion
     }
 
-    String getBranchName()
-    {
+    void setBranchName(final String branchNameString) {
+        this.@branchName = branchNameString;
+    }
+
+    String getBranchName() {
         return getModelWithVersion().@branchName
     }
 

@@ -46,6 +46,10 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
         repository = itemRepository
     }
 
+    List<I> findAllByParentAndPathIdentifier(UUID item, String pathIdentifier) {
+        repository.findAllByParentAndPathIdentifier( item,  pathIdentifier)
+    }
+
     List<I> findAllByParent(AdministeredItem parent) {
         cachedLookupByParent(FIND_ALL_BY_PARENT, domainType, parent)
     }

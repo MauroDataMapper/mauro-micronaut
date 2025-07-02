@@ -1,5 +1,8 @@
 package org.maurodata.domain.terminology
 
+import org.maurodata.domain.model.ItemReference
+import org.maurodata.domain.model.ItemReferencer
+
 import com.fasterxml.jackson.annotation.JsonIgnore
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
@@ -26,7 +29,7 @@ import org.maurodata.domain.model.ModelItem
 @MappedEntity(schema = 'terminology')
 @MapConstructor(includeSuperFields = true, includeSuperProperties = true, noArg = true)
 @Indexes([@Index(columns = ['folder_id', 'label', 'branch_name', 'model_version'], unique = true)])
-class CodeSet extends Model {
+class CodeSet extends Model implements ItemReferencer {
 
     @Relation(value = Relation.Kind.MANY_TO_MANY, cascade = Relation.Cascade.ALL)
     @JoinTable(
@@ -85,5 +88,34 @@ class CodeSet extends Model {
 
     int hashCode() {
         return (terms != null ? terms.hashCode() : 0)
+    }
+
+    @Transient
+    @JsonIgnore
+    @Override
+    List<ItemReference> getItemReferences() {
+        List<ItemReference> pathsBeingReferenced = []
+        if (terms != null) {
+            terms.forEach {Term term ->
+                pathsBeingReferenced << ItemReference.from(term)
+            }
+        }
+        return pathsBeingReferenced
+    }
+
+    @Override
+    void replaceItemReferences(Map<UUID, ItemReference> replacements) {
+        if (terms != null) {
+            final Set<Term> replacementSet = []
+            terms.forEach {Term term ->
+                ItemReference replacementItemReference = replacements.get(term.id)
+                if (replacementItemReference != null) {
+                    replacementSet.add((Term) replacementItemReference.theItem)
+                } else {
+                    replacementSet.add(term)
+                }
+            }
+            terms = replacementSet
+        }
     }
 }

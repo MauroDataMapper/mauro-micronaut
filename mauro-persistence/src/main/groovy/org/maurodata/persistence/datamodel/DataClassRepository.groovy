@@ -31,6 +31,11 @@ abstract class DataClassRepository implements ModelItemRepository<DataClass> {
     }
 
     @Nullable
+    List<DataClass> findAllByParentAndPathIdentifier(UUID item,String pathIdentifier) {
+        dataClassDTORepository.findAllByParentAndPathIdentifier(item,pathIdentifier)
+    }
+
+    @Nullable
     List<DataClass> findAllByDataModel(DataModel dataModel) {
         dataClassDTORepository.findAllByDataModel(dataModel) as List<DataClass>
     }
@@ -98,5 +103,8 @@ abstract class DataClassRepository implements ModelItemRepository<DataClass> {
         domainClass.simpleName.equalsIgnoreCase(domainType) || (domainClass.simpleName + 'es').equalsIgnoreCase(domainType)
     }
 
+    Boolean handlesPathPrefix(final String pathPrefix) {
+        'dc'.equalsIgnoreCase(pathPrefix)
+    }
 }
 

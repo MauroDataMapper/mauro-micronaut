@@ -1,9 +1,11 @@
 package org.maurodata.persistence.datamodel.dto
 
+import org.maurodata.domain.datamodel.DataElement
 import org.maurodata.domain.datamodel.DataType
 
 import groovy.transform.CompileStatic
 import io.micronaut.data.annotation.Join
+import io.micronaut.data.annotation.Query
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.repository.GenericRepository
@@ -22,4 +24,6 @@ abstract class DataElementDTORepository implements GenericRepository<DataElement
 
     abstract List<DataElementDTO> readAllByDataTypeIdIn(Collection<UUID> ids)
 
+    @Query('SELECT * FROM datamodel.data_element WHERE data_class_id = :item AND label = :pathIdentifier')
+    abstract List<DataElement> findAllByParentAndPathIdentifier(UUID item, String pathIdentifier)
 }

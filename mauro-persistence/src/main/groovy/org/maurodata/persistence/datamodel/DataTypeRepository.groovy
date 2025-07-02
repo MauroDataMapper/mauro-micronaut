@@ -16,6 +16,11 @@ abstract class DataTypeRepository implements ModelItemRepository<DataType> {
     @Inject
     DataTypeDTORepository dataTypeDTORepository
 
+    @Nullable
+    List<DataType> findAllByParentAndPathIdentifier(UUID item,String pathIdentifier) {
+        dataTypeDTORepository.findAllByParentAndPathIdentifier(item,pathIdentifier)
+    }
+
     @Override
     @Nullable
     DataType findById(UUID id) {
@@ -72,4 +77,7 @@ abstract class DataTypeRepository implements ModelItemRepository<DataType> {
                 'modeldatatypes']
     }
 
+    Boolean handlesPathPrefix(final String pathPrefix) {
+        'dt'.equalsIgnoreCase(pathPrefix)
+    }
 }

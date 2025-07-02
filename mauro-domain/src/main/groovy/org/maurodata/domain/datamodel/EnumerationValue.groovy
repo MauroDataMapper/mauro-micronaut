@@ -89,20 +89,26 @@ class EnumerationValue extends ModelItem<DataModel> implements DiffableItem<Enum
     @Transient
     @JsonIgnore
     CollectionDiff fromItem() {
-        new BaseCollectionDiff(id,label)
+        new BaseCollectionDiff(id,getDiffIdentifier(), label)
     }
 
     @Override
     @Transient
     @JsonIgnore
     String getDiffIdentifier() {
-        this.key
+        if (enumerationType != null) {
+            return "${enumerationType.getDiffIdentifier()}|${getPathNodeString()}"
+        }
+        if (dataModel != null) {
+            return "${dataModel.getDiffIdentifier()}|${getPathNodeString()}"
+        }
+        return "${getPathNodeString()}"
     }
 
     @Override
     @Transient
     @JsonIgnore
-    ObjectDiff<EnumerationValue> diff(EnumerationValue other) {
+    ObjectDiff<EnumerationValue> diff(EnumerationValue other, String lhsPathRoot, String rhsPathRoot) {
         ObjectDiff<EnumerationValue> base = DiffBuilder.objectDiff(EnumerationValue)
                 .leftHandSide(id?.toString(), this)
                 .rightHandSide(other.id?.toString(), other)

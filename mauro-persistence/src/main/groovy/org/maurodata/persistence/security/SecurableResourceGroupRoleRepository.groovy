@@ -19,4 +19,9 @@ abstract class SecurableResourceGroupRoleRepository implements ItemRepository<Se
     Class getDomainClass() {
         SecurableResourceGroupRole
     }
+
+    // Not pathable
+    Boolean handlesPathPrefix(final String pathPrefix) {
+        false
+    }
 }

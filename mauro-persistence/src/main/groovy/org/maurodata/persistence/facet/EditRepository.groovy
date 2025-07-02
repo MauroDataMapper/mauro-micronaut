@@ -16,4 +16,8 @@ abstract class EditRepository implements ItemRepository<Edit> {
         Edit
     }
 
+    Boolean handlesPathPrefix(final String pathPrefix) {
+        'ed'.equalsIgnoreCase(pathPrefix)
+    }
+
 }

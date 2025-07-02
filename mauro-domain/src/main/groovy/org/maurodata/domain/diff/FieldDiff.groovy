@@ -43,7 +43,7 @@ class FieldDiff<F> {
 
     String toString()
     {
-        return "FieldDiff: "+name+" left="+left+" right="+right+" lhsDiffableItem="+lhsDiffableItem+" rhsDiffableItem="+rhsDiffableItem
+        return "\n<FieldDiff> "+name+"\n left="+left+"\n right="+right+"\n lhsDiffableItem="+lhsDiffableItem+"\n rhsDiffableItem="+rhsDiffableItem+"</FieldDiff>"
     }
 
 }

@@ -22,6 +22,11 @@ abstract class ClassificationSchemeRepository implements ModelRepository<Classif
         classificationSchemeDTORepository.findById(id) as ClassificationScheme
     }
 
+    @Nullable
+    List<ClassificationScheme> findAllByParentAndPathIdentifier(UUID item, String pathIdentifier) {
+        classificationSchemeDTORepository.findAllByParentAndPathIdentifier(item,pathIdentifier) as List<ClassificationScheme>
+    }
+
     @Override
     Class getDomainClass() {
         ClassificationScheme
@@ -36,4 +41,8 @@ abstract class ClassificationSchemeRepository implements ModelRepository<Classif
     Boolean handles(String domainType){
         return domainType != null && domainType.toLowerCase() in [FieldConstants.CLASSIFICATION_SCHEME_LOWERCASE, FieldConstants.CLASSIFICATION_SCHEMES_LOWERCASE ]
     }
+    Boolean handlesPathPrefix(final String pathPrefix) {
+        'csc'.equalsIgnoreCase(pathPrefix)
+    }
+
 }

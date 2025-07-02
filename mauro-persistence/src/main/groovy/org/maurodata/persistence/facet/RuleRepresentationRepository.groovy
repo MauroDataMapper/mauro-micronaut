@@ -23,4 +23,8 @@ abstract class RuleRepresentationRepository implements ItemRepository<RuleRepres
     Class getDomainClass() {
         RuleRepresentation
     }
+
+    Boolean handlesPathPrefix(final String pathPrefix) {
+        'rr'.equalsIgnoreCase(pathPrefix)
+    }
 }

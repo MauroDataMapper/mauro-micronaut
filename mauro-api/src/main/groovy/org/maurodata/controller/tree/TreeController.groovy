@@ -79,7 +79,9 @@ class TreeController implements TreeApi {
     List<TreeItem> itemTree(String domainType, UUID id, @Nullable @QueryValue Boolean foldersOnly) {
         foldersOnly = foldersOnly ?: false
         AdministeredItemCacheableRepository repository = repositoryService.getAdministeredItemRepository(domainType)
-        AdministeredItem item = repository.readById(id)
+        AdministeredItem item = (AdministeredItem) repository.readById(id)
+        pathRepository.readParentItems(item)
+        item.updatePath()
         AvailableActions.updateAvailableActions(item, accessControlService)
 
         accessControlService.checkRole(Role.READER, item)

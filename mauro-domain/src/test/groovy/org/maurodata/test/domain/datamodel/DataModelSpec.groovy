@@ -21,15 +21,18 @@ class DataModelSpec extends Specification {
         primitiveType {
             label 'string'
             description 'character string'
+            id UUID.randomUUID()
         }
         primitiveType {
             label 'integer'
             description 'a whole number, may be positive or negative, with no maximum or minimum'
+            id UUID.randomUUID()
         }
         primitiveType {
             label 'height'
             units 'centimeters'
             description 'a whole number, may be positive or negative, with no maximum or minimum'
+            id UUID.randomUUID()
         }
         enumerationType {
             label 'Yes/No'
@@ -37,8 +40,10 @@ class DataModelSpec extends Specification {
             enumerationValue {
                 key 'Y'
                 value 'Yes'
+                id UUID.randomUUID()
             }
             enumerationValue(key: 'N', value: 'No')
+            id UUID.randomUUID()
         }
 
         dataClass {
@@ -69,6 +74,7 @@ class DataModelSpec extends Specification {
                     primitiveType {
                         label 'date'
                         description 'A date'
+                        id UUID.randomUUID()
                     }
                 }
             }
@@ -170,7 +176,8 @@ class DataModelSpec extends Specification {
         clonedDataClass1.extendedBy.size() == 1
         clonedDataClass1.extendedBy.first().is(clonedDataClass3)
 
-        cloned.dataElements.dataType == original.dataElements.dataType
+        cloned.dataElements.dataType.hashCode() != original.dataElements.dataType.hashCode()
+        cloned.dataElements.dataType.id == original.dataElements.dataType.id
         cloned.dataTypes.containsAll(cloned.dataElements.dataType)
         original.dataTypes.containsAll(original.dataElements.dataType)
 

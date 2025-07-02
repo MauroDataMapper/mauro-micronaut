@@ -1,11 +1,13 @@
 package org.maurodata.domain.facet
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
 import groovy.transform.MapConstructor
 import io.micronaut.data.annotation.Index
 import io.micronaut.data.annotation.Indexes
 import io.micronaut.data.annotation.MappedEntity
+import io.micronaut.data.annotation.Transient
 
 @CompileStatic
 @MappedEntity(schema = 'core')
@@ -53,4 +55,17 @@ class Edit extends Facet {
         this.description
     }
 
+    @Transient
+    @JsonIgnore
+    @Override
+    String getPathPrefix() {
+        'ed'
+    }
+
+    @Transient
+    @JsonIgnore
+    @Override
+    String getPathIdentifier() {
+        title
+    }
 }

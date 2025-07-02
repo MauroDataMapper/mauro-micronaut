@@ -41,6 +41,10 @@ class Path {
 
     void setNodes(List<PathNode> nodes) {
         this.nodes = nodes
+        updatePathString()
+    }
+
+    void updatePathString() {
         pathString = nodes.collect {it.toString()}.join('|')
     }
 
@@ -72,12 +76,72 @@ class Path {
         for (int i = at - 1; i >= 0; i--) {
             Item node = this.nodes.get(i).node
             if (node == null) {continue}
-            if (node.id != null && (domainType == null || node.domainType == domainType)) {
+            if (node.id != null && (domainType == null || node.domainType.equalsIgnoreCase(domainType))) {
                 return node
             }
         }
 
         return null
+    }
+
+    @Transient
+    Item findNodeItem(UUID ofUUID) {
+        for (int i = 0; i < this.nodes.size(); i++) {
+            Item node = this.nodes.get(i).node
+            if (node == null) {continue}
+            if (node.id == ofUUID) {return node}
+        }
+        return null
+    }
+
+    Path getParent() {
+        List<PathNode> lessNodes = []
+        lessNodes.addAll(nodes)
+        lessNodes.removeLast()
+        new Path(lessNodes)
+    }
+
+    Item getItem() {
+        ((PathNode) (nodes.get(nodes.size() - 1))).node
+    }
+
+    Path trimUntil(final String pathNodeString) {
+        PathNode toMatch = PathNode.from(pathNodeString)
+        List<PathNode> lessNodes = []
+        int from
+        for (from = 0; from < nodes.size(); from++) {
+            final PathNode node = nodes.get(from)
+
+            if (node.prefix == toMatch.prefix && node.identifier == toMatch.identifier) {break}
+        }
+        for (int copy = from; copy < nodes.size(); copy++) {
+            lessNodes.add(nodes.get(copy))
+        }
+        new Path(lessNodes)
+    }
+
+    /*
+    Returns a path that can be used to compare with paths from other
+    models by producing a path that is not different even when:
+      the model identifier may be different,
+      the folder path may be different
+      the items being compared may have different labels
+     */
+
+    static String branchAgnostic(final String pathString, final String pathRoot) {
+        Path copy = new Path(pathString)
+        for (int p = 0; p < copy.nodes.size(); p++) {
+            copy.nodes[p].modelIdentifier = '--------'
+        }
+        copy.updatePathString()
+        Path trimmed = copy.trimUntil(pathRoot)
+
+        if (trimmed.nodes.size() > 0) {
+            trimmed.nodes[0].identifier = '--------'
+        }
+
+        trimmed.updatePathString()
+        trimmed.pathString
     }
 
     static class PathNode {

@@ -38,24 +38,45 @@ class ReferenceFile extends CatalogueFile implements DiffableItem<ReferenceFile>
     @Transient
     @JsonIgnore
     CollectionDiff fromItem() {
-        new BaseCollectionDiff(id)
+        new BaseCollectionDiff(id,getDiffIdentifier(),null)
     }
 
     @Override
     @Transient
     @JsonIgnore
     String getDiffIdentifier() {
-        fileName
+        "${pathPrefix}:${fileName}"
     }
 
     @Override
     @Transient
     @JsonIgnore
-    ObjectDiff<ReferenceFile> diff(ReferenceFile other) {
+    ObjectDiff<ReferenceFile> diff(ReferenceFile other, String lhsPathRoot, String rhsPathRoot) {
         ObjectDiff<ReferenceFile> base = DiffBuilder.objectDiff(ReferenceFile)
                 .leftHandSide(id?.toString(), this)
                 .rightHandSide(other.id?.toString(), other)
         base.appendString(DiffBuilder.FILE_NAME, this.fileName, other.fileName, this, other)
         base
+    }
+
+    @Transient
+    @JsonIgnore
+    ObjectDiff<ReferenceFile> diff(ReferenceFile other) {
+        diff(other, null, null)
+    }
+
+    @Transient
+    @JsonIgnore
+    @Override
+    String getPathPrefix() {
+        'rf'
+    }
+
+    //TODO: Not clean: fileName may contain characters used by Paths
+    @Transient
+    @JsonIgnore
+    @Override
+    String getPathIdentifier() {
+        fileName
     }
 }

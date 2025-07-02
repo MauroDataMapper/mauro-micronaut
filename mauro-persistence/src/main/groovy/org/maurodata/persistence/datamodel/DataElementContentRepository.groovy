@@ -20,4 +20,9 @@ class DataElementContentRepository extends AdministeredItemContentRepository {
         DataElement dataElement = dataElementCacheableRepository.readById(id)
         dataElement
     }
+
+    @Override
+    Boolean handles(Class clazz) {
+        return clazz.simpleName == 'DataElement'
+    }
 }

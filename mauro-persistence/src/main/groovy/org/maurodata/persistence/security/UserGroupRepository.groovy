@@ -22,4 +22,9 @@ abstract class UserGroupRepository implements ItemRepository<UserGroup> {
     Class getDomainClass() {
         UserGroup
     }
+
+    // Not pathable
+    Boolean handlesPathPrefix(final String pathPrefix) {
+        false
+    }
 }

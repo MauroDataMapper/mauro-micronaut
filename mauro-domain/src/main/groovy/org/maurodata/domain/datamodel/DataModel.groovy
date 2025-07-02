@@ -81,29 +81,29 @@ class DataModel extends Model {
     @Override
     DataModel clone() {
         DataModel cloned = (DataModel) super.clone()
-        Map<DataClass, DataClass> clonedDataClassLookup = [:]
-        Map<DataClass, DataClass> clonedChildDataClassLookup = [:]
-        Map<DataElement, DataElement> clonedDataElementLookup = [:]
-        Map<DataType, DataType> clonedDataTypeLookup = [:]
-        Map<EnumerationValue, EnumerationValue> clonedEnumerationValueLookup = [:]
+        Map<UUID, DataClass> clonedDataClassLookup = [:]
+        Map<UUID, DataClass> clonedChildDataClassLookup = [:]
+        Map<UUID, DataElement> clonedDataElementLookup = [:]
+        Map<UUID, DataType> clonedDataTypeLookup = [:]
+        Map<UUID, EnumerationValue> clonedEnumerationValueLookup = [:]
 
         cloned.dataTypes = dataTypes.collect {it->
             it.clone().tap { clonedDT ->
-                clonedDataTypeLookup.put(it, clonedDT)
+                clonedDataTypeLookup.put(it.id, clonedDT)
                 clonedDT.parent = cloned
                 clonedDT.enumerationValues.clear()
             }
         }
         List<DataClass> clonedDataClasses = dataClasses.collect {
             it.clone().tap { clonedDC ->
-                clonedDataClassLookup.put(it, clonedDC)
+                clonedDataClassLookup.put(it.id, clonedDC)
                 clonedDC.dataModel = cloned
             }
         }
         clonedDataClasses.each {
             List<DataClass> clonedChildList = it.dataClasses.collect { child ->
                 child.clone().tap { clonedChild ->
-                    clonedChildDataClassLookup.put(child, clonedChild)
+                    clonedChildDataClassLookup.put(child.id, clonedChild)
                     clonedChild.parentDataClass = it
                     clonedChild.dataModel = cloned
                 }
@@ -117,36 +117,43 @@ class DataModel extends Model {
 
         cloned.dataElements = dataElements.collect {
             it.clone().tap { clonedDataElement ->
-                clonedDataElementLookup.put(it, clonedDataElement)
-                Map<DataClass, DataClass> allDataClassLookup = clonedDataClassLookup
+                clonedDataElementLookup.put(it.id, clonedDataElement)
+                Map<UUID, DataClass> allDataClassLookup = clonedDataClassLookup
                 allDataClassLookup.putAll(clonedChildDataClassLookup)
-                clonedDataElement.dataClass = allDataClassLookup[dataClass]
+                clonedDataElement.dataClass = allDataClassLookup[dataClass.id]
                 clonedDataElement.dataModel = cloned
-                clonedDataElement.dataType = clonedDataTypeLookup[clonedDataElement.dataType]
+                clonedDataElement.dataType = clonedDataTypeLookup[clonedDataElement.dataType.id]
             }
         }
         cloned.allDataClasses.each {dataClass ->
             dataClass.dataElements = dataClass.dataElements.collect { dataElementIt ->
-                clonedDataElementLookup[dataElementIt]
+                clonedDataElementLookup[dataElementIt.id]
             }
             dataClass.extendsDataClasses = dataClass.extendsDataClasses.collect {extendedDataClass ->
-                clonedDataClassLookup[extendedDataClass]
+                clonedDataClassLookup[extendedDataClass.id]
             }
             dataClass.extendedBy = dataClass.extendedBy.collect {extendsDataClass ->
-                clonedDataClassLookup[extendsDataClass]
+                clonedDataClassLookup[extendsDataClass.id]
             }
         }
         cloned.enumerationValues = enumerationValues.collect {
             it.clone().tap { clonedEV ->
-                clonedEnumerationValueLookup.put(it, clonedEV)
+                clonedEnumerationValueLookup.put(it.id, clonedEV)
                 clonedEV.dataModel = cloned
-                clonedEV.parent = clonedDataTypeLookup[it.parent]
+                clonedEV.parent = clonedDataTypeLookup[it.parent.id]
             }
         } as Set<EnumerationValue>
 
         cloned.setAssociations()
         cloned.allDataClasses = cloned.allDataClasses.toSorted {it.parentDataClass} as Set<DataClass>
         cloned
+    }
+
+    @Transient
+    @JsonIgnore
+    String getDiffIdentifier() {
+        if (folder != null) {return "${folder.getDiffIdentifier()}|${getPathNodeString()}"}
+        return "${getPathNodeString()}"
     }
 
     @Transient

@@ -6,12 +6,14 @@ import org.maurodata.domain.diff.DiffableItem
 import org.maurodata.domain.diff.ObjectDiff
 import org.maurodata.domain.diff.RuleRepresentationDiff
 import org.maurodata.domain.model.Item
+import org.maurodata.domain.model.Pathable
 
 import com.fasterxml.jackson.annotation.JsonAlias
 import com.fasterxml.jackson.annotation.JsonIgnore
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
 import groovy.transform.MapConstructor
+import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Transient
 
@@ -19,7 +21,7 @@ import io.micronaut.data.annotation.Transient
 @MappedEntity(value = 'rule_representation', schema = 'core', alias = 'rule_representation_')
 @AutoClone
 @MapConstructor(includeSuperFields = true, includeSuperProperties = true, noArg = true)
-class RuleRepresentation extends Item implements DiffableItem<RuleRepresentation> {
+class RuleRepresentation extends Item implements DiffableItem<RuleRepresentation>, Pathable {
     String language
 
     String representation
@@ -31,20 +33,20 @@ class RuleRepresentation extends Item implements DiffableItem<RuleRepresentation
     @JsonIgnore
     @Transient
     CollectionDiff fromItem() {
-        new RuleRepresentationDiff(id, language, representation)
+        new RuleRepresentationDiff(id, language, representation, getDiffIdentifier())
     }
 
     @Override
     @JsonIgnore
     @Transient
     String getDiffIdentifier() {
-        language
+        return "${pathPrefix}:${language}"
     }
 
     @Override
     @JsonIgnore
     @Transient
-    ObjectDiff<RuleRepresentation> diff(RuleRepresentation other) {
+    ObjectDiff<RuleRepresentation> diff(RuleRepresentation other, String lhsPathRoot, String rhsPathRoot) {
         ObjectDiff<RuleRepresentation> base = DiffBuilder.objectDiff(RuleRepresentation)
                 .leftHandSide(id?.toString(), this)
                 .rightHandSide(other.id?.toString(), other)
@@ -89,4 +91,25 @@ class RuleRepresentation extends Item implements DiffableItem<RuleRepresentation
         this.representation
     }
 
+    @Transient
+    @JsonIgnore
+    @Override
+    String getPathPrefix() {
+        'rr'
+    }
+
+    @Transient
+    @JsonIgnore
+    @Override
+    String getPathIdentifier() {
+        language
+    }
+
+    @Transient
+    @JsonIgnore
+    @Override
+    @Nullable
+    String getPathModelIdentifier() {
+        return null
+    }
 }
