@@ -6,13 +6,17 @@ import org.maurodata.api.folder.FolderApi
 import org.maurodata.api.model.PermissionsDTO
 import org.maurodata.audit.Audit
 import org.maurodata.controller.model.ModelController
+import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.facet.EditType
 import org.maurodata.domain.folder.Folder
 import org.maurodata.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
 import org.maurodata.persistence.folder.FolderContentRepository
 import org.maurodata.domain.search.dto.SearchRequestDTO
 import org.maurodata.domain.search.dto.SearchResultsDTO
+import org.maurodata.plugin.exporter.FolderExporterPlugin
 import org.maurodata.plugin.exporter.ModelExporterPlugin
+import org.maurodata.plugin.importer.DataModelImporterPlugin
+import org.maurodata.plugin.importer.FolderImporterPlugin
 import org.maurodata.service.plugin.PluginService
 import org.maurodata.web.ListResponse
 
@@ -225,4 +229,26 @@ class FolderController extends ModelController<Folder> implements FolderApi {
         ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "Doi is not implemented")
         return null
     }
+
+    @Get(Paths.FOLDER_IMPORTERS)
+    List<FolderImporterPlugin> folderImporters() {
+        mauroPluginService.listPlugins(FolderImporterPlugin)
+    }
+
+    @Get(Paths.FOLDER_EXPORTERS)
+    List<FolderExporterPlugin> folderExporters() {
+        mauroPluginService.listPlugins(FolderExporterPlugin)
+    }
+
+    /*
+    @Transactional
+    @ExecuteOn(TaskExecutors.IO)
+    @Audit(title = EditType.IMPORT, description = "Import folder")
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @Post(Paths.FOLDER_IMPORT)
+    ListResponse<Folder> importFolder(@Body MultipartBody body, String namespace, String name, @Nullable String version) {
+        super.importModel(body, namespace, name, version)
+    }
+*/
+
 }
