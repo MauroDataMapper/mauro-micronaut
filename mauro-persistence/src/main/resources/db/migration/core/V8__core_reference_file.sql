@@ -10,7 +10,8 @@ create table if not exists core."reference_file" (
     "file_type"                       varchar(255)     not null,
     "file_name"                       varchar(255)     not null,
     "file_contents"                   bytea            not null,
-    "created_by"                      text
+    "created_by"                      text,
+    "stable_id"                       uuid
 );
 create index "idx_reference_file_multi_facet_aware_item_id" on "core"."reference_file" (multi_facet_aware_item_id);
 

@@ -63,6 +63,7 @@ class SummaryMetadataReportController extends ItemController<SummaryMetadataRepo
         accessControlService.checkRole(Role.EDITOR, readAdministeredItemForFacet(summaryMetadata))
         summaryMetadataReport.summaryMetadataId = summaryMetadata.id
         updateCreationProperties(summaryMetadataReport)
+        setStableId(summaryMetadataReport)
         summaryMetadataReportCacheableRepository.save(summaryMetadataReport)
     }
 

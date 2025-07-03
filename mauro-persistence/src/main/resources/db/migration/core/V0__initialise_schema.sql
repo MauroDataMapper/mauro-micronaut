@@ -15,7 +15,8 @@ create table core."authority"
     "created_by"                      uuid,
     "breadcrumb_tree_id"              uuid,
     "url"                             varchar(255)     not null,
-    "default_authority"               boolean          default false
+    "default_authority"               boolean          default false,
+    "stable_id"                       uuid
 );
 
 -- Metadata
@@ -30,7 +31,8 @@ create table "core"."metadata"
     "created_by"                         uuid,
     "namespace"                          text             not null,
     "key"                                text             not null,
-    "value"                              text             not null
+    "value"                              text             not null,
+    "stable_id"                       uuid
 );
 create unique index "idx_metadata_multi_facet_aware_item_id_namespace_key" on "core"."metadata" (multi_facet_aware_item_id, namespace, key);
 
@@ -46,7 +48,8 @@ create table "core"."version_link"
     "created_by"                         uuid,
     "version_link_type"                  varchar(255)     not null,
     "target_model_id"                    uuid             not null,
-    "target_model_domain_type"           varchar(255)     not null
+    "target_model_domain_type"           varchar(255)     not null,
+    "stable_id"                       uuid
 );
 create unique index "idx_version_link_multi_facet_aware_item_id_target_model_id" on "core"."version_link" (multi_facet_aware_item_id, target_model_id);
 
@@ -73,7 +76,8 @@ create table core."folder"
     "model_version"                   varchar(255),
     "model_version_tag"               varchar(255),
     "parent_folder_id"                uuid,
-    "class"                           varchar(255)
+    "class"                           varchar(255),
+    "stable_id"                       uuid
 );
 create index "idx_folder_parent_folder_id" on core."folder" (parent_folder_id);
 
@@ -100,7 +104,8 @@ create table security."catalogue_user"
     "last_login"       timestamp with time zone,
     "salt"             bytea            not null,
     "password"         bytea,
-    "temp_password"    varchar(255)
+    "temp_password"    varchar(255),
+    "stable_id"                       uuid
 );
 create unique index "idx_catalogue_user_email_address" on "security"."catalogue_user" (trim(lower(email_address)));
 
@@ -114,7 +119,8 @@ create table security."user_group"
     "name"             varchar(255)     not null,
     "description"      text,
     "undeletable"      boolean                   default false,
-    "application_role" varchar(255)
+    "application_role" varchar(255),
+    "stable_id"                       uuid
 );
 create unique index "idx_security_user_group_name" on security.user_group (trim(lower(name)));
 
@@ -128,7 +134,8 @@ create table security."securable_resource_group_role"
     "securable_resource_domain_type" varchar(255)     not null,
     "securable_resource_id"          uuid             not null,
     "user_group_id"                  uuid             not null references security.user_group (id) initially deferred,
-    "role"                           varchar(255)     not null
+    "role"                           varchar(255)     not null,
+    "stable_id"                       uuid
 );
 create unique index "idx_securable_resource_group_role_securable_resource_user_group_id" on security.securable_resource_group_role (securable_resource_domain_type, securable_resource_id, user_group_id);
 
@@ -166,7 +173,8 @@ create table terminology."terminology"
     "authority_id"                    uuid /*NOT NULL REFERENCES authority(id) initially deferred*/,
     "branch_name"                     varchar(255),
     "model_version"                   varchar(255),
-    "model_version_tag"               varchar(255)
+    "model_version_tag"               varchar(255),
+    "stable_id"                       uuid
 );
 create unique index "idx_terminology_folder_id_label_branch_name_model_version" on terminology."terminology" (folder_id, label, branch_name, model_version);
 
@@ -184,7 +192,8 @@ create table terminology."term_relationship_type"
     "idx"                   integer,
     "terminology_id"        uuid             not null references terminology.terminology (id) initially deferred,
     "parental_relationship" boolean,
-    "child_relationship"    boolean
+    "child_relationship"    boolean,
+    "stable_id"             uuid
 );
 create unique index "idx_term_relationship_type_terminology_id_label" on terminology."term_relationship_type" (terminology_id, label);
 
@@ -206,7 +215,8 @@ create table terminology."term"
     "definition"         text             not null,
     "url"                varchar(255),
     "is_parent"          boolean,
-    "depth"              integer
+    "depth"              integer,
+    "stable_id"          uuid
 );
 create unique index "idx_term_terminology_id_code" on terminology."term" (terminology_id, code);
 
@@ -225,7 +235,8 @@ create table terminology."term_relationship"
     "terminology_id"       uuid             not null references terminology.terminology (id) initially deferred,
     "source_term_id"       uuid             not null references terminology.term (id) initially deferred,
     "target_term_id"       uuid             not null references terminology.term (id) initially deferred,
-    "relationship_type_id" uuid             not null references terminology.term_relationship_type (id) initially deferred
+    "relationship_type_id" uuid             not null references terminology.term_relationship_type (id) initially deferred,
+    "stable_id"            uuid
 );
 
 create index "idx_term_relationship_terminology_id" on terminology."term_relationship" (terminology_id);
@@ -258,7 +269,8 @@ create table datamodel."data_model" (
     "authority_id"                    uuid /*NOT NULL REFERENCES authority(id) initially deferred*/,
     "branch_name"                     varchar(255),
     "model_version"                   varchar(255),
-    "model_version_tag"               varchar(255)
+    "model_version_tag"               varchar(255),
+    "stable_id"                       uuid
 );
 
 
@@ -280,7 +292,8 @@ create table datamodel."data_class" (
     "description"                     text,
     "aliases_string"                  text,
     "min_multiplicity"                integer,
-    "max_multiplicity"                integer
+    "max_multiplicity"                integer,
+    "stable_id"                       uuid
 );
 
 create index "idx_data_class_data_model_id" on datamodel."data_class"(data_model_id);
@@ -302,7 +315,8 @@ create table datamodel."data_type" (
     "units"                           varchar(255),
     "reference_class_id"              uuid             references datamodel.data_class(id) initially deferred,
     "model_resource_id"               uuid,
-    "model_resource_domain_type"      varchar(255)
+    "model_resource_domain_type"      varchar(255),
+    "stable_id"                       uuid
 );
 
 create index "idx_data_type_data_model_id" on datamodel."data_type"(data_model_id);
@@ -322,7 +336,8 @@ create table datamodel."data_element" (
     "description"                     text,
     "aliases_string"                  text,
     "min_multiplicity"                integer,
-    "max_multiplicity"                integer
+    "max_multiplicity"                integer,
+    "stable_id"                       uuid
 );
 create index "idx_data_element_data_class_id" on datamodel."data_element"(data_class_id);
 create index "idx_data_element_data_type_id" on datamodel."data_element"(data_type_id);
@@ -342,7 +357,8 @@ create table datamodel."enumeration_value" (
     "aliases_string"                  text,
     "category"                        text,
     "key"                             text             not null,
-    "value"                           text
+    "value"                           text,
+    "stable_id"                       uuid
 );
 
 create index "idx_enumeration_value_enumeration_type_id" on datamodel."enumeration_value"(enumeration_type_id);
@@ -364,7 +380,8 @@ create table "core"."edit" (
     "multi_facet_aware_item_id"          uuid                     not null,
     "created_by"                         uuid                     not null,
     "description"                        text                     not null,
-    "title"                              varchar(255)             not null
+    "title"                              varchar(255)             not null,
+    "stable_id"                       uuid
 );
 
 create table "core"."semantic_link"
@@ -379,5 +396,6 @@ create table "core"."semantic_link"
     "link_type"                 varchar(255)     not null,
     "target_multi_facet_aware_item_id"   uuid             not null,
     "target_multi_facet_aware_item_domain_type" varchar(255)     not null,
-    "unconfirmed"                        boolean          not null
+    "unconfirmed"                        boolean          not null,
+    "stable_id"                       uuid
 );

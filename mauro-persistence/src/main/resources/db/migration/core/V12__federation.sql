@@ -19,7 +19,8 @@ create table if not exists federation."subscribed_catalogue" (
     "client_id"                       text,
     "client_secret"                   text,
     "access_token"                    text,
-    "access_token_expiry_time"        timestamp
+    "access_token_expiry_time"        timestamp,
+    "stable_id"                       uuid
 );
 
 create table if not exists federation."subscribed_model" (
@@ -35,7 +36,8 @@ create table if not exists federation."subscribed_model" (
     "subscribed_model_type"           text,
     "folder_id"                       uuid             not null,
     "last_read"                       timestamp with time zone,
-    "local_model_id"                  uuid
+    "local_model_id"                  uuid,
+    "stable_id"                       uuid
 );
 
 create index "idx_subscribed_model_subscribed_catalogue_id" on federation."subscribed_model" (subscribed_catalogue_id);

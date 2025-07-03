@@ -33,6 +33,7 @@ class FolderIntegrationSpec extends CommonDataSpec {
         folderResponse.label == 'Test folder'
         folderResponse.path.toString() == 'fo:Test folder'
         folderResponse.authority
+        folderResponse.stableId
     }
 
     void 'create child folder'() {

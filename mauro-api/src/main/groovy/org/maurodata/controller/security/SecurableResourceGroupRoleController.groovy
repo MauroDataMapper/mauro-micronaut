@@ -59,6 +59,7 @@ class SecurableResourceGroupRoleController extends ItemController<SecurableResou
                 userGroup: userGroup
         )
 
+        setStableId(securableResourceGroupRole)
         securableResourceGroupRoleRepository.save(securableResourceGroupRole)
     }
 

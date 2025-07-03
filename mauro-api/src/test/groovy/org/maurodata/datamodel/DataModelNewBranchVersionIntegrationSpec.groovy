@@ -28,6 +28,8 @@ class DataModelNewBranchVersionIntegrationSpec extends CommonDataSpec {
     @Shared
     UUID dataModelId
     @Shared
+    UUID dataModelStableId
+    @Shared
     UUID dataTypeId1
     @Shared
     UUID dataTypeId2
@@ -63,6 +65,7 @@ class DataModelNewBranchVersionIntegrationSpec extends CommonDataSpec {
         folderId = folderApi.create(folder()).id
         dataModel = dataModelApi.create(folderId, dataModelPayload())
         dataModelId = dataModel.id
+        dataModelStableId = dataModel.stableId
         dataTypeId1 = dataTypeApi.create(dataModelId,
                  new DataType(label: 'string',
                               description: 'character string of variable length',
@@ -138,6 +141,8 @@ class DataModelNewBranchVersionIntegrationSpec extends CommonDataSpec {
         newBranchVersionDataModel.summaryMetadata[0].id != summaryMetadataId
         newBranchVersionDataModel.summaryMetadata[0].summaryMetadataReports.size() == 1
         newBranchVersionDataModel.summaryMetadata[0].summaryMetadataReports[0].id  != summaryMetadataReportId
+        //stable id carries over
+        newBranchVersionDataModel.stableId==dataModelStableId
 
         when:
         ListResponse<DataModel> dataModelsList = dataModelApi.list(folderId)

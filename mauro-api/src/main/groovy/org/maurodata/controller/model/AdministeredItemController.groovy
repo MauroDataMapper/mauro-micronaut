@@ -99,6 +99,7 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
         cleanItem.parent = parent
 
         updateDerivedProperties(cleanItem)
+        setStableId(cleanItem)
         administeredItemRepository.save(cleanItem)
     }
 

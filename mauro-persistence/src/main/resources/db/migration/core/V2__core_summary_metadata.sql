@@ -9,7 +9,8 @@ create table if not exists core."summary_metadata" (
     "created_by"                      varchar(255),
     "summary_metadata_type"           varchar(255)     not null,
     "label"                           text             not null,
-    "description"                     text
+    "description"                     text,
+    "stable_id"                       uuid
 );
 create unique index "idx_summary_metadata_multi_facet_aware_item_id_summary_metadata_type" on "core"."summary_metadata" (multi_facet_aware_item_id, label, summary_metadata_type);
 
@@ -21,7 +22,8 @@ create table if not exists core.summary_metadata_report (
     "report_date"                     timestamp with time zone,
     "created_by"                      varchar(255),
     "report_value"                    text              not null,
-    "summary_metadata_id"             uuid              not null references core.summary_metadata (id) initially deferred
+    "summary_metadata_id"             uuid              not null references core.summary_metadata (id) initially deferred,
+    "stable_id"                       uuid
 );
 create index "idx_summary_metadata_report_summary_metadata_id" on "core"."summary_metadata_report" (summary_metadata_id);
 
