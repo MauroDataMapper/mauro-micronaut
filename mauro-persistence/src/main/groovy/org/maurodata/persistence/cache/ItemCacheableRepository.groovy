@@ -61,6 +61,10 @@ abstract class ItemCacheableRepository<I extends Item> implements ItemRepository
         cachedLookupById(READ_BY_ID, domainType, id)
     }
 
+    boolean existsById(UUID id){
+        repository.existsById(id)
+    }
+
     I save(I item) {
         I saved = repository.save(item)
         invalidate(item)
