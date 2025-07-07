@@ -3,6 +3,7 @@ package org.maurodata.controller.terminology
 import org.maurodata.api.Paths
 import org.maurodata.api.terminology.TermRelationshipApi
 import org.maurodata.audit.Audit
+import org.maurodata.domain.terminology.Term
 import org.maurodata.web.PaginationParams
 
 import groovy.transform.CompileStatic
@@ -95,5 +96,17 @@ class TermRelationshipController extends AdministeredItemController<TermRelation
     ListResponse<TermRelationship> list(UUID terminologyId, @Nullable PaginationParams params = new PaginationParams()) {
         
         super.list(terminologyId, params)
+    }
+
+    @Audit
+    @Get(Paths.TERM_RELATIONSHIP_BY_TERM_ID_LIST)
+    ListResponse<TermRelationship> byTerminologyAndTermIdList(UUID terminologyId, UUID termId) {
+        Term term = termRepository.readById(termId)
+        accessControlService.canDoRole(Role.READER, term)
+        List<TermRelationship> termRelationshipsByTerm = (super.listItems(terminologyId) as List<TermRelationship>).findAll {
+            it.sourceTerm.id == termId || it.targetTerm.id == termId
+        }
+        println(termRelationshipsByTerm.size())
+        ListResponse.from(termRelationshipsByTerm)
     }
 }
