@@ -84,6 +84,7 @@ class TerminologyIntegrationSpec extends CommonDataSpec {
         then:
         termRelationshipTypeResponse
         termRelationshipTypeResponse.label == 'Test relationship type'
+        termRelationshipTypeResponse.displayLabel == 'Test Relationship Type'
         termRelationshipTypeResponse.path.toString() == 'fo:Test folder|te:Test terminology$main|trt:Test relationship type'
         termRelationshipTypeResponse.childRelationship
         !termRelationshipTypeResponse.parentalRelationship
