@@ -57,10 +57,7 @@ class JsonTerminologyImporterPluginSpec extends Specification  {
         importedModels.first().label == testTerminology.label
         importedModels.first().terms.size() == testTerminology.terms.size()
         importedModels.first().termRelationships.size() == testTerminology.termRelationships.size()
-
+        importedModels.first().termRelationshipTypes.first().displayLabel == 'Broader Than'
     }
-
-
-
 
 }
