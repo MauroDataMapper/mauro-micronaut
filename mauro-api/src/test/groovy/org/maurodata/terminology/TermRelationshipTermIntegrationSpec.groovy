@@ -1,5 +1,7 @@
 package org.maurodata.terminology
 
+import io.micronaut.http.HttpResponse
+import io.micronaut.http.HttpStatus
 import io.micronaut.test.annotation.Sql
 import jakarta.inject.Singleton
 import org.maurodata.domain.terminology.Term
@@ -32,23 +34,23 @@ class TermRelationshipTermIntegrationSpec extends CommonDataSpec {
         folderId = folderApi.create(folder()).id
         terminologyId = terminologyApi.create(folderId, terminology()).id
         termId1 = termApi.create(terminologyId, term()).id
-        termId2 = termApi.create(terminologyId, new Term(description: 'Target Term description',
-                                                         code: 'term-code ',
-                                                         definition: 'some definition')).id
+        termId2 = termApi.create(terminologyId, termPayload('target term code', 'target term descdription', 'targetTerm definition')).id
     }
 
     void 'test termRelationshipByTermList'() {
         given:
         Term source = termApi.show(terminologyId, termId1)
         Term target = termApi.show(terminologyId, termId2)
-        termRelationshipApi.create(terminologyId, new TermRelationship(
-            relationshipType: termRelationshipTypeApi.create(
-                terminologyId, new TermRelationshipType(label: 'TEST', childRelationship: true)),
-            sourceTerm: source,
-            targetTerm: target)
+        Term other = termApi.create(terminologyId, termPayload('other code', 'other description', 'other definition'))
+        TermRelationshipType termRelationshipType = termRelationshipTypeApi.create(
+            terminologyId, termRelationshipTypePayload('Test', true))
+
+        TermRelationship termRelationship = termRelationshipApi.create(terminologyId, new TermRelationship(relationshipType: termRelationshipType, sourceTerm: source, targetTerm: target)
         )
+        TermRelationship termRelationshipOther = termRelationshipApi.createByTerminologyAndTerm(terminologyId, termId1,
+                                                                                                termRelationshipPayload(termRelationshipType, other, other))
         when:
-        ListResponse<TermRelationship> termRelationshipListResponse = termRelationshipApi.byTerminologyAndTermIdList(terminologyId, termId1)
+        ListResponse<TermRelationship> termRelationshipListResponse = termRelationshipApi.listByTerminologyAndTerm(terminologyId, termId1)
 
         then:
         termRelationshipListResponse
@@ -56,12 +58,51 @@ class TermRelationshipTermIntegrationSpec extends CommonDataSpec {
         termRelationshipListResponse.items.first().sourceTerm.id == termId1
 
         when:
-        termRelationshipListResponse = termRelationshipApi.byTerminologyAndTermIdList(terminologyId, termId2)
+        termRelationshipListResponse = termRelationshipApi.listByTerminologyAndTerm(terminologyId, termId2)
         then:
         termRelationshipListResponse
         termRelationshipListResponse.items.size() == 1
         termRelationshipListResponse.items.first().targetTerm.id == termId2
 
+        when:
+        termRelationshipListResponse = termRelationshipApi.list(terminologyId)
+        then:
+        termRelationshipListResponse
+        termRelationshipListResponse.items.size() == 2
+        termRelationshipListResponse.items.id.containsAll([termRelationshipOther.id, termRelationship.id])
+
     }
+
+    void 'test termRelationshipByTermCreate, show delete'() {
+        given:
+        Term source = termApi.show(terminologyId, termId1)
+        Term target = termApi.show(terminologyId, termId2)
+        TermRelationshipType termRelationshipType = termRelationshipTypeApi.create(terminologyId, termRelationshipType())
+
+        when:
+        TermRelationship termRelationship = termRelationshipApi.createByTerminologyAndTerm(terminologyId, termId1,
+                                                                                           termRelationshipPayload(termRelationshipType, source, target))
+
+        then:
+        termRelationship
+        termRelationship.targetTerm == target
+        termRelationship.sourceTerm == source
+        termRelationship.relationshipType == termRelationshipType
+
+
+        when:
+        TermRelationship termRelationshipResponse = termRelationshipApi.showByTerminologyAndTerm(terminologyId, source.id, termRelationship.id)
+
+        then:
+        termRelationshipResponse
+        termRelationshipResponse.id == termRelationship.id
+        termRelationshipResponse == termRelationship
+
+        when:
+        HttpResponse deleteResponse = termRelationshipApi.delete(terminologyId, source.id, termRelationship.id,termRelationship )
+        then:
+        deleteResponse.status() == HttpStatus.NO_CONTENT
+    }
+
 
 }

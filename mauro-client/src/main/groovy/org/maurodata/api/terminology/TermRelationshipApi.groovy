@@ -1,5 +1,6 @@
 package org.maurodata.api.terminology
 
+import jakarta.validation.constraints.NotNull
 import org.maurodata.api.MauroApi
 import org.maurodata.api.Paths
 import org.maurodata.api.model.AdministeredItemApi
@@ -38,6 +39,15 @@ interface TermRelationshipApi extends AdministeredItemApi<TermRelationship, Term
     @Get(Paths.TERM_RELATIONSHIP_LIST_PAGED)
     ListResponse<TermRelationship> list(UUID terminologyId, @Nullable PaginationParams params)
 
-    @Get(Paths.TERM_RELATIONSHIP_BY_TERM_ID_LIST)
-    ListResponse<TermRelationship> byTerminologyAndTermIdList(UUID terminologyId, UUID termId)
+    @Get(Paths.TERM_RELATIONSHIP_BY_TERM_ID)
+    ListResponse<TermRelationship> listByTerminologyAndTerm(UUID terminologyId, UUID termId)
+
+    @Get(Paths.TERM_RELATIONSHIP_BY_TERM_ID_ID)
+    TermRelationship showByTerminologyAndTerm(UUID terminologyId, UUID termId, UUID id)
+
+    @Post(Paths.TERM_RELATIONSHIP_BY_TERM_ID)
+    TermRelationship createByTerminologyAndTerm(@NonNull UUID terminologyId, @NonNull UUID termId, @Body @NotNull TermRelationship termRelationship)
+
+    @Delete(Paths.TERM_RELATIONSHIP_BY_TERM_ID_ID)
+    HttpResponse delete(UUID terminologyId, UUID termId, UUID id, @Nullable @Body TermRelationship termRelationship)
 }
