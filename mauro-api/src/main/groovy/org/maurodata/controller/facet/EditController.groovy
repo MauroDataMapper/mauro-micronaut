@@ -44,9 +44,11 @@ class EditController extends FacetController<Edit> implements EditApi {
     @Override
     @Get(Paths.EDIT_LIST_PAGED)
     ListResponse<Edit> list(String domainType, UUID domainId, @Nullable PaginationParams params = new PaginationParams()) {
-        
         AdministeredItem administeredItem = findAdministeredItem(domainType, domainId)
         accessControlService.checkRole(Role.READER, administeredItem)
+        if (params.sort == null) {
+            params.sort = 'dateCreated'
+        }
         ListResponse.from(!administeredItem.edits ? [] : administeredItem.edits, params)
     }
 
