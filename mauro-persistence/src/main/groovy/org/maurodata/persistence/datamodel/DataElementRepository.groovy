@@ -48,8 +48,8 @@ abstract class DataElementRepository implements  ModelItemRepository<DataElement
     }
 
     @Nullable
-    List<DataElement> findAllByDataTypeIn(Collection<DataType> dataTypes) {
-        dataElementDTORepository.findAllByDataTypeIn(dataTypes) as List<DataElement>
+    List<DataElement> readAllByDataTypeIn(List<DataType> dataTypes) {
+        dataElementDTORepository.readAllByDataTypeIdIn(dataTypes.id) as List<DataElement>
     }
 
     @Nullable
@@ -67,11 +67,6 @@ abstract class DataElementRepository implements  ModelItemRepository<DataElement
     @Query('''select de.* from datamodel.data_element de join datamodel.data_class dc on (de.data_class_id=dc.id)
               where dc.data_model_id = :dataModelId''')
     abstract List<DataElement> readAllByDataModelId(UUID dataModelId)
-
-
-    @Nullable
-    @Join(value = 'dataType', type = Join.Type.LEFT_FETCH)
-    abstract List<DataElement> readAllByDataType(DataType dataType)
 
     abstract Long deleteByDataClassId(UUID dataClassId)
 

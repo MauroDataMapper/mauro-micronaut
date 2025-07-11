@@ -1,7 +1,10 @@
 package org.maurodata.persistence.datamodel
 
+import io.micronaut.http.HttpStatus
+import org.maurodata.ErrorHandler
 import org.maurodata.domain.datamodel.DataClass
 import org.maurodata.domain.datamodel.DataElement
+import org.maurodata.domain.datamodel.DataType
 import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository.DataClassCacheableRepository
@@ -15,7 +18,6 @@ import org.maurodata.persistence.model.AdministeredItemContentRepository
 @Singleton
 class DataClassContentRepository extends AdministeredItemContentRepository {
 
-    @Inject
     DataClassCacheableRepository dataClassCacheableRepository
 
     AdministeredItemCacheableRepository.DataElementCacheableRepository dataElementCacheableRepository
@@ -36,12 +38,12 @@ class DataClassContentRepository extends AdministeredItemContentRepository {
     @Override
     DataClass readWithContentById(UUID id) {
         DataClass dataClass = dataClassCacheableRepository.findById(id)
-        if (!dataClass.parentDataClass) {
-            dataClass.dataClasses = dataClassCacheableRepository.readAllByParentDataClass_Id(id)
-            dataClass.dataClasses.collect {
-                it.dataElements = dataElementCacheableRepository.readAllByDataClass_Id(it.id)
-                it.dataElements = getDataTypes(it)
-            }
+        dataClass.dataClasses = dataClassCacheableRepository.readAllByParentDataClass_Id(id)
+        dataClass.dataClasses.collect {
+            it.dataElements = dataElementCacheableRepository.readAllByDataClass_Id(it.id)
+            it.dataElements = getDataTypes(it)
+            DataClass dcWithContent = readWithContentById(it.id)
+            it.dataClasses = dcWithContent.dataClasses
         }
         dataClass.dataElements = dataElementCacheableRepository.readAllByDataClass_Id(id)
         dataClass.dataElements = getDataTypes(dataClass)
@@ -77,6 +79,45 @@ class DataClassContentRepository extends AdministeredItemContentRepository {
         saved
     }
 
+    @Override
+    Long deleteWithContent(AdministeredItem administeredItem) {
+        Map<String, DataClass> deletedDataClassLookup = [:]
+        deletedDataClassLookup.put(administeredItem.label, administeredItem as DataClass)
+        if ((administeredItem as DataClass).dataElements) {
+            deleteDataElements((administeredItem as DataClass).dataElements)
+        }
+        if ((administeredItem as DataClass).dataClasses) {
+           deleteChildClasses((administeredItem as DataClass).dataClasses, deletedDataClassLookup)
+        }
+        deleteDanglingReferenceTypes(deletedDataClassLookup)
+        dataClassCacheableRepository.delete(administeredItem as DataClass)
+    }
+
+    protected Long deleteDataElements(List<DataElement> dataElements) {
+        dataElementCacheableRepository.deleteAll(dataElements)
+    }
+ 
+    protected Long deleteChildClasses(List<DataClass> children, Map<String, DataClass> deletedDataClassLookup) {
+        children.each {
+            if (it.dataClasses) {
+                deleteChildClasses(it.dataClasses, deletedDataClassLookup)
+            }
+            if (it.dataElements){
+                deleteDataElements(it.dataElements)
+            }
+            deletedDataClassLookup.put(it.label, it)
+        }
+        dataClassCacheableRepository.deleteAll(children)
+    }
+
+    protected void deleteDanglingReferenceTypes(Map<String, DataClass> deletedDataClassLookup) {
+        List<DataType> dataTypes = dataTypeCacheableRepository.findByReferenceClassIn(deletedDataClassLookup.values() as List<DataClass>).unique() as List<DataType>
+        List<DataElement> referencedDataElements = dataElementCacheableRepository.readAllByDataTypeIn(dataTypes)
+        if (!referencedDataElements.isEmpty()){
+            ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "DataClass(es) referenced as ReferencedDataType in data elements")
+        }
+        dataTypeCacheableRepository.deleteAll(dataTypes)
+    }
 
     protected List<DataElement> getDataTypes(DataClass dataClass) {
         dataClass.dataElements.collect {childDE ->

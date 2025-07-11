@@ -1,23 +1,19 @@
 package org.maurodata.persistence.model
 
+import groovy.transform.CompileStatic
+import groovy.util.logging.Slf4j
+import io.micronaut.core.annotation.NonNull
+import jakarta.inject.Singleton
 import org.maurodata.domain.facet.Annotation
 import org.maurodata.domain.facet.Facet
 import org.maurodata.domain.facet.Metadata
 import org.maurodata.domain.facet.ReferenceFile
 import org.maurodata.domain.facet.Rule
 import org.maurodata.domain.facet.RuleRepresentation
+import org.maurodata.domain.facet.SemanticLink
 import org.maurodata.domain.facet.SummaryMetadata
 import org.maurodata.domain.facet.SummaryMetadataReport
 import org.maurodata.domain.facet.VersionLink
-import org.maurodata.domain.folder.Folder
-import org.maurodata.domain.model.AdministeredItem
-import org.maurodata.domain.model.Model
-
-import groovy.transform.CompileStatic
-import groovy.util.logging.Slf4j
-import io.micronaut.core.annotation.NonNull
-import jakarta.inject.Singleton
-import org.maurodata.domain.facet.*
 import org.maurodata.domain.folder.Folder
 import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.domain.model.Model
