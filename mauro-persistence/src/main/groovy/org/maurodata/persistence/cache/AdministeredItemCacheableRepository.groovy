@@ -152,10 +152,6 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
             ((DataClassRepository) repository).readAllByParentDataClass_Id(parentDataClassId)
         }
 
-        // not cached
-        List<DataClass> readAllByParentDataClass(DataClass parentDataClass) {
-            ((DataClassRepository) repository).readAllByParentDataClass(parentDataClass)
-        }
 
         // not cached
         List<DataClass> readAllByDataModelAndParentDataClassIsNull(DataModel dataModel) {
@@ -194,8 +190,8 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
             ((DataElementRepository) repository).readAllByDataClassId(dataClassId)
         }
 
-        List<DataElement> readAllByDataType(DataType dataType) {
-            ((DataElementRepository) repository).readAllByDataType(dataType)
+        List<DataElement> readAllByDataTypeIn(List<DataType> dataTypes){
+            ((DataElementRepository) repository).readAllByDataTypeIn(dataTypes)
         }
     }
 
@@ -211,6 +207,10 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
             ((DataTypeRepository) repository).findAllByReferenceClass(referenceClass.id)
         }
 
+        @Nullable
+        List<DataType> findByReferenceClassIn(List<DataClass> dataClasses) {
+            ((DataTypeRepository) repository).findByReferenceClassIn(dataClasses.id)
+        }
         @Override
         Boolean handles(String domainType) {
             repository.handles(domainType)

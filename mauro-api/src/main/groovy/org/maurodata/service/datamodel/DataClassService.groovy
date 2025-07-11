@@ -3,9 +3,7 @@ package org.maurodata.service.datamodel
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
-import io.micronaut.http.HttpStatus
 import jakarta.inject.Inject
-import org.maurodata.ErrorHandler
 import org.maurodata.domain.datamodel.DataClass
 import org.maurodata.domain.datamodel.DataElement
 import org.maurodata.domain.datamodel.DataModel
@@ -107,17 +105,6 @@ class DataClassService {
         saved
     }
 
-    void deleteDanglingReferenceTypes(DataClass dataClassToDelete) {
-        List<DataType> dataTypes = dataTypeCacheableRepository.findAllByReferenceClass(dataClassToDelete).unique()
-        dataTypes.each {
-            List<DataElement> dataElementReferenced = dataElementCacheableRepository.readAllByDataType(it)
-            if (dataElementReferenced.isEmpty()) {
-                dataTypeCacheableRepository.delete(it)
-            } else {
-                ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "Cannot delete Data Class has associations - check dataElements")
-            }
-        }
-    }
 
     protected static DataType findDataTypeByLabelInTarget(DataType dataType, DataModel target) {
         target.dataTypes.find {targetModelDataType -> targetModelDataType.label == dataType.label}
