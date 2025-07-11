@@ -15,6 +15,10 @@ dependencies {
     implementation("io.micronaut.data:micronaut-data-processor")
     implementation("io.micronaut.validation:micronaut-validation")
     implementation("io.micronaut:micronaut-jackson-databind")
+
+    // camel case
+    implementation("com.google.guava:guava:33.4.8-jre")
+
     testImplementation("io.micronaut.test:micronaut-test-spock")
 
     // For parsing java dates / instants
