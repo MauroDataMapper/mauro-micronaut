@@ -301,13 +301,26 @@ class CommonDataSpec extends Specification {
                 readableByAuthenticatedUsers: true)
 
     }
+    ClassificationScheme classificationSchemePayload(boolean readableByEveryone, boolean readableByAuthenticatedUsers){
+        new ClassificationScheme(
+            label: 'classifiers label',
+            description : 'random description',
+            readableByEveryone: readableByEveryone,
+            readableByAuthenticatedUsers: readableByAuthenticatedUsers)
+
+    }
     Classifier classifierPayload(){
         new Classifier(
             label: 'classifier 1',
             description : 'random description ')
 
     }
+    Classifier classifierPayload(String label){
+        new Classifier(
+            label: label,
+            description : 'random description ')
 
+    }
     /**
      * Convenience method for importing a data model into the database for testing
      */
@@ -440,8 +453,8 @@ class CommonDataSpec extends Specification {
         new FinaliseData(versionChangeType: VersionChangeType.MAJOR, versionTag: 'random version tag')
     }
 
-    DataType referenceTypeDataTypePayload(UUID dataClassId) {
-        new DataType(label: 'test Reference Type',
+    DataType referenceTypeDataTypePayload(UUID dataClassId, String label) {
+        new DataType(label: label,
                      description: 'Test Reference type description',
                      dataTypeKind: DataType.DataTypeKind.REFERENCE_TYPE,
                      referenceClass: [id: dataClassId])

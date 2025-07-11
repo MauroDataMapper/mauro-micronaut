@@ -1,5 +1,6 @@
 package org.maurodata.persistence.classifier.dto
 
+import io.micronaut.data.model.DataType
 import org.maurodata.domain.facet.Rule
 
 import groovy.transform.CompileStatic
@@ -9,7 +10,6 @@ import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.MappedProperty
 import io.micronaut.data.annotation.TypeDef
 import io.micronaut.data.annotation.sql.ColumnTransformer
-import io.micronaut.data.model.DataType
 import org.maurodata.domain.classifier.Classifier
 import org.maurodata.domain.facet.Annotation
 import org.maurodata.domain.facet.Metadata

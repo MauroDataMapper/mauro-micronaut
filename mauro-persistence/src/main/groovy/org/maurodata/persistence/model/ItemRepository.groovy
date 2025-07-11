@@ -17,6 +17,8 @@ trait ItemRepository<I extends Item> implements GenericRepository<I, UUID> {
     @Nullable
     abstract I readById(UUID id)
 
+    abstract boolean existsById(UUID id)
+
     abstract I save(@Valid @NonNull I item)
 
     abstract List<I> saveAll(@Valid @NonNull Iterable<I> items)
@@ -39,4 +41,6 @@ trait ItemRepository<I extends Item> implements GenericRepository<I, UUID> {
     Boolean handles(String domainType) {
         domainClass.simpleName.equalsIgnoreCase(domainType) || (domainClass.simpleName + 's').equalsIgnoreCase(domainType)
     }
+
+    abstract List<I> readAll()
 }
