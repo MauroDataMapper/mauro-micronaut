@@ -81,7 +81,7 @@ class ClassifierController extends AdministeredItemController<Classifier, Classi
     @Audit
     @Get(Paths.CLASSIFIERS_ROUTE_PAGED)
     ListResponse<Classifier> list(UUID classificationSchemeId, @Nullable PaginationParams params = new PaginationParams()) {
-        
+
         super.list(classificationSchemeId, params)
     }
 
@@ -180,7 +180,7 @@ class ClassifierController extends AdministeredItemController<Classifier, Classi
     @Audit
     @Get(Paths.ADMINISTERED_ITEM_CLASSIFIER_ROUTE_PAGED)
     ListResponse<Classifier> findAllAdministeredItemClassifiers(@NonNull String administeredItemDomainType, @NonNull UUID administeredItemId, @Nullable PaginationParams params = new PaginationParams()) {
-        
+
         AdministeredItem administeredItem = findAdministeredItem(administeredItemDomainType, administeredItemId)
         accessControlService.checkRole(Role.READER, readAdministeredItem(administeredItem.domainType, administeredItemId))
         ListResponse.from(classifierCacheableRepository.findAllForAdministeredItem(administeredItem), params)
@@ -208,14 +208,10 @@ class ClassifierController extends AdministeredItemController<Classifier, Classi
         }
     }
 
-    //todo: temporary endpoint to align with UI
-    @Get('/classifiers')
-    List<Classifier> list() {
-        List result = List.of(new Classifier().tap {
-            id = UUID.randomUUID()
-            domainType = 'Classifier'
-            label = 'stub classifier label'
-        })
-        result
+
+    @Get(Paths.ALL_CLASSIFIERS_ROUTE)
+    ListResponse<Classifier> listAllClassifiers() {
+        super.listAll()
+
     }
 }

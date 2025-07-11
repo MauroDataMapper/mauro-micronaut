@@ -18,7 +18,6 @@ import org.maurodata.persistence.model.AdministeredItemContentRepository
 @Singleton
 class DataClassContentRepository extends AdministeredItemContentRepository {
 
-    @Inject
     DataClassCacheableRepository dataClassCacheableRepository
 
     AdministeredItemCacheableRepository.DataElementCacheableRepository dataElementCacheableRepository
@@ -39,12 +38,12 @@ class DataClassContentRepository extends AdministeredItemContentRepository {
     @Override
     DataClass readWithContentById(UUID id) {
         DataClass dataClass = dataClassCacheableRepository.findById(id)
-        if (!dataClass.parentDataClass) {
-            dataClass.dataClasses = dataClassCacheableRepository.readAllByParentDataClass_Id(id)
-            dataClass.dataClasses.collect {
-                it.dataElements = dataElementCacheableRepository.readAllByDataClass_Id(it.id)
-                it.dataElements = getDataTypes(it)
-            }
+        dataClass.dataClasses = dataClassCacheableRepository.readAllByParentDataClass_Id(id)
+        dataClass.dataClasses.collect {
+            it.dataElements = dataElementCacheableRepository.readAllByDataClass_Id(it.id)
+            it.dataElements = getDataTypes(it)
+            DataClass dcWithContent = readWithContentById(it.id)
+            it.dataClasses = dcWithContent.dataClasses
         }
         dataClass.dataElements = dataElementCacheableRepository.readAllByDataClass_Id(id)
         dataClass.dataElements = getDataTypes(dataClass)
@@ -82,37 +81,42 @@ class DataClassContentRepository extends AdministeredItemContentRepository {
 
     @Override
     Long deleteWithContent(AdministeredItem administeredItem) {
+        Map<String, DataClass> deletedDataClassLookup = [:]
+        deletedDataClassLookup.put(administeredItem.label, administeredItem as DataClass)
         if ((administeredItem as DataClass).dataElements) {
-            List<DataElement> dataElements = (administeredItem as DataClass).dataElements
-            dataElements.each {
-                if (it.dataType.isReferenceType()) {
-                    deleteDanglingReferenceTypes(it.dataType.referenceClass)
-                }
-            }
-            dataElementCacheableRepository.deleteAll(dataElements)
+            deleteDataElements((administeredItem as DataClass).dataElements)
         }
         if ((administeredItem as DataClass).dataClasses) {
-            List<DataClass> children = (administeredItem as DataClass).dataClasses
-            children.each {
-                deleteDanglingReferenceTypes(it)
-            }
-            dataClassCacheableRepository.deleteAll(children)
+           deleteChildClasses((administeredItem as DataClass).dataClasses, deletedDataClassLookup)
         }
-        deleteDanglingReferenceTypes(administeredItem as DataClass)
+        deleteDanglingReferenceTypes(deletedDataClassLookup)
         dataClassCacheableRepository.delete(administeredItem as DataClass)
     }
 
-    void deleteDanglingReferenceTypes(DataClass dataClassToDelete) {
-        List<DataType> dataTypes = dataTypeCacheableRepository.findAllByReferenceClass(dataClassToDelete).unique() as List<DataType>
-        dataTypes.each {
-            List<DataElement> dataElementReferenced = dataElementCacheableRepository.readAllByDataType(it as org.maurodata.domain.datamodel.DataType)
-            List<DataElement> dataElementReferences = dataElementReferenced.findAll {dataElement -> dataElement.dataClass != dataClassToDelete}.collect()
-            if (dataElementReferences.isEmpty()) {
-                dataTypeCacheableRepository.delete(it as org.maurodata.domain.datamodel.DataType)
-            } else {
-                ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "Cannot delete Data Class has associations - check dataElements")
+    protected Long deleteDataElements(List<DataElement> dataElements) {
+        dataElementCacheableRepository.deleteAll(dataElements)
+    }
+ 
+    protected Long deleteChildClasses(List<DataClass> children, Map<String, DataClass> deletedDataClassLookup) {
+        children.each {
+            if (it.dataClasses) {
+                deleteChildClasses(it.dataClasses, deletedDataClassLookup)
             }
+            if (it.dataElements){
+                deleteDataElements(it.dataElements)
+            }
+            deletedDataClassLookup.put(it.label, it)
         }
+        dataClassCacheableRepository.deleteAll(children)
+    }
+
+    protected void deleteDanglingReferenceTypes(Map<String, DataClass> deletedDataClassLookup) {
+        List<DataType> dataTypes = dataTypeCacheableRepository.findByReferenceClassIn(deletedDataClassLookup.values() as List<DataClass>).unique() as List<DataType>
+        List<DataElement> referencedDataElements = dataElementCacheableRepository.readAllByDataTypeIn(dataTypes)
+        if (!referencedDataElements.isEmpty()){
+            ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "DataClass(es) referenced as ReferencedDataType in data elements")
+        }
+        dataTypeCacheableRepository.deleteAll(dataTypes)
     }
 
     protected List<DataElement> getDataTypes(DataClass dataClass) {

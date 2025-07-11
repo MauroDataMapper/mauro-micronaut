@@ -38,6 +38,12 @@ abstract class Model<M extends DiffableItem> extends AdministeredItem implements
 
     Boolean finalised = false
 
+    Boolean getFinalised() {
+        Model modelWithVersion = getModelWithVersion()
+        if (modelWithVersion != null) {return modelWithVersion.@finalised}
+        return this.@finalised
+    }
+
     @Nullable
     Instant dateFinalised
 

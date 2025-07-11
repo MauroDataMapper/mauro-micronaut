@@ -41,10 +41,10 @@ class DataTypeService extends AdministeredItemService {
         dataType
     }
 
-    DataType getReferenceClassProperties(DataType dataType) {
-        if (dataType.isReferenceType()) {
-            dataType.referenceClass = dataClassRepository.readById(dataType.referenceClass?.id)
-        }
+   DataType getReferenceClassProperties(DataType dataType) {
+       if (dataType.isReferenceType()) {
+           dataType.referenceClass = dataClassRepository.readById(dataType.referenceClass?.id)
+       }
         dataType
     }
 

@@ -91,4 +91,17 @@ interface TerminologyApi extends ModelApi<Terminology> {
 
     @Get(Paths.TERMINOLOGY_SIMPLE_MODEL_VERSION_TREE)
     List<ModelVersionedRefDTO> simpleModelVersionTree(UUID id, @Nullable Boolean branchesOnly)
+
+    @Put(Paths.TERMINOLOGY_READ_BY_EVERYONE)
+    Terminology allowReadByEveryone(UUID id)
+
+    @Delete(Paths.TERMINOLOGY_READ_BY_EVERYONE)
+    HttpResponse revokeReadByEveryone(UUID id)
+
+    @Put(Paths.TERMINOLOGY_READ_BY_AUTHENTICATED)
+    Terminology allowReadByAuthenticated(UUID id)
+
+    @Delete(Paths.TERMINOLOGY_READ_BY_AUTHENTICATED)
+    HttpResponse revokeReadByAuthenticated(UUID id)
+
 }

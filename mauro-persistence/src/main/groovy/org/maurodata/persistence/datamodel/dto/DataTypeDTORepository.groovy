@@ -1,6 +1,5 @@
 package org.maurodata.persistence.datamodel.dto
 
-
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.annotation.Join
@@ -28,4 +27,8 @@ abstract class DataTypeDTORepository implements GenericRepository<DataTypeDTO, U
     @Nullable
     @Join(value = 'catalogueUser', type = Join.Type.LEFT_FETCH)
     abstract DataTypeDTO findByLabel(String label)
+
+    @Nullable
+    @Join(value = 'catalogueUser', type = Join.Type.LEFT_FETCH)
+    abstract List<DataTypeDTO> findByReferenceClassIdIn(List<UUID> referenceClassIds)
 }

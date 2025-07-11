@@ -20,7 +20,6 @@ import io.micronaut.http.annotation.Get
 import io.micronaut.http.annotation.Post
 import io.micronaut.http.annotation.Put
 import io.micronaut.http.server.multipart.MultipartBody
-import io.micronaut.http.server.types.files.StreamedFile
 import io.micronaut.scheduling.TaskExecutors
 import io.micronaut.scheduling.annotation.ExecuteOn
 
@@ -66,4 +65,17 @@ interface ClassificationSchemeApi extends ModelApi<ClassificationScheme> {
 
     @Get(Paths.CLASSIFICATION_SCHEMES_DIFF)
     ObjectDiff diffModels(@NonNull UUID id, @NonNull UUID otherId)
+
+    @Put(Paths.CLASSIFICATION_SCHEMES_READ_BY_EVERYONE)
+    ClassificationScheme allowReadByEveryone(UUID id)
+
+    @Delete(Paths.CLASSIFICATION_SCHEMES_READ_BY_EVERYONE)
+    HttpResponse revokeReadByEveryone(UUID id)
+
+    @Put(Paths.CLASSIFICATION_SCHEMES_READ_BY_AUTHENTICATED)
+    ClassificationScheme allowReadByAuthenticated(UUID id)
+
+    @Delete(Paths.CLASSIFICATION_SCHEMES_READ_BY_AUTHENTICATED)
+    HttpResponse revokeReadByAuthenticated(UUID id)
+
 }

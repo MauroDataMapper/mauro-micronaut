@@ -7,6 +7,7 @@ import io.micronaut.http.client.exceptions.HttpClientResponseException
 import io.micronaut.runtime.EmbeddedApplication
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
+import org.maurodata.domain.tree.TreeItem
 import spock.lang.Shared
 import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.folder.Folder
@@ -58,7 +59,7 @@ class ReaderAccessIntegrationSpec extends SecuredIntegrationSpec {
         exception.status == HttpStatus.FORBIDDEN
 
         when:
-        folderApi.delete(folderId, new Folder(),true)
+        folderApi.delete(folderId, new Folder(), true)
 
         then:
         exception = thrown()
@@ -88,7 +89,7 @@ class ReaderAccessIntegrationSpec extends SecuredIntegrationSpec {
         exception.status == HttpStatus.FORBIDDEN
 
         when:
-        dataModelApi.delete(dataModelId, new DataModel(),true)
+        dataModelApi.delete(dataModelId, new DataModel(), true)
 
         then: 'deleting models requires container administrator role'
         exception = thrown()
@@ -119,7 +120,7 @@ class ReaderAccessIntegrationSpec extends SecuredIntegrationSpec {
         exception.status == HttpStatus.FORBIDDEN
 
         when:
-        folderApi.delete(folderId, new Folder(),true)
+        folderApi.delete(folderId, new Folder(), true)
 
         then:
         exception = thrown()
@@ -140,7 +141,7 @@ class ReaderAccessIntegrationSpec extends SecuredIntegrationSpec {
         exception.status == HttpStatus.FORBIDDEN
 
         when:
-        dataModelApi.delete(dataModelId, new DataModel(),true)
+        dataModelApi.delete(dataModelId, new DataModel(), true)
 
         then:
         exception = thrown()
@@ -169,7 +170,7 @@ class ReaderAccessIntegrationSpec extends SecuredIntegrationSpec {
         exception.status == HttpStatus.FORBIDDEN
 
         when:
-        folderApi.delete(folderId, new Folder(),true)
+        folderApi.delete(folderId, new Folder(), true)
 
         then:
         exception = thrown()
@@ -190,10 +191,68 @@ class ReaderAccessIntegrationSpec extends SecuredIntegrationSpec {
         exception.status == HttpStatus.FORBIDDEN
 
         when:
-        dataModelApi.delete(dataModelId, new DataModel(),true)
+        dataModelApi.delete(dataModelId, new DataModel(), true)
 
         then:
         exception = thrown()
         exception.status == HttpStatus.FORBIDDEN
     }
+
+    void 'anonymous user read a model in a folder thats publicly accessible'() {
+        when:
+        loginAdmin()
+        Folder folder = folderApi.create(new Folder(label: 'Test folder'))
+        folderId = folder.id
+
+        DataModel dataModel = dataModelApi.create(folderId, new DataModel(label: "Test dataModel"))
+
+        logout()
+
+        Folder foundFolder = folderApi.show(folderId)
+
+        then:
+        HttpClientResponseException exception = thrown()
+        exception.status == HttpStatus.UNAUTHORIZED
+
+        when:
+        DataModel foundDataModel = dataModelApi.show(dataModel.id)
+
+        then:
+        exception = thrown()
+        exception.status == HttpStatus.UNAUTHORIZED
+
+        when:
+        loginAdmin()
+
+        folderApi.allowReadByEveryone(folderId)
+
+        logout()
+        foundFolder = folderApi.show(folderId)
+
+        then:
+        foundFolder.label == "Test folder"
+
+        when:
+        foundDataModel = dataModelApi.show(dataModel.id)
+
+        then:
+        foundDataModel.label == "Test dataModel"
+
+        List<TreeItem> treeItems = treeApi.folderTree(null, false)
+        treeItems.size() == 1
+        treeItems.first().label == "Test folder"
+        treeItems.first().hasChildren
+
+        when:
+        treeItems = treeApi.folderTree(folderId, false)
+
+        then:
+        treeItems.size() == 1
+        treeItems.first().label == "Test dataModel"
+        !treeItems.first().hasChildren
+
+
+
+    }
+
 }

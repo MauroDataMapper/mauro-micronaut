@@ -18,6 +18,7 @@ import org.maurodata.domain.model.version.CreateNewVersionData
 import org.maurodata.domain.model.version.FinaliseData
 import org.maurodata.domain.search.dto.SearchRequestDTO
 import org.maurodata.domain.search.dto.SearchResultsDTO
+import org.maurodata.domain.terminology.CodeSet
 import org.maurodata.plugin.datatype.DefaultDataTypeProviderPlugin
 import org.maurodata.plugin.importer.DataModelImporterPlugin
 import org.maurodata.web.ListResponse
@@ -128,4 +129,16 @@ interface DataModelApi extends ModelApi<DataModel> {
 
     @Get(Paths.DATA_MODEL_TYPES)
     List<String> dataModelTypes()
+
+    @Put(Paths.DATA_MODEL_READ_BY_EVERYONE)
+    DataModel allowReadByEveryone(UUID id)
+
+    @Delete(Paths.DATA_MODEL_READ_BY_EVERYONE)
+    HttpResponse revokeReadByEveryone(UUID id)
+
+    @Put(Paths.DATA_MODEL_READ_BY_AUTHENTICATED)
+    DataModel allowReadByAuthenticated(UUID id)
+
+    @Delete(Paths.DATA_MODEL_READ_BY_AUTHENTICATED)
+    HttpResponse revokeReadByAuthenticated(UUID id)
 }

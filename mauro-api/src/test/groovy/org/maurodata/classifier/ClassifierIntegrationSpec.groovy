@@ -230,4 +230,16 @@ class ClassifierIntegrationSpec extends CommonDataSpec {
 
     }
 
+    void 'list all classifiers from any classification scheme -should list all items in classifiers db'() {
+        given:
+        classifierApi.create(classificationSchemeId, classifierPayload('this label'))
+        ClassificationScheme otherClassificationScheme = classificationSchemeApi.create(folderId, classificationSchemePayload())
+        classifierApi.create(otherClassificationScheme.id, classifierPayload('other label'))
+        when:
+        ListResponse<Classifier> classifierList = classifierApi.listAllClassifiers()
+        then:
+        classifierList
+        classifierList.items.size() == 2
+
+    }
 }

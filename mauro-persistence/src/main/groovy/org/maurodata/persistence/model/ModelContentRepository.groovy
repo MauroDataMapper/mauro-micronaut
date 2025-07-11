@@ -18,15 +18,6 @@ import org.maurodata.domain.folder.Folder
 import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.domain.model.Model
 
-import groovy.transform.CompileStatic
-import groovy.util.logging.Slf4j
-import io.micronaut.core.annotation.NonNull
-import jakarta.inject.Singleton
-import org.maurodata.domain.facet.*
-import org.maurodata.domain.folder.Folder
-import org.maurodata.domain.model.AdministeredItem
-import org.maurodata.domain.model.Model
-
 @Slf4j
 @CompileStatic
 @Singleton

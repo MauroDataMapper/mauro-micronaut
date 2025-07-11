@@ -144,7 +144,10 @@ class AccessControlService implements Toggleable {
 
         // Permitted roles
         final List<Model> parentModels = pathRepository.readParentItems(owner) as List<Model>
-        final List<UserGroup> userGroups = userGroupRepository.readAllByCatalogueUserId(userId)
+        List<UserGroup> userGroups = []
+        if(userAuthenticated) {
+            userGroups = userGroupRepository.readAllByCatalogueUserId(userId)
+        }
 
         final List<Role> canDo=[];
 

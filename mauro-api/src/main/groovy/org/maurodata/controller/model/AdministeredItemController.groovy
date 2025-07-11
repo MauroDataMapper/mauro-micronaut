@@ -1,5 +1,16 @@
 package org.maurodata.controller.model
 
+import groovy.transform.CompileStatic
+import io.micronaut.core.annotation.NonNull
+import io.micronaut.core.annotation.Nullable
+import io.micronaut.http.HttpResponse
+import io.micronaut.http.HttpStatus
+import io.micronaut.http.annotation.Body
+import io.micronaut.http.exceptions.HttpStatusException
+import io.micronaut.security.annotation.Secured
+import io.micronaut.security.rules.SecurityRule
+import io.micronaut.transaction.annotation.Transactional
+import jakarta.inject.Inject
 import org.maurodata.ErrorHandler
 import org.maurodata.api.model.AdministeredItemApi
 import org.maurodata.domain.classifier.Classifier
@@ -12,19 +23,6 @@ import org.maurodata.persistence.model.PathRepository
 import org.maurodata.persistence.service.RepositoryService
 import org.maurodata.web.ListResponse
 import org.maurodata.web.PaginationParams
-
-import groovy.transform.CompileStatic
-import io.micronaut.core.annotation.NonNull
-import io.micronaut.core.annotation.Nullable
-import io.micronaut.data.exceptions.EmptyResultException
-import io.micronaut.http.HttpResponse
-import io.micronaut.http.HttpStatus
-import io.micronaut.http.annotation.Body
-import io.micronaut.http.exceptions.HttpStatusException
-import io.micronaut.security.annotation.Secured
-import io.micronaut.security.rules.SecurityRule
-import io.micronaut.transaction.annotation.Transactional
-import jakarta.inject.Inject
 
 @CompileStatic
 @Secured(SecurityRule.IS_ANONYMOUS)
@@ -61,19 +59,12 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
     }
 
     I show(UUID id) {
-       I item
-        try {
-            item = administeredItemRepository.findById(id)
-        } catch (Exception e) {
-            if (e instanceof EmptyResultException){
-                ErrorHandler.handleError(HttpStatus.NOT_FOUND, "Item $id not found")
-            }
-        }
+        I item = administeredItemRepository.findById(id)
         ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, item, "Item with id ${id.toString()} not found")
         accessControlService.checkRole(Role.READER, item)
 
-        updateDerivedProperties(item as I)
-        item as I
+        updateDerivedProperties(item)
+        item
     }
 
     @Transactional
@@ -159,7 +150,7 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
     }
 
     ListResponse<I> list(UUID parentId, @Nullable PaginationParams params = new PaginationParams()) {
-        
+
         P parent = parentItemRepository.readById(parentId)
         if (!parent) return null
         accessControlService.checkRole(Role.READER, parent)
@@ -168,6 +159,16 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
             updateDerivedProperties(it as I)
         }
         ListResponse.from(items, params)
+    }
+
+    ListResponse<I> listAll() {
+        List<I> items = itemRepository.readAll()
+        items = items.findAll { accessControlService.canDoRole(Role.READER, it) }
+        items.each {
+            pathRepository.readParentItems(it)
+            it.updatePath()
+        }
+        ListResponse.from(items)
     }
 
     I updateDerivedProperties(I item) {

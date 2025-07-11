@@ -28,6 +28,11 @@ abstract class DataTypeRepository implements ModelItemRepository<DataType> {
     }
 
 
+    @Nullable
+    List<DataType> findByReferenceClassIn(List<UUID> referenceClassIds){
+        dataTypeDTORepository.findByReferenceClassIdIn(referenceClassIds) as List<DataType>
+    }
+
     @Override
     @Nullable
     List<DataType> findAllByParent(AdministeredItem parent) {

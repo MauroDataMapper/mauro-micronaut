@@ -1,7 +1,11 @@
 package org.maurodata.datamodel
 
+import io.micronaut.http.HttpResponse
+import io.micronaut.http.HttpStatus
+import io.micronaut.http.client.exceptions.HttpClientResponseException
+import io.micronaut.test.annotation.Sql
+import jakarta.inject.Singleton
 import org.maurodata.domain.datamodel.DataClass
-import org.maurodata.domain.datamodel.DataElement
 import org.maurodata.domain.datamodel.DataType
 import org.maurodata.domain.folder.Folder
 import org.maurodata.domain.model.Model
@@ -9,12 +13,6 @@ import org.maurodata.domain.terminology.CodeSet
 import org.maurodata.persistence.ContainerizedTest
 import org.maurodata.testing.CommonDataSpec
 import org.maurodata.web.ListResponse
-
-import io.micronaut.http.HttpResponse
-import io.micronaut.http.HttpStatus
-import io.micronaut.http.client.exceptions.HttpClientResponseException
-import io.micronaut.test.annotation.Sql
-import jakarta.inject.Singleton
 import spock.lang.Shared
 import spock.lang.Unroll
 
@@ -247,8 +245,6 @@ class DataTypeIntegrationSpec extends CommonDataSpec {
                          dataTypeKind: DataType.DataTypeKind.REFERENCE_TYPE,
                          referenceClass: [id: dataClassId1]))
 
-
-        DataElement dataElement = dataElementApi.create(dataModelId, dataClassId2, dataElementPayload("dataElement label", dataTypeResponse))
 
         dataElementApi.create(dataModelId, dataClassId2, dataElementPayload("dataElement label", dataTypeResponse))
         when:

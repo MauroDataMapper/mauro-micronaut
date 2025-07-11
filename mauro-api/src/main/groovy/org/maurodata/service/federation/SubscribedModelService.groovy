@@ -1,5 +1,9 @@
 package org.maurodata.service.federation
 
+import groovy.transform.CompileStatic
+import groovy.util.logging.Slf4j
+import io.micronaut.http.HttpStatus
+import jakarta.inject.Inject
 import org.maurodata.ErrorHandler
 import org.maurodata.domain.classifier.ClassificationScheme
 import org.maurodata.domain.datamodel.DataModel
@@ -10,28 +14,19 @@ import org.maurodata.domain.facet.federation.SubscribedModel
 import org.maurodata.domain.facet.federation.SubscribedModelFederationParams
 import org.maurodata.domain.folder.Folder
 import org.maurodata.domain.model.Model
-import org.maurodata.domain.terminology.Terminology
 import org.maurodata.importdata.ImportMetadata
-import org.maurodata.persistence.cache.ItemCacheableRepository
 import org.maurodata.persistence.cache.ItemCacheableRepository.SubscribedModelCacheableRepository
 import org.maurodata.persistence.classifier.ClassificationSchemeContentRepository
 import org.maurodata.persistence.datamodel.DataModelContentRepository
 import org.maurodata.persistence.folder.FolderContentRepository
 import org.maurodata.persistence.model.ModelContentRepository
 import org.maurodata.persistence.service.RepositoryService
-import org.maurodata.persistence.terminology.CodeSetContentRepository
-import org.maurodata.persistence.terminology.TerminologyContentRepository
 import org.maurodata.plugin.MauroPluginService
 import org.maurodata.plugin.exporter.ModelExporterPlugin
 import org.maurodata.plugin.importer.FileImportParameters
 import org.maurodata.plugin.importer.FileParameter
 import org.maurodata.plugin.importer.ModelImporterPlugin
 import org.maurodata.service.core.AuthorityService
-
-import groovy.transform.CompileStatic
-import groovy.util.logging.Slf4j
-import io.micronaut.http.HttpStatus
-import jakarta.inject.Inject
 
 @CompileStatic
 @Slf4j
