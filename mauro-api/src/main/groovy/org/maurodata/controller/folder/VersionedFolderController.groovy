@@ -80,7 +80,7 @@ class VersionedFolderController extends ModelController<Folder> implements Versi
     Folder create(@Body Folder folder) {
         cleanBody(folder)
         updateCreationProperties(folder)
-
+        folder.authority = super.authorityService.getDefaultAuthority()
         folder.setVersionable(true)
 
         pathRepository.readParentItems(folder)
