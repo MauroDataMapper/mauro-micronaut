@@ -449,11 +449,6 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     }
 
     M findCommonAncestorBetweenModels(M leftModel, M rightModel) {
-        if (leftModel.label != rightModel.label) {
-            throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
-                    "MS03. Model [${leftModel.id.toString()}] does not share its label with [${leftModel.id}] therefore they cannot have a common " +
-                            "ancestor")
-        }
 
         final M finalisedLeftParent = getFinalisedParent(leftModel)
         final M finalisedRightParent = getFinalisedParent(rightModel)
