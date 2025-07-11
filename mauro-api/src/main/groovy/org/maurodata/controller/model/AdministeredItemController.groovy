@@ -161,6 +161,16 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
         ListResponse.from(items, params)
     }
 
+    ListResponse<I> listAll() {
+        List<I> items = itemRepository.readAll()
+        items = items.findAll { accessControlService.canDoRole(Role.READER, it) }
+        items.each {
+            pathRepository.readParentItems(it)
+            it.updatePath()
+        }
+        ListResponse.from(items)
+    }
+
     I updateDerivedProperties(I item) {
         pathRepository.readParentItems(item)
         item.updatePath()

@@ -285,6 +285,10 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
             deleted
         }
 
+        List<Classifier> findAll(){
+            ( ((ClassifierRepository) repository).findAll())
+        }
+
     }
 
     @Singleton

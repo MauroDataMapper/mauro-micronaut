@@ -295,13 +295,26 @@ class CommonDataSpec extends Specification {
                 readableByAuthenticatedUsers: true)
 
     }
+    ClassificationScheme classificationSchemePayload(boolean readableByEveryone, boolean readableByAuthenticatedUsers){
+        new ClassificationScheme(
+            label: 'classifiers label',
+            description : 'random description',
+            readableByEveryone: readableByEveryone,
+            readableByAuthenticatedUsers: readableByAuthenticatedUsers)
+
+    }
     Classifier classifierPayload(){
         new Classifier(
             label: 'classifier 1',
             description : 'random description ')
 
     }
+    Classifier classifierPayload(String label){
+        new Classifier(
+            label: label,
+            description : 'random description ')
 
+    }
     /**
      * Convenience method for importing a data model into the database for testing
      */

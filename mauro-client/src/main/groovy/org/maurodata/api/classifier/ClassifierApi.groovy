@@ -35,11 +35,11 @@ interface ClassifierApi extends AdministeredItemApi<Classifier, ClassificationSc
     @Get(Paths.CLASSIFIERS_ROUTE)
     ListResponse<Classifier> list(UUID classificationSchemeId)
 
-    @Get(Paths.CLASSIFIERS_ROUTE_PAGED)
-    ListResponse<Classifier> list(UUID classificationSchemeId, @Nullable PaginationParams params)
+    @Get(Paths.ALL_CLASSIFIERS_ROUTE)
+    ListResponse<Classifier> listAllClassifiers()
 
     @Get(Paths.CHILD_CLASSIFIERS_ID_ROUTE)
-    Classifier showChildClassifier(@NonNull UUID classificationSchemeId, @NonNull UUID parentClassifierId, @NonNull UUID childClassifierId)
+    Classifier showChildClassifier(@NonNull UUID classificationSchemeId,@NonNull UUID parentClassifierId, @NonNull UUID childClassifierId)
 
     /**
      * Create child classifier

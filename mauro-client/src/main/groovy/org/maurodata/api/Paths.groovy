@@ -46,7 +46,7 @@ interface Paths {
     String CLASSIFIERS_ROUTE_PAGED = '/classificationSchemes/{classificationSchemeId}/classifiers{?params*}'
     String CHILD_CLASSIFIERS_ROUTE_PAGED = '/classificationSchemes/{classificationSchemeId}/classifiers/{parentClassifierId}/classifiers{?params*}'
     String ADMINISTERED_ITEM_CLASSIFIER_ROUTE_PAGED = '/{administeredItemDomainType}/{administeredItemId}/classifiers{?params*}'
-
+    String ALL_CLASSIFIERS_ROUTE = '/classifiers'
     /*
     * ApiPropertyApi
      */
