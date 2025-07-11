@@ -73,7 +73,7 @@ class TermRelationshipTermIntegrationSpec extends CommonDataSpec {
 
     }
 
-    void 'test termRelationshipByTermCreate, show delete'() {
+    void 'test termRelationshipByTermCreate, show, update, delete'() {
         given:
         Term source = termApi.show(terminologyId, termId1)
         Term target = termApi.show(terminologyId, termId2)
@@ -104,5 +104,60 @@ class TermRelationshipTermIntegrationSpec extends CommonDataSpec {
         deleteResponse.status() == HttpStatus.NO_CONTENT
     }
 
+    void 'test shouldUpdateTermRelationship by terminology and term'() {
+        Term source = termApi.show(terminologyId, termId1)
+        Term target = termApi.show(terminologyId, termId2)
+        TermRelationshipType termRelationshipType = termRelationshipTypeApi.create(terminologyId, termRelationshipType())
 
+        TermRelationship termRelationship = termRelationshipApi.createByTerminologyAndTerm(terminologyId, termId1,
+                                                                                           termRelationshipPayload(termRelationshipType, source, target))
+
+        TermRelationshipType anotherRelationshipType = termRelationshipTypeApi.create(terminologyId, termRelationshipTypePayload('other label', false))
+
+        Term other = termApi.create(terminologyId, termPayload('other code', 'other description', 'other definition'))
+
+        termRelationship = termRelationshipApi.show(terminologyId, termRelationship.id)
+
+        termRelationship.targetTerm = other
+        termRelationship.sourceTerm = target
+        termRelationship.relationshipType = anotherRelationshipType
+
+        when:
+        TermRelationship termRelationshipResponse = termRelationshipApi.updateByTerminologyAndTerm(terminologyId, target.id, termRelationship.id, termRelationship)
+
+        then:
+        termRelationshipResponse
+        termRelationshipResponse.sourceTerm == target
+        termRelationshipResponse.targetTerm == other
+        termRelationshipResponse.relationshipType == anotherRelationshipType
+    }
+
+    void 'test shouldUpdateTermRelationship by terminology only'(){
+        Term source = termApi.show(terminologyId, termId1)
+        Term target = termApi.show(terminologyId, termId2)
+        TermRelationshipType termRelationshipType = termRelationshipTypeApi.create(terminologyId, termRelationshipType())
+
+        TermRelationship termRelationship = termRelationshipApi.createByTerminologyAndTerm(terminologyId, termId1,
+                                                                                           termRelationshipPayload(termRelationshipType, source, target))
+
+        TermRelationshipType anotherRelationshipType = termRelationshipTypeApi.create(terminologyId, termRelationshipTypePayload('other label', false))
+
+        Term other = termApi.create(terminologyId, termPayload('other code', 'other description', 'other definition'))
+
+        termRelationship = termRelationshipApi.show(terminologyId, termRelationship.id)
+
+        termRelationship.targetTerm = other
+        termRelationship.sourceTerm = target
+        termRelationship.relationshipType = anotherRelationshipType
+
+        when:
+        TermRelationship termRelationshipResponse = termRelationshipApi.update(terminologyId, termRelationship.id , termRelationship)
+
+        then:
+        termRelationshipResponse
+        termRelationshipResponse.sourceTerm == target
+        termRelationshipResponse.targetTerm == other
+        termRelationshipResponse.relationshipType == anotherRelationshipType
+
+    }
 }

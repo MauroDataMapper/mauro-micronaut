@@ -53,6 +53,10 @@ class TermRelationshipController extends AdministeredItemController<TermRelation
         this.terminologyRepository = terminologyRepository
     }
 
+    List<String> getDisallowedProperties() {
+        super.getDisallowedProperties() + ['availableActions']
+    }
+
     @Audit
     @Get(Paths.TERM_RELATIONSHIP_ID)
     TermRelationship show(UUID terminologyId, UUID id) {
@@ -74,19 +78,9 @@ class TermRelationshipController extends AdministeredItemController<TermRelation
     @Audit
     @Put(Paths.TERM_RELATIONSHIP_ID)
     TermRelationship update(UUID terminologyId, UUID id, @Body @NonNull TermRelationship termRelationship) {
-        cleanBody(termRelationship)
-
-        TermRelationship existing = termRelationshipRepository.readById(id)
-        accessControlService.checkRole(Role.EDITOR, existing)
-        updateProperties(existing, termRelationship)
-
-        termRelationship.terminology = terminologyRepository.readById(terminologyId)
-        termRelationship.sourceTerm = termRepository.readById(termRelationship.sourceTerm.id)
-        termRelationship.targetTerm = termRepository.readById(termRelationship.targetTerm.id)
-        termRelationship.relationshipType = termRelationshipTypeRepository.readById(termRelationship.relationshipType.id)
-
-        updateEntity(existing, termRelationship)
+        updateTermRelationship(termRelationship, id, terminologyId)
     }
+
 
     @Audit(deletedObjectDomainType = TermRelationship, parentDomainType = Terminology, parentIdParamName = "terminologyId")
     @Delete(Paths.TERM_RELATIONSHIP_ID)
@@ -97,7 +91,7 @@ class TermRelationshipController extends AdministeredItemController<TermRelation
     @Audit
     @Get(Paths.TERM_RELATIONSHIP_LIST_PAGED)
     ListResponse<TermRelationship> list(UUID terminologyId, @Nullable PaginationParams params = new PaginationParams()) {
-        
+
         super.list(terminologyId, params)
     }
 
@@ -129,7 +123,7 @@ class TermRelationshipController extends AdministeredItemController<TermRelation
     @Override
     @Post(Paths.TERM_RELATIONSHIP_BY_TERM_ID)
     TermRelationship createByTerminologyAndTerm(@NonNull UUID terminologyId, @NonNull UUID termId, @Body @NonNull TermRelationship termRelationship) {
-        cleanBody(termRelationship)
+        cleanBody(termRelationship, false)
         Terminology terminology = terminologyRepository.readById(terminologyId)
         accessControlService.checkRole(Role.EDITOR, terminology)
         Term term = termRepository.readById(termId)
@@ -145,11 +139,47 @@ class TermRelationshipController extends AdministeredItemController<TermRelation
     @Transactional
     @Override
     @Delete(Paths.TERM_RELATIONSHIP_BY_TERM_ID_ID)
-    HttpResponse delete(UUID terminologyId,  @NotNull UUID termId, @NotNull UUID id, @Body @Nullable TermRelationship termRelationship) {
+    HttpResponse delete(UUID terminologyId, @NotNull UUID termId, @NotNull UUID id, @Body @Nullable TermRelationship termRelationship) {
         super.delete(id, termRelationship)
     }
 
-    private TermRelationship retrieveRelationships(TermRelationship termRelationship) {
+    @Audit
+    @Put(Paths.TERM_RELATIONSHIP_BY_TERM_ID_ID)
+    TermRelationship updateByTerminologyAndTerm(@NotNull UUID terminologyId, @NotNull UUID termId, @NotNull UUID id, @Body @NotNull TermRelationship termRelationship) {
+        Term term = termRepository.readById(termId)
+        accessControlService.checkRole(Role.EDITOR, term)
+        updateTermRelationship(termRelationship, id, terminologyId)
+//        cleanBody(termRelationship, false)
+//
+//        TermRelationship existing = termRelationshipRepository.readById(id)
+//        accessControlService.checkRole(Role.EDITOR, existing)
+//        updateProperties(existing, termRelationship)
+//
+//        termRelationship.terminology = terminologyRepository.readById(terminologyId)
+//        termRelationship.sourceTerm = termRepository.readById(termRelationship.sourceTerm.id)
+//        termRelationship.targetTerm = termRepository.readById(termRelationship.targetTerm.id)
+//        termRelationship.relationshipType = termRelationshipTypeRepository.readById(termRelationship.relationshipType.id)
+//
+//        updateEntity(existing, termRelationship)
+    }
+
+    protected TermRelationship updateTermRelationship(TermRelationship termRelationship, UUID id, UUID terminologyId) {
+        cleanBody(termRelationship, false)
+
+        TermRelationship existing = termRelationshipRepository.readById(id)
+        accessControlService.checkRole(Role.EDITOR, existing)
+        updateProperties(existing, termRelationship)
+
+        termRelationship.terminology = terminologyRepository.readById(terminologyId)
+        termRelationship.sourceTerm = termRepository.readById(termRelationship.sourceTerm.id)
+        termRelationship.targetTerm = termRepository.readById(termRelationship.targetTerm.id)
+        termRelationship.relationshipType = termRelationshipTypeRepository.readById(termRelationship.relationshipType.id)
+
+        updateEntity(existing, termRelationship)
+
+    }
+
+    protected TermRelationship retrieveRelationships(TermRelationship termRelationship) {
         termRelationship.sourceTerm = termRepository.readById(termRelationship.sourceTerm.id)
         termRelationship.targetTerm = termRepository.readById(termRelationship.targetTerm.id)
         termRelationship.relationshipType = termRelationshipTypeRepository.readById(termRelationship.relationshipType.id)

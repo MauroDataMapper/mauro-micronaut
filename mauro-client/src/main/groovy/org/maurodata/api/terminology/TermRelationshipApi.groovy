@@ -46,8 +46,11 @@ interface TermRelationshipApi extends AdministeredItemApi<TermRelationship, Term
     TermRelationship showByTerminologyAndTerm(UUID terminologyId, UUID termId, UUID id)
 
     @Post(Paths.TERM_RELATIONSHIP_BY_TERM_ID)
-    TermRelationship createByTerminologyAndTerm(@NonNull UUID terminologyId, @NonNull UUID termId, @Body @NotNull TermRelationship termRelationship)
+    TermRelationship createByTerminologyAndTerm(@NonNull UUID terminologyId, @NonNull UUID termId, @Body @NonNull TermRelationship termRelationship)
+
+    @Put(Paths.TERM_RELATIONSHIP_BY_TERM_ID_ID)
+    TermRelationship updateByTerminologyAndTerm(@NonNull UUID terminologyId, @NonNull UUID termId, @NonNull UUID id, @Body @NonNull TermRelationship termRelationship)
 
     @Delete(Paths.TERM_RELATIONSHIP_BY_TERM_ID_ID)
-    HttpResponse delete(UUID terminologyId, UUID termId, UUID id, @Nullable @Body TermRelationship termRelationship)
+    HttpResponse delete(UUID terminologyId, @NonNull UUID termId, @NonNull UUID id, @Nullable @Body TermRelationship termRelationship)
 }
