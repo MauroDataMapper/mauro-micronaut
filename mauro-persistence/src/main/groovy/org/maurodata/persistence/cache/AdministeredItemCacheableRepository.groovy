@@ -158,6 +158,11 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
             ((DataClassRepository) repository).readAllByDataModelAndParentDataClassIsNull(dataModel)
         }
 
+
+        // not cached
+        List<DataClass> readAllByDataModel(DataModel dataModel) {
+            ((DataClassRepository) repository).readAllByDataModel(dataModel)
+        }
         // not cached
         DataClass createExtensionRelationship(DataClass sourceDataClass, DataClass targetDataClass) {
             invalidate(sourceDataClass)
