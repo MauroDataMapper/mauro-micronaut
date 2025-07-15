@@ -38,6 +38,9 @@ interface DataElementApi extends AdministeredItemApi<DataElement, DataClass> {
     @Get(Paths.DATA_ELEMENT_LIST_PAGED)
     ListResponse<DataElement> list(UUID dataModelId, UUID dataClassId)
 
+    @Get(Paths.DATA_ELEMENT_IN_MODEL_LIST)
+    ListResponse<DataElement> byModelList(UUID dataModelId)
+
     @Get(Paths.DATA_ELEMENT_DOI)
     Map doi(UUID id)
 }
