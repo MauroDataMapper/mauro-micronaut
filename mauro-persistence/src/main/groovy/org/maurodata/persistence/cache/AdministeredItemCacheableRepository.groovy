@@ -1,5 +1,13 @@
 package org.maurodata.persistence.cache
 
+import groovy.transform.CompileStatic
+import groovy.util.logging.Slf4j
+import io.micronaut.cache.annotation.CacheConfig
+import io.micronaut.cache.annotation.CacheInvalidate
+import io.micronaut.cache.annotation.Cacheable
+import io.micronaut.core.annotation.NonNull
+import io.micronaut.core.annotation.Nullable
+import jakarta.inject.Singleton
 import org.maurodata.domain.classifier.Classifier
 import org.maurodata.domain.dataflow.DataClassComponent
 import org.maurodata.domain.datamodel.DataClass
@@ -21,15 +29,6 @@ import org.maurodata.persistence.model.AdministeredItemRepository
 import org.maurodata.persistence.terminology.TermRelationshipRepository
 import org.maurodata.persistence.terminology.TermRelationshipTypeRepository
 import org.maurodata.persistence.terminology.TermRepository
-
-import groovy.transform.CompileStatic
-import groovy.util.logging.Slf4j
-import io.micronaut.cache.annotation.CacheConfig
-import io.micronaut.cache.annotation.CacheInvalidate
-import io.micronaut.cache.annotation.Cacheable
-import io.micronaut.core.annotation.NonNull
-import io.micronaut.core.annotation.Nullable
-import jakarta.inject.Singleton
 
 @Slf4j
 @CompileStatic
@@ -152,6 +151,10 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
             ((DataClassRepository) repository).readAllByParentDataClass_Id(parentDataClassId)
         }
 
+        // not cached
+        List<DataClass> readAllByParentDataClass(DataClass parentDataClass) {
+            ((DataClassRepository) repository).readAllByParentDataClass(parentDataClass)
+        }
 
         // not cached
         List<DataClass> readAllByDataModelAndParentDataClassIsNull(DataModel dataModel) {
