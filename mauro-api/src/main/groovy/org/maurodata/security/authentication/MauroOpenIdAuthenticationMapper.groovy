@@ -24,6 +24,9 @@ class MauroOpenIdAuthenticationMapper extends DefaultOpenIdAuthenticationMapper 
     @Value('${mauro.oauth.create-user:false}')
     boolean createUser
 
+    @Value('${mauro.oauth.require-verified-email:true}')
+    boolean requireVerifiedEmail
+
     @Inject
     ItemCacheableRepository.CatalogueUserCacheableRepository catalogueUserCacheableRepository
 
@@ -35,10 +38,9 @@ class MauroOpenIdAuthenticationMapper extends DefaultOpenIdAuthenticationMapper 
     @Transactional
     Map<String, Object> buildAttributes(String providerName, OpenIdTokenResponse tokenResponse, OpenIdClaims openIdClaims) {
         Map<String, Object> claims = super.buildAttributes(providerName, tokenResponse, openIdClaims)
-        //in theory this code is unreachable from openid provider
         if (!claims.email) authenticationException("Attempt to login with no  email address specified!")
+        if (requireVerifiedEmail && !claims.email_verified) authenticationException("Attempt to login with unverified email address! [${claims.email}]") // Entra does not provide email_verified
 
-        if (!claims.email_verified) authenticationException("Attempt to login with unverified email address! [${claims.email}]")
         CatalogueUser user = catalogueUserCacheableRepository.readByEmailAddress((String) claims.email) ?: createUser(claims)
         if (!user) authenticationException("User does not exist for $claims.email")
         claims.id = user.id
