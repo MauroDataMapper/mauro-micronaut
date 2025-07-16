@@ -70,6 +70,7 @@ import org.maurodata.domain.model.version.VersionChangeType
 import org.maurodata.domain.terminology.CodeSet
 import org.maurodata.domain.terminology.Term
 import org.maurodata.domain.terminology.TermRelationshipType
+import org.maurodata.domain.terminology.TermRelationshipType
 import org.maurodata.domain.terminology.Terminology
 import org.maurodata.export.ExportModel
 import org.maurodata.importdata.ImportMetadata
@@ -251,6 +252,12 @@ class CommonDataSpec extends Specification {
             units : 'kilograms')
     }
 
+    DataType dataTypesPayload(String label, DataType.DataTypeKind dataTypeKind){
+        new DataType(
+            label: label,
+            dataTypeKind: dataTypeKind,
+            units : 'kilograms')
+    }
     TermRelationshipType termRelationshipType(){
        new TermRelationshipType(label: 'Test Term Relationship Type label',
                                 //displayLabel: 'Random display label',

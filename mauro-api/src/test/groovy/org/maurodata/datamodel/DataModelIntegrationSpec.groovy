@@ -1,4 +1,4 @@
-package org.maurodata.datamodel
+ package org.maurodata.datamodel
 
 import io.micronaut.http.client.exceptions.HttpClientResponseException
 import org.maurodata.domain.datamodel.DataClass
@@ -19,6 +19,7 @@ import org.maurodata.web.ListResponse
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
 import jakarta.inject.Singleton
+import org.maurodata.web.PaginationParams
 import spock.lang.Shared
 
 @ContainerizedTest
@@ -136,7 +137,6 @@ class DataModelIntegrationSpec extends CommonDataSpec {
         dataTypeResponse.label == 'string'
 
         when:
-        dataTypeResponse =
         dataTypeResponse = dataTypeApi.create(
             dataModelId, new DataType(
             label: 'integer',
@@ -149,7 +149,7 @@ class DataModelIntegrationSpec extends CommonDataSpec {
 
         when:
         ListResponse<DataType> dataTypesListResponse =
-            dataTypeApi.list(dataModelId)
+            dataTypeApi.list(dataModelId, new PaginationParams(), null)
 
         then:
         dataTypesListResponse.count == 2
@@ -446,7 +446,7 @@ class DataModelIntegrationSpec extends CommonDataSpec {
 
         dataModelId = dataModelApi.create(folderId, new DataModel(label: 'Test data model'), 'ProfileSpecificationDataTypeProvider').id
 
-        ListResponse<DataType> dataTypes = dataTypeApi.list(dataModelId)
+        ListResponse<DataType> dataTypes = dataTypeApi.list(dataModelId, new PaginationParams(), null)
 
         then:
         dataTypes.count == 11

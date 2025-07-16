@@ -1,5 +1,6 @@
 package org.maurodata.controller.datamodel
 
+import io.micronaut.http.annotation.QueryValue
 import org.maurodata.domain.model.Path
 import org.maurodata.persistence.cache.ModelCacheableRepository
 
@@ -171,12 +172,15 @@ class DataTypeController extends AdministeredItemController<DataType, DataModel>
 
     @Audit
     @Get(Paths.DATA_TYPE_LIST_PAGED)
-    ListResponse<DataType> list(UUID dataModelId, @Nullable PaginationParams params = new PaginationParams()) {
-
+    ListResponse<DataType> list(UUID dataModelId, @Nullable PaginationParams params = new PaginationParams(), @Nullable @QueryValue ('domainType') String dataTypeKind) {
         Item parent = parentItemRepository.readById(dataModelId)
         if (!parent) return null
         accessControlService.checkRole(Role.READER, parent)
+
         List<DataType> dataTypes = administeredItemRepository.readAllByParent(parent)
+        if (dataTypeKind) {
+            dataTypes.findAll {dataTypeKind && it.dataTypeKind.stringValue.equalsIgnoreCase(dataTypeKind)}
+        }
         dataTypes.each {
             updateDerivedProperties(it)
             dataTypeService.getReferenceClassProperties(it)

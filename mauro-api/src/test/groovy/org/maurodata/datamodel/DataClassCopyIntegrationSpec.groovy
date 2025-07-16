@@ -11,6 +11,7 @@ import org.maurodata.domain.terminology.Terminology
 import org.maurodata.persistence.ContainerizedTest
 import org.maurodata.testing.CommonDataSpec
 import org.maurodata.web.ListResponse
+import org.maurodata.web.PaginationParams
 import spock.lang.Shared
 
 @ContainerizedTest
@@ -61,7 +62,7 @@ class DataClassCopyIntegrationSpec extends CommonDataSpec {
 
     void 'test copy simple dataclass with ReferenceClass dataType, has dataElement -primitiveDataType - both dataTypes created in target'() {
         given:
-        ListResponse<DataType> targetDataTypes = dataTypeApi.list(targetId)
+        ListResponse<DataType> targetDataTypes = dataTypeApi.list(targetId, new PaginationParams(), null)
         targetDataTypes.items.isEmpty()
 
         and:
@@ -92,7 +93,7 @@ class DataClassCopyIntegrationSpec extends CommonDataSpec {
 
         //referenceTypes not showing in dataclass
         when:
-        ListResponse<DataType> dataTypes = dataTypeApi.list(targetId)
+        ListResponse<DataType> dataTypes = dataTypeApi.list(targetId, new PaginationParams(), null)
         then:
         dataTypes
         dataTypes.items.size() == 2
@@ -110,7 +111,7 @@ class DataClassCopyIntegrationSpec extends CommonDataSpec {
 
     void 'test copy dataclass with child and child data element with modelType DataType'() {
         given:
-        ListResponse<DataType> dataTypesBefore = dataTypeApi.list(targetId)
+        ListResponse<DataType> dataTypesBefore = dataTypeApi.list(targetId, new PaginationParams(), null)
         dataTypesBefore.items.isEmpty()
         childDataElement = dataElementApi.create(dataModelId, childDataClass.id, dataElementPayload("data element label", modelTypeDataType))
 
@@ -134,7 +135,7 @@ class DataClassCopyIntegrationSpec extends CommonDataSpec {
         copiedChildDataElement.dataType.modelResourceId == modelTypeDataType.modelResourceId
 
         when:
-        ListResponse<DataType> dataTypes = dataTypeApi.list(targetId)
+        ListResponse<DataType> dataTypes = dataTypeApi.list(targetId, new PaginationParams(), null)
         then:
         dataTypes
         dataTypes.items.size() == 2

@@ -151,7 +151,7 @@ interface Paths {
     */
     String DATA_TYPE_LIST = '/dataModels/{dataModelId}/dataTypes'
     String DATA_TYPE_ID = '/dataModels/{dataModelId}/dataTypes/{id}'
-    String DATA_TYPE_LIST_PAGED = '/dataModels/{dataModelId}/dataTypes{?params*}'
+    String DATA_TYPE_LIST_PAGED = '/dataModels/{dataModelId}/dataTypes{?params*}{&domainType}'
 
     /*
     * EnumerationValueApi
