@@ -1,7 +1,7 @@
 package org.maurodata.api.security.openidprovider
 
 class OpenidConnectProvider {
-    UUID openidProviderId
+    UUID id
     String label
     boolean standardProvider
     String authorizationEndpoint
@@ -9,9 +9,9 @@ class OpenidConnectProvider {
 
     OpenidConnectProvider(String openidProviderId, String label, Boolean standardProvider,
                           String authorizationEndpoint, String imageUrl) {
-        if(openidProviderId!=null) this.openidProviderId = UUID.fromString(openidProviderId)
+        if (openidProviderId != null) this.id = UUID.fromString(openidProviderId)
         this.label = label
-        if(standardProvider!=null) this.standardProvider = standardProvider
+        if (standardProvider != null) this.standardProvider = standardProvider
         this.authorizationEndpoint = authorizationEndpoint
         this.imageUrl = imageUrl
     }
