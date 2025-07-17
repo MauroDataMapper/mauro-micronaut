@@ -136,7 +136,6 @@ class DataModelIntegrationSpec extends CommonDataSpec {
         dataTypeResponse.label == 'string'
 
         when:
-        dataTypeResponse =
         dataTypeResponse = dataTypeApi.create(
             dataModelId, new DataType(
             label: 'integer',

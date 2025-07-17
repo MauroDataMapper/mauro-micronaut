@@ -89,11 +89,7 @@ class DataTypeController extends AdministeredItemController<DataType, DataModel>
         Item parent = super.validate(cleanItem, dataModelId)
         cleanItem = dataTypeService.validateDataType(cleanItem, parent)
 
-        if (cleanItem.isReferenceType()) {
-            if (cleanItem.referenceClass.id == parent.id) {
-                ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "Data class element shouldn't reference it")
-            }
-        }
+
         if (dataType.isModelType()) {
 
             // Either the dataType is finalised

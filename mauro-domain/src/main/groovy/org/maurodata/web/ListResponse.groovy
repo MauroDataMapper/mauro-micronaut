@@ -1,5 +1,6 @@
 package org.maurodata.web
 
+import org.maurodata.domain.datamodel.DataType
 import org.maurodata.domain.model.ModelItem
 import org.maurodata.domain.terminology.Term
 
@@ -71,7 +72,7 @@ class ListResponse<T> {
             return input
         }
 
-        if (params.label || params.description || params.code || params.definition) {
+        if (params.label || params.description || params.code || params.definition || params.domainType) {
             if (input.get(0) instanceof AdministeredItem) {
                 List<AdministeredItem> filterable = (List<AdministeredItem>) input
 
@@ -89,6 +90,9 @@ class ListResponse<T> {
 
                 if (params.definition) {
                     filterable = filterable.findAll { it instanceof Term && ((Term) it).definition?.containsIgnoreCase(params.definition) }
+                }
+                if (params.domainType) {
+                    filterable = filterable.findAll {it instanceof DataType && ((DataType) it).dataTypeKind.stringValue?.containsIgnoreCase(params.domainType) }
                 }
 
                 return (List<T>) filterable

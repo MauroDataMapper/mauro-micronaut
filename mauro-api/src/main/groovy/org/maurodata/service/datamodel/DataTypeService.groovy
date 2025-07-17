@@ -54,6 +54,11 @@ class DataTypeService {
         if (referenceClass.dataModel.id != parent.id) {
             ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "DataClass $referenceClass.id assigned to DataType must belong to same datamodel")
         }
+
+        if (referenceClass.id == parent.id) {
+            ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "Data class reference should not be parent")
+        }
+
         DataType sameLabelInModel = dataTypeRepository.findAllByParent(parent).find {
             it.domainType == DataType.DataTypeKind.REFERENCE_TYPE.stringValue && it.label == dataType.label
         }
