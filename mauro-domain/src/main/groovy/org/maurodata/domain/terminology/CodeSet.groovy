@@ -56,11 +56,6 @@ class CodeSet extends Model {
         this
     }
 
-    @Transient
-    @JsonIgnore
-    List<List<ModelItem<CodeSet>>> getAllAssociations() {
-        [terms] as List<List<ModelItem<CodeSet>>>
-    }
 
     @Transient
     @JsonIgnore

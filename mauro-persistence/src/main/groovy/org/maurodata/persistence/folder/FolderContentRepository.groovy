@@ -4,11 +4,9 @@ import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
-
-
-
 import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.folder.Folder
+import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.domain.terminology.CodeSet
 import org.maurodata.domain.terminology.Terminology
 import org.maurodata.persistence.datamodel.DataModelContentRepository
@@ -85,6 +83,28 @@ class FolderContentRepository extends ModelContentRepository<Folder> {
         }
         saved
     }
+
+    @Override
+    Long deleteWithContent(@NonNull AdministeredItem administeredItem) {
+        Folder folder = administeredItem as Folder
+        folder.codeSets.each{codeSet ->
+            codeSetContentRepository.deleteWithContent(codeSet)
+        }
+
+        folder.terminologies.each{terminology ->
+            terminologyContentRepository.deleteWithContent(terminology)
+        }
+
+        folder.dataModels.each { dataModel ->
+            dataModelContentRepository.deleteWithContent(dataModel)
+        }
+        folder.childFolders.each { child ->
+            deleteWithContent(child)
+        }
+        Long result = super.deleteWithContent(folder)
+        result
+    }
+
 
     private List<Folder> surfaceChildContent(List<Folder> folders) {
         if (folders.isEmpty()) {
