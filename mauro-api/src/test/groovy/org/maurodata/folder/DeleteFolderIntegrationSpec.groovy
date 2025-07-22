@@ -8,6 +8,8 @@ import org.maurodata.domain.datamodel.DataClass
 import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.datamodel.DataType
 import org.maurodata.domain.folder.Folder
+import org.maurodata.domain.model.version.FinaliseData
+import org.maurodata.domain.model.version.VersionChangeType
 import org.maurodata.domain.terminology.CodeSet
 import org.maurodata.domain.terminology.Term
 import org.maurodata.domain.terminology.Terminology
@@ -34,7 +36,7 @@ class DeleteFolderIntegrationSpec extends CommonDataSpec {
 
     }
 
-    void 'should delete folder and all associations'() {
+    void 'should delete folder and all associations - happy path'() {
         given:
         DataModel dataModel = dataModelApi.create(folderId, dataModelPayload('test data model '))
         DataClass dataClass = dataClassApi.create(dataModel.id, dataClassPayload('test dataclass label'))
@@ -54,7 +56,28 @@ class DeleteFolderIntegrationSpec extends CommonDataSpec {
         then:
         response
         response.status() == HttpStatus.NO_CONTENT
+    }
 
+    void 'should delete folder and all associations - even when folder to delete contains references to models outside of it'() {
+        given:
+        DataModel dataModel = dataModelApi.create(folderId, dataModelPayload('test data model '))
+        Folder otherFolder = folderApi.create(folder('other folder'))
+        Terminology terminology = terminologyApi.create(otherFolder.id, terminology())
+        terminologyApi.finalise(terminology.id, new FinaliseData().tap{
+            versionChangeType = VersionChangeType.MAJOR
+            versionTag = '2.2'
+        } )
+
+        dataTypeApi.create(dataModel.id, modelTypeDataTypePayload(terminology.id, Terminology.class.simpleName))
+
+        Folder folder = folderApi.show(folderId)
+
+        when:
+        HttpResponse response = folderApi.delete(folderId, folder, true )
+
+        then:
+        response
+        response.status() == HttpStatus.NO_CONTENT
     }
 
 
