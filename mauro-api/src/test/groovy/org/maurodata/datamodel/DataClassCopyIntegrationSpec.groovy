@@ -50,7 +50,7 @@ class DataClassCopyIntegrationSpec extends CommonDataSpec {
         folderId = folderApi.create(new Folder(label: 'Test folder')).id
         dataModelId = dataModelApi.create(folderId, dataModelPayload('source label')).id
         targetId = dataModelApi.create(folderId, dataModelPayload('target label')).id
-        Terminology terminology = terminologyApi.create(folderId, terminology())
+        Terminology terminology = terminologyApi.create(folderId, terminologyPayload())
         terminologyApi.finalise(terminology.id, finalisePayload())
         dataClass = dataClassApi.create(dataModelId, dataClassPayload('source label'))
         referenceTypeDataType = dataTypeApi.create(dataModelId, referenceTypeDataTypePayload(dataClass.id, 'datatype reference class label'))

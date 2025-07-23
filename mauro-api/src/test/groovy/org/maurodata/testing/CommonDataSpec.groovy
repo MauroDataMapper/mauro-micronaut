@@ -178,8 +178,11 @@ class CommonDataSpec extends Specification {
         }
     }
 
-    Terminology terminology() {
+    Terminology terminologyPayload() {
         new Terminology(label: 'Test terminology')
+    }
+    Terminology terminologyPayload(String labelText) {
+        new Terminology(label: labelText)
     }
 
     Term termPayload() {

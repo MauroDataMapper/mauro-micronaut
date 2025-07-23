@@ -66,7 +66,7 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
         CodeSet codeSet = codeSetApi.create(folderId, codeSet())
         codeSetId = codeSet.id
 
-        Terminology terminology = terminologyApi.create(folderId, terminology())
+        Terminology terminology = terminologyApi.create(folderId, terminologyPayload())
 
         TermRelationshipType termRelationshipType = termRelationshipTypeApi.create(terminology.id, termRelationshipType())
 
@@ -176,7 +176,7 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
 
         CodeSet codeSet = codeSetApi.create(folderId, codeSet())
 
-        Terminology terminology = terminologyApi.create(folderId, terminology())
+        Terminology terminology = terminologyApi.create(folderId, terminologyPayload())
 
         TermRelationshipType termRelationshipType = termRelationshipTypeApi.create(terminology.id, termRelationshipType())
 
@@ -345,7 +345,7 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
 
         CodeSet codeSet = codeSetApi.create(folderId, codeSet())
 
-        Terminology terminology = terminologyApi.create(folderId, terminology())
+        Terminology terminology = terminologyApi.create(folderId, terminologyPayload())
 
         TermRelationshipType termRelationshipType = termRelationshipTypeApi.create(terminology.id, termRelationshipType())
 

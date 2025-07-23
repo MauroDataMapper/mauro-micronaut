@@ -4,7 +4,9 @@ import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
 import io.micronaut.test.annotation.Sql
 import jakarta.inject.Singleton
+import org.maurodata.api.facet.SemanticLinkCreateDTO
 import org.maurodata.domain.datamodel.DataClass
+import org.maurodata.domain.datamodel.DataElement
 import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.datamodel.DataType
 import org.maurodata.domain.folder.Folder
@@ -41,10 +43,11 @@ class DeleteFolderIntegrationSpec extends CommonDataSpec {
         DataModel dataModel = dataModelApi.create(folderId, dataModelPayload('test data model '))
         DataClass dataClass = dataClassApi.create(dataModel.id, dataClassPayload('test dataclass label'))
         DataType dataType = dataTypeApi.create(dataModel.id, dataTypesPayload())
-        dataElementApi.create(dataModel.id, dataClass.id, dataElementPayload('data element label', dataType))
-
-        Terminology terminology = terminologyApi.create(childFolderId, terminology())
+        DataElement dataElement = dataElementApi.create(dataModel.id, dataClass.id, dataElementPayload('data element label', dataType))
+        annotationApi.create("dataElement", dataElement.id, annotationPayload('label for annotation ', 'description'))
+        Terminology terminology = terminologyApi.create(childFolderId, terminologyPayload())
         Term term = termApi.create(terminology.id, term())
+        summaryMetadataApi.create("term", term.id, summaryMetadataPayload())
         CodeSet codeSet = codeSetApi.create(folderId, codeSet())
         codeSetApi.addTerm(codeSet.id, term.id)
 
@@ -58,11 +61,11 @@ class DeleteFolderIntegrationSpec extends CommonDataSpec {
         response.status() == HttpStatus.NO_CONTENT
     }
 
-    void 'should delete folder and all associations - even when folder to delete contains references to models outside of it'() {
+    void 'should delete folder and all associations - folder has reference to finalised model belonging to different folder'() {
         given:
         DataModel dataModel = dataModelApi.create(folderId, dataModelPayload('test data model '))
         Folder otherFolder = folderApi.create(folder('other folder'))
-        Terminology terminology = terminologyApi.create(otherFolder.id, terminology())
+        Terminology terminology = terminologyApi.create(otherFolder.id, terminologyPayload())
         terminologyApi.finalise(terminology.id, new FinaliseData().tap{
             versionChangeType = VersionChangeType.MAJOR
             versionTag = '2.2'
@@ -80,5 +83,30 @@ class DeleteFolderIntegrationSpec extends CommonDataSpec {
         response.status() == HttpStatus.NO_CONTENT
     }
 
+    void 'delete folder  - folder has reference to not finalised model belonging to different folder'() {
+        given:
+        dataModelApi.create(folderId, dataModelPayload('test data model '))
+        Folder otherFolder = folderApi.create(folder('other folder'))
+        Terminology terminology = terminologyApi.create(otherFolder.id, terminologyPayload())
+
+        Terminology terminology2 = terminologyApi.create(otherFolder.id, terminologyPayload('terminnology 2 label'))
+
+        summaryMetadataApi.create("terminology", terminology.id, summaryMetadataPayload())
+
+        semanticLinksApi.create(Terminology.class.simpleName, terminology2.id, new SemanticLinkCreateDTO().tap{
+            linkType = 'Refines'
+            targetMultiFacetAwareItemDomainType = Terminology.class.simpleName
+            targetMultiFacetAwareItemId  = terminology.id
+        })
+
+        Folder folder = folderApi.show(folderId)
+
+        when:
+        HttpResponse response = folderApi.delete(folderId, folder, true )
+
+        then:
+        response
+        response.status() == HttpStatus.NO_CONTENT
+    }
 
 }
