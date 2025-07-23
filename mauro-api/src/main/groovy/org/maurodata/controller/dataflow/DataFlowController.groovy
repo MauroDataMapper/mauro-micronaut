@@ -3,8 +3,6 @@ package org.maurodata.controller.dataflow
 import org.maurodata.ErrorHandler
 import org.maurodata.api.dataflow.DataFlowApi
 import org.maurodata.audit.Audit
-import org.maurodata.domain.dataflow.DataClassComponent
-import org.maurodata.domain.facet.EditType
 
 import org.maurodata.web.PaginationParams
 
@@ -56,8 +54,7 @@ class DataFlowController extends AdministeredItemController<DataFlow, DataModel>
 
     @Audit(level = Audit.AuditLevel.FILE_ONLY)
     @Post(Paths.DATA_FLOW_LIST)
-    DataFlow
-    create(@NonNull UUID dataModelId, @Body @NonNull DataFlow dataFlow) {
+    DataFlow create(@NonNull UUID dataModelId, @Body @NonNull DataFlow dataFlow) {
         DataModel source = dataModelRepository.findById(dataFlow.source.id)
         accessControlService.checkRole(Role.READER, source)
         ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, source, "Datamodel not found : $dataFlow.source.id")
