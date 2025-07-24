@@ -26,5 +26,9 @@ abstract class DataTypeDTORepository implements GenericRepository<DataTypeDTO, U
 
     @Nullable
     @Join(value = 'catalogueUser', type = Join.Type.LEFT_FETCH)
+    abstract DataTypeDTO findByLabel(String label)
+
+    @Nullable
+    @Join(value = 'catalogueUser', type = Join.Type.LEFT_FETCH)
     abstract List<DataTypeDTO> findByReferenceClassIdIn(List<UUID> referenceClassIds)
 }

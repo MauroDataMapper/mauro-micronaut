@@ -1,5 +1,6 @@
 package org.maurodata.controller.datamodel
 
+import jakarta.inject.Inject
 import org.maurodata.ErrorHandler
 import org.maurodata.api.Paths
 import org.maurodata.api.datamodel.DataElementApi
@@ -15,6 +16,8 @@ import org.maurodata.persistence.cache.AdministeredItemCacheableRepository.DataE
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository.DataTypeCacheableRepository
 import org.maurodata.persistence.cache.ModelCacheableRepository.DataModelCacheableRepository
 import org.maurodata.persistence.datamodel.DataElementContentRepository
+import org.maurodata.persistence.datamodel.DataModelContentRepository
+import org.maurodata.service.datamodel.DataTypeService
 import org.maurodata.web.ListResponse
 import org.maurodata.web.PaginationParams
 
@@ -51,14 +54,23 @@ class DataElementController extends AdministeredItemController<DataElement, Data
 
     DataElementContentRepository dataElementContentRepository
 
+    DataModelContentRepository dataModelContentRepository
+
+    DataTypeService dataTypeService
+
+    @Inject
     DataElementController(DataElementCacheableRepository dataElementRepository, DataClassCacheableRepository dataClassRepository,
                           DataElementContentRepository dataElementContentRepository, DataModelCacheableRepository dataModelRepository,
-                          DataTypeCacheableRepository dataTypeCacheableRepository) {
+                          DataTypeCacheableRepository dataTypeCacheableRepository, DataModelContentRepository dataModelContentRepository,
+                         DataTypeService dataTypeService) {
         super(DataElement, dataElementRepository, dataClassRepository, dataElementContentRepository)
         this.dataElementRepository = dataElementRepository
         this.dataModelRepository = dataModelRepository
         this.dataClassRepository = dataClassRepository
         this.dataTypeRepository = dataTypeCacheableRepository
+        this.dataElementContentRepository = dataElementContentRepository
+        this.dataModelContentRepository = dataModelContentRepository
+        this.dataTypeService = dataTypeService
     }
 
     @Audit
@@ -132,6 +144,37 @@ class DataElementController extends AdministeredItemController<DataElement, Data
     }
 
     @Audit
+    @Post(Paths. DATA_ELEMENT_COPY)
+    @Transactional
+    DataElement copyDataElement(UUID dataModelId, UUID dataClassId, UUID otherModelId, UUID otherDataClassId, UUID dataElementId) {
+        DataModel targetModel = dataModelContentRepository.findWithContentById(dataModelId)
+        accessControlService.checkRole(Role.EDITOR, targetModel)
+        DataClass targetClass = dataClassRepository.findById(dataClassId)
+        accessControlService.checkRole(Role.EDITOR, targetClass)
+        if (targetClass.dataModel.id != targetModel.id){
+            ErrorHandler.handleError(HttpStatus.BAD_REQUEST, "Destination DataClass $targetClass.id dataModel id is not $targetModel.id")
+        }
+
+        DataClass otherDataClass = dataClassRepository.findById(otherDataClassId)
+        accessControlService.canDoRole(Role.EDITOR, otherDataClass)
+        DataElement dataElement = dataElementRepository.findById(dataElementId)
+        accessControlService.canDoRole(Role.EDITOR, dataElement)
+        if (dataElement.dataClass.id != otherDataClass.id) {
+            ErrorHandler.handleError(HttpStatus.BAD_REQUEST, "DataElement with id $dataElementId is not associated with data Class: $otherDataClassId")
+        }
+        DataModel otherModel = dataModelContentRepository.findWithContentById(otherModelId)
+        accessControlService.canDoRole(Role.READER, otherModel)
+        //verify
+        if (otherDataClass.dataModel.id != otherModel.id ) {
+            ErrorHandler.handleError(HttpStatus.BAD_REQUEST, "DataClass  with id $otherDataClass.id is not associated with otherModel: $otherModel.id")
+        }
+        DataElement copied = dataElement.clone()
+        DataElement savedCopy = createEntity(otherDataClass, copied)
+        savedCopy.dataType = copyDataType(savedCopy, targetModel)
+        savedCopy
+    }
+
+    @Audit
     @Get(Paths.DATA_ELEMENT_IN_MODEL_LIST)
     ListResponse<DataElement> byModelList(UUID dataModelId) {
         DataModel dataModel = dataModelRepository.readById(dataModelId)
@@ -150,7 +193,7 @@ class DataElementController extends AdministeredItemController<DataElement, Data
      * @param dataElement
      * @return existing, updated with new DTid
      */
-    private DataElement validateDataTypeChange(DataElement existing, DataElement dataElement) {
+    protected DataElement validateDataTypeChange(DataElement existing, DataElement dataElement) {
         if (!dataElement.dataType) return existing
 
         DataType dataElementDataType = dataTypeRepository.readById(dataElement.dataType.id)
@@ -159,15 +202,27 @@ class DataElementController extends AdministeredItemController<DataElement, Data
         }
         DataModel dataElementDTDM = dataModelRepository.readById(dataElementDataType.dataModel.id)
 
-        DataType existingDataType = dataTypeRepository.readById(existing.dataType.id)
+        DataType existingDataType = dataTypeService.readDataType(existing.dataType.id)
+        ErrorHandler.handleErrorOnNullObject( HttpStatus.BAD_REQUEST, existingDataType, "Datatype not found:  $existingDataType.id")
+
         DataModel existingDTDM = dataModelRepository.readById(existingDataType.dataModel.id)
         if (dataElementDTDM && dataElementDTDM.id != existingDTDM.id) {
             throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
                                           "DataElement Update payload -DataType's DataModel must be same as existing dataType datamodel $existingDTDM")
-
         }
         existing.dataType = dataElement.dataType
         existing
+    }
+
+
+    protected DataType copyDataType(DataElement dataElement, DataModel target) {
+        DataType targetDataType = dataTypeService.findInModel(dataElement.dataType, target)
+        if (!targetDataType) {
+            if (dataElement.dataType.referenceClass || dataElement.dataType.isModelType() ) {
+                ErrorHandler.handleError(HttpStatus.INTERNAL_SERVER_ERROR, "Attempting to clone dataElement with a referenceType DataType. Datatype does not exist in target model $target.id")
+            }
+            dataTypeService.createAndSave(dataElement.dataType, target, null)
+        }
     }
 
     @Get(Paths.DATA_ELEMENT_DOI)
@@ -176,4 +231,5 @@ class DataElementController extends AdministeredItemController<DataElement, Data
         ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "Doi is not implemented")
         return null
     }
+
 }

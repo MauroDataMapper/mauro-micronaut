@@ -41,6 +41,10 @@ interface DataElementApi extends AdministeredItemApi<DataElement, DataClass> {
     @Get(Paths.DATA_ELEMENT_IN_MODEL_LIST)
     ListResponse<DataElement> byModelList(UUID dataModelId)
 
+    @Post(Paths.DATA_ELEMENT_COPY)
+    DataElement copyDataElement(UUID dataModelId, UUID dataClassId, UUID otherModelId,  UUID otherDataClassId, UUID dataElementId)
+
+
     @Get(Paths.DATA_ELEMENT_DOI)
     Map doi(UUID id)
 }
