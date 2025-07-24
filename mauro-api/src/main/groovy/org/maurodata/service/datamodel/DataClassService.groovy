@@ -12,41 +12,43 @@ import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository
 import org.maurodata.persistence.datamodel.DataClassContentRepository
 import org.maurodata.persistence.model.PathRepository
+import org.maurodata.service.core.AdministeredItemService
 
 @CompileStatic
 @Slf4j
-class DataClassService {
+class DataClassService extends AdministeredItemService{
 
-    PathRepository pathRepository
     DataClassContentRepository dataClassContentRepository
     AdministeredItemCacheableRepository.DataElementCacheableRepository dataElementCacheableRepository
     AdministeredItemCacheableRepository.DataTypeCacheableRepository dataTypeCacheableRepository
     AdministeredItemCacheableRepository.DataClassCacheableRepository dataClassCacheableRepository
+    DataTypeService dataTypeService
 
     @Inject
     DataClassService(PathRepository pathRepository, DataClassContentRepository dataClassContentRepository,
                      AdministeredItemCacheableRepository.DataElementCacheableRepository dataElementCacheableRepository,
                      AdministeredItemCacheableRepository.DataTypeCacheableRepository dataTypeCacheableRepository,
-                     AdministeredItemCacheableRepository.DataClassCacheableRepository dataClassCacheableRepository) {
+                     AdministeredItemCacheableRepository.DataClassCacheableRepository dataClassCacheableRepository, DataTypeService dataTypeService) {
         this.pathRepository = pathRepository
         this.dataClassContentRepository = dataClassContentRepository
         this.dataElementCacheableRepository = dataElementCacheableRepository
         this.dataTypeCacheableRepository = dataTypeCacheableRepository
         this.dataClassCacheableRepository = dataClassCacheableRepository
+        this.dataTypeService = dataTypeService
     }
 
     DataClass copyReferenceTypes(DataClass savedCopy, DataModel target) {
         //cloned so these are old
         List<DataType> copiedTargetDataTypes = []
         savedCopy.referenceTypes.each {
-            DataType targetDataType = findDataTypeByLabelInTarget(it, target)
+            DataType targetDataType = dataTypeService.findInModel(it, target)
             if (!targetDataType) {
-                copiedTargetDataTypes.add(createAndSave(it, target, savedCopy))
+                copiedTargetDataTypes.add(dataTypeService.createAndSave(it, target, savedCopy))
             } else {
                 copiedTargetDataTypes.add(targetDataType)
             }
         }
-        savedCopy.referenceTypes = dataTypeCacheableRepository.updateAll(copiedTargetDataTypes)
+        savedCopy.referenceTypes = dataTypeCacheableRepository.updateAll(copiedTargetDataTypes) as List<DataType>
         savedCopy
     }
 
@@ -75,7 +77,7 @@ class DataClassService {
                     //target model does not have existing dataType? copy new DataType in target model
                     copiedDE.dataType = setOrCreateNewDataType(target, copiedDE.dataType)
                 }
-                updateCreationProperties(copiedDE)
+                updateCreationProperties(copiedDE as AdministeredItem)
                 updateDerivedProperties(copiedDE)
                 copiedDE.dataModel = target
                 copiedDE.dataClass = dataClass
@@ -86,41 +88,11 @@ class DataClassService {
     }
 
     protected DataType setOrCreateNewDataType(DataModel target, DataType dataType) {
-        DataType targetDataType = findDataTypeByLabelInTarget(dataType, target)
+        DataType targetDataType = dataTypeService.findInModel(dataType, target)
         if (!targetDataType) {
-            targetDataType = createAndSave(dataType, target, null)
+            targetDataType = dataTypeService.createAndSave(dataType, target, null)
         }
         targetDataType
     }
 
-
-    protected DataType createAndSave(DataType source, DataModel target, DataClass savedCopy) {
-        DataType copiedDataType = source.clone()
-        copiedDataType.updateCreationProperties()
-        copiedDataType = updateDerivedProperties(copiedDataType) as DataType
-        copiedDataType.referenceClass = savedCopy ?: null
-        copiedDataType.dataModel = target
-        log.info("Saving new datatype with label $copiedDataType.label to model $target.id: ")
-        DataType saved = dataTypeCacheableRepository.save(copiedDataType)
-        saved
-    }
-
-
-    protected static DataType findDataTypeByLabelInTarget(DataType dataType, DataModel target) {
-        target.dataTypes.find {targetModelDataType -> targetModelDataType.label == dataType.label}
-    }
-
-    protected AdministeredItem updateDerivedProperties(AdministeredItem item) {
-        pathRepository.readParentItems(item)
-        item.updatePath()
-        item.updateBreadcrumbs()
-        item
-    }
-
-    protected void updateCreationProperties(AdministeredItem item) {
-        item.id = null
-        item.version = null
-        item.dateCreated = null
-        item.lastUpdated = null
-    }
 }
