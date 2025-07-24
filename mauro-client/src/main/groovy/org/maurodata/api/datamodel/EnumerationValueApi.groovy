@@ -37,4 +37,7 @@ interface EnumerationValueApi extends AdministeredItemApi<EnumerationValue, Data
 
     @Get(Paths.ENUMERATION_VALUE_LIST_PAGED)
     ListResponse<EnumerationValue> list(UUID dataModelId, UUID enumerationTypeId, @Nullable PaginationParams params)
+
+    @Get(Paths.ENUMERATION_VALUE_LIST_DOI)
+    Map doi(@NonNull UUID enumerationTypeId)
 }
