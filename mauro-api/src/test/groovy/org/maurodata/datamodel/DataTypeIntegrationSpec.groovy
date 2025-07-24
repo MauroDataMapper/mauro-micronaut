@@ -7,12 +7,14 @@ import io.micronaut.test.annotation.Sql
 import jakarta.inject.Singleton
 import org.maurodata.domain.datamodel.DataClass
 import org.maurodata.domain.datamodel.DataType
+import org.maurodata.domain.datamodel.EnumerationValue
 import org.maurodata.domain.folder.Folder
 import org.maurodata.domain.model.Model
 import org.maurodata.domain.terminology.CodeSet
 import org.maurodata.persistence.ContainerizedTest
 import org.maurodata.testing.CommonDataSpec
 import org.maurodata.web.ListResponse
+import org.maurodata.web.PaginationParams
 import spock.lang.Shared
 import spock.lang.Unroll
 
@@ -284,5 +286,34 @@ class DataTypeIntegrationSpec extends CommonDataSpec {
         httpResponse.status == HttpStatus.NO_CONTENT
     }
 
+    void 'should get enumeration values associated with EnumerationType dataType'() {
+        given:
+        DataType enumerationType = dataTypeApi.create(dataModelId, new DataType(label: 'test enumerationType',
+                                                                                dataTypeKind: DataType.DataTypeKind.ENUMERATION_TYPE))
+        enumerationValueApi.create(dataModelId, enumerationType.id, new EnumerationValue().tap {
+            key = 'yes'
+            value = 'yes value'
+        })
+        enumerationValueApi.create(dataModelId, enumerationType.id, new EnumerationValue().tap {
+            key = 'no'
+            value = 'no value'
+        })
+
+
+        when:
+        DataType retrieved = dataTypeApi.show(dataModelId, enumerationType.id)
+
+        then:
+        retrieved
+        retrieved.enumerationValues.size() == 2
+
+        when:
+        ListResponse<DataType> dataTypeListResponse = dataTypeApi.list(dataModelId,  new PaginationParams())
+        then:
+        dataTypeListResponse
+        dataTypeListResponse.items.size() == 1
+        dataTypeListResponse.items.first().enumerationValues.size() == 2
+
+    }
 
 }

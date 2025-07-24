@@ -78,6 +78,7 @@ class DataTypeController extends AdministeredItemController<DataType, DataModel>
 
         updateDerivedProperties(dataType)
         dataTypeService.getReferenceClassProperties(dataType)
+        dataTypeService.getEnumerationValues(dataType)
     }
 
     @Audit
@@ -172,7 +173,6 @@ class DataTypeController extends AdministeredItemController<DataType, DataModel>
     @Audit
     @Get(Paths.DATA_TYPE_LIST_PAGED)
     ListResponse<DataType> list(UUID dataModelId, @Nullable PaginationParams params = new PaginationParams()) {
-
         Item parent = parentItemRepository.readById(dataModelId)
         if (!parent) return null
         accessControlService.checkRole(Role.READER, parent)
@@ -180,6 +180,7 @@ class DataTypeController extends AdministeredItemController<DataType, DataModel>
         dataTypes.each {
             updateDerivedProperties(it)
             dataTypeService.getReferenceClassProperties(it)
+            dataTypeService.getEnumerationValues(it)
         }
         ListResponse.from(dataTypes, params)
     }

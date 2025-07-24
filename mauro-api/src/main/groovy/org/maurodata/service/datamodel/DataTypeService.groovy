@@ -7,6 +7,7 @@ import jakarta.inject.Inject
 import org.maurodata.ErrorHandler
 import org.maurodata.domain.datamodel.DataClass
 import org.maurodata.domain.datamodel.DataType
+import org.maurodata.domain.datamodel.EnumerationValue
 import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.domain.security.Role
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository
@@ -18,14 +19,17 @@ import jakarta.inject.Singleton
 class DataTypeService {
     AdministeredItemCacheableRepository.DataTypeCacheableRepository dataTypeRepository
     AdministeredItemCacheableRepository.DataClassCacheableRepository dataClassRepository
+    AdministeredItemCacheableRepository.EnumerationValueCacheableRepository enumerationValueRepository
     AccessControlService accessControlService
 
     @Inject
     DataTypeService(AdministeredItemCacheableRepository.DataTypeCacheableRepository dataTypeRepository,
                     AdministeredItemCacheableRepository.DataClassCacheableRepository dataClassRepository,
+                    AdministeredItemCacheableRepository.EnumerationValueCacheableRepository enumerationValueRepository,
                    AccessControlService accessControlService) {
         this.dataTypeRepository = dataTypeRepository
         this.dataClassRepository = dataClassRepository
+        this.enumerationValueRepository = enumerationValueRepository
         this.accessControlService = accessControlService
     }
 
@@ -37,16 +41,23 @@ class DataTypeService {
         dataType
     }
 
-   DataType getReferenceClassProperties(DataType dataType) {
-       if (dataType.isReferenceType()) {
-           dataType.referenceClass = dataClassRepository.readById(dataType.referenceClass?.id)
-       }
+    DataType getReferenceClassProperties(DataType dataType) {
+        if (dataType.isReferenceType()) {
+            dataType.referenceClass = dataClassRepository.readById(dataType.referenceClass?.id)
+        }
+        dataType
+    }
+
+    DataType getEnumerationValues(@NonNull DataType dataType) {
+        if (dataType.domainType == DataType.DataTypeKind.ENUMERATION_TYPE.stringValue) {
+            dataType.enumerationValues = enumerationValueRepository.readAllByEnumerationType_Id(dataType.id)
+        }
         dataType
     }
 
     protected DataClass validatedReferenceClass(DataType dataType, AdministeredItem parent) {
         UUID referenceClassId = dataType.referenceClass?.id
-        if ( !referenceClassId){
+        if (!referenceClassId) {
             ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "Error -ReferenceType datatype requires referenceClass")
         }
         DataClass referenceClass = getReferenceDataClass(referenceClassId)
