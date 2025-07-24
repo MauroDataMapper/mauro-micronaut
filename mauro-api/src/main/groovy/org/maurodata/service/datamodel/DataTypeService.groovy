@@ -1,11 +1,13 @@
 package org.maurodata.service.datamodel
 
 import groovy.transform.CompileStatic
+import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.http.HttpStatus
 import jakarta.inject.Inject
 import org.maurodata.ErrorHandler
 import org.maurodata.domain.datamodel.DataClass
+import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.datamodel.DataType
 import org.maurodata.domain.datamodel.EnumerationValue
 import org.maurodata.domain.model.AdministeredItem
@@ -13,10 +15,12 @@ import org.maurodata.domain.security.Role
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository
 import org.maurodata.security.AccessControlService
 import jakarta.inject.Singleton
+import org.maurodata.service.core.AdministeredItemService
 
 @CompileStatic
 @Singleton
-class DataTypeService {
+@Slf4j
+class DataTypeService extends AdministeredItemService {
     AdministeredItemCacheableRepository.DataTypeCacheableRepository dataTypeRepository
     AdministeredItemCacheableRepository.DataClassCacheableRepository dataClassRepository
     AdministeredItemCacheableRepository.EnumerationValueCacheableRepository enumerationValueRepository
@@ -74,10 +78,29 @@ class DataTypeService {
         referenceClass
     }
 
+    DataType findInModel(DataType dataType, DataModel target) {
+        target.dataTypes.find {targetModelDataType -> targetModelDataType.label == dataType.label}
+    }
+
+
+    DataType createAndSave(DataType source, DataModel target, DataClass referenceClass) {
+        DataType copiedDataType = source.clone()
+        copiedDataType.updateCreationProperties()
+        copiedDataType = super.updateDerivedProperties(copiedDataType) as DataType
+        copiedDataType.referenceClass = referenceClass ?: null
+        copiedDataType.dataModel = target
+        log.info("Saving new datatype with label $copiedDataType.label to model $target.id: ")
+        dataTypeRepository.save(copiedDataType)
+    }
+
+     DataType readDataType(UUID dataTypeId) {
+        dataTypeRepository.readById(dataTypeId)
+    }
+
+
     protected DataClass getReferenceDataClass(@NonNull UUID dataClassId) {
         DataClass referenceClass = dataClassRepository.findById(dataClassId)
         ErrorHandler.handleErrorOnNullObject(HttpStatus.UNPROCESSABLE_ENTITY, referenceClass, "Cannot find reference class ")
         referenceClass
     }
-
 }

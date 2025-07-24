@@ -45,7 +45,7 @@
 
     <logger name="org.flywaydb" level="info" />
 
-    <logger name="org.maurodata" level="debug" />
+    <logger name="org,maurodata" level="debug" />
     <logger name="org.codehaus.groovy" level="debug" />
 
 </configuration>
