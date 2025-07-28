@@ -201,6 +201,11 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
         List<DataElement> readAllByDataTypeIn(List<DataType> dataTypes){
             ((DataElementRepository) repository).readAllByDataTypeIn(dataTypes)
         }
+
+
+        List<DataElement> readAllByDataModel_Id(UUID dataModelId){
+            ((DataElementRepository) repository).readAllByDataModelId(dataModelId)
+        }
     }
 
     @Singleton
