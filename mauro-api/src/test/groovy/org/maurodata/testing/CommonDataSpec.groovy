@@ -172,10 +172,17 @@ class CommonDataSpec extends Specification {
             label 'Test folder'
         }
     }
+    Folder folder(String labelText) {
+        Folder.build {
+            label  labelText
+        }
+    }
 
-
-    Terminology terminology() {
+    Terminology terminologyPayload() {
         new Terminology(label: 'Test terminology')
+    }
+    Terminology terminologyPayload(String labelText) {
+        new Terminology(label: labelText)
     }
 
     Term termPayload() {

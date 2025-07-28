@@ -107,19 +107,6 @@ class AdministeredItemContentRepository {
         deleteReferenceFiles(items)
     }
 
-//    void saveAllFacets(Collection<AdministeredItem> items) {
-//        List<Metadata> metadata = []
-//
-//        items.each {item ->
-//            if (item.metadata) {
-//                metadata.addAll(item.metadata)
-//                metadataRepository.saveAll(metadata)
-//            }
-//        }
-//        deleteSummaryMetadata(items)
-//        deleteAnnotations(items)
-//        deleteReferenceFiles(items)
-//    }
     void deleteAllJoinAdministeredItemToClassifier(@NonNull AdministeredItem item) {
         deleteAllJoinAdministeredItemToClassifier([item])
     }
