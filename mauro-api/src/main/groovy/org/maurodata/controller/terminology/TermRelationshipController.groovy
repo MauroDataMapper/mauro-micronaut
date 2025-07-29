@@ -97,14 +97,4 @@ class TermRelationshipController extends AdministeredItemController<TermRelation
         
         super.list(terminologyId, params)
     }
-
-    @Audit
-    @Get(Paths.TERM_RELATIONSHIP_BY_TERM_ID_LIST)
-    ListResponse<TermRelationship> byTerminologyAndTermIdList(UUID terminologyId, UUID termId) {
-        Term term = termRepository.readById(termId)
-        accessControlService.canDoRole(Role.READER, term)
-        Terminology terminology = parentItemRepository.readById(terminologyId)
-        List<TermRelationship> termRelationshipsByTerm = termRelationshipRepository.readAllByTerminologyAndSourceTermOrTargetTerm(terminology, term)
-        ListResponse.from(termRelationshipsByTerm)
-    }
 }

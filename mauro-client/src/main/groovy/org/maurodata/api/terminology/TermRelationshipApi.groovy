@@ -38,6 +38,5 @@ interface TermRelationshipApi extends AdministeredItemApi<TermRelationship, Term
     @Get(Paths.TERM_RELATIONSHIP_LIST_PAGED)
     ListResponse<TermRelationship> list(UUID terminologyId, @Nullable PaginationParams params)
 
-    @Get(Paths.TERM_RELATIONSHIP_BY_TERM_ID_LIST)
-    ListResponse<TermRelationship> byTerminologyAndTermIdList(UUID terminologyId, UUID termId)
+
 }
