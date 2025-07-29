@@ -174,6 +174,18 @@ class DataElementController extends AdministeredItemController<DataElement, Data
         savedCopy
     }
 
+    @Audit
+    @Get(Paths.DATA_ELEMENT_IN_MODEL_LIST)
+    ListResponse<DataElement> byModelList(UUID dataModelId) {
+        DataModel dataModel = dataModelRepository.readById(dataModelId)
+        accessControlService.checkRole(Role.READER, dataModel)
+
+        List<DataElement> dataElements = dataElementRepository.readAllByDataModel_Id(dataModelId).findAll({
+            accessControlService.canDoRole(Role.READER, it)
+        }).each {updateDerivedProperties(it)}
+        ListResponse.from(dataElements)
+    }
+
     /**
      * DataType in DataElement Payload can be changed, but the DT must exist.
      * Furthermore, the DT must have the same DM as the existing DT's DM. This update does not update the DataType

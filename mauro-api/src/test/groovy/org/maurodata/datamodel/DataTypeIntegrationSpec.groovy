@@ -2,8 +2,12 @@ package org.maurodata.datamodel
 
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
+import io.micronaut.http.client.HttpClient
 import io.micronaut.http.client.exceptions.HttpClientResponseException
+import io.micronaut.http.uri.UriBuilder
+import io.micronaut.runtime.server.EmbeddedServer
 import io.micronaut.test.annotation.Sql
+import jakarta.inject.Inject
 import jakarta.inject.Singleton
 import org.maurodata.domain.datamodel.DataClass
 import org.maurodata.domain.datamodel.DataType
@@ -13,6 +17,7 @@ import org.maurodata.domain.terminology.CodeSet
 import org.maurodata.persistence.ContainerizedTest
 import org.maurodata.testing.CommonDataSpec
 import org.maurodata.web.ListResponse
+import org.maurodata.web.PaginationParams
 import spock.lang.Shared
 import spock.lang.Unroll
 
@@ -35,6 +40,15 @@ class DataTypeIntegrationSpec extends CommonDataSpec {
 
     @Shared
     UUID otherDataModelId
+
+    @Shared
+    @Inject
+    HttpClient httpClient
+
+    @Shared
+    @Inject
+    EmbeddedServer embeddedServer
+
 
     void setupSpec() {
         folderId = folderApi.create(new Folder(label: 'Test folder')).id
@@ -129,7 +143,7 @@ class DataTypeIntegrationSpec extends CommonDataSpec {
 
     void 'create another dataType with DataTypeKind referenceType in same model - different label - should create'() {
         given:
-        ListResponse<DataType> dataTypeResponse = dataTypeApi.list(dataModelId)
+        ListResponse<DataType> dataTypeResponse = dataTypeApi.list(dataModelId, new PaginationParams())
         dataTypeResponse.count == 0
 
         dataTypeApi.create(
@@ -139,8 +153,18 @@ class DataTypeIntegrationSpec extends CommonDataSpec {
                          dataTypeKind: DataType.DataTypeKind.REFERENCE_TYPE,
                          referenceClass: [id: dataClassId1]))
         and:
-        dataTypeResponse = dataTypeApi.list(dataModelId)
-        dataTypeResponse.count == 1
+         URI uri = UriBuilder.of(embeddedServer.getContextURI())
+            .path("/dataModels/".concat(dataModelId.toString()).concat('/dataTypes'))
+            .queryParam('domainType', DataType.DataTypeKind.REFERENCE_TYPE.stringValue)
+            .build()
+        when:
+
+        Map<String, Object> response = httpClient.toBlocking().retrieve(uri.toString(), Map<String, Object>)
+
+        then:
+        response
+        response.get('count') == 1
+
 
         and:
         DataClass dataClass2 = dataClassApi.show(dataModelId, dataClassId2)
@@ -207,6 +231,19 @@ class DataTypeIntegrationSpec extends CommonDataSpec {
         retrieved.modelResourceId == codeSet.id
         retrieved.modelResourceDomainType == CodeSet.class.simpleName
 
+        URI uri = UriBuilder.of(embeddedServer.getContextURI())
+            .path("/dataModels/".concat(dataModelId.toString()).concat('/dataTypes'))
+            .queryParam('domainType', DataType.DataTypeKind.MODEL_TYPE.stringValue)
+            .build()
+        when:
+
+        Map<String, Object> lowLevelResponse = httpClient.toBlocking().retrieve(uri.toString(), Map<String, Object>)
+
+        then:
+        lowLevelResponse
+        lowLevelResponse.get('count') == 1
+
+
         when:
         HttpResponse response = dataTypeApi.delete(dataModelId, retrieved.id, retrieved)
         then:
@@ -267,7 +304,7 @@ class DataTypeIntegrationSpec extends CommonDataSpec {
 
     void 'should delete dataType when no other references to dataType'() {
         given:
-        dataTypeApi.list(dataModelId).count == 0
+        dataTypeApi.list(dataModelId, new PaginationParams()).count == 0
 
         DataType dataTypeResponse = dataTypeApi.create(
             dataModelId,
@@ -284,5 +321,26 @@ class DataTypeIntegrationSpec extends CommonDataSpec {
         httpResponse.status == HttpStatus.NO_CONTENT
     }
 
+    @Unroll
+    void 'test list response query parameter'() {
+        given:
+        DataType dataType = dataTypeApi.create(dataModelId, dataTypesPayload('test label', dataTypeType))
 
+        URI uri = UriBuilder.of(embeddedServer.getContextURI())
+            .path("/dataModels/".concat(dataModelId.toString()).concat('/dataTypes'))
+            .queryParam('domainType', queryValue)
+            .build()
+        when:
+
+        Map<String, Object> response = httpClient.toBlocking().retrieve(uri.toString(), Map<String, Object>)
+
+        then:
+        response
+        response.get('count') == expectedItems
+        where:
+        dataTypeType                           | queryValue                                         | expectedItems
+        DataType.DataTypeKind.PRIMITIVE_TYPE   | DataType.DataTypeKind.PRIMITIVE_TYPE.stringValue   | 1
+        DataType.DataTypeKind.ENUMERATION_TYPE | DataType.DataTypeKind.ENUMERATION_TYPE.stringValue | 1
+
+    }
 }

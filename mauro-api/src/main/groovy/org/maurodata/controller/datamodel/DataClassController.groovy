@@ -1,6 +1,5 @@
 package org.maurodata.controller.datamodel
 
-
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
@@ -104,6 +103,20 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
         }
         ListResponse<DataClass>.from(classes,params)
     }
+
+
+    @Audit
+    @Get(Paths.ALL_DATA_CLASSES)
+    ListResponse<DataClass> allDataClasses(@NonNull UUID dataModelId) {
+        DataModel dataModel = dataModelRepository.readById(dataModelId)
+        accessControlService.checkRole(Role.READER, dataModel)
+        List<DataClass> classes = dataClassRepository.readAllByDataModel(dataModel)
+        classes.each {
+            updateDerivedProperties(it)
+        }
+        ListResponse<DataClass>.from(classes)
+    }
+
 
     @Audit
     @Get(Paths.DATA_CLASS_CHILD_DATA_CLASS_ID)

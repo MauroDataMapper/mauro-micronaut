@@ -54,7 +54,7 @@ class DataElementCopyIntegrationSpec extends CommonDataSpec {
         dataModelId = dataModelApi.create(folderId, dataModelPayload('source label')).id
         targetId = dataModelApi.create(folderId, dataModelPayload('target label')).id
         targetDataClass = dataClassApi.create(targetId, dataClassPayload('target data class label'))
-        Terminology terminology = terminologyApi.create(folderId, terminology())
+        Terminology terminology = terminologyApi.create(folderId, terminologyPayload())
         terminologyApi.finalise(terminology.id, finalisePayload())
         dataClass1 = dataClassApi.create(dataModelId, dataClassPayload('source label 1 '))
         dataClass2 = dataClassApi.create(dataModelId, dataClassPayload('source label 2'))

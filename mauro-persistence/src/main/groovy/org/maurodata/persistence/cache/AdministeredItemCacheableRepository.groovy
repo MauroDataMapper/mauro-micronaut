@@ -161,6 +161,11 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
             ((DataClassRepository) repository).readAllByDataModelAndParentDataClassIsNull(dataModel)
         }
 
+
+        // not cached
+        List<DataClass> readAllByDataModel(DataModel dataModel) {
+            ((DataClassRepository) repository).readAllByDataModel(dataModel)
+        }
         // not cached
         DataClass createExtensionRelationship(DataClass sourceDataClass, DataClass targetDataClass) {
             invalidate(sourceDataClass)
@@ -195,6 +200,11 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
 
         List<DataElement> readAllByDataTypeIn(List<DataType> dataTypes){
             ((DataElementRepository) repository).readAllByDataTypeIn(dataTypes)
+        }
+
+
+        List<DataElement> readAllByDataModel_Id(UUID dataModelId){
+            ((DataElementRepository) repository).readAllByDataModelId(dataModelId)
         }
     }
 

@@ -83,12 +83,11 @@ class DataFlowIntegrationSpec extends CommonDataSpec {
 
     void 'create dataflow -should return error when target is invalid id'() {
         when:
-        DataFlow response =
-                dataFlowApi.create(UUID.randomUUID(), dataFlowPayload(sourceId))
+        dataFlowApi.create(UUID.randomUUID(), dataFlowPayload(sourceId))
 
         then:
         HttpClientResponseException exception = thrown()
-        exception.status == HttpStatus.BAD_REQUEST
+        exception.status == HttpStatus.UNPROCESSABLE_ENTITY
     }
 
 
