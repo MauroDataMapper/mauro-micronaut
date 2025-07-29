@@ -30,7 +30,7 @@ class TermRelationshipTermIntegrationSpec extends CommonDataSpec {
 
     void setup() {
         folderId = folderApi.create(folder()).id
-        terminologyId = terminologyApi.create(folderId, terminology()).id
+        terminologyId = terminologyApi.create(folderId, terminologyPayload()).id
         termId1 = termApi.create(terminologyId, term()).id
         termId2 = termApi.create(terminologyId, new Term(description: 'Target Term description',
                                                          code: 'term-code ',

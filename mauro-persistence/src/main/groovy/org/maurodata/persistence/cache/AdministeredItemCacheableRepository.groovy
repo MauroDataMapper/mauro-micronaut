@@ -19,6 +19,7 @@ import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.domain.terminology.Term
 import org.maurodata.domain.terminology.TermRelationship
 import org.maurodata.domain.terminology.TermRelationshipType
+import org.maurodata.domain.terminology.Terminology
 import org.maurodata.persistence.classifier.ClassifierRepository
 import org.maurodata.persistence.dataflow.DataClassComponentRepository
 import org.maurodata.persistence.datamodel.DataClassRepository
@@ -128,6 +129,10 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
 
         List<TermRelationship> readAllByRelationshipType(TermRelationshipType relationshipType) {
             ((TermRelationshipRepository) repository).readAllByRelationshipType(relationshipType)
+        }
+
+        List<TermRelationship> readAllByTerminologyAndSourceTermOrTargetTerm(Terminology terminology, Term term) {
+            ((TermRelationshipRepository) repository).readAllByTerminologyAndSourceTermOrTargetTerm(terminology, term)
         }
     }
 

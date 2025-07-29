@@ -103,10 +103,8 @@ class TermRelationshipController extends AdministeredItemController<TermRelation
     ListResponse<TermRelationship> byTerminologyAndTermIdList(UUID terminologyId, UUID termId) {
         Term term = termRepository.readById(termId)
         accessControlService.canDoRole(Role.READER, term)
-        List<TermRelationship> termRelationshipsByTerm = (super.listItems(terminologyId) as List<TermRelationship>).findAll {
-            it.sourceTerm.id == termId || it.targetTerm.id == termId
-        }
-        println(termRelationshipsByTerm.size())
+        Terminology terminology = parentItemRepository.readById(terminologyId)
+        List<TermRelationship> termRelationshipsByTerm = termRelationshipRepository.readAllByTerminologyAndSourceTermOrTargetTerm(terminology, term)
         ListResponse.from(termRelationshipsByTerm)
     }
 }
