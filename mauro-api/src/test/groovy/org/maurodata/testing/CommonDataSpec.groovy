@@ -173,10 +173,17 @@ class CommonDataSpec extends Specification {
             label 'Test folder'
         }
     }
+    Folder folder(String labelText) {
+        Folder.build {
+            label  labelText
+        }
+    }
 
-
-    Terminology terminology() {
+    Terminology terminologyPayload() {
         new Terminology(label: 'Test terminology')
+    }
+    Terminology terminologyPayload(String labelText) {
+        new Terminology(label: labelText)
     }
 
     Term termPayload() {
@@ -258,6 +265,12 @@ class CommonDataSpec extends Specification {
             units : 'kilograms')
     }
 
+    DataType dataTypesPayload(String label, DataType.DataTypeKind dataTypeKind){
+        new DataType(
+            label: label,
+            dataTypeKind: dataTypeKind,
+            units : 'kilograms')
+    }
     TermRelationshipType termRelationshipType(){
        new TermRelationshipType(label: 'Test Term Relationship Type label',
                                 parentalRelationship: false,

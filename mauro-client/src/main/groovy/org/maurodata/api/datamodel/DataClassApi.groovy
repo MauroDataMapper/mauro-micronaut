@@ -38,6 +38,9 @@ interface DataClassApi extends AdministeredItemApi<DataClass, DataModel> {
     @Get(Paths.DATA_CLASS_SEARCH)
     ListResponse<DataClass> list(UUID dataModelId)
 
+    @Get(Paths.ALL_DATA_CLASSES)
+    ListResponse<DataClass> allDataClasses(@NonNull UUID dataModelId)
+
     @Get(Paths.DATA_CLASS_CHILD_DATA_CLASS_ID)
     DataClass show(UUID dataModelId, UUID parentDataClassId, UUID id)
 

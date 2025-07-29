@@ -153,7 +153,7 @@ class CodeSetIntegrationSpec extends CommonDataSpec {
         CodeSet response = codeSetApi.create(folderId, codeSet())
         codeSetId = response.id
         and:
-        Terminology terminologyResponse = terminologyApi.create(folderId, terminology())
+        Terminology terminologyResponse = terminologyApi.create(folderId, terminologyPayload())
         UUID terminologyId = terminologyResponse.id
         Term termResponse = termApi.create(terminologyId, termPayload())
         UUID termId = termResponse.id
@@ -180,7 +180,7 @@ class CodeSetIntegrationSpec extends CommonDataSpec {
         ReferenceFile referenceFile = referenceFileApi.create("codeSet", codeSetId, referenceFilePayload())
 
         and:
-        Terminology terminologyResponse = terminologyApi.create(folderId, terminology())
+        Terminology terminologyResponse = terminologyApi.create(folderId, terminologyPayload())
         UUID terminologyId = terminologyResponse.id
         Term termResponse = termApi.create(terminologyId, termPayload())
         UUID termId = termResponse.id
@@ -217,7 +217,7 @@ class CodeSetIntegrationSpec extends CommonDataSpec {
         codeSet.id = codeSetId
 
         and:
-        Terminology terminologyResponse = terminologyApi.create(folderId, terminology())
+        Terminology terminologyResponse = terminologyApi.create(folderId, terminologyPayload())
         UUID terminologyId = terminologyResponse.id
         Term termResponse = termApi.create(terminologyId, termPayload())
         UUID termId = termResponse.id
@@ -244,7 +244,7 @@ class CodeSetIntegrationSpec extends CommonDataSpec {
         codeSet.id = codeSetId
 
         and:
-        Terminology terminologyResponse = terminologyApi.create(folderId, terminology())
+        Terminology terminologyResponse = terminologyApi.create(folderId, terminologyPayload())
         UUID terminologyId = terminologyResponse.id
 
         Term termResponse1 = termApi.create(terminologyId, termPayload())
@@ -292,7 +292,7 @@ class CodeSetIntegrationSpec extends CommonDataSpec {
         codeSet.id = codeSetId
 
         and:
-        Terminology terminologyResponse = terminologyApi.create(folderId, terminology())
+        Terminology terminologyResponse = terminologyApi.create(folderId, terminologyPayload())
         UUID terminologyId = terminologyResponse.id
         Term termResponse = termApi.create(terminologyId, termPayload())
         UUID termId = termResponse.id

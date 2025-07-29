@@ -14,7 +14,7 @@ import io.micronaut.http.HttpStatus
 class DataModelHelper {
 
     static void validateModelTypeFields(DataType dataType) {
-        if (isModelType(dataType)) {
+        if (dataType.isModelType()) {
             if (!dataType.modelResourceDomainType && !dataType.modelResourceId) {
                 ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "Check DataType modelResource fields: $dataType.modelResourceDomainType, $dataType.modelResourceId")
             }
@@ -35,10 +35,6 @@ class DataModelHelper {
                 true
             default -> false
         }
-    }
-
-    static boolean isModelType(DataType dataType) {
-        dataType.domainType == DataType.DataTypeKind.MODEL_TYPE.stringValue || dataType.dataTypeKind == DataType.DataTypeKind.MODEL_TYPE
     }
 
 }

@@ -2,16 +2,11 @@ package org.maurodata.terminology
 
 import org.maurodata.domain.diff.ObjectDiff
 import org.maurodata.domain.model.version.CreateNewVersionData
-
-import io.micronaut.runtime.EmbeddedApplication
 import io.micronaut.test.annotation.Sql
-import jakarta.inject.Inject
 import jakarta.inject.Singleton
 import spock.lang.Shared
 import org.maurodata.domain.diff.DiffBuilder
 import org.maurodata.domain.facet.Annotation
-import org.maurodata.domain.facet.ReferenceFile
-import org.maurodata.domain.folder.Folder
 import org.maurodata.domain.terminology.*
 import org.maurodata.persistence.ContainerizedTest
 import org.maurodata.testing.CommonDataSpec
@@ -49,7 +44,7 @@ class TerminologyNewBranchVersionIntegrationSpec extends CommonDataSpec {
     void setup() {
         folderId = folderApi.create(folder()).id
         codeSet = codeSetApi.create(folderId, codeSet())
-        terminologyId = terminologyApi.create(folderId, terminology()).id
+        terminologyId = terminologyApi.create(folderId, terminologyPayload()).id
         termId1 = termApi.create(terminologyId, new Term(code: 'TEST-1', definition: 'first term')).id
         termId2 = termApi.create(terminologyId, term()).id
         termRelationshipTypeId = termRelationshipTypeApi.create(

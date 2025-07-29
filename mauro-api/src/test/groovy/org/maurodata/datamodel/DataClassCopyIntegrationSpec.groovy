@@ -11,6 +11,7 @@ import org.maurodata.domain.terminology.Terminology
 import org.maurodata.persistence.ContainerizedTest
 import org.maurodata.testing.CommonDataSpec
 import org.maurodata.web.ListResponse
+import org.maurodata.web.PaginationParams
 import spock.lang.Shared
 
 @ContainerizedTest
@@ -50,7 +51,7 @@ class DataClassCopyIntegrationSpec extends CommonDataSpec {
         folderId = folderApi.create(new Folder(label: 'Test folder')).id
         dataModelId = dataModelApi.create(folderId, dataModelPayload('source label')).id
         targetId = dataModelApi.create(folderId, dataModelPayload('target label')).id
-        Terminology terminology = terminologyApi.create(folderId, terminology())
+        Terminology terminology = terminologyApi.create(folderId, terminologyPayload())
         terminologyApi.finalise(terminology.id, finalisePayload())
         dataClass = dataClassApi.create(dataModelId, dataClassPayload('source label'))
         referenceTypeDataType = dataTypeApi.create(dataModelId, referenceTypeDataTypePayload(dataClass.id, 'datatype reference class label'))
@@ -105,6 +106,19 @@ class DataClassCopyIntegrationSpec extends CommonDataSpec {
         DataType copiedDataType  = dataTypes.items.find {it.domainType == DataType.DataTypeKind.PRIMITIVE_TYPE.stringValue}
         copiedDataType.id != primitiveDataType.id
         copiedDataType.label == primitiveDataType.label
+
+        when:
+        ListResponse<DataClass> allDataClasses = dataClassApi.allDataClasses(dataModelId)
+        then:
+        allDataClasses
+        allDataClasses.items.size() == 2
+
+        when:
+        ListResponse<DataClass> topLeveDataClasses = dataClassApi.list(dataModelId, new PaginationParams())
+
+        then:
+        topLeveDataClasses
+        topLeveDataClasses.items.size() == 1
 
     }
 
