@@ -40,7 +40,6 @@ class TermRelationshipType extends ModelItem<Terminology> {
     @Nullable
     Boolean childRelationship
 
-    String displayLabel = displayLabel ?: createDisplayLabel()
 
     @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'relationshipType')
     List<TermRelationship> termRelationships = []
@@ -72,20 +71,6 @@ class TermRelationshipType extends ModelItem<Terminology> {
         'trt'
     }
 
-    String createDisplayLabel() {
-        displayLabel = label
-        if (!displayLabel) return
-        // Replace all spaces and hyphens with underscores
-        displayLabel = displayLabel.replaceAll(/[ \-]/, '_')
-        // Convert all camel casing to underscores
-        displayLabel = CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_UNDERSCORE, displayLabel)
-
-        // Replace all underscores with spaces and trim to 1 space
-        displayLabel = displayLabel.replaceAll(/_/, ' ').replaceAll(/ {2}/, ' ')
-
-        // Capitalise each word in the label
-        displayLabel.split().collect {it.capitalize()}.join(' ')
-    }
 
     /****
      * Methods for building a tree-like DSL

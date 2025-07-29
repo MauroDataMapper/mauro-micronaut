@@ -32,7 +32,7 @@ class TermRelationshipTermIntegrationSpec extends CommonDataSpec {
 
     void setup() {
         folderId = folderApi.create(folder()).id
-        terminologyId = terminologyApi.create(folderId, terminology()).id
+        terminologyId = terminologyApi.create(folderId, terminologyPayload()).id
         termId1 = termApi.create(terminologyId, term()).id
         termId2 = termApi.create(terminologyId, termPayload('target term code', 'target term descdription', 'targetTerm definition')).id
     }
@@ -50,7 +50,7 @@ class TermRelationshipTermIntegrationSpec extends CommonDataSpec {
         TermRelationship termRelationshipOther = termRelationshipApi.createByTerminologyAndTerm(terminologyId, termId1,
                                                                                                 termRelationshipPayload(termRelationshipType, other, other))
         when:
-        ListResponse<TermRelationship> termRelationshipListResponse = termRelationshipApi.listByTerminologyAndTerm(terminologyId, termId1)
+        ListResponse<TermRelationship> termRelationshipListResponse = termRelationshipApi.byTerminologyAndTermIdList(terminologyId, termId1)
 
         then:
         termRelationshipListResponse
@@ -58,7 +58,7 @@ class TermRelationshipTermIntegrationSpec extends CommonDataSpec {
         termRelationshipListResponse.items.first().sourceTerm.id == termId1
 
         when:
-        termRelationshipListResponse = termRelationshipApi.listByTerminologyAndTerm(terminologyId, termId2)
+        termRelationshipListResponse = termRelationshipApi.byTerminologyAndTermIdList(terminologyId, termId2)
         then:
         termRelationshipListResponse
         termRelationshipListResponse.items.size() == 1

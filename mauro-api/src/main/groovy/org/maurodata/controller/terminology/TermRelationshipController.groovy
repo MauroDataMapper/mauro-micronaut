@@ -89,20 +89,20 @@ class TermRelationshipController extends AdministeredItemController<TermRelation
     }
 
     @Audit
+    @Override
     @Get(Paths.TERM_RELATIONSHIP_LIST_PAGED)
     ListResponse<TermRelationship> list(UUID terminologyId, @Nullable PaginationParams params = new PaginationParams()) {
-
         super.list(terminologyId, params)
     }
 
     @Audit
-    @Get(Paths.TERM_RELATIONSHIP_BY_TERM_ID)
-    ListResponse<TermRelationship> listByTerminologyAndTerm(UUID terminologyId, UUID termId) {
+    @Get(Paths.TERM_RELATIONSHIP_BY_TERM_ID_LIST)
+    @Override
+    ListResponse<TermRelationship> byTerminologyAndTermIdList(UUID terminologyId, UUID termId) {
         Term term = termRepository.readById(termId)
         accessControlService.canDoRole(Role.READER, term)
-        List<TermRelationship> termRelationshipsByTerm = (super.listItems(terminologyId) as List<TermRelationship>).findAll {
-            it.sourceTerm.id == termId || it.targetTerm.id == termId
-        }
+        Terminology terminology = parentItemRepository.readById(terminologyId)
+        List<TermRelationship> termRelationshipsByTerm = termRelationshipRepository.readAllByTerminologyAndSourceTermOrTargetTerm(terminology, term)
         ListResponse.from(termRelationshipsByTerm)
     }
 
@@ -121,7 +121,7 @@ class TermRelationshipController extends AdministeredItemController<TermRelation
     @Audit
     @Transactional
     @Override
-    @Post(Paths.TERM_RELATIONSHIP_BY_TERM_ID)
+    @Post(Paths.TERM_RELATIONSHIP_BY_TERM_ID_LIST)
     TermRelationship createByTerminologyAndTerm(@NonNull UUID terminologyId, @NonNull UUID termId, @Body @NonNull TermRelationship termRelationship) {
         cleanBody(termRelationship, false)
         Terminology terminology = terminologyRepository.readById(terminologyId)
@@ -149,18 +149,6 @@ class TermRelationshipController extends AdministeredItemController<TermRelation
         Term term = termRepository.readById(termId)
         accessControlService.checkRole(Role.EDITOR, term)
         updateTermRelationship(termRelationship, id, terminologyId)
-//        cleanBody(termRelationship, false)
-//
-//        TermRelationship existing = termRelationshipRepository.readById(id)
-//        accessControlService.checkRole(Role.EDITOR, existing)
-//        updateProperties(existing, termRelationship)
-//
-//        termRelationship.terminology = terminologyRepository.readById(terminologyId)
-//        termRelationship.sourceTerm = termRepository.readById(termRelationship.sourceTerm.id)
-//        termRelationship.targetTerm = termRepository.readById(termRelationship.targetTerm.id)
-//        termRelationship.relationshipType = termRelationshipTypeRepository.readById(termRelationship.relationshipType.id)
-//
-//        updateEntity(existing, termRelationship)
     }
 
     protected TermRelationship updateTermRelationship(TermRelationship termRelationship, UUID id, UUID terminologyId) {
@@ -185,5 +173,5 @@ class TermRelationshipController extends AdministeredItemController<TermRelation
         termRelationship.relationshipType = termRelationshipTypeRepository.readById(termRelationship.relationshipType.id)
         termRelationship
     }
-}
 
+}

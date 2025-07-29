@@ -184,8 +184,7 @@ create table terminology."term_relationship_type"
     "idx"                   integer,
     "terminology_id"        uuid             not null references terminology.terminology (id) initially deferred,
     "parental_relationship" boolean,
-    "child_relationship"    boolean,
-    "display_label"         text             not null
+    "child_relationship"    boolean
 );
 create unique index "idx_term_relationship_type_terminology_id_label" on terminology."term_relationship_type" (terminology_id, label);
 
