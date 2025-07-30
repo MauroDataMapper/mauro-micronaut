@@ -69,6 +69,7 @@ import org.maurodata.domain.model.version.FinaliseData
 import org.maurodata.domain.model.version.VersionChangeType
 import org.maurodata.domain.terminology.CodeSet
 import org.maurodata.domain.terminology.Term
+import org.maurodata.domain.terminology.TermRelationship
 import org.maurodata.domain.terminology.TermRelationshipType
 import org.maurodata.domain.terminology.Terminology
 import org.maurodata.export.ExportModel
@@ -189,6 +190,12 @@ class CommonDataSpec extends Specification {
         new Term(code: 'B15.0', definition: 'Hepatitis A with hepatic coma')
     }
 
+    protected Term termPayload(String code, String description, String definition) {
+        new Term(description: description,
+                 code: code,
+                 definition: definition)
+    }
+
     SummaryMetadataReport summaryMetadataReport() {
         new SummaryMetadataReport(reportValue: 'test-report-value', reportDate: REPORT_DATE)
     }
@@ -266,7 +273,6 @@ class CommonDataSpec extends Specification {
     }
     TermRelationshipType termRelationshipType(){
        new TermRelationshipType(label: 'Test Term Relationship Type label',
-                                //displayLabel: 'Random display label',
                                 parentalRelationship: false,
                                 childRelationship : false)
     }
@@ -467,12 +473,27 @@ class CommonDataSpec extends Specification {
                      referenceClass: [id: dataClassId])
     }
 
-     DataType modelTypeDataTypePayload(UUID modelId, String modelType) {
-         new DataType(label: 'test Model Resource Type',
-                      description: 'Test Model resourcde type description',
-                      dataTypeKind: DataType.DataTypeKind.MODEL_TYPE,
-                      modelResourceDomainType: modelType,
-                    modelResourceId: modelId)
+    DataType modelTypeDataTypePayload(UUID modelId, String modelType) {
+        new DataType(label: 'test Model Resource Type',
+                     description: 'Test Model resourcde type description',
+                     dataTypeKind: DataType.DataTypeKind.MODEL_TYPE,
+                     modelResourceDomainType: modelType,
+                     modelResourceId: modelId)
+    }
+
+    TermRelationship termRelationshipPayload(TermRelationshipType termRelationshipType,
+                                             Term source, Term target) {
+        new TermRelationship(
+            relationshipType: termRelationshipType,
+            sourceTerm      : source,
+            targetTerm      : target)
+
+    }
+
+     TermRelationshipType termRelationshipTypePayload(String label, boolean aBoolean) {
+         new TermRelationshipType(
+             label: label,
+             childRelationship:  aBoolean)
     }
 }
 

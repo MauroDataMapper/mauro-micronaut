@@ -131,8 +131,8 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
             ((TermRelationshipRepository) repository).readAllByRelationshipType(relationshipType)
         }
 
-        List<TermRelationship> readAllByTerminologyAndSourceTermOrTargetTerm(Terminology terminology, Term term) {
-            ((TermRelationshipRepository) repository).readAllByTerminologyAndSourceTermOrTargetTerm(terminology, term)
+        List<TermRelationship> findAllByTerminologyAndSourceTermOrTargetTerm(Terminology terminology, Term term) {
+            ((TermRelationshipRepository) repository).findAllByTerminologyAndSourceTermOrTargetTerm(terminology, term)
         }
     }
 

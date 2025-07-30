@@ -153,14 +153,7 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
     }
 
     ListResponse<I> list(UUID parentId, @Nullable PaginationParams params = new PaginationParams()) {
-
-        P parent = parentItemRepository.readById(parentId)
-        if (!parent) return null
-        accessControlService.checkRole(Role.READER, parent)
-        List<I> items = administeredItemRepository.readAllByParent(parent)
-        items.each {
-            updateDerivedProperties(it as I)
-        }
+        List<I> items = listItems(parentId)
         ListResponse.from(items, params)
     }
 
