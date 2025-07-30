@@ -32,5 +32,5 @@ abstract class TermRelationshipDTORepository implements GenericRepository<TermRe
     @Join(value = 'relationshipType', type = Join.Type.LEFT_FETCH)
     @Join(value = 'catalogueUser', type = Join.Type.LEFT_FETCH)
     @Nullable
-    abstract List<TermRelationshipDTO> readAllByTerminologyAndSourceTermOrTargetTerm(Terminology terminology, Term sourceTerm, Term targetTerm)
+    abstract List<TermRelationshipDTO> findAllByTerminologyAndSourceTermOrTargetTerm(Terminology terminology, Term sourceTerm, Term targetTerm)
 }

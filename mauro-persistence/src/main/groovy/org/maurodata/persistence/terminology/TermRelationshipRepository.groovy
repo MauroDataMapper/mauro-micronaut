@@ -68,7 +68,7 @@ abstract class TermRelationshipRepository implements ModelItemRepository<TermRel
 
     @Nullable
     List<TermRelationship> readAllByTerminologyAndSourceTermOrTargetTerm(Terminology terminology, Term term) {
-        termRelationshipDTORepository.readAllByTerminologyAndSourceTermOrTargetTerm(terminology, term, term) as List<TermRelationship>
+        termRelationshipDTORepository.findAllByTerminologyAndSourceTermOrTargetTerm(terminology, term, term) as List<TermRelationship>
     }
 
     @Override
