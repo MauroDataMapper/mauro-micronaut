@@ -3,8 +3,6 @@ package org.maurodata.controller.dataflow
 import org.maurodata.ErrorHandler
 import org.maurodata.api.dataflow.DataFlowApi
 import org.maurodata.audit.Audit
-import org.maurodata.domain.dataflow.DataClassComponent
-import org.maurodata.domain.facet.EditType
 
 import org.maurodata.web.PaginationParams
 

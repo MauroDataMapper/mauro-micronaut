@@ -237,12 +237,7 @@ class Folder extends Model {
         }
     }
 
-    @Override
-    @Transient
-    @JsonIgnore
-    List<List<AdministeredItem>> getAllAssociations() {
-        [childFolders] as List<List<AdministeredItem>>
-    }
+
 
     /****
      * Methods for building a tree-like DSL

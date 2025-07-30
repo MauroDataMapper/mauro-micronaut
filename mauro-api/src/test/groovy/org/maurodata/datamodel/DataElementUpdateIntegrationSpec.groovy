@@ -1,19 +1,16 @@
 package org.maurodata.datamodel
 
+import io.micronaut.http.HttpStatus
+import io.micronaut.http.client.exceptions.HttpClientResponseException
+import io.micronaut.test.annotation.Sql
 import jakarta.inject.Singleton
 import org.maurodata.domain.datamodel.DataClass
 import org.maurodata.domain.datamodel.DataElement
 import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.datamodel.DataType
-import org.maurodata.domain.folder.Folder
 import org.maurodata.persistence.ContainerizedTest
 import org.maurodata.testing.CommonDataSpec
-
-import io.micronaut.http.HttpStatus
-import io.micronaut.http.client.exceptions.HttpClientResponseException
-import io.micronaut.runtime.EmbeddedApplication
-import io.micronaut.test.annotation.Sql
-import jakarta.inject.Inject
+import org.maurodata.web.ListResponse
 import spock.lang.Shared
 import spock.lang.Unroll
 
@@ -40,15 +37,18 @@ class DataElementUpdateIntegrationSpec extends CommonDataSpec {
     @Shared
     UUID secondDataTypeId
 
+    @Shared
+    UUID dataElementId2
+
     void setupSpec() {
         folderId = folderApi.create(folder()).id
         dataModelId = dataModelApi.create(folderId, dataModelPayload()).id
         dataTypeId = dataTypeApi.create(dataModelId, dataTypesPayload()).id
         dataClassId = dataClassApi.create(dataModelId, dataClassPayload()).id
         dataElementId = dataElementApi.create(
-                dataModelId,
-                dataClassId,
-                new DataElement(label: 'First data element', description: 'The first data element', dataType: new DataType(id: dataTypeId))).id
+            dataModelId,
+            dataClassId,
+            new DataElement(label: 'First data element', description: 'The first data element', dataType: new DataType(id: dataTypeId))).id
         secondDataTypeId = dataTypeApi.create(dataModelId, new DataType(label: 'second data type', dataTypeKind: DataType.DataTypeKind.PRIMITIVE_TYPE, units: 'lbs')).id
 
     }
@@ -106,6 +106,35 @@ class DataElementUpdateIntegrationSpec extends CommonDataSpec {
         new DataElement(dataType: new DataType(id: dataTypeId))                                    | dataTypeId         | 'label data element'
         new DataElement(dataType: new DataType(id: secondDataTypeId))                              | secondDataTypeId   | 'label data element'
         new DataElement(label: 'data element label', dataType: new DataType(id: dataTypeId))       | dataTypeId         | 'data element label'
+
+    }
+
+    void 'test list dataElementByModel'() {
+
+        DataModel otherDataModel = dataModelApi.create(folderId, dataModelPayload('other data model '))
+        DataType otherDataType = dataTypeApi.create(otherDataModel.id, dataTypesPayload())
+        dataClassId = dataClassApi.create(dataModelId, dataClassPayload()).id
+        DataClass otherDataClass = dataClassApi.create(otherDataModel.id, dataClassPayload('other data class '))
+
+        DataElement otherDataElement = dataElementApi.create(
+            otherDataModel.id,
+            otherDataClass.id,
+            new DataElement(label: 'second data element', description: 'The second data element', dataType: otherDataType))
+
+        when:
+        ListResponse<DataElement> dataElementsByModel = dataElementApi.byModelList(otherDataModel.id)
+
+        then:
+        dataElementsByModel.items.size() == 1
+        dataElementsByModel.items.id.contains(otherDataElement.id)
+        !dataElementsByModel.items.id.contains(dataElementId)
+
+        when:
+        dataElementsByModel = dataElementApi.byModelList(dataModelId)
+
+        then:
+        dataElementsByModel.items.size() == 2
+        !dataElementsByModel.items.id.contains(otherDataElement.id)
 
     }
 

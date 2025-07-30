@@ -103,11 +103,13 @@ interface Paths {
     String DATA_CLASS_DOI = '/dataClasses/{id}/doi'
     String DATA_CLASS_SEARCH = '/dataModels/{dataModelId}/dataClasses{?params*}'
     String DATA_CLASS_COPY = '/dataModels/{dataModelId}/dataClasses/{otherModelId}/{dataClassId}'
+    String ALL_DATA_CLASSES = '/dataModels/{dataModelId}/allDataClasses'
 
     /*
     * DataElementApi
     */
     String DATA_ELEMENT_LIST = '/dataModels/{dataModelId}/dataClasses/{dataClassId}/dataElements'
+    String DATA_ELEMENT_IN_MODEL_LIST = '/dataModels/{dataModelId}/dataElements'
     String DATA_ELEMENT_ID = '/dataModels/{dataModelId}/dataClasses/{dataClassId}/dataElements/{id}'
     String DATA_ELEMENT_DOI = '/dataElements/{id}/doi'
     String DATA_ELEMENT_LIST_PAGED = '/dataModels/{dataModelId}/dataClasses/{dataClassId}/dataElements{?params*}'

@@ -66,7 +66,7 @@ class DataClassDeleteIntegrationSpec extends CommonDataSpec {
         childDataClassId2 = dataClassApi.create(dataModelId, dataClassId, dataClassPayload('child data class 2 label')).id
         grandChildDataClassId1 = dataClassApi.create(dataModelId, childDataClassId1, dataClassPayload('grand child data class 1 label')).id
         grandChildDataClassId2 = dataClassApi.create(dataModelId, childDataClassId2, dataClassPayload('grand child data class 2 label')).id
-        terminologyId = terminologyApi.create(folderId, terminology()).id
+        terminologyId = terminologyApi.create(folderId, terminologyPayload()).id
         terminologyApi.finalise(terminologyId, finalisePayload())
 
         referenceTypeDataType = dataTypeApi.create(dataModelId, referenceTypeDataTypePayload(grandChildDataClassId1, 'datatype reference class label grandchild DC'))

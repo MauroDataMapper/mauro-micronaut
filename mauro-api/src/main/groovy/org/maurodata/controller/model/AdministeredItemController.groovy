@@ -80,6 +80,9 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
     protected P validate(I item, UUID parentId) {
         cleanBody(item)
         P parent = parentItemRepository.readById(parentId)
+        if (!parent){
+            ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, 'Parent is null')
+        }
         accessControlService.checkRole(Role.EDITOR, parent)
         parent
     }
@@ -210,5 +213,15 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
             }
         }
         classifierList
+    }
+
+    protected List<I> listItems(UUID parentId) {
+        P parent = parentItemRepository.readById(parentId)
+        if (!parent) return null
+        accessControlService.checkRole(Role.READER, parent)
+        List<I> items = administeredItemRepository.readAllByParent(parent)
+        items.each {
+            updateDerivedProperties(it as I)
+        }
     }
 }

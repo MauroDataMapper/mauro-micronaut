@@ -99,6 +99,11 @@ class ModelCacheableRepository<M extends Model> extends AdministeredItemCacheabl
         CodeSetCacheableRepository(CodeSetRepository codeSetRepository) {
             super(codeSetRepository)
         }
+        @Override
+        Boolean handles(String domainType) {
+            return domainType != null && domainType.toLowerCase() in ['codeset', 'codesets']
+        }
+
     }
 
     @CompileStatic
@@ -107,6 +112,11 @@ class ModelCacheableRepository<M extends Model> extends AdministeredItemCacheabl
         DataModelCacheableRepository(DataModelRepository dataModelRepository) {
             super(dataModelRepository)
         }
+
+        @Override
+        Boolean handles(String domainType) {
+            return domainType != null && domainType.toLowerCase() in ['datamodel', 'datamodels']
+        }
     }
 
     @CompileStatic
@@ -114,6 +124,11 @@ class ModelCacheableRepository<M extends Model> extends AdministeredItemCacheabl
     static class ClassificationSchemeCacheableRepository extends ModelCacheableRepository<ClassificationScheme> {
         ClassificationSchemeCacheableRepository(ClassificationSchemeRepository classificationSchemeRepository) {
             super(classificationSchemeRepository as ModelRepository<ClassificationScheme>)
+        }
+
+        @Override
+        Boolean handles(String domainType) {
+            return domainType != null && domainType.toLowerCase() in ['classificationscheme', 'classificationschemes']
         }
     }
 
