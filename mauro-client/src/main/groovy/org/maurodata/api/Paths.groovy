@@ -161,7 +161,6 @@ interface Paths {
     * EnumerationValueApi
     */
     String ENUMERATION_VALUE_LIST = '/dataModels/{dataModelId}/dataTypes/{enumerationTypeId}/enumerationValues'
-    String ENUMERATION_VALUE_LIST_DOI= '/enumerationTypes/{enumerationTypeId}/doi'
     String ENUMERATION_VALUE_ID = '/dataModels/{dataModelId}/dataTypes/{enumerationTypeId}/enumerationValues/{id}'
     String ENUMERATION_VALUE_LIST_PAGED = '/dataModels/{dataModelId}/dataTypes/{enumerationTypeId}/enumerationValues{?params*}'
 

@@ -89,9 +89,4 @@ class EnumerationValueController extends AdministeredItemController<EnumerationV
         ListResponse.from(enumerationValueRepository.readAllByEnumerationType_Id(enumerationTypeId), params)
     }
 
-    @Audit
-    @Get(Paths.ENUMERATION_VALUE_LIST_DOI)
-    Map doi( UUID enumerationTypeId) {
-        ErrorHandler.handleError(HttpStatus.NOT_FOUND, "Doi is not implemented")  //grails returns 404
-    }
 }
