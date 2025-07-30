@@ -396,6 +396,8 @@ interface Paths {
     String TERM_RELATIONSHIP_LIST = '/terminologies/{terminologyId}/termRelationships'
     String TERM_RELATIONSHIP_ID = '/terminologies/{terminologyId}/termRelationships/{id}'
     String TERM_RELATIONSHIP_LIST_PAGED = '/terminologies/{terminologyId}/termRelationships'
+    String TERM_RELATIONSHIP_BY_TERM_ID_LIST = '/terminologies/{terminologyId}/terms/{termId}/termRelationships'
+    String TERM_RELATIONSHIP_BY_TERM_ID_ID = '/terminologies/{terminologyId}/terms/{termId}/termRelationships/{id}'
 
     /*
     * TermRelationshipTypeApi

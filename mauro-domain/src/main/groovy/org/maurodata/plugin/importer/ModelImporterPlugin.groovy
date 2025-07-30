@@ -1,15 +1,14 @@
 package org.maurodata.plugin.importer
 
+import com.fasterxml.jackson.annotation.JsonIgnore
+import groovy.transform.Memoized
+import groovy.util.logging.Slf4j
+import org.apache.commons.lang3.reflect.FieldUtils
 import org.maurodata.domain.model.Model
 import org.maurodata.domain.terminology.Terminology
 import org.maurodata.plugin.MauroPlugin
 import org.maurodata.plugin.PluginType
 import org.maurodata.plugin.importer.config.ImportParameterConfig
-
-import com.fasterxml.jackson.annotation.JsonIgnore
-import groovy.transform.Memoized
-import groovy.util.logging.Slf4j
-import org.apache.commons.lang3.reflect.FieldUtils
 
 import java.lang.reflect.Field
 
