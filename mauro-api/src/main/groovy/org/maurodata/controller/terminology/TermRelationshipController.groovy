@@ -3,6 +3,7 @@ package org.maurodata.controller.terminology
 import org.maurodata.api.Paths
 import org.maurodata.api.terminology.TermRelationshipApi
 import org.maurodata.audit.Audit
+import org.maurodata.domain.terminology.Term
 import org.maurodata.web.PaginationParams
 
 import groovy.transform.CompileStatic

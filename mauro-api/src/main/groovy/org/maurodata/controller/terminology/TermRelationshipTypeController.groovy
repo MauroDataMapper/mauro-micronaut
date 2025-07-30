@@ -40,6 +40,7 @@ class TermRelationshipTypeController extends AdministeredItemController<TermRela
     @Audit
     @Post(Paths.TERM_RELATIONSHIP_TYPE_LIST)
     TermRelationshipType create(UUID terminologyId, @Body @NonNull TermRelationshipType termRelationshipType) {
+        termRelationshipType.displayLabel = termRelationshipType.createDisplayLabel()
         super.create(terminologyId, termRelationshipType)
     }
 
