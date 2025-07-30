@@ -73,6 +73,8 @@ class ApiPropertyController extends ItemController<ApiProperty> implements ApiPr
 
         updateCreationProperties(apiProperty)
 
+        setStableId(apiProperty)
+
         apiPropertyRepository.save(apiProperty)
     }
 

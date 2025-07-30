@@ -25,7 +25,8 @@ create table if not exists terminology.code_set
     "authority_id"                    uuid /*NOT NULL REFERENCES authority(id) initially deferred*/,
     "branch_name"                     varchar(255),
     "model_version"                   varchar(255),
-    "model_version_tag"               varchar(255)
+    "model_version_tag"               varchar(255),
+    "stable_id"                       uuid
 );
 create unique index "idx_codeset_folder_id_label_branch_name_model_version" on terminology."code_set" (folder_id, label, branch_name, model_version);
 

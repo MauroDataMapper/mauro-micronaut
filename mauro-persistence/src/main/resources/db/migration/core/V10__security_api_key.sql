@@ -8,7 +8,8 @@ create table security.api_key (
     "disabled"          boolean             not null,
     "catalogue_user_id" uuid                not null        references security.catalogue_user (id) initially deferred,
     "name"              varchar(255)        not null,
-    "created_by"        uuid
+    "created_by"        uuid,
+    "stable_id"         uuid
 );
 create index apiKey_created_by_idx ON security.api_key(created_by);
 create index apiKey_catalogue_user_idx ON security.api_key(catalogue_user_id);

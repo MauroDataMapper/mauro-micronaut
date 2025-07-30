@@ -70,6 +70,7 @@ class RuleRepresentationController extends ItemController<RuleRepresentation> im
         accessControlService.checkRole(Role.EDITOR, readAdministeredItemForFacet(rule))
         ruleRepresentation.ruleId = rule.id
         updateCreationProperties(ruleRepresentation)
+        setStableId(ruleRepresentation)
         ruleRepresentationCacheableRepository.save(ruleRepresentation)
     }
 

@@ -54,6 +54,7 @@ class ApiKeyController extends ItemController<ApiKey> implements ApiKeyApi {
             apiKey.disabled = false
         }
         apiKey.updateExpiryDate()
+        setStableId(apiKey)
         apiKeyCacheableRepository.save(apiKey)
     }
 

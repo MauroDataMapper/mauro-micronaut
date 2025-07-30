@@ -9,7 +9,8 @@ create table if not exists core."annotation" (
     "parent_annotation_id"            uuid,
     "created_by"                      text,
     "label"                           text,
-    "description"                     text
+    "description"                     text,
+    "stable_id"                       uuid
 );
 create index "idx_annotation_multi_facet_aware_item_id" on "core"."annotation" (multi_facet_aware_item_id);
 

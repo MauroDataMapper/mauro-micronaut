@@ -60,6 +60,7 @@ class CatalogueUserController extends ItemController<CatalogueUser> implements C
         newUser.salt = SecureRandomStringGenerator.generateSalt()
         newUser.password = null
 
+        setStableId(newUser)
         catalogueUserRepository.save(newUser)
     }
 

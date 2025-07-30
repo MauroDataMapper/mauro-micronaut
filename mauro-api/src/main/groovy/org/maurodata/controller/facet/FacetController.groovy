@@ -40,8 +40,9 @@ abstract class FacetController<I extends Facet> extends ItemController<I> implem
 
         AdministeredItem administeredItem = readAdministeredItem(domainType, domainId)
         accessControlService.checkRole(Role.EDITOR, administeredItem)
-
-        createEntity(administeredItem, facet)
+        I created= createEntity(administeredItem, facet)
+        setStableId(created)
+        return created
     }
 
     protected I createEntity(@NonNull AdministeredItem administeredItem, @NonNull I cleanFacet) {

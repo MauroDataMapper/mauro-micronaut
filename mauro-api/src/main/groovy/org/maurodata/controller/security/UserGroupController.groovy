@@ -35,6 +35,7 @@ class UserGroupController extends ItemController<UserGroup> implements UserGroup
     @Post(Paths.USER_GROUP_LIST)
     UserGroup create(@Body @NonNull UserGroup userGroup) {
         accessControlService.checkAdministrator()
+        setStableId(userGroup)
         userGroupRepository.save(userGroup)
     }
 }

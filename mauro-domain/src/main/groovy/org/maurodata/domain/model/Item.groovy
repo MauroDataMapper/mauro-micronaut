@@ -80,4 +80,11 @@ abstract class Item implements Serializable {
         dateCreated = null
         lastUpdated = null
     }
+
+    /**
+     * The unchanging immutable identity of an object. This value persists between versions.
+     * Set when the object is created for the first time
+     */
+    @Nullable
+    UUID stableId
 }

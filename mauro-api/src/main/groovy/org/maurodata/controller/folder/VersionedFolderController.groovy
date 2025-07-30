@@ -85,7 +85,7 @@ class VersionedFolderController extends ModelController<Folder> implements Versi
 
         pathRepository.readParentItems(folder)
         folder.updatePath()
-
+        setStableId(folder)
         folderRepository.save(folder)
     }
 

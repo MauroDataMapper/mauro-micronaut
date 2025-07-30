@@ -60,6 +60,7 @@ class AuthorityController extends ItemController<Authority> implements Authority
         accessControlService.checkAdministrator()
         Authority cleanedItem = cleanBody(authority)
         cleanedItem = updateCreationProperties(cleanedItem) as Authority
+        setStableId(cleanedItem)
         authorityService.create(cleanedItem)
     }
 

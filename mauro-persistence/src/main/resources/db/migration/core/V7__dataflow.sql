@@ -11,7 +11,8 @@ create table if not exists "dataflow"."data_flow" (
     "created_by"                      uuid,
     "aliases_string"                  text,
     "definition"                      text,
-    "diagram_layout"                  text
+    "diagram_layout"                  text,
+    "stable_id"                       uuid
 );
 
 create table if not exists "dataflow"."data_class_component" (
@@ -25,7 +26,8 @@ create table if not exists "dataflow"."data_class_component" (
     "description"                     text,
     "aliases_string"                  text,
     "created_by"                      uuid,
-    "definition"                      text
+    "definition"                      text,
+    "stable_id"                       uuid
 );
 
 create index "idx_data_class_component_data_flow_id" on "dataflow"."data_class_component" (data_flow_id);
@@ -41,7 +43,8 @@ create table if not exists "dataflow"."data_element_component" (
     "description"                     text,
     "aliases_string"                  text,
     "created_by"                      uuid,
-    "definition"                      text
+    "definition"                      text,
+    "stable_id"                       uuid
 );
 
 create index "idx_data_element_component_data_class_component_id" on "dataflow"."data_element_component" (data_class_component_id);

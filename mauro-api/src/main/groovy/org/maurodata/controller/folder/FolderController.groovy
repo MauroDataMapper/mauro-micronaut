@@ -73,6 +73,7 @@ class FolderController extends ModelController<Folder> implements FolderApi {
         folder.authority = super.authorityService.getDefaultAuthority()
         pathRepository.readParentItems(folder)
         folder.updatePath()
+        setStableId(folder)
         folderRepository.save(folder)
     }
 

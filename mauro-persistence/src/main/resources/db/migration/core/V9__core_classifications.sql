@@ -25,7 +25,8 @@ create table if not exists core."classification_scheme" (
     "authority_id"                    uuid,
     "branch_name"                     varchar(255),
     "model_version"                   varchar(255),
-    "model_version_tag"               varchar(255)
+    "model_version_tag"               varchar(255),
+    "stable_id"                       uuid
 );
 
 create table if not exists core."classifier" (
@@ -39,7 +40,8 @@ create table if not exists core."classifier" (
     "aliases_string"                  text,
     "created_by"                      uuid,
     "classification_scheme_id"        uuid             not null references core.classification_scheme(id) initially deferred,
-    "parent_classifier_id"            uuid             null references core.classifier(id) initially deferred
+    "parent_classifier_id"            uuid             null references core.classifier(id) initially deferred,
+    "stable_id"                       uuid
 );
 
 create index "idx_classifier_classification_scheme_id" on core."classifier" (classification_scheme_id);

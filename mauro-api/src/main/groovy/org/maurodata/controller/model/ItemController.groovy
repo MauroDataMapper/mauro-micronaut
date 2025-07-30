@@ -23,7 +23,7 @@ abstract class ItemController<I extends Item> implements AdministeredItemReader 
      * Properties disallowed in a simple update request.
      */
     List<String> getDisallowedProperties() {
-        ['class_', 'class', 'id', 'dateCreated', 'lastUpdated', 'createdBy', 'versionable', 'domainType', 'version']
+        ['class_', 'class', 'id', 'dateCreated', 'lastUpdated', 'createdBy', 'versionable', 'domainType', 'version', 'stableId']
     }
 
     /**
@@ -93,5 +93,11 @@ abstract class ItemController<I extends Item> implements AdministeredItemReader 
             }
         }
         return hasChanged
+    }
+
+    protected void setStableId(Item item) {
+        if(item.stableId){return}
+
+        item.stableId=UUID.randomUUID()
     }
 }

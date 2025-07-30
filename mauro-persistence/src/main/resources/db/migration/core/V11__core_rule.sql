@@ -8,7 +8,8 @@ create table if not exists core."rule" (
     "multi_facet_aware_item_id"          uuid             not null,
     "created_by"                         varchar(255),
     "name"                               text             not null,
-    "description"                        text
+    "description"                        text,
+    "stable_id"                       uuid
 );
 create unique index "idx_rule_multi_facet_aware_item_id_rule" on "core"."rule" (multi_facet_aware_item_id, name);
 
@@ -20,7 +21,8 @@ create table if not exists core.rule_representation (
     "created_by"                         varchar(255),
     "language"                           varchar(255)      not null,
     "representation"                     text,
-    "rule_id"                            uuid              not null references core.rule (id) initially deferred
+    "rule_id"                            uuid              not null references core.rule (id) initially deferred,
+    "stable_id"                          uuid
 );
 create index "idx_rule_representation_rule_id" on "core"."rule_representation" (rule_id);
 
