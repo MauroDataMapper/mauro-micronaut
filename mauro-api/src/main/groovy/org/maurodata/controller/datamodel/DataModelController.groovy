@@ -25,6 +25,7 @@ import io.micronaut.security.rules.SecurityRule
 import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
 import org.maurodata.ErrorHandler
+import org.maurodata.FieldConstants
 import org.maurodata.api.Paths
 import org.maurodata.api.datamodel.DataModelApi
 import org.maurodata.api.model.MergeDiffDTO
@@ -78,7 +79,6 @@ import org.maurodata.web.ListResponse
 @CompileStatic
 @Secured(SecurityRule.IS_ANONYMOUS)
 class DataModelController extends ModelController<DataModel> implements DataModelApi {
-
     DataModelCacheableRepository dataModelRepository
 
     DataModelContentRepository dataModelContentRepository
@@ -566,10 +566,9 @@ class DataModelController extends ModelController<DataModel> implements DataMode
         }
 
         if (highestVersion == null) {
-            throw new HttpStatusException(HttpStatus.NOT_FOUND, "There are no versioned models")
+            log.warn("There are no versioned models for data model :$id")
         }
-
-        return new ModelVersionDTO(modelVersion: highestVersion)
+        return new ModelVersionDTO(modelVersion: highestVersion ?: ModelVersion.from(FieldConstants.DEFAULT_MODEL_VERSION))
     }
 
     @Override

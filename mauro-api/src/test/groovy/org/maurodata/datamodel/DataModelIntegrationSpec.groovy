@@ -1,6 +1,7 @@
 package org.maurodata.datamodel
 
 import io.micronaut.http.client.exceptions.HttpClientResponseException
+import org.maurodata.api.model.ModelVersionDTO
 import org.maurodata.domain.datamodel.DataClass
 import org.maurodata.domain.datamodel.DataElement
 import org.maurodata.domain.datamodel.DataModel
@@ -24,6 +25,8 @@ import spock.lang.Shared
 @ContainerizedTest
 @Singleton
 class DataModelIntegrationSpec extends CommonDataSpec {
+
+    static final String  DEFAULT_VERSION = '0.0.0'
 
     @Shared
     UUID folderId
@@ -467,5 +470,22 @@ class DataModelIntegrationSpec extends CommonDataSpec {
 
     }
 
+    void 'test latestModelVersion data model'() {
+
+        given:
+        Folder response = folderApi.create(new Folder(label: 'Test folder'))
+        folderId = response.id
+
+        dataModelId = dataModelApi.create(folderId, new DataModel(label: 'Test data model')).id
+
+        when:
+        ModelVersionDTO getLatestModelVersion = dataModelApi.latestModelVersion(dataModelId)
+
+
+        then:
+        getLatestModelVersion
+        getLatestModelVersion.modelVersion == DEFAULT_VERSION
+
+    }
 
 }
