@@ -9,8 +9,10 @@ import io.micronaut.runtime.server.EmbeddedServer
 import io.micronaut.test.annotation.Sql
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
+import jakarta.inject.Inject
 import org.maurodata.domain.datamodel.DataClass
 import org.maurodata.domain.datamodel.DataType
+import org.maurodata.domain.datamodel.EnumerationValue
 import org.maurodata.domain.folder.Folder
 import org.maurodata.domain.model.Model
 import org.maurodata.domain.terminology.CodeSet
@@ -321,26 +323,34 @@ class DataTypeIntegrationSpec extends CommonDataSpec {
         httpResponse.status == HttpStatus.NO_CONTENT
     }
 
-    @Unroll
-    void 'test list response query parameter'() {
+    void 'should get enumeration values associated with EnumerationType dataType'() {
         given:
-        DataType dataType = dataTypeApi.create(dataModelId, dataTypesPayload('test label', dataTypeType))
+        DataType enumerationType = dataTypeApi.create(dataModelId, new DataType(label: 'test enumerationType',
+                                                                                dataTypeKind: DataType.DataTypeKind.ENUMERATION_TYPE))
+        enumerationValueApi.create(dataModelId, enumerationType.id, new EnumerationValue().tap {
+            key = 'yes'
+            value = 'yes value'
+        })
+        enumerationValueApi.create(dataModelId, enumerationType.id, new EnumerationValue().tap {
+            key = 'no'
+            value = 'no value'
+        })
 
-        URI uri = UriBuilder.of(embeddedServer.getContextURI())
-            .path("/dataModels/".concat(dataModelId.toString()).concat('/dataTypes'))
-            .queryParam('domainType', queryValue)
-            .build()
+
         when:
-
-        Map<String, Object> response = httpClient.toBlocking().retrieve(uri.toString(), Map<String, Object>)
+        DataType retrieved = dataTypeApi.show(dataModelId, enumerationType.id)
 
         then:
-        response
-        response.get('count') == expectedItems
-        where:
-        dataTypeType                           | queryValue                                         | expectedItems
-        DataType.DataTypeKind.PRIMITIVE_TYPE   | DataType.DataTypeKind.PRIMITIVE_TYPE.stringValue   | 1
-        DataType.DataTypeKind.ENUMERATION_TYPE | DataType.DataTypeKind.ENUMERATION_TYPE.stringValue | 1
+        retrieved
+        retrieved.enumerationValues.size() == 2
+
+        when:
+        ListResponse<DataType> dataTypeListResponse = dataTypeApi.list(dataModelId,  new PaginationParams())
+        then:
+        dataTypeListResponse
+        dataTypeListResponse.items.size() == 1
+        dataTypeListResponse.items.first().enumerationValues.size() == 2
 
     }
+
 }

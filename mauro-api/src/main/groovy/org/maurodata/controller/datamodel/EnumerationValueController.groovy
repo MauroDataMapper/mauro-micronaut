@@ -1,20 +1,23 @@
 package org.maurodata.controller.datamodel
 
-import org.maurodata.api.Paths
-import org.maurodata.api.datamodel.EnumerationValueApi
-import org.maurodata.audit.Audit
-import org.maurodata.domain.datamodel.DataModel
-import org.maurodata.domain.facet.EditType
-import org.maurodata.web.PaginationParams
-
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpResponse
-import io.micronaut.http.annotation.*
+import io.micronaut.http.HttpStatus
+import io.micronaut.http.annotation.Body
+import io.micronaut.http.annotation.Controller
+import io.micronaut.http.annotation.Delete
+import io.micronaut.http.annotation.Get
+import io.micronaut.http.annotation.Post
+import io.micronaut.http.annotation.Put
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
 import jakarta.inject.Inject
+import org.maurodata.ErrorHandler
+import org.maurodata.api.Paths
+import org.maurodata.api.datamodel.EnumerationValueApi
+import org.maurodata.audit.Audit
 import org.maurodata.controller.model.AdministeredItemController
 import org.maurodata.domain.datamodel.DataType
 import org.maurodata.domain.datamodel.EnumerationValue
@@ -24,6 +27,7 @@ import org.maurodata.persistence.cache.AdministeredItemCacheableRepository.Enume
 import org.maurodata.persistence.cache.ModelCacheableRepository.DataModelCacheableRepository
 import org.maurodata.persistence.datamodel.DataModelContentRepository
 import org.maurodata.web.ListResponse
+import org.maurodata.web.PaginationParams
 
 @CompileStatic
 @Controller
