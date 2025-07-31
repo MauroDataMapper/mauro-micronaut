@@ -1,5 +1,6 @@
 package org.maurodata.domain.datamodel
 
+import org.maurodata.FieldConstants
 import org.maurodata.domain.model.ModelService
 
 import groovy.transform.CompileStatic
@@ -17,7 +18,7 @@ class DataModelService extends ModelService<DataModel> {
     }
 
     Boolean handles(String domainType) {
-        return domainType != null && domainType.toLowerCase() in ['datamodel', 'datamodels']
+        return domainType != null && domainType.toLowerCase() in [FieldConstants.DATAMODEL_LOWERCASE, FieldConstants.DATAMODELS_LOWERCASE]
     }
 
 

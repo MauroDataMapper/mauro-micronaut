@@ -6,6 +6,7 @@ import io.micronaut.data.annotation.Repository
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.model.query.builder.sql.Dialect
 import jakarta.inject.Inject
+import org.maurodata.FieldConstants
 import org.maurodata.domain.terminology.Terminology
 import org.maurodata.persistence.model.ModelRepository
 import org.maurodata.persistence.terminology.dto.TerminologyDTORepository
@@ -34,6 +35,6 @@ abstract class TerminologyRepository implements ModelRepository<Terminology> {
 
     @Override
     Boolean handles(String domainType) {
-        return domainType != null && domainType.toLowerCase() in ['terminology', 'terminologies']
+        return domainType != null && domainType.toLowerCase() in [FieldConstants.TERMINOLOGY_LOWERCASE, FieldConstants.TERMINOLOGIES_LOWERCASE]
     }
 }

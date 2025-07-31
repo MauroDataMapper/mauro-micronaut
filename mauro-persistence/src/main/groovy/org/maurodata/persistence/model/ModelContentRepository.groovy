@@ -191,4 +191,8 @@ class ModelContentRepository<M extends Model> extends AdministeredItemContentRep
         it.multiFacetAwareItemId = item.id
         it.multiFacetAwareItem = item
     }
+
+    Boolean handles(String domainType) {
+        administeredItemRepository.handles(domainType)
+    }
 }

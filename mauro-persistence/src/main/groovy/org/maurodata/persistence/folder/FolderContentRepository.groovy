@@ -4,55 +4,46 @@ import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
+import org.maurodata.domain.classifier.ClassificationScheme
 import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.folder.Folder
 import org.maurodata.domain.model.AdministeredItem
+import org.maurodata.domain.model.Model
 import org.maurodata.domain.terminology.CodeSet
 import org.maurodata.domain.terminology.Terminology
-import org.maurodata.persistence.datamodel.DataModelContentRepository
-import org.maurodata.persistence.datamodel.DataModelRepository
+import org.maurodata.persistence.cache.ItemCacheableRepository
 import org.maurodata.persistence.model.ModelContentRepository
-import org.maurodata.persistence.terminology.CodeSetContentRepository
-import org.maurodata.persistence.terminology.CodeSetRepository
-import org.maurodata.persistence.terminology.TerminologyContentRepository
-import org.maurodata.persistence.terminology.TerminologyRepository
+import org.maurodata.persistence.model.ModelRepository
 
 @CompileStatic
 @Singleton
 class FolderContentRepository extends ModelContentRepository<Folder> {
 
-    @Inject
     FolderRepository folderRepository
 
-    @Inject
-    DataModelRepository dataModelRepository
+    List<ModelContentRepository> modelContentRepositories
+
+    List<ModelRepository> modelRepositories
 
     @Inject
-    DataModelContentRepository dataModelContentRepository
-
-    @Inject
-    TerminologyRepository terminologyRepository
-
-    @Inject
-    TerminologyContentRepository terminologyContentRepository
-
-    @Inject
-    CodeSetRepository codeSetRepository
-
-    @Inject
-    CodeSetContentRepository codeSetContentRepository
+    FolderContentRepository(FolderRepository folderRepository, List<ModelContentRepository> modelContentRepositories, List<ModelRepository> modelRepositories) {
+        this.folderRepository = folderRepository
+        this.modelRepositories = modelRepositories.findAll {it !instanceof ItemCacheableRepository}
+        this.modelContentRepositories = modelContentRepositories
+    }
 
     @Override
     Folder findWithContentById(UUID id) {
         Folder folder = folderRepository.findById(id)
         if (folder) {
-            folder.dataModels = getDataModelAssociations(folder)
-            folder.terminologies = getTerminologyAssociations(folder)
-            folder.codeSets = getCodeSetAssociations(folder)
+            folder.dataModels = getModelAssociations(folder, DataModel.class) as List<DataModel>
+            folder.terminologies = getModelAssociations(folder, Terminology.class) as List<Terminology>
+            folder.codeSets = getModelAssociations(folder, CodeSet.class) as List<CodeSet>
+            folder.classificationSchemes = getModelAssociations(folder, ClassificationScheme.class) as List<ClassificationScheme>
             folder.childFolders = surfaceChildContent(folder.childFolders)
             folder.setAssociations()
-            folder
         }
+        folder
     }
 
     @Override
@@ -61,24 +52,28 @@ class FolderContentRepository extends ModelContentRepository<Folder> {
         super.saveAllFacets(saved)
 
         if (saved.childFolders) {
-            saved.childFolders.each { childFolder ->
+            saved.childFolders.each {childFolder ->
                 saveWithContent(childFolder)
             }
         }
-
         if (saved.dataModels) {
-            saved.dataModels.each{
-                dataModelContentRepository.saveWithContent(it)
+            saved.dataModels.each {
+                getModelContentRepository(it.class).saveWithContent(it)
             }
         }
-        if (saved.terminologies){
-            saved.terminologies.each{
-                terminologyContentRepository.saveWithContent(it)
+        if (saved.terminologies) {
+            saved.terminologies.each {
+                getModelContentRepository(it.class).saveWithContent(it)
             }
         }
-        if (saved.codeSets){
-            saved.codeSets.each{
-                codeSetContentRepository.saveWithContent(it)
+        if (saved.codeSets) {
+            saved.codeSets.each {
+                getModelContentRepository(it.class).saveWithContent(it)
+            }
+        }
+        if (saved.classificationSchemes) {
+            saved.classificationSchemes.each {
+                getModelContentRepository(it.class).saveWithContent(it)
             }
         }
         saved
@@ -87,70 +82,55 @@ class FolderContentRepository extends ModelContentRepository<Folder> {
     @Override
     Long deleteWithContent(@NonNull AdministeredItem administeredItem) {
         Folder folder = administeredItem as Folder
-        folder.codeSets.each{codeSet ->
-            codeSetContentRepository.deleteWithContent(codeSet)
-        }
-
-        folder.terminologies.each{terminology ->
-            terminologyContentRepository.deleteWithContent(terminology)
-        }
-
-        folder.dataModels.each { dataModel ->
-            dataModelContentRepository.deleteWithContent(dataModel)
-        }
-        folder.childFolders.each { child ->
+        folder.childFolders.each {child ->
             deleteWithContent(child)
+        }
+        folder.codeSets.each {codeSet ->
+            getModelContentRepository(CodeSet.class).deleteWithContent(codeSet)
+        }
+        folder.terminologies.each {terminology ->
+            getModelContentRepository(Terminology.class).deleteWithContent(terminology)
+        }
+        folder.dataModels.each {dataModel ->
+            getModelContentRepository(DataModel.class).deleteWithContent(dataModel)
+        }
+        folder.classificationSchemes.each {classificationScheme ->
+            getModelContentRepository(ClassificationScheme.class).deleteWithContent(classificationScheme)
         }
         Long result = super.deleteWithContent(folder)
         result
     }
 
 
-    private List<Folder> surfaceChildContent(List<Folder> folders) {
+    protected ModelContentRepository getModelContentRepository(Class clazz) {
+        modelContentRepositories.find {it.class.simpleName.toLowerCase().contains(clazz.simpleName.toLowerCase())}
+    }
+
+    protected List<Folder> surfaceChildContent(List<Folder> folders) {
         if (folders.isEmpty()) {
-            folders
+            return folders
         }
-        List<Folder> childFoldersWithContent = []
+        List<Folder> foldersWithAssociations = []
         folders.each {
             Folder retrieved = findWithContentById(it.id)
             retrieved.setAssociations()
             retrieved.childFolders = surfaceChildContent(retrieved.childFolders)
-            childFoldersWithContent.add(retrieved)
+            foldersWithAssociations.add(retrieved)
         }
-        childFoldersWithContent
+        foldersWithAssociations
     }
 
-    private List<DataModel> getDataModelAssociations(Folder folder) {
-        List<DataModel> dataModels = super.findAllModelsForFolder(dataModelRepository, folder) as List<DataModel>
-        List<DataModel> dataModelsWithAssociations = []
-        dataModels.each {
-            DataModel retrieved = dataModelContentRepository.findWithContentById(it.id)
-            retrieved.setAssociations()
-            dataModelsWithAssociations.add(retrieved)
-        }
-        dataModelsWithAssociations
-    }
+    private List<Model> getModelAssociations(Folder folder, Class clazz) {
+        ModelRepository modelRepository = modelRepositories.find {it.handles(clazz.simpleName)}
+        ModelContentRepository modelContentRepository = getModelContentRepository(clazz)
 
-    private List<Terminology> getTerminologyAssociations(Folder folder) {
-        List<Terminology> terminologies = super.findAllModelsForFolder(terminologyRepository, folder) as List<Terminology>
-        List<Terminology> terminologiesWithAssociations = []
-        terminologies.each {
-            Terminology retrieved = terminologyContentRepository.findWithContentById(it.id)
+        List<Model> models = super.findAllModelsForFolder(modelRepository, folder) as List<Model>
+        List<Model> modelsWithAssociations = []
+        models.each {
+            Model retrieved = modelContentRepository.findWithContentById((it as Model).id)
             retrieved.setAssociations()
-            terminologiesWithAssociations.add(retrieved)
+            modelsWithAssociations.add(retrieved)
         }
-        terminologiesWithAssociations
-
-    }
-
-    private List<CodeSet> getCodeSetAssociations(Folder folder) {
-        List<CodeSet> codeSets = super.findAllModelsForFolder(codeSetRepository, folder) as List<CodeSet>
-        List<CodeSet> codeSetsWithAssociations = []
-        codeSets.each {
-            CodeSet retrieved = codeSetContentRepository.readWithContentById(it.id)
-            retrieved.setAssociations()
-            codeSetsWithAssociations.add(retrieved)
-        }
-        codeSetsWithAssociations
+        modelsWithAssociations
     }
 }

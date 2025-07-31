@@ -87,7 +87,7 @@ class DataFlowIntegrationSpec extends CommonDataSpec {
 
         then:
         HttpClientResponseException exception = thrown()
-        exception.status == HttpStatus.UNPROCESSABLE_ENTITY
+        exception.status == HttpStatus.BAD_REQUEST
     }
 
 

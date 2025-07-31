@@ -22,6 +22,7 @@ trait ModelRepository<M extends Model> implements AdministeredItemRepository<M> 
     List<M> readAllByParent(AdministeredItem item) {
         readAllByFolder((Folder) item)
     }
+
     @Nullable
     abstract List<M> findAllByFolderId(UUID folderId)
 
@@ -30,4 +31,6 @@ trait ModelRepository<M extends Model> implements AdministeredItemRepository<M> 
 
     @Nullable
     abstract M readByLabelAndModelVersion(String label, ModelVersion modelVersion)
+
+    abstract Boolean handles(String domainType)
 }

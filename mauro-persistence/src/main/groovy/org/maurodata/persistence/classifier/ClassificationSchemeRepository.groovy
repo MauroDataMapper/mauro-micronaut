@@ -5,6 +5,7 @@ import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.model.query.builder.sql.Dialect
 import jakarta.inject.Inject
+import org.maurodata.FieldConstants
 import org.maurodata.domain.classifier.ClassificationScheme
 import org.maurodata.persistence.classifier.dto.ClassificationSchemeDTORepository
 import org.maurodata.persistence.model.ModelRepository
@@ -30,4 +31,9 @@ abstract class ClassificationSchemeRepository implements ModelRepository<Classif
     @Nullable
     abstract List<ClassificationScheme> findAllByFolderId(UUID folderId)
 
+
+    @Override
+    Boolean handles(String domainType){
+        return domainType != null && domainType.toLowerCase() in [FieldConstants.CLASSIFICATION_SCHEME_LOWERCASE, FieldConstants.CLASSIFICATION_SCHEMES_LOWERCASE ]
+    }
 }

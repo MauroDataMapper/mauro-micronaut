@@ -7,6 +7,7 @@ import io.micronaut.data.annotation.Query
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.model.query.builder.sql.Dialect
 import jakarta.inject.Inject
+import org.maurodata.FieldConstants
 import org.maurodata.domain.terminology.CodeSet
 import org.maurodata.domain.terminology.Term
 import org.maurodata.persistence.model.ModelRepository
@@ -61,4 +62,9 @@ abstract class CodeSetRepository implements ModelRepository<CodeSet> {
     @Nullable
     @Override
     abstract List<CodeSet> findAllByFolderId(UUID folderId)
+
+    @Override
+    Boolean handles(String domainType) {
+        return domainType != null && domainType.toLowerCase() in [FieldConstants.CODESET_LOWERCASE, FieldConstants.CODESETS_LOWERCASE]
+    }
 }
