@@ -2,6 +2,7 @@ package org.maurodata.domain.terminology
 
 import groovy.transform.CompileStatic
 import jakarta.inject.Singleton
+import org.maurodata.FieldConstants
 import org.maurodata.domain.model.ModelService
 
 /**
@@ -15,7 +16,7 @@ class CodeSetService extends ModelService<CodeSet> {
     }
 
     Boolean handles(String domainType) {
-        return domainType != null && domainType.toLowerCase() in ['codeset', 'codesets']
+        return domainType != null && domainType.toLowerCase() in [FieldConstants.CODESET_LOWERCASE, FieldConstants.CODESETS_LOWERCASE]
     }
 
 }

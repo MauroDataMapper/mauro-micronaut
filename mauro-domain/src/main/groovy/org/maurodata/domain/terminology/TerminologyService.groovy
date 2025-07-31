@@ -1,6 +1,7 @@
 package org.maurodata.domain.terminology
 
 import groovy.transform.CompileStatic
+import org.maurodata.FieldConstants
 import org.maurodata.domain.model.ModelService
 import org.maurodata.domain.tree.TreeItem
 
@@ -18,7 +19,7 @@ class TerminologyService extends ModelService<Terminology> {
     }
 
     Boolean handles(String domainType) {
-        return domainType != null && domainType.toLowerCase() in ['terminology', 'terminologies']
+        return domainType != null && domainType.toLowerCase() in [FieldConstants.TERMINOLOGY_LOWERCASE, FieldConstants.TERMINOLOGIES_LOWERCASE]
     }
 
     /*

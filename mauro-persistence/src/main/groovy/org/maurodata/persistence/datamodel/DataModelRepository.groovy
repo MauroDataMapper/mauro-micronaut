@@ -3,6 +3,7 @@ package org.maurodata.persistence.datamodel
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.jdbc.annotation.JdbcRepository
+import org.maurodata.FieldConstants
 import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.persistence.datamodel.dto.DataModelDTORepository
 import org.maurodata.persistence.model.ModelRepository
@@ -41,5 +42,11 @@ abstract class DataModelRepository implements ModelRepository<DataModel> {
 ''',
         nativeQuery = true)
     abstract List<DataModel> getAllModelsByNamespace(String namespace)
+
+
+    @Override
+    Boolean handles(String domainType) {
+        return domainType != null && domainType.toLowerCase() in [FieldConstants.DATAMODEL_LOWERCASE, FieldConstants.DATAMODELS_LOWERCASE]
+    }
 
 }

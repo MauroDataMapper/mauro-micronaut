@@ -8,6 +8,7 @@ import io.micronaut.core.annotation.Introspected
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.annotation.*
 import jakarta.persistence.Transient
+import org.maurodata.domain.classifier.ClassificationScheme
 import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.domain.model.Model
@@ -146,6 +147,9 @@ class Folder extends Model {
     @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'codeSet')
     List<CodeSet> codeSets = []
 
+    @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'classificationScheme')
+    List<ClassificationScheme> classificationSchemes = []
+
     @Override
     @Transient
     @JsonIgnore
@@ -210,7 +214,13 @@ class Folder extends Model {
                 it.folder = cloned
             }
         }
+        cloned.classificationSchemes = classificationSchemes.collect {
+            it.clone().tap {
+                it.folder = cloned
+            }
+        }
         cloned.codeSets = codeSets.collect {it.clone()}
+
         cloned.setAssociations()
         cloned
     }
@@ -234,6 +244,10 @@ class Folder extends Model {
         codeSets.each { codeSet ->
             codeSet.folder = this
             codeSet.setAssociations()
+        }
+        classificationSchemes.each { classificationScheme ->
+            classificationScheme.folder = this
+            classificationScheme.setAssociations()
         }
     }
 

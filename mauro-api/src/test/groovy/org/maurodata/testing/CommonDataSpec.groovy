@@ -316,7 +316,7 @@ class CommonDataSpec extends Specification {
     }
     ClassificationScheme classificationSchemePayload(boolean readableByEveryone, boolean readableByAuthenticatedUsers){
         new ClassificationScheme(
-            label: 'classifiers label',
+            label: 'classification scheme label',
             description : 'random description',
             readableByEveryone: readableByEveryone,
             readableByAuthenticatedUsers: readableByAuthenticatedUsers)

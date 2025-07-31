@@ -5,6 +5,8 @@ import io.micronaut.http.HttpStatus
 import io.micronaut.test.annotation.Sql
 import jakarta.inject.Singleton
 import org.maurodata.api.facet.SemanticLinkCreateDTO
+import org.maurodata.domain.classifier.ClassificationScheme
+import org.maurodata.domain.classifier.Classifier
 import org.maurodata.domain.datamodel.DataClass
 import org.maurodata.domain.datamodel.DataElement
 import org.maurodata.domain.datamodel.DataModel
@@ -17,6 +19,7 @@ import org.maurodata.domain.terminology.Term
 import org.maurodata.domain.terminology.Terminology
 import org.maurodata.persistence.ContainerizedTest
 import org.maurodata.testing.CommonDataSpec
+import org.maurodata.web.ListResponse
 import spock.lang.Shared
 
 @ContainerizedTest
@@ -51,6 +54,9 @@ class DeleteFolderIntegrationSpec extends CommonDataSpec {
         CodeSet codeSet = codeSetApi.create(folderId, codeSet())
         codeSetApi.addTerm(codeSet.id, term.id)
 
+        ClassificationScheme classificationScheme = classificationSchemeApi.create(folderId, classificationSchemePayload(true, true))
+        Classifier classifier1 = classifierApi.create(classificationScheme.id, classifierPayload('classifier one label') )
+        Classifier classifier2 = classifierApi.create(classificationScheme.id, classifierPayload('classifier two label') )
         Folder folder = folderApi.show(folderId)
 
         when:
@@ -59,6 +65,17 @@ class DeleteFolderIntegrationSpec extends CommonDataSpec {
         then:
         response
         response.status() == HttpStatus.NO_CONTENT
+
+        when:
+        ClassificationScheme retrieved = classificationSchemeApi.show(classificationScheme.id)
+        then:
+        !retrieved
+
+        when:
+        ListResponse<Folder> listResponse = folderApi.listAll()
+        then:
+        listResponse.items.isEmpty()
+
     }
 
     void 'should delete folder and all associations - folder has reference to finalised model belonging to different folder'() {

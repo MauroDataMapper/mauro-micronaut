@@ -80,9 +80,6 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
     protected P validate(I item, UUID parentId) {
         cleanBody(item)
         P parent = parentItemRepository.readById(parentId)
-        if (!parent){
-            ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, 'Parent is null')
-        }
         accessControlService.checkRole(Role.EDITOR, parent)
         parent
     }
