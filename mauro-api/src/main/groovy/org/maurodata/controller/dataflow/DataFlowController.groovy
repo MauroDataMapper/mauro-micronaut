@@ -3,7 +3,7 @@ package org.maurodata.controller.dataflow
 import org.maurodata.ErrorHandler
 import org.maurodata.api.dataflow.DataFlowApi
 import org.maurodata.audit.Audit
-
+import org.maurodata.persistence.cache.AdministeredItemCacheableRepository.DataFlowCacheableRepository
 import org.maurodata.web.PaginationParams
 
 import groovy.transform.CompileStatic
@@ -34,11 +34,13 @@ import org.maurodata.web.ListResponse
 class DataFlowController extends AdministeredItemController<DataFlow, DataModel> implements DataFlowApi {
 
     @Inject
-    ModelCacheableRepository.DataModelCacheableRepository dataModelRepository
+    ModelCacheableRepository.DataModelCacheableRepository dataModelCacheableRepository
 
     @Inject
-    DataFlowRepository dataFlowRepository
+    DataFlowCacheableRepository dataFlowCacheableRepository
 
+    //@Inject
+    //DataFlowRepository dataFlowRepository
 
     DataFlowController(DataFlowRepository dataFlowRepository, ModelCacheableRepository.DataModelCacheableRepository dataModelRepository,
                        DataFlowContentRepository dataFlowContentRepository) {
@@ -55,7 +57,7 @@ class DataFlowController extends AdministeredItemController<DataFlow, DataModel>
     @Audit(level = Audit.AuditLevel.FILE_ONLY)
     @Post(Paths.DATA_FLOW_LIST)
     DataFlow create(@NonNull UUID dataModelId, @Body @NonNull DataFlow dataFlow) {
-        DataModel source = dataModelRepository.findById(dataFlow.source.id)
+        DataModel source = dataModelCacheableRepository.findById(dataFlow.source.id)
         accessControlService.checkRole(Role.READER, source)
         ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, source, "Datamodel not found : $dataFlow.source.id")
         DataFlow created = super.create(dataModelId, dataFlow)
@@ -82,9 +84,9 @@ class DataFlowController extends AdministeredItemController<DataFlow, DataModel>
         if (!type || type == Type.TARGET) {
             return super.list(dataModelId)
         }
-        DataModel source = dataModelRepository.findById(dataModelId)
+        DataModel source = dataModelCacheableRepository.findById(dataModelId)
         ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, source, "Item with id: $dataModelId not found")
-        List<DataFlow> sourceDataFlowList = dataFlowRepository.findAllBySource(source)
+        List<DataFlow> sourceDataFlowList = dataFlowCacheableRepository.findAllBySource(source)
         ListResponse.from(sourceDataFlowList.findAll { accessControlService.canDoRole(Role.READER, it) }, params)
     }
 

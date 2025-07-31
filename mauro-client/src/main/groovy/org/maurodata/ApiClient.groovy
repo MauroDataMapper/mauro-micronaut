@@ -1,5 +1,8 @@
 package org.maurodata
 
+import groovy.transform.CompileStatic
+import io.micronaut.context.annotation.Bean
+import jakarta.inject.Singleton
 import org.maurodata.api.admin.AdminApi
 import org.maurodata.api.classifier.ClassificationSchemeApi
 import org.maurodata.api.classifier.ClassifierApi
@@ -32,30 +35,37 @@ import org.maurodata.api.terminology.TermRelationshipApi
 import org.maurodata.api.terminology.TermRelationshipTypeApi
 import org.maurodata.api.terminology.TerminologyApi
 import org.maurodata.api.tree.TreeApi
+import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.folder.Folder
 import org.maurodata.domain.terminology.Terminology
+import org.maurodata.export.ExportModel
+import org.maurodata.plugin.exporter.json.JsonDataModelExporterPlugin
 import org.maurodata.plugin.exporter.json.JsonTerminologyExporterPlugin
+import org.maurodata.plugin.importer.json.JsonDataModelImporterPlugin
+import org.maurodata.plugin.importer.json.JsonTerminologyImporterPlugin
 import org.maurodata.web.ListResponse
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import io.micronaut.configuration.picocli.PicocliRunner
 import io.micronaut.http.MediaType
 import io.micronaut.http.client.multipart.MultipartBody
 import jakarta.inject.Inject
 import org.slf4j.Logger
-import picocli.CommandLine.Command
 
 import static org.slf4j.LoggerFactory.getLogger
 
-
-@Command(name="my-cli-app")
-abstract class ApiClient implements Runnable {
+@CompileStatic
+@Singleton
+class ApiClient {
 
     protected static final Logger log = getLogger(ApiClient)
 
     @Inject ObjectMapper objectMapper
 
     @Inject JsonTerminologyExporterPlugin jsonTerminologyExporterPlugin
+    @Inject JsonTerminologyImporterPlugin jsonTerminologyImporterPlugin
+
+    @Inject JsonDataModelExporterPlugin jsonDataModelExporterPlugin
+    @Inject JsonDataModelImporterPlugin jsonDataModelImporterPlugin
 
     @Inject AdminApi adminApi
     @Inject ClassificationSchemeApi classificationSchemeApi
@@ -90,14 +100,6 @@ abstract class ApiClient implements Runnable {
     @Inject TermRelationshipTypeApi termRelationshipTypeApi
     @Inject TreeApi treeApi
 
-
-    static void main(String[] args) {
-        PicocliRunner.run(ApiClient, args)
-    }
-
-    abstract void run()
-
-
     // Helper functions
     // TODO: Work out how to move these into the Api interfaces (traits?)
     Folder findOrCreateFolderByLabel(String label) {
@@ -118,10 +120,36 @@ abstract class ApiClient implements Runnable {
 
         terminologyApi.importModel(
             importRequest,
-            'org.maurodata.plugin.importer.json',
-            'JsonTerminologyImporterPlugin',
-            '4.0.0')
-
+            jsonTerminologyImporterPlugin.namespace,
+            jsonTerminologyImporterPlugin.name,
+            jsonTerminologyImporterPlugin.version)
     }
 
+    ListResponse<DataModel> importDataModel(UUID folderId, DataModel dataModel) {
+
+        MultipartBody importRequest = MultipartBody.builder()
+            .addPart('folderId', folderId.toString())
+            .addPart('importFile', 'file.json', MediaType.APPLICATION_JSON_TYPE, jsonDataModelExporterPlugin.exportModel(dataModel))
+            .build()
+
+        dataModelApi.importModel(
+            importRequest,
+            jsonDataModelImporterPlugin.namespace,
+            jsonDataModelImporterPlugin.name,
+            jsonDataModelImporterPlugin.version)
+    }
+
+    DataModel exportDataModel(UUID dataModelId) {
+        def response = dataModelApi.exportModel(dataModelId, jsonDataModelExporterPlugin.namespace, jsonDataModelExporterPlugin.name, jsonDataModelExporterPlugin.version)
+        ExportModel exportModel = objectMapper.readValue(response.body(), ExportModel)
+        DataModel dataModel = exportModel.dataModel
+        return dataModel
+    }
+
+    Terminology exportTerminology(UUID terminologyId) {
+        def response = terminologyApi.exportModel(terminologyId, jsonTerminologyExporterPlugin.namespace, jsonTerminologyExporterPlugin.name, jsonTerminologyExporterPlugin.version)
+        ExportModel exportModel = objectMapper.readValue(response.body(), ExportModel)
+        Terminology terminology = exportModel.terminology
+        return terminology
+    }
 }
