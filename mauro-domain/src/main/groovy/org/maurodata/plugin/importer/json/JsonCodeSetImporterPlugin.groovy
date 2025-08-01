@@ -1,6 +1,7 @@
 package org.maurodata.plugin.importer.json
 
-
+import io.micronaut.http.HttpStatus
+import org.maurodata.ErrorHandler
 import org.maurodata.domain.terminology.CodeSet
 import org.maurodata.export.ExportModel
 import org.maurodata.plugin.importer.CodeSetImporterPlugin
@@ -29,7 +30,9 @@ class JsonCodeSetImporterPlugin implements CodeSetImporterPlugin<FileImportParam
         log.info '** start importModel **'
         ExportModel importModel = objectMapper.readValue(params.importFile.fileContents, ExportModel)
         log.info '*** imported JSON model ***'
-
+        if (!importModel.codeSet){
+            ErrorHandler.handleError(HttpStatus.BAD_REQUEST, 'Cannot import JSON as codeSet/s not present')
+        }
         if(importModel.codeSet) {
             return [importModel.codeSet]
         } else {

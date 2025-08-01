@@ -5,8 +5,10 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.ObjectNode
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
+import io.micronaut.http.HttpStatus
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
+import org.maurodata.ErrorHandler
 import org.maurodata.domain.folder.Folder
 import org.maurodata.domain.terminology.Terminology
 import org.maurodata.export.ExportModel
@@ -49,13 +51,15 @@ class JsonFolderImporterPlugin implements FolderImporterPlugin<FileImportParamet
             importModel.folders.each {addAllFoldersToMap(it, foldersMap)}
         }
 
-        // Import each Terminology as a separate object
+          // Import each Terminology as a separate object
         foldersMap.each {UUID folderId, Folder folder ->
             folder.terminologies = readTerminologiesInFolder(folderNodesMap[folderId])
         }
 
         log.info '*** imported JSON model ***'
-
+        if (!importModel.folder){
+            ErrorHandler.handleError(HttpStatus.BAD_REQUEST, 'Cannot import JSON as folder/s not present')
+        }
         if (importModel.folder) {
             return [importModel.folder]
         } else {

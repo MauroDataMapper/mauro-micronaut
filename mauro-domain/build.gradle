@@ -19,8 +19,6 @@ dependencies {
     // camel case
     implementation("com.google.guava:guava:33.4.8-jre")
 
-    testImplementation("io.micronaut.test:micronaut-test-spock")
-
     // For parsing java dates / instants
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
 
