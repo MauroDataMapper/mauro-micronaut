@@ -1,6 +1,9 @@
 package org.maurodata.test.plugin.importer.json
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import io.micronaut.http.HttpStatus
+import io.micronaut.http.MediaType
+import io.micronaut.http.exceptions.HttpStatusException
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
 import spock.lang.Specification
@@ -60,7 +63,35 @@ class JsonDataModelImporterPluginSpec extends Specification  {
 
     }
 
+    def "test JSON datamodel import- bad file -should fail with BADREQUEST exception"() {
+        given:
+        ExportModel exportModel = ExportModel.build {
+            exportMetadata {
+                namespace JsonPluginConstants.NAMESPACE
+                name JsonPluginConstants.JSON_FOLDER_NAME
+                version JsonPluginConstants.VERSION
+            }
+        }
+        DataModelImporterPlugin jsonImportPlugin =
+            mauroPluginService.getPlugin(DataModelImporterPlugin, JsonPluginConstants.NAMESPACE, JsonPluginConstants.JSON_DATA_MODEL_NAME,
+                                         JsonPluginConstants.VERSION)
 
+        FileImportParameters fileImportParameters = new FileImportParameters()
+        FileParameter fileParameter = new FileParameter().tap {
+            fileName = "import.json"
+            fileType = MediaType.APPLICATION_JSON
+            fileContents = objectMapper.writeValueAsBytes(exportModel)
+        }
+        fileImportParameters.importFile = fileParameter
+
+        when:
+        jsonImportPlugin.importModels(fileImportParameters)
+
+        then:
+        HttpStatusException exception = thrown()
+        exception.status == HttpStatus.BAD_REQUEST
+    }
 
 
 }
+
