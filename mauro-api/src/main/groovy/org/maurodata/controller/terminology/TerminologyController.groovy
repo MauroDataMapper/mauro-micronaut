@@ -1,50 +1,53 @@
 package org.maurodata.controller.terminology
 
-import org.maurodata.api.model.ModelVersionedRefDTO
-import org.maurodata.api.model.PermissionsDTO
-import org.maurodata.audit.Audit
-import org.maurodata.domain.facet.EditType
-import org.maurodata.web.PaginationParams
-
-import io.micronaut.http.HttpStatus
-import org.maurodata.api.Paths
-import org.maurodata.api.terminology.TerminologyApi
-import org.maurodata.ErrorHandler
-import org.maurodata.domain.model.Model
-import org.maurodata.plugin.exporter.DataModelExporterPlugin
-import org.maurodata.plugin.exporter.TerminologyExporterPlugin
-import org.maurodata.plugin.importer.TerminologyImporterPlugin
-
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpResponse
+import io.micronaut.http.HttpStatus
 import io.micronaut.http.MediaType
-import io.micronaut.http.annotation.*
+import io.micronaut.http.annotation.Body
+import io.micronaut.http.annotation.Consumes
+import io.micronaut.http.annotation.Controller
+import io.micronaut.http.annotation.Delete
+import io.micronaut.http.annotation.Get
+import io.micronaut.http.annotation.Post
+import io.micronaut.http.annotation.Put
+import io.micronaut.http.annotation.QueryValue
+import io.micronaut.http.annotation.RequestBean
 import io.micronaut.http.server.multipart.MultipartBody
-import io.micronaut.http.server.types.files.StreamedFile
 import io.micronaut.scheduling.TaskExecutors
 import io.micronaut.scheduling.annotation.ExecuteOn
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
 import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
+import org.maurodata.ErrorHandler
+import org.maurodata.api.Paths
+import org.maurodata.api.model.ModelVersionedRefDTO
+import org.maurodata.api.model.PermissionsDTO
+import org.maurodata.api.terminology.TerminologyApi
+import org.maurodata.audit.Audit
 import org.maurodata.controller.model.ModelController
 import org.maurodata.domain.diff.ObjectDiff
+import org.maurodata.domain.facet.EditType
+import org.maurodata.domain.model.Model
 import org.maurodata.domain.model.version.CreateNewVersionData
 import org.maurodata.domain.model.version.FinaliseData
+import org.maurodata.domain.search.dto.SearchRequestDTO
+import org.maurodata.domain.search.dto.SearchResultsDTO
 import org.maurodata.domain.security.Role
-import org.maurodata.domain.terminology.CodeSet
 import org.maurodata.domain.terminology.Terminology
 import org.maurodata.domain.terminology.TerminologyService
 import org.maurodata.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
 import org.maurodata.persistence.cache.ModelCacheableRepository.TerminologyCacheableRepository
 import org.maurodata.persistence.search.SearchRepository
-import org.maurodata.domain.search.dto.SearchRequestDTO
-import org.maurodata.domain.search.dto.SearchResultsDTO
 import org.maurodata.persistence.terminology.TerminologyContentRepository
+import org.maurodata.plugin.exporter.TerminologyExporterPlugin
+import org.maurodata.plugin.importer.TerminologyImporterPlugin
 import org.maurodata.web.ListResponse
+import org.maurodata.web.PaginationParams
 
 @Slf4j
 @Controller
@@ -157,7 +160,17 @@ class TerminologyController extends ModelController<Terminology> implements Term
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Post(Paths.TERMINOLOGY_IMPORT)
     ListResponse<Terminology> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version) {
-        super.importModel(body, namespace, name, version)
+        List<Terminology> imported = super.importModelList(body, namespace, name, version)
+
+        List<Terminology> saved = imported.collect {imp ->
+            log.info '** about to saveWithContentBatched... Terminology import**'
+            modelContentRepository.saveWithContent(imp as Terminology)
+        }
+        log.info '** finished saveWithContentBatched **'
+
+        ListResponse.from(saved.collect {model ->
+            show(model.id)
+        })
     }
 
     /*

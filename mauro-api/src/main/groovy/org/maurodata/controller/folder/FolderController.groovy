@@ -1,21 +1,5 @@
 package org.maurodata.controller.folder
 
-import org.maurodata.ErrorHandler
-import org.maurodata.api.Paths
-import org.maurodata.api.folder.FolderApi
-import org.maurodata.api.model.PermissionsDTO
-import org.maurodata.audit.Audit
-import org.maurodata.controller.model.ModelController
-import org.maurodata.domain.facet.EditType
-import org.maurodata.domain.folder.Folder
-import org.maurodata.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
-import org.maurodata.persistence.folder.FolderContentRepository
-import org.maurodata.domain.search.dto.SearchRequestDTO
-import org.maurodata.domain.search.dto.SearchResultsDTO
-import org.maurodata.plugin.exporter.ModelExporterPlugin
-import org.maurodata.service.plugin.PluginService
-import org.maurodata.web.ListResponse
-
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
@@ -39,6 +23,19 @@ import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
 import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
+import org.maurodata.ErrorHandler
+import org.maurodata.api.Paths
+import org.maurodata.api.folder.FolderApi
+import org.maurodata.api.model.PermissionsDTO
+import org.maurodata.audit.Audit
+import org.maurodata.controller.model.ModelController
+import org.maurodata.domain.facet.EditType
+import org.maurodata.domain.folder.Folder
+import org.maurodata.domain.search.dto.SearchRequestDTO
+import org.maurodata.domain.search.dto.SearchResultsDTO
+import org.maurodata.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
+import org.maurodata.persistence.folder.FolderContentRepository
+import org.maurodata.web.ListResponse
 
 @Slf4j
 @CompileStatic
@@ -46,11 +43,13 @@ import jakarta.inject.Inject
 @Secured(SecurityRule.IS_ANONYMOUS)
 class FolderController extends ModelController<Folder> implements FolderApi {
 
-    @Inject
     FolderContentRepository folderContentRepository
 
+
+    @Inject
     FolderController(FolderCacheableRepository folderRepository, FolderContentRepository folderContentRepository) {
         super(Folder, folderRepository, folderRepository, folderContentRepository)
+        this.folderContentRepository = folderContentRepository
     }
 
     @Audit
@@ -154,11 +153,10 @@ class FolderController extends ModelController<Folder> implements FolderApi {
 
     @Audit(title = EditType.EXPORT, description = 'Export folder')
     @Get(Paths.FOLDER_EXPORT)
+    @Override
     HttpResponse<byte[]> exportModel(UUID id, @Nullable String namespace, @Nullable String name, @Nullable String version) {
-        ModelExporterPlugin mauroPlugin = mauroPluginService.getPlugin(ModelExporterPlugin, namespace, name, version)
-        PluginService.handlePluginNotFound(mauroPlugin, namespace, name)
-        Folder existing = folderContentRepository.findWithContentById(id)
-        createExportResponse(mauroPlugin, existing)
+        super.exportModel(id,namespace, name, version)
+
     }
 
     @Transactional
@@ -166,8 +164,19 @@ class FolderController extends ModelController<Folder> implements FolderApi {
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Audit(title = EditType.IMPORT, description = 'Import folder')
     @Post(Paths.FOLDER_IMPORT)
+    @Override
     ListResponse<Folder> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version) {
-        super.importModel(body, namespace, name, version)
+        List<Folder> imported = super.importModelList(body, namespace, name, version)
+
+        List<Folder> saved = imported.collect {imp ->
+            log.info '** about to saveWithContentBatched... Folder import**'
+            modelContentRepository.saveWithContent(imp as Folder)
+        }
+        log.info '** finished saveWithContentBatched **'
+
+        ListResponse.from(saved.collect {model ->
+            show(model.id)
+        })
     }
 
     @Get('/folder/search{?requestDTO}')

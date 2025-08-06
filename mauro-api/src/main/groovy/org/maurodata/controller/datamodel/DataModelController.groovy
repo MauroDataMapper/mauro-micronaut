@@ -213,8 +213,19 @@ class DataModelController extends ModelController<DataModel> implements DataMode
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Post(Paths.DATA_MODEL_IMPORT)
     ListResponse<DataModel> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version) {
-        super.importModel(body, namespace, name, version)
+        List<DataModel> imported = super.importModelList(body, namespace, name, version)
+
+        List<DataModel> saved = imported.collect {imp ->
+            log.info '** about to saveWithContentBatched... **'
+            modelContentRepository.saveWithContent(imp as DataModel)
+        }
+        log.info '** finished saveWithContentBatched **'
+
+        ListResponse.from(saved.collect {model ->
+            show(model.id)
+        })
     }
+
 
     @Audit
     @Get(Paths.DATA_MODEL_DIFF)
@@ -232,7 +243,7 @@ class DataModelController extends ModelController<DataModel> implements DataMode
         dataModel.diff(otherDataModel)
     }
 
-    @Get(Paths.DATA_MODEL_EXPORTERS)
+    @Get(Paths.DATA_MODEL_IMPORTERS)
     List<DataModelImporterPlugin> dataModelImporters() {
         mauroPluginService.listPlugins(DataModelImporterPlugin)
     }
@@ -785,7 +796,7 @@ class DataModelController extends ModelController<DataModel> implements DataMode
         super.permissions(id)
     }
 
-    @Get('/dataModels/providers/exporters')
+    @Get(Paths.DATA_MODEL_EXPORTERS)
     List<DataModelExporterPlugin> dataModelExporters() {
         mauroPluginService.listPlugins(DataModelExporterPlugin)
     }

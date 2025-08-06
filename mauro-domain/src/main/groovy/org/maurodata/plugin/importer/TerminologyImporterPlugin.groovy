@@ -1,6 +1,5 @@
 package org.maurodata.plugin.importer
 
-import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.terminology.Terminology
 
 trait TerminologyImporterPlugin<P extends ImportParameters> extends ModelImporterPlugin<Terminology, P> {

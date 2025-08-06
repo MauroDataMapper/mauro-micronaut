@@ -1,5 +1,6 @@
 package org.maurodata.controller.classifier
 
+import jakarta.inject.Inject
 import org.maurodata.ErrorHandler
 import org.maurodata.api.Paths
 import org.maurodata.api.classifier.ClassificationSchemeApi
@@ -50,6 +51,7 @@ class ClassificationSchemeController extends ModelController<ClassificationSchem
     ClassificationSchemeContentRepository classificationSchemeContentRepository
 
 
+    @Inject
     ClassificationSchemeController(ModelCacheableRepository.ClassificationSchemeCacheableRepository classificationSchemeCacheableRepository,
                                    FolderCacheableRepository folderRepository, ClassificationSchemeContentRepository classificationSchemeContentRepository) {
         super(ClassificationScheme, classificationSchemeCacheableRepository, folderRepository, classificationSchemeContentRepository)
@@ -114,7 +116,17 @@ class ClassificationSchemeController extends ModelController<ClassificationSchem
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Post(Paths.CLASSIFICATION_SCHEMES_IMPORT)
     ListResponse<ClassificationScheme> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version) {
-        super.importModel(body, namespace, name, version)
+        List<ClassificationScheme> imported = super.importModelList(body, namespace, name, version)
+
+        List<ClassificationScheme> saved = imported.collect {imp ->
+            log.info '** about to saveWithContentBatched... ClassificationScheme import**'
+            modelContentRepository.saveWithContent(imp as ClassificationScheme)
+        }
+        log.info '** finished saveWithContentBatched **'
+
+        ListResponse.from(saved.collect {model ->
+            show(model.id)
+        })
     }
 
     @Audit

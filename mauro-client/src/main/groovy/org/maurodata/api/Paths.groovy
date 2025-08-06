@@ -131,7 +131,8 @@ interface Paths {
     String DATA_MODEL_DIFF = '/dataModels/{id}/diff/{otherId}'
     String DATA_MODEL_SEARCH_GET = '/dataModels/{id}/search{?requestDTO*}'
     String DATA_MODEL_SEARCH_POST = '/dataModels/{id}/search'
-    String DATA_MODEL_EXPORTERS = '/dataModels/providers/importers'
+    String DATA_MODEL_EXPORTERS = '/dataModels/providers/exporters'
+    String DATA_MODEL_IMPORTERS = '/dataModels/providers/importers'
     String DATA_MODEL_SUBSET = '/dataModels/{id}/subset/{otherId}'
     String DATA_MODEL_INTERSECTS_MANY = '/dataModels/{id}/intersectsMany'
     String DATA_MODEL_READ_BY_AUTHENTICATED = '/dataModels/{id}/readByAuthenticated'
@@ -344,6 +345,7 @@ interface Paths {
     String CODE_SET_DOI = '/codeSets/{id}/doi'
     String CODE_SET_LIST_PAGED = '/codeSets{?params*}'
     String CODE_SET_TERM_LIST_PAGED = '/codeSets/{id}/terms{?params*}'
+    String CODE_SET_IMPORT = '/codeSets/import/{namespace}/{name}{/version}'
 
     /*
     * TerminologyApi

@@ -1,18 +1,21 @@
 package org.maurodata.controller.folder
 
-import com.fasterxml.jackson.core.Versioned
+
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
-import io.micronaut.http.MediaType
-import io.micronaut.http.annotation.*
+import io.micronaut.http.annotation.Body
+import io.micronaut.http.annotation.Controller
+import io.micronaut.http.annotation.Delete
+import io.micronaut.http.annotation.Get
+import io.micronaut.http.annotation.Post
+import io.micronaut.http.annotation.Put
+import io.micronaut.http.annotation.QueryValue
 import io.micronaut.http.exceptions.HttpStatusException
 import io.micronaut.http.server.multipart.MultipartBody
-import io.micronaut.scheduling.TaskExecutors
-import io.micronaut.scheduling.annotation.ExecuteOn
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
 import io.micronaut.transaction.annotation.Transactional
@@ -29,7 +32,6 @@ import org.maurodata.api.model.PermissionsDTO
 import org.maurodata.api.model.VersionLinkTargetDTO
 import org.maurodata.audit.Audit
 import org.maurodata.controller.model.ModelController
-import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.diff.FieldDiff
 import org.maurodata.domain.diff.ObjectDiff
 import org.maurodata.domain.facet.VersionLink
@@ -143,6 +145,21 @@ class VersionedFolderController extends ModelController<Folder> implements Versi
     @Put(Paths.VERSIONED_FOLDER_NEW_BRANCH_MODEL_VERSION)
     Folder createNewBranchModelVersion(UUID id, @Body @Nullable CreateNewVersionData createNewVersionData) {
         super.createNewBranchModelVersion(id, createNewVersionData)
+    }
+
+
+    @Override
+    ListResponse<Folder> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version) {
+        List<Folder> imported = super.importModelList(body, namespace, name, version)
+        List<Folder> saved = imported.collect {imp ->
+            log.info '** about to saveWithContentBatched... Folder import**'
+            modelContentRepository.saveWithContent(imp as Folder)
+        }
+        log.info '** finished saveWithContentBatched **'
+
+        ListResponse.from(saved.collect {model ->
+            show(model.id)
+        })
     }
 
     @Audit

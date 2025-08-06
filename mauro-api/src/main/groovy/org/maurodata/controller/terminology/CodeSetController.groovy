@@ -1,5 +1,10 @@
 package org.maurodata.controller.terminology
 
+import io.micronaut.http.MediaType
+import io.micronaut.http.annotation.Consumes
+import io.micronaut.http.server.multipart.MultipartBody
+import io.micronaut.scheduling.TaskExecutors
+import io.micronaut.scheduling.annotation.ExecuteOn
 import org.maurodata.ErrorHandler
 import org.maurodata.api.Paths
 import org.maurodata.api.model.PermissionsDTO
@@ -160,7 +165,7 @@ class CodeSetController extends ModelController<CodeSet> implements CodeSetApi {
 
 
     @Audit
-    @Get('/codeSets/{id}/diff/{otherId}')
+    @Get(value = Paths.CODE_SET_DIFF)
     ObjectDiff diffModels(@NonNull UUID id, @NonNull UUID otherId) {
         CodeSet codeSet = modelContentRepository.findWithContentById(id)
         ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, codeSet, "item not found : $id")
@@ -190,6 +195,25 @@ class CodeSetController extends ModelController<CodeSet> implements CodeSetApi {
             addTerm(savedCopy.id, it.id)
         }
         savedCopy
+    }
+
+    @Override
+    @Audit(title = EditType.IMPORT, description = "Import codeSet")
+    @Transactional
+    @ExecuteOn(TaskExecutors.IO)
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @Post(Paths.CODE_SET_IMPORT)
+    ListResponse<CodeSet> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version) {
+        List<CodeSet> imported = super.importModelList(body, namespace, name, version)
+        List<CodeSet> saved = imported.collect {imp ->
+            log.info '** about to saveWithContentBatched... CodeSet import**'
+            modelContentRepository.saveWithContent(imp as CodeSet)
+        }
+        log.info '** finished saveWithContentBatched **'
+
+        ListResponse.from(saved.collect {model ->
+            show(model.id)
+        })
     }
 
     //stub endpoint todo: actual

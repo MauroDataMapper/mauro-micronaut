@@ -14,7 +14,6 @@ import jakarta.persistence.JoinColumn
 import jakarta.persistence.JoinTable
 import jakarta.persistence.Transient
 import org.maurodata.domain.model.Model
-import org.maurodata.domain.model.ModelItem
 
 /**
  * A Terminology is a model that describes a number of terms, and some relationships between them.
@@ -86,4 +85,48 @@ class CodeSet extends Model {
     int hashCode() {
         return (terms != null ? terms.hashCode() : 0)
     }
+
+    /**
+     * Builder methods
+     * @param args
+     * @param closure
+     * @return
+     */
+    static CodeSet build(
+        Map args,
+        @DelegatesTo(value = CodeSet, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+        new CodeSet(args).tap(closure)
+    }
+
+    static CodeSet build(
+        @DelegatesTo(value = CodeSet, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+        build [:], closure
+    }
+
+    CodeSet codeSet(CodeSet codeSet){
+        codeSet
+    }
+
+    CodeSet codeSet(Map args, @DelegatesTo(value = CodeSet, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+        CodeSet codeSet = build(args, closure)
+        codeSet
+    }
+
+    CodeSet codeSet (@DelegatesTo(value = CodeSet, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+        codeSet [:], closure
+    }
+    Term term (Term term) {
+        this.terms.add(term)
+        term
+    }
+
+    Term term(Map args, @DelegatesTo(value = Term, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+        Term term1 = Term.build(args , closure)
+        term term1
+    }
+
+    Term term(@DelegatesTo(value = Term, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+        term [:], closure
+    }
+
 }

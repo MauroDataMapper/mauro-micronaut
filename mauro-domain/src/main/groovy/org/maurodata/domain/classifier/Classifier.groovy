@@ -12,9 +12,6 @@ import io.micronaut.data.annotation.Relation
 import jakarta.persistence.Inheritance
 import jakarta.persistence.InheritanceType
 import jakarta.persistence.Transient
-import org.maurodata.domain.datamodel.DataModel
-import org.maurodata.domain.diff.*
-
 import org.maurodata.domain.diff.BaseCollectionDiff
 import org.maurodata.domain.diff.CollectionDiff
 import org.maurodata.domain.diff.DiffBuilder
@@ -109,6 +106,35 @@ class Classifier extends ModelItem<ClassificationScheme> implements DiffableItem
             base.appendCollection(DiffBuilder.CLASSIFIERS, this.classifiers as Collection<DiffableItem>, other.classifiers as Collection<DiffableItem>)
         }
         base
+    }
+
+    static Classifier build(
+        Map args,
+        @DelegatesTo(value = Classifier, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+        new Classifier(args).tap(closure)
+    }
+
+    static Classifier build(@DelegatesTo(value = Classifier, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+        build [:], closure
+    }
+
+    Classifier classifier(Classifier classifier) {
+        this.classifiers.add(classifier)
+        classifier.parentClassifier = this
+        this.classificationScheme.classifiers.add(classifier)
+        classifier
+    }
+
+    Classifier classifier(Map args, @DelegatesTo(value = Classifier, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+        Classifier classifier = build(args + [classificationScheme: this.classificationScheme], closure)
+        this.classifiers.add(classifier)
+        classifier.parentClassifier = this
+        this.classificationScheme.classifiers.add(classifier)
+        classifier
+    }
+
+    Classifier classifier(@DelegatesTo(value = Classifier, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+        classifier [:], closure
     }
 
 }
