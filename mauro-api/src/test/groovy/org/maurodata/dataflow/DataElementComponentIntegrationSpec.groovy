@@ -74,7 +74,7 @@ class DataElementComponentIntegrationSpec extends CommonDataSpec {
         then:
         response
         response.id
-        response.dataClassComponent.id == dataClassComponentId
+
     }
 
     void 'should update DataElementComponent'() {
@@ -119,7 +119,6 @@ class DataElementComponentIntegrationSpec extends CommonDataSpec {
             dataElementComponentApi.show(sourceId,dataFlowId,dataClassComponentId,dataElementComponentId)
         then:
         dataElementComponent
-        dataElementComponent.dataClassComponent
         dataElementComponent.sourceDataElements
         dataElementComponent.sourceDataElements.size() == 1
         !dataElementComponent.targetDataElements

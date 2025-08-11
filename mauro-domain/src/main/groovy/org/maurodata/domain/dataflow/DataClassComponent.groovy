@@ -28,6 +28,7 @@ import org.maurodata.domain.model.ModelItem
 class DataClassComponent extends ModelItem<DataFlow> {
 
     @NotNull
+    @JsonIgnore
     DataFlow dataFlow
 
     @Nullable
@@ -74,4 +75,15 @@ class DataClassComponent extends ModelItem<DataFlow> {
         'dsc'
     }
 
+    @Transient
+    @JsonIgnore
+    List<Collection<? extends ModelItem<DataClassComponent>>> getAllAssociations() {
+        [dataElementComponents, sourceDataClasses, targetDataClasses] as List<Collection<? extends ModelItem<DataClassComponent>>>
+    }
+
+    @Transient
+    @JsonIgnore
+    List getModelItemExcludedAssociations(){
+        [DataClass.class.simpleName]
+    }
 }

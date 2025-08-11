@@ -1,6 +1,7 @@
 package org.maurodata.export
 
 import org.maurodata.domain.classifier.ClassificationScheme
+import org.maurodata.domain.dataflow.DataFlow
 import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.folder.Folder
 import org.maurodata.domain.terminology.CodeSet
@@ -10,6 +11,7 @@ import groovy.transform.CompileStatic
 import groovy.transform.MapConstructor
 import io.micronaut.core.annotation.Introspected
 import org.maurodata.plugin.exporter.ModelExporterPlugin
+import org.maurodata.plugin.exporter.ModelItemExporterPlugin
 
 import java.time.Instant
 
@@ -35,6 +37,9 @@ class ExportModel {
     ClassificationScheme classificationScheme
     List<ClassificationScheme> classificationSchemes
 
+    DataFlow dataFlow
+    List<DataFlow> dataFlows = []
+
     ExportModel() {
 
     }
@@ -46,6 +51,15 @@ class ExportModel {
             version: plugin.version,
                 exportDate: Instant.now(),
                 exportedBy: "Anonymous User"
+        )
+    }
+    ExportModel(ModelItemExporterPlugin plugin) {
+        exportMetadata = new ExportMetadata(
+            namespace: plugin.namespace,
+            name: plugin.name,
+            version: plugin.version,
+            exportDate: Instant.now(),
+            exportedBy: "Anonymous User"
         )
     }
 
@@ -233,5 +247,36 @@ class ExportModel {
         }
         this.classificationSchemes.addAll(classificationSchemes)
         classificationSchemes
+    }
+
+    DataFlow dataFlow (DataFlow dataFlow ) {
+        if (!this.dataFlow && dataFlows.size() == 0) {
+            this.dataFlow = dataFlow
+        } else {
+            if(this.dataFlow) {
+                this.dataFlows.add(this.dataFlow)
+                this.dataFlow = null
+            }
+            this.dataFlows.add(dataFlow)
+        }
+        dataFlow
+    }
+
+    DataFlow dataFlow(Map args, @DelegatesTo(value = DataFlow, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
+        DataFlow dataFlow1  = DataFlow.build(args, closure)
+        dataFlow dataFlow1
+    }
+
+    DataFlow dataFlow(@DelegatesTo(value = DataFlow, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
+        dataFlow [:], closure
+    }
+
+    List<DataFlow> dataFlows(List<DataFlow> dataFlows) {
+        if(this.dataFlow) {
+            this.dataFlows.add(this.dataFlow)
+            this.dataFlow = null
+        }
+        this.dataFlows.addAll(dataFlows)
+        dataFlows
     }
 }

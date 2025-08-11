@@ -91,7 +91,10 @@ interface Paths {
     String DATA_FLOW_LIST = '/dataModels/{dataModelId}/dataFlows'
     String DATA_FLOW_ID = '/dataModels/{dataModelId}/dataFlows/{id}'
     String DATA_FLOW_LIST_PAGED = '/dataModels/{dataModelId}/dataFlows{?params*}'
-
+    String DATA_FLOW_EXPORT = '/dataModels/{dataModelId}/dataFlows/{id}/export{/namespace}{/name}{/version}'
+    String DATA_FLOW_IMPORT = '/dataModels/{dataModelId}/dataFlows/import{/namespace}{/name}{/version}'
+    String DATA_FLOW_EXPORTERS = '/dataFlows/providers/exporters'
+    String DATA_FLOW_IMPORTERS = '/dataFlows/providers/importers'
     /*
     * DataClassApi
     */

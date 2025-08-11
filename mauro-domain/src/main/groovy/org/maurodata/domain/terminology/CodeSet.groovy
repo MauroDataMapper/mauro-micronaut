@@ -103,18 +103,7 @@ class CodeSet extends Model {
         build [:], closure
     }
 
-    CodeSet codeSet(CodeSet codeSet){
-        codeSet
-    }
 
-    CodeSet codeSet(Map args, @DelegatesTo(value = CodeSet, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
-        CodeSet codeSet = build(args, closure)
-        codeSet
-    }
-
-    CodeSet codeSet (@DelegatesTo(value = CodeSet, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
-        codeSet [:], closure
-    }
     Term term (Term term) {
         this.terms.add(term)
         term

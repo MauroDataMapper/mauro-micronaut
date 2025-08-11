@@ -73,4 +73,32 @@ class DataFlow extends ModelItem<DataModel> {
         'df'
     }
 
+    @Override
+    @Transient
+    @JsonIgnore
+    List<Collection<? extends ModelItem<DataFlow>>> getAllAssociations() {
+        [source, target, dataClassComponents] as List<Collection<? extends ModelItem<DataFlow>>>
+    }
+
+    @Transient
+    @JsonIgnore
+    List getModelItemExcludedAssociations(){
+        [DataModel.class.simpleName]
+    }
+    /**
+     * Builder methods
+     * @param args
+     * @param closure
+     * @return
+     */
+    static DataFlow build(
+        Map args,
+        @DelegatesTo(value = DataFlow, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+        new DataFlow(args).tap(closure)
+    }
+
+    static DataFlow build(
+        @DelegatesTo(value = DataFlow, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+        build [:], closure
+    }
 }

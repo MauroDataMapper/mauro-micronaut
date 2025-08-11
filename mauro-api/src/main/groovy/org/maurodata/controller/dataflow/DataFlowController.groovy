@@ -1,50 +1,70 @@
 package org.maurodata.controller.dataflow
 
-import org.maurodata.ErrorHandler
-import org.maurodata.api.dataflow.DataFlowApi
-import org.maurodata.audit.Audit
-
-import org.maurodata.web.PaginationParams
-
 import groovy.transform.CompileStatic
+import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
-import io.micronaut.http.annotation.*
+import io.micronaut.http.MediaType
+import io.micronaut.http.annotation.Body
+import io.micronaut.http.annotation.Consumes
+import io.micronaut.http.annotation.Controller
+import io.micronaut.http.annotation.Delete
+import io.micronaut.http.annotation.Get
+import io.micronaut.http.annotation.Post
+import io.micronaut.http.annotation.Put
+import io.micronaut.http.annotation.QueryValue
+import io.micronaut.http.server.multipart.MultipartBody
+import io.micronaut.scheduling.TaskExecutors
+import io.micronaut.scheduling.annotation.ExecuteOn
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
 import jakarta.inject.Inject
 import jakarta.transaction.Transactional
 import jakarta.validation.constraints.NotNull
-import org.maurodata.controller.model.AdministeredItemController
+import org.maurodata.ErrorHandler
 import org.maurodata.api.Paths
+import org.maurodata.api.dataflow.DataFlowApi
+import org.maurodata.audit.Audit
+import org.maurodata.controller.model.AdministeredItemController
 import org.maurodata.domain.dataflow.DataFlow
 import org.maurodata.domain.dataflow.Type
 import org.maurodata.domain.datamodel.DataModel
+import org.maurodata.domain.facet.EditType
+import org.maurodata.domain.model.ModelItem
 import org.maurodata.domain.security.Role
 import org.maurodata.persistence.cache.ModelCacheableRepository
 import org.maurodata.persistence.dataflow.DataFlowContentRepository
 import org.maurodata.persistence.dataflow.DataFlowRepository
+import org.maurodata.plugin.exporter.DataFlowExporterPlugin
+import org.maurodata.plugin.exporter.ModelItemExporterPlugin
+import org.maurodata.plugin.importer.DataFlowImporterPlugin
+import org.maurodata.plugin.importer.json.JsonDataFlowImporterPlugin
+import org.maurodata.service.model.ImportExportModelService
 import org.maurodata.web.ListResponse
+import org.maurodata.web.PaginationParams
 
+@Slf4j
 @CompileStatic
 @Controller
 @Secured(SecurityRule.IS_AUTHENTICATED)
 class DataFlowController extends AdministeredItemController<DataFlow, DataModel> implements DataFlowApi {
 
-    @Inject
-    ModelCacheableRepository.DataModelCacheableRepository dataModelRepository
-
-    @Inject
     DataFlowRepository dataFlowRepository
+    ModelCacheableRepository.DataModelCacheableRepository dataModelRepository
+    DataFlowContentRepository dataFlowContentRepository
+    ImportExportModelService importExportModelService
 
-
+    @Inject
     DataFlowController(DataFlowRepository dataFlowRepository, ModelCacheableRepository.DataModelCacheableRepository dataModelRepository,
-                       DataFlowContentRepository dataFlowContentRepository) {
+                       DataFlowContentRepository dataFlowContentRepository, ImportExportModelService importExportModelService) {
         super(DataFlow, dataFlowRepository, dataModelRepository, dataFlowContentRepository)
+        this.dataFlowRepository = dataFlowRepository
+        this.dataModelRepository = dataModelRepository
+        this.dataFlowContentRepository = dataFlowContentRepository
+        this.importExportModelService = importExportModelService
     }
-
 
     @Audit
     @Get(Paths.DATA_FLOW_ID)
@@ -58,7 +78,7 @@ class DataFlowController extends AdministeredItemController<DataFlow, DataModel>
         DataModel source = dataModelRepository.findById(dataFlow.source.id)
         accessControlService.checkRole(Role.READER, source)
         ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, source, "Datamodel not found : $dataFlow.source.id")
-        DataFlow created = super.create(dataModelId, dataFlow)
+        DataFlow created = super.create(dataModelId, dataFlow) as DataFlow
         show(created.id)
     }
 
@@ -78,14 +98,61 @@ class DataFlowController extends AdministeredItemController<DataFlow, DataModel>
     @Audit
     @Get(Paths.DATA_FLOW_LIST_PAGED)
     ListResponse<DataFlow> list(@NotNull UUID dataModelId, @Nullable @QueryValue(Paths.TYPE_QUERY) Type type, @Nullable PaginationParams params = new PaginationParams()) {
-        
+
         if (!type || type == Type.TARGET) {
             return super.list(dataModelId)
         }
         DataModel source = dataModelRepository.findById(dataModelId)
         ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, source, "Item with id: $dataModelId not found")
         List<DataFlow> sourceDataFlowList = dataFlowRepository.findAllBySource(source)
-        ListResponse.from(sourceDataFlowList.findAll { accessControlService.canDoRole(Role.READER, it) }, params)
+        ListResponse.from(sourceDataFlowList.findAll {accessControlService.canDoRole(Role.READER, it)}, params)
     }
 
+    @Get(Paths.DATA_FLOW_EXPORTERS)
+    List<DataFlowExporterPlugin> dataFlowExporters() {
+        importExportModelService.getMauroPluginService().listPlugins(DataFlowExporterPlugin)
+    }
+
+    @Get(Paths.DATA_FLOW_IMPORTERS)
+    List<DataFlowImporterPlugin> dataFlowImporters() {
+        importExportModelService.getMauroPluginService().listPlugins(DataFlowImporterPlugin)
+    }
+
+    @Audit
+    @Get(Paths.DATA_FLOW_EXPORT)
+    HttpResponse<byte[]> exportModel(@NonNull UUID dataModelId, @NonNull UUID id, @Nullable String namespace, @Nullable String name, @Nullable String version) {
+        ModelItemExporterPlugin mauroPlugin = importExportModelService.getModelItemExporterPlugin(namespace, name, version)
+        DataFlow existing = dataFlowRepository.readWithContentById(id)
+        existing = importExportModelService.updatePaths(existing) as DataFlow
+        accessControlService.checkRole(Role.READER, existing)
+        DataModel parent = dataModelRepository.findById(dataModelId)
+        accessControlService.checkRole(Role.READER, parent)
+        if (parent.id != existing.target.id) {
+            ErrorHandler.handleError(HttpStatus.BAD_REQUEST, "DataModel with id $dataModelId is not parent of dataflow : $id")
+        }
+        importExportModelService.createExportResponse(mauroPlugin, existing)
+    }
+
+    @Transactional
+    @ExecuteOn(TaskExecutors.IO)
+    @Audit(title = EditType.IMPORT, description = "Import data flow")
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @Post(Paths.DATA_FLOW_IMPORT)
+    ListResponse<DataModel> importModel(@NonNull UUID dataModelId, @Body MultipartBody body, @Nullable String namespace, @Nullable String name, @Nullable String version) {
+
+        List<ModelItem> modelItems = importExportModelService.importModelItems(dataModelId, JsonDataFlowImporterPlugin,
+                                                                               body, namespace, name, version)
+
+        List<DataFlow> saved = modelItems.collect {imp ->
+            log.info '** about to saveWithContentBatched... dataFlow **'
+
+            dataFlowContentRepository.saveWithContent(imp as DataFlow)
+        } as List<DataFlow>
+
+        log.info '** finished saveWithContentBatched ** dataFlow'
+        ListResponse.from(saved.collect {dataFlow ->
+            show(dataFlow.id)
+        })
+
+    }
 }

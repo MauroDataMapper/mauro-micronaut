@@ -290,6 +290,11 @@ abstract class AdministeredItem extends Item {
 
     }
 
+    @Transient
+    @JsonIgnore
+    List getModelItemExcludedAssociations() {
+        []
+    }
     /**
      * DSL helper method for setting the identifier.  Returns the identifier passed in.
      *

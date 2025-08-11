@@ -22,6 +22,22 @@ class DataFlowContentRepository extends AdministeredItemContentRepository {
         dataFlowRepository.readWithContentById(id)
     }
 
+
+    @Override
+    DataFlow saveWithContent(AdministeredItem administeredItem) {
+        List<Collection<AdministeredItem>> associations = administeredItem.getAllAssociations()
+
+        DataFlow saved = dataFlowRepository.save(administeredItem as DataFlow)
+
+        AdministeredItem savedAllContent = super.saveFacetsAndAssociations(saved, associations)
+        savedAllContent as DataFlow
+        saved.dataClassComponents.each{
+            it.dataFlow = saved
+            it.parent
+            dataClassComponentContentRepository.saveWithContent(it)
+        }
+        saved
+    }
     @Override
     Long deleteWithContent(@NonNull AdministeredItem administeredItem) {
         DataFlow dataFlow = administeredItem as DataFlow

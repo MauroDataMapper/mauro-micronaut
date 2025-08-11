@@ -188,8 +188,13 @@ class AdministeredItemContentRepository {
         List<Collection<AdministeredItem>> associations = model.getAllAssociations()
         AdministeredItem saved = (AdministeredItem) getRepository(model).save(model)
 
+        AdministeredItem savedAllContent = saveFacetsAndAssociations(saved, associations)
+        savedAllContent
+    }
+
+    AdministeredItem saveFacetsAndAssociations(AdministeredItem saved, List<Collection<AdministeredItem>> associations) {
         saveAllFacets(saved)
-        associations.each { association ->
+        associations.each {association ->
             if (association) {
                 Collection<AdministeredItem> savedAssociation = getRepository(association.first()).saveAll((Collection<AdministeredItem>) association)
                 saveAllFacets(savedAssociation)

@@ -44,6 +44,7 @@ class DataElementComponent extends ModelItem<DataClassComponent> {
     List<DataElement> targetDataElements = []
 
     @NotNull
+    @JsonIgnore
     DataClassComponent dataClassComponent
 
     @Transient
@@ -73,6 +74,13 @@ class DataElementComponent extends ModelItem<DataClassComponent> {
     @JsonIgnore
     String getPathPrefix() {
         'dec'
+    }
+
+    @Override
+    @Transient
+    @JsonIgnore
+    List<Collection<? extends ModelItem<DataClassComponent>>> getAllAssociations() {
+        [sourceDataElements, targetDataElements] as List<Collection<? extends ModelItem<DataClassComponent>>>
     }
 
 }
