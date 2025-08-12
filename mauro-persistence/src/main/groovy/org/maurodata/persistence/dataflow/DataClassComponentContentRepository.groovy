@@ -45,4 +45,16 @@ class DataClassComponentContentRepository extends AdministeredItemContentReposit
         }
         dataClassComponentRepository.delete(administeredItem as DataClassComponent)
     }
+
+    @Override
+    AdministeredItem saveWithContent(@NonNull AdministeredItem administeredItem) {
+        DataClassComponent saved = dataClassComponentRepository.save(administeredItem as DataClassComponent)
+        saveAllFacets(saved)
+        saved.dataElementComponents.each {
+            it.dataClassComponent = saved
+            it.parent = saved
+            dataElementComponentRepository.save(it)
+        }
+        saved
+    }
 }

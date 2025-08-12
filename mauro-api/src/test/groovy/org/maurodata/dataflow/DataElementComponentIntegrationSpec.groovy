@@ -1,5 +1,11 @@
 package org.maurodata.dataflow
 
+
+import io.micronaut.http.HttpResponse
+import io.micronaut.http.HttpStatus
+import io.micronaut.http.client.exceptions.HttpClientResponseException
+import io.micronaut.test.annotation.Sql
+import jakarta.inject.Singleton
 import org.maurodata.domain.dataflow.DataClassComponent
 import org.maurodata.domain.dataflow.DataElementComponent
 import org.maurodata.domain.datamodel.DataElement
@@ -7,12 +13,6 @@ import org.maurodata.domain.datamodel.DataType
 import org.maurodata.persistence.ContainerizedTest
 import org.maurodata.testing.CommonDataSpec
 import org.maurodata.web.ListResponse
-
-import io.micronaut.http.HttpResponse
-import io.micronaut.http.HttpStatus
-import io.micronaut.http.client.exceptions.HttpClientResponseException
-import io.micronaut.test.annotation.Sql
-import jakarta.inject.Singleton
 import spock.lang.Shared
 
 @ContainerizedTest
@@ -130,26 +130,25 @@ class DataElementComponentIntegrationSpec extends CommonDataSpec {
         UUID dataElementComponentId =
             dataElementComponentApi.create(sourceId, dataFlowId, dataClassComponentId, new DataElementComponent(label: 'test data element component')).id
 
-        dataElementComponentApi.updateSource(sourceId,dataFlowId,dataClassComponentId,dataElementComponentId,dataElementId)
+        dataElementComponentApi.updateSource(sourceId, dataFlowId, dataClassComponentId, dataElementComponentId, dataElementId)
 
         DataElementComponent dataElementComponent =
-                dataElementComponentApi.show(sourceId,dataFlowId,dataClassComponentId,dataElementComponentId)
+            dataElementComponentApi.show(sourceId, dataFlowId, dataClassComponentId, dataElementComponentId)
         dataElementComponent.sourceDataElements
         dataElementComponent.sourceDataElements.size() == 1
 
         when:
         HttpResponse httpResponse =
-                dataElementComponentApi.deleteSource(sourceId,dataFlowId,dataClassComponentId,dataElementComponentId,dataElementId)
+            dataElementComponentApi.deleteSource(sourceId, dataFlowId, dataClassComponentId, dataElementComponentId, dataElementId)
         then:
         httpResponse.status == HttpStatus.NO_CONTENT
 
         when:
-        DataElementComponent updated = dataElementComponentApi.show(sourceId,dataFlowId,dataClassComponentId,dataElementComponentId)
+        ListResponse<DataElementComponent> dataElementComponentListResponse = dataElementComponentApi.list(sourceId, dataFlowId, dataClassComponentId)
         then:
-        updated
-        !updated.sourceDataElements
+        dataElementComponentListResponse.items.size() == 1
+        dataElementComponentListResponse.items.first().sourceDataElements.isEmpty()
     }
-
     void 'delete dataElement from DataElementComponent -dataElement not associated -should throw NOT_FOUND'() {
         given:
         UUID dataElementComponentId =

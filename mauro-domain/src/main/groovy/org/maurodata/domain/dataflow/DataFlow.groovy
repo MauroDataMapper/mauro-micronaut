@@ -77,15 +77,10 @@ class DataFlow extends ModelItem<DataModel> {
     @Transient
     @JsonIgnore
     List<Collection<? extends ModelItem<DataFlow>>> getAllAssociations() {
-        [source, target, dataClassComponents] as List<Collection<? extends ModelItem<DataFlow>>>
+        [dataClassComponents] as List<Collection<? extends ModelItem<DataFlow>>>
     }
 
-    @Transient
-    @JsonIgnore
-    List getModelItemExcludedAssociations(){
-        [DataModel.class.simpleName]
-    }
-    /**
+       /**
      * Builder methods
      * @param args
      * @param closure

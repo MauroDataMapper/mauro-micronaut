@@ -76,11 +76,4 @@ class DataElementComponent extends ModelItem<DataClassComponent> {
         'dec'
     }
 
-    @Override
-    @Transient
-    @JsonIgnore
-    List<Collection<? extends ModelItem<DataClassComponent>>> getAllAssociations() {
-        [sourceDataElements, targetDataElements] as List<Collection<? extends ModelItem<DataClassComponent>>>
-    }
-
 }

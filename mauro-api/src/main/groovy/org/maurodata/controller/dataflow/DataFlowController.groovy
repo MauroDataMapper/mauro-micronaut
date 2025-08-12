@@ -123,13 +123,16 @@ class DataFlowController extends AdministeredItemController<DataFlow, DataModel>
     HttpResponse<byte[]> exportModel(@NonNull UUID dataModelId, @NonNull UUID id, @Nullable String namespace, @Nullable String name, @Nullable String version) {
         ModelItemExporterPlugin mauroPlugin = importExportModelService.getModelItemExporterPlugin(namespace, name, version)
         DataFlow existing = dataFlowRepository.readWithContentById(id)
-        existing = importExportModelService.updatePaths(existing) as DataFlow
         accessControlService.checkRole(Role.READER, existing)
         DataModel parent = dataModelRepository.findById(dataModelId)
         accessControlService.checkRole(Role.READER, parent)
         if (parent.id != existing.target.id) {
             ErrorHandler.handleError(HttpStatus.BAD_REQUEST, "DataModel with id $dataModelId is not parent of dataflow : $id")
         }
+        //update dataModel paths and breadcrumbs
+        existing = importExportModelService.updatePaths(existing) as DataFlow
+        existing.source = importExportModelService.updateDerivedProperties(existing.source) as DataModel
+        existing.target = importExportModelService.updateDerivedProperties(existing.target) as DataModel
         importExportModelService.createExportResponse(mauroPlugin, existing)
     }
 

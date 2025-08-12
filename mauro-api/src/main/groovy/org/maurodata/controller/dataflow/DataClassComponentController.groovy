@@ -39,7 +39,7 @@ import jakarta.inject.Inject
 @Secured(SecurityRule.IS_AUTHENTICATED)
 class DataClassComponentController extends AdministeredItemController<DataClassComponent, DataFlow> implements DataClassComponentApi {
 
-    @Inject
+
     AdministeredItemCacheableRepository.DataClassCacheableRepository dataClassRepository
 
     AdministeredItemCacheableRepository.DataClassComponentCacheableRepository dataClassComponentRepository
@@ -48,13 +48,16 @@ class DataClassComponentController extends AdministeredItemController<DataClassC
 
     DataFlowRepository dataFlowRepository
 
+    @Inject
     DataClassComponentController(AdministeredItemCacheableRepository.DataClassComponentCacheableRepository dataClassComponentRepository,
                                  DataFlowRepository dataFlowRepository,
-                                 DataClassComponentContentRepository dataClassComponentContentRepository) {
+                                 DataClassComponentContentRepository dataClassComponentContentRepository,
+                                 AdministeredItemCacheableRepository.DataClassCacheableRepository dataClassRepository) {
         super(DataClassComponent, dataClassComponentRepository, dataFlowRepository, dataClassComponentContentRepository)
         this.dataClassComponentRepository = dataClassComponentRepository
         this.dataClassComponentContentRepository = dataClassComponentContentRepository
         this.dataFlowRepository = dataFlowRepository
+        this.dataClassRepository = dataClassRepository
     }
 
     @Audit

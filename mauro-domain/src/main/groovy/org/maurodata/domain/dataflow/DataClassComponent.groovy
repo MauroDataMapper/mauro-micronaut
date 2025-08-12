@@ -78,12 +78,7 @@ class DataClassComponent extends ModelItem<DataFlow> {
     @Transient
     @JsonIgnore
     List<Collection<? extends ModelItem<DataClassComponent>>> getAllAssociations() {
-        [dataElementComponents, sourceDataClasses, targetDataClasses] as List<Collection<? extends ModelItem<DataClassComponent>>>
+        [dataElementComponents] as List<Collection<? extends ModelItem<DataClassComponent>>>
     }
 
-    @Transient
-    @JsonIgnore
-    List getModelItemExcludedAssociations(){
-        [DataClass.class.simpleName]
-    }
 }

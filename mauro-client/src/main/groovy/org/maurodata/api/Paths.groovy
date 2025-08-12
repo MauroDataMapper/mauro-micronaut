@@ -79,12 +79,9 @@ interface Paths {
     */
     String DATA_FLOW_ELEMENT_COMPONENT_ID = '/dataModels/{dataModelId}/dataFlows/{dataFlowId}/dataClassComponents/{dataClassComponentId}/dataElementComponents/{id}'
     String DATA_FLOW_ELEMENT_COMPONENT_LIST = '/dataModels/{dataModelId}/dataFlows/{dataFlowId}/dataClassComponents/{dataClassComponentId}/dataElementComponents'
-    String DATA_FLOW_ELEMENT_COMPONENT_SOURCE_ELEMENT = '/dataModels/{dataModelId}/dataFlows/{dataFlowId}/dataClassComponents/{dataClassComponentId}/dataElementComponents' +
-                                                        '/{id}/source/{dataElementId}'
-    String DATA_FLOW_ELEMENT_COMPONENT_TARGET_ELEMENT = '/dataModels/{dataModelId}/dataFlows/{dataFlowId}/dataClassComponents/{dataClassComponentId}/dataElementComponents' +
-                                                        '/{id}/target/{dataElementId}'
-    String DATA_FLOW_ELEMENT_COMPONENT_LIST_PAGED = '/dataModels/{dataModelId}/dataFlows/{dataFlowId}/dataClassComponents/{dataClassComponentId}/dataElementComponents' +
-                                                    '{?params*}'
+    String DATA_FLOW_ELEMENT_COMPONENT_SOURCE_ELEMENT = '/dataModels/{dataModelId}/dataFlows/{dataFlowId}/dataClassComponents/{dataClassComponentId}/dataElementComponents/{id}/source/{dataElementId}'
+    String DATA_FLOW_ELEMENT_COMPONENT_TARGET_ELEMENT = '/dataModels/{dataModelId}/dataFlows/{dataFlowId}/dataClassComponents/{dataClassComponentId}/dataElementComponents/{id}/target/{dataElementId}'
+    String DATA_FLOW_ELEMENT_COMPONENT_LIST_PAGED = '/dataModels/{dataModelId}/dataFlows/{dataFlowId}/dataClassComponents/{dataClassComponentId}/dataElementComponents{?params*}'
     /*
     * DataFlowApi
     */

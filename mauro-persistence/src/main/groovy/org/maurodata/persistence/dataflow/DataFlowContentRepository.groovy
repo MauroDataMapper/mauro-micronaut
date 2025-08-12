@@ -17,27 +17,24 @@ class DataFlowContentRepository extends AdministeredItemContentRepository {
     @Inject
     DataClassComponentContentRepository dataClassComponentContentRepository
 
+
     @Override
     DataFlow readWithContentById(UUID id) {
         dataFlowRepository.readWithContentById(id)
     }
 
-
     @Override
     DataFlow saveWithContent(AdministeredItem administeredItem) {
-        List<Collection<AdministeredItem>> associations = administeredItem.getAllAssociations()
-
         DataFlow saved = dataFlowRepository.save(administeredItem as DataFlow)
-
-        AdministeredItem savedAllContent = super.saveFacetsAndAssociations(saved, associations)
-        savedAllContent as DataFlow
-        saved.dataClassComponents.each{
+        saveAllFacets(saved)
+        saved.dataClassComponents.each {
             it.dataFlow = saved
-            it.parent
+            it.parent = saved
             dataClassComponentContentRepository.saveWithContent(it)
         }
         saved
     }
+
     @Override
     Long deleteWithContent(@NonNull AdministeredItem administeredItem) {
         DataFlow dataFlow = administeredItem as DataFlow

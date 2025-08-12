@@ -29,9 +29,7 @@ abstract class AdministeredItemService {
             it.each {assoc ->
                 assoc.each {
                     updateDerivedProperties(assoc)
-                    if (!assoc.getModelItemExcludedAssociations().contains(assoc.domainType)) {
-                        updatePaths(assoc)
-                    }
+                    updatePaths(assoc)
                 }
             }
         }

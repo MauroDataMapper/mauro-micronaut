@@ -10,6 +10,7 @@ import io.micronaut.core.annotation.Nullable
 import jakarta.inject.Singleton
 import org.maurodata.domain.classifier.Classifier
 import org.maurodata.domain.dataflow.DataClassComponent
+import org.maurodata.domain.dataflow.DataElementComponent
 import org.maurodata.domain.datamodel.DataClass
 import org.maurodata.domain.datamodel.DataElement
 import org.maurodata.domain.datamodel.DataModel
@@ -22,6 +23,7 @@ import org.maurodata.domain.terminology.TermRelationshipType
 import org.maurodata.domain.terminology.Terminology
 import org.maurodata.persistence.classifier.ClassifierRepository
 import org.maurodata.persistence.dataflow.DataClassComponentRepository
+import org.maurodata.persistence.dataflow.DataElementComponentRepository
 import org.maurodata.persistence.datamodel.DataClassRepository
 import org.maurodata.persistence.datamodel.DataElementRepository
 import org.maurodata.persistence.datamodel.DataTypeRepository
@@ -328,6 +330,33 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
         }
         Long removeSourceDataClass(UUID id, UUID dataClassId) {
             ((DataClassComponentRepository) repository).removeSourceDataClass(id, dataClassId)
+        }
+
+        @Override
+        Boolean handles(String domainType) {
+            domainClass.simpleName.equalsIgnoreCase(domainType) || (domainClass.simpleName + 's').equalsIgnoreCase(domainType)
+        }
+    }
+
+    @Singleton
+    @CompileStatic
+    static class DataElementComponentCacheableRepository extends AdministeredItemCacheableRepository<DataElementComponent> {
+        DataElementComponentCacheableRepository(DataElementComponentRepository dataElementComponentRepository) {
+            super(dataElementComponentRepository)
+        }
+
+        DataElementComponent addTargetDataElement(@NonNull UUID id, @NonNull UUID dataElementId) {
+            ((DataElementComponentRepository) repository).addTargetDataElement(id, dataElementId)
+        }
+        DataElementComponent addSourceDataElement(@NonNull UUID id, @NonNull UUID dataElementId) {
+            ((DataElementComponentRepository) repository).addSourceDataElement(id, dataElementId)
+        }
+
+        Long removeTargetDataElement(UUID id, UUID dataElementId) {
+            ((DataElementComponentRepository) repository).removeTargetDataElement(id, dataElementId)
+        }
+        Long removeSourceDataElement(UUID id, UUID dataElementId) {
+            ((DataElementComponentRepository) repository).removeSourceDataElement(id, dataElementId)
         }
 
         @Override
