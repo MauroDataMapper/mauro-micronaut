@@ -341,18 +341,20 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
         DataClassComponentCacheableRepository(DataClassComponentRepository dataClassComponentRepository) {
             super(dataClassComponentRepository)
         }
-
         DataClassComponent addTargetDataClass(@NonNull UUID id, @NonNull UUID dataClassId) {
+            invalidate(id)
             ((DataClassComponentRepository) repository).addTargetDataClass(id, dataClassId)
         }
         DataClassComponent addSourceDataClass(@NonNull UUID id, @NonNull UUID dataClassId) {
+            invalidate(id)
             ((DataClassComponentRepository) repository).addSourceDataClass(id, dataClassId)
         }
-
         Long removeTargetDataClass(UUID id, UUID dataClassId) {
+            invalidate(id)
             ((DataClassComponentRepository) repository).removeTargetDataClass(id, dataClassId)
         }
         Long removeSourceDataClass(UUID id, UUID dataClassId) {
+            invalidate(id)
             ((DataClassComponentRepository) repository).removeSourceDataClass(id, dataClassId)
         }
 
@@ -369,17 +371,24 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
         }
 
         DataElementComponent addTargetDataElement(@NonNull UUID id, @NonNull UUID dataElementId) {
+            invalidate(id)
             ((DataElementComponentRepository) repository).addTargetDataElement(id, dataElementId)
         }
+
         DataElementComponent addSourceDataElement(@NonNull UUID id, @NonNull UUID dataElementId) {
+            invalidate(id)
             ((DataElementComponentRepository) repository).addSourceDataElement(id, dataElementId)
         }
 
         Long removeTargetDataElement(UUID id, UUID dataElementId) {
+            invalidate(id)
             ((DataElementComponentRepository) repository).removeTargetDataElement(id, dataElementId)
         }
+
         Long removeSourceDataElement(UUID id, UUID dataElementId) {
+            invalidate(id)
             ((DataElementComponentRepository) repository).removeSourceDataElement(id, dataElementId)
+
         }
 
         @Override
