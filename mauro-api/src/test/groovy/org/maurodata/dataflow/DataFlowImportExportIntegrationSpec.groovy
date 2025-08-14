@@ -2,6 +2,8 @@ package org.maurodata.dataflow
 
 import groovy.json.JsonSlurper
 import io.micronaut.http.HttpResponse
+import io.micronaut.http.MediaType
+import io.micronaut.http.client.multipart.MultipartBody
 import io.micronaut.test.annotation.Sql
 import jakarta.inject.Singleton
 import org.maurodata.domain.dataflow.DataClassComponent
@@ -9,12 +11,10 @@ import org.maurodata.domain.dataflow.DataElementComponent
 import org.maurodata.domain.dataflow.DataFlow
 import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.datamodel.DataType
-import org.maurodata.domain.facet.Annotation
-import org.maurodata.domain.facet.Metadata
-import org.maurodata.domain.facet.SummaryMetadata
-import org.maurodata.domain.facet.SummaryMetadataReport
+import org.maurodata.export.ExportModel
 import org.maurodata.persistence.ContainerizedTest
 import org.maurodata.testing.CommonDataSpec
+import org.maurodata.web.ListResponse
 import spock.lang.Shared
 
 @ContainerizedTest
@@ -22,8 +22,15 @@ import spock.lang.Shared
 @Sql(scripts = ["classpath:sql/tear-down-dataflow.sql",
     "classpath:sql/tear-down-datamodel.sql",
     "classpath:sql/tear-down.sql",
-    "classpath:sql/tear-down-folder.sql"], phase = Sql.Phase.AFTER_ALL)
+    "classpath:sql/tear-down-folder.sql"], phase = Sql.Phase.AFTER_EACH)
 class DataFlowImportExportIntegrationSpec extends CommonDataSpec {
+
+    static final String EXPORTER_NAMESPACE = 'org.maurodata.plugin.exporter.json'
+    static final String EXPORTER_NAME = 'JsonDataFlowExporterPlugin'
+    static final String EXPORTER_VERSION = '4.0.0'
+    static final String IMPORTER_NAMESPACE = 'org.maurodata.plugin.importer.json'
+    static final String IMPORTER_NAME = 'JsonDataFlowImporterPlugin'
+    static final String IMPORTER_VERSION = '4.0.0'
 
     JsonSlurper jsonSlurper = new JsonSlurper()
 
@@ -53,8 +60,19 @@ class DataFlowImportExportIntegrationSpec extends CommonDataSpec {
     @Shared
     DataFlow dataFlow
 
+    @Shared
+    UUID annotationId
+    @Shared
+    UUID childAnnotationId
+    @Shared
+    UUID metadataId
+    @Shared
+    UUID summaryMetadataId
+    @Shared
+    UUID summaryMetadataReportId
 
-    void setupSpec() {
+
+    void setup() {
         folderId = folderApi.create(folder()).id
         source = dataModelApi.create(folderId, dataModelPayload('source label'))
         target = dataModelApi.create(folderId, dataModelPayload('target label'))
@@ -80,28 +98,23 @@ class DataFlowImportExportIntegrationSpec extends CommonDataSpec {
 
         dataElementComponentApi.updateSource(source.id, dataFlow.id, dataClassComponentId, dataElementComponentId, dataElementId1)
         dataElementComponentApi.updateTarget(source.id, dataFlow.id, dataClassComponentId, dataElementComponentId, dataElementId2)
+
+        metadataId = metadataApi.create(DataFlow.simpleName, dataFlow.id, metadataPayload()).id
+        summaryMetadataId = summaryMetadataApi.create(DataFlow.simpleName, dataFlow.id, summaryMetadataPayload()).id
+        summaryMetadataReportId = summaryMetadataReportApi.create(DataFlow.simpleName, dataFlow.id, summaryMetadataId, summaryMetadataReport()).id
+        annotationId = annotationApi.create(DataFlow.simpleName, dataFlow.id, annotationPayload()).id
+        childAnnotationId = annotationApi.create(DataFlow.simpleName, dataFlow.id, annotationId, annotationPayload('childLabel', 'child-description')).id
     }
 
 
     void 'shouldCreateExportModel'() {
-        Metadata metadata = metadataApi.create(DataFlow.simpleName, dataFlow.id, metadataPayload())
-
-        SummaryMetadata summaryMetadata = summaryMetadataApi.create(DataFlow.simpleName, dataFlow.id, summaryMetadataPayload())
-
-        SummaryMetadataReport summaryMetadataReport = summaryMetadataReportApi.create(DataFlow.simpleName, dataFlow.id, summaryMetadata.id, summaryMetadataReport())
-
-        Annotation annotation = annotationApi.create(DataFlow.simpleName, dataFlow.id, annotationPayload())
-        Annotation childAnnotation = annotationApi.create(DataFlow.simpleName, dataFlow.id, annotation.id, annotationPayload('childLabel', 'child-description'))
-
-
         when:
-        HttpResponse<byte[]> exportResponse =
-            dataFlowApi.exportModel(target.id, dataFlow.id, 'org.maurodata.plugin.exporter.json', 'JsonDataFlowExporterPlugin', '4.0.0')
+        HttpResponse<byte[]> exportFile =
+            dataFlowApi.exportModel(target.id, dataFlow.id, EXPORTER_NAMESPACE, EXPORTER_NAME, EXPORTER_VERSION)
         then:
-        exportResponse
+        exportFile
 
-        exportResponse.body()
-        Map parsedJson = jsonSlurper.parseText(new String(exportResponse.body())) as Map
+        Map parsedJson = jsonSlurper.parseText(new String(exportFile.body())) as Map
         parsedJson.exportMetadata
         parsedJson.dataFlow
         parsedJson.dataFlow.source
@@ -110,16 +123,16 @@ class DataFlowImportExportIntegrationSpec extends CommonDataSpec {
         parsedJson.dataFlow.target.get('id') == target.id.toString()
 
         parsedJson.dataFlow.metadata.size() == 1
-        parsedJson.dataFlow.metadata[0].id != metadata.id
+        parsedJson.dataFlow.metadata[0].id != metadataId
         parsedJson.dataFlow.summaryMetadata.size() == 1
-        parsedJson.dataFlow.summaryMetadata[0].id != summaryMetadata.id
+        parsedJson.dataFlow.summaryMetadata[0].id != summaryMetadataId
         parsedJson.dataFlow.summaryMetadata[0].summaryMetadataReports.size() == 1
-        parsedJson.dataFlow.summaryMetadata[0].summaryMetadataReports[0].id != summaryMetadataReport.id
+        parsedJson.dataFlow.summaryMetadata[0].summaryMetadataReports[0].id != summaryMetadataReportId
 
         parsedJson.dataFlow.annotations.size() == 1
-        parsedJson.dataFlow.annotations[0].id != annotation.id
+        parsedJson.dataFlow.annotations[0].id != annotationId
         parsedJson.dataFlow.annotations[0].childAnnotations.size() == 1
-        parsedJson.dataFlow.annotations[0].childAnnotations[0].id != childAnnotation.id
+        parsedJson.dataFlow.annotations[0].childAnnotations[0].id != childAnnotationId
 
 
         parsedJson.dataFlow.dataClassComponents.size() == 1
@@ -136,5 +149,40 @@ class DataFlowImportExportIntegrationSpec extends CommonDataSpec {
 
     }
 
+    void 'shouldImportDataFlow'() {
+        given:
+        byte[] responseBytes =
+            dataFlowApi.exportModel(target.id, dataFlow.id, EXPORTER_NAMESPACE, EXPORTER_NAME, EXPORTER_VERSION).body()
+
+        ExportModel exportModel = objectMapper.readValue(responseBytes, ExportModel)
+
+        and:
+        MultipartBody importRequest = MultipartBody.builder()
+            .addPart('folderId', folderId.toString())
+            .addPart('importFile', 'file.json', MediaType.APPLICATION_JSON_TYPE, objectMapper.writeValueAsBytes(exportModel))
+            .build()
+
+        when:
+        ListResponse<DataFlow> dataFlowResponse = dataFlowApi.importModel(target.id, importRequest, IMPORTER_NAMESPACE, IMPORTER_NAME, IMPORTER_VERSION)
+
+        then:
+        dataFlowResponse
+        dataFlowResponse.items.size() == 1
+        DataFlow response = dataFlowResponse.items[0]
+        response.source
+        response.target
+        response.source.id == source.id
+        response.target.id == target.id
+        response.annotations.size() == 1
+        response.annotations[0].id != annotationId
+        response.annotations[0].childAnnotations.size() == 1
+        response.annotations[0].childAnnotations[0].id != childAnnotationId
+        response.metadata.size() == 1
+        response.metadata[0].id != metadataId
+        response.summaryMetadata.size() == 1
+        response.summaryMetadata[0].id != summaryMetadataId
+        response.summaryMetadata[0].summaryMetadataReports.size() == 1
+        response.summaryMetadata[0].summaryMetadataReports[0].id != summaryMetadataReportId
+    }
 
 }

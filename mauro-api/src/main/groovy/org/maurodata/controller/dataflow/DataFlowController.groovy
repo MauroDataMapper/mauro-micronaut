@@ -136,12 +136,13 @@ class DataFlowController extends AdministeredItemController<DataFlow, DataModel>
         importExportModelService.createExportResponse(mauroPlugin, existing)
     }
 
+
     @Transactional
     @ExecuteOn(TaskExecutors.IO)
     @Audit(title = EditType.IMPORT, description = "Import data flow")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Post(Paths.DATA_FLOW_IMPORT)
-    ListResponse<DataModel> importModel(@NonNull UUID dataModelId, @Body MultipartBody body, @Nullable String namespace, @Nullable String name, @Nullable String version) {
+    ListResponse<DataFlow> importModel(@NonNull UUID dataModelId, @Body MultipartBody body, @Nullable String namespace, @Nullable String name, @Nullable String version) {
 
         List<ModelItem> modelItems = importExportModelService.importModelItems(dataModelId, JsonDataFlowImporterPlugin,
                                                                                body, namespace, name, version)
@@ -157,5 +158,10 @@ class DataFlowController extends AdministeredItemController<DataFlow, DataModel>
             show(dataFlow.id)
         })
 
+    }
+    @Override
+    ListResponse<DataFlow> importModel(@NonNull UUID dataModelId, @Body io.micronaut.http.client.multipart.MultipartBody body, @Nullable String namespace,
+                                       @Nullable String name, @Nullable String version) {
+        throw new Exception("Client version of import model has been called.. hint client MultipartBody ")
     }
 }
