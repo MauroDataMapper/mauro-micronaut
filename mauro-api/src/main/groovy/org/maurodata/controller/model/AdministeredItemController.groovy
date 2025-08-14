@@ -45,9 +45,11 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
     AdministeredItemContentRepository administeredItemContentRepository
 
     @Inject
+    AdministeredItemCacheableRepository administeredItemCacheableRepository
+    @Inject
     PathRepository pathRepository
 
-
+    @Inject
     AdministeredItemController(Class<I> itemClass, AdministeredItemRepository<I> administeredItemRepository, AdministeredItemRepository<P> parentItemRepository,
                                AdministeredItemContentRepository administeredItemContentRepository) {
         super(administeredItemRepository)
@@ -143,6 +145,7 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
 
         Long deleted = administeredItemContentRepository.deleteWithContent(itemToDelete)
         if (deleted) {
+            administeredItemCacheableRepository.invalidate(itemToDelete)
             HttpResponse.status(HttpStatus.NO_CONTENT)
         } else {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, 'Not found for deletion')

@@ -320,6 +320,16 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
             super(dataFlowRepository)
         }
 
+        @Nullable
+        List<DataFlow> findAllBySource(DataModel dataModel) {
+            ((DataFlowRepository) repository).findAllBySource(dataModel)
+        }
+
+        @Nullable
+        List<DataFlow> findAllByTarget(DataModel dataModel) {
+            ((DataFlowRepository) repository).findAllByTarget(dataModel)
+        }
+
         @Override
         Boolean handles(String domainType) {
             domainClass.simpleName.equalsIgnoreCase(domainType) || (domainClass.simpleName + 's').equalsIgnoreCase(domainType)

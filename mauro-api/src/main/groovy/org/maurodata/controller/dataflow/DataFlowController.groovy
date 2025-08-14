@@ -34,9 +34,9 @@ import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.facet.EditType
 import org.maurodata.domain.model.ModelItem
 import org.maurodata.domain.security.Role
+import org.maurodata.persistence.cache.AdministeredItemCacheableRepository
 import org.maurodata.persistence.cache.ModelCacheableRepository
 import org.maurodata.persistence.dataflow.DataFlowContentRepository
-import org.maurodata.persistence.dataflow.DataFlowRepository
 import org.maurodata.plugin.exporter.DataFlowExporterPlugin
 import org.maurodata.plugin.exporter.ModelItemExporterPlugin
 import org.maurodata.plugin.importer.DataFlowImporterPlugin
@@ -51,13 +51,13 @@ import org.maurodata.web.PaginationParams
 @Secured(SecurityRule.IS_AUTHENTICATED)
 class DataFlowController extends AdministeredItemController<DataFlow, DataModel> implements DataFlowApi {
 
-    DataFlowRepository dataFlowRepository
+    AdministeredItemCacheableRepository.DataFlowCacheableRepository dataFlowRepository
     ModelCacheableRepository.DataModelCacheableRepository dataModelRepository
     DataFlowContentRepository dataFlowContentRepository
     ImportExportModelService importExportModelService
 
     @Inject
-    DataFlowController(DataFlowRepository dataFlowRepository, ModelCacheableRepository.DataModelCacheableRepository dataModelRepository,
+    DataFlowController(AdministeredItemCacheableRepository.DataFlowCacheableRepository dataFlowRepository, ModelCacheableRepository.DataModelCacheableRepository dataModelRepository,
                        DataFlowContentRepository dataFlowContentRepository, ImportExportModelService importExportModelService) {
         super(DataFlow, dataFlowRepository, dataModelRepository, dataFlowContentRepository)
         this.dataFlowRepository = dataFlowRepository
@@ -122,7 +122,7 @@ class DataFlowController extends AdministeredItemController<DataFlow, DataModel>
     @Get(Paths.DATA_FLOW_EXPORT)
     HttpResponse<byte[]> exportModel(@NonNull UUID dataModelId, @NonNull UUID id, @Nullable String namespace, @Nullable String name, @Nullable String version) {
         ModelItemExporterPlugin mauroPlugin = importExportModelService.getModelItemExporterPlugin(namespace, name, version)
-        DataFlow existing = dataFlowRepository.readWithContentById(id)
+        DataFlow existing = dataFlowContentRepository.readWithContentById(id)
         accessControlService.checkRole(Role.READER, existing)
         DataModel parent = dataModelRepository.findById(dataModelId)
         accessControlService.checkRole(Role.READER, parent)

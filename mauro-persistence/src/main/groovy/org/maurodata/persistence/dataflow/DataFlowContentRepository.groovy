@@ -4,6 +4,7 @@ import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
+import org.maurodata.domain.dataflow.DataClassComponent
 import org.maurodata.domain.dataflow.DataFlow
 import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.persistence.model.AdministeredItemContentRepository
@@ -16,11 +17,21 @@ class DataFlowContentRepository extends AdministeredItemContentRepository {
     DataFlowRepository dataFlowRepository
     @Inject
     DataClassComponentContentRepository dataClassComponentContentRepository
+    @Inject
+    DataClassComponentRepository dataClassComponentRepository
 
+    @Inject
+    DataElementComponentRepository dataElementComponentRepository
 
     @Override
     DataFlow readWithContentById(UUID id) {
-        dataFlowRepository.readWithContentById(id)
+        DataFlow dataFlow = dataFlowRepository.findById(id)
+        List<DataClassComponent> dataClassComponents = dataClassComponentRepository.findAllByParent(dataFlow)
+        dataClassComponents.each {
+            it.dataElementComponents = dataElementComponentRepository.findAllByParent(it)
+        }
+        dataFlow.dataClassComponents = dataClassComponents
+        dataFlow
     }
 
     @Override
