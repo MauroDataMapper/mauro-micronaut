@@ -1,7 +1,6 @@
 package org.maurodata
 
-import groovy.transform.CompileStatic
-import io.micronaut.context.annotation.Bean
+import groovy.util.logging.Slf4j
 import jakarta.inject.Singleton
 import org.maurodata.api.admin.AdminApi
 import org.maurodata.api.classifier.ClassificationSchemeApi
@@ -50,14 +49,14 @@ import io.micronaut.http.MediaType
 import io.micronaut.http.client.multipart.MultipartBody
 import jakarta.inject.Inject
 import org.slf4j.Logger
+import picocli.CommandLine.Command
 
 import static org.slf4j.LoggerFactory.getLogger
 
-@CompileStatic
 @Singleton
-class ApiClient {
-
-    protected static final Logger log = getLogger(ApiClient)
+@Command
+@Slf4j
+abstract class ApiClient {
 
     @Inject ObjectMapper objectMapper
 
