@@ -167,6 +167,13 @@ class DataFlowIntegrationSpec extends CommonDataSpec {
 
         then:
         response.status == HttpStatus.NO_CONTENT
+
+        when:
+        DataFlow dataFlow = dataFlowApi.show(targetId, dataFlowId)
+
+        then:
+        !dataFlow
+
     }
 
 }

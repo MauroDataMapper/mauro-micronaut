@@ -54,6 +54,6 @@ class DataFlowContentRepository extends AdministeredItemContentRepository {
                 dataClassComponentContentRepository.deleteWithContent(dataClassComponent as AdministeredItem)
             }
         }
-        dataFlowRepository.delete(dataFlow)
+        super.administeredItemRepository.delete(dataFlow)
     }
 }

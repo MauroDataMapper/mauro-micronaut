@@ -330,6 +330,11 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
             ((DataFlowRepository) repository).findAllByTarget(dataModel)
         }
 
+
+        Long delete(DataFlow item) {
+            super.delete(item)
+        }
+
         @Override
         Boolean handles(String domainType) {
             domainClass.simpleName.equalsIgnoreCase(domainType) || (domainClass.simpleName + 's').equalsIgnoreCase(domainType)
