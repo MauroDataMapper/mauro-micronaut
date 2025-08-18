@@ -161,7 +161,7 @@ class CodeSetController extends ModelController<CodeSet> implements CodeSetApi {
 
 
     @Audit
-    @Get('/codeSets/{id}/diff/{otherId}')
+    @Get(Paths.CODE_SET_DIFF)
     ObjectDiff diffModels(@NonNull UUID id, @NonNull UUID otherId) {
         CodeSet codeSet = modelContentRepository.findWithContentById(id)
         ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, codeSet, "item not found : $id")

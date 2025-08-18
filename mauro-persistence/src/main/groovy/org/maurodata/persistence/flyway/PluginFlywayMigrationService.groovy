@@ -7,6 +7,8 @@ import io.github.classgraph.ScanResult
 import io.micronaut.context.ApplicationContext
 import io.micronaut.context.event.ApplicationEventListener
 import io.micronaut.context.event.StartupEvent
+import io.micronaut.core.annotation.Order
+import io.micronaut.core.order.Ordered
 import io.micronaut.data.connection.annotation.Connectable
 import jakarta.inject.Inject
 import jakarta.inject.Named
@@ -18,6 +20,7 @@ import javax.sql.DataSource
 @Singleton
 @CompileStatic
 @Slf4j
+@Order(Ordered.HIGHEST_PRECEDENCE)
 class PluginFlywayMigrationService implements ApplicationEventListener<StartupEvent> {
 
     final static String CORE_MIGRATIONS_FOLDER = "core"

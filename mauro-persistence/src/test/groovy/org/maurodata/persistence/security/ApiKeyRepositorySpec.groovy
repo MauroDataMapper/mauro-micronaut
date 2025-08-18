@@ -55,6 +55,7 @@ class ApiKeyRepositorySpec extends Specification {
             expiryDate "2025-01-01T00:00:00.00Z"
             catalogueUserId savedUser.id
         }
+        apiKey.id = UUID.randomUUID()
         ApiKey savedApiKey = apiKeyRepository.save(apiKey)
 
         then:
@@ -89,6 +90,7 @@ class ApiKeyRepositorySpec extends Specification {
             expiryDate "2025-01-01T00:00:00.00Z"
             catalogueUserId savedUser.id
         }
+        apiKey.id = UUID.randomUUID()
         ApiKey savedApiKey = apiKeyCacheableRepository.save(apiKey)
 
         then:

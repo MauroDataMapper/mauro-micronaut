@@ -5,7 +5,7 @@ micronaut:
       connect-timeout: 11s
 
   server:
-    port: 8088
+    port: 8080
     max-request-size: 100mb
     multipart:
       max-file-size: 100mb
@@ -13,6 +13,10 @@ micronaut:
       enabled: true
   router:
     static-resources:
+      default:
+        paths: classpath:public
+        mapping: /**
+        enabled: true
       swagger:
         paths: classpath:META-INF/swagger
         mapping: /swagger/**
@@ -27,10 +31,10 @@ micronaut:
     endpoints:
       login:
         enabled: true
-        path: '/authentication/login'
+        path: '/api/authentication/login'
       logout:
         enabled: true
-        path: '/authentication/logout'
+        path: '/api/authentication/logout'
         get-allowed: true
       oauth:
         enabled: false

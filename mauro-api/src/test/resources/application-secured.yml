@@ -7,10 +7,10 @@ micronaut:
     endpoints:
       login:
         enabled: true
-        path: '/authentication/login'
+        path: '/api/authentication/login'
       logout:
         enabled: true
-        path: '/authentication/logout'
+        path: '/api/authentication/logout'
         get-allowed: true
       oauth:
         enabled: false

@@ -156,7 +156,7 @@ class DataTypeIntegrationSpec extends CommonDataSpec {
                          referenceClass: [id: dataClassId1]))
         and:
          URI uri = UriBuilder.of(embeddedServer.getContextURI())
-            .path("/dataModels/".concat(dataModelId.toString()).concat('/dataTypes'))
+            .path("/api/dataModels/".concat(dataModelId.toString()).concat('/dataTypes'))
             .queryParam('domainType', DataType.DataTypeKind.REFERENCE_TYPE.stringValue)
             .build()
         when:
@@ -234,7 +234,7 @@ class DataTypeIntegrationSpec extends CommonDataSpec {
         retrieved.modelResourceDomainType == CodeSet.class.simpleName
 
         URI uri = UriBuilder.of(embeddedServer.getContextURI())
-            .path("/dataModels/".concat(dataModelId.toString()).concat('/dataTypes'))
+            .path("/api/dataModels/".concat(dataModelId.toString()).concat('/dataTypes'))
             .queryParam('domainType', DataType.DataTypeKind.MODEL_TYPE.stringValue)
             .build()
         when:

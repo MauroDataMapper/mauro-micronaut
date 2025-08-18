@@ -221,6 +221,11 @@ abstract class ItemCacheableRepository<I extends Item> implements ItemRepository
             invalidateAll()
             ((UserGroupRepository) repository).addCatalogueUser(uuid, catalogueUserId)
         }
+
+        @Cacheable
+        List<UserGroup> readAllByName(String name) {
+            ((UserGroupRepository) repository).readAllByName(name)
+        }
     }
 
     @Singleton
@@ -250,6 +255,10 @@ abstract class ItemCacheableRepository<I extends Item> implements ItemRepository
 
         List<ApiKey> readByCatalogueUserId(UUID catalogueUserId) {
             ((ApiKeyRepository) repository).readByCatalogueUserId(catalogueUserId)
+        }
+
+        List<ApiKey> readByCatalogueUserIdAndName(UUID catalogueUserId, String name) {
+            ((ApiKeyRepository) repository).readByCatalogueUserIdAndName(catalogueUserId, name)
         }
     }
 
