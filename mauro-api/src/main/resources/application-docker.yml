@@ -1,0 +1,16 @@
+micronaut:
+  server:
+    port: 8080
+  router:
+    static-resources:
+      default:
+        paths: classpath:public
+        mapping: /**
+        enabled: true
+  security:
+    enabled: true
+    endpoints:
+      login:
+        path: '/api/authentication/login'
+      logout:
+        path: '/api/authentication/logout'

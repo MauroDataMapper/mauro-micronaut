@@ -19,6 +19,8 @@ abstract class ApiKeyRepository implements ItemRepository<ApiKey> {
 
     abstract List<ApiKey> readByCatalogueUserId(UUID catalogueUserId)
 
+    abstract List<ApiKey> readByCatalogueUserIdAndName(UUID catalogueUserId, String name)
+
     @Override
     Class getDomainClass() {
         ApiKey

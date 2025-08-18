@@ -17,7 +17,7 @@ import org.maurodata.security.AccessControlService
 
 @CompileStatic
 @Slf4j
-@Controller('/session')
+@Controller
 @Secured(SecurityRule.IS_ANONYMOUS)
 class SessionController implements SessionApi {
 
