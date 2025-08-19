@@ -6,6 +6,9 @@ import io.micronaut.http.HttpResponse
 import io.micronaut.http.MediaType
 import io.micronaut.http.client.multipart.MultipartBody
 import jakarta.inject.Singleton
+import org.maurodata.domain.dataflow.DataClassComponent
+import org.maurodata.domain.dataflow.DataElementComponent
+import org.maurodata.domain.dataflow.DataFlow
 import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.datamodel.DataType
 import org.maurodata.domain.facet.Annotation
@@ -30,7 +33,8 @@ class DataModelJsonImportExportIntegrationSpec extends CommonDataSpec {
 
     @Shared
     UUID dataModelId
-
+    @Shared
+    DataModel source
     @Shared
     UUID metadataId
 
@@ -48,6 +52,24 @@ class DataModelJsonImportExportIntegrationSpec extends CommonDataSpec {
 
     @Shared
     DataType dataType
+    @Shared
+    DataType dataType2
+    @Shared
+    UUID dataElementId1
+    @Shared
+    UUID dataElementId2
+    @Shared
+    UUID dataClassId1
+    @Shared
+    UUID dataClassId2
+
+    @Shared
+    DataFlow dataFlow
+    @Shared
+    UUID dataClassComponentId
+    @Shared
+    UUID dataElementComponentId
+
 
     JsonSlurper jsonSlurper = new JsonSlurper()
 
@@ -76,6 +98,8 @@ class DataModelJsonImportExportIntegrationSpec extends CommonDataSpec {
 
         dataType = dataTypeApi.create(dataModelId,
             new DataType(label: 'string', description: 'character string of variable length', dataTypeKind: DataType.DataTypeKind.PRIMITIVE_TYPE))
+
+        source = dataModelApi.create(folderId, dataModelPayload('source label'))
     }
 
     void 'test get export data model - should export model'() {
@@ -171,4 +195,54 @@ class DataModelJsonImportExportIntegrationSpec extends CommonDataSpec {
 
     }
 
+    void 'datamodel with dataflows . Should export model and dataflow should be in response'() {
+        given:
+        dataType2 = dataTypeApi.create(dataModelId, dataTypesPayload())
+        dataClassId1 = dataClassApi.create(source.id, dataClassPayload('dataclass label 1')).id
+        dataClassId2 = dataClassApi.create(dataModelId, dataClassPayload('dataclass label 2')).id
+        dataElementId1 = dataElementApi.create(dataModelId, dataClassId1, dataElementPayload('dataElement1 label', dataType)).id
+        dataElementId2 = dataElementApi.create(dataModelId, dataClassId2, dataElementPayload('label2', dataType2)).id
+        dataFlow = dataFlowApi.create(dataModelId, new DataFlow(
+            label: 'test label',
+            description: 'dataflow payload description ',
+            source: source))
+
+        dataClassComponentId = dataClassComponentApi.create(source.id, dataFlow.id,
+                                                            new DataClassComponent(
+                                                                label: 'data class component test label')).id
+        dataClassComponentApi.updateSource(source.id, dataFlow.id, dataClassComponentId, dataClassId1)
+        dataClassComponentApi.updateTarget(source.id, dataFlow.id, dataClassComponentId, dataClassId2)
+        dataElementComponentId =
+            dataElementComponentApi.create(source.id, dataFlow.id, dataClassComponentId, new DataElementComponent(label: 'test data element component')).id
+
+        dataElementComponentApi.updateSource(source.id, dataFlow.id, dataClassComponentId, dataElementComponentId, dataElementId1)
+        dataElementComponentApi.updateTarget(source.id, dataFlow.id, dataClassComponentId, dataElementComponentId, dataElementId2)
+        when:
+        HttpResponse<byte[]> response = dataModelApi.exportModel(dataModelId, 'org.maurodata.plugin.exporter.json', 'JsonDataModelExporterPlugin', '4.0.0')
+
+        then:
+        response.body()
+
+        Map parsedJson = jsonSlurper.parseText(new String(response.body())) as Map
+        parsedJson.exportMetadata
+
+        parsedJson.dataModel
+        parsedJson.dataModel.id == dataModelId.toString()
+        parsedJson.dataModel.metadata.id == List.of(metadataId.toString())
+        parsedJson.dataModel.summaryMetadata.id == List.of(summaryMetadataId.toString())
+        parsedJson.dataModel.summaryMetadata.summaryMetadataReports[0]
+        parsedJson.dataModel.summaryMetadata.summaryMetadataReports[0].id == List.of(reportId.toString())
+        parsedJson.dataModel.annotations.id == List.of(annotationId.toString())
+        parsedJson.dataModel.annotations.childAnnotations[0].id == List.of(childAnnotationId.toString())
+        parsedJson.dataModel.dataTypes.id == List.of(dataType.id.toString(), dataType2.id.toString())
+
+        parsedJson.dataModel.targetDataFlows.source.id[0] == source.id.toString()
+        parsedJson.dataModel.targetDataFlows.target.id[0] == dataModelId.toString()
+
+        parsedJson.dataModel.targetDataFlows.dataClassComponents[0].sourceDataClasses.size() == 1
+        parsedJson.dataModel.targetDataFlows.dataClassComponents[0].targetDataClasses.size() == 1
+        parsedJson.dataModel.targetDataFlows.dataClassComponents[0].dataElementComponents.size() == 1
+        parsedJson.dataModel.targetDataFlows.dataClassComponents[0].dataElementComponents[0].targetDataElements.size() == 1
+        parsedJson.dataModel.targetDataFlows.dataClassComponents[0].dataElementComponents[0].sourceDataElements.size() == 1
+    }
 }

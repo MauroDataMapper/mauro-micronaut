@@ -7,6 +7,8 @@ import jakarta.inject.Singleton
 import org.maurodata.domain.datamodel.DataClass
 import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.datamodel.DataType
+import org.maurodata.persistence.dataflow.DataFlowContentRepository
+import org.maurodata.persistence.dataflow.DataFlowRepository
 import org.maurodata.persistence.model.ModelContentRepository
 
 @CompileStatic
@@ -27,6 +29,12 @@ class DataModelContentRepository extends ModelContentRepository<DataModel> {
 
     @Inject
     EnumerationValueRepository enumerationValueRepository
+
+    @Inject
+    DataFlowRepository dataFlowRepository
+
+    @Inject
+    DataFlowContentRepository dataFlowContentRepository
 
     @Override
     DataModel findWithContentById(UUID id) {
@@ -60,6 +68,13 @@ class DataModelContentRepository extends ModelContentRepository<DataModel> {
             dataElement.dataType = dataTypeMap[dataElement.dataType.id]
         }
 
+        //dataFlows
+        dataModel.sourceDataFlows = dataFlowRepository.findAllBySource(dataModel).collect {
+            dataFlowContentRepository.readWithContentById(it.id)
+        }
+        dataModel.targetDataFlows = dataFlowRepository.findAllByTarget(dataModel).collect {
+            dataFlowContentRepository.readWithContentById(it.id)
+        }
         dataModel
     }
 

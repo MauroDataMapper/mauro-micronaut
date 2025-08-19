@@ -7,10 +7,12 @@ import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
 import groovy.transform.MapConstructor
 import io.micronaut.core.annotation.Introspected
+import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.MappedProperty
 import io.micronaut.data.annotation.Relation
 import jakarta.persistence.Transient
+import org.maurodata.domain.dataflow.DataFlow
 import org.maurodata.domain.model.Model
 import org.maurodata.domain.model.ModelItem
 
@@ -42,6 +44,14 @@ class DataModel extends Model {
     @Transient
     @JsonIgnore
     Set<EnumerationValue> enumerationValues = []
+
+    @Transient
+    @Nullable
+    List<DataFlow> targetDataFlows = []
+
+    @Transient
+    @Nullable
+    List<DataFlow> sourceDataFlows = []
 
     @Transient
     String modelType = domainType
@@ -188,7 +198,7 @@ class DataModel extends Model {
                 this.dataElements.add(dataElement)
             }
         }
-        dataClass.referenceTypes = referenceTypes.findAll{it.referenceClass?.id == dataClass.id } as List<DataType>
+        dataClass.referenceTypes = referenceTypes.findAll {it.referenceClass?.id == dataClass.id} as List<DataType>
     }
 
      protected List<DataType> dataTypeReferenceTypes() {
@@ -264,4 +274,5 @@ class DataModel extends Model {
     DataClass dataClass(@DelegatesTo(value = DataClass, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
         dataClass [:], closure
     }
+
 }

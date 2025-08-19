@@ -319,10 +319,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     HttpResponse<byte[]> exportModel(UUID modelId, String namespace, String name, @Nullable String version) {
         ModelExporterPlugin mauroPlugin = mauroPluginService.getPlugin(ModelExporterPlugin, namespace, name, version)
         PluginService.handlePluginNotFound(mauroPlugin, namespace, name)
-
-        M existing = modelContentRepository.findWithContentById(modelId)
-        existing.setAssociations()
-
+        M existing = getModelWithContent(modelId)
         importExportModelService.createExportResponse(mauroPlugin, existing)
     }
 
@@ -613,5 +610,9 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         return permissions
     }
 
-
+    protected M getModelWithContent(UUID modelId) {
+        M existing = modelContentRepository.findWithContentById(modelId)
+        existing.setAssociations()
+        existing
+    }
 }

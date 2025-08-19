@@ -1,5 +1,13 @@
 package org.maurodata.importexport
 
+import groovy.json.JsonSlurper
+import io.micronaut.http.HttpResponse
+import io.micronaut.http.MediaType
+import io.micronaut.http.client.multipart.MultipartBody
+import jakarta.inject.Singleton
+import org.maurodata.domain.dataflow.DataClassComponent
+import org.maurodata.domain.dataflow.DataElementComponent
+import org.maurodata.domain.dataflow.DataFlow
 import org.maurodata.domain.datamodel.DataClass
 import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.datamodel.DataType
@@ -16,20 +24,10 @@ import org.maurodata.domain.terminology.Terminology
 import org.maurodata.persistence.ContainerizedTest
 import org.maurodata.testing.CommonDataSpec
 import org.maurodata.web.ListResponse
-
-import groovy.json.JsonSlurper
-import io.micronaut.http.HttpResponse
-import io.micronaut.http.MediaType
-import io.micronaut.http.client.multipart.MultipartBody
-import io.micronaut.test.annotation.Sql
-import jakarta.inject.Singleton
 import spock.lang.Shared
 
 @ContainerizedTest
 @Singleton
-@Sql(scripts = ["classpath:sql/tear-down-annotation.sql", "classpath:sql/tear-down-metadata.sql",
-        "classpath:sql/tear-down-summary-metadata.sql", "classpath:sql/tear-down-datamodel.sql",
-        "classpath:sql/tear-down.sql", "classpath:sql/tear-down-folder.sql"], phase = Sql.Phase.AFTER_EACH)
 class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
 
     @Shared
@@ -37,6 +35,26 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
 
     @Shared
     UUID dataModelId
+    @Shared
+    DataType dataType
+    @Shared
+    UUID dataClass1Id
+    @Shared
+    UUID dataClass2Id
+    @Shared
+    UUID dataElementId1
+    @Shared
+    UUID dataElementId2
+
+    @Shared
+    DataModel source
+    @Shared
+    UUID dataFlowId
+
+    @Shared
+    UUID dataClassComponentId
+    @Shared
+    UUID dataElementComponentId
 
     @Shared
     UUID codeSetId
@@ -577,5 +595,54 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
         importedTermRelationships.items.first().sourceTerm.code == 'TEST'
         importedTermRelationships.items.first().targetTerm.code == 'TEST'
         importedTermRelationships.items.first().relationshipType.label == 'TEST'
+    }
+
+
+    void 'test export folder -datamodels with dataflow'(){
+        given:
+        dataClass1Id = dataClassApi.create(dataModelId, new DataClass(label: 'TEST-1', description: 'first data class')).id
+        dataClass2Id = dataClassApi.create(dataModelId, new DataClass(label: 'TEST-2', description: 'second data class')).id
+        dataType = dataTypeApi.create(dataModelId, new DataType(label: 'Test data type', dataTypeKind: DataType.DataTypeKind.PRIMITIVE_TYPE))
+        dataElementId1 = dataElementApi.create(dataModelId, dataClass1Id, dataElementPayload('dataElement1 label', dataType)).id
+        dataElementId2 = dataElementApi.create(dataModelId, dataClass2Id, dataElementPayload('label2', dataType)).id
+
+        source = dataModelApi.create(folderId, dataModelPayload('source label'))
+        dataFlowId = dataFlowApi.create(dataModelId, new DataFlow(
+            label: 'test label',
+            description: 'dataflow payload description ',
+            source: source)).id
+
+        dataClassComponentId = dataClassComponentApi.create(source.id, dataFlowId,
+                                                            new DataClassComponent(
+                                                                label: 'data class component test label')).id
+        dataClassComponentApi.updateSource(source.id, dataFlowId, dataClassComponentId, dataClass1Id)
+        dataClassComponentApi.updateTarget(source.id, dataFlowId, dataClassComponentId, dataClass2Id)
+        dataElementComponentId =
+            dataElementComponentApi.create(source.id, dataFlowId, dataClassComponentId, new DataElementComponent(label: 'test data element component')).id
+
+        dataElementComponentApi.updateSource(source.id, dataFlowId, dataClassComponentId, dataElementComponentId, dataElementId1)
+        dataElementComponentApi.updateTarget(source.id, dataFlowId, dataClassComponentId, dataElementComponentId, dataElementId2)
+
+
+        when:
+        HttpResponse<byte[]> exportResponse = folderApi.exportModel(folderId, 'org.maurodata.plugin.exporter.json', 'JsonFolderExporterPlugin', '4.0.0')
+
+        then:
+        exportResponse.body()
+        Map parsedJson = jsonSlurper.parseText(new String(exportResponse.body())) as Map
+        parsedJson.folder.dataModels.size() == 2
+        parsedJson.folder.dataModels[0].targetDataFlows.size() == 1
+        parsedJson.folder.dataModels[0].targetDataFlows[0].dataClassComponents.size() == 1
+        parsedJson.folder.dataModels[0].targetDataFlows[0].dataClassComponents[0].dataElementComponents.size() == 1
+        parsedJson.folder.dataModels[0].targetDataFlows[0].dataClassComponents[0].dataElementComponents[0].sourceDataElements
+        parsedJson.folder.dataModels[0].targetDataFlows[0].dataClassComponents[0].dataElementComponents[0].targetDataElements
+        !parsedJson.folder.dataModels[0].sourceDataFlows
+
+        !parsedJson.folder.dataModels[1].targetDataFlows
+        parsedJson.folder.dataModels[1].sourceDataFlows.size() == 1
+        parsedJson.folder.dataModels[1].sourceDataFlows[0].dataClassComponents.size() == 1
+        parsedJson.folder.dataModels[1].sourceDataFlows[0].dataClassComponents[0].dataElementComponents.size() == 1
+        parsedJson.folder.dataModels[1].sourceDataFlows[0].dataClassComponents[0].dataElementComponents[0].sourceDataElements.size() == 1
+        parsedJson.folder.dataModels[1].sourceDataFlows[0].dataClassComponents[0].dataElementComponents[0].targetDataElements.size() == 1
     }
 }

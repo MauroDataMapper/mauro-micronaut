@@ -64,12 +64,14 @@ import org.maurodata.persistence.cache.AdministeredItemCacheableRepository.DataE
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository.DataTypeCacheableRepository
 import org.maurodata.persistence.cache.ModelCacheableRepository.DataModelCacheableRepository
 import org.maurodata.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
+import org.maurodata.persistence.dataflow.DataFlowContentRepository
 import org.maurodata.persistence.datamodel.DataElementRepository
 import org.maurodata.persistence.datamodel.DataModelContentRepository
 import org.maurodata.persistence.datamodel.DataTypeContentRepository
 import org.maurodata.persistence.search.SearchRepository
 import org.maurodata.plugin.datatype.DefaultDataTypeProviderPlugin
 import org.maurodata.plugin.exporter.DataModelExporterPlugin
+import org.maurodata.plugin.exporter.ModelExporterPlugin
 import org.maurodata.plugin.importer.DataModelImporterPlugin
 import org.maurodata.service.plugin.PluginService
 import org.maurodata.web.ListResponse
@@ -100,6 +102,8 @@ class DataModelController extends ModelController<DataModel> implements DataMode
 
     @Inject
     DataElementRepository dataElementRepository
+    @Inject
+    DataFlowContentRepository dataFlowContentRepository
 
     DataModelController(DataModelCacheableRepository dataModelRepository, FolderCacheableRepository folderRepository, DataModelContentRepository dataModelContentRepository,
                         DataModelService dataModelService) {
