@@ -84,7 +84,7 @@ class ImportExportModelService extends AdministeredItemService {
         imported
     }
 
-    List<ModelItem> importModelItems(@NonNull UUID dataModelId, Class aClazz, @Body MultipartBody body, String namespace, String name, @Nullable String version) {
+    List<ModelItem> importModelItems(Class aClazz, @Body MultipartBody body, String namespace, String name, @Nullable String version) {
         ModelItemImporterPlugin mauroPlugin = mauroPluginService.getPlugin(aClazz, namespace, name, version) as ModelItemImporterPlugin
         PluginService.handlePluginNotFound(mauroPlugin, namespace, name)
 
