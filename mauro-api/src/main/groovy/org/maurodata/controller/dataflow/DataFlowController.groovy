@@ -123,9 +123,11 @@ class DataFlowController extends AdministeredItemController<DataFlow, DataModel>
     HttpResponse<byte[]> exportModel(@NonNull UUID dataModelId, @NonNull UUID id, @Nullable String namespace, @Nullable String name, @Nullable String version) {
         ModelItemExporterPlugin mauroPlugin = importExportModelService.getModelItemExporterPlugin(namespace, name, version)
         DataFlow existing = dataFlowContentRepository.readWithContentById(id)
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.BAD_REQUEST, existing,"dataFlow Id ${id} not found")
         accessControlService.checkRole(Role.READER, existing)
         DataModel parent = dataModelRepository.findById(dataModelId)
         accessControlService.checkRole(Role.READER, parent)
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.BAD_REQUEST, parent,"dataModel Id ${dataModelId} not found")
         if (parent.id != existing.target.id) {
             ErrorHandler.handleError(HttpStatus.BAD_REQUEST, "DataModel with id $dataModelId is not parent of dataflow : $id")
         }
@@ -144,13 +146,15 @@ class DataFlowController extends AdministeredItemController<DataFlow, DataModel>
     @Post(Paths.DATA_FLOW_IMPORT)
     ListResponse<DataFlow> importModel(@NonNull UUID dataModelId, @Body MultipartBody body, @Nullable String namespace, @Nullable String name, @Nullable String version) {
 
-        List<ModelItem> modelItems = importExportModelService.importModelItems(dataModelId, JsonDataFlowImporterPlugin,
-                                                                               body, namespace, name, version)
+        List<ModelItem> modelItems = importExportModelService.importModelItems(JsonDataFlowImporterPlugin, body, namespace, name, version).findAll {
+            it.domainType == DataFlow.class.simpleName && (it as DataFlow).target?.id == dataModelId
+        }
 
-        List<DataFlow> saved = modelItems.collect {imp ->
+        List<DataFlow> saved = modelItems.each {imp ->
             log.info '** about to saveWithContentBatched... dataFlow **'
 
             dataFlowContentRepository.saveWithContent(imp as DataFlow)
+            log.info '** finished saveWithContentBatched ** dataFlow'
         } as List<DataFlow>
 
         log.info '** finished saveWithContentBatched ** dataFlow'
