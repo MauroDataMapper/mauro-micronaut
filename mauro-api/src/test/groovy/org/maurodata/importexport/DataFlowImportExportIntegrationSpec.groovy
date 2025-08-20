@@ -6,6 +6,7 @@ import io.micronaut.http.MediaType
 import io.micronaut.http.client.multipart.MultipartBody
 import io.micronaut.test.annotation.Sql
 import jakarta.inject.Singleton
+import org.apache.http.HttpStatus
 import org.maurodata.domain.dataflow.DataClassComponent
 import org.maurodata.domain.dataflow.DataElementComponent
 import org.maurodata.domain.dataflow.DataFlow
@@ -183,6 +184,17 @@ class DataFlowImportExportIntegrationSpec extends CommonDataSpec {
         response.summaryMetadata[0].id != summaryMetadataId
         response.summaryMetadata[0].summaryMetadataReports.size() == 1
         response.summaryMetadata[0].summaryMetadataReports[0].id != summaryMetadataReportId
+
+        //proof new source/target rows  created -DataClassComponent->dataClass, dataElementComponent->dataElement
+        and:
+        HttpResponse httpResponse = dataClassComponentApi.deleteSource(target.id, dataFlowResponse.items[0].id, dataClassComponentId, dataClassId1)
+        then:
+        httpResponse.status().code == HttpStatus.SC_NO_CONTENT
+
+        when:
+        httpResponse = dataElementComponentApi.deleteTarget(target.id, dataFlowResponse.items[0].id, dataClassComponentId, dataElementComponentId, dataElementId2)
+        then:
+        httpResponse.status().code == HttpStatus.SC_NO_CONTENT
     }
 
 }
