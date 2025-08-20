@@ -49,11 +49,19 @@ class DataClassComponentContentRepository extends AdministeredItemContentReposit
     @Override
     AdministeredItem saveWithContent(@NonNull AdministeredItem administeredItem) {
         DataClassComponent saved = dataClassComponentRepository.save(administeredItem as DataClassComponent)
+
+        dataClassComponentRepository.findAllSourceDataClasses(administeredItem.id).each {
+            dataClassComponentRepository.addSourceDataClass(saved.id, it.id)
+        }
+        dataClassComponentRepository.findAllTargetDataClasses(administeredItem.id).each {
+            dataClassComponentRepository.addSourceDataClass(saved.id, it.id)
+        }
+
         saveAllFacets(saved)
         saved.dataElementComponents.each {
             it.dataClassComponent = saved
             it.parent = saved
-            dataElementComponentRepository.save(it)
+            dataElementComponentContentRepository.saveWithContent(it)
         }
         saved
     }

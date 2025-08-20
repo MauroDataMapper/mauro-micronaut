@@ -24,6 +24,21 @@ class DataElementComponentContentRepository extends AdministeredItemContentRepos
         dataElementComponent
     }
 
+    @Override
+    AdministeredItem saveWithContent(@NonNull AdministeredItem administeredItem) {
+        DataElementComponent saved = dataElementComponentRepository.save(administeredItem as DataElementComponent)
+
+        dataElementComponentRepository.getSourceDataElements(administeredItem.id).each {
+            dataElementComponentRepository.addSourceDataElement(saved.id, it.id)
+        }
+        dataElementComponentRepository.getTargetDataElements(administeredItem.id).each {
+            dataElementComponentRepository.addSourceDataElement(saved.id, it.id)
+        }
+        saveAllFacets(saved)
+        saved
+    }
+
+
     // TODO methods here won't invalidate the cache
     @Override
     Long deleteWithContent(@NonNull AdministeredItem administeredItem) {
