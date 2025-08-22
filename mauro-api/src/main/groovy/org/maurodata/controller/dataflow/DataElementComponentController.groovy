@@ -3,9 +3,7 @@ package org.maurodata.controller.dataflow
 import org.maurodata.api.dataflow.DataElementComponentApi
 import org.maurodata.ErrorHandler
 import org.maurodata.audit.Audit
-import org.maurodata.domain.dataflow.DataFlow
-import org.maurodata.domain.facet.EditType
-
+import org.maurodata.persistence.cache.AdministeredItemCacheableRepository
 import org.maurodata.web.PaginationParams
 
 import groovy.transform.CompileStatic
@@ -26,9 +24,6 @@ import org.maurodata.domain.datamodel.DataElement
 import org.maurodata.domain.security.Role
 import org.maurodata.persistence.dataflow.DataClassComponentRepository
 import org.maurodata.persistence.dataflow.DataElementComponentContentRepository
-import org.maurodata.persistence.dataflow.DataElementComponentRepository
-import org.maurodata.persistence.dataflow.DataFlowRepository
-import org.maurodata.persistence.datamodel.DataElementRepository
 import org.maurodata.web.ListResponse
 
 @CompileStatic
@@ -37,17 +32,18 @@ import org.maurodata.web.ListResponse
 class DataElementComponentController extends AdministeredItemController<DataElementComponent, DataClassComponent> implements DataElementComponentApi {
 
     @Inject
-    DataElementComponentRepository dataElementComponentRepository
+    AdministeredItemCacheableRepository.DataElementComponentCacheableRepository dataElementComponentRepository
 
     @Inject
-    DataElementRepository dataElementRepository
+    AdministeredItemCacheableRepository.DataElementCacheableRepository dataElementRepository
 
     @Inject
     DataElementComponentContentRepository dataElementComponentContentRepository
-    @Inject
-    DataFlowRepository dataFlowRepository
 
-    DataElementComponentController(DataElementComponentRepository dataElementComponentRepository,
+    @Inject
+    AdministeredItemCacheableRepository.DataFlowCacheableRepository dataFlowRepository
+
+    DataElementComponentController(AdministeredItemCacheableRepository.DataElementComponentCacheableRepository dataElementComponentRepository,
                                    DataClassComponentRepository dataClassComponentRepository,
                                    DataElementComponentContentRepository dataElementComponentContentRepository) {
         super(DataElementComponent, dataElementComponentRepository, dataClassComponentRepository, dataElementComponentContentRepository)
@@ -143,7 +139,7 @@ class DataElementComponentController extends AdministeredItemController<DataElem
         dataElementComponent
     }
 
-    private void removeDataElement(Type type, UUID id, UUID dataElementId) {
+    private DataElementComponent removeDataElement(Type type, UUID id, UUID dataElementId) {
         DataElement dataElementToRemove = dataElementRepository.readById(dataElementId)
         ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, dataElementToRemove, "Item with id: $dataElementId not found")
         accessControlService.checkRole(Role.EDITOR, dataElementToRemove)

@@ -4,6 +4,9 @@ import org.maurodata.api.MauroApi
 import org.maurodata.api.Paths
 import org.maurodata.api.model.ModelApi
 import org.maurodata.domain.folder.Folder
+import org.maurodata.plugin.exporter.FolderExporterPlugin
+import org.maurodata.plugin.importer.DataModelImporterPlugin
+import org.maurodata.plugin.importer.FolderImporterPlugin
 import org.maurodata.web.ListResponse
 
 import io.micronaut.core.annotation.NonNull
@@ -79,6 +82,12 @@ interface FolderApi extends ModelApi<Folder> {
 
     @Delete(Paths.FOLDER_READ_BY_AUTHENTICATED)
     HttpResponse revokeReadByAuthenticated(UUID id)
+
+    @Get(Paths.FOLDER_IMPORTERS)
+    List<FolderImporterPlugin> folderImporters()
+
+    @Get(Paths.FOLDER_EXPORTERS)
+    List<FolderExporterPlugin> folderExporters()
 
 
 }

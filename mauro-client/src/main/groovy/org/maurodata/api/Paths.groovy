@@ -79,12 +79,9 @@ interface Paths {
     */
     String DATA_FLOW_ELEMENT_COMPONENT_ID = '/dataModels/{dataModelId}/dataFlows/{dataFlowId}/dataClassComponents/{dataClassComponentId}/dataElementComponents/{id}'
     String DATA_FLOW_ELEMENT_COMPONENT_LIST = '/dataModels/{dataModelId}/dataFlows/{dataFlowId}/dataClassComponents/{dataClassComponentId}/dataElementComponents'
-    String DATA_FLOW_ELEMENT_COMPONENT_SOURCE_ELEMENT = '/dataModels/{dataModelId}/dataFlows/{dataFlowId}/dataClassComponents/{dataClassComponentId}/dataElementComponents' +
-                                                        '/{id}/source/{dataElementId}'
-    String DATA_FLOW_ELEMENT_COMPONENT_TARGET_ELEMENT = '/dataModels/{dataModelId}/dataFlows/{dataFlowId}/dataClassComponents/{dataClassComponentId}/dataElementComponents' +
-                                                        '/{id}/target/{dataElementId}'
-    String DATA_FLOW_ELEMENT_COMPONENT_LIST_PAGED = '/dataModels/{dataModelId}/dataFlows/{dataFlowId}/dataClassComponents/{dataClassComponentId}/dataElementComponents' +
-                                                    '{?params*}'
+    String DATA_FLOW_ELEMENT_COMPONENT_SOURCE_ELEMENT = '/dataModels/{dataModelId}/dataFlows/{dataFlowId}/dataClassComponents/{dataClassComponentId}/dataElementComponents/{id}/source/{dataElementId}'
+    String DATA_FLOW_ELEMENT_COMPONENT_TARGET_ELEMENT = '/dataModels/{dataModelId}/dataFlows/{dataFlowId}/dataClassComponents/{dataClassComponentId}/dataElementComponents/{id}/target/{dataElementId}'
+    String DATA_FLOW_ELEMENT_COMPONENT_LIST_PAGED = '/dataModels/{dataModelId}/dataFlows/{dataFlowId}/dataClassComponents/{dataClassComponentId}/dataElementComponents{?params*}'
     /*
     * DataFlowApi
     */
@@ -131,7 +128,8 @@ interface Paths {
     String DATA_MODEL_DIFF = '/dataModels/{id}/diff/{otherId}'
     String DATA_MODEL_SEARCH_GET = '/dataModels/{id}/search{?requestDTO*}'
     String DATA_MODEL_SEARCH_POST = '/dataModels/{id}/search'
-    String DATA_MODEL_EXPORTERS = '/dataModels/providers/importers'
+    String DATA_MODEL_IMPORTERS = '/dataModels/providers/importers'
+    String DATA_MODEL_EXPORTERS = '/dataModels/providers/exporters'
     String DATA_MODEL_SUBSET = '/dataModels/{id}/subset/{otherId}'
     String DATA_MODEL_INTERSECTS_MANY = '/dataModels/{id}/intersectsMany'
     String DATA_MODEL_READ_BY_AUTHENTICATED = '/dataModels/{id}/readByAuthenticated'
@@ -247,6 +245,9 @@ interface Paths {
     String FOLDER_READ_BY_EVERYONE = '/folders/{id}/readByEveryone'
     String FOLDER_PERMISSIONS = '/folders/{id}/permissions'
     String FOLDER_DOI = '/folders/{id}/doi'
+
+    String FOLDER_IMPORTERS = '/folders/providers/importers'
+    String FOLDER_EXPORTERS = '/folders/providers/exporters'
 
 
     /*

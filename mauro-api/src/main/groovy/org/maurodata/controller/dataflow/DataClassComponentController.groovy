@@ -46,10 +46,10 @@ class DataClassComponentController extends AdministeredItemController<DataClassC
 
     DataClassComponentContentRepository dataClassComponentContentRepository
 
-    DataFlowRepository dataFlowRepository
+    AdministeredItemCacheableRepository.DataFlowCacheableRepository dataFlowRepository
 
     DataClassComponentController(AdministeredItemCacheableRepository.DataClassComponentCacheableRepository dataClassComponentRepository,
-                                 DataFlowRepository dataFlowRepository,
+                                 AdministeredItemCacheableRepository.DataFlowCacheableRepository dataFlowRepository,
                                  DataClassComponentContentRepository dataClassComponentContentRepository) {
         super(DataClassComponent, dataClassComponentRepository, dataFlowRepository, dataClassComponentContentRepository)
         this.dataClassComponentRepository = dataClassComponentRepository

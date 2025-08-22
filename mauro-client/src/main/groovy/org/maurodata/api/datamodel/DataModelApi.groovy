@@ -21,6 +21,7 @@ import org.maurodata.domain.model.version.FinaliseData
 import org.maurodata.domain.search.dto.SearchRequestDTO
 import org.maurodata.domain.search.dto.SearchResultsDTO
 import org.maurodata.plugin.datatype.DefaultDataTypeProviderPlugin
+import org.maurodata.plugin.exporter.DataModelExporterPlugin
 import org.maurodata.plugin.importer.DataModelImporterPlugin
 import org.maurodata.web.ListResponse
 
@@ -89,8 +90,11 @@ interface DataModelApi extends ModelApi<DataModel> {
     @Get(Paths.DATA_MODEL_DIFF)
     ObjectDiff diffModels(@NonNull UUID id, @NonNull UUID otherId)
 
-    @Get(Paths.DATA_MODEL_EXPORTERS)
+    @Get(Paths.DATA_MODEL_IMPORTERS)
     List<DataModelImporterPlugin> dataModelImporters()
+
+    @Get(Paths.DATA_MODEL_EXPORTERS)
+    List<DataModelExporterPlugin> dataModelExporters()
 
     @Put(Paths.DATA_MODEL_SUBSET)
     DataModel subset(UUID id, UUID otherId, @Body SubsetData subsetData)

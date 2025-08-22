@@ -240,7 +240,7 @@ class DataModelController extends ModelController<DataModel> implements DataMode
         dataModel.diff(otherDataModel)
     }
 
-    @Get(Paths.DATA_MODEL_EXPORTERS)
+    @Get(Paths.DATA_MODEL_IMPORTERS)
     List<DataModelImporterPlugin> dataModelImporters() {
         mauroPluginService.listPlugins(DataModelImporterPlugin)
     }
@@ -504,7 +504,7 @@ class DataModelController extends ModelController<DataModel> implements DataMode
         super.permissions(id)
     }
 
-    @Get('/dataModels/providers/exporters')
+    @Get(Paths.DATA_MODEL_EXPORTERS)
     List<DataModelExporterPlugin> dataModelExporters() {
         mauroPluginService.listPlugins(DataModelExporterPlugin)
     }
