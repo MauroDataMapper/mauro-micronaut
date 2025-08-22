@@ -280,6 +280,7 @@ abstract class ItemCacheableRepository<I extends Item> implements ItemRepository
             switch (lookup) {
                 case FIND_ALL_PUBLIC_API_PROPERTIES -> ((ApiPropertyRepository) repository).findByPubliclyVisibleTrue()
                 case FIND_ALL_API_PROPERTIES -> ((ApiPropertyRepository) repository).findAll()
+
             }
         }
 
@@ -290,6 +291,12 @@ abstract class ItemCacheableRepository<I extends Item> implements ItemRepository
         List<ApiProperty> findAll() {
             cachedLookup(FIND_ALL_API_PROPERTIES)
         }
+
+        @Cacheable
+        List<ApiProperty> findByCategory(String category) {
+            ((ApiPropertyRepository) repository).findByCategory(category)
+        }
+
     }
 
     @Singleton

@@ -149,7 +149,7 @@ class DataElementComponentController extends AdministeredItemController<DataElem
         dataElementComponent
     }
 
-    private void removeDataElement(Type type, UUID id, UUID dataElementId) {
+    private DataElementComponent removeDataElement(Type type, UUID id, UUID dataElementId) {
         DataElement dataElementToRemove = dataElementRepository.readById(dataElementId)
         ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, dataElementToRemove, "Item with id: $dataElementId not found")
         accessControlService.checkRole(Role.EDITOR, dataElementToRemove)

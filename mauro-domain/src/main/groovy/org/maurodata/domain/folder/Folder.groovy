@@ -275,4 +275,20 @@ class Folder extends Model {
             @DelegatesTo(value = Folder, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
         build [:], closure
     }
+
+    Folder folder(Folder folder) {
+        this.childFolders.add(folder)
+        folder.parent = this
+        folder
+    }
+
+    Folder folder(Map args, @DelegatesTo(value = Folder, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+        Folder folder1 = build(args + [parent: this], closure)
+        folder folder1
+    }
+
+    Folder folder(@DelegatesTo(value = Folder, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+        folder [:], closure
+    }
+
 }

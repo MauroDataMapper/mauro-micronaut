@@ -324,19 +324,12 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
             super(dataFlowRepository)
         }
 
-        @Nullable
-        List<DataFlow> findAllBySource(DataModel dataModel) {
-            ((DataFlowRepository) repository).findAllBySource(dataModel)
-        }
-
-        @Nullable
         List<DataFlow> findAllByTarget(DataModel dataModel) {
-            ((DataFlowRepository) repository).findAllByTarget(dataModel)
+            ((DataFlowRepository) repository).findAllByTarget(dataModel) as List<DataFlow>
         }
 
-
-        Long delete(DataFlow item) {
-            super.delete(item)
+        List<DataFlow> findAllBySource(DataModel dataModel) {
+            ((DataFlowRepository) repository).findAllBySource(dataModel) as List<DataFlow>
         }
 
         @Override
@@ -351,24 +344,21 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
         DataClassComponentCacheableRepository(DataClassComponentRepository dataClassComponentRepository) {
             super(dataClassComponentRepository)
         }
-
         DataClassComponent addTargetDataClass(@NonNull UUID id, @NonNull UUID dataClassId) {
+            invalidate(id)
             ((DataClassComponentRepository) repository).addTargetDataClass(id, dataClassId)
         }
         DataClassComponent addSourceDataClass(@NonNull UUID id, @NonNull UUID dataClassId) {
+            invalidate(id)
             ((DataClassComponentRepository) repository).addSourceDataClass(id, dataClassId)
         }
-
         Long removeTargetDataClass(UUID id, UUID dataClassId) {
+            invalidate(id)
             ((DataClassComponentRepository) repository).removeTargetDataClass(id, dataClassId)
         }
         Long removeSourceDataClass(UUID id, UUID dataClassId) {
+            invalidate(id)
             ((DataClassComponentRepository) repository).removeSourceDataClass(id, dataClassId)
-        }
-
-        @Override
-        Boolean handles(String domainType) {
-            domainClass.simpleName.equalsIgnoreCase(domainType) || (domainClass.simpleName + 's').equalsIgnoreCase(domainType)
         }
 
          List<DataClass> findAllSourceDataClasses(UUID id) {
@@ -386,6 +376,9 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
         Long removeTargetDataClasses(UUID id) {
             ((DataClassComponentRepository) repository).removeTargetDataClasses(id)
         }
+        Boolean handles(String domainType) {
+            domainClass.simpleName.equalsIgnoreCase(domainType) || (domainClass.simpleName + 's').equalsIgnoreCase(domainType)
+        }
     }
 
     @Singleton
@@ -396,23 +389,29 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
         }
 
         DataElementComponent addTargetDataElement(@NonNull UUID id, @NonNull UUID dataElementId) {
+            invalidate(id)
             ((DataElementComponentRepository) repository).addTargetDataElement(id, dataElementId)
         }
         DataElementComponent addSourceDataElement(@NonNull UUID id, @NonNull UUID dataElementId) {
+            invalidate(id)
             ((DataElementComponentRepository) repository).addSourceDataElement(id, dataElementId)
         }
 
         Long removeTargetDataElement(UUID id, UUID dataElementId) {
+            invalidate(id)
             ((DataElementComponentRepository) repository).removeTargetDataElement(id, dataElementId)
         }
         Long removeTargetDataElements(UUID id) {
+            invalidate(id)
             ((DataElementComponentRepository) repository).removeTargetDataElements(id)
         }
 
         Long removeSourceDataElement(UUID id, UUID dataElementId) {
+            invalidate(id)
             ((DataElementComponentRepository) repository).removeSourceDataElement(id, dataElementId)
         }
         Long removeSourceDataElements(UUID id) {
+            invalidate(id)
             ((DataElementComponentRepository) repository).removeSourceDataElements(id)
         }
 
@@ -428,7 +427,5 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
         Boolean handles(String domainType) {
             domainClass.simpleName.equalsIgnoreCase(domainType) || (domainClass.simpleName + 's').equalsIgnoreCase(domainType)
         }
-
-
     }
 }

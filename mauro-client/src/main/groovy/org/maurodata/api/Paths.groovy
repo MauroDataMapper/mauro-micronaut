@@ -249,6 +249,9 @@ interface Paths {
     String FOLDER_PERMISSIONS = '/folders/{id}/permissions'
     String FOLDER_DOI = '/folders/{id}/doi'
 
+    String FOLDER_IMPORTERS = '/folders/providers/importers'
+    String FOLDER_EXPORTERS = '/folders/providers/exporters'
+
 
     /*
     * VersionedFolderApi

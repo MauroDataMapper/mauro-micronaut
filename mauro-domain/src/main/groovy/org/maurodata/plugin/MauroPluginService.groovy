@@ -12,7 +12,7 @@ class MauroPluginService {
 
     <P extends MauroPlugin> P getPlugin(Class<P> cls, String namespace, String name, String version) {
         (P) mauroPlugins.find {
-            cls.isInstance(it) && it.namespace == namespace && it.name == name && it.version == version
+            cls.isInstance(it) && it.namespace == namespace && it.name == name && (!version || (it.version == version))
         }
     }
 

@@ -23,7 +23,6 @@ import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
 import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
-import jakarta.inject.Named
 import org.maurodata.ErrorHandler
 import org.maurodata.api.Paths
 import org.maurodata.api.folder.FolderApi
@@ -36,6 +35,8 @@ import org.maurodata.domain.search.dto.SearchRequestDTO
 import org.maurodata.domain.search.dto.SearchResultsDTO
 import org.maurodata.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
 import org.maurodata.persistence.folder.FolderContentRepository
+import org.maurodata.plugin.exporter.FolderExporterPlugin
+import org.maurodata.plugin.importer.FolderImporterPlugin
 import org.maurodata.web.ListResponse
 
 @Slf4j
@@ -45,7 +46,6 @@ import org.maurodata.web.ListResponse
 class FolderController extends ModelController<Folder> implements FolderApi {
 
     FolderContentRepository folderContentRepository
-
 
     @Inject
     FolderController(FolderCacheableRepository folderRepository, FolderContentRepository folderContentRepository) {
@@ -165,9 +165,8 @@ class FolderController extends ModelController<Folder> implements FolderApi {
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Audit(title = EditType.IMPORT, description = 'Import folder')
     @Post(Paths.FOLDER_IMPORT)
-    @Override
     ListResponse<Folder> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version) {
-         super.importModel(body, namespace, name, version)
+        super.importModel(body, namespace, name, version)
     }
 
     @Get('/folder/search{?requestDTO}')
@@ -224,4 +223,26 @@ class FolderController extends ModelController<Folder> implements FolderApi {
         ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "Doi is not implemented")
         return null
     }
+
+    @Get(Paths.FOLDER_IMPORTERS)
+    List<FolderImporterPlugin> folderImporters() {
+        mauroPluginService.listPlugins(FolderImporterPlugin)
+    }
+
+    @Get(Paths.FOLDER_EXPORTERS)
+    List<FolderExporterPlugin> folderExporters() {
+        mauroPluginService.listPlugins(FolderExporterPlugin)
+    }
+
+    /*
+    @Transactional
+    @ExecuteOn(TaskExecutors.IO)
+    @Audit(title = EditType.IMPORT, description = "Import folder")
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @Post(Paths.FOLDER_IMPORT)
+    ListResponse<Folder> importFolder(@Body MultipartBody body, String namespace, String name, @Nullable String version) {
+        super.importModel(body, namespace, name, version)
+    }
+*/
+
 }

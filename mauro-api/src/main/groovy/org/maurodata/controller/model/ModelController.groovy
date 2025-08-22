@@ -10,8 +10,6 @@ import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.exceptions.HttpException
 import io.micronaut.http.exceptions.HttpStatusException
-import io.micronaut.http.multipart.CompletedFileUpload
-import io.micronaut.http.multipart.CompletedPart
 import io.micronaut.http.server.exceptions.InternalServerException
 import io.micronaut.http.server.multipart.MultipartBody
 import io.micronaut.scheduling.TaskExecutors
@@ -71,7 +69,7 @@ import org.maurodata.persistence.model.AdministeredItemRepository
 import org.maurodata.persistence.model.ModelContentRepository
 import org.maurodata.plugin.MauroPluginService
 import org.maurodata.plugin.exporter.ModelExporterPlugin
-import org.maurodata.plugin.importer.FileParameter
+import org.maurodata.plugin.importer.FolderImporterPlugin
 import org.maurodata.plugin.importer.ImportParameters
 import org.maurodata.plugin.importer.ModelImporterPlugin
 import org.maurodata.service.core.AuthorityService
@@ -79,10 +77,8 @@ import org.maurodata.service.model.ImportExportModelService
 import org.maurodata.service.plugin.PluginService
 import org.maurodata.web.ListResponse
 import org.maurodata.web.PaginationParams
-import reactor.core.publisher.Flux
 
 import java.lang.reflect.Method
-import java.nio.charset.StandardCharsets
 
 @Slf4j
 @CompileStatic

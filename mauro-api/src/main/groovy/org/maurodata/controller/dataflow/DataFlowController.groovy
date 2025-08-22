@@ -78,7 +78,7 @@ class DataFlowController extends AdministeredItemController<DataFlow, DataModel>
         DataModel source = dataModelRepository.findById(dataFlow.source.id)
         accessControlService.checkRole(Role.READER, source)
         ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, source, "Datamodel not found : $dataFlow.source.id")
-        DataFlow created = super.create(dataModelId, dataFlow) as DataFlow
+        DataFlow created = super.create(dataModelId, dataFlow)
         show(created.id)
     }
 
