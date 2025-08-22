@@ -113,9 +113,7 @@ class DataModelController extends ModelController<DataModel> implements DataMode
     @Audit
     @Get(Paths.DATA_MODEL_ID_ROUTE)
     DataModel show(UUID id) {
-        def ret = super.show(id)
-        System.err.println(ret)
-        return (DataModel) ret
+        super.show(id)
     }
 
     @Audit
