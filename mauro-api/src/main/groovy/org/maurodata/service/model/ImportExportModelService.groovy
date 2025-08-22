@@ -19,6 +19,7 @@ import org.maurodata.domain.model.Model
 import org.maurodata.domain.model.ModelItem
 import org.maurodata.domain.security.Role
 import org.maurodata.persistence.cache.ModelCacheableRepository
+import org.maurodata.plugin.MauroPlugin
 import org.maurodata.plugin.MauroPluginService
 import org.maurodata.plugin.exporter.ModelExporterPlugin
 import org.maurodata.plugin.exporter.ModelItemExporterPlugin

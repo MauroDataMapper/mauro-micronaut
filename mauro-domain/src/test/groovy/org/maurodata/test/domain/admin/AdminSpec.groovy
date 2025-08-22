@@ -4,10 +4,6 @@ import org.maurodata.plugin.MauroPlugin
 import org.maurodata.plugin.MauroPluginService
 import org.maurodata.plugin.PluginType
 import org.maurodata.plugin.exporter.ImportExportModelExporterPlugin
-import org.maurodata.plugin.exporter.ModelExporterPlugin
-import org.maurodata.plugin.importer.ImportExportModelImporterPlugin
-import org.maurodata.plugin.importer.ModelImporterPlugin
-
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
 import spock.lang.Specification

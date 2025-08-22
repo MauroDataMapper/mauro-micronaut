@@ -11,7 +11,7 @@ import org.maurodata.plugin.importer.config.ImportParameterConfig
 import java.lang.reflect.Field
 
 @Slf4j
-trait ModelItemImporterPlugin<D extends ModelItem, P extends ImportParameters> extends ImportExportModelImporterPlugin {
+trait ModelItemImporterPlugin<D extends ModelItem, P extends ImportParameters> extends ImporterPlugin {
 
     abstract List<D> importDomain(P params)
 
