@@ -39,6 +39,7 @@ class DataFlowContentRepository extends AdministeredItemContentRepository {
         DataFlow saved = dataFlowRepository.save(administeredItem as DataFlow)
         saveAllFacets(saved)
         saved.dataClassComponents.each {
+            it.updateCreationProperties()
             it.dataFlow = saved
             it.parent = saved
             dataClassComponentContentRepository.saveWithContent(it)
