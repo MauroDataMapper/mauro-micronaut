@@ -6,6 +6,7 @@ import org.maurodata.plugin.PluginType
 import org.maurodata.plugin.exporter.ImportExportModelExporterPlugin
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
+import org.maurodata.plugin.importer.ImporterPlugin
 import spock.lang.Specification
 
 /**
@@ -106,7 +107,7 @@ class AdminSpec extends Specification {
             }
 
         when:
-            List importersList = mauroPluginService.listPlugins(ImportExportModelImporterPlugin)
+            List importersList = mauroPluginService.listPlugins(ImporterPlugin)
         then:
             importersList == pluginsList.findAll{it.pluginType == PluginType.Importer}
 
