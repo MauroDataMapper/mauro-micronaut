@@ -212,16 +212,8 @@ class CodeSetController extends ModelController<CodeSet> implements CodeSetApi {
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Post(Paths.CODE_SET_IMPORT)
     ListResponse<CodeSet> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version) {
-        List<CodeSet> imported = super.importModelList(body, namespace, name, version)
-        List<CodeSet> saved = imported.collect {imp ->
-            log.info '** about to saveWithContentBatched... CodeSet import**'
-            modelContentRepository.saveWithContent(imp as CodeSet)
-        }
-        log.info '** finished saveWithContentBatched **'
+        super.importModel(body, namespace, name, version)
 
-        ListResponse.from(saved.collect {model ->
-            show(model.id)
-        })
     }
 
     //stub endpoint todo: actual

@@ -116,18 +116,9 @@ class ClassificationSchemeController extends ModelController<ClassificationSchem
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Post(Paths.CLASSIFICATION_SCHEMES_IMPORT)
     ListResponse<ClassificationScheme> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version) {
-        List<ClassificationScheme> imported = super.importModelList(body, namespace, name, version)
-
-        List<ClassificationScheme> saved = imported.collect {imp ->
-            log.info '** about to saveWithContentBatched... ClassificationScheme import**'
-            modelContentRepository.saveWithContent(imp as ClassificationScheme)
-        }
-        log.info '** finished saveWithContentBatched **'
-
-        ListResponse.from(saved.collect {model ->
-            show(model.id)
-        })
+        super.importModel(body, namespace, name, version)
     }
+
 
     @Audit
     @Get(Paths.CLASSIFICATION_SCHEMES_DIFF)

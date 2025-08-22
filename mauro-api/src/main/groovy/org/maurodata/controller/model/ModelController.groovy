@@ -351,16 +351,6 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         administeredItemRepositories.find {it.handles(item.class) || it.handles(item.domainType)}
     }
 
-    <P extends ImportParameters> P readFromMultipartFormBody(MultipartBody body, Class<P> parametersClass) {
-        Map<String, Object> importMap = Flux.from(body).collectList().block().collectEntries {CompletedPart cp ->
-            if (cp instanceof CompletedFileUpload) {
-                return [cp.name, new FileParameter(cp.filename, cp.contentType.toString(), cp.bytes)]
-            } else {
-                return [cp.name, new String(cp.bytes, StandardCharsets.UTF_8)]
-            }
-        }
-        return objectMapper.convertValue(importMap, parametersClass)
-    }
 
     HttpResponse<byte[]> exportModel(UUID modelId, String namespace, String name, @Nullable String version) {
         ModelExporterPlugin mauroPlugin = mauroPluginService.getPlugin(ModelExporterPlugin, namespace, name, version)
@@ -370,6 +360,36 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         existing.setAssociations()
 
         importExportModelService.createExportResponse(mauroPlugin, existing)
+    }
+
+    ListResponse<M> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version) {
+
+        ModelImporterPlugin mauroPlugin = mauroPluginService.getPlugin(ModelImporterPlugin, namespace, name, version)
+        PluginService.handlePluginNotFound(mauroPlugin, namespace, name)
+
+        ImportParameters importParameters = importExportModelService.readFromMultipartFormBody(body, mauroPlugin.importParametersClass())
+
+        if (importParameters.folderId == null) {
+            ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, importParameters.folderId, "Please choose the folder into which the Model/s should be imported.")
+        }
+
+        List<M> imported = (List<M>) mauroPlugin.importModels(importParameters)
+
+        Folder folder = folderRepository.readById(importParameters.folderId)
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, folder, "Folder with id $importParameters.folderId not found")
+        accessControlService.checkRole(Role.EDITOR, folder)
+        List<M> saved = imported.collect { M imp ->
+            imp.folder = folder
+            log.info '** about to saveWithContentBatched... **'
+            updateCreationProperties(imp)
+            M savedImported = modelContentRepository.saveWithContent(imp)
+            log.info '** finished saveWithContentBatched **'
+            savedImported
+        }
+        List<M> smallerResponse = saved.collect { model ->
+            show(model.id)
+        }
+        ListResponse.from(smallerResponse)
     }
 
     List<M> importModelList(@Body MultipartBody body, String namespace, String name, @Nullable String version) {
@@ -395,6 +415,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         imported
 
     }
+
 
     ListResponse<M> importModel(@Body io.micronaut.http.client.multipart.MultipartBody body, String namespace, String name, @Nullable String version) {
         throw new Exception("Client version of import model has been called.. hint client MultipartBody ")

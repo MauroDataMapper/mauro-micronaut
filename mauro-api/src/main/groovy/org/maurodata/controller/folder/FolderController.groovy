@@ -167,17 +167,7 @@ class FolderController extends ModelController<Folder> implements FolderApi {
     @Post(Paths.FOLDER_IMPORT)
     @Override
     ListResponse<Folder> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version) {
-        List<Folder> imported = super.importModelList(body, namespace, name, version)
-
-        List<Folder> saved = imported.collect {imp ->
-            log.info '** about to saveWithContentBatched... Folder import**'
-            modelContentRepository.saveWithContent(imp as Folder)
-        }
-        log.info '** finished saveWithContentBatched **'
-
-        ListResponse.from(saved.collect {model ->
-            show(model.id)
-        })
+         super.importModel(body, namespace, name, version)
     }
 
     @Get('/folder/search{?requestDTO}')

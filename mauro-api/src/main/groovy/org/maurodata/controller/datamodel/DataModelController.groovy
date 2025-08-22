@@ -214,19 +214,8 @@ class DataModelController extends ModelController<DataModel> implements DataMode
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Post(Paths.DATA_MODEL_IMPORT)
     ListResponse<DataModel> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version) {
-        List<DataModel> imported = super.importModelList(body, namespace, name, version)
-
-        List<DataModel> saved = imported.collect {imp ->
-            log.info '** about to saveWithContentBatched... **'
-            modelContentRepository.saveWithContent(imp as DataModel)
-        }
-        log.info '** finished saveWithContentBatched **'
-
-        ListResponse.from(saved.collect {model ->
-            show(model.id)
-        })
+        super.importModel(body, namespace, name, version)
     }
-
 
     @Audit
     @Get(Paths.DATA_MODEL_DIFF)
