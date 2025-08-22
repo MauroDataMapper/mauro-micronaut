@@ -366,6 +366,22 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
         Boolean handles(String domainType) {
             domainClass.simpleName.equalsIgnoreCase(domainType) || (domainClass.simpleName + 's').equalsIgnoreCase(domainType)
         }
+
+         List<DataClass> findAllSourceDataClasses(UUID id) {
+             ((DataClassComponentRepository) repository).findAllSourceDataClasses(id)
+        }
+
+        List<DataClass> findAllTargetDataClasses(UUID id) {
+            ((DataClassComponentRepository) repository).findAllTargetDataClasses(id)
+        }
+
+        Long removeSourceDataClasses(UUID id) {
+            ((DataClassComponentRepository) repository).removeSourceDataClasses(id)
+        }
+
+        Long removeTargetDataClasses(UUID id) {
+            ((DataClassComponentRepository) repository).removeTargetDataClasses(id)
+        }
     }
 
     @Singleton
@@ -385,13 +401,30 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
         Long removeTargetDataElement(UUID id, UUID dataElementId) {
             ((DataElementComponentRepository) repository).removeTargetDataElement(id, dataElementId)
         }
+        Long removeTargetDataElements(UUID id) {
+            ((DataElementComponentRepository) repository).removeTargetDataElements(id)
+        }
+
         Long removeSourceDataElement(UUID id, UUID dataElementId) {
             ((DataElementComponentRepository) repository).removeSourceDataElement(id, dataElementId)
+        }
+        Long removeSourceDataElements(UUID id) {
+            ((DataElementComponentRepository) repository).removeSourceDataElements(id)
+        }
+
+        List<DataElement> getSourceDataElements(UUID id) {
+            ((DataElementComponentRepository) repository).getSourceDataElements(id)
+        }
+
+        List<DataElement> getTargetDataElements(UUID id) {
+            ((DataElementComponentRepository) repository).getTargetDataElements(id)
         }
 
         @Override
         Boolean handles(String domainType) {
             domainClass.simpleName.equalsIgnoreCase(domainType) || (domainClass.simpleName + 's').equalsIgnoreCase(domainType)
         }
+
+
     }
 }
