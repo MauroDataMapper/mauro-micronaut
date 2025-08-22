@@ -41,27 +41,28 @@ class Rule extends Facet implements DiffableItem<Rule> {
     @JsonIgnore
     @Transient
     CollectionDiff fromItem() {
-        new RuleDiff(id, name, description)
+        new RuleDiff(id, name, description, getDiffIdentifier())
     }
 
     @Override
     @JsonIgnore
     @Transient
     String getDiffIdentifier() {
-        name
+        if (multiFacetAwareItem != null) {return "${multiFacetAwareItem.getDiffIdentifier()}|${pathPrefix}:${name}"}
+        return "${pathPrefix}:${name}"
     }
 
     @Override
     @JsonIgnore
     @Transient
-    ObjectDiff<Rule> diff(Rule other) {
+    ObjectDiff<Rule> diff(Rule other, String lhsPathRoot, String rhsPathRoot) {
         ObjectDiff<Rule> base = DiffBuilder.objectDiff(Rule)
                 .leftHandSide(id?.toString(), this)
                 .rightHandSide(other.id?.toString(), other)
         base.label = this.name
         base.appendString(DiffBuilder.DESCRIPTION, this.description, other.description, this, other)
         if (!DiffBuilder.isNull(this.ruleRepresentations) ||!DiffBuilder.isNull(other.ruleRepresentations)) {
-            base.appendCollection(DiffBuilder.SUMMARY_METADATA_REPORT, this.ruleRepresentations as Collection<DiffableItem>, other.ruleRepresentations as Collection<DiffableItem>)
+            base.appendCollection(DiffBuilder.SUMMARY_METADATA_REPORT, this.ruleRepresentations as Collection<DiffableItem>, other.ruleRepresentations as Collection<DiffableItem>, lhsPathRoot, rhsPathRoot)
         }
         base
     }
@@ -116,5 +117,17 @@ class Rule extends Facet implements DiffableItem<Rule> {
         ruleRepresentation [:], closure
     }
 
+    @Transient
+    @JsonIgnore
+    @Override
+    String getPathPrefix() {
+        'ru'
+    }
 
+    @Transient
+    @JsonIgnore
+    @Override
+    String getPathIdentifier() {
+       name
+    }
 }

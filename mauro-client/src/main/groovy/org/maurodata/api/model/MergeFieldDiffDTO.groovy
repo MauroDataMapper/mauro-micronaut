@@ -1,6 +1,6 @@
 package org.maurodata.api.model
 
-import com.fasterxml.jackson.annotation.JsonAlias
+import com.fasterxml.jackson.annotation.JsonProperty
 
 class MergeFieldDiffDTO {
 
@@ -10,6 +10,6 @@ class MergeFieldDiffDTO {
     Object targetValue
     Object commonAncestorValue
     boolean isMergeConflict
-    @JsonAlias(['type'])
+    @JsonProperty('type')
     String _type
 }

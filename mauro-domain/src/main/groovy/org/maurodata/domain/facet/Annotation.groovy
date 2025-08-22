@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonAlias
 import com.fasterxml.jackson.annotation.JsonIgnore
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
+import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.annotation.*
 import org.maurodata.domain.diff.*
 import org.maurodata.domain.security.CatalogueUser
@@ -33,29 +34,45 @@ class Annotation extends Facet implements DiffableItem<Annotation> {
     @JsonIgnore
     @Transient
     CollectionDiff fromItem() {
-        new BaseCollectionDiff(id, label)
+        new BaseCollectionDiff(id, getDiffIdentifier(), label)
     }
 
     @Override
     @JsonIgnore
     @Transient
     String getDiffIdentifier() {
-        label
+        if (multiFacetAwareItem != null) {
+            return "${multiFacetAwareItem.getDiffIdentifier()}|${this.pathNodeString}"
+        }
+        return "${this.pathNodeString}"
     }
 
     @Override
     @JsonIgnore
     @Transient
-    ObjectDiff<Annotation> diff(Annotation other) {
+    ObjectDiff<Annotation> diff(Annotation other, String lhsPathRoot, String rhsPathRoot) {
         ObjectDiff<Annotation> base = DiffBuilder.objectDiff(Annotation)
             .leftHandSide(id?.toString(), this)
             .rightHandSide(other.id?.toString(), other)
         base.label = this.label
         base.appendString(DiffBuilder.DESCRIPTION, this.description, other.description, this, other)
         if (!DiffBuilder.isNull(this.childAnnotations) || !DiffBuilder.isNull(other.childAnnotations)) {
-            base.appendCollection(DiffBuilder.CHILD_ANNOTATIONS, this.childAnnotations as Collection<DiffableItem>, other.childAnnotations as Collection<DiffableItem>)
+            base.appendCollection(DiffBuilder.CHILD_ANNOTATIONS, this.childAnnotations as Collection<DiffableItem>, other.childAnnotations as Collection<DiffableItem>, lhsPathRoot, rhsPathRoot)
         }
         base
     }
 
+    @Transient
+    @JsonIgnore
+    @Override
+    String getPathPrefix() {
+        'ann'
+    }
+
+    @Transient
+    @JsonIgnore
+    @Override
+    String getPathIdentifier() {
+        label
+    }
 }

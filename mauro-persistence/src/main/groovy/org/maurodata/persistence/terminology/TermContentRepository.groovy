@@ -25,4 +25,9 @@ class TermContentRepository extends AdministeredItemContentRepository {
         term.targetTermRelationships = termRelationshipCacheableRepository.readAllByTargetTerm(term)
         term
     }
+
+    @Override
+    Boolean handles(Class clazz) {
+        return clazz.simpleName == 'Term'
+    }
 }

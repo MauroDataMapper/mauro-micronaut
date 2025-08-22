@@ -18,4 +18,9 @@ abstract class CatalogueUserRepository implements ItemRepository<CatalogueUser> 
     Class getDomainClass() {
         CatalogueUser
     }
+
+    // Not pathable
+    Boolean handlesPathPrefix(final String pathPrefix) {
+        false
+    }
 }

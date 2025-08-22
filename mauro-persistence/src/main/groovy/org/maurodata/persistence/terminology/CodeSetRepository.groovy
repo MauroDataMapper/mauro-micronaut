@@ -25,6 +25,11 @@ abstract class CodeSetRepository implements ModelRepository<CodeSet> {
         codeSetDTORepository.findById(id) as CodeSet
     }
 
+    @Nullable
+    List<CodeSet> findAllByParentAndPathIdentifier(UUID item, String pathIdentifier) {
+        codeSetDTORepository.findAllByParentAndPathIdentifier(item, pathIdentifier)
+    }
+
     /**
      * Remove all associations from table code_set_terms
      * @param id codeSetId
@@ -66,5 +71,9 @@ abstract class CodeSetRepository implements ModelRepository<CodeSet> {
     @Override
     Boolean handles(String domainType) {
         return domainType != null && domainType.toLowerCase() in [FieldConstants.CODESET_LOWERCASE, FieldConstants.CODESETS_LOWERCASE]
+    }
+
+    Boolean handlesPathPrefix(final String pathPrefix) {
+        'cs'.equalsIgnoreCase(pathPrefix)
     }
 }

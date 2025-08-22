@@ -6,6 +6,7 @@ import org.maurodata.domain.diff.DiffableItem
 import org.maurodata.domain.diff.ObjectDiff
 import org.maurodata.domain.diff.SummaryMetadataReportDiff
 import org.maurodata.domain.model.Item
+import org.maurodata.domain.model.Pathable
 
 import com.fasterxml.jackson.annotation.JsonAlias
 import com.fasterxml.jackson.annotation.JsonIgnore
@@ -18,12 +19,13 @@ import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Transient
 
 import java.time.Instant
+import java.time.format.DateTimeFormatter
 
 @CompileStatic
 @MappedEntity(value = 'summary_metadata_report', schema = 'core', alias = 'summary_metadata_report_')
 @AutoClone
 @MapConstructor(includeSuperFields = true, includeSuperProperties = true, noArg = true)
-class SummaryMetadataReport extends Item implements DiffableItem<SummaryMetadataReport> {
+class SummaryMetadataReport extends Item implements DiffableItem<SummaryMetadataReport>, Pathable {
     @JsonAlias(['report_value'])
     @NonNull
     String reportValue
@@ -40,20 +42,20 @@ class SummaryMetadataReport extends Item implements DiffableItem<SummaryMetadata
     @JsonIgnore
     @Transient
     CollectionDiff fromItem() {
-        new SummaryMetadataReportDiff(id, reportDate, reportValue)
+        new SummaryMetadataReportDiff(id, reportDate, reportValue, getDiffIdentifier())
     }
 
     @Override
     @JsonIgnore
     @Transient
     String getDiffIdentifier() {
-        reportValue
+        return "${pathPrefix}:${reportValue}"
     }
 
     @Override
     @JsonIgnore
     @Transient
-    ObjectDiff<SummaryMetadataReport> diff(SummaryMetadataReport other) {
+    ObjectDiff<SummaryMetadataReport> diff(SummaryMetadataReport other, String lhsPathRoot, String rhsPathRoot) {
         ObjectDiff<SummaryMetadataReport> base = DiffBuilder.objectDiff(SummaryMetadataReport)
                 .leftHandSide(id?.toString(), this)
                 .rightHandSide(other.id?.toString(), other)
@@ -99,4 +101,26 @@ class SummaryMetadataReport extends Item implements DiffableItem<SummaryMetadata
         this.reportDate
     }
 
+    @Transient
+    @JsonIgnore
+    @Override
+    String getPathPrefix() {
+        'smr'
+    }
+
+    @Transient
+    @JsonIgnore
+    @Override
+    String getPathIdentifier() {
+        if(reportDate != null) {return reportDate.toString()}
+        return "-"
+    }
+
+    @Transient
+    @JsonIgnore
+    @Override
+    @Nullable
+    String getPathModelIdentifier() {
+        return null
+    }
 }

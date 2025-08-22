@@ -32,18 +32,19 @@ class ReferenceType extends ModelItem<DataType> implements DiffableItem<Referenc
 
     @Override
     CollectionDiff fromItem() {
-        new BaseCollectionDiff(id, label)
+        new BaseCollectionDiff(id, getDiffIdentifier(), label)
     }
 
     @Override
     String getDiffIdentifier() {
-        this.label
+        // TODO: Not sure what the path to this is supposed to be
+        getPathNodeString()
     }
 
     @Override
     @JsonIgnore
     @Transient
-    ObjectDiff<ReferenceType> diff(ReferenceType other) {
+    ObjectDiff<ReferenceType> diff(ReferenceType other, String lhsPathRoot, String rhsPathRoot) {
         ObjectDiff<ReferenceType> base = DiffBuilder.objectDiff(ReferenceType)
             .leftHandSide(id?.toString(), this)
             .rightHandSide(other.id?.toString(), other)

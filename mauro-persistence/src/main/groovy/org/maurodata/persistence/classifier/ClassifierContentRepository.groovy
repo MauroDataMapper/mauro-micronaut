@@ -23,4 +23,8 @@ class ClassifierContentRepository extends AdministeredItemContentRepository {
         classifier
     }
 
+    @Override
+    Boolean handles(Class clazz) {
+        return clazz.simpleName == 'Classifier'
+    }
 }

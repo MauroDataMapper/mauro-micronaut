@@ -1,10 +1,14 @@
 package org.maurodata.domain.diff
 
+import org.maurodata.domain.model.Path
+
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import org.maurodata.domain.model.Model
 
 import java.time.Instant
+import java.util.Map.Entry
+import javax.swing.DefaultListSelectionModel
 
 @Slf4j
 @CompileStatic
@@ -42,13 +46,20 @@ class DiffBuilder {
     static final String RIGHT_ID_KEY = 'rightId'
     static final String BRANCH_NAME = 'branchName'
     static final String PATH_MODEL_IDENTIFIER = 'pathModelIdentifier'
+    static final String PATH_IDENTIFIER = 'pathIdentifier'
+    static final String PATH_PREFIX = 'pathPrefix'
     static final String FILE_NAME = 'fileName'
     static final String LANGUAGE = 'language'
     static final String REPRESENTATION = 'representation'
     static final String REFERENCE_TYPE = 'referenceType'
-    static final List<String> IGNORE_KEYS = [ID_KEY, DATE_CREATED_KEY, LAST_UPDATED_KEY, DOMAIN_TYPE, CLASS_KEY, FOLDER_KEY, LEFT_ID_KEY, RIGHT_ID_KEY]
-    static final List<String> MODEL_COLLECTION_KEYS = [METADATA, ANNOTATION, RULE, SUMMARY_METADATA, SUMMARY_METADATA_REPORT, REFERENCE_FILES, DATA_CLASSES, DATA_TYPE, DATA_ELEMENTS,
-   ENUMERATION_VALUES, REFERENCE_FILES, CLASSIFIERS, REFERENCE_TYPE]
+    static final String PATH_NODE_STRING = 'pathNodeString'
+    static final String DIFF_IDENTIFIER = 'diffIdentifier'
+    static final String ALL_DATA_CLASSES = 'allDataClasses'
+    static final List<String> IGNORE_KEYS = [ID_KEY, DATE_CREATED_KEY, LAST_UPDATED_KEY, DOMAIN_TYPE, CLASS_KEY, FOLDER_KEY, LEFT_ID_KEY, RIGHT_ID_KEY, PATH_NODE_STRING,
+                                             DIFF_IDENTIFIER, ENUMERATION_VALUES, ALL_DATA_CLASSES, PATH_IDENTIFIER, PATH_PREFIX]
+    static final List<String> MODEL_COLLECTION_KEYS = [METADATA, ANNOTATION, RULE, SUMMARY_METADATA, SUMMARY_METADATA_REPORT, REFERENCE_FILES, DATA_CLASSES, DATA_TYPE,
+                                                       DATA_ELEMENTS,
+                                                       ENUMERATION_VALUES, REFERENCE_FILES, CLASSIFIERS, REFERENCE_TYPE]
 
     static ArrayDiff arrayDiff() {
         new ArrayDiff()
@@ -63,31 +74,31 @@ class DiffBuilder {
             !isNull(it) && isCollection(it.value) && isRequiredCollection(it.key, collectionKeys)
         }
         CollectionDTO collectionDTO = new CollectionDTO()
-        collectionMap.each { k, v -> collectionDTO.addField(k as String, v as Collection<DiffableItem>) }
+        collectionMap.entrySet().forEach {Entry<String, Object> entry -> collectionDTO.addField(entry.key, entry.value as Collection<DiffableItem>)}
         collectionDTO
     }
 
-    static ObjectDiff buildBaseDiff(Model lhs, Model rhs) {
+    static ObjectDiff buildBaseDiff(Model lhs, Model rhs, String lhsPathRoot, String rhsPathRoot) {
         Map lhsMap = lhs.properties
-        lhsMap.removeAll { excluded(it as Map.Entry<String, Object>) }
-        Map<String, String> leftStrFields = lhsMap.findAll { isAssignableFrom(it.value, String) } as Map<String, String>
-        Map<String, Boolean> leftBooleanFields = lhsMap.findAll { isAssignableFrom(it.value, Boolean) } as Map<String, Boolean>
-        Map<String, Instant> leftInstantFields = lhsMap.findAll { isAssignableFrom(it.value, Instant) } as Map<String, Instant>
+        lhsMap.removeAll {excluded(it as Map.Entry<String, Object>)}
+        Map<String, String> leftStrFields = lhsMap.findAll {isAssignableFrom(it.value, String)} as Map<String, String>
+        Map<String, Boolean> leftBooleanFields = lhsMap.findAll {isAssignableFrom(it.value, Boolean)} as Map<String, Boolean>
+        Map<String, Instant> leftInstantFields = lhsMap.findAll {isAssignableFrom(it.value, Instant)} as Map<String, Instant>
 
         Map rhsMap = rhs.properties
-        rhsMap.removeAll { excluded(it as Map.Entry<String, Object>) }
-        Map<String, String> rightStrFields = rhsMap.findAll { isAssignableFrom(it.value, String) } as Map<String, String>
-        Map<String, Boolean> rightBooleanFields = rhsMap.findAll { isAssignableFrom(it.value, Boolean) } as Map<String, Boolean>
-        Map<String, Instant> rightInstantFields = rhsMap.findAll { isAssignableFrom(it.value, Instant) } as Map<String, Instant>
+        rhsMap.removeAll {excluded(it as Map.Entry<String, Object>)}
+        Map<String, String> rightStrFields = rhsMap.findAll {isAssignableFrom(it.value, String)} as Map<String, String>
+        Map<String, Boolean> rightBooleanFields = rhsMap.findAll {isAssignableFrom(it.value, Boolean)} as Map<String, Boolean>
+        Map<String, Instant> rightInstantFields = rhsMap.findAll {isAssignableFrom(it.value, Instant)} as Map<String, Instant>
 
         String lhsId = lhs.id ?: "Left:Unsaved_${lhs.domainType}"
         String rhsId = rhs.id ?: "Right:Unsaved_${rhs.domainType}"
         Class<Model> diffClass = lhs.getClass()
         ObjectDiff baseDiff = newObjectDiff(diffClass, lhsId, rhsId)
-        baseDiff.label = lhsMap.find { it.key == LABEL }.value
+        baseDiff.label = lhsMap.find {it.key == LABEL}.value
 
-        String lhsDiffIdentifier=lhs.getPathPrefix()+":"+lhs.getLabel()+'$'+lhs.getBranchName()
-        String rhsDiffIdentifier=rhs.getPathPrefix()+":"+rhs.getLabel()+'$'+rhs.getBranchName()
+        String lhsDiffIdentifier = lhs.diffIdentifier
+        String rhsDiffIdentifier = rhs.diffIdentifier
 
         buildStrings(baseDiff, leftStrFields as Map<String, Object>, rightStrFields as Map<String, Object>, lhsDiffIdentifier, rhsDiffIdentifier)
         buildField(Boolean, baseDiff, leftBooleanFields as Map<String, Object>, rightBooleanFields as Map<String, Object>, lhsDiffIdentifier, rhsDiffIdentifier)
@@ -101,27 +112,32 @@ class DiffBuilder {
     }
 
     static ObjectDiff diff(Model lhs, Model rhs, CollectionDTO lhsCollectionDTO, CollectionDTO rhsCollectionDTO) {
-        ObjectDiff baseDiff = buildBaseDiff(lhs, rhs)
-        buildCollection(baseDiff as ObjectDiff<DiffableItem>, lhsCollectionDTO, rhsCollectionDTO)
+
+        String lhsPathRoot = lhs.pathNodeString
+        String rhsPathRoot = rhs.pathNodeString
+
+        ObjectDiff baseDiff = buildBaseDiff(lhs, rhs, lhsPathRoot, rhsPathRoot)
+
+        buildCollection(baseDiff as ObjectDiff<DiffableItem>, lhsCollectionDTO, rhsCollectionDTO, lhsPathRoot, rhsPathRoot)
     }
 
-    static ObjectDiff buildCollection(ObjectDiff<DiffableItem> objectDiff, CollectionDTO lhsCollectionDTO, CollectionDTO rhsCollectionDTO) {
-        lhsCollectionDTO.fieldCollections.each {
+    static ObjectDiff buildCollection(ObjectDiff<DiffableItem> objectDiff, CollectionDTO lhsCollectionDTO, CollectionDTO rhsCollectionDTO, String lhsPathRoot,
+                                      String rhsPathRoot) {
+        lhsCollectionDTO.fieldCollections.entrySet().forEach {
             Collection<DiffableItem> rhsValue = getRhsCollection(it.key, rhsCollectionDTO)
             if (!it.value.isEmpty() || !rhsValue.isEmpty()) {
                 String name = it.key
                 Collection<DiffableItem> lhsValue = it.value
-                objectDiff.appendCollection(name, lhsValue, rhsValue)
+                objectDiff.appendCollection(name, lhsValue, rhsValue, lhsPathRoot, rhsPathRoot)
             }
-
         }
         Set<String> rhsOnlyKeys = rhsCollectionDTO.fieldCollections.keySet()
         //keys in RHS only not LHS
         rhsOnlyKeys.removeAll(lhsCollectionDTO.fieldCollections.keySet())
-        rhsOnlyKeys.each {
+        rhsOnlyKeys.forEach {String it ->
             Collection<DiffableItem> rhsValue = getRhsCollection(it, rhsCollectionDTO)
             if (!rhsValue.isEmpty()) {
-                objectDiff.appendCollection(it, null, rhsValue)
+                objectDiff.appendCollection(it, null, rhsValue, lhsPathRoot, rhsPathRoot)
             }
         }
         objectDiff
@@ -132,12 +148,15 @@ class DiffBuilder {
         objectDiff
     }
 
-    static ObjectDiff buildField(Class<? extends Object> targetClass, ObjectDiff objectDiff, Map<String, Object> lhsMap, Map<String, Object> rhsMap, String lhsDiffIdentifier, String rhsDiffIdentifier) {
+    static ObjectDiff buildField(Class<? extends Object> targetClass, ObjectDiff objectDiff, Map<String, Object> lhsMap, Map<String, Object> rhsMap, String lhsDiffIdentifier,
+                                 String rhsDiffIdentifier) {
         if (!lhsMap.isEmpty()) {
-            lhsMap.each { k, v ->
+            lhsMap.each {k, v ->
                 if (rhsMap[k] != v) {
                     objectDiff.appendField(k as String, targetClass instanceof String ? clean(v as String) : v,
-                            targetClass instanceof String ? clean(rhsMap[k] as String) : rhsMap[k], new DiffablePlaceholder(diffIdentifier: lhsDiffIdentifier+'@'+k), new DiffablePlaceholder(diffIdentifier: rhsDiffIdentifier+'@'+k))
+                                           targetClass instanceof String ? clean(rhsMap[k] as String) : rhsMap[k],
+                                           new DiffablePlaceholder(diffIdentifier: lhsDiffIdentifier + '@' + k),
+                                           new DiffablePlaceholder(diffIdentifier: rhsDiffIdentifier + '@' + k))
                 }
             }
         }
@@ -147,7 +166,8 @@ class DiffBuilder {
             rhsMap.keySet().each {
                 if (!lhsMap.keySet().contains(it)) {
                     objectDiff.appendField(it as String, null, targetClass instanceof String ? clean(rhsMap.get(it) as String) :
-                            rhsMap.get(it), new DiffablePlaceholder(diffIdentifier: lhsDiffIdentifier+'@'+it), new DiffablePlaceholder(diffIdentifier: rhsDiffIdentifier+'@'+it))
+                                                               rhsMap.get(it), new DiffablePlaceholder(diffIdentifier: lhsDiffIdentifier + '@' + it),
+                                           new DiffablePlaceholder(diffIdentifier: rhsDiffIdentifier + '@' + it))
                 }
             }
         }

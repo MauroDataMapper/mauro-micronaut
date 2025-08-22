@@ -1,5 +1,7 @@
 package org.maurodata.api.datamodel
 
+import org.maurodata.api.model.MergeIntoDTO
+
 import io.micronaut.http.annotation.QueryValue
 import org.maurodata.api.MauroApi
 import org.maurodata.api.Paths
@@ -18,7 +20,6 @@ import org.maurodata.domain.model.version.CreateNewVersionData
 import org.maurodata.domain.model.version.FinaliseData
 import org.maurodata.domain.search.dto.SearchRequestDTO
 import org.maurodata.domain.search.dto.SearchResultsDTO
-import org.maurodata.domain.terminology.CodeSet
 import org.maurodata.plugin.datatype.DefaultDataTypeProviderPlugin
 import org.maurodata.plugin.importer.DataModelImporterPlugin
 import org.maurodata.web.ListResponse
@@ -120,6 +121,9 @@ interface DataModelApi extends ModelApi<DataModel> {
 
     @Get(Paths.DATA_MODEL_MERGE_DIFF)
     MergeDiffDTO mergeDiff(@NonNull UUID id, @NonNull UUID otherId)
+
+    @Put(Paths.DATA_MODEL_MERGE_INTO)
+    DataModel mergeInto(@NonNull UUID id, @NonNull UUID otherId, @Body @Nullable MergeIntoDTO mergeIntoDTO)
 
     @Get(Paths.DATA_MODEL_DOI)
     Map doi(UUID id)

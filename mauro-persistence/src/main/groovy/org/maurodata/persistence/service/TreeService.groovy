@@ -156,6 +156,9 @@ class TreeService {
         List<TreeItem> treeItems = dataClassCacheableRepository.readAllByDataModelAndParentDataClassIsNull(dataModel)
             .sort {it.label}
             .collect {DataClass dataClass ->
+                pathRepository.readParentItems(dataClass)
+                dataClass.updatePath()
+                dataClass.updateBreadcrumbs()
                 TreeItem.from(dataClass).tap {
                     model = dataClass.dataModel
                     List<TreeItem> theChildren
@@ -173,6 +176,9 @@ class TreeService {
 
     List<TreeItem> buildTreeForDataClass(DataClass dataClass, boolean setChildren, boolean lookForChildren) {
         dataClassCacheableRepository.readAllByParentDataClass_Id(dataClass.id).sort {it.label}.collect {DataClass childClass ->
+            pathRepository.readParentItems(dataClass)
+            dataClass.updatePath()
+            dataClass.updateBreadcrumbs()
             TreeItem.from(childClass).tap {
                 model = childClass.dataModel
 
@@ -190,6 +196,9 @@ class TreeService {
 
     List<TreeItem> buildTreeForTerminology(Terminology terminology, boolean setChildren, boolean lookForChildren) {
         termCacheableRepository.readChildTermsByParent(terminology.id, null).sort {it.code}.collect {Term term ->
+            pathRepository.readParentItems(term)
+            term.updatePath()
+            term.updateBreadcrumbs()
             TreeItem.from(term).tap {
                 model = term.terminology
 
@@ -207,6 +216,9 @@ class TreeService {
 
     List<TreeItem> buildTreeForTerm(Term term, boolean setChildren, boolean lookForChildren) {
         termCacheableRepository.readChildTermsByParent(term.terminology.id, term.id).sort {it.code}.collect {Term childTerm ->
+            pathRepository.readParentItems(childTerm)
+            childTerm.updatePath()
+            childTerm.updateBreadcrumbs()
             TreeItem.from(childTerm).tap {
                 model = childTerm.terminology
                 List<TreeItem> theChildren
@@ -224,6 +236,9 @@ class TreeService {
     List<TreeItem> buildTreeForClassificationScheme(ClassificationScheme classificationScheme, boolean setChildren, boolean lookForChildren) {
         List<TreeItem> treeItems =
             classifierCacheableRepository.readAllByClassificationScheme_Id(classificationScheme.id).sort {it.label}.collect {Classifier childClassifier ->
+                pathRepository.readParentItems(childClassifier)
+                childClassifier.updatePath()
+                childClassifier.updateBreadcrumbs()
                 TreeItem.from(childClassifier).tap {
                     model = childClassifier.classificationScheme
                     List<TreeItem> theChildren
@@ -241,6 +256,9 @@ class TreeService {
 
     List<TreeItem> buildTreeForClassifier(Classifier classifier, boolean setChildren, boolean lookForChildren) {
         classifierCacheableRepository.readAllByParentClassifier_Id(classifier.id).sort {it.label}.collect {Classifier child ->
+            pathRepository.readParentItems(child)
+            child.updatePath()
+            child.updateBreadcrumbs()
             TreeItem.from(child).tap {
                 model = child.classificationScheme
                 List<TreeItem> theChildren

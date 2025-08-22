@@ -90,7 +90,11 @@ class DataTypeController extends AdministeredItemController<DataType, DataModel>
         Item parent = super.validate(cleanItem, dataModelId)
         cleanItem = dataTypeService.validateDataType(cleanItem, parent)
 
-
+        if (cleanItem.isReferenceType()) {
+            if (cleanItem.referenceClass.id == parent.id) {
+                ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "Data class element shouldn't reference it")
+            }
+        }
         if (dataType.isModelType()) {
 
             // Either the dataType is finalised
@@ -99,7 +103,7 @@ class DataTypeController extends AdministeredItemController<DataType, DataModel>
 
             ModelCacheableRepository domainRepository = repositoryService.getModelRepository(dataType.modelResourceDomainType)
 
-            AdministeredItem dataTypeAdministeredItem = (AdministeredItem) domainRepository.findById(dataType.modelResourceId)
+            AdministeredItem dataTypeAdministeredItem = (AdministeredItem) domainRepository.readById(dataType.modelResourceId)
 
             pathRepository.readParentItems(dataTypeAdministeredItem)
             pathRepository.readParentItems(parent)
@@ -109,7 +113,6 @@ class DataTypeController extends AdministeredItemController<DataType, DataModel>
 
             Item dataTypeVersionedFolder = pathToDataType.findAncestorNodeItem(dataType.modelResourceId, "VersionedFolder")
             Item dataModelVersionedFolder = null
-            if (dataTypeVersionedFolder != null) {System.out.println(dataTypeVersionedFolder.toString());}
 
             if (dataTypeVersionedFolder != null) {
                 dataModelVersionedFolder = pathToDataModel.findAncestorNodeItem(parent.id, "VersionedFolder")

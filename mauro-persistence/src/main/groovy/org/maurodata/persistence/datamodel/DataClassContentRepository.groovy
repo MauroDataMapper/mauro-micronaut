@@ -125,4 +125,9 @@ class DataClassContentRepository extends AdministeredItemContentRepository {
         }
         dataClass.dataElements
     }
+
+    @Override
+    Boolean handles(Class clazz) {
+        return clazz.simpleName == 'DataClass'
+    }
 }

@@ -45,4 +45,9 @@ class DataTypeContentRepository extends AdministeredItemContentRepository {
 
         dataTypes
     }
+
+    @Override
+    Boolean handles(Class clazz) {
+        return clazz.simpleName == 'DataType'
+    }
 }

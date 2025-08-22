@@ -15,5 +15,7 @@ abstract class SemanticLinkRepository implements ItemRepository<SemanticLink> {
     Class getDomainClass() {
         SemanticLink
     }
-
+    Boolean handlesPathPrefix(final String pathPrefix) {
+        'sl'.equalsIgnoreCase(pathPrefix)
+    }
 }

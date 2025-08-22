@@ -43,4 +43,6 @@ trait ItemRepository<I extends Item> implements GenericRepository<I, UUID> {
     }
 
     abstract List<I> readAll()
+
+    abstract Boolean handlesPathPrefix(final String pathPrefix)
 }

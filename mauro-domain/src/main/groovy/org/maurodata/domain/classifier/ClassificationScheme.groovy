@@ -81,4 +81,13 @@ class ClassificationScheme extends Model {
         }
     }
 
+    @Override
+    @JsonIgnore
+    @Transient
+    String getDiffIdentifier() {
+        if(folder!=null) {
+            return "${folder.getDiffIdentifier()}|${getPathNodeString()}"
+        }
+        return "${getPathNodeString()}"
+    }
 }

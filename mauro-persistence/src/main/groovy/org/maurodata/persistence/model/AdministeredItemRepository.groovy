@@ -15,4 +15,9 @@ trait AdministeredItemRepository<I extends AdministeredItem> implements ItemRepo
 
     @Nullable
     abstract List<I> readAllByParent(AdministeredItem item)
+
+    @Nullable
+    List<I> findAllByParentAndPathIdentifier(UUID item, String pathIdentifier){
+        throw new UnsupportedOperationException('Method should be implemented')
+    }
 }

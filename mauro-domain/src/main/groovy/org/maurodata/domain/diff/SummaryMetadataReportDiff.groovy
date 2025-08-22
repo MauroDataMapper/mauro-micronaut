@@ -13,8 +13,8 @@ class SummaryMetadataReportDiff extends CollectionDiff {
     @NonNull
     String reportValue
 
-    SummaryMetadataReportDiff(UUID id, @Nullable Instant reportDate, @NonNull String reportValue) {
-        super(id)
+    SummaryMetadataReportDiff(UUID id, @Nullable Instant reportDate, @NonNull String reportValue, String diffIdentifier) {
+        super(id, diffIdentifier)
         this.reportDate = reportDate
         this.reportValue = reportValue
     }

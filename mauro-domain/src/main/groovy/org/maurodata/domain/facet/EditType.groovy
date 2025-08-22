@@ -25,7 +25,8 @@ enum EditType {
     FINALISE,
     CHANGELOG,
     VIEW,
-    EXPORT
+    EXPORT,
+    CHANGENOTICE
 
     static class EditTypeConverter extends StdConverter<String, EditType> {
 

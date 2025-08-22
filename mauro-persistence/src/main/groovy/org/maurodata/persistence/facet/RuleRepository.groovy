@@ -15,4 +15,8 @@ abstract class RuleRepository implements ItemRepository<Rule> {
     Class getDomainClass() {
         Rule
     }
+
+    Boolean handlesPathPrefix(final String pathPrefix) {
+        'ru'.equalsIgnoreCase(pathPrefix)
+    }
 }

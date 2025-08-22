@@ -151,6 +151,10 @@ abstract class ItemCacheableRepository<I extends Item> implements ItemRepository
         repository.handles(domainType)
     }
 
+    Boolean handlesPathPrefix(final String pathPrefix) {
+        repository.handlesPathPrefix(pathPrefix)
+    }
+
     // Cacheable Item Repository definitions
 
     @Singleton

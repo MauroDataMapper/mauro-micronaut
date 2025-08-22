@@ -24,4 +24,8 @@ abstract class ApiKeyRepository implements ItemRepository<ApiKey> {
         ApiKey
     }
 
+    // Not currently pathable
+    Boolean handlesPathPrefix(final String pathPrefix) {
+        false
+    }
 }

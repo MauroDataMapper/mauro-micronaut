@@ -43,4 +43,8 @@ class DataElementComponentContentRepository extends AdministeredItemContentRepos
         }
     }
 
+    @Override
+    Boolean handles(Class clazz) {
+        return clazz.simpleName == 'DataElementComponent'
+    }
 }

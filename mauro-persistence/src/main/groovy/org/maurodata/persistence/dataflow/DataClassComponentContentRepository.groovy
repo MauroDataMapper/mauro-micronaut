@@ -45,4 +45,9 @@ class DataClassComponentContentRepository extends AdministeredItemContentReposit
         }
         dataClassComponentRepository.delete(administeredItem as DataClassComponent)
     }
+
+    @Override
+    Boolean handles(Class clazz) {
+        return clazz.simpleName == 'DataClassComponent'
+    }
 }

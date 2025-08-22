@@ -24,4 +24,9 @@ class EnumerationValueContentRepository extends AdministeredItemContentRepositor
 
         enumerationValue
     }
+
+    @Override
+    Boolean handles(Class clazz) {
+        return clazz.simpleName == 'EnumerationValue'
+    }
 }

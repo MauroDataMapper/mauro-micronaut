@@ -2,6 +2,7 @@ package org.maurodata.controller.terminology
 
 import org.maurodata.ErrorHandler
 import org.maurodata.api.Paths
+import org.maurodata.api.model.ModelVersionedRefDTO
 import org.maurodata.api.model.PermissionsDTO
 import org.maurodata.api.terminology.CodeSetApi
 import org.maurodata.audit.Audit
@@ -172,6 +173,13 @@ class CodeSetController extends ModelController<CodeSet> implements CodeSetApi {
 
         codeSet.setAssociations()
         other.setAssociations()
+
+        pathRepository.readParentItems(codeSet)
+        codeSet.updatePath()
+
+        pathRepository.readParentItems(other)
+        other.updatePath()
+
         codeSet.diff(other)
     }
 
@@ -193,9 +201,9 @@ class CodeSetController extends ModelController<CodeSet> implements CodeSetApi {
     }
 
     //stub endpoint todo: actual
-    @Get('/codeSets/{id}/simpleModelVersionTree')
-    List<Map> simpleModelVersionTree(UUID id) {
-        super.simpleModelVersionTree(id)
+    @Get(Paths.CODE_SET_SIMPLE_MODEL_VERSION_TREE)
+    List<ModelVersionedRefDTO> simpleModelVersionTree(UUID id, @Nullable Boolean branchesOnly) {
+        super.simpleModelVersionTree(id,branchesOnly)
     }
 
     @Audit

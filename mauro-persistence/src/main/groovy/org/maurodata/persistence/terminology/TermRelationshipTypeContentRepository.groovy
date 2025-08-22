@@ -24,4 +24,9 @@ class TermRelationshipTypeContentRepository extends AdministeredItemContentRepos
         relationshipType.termRelationships = termRelationshipCacheableRepository.readAllByRelationshipType(relationshipType)
         relationshipType
     }
+
+    @Override
+    Boolean handles(Class clazz) {
+        return clazz.simpleName == 'TermRelationshipType'
+    }
 }

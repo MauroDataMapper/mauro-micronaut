@@ -26,6 +26,12 @@ abstract class ClassifierRepository implements ModelItemRepository<Classifier> {
         classifierDTORepository.findById(id) as Classifier
     }
 
+    @Override
+    @Nullable
+    List<Classifier> findAllByParentAndPathIdentifier(UUID item,String pathIdentifier) {
+        classifierDTORepository.findAllByParentAndPathIdentifier(item,pathIdentifier) as List<Classifier>
+    }
+
     @Nullable
     List<Classifier> findAllByClassificationScheme(ClassificationScheme classificationScheme) {
         classifierDTORepository.findAllByClassificationScheme(classificationScheme) as List<Classifier>
@@ -54,7 +60,7 @@ abstract class ClassifierRepository implements ModelItemRepository<Classifier> {
     }
 
     @Nullable
-    abstract List<Classifier> findAll() 
+    abstract List<Classifier> findAll()
 
 
     @Nullable
@@ -109,5 +115,9 @@ abstract class ClassifierRepository implements ModelItemRepository<Classifier> {
         findAll()
     }
 
+
+    Boolean handlesPathPrefix(final String pathPrefix) {
+        'cl'.equalsIgnoreCase(pathPrefix)
+    }
 }
 

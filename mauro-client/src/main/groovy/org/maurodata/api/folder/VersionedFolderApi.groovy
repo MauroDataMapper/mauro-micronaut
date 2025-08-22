@@ -1,5 +1,7 @@
 package org.maurodata.api.folder
 
+import org.maurodata.api.model.MergeIntoDTO
+
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpResponse
@@ -79,6 +81,8 @@ interface VersionedFolderApi extends ModelApi<Folder> {
     @Get(Paths.VERSIONED_FOLDER_MERGE_DIFF)
     MergeDiffDTO mergeDiff(@NonNull UUID id, @NonNull UUID otherId)
 
+    @Put(Paths.VERSIONED_FOLDER_MERGE_INTO)
+    Folder mergeInto(@NonNull UUID id, @NonNull UUID otherId, @Body @Nullable MergeIntoDTO mergeIntoDTO)
 
     @Put(Paths.VERSIONED_FOLDER_READ_BY_EVERYONE)
     Folder allowReadByEveryone(UUID id)

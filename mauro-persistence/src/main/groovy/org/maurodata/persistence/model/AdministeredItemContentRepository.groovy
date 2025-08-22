@@ -316,6 +316,8 @@ class AdministeredItemContentRepository {
         it.multiFacetAwareItem = item
     }
 
-
+    Boolean handles(Class clazz) {
+        return false
+    }
 }
 

@@ -32,7 +32,7 @@ class Metadata extends Facet implements DiffableItem<Metadata> {
     @JsonIgnore
     @Transient
     CollectionDiff fromItem() {
-        new MetadataDiff(id, namespace, key, value)
+        new MetadataDiff(id, namespace, key, value, getDiffIdentifier())
     }
 
 
@@ -40,13 +40,16 @@ class Metadata extends Facet implements DiffableItem<Metadata> {
     @JsonIgnore
     @Transient
     String getDiffIdentifier() {
-        "${this.namespace}.${this.key}"
+        if (multiFacetAwareItem != null) {
+            return "${multiFacetAwareItem.getDiffIdentifier()}|${pathPrefix}:${this.namespace}.${this.key}"
+        }
+        return "${pathPrefix}:${this.namespace}.${this.key}"
     }
 
     @Override
     @JsonIgnore
     @Transient
-    ObjectDiff<Metadata> diff(Metadata other) {
+    ObjectDiff<Metadata> diff(Metadata other, String lhsPathRoot, String rhsPathRoot) {
         ObjectDiff od = DiffBuilder.objectDiff(Metadata)
                 .leftHandSide(id?.toString(), this)
                 .rightHandSide(other.id?.toString(), other)
@@ -101,5 +104,17 @@ class Metadata extends Facet implements DiffableItem<Metadata> {
         this.value
     }
 
+    @Transient
+    @JsonIgnore
+    @Override
+    String getPathPrefix() {
+        'md'
+    }
 
+    @Transient
+    @JsonIgnore
+    @Override
+    String getPathIdentifier() {
+        "${this.namespace}.${this.key}"
+    }
 }

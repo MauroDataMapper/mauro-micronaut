@@ -35,7 +35,6 @@ import org.maurodata.domain.diff.ObjectDiff
 import org.maurodata.domain.model.version.CreateNewVersionData
 import org.maurodata.domain.model.version.FinaliseData
 import org.maurodata.domain.security.Role
-import org.maurodata.domain.terminology.CodeSet
 import org.maurodata.domain.terminology.Terminology
 import org.maurodata.domain.terminology.TerminologyService
 import org.maurodata.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
@@ -201,6 +200,13 @@ class TerminologyController extends ModelController<Terminology> implements Term
 
         terminology.setAssociations()
         other.setAssociations()
+
+        pathRepository.readParentItems(terminology)
+        terminology.updatePath()
+
+        pathRepository.readParentItems(other)
+        other.updatePath()
+
         terminology.diff(other)
     }
 
@@ -277,5 +283,4 @@ class TerminologyController extends ModelController<Terminology> implements Term
 
         return simpleModelVersionTreeList
     }
-
 }

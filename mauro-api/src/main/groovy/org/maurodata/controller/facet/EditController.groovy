@@ -4,6 +4,7 @@ import org.maurodata.api.Paths
 import org.maurodata.api.facet.EditApi
 import org.maurodata.audit.Audit
 import org.maurodata.domain.facet.Edit
+import org.maurodata.domain.facet.EditType
 import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.domain.security.Role
 import org.maurodata.persistence.cache.FacetCacheableRepository
@@ -65,5 +66,19 @@ class EditController extends FacetController<Edit> implements EditApi {
     @Delete(Paths.EDIT_ID)
     HttpResponse delete(String domainType, UUID domainId, UUID id) {
         super.delete(id)
+    }
+
+    @Override
+    Edit createEntity(@NonNull AdministeredItem administeredItem, @NonNull Edit edit) {
+        if (!accessControlService.enabled || accessControlService.user == null) {return edit}
+        super.createEntity(administeredItem, edit)
+    }
+
+    Edit createEdit(@NonNull AdministeredItem administeredItem, @NonNull EditType editType, @NonNull String theDescription) {
+        final Edit edit = new Edit().tap {
+            title = editType
+            description = theDescription
+        }
+        createEntity(administeredItem, edit)
     }
 }
