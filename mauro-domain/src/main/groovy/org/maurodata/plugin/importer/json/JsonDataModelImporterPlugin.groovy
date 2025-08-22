@@ -1,6 +1,8 @@
 package org.maurodata.plugin.importer.json
 
+import io.micronaut.http.HttpStatus
 import jakarta.inject.Inject
+import org.maurodata.ErrorHandler
 import org.maurodata.plugin.importer.DataModelImporterPlugin
 import org.maurodata.plugin.importer.FileImportParameters
 
@@ -29,7 +31,9 @@ class JsonDataModelImporterPlugin implements DataModelImporterPlugin<FileImportP
         log.info '** start importModel **'
         ExportModel importModel = objectMapper.readValue(params.importFile.fileContents, ExportModel)
         log.info '*** imported JSON model ***'
-
+        if (!importModel.dataModel){
+            ErrorHandler.handleError(HttpStatus.BAD_REQUEST, 'Cannot import JSON as datamodel/s not present')
+        }
         if(importModel.dataModel) {
             return [importModel.dataModel]
         } else {

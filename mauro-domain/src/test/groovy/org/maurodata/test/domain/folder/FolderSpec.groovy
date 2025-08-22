@@ -73,7 +73,8 @@ class FolderSpec extends Specification {
             folder.dataModels.allDataClasses
         }
 
-        cloned.dataModels.dataElements.dataType == folder.dataModels.dataElements.dataType
+        cloned.dataModels.dataElements.dataType.hashCode() != folder.dataModels.dataElements.dataType.hashCode()
+        cloned.dataModels.dataElements.dataType.id == folder.dataModels.dataElements.dataType.id
         cloned.dataModels.dataElements.dataType.toSet().each{
             cloned.dataModels.dataTypes.contains(it)
         }
@@ -84,13 +85,16 @@ class FolderSpec extends Specification {
         !cloned.dataModels.dataElements.dataType.is(folder.dataModels.dataElements.dataType)
 
         !cloned.terminologies.is(folder.terminologies)
-        cloned.terminologies.terms == folder.terminologies.terms
+        cloned.terminologies.terms.hashCode() != folder.terminologies.terms.hashCode()
+        cloned.terminologies.terms.id == folder.terminologies.terms.id
         !cloned.terminologies.terms.is(folder.terminologies.terms)
 
-        cloned.terminologies.termRelationshipTypes == folder.terminologies.termRelationshipTypes
+        cloned.terminologies.termRelationshipTypes.hashCode() != folder.terminologies.termRelationshipTypes.hashCode()
+        cloned.terminologies.termRelationshipTypes.id == folder.terminologies.termRelationshipTypes.id
         !cloned.terminologies.termRelationshipTypes.is(folder.terminologies.termRelationshipTypes)
 
-        cloned.terminologies.termRelationships == folder.terminologies.termRelationships
+        cloned.terminologies.termRelationships.hashCode() != folder.terminologies.termRelationships.hashCode()
+        cloned.terminologies.termRelationships.id == folder.terminologies.termRelationships.id
         !cloned.terminologies.termRelationships.is(folder.terminologies.termRelationships)
 
         folder.codeSets.size() == 1

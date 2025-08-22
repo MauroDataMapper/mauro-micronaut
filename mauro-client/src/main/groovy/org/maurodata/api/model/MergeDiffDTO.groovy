@@ -16,14 +16,14 @@ diffs:
     String path
     String label
     Integer count
-    Integer getCount()
-    {
-        if(diffs==null){count=0; return count}
-        count=diffs.size()
+
+    Integer getCount() {
+        if (diffs == null) {count = 0; return count}
+        count = diffs.size()
         return count
     }
-    private void setCount(Integer count)
-    {
+
+    private void setCount(Integer count) {
         // Nope
     }
     List<MergeFieldDiffDTO> diffs

@@ -121,7 +121,6 @@ class ListResponse<T> {
         if (comparator == null) {
             // Couldn't resolve the sort field to use
             sorted = input
-            System.err.println("Warning: unable to sort")
         } else {
             sorted = input.toSorted(comparator)
         }

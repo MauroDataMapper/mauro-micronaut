@@ -25,6 +25,11 @@ abstract class DataFlowRepository implements ModelItemRepository<DataFlow> {
     }
 
     @Nullable
+    List<DataFlow> findAllByParentAndPathIdentifier(UUID item,String pathIdentifier) {
+        dataFlowDTORepository.findAllByParentAndPathIdentifier(item,pathIdentifier)
+    }
+
+    @Nullable
     List<DataFlow> findAllByTarget(DataModel dataModel) {
         dataFlowDTORepository.findAllByTarget(dataModel) as List<DataFlow>
     }
@@ -53,4 +58,7 @@ abstract class DataFlowRepository implements ModelItemRepository<DataFlow> {
        findById(id)
     }
 
+    Boolean handlesPathPrefix(final String pathPrefix) {
+        'df'.equalsIgnoreCase(pathPrefix)
+    }
 }

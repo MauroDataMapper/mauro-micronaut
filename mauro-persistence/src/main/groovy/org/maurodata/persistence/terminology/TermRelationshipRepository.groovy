@@ -35,6 +35,11 @@ abstract class TermRelationshipRepository implements ModelItemRepository<TermRel
     }
 
     @Nullable
+    List<TermRelationship> findAllByParentAndPathIdentifier(UUID item, String pathIdentifier) {
+        termRelationshipDTORepository.findAllByParentAndPathIdentifier(item, pathIdentifier)
+    }
+
+    @Nullable
     List<TermRelationship> findAllByTerminology(Terminology terminology) {
         termRelationshipDTORepository.findAllByTerminology(terminology) as List<TermRelationship>
     }
@@ -74,5 +79,9 @@ abstract class TermRelationshipRepository implements ModelItemRepository<TermRel
     @Override
     Class getDomainClass() {
         TermRelationship
+    }
+
+    Boolean handlesPathPrefix(final String pathPrefix) {
+        'tr'.equalsIgnoreCase(pathPrefix)
     }
 }

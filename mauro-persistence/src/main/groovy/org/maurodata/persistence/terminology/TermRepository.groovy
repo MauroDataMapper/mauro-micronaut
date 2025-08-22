@@ -32,6 +32,11 @@ abstract class TermRepository implements ModelItemRepository<Term> {
     }
 
     @Nullable
+    List<Term> findAllByParentAndPathIdentifier(UUID item, String pathIdentifier) {
+        termDTORepository.findAllByParentAndPathIdentifier(item, pathIdentifier)
+    }
+
+    @Nullable
     List<Term> findAllByTerminology(Terminology terminology) {
         termDTORepository.findAllByTerminology(terminology) as List<Term>
     }
@@ -78,5 +83,9 @@ abstract class TermRepository implements ModelItemRepository<Term> {
     @Override
     Class getDomainClass() {
         Term
+    }
+
+    Boolean handlesPathPrefix(final String pathPrefix) {
+        'tm'.equalsIgnoreCase(pathPrefix)
     }
 }

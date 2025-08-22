@@ -24,6 +24,11 @@ abstract class DataModelRepository implements ModelRepository<DataModel> {
         dataModelDTORepository.findById(id) as DataModel
     }
 
+    @Nullable
+    List<DataModel> findAllByParentAndPathIdentifier(UUID item, String pathIdentifier) {
+        dataModelDTORepository.findAllByParentAndPathIdentifier(item, pathIdentifier)
+    }
+
     @Override
     Class getDomainClass() {
         DataModel
@@ -49,4 +54,7 @@ abstract class DataModelRepository implements ModelRepository<DataModel> {
         return domainType != null && domainType.toLowerCase() in [FieldConstants.DATAMODEL_LOWERCASE, FieldConstants.DATAMODELS_LOWERCASE]
     }
 
+    Boolean handlesPathPrefix(final String pathPrefix) {
+        'dm'.equalsIgnoreCase(pathPrefix)
+    }
 }

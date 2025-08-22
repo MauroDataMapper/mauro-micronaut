@@ -63,15 +63,11 @@ class SemanticLinkIntegrationSpec extends CommonDataSpec {
         createdSemanticLink.targetMultiFacetAwareItem.id == dataClassId_2
         createdSemanticLink.targetMultiFacetAwareItem.label == "Data class 2"
         createdSemanticLink.targetMultiFacetAwareItem.domainType == "DataClass"
-        System.out.println(createdSemanticLink.dump())
-        System.out.println(createdSemanticLink.sourceMultiFacetAwareItem.dump())
-        System.out.println(createdSemanticLink.targetMultiFacetAwareItem.dump())
 
         when:
         ListResponse<SemanticLinkDTO> semanticLinks = semanticLinksApi.list("dataClasses", dataClassId_1)
 
         then:
         semanticLinks.count == 1
-        System.out.println(semanticLinks.dump())
     }
 }

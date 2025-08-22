@@ -12,8 +12,8 @@ class SummaryMetadataDiff extends CollectionDiff {
 
     Collection<SummaryMetadataReport> summaryMetadataReports
 
-    SummaryMetadataDiff(UUID id, SummaryMetadataType summaryMetadataType, String label, Collection<SummaryMetadataReport> summaryMetadataReports) {
-        super(id)
+    SummaryMetadataDiff(UUID id, SummaryMetadataType summaryMetadataType, String label, Collection<SummaryMetadataReport> summaryMetadataReports, String diffIdentifier) {
+        super(id,diffIdentifier)
         this.summaryMetadataType = summaryMetadataType
         this.label = label
         this.summaryMetadataReports = summaryMetadataReports

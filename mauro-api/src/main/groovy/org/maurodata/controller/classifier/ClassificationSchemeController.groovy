@@ -143,6 +143,13 @@ class ClassificationSchemeController extends ModelController<ClassificationSchem
 
         classificationScheme.setAssociations()
         otherClassificationScheme.setAssociations()
+
+        pathRepository.readParentItems(classificationScheme)
+        classificationScheme.updatePath()
+
+        pathRepository.readParentItems(otherClassificationScheme)
+        otherClassificationScheme.updatePath()
+
         classificationScheme.diff(otherClassificationScheme)
     }
 

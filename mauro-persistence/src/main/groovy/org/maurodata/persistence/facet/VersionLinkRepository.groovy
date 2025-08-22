@@ -22,5 +22,8 @@ abstract class VersionLinkRepository implements ItemRepository<VersionLink>{
     Class getDomainClass() {
         VersionLink
     }
+    Boolean handlesPathPrefix(final String pathPrefix) {
+        'vl'.equalsIgnoreCase(pathPrefix)
+    }
 }
 

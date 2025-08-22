@@ -214,6 +214,13 @@ class TerminologyController extends ModelController<Terminology> implements Term
 
         terminology.setAssociations()
         other.setAssociations()
+
+        pathRepository.readParentItems(terminology)
+        terminology.updatePath()
+
+        pathRepository.readParentItems(other)
+        other.updatePath()
+
         terminology.diff(other)
     }
 
@@ -290,5 +297,4 @@ class TerminologyController extends ModelController<Terminology> implements Term
 
         return simpleModelVersionTreeList
     }
-
 }

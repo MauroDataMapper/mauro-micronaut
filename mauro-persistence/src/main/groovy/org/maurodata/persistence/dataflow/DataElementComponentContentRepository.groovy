@@ -25,6 +25,7 @@ class DataElementComponentContentRepository extends AdministeredItemContentRepos
         dataElementComponent
     }
 
+
     @Override
     AdministeredItem saveWithContent(@NonNull AdministeredItem administeredItem) {
         DataElementComponent saved = dataElementComponentRepository.save(administeredItem as DataElementComponent)
@@ -37,8 +38,6 @@ class DataElementComponentContentRepository extends AdministeredItemContentRepos
         saveAllFacets(saved)
         saved
     }
-
-
     // TODO methods here won't invalidate the cache
     @Override
     Long deleteWithContent(@NonNull AdministeredItem administeredItem) {
@@ -58,5 +57,8 @@ class DataElementComponentContentRepository extends AdministeredItemContentRepos
         }
     }
 
-
+    @Override
+    Boolean handles(Class clazz) {
+        return clazz.simpleName == 'DataElementComponent'
+    }
 }

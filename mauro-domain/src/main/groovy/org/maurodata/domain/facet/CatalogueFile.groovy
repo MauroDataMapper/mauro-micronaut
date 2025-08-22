@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
+import io.micronaut.data.annotation.Transient
 
 @CompileStatic
 @AutoClone
@@ -27,5 +28,18 @@ abstract class CatalogueFile extends Facet implements CatalogueFileOutput{
     @JsonAlias(['file_type'])
     String fileType
 
+    @Transient
+    @JsonIgnore
+    @Override
+    String getPathPrefix() {
+        'cf'
+    }
 
+    //TODO: Not clean: fileName may contain characters used by Paths
+    @Transient
+    @JsonIgnore
+    @Override
+    String getPathIdentifier() {
+        fileName
+    }
 }

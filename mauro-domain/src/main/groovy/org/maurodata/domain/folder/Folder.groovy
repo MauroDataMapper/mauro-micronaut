@@ -104,13 +104,13 @@ class Folder extends Model {
     String author
 
     // TODO: write a test for branch name
-    @Nullable
-    String branchName = 'main'
+
+    @Override
     String getBranchName()
     {
         if(this.class_!=null && "VersionedFolder" == this.class_)
         {
-            return branchName
+            return super.branchName
         }
         else
         {
@@ -187,6 +187,7 @@ class Folder extends Model {
     @Override
     @Transient
     @JsonIgnore
+    @Nullable
     String getPathModelIdentifier() {
         if(!isVersionable())
         {
@@ -194,6 +195,13 @@ class Folder extends Model {
         }
         // I'm a model, you know what I mean
         return super.getPathModelIdentifier()
+    }
+
+    @Transient
+    @JsonIgnore
+    String getDiffIdentifier() {
+        if (parentFolder != null) {return "${parentFolder.getDiffIdentifier()}|${getPathNodeString()}"}
+        return "${getPathNodeString()}"
     }
 
     @Override

@@ -8,7 +8,7 @@ class CollectionDTO {
 
     void addField(String field, Collection<DiffableItem> collection) {
         if (collection.size() > 0) {
-            fieldCollections.putIfAbsent(field, collection.unique())
+            fieldCollections.putIfAbsent(field, collection)
         }
     }
 

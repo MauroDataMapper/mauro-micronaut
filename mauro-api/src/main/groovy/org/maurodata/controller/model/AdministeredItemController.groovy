@@ -1,5 +1,8 @@
 package org.maurodata.controller.model
 
+import org.maurodata.domain.datamodel.DataClass
+import org.maurodata.domain.datamodel.DataType
+
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
@@ -132,6 +135,9 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
     @Transactional
     HttpResponse delete(@NonNull UUID id, @Body @Nullable I item) {
         I itemToDelete = (I) administeredItemContentRepository.readWithContentById(id)
+        if (item == null) {item = itemToDelete}
+
+        deletePre(itemToDelete)
 
         if (itemToDelete == null) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, "Object not found for deletion")
@@ -212,6 +218,40 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
         List<I> items = administeredItemRepository.readAllByParent(parent)
         items.each {
             updateDerivedProperties(it as I)
+        }
+    }
+
+    // Any precondition checks
+
+    protected void deletePre(AdministeredItem administeredItemToDelete) {
+        if (itemClass.simpleName == 'DataClass') {
+            deleteDataClassPre((DataClass) administeredItemToDelete)
+        }
+    }
+
+    // Precondition check for if this AdministeredItem is a DataClass
+    protected void deleteDataClassPre(DataClass dataClassToDelete) {
+        // Dataclass must not be referenced either as an extension, or in a datatype
+        if (dataClassToDelete.referenceTypes != null && !dataClassToDelete.referenceTypes.isEmpty()) {
+            StringBuilder str = new StringBuilder()
+            dataClassToDelete.referenceTypes.forEach {DataType dataType ->
+                pathRepository.readParentItems(dataType)
+                dataType.updatePath()
+                str.append(dataType.getPath().toString())
+                str.append(" , ")
+            }
+            throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "DataClass ${dataClassToDelete.id} is referenced by " + str)
+        }
+
+        if (dataClassToDelete.extendedBy != null && !dataClassToDelete.extendedBy.isEmpty()) {
+            StringBuilder str = new StringBuilder()
+            dataClassToDelete.extendedBy.forEach {DataClass extendedByDataClass ->
+                pathRepository.readParentItems(extendedByDataClass)
+                extendedByDataClass.updatePath()
+                str.append(extendedByDataClass.getPath().toString())
+                str.append(" , ")
+            }
+            throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "DataClass ${dataClassToDelete.id} is extended by " + str)
         }
     }
 }

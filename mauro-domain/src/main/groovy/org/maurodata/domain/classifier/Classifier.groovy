@@ -81,21 +81,22 @@ class Classifier extends ModelItem<ClassificationScheme> implements DiffableItem
     @JsonIgnore
     @Transient
     CollectionDiff fromItem() {
-        new BaseCollectionDiff(id, label)
+        new BaseCollectionDiff(id, getDiffIdentifier(), label)
     }
 
     @Override
     @JsonIgnore
     @Transient
     String getDiffIdentifier() {
-        if (!parentClassifier) return this.pathIdentifier
-        "${parentClassifier.getDiffIdentifier()}/${this.pathIdentifier}"
+        if (parentClassifier != null) {return "${parentClassifier.getDiffIdentifier()}|${getPathNodeString()}"}
+        if (classificationScheme != null) {return "${classificationScheme.getDiffIdentifier()}|${getPathNodeString()}"}
+        return "${getPathNodeString()}"
     }
 
     @Override
     @JsonIgnore
     @Transient
-    ObjectDiff<Classifier> diff(Classifier other) {
+    ObjectDiff<Classifier> diff(Classifier other, String lhsPathRoot, String rhsPathRoot) {
         ObjectDiff<Classifier> base = DiffBuilder.objectDiff(Classifier)
                 .leftHandSide(id?.toString(), this)
                 .rightHandSide(other.id?.toString(), other)
@@ -103,7 +104,7 @@ class Classifier extends ModelItem<ClassificationScheme> implements DiffableItem
         base.appendString(DiffBuilder.DESCRIPTION, this.description, other.description, this, other)
         base.appendString(DiffBuilder.ALIASES_STRING, this.aliasesString, other.aliasesString, this, other)
         if (!DiffBuilder.isNullOrEmpty(this.classifiers as Collection<Object>) || !DiffBuilder.isNullOrEmpty(other.classifiers as Collection<Object>)) {
-            base.appendCollection(DiffBuilder.CLASSIFIERS, this.classifiers as Collection<DiffableItem>, other.classifiers as Collection<DiffableItem>)
+            base.appendCollection(DiffBuilder.CLASSIFIERS, this.classifiers as Collection<DiffableItem>, other.classifiers as Collection<DiffableItem>, lhsPathRoot, rhsPathRoot)
         }
         base
     }

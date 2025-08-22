@@ -23,6 +23,11 @@ abstract class FolderRepository implements ModelRepository<Folder> {
     }
 
     @Nullable
+    List<Folder> findAllByParentAndPathIdentifier(UUID item, String pathIdentifier) {
+        folderDTORepository.findAllByParentAndPathIdentifier(item, pathIdentifier)
+    }
+
+    @Nullable
     abstract List<Folder> readAllByParentFolder(Folder folder)
 
     @Nullable
@@ -53,5 +58,9 @@ abstract class FolderRepository implements ModelRepository<Folder> {
     @Override
     Boolean handles(String domainType) {
         return domainType != null && domainType.toLowerCase() in ['folder', 'folders', 'versionedfolder', 'versionedfolders']
+    }
+
+    Boolean handlesPathPrefix(final String pathPrefix) {
+        'fo'.equalsIgnoreCase(pathPrefix) || 'vf'.equalsIgnoreCase(pathPrefix)
     }
 }
