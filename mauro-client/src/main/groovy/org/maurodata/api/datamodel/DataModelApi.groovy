@@ -1,20 +1,8 @@
 package org.maurodata.api.datamodel
 
-import io.micronaut.context.annotation.Parameter
-import io.micronaut.core.annotation.NonNull
-import io.micronaut.core.annotation.Nullable
-import io.micronaut.http.HttpResponse
-import io.micronaut.http.MediaType
-import io.micronaut.http.annotation.Body
-import io.micronaut.http.annotation.Delete
-import io.micronaut.http.annotation.Get
-import io.micronaut.http.annotation.Post
-import io.micronaut.http.annotation.Produces
-import io.micronaut.http.annotation.Put
+import org.maurodata.api.model.MergeIntoDTO
+
 import io.micronaut.http.annotation.QueryValue
-import io.micronaut.http.client.multipart.MultipartBody
-import io.micronaut.scheduling.TaskExecutors
-import io.micronaut.scheduling.annotation.ExecuteOn
 import org.maurodata.api.MauroApi
 import org.maurodata.api.Paths
 import org.maurodata.api.model.MergeDiffDTO
@@ -33,8 +21,24 @@ import org.maurodata.domain.model.version.FinaliseData
 import org.maurodata.domain.search.dto.SearchRequestDTO
 import org.maurodata.domain.search.dto.SearchResultsDTO
 import org.maurodata.plugin.datatype.DefaultDataTypeProviderPlugin
+import org.maurodata.plugin.exporter.DataModelExporterPlugin
 import org.maurodata.plugin.importer.DataModelImporterPlugin
 import org.maurodata.web.ListResponse
+
+import io.micronaut.context.annotation.Parameter
+import io.micronaut.core.annotation.NonNull
+import io.micronaut.core.annotation.Nullable
+import io.micronaut.http.HttpResponse
+import io.micronaut.http.MediaType
+import io.micronaut.http.annotation.Body
+import io.micronaut.http.annotation.Delete
+import io.micronaut.http.annotation.Get
+import io.micronaut.http.annotation.Post
+import io.micronaut.http.annotation.Produces
+import io.micronaut.http.annotation.Put
+import io.micronaut.http.client.multipart.MultipartBody
+import io.micronaut.scheduling.TaskExecutors
+import io.micronaut.scheduling.annotation.ExecuteOn
 
 @MauroApi
 interface DataModelApi extends ModelApi<DataModel> {
@@ -86,8 +90,11 @@ interface DataModelApi extends ModelApi<DataModel> {
     @Get(Paths.DATA_MODEL_DIFF)
     ObjectDiff diffModels(@NonNull UUID id, @NonNull UUID otherId)
 
-    @Get(Paths.DATA_MODEL_EXPORTERS)
+    @Get(Paths.DATA_MODEL_IMPORTERS)
     List<DataModelImporterPlugin> dataModelImporters()
+
+    @Get(Paths.DATA_MODEL_EXPORTERS)
+    List<DataModelExporterPlugin> dataModelExporters()
 
     @Put(Paths.DATA_MODEL_SUBSET)
     DataModel subset(UUID id, UUID otherId, @Body SubsetData subsetData)
@@ -118,6 +125,9 @@ interface DataModelApi extends ModelApi<DataModel> {
 
     @Get(Paths.DATA_MODEL_MERGE_DIFF)
     MergeDiffDTO mergeDiff(@NonNull UUID id, @NonNull UUID otherId)
+
+    @Put(Paths.DATA_MODEL_MERGE_INTO)
+    DataModel mergeInto(@NonNull UUID id, @NonNull UUID otherId, @Body @Nullable MergeIntoDTO mergeIntoDTO)
 
     @Get(Paths.DATA_MODEL_DOI)
     Map doi(UUID id)

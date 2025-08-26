@@ -160,17 +160,8 @@ class TerminologyController extends ModelController<Terminology> implements Term
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Post(Paths.TERMINOLOGY_IMPORT)
     ListResponse<Terminology> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version) {
-        List<Terminology> imported = super.importModelList(body, namespace, name, version)
+        super.importModel(body, namespace, name, version)
 
-        List<Terminology> saved = imported.collect {imp ->
-            log.info '** about to saveWithContentBatched... Terminology import**'
-            modelContentRepository.saveWithContent(imp as Terminology)
-        }
-        log.info '** finished saveWithContentBatched **'
-
-        ListResponse.from(saved.collect {model ->
-            show(model.id)
-        })
     }
 
     /*
@@ -214,6 +205,13 @@ class TerminologyController extends ModelController<Terminology> implements Term
 
         terminology.setAssociations()
         other.setAssociations()
+
+        pathRepository.readParentItems(terminology)
+        terminology.updatePath()
+
+        pathRepository.readParentItems(other)
+        other.updatePath()
+
         terminology.diff(other)
     }
 
@@ -290,5 +288,4 @@ class TerminologyController extends ModelController<Terminology> implements Term
 
         return simpleModelVersionTreeList
     }
-
 }

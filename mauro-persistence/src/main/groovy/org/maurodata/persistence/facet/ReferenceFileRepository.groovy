@@ -18,4 +18,7 @@ abstract class ReferenceFileRepository implements ItemRepository<ReferenceFile> 
     Class getDomainClass() {
         ReferenceFile
     }
+    Boolean handlesPathPrefix(final String pathPrefix) {
+        'rf'.equalsIgnoreCase(pathPrefix)
+    }
 }

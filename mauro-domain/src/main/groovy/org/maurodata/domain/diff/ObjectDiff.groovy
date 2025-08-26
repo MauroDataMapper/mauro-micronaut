@@ -1,5 +1,7 @@
 package org.maurodata.domain.diff
 
+import org.maurodata.domain.model.Path
+
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import groovy.transform.CompileStatic
@@ -48,6 +50,7 @@ class ObjectDiff<T extends DiffableItem> {
         this.rightId = rightId
         this
     }
+
     ObjectDiff<T> leftHandSide(String leftId, T lhs) {
         this.leftId = leftId
         this.left = lhs
@@ -60,10 +63,11 @@ class ObjectDiff<T extends DiffableItem> {
         this
     }
 
-    ObjectDiff<T> appendString(final String fieldName, final String lhs, final String rhs, final DiffableItem lhsDiffableItem, final DiffableItem rhsDiffableItem) throws MauroInternalException {
+    ObjectDiff<T> appendString(final String fieldName, final String lhs, final String rhs, final DiffableItem lhsDiffableItem, final DiffableItem rhsDiffableItem)
+        throws MauroInternalException {
         String lhsString = DiffBuilder.isNullOrEmpty(lhs) ? null : DiffBuilder.clean(lhs)
         String rhsString = DiffBuilder.isNullOrEmpty(rhs) ? null : DiffBuilder.clean(rhs)
-        appendField( fieldName, lhsString, rhsString, lhsDiffableItem, rhsDiffableItem)
+        appendField(fieldName, lhsString, rhsString, lhsDiffableItem, rhsDiffableItem)
         this
     }
 
@@ -74,16 +78,17 @@ class ObjectDiff<T extends DiffableItem> {
         this
     }
 
-    def <K extends DiffableItem> ObjectDiff appendCollection(String name, Collection<DiffableItem> lhs, Collection<DiffableItem> rhs) {
+    def <K extends DiffableItem> ObjectDiff appendCollection(String name, Collection<DiffableItem> lhs, Collection<DiffableItem> rhs, final String lhsPathRoot,
+                                                             final String rhsPathRoot) {
         ArrayDiff diff = DiffBuilder.arrayDiff() as ArrayDiff
         diff.name = name
         if (!lhs) {
-            return append(diff.createdObjects(rhs.unique() as Collection<K>))
+            return append(diff.createdObjects(rhs as Collection<K>))
         }
 
         // If no rhs then all lhs have been deleted/removed
         if (!rhs) {
-            return append(diff.deletedObjects(lhs.unique() as Collection<K>))
+            return append(diff.deletedObjects(lhs as Collection<K>))
         }
 
         Collection<K> deleted = []
@@ -91,18 +96,19 @@ class ObjectDiff<T extends DiffableItem> {
         // Assume all rhs have been created new
         List<K> created = new ArrayList<>(rhs as Collection<? extends K>)
 
-        Map<String, K> lhsMap = lhs.collectEntries { [it.getDiffIdentifier(), it] }
-        Map<String, K> rhsMap = rhs.collectEntries { [it.getDiffIdentifier(), it] }
+        Map<String, K> lhsMap = lhs.collectEntries {[Path.branchAgnostic(it.getDiffIdentifier(), lhsPathRoot), it]}
+        Map<String, K> rhsMap = rhs.collectEntries {[Path.branchAgnostic(it.getDiffIdentifier(), rhsPathRoot), it]}
+
         //toDo versionedDiff, childPaths when versionedDiff
 
-        lhsMap.each { di, lObj ->
+        lhsMap.forEach {String di, K lObj ->
             K rObj = rhsMap[di]
             if (rObj) {
                 // If robj then it exists and has not been created
                 created.remove(rObj)
                 // If we want to perform a diff on the actual elements themselves
 
-                ObjectDiff od = lObj.diff(rObj)
+                ObjectDiff od = lObj.diff(rObj, lhsPathRoot, rhsPathRoot)
                 // If not equal then objects have been modified
                 if (!od.objectsAreIdentical()) {
                     od.setLeft(null)
@@ -118,8 +124,8 @@ class ObjectDiff<T extends DiffableItem> {
 
         if (created || deleted || modified) {
             append(diff.createdObjects(created as Collection)
-                    .deletedObjects(deleted as Collection)
-                    .modifiedObjects(modified as Collection) as ArrayDiff)
+                       .deletedObjects(deleted as Collection)
+                       .modifiedObjects(modified as Collection) as ArrayDiff)
         }
 
         this
@@ -134,16 +140,16 @@ class ObjectDiff<T extends DiffableItem> {
 
     @JsonProperty('count')
     Integer getNumberOfDiffs() {
-        diffs?.sum { it.getNumberOfDiffs() } as Integer ?: 0
+        diffs?.sum {it.getNumberOfDiffs()} as Integer ?: 0
     }
 
     private boolean objectsAreIdentical() {
         !getNumberOfDiffs()
     }
 
-    String toString()
-    {
-        return "ObjectDiff: class: "+targetClass.getCanonicalName()+" label"+label+" leftId: "+leftId+" rightId: "+rightId+" diffs: "+diffs
+    String toString() {
+        return "<ObjectDiff>  class: " + targetClass?.getCanonicalName() + "\n label:" + label + "\n leftId: " + leftId + "\n rightId: " + rightId + "\n diffs: " + diffs +
+               " </ObjectDiff>"
     }
 
 }

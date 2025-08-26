@@ -1,5 +1,7 @@
 package org.maurodata.persistence.dataflow
 
+import org.maurodata.persistence.dataflow.dto.DataClassComponentDTO
+
 import groovy.transform.CompileStatic
 import groovy.transform.MapConstructor
 import io.micronaut.core.annotation.NonNull
@@ -26,6 +28,11 @@ abstract class DataClassComponentRepository implements ModelItemRepository<DataC
     @Nullable
     DataClassComponent findById(UUID id) {
         dataClassComponentDTORepository.findById(id) as DataClassComponent
+    }
+
+    @Nullable
+    List<DataClassComponentDTO> findAllByParentAndPathIdentifier(UUID item, String pathIdentifier) {
+        dataClassComponentDTORepository.findAllByParentAndPathIdentifier(item,pathIdentifier)
     }
 
     @Nullable
@@ -108,5 +115,9 @@ abstract class DataClassComponentRepository implements ModelItemRepository<DataC
     @Query(''' delete from dataflow.data_class_component_target_data_class t where t.data_class_component_id = :id ''')
     @Nullable
     abstract Long removeTargetDataClasses(@NonNull UUID id)
+
+    Boolean handlesPathPrefix(final String pathPrefix) {
+        'dsc'.equalsIgnoreCase(pathPrefix)
+    }
 }
 

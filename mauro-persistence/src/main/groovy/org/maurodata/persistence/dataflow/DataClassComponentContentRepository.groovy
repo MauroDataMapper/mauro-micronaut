@@ -65,4 +65,9 @@ class DataClassComponentContentRepository extends AdministeredItemContentReposit
         saveAllFacets(saved)
         saved
     }
+
+    @Override
+    Boolean handles(Class clazz) {
+        return clazz.simpleName == 'DataClassComponent'
+    }
 }

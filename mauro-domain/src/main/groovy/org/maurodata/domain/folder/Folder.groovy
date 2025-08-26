@@ -104,13 +104,13 @@ class Folder extends Model {
     String author
 
     // TODO: write a test for branch name
-    @Nullable
-    String branchName = 'main'
+
+    @Override
     String getBranchName()
     {
         if(this.class_!=null && "VersionedFolder" == this.class_)
         {
-            return branchName
+            return super.branchName
         }
         else
         {
@@ -187,6 +187,7 @@ class Folder extends Model {
     @Override
     @Transient
     @JsonIgnore
+    @Nullable
     String getPathModelIdentifier() {
         if(!isVersionable())
         {
@@ -194,6 +195,13 @@ class Folder extends Model {
         }
         // I'm a model, you know what I mean
         return super.getPathModelIdentifier()
+    }
+
+    @Transient
+    @JsonIgnore
+    String getDiffIdentifier() {
+        if (parentFolder != null) {return "${parentFolder.getDiffIdentifier()}|${getPathNodeString()}"}
+        return "${getPathNodeString()}"
     }
 
     @Override
@@ -267,4 +275,20 @@ class Folder extends Model {
             @DelegatesTo(value = Folder, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
         build [:], closure
     }
+
+    Folder folder(Folder folder) {
+        this.childFolders.add(folder)
+        folder.parent = this
+        folder
+    }
+
+    Folder folder(Map args, @DelegatesTo(value = Folder, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+        Folder folder1 = build(args + [parent: this], closure)
+        folder folder1
+    }
+
+    Folder folder(@DelegatesTo(value = Folder, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+        folder [:], closure
+    }
+
 }

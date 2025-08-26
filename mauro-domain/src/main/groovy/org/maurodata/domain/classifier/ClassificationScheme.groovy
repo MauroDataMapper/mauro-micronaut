@@ -1,5 +1,6 @@
 package org.maurodata.domain.classifier
 
+
 import com.fasterxml.jackson.annotation.JsonIgnore
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
@@ -70,7 +71,7 @@ class ClassificationScheme extends Model {
     void setAssociations() {
         classifiers.each { classifier ->
             classifier.classificationScheme = this
-            classifier.childClassifiers.each {childClassifier ->
+            classifier.childClassifiers.each { childClassifier ->
                 childClassifier.parentClassifier = classifier
                 childClassifier.classificationScheme = this
                 childClassifier.parent = childClassifier.parentClassifier
@@ -80,6 +81,15 @@ class ClassificationScheme extends Model {
         }
     }
 
+    @Override
+    @JsonIgnore
+    @Transient
+    String getDiffIdentifier() {
+        if(folder!=null) {
+            return "${folder.getDiffIdentifier()}|${getPathNodeString()}"
+        }
+        return "${getPathNodeString()}"
+    }
     /**
      * DSL builder
      * @param args

@@ -1,5 +1,9 @@
 package org.maurodata.domain.datamodel
 
+import org.maurodata.domain.model.ItemReference
+import org.maurodata.domain.model.ItemReferencer
+import org.maurodata.domain.model.Path
+
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import groovy.transform.AutoClone
@@ -41,7 +45,7 @@ import org.maurodata.domain.model.ModelItem
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @MappedEntity(schema = 'datamodel', value = 'data_type')
 @MapConstructor(includeSuperFields = true, includeSuperProperties = true, noArg = true)
-class DataType extends ModelItem<DataModel> implements DiffableItem<DataType> {
+class DataType extends ModelItem<DataModel> implements DiffableItem<DataType>, ItemReferencer {
 
     enum DataTypeKind {
         PRIMITIVE_TYPE('PrimitiveType'),
@@ -151,20 +155,21 @@ class DataType extends ModelItem<DataModel> implements DiffableItem<DataType> {
     @JsonIgnore
     @Transient
     CollectionDiff fromItem() {
-        new BaseCollectionDiff(id, label)
+        new BaseCollectionDiff(id, getDiffIdentifier(), label)
     }
 
     @Override
     @JsonIgnore
     @Transient
     String getDiffIdentifier() {
-        label
+        if (dataModel != null) {return "${dataModel.getDiffIdentifier()}|${getPathNodeString()}"}
+        return "${getPathNodeString()}"
     }
 
     @Override
     @JsonIgnore
     @Transient
-    ObjectDiff<DataType> diff(DataType other) {
+    ObjectDiff<DataType> diff(DataType other, String lhsPathRoot, String rhsPathRoot) {
         ObjectDiff<DataType> base = DiffBuilder.objectDiff(DataType)
                 .leftHandSide(id?.toString(), this)
                 .rightHandSide(other.id?.toString(), other)
@@ -220,5 +225,31 @@ class DataType extends ModelItem<DataModel> implements DiffableItem<DataType> {
         enumerationValue [:], closure
     }
 
+    @Transient
+    @JsonIgnore
+    @Override
+    List<ItemReference> getItemReferences() {
+        List<ItemReference> pathsBeingReferenced = []
+        if (referenceClass != null) {
+            pathsBeingReferenced << ItemReference.from(referenceClass)
+        }
+        if (modelResourceId != null) {
+            pathsBeingReferenced << ItemReference.from(modelResourceId,modelResourceDomainType)
+        }
+        return pathsBeingReferenced
+    }
 
+    @Override
+    void replaceItemReferences(Map<UUID, ItemReference> replacements) {
+        if (referenceClass != null) {
+            ItemReference replacementItemReference = replacements.get(referenceClass.id)
+            if (replacementItemReference != null) {referenceClass = (DataClass) replacementItemReference.theItem}
+        }
+        if (modelResourceId != null) {
+            ItemReference replacementItemReference = replacements.get(modelResourceId)
+            if (replacementItemReference != null) {
+                modelResourceId = replacementItemReference.itemId
+            }
+        }
+    }
 }

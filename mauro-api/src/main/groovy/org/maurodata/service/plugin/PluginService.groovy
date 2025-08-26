@@ -4,6 +4,7 @@ import org.maurodata.plugin.MauroPlugin
 
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.exceptions.HttpStatusException
+import org.maurodata.plugin.importer.ModelItemImporterPlugin
 
 class PluginService {
     static void handlePluginNotFound(MauroPlugin mauroPlugin, String namespace, String name) {

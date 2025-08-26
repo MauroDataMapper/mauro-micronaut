@@ -25,4 +25,8 @@ abstract class SubscribedCatalogueRepository implements ItemRepository<Subscribe
         SubscribedCatalogue
     }
 
+    // Not currently pathable
+    Boolean handlesPathPrefix(final String pathPrefix) {
+        false
+    }
 }

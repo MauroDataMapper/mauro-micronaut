@@ -20,7 +20,7 @@ import org.maurodata.domain.security.CatalogueUser
 import org.maurodata.persistence.security.EmailRepository
 import org.maurodata.plugin.MauroPluginService
 import org.maurodata.plugin.exporter.ImportExportModelExporterPlugin
-import org.maurodata.plugin.importer.ImportExportModelImporterPlugin
+import org.maurodata.plugin.importer.ImporterPlugin
 import org.maurodata.security.AccessControlService
 import org.maurodata.plugin.EmailPlugin
 import org.maurodata.service.email.EmailService
@@ -47,7 +47,7 @@ class AdminController implements AdminApi {
     }
 
     @Audit
-    @Get(Paths. ADMIN_MODULES_LIST)
+    @Get(Paths.ADMIN_MODULES_LIST)
     List<LinkedHashMap<String, String>> modules() {
         accessControlService.checkAdministrator()
 
@@ -60,7 +60,7 @@ class AdminController implements AdminApi {
     List<MauroPluginDTO> importers() {
         accessControlService.checkAdministrator()
 
-        mauroPluginService.listPluginsAsDTO(ImportExportModelImporterPlugin)
+        mauroPluginService.listPluginsAsDTO(ImporterPlugin)
     }
 
     @Audit

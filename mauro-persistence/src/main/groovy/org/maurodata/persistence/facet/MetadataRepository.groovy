@@ -27,5 +27,7 @@ abstract class MetadataRepository implements ItemRepository<Metadata> {
             [key, values.collect {it.key} as Set]
         }
     }
-
+    Boolean handlesPathPrefix(final String pathPrefix) {
+        'md'.equalsIgnoreCase(pathPrefix)
+    }
 }

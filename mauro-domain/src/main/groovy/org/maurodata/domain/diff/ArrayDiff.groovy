@@ -49,6 +49,39 @@ class ArrayDiff<K> extends FieldDiff<Collection<K>> {
     Integer getNumberOfDiffs() {
         created.size() + deleted.size() + ((modified.sum {it.getNumberOfDiffs() } ?: 0) as Integer)
     }
+
+    @Override
+    String toString(){
+        String description="\n<ArrayDiff> <super>"+super.toString()+"</super> ";
+
+        if (created.size() > 0) {
+            description += "<created> "
+            created.forEach {
+                description += it.getClass().simpleName+":"+it.toString() + ", "
+            }
+            description += " </created>"
+        }
+
+        if (deleted.size() > 0) {
+            description += "<deleted> "
+            deleted.forEach {
+                description += it.toString() + ", "
+            }
+            description += " </deleted>"
+        }
+
+        if (modified.size() > 0) {
+            description += "<modified> "
+            modified.forEach {
+                description += it.toString() + ", "
+            }
+            description += " </modified>"
+        }
+
+        description+="</ArrayDiff>"
+
+        return description
+    }
 }
 
 

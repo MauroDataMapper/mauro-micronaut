@@ -32,6 +32,11 @@ abstract class DataElementRepository implements  ModelItemRepository<DataElement
     }
 
     @Nullable
+    List<DataElement> findAllByParentAndPathIdentifier(UUID item,String pathIdentifier) {
+        dataElementDTORepository.findAllByParentAndPathIdentifier(item,pathIdentifier)
+    }
+
+    @Nullable
     List<DataElement> findAllByDataClass(DataClass dataClass) {
         dataElementDTORepository.findAllByDataClass(dataClass) as List<DataElement>
     }
@@ -81,5 +86,9 @@ abstract class DataElementRepository implements  ModelItemRepository<DataElement
     }
 
     abstract List<DataElement> readAllByDataClassId(UUID dataClassId)
+
+    Boolean handlesPathPrefix(final String pathPrefix) {
+        'de'.equalsIgnoreCase(pathPrefix)
+    }
 
 }

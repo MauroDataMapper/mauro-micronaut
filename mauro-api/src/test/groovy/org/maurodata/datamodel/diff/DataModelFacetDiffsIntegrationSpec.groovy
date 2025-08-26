@@ -63,8 +63,8 @@ class DataModelFacetDiffsIntegrationSpec extends CommonDataSpec {
         then:
         objectDiff
         objectDiff.label == left.label
-        objectDiff.diffs.size() == 6
-        objectDiff.diffs.each { [AUTHOR, DiffBuilder.DESCRIPTION, DiffBuilder.LABEL, PATH_IDENTIFIER].contains(it.name) }
+        objectDiff.diffs.size() == 5
+        objectDiff.diffs.every { [AUTHOR, DiffBuilder.DESCRIPTION, DiffBuilder.LABEL, DiffBuilder.ANNOTATION, DiffBuilder.METADATA].contains(it.name) }
         ArrayDiff<Collection> annotationsDiff = objectDiff.diffs.find { it -> it.name == DiffBuilder.ANNOTATION } as ArrayDiff<Collection>
         annotationsDiff.name == DiffBuilder.ANNOTATION
         annotationsDiff.deleted.size() == 1
@@ -106,10 +106,10 @@ class DataModelFacetDiffsIntegrationSpec extends CommonDataSpec {
         then:
         objectDiff
         objectDiff.label == left.label
-        objectDiff.diffs.size() == 10
-        objectDiff.diffs.each {
+        objectDiff.diffs.size() == 9
+        objectDiff.diffs.every {
             [AUTHOR, DiffBuilder.DESCRIPTION, DiffBuilder.LABEL,
-             PATH_IDENTIFIER, PATH_MODEL_IDENTIFIER, MODEL_VERSION_TAG, FINALISED, DATE_FINALISED].contains(it.name)
+             PATH_MODEL_IDENTIFIER, MODEL_VERSION_TAG, FINALISED, DATE_FINALISED, DiffBuilder.ANNOTATION, DiffBuilder.METADATA].contains(it.name)
         }
         ArrayDiff<Collection> annotationsDiff = objectDiff.diffs.find { it -> it.name == DiffBuilder.ANNOTATION } as ArrayDiff<Collection>
         annotationsDiff.created.size() == 1
@@ -222,7 +222,7 @@ class DataModelFacetDiffsIntegrationSpec extends CommonDataSpec {
         reportDiffs.deleted[0].get(DiffBuilder.REPORT_VALUE) == leftReport.reportValue
     }
 
-    void 'test datamodel - self does not have summaryMetadata -should show added/deleted '() {
+    void 'test datamodel - self does not have summaryMetadata -should show modified reportValue '() {
         given:
         DataModel right = dataModelApi.create(folderId, dataModelPayload())
 
@@ -244,18 +244,11 @@ class DataModelFacetDiffsIntegrationSpec extends CommonDataSpec {
         ArrayDiff<Collection> summaryMetadataDiff = objectDiff.diffs.find {it.name == DiffBuilder.SUMMARY_METADATA} as ArrayDiff<Collection>
 
         summaryMetadataDiff
-        summaryMetadataDiff.created.size() == 1
-        summaryMetadataDiff.deleted.size() == 1
-        summaryMetadataDiff.modified.isEmpty()
+        summaryMetadataDiff.modified.size() == 1
+        summaryMetadataDiff.created.size() == 0
+        summaryMetadataDiff.deleted.size() == 0
 
-        summaryMetadataDiff.created[0].get(DiffBuilder.SUMMARY_METADATA_REPORT).flatten().find {
-            it.reportDate == rightReport.reportDate
-            it.reportValue == rightReport.reportValue
-        }
-
-        summaryMetadataDiff.deleted[0].get(DiffBuilder.SUMMARY_METADATA_REPORT).flatten().find {
-            it.reportDate == leftReport.reportDate
-            it.reportValue == leftReport.reportValue
-        }
+        summaryMetadataDiff.modified[0].diffs[0].modified[0].diffs[0].left==leftReport.reportValue
+        summaryMetadataDiff.modified[0].diffs[0].modified[0].diffs[0].right==rightReport.reportValue
     }
 }

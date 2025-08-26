@@ -1,5 +1,8 @@
 package org.maurodata.domain.datamodel
 
+import org.maurodata.domain.model.ItemReference
+import org.maurodata.domain.model.ItemReferencer
+
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import groovy.transform.AutoClone
@@ -41,7 +44,7 @@ import org.maurodata.domain.model.ModelItem
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @MappedEntity(schema = 'datamodel', value = 'data_element')
 @MapConstructor(includeSuperFields = true, includeSuperProperties = true, noArg = true)
-class DataElement extends ModelItem<DataClass> implements DiffableItem<DataElement> {
+class DataElement extends ModelItem<DataClass> implements DiffableItem<DataElement>, ItemReferencer {
 
     @Nullable
     Integer minMultiplicity
@@ -93,6 +96,7 @@ class DataElement extends ModelItem<DataClass> implements DiffableItem<DataEleme
     @JsonIgnore
     void setParent(AdministeredItem dataClass) {
         this.dataClass = (DataClass) dataClass
+        this.dataModel = ((DataClass) dataClass).dataModel
     }
 
     @Override
@@ -106,23 +110,24 @@ class DataElement extends ModelItem<DataClass> implements DiffableItem<DataEleme
     @Transient
     @JsonIgnore
     CollectionDiff fromItem() {
-        new BaseCollectionDiff(id, label)
+        new BaseCollectionDiff(id, getDiffIdentifier(), label)
     }
 
     @Override
     @Transient
     @JsonIgnore
     String getDiffIdentifier() {
-        "${dataClass?.getDiffIdentifier()}/$this.pathIdentifier}"
+        if (dataClass != null) {return "${dataClass?.getDiffIdentifier()}|${getPathNodeString()}"}
+        return getPathNodeString()
     }
 
     @Override
     @Transient
     @JsonIgnore
-    ObjectDiff<DataElement> diff(DataElement other) {
+    ObjectDiff<DataElement> diff(DataElement other, String lhsPathRoot, String rhsPathRoot) {
         ObjectDiff<DataElement> base = DiffBuilder.objectDiff(DataElement)
-                .leftHandSide(id?.toString(), this)
-                .rightHandSide(other.id?.toString(), other)
+            .leftHandSide(id?.toString(), this)
+            .rightHandSide(other.id?.toString(), other)
         base.label = this.label
         base.appendString(DiffBuilder.DESCRIPTION, this.description, other.description, this, other)
         base.appendString(DiffBuilder.ALIASES_STRING, this.aliasesString, other.aliasesString, this, other)
@@ -138,11 +143,11 @@ class DataElement extends ModelItem<DataClass> implements DiffableItem<DataEleme
 
     static DataElement build(
         Map args,
-        @DelegatesTo(value = DataElement, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
+        @DelegatesTo(value = DataElement, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
         new DataElement(args).tap(closure)
     }
 
-    static DataElement build(@DelegatesTo(value = DataElement, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
+    static DataElement build(@DelegatesTo(value = DataElement, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
         build [:], closure
     }
 
@@ -167,7 +172,7 @@ class DataElement extends ModelItem<DataClass> implements DiffableItem<DataEleme
         primitiveType
     }
 
-    DataType primitiveType(Map args, @DelegatesTo(value = DataType, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
+    DataType primitiveType(Map args, @DelegatesTo(value = DataType, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
         DataType dt = DataType.build(args, closure)
         this.dataType = dt
         this.dataModel.dataTypes.add(dt)
@@ -176,7 +181,7 @@ class DataElement extends ModelItem<DataClass> implements DiffableItem<DataEleme
         dt
     }
 
-    DataType primitiveType(@DelegatesTo(value = DataType, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
+    DataType primitiveType(@DelegatesTo(value = DataType, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
         primitiveType [:], closure
     }
 
@@ -186,16 +191,16 @@ class DataElement extends ModelItem<DataClass> implements DiffableItem<DataEleme
         enumerationType
     }
 
-    DataType enumerationType(Map args, @DelegatesTo(value = DataType, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
+    DataType enumerationType(Map args, @DelegatesTo(value = DataType, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
         DataType dt = DataType.build(args + [dataModel: this.dataModel, dataTypeKind: DataType.DataTypeKind.ENUMERATION_TYPE], closure)
         enumerationType(dt)
     }
 
-    DataType enumerationType(@DelegatesTo(value = DataType, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
+    DataType enumerationType(@DelegatesTo(value = DataType, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
         enumerationType [:], closure
     }
 
-    DataType dataType(Map args, @DelegatesTo(value = DataType, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
+    DataType dataType(Map args, @DelegatesTo(value = DataType, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
         DataType dataType = DataType.build(args + [dataModel: this.dataModel], closure)
         this.dataType = dataType
         this.dataModel.dataTypes.add(dataType)
@@ -203,8 +208,7 @@ class DataElement extends ModelItem<DataClass> implements DiffableItem<DataEleme
     }
 
 
-
-    DataType dataType(@DelegatesTo(value = DataElement, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
+    DataType dataType(@DelegatesTo(value = DataElement, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
         dataType [:], closure
     }
 
@@ -216,5 +220,24 @@ class DataElement extends ModelItem<DataClass> implements DiffableItem<DataEleme
     Integer minMultiplicity(Integer minMultiplicity) {
         this.minMultiplicity = minMultiplicity
         this.minMultiplicity
+    }
+
+    @Transient
+    @JsonIgnore
+    @Override
+    List<ItemReference> getItemReferences() {
+        List<ItemReference> pathsBeingReferenced = []
+        if (dataType != null) {
+            pathsBeingReferenced << ItemReference.from(dataType)
+        }
+        return pathsBeingReferenced
+    }
+
+    @Override
+    void replaceItemReferences(Map<UUID, ItemReference> replacements) {
+        if (dataType != null) {
+            ItemReference replacementItemReference = replacements.get(dataType.id)
+            if (replacementItemReference != null) {dataType = (DataType) replacementItemReference.theItem}
+        }
     }
 }

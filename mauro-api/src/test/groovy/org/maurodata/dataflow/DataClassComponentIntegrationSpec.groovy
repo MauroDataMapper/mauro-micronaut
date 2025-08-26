@@ -103,14 +103,8 @@ class DataClassComponentIntegrationSpec extends CommonDataSpec {
 
         then:
         dcc
-
-        when:
-        DataClassComponent dataClassComponent = dataClassComponentApi.show(sourceId, dataFlowId, dataClassComponentId)
-        then:
-        dataClassComponent
-        dataClassComponent.sourceDataClasses
-        dataClassComponent.sourceDataClasses.size() == 1
-        dataClassComponent.sourceDataClasses[0].id == dataClassSourceId
+        dcc.sourceDataClasses.size() == 1
+        dcc.sourceDataClasses[0].id == dataClassSourceId
     }
 
     void 'should delete dataClass from DataClassComponent'() {

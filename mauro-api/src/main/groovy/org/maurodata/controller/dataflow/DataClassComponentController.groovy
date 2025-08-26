@@ -1,22 +1,5 @@
 package org.maurodata.controller.dataflow
 
-import org.maurodata.ErrorHandler
-import org.maurodata.api.Paths
-import org.maurodata.api.dataflow.DataClassComponentApi
-import org.maurodata.audit.Audit
-import org.maurodata.controller.model.AdministeredItemController
-import org.maurodata.domain.dataflow.DataClassComponent
-import org.maurodata.domain.dataflow.DataFlow
-import org.maurodata.domain.dataflow.Type
-import org.maurodata.domain.datamodel.DataClass
-import org.maurodata.domain.security.Role
-import org.maurodata.persistence.cache.AdministeredItemCacheableRepository
-import org.maurodata.persistence.dataflow.DataClassComponentContentRepository
-import org.maurodata.persistence.dataflow.DataFlowRepository
-import org.maurodata.web.ListResponse
-
-import org.maurodata.web.PaginationParams
-
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
@@ -32,27 +15,39 @@ import io.micronaut.http.annotation.Put
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
 import jakarta.inject.Inject
+import org.maurodata.ErrorHandler
+import org.maurodata.api.Paths
+import org.maurodata.api.dataflow.DataClassComponentApi
+import org.maurodata.audit.Audit
+import org.maurodata.controller.model.AdministeredItemController
+import org.maurodata.domain.dataflow.DataClassComponent
+import org.maurodata.domain.dataflow.DataFlow
+import org.maurodata.domain.dataflow.Type
+import org.maurodata.domain.datamodel.DataClass
+import org.maurodata.domain.security.Role
+import org.maurodata.persistence.cache.AdministeredItemCacheableRepository
+import org.maurodata.persistence.dataflow.DataClassComponentContentRepository
+import org.maurodata.web.ListResponse
+import org.maurodata.web.PaginationParams
 
 @CompileStatic
 @Controller()
 @Slf4j
 @Secured(SecurityRule.IS_AUTHENTICATED)
 class DataClassComponentController extends AdministeredItemController<DataClassComponent, DataFlow> implements DataClassComponentApi {
-
-
+  @Inject
     AdministeredItemCacheableRepository.DataClassCacheableRepository dataClassRepository
 
     AdministeredItemCacheableRepository.DataClassComponentCacheableRepository dataClassComponentRepository
 
     DataClassComponentContentRepository dataClassComponentContentRepository
 
-    DataFlowRepository dataFlowRepository
+    AdministeredItemCacheableRepository.DataFlowCacheableRepository dataFlowRepository
 
     @Inject
     DataClassComponentController(AdministeredItemCacheableRepository.DataClassComponentCacheableRepository dataClassComponentRepository,
-                                 DataFlowRepository dataFlowRepository,
-                                 DataClassComponentContentRepository dataClassComponentContentRepository,
-                                 AdministeredItemCacheableRepository.DataClassCacheableRepository dataClassRepository) {
+                                 AdministeredItemCacheableRepository.DataFlowCacheableRepository dataFlowRepository,
+                                 DataClassComponentContentRepository dataClassComponentContentRepository) {
         super(DataClassComponent, dataClassComponentRepository, dataFlowRepository, dataClassComponentContentRepository)
         this.dataClassComponentRepository = dataClassComponentRepository
         this.dataClassComponentContentRepository = dataClassComponentContentRepository

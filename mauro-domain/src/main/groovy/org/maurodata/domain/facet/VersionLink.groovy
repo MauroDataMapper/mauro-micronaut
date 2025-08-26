@@ -1,5 +1,8 @@
 package org.maurodata.domain.facet
 
+import org.maurodata.domain.model.ItemReference
+import org.maurodata.domain.model.ItemReferencer
+
 import com.fasterxml.jackson.annotation.JsonAlias
 import com.fasterxml.jackson.annotation.JsonIgnore
 import groovy.transform.AutoClone
@@ -15,7 +18,7 @@ import org.maurodata.domain.security.CatalogueUser
 @AutoClone
 @Indexes([@Index(columns = ['multi_facet_aware_item_id'])])
 @MapConstructor(includeSuperFields = true, includeSuperProperties = true, noArg = true)
-class VersionLink extends Facet  {
+class VersionLink extends Facet implements ItemReferencer {
 
     final static String NEW_FORK_OF="NEW_FORK_OF", NEW_MODEL_VERSION_OF="NEW_MODEL_VERSION_OF"
     final static Map<String,String> descriptions=[:]
@@ -71,5 +74,40 @@ class VersionLink extends Facet  {
         this.targetModelId = targetModel.id
         this.targetModelDomainType=targetModel.domainType
         targetModel
+    }
+
+    @Transient
+    @JsonIgnore
+    @Override
+    String getPathPrefix() {
+        'vl'
+    }
+
+    @Transient
+    @JsonIgnore
+    @Override
+    String getPathIdentifier() {
+        "${versionLinkType}.${targetModelDomainType}.${targetModelId}"
+    }
+
+    @Transient
+    @JsonIgnore
+    @Override
+    List<ItemReference> getItemReferences() {
+        List<ItemReference> pathsBeingReferenced = []
+        if (targetModelId != null) {
+            pathsBeingReferenced << ItemReference.from(targetModelId,targetModelDomainType)
+        }
+        return pathsBeingReferenced
+    }
+
+    @Override
+    void replaceItemReferences(Map<UUID, ItemReference> replacements) {
+        if (targetModelId != null) {
+            ItemReference replacementItemReference = replacements.get(targetModelId)
+            if (replacementItemReference != null) {
+                targetModelId = replacementItemReference.itemId
+            }
+        }
     }
 }

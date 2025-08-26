@@ -33,4 +33,9 @@ abstract class SubscribedModelRepository implements ItemRepository<SubscribedMod
     Class getDomainClass() {
         SubscribedModel
     }
+
+    // Not currently pathable
+    Boolean handlesPathPrefix(final String pathPrefix) {
+        false
+    }
 }

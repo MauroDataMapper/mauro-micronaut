@@ -57,4 +57,9 @@ class DataFlowContentRepository extends AdministeredItemContentRepository {
         }
         super.administeredItemRepository.delete(dataFlow)
     }
+
+    @Override
+    Boolean handles(Class clazz) {
+        return clazz.simpleName == 'DataFlow'
+    }
 }

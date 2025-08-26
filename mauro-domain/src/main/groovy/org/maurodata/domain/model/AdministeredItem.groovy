@@ -3,6 +3,7 @@ package org.maurodata.domain.model
 import org.maurodata.domain.classifier.Classifier
 import org.maurodata.domain.facet.Annotation
 import org.maurodata.domain.facet.Edit
+import org.maurodata.domain.facet.Facet
 import org.maurodata.domain.facet.Metadata
 import org.maurodata.domain.facet.ReferenceFile
 import org.maurodata.domain.facet.Rule
@@ -35,7 +36,7 @@ import java.time.Instant
 
 @CompileStatic
 @AutoClone
-abstract class AdministeredItem extends Item {
+abstract class AdministeredItem extends Item implements Pathable {
 
     /**
      * The label of an object.  Labels are used as identifiers within a context and so need to be unique within
@@ -168,8 +169,26 @@ abstract class AdministeredItem extends Item {
      */
     @Transient
     @JsonIgnore
+    @Override
+    @Nullable
     String getPathModelIdentifier() {
-        null
+        return null
+    }
+
+    /**
+     * Get this item's PathNode String
+     */
+    @Transient
+    @JsonIgnore
+    String getPathNodeString() {
+        (new Path.PathNode(prefix: this.pathPrefix, identifier: this.pathIdentifier, modelIdentifier: this.pathModelIdentifier)).toString()
+    }
+
+    @JsonIgnore
+    @Transient
+    String getDiffIdentifier() {
+        if (parent != null) {return "${parent.getDiffIdentifier()}|${this.pathNodeString}"}
+        return pathNodeString
     }
 
     /**

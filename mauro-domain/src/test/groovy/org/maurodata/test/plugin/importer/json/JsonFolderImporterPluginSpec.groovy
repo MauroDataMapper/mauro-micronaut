@@ -1,10 +1,11 @@
 package org.maurodata.test.plugin.importer.json
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import io.micronaut.http.HttpStatus
 import io.micronaut.http.MediaType
+import io.micronaut.http.exceptions.HttpStatusException
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
-import spock.lang.Specification
 import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.folder.Folder
 import org.maurodata.domain.terminology.Terminology
@@ -17,6 +18,7 @@ import org.maurodata.plugin.importer.FolderImporterPlugin
 import org.maurodata.test.domain.datamodel.DataModelSpec
 import org.maurodata.test.domain.folder.FolderSpec
 import org.maurodata.test.domain.terminology.TerminologySpec
+import spock.lang.Specification
 
 @MicronautTest
 class JsonFolderImporterPluginSpec extends Specification {
@@ -104,6 +106,35 @@ class JsonFolderImporterPluginSpec extends Specification {
 
         importedModels.first().label == testFolder.label
         importedModels.first().description == testFolder.description
+    }
+
+
+    def "test JSON folders import- bad file -should fail with BADREQUEST exception"() {
+        given:
+        ExportModel exportModel = ExportModel.build {
+            exportMetadata {
+                namespace JsonPluginConstants.NAMESPACE
+                name JsonPluginConstants.JSON_FOLDER_NAME
+                version JsonPluginConstants.VERSION
+            }
+        }
+        FolderImporterPlugin jsonImportPlugin = mauroPluginService.getPlugin(FolderImporterPlugin, JsonPluginConstants.NAMESPACE, JsonPluginConstants.JSON_FOLDER_NAME,
+                                                                             JsonPluginConstants.VERSION)
+
+        FileImportParameters fileImportParameters = new FileImportParameters()
+        FileParameter fileParameter = new FileParameter().tap {
+            fileName = "import.json"
+            fileType = MediaType.APPLICATION_JSON
+            fileContents = objectMapper.writeValueAsBytes(exportModel)
+        }
+        fileImportParameters.importFile = fileParameter
+
+        when:
+        jsonImportPlugin.importModels(fileImportParameters)
+
+        then:
+        HttpStatusException exception = thrown()
+        exception.status == HttpStatus.BAD_REQUEST
     }
 }
 

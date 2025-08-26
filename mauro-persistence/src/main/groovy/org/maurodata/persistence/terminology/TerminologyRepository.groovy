@@ -24,6 +24,11 @@ abstract class TerminologyRepository implements ModelRepository<Terminology> {
         terminologyDTORepository.findById(id)
     }
 
+    @Nullable
+    List<Terminology> findAllByParentAndPathIdentifier(UUID item, String pathIdentifier) {
+        terminologyDTORepository.findAllByParentAndPathIdentifier(item, pathIdentifier)
+    }
+
     @Override
     Class getDomainClass() {
         Terminology
@@ -36,5 +41,9 @@ abstract class TerminologyRepository implements ModelRepository<Terminology> {
     @Override
     Boolean handles(String domainType) {
         return domainType != null && domainType.toLowerCase() in [FieldConstants.TERMINOLOGY_LOWERCASE, FieldConstants.TERMINOLOGIES_LOWERCASE]
+    }
+
+    Boolean handlesPathPrefix(final String pathPrefix) {
+        'te'.equalsIgnoreCase(pathPrefix)
     }
 }

@@ -138,7 +138,7 @@ interface Paths {
     String DATA_MODEL_READ_BY_AUTHENTICATED = '/dataModels/{id}/readByAuthenticated'
     String DATA_MODEL_READ_BY_EVERYONE = '/dataModels/{id}/readByEveryone'
     String DATA_MODEL_VERSION_LINKS = '/dataModels/{id}/versionLinks'
-    String DATA_MODEL_SIMPLE_MODEL_VERSION_TREE = '/dataModels/{id}/simpleModelVersionTree'
+    String DATA_MODEL_SIMPLE_MODEL_VERSION_TREE = '/dataModels/{id}/simpleModelVersionTree{?branchesOnly}'
     String DATA_MODEL_MODEL_VERSION_TREE = '/dataModels/{id}/modelVersionTree'
     String DATA_MODEL_CURRENT_MAIN_BRANCH = '/dataModels/{id}/currentMainBranch'
     String DATA_MODEL_LATEST_MODEL_VERSION = '/dataModels/{id}/latestModelVersion'
@@ -149,6 +149,7 @@ interface Paths {
     String DATA_MODEL_DOI = '/dataModels/{id}/doi'
     String DATA_MODEL_DATATYPE_PROVIDERS = '/dataModels/providers/defaultDataTypeProviders'
     String DATA_MODEL_TYPES = '/dataModels/types'
+    String DATA_MODEL_MERGE_INTO = '/dataModels/{id}/mergeInto/{otherId}'
 
 
     /*
@@ -248,6 +249,9 @@ interface Paths {
     String FOLDER_PERMISSIONS = '/folders/{id}/permissions'
     String FOLDER_DOI = '/folders/{id}/doi'
 
+    String FOLDER_IMPORTERS = '/folders/providers/importers'
+    String FOLDER_EXPORTERS = '/folders/providers/exporters'
+
 
     /*
     * VersionedFolderApi
@@ -266,13 +270,15 @@ interface Paths {
     String VERSIONED_FOLDER_PERMISSIONS = '/versionedFolders/{id}/permissions'
     String VERSIONED_FOLDER_DOI = '/versionedFolders/{id}/doi'
 
-    String VERSIONED_FOLDER_SIMPLE_MODEL_VERSION_TREE = '/versionedFolders/{id}/simpleModelVersionTree'
+    String VERSIONED_FOLDER_SIMPLE_MODEL_VERSION_TREE = '/versionedFolders/{id}/simpleModelVersionTree{?branchesOnly}'
     String VERSIONED_FOLDER_MODEL_VERSION_TREE = '/versionedFolders/{id}/modelVersionTree'
     String VERSIONED_FOLDER_CURRENT_MAIN_BRANCH = '/versionedFolders/{id}/currentMainBranch'
     String VERSIONED_FOLDER_LATEST_MODEL_VERSION = '/versionedFolders/{id}/latestModelVersion'
     String VERSIONED_FOLDER_LATEST_FINALISED_MODEL = '/versionedFolders/{id}/latestFinalisedModel'
     String VERSIONED_FOLDER_COMMON_ANCESTOR = '/versionedFolders/{id}/commonAncestor/{other_model_id}'
     String VERSIONED_FOLDER_MERGE_DIFF = '/versionedFolders/{id}/mergeDiff/{otherId}'
+    String VERSIONED_FOLDER_MERGE_INTO = '/versionedFolders/{id}/mergeInto/{otherId}'
+
 
     /*
     * ImporterApi
@@ -346,6 +352,7 @@ interface Paths {
     String CODE_SET_LIST_PAGED = '/codeSets{?params*}'
     String CODE_SET_TERM_LIST_PAGED = '/codeSets/{id}/terms{?params*}'
     String CODE_SET_IMPORT = '/codeSets/import/{namespace}/{name}{/version}'
+    String CODE_SET_SIMPLE_MODEL_VERSION_TREE='/codeSets/{id}/simpleModelVersionTree{?branchesOnly}'
 
     /*
     * TerminologyApi
@@ -367,7 +374,7 @@ interface Paths {
     String TERMINOLOGY_LIST_EXPORTERS = '/terminologies/providers/exporters'
     String TERMINOLOGY_DOI = '/terminologies/{id}/doi'
 
-    String TERMINOLOGY_SIMPLE_MODEL_VERSION_TREE = '/terminologies/{id}/simpleModelVersionTree'
+    String TERMINOLOGY_SIMPLE_MODEL_VERSION_TREE = '/terminologies/{id}/simpleModelVersionTree{?branchesOnly}'
     String TERMINOLOGY_LIST_PAGED = '/terminologies{?params*}'
 
 

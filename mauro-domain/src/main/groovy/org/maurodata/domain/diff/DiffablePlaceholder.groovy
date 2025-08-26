@@ -14,7 +14,7 @@ class DiffablePlaceholder implements DiffableItem{
     }
 
     @Override
-    ObjectDiff diff(DiffableItem other) {
+    ObjectDiff diff(DiffableItem other, String lhsPathRoot, String rhsPathRoot) {
         return null
     }
 

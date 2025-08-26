@@ -5,5 +5,5 @@ import groovy.util.logging.Slf4j
 import org.maurodata.plugin.MauroPlugin
 
 @Slf4j
-trait ImportExportModelImporterPlugin extends MauroPlugin {
+trait ImporterPlugin extends MauroPlugin {
 }

@@ -156,8 +156,8 @@ class ModelContentRepository<M extends Model> extends AdministeredItemContentRep
     void saveVersionLinks(List<AdministeredItem> items) {
         List<VersionLink> versionLinks = []
         items.each {item ->
-            if(item instanceof Model) {
-                final Model modelItem=(Model) item
+            if (item instanceof Model) {
+                final Model modelItem = (Model) item
                 if (modelItem.versionLinks) {
                     modelItem.versionLinks.each {
                         updateMultiAwareData(item, it)
@@ -166,7 +166,11 @@ class ModelContentRepository<M extends Model> extends AdministeredItemContentRep
                 }
             }
         }
-        versionLinkCacheableRepository.saveAll(versionLinks)
+        versionLinks.each {
+            if (it.id == null || !versionLinkCacheableRepository.existsById(it.id)) {
+                versionLinkCacheableRepository.save(it)
+            }
+        }
     }
 
     void saveSemanticLinks(List<AdministeredItem> items) {
@@ -194,5 +198,10 @@ class ModelContentRepository<M extends Model> extends AdministeredItemContentRep
 
     Boolean handles(String domainType) {
         administeredItemRepository.handles(domainType)
+    }
+
+    @Override
+    Boolean handles(Class clazz) {
+        Model.isAssignableFrom(clazz) && clazz != Model
     }
 }

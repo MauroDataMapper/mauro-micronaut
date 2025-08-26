@@ -33,5 +33,9 @@ abstract class AuthorityRepository implements ItemRepository<Authority> {
         Authority
     }
 
+    // Does not have a prefix
+    Boolean handlesPathPrefix(final String pathPrefix) {
+        false
+    }
 }
 

@@ -36,20 +36,21 @@ class SummaryMetadata extends Facet implements DiffableItem<SummaryMetadata> {
     @JsonIgnore
     @Transient
     CollectionDiff fromItem() {
-        new SummaryMetadataDiff(id, summaryMetadataType, label, summaryMetadataReports)
+        new SummaryMetadataDiff(id, summaryMetadataType, label, summaryMetadataReports, getDiffIdentifier())
     }
 
     @Override
     @JsonIgnore
     @Transient
     String getDiffIdentifier() {
-        label
+        if(multiFacetAwareItem != null){return "${multiFacetAwareItem.getDiffIdentifier()}|${this.pathNodeString}"}
+        return "${this.pathNodeString}"
     }
 
     @Override
     @JsonIgnore
     @Transient
-    ObjectDiff<SummaryMetadata> diff(SummaryMetadata other) {
+    ObjectDiff<SummaryMetadata> diff(SummaryMetadata other, String lhsPathRoot, String rhsPathRoot) {
         ObjectDiff<SummaryMetadata> base = DiffBuilder.objectDiff(SummaryMetadata)
                 .leftHandSide(id?.toString(), this)
                 .rightHandSide(other.id?.toString(), other)
@@ -57,7 +58,7 @@ class SummaryMetadata extends Facet implements DiffableItem<SummaryMetadata> {
         base.appendString(DiffBuilder.DESCRIPTION, this.description, other.description, this, other)
         base.appendString(DiffBuilder.SUMMARY_METADATA_TYPE, this.summaryMetadataType.name(), other.summaryMetadataType.name(), this, other)
         if (!DiffBuilder.isNull(this.summaryMetadataReports) ||!DiffBuilder.isNull(other.summaryMetadataReports)) {
-            base.appendCollection(DiffBuilder.SUMMARY_METADATA_REPORT, this.summaryMetadataReports as Collection<DiffableItem>, other.summaryMetadataReports as Collection<DiffableItem>)
+            base.appendCollection(DiffBuilder.SUMMARY_METADATA_REPORT, this.summaryMetadataReports as Collection<DiffableItem>, other.summaryMetadataReports as Collection<DiffableItem>, lhsPathRoot, rhsPathRoot)
         }
         base
     }
@@ -122,4 +123,17 @@ class SummaryMetadata extends Facet implements DiffableItem<SummaryMetadata> {
         summaryMetadataReport [:], closure
     }
 
+    @Transient
+    @JsonIgnore
+    @Override
+    String getPathPrefix() {
+        'sm'
+    }
+
+    @Transient
+    @JsonIgnore
+    @Override
+    String getPathIdentifier() {
+        label
+    }
 }
