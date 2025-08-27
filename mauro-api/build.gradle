@@ -162,6 +162,40 @@ def uiVersion = project.findProperty('uiVersion')
 def uiRepoApi  = "${mauroRepository}/api/maven/details/${repositoryPath}"
 def uiTargetDir = project.layout.buildDirectory.dir("docker/main/layers/resources/public").get().asFile
 
+def latestLts(product, fallback) {
+    try {
+        def endoflife = 'https://endoflife.date/api/v1/products/'
+        def json = new JsonSlurper().parse(new URI("${endoflife}${product}").toURL())
+
+        def releases = json.result.releases
+        def ltsReleases = releases.findAll {r ->
+            (r.isLts == true) || (r.label =~ /LTS/)
+        }
+
+        def latest = ltsReleases.sort {a, b ->
+            b.releaseDate <=> a.releaseDate
+        }[0]
+
+        if (latest.codename == null) {
+            return latest.name
+        }
+
+        return latest.codename.substring(0, latest.codename.indexOf(' ')).toLowerCase()
+    }
+    catch(Exception e){
+        logger.warn("⚠️ Failed to fetch LTS info for ${product}, falling back to ${fallback} (reason: ${e.message})")
+        return fallback
+    }
+}
+
+def dockerTag="${latestLts('eclipse-temurin','21')}-jre-${latestLts('ubuntu','noble')}"
+
+tasks.register('printDockerTag') {
+    doLast {
+        println "Would use Docker base image: eclipse-temurin:${dockerTag}"
+    }
+}
+
 tasks.register('fetchMDMUI') {
     doLast {
         println "Fetching UI list from $uiRepoApi"
@@ -226,7 +260,7 @@ tasks.named('dockerBuild') {
 }
 
 tasks.named("dockerfile") {
-    baseImage('eclipse-temurin:21-jre-noble')
+    baseImage(${dockerTag})
 
     instruction """
 ENV MICRONAUT_ENVIRONMENTS=docker

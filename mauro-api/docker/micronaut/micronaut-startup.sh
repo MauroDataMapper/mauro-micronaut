@@ -7,7 +7,8 @@ if [ -e /opt/init/micronaut ];
 then
   pushd /opt/init/micronaut
 
-        for f in $(ls)
+        shopt -s nullglob
+        for f in *
         do
           case "${f}" in
             *.sh)
@@ -34,6 +35,7 @@ then
               ;;
           esac
         done
+        shopt -u nullglob
   popd
 else
       echo "No /opt/init/micronaut for *.sh *.yml *.xml *.properties etc - skipping"

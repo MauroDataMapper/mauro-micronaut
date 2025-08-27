@@ -25,7 +25,8 @@ EOSQL
   then
     pushd /opt/init/postgres
 
-      for f in $(ls)
+      shopt -s nullglob
+      for f in *
       do
         case "${f}" in
           *.sh)
@@ -43,6 +44,7 @@ EOSQL
             ;;
         esac
       done
+      shopt -u nullglob
     popd
   else
       echo "No /opt/init/postgres *.sh *.sql - skipping"
