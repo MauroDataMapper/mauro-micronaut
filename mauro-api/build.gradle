@@ -162,7 +162,8 @@ def uiVersion = project.findProperty('uiVersion')
 def uiRepoApi  = "${mauroRepository}/api/maven/details/${repositoryPath}"
 def uiTargetDir = project.layout.buildDirectory.dir("docker/main/layers/resources/public").get().asFile
 
-def latestLts(product, fallback) {
+def latestLts(product, fallback, detectLTS) {
+    if(!detectLTS){return fallback}
     try {
         def endoflife = 'https://endoflife.date/api/v1/products/'
         def json = new JsonSlurper().parse(new URI("${endoflife}${product}").toURL())
@@ -188,11 +189,15 @@ def latestLts(product, fallback) {
     }
 }
 
-def dockerTag="${latestLts('eclipse-temurin','21')}-jre-${latestLts('ubuntu','noble')}"
+def temurinDefault='21'
+def ubuntuDefault='noble'
+def detectLTS=false
+
+def dockerTag="eclipse-temurin:${latestLts('eclipse-temurin',temurinDefault,detectLTS)}-jre-${latestLts('ubuntu',ubuntuDefault,detectLTS)}"
 
 tasks.register('printDockerTag') {
     doLast {
-        println "Would use Docker base image: eclipse-temurin:${dockerTag}"
+        println "Would use Docker base image: ${dockerTag}"
     }
 }
 
@@ -260,7 +265,7 @@ tasks.named('dockerBuild') {
 }
 
 tasks.named("dockerfile") {
-    baseImage(${dockerTag})
+    baseImage("${dockerTag}")
 
     instruction """
 ENV MICRONAUT_ENVIRONMENTS=docker
