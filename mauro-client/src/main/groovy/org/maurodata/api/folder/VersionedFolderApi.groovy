@@ -88,6 +88,7 @@ interface VersionedFolderApi extends ModelApi<Folder> {
 
     @Put(Paths.VERSIONED_FOLDER_READ_BY_EVERYONE)
     Folder allowReadByEveryone(UUID id)
+
     @Delete(Paths.VERSIONED_FOLDER_READ_BY_EVERYONE)
     HttpResponse revokeReadByEveryone(UUID id)
 
@@ -97,7 +98,7 @@ interface VersionedFolderApi extends ModelApi<Folder> {
     @Delete(Paths.VERSIONED_FOLDER_READ_BY_AUTHENTICATED)
     HttpResponse revokeReadByAuthenticated(UUID id)
 
-    @Get(Paths.VERSIONED_FOLDER_EXPORT)
+    @Get(value = Paths.VERSIONED_FOLDER_EXPORT)
     HttpResponse<byte[]> exportModel(UUID id, @Nullable String namespace, @Nullable String name, @Nullable String version)
 
     @Produces(MediaType.MULTIPART_FORM_DATA)

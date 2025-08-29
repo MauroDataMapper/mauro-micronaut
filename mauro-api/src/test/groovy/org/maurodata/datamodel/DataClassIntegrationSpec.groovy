@@ -51,13 +51,13 @@ class DataClassIntegrationSpec extends BaseIntegrationSpec {
 
     void 'test data class'() {
         given:
-        Folder folder = (Folder) POST('/folders', [label: 'Test folder'], Folder)
-        DataModel dataModel = (DataModel) POST("/folders/$folder.id/dataModels", [label: 'Test data model'], DataModel)
+        Folder folder = (Folder) POST('/api/folders', [label: 'Test folder'], Folder)
+        DataModel dataModel = (DataModel) POST("/api/folders/$folder.id/dataModels", [label: 'Test data model'], DataModel)
         dataModelId = dataModel.id
 
         when:
 
-        DataClass dataClass = (DataClass) POST("/dataModels/$dataModelId/dataClasses", [label: 'My first Data Class'], DataClass)
+        DataClass dataClass = (DataClass) POST("/api/dataModels/$dataModelId/dataClasses", [label: 'My first Data Class'], DataClass)
 
         then:
         dataClass.label == 'My first Data Class'
@@ -66,13 +66,13 @@ class DataClassIntegrationSpec extends BaseIntegrationSpec {
 
     void 'test extend data class'() {
         given:
-            Folder folder = (Folder) POST('/folders', [label: 'Test folder'], Folder)
-            DataModel dataModel = (DataModel) POST("/folders/$folder.id/dataModels", [label: 'Test data model'], DataModel)
-            DataClass dataClass1 = (DataClass) POST("/dataModels/$dataModel.id/dataClasses", [label: 'My first Data Class'], DataClass)
-            DataClass dataClass2 = (DataClass) POST("/dataModels/$dataModel.id/dataClasses", [label: 'My second Data Class'], DataClass)
+            Folder folder = (Folder) POST('/api/folders', [label: 'Test folder'], Folder)
+            DataModel dataModel = (DataModel) POST("/api/folders/$folder.id/dataModels", [label: 'Test data model'], DataModel)
+            DataClass dataClass1 = (DataClass) POST("/api/dataModels/$dataModel.id/dataClasses", [label: 'My first Data Class'], DataClass)
+            DataClass dataClass2 = (DataClass) POST("/api/dataModels/$dataModel.id/dataClasses", [label: 'My second Data Class'], DataClass)
 
         when:
-            Map response = PUT("/dataModels/$dataModel.id/dataClasses/$dataClass2.id/extends/$dataModel.id/$dataClass1.id", null)
+            Map response = PUT("/api/dataModels/$dataModel.id/dataClasses/$dataClass2.id/extends/$dataModel.id/$dataClass1.id", null)
 
         then:
             response.label == 'My second Data Class'
@@ -80,7 +80,7 @@ class DataClassIntegrationSpec extends BaseIntegrationSpec {
             response.extendsDataClasses.first().label == 'My first Data Class'
 
         when:
-            response = GET("/dataModels/$dataModel.id/dataClasses/$dataClass2.id")
+            response = GET("/api/dataModels/$dataModel.id/dataClasses/$dataClass2.id")
 
         then:
             response.label == 'My second Data Class'
@@ -88,14 +88,14 @@ class DataClassIntegrationSpec extends BaseIntegrationSpec {
             response.extendsDataClasses.first().label == 'My first Data Class'
 
         when:
-            response = DELETE("/dataModels/$dataModel.id/dataClasses/$dataClass2.id/extends/$dataModel.id/$dataClass1.id")
+            response = DELETE("/api/dataModels/$dataModel.id/dataClasses/$dataClass2.id/extends/$dataModel.id/$dataClass1.id")
 
         then:
             response.label == 'My second Data Class'
             !response.extendsDataClasses
 
         when:
-            response = GET("/dataModels/$dataModel.id/dataClasses/$dataClass2.id")
+            response = GET("/api/dataModels/$dataModel.id/dataClasses/$dataClass2.id")
 
         then:
             response.label == 'My second Data Class'

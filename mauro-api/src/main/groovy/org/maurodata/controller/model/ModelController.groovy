@@ -95,8 +95,8 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     List<String> getDisallowedProperties() {
         log.debug '***** ModelController::getDisallowedProperties *****'
         super.disallowedProperties +
-                ['finalised', 'dateFinalised', 'readableByEveryone', 'readableByAuthenticatedUsers', 'modelType', 'deleted', 'folder', 'branchName',
-                 'modelVersion', 'modelVersionTag']
+        ['finalised', 'dateFinalised', 'readableByEveryone', 'readableByAuthenticatedUsers', 'modelType', 'deleted', 'folder', 'branchName',
+         'modelVersion', 'modelVersionTag']
     }
 
     @Override
@@ -181,7 +181,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         existing.updatePath()
         modelRepository.update(original, existing)
     }
-    
+
     @Transactional
     HttpResponse delete(UUID id, @Body @Nullable M model, @Nullable Boolean permanent) {
         M modelToDelete = (M) modelContentRepository.findWithContentById(id)
@@ -388,29 +388,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         ListResponse.from(smallerResponse)
     }
 
-    List<M> importModelList(@Body MultipartBody body, String namespace, String name, @Nullable String version) {
 
-        ModelImporterPlugin mauroPlugin = mauroPluginService.getPlugin(ModelImporterPlugin, namespace, name, version)
-        PluginService.handlePluginNotFound(mauroPlugin, namespace, name)
-
-        ImportParameters importParameters = importExportModelService.readFromMultipartFormBody(body, mauroPlugin.importParametersClass())
-
-        if (importParameters.folderId == null) {
-            ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, importParameters.folderId, "Please choose the folder into which the Model/s should be imported.")
-        }
-
-        List<M> imported = (List<M>) mauroPlugin.importModels(importParameters)
-
-        Folder folder = folderRepository.readById(importParameters.folderId)
-        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, folder, "Folder with id $importParameters.folderId not found")
-        accessControlService.checkRole(Role.EDITOR, folder)
-        imported.each {M imp ->
-            imp.folder = folder
-            updateCreationProperties(imp)
-        }
-        imported
-
-    }
 
 
     ListResponse<M> importModel(@Body io.micronaut.http.client.multipart.MultipartBody body, String namespace, String name, @Nullable String version) {

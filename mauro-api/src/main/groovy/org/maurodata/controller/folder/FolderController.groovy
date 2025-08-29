@@ -169,14 +169,14 @@ class FolderController extends ModelController<Folder> implements FolderApi {
         super.importModel(body, namespace, name, version)
     }
 
-    @Get('/folder/search{?requestDTO}')
+    @Get('/api/folder/search{?requestDTO}')
     ListResponse<SearchResultsDTO> searchGet(@RequestBean SearchRequestDTO requestDTO) {
         // TODO
         return null
     }
 
     @Audit
-    @Post('/folder/search')
+    @Post('/api/folder/search')
     ListResponse<SearchResultsDTO> searchPost(@Body SearchRequestDTO requestDTO) {
         // TODO
         return null
@@ -233,5 +233,16 @@ class FolderController extends ModelController<Folder> implements FolderApi {
     List<FolderExporterPlugin> folderExporters() {
         mauroPluginService.listPlugins(FolderExporterPlugin)
     }
+
+    /*
+    @Transactional
+    @ExecuteOn(TaskExecutors.IO)
+    @Audit(title = EditType.IMPORT, description = "Import folder")
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @Post(Paths.FOLDER_IMPORT)
+    ListResponse<Folder> importFolder(@Body MultipartBody body, String namespace, String name, @Nullable String version) {
+        super.importModel(body, namespace, name, version)
+    }
+*/
 
 }

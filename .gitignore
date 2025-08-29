@@ -162,3 +162,6 @@ Temporary Items
 # logs
 logs/*
 mauro-api/logs/*
+
+# resources public
+src/main/resources/public/*

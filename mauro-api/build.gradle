@@ -75,7 +75,6 @@ dependencies {
     }
 
     testImplementation 'org.reflections:reflections:0.10.2'
-
 }
 
 
@@ -153,3 +152,161 @@ codenarcTest {
 }
 
 [codenarcMain, codenarcTest]*.ignoreFailures = true
+
+import groovy.json.JsonSlurper
+
+def mauroRepository = 'https://mauro-repository.com'
+def repositoryPath='artifacts-snapshots/mauroDataMapper/mdm-ui'
+
+def uiVersion = project.findProperty('uiVersion')
+def uiRepoApi  = "${mauroRepository}/api/maven/details/${repositoryPath}"
+def uiTargetDir = project.layout.buildDirectory.dir("docker/main/layers/resources/public").get().asFile
+
+def latestLts(product, fallback, detectLTS) {
+    if(!detectLTS){return fallback}
+    try {
+        def endoflife = 'https://endoflife.date/api/v1/products/'
+        def json = new JsonSlurper().parse(new URI("${endoflife}${product}").toURL())
+
+        def releases = json.result.releases
+        def ltsReleases = releases.findAll {r ->
+            (r.isLts == true) || (r.label =~ /LTS/)
+        }
+
+        def latest = ltsReleases.sort {a, b ->
+            b.releaseDate <=> a.releaseDate
+        }[0]
+
+        if (latest.codename == null) {
+            return latest.name
+        }
+
+        return latest.codename.substring(0, latest.codename.indexOf(' ')).toLowerCase()
+    }
+    catch(Exception e){
+        logger.warn("⚠️ Failed to fetch LTS info for ${product}, falling back to ${fallback} (reason: ${e.message})")
+        return fallback
+    }
+}
+
+def temurinDefault='21'
+def ubuntuDefault='noble'
+def detectLTS=false
+
+def dockerTag="eclipse-temurin:${latestLts('eclipse-temurin',temurinDefault,detectLTS)}-jre-${latestLts('ubuntu',ubuntuDefault,detectLTS)}"
+
+tasks.register('printDockerTag') {
+    doLast {
+        println "Would use Docker base image: ${dockerTag}"
+    }
+}
+
+tasks.register('fetchMDMUI') {
+    doLast {
+        println "Fetching UI list from $uiRepoApi"
+        def jsonText = new URI(uiRepoApi).toURL().getText(requestProperties: ['Accept': 'application/json'])
+        def parsed = new JsonSlurper().parseText(jsonText)
+
+        def fileName
+        if (uiVersion) {
+            fileName = "mdm-ui-${uiVersion}.tgz"
+            if (!parsed.files*.name.contains(fileName)) {
+                throw new GradleException("UI version ${uiVersion} not found in repository")
+            }
+        } else {
+            fileName = parsed.files.last().name
+        }
+
+        def downloadUrl = "${mauroRepository}/${repositoryPath}/${fileName}"
+        println "Downloading UI: $fileName"
+        uiTargetDir.mkdirs()
+
+        def tmpFile = File.createTempFile('mdmui', '.tgz')
+        tmpFile.withOutputStream { out ->
+            out << new URI(downloadUrl).toURL().openStream()
+        }
+
+        println "Extracting UI into ${uiTargetDir.absolutePath}"
+        project.exec {
+            commandLine 'tar', '-xzf', tmpFile.absolutePath, '-C', uiTargetDir.absolutePath, '--strip-components=1'
+        }
+        tmpFile.delete()
+
+        println "Patching Angular API endpoint to relative /api"
+        def jsFiles = fileTree(dir: uiTargetDir, include: 'main.*.js').files
+
+        if (jsFiles) {
+            project.exec {
+                workingDir uiTargetDir
+
+                // macOS BSD sed needs an empty string after -i, GNU sed does not
+                def sedInlineArgs = System.getProperty("os.name").toLowerCase().contains("mac") ?
+                                    ['-i', ''] : ['-i']
+
+                commandLine 'sed', *sedInlineArgs, 's|this.apiEndpoint="http://localhost:8080/api"|this.apiEndpoint="/api"|g', *jsFiles*.absolutePath
+            }
+        } else {
+            logger.warn("No main.*.js files found in ${uiTargetDir}")
+        }
+    }
+}
+
+tasks.named('dockerBuild') {
+    dependsOn(tasks.named('fetchMDMUI'))
+}
+
+tasks.register('stageDockerFiles', Copy) {
+    from file('docker')
+    into project.layout.buildDirectory.dir("docker/main").get().asFile
+}
+
+tasks.named('dockerBuild') {
+    dependsOn 'stageDockerFiles'
+}
+
+tasks.named("dockerfile") {
+    baseImage("${dockerTag}")
+
+    instruction """
+ENV MICRONAUT_ENVIRONMENTS=docker
+ENV DATABASE_NAME=sandbox
+ENV DATABASE_USERNAME=sandbox
+ENV DATABASE_PASSWORD=sandbox
+
+ENV INIT_DIR=/opt/init
+ENV DATABASE_DIRECTORY=/var/lib/postgresql/data
+ENV LOGS_DIRECTORY=/var/logs
+ENV DATABASE_LOGS_DIRECTORY=\${LOGS_DIRECTORY}/postgres
+ENV DATABASE_SNAPSHOTS_DIRECTORY=/database
+
+RUN apt-get update && apt-get install -y --no-install-recommends postgresql postgresql-contrib unzip iproute2 && rm -rf /var/lib/apt/lists/*
+RUN mkdir -p \${DATABASE_DIRECTORY} && chown -R postgres:postgres /var/lib/postgresql
+RUN mkdir -p \${LOGS_DIRECTORY} && mkdir -p \${DATABASE_LOGS_DIRECTORY} && chown -R postgres:postgres \${DATABASE_LOGS_DIRECTORY}
+VOLUME ["\${DATABASE_DIRECTORY}","\${DATABASE_LOGS_DIRECTORY}"]
+RUN mkdir -p \${DATABASE_SNAPSHOTS_DIRECTORY} && chown -R postgres:postgres \${DATABASE_SNAPSHOTS_DIRECTORY}
+VOLUME ["\${DATABASE_SNAPSHOTS_DIRECTORY}"]
+RUN mkdir -p \${INIT_DIR}
+VOLUME ["\${INIT_DIR}"]
+
+COPY postgres/* /usr/local/bin/
+COPY micronaut/* /usr/local/bin/
+COPY startup/* /usr/local/bin/
+RUN chmod +x /usr/local/bin/*
+
+EXPOSE 5432
+ENTRYPOINT ["docker-startup.sh"]
+    """
+}
+
+tasks.named("dockerBuild") {
+    dependsOn("injectEnvIntoDockerfile")
+}
+
+tasks.register("injectEnvIntoDockerfile") {
+    doLast {
+        def dockerfile = file("build/docker/main/Dockerfile")
+        def contents = dockerfile.text
+        int entrypointPos = contents.lastIndexOf('ENTRYPOINT')
+        dockerfile.text = dockerfile.text.substring(0,entrypointPos)
+    }
+}
