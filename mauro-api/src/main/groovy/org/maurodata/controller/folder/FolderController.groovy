@@ -169,14 +169,14 @@ class FolderController extends ModelController<Folder> implements FolderApi {
         super.importModel(body, namespace, name, version)
     }
 
-    @Get('/folder/search{?requestDTO}')
+    @Get('/api/folder/search{?requestDTO}')
     ListResponse<SearchResultsDTO> searchGet(@RequestBean SearchRequestDTO requestDTO) {
         // TODO
         return null
     }
 
     @Audit
-    @Post('/folder/search')
+    @Post('/api/folder/search')
     ListResponse<SearchResultsDTO> searchPost(@Body SearchRequestDTO requestDTO) {
         // TODO
         return null

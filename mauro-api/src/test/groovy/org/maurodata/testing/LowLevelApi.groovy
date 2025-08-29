@@ -154,7 +154,7 @@ class LowLevelApi {
         String name = jsonDataModelImporterPlugin.name
         String version = jsonDataModelImporterPlugin.version
 
-        Map<String, Object> response = POST("/dataModels/import/$namespace/$name/$version", importRequest)
+        Map<String, Object> response = POST("/api/dataModels/import/$namespace/$name/$version", importRequest)
         UUID.fromString(response.items.first().id)
     }
 
@@ -170,7 +170,7 @@ class LowLevelApi {
         String name = jsonTerminologyImporterPlugin.name
         String version = jsonTerminologyImporterPlugin.version
 
-        Map<String, Object> response = POST("/terminologies/import/$namespace/$name/$version", importRequest)
+        Map<String, Object> response = POST("/api/terminologies/import/$namespace/$name/$version", importRequest)
         UUID.fromString(response.items.first().id)
     }
 

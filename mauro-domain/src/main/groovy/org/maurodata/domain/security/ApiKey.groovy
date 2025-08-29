@@ -11,6 +11,7 @@ import io.micronaut.data.annotation.Index
 import io.micronaut.data.annotation.Indexes
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.MappedProperty
+import jakarta.persistence.Id
 import jakarta.persistence.Transient
 
 import java.time.Instant
@@ -23,6 +24,8 @@ import java.time.temporal.ChronoUnit
 @MapConstructor(includeSuperFields = true, includeSuperProperties = true, noArg = true)
 class ApiKey extends Item {
 
+    @Id
+    UUID id
     //TODO: Rename this to 'label'
     String name
 
@@ -42,7 +45,7 @@ class ApiKey extends Item {
     UUID catalogueUserId
 
     void updateExpiryDate() {
-        if(expiresInDays) {
+        if (expiresInDays) {
             expiryDate = Instant.now().plus(expiresInDays, ChronoUnit.DAYS)
             expiresInDays = null
         }
@@ -64,11 +67,11 @@ class ApiKey extends Item {
      */
     static ApiKey build(
         Map args,
-        @DelegatesTo(value = ApiKey, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
+        @DelegatesTo(value = ApiKey, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
         new ApiKey(args).tap(closure)
     }
 
-    static ApiKey build(@DelegatesTo(value = ApiKey, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
+    static ApiKey build(@DelegatesTo(value = ApiKey, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
         build [:], closure
     }
 
