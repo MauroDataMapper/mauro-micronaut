@@ -259,8 +259,8 @@ interface Paths {
     String VERSIONED_FOLDER_LIST = '/versionedFolders'
     String VERSIONED_FOLDER_ID = '/versionedFolders/{id}'
 
-    String CHILD_VERSIONED_FOLDER_LIST = '/folders/{parentId}/versionedFolders'
-    String FOLDER_CHILD_VERSIONED_FOLDER_ID = '/folders/{parentId}/versionedFolders/{id}'
+    String CHILD_VERSIONED_FOLDER_LIST = '/versionedFolders/{parentId}/folders'
+    String FOLDER_CHILD_VERSIONED_FOLDER_ID = '/versionedFolders/{parentId}/folders/{id}'
 
     String VERSIONED_FOLDER_FINALISE = '/versionedFolders/{id}/finalise'
     String VERSIONED_FOLDER_NEW_BRANCH_MODEL_VERSION = '/versionedFolders/{id}/newBranchModelVersion'
@@ -278,6 +278,8 @@ interface Paths {
     String VERSIONED_FOLDER_COMMON_ANCESTOR = '/versionedFolders/{id}/commonAncestor/{other_model_id}'
     String VERSIONED_FOLDER_MERGE_DIFF = '/versionedFolders/{id}/mergeDiff/{otherId}'
     String VERSIONED_FOLDER_MERGE_INTO = '/versionedFolders/{id}/mergeInto/{otherId}'
+    String VERSIONED_FOLDER_IMPORT = '/versionedFolders/import/{namespace}/{name}{/version}'
+    String VERSIONED_FOLDER_EXPORT ='/versionedFolders/{id}/export{/namespace}{/name}{/version}'
 
 
     /*

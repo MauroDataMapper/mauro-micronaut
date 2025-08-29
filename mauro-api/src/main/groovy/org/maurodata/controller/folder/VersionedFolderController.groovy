@@ -6,7 +6,9 @@ import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
+import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.Body
+import io.micronaut.http.annotation.Consumes
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Delete
 import io.micronaut.http.annotation.Get
@@ -31,6 +33,7 @@ import org.maurodata.api.model.ModelVersionedWithTargetsRefDTO
 import org.maurodata.api.model.PermissionsDTO
 import org.maurodata.audit.Audit
 import org.maurodata.controller.model.ModelController
+import org.maurodata.domain.facet.EditType
 import org.maurodata.domain.folder.Folder
 import org.maurodata.domain.folder.FolderService
 import org.maurodata.domain.model.version.CreateNewVersionData
@@ -139,18 +142,22 @@ class VersionedFolderController extends ModelController<Folder> implements Versi
     }
 
 
+    @Audit(title = EditType.EXPORT, description = 'Export Versioned folder')
+    @Get(Paths.VERSIONED_FOLDER_EXPORT)
+    @Override
+    HttpResponse<byte[]> exportModel(UUID id, @Nullable String namespace, @Nullable String name, @Nullable String version) {
+        super.exportModel(id,namespace, name, version)
+
+    }
+
+    @Transactional
+    @ExecuteOn(TaskExecutors.IO)
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @Audit(title = EditType.IMPORT, description = 'Import folder')
+    @Post(Paths.VERSIONED_FOLDER_IMPORT)
     @Override
     ListResponse<Folder> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version) {
-        List<Folder> imported = super.importModelList(body, namespace, name, version)
-        List<Folder> saved = imported.collect {imp ->
-            log.info '** about to saveWithContentBatched... Folder import**'
-            modelContentRepository.saveWithContent(imp as Folder)
-        }
-        log.info '** finished saveWithContentBatched **'
-
-        ListResponse.from(saved.collect {model ->
-            show(model.id)
-        })
+        super.importModel(body, namespace, name, version )
     }
 
     @Audit
