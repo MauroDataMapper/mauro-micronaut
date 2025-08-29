@@ -28,6 +28,7 @@ import org.maurodata.api.federation.PublishApi
 import org.maurodata.api.federation.SubscribedCatalogueApi
 import org.maurodata.api.federation.SubscribedModelApi
 import org.maurodata.api.folder.FolderApi
+import org.maurodata.api.folder.VersionedFolderApi
 import org.maurodata.api.importer.ImporterApi
 import org.maurodata.api.profile.ProfileApi
 import org.maurodata.api.search.SearchApi
@@ -152,6 +153,7 @@ class CommonDataSpec extends Specification {
     @Shared @Inject SubscribedModelApi subscribedModelApi
     @Shared @Inject PublishApi publishApi
     @Shared @Inject SemanticLinksApi semanticLinksApi
+    @Shared @Inject VersionedFolderApi versionedFolderApi
 
     @Inject
     SessionHandlerClientFilter sessionHandlerClientFilter

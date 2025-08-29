@@ -89,8 +89,15 @@ class VersionedFolderController extends ModelController<Folder> implements Versi
     @Transactional
     @Post(Paths.CHILD_VERSIONED_FOLDER_LIST)
     Folder create(UUID parentId, @Body @NonNull Folder folder) {
+        folder.authority = super.authorityService.getDefaultAuthority()
+        Folder cleanItem = cleanBody(folder)
+
+        Folder parent = validate(cleanItem, parentId)
         folder.setVersionable(true)
-        super.create(parentId, folder)
+
+        Folder created = createEntity(parent, cleanItem)
+        created = validateAndAddClassifiers(created)
+        created
     }
 
     @Audit

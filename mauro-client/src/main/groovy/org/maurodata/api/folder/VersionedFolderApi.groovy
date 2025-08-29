@@ -1,5 +1,7 @@
 package org.maurodata.api.folder
 
+import io.micronaut.http.MediaType
+import io.micronaut.http.client.multipart.MultipartBody
 import org.maurodata.api.model.MergeIntoDTO
 
 import io.micronaut.core.annotation.NonNull
@@ -86,7 +88,6 @@ interface VersionedFolderApi extends ModelApi<Folder> {
 
     @Put(Paths.VERSIONED_FOLDER_READ_BY_EVERYONE)
     Folder allowReadByEveryone(UUID id)
-
     @Delete(Paths.VERSIONED_FOLDER_READ_BY_EVERYONE)
     HttpResponse revokeReadByEveryone(UUID id)
 
@@ -96,4 +97,13 @@ interface VersionedFolderApi extends ModelApi<Folder> {
     @Delete(Paths.VERSIONED_FOLDER_READ_BY_AUTHENTICATED)
     HttpResponse revokeReadByAuthenticated(UUID id)
 
+    @Get(Paths.VERSIONED_FOLDER_EXPORT)
+    HttpResponse<byte[]> exportModel(UUID id, @Nullable String namespace, @Nullable String name, @Nullable String version)
+
+    @Produces(MediaType.MULTIPART_FORM_DATA)
+    @Post(Paths.VERSIONED_FOLDER_IMPORT)
+    ListResponse<Folder> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version)
+
+    // This is the version that will be implemented by the controller
+    ListResponse<Folder> importModel(@Body io.micronaut.http.server.multipart.MultipartBody body, String namespace, String name, @Nullable String version)
 }

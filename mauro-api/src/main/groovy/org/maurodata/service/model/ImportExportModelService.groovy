@@ -19,19 +19,16 @@ import org.maurodata.domain.model.Model
 import org.maurodata.domain.model.ModelItem
 import org.maurodata.domain.security.Role
 import org.maurodata.persistence.cache.ModelCacheableRepository
-import org.maurodata.plugin.MauroPlugin
 import org.maurodata.plugin.MauroPluginService
 import org.maurodata.plugin.exporter.ModelExporterPlugin
 import org.maurodata.plugin.exporter.ModelItemExporterPlugin
 import org.maurodata.plugin.importer.FileParameter
 import org.maurodata.plugin.importer.ImportParameters
-import org.maurodata.plugin.importer.ModelImporterPlugin
 import org.maurodata.plugin.importer.ModelItemImporterPlugin
 import org.maurodata.security.AccessControlService
 import org.maurodata.service.core.AdministeredItemService
 import org.maurodata.service.plugin.PluginService
 import reactor.core.publisher.Flux
-import reactor.util.annotation.NonNull
 
 import java.nio.charset.StandardCharsets
 
@@ -53,36 +50,12 @@ class ImportExportModelService extends AdministeredItemService {
     }
 
 
-    ModelExporterPlugin getExporterPlugin(String namespace, String name, String version) {
-        ModelExporterPlugin mauroPlugin = mauroPluginService.getPlugin(ModelExporterPlugin, namespace, name, version)
-        PluginService.handlePluginNotFound(mauroPlugin, namespace, name)
-        mauroPlugin
-    }
+
 
     ModelItemExporterPlugin getModelItemExporterPlugin(String namespace, String name, String version) {
         ModelItemExporterPlugin mauroPlugin = mauroPluginService.getPlugin(ModelItemExporterPlugin, namespace, name, version)
         PluginService.handlePluginNotFound(mauroPlugin, namespace, name)
         mauroPlugin
-    }
-    List<Model> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version) {
-        ModelImporterPlugin mauroPlugin = mauroPluginService.getPlugin(ModelImporterPlugin, namespace, name, version)
-        PluginService.handlePluginNotFound(mauroPlugin, namespace, name)
-
-        ImportParameters importParameters = readFromMultipartFormBody(body, mauroPlugin.importParametersClass())
-
-        if (importParameters.folderId == null) {
-            ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, importParameters.folderId, "Please choose the folder into which the Model/s should be imported.")
-        }
-        List<Model> imported = (List<Model>) mauroPlugin.importModels(importParameters)
-
-        Folder folder = folderRepository.readById(importParameters.folderId)
-        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, folder, "Folder with id $importParameters.folderId not found")
-        accessControlService.checkRole(Role.EDITOR, folder)
-        imported.each {imp ->
-            imp.folder = folder
-            updateCreationProperties(imp)
-        }
-        imported
     }
 
     List<ModelItem> importModelItems(Class aClazz, @Body MultipartBody body, String namespace, String name, @Nullable String version) {

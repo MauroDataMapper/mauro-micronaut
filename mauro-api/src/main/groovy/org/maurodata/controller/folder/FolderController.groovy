@@ -234,15 +234,4 @@ class FolderController extends ModelController<Folder> implements FolderApi {
         mauroPluginService.listPlugins(FolderExporterPlugin)
     }
 
-    /*
-    @Transactional
-    @ExecuteOn(TaskExecutors.IO)
-    @Audit(title = EditType.IMPORT, description = "Import folder")
-    @Consumes(MediaType.MULTIPART_FORM_DATA)
-    @Post(Paths.FOLDER_IMPORT)
-    ListResponse<Folder> importFolder(@Body MultipartBody body, String namespace, String name, @Nullable String version) {
-        super.importModel(body, namespace, name, version)
-    }
-*/
-
 }

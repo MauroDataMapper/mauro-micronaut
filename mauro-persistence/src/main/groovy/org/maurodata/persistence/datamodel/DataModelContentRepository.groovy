@@ -4,7 +4,10 @@ import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
+import org.maurodata.domain.dataflow.DataClassComponent
+import org.maurodata.domain.dataflow.DataElementComponent
 import org.maurodata.domain.datamodel.DataClass
+import org.maurodata.domain.datamodel.DataElement
 import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.datamodel.DataType
 import org.maurodata.persistence.dataflow.DataFlowContentRepository
@@ -82,6 +85,16 @@ class DataModelContentRepository extends ModelContentRepository<DataModel> {
     @Override
     DataModel saveWithContent(@NonNull DataModel model) {
         DataModel saved = (DataModel) super.saveWithContent(model)
+        Map<String, DataClass> dataClassByLabelLookup = [:]
+        saved.allDataClasses.each {
+            dataClassByLabelLookup.putIfAbsent(it.label, it)
+        }
+
+        Map<String, DataElement> dataElementByLabelLookup  = [:]
+        saved.dataElements.each {
+            dataElementByLabelLookup.putIfAbsent(it.label, it)
+        }
+
         dataClassRepository.updateAll(saved.allDataClasses.findAll {dataClass ->
             dataClass.referenceTypes.collect {
                 it.referenceClass = dataClass
@@ -95,18 +108,67 @@ class DataModelContentRepository extends ModelContentRepository<DataModel> {
             }
         }
         saved.dataTypes = dataTypeRepository.updateAll(saved.dataTypes.findAll {it.isReferenceType()})
+
+        saved = updateDataFlows(saved, dataClassByLabelLookup, dataElementByLabelLookup)
+
+        saved.targetDataFlows.each {
+            it.target = saved
+            it.updateCreationProperties()
+            dataFlowContentRepository.saveWithContent(it)
+        }
         saved
     }
 
     @Override
     DataModel saveContentOnly(@NonNull DataModel model) {
         DataModel saved = (DataModel) super.saveContentOnly(model)
-        if(saved.allDataClasses) {
-            dataClassRepository.updateAll(saved.allDataClasses.findAll { it.parentDataClass})
+        if (saved.allDataClasses) {
+            dataClassRepository.updateAll(saved.allDataClasses.findAll {it.parentDataClass})
         }
-        if(model.dataElements) {
+        if (model.dataElements) {
             dataElementRepository.updateAll(model.dataElements)
         }
         saved
+    }
+
+    private DataModel updateDataFlows(DataModel dataModel, Map<String, DataClass> dataClassDataByLabelLookup, Map<String, DataElement> dataElementByLabelLookup) {
+        dataModel.sourceDataFlows.collect {
+            it.dataClassComponents = updateDataClassComponentFlows(it.dataClassComponents, dataClassDataByLabelLookup, dataElementByLabelLookup)
+        }
+
+        dataModel.targetDataFlows.collect {
+            it.dataClassComponents = updateDataClassComponentFlows(it.dataClassComponents, dataClassDataByLabelLookup, dataElementByLabelLookup)
+        }
+        dataModel
+    }
+
+    private List<DataClassComponent> updateDataClassComponentFlows(List<DataClassComponent> dataClassComponents, Map<String, DataClass> dataClassByLabelLookup,
+                                                                  Map<String, DataElement> dataElementByLabelLookup) {
+        dataClassComponents.collect {
+            it.sourceDataClasses = updateDataClasses(it.sourceDataClasses, dataClassByLabelLookup)
+            it.targetDataClasses = updateDataClasses(it.targetDataClasses, dataClassByLabelLookup)
+            it.dataElementComponents = updateDataElementsInDataElementComponents(it.dataElementComponents, dataElementByLabelLookup)
+        }
+        dataClassComponents
+    }
+
+    private List<DataElementComponent> updateDataElementsInDataElementComponents(List<DataElementComponent> dataElementComponents, Map<String, DataElement> dataElementByLabelLookup) {
+        dataElementComponents.collect {
+            it.sourceDataElements = updateDataElements(it.sourceDataElements, dataElementByLabelLookup)
+            it.targetDataElements = updateDataElements(it.targetDataElements, dataElementByLabelLookup)
+        }
+        dataElementComponents
+    }
+
+    private List<DataClass> updateDataClasses(List<DataClass> dataClasses, Map<String, DataClass> dataClassByLabelLookup) {
+        dataClasses.collect {
+            dataClassByLabelLookup.getOrDefault(it.label, it)
+        }
+    }
+
+    private List<DataElement> updateDataElements(List<DataElement> dataElements, Map<String, DataElement> dataElementByLabelLookup) {
+        dataElements.collect {
+            dataElementByLabelLookup.getOrDefault(it.label, it)
+        }
     }
 }
