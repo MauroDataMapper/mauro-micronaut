@@ -316,7 +316,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         toSave.add(existing)
         modelContentRepository.saveVersionLinks(toSave)
 
-        savedCopy
+        modelContentRepository.readWithContentById(savedCopy.id) as M
     }
 
     protected M createCopyModelWithAssociations(M existing, CreateNewVersionData createNewVersionData) {
