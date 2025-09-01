@@ -1,6 +1,7 @@
 package org.maurodata.persistence.datamodel.dto
 
 import org.maurodata.domain.datamodel.DataElement
+import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.datamodel.DataType
 
 import groovy.transform.CompileStatic
@@ -20,7 +21,9 @@ abstract class DataElementDTORepository implements GenericRepository<DataElement
 
     abstract List<DataElementDTO> findAllByDataClass(DataClass dataClass)
 
-    abstract List<DataElementDTO> findAllByDataClassIn(Collection<DataClass> dataClasses)
+    abstract List<DataElementDTO> findAllByDataClassIdIn(Collection<UUID> ids)
+
+    abstract List<DataElementDTO> readAllByDataClassIdIn(Collection<UUID> ids)
 
     abstract List<DataElementDTO> readAllByDataTypeIdIn(Collection<UUID> ids)
 
