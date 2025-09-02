@@ -71,6 +71,12 @@ class TerminologyController extends ModelController<Terminology> implements Term
     }
 
     @Audit
+    @Get('/api/terminologies/undefined')
+    Map showUndef() {
+        [:]
+    }
+
+    @Audit
     @Get(Paths.TERMINOLOGY_ID)
     Terminology show(UUID id) {
         super.show(id)

@@ -22,7 +22,7 @@ class TerminologySpec extends Specification {
             id UUID.randomUUID()
         }
 
-        term(code: "B15.0", definition: "Hepatitis A with hepatic coma")
+        term(code: "B15.0", definition: "Hepatitis A with hepatic coma", id: UUID.randomUUID())
 
         term(code: "B15.9") {
             definition "Hepatitis A without hepatic coma"
@@ -47,6 +47,7 @@ class TerminologySpec extends Specification {
             sourceTerm "B15"
             targetTerm "B15.9"
             relationshipType "BroaderThan"
+            id UUID.randomUUID()
         }
     }
 
@@ -94,4 +95,31 @@ class TerminologySpec extends Specification {
         diff.numberOfDiffs == 0
     }
 
+    void 'deep clone -should clone new terminology instance with new associations -deep copy of terminology and all its owning objects'() {
+        given:
+        Terminology original = testTerminology
+        original.referenceFiles = [TestModelData.testReferenceFile]
+        when:
+        Terminology cloned = (Terminology) original.deepClone()
+        then:
+
+        //clone clones entire object, all fields, including 'id'
+        !cloned.is(original)
+
+        cloned.terms == original.terms
+        !cloned.terms.is(original.terms)
+
+        cloned.termRelationshipTypes == original.termRelationshipTypes
+        !cloned.termRelationshipTypes.is(original.termRelationshipTypes)
+
+        cloned.termRelationships == original.termRelationships
+        !cloned.termRelationships.is(original.termRelationships)
+
+        cloned.referenceFiles.size() == 1
+        original.referenceFiles.size() == 1
+        !cloned.referenceFiles.is(original.referenceFiles)
+
+        ObjectDiff diff = cloned.diff(original)
+        diff.numberOfDiffs == 0
+    }
 }

@@ -116,6 +116,11 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
         List<Term> readChildTermsByParent(UUID terminologyId, @Nullable UUID id) {
             ((TermRepository) repository).readChildTermsByParent(terminologyId, id)
         }
+
+        @Override
+        Boolean handles(Class clazz) {
+            repository.handles(clazz)
+        }
     }
 
     @CompileStatic

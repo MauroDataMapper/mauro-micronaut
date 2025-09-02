@@ -1,7 +1,10 @@
 package org.maurodata.domain.facet
 
+import org.maurodata.domain.model.Item
 import org.maurodata.domain.model.ItemReference
 import org.maurodata.domain.model.ItemReferencer
+import org.maurodata.domain.model.ItemReferencerUtils
+import org.maurodata.domain.model.ItemUtils
 
 import com.fasterxml.jackson.annotation.JsonAlias
 import com.fasterxml.jackson.annotation.JsonIgnore
@@ -49,21 +52,37 @@ class SemanticLink extends Facet implements ItemReferencer {
     @Transient
     @JsonIgnore
     @Override
-    List<ItemReference> getItemReferences() {
-        List<ItemReference> pathsBeingReferenced = []
-        if (targetMultiFacetAwareItemId != null) {
-            pathsBeingReferenced << ItemReference.from(targetMultiFacetAwareItemId,targetMultiFacetAwareItemDomainType)
-        }
+    List<ItemReference> retrieveItemReferences() {
+        List<ItemReference> pathsBeingReferenced = [] + super.retrieveItemReferences()
+
+        ItemReferencerUtils.addIdType(targetMultiFacetAwareItemId, targetMultiFacetAwareItemDomainType, pathsBeingReferenced)
+
         return pathsBeingReferenced
     }
 
     @Override
-    void replaceItemReferences(Map<UUID, ItemReference> replacements) {
-        if (targetMultiFacetAwareItemId != null) {
-            ItemReference replacementItemReference = replacements.get(targetMultiFacetAwareItemId)
-            if (replacementItemReference != null) {
-                targetMultiFacetAwareItemId = replacementItemReference.itemId
-            }
-        }
+    void replaceItemReferencesByIdentity(IdentityHashMap<Item, Item> replacements, List<Item> notReplaced) {
+        super.replaceItemReferencesByIdentity(replacements, notReplaced)
+        // Can't do this by Item
+        // targetMultiFacetAwareItemId = ItemReferencerUtils.replaceIdTypeByIdentity(targetMultiFacetAwareItemId, replacements)
+    }
+
+    @Override
+    void copyInto(Item into) {
+        super.copyInto(into)
+        SemanticLink intoSemanticLink = (SemanticLink) into
+
+        intoSemanticLink.linkType = ItemUtils.copyItem(this.linkType, intoSemanticLink.linkType)
+        intoSemanticLink.targetMultiFacetAwareItemId = ItemUtils.copyItem(this.targetMultiFacetAwareItemId, intoSemanticLink.targetMultiFacetAwareItemId)
+        intoSemanticLink.targetMultiFacetAwareItemDomainType =
+            ItemUtils.copyItem(this.targetMultiFacetAwareItemDomainType, intoSemanticLink.targetMultiFacetAwareItemDomainType)
+        intoSemanticLink.unconfirmed = ItemUtils.copyItem(this.unconfirmed, intoSemanticLink.unconfirmed)
+    }
+
+    @Override
+    Item shallowCopy() {
+        SemanticLink semanticLinkShallowCopy = new SemanticLink()
+        this.copyInto(semanticLinkShallowCopy)
+        return semanticLinkShallowCopy
     }
 }

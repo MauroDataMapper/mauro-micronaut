@@ -79,11 +79,13 @@ class CodeSetSpec extends Specification {
                                  new Term().with {
                                      code: "B15.0"
                                      definition: "Hepatitis A with hepatic coma"
+                                     id: UUID.randomUUID()
                                  },
                                  new Term().with {
                                      code: "B15.9"
                                      definition "Hepatitis A without hepatic coma"
                                      description "Hepatitis A (acute)(viral) NOS"
+                                     id: UUID.randomUUID()
                                  }
                          ]
                 ]
@@ -94,6 +96,24 @@ class CodeSetSpec extends Specification {
         given:
         CodeSet original = TestModelData.testCodeSet
         CodeSet cloned = original.clone()
+
+        cloned.is(original)
+        cloned.domainType.is(original.domainType)
+        cloned.terms.size() == original.terms.size()
+        cloned.folder== original.folder
+        cloned.folder.is(original.folder)
+
+        cloned.terms.is(original.terms)
+        cloned.terms.toSorted() ==  original.terms.toSorted()
+
+        ObjectDiff objectDiff = original.diff(cloned)
+        objectDiff.numberOfDiffs == 0
+    }
+
+    void 'deep clone -should clone object with same folder and terms '() {
+        given:
+        CodeSet original = TestModelData.testCodeSet
+        CodeSet cloned = (CodeSet) original.deepClone()
 
         cloned.is(original)
         cloned.domainType.is(original.domainType)

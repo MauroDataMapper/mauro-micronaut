@@ -36,7 +36,7 @@ abstract class TermRelationshipRepository implements ModelItemRepository<TermRel
 
     @Nullable
     List<TermRelationship> findAllByParentAndPathIdentifier(UUID item, String pathIdentifier) {
-        termRelationshipDTORepository.findAllByParentAndPathIdentifier(item, pathIdentifier)
+        termRelationshipDTORepository.findAllByParentAndPathIdentifier(item, pathIdentifier) as List<TermRelationship>
     }
 
     @Nullable

@@ -301,7 +301,10 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
             throw new HttpStatusException(HttpStatus.NOT_FOUND, "Object not found")
         }
 
+        existing.setAssociations()
+
         M copy = createCopyModelWithAssociations(existing, createNewVersionData)
+        copy.setAssociations()
 
         M savedCopy = modelContentRepository.saveWithContent(copy)
 
@@ -318,6 +321,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
 
     protected M createCopyModelWithAssociations(M existing, CreateNewVersionData createNewVersionData) {
         M copy = modelService.createNewBranchModelVersion(existing, createNewVersionData.branchName)
+        copy.setAssociations()
         copy.parent = existing.parent
         updateCreationProperties(copy)
         updateDerivedProperties(copy)
@@ -380,7 +384,8 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         Folder folder = null
         if (importParameters.folderId != null) {
             folder = folderRepository.readById(importParameters.folderId)
-        } else if( !(mauroPlugin instanceof FolderImporterPlugin)) { // folderId is null and plugin is not a folder import
+        } else if (!(mauroPlugin instanceof FolderImporterPlugin)) {
+            // folderId is null and plugin is not a folder import
             ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, importParameters.folderId, "Please choose the folder into which the Model/s should be imported.")
         }
 
@@ -485,7 +490,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
                                           "MS04. Models don't share a common ancestor")
         }
 
-        chosenCommonAncestor
+        modelContentRepository.findWithContentById(chosenCommonAncestor.id)
     }
 
     M getFinalisedParent(final M model) {
@@ -502,7 +507,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
             final UUID sourceModelUUID = versionLinkRepositoryUncached.findSourceModel(currentId)
 
             if (sourceModelUUID != null) {
-                currentModel = modelContentRepository.findWithContentById(sourceModelUUID)
+                currentModel = modelRepository.findById(sourceModelUUID)
                 continue
             }
             break
@@ -512,24 +517,23 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     }
 
     boolean isOnVersionPath(final M modelToFind, final M asAncestorOf) {
-        M currentModel = asAncestorOf
+        if (asAncestorOf == null) {return false}
 
+        UUID currentId = asAncestorOf.id
         for (; ;) {
-            if (currentModel == null) {
-                break
-            }
-            final UUID currentId = currentModel.id
             if (currentId == modelToFind.id) {return true}
 
             final UUID sourceModelUUID = versionLinkRepositoryUncached.findSourceModel(currentId)
 
             if (sourceModelUUID != null) {
-                currentModel = modelContentRepository.findWithContentById(sourceModelUUID)
-                continue
+                final boolean sourceModelExists = modelRepository.existsById(sourceModelUUID)
+                if (sourceModelExists) {
+                    currentId = sourceModelUUID
+                    continue
+                }
             }
             break
         }
-
         return false
     }
 
@@ -547,15 +551,19 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         for (; ;) {
             final UUID sourceModelUUID = versionLinkRepositoryUncached.findSourceModel(currentId)
             if (sourceModelUUID != null) {
-                currentId = sourceModelUUID
-                continue
+                // Check whether it actually exists (it could have been deleted and the trail stops here)
+                final boolean rootObjectExists = modelRepository.existsById(sourceModelUUID)
+                if (rootObjectExists) {
+                    currentId = sourceModelUUID
+                    continue
+                }
             }
             break
         }
 
-        final Model rootObject = modelContentRepository.findWithContentById(currentId)
+        final Model rootObject = modelRepository.findById(currentId)
 
-        if (rootObject == null) throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to find root object")
+        if (rootObject == null) {throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to find root object")}
 
         final ArrayList<Model> allModels = new ArrayList<>(10)
         allModels.add(rootObject)
@@ -696,8 +704,6 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         // models are comparable
         // Root the path starting from the startingPathNodeString as the context item
 
-        System.out.println("flattenDiffIntoMap "+pathString+" trimUntil "+startingPathNodeString)
-
         final Path path
         try {
             path = new Path(pathString).trimUntil(startingPathNodeString)
@@ -705,7 +711,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         catch (IllegalArgumentException iae) {
             iae.printStackTrace()
 
-            System.err.println(fieldDiff.toString())
+            log.error(fieldDiff.toString())
             throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, iae.toString())
         }
 
@@ -1399,7 +1405,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
                 case 'modification':
                     return processModificationPatchIntoModel(fieldPatch, targetModel, sourceModel, changeNotice, addedChangeNotice)
                 default:
-                    System.err.println('Unknown field patch type ' + fieldPatch._type)
+                    log.error('Unknown field patch type ' + fieldPatch._type)
             }
         }
 
@@ -1542,13 +1548,13 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
             // If so, clone those and ask the ItemReferencer to update its references to the
             // cloned ones
             ItemReferencer itemReferencer = (ItemReferencer) savedClonedAdministeredItem
-            List<ItemReference> referencedItems = itemReferencer.itemReferences
+            List<ItemReference> referencedItems = itemReferencer.retrieveItemReferences()
 
             // Resolve these to a list of paths
             List<Path> pathsToReferencedItems = pathRepository.resolveItemReferences(referencedItems)
 
             // Are any of these paths inside the source model?
-            final Map<UUID, ItemReference> toReplace = [:]
+            final IdentityHashMap<Item, Item> toReplace = new IdentityHashMap<>(pathsToReferencedItems.size())
             for (int p = 0; p < pathsToReferencedItems.size(); p++) {
                 Path pathToReferencedItem = pathsToReferencedItems.get(p)
 
@@ -1563,9 +1569,6 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
                     // It is in the target model?
 
                     Path pathToReferencedItemFromTarget = pathToReferencedItem.trimUntil(targetModel.pathNodeString)
-
-                    //System.out.println("targetModel.pathNodeString "+targetModel.pathNodeString)
-                    //System.out.println("pathToReferencedItemFromTarget "+pathToReferencedItemFromTarget.toString())
 
                     AdministeredItem targetToReferencedItem
                     try {
@@ -1606,21 +1609,22 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
                     }
 
                     // Record a map of the ItemReferences the ItemReferencer will need to update to use the new reference
-                    toReplace.put(sourceOfReferencedItem.id, ItemReference.from(targetToReferencedItem))
+                    toReplace.put(sourceOfReferencedItem, targetToReferencedItem)
                 }
             }
 
             // Ask the ItemReferencer to update to use the cloned items
-            itemReferencer.replaceItemReferences(toReplace)
+            itemReferencer.replaceItemReferencesByIdentity(toReplace)
 
             // Then for each item, call update
 
-            toReplace.values().forEach {ItemReference itemReference ->
+            toReplace.values().forEach {Item replacedItem ->
 
-                if (itemReference.theItem && itemReference.theItem instanceof AdministeredItem) {
+                if (replacedItem instanceof AdministeredItem) {
+                    AdministeredItem replacedItemAdministeredItem = (AdministeredItem) replacedItem
                     AdministeredItemCacheableRepository administeredItemCacheableRepository =
-                        administeredItemContentRepository.getRepository((AdministeredItem) itemReference.theItem)
-                    administeredItemCacheableRepository.update((AdministeredItem) itemReference.theItem)
+                        administeredItemContentRepository.getRepository(replacedItemAdministeredItem)
+                    administeredItemCacheableRepository.update(replacedItemAdministeredItem)
                 }
             }
         }
@@ -1773,12 +1777,13 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
             it.handles(item.class)
         } ?:
         administeredItemContentRepositories.find {
-            it.getClass().simpleName != 'AdministeredItemContentRepository'
+            it.getClass().simpleName == 'AdministeredItemContentRepository'
         }
     }
 
-    private void connectFacets(AdministeredItem administeredItem){
-        if(administeredItem.metadata){
+    // TODO: Wonder whether this works given the shadowing in the DTOs?
+    private void connectFacets(AdministeredItem administeredItem) {
+        if (administeredItem.metadata) {
             administeredItem.metadata.each {
                 updateMultiAwareData(administeredItem, it)
             }
@@ -1796,7 +1801,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         if (administeredItem.annotations) {
             administeredItem.annotations.each {
                 updateMultiAwareData(administeredItem, it)
-                if(it.childAnnotations){
+                if (it.childAnnotations) {
                     it.childAnnotations.forEach {child ->
                         updateMultiAwareData(administeredItem, child)
                     }
@@ -1808,7 +1813,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
                 updateMultiAwareData(administeredItem, it)
             }
         }
-        if(administeredItem instanceof Model){
+        if (administeredItem instanceof Model) {
             if (((Model) administeredItem).versionLinks) {
                 ((Model) administeredItem).versionLinks.each {
                     updateMultiAwareData(administeredItem, it)

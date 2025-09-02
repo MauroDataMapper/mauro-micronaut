@@ -33,11 +33,17 @@ import java.time.Instant
  */
 @CompileStatic
 @Slf4j
-abstract class Model<M extends DiffableItem> extends AdministeredItem implements SecurableResource {
+abstract class Model<M extends DiffableItem> extends AdministeredItem implements SecurableResource, ItemReferencer {
 
     public static final String DEFAULT_BRANCH_NAME = 'main'
 
     Boolean finalised = false
+
+    @Transient
+    @JsonIgnore
+    Boolean getMyFinalised() {
+        return this.@finalised
+    }
 
     Boolean getFinalised() {
         Model modelWithVersion = getModelWithVersion()
@@ -82,22 +88,18 @@ abstract class Model<M extends DiffableItem> extends AdministeredItem implements
     String modelVersionTag
 
     @JsonIgnore
-    public boolean versionableFlag =true
+    public boolean versionableFlag = true
 
     @Transient
-    boolean isVersionable()
-    {
-        final List<Model> myAncestors= getAncestors()
+    boolean isVersionable() {
+        final List<Model> myAncestors = getAncestors()
         Collections.reverse(myAncestors)
 
-        final Iterator<Model> models=myAncestors.iterator()
-        while(models.hasNext())
-        {
-            final Model ancestor=models.next()
-            if(ancestor instanceof Folder)
-            {
-                if(ancestor.@versionableFlag)
-                {
+        final Iterator<Model> models = myAncestors.iterator()
+        while (models.hasNext()) {
+            final Model ancestor = models.next()
+            if (ancestor instanceof Folder) {
+                if (ancestor.@versionableFlag) {
                     return false
                 }
             }
@@ -106,9 +108,8 @@ abstract class Model<M extends DiffableItem> extends AdministeredItem implements
     }
 
     @Transient
-    void setVersionable(final boolean versionable)
-    {
-        this.versionableFlag=versionable
+    void setVersionable(final boolean versionable) {
+        this.versionableFlag = versionable
     }
 
     @Override
@@ -137,14 +138,13 @@ abstract class Model<M extends DiffableItem> extends AdministeredItem implements
     @JsonIgnore
     @Nullable
     String getPathModelIdentifier() {
-        final Model model=getModelWithVersion()
+        final Model model = getModelWithVersion()
 
-        if(model!=null)
-        {
-            return model.@modelVersion!=null ? model.@modelVersion.toString() : model.@branchName
+        if (model != null) {
+            return model.@modelVersion != null ? model.@modelVersion.toString() : model.@branchName
         }
 
-        return this.@modelVersion!=null ? this.@modelVersion.toString() : this.@branchName
+        return this.@modelVersion != null ? this.@modelVersion.toString() : this.@branchName
     }
 
     /**
@@ -181,12 +181,11 @@ abstract class Model<M extends DiffableItem> extends AdministeredItem implements
 
     @JsonIgnore
     @Transient
-    List<Model> getAncestors()
-    {
-        final ArrayList<Model> myAncestors=new ArrayList<>(3)
+    List<Model> getAncestors() {
+        final ArrayList<Model> myAncestors = new ArrayList<>(3)
 
-        final Model myParent=getParent()
-        if(myParent==null){return myAncestors}
+        final Model myParent = getParent()
+        if (myParent == null) {return myAncestors}
 
         myAncestors.add(myParent)
         myAncestors.addAll(myParent.getAncestors())
@@ -211,8 +210,13 @@ abstract class Model<M extends DiffableItem> extends AdministeredItem implements
         return this
     }
 
-    ModelVersion getModelVersion()
-    {
+    @JsonIgnore
+    @Transient
+    ModelVersion getMyModelVersion() {
+        return this.@modelVersion
+    }
+
+    ModelVersion getModelVersion() {
         return getModelWithVersion().@modelVersion
     }
 
@@ -220,12 +224,23 @@ abstract class Model<M extends DiffableItem> extends AdministeredItem implements
         this.@branchName = branchNameString;
     }
 
+    @JsonIgnore
+    @Transient
+    String getMyBranchName() {
+        return this.@branchName
+    }
+
     String getBranchName() {
         return getModelWithVersion().@branchName
     }
 
-    String getModelVersionTag()
-    {
+    @JsonIgnore
+    @Transient
+    String getMyModelVersionTag() {
+        return this.@modelVersionTag
+    }
+
+    String getModelVersionTag() {
         return getModelWithVersion().@modelVersionTag
     }
 
@@ -289,14 +304,14 @@ abstract class Model<M extends DiffableItem> extends AdministeredItem implements
     }
 
     ModelVersion modelVersion(
-            @NamedParams Map args,
-            @DelegatesTo(value = ModelVersion, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+        @NamedParams Map args,
+        @DelegatesTo(value = ModelVersion, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
         this.modelVersion = ModelVersion.build(args, closure)
         this.modelVersion
     }
 
     ModelVersion modelVersion(
-            @DelegatesTo(value = ModelVersion, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+        @DelegatesTo(value = ModelVersion, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
         this.modelVersion = ModelVersion.build([:], closure)
         this.modelVersion
     }
@@ -319,5 +334,48 @@ abstract class Model<M extends DiffableItem> extends AdministeredItem implements
     /* VersionLinkAware */
 
     @Relation(Relation.Kind.ONE_TO_MANY)
-    List<VersionLink> versionLinks=[]
+    List<VersionLink> versionLinks = []
+
+    @Transient
+    @JsonIgnore
+    @Override
+    List<ItemReference> retrieveItemReferences() {
+        List<ItemReference> pathsBeingReferenced = [] + super.retrieveItemReferences()
+
+        ItemReferencerUtils.addItem(folder, pathsBeingReferenced)
+        ItemReferencerUtils.addItem(authority, pathsBeingReferenced)
+
+        return pathsBeingReferenced
+    }
+
+    @Transient
+    @JsonIgnore
+    @Override
+    void replaceItemReferencesByIdentity(IdentityHashMap<Item, Item> replacements, List<Item> notReplaced) {
+        super.replaceItemReferencesByIdentity(replacements, notReplaced)
+        folder = ItemReferencerUtils.replaceItemByIdentity(folder, replacements, notReplaced)
+        authority = ItemReferencerUtils.replaceItemByIdentity(authority, replacements, notReplaced)
+    }
+
+    @Override
+    void copyInto(Item into) {
+        super.copyInto(into)
+        Model intoModel = (Model) into
+        intoModel.finalised = ItemUtils.copyItem(this.getMyFinalised(), intoModel.getMyFinalised())
+        intoModel.dateFinalised = ItemUtils.copyItem(this.dateFinalised, intoModel.dateFinalised)
+        intoModel.documentationVersion = ItemUtils.copyItem(this.documentationVersion, intoModel.documentationVersion)
+        intoModel.readableByEveryone = ItemUtils.copyItem(this.readableByEveryone, intoModel.readableByEveryone)
+        intoModel.readableByAuthenticatedUsers = ItemUtils.copyItem(this.readableByAuthenticatedUsers, intoModel.readableByAuthenticatedUsers)
+        intoModel.modelType = ItemUtils.copyItem(this.modelType, intoModel.modelType)
+        intoModel.organisation = ItemUtils.copyItem(this.organisation, intoModel.organisation)
+        intoModel.deleted = ItemUtils.copyItem(this.deleted, intoModel.deleted)
+        intoModel.author = ItemUtils.copyItem(this.author, intoModel.author)
+        intoModel.branchName = ItemUtils.copyItem(this.getMyBranchName(), intoModel.getMyBranchName())
+        intoModel.folder = ItemUtils.copyItem(this.folder, intoModel.folder)
+        intoModel.authority = ItemUtils.copyItem(this.authority, intoModel.authority)
+        intoModel.modelVersion = ItemUtils.copyItem(this.getMyModelVersion(), intoModel.getMyModelVersion())
+        intoModel.modelVersionTag = ItemUtils.copyItem(this.getMyModelVersionTag(), intoModel.getMyModelVersionTag())
+        intoModel.versionableFlag = ItemUtils.copyItem(this.versionableFlag, intoModel.versionableFlag)
+        intoModel.versionLinks = ItemUtils.copyItems(this.versionLinks, intoModel.versionLinks)
+    }
 }

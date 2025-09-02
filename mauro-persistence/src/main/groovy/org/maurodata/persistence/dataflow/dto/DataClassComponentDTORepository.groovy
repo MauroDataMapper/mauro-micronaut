@@ -1,6 +1,11 @@
 package org.maurodata.persistence.dataflow.dto
 
+import org.maurodata.domain.dataflow.DataClassComponent
+import org.maurodata.domain.datamodel.DataClass
+import org.maurodata.persistence.datamodel.dto.DataClassDTO
+
 import groovy.transform.CompileStatic
+import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.annotation.Join
 import io.micronaut.data.annotation.Query
@@ -32,5 +37,5 @@ abstract class DataClassComponentDTORepository implements GenericRepository<Data
     @Join(value = 'targetDataClasses', type = Join.Type.LEFT_FETCH)
     @Nullable
     @Query('SELECT * FROM dataflow.data_class_component WHERE data_flow_id = :item AND label = :pathIdentifier')
-    abstract List<DataClassComponentDTO> findAllByParentAndPathIdentifier(UUID item, String pathIdentifier)
+    abstract List<DataClassComponent> findAllByParentAndPathIdentifier(UUID item, String pathIdentifier)
 }

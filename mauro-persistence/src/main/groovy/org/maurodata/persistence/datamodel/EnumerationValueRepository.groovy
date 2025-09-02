@@ -29,7 +29,7 @@ abstract class EnumerationValueRepository implements ModelItemRepository<Enumera
 
     @Nullable
     List<EnumerationValue> findAllByParentAndPathIdentifier(UUID item,String pathIdentifier) {
-        enumerationValueDTORepository.findAllByParentAndPathIdentifier(item,pathIdentifier)
+        enumerationValueDTORepository.findAllByParentAndPathIdentifier(item,pathIdentifier) as List<EnumerationValue>
     }
 
     @Nullable

@@ -1,7 +1,10 @@
 package org.maurodata.domain.datamodel
 
+import org.maurodata.domain.model.Item
 import org.maurodata.domain.model.ItemReference
 import org.maurodata.domain.model.ItemReferencer
+import org.maurodata.domain.model.ItemReferencerUtils
+import org.maurodata.domain.model.ItemUtils
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
@@ -241,7 +244,7 @@ class DataClass extends ModelItem<DataModel> implements DiffableItem<DataClass>,
             if (!this.extendsDataClasses.contains(foundDataClass)) {
                 this.extendsDataClasses.add(foundDataClass)
             }
-            if (!foundDataClass.extendedBy.contains(this)) {
+            if (!foundDataClass.extendedBy.any {DataClass other -> other.id == this.id}) {
                 foundDataClass.extendedBy.add(this)
             }
         }
@@ -251,82 +254,53 @@ class DataClass extends ModelItem<DataModel> implements DiffableItem<DataClass>,
     @Transient
     @JsonIgnore
     @Override
-    List<ItemReference> getItemReferences() {
-        List<ItemReference> pathsBeingReferenced = []
-        if (dataClasses != null) {
-            dataClasses.forEach {DataClass dataClass ->
-                pathsBeingReferenced << ItemReference.from(dataClass)
-            }
-        }
-        if (dataElements != null) {
-            dataElements.forEach {DataElement dataElement ->
-                pathsBeingReferenced << ItemReference.from(dataElement)
-            }
-        }
-        if (referenceTypes != null) {
-            referenceTypes.forEach {DataType dataType ->
-                pathsBeingReferenced << ItemReference.from(dataType)
-            }
-        }
-        if (extendsDataClasses != null) {
-            extendsDataClasses.forEach {DataClass dataClass ->
-                pathsBeingReferenced << ItemReference.from(dataClass)
-            }
-        }
+    List<ItemReference> retrieveItemReferences() {
+        List<ItemReference> pathsBeingReferenced = [] + super.retrieveItemReferences()
+
+        ItemReferencerUtils.addItems(dataElements, pathsBeingReferenced)
+        ItemReferencerUtils.addItems(dataClasses, pathsBeingReferenced)
+
+        ItemReferencerUtils.addItems(referenceTypes, pathsBeingReferenced)
+        ItemReferencerUtils.addItem(parentDataClass, pathsBeingReferenced)
+        ItemReferencerUtils.addItem(dataModel, pathsBeingReferenced)
+        ItemReferencerUtils.addItems(extendsDataClasses, pathsBeingReferenced)
+        ItemReferencerUtils.addItems(extendedBy, pathsBeingReferenced)
+
         return pathsBeingReferenced
     }
 
     @Override
-    void replaceItemReferences(Map<UUID, ItemReference> replacements) {
-        if (dataClasses != null) {
-            final List<DataClass> replacement = []
-            dataClasses.forEach {DataClass dataClass ->
-                ItemReference replacementItemReference = replacements.get(dataClass.id)
-                if (replacementItemReference != null) {
-                    replacement.add((DataClass) replacementItemReference.theItem)
-                } else {
-                    replacement.add(dataClass)
-                }
-            }
-            dataClasses = replacement
-        }
-        if (dataElements != null) {
-            final List<DataElement> replacement = []
-            dataElements.forEach {DataElement dataElement ->
-                ItemReference replacementItemReference = replacements.get(dataElement.id)
-                if (replacementItemReference != null) {
-                    replacement.add((DataElement) replacementItemReference.theItem)
-                } else {
-                    replacement.add(dataElement)
-                }
-            }
-            dataElements = replacement
-        }
-        if (referenceTypes != null) {
-            final List<DataType> replacement = []
-            referenceTypes.forEach {DataType dataType ->
-                ItemReference replacementItemReference = replacements.get(dataType.id)
-                if (replacementItemReference != null) {
-                    replacement.add((DataType) replacementItemReference.theItem)
-                } else {
-                    replacement.add(dataType)
-                }
-            }
-            referenceTypes = replacement
-        }
-        if (extendsDataClasses != null) {
-            final List<DataClass> replacementSet = []
-            extendsDataClasses.forEach {DataClass dataClass ->
-                ItemReference replacementItemReference = replacements.get(dataClass.id)
-                if (replacementItemReference != null) {
-                    dataClass.extendedBy.remove(this)
-                    replacementSet.add((DataClass) replacementItemReference.theItem)
-                    ((DataClass) replacementItemReference.theItem).extendedBy.add(this)
-                } else {
-                    replacementSet.add(dataClass)
-                }
-            }
-            extendsDataClasses = replacementSet
-        }
+    void replaceItemReferencesByIdentity(IdentityHashMap<Item, Item> replacements, List<Item> notReplaced) {
+        super.replaceItemReferencesByIdentity(replacements, notReplaced)
+
+        parentDataClass = ItemReferencerUtils.replaceItemByIdentity(parentDataClass, replacements, notReplaced)
+        dataModel = ItemReferencerUtils.replaceItemByIdentity(dataModel, replacements, notReplaced)
+        dataClasses = ItemReferencerUtils.replaceItemsByIdentity(dataClasses, replacements, notReplaced)
+        dataElements = ItemReferencerUtils.replaceItemsByIdentity(dataElements, replacements, notReplaced)
+        referenceTypes = ItemReferencerUtils.replaceItemsByIdentity(referenceTypes, replacements, notReplaced)
+        extendsDataClasses = ItemReferencerUtils.replaceItemsByIdentity(extendsDataClasses, replacements, notReplaced)
+        extendedBy = ItemReferencerUtils.replaceItemsByIdentity(extendedBy, replacements, notReplaced)
+    }
+
+    @Override
+    void copyInto(Item into) {
+        super.copyInto(into)
+        DataClass intoDataClass = (DataClass) into
+        intoDataClass.minMultiplicity = ItemUtils.copyItem(this.minMultiplicity, intoDataClass.minMultiplicity)
+        intoDataClass.maxMultiplicity = ItemUtils.copyItem(this.maxMultiplicity, intoDataClass.maxMultiplicity)
+        intoDataClass.dataModel = ItemUtils.copyItem(this.dataModel, intoDataClass.dataModel)
+        intoDataClass.dataClasses = ItemUtils.copyItems(this.dataClasses, intoDataClass.dataClasses)
+        intoDataClass.dataElements = ItemUtils.copyItems(this.dataElements, intoDataClass.dataElements)
+        intoDataClass.extendsDataClasses = ItemUtils.copyItems(this.extendsDataClasses, intoDataClass.extendsDataClasses)
+        intoDataClass.extendedBy = ItemUtils.copyItems(this.extendedBy, intoDataClass.extendedBy)
+        intoDataClass.referenceTypes = ItemUtils.copyItems(this.referenceTypes, intoDataClass.referenceTypes)
+        intoDataClass.parentDataClass = ItemUtils.copyItem(this.parentDataClass, intoDataClass.parentDataClass)
+    }
+
+    @Override
+    Item shallowCopy() {
+        DataClass dataClassShallowCopy = new DataClass()
+        this.copyInto(dataClassShallowCopy)
+        return dataClassShallowCopy
     }
 }

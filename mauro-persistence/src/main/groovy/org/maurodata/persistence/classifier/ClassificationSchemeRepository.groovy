@@ -33,6 +33,11 @@ abstract class ClassificationSchemeRepository implements ModelRepository<Classif
     }
 
     @Override
+    Boolean handles(Class clazz) {
+        domainClass.isAssignableFrom(clazz)
+    }
+
+    @Override
     @Nullable
     abstract List<ClassificationScheme> findAllByFolderId(UUID folderId)
 

@@ -37,7 +37,7 @@ abstract class DataElementRepository implements  ModelItemRepository<DataElement
 
     @Nullable
     List<DataElement> findAllByParentAndPathIdentifier(UUID item,String pathIdentifier) {
-        dataElementDTORepository.findAllByParentAndPathIdentifier(item,pathIdentifier)
+        dataElementDTORepository.findAllByParentAndPathIdentifier(item,pathIdentifier) as List<DataElement>
     }
 
     @Nullable

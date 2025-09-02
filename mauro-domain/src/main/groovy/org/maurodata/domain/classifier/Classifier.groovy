@@ -1,5 +1,11 @@
 package org.maurodata.domain.classifier
 
+import org.maurodata.domain.model.Item
+import org.maurodata.domain.model.ItemReference
+import org.maurodata.domain.model.ItemReferencer
+import org.maurodata.domain.model.ItemReferencerUtils
+import org.maurodata.domain.model.ItemUtils
+
 import com.fasterxml.jackson.annotation.JsonAlias
 import com.fasterxml.jackson.annotation.JsonIgnore
 import groovy.transform.AutoClone
@@ -29,7 +35,7 @@ import org.maurodata.domain.model.ModelItem
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @MappedEntity(schema = 'core', value = 'classifier')
 @MapConstructor(includeSuperFields = true, includeSuperProperties = true, noArg = true)
-class Classifier extends ModelItem<ClassificationScheme> implements DiffableItem<Classifier> {
+class Classifier extends ModelItem<ClassificationScheme> implements DiffableItem<Classifier>, ItemReferencer {
 
     @JsonIgnore
     ClassificationScheme classificationScheme
@@ -47,6 +53,7 @@ class Classifier extends ModelItem<ClassificationScheme> implements DiffableItem
     @JsonIgnore
     AdministeredItem getParent() {
         parentClassifier?:classificationScheme
+
     }
 
     @Override
@@ -109,6 +116,46 @@ class Classifier extends ModelItem<ClassificationScheme> implements DiffableItem
             base.appendCollection(DiffBuilder.CLASSIFIERS, this.classifiers as Collection<DiffableItem>, other.classifiers as Collection<DiffableItem>, lhsPathRoot, rhsPathRoot)
         }
         base
+    }
+
+    @Override
+    void copyInto(Item into) {
+        super.copyInto(into)
+        Classifier intoClassifier = (Classifier) into
+        intoClassifier.classificationScheme = ItemUtils.copyItem(this.classificationScheme, intoClassifier.classificationScheme)
+        intoClassifier.childClassifiers = ItemUtils.copyItems(this.childClassifiers, intoClassifier.childClassifiers)
+        intoClassifier.parentClassifier = ItemUtils.copyItem(this.parentClassifier, intoClassifier.parentClassifier)
+        intoClassifier.breadcrumbTreeId = ItemUtils.copyItem(this.breadcrumbTreeId, intoClassifier.breadcrumbTreeId)
+    }
+
+    @Override
+    Item shallowCopy() {
+        Classifier classifierShallowCopy = new Classifier()
+        this.copyInto(classifierShallowCopy)
+        return classifierShallowCopy
+    }
+
+    @Transient
+    @JsonIgnore
+    @Override
+    List<ItemReference> retrieveItemReferences() {
+        List<ItemReference> pathsBeingReferenced = [] + super.retrieveItemReferences()
+
+        ItemReferencerUtils.addItem(classificationScheme, pathsBeingReferenced)
+        ItemReferencerUtils.addItems(childClassifiers, pathsBeingReferenced)
+        ItemReferencerUtils.addItem(parentClassifier, pathsBeingReferenced)
+
+        return pathsBeingReferenced
+    }
+
+    @Transient
+    @JsonIgnore
+    @Override
+    void replaceItemReferencesByIdentity(IdentityHashMap<Item, Item> replacements, List<Item> notReplaced) {
+        super.replaceItemReferencesByIdentity(replacements, notReplaced)
+        classificationScheme = ItemReferencerUtils.replaceItemByIdentity(classificationScheme, replacements, notReplaced)
+        parentClassifier = ItemReferencerUtils.replaceItemByIdentity(parentClassifier, replacements, notReplaced)
+        childClassifiers = ItemReferencerUtils.replaceItemsByIdentity(childClassifiers, replacements, notReplaced)
     }
 
 }

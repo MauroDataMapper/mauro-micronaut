@@ -52,4 +52,14 @@ class TerminologyContentRepository extends ModelContentRepository<Terminology> {
     Terminology saveWithContent(@NonNull Terminology terminology) {
         (Terminology) super.saveWithContent(terminology)
     }
+
+    @Override
+    Boolean handles(String domainType) {
+        return terminologyRepository.handles(domainType)
+    }
+
+    @Override
+    Boolean handles(Class clazz) {
+        return terminologyRepository.handles(clazz)
+    }
 }

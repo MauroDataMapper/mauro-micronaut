@@ -105,7 +105,13 @@ class FolderContentRepository extends ModelContentRepository<Folder> {
 
 
     protected ModelContentRepository getModelContentRepository(Class clazz) {
-        modelContentRepositories.find {it.class.simpleName.toLowerCase().contains(clazz.simpleName.toLowerCase())}
+        modelContentRepositories.find {
+            it.getClass().simpleName != 'ModelContentRepository' &&
+            it.handles(clazz)
+        } ?:
+        modelContentRepositories.find {
+            it.getClass().simpleName == 'ModelContentRepository'
+        }
     }
 
     protected List<Folder> surfaceChildContent(List<Folder> folders) {
