@@ -383,4 +383,20 @@ class Folder extends Model implements ItemReferencer {
         this.copyInto(folderShallowCopy)
         return folderShallowCopy
     }
+    Terminology terminology(Terminology terminology) {
+        this.terminologies.add(terminology)
+        terminology.folder = this
+        terminology.parent = this
+        terminology
+    }
+
+    Terminology terminology(Map args, @DelegatesTo(value = Terminology, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+        Terminology terminology1 = Terminology.build(args + [parent: this, folder: this], closure)
+        terminology terminology1
+    }
+
+    Terminology terminology(@DelegatesTo(value = Terminology, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+        terminology [:], closure
+    }
+
 }

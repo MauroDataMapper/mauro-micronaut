@@ -1,7 +1,9 @@
 package org.maurodata.persistence.cache
 
+import io.micronaut.cache.SyncCache
 import io.micronaut.core.annotation.Nullable
 import jakarta.inject.Inject
+import jakarta.inject.Named
 import org.maurodata.domain.security.ApiKey
 import org.maurodata.persistence.security.ApiKeyRepository
 
@@ -42,8 +44,16 @@ import org.maurodata.persistence.security.UserGroupRepository
 @CacheConfig(cacheNames = 'items-cache', keyGenerator = StringCacheKeyGenerator)
 abstract class ItemCacheableRepository<I extends Item> implements ItemRepository<I> {
 
+    @Inject
+    @Named("items-cache")
+    SyncCache<Object> entityCache
+
     static final String FIND_BY_ID = 'find'
     static final String READ_BY_ID = 'read'
+
+    static String generateReadKey(Item item) {
+        "${READ_BY_ID}_${item.domainType}_${item.id}"
+    }
 
     ItemRepository<I> repository
     String domainType
@@ -68,13 +78,19 @@ abstract class ItemCacheableRepository<I extends Item> implements ItemRepository
     I save(I item) {
         I saved = repository.save(item)
         invalidate(item)
-        saved
+        // entityCache.put(generateReadKey(saved), saved)
+        (I) saved.clone()
+        //saved
     }
 
     List<I> saveAll(Iterable<I> items) {
         List<I> saved = repository.saveAll(items)
-        items.each { invalidate(it) }
-        saved
+        saved.each { it ->
+            invalidate(it)
+            // entityCache.put(generateReadKey(it), it)
+        }
+
+        (List) saved.collect {(I) it.clone()}
     }
 
     I update(I item) {

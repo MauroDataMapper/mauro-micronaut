@@ -44,6 +44,9 @@ dependencies {
     implementation("io.micronaut.flyway:micronaut-flyway")
     runtimeOnly("org.postgresql:postgresql")
     runtimeOnly("org.flywaydb:flyway-database-postgresql")
+    implementation("io.micronaut.cache:micronaut-cache-core")
+    implementation("io.micronaut.cache:micronaut-cache-caffeine")
+
 
     implementation("io.micronaut.sql:micronaut-jdbc-hikari")
     implementation group: 'org.apache.groovy', name: 'groovy-json', version: '4.0.19'

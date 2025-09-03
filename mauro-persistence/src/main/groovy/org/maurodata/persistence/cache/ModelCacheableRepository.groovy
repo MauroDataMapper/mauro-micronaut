@@ -128,7 +128,7 @@ class ModelCacheableRepository<M extends Model> extends AdministeredItemCacheabl
     @Singleton
     static class ClassificationSchemeCacheableRepository extends ModelCacheableRepository<ClassificationScheme> {
         ClassificationSchemeCacheableRepository(ClassificationSchemeRepository classificationSchemeRepository) {
-            super(classificationSchemeRepository as ModelRepository<ClassificationScheme>)
+            super(classificationSchemeRepository)
         }
 
         @Override
