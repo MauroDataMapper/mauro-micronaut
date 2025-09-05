@@ -2,7 +2,6 @@ package org.maurodata.domain.model
 
 import org.maurodata.domain.datamodel.DataModel
 
-import com.fasterxml.jackson.annotation.JsonAlias
 import com.fasterxml.jackson.annotation.JsonIgnore
 import groovy.transform.CompileStatic
 import groovy.transform.NamedParams
