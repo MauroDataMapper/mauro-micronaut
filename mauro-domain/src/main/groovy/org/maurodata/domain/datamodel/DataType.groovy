@@ -1,8 +1,10 @@
 package org.maurodata.domain.datamodel
 
 import org.maurodata.domain.model.Item
+import jakarta.persistence.PrePersist
 import org.maurodata.domain.model.ItemReference
 import org.maurodata.domain.model.ItemReferencer
+import org.maurodata.domain.model.Model
 import org.maurodata.domain.model.ItemReferencerUtils
 import org.maurodata.domain.model.ItemUtils
 
@@ -94,6 +96,19 @@ class DataType extends ModelItem<DataModel> implements DiffableItem<DataType>, I
     @Nullable
     @MappedProperty('model_resource_id')
     UUID modelResourceId
+
+    @Transient
+    Model modelResource
+
+    @PrePersist
+    void prePersist() {
+        if(dataTypeKind == DataTypeKind.MODEL_TYPE) {
+            if(modelResource) {
+                modelResourceDomainType = modelResource.domainType
+                modelResourceId = modelResource.id
+            }
+        }
+    }
 
     @Override
     String getDomainType() {

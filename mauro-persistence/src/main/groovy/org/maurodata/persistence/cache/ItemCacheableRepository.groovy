@@ -79,8 +79,8 @@ abstract class ItemCacheableRepository<I extends Item> implements ItemRepository
         I saved = repository.save(item)
         invalidate(item)
         // entityCache.put(generateReadKey(saved), saved)
-        (I) saved.clone()
-        //saved
+        //(I) saved.clone()
+        saved
     }
 
     List<I> saveAll(Iterable<I> items) {
@@ -89,8 +89,8 @@ abstract class ItemCacheableRepository<I extends Item> implements ItemRepository
             invalidate(it)
             // entityCache.put(generateReadKey(it), it)
         }
-
-        (List) saved.collect {(I) it.clone()}
+        saved
+        //(List) saved.collect {(I) it.clone()}
     }
 
     I update(I item) {

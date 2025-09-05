@@ -7,15 +7,28 @@ import org.maurodata.domain.datamodel.DataElement
 import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.datamodel.DataType
 import org.maurodata.domain.datamodel.EnumerationValue
+import org.maurodata.domain.facet.Annotation
+import org.maurodata.domain.facet.CatalogueFile
+import org.maurodata.domain.facet.Edit
 import org.maurodata.domain.facet.Metadata
+import org.maurodata.domain.facet.ReferenceFile
+import org.maurodata.domain.facet.Rule
+import org.maurodata.domain.facet.RuleRepresentation
+import org.maurodata.domain.facet.SemanticLink
+import org.maurodata.domain.facet.SummaryMetadata
+import org.maurodata.domain.facet.SummaryMetadataReport
+import org.maurodata.domain.facet.VersionLink
 import org.maurodata.domain.folder.Folder
 import org.maurodata.domain.model.AdministeredItem
-import org.maurodata.domain.model.Item
 import org.maurodata.domain.terminology.CodeSet
 import org.maurodata.domain.terminology.Term
 import org.maurodata.domain.terminology.TermRelationship
 import org.maurodata.domain.terminology.TermRelationshipType
 import org.maurodata.domain.terminology.Terminology
+import org.maurodata.persistence.cache.AdministeredItemCacheableRepository.DataClassCacheableRepository
+import org.maurodata.persistence.cache.AdministeredItemCacheableRepository.DataTypeCacheableRepository
+import org.maurodata.persistence.cache.AdministeredItemCacheableRepository.DataElementCacheableRepository
+import org.maurodata.persistence.cache.AdministeredItemCacheableRepository.EnumerationValueCacheableRepository
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository.TermCacheableRepository
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository.TermRelationshipCacheableRepository
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository.TermRelationshipTypeCacheableRepository
@@ -23,6 +36,7 @@ import org.maurodata.persistence.cache.FacetCacheableRepository.MetadataCacheabl
 import org.maurodata.persistence.cache.ModelCacheableRepository.CodeSetCacheableRepository
 import org.maurodata.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
 import org.maurodata.persistence.cache.ModelCacheableRepository.TerminologyCacheableRepository
+import org.maurodata.persistence.cache.ModelCacheableRepository.DataModelCacheableRepository
 import org.maurodata.persistence.facet.MetadataRepository
 import org.maurodata.persistence.folder.FolderRepository
 
@@ -44,14 +58,19 @@ class ContentHandler {
     @Inject TermRelationshipTypeCacheableRepository termRelationshipTypeCacheableRepository
     @Inject TermRelationshipCacheableRepository termRelationshipCacheableRepository
     @Inject CodeSetCacheableRepository codeSetCacheableRepository
+    @Inject DataModelCacheableRepository dataModelCacheableRepository
+    @Inject DataClassCacheableRepository dataClassCacheableRepository
+    @Inject DataTypeCacheableRepository dataTypeCacheableRepository
+    @Inject DataElementCacheableRepository dataElementCacheableRepository
+    @Inject EnumerationValueCacheableRepository enumerationValueCacheableRepository
 
     @Inject MetadataCacheableRepository metadataCacheableRepository
 
     @Inject MetadataRepository metadataRepository
 
-    List<Folder> folders = []
+    Map<Integer, Set<Folder>> folders = [:]
     List<DataModel> dataModels = []
-    List<DataClass> dataClasses = []
+    Map<Integer, Set<DataClass>> dataClasses = [:]
     List<DataType> dataTypes = []
     List<DataElement> dataElements = []
     List<EnumerationValue> enumerationValues = []
@@ -62,12 +81,25 @@ class ContentHandler {
     List<CodeSet> codeSets = []
 
     List<Metadata> metadata = []
+    Map<Integer, Set<Annotation>> annotations = [:]
+    List<CatalogueFile> catalogueFiles = []
+    List<Edit> edits = []
+    List<ReferenceFile> referenceFiles = []
+    List<Rule> rules = []
+    List<RuleRepresentation> ruleRepresentations = []
+    List<SemanticLink> semanticLinks = []
+    List<SummaryMetadata> summaryMetadata = []
+    List<SummaryMetadataReport> summaryMetadataReports = []
+    List<VersionLink> versionLinks = []
 
-
-    void shred(Folder folder) {
-        folders.add(folder)
+    void shred(Folder folder, Integer depth = 0) {
+        if(folders[depth]) {
+            folders[depth].add(folder)
+        } else {
+            folders[depth] = [folder] as Set
+        }
         shredFacets(folder)
-        folder.childFolders.each {shred(it)}
+        folder.childFolders.each {shred(it, depth+1)}
         folder.terminologies.each {shred(it)}
         folder.dataModels.each {shred(it)}
         folder.codeSets.each {shred(it)}
@@ -75,6 +107,7 @@ class ContentHandler {
 
     void shred(Terminology terminology) {
         terminologies.add(terminology)
+        shredFacets(terminology)
         terminology.terms.each {shred(it)}
         terminology.termRelationships.each {shred(it)}
         terminology.termRelationshipTypes.each {shred(it)}
@@ -87,47 +120,72 @@ class ContentHandler {
 
     void shred(TermRelationshipType termRelationshipType) {
         termRelationshipTypes.add(termRelationshipType)
+        shredFacets(termRelationshipType)
     }
 
     void shred(TermRelationship termRelationship) {
         termRelationships.add(termRelationship)
+        shredFacets(termRelationship)
     }
 
     void shred(CodeSet codeSet) {
         codeSets.add(codeSet)
+        shredFacets(codeSet)
     }
 
     void shred(DataModel dataModel) {
         dataModels.add(dataModel)
+        shredFacets(dataModel)
         dataModel.childDataClasses.each {shred(it)}
         dataModel.dataTypes.each {shred(it) }
     }
 
-    void shred(DataClass dataClass) {
-        dataClasses.add(dataClass)
-        dataClass.dataClasses.each {shred(it)}
+    void shred(DataClass dataClass, Integer depth = 0) {
+        if(dataClasses[depth]) {
+            dataClasses[depth].add(dataClass)
+        } else {
+            dataClasses[depth] = [dataClass] as Set
+        }
+        shredFacets(dataClass)
+        dataClass.dataClasses.each {shred(it, depth+1)}
         dataClass.dataElements.each {shred(it)}
     }
 
     void shred(DataType dataType) {
         dataTypes.add(dataType)
+        shredFacets(dataType)
         dataType.enumerationValues.each {shred(it)}
     }
     void shred(EnumerationValue enumerationValue) {
+        shredFacets(enumerationValue)
         enumerationValues.add(enumerationValue)
     }
     void shred(DataElement dataElement) {
         dataElements.add(dataElement)
+        shredFacets(dataElement)
     }
 
     void saveWithContent() {
-        logSettings()
-        folderCacheableRepository.saveAll(folders)
+        folders.keySet().sort().each {depth ->
+            folderCacheableRepository.saveAll(folders[depth])
+        }
         terminologyCacheableRepository.saveAll(terminologies)
         termCacheableRepository.saveAll(terms)
         termRelationshipTypeCacheableRepository.saveAll(termRelationshipTypes)
         termRelationshipCacheableRepository.saveAll(termRelationships)
         codeSetCacheableRepository.saveAll(codeSets)
+        dataModelCacheableRepository.saveAll (dataModels)
+        dataClasses.keySet().sort().each {depth ->
+            dataClassCacheableRepository.saveAll (dataClasses[depth])
+        }
+        dataClasses.values().flatten().each {DataClass dataClass ->
+            dataClass.extendsDataClasses.each {superClass ->
+                dataClassCacheableRepository.addDataClassExtensionRelationship(dataClass.id, superClass.id)
+            }
+        }
+        dataTypeCacheableRepository.saveAll (dataTypes)
+        dataElementCacheableRepository.saveAll (dataElements)
+        enumerationValueCacheableRepository.saveAll (enumerationValues)
 
         metadata.each {it.multiFacetAwareItemId = it.multiFacetAwareItem.id }
 /*
@@ -147,14 +205,6 @@ class ContentHandler {
     void shredFacets(AdministeredItem item) {
         if(item.metadata) {
             metadata.addAll(item.metadata)
-        }
-    }
-
-    void logSettings() throws Exception {
-        try (Connection conn = dataSource.getConnection()) {
-            DatabaseMetaData meta = conn.getMetaData()
-            System.out.println("URL: " + meta.getURL())
-            System.out.println("AutoCommit: " + conn.getAutoCommit())
         }
     }
 

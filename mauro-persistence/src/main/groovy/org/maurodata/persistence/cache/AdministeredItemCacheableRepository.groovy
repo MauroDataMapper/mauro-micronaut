@@ -195,6 +195,11 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
             ((DataClassRepository) repository).addDataClassExtensionRelationship(sourceDataClass.id, targetDataClass.id)
 
         }
+        // not cached
+        DataClass addDataClassExtensionRelationship(@NonNull UUID dataClassId, @NonNull UUID extendedDataClassId) {
+            ((DataClassRepository) repository).addDataClassExtensionRelationship(dataClassId, extendedDataClassId)
+        }
+
 
         // not cached
         long deleteExtensionRelationship(DataClass sourceDataClass, DataClass targetDataClass) {
