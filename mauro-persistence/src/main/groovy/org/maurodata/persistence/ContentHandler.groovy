@@ -32,12 +32,22 @@ import org.maurodata.persistence.cache.AdministeredItemCacheableRepository.Enume
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository.TermCacheableRepository
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository.TermRelationshipCacheableRepository
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository.TermRelationshipTypeCacheableRepository
+import org.maurodata.persistence.cache.FacetCacheableRepository
+import org.maurodata.persistence.cache.FacetCacheableRepository.EditCacheableRepository
 import org.maurodata.persistence.cache.FacetCacheableRepository.MetadataCacheableRepository
+import org.maurodata.persistence.cache.FacetCacheableRepository.SummaryMetadataCacheableRepository
+import org.maurodata.persistence.cache.FacetCacheableRepository.VersionLinkCacheableRepository
+import org.maurodata.persistence.cache.ItemCacheableRepository.RuleRepresentationCacheableRepository
+import org.maurodata.persistence.cache.ItemCacheableRepository.SummaryMetadataReportCacheableRepository
 import org.maurodata.persistence.cache.ModelCacheableRepository.CodeSetCacheableRepository
 import org.maurodata.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
 import org.maurodata.persistence.cache.ModelCacheableRepository.TerminologyCacheableRepository
 import org.maurodata.persistence.cache.ModelCacheableRepository.DataModelCacheableRepository
+import org.maurodata.persistence.facet.AnnotationRepository
 import org.maurodata.persistence.facet.MetadataRepository
+import org.maurodata.persistence.facet.ReferenceFileRepository
+import org.maurodata.persistence.facet.RuleRepository
+import org.maurodata.persistence.facet.SemanticLinkRepository
 import org.maurodata.persistence.folder.FolderRepository
 
 import java.sql.Connection
@@ -68,6 +78,16 @@ class ContentHandler {
 
     @Inject MetadataRepository metadataRepository
 
+    @Inject AnnotationRepository annotationRepository
+    @Inject EditCacheableRepository editCacheableRepository
+    @Inject ReferenceFileRepository referenceFileRepository
+    @Inject FacetCacheableRepository.RuleCacheableRepository ruleRepository
+    @Inject RuleRepresentationCacheableRepository ruleRepresentationCacheableRepository
+    @Inject SemanticLinkRepository semanticLinkRepository
+    @Inject SummaryMetadataCacheableRepository summaryMetadataCacheableRepository
+    @Inject SummaryMetadataReportCacheableRepository summaryMetadataReportCacheableRepository
+    @Inject VersionLinkCacheableRepository versionLinkCacheableRepository
+
     Map<Integer, Set<Folder>> folders = [:]
     List<DataModel> dataModels = []
     Map<Integer, Set<DataClass>> dataClasses = [:]
@@ -82,7 +102,7 @@ class ContentHandler {
 
     List<Metadata> metadata = []
     Map<Integer, Set<Annotation>> annotations = [:]
-    List<CatalogueFile> catalogueFiles = []
+    //List<CatalogueFile> catalogueFiles = []
     List<Edit> edits = []
     List<ReferenceFile> referenceFiles = []
     List<Rule> rules = []
@@ -188,6 +208,34 @@ class ContentHandler {
         enumerationValueCacheableRepository.saveAll (enumerationValues)
 
         metadata.each {it.multiFacetAwareItemId = it.multiFacetAwareItem.id }
+
+        annotations.keySet().sort().each {depth ->
+            annotations[depth].each {it.multiFacetAwareItemId = it.multiFacetAwareItem.id }
+            annotationRepository.saveAll(annotations[depth])
+        }
+
+        edits.each {it.multiFacetAwareItemId = it.multiFacetAwareItem.id }
+        editCacheableRepository.saveAll(edits)
+        referenceFiles.each {it.multiFacetAwareItemId = it.multiFacetAwareItem.id }
+        referenceFileRepository.saveAll(referenceFiles)
+        rules.each {it.multiFacetAwareItemId = it.multiFacetAwareItem.id }
+        ruleRepository.saveAll(rules)
+        ruleRepresentationCacheableRepository.saveAll(ruleRepresentations)
+        semanticLinks.each {
+            it.multiFacetAwareItemId = it.multiFacetAwareItem.id
+            // target?
+        }
+        semanticLinkRepository.saveAll(semanticLinks)
+        summaryMetadata.each {it.multiFacetAwareItemId = it.multiFacetAwareItem.id }
+        summaryMetadataCacheableRepository.saveAll(summaryMetadata)
+        summaryMetadataReportCacheableRepository.saveAll(summaryMetadataReports)
+        versionLinks.each {
+            it.multiFacetAwareItemId = it.multiFacetAwareItem.id
+            it.targetModelId = it.targetModel.id
+            it.targetModelDomainType = it.targetModel.domainType
+        }
+        versionLinkCacheableRepository.saveAll(versionLinks)
+
 /*
         for (int i = 0; i < metadata.size(); i += 5000) {
             int end = Math.min(i + 5000, metadata.size())
