@@ -89,28 +89,28 @@ class ContentHandler {
     @Inject VersionLinkCacheableRepository versionLinkCacheableRepository
 
     Map<Integer, Set<Folder>> folders = [:]
-    List<DataModel> dataModels = []
+    Set<DataModel> dataModels = []
     Map<Integer, Set<DataClass>> dataClasses = [:]
-    List<DataType> dataTypes = []
-    List<DataElement> dataElements = []
-    List<EnumerationValue> enumerationValues = []
-    List<Terminology> terminologies = []
-    List<Term> terms = []
-    List<TermRelationshipType> termRelationshipTypes = []
-    List<TermRelationship> termRelationships = []
-    List<CodeSet> codeSets = []
+    Set<DataType> dataTypes = []
+    Set<DataElement> dataElements = []
+    Set<EnumerationValue> enumerationValues = []
+    Set<Terminology> terminologies = []
+    Set<Term> terms = []
+    Set<TermRelationshipType> termRelationshipTypes = []
+    Set<TermRelationship> termRelationships = []
+    Set<CodeSet> codeSets = []
 
-    List<Metadata> metadata = []
+    Set<Metadata> metadata = []
     Map<Integer, Set<Annotation>> annotations = [:]
     //List<CatalogueFile> catalogueFiles = []
-    List<Edit> edits = []
-    List<ReferenceFile> referenceFiles = []
-    List<Rule> rules = []
-    List<RuleRepresentation> ruleRepresentations = []
-    List<SemanticLink> semanticLinks = []
-    List<SummaryMetadata> summaryMetadata = []
-    List<SummaryMetadataReport> summaryMetadataReports = []
-    List<VersionLink> versionLinks = []
+    Set<Edit> edits = []
+    Set<ReferenceFile> referenceFiles = []
+    Set<Rule> rules = []
+    Set<RuleRepresentation> ruleRepresentations = []
+    Set<SemanticLink> semanticLinks = []
+    Set<SummaryMetadata> summaryMetadata = []
+    Set<SummaryMetadataReport> summaryMetadataReports = []
+    Set<VersionLink> versionLinks = []
 
     void shred(Folder folder, Integer depth = 0) {
         if(folders[depth]) {
@@ -231,8 +231,8 @@ class ContentHandler {
         summaryMetadataReportCacheableRepository.saveAll(summaryMetadataReports)
         versionLinks.each {
             it.multiFacetAwareItemId = it.multiFacetAwareItem.id
-            it.targetModelId = it.targetModel.id
-            it.targetModelDomainType = it.targetModel.domainType
+//            it.targetModelId = it.targetModel.id
+//            it.targetModelDomainType = it.targetModel.domainType
         }
         versionLinkCacheableRepository.saveAll(versionLinks)
 
