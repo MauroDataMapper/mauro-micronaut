@@ -1,5 +1,6 @@
 package org.maurodata.domain.model
 
+import groovy.util.logging.Slf4j
 import org.maurodata.domain.classifier.Classifier
 import org.maurodata.domain.facet.Annotation
 import org.maurodata.domain.facet.Edit
@@ -36,6 +37,7 @@ import java.time.Instant
 
 @CompileStatic
 @AutoClone
+@Slf4j
 abstract class AdministeredItem extends Item implements Pathable {
 
     /**
@@ -307,6 +309,40 @@ abstract class AdministeredItem extends Item implements Pathable {
         cloned.referenceFiles = clonedReferenceFiles
         cloned
 
+    }
+
+    /**
+     * Helper methods for dealing with Metadata
+     */
+
+    List<Metadata> findMetadataByNamespace(String namespace) {
+        metadata.findAll {it.namespace == namespace}
+    }
+
+    Map<String, String> findMetadataByNamespaceAsMap(String namespace) {
+        findMetadataByNamespace(namespace).collectEntries{ [it.key, it.value]}
+    }
+
+    Metadata findMetadataByNamespaceAndKey(String namespace, String key) {
+        metadata.find{it.namespace == namespace && it.key == key}
+    }
+
+    boolean maybeAddMetadata(String namespace, String key, String value) {
+        if(!namespace || !key || !value) {
+            log.warn("Unable to add metadata with namespace: ${namespace}, key: ${key}, value: ${value}, because of a null value")
+            return false
+        }
+        if(findMetadataByNamespaceAndKey(namespace, key)) {
+            log.warn("Unable to add metadata with namespace: ${namespace}, key: ${key}, value: ${value}, because a metadata item with the same namespace and key is already present")
+            return false
+        }
+        metadata.add(new Metadata(namespace: namespace, key: key, value: value))
+    }
+
+    void addAllMetadata(String namespace, Map<String, String> keyValues) {
+        keyValues.each {key, value ->
+            maybeAddMetadata(namespace, key, value)
+        }
     }
 
     /**
