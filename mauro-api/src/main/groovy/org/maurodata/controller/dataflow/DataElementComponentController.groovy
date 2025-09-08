@@ -26,8 +26,6 @@ import org.maurodata.domain.datamodel.DataElement
 import org.maurodata.domain.security.Role
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository
 import org.maurodata.persistence.dataflow.DataElementComponentContentRepository
-import org.maurodata.persistence.dataflow.DataFlowRepository
-import org.maurodata.persistence.datamodel.DataElementRepository
 import org.maurodata.web.ListResponse
 import org.maurodata.web.PaginationParams
 
@@ -40,23 +38,22 @@ class DataElementComponentController extends AdministeredItemController<DataElem
 
     AdministeredItemCacheableRepository.DataClassComponentCacheableRepository dataClassComponentRepository
 
-    DataElementRepository dataElementRepository
+    AdministeredItemCacheableRepository.DataElementCacheableRepository dataElementRepository
 
     DataElementComponentContentRepository dataElementComponentContentRepository
 
-    DataFlowRepository dataFlowRepository
 
     @Inject
-    DataElementComponentController( AdministeredItemCacheableRepository.DataElementComponentCacheableRepository dataElementComponentRepository,
-                                    AdministeredItemCacheableRepository.DataClassComponentCacheableRepository dataClassComponentRepository,
-                                   DataElementComponentContentRepository dataElementComponentContentRepository, DataElementRepository dataElementRepository,
-                                  DataFlowRepository dataFlowRepository) {
+    DataElementComponentController(AdministeredItemCacheableRepository.DataElementComponentCacheableRepository dataElementComponentRepository,
+                                   AdministeredItemCacheableRepository.DataClassComponentCacheableRepository dataClassComponentRepository,
+                                   DataElementComponentContentRepository dataElementComponentContentRepository, AdministeredItemCacheableRepository.
+                                       DataElementCacheableRepository dataElementRepository) {
         super(DataElementComponent, dataElementComponentRepository, dataClassComponentRepository, dataElementComponentContentRepository)
         this.dataElementComponentRepository = dataElementComponentRepository
         this.dataClassComponentRepository = dataClassComponentRepository
         this.dataElementRepository = dataElementRepository
         this.dataElementComponentContentRepository = dataElementComponentContentRepository
-        this.dataFlowRepository = dataFlowRepository
+
     }
 
 

@@ -370,10 +370,12 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
         }
 
         Long removeSourceDataClasses(UUID id) {
+            invalidate(id)
             ((DataClassComponentRepository) repository).removeSourceDataClasses(id)
         }
 
         Long removeTargetDataClasses(UUID id) {
+            invalidate(id)
             ((DataClassComponentRepository) repository).removeTargetDataClasses(id)
         }
         Boolean handles(String domainType) {

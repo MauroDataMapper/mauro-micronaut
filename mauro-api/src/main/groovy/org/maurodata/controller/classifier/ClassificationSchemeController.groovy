@@ -46,12 +46,11 @@ import org.maurodata.web.PaginationParams
 @Secured(SecurityRule.IS_ANONYMOUS)
 class ClassificationSchemeController extends ModelController<ClassificationScheme> implements ClassificationSchemeApi {
 
-    ModelCacheableRepository.ClassificationSchemeCacheableRepository classificationSchemeCacheableRepository
+
 
     ClassificationSchemeContentRepository classificationSchemeContentRepository
 
 
-    @Inject
     ClassificationSchemeController(ModelCacheableRepository.ClassificationSchemeCacheableRepository classificationSchemeCacheableRepository,
                                    FolderCacheableRepository folderRepository, ClassificationSchemeContentRepository classificationSchemeContentRepository) {
         super(ClassificationScheme, classificationSchemeCacheableRepository, folderRepository, classificationSchemeContentRepository)

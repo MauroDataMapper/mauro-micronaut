@@ -26,6 +26,7 @@ import org.maurodata.domain.dataflow.Type
 import org.maurodata.domain.datamodel.DataClass
 import org.maurodata.domain.security.Role
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository
+import org.maurodata.persistence.cache.AdministeredItemCacheableRepository.DataClassCacheableRepository
 import org.maurodata.persistence.dataflow.DataClassComponentContentRepository
 import org.maurodata.web.ListResponse
 import org.maurodata.web.PaginationParams
@@ -35,7 +36,7 @@ import org.maurodata.web.PaginationParams
 @Slf4j
 @Secured(SecurityRule.IS_AUTHENTICATED)
 class DataClassComponentController extends AdministeredItemController<DataClassComponent, DataFlow> implements DataClassComponentApi {
-  @Inject
+
     AdministeredItemCacheableRepository.DataClassCacheableRepository dataClassRepository
 
     AdministeredItemCacheableRepository.DataClassComponentCacheableRepository dataClassComponentRepository
@@ -44,10 +45,11 @@ class DataClassComponentController extends AdministeredItemController<DataClassC
 
     AdministeredItemCacheableRepository.DataFlowCacheableRepository dataFlowRepository
 
-    @Inject
+
     DataClassComponentController(AdministeredItemCacheableRepository.DataClassComponentCacheableRepository dataClassComponentRepository,
                                  AdministeredItemCacheableRepository.DataFlowCacheableRepository dataFlowRepository,
-                                 DataClassComponentContentRepository dataClassComponentContentRepository) {
+                                 DataClassComponentContentRepository dataClassComponentContentRepository,
+                                 DataClassCacheableRepository dataClassRepository) {
         super(DataClassComponent, dataClassComponentRepository, dataFlowRepository, dataClassComponentContentRepository)
         this.dataClassComponentRepository = dataClassComponentRepository
         this.dataClassComponentContentRepository = dataClassComponentContentRepository
