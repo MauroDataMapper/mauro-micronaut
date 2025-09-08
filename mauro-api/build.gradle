@@ -132,8 +132,6 @@ dependencies {
     implementation project(':mauro-client')
     implementation project(':mauro-persistence')
 
-    //implementation('org.maurodata.plugins:mauro-plugin-nhsdatadictionary:0.0.1-SNAPSHOT')
-
     testImplementation testFixtures(project(':mauro-client'))          // Pull in the filter that overwrites the port
     testImplementation testFixtures(project(':mauro-persistence'))     // Pull in the containerized testing definition
 }
