@@ -88,29 +88,29 @@ class ContentHandler {
     @Inject SummaryMetadataReportCacheableRepository summaryMetadataReportCacheableRepository
     @Inject VersionLinkCacheableRepository versionLinkCacheableRepository
 
-    Map<Integer, Set<Folder>> folders = [:]
-    Set<DataModel> dataModels = []
-    Map<Integer, Set<DataClass>> dataClasses = [:]
-    Set<DataType> dataTypes = []
-    Set<DataElement> dataElements = []
-    Set<EnumerationValue> enumerationValues = []
-    Set<Terminology> terminologies = []
-    Set<Term> terms = []
-    Set<TermRelationshipType> termRelationshipTypes = []
-    Set<TermRelationship> termRelationships = []
-    Set<CodeSet> codeSets = []
+    Map<Integer, List<Folder>> folders = [:]
+    List<DataModel> dataModels = []
+    Map<Integer, List<DataClass>> dataClasses = [:]
+    List<DataType> dataTypes = []
+    List<DataElement> dataElements = []
+    List<EnumerationValue> enumerationValues = []
+    List<Terminology> terminologies = []
+    List<Term> terms = []
+    List<TermRelationshipType> termRelationshipTypes = []
+    List<TermRelationship> termRelationships = []
+    List<CodeSet> codeSets = []
 
-    Set<Metadata> metadata = []
-    Map<Integer, Set<Annotation>> annotations = [:]
+    List<Metadata> metadata = []
+    Map<Integer, List<Annotation>> annotations = [:]
     //List<CatalogueFile> catalogueFiles = []
-    Set<Edit> edits = []
-    Set<ReferenceFile> referenceFiles = []
-    Set<Rule> rules = []
-    Set<RuleRepresentation> ruleRepresentations = []
-    Set<SemanticLink> semanticLinks = []
-    Set<SummaryMetadata> summaryMetadata = []
-    Set<SummaryMetadataReport> summaryMetadataReports = []
-    Set<VersionLink> versionLinks = []
+    List<Edit> edits = []
+    List<ReferenceFile> referenceFiles = []
+    List<Rule> rules = []
+    List<RuleRepresentation> ruleRepresentations = []
+    List<SemanticLink> semanticLinks = []
+    List<SummaryMetadata> summaryMetadata = []
+    List<SummaryMetadataReport> summaryMetadataReports = []
+    List<VersionLink> versionLinks = []
 
     void shred(Folder folder, Integer depth = 0) {
         if(folders[depth]) {
@@ -245,13 +245,19 @@ class ContentHandler {
         }
 */
         Instant start = Instant.now()
-        metadataRepository.saveAll(metadata)
+        saveInBatches(metadata, 1000) { List<Metadata> batch ->
+            metadataRepository.saveAll(batch)
+        }
         printTimeTaken(start)
 
     }
 
     void shredFacets(AdministeredItem item) {
         if(item.metadata) {
+            item.metadata.each {
+                it.multiFacetAwareItem = item
+                it.multiFacetAwareItemDomainType = item.domainType
+            }
             metadata.addAll(item.metadata)
         }
     }
@@ -264,5 +270,16 @@ class ContentHandler {
                                          timeTaken.toMillisPart()))
 
     }
+
+    private static <T> void saveInBatches(List<T> items, int batchSize, @DelegatesTo(List) Closure saver) {
+        if (items == null || items.isEmpty()) return
+        for (int i = 0; i < items.size(); i += batchSize) {
+            int end = Math.min(i + batchSize, items.size())
+            // Defensive copy so the batch does not retain a view of the full list
+            List<T> batch = new ArrayList<>(items.subList(i, end))
+            saver.call(batch)
+        }
+    }
+
 
 }

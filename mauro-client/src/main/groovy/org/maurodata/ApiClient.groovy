@@ -39,8 +39,10 @@ import org.maurodata.domain.folder.Folder
 import org.maurodata.domain.terminology.Terminology
 import org.maurodata.export.ExportModel
 import org.maurodata.plugin.exporter.json.JsonDataModelExporterPlugin
+import org.maurodata.plugin.exporter.json.JsonFolderExporterPlugin
 import org.maurodata.plugin.exporter.json.JsonTerminologyExporterPlugin
 import org.maurodata.plugin.importer.json.JsonDataModelImporterPlugin
+import org.maurodata.plugin.importer.json.JsonFolderImporterPlugin
 import org.maurodata.plugin.importer.json.JsonTerminologyImporterPlugin
 import org.maurodata.web.ListResponse
 
@@ -63,6 +65,9 @@ abstract class ApiClient {
 
     @Inject JsonDataModelExporterPlugin jsonDataModelExporterPlugin
     @Inject JsonDataModelImporterPlugin jsonDataModelImporterPlugin
+
+    @Inject JsonFolderExporterPlugin jsonFolderExporterPlugin
+    @Inject JsonFolderImporterPlugin jsonFolderImporterPlugin
 
     @Inject AdminApi adminApi
     @Inject ClassificationSchemeApi classificationSchemeApi
@@ -134,6 +139,22 @@ abstract class ApiClient {
             jsonDataModelImporterPlugin.namespace,
             jsonDataModelImporterPlugin.name,
             jsonDataModelImporterPlugin.version)
+    }
+
+    ListResponse<Folder> importFolder(Folder folder, UUID parentFolderId = null) {
+
+        MultipartBody.Builder importRequest = MultipartBody.builder()
+            .addPart('importFile', 'file.json', MediaType.APPLICATION_JSON_TYPE, jsonFolderExporterPlugin.exportModel(folder))
+
+        if(parentFolderId) {
+            importRequest.addPart('folderId', parentFolderId.toString())
+        }
+
+        folderApi.importModel(
+            importRequest.build(),
+            jsonFolderImporterPlugin.namespace,
+            jsonFolderImporterPlugin.name,
+            jsonFolderImporterPlugin.version)
     }
 
     DataModel exportDataModel(UUID dataModelId) {

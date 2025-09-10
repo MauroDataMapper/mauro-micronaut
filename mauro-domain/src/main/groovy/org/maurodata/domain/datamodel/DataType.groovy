@@ -104,8 +104,12 @@ class DataType extends ModelItem<DataModel> implements DiffableItem<DataType>, I
     void prePersist() {
         if(dataTypeKind == DataTypeKind.MODEL_TYPE) {
             if(modelResource) {
-                modelResourceDomainType = modelResource.domainType
-                modelResourceId = modelResource.id
+                if(!modelResource.id) {
+                    System.err.println("Trying to save a dataType with a model which doesn't have an id!")
+                } else {
+                    modelResourceDomainType = modelResource.domainType
+                    modelResourceId = modelResource.id
+                }
             }
         }
     }

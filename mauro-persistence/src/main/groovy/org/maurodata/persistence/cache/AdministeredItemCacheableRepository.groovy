@@ -122,6 +122,10 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
             ((TermRepository) repository).readChildTermsByParent(terminologyId, id)
         }
 
+        List<Term> findAllByTerminology(Terminology terminology) {
+            ((TermRepository) repository).findAllByTerminology(terminology)
+        }
+
         @Override
         Boolean handles(Class clazz) {
             repository.handles(clazz)

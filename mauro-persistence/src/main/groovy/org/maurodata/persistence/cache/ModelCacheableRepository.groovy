@@ -1,5 +1,6 @@
 package org.maurodata.persistence.cache
 
+import io.micronaut.core.annotation.NonNull
 import org.maurodata.domain.model.version.ModelVersion
 
 import groovy.transform.CompileStatic
@@ -12,6 +13,7 @@ import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.folder.Folder
 import org.maurodata.domain.model.Model
 import org.maurodata.domain.terminology.CodeSet
+import org.maurodata.domain.terminology.Term
 import org.maurodata.domain.terminology.Terminology
 import org.maurodata.persistence.classifier.ClassificationSchemeRepository
 import org.maurodata.persistence.datamodel.DataModelRepository
@@ -108,6 +110,12 @@ class ModelCacheableRepository<M extends Model> extends AdministeredItemCacheabl
         Boolean handles(String domainType) {
             return domainType != null && domainType.toLowerCase() in ['codeset', 'codesets']
         }
+
+        // Not cached
+        Set<Term> getTerms(@NonNull UUID uuid) {
+            ((CodeSetRepository) repository).getTerms(uuid)
+        }
+
 
     }
 

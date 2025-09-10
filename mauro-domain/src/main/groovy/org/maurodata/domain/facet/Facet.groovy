@@ -4,6 +4,7 @@ import org.maurodata.domain.model.ItemReference
 import org.maurodata.domain.model.ItemReferencer
 import org.maurodata.domain.model.ItemReferencerUtils
 import org.maurodata.domain.model.ItemUtils
+import jakarta.persistence.PrePersist
 import org.maurodata.domain.model.Path
 import org.maurodata.domain.model.Pathable
 
@@ -32,6 +33,14 @@ abstract class Facet extends Item implements Pathable, ItemReferencer {
     @Transient
     @JsonIgnore
     AdministeredItem multiFacetAwareItem
+
+    @PrePersist
+    void prePersist() {
+        if(multiFacetAwareItem && !multiFacetAwareItemId) {
+            multiFacetAwareItemId == multiFacetAwareItem.id
+            multiFacetAwareItemDomainType == multiFacetAwareItem.domainType
+        }
+    }
 
     @Transient
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
