@@ -66,8 +66,6 @@ dependencies {
     implementation group: 'org.apache.commons', name: 'commons-rng-simple', version: '1.5'
     implementation group: 'org.apache.commons', name: 'commons-text', version: '1.10.0'
 
-    testRuntimeOnly("org.testcontainers:testcontainers")
-    testRuntimeOnly("org.testcontainers:postgresql")
 
     testImplementation "io.micronaut.test:micronaut-test-spock"
     testImplementation("org.spockframework:spock-core") {
