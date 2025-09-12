@@ -22,14 +22,14 @@ class ClassificationSchemeContentRepository extends ModelContentRepository<Class
     @Override
     ClassificationScheme findWithContentById(UUID id) {
         ClassificationScheme classificationScheme = classificationSchemeCacheableRepository.findById(id)
-        classificationScheme.classifiers = classifierCacheableRepository.findAllByParent(classificationScheme)
+        classificationScheme.csClassifiers = classifierCacheableRepository.findAllByParent(classificationScheme)
         classificationScheme
     }
 
     @Override
     ClassificationScheme saveWithContent(@NonNull ClassificationScheme model) {
         ClassificationScheme saved = (ClassificationScheme) super.saveWithContent(model)
-        classifierRepository.updateAll(saved.classifiers.findAll{ it.classificationScheme})
+        classifierRepository.updateAll(saved.csClassifiers.findAll{ it.classificationScheme})
         saved
     }
 

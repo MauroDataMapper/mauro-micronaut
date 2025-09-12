@@ -47,7 +47,6 @@ class Classifier extends ModelItem<ClassificationScheme> implements DiffableItem
     @JsonIgnore
     AdministeredItem getParent() {
         parentClassifier?:classificationScheme
-
     }
 
     @Override
