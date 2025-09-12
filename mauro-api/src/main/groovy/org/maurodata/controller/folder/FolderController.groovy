@@ -160,10 +160,7 @@ class FolderController extends ModelController<Folder> implements FolderApi {
     @Audit(title = EditType.EXPORT, description = 'Export folder')
     @Get(Paths.FOLDER_EXPORT)
     HttpResponse<byte[]> exportModel(UUID id, @Nullable String namespace, @Nullable String name, @Nullable String version) {
-        ModelExporterPlugin mauroPlugin = mauroPluginService.getPlugin(ModelExporterPlugin, namespace, name, version)
-        PluginService.handlePluginNotFound(mauroPlugin, namespace, name)
-        Folder existing = folderContentRepository.findWithContentById(id)
-        createExportResponse(mauroPlugin, existing)
+        super.exportModel(id, namespace, name, version)
     }
 
     @Transactional

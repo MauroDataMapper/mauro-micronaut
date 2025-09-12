@@ -12,6 +12,7 @@ import org.maurodata.domain.model.Model
 import org.maurodata.domain.terminology.CodeSet
 import org.maurodata.domain.terminology.Terminology
 import org.maurodata.persistence.cache.ItemCacheableRepository
+import org.maurodata.persistence.cache.ModelCacheableRepository
 import org.maurodata.persistence.model.ModelContentRepository
 import org.maurodata.persistence.model.ModelRepository
 
@@ -19,15 +20,16 @@ import org.maurodata.persistence.model.ModelRepository
 @Singleton
 class FolderContentRepository extends ModelContentRepository<Folder> {
 
-    FolderRepository folderRepository
+    ModelCacheableRepository.FolderCacheableRepository folderRepository
 
     List<ModelContentRepository> modelContentRepositories
 
     List<ModelRepository> modelRepositories
 
     @Inject
-    FolderContentRepository(FolderRepository folderRepository, List<ModelContentRepository> modelContentRepositories, List<ModelRepository> modelRepositories) {
-        this.folderRepository = folderRepository
+    FolderContentRepository(  ModelCacheableRepository.FolderCacheableRepository folderCacheableRepository,
+                              List<ModelContentRepository> modelContentRepositories, List<ModelRepository> modelRepositories) {
+        this.folderRepository = folderCacheableRepository
         this.modelRepositories = modelRepositories.findAll {it !instanceof ItemCacheableRepository}
         this.modelContentRepositories = modelContentRepositories
     }
@@ -41,7 +43,6 @@ class FolderContentRepository extends ModelContentRepository<Folder> {
             folder.codeSets = getModelAssociations(folder, CodeSet.class) as List<CodeSet>
             folder.classificationSchemes = getModelAssociations(folder, ClassificationScheme.class) as List<ClassificationScheme>
             folder.childFolders = surfaceChildContent(folder.childFolders)
-            folder.setAssociations()
         }
         folder
     }
@@ -56,11 +57,12 @@ class FolderContentRepository extends ModelContentRepository<Folder> {
                 saveWithContent(childFolder)
             }
         }
-        if (saved.dataModels) {
-            saved.dataModels.each {
+        if (saved.classificationSchemes) {
+            saved.classificationSchemes.each {
                 getModelContentRepository(it.class).saveWithContent(it)
             }
         }
+
         if (saved.terminologies) {
             saved.terminologies.each {
                 getModelContentRepository(it.class).saveWithContent(it)
@@ -71,8 +73,8 @@ class FolderContentRepository extends ModelContentRepository<Folder> {
                 getModelContentRepository(it.class).saveWithContent(it)
             }
         }
-        if (saved.classificationSchemes) {
-            saved.classificationSchemes.each {
+        if (saved.dataModels) {
+            saved.dataModels.each {
                 getModelContentRepository(it.class).saveWithContent(it)
             }
         }
@@ -110,14 +112,11 @@ class FolderContentRepository extends ModelContentRepository<Folder> {
         if (folders.isEmpty()) {
             return folders
         }
-        List<Folder> foldersWithAssociations = []
-        folders.each {
+        folders.collect {
             Folder retrieved = findWithContentById(it.id)
-            retrieved.setAssociations()
             retrieved.childFolders = surfaceChildContent(retrieved.childFolders)
-            foldersWithAssociations.add(retrieved)
+            retrieved
         }
-        foldersWithAssociations
     }
 
     private List<Model> getModelAssociations(Folder folder, Class clazz) {
@@ -125,12 +124,10 @@ class FolderContentRepository extends ModelContentRepository<Folder> {
         ModelContentRepository modelContentRepository = getModelContentRepository(clazz)
 
         List<Model> models = super.findAllModelsForFolder(modelRepository, folder) as List<Model>
-        List<Model> modelsWithAssociations = []
-        models.each {
+        models.collect{
             Model retrieved = modelContentRepository.findWithContentById((it as Model).id)
-            retrieved.setAssociations()
-            modelsWithAssociations.add(retrieved)
+            retrieved
         }
-        modelsWithAssociations
+
     }
 }

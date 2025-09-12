@@ -1,5 +1,26 @@
 package org.maurodata.controller.model
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import groovy.transform.CompileStatic
+import groovy.util.logging.Slf4j
+import io.micronaut.core.annotation.NonNull
+import io.micronaut.core.annotation.Nullable
+import io.micronaut.http.HttpHeaders
+import io.micronaut.http.HttpResponse
+import io.micronaut.http.HttpStatus
+import io.micronaut.http.annotation.Body
+import io.micronaut.http.exceptions.HttpException
+import io.micronaut.http.exceptions.HttpStatusException
+import io.micronaut.http.multipart.CompletedFileUpload
+import io.micronaut.http.multipart.CompletedPart
+import io.micronaut.http.server.exceptions.InternalServerException
+import io.micronaut.http.server.multipart.MultipartBody
+import io.micronaut.scheduling.TaskExecutors
+import io.micronaut.scheduling.annotation.ExecuteOn
+import io.micronaut.security.annotation.Secured
+import io.micronaut.security.rules.SecurityRule
+import io.micronaut.transaction.annotation.Transactional
+import jakarta.inject.Inject
 import org.maurodata.ErrorHandler
 import org.maurodata.FieldConstants
 import org.maurodata.api.model.FieldPatchDataDTO
@@ -18,7 +39,6 @@ import org.maurodata.api.model.VersionLinkTargetDTO
 import org.maurodata.controller.facet.EditController
 import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.diff.ArrayDiff
-import org.maurodata.domain.diff.BaseCollectionDiff
 import org.maurodata.domain.diff.CollectionDiff
 import org.maurodata.domain.diff.FieldDiff
 import org.maurodata.domain.diff.ObjectDiff
@@ -50,7 +70,6 @@ import org.maurodata.persistence.facet.VersionLinkRepository
 import org.maurodata.persistence.model.AdministeredItemContentRepository
 import org.maurodata.persistence.model.AdministeredItemRepository
 import org.maurodata.persistence.model.ModelContentRepository
-
 import org.maurodata.plugin.MauroPluginService
 import org.maurodata.plugin.exporter.ModelExporterPlugin
 import org.maurodata.plugin.importer.FileParameter
@@ -61,28 +80,6 @@ import org.maurodata.service.core.AuthorityService
 import org.maurodata.service.plugin.PluginService
 import org.maurodata.web.ListResponse
 import org.maurodata.web.PaginationParams
-
-import com.fasterxml.jackson.databind.ObjectMapper
-import groovy.transform.CompileStatic
-import groovy.util.logging.Slf4j
-import io.micronaut.core.annotation.NonNull
-import io.micronaut.core.annotation.Nullable
-import io.micronaut.http.HttpHeaders
-import io.micronaut.http.HttpResponse
-import io.micronaut.http.HttpStatus
-import io.micronaut.http.annotation.Body
-import io.micronaut.http.exceptions.HttpException
-import io.micronaut.http.exceptions.HttpStatusException
-import io.micronaut.http.multipart.CompletedFileUpload
-import io.micronaut.http.multipart.CompletedPart
-import io.micronaut.http.server.exceptions.InternalServerException
-import io.micronaut.http.server.multipart.MultipartBody
-import io.micronaut.scheduling.TaskExecutors
-import io.micronaut.scheduling.annotation.ExecuteOn
-import io.micronaut.security.annotation.Secured
-import io.micronaut.security.rules.SecurityRule
-import io.micronaut.transaction.annotation.Transactional
-import jakarta.inject.Inject
 import reactor.core.publisher.Flux
 
 import java.lang.reflect.Method
@@ -316,7 +313,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         toSave.add(existing)
         modelContentRepository.saveVersionLinks(toSave)
 
-        savedCopy
+        modelRepository.readById(savedCopy.id) as M
     }
 
     protected M createCopyModelWithAssociations(M existing, CreateNewVersionData createNewVersionData) {
@@ -436,11 +433,6 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         }
     }
 
-    protected void handleNotFoundError(M model, UUID id) {
-        if (!model) {
-            throw new HttpStatusException(HttpStatus.NOT_FOUND, "Model not found, $id")
-        }
-    }
 
     static protected HttpResponse<byte[]> createExportResponse(ModelExporterPlugin mauroPlugin, Model model) {
         byte[] fileContents = mauroPlugin.exportModel(model)

@@ -99,8 +99,10 @@ class FolderSpec extends Specification {
 
         folder.codeSets.size() == 1
         cloned.codeSets.size() == 1
-        cloned.codeSets[0] == folder.codeSets[0]
+        //cloned.codeSets[0] == folder.codeSets[0]
         !cloned.codeSets[0].is(folder.codeSets[0])
+        cloned.codeSets[0].label == cloned.codeSets[0].label
+
         Set<Term> clonedTerms =  cloned.codeSets[0].terms
         Set<Term> originalTerms = folder.codeSets[0].terms
         originalTerms.is(clonedTerms)

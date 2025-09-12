@@ -64,7 +64,7 @@ class CodeSet extends Model implements ItemReferencer {
     @JsonIgnore
     @Override
     void setAssociations() {
-        this
+        []
     }
 
 
@@ -75,6 +75,7 @@ class CodeSet extends Model implements ItemReferencer {
                 '}'
     }
 
+    /*
     boolean equals(o) {
         if (this.is(o)) return true
         if (!(o instanceof CodeSet)) return false
@@ -85,6 +86,7 @@ class CodeSet extends Model implements ItemReferencer {
 
         return true
     }
+    */
 
     int hashCode() {
         return (terms != null ? terms.hashCode() : 0)

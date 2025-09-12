@@ -52,6 +52,7 @@ import org.maurodata.domain.datamodel.DataClass
 import org.maurodata.domain.datamodel.DataElement
 import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.datamodel.DataType
+import org.maurodata.domain.datamodel.EnumerationValue
 import org.maurodata.domain.facet.Annotation
 import org.maurodata.domain.facet.Metadata
 import org.maurodata.domain.facet.ReferenceFile
@@ -505,6 +506,13 @@ class CommonDataSpec extends Specification {
              label: label,
              childRelationship:  aBoolean)
     }
+
+    DataType enumerationValueDataTypePayload(String label) {
+        new DataType(
+            label: label,
+            dataTypeKind: DataType.DataTypeKind.ENUMERATION_TYPE)
+    }
+
 }
 
 
