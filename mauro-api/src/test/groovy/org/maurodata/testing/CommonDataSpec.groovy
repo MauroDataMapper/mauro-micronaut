@@ -29,6 +29,7 @@ import org.maurodata.api.federation.SubscribedCatalogueApi
 import org.maurodata.api.federation.SubscribedModelApi
 import org.maurodata.api.folder.FolderApi
 import org.maurodata.api.importer.ImporterApi
+import org.maurodata.api.path.PathApi
 import org.maurodata.api.profile.ProfileApi
 import org.maurodata.api.search.SearchApi
 import org.maurodata.api.security.ApiKeyApi
@@ -152,6 +153,7 @@ class CommonDataSpec extends Specification {
     @Shared @Inject SubscribedModelApi subscribedModelApi
     @Shared @Inject PublishApi publishApi
     @Shared @Inject SemanticLinksApi semanticLinksApi
+    @Shared @Inject PathApi pathApi
 
     @Inject
     SessionHandlerClientFilter sessionHandlerClientFilter
@@ -165,6 +167,14 @@ class CommonDataSpec extends Specification {
                 description : "code set description",
                 author      : "A.N. Other",
                 organisation: "uk.ac.gridpp.ral.org"
+        )
+    }
+    CodeSet codeSet(String label) {
+        new CodeSet(
+            label: label,
+            description: "code set description",
+            author: "A.N. Other",
+            organisation: "uk.ac.gridpp.ral.org"
         )
     }
 

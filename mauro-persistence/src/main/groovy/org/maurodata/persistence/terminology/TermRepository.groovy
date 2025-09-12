@@ -56,6 +56,10 @@ abstract class TermRepository implements ModelItemRepository<Term> {
         readAllByTerminology((Terminology) parent)
     }
 
+    Term findByPathIdentifier(String pathIdentifier){
+        termDTORepository.findByLabel(pathIdentifier)
+    }
+
     abstract Long deleteByTerminologyId(UUID terminologyId)
 
 //    @Override

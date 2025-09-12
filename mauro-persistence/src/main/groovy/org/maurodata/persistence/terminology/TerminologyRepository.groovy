@@ -29,6 +29,9 @@ abstract class TerminologyRepository implements ModelRepository<Terminology> {
         terminologyDTORepository.findAllByParentAndPathIdentifier(item, pathIdentifier)
     }
 
+    Terminology findByPathIdentifier(String pathIdentifier){
+        terminologyDTORepository.findByLabel(pathIdentifier)
+    }
     @Override
     Class getDomainClass() {
         Terminology

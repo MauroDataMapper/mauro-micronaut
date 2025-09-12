@@ -70,4 +70,9 @@ abstract class ClassifierDTORepository implements GenericRepository<ClassifierDT
     @Join(value = 'catalogueUser', type = Join.Type.LEFT_FETCH)
     @Query('''select * from core.classifier where parent_classifier_id = :classifierId ''')
     abstract List<Classifier> findAllByClassifier(UUID classifierId)
+
+    @Nullable
+    @Query('''select * from core.classifier where label = :label ''')
+    abstract Classifier findByLabel(String label)
+
 }

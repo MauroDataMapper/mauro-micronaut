@@ -36,4 +36,8 @@ abstract class DataFlowDTORepository implements GenericRepository<DataFlowDTO, U
     @Join(value = 'target', type = Join.Type.LEFT_FETCH)
     @Query('SELECT * FROM dataflow.data_flow WHERE target_id = :item AND label = :pathIdentifier')
     abstract List<DataFlow> findAllByParentAndPathIdentifier(UUID item, String pathIdentifier)
-    }
+
+    @Query('SELECT * FROM dataflow.data_flow WHERE label = :label')
+    @Nullable
+    abstract DataFlow findByLabel(String label)
+}

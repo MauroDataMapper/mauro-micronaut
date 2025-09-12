@@ -46,6 +46,9 @@ abstract class DataClassRepository implements ModelItemRepository<DataClass> {
         findAllByDataModel((DataModel) parent)
     }
 
+    DataClass findByPathIdentifier(String pathIdentifier) {
+        dataClassDTORepository.findByLabel(pathIdentifier)
+    }
     @Nullable
     abstract List<DataClass> readAllByDataModel(DataModel dataModel)
 

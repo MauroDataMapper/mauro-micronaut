@@ -48,6 +48,10 @@ abstract class DataFlowRepository implements ModelItemRepository<DataFlow> {
         dataFlowDTORepository.findAllBySource(dataModel) as List<DataFlow>
     }
 
+    DataFlow findByPathIdentifier(String pathIdentifier){
+        dataFlowDTORepository.findByLabel(pathIdentifier)
+    }
+
     @Override
     @Nullable
     List<DataFlow> readAllByParent(AdministeredItem parent) {

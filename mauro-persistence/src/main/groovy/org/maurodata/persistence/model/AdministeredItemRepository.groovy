@@ -20,4 +20,6 @@ trait AdministeredItemRepository<I extends AdministeredItem> implements ItemRepo
     List<I> findAllByParentAndPathIdentifier(UUID item, String pathIdentifier){
         throw new UnsupportedOperationException('Method should be implemented')
     }
+
+    abstract I findByPathIdentifier(String pathIdentifier)
 }

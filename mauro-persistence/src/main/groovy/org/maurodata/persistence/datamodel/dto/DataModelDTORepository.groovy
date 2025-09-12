@@ -24,4 +24,8 @@ abstract class DataModelDTORepository implements GenericRepository<DataModelDTO,
     @Nullable
     @Query('SELECT * FROM datamodel.data_model WHERE folder_id = :item AND label = :pathIdentifier')
     abstract List<DataModel> findAllByParentAndPathIdentifier(UUID item, String pathIdentifier)
+
+    @Query('SELECT * FROM datamodel.data_model WHERE label = :label')
+    @Nullable
+    abstract  DataModel findByLabel(String label)
 }

@@ -52,6 +52,9 @@ abstract class DataElementRepository implements  ModelItemRepository<DataElement
         dataElementDTORepository.findAllByDataClassIn(dataClasses) as List<DataElement>
     }
 
+    DataElement findByPathIdentifier(String pathIdentifier){
+        dataElementDTORepository.findByLabel(pathIdentifier)
+    }
     @Nullable
     List<DataElement> readAllByDataTypeIn(List<DataType> dataTypes) {
         dataElementDTORepository.readAllByDataTypeIdIn(dataTypes.id) as List<DataElement>

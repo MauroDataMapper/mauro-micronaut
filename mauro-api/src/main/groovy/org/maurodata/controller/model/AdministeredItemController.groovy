@@ -61,6 +61,9 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
         this.administeredItemContentRepository.administeredItemRepository = administeredItemRepository
     }
 
+    AdministeredItemController() {
+    }
+
     I show(UUID id) {
         I item = administeredItemRepository.findById(id)
         ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, item, "Item with id ${id.toString()} not found")
@@ -253,5 +256,10 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
             }
             throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "DataClass ${dataClassToDelete.id} is extended by " + str)
         }
+    }
+
+    @Override
+    public String toString() {
+        return "AdministeredItemController{}";
     }
 }
