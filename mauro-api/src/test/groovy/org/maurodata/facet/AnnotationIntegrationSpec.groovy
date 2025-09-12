@@ -1,22 +1,17 @@
 package org.maurodata.facet
 
-import org.maurodata.api.facet.AnnotationApi
-import org.maurodata.api.folder.FolderApi
-
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.client.exceptions.HttpClientResponseException
-import io.micronaut.runtime.EmbeddedApplication
 import io.micronaut.test.annotation.Sql
-import jakarta.inject.Inject
 import jakarta.inject.Singleton
-import spock.lang.Shared
-import spock.lang.Unroll
 import org.maurodata.domain.facet.Annotation
 import org.maurodata.domain.folder.Folder
 import org.maurodata.persistence.ContainerizedTest
 import org.maurodata.testing.CommonDataSpec
 import org.maurodata.web.ListResponse
+import spock.lang.Shared
+import spock.lang.Unroll
 
 @ContainerizedTest
 @Singleton
@@ -26,13 +21,11 @@ class AnnotationIntegrationSpec extends CommonDataSpec {
     @Shared
     UUID folderId
 
-
     void setup() {
         Folder folder = folderApi.create(folder())
         folderId = folder.id
     }
 
-    @Unroll()
     void 'list Annotations should return empty list'() {
         when:
         ListResponse<Annotation> response = annotationApi.list("folder", folderId)
