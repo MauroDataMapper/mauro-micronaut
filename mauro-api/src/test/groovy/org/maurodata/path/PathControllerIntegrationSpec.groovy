@@ -4,6 +4,10 @@ import io.micronaut.http.HttpStatus
 import io.micronaut.http.exceptions.HttpStatusException
 import io.micronaut.test.annotation.Sql
 import jakarta.inject.Singleton
+import org.maurodata.domain.datamodel.DataClass
+import org.maurodata.domain.datamodel.DataElement
+import org.maurodata.domain.datamodel.DataModel
+import org.maurodata.domain.datamodel.DataType
 import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.domain.terminology.CodeSet
 import org.maurodata.persistence.ContainerizedTest
@@ -62,6 +66,19 @@ class PathControllerIntegrationSpec extends CommonDataSpec {
         then:
         HttpStatusException exception = thrown()
         exception.status ==  HttpStatus.NOT_FOUND
+    }
+
+    void 'test getResource by Path from Resource -should find resource'(){
+        DataModel dataModel = dataModelApi.create(folderId, dataModelPayload('datamodel label '))
+        DataType dataType  = dataTypeApi.create(dataModel.id, dataTypesPayload('label for datatype', DataType.DataTypeKind.ENUMERATION_TYPE))
+        DataClass dataClass = dataClassApi.create(dataModel.id, dataClassPayload('label for dataclass'))
+        DataElement dataElement = dataElementApi.create(dataModel.id, dataClass.id, dataElementPayload('label for datatype', dataType))
+
+        when:
+        DataElement dataElementResponse  = pathApi.getResourceByPathFromResource( DataModel.class.simpleName, dataModel.id, dataElement.getPath().pathString) as DataElement
+        then:
+        dataElementResponse
+
     }
 
 }
