@@ -3,6 +3,7 @@ package org.maurodata.service.path
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import jakarta.inject.Inject
+import org.maurodata.domain.folder.Folder
 import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository
 
@@ -25,8 +26,11 @@ class PathPrefixLoader {
         Map<String, String> lookup = [:]
         administeredItemRepositories.each {
             AdministeredItem domainClass = (AdministeredItem) it.domainClass.getDeclaredConstructor().newInstance()
-            lookup.putIfAbsent(domainClass.getPathPrefix(), domainClass.domainType)
+
+            lookup.putIfAbsent(domainClass.getPathPrefix(), domainClass.getDomainType())
         }
+        //special case ->VersionedFolder = folder with isVersionable() set.
+        lookup.put('vf', Folder.class.simpleName)
         pathPrefixDomainType = lookup.asImmutable()
 
     }
