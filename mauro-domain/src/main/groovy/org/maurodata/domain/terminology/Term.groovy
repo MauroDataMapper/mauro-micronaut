@@ -1,9 +1,11 @@
 package org.maurodata.domain.terminology
 
 import com.fasterxml.jackson.annotation.JsonBackReference
+import com.fasterxml.jackson.annotation.JsonIdentityInfo
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonManagedReference
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.annotation.ObjectIdGenerators
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
 import groovy.transform.MapConstructor
@@ -18,6 +20,7 @@ import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Pattern
 import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.domain.model.ModelItem
+import org.maurodata.domain.terminology.resolver.TerminologyScopeResolver
 
 /**
  * A term describes a value with a code and a meaning, within the context of a terminology.
@@ -33,6 +36,11 @@ import org.maurodata.domain.model.ModelItem
 @MappedEntity(schema = 'terminology')
 @MapConstructor(includeSuperFields = true, includeSuperProperties = true, noArg = true)
 @Indexes([@Index(columns = ['terminology_id', 'code'], unique = true)])
+@JsonIdentityInfo(
+    generator = ObjectIdGenerators.PropertyGenerator.class,
+    property = "code",
+    resolver = TerminologyScopeResolver.class // our custom resolver
+)
 class Term extends ModelItem<Terminology> {
 
     @Override

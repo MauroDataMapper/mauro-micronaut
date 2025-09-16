@@ -1,5 +1,7 @@
 package org.maurodata.domain.terminology
 
+import com.fasterxml.jackson.annotation.JsonIdentityReference
+import org.maurodata.domain.terminology.resolver.TerminologyScopeResolver
 import org.maurodata.util.DedupingObjectIdResolver
 
 import com.fasterxml.jackson.annotation.JsonBackReference
@@ -39,12 +41,15 @@ class TermRelationship extends ModelItem<Terminology> {
     @JsonIgnore
     Terminology terminology
 
-    @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator, property = 'code', scope = Term, resolver = DedupingObjectIdResolver)
+    @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator, property = 'code', resolver = TerminologyScopeResolver)
+    //@JsonIdentityReference(alwaysAsId = true)
     Term sourceTerm
-    @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator, property = 'code', scope = Term, resolver = DedupingObjectIdResolver)
+    @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator, property = 'code', resolver = TerminologyScopeResolver)
+    @JsonIdentityReference(alwaysAsId = true)
     Term targetTerm
 
-    @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator, property = 'label', scope = TermRelationshipType, resolver = DedupingObjectIdResolver)
+    @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator, property = 'label', resolver = TerminologyScopeResolver)
+    @JsonIdentityReference(alwaysAsId = true)
     TermRelationshipType relationshipType
 
     @Override

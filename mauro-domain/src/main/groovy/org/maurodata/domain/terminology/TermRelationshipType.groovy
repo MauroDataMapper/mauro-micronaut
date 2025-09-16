@@ -1,6 +1,8 @@
 package org.maurodata.domain.terminology
 
+import com.fasterxml.jackson.annotation.JsonIdentityInfo
 import com.fasterxml.jackson.annotation.JsonIgnore
+import com.fasterxml.jackson.annotation.ObjectIdGenerators
 import com.google.common.base.CaseFormat
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
@@ -11,9 +13,11 @@ import io.micronaut.data.annotation.Index
 import io.micronaut.data.annotation.Indexes
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Relation
+import jakarta.persistence.PrePersist
 import jakarta.persistence.Transient
 import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.domain.model.ModelItem
+import org.maurodata.domain.terminology.resolver.TerminologyScopeResolver
 
 /**
  * A TermRelationshipType defines a kind of relationship between terms with a terminology.
@@ -29,6 +33,11 @@ import org.maurodata.domain.model.ModelItem
 @MappedEntity(schema = 'terminology')
 @MapConstructor(includeSuperFields = true, includeSuperProperties = true, noArg = true)
 @Indexes([@Index(columns = ['terminology_id', 'label'], unique = true)])
+@JsonIdentityInfo(
+    generator = ObjectIdGenerators.PropertyGenerator.class,
+    property = "label",
+    resolver = TerminologyScopeResolver.class // our custom resolver
+)
 class TermRelationshipType extends ModelItem<Terminology> {
 
     @JsonIgnore
@@ -72,7 +81,8 @@ class TermRelationshipType extends ModelItem<Terminology> {
         'trt'
     }
 
-    String createDisplayLabel() {
+    @PrePersist
+    void createDisplayLabel() {
         displayLabel = label
         if (!displayLabel) return
         // Replace all spaces and hyphens with underscores

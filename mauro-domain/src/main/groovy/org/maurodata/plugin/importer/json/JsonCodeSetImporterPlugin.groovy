@@ -30,13 +30,12 @@ class JsonCodeSetImporterPlugin implements CodeSetImporterPlugin<FileImportParam
         log.info '** start importModel **'
         ExportModel importModel = objectMapper.readValue(params.importFile.fileContents, ExportModel)
         log.info '*** imported JSON model ***'
-        if (!importModel.codeSet){
-            ErrorHandler.handleError(HttpStatus.BAD_REQUEST, 'Cannot import JSON as codeSet/s not present')
-        }
         if(importModel.codeSet) {
             return [importModel.codeSet]
+        } else if(importModel.codeSets) {
+            return importModel.codeSets
         } else {
-            return importModel.codeSets?:[]
+            ErrorHandler.handleError(HttpStatus.BAD_REQUEST, 'Cannot import JSON as codeset/s not present')
         }
 
     }

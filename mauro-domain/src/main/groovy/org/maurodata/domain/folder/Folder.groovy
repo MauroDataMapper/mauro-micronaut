@@ -12,6 +12,7 @@ import org.maurodata.domain.classifier.ClassificationScheme
 import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.domain.model.Model
+import org.maurodata.domain.model.ModelItem
 import org.maurodata.domain.terminology.CodeSet
 import org.maurodata.domain.terminology.Terminology
 
@@ -50,20 +51,14 @@ class Folder extends Model {
     @JsonIgnore
     String class_
 
+/*
+    @Override
+    @Transient
     @JsonIgnore
-    void setClass_(final String class_)
-    {
-        this.class_=class_
-
-        if(this.class_!=null && "VersionedFolder" == this.class_)
-        {
-            setVersionable(true)
-        }
-        else
-        {
-            setVersionable(false)
-        }
+    List<Collection<? extends ModelItem<Folder>>> getAllAssociations() {
+        [childFolders, dataModels, terminologies, codeSets, classificationSchemes] as List<Collection<? extends ModelItem<Folder>>>
     }
+*/
 
     @Transient
     @Override

@@ -158,6 +158,8 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
 
     void 'test consume export folders  - should import'() {
         given:
+
+        objectMapper.convertValue([label: "my terminology"], Terminology)
         UUID dataClassId = dataClassApi.create(dataModelId, new DataClass(label: 'TEST-1', description: 'first data class')).id
         UUID dataTypeId = dataTypeApi.create(dataModelId, new DataType(label: 'Test data type', dataTypeKind: DataType.DataTypeKind.PRIMITIVE_TYPE)).id
 

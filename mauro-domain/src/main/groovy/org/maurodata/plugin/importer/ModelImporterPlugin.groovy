@@ -43,11 +43,6 @@ trait ModelImporterPlugin <D extends Model, P extends ImportParameters> extends 
         List<D> imported = importDomain(parameters)
         imported.each { importedModel ->
             importedModel.setAssociations()
-            if (importedModel.modelType == Terminology.class.simpleName){
-                ((Terminology) importedModel as Terminology).termRelationshipTypes.each {
-                    it.displayLabel = it.createDisplayLabel()
-                }
-            }
             importedModel.updateCreationProperties()
             log.info '* start updateCreationProperties *'
             importedModel.getAllContents().each {it.updateCreationProperties()}

@@ -31,15 +31,13 @@ class JsonDataModelImporterPlugin implements DataModelImporterPlugin<FileImportP
         log.info '** start importModel **'
         ExportModel importModel = objectMapper.readValue(params.importFile.fileContents, ExportModel)
         log.info '*** imported JSON model ***'
-        if (!importModel.dataModel){
-            ErrorHandler.handleError(HttpStatus.BAD_REQUEST, 'Cannot import JSON as datamodel/s not present')
-        }
         if(importModel.dataModel) {
             return [importModel.dataModel]
+        } else if(importModel.dataModels) {
+            return importModel.dataModels
         } else {
-            return importModel.dataModels?:[]
+            ErrorHandler.handleError(HttpStatus.BAD_REQUEST, 'Cannot import JSON as datamodel/s not present')
         }
-
     }
 
     @Override

@@ -33,8 +33,19 @@ class JsonFolderImporterPlugin implements FolderImporterPlugin<FileImportParamet
     @Override
     List<Folder> importDomain(FileImportParameters params) {
         log.info '** start importModel **'
+        ExportModel importModel = objectMapper.readValue(params.importFile.fileContents, ExportModel)
+        log.info '*** imported JSON model ***'
+        if(importModel.folder) {
+            return [importModel.folder]
+        } else if(importModel.folders) {
+            return importModel.folders
+        } else {
+            ErrorHandler.handleError(HttpStatus.BAD_REQUEST, 'Cannot import JSON as folder/s not present')
+        }
 
-        JsonNode importModelTree = objectMapper.readTree(params.importFile.fileContents)
+    }
+/*
+    JsonNode importModelTree = objectMapper.readTree(params.importFile.fileContents)
 
         Map<UUID, JsonNode> folderNodesMap = [:]
         if (importModelTree.has('folder')) {
@@ -66,7 +77,7 @@ class JsonFolderImporterPlugin implements FolderImporterPlugin<FileImportParamet
             return importModel.folders ?: []
         }
     }
-
+*/
     @Override
     Boolean handlesContentType(String contentType) {
         return contentType == 'application/mauro.folder+json'
@@ -77,6 +88,7 @@ class JsonFolderImporterPlugin implements FolderImporterPlugin<FileImportParamet
         return FileImportParameters
     }
 
+/*
     List<Terminology> readTerminologiesInFolder(JsonNode folder) {
         List<JsonNode> terminologyJsonNodes = folder.at('/terminologies').asList()
         terminologyJsonNodes.collect {objectMapper.treeToValue(it, Terminology)}
@@ -95,4 +107,6 @@ class JsonFolderImporterPlugin implements FolderImporterPlugin<FileImportParamet
         foldersMap[folder.id] = folder
         folder.childFolders.each {addAllFoldersToMap(it, foldersMap)}
     }
+
+ */
 }

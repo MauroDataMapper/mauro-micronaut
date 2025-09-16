@@ -28,17 +28,14 @@ class JsonTerminologyImporterPlugin implements TerminologyImporterPlugin<FileImp
         log.info '** start importModel **'
         ExportModel importModel = objectMapper.readValue(params.importFile.fileContents, ExportModel)
         log.info '*** imported JSON model ***'
-        if (!importModel.terminology){
-            ErrorHandler.handleError(HttpStatus.BAD_REQUEST, 'Cannot import JSON as terminology/ies is not present')
-        }
         if(importModel.terminology) {
             return [importModel.terminology]
+        } else if(importModel.terminologies) {
+            return importModel.terminologies
         } else {
-            return importModel.terminologies?:[]
+            ErrorHandler.handleError(HttpStatus.BAD_REQUEST, 'Cannot import JSON as terminology/s not present')
         }
     }
-
-
 
     @Override
     Boolean handlesContentType(String contentType) {
