@@ -30,7 +30,7 @@ abstract class CodeSetRepository implements ModelRepository<CodeSet> {
         codeSetDTORepository.findAllByParentAndPathIdentifier(item, pathIdentifier)
     }
 
-    CodeSet findByPathIdentifier(String pathIdentifier) {
+    CodeSet findByLabelContaining(String pathIdentifier) {
         codeSetDTORepository.findByLabel(pathIdentifier)
     }
     /**

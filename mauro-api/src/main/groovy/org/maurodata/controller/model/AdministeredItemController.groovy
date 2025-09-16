@@ -61,8 +61,7 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
         this.administeredItemContentRepository.administeredItemRepository = administeredItemRepository
     }
 
-    AdministeredItemController() {
-    }
+
 
     I show(UUID id) {
         I item = administeredItemRepository.findById(id)

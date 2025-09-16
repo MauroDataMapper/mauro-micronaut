@@ -1,10 +1,9 @@
 package org.maurodata.path
 
-import io.micronaut.http.client.exceptions.HttpClientResponseException
+import io.micronaut.http.HttpStatus
 import io.micronaut.http.exceptions.HttpStatusException
 import io.micronaut.test.annotation.Sql
 import jakarta.inject.Singleton
-import org.apache.http.HttpStatus
 import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.domain.terminology.CodeSet
 import org.maurodata.persistence.ContainerizedTest
@@ -18,6 +17,7 @@ import spock.lang.Unroll
 class PathControllerIntegrationSpec extends CommonDataSpec {
 
     static final String EXPECTED_LABEL = 'test label'
+    static final String EXPECTED_PATH = 'fo:Test folder|cs:test label$main'
     @Shared
     UUID folderId
 
@@ -34,15 +34,15 @@ class PathControllerIntegrationSpec extends CommonDataSpec {
     void 'test getResource by #path given #domainType -should get resource'() {
         when:
         CodeSet codeSet = pathApi.getResourceByPath(domainType, path) as AdministeredItem as CodeSet
-
         then:
         codeSet
         codeSet.label
+        codeSet.path.pathString == EXPECTED_PATH
 
         where:
         domainType | path
-        'codeSet'  | EXPECTED_LABEL
-        'codesets' | EXPECTED_LABEL
+        'codeSet'  | EXPECTED_PATH
+        'codesets' | EXPECTED_PATH
     }
 
 
@@ -52,7 +52,7 @@ class PathControllerIntegrationSpec extends CommonDataSpec {
 
         then:
         HttpStatusException exception = thrown()
-        exception.status == io.micronaut.http.HttpStatus.NOT_FOUND
+        exception.status == HttpStatus.NOT_FOUND
     }
 
     void 'test getResource by path -unknown domainType  -shouldThrowException'() {
@@ -61,7 +61,7 @@ class PathControllerIntegrationSpec extends CommonDataSpec {
 
         then:
         HttpStatusException exception = thrown()
-        exception.status ==  io.micronaut.http.HttpStatus.NOT_FOUND
+        exception.status ==  HttpStatus.NOT_FOUND
     }
 
 }

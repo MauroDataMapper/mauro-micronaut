@@ -6,6 +6,7 @@ import org.maurodata.api.Paths
 import org.maurodata.api.datamodel.DataElementApi
 import org.maurodata.audit.Audit
 import org.maurodata.controller.model.AdministeredItemController
+import org.maurodata.controller.model.AvailableActions
 import org.maurodata.domain.datamodel.DataClass
 import org.maurodata.domain.datamodel.DataElement
 import org.maurodata.domain.datamodel.DataModel

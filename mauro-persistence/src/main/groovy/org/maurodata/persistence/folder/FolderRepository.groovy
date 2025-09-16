@@ -27,7 +27,7 @@ abstract class FolderRepository implements ModelRepository<Folder> {
         folderDTORepository.findAllByParentAndPathIdentifier(item, pathIdentifier)
     }
 
-    Folder findByPathIdentifier(String pathIdentifier){
+    Folder findByLabelContaining(String pathIdentifier){
         folderDTORepository.findByLabel(pathIdentifier)
     }
 

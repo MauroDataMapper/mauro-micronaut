@@ -50,7 +50,7 @@ abstract class TermRelationshipTypeRepository implements ModelItemRepository<Ter
         readAllByTerminology((Terminology) parent)
     }
     @Override
-    TermRelationshipType findByPathIdentifier(String pathIdentifier){
+    TermRelationshipType findByLabelContaining(String pathIdentifier){
         termRelationshipTypeDTORepository.findByLabel(pathIdentifier)
     }
     @Nullable

@@ -27,7 +27,7 @@ abstract class DataTypeRepository implements ModelItemRepository<DataType> {
         dataTypeDTORepository.findById(id) as DataType
     }
 
-    DataType findByPathIdentifier(String pathIdentifier){
+    DataType findByLabelContaining(String pathIdentifier){
         dataTypeDTORepository.findByLabel(pathIdentifier)
     }
     @Nullable

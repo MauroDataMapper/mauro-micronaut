@@ -43,7 +43,7 @@ abstract class EnumerationValueRepository implements ModelItemRepository<Enumera
         findAllByEnumerationType((DataType) parent)
     }
 
-    EnumerationValue findByPathIdentifier(String pathIdentifier){
+    EnumerationValue findByLabelContaining(String pathIdentifier){
         enumerationValueDTORepository.findByLabel(pathIdentifier)
     }
 

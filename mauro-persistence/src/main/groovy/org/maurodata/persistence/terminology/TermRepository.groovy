@@ -56,7 +56,7 @@ abstract class TermRepository implements ModelItemRepository<Term> {
         readAllByTerminology((Terminology) parent)
     }
 
-    Term findByPathIdentifier(String pathIdentifier){
+    Term findByLabelContaining(String pathIdentifier){
         termDTORepository.findByLabel(pathIdentifier)
     }
 

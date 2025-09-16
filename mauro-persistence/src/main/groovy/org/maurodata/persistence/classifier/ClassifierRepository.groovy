@@ -44,7 +44,7 @@ abstract class ClassifierRepository implements ModelItemRepository<Classifier> {
     }
 
     @Override
-    Classifier findByPathIdentifier(String pathIdentifier) {
+    Classifier findByLabelContaining(String pathIdentifier) {
         classifierDTORepository.findByLabel(pathIdentifier)
     }
 

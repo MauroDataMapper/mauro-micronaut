@@ -29,7 +29,7 @@ abstract class DataModelRepository implements ModelRepository<DataModel> {
         dataModelDTORepository.findAllByParentAndPathIdentifier(item, pathIdentifier)
     }
 
-    DataModel findByPathIdentifier(String pathIdentifier) {
+    DataModel findByLabelContaining(String pathIdentifier) {
         dataModelDTORepository.findByLabel(pathIdentifier)
     }
 

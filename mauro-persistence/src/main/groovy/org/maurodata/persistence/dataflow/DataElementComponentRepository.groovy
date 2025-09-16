@@ -49,7 +49,7 @@ abstract class DataElementComponentRepository implements ModelItemRepository<Dat
         readAllByDataClassComponent((DataClassComponent) parent)
     }
 
-    DataElementComponent findByPathIdentifier(String pathIdentifier){
+    DataElementComponent findByLabelContaining(String pathIdentifier){
         dataElementComponentDTORepository.findByLabel(pathIdentifier)
     }
     @Override

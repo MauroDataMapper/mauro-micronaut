@@ -48,7 +48,7 @@ abstract class DataFlowRepository implements ModelItemRepository<DataFlow> {
         dataFlowDTORepository.findAllBySource(dataModel) as List<DataFlow>
     }
 
-    DataFlow findByPathIdentifier(String pathIdentifier){
+    DataFlow findByLabelContaining(String pathIdentifier){
         dataFlowDTORepository.findByLabel(pathIdentifier)
     }
 

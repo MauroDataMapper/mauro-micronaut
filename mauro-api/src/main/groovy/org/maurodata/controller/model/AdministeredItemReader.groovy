@@ -39,7 +39,7 @@ trait AdministeredItemReader {
     AdministeredItem findAdministeredItem(String domainType, String pathIdentifier) {
         AdministeredItemCacheableRepository administeredItemRepository = getAdministeredItemRepository(domainType)
         try {
-            AdministeredItem administeredItem = administeredItemRepository.findByPathIdentifier(pathIdentifier)
+            AdministeredItem administeredItem = administeredItemRepository.findByLabelContaining(pathIdentifier)
             return administeredItem
         } catch (DataAccessException e) {
             ErrorHandler.handleError(HttpStatus.NOT_FOUND, e.message)

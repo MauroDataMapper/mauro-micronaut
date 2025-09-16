@@ -29,7 +29,7 @@ abstract class TerminologyRepository implements ModelRepository<Terminology> {
         terminologyDTORepository.findAllByParentAndPathIdentifier(item, pathIdentifier)
     }
 
-    Terminology findByPathIdentifier(String pathIdentifier){
+    Terminology findByLabelContaining(String pathIdentifier){
         terminologyDTORepository.findByLabel(pathIdentifier)
     }
     @Override
