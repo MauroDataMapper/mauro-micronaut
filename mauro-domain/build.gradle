@@ -62,7 +62,7 @@ publishing {
         gpr(MavenPublication) {
             groupId = 'org.maurodata'
             artifactId = 'mauro-domain'
-            version = "0.0.1-SNAPSHOT"
+            version = "0.0.1-beta"
             from components.java
         }
     }

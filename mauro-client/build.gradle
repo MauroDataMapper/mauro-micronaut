@@ -70,7 +70,7 @@ publishing {
         mavenJava(MavenPublication) {
             groupId = 'org.maurodata'
             artifactId = 'mauro-client'
-            version = "0.0.1-SNAPSHOT"
+            version = "0.0.1-beta"
             from components.java
         }
     }
