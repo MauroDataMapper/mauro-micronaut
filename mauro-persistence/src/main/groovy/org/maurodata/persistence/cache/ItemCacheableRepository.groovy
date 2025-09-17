@@ -222,6 +222,11 @@ abstract class ItemCacheableRepository<I extends Item> implements ItemRepository
             ((UserGroupRepository) repository).addCatalogueUser(uuid, catalogueUserId)
         }
 
+        long deleteCatalogueUser(@NonNull UUID uuid, @NonNull UUID catalogueUserId) {
+            invalidateAll()
+            ((UserGroupRepository) repository).deleteCatalogueUser(uuid, catalogueUserId)
+        }
+
         @Cacheable
         List<UserGroup> readAllByName(String name) {
             ((UserGroupRepository) repository).readAllByName(name)
@@ -238,8 +243,28 @@ abstract class ItemCacheableRepository<I extends Item> implements ItemRepository
 
         // not cached
 
+        List<CatalogueUser> readByPendingAndDisabled(boolean pending, boolean disabled) {
+            ((CatalogueUserRepository) repository).readByPendingAndDisabled(pending, disabled)
+        }
+
         CatalogueUser readByEmailAddress(String emailAddress) {
             ((CatalogueUserRepository) repository).readByEmailAddress(emailAddress)
+        }
+
+        boolean existsByEmailAddress(String emailAddress) {
+            ((CatalogueUserRepository) repository).existsByEmailAddress(emailAddress)
+        }
+
+        List<CatalogueUser> readAll() {
+            ((CatalogueUserRepository) repository).readAll()
+        }
+
+        List<CatalogueUser> readAllByUserGroupId(UUID userGroupId) {
+            ((CatalogueUserRepository) repository).readAllByUserGroupId(userGroupId)
+        }
+
+        List<CatalogueUser> readAllByEmailAddressIlike(String searchTerm) {
+            ((CatalogueUserRepository) repository).readAllByEmailAddressIlike(searchTerm)
         }
     }
 
@@ -306,6 +331,10 @@ abstract class ItemCacheableRepository<I extends Item> implements ItemRepository
             ((ApiPropertyRepository) repository).findByCategory(category)
         }
 
+        @Cacheable
+        ApiProperty findByKey(final String key) {
+            ((ApiPropertyRepository) repository).findByKey(key)
+        }
     }
 
     @Singleton

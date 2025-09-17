@@ -93,4 +93,14 @@ class Email {
         this.failureReason
     }
 
+    String toString() {
+        return """
+From: ?
+To: ${sentToEmailAddress?sentToEmailAddress:""}
+Subject: ${subject?subject:""}
+
+${body?body:""}
+
+"""
+    }
 }
