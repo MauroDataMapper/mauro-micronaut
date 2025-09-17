@@ -37,6 +37,11 @@ abstract class ApiPropertyRepository implements ItemRepository<ApiProperty> {
     @Join(value = 'lastUpdatedBy', type = Join.Type.LEFT_FETCH)
     abstract List<ApiProperty> findByCategory(String category)
 
+    @Nullable
+    @Join(value = 'catalogueUser', type = Join.Type.LEFT_FETCH)
+    @Join(value = 'lastUpdatedBy', type = Join.Type.LEFT_FETCH)
+    abstract ApiProperty findByKey(String key)
+
     // Does not have a prefix
     Boolean handlesPathPrefix(final String pathPrefix) {
         false

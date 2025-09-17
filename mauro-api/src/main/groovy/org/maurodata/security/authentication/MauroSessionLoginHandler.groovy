@@ -12,6 +12,7 @@ import io.micronaut.security.config.RedirectService
 import io.micronaut.security.endpoints.LoginControllerConfigurationProperties
 import io.micronaut.security.errors.PriorToLoginPersistence
 import io.micronaut.security.session.SessionLoginHandler
+import io.micronaut.security.session.SessionPopulator
 import io.micronaut.session.Session
 import io.micronaut.session.SessionStore
 import jakarta.inject.Inject
@@ -36,8 +37,10 @@ class MauroSessionLoginHandler extends SessionLoginHandler {
     @Value('${mauro.oauth.login-success:/}')
     URI loginSuccessUrl
 
-    MauroSessionLoginHandler(RedirectConfiguration redirectConfiguration, SessionStore<Session> sessionStore, @Nullable PriorToLoginPersistence<HttpRequest<?>, MutableHttpResponse<?>> priorToLoginPersistence, RedirectService redirectService) {
-        super(redirectConfiguration, sessionStore, priorToLoginPersistence, redirectService)
+    MauroSessionLoginHandler(RedirectConfiguration redirectConfiguration, SessionStore<Session> sessionStore,
+                             @Nullable PriorToLoginPersistence<HttpRequest<?>, MutableHttpResponse<?>> priorToLoginPersistence, RedirectService redirectService,
+                             List<SessionPopulator<HttpRequest<?>>> sessionPopulators) {
+        super(redirectConfiguration, sessionStore, priorToLoginPersistence, redirectService, sessionPopulators)
     }
 
     @Override

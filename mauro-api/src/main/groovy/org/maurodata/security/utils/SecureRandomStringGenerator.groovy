@@ -73,7 +73,9 @@ class SecureRandomStringGenerator {
     }
 
     static byte[] generateSalt() {
-        return fullGenerator().generate(8).getBytes(Charset.defaultCharset())
+        final byte[] salt = new byte[16]
+        UniformRandomProvider rng = RandomSource.MT.create()
+        rng.nextBytes(salt)
+        return salt
     }
-
 }

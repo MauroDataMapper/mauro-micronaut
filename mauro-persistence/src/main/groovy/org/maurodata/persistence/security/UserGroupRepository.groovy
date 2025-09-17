@@ -21,6 +21,9 @@ abstract class UserGroupRepository implements ItemRepository<UserGroup> {
     @Query('insert into security.user_group_catalogue_user (catalogue_user_id, user_group_id) values (:catalogueUserId, :uuid)')
     abstract UserGroup addCatalogueUser(@NonNull UUID uuid, @NonNull UUID catalogueUserId)
 
+    @Query('delete from security.user_group_catalogue_user where catalogue_user_id = :catalogueUserId AND user_group_id = :uuid')
+    abstract long deleteCatalogueUser(@NonNull UUID uuid, @NonNull UUID catalogueUserId)
+
     @Nullable
     abstract List<UserGroup> readAllByName(String name)
 
