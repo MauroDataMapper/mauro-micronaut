@@ -121,7 +121,7 @@ publishing {
         mavenJava(MavenPublication) {
             groupId = 'org.maurodata'
             artifactId = 'mauro-api'
-            version = "0.0.1-beta"
+            version = "0.0.2-SNAPSHOT"
             from components.java
         }
     }
