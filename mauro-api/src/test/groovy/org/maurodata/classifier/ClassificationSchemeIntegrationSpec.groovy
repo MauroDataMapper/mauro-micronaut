@@ -1,26 +1,15 @@
 package org.maurodata.classifier
 
-import org.maurodata.api.classifier.ClassificationSchemeApi
-import org.maurodata.api.classifier.ClassifierApi
-import org.maurodata.api.folder.FolderApi
-
 import io.micronaut.http.HttpResponse
-import io.micronaut.runtime.server.EmbeddedServer
-import jakarta.inject.Singleton
-
-import org.maurodata.api.Paths
-
 import io.micronaut.http.HttpStatus
-import io.micronaut.runtime.EmbeddedApplication
 import io.micronaut.test.annotation.Sql
-import jakarta.inject.Inject
-import spock.lang.Shared
+import jakarta.inject.Singleton
 import org.maurodata.domain.classifier.ClassificationScheme
 import org.maurodata.domain.classifier.Classifier
-import org.maurodata.domain.folder.Folder
 import org.maurodata.persistence.ContainerizedTest
 import org.maurodata.testing.CommonDataSpec
 import org.maurodata.web.ListResponse
+import spock.lang.Shared
 
 @ContainerizedTest
 @Singleton
@@ -71,8 +60,8 @@ class ClassificationSchemeIntegrationSpec extends CommonDataSpec {
         when:
         ClassificationScheme updated =
             classificationSchemeApi.update(classificationScheme.id,
-                new ClassificationScheme(label: 'updated test label',
-                 description: 'updated test description'))
+                                           new ClassificationScheme(label: 'updated test label',
+                                                                    description: 'updated test description'))
         then:
         updated
         updated.label == 'updated test label'
@@ -90,7 +79,6 @@ class ClassificationSchemeIntegrationSpec extends CommonDataSpec {
 
         //Add AdministeredItemClassificationScheme to classifier -joinAdministeredItemToClassifier
 
-        classifierApi.createAdministeredItemClassifier('classificationScheme', classificationScheme.id, classifier.id)
         classifierApi.createAdministeredItemClassifier('classifier', classifier.id, classifier.id)
 
         when:
@@ -100,8 +88,19 @@ class ClassificationSchemeIntegrationSpec extends CommonDataSpec {
         then:
         httpResponse.status == HttpStatus.NO_CONTENT
 
-        // TODO: Keep testing this result...
+        when:
+        ListResponse<ClassificationScheme> listResponse = classificationSchemeApi.listAll()
+
+        then:
+        listResponse
+        listResponse.items.isEmpty()
+
+        when:
+        ListResponse<Classifier> response = classifierApi.listAllClassifiers()
+
+        then:
+        response.items.isEmpty()
 
     }
-
 }
+

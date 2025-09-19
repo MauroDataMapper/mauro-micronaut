@@ -115,14 +115,6 @@ abstract class FacetCacheableRepository<F extends Facet> extends ItemCacheableRe
             super(annotationRepository)
         }
 
-        // TODO: Are these overrides necessary?
-        Annotation findById(UUID id) {
-            cachedLookupById(FIND_BY_ID, Annotation.class.simpleName, id)
-        }
-
-        Annotation readById(UUID id) {
-            cachedLookupById(READ_BY_ID, Annotation.class.simpleName, id)
-        }
 
         List<Annotation> saveAll(Iterable<Annotation> items) {
             List<Annotation> savedChild = []

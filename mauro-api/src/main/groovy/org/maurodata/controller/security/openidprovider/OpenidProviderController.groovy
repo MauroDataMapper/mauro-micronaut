@@ -43,6 +43,10 @@ class OpenidProviderController implements OpenidProviderApi {
     @Audit
     @Get(Paths.OPENID_PROVIDER_LIST)
     List<OpenidConnectProvider> list() {
+        if(!openidProviderId || !label || !standardProvider || !authorizationEndpoint) {
+            log.debug("No OpenID Connect Provider configured (mauro.oauth.{id, label, standard-provider, authorization-endpoint, image-url} is not set)")
+            return []
+        }
         OpenidConnectProvider openidConnectProvider = new OpenidConnectProvider(openidProviderId, label, standardProvider, authorizationEndpoint,
                 imageUrl)
         [openidConnectProvider]

@@ -195,12 +195,9 @@ class ClassifierIntegrationSpec extends CommonDataSpec {
                 classifier.id,
                 new SummaryMetadata(summaryMetadataType: SummaryMetadataType.STRING, label: 'summary metadata label'))
 
-        //Add AdministeredItemClassificationScheme to classifier -joinAdministeredItemToClassifier
-
-        classifierApi.createAdministeredItemClassifier('classificationScheme', classificationSchemeId, classifier.id)
-        classifierApi.createAdministeredItemClassifier('classifier', classifier.id, classifier.id)
-
         DataModel dataModel = dataModelApi.create(folderId, new DataModel(label: 'Test data model'))
+
+        //Add AdministeredItemClassificationScheme to classifier -joinAdministeredItemToClassifier
         classifierApi.createAdministeredItemClassifier('dataModel', dataModel.id, classifier.id)
 
         when:

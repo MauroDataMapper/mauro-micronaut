@@ -150,6 +150,11 @@ class DataType extends ModelItem<DataModel> implements DiffableItem<DataType>, I
     boolean isModelType() {
         modelResourceDomainType && modelResourceId
     }
+    @Transient
+    @JsonIgnore
+    boolean isEnumerationType() {
+        this.dataTypeKind == DataTypeKind.ENUMERATION_TYPE
+    }
 
     @Override
     @JsonIgnore

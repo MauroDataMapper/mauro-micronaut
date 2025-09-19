@@ -5,6 +5,7 @@ import groovy.util.logging.Slf4j
 import io.github.classgraph.ClassGraph
 import io.github.classgraph.ScanResult
 import io.micronaut.context.ApplicationContext
+import io.micronaut.context.annotation.Value
 import io.micronaut.context.event.ApplicationEventListener
 import io.micronaut.context.event.StartupEvent
 import io.micronaut.core.annotation.Order
@@ -32,10 +33,16 @@ class PluginFlywayMigrationService implements ApplicationEventListener<StartupEv
     @Named("default")
     DataSource dataSource
 
+    @Value('${flyway.enabled:true}')
+    boolean flywayEnabled
+
     @Override
     void onApplicationEvent(final StartupEvent event) {
         log.trace("Loading data at startup")
-        runPluginMigrations()
+        log.trace("Flyway enabled: $flywayEnabled")
+        if(flywayEnabled) {
+            runPluginMigrations()
+        }
     }
 
     @Connectable
