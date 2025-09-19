@@ -25,7 +25,11 @@ abstract class TerminologyDTORepository implements GenericRepository<Terminology
     @Query('SELECT * FROM terminology.terminology WHERE folder_id = :item AND label = :pathIdentifier')
     abstract List<Terminology> findAllByParentAndPathIdentifier(UUID item, String pathIdentifier)
 
-    @Query('SELECT * FROM terminology.terminology WHERE label = :label')
+    @Query('SELECT * FROM terminology.terminology WHERE label like :label')
     @Nullable
-    abstract def Terminology findByLabel(String label)
+    abstract Terminology findByLabelContaining(String label)
+
+    @Query('SELECT * FROM terminology.terminology WHERE label like :label')
+    @Nullable
+    abstract List<Terminology> findAllByLabelContaining(String label)
 }

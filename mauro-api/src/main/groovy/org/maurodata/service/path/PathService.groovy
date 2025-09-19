@@ -5,52 +5,70 @@ import groovy.util.logging.Slf4j
 import io.micronaut.http.HttpStatus
 import jakarta.inject.Inject
 import org.maurodata.ErrorHandler
+import org.maurodata.controller.model.AdministeredItemReader
 import org.maurodata.controller.model.AvailableActions
 import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.domain.model.Item
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository
 import org.maurodata.persistence.model.PathRepository
 import org.maurodata.security.AccessControlService
+import org.maurodata.utils.PathStringUtils
 
 @CompileStatic
 @Slf4j
-class PathService {
-
-    static final String VERTICAL_BAR_ESCAPE = "\\|"
-    static final String COLON = ":"
-
+class PathService implements AdministeredItemReader {
     @Inject
-    PathPrefixLoader pathPrefixLoader
+    PathPrefixTypeLookup pathPrefixTypeLookup
 
     @Inject
     PathRepository pathRepository
-
-    @Inject
-    List<AdministeredItemCacheableRepository> administeredItemRepositories
 
     @Inject
     AccessControlService accessControlService
 
     /**
      *
-     *
-     * @param domainType eg folders
-     * @param path eg "%3Asoluta%20eum%20architecto%7Cdm%3ABadgerNet%20UK%20Maternity%24main" ("fo:soluta eum architecto|dm:BadgerNet UK Maternity$main")
-     *  find last path after |.  remove text after $(branch)
-     * @return path (label in table)
+     * @param domainType et dataModels, folders, dataClasses
+     * @param path -full path eg
+     * http://localhost:8080/api/dataModels/path/dm%3AComplex%20Test%20DataModel%241.0.0 dm:Complex Test DataModel$1.0.0
+     http://localhost:8080/api/folders/path/fo%3Asoluta%20eum%20architecto%7Cdm%3Amodi%20unde%20est%241.0.0%7Cdc%3Aest%20quasi%20vel
+     http://localhost:8080/api/folders/path/fo%3Asoluta%20eum%20architecto%7Cdm%3Amodi%20unde%20est%24matrix
+
+     From examples above,
+     version could be branchname(defaults to main) or modelversion(nullable)
+
+     * @return the admin item, given the full path including versioning
      */
-    String getPathPrefixSubPath(String pathPrefix, String fullPath) {
-        String[] pathSubPaths = splitBy(fullPath, VERTICAL_BAR_ESCAPE)
-        String entireSubPath = pathSubPaths.find {it.startsWith("$pathPrefix:")}
-        if (!entireSubPath ) ErrorHandler.handleError(HttpStatus.NOT_FOUND, "Path starting with $pathPrefix not found")
-        String subPath =  entireSubPath - "$pathPrefix:"
-        def result = subPath.find(~/.*\$/)  //find up to and including $ eg branch
-        result - '$'
+
+    AdministeredItem findResourceByPath(String domainType, String path) {
+        String pathPrefix = getPathPrefixForDomainType(domainType)
+        String domainPath = PathStringUtils.getItemSubPath(pathPrefix, path)
+        String versionString = PathStringUtils.getVersionFromPath(path)
+        return findItemForPath(domainType, domainPath, versionString, path)
     }
 
 
+    /**
+     *
+     * @param path fullPath
+     * @return  the last path domainType and label/subPath
+     */
+    Tuple2<String,String> getItemDomainTypeAndPath(String path) {
+        String itemPath = PathStringUtils.lastSubPath(path)
+        //extract the item domain type from given input path
+        String[] itemParts = PathStringUtils.splitBy(itemPath, PathStringUtils.COLON)
+        if (itemParts.size() != 2){
+            ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "bad path $path")
+        }
+        String itemDomainType = getDomainTypeFromPathPrefix(itemParts[0])
+        String subPathOnly = itemParts[1].find(PathStringUtils.DISCARD_AFTER_VERSION) ?: itemParts[1]
+
+        String itemSubPath = subPathOnly.replaceAll(PathStringUtils.REMOVE_VERSION_DELIM, '')
+        new Tuple2(itemDomainType, itemSubPath)
+    }
+
     String getPathPrefixForDomainType(String domainType) {
-        AdministeredItemCacheableRepository repo = administeredItemRepositories.find {
+        AdministeredItemCacheableRepository repo = repositoryService.administeredItemCacheableRepositories.find {
             it.handles(domainType)
         }
         ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, repo, "Cannot find repository for domain Type : $domainType")
@@ -59,20 +77,11 @@ class PathService {
     }
 
     String getDomainTypeFromPathPrefix(String pathPrefix) {
-        String domainType = pathPrefixLoader.getDomainType(pathPrefix)
+        String domainType = pathPrefixTypeLookup.getDomainType(pathPrefix)
         if (!domainType) {
             ErrorHandler.handleError(HttpStatus.NOT_FOUND, "Unknown path prefix $pathPrefix for modelItem ")
         }
         domainType
-    }
-
-    String getItemPath(String path) {
-        splitBy(path, VERTICAL_BAR_ESCAPE).last()
-    }
-
-   String[] splitBy(String path, String separator){
-        path.split(separator)
-
     }
 
     Item updateDerivedProperties(Item item) {
@@ -80,6 +89,28 @@ class PathService {
         (item as AdministeredItem).updatePath()
         (item as AdministeredItem).updateBreadcrumbs()
         AvailableActions.updateAvailableActions(item as AdministeredItem, accessControlService)
+        item
+    }
+
+    protected AdministeredItem findItemForPath(String domainType, String domainPath, String versionString, String fullPath) {
+        AdministeredItemCacheableRepository repository = getAdministeredItemRepository(domainType)
+        List<AdministeredItem> items = repository.findAllByLabelContaining(domainPath)
+        if (items.isEmpty()) {
+            null
+        }
+        AdministeredItem item
+        if (items.size() == 1) {
+            item = items[0] as AdministeredItem
+        } else {
+            if (!versionString) {
+                log.warn("No version found in  fullpath: $fullPath; returning 1st item")
+                items.first()
+            }
+            item = (items as List<AdministeredItem>).find {
+                it.updatePath()
+                it.path.pathString.contains(versionString)
+            }
+        }
         item
     }
 }

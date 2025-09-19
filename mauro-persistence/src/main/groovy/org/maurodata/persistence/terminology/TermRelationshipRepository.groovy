@@ -75,9 +75,17 @@ abstract class TermRelationshipRepository implements ModelItemRepository<TermRel
     List<TermRelationship> findAllByTerminologyAndSourceTermOrTargetTerm(Terminology terminology, Term term) {
         termRelationshipDTORepository.findAllByTerminologyAndSourceTermOrTargetTerm(terminology, term, term) as List<TermRelationship>
     }
+//
+//    @Override
+//    @Nullable
+//    TermRelationship findByLabelContaining(String label){
+//        termRelationshipDTORepository.findByLabelContaining(label)
+//    }
 
-    TermRelationship findByLabelContaining(String pathIdentifier){
-        termRelationshipDTORepository.findByLabel(pathIdentifier)
+    @Override
+    @Nullable
+    List<TermRelationship> findAllByLabelContaining(String label){
+        termRelationshipDTORepository.findAllByLabelContaining(label)
     }
 
     @Override

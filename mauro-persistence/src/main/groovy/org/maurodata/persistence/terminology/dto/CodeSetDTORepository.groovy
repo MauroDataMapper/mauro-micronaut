@@ -20,7 +20,8 @@ abstract class CodeSetDTORepository implements GenericRepository<CodeSetDTO, UUI
     @Query('SELECT * FROM terminology.code_set WHERE folder_id = :item AND label = :pathIdentifier')
     abstract List<CodeSet> findAllByParentAndPathIdentifier(UUID item, String pathIdentifier)
 
+
     @Nullable
-    @Query('SELECT * FROM terminology.code_set WHERE label = :label')
-    abstract CodeSet findByLabel(String label)
+    @Query('SELECT * FROM terminology.code_set WHERE label like :label')
+    abstract List<CodeSet> findAllByLabelContaining(String label)
 }

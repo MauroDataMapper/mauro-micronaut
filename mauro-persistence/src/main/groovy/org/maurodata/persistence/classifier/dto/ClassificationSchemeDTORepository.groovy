@@ -7,6 +7,7 @@ import io.micronaut.data.annotation.Query
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.repository.GenericRepository
+import org.maurodata.domain.classifier.ClassificationScheme
 
 @CompileStatic
 @JdbcRepository(dialect = Dialect.POSTGRES)
@@ -20,7 +21,9 @@ abstract class ClassificationSchemeDTORepository implements GenericRepository<Cl
     @Nullable
     @Query('select * from core.classification_scheme where folder_id = :item AND label = :pathIdentifier')
     abstract List<ClassificationSchemeDTO> findAllByParentAndPathIdentifier(UUID item, String pathIdentifier)
+
     @Nullable
-    @Query('select * from core.classification_scheme where label = :label')
-    abstract ClassificationSchemeDTO findByLabel(String label)
+    @Query('select * from core.classification_scheme where label like :label')
+    abstract List<ClassificationScheme> findAllByLabelContaining(String label)
+
 }

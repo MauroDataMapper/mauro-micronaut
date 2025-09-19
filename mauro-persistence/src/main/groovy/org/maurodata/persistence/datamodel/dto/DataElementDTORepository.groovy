@@ -31,7 +31,8 @@ abstract class DataElementDTORepository implements GenericRepository<DataElement
     @Query('SELECT * FROM datamodel.data_element WHERE data_class_id = :item AND label = :pathIdentifier')
     abstract List<DataElement> findAllByParentAndPathIdentifier(UUID item, String pathIdentifier)
 
+
     @Query('SELECT * FROM datamodel.data_element WHERE label like :label')
     @Nullable
-    abstract DataElement findByLabelContaining(String label)
+    abstract List<DataElement> findAllByLabelContaining(String label)
 }

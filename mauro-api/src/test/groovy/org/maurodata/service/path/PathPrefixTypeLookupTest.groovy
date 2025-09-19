@@ -24,17 +24,17 @@ import spock.lang.Specification
 import spock.lang.Unroll
 
 @MicronautTest
-class PathPrefixLoaderTest extends Specification {
+class PathPrefixTypeLookupTest extends Specification {
 
     @Inject
     List<AdministeredItemCacheableRepository> administeredItemCacheableRepositories
 
     @Unroll
-    def 'PathPrefixLoader -should get #expectedDomainType for #pathPrefix'() {
-        PathPrefixLoader pathPrefixLoader = new PathPrefixLoader(administeredItemCacheableRepositories)
+    def 'PathPrefixTypeLookup -should get #expectedDomainType for #pathPrefix'() {
+        PathPrefixTypeLookup pathPrefixTypeLookup = new PathPrefixTypeLookup(administeredItemCacheableRepositories)
 
         when:
-        String domainType = pathPrefixLoader.getDomainType(pathPrefix)
+        String domainType = pathPrefixTypeLookup.getDomainType(pathPrefix)
 
         then:
         domainType == expectedDomainType

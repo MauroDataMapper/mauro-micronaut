@@ -11,7 +11,6 @@ import jakarta.inject.Inject
 import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.domain.terminology.CodeSet
 import org.maurodata.domain.terminology.Term
-import org.maurodata.domain.terminology.TermRelationship
 import org.maurodata.domain.terminology.Terminology
 import org.maurodata.persistence.model.ModelItemRepository
 import org.maurodata.persistence.terminology.dto.TermDTORepository
@@ -55,9 +54,17 @@ abstract class TermRepository implements ModelItemRepository<Term> {
     List<Term> readAllByParent(AdministeredItem parent) {
         readAllByTerminology((Terminology) parent)
     }
+//
+//    @Override
+//    @Nullable
+//    Term findByLabelContaining(String label){
+//        termDTORepository.findByLabelContaining(label)
+//    }
 
-    Term findByLabelContaining(String pathIdentifier){
-        termDTORepository.findByLabel(pathIdentifier)
+    @Override
+    @Nullable
+    List<Term> findAllByLabelContaining(String label){
+        termDTORepository.findAllByLabelContaining(label)
     }
 
     abstract Long deleteByTerminologyId(UUID terminologyId)

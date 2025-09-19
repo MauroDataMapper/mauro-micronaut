@@ -30,9 +30,6 @@ abstract class CodeSetRepository implements ModelRepository<CodeSet> {
         codeSetDTORepository.findAllByParentAndPathIdentifier(item, pathIdentifier)
     }
 
-    CodeSet findByLabelContaining(String pathIdentifier) {
-        codeSetDTORepository.findByLabel(pathIdentifier)
-    }
     /**
      * Remove all associations from table code_set_terms
      * @param id codeSetId

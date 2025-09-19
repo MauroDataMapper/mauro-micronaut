@@ -1,7 +1,6 @@
 package org.maurodata.persistence.dataflow
 
 import groovy.transform.CompileStatic
-import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.model.query.builder.sql.Dialect
@@ -48,10 +47,11 @@ abstract class DataFlowRepository implements ModelItemRepository<DataFlow> {
         dataFlowDTORepository.findAllBySource(dataModel) as List<DataFlow>
     }
 
-    DataFlow findByLabelContaining(String pathIdentifier){
-        dataFlowDTORepository.findByLabel(pathIdentifier)
-    }
 
+    @Nullable
+    List<DataFlow> findAllByLabelContaining(String label){
+        dataFlowDTORepository.findAllByLabelContaining(label)
+    }
     @Override
     @Nullable
     List<DataFlow> readAllByParent(AdministeredItem parent) {

@@ -9,7 +9,7 @@ import org.maurodata.persistence.cache.AdministeredItemCacheableRepository
 
 @CompileStatic
 @Slf4j
-class PathPrefixLoader {
+class PathPrefixTypeLookup {
 
     static Map<String, String> pathPrefixDomainType
 
@@ -17,7 +17,7 @@ class PathPrefixLoader {
     List<AdministeredItemCacheableRepository> administeredItemRepositories
 
 
-    PathPrefixLoader(List<AdministeredItemCacheableRepository> administeredItemRepositories) {
+    PathPrefixTypeLookup(List<AdministeredItemCacheableRepository> administeredItemRepositories) {
         this.administeredItemRepositories = administeredItemRepositories
         initialisePathPrefixLookup()
     }

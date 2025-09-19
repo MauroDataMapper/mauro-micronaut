@@ -72,7 +72,6 @@ abstract class ClassifierDTORepository implements GenericRepository<ClassifierDT
     abstract List<Classifier> findAllByClassifier(UUID classifierId)
 
     @Nullable
-    @Query('''select * from core.classifier where label = :label ''')
-    abstract Classifier findByLabel(String label)
-
+    @Query('''select * from core.classifier where label like :label ''')
+    abstract List<Classifier> findAllByLabelContaining(String label)
 }

@@ -21,5 +21,6 @@ trait AdministeredItemRepository<I extends AdministeredItem> implements ItemRepo
         throw new UnsupportedOperationException('Method should be implemented')
     }
 
-    abstract I findByLabelContaining(String pathIdentifier)
+
+    abstract <I extends AdministeredItem> List<I> findAllByLabelContaining(String label)
 }

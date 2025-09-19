@@ -37,7 +37,9 @@ abstract class DataFlowDTORepository implements GenericRepository<DataFlowDTO, U
     @Query('SELECT * FROM dataflow.data_flow WHERE target_id = :item AND label = :pathIdentifier')
     abstract List<DataFlow> findAllByParentAndPathIdentifier(UUID item, String pathIdentifier)
 
-    @Query('SELECT * FROM dataflow.data_flow WHERE label = :label')
+
+
+    @Query('SELECT * FROM dataflow.data_flow WHERE label like :label')
     @Nullable
-    abstract DataFlow findByLabel(String label)
+    abstract List<DataFlow> findAllByLabelContaining(String label)
 }

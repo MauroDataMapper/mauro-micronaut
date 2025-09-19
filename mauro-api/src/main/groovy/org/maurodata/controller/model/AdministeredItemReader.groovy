@@ -36,15 +36,4 @@ trait AdministeredItemReader {
         administeredItemRepository
     }
 
-    AdministeredItem findAdministeredItem(String domainType, String pathIdentifier) {
-        AdministeredItemCacheableRepository administeredItemRepository = getAdministeredItemRepository(domainType)
-        try {
-            AdministeredItem administeredItem = administeredItemRepository.findByLabelContaining(pathIdentifier)
-            return administeredItem
-        } catch (DataAccessException e) {
-            ErrorHandler.handleError(HttpStatus.NOT_FOUND, e.message)
-        }
-        throw new HttpStatusException(HttpStatus.NOT_FOUND, 'AdministeredItem not found by ID')
-
-    }
 }

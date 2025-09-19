@@ -1,7 +1,6 @@
 package org.maurodata.persistence.terminology
 
 import groovy.transform.CompileStatic
-import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.model.query.builder.sql.Dialect
@@ -49,10 +48,17 @@ abstract class TermRelationshipTypeRepository implements ModelItemRepository<Ter
     List<TermRelationshipType> readAllByParent(AdministeredItem parent) {
         readAllByTerminology((Terminology) parent)
     }
+//    @Nullable
+//    @Override
+//    TermRelationshipType findByLabelContaining(String label){
+//        termRelationshipTypeDTORepository.findByLabelContaining(label)
+//    }
+    @Nullable
     @Override
-    TermRelationshipType findByLabelContaining(String pathIdentifier){
-        termRelationshipTypeDTORepository.findByLabel(pathIdentifier)
+    List<TermRelationshipType> findAllByLabelContaining(String label){
+        termRelationshipTypeDTORepository.findAllByLabelContaining(label)
     }
+
     @Nullable
     abstract Long deleteByTerminologyId(UUID terminologyId)
 

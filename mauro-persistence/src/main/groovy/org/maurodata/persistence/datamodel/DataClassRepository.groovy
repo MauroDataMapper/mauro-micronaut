@@ -4,7 +4,6 @@ import org.maurodata.domain.datamodel.DataClass
 import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.persistence.datamodel.dto.DataClassDTORepository
-import org.maurodata.persistence.model.ModelItemRepository
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
@@ -14,6 +13,7 @@ import io.micronaut.data.annotation.Query
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.model.query.builder.sql.Dialect
 import jakarta.inject.Inject
+import org.maurodata.persistence.model.ModelItemRepository
 
 @Slf4j
 @CompileStatic
@@ -46,9 +46,14 @@ abstract class DataClassRepository implements ModelItemRepository<DataClass> {
         findAllByDataModel((DataModel) parent)
     }
 
-    DataClass findByLabelContaining(String pathIdentifier) {
-        dataClassDTORepository.findByLabel(pathIdentifier)
+
+
+    @Nullable
+    @Override
+    List<DataClass> findAllByLabelContaining(String label) {
+        dataClassDTORepository.findAllByLabelContaining(label)
     }
+
     @Nullable
     abstract List<DataClass> readAllByDataModel(DataModel dataModel)
 

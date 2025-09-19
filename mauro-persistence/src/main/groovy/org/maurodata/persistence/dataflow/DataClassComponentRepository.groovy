@@ -50,10 +50,12 @@ abstract class DataClassComponentRepository implements ModelItemRepository<DataC
         readAllByDataFlow((DataFlow) parent)
     }
 
-    DataClassComponentDTO findByLabelContaining(String pathIdentifier) {
-        dataClassComponentDTORepository.findByLabel(pathIdentifier)
-    }
 
+    @Nullable
+    @Override
+    List<DataClassComponentDTO> findAllByLabelContaining(String label) {
+        dataClassComponentDTORepository.findAllByLabelContaining(label)
+    }
 
     /**
      * Add sourcedataClass to dataClassComponent

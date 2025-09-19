@@ -20,7 +20,7 @@ import org.maurodata.persistence.model.ModelItemRepository
 @Slf4j
 @CompileStatic
 @JdbcRepository(dialect = Dialect.POSTGRES)
-abstract class DataElementRepository implements  ModelItemRepository<DataElement> {
+abstract class DataElementRepository implements ModelItemRepository<DataElement> {
 
     @Inject
     DataElementDTORepository dataElementDTORepository
@@ -61,9 +61,12 @@ abstract class DataElementRepository implements  ModelItemRepository<DataElement
         dataElementDTORepository.readAllByDataClassIdIn(dataClasses.collect{it.id}) as List<DataElement>
     }
 
-    DataElement findByLabelContaining(String pathIdentifier){
-        dataElementDTORepository.findByLabelContaining(pathIdentifier)
+    @Nullable
+    @Override
+    List<DataElement> findAllByLabelContaining(String label){
+        dataElementDTORepository.findAllByLabelContaining(label)
     }
+
     @Nullable
     List<DataElement> readAllByDataTypeIn(List<DataType> dataTypes) {
         dataElementDTORepository.readAllByDataTypeIdIn(dataTypes.id) as List<DataElement>
