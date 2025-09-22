@@ -19,7 +19,8 @@ import org.maurodata.domain.email.Email
 import org.maurodata.domain.security.CatalogueUser
 import org.maurodata.persistence.security.EmailRepository
 import org.maurodata.plugin.MauroPluginService
-import org.maurodata.plugin.exporter.ImportExportModelExporterPlugin
+import org.maurodata.plugin.exporter.ModelExporterPlugin
+import org.maurodata.plugin.exporter.ModelItemExporterPlugin
 import org.maurodata.plugin.importer.ImporterPlugin
 import org.maurodata.security.AccessControlService
 import org.maurodata.plugin.EmailPlugin
@@ -68,7 +69,7 @@ class AdminController implements AdminApi {
     List<MauroPluginDTO> exporters() {
         accessControlService.checkAdministrator()
 
-        mauroPluginService.listPluginsAsDTO(ImportExportModelExporterPlugin)
+        mauroPluginService.listPluginsAsDTO(ModelExporterPlugin)
     }
 
 

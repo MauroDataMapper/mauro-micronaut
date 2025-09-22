@@ -5,6 +5,7 @@ import io.micronaut.core.annotation.NonNull
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
 import org.maurodata.domain.dataflow.DataClassComponent
+import org.maurodata.domain.dataflow.DataElementComponent
 import org.maurodata.domain.dataflow.DataFlow
 import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.persistence.model.AdministeredItemContentRepository
@@ -27,8 +28,11 @@ class DataFlowContentRepository extends AdministeredItemContentRepository {
     DataFlow readWithContentById(UUID id) {
         DataFlow dataFlow = dataFlowRepository.findById(id)
         List<DataClassComponent> dataClassComponents = dataClassComponentRepository.findAllByParent(dataFlow)
+
         dataClassComponents.each {
-            it.dataElementComponents = dataElementComponentRepository.findAllByParent(it)
+            it.dataElementComponents = getAllDataElementsWithFullAssociations( it)
+            it.sourceDataClasses.each{it.updatePath()}
+            it.targetDataClasses.each{it.updatePath()}
         }
         dataFlow.dataClassComponents = dataClassComponents
         dataFlow
@@ -61,5 +65,13 @@ class DataFlowContentRepository extends AdministeredItemContentRepository {
     @Override
     Boolean handles(Class clazz) {
         return clazz.simpleName == 'DataFlow'
+    }
+
+    List<DataElementComponent> getAllDataElementsWithFullAssociations(DataClassComponent dataClassComponent) {
+         dataElementComponentRepository.findAllByParent(dataClassComponent).each{
+            it.updatePath()
+            it.sourceDataElements.each{it.updatePath()}
+            it.targetDataElements.each{it.updatePath()}
+        }
     }
 }

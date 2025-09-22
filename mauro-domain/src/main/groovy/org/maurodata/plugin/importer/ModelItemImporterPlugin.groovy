@@ -37,7 +37,7 @@ trait ModelItemImporterPlugin<D extends ModelItem, P extends ImportParameters> e
         importParametersClass().toString()
     }
 
-    List<D> importModelItems(P parameters) {
+    List<D> importModelItem(P parameters) {
         List<D> imported = importDomain(parameters)
         imported.each { importedModelItem ->
 

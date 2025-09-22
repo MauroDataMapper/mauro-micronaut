@@ -39,6 +39,9 @@ class DataFlowImportExportIntegrationSpec extends CommonDataSpec {
     UUID folderId
     @Shared
     DataModel source
+
+    @Shared
+    DataModel importedSource
     @Shared
     DataModel target
     @Shared
@@ -76,6 +79,7 @@ class DataFlowImportExportIntegrationSpec extends CommonDataSpec {
     void setup() {
         folderId = folderApi.create(folder()).id
         source = dataModelApi.create(folderId, dataModelPayload('source label'))
+        importedSource = dataModelApi.create(folderId, dataModelPayload('imported source label'))
         target = dataModelApi.create(folderId, dataModelPayload('target label'))
         dataType1 = dataTypeApi.create(source.id, dataTypesPayload('dataType1 label', DataType.DataTypeKind.PRIMITIVE_TYPE))
         dataType2 = dataTypeApi.create(target.id, dataTypesPayload())
@@ -160,6 +164,7 @@ class DataFlowImportExportIntegrationSpec extends CommonDataSpec {
         and:
         MultipartBody importRequest = MultipartBody.builder()
             .addPart('folderId', folderId.toString())
+            .addPart('sourceDataModelId', importedSource.id.toString())
             .addPart('importFile', 'file.json', MediaType.APPLICATION_JSON_TYPE, objectMapper.writeValueAsBytes(exportModel))
             .build()
 

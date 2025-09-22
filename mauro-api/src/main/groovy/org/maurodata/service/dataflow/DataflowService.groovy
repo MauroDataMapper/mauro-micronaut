@@ -1,4 +1,4 @@
-package org.maurodata.service.model
+package org.maurodata.service.dataflow
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.transform.CompileStatic
@@ -12,7 +12,11 @@ import io.micronaut.http.multipart.CompletedFileUpload
 import io.micronaut.http.multipart.CompletedPart
 import io.micronaut.http.server.multipart.MultipartBody
 import jakarta.inject.Inject
+import jakarta.validation.constraints.NotNull
 import org.maurodata.ErrorHandler
+import org.maurodata.domain.dataflow.DataFlow
+import org.maurodata.domain.datamodel.DataClass
+import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.folder.Folder
 import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.domain.model.Model
@@ -34,17 +38,22 @@ import java.nio.charset.StandardCharsets
 
 @Slf4j
 @CompileStatic
-class ImportExportModelService extends AdministeredItemService {
+class DataflowService extends AdministeredItemService {
 
     AccessControlService accessControlService
     ModelCacheableRepository.FolderCacheableRepository folderRepository
+    ModelCacheableRepository.DataModelCacheableRepository dataModelRepository
     MauroPluginService mauroPluginService
     ObjectMapper objectMapper
 
+//    PathService pathService
     @Inject
-    ImportExportModelService(AccessControlService accessControlService, ModelCacheableRepository.FolderCacheableRepository folderRepository, MauroPluginService mauroPluginService, ObjectMapper objectMapper) {
+    DataflowService(AccessControlService accessControlService, ModelCacheableRepository.FolderCacheableRepository folderRepository,
+                    ModelCacheableRepository.DataModelCacheableRepository dataModelCacheableRepository, MauroPluginService mauroPluginService,
+                    ObjectMapper objectMapper) {
         this.accessControlService = accessControlService
         this.folderRepository = folderRepository
+        this.dataModelRepository = dataModelCacheableRepository
         this.mauroPluginService = mauroPluginService
         this.objectMapper = objectMapper
     }
@@ -56,8 +65,7 @@ class ImportExportModelService extends AdministeredItemService {
         mauroPlugin
     }
 
-
-    List<ModelItem> importModelItems(Class aClazz, @Body MultipartBody body, String namespace, String name, @Nullable String version) {
+    List<ModelItem> importModelItem(Class aClazz, @NotNull UUID targetDataModelId, @Body MultipartBody body, String namespace, String name, @Nullable String version) {
         ModelItemImporterPlugin mauroPlugin = mauroPluginService.getPlugin(aClazz, namespace, name, version) as ModelItemImporterPlugin
         PluginService.handlePluginNotFound(mauroPlugin, namespace, name)
 
@@ -66,13 +74,35 @@ class ImportExportModelService extends AdministeredItemService {
         if (importParameters.folderId == null) {
             ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, importParameters.folderId, "Please choose the folder into which the Model/s should be imported.")
         }
-        List<ModelItem> imported = (List<ModelItem>) mauroPlugin.importModelItems(importParameters)
+
+        List<ModelItem> imported = (List<ModelItem>) mauroPlugin.importModelItem(importParameters)
+
+        DataModel target = dataModelRepository.readById(targetDataModelId)
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.BAD_REQUEST, target, "Datamodel with id $targetDataModelId not found")
+        accessControlService.checkRole(Role.EDITOR, target)
+
+        DataModel source = dataModelRepository.readById(importParameters.sourceDataModelId)
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.BAD_REQUEST, source, "Datamodel with id $importParameters.sourceDataModelId not found")
+        accessControlService.checkRole(Role.EDITOR, source)
 
         Folder folder = folderRepository.readById(importParameters.folderId)
         ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, folder, "Folder with id $importParameters.folderId not found")
         accessControlService.checkRole(Role.EDITOR, folder)
         imported.each {imp ->
             imp.folder = folder
+            DataFlow importedDataFlow = (DataFlow) imp
+            importedDataFlow.source = source
+            importedDataFlow.target = target
+
+            importedDataFlow.dataClassComponents.each {
+                it.sourceDataClasses.each {sourceDataClass ->
+                    getImportSource(sourceDataClass)
+                }}
+//
+//
+//                    }
+//                }
+//            }
             updateCreationProperties(imp)
         }
         imported
@@ -96,6 +126,7 @@ class ImportExportModelService extends AdministeredItemService {
             .header(HttpHeaders.CONTENT_LENGTH, Long.toString(fileContents.length))
             .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=${filename}")
     }
+
     static HttpResponse<byte[]> createExportResponse(ModelItemExporterPlugin mauroPlugin, AdministeredItem administeredItem) {
         byte[] fileContents = mauroPlugin.exportModelItem(administeredItem as ModelItem)
         String filename = mauroPlugin.getFileName(administeredItem as ModelItem)
@@ -105,5 +136,7 @@ class ImportExportModelService extends AdministeredItemService {
             .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=${filename}")
     }
 
+    DataClass getImportSource(DataClass exportDataClass) {
 
+    }
 }
