@@ -28,6 +28,17 @@ abstract class TerminologyRepository implements ModelRepository<Terminology> {
     List<Terminology> findAllByParentAndPathIdentifier(UUID item, String pathIdentifier) {
         terminologyDTORepository.findAllByParentAndPathIdentifier(item, pathIdentifier)
     }
+//    @Nullable
+//    @Override
+//    Terminology findByLabelContaining(String label){
+//        terminologyDTORepository.findByLabelContaining(label)
+//    }
+
+    @Nullable
+    @Override
+    List<Terminology> findAllByLabelContaining(String label){
+        terminologyDTORepository.findAllByLabelContaining(label)
+    }
 
     @Override
     Class getDomainClass() {

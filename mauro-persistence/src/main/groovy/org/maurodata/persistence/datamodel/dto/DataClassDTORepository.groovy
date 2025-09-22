@@ -29,4 +29,8 @@ abstract class DataClassDTORepository implements GenericRepository<DataClassDTO,
     @Nullable
     @Query('SELECT * FROM datamodel.data_class WHERE label = :pathIdentifier AND ((parent_data_class_id IS NOT NULL AND parent_data_class_id = :item) OR (parent_data_class_id IS NULL AND data_model_id = :item))')
     abstract List<DataClass> findAllByParentAndPathIdentifier(UUID item, String pathIdentifier)
-    }
+
+    @Nullable
+    @Query('SELECT * FROM datamodel.data_class WHERE label like :label')
+    abstract List<DataClass> findAllByLabelContaining(String label)
+}

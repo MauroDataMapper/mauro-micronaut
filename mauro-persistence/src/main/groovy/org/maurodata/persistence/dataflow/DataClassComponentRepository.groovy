@@ -51,6 +51,12 @@ abstract class DataClassComponentRepository implements ModelItemRepository<DataC
     }
 
 
+    @Nullable
+    @Override
+    List<DataClassComponentDTO> findAllByLabelContaining(String label) {
+        dataClassComponentDTORepository.findAllByLabelContaining(label)
+    }
+
     /**
      * Add sourcedataClass to dataClassComponent
      * * @param id            dataClassComponentId
