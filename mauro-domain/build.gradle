@@ -1,10 +1,11 @@
 plugins {
     id("groovy")
-    id("com.github.johnrengelman.shadow") version "8.1.1"
-    id("maven-publish")
+    //id("com.gradleup.shadow") version "9.0.0"
     id("io.micronaut.library") version "4.4.5"
     id("codenarc")
+    id "com.vanniktech.maven.publish" version "0.34.0"
 }
+
 
 repositories {
     mavenCentral()
@@ -29,44 +30,6 @@ dependencies {
     testImplementation "io.micronaut.test:micronaut-test-spock"
 }
 
-java {
-    sourceCompatibility = JavaVersion.toVersion("17")
-    targetCompatibility = JavaVersion.toVersion("17")
-    withJavadocJar()
-    withSourcesJar()
-}
-
-publishing {
-    repositories {
-        // The target repository
-        maven {
-            // The url of the repository, where the artifacts will be published
-            url = "https://maven.pkg.github.com/MauroDataMapper/mauro-package-repository"
-            credentials {
-                // The credentials (described in the next section)
-                username = project.findProperty("gpr.user")
-                password = project.findProperty("gpr.key")
-            }
-        }
-        maven {
-            name = "MauroSnapshotRepository"
-            url = "https://mauro-repository.com/libs-snapshot-local"
-            credentials(PasswordCredentials)
-            authentication {
-                basic(BasicAuthentication)
-            }
-        }
-    }
-
-    publications {
-        gpr(MavenPublication) {
-            groupId = 'org.maurodata'
-            artifactId = 'mauro-domain'
-            version = "0.0.2-SNAPSHOT"
-            from components.java
-        }
-    }
-}
 
 test {
     useJUnitPlatform()

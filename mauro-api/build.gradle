@@ -1,11 +1,11 @@
 plugins {
     id("groovy")
-    id("com.github.johnrengelman.shadow") version "8.1.1"
+    //id("com.gradleup.shadow") version "9.0.0"
     id("io.micronaut.application") version "4.4.5"
     id("io.micronaut.aot") version "4.4.5"
-    id("maven-publish")
     id("codenarc")
     id("java-test-fixtures")
+    id "com.vanniktech.maven.publish" version "0.34.0"
 }
 
 repositories {
@@ -13,6 +13,13 @@ repositories {
 }
 
 dependencies {
+    implementation project(':mauro-domain')
+    implementation project(':mauro-client')
+    implementation project(':mauro-persistence')
+
+    testImplementation testFixtures(project(':mauro-client'))          // Pull in the filter that overwrites the port
+    testImplementation testFixtures(project(':mauro-persistence'))     // Pull in the containerized testing definition
+
     compileOnly("io.micronaut.openapi:micronaut-openapi") {
         //        exclude group: 'org.slf4j'
     }
@@ -79,12 +86,9 @@ dependencies {
 application {
     mainClass.set("org.maurodata.controller.Application")
 }
-java {
-    sourceCompatibility = JavaVersion.toVersion("17")
-    targetCompatibility = JavaVersion.toVersion("17")
-}
 
-graalvmNative.toolchainDetection = false
+//graalvmNative.toolchainDetection = false
+
 micronaut {
     runtime("netty")
     testRuntime("spock2")
@@ -105,39 +109,9 @@ micronaut {
     }
 }
 
-publishing {
-    repositories {
-        maven {
-            name = "MauroSnapshotRepository"
-            url = "https://mauro-repository.com/libs-snapshot-local"
-            credentials(PasswordCredentials)
-            authentication {
-                basic(BasicAuthentication)
-            }
-        }
-    }
-
-    publications {
-        mavenJava(MavenPublication) {
-            groupId = 'org.maurodata'
-            artifactId = 'mauro-api'
-            version = "0.0.2-SNAPSHOT"
-            from components.java
-        }
-    }
-}
-
-dependencies {
-    implementation project(':mauro-domain')
-    implementation project(':mauro-client')
-    implementation project(':mauro-persistence')
-
-    testImplementation testFixtures(project(':mauro-client'))          // Pull in the filter that overwrites the port
-    testImplementation testFixtures(project(':mauro-persistence'))     // Pull in the containerized testing definition
-}
 
 codenarc {
-    toolVersion = "3.3.0-groovy-4.0"
+    //toolVersion = "3.3.0-groovy-4.0"
     configFile = rootProject.file("config/codenarc/codenarc.groovy")
 }
 
@@ -225,7 +199,7 @@ tasks.register('fetchMDMUI') {
         }
 
         println "Extracting UI into ${uiTargetDir.absolutePath}"
-        project.exec {
+        providers.exec {
             commandLine 'tar', '-xzf', tmpFile.absolutePath, '-C', uiTargetDir.absolutePath, '--strip-components=1'
         }
         tmpFile.delete()
@@ -234,14 +208,14 @@ tasks.register('fetchMDMUI') {
         def jsFiles = fileTree(dir: uiTargetDir, include: 'main.*.js').files
 
         if (jsFiles) {
-            project.exec {
+            providers.exec {
                 workingDir uiTargetDir
 
                 // macOS BSD sed needs an empty string after -i, GNU sed does not
                 def sedInlineArgs = System.getProperty("os.name").toLowerCase().contains("mac") ?
                                     ['-i', ''] : ['-i']
 
-                commandLine 'sed', *sedInlineArgs, 's|this.apiEndpoint="http://localhost:8080/api"|this.apiEndpoint="/api"|g', *jsFiles*.absolutePath
+                commandLine 'sed', sedInlineArgs, 's|this.apiEndpoint="http://localhost:8080/api"|this.apiEndpoint="/api"|g', *jsFiles*.absolutePath
             }
         } else {
             logger.warn("No main.*.js files found in ${uiTargetDir}")
