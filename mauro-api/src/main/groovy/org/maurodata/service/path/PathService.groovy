@@ -9,6 +9,7 @@ import org.maurodata.controller.model.AdministeredItemReader
 import org.maurodata.controller.model.AvailableActions
 import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.domain.model.Item
+import org.maurodata.domain.security.Role
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository
 import org.maurodata.persistence.model.PathRepository
 import org.maurodata.security.AccessControlService
@@ -26,6 +27,35 @@ class PathService implements AdministeredItemReader {
     @Inject
     AccessControlService accessControlService
 
+    AdministeredItem getResourceByPath(String domainType, String path) {
+        AdministeredItem item = findResourceByPath(domainType, path)
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, item, "Item with DomainType $domainType not found with path: $path")
+
+        accessControlService.checkRole(Role.READER, item)
+        updateDerivedProperties(item)
+        item
+    }
+
+
+    AdministeredItem getResourceByPathFromResource(String domainType, UUID domainId, String path){
+        AdministeredItem fromModel = findAdministeredItem(domainType, domainId)
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, fromModel, "Model $domainType, $domainId not found")
+
+        accessControlService.checkRole(Role.READER, fromModel)
+        updateDerivedProperties(fromModel)
+
+        //verify model path in the input path
+        if (!path.contains(fromModel.path.pathString)) {
+            ErrorHandler.handleError(HttpStatus.NOT_FOUND, "Path $path does not belong to $domainType, $domainId")
+        }
+        Tuple2<String, String> itemDomainTypeAndPath = getItemDomainTypeAndPath(path)
+        AdministeredItem administeredItem = findResourceByPath(itemDomainTypeAndPath.first, path)
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, administeredItem, "Item with $itemDomainTypeAndPath.first  and label $itemDomainTypeAndPath.v2 not found")
+        accessControlService.checkRole(Role.READER, administeredItem)
+        updateDerivedProperties(administeredItem)
+        administeredItem
+    }
+
     /**
      *
      * @param domainType et dataModels, folders, dataClasses
@@ -40,7 +70,7 @@ class PathService implements AdministeredItemReader {
      * @return the admin item, given the full path including versioning
      */
 
-    AdministeredItem findResourceByPath(String domainType, String path) {
+    protected AdministeredItem findResourceByPath(String domainType, String path) {
         String pathPrefix = getPathPrefixForDomainType(domainType)
         String domainPath = PathStringUtils.getItemSubPath(pathPrefix, path)
         String versionString = PathStringUtils.getVersionFromPath(path)
@@ -53,7 +83,7 @@ class PathService implements AdministeredItemReader {
      * @param path fullPath
      * @return  the last path domainType and label/subPath
      */
-    Tuple2<String,String> getItemDomainTypeAndPath(String path) {
+    protected Tuple2<String,String> getItemDomainTypeAndPath(String path) {
         String itemPath = PathStringUtils.lastSubPath(path)
         //extract the item domain type from given input path
         String[] itemParts = PathStringUtils.splitBy(itemPath, PathStringUtils.COLON)
@@ -67,7 +97,7 @@ class PathService implements AdministeredItemReader {
         new Tuple2(itemDomainType, itemSubPath)
     }
 
-    String getPathPrefixForDomainType(String domainType) {
+    protected String getPathPrefixForDomainType(String domainType) {
         AdministeredItemCacheableRepository repo = repositoryService.administeredItemCacheableRepositories.find {
             it.handles(domainType)
         }
@@ -76,7 +106,7 @@ class PathService implements AdministeredItemReader {
         return domainClass.getPathPrefix()
     }
 
-    String getDomainTypeFromPathPrefix(String pathPrefix) {
+    protected String getDomainTypeFromPathPrefix(String pathPrefix) {
         String domainType = pathPrefixTypeLookup.getDomainType(pathPrefix)
         if (!domainType) {
             ErrorHandler.handleError(HttpStatus.NOT_FOUND, "Unknown path prefix $pathPrefix for modelItem ")
@@ -84,7 +114,7 @@ class PathService implements AdministeredItemReader {
         domainType
     }
 
-    Item updateDerivedProperties(Item item) {
+    protected Item updateDerivedProperties(Item item) {
         pathRepository.readParentItems(item as AdministeredItem)
         (item as AdministeredItem).updatePath()
         (item as AdministeredItem).updateBreadcrumbs()
