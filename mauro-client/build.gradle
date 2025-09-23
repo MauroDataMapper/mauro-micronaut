@@ -1,13 +1,14 @@
 plugins {
     id 'groovy'
-    id("com.github.johnrengelman.shadow") version "8.1.1"
+    //id("com.gradleup.shadow") version "9.0.0"
     id("java-library")
     id("java-test-fixtures")
     id("io.micronaut.library") version "4.4.5"
     id("io.micronaut.aot") version "4.4.5"
-    id("maven-publish")
     id("codenarc")
+    id "com.vanniktech.maven.publish" version "0.34.0"
 }
+
 
 repositories {
     mavenCentral()
@@ -30,7 +31,7 @@ dependencies {
     implementation("io.micronaut.security:micronaut-security")
     annotationProcessor("info.picocli:picocli-codegen")
 
-
+    testRuntimeOnly "org.junit.platform:junit-platform-launcher"
     testFixturesImplementation("io.micronaut.test:micronaut-test-spock")
     testFixturesImplementation("io.micronaut.sql:micronaut-jdbc-hikari")
     testFixturesImplementation('io.micronaut:micronaut-http-server')
@@ -52,28 +53,6 @@ jar {
 
 test {
     useJUnitPlatform()
-}
-
-publishing {
-    repositories {
-        maven {
-            name = "MauroSnapshotRepository"
-            url = "https://mauro-repository.com/libs-snapshot-local"
-            credentials(PasswordCredentials)
-            authentication {
-                basic(BasicAuthentication)
-            }
-        }
-    }
-
-    publications {
-        mavenJava(MavenPublication) {
-            groupId = 'org.maurodata'
-            artifactId = 'mauro-client'
-            version = "0.0.2-SNAPSHOT"
-            from components.java
-        }
-    }
 }
 
 
