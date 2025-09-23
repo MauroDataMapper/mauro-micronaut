@@ -31,7 +31,7 @@ dependencies {
     implementation("io.micronaut.security:micronaut-security")
     annotationProcessor("info.picocli:picocli-codegen")
 
-
+    testRuntimeOnly "org.junit.platform:junit-platform-launcher"
     testFixturesImplementation("io.micronaut.test:micronaut-test-spock")
     testFixturesImplementation("io.micronaut.sql:micronaut-jdbc-hikari")
     testFixturesImplementation('io.micronaut:micronaut-http-server')
