@@ -197,7 +197,7 @@ tasks.register('fetchMDMUI') {
         }
 
         def downloadUrl = "${mauroRepository}/${repositoryPath}/${fileName}"
-        println "Downloading UI: $fileName"
+        println "Downloading UI: $fileName from ${downloadUrl}"
         uiTargetDir.mkdirs()
 
         def tmpFile = File.createTempFile('mdmui', '.tgz')
@@ -205,25 +205,33 @@ tasks.register('fetchMDMUI') {
             out << new URI(downloadUrl).toURL().openStream()
         }
 
-        println "Extracting UI into ${uiTargetDir.absolutePath}"
-        providers.exec {
-            commandLine 'tar', '-xzf', tmpFile.absolutePath, '-C', uiTargetDir.absolutePath, '--strip-components=1'
-        }
+        println "Extracting UI ${tmpFile.absolutePath} into ${uiTargetDir.absolutePath}"
+
+        def processTar = ['tar', '-xzf', tmpFile.absolutePath, '-C', uiTargetDir.absolutePath, '--strip-components=1'].execute()
+        processTar.waitFor()
+
         tmpFile.delete()
 
         println "Patching Angular API endpoint to relative /api"
         def jsFiles = fileTree(dir: uiTargetDir, include: 'main.*.js').files
 
         if (jsFiles) {
-            providers.exec {
-                workingDir uiTargetDir
 
-                // macOS BSD sed needs an empty string after -i, GNU sed does not
-                def sedInlineArgs = System.getProperty("os.name").toLowerCase().contains("mac") ?
-                                    ['-i', ''] : ['-i']
+            def sedInlineArgs = System.getProperty("os.name").toLowerCase().contains("mac") ?
+                                ['-i', ''] : ['-i']
 
-                commandLine 'sed', sedInlineArgs, 's|this.apiEndpoint="http://localhost:8080/api"|this.apiEndpoint="/api"|g', *jsFiles*.absolutePath
-            }
+            def jsFilePaths = jsFiles.collect { it.absolutePath }
+
+            def cmd = ['sed'] +
+                      sedInlineArgs +
+                      ['s|this.apiEndpoint="http://localhost:8080/api"|this.apiEndpoint="/api"|g'] +
+                      jsFilePaths
+
+            def processSed = new ProcessBuilder(cmd)
+            .directory(uiTargetDir)
+            .start()
+            processSed.waitFor()
+
         } else {
             logger.warn("No main.*.js files found in ${uiTargetDir}")
         }
@@ -259,7 +267,7 @@ ENV LOGS_DIRECTORY=/var/logs
 ENV DATABASE_LOGS_DIRECTORY=\${LOGS_DIRECTORY}/postgres
 ENV DATABASE_SNAPSHOTS_DIRECTORY=/database
 
-RUN apt-get update && apt-get install -y --no-install-recommends postgresql postgresql-contrib unzip iproute2 && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get dist-upgrade -y && apt-get install -y --no-install-recommends postgresql postgresql-contrib unzip iproute2 && apt-get clean && rm -rf /var/lib/apt/lists/*
 RUN mkdir -p \${DATABASE_DIRECTORY} && chown -R postgres:postgres /var/lib/postgresql
 RUN mkdir -p \${LOGS_DIRECTORY} && mkdir -p \${DATABASE_LOGS_DIRECTORY} && chown -R postgres:postgres \${DATABASE_LOGS_DIRECTORY}
 VOLUME ["\${DATABASE_DIRECTORY}","\${DATABASE_LOGS_DIRECTORY}"]
