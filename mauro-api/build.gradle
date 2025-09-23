@@ -125,6 +125,13 @@ codenarcTest {
 
 [codenarcMain, codenarcTest]*.ignoreFailures = true
 
+docker {
+    registryCredentials {
+        username = System.getenv('DOCKER_USERNAME')
+        password = System.getenv('DOCKER_PASSWORD')
+    }
+}
+
 import groovy.json.JsonSlurper
 
 def mauroRepository = 'https://mauro-repository.com'
@@ -225,6 +232,7 @@ tasks.register('fetchMDMUI') {
 
 tasks.named('dockerBuild') {
     dependsOn(tasks.named('fetchMDMUI'))
+    images = ["maurodatamapper/mauro:${version}"]
 }
 
 tasks.register('stageDockerFiles', Copy) {
