@@ -94,7 +94,7 @@ jobs:
 
     - name: Archive lint reports
       if: success() || failure()
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: MegaLinter reports
         path: |
