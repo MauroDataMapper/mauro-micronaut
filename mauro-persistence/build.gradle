@@ -50,6 +50,10 @@ dependencies {
 
     // To find flyway migrations in jars
     implementation 'io.github.classgraph:classgraph:4.8.158'
+
+    codenarc 'org.apache.groovy:groovy-all:4.0.24'
+    codenarc 'org.codenarc:CodeNarc:3.6.0-groovy-4.0'
+
 }
 
 test {

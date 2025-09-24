@@ -30,6 +30,10 @@ dependencies {
 
     testRuntimeOnly "org.junit.platform:junit-platform-launcher"
     testImplementation "io.micronaut.test:micronaut-test-spock"
+
+    codenarc 'org.apache.groovy:groovy-all:4.0.24'
+    codenarc 'org.codenarc:CodeNarc:3.6.0-groovy-4.0'
+
 }
 
 

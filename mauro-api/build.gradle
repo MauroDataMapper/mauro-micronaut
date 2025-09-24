@@ -80,6 +80,10 @@ dependencies {
     }
 
     testImplementation 'org.reflections:reflections:0.10.2'
+
+    codenarc 'org.apache.groovy:groovy-all:4.0.24'
+    codenarc 'org.codenarc:CodeNarc:3.6.0-groovy-4.0'
+
 }
 
 
