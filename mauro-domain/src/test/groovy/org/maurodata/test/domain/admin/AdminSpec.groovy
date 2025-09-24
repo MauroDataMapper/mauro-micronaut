@@ -29,9 +29,9 @@ class AdminSpec extends Specification {
             modulesList.find {it["name"] == "java.base" && it["version"] == javaVersion}
     }
 
-    def "test listing all plugins"() {
+    def "test listing all standard plugins"() {
         when:
-            List pluginsList = mauroPluginService.listPlugins()
+            List pluginsList = mauroPluginService.listStandardPlugins()
 
         then:
             pluginsList.size() == 14
@@ -112,12 +112,12 @@ class AdminSpec extends Specification {
             }
 
         when:
-            List importersList = mauroPluginService.listPlugins(ImporterPlugin)
+            List importersList = mauroPluginService.listStandardPlugins(ModelImporterPlugin)
         then:
             importersList == pluginsList.findAll{it.pluginType == PluginType.Importer}
 
         when:
-            List exportersList = mauroPluginService.listPlugins(ExporterPlugin)
+            List exportersList = mauroPluginService.listStandardPlugins(ModelExporterPlugin)
         then:
             exportersList == pluginsList.findAll{it.pluginType == PluginType.Exporter}
     }

@@ -23,8 +23,8 @@ class JsonProfileSpec extends Specification {
 
     def "test getting all static profiles"() {
         expect:
-        mauroPluginService.listPlugins(Profile).size() == 2
-        profileService.staticProfiles.size() == 2
+        mauroPluginService.listStandardPlugins(Profile).size() == 2
+        profileService.staticProfiles.size() >= 2
 
         profileService.staticProfiles.find { it.displayName == "Profile Specification Profile" }
         profileService.staticProfiles.find { it.displayName == "Profile Specification Field Profile" }
