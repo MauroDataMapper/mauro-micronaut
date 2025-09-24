@@ -81,8 +81,9 @@ jobs:
         # https://megalinter.io/configuration/
         VALIDATE_ALL_CODEBASE: true
         ENABLE_LINTERS: GROOVY_NPM_GROOVY_LINT
-        LINTER_RULES_PATH: 'config/codenarc'
-        GROOVY_NPM_GROOVY_LINT_ARGUMENTS: "--returnrules"
+        GROOVY_NPM_GROOVY_LINT_ARGUMENTS: >
+          -r "file:config/codenarc/codenarc.groovy"
+        LINTER_RULES_PATH: 'config/codenarc/codenarc.groovy'
         DISABLE_ERRORS: true #Flag to have the linter complete with exit code 0 even if errors were detected.
         SARIF_REPORTER: true
 
