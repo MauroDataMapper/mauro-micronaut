@@ -4,7 +4,6 @@ import com.vanniktech.maven.publish.JavadocJar
 plugins {
     id 'java-library'
     id 'groovy'
-    id 'codenarc'
     id "com.vanniktech.maven.publish" version "0.34.0"
     id "org.graalvm.buildtools.native" version "0.11.0" apply false
 }
@@ -31,6 +30,7 @@ subprojects {
                     url = uri("https://mauro-repository.com/libs-snapshot-local")
                     credentials(PasswordCredentials)
                     authentication { basic(BasicAuthentication) }
+//                    signMavenPublication(false)
                 }
             }
         }
