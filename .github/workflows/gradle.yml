@@ -75,12 +75,11 @@ jobs:
 #        path: '**/build/test-results/**/*.xml'
 
     - name: MegaLinter
-      uses: oxsecurity/megalinter/flavors/ci_light@v7
+      uses: oxsecurity/megalinter/flavors/ci_light@v9
       env:
         # All available variables are described in documentation
         # https://megalinter.io/configuration/
         VALIDATE_ALL_CODEBASE: true
-
         ENABLE_LINTERS: GROOVY_NPM_GROOVY_LINT
         LINTER_RULES_PATH: 'config/codenarc'
         DISABLE_ERRORS: true #Flag to have the linter complete with exit code 0 even if errors were detected.
@@ -100,7 +99,7 @@ jobs:
       if: success() || failure()
       uses: github/codeql-action/upload-sarif@v3
       with:
-        sarif_file: '/github/workspace/megalinter-reports/megalinter-report.sarif'
+        sarif_file: 'megalinter-reports/megalinter-report.sarif'
 
 
 
