@@ -147,7 +147,9 @@ ruleset {
     ConstantsOnlyInterface
     EmptyMethodInAbstractClass
     FinalClassWithProtectedMember
-    ImplementationAsType
+    ImplementationAsType {
+        violationMessage = "Implementation As Type"
+    }
     Instanceof
     LocaleSetDefault
     NestedForLoop
@@ -296,8 +298,12 @@ ruleset {
     UseCollectNested
 
     // rulesets/imports.xml
-    DuplicateImport
-    ImportFromSamePackage
+    DuplicateImport {
+        violationMessage = "Duplicate Import"
+    }
+    ImportFromSamePackage {
+        violationMessage = "Import From Same Package"
+    }
     ImportFromSunPackages
     MisorderedStaticImports
     NoWildcardImports
