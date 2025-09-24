@@ -83,7 +83,7 @@ jobs:
         ENABLE_LINTERS: GROOVY_NPM_GROOVY_LINT
         GROOVY_NPM_GROOVY_LINT_ARGUMENTS: >
           -r "file:config/codenarc/codenarc.groovy"
-        LINTER_RULES_PATH: 'config/codenarc/codenarc.groovy'
+        LINTER_RULES_PATH: 'config/codenarc'
         DISABLE_ERRORS: true #Flag to have the linter complete with exit code 0 even if errors were detected.
         SARIF_REPORTER: true
 
