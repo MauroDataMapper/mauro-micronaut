@@ -82,6 +82,7 @@ jobs:
         VALIDATE_ALL_CODEBASE: true
         ENABLE_LINTERS: GROOVY_NPM_GROOVY_LINT
         LINTER_RULES_PATH: 'config/codenarc'
+        GROOVY_NPM_GROOVY_LINT_ARGUMENTS: "--returnrules"
         DISABLE_ERRORS: true #Flag to have the linter complete with exit code 0 even if errors were detected.
         SARIF_REPORTER: true
 
@@ -93,7 +94,6 @@ jobs:
           path: |
               megalinter-reports
               mega-linter.log
-
 
     - name: Upload MegaLinter scan results to GitHub Security tab
       if: success() || failure()
