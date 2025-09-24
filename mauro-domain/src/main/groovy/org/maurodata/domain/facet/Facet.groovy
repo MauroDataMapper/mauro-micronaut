@@ -1,5 +1,9 @@
 package org.maurodata.domain.facet
 
+import org.maurodata.domain.model.ItemReference
+import org.maurodata.domain.model.ItemReferencer
+import org.maurodata.domain.model.ItemReferencerUtils
+import org.maurodata.domain.model.ItemUtils
 import org.maurodata.domain.model.Path
 import org.maurodata.domain.model.Pathable
 
@@ -15,7 +19,7 @@ import org.maurodata.domain.model.Item
 
 @CompileStatic
 @AutoClone
-abstract class Facet extends Item implements Pathable {
+abstract class Facet extends Item implements Pathable, ItemReferencer {
 
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     @JsonAlias(['multi_facet_aware_item_domain_type'])
@@ -48,5 +52,37 @@ abstract class Facet extends Item implements Pathable {
     @Nullable
     String getPathModelIdentifier() {
         return null
+    }
+
+    @Override
+    void copyInto(Item into) {
+        super.copyInto(into)
+        Facet intoFacet = (Facet) into
+        intoFacet.multiFacetAwareItemDomainType = ItemUtils.copyItem(this.multiFacetAwareItemDomainType, intoFacet.multiFacetAwareItemDomainType)
+        intoFacet.multiFacetAwareItemId = ItemUtils.copyItem(this.multiFacetAwareItemId, intoFacet.multiFacetAwareItemId)
+        intoFacet.multiFacetAwareItem = ItemUtils.copyItem(this.multiFacetAwareItem, intoFacet.multiFacetAwareItem)
+        intoFacet.domainType = ItemUtils.copyItem(this.domainType, intoFacet.domainType)
+    }
+
+    @Transient
+    @JsonIgnore
+    @Override
+    List<ItemReference> retrieveItemReferences() {
+        List<ItemReference> pathsBeingReferenced = [] + super.retrieveItemReferences()
+
+        ItemReferencerUtils.addItem(multiFacetAwareItem, pathsBeingReferenced)
+        ItemReferencerUtils.addIdType(multiFacetAwareItemId, multiFacetAwareItemDomainType, pathsBeingReferenced)
+
+        return pathsBeingReferenced
+    }
+
+    @Transient
+    @JsonIgnore
+    @Override
+    void replaceItemReferencesByIdentity(IdentityHashMap<Item, Item> replacements, List<Item> notReplaced) {
+        super.replaceItemReferencesByIdentity(replacements, notReplaced)
+        multiFacetAwareItem = ItemReferencerUtils.replaceItemByIdentity(multiFacetAwareItem, replacements, notReplaced)
+        // Can't do this yet
+        //multiFacetAwareItemId = ItemReferencerUtils.replaceIdTypeByIdentity(multiFacetAwareItemId, replacements)
     }
 }

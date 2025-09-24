@@ -1,5 +1,8 @@
 package org.maurodata.domain.facet
 
+import org.maurodata.domain.model.Item
+import org.maurodata.domain.model.ItemUtils
+
 import com.fasterxml.jackson.annotation.JsonIgnore
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
@@ -51,8 +54,8 @@ class Metadata extends Facet implements DiffableItem<Metadata> {
     @Transient
     ObjectDiff<Metadata> diff(Metadata other, String lhsPathRoot, String rhsPathRoot) {
         ObjectDiff od = DiffBuilder.objectDiff(Metadata)
-                .leftHandSide(id?.toString(), this)
-                .rightHandSide(other.id?.toString(), other)
+            .leftHandSide(id?.toString(), this)
+            .rightHandSide(other.id?.toString(), other)
         od.appendString(DiffBuilder.VALUE, this.value, other.value, this, other)
         od.namespace = this.namespace
         od.key = this.key
@@ -64,13 +67,13 @@ class Metadata extends Facet implements DiffableItem<Metadata> {
      */
 
     static Metadata build(
-            Map args,
-            @DelegatesTo(value = Metadata, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
+        Map args,
+        @DelegatesTo(value = Metadata, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
         new Metadata(args).tap(closure)
     }
 
     static Metadata build(
-            @DelegatesTo(value = Metadata, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
+        @DelegatesTo(value = Metadata, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
         build [:], closure
     }
 
@@ -116,5 +119,21 @@ class Metadata extends Facet implements DiffableItem<Metadata> {
     @Override
     String getPathIdentifier() {
         "${this.namespace}.${this.key}"
+    }
+
+    @Override
+    void copyInto(Item into) {
+        super.copyInto(into)
+        Metadata intoMetadata = (Metadata) into
+        intoMetadata.namespace = ItemUtils.copyItem(this.namespace, intoMetadata.namespace)
+        intoMetadata.key = ItemUtils.copyItem(this.key, intoMetadata.key)
+        intoMetadata.value = ItemUtils.copyItem(this.value, intoMetadata.value)
+    }
+
+    @Override
+    Item shallowCopy() {
+        Metadata metadataShallowCopy = new Metadata()
+        this.copyInto(metadataShallowCopy)
+        return metadataShallowCopy
     }
 }

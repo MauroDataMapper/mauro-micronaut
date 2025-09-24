@@ -2,6 +2,7 @@ package org.maurodata.domain.security
 
 
 import org.maurodata.domain.model.Item
+import org.maurodata.domain.model.ItemUtils
 
 import com.fasterxml.jackson.annotation.JsonAlias
 import groovy.transform.AutoClone
@@ -111,5 +112,23 @@ class ApiKey extends Item {
         catalogueUserId
     }
 
+    @Override
+    void copyInto(Item into) {
+        super.copyInto(into)
+        ApiKey intoApiKey = (ApiKey) into
+        intoApiKey.id = ItemUtils.copyItem(this.id, intoApiKey.id)
+        intoApiKey.name = ItemUtils.copyItem(this.name, intoApiKey.name)
+        intoApiKey.expiryDate = ItemUtils.copyItem(this.expiryDate, intoApiKey.expiryDate)
+        intoApiKey.refreshable = ItemUtils.copyItem(this.refreshable, intoApiKey.refreshable)
+        intoApiKey.disabled = ItemUtils.copyItem(this.disabled, intoApiKey.disabled)
+        intoApiKey.expiresInDays = ItemUtils.copyItem(this.expiresInDays, intoApiKey.expiresInDays)
+        intoApiKey.catalogueUserId = ItemUtils.copyItem(this.catalogueUserId, intoApiKey.catalogueUserId)
+    }
 
+    @Override
+    Item shallowCopy() {
+        ApiKey apiKeyShallowCopy = new ApiKey()
+        this.copyInto(apiKeyShallowCopy)
+        return apiKeyShallowCopy
+    }
 }

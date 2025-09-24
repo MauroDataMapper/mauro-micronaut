@@ -9,6 +9,8 @@ import org.maurodata.domain.datamodel.IntersectsData
 import org.maurodata.domain.datamodel.IntersectsManyData
 import org.maurodata.domain.datamodel.SubsetData
 import org.maurodata.domain.folder.Folder
+import org.maurodata.domain.model.Item
+import org.maurodata.domain.model.ItemReferencerUtils
 import org.maurodata.persistence.ContainerizedTest
 import org.maurodata.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
 import org.maurodata.persistence.datamodel.DataModelContentRepository

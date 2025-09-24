@@ -35,6 +35,11 @@ abstract class TerminologyRepository implements ModelRepository<Terminology> {
     }
 
     @Override
+    Boolean handles(Class clazz) {
+        domainClass.isAssignableFrom(clazz)
+    }
+
+    @Override
     @Nullable
     abstract List<Terminology> findAllByFolderId(UUID folderId)
 

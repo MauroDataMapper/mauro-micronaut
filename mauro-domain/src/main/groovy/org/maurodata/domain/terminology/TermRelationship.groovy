@@ -1,11 +1,14 @@
 package org.maurodata.domain.terminology
 
+import org.maurodata.domain.model.Item
+import org.maurodata.domain.model.ItemReference
+import org.maurodata.domain.model.ItemReferencer
+import org.maurodata.domain.model.ItemReferencerUtils
+import org.maurodata.domain.model.ItemUtils
 import org.maurodata.util.DedupingObjectIdResolver
 
-import com.fasterxml.jackson.annotation.JsonBackReference
 import com.fasterxml.jackson.annotation.JsonIdentityInfo
 import com.fasterxml.jackson.annotation.JsonIgnore
-import com.fasterxml.jackson.annotation.JsonManagedReference
 import com.fasterxml.jackson.annotation.ObjectIdGenerators
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
@@ -30,11 +33,11 @@ import org.maurodata.domain.model.ModelItem
 @MappedEntity(schema = 'terminology')
 @MapConstructor(includeSuperFields = true, includeSuperProperties = true, noArg = true)
 @Indexes([
-        @Index(columns = ['terminology_id']),
-        @Index(columns = ['source_term_id']),
-        @Index(columns = ['target_term_id']),
-        @Index(columns = ['relationship_type_id'])])
-class TermRelationship extends ModelItem<Terminology> {
+    @Index(columns = ['terminology_id']),
+    @Index(columns = ['source_term_id']),
+    @Index(columns = ['target_term_id']),
+    @Index(columns = ['relationship_type_id'])])
+class TermRelationship extends ModelItem<Terminology> implements ItemReferencer {
 
     @JsonIgnore
     Terminology terminology
@@ -85,13 +88,13 @@ class TermRelationship extends ModelItem<Terminology> {
      */
 
     static TermRelationship build(
-            Map args,
-            @DelegatesTo(value = TermRelationship, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
+        Map args,
+        @DelegatesTo(value = TermRelationship, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
         new TermRelationship(args).tap(closure)
     }
 
     static TermRelationship build(
-            @DelegatesTo(value = TermRelationship, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
+        @DelegatesTo(value = TermRelationship, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
         build [:], closure
     }
 
@@ -100,7 +103,7 @@ class TermRelationship extends ModelItem<Terminology> {
     }
 
     Term sourceTerm(String sourceTermCode) {
-        this.sourceTerm = terminology.terms.find { it.code == sourceTermCode }
+        this.sourceTerm = terminology.terms.find {it.code == sourceTermCode}
     }
 
     Term targetTerm(Term targetTerm) {
@@ -108,7 +111,7 @@ class TermRelationship extends ModelItem<Terminology> {
     }
 
     Term targetTerm(String targetTermCode) {
-        this.targetTerm = terminology.terms.find { it.code == targetTermCode }
+        this.targetTerm = terminology.terms.find {it.code == targetTermCode}
     }
 
     TermRelationshipType relationshipType(TermRelationshipType relationshipType) {
@@ -117,6 +120,50 @@ class TermRelationship extends ModelItem<Terminology> {
 
     TermRelationshipType relationshipType(String relationshipTypeLabel) {
         this.relationshipType = terminology.termRelationshipTypes.
-                find { it.label == relationshipTypeLabel }
+            find {it.label == relationshipTypeLabel}
+    }
+
+    @Transient
+    @JsonIgnore
+    @Override
+    List<ItemReference> retrieveItemReferences() {
+        List<ItemReference> pathsBeingReferenced = [] + super.retrieveItemReferences()
+
+        ItemReferencerUtils.addItem(terminology, pathsBeingReferenced)
+        ItemReferencerUtils.addItem(sourceTerm, pathsBeingReferenced)
+        ItemReferencerUtils.addItem(targetTerm, pathsBeingReferenced)
+        ItemReferencerUtils.addItem(relationshipType, pathsBeingReferenced)
+
+        return pathsBeingReferenced
+    }
+
+    @Transient
+    @JsonIgnore
+    @Override
+    void replaceItemReferencesByIdentity(IdentityHashMap<Item, Item> replacements, List<Item> notReplaced) {
+        super.replaceItemReferencesByIdentity(replacements, notReplaced)
+        terminology = ItemReferencerUtils.replaceItemByIdentity(terminology, replacements, notReplaced)
+        sourceTerm = ItemReferencerUtils.replaceItemByIdentity(sourceTerm, replacements, notReplaced)
+        targetTerm = ItemReferencerUtils.replaceItemByIdentity(targetTerm, replacements, notReplaced)
+        relationshipType = ItemReferencerUtils.replaceItemByIdentity(relationshipType, replacements, notReplaced)
+    }
+
+    @Override
+    void copyInto(Item into) {
+        super.copyInto(into)
+        TermRelationship intoTermRelationship = (TermRelationship) into
+        intoTermRelationship.terminology = ItemUtils.copyItem(this.terminology, intoTermRelationship.terminology)
+        intoTermRelationship.sourceTerm = ItemUtils.copyItem(this.sourceTerm, intoTermRelationship.sourceTerm)
+        intoTermRelationship.targetTerm = ItemUtils.copyItem(this.targetTerm, intoTermRelationship.targetTerm)
+        intoTermRelationship.relationshipType = ItemUtils.copyItem(this.relationshipType, intoTermRelationship.relationshipType)
+        // Depends on relationshipType
+        intoTermRelationship.label = ItemUtils.copyItem(this.label, intoTermRelationship.label)
+    }
+
+    @Override
+    Item shallowCopy() {
+        TermRelationship termRelationshipShallowCopy = new TermRelationship()
+        this.copyInto(termRelationshipShallowCopy)
+        return termRelationshipShallowCopy
     }
 }

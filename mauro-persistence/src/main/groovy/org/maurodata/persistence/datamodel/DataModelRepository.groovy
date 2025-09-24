@@ -26,12 +26,17 @@ abstract class DataModelRepository implements ModelRepository<DataModel> {
 
     @Nullable
     List<DataModel> findAllByParentAndPathIdentifier(UUID item, String pathIdentifier) {
-        dataModelDTORepository.findAllByParentAndPathIdentifier(item, pathIdentifier)
+        dataModelDTORepository.findAllByParentAndPathIdentifier(item, pathIdentifier) as List<DataModel>
     }
 
     @Override
     Class getDomainClass() {
         DataModel
+    }
+
+    @Override
+    Boolean handles(Class clazz) {
+        domainClass.isAssignableFrom(clazz)
     }
 
     @Override

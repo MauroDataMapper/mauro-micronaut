@@ -27,7 +27,7 @@ import java.time.Instant
 @Introspected
 @MappedEntity(schema = 'federation')
 @MapConstructor(includeSuperFields = true, includeSuperProperties = true, noArg = true)
-class SubscribedCatalogue extends Item implements SecurableResource{
+class SubscribedCatalogue extends Item implements SecurableResource {
     @NonNull
     String url
 
@@ -84,5 +84,34 @@ class SubscribedCatalogue extends Item implements SecurableResource{
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     String domainType = this.class.simpleName
 
+    @Override
+    void copyInto(Item into) {
+        super.copyInto(into)
+        SubscribedCatalogue intoSubscribedCatalogue = (SubscribedCatalogue) into
+        intoSubscribedCatalogue.url = this.url
+        intoSubscribedCatalogue.label = this.label
+        intoSubscribedCatalogue.refreshPeriod = refreshPeriod
+        intoSubscribedCatalogue.subscribedCatalogueType = subscribedCatalogueType
+        intoSubscribedCatalogue.subscribedCatalogueAuthenticationType = subscribedCatalogueAuthenticationType
+        intoSubscribedCatalogue.readableByEveryone = readableByEveryone
+        intoSubscribedCatalogue.readableByAuthenticatedUsers = readableByAuthenticatedUsers
+        intoSubscribedCatalogue.apiKey = apiKey
+        intoSubscribedCatalogue.tokenUrl = tokenUrl
+        intoSubscribedCatalogue.clientId = clientId
+        intoSubscribedCatalogue.clientSecret = clientSecret
+        intoSubscribedCatalogue.accessToken = accessToken
+        intoSubscribedCatalogue.accessTokenExpiryTime = accessTokenExpiryTime
+        intoSubscribedCatalogue.lastRead = lastRead
+        intoSubscribedCatalogue.accessTokenExpiryTime = accessTokenExpiryTime
+        intoSubscribedCatalogue.subscribedModels = [] + subscribedModels
+        intoSubscribedCatalogue.domainType = domainType
+    }
+
+    @Override
+    Item shallowCopy() {
+        SubscribedCatalogue subscribedCatalogueShallowCopy = new SubscribedCatalogue()
+        this.copyInto(subscribedCatalogueShallowCopy)
+        return subscribedCatalogueShallowCopy
+    }
 }
 

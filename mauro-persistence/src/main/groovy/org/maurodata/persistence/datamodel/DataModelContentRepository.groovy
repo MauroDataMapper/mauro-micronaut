@@ -94,4 +94,14 @@ class DataModelContentRepository extends ModelContentRepository<DataModel> {
         }
         saved
     }
+
+    @Override
+    Boolean handles(String domainType) {
+        return dataModelRepository.handles(domainType)
+    }
+
+    @Override
+    Boolean handles(Class clazz) {
+        return dataModelRepository.handles(clazz)
+    }
 }

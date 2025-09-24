@@ -1,5 +1,8 @@
 package org.maurodata.domain.dataflow
 
+import org.maurodata.domain.model.Item
+import org.maurodata.domain.model.ItemUtils
+
 import com.fasterxml.jackson.annotation.JsonIgnore
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
@@ -47,7 +50,7 @@ class DataFlow extends ModelItem<DataModel> {
         DataFlow.simpleName
     }
 
-    Boolean hasChildren(){
+    Boolean hasChildren() {
         dataClassComponents
     }
 
@@ -73,4 +76,22 @@ class DataFlow extends ModelItem<DataModel> {
         'df'
     }
 
+    @Override
+    void copyInto(Item into) {
+        super.copyInto(into)
+        DataFlow intoDataFlow = (DataFlow) into
+        intoDataFlow.diagramLayout = ItemUtils.copyItem(this.diagramLayout, intoDataFlow.diagramLayout)
+        intoDataFlow.definition = ItemUtils.copyItem(this.definition, intoDataFlow.definition)
+        intoDataFlow.source = ItemUtils.copyItem(this.source, intoDataFlow.source)
+        intoDataFlow.target = ItemUtils.copyItem(this.target, intoDataFlow.target)
+        intoDataFlow.dataClassComponents = ItemUtils.copyItems(this.dataClassComponents, intoDataFlow.dataClassComponents)
+        intoDataFlow.breadcrumbTreeId = ItemUtils.copyItem(breadcrumbTreeId, intoDataFlow.breadcrumbTreeId)
+    }
+
+    @Override
+    Item shallowCopy() {
+        DataFlow dataFlowShallowCopy = new DataFlow()
+        this.copyInto(dataFlowShallowCopy)
+        return dataFlowShallowCopy
+    }
 }

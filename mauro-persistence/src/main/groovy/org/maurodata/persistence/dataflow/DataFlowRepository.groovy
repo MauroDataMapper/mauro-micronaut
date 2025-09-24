@@ -35,7 +35,7 @@ abstract class DataFlowRepository implements ModelItemRepository<DataFlow> {
 
     @Nullable
     List<DataFlow> findAllByParentAndPathIdentifier(UUID item,String pathIdentifier) {
-        dataFlowDTORepository.findAllByParentAndPathIdentifier(item,pathIdentifier)
+        dataFlowDTORepository.findAllByParentAndPathIdentifier(item,pathIdentifier) as List<DataFlow>
     }
 
     @Nullable

@@ -72,6 +72,11 @@ class ModelCacheableRepository<M extends Model> extends AdministeredItemCacheabl
         Boolean handles(String domainType) {
             repository.handles(domainType)
         }
+
+        @Override
+        Boolean handles(Class clazz) {
+            repository.handles(clazz)
+        }
     }
 
     @CompileStatic
@@ -129,6 +134,11 @@ class ModelCacheableRepository<M extends Model> extends AdministeredItemCacheabl
         @Override
         Boolean handles(String domainType) {
             return domainType != null && domainType.toLowerCase() in ['classificationscheme', 'classificationschemes']
+        }
+
+        @Override
+        Boolean handles(Class clazz) {
+            return repository.handles(clazz)
         }
     }
 

@@ -6,6 +6,7 @@ import org.maurodata.domain.diff.DiffBuilder
 import org.maurodata.domain.diff.DiffableItem
 import org.maurodata.domain.diff.ObjectDiff
 import org.maurodata.domain.model.AdministeredItem
+import org.maurodata.domain.model.Item
 import org.maurodata.domain.model.ModelItem
 
 import com.fasterxml.jackson.annotation.JsonIgnore
@@ -21,7 +22,7 @@ import jakarta.persistence.Transient
 @Introspected
 class ReferenceType extends ModelItem<DataType> implements DiffableItem<ReferenceType> {
 
-    DataClass getReferenceClass(){
+    DataClass getReferenceClass() {
         referenceClass
     }
 
@@ -63,5 +64,17 @@ class ReferenceType extends ModelItem<DataType> implements DiffableItem<Referenc
     @Override
     void setParent(AdministeredItem parent) {
 
+    }
+
+    @Override
+    void copyInto(Item into) {
+        super.copyInto(into)
+    }
+
+    @Override
+    Item shallowCopy() {
+        ReferenceType referenceTypeShallowCopy = new ReferenceType()
+        this.copyInto(referenceTypeShallowCopy)
+        return referenceTypeShallowCopy
     }
 }
