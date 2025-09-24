@@ -85,27 +85,25 @@ jobs:
         DISABLE_ERRORS: true #Flag to have the linter complete with exit code 0 even if errors were detected.
         SARIF_REPORTER: true
 
-    ## This won't work until the repository is made public
-    #- name: Upload MegaLinter scan results to GitHub Security tab
-    #  if: ${{ success() }} || ${{ failure() }}
-    #  uses: github/codeql-action/upload-sarif@v2
-    #  with:
-    #    sarif_file: 'megalinter-reports/megalinter-report.sarif'
+    - name: Upload MegaLinter scan results to GitHub Security tab
+      if: success() || failure()
+      uses: github/codeql-action/upload-sarif@v2
+      with:
+        sarif_file: 'megalinter-reports/megalinter-report.sarif'
 
 
-    # Upload MegaLinter artifacts
-#    - name: Archive lint reports
-#      if: ${{ success() }} || ${{ failure() }}
-#      uses: actions/upload-artifact@v3
-#      with:
-#        name: MegaLinter reports
-#        path: |
-#          megalinter-reports
-#          mega-linter.log
+    - name: Archive lint reports
+      if: success() || failure()
+      uses: actions/upload-artifact@v3
+      with:
+        name: MegaLinter reports
+        path: |
+          megalinter-reports
+          mega-linter.log
 
-    -   name: Publish Snapshot to Mauro Snapshot Repository
-        if: success() && github.ref == 'refs/heads/develop'
-        run: |
+    - name: Publish Snapshot to Mauro Snapshot Repository
+      if: success() && github.ref == 'refs/heads/develop'
+      run: |
           ./gradlew --stacktrace -PMauroSnapshotRepositoryUsername=${{secrets.MAURO_SNAPSHOT_REPOSITORY_USERNAME}} -PMauroSnapshotRepositoryPassword=${{secrets.MAURO_SNAPSHOT_REPOSITORY_PASSWORD}} publishAllPublicationsToMauroSnapshotRepositoryRepository
 
     - name: Publish to Maven Central
