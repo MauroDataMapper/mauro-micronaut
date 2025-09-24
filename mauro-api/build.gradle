@@ -115,7 +115,7 @@ micronaut {
 
 
 codenarc {
-    //toolVersion = "3.3.0-groovy-4.0"
+    toolVersion = "3.6.0-groovy-4.0"
     configFile = rootProject.file("config/codenarc/codenarc.groovy")
 }
 

@@ -86,21 +86,23 @@ jobs:
         DISABLE_ERRORS: true #Flag to have the linter complete with exit code 0 even if errors were detected.
         SARIF_REPORTER: true
 
-    - name: Upload MegaLinter scan results to GitHub Security tab
-      if: success() || failure()
-      uses: github/codeql-action/upload-sarif@v3
-      with:
-        sarif_file: 'megalinter-reports/megalinter-report.sarif'
-
-
     - name: Archive lint reports
       if: success() || failure()
       uses: actions/upload-artifact@v4
       with:
-        name: MegaLinter reports
-        path: |
-          megalinter-reports
-          mega-linter.log
+          name: MegaLinter reports
+          path: |
+              megalinter-reports
+              mega-linter.log
+
+
+    - name: Upload MegaLinter scan results to GitHub Security tab
+      if: success() || failure()
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: '/github/workspace/megalinter-reports/megalinter-report.sarif'
+
+
 
     - name: Publish Snapshot to Mauro Snapshot Repository
       if: success() && github.ref == 'refs/heads/develop'
