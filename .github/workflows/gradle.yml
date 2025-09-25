@@ -75,7 +75,7 @@ jobs:
 #        path: '**/build/test-results/**/*.xml'
 
     - name: MegaLinter
-      uses: oxsecurity/megalinter/flavors/ci_light@v9
+      uses: oxsecurity/megalinter/flavors/java@v9
       env:
         # All available variables are described in documentation
         # https://megalinter.io/configuration/
