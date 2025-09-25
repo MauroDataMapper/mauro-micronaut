@@ -30,7 +30,6 @@ subprojects {
                     url = uri("https://mauro-repository.com/libs-snapshot-local")
                     credentials(PasswordCredentials)
                     authentication { basic(BasicAuthentication) }
-//                    signMavenPublication(false)
                 }
             }
         }
