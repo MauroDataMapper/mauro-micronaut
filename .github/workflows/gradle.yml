@@ -17,6 +17,7 @@ permissions:
   contents: read
   actions: read
   checks: write
+  security-events: write
 
 jobs:
   build:
@@ -85,6 +86,33 @@ jobs:
         LINTER_RULES_PATH: 'config/codenarc'
         DISABLE_ERRORS: true #Flag to have the linter complete with exit code 0 even if errors were detected.
         SARIF_REPORTER: true
+        SARIF_REPORTER_LINTERS:
+            - ACTION_ACTIONLINT
+            - API_SPECTRAL
+            - BASH_EXEC
+            - BASH_SHFMT
+            - COPYPASTE_JSCPD
+            - GROOVY_NPM_GROOVY_LINT
+            - JSON_JSONLINT
+            - JSON_V8R
+            - JSON_PRETTIER
+            - MARKDOWN_MARKDOWNLINT
+            - MARKDOWN_MARKDOWN_TABLE_FORMATTER
+            - REPOSITORY_GIT_DIFF
+            - REPOSITORY_GITLEAKS
+            - REPOSITORY_GRYPE
+            - REPOSITORY_SECRETLINT
+            - REPOSITORY_SYFT
+            - REPOSITORY_TRIVY
+            - REPOSITORY_TRIVY_SBOM
+            - REPOSITORY_TRUFFLEHOG
+            - SPELL_CSPELL
+            - SPELL_LYCHEE
+            - XML_XMLLINT
+            - YAML_PRETTIER
+            - YAML_YAMLLINT
+            - YAML_V8R
+        GITHUB_STATUS_REPORTER: true
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # see the results in PRs
 
     - name: Archive lint reports
@@ -101,6 +129,10 @@ jobs:
       uses: github/codeql-action/upload-sarif@v3
       with:
         sarif_file: 'megalinter-reports/megalinter-report.sarif'
+        ref: refs/heads/${{ github.head_ref || github.ref_name }}
+        sha: ${{ github.event.pull_request.head.sha || github.sha }}
+        category: MegaLinter-Groovy
+        wait-for-processing: true
 
 
 
