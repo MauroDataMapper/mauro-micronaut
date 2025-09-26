@@ -1,5 +1,25 @@
 package org.maurodata.controller.folder
 
+import org.maurodata.ErrorHandler
+import org.maurodata.api.Paths
+import org.maurodata.api.folder.FolderApi
+import org.maurodata.api.model.PermissionsDTO
+import org.maurodata.audit.Audit
+import org.maurodata.controller.model.ModelController
+import org.maurodata.domain.datamodel.DataModel
+import org.maurodata.domain.facet.EditType
+import org.maurodata.domain.folder.Folder
+import org.maurodata.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
+import org.maurodata.persistence.folder.FolderContentRepository
+import org.maurodata.domain.search.dto.SearchRequestDTO
+import org.maurodata.domain.search.dto.SearchResultsDTO
+import org.maurodata.plugin.exporter.FolderExporterPlugin
+import org.maurodata.plugin.exporter.ModelExporterPlugin
+import org.maurodata.plugin.importer.DataModelImporterPlugin
+import org.maurodata.plugin.importer.FolderImporterPlugin
+import org.maurodata.service.plugin.PluginService
+import org.maurodata.web.ListResponse
+
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
@@ -23,21 +43,7 @@ import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
 import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
-import org.maurodata.ErrorHandler
-import org.maurodata.api.Paths
-import org.maurodata.api.folder.FolderApi
-import org.maurodata.api.model.PermissionsDTO
-import org.maurodata.audit.Audit
-import org.maurodata.controller.model.ModelController
-import org.maurodata.domain.facet.EditType
-import org.maurodata.domain.folder.Folder
-import org.maurodata.domain.search.dto.SearchRequestDTO
-import org.maurodata.domain.search.dto.SearchResultsDTO
-import org.maurodata.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
-import org.maurodata.persistence.folder.FolderContentRepository
-import org.maurodata.plugin.exporter.FolderExporterPlugin
-import org.maurodata.plugin.importer.FolderImporterPlugin
-import org.maurodata.web.ListResponse
+import jakarta.inject.Named
 
 @Slf4j
 @CompileStatic
@@ -45,12 +51,11 @@ import org.maurodata.web.ListResponse
 @Secured(SecurityRule.IS_ANONYMOUS)
 class FolderController extends ModelController<Folder> implements FolderApi {
 
+    @Inject
     FolderContentRepository folderContentRepository
 
-    @Inject
     FolderController(FolderCacheableRepository folderRepository, FolderContentRepository folderContentRepository) {
         super(Folder, folderRepository, folderRepository, folderContentRepository)
-        this.folderContentRepository = folderContentRepository
     }
 
     @Audit

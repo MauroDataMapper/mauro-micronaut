@@ -1,8 +1,10 @@
 package org.maurodata.importexport
 
+
 import groovy.json.JsonSlurper
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.MediaType
+import io.micronaut.http.client.exceptions.HttpClientResponseException
 import io.micronaut.http.client.multipart.MultipartBody
 import io.micronaut.test.annotation.Sql
 import jakarta.inject.Singleton
@@ -12,6 +14,9 @@ import org.maurodata.domain.dataflow.DataElementComponent
 import org.maurodata.domain.dataflow.DataFlow
 import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.datamodel.DataType
+import org.maurodata.domain.model.version.CreateNewVersionData
+import org.maurodata.domain.model.version.FinaliseData
+import org.maurodata.domain.model.version.VersionChangeType
 import org.maurodata.export.ExportModel
 import org.maurodata.persistence.ContainerizedTest
 import org.maurodata.testing.CommonDataSpec
@@ -71,34 +76,46 @@ class DataFlowImportExportIntegrationSpec extends CommonDataSpec {
     UUID summaryMetadataId
     @Shared
     UUID summaryMetadataReportId
-
+    @Shared
+    DataModel sourceBranch
+    @Shared
+    DataModel targetBranch
 
     void setup() {
         folderId = folderApi.create(folder()).id
         source = dataModelApi.create(folderId, dataModelPayload('source label'))
-        target = dataModelApi.create(folderId, dataModelPayload('target label'))
         dataType1 = dataTypeApi.create(source.id, dataTypesPayload('dataType1 label', DataType.DataTypeKind.PRIMITIVE_TYPE))
-        dataType2 = dataTypeApi.create(target.id, dataTypesPayload())
         dataClassId1 = dataClassApi.create(source.id, dataClassPayload('dataclass label 1')).id
+        dataElementId1 = dataElementApi.create(source.id, dataClassId1, dataElementPayload('dataElement1 label', dataType1)).id
+        sourceBranch =
+            dataModelApi.createNewBranchModelVersion(
+                source.id,
+                new CreateNewVersionData(branchName: 'new branch name' ))
+
+        target = dataModelApi.create(folderId, dataModelPayload('target label'))
+        dataType2 = dataTypeApi.create(target.id, dataTypesPayload())
         dataClassId2 = dataClassApi.create(target.id, dataClassPayload('dataclass label 2')).id
-        dataElementId1 = dataElementApi.create(target.id, dataClassId1, dataElementPayload('dataElement1 label', dataType1)).id
         dataElementId2 = dataElementApi.create(target.id, dataClassId2, dataElementPayload('label2', dataType2)).id
+        targetBranch =
+            dataModelApi.createNewBranchModelVersion(
+                target.id,
+                new CreateNewVersionData(branchName: 'targetBranch' ))
 
         dataFlow = dataFlowApi.create(target.id, new DataFlow(
             label: 'test label',
             description: 'dataflow payload description ',
             source: source))
 
-        dataClassComponentId = dataClassComponentApi.create(source.id, dataFlow.id,
+        dataClassComponentId = dataClassComponentApi.create(target.id, dataFlow.id,
                                                             new DataClassComponent(
                                                                 label: 'data class component test label')).id
-        dataClassComponentApi.updateSource(source.id, dataFlow.id, dataClassComponentId, dataClassId1)
-        dataClassComponentApi.updateTarget(source.id, dataFlow.id, dataClassComponentId, dataClassId2)
+        dataClassComponentApi.updateSource(target.id, dataFlow.id, dataClassComponentId, dataClassId1)
+        dataClassComponentApi.updateTarget(target.id, dataFlow.id, dataClassComponentId, dataClassId2)
         dataElementComponentId =
-            dataElementComponentApi.create(source.id, dataFlow.id, dataClassComponentId, new DataElementComponent(label: 'test data element component')).id
+            dataElementComponentApi.create(target.id, dataFlow.id, dataClassComponentId, new DataElementComponent(label: 'test data element component')).id
 
         dataElementComponentApi.updateSource(source.id, dataFlow.id, dataClassComponentId, dataElementComponentId, dataElementId1)
-        dataElementComponentApi.updateTarget(source.id, dataFlow.id, dataClassComponentId, dataElementComponentId, dataElementId2)
+        dataElementComponentApi.updateTarget(target.id, dataFlow.id, dataClassComponentId, dataElementComponentId, dataElementId2)
 
         metadataId = metadataApi.create(DataFlow.simpleName, dataFlow.id, metadataPayload()).id
         summaryMetadataId = summaryMetadataApi.create(DataFlow.simpleName, dataFlow.id, summaryMetadataPayload()).id
@@ -160,11 +177,12 @@ class DataFlowImportExportIntegrationSpec extends CommonDataSpec {
         and:
         MultipartBody importRequest = MultipartBody.builder()
             .addPart('folderId', folderId.toString())
+            .addPart('sourceDataModelId', sourceBranch.id.toString())
             .addPart('importFile', 'file.json', MediaType.APPLICATION_JSON_TYPE, objectMapper.writeValueAsBytes(exportModel))
             .build()
 
         when:
-        ListResponse<DataFlow> dataFlowResponse = dataFlowApi.importModel(target.id, importRequest, IMPORTER_NAMESPACE, IMPORTER_NAME, IMPORTER_VERSION)
+        ListResponse<DataFlow> dataFlowResponse = dataFlowApi.importModel(targetBranch.id, importRequest, IMPORTER_NAMESPACE, IMPORTER_NAME, IMPORTER_VERSION)
 
         then:
         dataFlowResponse
@@ -172,8 +190,8 @@ class DataFlowImportExportIntegrationSpec extends CommonDataSpec {
         DataFlow response = dataFlowResponse.items[0]
         response.source
         response.target
-        response.source.id == source.id
-        response.target.id == target.id
+        response.source.id == sourceBranch.id
+        response.target.id == targetBranch.id
         response.annotations.size() == 1
         response.annotations[0].id != annotationId
         response.annotations[0].childAnnotations.size() == 1
@@ -187,14 +205,90 @@ class DataFlowImportExportIntegrationSpec extends CommonDataSpec {
 
         //proof new source/target rows  created -DataClassComponent->dataClass, dataElementComponent->dataElement
         and:
-        HttpResponse httpResponse = dataClassComponentApi.deleteSource(target.id, dataFlowResponse.items[0].id, dataClassComponentId, dataClassId1)
+        HttpResponse httpResponse = dataClassComponentApi.deleteSource(sourceBranch.id, dataFlowResponse.items[0].id, dataClassComponentId, dataClassId1)
         then:
         httpResponse.status().code == HttpStatus.SC_NO_CONTENT
 
         when:
-        httpResponse = dataElementComponentApi.deleteTarget(target.id, dataFlowResponse.items[0].id, dataClassComponentId, dataElementComponentId, dataElementId2)
+        httpResponse = dataElementComponentApi.deleteTarget(targetBranch.id, dataFlowResponse.items[0].id, dataClassComponentId, dataElementComponentId, dataElementId2)
         then:
         httpResponse.status().code == HttpStatus.SC_NO_CONTENT
+    }
+
+    void 'import dataflow - target datamodel does not contain same model structure or model items as exported datamodel target -should throw exception'() {
+        given:
+        byte[] responseBytes =
+            dataFlowApi.exportModel(target.id, dataFlow.id, EXPORTER_NAMESPACE, EXPORTER_NAME, EXPORTER_VERSION).body()
+
+        ExportModel exportModel = objectMapper.readValue(responseBytes, ExportModel)
+
+        and:
+        DataModel importTarget = dataModelApi.create(folderId, dataModelPayload('import target  label'))
+
+        MultipartBody importRequest = MultipartBody.builder()
+            .addPart('folderId', folderId.toString())
+            .addPart('sourceDataModelId', sourceBranch.id.toString())
+            .addPart('importFile', 'file.json', MediaType.APPLICATION_JSON_TYPE, objectMapper.writeValueAsBytes(exportModel))
+            .build()
+
+        when:
+        dataFlowApi.importModel(importTarget.id, importRequest, IMPORTER_NAMESPACE, IMPORTER_NAME, IMPORTER_VERSION)
+
+        then:
+        HttpClientResponseException exception = thrown()
+        exception.status == io.micronaut.http.HttpStatus.UNPROCESSABLE_ENTITY
+
+    }
+    void 'import dataflow - source datamodel does not contain same model structure or model items as exported datamodel source -should throw exception'() {
+        given:
+        byte[] responseBytes =
+            dataFlowApi.exportModel(target.id, dataFlow.id, EXPORTER_NAMESPACE, EXPORTER_NAME, EXPORTER_VERSION).body()
+
+        ExportModel exportModel = objectMapper.readValue(responseBytes, ExportModel)
+
+        and:
+        DataModel importSource = dataModelApi.create(folderId, dataModelPayload('import target  label'))
+
+        MultipartBody importRequest = MultipartBody.builder()
+            .addPart('folderId', folderId.toString())
+            .addPart('sourceDataModelId', importSource.id.toString())
+            .addPart('importFile', 'file.json', MediaType.APPLICATION_JSON_TYPE, objectMapper.writeValueAsBytes(exportModel))
+            .build()
+
+        when:
+        dataFlowApi.importModel(targetBranch.id, importRequest, IMPORTER_NAMESPACE, IMPORTER_NAME, IMPORTER_VERSION)
+
+        then:
+        HttpClientResponseException exception = thrown()
+        exception.status == io.micronaut.http.HttpStatus.UNPROCESSABLE_ENTITY
+
+    }
+
+    void 'importing dataflow -target model is finalised  -should throw exception '() {
+        given:
+        DataModel anotherModel = dataModelApi.create(folderId, dataModelPayload('another model label'))
+        dataModelApi.finalise(anotherModel.id, new FinaliseData(versionChangeType: VersionChangeType.MAJOR, versionTag: 'random version tag'))
+
+        byte[] responseBytes =
+            dataFlowApi.exportModel(target.id, dataFlow.id, EXPORTER_NAMESPACE, EXPORTER_NAME, EXPORTER_VERSION).body()
+
+        ExportModel exportModel = objectMapper.readValue(responseBytes, ExportModel)
+
+        and:
+        MultipartBody importRequest = MultipartBody.builder()
+            .addPart('folderId', folderId.toString())
+            .addPart('sourceDataModelId', sourceBranch.id.toString())
+            .addPart('importFile', 'file.json', MediaType.APPLICATION_JSON_TYPE, objectMapper.writeValueAsBytes(exportModel))
+            .build()
+
+
+        when:
+         dataFlowApi.importModel(anotherModel.id, importRequest, IMPORTER_NAMESPACE, IMPORTER_NAME, IMPORTER_VERSION)
+
+        then:
+        HttpClientResponseException exception = thrown()
+        exception.status == io.micronaut.http.HttpStatus.UNPROCESSABLE_ENTITY
+
     }
 
 }

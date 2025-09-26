@@ -6,6 +6,7 @@ import org.maurodata.api.Paths
 import org.maurodata.api.datamodel.DataElementApi
 import org.maurodata.audit.Audit
 import org.maurodata.controller.model.AdministeredItemController
+import org.maurodata.controller.model.AvailableActions
 import org.maurodata.domain.datamodel.DataClass
 import org.maurodata.domain.datamodel.DataElement
 import org.maurodata.domain.datamodel.DataModel
@@ -76,7 +77,11 @@ class DataElementController extends AdministeredItemController<DataElement, Data
     @Audit
     @Get(Paths.DATA_ELEMENT_ID)
     DataElement show(UUID dataModelId, UUID dataClassId, UUID id) {
-        super.show(id)
+        DataElement dataElement = super.show(id)
+        if (dataElement.dataType.isEnumerationType()) {
+            dataElement.dataType = dataTypeService.getEnumerationValues(dataElement.dataType)
+        }
+        dataElement
     }
 
     @Audit
@@ -90,7 +95,6 @@ class DataElementController extends AdministeredItemController<DataElement, Data
         dataElement.dataClass = dataClass
         createEntity(dataClass, dataElement)
         return dataElement
-
     }
 
     @Audit

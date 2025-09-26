@@ -38,4 +38,10 @@ abstract class DataTypeDTORepository implements GenericRepository<DataTypeDTO, U
     @Nullable
     @Query('SELECT * FROM datamodel.data_type WHERE label = :pathIdentifier AND data_model_id = :item')
     abstract List<DataType> findAllByParentAndPathIdentifier(UUID item, String pathIdentifier)
+
+
+
+    @Query('SELECT * FROM datamodel.data_type WHERE label like :label')
+    @Nullable
+    abstract List<DataType> findAllByLabelContaining(String label)
 }

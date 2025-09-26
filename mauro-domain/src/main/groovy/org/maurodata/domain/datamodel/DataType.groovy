@@ -95,7 +95,7 @@ class DataType extends ModelItem<DataModel> implements DiffableItem<DataType>, I
 
     @Override
     String getDomainType() {
-        dataTypeKind?.toString()
+        dataTypeKind?.toString() ?:DataType.class.simpleName
     }
 
     @Override
@@ -149,6 +149,11 @@ class DataType extends ModelItem<DataModel> implements DiffableItem<DataType>, I
     @JsonIgnore
     boolean isModelType() {
         modelResourceDomainType && modelResourceId
+    }
+    @Transient
+    @JsonIgnore
+    boolean isEnumerationType() {
+        this.dataTypeKind == DataTypeKind.ENUMERATION_TYPE
     }
 
     @Override

@@ -164,7 +164,7 @@ class VersionedFolderController extends ModelController<Folder> implements Versi
     @Post(Paths.VERSIONED_FOLDER_IMPORT)
     @Override
     ListResponse<Folder> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version) {
-        super.importModel(body, namespace, name, version )
+        super.importModel(body, namespace, name, version)
     }
 
     @Audit

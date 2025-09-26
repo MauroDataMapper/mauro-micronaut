@@ -50,8 +50,8 @@ to configure Micronaut. See above.
     groups:
         -   name: Administrators
             isAdmin: true
-    members:
-        - admin@maurodatamapper.com
+            members:
+                - admin@maurodatamapper.com
     api-keys:
         -   name: My first API Key
             email: admin@maurodatamapper.com

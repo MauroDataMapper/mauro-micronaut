@@ -62,6 +62,7 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
         cachedLookupByParent(READ_ALL_BY_PARENT, domainType, parent)
     }
 
+
     I update(I oldItem, I newItem) {
         I updated = repository.update(newItem)
         invalidate(oldItem, newItem)
@@ -100,6 +101,10 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
             invalidate(oldItem)
         }
         invalidate(newItem)
+    }
+
+    List<I> findAllByLabelContaining(String label){
+        repository.findAllByLabelContaining(label)
     }
 
 
@@ -370,10 +375,12 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
         }
 
         Long removeSourceDataClasses(UUID id) {
+            invalidate(id)
             ((DataClassComponentRepository) repository).removeSourceDataClasses(id)
         }
 
         Long removeTargetDataClasses(UUID id) {
+            invalidate(id)
             ((DataClassComponentRepository) repository).removeTargetDataClasses(id)
         }
         Boolean handles(String domainType) {

@@ -2,11 +2,19 @@ package org.maurodata.domain.facet
 
 import com.fasterxml.jackson.annotation.JsonAlias
 import com.fasterxml.jackson.annotation.JsonIgnore
+import com.fasterxml.jackson.annotation.JsonProperty
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
-import io.micronaut.core.annotation.Nullable
-import io.micronaut.data.annotation.*
-import org.maurodata.domain.diff.*
+import io.micronaut.data.annotation.Index
+import io.micronaut.data.annotation.Indexes
+import io.micronaut.data.annotation.MappedEntity
+import io.micronaut.data.annotation.Relation
+import io.micronaut.data.annotation.Transient
+import org.maurodata.domain.diff.BaseCollectionDiff
+import org.maurodata.domain.diff.CollectionDiff
+import org.maurodata.domain.diff.DiffBuilder
+import org.maurodata.domain.diff.DiffableItem
+import org.maurodata.domain.diff.ObjectDiff
 import org.maurodata.domain.security.CatalogueUser
 
 @CompileStatic
@@ -21,14 +29,18 @@ class Annotation extends Facet implements DiffableItem<Annotation> {
     String description
     String label
 
-    @JsonIgnore
     @Transient
+    @JsonProperty('createdByUser')
     CatalogueUser createdByUser
 
     @JsonAlias(['child_annotations'])
     @Relation(Relation.Kind.ONE_TO_MANY)
     List<Annotation> childAnnotations = []
 
+
+    CatalogueUser getCreatedByUser() {
+        createdByUser ? createdByUser : catalogueUser
+    }
 
     @Override
     @JsonIgnore

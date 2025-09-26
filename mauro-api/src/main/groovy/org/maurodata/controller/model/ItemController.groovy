@@ -39,6 +39,7 @@ abstract class ItemController<I extends Item> implements AdministeredItemReader 
         this.itemRepository = itemRepository
     }
 
+
     I cleanBody(I item, boolean strictProperties = true) {
         I defaultItem = (I) item.class.getDeclaredConstructor().newInstance()
 

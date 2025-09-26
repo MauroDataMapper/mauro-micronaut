@@ -1,5 +1,7 @@
 package org.maurodata.datamodel
 
+import io.micronaut.test.annotation.Sql
+import jakarta.inject.Singleton
 import org.maurodata.domain.datamodel.DataClass
 import org.maurodata.domain.datamodel.DataElement
 import org.maurodata.domain.datamodel.DataModel
@@ -7,13 +9,11 @@ import org.maurodata.domain.datamodel.DataType
 import org.maurodata.domain.datamodel.EnumerationValue
 import org.maurodata.domain.diff.DiffBuilder
 import org.maurodata.domain.diff.ObjectDiff
+import org.maurodata.domain.facet.SummaryMetadata
 import org.maurodata.domain.model.version.CreateNewVersionData
 import org.maurodata.persistence.ContainerizedTest
 import org.maurodata.testing.CommonDataSpec
 import org.maurodata.web.ListResponse
-
-import io.micronaut.test.annotation.Sql
-import jakarta.inject.Singleton
 import spock.lang.Shared
 
 @ContainerizedTest
@@ -133,11 +133,16 @@ class DataModelNewBranchVersionIntegrationSpec extends CommonDataSpec {
 
         then:
         newBranchVersionDataModel
+
+        when:
+        ListResponse<SummaryMetadata> summaryMetadataListResponse = summaryMetadataApi.list(newBranchVersionDataModel.domainType, newBranchVersionDataModel.id)
+
+        then:
         //check facets carried over
-        newBranchVersionDataModel.summaryMetadata.size() == 1
-        newBranchVersionDataModel.summaryMetadata[0].id != summaryMetadataId
-        newBranchVersionDataModel.summaryMetadata[0].summaryMetadataReports.size() == 1
-        newBranchVersionDataModel.summaryMetadata[0].summaryMetadataReports[0].id  != summaryMetadataReportId
+        summaryMetadataListResponse.items.size() == 1
+        summaryMetadataListResponse.items[0].id != summaryMetadataId
+        summaryMetadataListResponse.items[0].summaryMetadataReports.size() == 1
+        summaryMetadataListResponse.items[0].summaryMetadataReports[0].id  != summaryMetadataReportId
 
         when:
         ListResponse<DataModel> dataModelsList = dataModelApi.list(folderId)

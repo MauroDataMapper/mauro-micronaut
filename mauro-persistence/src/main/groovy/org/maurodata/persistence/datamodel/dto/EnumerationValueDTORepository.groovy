@@ -31,4 +31,10 @@ abstract class EnumerationValueDTORepository implements GenericRepository<Enumer
     @Nullable
     @Query('SELECT * FROM datamodel.enumeration_value WHERE enumeration_type_id = :item AND label = :pathIdentifier')
     abstract List<EnumerationValue> findAllByParentAndPathIdentifier(UUID item, String pathIdentifier)
+
+
+
+    @Query('SELECT * FROM datamodel.enumeration_value WHERE label like :label')
+    @Nullable
+    abstract List<EnumerationValue> findAllByLabelContaining(String label)
 }

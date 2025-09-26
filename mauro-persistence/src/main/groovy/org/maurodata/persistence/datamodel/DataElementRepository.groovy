@@ -1,5 +1,6 @@
 package org.maurodata.persistence.datamodel
 
+import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.datamodel.DataType
 
 import groovy.transform.CompileStatic
@@ -19,10 +20,13 @@ import org.maurodata.persistence.model.ModelItemRepository
 @Slf4j
 @CompileStatic
 @JdbcRepository(dialect = Dialect.POSTGRES)
-abstract class DataElementRepository implements  ModelItemRepository<DataElement> {
+abstract class DataElementRepository implements ModelItemRepository<DataElement> {
 
     @Inject
     DataElementDTORepository dataElementDTORepository
+
+    @Inject
+    DataClassRepository dataClassRepository
 
     @Override
     @Nullable
@@ -49,13 +53,39 @@ abstract class DataElementRepository implements  ModelItemRepository<DataElement
 
     @Nullable
     List<DataElement> findAllByDataClassIn(Collection<DataClass> dataClasses) {
-        dataElementDTORepository.findAllByDataClassIn(dataClasses) as List<DataElement>
+        dataElementDTORepository.findAllByDataClassIdIn(dataClasses.collect{it.id}) as List<DataElement>
+    }
+
+    @Nullable
+    List<DataElement> readAllByDataClassIn(Collection<DataClass> dataClasses) {
+        dataElementDTORepository.readAllByDataClassIdIn(dataClasses.collect{it.id}) as List<DataElement>
+    }
+
+    @Nullable
+    @Override
+    List<DataElement> findAllByLabelContaining(String label){
+        dataElementDTORepository.findAllByLabelContaining(label)
     }
 
     @Nullable
     List<DataElement> readAllByDataTypeIn(List<DataType> dataTypes) {
         dataElementDTORepository.readAllByDataTypeIdIn(dataTypes.id) as List<DataElement>
     }
+
+    @Nullable
+    List<DataElement> findAllByDataModel(DataModel dataModel) {
+        List<DataClass> dataClasses = dataClassRepository.findAllByDataModel(dataModel)
+        findAllByDataClassIn(dataClasses)
+
+    }
+
+    @Nullable
+    List<DataElement> readAllByDataModel(DataModel dataModel) {
+        List<DataClass> dataClasses = dataClassRepository.findAllByDataModel(dataModel)
+        readAllByDataClassIn(dataClasses)
+    }
+
+
 
     @Nullable
     @Join(value = 'dataType', type = Join.Type.LEFT_FETCH)

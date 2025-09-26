@@ -138,7 +138,7 @@ interface Paths {
     String DATA_MODEL_READ_BY_AUTHENTICATED = '/api/dataModels/{id}/readByAuthenticated'
     String DATA_MODEL_READ_BY_EVERYONE = '/api/dataModels/{id}/readByEveryone'
     String DATA_MODEL_VERSION_LINKS = '/api/dataModels/{id}/versionLinks'
-    String DATA_MODEL_SIMPLE_MODEL_VERSION_TREE = '/api/dataModels/{id}/simpleModelVersionTree{?branchesOnly}'
+    String DATA_MODEL_SIMPLE_MODEL_VERSION_TREE = '/api/dataModels/{id}/simpleModelVersionTree'
     String DATA_MODEL_MODEL_VERSION_TREE = '/api/dataModels/{id}/modelVersionTree'
     String DATA_MODEL_CURRENT_MAIN_BRANCH = '/api/dataModels/{id}/currentMainBranch'
     String DATA_MODEL_LATEST_MODEL_VERSION = '/api/dataModels/{id}/latestModelVersion'
@@ -150,7 +150,6 @@ interface Paths {
     String DATA_MODEL_DATATYPE_PROVIDERS = '/api/dataModels/providers/defaultDataTypeProviders'
     String DATA_MODEL_TYPES = '/api/dataModels/types'
     String DATA_MODEL_MERGE_INTO = '/api/dataModels/{id}/mergeInto/{otherId}'
-
 
     /*
     * DataTypeApi
@@ -479,4 +478,7 @@ interface Paths {
     */
     String REFERENCE_DATA_MODELS_LIST = '/api/referenceDataModels'
     String FOLDER_REFERENCE_DATA_MODELS= '/api/folders/{id}/referenceDataModels'
+
+    String RESOURCE_BY_PATH = '/api/{domainType}/path/{path}'
+    String RESOURCE_BY_PATH_FROM_RESOURCE = '/api/{domainType}/{domainId}/path/{path}'
 }

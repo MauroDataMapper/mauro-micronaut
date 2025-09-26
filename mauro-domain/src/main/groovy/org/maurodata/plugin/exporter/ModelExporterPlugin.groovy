@@ -7,7 +7,7 @@ import org.maurodata.plugin.MauroPlugin
 import org.maurodata.plugin.PluginType
 
 @Slf4j
-trait ModelExporterPlugin<D extends Model> extends ImportExportModelExporterPlugin {
+trait ModelExporterPlugin<D extends Model> extends ExporterPlugin {
 
     abstract byte[] exportModel(D model)
 

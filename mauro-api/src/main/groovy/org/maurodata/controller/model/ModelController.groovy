@@ -5,6 +5,7 @@ import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
+import io.micronaut.http.HttpHeaders
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.Body
@@ -69,12 +70,12 @@ import org.maurodata.persistence.model.AdministeredItemRepository
 import org.maurodata.persistence.model.ModelContentRepository
 import org.maurodata.plugin.MauroPluginService
 import org.maurodata.plugin.exporter.ModelExporterPlugin
-import org.maurodata.plugin.importer.FolderImporterPlugin
 import org.maurodata.plugin.importer.ImportParameters
 import org.maurodata.plugin.importer.ModelImporterPlugin
 import org.maurodata.service.core.AuthorityService
-import org.maurodata.service.model.ImportExportModelService
 import org.maurodata.service.plugin.PluginService
+import org.maurodata.utils.exporter.ExporterUtils
+import org.maurodata.utils.importer.ImporterUtils
 import org.maurodata.web.ListResponse
 import org.maurodata.web.PaginationParams
 
@@ -88,8 +89,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     @Inject
     FacetCacheableRepository.ReferenceFileCacheableRepository referenceFileCacheableRepository
 
-    @Inject
-    ImportExportModelService importExportModelService
+
 
     @Override
     List<String> getDisallowedProperties() {
@@ -127,6 +127,9 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
 
     @Inject
     List<AdministeredItemContentRepository> administeredItemContentRepositories
+
+    @Inject
+    ImporterUtils importerUtils
 
     ModelController(Class<M> modelClass, AdministeredItemCacheableRepository<M> modelRepository, FolderCacheableRepository folderRepository,
                     ModelContentRepository<M> modelContentRepository) {
@@ -351,8 +354,12 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     HttpResponse<byte[]> exportModel(UUID modelId, String namespace, String name, @Nullable String version) {
         ModelExporterPlugin mauroPlugin = mauroPluginService.getPlugin(ModelExporterPlugin, namespace, name, version)
         PluginService.handlePluginNotFound(mauroPlugin, namespace, name)
-        M existing = getModelWithContent(modelId)
-        importExportModelService.createExportResponse(mauroPlugin, existing)
+
+        M existing = modelContentRepository.findWithContentById(modelId)
+        existing.setAssociations()
+
+        ExporterUtils.createExportResponse(mauroPlugin, existing)
+        ExporterUtils.createExportResponse(mauroPlugin, existing)
     }
 
     ListResponse<M> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version) {
@@ -360,7 +367,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         ModelImporterPlugin mauroPlugin = mauroPluginService.getPlugin(ModelImporterPlugin, namespace, name, version)
         PluginService.handlePluginNotFound(mauroPlugin, namespace, name)
 
-        ImportParameters importParameters = importExportModelService.readFromMultipartFormBody(body, mauroPlugin.importParametersClass())
+        ImportParameters importParameters = importerUtils.readFromMultipartFormBody(body, mauroPlugin.importParametersClass())
 
         List<M> imported = (List<M>) mauroPlugin.importModels(importParameters)
         String importedFolder = importParameters.folderId ?: null
