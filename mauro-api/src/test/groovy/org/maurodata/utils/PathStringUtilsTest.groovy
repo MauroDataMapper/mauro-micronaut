@@ -25,6 +25,7 @@ class PathStringUtilsTest extends Specification {
         'fo'       | "fo:soluta eum architecto"                                                                     | "soluta eum architecto"
         'fo'       | "fo:soluta eum architecto|te:Dewey Decimal Classification v22\$main"                           | "soluta eum architecto"
         'te'       | "fo:soluta eum architecto|te:Dewey Decimal Classification v22\$main"                           | "Dewey Decimal Classification v22"
+        'dc'       | "fo:soluta eum architecto|dm:modi unde est\$1.0.0|dc:est quasi vel|dc:est sed hic"              | "est sed hic"
     }
 
     @Unroll

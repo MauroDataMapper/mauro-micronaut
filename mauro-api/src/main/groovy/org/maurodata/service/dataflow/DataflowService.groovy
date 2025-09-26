@@ -1,63 +1,59 @@
 package org.maurodata.service.dataflow
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.Nullable
-import io.micronaut.http.HttpHeaders
-import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.Body
-import io.micronaut.http.multipart.CompletedFileUpload
-import io.micronaut.http.multipart.CompletedPart
 import io.micronaut.http.server.multipart.MultipartBody
 import jakarta.inject.Inject
-import jakarta.validation.constraints.NotNull
 import org.maurodata.ErrorHandler
+import org.maurodata.domain.dataflow.DataElementComponent
 import org.maurodata.domain.dataflow.DataFlow
 import org.maurodata.domain.datamodel.DataClass
+import org.maurodata.domain.datamodel.DataElement
 import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.folder.Folder
 import org.maurodata.domain.model.AdministeredItem
-import org.maurodata.domain.model.Model
 import org.maurodata.domain.model.ModelItem
 import org.maurodata.domain.security.Role
 import org.maurodata.persistence.cache.ModelCacheableRepository
+import org.maurodata.persistence.datamodel.DataModelContentRepository
 import org.maurodata.plugin.MauroPluginService
-import org.maurodata.plugin.exporter.ModelExporterPlugin
 import org.maurodata.plugin.exporter.ModelItemExporterPlugin
-import org.maurodata.plugin.importer.FileParameter
 import org.maurodata.plugin.importer.ImportParameters
 import org.maurodata.plugin.importer.ModelItemImporterPlugin
 import org.maurodata.security.AccessControlService
 import org.maurodata.service.core.AdministeredItemService
+import org.maurodata.service.path.PathService
 import org.maurodata.service.plugin.PluginService
-import reactor.core.publisher.Flux
+import org.maurodata.utils.PathStringUtils
+import org.maurodata.utils.importer.ImporterUtils
 
-import java.nio.charset.StandardCharsets
-
-@Slf4j
 @CompileStatic
+@Slf4j
 class DataflowService extends AdministeredItemService {
 
     AccessControlService accessControlService
     ModelCacheableRepository.FolderCacheableRepository folderRepository
     ModelCacheableRepository.DataModelCacheableRepository dataModelRepository
     MauroPluginService mauroPluginService
-    ObjectMapper objectMapper
+    PathService pathService
+    DataModelContentRepository dataModelContentRepository
+    ImporterUtils importerUtils
 
-//    PathService pathService
     @Inject
     DataflowService(AccessControlService accessControlService, ModelCacheableRepository.FolderCacheableRepository folderRepository,
-                    ModelCacheableRepository.DataModelCacheableRepository dataModelCacheableRepository, MauroPluginService mauroPluginService,
-                    ObjectMapper objectMapper) {
+                    ModelCacheableRepository.DataModelCacheableRepository dataModelRepository, MauroPluginService mauroPluginService, PathService pathService,
+                    DataModelContentRepository dataModelContentRepository, ImporterUtils importerUtils) {
         this.accessControlService = accessControlService
         this.folderRepository = folderRepository
-        this.dataModelRepository = dataModelCacheableRepository
+        this.dataModelRepository = dataModelRepository
         this.mauroPluginService = mauroPluginService
-        this.objectMapper = objectMapper
+        this.pathService = pathService
+        this.dataModelContentRepository = dataModelContentRepository
+        this.importerUtils = importerUtils
     }
-
 
     ModelItemExporterPlugin getModelItemExporterPlugin(String namespace, String name, String version) {
         ModelItemExporterPlugin mauroPlugin = mauroPluginService.getPlugin(ModelItemExporterPlugin, namespace, name, version)
@@ -65,78 +61,122 @@ class DataflowService extends AdministeredItemService {
         mauroPlugin
     }
 
-    List<ModelItem> importModelItem(Class aClazz, @NotNull UUID targetDataModelId, @Body MultipartBody body, String namespace, String name, @Nullable String version) {
+    List<ModelItem> importModelItem(Class aClazz, DataModel target, @Body MultipartBody body, String namespace, String name, @Nullable String version) {
         ModelItemImporterPlugin mauroPlugin = mauroPluginService.getPlugin(aClazz, namespace, name, version) as ModelItemImporterPlugin
         PluginService.handlePluginNotFound(mauroPlugin, namespace, name)
 
-        ImportParameters importParameters = readFromMultipartFormBody(body, mauroPlugin.importParametersClass())
+        ImportParameters importParameters = importerUtils.readFromMultipartFormBody(body, mauroPlugin.importParametersClass())
 
         if (importParameters.folderId == null) {
             ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, importParameters.folderId, "Please choose the folder into which the Model/s should be imported.")
         }
-
+        if (importParameters.sourceDataModelId == null) {
+            ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, importParameters.sourceDataModelId,
+                                                 "Please choose the source dataModel into which the DataFlow ModelItem/s should be imported.")
+        }
         List<ModelItem> imported = (List<ModelItem>) mauroPlugin.importModelItem(importParameters)
 
-        DataModel target = dataModelRepository.readById(targetDataModelId)
-        ErrorHandler.handleErrorOnNullObject(HttpStatus.BAD_REQUEST, target, "Datamodel with id $targetDataModelId not found")
-        accessControlService.checkRole(Role.EDITOR, target)
+        pathRepository.readParentItems(target)
+        target.updatePath()
 
-        DataModel source = dataModelRepository.readById(importParameters.sourceDataModelId)
+        DataModel source = dataModelContentRepository.findWithContentById(importParameters.sourceDataModelId)
         ErrorHandler.handleErrorOnNullObject(HttpStatus.BAD_REQUEST, source, "Datamodel with id $importParameters.sourceDataModelId not found")
         accessControlService.checkRole(Role.EDITOR, source)
+
+        pathRepository.readParentItems(source)
+        source.updatePath()
 
         Folder folder = folderRepository.readById(importParameters.folderId)
         ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, folder, "Folder with id $importParameters.folderId not found")
         accessControlService.checkRole(Role.EDITOR, folder)
+
+        pathRepository.readParentItems(folder)
+        folder.updatePath()
+
+        //read in all modelitems under target
+        target = dataModelContentRepository.findWithContentById(target.id) as DataModel
+
         imported.each {imp ->
             imp.folder = folder
-            DataFlow importedDataFlow = (DataFlow) imp
-            importedDataFlow.source = source
-            importedDataFlow.target = target
-
-            importedDataFlow.dataClassComponents.each {
-                it.sourceDataClasses.each {sourceDataClass ->
-                    getImportSource(sourceDataClass)
-                }}
-//
-//
-//                    }
-//                }
-//            }
+            (imp as DataFlow).source = source
+            (imp as DataFlow).target = target
+            (imp as DataFlow).dataClassComponents.each {
+                it.sourceDataClasses = getImportDataClass(it.sourceDataClasses, source)
+                it.targetDataClasses = getImportDataClass(it.targetDataClasses, target)
+                it.dataElementComponents = findImportDataElements(it.dataElementComponents, source, target)
+            }
             updateCreationProperties(imp)
         }
         imported
     }
-    <P extends ImportParameters> P readFromMultipartFormBody(MultipartBody body, Class<P> parametersClass) {
-        Map<String, Object> importMap = Flux.from(body).collectList().block().collectEntries {CompletedPart cp ->
-            if (cp instanceof CompletedFileUpload) {
-                return [cp.name, new FileParameter(cp.filename, cp.contentType.toString(), cp.bytes)]
-            } else {
-                return [cp.name, new String(cp.bytes, StandardCharsets.UTF_8)]
+
+    @Override
+    AdministeredItem updatePaths(AdministeredItem dataFlow) {
+        updateDerivedProperties(dataFlow)
+        (dataFlow as DataFlow).dataClassComponents.each {
+            updateDerivedProperties(it)
+            it.sourceDataClasses.each {sourceDataClass ->
+                updateDerivedProperties(sourceDataClass)
+            }
+            it.targetDataClasses.each {targetDataClass ->
+                updateDerivedProperties(targetDataClass)
+            }
+            it.dataElementComponents.each {dataElementComponent ->
+                updateDerivedProperties(dataElementComponent)
+                dataElementComponent.sourceDataElements.each {sourceDataElement ->
+                    updateDerivedProperties(sourceDataElement)
+                }
+                dataElementComponent.targetDataElements.each {targetDataElement ->
+                    updateDerivedProperties(targetDataElement)
+                }
             }
         }
-        return objectMapper.convertValue(importMap, parametersClass)
+        dataFlow
     }
 
-    static HttpResponse<byte[]> createExportResponse(ModelExporterPlugin mauroPlugin, Model model) {
-        byte[] fileContents = mauroPlugin.exportModel(model)
-        String filename = mauroPlugin.getFileName(model)
-        HttpResponse
-            .ok(fileContents)
-            .header(HttpHeaders.CONTENT_LENGTH, Long.toString(fileContents.length))
-            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=${filename}")
+    protected List<DataClass> getImportDataClass(List<DataClass> dataClasses, DataModel model) {
+        return dataClasses.collect {dC ->
+            String resourceLabel = PathStringUtils.getItemSubPath(dC.pathPrefix, dC.path.pathString)
+            DataClass importDataClass = findImportDataClassByLabel(resourceLabel, model)
+            pathRepository.readParentItems(importDataClass) //perhaps not necessary to cal the full path but doing it anyway
+            importDataClass.updatePath()
+            importDataClass
+        }
     }
 
-    static HttpResponse<byte[]> createExportResponse(ModelItemExporterPlugin mauroPlugin, AdministeredItem administeredItem) {
-        byte[] fileContents = mauroPlugin.exportModelItem(administeredItem as ModelItem)
-        String filename = mauroPlugin.getFileName(administeredItem as ModelItem)
-        HttpResponse
-            .ok(fileContents)
-            .header(HttpHeaders.CONTENT_LENGTH, Long.toString(fileContents.length))
-            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=${filename}")
+    protected DataClass findImportDataClassByLabel(String resourceLabel, DataModel model) {
+        List<DataClass> importDataClasses = model.allDataClasses.findAll {it.label == resourceLabel} as List<DataClass>
+        if (importDataClasses.isEmpty()) {
+            ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "No dataclass found with label $resourceLabel in import target datamodel $model.id")
+        }
+        if (importDataClasses.size() > 1) {
+            log.warn("Found more than 1 match in model: $model.id on label $resourceLabel. Returning first: ${importDataClasses.first().id}")
+        }
+        importDataClasses.first()
     }
 
-    DataClass getImportSource(DataClass exportDataClass) {
-
+    protected List<DataElementComponent> findImportDataElements(List<DataElementComponent> dataElementComponents, DataModel source, DataModel target) {
+        dataElementComponents.collect {
+            it.sourceDataElements = getImportDataElements(it.sourceDataElements, source)
+            it.targetDataElements = getImportDataElements(it.targetDataElements, target)
+        }
+        dataElementComponents
     }
+
+    protected List<DataElement> getImportDataElements(List<DataElement> dataElements, DataModel model) {
+        return dataElements.collect {dE ->
+            String resourceLabel = PathStringUtils.getItemSubPath(dE.pathPrefix, dE.path.pathString)
+            List<DataElement> importElementsWithSameLabel = model.dataElements.findAll {
+                it.label == resourceLabel
+            }
+            if (importElementsWithSameLabel.isEmpty()) {
+                ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "No dataElement found with label $resourceLabel in import target datamodel $model.id")
+            }
+            if (importElementsWithSameLabel.size() > 1) {
+                log.warn("Found more than 1 match in model: $model.id on label $resourceLabel. Returning first: ${importElementsWithSameLabel.first().id}")
+            }
+            importElementsWithSameLabel.first()
+        }
+    }
+
 }

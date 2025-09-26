@@ -18,13 +18,18 @@ class PathStringUtils {
     /**
      *
      * @param path eg  "fo:soluta eum architecto|dm:modi unde est$matrix|dc:est quasi vel|de:new data element label"
-     *        pathPrefix eg 'de'
+     *        pathPrefix eg 'de',
+     *
+     *        path: "fo:soluta eum architecto|dm:modi unde est$1.0.0|dc:est quasi vel|dc:est sed hic",
+     *        pathPrefix: dc
+     *        returns last : "est sed hic"  (ie child)
+     *
      *  split each subpath '|'
      *  find subpath matching pathPrefix
      * @return the subpath eg  "new data element label"
      */
     static String getItemSubPath(String pathPrefix, String fullPath) {
-        String[] pathSubPaths = splitBy(fullPath, VERTICAL_BAR_ESCAPE)
+        String[] pathSubPaths = splitBy(fullPath, VERTICAL_BAR_ESCAPE).reverse()
         String subPathAndPrefix = pathSubPaths.find {it.startsWith("$pathPrefix:")}
         if (!subPathAndPrefix) ErrorHandler.handleError(HttpStatus.NOT_FOUND, "Path starting with $pathPrefix not found")
         String subPath = subPathAndPrefix - "$pathPrefix:"

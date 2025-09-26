@@ -42,6 +42,7 @@ import org.maurodata.plugin.exporter.ModelItemExporterPlugin
 import org.maurodata.plugin.importer.DataFlowImporterPlugin
 import org.maurodata.plugin.importer.json.JsonDataFlowImporterPlugin
 import org.maurodata.service.dataflow.DataflowService
+import org.maurodata.utils.exporter.ExporterUtils
 import org.maurodata.web.ListResponse
 import org.maurodata.web.PaginationParams
 
@@ -56,8 +57,9 @@ class DataFlowController extends AdministeredItemController<DataFlow, DataModel>
     DataFlowContentRepository dataFlowContentRepository
     DataflowService dataFlowService
 
-    @Inject
-    DataFlowController(AdministeredItemCacheableRepository.DataFlowCacheableRepository dataFlowRepository, ModelCacheableRepository.DataModelCacheableRepository dataModelRepository,
+
+    DataFlowController(AdministeredItemCacheableRepository.DataFlowCacheableRepository dataFlowRepository,
+                       ModelCacheableRepository.DataModelCacheableRepository dataModelRepository,
                        DataFlowContentRepository dataFlowContentRepository, DataflowService dataFlowService) {
         super(DataFlow, dataFlowRepository, dataModelRepository, dataFlowContentRepository)
         this.dataFlowRepository = dataFlowRepository
@@ -135,7 +137,7 @@ class DataFlowController extends AdministeredItemController<DataFlow, DataModel>
         existing = dataFlowService.updatePaths(existing) as DataFlow
         existing.source = dataFlowService.updateDerivedProperties(existing.source) as DataModel
         existing.target = dataFlowService.updateDerivedProperties(existing.target) as DataModel
-        dataFlowService.createExportResponse(mauroPlugin, existing)
+        ExporterUtils.createExportResponse(mauroPlugin, existing)
     }
 
 
@@ -145,8 +147,15 @@ class DataFlowController extends AdministeredItemController<DataFlow, DataModel>
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Post(Paths.DATA_FLOW_IMPORT)
     ListResponse<DataFlow> importModel(@NonNull UUID dataModelId, @Body MultipartBody body, @Nullable String namespace, @Nullable String name, @Nullable String version) {
+        // check target model is in right state
+        DataModel target = dataModelRepository.readById(dataModelId)
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.BAD_REQUEST, target, "Datamodel with id $dataModelId not found")
+        accessControlService.checkRole(Role.EDITOR, target)
+        if (target.finalised) {
+            ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "Target model is finalised: $target.id")
+        }
 
-        List<ModelItem> modelItems = dataFlowService.importModelItem(JsonDataFlowImporterPlugin, dataModelId, body, namespace, name, version).findAll {
+        List<ModelItem> modelItems = dataFlowService.importModelItem(JsonDataFlowImporterPlugin, target, body, namespace, name, version).findAll {
             it.domainType == DataFlow.class.simpleName && (it as DataFlow).target?.id == dataModelId
         }
 
