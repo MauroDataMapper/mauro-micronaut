@@ -1,9 +1,10 @@
 package org.maurodata.importexport
 
-import com.fasterxml.jackson.annotation.JsonIgnore
+
 import groovy.json.JsonSlurper
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.MediaType
+import io.micronaut.http.client.exceptions.HttpClientResponseException
 import io.micronaut.http.client.multipart.MultipartBody
 import io.micronaut.test.annotation.Sql
 import jakarta.inject.Singleton
@@ -14,11 +15,12 @@ import org.maurodata.domain.dataflow.DataFlow
 import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.datamodel.DataType
 import org.maurodata.domain.model.version.CreateNewVersionData
+import org.maurodata.domain.model.version.FinaliseData
+import org.maurodata.domain.model.version.VersionChangeType
 import org.maurodata.export.ExportModel
 import org.maurodata.persistence.ContainerizedTest
 import org.maurodata.testing.CommonDataSpec
 import org.maurodata.web.ListResponse
-import spock.lang.Ignore
 import spock.lang.Shared
 
 @ContainerizedTest
@@ -42,8 +44,6 @@ class DataFlowImportExportIntegrationSpec extends CommonDataSpec {
     UUID folderId
     @Shared
     DataModel source
-
-
     @Shared
     DataModel target
     @Shared
@@ -213,6 +213,82 @@ class DataFlowImportExportIntegrationSpec extends CommonDataSpec {
         httpResponse = dataElementComponentApi.deleteTarget(targetBranch.id, dataFlowResponse.items[0].id, dataClassComponentId, dataElementComponentId, dataElementId2)
         then:
         httpResponse.status().code == HttpStatus.SC_NO_CONTENT
+    }
+
+    void 'import dataflow - target datamodel does not contain same model structure or model items as exported datamodel target -should throw exception'() {
+        given:
+        byte[] responseBytes =
+            dataFlowApi.exportModel(target.id, dataFlow.id, EXPORTER_NAMESPACE, EXPORTER_NAME, EXPORTER_VERSION).body()
+
+        ExportModel exportModel = objectMapper.readValue(responseBytes, ExportModel)
+
+        and:
+        DataModel importTarget = dataModelApi.create(folderId, dataModelPayload('import target  label'))
+
+        MultipartBody importRequest = MultipartBody.builder()
+            .addPart('folderId', folderId.toString())
+            .addPart('sourceDataModelId', sourceBranch.id.toString())
+            .addPart('importFile', 'file.json', MediaType.APPLICATION_JSON_TYPE, objectMapper.writeValueAsBytes(exportModel))
+            .build()
+
+        when:
+        dataFlowApi.importModel(importTarget.id, importRequest, IMPORTER_NAMESPACE, IMPORTER_NAME, IMPORTER_VERSION)
+
+        then:
+        HttpClientResponseException exception = thrown()
+        exception.status == io.micronaut.http.HttpStatus.UNPROCESSABLE_ENTITY
+
+    }
+    void 'import dataflow - source datamodel does not contain same model structure or model items as exported datamodel source -should throw exception'() {
+        given:
+        byte[] responseBytes =
+            dataFlowApi.exportModel(target.id, dataFlow.id, EXPORTER_NAMESPACE, EXPORTER_NAME, EXPORTER_VERSION).body()
+
+        ExportModel exportModel = objectMapper.readValue(responseBytes, ExportModel)
+
+        and:
+        DataModel importSource = dataModelApi.create(folderId, dataModelPayload('import target  label'))
+
+        MultipartBody importRequest = MultipartBody.builder()
+            .addPart('folderId', folderId.toString())
+            .addPart('sourceDataModelId', importSource.id.toString())
+            .addPart('importFile', 'file.json', MediaType.APPLICATION_JSON_TYPE, objectMapper.writeValueAsBytes(exportModel))
+            .build()
+
+        when:
+        dataFlowApi.importModel(targetBranch.id, importRequest, IMPORTER_NAMESPACE, IMPORTER_NAME, IMPORTER_VERSION)
+
+        then:
+        HttpClientResponseException exception = thrown()
+        exception.status == io.micronaut.http.HttpStatus.UNPROCESSABLE_ENTITY
+
+    }
+
+    void 'importing dataflow -target model is finalised  -should throw exception '() {
+        given:
+        DataModel anotherModel = dataModelApi.create(folderId, dataModelPayload('another model label'))
+        dataModelApi.finalise(anotherModel.id, new FinaliseData(versionChangeType: VersionChangeType.MAJOR, versionTag: 'random version tag'))
+
+        byte[] responseBytes =
+            dataFlowApi.exportModel(target.id, dataFlow.id, EXPORTER_NAMESPACE, EXPORTER_NAME, EXPORTER_VERSION).body()
+
+        ExportModel exportModel = objectMapper.readValue(responseBytes, ExportModel)
+
+        and:
+        MultipartBody importRequest = MultipartBody.builder()
+            .addPart('folderId', folderId.toString())
+            .addPart('sourceDataModelId', sourceBranch.id.toString())
+            .addPart('importFile', 'file.json', MediaType.APPLICATION_JSON_TYPE, objectMapper.writeValueAsBytes(exportModel))
+            .build()
+
+
+        when:
+         dataFlowApi.importModel(anotherModel.id, importRequest, IMPORTER_NAMESPACE, IMPORTER_NAME, IMPORTER_VERSION)
+
+        then:
+        HttpClientResponseException exception = thrown()
+        exception.status == io.micronaut.http.HttpStatus.UNPROCESSABLE_ENTITY
+
     }
 
 }
