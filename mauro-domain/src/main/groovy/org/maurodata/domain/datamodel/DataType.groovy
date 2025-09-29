@@ -238,10 +238,10 @@ class DataType extends ModelItem<DataModel> implements DiffableItem<DataType>, I
     List<ItemReference> retrieveItemReferences() {
         List<ItemReference> pathsBeingReferenced = [] + super.retrieveItemReferences()
 
-        ItemReferencerUtils.addItems(enumerationValues, pathsBeingReferenced)
-        ItemReferencerUtils.addIdType(modelResourceId, modelResourceDomainType, pathsBeingReferenced)
-        ItemReferencerUtils.addItem(referenceClass, pathsBeingReferenced)
-        ItemReferencerUtils.addItem(parent, pathsBeingReferenced)
+        ItemReferencerUtils.addItems(this.enumerationValues, pathsBeingReferenced)
+        ItemReferencerUtils.addIdType(this.modelResourceId, modelResourceDomainType, pathsBeingReferenced)
+        ItemReferencerUtils.addItem(this.@referenceClass, pathsBeingReferenced)
+        ItemReferencerUtils.addItem(this.parent, pathsBeingReferenced)
 
         return pathsBeingReferenced
     }
@@ -250,26 +250,27 @@ class DataType extends ModelItem<DataModel> implements DiffableItem<DataType>, I
     void replaceItemReferencesByIdentity(IdentityHashMap<Item, Item> replacements, List<Item> notReplaced) {
         super.replaceItemReferencesByIdentity(replacements, notReplaced)
 
-        parent = ItemReferencerUtils.replaceItemByIdentity(parent, replacements, notReplaced)
-        referenceClass = ItemReferencerUtils.replaceItemByIdentity(referenceClass, replacements, notReplaced)
+        this.parent = ItemReferencerUtils.replaceItemByIdentity(this.parent, replacements, notReplaced)
+        this.referenceClass = ItemReferencerUtils.replaceItemByIdentity(this.@referenceClass, replacements, notReplaced)
         // This is not possible on Items
         // modelResourceId = ItemReferencerUtils.replaceIdTypeByIdentity(modelResourceId, replacements)
-        enumerationValues = ItemReferencerUtils.replaceItemsByIdentity(enumerationValues, replacements, notReplaced)
+        this.enumerationValues = ItemReferencerUtils.replaceItemsByIdentity(this.@enumerationValues, replacements, notReplaced)
     }
 
     @Override
     void copyInto(Item into) {
         DataType intoDataType = (DataType) into
         // A cart before the horse: domainType in AdministeredItem depends on dataTypeKind
-        intoDataType.dataTypeKind = ItemUtils.copyItem(this.@dataTypeKind, intoDataType.dataTypeKind)
+        intoDataType.dataTypeKind = ItemUtils.copyItem(this.@dataTypeKind, intoDataType.@dataTypeKind)
         super.copyInto(into)
-        intoDataType.domainType = ItemUtils.copyItem(this.@domainType, intoDataType.domainType)
-        intoDataType.dataModel = ItemUtils.copyItem(this.@dataModel, intoDataType.dataModel)
-        intoDataType.referenceClass = ItemUtils.copyItem(this.@referenceClass, intoDataType.referenceClass)
-        intoDataType.modelResourceDomainType = ItemUtils.copyItem(this.@modelResourceDomainType, intoDataType.modelResourceDomainType)
-        intoDataType.modelResourceId = ItemUtils.copyItem(this.@modelResourceId, intoDataType.modelResourceId)
-        intoDataType.units = ItemUtils.copyItem(this.@units, intoDataType.units)
-        intoDataType.enumerationValues = ItemUtils.copyItems(this.@enumerationValues, intoDataType.enumerationValues)
+        intoDataType.domainType = ItemUtils.copyItem(this.domainType, intoDataType.domainType)
+        intoDataType.dataTypeKind = ItemUtils.copyItem(this.@dataTypeKind, intoDataType.@dataTypeKind)
+        intoDataType.dataModel = ItemUtils.copyItem(this.@dataModel, intoDataType.@dataModel)
+        intoDataType.referenceClass = ItemUtils.copyItem(this.@referenceClass, intoDataType.@referenceClass)
+        intoDataType.modelResourceDomainType = ItemUtils.copyItem(this.@modelResourceDomainType, intoDataType.@modelResourceDomainType)
+        intoDataType.modelResourceId = ItemUtils.copyItem(this.@modelResourceId, intoDataType.@modelResourceId)
+        intoDataType.units = ItemUtils.copyItem(this.@units, intoDataType.@units)
+        intoDataType.enumerationValues = ItemUtils.copyItems(this.@enumerationValues, intoDataType.@enumerationValues)
     }
 
     @Override

@@ -288,6 +288,7 @@ class DataModel extends Model implements ItemReferencer {
 
         ItemReferencerUtils.addItems(dataTypes, pathsBeingReferenced)
         ItemReferencerUtils.addItems(enumerationValues, pathsBeingReferenced)
+        ItemReferencerUtils.addItems(dataElements, pathsBeingReferenced)
         ItemReferencerUtils.addItems(dataClasses, pathsBeingReferenced)
         ItemReferencerUtils.addItem(parent, pathsBeingReferenced)
 
@@ -302,6 +303,7 @@ class DataModel extends Model implements ItemReferencer {
         parent = ItemReferencerUtils.replaceItemByIdentity(parent, replacements, notReplaced)
         dataTypes = ItemReferencerUtils.replaceItemsByIdentity(dataTypes, replacements, notReplaced)
         dataClasses = ItemReferencerUtils.replaceItemsByIdentity(dataClasses, replacements, notReplaced)
+        dataElements = ItemReferencerUtils.replaceItemsByIdentity(dataElements, replacements, notReplaced)
         enumerationValues = ItemReferencerUtils.replaceItemsByIdentity(enumerationValues, replacements, notReplaced)
     }
 
@@ -312,6 +314,7 @@ class DataModel extends Model implements ItemReferencer {
         intoDataModel.dataTypes = ItemUtils.copyItems(this.dataTypes, intoDataModel.dataTypes)
         intoDataModel.enumerationValues = ItemUtils.copyItems(this.enumerationValues, intoDataModel.enumerationValues)
         intoDataModel.dataClasses = ItemUtils.copyItems(this.dataClasses, intoDataModel.dataClasses)
+        intoDataModel.dataElements = ItemUtils.copyItems(this.dataElements, intoDataModel.dataElements)
         intoDataModel.modelType = ItemUtils.copyItem(this.modelType, intoDataModel.modelType)
         intoDataModel.dataModelType = ItemUtils.copyItem(this.dataModelType, intoDataModel.dataModelType)
     }
