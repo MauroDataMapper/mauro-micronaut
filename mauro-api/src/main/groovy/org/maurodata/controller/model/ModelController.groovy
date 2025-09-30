@@ -355,8 +355,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         ModelExporterPlugin mauroPlugin = mauroPluginService.getPlugin(ModelExporterPlugin, namespace, name, version)
         PluginService.handlePluginNotFound(mauroPlugin, namespace, name)
 
-        M existing = modelContentRepository.findWithContentById(modelId)
-        existing.setAssociations()
+        M existing = getModelContent(modelId)
 
         ExporterUtils.createExportResponse(mauroPlugin, existing)
         ExporterUtils.createExportResponse(mauroPlugin, existing)
@@ -721,29 +720,12 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         return permissions
     }
 
-    protected M saveDataModel(DataModel dataModel) {
-        DataModel savedImport = modelContentRepository.saveWithContent(dataModel as M) as DataModel
-        savedImport as M
+    protected M getModelContent( UUID modelId) {
+        M existing = modelContentRepository.findWithContentById(modelId)
+        existing.setAssociations()
+        existing
     }
 
-    protected M saveFolder(Folder folder) {
-        Folder savedImport = modelContentRepository.saveWithContent(folder as M) as Folder
-        savedImport as M
-    }
-
-    protected M saveCodeSet(CodeSet codeSet) {
-        CodeSet savedImport = modelContentRepository.saveWithContent(codeSet as M) as CodeSet
-        savedImport as M
-    }
-
-    protected M saveTerminology(Terminology terminology) {
-        Terminology savedImport = modelContentRepository.saveWithContent(terminology as M) as Terminology
-        savedImport as M
-    }
-
-    protected M saveModel(M model) {
-        modelContentRepository.saveWithContent(model)
-    }
 
     protected ModelVersionDTO latestModelVersion(UUID id) {
         final List<Model> allModels = populateVersionTree(id, false, null)
@@ -1752,14 +1734,9 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         }
     }
 
-    protected M getModelWithContent(UUID modelId) {
-        M existing = modelContentRepository.findWithContentById(modelId)
-        existing.setAssociations()
-        existing
-    }
-
     private void connectFacets(AdministeredItem administeredItem) {
         if (administeredItem.metadata) {
+
             administeredItem.metadata.each {
                 updateMultiAwareData(administeredItem, it)
             }

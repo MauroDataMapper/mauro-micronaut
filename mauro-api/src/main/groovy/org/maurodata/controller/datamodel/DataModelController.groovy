@@ -1,6 +1,5 @@
 package org.maurodata.controller.datamodel
 
-import org.maurodata.api.model.MergeIntoDTO
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.context.annotation.Parameter
@@ -26,19 +25,18 @@ import io.micronaut.security.rules.SecurityRule
 import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
 import org.maurodata.ErrorHandler
-import org.maurodata.FieldConstants
 import org.maurodata.api.Paths
 import org.maurodata.api.datamodel.DataModelApi
 import org.maurodata.api.model.MergeDiffDTO
-import org.maurodata.api.model.MergeFieldDiffDTO
+import org.maurodata.api.model.MergeIntoDTO
 import org.maurodata.api.model.ModelVersionDTO
 import org.maurodata.api.model.ModelVersionedRefDTO
 import org.maurodata.api.model.ModelVersionedWithTargetsRefDTO
 import org.maurodata.api.model.PermissionsDTO
 import org.maurodata.api.model.VersionLinkDTO
-import org.maurodata.api.model.VersionLinkTargetDTO
 import org.maurodata.audit.Audit
 import org.maurodata.controller.model.ModelController
+import org.maurodata.domain.dataflow.DataFlow
 import org.maurodata.domain.datamodel.DataClass
 import org.maurodata.domain.datamodel.DataElement
 import org.maurodata.domain.datamodel.DataModel
@@ -48,21 +46,17 @@ import org.maurodata.domain.datamodel.DataType
 import org.maurodata.domain.datamodel.IntersectsData
 import org.maurodata.domain.datamodel.IntersectsManyData
 import org.maurodata.domain.datamodel.SubsetData
-import org.maurodata.domain.diff.FieldDiff
 import org.maurodata.domain.diff.ObjectDiff
 import org.maurodata.domain.facet.EditType
 import org.maurodata.domain.facet.VersionLink
 import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.domain.model.Model
-import org.maurodata.domain.model.Path
 import org.maurodata.domain.model.version.CreateNewVersionData
 import org.maurodata.domain.model.version.FinaliseData
-import org.maurodata.domain.model.version.ModelVersion
 import org.maurodata.domain.search.dto.SearchRequestDTO
 import org.maurodata.domain.search.dto.SearchResultsDTO
 import org.maurodata.domain.security.Role
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository.DataElementCacheableRepository
-import org.maurodata.persistence.cache.AdministeredItemCacheableRepository.DataTypeCacheableRepository
 import org.maurodata.persistence.cache.ModelCacheableRepository.DataModelCacheableRepository
 import org.maurodata.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
 import org.maurodata.persistence.dataflow.DataFlowContentRepository
@@ -74,14 +68,16 @@ import org.maurodata.plugin.datatype.DefaultDataTypeProviderPlugin
 import org.maurodata.plugin.exporter.DataModelExporterPlugin
 import org.maurodata.plugin.exporter.ModelExporterPlugin
 import org.maurodata.plugin.importer.DataModelImporterPlugin
+import org.maurodata.service.datamodel.DataClassService
 import org.maurodata.service.plugin.PluginService
+import org.maurodata.utils.exporter.ExporterUtils
 import org.maurodata.web.ListResponse
 
 @Slf4j
 @Controller
 @CompileStatic
 @Secured(SecurityRule.IS_ANONYMOUS)
-class DataModelController extends ModelController<DataModel> implements DataModelApi {
+class DataModelController extends ModelController<DataModel>implements DataModelApi {
     DataModelCacheableRepository dataModelRepository
 
     DataModelContentRepository dataModelContentRepository
@@ -90,13 +86,7 @@ class DataModelController extends ModelController<DataModel> implements DataMode
     SearchRepository searchRepository
 
     @Inject
-    DataModelService dataModelService
-
-    @Inject
     DataElementCacheableRepository dataElementCacheableRepository
-
-    @Inject
-    DataTypeCacheableRepository dataTypeCacheableRepository
 
     @Inject
     DataTypeContentRepository dataTypeContentRepository
@@ -105,13 +95,14 @@ class DataModelController extends ModelController<DataModel> implements DataMode
     DataElementRepository dataElementRepository
     @Inject
     DataFlowContentRepository dataFlowContentRepository
+    @Inject
+    DataClassService dataClassService
 
     DataModelController(DataModelCacheableRepository dataModelRepository, FolderCacheableRepository folderRepository, DataModelContentRepository dataModelContentRepository,
                         DataModelService dataModelService) {
         super(DataModel, dataModelRepository, folderRepository, dataModelContentRepository, dataModelService)
         this.dataModelRepository = dataModelRepository
         this.dataModelContentRepository = dataModelContentRepository
-        this.dataModelService = dataModelService
     }
 
     @Audit
@@ -209,7 +200,12 @@ class DataModelController extends ModelController<DataModel> implements DataMode
     @Audit
     @Get(Paths.DATA_MODEL_EXPORT)
     HttpResponse<byte[]> exportModel(UUID id, @Nullable String namespace, @Nullable String name, @Nullable String version) {
-        super.exportModel(id, namespace, name, version)
+        ModelExporterPlugin mauroPlugin = mauroPluginService.getPlugin(ModelExporterPlugin, namespace, name, version)
+        PluginService.handlePluginNotFound(mauroPlugin, namespace, name)
+
+        DataModel existing = getModelContent(id)
+        updatePaths(existing)
+        ExporterUtils.createExportResponse(mauroPlugin, existing)
     }
 
     @Transactional
@@ -528,5 +524,49 @@ class DataModelController extends ModelController<DataModel> implements DataMode
     @Override
     List<String> dataModelTypes() {
         return DataModelType.labels()
+    }
+
+    protected void updatePaths(DataModel existing) {
+        dataClassService.updatePaths(existing)
+        existing.dataClasses.each {
+            dataClassService.updatePaths(it)
+            it.dataClasses.each {
+                dataClassService.updatePaths(it)
+            }
+        }
+        existing.dataElements.each {
+            dataClassService.updatePaths(it)
+        }
+        existing.dataTypes.each {
+            dataClassService.updatePaths(it)
+        }
+        updateDataFlowPaths(existing.sourceDataFlows)
+        updateDataFlowPaths(existing.targetDataFlows)
+    }
+
+    protected List<DataFlow> updateDataFlowPaths(List<DataFlow> dataFlows) {
+        return dataFlows.each {
+            dataClassService.updatePaths(it)
+            dataClassService.updatePaths(it.source)
+            dataClassService.updatePaths(it.target)
+            it.dataClassComponents.each {dCC ->
+                dataClassService.updatePaths(dCC)
+                dCC.sourceDataClasses.each {dC ->
+                    dataClassService.updatePaths(dC)
+                }
+                dCC.targetDataClasses.each {tDC ->
+                    dataClassService.updatePaths(tDC)
+                }
+                dCC.dataElementComponents.each {dEC ->
+                    dataClassService.updatePaths(dEC)
+                    dEC.sourceDataElements.each {dE ->
+                        dataClassService.updatePaths(dE)
+                    }
+                    dEC.targetDataElements.each {tDE ->
+                        dataClassService.updatePaths(tDE)
+                    }
+                }
+            }
+        }
     }
 }

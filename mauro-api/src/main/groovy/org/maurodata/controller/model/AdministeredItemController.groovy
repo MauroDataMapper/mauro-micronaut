@@ -257,6 +257,11 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
         }
     }
 
+    protected void calculatePath(AdministeredItem item ) {
+        pathRepository.readParentItems(item)
+        item.updatePath()
+    }
+
     @Override
     public String toString() {
         return "AdministeredItemController{}";

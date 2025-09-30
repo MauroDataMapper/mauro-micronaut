@@ -134,6 +134,7 @@ class DataModelJsonImportExportIntegrationSpec extends CommonDataSpec {
         parsedJson.exportMetadata
 
         parsedJson.dataModel
+        parsedJson.dataModel.path
         parsedJson.dataModel.id == dataModelId.toString()
         parsedJson.dataModel.metadata.id == List.of(metadataId.toString())
         parsedJson.dataModel.summaryMetadata.id == List.of(summaryMetadataId.toString())
@@ -144,21 +145,29 @@ class DataModelJsonImportExportIntegrationSpec extends CommonDataSpec {
         parsedJson.dataModel.dataTypes.id == List.of(dataType.id.toString())
         parsedJson.dataModel.dataTypes.domainType == List.of(dataType.domainType)
 
+
         parsedJson.dataModel.targetDataFlows
         parsedJson.dataModel.targetDataFlows.size() == 1
+        parsedJson.dataModel.targetDataFlows[0].path
         parsedJson.dataModel.targetDataFlows[0].dataClassComponents
         parsedJson.dataModel.targetDataFlows[0].dataClassComponents.size() == 1
+        parsedJson.dataModel.targetDataFlows[0].dataClassComponents[0].path
+
         !parsedJson.dataModel.targetDataFlows[0].dataClassComponents[0].sourceDataClasses
+
         parsedJson.dataModel.targetDataFlows[0].dataClassComponents[0].targetDataClasses
         parsedJson.dataModel.targetDataFlows[0].dataClassComponents[0].targetDataClasses.size() == 1
         parsedJson.dataModel.targetDataFlows[0].dataClassComponents[0].targetDataClasses[0].id == dataClassId1.toString()
+        parsedJson.dataModel.targetDataFlows[0].dataClassComponents[0].targetDataClasses[0].path
         parsedJson.dataModel.targetDataFlows[0].dataClassComponents[0].dataElementComponents
         parsedJson.dataModel.targetDataFlows[0].dataClassComponents[0].dataElementComponents.size() == 1
         parsedJson.dataModel.targetDataFlows[0].dataClassComponents[0].dataElementComponents[0].id == dataElementComponentId.toString()
+        parsedJson.dataModel.targetDataFlows[0].dataClassComponents[0].dataElementComponents[0].path
         !parsedJson.dataModel.targetDataFlows[0].dataClassComponents[0].dataElementComponents[0].sourceDataElements
         parsedJson.dataModel.targetDataFlows[0].dataClassComponents[0].dataElementComponents[0].targetDataElements
         parsedJson.dataModel.targetDataFlows[0].dataClassComponents[0].dataElementComponents[0].targetDataElements.size() == 1
         parsedJson.dataModel.targetDataFlows[0].dataClassComponents[0].dataElementComponents[0].targetDataElements[0].id == dataElementId1.toString()
+        parsedJson.dataModel.targetDataFlows[0].dataClassComponents[0].dataElementComponents[0].targetDataElements[0].path
     }
 
 
