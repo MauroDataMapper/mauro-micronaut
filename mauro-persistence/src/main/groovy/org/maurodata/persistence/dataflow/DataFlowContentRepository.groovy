@@ -30,9 +30,7 @@ class DataFlowContentRepository extends AdministeredItemContentRepository {
         List<DataClassComponent> dataClassComponents = dataClassComponentRepository.findAllByParent(dataFlow)
 
         dataClassComponents.each {
-            it.dataElementComponents = getAllDataElementsWithFullAssociations( it)
-            it.sourceDataClasses.each{it.updatePath()}
-            it.targetDataClasses.each{it.updatePath()}
+            it.dataElementComponents =   dataElementComponentRepository.findAllByParent(it)
         }
         dataFlow.dataClassComponents = dataClassComponents
         dataFlow
@@ -67,11 +65,4 @@ class DataFlowContentRepository extends AdministeredItemContentRepository {
         return clazz.simpleName == 'DataFlow'
     }
 
-    List<DataElementComponent> getAllDataElementsWithFullAssociations(DataClassComponent dataClassComponent) {
-         dataElementComponentRepository.findAllByParent(dataClassComponent).each{
-            it.updatePath()
-            it.sourceDataElements.each{it.updatePath()}
-            it.targetDataElements.each{it.updatePath()}
-        }
-    }
 }
