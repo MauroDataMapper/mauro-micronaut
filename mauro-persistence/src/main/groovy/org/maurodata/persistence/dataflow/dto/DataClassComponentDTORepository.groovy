@@ -1,6 +1,11 @@
 package org.maurodata.persistence.dataflow.dto
 
+import org.maurodata.domain.dataflow.DataClassComponent
+import org.maurodata.domain.datamodel.DataClass
+import org.maurodata.persistence.datamodel.dto.DataClassDTO
+
 import groovy.transform.CompileStatic
+import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.annotation.Join
 import io.micronaut.data.annotation.Query

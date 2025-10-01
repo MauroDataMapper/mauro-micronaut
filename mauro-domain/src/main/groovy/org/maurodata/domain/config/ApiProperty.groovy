@@ -1,5 +1,7 @@
 package org.maurodata.domain.config
 
+import org.maurodata.domain.model.ItemUtils
+
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import groovy.transform.AutoClone
@@ -35,5 +37,23 @@ class ApiProperty extends Item {
     @JsonProperty('lastUpdatedBy')
     String getLastUpdatedByEmailAddress() {
         lastUpdatedBy?.emailAddress
+    }
+
+    @Override
+    void copyInto(Item into) {
+        super.copyInto(into)
+        ApiProperty intoApiProperty = (ApiProperty) into
+        intoApiProperty.key = ItemUtils.copyItem(this.key, intoApiProperty.key)
+        intoApiProperty.value = ItemUtils.copyItem(this.value, intoApiProperty.value)
+        intoApiProperty.publiclyVisible = ItemUtils.copyItem(publiclyVisible, intoApiProperty.publiclyVisible)
+        intoApiProperty.category = ItemUtils.copyItem(this.category, intoApiProperty.category)
+        intoApiProperty.lastUpdatedBy = ItemUtils.copyItem(this.lastUpdatedBy, intoApiProperty.lastUpdatedBy)
+    }
+
+    @Override
+    Item shallowCopy() {
+        ApiProperty apiPropertyShallowCopy = new ApiProperty()
+        this.copyInto(apiPropertyShallowCopy)
+        return apiPropertyShallowCopy
     }
 }

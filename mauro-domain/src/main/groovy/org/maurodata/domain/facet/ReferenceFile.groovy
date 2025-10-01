@@ -1,5 +1,7 @@
 package org.maurodata.domain.facet
 
+import org.maurodata.domain.model.Item
+
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import groovy.transform.AutoClone
@@ -38,7 +40,7 @@ class ReferenceFile extends CatalogueFile implements DiffableItem<ReferenceFile>
     @Transient
     @JsonIgnore
     CollectionDiff fromItem() {
-        new BaseCollectionDiff(id,getDiffIdentifier(),null)
+        new BaseCollectionDiff(id, getDiffIdentifier(), null)
     }
 
     @Override
@@ -53,8 +55,8 @@ class ReferenceFile extends CatalogueFile implements DiffableItem<ReferenceFile>
     @JsonIgnore
     ObjectDiff<ReferenceFile> diff(ReferenceFile other, String lhsPathRoot, String rhsPathRoot) {
         ObjectDiff<ReferenceFile> base = DiffBuilder.objectDiff(ReferenceFile)
-                .leftHandSide(id?.toString(), this)
-                .rightHandSide(other.id?.toString(), other)
+            .leftHandSide(id?.toString(), this)
+            .rightHandSide(other.id?.toString(), other)
         base.appendString(DiffBuilder.FILE_NAME, this.fileName, other.fileName, this, other)
         base
     }
@@ -78,5 +80,17 @@ class ReferenceFile extends CatalogueFile implements DiffableItem<ReferenceFile>
     @Override
     String getPathIdentifier() {
         fileName
+    }
+
+    @Override
+    void copyInto(Item into) {
+        super.copyInto(into)
+    }
+
+    @Override
+    Item shallowCopy() {
+        ReferenceFile referenceFileShallowCopy = new ReferenceFile()
+        this.copyInto(referenceFileShallowCopy)
+        return referenceFileShallowCopy
     }
 }

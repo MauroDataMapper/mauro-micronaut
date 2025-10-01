@@ -109,7 +109,6 @@ class DataModelJsonImportExportSpec extends CommonDataSpec {
 
         exportModel = objectMapper.readValue(responseBytes, ExportModel)
 
-
         MultipartBody importRequest = MultipartBody.builder()
             .addPart('folderId', folderId.toString())
             .addPart('importFile', 'file.json', MediaType.APPLICATION_JSON_TYPE, objectMapper.writeValueAsBytes(exportModel))
@@ -152,7 +151,6 @@ class DataModelJsonImportExportSpec extends CommonDataSpec {
 
         then:
         copyDataElements
-
         def copyDataElementId = copyDataElements.items.first().id
         copyDataElementId != dataElementId
 

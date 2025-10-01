@@ -45,6 +45,7 @@ class TestModelData {
         author = 'a n other'
         folder = testFolder
         terms = testTerms
+        id = UUID.randomUUID()
     }
     static DataModel dataModelTest = DataModelSpec.testDataModel
 
@@ -55,6 +56,7 @@ class TestModelData {
                 label = 'test child folder 1 label'
                 description = 'test child folder 1 description'
                 parentFolder = testFolder
+                id = UUID.randomUUID()
            }
 
 

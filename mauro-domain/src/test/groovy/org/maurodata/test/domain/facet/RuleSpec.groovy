@@ -36,5 +36,31 @@ class RuleSpec extends Specification {
         cloned.description.is(original.description)
     }
 
+    void 'deep clone -should clone new rule instance '() {
+        given:
+        Rule original = TestModelData.testRule
+        original.ruleRepresentations = [
+            new RuleRepresentation().tap {
+                id = UUID.randomUUID()
+                language = 'test language 1'
+                representation = 'test representation 1'
+            },
+            new RuleRepresentation().tap {
+                id = UUID.randomUUID()
+                language = 'test language 2'
+                representation = 'test representation 2'
+            } ]
+
+        when:
+        Rule cloned = (Rule) original.deepClone()
+        then:
+
+        //assert clone works as per groovy docs
+        !cloned.is(original)
+        !cloned.ruleRepresentations.is(original.ruleRepresentations)
+        cloned.id.is(original.id)
+        cloned.name.is(original.name)
+        cloned.description.is(original.description)
+    }
 
 }

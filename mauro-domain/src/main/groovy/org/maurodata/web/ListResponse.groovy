@@ -43,7 +43,7 @@ class ListResponse<T> {
     static ListResponse from(List items, PaginationParams params) {
 
         // If you want to have no sorting, use ListResponse.from() without PaginationParams
-        
+
 
         List filteredItems = filter(items, params)
 
@@ -142,20 +142,12 @@ class ListResponse<T> {
 
     private static Sort toSort(PaginationParams params, Class clazz) {
         Sort.Order.Direction direction = params.order?.toLowerCase() == "desc" ? Sort.Order.Direction.DESC : Sort.Order.Direction.ASC
-        // TODO detect whether ModelItem.order is available. It may not be used in a collection, therefore, sort by 'label', then by 'order'
-        // notice that the Sort uses an array
 
-        if(params.sort)
-        {
-            return Sort.of([new Sort.Order(params.sort, direction, true)])
-        }
-
-        if(clazz.isAssignableFrom(ModelItem.getClass()))
-        {
+        if (ModelItem.isAssignableFrom(clazz)) {
             return Sort.of([new Sort.Order("order", direction, true), new Sort.Order("label", direction, true)])
-        }
-        else
-        {
+        } else if (params.sort) {
+            return Sort.of([new Sort.Order(params.sort, direction, true)])
+        } else {
             return Sort.of([new Sort.Order("label", direction, true)])
         }
     }
@@ -194,7 +186,6 @@ class ListResponse<T> {
 
             } catch (Throwable e) {
                 // Graceful fallback — you can log or ignore
-                System.err.println("Warning: unable to sort by '${order.property}': ${e.message}")
             }
         }
 

@@ -1,7 +1,10 @@
 package org.maurodata.domain.terminology
 
+import org.maurodata.domain.model.Item
 import org.maurodata.domain.model.ItemReference
 import org.maurodata.domain.model.ItemReferencer
+import org.maurodata.domain.model.ItemReferencerUtils
+import org.maurodata.domain.model.ItemUtils
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import groovy.transform.AutoClone
@@ -32,9 +35,9 @@ class CodeSet extends Model implements ItemReferencer {
 
     @Relation(value = Relation.Kind.MANY_TO_MANY, cascade = Relation.Cascade.ALL)
     @JoinTable(
-            name = 'code_set_term',
-            joinColumns = @JoinColumn(name = 'code_set_id'),
-            inverseJoinColumns = @JoinColumn(name = 'term_id')
+        name = 'code_set_term',
+        joinColumns = @JoinColumn(name = 'code_set_id'),
+        inverseJoinColumns = @JoinColumn(name = 'term_id')
     )
     @JsonIgnore
     Set<Term> terms = []
@@ -70,8 +73,8 @@ class CodeSet extends Model implements ItemReferencer {
     @Override
     String toString() {
         return "CodeSet{" +
-                "terms=" + terms +
-                '}'
+               "terms=" + terms +
+               '}'
     }
 
     /*
@@ -94,30 +97,33 @@ class CodeSet extends Model implements ItemReferencer {
     @Transient
     @JsonIgnore
     @Override
-    List<ItemReference> getItemReferences() {
-        List<ItemReference> pathsBeingReferenced = []
-        if (terms != null) {
-            terms.forEach {Term term ->
-                pathsBeingReferenced << ItemReference.from(term)
-            }
-        }
+    List<ItemReference> retrieveItemReferences() {
+        List<ItemReference> pathsBeingReferenced = [] + super.retrieveItemReferences()
+
+        ItemReferencerUtils.addItems(terms, pathsBeingReferenced)
+
         return pathsBeingReferenced
     }
 
     @Override
-    void replaceItemReferences(Map<UUID, ItemReference> replacements) {
-        if (terms != null) {
-            final Set<Term> replacementSet = []
-            terms.forEach {Term term ->
-                ItemReference replacementItemReference = replacements.get(term.id)
-                if (replacementItemReference != null) {
-                    replacementSet.add((Term) replacementItemReference.theItem)
-                } else {
-                    replacementSet.add(term)
-                }
-            }
-            terms = replacementSet
-        }
+    void replaceItemReferencesByIdentity(IdentityHashMap<Item, Item> replacements, List<Item> notReplaced) {
+        super.replaceItemReferencesByIdentity(replacements, notReplaced)
+
+        terms = ItemReferencerUtils.replaceItemsByIdentity(terms, replacements, notReplaced)
+    }
+
+    @Override
+    void copyInto(Item into) {
+        super.copyInto(into)
+        CodeSet intoCodeSet = (CodeSet) into
+        intoCodeSet.terms = ItemUtils.copyItems(this.terms, intoCodeSet.terms)
+    }
+
+    @Override
+    Item shallowCopy() {
+        CodeSet codeSetShallowCopy = new CodeSet()
+        this.copyInto(codeSetShallowCopy)
+        return codeSetShallowCopy
     }
 
     /**

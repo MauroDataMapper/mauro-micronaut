@@ -1,5 +1,11 @@
 package org.maurodata.domain.folder
 
+import org.maurodata.domain.model.Item
+import org.maurodata.domain.model.ItemReference
+import org.maurodata.domain.model.ItemReferencer
+import org.maurodata.domain.model.ItemReferencerUtils
+import org.maurodata.domain.model.ItemUtils
+
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import groovy.transform.CompileStatic
@@ -29,9 +35,9 @@ import org.maurodata.domain.terminology.Terminology
 @MappedEntity(schema = 'core')
 @Indexes([@Index(columns = ['parent_folder_id'])])
 @MapConstructor(includeSuperFields = true, includeSuperProperties = true, noArg = true)
-class Folder extends Model {
+class Folder extends Model implements ItemReferencer {
 
-    { versionableFlag=false }
+    {versionableFlag = false}
 
     @JsonIgnore
     @Nullable
@@ -51,44 +57,33 @@ class Folder extends Model {
     String class_
 
     @JsonIgnore
-    void setClass_(final String class_)
-    {
-        this.class_=class_
+    void setClass_(final String class_) {
+        this.class_ = class_
 
-        if(this.class_!=null && "VersionedFolder" == this.class_)
-        {
+        if (this.class_ != null && "VersionedFolder" == this.class_) {
             setVersionable(true)
-        }
-        else
-        {
+        } else {
             setVersionable(false)
         }
     }
 
     @Transient
     @Override
-    void setVersionable(final boolean versionable)
-    {
-        this.versionableFlag=versionable
-        if(versionable) {
+    void setVersionable(final boolean versionable) {
+        this.versionableFlag = versionable
+        if (versionable) {
             this.class_ = "VersionedFolder"
-        }
-        else
-        {
+        } else {
             this.class_ = null
         }
     }
 
     @Transient
     @Override
-    String getDomainType()
-    {
-        if(this.class_!=null && "VersionedFolder" == this.class_)
-        {
+    String getDomainType() {
+        if (this.class_ != null && "VersionedFolder" == this.class_) {
             return "VersionedFolder"
-        }
-        else
-        {
+        } else {
             return "Folder"
         }
     }
@@ -106,14 +101,10 @@ class Folder extends Model {
     // TODO: write a test for branch name
 
     @Override
-    String getBranchName()
-    {
-        if(this.class_!=null && "VersionedFolder" == this.class_)
-        {
+    String getBranchName() {
+        if (this.class_ != null && "VersionedFolder" == this.class_) {
             return super.branchName
-        }
-        else
-        {
+        } else {
             return null
         }
     }
@@ -176,8 +167,7 @@ class Folder extends Model {
     @JsonIgnore
     String getPathPrefix() {
 
-        if(isVersionable())
-        {
+        if (isVersionable()) {
             return 'vf'
         }
 
@@ -189,8 +179,7 @@ class Folder extends Model {
     @JsonIgnore
     @Nullable
     String getPathModelIdentifier() {
-        if(!isVersionable())
-        {
+        if (!isVersionable()) {
             return null
         }
         // I'm a model, you know what I mean
@@ -237,28 +226,27 @@ class Folder extends Model {
     @JsonIgnore
     @Override
     void setAssociations() {
-        childFolders.each { childFolder ->
+        childFolders.each {childFolder ->
             childFolder.parentFolder = this
             childFolder.setAssociations()
         }
-        dataModels.each { dataModel ->
+        dataModels.each {dataModel ->
             dataModel.folder = this
             dataModel.setAssociations()
         }
-        terminologies.each { terminology ->
+        terminologies.each {terminology ->
             terminology.folder = this
             terminology.setAssociations()
         }
-        codeSets.each { codeSet ->
+        codeSets.each {codeSet ->
             codeSet.folder = this
             codeSet.setAssociations()
         }
-        classificationSchemes.each { classificationScheme ->
+        classificationSchemes.each {classificationScheme ->
             classificationScheme.folder = this
             classificationScheme.setAssociations()
         }
     }
-
 
 
     /****
@@ -266,13 +254,13 @@ class Folder extends Model {
      */
 
     static Folder build(
-            Map args,
-            @DelegatesTo(value = Folder, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+        Map args,
+        @DelegatesTo(value = Folder, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
         new Folder(args).tap(closure)
     }
 
     static Folder build(
-            @DelegatesTo(value = Folder, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+        @DelegatesTo(value = Folder, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
         build [:], closure
     }
 
@@ -291,4 +279,58 @@ class Folder extends Model {
         folder [:], closure
     }
 
+    @Transient
+    @JsonIgnore
+    @Override
+    List<ItemReference> retrieveItemReferences() {
+        List<ItemReference> pathsBeingReferenced = [] + super.retrieveItemReferences()
+
+        ItemReferencerUtils.addItems(childFolders, pathsBeingReferenced)
+        ItemReferencerUtils.addItems(dataModels, pathsBeingReferenced)
+        ItemReferencerUtils.addItems(terminologies, pathsBeingReferenced)
+        ItemReferencerUtils.addItems(codeSets, pathsBeingReferenced)
+        ItemReferencerUtils.addItems(classificationSchemes, pathsBeingReferenced)
+        ItemReferencerUtils.addItem(parentFolder, pathsBeingReferenced)
+
+        return pathsBeingReferenced
+    }
+
+    @Transient
+    @JsonIgnore
+    @Override
+    void replaceItemReferencesByIdentity(IdentityHashMap<Item, Item> replacements, List<Item> notReplaced) {
+        super.replaceItemReferencesByIdentity(replacements, notReplaced)
+        parentFolder = ItemReferencerUtils.replaceItemByIdentity(parentFolder, replacements, notReplaced)
+        childFolders = ItemReferencerUtils.replaceItemsByIdentity(childFolders, replacements, notReplaced)
+        dataModels = ItemReferencerUtils.replaceItemsByIdentity(dataModels, replacements, notReplaced)
+        terminologies = ItemReferencerUtils.replaceItemsByIdentity(terminologies, replacements, notReplaced)
+        codeSets = ItemReferencerUtils.replaceItemsByIdentity(codeSets, replacements, notReplaced)
+        classificationSchemes = ItemReferencerUtils.replaceItemsByIdentity(classificationSchemes, replacements, notReplaced)
+    }
+
+    @Override
+    void copyInto(Item into) {
+        super.copyInto(into)
+        Folder intoFolder = (Folder) into
+        intoFolder.versionableFlag = ItemUtils.copyItem(this.versionableFlag, intoFolder.versionableFlag)
+        intoFolder.parentFolder = ItemUtils.copyItem(this.parentFolder, intoFolder.parentFolder)
+        intoFolder.aliasesString = ItemUtils.copyItem(this.aliasesString, intoFolder.aliasesString)
+        intoFolder.modelType = ItemUtils.copyItem(this.modelType, intoFolder.modelType)
+        intoFolder.class_ = ItemUtils.copyItem(this.class_, intoFolder.class_)
+        intoFolder.breadcrumbTreeId = ItemUtils.copyItem(this.breadcrumbTreeId, intoFolder.breadcrumbTreeId)
+        intoFolder.organisation = ItemUtils.copyItem(this.organisation, intoFolder.organisation)
+        intoFolder.author = ItemUtils.copyItem(this.author, intoFolder.author)
+        intoFolder.childFolders = ItemUtils.copyItems(this.childFolders, intoFolder.childFolders)
+        intoFolder.dataModels = ItemUtils.copyItems(this.dataModels, intoFolder.dataModels)
+        intoFolder.terminologies = ItemUtils.copyItems(this.terminologies, intoFolder.terminologies)
+        intoFolder.codeSets = ItemUtils.copyItems(this.codeSets, intoFolder.codeSets)
+        intoFolder.classificationSchemes = ItemUtils.copyItems(this.classificationSchemes, intoFolder.classificationSchemes)
+    }
+
+    @Override
+    Item shallowCopy() {
+        Folder folderShallowCopy = new Folder()
+        this.copyInto(folderShallowCopy)
+        return folderShallowCopy
+    }
 }

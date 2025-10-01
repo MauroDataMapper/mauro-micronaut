@@ -1,6 +1,7 @@
 package org.maurodata.domain.security
 
 import org.maurodata.domain.model.Item
+import org.maurodata.domain.model.ItemUtils
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
@@ -30,7 +31,8 @@ class CatalogueUser extends Item {
 
     Boolean pending
     Boolean disabled
-    String profilePicture // should be UserImageFile type
+    String profilePicture
+    // should be UserImageFile type
     String userPreferences
     UUID resetToken
 
@@ -70,7 +72,8 @@ class CatalogueUser extends Item {
         "$firstName $lastName"
     }
 
-    CatalogueUser() {}
+    CatalogueUser() {
+    }
 
     CatalogueUser(String identity) {
         this.id = UUID.fromString(identity)
@@ -80,5 +83,32 @@ class CatalogueUser extends Item {
         this.id = identity
     }
 
+    @Override
+    void copyInto(Item into) {
+        super.copyInto(into)
+        CatalogueUser intoCatalogueUser = (CatalogueUser) into
+        intoCatalogueUser.emailAddress = ItemUtils.copyItem(this.emailAddress, intoCatalogueUser.emailAddress)
+        intoCatalogueUser.firstName = ItemUtils.copyItem(this.firstName, intoCatalogueUser.firstName)
+        intoCatalogueUser.lastName = ItemUtils.copyItem(this.lastName, intoCatalogueUser.lastName)
+        intoCatalogueUser.jobTitle = ItemUtils.copyItem(this.jobTitle, intoCatalogueUser.jobTitle)
+        intoCatalogueUser.organisation = ItemUtils.copyItem(this.organisation, intoCatalogueUser.organisation)
+        intoCatalogueUser.pending = ItemUtils.copyItem(this.pending, intoCatalogueUser.pending)
+        intoCatalogueUser.disabled = ItemUtils.copyItem(this.disabled, intoCatalogueUser.disabled)
+        intoCatalogueUser.profilePicture = ItemUtils.copyItem(this.profilePicture, intoCatalogueUser.profilePicture)
+        intoCatalogueUser.userPreferences = ItemUtils.copyItem(this.userPreferences, intoCatalogueUser.userPreferences)
+        intoCatalogueUser.resetToken = ItemUtils.copyItem(this.resetToken, intoCatalogueUser.resetToken)
+        intoCatalogueUser.creationMethod = ItemUtils.copyItem(this.creationMethod, intoCatalogueUser.creationMethod)
+        intoCatalogueUser.lastLogin = ItemUtils.copyItem(this.lastLogin, intoCatalogueUser.lastLogin)
+        intoCatalogueUser.salt = ItemUtils.copyItem(this.salt, intoCatalogueUser.salt)
+        intoCatalogueUser.password = ItemUtils.copyItem(this.password, intoCatalogueUser.password)
+        intoCatalogueUser.tempPassword = ItemUtils.copyItem(this.tempPassword, intoCatalogueUser.tempPassword)
+        intoCatalogueUser.groups = ItemUtils.copyItems(this.groups, intoCatalogueUser.groups)
+    }
 
+    @Override
+    Item shallowCopy() {
+        CatalogueUser catalogueUserShallowCopy = new CatalogueUser()
+        this.copyInto(catalogueUserShallowCopy)
+        return catalogueUserShallowCopy
+    }
 }

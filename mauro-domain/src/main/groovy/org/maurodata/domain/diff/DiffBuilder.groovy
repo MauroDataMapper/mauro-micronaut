@@ -55,8 +55,12 @@ class DiffBuilder {
     static final String PATH_NODE_STRING = 'pathNodeString'
     static final String DIFF_IDENTIFIER = 'diffIdentifier'
     static final String ALL_DATA_CLASSES = 'allDataClasses'
+    static final String MY_MODEL_VERSION = 'myModelVersion'
+    static final String MY_MODEL_VERSION_TAG = 'myModelVersionTag'
+    static final String MY_FINALISED = 'myFinalised'
+    static final String MY_BRANCH_NAME = 'myBranchName'
     static final List<String> IGNORE_KEYS = [ID_KEY, DATE_CREATED_KEY, LAST_UPDATED_KEY, DOMAIN_TYPE, CLASS_KEY, FOLDER_KEY, LEFT_ID_KEY, RIGHT_ID_KEY, PATH_NODE_STRING,
-                                             DIFF_IDENTIFIER, ENUMERATION_VALUES, ALL_DATA_CLASSES, PATH_IDENTIFIER, PATH_PREFIX]
+                                             DIFF_IDENTIFIER, ENUMERATION_VALUES, ALL_DATA_CLASSES, PATH_IDENTIFIER, PATH_PREFIX, MY_MODEL_VERSION, MY_MODEL_VERSION_TAG, MY_FINALISED, MY_BRANCH_NAME]
     static final List<String> MODEL_COLLECTION_KEYS = [METADATA, ANNOTATION, RULE, SUMMARY_METADATA, SUMMARY_METADATA_REPORT, REFERENCE_FILES, DATA_CLASSES, DATA_TYPE,
                                                        DATA_ELEMENTS,
                                                        ENUMERATION_VALUES, REFERENCE_FILES, CLASSIFIERS, REFERENCE_TYPE]

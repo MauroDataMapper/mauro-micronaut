@@ -1,8 +1,13 @@
 package org.maurodata.domain.terminology
 
-import com.fasterxml.jackson.annotation.JsonBackReference
+
+import org.maurodata.domain.model.Item
+import org.maurodata.domain.model.ItemReference
+import org.maurodata.domain.model.ItemReferencer
+import org.maurodata.domain.model.ItemReferencerUtils
+import org.maurodata.domain.model.ItemUtils
+
 import com.fasterxml.jackson.annotation.JsonIgnore
-import com.fasterxml.jackson.annotation.JsonManagedReference
 import com.fasterxml.jackson.annotation.JsonProperty
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
@@ -33,7 +38,7 @@ import org.maurodata.domain.model.ModelItem
 @MappedEntity(schema = 'terminology')
 @MapConstructor(includeSuperFields = true, includeSuperProperties = true, noArg = true)
 @Indexes([@Index(columns = ['terminology_id', 'code'], unique = true)])
-class Term extends ModelItem<Terminology> {
+class Term extends ModelItem<Terminology> implements ItemReferencer {
 
     @Override
     String getLabel() {
@@ -165,5 +170,54 @@ class Term extends ModelItem<Terminology> {
                ", targetTermRelationships=" + targetTermRelationships +
                ", codeSets=" + codeSets +
                '}'
+    }
+
+    @Transient
+    @JsonIgnore
+    @Override
+    List<ItemReference> retrieveItemReferences() {
+        List<ItemReference> pathsBeingReferenced = [] + super.retrieveItemReferences()
+
+        ItemReferencerUtils.addItem(terminology, pathsBeingReferenced)
+        ItemReferencerUtils.addItems(sourceTermRelationships, pathsBeingReferenced)
+        ItemReferencerUtils.addItems(targetTermRelationships, pathsBeingReferenced)
+        ItemReferencerUtils.addItems(codeSets, pathsBeingReferenced)
+
+        return pathsBeingReferenced
+    }
+
+    @Transient
+    @JsonIgnore
+    @Override
+    void replaceItemReferencesByIdentity(IdentityHashMap<Item, Item> replacements, List<Item> notReplaced) {
+        super.replaceItemReferencesByIdentity(replacements, notReplaced)
+        terminology = ItemReferencerUtils.replaceItemByIdentity(terminology, replacements, notReplaced)
+        sourceTermRelationships = ItemReferencerUtils.replaceItemsByIdentity(sourceTermRelationships, replacements, notReplaced)
+        targetTermRelationships = ItemReferencerUtils.replaceItemsByIdentity(targetTermRelationships, replacements, notReplaced)
+        codeSets = ItemReferencerUtils.replaceItemsByIdentity(codeSets, replacements, notReplaced)
+    }
+
+    @Override
+    void copyInto(Item into) {
+        super.copyInto(into)
+        Term intoDataType = (Term) into
+        intoDataType.terminology = ItemUtils.copyItem(this.terminology, intoDataType.terminology)
+        intoDataType.code = ItemUtils.copyItem(this.code, intoDataType.code)
+        intoDataType.definition = ItemUtils.copyItem(this.definition, intoDataType.definition)
+        intoDataType.url = ItemUtils.copyItem(this.url, intoDataType.url)
+        intoDataType.isParent = ItemUtils.copyItem(this.isParent, intoDataType.isParent)
+        intoDataType.depth = ItemUtils.copyItem(this.depth, intoDataType.depth)
+        intoDataType.sourceTermRelationships = ItemUtils.copyItems(this.sourceTermRelationships, intoDataType.sourceTermRelationships)
+        intoDataType.targetTermRelationships = ItemUtils.copyItems(this.targetTermRelationships, intoDataType.targetTermRelationships)
+        intoDataType.codeSets = ItemUtils.copyItems(this.codeSets, intoDataType.codeSets)
+        // depends on code and definition
+        intoDataType.label = ItemUtils.copyItem(this.label, intoDataType.label)
+    }
+
+    @Override
+    Item shallowCopy() {
+        Term termShallowCopy = new Term()
+        this.copyInto(termShallowCopy)
+        return termShallowCopy
     }
 }

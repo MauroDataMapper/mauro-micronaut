@@ -50,4 +50,14 @@ class CodeSetContentRepository extends ModelContentRepository<CodeSet> {
     CodeSet saveWithContent(@NonNull CodeSet codeSet) {
         (CodeSet) super.saveWithContent(codeSet)
     }
+
+    @Override
+    Boolean handles(String domainType) {
+        return codeSetRepository.handles(domainType)
+    }
+
+    @Override
+    Boolean handles(Class clazz) {
+        return codeSetRepository.handles(clazz)
+    }
 }
