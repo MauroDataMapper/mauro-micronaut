@@ -32,7 +32,7 @@ abstract class DataClassComponentRepository implements ModelItemRepository<DataC
 
     @Nullable
     List<DataClassComponent> findAllByParentAndPathIdentifier(UUID item, String pathIdentifier) {
-        dataClassComponentDTORepository.findAllByParentAndPathIdentifier(item,pathIdentifier) as List<DataClassComponent>
+        dataClassComponentDTORepository.findAllByParentAndPathIdentifier(item, pathIdentifier) as List<DataClassComponent>
     }
 
     @Nullable

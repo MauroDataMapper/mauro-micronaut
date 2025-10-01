@@ -1,4 +1,3 @@
-
 package org.maurodata.controller.model
 
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -74,7 +73,7 @@ import org.maurodata.plugin.importer.ImportParameters
 import org.maurodata.plugin.importer.ModelImporterPlugin
 import org.maurodata.service.core.AuthorityService
 import org.maurodata.service.plugin.PluginService
-import org.maurodata.utils.exporter.ExporterUtils
+import org.maurodata.util.exporter.ExporterUtils
 import org.maurodata.utils.importer.ImporterUtils
 import org.maurodata.web.ListResponse
 import org.maurodata.web.PaginationParams

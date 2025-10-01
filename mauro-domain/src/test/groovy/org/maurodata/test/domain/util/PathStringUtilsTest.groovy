@@ -1,6 +1,7 @@
-package org.maurodata.utils
+package org.maurodata.test.domain.util
 
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
+import org.maurodata.util.PathStringUtils
 import spock.lang.Specification
 import spock.lang.Unroll
 

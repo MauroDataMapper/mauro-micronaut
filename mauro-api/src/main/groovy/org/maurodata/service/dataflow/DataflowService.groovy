@@ -27,7 +27,7 @@ import org.maurodata.security.AccessControlService
 import org.maurodata.service.core.AdministeredItemService
 import org.maurodata.service.path.PathService
 import org.maurodata.service.plugin.PluginService
-import org.maurodata.utils.PathStringUtils
+import org.maurodata.util.PathStringUtils
 import org.maurodata.utils.importer.ImporterUtils
 
 @CompileStatic
@@ -65,7 +65,7 @@ class DataflowService extends AdministeredItemService {
         ModelItemImporterPlugin mauroPlugin = mauroPluginService.getPlugin(aClazz, namespace, name, version) as ModelItemImporterPlugin
         PluginService.handlePluginNotFound(mauroPlugin, namespace, name)
 
-        ImportParameters importParameters = importerUtils.readFromMultipartFormBody(body, mauroPlugin.importParametersClass())
+        ImportParameters importParameters = importerUtils.readFromMultipartFormBody(body as MultipartBody, mauroPlugin.importParametersClass())
 
         if (importParameters.folderId == null) {
             ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, importParameters.folderId, "Please choose the folder into which the Model/s should be imported.")
