@@ -13,7 +13,7 @@ import org.maurodata.domain.security.Role
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository
 import org.maurodata.persistence.model.PathRepository
 import org.maurodata.security.AccessControlService
-import org.maurodata.utils.PathStringUtils
+import org.maurodata.util.PathStringUtils
 
 @CompileStatic
 @Slf4j
