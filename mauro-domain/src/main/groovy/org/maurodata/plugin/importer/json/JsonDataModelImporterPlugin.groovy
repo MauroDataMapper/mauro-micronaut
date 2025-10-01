@@ -1,17 +1,15 @@
 package org.maurodata.plugin.importer.json
 
-import io.micronaut.http.HttpStatus
-import jakarta.inject.Inject
-import org.maurodata.ErrorHandler
-import org.maurodata.plugin.importer.DataModelImporterPlugin
-import org.maurodata.plugin.importer.FileImportParameters
-
 import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.util.logging.Slf4j
+import io.micronaut.http.HttpStatus
+import jakarta.inject.Inject
+import jakarta.inject.Singleton
+import org.maurodata.ErrorHandler
 import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.export.ExportModel
-
-import jakarta.inject.Singleton
+import org.maurodata.plugin.importer.DataModelImporterPlugin
+import org.maurodata.plugin.importer.FileImportParameters
 
 @Slf4j
 @Singleton
@@ -31,13 +29,13 @@ class JsonDataModelImporterPlugin implements DataModelImporterPlugin<FileImportP
         log.info '** start importModel **'
         ExportModel importModel = objectMapper.readValue(params.importFile.fileContents, ExportModel)
         log.info '*** imported JSON model ***'
-        if (!importModel.dataModel && !importModel.dataModels){
+        if (!importModel.dataModel && !importModel.dataModels) {
             ErrorHandler.handleError(HttpStatus.BAD_REQUEST, 'Cannot import JSON as datamodel/s not present')
         }
-        if(importModel.dataModel) {
+        if (importModel.dataModel) {
             return [importModel.dataModel]
         } else {
-            return importModel.dataModels?:[]
+            return importModel.dataModels ?: []
         }
 
     }

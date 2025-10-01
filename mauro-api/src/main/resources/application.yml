@@ -6,9 +6,9 @@ micronaut:
 
   server:
     port: 8080
-    max-request-size: 100mb
+    max-request-size: 500mb
     multipart:
-      max-file-size: 100mb
+      max-file-size: 500mb
     cors:
       enabled: true
   router:
