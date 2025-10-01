@@ -69,6 +69,12 @@ class CodeSetController extends ModelController<CodeSet> implements CodeSetApi {
     }
 
     @Audit
+    @Get('/api/codeSets/undefined')
+    Map showUndef() {
+        [:]
+    }
+
+    @Audit
     @Get(value = Paths.CODE_SET_ID)
     CodeSet show(UUID id) {
         super.show(id)
@@ -191,6 +197,7 @@ class CodeSetController extends ModelController<CodeSet> implements CodeSetApi {
         CodeSet existing = super.getExistingWithContent(id) as CodeSet
 
         CodeSet copy = createCopyModelWithAssociations(existing, createNewVersionData)
+        copy.setAssociations()
         copy.terms.clear()
         CodeSet savedCopy = modelContentRepository.saveWithContent(copy)
         List<Term> terms = codeSetContentRepository.codeSetRepository.getTerms(id) as List<Term>

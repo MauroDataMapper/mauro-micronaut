@@ -64,6 +64,11 @@ abstract class CodeSetRepository implements ModelRepository<CodeSet> {
         CodeSet
     }
 
+    @Override
+    Boolean handles(Class clazz) {
+        domainClass.isAssignableFrom(clazz)
+    }
+
     @Nullable
     @Override
     abstract List<CodeSet> findAllByFolderId(UUID folderId)

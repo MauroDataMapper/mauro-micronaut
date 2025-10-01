@@ -1,7 +1,10 @@
 package org.maurodata.domain.facet
 
+import org.maurodata.domain.model.Item
 import org.maurodata.domain.model.ItemReference
 import org.maurodata.domain.model.ItemReferencer
+import org.maurodata.domain.model.ItemReferencerUtils
+import org.maurodata.domain.model.ItemUtils
 
 import com.fasterxml.jackson.annotation.JsonAlias
 import com.fasterxml.jackson.annotation.JsonIgnore
@@ -9,9 +12,7 @@ import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
 import groovy.transform.MapConstructor
 import io.micronaut.data.annotation.*
-import org.maurodata.domain.diff.*
 import org.maurodata.domain.model.Model
-import org.maurodata.domain.security.CatalogueUser
 
 @CompileStatic
 @MappedEntity(value = 'version_link', schema = 'core')
@@ -20,11 +21,11 @@ import org.maurodata.domain.security.CatalogueUser
 @MapConstructor(includeSuperFields = true, includeSuperProperties = true, noArg = true)
 class VersionLink extends Facet implements ItemReferencer {
 
-    final static String NEW_FORK_OF="NEW_FORK_OF", NEW_MODEL_VERSION_OF="NEW_MODEL_VERSION_OF"
-    final static Map<String,String> descriptions=[:]
+    final static String NEW_FORK_OF = "NEW_FORK_OF", NEW_MODEL_VERSION_OF = "NEW_MODEL_VERSION_OF"
+    final static Map<String, String> descriptions = [:]
     static {
-        descriptions.put(NEW_FORK_OF,"New Fork Of");
-        descriptions.put(NEW_MODEL_VERSION_OF,"New Model Version Of")
+        descriptions.put(NEW_FORK_OF, "New Fork Of")
+        descriptions.put(NEW_MODEL_VERSION_OF, "New Model Version Of")
     }
 
     @JsonAlias(['version_link_type'])
@@ -41,13 +42,13 @@ class VersionLink extends Facet implements ItemReferencer {
      */
 
     static VersionLink build(
-            Map args,
-            @DelegatesTo(value = VersionLink, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
+        Map args,
+        @DelegatesTo(value = VersionLink, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
         new VersionLink(args).tap(closure)
     }
 
     static VersionLink build(
-            @DelegatesTo(value = VersionLink, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
+        @DelegatesTo(value = VersionLink, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
         build [:], closure
     }
 
@@ -58,21 +59,20 @@ class VersionLink extends Facet implements ItemReferencer {
 
     @JsonIgnore
     @Transient
-    String getDescription()
-    {
-        if(versionLinkType==null){return ""}
+    String getDescription() {
+        if (versionLinkType == null) {return ""}
 
-        final String description=descriptions.get(versionLinkType)
-        if(description!=null){return description}
+        final String description = descriptions.get(versionLinkType)
+        if (description != null) {return description}
 
-        return "";
+        return ""
     }
 
     @JsonIgnore
     @Transient
     Model setTargetModel(final Model targetModel) {
         this.targetModelId = targetModel.id
-        this.targetModelDomainType=targetModel.domainType
+        this.targetModelDomainType = targetModel.domainType
         targetModel
     }
 
@@ -93,21 +93,31 @@ class VersionLink extends Facet implements ItemReferencer {
     @Transient
     @JsonIgnore
     @Override
-    List<ItemReference> getItemReferences() {
-        List<ItemReference> pathsBeingReferenced = []
-        if (targetModelId != null) {
-            pathsBeingReferenced << ItemReference.from(targetModelId,targetModelDomainType)
-        }
+    List<ItemReference> retrieveItemReferences() {
+        List<ItemReference> pathsBeingReferenced = [] + super.retrieveItemReferences()
+        ItemReferencerUtils.addIdType(targetModelId, targetModelDomainType, pathsBeingReferenced)
         return pathsBeingReferenced
     }
 
     @Override
-    void replaceItemReferences(Map<UUID, ItemReference> replacements) {
-        if (targetModelId != null) {
-            ItemReference replacementItemReference = replacements.get(targetModelId)
-            if (replacementItemReference != null) {
-                targetModelId = replacementItemReference.itemId
-            }
-        }
+    void replaceItemReferencesByIdentity(IdentityHashMap<Item, Item> replacements, List<Item> notReplaced) {
+        super.replaceItemReferencesByIdentity(replacements, notReplaced)
+        // The targetModelId shouldn't actually be changed, should it?
+    }
+
+    @Override
+    void copyInto(Item into) {
+        super.copyInto(into)
+        VersionLink intoVersionLink = (VersionLink) into
+        intoVersionLink.versionLinkType = ItemUtils.copyItem(this.versionLinkType, intoVersionLink.versionLinkType)
+        intoVersionLink.targetModelId = ItemUtils.copyItem(this.targetModelId, intoVersionLink.targetModelId)
+        intoVersionLink.targetModelDomainType = ItemUtils.copyItem(this.targetModelDomainType, intoVersionLink.targetModelDomainType)
+    }
+
+    @Override
+    Item shallowCopy() {
+        VersionLink versionLinkShallowCopy = new VersionLink()
+        this.copyInto(versionLinkShallowCopy)
+        return versionLinkShallowCopy
     }
 }

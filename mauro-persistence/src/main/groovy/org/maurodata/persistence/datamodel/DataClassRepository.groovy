@@ -26,13 +26,13 @@ abstract class DataClassRepository implements ModelItemRepository<DataClass> {
     @Override
     @Nullable
     DataClass findById(UUID id) {
-        log.debug 'DataClassRepository::findById'
+        // log.debug 'DataClassRepository::findById'
         dataClassDTORepository.findById(id) as DataClass
     }
 
     @Nullable
     List<DataClass> findAllByParentAndPathIdentifier(UUID item,String pathIdentifier) {
-        dataClassDTORepository.findAllByParentAndPathIdentifier(item,pathIdentifier)
+        dataClassDTORepository.findAllByParentAndPathIdentifier(item,pathIdentifier) as List<DataClass>
     }
 
     @Nullable
@@ -79,7 +79,7 @@ abstract class DataClassRepository implements ModelItemRepository<DataClass> {
     @Query('''insert into datamodel.join_dataclass_to_extended_data_class (dataclass_id, extended_dataclass_id) values (:dataClassId, :extendedDataClassId)''')
     abstract DataClass addDataClassExtensionRelationship(@NonNull UUID dataClassId, @NonNull UUID extendedDataClassId)
 
-    @Query('''select from datamodel.join_dataclass_to_extended_data_class jdcedc (dataclass_id, extended_dataclass_id) inner join datamodel.data_class on jdcedc.dataclass_id = id where dataclass_id = :dataClassId''')
+    @Query('''select * from datamodel.join_dataclass_to_extended_data_class jdcedc (dataclass_id, extended_dataclass_id) inner join datamodel.data_class on jdcedc.extended_dataclass_id = id where dataclass_id = :dataClassId''')
     abstract List<DataClass> getDataClassExtensionRelationships(@NonNull UUID dataClassId)
 
     @Override

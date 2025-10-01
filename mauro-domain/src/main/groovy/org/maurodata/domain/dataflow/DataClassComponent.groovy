@@ -1,5 +1,8 @@
 package org.maurodata.domain.dataflow
 
+import org.maurodata.domain.model.Item
+import org.maurodata.domain.model.ItemUtils
+
 import com.fasterxml.jackson.annotation.JsonIgnore
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
@@ -35,16 +38,16 @@ class DataClassComponent extends ModelItem<DataFlow> {
 
     @Relation(value = Relation.Kind.MANY_TO_MANY)
     @JoinTable(
-            name = "data_class_component_target_data_class",
-            joinColumns = @JoinColumn(name = "data_class_component_id"),
-            inverseJoinColumns = @JoinColumn(name = "data_class_id"))
+        name = "data_class_component_target_data_class",
+        joinColumns = @JoinColumn(name = "data_class_component_id"),
+        inverseJoinColumns = @JoinColumn(name = "data_class_id"))
     List<DataClass> targetDataClasses = []
 
     @Relation(value = Relation.Kind.MANY_TO_MANY)
     @JoinTable(
-            name = "data_class_component_source_data_class",
-            joinColumns = @JoinColumn(name = "data_class_component_id"),
-            inverseJoinColumns = @JoinColumn(name = "data_class_id"))
+        name = "data_class_component_source_data_class",
+        joinColumns = @JoinColumn(name = "data_class_component_id"),
+        inverseJoinColumns = @JoinColumn(name = "data_class_id"))
     List<DataClass> sourceDataClasses = []
 
     @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'dataElementComponent')
@@ -74,4 +77,22 @@ class DataClassComponent extends ModelItem<DataFlow> {
         'dcc'
     }
 
+    @Override
+    void copyInto(Item into) {
+        super.copyInto(into)
+        DataClassComponent intoDataClassComponent = (DataClassComponent) into
+        intoDataClassComponent.dataFlow = ItemUtils.copyItem(this.dataFlow, intoDataClassComponent.dataFlow)
+        intoDataClassComponent.definition = ItemUtils.copyItem(this.definition, intoDataClassComponent.definition)
+        intoDataClassComponent.targetDataClasses = ItemUtils.copyItems(this.targetDataClasses, intoDataClassComponent.targetDataClasses)
+        intoDataClassComponent.sourceDataClasses = ItemUtils.copyItems(this.sourceDataClasses, intoDataClassComponent.sourceDataClasses)
+        intoDataClassComponent.dataElementComponents = ItemUtils.copyItems(this.dataElementComponents, intoDataClassComponent.dataElementComponents)
+        intoDataClassComponent.breadcrumbTreeId = ItemUtils.copyItem(breadcrumbTreeId, intoDataClassComponent.breadcrumbTreeId)
+    }
+
+    @Override
+    Item shallowCopy() {
+        DataClassComponent dataClassComponentShallowCopy = new DataClassComponent()
+        this.copyInto(dataClassComponentShallowCopy)
+        return dataClassComponentShallowCopy
+    }
 }

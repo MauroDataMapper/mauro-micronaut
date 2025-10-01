@@ -6,6 +6,7 @@ import org.maurodata.domain.diff.DiffableItem
 import org.maurodata.domain.diff.ObjectDiff
 import org.maurodata.domain.diff.RuleRepresentationDiff
 import org.maurodata.domain.model.Item
+import org.maurodata.domain.model.ItemUtils
 import org.maurodata.domain.model.Pathable
 
 import com.fasterxml.jackson.annotation.JsonAlias
@@ -48,11 +49,11 @@ class RuleRepresentation extends Item implements DiffableItem<RuleRepresentation
     @Transient
     ObjectDiff<RuleRepresentation> diff(RuleRepresentation other, String lhsPathRoot, String rhsPathRoot) {
         ObjectDiff<RuleRepresentation> base = DiffBuilder.objectDiff(RuleRepresentation)
-                .leftHandSide(id?.toString(), this)
-                .rightHandSide(other.id?.toString(), other)
+            .leftHandSide(id?.toString(), this)
+            .rightHandSide(other.id?.toString(), other)
 
         base.appendString(DiffBuilder.LANGUAGE, this.language, other.language, this, other)
-        base.appendString(DiffBuilder.REPRESENTATION ,this.representation, other.representation, this, other)
+        base.appendString(DiffBuilder.REPRESENTATION, this.representation, other.representation, this, other)
         base
     }
 
@@ -111,5 +112,21 @@ class RuleRepresentation extends Item implements DiffableItem<RuleRepresentation
     @Nullable
     String getPathModelIdentifier() {
         return null
+    }
+
+    @Override
+    void copyInto(Item into) {
+        super.copyInto(into)
+        RuleRepresentation intoRuleRepresentation = (RuleRepresentation) into
+        intoRuleRepresentation.language = ItemUtils.copyItem(this.language, intoRuleRepresentation.language)
+        intoRuleRepresentation.representation = ItemUtils.copyItem(this.representation, intoRuleRepresentation.representation)
+        intoRuleRepresentation.ruleId = ItemUtils.copyItem(this.ruleId, intoRuleRepresentation.ruleId)
+    }
+
+    @Override
+    Item shallowCopy() {
+        RuleRepresentation ruleRepresentationShallowCopy = new RuleRepresentation()
+        this.copyInto(ruleRepresentationShallowCopy)
+        return ruleRepresentationShallowCopy
     }
 }

@@ -1,9 +1,11 @@
 package org.maurodata.test.domain.datamodel
 
 import org.maurodata.domain.datamodel.DataClass
+import org.maurodata.domain.datamodel.DataElement
 import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.datamodel.DataType
 import org.maurodata.domain.diff.ObjectDiff
+import org.maurodata.domain.facet.SummaryMetadataType
 import org.maurodata.domain.terminology.Terminology
 
 import spock.lang.Specification
@@ -42,7 +44,7 @@ class DataModelSpec extends Specification {
                 value 'Yes'
                 id UUID.randomUUID()
             }
-            enumerationValue(key: 'N', value: 'No')
+            enumerationValue(key: 'N', value: 'No', id: UUID.randomUUID())
             id UUID.randomUUID()
         }
 
@@ -50,6 +52,7 @@ class DataModelSpec extends Specification {
             label 'My First DataClass'
             description 'Here is the description of the first DataClass'
             id UUID.randomUUID()
+            metadata("com.test2", "key3", "value3")
         }
 
         dataClass {
@@ -66,6 +69,8 @@ class DataModelSpec extends Specification {
                     description 'Something about the data element here...'
                     dataType 'Yes/No'
                     id UUID.randomUUID()
+                    metadata("com.test1", "key1", "value1")
+                    summaryMetadata(label:'test label', description: 'test description', summaryMetadataType: SummaryMetadataType.STRING)
                 }
                 dataElement {
                     label 'Another data element'
@@ -76,6 +81,7 @@ class DataModelSpec extends Specification {
                         description 'A date'
                         id UUID.randomUUID()
                     }
+                    metadata("com.test1", "key2", "value2")
                 }
             }
         }
@@ -187,4 +193,62 @@ class DataModelSpec extends Specification {
         objectDiff.numberOfDiffs == 0
     }
 
+    def 'deep clone the datamodel -should deep copy object and all modelitems and facets'() {
+        given:
+        DataModel original = testDataModel
+        when:
+        DataModel cloned = (DataModel) original.deepClone()
+        cloned.setAssociations()
+        then:
+        !cloned.is(original)
+
+        cloned.dataTypes == original.dataTypes
+        !cloned.dataTypes.is(original.dataTypes)  //groovy object equality. cloned is not original
+
+        cloned.allDataClasses == original.allDataClasses
+        !cloned.allDataClasses.is(original.allDataClasses)
+
+        cloned.dataElements == original.dataElements
+        !cloned.dataElements.is(original.dataElements)
+
+        cloned.enumerationValues == original.enumerationValues
+        !cloned.enumerationValues.is(original.enumerationValues)  //groovy object equal
+
+        cloned.allDataClasses.containsAll(cloned.dataElements.dataClass)
+        original.allDataClasses.containsAll(original.dataElements.dataClass)
+
+        DataClass originalDataClass1 = original.allDataClasses.find {it.label == 'My First DataClass'}
+        originalDataClass1.extendedBy.size() == 1
+        originalDataClass1.metadata.find { it.namespace == 'com.test2' && it.key == 'key3' && it.value == 'value3'}
+
+        DataClass clonedDataClass1 = cloned.allDataClasses.find {it.label == 'My First DataClass'}
+        clonedDataClass1.extendedBy.size() == 1
+        clonedDataClass1.metadata.find { it.namespace == 'com.test2' && it.key == 'key3' && it.value == 'value3'}
+
+        DataClass originalDataClass3 = original.allDataClasses.find {it.label == "My Third DataClass"}
+        DataElement originalDataElement = originalDataClass3.dataElements.find {it.label == 'A data element' }
+        originalDataElement.metadata.find {it.namespace == 'com.test1' && it.key == 'key1' && it.value == 'value1' }
+        originalDataElement.summaryMetadata.find { it.label == 'test label' && it.description == 'test description' && it.summaryMetadataType == SummaryMetadataType.STRING }
+
+        DataClass clonedDataClass3 = cloned.allDataClasses.find {it.label == "My Third DataClass"}
+        clonedDataClass3.extendsDataClasses.size() == 1
+        clonedDataClass3.extendsDataClasses.first().label == 'My First DataClass'
+        clonedDataClass3.extendsDataClasses.first().is(clonedDataClass1)
+        clonedDataClass1.extendedBy.size() == 1
+        clonedDataClass1.extendedBy.first().is(clonedDataClass3)
+
+        DataElement clonedDataElement = clonedDataClass3.dataElements.find {it.label == 'A data element' }
+        clonedDataElement.metadata.find {it.namespace == 'com.test1' && it.key == 'key1' && it.value == 'value1' }
+        clonedDataElement.summaryMetadata.find { it.label == 'test label' && it.description == 'test description' && it.summaryMetadataType == SummaryMetadataType.STRING }
+
+        cloned.dataElements.dataType.hashCode() != original.dataElements.dataType.hashCode()
+        cloned.dataElements.dataType.id == original.dataElements.dataType.id
+        cloned.dataTypes.containsAll(cloned.dataElements.dataType)
+        original.dataTypes.containsAll(original.dataElements.dataType)
+
+        !cloned.dataElements.dataType.is(original.dataElements.dataType)
+
+        ObjectDiff objectDiff = original.diff(cloned)
+        objectDiff.numberOfDiffs == 0
+    }
 }

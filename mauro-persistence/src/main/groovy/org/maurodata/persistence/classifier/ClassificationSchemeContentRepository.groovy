@@ -53,4 +53,14 @@ class ClassificationSchemeContentRepository extends ModelContentRepository<Class
         classifierRepository.deleteAll(administeredItem.classifiers)
         getRepository(administeredItem).delete(administeredItem)
     }
+
+    @Override
+    Boolean handles(String domainType) {
+        return classificationSchemeCacheableRepository.handles(domainType)
+    }
+
+    @Override
+    Boolean handles(Class clazz) {
+        return classificationSchemeCacheableRepository.handles(clazz)
+    }
 }

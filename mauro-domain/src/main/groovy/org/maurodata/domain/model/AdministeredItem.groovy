@@ -95,7 +95,8 @@ abstract class AdministeredItem extends Item implements Pathable {
      * The identifier of a breadcrumb tree object for navigation.
      */
     @Nullable
-    UUID breadcrumbTreeId // should be BreadcrumbTree type
+    UUID breadcrumbTreeId
+    // should be BreadcrumbTree type
 
     @Relation(Relation.Kind.ONE_TO_MANY)
     List<Edit> edits = []
@@ -120,6 +121,58 @@ abstract class AdministeredItem extends Item implements Pathable {
 
     @Relation(Relation.Kind.ONE_TO_MANY)
     List<SemanticLink> semanticLinks = []
+
+    @Override
+    void copyInto(Item into) {
+        super.copyInto(into)
+        AdministeredItem intoAdministeredItem = (AdministeredItem) into
+        intoAdministeredItem.label = ItemUtils.copyItem(this.@label, intoAdministeredItem.@label)
+        intoAdministeredItem.description = ItemUtils.copyItem(this.description, intoAdministeredItem.description)
+        intoAdministeredItem.aliasesString = ItemUtils.copyItem(this.aliasesString, intoAdministeredItem.aliasesString)
+        intoAdministeredItem.path = ItemUtils.copyItem(this.path, intoAdministeredItem.path)
+        if (intoAdministeredItem.breadcrumbs != null) {intoAdministeredItem.breadcrumbs = [] + this.breadcrumbs}
+        intoAdministeredItem.availableActions = [] + this.availableActions
+        intoAdministeredItem.breadcrumbTreeId = ItemUtils.copyItem(this.breadcrumbTreeId, intoAdministeredItem.breadcrumbTreeId)
+        intoAdministeredItem.edits = ItemUtils.copyItem(this.edits, intoAdministeredItem.edits)
+        intoAdministeredItem.metadata = ItemUtils.copyItem(this.metadata, intoAdministeredItem.metadata)
+        intoAdministeredItem.summaryMetadata = ItemUtils.copyItem(this.summaryMetadata, intoAdministeredItem.summaryMetadata)
+        intoAdministeredItem.rules = ItemUtils.copyItem(this.rules, intoAdministeredItem.rules)
+        intoAdministeredItem.annotations = ItemUtils.copyItem(this.annotations, intoAdministeredItem.annotations)
+        intoAdministeredItem.classifiers = ItemUtils.copyItem(this.classifiers, intoAdministeredItem.classifiers)
+        intoAdministeredItem.referenceFiles = ItemUtils.copyItem(this.referenceFiles, intoAdministeredItem.referenceFiles)
+        intoAdministeredItem.semanticLinks = ItemUtils.copyItem(this.semanticLinks, intoAdministeredItem.semanticLinks)
+    }
+
+    @Transient
+    @JsonIgnore
+    @Override
+    List<ItemReference> retrieveItemReferences() {
+        List<ItemReference> pathsBeingReferenced = [] + super.retrieveItemReferences()
+
+        ItemReferencerUtils.addItems(classifiers, pathsBeingReferenced)
+        ItemReferencerUtils.addItems(edits, pathsBeingReferenced)
+        ItemReferencerUtils.addItems(metadata, pathsBeingReferenced)
+        ItemReferencerUtils.addItems(summaryMetadata, pathsBeingReferenced)
+        ItemReferencerUtils.addItems(rules, pathsBeingReferenced)
+        ItemReferencerUtils.addItems(annotations, pathsBeingReferenced)
+        ItemReferencerUtils.addItems(referenceFiles, pathsBeingReferenced)
+        ItemReferencerUtils.addItems(semanticLinks, pathsBeingReferenced)
+
+        return pathsBeingReferenced
+    }
+
+    @Override
+    void replaceItemReferencesByIdentity(IdentityHashMap<Item, Item> replacements, List<Item> notReplaced) {
+        super.replaceItemReferencesByIdentity(replacements, notReplaced)
+
+        classifiers = ItemReferencerUtils.replaceItemsByIdentity(classifiers, replacements, notReplaced)
+        edits = ItemReferencerUtils.replaceItemsByIdentity(edits, replacements, notReplaced)
+        metadata = ItemReferencerUtils.replaceItemsByIdentity(metadata, replacements, notReplaced)
+        summaryMetadata = ItemReferencerUtils.replaceItemsByIdentity(summaryMetadata, replacements, notReplaced)
+        annotations = ItemReferencerUtils.replaceItemsByIdentity(annotations, replacements, notReplaced)
+        referenceFiles = ItemReferencerUtils.replaceItemsByIdentity(referenceFiles, replacements, notReplaced)
+        semanticLinks = ItemReferencerUtils.replaceItemsByIdentity(semanticLinks, replacements, notReplaced)
+    }
 
     /**
      * Helper method for returning the parent of this object, if one exists and is loaded.
@@ -268,8 +321,8 @@ abstract class AdministeredItem extends Item implements Pathable {
      */
 
     Map<String, String> metadataAsMap(String namespace) {
-        getMetadata().findAll { it.namespace == namespace }
-                .collectEntries { [it.key, it.value] }
+        getMetadata().findAll {it.namespace == namespace}
+            .collectEntries {[it.key, it.value]}
     }
 
 
@@ -289,7 +342,7 @@ abstract class AdministeredItem extends Item implements Pathable {
     AdministeredItem clone() {
         AdministeredItem cloned = super.clone() as AdministeredItem
 
-        List<Metadata> clonedMetadata = getMetadata().collect { it.clone() }
+        List<Metadata> clonedMetadata = getMetadata().collect {it.clone()}
         cloned.metadata = clonedMetadata
 
         List<Annotation> clonedAnnotations = getAnnotations().collect {
@@ -302,10 +355,10 @@ abstract class AdministeredItem extends Item implements Pathable {
         }
         cloned.annotations = clonedAnnotations
 
-        List<SummaryMetadata> clonedSummaryMetadata = getSummaryMetadata().collect { it.clone() }
+        List<SummaryMetadata> clonedSummaryMetadata = getSummaryMetadata().collect {it.clone()}
         cloned.summaryMetadata = clonedSummaryMetadata
 
-        List<ReferenceFile> clonedReferenceFiles = getReferenceFiles().collect { it.clone() }
+        List<ReferenceFile> clonedReferenceFiles = getReferenceFiles().collect {it.clone()}
         cloned.referenceFiles = clonedReferenceFiles
         cloned
 
@@ -320,20 +373,22 @@ abstract class AdministeredItem extends Item implements Pathable {
     }
 
     Map<String, String> findMetadataByNamespaceAsMap(String namespace) {
-        findMetadataByNamespace(namespace).collectEntries{ [it.key, it.value]}
+        findMetadataByNamespace(namespace).collectEntries {[it.key, it.value]}
     }
 
     Metadata findMetadataByNamespaceAndKey(String namespace, String key) {
-        metadata.find{it.namespace == namespace && it.key == key}
+        metadata.find {it.namespace == namespace && it.key == key}
     }
 
     boolean maybeAddMetadata(String namespace, String key, String value) {
-        if(!namespace || !key || !value) {
+        if (!namespace || !key || !value) {
             log.warn("Unable to add metadata with namespace: ${namespace}, key: ${key}, value: ${value}, because of a null value")
             return false
         }
-        if(findMetadataByNamespaceAndKey(namespace, key)) {
-            log.warn("Unable to add metadata with namespace: ${namespace}, key: ${key}, value: ${value}, because a metadata item with the same namespace and key is already present")
+        if (findMetadataByNamespaceAndKey(namespace, key)) {
+            log.warn(
+                "Unable to add metadata with namespace: ${namespace}, key: ${key}, value: ${value}, because a metadata item with the same namespace and key is already " +
+                "present")
             return false
         }
         metadata.add(new Metadata(namespace: namespace, key: key, value: value))
@@ -472,7 +527,7 @@ abstract class AdministeredItem extends Item implements Pathable {
      * @see #metadata
      */
     List<Metadata> metadata(String namespace, Map<String, String> keyValueMap) {
-        this.metadata.addAll(keyValueMap.collect { key, value ->
+        this.metadata.addAll(keyValueMap.collect {key, value ->
             new Metadata(namespace: namespace, key: key, value: value)
         })
         return metadata
