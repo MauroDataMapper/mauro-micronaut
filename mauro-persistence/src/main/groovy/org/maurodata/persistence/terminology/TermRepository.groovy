@@ -96,6 +96,11 @@ abstract class TermRepository implements ModelItemRepository<Term> {
         Term
     }
 
+    @Override
+    Boolean handles(Class clazz) {
+        domainClass.isAssignableFrom(clazz)
+    }
+
     Boolean handlesPathPrefix(final String pathPrefix) {
         'tm'.equalsIgnoreCase(pathPrefix)
     }

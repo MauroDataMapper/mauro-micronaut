@@ -70,7 +70,7 @@ import org.maurodata.plugin.exporter.ModelExporterPlugin
 import org.maurodata.plugin.importer.DataModelImporterPlugin
 import org.maurodata.service.datamodel.DataClassService
 import org.maurodata.service.plugin.PluginService
-import org.maurodata.utils.exporter.ExporterUtils
+import org.maurodata.util.exporter.ExporterUtils
 import org.maurodata.web.ListResponse
 
 @Slf4j

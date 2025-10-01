@@ -1,5 +1,8 @@
 package org.maurodata.domain.facet
 
+import org.maurodata.domain.model.Item
+import org.maurodata.domain.model.ItemUtils
+
 import com.fasterxml.jackson.annotation.JsonAlias
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
@@ -69,7 +72,8 @@ class Annotation extends Facet implements DiffableItem<Annotation> {
         base.label = this.label
         base.appendString(DiffBuilder.DESCRIPTION, this.description, other.description, this, other)
         if (!DiffBuilder.isNull(this.childAnnotations) || !DiffBuilder.isNull(other.childAnnotations)) {
-            base.appendCollection(DiffBuilder.CHILD_ANNOTATIONS, this.childAnnotations as Collection<DiffableItem>, other.childAnnotations as Collection<DiffableItem>, lhsPathRoot, rhsPathRoot)
+            base.appendCollection(DiffBuilder.CHILD_ANNOTATIONS, this.childAnnotations as Collection<DiffableItem>, other.childAnnotations as Collection<DiffableItem>,
+                                  lhsPathRoot, rhsPathRoot)
         }
         base
     }
@@ -86,5 +90,23 @@ class Annotation extends Facet implements DiffableItem<Annotation> {
     @Override
     String getPathIdentifier() {
         label
+    }
+
+    @Override
+    void copyInto(Item into) {
+        super.copyInto(into)
+        Annotation intoAnnotation = (Annotation) into
+        intoAnnotation.parentAnnotationId = ItemUtils.copyItem(this.parentAnnotationId, intoAnnotation.parentAnnotationId)
+        intoAnnotation.description = ItemUtils.copyItem(this.description, intoAnnotation.description)
+        intoAnnotation.label = ItemUtils.copyItem(this.label, intoAnnotation.label)
+        intoAnnotation.createdByUser = ItemUtils.copyItem(this.createdByUser, intoAnnotation.createdByUser)
+        intoAnnotation.childAnnotations = ItemUtils.copyItems(this.childAnnotations, intoAnnotation.childAnnotations)
+    }
+
+    @Override
+    Item shallowCopy() {
+        Annotation annotationShallowCopy = new Annotation()
+        this.copyInto(annotationShallowCopy)
+        return annotationShallowCopy
     }
 }

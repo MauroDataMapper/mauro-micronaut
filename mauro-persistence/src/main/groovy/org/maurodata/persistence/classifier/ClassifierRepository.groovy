@@ -61,7 +61,7 @@ abstract class ClassifierRepository implements ModelItemRepository<Classifier> {
 
     @Nullable
     List<Classifier> findAllForAdministeredItem(String administeredItemDomainType, UUID administeredItemId) {
-        classifierDTORepository.findAllByAdministeredItem(administeredItemDomainType, administeredItemId)
+        classifierDTORepository.findAllByAdministeredItem(administeredItemDomainType, administeredItemId) as List<Classifier>
     }
 
     @Nullable
@@ -113,7 +113,7 @@ abstract class ClassifierRepository implements ModelItemRepository<Classifier> {
     }
 
     List<Classifier> findAllByParent(Classifier classifier) {
-        classifierDTORepository.findAllByClassifier(classifier.id)
+        classifierDTORepository.findAllByClassifier(classifier.id) as List<Classifier>
     }
 
     List<Classifier> readAll(){

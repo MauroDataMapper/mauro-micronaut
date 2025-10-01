@@ -26,6 +26,13 @@ abstract class ModelItem<P extends AdministeredItem> extends AdministeredItem {
     @MappedProperty('idx')
     Integer order
 
+    @Override
+    void copyInto(Item into) {
+        super.copyInto(into)
+        ModelItem intoModelItem = (ModelItem) into
+        intoModelItem.order = ItemUtils.copyItem(this.order, intoModelItem.order)
+    }
+
     /**
      * for modelitem import
      */

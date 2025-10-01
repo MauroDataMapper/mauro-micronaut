@@ -13,6 +13,11 @@ import io.micronaut.data.annotation.MappedProperty
 import io.micronaut.data.annotation.Relation
 import jakarta.persistence.Transient
 import org.maurodata.domain.dataflow.DataFlow
+import org.maurodata.domain.model.Item
+import org.maurodata.domain.model.ItemReference
+import org.maurodata.domain.model.ItemReferencer
+import org.maurodata.domain.model.ItemReferencerUtils
+import org.maurodata.domain.model.ItemUtils
 import org.maurodata.domain.model.Model
 import org.maurodata.domain.model.ModelItem
 
@@ -24,12 +29,13 @@ import org.maurodata.domain.model.ModelItem
 @Introspected
 @MappedEntity(schema = 'datamodel')
 @MapConstructor(includeSuperFields = true, includeSuperProperties = true, noArg = true)
-class DataModel extends Model {
+class DataModel extends Model implements ItemReferencer {
 
     @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'dataModel')
     List<DataType> dataTypes = []
 
-    @JsonAlias("childDataClasses") // for importing models exported from the Grails implementation
+    @JsonAlias("childDataClasses")
+    // for importing models exported from the Grails implementation
     @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'dataModel')
     List<DataClass> dataClasses = []
 
@@ -205,7 +211,7 @@ class DataModel extends Model {
                 this.dataElements.add(dataElement)
             }
         }
-        dataClass.referenceTypes = referenceTypes.findAll {it.referenceClass?.id == dataClass.id} as List<DataType>
+        dataClass.referenceTypes = referenceTypes.findAll{it.referenceClass?.id == dataClass.id } as List<DataType>
     }
 
      protected List<DataType> dataTypeReferenceTypes() {
@@ -282,4 +288,46 @@ class DataModel extends Model {
         dataClass [:], closure
     }
 
+    @Transient
+    @JsonIgnore
+    @Override
+    List<ItemReference> retrieveItemReferences() {
+        List<ItemReference> pathsBeingReferenced = [] + super.retrieveItemReferences()
+
+        ItemReferencerUtils.addItems(dataTypes, pathsBeingReferenced)
+        ItemReferencerUtils.addItems(enumerationValues, pathsBeingReferenced)
+        ItemReferencerUtils.addItems(dataClasses, pathsBeingReferenced)
+        ItemReferencerUtils.addItem(parent, pathsBeingReferenced)
+
+        return pathsBeingReferenced
+    }
+
+    @Transient
+    @JsonIgnore
+    @Override
+    void replaceItemReferencesByIdentity(IdentityHashMap<Item, Item> replacements, List<Item> notReplaced) {
+        super.replaceItemReferencesByIdentity(replacements, notReplaced)
+        parent = ItemReferencerUtils.replaceItemByIdentity(parent, replacements, notReplaced)
+        dataTypes = ItemReferencerUtils.replaceItemsByIdentity(dataTypes, replacements, notReplaced)
+        dataClasses = ItemReferencerUtils.replaceItemsByIdentity(dataClasses, replacements, notReplaced)
+        enumerationValues = ItemReferencerUtils.replaceItemsByIdentity(enumerationValues, replacements, notReplaced)
+    }
+
+    @Override
+    void copyInto(Item into) {
+        super.copyInto(into)
+        DataModel intoDataModel = (DataModel) into
+        intoDataModel.dataTypes = ItemUtils.copyItems(this.dataTypes, intoDataModel.dataTypes)
+        intoDataModel.enumerationValues = ItemUtils.copyItems(this.enumerationValues, intoDataModel.enumerationValues)
+        intoDataModel.dataClasses = ItemUtils.copyItems(this.dataClasses, intoDataModel.dataClasses)
+        intoDataModel.modelType = ItemUtils.copyItem(this.modelType, intoDataModel.modelType)
+        intoDataModel.dataModelType = ItemUtils.copyItem(this.dataModelType, intoDataModel.dataModelType)
+    }
+
+    @Override
+    Item shallowCopy() {
+        DataModel dataModelShallowCopy = new DataModel()
+        this.copyInto(dataModelShallowCopy)
+        return dataModelShallowCopy
+    }
 }

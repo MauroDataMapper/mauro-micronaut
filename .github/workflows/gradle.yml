@@ -62,7 +62,11 @@ jobs:
         path: '**/build/test-results/**/*.xml'
         reporter: java-junit
 
-#    - name: Archive test report
+    - name: Test Docker Build
+      run: ./gradlew dockerBuild
+
+
+          #    - name: Archive test report
 #      if: always()
 #      uses: actions/upload-artifact@v3
 #      with:
@@ -104,7 +108,20 @@ jobs:
         run: |
           ./gradlew --stacktrace -PMauroSnapshotRepositoryUsername=${{secrets.MAURO_SNAPSHOT_REPOSITORY_USERNAME}} -PMauroSnapshotRepositoryPassword=${{secrets.MAURO_SNAPSHOT_REPOSITORY_PASSWORD}} publishAllPublicationsToMauroSnapshotRepositoryRepository
 
+    - name: Publish to Maven Central
+      if: success() && github.ref == 'refs/heads/main'
+      env:
+          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SIGNING_IN_MEMORY_KEY }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_IN_MEMORY_KEY_PASSWORD }}
+          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.SONATYPE_USERNAME }}
+          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.SONATYPE_PASSWORD }}
+      run: |
+          ./gradlew --stacktrace publishAllPublicationsToMavenCentralRepository    
 
+    - name: Publish to Docker Hub
+      if: success() && github.ref == 'refs/heads/main'
+      run: |
+          ./gradlew --stacktrace dockerPush    
 
     - name: Send a stream message
       if: success() || failure()

@@ -1,5 +1,11 @@
 package org.maurodata.domain.datamodel
 
+import org.maurodata.domain.model.Item
+import org.maurodata.domain.model.ItemReference
+import org.maurodata.domain.model.ItemReferencer
+import org.maurodata.domain.model.ItemReferencerUtils
+import org.maurodata.domain.model.ItemUtils
+
 import com.fasterxml.jackson.annotation.JsonIgnore
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
@@ -34,7 +40,7 @@ import org.maurodata.domain.model.ModelItem
 @MappedEntity(schema = 'datamodel', value = 'enumeration_value')
 @MapConstructor(includeSuperFields = true, includeSuperProperties = true, noArg = true)
 @Indexes([@Index(columns = ['enumeration_value_id', 'enumeration_type_id', 'category', 'key', 'value'], unique = true)])
-class EnumerationValue extends ModelItem<DataModel> implements DiffableItem<EnumerationValue> {
+class EnumerationValue extends ModelItem<DataModel> implements DiffableItem<EnumerationValue>, ItemReferencer {
 
     @Override
     String getLabel() {
@@ -85,11 +91,12 @@ class EnumerationValue extends ModelItem<DataModel> implements DiffableItem<Enum
     String getPathIdentifier() {
         key
     }
+
     @Override
     @Transient
     @JsonIgnore
     CollectionDiff fromItem() {
-        new BaseCollectionDiff(id,getDiffIdentifier(), label)
+        new BaseCollectionDiff(id, getDiffIdentifier(), label)
     }
 
     @Override
@@ -110,8 +117,8 @@ class EnumerationValue extends ModelItem<DataModel> implements DiffableItem<Enum
     @JsonIgnore
     ObjectDiff<EnumerationValue> diff(EnumerationValue other, String lhsPathRoot, String rhsPathRoot) {
         ObjectDiff<EnumerationValue> base = DiffBuilder.objectDiff(EnumerationValue)
-                .leftHandSide(id?.toString(), this)
-                .rightHandSide(other.id?.toString(), other)
+            .leftHandSide(id?.toString(), this)
+            .rightHandSide(other.id?.toString(), other)
         base.label = this.label
         base.appendString(DiffBuilder.DESCRIPTION, this.description, other.description, this, other)
         base.appendString(DiffBuilder.ALIASES_STRING, this.aliasesString, other.aliasesString, this, other)
@@ -123,12 +130,12 @@ class EnumerationValue extends ModelItem<DataModel> implements DiffableItem<Enum
      */
 
     static EnumerationValue build(
-            Map args,
-            @DelegatesTo(value = EnumerationValue, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
+        Map args,
+        @DelegatesTo(value = EnumerationValue, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
         new EnumerationValue(args).tap(closure)
     }
 
-    static EnumerationValue build(@DelegatesTo(value = EnumerationValue, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
+    static EnumerationValue build(@DelegatesTo(value = EnumerationValue, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
         build [:], closure
     }
 
@@ -142,5 +149,46 @@ class EnumerationValue extends ModelItem<DataModel> implements DiffableItem<Enum
 
     String value(String value) {
         this.value = value
+    }
+
+    @Transient
+    @JsonIgnore
+    @Override
+    List<ItemReference> retrieveItemReferences() {
+        List<ItemReference> pathsBeingReferenced = [] + super.retrieveItemReferences()
+
+        ItemReferencerUtils.addItem(enumerationType, pathsBeingReferenced)
+        ItemReferencerUtils.addItem(dataModel, pathsBeingReferenced)
+
+        return pathsBeingReferenced
+    }
+
+    @Transient
+    @JsonIgnore
+    @Override
+    void replaceItemReferencesByIdentity(IdentityHashMap<Item, Item> replacements, List<Item> notReplaced) {
+        super.replaceItemReferencesByIdentity(replacements, notReplaced)
+        dataModel = ItemReferencerUtils.replaceItemByIdentity(dataModel, replacements, notReplaced)
+        enumerationType = ItemReferencerUtils.replaceItemByIdentity(enumerationType, replacements, notReplaced)
+    }
+
+    @Override
+    void copyInto(Item into) {
+        super.copyInto(into)
+        EnumerationValue intoEnumerationValue = (EnumerationValue) into
+        intoEnumerationValue.enumerationType = ItemUtils.copyItem(this.enumerationType, intoEnumerationValue.enumerationType)
+        intoEnumerationValue.dataModel = ItemUtils.copyItem(this.dataModel, intoEnumerationValue.dataModel)
+        intoEnumerationValue.category = ItemUtils.copyItem(this.category, intoEnumerationValue.category)
+        intoEnumerationValue.key = ItemUtils.copyItem(this.key, intoEnumerationValue.key)
+        intoEnumerationValue.value = ItemUtils.copyItem(this.value, intoEnumerationValue.value)
+        // depends on key
+        intoEnumerationValue.label = ItemUtils.copyItem(this.label, intoEnumerationValue.label)
+    }
+
+    @Override
+    Item shallowCopy() {
+        EnumerationValue enumerationValueShallowCopy = new EnumerationValue()
+        this.copyInto(enumerationValueShallowCopy)
+        return enumerationValueShallowCopy
     }
 }

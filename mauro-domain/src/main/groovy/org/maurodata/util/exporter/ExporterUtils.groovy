@@ -1,4 +1,4 @@
-package org.maurodata.utils.exporter
+package org.maurodata.util.exporter
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
@@ -15,6 +15,7 @@ import org.maurodata.plugin.exporter.ModelItemExporterPlugin
 class ExporterUtils {
 
      static HttpResponse<byte[]> createExportResponse(ModelExporterPlugin mauroPlugin, Model model) {
+         println(">>>>>>>>>>>>>>> here we are")
         byte[] fileContents = mauroPlugin.exportModel(model)
         String filename = mauroPlugin.getFileName(model)
         HttpResponse

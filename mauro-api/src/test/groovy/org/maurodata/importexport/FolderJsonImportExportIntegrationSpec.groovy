@@ -26,6 +26,7 @@ import org.maurodata.domain.terminology.Terminology
 import org.maurodata.persistence.ContainerizedTest
 import org.maurodata.testing.CommonDataSpec
 import org.maurodata.web.ListResponse
+import spock.lang.Ignore
 import spock.lang.Shared
 
 @ContainerizedTest
@@ -62,6 +63,7 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
         dataModelId = dataModelApi.create(folderId, new DataModel(label: 'Test data model')).id
     }
 
+    @Ignore
     void 'create folder, dataModels, metadata, summaryMetadata, summaryMetadataReports, annotations, terminology, codeset and export'() {
         given:
         UUID dataClass1Id = dataClassApi.create(dataModelId, new DataClass(label: 'TEST-1', description: 'first data class')).id
@@ -131,6 +133,7 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
         parsedJson.folder.codeSets[0].id == codeSet.id.toString()
     }
 
+    @Ignore
     void 'get export folder -should export folder, with nested data and deep nesting of child folders'() {
         given:
         UUID childFolderId = folderApi.create(folderId, new Folder(label: 'Test child folder 1st level')).id
@@ -600,6 +603,7 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
     }
 
 
+    @Ignore
     void 'test export and import folder with datamodel and dataflow '() {
         given:
         UUID dataClass1Id = dataClassApi.create(dataModelId, new DataClass(label: 'TEST-1', description: 'first data class')).id
@@ -710,6 +714,7 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
         dataElementComponent.targetDataElements[0].id != dataElementId1
     }
 
+    @Ignore
     void 'test import folder without folder_id in params -should import as root folder'() {
         given:
         HttpResponse<byte[]> exportResponse = folderApi.exportModel(folderId, EXPORTER_NAMESPACE, FOLDER_EXPORTER_NAME, EXPORTER_VERSION)

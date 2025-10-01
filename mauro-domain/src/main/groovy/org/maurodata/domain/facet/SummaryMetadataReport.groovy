@@ -6,6 +6,8 @@ import org.maurodata.domain.diff.DiffableItem
 import org.maurodata.domain.diff.ObjectDiff
 import org.maurodata.domain.diff.SummaryMetadataReportDiff
 import org.maurodata.domain.model.Item
+import org.maurodata.domain.model.ItemReferencer
+import org.maurodata.domain.model.ItemUtils
 import org.maurodata.domain.model.Pathable
 
 import com.fasterxml.jackson.annotation.JsonAlias
@@ -25,7 +27,7 @@ import java.time.format.DateTimeFormatter
 @MappedEntity(value = 'summary_metadata_report', schema = 'core', alias = 'summary_metadata_report_')
 @AutoClone
 @MapConstructor(includeSuperFields = true, includeSuperProperties = true, noArg = true)
-class SummaryMetadataReport extends Item implements DiffableItem<SummaryMetadataReport>, Pathable {
+class SummaryMetadataReport extends Item implements DiffableItem<SummaryMetadataReport>, Pathable, ItemReferencer {
     @JsonAlias(['report_value'])
     @NonNull
     String reportValue
@@ -57,8 +59,8 @@ class SummaryMetadataReport extends Item implements DiffableItem<SummaryMetadata
     @Transient
     ObjectDiff<SummaryMetadataReport> diff(SummaryMetadataReport other, String lhsPathRoot, String rhsPathRoot) {
         ObjectDiff<SummaryMetadataReport> base = DiffBuilder.objectDiff(SummaryMetadataReport)
-                .leftHandSide(id?.toString(), this)
-                .rightHandSide(other.id?.toString(), other)
+            .leftHandSide(id?.toString(), this)
+            .rightHandSide(other.id?.toString(), other)
 
         base.appendString(DiffBuilder.REPORT_VALUE, this.reportValue, other.reportValue, this, other)
         base.appendField(DiffBuilder.REPORT_DATE, this.reportDate, other.reportDate, this, other)
@@ -112,7 +114,7 @@ class SummaryMetadataReport extends Item implements DiffableItem<SummaryMetadata
     @JsonIgnore
     @Override
     String getPathIdentifier() {
-        if(reportDate != null) {return reportDate.toString()}
+        if (reportDate != null) {return reportDate.toString()}
         return "-"
     }
 
@@ -122,5 +124,21 @@ class SummaryMetadataReport extends Item implements DiffableItem<SummaryMetadata
     @Nullable
     String getPathModelIdentifier() {
         return null
+    }
+
+    @Override
+    void copyInto(Item into) {
+        super.copyInto(into)
+        SummaryMetadataReport intoSummaryMetadataReport = (SummaryMetadataReport) into
+        intoSummaryMetadataReport.reportValue = ItemUtils.copyItem(this.reportValue, intoSummaryMetadataReport.reportValue)
+        intoSummaryMetadataReport.summaryMetadataId = ItemUtils.copyItem(this.summaryMetadataId, intoSummaryMetadataReport.summaryMetadataId)
+        intoSummaryMetadataReport.reportDate = ItemUtils.copyItem(reportDate, intoSummaryMetadataReport.reportDate)
+    }
+
+    @Override
+    Item shallowCopy() {
+        SummaryMetadataReport summaryMetadataReportShallowCopy = new SummaryMetadataReport()
+        this.copyInto(summaryMetadataReportShallowCopy)
+        return summaryMetadataReportShallowCopy
     }
 }

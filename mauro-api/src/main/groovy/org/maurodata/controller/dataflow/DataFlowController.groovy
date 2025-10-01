@@ -42,7 +42,7 @@ import org.maurodata.plugin.exporter.ModelItemExporterPlugin
 import org.maurodata.plugin.importer.DataFlowImporterPlugin
 import org.maurodata.plugin.importer.json.JsonDataFlowImporterPlugin
 import org.maurodata.service.dataflow.DataflowService
-import org.maurodata.utils.exporter.ExporterUtils
+import org.maurodata.util.exporter.ExporterUtils
 import org.maurodata.web.ListResponse
 import org.maurodata.web.PaginationParams
 

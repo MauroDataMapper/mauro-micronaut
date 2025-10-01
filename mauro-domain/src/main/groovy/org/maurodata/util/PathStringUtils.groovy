@@ -1,4 +1,4 @@
-package org.maurodata.utils
+package org.maurodata.util
 
 import groovy.transform.CompileStatic
 import io.micronaut.http.HttpStatus

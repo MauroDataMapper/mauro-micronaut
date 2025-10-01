@@ -1,5 +1,8 @@
 package org.maurodata.domain.facet
 
+import org.maurodata.domain.model.Item
+import org.maurodata.domain.model.ItemUtils
+
 import com.fasterxml.jackson.annotation.JsonIgnore
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
@@ -25,13 +28,13 @@ class Edit extends Facet {
      */
 
     static Edit build(
-            Map args,
-            @DelegatesTo(value = Edit, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
+        Map args,
+        @DelegatesTo(value = Edit, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
         new Edit(args).tap(closure)
     }
 
     static Edit build(
-            @DelegatesTo(value = Edit, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
+        @DelegatesTo(value = Edit, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
         build [:], closure
     }
 
@@ -67,5 +70,20 @@ class Edit extends Facet {
     @Override
     String getPathIdentifier() {
         title
+    }
+
+    @Override
+    void copyInto(Item into) {
+        super.copyInto(into)
+        Edit intoEdit = (Edit) into
+        intoEdit.title = ItemUtils.copyItem(this.title, intoEdit.title)
+        intoEdit.description = ItemUtils.copyItem(this.description, intoEdit.description)
+    }
+
+    @Override
+    Item shallowCopy() {
+        Edit editShallowCopy = new Edit()
+        this.copyInto(editShallowCopy)
+        return editShallowCopy
     }
 }

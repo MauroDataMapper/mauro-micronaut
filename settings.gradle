@@ -3,6 +3,6 @@ rootProject.name="mauro-micronaut"
 
 include 'mauro-domain'
 include 'mauro-persistence'
-include 'mauro-api'
 include 'mauro-client'
+include 'mauro-api'
 

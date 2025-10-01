@@ -1,5 +1,12 @@
 package org.maurodata.domain.classifier
 
+
+import org.maurodata.domain.model.Item
+import org.maurodata.domain.model.ItemReference
+import org.maurodata.domain.model.ItemReferencer
+import org.maurodata.domain.model.ItemReferencerUtils
+import org.maurodata.domain.model.ItemUtils
+
 import com.fasterxml.jackson.annotation.JsonAlias
 import com.fasterxml.jackson.annotation.JsonIgnore
 import groovy.transform.AutoClone
@@ -20,7 +27,7 @@ import org.maurodata.domain.model.ModelItem
 @Introspected
 @MappedEntity(schema = 'core')
 @MapConstructor(includeSuperFields = true, includeSuperProperties = true, noArg = true)
-class ClassificationScheme extends Model {
+class ClassificationScheme extends Model implements ItemReferencer {
 
     @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'classificationScheme')
     @JsonAlias("classifiers") // for importing models exported from the Grails implementation
@@ -87,11 +94,48 @@ class ClassificationScheme extends Model {
     @JsonIgnore
     @Transient
     String getDiffIdentifier() {
-        if(folder!=null) {
+        if (folder != null) {
             return "${folder.getDiffIdentifier()}|${getPathNodeString()}"
         }
         return "${getPathNodeString()}"
     }
+
+    @Override
+    void copyInto(Item into) {
+        super.copyInto(into)
+        ClassificationScheme intoClassificationScheme = (ClassificationScheme) into
+        intoClassificationScheme.csClassifiers = ItemUtils.copyItems(this.csClassifiers, intoClassificationScheme.csClassifiers)
+        intoClassificationScheme.breadcrumbTreeId = ItemUtils.copyItem(this.breadcrumbTreeId, intoClassificationScheme.breadcrumbTreeId)
+    }
+
+    @Override
+    Item shallowCopy() {
+        ClassificationScheme classificationSchemeShallowCopy = new ClassificationScheme()
+        this.copyInto(classificationSchemeShallowCopy)
+        return classificationSchemeShallowCopy
+    }
+
+    @Transient
+    @JsonIgnore
+    @Override
+    List<ItemReference> retrieveItemReferences() {
+        List<ItemReference> pathsBeingReferenced = [] + super.retrieveItemReferences()
+
+        ItemReferencerUtils.addItem(parent, pathsBeingReferenced)
+        ItemReferencerUtils.addItems(csClassifiers, pathsBeingReferenced)
+
+        return pathsBeingReferenced
+    }
+
+    @Transient
+    @JsonIgnore
+    @Override
+    void replaceItemReferencesByIdentity(IdentityHashMap<Item, Item> replacements, List<Item> notReplaced) {
+        super.replaceItemReferencesByIdentity(replacements, notReplaced)
+        parent = ItemReferencerUtils.replaceItemByIdentity(parent, replacements, notReplaced)
+        csClassifiers = ItemReferencerUtils.replaceItemsByIdentity(csClassifiers, replacements, notReplaced)
+    }
+
     /**
      * DSL builder
      * @param args
