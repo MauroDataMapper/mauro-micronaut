@@ -88,10 +88,15 @@ class MauroPluginService {
 
     private void loadPlugins(final Path pluginsDirPath) {
         log.trace("Loading plugins")
-        try (DirectoryStream<Path> dirs = Files.newDirectoryStream(pluginsDirPath)) {
-            for (Path dir : dirs) {
-                if (Files.isDirectory(dir)) {
-                    loadPlugin(dir)
+        try (DirectoryStream<Path> files = Files.newDirectoryStream(pluginsDirPath)) {
+            for (Path file : files) {
+                if(file.getFileName().toString().startsWith('.')) {continue}
+                if (Files.isDirectory(file)) {
+                    loadPlugin(file)
+                } else {
+                    if (Files.isRegularFile(file) && file.getFileName().toString().endsWith(".jar")) {
+                        loadPlugin(file)
+                    }
                 }
             }
         }
@@ -107,21 +112,33 @@ class MauroPluginService {
     Adding them to loadedMauroPlugins for plugins look-up
      */
 
-    private void loadPlugin(final Path pluginDir) {
+    private void loadPlugin(final Path pluginLocation) {
 
-        log.trace("Loading plugin ${pluginDir.toString()}")
+        log.trace("Loading plugin ${pluginLocation.toString()}")
 
         final ClassLoader apiClassLoader = getClass().getClassLoader()
 
         final List<URL> urls = []
-        try (Stream<Path> stream = Files.walk(pluginDir)) {
-            stream.forEach {Path p ->
-                try {
-                    urls.add(p.toUri().toURL())
-                } catch (MalformedURLException e) {
-                    throw new UncheckedIOException(e)
+        if (Files.isDirectory(pluginLocation)) {
+            try (Stream<Path> stream = Files.walk(pluginLocation)) {
+                stream.forEach {Path p ->
+                    try {
+                        urls.add(p.toUri().toURL())
+                    } catch (MalformedURLException e) {
+                        throw new UncheckedIOException(e)
+                    }
                 }
             }
+        } else {
+            try {
+                urls.add(pluginLocation.toUri().toURL())
+            } catch (MalformedURLException e) {
+                throw new UncheckedIOException(e)
+            }
+        }
+
+        if (urls.isEmpty()) {
+            return
         }
 
         URLClassLoader pluginLoader = new URLClassLoader(
