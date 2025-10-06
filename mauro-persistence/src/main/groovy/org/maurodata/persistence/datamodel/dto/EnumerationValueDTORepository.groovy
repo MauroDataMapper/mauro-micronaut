@@ -34,7 +34,7 @@ abstract class EnumerationValueDTORepository implements GenericRepository<Enumer
 
 
 
-    @Query('SELECT * FROM datamodel.enumeration_value WHERE label like :label')
+    @Query('SELECT * FROM datamodel.enumeration_value WHERE label = :label')
     @Nullable
-    abstract List<EnumerationValue> findAllByLabelContaining(String label)
+    abstract List<EnumerationValue> findAllByLabel(String label)
 }

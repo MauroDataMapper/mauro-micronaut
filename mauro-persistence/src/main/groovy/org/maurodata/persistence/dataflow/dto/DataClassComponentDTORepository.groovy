@@ -36,5 +36,5 @@ abstract class DataClassComponentDTORepository implements GenericRepository<Data
 
 
     @Nullable
-    abstract List<DataClassComponentDTO> findAllByLabelContaining(String label)
+    abstract List<DataClassComponentDTO> findAllByLabel(String label)
 }

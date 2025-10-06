@@ -103,8 +103,8 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
         invalidate(newItem)
     }
 
-    List<I> findAllByLabelContaining(String label){
-        repository.findAllByLabelContaining(label)
+    List<I> findAllByLabel(String label){
+        repository.findAllByLabel(label)
     }
 
 

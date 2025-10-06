@@ -53,8 +53,8 @@ abstract class DataElementComponentRepository implements ModelItemRepository<Dat
 
     @Nullable
     @Override
-    List<DataElementComponent> findAllByLabelContaining(String label){
-        dataElementComponentDTORepository.findAllByLabelContaining(label)
+    List<DataElementComponent> findAllByLabel(String label){
+        dataElementComponentDTORepository.findAllByLabel(label)
     }
 
     @Override

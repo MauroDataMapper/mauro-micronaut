@@ -45,8 +45,8 @@ abstract class EnumerationValueRepository implements ModelItemRepository<Enumera
 
     @Override
     @Nullable
-    List<EnumerationValue> findAllByLabelContaining(String label){
-        enumerationValueDTORepository.findAllByLabelContaining(label)
+    List<EnumerationValue> findAllByLabel(String label){
+        enumerationValueDTORepository.findAllByLabel(label)
     }
     @Nullable
     abstract Set<EnumerationValue> readAllByEnumerationTypeIn(Collection<DataType> dataTypes)

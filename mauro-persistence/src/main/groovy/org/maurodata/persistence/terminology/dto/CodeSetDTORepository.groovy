@@ -22,6 +22,6 @@ abstract class CodeSetDTORepository implements GenericRepository<CodeSetDTO, UUI
 
 
     @Nullable
-    @Query('SELECT * FROM terminology.code_set WHERE label like :label')
-    abstract List<CodeSet> findAllByLabelContaining(String label)
+    @Query('SELECT * FROM terminology.code_set WHERE label = :label')
+    abstract List<CodeSet> findAllByLabel(String label)
 }

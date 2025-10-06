@@ -127,25 +127,20 @@ class PathControllerIntegrationSpec extends CommonDataSpec {
     void 'test getResource by Path from Resource -should find resource'() {
         DataModel dataModel = dataModelApi.create(folderId, dataModelPayload('datamodel label '))
         DataClass dataClass = dataClassApi.create(dataModel.id, dataClassPayload('label for dataclass'))
-        println(">>>>>>   dataclass id; $dataClass.id, path: $dataClass.path.pathString")
 
         DataModel finalised = dataModelApi.finalise(dataModel.id,
                                                     new FinaliseData(versionChangeType: VersionChangeType.MAJOR, versionTag: 'random version tag'))
 
 
-        println(">>>>>>   dataclass id after finalise, ; $dataClass.id, path: $dataClass.path.pathString")
 
         DataModel newBranchModelVersion = dataModelApi.createNewBranchModelVersion(finalised.id, new CreateNewVersionData().tap {
             branchName: 'newBranchName'
         })
 
         DataModel retrieved  = dataModelApi.show(newBranchModelVersion.id)
-        println( ">>>>>>>>>>>>no ofitems ; new dataclass: ${dataClassApi.list(retrieved.id).items.size()}")
         DataClass retrievedDataClass = dataClassApi.list(retrieved.id).items.first()
-        println(" >>>>>>>>>>>newdataclass id; $retrievedDataClass.id , path`: $retrievedDataClass.path.pathString")
         DataClass fullRetrievedDataClass = dataClassApi.show(retrieved.id, retrievedDataClass.id)
         String newModelVersionDataClassPathString = fullRetrievedDataClass.path.pathString
-        println("?>>>>>>>>    required version path string: $newModelVersionDataClassPathString")
         when:
         DataClass resourceByPath =
             pathApi.getResourceByPathFromResource(DataClass.class.simpleName, fullRetrievedDataClass.id, newModelVersionDataClassPathString) as DataClass

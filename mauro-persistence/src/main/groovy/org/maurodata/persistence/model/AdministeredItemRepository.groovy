@@ -22,5 +22,5 @@ trait AdministeredItemRepository<I extends AdministeredItem> implements ItemRepo
     }
 
 
-    abstract <I extends AdministeredItem> List<I> findAllByLabelContaining(String label)
+    abstract <I extends AdministeredItem> List<I> findAllByLabel(String label)
 }

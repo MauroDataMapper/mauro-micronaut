@@ -50,8 +50,8 @@ abstract class DataClassRepository implements ModelItemRepository<DataClass> {
 
     @Nullable
     @Override
-    List<DataClass> findAllByLabelContaining(String label) {
-        dataClassDTORepository.findAllByLabelContaining(label)
+    List<DataClass> findAllByLabel(String label) {
+        dataClassDTORepository.findAllByLabel(label)
     }
 
     @Nullable

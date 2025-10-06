@@ -39,7 +39,7 @@ abstract class DataFlowDTORepository implements GenericRepository<DataFlowDTO, U
 
 
 
-    @Query('SELECT * FROM dataflow.data_flow WHERE label like :label')
+    @Query('SELECT * FROM dataflow.data_flow WHERE label = :label')
     @Nullable
-    abstract List<DataFlow> findAllByLabelContaining(String label)
+    abstract List<DataFlow> findAllByLabel(String label)
 }

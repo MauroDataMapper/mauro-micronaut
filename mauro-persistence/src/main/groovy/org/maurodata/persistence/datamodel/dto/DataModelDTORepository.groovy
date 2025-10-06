@@ -27,7 +27,7 @@ abstract class DataModelDTORepository implements GenericRepository<DataModelDTO,
 
 
 
-    @Query('SELECT * FROM datamodel.data_model WHERE label like :label')
+    @Query('SELECT * FROM datamodel.data_model WHERE label = :label')
     @Nullable
-    abstract List<DataModel> findAllByLabelContaining(String label)
+    abstract List<DataModel> findAllByLabel(String label)
 }
