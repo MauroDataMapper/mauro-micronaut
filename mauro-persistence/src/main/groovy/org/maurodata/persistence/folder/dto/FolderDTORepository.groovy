@@ -29,8 +29,8 @@ abstract class FolderDTORepository implements GenericRepository<FolderDTO, UUID>
 
 
 
-    @Query('SELECT * FROM core.folder WHERE label like :label')
+    @Query('SELECT * FROM core.folder WHERE label = :label')
     @Nullable
-    abstract List<Folder> findAllByLabelContaining(String label)
+    abstract List<Folder> findAllByLabel(String label)
 }
 

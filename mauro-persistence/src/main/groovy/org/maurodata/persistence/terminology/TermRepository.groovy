@@ -54,17 +54,11 @@ abstract class TermRepository implements ModelItemRepository<Term> {
     List<Term> readAllByParent(AdministeredItem parent) {
         readAllByTerminology((Terminology) parent)
     }
-//
-//    @Override
-//    @Nullable
-//    Term findByLabelContaining(String label){
-//        termDTORepository.findByLabelContaining(label)
-//    }
 
     @Override
     @Nullable
-    List<Term> findAllByLabelContaining(String label){
-        termDTORepository.findAllByLabelContaining(label)
+    List<Term> findAllByLabel(String label){
+        termDTORepository.findAllByLabel(label)
     }
 
     abstract Long deleteByTerminologyId(UUID terminologyId)

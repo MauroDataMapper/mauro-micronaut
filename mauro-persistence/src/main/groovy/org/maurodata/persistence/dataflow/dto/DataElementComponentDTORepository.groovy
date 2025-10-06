@@ -40,6 +40,6 @@ abstract class DataElementComponentDTORepository implements GenericRepository<Da
 
 
     @Nullable
-    @Query('SELECT * FROM dataflow.data_element_component WHERE  label like :label')
-    abstract List<DataElementComponent> findAllByLabelContaining(String label)
+    @Query('SELECT * FROM dataflow.data_element_component WHERE label = :label')
+    abstract List<DataElementComponent> findAllByLabel(String label)
 }

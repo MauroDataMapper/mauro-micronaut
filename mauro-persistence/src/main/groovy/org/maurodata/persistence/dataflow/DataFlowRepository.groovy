@@ -49,8 +49,8 @@ abstract class DataFlowRepository implements ModelItemRepository<DataFlow> {
 
 
     @Nullable
-    List<DataFlow> findAllByLabelContaining(String label){
-        dataFlowDTORepository.findAllByLabelContaining(label)
+    List<DataFlow> findAllByLabel(String label){
+        dataFlowDTORepository.findAllByLabel(label)
     }
     @Override
     @Nullable

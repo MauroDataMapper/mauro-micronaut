@@ -13,7 +13,14 @@ import org.maurodata.domain.security.Role
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository
 import org.maurodata.persistence.model.PathRepository
 import org.maurodata.security.AccessControlService
-import org.maurodata.util.PathStringUtils
+
+import static org.maurodata.util.PathStringUtils.getCOLON
+import static org.maurodata.util.PathStringUtils.getDISCARD_AFTER_VERSION
+import static org.maurodata.util.PathStringUtils.getItemSubPath
+import static org.maurodata.util.PathStringUtils.getREMOVE_VERSION_DELIM
+import static org.maurodata.util.PathStringUtils.getVersionFromPath
+import static org.maurodata.util.PathStringUtils.lastSubPath
+import static org.maurodata.util.PathStringUtils.splitBy
 
 @CompileStatic
 @Slf4j
@@ -72,8 +79,8 @@ class PathService implements AdministeredItemReader {
 
     protected AdministeredItem findResourceByPath(String domainType, String path) {
         String pathPrefix = getPathPrefixForDomainType(domainType)
-        String domainPath = PathStringUtils.getItemSubPath(pathPrefix, path)
-        String versionString = PathStringUtils.getVersionFromPath(path)
+        String domainPath = getItemSubPath(pathPrefix, path)
+        String versionString = getVersionFromPath(path)
         return findItemForPath(domainType, domainPath, versionString, path)
     }
 
@@ -84,16 +91,16 @@ class PathService implements AdministeredItemReader {
      * @return  the last path domainType and label/subPath
      */
     protected Tuple2<String,String> getItemDomainTypeAndPath(String path) {
-        String itemPath = PathStringUtils.lastSubPath(path)
+        String itemPath = lastSubPath(path)
         //extract the item domain type from given input path
-        String[] itemParts = PathStringUtils.splitBy(itemPath, PathStringUtils.COLON)
+        String[] itemParts = splitBy(itemPath, COLON)
         if (itemParts.size() != 2){
             ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "bad path $path")
         }
         String itemDomainType = getDomainTypeFromPathPrefix(itemParts[0])
-        String subPathOnly = itemParts[1].find(PathStringUtils.DISCARD_AFTER_VERSION) ?: itemParts[1]
+        String subPathOnly = itemParts[1].find(DISCARD_AFTER_VERSION) ?: itemParts[1]
 
-        String itemSubPath = subPathOnly.replaceAll(PathStringUtils.REMOVE_VERSION_DELIM, '')
+        String itemSubPath = subPathOnly.replaceAll(REMOVE_VERSION_DELIM, '')
         new Tuple2(itemDomainType, itemSubPath)
     }
 
@@ -124,7 +131,7 @@ class PathService implements AdministeredItemReader {
 
     protected AdministeredItem findItemForPath(String domainType, String domainPath, String versionString, String fullPath) {
         AdministeredItemCacheableRepository repository = getAdministeredItemRepository(domainType)
-        List<AdministeredItem> items = repository.findAllByLabelContaining(domainPath)
+        List<AdministeredItem> items = repository.findAllByLabel(domainPath)
         if (items.isEmpty()) {
             null
         }
@@ -138,7 +145,7 @@ class PathService implements AdministeredItemReader {
             }
             item = (items as List<AdministeredItem>).find {
                 it.updatePath()
-                it.path.pathString.contains(versionString)
+                it.path?.pathString?.contains(versionString)
             }
         }
         item

@@ -63,8 +63,8 @@ abstract class DataElementRepository implements ModelItemRepository<DataElement>
 
     @Nullable
     @Override
-    List<DataElement> findAllByLabelContaining(String label){
-        dataElementDTORepository.findAllByLabelContaining(label)
+    List<DataElement> findAllByLabel(String label){
+        dataElementDTORepository.findAllByLabel(label)
     }
 
     @Nullable
