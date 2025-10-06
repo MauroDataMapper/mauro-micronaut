@@ -61,7 +61,7 @@ class MauroPluginService {
             pluginsDirPath = findProjectRoot(baseDirPath)?.resolve("plugins")
         } else {
             // Application is in a packaged jar
-            pluginsDirPath = baseDirPath.getParent().resolve("plugins")
+            pluginsDirPath = findAppRoot(baseDirPath.getParent())?.resolve("plugins")
         }
 
         if (pluginsDirPath == null) {
@@ -79,6 +79,19 @@ class MauroPluginService {
         while (current != null) {
             if (Files.exists(current.resolve("build.gradle")) ||
                 Files.exists(current.resolve("pom.xml"))) {
+                return current
+            }
+            current = current.getParent()
+        }
+        return null
+    }
+
+    private static Path findAppRoot(final Path start) {
+        Path current = start
+        while (current != null) {
+            if (Files.exists(current.resolve("resources")) ||
+                Files.exists(current.resolve("plugins"))
+            ) {
                 return current
             }
             current = current.getParent()
