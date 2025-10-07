@@ -129,7 +129,7 @@ interface Paths {
     String DATA_MODEL_SEARCH_GET = '/api/dataModels/{id}/search{?requestDTO*}'
     String DATA_MODEL_SEARCH_POST = '/api/dataModels/{id}/search'
     String DATA_MODEL_IMPORTERS = '/api/dataModels/providers/importers'
-    String DATA_MODEL_EXPORTERS = '/api/dataModels/providers/importers'
+    String DATA_MODEL_EXPORTERS = '/api/dataModels/providers/exporters'
     String DATA_MODEL_SUBSET = '/api/dataModels/{id}/subset/{otherId}'
     String DATA_MODEL_INTERSECTS_MANY = '/api/dataModels/{id}/intersectsMany'
     String DATA_MODEL_READ_BY_AUTHENTICATED = '/api/dataModels/{id}/readByAuthenticated'
@@ -472,4 +472,7 @@ interface Paths {
     */
     String REFERENCE_DATA_MODELS_LIST = '/api/referenceDataModels'
     String FOLDER_REFERENCE_DATA_MODELS= '/api/folders/{id}/referenceDataModels'
+
+    String RESOURCE_BY_PATH = '/api/{domainType}/path/{path}'
+    String RESOURCE_BY_PATH_FROM_RESOURCE = '/api/{domainType}/{domainId}/path/{path}'
 }

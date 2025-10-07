@@ -8,7 +8,6 @@ import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpHeaders
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
-import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.exceptions.HttpException
 import io.micronaut.http.exceptions.HttpStatusException
@@ -443,16 +442,10 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     static protected HttpResponse<byte[]> createExportResponse(ModelExporterPlugin mauroPlugin, Model model) {
         byte[] fileContents = mauroPlugin.exportModel(model)
         String filename = mauroPlugin.getFileName(model)
-        String contentType = mauroPlugin.getContentType()
-        if (contentType == null) {
-            contentType = MediaType.APPLICATION_OCTET_STREAM
-        }
-
         HttpResponse
             .ok(fileContents)
             .header(HttpHeaders.CONTENT_LENGTH, Long.toString(fileContents.length))
             .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=${filename}")
-            .contentType(contentType)
     }
 
     protected VersionLinkDTO constructVersionLinkDTO(final M sourceModel, final VersionLink versionLink) {

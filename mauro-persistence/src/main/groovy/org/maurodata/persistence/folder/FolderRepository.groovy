@@ -27,6 +27,14 @@ abstract class FolderRepository implements ModelRepository<Folder> {
         folderDTORepository.findAllByParentAndPathIdentifier(item, pathIdentifier) as List<Folder>
     }
 
+
+    @Nullable
+    @Override
+    List<Folder> findAllByLabel(String label){
+        folderDTORepository.findAllByLabel(label)
+    }
+
+
     @Nullable
     abstract List<Folder> readAllByParentFolder(Folder folder)
 

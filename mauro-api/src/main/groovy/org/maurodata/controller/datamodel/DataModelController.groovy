@@ -1,6 +1,5 @@
 package org.maurodata.controller.datamodel
 
-import org.maurodata.api.model.MergeIntoDTO
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.context.annotation.Parameter
@@ -26,17 +25,15 @@ import io.micronaut.security.rules.SecurityRule
 import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
 import org.maurodata.ErrorHandler
-import org.maurodata.FieldConstants
 import org.maurodata.api.Paths
 import org.maurodata.api.datamodel.DataModelApi
 import org.maurodata.api.model.MergeDiffDTO
-import org.maurodata.api.model.MergeFieldDiffDTO
+import org.maurodata.api.model.MergeIntoDTO
 import org.maurodata.api.model.ModelVersionDTO
 import org.maurodata.api.model.ModelVersionedRefDTO
 import org.maurodata.api.model.ModelVersionedWithTargetsRefDTO
 import org.maurodata.api.model.PermissionsDTO
 import org.maurodata.api.model.VersionLinkDTO
-import org.maurodata.api.model.VersionLinkTargetDTO
 import org.maurodata.audit.Audit
 import org.maurodata.controller.model.ModelController
 import org.maurodata.domain.datamodel.DataClass
@@ -48,16 +45,13 @@ import org.maurodata.domain.datamodel.DataType
 import org.maurodata.domain.datamodel.IntersectsData
 import org.maurodata.domain.datamodel.IntersectsManyData
 import org.maurodata.domain.datamodel.SubsetData
-import org.maurodata.domain.diff.FieldDiff
 import org.maurodata.domain.diff.ObjectDiff
 import org.maurodata.domain.facet.EditType
 import org.maurodata.domain.facet.VersionLink
 import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.domain.model.Model
-import org.maurodata.domain.model.Path
 import org.maurodata.domain.model.version.CreateNewVersionData
 import org.maurodata.domain.model.version.FinaliseData
-import org.maurodata.domain.model.version.ModelVersion
 import org.maurodata.domain.search.dto.SearchRequestDTO
 import org.maurodata.domain.search.dto.SearchResultsDTO
 import org.maurodata.domain.security.Role

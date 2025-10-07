@@ -74,7 +74,7 @@ class DataClassComponent extends ModelItem<DataFlow> {
     @Transient
     @JsonIgnore
     String getPathPrefix() {
-        'dsc'
+        'dcc'
     }
 
     @Override

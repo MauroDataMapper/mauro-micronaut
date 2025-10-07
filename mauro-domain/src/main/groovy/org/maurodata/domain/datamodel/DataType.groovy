@@ -97,7 +97,7 @@ class DataType extends ModelItem<DataModel> implements DiffableItem<DataType>, I
 
     @Override
     String getDomainType() {
-        dataTypeKind?.toString()
+        dataTypeKind?.toString() ?:DataType.class.simpleName
     }
 
     @Override

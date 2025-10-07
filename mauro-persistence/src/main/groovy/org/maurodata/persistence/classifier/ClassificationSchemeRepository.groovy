@@ -27,6 +27,10 @@ abstract class ClassificationSchemeRepository implements ModelRepository<Classif
         classificationSchemeDTORepository.findAllByParentAndPathIdentifier(item,pathIdentifier) as List<ClassificationScheme>
     }
 
+    List<ClassificationScheme> findAllByLabel(String label) {
+        classificationSchemeDTORepository.findAllByLabel(label)
+    }
+
     @Override
     Class getDomainClass() {
         ClassificationScheme

@@ -1,5 +1,6 @@
 package org.maurodata.persistence.terminology.dto
 
+import io.micronaut.core.annotation.Nullable
 import org.maurodata.domain.terminology.CodeSet
 import groovy.transform.CompileStatic
 import io.micronaut.data.annotation.Join
@@ -18,4 +19,9 @@ abstract class CodeSetDTORepository implements GenericRepository<CodeSetDTO, UUI
     @Join(value = 'authority', type = Join.Type.LEFT_FETCH)
     @Query('SELECT * FROM terminology.code_set WHERE folder_id = :item AND label = :pathIdentifier')
     abstract List<CodeSet> findAllByParentAndPathIdentifier(UUID item, String pathIdentifier)
+
+
+    @Nullable
+    @Query('SELECT * FROM terminology.code_set WHERE label = :label')
+    abstract List<CodeSet> findAllByLabel(String label)
 }

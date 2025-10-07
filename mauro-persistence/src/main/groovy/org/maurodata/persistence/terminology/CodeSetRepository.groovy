@@ -10,6 +10,7 @@ import jakarta.inject.Inject
 import org.maurodata.FieldConstants
 import org.maurodata.domain.terminology.CodeSet
 import org.maurodata.domain.terminology.Term
+import org.maurodata.domain.terminology.Terminology
 import org.maurodata.persistence.model.ModelRepository
 import org.maurodata.persistence.terminology.dto.CodeSetDTORepository
 
@@ -28,6 +29,13 @@ abstract class CodeSetRepository implements ModelRepository<CodeSet> {
     @Nullable
     List<CodeSet> findAllByParentAndPathIdentifier(UUID item, String pathIdentifier) {
         codeSetDTORepository.findAllByParentAndPathIdentifier(item, pathIdentifier)
+    }
+
+
+    @Nullable
+    @Override
+    List<CodeSet> findAllByLabel(String label){
+        codeSetDTORepository.findAllByLabel(label)
     }
 
     /**

@@ -49,6 +49,14 @@ abstract class DataElementComponentRepository implements ModelItemRepository<Dat
         readAllByDataClassComponent((DataClassComponent) parent)
     }
 
+
+
+    @Nullable
+    @Override
+    List<DataElementComponent> findAllByLabel(String label){
+        dataElementComponentDTORepository.findAllByLabel(label)
+    }
+
     @Override
     Class getDomainClass() {
         DataElementComponent

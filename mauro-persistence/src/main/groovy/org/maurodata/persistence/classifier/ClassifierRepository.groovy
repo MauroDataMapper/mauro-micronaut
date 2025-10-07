@@ -43,6 +43,11 @@ abstract class ClassifierRepository implements ModelItemRepository<Classifier> {
         findAllByClassificationScheme((ClassificationScheme) parent)
     }
 
+
+    @Override
+    List<Classifier> findAllByLabel(String label) {
+        classifierDTORepository.findAllByLabel(label)
+    }
     @Nullable
     UUID addAdministeredItem(AdministeredItem administeredItem, Classifier classifier) {
         log.debug("Adding to joinAdministeredItemToClassifier : administered item $administeredItem.id , classifier: $classifier.id")

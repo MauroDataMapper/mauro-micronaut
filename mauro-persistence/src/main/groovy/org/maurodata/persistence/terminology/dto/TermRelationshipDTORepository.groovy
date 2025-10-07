@@ -45,4 +45,9 @@ abstract class TermRelationshipDTORepository implements GenericRepository<TermRe
     @Nullable
     @Query('SELECT * FROM terminology.term_relationship WHERE target_term_id = :item AND label = :pathIdentifier')
     abstract List<TermRelationship> findAllByParentAndPathIdentifier(UUID item, String pathIdentifier)
+
+
+    @Query('SELECT * FROM terminology.term_relationship WHERE label = :label')
+    @Nullable
+    abstract List<TermRelationship> findAllByLabel(String label)
 }

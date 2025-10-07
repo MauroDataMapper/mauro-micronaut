@@ -37,4 +37,9 @@ abstract class DataElementComponentDTORepository implements GenericRepository<Da
     @Nullable
     @Query('SELECT * FROM dataflow.data_element_component WHERE data_class_component_id = :item AND label = :pathIdentifier')
     abstract List<DataElementComponent> findAllByParentAndPathIdentifier(UUID item, String pathIdentifier)
+
+
+    @Nullable
+    @Query('SELECT * FROM dataflow.data_element_component WHERE label = :label')
+    abstract List<DataElementComponent> findAllByLabel(String label)
 }

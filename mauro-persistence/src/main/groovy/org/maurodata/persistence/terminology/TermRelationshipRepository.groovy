@@ -77,6 +77,12 @@ abstract class TermRelationshipRepository implements ModelItemRepository<TermRel
     }
 
     @Override
+    @Nullable
+    List<TermRelationship> findAllByLabel(String label){
+        termRelationshipDTORepository.findAllByLabel(label)
+    }
+
+    @Override
     Class getDomainClass() {
         TermRelationship
     }

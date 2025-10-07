@@ -1,7 +1,5 @@
 package org.maurodata.persistence.classifier.dto
 
-import org.maurodata.domain.classifier.ClassificationScheme
-
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.annotation.Join
@@ -9,6 +7,7 @@ import io.micronaut.data.annotation.Query
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.repository.GenericRepository
+import org.maurodata.domain.classifier.ClassificationScheme
 
 @CompileStatic
 @JdbcRepository(dialect = Dialect.POSTGRES)
@@ -20,6 +19,11 @@ abstract class ClassificationSchemeDTORepository implements GenericRepository<Cl
     abstract ClassificationSchemeDTO findById(UUID id)
 
     @Nullable
-    @Query('select * from code.classification_scheme where folder_id = :item AND label = :pathIdentifier')
-    abstract List<ClassificationScheme> findAllByParentAndPathIdentifier(UUID item, String pathIdentifier)
+    @Query('select * from core.classification_scheme where folder_id = :item AND label = :pathIdentifier')
+    abstract List<ClassificationSchemeDTO> findAllByParentAndPathIdentifier(UUID item, String pathIdentifier)
+
+    @Nullable
+    @Query('select * from core.classification_scheme where label = :label')
+    abstract List<ClassificationScheme> findAllByLabel(String label)
+
 }

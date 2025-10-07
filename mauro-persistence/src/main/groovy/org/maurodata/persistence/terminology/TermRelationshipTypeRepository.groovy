@@ -1,7 +1,6 @@
 package org.maurodata.persistence.terminology
 
 import groovy.transform.CompileStatic
-import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.model.query.builder.sql.Dialect
@@ -23,6 +22,7 @@ abstract class TermRelationshipTypeRepository implements ModelItemRepository<Ter
     TermRelationshipType findById(UUID id) {
         termRelationshipTypeDTORepository.findById(id) as TermRelationshipType
     }
+
 
     @Nullable
     List<TermRelationshipType> findAllByParentAndPathIdentifier(UUID item, String pathIdentifier) {
@@ -47,6 +47,12 @@ abstract class TermRelationshipTypeRepository implements ModelItemRepository<Ter
     @Nullable
     List<TermRelationshipType> readAllByParent(AdministeredItem parent) {
         readAllByTerminology((Terminology) parent)
+    }
+
+    @Nullable
+    @Override
+    List<TermRelationshipType> findAllByLabel(String label){
+        termRelationshipTypeDTORepository.findAllByLabel(label)
     }
 
     @Nullable
