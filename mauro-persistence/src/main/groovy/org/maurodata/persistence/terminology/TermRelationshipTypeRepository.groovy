@@ -48,15 +48,11 @@ abstract class TermRelationshipTypeRepository implements ModelItemRepository<Ter
     List<TermRelationshipType> readAllByParent(AdministeredItem parent) {
         readAllByTerminology((Terminology) parent)
     }
-//    @Nullable
-//    @Override
-//    TermRelationshipType findByLabelContaining(String label){
-//        termRelationshipTypeDTORepository.findByLabelContaining(label)
-//    }
+
     @Nullable
     @Override
-    List<TermRelationshipType> findAllByLabelContaining(String label){
-        termRelationshipTypeDTORepository.findAllByLabelContaining(label)
+    List<TermRelationshipType> findAllByLabel(String label){
+        termRelationshipTypeDTORepository.findAllByLabel(label)
     }
 
     @Nullable

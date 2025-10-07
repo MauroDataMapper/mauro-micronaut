@@ -30,8 +30,8 @@ abstract class FolderRepository implements ModelRepository<Folder> {
 
     @Nullable
     @Override
-    List<Folder> findAllByLabelContaining(String label){
-        folderDTORepository.findAllByLabelContaining(label)
+    List<Folder> findAllByLabel(String label){
+        folderDTORepository.findAllByLabel(label)
     }
 
 

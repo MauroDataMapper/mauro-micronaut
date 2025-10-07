@@ -45,8 +45,8 @@ abstract class ClassifierRepository implements ModelItemRepository<Classifier> {
 
 
     @Override
-    List<Classifier> findAllByLabelContaining(String label) {
-        classifierDTORepository.findAllByLabelContaining(label)
+    List<Classifier> findAllByLabel(String label) {
+        classifierDTORepository.findAllByLabel(label)
     }
     @Nullable
     UUID addAdministeredItem(AdministeredItem administeredItem, Classifier classifier) {

@@ -32,7 +32,7 @@ abstract class DataElementDTORepository implements GenericRepository<DataElement
     abstract List<DataElement> findAllByParentAndPathIdentifier(UUID item, String pathIdentifier)
 
 
-    @Query('SELECT * FROM datamodel.data_element WHERE label like :label')
+    @Query('SELECT * FROM datamodel.data_element WHERE label = :label')
     @Nullable
-    abstract List<DataElement> findAllByLabelContaining(String label)
+    abstract List<DataElement> findAllByLabel(String label)
 }

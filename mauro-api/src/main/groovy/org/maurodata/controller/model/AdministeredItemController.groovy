@@ -257,8 +257,4 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
         }
     }
 
-    @Override
-    public String toString() {
-        return "AdministeredItemController{}";
-    }
 }

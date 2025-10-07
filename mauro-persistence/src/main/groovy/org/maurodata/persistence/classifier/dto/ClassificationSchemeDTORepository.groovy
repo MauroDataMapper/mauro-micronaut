@@ -23,7 +23,7 @@ abstract class ClassificationSchemeDTORepository implements GenericRepository<Cl
     abstract List<ClassificationSchemeDTO> findAllByParentAndPathIdentifier(UUID item, String pathIdentifier)
 
     @Nullable
-    @Query('select * from core.classification_scheme where label like :label')
-    abstract List<ClassificationScheme> findAllByLabelContaining(String label)
+    @Query('select * from core.classification_scheme where label = :label')
+    abstract List<ClassificationScheme> findAllByLabel(String label)
 
 }
