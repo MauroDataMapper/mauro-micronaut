@@ -7,6 +7,7 @@ import io.micronaut.core.annotation.Nullable
 import org.maurodata.domain.folder.Folder
 import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.domain.model.Model
+import org.maurodata.domain.terminology.Terminology
 
 @CompileStatic
 trait ModelRepository<M extends Model> implements AdministeredItemRepository<M> {
@@ -25,6 +26,11 @@ trait ModelRepository<M extends Model> implements AdministeredItemRepository<M> 
 
     @Nullable
     abstract List<M> findAllByFolderId(UUID folderId)
+
+
+    @Nullable
+    abstract List<M> readAllByFolderIdIn(Collection<UUID> folderIds)
+
 
     @Nullable
     abstract List<M> readAllByFinalisedTrue()

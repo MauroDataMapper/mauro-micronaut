@@ -9,7 +9,7 @@ import org.maurodata.persistence.model.ItemRepository
 
 @CompileStatic
 @JdbcRepository(dialect = Dialect.POSTGRES)
-abstract class ReferenceFileRepository implements ItemRepository<ReferenceFile> {
+abstract class ReferenceFileRepository implements FacetRepository<ReferenceFile> {
 
     @Nullable
     abstract long deleteById(UUID referenceFileId)

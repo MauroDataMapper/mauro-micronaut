@@ -47,6 +47,10 @@ abstract class TerminologyRepository implements ModelRepository<Terminology> {
 
     @Override
     @Nullable
+    abstract List<Terminology> readAllByFolderIdIn(Collection<UUID> folderIds)
+
+    @Override
+    @Nullable
     abstract List<Terminology> findAllByFolderId(UUID folderId)
 
     @Override

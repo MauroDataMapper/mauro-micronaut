@@ -19,6 +19,16 @@ class ContentsService {
         return item
     }
 
+    boolean deleteWithContent(AdministeredItem item) {
+        ContentHandler contentHandler = applicationContext.createBean(ContentHandler)
+        contentHandler.shred(item)
+        return contentHandler.deleteWithContent()
+    }
+
+    AdministeredItem loadWithContent(UUID uuid) {
+        ContentHandler contentHandler = applicationContext.createBean(ContentHandler)
+        contentHandler.loadFolderWithContent(uuid)
+    }
 
 
 }

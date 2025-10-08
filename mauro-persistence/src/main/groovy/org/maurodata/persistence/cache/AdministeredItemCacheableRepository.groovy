@@ -126,6 +126,17 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
             ((TermRepository) repository).findAllByTerminology(terminology)
         }
 
+        Term findAllByTerminologyAndCode(Terminology terminology, String code) {
+            ((TermRepository) repository).findAllByTerminologyAndCode(terminology, code)
+        }
+
+        List<Term> readAllByTerminologyIdIn(Collection<UUID> terminologyIds) {
+            ((TermRepository) repository).readAllByTerminologyIdIn(terminologyIds)
+        }
+
+
+
+
         @Override
         Boolean handles(Class clazz) {
             repository.handles(clazz)
@@ -156,6 +167,12 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
         List<TermRelationship> findAllByTerminologyAndSourceTermOrTargetTerm(Terminology terminology, Term term) {
             ((TermRelationshipRepository) repository).findAllByTerminologyAndSourceTermOrTargetTerm(terminology, term)
         }
+
+        List<TermRelationship> readAllByTerminologyIdIn(Collection<UUID> terminologyIds) {
+            ((TermRelationshipRepository) repository).readAllByTerminologyIdIn(terminologyIds)
+        }
+
+
     }
 
     @CompileStatic
@@ -164,6 +181,11 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
         TermRelationshipTypeCacheableRepository(TermRelationshipTypeRepository termRelationshipTypeRepository) {
             super(termRelationshipTypeRepository)
         }
+
+        List<TermRelationshipType> readAllByTerminologyIdIn(Collection<UUID> terminologyIds) {
+            ((TermRelationshipTypeRepository) repository).readAllByTerminologyIdIn(terminologyIds)
+        }
+
     }
 
     @Singleton
@@ -188,11 +210,32 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
             ((DataClassRepository) repository).readAllByDataModelAndParentDataClassIsNull(dataModel)
         }
 
+        // not cached
+        DataClass readByDataModelAndLabelAndParentDataClassIsNull(DataModel dataModel, String label) {
+            ((DataClassRepository) repository).readByDataModelAndLabelAndParentDataClassIsNull(dataModel, label)
+        }
+
 
         // not cached
         List<DataClass> readAllByDataModel(DataModel dataModel) {
             ((DataClassRepository) repository).readAllByDataModel(dataModel)
         }
+
+        // not cached
+        List<DataClass> readAllByDataModelIdInAndParentDataClassIsNull(Collection<UUID> dataModelIds) {
+            ((DataClassRepository) repository).readAllByDataModelIdInAndParentDataClassIsNull(dataModelIds)
+        }
+
+        // not cached
+        List<DataClass> readAllByParentDataClassIdIn(Collection<UUID> dataClassIds) {
+            ((DataClassRepository) repository).readAllByParentDataClassIdIn(dataClassIds)
+        }
+
+        // not cached
+        DataClass readByParentDataClassAndLabel(DataClass parentDataClass, String label) {
+            ((DataClassRepository) repository).readByParentDataClassAndLabel(parentDataClass, label)
+        }
+
         // not cached
         DataClass createExtensionRelationship(DataClass sourceDataClass, DataClass targetDataClass) {
             invalidate(sourceDataClass)
@@ -211,6 +254,13 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
             ((DataClassRepository) repository).deleteExtensionRelationship(sourceDataClass.id, targetDataClass.id)
         }
 
+        // not cached
+        long deleteExtensionRelationships(List<UUID> dataClassIds) {
+            dataClassIds.each {
+                invalidate(it)
+            }
+            ((DataClassRepository) repository).deleteExtensionRelationships(dataClassIds)
+        }
 
         @Override
         Boolean handles(String domainType) {
@@ -238,6 +288,15 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
         List<DataElement> readAllByDataModel_Id(UUID dataModelId){
             ((DataElementRepository) repository).readAllByDataModelId(dataModelId)
         }
+
+        DataElement readByDataClassAndLabel(DataClass dataClass, String label) {
+            ((DataElementRepository) repository).readByDataClassAndLabel(dataClass, label)
+        }
+
+        List<DataElement> readAllByDataClassIdIn(List<UUID> dataClassIds){
+            ((DataElementRepository) repository).readAllByDataClassIdIn(dataClassIds)
+        }
+
     }
 
     @Singleton
@@ -260,6 +319,10 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
         Boolean handles(String domainType) {
             repository.handles(domainType)
         }
+
+        List<DataType> readAllByDataModelIdIn(Collection<UUID> dataModelIds) {
+            ((DataTypeRepository) repository).readAllByDataModelIdIn(dataModelIds)
+        }
     }
 
     @Singleton
@@ -273,6 +336,11 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
         List<EnumerationValue> readAllByEnumerationType_Id(UUID enumerationTypeId) {
             ((EnumerationValueRepository) repository).readAllByEnumerationTypeId(enumerationTypeId)
         }
+
+        List<EnumerationValue> readAllByEnumerationTypeIdIn(Collection<UUID> dataTypeIds) {
+            ((EnumerationValueRepository) repository).readAllByEnumerationTypeIdIn(dataTypeIds)
+        }
+
 
     }
 

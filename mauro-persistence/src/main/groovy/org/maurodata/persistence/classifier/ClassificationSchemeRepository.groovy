@@ -45,6 +45,10 @@ abstract class ClassificationSchemeRepository implements ModelRepository<Classif
     @Nullable
     abstract List<ClassificationScheme> findAllByFolderId(UUID folderId)
 
+    @Override
+    @Nullable
+    abstract List<ClassificationScheme> readAllByFolderIdIn(Collection<UUID> folderIds)
+
 
     @Override
     Boolean handles(String domainType){

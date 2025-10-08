@@ -43,6 +43,7 @@ class FolderDTO extends Folder implements AdministeredItemDTO {
     @ColumnTransformer(read = """(select json_agg(x) from
         (select edit.id,
                 edit.title,
+                edit.version,
                 edit.description,
                 edit.date_created,
                 row_to_json(catalogue_user) as catalogue_user

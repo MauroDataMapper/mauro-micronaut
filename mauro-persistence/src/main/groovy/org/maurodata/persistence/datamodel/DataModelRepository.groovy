@@ -48,6 +48,12 @@ abstract class DataModelRepository implements ModelRepository<DataModel> {
     @Nullable
     abstract List<DataModel> findAllByFolderId(UUID folderId)
 
+    @Override
+    @Nullable
+    abstract List<DataModel> readAllByFolderIdIn(Collection<UUID> folderIds)
+
+
+
     // TODO: This method really needs caching
     @Query(value = '''
         select * from datamodel.data_model where

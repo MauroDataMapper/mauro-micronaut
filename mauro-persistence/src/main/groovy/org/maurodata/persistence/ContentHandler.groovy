@@ -1,6 +1,7 @@
 package org.maurodata.persistence
 
 import groovy.util.logging.Slf4j
+import groovyjarjarantlr4.v4.runtime.misc.OrderedHashSet
 import jakarta.inject.Inject
 import org.maurodata.domain.datamodel.DataClass
 import org.maurodata.domain.datamodel.DataElement
@@ -20,6 +21,7 @@ import org.maurodata.domain.facet.SummaryMetadataReport
 import org.maurodata.domain.facet.VersionLink
 import org.maurodata.domain.folder.Folder
 import org.maurodata.domain.model.AdministeredItem
+import org.maurodata.domain.model.Model
 import org.maurodata.domain.terminology.CodeSet
 import org.maurodata.domain.terminology.Term
 import org.maurodata.domain.terminology.TermRelationship
@@ -49,6 +51,7 @@ import org.maurodata.persistence.facet.ReferenceFileRepository
 import org.maurodata.persistence.facet.RuleRepository
 import org.maurodata.persistence.facet.SemanticLinkRepository
 import org.maurodata.persistence.folder.FolderRepository
+import org.maurodata.persistence.terminology.TermRelationshipRepository
 
 import java.sql.Connection
 import java.sql.DatabaseMetaData
@@ -78,39 +81,42 @@ class ContentHandler {
 
     @Inject MetadataRepository metadataRepository
 
-    @Inject AnnotationRepository annotationRepository
+    @Inject FacetCacheableRepository.AnnotationCacheableRepository annotationRepository
     @Inject EditCacheableRepository editCacheableRepository
-    @Inject ReferenceFileRepository referenceFileRepository
+    @Inject FacetCacheableRepository.ReferenceFileCacheableRepository referenceFileRepository
     @Inject FacetCacheableRepository.RuleCacheableRepository ruleRepository
     @Inject RuleRepresentationCacheableRepository ruleRepresentationCacheableRepository
-    @Inject SemanticLinkRepository semanticLinkRepository
+    @Inject FacetCacheableRepository.SemanticLinkCacheableRepository semanticLinkRepository
     @Inject SummaryMetadataCacheableRepository summaryMetadataCacheableRepository
     @Inject SummaryMetadataReportCacheableRepository summaryMetadataReportCacheableRepository
     @Inject VersionLinkCacheableRepository versionLinkCacheableRepository
 
-    Map<Integer, List<Folder>> folders = [:]
-    List<DataModel> dataModels = []
-    Map<Integer, List<DataClass>> dataClasses = [:]
-    List<DataType> dataTypes = []
-    List<DataElement> dataElements = []
-    List<EnumerationValue> enumerationValues = []
-    List<Terminology> terminologies = []
-    List<Term> terms = []
-    List<TermRelationshipType> termRelationshipTypes = []
-    List<TermRelationship> termRelationships = []
-    List<CodeSet> codeSets = []
+    Map<UUID, AdministeredItem> allItems = [:]
 
-    List<Metadata> metadata = []
-    Map<Integer, List<Annotation>> annotations = [:]
+
+    Map<Integer, Set<Folder>> folders = [:]
+    Set<DataModel> dataModels = []
+    Map<Integer, Set<DataClass>> dataClasses = [:]
+    Set<DataType> dataTypes = []
+    Set<DataElement> dataElements = []
+    Set<EnumerationValue> enumerationValues = []
+    Set<Terminology> terminologies = []
+    Set<Term> terms = []
+    Set<TermRelationshipType> termRelationshipTypes = []
+    Set<TermRelationship> termRelationships = []
+    Set<CodeSet> codeSets = []
+
+    Set<Metadata> metadata = []
+    Map<Integer, Set<Annotation>> annotations = [:]
     //List<CatalogueFile> catalogueFiles = []
-    List<Edit> edits = []
-    List<ReferenceFile> referenceFiles = []
-    List<Rule> rules = []
-    List<RuleRepresentation> ruleRepresentations = []
-    List<SemanticLink> semanticLinks = []
-    List<SummaryMetadata> summaryMetadata = []
-    List<SummaryMetadataReport> summaryMetadataReports = []
-    List<VersionLink> versionLinks = []
+    Set<Edit> edits = []
+    Set<ReferenceFile> referenceFiles = []
+    Set<Rule> rules = []
+    Set<RuleRepresentation> ruleRepresentations = []
+    Set<SemanticLink> semanticLinks = []
+    Set<SummaryMetadata> summaryMetadata = []
+    Set<SummaryMetadataReport> summaryMetadataReports = []
+    Set<VersionLink> versionLinks = []
 
     void shred(Folder folder, Integer depth = 0) {
         if(folders[depth]) {
@@ -207,48 +213,73 @@ class ContentHandler {
         dataElementCacheableRepository.saveAll (dataElements)
         enumerationValueCacheableRepository.saveAll (enumerationValues)
 
-        metadata.each {it.multiFacetAwareItemId = it.multiFacetAwareItem.id }
-
         annotations.keySet().sort().each {depth ->
-            annotations[depth].each {it.multiFacetAwareItemId = it.multiFacetAwareItem.id }
+            annotations[depth].each {it.prePersist() }
             annotationRepository.saveAll(annotations[depth])
         }
 
-        edits.each {it.multiFacetAwareItemId = it.multiFacetAwareItem.id }
+        edits.each {it.prePersist() }
         editCacheableRepository.saveAll(edits)
-        referenceFiles.each {it.multiFacetAwareItemId = it.multiFacetAwareItem.id }
+        referenceFiles.each {it.prePersist() }
         referenceFileRepository.saveAll(referenceFiles)
-        rules.each {it.multiFacetAwareItemId = it.multiFacetAwareItem.id }
+        rules.each {it.prePersist() }
         ruleRepository.saveAll(rules)
         ruleRepresentationCacheableRepository.saveAll(ruleRepresentations)
-        semanticLinks.each {
-            it.multiFacetAwareItemId = it.multiFacetAwareItem.id
-            // target?
-        }
+        semanticLinks.each {it.prePersist() }
         semanticLinkRepository.saveAll(semanticLinks)
-        summaryMetadata.each {it.multiFacetAwareItemId = it.multiFacetAwareItem.id }
+        summaryMetadata.each {it.prePersist() }
         summaryMetadataCacheableRepository.saveAll(summaryMetadata)
         summaryMetadataReportCacheableRepository.saveAll(summaryMetadataReports)
-        versionLinks.each {
-            it.multiFacetAwareItemId = it.multiFacetAwareItem.id
-//            it.targetModelId = it.targetModel.id
-//            it.targetModelDomainType = it.targetModel.domainType
-        }
+        versionLinks.each {it.prePersist() }
         versionLinkCacheableRepository.saveAll(versionLinks)
 
-/*
-        for (int i = 0; i < metadata.size(); i += 5000) {
-            int end = Math.min(i + 5000, metadata.size())
-            log.error("Start save terminology")
-            metadataCacheableRepository.saveAll(metadata.subList(i, end))
-            log.error("End save terminology")
-        }
-*/
         Instant start = Instant.now()
-        saveInBatches(metadata, 1000) { List<Metadata> batch ->
+        metadata.each {it.prePersist() }
+        inBatches(metadata as List, 1000) { List<Metadata> batch ->
             metadataRepository.saveAll(batch)
         }
         printTimeTaken(start)
+
+    }
+
+    boolean deleteWithContent() {
+
+        Instant start = Instant.now()
+        inBatches(metadata as List, 1000) { List<Metadata> batch ->
+            metadataRepository.deleteAll(batch)
+        }
+        printTimeTaken(start)
+        versionLinkCacheableRepository.deleteAll(versionLinks)
+        summaryMetadataReportCacheableRepository.deleteAll(summaryMetadataReports)
+        summaryMetadataCacheableRepository.deleteAll(summaryMetadata)
+        semanticLinkRepository.deleteAll(semanticLinks)
+        ruleRepresentationCacheableRepository.deleteAll(ruleRepresentations)
+        ruleRepository.deleteAll(rules)
+        referenceFileRepository.deleteAll(referenceFiles)
+        editCacheableRepository.deleteAll(edits)
+        annotations.keySet().sort().reverse().each {depth ->
+            annotationRepository.deleteAll(annotations[depth])
+        }
+        enumerationValueCacheableRepository.deleteAll (enumerationValues)
+        dataElementCacheableRepository.deleteAll (dataElements)
+        dataTypeCacheableRepository.deleteAll (dataTypes)
+
+        dataClassCacheableRepository.deleteExtensionRelationships(dataClasses.values().flatten().collect {DataClass it -> it.id})
+        dataClasses.keySet().sort().reverse().each {depth ->
+            dataClassCacheableRepository.deleteAll (dataClasses[depth])
+        }
+        dataModelCacheableRepository.deleteAll (dataModels)
+        codeSetCacheableRepository.removeAllAssociations(codeSets.id)
+        codeSetCacheableRepository.deleteAll(codeSets)
+        termRelationshipCacheableRepository.deleteAll(termRelationships)
+        termRelationshipTypeCacheableRepository.deleteAll(termRelationshipTypes)
+        termCacheableRepository.deleteAll(terms)
+        terminologyCacheableRepository.deleteAll(terminologies)
+        folders.keySet().sort().reverse().each {depth ->
+            folderCacheableRepository.deleteAll(folders[depth])
+        }
+
+        true
 
     }
 
@@ -260,7 +291,52 @@ class ContentHandler {
             }
             metadata.addAll(item.metadata)
         }
+        if(item instanceof Model && item.versionLinks) {
+            versionLinks.addAll(item.versionLinks)
+        }
+        if(item.summaryMetadata) {
+            summaryMetadata.addAll(item.summaryMetadata)
+            item.summaryMetadata.each {sm ->
+                if(sm.summaryMetadataReports) {
+                    summaryMetadataReports.addAll(sm.summaryMetadataReports)
+                }
+            }
+        }
+        if(item.semanticLinks) {
+            semanticLinks.addAll(item.semanticLinks)
+        }
+        if(item.rules) {
+            rules.addAll(item.rules)
+            item.rules.each {r ->
+                if(r.ruleRepresentations) {
+                    ruleRepresentations.addAll(r.ruleRepresentations)
+                }
+            }
+        }
+        if(item.referenceFiles) {
+            referenceFiles.addAll(item.referenceFiles)
+        }
+        if(item.edits) {
+            edits.addAll(item.edits)
+        }
+        if(item.annotations) {
+            item.annotations.each {
+                shred(it, 0)
+            }
+        }
     }
+
+    void shred(Annotation annotation, Integer depth = 0) {
+        if (annotations[depth]) {
+            annotations[depth].add(annotation)
+        } else {
+            annotations[depth] = [annotation] as Set
+        }
+        annotation.childAnnotations.each {
+            shred(it, depth + 1)
+        }
+    }
+
 
     void printTimeTaken(Instant start) {
         Duration timeTaken = Duration.between(start, Instant.now())
@@ -271,7 +347,7 @@ class ContentHandler {
 
     }
 
-    private static <T> void saveInBatches(List<T> items, int batchSize, @DelegatesTo(List) Closure saver) {
+    private static <T> void inBatches(List<T> items, int batchSize, @DelegatesTo(List) Closure saver) {
         if (items == null || items.isEmpty()) return
         for (int i = 0; i < items.size(); i += batchSize) {
             int end = Math.min(i + batchSize, items.size())
@@ -279,6 +355,168 @@ class ContentHandler {
             List<T> batch = new ArrayList<>(items.subList(i, end))
             saver.call(batch)
         }
+    }
+
+    Folder loadFolderWithContent(UUID folderId) {
+        folders[0] = [folderCacheableRepository.readById(folderId)] as Set
+        int depth = 1
+        Set<UUID> foundFolders = [folderId] as Set
+        do {
+            List<Folder> retrievedFolders = folderCacheableRepository.readAllByFolderIdIn(foundFolders)
+            foundFolders = retrievedFolders.id as Set
+            if(foundFolders) {
+                folders[depth] = retrievedFolders as Set
+            }
+            depth++
+        } while (foundFolders.size() > 0)
+        allItems.putAll(folders.values().flatten().collectEntries { [it.id, it]})
+
+        terminologies = terminologyCacheableRepository.readAllByFolderIdIn(folders.values().flatten().id as Set<UUID>)
+        allItems.putAll(terminologies.collectEntries{[it.id, it]})
+
+        terms = termCacheableRepository.readAllByTerminologyIdIn(terminologies.id)
+        allItems.putAll(terms.collectEntries{[it.id, it]})
+
+        termRelationshipTypes = termRelationshipTypeCacheableRepository.readAllByTerminologyIdIn(terminologies.id)
+        allItems.putAll(termRelationshipTypes.collectEntries{[it.id, it]})
+
+        termRelationships = termRelationshipCacheableRepository.readAllByTerminologyIdIn(terminologies.id)
+        allItems.putAll(termRelationships.collectEntries{[it.id, it]})
+
+        codeSets = codeSetCacheableRepository.readAllByFolderIdIn(folders.values().flatten().id as Set<UUID>)
+        allItems.putAll(codeSets.collectEntries{[it.id, it]})
+
+        dataModels = dataModelCacheableRepository.readAllByFolderIdIn(folders.values().flatten().id as Set<UUID>)
+        allItems.putAll(dataModels.collectEntries{[it.id, it]})
+
+        dataClasses[0] = dataClassCacheableRepository.readAllByDataModelIdInAndParentDataClassIsNull(dataModels.id) as Set
+
+        depth = 1
+        Set<UUID> foundClasses = dataClasses[0].id as Set
+        do {
+            List<DataClass> retrievedDataClasses = dataClassCacheableRepository.readAllByParentDataClassIdIn(foundClasses)
+            foundClasses = retrievedDataClasses.id as Set
+            if(foundClasses) {
+                dataClasses[depth] = retrievedDataClasses as Set
+            }
+            depth++
+        } while (foundClasses.size() > 0)
+        allItems.putAll(dataClasses.values().flatten().collectEntries { [it.id, it]})
+
+        dataTypes = dataTypeCacheableRepository.readAllByDataModelIdIn(dataModels.id)
+        allItems.putAll(dataTypes.collectEntries{[it.id, it]})
+
+        enumerationValues = enumerationValueCacheableRepository.readAllByEnumerationTypeIdIn(dataTypes.id)
+        allItems.putAll(enumerationValues.collectEntries{[it.id, it]})
+
+        dataElements = dataElementCacheableRepository.readAllByDataClassIdIn(dataClasses.values().flatten().id)
+        allItems.putAll(dataElements.collectEntries{[it.id, it]})
+
+        // annotations
+
+        edits = editCacheableRepository.readAllByMultiFacetAwareItemIdIn(allItems.values().id)
+        referenceFiles = referenceFileRepository.readAllByMultiFacetAwareItemIdIn(allItems.values().id)
+        rules = ruleRepository.readAllByMultiFacetAwareItemIdIn(allItems.values().id)
+        ruleRepresentations = ruleRepresentationCacheableRepository.readAllByRuleIdIn(rules.id)
+        semanticLinks = semanticLinkRepository.readAllByMultiFacetAwareItemIdIn(allItems.values().id)
+        summaryMetadata = summaryMetadataCacheableRepository.readAllByMultiFacetAwareItemIdIn(allItems.values().id)
+        summaryMetadataReports = summaryMetadataReportCacheableRepository.readAllBySummaryMetadataIdIn(summaryMetadata.id)
+        versionLinks = versionLinkCacheableRepository.readAllByMultiFacetAwareItemIdIn(summaryMetadata.id)
+
+        metadata = metadataCacheableRepository.readAllByMultiFacetAwareItemIdIn(allItems.values().id)
+
+
+        return reassemble(folderId)
+    }
+
+    Folder reassemble(UUID id) {
+
+        folders.keySet().sort().each {depth ->
+            if(depth > 0) {
+                folders[depth].each {folder ->
+                    ((Folder) allItems[folder.parentFolder.id]).childFolders.add(folder)
+                }
+            }
+        }
+        terminologies.each {terminology ->
+            ((Folder) allItems[terminology.folder.id]).terminologies.add(terminology)
+        }
+        terms.each {term ->
+            ((Terminology) allItems[term.terminology.id]).terms.add(term)
+        }
+        termRelationshipTypes.each {termRelationshipType ->
+            ((Terminology) allItems[termRelationshipType.terminology.id]).termRelationshipTypes.add(termRelationshipType)
+        }
+        termRelationships.each {termRelationship ->
+            ((Terminology) allItems[termRelationship.terminology.id]).termRelationships.add(termRelationship)
+        }
+        codeSets.each {codeSet ->
+            ((Folder) allItems[codeSet.folder.id]).codeSets.add(codeSet)
+        }
+        dataModels.each {dataModel ->
+            ((Folder) allItems[dataModel.folder.id]).dataModels.add(dataModel)
+        }
+
+        dataClasses.keySet().sort().each {depth ->
+            dataClasses[depth].each {dataClass ->
+                if(dataClass.parentDataClass) {
+                    ((DataClass) allItems[dataClass.parentDataClass.id]).dataClasses.add(dataClass)
+                } else {
+                    ((DataModel) allItems[dataClass.dataModel.id]).dataClasses.add(dataClass)
+                }
+            }
+        }
+        dataTypes.each {dataType ->
+            ((DataModel) allItems[dataType.dataModel.id]).dataTypes.add(dataType)
+        }
+        enumerationValues.each {enumerationValue ->
+            ((DataModel) allItems[enumerationValue.enumerationType.id]).enumerationValues.add(enumerationValue)
+        }
+
+        dataElements.each {dataElement ->
+            ((DataClass) allItems[dataElement.dataClass.id]).dataElements.add(dataElement)
+        }
+
+        edits.each {edit ->
+            allItems[edit.multiFacetAwareItemId].edits.add(edit)
+        }
+
+        referenceFiles.each {referenceFile ->
+            allItems[referenceFile.multiFacetAwareItemId].referenceFiles.add(referenceFile)
+        }
+        rules.each {rule ->
+            allItems[rule.multiFacetAwareItemId].rules.add(rule)
+        }
+
+        // TODO: Make this quicker using a map
+        ruleRepresentations.each {ruleRepresentation ->
+            rules.find {it.id == ruleRepresentation.ruleId }.ruleRepresentations.add(ruleRepresentation)
+        }
+
+        semanticLinks.each {semanticLink ->
+            allItems[semanticLink.multiFacetAwareItemId].semanticLinks.add(semanticLink)
+        }
+
+        summaryMetadata.each {summaryMetadata ->
+            allItems[summaryMetadata.multiFacetAwareItemId].summaryMetadata.add(summaryMetadata)
+        }
+
+        // TODO: Make this quicker using a map
+        summaryMetadataReports.each {summaryMetadataReport ->
+            summaryMetadata.find {it.id == summaryMetadataReport.summaryMetadataId}.summaryMetadataReports.add(summaryMetadataReport)
+        }
+
+        versionLinks.each {versionLink ->
+            ((Model) allItems[versionLink.multiFacetAwareItemId]).versionLinks.add(versionLink)
+        }
+
+        metadata.each {metadata ->
+            allItems[metadata.multiFacetAwareItemId].metadata.add(metadata)
+        }
+
+
+
+        return allItems[id]
     }
 
 

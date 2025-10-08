@@ -6,6 +6,7 @@ import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.model.query.builder.sql.Dialect
 import jakarta.inject.Inject
 import org.maurodata.domain.model.AdministeredItem
+import org.maurodata.domain.terminology.TermRelationship
 import org.maurodata.domain.terminology.TermRelationshipType
 import org.maurodata.domain.terminology.Terminology
 import org.maurodata.persistence.model.ModelItemRepository
@@ -42,6 +43,9 @@ abstract class TermRelationshipTypeRepository implements ModelItemRepository<Ter
 
     @Nullable
     abstract List<TermRelationshipType> readAllByTerminology(Terminology terminology)
+
+    @Nullable
+    abstract List<TermRelationshipType> readAllByTerminologyIdIn(Collection<UUID> terminologyIds)
 
     @Override
     @Nullable

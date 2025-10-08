@@ -5,6 +5,7 @@ import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.model.query.builder.sql.Dialect
 import jakarta.inject.Inject
+import org.maurodata.domain.classifier.ClassificationScheme
 import org.maurodata.domain.folder.Folder
 import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.persistence.folder.dto.FolderDTORepository
@@ -37,6 +38,17 @@ abstract class FolderRepository implements ModelRepository<Folder> {
 
     @Nullable
     abstract List<Folder> readAllByParentFolder(Folder folder)
+
+    @Nullable
+    abstract List<Folder> readAllByParentFolderIdInList(Collection<UUID> folderId)
+
+    @Override
+    @Nullable
+    List<Folder> readAllByFolderIdIn(Collection<UUID> folderIds) {
+        readAllByParentFolderIdInList(folderIds)
+    }
+
+
 
     @Nullable
     abstract List<Folder> readAllByParentFolderIsNull()

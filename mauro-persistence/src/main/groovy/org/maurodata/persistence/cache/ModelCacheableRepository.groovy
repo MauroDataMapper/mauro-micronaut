@@ -48,7 +48,12 @@ class ModelCacheableRepository<M extends Model> extends AdministeredItemCacheabl
     @Override
     @Nullable
     List<M> findAllByFolderId(UUID folderId) {
-        return null
+        repository.findAllByFolderId(folderId)
+    }
+
+    @Override
+    List<M> readAllByFolderIdIn(Collection<UUID> folderIds) {
+        repository.readAllByFolderIdIn(folderIds)
     }
 
     @Override
@@ -116,6 +121,10 @@ class ModelCacheableRepository<M extends Model> extends AdministeredItemCacheabl
             ((CodeSetRepository) repository).getTerms(uuid)
         }
 
+        // Not cached
+        Long removeAllAssociations(@NonNull Collection<UUID> uuids) {
+            ((CodeSetRepository) repository).removeTermAssociations(uuids)
+        }
 
     }
 

@@ -382,6 +382,10 @@ abstract class ItemCacheableRepository<I extends Item> implements ItemRepository
             saved
         }
 
+        List<SummaryMetadataReport> readAllBySummaryMetadataIdIn(List<UUID> summaryMetadataIds) {
+            ((SummaryMetadataReportRepository) repository).readAllBySummaryMetadataIdIn(summaryMetadataIds)
+        }
+
         private void invalidateChain(SummaryMetadataReport summaryMetadataReport, SummaryMetadata summaryMetadata) {
             invalidate(summaryMetadataReport)
             summaryMetadataCacheableRepository.invalidate(summaryMetadata)
@@ -404,6 +408,11 @@ abstract class ItemCacheableRepository<I extends Item> implements ItemRepository
             Rule rule = ruleCacheableRepository.readById(item.ruleId)
             ruleCacheableRepository.invalidate(rule)
         }
+
+        List<RuleRepresentation> readAllByRuleIdIn(List<UUID> ruleIds) {
+            ((RuleRepresentationRepository) repository).readAllByRuleIdIn(ruleIds)
+        }
+
     }
 
     @CompileStatic
