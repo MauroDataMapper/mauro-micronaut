@@ -57,7 +57,7 @@ class JsonFolderImporterPlugin implements FolderImporterPlugin<FileImportParamet
         }
 
         log.info '*** imported JSON model ***'
-        if (!importModel.folder){
+        if (!importModel.folder && !importModel.folders){
             ErrorHandler.handleError(HttpStatus.BAD_REQUEST, 'Cannot import JSON as folder/s not present')
         }
         if (importModel.folder) {

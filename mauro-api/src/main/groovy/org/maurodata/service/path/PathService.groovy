@@ -144,6 +144,7 @@ class PathService implements AdministeredItemReader {
                 items.first()
             }
             item = (items as List<AdministeredItem>).find {
+                pathRepository.readParentItems(it)
                 it.updatePath()
                 it.path?.pathString?.contains(versionString)
             }
