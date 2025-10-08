@@ -31,7 +31,7 @@ class JsonTerminologyImporterPlugin implements TerminologyImporterPlugin<FileImp
         if (!importModel.terminology){
             ErrorHandler.handleError(HttpStatus.BAD_REQUEST, 'Cannot import JSON as terminology/ies is not present')
         }
-        if(importModel.terminology) {
+        if(importModel.terminology && !importModel.terminologies) {
             return [importModel.terminology]
         } else {
             return importModel.terminologies?:[]
