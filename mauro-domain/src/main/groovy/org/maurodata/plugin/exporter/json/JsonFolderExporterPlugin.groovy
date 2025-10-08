@@ -85,6 +85,7 @@ class JsonFolderExporterPlugin implements FolderExporterPlugin {
     }
 
     void addAllFoldersToMap(Folder folder, Map<UUID, Folder> foldersMap) {
+        if (!folder.id) folder.id = UUID.randomUUID()
         foldersMap[folder.id] = folder
         folder.childFolders.each {addAllFoldersToMap(it, foldersMap)}
     }
