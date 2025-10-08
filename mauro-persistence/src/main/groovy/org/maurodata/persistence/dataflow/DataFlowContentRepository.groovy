@@ -4,6 +4,8 @@ import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
+import org.maurodata.domain.dataflow.DataClassComponent
+import org.maurodata.domain.dataflow.DataElementComponent
 import org.maurodata.domain.dataflow.DataFlow
 import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.persistence.model.AdministeredItemContentRepository
@@ -16,10 +18,35 @@ class DataFlowContentRepository extends AdministeredItemContentRepository {
     DataFlowRepository dataFlowRepository
     @Inject
     DataClassComponentContentRepository dataClassComponentContentRepository
+    @Inject
+    DataClassComponentRepository dataClassComponentRepository
+
+    @Inject
+    DataElementComponentRepository dataElementComponentRepository
 
     @Override
     DataFlow readWithContentById(UUID id) {
-        dataFlowRepository.readWithContentById(id)
+        DataFlow dataFlow = dataFlowRepository.findById(id)
+        List<DataClassComponent> dataClassComponents = dataClassComponentRepository.findAllByParent(dataFlow)
+
+        dataClassComponents.each {
+            it.dataElementComponents =   dataElementComponentRepository.findAllByParent(it)
+        }
+        dataFlow.dataClassComponents = dataClassComponents
+        dataFlow
+    }
+
+    @Override
+    DataFlow saveWithContent(AdministeredItem administeredItem) {
+        DataFlow saved = dataFlowRepository.save(administeredItem as DataFlow)
+        saveAllFacets(saved)
+        saved.dataClassComponents.each {
+            it.updateCreationProperties()
+            it.dataFlow = saved
+            it.parent = saved
+            dataClassComponentContentRepository.saveWithContent(it)
+        }
+        saved
     }
 
     @Override
@@ -30,11 +57,12 @@ class DataFlowContentRepository extends AdministeredItemContentRepository {
                 dataClassComponentContentRepository.deleteWithContent(dataClassComponent as AdministeredItem)
             }
         }
-        dataFlowRepository.delete(dataFlow)
+        super.administeredItemRepository.delete(dataFlow)
     }
 
     @Override
     Boolean handles(Class clazz) {
         return clazz.simpleName == 'DataFlow'
     }
+
 }

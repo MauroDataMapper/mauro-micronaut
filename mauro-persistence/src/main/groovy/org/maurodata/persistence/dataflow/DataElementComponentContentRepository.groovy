@@ -6,6 +6,7 @@ import jakarta.inject.Inject
 import jakarta.inject.Singleton
 import org.maurodata.domain.dataflow.DataElementComponent
 import org.maurodata.domain.model.AdministeredItem
+import org.maurodata.persistence.cache.AdministeredItemCacheableRepository
 import org.maurodata.persistence.model.AdministeredItemContentRepository
 
 @CompileStatic
@@ -13,7 +14,7 @@ import org.maurodata.persistence.model.AdministeredItemContentRepository
 class DataElementComponentContentRepository extends AdministeredItemContentRepository {
 
     @Inject
-    DataElementComponentRepository dataElementComponentRepository
+    AdministeredItemCacheableRepository.DataElementComponentCacheableRepository dataElementComponentRepository
 
     @Override
     DataElementComponent readWithContentById(UUID id) {
@@ -24,6 +25,19 @@ class DataElementComponentContentRepository extends AdministeredItemContentRepos
         dataElementComponent
     }
 
+
+    @Override
+    AdministeredItem saveWithContent(@NonNull AdministeredItem administeredItem) {
+        DataElementComponent saved = dataElementComponentRepository.save(administeredItem as DataElementComponent)
+        saved.sourceDataElements.each {
+            dataElementComponentRepository.addSourceDataElement(saved.id, it.id)
+        }
+        saved.targetDataElements.each {
+            dataElementComponentRepository.addTargetDataElement(saved.id, it.id)
+        }
+        saveAllFacets(saved)
+        saved
+    }
     // TODO methods here won't invalidate the cache
     @Override
     Long deleteWithContent(@NonNull AdministeredItem administeredItem) {

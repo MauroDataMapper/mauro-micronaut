@@ -5,21 +5,19 @@ import groovy.json.JsonSlurper
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.MediaType
 import io.micronaut.http.client.multipart.MultipartBody
-import io.micronaut.runtime.EmbeddedApplication
-import jakarta.inject.Inject
 import jakarta.inject.Singleton
-import spock.lang.Shared
 import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.datamodel.DataType
 import org.maurodata.domain.facet.Annotation
 import org.maurodata.domain.facet.Metadata
 import org.maurodata.domain.facet.SummaryMetadata
-import org.maurodata.domain.folder.Folder
 import org.maurodata.domain.facet.SummaryMetadataReport
+import org.maurodata.domain.folder.Folder
 import org.maurodata.export.ExportModel
 import org.maurodata.persistence.ContainerizedTest
 import org.maurodata.testing.CommonDataSpec
 import org.maurodata.web.ListResponse
+import spock.lang.Shared
 
 import java.time.Instant
 

@@ -342,7 +342,10 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
             ((DataFlowRepository) repository).findAllBySource(dataModel) as List<DataFlow>
         }
 
-
+        @Override
+        Boolean handles(String domainType) {
+            domainClass.simpleName.equalsIgnoreCase(domainType) || (domainClass.simpleName + 's').equalsIgnoreCase(domainType)
+        }
     }
 
     @Singleton
@@ -368,11 +371,28 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
             ((DataClassComponentRepository) repository).removeSourceDataClass(id, dataClassId)
         }
 
-        @Override
+         List<DataClass> findAllSourceDataClasses(UUID id) {
+             ((DataClassComponentRepository) repository).findAllSourceDataClasses(id)
+        }
+
+        List<DataClass> findAllTargetDataClasses(UUID id) {
+            ((DataClassComponentRepository) repository).findAllTargetDataClasses(id)
+        }
+
+        Long removeSourceDataClasses(UUID id) {
+            invalidate(id)
+            ((DataClassComponentRepository) repository).removeSourceDataClasses(id)
+        }
+
+        Long removeTargetDataClasses(UUID id) {
+            invalidate(id)
+            ((DataClassComponentRepository) repository).removeTargetDataClasses(id)
+        }
         Boolean handles(String domainType) {
             domainClass.simpleName.equalsIgnoreCase(domainType) || (domainClass.simpleName + 's').equalsIgnoreCase(domainType)
         }
     }
+
     @Singleton
     @CompileStatic
     static class DataElementComponentCacheableRepository extends AdministeredItemCacheableRepository<DataElementComponent> {
@@ -384,7 +404,6 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
             invalidate(id)
             ((DataElementComponentRepository) repository).addTargetDataElement(id, dataElementId)
         }
-
         DataElementComponent addSourceDataElement(@NonNull UUID id, @NonNull UUID dataElementId) {
             invalidate(id)
             ((DataElementComponentRepository) repository).addSourceDataElement(id, dataElementId)
@@ -394,11 +413,26 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
             invalidate(id)
             ((DataElementComponentRepository) repository).removeTargetDataElement(id, dataElementId)
         }
+        Long removeTargetDataElements(UUID id) {
+            invalidate(id)
+            ((DataElementComponentRepository) repository).removeTargetDataElements(id)
+        }
 
         Long removeSourceDataElement(UUID id, UUID dataElementId) {
             invalidate(id)
             ((DataElementComponentRepository) repository).removeSourceDataElement(id, dataElementId)
+        }
+        Long removeSourceDataElements(UUID id) {
+            invalidate(id)
+            ((DataElementComponentRepository) repository).removeSourceDataElements(id)
+        }
 
+        List<DataElement> getSourceDataElements(UUID id) {
+            ((DataElementComponentRepository) repository).getSourceDataElements(id)
+        }
+
+        List<DataElement> getTargetDataElements(UUID id) {
+            ((DataElementComponentRepository) repository).getTargetDataElements(id)
         }
 
         @Override

@@ -31,6 +31,7 @@ import org.maurodata.domain.model.ModelItem
 class DataClassComponent extends ModelItem<DataFlow> {
 
     @NotNull
+    @JsonIgnore
     DataFlow dataFlow
 
     @Nullable
@@ -75,6 +76,12 @@ class DataClassComponent extends ModelItem<DataFlow> {
     @JsonIgnore
     String getPathPrefix() {
         'dcc'
+    }
+
+    @Transient
+    @JsonIgnore
+    List<Collection<? extends ModelItem<DataClassComponent>>> getAllAssociations() {
+        [dataElementComponents] as List<Collection<? extends ModelItem<DataClassComponent>>>
     }
 
     @Override

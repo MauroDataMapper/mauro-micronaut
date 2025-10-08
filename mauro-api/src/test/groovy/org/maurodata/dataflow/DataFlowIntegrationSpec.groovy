@@ -77,8 +77,6 @@ class DataFlowIntegrationSpec extends CommonDataSpec {
 
         then:
         !response
-        //HttpClientResponseException exception = thrown()
-        //exception.status == HttpStatus.NOT_FOUND
     }
 
     void 'create dataflow -should return error when target is invalid id'() {

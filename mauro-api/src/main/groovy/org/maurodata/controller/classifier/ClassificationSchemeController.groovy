@@ -1,5 +1,6 @@
 package org.maurodata.controller.classifier
 
+import jakarta.inject.Inject
 import org.maurodata.ErrorHandler
 import org.maurodata.api.Paths
 import org.maurodata.api.classifier.ClassificationSchemeApi
@@ -45,7 +46,7 @@ import org.maurodata.web.PaginationParams
 @Secured(SecurityRule.IS_ANONYMOUS)
 class ClassificationSchemeController extends ModelController<ClassificationScheme> implements ClassificationSchemeApi {
 
-    ModelCacheableRepository.ClassificationSchemeCacheableRepository classificationSchemeCacheableRepository
+
 
     ClassificationSchemeContentRepository classificationSchemeContentRepository
 
@@ -116,6 +117,7 @@ class ClassificationSchemeController extends ModelController<ClassificationSchem
     ListResponse<ClassificationScheme> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version) {
         super.importModel(body, namespace, name, version)
     }
+
 
     @Audit
     @Get(Paths.CLASSIFICATION_SCHEMES_DIFF)

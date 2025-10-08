@@ -1,13 +1,12 @@
 package org.maurodata.test.domain.admin
 
+import io.micronaut.test.extensions.spock.annotation.MicronautTest
+import jakarta.inject.Inject
 import org.maurodata.plugin.MauroPlugin
 import org.maurodata.plugin.MauroPluginService
 import org.maurodata.plugin.PluginType
-import org.maurodata.plugin.exporter.ModelExporterPlugin
-import org.maurodata.plugin.importer.ModelImporterPlugin
-
-import io.micronaut.test.extensions.spock.annotation.MicronautTest
-import jakarta.inject.Inject
+import org.maurodata.plugin.exporter.ExporterPlugin
+import org.maurodata.plugin.importer.ImporterPlugin
 import spock.lang.Specification
 
 /**
@@ -35,7 +34,7 @@ class AdminSpec extends Specification {
             List pluginsList = mauroPluginService.listPlugins()
 
         then:
-            pluginsList.size() == 12
+            pluginsList.size() == 14
             pluginsList.find {
                 it.name == "JsonDataModelImporterPlugin" &&
                 it.displayName == "JSON DataModel Importer" &&
@@ -87,6 +86,21 @@ class AdminSpec extends Specification {
                 it.version == "4.0.0"
             }
             pluginsList.find {
+                it.name == 'JsonDataFlowImporterPlugin' &&
+                it.displayName == "JSON DataFlow Importer" &&
+                it.version == "4.0.0"
+            }
+        pluginsList.find {
+            it.name == 'JsonDataFlowExporterPlugin' &&
+            it.displayName == "JSON DataFlow Exporter" &&
+            it.version == "4.0.0"
+        }
+        pluginsList.find {
+            it.name == 'JsonDataFlowImporterPlugin' &&
+            it.displayName == "JSON DataFlow Importer" &&
+            it.version == "4.0.0"
+        }
+            pluginsList.find {
                 it.name == "MauroDataTypeProviderService" &&
                 it.displayName == "Basic Default DataTypes" &&
                 it.version == "1.0.0"
@@ -98,12 +112,12 @@ class AdminSpec extends Specification {
             }
 
         when:
-            List importersList = mauroPluginService.listPlugins(ModelImporterPlugin)
+            List importersList = mauroPluginService.listPlugins(ImporterPlugin)
         then:
             importersList == pluginsList.findAll{it.pluginType == PluginType.Importer}
 
         when:
-            List exportersList = mauroPluginService.listPlugins(ModelExporterPlugin)
+            List exportersList = mauroPluginService.listPlugins(ExporterPlugin)
         then:
             exportersList == pluginsList.findAll{it.pluginType == PluginType.Exporter}
     }

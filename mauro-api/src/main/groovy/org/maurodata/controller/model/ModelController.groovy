@@ -5,14 +5,11 @@ import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
-import io.micronaut.http.HttpHeaders
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.exceptions.HttpException
 import io.micronaut.http.exceptions.HttpStatusException
-import io.micronaut.http.multipart.CompletedFileUpload
-import io.micronaut.http.multipart.CompletedPart
 import io.micronaut.http.server.exceptions.InternalServerException
 import io.micronaut.http.server.multipart.MultipartBody
 import io.micronaut.scheduling.TaskExecutors
@@ -72,18 +69,16 @@ import org.maurodata.persistence.model.AdministeredItemRepository
 import org.maurodata.persistence.model.ModelContentRepository
 import org.maurodata.plugin.MauroPluginService
 import org.maurodata.plugin.exporter.ModelExporterPlugin
-import org.maurodata.plugin.importer.FileParameter
-import org.maurodata.plugin.importer.FolderImporterPlugin
 import org.maurodata.plugin.importer.ImportParameters
 import org.maurodata.plugin.importer.ModelImporterPlugin
 import org.maurodata.service.core.AuthorityService
 import org.maurodata.service.plugin.PluginService
+import org.maurodata.util.exporter.ExporterUtils
+import org.maurodata.utils.importer.ImporterUtils
 import org.maurodata.web.ListResponse
 import org.maurodata.web.PaginationParams
-import reactor.core.publisher.Flux
 
 import java.lang.reflect.Method
-import java.nio.charset.StandardCharsets
 
 @Slf4j
 @CompileStatic
@@ -129,6 +124,9 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
 
     @Inject
     List<AdministeredItemContentRepository> administeredItemContentRepositories
+
+    @Inject
+    ImporterUtils importerUtils
 
     ModelController(Class<M> modelClass, AdministeredItemCacheableRepository<M> modelRepository, FolderCacheableRepository folderRepository,
                     ModelContentRepository<M> modelContentRepository) {
@@ -353,16 +351,6 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         administeredItemRepositories.find {it.handles(item.class) || it.handles(item.domainType)}
     }
 
-    <P extends ImportParameters> P readFromMultipartFormBody(MultipartBody body, Class<P> parametersClass) {
-        Map<String, Object> importMap = Flux.from(body).collectList().block().collectEntries {CompletedPart cp ->
-            if (cp instanceof CompletedFileUpload) {
-                return [cp.name, new FileParameter(cp.filename, cp.contentType.toString(), cp.bytes)]
-            } else {
-                return [cp.name, new String(cp.bytes, StandardCharsets.UTF_8)]
-            }
-        }
-        return objectMapper.convertValue(importMap, parametersClass)
-    }
 
     HttpResponse<byte[]> exportModel(UUID modelId, String namespace, String name, @Nullable String version) {
         ModelExporterPlugin mauroPlugin = mauroPluginService.getPlugin(ModelExporterPlugin, namespace, name, version)
@@ -371,7 +359,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         M existing = modelContentRepository.findWithContentById(modelId)
         existing.setAssociations()
 
-        createExportResponse(mauroPlugin, existing)
+        ExporterUtils.createExportResponse(mauroPlugin, existing)
     }
 
     ListResponse<M> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version) {
@@ -379,49 +367,36 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         ModelImporterPlugin mauroPlugin = mauroPluginService.getPlugin(ModelImporterPlugin, namespace, name, version)
         PluginService.handlePluginNotFound(mauroPlugin, namespace, name)
 
-        ImportParameters importParameters = readFromMultipartFormBody(body, mauroPlugin.importParametersClass())
+        ImportParameters importParameters = importerUtils.readFromMultipartFormBody(body, mauroPlugin.importParametersClass())
 
-        Folder folder = null
-        if (importParameters.folderId != null) {
-            folder = folderRepository.readById(importParameters.folderId)
-        } else if (!(mauroPlugin instanceof FolderImporterPlugin)) {
-            // folderId is null and plugin is not a folder import
+        if (importParameters.folderId == null) {
             ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, importParameters.folderId, "Please choose the folder into which the Model/s should be imported.")
         }
 
         List<M> imported = (List<M>) mauroPlugin.importModels(importParameters)
 
+        Folder folder = folderRepository.readById(importParameters.folderId)
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, folder, "Folder with id $importParameters.folderId not found")
         accessControlService.checkRole(Role.EDITOR, folder)
-        List<M> saved = imported.collect {M imp ->
+        List<M> saved = imported.collect { M imp ->
             imp.folder = folder
             log.info '** about to saveWithContentBatched... **'
             updateCreationProperties(imp)
-            switch (imp.getDomainType()) {
-                case DataModel.class.simpleName: saveDataModel((DataModel) imp)
-                    break
-                case Folder.class.simpleName: saveFolder((Folder) imp)
-                    break
-                case CodeSet.class.simpleName: saveCodeSet((CodeSet) imp)
-                    break
-                case Terminology.class.simpleName: saveTerminology((Terminology) imp)
-                    break
-                default:
-                    saveModel(imp)
-                    break
-            }
-
+            M savedImported = modelContentRepository.saveWithContent(imp)
+            log.info '** finished saveWithContentBatched **'
+            savedImported
         }
-        log.info '** finished saveWithContentBatched **'
-        List<M> smallerResponse = saved.collect {model ->
+        List<M> smallerResponse = saved.collect { model ->
             show(model.id)
         }
         ListResponse.from(smallerResponse)
     }
 
-    ListResponse<DataModel> importModel(@Body io.micronaut.http.client.multipart.MultipartBody body, String namespace, String name, @Nullable String version) {
-        throw new Exception("Client version of importModel has been called")
-    }
 
+
+    ListResponse<M> importModel(@Body io.micronaut.http.client.multipart.MultipartBody body, String namespace, String name, @Nullable String version) {
+        throw new Exception("Client version of import model has been called.. hint client MultipartBody ")
+    }
 
     protected void getReferenceFileFileContent(Collection<AdministeredItem> administeredItems) {
         administeredItems.each {
@@ -438,15 +413,6 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         }
     }
 
-
-    static protected HttpResponse<byte[]> createExportResponse(ModelExporterPlugin mauroPlugin, Model model) {
-        byte[] fileContents = mauroPlugin.exportModel(model)
-        String filename = mauroPlugin.getFileName(model)
-        HttpResponse
-            .ok(fileContents)
-            .header(HttpHeaders.CONTENT_LENGTH, Long.toString(fileContents.length))
-            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=${filename}")
-    }
 
     protected VersionLinkDTO constructVersionLinkDTO(final M sourceModel, final VersionLink versionLink) {
         // Look up target model

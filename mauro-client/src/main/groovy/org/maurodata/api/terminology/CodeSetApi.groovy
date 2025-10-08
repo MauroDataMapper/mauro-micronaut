@@ -1,5 +1,6 @@
 package org.maurodata.api.terminology
 
+import io.micronaut.http.server.multipart.MultipartBody
 import org.maurodata.api.MauroApi
 import org.maurodata.api.Paths
 
@@ -82,5 +83,8 @@ interface CodeSetApi extends ModelApi<CodeSet> {
 
     @Delete(Paths.CODE_SET_READ_BY_AUTHENTICATED)
     HttpResponse revokeReadByAuthenticated(UUID id)
+
+    @Post(Paths.CODE_SET_IMPORT)
+    ListResponse<CodeSet> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version)
 
 }

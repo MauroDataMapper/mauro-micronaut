@@ -125,4 +125,37 @@ class CodeSet extends Model implements ItemReferencer {
         this.copyInto(codeSetShallowCopy)
         return codeSetShallowCopy
     }
+
+    /**
+     * Builder methods
+     * @param args
+     * @param closure
+     * @return
+     */
+    static CodeSet build(
+        Map args,
+        @DelegatesTo(value = CodeSet, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+        new CodeSet(args).tap(closure)
+    }
+
+    static CodeSet build(
+        @DelegatesTo(value = CodeSet, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+        build [:], closure
+    }
+
+
+    Term term (Term term) {
+        this.terms.add(term)
+        term
+    }
+
+    Term term(Map args, @DelegatesTo(value = Term, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+        Term term1 = Term.build(args , closure)
+        term term1
+    }
+
+    Term term(@DelegatesTo(value = Term, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+        term [:], closure
+    }
+
 }

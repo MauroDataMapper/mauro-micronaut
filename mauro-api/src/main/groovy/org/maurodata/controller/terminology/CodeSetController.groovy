@@ -1,5 +1,10 @@
 package org.maurodata.controller.terminology
 
+import io.micronaut.http.MediaType
+import io.micronaut.http.annotation.Consumes
+import io.micronaut.http.server.multipart.MultipartBody
+import io.micronaut.scheduling.TaskExecutors
+import io.micronaut.scheduling.annotation.ExecuteOn
 import org.maurodata.ErrorHandler
 import org.maurodata.api.Paths
 import org.maurodata.api.model.ModelVersionedRefDTO
@@ -205,6 +210,17 @@ class CodeSetController extends ModelController<CodeSet> implements CodeSetApi {
             addTerm(savedCopy.id, it.id)
         }
         savedCopy
+    }
+
+    @Override
+    @Audit(title = EditType.IMPORT, description = "Import codeSet")
+    @Transactional
+    @ExecuteOn(TaskExecutors.IO)
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @Post(Paths.CODE_SET_IMPORT)
+    ListResponse<CodeSet> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version) {
+        super.importModel(body, namespace, name, version)
+
     }
 
     //stub endpoint todo: actual

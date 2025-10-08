@@ -88,7 +88,10 @@ interface Paths {
     String DATA_FLOW_LIST = '/api/dataModels/{dataModelId}/dataFlows'
     String DATA_FLOW_ID = '/api/dataModels/{dataModelId}/dataFlows/{id}'
     String DATA_FLOW_LIST_PAGED = '/api/dataModels/{dataModelId}/dataFlows{?params*}'
-
+    String DATA_FLOW_EXPORT = '/api/dataModels/{dataModelId}/dataFlows/{id}/export{/namespace}{/name}{/version}'
+    String DATA_FLOW_IMPORT = '/api/dataModels/{dataModelId}/dataFlows/import{/namespace}{/name}{/version}'
+    String DATA_FLOW_EXPORTERS = '/api/dataFlows/providers/exporters'
+    String DATA_FLOW_IMPORTERS = '/api/dataFlows/providers/importers'
     /*
     * DataClassApi
     */
@@ -128,8 +131,8 @@ interface Paths {
     String DATA_MODEL_DIFF = '/api/dataModels/{id}/diff/{otherId}'
     String DATA_MODEL_SEARCH_GET = '/api/dataModels/{id}/search{?requestDTO*}'
     String DATA_MODEL_SEARCH_POST = '/api/dataModels/{id}/search'
-    String DATA_MODEL_IMPORTERS = '/api/dataModels/providers/importers'
     String DATA_MODEL_EXPORTERS = '/api/dataModels/providers/exporters'
+    String DATA_MODEL_IMPORTERS = '/api/dataModels/providers/importers'
     String DATA_MODEL_SUBSET = '/api/dataModels/{id}/subset/{otherId}'
     String DATA_MODEL_INTERSECTS_MANY = '/api/dataModels/{id}/intersectsMany'
     String DATA_MODEL_READ_BY_AUTHENTICATED = '/api/dataModels/{id}/readByAuthenticated'
@@ -346,6 +349,7 @@ interface Paths {
     String CODE_SET_DOI = '/api/codeSets/{id}/doi'
     String CODE_SET_LIST_PAGED = '/api/codeSets{?params*}'
     String CODE_SET_TERM_LIST_PAGED = '/api/codeSets/{id}/terms{?params*}'
+    String CODE_SET_IMPORT = '/api/codeSets/import/{namespace}/{name}{/version}'
     String CODE_SET_SIMPLE_MODEL_VERSION_TREE = '/api/codeSets/{id}/simpleModelVersionTree{?branchesOnly}'
 
 

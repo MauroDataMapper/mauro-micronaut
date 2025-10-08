@@ -48,10 +48,8 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import io.micronaut.http.MediaType
 import io.micronaut.http.client.multipart.MultipartBody
 import jakarta.inject.Inject
-import org.slf4j.Logger
 import picocli.CommandLine.Command
 
-import static org.slf4j.LoggerFactory.getLogger
 
 @Singleton
 @Command

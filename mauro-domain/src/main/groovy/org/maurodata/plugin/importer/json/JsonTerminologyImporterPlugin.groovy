@@ -50,4 +50,8 @@ class JsonTerminologyImporterPlugin implements TerminologyImporterPlugin<FileImp
         return FileImportParameters
     }
 
+    @Override
+    Class<Terminology> getHandlesModelType() {
+        Terminology
+    }
 }

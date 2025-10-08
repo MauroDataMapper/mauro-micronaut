@@ -4,15 +4,14 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import groovy.transform.Memoized
 import groovy.util.logging.Slf4j
 import org.apache.commons.lang3.reflect.FieldUtils
-import org.maurodata.domain.model.Model
-import org.maurodata.domain.terminology.Terminology
+import org.maurodata.domain.model.ModelItem
 import org.maurodata.plugin.PluginType
 import org.maurodata.plugin.importer.config.ImportParameterConfig
 
 import java.lang.reflect.Field
 
 @Slf4j
-trait ModelImporterPlugin <D extends Model, P extends ImportParameters> extends ImporterPlugin {
+trait ModelItemImporterPlugin<D extends ModelItem, P extends ImportParameters> extends ImporterPlugin {
 
     abstract List<D> importDomain(P params)
 
@@ -32,24 +31,18 @@ trait ModelImporterPlugin <D extends Model, P extends ImportParameters> extends 
     }
 
     @JsonIgnore
-    abstract Class<D> getHandlesModelType()
+    abstract Class<D> getHandlesModelItemType()
 
     String getParamClassType() {
         importParametersClass().toString()
     }
 
-    List<D> importModels(P parameters) {
+    List<D> importModelItem(P parameters) {
         List<D> imported = importDomain(parameters)
-        imported.each { importedModel ->
-            importedModel.setAssociations()
-            if (importedModel.modelType == Terminology.class.simpleName){
-                ((Terminology) importedModel as Terminology).termRelationshipTypes.each {
-                    it.displayLabel = it.createDisplayLabel()
-                }
-            }
-            importedModel.updateCreationProperties()
+        imported.each { importedModelItem ->
+
             log.info '* start updateCreationProperties *'
-            importedModel.getAllContents().each {it.updateCreationProperties()}
+            importedModelItem.updateCreationProperties()
             log.info '* finish updateCreationProperties *'
         }
         imported
@@ -57,7 +50,7 @@ trait ModelImporterPlugin <D extends Model, P extends ImportParameters> extends 
 
     @Override
     String getProviderType() {
-        return "${getHandlesModelType().simpleName}${this.pluginType}"
+        return "${getHandlesModelItemType().simpleName}${this.pluginType}"
     }
 
     @Memoized

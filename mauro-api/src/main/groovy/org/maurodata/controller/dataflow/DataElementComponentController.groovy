@@ -1,52 +1,59 @@
 package org.maurodata.controller.dataflow
 
-import org.maurodata.api.dataflow.DataElementComponentApi
-import org.maurodata.ErrorHandler
-import org.maurodata.audit.Audit
-import org.maurodata.persistence.cache.AdministeredItemCacheableRepository
-import org.maurodata.web.PaginationParams
-
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
-import io.micronaut.http.annotation.*
+import io.micronaut.http.annotation.Body
+import io.micronaut.http.annotation.Controller
+import io.micronaut.http.annotation.Delete
+import io.micronaut.http.annotation.Get
+import io.micronaut.http.annotation.Post
+import io.micronaut.http.annotation.Put
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
 import jakarta.inject.Inject
-import org.maurodata.controller.model.AdministeredItemController
+import org.maurodata.ErrorHandler
 import org.maurodata.api.Paths
+import org.maurodata.api.dataflow.DataElementComponentApi
+import org.maurodata.audit.Audit
+import org.maurodata.controller.model.AdministeredItemController
 import org.maurodata.domain.dataflow.DataClassComponent
 import org.maurodata.domain.dataflow.DataElementComponent
 import org.maurodata.domain.dataflow.Type
 import org.maurodata.domain.datamodel.DataElement
 import org.maurodata.domain.security.Role
-import org.maurodata.persistence.dataflow.DataClassComponentRepository
+import org.maurodata.persistence.cache.AdministeredItemCacheableRepository
 import org.maurodata.persistence.dataflow.DataElementComponentContentRepository
 import org.maurodata.web.ListResponse
+import org.maurodata.web.PaginationParams
 
 @CompileStatic
 @Controller()
 @Secured(SecurityRule.IS_AUTHENTICATED)
 class DataElementComponentController extends AdministeredItemController<DataElementComponent, DataClassComponent> implements DataElementComponentApi {
 
-    @Inject
     AdministeredItemCacheableRepository.DataElementComponentCacheableRepository dataElementComponentRepository
 
-    @Inject
+    AdministeredItemCacheableRepository.DataClassComponentCacheableRepository dataClassComponentRepository
+
     AdministeredItemCacheableRepository.DataElementCacheableRepository dataElementRepository
 
-    @Inject
     DataElementComponentContentRepository dataElementComponentContentRepository
 
-    @Inject
-    AdministeredItemCacheableRepository.DataFlowCacheableRepository dataFlowRepository
 
+    @Inject
     DataElementComponentController(AdministeredItemCacheableRepository.DataElementComponentCacheableRepository dataElementComponentRepository,
-                                   DataClassComponentRepository dataClassComponentRepository,
-                                   DataElementComponentContentRepository dataElementComponentContentRepository) {
+                                   AdministeredItemCacheableRepository.DataClassComponentCacheableRepository dataClassComponentRepository,
+                                   DataElementComponentContentRepository dataElementComponentContentRepository, AdministeredItemCacheableRepository.
+                                       DataElementCacheableRepository dataElementRepository) {
         super(DataElementComponent, dataElementComponentRepository, dataClassComponentRepository, dataElementComponentContentRepository)
+        this.dataElementComponentRepository = dataElementComponentRepository
+        this.dataClassComponentRepository = dataClassComponentRepository
+        this.dataElementRepository = dataElementRepository
+        this.dataElementComponentContentRepository = dataElementComponentContentRepository
+
     }
 
 

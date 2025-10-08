@@ -25,7 +25,6 @@ class FileParameter {
     byte[] fileContents
     String fileName
     String fileType
-
     FileParameter() {
 
     }

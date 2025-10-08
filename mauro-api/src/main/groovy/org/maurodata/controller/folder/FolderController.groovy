@@ -159,8 +159,10 @@ class FolderController extends ModelController<Folder> implements FolderApi {
 
     @Audit(title = EditType.EXPORT, description = 'Export folder')
     @Get(Paths.FOLDER_EXPORT)
+    @Override
     HttpResponse<byte[]> exportModel(UUID id, @Nullable String namespace, @Nullable String name, @Nullable String version) {
-        super.exportModel(id, namespace, name, version)
+        super.exportModel(id,namespace, name, version)
+
     }
 
     @Transactional

@@ -5,7 +5,6 @@ import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.model.query.builder.sql.Dialect
 import jakarta.inject.Inject
-import org.maurodata.domain.dataflow.DataClassComponent
 import org.maurodata.domain.dataflow.DataFlow
 import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.model.AdministeredItem
@@ -18,13 +17,6 @@ abstract class DataFlowRepository implements ModelItemRepository<DataFlow> {
 
     @Inject
     DataFlowDTORepository dataFlowDTORepository
-
-    @Inject
-    DataClassComponentRepository dataClassComponentRepository
-
-    @Inject
-    DataElementComponentRepository dataElementComponentRepository
-
 
     @Override
     @Nullable
@@ -63,15 +55,6 @@ abstract class DataFlowRepository implements ModelItemRepository<DataFlow> {
         DataFlow
     }
 
-    DataFlow readWithContentById(UUID id) {
-        DataFlow dataFlow = dataFlowDTORepository.findById(id)
-        List<DataClassComponent> dataClassComponents = dataClassComponentRepository.findAllByParent(dataFlow)
-        dataClassComponents.each {
-            it.dataElementComponents = dataElementComponentRepository.findAllByParent(it)
-        }
-        dataFlow.dataClassComponents = dataClassComponents
-        dataFlow
-    }
 
     @Override
     @Nullable

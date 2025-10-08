@@ -2,14 +2,14 @@ package org.maurodata.plugin.exporter
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import groovy.util.logging.Slf4j
-import org.maurodata.domain.model.Model
+import org.maurodata.domain.model.ModelItem
 import org.maurodata.plugin.MauroPlugin
 import org.maurodata.plugin.PluginType
 
 @Slf4j
-trait ModelExporterPlugin<D extends Model> extends ExporterPlugin {
+trait ModelItemExporterPlugin<D extends ModelItem> extends ExporterPlugin{
 
-    abstract byte[] exportModel(D model)
+    abstract byte[] exportModelItem(D modelItem)
 
     Boolean getCanExportMultipleDomains() {
         false
@@ -25,14 +25,14 @@ trait ModelExporterPlugin<D extends Model> extends ExporterPlugin {
     }
 
     @JsonIgnore
-    abstract Class<D> getHandlesModelType()
+    abstract Class<D> getHandlesModelItemType()
 
-    abstract String getFileName(D model)
+    abstract String getFileName(D modelItem)
 
-    abstract byte[] exportModels(Collection<D> models)
+    abstract byte[] exportModelItems(Collection<D> modelItems)
 
     @Override
     String getProviderType() {
-        return "${getHandlesModelType().simpleName}${this.pluginType}"
+        return "${getHandlesModelItemType().simpleName}${this.pluginType}"
     }
 }

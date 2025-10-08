@@ -1,16 +1,18 @@
 package org.maurodata.controller.folder
 
-import org.maurodata.api.model.MergeIntoDTO
-import com.fasterxml.jackson.core.Versioned
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
-import io.micronaut.http.MediaType
-import io.micronaut.http.annotation.*
-import io.micronaut.http.exceptions.HttpStatusException
+import io.micronaut.http.annotation.Body
+import io.micronaut.http.annotation.Controller
+import io.micronaut.http.annotation.Delete
+import io.micronaut.http.annotation.Get
+import io.micronaut.http.annotation.Post
+import io.micronaut.http.annotation.Put
+import io.micronaut.http.annotation.QueryValue
 import io.micronaut.http.server.multipart.MultipartBody
 import io.micronaut.scheduling.TaskExecutors
 import io.micronaut.scheduling.annotation.ExecuteOn
@@ -22,27 +24,17 @@ import org.maurodata.ErrorHandler
 import org.maurodata.api.Paths
 import org.maurodata.api.folder.VersionedFolderApi
 import org.maurodata.api.model.MergeDiffDTO
-import org.maurodata.api.model.MergeFieldDiffDTO
+import org.maurodata.api.model.MergeIntoDTO
 import org.maurodata.api.model.ModelVersionDTO
 import org.maurodata.api.model.ModelVersionedRefDTO
 import org.maurodata.api.model.ModelVersionedWithTargetsRefDTO
 import org.maurodata.api.model.PermissionsDTO
-import org.maurodata.api.model.VersionLinkTargetDTO
 import org.maurodata.audit.Audit
 import org.maurodata.controller.model.ModelController
-import org.maurodata.domain.datamodel.DataModel
-import org.maurodata.domain.diff.FieldDiff
-import org.maurodata.domain.diff.ObjectDiff
-import org.maurodata.domain.facet.VersionLink
 import org.maurodata.domain.folder.Folder
 import org.maurodata.domain.folder.FolderService
-import org.maurodata.domain.model.AdministeredItem
-import org.maurodata.domain.model.Model
-import org.maurodata.domain.model.Path
 import org.maurodata.domain.model.version.CreateNewVersionData
 import org.maurodata.domain.model.version.FinaliseData
-import org.maurodata.domain.model.version.ModelVersion
-import org.maurodata.domain.security.Role
 import org.maurodata.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
 import org.maurodata.persistence.folder.FolderContentRepository
 import org.maurodata.web.ListResponse
@@ -144,6 +136,12 @@ class VersionedFolderController extends ModelController<Folder> implements Versi
     @Put(Paths.VERSIONED_FOLDER_NEW_BRANCH_MODEL_VERSION)
     Folder createNewBranchModelVersion(UUID id, @Body @Nullable CreateNewVersionData createNewVersionData) {
         super.createNewBranchModelVersion(id, createNewVersionData)
+    }
+
+
+    @Override
+    ListResponse<Folder> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version) {
+        super.importModel(body, namespace, name, version)
     }
 
     @Audit

@@ -6,6 +6,7 @@ import jakarta.inject.Inject
 import jakarta.inject.Singleton
 import org.maurodata.domain.dataflow.DataClassComponent
 import org.maurodata.domain.model.AdministeredItem
+import org.maurodata.persistence.cache.AdministeredItemCacheableRepository
 import org.maurodata.persistence.model.AdministeredItemContentRepository
 
 @CompileStatic
@@ -13,7 +14,7 @@ import org.maurodata.persistence.model.AdministeredItemContentRepository
 class DataClassComponentContentRepository extends AdministeredItemContentRepository {
 
     @Inject
-    DataClassComponentRepository dataClassComponentRepository
+    AdministeredItemCacheableRepository.DataClassComponentCacheableRepository dataClassComponentRepository
 
     @Inject
     DataElementComponentContentRepository dataElementComponentContentRepository
@@ -44,6 +45,25 @@ class DataClassComponentContentRepository extends AdministeredItemContentReposit
             dataClassComponentRepository.removeTargetDataClasses(administeredItem.id)
         }
         dataClassComponentRepository.delete(administeredItem as DataClassComponent)
+    }
+
+    @Override
+    AdministeredItem saveWithContent(@NonNull AdministeredItem administeredItem) {
+        DataClassComponent saved = dataClassComponentRepository.save(administeredItem as DataClassComponent)
+        saved.sourceDataClasses.each{
+            dataClassComponentRepository.addSourceDataClass(saved.id, it.id)
+        }
+        saved.targetDataClasses.each{
+            dataClassComponentRepository.addTargetDataClass(saved.id, it.id)
+        }
+        saved.dataElementComponents.each {
+            it.updateCreationProperties()
+            it.dataClassComponent = saved
+            it.parent = saved
+            dataElementComponentContentRepository.saveWithContent(it)
+        }
+        saveAllFacets(saved)
+        saved
     }
 
     @Override

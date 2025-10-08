@@ -135,4 +135,40 @@ class ClassificationScheme extends Model implements ItemReferencer {
         parent = ItemReferencerUtils.replaceItemByIdentity(parent, replacements, notReplaced)
         csClassifiers = ItemReferencerUtils.replaceItemsByIdentity(csClassifiers, replacements, notReplaced)
     }
+
+    /**
+     * DSL builder
+     * @param args
+     * @param closure
+     * @return
+     */
+    static ClassificationScheme build(
+        Map args,
+        @DelegatesTo(value = ClassificationScheme, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+        new ClassificationScheme(args).tap(closure)
+    }
+
+    static ClassificationScheme build(
+        @DelegatesTo(value = ClassificationScheme, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+        build [:], closure
+
+    }
+
+    Classifier classifier(Classifier classifier) {
+        this.classifiers.add(classifier)
+        classifier.classificationScheme = this
+        classifier
+    }
+
+    Classifier classifier(@DelegatesTo(value = Classifier, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+        classifier [:], closure
+    }
+
+    Classifier classifier(Map args, @DelegatesTo(value = Classifier, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+        Classifier classifier1 = Classifier.build(args, closure)
+        classifier1.classificationScheme = this
+        this.classifiers.add(classifier1)
+        classifier1
+    }
+
 }

@@ -47,6 +47,7 @@ class DataElementComponent extends ModelItem<DataClassComponent> {
     List<DataElement> targetDataElements = []
 
     @NotNull
+    @JsonIgnore
     DataClassComponent dataClassComponent
 
     @Transient
