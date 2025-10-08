@@ -112,12 +112,12 @@ class AdminSpec extends Specification {
             }
 
         when:
-            List importersList = mauroPluginService.listStandardPlugins(ModelImporterPlugin)
+            List importersList = mauroPluginService.listStandardPlugins(ImporterPlugin)
         then:
             importersList == pluginsList.findAll{it.pluginType == PluginType.Importer}
 
         when:
-            List exportersList = mauroPluginService.listStandardPlugins(ModelExporterPlugin)
+            List exportersList = mauroPluginService.listStandardPlugins(ExporterPlugin)
         then:
             exportersList == pluginsList.findAll{it.pluginType == PluginType.Exporter}
     }
