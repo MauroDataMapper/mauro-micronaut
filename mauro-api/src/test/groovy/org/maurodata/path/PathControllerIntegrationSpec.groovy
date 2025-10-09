@@ -59,7 +59,7 @@ class PathControllerIntegrationSpec extends CommonDataSpec {
 
     void 'test getResource by path -path not found -shouldThrowException'() {
         when:
-        pathApi.getResourceByPath('datamodel', 'not known label')
+        pathApi.getResourceByPath('datamodel', 'dm:not known label')
 
         then:
         HttpStatusException exception = thrown()
@@ -68,14 +68,14 @@ class PathControllerIntegrationSpec extends CommonDataSpec {
 
     void 'test getResource by path -unknown domainType  -shouldThrowException'() {
         when:
-        pathApi.getResourceByPath('whatisthis', EXPECTED_LABEL)
+        pathApi.getResourceByPath('whatisthis', "dm:${EXPECTED_LABEL}" )
 
         then:
         HttpStatusException exception = thrown()
         exception.status ==  HttpStatus.NOT_FOUND
     }
 
-    void 'test getResource by Path from Resource -should find resource'() {
+    void 'test getResource by Path from Resource1 -should find resource'() {
         DataModel dataModel = dataModelApi.create(folderId, dataModelPayload('datamodel label '))
         DataType dataType = dataTypeApi.create(dataModel.id, dataTypesPayload('label for datatype', DataType.DataTypeKind.ENUMERATION_TYPE))
         DataClass dataClass = dataClassApi.create(dataModel.id, dataClassPayload('label for dataclass'))
@@ -124,7 +124,7 @@ class PathControllerIntegrationSpec extends CommonDataSpec {
 
 
     //todo: fixme the version info is not part of the  pathsstring for modelitems so unable to match exact version
-    void 'test getResource by Path from Resource -should find resource'() {
+    void 'test getResource by Path from Resource2 -should find resource'() {
         DataModel dataModel = dataModelApi.create(folderId, dataModelPayload('datamodel label '))
         DataClass dataClass = dataClassApi.create(dataModel.id, dataClassPayload('label for dataclass'))
 

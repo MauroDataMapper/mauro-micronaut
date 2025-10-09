@@ -1,21 +1,22 @@
-package org.maurodata.test.domain.util
+package org.maurodata.test.domain.model
+
+import org.maurodata.domain.model.Path
 
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
-import org.maurodata.util.PathStringUtils
 import spock.lang.Specification
 import spock.lang.Unroll
 
 @MicronautTest
-class PathStringUtilsTest extends Specification {
+class PathMethodsTest extends Specification {
 
     @Unroll
-    void 'test getItemSubPath, for #pathPrefix, #fullPath'() {
+    void 'test findLastPathNodeByPrefix, for #pathPrefix, #fullPath'() {
         when:
-        String subPath = PathStringUtils.getItemSubPath(pathPrefix, fullPath)
+        Path.PathNode pathNode = new Path(fullPath).findLastPathNodeByPrefix(pathPrefix)
 
         then:
-        subPath
-        subPath == expectedSubPath
+        pathNode
+        pathNode.identifier == expectedSubPath
 
         where:
         pathPrefix | fullPath                                                                                       | expectedSubPath
@@ -30,19 +31,20 @@ class PathStringUtilsTest extends Specification {
     }
 
     @Unroll
-    void 'test getVersionFromPath for #fullPath'() {
+    void 'test modelIdentifier for #fullPath'() {
         when:
-        String version = PathStringUtils.getVersionFromPath(fullPath)
+        String modelIdentifier = new Path(fullPath).modelIdentifier
 
         then:
-        version == expectedVersion
+        modelIdentifier == expectedVersion
 
         where:
-        fullPath                                                                                              | expectedVersion
-        "fo:soluta eum architecto|dm:modi unde est\$matrix|dc:est quasi vel|de:new data element label\$2.0.0" | "2.0.0"
-        "dm:BC_Bloods\$2.0.0"                                                                                 | "2.0.0"
-        "fo:soluta eum architecto"                                                                            | null
-        "fo:soluta eum architecto|te:Dewey Decimal Classification v22\$main"                                  | "main"
+        fullPath                                                                                            | expectedVersion
+        'fo:soluta eum architecto|dm:modi unde est$matrix|dc:est quasi vel|de:new data element label$2.0.0' | "matrix"
+        'dm:BC_Bloods$2.0.0'                                                                                | "2.0.0"
+        'fo:soluta eum architecto'                                                                          | null
+        'fo:soluta eum architecto|te:Dewey Decimal Classification v22$main'                                 | "main"
+        'fo:soluta eum architecto|vf:versionio de folder$main|te:Dewey Decimal Classification v22$main'     | "main"
     }
 
 }

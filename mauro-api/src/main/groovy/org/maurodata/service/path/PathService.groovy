@@ -13,14 +13,8 @@ import org.maurodata.domain.security.Role
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository
 import org.maurodata.persistence.model.PathRepository
 import org.maurodata.security.AccessControlService
+import org.maurodata.domain.model.Path
 
-import static org.maurodata.util.PathStringUtils.getCOLON
-import static org.maurodata.util.PathStringUtils.getDISCARD_AFTER_VERSION
-import static org.maurodata.util.PathStringUtils.getItemSubPath
-import static org.maurodata.util.PathStringUtils.getREMOVE_VERSION_DELIM
-import static org.maurodata.util.PathStringUtils.getVersionFromPath
-import static org.maurodata.util.PathStringUtils.lastSubPath
-import static org.maurodata.util.PathStringUtils.splitBy
 
 @CompileStatic
 @Slf4j
@@ -34,7 +28,8 @@ class PathService implements AdministeredItemReader {
     @Inject
     AccessControlService accessControlService
 
-    AdministeredItem getResourceByPath(String domainType, String path) {
+    AdministeredItem getResourceByPath(String domainType, String pathString) {
+        Path path = new Path(pathString)
         AdministeredItem item = findResourceByPath(domainType, path)
         ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, item, "Item with DomainType $domainType not found with path: $path")
 
@@ -44,7 +39,7 @@ class PathService implements AdministeredItemReader {
     }
 
 
-    AdministeredItem getResourceByPathFromResource(String domainType, UUID domainId, String path){
+    AdministeredItem getResourceByPathFromResource(String domainType, UUID domainId, String pathString){
         AdministeredItem fromModel = findAdministeredItem(domainType, domainId)
         ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, fromModel, "Model $domainType, $domainId not found")
 
@@ -52,12 +47,14 @@ class PathService implements AdministeredItemReader {
         updateDerivedProperties(fromModel)
 
         //verify model path in the input path
-        if (!path.contains(fromModel.path.pathString)) {
-            ErrorHandler.handleError(HttpStatus.NOT_FOUND, "Path $path does not belong to $domainType, $domainId")
+        if (!pathString.contains(fromModel.path.pathString)) {
+            ErrorHandler.handleError(HttpStatus.NOT_FOUND, "Path $pathString does not belong to $domainType, $domainId")
         }
-        Tuple2<String, String> itemDomainTypeAndPath = getItemDomainTypeAndPath(path)
-        AdministeredItem administeredItem = findResourceByPath(itemDomainTypeAndPath.first, path)
-        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, administeredItem, "Item with $itemDomainTypeAndPath.first  and label $itemDomainTypeAndPath.v2 not found")
+        Path path = new Path(pathString)
+        Path.PathNode lastPathNode = path.lastPathNode()
+        String itemDomainType = getDomainTypeFromPathPrefix(lastPathNode.prefix)
+        AdministeredItem administeredItem = findResourceByPath(itemDomainType, path)
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, administeredItem, "Item with ${lastPathNode.prefix}  and label ${lastPathNode.identifier} not found")
         accessControlService.checkRole(Role.READER, administeredItem)
         updateDerivedProperties(administeredItem)
         administeredItem
@@ -77,31 +74,11 @@ class PathService implements AdministeredItemReader {
      * @return the admin item, given the full path including versioning
      */
 
-    protected AdministeredItem findResourceByPath(String domainType, String path) {
+    protected AdministeredItem findResourceByPath(String domainType, Path path) {
         String pathPrefix = getPathPrefixForDomainType(domainType)
-        String domainPath = getItemSubPath(pathPrefix, path)
-        String versionString = getVersionFromPath(path)
+        String domainPath = path.findLastPathNodeByPrefix(pathPrefix).identifier
+        String versionString = path.modelIdentifier
         return findItemForPath(domainType, domainPath, versionString, path)
-    }
-
-
-    /**
-     *
-     * @param path fullPath
-     * @return  the last path domainType and label/subPath
-     */
-    protected Tuple2<String,String> getItemDomainTypeAndPath(String path) {
-        String itemPath = lastSubPath(path)
-        //extract the item domain type from given input path
-        String[] itemParts = splitBy(itemPath, COLON)
-        if (itemParts.size() != 2){
-            ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "bad path $path")
-        }
-        String itemDomainType = getDomainTypeFromPathPrefix(itemParts[0])
-        String subPathOnly = itemParts[1].find(DISCARD_AFTER_VERSION) ?: itemParts[1]
-
-        String itemSubPath = subPathOnly.replaceAll(REMOVE_VERSION_DELIM, '')
-        new Tuple2(itemDomainType, itemSubPath)
     }
 
     protected String getPathPrefixForDomainType(String domainType) {
@@ -129,24 +106,24 @@ class PathService implements AdministeredItemReader {
         item
     }
 
-    protected AdministeredItem findItemForPath(String domainType, String domainPath, String versionString, String fullPath) {
+    protected AdministeredItem findItemForPath(String domainType, String domainPath, String versionString, Path path) {
         AdministeredItemCacheableRepository repository = getAdministeredItemRepository(domainType)
-        List<AdministeredItem> items = repository.findAllByLabel(domainPath)
+        List<AdministeredItem> items = repository.findAllByLabel(domainPath) as List<AdministeredItem>
         if (items.isEmpty()) {
-            null
+            return null
         }
         AdministeredItem item
         if (items.size() == 1) {
             item = items[0] as AdministeredItem
         } else {
             if (!versionString) {
-                log.warn("No version found in  fullpath: $fullPath; returning 1st item")
-                items.first()
+                log.warn("No version found in path: ${path.toString()}; returning 1st item")
+                return items.first()
             }
             item = (items as List<AdministeredItem>).find {
                 pathRepository.readParentItems(it)
                 it.updatePath()
-                it.path?.pathString?.contains(versionString)
+                it.path?.modelIdentifier == versionString
             }
         }
         item

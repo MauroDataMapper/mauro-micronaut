@@ -45,6 +45,9 @@ class Path {
     }
 
     void updatePathString() {
+        final String modelIdentifier = getModelIdentifier()
+        nodes.each {PathNode pathNode -> pathNode.modelIdentifier = null}
+        setModelIdentifier(modelIdentifier)
         pathString = nodes.collect {it.toString()}.join('|')
     }
 
@@ -144,6 +147,42 @@ class Path {
         trimmed.pathString
     }
 
+    @Transient
+    PathNode findLastPathNodeByPrefix(final String prefix) {
+        for (int p = nodes.size() - 1; p >= 0; p--) {
+            final PathNode pathNode = nodes.get(p)
+            if (pathNode.prefix == prefix) {return pathNode}
+        }
+        return null
+    }
+
+    @Transient
+    PathNode lastPathNode() {
+        if (nodes.isEmpty()) {return null}
+        return nodes.get(nodes.size() - 1)
+    }
+
+    @Transient
+    String getModelIdentifier() {
+        for (int p = 0, n = nodes.size(); p < n; p++) {
+            final PathNode pathNode = nodes.get(p)
+            if (!PathNode.canHaveModelIdentifier.contains(pathNode.prefix)) {continue}
+            if (pathNode.modelIdentifier) {return pathNode.modelIdentifier}
+        }
+        return null
+    }
+
+    void setModelIdentifier(final String modelIdentifier) {
+        nodes.each {PathNode pathNode -> pathNode.modelIdentifier = null}
+        for (int p = 0, n = nodes.size(); p < n; p++) {
+            final PathNode pathNode = nodes.get(p)
+            if (!PathNode.canHaveModelIdentifier.contains(pathNode.prefix)) {continue}
+            pathNode.modelIdentifier = modelIdentifier
+            break
+        }
+        pathString = nodes.collect {it.toString()}.join('|')
+    }
+
     static class PathNode {
         String prefix
         String identifier
@@ -160,6 +199,8 @@ class Path {
             if (attribute) value += '@' + attribute
             value
         }
+
+        static List<String> canHaveModelIdentifier = ['dm','vf','csc','cs','te']
 
         static PathNode from(String str) {
             Pattern nodePattern = ~/^(?<prefix>\w\w\w?):(?<identifier>[^@$]*)(\$(?<modelIdentifier>[^@]*))?(@(?<attribute>.*))?$/
