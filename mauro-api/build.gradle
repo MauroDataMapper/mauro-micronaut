@@ -240,7 +240,7 @@ tasks.register('fetchMDMUI') {
 
 tasks.named('dockerBuild') {
     dependsOn(tasks.named('fetchMDMUI'))
-    images = ["maurodatamapper/mauro:${version}"]
+    images = ["maurodatamapper/mauro:${System.getProperty('os.arch')}-${version}"]
 }
 
 tasks.register('stageDockerFiles', Copy) {
@@ -308,7 +308,7 @@ tasks.register('dockerBuildMultiArch') {
 
     doLast {
         println "🐳 Running docker build with multi-arch buildx command..."
-        def imageName = "maurodatamapper/mauro:multi-${version}"
+        def imageName = "maurodatamapper/mauro:${version}"
         def location = project.layout.buildDirectory.dir("docker/main").get().asFile.absolutePath
 
         def processBuilderDockerx = new ProcessBuilder('docker', 'buildx', 'build', '--platform', 'linux/amd64,linux/arm64', '--tag', "${imageName}", "${location}")
