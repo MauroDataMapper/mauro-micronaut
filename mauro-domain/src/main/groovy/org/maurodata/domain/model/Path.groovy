@@ -36,7 +36,7 @@ class Path {
     }
 
     void setPathString(String pathString) {
-        setNodes(pathString?.split(/\|/)?.collect {PathNode.from(it)})
+        setNodes(pathString?.split(/(?<!%)\|/)?.collect {PathNode.from(it)})
     }
 
     void setNodes(List<PathNode> nodes) {
@@ -155,20 +155,38 @@ class Path {
 
         @Override
         String toString() {
-            String value = prefix + ':' + identifier
-            if (modelIdentifier) value += '$' + modelIdentifier
-            if (attribute) value += '@' + attribute
+            String value = prefix + ':' + escapeIdentifier(identifier)
+            if (modelIdentifier) value += '$' + escapeIdentifier(modelIdentifier)
+            if (attribute) value += '@' + escapeIdentifier(attribute)
             value
         }
 
+        static String escapeIdentifier(final String input) {
+            if (input == null) return null
+            // escape '%' first, otherwise we'll double-escape later
+            return input
+                .replaceAll('%', '%%')
+                .replaceAll(':', '%:')
+                .replaceAll('\\$', '%\\$')
+                .replaceAll('@', '%@')
+                .replaceAll('\\|', '%|')
+        }
+
+        static String unescapeIdentifier(final String input) {
+            if (input == null) return null
+            return input.replaceAll(/%([$@|:%])/) {all, ch -> ch}
+        }
+
         static PathNode from(String str) {
-            Pattern nodePattern = ~/^(?<prefix>\w\w\w?):(?<identifier>[^@$]*)(\$(?<modelIdentifier>[^@]*))?(@(?<attribute>.*))?$/
+            Pattern nodePattern = ~/^(?<prefix>\w{2,3}):(?<identifier>(?:%[$@|:%]|[^@$|:%])*?)(?:\$(?<modelIdentifier>(?:%[$@|:%]|[^@$|:%])*))?(?:@(?<attribute>(?:%[$@|:%]|[^@$|:%])*))?$/
             Matcher matcher = str =~ nodePattern
             if (!matcher.matches()) {
                 throw new IllegalArgumentException('String [' + str + '] is not a valid PathNode')
             }
-            new PathNode(prefix: matcher.group('prefix'), identifier: matcher.group('identifier'), modelIdentifier: matcher.group('modelIdentifier'),
-                         attribute: matcher.group('attribute'))
+            new PathNode(prefix: unescapeIdentifier(matcher.group('prefix')),
+                         identifier: unescapeIdentifier(matcher.group('identifier')),
+                         modelIdentifier: unescapeIdentifier(matcher.group('modelIdentifier')),
+                         attribute: unescapeIdentifier(matcher.group('attribute')))
         }
 
         @Prototype
@@ -195,9 +213,7 @@ class Path {
 
         @Override
         Path convertToEntityValue(String value, ConversionContext context) {
-            Path path = new Path()
-            path.pathString = value
-            path
+            new Path(value)
         }
     }
 }
