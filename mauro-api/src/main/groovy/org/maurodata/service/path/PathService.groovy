@@ -17,14 +17,8 @@ import org.maurodata.domain.security.Role
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository
 import org.maurodata.persistence.model.PathRepository
 import org.maurodata.security.AccessControlService
+import org.maurodata.domain.model.Path
 
-import static org.maurodata.util.PathStringUtils.getCOLON
-import static org.maurodata.util.PathStringUtils.getDISCARD_AFTER_VERSION
-import static org.maurodata.util.PathStringUtils.getItemSubPath
-import static org.maurodata.util.PathStringUtils.getREMOVE_VERSION_DELIM
-import static org.maurodata.util.PathStringUtils.getVersionFromPath
-import static org.maurodata.util.PathStringUtils.lastSubPath
-import static org.maurodata.util.PathStringUtils.splitBy
 
 @CompileStatic
 @Slf4j
@@ -39,7 +33,8 @@ class PathService implements AdministeredItemReader {
     @Inject
     AccessControlService accessControlService
 
-    AdministeredItem getResourceByPath(String domainType, String path) {
+    AdministeredItem getResourceByPath(String domainType, String pathString) {
+        Path path = new Path(pathString)
         AdministeredItem item = findResourceByPath(domainType, path)
         ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, item, "Item with DomainType $domainType not found with path: $path")
 
@@ -83,10 +78,10 @@ class PathService implements AdministeredItemReader {
      * @return the admin item, given the full path including versioning
      */
 
-    protected AdministeredItem findResourceByPath(String domainType, String path) {
+    protected AdministeredItem findResourceByPath(String domainType, Path path) {
         String pathPrefix = getPathPrefixForDomainType(domainType)
-        String domainPath = getItemSubPath(pathPrefix, path)
-        String versionString = getVersionFromPath(path)
+        String domainPath = path.findLastPathNodeByPrefix(pathPrefix).identifier
+        String versionString = path.modelIdentifier
         return findItemForPath(domainType, domainPath, versionString, path)
     }
 
@@ -116,24 +111,24 @@ class PathService implements AdministeredItemReader {
         item
     }
 
-    protected AdministeredItem findItemForPath(String domainType, String domainPath, String versionString, String fullPath) {
+    protected AdministeredItem findItemForPath(String domainType, String domainPath, String versionString, Path path) {
         AdministeredItemCacheableRepository repository = getAdministeredItemRepository(domainType)
-        List<AdministeredItem> items = repository.findAllByLabel(domainPath)
+        List<AdministeredItem> items = repository.findAllByLabel(domainPath) as List<AdministeredItem>
         if (items.isEmpty()) {
-            null
+            return null
         }
         AdministeredItem item
         if (items.size() == 1) {
             item = items[0] as AdministeredItem
         } else {
             if (!versionString) {
-                log.warn("No version found in  fullpath: $fullPath; returning 1st item")
-                items.first()
+                log.warn("No version found in path: ${path.toString()}; returning 1st item")
+                return items.first()
             }
             item = (items as List<AdministeredItem>).find {
                 pathRepository.readParentItems(it)
                 it.updatePath()
-                it.path?.pathString?.contains(versionString)
+                it.path?.modelIdentifier == versionString
             }
         }
         item
