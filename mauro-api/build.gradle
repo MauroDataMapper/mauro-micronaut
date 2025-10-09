@@ -240,7 +240,7 @@ tasks.register('fetchMDMUI') {
 
 tasks.named('dockerBuild') {
     dependsOn(tasks.named('fetchMDMUI'))
-    images = ["maurodatamapper/mauro:${version}"]
+    images = ["maurodatamapper/mauro:${System.getProperty('os.arch')}-${version}"]
 }
 
 tasks.register('stageDockerFiles', Copy) {
@@ -296,5 +296,25 @@ tasks.register("injectEnvIntoDockerfile") {
         def contents = dockerfile.text
         int entrypointPos = contents.lastIndexOf('ENTRYPOINT')
         dockerfile.text = dockerfile.text.substring(0,entrypointPos)
+    }
+}
+
+tasks.register('dockerBuildMultiArch') {
+    dependsOn(tasks.named('buildLayers'))
+    dependsOn(tasks.named('dockerfile'))
+    dependsOn(tasks.named('fetchMDMUI'))
+    dependsOn(tasks.named('injectEnvIntoDockerfile'))
+    dependsOn(tasks.named('stageDockerFiles'))
+
+    doLast {
+        println "🐳 Running docker build with multi-arch buildx command..."
+        def imageName = "maurodatamapper/mauro:${version}"
+        def location = project.layout.buildDirectory.dir("docker/main").get().asFile.absolutePath
+
+        def processBuilderDockerx = new ProcessBuilder('docker', 'buildx', 'build', '--platform', 'linux/amd64,linux/arm64', '--tag', "${imageName}", "${location}")
+        processBuilderDockerx.inheritIO()
+        def processDockerx = processBuilderDockerx.start()
+        def rc = processDockerx.waitFor()
+        if (rc != 0) throw new GradleException("buildx failed (${rc})")
     }
 }
