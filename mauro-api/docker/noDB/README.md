@@ -1,29 +1,28 @@
 # Docker
 
-## Building the container
-With your Docker Engine running, create a container via:
+## Building the image
+With your Docker Engine running, create an image via:
 
-    # ./gradlew dockerBuild
+    # ./gradlew dockerBuildNoDatabase
+
+for a local architecture image, or
+
+    # ./gradlew dockerBuildMultiArchNoDatabase
+
+for a dual amd64/arm64 image
 
 ## Running the container with configuration
 The container is configured to have these mount points:
 
     /opt/init
-    /var/lib/postgresql/data
     /var/logs
-    /var/logs/postgres
-    /database
-
 
 */opt/init* is where the container start-up can be controlled from.
-There are two sub-directories under */opt/init*:
+There is one sub-directory under */opt/init*:
 
-    postgres/
     micronaut/
 
-which will be used for the start-up of those services.
-
-From *postgres/* any *.sh* scripts will be run, and any *.sql* will be run in postgres.
+which will be used for the start-up of that service.
 
 From *micronaut/* any *.sh* scripts will be run, *.jar* files will be added to the classpath,
 and any other files will be copied to Micronaut's *resources/* directory. Use this mechanism to
@@ -58,17 +57,12 @@ to configure Micronaut. See above.
             refreshable: true
             expiry: 2025-12-31
 
-### Running the container
+### Running the image
 
 Point the container at your *init/* directory, and expose the port micronaut is running on:
 
-    # docker run --rm -p 8080:8080 -v /path/to/your/init:/opt/init:ro -it mauro-api:latest
+    # docker run --rm -p 8080:8080 -v /path/to/your/init:/opt/init:ro -it maurodatamapper/mauro:0.0.2-SNAPSHOT
 
-To persist the data between shutdown and startup, you must also connect the container to */var/lib/postgresql/data* as read/write.
+## Pointing the container to a database
 
-## Running the container with existing data
-
-Either import *.sql* scripts are present in */opt/init/postgres* to be imported at startup, or a pre-existing postgres database
-is present in */var/lib/postgresql/data*. In both these cases, make sure that the datasource for postgres matches up with the
-*application.yml* configuration
-
+...

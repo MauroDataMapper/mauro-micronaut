@@ -174,9 +174,18 @@ def detectLTS=false
 
 def dockerTag="eclipse-temurin:${latestLts('eclipse-temurin',temurinDefault,detectLTS)}-jre-${latestLts('ubuntu',ubuntuDefault,detectLTS)}"
 
+def dockerIncludeDatabase = !gradle.startParameter.taskNames.any { it.contains('dockerBuild') && it.contains("NoDatabase") }
+
 tasks.register('printDockerTag') {
     doLast {
         println "Would use Docker base image: ${dockerTag}"
+    }
+}
+
+tasks.register('printItOut') {
+
+    doLast {
+        println "dockerIncludeDatabase = ${dockerIncludeDatabase}"
     }
 }
 
@@ -240,12 +249,21 @@ tasks.register('fetchMDMUI') {
 
 tasks.named('dockerBuild') {
     dependsOn(tasks.named('fetchMDMUI'))
-    images = ["maurodatamapper/mauro:${System.getProperty('os.arch')}-${version}"]
+    if(!dockerIncludeDatabase) {
+        images = ["maurodatamapper/mauro:${System.getProperty('os.arch')}-nodb-${version}"]
+    } else {
+        images = ["maurodatamapper/mauro:${System.getProperty('os.arch')}-${version}"]
+    }
 }
 
 tasks.register('stageDockerFiles', Copy) {
-    from file('docker')
-    into project.layout.buildDirectory.dir("docker/main").get().asFile
+    if(!dockerIncludeDatabase) {
+        from file('docker/noDB')
+        into project.layout.buildDirectory.dir("docker/main").get().asFile
+    } else {
+        from file('docker/all')
+        into project.layout.buildDirectory.dir("docker/main").get().asFile
+    }
 }
 
 tasks.named('dockerBuild') {
@@ -255,8 +273,28 @@ tasks.named('dockerBuild') {
 tasks.named("dockerfile") {
     baseImage("${dockerTag}")
 
-    instruction """
+    if(!dockerIncludeDatabase) {
+        instruction """
 ENV MICRONAUT_ENVIRONMENTS='docker,datasources,javamail,mauro'
+
+ENV INIT_DIR=/opt/init
+ENV LOGS_DIRECTORY=/var/logs
+
+RUN apt-get update && apt-get dist-upgrade -y && apt-get install -y --no-install-recommends unzip iproute2 && apt-get clean && rm -rf /var/lib/apt/lists/*
+RUN mkdir -p \${LOGS_DIRECTORY}
+RUN mkdir -p \${INIT_DIR}
+VOLUME ["\${INIT_DIR}"]
+
+COPY micronaut/* /usr/local/bin/
+COPY startup/* /usr/local/bin/
+RUN chmod +x /usr/local/bin/*
+
+ENTRYPOINT ["docker-startup.sh"]
+    """
+    } else {
+
+        instruction """
+ENV MICRONAUT_ENVIRONMENTS=docker
 ENV DATABASE_NAME=sandbox
 ENV DATABASE_USERNAME=sandbox
 ENV DATABASE_PASSWORD=sandbox
@@ -284,6 +322,7 @@ RUN chmod +x /usr/local/bin/*
 EXPOSE 5432
 ENTRYPOINT ["docker-startup.sh"]
     """
+    }
 }
 
 tasks.named("dockerBuild") {
@@ -308,7 +347,13 @@ tasks.register('dockerBuildMultiArch') {
 
     doLast {
         println "🐳 Running docker build with multi-arch buildx command..."
-        def imageName = "maurodatamapper/mauro:${version}"
+
+        def imageName
+        if(!dockerIncludeDatabase) {
+            imageName = "maurodatamapper/mauro:nodb-${version}"
+        } else {
+            imageName = "maurodatamapper/mauro:${version}"
+        }
         def location = project.layout.buildDirectory.dir("docker/main").get().asFile.absolutePath
 
         def processBuilderDockerx = new ProcessBuilder('docker', 'buildx', 'build', '--platform', 'linux/amd64,linux/arm64', '--tag', "${imageName}", "${location}")
@@ -317,4 +362,12 @@ tasks.register('dockerBuildMultiArch') {
         def rc = processDockerx.waitFor()
         if (rc != 0) throw new GradleException("buildx failed (${rc})")
     }
+}
+
+tasks.register('dockerBuildNoDatabase') {
+    dependsOn(tasks.named('dockerBuild'))
+}
+
+tasks.register('dockerBuildMultiArchNoDatabase') {
+    dependsOn(tasks.named('dockerBuildMultiArch'))
 }
