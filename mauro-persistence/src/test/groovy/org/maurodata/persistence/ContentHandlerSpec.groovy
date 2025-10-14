@@ -25,8 +25,8 @@ import org.maurodata.persistence.cache.ModelCacheableRepository
 import java.time.Duration
 import java.time.Instant
 
-//@ContainerizedTest
-@MicronautTest
+@ContainerizedTest
+//@MicronautTest
 class ContentHandlerSpec extends Specification{
 
     @Inject
@@ -77,7 +77,7 @@ class ContentHandlerSpec extends Specification{
 
 
         Folder folder = getBigFolder()
-        contentsService.saveWithContent(folder)
+        contentsService.saveWithContent(folder, null)
 
         Instant start = Instant.now()
 

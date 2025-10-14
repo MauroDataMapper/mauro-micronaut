@@ -122,6 +122,31 @@ abstract class AdministeredItem extends Item implements Pathable {
     @Relation(Relation.Kind.ONE_TO_MANY)
     List<SemanticLink> semanticLinks = []
 
+    @Transient
+    @JsonIgnore
+    void setAssociations() {
+        List<Facet> facets = []
+        [getEdits(),getMetadata(),getSummaryMetadata(),getRules(),getAnnotations(),getReferenceFiles()].each {
+            facets.addAll(it)
+        }
+        facets.each {
+            it.multiFacetAwareItem = this
+        }
+        getAnnotations().each {
+            it.setAssociations()
+        }
+        summaryMetadata.each {summaryMetadata ->
+            summaryMetadata.summaryMetadataReports.each { report ->
+                report.summaryMetadata = summaryMetadata
+            }
+        }
+        rules.each {rule ->
+            rule.ruleRepresentations.each { ruleRepresentation ->
+                ruleRepresentation.rule = rule
+            }
+        }
+    }
+
     @Override
     void copyInto(Item into) {
         super.copyInto(into)
@@ -343,6 +368,9 @@ abstract class AdministeredItem extends Item implements Pathable {
     @Override
     AdministeredItem clone() {
         AdministeredItem cloned = super.clone() as AdministeredItem
+
+        List<Edit> clonedEdits = getEdits().collect {it.clone()}
+        cloned.edits = clonedEdits
 
         List<Metadata> clonedMetadata = getMetadata().collect {it.clone()}
         cloned.metadata = clonedMetadata

@@ -214,16 +214,13 @@ class DataModelController extends ModelController<DataModel> implements DataMode
     @Audit
     @Get(Paths.DATA_MODEL_DIFF)
     ObjectDiff diffModels(@NonNull UUID id, @NonNull UUID otherId) {
-        DataModel dataModel = modelContentRepository.findWithContentById(id)
+        DataModel dataModel = (DataModel) contentsService.loadWithContent(modelRepository.readById(id))
         ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, dataModel, "item with $id not found")
-        DataModel otherDataModel = modelContentRepository.findWithContentById(otherId)
+        DataModel otherDataModel = (DataModel) contentsService.loadWithContent(modelRepository.readById(otherId))
         ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, otherDataModel, "item with $otherId not found")
 
         accessControlService.checkRole(Role.READER, dataModel)
         accessControlService.checkRole(Role.READER, otherDataModel)
-
-        dataModel.setAssociations()
-        otherDataModel.setAssociations()
 
         pathRepository.readParentItems(dataModel)
         dataModel.updatePath()

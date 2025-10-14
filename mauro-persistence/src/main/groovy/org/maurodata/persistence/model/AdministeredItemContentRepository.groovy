@@ -257,14 +257,15 @@ class AdministeredItemContentRepository {
                     if (it.childAnnotations) {
                         it.childAnnotations.forEach { child ->
                             updateMultiAwareData(item, child)
-                            child.parentAnnotationId = it.id
+                            child.parentAnnotation = it
+//                            child.parentAnnotationId = it.id
                         }
                     }
                 }
                 annotations.addAll(item.annotations)
             }
         }
-        annotationCacheableRepository.saveAll(annotations)
+        annotationCacheableRepository.saveAllRecurse(annotations)
     }
 
     void saveReferenceFiles(List<AdministeredItem> items) {

@@ -190,8 +190,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     @Transactional
     HttpResponse delete(UUID id, @Body @Nullable M model, @Nullable Boolean permanent) {
         //modelContentRepository.findWithContentById(id)
-
-        M modelToDelete = (M) contentsService.loadWithContent(id)
+        M modelToDelete = modelRepository.readById(id)
 
 
         if (modelToDelete == null) {
@@ -200,6 +199,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
 
         accessControlService.checkRole(Role.CONTAINER_ADMIN, modelToDelete)
 
+        modelToDelete = (M) contentsService.loadWithContent(modelToDelete)
         if (model?.version) modelToDelete.version = model.version
 
         if (permanent) {
@@ -302,18 +302,18 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     @Transactional
     M createNewBranchModelVersion(UUID id, @Body @Nullable CreateNewVersionData createNewVersionData) {
         if (!createNewVersionData) createNewVersionData = new CreateNewVersionData()
-        M existing = getExistingWithContent(id)
+        M existing = modelRepository.readById(id)
+        existing = (M) contentsService.loadWithContent(existing)
 
         if (existing == null) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, "Object not found")
         }
 
-        existing.setAssociations()
-
         M copy = createCopyModelWithAssociations(existing, createNewVersionData)
         copy.setAssociations()
 
-        M savedCopy = modelContentRepository.saveWithContent(copy)
+        M savedCopy = (M) contentsService.saveWithContent(copy, accessControlService.getUser())
+        //modelContentRepository.saveWithContent(copy)
 
         final VersionLink versionLink = new VersionLink(versionLinkType: VersionLink.NEW_MODEL_VERSION_OF)
         versionLink.setTargetModel(savedCopy)
@@ -391,8 +391,8 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         List<M> saved = imported.collect { M imp ->
             imp.folder = folder
             log.info '** about to saveWithContentBatched... **'
-            updateCreationProperties(imp)
-            M savedImported = modelContentRepository.saveWithContent(imp)
+            //updateCreationProperties(imp)
+            M savedImported = (M) contentsService.saveWithContent(imp, accessControlService.getUser())
             log.info '** finished saveWithContentBatched **'
             savedImported
         }
@@ -701,7 +701,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     @Override
     PermissionsDTO permissions(UUID id) {
 
-        M modelToUse = (M) modelContentRepository.findWithContentById(id)
+        M modelToUse = (M) modelRepository.readById(id)
 
         if (modelToUse == null) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, "Object not found for permissions")
@@ -728,32 +728,6 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         return permissions
     }
 
-    protected M saveDataModel(DataModel dataModel) {
-        DataModel savedImport = modelContentRepository.saveWithContent(dataModel as M) as DataModel
-        savedImport as M
-    }
-
-    protected M saveFolder(Folder folder) {
-        //folder.setAssociations()
-        Folder savedImport = (Folder) contentsService.saveWithContent(folder)
-
-        //Folder savedImport = modelContentRepository.saveWithContent(folder as M) as Folder
-        savedImport as M
-    }
-
-    protected M saveCodeSet(CodeSet codeSet) {
-        CodeSet savedImport = modelContentRepository.saveWithContent(codeSet as M) as CodeSet
-        savedImport as M
-    }
-
-    protected M saveTerminology(Terminology terminology) {
-        Terminology savedImport = modelContentRepository.saveWithContent(terminology as M) as Terminology
-        savedImport as M
-    }
-
-    protected M saveModel(M model) {
-        modelContentRepository.saveWithContent(model)
-    }
 
     protected ModelVersionDTO latestModelVersion(UUID id) {
         final List<Model> allModels = populateVersionTree(id, false, null)

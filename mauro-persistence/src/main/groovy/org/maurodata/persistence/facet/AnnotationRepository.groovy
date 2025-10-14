@@ -11,12 +11,16 @@ import org.maurodata.persistence.model.ItemRepository
 
 @CompileStatic
 @JdbcRepository(dialect = Dialect.POSTGRES)
-abstract class AnnotationRepository implements ItemRepository<Annotation> {
+abstract class AnnotationRepository implements FacetRepository<Annotation> {
 
     @Query(''' select * from core.annotation a where a.parent_annotation_id = :id ''')
     @Nullable
     abstract Set<Annotation> findAllChildrenById(@NonNull UUID id)
 
+
+    abstract Set<Annotation> readAllByMultiFacetAwareItemIdInAndParentAnnotationIdIsNull(@NonNull Collection<UUID> ids)
+
+    abstract Set<Annotation> readAllByParentAnnotationIdIn(Collection<UUID> parentAnnotationIds)
 
     @Override
     Class getDomainClass() {

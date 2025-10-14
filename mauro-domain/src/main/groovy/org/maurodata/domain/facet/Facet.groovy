@@ -41,14 +41,15 @@ abstract class Facet extends Item implements Pathable, ItemReferencer {
 
     @PrePersist
     void prePersist() {
-        if(multiFacetAwareItem && !multiFacetAwareItemId) {
-            multiFacetAwareItemId = multiFacetAwareItem.id
-            multiFacetAwareItemDomainType = multiFacetAwareItem.domainType
-        } else {
-            log.error("Trying to save Facet without 'multiFacetAwareItem' set")
-            log.error("" + multiFacetAwareItem)
-            log.error("" + multiFacetAwareItemId)
-
+        if(!multiFacetAwareItemId) {
+            if(multiFacetAwareItem) {
+                multiFacetAwareItemId = multiFacetAwareItem.id
+                multiFacetAwareItemDomainType = multiFacetAwareItem.domainType
+            } else {
+                log.error("Trying to save Facet without 'multiFacetAwareItem' set")
+                log.error("" + multiFacetAwareItem)
+                log.error("" + multiFacetAwareItemId)
+            }
         }
     }
 

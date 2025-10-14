@@ -1,5 +1,6 @@
 package org.maurodata.domain.facet
 
+import jakarta.persistence.PrePersist
 import org.maurodata.domain.diff.CollectionDiff
 import org.maurodata.domain.diff.DiffBuilder
 import org.maurodata.domain.diff.DiffableItem
@@ -28,9 +29,14 @@ import java.time.format.DateTimeFormatter
 @AutoClone
 @MapConstructor(includeSuperFields = true, includeSuperProperties = true, noArg = true)
 class SummaryMetadataReport extends Item implements DiffableItem<SummaryMetadataReport>, Pathable, ItemReferencer {
+
     @JsonAlias(['report_value'])
     @NonNull
     String reportValue
+
+    @Transient
+    @JsonIgnore
+    SummaryMetadata summaryMetadata
 
     @JsonAlias(['summary_metadata_id'])
     @NonNull
@@ -39,6 +45,13 @@ class SummaryMetadataReport extends Item implements DiffableItem<SummaryMetadata
     @JsonAlias(['report_date'])
     @Nullable
     Instant reportDate
+
+    @PrePersist
+    void prePersist() {
+        if(summaryMetadata) {
+            summaryMetadataId = summaryMetadata.id
+        }
+    }
 
     @Override
     @JsonIgnore

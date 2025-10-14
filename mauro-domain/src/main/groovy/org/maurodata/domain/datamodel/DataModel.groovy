@@ -168,17 +168,21 @@ class DataModel extends Model implements ItemReferencer {
     @JsonIgnore
     @Override
     void setAssociations() {
-        Map<String, DataType> dataTypesMap = dataTypes.collectEntries {[it.label, it]}
+        super.setAssociations()
+        Map<String, DataType> dataTypesMap = dataTypes.collectEntries {[it.id?:it.label, it]}
         List<? extends DataType> referenceTypes = dataTypeReferenceTypes()
 
         dataTypes.each {dataType ->
             dataType.parent = this
+            dataType.dataModel = this
             dataType.enumerationValues.each {enumerationValue ->
                 enumerationValue.parent = dataType
+                enumerationValue.enumerationType = dataType
                 enumerationValues.add(enumerationValue)
                 enumerationValue.dataModel = this
                 this.enumerationValues.add(enumerationValue)
             }
+            dataType.setAssociations()
         }
 
         dataClasses.each {dataClass ->
@@ -189,6 +193,7 @@ class DataModel extends Model implements ItemReferencer {
 
     void setDataClassAssociations(DataClass dataClass, Map<String, DataType> dataTypesMap,
                                   List<? extends DataType> referenceTypes) {
+        dataClass.setAssociations()
         allDataClasses.add(dataClass)
         dataClass.dataModel = this
         dataClass.dataClasses.each {childDataClass ->
@@ -198,10 +203,11 @@ class DataModel extends Model implements ItemReferencer {
         dataClass.dataElements.each {dataElement ->
             dataElement.dataModel = this
             dataElement.dataClass = dataClass
-            dataElement.dataType = dataTypesMap[dataElement?.dataType?.label]
+            dataElement.dataType = dataTypesMap[dataElement.dataType?.id ?: dataElement.dataType?.label]
             if (!this.dataElements.contains(dataElement)) {
                 this.dataElements.add(dataElement)
             }
+            dataElement.setAssociations()
         }
         dataClass.referenceTypes = referenceTypes.findAll {it.referenceClass?.id == dataClass.id} as List<DataType>
     }

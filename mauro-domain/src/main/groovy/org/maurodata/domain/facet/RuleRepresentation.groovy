@@ -27,6 +27,10 @@ class RuleRepresentation extends Item implements DiffableItem<RuleRepresentation
 
     String representation
 
+    @Transient
+    @JsonIgnore
+    Rule rule
+
     @JsonAlias(['rule_id'])
     UUID ruleId
 

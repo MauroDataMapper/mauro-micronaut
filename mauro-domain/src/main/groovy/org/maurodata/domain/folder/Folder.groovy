@@ -131,7 +131,6 @@ class Folder extends Model implements ItemReferencer {
     List<DataModel> dataModels = []
 
     @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'terminology')
-    @JsonIgnore
     // have to parse separately due to internal references
     List<Terminology> terminologies = []
 
@@ -226,6 +225,7 @@ class Folder extends Model implements ItemReferencer {
     @JsonIgnore
     @Override
     void setAssociations() {
+        super.setAssociations()
         childFolders.each {childFolder ->
             childFolder.parentFolder = this
             childFolder.setAssociations()
