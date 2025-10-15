@@ -188,6 +188,17 @@ class DataModel extends Model implements ItemReferencer {
         dataClasses.each {dataClass ->
             setDataClassAssociations(dataClass, dataTypesMap, referenceTypes)
         }
+        dataTypes.each {dataType ->
+            if(dataType.dataTypeKind == DataType.DataTypeKind.REFERENCE_TYPE) {
+                if(!dataType.dataModel.allDataClasses.contains(dataType.referenceClass)) {
+                    dataType.referenceClass = dataType.dataModel.allDataClasses.find {dataClass ->
+                        (dataType.referenceClass.id && dataClass.id && dataClass.id == dataType.referenceClass.id) ||
+                        (dataType.referenceClass.label && dataClass.label && dataClass.label == dataType.referenceClass.label)
+                    }
+                }
+            }
+        }
+
         this
     }
 
