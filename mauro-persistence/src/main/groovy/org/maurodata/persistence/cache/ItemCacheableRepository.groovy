@@ -376,12 +376,6 @@ abstract class ItemCacheableRepository<I extends Item> implements ItemRepository
             updated
         }
 
-        List<SummaryMetadataReport> saveAll(Iterable<SummaryMetadataReport> items) {
-            List<SummaryMetadataReport> saved = repository.saveAll(items)
-            items.each { invalidate(it) }
-            saved
-        }
-
         List<SummaryMetadataReport> readAllBySummaryMetadataIdIn(List<UUID> summaryMetadataIds) {
             ((SummaryMetadataReportRepository) repository).readAllBySummaryMetadataIdIn(summaryMetadataIds)
         }

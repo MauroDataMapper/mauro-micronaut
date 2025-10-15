@@ -52,6 +52,7 @@ import org.maurodata.persistence.cache.ModelCacheableRepository.CodeSetCacheable
 import org.maurodata.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
 import org.maurodata.persistence.cache.ModelCacheableRepository.TerminologyCacheableRepository
 import org.maurodata.persistence.cache.ModelCacheableRepository.DataModelCacheableRepository
+import org.maurodata.persistence.datamodel.dto.DataClassExtensionDTO
 import org.maurodata.persistence.facet.AnnotationRepository
 import org.maurodata.persistence.facet.MetadataRepository
 import org.maurodata.persistence.facet.ReferenceFileRepository
@@ -575,6 +576,13 @@ class ContentHandler {
             } while (foundClasses.size() > 0)
             allItems.putAll(dataClasses.values().flatten().collectEntries {[it.id, it]})
 
+            Map<UUID, DataClass> dataClassMap = dataClasses.values().flatten().collectEntries{[it.id, it]}
+
+            List<DataClassExtensionDTO> extensions = dataClassCacheableRepository.getDataClassExtensionRelationships(dataClasses.values().flatten().id)
+            extensions.each {
+                dataClassMap[it.dataClassId].extendsDataClasses.add(dataClassMap[it.extendedDataClassId])
+            }
+
             dataTypes = dataTypeCacheableRepository.readAllByDataModelIdIn(dataModels.id)
             allItems.putAll(dataTypes.collectEntries {[it.id, it]})
         }
@@ -707,9 +715,9 @@ class ContentHandler {
             allItems[rule.multiFacetAwareItemId].rules.add(rule)
         }
 
-        // TODO: Make this quicker using a map
+        Map<UUID, Rule> ruleMap = rules.collectEntries{ [it.id, it]}
         ruleRepresentations.each {ruleRepresentation ->
-            rules.find {it.id == ruleRepresentation.ruleId }.ruleRepresentations.add(ruleRepresentation)
+            ruleMap[ruleRepresentation.ruleId].ruleRepresentations.add(ruleRepresentation)
         }
 
         semanticLinks.each {semanticLink ->
@@ -720,9 +728,9 @@ class ContentHandler {
             allItems[summaryMetadata.multiFacetAwareItemId].summaryMetadata.add(summaryMetadata)
         }
 
-        // TODO: Make this quicker using a map
+        Map<UUID, SummaryMetadata> summaryMetadataMap = summaryMetadata.collectEntries {[it.id, it]}
         summaryMetadataReports.each {summaryMetadataReport ->
-            summaryMetadata.find {it.id == summaryMetadataReport.summaryMetadataId}.summaryMetadataReports.add(summaryMetadataReport)
+            summaryMetadataMap[summaryMetadataReport.summaryMetadataId].summaryMetadataReports.add(summaryMetadataReport)
         }
 
         versionLinks.each {versionLink ->

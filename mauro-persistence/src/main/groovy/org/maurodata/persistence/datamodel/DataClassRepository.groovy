@@ -13,6 +13,7 @@ import io.micronaut.data.annotation.Query
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.model.query.builder.sql.Dialect
 import jakarta.inject.Inject
+import org.maurodata.persistence.datamodel.dto.DataClassExtensionDTO
 import org.maurodata.persistence.model.ModelItemRepository
 
 @Slf4j
@@ -90,6 +91,10 @@ abstract class DataClassRepository implements ModelItemRepository<DataClass> {
 
     @Query('''select data_class.* from datamodel.join_dataclass_to_extended_data_class jdcedc (dataclass_id, extended_dataclass_id) inner join datamodel.data_class on jdcedc.extended_dataclass_id = id where dataclass_id = :dataClassId''')
     abstract List<DataClass> getDataClassExtensionRelationships(@NonNull UUID dataClassId)
+
+    @Query('''select dataclass_id AS data_class_id,
+           extended_dataclass_id AS extended_data_class_id from datamodel.join_dataclass_to_extended_data_class where dataclass_id in (:dataClassIds)''')
+    abstract List<DataClassExtensionDTO> getDataClassExtensionRelationships(@NonNull List<UUID> dataClassIds)
 
     @Override
     @Nullable

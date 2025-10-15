@@ -6,6 +6,7 @@ import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.datamodel.DataType
 import org.maurodata.domain.folder.Folder
 import org.maurodata.persistence.ContainerizedTest
+import org.maurodata.persistence.ContentsService
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository
 import org.maurodata.persistence.cache.ModelCacheableRepository
 
@@ -19,7 +20,7 @@ class DataModelRepositorySpec extends Specification {
 
     @Inject
     @Shared
-    DataModelContentRepository dataModelContentRepository
+    ContentsService contentsService
 
     @Inject
     @Shared
@@ -95,7 +96,7 @@ class DataModelRepositorySpec extends Specification {
 
     def testImportAndExportFromCacheableRepo() {
         when:
-            DataModel importedModel = dataModelContentRepository.saveWithContent(testDataModel(myFirstFolder))
+            DataModel importedModel = contentsService.saveWithContent(testDataModel(myFirstFolder))
             importedModel = dataModelCacheableRepository.readById(importedModel.id)
             dataModelId = importedModel.id
 
@@ -122,9 +123,9 @@ class DataModelRepositorySpec extends Specification {
     }
     def testImportAndFindWithContent() {
         when:
-            DataModel importedModel = dataModelContentRepository.saveWithContent(testDataModel(myFirstFolder))
+            DataModel importedModel = contentsService.saveWithContent(testDataModel(myFirstFolder))
 
-            importedModel = dataModelContentRepository.findWithContentById(importedModel.id)
+            importedModel = contentsService.loadDataModelWithContent(importedModel.id)
             dataModelId = importedModel.id
             List<DataElement> allDataElements = (List<DataElement>) importedModel.allDataClasses.dataElements.flatten()
             List<DataType> allDataTypes = importedModel.dataTypes
@@ -152,19 +153,19 @@ class DataModelRepositorySpec extends Specification {
     def "Test Retrieving Data Models by Namespace"() {
 
         when:
-        dataModelContentRepository.saveWithContent(DataModel.build {
+        contentsService.saveWithContent(DataModel.build {
             folder myFirstFolder
             label "Data Model 1"
             metadata ("namespace 1", "key 1", "value 1")
             metadata ("namespace 1", "key 2", "value 2")
         })
-        dataModelContentRepository.saveWithContent(DataModel.build {
+        contentsService.saveWithContent(DataModel.build {
             folder myFirstFolder
             label "Data Model 2"
             metadata ("namespace 1", "key 1", "value 1")
             metadata ("namespace 2", "key 2", "value 2")
         })
-        dataModelContentRepository.saveWithContent(DataModel.build {
+        contentsService.saveWithContent(DataModel.build {
             folder myFirstFolder
             label "Data Model 3"
             metadata ("namespace 2", "key 1", "value 1")

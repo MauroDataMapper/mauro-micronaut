@@ -1,6 +1,8 @@
 package org.maurodata.persistence.profile
 
 import jakarta.inject.Inject
+import org.maurodata.persistence.ContentsService
+import spock.lang.Shared
 import spock.lang.Specification
 import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.folder.Folder
@@ -16,13 +18,10 @@ import org.maurodata.profile.test.DataModelBasedProfileTest
 class DynamicProfileServiceSpec extends Specification {
 
     @Inject
-    DataModelContentRepository dataModelContentRepository
+    ContentsService contentsService
 
     @Inject
     ModelCacheableRepository.FolderCacheableRepository folderRepository
-
-    @Inject
-    ModelCacheableRepository.DataModelCacheableRepository dataModelCacheableRepository
 
     @Inject
     DynamicProfileService dynamicProfileService
@@ -41,10 +40,10 @@ class DynamicProfileServiceSpec extends Specification {
         DataModel testDataModel = DataModelBasedProfileTest.testProfileModel
         testDataModel.folder = myFirstFolder
 
-        UUID dataModelId = dataModelContentRepository.saveWithContent(testDataModel).id
+        UUID dataModelId = contentsService.saveWithContent(testDataModel, null).id
 
 
-        DataModel saved = dataModelContentRepository.findWithContentById(dataModelId)
+        DataModel saved = contentsService.loadDataModelWithContent(dataModelId)
 
 
         List<Profile> profiles = dynamicProfileService.getDynamicProfiles()
@@ -74,7 +73,7 @@ class DynamicProfileServiceSpec extends Specification {
         DataModel testDataModel = DataModelBasedProfileTest.testProfileModel
         testDataModel.folder = myFirstFolder
 
-        dataModelContentRepository.saveWithContent(testDataModel).id
+        contentsService.saveWithContent(testDataModel).id
 
         List<Profile> profiles = dynamicProfileService.getDynamicProfiles()
         Profile dynamicProfile = profiles[0]

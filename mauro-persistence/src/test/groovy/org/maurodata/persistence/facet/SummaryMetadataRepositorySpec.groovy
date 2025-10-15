@@ -4,6 +4,7 @@ import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.facet.SummaryMetadataType
 import org.maurodata.domain.folder.Folder
 import org.maurodata.persistence.ContainerizedTest
+import org.maurodata.persistence.ContentsService
 import org.maurodata.persistence.cache.FacetCacheableRepository
 import org.maurodata.persistence.cache.ModelCacheableRepository
 import org.maurodata.persistence.datamodel.DataModelContentRepository
@@ -17,7 +18,7 @@ import spock.lang.Specification
 class SummaryMetadataRepositorySpec extends Specification {
 
     @Inject
-    DataModelContentRepository dataModelContentRepository
+    ContentsService contentsService
 
     @Inject
     ModelCacheableRepository.DataModelCacheableRepository dataModelCacheableRepository
@@ -69,8 +70,8 @@ class SummaryMetadataRepositorySpec extends Specification {
         }
 
 
-        dataModelId = dataModelContentRepository.saveWithContent(dataModel).id
-        DataModel retrievedDataModel = dataModelContentRepository.findWithContentById(dataModelId)
+        dataModelId = contentsService.saveWithContent(dataModel).id
+        DataModel retrievedDataModel = contentsService.loadDataModelWithContent(dataModelId)
 
         then:
         retrievedDataModel.summaryMetadata.size() == 1

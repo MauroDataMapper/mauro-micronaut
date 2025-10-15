@@ -30,6 +30,7 @@ import org.maurodata.persistence.datamodel.DataClassRepository
 import org.maurodata.persistence.datamodel.DataElementRepository
 import org.maurodata.persistence.datamodel.DataTypeRepository
 import org.maurodata.persistence.datamodel.EnumerationValueRepository
+import org.maurodata.persistence.datamodel.dto.DataClassExtensionDTO
 import org.maurodata.persistence.model.AdministeredItemRepository
 import org.maurodata.persistence.terminology.TermRelationshipRepository
 import org.maurodata.persistence.terminology.TermRelationshipTypeRepository
@@ -261,6 +262,11 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
             }
             ((DataClassRepository) repository).deleteExtensionRelationships(dataClassIds)
         }
+
+        List<DataClassExtensionDTO> getDataClassExtensionRelationships(List<UUID> dataClassIds) {
+            ((DataClassRepository) repository).getDataClassExtensionRelationships(dataClassIds)
+        }
+
 
         @Override
         Boolean handles(String domainType) {

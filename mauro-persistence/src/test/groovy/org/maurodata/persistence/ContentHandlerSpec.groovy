@@ -77,7 +77,7 @@ class ContentHandlerSpec extends Specification{
 
 
         Folder folder = getBigFolder()
-        contentsService.saveWithContent(folder, null)
+        contentsService.saveWithContent(folder)
 
         Instant start = Instant.now()
 
