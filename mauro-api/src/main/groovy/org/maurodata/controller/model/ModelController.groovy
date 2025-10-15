@@ -69,6 +69,7 @@ import org.maurodata.persistence.model.AdministeredItemRepository
 import org.maurodata.persistence.model.ModelContentRepository
 import org.maurodata.plugin.MauroPluginService
 import org.maurodata.plugin.exporter.ModelExporterPlugin
+import org.maurodata.plugin.importer.FolderImporterPlugin
 import org.maurodata.plugin.importer.ImportParameters
 import org.maurodata.plugin.importer.ModelImporterPlugin
 import org.maurodata.service.core.AuthorityService
@@ -369,14 +370,15 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
 
         ImportParameters importParameters = importerUtils.readFromMultipartFormBody(body, mauroPlugin.importParametersClass())
 
-        if (importParameters.folderId == null) {
+        Folder folder = null
+        if (importParameters.folderId != null) {
+            folder = folderRepository.readById(importParameters.folderId)
+        } else if( !(mauroPlugin instanceof FolderImporterPlugin)) { // folderId is null and plugin is not a folder import
             ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, importParameters.folderId, "Please choose the folder into which the Model/s should be imported.")
         }
 
         List<M> imported = (List<M>) mauroPlugin.importModels(importParameters)
 
-        Folder folder = folderRepository.readById(importParameters.folderId)
-        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, folder, "Folder with id $importParameters.folderId not found")
         accessControlService.checkRole(Role.EDITOR, folder)
         List<M> saved = imported.collect { M imp ->
             imp.folder = folder
