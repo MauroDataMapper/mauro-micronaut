@@ -256,7 +256,7 @@ tasks.named("dockerfile") {
     baseImage("${dockerTag}")
 
     instruction """
-ENV MICRONAUT_ENVIRONMENTS=docker
+ENV MICRONAUT_ENVIRONMENTS='docker,datasources,javamail,mauro'
 ENV DATABASE_NAME=sandbox
 ENV DATABASE_USERNAME=sandbox
 ENV DATABASE_PASSWORD=sandbox
