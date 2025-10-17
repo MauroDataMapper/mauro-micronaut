@@ -5,17 +5,12 @@ import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
-import org.maurodata.domain.dataflow.DataClassComponent
-import org.maurodata.domain.dataflow.DataElementComponent
-import org.maurodata.domain.dataflow.DataFlow
 import org.maurodata.domain.datamodel.DataClass
-import org.maurodata.domain.datamodel.DataElement
 import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.datamodel.DataType
+import org.maurodata.persistence.cache.AdministeredItemCacheableRepository
 import org.maurodata.persistence.dataflow.DataFlowContentRepository
-import org.maurodata.persistence.dataflow.DataFlowRepository
 import org.maurodata.persistence.model.ModelContentRepository
-import org.maurodata.util.PathStringUtils
 
 @CompileStatic
 @Singleton
@@ -38,7 +33,7 @@ class DataModelContentRepository extends ModelContentRepository<DataModel> {
     EnumerationValueRepository enumerationValueRepository
 
     @Inject
-    DataFlowRepository dataFlowRepository
+    AdministeredItemCacheableRepository.DataFlowCacheableRepository dataFlowCacheableRepository
 
     @Inject
     DataFlowContentRepository dataFlowContentRepository
@@ -76,10 +71,10 @@ class DataModelContentRepository extends ModelContentRepository<DataModel> {
         }
 
         //dataFlows
-        dataModel.sourceDataFlows = dataFlowRepository.findAllBySource(dataModel).collect {
+        dataModel.sourceDataFlows = dataFlowCacheableRepository.findAllBySource(dataModel).collect {
             dataFlowContentRepository.readWithContentById(it.id)
         }
-        dataModel.targetDataFlows = dataFlowRepository.findAllByTarget(dataModel).collect {
+        dataModel.targetDataFlows = dataFlowCacheableRepository.findAllByTarget(dataModel).collect {
             dataFlowContentRepository.readWithContentById(it.id)
         }
         dataModel
@@ -102,22 +97,10 @@ class DataModelContentRepository extends ModelContentRepository<DataModel> {
             }
         }
         saved.dataTypes = dataTypeRepository.updateAll(saved.dataTypes.findAll {it.isReferenceType()})
-
-//        saved = updateDataFlows(saved, dataClassByLabelLookup, dataElementByLabelLookup)
-//
-        saved.targetDataFlows.each {
-            it.target = saved
-            it.updateCreationProperties()
-
-            DataModel source = findSourceImportDataModel(it, saved)
-            if (source) {
-                it.source = source
-                it.target = saved
-                it.updateCreationProperties()
-                dataFlowContentRepository.saveWithContent(it)
-            } else {
-                log.warn("No matching source model foumd for dataflow $it.source.label, dropping item")
-            }
+        saved.targetDataFlows.each {dataFlow ->
+            dataFlow.target = saved
+            dataFlow.updateCreationProperties()
+            dataFlowContentRepository.saveWithContent(dataFlow)
         }
         saved
     }
@@ -142,17 +125,5 @@ class DataModelContentRepository extends ModelContentRepository<DataModel> {
     @Override
     Boolean handles(Class clazz) {
         return dataModelRepository.handles(clazz)
-    }
-
-    DataModel findSourceImportDataModel(DataFlow dataFlow, DataModel dataModel) {
-        String sourcePath = dataFlow.source.path.pathString
-        PathStringUtils.getVersionFromPath(sourcePath)
-
-        List<DataModel> importedSources = dataModelRepository.findAllByParentAndPathIdentifier(dataModel.parent.id, dataFlow.source.label).findAll{
-            it.id != dataFlow.source.id}
-        if (importedSources.size() > 1) {
-            log.warn("Multiple models found for parent $dataModel.parent.id with label $dataFlow.source.label. Returning 1st match")
-        }
-        importedSources.isEmpty()? null: importedSources.first()
     }
 }

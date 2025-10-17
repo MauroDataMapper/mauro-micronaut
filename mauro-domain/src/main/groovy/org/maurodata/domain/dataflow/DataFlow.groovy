@@ -94,12 +94,6 @@ class DataFlow extends ModelItem<DataModel> {
         this.copyInto(dataFlowShallowCopy)
         return dataFlowShallowCopy
     }
-    @Override
-    @Transient
-    @JsonIgnore
-    List<Collection<? extends ModelItem<DataFlow>>> getAllAssociations() {
-        [dataClassComponents] as List<Collection<? extends ModelItem<DataFlow>>>
-    }
 
        /**
      * Builder methods

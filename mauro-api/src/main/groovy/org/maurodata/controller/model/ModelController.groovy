@@ -6,7 +6,6 @@ import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
-import io.micronaut.http.HttpHeaders
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.Body
@@ -36,7 +35,6 @@ import org.maurodata.api.model.PermissionsDTO
 import org.maurodata.api.model.VersionLinkDTO
 import org.maurodata.api.model.VersionLinkTargetDTO
 import org.maurodata.controller.facet.EditController
-import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.diff.ArrayDiff
 import org.maurodata.domain.diff.CollectionDiff
 import org.maurodata.domain.diff.FieldDiff
@@ -59,8 +57,6 @@ import org.maurodata.domain.model.version.ModelVersion
 import org.maurodata.domain.security.CatalogueUser
 import org.maurodata.domain.security.Role
 import org.maurodata.domain.security.UserGroup
-import org.maurodata.domain.terminology.CodeSet
-import org.maurodata.domain.terminology.Terminology
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository
 import org.maurodata.persistence.cache.FacetCacheableRepository
 import org.maurodata.persistence.cache.ModelCacheableRepository
@@ -71,9 +67,11 @@ import org.maurodata.persistence.model.AdministeredItemRepository
 import org.maurodata.persistence.model.ModelContentRepository
 import org.maurodata.plugin.MauroPluginService
 import org.maurodata.plugin.exporter.ModelExporterPlugin
+import org.maurodata.plugin.importer.FolderImporterPlugin
 import org.maurodata.plugin.importer.ImportParameters
 import org.maurodata.plugin.importer.ModelImporterPlugin
 import org.maurodata.service.core.AuthorityService
+import org.maurodata.service.datamodel.DataModelImportService
 import org.maurodata.service.plugin.PluginService
 import org.maurodata.util.exporter.ExporterUtils
 import org.maurodata.utils.importer.ImporterUtils
@@ -130,6 +128,9 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
 
     @Inject
     ImporterUtils importerUtils
+
+    @Inject
+    DataModelImportService dataModelImportService
 
     ModelController(Class<M> modelClass, AdministeredItemCacheableRepository<M> modelRepository, FolderCacheableRepository folderRepository,
                     ModelContentRepository<M> modelContentRepository) {
@@ -365,31 +366,44 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         ExporterUtils.createExportResponse(mauroPlugin, existing)
     }
 
-    ListResponse<M> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version) {
 
+    List<M> consumeExportFile(@Body MultipartBody body, String namespace, String name, @Nullable String version) {
         ModelImporterPlugin mauroPlugin = mauroPluginService.getPlugin(ModelImporterPlugin, namespace, name, version)
         PluginService.handlePluginNotFound(mauroPlugin, namespace, name)
 
         ImportParameters importParameters = importerUtils.readFromMultipartFormBody(body, mauroPlugin.importParametersClass())
 
-        if (importParameters.folderId == null) {
+        Folder folder = null
+        if (importParameters.folderId != null) {
+            folder = folderRepository.readById(importParameters.folderId)
+        } else if (!(mauroPlugin instanceof FolderImporterPlugin)) {
+            // folderId is null and plugin is not a folder import
             ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, importParameters.folderId, "Please choose the folder into which the Model/s should be imported.")
         }
-
-        List<M> imported = (List<M>) mauroPlugin.importModels(importParameters)
-
-        Folder folder = folderRepository.readById(importParameters.folderId)
-        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, folder, "Folder with id $importParameters.folderId not found")
         accessControlService.checkRole(Role.EDITOR, folder)
-        List<M> saved = imported.collect { M imp ->
+
+        mauroPlugin.importModels(importParameters).collect {M imp->
             imp.folder = folder
+            imp
+        }
+    }
+
+    ListResponse<M> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version) {
+        List<M> imported = consumeExportFile(body, namespace, name, version)
+        List<M> saved = []
+        saved = imported.collect {M imp ->
             log.info '** about to saveWithContentBatched... **'
+            updateDerivedProperties(imp)
             updateCreationProperties(imp)
             M savedImported = modelContentRepository.saveWithContent(imp)
             log.info '** finished saveWithContentBatched **'
             savedImported
         }
-        List<M> smallerResponse = saved.collect { model ->
+        smallerResponse(saved)
+    }
+
+    ListResponse<M> smallerResponse(List<M> saved) {
+        List<M> smallerResponse = saved.collect {model ->
             show(model.id)
         }
         ListResponse.from(smallerResponse)

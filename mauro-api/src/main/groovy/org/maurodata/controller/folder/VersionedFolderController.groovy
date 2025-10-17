@@ -40,6 +40,7 @@ import org.maurodata.domain.model.version.CreateNewVersionData
 import org.maurodata.domain.model.version.FinaliseData
 import org.maurodata.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
 import org.maurodata.persistence.folder.FolderContentRepository
+import org.maurodata.service.core.AllFolderService
 import org.maurodata.web.ListResponse
 
 @Slf4j
@@ -50,15 +51,14 @@ class VersionedFolderController extends ModelController<Folder> implements Versi
 
     private static final String MY_CLASS_TYPE = "VersionedFolder"
 
-    @Inject
     FolderContentRepository folderContentRepository
 
     @Inject
-    FolderService folderService
+    AllFolderService allFolderService
 
     VersionedFolderController(FolderCacheableRepository folderRepository, FolderContentRepository folderContentRepository, FolderService folderService) {
         super(Folder, folderRepository, folderRepository, folderContentRepository, folderService)
-        this.folderService = folderService
+        this.folderContentRepository = folderContentRepository
     }
 
     @Get(Paths.VERSIONED_FOLDER_ID)
@@ -164,8 +164,11 @@ class VersionedFolderController extends ModelController<Folder> implements Versi
     @Post(Paths.VERSIONED_FOLDER_IMPORT)
     @Override
     ListResponse<Folder> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version) {
-        super.importModel(body, namespace, name, version)
+        List<Folder> imported = super.consumeExportFile(body, namespace, name, version)
+        List<Folder> saved = allFolderService.importModel(imported, folderContentRepository)
+        smallerResponse(saved)
     }
+
 
     @Audit
     @Transactional

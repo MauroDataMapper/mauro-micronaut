@@ -15,7 +15,6 @@ import org.maurodata.plugin.exporter.ModelItemExporterPlugin
 class ExporterUtils {
 
      static HttpResponse<byte[]> createExportResponse(ModelExporterPlugin mauroPlugin, Model model) {
-         println(">>>>>>>>>>>>>>> here we are")
         byte[] fileContents = mauroPlugin.exportModel(model)
         String filename = mauroPlugin.getFileName(model)
         HttpResponse

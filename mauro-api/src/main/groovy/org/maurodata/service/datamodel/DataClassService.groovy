@@ -12,6 +12,7 @@ import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository
 import org.maurodata.persistence.datamodel.DataClassContentRepository
 import org.maurodata.persistence.model.PathRepository
+import org.maurodata.security.AccessControlService
 import org.maurodata.service.core.AdministeredItemService
 
 @CompileStatic
@@ -23,6 +24,8 @@ class DataClassService extends AdministeredItemService{
     AdministeredItemCacheableRepository.DataTypeCacheableRepository dataTypeCacheableRepository
     AdministeredItemCacheableRepository.DataClassCacheableRepository dataClassCacheableRepository
     DataTypeService dataTypeService
+    @Inject
+    AccessControlService accessControlService
 
     @Inject
     DataClassService(PathRepository pathRepository, DataClassContentRepository dataClassContentRepository,
@@ -77,11 +80,12 @@ class DataClassService extends AdministeredItemService{
                     //target model does not have existing dataType? copy new DataType in target model
                     copiedDE.dataType = setOrCreateNewDataType(target, copiedDE.dataType)
                 }
-                updateCreationProperties(copiedDE as AdministeredItem)
+                copiedDE = updateCreationProperties(copiedDE)
+                copiedDE.catalogueUser = accessControlService.getUser()
                 updateDerivedProperties(copiedDE)
-                copiedDE.dataModel = target
-                copiedDE.dataClass = dataClass
-                copiedDataElements.add(copiedDE)
+                (copiedDE as DataElement).dataModel = target
+                (copiedDE as DataElement).dataClass = dataClass
+                copiedDataElements.add(copiedDE as DataElement)
             }
         }
         dataElementCacheableRepository.saveAll(copiedDataElements)

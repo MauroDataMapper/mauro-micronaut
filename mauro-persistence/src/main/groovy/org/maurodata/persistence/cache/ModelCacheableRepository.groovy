@@ -1,7 +1,5 @@
 package org.maurodata.persistence.cache
 
-import org.maurodata.domain.model.version.ModelVersion
-
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.cache.annotation.CacheConfig
@@ -11,6 +9,7 @@ import org.maurodata.domain.classifier.ClassificationScheme
 import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.folder.Folder
 import org.maurodata.domain.model.Model
+import org.maurodata.domain.model.version.ModelVersion
 import org.maurodata.domain.terminology.CodeSet
 import org.maurodata.domain.terminology.Terminology
 import org.maurodata.persistence.classifier.ClassificationSchemeRepository
@@ -118,6 +117,9 @@ class ModelCacheableRepository<M extends Model> extends AdministeredItemCacheabl
             super(dataModelRepository)
         }
 
+        List<DataModel> findAllByLabelAndBranchName(String label, String branchName) {
+            ((DataModelRepository) repository).findAllByLabelAndBranchName(label, branchName)
+        }
         @Override
         Boolean handles(String domainType) {
             return domainType != null && domainType.toLowerCase() in ['datamodel', 'datamodels']

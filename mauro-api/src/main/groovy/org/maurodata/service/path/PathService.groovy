@@ -18,7 +18,7 @@ import static org.maurodata.util.PathStringUtils.getCOLON
 import static org.maurodata.util.PathStringUtils.getDISCARD_AFTER_VERSION
 import static org.maurodata.util.PathStringUtils.getItemSubPath
 import static org.maurodata.util.PathStringUtils.getREMOVE_VERSION_DELIM
-import static org.maurodata.util.PathStringUtils.getVersionFromPath
+import static org.maurodata.util.PathStringUtils.getBranchNameFromPath
 import static org.maurodata.util.PathStringUtils.lastSubPath
 import static org.maurodata.util.PathStringUtils.splitBy
 
@@ -80,7 +80,7 @@ class PathService implements AdministeredItemReader {
     protected AdministeredItem findResourceByPath(String domainType, String path) {
         String pathPrefix = getPathPrefixForDomainType(domainType)
         String domainPath = getItemSubPath(pathPrefix, path)
-        String versionString = getVersionFromPath(path)
+        String versionString = getBranchNameFromPath(path)
         return findItemForPath(domainType, domainPath, versionString, path)
     }
 

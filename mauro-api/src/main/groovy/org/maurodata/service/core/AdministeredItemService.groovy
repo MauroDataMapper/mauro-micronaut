@@ -1,9 +1,11 @@
 package org.maurodata.service.core
 
+import groovy.transform.CompileStatic
 import jakarta.inject.Inject
 import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.persistence.model.PathRepository
 
+@CompileStatic
 abstract class AdministeredItemService {
 
     @Inject
@@ -16,11 +18,12 @@ abstract class AdministeredItemService {
         item
     }
 
-    protected void updateCreationProperties(AdministeredItem item) {
+    protected AdministeredItem updateCreationProperties(AdministeredItem item) {
         item.id = null
         item.version = null
         item.dateCreated = null
         item.lastUpdated = null
+        item
     }
 
     AdministeredItem updatePaths(AdministeredItem administeredItem) {

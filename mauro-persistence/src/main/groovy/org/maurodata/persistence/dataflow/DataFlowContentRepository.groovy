@@ -5,9 +5,9 @@ import io.micronaut.core.annotation.NonNull
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
 import org.maurodata.domain.dataflow.DataClassComponent
-import org.maurodata.domain.dataflow.DataElementComponent
 import org.maurodata.domain.dataflow.DataFlow
 import org.maurodata.domain.model.AdministeredItem
+import org.maurodata.persistence.cache.AdministeredItemCacheableRepository
 import org.maurodata.persistence.model.AdministeredItemContentRepository
 
 @CompileStatic
@@ -15,22 +15,23 @@ import org.maurodata.persistence.model.AdministeredItemContentRepository
 class DataFlowContentRepository extends AdministeredItemContentRepository {
 
     @Inject
-    DataFlowRepository dataFlowRepository
+    AdministeredItemCacheableRepository.DataFlowCacheableRepository dataFlowCacheableRepository
     @Inject
     DataClassComponentContentRepository dataClassComponentContentRepository
-    @Inject
-    DataClassComponentRepository dataClassComponentRepository
 
     @Inject
-    DataElementComponentRepository dataElementComponentRepository
+    AdministeredItemCacheableRepository.DataElementComponentCacheableRepository dataElementComponentCacheableRepository
+
+    @Inject
+    AdministeredItemCacheableRepository.DataClassComponentCacheableRepository dataClassComponentCacheableRepository
 
     @Override
     DataFlow readWithContentById(UUID id) {
-        DataFlow dataFlow = dataFlowRepository.findById(id)
-        List<DataClassComponent> dataClassComponents = dataClassComponentRepository.findAllByParent(dataFlow)
+        DataFlow dataFlow = dataFlowCacheableRepository.findById(id)
+        List<DataClassComponent> dataClassComponents = dataClassComponentCacheableRepository.findAllByParent(dataFlow)
 
         dataClassComponents.each {
-            it.dataElementComponents =   dataElementComponentRepository.findAllByParent(it)
+            it.dataElementComponents = dataElementComponentCacheableRepository.findAllByParent(it)
         }
         dataFlow.dataClassComponents = dataClassComponents
         dataFlow
@@ -38,8 +39,7 @@ class DataFlowContentRepository extends AdministeredItemContentRepository {
 
     @Override
     DataFlow saveWithContent(AdministeredItem administeredItem) {
-        DataFlow saved = dataFlowRepository.save(administeredItem as DataFlow)
-        saveAllFacets(saved)
+        DataFlow saved = (DataFlow) super.saveWithContent(administeredItem)
         saved.dataClassComponents.each {
             it.updateCreationProperties()
             it.dataFlow = saved

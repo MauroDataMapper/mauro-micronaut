@@ -39,6 +39,10 @@ class PathStringUtils {
         subPathOnly - BRANCH_DELIMITER
     }
 
+    static String getPathFrom(String start, String fullPath){
+        start + fullPath.split(start)[1]
+    }
+
     static String lastSubPath(String subPath) {
         splitBy(subPath, VERTICAL_BAR_ESCAPE).last()
     }
@@ -47,7 +51,7 @@ class PathStringUtils {
         path.split(separator)
     }
 
-    static String getVersionFromPath(String fullPath) {
+    static String getBranchNameFromPath(String fullPath) {
         String[] parts = fullPath.split(VERTICAL_BAR_ESCAPE)
         String version
         parts.each {

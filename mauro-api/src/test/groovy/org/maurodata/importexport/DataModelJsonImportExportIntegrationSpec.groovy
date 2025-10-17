@@ -5,6 +5,7 @@ import groovy.json.JsonSlurper
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.MediaType
 import io.micronaut.http.client.multipart.MultipartBody
+import io.micronaut.test.annotation.Sql
 import jakarta.inject.Singleton
 import org.maurodata.domain.dataflow.DataClassComponent
 import org.maurodata.domain.dataflow.DataElementComponent
@@ -21,7 +22,6 @@ import org.maurodata.export.ExportModel
 import org.maurodata.persistence.ContainerizedTest
 import org.maurodata.testing.CommonDataSpec
 import org.maurodata.web.ListResponse
-import spock.lang.Ignore
 import spock.lang.Shared
 
 import java.time.Instant
@@ -37,6 +37,8 @@ class DataModelJsonImportExportIntegrationSpec extends CommonDataSpec {
     UUID dataModelId
     @Shared
     DataModel source
+    @Shared
+    DataModel importedSource
     @Shared
     UUID metadataId
 
@@ -107,6 +109,9 @@ class DataModelJsonImportExportIntegrationSpec extends CommonDataSpec {
 
         source = dataModelApi.create(folderId, dataModelPayload('source label'))
 
+        //same label and branchName as source
+        importedSource = dataModelApi.create(folderId, dataModelPayload('source label'))
+
         dataFlow = dataFlowApi.create(dataModelId, new DataFlow(
             label: 'test label',
             description: 'dataflow payload description ',
@@ -170,7 +175,7 @@ class DataModelJsonImportExportIntegrationSpec extends CommonDataSpec {
         parsedJson.dataModel.targetDataFlows[0].dataClassComponents[0].dataElementComponents[0].targetDataElements[0].path
     }
 
-    @Ignore
+
     void 'test consume export data model  - should import'() {
         given:
         HttpResponse<byte[]> response = dataModelApi.exportModel(dataModelId, 'org.maurodata.plugin.exporter.json', 'JsonDataModelExporterPlugin', '4.0.0')

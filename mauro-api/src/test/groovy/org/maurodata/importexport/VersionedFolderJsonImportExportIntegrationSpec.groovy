@@ -27,7 +27,6 @@ import org.maurodata.domain.terminology.Terminology
 import org.maurodata.persistence.ContainerizedTest
 import org.maurodata.testing.CommonDataSpec
 import org.maurodata.web.ListResponse
-import spock.lang.Ignore
 import spock.lang.Shared
 
 @ContainerizedTest
@@ -57,7 +56,7 @@ class VersionedFolderJsonImportExportIntegrationSpec extends CommonDataSpec {
         dataModelId = dataModelApi.create(folderId, new DataModel(label: 'Test data model')).id
     }
 
-    @Ignore
+
     void 'create versionedFolder, dataModels, metadata, summaryMetadata, summaryMetadataReports, annotations, terminology, codeset and export'() {
         given:
         UUID dataClass1Id = dataClassApi.create(dataModelId, new DataClass(label: 'TEST-1', description: 'first data class')).id
@@ -131,7 +130,6 @@ class VersionedFolderJsonImportExportIntegrationSpec extends CommonDataSpec {
         parsedJson.folder.codeSets[0].id == codeSet.id.toString()
     }
 
-    @Ignore
     void 'get export folder -should export folder, with nested data and deep nesting of child folders'() {
         given:
         UUID childFolderId = folderApi.create(folderId, new Folder(label: 'Test child folder 1st level')).id
@@ -172,7 +170,6 @@ class VersionedFolderJsonImportExportIntegrationSpec extends CommonDataSpec {
     }
 
 
-    @Ignore
     void 'test consume export folders  - should import'() {
         given:
         UUID dataClassId = dataClassApi.create(dataModelId, new DataClass(label: 'TEST-1', description: 'first data class')).id
@@ -360,7 +357,7 @@ class VersionedFolderJsonImportExportIntegrationSpec extends CommonDataSpec {
 
     }
 
-    @Ignore
+
     void 'test consume export folder- folder is not parent - should import'() {
         given:
 
@@ -489,7 +486,7 @@ class VersionedFolderJsonImportExportIntegrationSpec extends CommonDataSpec {
         importedTermRelationship.items[0].relationshipType.id == importedTermRelationshipTypeId
     }
 
-    @Ignore
+
     void 'export and import folder with two terminologies with overlapping codes'() {
         given:
         // create two terminologies each with different Terms with code TEST
@@ -615,7 +612,6 @@ class VersionedFolderJsonImportExportIntegrationSpec extends CommonDataSpec {
         importedTermRelationships.items.first().relationshipType.label == 'TEST'
     }
 
-    @Ignore
     void 'test export and import folder with datamodel and dataflow '() {
         given:
         UUID dataClass1Id = dataClassApi.create(dataModelId, new DataClass(label: 'TEST-1', description: 'first data class')).id
@@ -623,6 +619,8 @@ class VersionedFolderJsonImportExportIntegrationSpec extends CommonDataSpec {
         UUID dataElementId1 = dataElementApi.create(dataModelId, dataClass1Id, dataElementPayload('dataElement1 label', dataType)).id
 
         DataModel source = dataModelApi.create(folderId, new DataModel(label: 'Test data model source'))
+        // same label and branchName(version)
+        DataModel importSource = dataModelApi.create(folderId, new DataModel(label: 'Test data model source'))
 
         DataFlow dataFlow = dataFlowApi.create(dataModelId, new DataFlow(
             label: 'test label',
@@ -648,7 +646,7 @@ class VersionedFolderJsonImportExportIntegrationSpec extends CommonDataSpec {
         then:
         exportResponse
         Map parsedJson = jsonSlurper.parseText(new String(exportResponse.body())) as Map
-        parsedJson.folder.dataModels.size() == 2
+        parsedJson.folder.dataModels.size() == 3
         parsedJson.folder.dataModels[0].targetDataFlows.size() == 1
         parsedJson.folder.dataModels[0].targetDataFlows[0].dataClassComponents.size() == 1
         parsedJson.folder.dataModels[0].targetDataFlows[0].dataClassComponents[0].dataElementComponents.size() == 1
@@ -660,6 +658,9 @@ class VersionedFolderJsonImportExportIntegrationSpec extends CommonDataSpec {
         parsedJson.folder.dataModels[1].sourceDataFlows[0].dataClassComponents.size() == 1
         parsedJson.folder.dataModels[1].sourceDataFlows[0].dataClassComponents[0].dataElementComponents.size() == 1
         parsedJson.folder.dataModels[1].sourceDataFlows[0].dataClassComponents[0].dataElementComponents[0].targetDataElements.size() == 1
+
+        !parsedJson.folder.dataModels[2].targetDataFlows
+        !parsedJson.folder.dataModels[2].sourceDataFlows
 
 
         MultipartBody importRequest = MultipartBody.builder()
@@ -683,7 +684,7 @@ class VersionedFolderJsonImportExportIntegrationSpec extends CommonDataSpec {
         ListResponse<DataModel> dataModels = dataModelApi.list(importedFolderId)
 
         then:
-        dataModels.items.size() == 2
+        dataModels.items.size() == 3
 
         UUID importedDataModelId = dataModels.items.find {!it.path.toString().contains('source')}.id
         when:
@@ -694,7 +695,7 @@ class VersionedFolderJsonImportExportIntegrationSpec extends CommonDataSpec {
         dataFlowListResponse.items.size() == 1
         DataFlow importedDataFlow = dataFlowListResponse.items[0]
         importedDataFlow.target.id != dataModelId
-        importedDataFlow.source.id == source.id
+        importedDataFlow.source.id == importSource.id
 
         when:
         ListResponse<DataClassComponent> dataClassComponents = dataClassComponentApi.list(importedDataModelId, importedDataFlow.id)
@@ -731,7 +732,7 @@ class VersionedFolderJsonImportExportIntegrationSpec extends CommonDataSpec {
         dataElementComponent.targetDataElements[0].id != dataElementId1
     }
 
-    @Ignore
+
     void 'test import folder without folder_id in params -should import as root folder'() {
         given:
         HttpResponse<byte[]> exportResponse =
