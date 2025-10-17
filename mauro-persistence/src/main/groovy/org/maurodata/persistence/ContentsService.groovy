@@ -27,6 +27,17 @@ class ContentsService {
         return item
     }
 
+    DataModel saveContentOnly(DataModel dataModel, CatalogueUser catalogueUser = null) {
+        ContentHandler contentHandler = applicationContext.createBean(ContentHandler)
+        dataModel.setAssociations()
+        contentHandler.shred(dataModel)
+        contentHandler.dataModels = [] as Set
+        contentHandler.setCreateProperties(catalogueUser)
+        contentHandler.saveWithContent()
+        return dataModel
+    }
+
+
     boolean deleteWithContent(AdministeredItem item) {
         ContentHandler contentHandler = applicationContext.createBean(ContentHandler)
         item.setAssociations()

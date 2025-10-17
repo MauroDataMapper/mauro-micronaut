@@ -88,6 +88,9 @@ import java.lang.reflect.Method
 abstract class ModelController<M extends Model> extends AdministeredItemController<M, Folder> implements ModelApi<M> {
 
     @Inject
+    FacetCacheableRepository.VersionLinkCacheableRepository versionLinkCacheableRepository
+
+    @Inject
     FacetCacheableRepository.ReferenceFileCacheableRepository referenceFileCacheableRepository
 
     @Override
@@ -321,7 +324,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
 
         final List<AdministeredItem> toSave = new LinkedList<>()
         toSave.add(existing)
-        modelContentRepository.saveVersionLinks(toSave)
+        saveVersionLinks(toSave)
 
         modelRepository.readById(savedCopy.id) as M
     }
@@ -1789,6 +1792,26 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         it.multiFacetAwareItemDomainType = item.domainType
         it.multiFacetAwareItemId = item.id
         it.multiFacetAwareItem = item
+    }
+
+    void saveVersionLinks(List<AdministeredItem> items) {
+        List<VersionLink> versionLinks = []
+        items.each {item ->
+            if (item instanceof Model) {
+                final Model modelItem = (Model) item
+                if (modelItem.versionLinks) {
+                    modelItem.versionLinks.each {
+                        updateMultiAwareData(item, it)
+                    }
+                    versionLinks.addAll(modelItem.versionLinks)
+                }
+            }
+        }
+        versionLinks.each {
+            if (it.id == null || !versionLinkCacheableRepository.existsById(it.id)) {
+                versionLinkCacheableRepository.save(it)
+            }
+        }
     }
 
 }

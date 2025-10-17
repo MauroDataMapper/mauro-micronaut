@@ -83,17 +83,6 @@ class DataModelContentRepository extends ModelContentRepository<DataModel> {
         saved
     }
 
-    @Override
-    DataModel saveContentOnly(@NonNull DataModel model) {
-        DataModel saved = (DataModel) super.saveContentOnly(model)
-        if(saved.allDataClasses) {
-            dataClassRepository.updateAll(saved.allDataClasses.findAll { it.parentDataClass})
-        }
-        if(model.dataElements) {
-            dataElementRepository.updateAll(model.dataElements)
-        }
-        saved
-    }
 
     @Override
     Boolean handles(String domainType) {

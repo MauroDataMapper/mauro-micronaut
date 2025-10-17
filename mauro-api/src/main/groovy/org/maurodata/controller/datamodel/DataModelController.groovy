@@ -50,11 +50,13 @@ import org.maurodata.domain.facet.EditType
 import org.maurodata.domain.facet.VersionLink
 import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.domain.model.Model
+import org.maurodata.domain.model.ModelItem
 import org.maurodata.domain.model.version.CreateNewVersionData
 import org.maurodata.domain.model.version.FinaliseData
 import org.maurodata.domain.search.dto.SearchRequestDTO
 import org.maurodata.domain.search.dto.SearchResultsDTO
 import org.maurodata.domain.security.Role
+import org.maurodata.persistence.cache.AdministeredItemCacheableRepository.DataClassCacheableRepository
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository.DataElementCacheableRepository
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository.DataTypeCacheableRepository
 import org.maurodata.persistence.cache.ModelCacheableRepository.DataModelCacheableRepository
@@ -83,6 +85,9 @@ class DataModelController extends ModelController<DataModel> implements DataMode
 
     @Inject
     DataModelService dataModelService
+
+    @Inject
+    DataClassCacheableRepository dataClassRepository
 
     @Inject
     DataElementCacheableRepository dataElementCacheableRepository
@@ -123,15 +128,11 @@ class DataModelController extends ModelController<DataModel> implements DataMode
         }
         DataModel newDataModel = super.create(folderId, dataModel) as DataModel
         // If we previously got datatypes, now save them into the model
-        if(importedDataTypes.size() > 0) {
-            newDataModel.dataTypes = importedDataTypes
-            newDataModel.dataTypes.each {dataType ->
-                dataType.dataModel = newDataModel
-            }
-            dataModelContentRepository.saveContentOnly(newDataModel)
+        importedDataTypes.each {
+            it.dataModel = newDataModel
         }
-        // Now set dataTypes to be empty for the response:
-        newDataModel.dataTypes = []
+        dataTypeCacheableRepository.saveAll(importedDataTypes)
+
         return newDataModel
     }
 
@@ -308,7 +309,7 @@ class DataModelController extends ModelController<DataModel> implements DataMode
         additionSubset.setAssociations()
 
         log.debug "subset: saving additions to datamodel id [$additionSubset.id]"
-        dataModelContentRepository.saveContentOnly(additionSubset)
+        contentsService.saveContentOnly(additionSubset)
 
         // process DataElements for deletion
         List<DataElement> deletionDataElements = subsetData.deletions?.collect {dataElementCacheableRepository.findById(it)}
@@ -516,4 +517,38 @@ class DataModelController extends ModelController<DataModel> implements DataMode
     List<String> dataModelTypes() {
         return DataModelType.labels()
     }
+
+
+    DataModel saveContentOnly(@NonNull DataModel model) {
+        //List<Collection<AdministeredItem>> associations = model.getAllAssociations() as List<Collection<AdministeredItem>>
+
+        model.allDataClasses.each {
+            contentsService.saveWithContent(it)
+        }
+        model.dataTypes.each {
+            contentsService.saveWithContent(it)
+        }
+        model.dataElements.each {
+            contentsService.saveWithContent(it)
+        }
+
+/*        associations.each {association ->
+            if (association) {
+                //Collection<AdministeredItem> savedAssociation = getRepository(association.first()).saveAll((Collection<AdministeredItem>) association)
+                association.each {
+                }
+            }
+        }
+
+        if(model.allDataClasses) {
+            dataClassRepository.updateAll(model.allDataClasses.findAll { it.parentDataClass})
+        }
+        if(model.dataElements) {
+            dataElementRepository.updateAll(model.dataElements)
+        }
+ */
+        model
+    }
+
+
 }

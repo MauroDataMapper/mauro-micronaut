@@ -213,6 +213,7 @@ class DataModel extends Model implements ItemReferencer {
         }
         dataClass.dataElements.each {dataElement ->
             dataElement.dataModel = this
+            dataElement.dataModel.dataElements.add(dataElement)
             dataElement.dataClass = dataClass
             dataElement.dataType = dataTypesMap[dataElement.dataType?.id ?: dataElement.dataType?.label]
             if (!this.dataElements.contains(dataElement)) {

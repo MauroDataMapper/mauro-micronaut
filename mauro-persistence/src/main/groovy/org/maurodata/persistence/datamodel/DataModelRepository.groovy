@@ -1,10 +1,12 @@
 package org.maurodata.persistence.datamodel
 
+import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import org.maurodata.FieldConstants
 import org.maurodata.domain.datamodel.DataModel
+import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.persistence.datamodel.dto.DataModelDTORepository
 import org.maurodata.persistence.model.ModelRepository
 
