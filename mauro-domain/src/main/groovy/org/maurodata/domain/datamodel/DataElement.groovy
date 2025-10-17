@@ -202,6 +202,14 @@ class DataElement extends ModelItem<DataClass> implements DiffableItem<DataEleme
         enumerationType [:], closure
     }
 
+    DataType referenceType(String className) {
+        DataClass dataClass = this.dataModel.allDataClasses.find {it.label == className}
+        this.dataType = new DataType(label: "Reference to ${className}", referenceClass: dataClass, dataTypeKind: DataType.DataTypeKind.REFERENCE_TYPE, dataModel: this.dataModel)
+        this.dataModel.dataTypes.add(this.dataType)
+        this.dataType
+    }
+
+
     DataType dataType(Map args, @DelegatesTo(value = DataType, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
         DataType dataType = DataType.build(args + [dataModel: this.dataModel], closure)
         this.dataType = dataType

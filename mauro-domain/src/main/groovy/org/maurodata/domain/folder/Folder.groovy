@@ -279,6 +279,56 @@ class Folder extends Model implements ItemReferencer {
         folder [:], closure
     }
 
+    Terminology terminology(Terminology terminology) {
+        this.terminologies.add(terminology)
+        terminology.folder = this
+        terminology.parent = this
+        terminology
+    }
+
+    Terminology terminology(Map args, @DelegatesTo(value = Terminology, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+        Terminology terminology1 = Terminology.build(args + [parent: this, folder: this], closure)
+        terminology terminology1
+    }
+
+    Terminology terminology(@DelegatesTo(value = Terminology, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+        terminology [:], closure
+    }
+
+    CodeSet codeSet(CodeSet codeSet) {
+        this.codeSets.add(codeSet)
+        codeSet.folder = this
+        codeSet.parent = this
+        codeSet
+    }
+
+    CodeSet codeSet(Map args, @DelegatesTo(value = CodeSet, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+        CodeSet codeSet1 = CodeSet.build(args + [parent: this, folder: this], closure)
+        codeSet codeSet1
+    }
+
+    CodeSet codeSet(@DelegatesTo(value = CodeSet, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+        codeSet [:], closure
+    }
+
+    DataModel dataModel(DataModel dataModel) {
+        this.dataModels.add(dataModel)
+        dataModel.folder = this
+        dataModel.parent = this
+        dataModel
+    }
+
+    DataModel dataModel(Map args, @DelegatesTo(value = DataModel, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+        DataModel dataModel1 = DataModel.build(args + [parent: this, folder: this], closure)
+        dataModel dataModel1
+    }
+
+    DataModel dataModel(@DelegatesTo(value = DataModel, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+        dataModel [:], closure
+    }
+
+
+
     @Transient
     @JsonIgnore
     @Override

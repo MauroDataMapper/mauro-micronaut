@@ -508,10 +508,28 @@ abstract class AdministeredItem extends Item implements Pathable {
      * @see #metadata
      */
     Metadata metadata(String namespace, String key, String value) {
-        Metadata md = Metadata.build(namespace: namespace, key: key, value: value)
+        Metadata md = new Metadata(
+            namespace: namespace,
+            key: key,
+            value: value,
+            multiFacetAwareItemDomainType: this.domainType,
+            multiFacetAwareItem: this)
         this.metadata.add(md)
         return md
     }
+
+    /**
+     * DSL helper method for adding to the metadata field.  Returns the newly-created metadata item.
+     *
+     * @see #metadata
+     */
+    Metadata metadata(Metadata metadata1) {
+        this.metadata.add(metadata1)
+        metadata1.multiFacetAwareItemDomainType = this.domainType
+        metadata1.multiFacetAwareItem = this
+        return metadata1
+    }
+
 
     /**
      * DSL helper method for adding to the metadata field.  Returns the metadata list passed in.
