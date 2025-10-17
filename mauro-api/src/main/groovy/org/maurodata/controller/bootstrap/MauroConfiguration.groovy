@@ -2,6 +2,7 @@ package org.maurodata.controller.bootstrap
 
 import groovy.beans.Bindable
 import io.micronaut.context.annotation.ConfigurationProperties
+import io.micronaut.core.annotation.Nullable
 import jakarta.validation.constraints.NotBlank
 
 import java.time.Instant
@@ -13,6 +14,7 @@ class MauroConfiguration {
     List<CatalogueUserConfig> users
     List<UserGroupConfig> groups
     List<ApiKeyConfig> apiKeys
+    List<ApiPropertyConfig> apiProperties
 
     public static class CatalogueUserConfig {
 
@@ -45,5 +47,19 @@ class MauroConfiguration {
         UUID key
         Boolean refreshable
         Instant expiry
+    }
+
+    public static class ApiPropertyConfig {
+        @NotBlank
+        String key
+        @NotBlank
+        String value
+
+        @Nullable
+        Boolean publiclyVisible
+
+        @Nullable
+        @NotBlank
+        String category
     }
 }

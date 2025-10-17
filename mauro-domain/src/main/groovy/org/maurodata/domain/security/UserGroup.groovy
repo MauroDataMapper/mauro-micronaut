@@ -11,6 +11,8 @@ import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Relation
 import org.maurodata.domain.model.Item
 
+import jakarta.persistence.Transient
+
 @CompileStatic
 @MappedEntity(schema = 'security')
 @AutoClone
@@ -46,4 +48,7 @@ class UserGroup extends Item {
         this.copyInto(userGroupShallowCopy)
         return userGroupShallowCopy
     }
+
+    @Transient
+    List<String> availableActions = []
 }

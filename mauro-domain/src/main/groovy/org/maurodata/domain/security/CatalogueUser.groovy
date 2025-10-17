@@ -4,6 +4,8 @@ import org.maurodata.domain.model.Item
 import org.maurodata.domain.model.ItemUtils
 
 import com.fasterxml.jackson.annotation.JsonIgnore
+import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import com.fasterxml.jackson.databind.util.StdConverter
 import groovy.transform.AutoClone
@@ -52,10 +54,40 @@ class CatalogueUser extends Item {
     @JsonDeserialize(converter = CatalogueUserGroupsConverter)
     Set<UserGroup> groups = []
 
-    static class CatalogueUserGroupsConverter extends StdConverter<List<UUID>, Set<UserGroup>> {
+    @Transient
+    List<String> availableActions = []
+
+    @Transient
+    boolean getNeedsToResetPassword(){
+        tempPassword != null || resetToken != null
+    }
+
+    static class CatalogueUserGroupsConverter extends StdConverter<JsonNode, Set<UserGroup>> {
         @Override
-        Set<UserGroup> convert(List<UUID> groupIds) {
-            groupIds.collect {new UserGroup(id: it)} as Set<UserGroup>
+        Set<UserGroup> convert(JsonNode node) {
+
+            Set<UserGroup> groups = []
+
+            if (node.isArray()) {
+                node.forEach {JsonNode element ->
+
+                    if (element.isTextual()) {
+                        UUID id = UUID.fromString(element.asText())
+                        groups.add(new UserGroup(id: id))
+                    } else if (element.isObject()) {
+                        try {
+                            JsonNode idNode = element.get("id")
+                            UUID id = UUID.fromString(idNode.asText())
+                            groups.add(new UserGroup(id: id))
+                        }
+                        catch (Exception ex) {
+                            throw new RuntimeException("Failed to parse UserGroup JSON: " + element, ex)
+                        }
+                    }
+                }
+            }
+
+            groups
         }
     }
 

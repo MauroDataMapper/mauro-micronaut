@@ -1,4 +1,3 @@
-
 package org.maurodata.controller.model
 
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -35,6 +34,7 @@ import org.maurodata.api.model.PermissionsDTO
 import org.maurodata.api.model.VersionLinkDTO
 import org.maurodata.api.model.VersionLinkTargetDTO
 import org.maurodata.controller.facet.EditController
+import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.diff.ArrayDiff
 import org.maurodata.domain.diff.CollectionDiff
 import org.maurodata.domain.diff.FieldDiff
@@ -57,6 +57,8 @@ import org.maurodata.domain.model.version.ModelVersion
 import org.maurodata.domain.security.CatalogueUser
 import org.maurodata.domain.security.Role
 import org.maurodata.domain.security.UserGroup
+import org.maurodata.domain.terminology.CodeSet
+import org.maurodata.domain.terminology.Terminology
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository
 import org.maurodata.persistence.cache.FacetCacheableRepository
 import org.maurodata.persistence.cache.ModelCacheableRepository
@@ -106,7 +108,6 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
 
     @Inject
     MauroPluginService mauroPluginService
-
 
     ModelContentRepository<M> modelContentRepository
 
@@ -393,7 +394,6 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         List<M> saved = []
         saved = imported.collect {M imp ->
             log.info '** about to saveWithContentBatched... **'
-            updateDerivedProperties(imp)
             updateCreationProperties(imp)
             M savedImported = modelContentRepository.saveWithContent(imp)
             log.info '** finished saveWithContentBatched **'

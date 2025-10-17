@@ -12,6 +12,7 @@ interface Paths {
     String ADMIN_IMPORTERS_LIST = '/api/admin/providers/importers'
     String ADMIN_EXPORTERS_LIST = '/api/admin/providers/exporters'
     String ADMIN_EMAILERS_LIST = '/api/admin/providers/emailers'
+    String ADMIN_DATALOADERS_LIST = '/api/admin/providers/dataLoaders'
     String ADMIN_EMAIL_SEND_TEST = '/api/admin/email/sendTestEmail'
     String ADMIN_EMAIL_TEST_CONNECTION = '/api/admin/email/testConnection'
     String ADMIN_EMAILS = '/api/admin/emails'
@@ -64,6 +65,7 @@ interface Paths {
     String SESSION_AUTH_DETAILS = '/api/session/authenticationDetails'
     String SESSION_CHECK_AUTHENTICATED = '/api/session/checkAuthenticated'
     String SESSION_CHECK_ANONYMOUS = '/api/session/checkAnonymous'
+    String SESSION_ADMIN_ACTIVE_SESSIONS = '/api/admin/activeSessions'
 
     /*
     * DataClassComponentApi
@@ -317,10 +319,15 @@ interface Paths {
     String USER_ADMIN_REGISTER = '/api/admin/catalogueUsers/adminRegister'
     String USER_CURRENT_USER = '/api/catalogueUsers/currentUser'
     String USER_CHANGE_PASSWORD = '/api/catalogueUsers/currentUser/changePassword'
+    String USER_ID_CHANGE_PASSWORD = '/api/catalogueUsers/{id}/changePassword'
     String USER_ID = '/api/catalogueUsers/{id}'
     String USER_PREFERENCES = '/api/catalogueUsers/{id}/userPreferences'
     String USER_IMAGE = '/api/catalogueUsers/{id}/image'
-
+    String USER_ADMIN_PENDING_PAGED = '/api/admin/catalogueUsers/pending{?params*}{?disabled}'
+    String USER_ADMIN_USER_EXISTS = '/api/admin/catalogueUsers/userExists/{username}'
+    String USER_LIST = '/api/catalogueUsers'
+    String USER_ADMIN_PASSWORD_RESET= '/api/admin/catalogueUsers/{id}/adminPasswordReset'
+    String USER_SEARCH_POST = '/api/catalogueUsers/search'
 
     /*
     * SecurableResourceGroupRoleApi
@@ -333,6 +340,9 @@ interface Paths {
     */
 
     String USER_GROUP_LIST = '/api/userGroups'
+    String USER_GROUP_ID = '/api/userGroups/{id}'
+    String USER_GROUP_CATALOGUE_USERS_PAGED = '/api/userGroups/{id}/catalogueUsers{?params*}'
+    String USER_GROUP_ID_CATALOGUE_USERS_ID = '/api/userGroups/{userGroupId}/catalogueUsers/{id}'
 
     /*
     * CodeSetApi
@@ -481,4 +491,16 @@ interface Paths {
 
     String RESOURCE_BY_PATH = '/api/{domainType}/path/{path}'
     String RESOURCE_BY_PATH_FROM_RESOURCE = '/api/{domainType}/{domainId}/path/{path}'
+
+    /*
+    * DomainExportsApi
+    */
+
+    String DOMAIN_EXPORTS_LIST_PAGED = '/api/domainExports{?params*}'
+
+    /*
+    * JobsApi
+    */
+
+    String JOBS_LIST_PAGED = '/api/asyncJobs{?params*}'
 }

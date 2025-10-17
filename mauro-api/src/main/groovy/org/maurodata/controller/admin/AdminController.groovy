@@ -79,6 +79,11 @@ class AdminController implements AdminApi {
         mauroPluginService.listPluginsAsDTO(EmailPlugin)
     }
 
+    @Audit
+    @Get(Paths.ADMIN_DATALOADERS_LIST)
+    List<MauroPluginDTO> dataLoaders() {
+        []
+    }
 
     /**
      * This is new endpoint that can be used to test sending an email.  You should provide a catalogue user with a
