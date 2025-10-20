@@ -2,9 +2,15 @@ package org.maurodata.plugin
 
 import groovy.util.logging.Slf4j
 import io.micronaut.context.ApplicationContext
+import io.micronaut.context.BeanDefinitionRegistry
+import io.micronaut.context.RuntimeBeanDefinition
 import io.micronaut.context.annotation.Context
 import io.micronaut.context.event.ShutdownEvent
+import io.micronaut.inject.BeanDefinition
 import io.micronaut.runtime.event.annotation.EventListener
+import io.micronaut.http.annotation.Controller
+import io.micronaut.runtime.server.EmbeddedServer
+import io.micronaut.runtime.server.event.ServerStartupEvent
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
 
@@ -167,8 +173,20 @@ class MauroPluginService {
 
         applicationContext.getBeansOfType(MauroPlugin).forEach {MauroPlugin it ->
             if (mainContext.getBeansOfType(it.class as Class<Object>).isEmpty()) {
-                log.trace("Loaded plugin ${it.getClass().simpleName}")
+                log.info("Loaded plugin ${it.getClass().simpleName}")
                 loadedMauroPlugins.add(it)
+            }
+        }
+
+        boolean anyNewRoutes=false
+        applicationContext.getBeanDefinitions(Object).forEach {BeanDefinition<Object> beanDefinition ->
+            if(beanDefinition.hasAnnotation(Controller)) {
+                Class controllerClass = beanDefinition.beanType
+                if (mainContext.getBeansOfType(controllerClass).isEmpty()) {
+                    log.info("Registering controller ${controllerClass.simpleName}")
+                    ((BeanDefinitionRegistry) mainContext).registerBeanDefinition(beanDefinition as RuntimeBeanDefinition<Object>)
+                    anyNewRoutes = true
+                }
             }
         }
     }
