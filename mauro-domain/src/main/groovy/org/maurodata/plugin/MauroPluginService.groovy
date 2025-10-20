@@ -9,8 +9,6 @@ import io.micronaut.context.event.ShutdownEvent
 import io.micronaut.inject.BeanDefinition
 import io.micronaut.runtime.event.annotation.EventListener
 import io.micronaut.http.annotation.Controller
-import io.micronaut.runtime.server.EmbeddedServer
-import io.micronaut.runtime.server.event.ServerStartupEvent
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
 
