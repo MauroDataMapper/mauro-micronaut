@@ -27,7 +27,6 @@ import org.maurodata.security.AccessControlService
 import org.maurodata.service.core.AdministeredItemService
 import org.maurodata.service.path.PathService
 import org.maurodata.service.plugin.PluginService
-import org.maurodata.util.PathStringUtils
 import org.maurodata.utils.importer.ImporterUtils
 
 @CompileStatic
@@ -136,7 +135,7 @@ class DataflowService extends AdministeredItemService {
 
     protected List<DataClass> getImportDataClass(List<DataClass> dataClasses, DataModel model) {
         return dataClasses.collect {dC ->
-            String resourceLabel = PathStringUtils.getItemSubPath(dC.pathPrefix, dC.path.pathString)
+            String resourceLabel = dC.path.findLastPathNodeByPrefix(dC.pathPrefix).identifier
             DataClass importDataClass = findImportDataClassByLabel(resourceLabel, model)
             pathRepository.readParentItems(importDataClass) //perhaps not necessary to cal the full path but doing it anyway
             importDataClass.updatePath()
@@ -165,7 +164,7 @@ class DataflowService extends AdministeredItemService {
 
     protected List<DataElement> getImportDataElements(List<DataElement> dataElements, DataModel model) {
         return dataElements.collect {dE ->
-            String resourceLabel = PathStringUtils.getItemSubPath(dE.pathPrefix, dE.path.pathString)
+            String resourceLabel = dE.path.findLastPathNodeByPrefix(dE.pathPrefix).identifier
             List<DataElement> importElementsWithSameLabel = model.dataElements.findAll {
                 it.label == resourceLabel
             }
