@@ -6,12 +6,14 @@ import io.micronaut.context.BeanDefinitionRegistry
 import io.micronaut.context.RuntimeBeanDefinition
 import io.micronaut.context.annotation.Context
 import io.micronaut.context.event.ShutdownEvent
+import io.micronaut.http.annotation.Controller
 import io.micronaut.inject.BeanDefinition
 import io.micronaut.runtime.event.annotation.EventListener
-import io.micronaut.http.annotation.Controller
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
 
+import java.lang.annotation.Annotation
+import java.lang.reflect.Method
 import java.nio.file.DirectoryStream
 import java.nio.file.Files
 import java.nio.file.Path
@@ -107,7 +109,7 @@ class MauroPluginService {
         log.trace("Loading plugins")
         try (DirectoryStream<Path> files = Files.newDirectoryStream(pluginsDirPath)) {
             for (Path file : files) {
-                if(file.getFileName().toString().startsWith('.')) {continue}
+                if (file.getFileName().toString().startsWith('.')) {continue}
                 if (Files.isDirectory(file)) {
                     loadPlugin(file)
                 } else {
@@ -169,21 +171,57 @@ class MauroPluginService {
             pluginLoader
         ) as ApplicationContext
 
-        applicationContext.getBeansOfType(MauroPlugin).forEach {MauroPlugin it ->
-            if (mainContext.getBeansOfType(it.class as Class<Object>).isEmpty()) {
-                log.info("Loaded plugin ${it.getClass().simpleName}")
-                loadedMauroPlugins.add(it)
+        applicationContext.getBeanDefinitions(MauroPlugin).forEach {BeanDefinition<MauroPlugin> beanDefinition ->
+            Class controllerClass = beanDefinition.beanType
+            if (mainContext.getBeansOfType(controllerClass).isEmpty()) {
+                log.info("Registering plugin ${controllerClass.simpleName}")
+                ((BeanDefinitionRegistry) mainContext).registerBeanDefinition(beanDefinition as RuntimeBeanDefinition<Object>)
             }
         }
 
-        boolean anyNewRoutes=false
         applicationContext.getBeanDefinitions(Object).forEach {BeanDefinition<Object> beanDefinition ->
-            if(beanDefinition.hasAnnotation(Controller)) {
+            if (beanDefinition.hasAnnotation(Controller)) {
                 Class controllerClass = beanDefinition.beanType
                 if (mainContext.getBeansOfType(controllerClass).isEmpty()) {
                     log.info("Registering controller ${controllerClass.simpleName}")
                     ((BeanDefinitionRegistry) mainContext).registerBeanDefinition(beanDefinition as RuntimeBeanDefinition<Object>)
-                    anyNewRoutes = true
+
+                    Method[] methods = controllerClass.getMethods()
+                    methods.each {Method method ->
+
+                        Annotation annotation_GET = method.getAnnotation(io.micronaut.http.annotation.Get)
+                        if (annotation_GET != null) {
+                            final String value = ((io.micronaut.http.annotation.Get) annotation_GET).value()
+                            if (value != null) {
+                                log.info("Registering GET: ${value}")
+                            }
+                        }
+
+                        Annotation annotation_POST = method.getAnnotation(io.micronaut.http.annotation.Post)
+                        if (annotation_POST != null) {
+                            final String value = ((io.micronaut.http.annotation.Post) annotation_POST).value()
+                            if (value != null) {
+                                log.info("Registering POST: ${value}")
+                            }
+                        }
+
+                        Annotation annotation_PUT = method.getAnnotation(io.micronaut.http.annotation.Put)
+                        if (annotation_PUT != null) {
+                            final String value = ((io.micronaut.http.annotation.Put) annotation_PUT).value()
+                            if (value != null) {
+                                log.info("Registering PUT: ${value}")
+                            }
+                        }
+
+                        Annotation annotation_DELETE = method.getAnnotation(io.micronaut.http.annotation.Delete)
+                        if (annotation_DELETE != null) {
+                            final String value = ((io.micronaut.http.annotation.Delete) annotation_DELETE).value()
+                            if (value != null) {
+                                log.info("Registering DELETE: ${value}")
+                            }
+                        }
+
+                    }
                 }
             }
         }
