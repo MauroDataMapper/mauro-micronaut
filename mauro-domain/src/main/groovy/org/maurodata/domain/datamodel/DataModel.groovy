@@ -205,7 +205,9 @@ class DataModel extends Model implements ItemReferencer {
     void setDataClassAssociations(DataClass dataClass, Map<String, DataType> dataTypesMap,
                                   List<? extends DataType> referenceTypes) {
         dataClass.setAssociations()
-        allDataClasses.add(dataClass)
+        if(!allDataClasses.contains(dataClass)) {
+            allDataClasses.add(dataClass)
+        }
         dataClass.dataModel = this
         dataClass.dataClasses.each {childDataClass ->
             setDataClassAssociations(childDataClass, dataTypesMap, referenceTypes)
@@ -213,9 +215,14 @@ class DataModel extends Model implements ItemReferencer {
         }
         dataClass.dataElements.each {dataElement ->
             dataElement.dataModel = this
-            dataElement.dataModel.dataElements.add(dataElement)
+            if(!dataElements.contains(dataElement)) {
+                dataElements.add(dataElement)
+            }
             dataElement.dataClass = dataClass
-            dataElement.dataType = dataTypesMap[dataElement.dataType?.id ?: dataElement.dataType?.label]
+/*            if(!dataElement.dataType) {
+                dataElement.dataType = dataTypesMap[dataElement.dataType?.id ?: dataElement.dataType?.label]
+            }
+*/
             if (!this.dataElements.contains(dataElement)) {
                 this.dataElements.add(dataElement)
             }

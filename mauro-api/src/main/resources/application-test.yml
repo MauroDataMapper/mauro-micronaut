@@ -6,5 +6,8 @@ micronaut:
       mauro:
         url: 'http://localhost:2345'
 #       apikey: 1234
+    client:
+      read-timeout: 10m      # Read timeout
+      connect-timeout: 100s
   security:
     enabled: false

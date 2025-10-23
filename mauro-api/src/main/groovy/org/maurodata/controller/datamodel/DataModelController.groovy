@@ -269,23 +269,35 @@ class DataModelController extends ModelController<DataModel> implements DataMode
             List<DataClass> dataClassParents = parents.takeWhile {it !instanceof Model}.tail().reverse() as List<DataClass>
             DataClass currentOtherModelOrAdditionParent = new DataClass(dataClasses: otherDataModel.dataClasses)
             // maintain as the copy of the parent of `DataClass child` in the otherDataModel
-            dataClassParents.each {DataClass child ->
+            dataClassParents.eachWithIndex {DataClass child, int idx ->
                 DataClass otherModelOrAdditionChild =
                     currentOtherModelOrAdditionParent?.dataClasses?.find {it.label == child.label} ?: additionSubset.dataClasses.find {it.id == child.id}
                 if (otherModelOrAdditionChild) {
+                    if(idx == 0) {
+                        additionSubset.dataClasses.add(otherModelOrAdditionChild)
+                        additionSubset.allDataClasses.add(otherModelOrAdditionChild)
+                    } else {
+                        currentOtherModelOrAdditionParent.dataClasses.add(otherModelOrAdditionChild)
+                    }
                     currentOtherModelOrAdditionParent = otherModelOrAdditionChild
                 } else {
-                    child.dataModel = otherDataModel
-                    child.parent = currentOtherModelOrAdditionParent
-                    additionSubset.dataClasses.add(child)
+                    child.dataModel = additionSubset
+                    child.parentDataClass = currentOtherModelOrAdditionParent
+                    additionSubset.allDataClasses.add(child)
+                    if(idx == 0) {
+                        additionSubset.dataClasses.add(child)
+                    } else {
+                        currentOtherModelOrAdditionParent.dataClasses.add(child)
+                    }
                     currentOtherModelOrAdditionParent = child
                 }
             }
 
             if (!currentOtherModelOrAdditionParent.dataElements.label.contains(dataElement.label)) {
-                dataElement.dataModel = otherDataModel
-                dataElement.parent = currentOtherModelOrAdditionParent
+                dataElement.dataModel = additionSubset
+                dataElement.dataClass = currentOtherModelOrAdditionParent
                 additionSubset.dataElements.add(dataElement)
+                currentOtherModelOrAdditionParent.dataElements.add(dataElement)
             }
         }
 
@@ -293,16 +305,16 @@ class DataModelController extends ModelController<DataModel> implements DataMode
         List<DataType> dataTypes = dataTypeContentRepository.findAllWithContentByParent(dataModel)
         Set<String> additionDataTypeLabels = (additionSubset.dataElements.dataType.label - otherDataModel.dataTypes.label) as Set
         dataTypes.findAll {additionDataTypeLabels.contains(it.label)}.each {DataType dataType ->
-            dataType.dataModel = otherDataModel
+            dataType.dataModel = additionSubset
             additionSubset.dataTypes.add(dataType)
         }
-        Map<String, DataType> dataTypeMap = (additionSubset.dataTypes + otherDataModel.dataTypes).collectEntries {[it.label, it]}
+        Map<String, DataType> dataTypeMap = (additionSubset.dataTypes).collectEntries {[it.label, it]}
         additionSubset.dataElements.each {DataElement dataElement ->
             dataElement.dataType = dataTypeMap[dataElement.dataType.label]
         }
         additionSubset.dataTypes = additionSubset.dataElements.dataType.unique()
         additionSubset.dataTypes.each {
-            it.dataModel = otherDataModel
+            it.dataModel = additionSubset
         }
 
         additionSubset.id = otherDataModel.id

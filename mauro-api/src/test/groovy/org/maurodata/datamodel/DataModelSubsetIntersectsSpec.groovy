@@ -23,7 +23,6 @@ import org.maurodata.web.PaginationParams
 import spock.lang.Shared
 
 @ContainerizedTest
-@Singleton
 class DataModelSubsetIntersectsSpec  extends CommonDataSpec {
 
     @Inject

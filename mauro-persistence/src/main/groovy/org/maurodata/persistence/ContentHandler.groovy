@@ -187,7 +187,7 @@ class ContentHandler {
     void shred(DataModel dataModel) {
         dataModels.add(dataModel)
         shredFacets(dataModel)
-        dataModel.childDataClasses.each {shred(it)}
+        dataModel.dataClasses.each {shred(it)}
         dataModel.dataTypes.each {shred(it) }
     }
 
