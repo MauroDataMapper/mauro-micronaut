@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 set -e
 
+ADDITIONAL_CLASSPATH=""
+
 if [ -e /opt/init/micronaut ];
 then
-  mkdir -p /home/app/plugins
   pushd /opt/init/micronaut
 
         shopt -s nullglob
@@ -20,8 +21,13 @@ then
                 fi
               ;;
             *.jar)
-              echo "Adding ${f} as plugin"
-              cp -pf ${f} /home/app/plugins/.
+              echo "Adding ${f} to classpath"
+              if [ "${ADDITIONAL_CLASSPATH}" != "" ];
+              then
+                ADDITIONAL_CLASSPATH="${ADDITIONAL_CLASSPATH}:/opt/init/micronaut/${f}"
+              else
+                ADDITIONAL_CLASSPATH="/opt/init/micronaut/${f}"
+              fi
               ;;
             *)
                   echo "Copying ${f} to micronaut resources"
@@ -71,5 +77,5 @@ APPLICATION_MAIN_CLASS=$(echo "${APPLICATION_MANIFEST}" | grep '^Main-Class:' | 
 # Start Micronaut
 echo "Starting Micronaut..."
 cd /home/app
-echo java "${JAVA_OPTS}" -cp "/home/app/application.jar" "${APPLICATION_MAIN_CLASS}"
-java $JAVA_OPTS -cp "/home/app/application.jar" "${APPLICATION_MAIN_CLASS}"
+echo java "${JAVA_OPTS}" -cp "/home/app/application.jar:${ADDITIONAL_CLASSPATH}" "${APPLICATION_MAIN_CLASS}"
+java $JAVA_OPTS -cp "/home/app/application.jar:${ADDITIONAL_CLASSPATH}" "${APPLICATION_MAIN_CLASS}"
