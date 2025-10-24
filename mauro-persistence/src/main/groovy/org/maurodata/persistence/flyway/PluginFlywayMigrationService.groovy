@@ -1,16 +1,19 @@
 package org.maurodata.persistence.flyway
 
+import org.maurodata.plugin.MauroPluginService
+
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.github.classgraph.ClassGraph
 import io.github.classgraph.ScanResult
-import io.micronaut.context.ApplicationContext
 import io.micronaut.context.annotation.Value
 import io.micronaut.context.event.ApplicationEventListener
+import io.micronaut.context.event.ShutdownEvent
 import io.micronaut.context.event.StartupEvent
 import io.micronaut.core.annotation.Order
 import io.micronaut.core.order.Ordered
 import io.micronaut.data.connection.annotation.Connectable
+import io.micronaut.runtime.event.annotation.EventListener
 import jakarta.inject.Inject
 import jakarta.inject.Named
 import jakarta.inject.Singleton
@@ -27,73 +30,97 @@ class PluginFlywayMigrationService implements ApplicationEventListener<StartupEv
     final static String CORE_MIGRATIONS_FOLDER = "core"
 
     @Inject
-    ApplicationContext applicationContext
-
-    @Inject
     @Named("default")
     DataSource dataSource
 
     @Value('${flyway.enabled:true}')
     boolean flywayEnabled
 
+    static final Map<String, Boolean> haveRunPluginMigration = [:]
+
     @Override
     void onApplicationEvent(final StartupEvent event) {
         log.trace("Loading data at startup")
         log.trace("Flyway enabled: $flywayEnabled")
-        if(flywayEnabled) {
+        if (flywayEnabled) {
             runPluginMigrations()
         }
+    }
+
+    @EventListener
+    void onShutdown(final ShutdownEvent event) {
+        log.trace("Unloading at shutdown")
+        haveRunPluginMigration.clear()
     }
 
     @Connectable
     void runPluginMigrations() {
         log.trace("🔄 Scanning for plugin migrations...")
 
-        ScanResult scanResult = new ClassGraph().acceptPaths("db/migration").scan()
+        List<ClassLoader> toScan = [Thread.currentThread().contextClassLoader] + MauroPluginService.classLoaders
 
-        Set<String> pluginDirs = [] as Set<String>
+        Map<String, List<ClassLoader>> pluginDirs = [:]
 
-        scanResult.getAllResources().each {resource ->
-            String path = resource.getPath()
-            if (path.startsWith("db/migration/")) {
-                String[] segments = path.split("/")
-                if (segments.length > 2) {
-                    pluginDirs.add(segments[2]) // e.g., "user" from db/migration/user/V1__init.sql
+        toScan.forEach {ClassLoader fromClassLoader ->
+            final ClassGraph classGraph = new ClassGraph()
+            classGraph.addClassLoader(fromClassLoader)
+
+            final ScanResult scanResult = classGraph.acceptPaths("db/migration").scan()
+
+            scanResult.getAllResources().each {resource ->
+                String path = resource.getPath()
+                if (path.startsWith("db/migration/")) {
+                    String[] segments = path.split("/")
+                    if (segments.length > 2) {
+                        final String pluginDir = segments[2] // e.g., "user" from db/migration/user/V1__init.sql
+                        List<ClassLoader> classLoaders = pluginDirs.get(pluginDir)
+                        if (classLoaders == null) {
+                            classLoaders = []
+                            pluginDirs.put(pluginDir, classLoaders)
+                        }
+                        if (!classLoaders.contains(fromClassLoader)) {
+                            classLoaders.add(fromClassLoader)
+                        }
+                    }
                 }
             }
         }
 
-        runMigration(CORE_MIGRATIONS_FOLDER)
-        pluginDirs.each { pluginName ->
-            if(pluginName != CORE_MIGRATIONS_FOLDER) {
-                runMigration(pluginName)
+        if (haveRunPluginMigration.get(CORE_MIGRATIONS_FOLDER) == null) {runMigration(CORE_MIGRATIONS_FOLDER, [Thread.currentThread().contextClassLoader])}
+        pluginDirs.keySet().forEach {String pluginName ->
+            if (pluginName != CORE_MIGRATIONS_FOLDER) {
+                if (haveRunPluginMigration.get(pluginName) == null) {
+                    runMigration(pluginName, pluginDirs.get(pluginName))
+                }
             }
         }
-
     }
 
-    void runMigration(String pluginName) {
-        try{
+    void runMigration(String pluginName, List<ClassLoader> classLoaders) {
+        try {
+            haveRunPluginMigration.put(pluginName, true)
+
             String location = "classpath:db/migration/" + pluginName
             String tableName = "flyway_history_" + pluginName
 
             log.info(String.format("🚀 Running Flyway migration for plugin '%s' (%s, schema %s, table: %s)%n", pluginName, location, pluginName, tableName))
 
-            Flyway flyway = Flyway.configure()
-                .dataSource(dataSource)
-                .locations(location)
-                .table(tableName)
-                .schemas(pluginName)
-                .baselineOnMigrate(true)
-                .baselineVersion("0")
-                .load()
+            classLoaders.forEach {ClassLoader classLoader ->
+                final Flyway flyway = Flyway.configure(classLoader)
+                    .dataSource(dataSource)
+                    .locations(location)
+                    .table(tableName)
+                    .schemas(pluginName)
+                    .baselineOnMigrate(true)
+                    .baselineVersion("0")
+                    .load()
 
-            flyway.migrate()
+                flyway.migrate()
+            }
 
         } catch (Exception e) {
             throw new RuntimeException("Failed to run plugin migrations", e)
         }
 
     }
-
 }
