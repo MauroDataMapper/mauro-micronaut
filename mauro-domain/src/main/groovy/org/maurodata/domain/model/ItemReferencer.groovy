@@ -82,6 +82,37 @@ trait ItemReferencer {
         }
     }
 
+    /*
+        Given an ItemReferencer (e.g. a DataModel / VersionedFolder / Folder etc)
+        get a map of all id -> Item[]
+
+        Useful for finding any Item by id without having to traverse
+        but also for finding alternatively loaded items by id.
+        Example use: DataType.referenceClass may point to a DataClass that only has the id hydrated
+        use that id to find the DataClass in the model that has a label
+         */
+    @Transient
+    @JsonIgnore
+    Map<UUID, Set<Item>> itemLookupById() {
+        IdentityHashMap<Item, Set<Item>> predecessorMap = new IdentityHashMap<>()
+        this.predecessors(predecessorMap)
+
+        Map<UUID, Set<Item>> allItemLookup = new HashMap<>(predecessorMap.size())
+
+        predecessorMap.keySet().forEach {Item item ->
+
+            final UUID id = item.id
+            Set<Item> referencedItems = allItemLookup.get(id)
+            if (referencedItems == null) {
+                referencedItems = []
+                allItemLookup.put(id, referencedItems)
+            }
+            referencedItems << item
+        }
+
+        return allItemLookup
+    }
+
     /**
      A general deep clone does the following:
 

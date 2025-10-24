@@ -6,6 +6,7 @@ import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.datamodel.DataType
 import org.maurodata.domain.diff.ObjectDiff
 import org.maurodata.domain.facet.SummaryMetadataType
+import org.maurodata.domain.model.Item
 import org.maurodata.domain.terminology.Terminology
 
 import spock.lang.Specification
@@ -15,6 +16,8 @@ import spock.lang.Specification
  * @see DataModel
  */
 class DataModelSpec extends Specification {
+
+    static UUID dataClassReferenceId=UUID.randomUUID()
 
     static DataModel testDataModel = DataModel.build(label: 'My Test DataModel') {
         author 'James Welch'
@@ -53,12 +56,17 @@ class DataModelSpec extends Specification {
             description 'Here is the description of the first DataClass'
             id UUID.randomUUID()
             metadata("com.test2", "key3", "value3")
+            dataElement {
+                label 'A data element that uses dataType.referenceClass'
+                description 'Something about the data element here...'
+                id UUID.randomUUID()
+            }
         }
 
         dataClass {
             label 'My Second DataClass'
             description 'Here is the description of the second DataClass'
-            id UUID.randomUUID()
+            id dataClassReferenceId
             dataClass {
                 label 'My Third DataClass'
                 description 'Here is the description of the third DataClass'
@@ -85,9 +93,28 @@ class DataModelSpec extends Specification {
                 }
             }
         }
-
     }
 
+    static {
+        DataClass dataClass1 = testDataModel.dataClasses.find {
+            it.label == 'My First DataClass'
+        }
+        DataClass dataClass2 = testDataModel.dataClasses.find {
+            it.label == 'My Second DataClass'
+        }
+
+        DataClass dataClass2Stub = new DataClass()
+        dataClass2Stub.id = dataClass2.id
+
+        DataType classReferencing = new DataType()
+        classReferencing.id = UUID.randomUUID()
+        classReferencing.domainType = DataType.DataTypeKind.REFERENCE_TYPE
+        classReferencing.referenceClass = dataClass2Stub
+        dataClass1.dataElements.get(0).dataType = classReferencing
+
+        testDataModel.dataTypes.add(classReferencing)
+        classReferencing.dataModel = testDataModel
+    }
 
     def "Test the DSL for creating objects"() {
 
@@ -95,7 +122,7 @@ class DataModelSpec extends Specification {
         testDataModel
 
         then:
-        testDataModel.dataTypes.size() == 5
+        testDataModel.dataTypes.size() == 6
 
         testDataModel.dataTypes.findAll {
             it.domainType == 'PrimitiveType'
@@ -250,5 +277,25 @@ class DataModelSpec extends Specification {
 
         ObjectDiff objectDiff = original.diff(cloned)
         objectDiff.numberOfDiffs == 0
+    }
+
+    def 'itemLookupById should give two Classes'() {
+        given:
+        testDataModel
+        when:
+        Map<UUID, Set<Item>> itemsById = testDataModel.itemLookupById()
+        then:
+        Set<Item> itemsOfInterest = itemsById.get(dataClassReferenceId)
+        itemsOfInterest.size() == 2
+
+        List<Item> itemsOfInterestList = itemsOfInterest.toList()
+
+        DataClass dataClass1=((DataClass) itemsOfInterestList.get(0)).deepClone()
+        DataClass dataClass2=((DataClass) itemsOfInterestList.get(1)).deepClone()
+        dataClass2.copyInto(dataClass1)
+
+        System.out.println(dataClass1.dump())
+
+        dataClass1.label
     }
 }
