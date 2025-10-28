@@ -32,7 +32,7 @@ class ContentsService {
         dataModel.setAssociations()
         contentHandler.shred(dataModel)
         contentHandler.dataModels = [] as Set
-        contentHandler.setCreateProperties(catalogueUser)
+        //contentHandler.setCreateProperties(catalogueUser)
         contentHandler.saveWithContent()
         return dataModel
     }

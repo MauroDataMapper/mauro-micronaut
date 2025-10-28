@@ -146,6 +146,10 @@ class DataModelSubsetIntersectsSpec  extends CommonDataSpec {
         when: 'subset elements are queried'
         DataModel targetUpdated = dataModelContentRepository.findWithContentById(targetDataModelId)
 
+        then: 'correct number of classes'
+        targetUpdated.allDataClasses.size() == 2
+
+        when:
         UUID copiedNumericDataElementId = targetUpdated.dataElements.find {it.label == 'Test Data Element 2'}.id
         UUID copiedEnumerationDataElementId = targetUpdated.dataElements.find {it.label == 'Test Data Element 5'}.id
         UUID copiedThirdDataClassId = targetUpdated.allDataClasses.find {it.label == 'Third class'}.id
@@ -163,13 +167,13 @@ class DataModelSubsetIntersectsSpec  extends CommonDataSpec {
         copiedEnumerationDataElement.dataType.label == 'Large EnumerationType'
 
         when: 'subset datatypes are queried'
-        DataType copiedBooleanDataType = dataTypeApi.show(targetUpdated.id, copiedNumericDataElement.dataType.id)
+        DataType copiedNumericDataType = dataTypeApi.show(targetUpdated.id, copiedNumericDataElement.dataType.id)
         DataType copiedEnumerationDataType = dataTypeApi.show(targetUpdated.id, copiedEnumerationDataElement.dataType.id)
 
         then: 'subset datatypes have correct paths and types'
-        copiedBooleanDataType.dataTypeKind == DataType.DataTypeKind.PRIMITIVE_TYPE
-        copiedBooleanDataType.label == 'Numeric'
-        copiedBooleanDataType.path.toString() == 'fo:Test folder|dm:Subset Target DataModel$main|dt:Numeric'
+        copiedNumericDataType.dataTypeKind == DataType.DataTypeKind.PRIMITIVE_TYPE
+        copiedNumericDataType.label == 'Numeric'
+        copiedNumericDataType.path.toString() == 'fo:Test folder|dm:Subset Target DataModel$main|dt:Numeric'
 
         copiedEnumerationDataType.dataTypeKind == DataType.DataTypeKind.ENUMERATION_TYPE
         copiedEnumerationDataType.label == 'Large EnumerationType'

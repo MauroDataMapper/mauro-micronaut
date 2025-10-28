@@ -250,7 +250,7 @@ class DataModelController extends ModelController<DataModel> implements DataMode
         DataModel dataModel = dataModelRepository.readById(id)
         // source i.e. rootDataModel
         accessControlService.canDoRole(Role.READER, dataModel)
-        DataModel otherDataModel = dataModelContentRepository.findWithContentById(otherId)
+        DataModel otherDataModel = contentsService.loadDataModelWithContent(otherId)
         // target i.e. request model
         accessControlService.canDoRole(Role.EDITOR, otherDataModel)
 
@@ -270,34 +270,49 @@ class DataModelController extends ModelController<DataModel> implements DataMode
             DataClass currentOtherModelOrAdditionParent = new DataClass(dataClasses: otherDataModel.dataClasses)
             // maintain as the copy of the parent of `DataClass child` in the otherDataModel
             dataClassParents.eachWithIndex {DataClass child, int idx ->
-                DataClass otherModelOrAdditionChild =
-                    currentOtherModelOrAdditionParent?.dataClasses?.find {it.label == child.label} ?: additionSubset.dataClasses.find {it.id == child.id}
+                DataClass otherModelOrAdditionChild = currentOtherModelOrAdditionParent?.dataClasses?.find {it.label == child.label}
                 if (otherModelOrAdditionChild) {
                     if(idx == 0) {
-                        additionSubset.dataClasses.add(otherModelOrAdditionChild)
-                        additionSubset.allDataClasses.add(otherModelOrAdditionChild)
+                        if(!additionSubset.dataClasses.find {it.label == child.label}) {
+                            additionSubset.dataClasses.add(otherModelOrAdditionChild)
+                            additionSubset.allDataClasses.add(otherModelOrAdditionChild)
+                            currentOtherModelOrAdditionParent = otherModelOrAdditionChild
+                        }
+                        else {
+                            currentOtherModelOrAdditionParent = additionSubset.dataClasses.find {it.label == child.label}
+                        }
                     } else {
-                        currentOtherModelOrAdditionParent.dataClasses.add(otherModelOrAdditionChild)
+                        currentOtherModelOrAdditionParent = otherModelOrAdditionChild
+//                        currentOtherModelOrAdditionParent.dataClasses.add(otherModelOrAdditionChild)
+//                        additionSubset.allDataClasses.add(otherModelOrAdditionChild)
                     }
-                    currentOtherModelOrAdditionParent = otherModelOrAdditionChild
                 } else {
-                    child.dataModel = additionSubset
-                    child.parentDataClass = currentOtherModelOrAdditionParent
-                    additionSubset.allDataClasses.add(child)
+                    child.id = null
+                    child.version = null
                     if(idx == 0) {
-                        additionSubset.dataClasses.add(child)
+                        if (!additionSubset.dataClasses.find {it.label == child.label}) {
+                            additionSubset.dataClasses.add(child)
+                            additionSubset.allDataClasses.add(child)
+                            child.dataModel = additionSubset
+                            currentOtherModelOrAdditionParent = child
+                        } else {
+                            currentOtherModelOrAdditionParent = additionSubset.dataClasses.find {it.label == child.label}
+                        }
                     } else {
                         currentOtherModelOrAdditionParent.dataClasses.add(child)
+                        child.parentDataClass = currentOtherModelOrAdditionParent
+                        currentOtherModelOrAdditionParent = child
                     }
-                    currentOtherModelOrAdditionParent = child
                 }
             }
 
-            if (!currentOtherModelOrAdditionParent.dataElements.label.contains(dataElement.label)) {
+            if (!currentOtherModelOrAdditionParent.dataElements.find {it.label == dataElement.label}) {
                 dataElement.dataModel = additionSubset
                 dataElement.dataClass = currentOtherModelOrAdditionParent
                 additionSubset.dataElements.add(dataElement)
                 currentOtherModelOrAdditionParent.dataElements.add(dataElement)
+                dataElement.id = null
+                dataElement.version = null
             }
         }
 
@@ -307,14 +322,17 @@ class DataModelController extends ModelController<DataModel> implements DataMode
         dataTypes.findAll {additionDataTypeLabels.contains(it.label)}.each {DataType dataType ->
             dataType.dataModel = additionSubset
             additionSubset.dataTypes.add(dataType)
+            dataType.id = null
+            dataType.version = null
+            dataType.enumerationValues.each {
+                it.id = null
+                it.version = null
+            }
         }
-        Map<String, DataType> dataTypeMap = (additionSubset.dataTypes).collectEntries {[it.label, it]}
-        additionSubset.dataElements.each {DataElement dataElement ->
-            dataElement.dataType = dataTypeMap[dataElement.dataType.label]
-        }
-        additionSubset.dataTypes = additionSubset.dataElements.dataType.unique()
-        additionSubset.dataTypes.each {
-            it.dataModel = additionSubset
+
+        // Reconnect the elements with the new datatypes
+        additionSubset.dataElements.each {dataElement ->
+            dataElement.dataType = additionSubset.dataTypes.find {it.label == dataElement.dataType.label}
         }
 
         additionSubset.id = otherDataModel.id

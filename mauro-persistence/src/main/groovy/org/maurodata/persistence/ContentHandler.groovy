@@ -218,51 +218,51 @@ class ContentHandler {
 
     void saveWithContent() {
         folders.keySet().sort().each {depth ->
-            folderCacheableRepository.saveAll(folders[depth])
+            folderCacheableRepository.saveAll(folders[depth].findAll {!it.id})
         }
-        classificationSchemeCacheableRepository.saveAll(classificationSchemes)
-        classifierCacheableRepository.saveAll(classifiers)
-        terminologyCacheableRepository.saveAll(terminologies)
-        termCacheableRepository.saveAll(terms)
-        termRelationshipTypeCacheableRepository.saveAll(termRelationshipTypes)
-        termRelationshipCacheableRepository.saveAll(termRelationships)
-        codeSetCacheableRepository.saveAll(codeSets)
-        dataModelCacheableRepository.saveAll (dataModels)
+        classificationSchemeCacheableRepository.saveAll(classificationSchemes.findAll {!it.id})
+        classifierCacheableRepository.saveAll(classifiers.findAll {!it.id})
+        terminologyCacheableRepository.saveAll(terminologies.findAll {!it.id})
+        termCacheableRepository.saveAll(terms.findAll {!it.id})
+        termRelationshipTypeCacheableRepository.saveAll(termRelationshipTypes.findAll {!it.id})
+        termRelationshipCacheableRepository.saveAll(termRelationships.findAll {!it.id})
+        codeSetCacheableRepository.saveAll(codeSets.findAll {!it.id})
+        dataModelCacheableRepository.saveAll (dataModels.findAll {!it.id})
         dataClasses.keySet().sort().each {depth ->
-            dataClassCacheableRepository.saveAll (dataClasses[depth])
+            dataClassCacheableRepository.saveAll (dataClasses[depth].findAll {!it.id})
         }
         dataClasses.values().flatten().each {DataClass dataClass ->
             dataClass.extendsDataClasses.each {superClass ->
                 dataClassCacheableRepository.addDataClassExtensionRelationship(dataClass.id, superClass.id)
             }
         }
-        dataTypeCacheableRepository.saveAll (dataTypes)
-        dataElementCacheableRepository.saveAll (dataElements)
-        enumerationValueCacheableRepository.saveAll (enumerationValues)
+        dataTypeCacheableRepository.saveAll (dataTypes.findAll {!it.id})
+        dataElementCacheableRepository.saveAll (dataElements.findAll {!it.id})
+        enumerationValueCacheableRepository.saveAll (enumerationValues.findAll {!it.id})
 
         annotations.keySet().sort().each {depth ->
             //annotations[depth].each {it.prePersist() }
-            annotationRepository.saveAll(annotations[depth])
+            annotationRepository.saveAll(annotations[depth].findAll {!it.id})
         }
 
         //edits.each {it.prePersist() }
-        editCacheableRepository.saveAll(edits)
+        editCacheableRepository.saveAll(edits.findAll {!it.id})
         //referenceFiles.each {it.prePersist() }
-        referenceFileRepository.saveAll(referenceFiles)
+        referenceFileRepository.saveAll(referenceFiles.findAll {!it.id})
         //rules.each {it.prePersist() }
-        ruleRepository.saveAll(rules)
-        ruleRepresentationCacheableRepository.saveAll(ruleRepresentations)
+        ruleRepository.saveAll(rules.findAll {!it.id})
+        ruleRepresentationCacheableRepository.saveAll(ruleRepresentations.findAll {!it.id})
         //semanticLinks.each {it.prePersist() }
-        semanticLinkRepository.saveAll(semanticLinks)
+        semanticLinkRepository.saveAll(semanticLinks.findAll {!it.id})
         //summaryMetadata.each {it.prePersist() }
-        summaryMetadataCacheableRepository.saveAll(summaryMetadata)
-        summaryMetadataReportCacheableRepository.saveAll(summaryMetadataReports)
+        summaryMetadataCacheableRepository.saveAll(summaryMetadata.findAll {!it.id})
+        summaryMetadataReportCacheableRepository.saveAll(summaryMetadataReports.findAll {!it.id})
         //versionLinks.each {it.prePersist() }
-        versionLinkCacheableRepository.saveAll(versionLinks)
+        versionLinkCacheableRepository.saveAll(versionLinks.findAll {!it.id})
 
         Instant start = Instant.now()
         //metadata.each {it.prePersist() }
-        inBatches(metadata as List, 1000) { List<Metadata> batch ->
+        inBatches(metadata.findAll {!it.id} as List, 1000) { List<Metadata> batch ->
             metadataRepository.saveAll(batch)
         }
         printTimeTaken(start)
@@ -350,8 +350,8 @@ class ContentHandler {
     }
 
     void setCreateProperties(Item item, CatalogueUser catalogueUser) {
-        item.id = null
-        item.version = null
+        //item.id = null
+        //item.version = null
         item.dateCreated = null
         item.lastUpdated = null
         item.catalogueUser = catalogueUser
@@ -566,14 +566,14 @@ class ContentHandler {
 
             int depth = 1
             Set<UUID> foundClasses = dataClasses[0].id as Set
-            do {
+            while (foundClasses.size() > 0) {
                 List<DataClass> retrievedDataClasses = dataClassCacheableRepository.readAllByParentDataClassIdIn(foundClasses)
                 foundClasses = retrievedDataClasses.id as Set
                 if (foundClasses) {
                     dataClasses[depth] = retrievedDataClasses as Set
                 }
                 depth++
-            } while (foundClasses.size() > 0)
+            }
             allItems.putAll(dataClasses.values().flatten().collectEntries {[it.id, it]})
 
             Map<UUID, DataClass> dataClassMap = dataClasses.values().flatten().collectEntries{[it.id, it]}
