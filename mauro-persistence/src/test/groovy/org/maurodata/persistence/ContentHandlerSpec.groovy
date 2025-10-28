@@ -171,7 +171,7 @@ class ContentHandlerSpec extends Specification{
         Folder folder = getBigFolder()
 
         Instant start = Instant.now()
-        folderContentRepository.saveWithContent(folder)
+        contentsService.saveWithContent(folder)
         Duration timeTaken = Duration.between(start, Instant.now())
         printTimeTaken(start)
 

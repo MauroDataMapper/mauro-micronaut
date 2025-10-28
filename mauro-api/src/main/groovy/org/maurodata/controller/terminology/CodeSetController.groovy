@@ -204,7 +204,7 @@ class CodeSetController extends ModelController<CodeSet> implements CodeSetApi {
         CodeSet copy = createCopyModelWithAssociations(existing, createNewVersionData)
         copy.setAssociations()
         copy.terms.clear()
-        CodeSet savedCopy = modelContentRepository.saveWithContent(copy)
+        CodeSet savedCopy = (CodeSet) contentsService.saveWithContent(copy)
         List<Term> terms = codeSetContentRepository.codeSetRepository.getTerms(id) as List<Term>
         terms.each {
             addTerm(savedCopy.id, it.id)

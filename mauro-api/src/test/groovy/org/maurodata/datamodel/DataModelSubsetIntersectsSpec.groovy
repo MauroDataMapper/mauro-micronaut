@@ -12,6 +12,7 @@ import org.maurodata.domain.folder.Folder
 import org.maurodata.domain.model.Item
 import org.maurodata.domain.model.ItemReferencerUtils
 import org.maurodata.persistence.ContainerizedTest
+import org.maurodata.persistence.ContentsService
 import org.maurodata.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
 import org.maurodata.persistence.datamodel.DataModelContentRepository
 import org.maurodata.testing.CommonDataSpec
@@ -24,6 +25,10 @@ import spock.lang.Shared
 
 @ContainerizedTest
 class DataModelSubsetIntersectsSpec  extends CommonDataSpec {
+
+    @Inject
+    @Shared
+    ContentsService contentsService
 
     @Inject
     @Shared
@@ -125,7 +130,7 @@ class DataModelSubsetIntersectsSpec  extends CommonDataSpec {
         )
 
         catalogueDataModel.setAssociations()
-        catalogueDataModel = dataModelContentRepository.saveWithContent(catalogueDataModel)
+        catalogueDataModel = (DataModel) contentsService.saveWithContent(catalogueDataModel)
 
         dataModelId = catalogueDataModel.id
         stringDataElementId = catalogueDataModel.dataElements.find {it.label == 'Test Data Element 4'}.id

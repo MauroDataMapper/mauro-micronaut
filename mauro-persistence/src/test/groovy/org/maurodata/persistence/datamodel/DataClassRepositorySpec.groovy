@@ -6,6 +6,7 @@ import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.datamodel.DataType
 import org.maurodata.domain.folder.Folder
 import org.maurodata.persistence.ContainerizedTest
+import org.maurodata.persistence.ContentsService
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository
 import org.maurodata.persistence.cache.ModelCacheableRepository
 
@@ -18,6 +19,10 @@ import static org.maurodata.persistence.cache.ItemCacheableRepository.*
 
 @ContainerizedTest
 class DataClassRepositorySpec extends Specification {
+
+    @Inject
+    @Shared
+    ContentsService contentsService
 
     @Inject
     @Shared
@@ -178,9 +183,9 @@ class DataClassRepositorySpec extends Specification {
 
     void "test extending a class with saving content"() {
         when:
-        DataClass dataClass1 = dataClassContentRepository.saveWithContent(new DataClass(label: 'My test DataClass 1', dataModel: sharedDataModel))
+        DataClass dataClass1 = contentsService.saveWithContent(new DataClass(label: 'My test DataClass 1', dataModel: sharedDataModel))
 
-        DataClass dataClass2 = dataClassContentRepository.saveWithContent(
+        DataClass dataClass2 = contentsService.saveWithContent(
             new DataClass(
                 label: 'My test DataClass 2',
                 dataModel: sharedDataModel,
@@ -201,9 +206,9 @@ class DataClassRepositorySpec extends Specification {
 
     void "test extending a class with saving content identified by label"() {
         when:
-        DataClass dataClass1 = dataClassContentRepository.saveWithContent(new DataClass(label: 'My test DataClass 1', dataModel: sharedDataModel))
+        DataClass dataClass1 = contentsService.saveWithContent(new DataClass(label: 'My test DataClass 1', dataModel: sharedDataModel))
 
-        DataClass dataClass2 = dataClassContentRepository.saveWithContent(
+        DataClass dataClass2 = contentsService.saveWithContent(
             new DataClass(
                 label: 'My test DataClass 2',
                 dataModel: sharedDataModel,
