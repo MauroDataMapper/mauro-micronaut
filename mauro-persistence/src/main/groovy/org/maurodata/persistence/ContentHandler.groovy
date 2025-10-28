@@ -349,9 +349,9 @@ class ContentHandler {
 
     }
 
-    void setCreateProperties(Item item, CatalogueUser catalogueUser) {
-        //item.id = null
-        //item.version = null
+    static void setCreateProperties(Item item, CatalogueUser catalogueUser) {
+        item.id = null
+        item.version = null
         item.dateCreated = null
         item.lastUpdated = null
         item.catalogueUser = catalogueUser

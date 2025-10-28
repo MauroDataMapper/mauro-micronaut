@@ -88,6 +88,7 @@ class DataModel extends Model implements ItemReferencer {
     @JsonIgnore
     @Override
     DataModel clone() {
+        this.setAssociations()
         DataModel cloned = (DataModel) super.clone()
         Map<UUID, DataClass> clonedDataClassLookup = [:]
         Map<UUID, DataClass> clonedChildDataClassLookup = [:]
@@ -205,24 +206,21 @@ class DataModel extends Model implements ItemReferencer {
     void setDataClassAssociations(DataClass dataClass, Map<String, DataType> dataTypesMap,
                                   List<? extends DataType> referenceTypes) {
         dataClass.setAssociations()
-        if(!allDataClasses.contains(dataClass)) {
-            allDataClasses.add(dataClass)
-        }
         dataClass.dataModel = this
+        if(!dataClass.dataModel.allDataClasses.contains(dataClass)) {
+            dataClass.dataModel.allDataClasses.add(dataClass)
+        }
         dataClass.dataClasses.each {childDataClass ->
             setDataClassAssociations(childDataClass, dataTypesMap, referenceTypes)
             childDataClass.parentDataClass = dataClass
         }
         dataClass.dataElements.each {dataElement ->
             dataElement.dataModel = this
-            if(!dataElements.contains(dataElement)) {
-                dataElements.add(dataElement)
+            if(!dataElement.dataModel.dataElements.contains(dataElement)) {
+                dataElement.dataModel.dataElements.add(dataElement)
             }
             dataElement.dataClass = dataClass
-/*            if(!dataElement.dataType) {
-                dataElement.dataType = dataTypesMap[dataElement.dataType?.id ?: dataElement.dataType?.label]
-            }
-*/
+            dataElement.dataType = dataTypesMap[dataElement.dataType?.id ?: dataElement.dataType?.label]
             if (!this.dataElements.contains(dataElement)) {
                 this.dataElements.add(dataElement)
             }
