@@ -588,10 +588,22 @@ class ContentHandler {
         return term.first()
     }
 
+    TermRelationship loadWithContent(TermRelationship termRelationship) {
+        termRelationships = [termRelationship] as Set
+        loadContent()
+        return termRelationships.first()
+    }
+
     DataType loadWithContent(DataType dataType) {
         dataTypes = [dataType] as Set
         loadContent()
         return dataTypes.first()
+    }
+
+    DataElement loadWithContent(DataElement dataElement) {
+        dataElements = [dataElement] as Set
+        loadContent()
+        return dataElements.first()
     }
 
     DataFlow loadWithContent(DataFlow dataFlow) {
@@ -797,30 +809,40 @@ class ContentHandler {
 
         dataClasses.keySet().sort().each {depth ->
             dataClasses[depth].each {dataClass ->
-                if(dataClass.parentDataClass) {
+                if(dataClass.parentDataClass && allItems[dataClass.parentDataClass.id] ) {
                     ((DataClass) allItems[dataClass.parentDataClass.id]).dataClasses.add(dataClass)
-                } else {
+                } else if(allItems[dataClass.dataModel.id]) {
                     ((DataModel) allItems[dataClass.dataModel.id]).dataClasses.add(dataClass)
                 }
             }
         }
         dataTypes.each {dataType ->
-            ((DataModel) allItems[dataType.dataModel.id]).dataTypes.add(dataType)
+            if(allItems[dataType.dataModel.id]) {
+                ((DataModel) allItems[dataType.dataModel.id]).dataTypes.add(dataType)
+            }
         }
         enumerationValues.each {enumerationValue ->
-            ((DataType) allItems[enumerationValue.enumerationType.id]).enumerationValues.add(enumerationValue)
+            if(allItems[enumerationValue.enumerationType.id]) {
+                ((DataType) allItems[enumerationValue.enumerationType.id]).enumerationValues.add(enumerationValue)
+            }
         }
 
         dataElements.each {dataElement ->
-            ((DataClass) allItems[dataElement.dataClass.id]).dataElements.add(dataElement)
+            if(allItems[dataElement.dataClass.id]) {
+                ((DataClass) allItems[dataElement.dataClass.id]).dataElements.add(dataElement)
+            }
         }
 
         dataClassComponents.each {dataClassComponent ->
-            ((DataFlow) allItems[dataClassComponent.dataFlow.id]).dataClassComponents.add(dataClassComponent)
+            if(allItems[dataClassComponent.dataFlow.id]) {
+                ((DataFlow) allItems[dataClassComponent.dataFlow.id]).dataClassComponents.add(dataClassComponent)
+            }
         }
 
         dataElementComponents.each {dataElementComponent ->
-            ((DataClassComponent) allItems[dataElementComponent.dataClassComponent.id]).dataElementComponents.add(dataElementComponent)
+            if(allItems[dataElementComponent.dataClassComponent.id]) {
+                ((DataClassComponent) allItems[dataElementComponent.dataClassComponent.id]).dataElementComponents.add(dataElementComponent)
+            }
         }
 
         edits.each {edit ->
