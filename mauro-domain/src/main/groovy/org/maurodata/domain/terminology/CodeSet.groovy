@@ -66,7 +66,7 @@ class CodeSet extends Model implements ItemReferencer {
     @JsonIgnore
     @Override
     void setAssociations() {
-        []
+        super.setAssociations()
     }
 
 

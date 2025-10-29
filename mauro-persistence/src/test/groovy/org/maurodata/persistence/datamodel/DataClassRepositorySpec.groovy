@@ -212,7 +212,7 @@ class DataClassRepositorySpec extends Specification {
             new DataClass(
                 label: 'My test DataClass 2',
                 dataModel: sharedDataModel,
-                extendsDataClasses: [new DataClass(label: dataClass1.label)]))
+                extendsDataClasses: [new DataClass(id: dataClass1.id)]))
 
         DataClass retrieved1 = dataClassRepository.findById(dataClass1.id)
         DataClass retrieved2 = dataClassRepository.findById(dataClass2.id)
