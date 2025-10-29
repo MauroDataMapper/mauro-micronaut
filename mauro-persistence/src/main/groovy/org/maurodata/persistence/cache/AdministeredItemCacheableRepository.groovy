@@ -22,6 +22,7 @@ import org.maurodata.domain.terminology.Term
 import org.maurodata.domain.terminology.TermRelationship
 import org.maurodata.domain.terminology.TermRelationshipType
 import org.maurodata.domain.terminology.Terminology
+import org.maurodata.persistence.ContentsService
 import org.maurodata.persistence.classifier.ClassifierRepository
 import org.maurodata.persistence.dataflow.DataClassComponentRepository
 import org.maurodata.persistence.dataflow.DataElementComponentRepository
@@ -46,9 +47,10 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
 
     AdministeredItemRepository<I> repository
 
-    AdministeredItemCacheableRepository(AdministeredItemRepository<I> itemRepository) {
+    AdministeredItemCacheableRepository(AdministeredItemRepository<I> itemRepository, ContentsService contentsService) {
         super(itemRepository)
         repository = itemRepository
+        this.contentsService = contentsService
     }
 
     List<I> findAllByParentAndPathIdentifier(UUID item, String pathIdentifier) {
@@ -114,8 +116,8 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
     @CompileStatic
     @Singleton
     static class TermCacheableRepository extends AdministeredItemCacheableRepository<Term> {
-        TermCacheableRepository(TermRepository termRepository) {
-            super(termRepository)
+        TermCacheableRepository(TermRepository termRepository, ContentsService contentsService) {
+            super(termRepository, contentsService)
         }
 
         // not cached
@@ -147,8 +149,8 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
     @CompileStatic
     @Singleton
     static class TermRelationshipCacheableRepository extends AdministeredItemCacheableRepository<TermRelationship> {
-        TermRelationshipCacheableRepository(TermRelationshipRepository termRelationshipRepository) {
-            super(termRelationshipRepository)
+        TermRelationshipCacheableRepository(TermRelationshipRepository termRelationshipRepository, ContentsService contentsService) {
+            super(termRelationshipRepository, contentsService)
         }
 
         // not cached
@@ -179,8 +181,8 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
     @CompileStatic
     @Singleton
     static class TermRelationshipTypeCacheableRepository extends AdministeredItemCacheableRepository<TermRelationshipType> {
-        TermRelationshipTypeCacheableRepository(TermRelationshipTypeRepository termRelationshipTypeRepository) {
-            super(termRelationshipTypeRepository)
+        TermRelationshipTypeCacheableRepository(TermRelationshipTypeRepository termRelationshipTypeRepository, ContentsService contentsService) {
+            super(termRelationshipTypeRepository, contentsService)
         }
 
         List<TermRelationshipType> readAllByTerminologyIdIn(Collection<UUID> terminologyIds) {
@@ -192,8 +194,8 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
     @Singleton
     @CompileStatic
     static class DataClassCacheableRepository extends AdministeredItemCacheableRepository<DataClass> {
-        DataClassCacheableRepository(DataClassRepository dataClassRepository) {
-            super(dataClassRepository)
+        DataClassCacheableRepository(DataClassRepository dataClassRepository, ContentsService contentsService) {
+            super(dataClassRepository, contentsService)
         }
 
         // not cached
@@ -277,8 +279,8 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
     @Singleton
     @CompileStatic
     static class DataElementCacheableRepository extends AdministeredItemCacheableRepository<DataElement> {
-        DataElementCacheableRepository(DataElementRepository dataElementRepository) {
-            super(dataElementRepository)
+        DataElementCacheableRepository(DataElementRepository dataElementRepository, ContentsService contentsService) {
+            super(dataElementRepository, contentsService)
         }
 
         // not cached
@@ -308,8 +310,8 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
     @Singleton
     @CompileStatic
     static class DataTypeCacheableRepository extends AdministeredItemCacheableRepository<DataType> {
-        DataTypeCacheableRepository(DataTypeRepository dataTypeRepository) {
-            super(dataTypeRepository)
+        DataTypeCacheableRepository(DataTypeRepository dataTypeRepository, ContentsService contentsService) {
+            super(dataTypeRepository, contentsService)
         }
 
         @Nullable
@@ -334,8 +336,8 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
     @Singleton
     @CompileStatic
     static class EnumerationValueCacheableRepository extends AdministeredItemCacheableRepository<EnumerationValue> {
-        EnumerationValueCacheableRepository(EnumerationValueRepository enumerationValueRepository) {
-            super(enumerationValueRepository)
+        EnumerationValueCacheableRepository(EnumerationValueRepository enumerationValueRepository, ContentsService contentsService) {
+            super(enumerationValueRepository, contentsService)
         }
 
         // not cached
@@ -353,8 +355,8 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
     @Singleton
     @CompileStatic
     static class ClassifierCacheableRepository extends AdministeredItemCacheableRepository<Classifier> {
-        ClassifierCacheableRepository(ClassifierRepository classifierRepository) {
-            super(classifierRepository)
+        ClassifierCacheableRepository(ClassifierRepository classifierRepository, ContentsService contentsService) {
+            super(classifierRepository, contentsService)
         }
 
         List<Classifier> readAllByParentClassifier_Id(UUID parentClassifierId) {
@@ -421,8 +423,8 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
     @Singleton
     @CompileStatic
     static class DataFlowCacheableRepository extends AdministeredItemCacheableRepository<DataFlow> {
-        DataFlowCacheableRepository(DataFlowRepository dataFlowRepository) {
-            super(dataFlowRepository)
+        DataFlowCacheableRepository(DataFlowRepository dataFlowRepository, ContentsService contentsService) {
+            super(dataFlowRepository, contentsService)
         }
 
         List<DataFlow> findAllByTarget(DataModel dataModel) {
@@ -442,8 +444,8 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
     @Singleton
     @CompileStatic
     static class DataClassComponentCacheableRepository extends AdministeredItemCacheableRepository<DataClassComponent> {
-        DataClassComponentCacheableRepository(DataClassComponentRepository dataClassComponentRepository) {
-            super(dataClassComponentRepository)
+        DataClassComponentCacheableRepository(DataClassComponentRepository dataClassComponentRepository, ContentsService contentsService) {
+            super(dataClassComponentRepository, contentsService)
         }
         DataClassComponent addTargetDataClass(@NonNull UUID id, @NonNull UUID dataClassId) {
             invalidate(id)
@@ -491,8 +493,8 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
     @Singleton
     @CompileStatic
     static class DataElementComponentCacheableRepository extends AdministeredItemCacheableRepository<DataElementComponent> {
-        DataElementComponentCacheableRepository(DataElementComponentRepository dataElementComponentRepository) {
-            super(dataElementComponentRepository)
+        DataElementComponentCacheableRepository(DataElementComponentRepository dataElementComponentRepository, ContentsService contentsService) {
+            super(dataElementComponentRepository, contentsService)
         }
 
         DataElementComponent addTargetDataElement(@NonNull UUID id, @NonNull UUID dataElementId) {

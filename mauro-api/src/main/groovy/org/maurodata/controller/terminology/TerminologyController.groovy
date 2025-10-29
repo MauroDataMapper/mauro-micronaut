@@ -200,10 +200,10 @@ class TerminologyController extends ModelController<Terminology> implements Term
     @Audit
     @Get(Paths.TERMINOLOGY_DIFF)
     ObjectDiff diffModels(@NonNull UUID id, @NonNull UUID otherId) {
-        Terminology terminology = modelContentRepository.findWithContentById(id)
+        Terminology terminology = terminologyRepository.loadWithContent(id)
 
         ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, terminology, "item not found : $id")
-        Terminology other = modelContentRepository.findWithContentById(otherId)
+        Terminology other = terminologyRepository.loadWithContent(otherId)
         ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, terminology, "item not found : $otherId")
 
         accessControlService.checkRole(Role.READER, terminology)

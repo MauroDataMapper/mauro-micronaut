@@ -13,8 +13,6 @@ import org.maurodata.persistence.ContentsService
 @CompileStatic
 trait ModelRepository<M extends Model> implements AdministeredItemRepository<M> {
 
-    ContentsService contentsService
-
     @Nullable
     abstract List<M> readAllByFolder(Folder folder)
 
@@ -43,11 +41,6 @@ trait ModelRepository<M extends Model> implements AdministeredItemRepository<M> 
 
     abstract Boolean handles(String domainType)
 
-    M loadWithContent(UUID id) {
-        M model = readById(id)
-        (M) contentsService.loadWithContent (model)
-        model
-    }
 
 
 

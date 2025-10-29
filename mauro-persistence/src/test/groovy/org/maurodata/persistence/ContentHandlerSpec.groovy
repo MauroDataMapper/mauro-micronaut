@@ -48,9 +48,6 @@ class ContentHandlerSpec extends Specification{
     ModelCacheableRepository.CodeSetCacheableRepository codeSetCacheableRepository
 
     @Inject
-    CodeSetContentRepository codeSetContentRepository
-
-    @Inject
     AdministeredItemCacheableRepository.TermCacheableRepository termCacheableRepository
 
     @Inject
@@ -106,7 +103,7 @@ class ContentHandlerSpec extends Specification{
         codeSets.size() == 1
 
         when:
-        CodeSet codeSet = codeSetContentRepository.readWithContentById(codeSets.first().id)
+        CodeSet codeSet = codeSetCacheableRepository.loadWithContent(codeSets.first().id)
         then:
         codeSet.terms.size() == 5
 
@@ -199,7 +196,7 @@ class ContentHandlerSpec extends Specification{
         codeSets.size() == 1
 
         when:
-        CodeSet codeSet = codeSetContentRepository.readWithContentById(codeSets.first().id)
+        CodeSet codeSet = codeSetCacheableRepository.loadWithContent(codeSets.first().id)
         then:
         codeSet.terms.size() == 5
 

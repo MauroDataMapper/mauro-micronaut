@@ -49,6 +49,13 @@ class ContentsService {
         return model
     }
 
+    AdministeredItem loadWithContent(AdministeredItem item) {
+        ContentHandler contentHandler = applicationContext.createBean(ContentHandler)
+        contentHandler.loadWithContent(item)
+        item.setAssociations()
+        return item
+    }
+
 
 
 }

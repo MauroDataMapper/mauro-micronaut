@@ -140,7 +140,7 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
 
     @Transactional
     HttpResponse delete(@NonNull UUID id, @Body @Nullable I item) {
-        I itemToDelete = (I) administeredItemContentRepository.readWithContentById(id)
+        I itemToDelete = (I) administeredItemRepository.loadWithContent(id)
         if (item == null) {item = itemToDelete}
 
         deletePre(itemToDelete)
@@ -153,7 +153,7 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
 
         if (item?.version) itemToDelete.version = item.version
 
-        Long deleted = administeredItemContentRepository.deleteWithContent(itemToDelete)
+        Boolean deleted = contentsService.deleteWithContent(itemToDelete)
         if (deleted) {
             HttpResponse.status(HttpStatus.NO_CONTENT)
         } else {

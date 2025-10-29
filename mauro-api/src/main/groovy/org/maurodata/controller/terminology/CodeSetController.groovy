@@ -159,7 +159,7 @@ class CodeSetController extends ModelController<CodeSet> implements CodeSetApi {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, 'CodeSet item not found')
         }
         accessControlService.checkRole(Role.READER, codeSet)
-        List<Term> associatedTerms = codeSetContentRepository.codeSetRepository.getTerms(id).each { it.updateBreadcrumbs() } as List<Term>
+        List<Term> associatedTerms = codeSetRepository.getTerms(id).each { it.updateBreadcrumbs() } as List<Term>
         ListResponse.from(associatedTerms, params)
     }
 
@@ -174,9 +174,9 @@ class CodeSetController extends ModelController<CodeSet> implements CodeSetApi {
     @Audit
     @Get(Paths.CODE_SET_DIFF)
     ObjectDiff diffModels(@NonNull UUID id, @NonNull UUID otherId) {
-        CodeSet codeSet = modelContentRepository.findWithContentById(id)
+        CodeSet codeSet = modelRepository.loadWithContent(id)
         ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, codeSet, "item not found : $id")
-        CodeSet other = modelContentRepository.findWithContentById(otherId)
+        CodeSet other = modelRepository.loadWithContent(otherId)
         ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, codeSet, "item not found : $otherId")
 
         accessControlService.checkRole(Role.READER, codeSet)
@@ -205,7 +205,7 @@ class CodeSetController extends ModelController<CodeSet> implements CodeSetApi {
         copy.setAssociations()
         copy.terms.clear()
         CodeSet savedCopy = (CodeSet) contentsService.saveWithContent(copy)
-        List<Term> terms = codeSetContentRepository.codeSetRepository.getTerms(id) as List<Term>
+        List<Term> terms = codeSetRepository.getTerms(id) as List<Term>
         terms.each {
             addTerm(savedCopy.id, it.id)
         }

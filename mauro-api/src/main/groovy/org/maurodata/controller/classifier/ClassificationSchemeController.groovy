@@ -122,9 +122,9 @@ class ClassificationSchemeController extends ModelController<ClassificationSchem
     @Audit
     @Get(Paths.CLASSIFICATION_SCHEMES_DIFF)
     ObjectDiff diffModels(@NonNull UUID id, @NonNull UUID otherId) {
-        ClassificationScheme classificationScheme = modelContentRepository.findWithContentById(id)
+        ClassificationScheme classificationScheme = modelRepository.loadWithContent(id)
         ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, classificationScheme, "Item not found: $id")
-        ClassificationScheme otherClassificationScheme = modelContentRepository.findWithContentById(otherId)
+        ClassificationScheme otherClassificationScheme = modelRepository.loadWithContent(otherId)
         ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, classificationScheme, "Item not found: $otherId")
 
 

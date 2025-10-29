@@ -22,6 +22,7 @@ import org.maurodata.persistence.folder.FolderRepository
 import org.maurodata.persistence.model.ModelRepository
 import org.maurodata.persistence.terminology.CodeSetRepository
 import org.maurodata.persistence.terminology.TerminologyRepository
+import org.maurodata.persistence.terminology.dto.CodeSetTermDTO
 
 @Slf4j
 @CompileStatic
@@ -31,9 +32,8 @@ class ModelCacheableRepository<M extends Model> extends AdministeredItemCacheabl
     ModelRepository<M> repository
 
     ModelCacheableRepository(ModelRepository<M> itemRepository, ContentsService contentsService) {
-        super(itemRepository)
+        super(itemRepository, contentsService)
         repository = itemRepository
-        this.contentsService = contentsService
     }
 
     @Override
@@ -123,9 +123,17 @@ class ModelCacheableRepository<M extends Model> extends AdministeredItemCacheabl
             ((CodeSetRepository) repository).getTerms(uuid)
         }
 
+        CodeSet addTerm(@NonNull UUID uuid, @NonNull UUID termId) {
+            ((CodeSetRepository) repository).addTerm(uuid, termId)
+        }
+
         // Not cached
         Long removeAllAssociations(@NonNull Collection<UUID> uuids) {
             ((CodeSetRepository) repository).removeTermAssociations(uuids)
+        }
+
+        List<CodeSetTermDTO> getCodeSetTerms(@NonNull List<UUID> codeSetIds) {
+            ((CodeSetRepository) repository).getCodeSetTerms(codeSetIds)
         }
 
     }

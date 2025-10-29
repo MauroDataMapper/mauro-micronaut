@@ -8,11 +8,15 @@ import org.maurodata.domain.dataflow.DataClassComponent
 import org.maurodata.domain.dataflow.DataElementComponent
 import org.maurodata.domain.dataflow.DataFlow
 import org.maurodata.domain.model.AdministeredItem
+import org.maurodata.persistence.ContentsService
 import org.maurodata.persistence.model.AdministeredItemContentRepository
 
 @CompileStatic
 @Singleton
 class DataFlowContentRepository extends AdministeredItemContentRepository {
+
+    @Inject
+    ContentsService contentsService
 
     @Inject
     DataFlowRepository dataFlowRepository
@@ -44,7 +48,7 @@ class DataFlowContentRepository extends AdministeredItemContentRepository {
             it.updateCreationProperties()
             it.dataFlow = saved
             it.parent = saved
-            dataClassComponentContentRepository.saveWithContent(it)
+            contentsService.saveWithContent(it)
         }
         saved
     }
@@ -54,7 +58,7 @@ class DataFlowContentRepository extends AdministeredItemContentRepository {
         DataFlow dataFlow = administeredItem as DataFlow
         if (dataFlow.dataClassComponents) {
             dataFlow.dataClassComponents.each { dataClassComponent ->
-                dataClassComponentContentRepository.deleteWithContent(dataClassComponent as AdministeredItem)
+                contentsService.deleteWithContent(dataClassComponent as AdministeredItem)
             }
         }
         super.administeredItemRepository.delete(dataFlow)

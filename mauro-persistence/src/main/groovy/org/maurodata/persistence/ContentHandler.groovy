@@ -64,6 +64,7 @@ import org.maurodata.persistence.facet.RuleRepository
 import org.maurodata.persistence.facet.SemanticLinkRepository
 import org.maurodata.persistence.folder.FolderRepository
 import org.maurodata.persistence.terminology.TermRelationshipRepository
+import org.maurodata.persistence.terminology.dto.CodeSetTermDTO
 
 import java.sql.Connection
 import java.sql.DatabaseMetaData
@@ -126,6 +127,7 @@ class ContentHandler {
     Set<TermRelationshipType> termRelationshipTypes = []
     Set<TermRelationship> termRelationships = []
     Set<CodeSet> codeSets = []
+    Set<CodeSetTermDTO> codeSetTermDTOS = []
     Set<DataFlow> dataFlows = []
     Set<DataClassComponent> dataClassComponents = []
     Set<DataElementComponent> dataElementComponents = []
@@ -255,6 +257,15 @@ class ContentHandler {
         termRelationshipTypeCacheableRepository.saveAll(termRelationshipTypes.findAll {!it.id})
         termRelationshipCacheableRepository.saveAll(termRelationships.findAll {!it.id})
         codeSetCacheableRepository.saveAll(codeSets.findAll {!it.id})
+
+        // TODO: Improve this by doing them in bulk
+        // Actually maybe this happens automatically
+/*        codeSets.each {codeSet ->
+            codeSet.terms.each {term ->
+                codeSetCacheableRepository.addTerm(codeSet.id, term.id)
+            }
+        }
+*/
         dataModelCacheableRepository.saveAll (dataModels.findAll {!it.id})
         dataClasses.keySet().sort().each {depth ->
             dataClassCacheableRepository.saveAll (dataClasses[depth].findAll {!it.id})
@@ -565,6 +576,42 @@ class ContentHandler {
         return dataFlows.first()
     }
 
+    DataClass loadWithContent(DataClass dataClass) {
+        dataClasses[0] = [dataClass] as Set
+        loadContent()
+        return dataClasses[0].first()
+    }
+
+    Term loadWithContent(Term term) {
+        terms = [term] as Set
+        loadContent()
+        return term.first()
+    }
+
+    DataType loadWithContent(DataType dataType) {
+        dataTypes = [dataType] as Set
+        loadContent()
+        return dataTypes.first()
+    }
+
+    DataFlow loadWithContent(DataFlow dataFlow) {
+        dataFlows = [dataFlow] as Set
+        loadContent()
+        return dataFlows.first()
+    }
+
+    DataClassComponent loadWithContent(DataClassComponent dataClassComponent) {
+        dataClassComponents = [dataClassComponent] as Set
+        loadContent()
+        return dataClassComponents.first()
+    }
+
+    DataElementComponent loadWithContent(DataElementComponent dataElementComponent) {
+        dataElementComponents = [dataElementComponent] as Set
+        loadContent()
+        return dataElementComponents.first()
+    }
+
     void loadContent() {
         if(folders[0]) {
             int depth = 1
@@ -608,6 +655,21 @@ class ContentHandler {
             codeSets = codeSetCacheableRepository.readAllByFolderIdIn(folders.values().flatten().id as Set<UUID>)
         }
         allItems.putAll(codeSets.collectEntries {[it.id, it]})
+
+        if(codeSets) {
+            Map<UUID, CodeSet> codeSetMap = codeSets.collectEntries { [it.id, it]}
+            Map<UUID, Term> termMap = terms.collectEntries { [it.id, it]}
+            if(terms) {
+                codeSetCacheableRepository.getCodeSetTerms(codeSets.id).each {codeSetTermDTO ->
+                    codeSetMap[codeSetTermDTO.codeSetId].terms.add(termMap[codeSetTermDTO.termId])
+
+                }
+            } else {
+                codeSets.each {codeSet ->
+                    codeSet.terms = codeSetCacheableRepository.getTerms(codeSet.id)
+                }
+            }
+        }
 
         if(folders.values().flatten()) {
             dataModels = dataModelCacheableRepository.readAllByFolderIdIn(folders.values().flatten().id as Set<UUID>)

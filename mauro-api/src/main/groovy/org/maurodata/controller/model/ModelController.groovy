@@ -220,7 +220,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
 
     @Transactional
     M putReadByAuthenticated(UUID id) {
-        M modelToUse = (M) modelContentRepository.findWithContentById(id)
+        M modelToUse = (M) modelRepository.loadWithContent(id)
 
         if (modelToUse == null) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, "Object not found for readByAuthenticated")
@@ -236,7 +236,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
 
     @Transactional
     HttpResponse deleteReadByAuthenticated(UUID id) {
-        M modelToUse = (M) modelContentRepository.findWithContentById(id)
+        M modelToUse = (M) modelRepository.loadWithContent(id)
 
         if (modelToUse == null) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, "Object not found for readByAuthenticated")
@@ -252,7 +252,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
 
     @Transactional
     M putReadByEveryone(UUID id) {
-        M modelToUse = (M) modelContentRepository.findWithContentById(id)
+        M modelToUse = (M) modelRepository.loadWithContent(id)
 
         if (modelToUse == null) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, "Object not found for readByAuthenticated")
@@ -268,7 +268,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
 
     @Transactional
     HttpResponse deleteReadByEveryone(UUID id) {
-        M modelToUse = (M) modelContentRepository.findWithContentById(id)
+        M modelToUse = (M) modelRepository.loadWithContent(id)
 
         if (modelToUse == null) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, "Object not found for readByAuthenticated")
@@ -341,7 +341,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     }
 
     protected M getExistingWithContent(UUID id) {
-        M existing = modelContentRepository.findWithContentById(id)
+        M existing = modelRepository.loadWithContent(id)
         existing.setAssociations()
         getReferenceFileFileContent(existing.getAllContents())
 
@@ -368,7 +368,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         ModelExporterPlugin mauroPlugin = mauroPluginService.getPlugin(ModelExporterPlugin, namespace, name, version)
         PluginService.handlePluginNotFound(mauroPlugin, namespace, name)
 
-        M existing = modelContentRepository.findWithContentById(modelId)
+        M existing = modelRepository.loadWithContent(modelId)
         existing.setAssociations()
 
         ExporterUtils.createExportResponse(mauroPlugin, existing)
@@ -469,7 +469,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
                                           "MS04. Models don't share a common ancestor")
         }
 
-        modelContentRepository.findWithContentById(chosenCommonAncestor.id)
+        modelRepository.loadWithContent(chosenCommonAncestor.id)
     }
 
     M getFinalisedParent(final M model) {
@@ -581,7 +581,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
                 }
             }
 
-            final Model childModel = modelContentRepository.findWithContentById(targetModelId)
+            final Model childModel = modelRepository.loadWithContent(targetModelId)
 
             if (childModel == null) {
                 continue
@@ -911,10 +911,10 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     }
 
     protected MergeDiffDTO mergeDiff(@NonNull UUID id, @NonNull UUID otherId) {
-        final M dataModelOne = modelContentRepository.findWithContentById(id)
+        final M dataModelOne = modelRepository.loadWithContent(id)
         ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, dataModelOne, "item with $id not found")
 
-        final M dataModelTwo = modelContentRepository.findWithContentById(otherId)
+        final M dataModelTwo = modelRepository.loadWithContent(otherId)
         ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, dataModelTwo, "item with $otherId not found")
 
         accessControlService.checkRole(Role.READER, dataModelOne)
@@ -1313,12 +1313,12 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
             throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, 'Target model id passed in request body does not match target model id in URI.')
         }
 
-        M sourceModel = modelContentRepository.findWithContentById(id)
+        M sourceModel = modelRepository.loadWithContent(id)
         if (sourceModel == null) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, id.toString())
         }
 
-        M targetModel = modelContentRepository.findWithContentById(otherId)
+        M targetModel = modelRepository.loadWithContent(otherId)
         if (targetModel == null) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, targetModel.toString())
         }
