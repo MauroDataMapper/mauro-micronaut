@@ -8,6 +8,7 @@ import jakarta.inject.Inject
 import org.maurodata.domain.classifier.ClassificationScheme
 import org.maurodata.domain.folder.Folder
 import org.maurodata.domain.model.AdministeredItem
+import org.maurodata.persistence.ContentsService
 import org.maurodata.persistence.folder.dto.FolderDTORepository
 import org.maurodata.persistence.model.ModelRepository
 
@@ -17,6 +18,10 @@ abstract class FolderRepository implements ModelRepository<Folder> {
 
     @Inject
     FolderDTORepository folderDTORepository
+
+    FolderRepository(ContentsService contentsService) {
+        this.contentsService = contentsService
+    }
 
     @Nullable
     Folder findById(UUID id) {

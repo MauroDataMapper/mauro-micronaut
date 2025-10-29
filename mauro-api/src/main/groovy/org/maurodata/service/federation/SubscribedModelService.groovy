@@ -15,10 +15,6 @@ import org.maurodata.domain.model.Model
 import org.maurodata.importdata.ImportMetadata
 import org.maurodata.persistence.ContentsService
 import org.maurodata.persistence.cache.ItemCacheableRepository.SubscribedModelCacheableRepository
-import org.maurodata.persistence.classifier.ClassificationSchemeContentRepository
-import org.maurodata.persistence.datamodel.DataModelContentRepository
-import org.maurodata.persistence.folder.FolderContentRepository
-import org.maurodata.persistence.model.ModelContentRepository
 import org.maurodata.persistence.service.RepositoryService
 import org.maurodata.plugin.MauroPluginService
 import org.maurodata.plugin.exporter.ModelExporterPlugin
@@ -36,26 +32,19 @@ class SubscribedModelService {
     final RepositoryService repositoryService
     final MauroPluginService mauroPluginService
     final SubscribedCatalogueService subscribedCatalogueService
-    final ModelContentRepository<Model> modelContentRepository
     final SubscribedModelCacheableRepository subscribedModelCacheableRepository
     final AuthorityService authorityService
 
     @Inject
     ContentsService contentsService
-    @Inject
-    FolderContentRepository folderContentRepository
-    @Inject
-    ClassificationSchemeContentRepository classificationSchemeContentRepository
 
 
     @Inject
     SubscribedModelService(RepositoryService repositoryService, MauroPluginService mauroPluginService, SubscribedCatalogueService subscribedCatalogueService,
-                           ModelContentRepository<Model> modelContentRepository, SubscribedModelCacheableRepository subscribedModelCacheableRepository,
-                           AuthorityService authorityService) {
+                           SubscribedModelCacheableRepository subscribedModelCacheableRepository, AuthorityService authorityService) {
         this.repositoryService = repositoryService
         this.mauroPluginService = mauroPluginService
         this.subscribedCatalogueService = subscribedCatalogueService
-        this.modelContentRepository = modelContentRepository
         this.subscribedModelCacheableRepository = subscribedModelCacheableRepository
         this.authorityService = authorityService
     }

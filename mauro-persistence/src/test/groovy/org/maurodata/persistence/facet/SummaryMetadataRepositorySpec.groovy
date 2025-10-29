@@ -71,7 +71,7 @@ class SummaryMetadataRepositorySpec extends Specification {
 
 
         dataModelId = contentsService.saveWithContent(dataModel).id
-        DataModel retrievedDataModel = contentsService.loadDataModelWithContent(dataModelId)
+        DataModel retrievedDataModel = dataModelRepository.loadWithContent(dataModelId)
 
         then:
         retrievedDataModel.summaryMetadata.size() == 1

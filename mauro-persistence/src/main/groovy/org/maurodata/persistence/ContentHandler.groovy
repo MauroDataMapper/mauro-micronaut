@@ -5,6 +5,9 @@ import groovyjarjarantlr4.v4.runtime.misc.OrderedHashSet
 import jakarta.inject.Inject
 import org.maurodata.domain.classifier.ClassificationScheme
 import org.maurodata.domain.classifier.Classifier
+import org.maurodata.domain.dataflow.DataClassComponent
+import org.maurodata.domain.dataflow.DataElementComponent
+import org.maurodata.domain.dataflow.DataFlow
 import org.maurodata.domain.datamodel.DataClass
 import org.maurodata.domain.datamodel.DataElement
 import org.maurodata.domain.datamodel.DataModel
@@ -34,6 +37,7 @@ import org.maurodata.domain.terminology.TermRelationshipType
 import org.maurodata.domain.terminology.Terminology
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository.DataClassCacheableRepository
+import org.maurodata.persistence.cache.AdministeredItemCacheableRepository.DataFlowCacheableRepository
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository.DataTypeCacheableRepository
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository.DataElementCacheableRepository
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository.EnumerationValueCacheableRepository
@@ -87,6 +91,10 @@ class ContentHandler {
     @Inject DataElementCacheableRepository dataElementCacheableRepository
     @Inject EnumerationValueCacheableRepository enumerationValueCacheableRepository
 
+    @Inject DataFlowCacheableRepository dataFlowCacheableRepository
+    @Inject AdministeredItemCacheableRepository.DataClassComponentCacheableRepository dataClassComponentCacheableRepository
+    @Inject AdministeredItemCacheableRepository.DataElementComponentCacheableRepository dataElementComponentCacheableRepository
+
     @Inject MetadataCacheableRepository metadataCacheableRepository
 
     @Inject MetadataRepository metadataRepository
@@ -118,6 +126,9 @@ class ContentHandler {
     Set<TermRelationshipType> termRelationshipTypes = []
     Set<TermRelationship> termRelationships = []
     Set<CodeSet> codeSets = []
+    Set<DataFlow> dataFlows = []
+    Set<DataClassComponent> dataClassComponents = []
+    Set<DataElementComponent> dataElementComponents = []
 
     Set<Metadata> metadata = []
     Map<Integer, Set<Annotation>> annotations = [:]
@@ -216,6 +227,23 @@ class ContentHandler {
         shredFacets(dataElement)
     }
 
+    void shred(DataFlow dataFlow) {
+        dataFlows.add(dataFlow)
+        shredFacets(dataFlow)
+        dataFlow.dataClassComponents.each { shred(it)}
+    }
+
+    void shred(DataClassComponent dataClassComponent) {
+        dataClassComponents.add(dataClassComponent)
+        shredFacets(dataClassComponent)
+        dataClassComponent.dataElementComponents.each { shred(it)}
+    }
+
+    void shred(DataElementComponent dataElementComponent) {
+        dataElementComponents.add(dataElementComponent)
+        shredFacets(dataElementComponent)
+    }
+
     void saveWithContent() {
         folders.keySet().sort().each {depth ->
             folderCacheableRepository.saveAll(folders[depth].findAll {!it.id})
@@ -239,6 +267,10 @@ class ContentHandler {
         dataTypeCacheableRepository.saveAll (dataTypes.findAll {!it.id})
         dataElementCacheableRepository.saveAll (dataElements.findAll {!it.id})
         enumerationValueCacheableRepository.saveAll (enumerationValues.findAll {!it.id})
+
+        dataFlowCacheableRepository.saveAll (dataFlows.findAll {!it.id})
+        dataClassComponentCacheableRepository.saveAll (dataClassComponents.findAll {!it.id})
+        dataElementComponentCacheableRepository.saveAll (dataElementComponents.findAll {!it.id})
 
         annotations.keySet().sort().each {depth ->
             //annotations[depth].each {it.prePersist() }
@@ -314,6 +346,16 @@ class ContentHandler {
             setCreateProperties(it, catalogueUser)
         }
 
+        dataFlows.each {
+            setCreateProperties(it, catalogueUser)
+        }
+        dataClassComponents.each {
+            setCreateProperties(it, catalogueUser)
+        }
+        dataElementComponents.each {
+            setCreateProperties(it, catalogueUser)
+        }
+
         annotations.keySet().sort().each {depth ->
             annotations[depth].each {
                 setCreateProperties(it, catalogueUser)
@@ -382,6 +424,11 @@ class ContentHandler {
         annotations.keySet().sort().reverse().each {depth ->
             annotationRepository.deleteAll(annotations[depth])
         }
+
+        dataElementComponentCacheableRepository.deleteAll (dataElementComponents)
+        dataClassComponentCacheableRepository.deleteAll (dataClassComponents)
+        dataFlowCacheableRepository.deleteAll (dataFlows)
+
         enumerationValueCacheableRepository.deleteAll (enumerationValues)
         dataElementCacheableRepository.deleteAll (dataElements)
         dataTypeCacheableRepository.deleteAll (dataTypes)
@@ -512,6 +559,11 @@ class ContentHandler {
         return codeSets.first()
     }
 
+    DataFlow loadWIthContent(DataFlow dataFlow) {
+        dataFlows = [dataFlow] as Set
+        loadContent()
+        return dataFlows.first()
+    }
 
     void loadContent() {
         if(folders[0]) {
@@ -595,6 +647,18 @@ class ContentHandler {
         if(dataClasses.values().flatten()) {
             dataElements = dataElementCacheableRepository.readAllByDataClassIdIn(dataClasses.values().flatten().id)
             allItems.putAll(dataElements.collectEntries{[it.id, it]})
+        }
+
+        allItems.putAll(dataFlows.collectEntries {[it.id, it]})
+
+        if(dataFlows) {
+            dataClassComponents = dataClassComponentCacheableRepository.readAllByDataFlowIdIn(dataFlows.id)
+            allItems.putAll(dataClassComponents.collectEntries {[it.id, it]})
+        }
+
+        if(dataClassComponents) {
+            dataElementComponents = dataElementComponentCacheableRepository.readAllByDataClassComponentIdIn(dataClassComponents.id)
+            allItems.putAll(dataElementComponents.collectEntries {[it.id, it]})
         }
 
         // annotations
@@ -687,6 +751,14 @@ class ContentHandler {
 
         dataElements.each {dataElement ->
             ((DataClass) allItems[dataElement.dataClass.id]).dataElements.add(dataElement)
+        }
+
+        dataClassComponents.each {dataClassComponent ->
+            ((DataFlow) allItems[dataClassComponent.dataFlow.id]).dataClassComponents.add(dataClassComponent)
+        }
+
+        dataElementComponents.each {dataElementComponent ->
+            ((DataClassComponent) allItems[dataElementComponent.dataClassComponent.id]).dataElementComponents.add(dataElementComponent)
         }
 
         edits.each {edit ->

@@ -10,7 +10,6 @@ import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.datamodel.DataType
 import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository
-import org.maurodata.persistence.datamodel.DataClassContentRepository
 import org.maurodata.persistence.model.PathRepository
 import org.maurodata.service.core.AdministeredItemService
 
@@ -18,19 +17,17 @@ import org.maurodata.service.core.AdministeredItemService
 @Slf4j
 class DataClassService extends AdministeredItemService{
 
-    DataClassContentRepository dataClassContentRepository
     AdministeredItemCacheableRepository.DataElementCacheableRepository dataElementCacheableRepository
     AdministeredItemCacheableRepository.DataTypeCacheableRepository dataTypeCacheableRepository
     AdministeredItemCacheableRepository.DataClassCacheableRepository dataClassCacheableRepository
     DataTypeService dataTypeService
 
     @Inject
-    DataClassService(PathRepository pathRepository, DataClassContentRepository dataClassContentRepository,
+    DataClassService(PathRepository pathRepository,
                      AdministeredItemCacheableRepository.DataElementCacheableRepository dataElementCacheableRepository,
                      AdministeredItemCacheableRepository.DataTypeCacheableRepository dataTypeCacheableRepository,
                      AdministeredItemCacheableRepository.DataClassCacheableRepository dataClassCacheableRepository, DataTypeService dataTypeService) {
         this.pathRepository = pathRepository
-        this.dataClassContentRepository = dataClassContentRepository
         this.dataElementCacheableRepository = dataElementCacheableRepository
         this.dataTypeCacheableRepository = dataTypeCacheableRepository
         this.dataClassCacheableRepository = dataClassCacheableRepository

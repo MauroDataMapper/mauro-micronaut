@@ -482,6 +482,10 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
         Boolean handles(String domainType) {
             domainClass.simpleName.equalsIgnoreCase(domainType) || (domainClass.simpleName + 's').equalsIgnoreCase(domainType)
         }
+
+        List<DataClassComponent> readAllByDataFlowIdIn(List<UUID> dataFlowIds) {
+            ((DataClassComponentRepository) repository).readAllByDataFlowIdIn(dataFlowIds)
+        }
     }
 
     @Singleton
@@ -525,6 +529,11 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
         List<DataElement> getTargetDataElements(UUID id) {
             ((DataElementComponentRepository) repository).getTargetDataElements(id)
         }
+
+        List<DataElementComponent> readAllByDataClassComponentIdIn(List<UUID> dataClassComponentIds) {
+            ((DataElementComponentRepository) repository).readAllByDataClassComponentIdIn(dataClassComponentIds)
+        }
+
 
         @Override
         Boolean handles(String domainType) {

@@ -250,7 +250,7 @@ class DataModelController extends ModelController<DataModel> implements DataMode
         DataModel dataModel = dataModelRepository.readById(id)
         // source i.e. rootDataModel
         accessControlService.canDoRole(Role.READER, dataModel)
-        DataModel otherDataModel = contentsService.loadDataModelWithContent(otherId)
+        DataModel otherDataModel = dataModelRepository.loadWithContent(otherId)
         // target i.e. request model
         accessControlService.canDoRole(Role.EDITOR, otherDataModel)
 
@@ -348,7 +348,7 @@ class DataModelController extends ModelController<DataModel> implements DataMode
             if (dataElement.owner.id != dataModel.id) throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Subset DataElements for Deletion must be within the source DataModel")
         }
 
-        otherDataModel = dataModelContentRepository.findWithContentById(otherId)
+        otherDataModel = dataModelRepository.loadWithContent(otherId)
 
         deletionDataElements?.each {DataElement dataElement ->
             log.debug "subset: processing data element deletion for id [$dataElement.id], label [$dataElement.label]"

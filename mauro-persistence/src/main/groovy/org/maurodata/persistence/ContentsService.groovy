@@ -8,15 +8,12 @@ import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.domain.model.Model
 import org.maurodata.domain.security.CatalogueUser
-import org.maurodata.persistence.datamodel.DataModelRepository
 
 @Slf4j
 @Singleton
 class ContentsService {
 
     @Inject ApplicationContext applicationContext
-
-    @Inject DataModelRepository dataModelRepository
 
     AdministeredItem saveWithContent(AdministeredItem item, CatalogueUser catalogueUser = null) {
         ContentHandler contentHandler = applicationContext.createBean(ContentHandler)
@@ -52,13 +49,6 @@ class ContentsService {
         return model
     }
 
-    DataModel loadDataModelWithContent(UUID id) {
-        ContentHandler contentHandler = applicationContext.createBean(ContentHandler)
-        DataModel dataModel = dataModelRepository.readById(id)
-        contentHandler.loadWithContent(dataModel)
-        dataModel.setAssociations()
-        return dataModel
-    }
 
 
 }

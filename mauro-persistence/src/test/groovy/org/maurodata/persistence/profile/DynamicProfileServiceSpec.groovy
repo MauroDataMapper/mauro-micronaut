@@ -2,6 +2,7 @@ package org.maurodata.persistence.profile
 
 import jakarta.inject.Inject
 import org.maurodata.persistence.ContentsService
+import org.maurodata.persistence.datamodel.DataModelRepository
 import spock.lang.Shared
 import spock.lang.Specification
 import org.maurodata.domain.datamodel.DataModel
@@ -29,6 +30,9 @@ class DynamicProfileServiceSpec extends Specification {
     @Inject
     MetadataRepository metadataRepository
 
+    @Inject
+    ModelCacheableRepository.DataModelCacheableRepository dataModelCacheableRepository
+
     def "Test getting all dynamic profiles"() {
         given:
 
@@ -43,7 +47,7 @@ class DynamicProfileServiceSpec extends Specification {
         UUID dataModelId = contentsService.saveWithContent(testDataModel, null).id
 
 
-        DataModel saved = contentsService.loadDataModelWithContent(dataModelId)
+        DataModel saved = dataModelCacheableRepository.loadWithContent(dataModelId)
 
 
         List<Profile> profiles = dynamicProfileService.getDynamicProfiles()

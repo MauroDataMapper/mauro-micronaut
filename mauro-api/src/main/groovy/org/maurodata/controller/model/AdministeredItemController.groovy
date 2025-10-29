@@ -19,6 +19,7 @@ import org.maurodata.api.model.AdministeredItemApi
 import org.maurodata.domain.classifier.Classifier
 import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.domain.security.Role
+import org.maurodata.persistence.ContentsService
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository
 import org.maurodata.persistence.model.AdministeredItemContentRepository
 import org.maurodata.persistence.model.AdministeredItemRepository
@@ -49,6 +50,9 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
 
     @Inject
     PathRepository pathRepository
+
+    @Inject
+    ContentsService contentsService
 
     @Inject
     AdministeredItemController(Class<I> itemClass, AdministeredItemRepository<I> administeredItemRepository, AdministeredItemRepository<P> parentItemRepository,

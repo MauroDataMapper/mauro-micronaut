@@ -76,7 +76,7 @@ class RuleRepositorySpec extends Specification {
 
     def TestRuleAndRepresentations() {
         when:
-        DataModel retrievedDataModel = contentsService.loadDataModelWithContent(dataModelId)
+        DataModel retrievedDataModel = dataModelRepository.loadWithContent(dataModelId)
 
         then:
         retrievedDataModel.rules.size() == 1
@@ -92,7 +92,7 @@ class RuleRepositorySpec extends Specification {
 
     def TestCacheInvalidation() {
         when:
-        DataModel retrievedDataModel = contentsService.loadDataModelWithContent(dataModelId)
+        DataModel retrievedDataModel = dataModelRepository.loadWithContent(dataModelId)
 
         then:
         retrievedDataModel.rules.size() == 1

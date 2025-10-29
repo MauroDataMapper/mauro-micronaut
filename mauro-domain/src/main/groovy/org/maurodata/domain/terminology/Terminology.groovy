@@ -82,8 +82,6 @@ class Terminology extends Model implements ItemReferencer {
             it.sourceTerm = termsMap[it.sourceTerm.id?:it.sourceTerm.code]
             it.targetTerm = termsMap[it.targetTerm.id?:it.targetTerm.code]
         }
-
-        this
     }
 
     @Override

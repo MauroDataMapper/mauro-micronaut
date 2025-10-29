@@ -151,7 +151,7 @@ class DataElementController extends AdministeredItemController<DataElement, Data
     @Post(Paths. DATA_ELEMENT_COPY)
     @Transactional
     DataElement copyDataElement(UUID dataModelId, UUID dataClassId, UUID otherModelId, UUID otherDataClassId, UUID dataElementId) {
-        DataModel targetModel = dataModelContentRepository.findWithContentById(dataModelId)
+        DataModel targetModel = dataModelRepository.loadWithContent(dataModelId)
         accessControlService.checkRole(Role.EDITOR, targetModel)
         DataClass targetClass = dataClassRepository.findById(dataClassId)
         accessControlService.checkRole(Role.EDITOR, targetClass)
@@ -166,7 +166,7 @@ class DataElementController extends AdministeredItemController<DataElement, Data
         if (dataElement.dataClass.id != otherDataClass.id) {
             ErrorHandler.handleError(HttpStatus.BAD_REQUEST, "DataElement with id $dataElementId is not associated with data Class: $otherDataClassId")
         }
-        DataModel otherModel = dataModelContentRepository.findWithContentById(otherModelId)
+        DataModel otherModel = dataModelRepository.loadWithContent(otherModelId)
         accessControlService.canDoRole(Role.READER, otherModel)
         //verify
         if (otherDataClass.dataModel.id != otherModel.id ) {

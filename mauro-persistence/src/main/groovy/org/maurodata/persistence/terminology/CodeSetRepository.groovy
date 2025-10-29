@@ -11,12 +11,17 @@ import org.maurodata.FieldConstants
 import org.maurodata.domain.terminology.CodeSet
 import org.maurodata.domain.terminology.Term
 import org.maurodata.domain.terminology.Terminology
+import org.maurodata.persistence.ContentsService
 import org.maurodata.persistence.model.ModelRepository
 import org.maurodata.persistence.terminology.dto.CodeSetDTORepository
 
 @CompileStatic
 @JdbcRepository(dialect = Dialect.POSTGRES)
 abstract class CodeSetRepository implements ModelRepository<CodeSet> {
+
+    CodeSetRepository(ContentsService contentsService) {
+        this.contentsService = contentsService
+    }
 
     @Inject
     CodeSetDTORepository codeSetDTORepository

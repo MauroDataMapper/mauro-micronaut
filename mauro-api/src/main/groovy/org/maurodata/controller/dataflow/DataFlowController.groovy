@@ -52,6 +52,7 @@ import org.maurodata.web.PaginationParams
 @Secured(SecurityRule.IS_AUTHENTICATED)
 class DataFlowController extends AdministeredItemController<DataFlow, DataModel> implements DataFlowApi {
 
+
     AdministeredItemCacheableRepository.DataFlowCacheableRepository dataFlowRepository
     ModelCacheableRepository.DataModelCacheableRepository dataModelRepository
     DataFlowContentRepository dataFlowContentRepository
@@ -162,7 +163,7 @@ class DataFlowController extends AdministeredItemController<DataFlow, DataModel>
         List<DataFlow> saved = modelItems.each {imp ->
             log.info '** about to saveWithContentBatched... dataFlow **'
 
-            dataFlowContentRepository.saveWithContent(imp as DataFlow)
+            contentsService.saveWithContent(imp as DataFlow)
             log.info '** finished saveWithContentBatched ** dataFlow'
         } as List<DataFlow>
 

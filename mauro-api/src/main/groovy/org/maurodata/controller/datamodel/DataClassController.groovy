@@ -193,7 +193,7 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
     @Post(Paths.DATA_CLASS_COPY)
     @Transactional
     DataClass copyDataClass(UUID dataModelId, UUID otherModelId, UUID dataClassId) {
-        DataModel dataModel = dataModelContentRepository.findWithContentById(dataModelId)
+        DataModel dataModel = dataModelRepository.loadWithContent(dataModelId)
         accessControlService.checkRole(Role.EDITOR, dataModel)
         DataClass dataClass = dataClassContentRepository.readWithContentById(dataClassId)
         accessControlService.canDoRole(Role.EDITOR, dataClass)

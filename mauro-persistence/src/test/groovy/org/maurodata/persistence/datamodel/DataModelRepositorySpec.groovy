@@ -125,7 +125,7 @@ class DataModelRepositorySpec extends Specification {
         when:
             DataModel importedModel = contentsService.saveWithContent(testDataModel(myFirstFolder))
 
-            importedModel = contentsService.loadDataModelWithContent(importedModel.id)
+            importedModel = dataModelRepository.loadWithContent(importedModel.id)
             dataModelId = importedModel.id
             List<DataElement> allDataElements = (List<DataElement>) importedModel.allDataClasses.dataElements.flatten()
             List<DataType> allDataTypes = importedModel.dataTypes
