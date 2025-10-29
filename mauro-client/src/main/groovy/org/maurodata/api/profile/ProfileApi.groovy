@@ -1,11 +1,13 @@
 package org.maurodata.api.profile
 
+import io.micronaut.core.annotation.NonNull
 import org.maurodata.api.MauroApi
 import org.maurodata.api.Paths
 import org.maurodata.domain.facet.Metadata
 import org.maurodata.plugin.MauroPluginDTO
 import org.maurodata.profile.DataModelBasedProfile
 import org.maurodata.profile.Profile
+import org.maurodata.profile.ProfilesProvidedDTO
 import org.maurodata.profile.applied.AppliedProfile
 import org.maurodata.web.ListResponse
 
@@ -51,4 +53,9 @@ interface ProfileApi {
     @Get(Paths.PROFILE_NAMESPACES)
     List<MetadataNamespaceDTO> getNamespaces(@Nullable String prefix)
 
+    @Post(Paths.PROFILE_GET_MANY)
+    ProfilesProvidedDTO getMany(@NonNull String domainType, @NonNull UUID domainId, @Body Map bodyMap)
+
+    @Post(Paths.PROFILE_VALIDATE_MANY)
+    ProfilesProvidedDTO validateMany(@NonNull String domainType, @NonNull UUID domainId, @Body ProfilesProvidedDTO profilesProvidedDTO)
 }

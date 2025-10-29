@@ -1,11 +1,13 @@
 package org.maurodata.profile
 
+
+import io.micronaut.http.client.exceptions.HttpClientResponseException
 import org.maurodata.api.profile.MetadataNamespaceDTO
+import org.maurodata.domain.datamodel.DataModel
+import org.maurodata.persistence.datamodel.DataModelContentRepository
 import org.maurodata.plugin.MauroPluginDTO
 import org.maurodata.profile.applied.AppliedProfile
 import org.maurodata.testing.CommonDataSpec
-
-import io.micronaut.runtime.EmbeddedApplication
 import jakarta.inject.Inject
 
 import org.maurodata.domain.folder.Folder
@@ -19,6 +21,10 @@ import spock.lang.Unroll
 @ContainerizedTest
 @Singleton
 class ProfileIntegrationSpec extends CommonDataSpec {
+    static final String PROFILE_PROVIDER_SERVICES = "profileProviderServices"
+    static final String PROFILE_NAME = "ProfileSpecificationFieldProfile"
+    static final String PROFILE_NAMESPACE = "org.maurodata.profile"
+    static final String PROFILE_VERSION = "1.0.0"
 
     @Shared
     UUID profileDataModelId
@@ -26,10 +32,27 @@ class ProfileIntegrationSpec extends CommonDataSpec {
     @Shared
     UUID appliedProfileDataModelId
 
+    @Shared
+    UUID profileDataElementId
+
+    @Shared
+    UUID otherModelId
+
+    @Shared
+    UUID otherModelItemId
+
+    @Inject
+    @Shared
+    DataModelContentRepository dataModelContentRepository
+
     void setupSpec() {
         Folder folderResponse = folderApi.create(new Folder(label: 'Test folder'))
         profileDataModelId = importDataModel(DataModelBasedProfileTest.testProfileModel, folderResponse)
         appliedProfileDataModelId = importDataModel(DataModelBasedProfileTest.testAppliedProfileModel, folderResponse)
+        DataModel profileDataModel = dataModelContentRepository.findWithContentById(profileDataModelId)
+        profileDataElementId = profileDataModel.dataElements.first().id
+        DataModel other = dataModelApi.create(folderResponse.id, dataModelPayload())
+        otherModelId = other.id
     }
 
     static Map expectedPropertyMap = [
@@ -81,12 +104,11 @@ class ProfileIntegrationSpec extends CommonDataSpec {
 
     void "get profile details"() {
         when:
-        String profileNamespace = "org.maurodata.profile"
         String profileName = DataModelBasedProfileTest.testProfileModelName
-        String profileVersion = "1.0.0"
+        String profileVersion = PROFILE_VERSION
         //Map profileDetails1 = GET("/dataModel/$appliedProfileDataModelId/profile/$profileNamespace/$profileName/$profileVersion")
         AppliedProfile profileDetails = profileApi.getProfiledItem(
-            "dataModel", appliedProfileDataModelId, profileNamespace, profileName, profileVersion)
+            "dataModel", appliedProfileDataModelId, PROFILE_NAMESPACE, profileName, profileVersion)
         then:
 
         !profileDetails.errors
@@ -101,11 +123,12 @@ class ProfileIntegrationSpec extends CommonDataSpec {
         }
     }
 
+
     void "test validate profile"() {
         when:
-        String profileNamespace = "org.maurodata.profile"
+        String profileNamespace = PROFILE_NAMESPACE
         String profileName = DataModelBasedProfileTest.testProfileModelName
-        String profileVersion = "1.0.0"
+        String profileVersion = PROFILE_VERSION
         Map requestBody =
             [sections: [
                 [name       : "Asset Creation",
@@ -182,6 +205,79 @@ class ProfileIntegrationSpec extends CommonDataSpec {
             it.metadataPropertyName == 'contactEmail' &&
             it.errors.size() == 1
         }
+    }
+
+    void "getMany profiles inside model "() {
+        String profileNamespace = PROFILE_NAMESPACE
+        String profileName = PROFILE_NAME
+        String profileVersion = PROFILE_VERSION
+        Map requestPayload = requestPayload(profileDataElementId, profileNamespace, profileName, profileVersion)
+
+        when:
+        ProfilesProvidedDTO response = profileApi.getMany("dataModels", profileDataModelId, requestPayload)
+
+        then:
+        response
+        response.count == 1
+        response.profilesProvided[0].profileProviderService["namespace"] == PROFILE_NAMESPACE
+        response.profilesProvided[0].profileProviderService["name"] == PROFILE_NAME
+        response.profilesProvided[0].profileProviderService["version"] == PROFILE_VERSION
+        response.profilesProvided[0].profile.sections['label'] == ["Profile Specification"]
+    }
+
+    void "getMany profiles inside model - no profile found -should return empty list"() {
+        String profileNamespace = null
+        String profileName = 'unknown'
+        String profileVersion = '1'
+        Map requestPayload = requestPayload(profileDataElementId, profileNamespace, profileName, profileVersion)
+
+        when:
+        ProfilesProvidedDTO response = profileApi.getMany("dataModels", profileDataModelId, requestPayload)
+
+        then:
+        response
+        response.count == 0
 
     }
+
+
+    @Unroll
+    void 'getMany multiFacetAware #modelItemId inside model #modelId - should throw exception'() {
+        given:
+        String profileNamespace = PROFILE_NAMESPACE
+        String profileName = PROFILE_NAME
+        String profileVersion = PROFILE_VERSION
+        Map requestPayload = requestPayload(modelItemId, profileNamespace, profileName, profileVersion)
+
+        when:
+        ProfilesProvidedDTO response = profileApi.getMany("dataModels", modelId, requestPayload)
+
+        then:
+        HttpClientResponseException exception = thrown()
+        //not checking exception type too closely. Different exception thrown from test httpclientlibrary vis a vis actual via POSTMAN
+
+        where:
+        modelItemId          | modelId
+        otherModelId         | profileDataModelId
+        profileDataElementId | otherModelId
+    }
+
+
+    protected Map requestPayload(UUID dataElementId, String namespace, String name, String version) {
+        Map requestPayload =
+            [multiFacetAwareItems: [
+                [multiFacetAwareItemDomainType: "dataElement",
+                 multiFacetAwareItemId        : dataElementId
+                ]
+            ]]
+
+        requestPayload[PROFILE_PROVIDER_SERVICES] =
+            [[name     : name,
+              namespace: namespace,
+              version  : version]
+            ]
+        return requestPayload
+    }
+
+
 }

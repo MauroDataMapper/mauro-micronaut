@@ -55,7 +55,7 @@ class AppliedProfileField extends ProfileField {
     AppliedProfileField(ProfileField profileField, AppliedProfileSection parentSection, Map fieldBody) {
         this.sourceProfileField = profileField
         this.parentSection = parentSection
-        this.currentValue = fieldBody.currentValue
+        this.currentValue = fieldBody?.currentValue
         this.fieldName = profileField.fieldName
         this.description = profileField.description
         this.metadataPropertyName = profileField.metadataPropertyName

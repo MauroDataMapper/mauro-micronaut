@@ -299,6 +299,8 @@ interface Paths {
     String PROFILE_ITEM = '/api/{domainType}/{domainId}/profile/{namespace}/{name}{/version}'
     String PROFILE_ITEM_VALIDATE = '/api/{domainType}/{domainId}/profile/{namespace}/{name}{/version}/validate'
     String PROFILE_NAMESPACES = '/api/metadata/namespaces{/prefix}'
+    String PROFILE_GET_MANY = '/api/{domainType}/{domainId}/profile/getMany'
+    String PROFILE_VALIDATE_MANY = '/api/{domainType}/{domainId}/profile/validateMany'
 
     /*
     * SearchApi

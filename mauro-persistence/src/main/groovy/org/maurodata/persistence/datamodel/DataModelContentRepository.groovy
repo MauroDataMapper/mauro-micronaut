@@ -97,7 +97,7 @@ class DataModelContentRepository extends ModelContentRepository<DataModel> {
 
     @Override
     Boolean handles(String domainType) {
-        return dataModelRepository.handles(domainType)
+       return dataModelRepository.handles(domainType)
     }
 
     @Override

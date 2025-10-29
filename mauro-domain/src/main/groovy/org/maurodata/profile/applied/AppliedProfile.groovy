@@ -36,6 +36,14 @@ class AppliedProfile extends MauroPluginDTO {
         return sourceProfile.profileApplicableForDomains
     }
 
+    String getVersion(){
+        return sourceProfile.getVersion()
+    }
+
+    String getNamespace(){
+        return sourceProfile.getNamespace()
+    }
+
     List<String> errors = []
 
     UUID getId() {
