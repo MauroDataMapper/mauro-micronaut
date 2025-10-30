@@ -1,6 +1,7 @@
 package org.maurodata.profile
 
-
+import com.fasterxml.jackson.annotation.JsonAlias
+import com.fasterxml.jackson.annotation.JsonCreator
 import com.fasterxml.jackson.annotation.JsonProperty
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.Introspected
@@ -10,11 +11,16 @@ import org.maurodata.profile.applied.AppliedProfile
 @CompileStatic
 class ProfileProvided {
     @JsonProperty('profile')
-    AppliedProfile appliedProfile
+    AppliedProfile profile
+
     ProfileProviderService profileProviderService
 
-    ProfileProvided(AppliedProfile appliedProfile) {
-        this.appliedProfile = appliedProfile
+    @JsonCreator
+    ProfileProvided() {
+    }
+
+    ProfileProvided(@JsonAlias('profile') AppliedProfile appliedProfile) {
+        this.profile = appliedProfile
         this.profileProviderService =  new ProfileProviderService(appliedProfile.getNamespace(), appliedProfile.getName(), appliedProfile.getVersion())
     }
 

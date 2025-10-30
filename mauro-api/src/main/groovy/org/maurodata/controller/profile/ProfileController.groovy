@@ -1,6 +1,9 @@
 package org.maurodata.controller.profile
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.core.type.TypeReference
+import com.fasterxml.jackson.databind.ObjectMapper
+import groovy.json.JsonSlurper
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
@@ -32,6 +35,7 @@ import org.maurodata.plugin.MauroPluginDTO
 import org.maurodata.profile.DataModelBasedProfile
 import org.maurodata.profile.Profile
 import org.maurodata.profile.ProfileProvided
+import org.maurodata.profile.ProfileProviderService
 import org.maurodata.profile.ProfileService
 import org.maurodata.profile.ProfilesProvidedDTO
 import org.maurodata.profile.applied.AppliedProfile
@@ -219,11 +223,10 @@ class ProfileController implements AdministeredItemReader, ProfileApi {
 
     @Audit
     @Post(Paths.PROFILE_VALIDATE_MANY)
-    ProfilesProvidedDTO validateMany(@NonNull String domainType, @NonNull UUID domainId, @Body Map bodyMap) {
-        //todo
-       // AdministeredItem model = getAndValidateModel(domainType, domainId)
-        //List<ProfileProvided> profilesProvided = validateManyPayload(model, bodyMap)
-        //ProfilesProvidedDTO.from(profilesProvided)
+    ProfilesProvidedDTO validateMany(@NonNull String domainType, @NonNull UUID domainId, @Body Map profileProvidedMap) {
+        AdministeredItem model = getAndValidateModel(domainType, domainId)
+        List<ProfileProvided> profilesProvided = validateManyPayload(model, profileProvidedMap)
+        ProfilesProvidedDTO.from(profilesProvided)
     }
 
     protected AdministeredItem getAndValidateModel(String domainType, UUID domainId) {
@@ -258,11 +261,34 @@ class ProfileController implements AdministeredItemReader, ProfileApi {
         profileProvidedList
     }
 
-    List<ProfileProvided> validateManyPayload(AdministeredItem administeredItem, Map bodyMap) {
-        //todo
-        []
+    //todo: check functionality/logic. not sure if correct
+    List<ProfileProvided> validateManyPayload(AdministeredItem model, Map profileProvidedPayload) {
+        List<ProfileProvided> response = []
+        Profile matchedProfile = findProfile(profileProvidedPayload)
+        profileProvidedPayload['profilesProvided']['profile'].each {
+            String itemDomainType = it['domainType']
+            String itemId = it['id']
+            AdministeredItem administeredItem = findAdministeredItem(itemDomainType, UUID.fromString(itemId))
+            ErrorHandler.handleError(HttpStatus.NOT_FOUND, "$itemId not found for domainType: $itemDomainType")
+            accessControlService.canDoRole(Role.EDITOR, administeredItem)
+            if (isValid(administeredItem, model)) {
+                ProfileProvided profileProvided = new ProfileProvided(new AppliedProfile(matchedProfile, administeredItem))
+                response.add(profileProvided)
+            }
+        }
+        response
     }
 
+    protected Profile findProfile( Map payload){
+        Profile matchedProfile = null
+        payload['profilesProvided']['profileProviderService'].each {
+            String namespace = it[NAMESPACE]
+            String name = it[NAME]
+            String version = it[VERSION]
+            matchedProfile = getProfileByName(namespace, name, version)
+        }
+        matchedProfile
+    }
     protected boolean isValid(AdministeredItem administeredItem, AdministeredItem modelOwner) {
         pathRepository.readParentItems(administeredItem)
         administeredItem.updatePath()

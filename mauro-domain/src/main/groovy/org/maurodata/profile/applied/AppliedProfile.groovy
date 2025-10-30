@@ -1,12 +1,12 @@
 package org.maurodata.profile.applied
 
+import com.fasterxml.jackson.annotation.JsonAlias
 import org.maurodata.domain.facet.Metadata
 import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.plugin.MauroPluginDTO
 import org.maurodata.profile.Profile
 
 import com.fasterxml.jackson.annotation.JsonIgnore
-
 class AppliedProfile extends MauroPluginDTO {
 
     @JsonIgnore

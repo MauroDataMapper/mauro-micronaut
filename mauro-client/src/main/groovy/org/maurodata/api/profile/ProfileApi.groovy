@@ -7,6 +7,7 @@ import org.maurodata.domain.facet.Metadata
 import org.maurodata.plugin.MauroPluginDTO
 import org.maurodata.profile.DataModelBasedProfile
 import org.maurodata.profile.Profile
+import org.maurodata.profile.ProfileProvided
 import org.maurodata.profile.ProfilesProvidedDTO
 import org.maurodata.profile.applied.AppliedProfile
 import org.maurodata.web.ListResponse
@@ -57,5 +58,5 @@ interface ProfileApi {
     ProfilesProvidedDTO getMany(@NonNull String domainType, @NonNull UUID domainId, @Body Map bodyMap)
 
     @Post(Paths.PROFILE_VALIDATE_MANY)
-    ProfilesProvidedDTO validateMany(@NonNull String domainType, @NonNull UUID domainId, @Body Map bodyMap)
+    ProfilesProvidedDTO validateMany(@NonNull String domainType, @NonNull UUID domainId, @Body Map profileProvidedMap)
 }
