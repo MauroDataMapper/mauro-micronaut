@@ -219,9 +219,11 @@ class ProfileController implements AdministeredItemReader, ProfileApi {
 
     @Audit
     @Post(Paths.PROFILE_VALIDATE_MANY)
-    ProfilesProvidedDTO validateMany(@NonNull String domainType, @NonNull UUID domainId, @Body ProfilesProvidedDTO profilesProvidedDTO) {
-    //todo
-        null
+    ProfilesProvidedDTO validateMany(@NonNull String domainType, @NonNull UUID domainId, @Body Map bodyMap) {
+        //todo
+       // AdministeredItem model = getAndValidateModel(domainType, domainId)
+        //List<ProfileProvided> profilesProvided = validateManyPayload(model, bodyMap)
+        //ProfilesProvidedDTO.from(profilesProvided)
     }
 
     protected AdministeredItem getAndValidateModel(String domainType, UUID domainId) {
@@ -254,7 +256,11 @@ class ProfileController implements AdministeredItemReader, ProfileApi {
             }
         }
         profileProvidedList
+    }
 
+    List<ProfileProvided> validateManyPayload(AdministeredItem administeredItem, Map bodyMap) {
+        //todo
+        []
     }
 
     protected boolean isValid(AdministeredItem administeredItem, AdministeredItem modelOwner) {

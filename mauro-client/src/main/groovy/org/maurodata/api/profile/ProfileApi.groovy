@@ -57,5 +57,5 @@ interface ProfileApi {
     ProfilesProvidedDTO getMany(@NonNull String domainType, @NonNull UUID domainId, @Body Map bodyMap)
 
     @Post(Paths.PROFILE_VALIDATE_MANY)
-    ProfilesProvidedDTO validateMany(@NonNull String domainType, @NonNull UUID domainId, @Body ProfilesProvidedDTO profilesProvidedDTO)
+    ProfilesProvidedDTO validateMany(@NonNull String domainType, @NonNull UUID domainId, @Body Map bodyMap)
 }
