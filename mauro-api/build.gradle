@@ -181,7 +181,9 @@ def detectLTS=false
 
 def dockerTag="eclipse-temurin:${latestLts('eclipse-temurin',temurinDefault,detectLTS)}-jre-${latestLts('ubuntu',ubuntuDefault,detectLTS)}"
 
-def dockerIncludeDatabase = !gradle.startParameter.taskNames.any { it.contains('dockerBuild') && it.contains("NoDatabase") }
+def dockerIncludeDatabase = !gradle.startParameter.taskNames.any { it.contains('dockerBuild') && (it.contains("NoDatabase") || it.contains("Backend")) }
+def dockerIncludeUI = !gradle.startParameter.taskNames.any { it.contains('dockerBuild') && it.contains("Backend") }
+def dockerBackendOnly = !dockerIncludeDatabase && !dockerIncludeUI
 
 tasks.register('printDockerTag') {
     doLast {
@@ -198,6 +200,16 @@ tasks.register('printItOut') {
 
 tasks.register('fetchMDMUI') {
     doLast {
+        if(!dockerIncludeUI) {
+
+            if(uiTargetDir.exists()) {
+                println "Removing UI files"
+                project.delete(uiTargetDir)
+            }
+
+            return
+        }
+
         println "Fetching UI list from $uiRepoApi"
         def jsonText = new URI(uiRepoApi).toURL().getText(requestProperties: ['Accept': 'application/json'])
         def parsed = new JsonSlurper().parseText(jsonText)
@@ -264,12 +276,17 @@ tasks.named('dockerBuild') {
 }
 
 tasks.register('stageDockerFiles', Copy) {
+    def dockerMainScripts=project.layout.buildDirectory.dir("docker/main/scripts").get().asFile
+    if(dockerMainScripts.exists()){
+        delete(dockerMainScripts)
+    }
+    mkdir(dockerMainScripts)
     if(!dockerIncludeDatabase) {
         from file('docker/noDB')
-        into project.layout.buildDirectory.dir("docker/main").get().asFile
+        into dockerMainScripts
     } else {
         from file('docker/all')
-        into project.layout.buildDirectory.dir("docker/main").get().asFile
+        into dockerMainScripts
     }
 }
 
@@ -309,8 +326,8 @@ RUN mkdir -p \${LOGS_DIRECTORY}
 RUN mkdir -p \${INIT_DIR}
 VOLUME ["\${INIT_DIR}"]
 
-COPY micronaut/* /usr/local/bin/
-COPY startup/* /usr/local/bin/
+COPY scripts/micronaut/* /usr/local/bin/
+COPY scripts/startup/* /usr/local/bin/
 RUN chmod +x /usr/local/bin/*
 
 ENTRYPOINT ["docker-startup.sh"]
@@ -355,9 +372,9 @@ VOLUME ["\${DATABASE_SNAPSHOTS_DIRECTORY}"]
 RUN mkdir -p \${INIT_DIR}
 VOLUME ["\${INIT_DIR}"]
 
-COPY postgres/* /usr/local/bin/
-COPY micronaut/* /usr/local/bin/
-COPY startup/* /usr/local/bin/
+COPY scripts/postgres/* /usr/local/bin/
+COPY scripts/micronaut/* /usr/local/bin/
+COPY scripts/startup/* /usr/local/bin/
 RUN chmod +x /usr/local/bin/*
 
 EXPOSE 5432
@@ -390,10 +407,15 @@ tasks.register('dockerBuildMultiArch') {
         println "🐳 Running docker build with multi-arch buildx command..."
 
         def imageName
-        if(!dockerIncludeDatabase) {
-            imageName = "maurodatamapper/mauro:nodb-${version}"
-        } else {
-            imageName = "maurodatamapper/mauro:${version}"
+        if(dockerBackendOnly) {
+            imageName = "maurodatamapper/mauro:backend-${version}"
+        }
+        else {
+            if (!dockerIncludeDatabase) {
+                imageName = "maurodatamapper/mauro:nodb-${version}"
+            } else {
+                imageName = "maurodatamapper/mauro:${version}"
+            }
         }
         def location = project.layout.buildDirectory.dir("docker/main").get().asFile.absolutePath
 
@@ -410,5 +432,9 @@ tasks.register('dockerBuildNoDatabase') {
 }
 
 tasks.register('dockerBuildMultiArchNoDatabase') {
+    dependsOn(tasks.named('dockerBuildMultiArch'))
+}
+
+tasks.register('dockerBuildBackend') {
     dependsOn(tasks.named('dockerBuildMultiArch'))
 }
