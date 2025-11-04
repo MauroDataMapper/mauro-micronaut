@@ -280,6 +280,8 @@ ENV MICRONAUT_ENVIRONMENTS='docker,datasources,javamail,mauro'
 ENV INIT_DIR=/opt/init
 ENV LOGS_DIRECTORY=/var/logs
 
+RUN cp -p "/etc/apt/sources.list.d/ubuntu.sources" "/etc/apt/sources.list.d/ubuntu-uk.sources" && sed -i -E "s|^URIs:.*|URIs: http://uk.ports.ubuntu.com/ubuntu-ports/|g" "/etc/apt/sources.list.d/ubuntu-uk.sources"
+RUN cp -p "/etc/apt/sources.list.d/ubuntu.sources" "/etc/apt/sources.list.d/ubuntu-ie.sources" && sed -i -E "s|^URIs:.*|URIs: http://ie.ports.ubuntu.com/ubuntu-ports/|g" "/etc/apt/sources.list.d/ubuntu-ie.sources"
 RUN apt-get update && apt-get dist-upgrade -y && apt-get install -y --no-install-recommends unzip iproute2 && apt-get clean && rm -rf /var/lib/apt/lists/*
 RUN mkdir -p \${LOGS_DIRECTORY}
 RUN mkdir -p \${INIT_DIR}
@@ -294,7 +296,7 @@ ENTRYPOINT ["docker-startup.sh"]
     } else {
 
         instruction """
-ENV MICRONAUT_ENVIRONMENTS=docker
+ENV MICRONAUT_ENVIRONMENTS='docker,datasources,javamail,mauro'
 ENV DATABASE_NAME=sandbox
 ENV DATABASE_USERNAME=sandbox
 ENV DATABASE_PASSWORD=sandbox
@@ -305,6 +307,8 @@ ENV LOGS_DIRECTORY=/var/logs
 ENV DATABASE_LOGS_DIRECTORY=\${LOGS_DIRECTORY}/postgres
 ENV DATABASE_SNAPSHOTS_DIRECTORY=/database
 
+RUN cp -p "/etc/apt/sources.list.d/ubuntu.sources" "/etc/apt/sources.list.d/ubuntu-uk.sources" && sed -i -E "s|^URIs:.*|URIs: http://uk.ports.ubuntu.com/ubuntu-ports/|g" "/etc/apt/sources.list.d/ubuntu-uk.sources"
+RUN cp -p "/etc/apt/sources.list.d/ubuntu.sources" "/etc/apt/sources.list.d/ubuntu-ie.sources" && sed -i -E "s|^URIs:.*|URIs: http://ie.ports.ubuntu.com/ubuntu-ports/|g" "/etc/apt/sources.list.d/ubuntu-ie.sources"
 RUN apt-get update && apt-get dist-upgrade -y && apt-get install -y --no-install-recommends postgresql postgresql-contrib unzip iproute2 && apt-get clean && rm -rf /var/lib/apt/lists/*
 RUN mkdir -p \${DATABASE_DIRECTORY} && chown -R postgres:postgres /var/lib/postgresql
 RUN mkdir -p \${LOGS_DIRECTORY} && mkdir -p \${DATABASE_LOGS_DIRECTORY} && chown -R postgres:postgres \${DATABASE_LOGS_DIRECTORY}
