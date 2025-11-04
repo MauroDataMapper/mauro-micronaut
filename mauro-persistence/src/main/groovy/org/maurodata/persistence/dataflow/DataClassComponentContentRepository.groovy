@@ -6,12 +6,16 @@ import jakarta.inject.Inject
 import jakarta.inject.Singleton
 import org.maurodata.domain.dataflow.DataClassComponent
 import org.maurodata.domain.model.AdministeredItem
+import org.maurodata.persistence.ContentsService
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository
 import org.maurodata.persistence.model.AdministeredItemContentRepository
 
 @CompileStatic
 @Singleton
 class DataClassComponentContentRepository extends AdministeredItemContentRepository {
+
+    @Inject
+    ContentsService contentsService
 
     @Inject
     AdministeredItemCacheableRepository.DataClassComponentCacheableRepository dataClassComponentRepository
@@ -60,7 +64,7 @@ class DataClassComponentContentRepository extends AdministeredItemContentReposit
             it.updateCreationProperties()
             it.dataClassComponent = saved
             it.parent = saved
-            dataElementComponentContentRepository.saveWithContent(it)
+            contentsService.saveWithContent(it)
         }
         saveAllFacets(saved)
         saved

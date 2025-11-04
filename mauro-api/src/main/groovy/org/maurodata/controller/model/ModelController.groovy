@@ -1687,8 +1687,8 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     }
 
     AdministeredItem getWithContents(AdministeredItem item) {
-        AdministeredItemContentRepository specificAdministeredItemContentRepository = getAdministeredItemContentRepository(item)
-        AdministeredItem itemWithContents = specificAdministeredItemContentRepository.readWithContentById(item.id)
+        AdministeredItemRepository specificAdministeredItemRepository = getAdministeredItemRepository(item.domainType)
+        AdministeredItem itemWithContents = specificAdministeredItemRepository.loadWithContent(item.id)
         return itemWithContents
     }
 
@@ -1705,11 +1705,11 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
                 accessControlService.checkRole(Role.EDITOR, item)
             }
 
-            AdministeredItemContentRepository specificAdministeredItemContentRepository = getAdministeredItemContentRepository(item)
+            AdministeredItemRepository specificAdministeredItemRepository = getAdministeredItemRepository(item.domainType)
 
-            AdministeredItem itemWithContents = specificAdministeredItemContentRepository.readWithContentById(item.id)
+            AdministeredItem itemWithContents = specificAdministeredItemRepository.loadWithContent(item.id)
 
-            if (!specificAdministeredItemContentRepository.deleteWithContent(itemWithContents)) {
+            if (!contentsService.deleteWithContent(itemWithContents)) {
                 throw new HttpStatusException(HttpStatus.NOT_FOUND, 'Not found for deletion: ' + item.label)
             }
         }

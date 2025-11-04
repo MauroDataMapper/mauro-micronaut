@@ -30,7 +30,7 @@ import org.maurodata.persistence.cache.ModelCacheableRepository
 import org.maurodata.persistence.cache.ModelCacheableRepository.DataModelCacheableRepository
 import org.maurodata.persistence.datamodel.DataClassContentRepository
 import org.maurodata.persistence.datamodel.DataModelContentRepository
-import org.maurodata.service.datamodel.DataClassService
+
 import org.maurodata.web.ListResponse
 import org.maurodata.web.PaginationParams
 
@@ -52,15 +52,12 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
 
     DataModelContentRepository dataModelContentRepository
     DataClassContentRepository dataClassContentRepository
-    DataClassService dataClassService
 
     @Inject
     DataClassController(AdministeredItemCacheableRepository.DataClassCacheableRepository dataClassRepository, DataModelCacheableRepository dataModelRepository,
                         DataModelContentRepository dataModelContentRepository,
-                        DataClassContentRepository dataClassContentRepository,
-                        DataClassService dataClassService) {
+                        DataClassContentRepository dataClassContentRepository) {
         super(DataClass, dataClassRepository, dataModelRepository, dataClassContentRepository)
-        this.dataClassService = dataClassService
         this.dataModelRepository = dataModelRepository
         this.dataClassRepository = dataClassRepository
         this.dataModelContentRepository = dataModelContentRepository
@@ -216,7 +213,6 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
         if (dataClass.dataModel.id != otherModel.id) {
             ErrorHandler.handleError(HttpStatus.NOT_FOUND, "Cannot find dataClass $dataClassId for dataModel $otherModelId")
         }
-        //DataClass copied = dataClass.clone()
         dataClass.parentDataClass = null //do not keep existing source structure if source is child
         dataClass.dataModel = dataModel
         dataClass.allChildDataClasses().each {
@@ -224,11 +220,6 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
         }
         copyDataTypes(dataClass, otherModel, dataModel)
         contentsService.saveWithContent(dataClass)
-        //DataClass savedCopy = createEntity(dataModel, copied)
-        //savedCopy = dataClassService.copyReferenceTypes( savedCopy, dataModel)
-        //savedCopy.dataClasses = dataClassService.copyChildren(savedCopy, savedCopy.dataClasses, dataModel)
-        //savedCopy.dataElements = dataClassService.copyDataElementsAndDataTypes(savedCopy.dataElements, dataModel)
-        //savedCopy
         dataClass
     }
 

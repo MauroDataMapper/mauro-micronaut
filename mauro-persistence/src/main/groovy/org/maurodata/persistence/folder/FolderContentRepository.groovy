@@ -131,7 +131,7 @@ class FolderContentRepository extends ModelContentRepository<Folder> {
 
         List<Model> models = super.findAllModelsForFolder(modelRepository, folder) as List<Model>
         models.collect{
-            Model retrieved = modelContentRepository.findWithContentById((it as Model).id)
+            Model retrieved = modelRepository.loadWithContent((it as Model).id)
             retrieved
         }
 
