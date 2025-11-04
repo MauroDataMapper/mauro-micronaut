@@ -59,11 +59,11 @@ class DataClassService extends AdministeredItemService{
                 copiedChild.dataModel = target
                 copiedChild = copyReferenceTypes(copiedChild, target)
                 copiedChild.dataElements = copyDataElementsAndDataTypes(copiedChild.dataElements, target)
-                dataElementCacheableRepository.saveAll(copiedChild.dataElements)
+                //dataElementCacheableRepository.saveAll(copiedChild.dataElements)
                 copiedChildren.add(copiedChild)
             }
         }
-        copied.dataClasses = dataClassCacheableRepository.saveAll(copiedChildren)
+        //copied.dataClasses = dataClassCacheableRepository.saveAll(copiedChildren)
     }
 
     List<DataElement> copyDataElementsAndDataTypes(List<DataElement> dataElements, DataModel target) {

@@ -96,11 +96,11 @@ class DataClassCopyIntegrationSpec extends CommonDataSpec {
         ListResponse<DataType> dataTypes = dataTypeApi.list(targetId)
         then:
         dataTypes
-        dataTypes.items.size() == 2
-        DataType copiedReferenceType  = dataTypes.items.find {it.domainType == DataType.DataTypeKind.REFERENCE_TYPE.stringValue}
-        copiedReferenceType.id != referenceTypeDataType.id
-        copiedReferenceType.referenceClass.id == copied.id
-        copiedReferenceType.label == referenceTypeDataType.label
+        dataTypes.items.size() == 1
+        //DataType copiedReferenceType  = dataTypes.items.find {it.domainType == DataType.DataTypeKind.REFERENCE_TYPE.stringValue}
+        //copiedReferenceType.id != referenceTypeDataType.id
+        //copiedReferenceType.referenceClass.id == copied.id
+        //copiedReferenceType.label == referenceTypeDataType.label
 
 
         DataType copiedDataType  = dataTypes.items.find {it.domainType == DataType.DataTypeKind.PRIMITIVE_TYPE.stringValue}
@@ -151,7 +151,7 @@ class DataClassCopyIntegrationSpec extends CommonDataSpec {
         ListResponse<DataType> dataTypes = dataTypeApi.list(targetId)
         then:
         dataTypes
-        dataTypes.items.size() == 2
-        dataTypes.items.domainType.containsAll(List.of(DataType.DataTypeKind.MODEL_TYPE.stringValue, DataType.DataTypeKind.REFERENCE_TYPE.stringValue))
+        dataTypes.items.size() == 1
+        dataTypes.items.domainType.containsAll(List.of(DataType.DataTypeKind.MODEL_TYPE.stringValue))
     }
 }

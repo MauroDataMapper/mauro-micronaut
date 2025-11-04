@@ -317,7 +317,8 @@ class DataClass extends ModelItem<DataModel> implements DiffableItem<DataClass>,
     @Transient
     @Nullable
     List<DataElement> allChildDataElements() {
-        List ret = this.dataElements
+        List<DataElement> ret = []
+        ret.addAll(this.dataElements)
         ret.addAll((List<DataElement>) dataClasses.collect {it.allChildDataElements()}.flatten())
         return ret
     }

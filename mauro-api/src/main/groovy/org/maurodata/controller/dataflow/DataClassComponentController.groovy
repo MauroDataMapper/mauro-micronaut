@@ -119,7 +119,7 @@ class DataClassComponentController extends AdministeredItemController<DataClassC
         DataClass dataClassToAdd = dataClassRepository.readById(dataClassId)
         ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, dataClassToAdd, "item not found : $id")
         accessControlService.checkRole(Role.EDITOR, dataClassToAdd)
-        DataClassComponent dataClassComponent = dataClassComponentContentRepository.readWithContentById(id)
+        DataClassComponent dataClassComponent = dataClassComponentRepository.loadWithContent(id)
         ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, dataClassComponent, "item not found : $id")
         accessControlService.checkRole(Role.EDITOR, dataClassComponent)
 
@@ -148,7 +148,7 @@ class DataClassComponentController extends AdministeredItemController<DataClassC
         DataClass dataClassToRemove = dataClassRepository.readById(dataClassId)
         ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, dataClassToRemove, "Item with id: $dataClassId not found")
         accessControlService.checkRole(Role.EDITOR, dataClassToRemove)
-        DataClassComponent dataClassComponent = dataClassComponentContentRepository.readWithContentById(id)
+        DataClassComponent dataClassComponent = dataClassComponentRepository.loadWithContent(id)
         ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, dataClassToRemove, "Item with id: $id not found")
         accessControlService.checkRole(Role.EDITOR, dataClassComponent)
 

@@ -29,7 +29,7 @@ trait AdministeredItemRepository<I extends AdministeredItem> implements ItemRepo
 
     I loadWithContent(UUID id) {
         I model = readById(id)
-        (I) contentsService.loadWithContent (model)
+        (I) contentsService.loadWithContent(model)
         model
     }
 

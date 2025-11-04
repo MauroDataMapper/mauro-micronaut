@@ -208,21 +208,28 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
     DataClass copyDataClass(UUID dataModelId, UUID otherModelId, UUID dataClassId) {
         DataModel dataModel = dataModelRepository.loadWithContent(dataModelId)
         accessControlService.checkRole(Role.EDITOR, dataModel)
-        DataClass dataClass = dataClassContentRepository.readWithContentById(dataClassId)
+        DataClass dataClass = dataClassRepository.loadWithContent(dataClassId)
         accessControlService.canDoRole(Role.EDITOR, dataClass)
-        DataModel otherModel = dataModelRepository.readById(otherModelId)
+        DataModel otherModel = dataModelRepository.loadWithContent(otherModelId)
         accessControlService.canDoRole(Role.READER, otherModel)
         //verify
         if (dataClass.dataModel.id != otherModel.id) {
             ErrorHandler.handleError(HttpStatus.NOT_FOUND, "Cannot find dataClass $dataClassId for dataModel $otherModelId")
         }
-        DataClass copied = dataClass.clone()
-        copied.parentDataClass = null //do not keep existing source structure if source is child
-        DataClass savedCopy = createEntity(dataModel, copied)
-        savedCopy = dataClassService.copyReferenceTypes( savedCopy, dataModel)
-        savedCopy.dataClasses = dataClassService.copyChildren(savedCopy, savedCopy.dataClasses, dataModel)
-        savedCopy.dataElements = dataClassService.copyDataElementsAndDataTypes(savedCopy.dataElements, dataModel)
-        savedCopy
+        //DataClass copied = dataClass.clone()
+        dataClass.parentDataClass = null //do not keep existing source structure if source is child
+        dataClass.dataModel = dataModel
+        dataClass.allChildDataClasses().each {
+            it.dataModel = dataModel
+        }
+        copyDataTypes(dataClass, otherModel, dataModel)
+        contentsService.saveWithContent(dataClass)
+        //DataClass savedCopy = createEntity(dataModel, copied)
+        //savedCopy = dataClassService.copyReferenceTypes( savedCopy, dataModel)
+        //savedCopy.dataClasses = dataClassService.copyChildren(savedCopy, savedCopy.dataClasses, dataModel)
+        //savedCopy.dataElements = dataClassService.copyDataElementsAndDataTypes(savedCopy.dataElements, dataModel)
+        //savedCopy
+        dataClass
     }
 
     @Get(Paths.DATA_CLASS_DOI)
@@ -237,9 +244,37 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
         List<DataElement> referencedDataElements = dataElementRepository.readAllByDataTypeIn(dataTypes)
         if (!allDataElements.id.containsAll(referencedDataElements.id)){
             // All datatypes are referenced by things that will be deleted
-            // Uses containsAll() to test using equals() rather than contains() which uses object identity
             ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "DataClass(es) referenced as ReferencedDataType in data elements")
         }
         dataTypeRepository.deleteAll(dataTypes)
     }
+
+    protected void copyDataTypes(DataClass dataClass, DataModel oldDataModel, DataModel newDataModel) {
+        Set<DataType> newDataTypes = []
+        dataClass.allChildDataElements().each {dataElement ->
+            dataElement.dataModel = newDataModel
+            DataType originalDataType = dataTypeRepository.readById(dataElement.dataType.id)
+            DataType alreadyCopied = newDataTypes.find {it.label == originalDataType.label }
+            if(alreadyCopied) {
+                dataElement.dataType = alreadyCopied
+            } else {
+                DataType alreadyGot = newDataModel.dataTypes.find {it.label == originalDataType.label}
+                if (alreadyGot) {
+                    dataElement.dataType = alreadyGot
+                } else {
+                    DataType needToCopy = oldDataModel.dataTypes.find {it.label == originalDataType.label}
+                    if(needToCopy) {
+                        needToCopy.id = null
+                        needToCopy.dataModel = newDataModel
+                        dataElement.dataType = needToCopy
+                        newDataTypes.add(needToCopy)
+                    } else {
+                        ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "DataClass includes an element with an invalid datatype")
+                    }
+                }
+            }
+        }
+        newDataTypes.each {contentsService.saveWithContent(it)}
+    }
+
 }

@@ -125,7 +125,7 @@ class DataFlowController extends AdministeredItemController<DataFlow, DataModel>
     @Get(Paths.DATA_FLOW_EXPORT)
     HttpResponse<byte[]> exportModel(@NonNull UUID dataModelId, @NonNull UUID id, @Nullable String namespace, @Nullable String name, @Nullable String version) {
         ModelItemExporterPlugin mauroPlugin = dataFlowService.getModelItemExporterPlugin(namespace, name, version)
-        DataFlow existing = dataFlowContentRepository.readWithContentById(id)
+        DataFlow existing = dataFlowRepository.loadWithContent(id)
         ErrorHandler.handleErrorOnNullObject(HttpStatus.BAD_REQUEST, existing,"dataFlow Id ${id} not found")
         accessControlService.checkRole(Role.READER, existing)
         DataModel parent = dataModelRepository.findById(dataModelId)

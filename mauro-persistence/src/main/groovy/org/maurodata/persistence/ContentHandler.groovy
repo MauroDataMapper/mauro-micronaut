@@ -740,12 +740,20 @@ class ContentHandler {
 
         if(dataFlows) {
             dataClassComponents = dataClassComponentCacheableRepository.readAllByDataFlowIdIn(dataFlows.id)
-            allItems.putAll(dataClassComponents.collectEntries {[it.id, it]})
+        }
+        allItems.putAll(dataClassComponents.collectEntries {[it.id, it]})
+        dataClassComponents.each {dataClassComponent ->
+            dataClassComponent.sourceDataClasses = dataClassComponentCacheableRepository.findAllSourceDataClasses(dataClassComponent.id)
+            dataClassComponent.targetDataClasses = dataClassComponentCacheableRepository.findAllTargetDataClasses(dataClassComponent.id)
         }
 
         if(dataClassComponents) {
             dataElementComponents = dataElementComponentCacheableRepository.readAllByDataClassComponentIdIn(dataClassComponents.id)
-            allItems.putAll(dataElementComponents.collectEntries {[it.id, it]})
+        }
+        allItems.putAll(dataElementComponents.collectEntries {[it.id, it]})
+        dataElementComponents.each {dataElementComponent ->
+            dataElementComponent.sourceDataElements = dataElementComponentCacheableRepository.getSourceDataElements(dataElementComponent.id)
+            dataElementComponent.targetDataElements = dataElementComponentCacheableRepository.getTargetDataElements(dataElementComponent.id)
         }
 
         // annotations
