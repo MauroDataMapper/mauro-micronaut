@@ -15,11 +15,11 @@ import io.micronaut.core.annotation.Introspected
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Relation
+import io.micronaut.data.annotation.Transient
 import jakarta.persistence.Inheritance
 import jakarta.persistence.InheritanceType
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.JoinTable
-import jakarta.persistence.Transient
 import org.maurodata.domain.diff.BaseCollectionDiff
 import org.maurodata.domain.diff.CollectionDiff
 import org.maurodata.domain.diff.DiffBuilder
@@ -303,4 +303,23 @@ class DataClass extends ModelItem<DataModel> implements DiffableItem<DataClass>,
         this.copyInto(dataClassShallowCopy)
         return dataClassShallowCopy
     }
+
+    @JsonIgnore
+    @Transient
+    @Nullable
+    List<DataClass> allChildDataClasses() {
+        List ret = [this]
+        ret.addAll((List<DataClass>) dataClasses.collect {it.allChildDataClasses()}.flatten())
+        return ret
+    }
+
+    @JsonIgnore
+    @Transient
+    @Nullable
+    List<DataElement> allChildDataElements() {
+        List ret = this.dataElements
+        ret.addAll((List<DataElement>) dataClasses.collect {it.allChildDataElements()}.flatten())
+        return ret
+    }
+
 }

@@ -21,7 +21,9 @@ import org.maurodata.api.datamodel.DataClassApi
 import org.maurodata.audit.Audit
 import org.maurodata.controller.model.AdministeredItemController
 import org.maurodata.domain.datamodel.DataClass
+import org.maurodata.domain.datamodel.DataElement
 import org.maurodata.domain.datamodel.DataModel
+import org.maurodata.domain.datamodel.DataType
 import org.maurodata.domain.security.Role
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository
 import org.maurodata.persistence.cache.ModelCacheableRepository
@@ -37,7 +39,14 @@ import org.maurodata.web.PaginationParams
 @Secured(SecurityRule.IS_ANONYMOUS)
 class DataClassController extends AdministeredItemController<DataClass, DataModel> implements DataClassApi {
 
+    @Inject
     AdministeredItemCacheableRepository.DataClassCacheableRepository dataClassRepository
+
+    @Inject
+    AdministeredItemCacheableRepository.DataTypeCacheableRepository dataTypeRepository
+
+    @Inject
+    AdministeredItemCacheableRepository.DataElementCacheableRepository dataElementRepository
 
     ModelCacheableRepository.DataModelCacheableRepository dataModelRepository
 
@@ -85,9 +94,9 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
     @Transactional
     @Delete(Paths.DATA_CLASS_ID)
     HttpResponse delete(UUID dataModelId, UUID id, @Body @Nullable DataClass dataClass) {
-        DataClass dataClassToDelete = dataClassRepository.readById(id)
+        DataClass dataClassToDelete = dataClassRepository.loadWithContent(id)
         ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, dataClassToDelete, "DataClass $id not found")
-
+        deleteDanglingReferenceTypes(dataClassToDelete.allChildDataClasses(), dataClassToDelete.allChildDataElements())
         HttpResponse deletedResponse = super.delete(id, dataClass)
         deletedResponse
     }
@@ -151,7 +160,11 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
     )
     @Delete(Paths.DATA_CLASS_CHILD_DATA_CLASS_ID)
     HttpResponse delete(UUID dataModelId, UUID parentDataClassId, UUID id, @Body @Nullable DataClass dataClass) {
-        super.delete(id, dataClass)
+        DataClass dataClassToDelete = dataClassRepository.loadWithContent(id)
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, dataClassToDelete, "DataClass $id not found")
+        deleteDanglingReferenceTypes(dataClassToDelete.allChildDataClasses(), dataClassToDelete.allChildDataElements())
+        HttpResponse deletedResponse = super.delete(id, dataClass)
+        deletedResponse
     }
 
     @Audit
@@ -217,5 +230,16 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
     Map doi(UUID id) {
         ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "Doi is not implemented")
         return null
+    }
+
+    protected void deleteDanglingReferenceTypes(List<DataClass> deletedDataClassLookup, List<DataElement> allDataElements) {
+        List<DataType> dataTypes = dataTypeRepository.findByReferenceClassIn(deletedDataClassLookup).unique() as List<DataType>
+        List<DataElement> referencedDataElements = dataElementRepository.readAllByDataTypeIn(dataTypes)
+        if (!allDataElements.id.containsAll(referencedDataElements.id)){
+            // All datatypes are referenced by things that will be deleted
+            // Uses containsAll() to test using equals() rather than contains() which uses object identity
+            ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "DataClass(es) referenced as ReferencedDataType in data elements")
+        }
+        dataTypeRepository.deleteAll(dataTypes)
     }
 }

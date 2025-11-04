@@ -436,8 +436,19 @@ class ContentHandler {
             annotationRepository.deleteAll(annotations[depth])
         }
 
+        // TODO: Do this in batch
+        dataElementComponents.each {dataElementComponent ->
+            dataElementComponentCacheableRepository.removeSourceDataElements(dataElementComponent.id)
+            dataElementComponentCacheableRepository.removeTargetDataElements(dataElementComponent.id)
+        }
         dataElementComponentCacheableRepository.deleteAll (dataElementComponents)
+
+        dataClassComponents.each {dataClassComponent ->
+            dataClassComponentCacheableRepository.removeSourceDataClasses(dataClassComponent.id)
+            dataClassComponentCacheableRepository.removeTargetDataClasses(dataClassComponent.id)
+        }
         dataClassComponentCacheableRepository.deleteAll (dataClassComponents)
+
         dataFlowCacheableRepository.deleteAll (dataFlows)
 
         enumerationValueCacheableRepository.deleteAll (enumerationValues)
@@ -625,53 +636,53 @@ class ContentHandler {
     }
 
     void loadContent() {
-        if(folders[0]) {
+        if (folders[0]) {
             int depth = 1
             Set<UUID> foundFolders = folders[0].id
             do {
                 List<Folder> retrievedFolders = folderCacheableRepository.readAllByFolderIdIn(foundFolders)
                 foundFolders = retrievedFolders.id as Set
-                if(foundFolders) {
+                if (foundFolders) {
                     folders[depth] = retrievedFolders as Set
                 }
                 depth++
             } while (foundFolders.size() > 0)
         }
-        allItems.putAll(folders.values().flatten().collectEntries { [it.id, it]})
-        if(folders.values().flatten()) {
+        allItems.putAll(folders.values().flatten().collectEntries {[it.id, it]})
+        if (folders.values().flatten()) {
             classificationSchemes = classificationSchemeCacheableRepository.readAllByFolderIdIn(folders.values().flatten().id as Set<UUID>)
         }
-        allItems.putAll(classificationSchemes.collectEntries{[it.id, it]})
-        if(classificationSchemes) {
+        allItems.putAll(classificationSchemes.collectEntries {[it.id, it]})
+        if (classificationSchemes) {
             classifiers = classifierCacheableRepository.readAllByClassificationSchemeIdIn(classificationSchemes.id)
         }
-        allItems.putAll(classifiers.collectEntries{[it.id, it]})
+        allItems.putAll(classifiers.collectEntries {[it.id, it]})
 
-        if(folders.values().flatten()) {
+        if (folders.values().flatten()) {
             terminologies = terminologyCacheableRepository.readAllByFolderIdIn(folders.values().flatten().id as Set<UUID>)
         }
-        allItems.putAll(terminologies.collectEntries{[it.id, it]})
+        allItems.putAll(terminologies.collectEntries {[it.id, it]})
 
-        if(terminologies) {
+        if (terminologies) {
             terms = termCacheableRepository.readAllByTerminologyIdIn(terminologies.id)
-            allItems.putAll(terms.collectEntries{[it.id, it]})
+            allItems.putAll(terms.collectEntries {[it.id, it]})
 
             termRelationshipTypes = termRelationshipTypeCacheableRepository.readAllByTerminologyIdIn(terminologies.id)
-            allItems.putAll(termRelationshipTypes.collectEntries{[it.id, it]})
+            allItems.putAll(termRelationshipTypes.collectEntries {[it.id, it]})
 
             termRelationships = termRelationshipCacheableRepository.readAllByTerminologyIdIn(terminologies.id)
-            allItems.putAll(termRelationships.collectEntries{[it.id, it]})
+            allItems.putAll(termRelationships.collectEntries {[it.id, it]})
         }
 
-        if(folders.values().flatten()) {
+        if (folders.values().flatten()) {
             codeSets = codeSetCacheableRepository.readAllByFolderIdIn(folders.values().flatten().id as Set<UUID>)
         }
         allItems.putAll(codeSets.collectEntries {[it.id, it]})
 
-        if(codeSets) {
-            Map<UUID, CodeSet> codeSetMap = codeSets.collectEntries { [it.id, it]}
-            Map<UUID, Term> termMap = terms.collectEntries { [it.id, it]}
-            if(terms) {
+        if (codeSets) {
+            Map<UUID, CodeSet> codeSetMap = codeSets.collectEntries {[it.id, it]}
+            Map<UUID, Term> termMap = terms.collectEntries {[it.id, it]}
+            if (terms) {
                 codeSetCacheableRepository.getCodeSetTerms(codeSets.id).each {codeSetTermDTO ->
                     codeSetMap[codeSetTermDTO.codeSetId].terms.add(termMap[codeSetTermDTO.termId])
 
@@ -683,13 +694,14 @@ class ContentHandler {
             }
         }
 
-        if(folders.values().flatten()) {
+        if (folders.values().flatten()) {
             dataModels = dataModelCacheableRepository.readAllByFolderIdIn(folders.values().flatten().id as Set<UUID>)
         }
         allItems.putAll(dataModels.collectEntries {[it.id, it]})
-        if(dataModels) {
+        if (dataModels) {
             dataClasses[0] = dataClassCacheableRepository.readAllByDataModelIdInAndParentDataClassIsNull(dataModels.id) as Set
-
+        }
+        if (dataClasses[0]){
             int depth = 1
             Set<UUID> foundClasses = dataClasses[0].id as Set
             while (foundClasses.size() > 0) {
@@ -702,13 +714,14 @@ class ContentHandler {
             }
             allItems.putAll(dataClasses.values().flatten().collectEntries {[it.id, it]})
 
-            Map<UUID, DataClass> dataClassMap = dataClasses.values().flatten().collectEntries{[it.id, it]}
+            Map<UUID, DataClass> dataClassMap = dataClasses.values().flatten().collectEntries {[it.id, it]}
 
             List<DataClassExtensionDTO> extensions = dataClassCacheableRepository.getDataClassExtensionRelationships(dataClasses.values().flatten().id)
             extensions.each {
                 dataClassMap[it.dataClassId].extendsDataClasses.add(dataClassMap[it.extendedDataClassId])
             }
-
+        }
+        if(dataModels) {
             dataTypes = dataTypeCacheableRepository.readAllByDataModelIdIn(dataModels.id)
             allItems.putAll(dataTypes.collectEntries {[it.id, it]})
         }
@@ -788,13 +801,19 @@ class ContentHandler {
             }
         }
         terms.each {term ->
-            ((Terminology) allItems[term.terminology.id]).terms.add(term)
+            if(allItems[term.terminology.id]) {
+                ((Terminology) allItems[term.terminology.id]).terms.add(term)
+            }
         }
         termRelationshipTypes.each {termRelationshipType ->
-            ((Terminology) allItems[termRelationshipType.terminology.id]).termRelationshipTypes.add(termRelationshipType)
+            if(allItems[termRelationshipType.terminology.id]) {
+                ((Terminology) allItems[termRelationshipType.terminology.id]).termRelationshipTypes.add(termRelationshipType)
+            }
         }
         termRelationships.each {termRelationship ->
-            ((Terminology) allItems[termRelationship.terminology.id]).termRelationships.add(termRelationship)
+            if(allItems[termRelationship.terminology.id]) {
+                ((Terminology) allItems[termRelationship.terminology.id]).termRelationships.add(termRelationship)
+            }
         }
         codeSets.each {codeSet ->
             if(allItems[codeSet.folder.id]) {
@@ -846,11 +865,15 @@ class ContentHandler {
         }
 
         edits.each {edit ->
-            allItems[edit.multiFacetAwareItemId].edits.add(edit)
+            if(allItems[edit.multiFacetAwareItemId]) {
+                allItems[edit.multiFacetAwareItemId].edits.add(edit)
+            }
         }
 
         annotations[0].each {annotation ->
-            allItems[annotation.multiFacetAwareItemId].annotations.add(annotation)
+            if(allItems[annotation.multiFacetAwareItemId]) {
+                allItems[annotation.multiFacetAwareItemId].annotations.add(annotation)
+            }
         }
         annotations.keySet().sort().each {depth ->
             if(depth > 0) {
