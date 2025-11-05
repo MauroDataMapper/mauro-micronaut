@@ -43,7 +43,7 @@ import org.maurodata.domain.terminology.TerminologyService
 import org.maurodata.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
 import org.maurodata.persistence.cache.ModelCacheableRepository.TerminologyCacheableRepository
 import org.maurodata.persistence.search.SearchRepository
-import org.maurodata.persistence.terminology.TerminologyContentRepository
+
 import org.maurodata.plugin.exporter.TerminologyExporterPlugin
 import org.maurodata.plugin.importer.TerminologyImporterPlugin
 import org.maurodata.web.ListResponse
@@ -56,8 +56,6 @@ import org.maurodata.web.PaginationParams
 class TerminologyController extends ModelController<Terminology> implements TerminologyApi {
 
     TerminologyCacheableRepository terminologyRepository
-    @Inject
-    TerminologyContentRepository terminologyContentRepository
 
     @Inject
     SearchRepository searchRepository
@@ -66,11 +64,9 @@ class TerminologyController extends ModelController<Terminology> implements Term
     TerminologyService terminologyService
 
     TerminologyController(TerminologyCacheableRepository terminologyRepository, FolderCacheableRepository folderRepository,
-                          TerminologyContentRepository terminologyContentRepository,
                           TerminologyService terminologyService) {
-        super(Terminology, terminologyRepository, folderRepository, terminologyContentRepository, terminologyService)
+        super(Terminology, terminologyRepository, folderRepository, terminologyService)
         this.terminologyRepository = terminologyRepository
-        this.terminologyContentRepository = terminologyContentRepository
         this.terminologyService = terminologyService
     }
 

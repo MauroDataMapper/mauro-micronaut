@@ -7,7 +7,7 @@ import org.maurodata.persistence.ContainerizedTest
 import org.maurodata.persistence.ContentsService
 import org.maurodata.persistence.cache.FacetCacheableRepository
 import org.maurodata.persistence.cache.ModelCacheableRepository
-import org.maurodata.persistence.datamodel.DataModelContentRepository
+
 import org.maurodata.persistence.datamodel.DataModelRepository
 
 import jakarta.inject.Inject

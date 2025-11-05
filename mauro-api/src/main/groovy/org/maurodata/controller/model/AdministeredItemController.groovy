@@ -21,7 +21,7 @@ import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.domain.security.Role
 import org.maurodata.persistence.ContentsService
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository
-import org.maurodata.persistence.model.AdministeredItemContentRepository
+
 import org.maurodata.persistence.model.AdministeredItemRepository
 import org.maurodata.persistence.model.PathRepository
 import org.maurodata.persistence.service.RepositoryService
@@ -46,8 +46,6 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
 
     AdministeredItemRepository<P> parentItemRepository
 
-    AdministeredItemContentRepository administeredItemContentRepository
-
     @Inject
     PathRepository pathRepository
 
@@ -55,14 +53,11 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
     ContentsService contentsService
 
     @Inject
-    AdministeredItemController(Class<I> itemClass, AdministeredItemRepository<I> administeredItemRepository, AdministeredItemRepository<P> parentItemRepository,
-                               AdministeredItemContentRepository administeredItemContentRepository) {
+    AdministeredItemController(Class<I> itemClass, AdministeredItemRepository<I> administeredItemRepository, AdministeredItemRepository<P> parentItemRepository) {
         super(administeredItemRepository)
         this.itemClass = itemClass
         this.administeredItemRepository = administeredItemRepository
         this.parentItemRepository = parentItemRepository
-        this.administeredItemContentRepository = administeredItemContentRepository
-        this.administeredItemContentRepository.administeredItemRepository = administeredItemRepository
     }
 
 

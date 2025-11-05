@@ -4,7 +4,6 @@ import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpResponse
-import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Delete
@@ -14,7 +13,6 @@ import io.micronaut.http.annotation.Put
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
 import jakarta.inject.Inject
-import org.maurodata.ErrorHandler
 import org.maurodata.api.Paths
 import org.maurodata.api.datamodel.EnumerationValueApi
 import org.maurodata.audit.Audit
@@ -25,7 +23,7 @@ import org.maurodata.domain.security.Role
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository.DataTypeCacheableRepository
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository.EnumerationValueCacheableRepository
 import org.maurodata.persistence.cache.ModelCacheableRepository.DataModelCacheableRepository
-import org.maurodata.persistence.datamodel.DataModelContentRepository
+
 import org.maurodata.web.ListResponse
 import org.maurodata.web.PaginationParams
 
@@ -42,8 +40,8 @@ class EnumerationValueController extends AdministeredItemController<EnumerationV
 
     EnumerationValueCacheableRepository enumerationValueRepository
 
-    EnumerationValueController(EnumerationValueCacheableRepository enumerationValueRepository, DataTypeCacheableRepository dataTypeRepository, DataModelContentRepository dataModelContentRepository) {
-        super(EnumerationValue, enumerationValueRepository, dataTypeRepository, dataModelContentRepository)
+    EnumerationValueController(EnumerationValueCacheableRepository enumerationValueRepository, DataTypeCacheableRepository dataTypeRepository) {
+        super(EnumerationValue, enumerationValueRepository, dataTypeRepository)
         this.enumerationValueRepository = enumerationValueRepository
     }
 

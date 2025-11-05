@@ -34,7 +34,6 @@ import org.maurodata.api.model.PermissionsDTO
 import org.maurodata.api.model.VersionLinkDTO
 import org.maurodata.api.model.VersionLinkTargetDTO
 import org.maurodata.controller.facet.EditController
-import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.diff.ArrayDiff
 import org.maurodata.domain.diff.CollectionDiff
 import org.maurodata.domain.diff.FieldDiff
@@ -57,17 +56,15 @@ import org.maurodata.domain.model.version.ModelVersion
 import org.maurodata.domain.security.CatalogueUser
 import org.maurodata.domain.security.Role
 import org.maurodata.domain.security.UserGroup
-import org.maurodata.domain.terminology.CodeSet
-import org.maurodata.domain.terminology.Terminology
 import org.maurodata.persistence.ContentsService
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository
 import org.maurodata.persistence.cache.FacetCacheableRepository
 import org.maurodata.persistence.cache.ModelCacheableRepository
 import org.maurodata.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
 import org.maurodata.persistence.facet.VersionLinkRepository
-import org.maurodata.persistence.model.AdministeredItemContentRepository
+
 import org.maurodata.persistence.model.AdministeredItemRepository
-import org.maurodata.persistence.model.ModelContentRepository
+
 import org.maurodata.plugin.MauroPluginService
 import org.maurodata.plugin.exporter.ModelExporterPlugin
 import org.maurodata.plugin.importer.FolderImporterPlugin
@@ -112,8 +109,6 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     @Inject
     MauroPluginService mauroPluginService
 
-    ModelContentRepository<M> modelContentRepository
-
     @Inject
     ContentsService contentsService
 
@@ -130,25 +125,20 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     @Inject
     EditController editController
 
-    @Inject
-    List<AdministeredItemContentRepository> administeredItemContentRepositories
 
     @Inject
     ImporterUtils importerUtils
 
-    ModelController(Class<M> modelClass, AdministeredItemCacheableRepository<M> modelRepository, FolderCacheableRepository folderRepository,
-                    ModelContentRepository<M> modelContentRepository) {
-        super(modelClass, modelRepository, folderRepository, modelContentRepository)
+    ModelController(Class<M> modelClass, AdministeredItemCacheableRepository<M> modelRepository, FolderCacheableRepository folderRepository) {
+        super(modelClass, modelRepository, folderRepository)
         this.itemClass = modelClass
         this.administeredItemRepository = modelRepository
         this.parentItemRepository = folderRepository
-        this.modelContentRepository = modelContentRepository
-        this.administeredItemContentRepository = modelContentRepository
     }
 
     ModelController(Class<M> modelClass, AdministeredItemCacheableRepository<M> modelRepository, FolderCacheableRepository folderRepository,
-                    ModelContentRepository<M> modelContentRepository, ModelService modelService) {
-        this(modelClass, modelRepository, folderRepository, modelContentRepository)
+                    ModelService modelService) {
+        this(modelClass, modelRepository, folderRepository)
         this.modelService = modelService
     }
 
@@ -192,7 +182,6 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
 
     @Transactional
     HttpResponse delete(UUID id, @Body @Nullable M model, @Nullable Boolean permanent) {
-        //modelContentRepository.findWithContentById(id)
         M modelToDelete = modelRepository.readById(id)
 
 
@@ -208,9 +197,6 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         if (permanent) {
             contentsService.deleteWithContent(modelToDelete)
 
-//            if (!administeredItemContentRepository.deleteWithContent(modelToDelete)) {
-//                throw new HttpStatusException(HttpStatus.NOT_FOUND, 'Not found for deletion')
-//            }
         } else {
             modelToDelete.deleted(true)
             administeredItemRepository.update(modelToDelete)
@@ -1578,9 +1564,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
 
                 if (replacedItem instanceof AdministeredItem) {
                     AdministeredItem replacedItemAdministeredItem = (AdministeredItem) replacedItem
-                    AdministeredItemCacheableRepository administeredItemCacheableRepository =
-                        administeredItemContentRepository.getRepository(replacedItemAdministeredItem)
-                    administeredItemCacheableRepository.update(replacedItemAdministeredItem)
+                    getAdministeredItemRepository(replacedItem.domainType).update(replacedItemAdministeredItem)
                 }
             }
         }
@@ -1718,22 +1702,6 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
                 throw (HttpException) th
             }
             throw new InternalServerException("Deletion failed", th)
-        }
-    }
-
-    @NonNull
-    AdministeredItemContentRepository getAdministeredItemContentRepository(AdministeredItem item) {
-        administeredItemContentRepositories.find {
-            it.getClass().simpleName != 'AdministeredItemContentRepository' &&
-            it.getClass().simpleName != 'ModelContentRepository' &&
-            it.handles(item.class)
-        } ?:
-        administeredItemContentRepositories.find {
-            it.getClass().simpleName != 'ModelContentRepository' &&
-            it.handles(item.class)
-        } ?:
-        administeredItemContentRepositories.find {
-            it.getClass().simpleName == 'AdministeredItemContentRepository'
         }
     }
 

@@ -7,6 +7,7 @@ import io.micronaut.http.multipart.CompletedFileUpload
 import io.micronaut.http.multipart.CompletedPart
 import io.micronaut.http.server.multipart.MultipartBody
 import jakarta.inject.Inject
+import jakarta.inject.Singleton
 import org.maurodata.plugin.importer.FileParameter
 import org.maurodata.plugin.importer.ImportParameters
 import reactor.core.publisher.Flux
@@ -15,6 +16,7 @@ import java.nio.charset.StandardCharsets
 
 @Slf4j
 @CompileStatic
+@Singleton
 class ImporterUtils {
     @Inject
     ObjectMapper objectMapper

@@ -2,15 +2,12 @@ package org.maurodata.persistence.profile
 
 import jakarta.inject.Inject
 import org.maurodata.persistence.ContentsService
-import org.maurodata.persistence.datamodel.DataModelRepository
-import spock.lang.Shared
 import spock.lang.Specification
 import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.folder.Folder
-import org.maurodata.persistence.Containerized
 import org.maurodata.persistence.ContainerizedTest
 import org.maurodata.persistence.cache.ModelCacheableRepository
-import org.maurodata.persistence.datamodel.DataModelContentRepository
+
 import org.maurodata.persistence.facet.MetadataRepository
 import org.maurodata.profile.Profile
 import org.maurodata.profile.test.DataModelBasedProfileTest

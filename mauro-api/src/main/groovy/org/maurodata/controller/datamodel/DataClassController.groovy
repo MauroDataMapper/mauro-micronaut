@@ -28,8 +28,6 @@ import org.maurodata.domain.security.Role
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository
 import org.maurodata.persistence.cache.ModelCacheableRepository
 import org.maurodata.persistence.cache.ModelCacheableRepository.DataModelCacheableRepository
-import org.maurodata.persistence.datamodel.DataClassContentRepository
-import org.maurodata.persistence.datamodel.DataModelContentRepository
 
 import org.maurodata.web.ListResponse
 import org.maurodata.web.PaginationParams
@@ -50,18 +48,11 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
 
     ModelCacheableRepository.DataModelCacheableRepository dataModelRepository
 
-    DataModelContentRepository dataModelContentRepository
-    DataClassContentRepository dataClassContentRepository
-
     @Inject
-    DataClassController(AdministeredItemCacheableRepository.DataClassCacheableRepository dataClassRepository, DataModelCacheableRepository dataModelRepository,
-                        DataModelContentRepository dataModelContentRepository,
-                        DataClassContentRepository dataClassContentRepository) {
-        super(DataClass, dataClassRepository, dataModelRepository, dataClassContentRepository)
+    DataClassController(AdministeredItemCacheableRepository.DataClassCacheableRepository dataClassRepository, DataModelCacheableRepository dataModelRepository) {
+        super(DataClass, dataClassRepository, dataModelRepository)
         this.dataModelRepository = dataModelRepository
         this.dataClassRepository = dataClassRepository
-        this.dataModelContentRepository = dataModelContentRepository
-        this.dataClassContentRepository = dataClassContentRepository
     }
 
     @Audit

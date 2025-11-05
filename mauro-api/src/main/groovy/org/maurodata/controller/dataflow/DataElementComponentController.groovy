@@ -25,7 +25,7 @@ import org.maurodata.domain.dataflow.Type
 import org.maurodata.domain.datamodel.DataElement
 import org.maurodata.domain.security.Role
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository
-import org.maurodata.persistence.dataflow.DataElementComponentContentRepository
+
 import org.maurodata.web.ListResponse
 import org.maurodata.web.PaginationParams
 
@@ -40,20 +40,14 @@ class DataElementComponentController extends AdministeredItemController<DataElem
 
     AdministeredItemCacheableRepository.DataElementCacheableRepository dataElementRepository
 
-    DataElementComponentContentRepository dataElementComponentContentRepository
-
-
     @Inject
     DataElementComponentController(AdministeredItemCacheableRepository.DataElementComponentCacheableRepository dataElementComponentRepository,
                                    AdministeredItemCacheableRepository.DataClassComponentCacheableRepository dataClassComponentRepository,
-                                   DataElementComponentContentRepository dataElementComponentContentRepository, AdministeredItemCacheableRepository.
-                                       DataElementCacheableRepository dataElementRepository) {
-        super(DataElementComponent, dataElementComponentRepository, dataClassComponentRepository, dataElementComponentContentRepository)
+                                   AdministeredItemCacheableRepository.DataElementCacheableRepository dataElementRepository) {
+        super(DataElementComponent, dataElementComponentRepository, dataClassComponentRepository)
         this.dataElementComponentRepository = dataElementComponentRepository
         this.dataClassComponentRepository = dataClassComponentRepository
         this.dataElementRepository = dataElementRepository
-        this.dataElementComponentContentRepository = dataElementComponentContentRepository
-
     }
 
 

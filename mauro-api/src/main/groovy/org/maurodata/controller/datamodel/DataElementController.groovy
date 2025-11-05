@@ -6,7 +6,6 @@ import org.maurodata.api.Paths
 import org.maurodata.api.datamodel.DataElementApi
 import org.maurodata.audit.Audit
 import org.maurodata.controller.model.AdministeredItemController
-import org.maurodata.controller.model.AvailableActions
 import org.maurodata.domain.datamodel.DataClass
 import org.maurodata.domain.datamodel.DataElement
 import org.maurodata.domain.datamodel.DataModel
@@ -16,8 +15,7 @@ import org.maurodata.persistence.cache.AdministeredItemCacheableRepository.DataC
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository.DataElementCacheableRepository
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository.DataTypeCacheableRepository
 import org.maurodata.persistence.cache.ModelCacheableRepository.DataModelCacheableRepository
-import org.maurodata.persistence.datamodel.DataElementContentRepository
-import org.maurodata.persistence.datamodel.DataModelContentRepository
+
 import org.maurodata.service.datamodel.DataTypeService
 import org.maurodata.web.ListResponse
 import org.maurodata.web.PaginationParams
@@ -53,24 +51,17 @@ class DataElementController extends AdministeredItemController<DataElement, Data
 
     DataTypeCacheableRepository dataTypeRepository
 
-    DataElementContentRepository dataElementContentRepository
-
-    DataModelContentRepository dataModelContentRepository
-
     DataTypeService dataTypeService
 
     @Inject
     DataElementController(DataElementCacheableRepository dataElementRepository, DataClassCacheableRepository dataClassRepository,
-                          DataElementContentRepository dataElementContentRepository, DataModelCacheableRepository dataModelRepository,
-                          DataTypeCacheableRepository dataTypeCacheableRepository, DataModelContentRepository dataModelContentRepository,
-                         DataTypeService dataTypeService) {
-        super(DataElement, dataElementRepository, dataClassRepository, dataElementContentRepository)
+                          DataModelCacheableRepository dataModelRepository, DataTypeCacheableRepository dataTypeCacheableRepository,
+                          DataTypeService dataTypeService) {
+        super(DataElement, dataElementRepository, dataClassRepository)
         this.dataElementRepository = dataElementRepository
         this.dataModelRepository = dataModelRepository
         this.dataClassRepository = dataClassRepository
         this.dataTypeRepository = dataTypeCacheableRepository
-        this.dataElementContentRepository = dataElementContentRepository
-        this.dataModelContentRepository = dataModelContentRepository
         this.dataTypeService = dataTypeService
     }
 

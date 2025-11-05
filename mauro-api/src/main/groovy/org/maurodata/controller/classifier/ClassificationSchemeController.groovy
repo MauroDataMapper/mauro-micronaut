@@ -1,6 +1,6 @@
 package org.maurodata.controller.classifier
 
-import jakarta.inject.Inject
+
 import org.maurodata.ErrorHandler
 import org.maurodata.api.Paths
 import org.maurodata.api.classifier.ClassificationSchemeApi
@@ -14,7 +14,7 @@ import org.maurodata.domain.model.version.CreateNewVersionData
 import org.maurodata.domain.security.Role
 import org.maurodata.persistence.cache.ModelCacheableRepository
 import org.maurodata.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
-import org.maurodata.persistence.classifier.ClassificationSchemeContentRepository
+
 import org.maurodata.web.ListResponse
 
 import groovy.transform.CompileStatic
@@ -46,15 +46,9 @@ import org.maurodata.web.PaginationParams
 @Secured(SecurityRule.IS_ANONYMOUS)
 class ClassificationSchemeController extends ModelController<ClassificationScheme> implements ClassificationSchemeApi {
 
-
-
-    ClassificationSchemeContentRepository classificationSchemeContentRepository
-
-
     ClassificationSchemeController(ModelCacheableRepository.ClassificationSchemeCacheableRepository classificationSchemeCacheableRepository,
-                                   FolderCacheableRepository folderRepository, ClassificationSchemeContentRepository classificationSchemeContentRepository) {
-        super(ClassificationScheme, classificationSchemeCacheableRepository, folderRepository, classificationSchemeContentRepository)
-        this.classificationSchemeContentRepository = classificationSchemeContentRepository
+                                   FolderCacheableRepository folderRepository) {
+        super(ClassificationScheme, classificationSchemeCacheableRepository, folderRepository)
     }
 
     @Audit

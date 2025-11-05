@@ -23,10 +23,6 @@ class DataModelRepositorySpec extends Specification {
     ContentsService contentsService
 
     @Inject
-    @Shared
-    DataClassContentRepository dataClassContentRepository
-
-    @Inject
     ModelCacheableRepository.DataModelCacheableRepository dataModelCacheableRepository
 
     @Inject

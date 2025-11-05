@@ -20,7 +20,6 @@ import io.micronaut.scheduling.TaskExecutors
 import io.micronaut.scheduling.annotation.ExecuteOn
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
-import jakarta.inject.Inject
 import jakarta.transaction.Transactional
 import jakarta.validation.constraints.NotNull
 import org.maurodata.ErrorHandler
@@ -36,7 +35,7 @@ import org.maurodata.domain.model.ModelItem
 import org.maurodata.domain.security.Role
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository
 import org.maurodata.persistence.cache.ModelCacheableRepository
-import org.maurodata.persistence.dataflow.DataFlowContentRepository
+
 import org.maurodata.plugin.exporter.DataFlowExporterPlugin
 import org.maurodata.plugin.exporter.ModelItemExporterPlugin
 import org.maurodata.plugin.importer.DataFlowImporterPlugin
@@ -55,17 +54,15 @@ class DataFlowController extends AdministeredItemController<DataFlow, DataModel>
 
     AdministeredItemCacheableRepository.DataFlowCacheableRepository dataFlowRepository
     ModelCacheableRepository.DataModelCacheableRepository dataModelRepository
-    DataFlowContentRepository dataFlowContentRepository
     DataflowService dataFlowService
 
 
     DataFlowController(AdministeredItemCacheableRepository.DataFlowCacheableRepository dataFlowRepository,
                        ModelCacheableRepository.DataModelCacheableRepository dataModelRepository,
-                       DataFlowContentRepository dataFlowContentRepository, DataflowService dataFlowService) {
-        super(DataFlow, dataFlowRepository, dataModelRepository, dataFlowContentRepository)
+                       DataflowService dataFlowService) {
+        super(DataFlow, dataFlowRepository, dataModelRepository)
         this.dataFlowRepository = dataFlowRepository
         this.dataModelRepository = dataModelRepository
-        this.dataFlowContentRepository = dataFlowContentRepository
         this.dataFlowService = dataFlowService
     }
 

@@ -31,7 +31,7 @@ import org.maurodata.domain.model.Model
 import org.maurodata.domain.security.Role
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository.DataTypeCacheableRepository
 import org.maurodata.persistence.cache.ModelCacheableRepository.DataModelCacheableRepository
-import org.maurodata.persistence.datamodel.DataTypeContentRepository
+
 import org.maurodata.persistence.datamodel.EnumerationValueRepository
 import org.maurodata.service.datamodel.DataTypeService
 import org.maurodata.web.ListResponse
@@ -60,9 +60,8 @@ class DataTypeController extends AdministeredItemController<DataType, DataModel>
     AdministeredItemCacheableRepository.DataClassCacheableRepository dataClassRepository
 
     DataTypeController(DataTypeService dataTypeService, DataTypeCacheableRepository dataTypeRepository, DataModelCacheableRepository dataModelRepository,
-                       DataTypeContentRepository dataTypeContentRepository,
                        AdministeredItemCacheableRepository.DataClassCacheableRepository dataClassRepository) {
-        super(DataType, dataTypeRepository, dataModelRepository, dataTypeContentRepository)
+        super(DataType, dataTypeRepository, dataModelRepository)
         this.dataTypeService = dataTypeService
         this.dataTypeRepository = dataTypeRepository
         this.dataClassRepository = dataClassRepository

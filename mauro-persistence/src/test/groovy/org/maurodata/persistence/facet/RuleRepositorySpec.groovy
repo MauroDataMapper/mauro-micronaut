@@ -1,7 +1,6 @@
 package org.maurodata.persistence.facet
 
 import org.maurodata.domain.datamodel.DataModel
-import org.maurodata.domain.facet.Rule
 import org.maurodata.domain.facet.RuleRepresentation
 import org.maurodata.domain.folder.Folder
 import org.maurodata.persistence.ContainerizedTest
@@ -9,7 +8,7 @@ import org.maurodata.persistence.ContentsService
 import org.maurodata.persistence.cache.FacetCacheableRepository
 import org.maurodata.persistence.cache.ItemCacheableRepository
 import org.maurodata.persistence.cache.ModelCacheableRepository
-import org.maurodata.persistence.datamodel.DataModelContentRepository
+
 import org.maurodata.persistence.datamodel.DataModelRepository
 
 import jakarta.inject.Inject

@@ -50,7 +50,6 @@ import org.maurodata.domain.facet.EditType
 import org.maurodata.domain.facet.VersionLink
 import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.domain.model.Model
-import org.maurodata.domain.model.ModelItem
 import org.maurodata.domain.model.version.CreateNewVersionData
 import org.maurodata.domain.model.version.FinaliseData
 import org.maurodata.domain.search.dto.SearchRequestDTO
@@ -62,8 +61,7 @@ import org.maurodata.persistence.cache.AdministeredItemCacheableRepository.DataT
 import org.maurodata.persistence.cache.ModelCacheableRepository.DataModelCacheableRepository
 import org.maurodata.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
 import org.maurodata.persistence.datamodel.DataElementRepository
-import org.maurodata.persistence.datamodel.DataModelContentRepository
-import org.maurodata.persistence.datamodel.DataTypeContentRepository
+
 import org.maurodata.persistence.search.SearchRepository
 import org.maurodata.plugin.datatype.DefaultDataTypeProviderPlugin
 import org.maurodata.plugin.exporter.DataModelExporterPlugin
@@ -76,9 +74,8 @@ import org.maurodata.web.ListResponse
 @CompileStatic
 @Secured(SecurityRule.IS_ANONYMOUS)
 class DataModelController extends ModelController<DataModel> implements DataModelApi {
-    DataModelCacheableRepository dataModelRepository
 
-    DataModelContentRepository dataModelContentRepository
+    DataModelCacheableRepository dataModelRepository
 
     @Inject
     SearchRepository searchRepository
@@ -96,16 +93,12 @@ class DataModelController extends ModelController<DataModel> implements DataMode
     DataTypeCacheableRepository dataTypeCacheableRepository
 
     @Inject
-    DataTypeContentRepository dataTypeContentRepository
-
-    @Inject
     DataElementRepository dataElementRepository
 
-    DataModelController(DataModelCacheableRepository dataModelRepository, FolderCacheableRepository folderRepository, DataModelContentRepository dataModelContentRepository,
+    DataModelController(DataModelCacheableRepository dataModelRepository, FolderCacheableRepository folderRepository,
                         DataModelService dataModelService) {
-        super(DataModel, dataModelRepository, folderRepository, dataModelContentRepository, dataModelService)
+        super(DataModel, dataModelRepository, folderRepository, dataModelService)
         this.dataModelRepository = dataModelRepository
-        this.dataModelContentRepository = dataModelContentRepository
         this.dataModelService = dataModelService
     }
 
@@ -317,7 +310,10 @@ class DataModelController extends ModelController<DataModel> implements DataMode
         }
 
         // copy missing DataTypes into additionSubset
-        List<DataType> dataTypes = dataTypeContentRepository.findAllWithContentByParent(dataModel)
+        List<DataType> dataTypes = []
+            dataTypeCacheableRepository.findAllByParent(dataModel).each {
+                dataTypes.add(contentsService.loadWithContent(it) as DataType)
+        }
         Set<String> additionDataTypeLabels = (additionSubset.dataElements.dataType.label - otherDataModel.dataTypes.label) as Set
         dataTypes.findAll {additionDataTypeLabels.contains(it.label)}.each {DataType dataType ->
             dataType.dataModel = additionSubset

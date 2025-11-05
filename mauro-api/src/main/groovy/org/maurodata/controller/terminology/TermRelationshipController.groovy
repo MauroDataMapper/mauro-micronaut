@@ -27,7 +27,7 @@ import org.maurodata.persistence.cache.AdministeredItemCacheableRepository.TermC
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository.TermRelationshipCacheableRepository
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository.TermRelationshipTypeCacheableRepository
 import org.maurodata.persistence.cache.ModelCacheableRepository.TerminologyCacheableRepository
-import org.maurodata.persistence.model.AdministeredItemContentRepository
+
 import org.maurodata.web.ListResponse
 import org.maurodata.web.PaginationParams
 
@@ -46,9 +46,8 @@ class TermRelationshipController extends AdministeredItemController<TermRelation
     @Inject
     TermRelationshipTypeCacheableRepository termRelationshipTypeRepository
 
-    TermRelationshipController(TermRelationshipCacheableRepository termRelationshipRepository, TerminologyCacheableRepository terminologyRepository,
-                               AdministeredItemContentRepository administeredItemContentRepository) {
-        super(TermRelationship, termRelationshipRepository, terminologyRepository, administeredItemContentRepository)
+    TermRelationshipController(TermRelationshipCacheableRepository termRelationshipRepository, TerminologyCacheableRepository terminologyRepository) {
+        super(TermRelationship, termRelationshipRepository, terminologyRepository)
         this.termRelationshipRepository = termRelationshipRepository
         this.terminologyRepository = terminologyRepository
     }

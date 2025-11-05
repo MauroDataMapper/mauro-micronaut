@@ -723,18 +723,19 @@ class ContentHandler {
         }
         if(dataModels) {
             dataTypes = dataTypeCacheableRepository.readAllByDataModelIdIn(dataModels.id)
-            allItems.putAll(dataTypes.collectEntries {[it.id, it]})
         }
+        allItems.putAll(dataTypes.collectEntries {[it.id, it]})
 
         if(dataTypes) {
             enumerationValues = enumerationValueCacheableRepository.readAllByEnumerationTypeIdIn(dataTypes.id)
-            allItems.putAll(enumerationValues.collectEntries {[it.id, it]})
         }
+        allItems.putAll(enumerationValues.collectEntries {[it.id, it]})
 
         if(dataClasses.values().flatten()) {
             dataElements = dataElementCacheableRepository.readAllByDataClassIdIn(dataClasses.values().flatten().id)
-            allItems.putAll(dataElements.collectEntries{[it.id, it]})
         }
+        allItems.putAll(dataElements.collectEntries{[it.id, it]})
+
 
         allItems.putAll(dataFlows.collectEntries {[it.id, it]})
 

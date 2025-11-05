@@ -1,21 +1,16 @@
 package org.maurodata.persistence
 
-import io.micronaut.context.ApplicationContext
-import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
 import org.maurodata.domain.datamodel.DataElement
 import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.datamodel.DataType
-import org.maurodata.domain.facet.Metadata
 import org.maurodata.domain.terminology.CodeSet
 import org.maurodata.domain.terminology.Term
 import org.maurodata.domain.terminology.Terminology
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository
 import org.maurodata.persistence.datamodel.DataClassRepository
-import org.maurodata.persistence.datamodel.DataModelContentRepository
-import org.maurodata.persistence.folder.FolderContentRepository
+
 import org.maurodata.persistence.folder.dto.FolderDTORepository
-import org.maurodata.persistence.terminology.CodeSetContentRepository
 import spock.lang.Specification
 
 import org.maurodata.domain.datamodel.DataClass
@@ -26,7 +21,6 @@ import java.time.Duration
 import java.time.Instant
 
 @ContainerizedTest
-//@MicronautTest
 class ContentHandlerSpec extends Specification{
 
     @Inject
@@ -34,9 +28,6 @@ class ContentHandlerSpec extends Specification{
 
     @Inject
     FolderDTORepository folderDTORepository
-
-    @Inject
-    FolderContentRepository folderContentRepository
 
     @Inject
     ModelCacheableRepository.DataModelCacheableRepository dataModelCacheableRepository
@@ -53,7 +44,8 @@ class ContentHandlerSpec extends Specification{
     @Inject
     AdministeredItemCacheableRepository.DataClassCacheableRepository dataClassCacheableRepository
 
-    @Inject DataClassRepository dataClassRepository
+    @Inject
+    DataClassRepository dataClassRepository
 
     @Inject
     AdministeredItemCacheableRepository.DataElementCacheableRepository dataElementCacheableRepository
@@ -160,61 +152,6 @@ class ContentHandlerSpec extends Specification{
 
 
     }
-
-    void "test saving a folder and its content - old"() {
-
-        when:
-
-        Folder folder = getBigFolder()
-
-        Instant start = Instant.now()
-        contentsService.saveWithContent(folder)
-        Duration timeTaken = Duration.between(start, Instant.now())
-        printTimeTaken(start)
-
-        then:
-        folder.id
-
-        when:
-        List<Folder> folders1 = folderCacheableRepository.readAll()
-        then:
-        folders1.size() == 4
-
-        when:
-        List<Terminology> terminologies1 = terminologyCacheableRepository.readAll()
-        then:
-        terminologies1.size() == 2
-
-        when:
-        List<Term> terms1 = termCacheableRepository.readAllByParent(terminologies1.first())
-        then:
-        terms1.size() == 10
-
-        when:
-        List<CodeSet> codeSets = codeSetCacheableRepository.readAll()
-        then:
-        codeSets.size() == 1
-
-        when:
-        CodeSet codeSet = codeSetCacheableRepository.loadWithContent(codeSets.first().id)
-        then:
-        codeSet.terms.size() == 5
-
-        when:
-        List<DataModel> dataModels = dataModelCacheableRepository.readAll()
-        then:
-        dataModels.size() == 1
-
-        when:
-        List<DataClass> dataClasses = dataClassCacheableRepository.readAllByDataModelAndParentDataClassIsNull(dataModels.first())
-        then:
-        // Top level data classes
-        dataClasses.size() == 4
-
-
-
-    }
-
 
     Folder getBigFolder() {
         List<Term> linkedTerms = []

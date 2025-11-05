@@ -25,7 +25,7 @@ import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.domain.security.Role
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository
 import org.maurodata.persistence.cache.ModelCacheableRepository
-import org.maurodata.persistence.classifier.ClassifierContentRepository
+
 import org.maurodata.web.ListResponse
 
 @Slf4j
@@ -40,9 +40,8 @@ class ClassifierController extends AdministeredItemController<Classifier, Classi
 
 
     ClassifierController(AdministeredItemCacheableRepository.ClassifierCacheableRepository classifierCacheableRepository,
-                         ModelCacheableRepository.ClassificationSchemeCacheableRepository classificationSchemeCacheableRepository,
-                         ClassifierContentRepository classifierContentRepository) {
-        super(Classifier, classifierCacheableRepository, classificationSchemeCacheableRepository, classifierContentRepository)
+                         ModelCacheableRepository.ClassificationSchemeCacheableRepository classificationSchemeCacheableRepository) {
+        super(Classifier, classifierCacheableRepository, classificationSchemeCacheableRepository)
         this.classifierCacheableRepository = classifierCacheableRepository
         this.classificationSchemeCacheableRepository = classificationSchemeCacheableRepository
     }
