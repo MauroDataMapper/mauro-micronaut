@@ -88,7 +88,6 @@ class DataModel extends Model implements ItemReferencer {
     @JsonIgnore
     @Override
     DataModel clone() {
-        this.setAssociations()
         DataModel cloned = (DataModel) super.clone()
         Map<UUID, DataClass> clonedDataClassLookup = [:]
         Map<UUID, DataClass> clonedChildDataClassLookup = [:]
@@ -153,7 +152,6 @@ class DataModel extends Model implements ItemReferencer {
             }
         } as Set<EnumerationValue>
 
-        cloned.setAssociations()
         cloned.allDataClasses = cloned.allDataClasses.toSorted {it.parentDataClass} as Set<DataClass>
         cloned
     }
