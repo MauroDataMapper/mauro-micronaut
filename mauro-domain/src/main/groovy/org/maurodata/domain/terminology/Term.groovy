@@ -51,7 +51,6 @@ class Term extends ModelItem<Terminology> implements ItemReferencer {
     Terminology terminology
 
     @NotBlank
-    @Pattern(regexp = /[^\$@|]*/, message = 'Cannot contain $, | or @')
     String code
 
     @NotBlank

@@ -43,11 +43,8 @@ abstract class AdministeredItem extends Item implements Pathable {
     /**
      * The label of an object.  Labels are used as identifiers within a context and so need to be unique within
      * that context. Labels of models must be unique when combined with the version number or branch name.
-     * <p>
-     *     A label cannot contain the characters `$`, `|` or `@`, since this values are used in the creation of paths.
      */
     @NotBlank
-    @Pattern(regexp = /[^\$@|]*/, message = 'Cannot contain $, | or @')
     String label
 
     /**
