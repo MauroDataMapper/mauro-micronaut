@@ -32,7 +32,6 @@ class Rule extends Facet implements DiffableItem<Rule> {
 
     // TODO: Rename this 'label'?
     @NotBlank
-    @Pattern(regexp = /[^\$@|]*/, message = 'Cannot contain $, | or @')
     String name
 
     String description

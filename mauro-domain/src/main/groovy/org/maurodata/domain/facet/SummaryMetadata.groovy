@@ -25,7 +25,6 @@ import org.maurodata.domain.diff.*
 class SummaryMetadata extends Facet implements DiffableItem<SummaryMetadata>, ItemReferencer {
 
     @NotBlank
-    @Pattern(regexp = /[^\$@|]*/, message = 'Cannot contain $, | or @')
     String label
 
     String description
