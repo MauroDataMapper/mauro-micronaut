@@ -16,8 +16,6 @@ import jakarta.validation.constraints.NotNull
 import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.domain.model.ModelItem
-import org.maurodata.domain.terminology.Term
-import org.maurodata.domain.terminology.TermRelationshipType
 
 /**
  * A DataFlow is has source and target dataModels

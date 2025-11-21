@@ -544,37 +544,4 @@ class DataModelController extends ModelController<DataModel> implements DataMode
         return DataModelType.labels()
     }
 
-
-    DataModel saveContentOnly(@NonNull DataModel model) {
-        //List<Collection<AdministeredItem>> associations = model.getAllAssociations() as List<Collection<AdministeredItem>>
-
-        model.allDataClasses.each {
-            contentsService.saveWithContent(it)
-        }
-        model.dataTypes.each {
-            contentsService.saveWithContent(it)
-        }
-        model.dataElements.each {
-            contentsService.saveWithContent(it)
-        }
-
-/*        associations.each {association ->
-            if (association) {
-                //Collection<AdministeredItem> savedAssociation = getRepository(association.first()).saveAll((Collection<AdministeredItem>) association)
-                association.each {
-                }
-            }
-        }
-
-        if(model.allDataClasses) {
-            dataClassRepository.updateAll(model.allDataClasses.findAll { it.parentDataClass})
-        }
-        if(model.dataElements) {
-            dataElementRepository.updateAll(model.dataElements)
-        }
- */
-        model
-    }
-
-
 }
