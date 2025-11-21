@@ -71,7 +71,7 @@ class MauroPluginService {
         }
 
         if (pluginsDirPath == null) {
-            log.error("Failed to locate plugins directory")
+            log.warn("Failed to locate plugins directory")
             return
         }
 
