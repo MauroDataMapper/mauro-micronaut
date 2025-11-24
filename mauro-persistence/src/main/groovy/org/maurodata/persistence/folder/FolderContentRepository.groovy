@@ -52,31 +52,34 @@ class FolderContentRepository extends ModelContentRepository<Folder> {
         Folder saved = folderRepository.save(folder)
         super.saveAllFacets(saved)
 
-        if (saved.childFolders) {
-            saved.childFolders.each {childFolder ->
-                saveWithContent(childFolder)
-            }
-        }
-        if (saved.classificationSchemes) {
-            saved.classificationSchemes.each {
-                getModelContentRepository(it.class).saveWithContent(it)
-            }
+        saved.childFolders.each {childFolder ->
+            childFolder.parent = saved
+            childFolder.updateCreationProperties()
+            childFolder.catalogueUser = folder.catalogueUser
+            saveWithContent(childFolder)
         }
 
-        if (saved.terminologies) {
-            saved.terminologies.each {
-                getModelContentRepository(it.class).saveWithContent(it)
-            }
+        saved.classificationSchemes.each {
+            it.folder = saved
+            it.updateCreationProperties()
+            getModelContentRepository(it.class).saveWithContent(it)
         }
-        if (saved.codeSets) {
-            saved.codeSets.each {
-                getModelContentRepository(it.class).saveWithContent(it)
-            }
+
+        saved.terminologies.each {
+            it.folder = saved
+            it.updateCreationProperties()
+            getModelContentRepository(it.class).saveWithContent(it)
         }
-        if (saved.dataModels) {
-            saved.dataModels.each {
-                getModelContentRepository(it.class).saveWithContent(it)
-            }
+
+        saved.codeSets.each {
+            it.folder = saved
+            it.updateCreationProperties()
+            getModelContentRepository(it.class).saveWithContent(it)
+        }
+        saved.dataModels.each {
+            it.folder = saved
+            it.updateCreationProperties()
+            getModelContentRepository(it.class).saveWithContent(it)
         }
         saved
     }

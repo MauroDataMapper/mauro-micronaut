@@ -47,13 +47,20 @@ trait ModelImporterPlugin <D extends Model, P extends ImportParameters> extends 
                     it.displayLabel = it.createDisplayLabel()
                 }
             }
-            importedModel.updateCreationProperties()
-            log.info '* start updateCreationProperties *'
-            importedModel.getAllContents().each {it.updateCreationProperties()}
-            log.info '* finish updateCreationProperties *'
+
         }
         imported
     }
+    List<D> updateCreationProperties(List<D> models) {
+        models.each{
+            it.updateCreationProperties()
+            log.info('* start updateCreationProperties *')
+            it.getAllContents().each {it.updateCreationProperties()}
+            log.info('* finish updateCreationProperties *')
+        }
+        models
+    }
+
 
     @Override
     String getProviderType() {

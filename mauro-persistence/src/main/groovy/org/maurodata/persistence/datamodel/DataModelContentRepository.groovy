@@ -1,16 +1,20 @@
 package org.maurodata.persistence.datamodel
 
 import groovy.transform.CompileStatic
+import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
 import org.maurodata.domain.datamodel.DataClass
 import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.datamodel.DataType
+import org.maurodata.persistence.cache.AdministeredItemCacheableRepository
+import org.maurodata.persistence.dataflow.DataFlowContentRepository
 import org.maurodata.persistence.model.ModelContentRepository
 
 @CompileStatic
 @Singleton
+@Slf4j
 class DataModelContentRepository extends ModelContentRepository<DataModel> {
 
     @Inject
@@ -27,6 +31,12 @@ class DataModelContentRepository extends ModelContentRepository<DataModel> {
 
     @Inject
     EnumerationValueRepository enumerationValueRepository
+
+    @Inject
+    AdministeredItemCacheableRepository.DataFlowCacheableRepository dataFlowCacheableRepository
+
+    @Inject
+    DataFlowContentRepository dataFlowContentRepository
 
     @Override
     DataModel findWithContentById(UUID id) {
@@ -60,6 +70,13 @@ class DataModelContentRepository extends ModelContentRepository<DataModel> {
             dataElement.dataType = dataTypeMap[dataElement.dataType.id]
         }
 
+        //dataFlows
+        dataModel.sourceDataFlows = dataFlowCacheableRepository.findAllBySource(dataModel).collect {
+            dataFlowContentRepository.readWithContentById(it.id)
+        }
+        dataModel.targetDataFlows = dataFlowCacheableRepository.findAllByTarget(dataModel).collect {
+            dataFlowContentRepository.readWithContentById(it.id)
+        }
         dataModel
     }
 
@@ -80,6 +97,11 @@ class DataModelContentRepository extends ModelContentRepository<DataModel> {
             }
         }
         saved.dataTypes = dataTypeRepository.updateAll(saved.dataTypes.findAll {it.isReferenceType()})
+        saved.targetDataFlows.each {dataFlow ->
+            dataFlow.target = saved
+            dataFlow.updateCreationProperties()
+            dataFlowContentRepository.saveWithContent(dataFlow)
+        }
         saved
     }
 

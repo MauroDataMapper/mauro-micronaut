@@ -14,7 +14,6 @@ import org.maurodata.domain.datamodel.DataClass
 import org.maurodata.domain.datamodel.DataElement
 import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.folder.Folder
-import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.domain.model.ModelItem
 import org.maurodata.domain.security.Role
 import org.maurodata.persistence.cache.ModelCacheableRepository
@@ -32,7 +31,7 @@ import org.maurodata.utils.importer.ImporterUtils
 
 @CompileStatic
 @Slf4j
-class DataflowService extends AdministeredItemService {
+class DataFlowService extends AdministeredItemService {
 
     AccessControlService accessControlService
     ModelCacheableRepository.FolderCacheableRepository folderRepository
@@ -43,7 +42,7 @@ class DataflowService extends AdministeredItemService {
     ImporterUtils importerUtils
 
     @Inject
-    DataflowService(AccessControlService accessControlService, ModelCacheableRepository.FolderCacheableRepository folderRepository,
+    DataFlowService(AccessControlService accessControlService, ModelCacheableRepository.FolderCacheableRepository folderRepository,
                     ModelCacheableRepository.DataModelCacheableRepository dataModelRepository, MauroPluginService mauroPluginService, PathService pathService,
                     DataModelContentRepository dataModelContentRepository, ImporterUtils importerUtils) {
         this.accessControlService = accessControlService
@@ -105,13 +104,14 @@ class DataflowService extends AdministeredItemService {
                 it.targetDataClasses = getImportDataClass(it.targetDataClasses, target)
                 it.dataElementComponents = findImportDataElements(it.dataElementComponents, source, target)
             }
-            updateCreationProperties(imp)
+            imp = updateCreationProperties(imp)
+            imp.catalogueUser = accessControlService.getUser()
         }
         imported
     }
 
-    @Override
-    AdministeredItem updatePaths(AdministeredItem dataFlow) {
+
+    DataFlow updatePaths(DataFlow dataFlow) {
         updateDerivedProperties(dataFlow)
         (dataFlow as DataFlow).dataClassComponents.each {
             updateDerivedProperties(it)

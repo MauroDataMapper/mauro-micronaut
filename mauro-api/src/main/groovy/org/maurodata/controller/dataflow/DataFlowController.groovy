@@ -41,7 +41,7 @@ import org.maurodata.plugin.exporter.DataFlowExporterPlugin
 import org.maurodata.plugin.exporter.ModelItemExporterPlugin
 import org.maurodata.plugin.importer.DataFlowImporterPlugin
 import org.maurodata.plugin.importer.json.JsonDataFlowImporterPlugin
-import org.maurodata.service.dataflow.DataflowService
+import org.maurodata.service.dataflow.DataFlowService
 import org.maurodata.util.exporter.ExporterUtils
 import org.maurodata.web.ListResponse
 import org.maurodata.web.PaginationParams
@@ -55,12 +55,11 @@ class DataFlowController extends AdministeredItemController<DataFlow, DataModel>
     AdministeredItemCacheableRepository.DataFlowCacheableRepository dataFlowRepository
     ModelCacheableRepository.DataModelCacheableRepository dataModelRepository
     DataFlowContentRepository dataFlowContentRepository
-    DataflowService dataFlowService
-
+    DataFlowService dataFlowService
 
     DataFlowController(AdministeredItemCacheableRepository.DataFlowCacheableRepository dataFlowRepository,
                        ModelCacheableRepository.DataModelCacheableRepository dataModelRepository,
-                       DataFlowContentRepository dataFlowContentRepository, DataflowService dataFlowService) {
+                       DataFlowContentRepository dataFlowContentRepository, DataFlowService dataFlowService) {
         super(DataFlow, dataFlowRepository, dataModelRepository, dataFlowContentRepository)
         this.dataFlowRepository = dataFlowRepository
         this.dataModelRepository = dataModelRepository

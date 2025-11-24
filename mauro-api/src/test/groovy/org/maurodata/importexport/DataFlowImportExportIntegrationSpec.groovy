@@ -203,7 +203,7 @@ class DataFlowImportExportIntegrationSpec extends CommonDataSpec {
         response.summaryMetadata[0].summaryMetadataReports.size() == 1
         response.summaryMetadata[0].summaryMetadataReports[0].id != summaryMetadataReportId
 
-        //proof new source/target rows  created -DataClassComponent->dataClass, dataElementComponent->dataElement
+       //proof new source/target rows  created -DataClassComponent->dataClass, dataElementComponent->dataElement
         and:
         HttpResponse httpResponse = dataClassComponentApi.deleteSource(sourceBranch.id, dataFlowResponse.items[0].id, dataClassComponentId, dataClassId1)
         then:

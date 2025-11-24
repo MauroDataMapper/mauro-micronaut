@@ -6,6 +6,7 @@ import io.micronaut.http.MediaType
 import io.micronaut.http.client.multipart.MultipartBody
 import io.micronaut.test.annotation.Sql
 import jakarta.inject.Singleton
+import org.maurodata.FieldConstants
 import org.maurodata.domain.dataflow.DataClassComponent
 import org.maurodata.domain.dataflow.DataElementComponent
 import org.maurodata.domain.dataflow.DataFlow
@@ -26,7 +27,6 @@ import org.maurodata.domain.terminology.Terminology
 import org.maurodata.persistence.ContainerizedTest
 import org.maurodata.testing.CommonDataSpec
 import org.maurodata.web.ListResponse
-import spock.lang.Ignore
 import spock.lang.Shared
 
 @ContainerizedTest
@@ -40,14 +40,7 @@ import spock.lang.Shared
     "classpath:sql/tear-down-datamodel.sql",
     "classpath:sql/tear-down.sql",
     "classpath:sql/tear-down-folder.sql"], phase = Sql.Phase.AFTER_EACH)
-class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
-
-    static final String EXPORTER_NAMESPACE = 'org.maurodata.plugin.exporter.json'
-    static final String FOLDER_EXPORTER_NAME = 'JsonFolderExporterPlugin'
-    static final String EXPORTER_VERSION = '4.0.0'
-    static final String IMPORTER_NAMESPACE = 'org.maurodata.plugin.importer.json'
-    static final String FOLDER_IMPORTER_NAME = 'JsonFolderImporterPlugin'
-    static final String IMPORTER_VERSION = '4.0.0'
+class VersionedFolderJsonImportExportIntegrationSpec extends CommonDataSpec {
 
     @Shared
     UUID folderId
@@ -59,27 +52,28 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
     JsonSlurper jsonSlurper = new JsonSlurper()
 
     void setup() {
-        folderId = folderApi.create(new Folder(label: 'Folder top level')).id
+        folderId = versionedFolderApi.create(new Folder(label: 'VersionedFolder top level')).id
         dataModelId = dataModelApi.create(folderId, new DataModel(label: 'Test data model')).id
     }
 
 
-    void 'create folder, dataModels, metadata, summaryMetadata, summaryMetadataReports, annotations, terminology, codeset and export'() {
+    void 'create versionedFolder, dataModels, metadata, summaryMetadata, summaryMetadataReports, annotations, terminology, codeset and export'() {
         given:
         UUID dataClass1Id = dataClassApi.create(dataModelId, new DataClass(label: 'TEST-1', description: 'first data class')).id
         UUID dataClass2Id = dataClassApi.create(dataModelId, new DataClass(label: 'TEST-2', description: 'second data class')).id
         UUID dataTypeId = dataTypeApi.create(dataModelId, new DataType(label: 'Test data type', dataTypeKind: DataType.DataTypeKind.PRIMITIVE_TYPE)).id
 
-        Metadata metadataResponse = metadataApi.create("folder", folderId, metadataPayload())
+        Metadata metadataResponse = metadataApi.create(FieldConstants.VERSIONED_FOLDER, folderId, metadataPayload())
 
-        SummaryMetadata summaryMetadataResponse = summaryMetadataApi.create("folder", folderId, summaryMetadataPayload())
+        SummaryMetadata summaryMetadataResponse = summaryMetadataApi.create(FieldConstants.VERSIONED_FOLDER, folderId, summaryMetadataPayload())
 
-        SummaryMetadataReport reportResponse = summaryMetadataReportApi.create("folder", folderId, summaryMetadataResponse.id, summaryMetadataReport())
+        SummaryMetadataReport reportResponse = summaryMetadataReportApi.create(FieldConstants.VERSIONED_FOLDER, folderId, summaryMetadataResponse.id, summaryMetadataReport())
 
-        Annotation annotation = annotationApi.create("folder", folderId, annotationPayload())
-        Annotation childAnnotation = annotationApi.create("folder", folderId, annotation.id, annotationPayload('childLabel', 'child-description'))
+        Annotation annotation = annotationApi.create(FieldConstants.VERSIONED_FOLDER, folderId, annotationPayload())
+        Annotation childAnnotation = annotationApi.create(FieldConstants.VERSIONED_FOLDER, folderId, annotation.id, annotationPayload('childLabel', 'child-description'))
 
         CodeSet codeSet = codeSetApi.create(folderId, codeSet())
+        //        codeSetId = codeSet.id
 
         Terminology terminology = terminologyApi.create(folderId, terminologyPayload())
 
@@ -88,7 +82,10 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
         Term term = termApi.create(terminology.id, term())
 
         when:
-        HttpResponse<byte[]> exportResponse = folderApi.exportModel(folderId, EXPORTER_NAMESPACE, FOLDER_EXPORTER_NAME, EXPORTER_VERSION)
+        HttpResponse<byte[]> exportResponse =
+            folderApi
+                .exportModel(folderId, FolderJsonImportExportIntegrationSpec.EXPORTER_NAMESPACE, FolderJsonImportExportIntegrationSpec.FOLDER_EXPORTER_NAME,
+                             FolderJsonImportExportIntegrationSpec.EXPORTER_VERSION)
 
         then:
         Map parsedJson = jsonSlurper.parseText(new String(exportResponse.body())) as Map
@@ -102,8 +99,8 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
         parsedJson.folder.dataModels[0].dataTypes[0].id == dataTypeId.toString()
         parsedJson.folder.dataModels[0].dataClasses.size() == 2
         List<DataClass> dataClasses = parsedJson.folder.dataModels[0].dataClasses
-        dataClasses.label.sort().collect { it.toString() } == ['TEST-1', 'TEST-2']
-        dataClasses.id.sort().collect { it.toString() } == [ dataClass1Id.toString(), dataClass2Id.toString()].sort()
+        dataClasses.label.sort().collect {it.toString()} == ['TEST-1', 'TEST-2']
+        dataClasses.id.sort().collect {it.toString()} == [dataClass1Id.toString(), dataClass2Id.toString()].sort()
 
         parsedJson.folder.metadata.size() == 1
         parsedJson.folder.metadata[0].id == metadataResponse.id.toString()
@@ -133,7 +130,6 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
         parsedJson.folder.codeSets[0].id == codeSet.id.toString()
     }
 
-
     void 'get export folder -should export folder, with nested data and deep nesting of child folders'() {
         given:
         UUID childFolderId = folderApi.create(folderId, new Folder(label: 'Test child folder 1st level')).id
@@ -144,10 +140,13 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
         UUID nestedChildDataModelId = dataModelApi.create(nestedChildFolderId, new DataModel(label: 'Test nested child 2nd level folder')).id
 
         UUID childDataModelTypeId = dataTypeApi.create(childDataModelId,
-            new DataType(label: 'Test data type childData Model', dataTypeKind: DataType.DataTypeKind.PRIMITIVE_TYPE)).id
+                                                       new DataType(label: 'Test data type childData Model', dataTypeKind: DataType.DataTypeKind.PRIMITIVE_TYPE)).id
 
         when:
-        HttpResponse<byte[]> exportResponse = folderApi.exportModel(folderId, EXPORTER_NAMESPACE, FOLDER_EXPORTER_NAME, EXPORTER_VERSION)
+        HttpResponse<byte[]> exportResponse =
+            folderApi
+                .exportModel(folderId, FolderJsonImportExportIntegrationSpec.EXPORTER_NAMESPACE, FolderJsonImportExportIntegrationSpec.FOLDER_EXPORTER_NAME,
+                             FolderJsonImportExportIntegrationSpec.EXPORTER_VERSION)
         then:
         exportResponse.body()
 
@@ -200,22 +199,27 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
         Term targetTerm = termApi.create(terminology.id, new Term(code: 'target code', definition: 'target term'))
 
         termRelationshipApi.create(terminology.id,
-                new TermRelationship(
-                        relationshipType: new TermRelationshipType(id: termRelationshipType.id),
-                        sourceTerm      : new Term(id: sourceTerm.id),
-                        targetTerm      : new Term(id: targetTerm.id)))
+                                   new TermRelationship(
+                                       relationshipType: new TermRelationshipType(id: termRelationshipType.id),
+                                       sourceTerm: new Term(id: sourceTerm.id),
+                                       targetTerm: new Term(id: targetTerm.id)))
 
 
-        HttpResponse<byte[]> exportResponse = folderApi.exportModel(folderId, EXPORTER_NAMESPACE, FOLDER_EXPORTER_NAME, EXPORTER_VERSION)
+        HttpResponse<byte[]> exportResponse =
+            folderApi
+                .exportModel(folderId, FolderJsonImportExportIntegrationSpec.EXPORTER_NAMESPACE, FolderJsonImportExportIntegrationSpec.FOLDER_EXPORTER_NAME,
+                             FolderJsonImportExportIntegrationSpec.EXPORTER_VERSION)
 
 
         MultipartBody importRequest = MultipartBody.builder()
-                .addPart('folderId', folderId.toString())
-                .addPart('importFile', 'file.json', MediaType.APPLICATION_JSON_TYPE, exportResponse.body())
-                .build()
+            .addPart('folderId', folderId.toString())
+            .addPart('importFile', 'file.json', MediaType.APPLICATION_JSON_TYPE, exportResponse.body())
+            .build()
 
         when:
-        ListResponse<Folder> response = folderApi.importModel(importRequest, IMPORTER_NAMESPACE, FOLDER_IMPORTER_NAME, IMPORTER_VERSION)
+        ListResponse<Folder> response = folderApi.importModel(importRequest, FolderJsonImportExportIntegrationSpec.IMPORTER_NAMESPACE,
+                                                              FolderJsonImportExportIntegrationSpec.FOLDER_IMPORTER_NAME,
+                                                              FolderJsonImportExportIntegrationSpec.IMPORTER_VERSION)
 
         then:
         response
@@ -321,7 +325,7 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
 
         when:
         ListResponse<TermRelationshipType> importedTermRelationshipTypeResponse =
-                termRelationshipTypeApi.list(importedTerminologyId)
+            termRelationshipTypeApi.list(importedTerminologyId)
 
         then:
         importedTermRelationshipTypeResponse
@@ -351,7 +355,6 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
         importedTermRelationship.items[0].relationshipType.id == importedTermRelationshipTypeId
 
 
-
     }
 
 
@@ -377,21 +380,25 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
         Term targetTerm = termApi.create(terminology.id, new Term(code: 'target code', definition: 'target term'))
 
         termRelationshipApi.create(terminology.id,
-                new TermRelationship(
-                        relationshipType: new TermRelationshipType(id: termRelationshipType.id),
-                        sourceTerm      : new Term(id: sourceTerm.id),
-                        targetTerm      : new Term(id: targetTerm.id)))
+                                   new TermRelationship(
+                                       relationshipType: new TermRelationshipType(id: termRelationshipType.id),
+                                       sourceTerm: new Term(id: sourceTerm.id),
+                                       targetTerm: new Term(id: targetTerm.id)))
 
 
-        HttpResponse<byte[]> exportResponse = folderApi.exportModel(folderId, 'org.maurodata.plugin.exporter.json', 'JsonFolderExporterPlugin', '4.0.0')
+        HttpResponse<byte[]> exportResponse =
+            folderApi.exportModel(folderId, FolderJsonImportExportIntegrationSpec.EXPORTER_NAMESPACE, FolderJsonImportExportIntegrationSpec.FOLDER_EXPORTER_NAME,
+                                  FolderJsonImportExportIntegrationSpec.EXPORTER_VERSION)
 
         MultipartBody importRequest = MultipartBody.builder()
-                .addPart('folderId', childFolderId.toString())
-                .addPart('importFile', 'file.json', MediaType.APPLICATION_JSON_TYPE, exportResponse.body())
-                .build()
+            .addPart('folderId', childFolderId.toString())
+            .addPart('importFile', 'file.json', MediaType.APPLICATION_JSON_TYPE, exportResponse.body())
+            .build()
 
         when:
-        ListResponse<Folder> response = folderApi.importModel(importRequest, IMPORTER_NAMESPACE, FOLDER_IMPORTER_NAME, IMPORTER_VERSION)
+        ListResponse<Folder> response =
+            folderApi.importModel(importRequest, FolderJsonImportExportIntegrationSpec.IMPORTER_NAMESPACE, FolderJsonImportExportIntegrationSpec.FOLDER_IMPORTER_NAME,
+                                  FolderJsonImportExportIntegrationSpec.IMPORTER_VERSION)
         then:
         response
         UUID importedFolderId = response.items.first().id
@@ -450,7 +457,7 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
 
         when:
         ListResponse<TermRelationshipType> importedTermRelationshipTypeResponse =
-                termRelationshipTypeApi.list(importedTerminologyId)
+            termRelationshipTypeApi.list(importedTerminologyId)
 
         then:
         importedTermRelationshipTypeResponse
@@ -478,6 +485,7 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
         importedTermRelationship.items[0].targetTerm.code == 'target code'
         importedTermRelationship.items[0].relationshipType.id == importedTermRelationshipTypeId
     }
+
 
     void 'export and import folder with two terminologies with overlapping codes'() {
         given:
@@ -530,7 +538,9 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
             .addPart('folderId', folderId.toString())
             .addPart('importFile', 'file.json', MediaType.APPLICATION_JSON_TYPE, objectMapper.writeValueAsBytes(export))
             .build()
-        ListResponse<Folder> response = folderApi.importModel(importRequest, IMPORTER_NAMESPACE, FOLDER_IMPORTER_NAME, IMPORTER_VERSION)
+        ListResponse<Folder> response =
+            folderApi.importModel(importRequest, FolderJsonImportExportIntegrationSpec.IMPORTER_NAMESPACE, FolderJsonImportExportIntegrationSpec.FOLDER_IMPORTER_NAME,
+                                  FolderJsonImportExportIntegrationSpec.IMPORTER_VERSION)
 
         UUID importedFolderId = response.items.first().id
 
@@ -602,14 +612,15 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
         importedTermRelationships.items.first().relationshipType.label == 'TEST'
     }
 
-
-    void 'import folder with datamodel and dataflow -dataflow item not imported'() {
+    void 'test export and import folder with datamodel and dataflow '() {
         given:
         UUID dataClass1Id = dataClassApi.create(dataModelId, new DataClass(label: 'TEST-1', description: 'first data class')).id
         DataType dataType = dataTypeApi.create(dataModelId, new DataType(label: 'Test data type', dataTypeKind: DataType.DataTypeKind.PRIMITIVE_TYPE))
         UUID dataElementId1 = dataElementApi.create(dataModelId, dataClass1Id, dataElementPayload('dataElement1 label', dataType)).id
 
         DataModel source = dataModelApi.create(folderId, new DataModel(label: 'Test data model source'))
+        // same label and branchName(version)
+        DataModel importSource = dataModelApi.create(folderId, new DataModel(label: 'Test data model source'))
 
         DataFlow dataFlow = dataFlowApi.create(dataModelId, new DataFlow(
             label: 'test label',
@@ -617,8 +628,8 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
             source: source))
 
         UUID dataClassComponentId = dataClassComponentApi.create(dataModelId, dataFlow.id,
-                                                                 new DataClassComponent(
-                                                                     label: 'data class component test label')).id
+                                                            new DataClassComponent(
+                                                                label: 'data class component test label')).id
         dataClassComponentApi.updateTarget(dataModelId, dataFlow.id, dataClassComponentId, dataClass1Id)
 
         UUID dataElementComponentId =
@@ -627,12 +638,15 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
         dataElementComponentApi.updateTarget(dataModelId, dataFlow.id, dataClassComponentId, dataElementComponentId, dataElementId1)
 
         when:
-        HttpResponse<byte[]> exportResponse = folderApi.exportModel(folderId, 'org.maurodata.plugin.exporter.json', 'JsonFolderExporterPlugin', '4.0.0')
+        HttpResponse<byte[]> exportResponse = folderApi.exportModel(folderId, FolderJsonImportExportIntegrationSpec.EXPORTER_NAMESPACE,
+                                                                    FolderJsonImportExportIntegrationSpec.FOLDER_EXPORTER_NAME,
+                                                                    FolderJsonImportExportIntegrationSpec.EXPORTER_VERSION)
+
 
         then:
         exportResponse
         Map parsedJson = jsonSlurper.parseText(new String(exportResponse.body())) as Map
-        parsedJson.folder.dataModels.size() == 2
+        parsedJson.folder.dataModels.size() == 3
         parsedJson.folder.dataModels[0].targetDataFlows.size() == 1
         parsedJson.folder.dataModels[0].targetDataFlows[0].dataClassComponents.size() == 1
         parsedJson.folder.dataModels[0].targetDataFlows[0].dataClassComponents[0].dataElementComponents.size() == 1
@@ -645,6 +659,9 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
         parsedJson.folder.dataModels[1].sourceDataFlows[0].dataClassComponents[0].dataElementComponents.size() == 1
         parsedJson.folder.dataModels[1].sourceDataFlows[0].dataClassComponents[0].dataElementComponents[0].targetDataElements.size() == 1
 
+        !parsedJson.folder.dataModels[2].targetDataFlows
+        !parsedJson.folder.dataModels[2].sourceDataFlows
+
 
         MultipartBody importRequest = MultipartBody.builder()
             .addPart('folderId', folderId.toString())
@@ -652,7 +669,9 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
             .build()
 
         when:
-        ListResponse<Folder> importResponse = folderApi.importModel(importRequest, IMPORTER_NAMESPACE, FOLDER_IMPORTER_NAME, IMPORTER_VERSION)
+        ListResponse<Folder> importResponse = folderApi.importModel(importRequest, FolderJsonImportExportIntegrationSpec.IMPORTER_NAMESPACE,
+                                                                    FolderJsonImportExportIntegrationSpec.FOLDER_IMPORTER_NAME,
+                                                                    FolderJsonImportExportIntegrationSpec.IMPORTER_VERSION)
 
         then:
         importResponse
@@ -660,81 +679,6 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
 
         UUID importedFolderId = importResponse.items[0].id
         importedFolderId != folderId
-
-        when:
-        ListResponse<DataModel> originalModels = dataModelApi.list(folderId)
-
-        then:
-        originalModels.items.size() == 2
-
-        when:
-        ListResponse<DataModel> dataModels = dataModelApi.list(importedFolderId)
-
-        then:
-        dataModels.items.size() == 2
-
-        DataModel importedTargetDataModel = dataModels.items.find {!it.path.toString().contains('source') && it.id != source.id}
-        when:
-        ListResponse<DataFlow> dataFlowListResponse = dataFlowApi.list(importedTargetDataModel.id, Type.TARGET)
-
-        then:
-        dataFlowListResponse
-        dataFlowListResponse.items.isEmpty()
-    }
-
-
-    void 'import folder with datamodel and dataflow -happy path'() {
-        given:
-        UUID dataClass1Id = dataClassApi.create(dataModelId, new DataClass(label: 'TEST-1', description: 'first data class')).id
-        DataType dataType = dataTypeApi.create(dataModelId, new DataType(label: 'Test data type', dataTypeKind: DataType.DataTypeKind.PRIMITIVE_TYPE))
-        UUID dataElementId1 = dataElementApi.create(dataModelId, dataClass1Id, dataElementPayload('dataElement1 label', dataType)).id
-
-        DataModel source = dataModelApi.create(folderId, new DataModel(label: 'Test data model source'))
-        DataModel copySource = dataModelApi.create(folderId, new DataModel(label: 'Test data model source'))
-
-        DataFlow dataFlow = dataFlowApi.create(dataModelId, new DataFlow(
-            label: 'test label',
-            description: 'dataflow payload description ',
-            source: source))
-
-        UUID dataClassComponentId = dataClassComponentApi.create(dataModelId, dataFlow.id,
-                                                                 new DataClassComponent(
-                                                                     label: 'data class component test label')).id
-        dataClassComponentApi.updateTarget(dataModelId, dataFlow.id, dataClassComponentId, dataClass1Id)
-
-        UUID dataElementComponentId =
-            dataElementComponentApi.create(dataModelId, dataFlow.id, dataClassComponentId, new DataElementComponent(label: 'test data element component')).id
-
-        dataElementComponentApi.updateTarget(dataModelId, dataFlow.id, dataClassComponentId, dataElementComponentId, dataElementId1)
-
-        when:
-        HttpResponse<byte[]> exportResponse = folderApi.exportModel(folderId, 'org.maurodata.plugin.exporter.json', 'JsonFolderExporterPlugin', '4.0.0')
-
-        then:
-        exportResponse
-        Map parsedJson = jsonSlurper.parseText(new String(exportResponse.body())) as Map
-        parsedJson.folder.dataModels.size() == 3
-
-        MultipartBody importRequest = MultipartBody.builder()
-            .addPart('folderId', folderId.toString())
-            .addPart('importFile', 'file.json', MediaType.APPLICATION_JSON_TYPE, exportResponse.body())
-            .build()
-
-        when:
-        ListResponse<Folder> importResponse = folderApi.importModel(importRequest, IMPORTER_NAMESPACE, FOLDER_IMPORTER_NAME, IMPORTER_VERSION)
-
-        then:
-        importResponse
-        importResponse.items.size() == 1
-
-        UUID importedFolderId = importResponse.items[0].id
-        importedFolderId != folderId
-
-        when:
-        ListResponse<DataModel> originalModels = dataModelApi.list(folderId)
-
-        then:
-        originalModels.items.size() == 3
 
         when:
         ListResponse<DataModel> dataModels = dataModelApi.list(importedFolderId)
@@ -742,38 +686,36 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
         then:
         dataModels.items.size() == 3
 
-        DataModel importedTargetDataModel = dataModels.items.find {!it.path.toString().contains('source')}
+        UUID importedDataModelId = dataModels.items.find {!it.path.toString().contains('source')}.id
         when:
-        ListResponse<DataFlow> dataFlowListResponse = dataFlowApi.list(importedTargetDataModel.id, Type.TARGET)
+        ListResponse<DataFlow> dataFlowListResponse = dataFlowApi.list(importedDataModelId, Type.TARGET)
 
         then:
         dataFlowListResponse
-        !dataFlowListResponse.items.isEmpty()
-
+        dataFlowListResponse.items.size() == 1
         DataFlow importedDataFlow = dataFlowListResponse.items[0]
         importedDataFlow.target.id != dataModelId
-        importedDataFlow.source.id != source.id
+        importedDataFlow.source.id == importSource.id
 
         when:
-        ListResponse<DataClassComponent> dataClassComponents = dataClassComponentApi.list(importedTargetDataModel.id, importedDataFlow.id)
+        ListResponse<DataClassComponent> dataClassComponents = dataClassComponentApi.list(importedDataModelId, importedDataFlow.id)
 
         then:
         dataClassComponents
         dataClassComponents.items.size() == 1
 
         when:
-        DataClassComponent dataClassComponent = dataClassComponentApi.show(importedTargetDataModel.id, importedDataFlow.id, dataClassComponents.items[0].id)
+        DataClassComponent dataClassComponent = dataClassComponentApi.show(importedDataModelId, importedDataFlow.id, dataClassComponents.items[0].id)
 
         then:
         dataClassComponent
         !dataClassComponent.sourceDataClasses
         dataClassComponent.targetDataClasses.size() == 1
+        dataClassComponent.targetDataClasses.size() == 1
         dataClassComponent.targetDataClasses[0].id != dataClass1Id
 
-
         when:
-        ListResponse<DataElementComponent> dataElementComponentList =
-            dataElementComponentApi.list(importedTargetDataModel.id, importedDataFlow.id, dataClassComponents.items[0].id)
+        ListResponse<DataElementComponent> dataElementComponentList = dataElementComponentApi.list(importedDataModelId, importedDataFlow.id, dataClassComponents.items[0].id)
 
         then:
         dataElementComponentList.items.size() == 1
@@ -781,7 +723,7 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
 
         when:
         DataElementComponent dataElementComponent =
-            dataElementComponentApi.show(importedTargetDataModel.id, importedDataFlow.id, dataClassComponents.items[0].id, dataElementComponentList.items[0].id)
+            dataElementComponentApi.show(importedDataModelId, importedDataFlow.id, dataClassComponents.items[0].id, dataElementComponentList.items[0].id)
 
         then:
         dataElementComponent
@@ -790,16 +732,21 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
         dataElementComponent.targetDataElements[0].id != dataElementId1
     }
 
+
     void 'test import folder without folder_id in params -should import as root folder'() {
         given:
-        HttpResponse<byte[]> exportResponse = folderApi.exportModel(folderId, EXPORTER_NAMESPACE, FOLDER_EXPORTER_NAME, EXPORTER_VERSION)
+        HttpResponse<byte[]> exportResponse =
+            folderApi.exportModel(folderId, FolderJsonImportExportIntegrationSpec.EXPORTER_NAMESPACE, FolderJsonImportExportIntegrationSpec.FOLDER_EXPORTER_NAME,
+                                  FolderJsonImportExportIntegrationSpec.EXPORTER_VERSION)
 
         MultipartBody importRequest = MultipartBody.builder()
             .addPart('importFile', 'file.json', MediaType.APPLICATION_JSON_TYPE, exportResponse.body())
             .build()
 
         when:
-        ListResponse<Folder> importResponse = folderApi.importModel(importRequest, IMPORTER_NAMESPACE, FOLDER_IMPORTER_NAME, IMPORTER_VERSION)
+        ListResponse<Folder> importResponse =
+            folderApi.importModel(importRequest, FolderJsonImportExportIntegrationSpec.IMPORTER_NAMESPACE, FolderJsonImportExportIntegrationSpec.FOLDER_IMPORTER_NAME,
+                                  FolderJsonImportExportIntegrationSpec.IMPORTER_VERSION)
 
         then:
         importResponse

@@ -254,14 +254,15 @@ interface Paths {
     String FOLDER_EXPORTERS = '/api/folders/providers/exporters'
 
 
+
     /*
     * VersionedFolderApi
      */
     String VERSIONED_FOLDER_LIST = '/api/versionedFolders'
     String VERSIONED_FOLDER_ID = '/api/versionedFolders/{id}'
 
-    String CHILD_VERSIONED_FOLDER_LIST = '/api/folders/{parentId}/versionedFolders'
-    String FOLDER_CHILD_VERSIONED_FOLDER_ID = '/api/folders/{parentId}/versionedFolders/{id}'
+    String CHILD_VERSIONED_FOLDER_LIST = '/api/versionedFolders/{parentId}/folders'
+    String FOLDER_CHILD_VERSIONED_FOLDER_ID = '/api/versionedFolders/{parentId}/folders/{id}'
 
     String VERSIONED_FOLDER_FINALISE = '/api/versionedFolders/{id}/finalise'
     String VERSIONED_FOLDER_NEW_BRANCH_MODEL_VERSION = '/api/versionedFolders/{id}/newBranchModelVersion'
@@ -279,7 +280,8 @@ interface Paths {
     String VERSIONED_FOLDER_COMMON_ANCESTOR = '/api/versionedFolders/{id}/commonAncestor/{other_model_id}'
     String VERSIONED_FOLDER_MERGE_DIFF = '/api/versionedFolders/{id}/mergeDiff/{otherId}'
     String VERSIONED_FOLDER_MERGE_INTO = '/api/versionedFolders/{id}/mergeInto/{otherId}'
-
+    String VERSIONED_FOLDER_IMPORT = '/api/versionedFolders/import/{namespace}/{name}{/version}'
+    String VERSIONED_FOLDER_EXPORT ='/api/versionedFolders/{id}/export{/namespace}{/name}{/version}'
     /*
     * ImporterApi
     */

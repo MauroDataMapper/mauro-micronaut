@@ -8,6 +8,14 @@ import spock.lang.Unroll
 @MicronautTest
 class PathStringUtilsTest extends Specification {
 
+    void 'test getPathFrom'(){
+        when:
+        String result = PathStringUtils.getPathFrom('dc',
+                                                    "fo:rem recusandae eaque|dm:rem et eum\$main|dc:sunt eum possimus|de:corporis omnis labore")
+        then:
+        result == "dc:sunt eum possimus|de:corporis omnis labore"
+    }
+
     @Unroll
     void 'test getItemSubPath, for #pathPrefix, #fullPath'() {
         when:
@@ -30,9 +38,9 @@ class PathStringUtilsTest extends Specification {
     }
 
     @Unroll
-    void 'test getVersionFromPath for #fullPath'() {
+    void 'test getBranchNameFromPath for #fullPath'() {
         when:
-        String version = PathStringUtils.getVersionFromPath(fullPath)
+        String version = PathStringUtils.getBranchNameFromPath(fullPath)
 
         then:
         version == expectedVersion

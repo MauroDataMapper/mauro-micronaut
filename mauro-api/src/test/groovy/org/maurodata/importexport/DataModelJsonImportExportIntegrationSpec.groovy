@@ -5,7 +5,12 @@ import groovy.json.JsonSlurper
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.MediaType
 import io.micronaut.http.client.multipart.MultipartBody
+import io.micronaut.test.annotation.Sql
 import jakarta.inject.Singleton
+import org.maurodata.domain.dataflow.DataClassComponent
+import org.maurodata.domain.dataflow.DataElementComponent
+import org.maurodata.domain.dataflow.DataFlow
+import org.maurodata.domain.dataflow.Type
 import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.datamodel.DataType
 import org.maurodata.domain.facet.Annotation
@@ -30,7 +35,10 @@ class DataModelJsonImportExportIntegrationSpec extends CommonDataSpec {
 
     @Shared
     UUID dataModelId
-
+    @Shared
+    DataModel source
+    @Shared
+    DataModel importedSource
     @Shared
     UUID metadataId
 
@@ -48,6 +56,24 @@ class DataModelJsonImportExportIntegrationSpec extends CommonDataSpec {
 
     @Shared
     DataType dataType
+    @Shared
+    DataType dataType2
+    @Shared
+    UUID dataElementId1
+    @Shared
+    UUID dataElementId2
+    @Shared
+    UUID dataClassId1
+    @Shared
+    UUID dataClassId2
+
+    @Shared
+    DataFlow dataFlow
+    @Shared
+    UUID dataClassComponentId
+    @Shared
+    UUID dataElementComponentId
+
 
     JsonSlurper jsonSlurper = new JsonSlurper()
 
@@ -74,13 +100,37 @@ class DataModelJsonImportExportIntegrationSpec extends CommonDataSpec {
         Annotation childResp = annotationApi.create("dataModel", dataModelId, annotationId, annotationPayload('child label', 'child description'))
         childAnnotationId = childResp.id
 
+        dataClassId1 = dataClassApi.create(dataModelId, dataClassPayload('dataClass label')).id
+
         dataType = dataTypeApi.create(dataModelId,
-            new DataType(label: 'string', description: 'character string of variable length', dataTypeKind: DataType.DataTypeKind.PRIMITIVE_TYPE))
+                                      new DataType(label: 'string', description: 'character string of variable length', dataTypeKind: DataType.DataTypeKind.PRIMITIVE_TYPE))
+
+        dataElementId1 = dataElementApi.create(dataModelId, dataClassId1, dataElementPayload('data element label', dataType)).id
+
+        source = dataModelApi.create(folderId, dataModelPayload('source label'))
+
+        //same label and branchName as source
+        importedSource = dataModelApi.create(folderId, dataModelPayload('source label'))
+
+        dataFlow = dataFlowApi.create(dataModelId, new DataFlow(
+            label: 'test label',
+            description: 'dataflow payload description ',
+            source: source))
+
+        dataClassComponentId = dataClassComponentApi.create(dataModelId, dataFlow.id,
+                                                            new DataClassComponent(
+                                                                label: 'data class component test label')).id
+        dataClassComponentApi.updateTarget(dataModelId, dataFlow.id, dataClassComponentId, dataClassId1)
+
+        dataElementComponentId =
+            dataElementComponentApi.create(dataModelId, dataFlow.id, dataClassComponentId, new DataElementComponent(label: 'test data element component')).id
+
+        dataElementComponentApi.updateTarget(dataModelId, dataFlow.id, dataClassComponentId, dataElementComponentId, dataElementId1)
+
     }
 
     void 'test get export data model - should export model'() {
-        when:
-        HttpResponse<byte[]> response = dataModelApi.exportModel(dataModelId, 'org.maurodata.plugin.exporter.json', 'JsonDataModelExporterPlugin', '4.0.0')
+        when:HttpResponse<byte[]> response = dataModelApi.exportModel(dataModelId, 'org.maurodata.plugin.exporter.json', 'JsonDataModelExporterPlugin', '4.0.0')
 
         then:
         response.body()
@@ -89,6 +139,7 @@ class DataModelJsonImportExportIntegrationSpec extends CommonDataSpec {
         parsedJson.exportMetadata
 
         parsedJson.dataModel
+        parsedJson.dataModel.path
         parsedJson.dataModel.id == dataModelId.toString()
         parsedJson.dataModel.metadata.id == List.of(metadataId.toString())
         parsedJson.dataModel.summaryMetadata.id == List.of(summaryMetadataId.toString())
@@ -98,6 +149,30 @@ class DataModelJsonImportExportIntegrationSpec extends CommonDataSpec {
         parsedJson.dataModel.annotations.childAnnotations[0].id == List.of(childAnnotationId.toString())
         parsedJson.dataModel.dataTypes.id == List.of(dataType.id.toString())
         parsedJson.dataModel.dataTypes.domainType == List.of(dataType.domainType)
+
+
+        parsedJson.dataModel.targetDataFlows
+        parsedJson.dataModel.targetDataFlows.size() == 1
+        parsedJson.dataModel.targetDataFlows[0].path
+        parsedJson.dataModel.targetDataFlows[0].dataClassComponents
+        parsedJson.dataModel.targetDataFlows[0].dataClassComponents.size() == 1
+        parsedJson.dataModel.targetDataFlows[0].dataClassComponents[0].path
+
+        !parsedJson.dataModel.targetDataFlows[0].dataClassComponents[0].sourceDataClasses
+
+        parsedJson.dataModel.targetDataFlows[0].dataClassComponents[0].targetDataClasses
+        parsedJson.dataModel.targetDataFlows[0].dataClassComponents[0].targetDataClasses.size() == 1
+        parsedJson.dataModel.targetDataFlows[0].dataClassComponents[0].targetDataClasses[0].id == dataClassId1.toString()
+        parsedJson.dataModel.targetDataFlows[0].dataClassComponents[0].targetDataClasses[0].path
+        parsedJson.dataModel.targetDataFlows[0].dataClassComponents[0].dataElementComponents
+        parsedJson.dataModel.targetDataFlows[0].dataClassComponents[0].dataElementComponents.size() == 1
+        parsedJson.dataModel.targetDataFlows[0].dataClassComponents[0].dataElementComponents[0].id == dataElementComponentId.toString()
+        parsedJson.dataModel.targetDataFlows[0].dataClassComponents[0].dataElementComponents[0].path
+        !parsedJson.dataModel.targetDataFlows[0].dataClassComponents[0].dataElementComponents[0].sourceDataElements
+        parsedJson.dataModel.targetDataFlows[0].dataClassComponents[0].dataElementComponents[0].targetDataElements
+        parsedJson.dataModel.targetDataFlows[0].dataClassComponents[0].dataElementComponents[0].targetDataElements.size() == 1
+        parsedJson.dataModel.targetDataFlows[0].dataClassComponents[0].dataElementComponents[0].targetDataElements[0].id == dataElementId1.toString()
+        parsedJson.dataModel.targetDataFlows[0].dataClassComponents[0].dataElementComponents[0].targetDataElements[0].path
     }
 
 
@@ -108,15 +183,17 @@ class DataModelJsonImportExportIntegrationSpec extends CommonDataSpec {
 
         and:
         MultipartBody importRequest = MultipartBody.builder()
-                .addPart('folderId', folderId.toString())
-                .addPart('importFile', 'file.json', MediaType.APPLICATION_JSON_TYPE, response.body())
-                .build()
+            .addPart('folderId', folderId.toString())
+            .addPart('importFile', 'file.json', MediaType.APPLICATION_JSON_TYPE, response.body())
+            .build()
         when:
         ListResponse<DataModel> dataModelResponse = dataModelApi.importModel(importRequest, 'org.maurodata.plugin.importer.json', 'JsonDataModelImporterPlugin', '4.0.0')
 
         then:
         dataModelResponse
         UUID importedDataModelId = dataModelResponse.items.first().id
+        importedDataModelId != dataModelId
+
 
         when:
         DataModel importedDataModel = dataModelApi.show(importedDataModelId)
@@ -133,7 +210,7 @@ class DataModelJsonImportExportIntegrationSpec extends CommonDataSpec {
 
         importedDataModel.annotations.size() == 1
         UUID parentId = importedDataModel.annotations[0].id
-        List<Annotation> children  = importedDataModel.annotations[0].childAnnotations
+        List<Annotation> children = importedDataModel.annotations[0].childAnnotations
         children.size() == 1
         children.first().parentAnnotationId == parentId
 
@@ -143,6 +220,40 @@ class DataModelJsonImportExportIntegrationSpec extends CommonDataSpec {
         importedDataTypes
         importedDataTypes.count == 1
         importedDataTypes.items.domainType.first() == dataType.domainType
+
+        //check imported dataModel includes dataFlows
+        when:
+        ListResponse<DataFlow> dataFlowResponse = dataFlowApi.list(importedDataModelId, Type.TARGET)
+
+        then:
+        dataFlowResponse
+        dataFlowResponse.items.size() == 1
+        dataFlowResponse.items[0].target.id == importedDataModelId
+
+        when:
+        DataFlow importedDataFlow = dataFlowApi.show(importedDataModelId, dataFlowResponse.items[0].id)
+        then:
+        importedDataFlow
+        importedDataFlow.id != dataFlow.id
+
+        when:
+        ListResponse<DataClassComponent> importedDataClassComponents = dataClassComponentApi.list(importedDataModel.id, importedDataFlow.id)
+        then:
+        importedDataClassComponents
+        importedDataClassComponents.items.size() == 1
+
+        when:
+        DataClassComponent importedDataClassComponent = dataClassComponentApi.show(importedDataModel.id, importedDataFlow.id, importedDataClassComponents.items[0].id)
+        then:
+        importedDataClassComponent
+        importedDataClassComponent.id != dataClassComponentId
+
+        when:
+        ListResponse<DataElementComponent> importedDataElementComponents = dataElementComponentApi.list(importedDataModel.id, importedDataFlow.id, importedDataClassComponent.id)
+        then:
+        importedDataElementComponents
+        importedDataElementComponents.items.size() == 1
+        importedDataElementComponents.items[0].id != dataElementComponentId
     }
 
     // TODO: Is this used, or could it be?
@@ -170,5 +281,4 @@ class DataModelJsonImportExportIntegrationSpec extends CommonDataSpec {
         response.items[0].id
 
     }
-
 }

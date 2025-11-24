@@ -1,6 +1,7 @@
 package org.maurodata.persistence.dataflow
 
 import groovy.transform.CompileStatic
+import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
@@ -10,50 +11,45 @@ import org.maurodata.persistence.cache.AdministeredItemCacheableRepository
 import org.maurodata.persistence.model.AdministeredItemContentRepository
 
 @CompileStatic
+@Slf4j
 @Singleton
 class DataElementComponentContentRepository extends AdministeredItemContentRepository {
 
     @Inject
-    AdministeredItemCacheableRepository.DataElementComponentCacheableRepository dataElementComponentRepository
+    AdministeredItemCacheableRepository.DataElementComponentCacheableRepository dataElementComponentCacheableRepository
 
     @Override
     DataElementComponent readWithContentById(UUID id) {
-        DataElementComponent dataElementComponent = dataElementComponentRepository.readById(id)
+        DataElementComponent dataElementComponent = dataElementComponentCacheableRepository.readById(id)
         if (!dataElementComponent) return null
-        dataElementComponent.sourceDataElements = dataElementComponentRepository.getSourceDataElements(dataElementComponent.id)
-        dataElementComponent.targetDataElements = dataElementComponentRepository.getTargetDataElements(dataElementComponent.id)
+        dataElementComponent.sourceDataElements = dataElementComponentCacheableRepository.getSourceDataElements(dataElementComponent.id)
+        dataElementComponent.targetDataElements = dataElementComponentCacheableRepository.getTargetDataElements(dataElementComponent.id)
         dataElementComponent
     }
 
 
     @Override
     AdministeredItem saveWithContent(@NonNull AdministeredItem administeredItem) {
-        DataElementComponent saved = dataElementComponentRepository.save(administeredItem as DataElementComponent)
-        saved.sourceDataElements.each {
-            dataElementComponentRepository.addSourceDataElement(saved.id, it.id)
-        }
-        saved.targetDataElements.each {
-            dataElementComponentRepository.addTargetDataElement(saved.id, it.id)
-        }
+        DataElementComponent saved = dataElementComponentCacheableRepository.save(administeredItem as DataElementComponent)
         saveAllFacets(saved)
         saved
     }
-    // TODO methods here won't invalidate the cache
+
     @Override
     Long deleteWithContent(@NonNull AdministeredItem administeredItem) {
         if ((administeredItem as DataElementComponent).sourceDataElements) {
-            dataElementComponentRepository.removeSourceDataElements(administeredItem.id)
+            dataElementComponentCacheableRepository.removeSourceDataElements(administeredItem.id)
         }
         if ((administeredItem as DataElementComponent).targetDataElements) {
-            dataElementComponentRepository.removeTargetDataElements(administeredItem.id)
+            dataElementComponentCacheableRepository.removeTargetDataElements(administeredItem.id)
         }
-        dataElementComponentRepository.delete(administeredItem as DataElementComponent)
+        dataElementComponentCacheableRepository.delete(administeredItem as DataElementComponent)
     }
 
     void deleteAllSourceAndTargetDataElements(List<DataElementComponent> dataElementComponents) {
         dataElementComponents.each{
-            dataElementComponentRepository.removeSourceDataElements(it.id)
-            dataElementComponentRepository.removeTargetDataElements(it.id)
+            dataElementComponentCacheableRepository.removeSourceDataElements(it.id)
+            dataElementComponentCacheableRepository.removeTargetDataElements(it.id)
         }
     }
 

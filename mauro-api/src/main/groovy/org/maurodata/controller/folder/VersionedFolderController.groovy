@@ -6,7 +6,9 @@ import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
+import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.Body
+import io.micronaut.http.annotation.Consumes
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Delete
 import io.micronaut.http.annotation.Get
@@ -31,12 +33,14 @@ import org.maurodata.api.model.ModelVersionedWithTargetsRefDTO
 import org.maurodata.api.model.PermissionsDTO
 import org.maurodata.audit.Audit
 import org.maurodata.controller.model.ModelController
+import org.maurodata.domain.facet.EditType
 import org.maurodata.domain.folder.Folder
 import org.maurodata.domain.folder.FolderService
 import org.maurodata.domain.model.version.CreateNewVersionData
 import org.maurodata.domain.model.version.FinaliseData
 import org.maurodata.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
 import org.maurodata.persistence.folder.FolderContentRepository
+import org.maurodata.service.core.AllFolderService
 import org.maurodata.web.ListResponse
 
 @Slf4j
@@ -47,15 +51,14 @@ class VersionedFolderController extends ModelController<Folder> implements Versi
 
     private static final String MY_CLASS_TYPE = "VersionedFolder"
 
-    @Inject
     FolderContentRepository folderContentRepository
 
     @Inject
-    FolderService folderService
+    AllFolderService allFolderService
 
     VersionedFolderController(FolderCacheableRepository folderRepository, FolderContentRepository folderContentRepository, FolderService folderService) {
         super(Folder, folderRepository, folderRepository, folderContentRepository, folderService)
-        this.folderService = folderService
+        this.folderContentRepository = folderContentRepository
     }
 
     @Get(Paths.VERSIONED_FOLDER_ID)
@@ -86,8 +89,15 @@ class VersionedFolderController extends ModelController<Folder> implements Versi
     @Transactional
     @Post(Paths.CHILD_VERSIONED_FOLDER_LIST)
     Folder create(UUID parentId, @Body @NonNull Folder folder) {
+        folder.authority = super.authorityService.getDefaultAuthority()
+        Folder cleanItem = cleanBody(folder)
+
+        Folder parent = validate(cleanItem, parentId)
         folder.setVersionable(true)
-        super.create(parentId, folder)
+
+        Folder created = createEntity(parent, cleanItem)
+        created = validateAndAddClassifiers(created)
+        created
     }
 
     @Audit
@@ -139,10 +149,26 @@ class VersionedFolderController extends ModelController<Folder> implements Versi
     }
 
 
+    @Audit(title = EditType.EXPORT, description = 'Export Versioned folder')
+    @Get(Paths.VERSIONED_FOLDER_EXPORT)
+    @Override
+    HttpResponse<byte[]> exportModel(UUID id, @Nullable String namespace, @Nullable String name, @Nullable String version) {
+        super.exportModel(id,namespace, name, version)
+
+    }
+
+    @Transactional
+    @ExecuteOn(TaskExecutors.IO)
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @Audit(title = EditType.IMPORT, description = 'Import folder')
+    @Post(Paths.VERSIONED_FOLDER_IMPORT)
     @Override
     ListResponse<Folder> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version) {
-        super.importModel(body, namespace, name, version)
+        List<Folder> imported = super.consumeExportFile(body, namespace, name, version)
+        List<Folder> saved = allFolderService.importModel(imported, folderContentRepository)
+        smallerResponse(saved)
     }
+
 
     @Audit
     @Transactional

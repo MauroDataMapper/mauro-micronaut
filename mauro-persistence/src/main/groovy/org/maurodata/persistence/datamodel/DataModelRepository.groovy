@@ -34,7 +34,14 @@ abstract class DataModelRepository implements ModelRepository<DataModel> {
     List<DataModel> findAllByLabel(String pathIdentifier) {
         dataModelDTORepository.findAllByLabel(pathIdentifier)
     }
-    @Override
+
+
+    @Nullable
+    List<DataModel> findAllByLabelAndBranchName(String label, String branchName) {
+        dataModelDTORepository.findAllByLabelAndBranchName(label, branchName)
+    }
+
+
     Class getDomainClass() {
         DataModel
     }

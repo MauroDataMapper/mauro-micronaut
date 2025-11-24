@@ -36,7 +36,7 @@ import org.maurodata.web.PaginationParams
 @Secured(SecurityRule.IS_AUTHENTICATED)
 class DataClassComponentController extends AdministeredItemController<DataClassComponent, DataFlow> implements DataClassComponentApi {
 
-    AdministeredItemCacheableRepository.DataClassCacheableRepository dataClassRepository
+    DataClassCacheableRepository dataClassRepository
 
     AdministeredItemCacheableRepository.DataClassComponentCacheableRepository dataClassComponentRepository
 

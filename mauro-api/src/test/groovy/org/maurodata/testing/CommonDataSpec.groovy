@@ -28,6 +28,7 @@ import org.maurodata.api.federation.PublishApi
 import org.maurodata.api.federation.SubscribedCatalogueApi
 import org.maurodata.api.federation.SubscribedModelApi
 import org.maurodata.api.folder.FolderApi
+import org.maurodata.api.folder.VersionedFolderApi
 import org.maurodata.api.importer.ImporterApi
 import org.maurodata.api.path.PathApi
 import org.maurodata.api.profile.ProfileApi
@@ -52,7 +53,6 @@ import org.maurodata.domain.datamodel.DataClass
 import org.maurodata.domain.datamodel.DataElement
 import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.datamodel.DataType
-import org.maurodata.domain.datamodel.EnumerationValue
 import org.maurodata.domain.facet.Annotation
 import org.maurodata.domain.facet.Metadata
 import org.maurodata.domain.facet.ReferenceFile
@@ -155,6 +155,7 @@ class CommonDataSpec extends Specification {
     @Shared @Inject PublishApi publishApi
     @Shared @Inject SemanticLinksApi semanticLinksApi
     @Shared @Inject PathApi pathApi
+    @Shared @Inject VersionedFolderApi versionedFolderApi
 
     @Inject
     SessionHandlerClientFilter sessionHandlerClientFilter

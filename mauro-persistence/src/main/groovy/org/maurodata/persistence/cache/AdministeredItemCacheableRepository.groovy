@@ -202,6 +202,9 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
             ((DataClassRepository) repository).deleteExtensionRelationship(sourceDataClass.id, targetDataClass.id)
         }
 
+        List<DataClass> findAllByLabel(String label) {
+            ((DataClassRepository) repository).findAllByLabel(label)
+        }
 
         @Override
         Boolean handles(String domainType) {
@@ -388,6 +391,11 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
             invalidate(id)
             ((DataClassComponentRepository) repository).removeTargetDataClasses(id)
         }
+
+        List<DataClassComponent> findAllByParent(DataFlow dataFlow)  {
+            ((DataClassComponentRepository) repository).findAllByDataFlow(dataFlow)
+        }
+
         Boolean handles(String domainType) {
             domainClass.simpleName.equalsIgnoreCase(domainType) || (domainClass.simpleName + 's').equalsIgnoreCase(domainType)
         }
@@ -433,6 +441,10 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
 
         List<DataElement> getTargetDataElements(UUID id) {
             ((DataElementComponentRepository) repository).getTargetDataElements(id)
+        }
+
+        List<DataElementComponent> findAllByParent(DataClassComponent dataClassComponent )  {
+            ((DataElementComponentRepository) repository).findAllByDataClassComponent(dataClassComponent)
         }
 
         @Override

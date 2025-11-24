@@ -78,11 +78,6 @@ class DataClassComponent extends ModelItem<DataFlow> {
         'dcc'
     }
 
-    @Transient
-    @JsonIgnore
-    List<Collection<? extends ModelItem<DataClassComponent>>> getAllAssociations() {
-        [dataElementComponents] as List<Collection<? extends ModelItem<DataClassComponent>>>
-    }
 
     @Override
     void copyInto(Item into) {

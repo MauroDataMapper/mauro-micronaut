@@ -1,34 +1,38 @@
 package org.maurodata.persistence.dataflow
 
 import groovy.transform.CompileStatic
+import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
 import org.maurodata.domain.dataflow.DataClassComponent
+import org.maurodata.domain.dataflow.DataElementComponent
 import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository
 import org.maurodata.persistence.model.AdministeredItemContentRepository
 
 @CompileStatic
+@Slf4j
 @Singleton
 class DataClassComponentContentRepository extends AdministeredItemContentRepository {
 
     @Inject
-    AdministeredItemCacheableRepository.DataClassComponentCacheableRepository dataClassComponentRepository
+    AdministeredItemCacheableRepository.DataClassComponentCacheableRepository dataClassComponentCacheableRepository
 
     @Inject
     DataElementComponentContentRepository dataElementComponentContentRepository
 
     @Inject
-    DataElementComponentRepository dataElementComponentRepository
+    AdministeredItemCacheableRepository.DataElementComponentCacheableRepository dataElementComponentCacheableRepository
+
 
     @Override
     DataClassComponent readWithContentById(UUID id) {
-        DataClassComponent dataClassComponent = dataClassComponentRepository.findById(id)
+        DataClassComponent dataClassComponent = dataClassComponentCacheableRepository.findById(id)
         if (!dataClassComponent) return null
-        dataClassComponent.sourceDataClasses = dataClassComponentRepository.findAllSourceDataClasses(dataClassComponent.id)
-        dataClassComponent.targetDataClasses = dataClassComponentRepository.findAllTargetDataClasses(dataClassComponent.id)
-        dataClassComponent.dataElementComponents = dataElementComponentRepository.findAllByParent(dataClassComponent)
+        dataClassComponent.sourceDataClasses = dataClassComponentCacheableRepository.findAllSourceDataClasses(dataClassComponent.id)
+        dataClassComponent.targetDataClasses = dataClassComponentCacheableRepository.findAllTargetDataClasses(dataClassComponent.id)
+        dataClassComponent.dataElementComponents = dataElementComponentCacheableRepository.findAllByParent(dataClassComponent)
         dataClassComponent
     }
 
@@ -36,31 +40,25 @@ class DataClassComponentContentRepository extends AdministeredItemContentReposit
     Long deleteWithContent(@NonNull AdministeredItem administeredItem) {
         if ((administeredItem as DataClassComponent).dataElementComponents) {
             dataElementComponentContentRepository.deleteAllSourceAndTargetDataElements((administeredItem as DataClassComponent).dataElementComponents)
-            dataElementComponentRepository.deleteAll( (administeredItem as DataClassComponent).dataElementComponents)
+            dataElementComponentCacheableRepository.deleteAll( (administeredItem as DataClassComponent).dataElementComponents)
         }
         if ((administeredItem as DataClassComponent).sourceDataClasses) {
-            dataClassComponentRepository.removeSourceDataClasses(administeredItem.id)
+            dataClassComponentCacheableRepository.removeSourceDataClasses(administeredItem.id)
         }
         if ((administeredItem as DataClassComponent).targetDataClasses) {
-            dataClassComponentRepository.removeTargetDataClasses(administeredItem.id)
+            dataClassComponentCacheableRepository.removeTargetDataClasses(administeredItem.id)
         }
-        dataClassComponentRepository.delete(administeredItem as DataClassComponent)
+        dataClassComponentCacheableRepository.delete(administeredItem as DataClassComponent)
     }
 
     @Override
     AdministeredItem saveWithContent(@NonNull AdministeredItem administeredItem) {
-        DataClassComponent saved = dataClassComponentRepository.save(administeredItem as DataClassComponent)
-        saved.sourceDataClasses.each{
-            dataClassComponentRepository.addSourceDataClass(saved.id, it.id)
-        }
-        saved.targetDataClasses.each{
-            dataClassComponentRepository.addTargetDataClass(saved.id, it.id)
-        }
+        DataClassComponent saved = (DataClassComponent) super.saveWithContent(administeredItem)
         saved.dataElementComponents.each {
             it.updateCreationProperties()
             it.dataClassComponent = saved
             it.parent = saved
-            dataElementComponentContentRepository.saveWithContent(it)
+            (DataElementComponent) super.saveWithContent(it)
         }
         saveAllFacets(saved)
         saved

@@ -56,7 +56,6 @@ import org.maurodata.domain.search.dto.SearchRequestDTO
 import org.maurodata.domain.search.dto.SearchResultsDTO
 import org.maurodata.domain.security.Role
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository.DataElementCacheableRepository
-import org.maurodata.persistence.cache.AdministeredItemCacheableRepository.DataTypeCacheableRepository
 import org.maurodata.persistence.cache.ModelCacheableRepository.DataModelCacheableRepository
 import org.maurodata.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
 import org.maurodata.persistence.datamodel.DataElementRepository
@@ -65,8 +64,10 @@ import org.maurodata.persistence.datamodel.DataTypeContentRepository
 import org.maurodata.persistence.search.SearchRepository
 import org.maurodata.plugin.datatype.DefaultDataTypeProviderPlugin
 import org.maurodata.plugin.exporter.DataModelExporterPlugin
+import org.maurodata.plugin.exporter.ModelExporterPlugin
 import org.maurodata.plugin.importer.DataModelImporterPlugin
 import org.maurodata.service.plugin.PluginService
+import org.maurodata.util.exporter.ExporterUtils
 import org.maurodata.web.ListResponse
 
 @Slf4j
@@ -82,13 +83,7 @@ class DataModelController extends ModelController<DataModel> implements DataMode
     SearchRepository searchRepository
 
     @Inject
-    DataModelService dataModelService
-
-    @Inject
     DataElementCacheableRepository dataElementCacheableRepository
-
-    @Inject
-    DataTypeCacheableRepository dataTypeCacheableRepository
 
     @Inject
     DataTypeContentRepository dataTypeContentRepository
@@ -96,12 +91,12 @@ class DataModelController extends ModelController<DataModel> implements DataMode
     @Inject
     DataElementRepository dataElementRepository
 
+
     DataModelController(DataModelCacheableRepository dataModelRepository, FolderCacheableRepository folderRepository, DataModelContentRepository dataModelContentRepository,
-                        DataModelService dataModelService) {
-        super(DataModel, dataModelRepository, folderRepository, dataModelContentRepository, dataModelService)
+                        DataModelService domainDataModelService) {
+        super(DataModel, dataModelRepository, folderRepository, dataModelContentRepository, domainDataModelService)
         this.dataModelRepository = dataModelRepository
         this.dataModelContentRepository = dataModelContentRepository
-        this.dataModelService = dataModelService
     }
 
     @Audit
@@ -116,14 +111,14 @@ class DataModelController extends ModelController<DataModel> implements DataMode
     DataModel create(UUID folderId, @Body @NonNull DataModel dataModel, @Nullable @QueryValue String defaultDataTypeProvider = null) {
         // First try and get the default datatypes if applicable
         List<DataType> importedDataTypes = []
-        if(defaultDataTypeProvider) {
+        if (defaultDataTypeProvider) {
             DefaultDataTypeProviderPlugin defaultDataTypeProviderPlugin = mauroPluginService.getPlugin(DefaultDataTypeProviderPlugin, defaultDataTypeProvider)
             PluginService.handlePluginNotFound(defaultDataTypeProviderPlugin, DefaultDataTypeProviderPlugin, defaultDataTypeProvider)
             importedDataTypes.addAll(defaultDataTypeProviderPlugin.dataTypes)
         }
         DataModel newDataModel = super.create(folderId, dataModel) as DataModel
         // If we previously got datatypes, now save them into the model
-        if(importedDataTypes.size() > 0) {
+        if (importedDataTypes.size() > 0) {
             newDataModel.dataTypes = importedDataTypes
             newDataModel.dataTypes.each {dataType ->
                 dataType.dataModel = newDataModel
@@ -199,7 +194,12 @@ class DataModelController extends ModelController<DataModel> implements DataMode
     @Audit
     @Get(Paths.DATA_MODEL_EXPORT)
     HttpResponse<byte[]> exportModel(UUID id, @Nullable String namespace, @Nullable String name, @Nullable String version) {
-        super.exportModel(id, namespace, name, version)
+        ModelExporterPlugin mauroPlugin = mauroPluginService.getPlugin(ModelExporterPlugin, namespace, name, version)
+        PluginService.handlePluginNotFound(mauroPlugin, namespace, name)
+
+        DataModel existing = getModelContent(id)
+        super.dataModelImportService.updateModelPaths(existing)
+        ExporterUtils.createExportResponse(mauroPlugin, existing)
     }
 
     @Transactional
@@ -208,10 +208,12 @@ class DataModelController extends ModelController<DataModel> implements DataMode
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Post(Paths.DATA_MODEL_IMPORT)
     ListResponse<DataModel> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version) {
-        super.importModel(body, namespace, name, version)
+        List<DataModel> imported = super.consumeExportFile(body, namespace, name, version)
+        List<DataModel> saved = super.dataModelImportService.saveImportedModels(imported)
+        smallerResponse(saved)
     }
 
-    @Audit
+        @Audit
     @Get(Paths.DATA_MODEL_DIFF)
     ObjectDiff diffModels(@NonNull UUID id, @NonNull UUID otherId) {
         DataModel dataModel = modelContentRepository.findWithContentById(id)
@@ -519,4 +521,6 @@ class DataModelController extends ModelController<DataModel> implements DataMode
     List<String> dataModelTypes() {
         return DataModelType.labels()
     }
+
+
 }

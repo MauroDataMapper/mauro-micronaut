@@ -1,12 +1,5 @@
 package org.maurodata.domain.datamodel
 
-
-import org.maurodata.domain.model.Item
-import org.maurodata.domain.model.ItemReference
-import org.maurodata.domain.model.ItemReferencer
-import org.maurodata.domain.model.ItemReferencerUtils
-import org.maurodata.domain.model.ItemUtils
-
 import com.fasterxml.jackson.annotation.JsonAlias
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
@@ -14,10 +7,17 @@ import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
 import groovy.transform.MapConstructor
 import io.micronaut.core.annotation.Introspected
+import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.MappedProperty
 import io.micronaut.data.annotation.Relation
 import jakarta.persistence.Transient
+import org.maurodata.domain.dataflow.DataFlow
+import org.maurodata.domain.model.Item
+import org.maurodata.domain.model.ItemReference
+import org.maurodata.domain.model.ItemReferencer
+import org.maurodata.domain.model.ItemReferencerUtils
+import org.maurodata.domain.model.ItemUtils
 import org.maurodata.domain.model.Model
 import org.maurodata.domain.model.ModelItem
 
@@ -50,6 +50,14 @@ class DataModel extends Model implements ItemReferencer {
     @Transient
     @JsonIgnore
     Set<EnumerationValue> enumerationValues = []
+
+    @Transient
+    @Nullable
+    List<DataFlow> targetDataFlows = []
+
+    @Transient
+    @Nullable
+    List<DataFlow> sourceDataFlows = []
 
     @Transient
     String modelType = domainType
@@ -95,22 +103,22 @@ class DataModel extends Model implements ItemReferencer {
         Map<UUID, DataType> clonedDataTypeLookup = [:]
         Map<UUID, EnumerationValue> clonedEnumerationValueLookup = [:]
 
-        cloned.dataTypes = dataTypes.collect {it ->
-            it.clone().tap {clonedDT ->
+        cloned.dataTypes = dataTypes.collect {it->
+            it.clone().tap { clonedDT ->
                 clonedDataTypeLookup.put(it.id, clonedDT)
                 clonedDT.parent = cloned
                 clonedDT.enumerationValues.clear()
             }
         }
         List<DataClass> clonedDataClasses = dataClasses.collect {
-            it.clone().tap {clonedDC ->
+            it.clone().tap { clonedDC ->
                 clonedDataClassLookup.put(it.id, clonedDC)
                 clonedDC.dataModel = cloned
             }
         }
         clonedDataClasses.each {
-            List<DataClass> clonedChildList = it.dataClasses.collect {child ->
-                child.clone().tap {clonedChild ->
+            List<DataClass> clonedChildList = it.dataClasses.collect { child ->
+                child.clone().tap { clonedChild ->
                     clonedChildDataClassLookup.put(child.id, clonedChild)
                     clonedChild.parentDataClass = it
                     clonedChild.dataModel = cloned
@@ -124,7 +132,7 @@ class DataModel extends Model implements ItemReferencer {
         cloned.allDataClasses = clonedChildren as Set<DataClass>
 
         cloned.dataElements = dataElements.collect {
-            it.clone().tap {clonedDataElement ->
+            it.clone().tap { clonedDataElement ->
                 clonedDataElementLookup.put(it.id, clonedDataElement)
                 Map<UUID, DataClass> allDataClassLookup = clonedDataClassLookup
                 allDataClassLookup.putAll(clonedChildDataClassLookup)
@@ -134,7 +142,7 @@ class DataModel extends Model implements ItemReferencer {
             }
         }
         cloned.allDataClasses.each {dataClass ->
-            dataClass.dataElements = dataClass.dataElements.collect {dataElementIt ->
+            dataClass.dataElements = dataClass.dataElements.collect { dataElementIt ->
                 clonedDataElementLookup[dataElementIt.id]
             }
             dataClass.extendsDataClasses = dataClass.extendsDataClasses.collect {extendedDataClass ->
@@ -145,7 +153,7 @@ class DataModel extends Model implements ItemReferencer {
             }
         }
         cloned.enumerationValues = enumerationValues.collect {
-            it.clone().tap {clonedEV ->
+            it.clone().tap { clonedEV ->
                 clonedEnumerationValueLookup.put(it.id, clonedEV)
                 clonedEV.dataModel = cloned
                 clonedEV.parent = clonedDataTypeLookup[it.parent.id]
@@ -171,9 +179,9 @@ class DataModel extends Model implements ItemReferencer {
         Map<String, DataType> dataTypesMap = dataTypes.collectEntries {[it.label, it]}
         List<? extends DataType> referenceTypes = dataTypeReferenceTypes()
 
-        dataTypes.each {dataType ->
+        dataTypes.each { dataType ->
             dataType.parent = this
-            dataType.enumerationValues.each {enumerationValue ->
+            dataType.enumerationValues.each { enumerationValue ->
                 enumerationValue.parent = dataType
                 enumerationValues.add(enumerationValue)
                 enumerationValue.dataModel = this
@@ -181,14 +189,14 @@ class DataModel extends Model implements ItemReferencer {
             }
         }
 
-        dataClasses.each {dataClass ->
+        dataClasses.each { dataClass ->
             setDataClassAssociations(dataClass, dataTypesMap, referenceTypes)
         }
         this
     }
 
     void setDataClassAssociations(DataClass dataClass, Map<String, DataType> dataTypesMap,
-                                  List<? extends DataType> referenceTypes) {
+                                 List<? extends DataType> referenceTypes) {
         allDataClasses.add(dataClass)
         dataClass.dataModel = this
         dataClass.dataClasses.each {childDataClass ->
@@ -203,10 +211,10 @@ class DataModel extends Model implements ItemReferencer {
                 this.dataElements.add(dataElement)
             }
         }
-        dataClass.referenceTypes = referenceTypes.findAll {it.referenceClass?.id == dataClass.id} as List<DataType>
+        dataClass.referenceTypes = referenceTypes.findAll{it.referenceClass?.id == dataClass.id } as List<DataType>
     }
 
-    protected List<DataType> dataTypeReferenceTypes() {
+     protected List<DataType> dataTypeReferenceTypes() {
         dataTypes.findAll {it.isReferenceType()}
     }
 
@@ -216,13 +224,13 @@ class DataModel extends Model implements ItemReferencer {
      */
 
     static DataModel build(
-        Map args,
-        @DelegatesTo(value = DataModel, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+            Map args,
+            @DelegatesTo(value = DataModel, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
         new DataModel(args).tap(closure)
     }
 
     static DataModel build(
-        @DelegatesTo(value = DataModel, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+            @DelegatesTo(value = DataModel, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
         build [:], closure
     }
 

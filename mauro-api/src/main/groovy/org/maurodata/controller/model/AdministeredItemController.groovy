@@ -50,7 +50,7 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
     @Inject
     PathRepository pathRepository
 
-    @Inject
+
     AdministeredItemController(Class<I> itemClass, AdministeredItemRepository<I> administeredItemRepository, AdministeredItemRepository<P> parentItemRepository,
                                AdministeredItemContentRepository administeredItemContentRepository) {
         super(administeredItemRepository)
@@ -256,5 +256,6 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
             throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "DataClass ${dataClassToDelete.id} is extended by " + str)
         }
     }
+
 
 }
