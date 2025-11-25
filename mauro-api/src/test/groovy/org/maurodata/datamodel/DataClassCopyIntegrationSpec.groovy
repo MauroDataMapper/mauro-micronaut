@@ -60,7 +60,7 @@ class DataClassCopyIntegrationSpec extends CommonDataSpec {
         childDataClass = dataClassApi.create(dataModelId, dataClass.id, dataClassPayload('child data class label'))
     }
 
-    void 'test copy simple dataclass with ReferenceClass dataType, has dataElement -primitiveDataType - both dataTypes created in target'() {
+    void 'test copy simple dataclass with ReferenceClass dataType, has dataElement -primitiveDataType - one dataTypes created in target'() {
         given:
         ListResponse<DataType> targetDataTypes = dataTypeApi.list(targetId)
         targetDataTypes.items.isEmpty()
@@ -74,8 +74,10 @@ class DataClassCopyIntegrationSpec extends CommonDataSpec {
         then:
         copied
 
-        copied.dataElements.size() == 1
-        DataElement copiedDataElement = copied.dataElements[0]
+        List<DataElement> dataElements = dataElementApi.list(targetId, copied.id).items
+
+        dataElements.size() == 1
+        DataElement copiedDataElement = dataElements[0]
         copiedDataElement.label == dataElement.label
         copiedDataElement.id != dataElement.id
         copiedDataElement.domainType == dataElement.domainType
@@ -97,15 +99,75 @@ class DataClassCopyIntegrationSpec extends CommonDataSpec {
         then:
         dataTypes
         dataTypes.items.size() == 1
-        //DataType copiedReferenceType  = dataTypes.items.find {it.domainType == DataType.DataTypeKind.REFERENCE_TYPE.stringValue}
-        //copiedReferenceType.id != referenceTypeDataType.id
-        //copiedReferenceType.referenceClass.id == copied.id
-        //copiedReferenceType.label == referenceTypeDataType.label
 
 
         DataType copiedDataType  = dataTypes.items.find {it.domainType == DataType.DataTypeKind.PRIMITIVE_TYPE.stringValue}
         copiedDataType.id != primitiveDataType.id
         copiedDataType.label == primitiveDataType.label
+
+        when:
+        ListResponse<DataClass> allDataClasses = dataClassApi.allDataClasses(dataModelId)
+        then:
+        allDataClasses
+        allDataClasses.items.size() == 2
+
+        when:
+        ListResponse<DataClass> topLeveDataClasses = dataClassApi.list(dataModelId, new PaginationParams())
+
+        then:
+        topLeveDataClasses
+        topLeveDataClasses.items.size() == 1
+
+    }
+
+
+    void 'test copy simple dataclass with ReferenceClass dataType, has dataElement -referenceDataType - one dataTypes created in target'() {
+        given:
+        ListResponse<DataType> targetDataTypes = dataTypeApi.list(targetId)
+        targetDataTypes.items.isEmpty()
+
+        and:
+        dataElement = dataElementApi.create(dataModelId, dataClass.id,
+                                            dataElementPayload("data element label", referenceTypeDataType))
+
+
+        when:
+        DataClass copied = dataClassApi.copyDataClass(targetId, dataModelId, dataClass.id)
+        then:
+        copied
+        copied.id != dataClass.id
+
+        List<DataElement> dataElements = dataElementApi.list(targetId, copied.id).items
+
+        dataElements.size() == 1
+        DataElement copiedDataElement = dataElements[0]
+        copiedDataElement.label == dataElement.label
+        copiedDataElement.id != dataElement.id
+        copiedDataElement.domainType == dataElement.domainType
+
+        copiedDataElement.dataType.id != dataElement.dataType.id
+        copiedDataElement.dataType.domainType == dataElement.dataType.domainType
+        copiedDataElement.dataType.label == dataElement.dataType.label
+
+        copied.dataClasses.size() == 1
+        DataClass copiedChild = copied.dataClasses[0]
+        copiedChild.label == childDataClass.label
+        copiedChild.id != childDataClass.id
+
+        copiedChild.dataElements.isEmpty()
+
+        //referenceTypes not showing in dataclass
+        when:
+        ListResponse<DataType> dataTypes = dataTypeApi.list(targetId)
+        then:
+        dataTypes
+        dataTypes.items.size() == 1
+
+
+        DataType copiedDataType  = dataTypes.items.find {it.domainType == DataType.DataTypeKind.REFERENCE_TYPE.stringValue }
+        copiedDataType.id != referenceTypeDataType.id
+        copiedDataType.label == referenceTypeDataType.label
+        copiedDataType.referenceClass.id == copied.id
 
         when:
         ListResponse<DataClass> allDataClasses = dataClassApi.allDataClasses(dataModelId)

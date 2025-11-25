@@ -209,8 +209,17 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
         dataClass.allChildDataClasses().each {
             it.dataModel = dataModel
         }
-        copyDataTypes(dataClass, otherModel, dataModel)
-        contentsService.saveWithContent(dataClass)
+        setDataElementParents(dataClass)
+        Set<DataType> newDataTypes = copyDataTypes(dataClass, otherModel, dataModel)
+        dataModel.dataTypes = newDataTypes as List
+        dataModel.dataClasses = [dataClass]
+        dataClass.id = null
+
+        contentsService.saveContentOnly(dataModel)
+
+        // clean before responding
+        dataClass.dataElements = []
+
         dataClass
     }
 
@@ -231,7 +240,7 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
         dataTypeRepository.deleteAll(dataTypes)
     }
 
-    protected void copyDataTypes(DataClass dataClass, DataModel oldDataModel, DataModel newDataModel) {
+    protected Set<DataType> copyDataTypes(DataClass dataClass, DataModel oldDataModel, DataModel newDataModel) {
         Set<DataType> newDataTypes = []
         dataClass.allChildDataElements().each {dataElement ->
             dataElement.dataModel = newDataModel
@@ -249,6 +258,12 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
                         needToCopy.id = null
                         needToCopy.dataModel = newDataModel
                         dataElement.dataType = needToCopy
+                        if(dataElement.dataType.referenceClass) {
+                            dataElement.dataType.referenceClass = findReferenceClass(dataElement.dataType.referenceClass, dataClass)
+                            if(!dataElement.dataType.referenceClass) {
+                                ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "A data element uses a data type that refers to a dataclass not being copied")
+                            }
+                        }
                         newDataTypes.add(needToCopy)
                     } else {
                         ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "DataClass includes an element with an invalid datatype")
@@ -256,7 +271,31 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
                 }
             }
         }
-        newDataTypes.each {contentsService.saveWithContent(it)}
+        return newDataTypes
     }
 
+    protected void setDataElementParents(DataClass dataClass) {
+        dataClass.dataElements.each {
+            it.id = null
+            it.dataClass = dataClass
+        }
+        dataClass.dataClasses.each {
+            it.id = null
+            setDataElementParents(it)
+        }
+    }
+
+    protected DataClass findReferenceClass(DataClass referenceClass, DataClass dataClass) {
+        if(referenceClass.id == dataClass.id) {
+            return dataClass
+        } else {
+            dataClass.dataClasses.each {
+                DataClass response = findReferenceClass(referenceClass, it)
+                if(response) {
+                    return response
+                }
+            }
+        }
+        return null
+    }
 }

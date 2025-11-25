@@ -1,7 +1,6 @@
 package org.maurodata.persistence
 
 import groovy.util.logging.Slf4j
-import groovyjarjarantlr4.v4.runtime.misc.OrderedHashSet
 import jakarta.inject.Inject
 import org.maurodata.domain.classifier.ClassificationScheme
 import org.maurodata.domain.classifier.Classifier
@@ -14,7 +13,6 @@ import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.datamodel.DataType
 import org.maurodata.domain.datamodel.EnumerationValue
 import org.maurodata.domain.facet.Annotation
-import org.maurodata.domain.facet.CatalogueFile
 import org.maurodata.domain.facet.Edit
 import org.maurodata.domain.facet.Facet
 import org.maurodata.domain.facet.Metadata
@@ -57,17 +55,9 @@ import org.maurodata.persistence.cache.ModelCacheableRepository.FolderCacheableR
 import org.maurodata.persistence.cache.ModelCacheableRepository.TerminologyCacheableRepository
 import org.maurodata.persistence.cache.ModelCacheableRepository.DataModelCacheableRepository
 import org.maurodata.persistence.datamodel.dto.DataClassExtensionDTO
-import org.maurodata.persistence.facet.AnnotationRepository
 import org.maurodata.persistence.facet.MetadataRepository
-import org.maurodata.persistence.facet.ReferenceFileRepository
-import org.maurodata.persistence.facet.RuleRepository
-import org.maurodata.persistence.facet.SemanticLinkRepository
 import org.maurodata.persistence.folder.FolderRepository
-import org.maurodata.persistence.terminology.TermRelationshipRepository
-import org.maurodata.persistence.terminology.dto.CodeSetTermDTO
 
-import java.sql.Connection
-import java.sql.DatabaseMetaData
 import java.time.Duration
 import java.time.Instant
 import javax.sql.DataSource
@@ -127,14 +117,12 @@ class ContentHandler {
     Set<TermRelationshipType> termRelationshipTypes = []
     Set<TermRelationship> termRelationships = []
     Set<CodeSet> codeSets = []
-    Set<CodeSetTermDTO> codeSetTermDTOS = []
     Set<DataFlow> dataFlows = []
     Set<DataClassComponent> dataClassComponents = []
     Set<DataElementComponent> dataElementComponents = []
 
     Set<Metadata> metadata = []
     Map<Integer, Set<Annotation>> annotations = [:]
-    //List<CatalogueFile> catalogueFiles = []
     Set<Edit> edits = []
     Set<ReferenceFile> referenceFiles = []
     Set<Rule> rules = []
@@ -532,9 +520,9 @@ class ContentHandler {
     }
 
 
-    void printTimeTaken(Instant start) {
+    static void printTimeTaken(Instant start) {
         Duration timeTaken = Duration.between(start, Instant.now())
-        System.err.println(String.format("Time taken: %sm %ss %sms",
+        log.info(String.format("Time taken: %sm %ss %sms",
                                          timeTaken.toMinutesPart(),
                                          timeTaken.toSecondsPart(),
                                          timeTaken.toMillisPart()))
@@ -579,12 +567,6 @@ class ContentHandler {
         codeSets = [codeSet] as Set
         loadContent()
         return codeSets.first()
-    }
-
-    DataFlow loadWIthContent(DataFlow dataFlow) {
-        dataFlows = [dataFlow] as Set
-        loadContent()
-        return dataFlows.first()
     }
 
     DataClass loadWithContent(DataClass dataClass) {

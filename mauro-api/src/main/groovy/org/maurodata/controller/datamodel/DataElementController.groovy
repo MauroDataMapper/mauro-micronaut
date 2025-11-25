@@ -85,6 +85,12 @@ class DataElementController extends AdministeredItemController<DataElement, Data
         accessControlService.checkRole(Role.EDITOR, dataClass)
         dataElement.dataClass = dataClass
         createEntity(dataClass, dataElement)
+
+        // Clean before output
+        if(dataElement.dataType.referenceClass) {
+            dataElement.dataType.referenceClass.dataElements = []
+            dataElement.dataType.referenceClass.dataClasses = []
+        }
         return dataElement
     }
 
