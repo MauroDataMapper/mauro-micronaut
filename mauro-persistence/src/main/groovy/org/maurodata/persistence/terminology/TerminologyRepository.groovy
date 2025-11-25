@@ -8,6 +8,7 @@ import io.micronaut.data.model.query.builder.sql.Dialect
 import jakarta.inject.Inject
 import org.maurodata.FieldConstants
 import org.maurodata.domain.terminology.Terminology
+import org.maurodata.persistence.ContentsService
 import org.maurodata.persistence.model.ModelRepository
 import org.maurodata.persistence.terminology.dto.TerminologyDTORepository
 
@@ -18,6 +19,11 @@ abstract class TerminologyRepository implements ModelRepository<Terminology> {
 
     @Inject
     TerminologyDTORepository terminologyDTORepository
+
+    TerminologyRepository(ContentsService contentsService) {
+        this.contentsService = contentsService
+    }
+
 
     @Nullable
     Terminology findById(UUID id) {
@@ -44,6 +50,10 @@ abstract class TerminologyRepository implements ModelRepository<Terminology> {
     Boolean handles(Class clazz) {
         domainClass.isAssignableFrom(clazz)
     }
+
+    @Override
+    @Nullable
+    abstract List<Terminology> readAllByFolderIdIn(Collection<UUID> folderIds)
 
     @Override
     @Nullable

@@ -1,10 +1,13 @@
 package org.maurodata.persistence.datamodel
 
+import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import org.maurodata.FieldConstants
 import org.maurodata.domain.datamodel.DataModel
+import org.maurodata.domain.model.AdministeredItem
+import org.maurodata.persistence.ContentsService
 import org.maurodata.persistence.datamodel.dto.DataModelDTORepository
 import org.maurodata.persistence.model.ModelRepository
 
@@ -15,6 +18,10 @@ import jakarta.inject.Inject
 @CompileStatic
 @JdbcRepository(dialect = Dialect.POSTGRES)
 abstract class DataModelRepository implements ModelRepository<DataModel> {
+
+    DataModelRepository(ContentsService contentsService) {
+        this.contentsService = contentsService
+    }
 
     @Inject
     DataModelDTORepository dataModelDTORepository
@@ -47,6 +54,12 @@ abstract class DataModelRepository implements ModelRepository<DataModel> {
     @Override
     @Nullable
     abstract List<DataModel> findAllByFolderId(UUID folderId)
+
+    @Override
+    @Nullable
+    abstract List<DataModel> readAllByFolderIdIn(Collection<UUID> folderIds)
+
+
 
     // TODO: This method really needs caching
     @Query(value = '''

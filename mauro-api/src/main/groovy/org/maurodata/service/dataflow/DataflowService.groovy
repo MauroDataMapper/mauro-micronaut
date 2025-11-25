@@ -7,6 +7,7 @@ import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.server.multipart.MultipartBody
 import jakarta.inject.Inject
+import jakarta.inject.Singleton
 import org.maurodata.ErrorHandler
 import org.maurodata.domain.dataflow.DataElementComponent
 import org.maurodata.domain.dataflow.DataFlow
@@ -17,8 +18,9 @@ import org.maurodata.domain.folder.Folder
 import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.domain.model.ModelItem
 import org.maurodata.domain.security.Role
+import org.maurodata.persistence.ContentsService
 import org.maurodata.persistence.cache.ModelCacheableRepository
-import org.maurodata.persistence.datamodel.DataModelContentRepository
+
 import org.maurodata.plugin.MauroPluginService
 import org.maurodata.plugin.exporter.ModelItemExporterPlugin
 import org.maurodata.plugin.importer.ImportParameters
@@ -32,6 +34,7 @@ import org.maurodata.utils.importer.ImporterUtils
 
 @CompileStatic
 @Slf4j
+@Singleton
 class DataflowService extends AdministeredItemService {
 
     AccessControlService accessControlService
@@ -39,19 +42,20 @@ class DataflowService extends AdministeredItemService {
     ModelCacheableRepository.DataModelCacheableRepository dataModelRepository
     MauroPluginService mauroPluginService
     PathService pathService
-    DataModelContentRepository dataModelContentRepository
     ImporterUtils importerUtils
+
+    @Inject
+    ContentsService contentsService
 
     @Inject
     DataflowService(AccessControlService accessControlService, ModelCacheableRepository.FolderCacheableRepository folderRepository,
                     ModelCacheableRepository.DataModelCacheableRepository dataModelRepository, MauroPluginService mauroPluginService, PathService pathService,
-                    DataModelContentRepository dataModelContentRepository, ImporterUtils importerUtils) {
+                    ImporterUtils importerUtils) {
         this.accessControlService = accessControlService
         this.folderRepository = folderRepository
         this.dataModelRepository = dataModelRepository
         this.mauroPluginService = mauroPluginService
         this.pathService = pathService
-        this.dataModelContentRepository = dataModelContentRepository
         this.importerUtils = importerUtils
     }
 
@@ -79,7 +83,7 @@ class DataflowService extends AdministeredItemService {
         pathRepository.readParentItems(target)
         target.updatePath()
 
-        DataModel source = dataModelContentRepository.findWithContentById(importParameters.sourceDataModelId)
+        DataModel source = dataModelRepository.loadWithContent(importParameters.sourceDataModelId)
         ErrorHandler.handleErrorOnNullObject(HttpStatus.BAD_REQUEST, source, "Datamodel with id $importParameters.sourceDataModelId not found")
         accessControlService.checkRole(Role.EDITOR, source)
 
@@ -94,7 +98,7 @@ class DataflowService extends AdministeredItemService {
         folder.updatePath()
 
         //read in all modelitems under target
-        target = dataModelContentRepository.findWithContentById(target.id) as DataModel
+        target = dataModelRepository.loadWithContent(target.id) as DataModel
 
         imported.each {imp ->
             imp.folder = folder

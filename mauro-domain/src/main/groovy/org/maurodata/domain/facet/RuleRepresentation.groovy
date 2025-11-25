@@ -1,5 +1,6 @@
 package org.maurodata.domain.facet
 
+import jakarta.persistence.PrePersist
 import org.maurodata.domain.diff.CollectionDiff
 import org.maurodata.domain.diff.DiffBuilder
 import org.maurodata.domain.diff.DiffableItem
@@ -27,6 +28,10 @@ class RuleRepresentation extends Item implements DiffableItem<RuleRepresentation
 
     String representation
 
+    @Transient
+    @JsonIgnore
+    Rule rule
+
     @JsonAlias(['rule_id'])
     UUID ruleId
 
@@ -43,6 +48,14 @@ class RuleRepresentation extends Item implements DiffableItem<RuleRepresentation
     String getDiffIdentifier() {
         return "${pathPrefix}:${language}"
     }
+
+    @PrePersist
+    void prePersist() {
+        if(rule) {
+            ruleId = rule.id
+        }
+    }
+
 
     @Override
     @JsonIgnore

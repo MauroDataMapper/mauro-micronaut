@@ -14,6 +14,7 @@ import jakarta.inject.Inject
 import org.maurodata.domain.datamodel.DataClass
 import org.maurodata.domain.datamodel.DataElement
 import org.maurodata.domain.model.AdministeredItem
+import org.maurodata.persistence.datamodel.dto.DataElementDTO
 import org.maurodata.persistence.datamodel.dto.DataElementDTORepository
 import org.maurodata.persistence.model.ModelItemRepository
 
@@ -73,6 +74,10 @@ abstract class DataElementRepository implements ModelItemRepository<DataElement>
     }
 
     @Nullable
+    abstract List<DataElement> readAllByDataClassIdIn(Collection<UUID> dataClassIds)
+
+
+    @Nullable
     List<DataElement> findAllByDataModel(DataModel dataModel) {
         List<DataClass> dataClasses = dataClassRepository.findAllByDataModel(dataModel)
         findAllByDataClassIn(dataClasses)
@@ -85,6 +90,9 @@ abstract class DataElementRepository implements ModelItemRepository<DataElement>
         readAllByDataClassIn(dataClasses)
     }
 
+    DataElement readByDataClassAndLabel(DataClass dataClass, String label) {
+        dataElementDTORepository.readByDataClassAndLabel(dataClass, label) as DataElement
+    }
 
 
     @Nullable

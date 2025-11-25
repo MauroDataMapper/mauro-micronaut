@@ -152,7 +152,6 @@ class DataModel extends Model implements ItemReferencer {
             }
         } as Set<EnumerationValue>
 
-        cloned.setAssociations()
         cloned.allDataClasses = cloned.allDataClasses.toSorted {it.parentDataClass} as Set<DataClass>
         cloned
     }
@@ -168,40 +167,62 @@ class DataModel extends Model implements ItemReferencer {
     @JsonIgnore
     @Override
     void setAssociations() {
-        Map<String, DataType> dataTypesMap = dataTypes.collectEntries {[it.label, it]}
+        super.setAssociations()
+        Map<String, DataType> dataTypesMap = dataTypes.collectEntries {[it.id?:it.label, it]}
         List<? extends DataType> referenceTypes = dataTypeReferenceTypes()
 
         dataTypes.each {dataType ->
             dataType.parent = this
+            dataType.dataModel = this
             dataType.enumerationValues.each {enumerationValue ->
                 enumerationValue.parent = dataType
+                enumerationValue.enumerationType = dataType
                 enumerationValues.add(enumerationValue)
                 enumerationValue.dataModel = this
                 this.enumerationValues.add(enumerationValue)
             }
+            dataType.setAssociations()
         }
 
         dataClasses.each {dataClass ->
             setDataClassAssociations(dataClass, dataTypesMap, referenceTypes)
         }
+        dataTypes.each {dataType ->
+            if(dataType.dataTypeKind == DataType.DataTypeKind.REFERENCE_TYPE) {
+                if(!dataType.dataModel.allDataClasses.contains(dataType.referenceClass)) {
+                    dataType.referenceClass = dataType.dataModel.allDataClasses.find {dataClass ->
+                        (dataType.referenceClass.id && dataClass.id && dataClass.id == dataType.referenceClass.id) ||
+                        (dataType.referenceClass.label && dataClass.label && dataClass.label == dataType.referenceClass.label)
+                    }
+                }
+            }
+        }
+
         this
     }
 
     void setDataClassAssociations(DataClass dataClass, Map<String, DataType> dataTypesMap,
                                   List<? extends DataType> referenceTypes) {
-        allDataClasses.add(dataClass)
+        dataClass.setAssociations()
         dataClass.dataModel = this
+        if(!dataClass.dataModel.allDataClasses.contains(dataClass)) {
+            dataClass.dataModel.allDataClasses.add(dataClass)
+        }
         dataClass.dataClasses.each {childDataClass ->
             setDataClassAssociations(childDataClass, dataTypesMap, referenceTypes)
             childDataClass.parentDataClass = dataClass
         }
         dataClass.dataElements.each {dataElement ->
             dataElement.dataModel = this
+            if(!dataElement.dataModel.dataElements.contains(dataElement)) {
+                dataElement.dataModel.dataElements.add(dataElement)
+            }
             dataElement.dataClass = dataClass
-            dataElement.dataType = dataTypesMap[dataElement?.dataType?.label]
+            dataElement.dataType = dataTypesMap[dataElement.dataType?.id ?: dataElement.dataType?.label]
             if (!this.dataElements.contains(dataElement)) {
                 this.dataElements.add(dataElement)
             }
+            dataElement.setAssociations()
         }
         dataClass.referenceTypes = referenceTypes.findAll {it.referenceClass?.id == dataClass.id} as List<DataType>
     }

@@ -32,14 +32,14 @@ class DataElementComponent extends ModelItem<DataClassComponent> {
     @Nullable
     String definition
 
-    @Relation(value = Relation.Kind.MANY_TO_MANY)
+    @Relation(value = Relation.Kind.MANY_TO_MANY, cascade = Relation.Cascade.ALL)
     @JoinTable(
         name = "data_element_component_source_data_element",
         joinColumns = @JoinColumn(name = "data_element_component_id"),
         inverseJoinColumns = @JoinColumn(name = "data_element_id"))
     List<DataElement> sourceDataElements = []
 
-    @Relation(value = Relation.Kind.MANY_TO_MANY)
+    @Relation(value = Relation.Kind.MANY_TO_MANY, cascade = Relation.Cascade.ALL)
     @JoinTable(
         name = "data_element_component_target_data_element",
         joinColumns = @JoinColumn(name = "data_element_component_id"),

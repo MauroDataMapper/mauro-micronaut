@@ -7,12 +7,17 @@ import io.micronaut.data.model.query.builder.sql.Dialect
 import jakarta.inject.Inject
 import org.maurodata.FieldConstants
 import org.maurodata.domain.classifier.ClassificationScheme
+import org.maurodata.persistence.ContentsService
 import org.maurodata.persistence.classifier.dto.ClassificationSchemeDTORepository
 import org.maurodata.persistence.model.ModelRepository
 
 @CompileStatic
 @JdbcRepository(dialect = Dialect.POSTGRES)
 abstract class ClassificationSchemeRepository implements ModelRepository<ClassificationScheme> {
+
+    ClassificationSchemeRepository(ContentsService contentsService) {
+        this.contentsService = contentsService
+    }
 
     @Inject
     ClassificationSchemeDTORepository classificationSchemeDTORepository
@@ -44,6 +49,10 @@ abstract class ClassificationSchemeRepository implements ModelRepository<Classif
     @Override
     @Nullable
     abstract List<ClassificationScheme> findAllByFolderId(UUID folderId)
+
+    @Override
+    @Nullable
+    abstract List<ClassificationScheme> readAllByFolderIdIn(Collection<UUID> folderIds)
 
 
     @Override

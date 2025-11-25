@@ -1,0 +1,21 @@
+micronaut:
+    caches:
+        items-cache:
+            initial-capacity: 10000
+            maximum-weight: 1_000_000_000
+            expire-after-write: 1h
+            record-stats: true
+
+datasources:
+    default:
+        url: jdbc:postgresql://localhost:5432/sandbox?reWriteBatchedInserts=true
+        username: sandbox
+        password: sandbox
+        dialect: POSTGRES
+        db-type: postgres
+        driver-class-name: org.postgresql.Driver
+logger:
+    levels:
+#       io.micronaut.data: DEBUG
+#        com.zaxxer.hikari: DEBUG
+#        org.postgresql: DEBUG

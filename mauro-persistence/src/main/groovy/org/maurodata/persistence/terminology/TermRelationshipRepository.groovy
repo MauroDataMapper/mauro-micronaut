@@ -56,6 +56,9 @@ abstract class TermRelationshipRepository implements ModelItemRepository<TermRel
     @Nullable
     abstract List<TermRelationship> readAllByTerminology(Terminology terminology)
 
+    @Nullable
+    abstract List<TermRelationship> readAllByTerminologyIdIn(Collection<UUID> terminologyIds)
+
     @Override
     @Nullable
     List<TermRelationship> readAllByParent(AdministeredItem parent) {

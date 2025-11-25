@@ -1,5 +1,9 @@
 package org.maurodata.domain.facet
 
+import groovy.util.logging.Slf4j
+import io.micronaut.data.annotation.MappedEntity
+import jakarta.persistence.Entity
+import jakarta.persistence.PrePersist
 import org.maurodata.domain.model.ItemReference
 import org.maurodata.domain.model.ItemReferencer
 import org.maurodata.domain.model.ItemReferencerUtils
@@ -18,6 +22,8 @@ import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.domain.model.Item
 
 @CompileStatic
+@Slf4j
+@MappedEntity(schema = 'core')
 @AutoClone(excludes = ['multiFacetAwareItem'])
 abstract class Facet extends Item implements Pathable, ItemReferencer {
 
@@ -32,6 +38,20 @@ abstract class Facet extends Item implements Pathable, ItemReferencer {
     @Transient
     @JsonIgnore
     AdministeredItem multiFacetAwareItem
+
+    @PrePersist
+    void prePersist() {
+        if(!multiFacetAwareItemId) {
+            if(multiFacetAwareItem) {
+                multiFacetAwareItemId = multiFacetAwareItem.id
+                multiFacetAwareItemDomainType = multiFacetAwareItem.domainType
+            } else {
+                log.error("Trying to save Facet without 'multiFacetAwareItem' set")
+                log.error("" + multiFacetAwareItem)
+                log.error("" + multiFacetAwareItemId)
+            }
+        }
+    }
 
     @Transient
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)

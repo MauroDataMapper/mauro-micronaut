@@ -8,7 +8,7 @@ import org.maurodata.persistence.model.ItemRepository
 
 @CompileStatic
 @JdbcRepository(dialect = Dialect.POSTGRES)
-abstract class SummaryMetadataRepository implements ItemRepository<SummaryMetadata> {
+abstract class SummaryMetadataRepository implements FacetRepository<SummaryMetadata> {
 
     @Override
     Class getDomainClass() {

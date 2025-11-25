@@ -209,7 +209,6 @@ class DataElement extends ModelItem<DataClass> implements DiffableItem<DataEleme
         this.dataType
     }
 
-
     DataType dataType(Map args, @DelegatesTo(value = DataType, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
         DataType dataType = DataType.build(args + [dataModel: this.dataModel], closure)
         this.dataType = dataType

@@ -9,7 +9,7 @@ import io.micronaut.data.model.query.builder.sql.Dialect
 
 @CompileStatic
 @JdbcRepository(dialect = Dialect.POSTGRES)
-abstract class SemanticLinkRepository implements ItemRepository<SemanticLink> {
+abstract class SemanticLinkRepository implements FacetRepository<SemanticLink> {
 
     @Override
     Class getDomainClass() {

@@ -1,6 +1,7 @@
 package org.maurodata.persistence.profile
 
-import org.maurodata.persistence.datamodel.DataModelContentRepository
+import org.maurodata.persistence.ContentsService
+import org.maurodata.persistence.cache.ModelCacheableRepository
 import org.maurodata.persistence.datamodel.DataModelRepository
 import org.maurodata.profile.DataModelBasedProfile
 import org.maurodata.profile.ProfileSpecificationProfile
@@ -13,16 +14,16 @@ import jakarta.inject.Singleton
 class DynamicProfileService {
 
     @Inject
-    DataModelRepository dataModelRepository
+    ModelCacheableRepository.DataModelCacheableRepository dataModelCacheableRepository
 
     @Inject
-    DataModelContentRepository dataModelContentRepository
+    ContentsService contentsService
 
 
     List<DataModelBasedProfile> getDynamicProfiles() {
-        dataModelRepository.getAllModelsByNamespace(ProfileSpecificationProfile.NAMESPACE).collect {
+        dataModelCacheableRepository.getAllModelsByNamespace(ProfileSpecificationProfile.NAMESPACE).collect {
             dataModel -> new DataModelBasedProfile(
-                    dataModelContentRepository.findWithContentById(dataModel.id))
+                dataModelCacheableRepository.loadWithContent(dataModel.id))
         }
     }
 

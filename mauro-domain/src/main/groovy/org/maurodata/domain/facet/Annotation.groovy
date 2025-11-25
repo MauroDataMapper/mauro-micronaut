@@ -1,5 +1,7 @@
 package org.maurodata.domain.facet
 
+import groovy.util.logging.Slf4j
+import jakarta.persistence.PrePersist
 import org.maurodata.domain.model.Item
 import org.maurodata.domain.model.ItemUtils
 
@@ -24,7 +26,12 @@ import org.maurodata.domain.security.CatalogueUser
 @MappedEntity(value = 'annotation', schema = 'core', alias = 'annotation_')
 @AutoClone
 @Indexes([@Index(columns = ['multi_facet_aware_item_id'])])
+@Slf4j
 class Annotation extends Facet implements DiffableItem<Annotation> {
+
+    @Transient
+    @JsonIgnore
+    Annotation parentAnnotation
 
     @JsonAlias(['parent_annotation_id'])
     UUID parentAnnotationId
@@ -40,9 +47,48 @@ class Annotation extends Facet implements DiffableItem<Annotation> {
     @Relation(Relation.Kind.ONE_TO_MANY)
     List<Annotation> childAnnotations = []
 
+    @PrePersist
+    void prePersist() {
+        if(parentAnnotation && (!parentAnnotationId || parentAnnotationId != parentAnnotation.id)) {
+            if(parentAnnotation.id) {
+                parentAnnotationId = parentAnnotation.id
+            } else {
+                log.error("Trying to save a child Annotation without parent id being saved")
+                log.error("" + label)
+                log.error("" + parentAnnotation.label)
+            }
+        }
+        if(!multiFacetAwareItemId) {
+            if(multiFacetAwareItem) {
+                multiFacetAwareItemId = multiFacetAwareItem.id
+                multiFacetAwareItemDomainType = multiFacetAwareItem.domainType
+            } else if(parentAnnotation) {
+                    multiFacetAwareItemId = parentAnnotation.multiFacetAwareItemId
+                    multiFacetAwareItemDomainType = parentAnnotation.multiFacetAwareItemDomainType
+            } else {
+                log.error("Trying to save Annotation without 'multiFacetAwareItem' set")
+
+                log.error("" + multiFacetAwareItem)
+                log.error("" + multiFacetAwareItemId)
+                log.error("" + parentAnnotation)
+                log.error("" + parentAnnotation?.multiFacetAwareItem)
+                log.error("" + parentAnnotation?.multiFacetAwareItemId)
+            }
+        }
+
+    }
 
     CatalogueUser getCreatedByUser() {
         createdByUser ? createdByUser : catalogueUser
+    }
+
+    void setAssociations() {
+        if(childAnnotations) {
+            childAnnotations.each {childAnnotation ->
+                childAnnotation.parentAnnotation = this
+                childAnnotation.setAssociations()
+            }
+        }
     }
 
     @Override

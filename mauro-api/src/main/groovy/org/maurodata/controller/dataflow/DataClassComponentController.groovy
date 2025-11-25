@@ -26,7 +26,7 @@ import org.maurodata.domain.datamodel.DataClass
 import org.maurodata.domain.security.Role
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository.DataClassCacheableRepository
-import org.maurodata.persistence.dataflow.DataClassComponentContentRepository
+
 import org.maurodata.web.ListResponse
 import org.maurodata.web.PaginationParams
 
@@ -40,18 +40,14 @@ class DataClassComponentController extends AdministeredItemController<DataClassC
 
     AdministeredItemCacheableRepository.DataClassComponentCacheableRepository dataClassComponentRepository
 
-    DataClassComponentContentRepository dataClassComponentContentRepository
-
     AdministeredItemCacheableRepository.DataFlowCacheableRepository dataFlowRepository
 
 
     DataClassComponentController(AdministeredItemCacheableRepository.DataClassComponentCacheableRepository dataClassComponentRepository,
                                  AdministeredItemCacheableRepository.DataFlowCacheableRepository dataFlowRepository,
-                                 DataClassComponentContentRepository dataClassComponentContentRepository,
                                  DataClassCacheableRepository dataClassRepository) {
-        super(DataClassComponent, dataClassComponentRepository, dataFlowRepository, dataClassComponentContentRepository)
+        super(DataClassComponent, dataClassComponentRepository, dataFlowRepository)
         this.dataClassComponentRepository = dataClassComponentRepository
-        this.dataClassComponentContentRepository = dataClassComponentContentRepository
         this.dataFlowRepository = dataFlowRepository
         this.dataClassRepository = dataClassRepository
     }
@@ -119,7 +115,7 @@ class DataClassComponentController extends AdministeredItemController<DataClassC
         DataClass dataClassToAdd = dataClassRepository.readById(dataClassId)
         ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, dataClassToAdd, "item not found : $id")
         accessControlService.checkRole(Role.EDITOR, dataClassToAdd)
-        DataClassComponent dataClassComponent = dataClassComponentContentRepository.readWithContentById(id)
+        DataClassComponent dataClassComponent = dataClassComponentRepository.loadWithContent(id)
         ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, dataClassComponent, "item not found : $id")
         accessControlService.checkRole(Role.EDITOR, dataClassComponent)
 
@@ -148,7 +144,7 @@ class DataClassComponentController extends AdministeredItemController<DataClassC
         DataClass dataClassToRemove = dataClassRepository.readById(dataClassId)
         ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, dataClassToRemove, "Item with id: $dataClassId not found")
         accessControlService.checkRole(Role.EDITOR, dataClassToRemove)
-        DataClassComponent dataClassComponent = dataClassComponentContentRepository.readWithContentById(id)
+        DataClassComponent dataClassComponent = dataClassComponentRepository.loadWithContent(id)
         ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, dataClassToRemove, "Item with id: $id not found")
         accessControlService.checkRole(Role.EDITOR, dataClassComponent)
 

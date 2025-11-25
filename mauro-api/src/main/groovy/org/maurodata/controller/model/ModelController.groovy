@@ -34,7 +34,6 @@ import org.maurodata.api.model.PermissionsDTO
 import org.maurodata.api.model.VersionLinkDTO
 import org.maurodata.api.model.VersionLinkTargetDTO
 import org.maurodata.controller.facet.EditController
-import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.diff.ArrayDiff
 import org.maurodata.domain.diff.CollectionDiff
 import org.maurodata.domain.diff.FieldDiff
@@ -57,16 +56,15 @@ import org.maurodata.domain.model.version.ModelVersion
 import org.maurodata.domain.security.CatalogueUser
 import org.maurodata.domain.security.Role
 import org.maurodata.domain.security.UserGroup
-import org.maurodata.domain.terminology.CodeSet
-import org.maurodata.domain.terminology.Terminology
+import org.maurodata.persistence.ContentsService
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository
 import org.maurodata.persistence.cache.FacetCacheableRepository
 import org.maurodata.persistence.cache.ModelCacheableRepository
 import org.maurodata.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
 import org.maurodata.persistence.facet.VersionLinkRepository
-import org.maurodata.persistence.model.AdministeredItemContentRepository
+
 import org.maurodata.persistence.model.AdministeredItemRepository
-import org.maurodata.persistence.model.ModelContentRepository
+
 import org.maurodata.plugin.MauroPluginService
 import org.maurodata.plugin.exporter.ModelExporterPlugin
 import org.maurodata.plugin.importer.FolderImporterPlugin
@@ -85,6 +83,9 @@ import java.lang.reflect.Method
 @CompileStatic
 @Secured(SecurityRule.IS_ANONYMOUS)
 abstract class ModelController<M extends Model> extends AdministeredItemController<M, Folder> implements ModelApi<M> {
+
+    @Inject
+    FacetCacheableRepository.VersionLinkCacheableRepository versionLinkCacheableRepository
 
     @Inject
     FacetCacheableRepository.ReferenceFileCacheableRepository referenceFileCacheableRepository
@@ -108,7 +109,8 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     @Inject
     MauroPluginService mauroPluginService
 
-    ModelContentRepository<M> modelContentRepository
+    @Inject
+    ContentsService contentsService
 
     ModelService<M> modelService
     @Inject
@@ -123,25 +125,20 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     @Inject
     EditController editController
 
-    @Inject
-    List<AdministeredItemContentRepository> administeredItemContentRepositories
 
     @Inject
     ImporterUtils importerUtils
 
-    ModelController(Class<M> modelClass, AdministeredItemCacheableRepository<M> modelRepository, FolderCacheableRepository folderRepository,
-                    ModelContentRepository<M> modelContentRepository) {
-        super(modelClass, modelRepository, folderRepository, modelContentRepository)
+    ModelController(Class<M> modelClass, AdministeredItemCacheableRepository<M> modelRepository, FolderCacheableRepository folderRepository) {
+        super(modelClass, modelRepository, folderRepository)
         this.itemClass = modelClass
         this.administeredItemRepository = modelRepository
         this.parentItemRepository = folderRepository
-        this.modelContentRepository = modelContentRepository
-        this.administeredItemContentRepository = modelContentRepository
     }
 
     ModelController(Class<M> modelClass, AdministeredItemCacheableRepository<M> modelRepository, FolderCacheableRepository folderRepository,
-                    ModelContentRepository<M> modelContentRepository, ModelService modelService) {
-        this(modelClass, modelRepository, folderRepository, modelContentRepository)
+                    ModelService modelService) {
+        this(modelClass, modelRepository, folderRepository)
         this.modelService = modelService
     }
 
@@ -185,7 +182,8 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
 
     @Transactional
     HttpResponse delete(UUID id, @Body @Nullable M model, @Nullable Boolean permanent) {
-        M modelToDelete = (M) modelContentRepository.findWithContentById(id)
+        M modelToDelete = modelRepository.readById(id)
+
 
         if (modelToDelete == null) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, "Object not found for deletion")
@@ -193,13 +191,12 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
 
         accessControlService.checkRole(Role.CONTAINER_ADMIN, modelToDelete)
 
+        modelToDelete = (M) contentsService.loadWithContent(modelToDelete)
         if (model?.version) modelToDelete.version = model.version
 
         if (permanent) {
+            contentsService.deleteWithContent(modelToDelete)
 
-            if (!administeredItemContentRepository.deleteWithContent(modelToDelete)) {
-                throw new HttpStatusException(HttpStatus.NOT_FOUND, 'Not found for deletion')
-            }
         } else {
             modelToDelete.deleted(true)
             administeredItemRepository.update(modelToDelete)
@@ -209,7 +206,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
 
     @Transactional
     M putReadByAuthenticated(UUID id) {
-        M modelToUse = (M) modelContentRepository.findWithContentById(id)
+        M modelToUse = (M) modelRepository.loadWithContent(id)
 
         if (modelToUse == null) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, "Object not found for readByAuthenticated")
@@ -225,7 +222,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
 
     @Transactional
     HttpResponse deleteReadByAuthenticated(UUID id) {
-        M modelToUse = (M) modelContentRepository.findWithContentById(id)
+        M modelToUse = (M) modelRepository.loadWithContent(id)
 
         if (modelToUse == null) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, "Object not found for readByAuthenticated")
@@ -241,7 +238,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
 
     @Transactional
     M putReadByEveryone(UUID id) {
-        M modelToUse = (M) modelContentRepository.findWithContentById(id)
+        M modelToUse = (M) modelRepository.loadWithContent(id)
 
         if (modelToUse == null) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, "Object not found for readByAuthenticated")
@@ -257,7 +254,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
 
     @Transactional
     HttpResponse deleteReadByEveryone(UUID id) {
-        M modelToUse = (M) modelContentRepository.findWithContentById(id)
+        M modelToUse = (M) modelRepository.loadWithContent(id)
 
         if (modelToUse == null) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, "Object not found for readByAuthenticated")
@@ -294,18 +291,18 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     @Transactional
     M createNewBranchModelVersion(UUID id, @Body @Nullable CreateNewVersionData createNewVersionData) {
         if (!createNewVersionData) createNewVersionData = new CreateNewVersionData()
-        M existing = getExistingWithContent(id)
+        M existing = modelRepository.readById(id)
+        existing = (M) contentsService.loadWithContent(existing)
 
         if (existing == null) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, "Object not found")
         }
 
-        existing.setAssociations()
-
         M copy = createCopyModelWithAssociations(existing, createNewVersionData)
         copy.setAssociations()
 
-        M savedCopy = modelContentRepository.saveWithContent(copy)
+        M savedCopy = (M) contentsService.saveWithContent(copy, accessControlService.getUser())
+        //modelContentRepository.saveWithContent(copy)
 
         final VersionLink versionLink = new VersionLink(versionLinkType: VersionLink.NEW_MODEL_VERSION_OF)
         versionLink.setTargetModel(savedCopy)
@@ -313,7 +310,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
 
         final List<AdministeredItem> toSave = new LinkedList<>()
         toSave.add(existing)
-        modelContentRepository.saveVersionLinks(toSave)
+        saveVersionLinks(toSave)
 
         modelRepository.readById(savedCopy.id) as M
     }
@@ -330,7 +327,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     }
 
     protected M getExistingWithContent(UUID id) {
-        M existing = modelContentRepository.findWithContentById(id)
+        M existing = modelRepository.loadWithContent(id)
         existing.setAssociations()
         getReferenceFileFileContent(existing.getAllContents())
 
@@ -357,7 +354,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         ModelExporterPlugin mauroPlugin = mauroPluginService.getPlugin(ModelExporterPlugin, namespace, name, version)
         PluginService.handlePluginNotFound(mauroPlugin, namespace, name)
 
-        M existing = modelContentRepository.findWithContentById(modelId)
+        M existing = modelRepository.loadWithContent(modelId)
         existing.setAssociations()
 
         ExporterUtils.createExportResponse(mauroPlugin, existing)
@@ -383,8 +380,8 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         List<M> saved = imported.collect { M imp ->
             imp.folder = folder
             log.info '** about to saveWithContentBatched... **'
-            updateCreationProperties(imp)
-            M savedImported = modelContentRepository.saveWithContent(imp)
+            //updateCreationProperties(imp)
+            M savedImported = (M) contentsService.saveWithContent(imp, accessControlService.getUser())
             log.info '** finished saveWithContentBatched **'
             savedImported
         }
@@ -458,7 +455,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
                                           "MS04. Models don't share a common ancestor")
         }
 
-        modelContentRepository.findWithContentById(chosenCommonAncestor.id)
+        modelRepository.loadWithContent(chosenCommonAncestor.id)
     }
 
     M getFinalisedParent(final M model) {
@@ -570,7 +567,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
                 }
             }
 
-            final Model childModel = modelContentRepository.findWithContentById(targetModelId)
+            final Model childModel = modelRepository.loadWithContent(targetModelId)
 
             if (childModel == null) {
                 continue
@@ -693,7 +690,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     @Override
     PermissionsDTO permissions(UUID id) {
 
-        M modelToUse = (M) modelContentRepository.findWithContentById(id)
+        M modelToUse = (M) modelRepository.readById(id)
 
         if (modelToUse == null) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, "Object not found for permissions")
@@ -720,29 +717,6 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         return permissions
     }
 
-    protected M saveDataModel(DataModel dataModel) {
-        DataModel savedImport = modelContentRepository.saveWithContent(dataModel as M) as DataModel
-        savedImport as M
-    }
-
-    protected M saveFolder(Folder folder) {
-        Folder savedImport = modelContentRepository.saveWithContent(folder as M) as Folder
-        savedImport as M
-    }
-
-    protected M saveCodeSet(CodeSet codeSet) {
-        CodeSet savedImport = modelContentRepository.saveWithContent(codeSet as M) as CodeSet
-        savedImport as M
-    }
-
-    protected M saveTerminology(Terminology terminology) {
-        Terminology savedImport = modelContentRepository.saveWithContent(terminology as M) as Terminology
-        savedImport as M
-    }
-
-    protected M saveModel(M model) {
-        modelContentRepository.saveWithContent(model)
-    }
 
     protected ModelVersionDTO latestModelVersion(UUID id) {
         final List<Model> allModels = populateVersionTree(id, false, null)
@@ -923,10 +897,10 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     }
 
     protected MergeDiffDTO mergeDiff(@NonNull UUID id, @NonNull UUID otherId) {
-        final M dataModelOne = modelContentRepository.findWithContentById(id)
+        final M dataModelOne = modelRepository.loadWithContent(id)
         ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, dataModelOne, "item with $id not found")
 
-        final M dataModelTwo = modelContentRepository.findWithContentById(otherId)
+        final M dataModelTwo = modelRepository.loadWithContent(otherId)
         ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, dataModelTwo, "item with $otherId not found")
 
         accessControlService.checkRole(Role.READER, dataModelOne)
@@ -1325,12 +1299,12 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
             throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, 'Target model id passed in request body does not match target model id in URI.')
         }
 
-        M sourceModel = modelContentRepository.findWithContentById(id)
+        M sourceModel = modelRepository.loadWithContent(id)
         if (sourceModel == null) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, id.toString())
         }
 
-        M targetModel = modelContentRepository.findWithContentById(otherId)
+        M targetModel = modelRepository.loadWithContent(otherId)
         if (targetModel == null) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, targetModel.toString())
         }
@@ -1590,9 +1564,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
 
                 if (replacedItem instanceof AdministeredItem) {
                     AdministeredItem replacedItemAdministeredItem = (AdministeredItem) replacedItem
-                    AdministeredItemCacheableRepository administeredItemCacheableRepository =
-                        administeredItemContentRepository.getRepository(replacedItemAdministeredItem)
-                    administeredItemCacheableRepository.update(replacedItemAdministeredItem)
+                    getAdministeredItemRepository(replacedItem.domainType).update(replacedItemAdministeredItem)
                 }
             }
         }
@@ -1699,8 +1671,8 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     }
 
     AdministeredItem getWithContents(AdministeredItem item) {
-        AdministeredItemContentRepository specificAdministeredItemContentRepository = getAdministeredItemContentRepository(item)
-        AdministeredItem itemWithContents = specificAdministeredItemContentRepository.readWithContentById(item.id)
+        AdministeredItemRepository specificAdministeredItemRepository = getAdministeredItemRepository(item.domainType)
+        AdministeredItem itemWithContents = specificAdministeredItemRepository.loadWithContent(item.id)
         return itemWithContents
     }
 
@@ -1717,11 +1689,11 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
                 accessControlService.checkRole(Role.EDITOR, item)
             }
 
-            AdministeredItemContentRepository specificAdministeredItemContentRepository = getAdministeredItemContentRepository(item)
+            AdministeredItemRepository specificAdministeredItemRepository = getAdministeredItemRepository(item.domainType)
 
-            AdministeredItem itemWithContents = specificAdministeredItemContentRepository.readWithContentById(item.id)
+            AdministeredItem itemWithContents = specificAdministeredItemRepository.loadWithContent(item.id)
 
-            if (!specificAdministeredItemContentRepository.deleteWithContent(itemWithContents)) {
+            if (!contentsService.deleteWithContent(itemWithContents)) {
                 throw new HttpStatusException(HttpStatus.NOT_FOUND, 'Not found for deletion: ' + item.label)
             }
         }
@@ -1730,22 +1702,6 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
                 throw (HttpException) th
             }
             throw new InternalServerException("Deletion failed", th)
-        }
-    }
-
-    @NonNull
-    AdministeredItemContentRepository getAdministeredItemContentRepository(AdministeredItem item) {
-        administeredItemContentRepositories.find {
-            it.getClass().simpleName != 'AdministeredItemContentRepository' &&
-            it.getClass().simpleName != 'ModelContentRepository' &&
-            it.handles(item.class)
-        } ?:
-        administeredItemContentRepositories.find {
-            it.getClass().simpleName != 'ModelContentRepository' &&
-            it.handles(item.class)
-        } ?:
-        administeredItemContentRepositories.find {
-            it.getClass().simpleName == 'AdministeredItemContentRepository'
         }
     }
 
@@ -1781,6 +1737,11 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
                 updateMultiAwareData(administeredItem, it)
             }
         }
+        if (administeredItem.edits) {
+            administeredItem.edits.each {
+                updateMultiAwareData(administeredItem, it)
+            }
+        }
         if (administeredItem instanceof Model) {
             if (((Model) administeredItem).versionLinks) {
                 ((Model) administeredItem).versionLinks.each {
@@ -1799,6 +1760,26 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         it.multiFacetAwareItemDomainType = item.domainType
         it.multiFacetAwareItemId = item.id
         it.multiFacetAwareItem = item
+    }
+
+    void saveVersionLinks(List<AdministeredItem> items) {
+        List<VersionLink> versionLinks = []
+        items.each {item ->
+            if (item instanceof Model) {
+                final Model modelItem = (Model) item
+                if (modelItem.versionLinks) {
+                    modelItem.versionLinks.each {
+                        updateMultiAwareData(item, it)
+                    }
+                    versionLinks.addAll(modelItem.versionLinks)
+                }
+            }
+        }
+        versionLinks.each {
+            if (it.id == null || !versionLinkCacheableRepository.existsById(it.id)) {
+                versionLinkCacheableRepository.save(it)
+            }
+        }
     }
 
 }

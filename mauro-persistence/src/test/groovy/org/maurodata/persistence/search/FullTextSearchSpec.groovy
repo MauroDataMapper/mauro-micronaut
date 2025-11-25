@@ -4,15 +4,14 @@ package org.maurodata.persistence.search
 import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.folder.Folder
 import org.maurodata.persistence.ContainerizedTest
+import org.maurodata.persistence.ContentsService
 import org.maurodata.persistence.cache.ModelCacheableRepository
 import org.maurodata.persistence.datamodel.DataClassRepository
-import org.maurodata.persistence.datamodel.DataModelContentRepository
 
 import jakarta.inject.Inject
 import spock.lang.Shared
 import spock.lang.Specification
 import org.maurodata.domain.search.dto.SearchResultsDTO
-import org.maurodata.persistence.search.SearchRepository
 
 import java.time.LocalDate
 import java.sql.Date
@@ -22,7 +21,7 @@ class FullTextSearchSpec extends Specification {
 
     @Inject
     @Shared
-    DataModelContentRepository dataModelContentRepository
+    ContentsService contentsService
 
     @Inject
     DataClassRepository dataClassRepository
@@ -68,8 +67,8 @@ class FullTextSearchSpec extends Specification {
             description ""
             folder myFirstFolder
         }
-        dataModelContentRepository.saveWithContent(dataModel1)
-        dataModelContentRepository.saveWithContent(dataModel2)
+        contentsService.saveWithContent(dataModel1)
+        contentsService.saveWithContent(dataModel2)
     }
 
     def "test search results across all domains" () {

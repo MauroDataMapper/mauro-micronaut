@@ -36,7 +36,7 @@ import org.maurodata.domain.folder.FolderService
 import org.maurodata.domain.model.version.CreateNewVersionData
 import org.maurodata.domain.model.version.FinaliseData
 import org.maurodata.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
-import org.maurodata.persistence.folder.FolderContentRepository
+
 import org.maurodata.web.ListResponse
 
 @Slf4j
@@ -48,13 +48,10 @@ class VersionedFolderController extends ModelController<Folder> implements Versi
     private static final String MY_CLASS_TYPE = "VersionedFolder"
 
     @Inject
-    FolderContentRepository folderContentRepository
-
-    @Inject
     FolderService folderService
 
-    VersionedFolderController(FolderCacheableRepository folderRepository, FolderContentRepository folderContentRepository, FolderService folderService) {
-        super(Folder, folderRepository, folderRepository, folderContentRepository, folderService)
+    VersionedFolderController(FolderCacheableRepository folderRepository, FolderService folderService) {
+        super(Folder, folderRepository, folderRepository, folderService)
         this.folderService = folderService
     }
 

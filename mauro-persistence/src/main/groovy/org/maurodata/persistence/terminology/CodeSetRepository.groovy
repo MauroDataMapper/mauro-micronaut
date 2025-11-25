@@ -11,12 +11,19 @@ import org.maurodata.FieldConstants
 import org.maurodata.domain.terminology.CodeSet
 import org.maurodata.domain.terminology.Term
 import org.maurodata.domain.terminology.Terminology
+import org.maurodata.persistence.ContentsService
+import org.maurodata.persistence.datamodel.dto.DataClassExtensionDTO
 import org.maurodata.persistence.model.ModelRepository
 import org.maurodata.persistence.terminology.dto.CodeSetDTORepository
+import org.maurodata.persistence.terminology.dto.CodeSetTermDTO
 
 @CompileStatic
 @JdbcRepository(dialect = Dialect.POSTGRES)
 abstract class CodeSetRepository implements ModelRepository<CodeSet> {
+
+    CodeSetRepository(ContentsService contentsService) {
+        this.contentsService = contentsService
+    }
 
     @Inject
     CodeSetDTORepository codeSetDTORepository
@@ -32,6 +39,7 @@ abstract class CodeSetRepository implements ModelRepository<CodeSet> {
     }
 
 
+
     @Nullable
     @Override
     List<CodeSet> findAllByLabel(String label){
@@ -45,6 +53,15 @@ abstract class CodeSetRepository implements ModelRepository<CodeSet> {
      */
     @Query(''' delete from terminology.code_set_term cst where cst.code_set_id = :uuid ''')
     abstract Long removeTermAssociations(@NonNull UUID uuid)
+
+    /**
+     * Remove all associations from table code_set_terms
+     * @param id codeSetId
+     * @returns: number of rows deleted from code_set_terms
+     */
+    @Query(''' delete from terminology.code_set_term cst where cst.code_set_id in (:uuids) ''')
+    abstract Long removeTermAssociations(@NonNull Collection<UUID> uuids)
+
     /**
      * Remove all associations from table code_set_terms
      * @param id codeSetId
@@ -66,6 +83,11 @@ abstract class CodeSetRepository implements ModelRepository<CodeSet> {
                     where cst.code_set_id = :uuid and t.id = cst.term_id) ''')
     @Nullable
     abstract Set<Term> getTerms(@NonNull UUID uuid)
+
+    @Query('''select code_set_id,
+           term_id from terminology.code_set_term where code_set_id in (:codeSetIds)''')
+    abstract List<CodeSetTermDTO> getCodeSetTerms(@NonNull List<UUID> codeSetIds)
+
 
     @Override
     Class getDomainClass() {

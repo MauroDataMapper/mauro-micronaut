@@ -24,6 +24,8 @@ abstract class DataElementDTORepository implements GenericRepository<DataElement
 
     abstract List<DataElementDTO> findAllByDataClassIdIn(Collection<UUID> ids)
 
+    abstract DataElementDTO readByDataClassAndLabel(DataClass dataClass, String label)
+
     abstract List<DataElementDTO> readAllByDataClassIdIn(Collection<UUID> ids)
 
     abstract List<DataElementDTO> readAllByDataTypeIdIn(Collection<UUID> ids)

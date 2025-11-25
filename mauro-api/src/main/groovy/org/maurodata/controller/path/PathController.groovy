@@ -11,11 +11,7 @@ import jakarta.inject.Singleton
 import org.maurodata.api.Paths
 import org.maurodata.api.path.PathApi
 import org.maurodata.audit.Audit
-import org.maurodata.controller.model.ItemController
 import org.maurodata.domain.model.AdministeredItem
-import org.maurodata.domain.model.Item
-import org.maurodata.persistence.model.ItemRepository
-import org.maurodata.persistence.model.PathRepository
 import org.maurodata.service.path.PathService
 
 @Slf4j
@@ -23,14 +19,10 @@ import org.maurodata.service.path.PathService
 @Controller
 @Secured(SecurityRule.IS_ANONYMOUS)
 @CompileStatic
-class PathController<I extends Item> extends ItemController<I> implements PathApi<I> {
+class PathController implements PathApi {
 
     @Inject
     PathService pathService
-
-    PathController(PathRepository pathRepository) {
-        super(pathRepository as ItemRepository<I>)
-    }
 
     @Audit
     @Override

@@ -19,6 +19,9 @@ abstract class SummaryMetadataReportRepository implements ItemRepository<Summary
     abstract List<SummaryMetadataReport> findAllBySummaryMetadataId(@NonNull UUID summaryMetadataId)
 
 
+    abstract List<SummaryMetadataReport> readAllBySummaryMetadataIdIn(List<UUID> summaryMetadataIds)
+
+
     @Override
     Class getDomainClass() {
         SummaryMetadataReport

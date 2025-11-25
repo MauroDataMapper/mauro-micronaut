@@ -22,7 +22,7 @@ import org.maurodata.domain.terminology.CodeSetService
 import org.maurodata.domain.terminology.Term
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository
 import org.maurodata.persistence.cache.ModelCacheableRepository
-import org.maurodata.persistence.terminology.CodeSetContentRepository
+
 import org.maurodata.persistence.terminology.CodeSetRepository
 import org.maurodata.web.ListResponse
 import org.maurodata.web.PaginationParams
@@ -57,19 +57,15 @@ class CodeSetController extends ModelController<CodeSet> implements CodeSetApi {
     @Inject
     CodeSetRepository codeSetRepositoryUnCached
 
-    CodeSetContentRepository codeSetContentRepository
-
     @Inject
     AdministeredItemCacheableRepository.TermCacheableRepository termRepository
 
     CodeSetService codeSetService
 
     CodeSetController(ModelCacheableRepository.CodeSetCacheableRepository codeSetRepository, ModelCacheableRepository.FolderCacheableRepository folderRepository,
-                      CodeSetContentRepository codeSetContentRepository,
                       CodeSetService codeSetService) {
-        super(CodeSet, codeSetRepository, folderRepository, codeSetContentRepository, codeSetService)
+        super(CodeSet, codeSetRepository, folderRepository, codeSetService)
         this.codeSetRepository = codeSetRepository
-        this.codeSetContentRepository = codeSetContentRepository
         this.codeSetService = codeSetService
     }
 
@@ -159,7 +155,7 @@ class CodeSetController extends ModelController<CodeSet> implements CodeSetApi {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, 'CodeSet item not found')
         }
         accessControlService.checkRole(Role.READER, codeSet)
-        List<Term> associatedTerms = codeSetContentRepository.codeSetRepository.getTerms(id).each { it.updateBreadcrumbs() } as List<Term>
+        List<Term> associatedTerms = codeSetRepository.getTerms(id).each { it.updateBreadcrumbs() } as List<Term>
         ListResponse.from(associatedTerms, params)
     }
 
@@ -174,9 +170,9 @@ class CodeSetController extends ModelController<CodeSet> implements CodeSetApi {
     @Audit
     @Get(Paths.CODE_SET_DIFF)
     ObjectDiff diffModels(@NonNull UUID id, @NonNull UUID otherId) {
-        CodeSet codeSet = modelContentRepository.findWithContentById(id)
+        CodeSet codeSet = modelRepository.loadWithContent(id)
         ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, codeSet, "item not found : $id")
-        CodeSet other = modelContentRepository.findWithContentById(otherId)
+        CodeSet other = modelRepository.loadWithContent(otherId)
         ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, codeSet, "item not found : $otherId")
 
         accessControlService.checkRole(Role.READER, codeSet)
@@ -204,8 +200,8 @@ class CodeSetController extends ModelController<CodeSet> implements CodeSetApi {
         CodeSet copy = createCopyModelWithAssociations(existing, createNewVersionData)
         copy.setAssociations()
         copy.terms.clear()
-        CodeSet savedCopy = modelContentRepository.saveWithContent(copy)
-        List<Term> terms = codeSetContentRepository.codeSetRepository.getTerms(id) as List<Term>
+        CodeSet savedCopy = (CodeSet) contentsService.saveWithContent(copy)
+        List<Term> terms = codeSetRepository.getTerms(id) as List<Term>
         terms.each {
             addTerm(savedCopy.id, it.id)
         }

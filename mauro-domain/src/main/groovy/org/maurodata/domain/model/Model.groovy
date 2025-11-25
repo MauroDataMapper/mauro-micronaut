@@ -157,9 +157,9 @@ abstract class Model<M extends DiffableItem> extends AdministeredItem implements
         getAllAssociations().flatten() as List<AdministeredItem>
     }
 
-    @Transient
-    @JsonIgnore
-    abstract void setAssociations()
+//    @Transient
+//    @JsonIgnore
+//    abstract void setAssociations()
 
     Boolean hasSameDomainType(Model other) {
         boolean result = this.domainType == other.domainType && this.class == other.class

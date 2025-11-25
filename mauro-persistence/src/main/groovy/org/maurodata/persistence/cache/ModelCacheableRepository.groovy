@@ -1,5 +1,6 @@
 package org.maurodata.persistence.cache
 
+import io.micronaut.core.annotation.NonNull
 import org.maurodata.domain.model.version.ModelVersion
 
 import groovy.transform.CompileStatic
@@ -12,13 +13,16 @@ import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.folder.Folder
 import org.maurodata.domain.model.Model
 import org.maurodata.domain.terminology.CodeSet
+import org.maurodata.domain.terminology.Term
 import org.maurodata.domain.terminology.Terminology
+import org.maurodata.persistence.ContentsService
 import org.maurodata.persistence.classifier.ClassificationSchemeRepository
 import org.maurodata.persistence.datamodel.DataModelRepository
 import org.maurodata.persistence.folder.FolderRepository
 import org.maurodata.persistence.model.ModelRepository
 import org.maurodata.persistence.terminology.CodeSetRepository
 import org.maurodata.persistence.terminology.TerminologyRepository
+import org.maurodata.persistence.terminology.dto.CodeSetTermDTO
 
 @Slf4j
 @CompileStatic
@@ -27,8 +31,8 @@ class ModelCacheableRepository<M extends Model> extends AdministeredItemCacheabl
 
     ModelRepository<M> repository
 
-    ModelCacheableRepository(ModelRepository<M> itemRepository) {
-        super(itemRepository)
+    ModelCacheableRepository(ModelRepository<M> itemRepository, ContentsService contentsService) {
+        super(itemRepository, contentsService)
         repository = itemRepository
     }
 
@@ -46,7 +50,12 @@ class ModelCacheableRepository<M extends Model> extends AdministeredItemCacheabl
     @Override
     @Nullable
     List<M> findAllByFolderId(UUID folderId) {
-        return null
+        repository.findAllByFolderId(folderId)
+    }
+
+    @Override
+    List<M> readAllByFolderIdIn(Collection<UUID> folderIds) {
+        repository.readAllByFolderIdIn(folderIds)
     }
 
     @Override
@@ -64,8 +73,8 @@ class ModelCacheableRepository<M extends Model> extends AdministeredItemCacheabl
     @CompileStatic
     @Singleton
     static class TerminologyCacheableRepository extends ModelCacheableRepository<Terminology> {
-        TerminologyCacheableRepository(TerminologyRepository terminologyRepository) {
-            super(terminologyRepository)
+        TerminologyCacheableRepository(TerminologyRepository terminologyRepository, ContentsService contentsService) {
+            super(terminologyRepository, contentsService)
         }
 
         @Override
@@ -82,8 +91,8 @@ class ModelCacheableRepository<M extends Model> extends AdministeredItemCacheabl
     @CompileStatic
     @Singleton
     static class FolderCacheableRepository extends ModelCacheableRepository<Folder> {
-        FolderCacheableRepository(FolderRepository folderRepository) {
-            super(folderRepository)
+        FolderCacheableRepository(FolderRepository folderRepository, ContentsService contentsService) {
+            super(folderRepository, contentsService)
         }
 
         @Override
@@ -101,12 +110,30 @@ class ModelCacheableRepository<M extends Model> extends AdministeredItemCacheabl
     @Singleton
     @CompileStatic
     static class CodeSetCacheableRepository extends ModelCacheableRepository<CodeSet> {
-        CodeSetCacheableRepository(CodeSetRepository codeSetRepository) {
-            super(codeSetRepository)
+        CodeSetCacheableRepository(CodeSetRepository codeSetRepository, ContentsService contentsService) {
+            super(codeSetRepository, contentsService)
         }
         @Override
         Boolean handles(String domainType) {
             return domainType != null && domainType.toLowerCase() in ['codeset', 'codesets']
+        }
+
+        // Not cached
+        Set<Term> getTerms(@NonNull UUID uuid) {
+            ((CodeSetRepository) repository).getTerms(uuid)
+        }
+
+        CodeSet addTerm(@NonNull UUID uuid, @NonNull UUID termId) {
+            ((CodeSetRepository) repository).addTerm(uuid, termId)
+        }
+
+        // Not cached
+        Long removeAllAssociations(@NonNull Collection<UUID> uuids) {
+            ((CodeSetRepository) repository).removeTermAssociations(uuids)
+        }
+
+        List<CodeSetTermDTO> getCodeSetTerms(@NonNull List<UUID> codeSetIds) {
+            ((CodeSetRepository) repository).getCodeSetTerms(codeSetIds)
         }
 
     }
@@ -114,21 +141,26 @@ class ModelCacheableRepository<M extends Model> extends AdministeredItemCacheabl
     @CompileStatic
     @Singleton
     static class DataModelCacheableRepository extends ModelCacheableRepository<DataModel> {
-        DataModelCacheableRepository(DataModelRepository dataModelRepository) {
-            super(dataModelRepository)
+        DataModelCacheableRepository(DataModelRepository dataModelRepository, ContentsService contentsService) {
+            super(dataModelRepository, contentsService)
         }
 
         @Override
         Boolean handles(String domainType) {
             return domainType != null && domainType.toLowerCase() in ['datamodel', 'datamodels']
         }
+
+        List<DataModel> getAllModelsByNamespace(String namespace) {
+            ((DataModelRepository) repository).getAllModelsByNamespace(namespace)
+        }
+
     }
 
     @CompileStatic
     @Singleton
     static class ClassificationSchemeCacheableRepository extends ModelCacheableRepository<ClassificationScheme> {
-        ClassificationSchemeCacheableRepository(ClassificationSchemeRepository classificationSchemeRepository) {
-            super(classificationSchemeRepository as ModelRepository<ClassificationScheme>)
+        ClassificationSchemeCacheableRepository(ClassificationSchemeRepository classificationSchemeRepository, ContentsService contentsService) {
+            super(classificationSchemeRepository, contentsService)
         }
 
         @Override

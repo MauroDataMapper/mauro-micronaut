@@ -55,13 +55,13 @@ import org.maurodata.domain.model.version.FinaliseData
 import org.maurodata.domain.search.dto.SearchRequestDTO
 import org.maurodata.domain.search.dto.SearchResultsDTO
 import org.maurodata.domain.security.Role
+import org.maurodata.persistence.cache.AdministeredItemCacheableRepository.DataClassCacheableRepository
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository.DataElementCacheableRepository
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository.DataTypeCacheableRepository
 import org.maurodata.persistence.cache.ModelCacheableRepository.DataModelCacheableRepository
 import org.maurodata.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
 import org.maurodata.persistence.datamodel.DataElementRepository
-import org.maurodata.persistence.datamodel.DataModelContentRepository
-import org.maurodata.persistence.datamodel.DataTypeContentRepository
+
 import org.maurodata.persistence.search.SearchRepository
 import org.maurodata.plugin.datatype.DefaultDataTypeProviderPlugin
 import org.maurodata.plugin.exporter.DataModelExporterPlugin
@@ -74,9 +74,8 @@ import org.maurodata.web.ListResponse
 @CompileStatic
 @Secured(SecurityRule.IS_ANONYMOUS)
 class DataModelController extends ModelController<DataModel> implements DataModelApi {
-    DataModelCacheableRepository dataModelRepository
 
-    DataModelContentRepository dataModelContentRepository
+    DataModelCacheableRepository dataModelRepository
 
     @Inject
     SearchRepository searchRepository
@@ -85,22 +84,21 @@ class DataModelController extends ModelController<DataModel> implements DataMode
     DataModelService dataModelService
 
     @Inject
+    DataClassCacheableRepository dataClassRepository
+
+    @Inject
     DataElementCacheableRepository dataElementCacheableRepository
 
     @Inject
     DataTypeCacheableRepository dataTypeCacheableRepository
 
     @Inject
-    DataTypeContentRepository dataTypeContentRepository
-
-    @Inject
     DataElementRepository dataElementRepository
 
-    DataModelController(DataModelCacheableRepository dataModelRepository, FolderCacheableRepository folderRepository, DataModelContentRepository dataModelContentRepository,
+    DataModelController(DataModelCacheableRepository dataModelRepository, FolderCacheableRepository folderRepository,
                         DataModelService dataModelService) {
-        super(DataModel, dataModelRepository, folderRepository, dataModelContentRepository, dataModelService)
+        super(DataModel, dataModelRepository, folderRepository, dataModelService)
         this.dataModelRepository = dataModelRepository
-        this.dataModelContentRepository = dataModelContentRepository
         this.dataModelService = dataModelService
     }
 
@@ -123,15 +121,11 @@ class DataModelController extends ModelController<DataModel> implements DataMode
         }
         DataModel newDataModel = super.create(folderId, dataModel) as DataModel
         // If we previously got datatypes, now save them into the model
-        if(importedDataTypes.size() > 0) {
-            newDataModel.dataTypes = importedDataTypes
-            newDataModel.dataTypes.each {dataType ->
-                dataType.dataModel = newDataModel
-            }
-            dataModelContentRepository.saveContentOnly(newDataModel)
+        importedDataTypes.each {
+            it.dataModel = newDataModel
         }
-        // Now set dataTypes to be empty for the response:
-        newDataModel.dataTypes = []
+        dataTypeCacheableRepository.saveAll(importedDataTypes)
+
         return newDataModel
     }
 
@@ -214,16 +208,13 @@ class DataModelController extends ModelController<DataModel> implements DataMode
     @Audit
     @Get(Paths.DATA_MODEL_DIFF)
     ObjectDiff diffModels(@NonNull UUID id, @NonNull UUID otherId) {
-        DataModel dataModel = modelContentRepository.findWithContentById(id)
+        DataModel dataModel = (DataModel) contentsService.loadWithContent(modelRepository.readById(id))
         ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, dataModel, "item with $id not found")
-        DataModel otherDataModel = modelContentRepository.findWithContentById(otherId)
+        DataModel otherDataModel = (DataModel) contentsService.loadWithContent(modelRepository.readById(otherId))
         ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, otherDataModel, "item with $otherId not found")
 
         accessControlService.checkRole(Role.READER, dataModel)
         accessControlService.checkRole(Role.READER, otherDataModel)
-
-        dataModel.setAssociations()
-        otherDataModel.setAssociations()
 
         pathRepository.readParentItems(dataModel)
         dataModel.updatePath()
@@ -252,7 +243,7 @@ class DataModelController extends ModelController<DataModel> implements DataMode
         DataModel dataModel = dataModelRepository.readById(id)
         // source i.e. rootDataModel
         accessControlService.canDoRole(Role.READER, dataModel)
-        DataModel otherDataModel = dataModelContentRepository.findWithContentById(otherId)
+        DataModel otherDataModel = dataModelRepository.loadWithContent(otherId)
         // target i.e. request model
         accessControlService.canDoRole(Role.EDITOR, otherDataModel)
 
@@ -271,47 +262,80 @@ class DataModelController extends ModelController<DataModel> implements DataMode
             List<DataClass> dataClassParents = parents.takeWhile {it !instanceof Model}.tail().reverse() as List<DataClass>
             DataClass currentOtherModelOrAdditionParent = new DataClass(dataClasses: otherDataModel.dataClasses)
             // maintain as the copy of the parent of `DataClass child` in the otherDataModel
-            dataClassParents.each {DataClass child ->
-                DataClass otherModelOrAdditionChild =
-                    currentOtherModelOrAdditionParent?.dataClasses?.find {it.label == child.label} ?: additionSubset.dataClasses.find {it.id == child.id}
+            dataClassParents.eachWithIndex {DataClass child, int idx ->
+                DataClass otherModelOrAdditionChild = currentOtherModelOrAdditionParent?.dataClasses?.find {it.label == child.label}
                 if (otherModelOrAdditionChild) {
-                    currentOtherModelOrAdditionParent = otherModelOrAdditionChild
+                    if(idx == 0) {
+                        if(!additionSubset.dataClasses.find {it.label == child.label}) {
+                            additionSubset.dataClasses.add(otherModelOrAdditionChild)
+                            additionSubset.allDataClasses.add(otherModelOrAdditionChild)
+                            currentOtherModelOrAdditionParent = otherModelOrAdditionChild
+                        }
+                        else {
+                            currentOtherModelOrAdditionParent = additionSubset.dataClasses.find {it.label == child.label}
+                        }
+                    } else {
+                        currentOtherModelOrAdditionParent = otherModelOrAdditionChild
+//                        currentOtherModelOrAdditionParent.dataClasses.add(otherModelOrAdditionChild)
+//                        additionSubset.allDataClasses.add(otherModelOrAdditionChild)
+                    }
                 } else {
-                    child.dataModel = otherDataModel
-                    child.parent = currentOtherModelOrAdditionParent
-                    additionSubset.dataClasses.add(child)
-                    currentOtherModelOrAdditionParent = child
+                    child.id = null
+                    child.version = null
+                    if(idx == 0) {
+                        if (!additionSubset.dataClasses.find {it.label == child.label}) {
+                            additionSubset.dataClasses.add(child)
+                            additionSubset.allDataClasses.add(child)
+                            child.dataModel = additionSubset
+                            currentOtherModelOrAdditionParent = child
+                        } else {
+                            currentOtherModelOrAdditionParent = additionSubset.dataClasses.find {it.label == child.label}
+                        }
+                    } else {
+                        currentOtherModelOrAdditionParent.dataClasses.add(child)
+                        child.parentDataClass = currentOtherModelOrAdditionParent
+                        currentOtherModelOrAdditionParent = child
+                    }
                 }
             }
 
-            if (!currentOtherModelOrAdditionParent.dataElements.label.contains(dataElement.label)) {
-                dataElement.dataModel = otherDataModel
-                dataElement.parent = currentOtherModelOrAdditionParent
+            if (!currentOtherModelOrAdditionParent.dataElements.find {it.label == dataElement.label}) {
+                dataElement.dataModel = additionSubset
+                dataElement.dataClass = currentOtherModelOrAdditionParent
                 additionSubset.dataElements.add(dataElement)
+                currentOtherModelOrAdditionParent.dataElements.add(dataElement)
+                dataElement.id = null
+                dataElement.version = null
             }
         }
 
         // copy missing DataTypes into additionSubset
-        List<DataType> dataTypes = dataTypeContentRepository.findAllWithContentByParent(dataModel)
+        List<DataType> dataTypes = []
+            dataTypeCacheableRepository.findAllByParent(dataModel).each {
+                dataTypes.add(contentsService.loadWithContent(it) as DataType)
+        }
         Set<String> additionDataTypeLabels = (additionSubset.dataElements.dataType.label - otherDataModel.dataTypes.label) as Set
         dataTypes.findAll {additionDataTypeLabels.contains(it.label)}.each {DataType dataType ->
-            dataType.dataModel = otherDataModel
+            dataType.dataModel = additionSubset
             additionSubset.dataTypes.add(dataType)
+            dataType.id = null
+            dataType.version = null
+            dataType.enumerationValues.each {
+                it.id = null
+                it.version = null
+            }
         }
-        Map<String, DataType> dataTypeMap = (additionSubset.dataTypes + otherDataModel.dataTypes).collectEntries {[it.label, it]}
-        additionSubset.dataElements.each {DataElement dataElement ->
-            dataElement.dataType = dataTypeMap[dataElement.dataType.label]
-        }
-        additionSubset.dataTypes = additionSubset.dataElements.dataType.unique()
-        additionSubset.dataTypes.each {
-            it.dataModel = otherDataModel
+
+        // Reconnect the elements with the new datatypes
+        additionSubset.dataElements.each {dataElement ->
+            dataElement.dataType = additionSubset.dataTypes.find {it.label == dataElement.dataType.label}
         }
 
         additionSubset.id = otherDataModel.id
         additionSubset.setAssociations()
 
         log.debug "subset: saving additions to datamodel id [$additionSubset.id]"
-        dataModelContentRepository.saveContentOnly(additionSubset)
+        contentsService.saveContentOnly(additionSubset)
 
         // process DataElements for deletion
         List<DataElement> deletionDataElements = subsetData.deletions?.collect {dataElementCacheableRepository.findById(it)}
@@ -320,7 +344,7 @@ class DataModelController extends ModelController<DataModel> implements DataMode
             if (dataElement.owner.id != dataModel.id) throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Subset DataElements for Deletion must be within the source DataModel")
         }
 
-        otherDataModel = dataModelContentRepository.findWithContentById(otherId)
+        otherDataModel = dataModelRepository.loadWithContent(otherId)
 
         deletionDataElements?.each {DataElement dataElement ->
             log.debug "subset: processing data element deletion for id [$dataElement.id], label [$dataElement.label]"
@@ -519,4 +543,5 @@ class DataModelController extends ModelController<DataModel> implements DataMode
     List<String> dataModelTypes() {
         return DataModelType.labels()
     }
+
 }

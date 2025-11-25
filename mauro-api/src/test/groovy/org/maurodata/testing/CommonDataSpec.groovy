@@ -486,7 +486,7 @@ class CommonDataSpec extends Specification {
 
     DataType modelTypeDataTypePayload(UUID modelId, String modelType) {
         new DataType(label: 'test Model Resource Type',
-                     description: 'Test Model resourcde type description',
+                     description: 'Test Model resource type description',
                      dataTypeKind: DataType.DataTypeKind.MODEL_TYPE,
                      modelResourceDomainType: modelType,
                      modelResourceId: modelId)

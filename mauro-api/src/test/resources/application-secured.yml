@@ -22,6 +22,13 @@ micronaut:
       read-timeout: 30m
       connect-timeout: 30m
 
+  caches:
+    items-cache:
+      initial-capacity: 10000
+      maximum-weight: 1_000_000_000
+      expire-after-write: 1h
+      record-stats: true
+
 mauro:
   federation:
     subscribed-catalogues.max: 1

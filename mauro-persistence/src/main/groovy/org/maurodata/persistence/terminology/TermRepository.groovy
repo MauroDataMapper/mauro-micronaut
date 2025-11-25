@@ -40,6 +40,12 @@ abstract class TermRepository implements ModelItemRepository<Term> {
         termDTORepository.findAllByTerminology(terminology) as List<Term>
     }
 
+
+    @Nullable
+    Term findAllByTerminologyAndCode(Terminology terminology, String label) {
+        termDTORepository.findAllByTerminologyAndCode(terminology, label) as Term
+    }
+
     @Override
     @Nullable
     List<Term> findAllByParent(AdministeredItem parent) {
@@ -48,6 +54,9 @@ abstract class TermRepository implements ModelItemRepository<Term> {
 
     @Nullable
     abstract List<Term> readAllByTerminology(Terminology terminology)
+
+    @Nullable
+    abstract List<Term> readAllByTerminologyIdIn(Collection<UUID> terminologyIds)
 
     @Override
     @Nullable

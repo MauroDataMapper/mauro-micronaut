@@ -36,26 +36,7 @@ class JsonFolderImporterPlugin implements FolderImporterPlugin<FileImportParamet
 
         JsonNode importModelTree = objectMapper.readTree(params.importFile.fileContents)
 
-        Map<UUID, JsonNode> folderNodesMap = [:]
-        if (importModelTree.has('folder')) {
-            addAllFoldersToMap(importModelTree.get('folder'), folderNodesMap)
-        } else if (importModelTree.has('folders')) {
-            importModelTree.get('folders').toList().each {addAllFoldersToMap(it, folderNodesMap)}
-        }
         ExportModel importModel = objectMapper.treeToValue(importModelTree, ExportModel)
-
-        Map<UUID, Folder> foldersMap = [:]
-        if (importModel.folder) {
-            addAllFoldersToMap(importModel.folder, foldersMap)
-        } else if (importModel.folders) {
-            importModel.folders.each {addAllFoldersToMap(it, foldersMap)}
-        }
-
-          // Import each Terminology as a separate object
-        foldersMap.each {UUID folderId, Folder folder ->
-            folder.terminologies = readTerminologiesInFolder(folderNodesMap[folderId])
-        }
-
         log.info '*** imported JSON model ***'
         if (!importModel.folder && !importModel.folders){
             ErrorHandler.handleError(HttpStatus.BAD_REQUEST, 'Cannot import JSON as folder/s not present')

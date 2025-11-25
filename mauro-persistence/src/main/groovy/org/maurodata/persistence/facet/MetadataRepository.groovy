@@ -10,12 +10,14 @@ import org.maurodata.persistence.model.ItemRepository
 
 @CompileStatic
 @JdbcRepository(dialect = Dialect.POSTGRES)
-abstract class MetadataRepository implements ItemRepository<Metadata> {
+abstract class MetadataRepository implements FacetRepository<Metadata> {
 
     @Override
     Class getDomainClass() {
         Metadata
     }
+
+    abstract List<Metadata> findByMultiFacetAwareItemIdAndNamespace(UUID ownerId, String namespace)
 
 
 

@@ -228,12 +228,12 @@ class DataModelFacetDiffsIntegrationSpec extends CommonDataSpec {
 
         and:
         SummaryMetadata rightSummaryMetadata = summaryMetadataApi.create("DataModel", right.id,
-                                                                        new SummaryMetadata(summaryMetadataType: SummaryMetadataType.MAP, label: 'summary metadata label right'))
+                                                                        new SummaryMetadata(summaryMetadataType: SummaryMetadataType.MAP, label: 'summary metadata label'))
 
         SummaryMetadataReport rightReport = summaryMetadataReportApi.create("DataModel", right.id, rightSummaryMetadata.id,
                                                                        summaryMetadataReport('right report label', REPORT_DATE))
         SummaryMetadata leftSummaryMetadata = summaryMetadataApi.create("DataModel", left.id,
-                                                                         new SummaryMetadata(summaryMetadataType: SummaryMetadataType.MAP, label: 'summary metadata label left'))
+                                                                         new SummaryMetadata(summaryMetadataType: SummaryMetadataType.MAP, label: 'summary metadata label'))
         SummaryMetadataReport leftReport = summaryMetadataReportApi.create("DataModel", left.id, leftSummaryMetadata.id,
                                                                             summaryMetadataReport('left report label', REPORT_DATE))
         when:

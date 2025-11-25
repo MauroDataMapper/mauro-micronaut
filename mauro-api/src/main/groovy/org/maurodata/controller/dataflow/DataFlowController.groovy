@@ -20,7 +20,6 @@ import io.micronaut.scheduling.TaskExecutors
 import io.micronaut.scheduling.annotation.ExecuteOn
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
-import jakarta.inject.Inject
 import jakarta.transaction.Transactional
 import jakarta.validation.constraints.NotNull
 import org.maurodata.ErrorHandler
@@ -36,7 +35,7 @@ import org.maurodata.domain.model.ModelItem
 import org.maurodata.domain.security.Role
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository
 import org.maurodata.persistence.cache.ModelCacheableRepository
-import org.maurodata.persistence.dataflow.DataFlowContentRepository
+
 import org.maurodata.plugin.exporter.DataFlowExporterPlugin
 import org.maurodata.plugin.exporter.ModelItemExporterPlugin
 import org.maurodata.plugin.importer.DataFlowImporterPlugin
@@ -52,19 +51,18 @@ import org.maurodata.web.PaginationParams
 @Secured(SecurityRule.IS_AUTHENTICATED)
 class DataFlowController extends AdministeredItemController<DataFlow, DataModel> implements DataFlowApi {
 
+
     AdministeredItemCacheableRepository.DataFlowCacheableRepository dataFlowRepository
     ModelCacheableRepository.DataModelCacheableRepository dataModelRepository
-    DataFlowContentRepository dataFlowContentRepository
     DataflowService dataFlowService
 
 
     DataFlowController(AdministeredItemCacheableRepository.DataFlowCacheableRepository dataFlowRepository,
                        ModelCacheableRepository.DataModelCacheableRepository dataModelRepository,
-                       DataFlowContentRepository dataFlowContentRepository, DataflowService dataFlowService) {
-        super(DataFlow, dataFlowRepository, dataModelRepository, dataFlowContentRepository)
+                       DataflowService dataFlowService) {
+        super(DataFlow, dataFlowRepository, dataModelRepository)
         this.dataFlowRepository = dataFlowRepository
         this.dataModelRepository = dataModelRepository
-        this.dataFlowContentRepository = dataFlowContentRepository
         this.dataFlowService = dataFlowService
     }
 
@@ -124,7 +122,7 @@ class DataFlowController extends AdministeredItemController<DataFlow, DataModel>
     @Get(Paths.DATA_FLOW_EXPORT)
     HttpResponse<byte[]> exportModel(@NonNull UUID dataModelId, @NonNull UUID id, @Nullable String namespace, @Nullable String name, @Nullable String version) {
         ModelItemExporterPlugin mauroPlugin = dataFlowService.getModelItemExporterPlugin(namespace, name, version)
-        DataFlow existing = dataFlowContentRepository.readWithContentById(id)
+        DataFlow existing = dataFlowRepository.loadWithContent(id)
         ErrorHandler.handleErrorOnNullObject(HttpStatus.BAD_REQUEST, existing,"dataFlow Id ${id} not found")
         accessControlService.checkRole(Role.READER, existing)
         DataModel parent = dataModelRepository.findById(dataModelId)
@@ -162,7 +160,7 @@ class DataFlowController extends AdministeredItemController<DataFlow, DataModel>
         List<DataFlow> saved = modelItems.each {imp ->
             log.info '** about to saveWithContentBatched... dataFlow **'
 
-            dataFlowContentRepository.saveWithContent(imp as DataFlow)
+            contentsService.saveWithContent(imp as DataFlow)
             log.info '** finished saveWithContentBatched ** dataFlow'
         } as List<DataFlow>
 

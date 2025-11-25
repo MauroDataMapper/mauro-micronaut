@@ -74,6 +74,11 @@ abstract class FacetCacheableRepository<F extends Facet> extends ItemCacheableRe
         MetadataCacheableRepository(MetadataRepository metadataRepository) {
             super(metadataRepository)
         }
+
+        Set<Metadata> readAllByMultiFacetAwareItemIdIn(Collection<UUID> itemIds) {
+            ((MetadataRepository) repository).readAllByMultiFacetAwareItemIdIn(itemIds)
+        }
+
     }
 
     @Singleton
@@ -82,6 +87,11 @@ abstract class FacetCacheableRepository<F extends Facet> extends ItemCacheableRe
         VersionLinkCacheableRepository(VersionLinkRepository versionLinkRepository) {
             super(versionLinkRepository)
         }
+
+        Set<VersionLink> readAllByMultiFacetAwareItemIdIn(Collection<UUID> itemIds) {
+            ((VersionLinkRepository) repository).readAllByMultiFacetAwareItemIdIn(itemIds)
+        }
+
     }
 
     @Singleton
@@ -89,6 +99,9 @@ abstract class FacetCacheableRepository<F extends Facet> extends ItemCacheableRe
     static class SummaryMetadataCacheableRepository extends FacetCacheableRepository<SummaryMetadata> {
         SummaryMetadataCacheableRepository(SummaryMetadataRepository summaryMetadataRepository) {
             super(summaryMetadataRepository)
+        }
+        Set<SummaryMetadata> readAllByMultiFacetAwareItemIdIn(Collection<UUID> itemIds) {
+            ((SummaryMetadataRepository) repository).readAllByMultiFacetAwareItemIdIn(itemIds)
         }
     }
 
@@ -98,6 +111,10 @@ abstract class FacetCacheableRepository<F extends Facet> extends ItemCacheableRe
         EditCacheableRepository(EditRepository editRepository) {
             super(editRepository)
         }
+        Set<Edit> readAllByMultiFacetAwareItemIdIn(Collection<UUID> itemIds) {
+            ((EditRepository) repository).readAllByMultiFacetAwareItemIdIn(itemIds)
+        }
+
     }
 
     @Singleton
@@ -105,6 +122,10 @@ abstract class FacetCacheableRepository<F extends Facet> extends ItemCacheableRe
     static class RuleCacheableRepository extends FacetCacheableRepository<Rule> {
         RuleCacheableRepository(RuleRepository ruleRepository) {
             super(ruleRepository)
+        }
+
+        Set<Rule> readAllByMultiFacetAwareItemIdIn(Collection<UUID> itemIds) {
+            ((RuleRepository) repository).readAllByMultiFacetAwareItemIdIn(itemIds)
         }
     }
 
@@ -115,8 +136,21 @@ abstract class FacetCacheableRepository<F extends Facet> extends ItemCacheableRe
             super(annotationRepository)
         }
 
+        Set<Annotation> readAllByMultiFacetAwareItemIdIn(Collection<UUID> itemIds) {
+            ((AnnotationRepository) repository).readAllByMultiFacetAwareItemIdIn(itemIds)
+        }
 
-        List<Annotation> saveAll(Iterable<Annotation> items) {
+        Set<Annotation> readAllByMultiFacetAwareItemIdInAndParentAnnotationIdIsNull(@NonNull Collection<UUID> ids) {
+            ((AnnotationRepository) repository).readAllByMultiFacetAwareItemIdInAndParentAnnotationIdIsNull(ids)
+        }
+
+        Set<Annotation> readAllByParentAnnotationIdIn(Collection<UUID> parentAnnotationIds) {
+            ((AnnotationRepository) repository).readAllByParentAnnotationIdIn(parentAnnotationIds)
+        }
+
+
+        @Deprecated
+        List<Annotation> saveAllRecurse(Iterable<Annotation> items) {
             List<Annotation> savedChild = []
             List<Annotation> savedList = []
             Annotation saved
@@ -137,6 +171,8 @@ abstract class FacetCacheableRepository<F extends Facet> extends ItemCacheableRe
             savedList.addAll(savedChild)
             savedList
         }
+
+
     }
 
     @Singleton
@@ -151,6 +187,11 @@ abstract class FacetCacheableRepository<F extends Facet> extends ItemCacheableRe
             super.invalidate(id)
             deleted
         }
+
+        Set<ReferenceFile> readAllByMultiFacetAwareItemIdIn(Collection<UUID> itemIds) {
+            ((ReferenceFileRepository) repository).readAllByMultiFacetAwareItemIdIn(itemIds)
+        }
+
     }
 
     @Singleton
@@ -159,7 +200,7 @@ abstract class FacetCacheableRepository<F extends Facet> extends ItemCacheableRe
         SemanticLinkCacheableRepository(SemanticLinkRepository semanticLinkRepository) {
             super(semanticLinkRepository)
         }
-
+/*
         SemanticLink findById(UUID id) {
             cachedLookupById(FIND_BY_ID, SemanticLink.class.simpleName, id)
         }
@@ -167,16 +208,10 @@ abstract class FacetCacheableRepository<F extends Facet> extends ItemCacheableRe
         SemanticLink readById(UUID id) {
             cachedLookupById(READ_BY_ID, SemanticLink.class.simpleName, id)
         }
-
-        List<SemanticLink> saveAll(Iterable<SemanticLink> items) {
-            List<SemanticLink> savedList = []
-            SemanticLink saved
-            items.forEach { semanticLink ->
-                saved = repository.save(semanticLink)
-                savedList.add(saved)
-                invalidate(saved)
-            }
-            savedList
+*/
+        Set<SemanticLink> readAllByMultiFacetAwareItemIdIn(Collection<UUID> itemIds) {
+            ((SemanticLinkRepository) repository).readAllByMultiFacetAwareItemIdIn(itemIds)
         }
+
     }
 }

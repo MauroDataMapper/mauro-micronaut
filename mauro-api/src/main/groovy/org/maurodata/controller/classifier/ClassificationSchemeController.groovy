@@ -1,6 +1,6 @@
 package org.maurodata.controller.classifier
 
-import jakarta.inject.Inject
+
 import org.maurodata.ErrorHandler
 import org.maurodata.api.Paths
 import org.maurodata.api.classifier.ClassificationSchemeApi
@@ -14,7 +14,7 @@ import org.maurodata.domain.model.version.CreateNewVersionData
 import org.maurodata.domain.security.Role
 import org.maurodata.persistence.cache.ModelCacheableRepository
 import org.maurodata.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
-import org.maurodata.persistence.classifier.ClassificationSchemeContentRepository
+
 import org.maurodata.web.ListResponse
 
 import groovy.transform.CompileStatic
@@ -46,15 +46,9 @@ import org.maurodata.web.PaginationParams
 @Secured(SecurityRule.IS_ANONYMOUS)
 class ClassificationSchemeController extends ModelController<ClassificationScheme> implements ClassificationSchemeApi {
 
-
-
-    ClassificationSchemeContentRepository classificationSchemeContentRepository
-
-
     ClassificationSchemeController(ModelCacheableRepository.ClassificationSchemeCacheableRepository classificationSchemeCacheableRepository,
-                                   FolderCacheableRepository folderRepository, ClassificationSchemeContentRepository classificationSchemeContentRepository) {
-        super(ClassificationScheme, classificationSchemeCacheableRepository, folderRepository, classificationSchemeContentRepository)
-        this.classificationSchemeContentRepository = classificationSchemeContentRepository
+                                   FolderCacheableRepository folderRepository) {
+        super(ClassificationScheme, classificationSchemeCacheableRepository, folderRepository)
     }
 
     @Audit
@@ -122,9 +116,9 @@ class ClassificationSchemeController extends ModelController<ClassificationSchem
     @Audit
     @Get(Paths.CLASSIFICATION_SCHEMES_DIFF)
     ObjectDiff diffModels(@NonNull UUID id, @NonNull UUID otherId) {
-        ClassificationScheme classificationScheme = modelContentRepository.findWithContentById(id)
+        ClassificationScheme classificationScheme = modelRepository.loadWithContent(id)
         ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, classificationScheme, "Item not found: $id")
-        ClassificationScheme otherClassificationScheme = modelContentRepository.findWithContentById(otherId)
+        ClassificationScheme otherClassificationScheme = modelRepository.loadWithContent(otherId)
         ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, classificationScheme, "Item not found: $otherId")
 
 

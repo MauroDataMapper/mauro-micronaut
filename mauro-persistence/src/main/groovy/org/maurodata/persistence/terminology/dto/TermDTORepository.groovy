@@ -25,6 +25,10 @@ abstract class TermDTORepository implements GenericRepository<TermDTO, UUID> {
 
     @Join(value = 'catalogueUser', type = Join.Type.LEFT_FETCH)
     @Nullable
+    abstract TermDTO findAllByTerminologyAndCode(Terminology terminology, String code)
+
+    @Join(value = 'catalogueUser', type = Join.Type.LEFT_FETCH)
+    @Nullable
     @Query('SELECT * FROM terminology.term WHERE terminology_id = :item AND label = :pathIdentifier')
     abstract List<Term> findAllByParentAndPathIdentifier(UUID item, String pathIdentifier)
 

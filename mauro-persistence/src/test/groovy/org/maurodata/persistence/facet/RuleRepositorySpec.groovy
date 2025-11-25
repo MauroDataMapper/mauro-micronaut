@@ -1,14 +1,14 @@
 package org.maurodata.persistence.facet
 
 import org.maurodata.domain.datamodel.DataModel
-import org.maurodata.domain.facet.Rule
 import org.maurodata.domain.facet.RuleRepresentation
 import org.maurodata.domain.folder.Folder
 import org.maurodata.persistence.ContainerizedTest
+import org.maurodata.persistence.ContentsService
 import org.maurodata.persistence.cache.FacetCacheableRepository
 import org.maurodata.persistence.cache.ItemCacheableRepository
 import org.maurodata.persistence.cache.ModelCacheableRepository
-import org.maurodata.persistence.datamodel.DataModelContentRepository
+
 import org.maurodata.persistence.datamodel.DataModelRepository
 
 import jakarta.inject.Inject
@@ -19,7 +19,7 @@ import spock.lang.Specification
 class RuleRepositorySpec extends Specification {
 
     @Inject
-    DataModelContentRepository dataModelContentRepository
+    ContentsService contentsService
 
     @Inject
     ModelCacheableRepository.DataModelCacheableRepository dataModelCacheableRepository
@@ -70,12 +70,12 @@ class RuleRepositorySpec extends Specification {
                 label "My first data class"
             }
         }
-        dataModelId = dataModelContentRepository.saveWithContent(dataModel).id
+        dataModelId = contentsService.saveWithContent(dataModel).id
     }
 
     def TestRuleAndRepresentations() {
         when:
-        DataModel retrievedDataModel = dataModelContentRepository.findWithContentById(dataModelId)
+        DataModel retrievedDataModel = dataModelRepository.loadWithContent(dataModelId)
 
         then:
         retrievedDataModel.rules.size() == 1
@@ -91,7 +91,7 @@ class RuleRepositorySpec extends Specification {
 
     def TestCacheInvalidation() {
         when:
-        DataModel retrievedDataModel = dataModelContentRepository.findWithContentById(dataModelId)
+        DataModel retrievedDataModel = dataModelRepository.loadWithContent(dataModelId)
 
         then:
         retrievedDataModel.rules.size() == 1

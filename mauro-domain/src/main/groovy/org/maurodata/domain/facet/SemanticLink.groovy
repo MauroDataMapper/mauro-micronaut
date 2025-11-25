@@ -1,5 +1,7 @@
 package org.maurodata.domain.facet
 
+import jakarta.persistence.PrePersist
+import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.domain.model.Item
 import org.maurodata.domain.model.ItemReference
 import org.maurodata.domain.model.ItemReferencer
@@ -25,15 +27,39 @@ class SemanticLink extends Facet implements ItemReferencer {
 
     @JsonAlias(['link_type'])
     SemanticLinkType linkType
+
+    @JsonIgnore
+    @Transient
+    AdministeredItem target
+
     @JsonAlias(['target_multi_facet_aware_item_id'])
     UUID targetMultiFacetAwareItemId
     @JsonAlias(['target_multi_facet_aware_item_domain_type'])
     String targetMultiFacetAwareItemDomainType
+
+    // Default is false
     Boolean unconfirmed
 
     SemanticLink() {
         unconfirmed = false
     }
+
+    @PrePersist
+    void prePersist() {
+        super.prePersist()
+        if(target) {
+            if(!target.id) {
+                System.err.println("Trying to save a semantic link with a target which doesn't have an id!")
+            } else {
+                targetMultiFacetAwareItemDomainType = target.domainType
+                targetMultiFacetAwareItemId = target.id
+            }
+        }
+        if(!unconfirmed) {
+            unconfirmed = false
+        }
+    }
+
 
     @Transient
     @JsonIgnore
