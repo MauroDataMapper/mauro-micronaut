@@ -17,9 +17,11 @@ permissions:
   contents: read
   actions: read
   checks: write
+  security-events: write
 
 jobs:
   build:
+    permissions: write-all
 
     runs-on: ubuntu-latest
 
@@ -74,38 +76,46 @@ jobs:
 #        path: '**/build/test-results/**/*.xml'
 
     - name: MegaLinter
-      uses: oxsecurity/megalinter/flavors/ci_light@v7
+      uses: oxsecurity/megalinter/flavors/java@v9
       env:
         # All available variables are described in documentation
         # https://megalinter.io/configuration/
         VALIDATE_ALL_CODEBASE: true
-
-        ENABLE_LINTERS: GROOVY_NPM_GROOVY_LINT
+        GROOVY_NPM_GROOVY_LINT_ARGUMENTS: >
+          -r "file:config/codenarc/codenarc.groovy"
         LINTER_RULES_PATH: 'config/codenarc'
         DISABLE_ERRORS: true #Flag to have the linter complete with exit code 0 even if errors were detected.
         SARIF_REPORTER: true
+        SARIF_REPORTER_LINTERS: ACTION_ACTIONLINT,API_SPECTRAL,BASH_EXEC,BASH_SHFMT,COPYPASTE_JSCPD,GROOVY_NPM_GROOVY_LINT,JSON_JSONLINT,JSON_V8R,JSON_PRETTIER,MARKDOWN_MARKDOWNLINT,MARKDOWN_MARKDOWN_TABLE_FORMATTER,REPOSITORY_GIT_DIFF,REPOSITORY_GITLEAKS,REPOSITORY_GRYPE,REPOSITORY_SECRETLINT,REPOSITORY_SYFT,REPOSITORY_TRIVY,REPOSITORY_TRIVY_SBOM,REPOSITORY_TRUFFLEHOG,SPELL_CSPELL,SPELL_LYCHEE,XML_XMLLINT,YAML_PRETTIER,YAML_YAMLLINT,YAML_V8R
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # see the results in PRs
 
-    ## This won't work until the repository is made public
-    #- name: Upload MegaLinter scan results to GitHub Security tab
-    #  if: ${{ success() }} || ${{ failure() }}
-    #  uses: github/codeql-action/upload-sarif@v2
-    #  with:
-    #    sarif_file: 'megalinter-reports/megalinter-report.sarif'
+    - name: Archive lint reports
+      if: success() || failure()
+      uses: actions/upload-artifact@v4
+      with:
+          name: MegaLinter reports
+          path: |
+              megalinter-reports
+              mega-linter.log
+
+    - name: Upload MegaLinter scan results to GitHub Security tab
+      if: success() || failure()
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: 'megalinter-reports/megalinter-report.sarif'
+        ref: refs/heads/${{ github.head_ref || github.ref_name }}
+        sha: ${{ github.event.pull_request.head.sha || github.sha }}
+        category: MegaLinter-Groovy
+        wait-for-processing: true
 
 
-    # Upload MegaLinter artifacts
-#    - name: Archive lint reports
-#      if: ${{ success() }} || ${{ failure() }}
-#      uses: actions/upload-artifact@v3
-#      with:
-#        name: MegaLinter reports
-#        path: |
-#          megalinter-reports
-#          mega-linter.log
 
-    -   name: Publish Snapshot to Mauro Snapshot Repository
-        if: success() && github.ref == 'refs/heads/develop'
-        run: |
+    - name: Publish Snapshot to Mauro Snapshot Repository
+      if: success() && github.ref == 'refs/heads/develop'
+      env:
+          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SIGNING_IN_MEMORY_KEY }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_IN_MEMORY_KEY_PASSWORD }}
+      run: |
           ./gradlew --stacktrace -PMauroSnapshotRepositoryUsername=${{secrets.MAURO_SNAPSHOT_REPOSITORY_USERNAME}} -PMauroSnapshotRepositoryPassword=${{secrets.MAURO_SNAPSHOT_REPOSITORY_PASSWORD}} publishAllPublicationsToMauroSnapshotRepositoryRepository
 
     - name: Publish to Maven Central

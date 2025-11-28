@@ -49,8 +49,8 @@ dependencies {
 
 
     implementation("io.micronaut.sql:micronaut-jdbc-hikari")
-    implementation group: 'org.apache.groovy', name: 'groovy-json', version: '4.0.19'
-    implementation group: 'org.apache.groovy', name: 'groovy-xml', version: '4.0.25'
+    implementation('org.apache.groovy:groovy-json:4.0.19')
+    implementation('org.apache.groovy:groovy-xml:4.0.25')
 
 
     // Security
@@ -60,8 +60,8 @@ dependencies {
     implementation("io.micronaut.security:micronaut-security-oauth2")
     implementation("io.micronaut.security:micronaut-security-jwt")
 
-    implementation group: 'org.jboss.resteasy', name: 'resteasy-client', version: '7.0.0.Alpha4'
-    testImplementation group: 'org.htmlunit', name: 'htmlunit', version: '4.6.0'
+    implementation('org.jboss.resteasy:resteasy-client:7.0.0.Alpha4')
+    testImplementation('org.htmlunit:htmlunit:4.6.0')
     //Email
     implementation("io.micronaut.email:micronaut-email-javamail")
     runtimeOnly("org.eclipse.angus:angus-mail")
@@ -73,8 +73,8 @@ dependencies {
     testRuntimeOnly("org.postgresql:postgresql")
 
 
-    implementation group: 'org.apache.commons', name: 'commons-rng-simple', version: '1.5'
-    implementation group: 'org.apache.commons', name: 'commons-text', version: '1.10.0'
+    implementation('org.apache.commons:commons-rng-simple:1.5')
+    implementation('org.apache.commons:commons-text:1.10.0')
 
     testRuntimeOnly "org.junit.platform:junit-platform-launcher"
     testImplementation "io.micronaut.test:micronaut-test-spock"
@@ -83,6 +83,10 @@ dependencies {
     }
 
     testImplementation 'org.reflections:reflections:0.10.2'
+
+    codenarc 'org.apache.groovy:groovy-all:4.0.24'
+    codenarc 'org.codenarc:CodeNarc:3.6.0-groovy-4.0'
+
 }
 
 
@@ -114,7 +118,7 @@ micronaut {
 
 
 codenarc {
-    //toolVersion = "3.3.0-groovy-4.0"
+    toolVersion = "3.6.0-groovy-4.0"
     configFile = rootProject.file("config/codenarc/codenarc.groovy")
 }
 

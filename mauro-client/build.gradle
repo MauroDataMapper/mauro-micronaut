@@ -38,6 +38,9 @@ dependencies {
     testFixturesImplementation("org.junit.jupiter:junit-jupiter-api:5.2.0")
     testFixturesImplementation("org.junit.jupiter:junit-jupiter-engine:5.2.0")
 
+    codenarc 'org.apache.groovy:groovy-all:4.0.24'
+    codenarc 'org.codenarc:CodeNarc:3.6.0-groovy-4.0'
+
 }
 
 // This is necessary to ensure the TestApiClientFilter is turned into a bean and injectable
@@ -58,7 +61,7 @@ test {
 
 
 codenarc {
-    toolVersion = "3.3.0-groovy-4.0"
+    toolVersion = "3.6.0-groovy-4.0"
     configFile = rootProject.file("config/codenarc/codenarc.groovy")
 }
 

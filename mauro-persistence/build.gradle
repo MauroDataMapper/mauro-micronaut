@@ -50,6 +50,11 @@ dependencies {
 
     // To find flyway migrations in jars
     implementation 'io.github.classgraph:classgraph:4.8.158'
+
+    codenarc 'org.apache.groovy:groovy-all:4.0.24'
+    codenarc 'org.codenarc:CodeNarc:3.6.0-groovy-4.0'
+
+    implementation project(':mauro-domain')
 }
 
 test {
@@ -57,12 +62,8 @@ test {
 }
 
 
-dependencies {
-    implementation project(':mauro-domain')
-}
-
 codenarc {
-    toolVersion = "3.3.0-groovy-4.0"
+    toolVersion = "3.6.0-groovy-4.0"
     configFile = rootProject.file("config/codenarc/codenarc.groovy")
 }
 
