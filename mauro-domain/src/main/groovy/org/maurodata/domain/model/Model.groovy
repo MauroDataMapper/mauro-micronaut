@@ -1,7 +1,5 @@
 package org.maurodata.domain.model
 
-import org.maurodata.domain.datamodel.DataModel
-
 import com.fasterxml.jackson.annotation.JsonIgnore
 import groovy.transform.CompileStatic
 import groovy.transform.NamedParams
@@ -10,6 +8,7 @@ import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.annotation.Relation
 import jakarta.persistence.Transient
 import org.maurodata.domain.authority.Authority
+import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.diff.CollectionDTO
 import org.maurodata.domain.diff.DiffBuilder
 import org.maurodata.domain.diff.DiffableItem
@@ -39,18 +38,6 @@ abstract class Model<M extends DiffableItem> extends AdministeredItem implements
 
     Boolean finalised = false
 
-    @Transient
-    @JsonIgnore
-    Boolean getMyFinalised() {
-        return this.@finalised
-    }
-
-    Boolean getFinalised() {
-        Model modelWithVersion = getModelWithVersion()
-        if (modelWithVersion != null) {return modelWithVersion.@finalised}
-        return this.@finalised
-    }
-
     @Nullable
     Instant dateFinalised
 
@@ -78,7 +65,7 @@ abstract class Model<M extends DiffableItem> extends AdministeredItem implements
     Authority authority
 
     @Nullable
-    protected String branchName = DEFAULT_BRANCH_NAME
+    String branchName
 
     @Nullable
     //@Transient
@@ -86,31 +73,6 @@ abstract class Model<M extends DiffableItem> extends AdministeredItem implements
 
     @Nullable
     String modelVersionTag
-
-    @JsonIgnore
-    public boolean versionableFlag = true
-
-    @Transient
-    boolean isVersionable() {
-        final List<Model> myAncestors = getAncestors()
-        Collections.reverse(myAncestors)
-
-        final Iterator<Model> models = myAncestors.iterator()
-        while (models.hasNext()) {
-            final Model ancestor = models.next()
-            if (ancestor instanceof Folder) {
-                if (ancestor.@versionableFlag) {
-                    return false
-                }
-            }
-        }
-        return versionableFlag
-    }
-
-    @Transient
-    void setVersionable(final boolean versionable) {
-        this.versionableFlag = versionable
-    }
 
     @Override
     @Transient
@@ -141,10 +103,10 @@ abstract class Model<M extends DiffableItem> extends AdministeredItem implements
         final Model model = getModelWithVersion()
 
         if (model != null) {
-            return model.@modelVersion != null ? model.@modelVersion.toString() : model.@branchName
+            return model.modelVersion? model.modelVersion.toString() : model.branchName
         }
 
-        return this.@modelVersion != null ? this.@modelVersion.toString() : this.@branchName
+        return this.modelVersion != null ? this.modelVersion.toString() : this.branchName
     }
 
     /**
@@ -198,6 +160,11 @@ abstract class Model<M extends DiffableItem> extends AdministeredItem implements
         return myAncestors
     }
 
+    boolean inAVersionedFolder() {
+        List<Model> models = getAncestors()
+        return models.find {it.domainType == "VersionedFolder"}
+    }
+
     @JsonIgnore
     @Transient
     Model getModelWithVersion() {
@@ -208,45 +175,11 @@ abstract class Model<M extends DiffableItem> extends AdministeredItem implements
         // that has a version
         for (int m = 0; m < myAncestors.size(); m++) {
             final Model model = myAncestors.get(m)
-            if ((model instanceof Folder || model instanceof DataModel) && model.@versionableFlag) {
+            if (model.branchName || model.modelVersion) {
                 return model
             }
         }
         return this
-    }
-
-    @JsonIgnore
-    @Transient
-    ModelVersion getMyModelVersion() {
-        return this.@modelVersion
-    }
-
-    ModelVersion getModelVersion() {
-        return getModelWithVersion().@modelVersion
-    }
-
-    void setBranchName(final String branchNameString) {
-        this.@branchName = branchNameString
-    }
-
-    @JsonIgnore
-    @Transient
-    String getMyBranchName() {
-        return this.@branchName
-    }
-
-    String getBranchName() {
-        return getModelWithVersion().@branchName
-    }
-
-    @JsonIgnore
-    @Transient
-    String getMyModelVersionTag() {
-        return this.@modelVersionTag
-    }
-
-    String getModelVersionTag() {
-        return getModelWithVersion().@modelVersionTag
     }
 
     /****
@@ -366,7 +299,7 @@ abstract class Model<M extends DiffableItem> extends AdministeredItem implements
     void copyInto(Item into) {
         super.copyInto(into)
         Model intoModel = (Model) into
-        intoModel.finalised = ItemUtils.copyItem(this.getMyFinalised(), intoModel.getMyFinalised())
+        intoModel.finalised = ItemUtils.copyItem(this.finalised, intoModel.finalised)
         intoModel.dateFinalised = ItemUtils.copyItem(this.dateFinalised, intoModel.dateFinalised)
         intoModel.documentationVersion = ItemUtils.copyItem(this.documentationVersion, intoModel.documentationVersion)
         intoModel.readableByEveryone = ItemUtils.copyItem(this.readableByEveryone, intoModel.readableByEveryone)
@@ -375,12 +308,11 @@ abstract class Model<M extends DiffableItem> extends AdministeredItem implements
         intoModel.organisation = ItemUtils.copyItem(this.organisation, intoModel.organisation)
         intoModel.deleted = ItemUtils.copyItem(this.deleted, intoModel.deleted)
         intoModel.author = ItemUtils.copyItem(this.author, intoModel.author)
-        intoModel.branchName = ItemUtils.copyItem(this.getMyBranchName(), intoModel.getMyBranchName())
+        intoModel.branchName = ItemUtils.copyItem(this.branchName, intoModel.branchName)
         intoModel.folder = ItemUtils.copyItem(this.folder, intoModel.folder)
         intoModel.authority = ItemUtils.copyItem(this.authority, intoModel.authority)
-        intoModel.modelVersion = ItemUtils.copyItem(this.getMyModelVersion(), intoModel.getMyModelVersion())
-        intoModel.modelVersionTag = ItemUtils.copyItem(this.getMyModelVersionTag(), intoModel.getMyModelVersionTag())
-        intoModel.versionableFlag = ItemUtils.copyItem(this.versionableFlag, intoModel.versionableFlag)
+        intoModel.modelVersion = ItemUtils.copyItem(this.modelVersion, intoModel.modelVersion)
+        intoModel.modelVersionTag = ItemUtils.copyItem(this.modelVersion, intoModel.modelVersion)
         intoModel.versionLinks = ItemUtils.copyItems(this.versionLinks, intoModel.versionLinks)
     }
 }

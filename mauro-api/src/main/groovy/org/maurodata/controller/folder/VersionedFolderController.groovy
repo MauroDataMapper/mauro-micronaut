@@ -33,8 +33,10 @@ import org.maurodata.audit.Audit
 import org.maurodata.controller.model.ModelController
 import org.maurodata.domain.folder.Folder
 import org.maurodata.domain.folder.FolderService
+import org.maurodata.domain.model.Model
 import org.maurodata.domain.model.version.CreateNewVersionData
 import org.maurodata.domain.model.version.FinaliseData
+import org.maurodata.exception.MauroApplicationException
 import org.maurodata.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
 
 import org.maurodata.web.ListResponse
@@ -44,8 +46,6 @@ import org.maurodata.web.ListResponse
 @Controller
 @Secured(SecurityRule.IS_ANONYMOUS)
 class VersionedFolderController extends ModelController<Folder> implements VersionedFolderApi {
-
-    private static final String MY_CLASS_TYPE = "VersionedFolder"
 
     @Inject
     FolderService folderService
@@ -71,7 +71,7 @@ class VersionedFolderController extends ModelController<Folder> implements Versi
         cleanBody(folder)
         updateCreationProperties(folder)
         folder.authority = super.authorityService.getDefaultAuthority()
-        folder.setVersionable(true)
+        folder.branchName = Model.DEFAULT_BRANCH_NAME
 
         pathRepository.readParentItems(folder)
         folder.updatePath()
@@ -83,7 +83,7 @@ class VersionedFolderController extends ModelController<Folder> implements Versi
     @Transactional
     @Post(Paths.CHILD_VERSIONED_FOLDER_LIST)
     Folder create(UUID parentId, @Body @NonNull Folder folder) {
-        folder.setVersionable(true)
+        folder.branchName = Model.DEFAULT_BRANCH_NAME
         super.create(parentId, folder)
     }
 
@@ -102,9 +102,9 @@ class VersionedFolderController extends ModelController<Folder> implements Versi
     @Get(Paths.VERSIONED_FOLDER_LIST)
     ListResponse<Folder> listAll() {
 
-        final ListResponse<Folder> listResponse = super.listAll()
+        final ListResponse<Folder> listResponse = super.listAll() as ListResponse<Folder>
 
-        listResponse.items = listResponse.items.findAll {MY_CLASS_TYPE == ((Folder) it).getClass_()}
+        listResponse.items = listResponse.items.findAll {it.domainType == "VersionedFolder"}
         listResponse.count = listResponse.items.size()
 
         return listResponse
@@ -113,9 +113,9 @@ class VersionedFolderController extends ModelController<Folder> implements Versi
     @Get(Paths.CHILD_VERSIONED_FOLDER_LIST)
     ListResponse<Folder> list(UUID parentId) {
 
-        final ListResponse<Folder> listResponse = super.list(parentId)
+        final ListResponse<Folder> listResponse = super.list(parentId) as ListResponse<Folder>
 
-        listResponse.items = listResponse.items.findAll {MY_CLASS_TYPE == ((Folder) it).getClass_()}
+        listResponse.items = listResponse.items.findAll {it.domainType == "VersionedFolder"}
         listResponse.count = listResponse.items.size()
 
         return listResponse
@@ -248,4 +248,19 @@ class VersionedFolderController extends ModelController<Folder> implements Versi
     {
         super.mergeInto(id,otherId,mergeIntoDTO)
     }
+
+    @Override
+    void setBranchName(UUID parentFolderId, Folder folder) {
+        Folder parentFolder = getFolderAncestors(parentFolderId)
+        if(parentFolder &&
+           (parentFolder.branchName || parentFolder.modelVersion || parentFolder.inAVersionedFolder())) {
+               throw new MauroApplicationException("Cannot create a versioned folder inside another versioned folder")
+        } else {
+            // Otherwise, if a branch name isn't already set, we set it to the default
+            if(!folder.branchName) {
+                folder.branchName = Model.DEFAULT_BRANCH_NAME
+            } // Otherwise we leave it as set
+        }
+    }
+
 }

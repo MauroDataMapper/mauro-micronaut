@@ -1,5 +1,6 @@
 package org.maurodata.controller.model
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
@@ -18,6 +19,7 @@ import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
 import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
+import jakarta.persistence.Transient
 import org.maurodata.ErrorHandler
 import org.maurodata.FieldConstants
 import org.maurodata.api.model.FieldPatchDataDTO
@@ -90,12 +92,14 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     @Inject
     FacetCacheableRepository.ReferenceFileCacheableRepository referenceFileCacheableRepository
 
+    @Inject
+    FolderCacheableRepository folderCacheableRepository
+
     @Override
     List<String> getDisallowedProperties() {
         log.debug '***** ModelController::getDisallowedProperties *****'
         super.disallowedProperties +
-        ['finalised', 'dateFinalised', 'readableByEveryone', 'readableByAuthenticatedUsers', 'modelType', 'deleted', 'folder', 'branchName',
-         'modelVersion', 'modelVersionTag']
+        ['finalised', 'dateFinalised', 'readableByEveryone', 'readableByAuthenticatedUsers', 'modelType', 'deleted', 'folder']
     }
 
     @Override
@@ -149,7 +153,28 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     @Transactional
     M create(@NonNull UUID folderId, @Body @NonNull M model) {
         model.authority = authorityService.getDefaultAuthority()
+        setBranchName(folderId, model)
         super.create(folderId, model) as M
+    }
+
+    void setBranchName(UUID folderId, M model) {
+        Folder folder = getFolderAncestors(folderId)
+        if( folder &&
+            !folder.branchName &&
+            !folder.modelVersion &&
+            !folder.inAVersionedFolder()) {
+            model.branchName = Model.DEFAULT_BRANCH_NAME
+        } else {
+            model.branchName = null
+        }
+    }
+
+    Folder getFolderAncestors(UUID folderId) {
+        final Folder parentFolder = folderRepository.findById(folderId)
+        if(parentFolder && parentFolder.parentFolder) {
+            parentFolder.parentFolder = getFolderAncestors(parentFolder.parentFolder.id)
+        }
+        return parentFolder
     }
 
     @Transactional
@@ -464,7 +489,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
             if (currentModel == null) {
                 break
             }
-            if (currentModel.finalised && currentModel.isVersionable()) {
+            if (currentModel.finalised && currentModel.modelVersion) {
                 return currentModel
             }
             final UUID currentId = currentModel.id

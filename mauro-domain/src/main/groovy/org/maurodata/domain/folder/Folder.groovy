@@ -7,7 +7,6 @@ import org.maurodata.domain.model.ItemReferencerUtils
 import org.maurodata.domain.model.ItemUtils
 
 import com.fasterxml.jackson.annotation.JsonIgnore
-import com.fasterxml.jackson.annotation.JsonProperty
 import groovy.transform.CompileStatic
 import groovy.transform.MapConstructor
 import io.micronaut.core.annotation.Introspected
@@ -37,8 +36,6 @@ import org.maurodata.domain.terminology.Terminology
 @MapConstructor(includeSuperFields = true, includeSuperProperties = true, noArg = true)
 class Folder extends Model implements ItemReferencer {
 
-    {versionableFlag = false}
-
     @JsonIgnore
     @Nullable
     Folder parentFolder
@@ -49,45 +46,15 @@ class Folder extends Model implements ItemReferencer {
     @Transient
     String modelType = domainType
 
-    @SuppressWarnings('PropertyName')
-    @MappedProperty('class')
-    @JsonProperty('class')
-    @Nullable
-    @JsonIgnore
-    String class_
-
-    @JsonIgnore
-    void setClass_(final String class_) {
-        this.class_ = class_
-
-        if (this.class_ != null && "VersionedFolder" == this.class_) {
-            setVersionable(true)
-        } else {
-            setVersionable(false)
-        }
-    }
-
-    @Transient
-    @Override
-    void setVersionable(final boolean versionable) {
-        this.versionableFlag = versionable
-        if (versionable) {
-            this.class_ = "VersionedFolder"
-        } else {
-            this.class_ = null
-        }
-    }
-
     @Transient
     @Override
     String getDomainType() {
-        if (this.class_ != null && "VersionedFolder" == this.class_) {
+        if(branchName || modelVersion) {
             return "VersionedFolder"
         } else {
             return "Folder"
         }
     }
-
 
     @Transient
     UUID breadcrumbTreeId
@@ -98,16 +65,6 @@ class Folder extends Model implements ItemReferencer {
     @Nullable
     String author
 
-    // TODO: write a test for branch name
-
-    @Override
-    String getBranchName() {
-        if (this.class_ != null && "VersionedFolder" == this.class_) {
-            return super.branchName
-        } else {
-            return null
-        }
-    }
 
     @JsonIgnore
     @Transient
@@ -165,24 +122,10 @@ class Folder extends Model implements ItemReferencer {
     @Transient
     @JsonIgnore
     String getPathPrefix() {
-
-        if (isVersionable()) {
+        if (domainType == "VersionedFolder") {
             return 'vf'
         }
-
         return 'fo'
-    }
-
-    @Override
-    @Transient
-    @JsonIgnore
-    @Nullable
-    String getPathModelIdentifier() {
-        if (!isVersionable()) {
-            return null
-        }
-        // I'm a model, you know what I mean
-        return super.getPathModelIdentifier()
     }
 
     @Transient
@@ -313,11 +256,9 @@ class Folder extends Model implements ItemReferencer {
     void copyInto(Item into) {
         super.copyInto(into)
         Folder intoFolder = (Folder) into
-        intoFolder.versionableFlag = ItemUtils.copyItem(this.versionableFlag, intoFolder.versionableFlag)
         intoFolder.parentFolder = ItemUtils.copyItem(this.parentFolder, intoFolder.parentFolder)
         intoFolder.aliasesString = ItemUtils.copyItem(this.aliasesString, intoFolder.aliasesString)
         intoFolder.modelType = ItemUtils.copyItem(this.modelType, intoFolder.modelType)
-        intoFolder.class_ = ItemUtils.copyItem(this.class_, intoFolder.class_)
         intoFolder.breadcrumbTreeId = ItemUtils.copyItem(this.breadcrumbTreeId, intoFolder.breadcrumbTreeId)
         intoFolder.organisation = ItemUtils.copyItem(this.organisation, intoFolder.organisation)
         intoFolder.author = ItemUtils.copyItem(this.author, intoFolder.author)

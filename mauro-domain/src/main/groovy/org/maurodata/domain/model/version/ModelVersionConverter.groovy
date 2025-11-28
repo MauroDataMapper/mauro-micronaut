@@ -5,6 +5,7 @@ import groovy.transform.CompileStatic
 import io.micronaut.context.annotation.Prototype
 import io.micronaut.core.convert.ConversionContext
 import io.micronaut.data.model.runtime.convert.AttributeConverter
+import jakarta.inject.Singleton
 
 /**
  * A ModelVersionConverter is a utility for converting ModelVersions to and from Strings, for the JSON conversion
@@ -13,7 +14,7 @@ import io.micronaut.data.model.runtime.convert.AttributeConverter
  * @see ModelVersion
  */
 @CompileStatic
-@Prototype
+@Singleton
 class ModelVersionConverter extends StdConverter<String, ModelVersion>
         implements AttributeConverter<ModelVersion, String> {
 

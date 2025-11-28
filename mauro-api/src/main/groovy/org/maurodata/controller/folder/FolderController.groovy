@@ -8,6 +8,7 @@ import org.maurodata.audit.Audit
 import org.maurodata.controller.model.ModelController
 import org.maurodata.domain.facet.EditType
 import org.maurodata.domain.folder.Folder
+import org.maurodata.domain.model.Model
 import org.maurodata.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
 
 import org.maurodata.domain.search.dto.SearchRequestDTO
@@ -241,5 +242,10 @@ class FolderController extends ModelController<Folder> implements FolderApi {
         super.importModel(body, namespace, name, version)
     }
 */
+    @Override
+    void setBranchName(UUID parentFolderId, Folder folder) {
+        folder.branchName = null
+    }
+
 
 }
