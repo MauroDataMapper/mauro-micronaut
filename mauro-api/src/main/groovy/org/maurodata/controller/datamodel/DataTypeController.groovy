@@ -1,5 +1,6 @@
 package org.maurodata.controller.datamodel
 
+import org.maurodata.domain.datamodel.DataElement
 import org.maurodata.domain.model.Path
 import org.maurodata.persistence.cache.ModelCacheableRepository
 
@@ -48,6 +49,9 @@ class DataTypeController extends AdministeredItemController<DataType, DataModel>
 
     @Inject
     DataModelCacheableRepository dataModelRepository
+
+    @Inject
+    AdministeredItemCacheableRepository.DataElementCacheableRepository dataElementRepository
 
     @Inject
     EnumerationValueRepository enumerationValueRepository
@@ -178,6 +182,36 @@ class DataTypeController extends AdministeredItemController<DataType, DataModel>
         }
         ListResponse.from(dataTypes, params)
     }
+
+    @Get(Paths.DATA_TYPE_DATA_ELEMENTS_PAGED)
+    ListResponse<DataElement> listDataElementsForType(UUID dataModelId, UUID dataTypeId, @Nullable PaginationParams params = new PaginationParams()) {
+        DataType dataType
+        dataType = administeredItemRepository.findById(dataTypeId)
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, dataType, "Item with id ${dataTypeId.toString()} not found")
+        accessControlService.checkRole(Role.READER, dataType)
+
+        List<DataElement> dataElements = dataElementRepository.readAllByDataTypeIn([dataType])
+        ListResponse.from(dataElements, params)
+    }
+
+    @Get(Paths.PRIMITIVETYPE_DOI)
+    Map primitiveTypeDoi(UUID id) {
+        ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "Doi is not implemented")
+        return null
+    }
+
+    @Get(Paths.ENUMERATIONTYPE_DOI)
+    Map enumerationTypeDoi(UUID id) {
+        ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "Doi is not implemented")
+        return null
+    }
+
+    @Get(Paths.REFERENCETYPE_DOI)
+    Map referenceTypeDoi(UUID id) {
+        ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "Doi is not implemented")
+        return null
+    }
+
 
     protected void validateModelResource(DataType dataType) {
         AdministeredItem modelResource = super.readAdministeredItem(dataType.modelResourceDomainType, dataType.modelResourceId) as Model
