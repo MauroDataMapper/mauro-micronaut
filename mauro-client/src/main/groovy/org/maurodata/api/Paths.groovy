@@ -157,8 +157,14 @@ interface Paths {
     * DataTypeApi
     */
     String DATA_TYPE_LIST = '/api/dataModels/{dataModelId}/dataTypes'
-    String DATA_TYPE_ID = '/api/dataModels/{dataModelId}/dataTypes/{id}'
     String DATA_TYPE_LIST_PAGED = '/api/dataModels/{dataModelId}/dataTypes{?params*}'
+    String DATA_TYPE_ID = '/api/dataModels/{dataModelId}/dataTypes/{id}'
+    String DATA_TYPE_DATA_ELEMENTS = '/api/dataModels/{dataModelId}/dataTypes/{dataTypeId}/dataElements'
+    String DATA_TYPE_DATA_ELEMENTS_PAGED = '/api/dataModels/{dataModelId}/dataTypes/{dataTypeId}/dataElements{?params*}'
+    String PRIMITIVETYPE_DOI = '/api/primitiveTypes/{id}/doi'
+    String ENUMERATIONTYPE_DOI = '/api/enumerationTypes/{id}/doi'
+    String REFERENCETYPE_DOI = '/api/referenceTypes/{id}/doi'
+
 
     /*
     * EnumerationValueApi
