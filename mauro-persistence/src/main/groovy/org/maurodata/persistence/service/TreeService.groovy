@@ -154,7 +154,7 @@ class TreeService {
 
     List<TreeItem> buildTreeForDataModel(DataModel dataModel, boolean setChildren, boolean lookForChildren) {
         List<TreeItem> treeItems = dataClassCacheableRepository.readAllByDataModelAndParentDataClassIsNull(dataModel)
-            .sort {it.label}
+            .sort {a, b -> a.order <=> b.order ?: a.label <=> b.label}
             .collect {DataClass dataClass ->
                 pathRepository.readParentItems(dataClass)
                 dataClass.updatePath()
@@ -175,7 +175,9 @@ class TreeService {
     }
 
     List<TreeItem> buildTreeForDataClass(DataClass dataClass, boolean setChildren, boolean lookForChildren) {
-        dataClassCacheableRepository.readAllByParentDataClass_Id(dataClass.id).sort {it.label}.collect {DataClass childClass ->
+        dataClassCacheableRepository.readAllByParentDataClass_Id(dataClass.id)
+            .sort {a, b -> a.order <=> b.order ?: a.label <=> b.label}
+            .collect {DataClass childClass ->
             pathRepository.readParentItems(dataClass)
             dataClass.updatePath()
             dataClass.updateBreadcrumbs()
