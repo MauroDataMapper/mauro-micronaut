@@ -8,7 +8,7 @@ import io.micronaut.http.multipart.CompletedPart
 
 import java.nio.charset.StandardCharsets
 
-class  ImportParameters {
+class ImportParameters {
 
     @ImportParameterConfig(
             displayName = 'Folder',
@@ -159,14 +159,4 @@ class  ImportParameters {
             ))
     Boolean asynchronous = false
 
-
-    @ImportParameterConfig(
-        displayName = 'Source dataModel',
-        description = 'The source data model of the imported dataflow',
-        order = 4,
-        group = @ImportGroupConfig(
-            name = 'Source Data Model',
-            order = 5
-        ))
-    UUID sourceDataModelId
 }

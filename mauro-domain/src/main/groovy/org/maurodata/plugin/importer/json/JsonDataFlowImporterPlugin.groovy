@@ -6,12 +6,13 @@ import jakarta.inject.Inject
 import jakarta.inject.Singleton
 import org.maurodata.domain.dataflow.DataFlow
 import org.maurodata.export.ExportModel
+import org.maurodata.plugin.importer.DataFlowFileImportParameters
 import org.maurodata.plugin.importer.DataFlowImporterPlugin
 import org.maurodata.plugin.importer.FileImportParameters
 
 @Slf4j
 @Singleton
-class JsonDataFlowImporterPlugin implements DataFlowImporterPlugin<FileImportParameters> {
+class JsonDataFlowImporterPlugin implements DataFlowImporterPlugin<DataFlowFileImportParameters> {
 
     String version = '4.0.0'
 
@@ -23,7 +24,7 @@ class JsonDataFlowImporterPlugin implements DataFlowImporterPlugin<FileImportPar
     ObjectMapper objectMapper
 
     @Override
-    List<DataFlow> importDomain(FileImportParameters params) {
+    List<DataFlow> importDomain(DataFlowFileImportParameters params) {
         log.info '** start importModel **'
         ExportModel importModel = objectMapper.readValue(params.importFile.fileContents, ExportModel)
         log.info '*** imported JSON model ***'
@@ -43,7 +44,7 @@ class JsonDataFlowImporterPlugin implements DataFlowImporterPlugin<FileImportPar
 
     @Override
     Class<FileImportParameters> importParametersClass() {
-        return FileImportParameters
+        return DataFlowFileImportParameters
     }
 
 }
