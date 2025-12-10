@@ -2,16 +2,19 @@
 # They are provided by a third-party and are governed by
 # separate terms of service, privacy policy, and support
 # documentation.
-# This workflow will build a Java project with Gradle and cache/restore any dependencies to improve the workflow execution time
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-java-with-gradle
+# This workflow will build a Java project with Gradle and
+# cache/restore any dependencies to improve the workflow execution time
+# For more information see:
+# https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-java-with-gradle
 
+---  # GitHub Actions Workflow
 name: Java CI with Gradle
 
-on:
+"on":
   push:
-    branches: [ "**" ]
+    branches: ["**"]
   pull_request:
-    branches: [ "**" ]
+    branches: ["**"]
 
 permissions:
   contents: read
@@ -41,106 +44,96 @@ jobs:
           - 5432:5432
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Set up JDK 17
-      uses: actions/setup-java@v4
-      with:
-        java-version: '17'
-        distribution: 'temurin'
+      - uses: actions/checkout@v4
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
 
-    - name: Setup Gradle
-      uses: gradle/actions/setup-gradle@v3
-      with:
-        cache-disabled: true
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          cache-disabled: true
 
-    - name: Test with Gradle
-      run: ./gradlew test
+      - name: Test with Gradle
+        run: ./gradlew test
 
-    - name: Test Report
-      uses: dorny/test-reporter@v1
-      if: success() || failure()
-      with:
-        name: Test Results
-        path: '**/build/test-results/**/*.xml'
-        reporter: java-junit
+      - name: Test Report
+        uses: dorny/test-reporter@v1
+        if: success() || failure()
+        with:
+          name: Test Results
+          path: '**/build/test-results/**/*.xml'
+          reporter: java-junit
 
-    - name: Test Docker Build
-      run: ./gradlew dockerBuild
+      - name: Test Docker Build
+        run: ./gradlew dockerBuild
 
+      # All available variables are described in documentation
+      # https://megalinter.io/configuration/
+      - name: MegaLinter
+        uses: oxsecurity/megalinter/flavors/java@v9
+        env:
+          VALIDATE_ALL_CODEBASE: true
+          GROOVY_NPM_GROOVY_LINT_ARGUMENTS: >
+             -r "file:config/codenarc/codenarc.groovy"
+          LINTER_RULES_PATH: 'config/codenarc'
+          DISABLE_ERRORS: true  # Flag to have the linter complete with exit code 0 even if errors were detected.
+          SARIF_REPORTER: true
+          SARIF_REPORTER_LINTERS: ACTION_ACTIONLINT,API_SPECTRAL,BASH_EXEC,BASH_SHFMT,COPYPASTE_JSCPD,GROOVY_NPM_GROOVY_LINT,JSON_JSONLINT,JSON_V8R,JSON_PRETTIER,MARKDOWN_MARKDOWNLINT,MARKDOWN_MARKDOWN_TABLE_FORMATTER,REPOSITORY_GIT_DIFF,REPOSITORY_GITLEAKS,REPOSITORY_GRYPE,REPOSITORY_SECRETLINT,REPOSITORY_SYFT,REPOSITORY_TRIVY,REPOSITORY_TRIVY_SBOM,REPOSITORY_TRUFFLEHOG,SPELL_CSPELL,SPELL_LYCHEE,XML_XMLLINT,YAML_PRETTIER,YAML_YAMLLINT,YAML_V8R
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # see the results in PRs
 
-          #    - name: Archive test report
-#      if: always()
-#      uses: actions/upload-artifact@v3
-#      with:
-#        name: test-report
-#        path: '**/build/test-results/**/*.xml'
-
-    - name: MegaLinter
-      uses: oxsecurity/megalinter/flavors/java@v9
-      env:
-        # All available variables are described in documentation
-        # https://megalinter.io/configuration/
-        VALIDATE_ALL_CODEBASE: true
-        GROOVY_NPM_GROOVY_LINT_ARGUMENTS: >
-          -r "file:config/codenarc/codenarc.groovy"
-        LINTER_RULES_PATH: 'config/codenarc'
-        DISABLE_ERRORS: true #Flag to have the linter complete with exit code 0 even if errors were detected.
-        SARIF_REPORTER: true
-        SARIF_REPORTER_LINTERS: ACTION_ACTIONLINT,API_SPECTRAL,BASH_EXEC,BASH_SHFMT,COPYPASTE_JSCPD,GROOVY_NPM_GROOVY_LINT,JSON_JSONLINT,JSON_V8R,JSON_PRETTIER,MARKDOWN_MARKDOWNLINT,MARKDOWN_MARKDOWN_TABLE_FORMATTER,REPOSITORY_GIT_DIFF,REPOSITORY_GITLEAKS,REPOSITORY_GRYPE,REPOSITORY_SECRETLINT,REPOSITORY_SYFT,REPOSITORY_TRIVY,REPOSITORY_TRIVY_SBOM,REPOSITORY_TRUFFLEHOG,SPELL_CSPELL,SPELL_LYCHEE,XML_XMLLINT,YAML_PRETTIER,YAML_YAMLLINT,YAML_V8R
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # see the results in PRs
-
-    - name: Archive lint reports
-      if: success() || failure()
-      uses: actions/upload-artifact@v4
-      with:
+      - name: Archive lint reports
+        if: success() || failure()
+        uses: actions/upload-artifact@v4
+        with:
           name: MegaLinter reports
           path: |
               megalinter-reports
               mega-linter.log
 
-    - name: Upload MegaLinter scan results to GitHub Security tab
-      if: success() || failure()
-      uses: github/codeql-action/upload-sarif@v3
-      with:
-        sarif_file: 'megalinter-reports/megalinter-report.sarif'
-        ref: refs/heads/${{ github.head_ref || github.ref_name }}
-        sha: ${{ github.event.pull_request.head.sha || github.sha }}
-        category: MegaLinter-Groovy
-        wait-for-processing: true
+      - name: Upload MegaLinter scan results to GitHub Security tab
+        if: success() || failure()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'megalinter-reports/megalinter-report.sarif'
+          ref: refs/heads/${{ github.head_ref || github.ref_name }}
+          sha: ${{ github.event.pull_request.head.sha || github.sha }}
+          category: MegaLinter-Groovy
+          wait-for-processing: true
 
-
-
-    - name: Publish Snapshot to Mauro Snapshot Repository
-      if: success() && github.ref == 'refs/heads/develop'
-      env:
+      - name: Publish Snapshot to Mauro Snapshot Repository
+        if: success() && github.ref == 'refs/heads/develop'
+        env:
           ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SIGNING_IN_MEMORY_KEY }}
           ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_IN_MEMORY_KEY_PASSWORD }}
-      run: |
-          ./gradlew --stacktrace -PMauroSnapshotRepositoryUsername=${{secrets.MAURO_SNAPSHOT_REPOSITORY_USERNAME}} -PMauroSnapshotRepositoryPassword=${{secrets.MAURO_SNAPSHOT_REPOSITORY_PASSWORD}} publishAllPublicationsToMauroSnapshotRepositoryRepository
+        run: |
+            ./gradlew --stacktrace -PMauroSnapshotRepositoryUsername=${{secrets.MAURO_SNAPSHOT_REPOSITORY_USERNAME}} -PMauroSnapshotRepositoryPassword=${{secrets.MAURO_SNAPSHOT_REPOSITORY_PASSWORD}} publishAllPublicationsToMauroSnapshotRepositoryRepository
 
-    - name: Publish to Maven Central
-      if: success() && github.ref == 'refs/heads/main'
-      env:
+      - name: Publish to Maven Central
+        if: success() && github.ref == 'refs/heads/main'
+        env:
           ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SIGNING_IN_MEMORY_KEY }}
           ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_IN_MEMORY_KEY_PASSWORD }}
           ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.SONATYPE_USERNAME }}
           ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.SONATYPE_PASSWORD }}
-      run: |
-          ./gradlew --stacktrace publishAllPublicationsToMavenCentralRepository    
+        run: |
+            ./gradlew --stacktrace publishAllPublicationsToMavenCentralRepository
 
-    - name: Publish to Docker Hub
-      if: success() && github.ref == 'refs/heads/main'
-      run: |
-          ./gradlew --stacktrace dockerPush    
+      - name: Publish to Docker Hub
+        if: success() && github.ref == 'refs/heads/main'
+        run: |
+            ./gradlew --stacktrace dockerPush
 
-    - name: Send a stream message
-      if: success() || failure()
-      uses: zulip/github-actions-zulip/send-message@v1
-      with:
-        api-key: ${{ secrets.ZULIP_API_KEY }}
-        email: "githubactionsbot-bot@maurodatamapper.zulipchat.com"
-        organization-url: "https://maurodatamapper.zulipchat.com"
-        to: "build/github-actions"
-        type: "stream"
-        topic: "${{github.repository}}"
-        content: "${{ job.status == 'success' && ':check_mark:' || ':cross_mark:' }} ${{github.repository}} : **${{github.ref}}**\nGitHub Actions build result: **${{ job.status }}**\n${{ github.event.pull_request.html_url || github.event.head_commit.url }}"
+      - name: Send a stream message
+        if: success() || failure()
+        uses: zulip/github-actions-zulip/send-message@v1
+        with:
+          api-key: ${{ secrets.ZULIP_API_KEY }}
+          email: "githubactionsbot-bot@maurodatamapper.zulipchat.com"
+          organization-url: "https://maurodatamapper.zulipchat.com"
+          to: "build/github-actions"
+          type: "stream"
+          topic: "${{github.repository}}"
+          content: "${{ job.status == 'success' && ':check_mark:' || ':cross_mark:' }} ${{github.repository}} : **${{github.ref}}**\nGitHub Actions build result: **${{ job.status }}**\n${{ github.event.pull_request.html_url || github.event.head_commit.url }}"
