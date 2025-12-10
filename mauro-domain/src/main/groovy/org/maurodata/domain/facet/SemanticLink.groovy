@@ -1,5 +1,6 @@
 package org.maurodata.domain.facet
 
+import groovy.util.logging.Slf4j
 import jakarta.persistence.PrePersist
 import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.domain.model.Item
@@ -23,6 +24,7 @@ import io.micronaut.data.annotation.Transient
 @AutoClone
 @Indexes([@Index(columns = ['multi_facet_aware_item_id'], unique = true)])
 @MapConstructor(includeSuperFields = true, includeSuperProperties = true, noArg = true)
+@Slf4j
 class SemanticLink extends Facet implements ItemReferencer {
 
     @JsonAlias(['link_type'])
@@ -49,7 +51,7 @@ class SemanticLink extends Facet implements ItemReferencer {
         super.prePersist()
         if(target) {
             if(!target.id) {
-                System.err.println("Trying to save a semantic link with a target which doesn't have an id!")
+                log.error("Trying to save a semantic link with a target which doesn't have an id!")
             } else {
                 targetMultiFacetAwareItemDomainType = target.domainType
                 targetMultiFacetAwareItemId = target.id

@@ -1,5 +1,7 @@
 package org.maurodata.domain.facet
 
+import groovy.util.logging.Slf4j
+import jakarta.persistence.PrePersist
 import org.maurodata.domain.model.Item
 import org.maurodata.domain.model.ItemReference
 import org.maurodata.domain.model.ItemReferencer
@@ -19,6 +21,7 @@ import org.maurodata.domain.model.Model
 @AutoClone
 @Indexes([@Index(columns = ['multi_facet_aware_item_id'])])
 @MapConstructor(includeSuperFields = true, includeSuperProperties = true, noArg = true)
+@Slf4j
 class VersionLink extends Facet implements ItemReferencer {
 
     final static String NEW_FORK_OF = "NEW_FORK_OF", NEW_MODEL_VERSION_OF = "NEW_MODEL_VERSION_OF"
@@ -28,6 +31,10 @@ class VersionLink extends Facet implements ItemReferencer {
         descriptions.put(NEW_MODEL_VERSION_OF, "New Model Version Of")
     }
 
+    @JsonIgnore
+    @Transient
+    Model target
+
     @JsonAlias(['version_link_type'])
     String versionLinkType
 
@@ -36,6 +43,19 @@ class VersionLink extends Facet implements ItemReferencer {
 
     @JsonAlias(['target_model_domain_type'])
     String targetModelDomainType
+
+    @PrePersist
+    void prePersist() {
+        super.prePersist()
+        if(target) {
+            if(!target.id) {
+                log.error("Trying to save a version link with a target which doesn't have an id!")
+            } else {
+                targetModelDomainType = target.domainType
+                targetModelId = target.id
+            }
+        }
+    }
 
     /****
      * Methods for building a tree-like DSL
