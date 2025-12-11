@@ -213,7 +213,12 @@ class VersionedFolderController extends ModelController<Folder> implements Versi
     @Override
     @Get(Paths.VERSIONED_FOLDER_CURRENT_MAIN_BRANCH)
     Folder currentMainBranch(UUID id) {
-        super.currentMainBranch(id)
+        Folder returnFolder = (Folder) super.currentMainBranch(id)
+        returnFolder.dataModels = []
+        returnFolder.terminologies = []
+        returnFolder.childFolders = []
+        returnFolder.codeSets = []
+        return returnFolder
     }
 
     @Override

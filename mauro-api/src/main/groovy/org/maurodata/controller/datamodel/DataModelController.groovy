@@ -483,7 +483,10 @@ class DataModelController extends ModelController<DataModel> implements DataMode
     @Override
     @Get(Paths.DATA_MODEL_CURRENT_MAIN_BRANCH)
     DataModel currentMainBranch(UUID id) {
-        super.currentMainBranch(id)
+        DataModel returnDataModel = (DataModel) super.currentMainBranch(id)
+        returnDataModel.dataClasses = []
+        returnDataModel.dataTypes = []
+        return returnDataModel
     }
 
     @Override
