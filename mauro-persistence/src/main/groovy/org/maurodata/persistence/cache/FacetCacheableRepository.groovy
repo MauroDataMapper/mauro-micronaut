@@ -213,5 +213,13 @@ abstract class FacetCacheableRepository<F extends Facet> extends ItemCacheableRe
             ((SemanticLinkRepository) repository).readAllByMultiFacetAwareItemIdIn(itemIds)
         }
 
+        Set<SemanticLink> readAllByTargetMultiFacetAwareItemIdIn(Collection<UUID> itemIds) {
+            ((SemanticLinkRepository) repository).readAllByTargetMultiFacetAwareItemIdIn(itemIds)
+        }
+
+        Set<SemanticLink> readAllByTargetMultiFacetAwareItemId(UUID itemId) {
+            ((SemanticLinkRepository) repository).readAllByTargetMultiFacetAwareItemId(itemId)
+        }
+
     }
 }

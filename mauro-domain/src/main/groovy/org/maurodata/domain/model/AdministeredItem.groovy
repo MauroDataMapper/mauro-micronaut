@@ -326,7 +326,7 @@ abstract class AdministeredItem extends Item implements Pathable {
         AdministeredItem node = this
         while (node) {
             breadcrumbs.add(new Breadcrumb(id: node.id, domainType: node.domainType, label: node.label, finalised: node instanceof Model ? node.finalised : null))
-            if (node.parent == node || node instanceof Model) break
+            if (node.parent === node || node instanceof Model) break
             // root of Breadcrumbs is the nearest Model type parent of the item
             i++; node = node.parent
             if (i > Path.PATH_MAX_NODES) throw new MauroInternalException("Breadcrumbs exceeded maximum depth of [$Path.PATH_MAX_NODES]")

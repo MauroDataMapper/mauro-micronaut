@@ -281,10 +281,7 @@ class TerminologyController extends ModelController<Terminology> implements Term
         final ArrayList<ModelVersionedRefDTO> simpleModelVersionTreeList = new ArrayList<>(allModels.size())
 
         for (Model model : allModels) {
-            final ModelVersionedRefDTO modelVersionedRefDTO = new ModelVersionedRefDTO(id: model.id, branch: model.branchName, branchName: model.branchName,
-                    modelVersion: model.modelVersion?.toString(), modelVersionTag: model.modelVersionTag,
-                    documentationVersion: model.documentationVersion,
-                    displayName: model.pathModelIdentifier)
+            final ModelVersionedRefDTO modelVersionedRefDTO = new ModelVersionedRefDTO(model)
             simpleModelVersionTreeList.add(modelVersionedRefDTO)
         }
 
