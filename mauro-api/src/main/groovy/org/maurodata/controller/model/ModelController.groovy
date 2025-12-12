@@ -421,9 +421,8 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
             throw new HttpStatusException(HttpStatus.NOT_FOUND, "Object not found")
         }
 
-        ModelRefDTO sourceModelDto = new ModelRefDTO(id: sourceModel.id, domainType: sourceModel.domainType, label: sourceModel.label)
-        ModelRefDTO targetModelDto = new ModelRefDTO(id: targetModel.id, domainType: targetModel.domainType, label: targetModel.label,
-                                                     model: targetModel.owner ? targetModel.owner.id : null)
+        ModelRefDTO sourceModelDto = new ModelRefDTO(sourceModel)
+        ModelRefDTO targetModelDto = new ModelRefDTO(targetModel)
 
         final VersionLinkDTO versionLinkDTO = new VersionLinkDTO(id: versionLink.id, linkType: versionLink.versionLinkType, sourceModel: sourceModelDto,
                                                                  targetModel: targetModelDto)
@@ -781,10 +780,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
             throw new HttpStatusException(HttpStatus.NOT_FOUND, "There are no versioned models")
         }
 
-        return new ModelVersionedRefDTO(id: highestVersionModel.id, domainType: highestVersionModel.domainType, label: highestVersionModel.label,
-                                        branch: highestVersionModel.branchName, branchName: highestVersionModel.branchName,
-                                        modelVersion: highestVersionModel.modelVersion?.toString(), modelVersionTag: highestVersionModel.modelVersionTag,
-                                        documentationVersion: highestVersionModel.documentationVersion, displayName: highestVersionModel.pathModelIdentifier)
+        return new ModelVersionedRefDTO(highestVersionModel)
     }
 
     protected M commonAncestor(UUID id, UUID other_model_id) {
@@ -831,12 +827,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         allModels.forEach {Model model ->
 
             if (!branchesOnly || !model.finalised) {
-                simpleModelVersionTreeList.add(
-                    new ModelVersionedRefDTO(id: model.id, domainType: model.domainType, label: model.label, model: model.owner.id, branch: model.branchName,
-                                             branchName: model.branchName,
-                                             modelVersion: model.modelVersion?.toString(), modelVersionTag: model.modelVersionTag,
-                                             documentationVersion: model.documentationVersion,
-                                             displayName: model.pathModelIdentifier))
+                simpleModelVersionTreeList.add(new ModelVersionedRefDTO(model))
             }
         }
 
@@ -853,13 +844,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         final ArrayList<ModelVersionedWithTargetsRefDTO> modelVersionTreeList = new ArrayList<>(allModels.size())
 
         for (Model model : allModels) {
-            final ModelVersionedWithTargetsRefDTO modelVersionedWithTargetsRefDTO = new ModelVersionedWithTargetsRefDTO(id: model.id, branch: model.branchName,
-                                                                                                                        branchName: model.branchName,
-                                                                                                                        modelVersion: model.modelVersion?.toString(),
-                                                                                                                        modelVersionTag: model.modelVersionTag,
-                                                                                                                        documentationVersion: model.documentationVersion,
-                                                                                                                        displayName: model.pathModelIdentifier,
-                                                                                                                        domainType: model.domainType)
+            final ModelVersionedWithTargetsRefDTO modelVersionedWithTargetsRefDTO = new ModelVersionedWithTargetsRefDTO(model)
 
             // Have any flags been set during recursion?
             final Map<String, Boolean> modelFlags = flags.get(modelVersionedWithTargetsRefDTO.id)

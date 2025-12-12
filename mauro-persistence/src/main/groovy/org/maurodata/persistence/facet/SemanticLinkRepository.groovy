@@ -11,6 +11,12 @@ import io.micronaut.data.model.query.builder.sql.Dialect
 @JdbcRepository(dialect = Dialect.POSTGRES)
 abstract class SemanticLinkRepository implements FacetRepository<SemanticLink> {
 
+
+    abstract Set<SemanticLink> readAllByTargetMultiFacetAwareItemId(UUID ownerId)
+
+    abstract Set<SemanticLink> readAllByTargetMultiFacetAwareItemIdIn(Collection<UUID> ownerIds)
+
+
     @Override
     Class getDomainClass() {
         SemanticLink

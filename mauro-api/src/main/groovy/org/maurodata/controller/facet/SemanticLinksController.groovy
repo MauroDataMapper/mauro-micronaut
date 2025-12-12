@@ -1,5 +1,6 @@
 package org.maurodata.controller.facet
 
+import jakarta.inject.Inject
 import org.maurodata.ErrorHandler
 import org.maurodata.api.Paths
 import org.maurodata.api.facet.SemanticLinkCreateDTO
@@ -11,6 +12,7 @@ import org.maurodata.domain.facet.SemanticLinkType
 import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.domain.security.Role
 import org.maurodata.persistence.cache.FacetCacheableRepository
+import org.maurodata.persistence.model.PathRepository
 import org.maurodata.web.ListResponse
 import org.maurodata.web.PaginationParams
 
@@ -31,6 +33,9 @@ import io.micronaut.security.rules.SecurityRule
 class SemanticLinksController extends FacetController<SemanticLink> implements SemanticLinksApi {
 
     //todo: implement actual
+
+    @Inject
+    PathRepository pathRepository
 
     /**
      * Properties disallowed in a simple update request.
@@ -53,25 +58,54 @@ class SemanticLinksController extends FacetController<SemanticLink> implements S
         ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, administeredItem, "$domainType $domainId not found")
         accessControlService.checkRole(Role.READER, administeredItem)
 
-        List<SemanticLink> semanticLinks = !administeredItem.semanticLinks ? [] : administeredItem.semanticLinks
+        pathRepository.readParentItems(administeredItem)
+        administeredItem.updateBreadcrumbs()
+        ModelRefDTO administeredItemDTO = new ModelRefDTO(administeredItem)
+
         List<SemanticLinkDTO> semanticLinkDTOList = []
 
+        // First get the links from this item...
+        List<SemanticLink> semanticLinks = !administeredItem.semanticLinks ? [] : administeredItem.semanticLinks
         semanticLinks.forEach {SemanticLink semanticLink ->
 
             final String targetDomainType = semanticLink.targetMultiFacetAwareItemDomainType
             final UUID targetDomainId = semanticLink.targetMultiFacetAwareItemId
 
-            // RHS
             final AdministeredItem targetAdministeredItem = findAdministeredItem(targetDomainType, targetDomainId)
-
             if (targetAdministeredItem != null) {
+                pathRepository.readParentItems(targetAdministeredItem)
+                targetAdministeredItem.updateBreadcrumbs()
                 final SemanticLinkDTO semanticLinkDTO = new SemanticLinkDTO().tap {
                     id = semanticLink.id
                     linkType = semanticLink.linkType.label
                     unconfirmed = semanticLink.unconfirmed
-                    sourceMultiFacetAwareItem = new ModelRefDTO(id: administeredItem.id, label: administeredItem.label, domainType: administeredItem.domainType)
+                    sourceMultiFacetAwareItem = administeredItemDTO
                     targetMultiFacetAwareItem =
-                        new ModelRefDTO(id: targetAdministeredItem.id, label: targetAdministeredItem.label, domainType: targetAdministeredItem.domainType, model: targetAdministeredItem.owner? targetAdministeredItem.owner.id : null)
+                        new ModelRefDTO(targetAdministeredItem)
+                }
+
+                semanticLinkDTOList << semanticLinkDTO
+            }
+        }
+        // Now get the links pointing to this item
+        semanticLinks = semanticLinkRepository.readAllByTargetMultiFacetAwareItemId(domainId) as List<SemanticLink>
+        semanticLinks.forEach {SemanticLink semanticLink ->
+
+            final String sourceDomainType = semanticLink.multiFacetAwareItemDomainType
+            final UUID sourceDomainId = semanticLink.multiFacetAwareItemId
+
+            // RHS
+            final AdministeredItem sourceAdministeredItem = findAdministeredItem(sourceDomainType, sourceDomainId)
+            if (sourceAdministeredItem != null) {
+                pathRepository.readParentItems(sourceAdministeredItem)
+                sourceAdministeredItem.updateBreadcrumbs()
+                final SemanticLinkDTO semanticLinkDTO = new SemanticLinkDTO().tap {
+                    id = semanticLink.id
+                    linkType = semanticLink.linkType.label
+                    unconfirmed = semanticLink.unconfirmed
+                    sourceMultiFacetAwareItem = new ModelRefDTO(sourceAdministeredItem)
+                    targetMultiFacetAwareItem = administeredItemDTO
+
                 }
 
                 semanticLinkDTOList << semanticLinkDTO
@@ -119,8 +153,8 @@ class SemanticLinksController extends FacetController<SemanticLink> implements S
             id = createdSemanticLink.id
             linkType = createdSemanticLink.linkType.label
             unconfirmed = createdSemanticLink.unconfirmed
-            sourceMultiFacetAwareItem = new ModelRefDTO(id: administeredItem.id, label: administeredItem.label, domainType: administeredItem.domainType)
-            targetMultiFacetAwareItem = new ModelRefDTO(id: targetAdministeredItem.id, label: targetAdministeredItem.label, domainType: targetAdministeredItem.domainType, model: targetAdministeredItem.owner? targetAdministeredItem.owner.id : null)
+            sourceMultiFacetAwareItem = new ModelRefDTO(administeredItem)
+            targetMultiFacetAwareItem = new ModelRefDTO(targetAdministeredItem)
         }
 
         return createdSemanticLinkDTO
