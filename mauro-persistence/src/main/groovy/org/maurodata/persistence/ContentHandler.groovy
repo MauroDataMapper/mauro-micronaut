@@ -671,7 +671,7 @@ class ContentHandler {
                 }
             } else {
                 codeSets.each {codeSet ->
-                    codeSet.terms = codeSetCacheableRepository.getTerms(codeSet.id)
+                    codeSet.terms = codeSetCacheableRepository.readTerms(codeSet.id)
                 }
             }
         }
