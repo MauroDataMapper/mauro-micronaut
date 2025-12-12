@@ -10,9 +10,7 @@ import jakarta.inject.Inject
 import org.maurodata.FieldConstants
 import org.maurodata.domain.terminology.CodeSet
 import org.maurodata.domain.terminology.Term
-import org.maurodata.domain.terminology.Terminology
 import org.maurodata.persistence.ContentsService
-import org.maurodata.persistence.datamodel.dto.DataClassExtensionDTO
 import org.maurodata.persistence.model.ModelRepository
 import org.maurodata.persistence.terminology.dto.CodeSetDTORepository
 import org.maurodata.persistence.terminology.dto.CodeSetTermDTO
@@ -82,7 +80,7 @@ abstract class CodeSetRepository implements ModelRepository<CodeSet> {
     where exists (select term_id from terminology.code_set_term cst
                     where cst.code_set_id = :uuid and t.id = cst.term_id) ''')
     @Nullable
-    abstract Set<Term> getTerms(@NonNull UUID uuid)
+    abstract Set<Term> readTerms(@NonNull UUID uuid)
 
     @Query('''select code_set_id,
            term_id from terminology.code_set_term where code_set_id in (:codeSetIds)''')

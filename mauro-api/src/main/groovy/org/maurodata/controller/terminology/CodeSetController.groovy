@@ -155,7 +155,7 @@ class CodeSetController extends ModelController<CodeSet> implements CodeSetApi {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, 'CodeSet item not found')
         }
         accessControlService.checkRole(Role.READER, codeSet)
-        List<Term> associatedTerms = codeSetRepository.getTerms(id).each { it.updateBreadcrumbs() } as List<Term>
+        List<Term> associatedTerms = codeSetRepository.readTerms(id).each { it.updateBreadcrumbs() } as List<Term>
         ListResponse.from(associatedTerms, params)
     }
 
@@ -201,7 +201,7 @@ class CodeSetController extends ModelController<CodeSet> implements CodeSetApi {
         copy.setAssociations()
         copy.terms.clear()
         CodeSet savedCopy = (CodeSet) contentsService.saveWithContent(copy)
-        List<Term> terms = codeSetRepository.getTerms(id) as List<Term>
+        List<Term> terms = termRepository.findAllByCodeSetsIdIn([id]) as List<Term>
         terms.each {
             addTerm(savedCopy.id, it.id)
         }
