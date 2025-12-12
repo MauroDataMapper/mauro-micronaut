@@ -119,8 +119,8 @@ class ModelCacheableRepository<M extends Model> extends AdministeredItemCacheabl
         }
 
         // Not cached
-        Set<Term> getTerms(@NonNull UUID uuid) {
-            ((CodeSetRepository) repository).getTerms(uuid)
+        Set<Term> readTerms(@NonNull UUID uuid) {
+            ((CodeSetRepository) repository).readTerms(uuid)
         }
 
         CodeSet addTerm(@NonNull UUID uuid, @NonNull UUID termId) {

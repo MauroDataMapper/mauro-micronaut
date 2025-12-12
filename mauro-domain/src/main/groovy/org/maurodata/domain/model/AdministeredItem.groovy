@@ -123,7 +123,7 @@ abstract class AdministeredItem extends Item implements Pathable {
     @JsonIgnore
     void setAssociations() {
         List<Facet> facets = []
-        [getEdits(),getMetadata(),getSummaryMetadata(),getRules(),getAnnotations(),getReferenceFiles()].each {
+        [getEdits(),getMetadata(),getSummaryMetadata(),getRules(),getAnnotations(),getReferenceFiles(),getSemanticLinks()].each {
             facets.addAll(it)
         }
         facets.each {
@@ -388,10 +388,13 @@ abstract class AdministeredItem extends Item implements Pathable {
         List<ReferenceFile> clonedReferenceFiles = getReferenceFiles().collect {it.clone()}
         cloned.referenceFiles = clonedReferenceFiles
 
+        List<Rule> clonedRules = getRules().collect {it.clone()}
+        cloned.rules = clonedRules
+
         List<SemanticLink> clonedSemanticLinks = getSemanticLinks().collect {it.clone()}
         cloned.semanticLinks = clonedSemanticLinks
-        cloned
 
+        cloned
     }
 
     /**

@@ -94,6 +94,10 @@ abstract class TermRepository implements ModelItemRepository<Term> {
     @Nullable
     abstract List<CodeSet> getCodeSets(@NonNull UUID uuid)
 
+    Set<Term> findAllByCodeSetsIdIn(@NonNull List<UUID> uuids) {
+        termDTORepository.findAllByCodeSetsIdIn(uuids) as Set<Term>
+    }
+
     @Override
     Class getDomainClass() {
         Term

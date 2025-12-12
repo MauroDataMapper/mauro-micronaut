@@ -1,5 +1,6 @@
 package org.maurodata.persistence.terminology.dto
 
+import io.micronaut.core.annotation.NonNull
 import org.maurodata.domain.terminology.Term
 
 import groovy.transform.CompileStatic
@@ -36,4 +37,8 @@ abstract class TermDTORepository implements GenericRepository<TermDTO, UUID> {
     @Query('SELECT * FROM terminology.term WHERE label = :label')
     @Nullable
     abstract List<Term> findAllByLabel(String label)
+
+    @Nullable
+    abstract Set<TermDTO> findAllByCodeSetsIdIn(@NonNull Collection<UUID> uuid)
+
 }

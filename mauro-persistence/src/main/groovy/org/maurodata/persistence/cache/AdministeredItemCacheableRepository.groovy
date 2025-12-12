@@ -137,6 +137,10 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
             ((TermRepository) repository).readAllByTerminologyIdIn(terminologyIds)
         }
 
+        Set<Term> findAllByCodeSetsIdIn(@NonNull List<UUID> uuids) {
+            ((TermRepository) repository).findAllByCodeSetsIdIn(uuids)
+        }
+
 
 
 
