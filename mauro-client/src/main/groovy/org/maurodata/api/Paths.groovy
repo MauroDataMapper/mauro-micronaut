@@ -309,8 +309,8 @@ interface Paths {
     /*
     * SearchApi
     */
-    String SEARCH_GET = '/api/search{?requestDTO*}'
-    String SEARCH_POST = '/api/search'
+    String SEARCH_GET = '/api/catalogueItems/search{?requestDTO*}'
+    String SEARCH_POST = '/api/catalogueItems/search'
 
     /*
     * OpenidProviderApi
