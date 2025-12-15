@@ -90,7 +90,7 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
         exportModel.folder.dataModels[0].dataClasses.size() == 2
         List<DataClass> dataClasses = exportModel.folder.dataModels[0].dataClasses
         dataClasses.label.sort().collect { it.toString() } == ['TEST-1', 'TEST-2']
-        dataClasses.id.sort().collect { it.toString() } == [ dataClass1Id.toString(), dataClass2Id.toString()].sort()
+        dataClasses.id.collect { it.toString() }.sort() == [ dataClass1Id.toString(), dataClass2Id.toString()].sort()
 
         exportModel.folder.metadata.size() == 1
         exportModel.folder.metadata[0].id == metadataResponse.id

@@ -9,9 +9,6 @@ import org.maurodata.domain.diff.ArrayDiff
 import org.maurodata.domain.diff.DiffBuilder
 import org.maurodata.domain.diff.FieldDiff
 import org.maurodata.domain.diff.ObjectDiff
-import org.maurodata.domain.facet.SummaryMetadata
-import org.maurodata.domain.facet.SummaryMetadataReport
-import org.maurodata.domain.facet.SummaryMetadataType
 import org.maurodata.domain.folder.Folder
 import org.maurodata.persistence.ContainerizedTest
 import org.maurodata.testing.CommonDataSpec
@@ -26,7 +23,7 @@ import spock.lang.Shared
 @Sql(scripts = "classpath:sql/tear-down-datamodel.sql", phase = Sql.Phase.AFTER_EACH)
 class DataModelSchemaDiffsIntegrationSpec extends CommonDataSpec {
     static String NAME = 'name'
-    static String CREATED = 'created'
+    // static String CREATED = 'created'
     static String DELETED = 'deleted'
 
     @Shared
@@ -108,7 +105,7 @@ class DataModelSchemaDiffsIntegrationSpec extends CommonDataSpec {
         dataClasses.modified.size() == 1
         dataClasses.modified[0].numberOfDiffs == 3
         dataClasses.modified[0].diffs.each { [DiffBuilder.DESCRIPTION, DiffBuilder.MIN_MULTIPILICITY, DiffBuilder.DATA_CLASSES].contains(it.name) }
-        ArrayDiff<Collection> child = dataClasses.modified[0].diffs.find { it.name == DiffBuilder.DATA_CLASSES }
+        ArrayDiff<Collection> child = dataClasses.modified[0].diffs.find { it.name == DiffBuilder.DATA_CLASSES } as ArrayDiff<Collection>
         child
         child.deleted.isEmpty()
         child.modified.isEmpty()
@@ -145,7 +142,7 @@ class DataModelSchemaDiffsIntegrationSpec extends CommonDataSpec {
         dataClasses.modified.size() == 1
         dataClasses.modified[0].numberOfDiffs == 3
         dataClasses.modified[0].diffs.every { [DiffBuilder.DESCRIPTION, DiffBuilder.MIN_MULTIPILICITY, DiffBuilder.DATA_CLASSES].contains(it.name) }
-        ArrayDiff<Collection> child = dataClasses.modified[0].diffs.find { it.name == DiffBuilder.DATA_CLASSES }
+        ArrayDiff<Collection> child = dataClasses.modified[0].diffs.find { it.name == DiffBuilder.DATA_CLASSES } as ArrayDiff<Collection>
         child
         child.deleted.isEmpty()
         child.modified.isEmpty()
@@ -183,7 +180,7 @@ class DataModelSchemaDiffsIntegrationSpec extends CommonDataSpec {
         dataClasses.modified.size() == 1
         dataClasses.modified[0].numberOfDiffs == 3
         dataClasses.modified[0].diffs.every { [DiffBuilder.DESCRIPTION, DiffBuilder.MIN_MULTIPILICITY, DiffBuilder.DATA_CLASSES].contains(it.name) }
-        ArrayDiff<Collection> child = dataClasses.modified[0].diffs.find { it.name == DiffBuilder.DATA_CLASSES }
+        ArrayDiff<Collection> child = dataClasses.modified[0].diffs.find { it.name == DiffBuilder.DATA_CLASSES } as ArrayDiff<Collection>
         child
         child.created.isEmpty()
         child.modified.isEmpty()
@@ -204,7 +201,7 @@ class DataModelSchemaDiffsIntegrationSpec extends CommonDataSpec {
         then:
         objectDiff
         objectDiff.numberOfDiffs == 4
-        ArrayDiff<Collection> dataTypesDiff = objectDiff.diffs.find { it.name == DiffBuilder.DATA_TYPE }
+        ArrayDiff<Collection> dataTypesDiff = objectDiff.diffs.find { it.name == DiffBuilder.DATA_TYPE } as ArrayDiff<Collection>
         dataTypesDiff.created.isEmpty()
         dataTypesDiff.modified.isEmpty()
         dataTypesDiff.deleted.size() == 1
@@ -226,7 +223,7 @@ class DataModelSchemaDiffsIntegrationSpec extends CommonDataSpec {
         then:
         objectDiff
         objectDiff.numberOfDiffs == 1
-        ArrayDiff<Collection> dataTypesDiff = objectDiff.diffs.find { it.name == DiffBuilder.DATA_TYPE }
+        ArrayDiff<Collection> dataTypesDiff = objectDiff.diffs.find { it.name == DiffBuilder.DATA_TYPE } as ArrayDiff<Collection>
         dataTypesDiff.created.isEmpty()
         dataTypesDiff.modified.isEmpty()
         dataTypesDiff.deleted.size() == 1
@@ -258,7 +255,7 @@ class DataModelSchemaDiffsIntegrationSpec extends CommonDataSpec {
         then:
         objectDiff
         objectDiff.diffs.each { [AUTHOR, DiffBuilder.DESCRIPTION, DiffBuilder.DATA_CLASSES].contains(it.name) }
-        ArrayDiff<Collection> dataClassesDiff = objectDiff.diffs.find { it.name == DiffBuilder.DATA_CLASSES }
+        ArrayDiff<Collection> dataClassesDiff = objectDiff.diffs.find { it.name == DiffBuilder.DATA_CLASSES } as ArrayDiff<Collection>
         dataClassesDiff.created.isEmpty()
         dataClassesDiff.deleted.isEmpty()
         dataClassesDiff.modified.size() == 1
@@ -269,7 +266,7 @@ class DataModelSchemaDiffsIntegrationSpec extends CommonDataSpec {
 
         Collection<FieldDiff> nestedDataElement = dataClassesDiff.modified.diffs[0]
         nestedDataElement.size() == 1
-        ArrayDiff dataElementMap = nestedDataElement[0]
+        ArrayDiff dataElementMap = (ArrayDiff) nestedDataElement[0]
         Collection<FieldDiff> dataElement = dataElementMap.deleted
         dataElement[0].get(DiffBuilder.LABEL) == leftDataElement.label
         dataElement[0].get(DiffBuilder.ID_KEY) == leftDataElement.id.toString()
@@ -297,7 +294,7 @@ class DataModelSchemaDiffsIntegrationSpec extends CommonDataSpec {
         then:
         objectDiff
         objectDiff.diffs.every { [DiffBuilder.DATA_CLASSES, DiffBuilder.DATA_ELEMENTS, DiffBuilder.DATA_TYPE].contains(it.name) }
-        ArrayDiff<Collection> dataClassesDiff = objectDiff.diffs.find { it.name == DiffBuilder.DATA_CLASSES }
+        ArrayDiff<Collection> dataClassesDiff = objectDiff.diffs.find { it.name == DiffBuilder.DATA_CLASSES } as ArrayDiff<Collection>
         dataClassesDiff.created.isEmpty()
         dataClassesDiff.deleted.isEmpty()
         dataClassesDiff.modified.size() == 1
@@ -308,7 +305,7 @@ class DataModelSchemaDiffsIntegrationSpec extends CommonDataSpec {
 
         Collection<FieldDiff> nestedDataElement = dataClassesDiff.modified.diffs[0]
         nestedDataElement.size() == 1
-        ArrayDiff dataElementMap = nestedDataElement[0]
+        ArrayDiff dataElementMap = (ArrayDiff) nestedDataElement[0]
         Collection<FieldDiff> dataElement = dataElementMap.deleted
         dataElement[0].get(DiffBuilder.LABEL) == leftDataElement.label
         dataElement[0].get(DiffBuilder.ID_KEY) == leftDataElement.id.toString()
@@ -346,15 +343,15 @@ class DataModelSchemaDiffsIntegrationSpec extends CommonDataSpec {
         then:
         objectDiff
         objectDiff.diffs.each { [AUTHOR, DiffBuilder.DESCRIPTION, DiffBuilder.DATA_CLASSES].contains(it.name) }
-        ArrayDiff<Collection> dataClassesDiff = objectDiff.diffs.find { it.name == DiffBuilder.DATA_CLASSES } as ArrayDiff<Collection>
+        ArrayDiff dataClassesDiff = objectDiff.diffs.find { it.name == DiffBuilder.DATA_CLASSES } as ArrayDiff
         dataClassesDiff.deleted.isEmpty()
         dataClassesDiff.created.isEmpty()
         dataClassesDiff.modified.size() == 1
 
         List<FieldDiff> nestedDataElement = dataClassesDiff.modified.diffs[0]
         nestedDataElement.size() == 1
-        ArrayDiff dataElementMap = nestedDataElement[0]
-        List<DataElement> dataElement = dataElementMap.created
+        ArrayDiff dataElementMap = (ArrayDiff) nestedDataElement[0]
+        List<Map> dataElement = dataElementMap.created
         dataElement[0].label == rightDataElement.label
         dataElement[0].id == rightDataElement.id.toString()
     }
@@ -398,8 +395,8 @@ class DataModelSchemaDiffsIntegrationSpec extends CommonDataSpec {
 
         List<FieldDiff> nestedDataElement = dataClassesDiff.modified.diffs[0]
         nestedDataElement.size() == 1
-        ArrayDiff dataElementMap = nestedDataElement[0]
-        List<DataElement> dataElement = dataElementMap.created
+        ArrayDiff dataElementMap = nestedDataElement[0] as ArrayDiff<Collection>
+        List<Map> dataElement = dataElementMap.created as List<Map>
         dataElement[0].label == rightDataElement.label
         dataElement[0].id == rightDataElement.id.toString()
     }
