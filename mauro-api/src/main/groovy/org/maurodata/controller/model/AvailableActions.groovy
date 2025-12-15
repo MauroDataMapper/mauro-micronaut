@@ -154,7 +154,7 @@ class AvailableActions {
 
 
     static List<String> getActionsForRolePurpose(final Role role, final String purpose) {
-        final Map<Role, List<String>> roleActions = PurposeRoleActions.get(purpose);
+        final Map<Role, List<String>> roleActions = PurposeRoleActions.get(purpose)
         if (roleActions == null) {
             return empty_list
         }

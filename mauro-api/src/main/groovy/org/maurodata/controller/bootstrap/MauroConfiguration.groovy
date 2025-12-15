@@ -16,7 +16,7 @@ class MauroConfiguration {
     List<ApiKeyConfig> apiKeys
     List<ApiPropertyConfig> apiProperties
 
-    public static class CatalogueUserConfig {
+    static class CatalogueUserConfig {
 
         @NotBlank
         String email
@@ -28,7 +28,7 @@ class MauroConfiguration {
         String tempPassword
     }
 
-    public static class UserGroupConfig {
+    static class UserGroupConfig {
 
         @NotBlank
         String name
@@ -37,7 +37,7 @@ class MauroConfiguration {
         List<String> members
     }
 
-    public static class ApiKeyConfig {
+    static class ApiKeyConfig {
 
         // create unique index "idx_api_key_catalogue_user_id_name_unique" on  security.api_key (catalogue_user_id, name);
         @NotBlank
@@ -49,7 +49,7 @@ class MauroConfiguration {
         Instant expiry
     }
 
-    public static class ApiPropertyConfig {
+    static class ApiPropertyConfig {
         @NotBlank
         String key
         @NotBlank

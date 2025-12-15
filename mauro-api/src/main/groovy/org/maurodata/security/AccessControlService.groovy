@@ -149,7 +149,7 @@ class AccessControlService implements Toggleable {
             userGroups = userGroupRepository.readAllByCatalogueUserId(userId)
         }
 
-        final List<Role> canDo=[];
+        final List<Role> canDo=[]
 
         for(Role role : allRoles)
         {
@@ -160,7 +160,7 @@ class AccessControlService implements Toggleable {
                 canDo.add(role)
             }
 
-            if (!userAuthenticated) break;
+            if (!userAuthenticated) break
 
             if( parentModels.any {canDoRoleWithGroups(role, userGroups, it)} )
             {

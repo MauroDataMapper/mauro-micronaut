@@ -700,10 +700,10 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
 
         // TODO: Perhaps want to use SecurableResourceGroupRoleCacheableRepository to get the
         // list of SecurableResourceGroupRole
-        Set<UserGroup> readableByGroups = [];
-        Set<UserGroup> writeableByGroups = [];
-        Set<CatalogueUser> readableByUsers = [];
-        Set<CatalogueUser> writeableByUsers = [];
+        Set<UserGroup> readableByGroups = []
+        Set<UserGroup> writeableByGroups = []
+        Set<CatalogueUser> readableByUsers = []
+        Set<CatalogueUser> writeableByUsers = []
 
         PermissionsDTO permissions = new PermissionsDTO()
         permissions.readableByEveryone = readableByEveryone

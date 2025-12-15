@@ -133,7 +133,7 @@ class PublishedModel implements Comparable<PublishedModel> {
                ", datePublished=" + (datePublished ? datePublished : null) +
                ", author='" + (author ? author : "")  + '\'' +
                ", links=" + links +
-               '}';
+               '}'
     }
 }
 

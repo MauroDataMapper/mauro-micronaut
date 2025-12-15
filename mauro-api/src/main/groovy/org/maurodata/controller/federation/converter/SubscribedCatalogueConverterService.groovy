@@ -23,7 +23,7 @@ class SubscribedCatalogueConverterService {
      String toString() {
         return "SubscribedCatalogueConverterService{" +
                "subscribedCatalogueConverters=" + subscribedCatalogueConverters +
-               '}';
+               '}'
     }
 }
 
