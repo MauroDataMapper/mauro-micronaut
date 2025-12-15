@@ -551,6 +551,9 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         }
 
         final Model rootObject = modelRepository.findById(currentId)
+        pathRepository.readParentItems(rootObject)
+        rootObject.updatePath()
+        rootObject.updateBreadcrumbs()
 
         if (rootObject == null) {throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to find root object")}
 
@@ -596,6 +599,10 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
             if (childModel == null) {
                 continue
             }
+
+            pathRepository.readParentItems(childModel)
+            childModel.updatePath()
+            childModel.updateBreadcrumbs()
 
             into.add(childModel)
             populateByVersionLink(childModel, into, flags, branchesOnly)

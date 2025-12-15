@@ -95,18 +95,19 @@ abstract class Model<M extends DiffableItem> extends AdministeredItem implements
         this
     }
 
+    @Transient
+    @JsonIgnore
+    private boolean ownsVersioning() {
+        final Model model = getModelWithVersion()
+        return model != null && model == this
+    }
+
     @Override
     @Transient
     @JsonIgnore
     @Nullable
     String getPathModelIdentifier() {
-        final Model model = getModelWithVersion()
-
-        if (model != null) {
-            return model.modelVersion? model.modelVersion.toString() : model.branchName
-        }
-
-        return this.modelVersion != null ? this.modelVersion.toString() : this.branchName
+        ownsVersioning() ? (this.modelVersion != null ? this.modelVersion.toString() : this.branchName) : null
     }
 
     /**
@@ -167,19 +168,32 @@ abstract class Model<M extends DiffableItem> extends AdministeredItem implements
 
     @JsonIgnore
     @Transient
-    Model getModelWithVersion() {
+    private Model getModelWithVersion() {
         final List<Model> myAncestors = getAncestors()
         Collections.reverse(myAncestors)
+        myAncestors.add(this)
 
         // Ignoring folders that are not versionable, find an ancestor
         // that has a version
         for (int m = 0; m < myAncestors.size(); m++) {
             final Model model = myAncestors.get(m)
-            if (model.branchName || model.modelVersion) {
+            if (model.@branchName || model.@modelVersion) {
                 return model
             }
         }
-        return this
+        return null
+    }
+
+    ModelVersion getModelVersion() {
+        return ownsVersioning() ? this.@modelVersion : null
+    }
+
+    String getBranchName() {
+        return ownsVersioning() ? this.@branchName : null
+    }
+
+    String getModelVersionTag() {
+        return ownsVersioning() ? this.@modelVersionTag : null
     }
 
     /****
