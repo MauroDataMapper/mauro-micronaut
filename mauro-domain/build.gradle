@@ -1,7 +1,7 @@
 plugins {
     id("groovy")
     //id("com.gradleup.shadow") version "9.0.0"
-    id("io.micronaut.library") version "4.6.0"
+    id("io.micronaut.library") version "4.6.1"
     id("codenarc")
     id "com.vanniktech.maven.publish" version "0.34.0"
 }
@@ -24,7 +24,7 @@ dependencies {
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
 
     // For importer parameters introspection
-    implementation('org.apache.commons:commons-lang3:3.17.0')
+    implementation('org.apache.commons:commons-lang3:3.18.0')
 
     implementation('org.apache.groovy:groovy-json:4.0.19')
 
