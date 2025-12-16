@@ -1,5 +1,6 @@
 package org.maurodata.persistence.terminology.dto
 
+import org.maurodata.domain.facet.VersionLink
 import org.maurodata.domain.model.Item
 import org.maurodata.domain.model.ItemReference
 import org.maurodata.domain.model.ItemReferencerUtils
@@ -100,6 +101,12 @@ class CodeSetDTO extends CodeSet implements AdministeredItemDTO {
                 and join_administered_item_to_classifier.catalogue_item_id = code_set_.id)''')
     List<Classifier> classifiers = []
 
+    @Nullable
+    @TypeDef(type = DataType.JSON)
+    @MappedProperty
+    @ColumnTransformer(read = '(select json_agg(version_link) from core.version_link where multi_facet_aware_item_id = code_set_.id)')
+    List<VersionLink> versionLinks = []
+
     @Transient
     @JsonIgnore
     @Override
@@ -113,6 +120,7 @@ class CodeSetDTO extends CodeSet implements AdministeredItemDTO {
         ItemReferencerUtils.addItems(annotations, pathsBeingReferenced)
         ItemReferencerUtils.addItems(classifiers, pathsBeingReferenced)
         ItemReferencerUtils.addItems(referenceFiles, pathsBeingReferenced)
+        ItemReferencerUtils.addItems(versionLinks, pathsBeingReferenced)
 
         return pathsBeingReferenced
     }
@@ -130,6 +138,7 @@ class CodeSetDTO extends CodeSet implements AdministeredItemDTO {
         annotations = ItemReferencerUtils.replaceItemsByIdentity(annotations, replacements, notReplaced)
         classifiers = ItemReferencerUtils.replaceItemsByIdentity(classifiers, replacements, notReplaced)
         referenceFiles = ItemReferencerUtils.replaceItemsByIdentity(referenceFiles, replacements, notReplaced)
+        versionLinks = ItemReferencerUtils.replaceItemsByIdentity(versionLinks, replacements, notReplaced)
     }
 
     @Override
@@ -144,6 +153,7 @@ class CodeSetDTO extends CodeSet implements AdministeredItemDTO {
         intoDTO.annotations = ItemUtils.copyItems(this.annotations, intoDTO.annotations)
         intoDTO.classifiers = ItemUtils.copyItems(this.classifiers, intoDTO.classifiers)
         intoDTO.referenceFiles = ItemUtils.copyItems(this.referenceFiles, intoDTO.referenceFiles)
+        intoDTO.versionLinks = ItemUtils.copyItems(this.versionLinks, intoDTO.versionLinks)
     }
 
     @Override
