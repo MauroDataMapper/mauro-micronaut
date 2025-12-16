@@ -73,14 +73,15 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
     }
 
     List<I> cachedLookupByParent(String lookup, String domainType, AdministeredItem parent) {
-        mutableCachedLookupByParent(lookup, domainType, parent).collect {it.clone()}
+        mutableCachedLookupByParent(lookup, domainType, parent).collect {it.clone() as I}
     }
 
     @Cacheable
     List<I> mutableCachedLookupByParent(String lookup, String domainType, AdministeredItem parent) {
-        switch (lookup) {
+        return switch (lookup) {
             case FIND_ALL_BY_PARENT -> repository.findAllByParent(parent)
             case READ_ALL_BY_PARENT -> repository.readAllByParent(parent)
+            default -> throw new IllegalStateException()
         }
     }
 
@@ -380,17 +381,19 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
         }
 
         // not cached
-        UUID addAdministeredItem(AdministeredItem administeredItem, Classifier classifier) {
+        void addAdministeredItem(AdministeredItem administeredItem, Classifier classifier) {
             ((ClassifierRepository) repository).addAdministeredItem(administeredItem, classifier)
 
             invalidate(classifier)
 
-            if (administeredItem?.id)
+            if (administeredItem?.id) {
                 invalidateCachedLookupById(FIND_BY_ID, administeredItem.domainType, administeredItem.id)
+            }
 
-            if (administeredItem?.parent?.id)
+            if (administeredItem?.parent?.id) {
                 invalidateCachedLookupById(FIND_ALL_BY_PARENT, administeredItem.parent.domainType,
                         administeredItem.parent.id)
+            }
         }
 
         // not cached

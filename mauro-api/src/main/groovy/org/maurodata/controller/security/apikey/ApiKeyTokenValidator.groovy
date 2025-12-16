@@ -5,12 +5,12 @@ import org.maurodata.domain.security.CatalogueUser
 import org.maurodata.persistence.cache.ItemCacheableRepository
 
 import groovy.util.logging.Slf4j
-import io.micronaut.core.async.publisher.Publishers;
-import io.micronaut.http.HttpRequest;
-import io.micronaut.security.authentication.Authentication;
-import io.micronaut.security.token.validator.TokenValidator;
-import jakarta.inject.Singleton;
-import org.reactivestreams.Publisher;
+import io.micronaut.core.async.publisher.Publishers
+import io.micronaut.http.HttpRequest
+import io.micronaut.security.authentication.Authentication
+import io.micronaut.security.token.validator.TokenValidator
+import jakarta.inject.Singleton
+import org.reactivestreams.Publisher
 
 @Slf4j
 @Singleton

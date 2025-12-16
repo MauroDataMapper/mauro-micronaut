@@ -226,7 +226,7 @@ abstract class Model<M extends DiffableItem> extends AdministeredItem implements
     }
 
     void setBranchName(final String branchNameString) {
-        this.@branchName = branchNameString;
+        this.@branchName = branchNameString
     }
 
     @JsonIgnore

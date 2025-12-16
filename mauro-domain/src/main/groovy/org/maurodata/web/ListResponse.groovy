@@ -33,7 +33,7 @@ class ListResponse<T> {
 
     private static Map<String, String> mappedProperties = [:]
     static {
-        mappedProperties.put("idx", "order");
+        mappedProperties.put("idx", "order")
     }
 
     static ListResponse from(List items) {

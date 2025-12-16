@@ -216,7 +216,7 @@ class FolderSpec extends Specification {
             folderWithoutVersion.getModelVersion() == null &&
             dataModelWithoutVersion.getPathModelIdentifier() == 'main' &&
             folderWithoutVersion.getPathModelIdentifier() == null &&
-            folderWithoutVersion.isVersionable() == false
+            !folderWithoutVersion.isVersionable()
     }
 
     def "Test non versioned folder with non versioned sub folder"()
@@ -227,8 +227,8 @@ class FolderSpec extends Specification {
         when:
             subFolderWithoutVersion.setParent(folderWithoutVersion)
         then:
-            folderWithoutVersion.isVersionable() == false &&
-            subFolderWithoutVersion.isVersionable() == false &&
+            !folderWithoutVersion.isVersionable() &&
+            !subFolderWithoutVersion.isVersionable() &&
             subFolderWithoutVersion.getModelVersion() == null &&
             folderWithoutVersion.getModelVersion() == null &&
             subFolderWithoutVersion.getPathModelIdentifier() == null &&
@@ -263,7 +263,7 @@ class FolderSpec extends Specification {
         when:
             true
         then:
-            folderWithVersion.isVersionable() == false &&
+            !folderWithVersion.isVersionable() &&
             folderWithVersion.getModelVersion() == modelVersion1 &&
             folderWithVersion.getPathModelIdentifier() == null
     }
@@ -306,7 +306,7 @@ class FolderSpec extends Specification {
             subFolderWithVersion.getPathModelIdentifier() == null &&
             folderWithVersion.getPathModelIdentifier() == "1.2.3-SNAPSHOT" &&
             folderWithVersion.isVersionable() &&
-            subFolderWithVersion.isVersionable() == false
+            !subFolderWithVersion.isVersionable()
     }
 
     def "Test a versioned versionable folder with a versioned versionable sub folder"()
@@ -332,7 +332,7 @@ class FolderSpec extends Specification {
                 subFolderWithVersion.getPathModelIdentifier() == null &&
                 folderWithVersion.getPathModelIdentifier() == "1.2.3-SNAPSHOT" &&
                 folderWithVersion.isVersionable() &&
-                subFolderWithVersion.isVersionable() == false
+                !subFolderWithVersion.isVersionable()
     }
 
     def "Test a versioned non-versionable folder with a versioned datamodel"()

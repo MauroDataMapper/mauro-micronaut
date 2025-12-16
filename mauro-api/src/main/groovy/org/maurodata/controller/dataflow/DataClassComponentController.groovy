@@ -164,7 +164,7 @@ class DataClassComponentController extends AdministeredItemController<DataClassC
                 break
             default:
                 ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "Type must be source or target")
-                break;
+                break
         }
         dataClassComponent
     }

@@ -149,7 +149,7 @@ class AccessControlService implements Toggleable {
             userGroups = userGroupRepository.readAllByCatalogueUserId(userId)
         }
 
-        final List<Role> canDo=[];
+        final List<Role> canDo=[]
 
         for(Role role : allRoles)
         {
@@ -160,7 +160,7 @@ class AccessControlService implements Toggleable {
                 canDo.add(role)
             }
 
-            if (!userAuthenticated) break;
+            if (!userAuthenticated) break
 
             if( parentModels.any {canDoRoleWithGroups(role, userGroups, it)} )
             {
@@ -203,12 +203,14 @@ class AccessControlService implements Toggleable {
         (UUID) userAuthentication.attributes.id
     }
 
-    CatalogueUser getUser() {
-        if (!enabled) return
+    CatalogueUser getUser() throws AuthenticationException {
+        if (!enabled) {
+            return null
+        }
         if (!securityService.authenticated) {
             throw new AuthenticationException('User is not authenticated')
         }
-        catalogueUserRepository.findById(userId)
+        return catalogueUserRepository.findById(userId)
     }
 
     boolean isEnabled() {

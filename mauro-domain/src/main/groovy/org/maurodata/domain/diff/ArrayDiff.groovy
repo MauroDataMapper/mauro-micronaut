@@ -52,7 +52,7 @@ class ArrayDiff<K> extends FieldDiff<Collection<K>> {
 
     @Override
     String toString(){
-        String description="\n<ArrayDiff> <super>"+super.toString()+"</super> ";
+        String description="\n<ArrayDiff> <super>"+super.toString()+"</super> "
 
         if (created.size() > 0) {
             description += "<created> "

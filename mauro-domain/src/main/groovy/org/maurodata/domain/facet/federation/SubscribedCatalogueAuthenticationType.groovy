@@ -25,7 +25,7 @@ enum SubscribedCatalogueAuthenticationType {
     static SubscribedCatalogueAuthenticationType fromString(String label) {
         return Optional
             .ofNullable(LOOKUP_BY_LABEL.get(SubscribedCatalogueType.standardizeLabelStringCaseAndWhitespace(label))?:valueOf(label))
-            .orElseThrow(() -> new IllegalArgumentException(label));
+            .orElseThrow(() -> new IllegalArgumentException(label))
     }
 
 

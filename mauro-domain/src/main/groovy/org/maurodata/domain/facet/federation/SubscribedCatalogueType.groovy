@@ -10,13 +10,13 @@ enum SubscribedCatalogueType {
     ATOM('Atom');
 
     @JsonAlias(['subscribed_catalogue_type'])
-    private final String label;
+    private final String label
 
     private static Map<String, SubscribedCatalogueType> LOOKUP_BY_LABEL =
        values().collectEntries {[ standardizeLabelStringCaseAndWhitespace(it.label), it]}
 
     SubscribedCatalogueType(String label) {
-        this.label = label;
+        this.label = label
     }
 
     @JsonCreator
@@ -24,7 +24,7 @@ enum SubscribedCatalogueType {
     static SubscribedCatalogueType fromString(String label) {
         return Optional
             .ofNullable(LOOKUP_BY_LABEL.get(standardizeLabelStringCaseAndWhitespace(label)))
-            .orElseThrow(() -> new IllegalArgumentException(label));
+            .orElseThrow(() -> new IllegalArgumentException(label))
     }
 
     static String standardizeLabelStringCaseAndWhitespace(String label) {
