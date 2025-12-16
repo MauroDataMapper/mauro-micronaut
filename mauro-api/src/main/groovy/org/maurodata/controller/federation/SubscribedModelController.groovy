@@ -11,8 +11,8 @@ import org.maurodata.domain.facet.federation.SubscribedModel
 import org.maurodata.domain.facet.federation.SubscribedModelFederationParams
 import org.maurodata.domain.folder.Folder
 import org.maurodata.domain.model.Model
-import org.maurodata.persistence.cache.ItemCacheableRepository
 import org.maurodata.persistence.cache.ItemCacheableRepository.SubscribedCatalogueCacheableRepository
+import org.maurodata.persistence.cache.ItemCacheableRepository.SubscribedModelCacheableRepository
 import org.maurodata.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
 import org.maurodata.service.federation.SubscribedModelService
 import org.maurodata.web.ListResponse
@@ -43,11 +43,11 @@ class SubscribedModelController extends ItemController<SubscribedModel> {
 
     final FolderCacheableRepository folderCacheableRepository
     final SubscribedModelService subscribedModelService
-    final ItemCacheableRepository.SubscribedModelCacheableRepository subscribedModelCacheableRepository
-    final ItemCacheableRepository.SubscribedCatalogueCacheableRepository subscribedCatalogueCacheableRepository
+    final SubscribedModelCacheableRepository subscribedModelCacheableRepository
+    final SubscribedCatalogueCacheableRepository subscribedCatalogueCacheableRepository
 
     @Inject
-    SubscribedModelController(ItemCacheableRepository.SubscribedModelCacheableRepository subscribedModelCacheableRepository,
+    SubscribedModelController(SubscribedModelCacheableRepository subscribedModelCacheableRepository,
                               SubscribedCatalogueCacheableRepository subscribedCatalogueCacheableRepository,
                               FolderCacheableRepository folderCacheableRepository,
                               SubscribedModelService subscribedModelService) {

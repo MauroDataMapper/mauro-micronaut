@@ -4,6 +4,7 @@ import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.http.HttpStatus
 import jakarta.inject.Inject
+import jakarta.inject.Singleton
 import org.maurodata.ErrorHandler
 import org.maurodata.domain.facet.federation.MauroLink
 import org.maurodata.domain.facet.federation.PublishedModel
@@ -25,6 +26,7 @@ import org.maurodata.service.core.AuthorityService
 
 @CompileStatic
 @Slf4j
+@Singleton
 class SubscribedModelService {
     public static final String APPLICATION_CONTENT_TYPE = 'application/'
     public static final String MAURO_DOT = 'mauro.'
