@@ -29,11 +29,6 @@ class AppliedProfileSection extends ProfileSection {
         return sourceProfileSection.getLabel()
     }
 
-    @Deprecated
-    String getName() {
-        label
-    }
-
     @Override
     String getDescription() {
         return sourceProfileSection.getDescription()

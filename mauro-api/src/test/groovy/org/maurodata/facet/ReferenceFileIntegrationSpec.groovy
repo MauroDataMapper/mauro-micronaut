@@ -44,7 +44,7 @@ class ReferenceFileIntegrationSpec extends SecuredIntegrationSpec {
 
         when:
         loginUser()
-        responses = referenceFileApi.list("DataModel", dataModelId)
+        referenceFileApi.list("DataModel", dataModelId)
         then:
         HttpClientResponseException exception = thrown()
         exception.status == HttpStatus.FORBIDDEN
@@ -85,7 +85,7 @@ class ReferenceFileIntegrationSpec extends SecuredIntegrationSpec {
         logout()
         when:
         loginUser()
-        retrieved = referenceFileApi.showAndReturnFile("DataModel", dataModelId, saved.id)
+        referenceFileApi.showAndReturnFile("DataModel", dataModelId, saved.id)
         then:
         HttpClientResponseException exception = thrown()
         exception.status == HttpStatus.FORBIDDEN
@@ -103,7 +103,7 @@ class ReferenceFileIntegrationSpec extends SecuredIntegrationSpec {
         then:
         updated
         updated.fileName == fileName
-        updated.fileSize == updatedFileContents.size()
+        updated.fileSize == updatedFileContents.size() as Long
         when:
         byte[] retrieved = referenceFileApi.showAndReturnFile("DataModel", dataModelId, saved.id)
         then:
