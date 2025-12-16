@@ -308,7 +308,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         versionLink.setTargetModel(savedCopy)
         existing.versionLinks.add(versionLink)
 
-        final List<AdministeredItem> toSave = new LinkedList<>()
+        final List<AdministeredItem> toSave = [] as LinkedList
         toSave.add(existing)
         saveVersionLinks(toSave)
 
@@ -962,7 +962,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         final List<Map<String, FieldDiff>> flattenedDiffOneMapList = [flattenedDiffOneCreated, flattenedDiffOneModified, flattenedDiffOneDeleted]
         final List<Map<String, FieldDiff>> flattenedDiffTwoMapList = [flattenedDiffTwoCreated, flattenedDiffTwoModified, flattenedDiffTwoDeleted]
 
-        final Set<String> allPaths = new LinkedHashSet<>()
+        final Set<String> allPaths = [] as LinkedHashSet
         for (Map<String, FieldDiff> pathToFieldDiff : flattenedDiffOneMapList + flattenedDiffTwoMapList) {
             final Set keys = pathToFieldDiff.keySet()
             allPaths.addAll(keys)

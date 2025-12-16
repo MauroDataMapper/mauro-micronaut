@@ -68,7 +68,7 @@ class DataElementController extends AdministeredItemController<DataElement, Data
     @Audit
     @Get(Paths.DATA_ELEMENT_ID)
     DataElement show(UUID dataModelId, UUID dataClassId, UUID id) {
-        DataElement dataElement = super.show(id)
+        DataElement dataElement = super.show(id) as DataElement
         if (dataElement.dataType.isEnumerationType()) {
             dataElement.dataType = dataTypeService.getEnumerationValues(dataElement.dataType)
         }

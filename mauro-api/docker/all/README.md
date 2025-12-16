@@ -22,7 +22,7 @@ The container is configured to have these mount points:
 
 
 */opt/init* is where the container start-up can be controlled from.
-There are two sub-directories under */opt/init*:
+There are two subdirectories under */opt/init*:
 
     postgres/
     micronaut/
@@ -31,7 +31,7 @@ which will be used for the start-up of those services.
 
 From *postgres/* any *.sh* scripts will be run, and any *.sql* will be run in postgres.
 
-From *micronaut/* any *.sh* scripts will be run, *.jar* files will be added to the classpath,
+From *micronaut/* any *.sh* scripts will be run; *.jar* files will be added to the classpath;
 and any other files will be copied to Micronaut's *resources/* directory. Use this mechanism to
 include any plugins as *.jar* files, and set your own version of *application.yml*
 
@@ -42,10 +42,10 @@ include any plugins as *.jar* files, and set your own version of *application.ym
         | - application.yml
         | - myplugin.jar
 
-### Bootstrapping users, groups and api keys
+### Bootstrapping users, groups, and api keys
 
-Before you can sign in to Mauro, you need configure a user.
-This is done via the application.yml file that is passed to the container via */opt/init/micronaut/application.yml*
+Before you can sign in to Mauro, you need to configure a user.
+This is done via the application.yml file, passed to the container via */opt/init/micronaut/application.yml*
 to configure Micronaut. See above.
 
     users:

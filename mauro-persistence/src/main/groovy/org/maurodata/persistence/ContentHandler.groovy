@@ -578,7 +578,7 @@ class ContentHandler {
     Term loadWithContent(Term term) {
         terms = [term] as Set
         loadContent()
-        return term.first()
+        return terms.first()
     }
 
     TermRelationship loadWithContent(TermRelationship termRelationship) {

@@ -72,21 +72,23 @@ class AuthorityController extends ItemController<Authority> implements Authority
 
         boolean hasChanged = updateProperties(existing, cleanItem)
         if (hasChanged) {
-            authorityService.update(existing)
+            return authorityService.update(existing)
+        } else {
+            return null
         }
     }
 
     @Audit(level = Audit.AuditLevel.FILE_ONLY)
     @Transactional
     @Delete(Paths.AUTHORITY_ID)
-    HttpResponse delete(UUID id, @Body @Nullable Authority authority) {
+    HttpResponse delete(UUID id, @Body @Nullable Authority authority) throws HttpStatusException {
         accessControlService.checkAdministrator()
 
         Authority authorityToDelete = authorityService.readById(id)
         if (authorityToDelete?.version) authorityToDelete.version = authority.version
         Long deleted = authorityService.delete(authorityToDelete)
         if (deleted) {
-            HttpResponse.status(HttpStatus.NO_CONTENT)
+            return HttpResponse.status(HttpStatus.NO_CONTENT)
         } else {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, 'Not found for deletion')
         }

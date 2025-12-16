@@ -4,6 +4,7 @@ import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.http.HttpStatus
 import jakarta.inject.Inject
+import jakarta.inject.Singleton
 import org.maurodata.ErrorHandler
 import org.maurodata.controller.model.AdministeredItemReader
 import org.maurodata.controller.model.AvailableActions
@@ -24,6 +25,7 @@ import static org.maurodata.util.PathStringUtils.splitBy
 
 @CompileStatic
 @Slf4j
+@Singleton
 class PathService implements AdministeredItemReader {
     @Inject
     PathPrefixTypeLookup pathPrefixTypeLookup

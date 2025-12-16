@@ -40,7 +40,7 @@ class HttpStatusExceptionHandler implements ExceptionHandler<HttpStatusException
             "templated", false
         ))
 
-        Map<String, Object> body = new LinkedHashMap<>()
+        Map<String, Object> body = new LinkedHashMap<>(10)
         body.put("message", status.getReason())
         body.put("total", 1)
         body.put("errors", List.of(errorMessage))
