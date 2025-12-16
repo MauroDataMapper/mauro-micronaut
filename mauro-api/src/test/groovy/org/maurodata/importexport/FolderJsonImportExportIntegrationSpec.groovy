@@ -485,7 +485,7 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
 
         when:
         HttpResponse<byte[]> exportResponse = folderApi.exportModel(folderId, 'org.maurodata.plugin.exporter.json', 'JsonFolderExporterPlugin', '4.0.0')
-        Map export = jsonSlurper.parseText(new String(exportResponse.body())) as Map
+        ExportModel export = objectMapper.readValue(exportResponse.body(), ExportModel)
 
         then:
         export.folder.terminologies.size() == 2
@@ -497,12 +497,12 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
         export.folder.terminologies.find {it.label == 'First Terminology'}.termRelationshipTypes.first().childRelationship == true
         export.folder.terminologies.find {it.label == 'Second Terminology'}.termRelationshipTypes.first().label == 'TEST'
         export.folder.terminologies.find {it.label == 'Second Terminology'}.termRelationshipTypes.first().childRelationship == false
-        export.folder.terminologies.find {it.label == 'First Terminology'}.termRelationships.first().sourceTerm == 'TEST'
-        export.folder.terminologies.find {it.label == 'First Terminology'}.termRelationships.first().targetTerm == 'TEST'
-        export.folder.terminologies.find {it.label == 'First Terminology'}.termRelationships.first().relationshipType == 'TEST'
-        export.folder.terminologies.find {it.label == 'Second Terminology'}.termRelationships.first().sourceTerm == 'TEST'
-        export.folder.terminologies.find {it.label == 'Second Terminology'}.termRelationships.first().targetTerm == 'TEST'
-        export.folder.terminologies.find {it.label == 'Second Terminology'}.termRelationships.first().relationshipType == 'TEST'
+        export.folder.terminologies.find {it.label == 'First Terminology'}.termRelationships.first().sourceTerm.code == 'TEST'
+        export.folder.terminologies.find {it.label == 'First Terminology'}.termRelationships.first().targetTerm.code == 'TEST'
+        export.folder.terminologies.find {it.label == 'First Terminology'}.termRelationships.first().relationshipType.label == 'TEST'
+        export.folder.terminologies.find {it.label == 'Second Terminology'}.termRelationships.first().sourceTerm.code == 'TEST'
+        export.folder.terminologies.find {it.label == 'Second Terminology'}.termRelationships.first().targetTerm.code == 'TEST'
+        export.folder.terminologies.find {it.label == 'Second Terminology'}.termRelationships.first().relationshipType.label == 'TEST'
 
         when:
         MultipartBody importRequest = MultipartBody.builder()

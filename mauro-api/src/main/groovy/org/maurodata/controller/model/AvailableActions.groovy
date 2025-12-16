@@ -189,30 +189,30 @@ class AvailableActions {
 
         // Additions
 
-        item.availableActions.addAll(AvailableActions.getActionsForRolesPurpose(roles, AvailableActions.PURPOSE_STANDARD))
+        item.availableActions.addAll(getActionsForRolesPurpose(roles, PURPOSE_STANDARD))
 
         if (item instanceof SecurableResource) {
-            item.availableActions.addAll(AvailableActions.getActionsForRolesPurpose(roles, AvailableActions.PURPOSE_SECURABLE))
+            item.availableActions.addAll(getActionsForRolesPurpose(roles, PURPOSE_SECURABLE))
         }
 
         if (item instanceof Folder) {
-            item.availableActions.addAll(AvailableActions.getActionsForRolesPurpose(roles, AvailableActions.PURPOSE_FOLDER))
+            item.availableActions.addAll(getActionsForRolesPurpose(roles, PURPOSE_FOLDER))
         }
 
         if (item instanceof DataModel) {
-            item.availableActions.addAll(AvailableActions.getActionsForRolesPurpose(roles, AvailableActions.PURPOSE_DATAMODEL))
+            item.availableActions.addAll(getActionsForRolesPurpose(roles, PURPOSE_DATAMODEL))
         }
 
         if (item instanceof ModelItem) {
-            item.availableActions.addAll(AvailableActions.getActionsForRolesPurpose(roles, AvailableActions.PURPOSE_MODELITEM))
+            item.availableActions.addAll(getActionsForRolesPurpose(roles, PURPOSE_MODELITEM))
         }
 
         if (item instanceof Model) {
             final Model itemAsModel = (Model) item
             if (itemAsModel.isVersionable()) {
-                item.availableActions.addAll(AvailableActions.getActionsForRolesPurpose(roles, AvailableActions.PURPOSE_VERSIONING))
+                item.availableActions.addAll(getActionsForRolesPurpose(roles, PURPOSE_VERSIONING))
             }
-            item.availableActions.addAll(AvailableActions.getActionsForRolesPurpose(roles, AvailableActions.PURPOSE_MODEL))
+            item.availableActions.addAll(getActionsForRolesPurpose(roles, PURPOSE_MODEL))
         }
 
         // Removals
@@ -221,12 +221,12 @@ class AvailableActions {
             final Model itemAsModel = (Model) item
 
             if (itemAsModel.finalised) {
-                item.availableActions.removeAll(AvailableActions.REMOVE_WHEN_FINALISED)
+                item.availableActions.removeAll(REMOVE_WHEN_FINALISED)
             }
         }
 
         if (item instanceof ModelItem) {
-            item.availableActions.removeAll(AvailableActions.REMOVE_FROM_MODEL_ITEM)
+            item.availableActions.removeAll(REMOVE_FROM_MODEL_ITEM)
         }
 
         // TODO: mergeInto is removed if not a non-main draft

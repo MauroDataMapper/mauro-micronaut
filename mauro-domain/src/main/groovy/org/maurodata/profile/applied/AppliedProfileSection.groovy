@@ -49,7 +49,7 @@ class AppliedProfileSection extends ProfileSection {
         this.parentProfile = parentProfile
         this.fields = profileSection.fields.collect {profileField ->
             new AppliedProfileField(profileField, this,
-                                    sectionBody["fields"].find { it.metadataPropertyName == profileField.metadataPropertyName } as Map)
+                                    sectionBody["fields"].find { it['metadataPropertyName'] == profileField.metadataPropertyName } as Map)
         }
     }
 

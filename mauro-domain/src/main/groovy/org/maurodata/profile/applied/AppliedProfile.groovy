@@ -58,7 +58,7 @@ class AppliedProfile extends MauroPluginDTO {
         this.administeredItem = administeredItem
         this.sections = profile.sections.collect {profileSection ->
             new AppliedProfileSection(profileSection, this,
-                                      profileBody["sections"].find { it.name == profileSection.label || it.label == profileSection.label } as Map)
+                                      profileBody["sections"].find { it['name'] == profileSection.label || it['label'] == profileSection.label } as Map)
         }
         validate()
     }
