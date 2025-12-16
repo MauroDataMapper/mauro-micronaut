@@ -74,7 +74,7 @@ dependencies {
 
 
     implementation('org.apache.commons:commons-rng-simple:1.5')
-    implementation('org.apache.commons:commons-text:1.10.0')
+    implementation('org.apache.commons:commons-text:1.15.0')
 
     testRuntimeOnly "org.junit.platform:junit-platform-launcher"
     testImplementation "io.micronaut.test:micronaut-test-spock"

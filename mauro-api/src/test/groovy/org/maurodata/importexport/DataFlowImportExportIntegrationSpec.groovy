@@ -132,38 +132,39 @@ class DataFlowImportExportIntegrationSpec extends CommonDataSpec {
         then:
         exportFile
 
-        Map parsedJson = jsonSlurper.parseText(new String(exportFile.body())) as Map
-        parsedJson.exportMetadata
-        parsedJson.dataFlow
-        parsedJson.dataFlow.source
-        parsedJson.dataFlow.source.get('id') == source.id.toString()
-        parsedJson.dataFlow.target
-        parsedJson.dataFlow.target.get('id') == target.id.toString()
 
-        parsedJson.dataFlow.metadata.size() == 1
-        parsedJson.dataFlow.metadata[0].id != metadataId
-        parsedJson.dataFlow.summaryMetadata.size() == 1
-        parsedJson.dataFlow.summaryMetadata[0].id != summaryMetadataId
-        parsedJson.dataFlow.summaryMetadata[0].summaryMetadataReports.size() == 1
-        parsedJson.dataFlow.summaryMetadata[0].summaryMetadataReports[0].id != summaryMetadataReportId
+        ExportModel exportModel = objectMapper.readValue(exportFile.body(), ExportModel)
+        exportModel.exportMetadata
+        exportModel.dataFlow
+        exportModel.dataFlow.source
+        exportModel.dataFlow.source.id == source.id
+        exportModel.dataFlow.target
+        exportModel.dataFlow.target.id == target.id
 
-        parsedJson.dataFlow.annotations.size() == 1
-        parsedJson.dataFlow.annotations[0].id != annotationId
-        parsedJson.dataFlow.annotations[0].childAnnotations.size() == 1
-        parsedJson.dataFlow.annotations[0].childAnnotations[0].id != childAnnotationId
+        exportModel.dataFlow.metadata.size() == 1
+        exportModel.dataFlow.metadata[0].id == metadataId
+        exportModel.dataFlow.summaryMetadata.size() == 1
+        exportModel.dataFlow.summaryMetadata[0].id == summaryMetadataId
+        exportModel.dataFlow.summaryMetadata[0].summaryMetadataReports.size() == 1
+        exportModel.dataFlow.summaryMetadata[0].summaryMetadataReports[0].id == summaryMetadataReportId
+
+        exportModel.dataFlow.annotations.size() == 1
+        exportModel.dataFlow.annotations[0].id == annotationId
+        exportModel.dataFlow.annotations[0].childAnnotations.size() == 1
+        exportModel.dataFlow.annotations[0].childAnnotations[0].id == childAnnotationId
 
 
-        parsedJson.dataFlow.dataClassComponents.size() == 1
-        parsedJson.dataFlow.dataClassComponents[0].sourceDataClasses.size() == 1
-        parsedJson.dataFlow.dataClassComponents[0].targetDataClasses.size() == 1
-        parsedJson.dataFlow.dataClassComponents[0].dataElementComponents.size() == 1
-        parsedJson.dataFlow.dataClassComponents[0].sourceDataClasses[0].id != dataClassId1
-        parsedJson.dataFlow.dataClassComponents[0].targetDataClasses[0].id != dataClassId2
+        exportModel.dataFlow.dataClassComponents.size() == 1
+        exportModel.dataFlow.dataClassComponents[0].sourceDataClasses.size() == 1
+        exportModel.dataFlow.dataClassComponents[0].targetDataClasses.size() == 1
+        exportModel.dataFlow.dataClassComponents[0].dataElementComponents.size() == 1
+        exportModel.dataFlow.dataClassComponents[0].sourceDataClasses[0].id !== dataClassId1
+        exportModel.dataFlow.dataClassComponents[0].targetDataClasses[0].id == dataClassId2
 
-        parsedJson.dataFlow.dataClassComponents[0].dataElementComponents[0].sourceDataElements.size() == 1
-        parsedJson.dataFlow.dataClassComponents[0].dataElementComponents[0].targetDataElements.size() == 1
-        parsedJson.dataFlow.dataClassComponents[0].dataElementComponents[0].sourceDataElements[0].id != dataElementId1
-        parsedJson.dataFlow.dataClassComponents[0].dataElementComponents[0].targetDataElements[0].id != dataElementId2
+        exportModel.dataFlow.dataClassComponents[0].dataElementComponents[0].sourceDataElements.size() == 1
+        exportModel.dataFlow.dataClassComponents[0].dataElementComponents[0].targetDataElements.size() == 1
+        exportModel.dataFlow.dataClassComponents[0].dataElementComponents[0].sourceDataElements[0].id == dataElementId1
+        exportModel.dataFlow.dataClassComponents[0].dataElementComponents[0].targetDataElements[0].id == dataElementId2
 
     }
 
