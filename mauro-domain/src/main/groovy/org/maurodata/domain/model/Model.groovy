@@ -92,7 +92,7 @@ abstract class Model<M extends DiffableItem> extends AdministeredItem implements
     @Transient
     @JsonIgnore
     Model getOwner() {
-        this
+        getModelWithVersion()
     }
 
     @Transient
@@ -161,6 +161,34 @@ abstract class Model<M extends DiffableItem> extends AdministeredItem implements
         return myAncestors
     }
 
+    class ModelStub {
+        String branchName
+        String modelVersionTag
+        ModelVersion modelVersion
+        String label
+        UUID id
+        ModelStub(Model m) {
+            if(m) {
+                this.branchName = m.branchName
+                this.modelVersionTag = m.modelVersionTag
+                this.modelVersion = m.modelVersion
+                this.label = m.label
+                this.id = m.id
+            } else {
+                log.error('model owner is null!')
+            }
+        }
+    }
+
+    @Transient
+    ModelStub getOwningModel() {
+        Model m = getOwner()
+        if(m && m!=this) {
+            return new ModelStub(getOwner())
+        }
+        return null
+    }
+
     boolean inAVersionedFolder() {
         List<Model> models = getAncestors()
         return models.find {it.domainType == "VersionedFolder"}
@@ -168,7 +196,7 @@ abstract class Model<M extends DiffableItem> extends AdministeredItem implements
 
     @JsonIgnore
     @Transient
-    private Model getModelWithVersion() {
+    Model getModelWithVersion() {
         final List<Model> myAncestors = getAncestors()
         Collections.reverse(myAncestors)
         myAncestors.add(this)

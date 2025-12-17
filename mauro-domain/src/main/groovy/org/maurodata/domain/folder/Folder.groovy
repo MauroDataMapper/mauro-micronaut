@@ -114,8 +114,8 @@ class Folder extends Model implements ItemReferencer {
     @Override
     @Transient
     @JsonIgnore
-    Folder getOwner() {
-        this
+    Model getOwner() {
+        getModelWithVersion() ?: this
     }
 
     @Override

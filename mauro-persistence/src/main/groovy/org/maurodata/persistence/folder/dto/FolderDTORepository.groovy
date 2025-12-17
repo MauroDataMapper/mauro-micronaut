@@ -25,12 +25,15 @@ abstract class FolderDTORepository implements GenericRepository<FolderDTO, UUID>
     @Join(value = 'catalogueUser', type = Join.Type.LEFT_FETCH)
     @Nullable
     @Query('SELECT * FROM core.folder WHERE parent_folder_id = :item AND label = :pathIdentifier')
-    abstract List<Folder> findAllByParentAndPathIdentifier(UUID item, String pathIdentifier)
+    abstract List<FolderDTO> findAllByParentAndPathIdentifier(UUID item, String pathIdentifier)
 
-
-
-    @Query('SELECT * FROM core.folder WHERE label = :label')
     @Nullable
+    abstract List<FolderDTO> findAllByParentFolderId(UUID item)
+
+
+
+    @Nullable
+    @Query('SELECT * FROM core.folder WHERE label = :label')
     abstract List<Folder> findAllByLabel(String label)
 }
 

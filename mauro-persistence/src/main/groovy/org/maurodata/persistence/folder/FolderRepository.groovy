@@ -28,6 +28,10 @@ abstract class FolderRepository implements ModelRepository<Folder> {
         folderDTORepository.findById(id) as Folder
     }
 
+    List<Folder> findAllByParentId(UUID parentId) {
+        folderDTORepository.findAllByParentFolderId(parentId) as List<Folder>
+    }
+
     @Nullable
     List<Folder> findAllByParentAndPathIdentifier(UUID item, String pathIdentifier) {
         folderDTORepository.findAllByParentAndPathIdentifier(item, pathIdentifier) as List<Folder>
@@ -77,7 +81,7 @@ abstract class FolderRepository implements ModelRepository<Folder> {
     @Nullable
     @Override
     List<Folder> findAllByFolderId(UUID folderId) {
-        findAllByParent(folderId as AdministeredItem)
+        findAllByParentId(folderId)
     }
 
     @Override

@@ -594,7 +594,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
                 }
             }
 
-            final Model childModel = modelRepository.loadWithContent(targetModelId)
+            final Model childModel = modelRepository.findById(targetModelId)
 
             if (childModel == null) {
                 continue
