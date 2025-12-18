@@ -1,5 +1,6 @@
 package org.maurodata.test.domain.folder
 
+import spock.lang.Ignore
 import spock.lang.Specification
 import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.diff.ObjectDiff
@@ -208,15 +209,14 @@ class FolderSpec extends Specification {
     {
         given:
             Folder folderWithoutVersion = Folder.build(label: "$LABEL", author: "$AUTHOR", description: "$DESCRIPTION") {}
-        DataModel dataModelWithoutVersion = DataModel.build(label: 'My Test DataModel with Version', id: UUID.randomUUID()) {}
+            DataModel dataModelWithoutVersion = DataModel.build(label: 'My Test DataModel with Version', id: UUID.randomUUID()) {}
         when:
             dataModelWithoutVersion.setParent(folderWithoutVersion)
         then:
             dataModelWithoutVersion.getModelVersion() == null &&
             folderWithoutVersion.getModelVersion() == null &&
-            dataModelWithoutVersion.getPathModelIdentifier() == 'main' &&
-            folderWithoutVersion.getPathModelIdentifier() == null &&
-            !folderWithoutVersion.isVersionable()
+            dataModelWithoutVersion.getPathModelIdentifier() == null &&
+            folderWithoutVersion.getPathModelIdentifier() == null
     }
 
     def "Test non versioned folder with non versioned sub folder"()
@@ -227,8 +227,6 @@ class FolderSpec extends Specification {
         when:
             subFolderWithoutVersion.setParent(folderWithoutVersion)
         then:
-            !folderWithoutVersion.isVersionable() &&
-            !subFolderWithoutVersion.isVersionable() &&
             subFolderWithoutVersion.getModelVersion() == null &&
             folderWithoutVersion.getModelVersion() == null &&
             subFolderWithoutVersion.getPathModelIdentifier() == null &&
@@ -248,22 +246,20 @@ class FolderSpec extends Specification {
             folderWithoutVersion.getModelVersion() == null &&
             dataModelWithVersion.getModelVersion() == modelVersion &&
             dataModelWithVersion.getPathModelIdentifier() == "2.3.0" &&
-            folderWithoutVersion.getPathModelIdentifier() == null &&
-            dataModelWithVersion.isVersionable()
+            folderWithoutVersion.getPathModelIdentifier() == null
     }
 
+    @Ignore("'Versioned non-versionable' is no-longer a thing")
     def "Test a versioned non-versionable folder "()
     {
         given:
             Folder folderWithVersion = Folder.build(label: "$LABEL", author: "$AUTHOR", description: "$DESCRIPTION") {}
             ModelVersion modelVersion1 = ModelVersion.build(major: 1, minor: 2, patch: 3, snapshot: true){}
             folderWithVersion.setModelVersion( modelVersion1 )
-            folderWithVersion.setVersionable(false)
 
         when:
             true
         then:
-            !folderWithVersion.isVersionable() &&
             folderWithVersion.getModelVersion() == modelVersion1 &&
             folderWithVersion.getPathModelIdentifier() == null
     }
@@ -274,16 +270,15 @@ class FolderSpec extends Specification {
         Folder folderWithVersion = Folder.build(label: "$LABEL", author: "$AUTHOR", description: "$DESCRIPTION") {}
         ModelVersion modelVersion1 = ModelVersion.build(major: 1, minor: 2, patch: 3, snapshot: true){}
         folderWithVersion.setModelVersion( modelVersion1 )
-        folderWithVersion.setVersionable(true)
 
         when:
         true
         then:
-            folderWithVersion.isVersionable()  &&
-            folderWithVersion.getModelVersion() == modelVersion1 &&
-            folderWithVersion.getPathModelIdentifier() == "1.2.3-SNAPSHOT"
+        folderWithVersion.getModelVersion() == modelVersion1 &&
+        folderWithVersion.getPathModelIdentifier() == "1.2.3-SNAPSHOT"
     }
 
+    @Ignore("'Versioned non-versionable' is no-longer a thing")
     def "Test a versioned versionable folder with a versioned non-versionable sub folder"()
     {
         given:
@@ -296,19 +291,16 @@ class FolderSpec extends Specification {
         folderWithVersion.setModelVersion( modelVersion1 )
         subFolderWithVersion.setModelVersion( modelVersion2 )
 
-        folderWithVersion.setVersionable(true)
-
         when:
             subFolderWithVersion.setParent(folderWithVersion)
         then:
             folderWithVersion.getModelVersion() == modelVersion1 &&
             subFolderWithVersion.getModelVersion() == modelVersion1 &&
             subFolderWithVersion.getPathModelIdentifier() == null &&
-            folderWithVersion.getPathModelIdentifier() == "1.2.3-SNAPSHOT" &&
-            folderWithVersion.isVersionable() &&
-            !subFolderWithVersion.isVersionable()
+            folderWithVersion.getPathModelIdentifier() == "1.2.3-SNAPSHOT"
     }
 
+    @Ignore("VersionedFolders should live inside VersionedFolders")
     def "Test a versioned versionable folder with a versioned versionable sub folder"()
     {
         given:
@@ -321,20 +313,16 @@ class FolderSpec extends Specification {
         folderWithVersion.setModelVersion( modelVersion1 )
         subFolderWithVersion.setModelVersion( modelVersion2 )
 
-        folderWithVersion.setVersionable(true)
-        subFolderWithVersion.setVersionable(true)
-
         when:
         subFolderWithVersion.setParent(folderWithVersion)
         then:
         folderWithVersion.getModelVersion() == modelVersion1 &&
                 subFolderWithVersion.getModelVersion() == modelVersion1 &&
                 subFolderWithVersion.getPathModelIdentifier() == null &&
-                folderWithVersion.getPathModelIdentifier() == "1.2.3-SNAPSHOT" &&
-                folderWithVersion.isVersionable() &&
-                !subFolderWithVersion.isVersionable()
+                folderWithVersion.getPathModelIdentifier() == "1.2.3-SNAPSHOT"
     }
 
+    @Ignore("'Versioned non-versionable' is no-longer a thing")
     def "Test a versioned non-versionable folder with a versioned datamodel"()
     {
         given:

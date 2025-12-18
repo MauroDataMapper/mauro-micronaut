@@ -209,7 +209,7 @@ class AvailableActions {
 
         if (item instanceof Model) {
             final Model itemAsModel = (Model) item
-            if (itemAsModel.isVersionable()) {
+            if (itemAsModel.branchName || itemAsModel.modelVersion) {
                 item.availableActions.addAll(getActionsForRolesPurpose(roles, PURPOSE_VERSIONING))
             }
             item.availableActions.addAll(getActionsForRolesPurpose(roles, PURPOSE_MODEL))

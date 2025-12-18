@@ -113,8 +113,7 @@ class ItemUtils {
     }
 
     static <T extends String> T copyItem(T from, T to) {
-        if (from == null) {return to}
-        if (from.isEmpty()) {return to}
+        if ((from == null || from.isEmpty()) && to != null) {return to}
         return from
     }
 }

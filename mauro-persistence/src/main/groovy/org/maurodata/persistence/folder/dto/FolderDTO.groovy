@@ -32,11 +32,6 @@ import jakarta.persistence.Transient
 @MappedEntity(value = 'folder', schema = 'core', alias = 'folder_')
 class FolderDTO extends Folder implements AdministeredItemDTO {
 
-    @Override
-    String getDomainType() {
-        return super.getDomainType()
-    }
-
     @Nullable
     @TypeDef(type = DataType.JSON)
     @MappedProperty
@@ -170,5 +165,15 @@ class FolderDTO extends Folder implements AdministeredItemDTO {
         FolderDTO dtoShallowCopy = new FolderDTO()
         this.copyInto(dtoShallowCopy)
         return dtoShallowCopy
+    }
+
+    @Transient
+    @Override
+    String getDomainType() {
+        if(branchName || modelVersion) {
+            return "VersionedFolder"
+        } else {
+            return "Folder"
+        }
     }
 }
