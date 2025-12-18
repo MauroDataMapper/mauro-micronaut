@@ -1,5 +1,6 @@
 package org.maurodata.security
 
+import groovy.transform.CompileStatic
 import io.micronaut.context.annotation.Replaces
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.http.HttpRequest
@@ -13,6 +14,7 @@ import jakarta.inject.Singleton
 import org.reactivestreams.Publisher
 import reactor.core.publisher.Mono
 
+@CompileStatic
 @Singleton
 @Replaces(SensitiveEndpointRule)
 class AdminSensitiveEndpointRule extends SensitiveEndpointRule {

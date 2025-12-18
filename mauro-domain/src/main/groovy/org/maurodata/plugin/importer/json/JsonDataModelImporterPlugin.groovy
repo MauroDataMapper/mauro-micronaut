@@ -1,6 +1,7 @@
 package org.maurodata.plugin.importer.json
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.http.HttpStatus
 import jakarta.inject.Inject
@@ -11,6 +12,7 @@ import org.maurodata.export.ExportModel
 import org.maurodata.plugin.importer.DataModelImporterPlugin
 import org.maurodata.plugin.importer.FileImportParameters
 
+@CompileStatic
 @Slf4j
 @Singleton
 class JsonDataModelImporterPlugin implements DataModelImporterPlugin<FileImportParameters> {

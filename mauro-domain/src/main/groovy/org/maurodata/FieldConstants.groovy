@@ -1,5 +1,8 @@
 package org.maurodata
 
+import groovy.transform.CompileStatic
+
+@CompileStatic
 class FieldConstants {
 
     static final String CLASSIFICATION_SCHEME_LOWERCASE = 'classificationscheme'

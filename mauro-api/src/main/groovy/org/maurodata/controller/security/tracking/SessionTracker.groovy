@@ -1,11 +1,13 @@
 package org.maurodata.controller.security.tracking
 
+import groovy.transform.CompileStatic
 import jakarta.inject.Singleton
 
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 import java.util.concurrent.*
 
+@CompileStatic
 @Singleton
 class SessionTracker {
 

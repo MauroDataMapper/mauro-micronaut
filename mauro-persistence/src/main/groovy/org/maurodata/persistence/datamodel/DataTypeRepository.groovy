@@ -1,5 +1,6 @@
 package org.maurodata.persistence.datamodel
 
+import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.model.query.builder.sql.Dialect
@@ -10,6 +11,7 @@ import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.persistence.datamodel.dto.DataTypeDTORepository
 import org.maurodata.persistence.model.ModelItemRepository
 
+@CompileStatic
 @JdbcRepository(dialect = Dialect.POSTGRES)
 abstract class DataTypeRepository implements ModelItemRepository<DataType> {
 
@@ -70,7 +72,7 @@ abstract class DataTypeRepository implements ModelItemRepository<DataType> {
 
     @Nullable
     List<DataType> findAllByReferenceClass(UUID referenceClassId) {
-        dataTypeDTORepository.findAllByReferenceClassId(referenceClassId)
+        dataTypeDTORepository.findAllByReferenceClassId(referenceClassId) as List<DataType>
     }
 
     @Override

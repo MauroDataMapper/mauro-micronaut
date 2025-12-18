@@ -1,8 +1,10 @@
 package org.maurodata.plugin.datatype
 
+import groovy.transform.CompileStatic
 import jakarta.inject.Singleton
 import org.maurodata.domain.datamodel.DataType
 
+@CompileStatic
 @Singleton
 class ProfileSpecificationDataTypeProvider implements DefaultDataTypeProviderPlugin{
 

@@ -1,6 +1,7 @@
 package org.maurodata.plugin.importer.json
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
@@ -8,8 +9,8 @@ import org.maurodata.domain.dataflow.DataFlow
 import org.maurodata.export.ExportModel
 import org.maurodata.plugin.importer.DataFlowFileImportParameters
 import org.maurodata.plugin.importer.DataFlowImporterPlugin
-import org.maurodata.plugin.importer.FileImportParameters
 
+@CompileStatic
 @Slf4j
 @Singleton
 class JsonDataFlowImporterPlugin implements DataFlowImporterPlugin<DataFlowFileImportParameters> {
@@ -43,7 +44,7 @@ class JsonDataFlowImporterPlugin implements DataFlowImporterPlugin<DataFlowFileI
     }
 
     @Override
-    Class<FileImportParameters> importParametersClass() {
+    Class<DataFlowFileImportParameters> importParametersClass() {
         return DataFlowFileImportParameters
     }
 

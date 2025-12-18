@@ -1,9 +1,11 @@
 package org.maurodata.api.model
 
+import groovy.transform.CompileStatic
 import groovy.transform.MapConstructor
 import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.domain.model.Breadcrumb
 
+@CompileStatic
 @MapConstructor(includeSuperFields = true, includeSuperProperties = true, noArg = true)
 class ModelRefDTO {
     UUID id

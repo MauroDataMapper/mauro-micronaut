@@ -1,5 +1,6 @@
 package org.maurodata.plugin.importer.json
 
+import groovy.transform.CompileStatic
 import io.micronaut.http.HttpStatus
 import org.maurodata.ErrorHandler
 import org.maurodata.domain.terminology.CodeSet
@@ -12,6 +13,7 @@ import groovy.util.logging.Slf4j
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
 
+@CompileStatic
 @Slf4j
 @Singleton
 class JsonCodeSetImporterPlugin implements CodeSetImporterPlugin<FileImportParameters> {

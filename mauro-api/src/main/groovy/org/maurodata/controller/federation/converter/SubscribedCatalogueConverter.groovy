@@ -6,11 +6,14 @@ import org.maurodata.domain.facet.federation.PublishedModel
 import org.maurodata.domain.facet.federation.SubscribedCatalogue
 import org.maurodata.domain.facet.federation.SubscribedCatalogueType
 
+import groovy.transform.CompileStatic
+
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.time.format.DateTimeParseException
 
+@CompileStatic
 trait SubscribedCatalogueConverter {
 
     abstract boolean handles(SubscribedCatalogueType type)

@@ -4,6 +4,9 @@ import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.plugin.MauroPlugin
 import org.maurodata.plugin.PluginType
 
+import groovy.transform.CompileStatic
+
+@CompileStatic
 trait Profile extends MauroPlugin {
 
     boolean canBeEditedAfterFinalisation
@@ -34,11 +37,11 @@ trait Profile extends MauroPlugin {
 
 
     List<String> getKeys() {
-        sections.collect { section ->
+        ((List<String>) sections.collect { section ->
             section.fields.collect { field ->
                 field.getMetadataKey(section.label)
             }
-        }.flatten().sort()
+        }.flatten()).sort()
     }
 
 }

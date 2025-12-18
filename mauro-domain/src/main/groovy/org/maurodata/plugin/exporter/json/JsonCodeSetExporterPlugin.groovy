@@ -5,10 +5,12 @@ import org.maurodata.export.ExportModel
 import org.maurodata.plugin.exporter.CodeSetExporterPlugin
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
 
+@CompileStatic
 @Slf4j
 @Singleton
 class JsonCodeSetExporterPlugin implements CodeSetExporterPlugin {
@@ -42,7 +44,7 @@ class JsonCodeSetExporterPlugin implements CodeSetExporterPlugin {
     @Override
     byte[] exportModels(Collection<CodeSet> codeSet) {
         ExportModel exportModel = new ExportModel(this)
-        exportModel.codeSets = codeSet
+        exportModel.codeSets = codeSet.toList()
         objectMapper.writeValueAsBytes(exportModel)
 
     }

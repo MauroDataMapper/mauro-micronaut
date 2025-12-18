@@ -4,6 +4,9 @@ import org.maurodata.plugin.exporter.ModelExporterPlugin
 import org.maurodata.plugin.importer.ModelImporterPlugin
 import org.maurodata.profile.Profile
 
+import groovy.transform.CompileStatic
+
+@CompileStatic
 class MauroPluginDTO {
     String name
     String version

@@ -3,6 +3,7 @@ package org.maurodata.service.email
 import org.maurodata.plugin.EmailPlugin
 
 import com.fasterxml.jackson.annotation.JsonTypeName
+import groovy.transform.CompileStatic
 import io.micronaut.context.annotation.Property
 import io.micronaut.context.env.Environment
 import io.micronaut.email.Contact
@@ -15,6 +16,7 @@ import jakarta.mail.Session
 import jakarta.mail.Transport
 import org.maurodata.domain.security.CatalogueUser
 
+@CompileStatic
 @Singleton
 @JsonTypeName("MicronautJavamailEmailPlugin")
 class MicronautJavamailEmailPlugin implements EmailPlugin {

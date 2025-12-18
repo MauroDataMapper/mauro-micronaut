@@ -4,8 +4,10 @@ import com.fasterxml.jackson.annotation.JsonCreator
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonValue
 import groovy.json.JsonSlurper
+import groovy.transform.CompileStatic
 import org.apache.commons.lang3.time.DateUtils
 
+@CompileStatic
 enum ProfileFieldDataType {
 
     BOOLEAN('boolean'),

@@ -9,11 +9,13 @@ import org.maurodata.domain.facet.federation.SubscribedCatalogue
 import org.maurodata.domain.facet.federation.SubscribedCatalogueType
 import org.maurodata.domain.model.version.ModelVersion
 
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import jakarta.inject.Singleton
 
 import java.time.Instant
 
+@CompileStatic
 @Slf4j
 @Singleton
 class MauroJsonSubscribedCatalogueConverter implements SubscribedCatalogueConverter {
@@ -29,8 +31,8 @@ class MauroJsonSubscribedCatalogueConverter implements SubscribedCatalogueConver
         Map<String, Object> subscribedCatalogueModelsMap = federationClient.fetchFederatedClientDataAsMap(subscribedCatalogue, path)
         Authority subscribedAuthority = new Authority().tap {
             if (subscribedCatalogueModelsMap.authority) {
-                label = subscribedCatalogueModelsMap.authority.label ?: null
-                url = subscribedCatalogueModelsMap.authority.url ?: null
+                label = subscribedCatalogueModelsMap.authority['label'] as String?: null
+                url = subscribedCatalogueModelsMap.authority['url'] as String?: null
             }
         }
         List<PublishedModel> publishedModels = (subscribedCatalogueModelsMap.publishedModels as List<Map<String, Object>>).collect {convertEntryToPublishedModel(it)}
@@ -51,7 +53,7 @@ class MauroJsonSubscribedCatalogueConverter implements SubscribedCatalogueConver
         PublishedModel model = new PublishedModel().tap {
             modelId = entry.modelId
             modelLabel = entry.label
-            modelVersion = ModelVersion.from(entry.version)
+            modelVersion = ModelVersion.from(entry.version as String)
             modelVersionTag = entry.modelVersionTag
             modelType = entry.modelType
             if (entry.lastUpdated) lastUpdated = convert(entry.lastUpdated as String)
@@ -59,7 +61,7 @@ class MauroJsonSubscribedCatalogueConverter implements SubscribedCatalogueConver
             if (entry.datePublished) datePublished = convert(entry.datePublished as String)
             author = entry.author
             description = entry.description
-            if (entry.links) links = entry.links.collect {link -> new MauroLink(link.url, link.contentType)}
+            if (entry.links) links = entry.links.collect {link -> new MauroLink(link['url'] as String, link['contentType'] as String)}
         }
         return model
     }

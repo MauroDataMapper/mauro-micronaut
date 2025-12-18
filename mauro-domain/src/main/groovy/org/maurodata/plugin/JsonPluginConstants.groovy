@@ -1,5 +1,8 @@
 package org.maurodata.plugin
 
+import groovy.transform.CompileStatic
+
+@CompileStatic
 class JsonPluginConstants {
 
     public static String NAMESPACE = "org.maurodata.plugin.importer.json"

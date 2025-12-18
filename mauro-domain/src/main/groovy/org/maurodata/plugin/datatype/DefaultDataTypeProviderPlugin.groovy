@@ -5,7 +5,9 @@ import org.maurodata.domain.datamodel.DataType
 import org.maurodata.plugin.MauroPlugin
 import org.maurodata.plugin.PluginType
 
+import groovy.transform.CompileStatic
 
+@CompileStatic
 trait DefaultDataTypeProviderPlugin extends MauroPlugin {
 
     @JsonIgnore

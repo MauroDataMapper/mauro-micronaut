@@ -1,5 +1,6 @@
 package org.maurodata.security.authentication
 
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.context.annotation.Replaces
 import io.micronaut.context.annotation.Value
@@ -20,6 +21,7 @@ import jakarta.inject.Singleton
 import org.maurodata.persistence.cache.ItemCacheableRepository.CatalogueUserCacheableRepository
 import org.maurodata.security.AccessControlService
 
+@CompileStatic
 @Singleton
 @Slf4j
 @Replaces(SessionLoginHandler)
@@ -54,7 +56,7 @@ class MauroSessionLoginHandler extends SessionLoginHandler {
             } else {
                 log.debug 'Successful login, redirecting to login success URI'
                 MutableHttpResponse<?> response = HttpResponse.status(HttpStatus.SEE_OTHER)
-                MutableHttpHeaders headers = response.headers
+                MutableHttpHeaders headers = response.headers as MutableHttpHeaders
                 headers.location(loginSuccessUrl)
                 response
             }

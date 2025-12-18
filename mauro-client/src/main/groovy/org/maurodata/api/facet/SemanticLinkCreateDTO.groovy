@@ -1,8 +1,8 @@
 package org.maurodata.api.facet
 
+import groovy.transform.CompileStatic
 
-import org.maurodata.domain.model.AdministeredItem
-
+@CompileStatic
 class SemanticLinkCreateDTO {
     UUID id
     String linkType

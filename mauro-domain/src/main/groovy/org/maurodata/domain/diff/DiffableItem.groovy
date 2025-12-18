@@ -1,5 +1,8 @@
 package org.maurodata.domain.diff
 
+import groovy.transform.CompileStatic
+
+@CompileStatic
 trait DiffableItem<T extends DiffableItem> {
     abstract CollectionDiff fromItem()
 

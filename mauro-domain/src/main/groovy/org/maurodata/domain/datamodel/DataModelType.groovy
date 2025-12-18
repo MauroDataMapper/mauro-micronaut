@@ -1,5 +1,8 @@
 package org.maurodata.domain.datamodel
 
+import groovy.transform.CompileStatic
+
+@CompileStatic
 enum DataModelType {
     DATA_ASSET('Data Asset'),
     DATA_STANDARD('Data Standard')

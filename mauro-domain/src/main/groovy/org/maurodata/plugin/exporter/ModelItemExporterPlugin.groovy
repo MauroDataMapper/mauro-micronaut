@@ -1,11 +1,13 @@
 package org.maurodata.plugin.exporter
 
 import com.fasterxml.jackson.annotation.JsonIgnore
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import org.maurodata.domain.model.ModelItem
 import org.maurodata.plugin.MauroPlugin
 import org.maurodata.plugin.PluginType
 
+@CompileStatic
 @Slf4j
 trait ModelItemExporterPlugin<D extends ModelItem> extends ExporterPlugin{
 

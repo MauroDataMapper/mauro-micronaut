@@ -3,11 +3,13 @@ package org.maurodata.plugin.importer
 import org.maurodata.plugin.importer.config.ImportGroupConfig
 import org.maurodata.plugin.importer.config.ImportParameterConfig
 
+import groovy.transform.CompileStatic
 import io.micronaut.http.multipart.CompletedFileUpload
 import io.micronaut.http.multipart.CompletedPart
 
 import java.nio.charset.StandardCharsets
 
+@CompileStatic
 class ImportParameters {
 
     @ImportParameterConfig(
