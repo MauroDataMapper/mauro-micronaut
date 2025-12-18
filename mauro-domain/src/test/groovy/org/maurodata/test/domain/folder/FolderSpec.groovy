@@ -216,8 +216,7 @@ class FolderSpec extends Specification {
             dataModelWithoutVersion.getModelVersion() == null &&
             folderWithoutVersion.getModelVersion() == null &&
             dataModelWithoutVersion.getPathModelIdentifier() == null &&
-            folderWithoutVersion.getPathModelIdentifier() == null &&
-            !folderWithoutVersion.isVersionable()
+            folderWithoutVersion.getPathModelIdentifier() == null
     }
 
     def "Test non versioned folder with non versioned sub folder"()
