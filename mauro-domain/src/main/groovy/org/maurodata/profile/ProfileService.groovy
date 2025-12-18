@@ -1,10 +1,12 @@
 package org.maurodata.profile
 
+import groovy.transform.CompileStatic
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
 import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.plugin.MauroPluginService
 
+@CompileStatic
 @Singleton
 class ProfileService {
 

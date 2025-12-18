@@ -1,5 +1,6 @@
 package org.maurodata.plugin
 
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.context.ApplicationContext
 import io.micronaut.context.BeanDefinitionRegistry
@@ -7,6 +8,10 @@ import io.micronaut.context.RuntimeBeanDefinition
 import io.micronaut.context.annotation.Context
 import io.micronaut.context.event.ShutdownEvent
 import io.micronaut.http.annotation.Controller
+import io.micronaut.http.annotation.Delete
+import io.micronaut.http.annotation.Get
+import io.micronaut.http.annotation.Post
+import io.micronaut.http.annotation.Put
 import io.micronaut.inject.BeanDefinition
 import io.micronaut.runtime.event.annotation.EventListener
 import jakarta.inject.Inject
@@ -20,6 +25,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.stream.Stream
 
+@CompileStatic
 @Slf4j
 @Singleton
 @Context
@@ -161,7 +167,7 @@ class MauroPluginService {
         }
 
         URLClassLoader pluginLoader = new URLClassLoader(
-            (URL[]) urls.toArray(new URL[0]),
+            urls.toArray(new URL[0]) as URL[],
             apiClassLoader
         )
 
@@ -189,33 +195,33 @@ class MauroPluginService {
                     Method[] methods = controllerClass.getMethods()
                     methods.each {Method method ->
 
-                        Annotation annotation_GET = method.getAnnotation(io.micronaut.http.annotation.Get)
+                        Annotation annotation_GET = method.getAnnotation(Get)
                         if (annotation_GET != null) {
-                            final String value = ((io.micronaut.http.annotation.Get) annotation_GET).value()
+                            final String value = ((Get) annotation_GET).value()
                             if (value != null) {
                                 log.info("Registering GET: ${value}")
                             }
                         }
 
-                        Annotation annotation_POST = method.getAnnotation(io.micronaut.http.annotation.Post)
+                        Annotation annotation_POST = method.getAnnotation(Post)
                         if (annotation_POST != null) {
-                            final String value = ((io.micronaut.http.annotation.Post) annotation_POST).value()
+                            final String value = ((Post) annotation_POST).value()
                             if (value != null) {
                                 log.info("Registering POST: ${value}")
                             }
                         }
 
-                        Annotation annotation_PUT = method.getAnnotation(io.micronaut.http.annotation.Put)
+                        Annotation annotation_PUT = method.getAnnotation(Put)
                         if (annotation_PUT != null) {
-                            final String value = ((io.micronaut.http.annotation.Put) annotation_PUT).value()
+                            final String value = ((Put) annotation_PUT).value()
                             if (value != null) {
                                 log.info("Registering PUT: ${value}")
                             }
                         }
 
-                        Annotation annotation_DELETE = method.getAnnotation(io.micronaut.http.annotation.Delete)
+                        Annotation annotation_DELETE = method.getAnnotation(Delete)
                         if (annotation_DELETE != null) {
-                            final String value = ((io.micronaut.http.annotation.Delete) annotation_DELETE).value()
+                            final String value = ((Delete) annotation_DELETE).value()
                             if (value != null) {
                                 log.info("Registering DELETE: ${value}")
                             }
@@ -236,13 +242,13 @@ class MauroPluginService {
     <P extends MauroPlugin> P getPlugin(Class<P> cls, String namespace, String name) {
         (P) listPlugins().findAll {
             cls.isInstance(it) && it.namespace == namespace && it.name == name
-        }.sort {P plugin -> plugin.version}?.find()
+        }.sort {MauroPlugin plugin -> plugin.version}?.find()
     }
 
     <P extends MauroPlugin> P getPlugin(Class<P> cls, String name) {
         (P) listPlugins().findAll {
             it.name == name
-        }.sort {P plugin -> plugin.version}?.find()
+        }.sort {MauroPlugin plugin -> plugin.version}?.find()
     }
 
     MauroPlugin getPlugin(String namespace, String name) {

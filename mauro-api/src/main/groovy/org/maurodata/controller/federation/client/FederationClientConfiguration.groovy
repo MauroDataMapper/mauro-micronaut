@@ -1,10 +1,12 @@
 package org.maurodata.controller.federation.client
 
+import groovy.transform.CompileStatic
 import io.micronaut.context.annotation.ConfigurationProperties
 import io.micronaut.context.annotation.Replaces
 import io.micronaut.http.client.HttpClientConfiguration
 import io.micronaut.runtime.ApplicationConfiguration
 
+@CompileStatic
 @ConfigurationProperties(PREFIX)
 //@Replaces(HttpClientConfiguration)
 class FederationClientConfiguration extends HttpClientConfiguration {

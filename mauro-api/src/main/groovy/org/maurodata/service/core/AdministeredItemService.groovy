@@ -1,9 +1,11 @@
 package org.maurodata.service.core
 
+import groovy.transform.CompileStatic
 import jakarta.inject.Inject
 import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.persistence.model.PathRepository
 
+@CompileStatic
 abstract class AdministeredItemService {
 
     @Inject

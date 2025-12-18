@@ -1,5 +1,6 @@
 package org.maurodata.plugin.importer.json
 
+import groovy.transform.CompileStatic
 import io.micronaut.http.HttpStatus
 import jakarta.inject.Inject
 import org.maurodata.ErrorHandler
@@ -12,6 +13,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.util.logging.Slf4j
 import jakarta.inject.Singleton
 
+@CompileStatic
 @Slf4j
 @Singleton
 class JsonTerminologyImporterPlugin implements TerminologyImporterPlugin<FileImportParameters> {

@@ -1,9 +1,12 @@
 package org.maurodata.domain.diff
 
+import groovy.transform.CompileStatic
+
 /**
  * Really a placeholder for an object with the DiffableItem trait
  * that returns the given diffIdentifier
  */
+@CompileStatic
 class DiffablePlaceholder implements DiffableItem{
 
     String diffIdentifier

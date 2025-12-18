@@ -6,10 +6,11 @@ import org.maurodata.persistence.datamodel.DataModelRepository
 import org.maurodata.profile.DataModelBasedProfile
 import org.maurodata.profile.ProfileSpecificationProfile
 
+import groovy.transform.CompileStatic
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
 
-
+@CompileStatic
 @Singleton
 class DynamicProfileService {
 

@@ -1,5 +1,6 @@
 package org.maurodata.security.authentication
 
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.context.annotation.Replaces
 import io.micronaut.context.annotation.Value
@@ -16,6 +17,7 @@ import org.maurodata.domain.security.CatalogueUser
 import org.maurodata.persistence.cache.ItemCacheableRepository
 import org.maurodata.security.utils.SecureRandomStringGenerator
 
+@CompileStatic
 @Singleton
 @Slf4j
 @Replaces(DefaultOpenIdAuthenticationMapper)
@@ -49,7 +51,7 @@ class MauroOpenIdAuthenticationMapper extends DefaultOpenIdAuthenticationMapper 
     }
 
     CatalogueUser createUser(Map<String, Object> claims) {
-        CatalogueUser saved
+
         if (createUser) {
             log.debug("User email address not found, adding new Catalogue user for : {}", claims.email)
             CatalogueUser newUser = new CatalogueUser().tap {
@@ -63,9 +65,9 @@ class MauroOpenIdAuthenticationMapper extends DefaultOpenIdAuthenticationMapper 
                 emailAddress = claims.email
                 salt = SecureRandomStringGenerator.generateSalt()
             }
-            saved = catalogueUserCacheableRepository.save(newUser)
+            return catalogueUserCacheableRepository.save(newUser)
         }
-        saved
+        return null
     }
 
     static void authenticationException(String message) {

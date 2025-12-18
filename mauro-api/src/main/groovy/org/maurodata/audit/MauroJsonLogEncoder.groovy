@@ -3,11 +3,13 @@ package org.maurodata.audit
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.encoder.EncoderBase
 import com.fasterxml.jackson.databind.ObjectMapper
+import groovy.transform.CompileStatic
 
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
+@CompileStatic
 class MauroJsonLogEncoder extends EncoderBase<ILoggingEvent> {
 
     static ObjectMapper objectMapper = new ObjectMapper()
@@ -16,11 +18,11 @@ class MauroJsonLogEncoder extends EncoderBase<ILoggingEvent> {
 
     @Override
     byte[] headerBytes() {
-        return []
+        return [] as byte[]
     }
     @Override
     byte[] footerBytes() {
-        return []
+        return [] as byte[]
     }
 
     @Override

@@ -1,7 +1,10 @@
 package org.maurodata.controller.security.tracking
 
+import groovy.transform.CompileStatic
+
 import java.time.Instant
 
+@CompileStatic
 class TrackedSession {
     final String id
     final Instant creationDateTime

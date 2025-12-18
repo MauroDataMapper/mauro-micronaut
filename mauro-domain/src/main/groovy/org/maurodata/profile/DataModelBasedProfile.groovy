@@ -4,6 +4,9 @@ import org.maurodata.domain.datamodel.DataClass
 import org.maurodata.domain.datamodel.DataElement
 import org.maurodata.domain.datamodel.DataModel
 
+import groovy.transform.CompileStatic
+
+@CompileStatic
 class DataModelBasedProfile implements Profile {
 
     String metadataNamespace

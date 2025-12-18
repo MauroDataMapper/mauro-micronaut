@@ -1,6 +1,7 @@
 package org.maurodata.plugin.exporter.json
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
@@ -8,6 +9,7 @@ import org.maurodata.domain.dataflow.DataFlow
 import org.maurodata.export.ExportModel
 import org.maurodata.plugin.exporter.DataFlowExporterPlugin
 
+@CompileStatic
 @Slf4j
 @Singleton
 class  JsonDataFlowExporterPlugin implements DataFlowExporterPlugin {
@@ -42,7 +44,7 @@ class  JsonDataFlowExporterPlugin implements DataFlowExporterPlugin {
     @Override
     byte[] exportModelItems(Collection<DataFlow> dataFlows) {
         ExportModel exportModel = new ExportModel(this)
-        exportModel.dataFlows = dataFlows
+        exportModel.dataFlows = dataFlows.toList()
         objectMapper.writeValueAsBytes(exportModel)
     }
 

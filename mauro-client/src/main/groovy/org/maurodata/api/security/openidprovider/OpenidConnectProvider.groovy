@@ -1,5 +1,8 @@
 package org.maurodata.api.security.openidprovider
 
+import groovy.transform.CompileStatic
+
+@CompileStatic
 class OpenidConnectProvider {
     UUID id
     String label

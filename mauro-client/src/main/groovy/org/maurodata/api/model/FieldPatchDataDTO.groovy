@@ -4,7 +4,9 @@ import org.maurodata.domain.model.Path
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
+import groovy.transform.CompileStatic
 
+@CompileStatic
 class FieldPatchDataDTO implements Comparable<FieldPatchDataDTO>{
 
     String fieldName

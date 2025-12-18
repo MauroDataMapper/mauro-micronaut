@@ -3,8 +3,9 @@ package org.maurodata.util
 import com.fasterxml.jackson.annotation.ObjectIdGenerator.IdKey
 import com.fasterxml.jackson.annotation.ObjectIdResolver
 import com.fasterxml.jackson.annotation.SimpleObjectIdResolver
+import groovy.transform.CompileStatic
 
-
+@CompileStatic
 class DedupingObjectIdResolver extends SimpleObjectIdResolver {
     @Override
     void bindItem(IdKey id, Object ob) {

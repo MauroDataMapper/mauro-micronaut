@@ -1,5 +1,6 @@
 package org.maurodata.api
 
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.MutableHttpRequest
@@ -10,6 +11,7 @@ import io.micronaut.http.annotation.ResponseFilter
 import io.micronaut.http.cookie.Cookie
 import jakarta.inject.Singleton
 
+@CompileStatic
 @ClientFilter
 @Singleton
 @Slf4j

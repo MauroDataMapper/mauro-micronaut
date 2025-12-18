@@ -1,7 +1,9 @@
 package org.maurodata.plugin
 
 import com.fasterxml.jackson.annotation.JsonIgnore
+import groovy.transform.CompileStatic
 
+@CompileStatic
 trait MauroPlugin {
 
     String getNamespace() {

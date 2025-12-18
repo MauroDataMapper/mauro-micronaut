@@ -1,5 +1,6 @@
 package org.maurodata
 
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import jakarta.inject.Singleton
 import org.maurodata.api.admin.AdminApi
@@ -52,7 +53,7 @@ import io.micronaut.http.client.multipart.MultipartBody
 import jakarta.inject.Inject
 import picocli.CommandLine.Command
 
-
+@CompileStatic
 @Singleton
 @Command
 @Slf4j

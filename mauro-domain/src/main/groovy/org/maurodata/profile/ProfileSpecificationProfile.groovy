@@ -1,10 +1,12 @@
 package org.maurodata.profile
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import groovy.transform.CompileStatic
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
 import org.maurodata.plugin.PluginType
 
+@CompileStatic
 @Singleton
 class ProfileSpecificationProfile extends JsonBasedProfile {
 

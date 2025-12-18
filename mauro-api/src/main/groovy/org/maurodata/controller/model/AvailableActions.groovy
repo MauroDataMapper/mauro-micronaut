@@ -9,6 +9,9 @@ import org.maurodata.domain.security.Role
 import org.maurodata.domain.security.SecurableResource
 import org.maurodata.security.AccessControlService
 
+import groovy.transform.CompileStatic
+
+@CompileStatic
 class AvailableActions {
 
     // Purposes

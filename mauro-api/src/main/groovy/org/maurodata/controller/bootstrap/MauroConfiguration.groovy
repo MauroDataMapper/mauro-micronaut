@@ -1,13 +1,14 @@
 package org.maurodata.controller.bootstrap
 
 import groovy.beans.Bindable
+import groovy.transform.CompileStatic
 import io.micronaut.context.annotation.ConfigurationProperties
 import io.micronaut.core.annotation.Nullable
 import jakarta.validation.constraints.NotBlank
 
 import java.time.Instant
 
-
+@CompileStatic
 @ConfigurationProperties("mauro")
 class MauroConfiguration {
 

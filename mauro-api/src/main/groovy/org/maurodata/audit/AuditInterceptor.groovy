@@ -10,6 +10,7 @@ import org.maurodata.persistence.facet.EditRepository
 import org.maurodata.security.AccessControlService
 import org.maurodata.web.ListResponse
 
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.aop.InterceptorBean
 import io.micronaut.aop.MethodInterceptor
@@ -23,7 +24,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.slf4j.spi.LoggingEventBuilder
 
-
+@CompileStatic
 @Slf4j
 @InterceptorBean(Audit)
 class AuditInterceptor implements MethodInterceptor<Object, Object>{

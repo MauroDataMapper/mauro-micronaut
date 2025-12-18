@@ -1,7 +1,9 @@
 package org.maurodata.plugin.importer
 
 import org.maurodata.domain.folder.Folder
+import groovy.transform.CompileStatic
 
+@CompileStatic
 trait FolderImporterPlugin<P extends ImportParameters> extends ModelImporterPlugin<Folder, P> {
 
     abstract List<Folder> importDomain(P params)

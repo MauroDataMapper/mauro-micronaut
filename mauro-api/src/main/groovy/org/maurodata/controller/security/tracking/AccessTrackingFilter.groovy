@@ -2,6 +2,7 @@ package org.maurodata.controller.security.tracking
 
 import org.maurodata.api.Paths
 
+import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpRequest
 import io.micronaut.http.MutableHttpResponse
@@ -14,6 +15,7 @@ import jakarta.inject.Singleton
 import org.reactivestreams.Publisher
 import reactor.core.publisher.Mono
 
+@CompileStatic
 @Filter("/**")
 @Singleton
 class AccessTrackingFilter implements HttpServerFilter {
