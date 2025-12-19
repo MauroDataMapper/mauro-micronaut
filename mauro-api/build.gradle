@@ -336,9 +336,6 @@ ENTRYPOINT ["docker-startup.sh"]
 
         instruction """
 ENV MICRONAUT_ENVIRONMENTS='docker,datasources,javamail,mauro'
-ENV DATABASE_NAME=sandbox
-ENV DATABASE_USERNAME=sandbox
-ENV DATABASE_PASSWORD=sandbox
 
 ENV INIT_DIR=/opt/init
 ENV DATABASE_DIRECTORY=/var/lib/postgresql/data
