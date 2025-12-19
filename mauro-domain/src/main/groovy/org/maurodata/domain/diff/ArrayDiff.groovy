@@ -52,12 +52,12 @@ class ArrayDiff<K> extends FieldDiff<Collection<K>> {
 
     @Override
     String toString(){
-        String description="\n<ArrayDiff> <super>"+super.toString()+"</super> "
+        String description="\n<ArrayDiff> <super>${super}</super> "
 
         if (created.size() > 0) {
             description += "<created> "
             created.forEach {
-                description += it.getClass().simpleName+":"+it.toString() + ", "
+                description += it.getClass().simpleName+":${it}, "
             }
             description += " </created>"
         }
@@ -65,7 +65,7 @@ class ArrayDiff<K> extends FieldDiff<Collection<K>> {
         if (deleted.size() > 0) {
             description += "<deleted> "
             deleted.forEach {
-                description += it.toString() + ", "
+                description += "${it}, "
             }
             description += " </deleted>"
         }
@@ -73,7 +73,7 @@ class ArrayDiff<K> extends FieldDiff<Collection<K>> {
         if (modified.size() > 0) {
             description += "<modified> "
             modified.forEach {
-                description += it.toString() + ", "
+                description += "${it}, "
             }
             description += " </modified>"
         }

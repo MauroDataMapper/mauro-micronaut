@@ -462,13 +462,13 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
 
         if (!finalisedLeftParent) {
             throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
-                                          "MS01. Model [${leftModel.id.toString()}] has no finalised parent therefore cannot have a common ancestor with Model " +
+                                          "MS01. Model [${leftModel.id}] has no finalised parent therefore cannot have a common ancestor with Model " +
                                           "[${rightModel.id}]")
         }
 
         if (!finalisedRightParent) {
             throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
-                                          "MS02. Model [${rightModel.id.toString()}] has no finalised parent therefore cannot have a common ancestor with Model " +
+                                          "MS02. Model [${rightModel.id}] has no finalised parent therefore cannot have a common ancestor with Model " +
                                           "[${leftModel.id}]")
         }
 
@@ -818,11 +818,11 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     protected M commonAncestor(UUID id, UUID other_model_id) {
         final M left = show(id)
         if (!left) {
-            throw new HttpStatusException(HttpStatus.NOT_FOUND, "No data model found for id [${left.id.toString()}]")
+            throw new HttpStatusException(HttpStatus.NOT_FOUND, "No data model found for id [${left.id}]")
         }
         final M right = show(other_model_id)
         if (!right) {
-            throw new HttpStatusException(HttpStatus.NOT_FOUND, "No data model found for id [${right.id.toString()}]")
+            throw new HttpStatusException(HttpStatus.NOT_FOUND, "No data model found for id [${right.id}]")
         }
 
         return findCommonAncestorBetweenModels(left, right)
@@ -1421,7 +1421,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
             }
         }
         catch (Exception ignored) {
-            throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to create path for ${creationPatch.path.toString()}")
+            throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to create path for ${creationPatch.path}")
         }
 
         // Find the Item referenced by the creationPatch in the source model
@@ -1444,15 +1444,15 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
                     administeredItemTargetParent = pathRepository.findResourcesByPathFromRootResource(targetModel, creationPatch.path.parent)
                 }
                 catch (Exception ignoredAgain) {
-                    throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to create path for ${creationPatch.path.toString()}")
+                    throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to create path for ${creationPatch.path}")
                 }
                 if (administeredItemTargetParent == null) {
-                    throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to create path for ${creationPatch.path.toString()}")
+                    throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to create path for ${creationPatch.path}")
                 }
             }
         }
         catch (Exception ignored) {
-            throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to create path for ${creationPatch.path.toString()}")
+            throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to create path for ${creationPatch.path}")
         }
 
         // Make a copy of the AdministeredItem from the source, then attach the copy to the target parent
@@ -1542,16 +1542,16 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
                             }
                             catch (Exception ignoredOnceMore) {
                                 ignoredOnceMore.printStackTrace()
-                                throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to create path for ${pathToReferencedItemFromTarget.toString()}")
+                                throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to create path for ${pathToReferencedItemFromTarget}")
                             }
                             if (targetToReferencedItem == null) {
-                                throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to create path for ${pathToReferencedItemFromTarget.toString()}")
+                                throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to create path for ${pathToReferencedItemFromTarget}")
                             }
                         }
                     }
                     catch (Exception ignored) {
                         ignored.printStackTrace()
-                        throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to create path for ${pathToReferencedItemFromTarget.toString()}")
+                        throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to create path for ${pathToReferencedItemFromTarget}")
                     }
 
                     // Resolve the source item from the path so it can be swapped out
@@ -1560,11 +1560,11 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
                     try {
                         sourceOfReferencedItem = pathRepository.findResourcesByPathFromRootResource(sourceModel, pathToReferencedItemFromSource)
                         if (sourceOfReferencedItem == null) {
-                            throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to find path for ${pathToReferencedItemFromSource.toString()}")
+                            throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to find path for ${pathToReferencedItemFromSource}")
                         }
                     }
                     catch (Exception ignored) {
-                        throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to find path for ${pathToReferencedItemFromSource.toString()}")
+                        throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to find path for ${pathToReferencedItemFromSource}")
                     }
 
                     // Record a map of the ItemReferences the ItemReferencer will need to update to use the new reference
@@ -1612,7 +1612,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
             }
         }
         catch (Exception findingResource) {
-            throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to find path for ${deletionPatch.path.toString()}")
+            throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to find path for ${deletionPatch.path}")
         }
 
         String itemRemovedLabel = administeredItem.label ?: "No label"

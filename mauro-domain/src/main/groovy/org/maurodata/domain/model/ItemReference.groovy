@@ -43,9 +43,9 @@ class ItemReference {
     @Override
     String toString() {
         String referenceTo = "ItemReference to"
-        if (pathToItem != null) {referenceTo += " " + pathToItem.toString()}
-        if (itemId != null) {referenceTo += " " + itemId.toString()}
-        if (itemDomainType != null) {referenceTo += " " + itemDomainType.toString()}
+        if (pathToItem != null) {referenceTo += " ${pathToItem}"}
+        if (itemId != null) {referenceTo += " ${itemId}"}
+        if (itemDomainType != null) {referenceTo += " ${itemDomainType}"}
         referenceTo += " " + hashCode()
         return referenceTo
     }

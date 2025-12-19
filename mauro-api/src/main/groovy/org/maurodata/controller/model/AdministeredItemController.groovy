@@ -64,7 +64,7 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
 
     I show(UUID id) {
         I item = administeredItemRepository.findById(id)
-        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, item, "Item with id ${id.toString()} not found")
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, item, "Item with id ${id} not found")
         accessControlService.checkRole(Role.READER, item)
 
         updateDerivedProperties(item)
