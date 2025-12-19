@@ -171,7 +171,7 @@ class BootstrapUsers implements ApplicationEventListener<ServiceReadyEvent> {
 
                 if (userNamedApiKeys.isEmpty() && keyById == null) {
 
-                    log.info("apiKeyConfig.key " + apiKeyConfig.key?.toString())
+                    log.info("apiKeyConfig.key ${apiKeyConfig.key}")
 
                     ApiKey newApiKey = new ApiKey(
                         name: apiKeyConfig.name,
@@ -183,16 +183,16 @@ class BootstrapUsers implements ApplicationEventListener<ServiceReadyEvent> {
                         id: apiKeyConfig.key != null ? apiKeyConfig.key : UUID.randomUUID()
                     )
 
-                    log.info("newApiKey.id " + newApiKey.id?.toString())
+                    log.info("newApiKey.id ${newApiKey.id}")
 
                     apiKeyCacheableRepository.save(newApiKey)
-                    log.info("Created key '${newApiKey.name}' ${newApiKey.id.toString()} for user ${apiKeyConfig.email}")
+                    log.info("Created key '${newApiKey.name}' ${newApiKey.id} for user ${apiKeyConfig.email}")
                 } else {
                     if (!userNamedApiKeys.isEmpty()) {
-                        log.info("The User ${apiKeyConfig.email} has a key '${apiKeyConfig.name}' ${userNamedApiKeys.get(0).id.toString()}")
+                        log.info("The User ${apiKeyConfig.email} has a key '${apiKeyConfig.name}' ${userNamedApiKeys.get(0).id}")
                     } else {
                         log.warn(
-                            "A different user than ${apiKeyConfig.email} has a key ${apiKeyConfig.key.toString()} - it is already in use. Choose a different key, or leave " +
+                            "A different user than ${apiKeyConfig.email} has a key ${apiKeyConfig.key} - it is already in use. Choose a different key, or leave " +
                             "that field blank and it will be chosen for you")
                     }
                 }

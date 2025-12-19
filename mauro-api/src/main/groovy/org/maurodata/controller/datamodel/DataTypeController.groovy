@@ -76,7 +76,7 @@ class DataTypeController extends AdministeredItemController<DataType, DataModel>
     DataType show(UUID dataModelId, UUID id) {
         DataType dataType
         dataType = administeredItemRepository.findById(id)
-        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, dataType, "Item with id ${id.toString()} not found")
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, dataType, "Item with id ${id} not found")
         accessControlService.checkRole(Role.READER, dataType)
 
         updateDerivedProperties(dataType)
@@ -187,7 +187,7 @@ class DataTypeController extends AdministeredItemController<DataType, DataModel>
     ListResponse<DataElement> listDataElementsForType(UUID dataModelId, UUID dataTypeId, @Nullable PaginationParams params = new PaginationParams()) {
         DataType dataType
         dataType = administeredItemRepository.findById(dataTypeId)
-        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, dataType, "Item with id ${dataTypeId.toString()} not found")
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, dataType, "Item with id ${dataTypeId} not found")
         accessControlService.checkRole(Role.READER, dataType)
 
         List<DataElement> dataElements = dataElementRepository.readAllByDataTypeIn([dataType])

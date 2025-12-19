@@ -16,6 +16,6 @@ abstract class CollectionDiff {
     }
 
     String toString(){
-        return "<CollectionDiff> "+id?.toString()+" "+diffIdentifier+" </CollectionDiff>"
+        return "<CollectionDiff> ${id} "+diffIdentifier+" </CollectionDiff>"
     }
 }

@@ -139,7 +139,7 @@ class MauroPluginService {
 
     private void loadPlugin(final Path pluginLocation) {
 
-        log.trace("Loading plugin ${pluginLocation.toString()}")
+        log.trace("Loading plugin ${pluginLocation}")
 
         final ClassLoader apiClassLoader = getClass().getClassLoader()
 

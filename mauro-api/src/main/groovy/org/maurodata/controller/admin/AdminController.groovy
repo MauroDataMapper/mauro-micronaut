@@ -151,7 +151,7 @@ class AdminController implements AdminApi {
         try {
             Email email = emailRepository.findById(emailId).get()
             if (!email) {
-                throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Email with id ${emailId.toString()} not found")
+                throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Email with id ${emailId} not found")
             }
             emailService.retrySendEmail(email, false)
             return true
