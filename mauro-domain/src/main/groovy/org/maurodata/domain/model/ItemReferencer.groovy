@@ -39,7 +39,7 @@ trait ItemReferencer {
      */
     @Transient
     @JsonIgnore
-    void predecessors(IdentityHashMap<Item, Set<Item>> predecessorMap = new IdentityHashMap<>(), IdentityHashMap<Item, Boolean> seen = new IdentityHashMap<>()) {
+    void predecessors(IdentityHashMap<Item, Set<Item>> predecessorMap = new IdentityHashMap<>(), IdentityHashMap<Item, Boolean> seen = new IdentityHashMap<>(), IdentityHashMap<Item,List<ItemReference>> unresolvedLinks = new IdentityHashMap<>()) {
 
         Item me = (Item) this
 
@@ -60,6 +60,17 @@ trait ItemReferencer {
                         predecessorMap.put(successor, successorReferencedBy)
                     }
                     successorReferencedBy.add(me)
+                } else
+                if(beingReferenced.itemId && beingReferenced.itemDomainType) {
+                    // A link to something as yet unresolved
+                    List<ItemReference> itemsBeingReferenced=unresolvedLinks.get(me)
+                    if(itemsBeingReferenced == null) {
+                        itemsBeingReferenced = []
+                        unresolvedLinks.put(me,itemsBeingReferenced)
+                    }
+                    if( ! itemsBeingReferenced.find{ItemReference ir -> ir.itemId == beingReferenced.itemId  }) {
+                        itemsBeingReferenced << beingReferenced
+                    }
                 }
             }
         }
@@ -128,14 +139,71 @@ trait ItemReferencer {
     Item deepClone(IdentityHashMap<Item, Item> replacements = new IdentityHashMap<>(), List<Item> notReplaced = []) {
         IdentityHashMap<Item, Set<Item>> predecessorMap = new IdentityHashMap<>()
         IdentityHashMap<Item, Boolean> seen = new IdentityHashMap<>()
-        this.predecessors(predecessorMap, seen)
+        IdentityHashMap<Item,List<ItemReference>> unresolvedLinks = new IdentityHashMap<>()
+        this.predecessors(predecessorMap, seen, unresolvedLinks)
 
+        // Transpose
+        HashMap<UUID, List<Item>> linkedToBy = [:]
+
+        unresolvedLinks.entrySet().forEach {
+            Item linkingItem = it.key
+            List<ItemReference> linkedToList = it.value
+
+            linkedToList.forEach { ItemReference linkedTo ->
+                UUID linkedToId = linkedTo.itemId
+                List<Item> itemsLinkedBy = linkedToBy.get(linkedToId)
+                if(itemsLinkedBy == null) {
+                    itemsLinkedBy = []
+                    linkedToBy.put(linkedToId,itemsLinkedBy)
+                }
+                itemsLinkedBy << linkingItem
+            }
+        }
+
+        IdentityHashMap<Item, List<Item>> linkedToByItem = new IdentityHashMap<>()
+
+        // Clone and replacement map
         predecessorMap.keySet().forEach {Item toClone ->
             if (replacements.get(toClone) == null) {
                 Item shallowCloned = (Item) toClone.shallowCopy()
                 replacements.put(toClone, shallowCloned)
             }
+
+            // Linked to by map
+            if(toClone.id !=null) {
+                List<Item> itemsLinkingToThis = linkedToBy.get(toClone.id)
+                if(itemsLinkingToThis) {
+                    linkedToByItem.put(toClone,itemsLinkingToThis.collect())
+                }
+            }
         }
+
+        // Replace linkedToByItem Items for clones
+        IdentityHashMap<Item, Item> localReplacements = new IdentityHashMap<>()
+        linkedToByItem.entrySet().forEach {
+            Item linkedToItemOriginal = it.key
+            Item linkedToClone = replacements.get(linkedToItemOriginal)
+
+            if(linkedToClone != null) {
+                List<Item> linkedByItemsOriginal = it.value
+
+                localReplacements.clear()
+
+                linkedByItemsOriginal.forEach { Item linkedByItemOriginal ->
+                    Item linkedByItemClone = replacements.get(linkedByItemOriginal)
+                    if(linkedByItemClone != null) {
+
+                        localReplacements.put(linkedByItemOriginal, linkedByItemOriginal)
+                    }
+                }
+
+                // Ask linked ItemReferencer to replace with clones
+                ItemReferencer shallowClonedAsItemReferencer = (ItemReferencer) linkedToClone
+                shallowClonedAsItemReferencer.replaceItemReferencesByIdentity(localReplacements, notReplaced)
+            }
+        }
+
+        // Ask ItemReferencer to replace with clones
 
         replacements.values().forEach {Item shallowCloned ->
             ItemReferencer shallowClonedAsItemReferencer = (ItemReferencer) shallowCloned
