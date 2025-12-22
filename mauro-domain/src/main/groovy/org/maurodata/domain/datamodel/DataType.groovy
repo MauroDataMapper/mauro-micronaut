@@ -258,7 +258,7 @@ class DataType extends ModelItem<DataModel> implements DiffableItem<DataType>, I
         List<ItemReference> pathsBeingReferenced = [] + super.retrieveItemReferences()
 
         ItemReferencerUtils.addItems(this.enumerationValues, pathsBeingReferenced)
-        ItemReferencerUtils.addIdType(this.modelResourceId, modelResourceDomainType, pathsBeingReferenced)
+        ItemReferencerUtils.addIdType(this.modelResourceId, this.modelResourceDomainType, pathsBeingReferenced)
         ItemReferencerUtils.addItem(this.@referenceClass, pathsBeingReferenced)
         ItemReferencerUtils.addItem(this.parent, pathsBeingReferenced)
 
@@ -271,8 +271,12 @@ class DataType extends ModelItem<DataModel> implements DiffableItem<DataType>, I
 
         this.parent = ItemReferencerUtils.replaceItemByIdentity(this.parent, replacements, notReplaced)
         this.referenceClass = ItemReferencerUtils.replaceItemByIdentity(this.@referenceClass, replacements, notReplaced)
-        // This is not possible on Items
-        // modelResourceId = ItemReferencerUtils.replaceIdTypeByIdentity(modelResourceId, replacements)
+        if (modelResource != null) {
+            modelResource = ItemReferencerUtils.replaceItemByIdentity(modelResource, replacements)
+        } else {
+            Item originalModelResource = replacements.keySet().find {it.id != null && it.id == modelResourceId}
+            modelResource = ItemReferencerUtils.replaceItemByIdentity(originalModelResource, replacements) as Model
+        }
         this.enumerationValues = ItemReferencerUtils.replaceItemsByIdentity(this.@enumerationValues, replacements, notReplaced)
     }
 
