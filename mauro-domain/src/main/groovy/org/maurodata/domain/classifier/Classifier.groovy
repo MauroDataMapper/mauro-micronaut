@@ -148,8 +148,8 @@ class Classifier extends ModelItem<ClassificationScheme> implements DiffableItem
     @Transient
     @JsonIgnore
     @Override
-    void replaceItemReferencesByIdentity(IdentityHashMap<Item, Item> replacements, List<Item> notReplaced) {
-        super.replaceItemReferencesByIdentity(replacements, notReplaced)
+    void replaceItemReferencesByIdentity(IdentityHashMap<Item, Item> replacements, Map<UUID, Item> allItemsById, List<Item> notReplaced) {
+        super.replaceItemReferencesByIdentity(replacements, allItemsById, notReplaced)
         classificationScheme = ItemReferencerUtils.replaceItemByIdentity(classificationScheme, replacements, notReplaced)
         parentClassifier = ItemReferencerUtils.replaceItemByIdentity(parentClassifier, replacements, notReplaced)
         childClassifiers = ItemReferencerUtils.replaceItemsByIdentity(childClassifiers, replacements, notReplaced)

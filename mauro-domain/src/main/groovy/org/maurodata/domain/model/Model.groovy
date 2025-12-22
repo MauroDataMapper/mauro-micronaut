@@ -331,8 +331,8 @@ abstract class Model<M extends DiffableItem> extends AdministeredItem implements
     @Transient
     @JsonIgnore
     @Override
-    void replaceItemReferencesByIdentity(IdentityHashMap<Item, Item> replacements, List<Item> notReplaced) {
-        super.replaceItemReferencesByIdentity(replacements, notReplaced)
+    void replaceItemReferencesByIdentity(IdentityHashMap<Item, Item> replacements, Map<UUID, Item> allItemsById, List<Item> notReplaced) {
+        super.replaceItemReferencesByIdentity(replacements, allItemsById, notReplaced)
         folder = ItemReferencerUtils.replaceItemByIdentity(folder, replacements, notReplaced)
         authority = ItemReferencerUtils.replaceItemByIdentity(authority, replacements, notReplaced)
     }

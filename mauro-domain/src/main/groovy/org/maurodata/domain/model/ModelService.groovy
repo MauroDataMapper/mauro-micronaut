@@ -55,7 +55,9 @@ abstract class ModelService<M extends Model> {
             replacements.put(model.parent, model.parent)
         }
 
-        M copy = (M) ((ItemReferencer) model).deepClone(replacements)
+        Map<UUID, Item> allItemsById = replacements.values().collectEntries {value -> [value.id, value]}
+
+        M copy = (M) ((ItemReferencer) model).deepClone(replacements, allItemsById)
 
         /*
         if(replacements!=null){

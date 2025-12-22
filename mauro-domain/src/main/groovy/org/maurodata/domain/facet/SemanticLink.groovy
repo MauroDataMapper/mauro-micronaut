@@ -89,10 +89,15 @@ class SemanticLink extends Facet implements ItemReferencer {
     }
 
     @Override
-    void replaceItemReferencesByIdentity(IdentityHashMap<Item, Item> replacements, List<Item> notReplaced) {
-        super.replaceItemReferencesByIdentity(replacements, notReplaced)
+    void replaceItemReferencesByIdentity(IdentityHashMap<Item, Item> replacements, Map<UUID, Item> allItemsById, List<Item> notReplaced) {
+        super.replaceItemReferencesByIdentity(replacements, allItemsById, notReplaced)
         // Can't do this by Item
-        // targetMultiFacetAwareItemId = ItemReferencerUtils.replaceIdTypeByIdentity(targetMultiFacetAwareItemId, replacements)
+        if(target) {
+            target = ItemReferencerUtils.replaceItemByIdentity(target, replacements)
+        } else {
+            Item originalTarget = allItemsById[targetMultiFacetAwareItemId]
+            target = ItemReferencerUtils.replaceItemByIdentity(originalTarget, replacements) as AdministeredItem
+        }
     }
 
     @Override

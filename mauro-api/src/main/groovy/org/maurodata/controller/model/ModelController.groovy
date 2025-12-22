@@ -1573,7 +1573,8 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
             }
 
             // Ask the ItemReferencer to update to use the cloned items
-            itemReferencer.replaceItemReferencesByIdentity(toReplace)
+            Map<UUID, Item> toReplaceById = toReplace.values().collectEntries { value -> [value.id, value]}
+            itemReferencer.replaceItemReferencesByIdentity(toReplace, toReplaceById)
 
             // Then for each item, call update
 

@@ -24,7 +24,7 @@ trait ItemReferencer {
      */
     @Transient
     @JsonIgnore
-    abstract void replaceItemReferencesByIdentity(final IdentityHashMap<Item, Item> replacements, List<Item> notReplaced = [])
+    abstract void replaceItemReferencesByIdentity(final IdentityHashMap<Item, Item> replacements, Map<UUID, Item> allItemsById, List<Item> notReplaced = [])
 
     /**
      * A very shallow copy of this ItemReferencer
@@ -125,7 +125,7 @@ trait ItemReferencer {
      */
     @Transient
     @JsonIgnore
-    Item deepClone(IdentityHashMap<Item, Item> replacements = new IdentityHashMap<>(), List<Item> notReplaced = []) {
+    Item deepClone(IdentityHashMap<Item, Item> replacements = new IdentityHashMap<>(), Map<UUID, Item> allItemsById = [:], List<Item> notReplaced = []) {
         IdentityHashMap<Item, Set<Item>> predecessorMap = new IdentityHashMap<>()
         IdentityHashMap<Item, Boolean> seen = new IdentityHashMap<>()
         this.predecessors(predecessorMap, seen)
@@ -134,12 +134,13 @@ trait ItemReferencer {
             if (replacements.get(toClone) == null) {
                 Item shallowCloned = (Item) toClone.shallowCopy()
                 replacements.put(toClone, shallowCloned)
+                allItemsById.put(toClone.id, toClone)
             }
         }
 
         replacements.values().forEach {Item shallowCloned ->
             ItemReferencer shallowClonedAsItemReferencer = (ItemReferencer) shallowCloned
-            shallowClonedAsItemReferencer.replaceItemReferencesByIdentity(replacements, notReplaced)
+            shallowClonedAsItemReferencer.replaceItemReferencesByIdentity(replacements, allItemsById, notReplaced)
         }
 
         return replacements.get(this)

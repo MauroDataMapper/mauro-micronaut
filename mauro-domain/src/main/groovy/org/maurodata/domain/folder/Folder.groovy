@@ -242,8 +242,8 @@ class Folder extends Model implements ItemReferencer {
     @Transient
     @JsonIgnore
     @Override
-    void replaceItemReferencesByIdentity(IdentityHashMap<Item, Item> replacements, List<Item> notReplaced) {
-        super.replaceItemReferencesByIdentity(replacements, notReplaced)
+    void replaceItemReferencesByIdentity(IdentityHashMap<Item, Item> replacements, Map<UUID, Item> allItemsById, List<Item> notReplaced) {
+        super.replaceItemReferencesByIdentity(replacements, allItemsById, notReplaced)
         parentFolder = ItemReferencerUtils.replaceItemByIdentity(parentFolder, replacements, notReplaced)
         childFolders = ItemReferencerUtils.replaceItemsByIdentity(childFolders, replacements, notReplaced)
         dataModels = ItemReferencerUtils.replaceItemsByIdentity(dataModels, replacements, notReplaced)
