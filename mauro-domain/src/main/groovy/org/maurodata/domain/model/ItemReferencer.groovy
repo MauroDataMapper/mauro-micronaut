@@ -39,7 +39,7 @@ trait ItemReferencer {
      */
     @Transient
     @JsonIgnore
-    void predecessors(IdentityHashMap<Item, Set<Item>> predecessorMap = new IdentityHashMap<>(), IdentityHashMap<Item, Boolean> seen = new IdentityHashMap<>()) {
+    void predecessors(IdentityHashMap<Item, Set<Item>> predecessorMap = new IdentityHashMap<>(), IdentityHashMap<Item, Boolean> seen = new IdentityHashMap<>(), HashMap<UUID,Object> linkIds = [:]) {
 
         Item me = (Item) this
 
@@ -60,6 +60,9 @@ trait ItemReferencer {
                         predecessorMap.put(successor, successorReferencedBy)
                     }
                     successorReferencedBy.add(me)
+                } else if (beingReferenced.itemId != null && beingReferenced.itemDomainType != null) {
+                    // A link to something as yet unresolved
+                    linkIds.put(beingReferenced.itemId, beingReferenced.itemId)
                 }
             }
         }
@@ -71,7 +74,7 @@ trait ItemReferencer {
                 Item successor = beingReferenced.theItem
                 if (successor != null) {
                     ItemReferencer successorItemReferencer = successor
-                    successorItemReferencer.predecessors(predecessorMap, seen)
+                    successorItemReferencer.predecessors(predecessorMap, seen, linkIds)
                 }
             }
         }
@@ -128,13 +131,16 @@ trait ItemReferencer {
     Item deepClone(IdentityHashMap<Item, Item> replacements = new IdentityHashMap<>(), Map<UUID, Item> allItemsById = [:], List<Item> notReplaced = []) {
         IdentityHashMap<Item, Set<Item>> predecessorMap = new IdentityHashMap<>()
         IdentityHashMap<Item, Boolean> seen = new IdentityHashMap<>()
-        this.predecessors(predecessorMap, seen)
+        HashMap<UUID,Object> linkIds = [:]
+        this.predecessors(predecessorMap, seen, linkIds)
 
         predecessorMap.keySet().forEach {Item toClone ->
             if (replacements.get(toClone) == null) {
                 Item shallowCloned = (Item) toClone.shallowCopy()
                 replacements.put(toClone, shallowCloned)
-                allItemsById.put(toClone.id, toClone)
+                if(linkIds.containsKey(toClone.id)) {
+                    allItemsById.put(toClone.id, toClone)
+                }
             }
         }
 
