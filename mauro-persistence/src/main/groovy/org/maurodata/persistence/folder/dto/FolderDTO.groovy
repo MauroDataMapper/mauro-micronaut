@@ -131,8 +131,8 @@ class FolderDTO extends Folder implements AdministeredItemDTO {
     @Transient
     @JsonIgnore
     @Override
-    void replaceItemReferencesByIdentity(IdentityHashMap<Item, Item> replacements, List<Item> notReplaced) {
-        super.replaceItemReferencesByIdentity(replacements, notReplaced)
+    void replaceItemReferencesByIdentity(IdentityHashMap<Item, Item> replacements, Map<UUID, Item> allItemsById, List<Item> notReplaced) {
+        super.replaceItemReferencesByIdentity(replacements, allItemsById, notReplaced)
 
         edits = ItemReferencerUtils.replaceItemsByIdentity(edits, replacements, notReplaced)
         metadata = ItemReferencerUtils.replaceItemsByIdentity(metadata, replacements, notReplaced)

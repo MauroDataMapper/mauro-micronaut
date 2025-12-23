@@ -120,8 +120,8 @@ class VersionLink extends Facet implements ItemReferencer {
     }
 
     @Override
-    void replaceItemReferencesByIdentity(IdentityHashMap<Item, Item> replacements, List<Item> notReplaced) {
-        super.replaceItemReferencesByIdentity(replacements, notReplaced)
+    void replaceItemReferencesByIdentity(IdentityHashMap<Item, Item> replacements, Map<UUID, Item> allItemsById, List<Item> notReplaced) {
+        super.replaceItemReferencesByIdentity(replacements, allItemsById, notReplaced)
         // The targetModelId shouldn't actually be changed, should it?
     }
 

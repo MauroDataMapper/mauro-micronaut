@@ -184,8 +184,8 @@ abstract class AdministeredItem extends Item implements Pathable {
     }
 
     @Override
-    void replaceItemReferencesByIdentity(IdentityHashMap<Item, Item> replacements, List<Item> notReplaced) {
-        super.replaceItemReferencesByIdentity(replacements, notReplaced)
+    void replaceItemReferencesByIdentity(IdentityHashMap<Item, Item> replacements, Map<UUID, Item> allItemsById, List<Item> notReplaced) {
+        super.replaceItemReferencesByIdentity(replacements, allItemsById, notReplaced)
 
         classifiers = ItemReferencerUtils.replaceItemsByIdentity(classifiers, replacements, notReplaced)
         edits = ItemReferencerUtils.replaceItemsByIdentity(edits, replacements, notReplaced)

@@ -183,8 +183,8 @@ class Term extends ModelItem<Terminology> implements ItemReferencer {
     @Transient
     @JsonIgnore
     @Override
-    void replaceItemReferencesByIdentity(IdentityHashMap<Item, Item> replacements, List<Item> notReplaced) {
-        super.replaceItemReferencesByIdentity(replacements, notReplaced)
+    void replaceItemReferencesByIdentity(IdentityHashMap<Item, Item> replacements, Map<UUID, Item> allItemsById, List<Item> notReplaced) {
+        super.replaceItemReferencesByIdentity(replacements, allItemsById, notReplaced)
         terminology = ItemReferencerUtils.replaceItemByIdentity(terminology, replacements, notReplaced)
         sourceTermRelationships = ItemReferencerUtils.replaceItemsByIdentity(sourceTermRelationships, replacements, notReplaced)
         targetTermRelationships = ItemReferencerUtils.replaceItemsByIdentity(targetTermRelationships, replacements, notReplaced)

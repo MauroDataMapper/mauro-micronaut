@@ -109,7 +109,7 @@ abstract class Item implements Serializable, ItemReferencer {
     }
 
     @Override
-    void replaceItemReferencesByIdentity(IdentityHashMap<Item, Item> replacements, List<Item> notReplaced) {
+    void replaceItemReferencesByIdentity(IdentityHashMap<Item, Item> replacements, Map<UUID, Item> allItemsById, List<Item> notReplaced) {
         catalogueUser = ItemReferencerUtils.replaceItemByIdentity(catalogueUser, replacements, notReplaced)
     }
 

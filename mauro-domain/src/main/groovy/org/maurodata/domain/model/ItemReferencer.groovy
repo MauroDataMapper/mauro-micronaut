@@ -24,7 +24,7 @@ trait ItemReferencer {
      */
     @Transient
     @JsonIgnore
-    abstract void replaceItemReferencesByIdentity(final IdentityHashMap<Item, Item> replacements, List<Item> notReplaced = [])
+    abstract void replaceItemReferencesByIdentity(final IdentityHashMap<Item, Item> replacements, Map<UUID, Item> allItemsById, List<Item> notReplaced = [])
 
     /**
      * A very shallow copy of this ItemReferencer
@@ -39,7 +39,7 @@ trait ItemReferencer {
      */
     @Transient
     @JsonIgnore
-    void predecessors(IdentityHashMap<Item, Set<Item>> predecessorMap = new IdentityHashMap<>(), IdentityHashMap<Item, Boolean> seen = new IdentityHashMap<>()) {
+    void predecessors(IdentityHashMap<Item, Set<Item>> predecessorMap = new IdentityHashMap<>(), IdentityHashMap<Item, Boolean> seen = new IdentityHashMap<>(), HashMap<UUID,Object> linkIds = [:]) {
 
         Item me = (Item) this
 
@@ -60,6 +60,9 @@ trait ItemReferencer {
                         predecessorMap.put(successor, successorReferencedBy)
                     }
                     successorReferencedBy.add(me)
+                } else if (beingReferenced.itemId != null && beingReferenced.itemDomainType != null) {
+                    // A link to something as yet unresolved
+                    linkIds.put(beingReferenced.itemId, beingReferenced.itemId)
                 }
             }
         }
@@ -71,7 +74,7 @@ trait ItemReferencer {
                 Item successor = beingReferenced.theItem
                 if (successor != null) {
                     ItemReferencer successorItemReferencer = successor
-                    successorItemReferencer.predecessors(predecessorMap, seen)
+                    successorItemReferencer.predecessors(predecessorMap, seen, linkIds)
                 }
             }
         }
@@ -79,6 +82,36 @@ trait ItemReferencer {
         // Do I have any predecessors? If not, create an empty set entry
         if (predecessorMap.get(me) == null) {
             predecessorMap.put(me, Collections.newSetFromMap(new IdentityHashMap<>()) as Set<Item>)
+        }
+    }
+
+    /**
+     * Walk a model fragment and populates a simple Set of all Items (seen), and any UUID links to Items (linkIds)
+     */
+    @Transient
+    @JsonIgnore
+    void walk(IdentityHashMap<Item, Boolean> seen = new IdentityHashMap<>(), HashSet<UUID> linkIds = [] as HashSet<UUID>) {
+
+        Item me = (Item) this
+
+        // Been here already
+        if (seen.get(me) != null) {return}
+
+        seen.put(me, true)
+
+        List<ItemReference> itemReferences = me.retrieveItemReferences()
+        if (itemReferences != null) {
+            itemReferences.forEach {ItemReference beingReferenced ->
+                Item successor = beingReferenced.theItem
+                if (successor != null) {
+                    // Recurse successors
+                    ItemReferencer successorItemReferencer = successor
+                    successorItemReferencer.walk(seen, linkIds)
+                } else if (successor == null && beingReferenced.itemId != null && beingReferenced.itemDomainType != null) {
+                    // A link to something as yet unresolved
+                    linkIds.add(beingReferenced.itemId)
+                }
+            }
         }
     }
 
@@ -94,12 +127,12 @@ trait ItemReferencer {
     @Transient
     @JsonIgnore
     Map<UUID, Set<Item>> itemLookupById() {
-        IdentityHashMap<Item, Set<Item>> predecessorMap = new IdentityHashMap<>()
-        this.predecessors(predecessorMap)
+        IdentityHashMap<Item, Boolean> seen = new IdentityHashMap<>()
+        this.walk(seen)
 
-        Map<UUID, Set<Item>> allItemLookup = new HashMap<>(predecessorMap.size())
+        Map<UUID, Set<Item>> allItemLookup = new HashMap<>(seen.size())
 
-        predecessorMap.keySet().forEach {Item item ->
+        seen.keySet().forEach {Item item ->
 
             final UUID id = item.id
             Set<Item> referencedItems = allItemLookup.get(id)
@@ -125,21 +158,26 @@ trait ItemReferencer {
      */
     @Transient
     @JsonIgnore
-    Item deepClone(IdentityHashMap<Item, Item> replacements = new IdentityHashMap<>(), List<Item> notReplaced = []) {
-        IdentityHashMap<Item, Set<Item>> predecessorMap = new IdentityHashMap<>()
-        IdentityHashMap<Item, Boolean> seen = new IdentityHashMap<>()
-        this.predecessors(predecessorMap, seen)
+    Item deepClone(final IdentityHashMap<Item, Item> replacements = new IdentityHashMap<>(4096), final List<Item> notReplaced = []) {
+        final IdentityHashMap<Item, Boolean> seen = new IdentityHashMap<>(1024)
+        final HashSet<UUID> linkIds = [] as HashSet<UUID>
+        this.walk(seen, linkIds)
 
-        predecessorMap.keySet().forEach {Item toClone ->
+        final HashMap<UUID, Item> allItemsById = new HashMap<>(linkIds.size())
+
+            seen.keySet().forEach {Item toClone ->
             if (replacements.get(toClone) == null) {
-                Item shallowCloned = (Item) toClone.shallowCopy()
+                final Item shallowCloned = (Item) toClone.shallowCopy()
                 replacements.put(toClone, shallowCloned)
+                if(linkIds.contains(toClone.id)) {
+                    allItemsById.put(toClone.id, toClone)
+                }
             }
         }
 
         replacements.values().forEach {Item shallowCloned ->
-            ItemReferencer shallowClonedAsItemReferencer = (ItemReferencer) shallowCloned
-            shallowClonedAsItemReferencer.replaceItemReferencesByIdentity(replacements, notReplaced)
+            final ItemReferencer shallowClonedAsItemReferencer = (ItemReferencer) shallowCloned
+            shallowClonedAsItemReferencer.replaceItemReferencesByIdentity(replacements, allItemsById, notReplaced)
         }
 
         return replacements.get(this)

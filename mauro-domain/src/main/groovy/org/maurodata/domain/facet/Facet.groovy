@@ -99,10 +99,14 @@ abstract class Facet extends Item implements Pathable, ItemReferencer {
     @Transient
     @JsonIgnore
     @Override
-    void replaceItemReferencesByIdentity(IdentityHashMap<Item, Item> replacements, List<Item> notReplaced) {
-        super.replaceItemReferencesByIdentity(replacements, notReplaced)
-        multiFacetAwareItem = ItemReferencerUtils.replaceItemByIdentity(multiFacetAwareItem, replacements, notReplaced)
-        // Can't do this yet
-        //multiFacetAwareItemId = ItemReferencerUtils.replaceIdTypeByIdentity(multiFacetAwareItemId, replacements)
+    void replaceItemReferencesByIdentity(IdentityHashMap<Item, Item> replacements, Map<UUID, Item> allItemsById, List<Item> notReplaced) {
+        super.replaceItemReferencesByIdentity(replacements, allItemsById, notReplaced)
+
+        if (multiFacetAwareItem) {
+            multiFacetAwareItem = ItemReferencerUtils.replaceItemByIdentity(multiFacetAwareItem, replacements)
+        } else { // Can this actually happen?
+            Item originalMultiFacetAwareItem = allItemsById[multiFacetAwareItemId]
+            multiFacetAwareItem = ItemReferencerUtils.replaceItemByIdentity(originalMultiFacetAwareItem, replacements) as AdministeredItem
+        }
     }
 }

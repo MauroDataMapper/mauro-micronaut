@@ -270,8 +270,8 @@ class DataClass extends ModelItem<DataModel> implements DiffableItem<DataClass>,
     }
 
     @Override
-    void replaceItemReferencesByIdentity(IdentityHashMap<Item, Item> replacements, List<Item> notReplaced) {
-        super.replaceItemReferencesByIdentity(replacements, notReplaced)
+    void replaceItemReferencesByIdentity(IdentityHashMap<Item, Item> replacements, Map<UUID, Item> allItemsById, List<Item> notReplaced) {
+        super.replaceItemReferencesByIdentity(replacements, allItemsById, notReplaced)
 
         parentDataClass = ItemReferencerUtils.replaceItemByIdentity(parentDataClass, replacements, notReplaced)
         dataModel = ItemReferencerUtils.replaceItemByIdentity(dataModel, replacements, notReplaced)
