@@ -272,7 +272,12 @@ class DataType extends ModelItem<DataModel> implements DiffableItem<DataType>, I
         this.parent = ItemReferencerUtils.replaceItemByIdentity(this.parent, replacements, notReplaced)
         this.referenceClass = ItemReferencerUtils.replaceItemByIdentity(this.@referenceClass, replacements, notReplaced)
         // This is not possible on Items
-        // modelResourceId = ItemReferencerUtils.replaceIdTypeByIdentity(modelResourceId, replacements)
+        if (modelResource != null) {
+            modelResource = ItemReferencerUtils.replaceItemByIdentity(modelResource, replacements)
+        } else {
+            Item originalModelResource = allItemsById[modelResourceId]
+            modelResource = ItemReferencerUtils.replaceItemByIdentity(originalModelResource, replacements) as Model
+        }
         this.enumerationValues = ItemReferencerUtils.replaceItemsByIdentity(this.@enumerationValues, replacements, notReplaced)
     }
 
