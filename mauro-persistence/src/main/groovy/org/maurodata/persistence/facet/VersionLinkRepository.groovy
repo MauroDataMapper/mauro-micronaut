@@ -14,7 +14,7 @@ import org.maurodata.persistence.model.ItemRepository
 @JdbcRepository(dialect = Dialect.POSTGRES)
 abstract class VersionLinkRepository implements FacetRepository<VersionLink>{
 
-    @Query(''' select multi_facet_aware_item_id from core.version_link v where v.target_model_id = :id ''')
+    @Query(''' select target_model_id from core.version_link v where v.multi_facet_aware_item_id = :id ''')
     @Nullable
     abstract UUID findSourceModel(@NonNull UUID id)
 

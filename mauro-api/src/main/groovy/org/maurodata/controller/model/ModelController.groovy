@@ -330,12 +330,13 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         //modelContentRepository.saveWithContent(copy)
 
         final VersionLink versionLink = new VersionLink(versionLinkType: VersionLink.NEW_MODEL_VERSION_OF)
-        versionLink.setTargetModel(savedCopy)
-        existing.versionLinks.add(versionLink)
+        versionLink.setTargetModel(existing)
+        versionLink.setMultiFacetAwareItem(savedCopy)
 
-        final List<AdministeredItem> toSave = [] as LinkedList
-        toSave.add(existing)
-        saveVersionLinks(toSave)
+        versionLinkCacheableRepository.save(versionLink)
+        // final List<AdministeredItem> toSave = [] as LinkedList
+        // toSave.add(existing)
+        // saveVersionLinks(toSave)
 
         modelRepository.readById(savedCopy.id) as M
     }
