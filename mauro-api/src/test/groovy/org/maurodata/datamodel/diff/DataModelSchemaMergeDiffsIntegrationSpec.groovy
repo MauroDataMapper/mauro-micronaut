@@ -32,9 +32,6 @@ import spock.lang.Shared
 @Singleton
 @Sql(scripts = "classpath:sql/tear-down-datamodel.sql", phase = Sql.Phase.AFTER_EACH)
 class DataModelSchemaMergeDiffsIntegrationSpec extends CommonDataSpec {
-    static String NAME = 'name'
-    static String CREATED = 'created'
-    static String DELETED = 'deleted'
 
     @Shared
     UUID folderId
