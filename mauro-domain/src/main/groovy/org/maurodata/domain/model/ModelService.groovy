@@ -48,16 +48,14 @@ abstract class ModelService<M extends Model> {
     M createNewBranchModelVersion(M model, String branchName) {
         // M copy = (M) model.clone()
 
-        IdentityHashMap<Item, Item> replacements = new IdentityHashMap<>()
+        IdentityHashMap<Item, Item> replacements = new IdentityHashMap<>(4096)
 
         // If there is a parent, don't clone it, reference it
         if (model.parent != null) {
             replacements.put(model.parent, model.parent)
         }
 
-        Map<UUID, Item> allItemsById = replacements.values().collectEntries {value -> [value.id, value]}
-
-        M copy = (M) ((ItemReferencer) model).deepClone(replacements, allItemsById)
+        M copy = (M) ((ItemReferencer) model).deepClone(replacements)
 
         /*
         if(replacements!=null){
