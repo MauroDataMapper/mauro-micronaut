@@ -57,7 +57,7 @@ class SecureRandomStringGenerator {
 
         return new RandomStringGenerator.Builder()
                 .withinRange(MINIMUM_CODEPOINT, MAXIMUM_CODEPOINT)
-                .usingRandom(rng::nextInt() as IntUnaryOperator)
+                .usingRandom({ int bound -> rng.nextInt(bound)} as IntUnaryOperator)
                 .filteredBy(CharacterPredicates.LETTERS, CharacterPredicates.DIGITS)
                 .get()
     }
