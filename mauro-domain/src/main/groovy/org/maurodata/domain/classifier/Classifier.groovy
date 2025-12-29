@@ -140,7 +140,6 @@ class Classifier extends ModelItem<ClassificationScheme> implements DiffableItem
 
         ItemReferencerUtils.addItem(classificationScheme, pathsBeingReferenced)
         ItemReferencerUtils.addItems(childClassifiers, pathsBeingReferenced)
-        ItemReferencerUtils.addItem(parentClassifier, pathsBeingReferenced)
 
         return pathsBeingReferenced
     }

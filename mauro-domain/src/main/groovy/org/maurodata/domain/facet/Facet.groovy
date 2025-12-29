@@ -90,7 +90,6 @@ abstract class Facet extends Item implements Pathable, ItemReferencer {
     List<ItemReference> retrieveItemReferences() {
         List<ItemReference> pathsBeingReferenced = [] + super.retrieveItemReferences()
 
-        ItemReferencerUtils.addItem(multiFacetAwareItem, pathsBeingReferenced)
         ItemReferencerUtils.addIdType(multiFacetAwareItemId, multiFacetAwareItemDomainType, pathsBeingReferenced)
 
         return pathsBeingReferenced

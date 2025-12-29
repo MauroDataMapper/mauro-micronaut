@@ -322,7 +322,6 @@ abstract class Model<M extends DiffableItem> extends AdministeredItem implements
     List<ItemReference> retrieveItemReferences() {
         List<ItemReference> pathsBeingReferenced = [] + super.retrieveItemReferences()
 
-        ItemReferencerUtils.addItem(folder, pathsBeingReferenced)
         ItemReferencerUtils.addItem(authority, pathsBeingReferenced)
 
         return pathsBeingReferenced

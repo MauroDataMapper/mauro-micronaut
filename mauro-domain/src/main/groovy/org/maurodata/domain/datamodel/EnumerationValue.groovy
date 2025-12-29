@@ -157,9 +157,6 @@ class EnumerationValue extends ModelItem<DataModel> implements DiffableItem<Enum
     List<ItemReference> retrieveItemReferences() {
         List<ItemReference> pathsBeingReferenced = [] + super.retrieveItemReferences()
 
-        ItemReferencerUtils.addItem(enumerationType, pathsBeingReferenced)
-        ItemReferencerUtils.addItem(dataModel, pathsBeingReferenced)
-
         return pathsBeingReferenced
     }
 
