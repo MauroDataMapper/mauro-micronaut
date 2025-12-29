@@ -234,7 +234,6 @@ class Folder extends Model implements ItemReferencer {
         ItemReferencerUtils.addItems(terminologies, pathsBeingReferenced)
         ItemReferencerUtils.addItems(codeSets, pathsBeingReferenced)
         ItemReferencerUtils.addItems(classificationSchemes, pathsBeingReferenced)
-        ItemReferencerUtils.addItem(parentFolder, pathsBeingReferenced)
 
         return pathsBeingReferenced
     }

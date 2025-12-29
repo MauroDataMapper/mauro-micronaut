@@ -237,9 +237,7 @@ class DataElement extends ModelItem<DataClass> implements DiffableItem<DataEleme
     List<ItemReference> retrieveItemReferences() {
         List<ItemReference> pathsBeingReferenced = [] + super.retrieveItemReferences()
 
-        ItemReferencerUtils.addItem(dataClass, pathsBeingReferenced)
         ItemReferencerUtils.addItem(dataType, pathsBeingReferenced)
-        ItemReferencerUtils.addItem(dataModel, pathsBeingReferenced)
 
         return pathsBeingReferenced
     }

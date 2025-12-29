@@ -261,8 +261,6 @@ class DataClass extends ModelItem<DataModel> implements DiffableItem<DataClass>,
         ItemReferencerUtils.addItems(dataClasses, pathsBeingReferenced)
 
         ItemReferencerUtils.addItems(referenceTypes, pathsBeingReferenced)
-        ItemReferencerUtils.addItem(parentDataClass, pathsBeingReferenced)
-        ItemReferencerUtils.addItem(dataModel, pathsBeingReferenced)
         ItemReferencerUtils.addItems(extendsDataClasses, pathsBeingReferenced)
         ItemReferencerUtils.addItems(extendedBy, pathsBeingReferenced)
 

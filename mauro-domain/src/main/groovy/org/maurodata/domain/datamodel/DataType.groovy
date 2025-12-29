@@ -260,7 +260,6 @@ class DataType extends ModelItem<DataModel> implements DiffableItem<DataType>, I
         ItemReferencerUtils.addItems(this.enumerationValues, pathsBeingReferenced)
         ItemReferencerUtils.addIdType(this.modelResourceId, modelResourceDomainType, pathsBeingReferenced)
         ItemReferencerUtils.addItem(this.@referenceClass, pathsBeingReferenced)
-        ItemReferencerUtils.addItem(this.parent, pathsBeingReferenced)
 
         return pathsBeingReferenced
     }

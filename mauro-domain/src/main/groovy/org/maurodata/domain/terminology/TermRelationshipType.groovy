@@ -122,7 +122,6 @@ class TermRelationshipType extends ModelItem<Terminology> implements ItemReferen
     List<ItemReference> retrieveItemReferences() {
         List<ItemReference> pathsBeingReferenced = [] + super.retrieveItemReferences()
 
-        ItemReferencerUtils.addItem(terminology, pathsBeingReferenced)
         ItemReferencerUtils.addItems(termRelationships, pathsBeingReferenced)
 
         return pathsBeingReferenced

@@ -311,7 +311,6 @@ class DataModel extends Model implements ItemReferencer {
         ItemReferencerUtils.addItems(enumerationValues, pathsBeingReferenced)
         ItemReferencerUtils.addItems(dataElements, pathsBeingReferenced)
         ItemReferencerUtils.addItems(dataClasses, pathsBeingReferenced)
-        ItemReferencerUtils.addItem(parent, pathsBeingReferenced)
 
         return pathsBeingReferenced
     }

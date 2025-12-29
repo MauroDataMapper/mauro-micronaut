@@ -121,7 +121,6 @@ class ClassificationScheme extends Model implements ItemReferencer {
     List<ItemReference> retrieveItemReferences() {
         List<ItemReference> pathsBeingReferenced = [] + super.retrieveItemReferences()
 
-        ItemReferencerUtils.addItem(parent, pathsBeingReferenced)
         ItemReferencerUtils.addItems(csClassifiers, pathsBeingReferenced)
 
         return pathsBeingReferenced
