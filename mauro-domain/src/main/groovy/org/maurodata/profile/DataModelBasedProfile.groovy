@@ -13,6 +13,8 @@ class DataModelBasedProfile implements Profile {
 
     String name
 
+    private List<String> profileApplicableForDomains
+
     DataModelBasedProfile(DataModel dataModel) {
         Map<String, String> metadataMap = dataModel.metadataAsMap(ProfileSpecificationProfile.NAMESPACE)
         name = dataModel.label
@@ -28,6 +30,11 @@ class DataModelBasedProfile implements Profile {
         }
         sections = dataModel.dataClasses.collect { sectionFromClass(it) }
 
+    }
+
+    @Override
+    List<String> getProfileApplicableForDomains() {
+        return this.@profileApplicableForDomains
     }
 
     private ProfileSection sectionFromClass(DataClass dataClass) {
