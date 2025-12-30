@@ -439,22 +439,6 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     }
 
 
-    protected VersionLinkDTO constructVersionLinkDTO(final M sourceModel, final VersionLink versionLink) {
-        // Look up target model
-
-        final M targetModel = show(versionLink.targetModelId)
-        if (targetModel == null) {
-            throw new HttpStatusException(HttpStatus.NOT_FOUND, "Object not found")
-        }
-
-        ModelRefDTO sourceModelDto = new ModelRefDTO(sourceModel)
-        ModelRefDTO targetModelDto = new ModelRefDTO(targetModel)
-
-        final VersionLinkDTO versionLinkDTO = new VersionLinkDTO(id: versionLink.id, linkType: versionLink.versionLinkType, sourceModel: sourceModelDto,
-                                                                 targetModel: targetModelDto)
-
-        versionLinkDTO
-    }
 
     M findCommonAncestorBetweenModels(M leftModel, M rightModel) {
 

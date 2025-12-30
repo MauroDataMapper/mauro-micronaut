@@ -102,9 +102,6 @@ interface DataModelApi extends ModelApi<DataModel> {
     @Post(Paths.DATA_MODEL_INTERSECTS_MANY)
     ListResponse<IntersectsData> intersectsMany(UUID id, @Body IntersectsManyData intersectsManyData)
 
-    @Get(Paths.DATA_MODEL_VERSION_LINKS)
-    ListResponse<VersionLinkDTO> listVersionLinks(UUID id)
-
     @Get(Paths.DATA_MODEL_SIMPLE_MODEL_VERSION_TREE)
     List<ModelVersionedRefDTO> simpleModelVersionTree(UUID id, @Nullable Boolean branchesOnly)
 
