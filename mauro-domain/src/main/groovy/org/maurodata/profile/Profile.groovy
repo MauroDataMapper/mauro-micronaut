@@ -10,7 +10,8 @@ import groovy.transform.CompileStatic
 trait Profile extends MauroPlugin {
 
     boolean canBeEditedAfterFinalisation
-    List<String> profileApplicableForDomains
+
+    abstract List<String> getProfileApplicableForDomains()
 
     List<ProfileSection> sections = []
 
@@ -24,15 +25,14 @@ trait Profile extends MauroPlugin {
 
 
     boolean isApplicableForDomain(String domain) {
-        (profileApplicableForDomains == null ||
-                profileApplicableForDomains.size() == 0 ||
-                profileApplicableForDomains.contains(domain))
+        return (
+            this.getProfileApplicableForDomains() == null ||
+            this.getProfileApplicableForDomains().size() == 0 ||
+            this.getProfileApplicableForDomains().contains(domain))
     }
 
     boolean isApplicableForDomain(AdministeredItem item) {
-        (profileApplicableForDomains == null ||
-                profileApplicableForDomains.size() == 0 ||
-                profileApplicableForDomains.contains(item.getDomainType()))
+        return isApplicableForDomain(item.getDomainType())
     }
 
 

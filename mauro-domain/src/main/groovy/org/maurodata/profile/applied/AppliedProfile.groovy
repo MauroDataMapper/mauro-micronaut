@@ -32,8 +32,9 @@ class AppliedProfile extends MauroPluginDTO {
         return sourceProfile.getDisplayName()
     }
 
+    @Override
     List<String> getProfileApplicableForDomains() {
-        return sourceProfile.profileApplicableForDomains
+        return sourceProfile.getProfileApplicableForDomains()
     }
 
     List<String> errors = []

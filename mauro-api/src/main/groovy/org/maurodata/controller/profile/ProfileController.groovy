@@ -155,14 +155,19 @@ class ProfileController implements AdministeredItemReader, ProfileApi {
     @Audit
     @Post(Paths.PROFILE_ITEM)
     AppliedProfile applyProfile(String domainType, UUID domainId, String namespace, String name, @Nullable String version, @Body Map bodyMap) {
-        AdministeredItem administeredItem = readAdministeredItem(domainType, domainId)
+        AdministeredItem administeredItem = findAdministeredItem(domainType, domainId)
         accessControlService.canDoRole(Role.EDITOR, administeredItem)
         Profile profile = getProfileByName(namespace, name, version)
         handleProfileNotFound(profile, namespace, name, version)
         // Overwrite applied profile with metadata items from the bodyMap
         AppliedProfile appliedProfile = new AppliedProfile(profile, administeredItem, bodyMap)
         List<Metadata> profileMetadata = appliedProfile.metadata
-        metadataCacheableRepository.saveAll(profileMetadata)
+
+        // First delete the metadata saved previously for this profile
+        metadataCacheableRepository.deleteAll(administeredItem.metadata.findAll {it.namespace == appliedProfile.metadataNamespace})
+
+        // Then save the profile items as new metadata
+        metadataCacheableRepository.saveAll(profileMetadata.findAll {it.value})
         appliedProfile
     }
 
