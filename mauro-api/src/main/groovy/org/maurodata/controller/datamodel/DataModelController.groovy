@@ -451,24 +451,6 @@ class DataModelController extends ModelController<DataModel> implements DataMode
     }
 
     @Override
-    @Get(Paths.DATA_MODEL_VERSION_LINKS)
-    ListResponse<VersionLinkDTO> listVersionLinks(UUID id) {
-
-        final Model model = super.show(id)
-        if (model == null) {
-            throw new HttpStatusException(HttpStatus.NOT_FOUND, "Object not found")
-        }
-
-        final List<VersionLinkDTO> versionList = new ArrayList<>()
-
-        for (VersionLink versionLink : model.versionLinks) {
-            versionList.add(super.constructVersionLinkDTO(model, versionLink))
-        }
-
-        return ListResponse.from(versionList)
-    }
-
-    @Override
     @Get(Paths.DATA_MODEL_SIMPLE_MODEL_VERSION_TREE)
     List<ModelVersionedRefDTO> simpleModelVersionTree(UUID id, @Nullable Boolean branchesOnly) {
         super.simpleModelVersionTree(id, branchesOnly)

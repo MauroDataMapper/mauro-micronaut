@@ -139,7 +139,6 @@ interface Paths {
     String DATA_MODEL_INTERSECTS_MANY = '/api/dataModels/{id}/intersectsMany'
     String DATA_MODEL_READ_BY_AUTHENTICATED = '/api/dataModels/{id}/readByAuthenticated'
     String DATA_MODEL_READ_BY_EVERYONE = '/api/dataModels/{id}/readByEveryone'
-    String DATA_MODEL_VERSION_LINKS = '/api/dataModels/{id}/versionLinks'
     String DATA_MODEL_SIMPLE_MODEL_VERSION_TREE = '/api/dataModels/{id}/simpleModelVersionTree'
     String DATA_MODEL_MODEL_VERSION_TREE = '/api/dataModels/{id}/modelVersionTree'
     String DATA_MODEL_CURRENT_MAIN_BRANCH = '/api/dataModels/{id}/currentMainBranch'
@@ -197,7 +196,7 @@ interface Paths {
     String EDIT_LIST_PAGED = '/api/{domainType}/{domainId}/edits{?params*}'
 
     /*
-    * EditApi
+    * SemanticLinksApi
     */
     String SEMANTIC_LINKS_LIST = '/api/{domainType}/{domainId}/semanticLinks'
     String SEMANTIC_LINKS_ID = '/api/{domainType}/{domainId}/semanticLinks/{id}'
@@ -237,6 +236,14 @@ interface Paths {
     String SUMMARY_METADATA_REPORTS_LIST = '/api/{domainType}/{domainId}/summaryMetadata/{summaryMetadataId}/summaryMetadataReports'
     String SUMMARY_METADATA_REPORTS_ID = '/api/{domainType}/{domainId}/summaryMetadata/{summaryMetadataId}/summaryMetadataReports/{id}'
     String SUMMARY_METADATA_REPORTS_LIST_PAGED = '/api/{domainType}/{domainId}/summaryMetadata/{summaryMetadataId}/summaryMetadataReports{?params*}'
+
+    /*
+    * VersionLinksApi
+    */
+    String VERSION_LINKS_LIST = '/api/{domainType}/{domainId}/versionLinks'
+    String VERSION_LINKS_ID = '/api/{domainType}/{domainId}/versionLinks/{id}'
+    String VERSION_LINKS_LIST_PAGED = '/api/{domainType}/{domainId}/versionLinks{?params*}'
+
 
     /*
     * FolderApi
