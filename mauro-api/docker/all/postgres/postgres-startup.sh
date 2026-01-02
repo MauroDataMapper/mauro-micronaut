@@ -109,9 +109,7 @@ chown postgres:postgres "${DATABASE_DIRECTORY}/postgresql.auto.conf"
 
 if [ -e "${DATABASE_DIRECTORY}/pg_hba.conf" ];
 then
-  echo grep "${DOCKER_SUBNET}" "${DATABASE_DIRECTORY}/pg_hba.conf"
   ALLOWED=$(grep "${DOCKER_SUBNET}" "${DATABASE_DIRECTORY}/pg_hba.conf" || true)
-  echo ${ALLOWED}
 
   if [ "${ALLOWED}" == "" ];
   then

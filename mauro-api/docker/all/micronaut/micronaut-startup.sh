@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
 set -e
 
-ADDITIONAL_CLASSPATH=""
-
 if [ -e /opt/init/micronaut ];
 then
+  mkdir -p /home/app/plugins
   pushd /opt/init/micronaut
 
         shopt -s nullglob
@@ -21,13 +20,8 @@ then
                 fi
               ;;
             *.jar)
-              echo "Adding ${f} to classpath"
-              if [ "${ADDITIONAL_CLASSPATH}" != "" ];
-              then
-                ADDITIONAL_CLASSPATH="${ADDITIONAL_CLASSPATH}:/opt/init/micronaut/${f}"
-              else
-                ADDITIONAL_CLASSPATH="/opt/init/micronaut/${f}"
-              fi
+              echo "Adding ${f} as plugin"
+              cp -pf ${f} /home/app/plugins/.
               ;;
             *)
                   echo "Copying ${f} to micronaut resources"
@@ -59,7 +53,7 @@ declare -A java_opts=(
 chosen_opts=""
 best_key=0
 for key in "${!java_opts[@]}"; do
-    if (( available_gb >= key && key > best_key ));
+    if (( MEMORY_AVAILABLE_GB >= key && key > best_key ));
     then
         best_key=$key
         chosen_opts=${java_opts[$key]}
@@ -73,9 +67,12 @@ export JAVA_OPTS="${chosen_opts}"
 APPLICATION_MANIFEST="$(unzip -p /home/app/application.jar META-INF/MANIFEST.MF)"
 APPLICATION_MAIN_CLASS=$(echo "${APPLICATION_MANIFEST}" | grep '^Main-Class:' | awk '{print $2}' | tr -d '\r')
 
+JAVA_BIN="$(readlink -f "$(command -v java)")"
 
 # Start Micronaut
 echo "Starting Micronaut..."
 cd /home/app
-echo java "${JAVA_OPTS}" -cp "/home/app/application.jar:${ADDITIONAL_CLASSPATH}" "${APPLICATION_MAIN_CLASS}"
-java $JAVA_OPTS -cp "/home/app/application.jar:${ADDITIONAL_CLASSPATH}" "${APPLICATION_MAIN_CLASS}"
+# Give the directory and contents to the micronaut user
+chown -R micronaut:micronaut /home/app
+echo ${JAVA_BIN} "${JAVA_OPTS}" -cp "/home/app/application.jar" "${APPLICATION_MAIN_CLASS}"
+gosu micronaut ${JAVA_BIN} ${JAVA_OPTS} -cp /home/app/application.jar "${APPLICATION_MAIN_CLASS}"
