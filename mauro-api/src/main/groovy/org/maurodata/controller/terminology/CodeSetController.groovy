@@ -20,6 +20,7 @@ import org.maurodata.domain.security.Role
 import org.maurodata.domain.terminology.CodeSet
 import org.maurodata.domain.terminology.CodeSetService
 import org.maurodata.domain.terminology.Term
+import org.maurodata.domain.terminology.Terminology
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository
 import org.maurodata.persistence.cache.ModelCacheableRepository
 
@@ -55,6 +56,9 @@ class CodeSetController extends ModelController<CodeSet> implements CodeSetApi {
     ModelCacheableRepository.CodeSetCacheableRepository codeSetRepository
 
     @Inject
+    ModelCacheableRepository.TerminologyCacheableRepository terminologyRepository
+
+    @Inject
     CodeSetRepository codeSetRepositoryUnCached
 
     @Inject
@@ -85,7 +89,31 @@ class CodeSetController extends ModelController<CodeSet> implements CodeSetApi {
     @Transactional
     @Post(value = Paths.FOLDER_LIST_CODE_SET)
     CodeSet create(UUID folderId, @Body @NonNull CodeSet codeSet) {
-        super.create(folderId, codeSet)
+        Set<Terminology> attachedTerminologies = codeSet.terminologies
+        codeSet.terminologies = null
+
+        Set<Term> attachedTerms = codeSet.terms
+        codeSet.terms = null
+
+        CodeSet newCodeSet = super.create(folderId, codeSet) as CodeSet
+
+        if(attachedTerminologies) {
+            attachedTerminologies.each {terminology ->
+               Terminology loadedTerminology = terminologyRepository.loadWithContent(terminology.id)
+               loadedTerminology.terms.each {term ->
+                   codeSetRepository.addTerm(newCodeSet.id, term.id)
+               }
+           }
+        }
+
+        if(attachedTerms) {
+            attachedTerms.each {term ->
+                codeSetRepository.addTerm(newCodeSet.id, term.id)
+            }
+        }
+
+        return newCodeSet
+
     }
 
     @Audit

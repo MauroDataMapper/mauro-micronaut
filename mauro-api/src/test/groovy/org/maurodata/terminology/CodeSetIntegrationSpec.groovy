@@ -44,6 +44,44 @@ class CodeSetIntegrationSpec extends CommonDataSpec {
         response.authority
     }
 
+    void 'test post with terms'() {
+        when:
+        Terminology terminology = terminologyApi.create(folderId, new Terminology(label: "My terminology"))
+        Term t1 = termApi.create(terminology.id, new Term(code: "1", definition: "First"))
+        termApi.create(terminology.id, new Term(code: "2", definition: "Second"))
+        Term t3 = termApi.create(terminology.id, new Term(code: "3", definition: "Third"))
+
+        CodeSet storedCodeSet = codeSetApi.create(folderId, new CodeSet(label: "My CodeSet", terms: [t1, t3]))
+
+        ListResponse<Term> storedTerms = codeSetApi.listAllTermsInCodeSet(storedCodeSet.id)
+
+        then:
+        storedCodeSet.label == "My CodeSet"
+        storedTerms.items.size() == 2
+        storedTerms.items.find {it.code == "1" && it.definition == "First" && it.id == t1.id}
+        storedTerms.items.find {it.code == "3" && it.definition == "Third" && it.id == t3.id}
+    }
+
+
+    void 'test post with terminology'() {
+        when:
+        Terminology terminology = terminologyApi.create(folderId, new Terminology(label: "My terminology"))
+        Term t1 = termApi.create(terminology.id, new Term(code: "1", definition: "First"))
+        Term t2 = termApi.create(terminology.id, new Term(code: "2", definition: "Second"))
+        Term t3 = termApi.create(terminology.id, new Term(code: "3", definition: "Third"))
+
+        CodeSet storedCodeSet = codeSetApi.create(folderId, new CodeSet(label: "My CodeSet", terminologies: [terminology]))
+
+        ListResponse<Term> storedTerms = codeSetApi.listAllTermsInCodeSet(storedCodeSet.id)
+
+        then:
+        storedCodeSet.label == "My CodeSet"
+        storedTerms.items.size() == 3
+        storedTerms.items.find {it.code == "1" && it.definition == "First" && it.id == t1.id}
+        storedTerms.items.find {it.code == "2" && it.definition == "Second" && it.id == t2.id}
+        storedTerms.items.find {it.code == "3" && it.definition == "Third" && it.id == t3.id}
+    }
+
 
     void 'test codeSet getById'() {
         given:
