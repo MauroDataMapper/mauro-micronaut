@@ -1,5 +1,7 @@
 package org.maurodata.security
 
+import org.maurodata.persistence.model.AdministeredItemRepository
+
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.context.annotation.Property
@@ -107,6 +109,12 @@ class AccessControlService implements Toggleable {
         if (isAdministrator()) return true // always allow Administrator full access
         pathRepository.readParentItems(item)
         Model owner = item.owner
+
+        if (owner.catalogueUser == null) {
+            AdministeredItemRepository air = pathRepository.getRepository(owner)
+            owner = air.readById(owner.id) as Model
+        }
+
         if (userAuthenticated && owner.catalogueUser && owner.catalogueUser.id == getUserId()) return true // always allow owner full access
 
         List<Model> parentModels = pathRepository.readParentItems(owner) as List<Model>
@@ -121,7 +129,7 @@ class AccessControlService implements Toggleable {
 
         if (!userAuthenticated) return false
 
-        // allow role access according to owning model or parents
+        // allow role access according to user groups
         List<UserGroup> userGroups = userGroupRepository.readAllByCatalogueUserId(userId)
         parentModels.any {canDoRoleWithGroups(role, userGroups, it)}
     }
@@ -131,39 +139,40 @@ class AccessControlService implements Toggleable {
      * the current authenticated user is authorised to apply to the item
      * @return the list of Role
      */
-    List<Role> listCanDoRoles(@NonNull AdministeredItem item)
-    {
-        final List<Role> allRoles=Arrays.asList(Role.values())
+    List<Role> listCanDoRoles(@NonNull AdministeredItem item) {
+        final List<Role> allRoles = Arrays.asList(Role.values())
 
         // All roles
         if (!enabled) return allRoles
         if (isAdministrator()) return allRoles
         pathRepository.readParentItems(item)
-        final Model owner = item.owner
+        Model owner = item.owner
+        if (owner.catalogueUser == null) {
+            AdministeredItemRepository air = pathRepository.getRepository(owner)
+            owner = air.readById(owner.id) as Model
+        }
         if (userAuthenticated && owner.catalogueUser && owner.catalogueUser.id == getUserId()) return allRoles
 
         // Permitted roles
         final List<Model> parentModels = pathRepository.readParentItems(owner) as List<Model>
         List<UserGroup> userGroups = []
-        if(userAuthenticated) {
+        if (userAuthenticated) {
             userGroups = userGroupRepository.readAllByCatalogueUserId(userId)
         }
 
-        final List<Role> canDo=[]
+        final List<Role> canDo = []
 
-        for(Role role : allRoles)
-        {
+        for (Role role : allRoles) {
             if (role <= Role.READER &&
-                    parentModels.any {Model model ->
-                        model.readableByEveryone || (model.readableByAuthenticatedUsers && userAuthenticated)
-                    }){
+                parentModels.any {Model model ->
+                    model.readableByEveryone || (model.readableByAuthenticatedUsers && userAuthenticated)
+                }) {
                 canDo.add(role)
             }
 
             if (!userAuthenticated) break
 
-            if( parentModels.any {canDoRoleWithGroups(role, userGroups, it)} )
-            {
+            if (parentModels.any {canDoRoleWithGroups(role, userGroups, it)}) {
                 canDo.add(role)
             }
         }

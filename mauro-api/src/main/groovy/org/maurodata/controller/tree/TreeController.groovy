@@ -99,10 +99,10 @@ class TreeController implements TreeApi {
                 it.modelVersion = ((Model) it.item).modelVersion
                 it.modelVersionTag = ((Model) it.item).modelVersionTag
             }
-            it.availableActions = new ArrayList<String>(it.item.availableActions)
+            it.availableActions = new ArrayList<String>(it.item.availableActions?:[])
             it.children.each {
                 AvailableActions.updateAvailableActions(it.item, accessControlService)
-                it.availableActions = new ArrayList<String>(it.item.availableActions)
+                it.availableActions = new ArrayList<String>(it.item.availableActions?:[])
                 if (it.item instanceof Model) {
                     it.modelVersion = ((Model) it.item).modelVersion
                     it.modelVersionTag = ((Model) it.item).modelVersionTag
