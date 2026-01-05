@@ -114,7 +114,8 @@ abstract class AdministeredItem extends Item implements Pathable {
     List<ReferenceFile> referenceFiles = []
 
     @Transient
-    List<String> availableActions = []
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    List<String> availableActions = null
 
     @Relation(Relation.Kind.ONE_TO_MANY)
     List<SemanticLink> semanticLinks = []
@@ -153,7 +154,7 @@ abstract class AdministeredItem extends Item implements Pathable {
         intoAdministeredItem.aliasesString = ItemUtils.copyItem(this.aliasesString, intoAdministeredItem.aliasesString)
         intoAdministeredItem.path = ItemUtils.copyItem(this.path, intoAdministeredItem.path)
         if (intoAdministeredItem.breadcrumbs != null) {intoAdministeredItem.breadcrumbs = [] + this.breadcrumbs}
-        intoAdministeredItem.availableActions = [] + this.availableActions
+        intoAdministeredItem.availableActions = this.availableActions != null? ([] + this.availableActions) : null
         intoAdministeredItem.breadcrumbTreeId = ItemUtils.copyItem(this.breadcrumbTreeId, intoAdministeredItem.breadcrumbTreeId)
         intoAdministeredItem.edits = ItemUtils.copyItem(this.edits, intoAdministeredItem.edits)
         intoAdministeredItem.metadata = ItemUtils.copyItem(this.metadata, intoAdministeredItem.metadata)
