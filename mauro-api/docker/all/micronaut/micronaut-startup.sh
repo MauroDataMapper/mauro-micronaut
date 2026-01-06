@@ -14,7 +14,7 @@ then
                 echo "Running ${f}"
                 if [ -x "${f}" ];
                 then
-                    "${f}"
+                    /bin/bash "${f}"
                 else
                     . "${f}"
                 fi
