@@ -39,8 +39,13 @@ class CodeSet extends Model implements ItemReferencer {
         joinColumns = @JoinColumn(name = 'code_set_id'),
         inverseJoinColumns = @JoinColumn(name = 'term_id')
     )
-    @JsonIgnore
+
     Set<Term> terms = []
+
+    // This attribute is used when creating a new CodeSet and wanting to add all terms from one or more terminologies.
+    @Transient
+    Set<Terminology> terminologies = []
+
 
     @Override
     @Transient
