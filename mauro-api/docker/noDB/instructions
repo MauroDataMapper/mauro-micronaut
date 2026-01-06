@@ -34,4 +34,5 @@ RUN chmod +x /usr/local/bin/*
 RUN groupadd -r micronaut && useradd -r -g micronaut micronaut
 RUN JAVA_BIN="$(readlink -f "$(command -v java)")" && setcap 'cap_net_bind_service=+ep' "$JAVA_BIN"
 
+HEALTHCHECK --interval=2m --timeout=5s --start-period=2m --retries=3 CMD curl -fsS http://localhost:8080/health || exit 1
 ENTRYPOINT ["docker-startup.sh"]
