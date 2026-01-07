@@ -104,7 +104,7 @@ interface Paths {
     String DATA_CLASS_EXTENDS = '/api/dataModels/{dataModelId}/dataClasses/{id}/extends/{otherModelId}/{otherClassId}'
     String DATA_CLASS_DOI = '/api/dataClasses/{id}/doi'
     String DATA_CLASS_SEARCH = '/api/dataModels/{dataModelId}/dataClasses{?params*}'
-    String DATA_CLASS_COPY = '/api/dataModels/{dataModelId}/dataClasses/{otherModelId}/{dataClassId}'
+    String DATA_CLASS_COPY = '/api/dataModels/{toDataModelId}/dataClasses/{fromDataModelId}/{dataClassId}'
     String ALL_DATA_CLASSES = '/api/dataModels/{dataModelId}/allDataClasses'
 
     /*

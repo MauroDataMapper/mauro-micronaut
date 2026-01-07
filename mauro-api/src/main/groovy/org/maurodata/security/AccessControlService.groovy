@@ -105,6 +105,7 @@ class AccessControlService implements Toggleable {
      * @return true if authorised, false otherwise
      */
     boolean canDoRole(@NonNull Role role, @NonNull AdministeredItem item) {
+        if(item == null) return false
         if (!enabled) return true
         if (isAdministrator()) return true // always allow Administrator full access
         pathRepository.readParentItems(item)

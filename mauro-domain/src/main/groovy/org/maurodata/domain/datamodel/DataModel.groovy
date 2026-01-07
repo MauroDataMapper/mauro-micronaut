@@ -13,6 +13,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
 import groovy.transform.MapConstructor
+import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.Introspected
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.MappedProperty
@@ -24,6 +25,7 @@ import org.maurodata.domain.model.ModelItem
 /**
  * A DataModel describes a data asset, or a data standard
  */
+@Slf4j
 @CompileStatic
 @AutoClone
 @Introspected
@@ -168,7 +170,8 @@ class DataModel extends Model implements ItemReferencer {
     @Override
     void setAssociations() {
         super.setAssociations()
-        Map<String, DataType> dataTypesMap = dataTypes.collectEntries {[it.id?:it.label, it]}
+        Map<String, DataType> dataTypesMap = dataTypes.collectEntries { if(it.id) {[it.id, it]}}
+        dataTypesMap.putAll(dataTypes.collectEntries { {[it.label, it]}})
         List<? extends DataType> referenceTypes = dataTypeReferenceTypes()
 
         dataTypes.each {dataType ->
@@ -205,7 +208,7 @@ class DataModel extends Model implements ItemReferencer {
                                   List<? extends DataType> referenceTypes) {
         dataClass.setAssociations()
         dataClass.dataModel = this
-        if(!dataClass.dataModel.allDataClasses.contains(dataClass)) {
+        if (!dataClass.dataModel.allDataClasses.contains(dataClass)) {
             dataClass.dataModel.allDataClasses.add(dataClass)
         }
         dataClass.dataClasses.each {childDataClass ->
@@ -214,11 +217,16 @@ class DataModel extends Model implements ItemReferencer {
         }
         dataClass.dataElements.each {dataElement ->
             dataElement.dataModel = this
-            if(!dataElement.dataModel.dataElements.contains(dataElement)) {
+            if (!dataElement.dataModel.dataElements.contains(dataElement)) {
                 dataElement.dataModel.dataElements.add(dataElement)
             }
             dataElement.dataClass = dataClass
-            dataElement.dataType = dataTypesMap[dataElement.dataType?.id ?: dataElement.dataType?.label]
+            final DataType foundDataType = dataTypesMap[dataElement.dataType?.id ?: dataElement.dataType?.label]
+            if (foundDataType == null) {
+                log.error(
+                    "DataModel setAssociations() setDataClassAssociations() failed to find a DataType for ${dataElement.dataType?.id} or else ${dataElement.dataType?.label}")
+            }
+            dataElement.dataType = foundDataType
             if (!this.dataElements.contains(dataElement)) {
                 this.dataElements.add(dataElement)
             }

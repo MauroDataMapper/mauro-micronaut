@@ -3,6 +3,7 @@ package org.maurodata.api.datamodel
 import org.maurodata.api.MauroApi
 import org.maurodata.api.Paths
 import org.maurodata.api.model.AdministeredItemApi
+import org.maurodata.api.model.CopyDataClassParamsDTO
 import org.maurodata.domain.datamodel.DataClass
 import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.web.ListResponse
@@ -63,7 +64,10 @@ interface DataClassApi extends AdministeredItemApi<DataClass, DataModel> {
     DataClass deleteExtension(UUID dataModelId, UUID id, UUID otherModelId, UUID otherClassId)
 
     @Post(Paths.DATA_CLASS_COPY)
-    DataClass copyDataClass(UUID dataModelId, UUID otherModelId, UUID dataClassId)
+    DataClass copyDataClass(UUID toDataModelId, UUID fromDataModelId, UUID dataClassId, @Body @Nullable CopyDataClassParamsDTO copyDataClassParams)
+
+    @Post(Paths.DATA_CLASS_COPY)
+    DataClass copyDataClass(UUID toDataModelId, UUID fromDataModelId, UUID dataClassId)
 
     @Get(Paths.DATA_CLASS_DOI)
     Map doi(UUID id)

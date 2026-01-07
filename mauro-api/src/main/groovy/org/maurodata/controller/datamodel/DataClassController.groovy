@@ -1,6 +1,10 @@
 package org.maurodata.controller.datamodel
 
+import org.maurodata.api.model.CopyDataClassParamsDTO
+import org.maurodata.domain.model.Item
+
 import groovy.transform.CompileStatic
+import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpResponse
@@ -26,12 +30,11 @@ import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.datamodel.DataType
 import org.maurodata.domain.security.Role
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository
-import org.maurodata.persistence.cache.ModelCacheableRepository
 import org.maurodata.persistence.cache.ModelCacheableRepository.DataModelCacheableRepository
 
 import org.maurodata.web.ListResponse
 import org.maurodata.web.PaginationParams
-
+@Slf4j
 @CompileStatic
 @Controller
 @Secured(SecurityRule.IS_ANONYMOUS)
@@ -46,7 +49,7 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
     @Inject
     AdministeredItemCacheableRepository.DataElementCacheableRepository dataElementRepository
 
-    ModelCacheableRepository.DataModelCacheableRepository dataModelRepository
+    DataModelCacheableRepository dataModelRepository
 
     @Inject
     DataClassController(AdministeredItemCacheableRepository.DataClassCacheableRepository dataClassRepository, DataModelCacheableRepository dataModelRepository) {
@@ -193,34 +196,62 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
     @Audit
     @Post(Paths.DATA_CLASS_COPY)
     @Transactional
-    DataClass copyDataClass(UUID dataModelId, UUID otherModelId, UUID dataClassId) {
-        DataModel dataModel = dataModelRepository.loadWithContent(dataModelId)
-        accessControlService.checkRole(Role.EDITOR, dataModel)
-        DataClass dataClass = dataClassRepository.loadWithContent(dataClassId)
-        accessControlService.canDoRole(Role.EDITOR, dataClass)
-        DataModel otherModel = dataModelRepository.loadWithContent(otherModelId)
-        accessControlService.canDoRole(Role.READER, otherModel)
-        //verify
-        if (dataClass.dataModel.id != otherModel.id) {
-            ErrorHandler.handleError(HttpStatus.NOT_FOUND, "Cannot find dataClass $dataClassId for dataModel $otherModelId")
-        }
-        dataClass.parentDataClass = null //do not keep existing source structure if source is child
-        dataClass.dataModel = dataModel
-        dataClass.allChildDataClasses().each {
-            it.dataModel = dataModel
-        }
-        setDataElementParents(dataClass)
-        Set<DataType> newDataTypes = copyDataTypes(dataClass, otherModel, dataModel)
-        dataModel.dataTypes = newDataTypes as List
-        dataModel.dataClasses = [dataClass]
-        dataClass.id = null
+    DataClass copyDataClass(UUID toDataModelId, UUID fromDataModelId, UUID dataClassId, @Body @Nullable CopyDataClassParamsDTO copyDataClassParams = null) {
 
-        contentsService.saveContentOnly(dataModel)
+        DataModel toDataModel = dataModelRepository.loadWithContent(toDataModelId)
+        accessControlService.checkRole(Role.EDITOR, toDataModel)
+
+        DataModel fromDataModel = dataModelRepository.loadWithContent(fromDataModelId)
+        accessControlService.canDoRole(Role.READER, fromDataModel)
+
+        // It's loaded in with the DataModel content, so find it rather than loading another copy
+        DataClass fromDataClass = fromDataModel.dataClasses.find {DataClass dataClass -> dataClass.id == dataClassId}
+        //verify
+        if (fromDataClass == null) {
+            ErrorHandler.handleError(HttpStatus.NOT_FOUND, "Cannot find dataClass $dataClassId for dataModel $fromDataModelId")
+        }
+        accessControlService.canDoRole(Role.EDITOR, fromDataClass)
+
+        // Make a deep clone, replacing fromDataModel with toDataModel throughout
+        IdentityHashMap<Item, Item> replacements = new IdentityHashMap<>(256)
+        replacements.put(fromDataModel, toDataModel)
+        DataClass toDataClass = fromDataClass.deepClone(replacements) as DataClass
+
+        Set<DataType> newDataTypes = copyDataTypes(toDataClass)
+        toDataModel.dataTypes = newDataTypes as List
+        toDataModel.dataClasses = [toDataClass]
+
+        if(copyDataClassParams != null && copyDataClassParams.copyLabel != null && !copyDataClassParams.copyLabel.trim().isEmpty()) {
+            toDataClass.label = copyDataClassParams.copyLabel.trim()
+        } else {
+            if (fromDataModel.id == toDataModel.id) {toDataClass.label = "${toDataClass.label} (Copy)"}
+        }
+        /*
+            TO DO: Question about copyPermissions
+            In grails copyPermissions == true is not implemented and throws an error if copyPermissions == true, which may mean
+             that the permissions are not copied by default, and default permissions and ownership are applied.
+            However, here in micronaut the permission properties are copied by default, including the catalogue user as this
+             is not overwritten. See: contentsService.saveContentOnly() not calling contentHandler.setCreateProperties
+             To implement copyPermissions would require doing nothing when copyPermissions is true, and recursively setting defaults
+             otherwise
+         */
+
+        // Trigger this to be saved
+        unsetDataElementIds(toDataClass)
+
+        try {
+            contentsService.saveContentOnly(toDataModel)
+        } catch (Throwable th) {
+            th.printStackTrace()
+            throw th
+        }
+
+        updateDerivedProperties(toDataClass)
 
         // clean before responding
-        dataClass.dataElements = []
+        toDataClass.dataElements = []
 
-        dataClass
+        toDataClass
     }
 
     @Get(Paths.DATA_CLASS_DOI)
@@ -240,48 +271,60 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
         dataTypeRepository.deleteAll(dataTypes)
     }
 
-    protected Set<DataType> copyDataTypes(DataClass dataClass, DataModel oldDataModel, DataModel newDataModel) {
-        Set<DataType> newDataTypes = []
+    protected Set<DataType> copyDataTypes(DataClass dataClass) {
+
+        DataModel newDataModel = dataClass.dataModel
+
+        Map<String, DataType> newDataModel_labelOntoDataType = newDataModel.dataTypes.collectEntries {DataType dataType ->
+            [(dataType.label): dataType]
+        }
+
+        Map<String, DataType> oldDataModel_labelOntoDataType = dataClass.allChildDataElements().collectEntries {DataElement dataElement ->
+            [(dataElement.dataType.label): dataElement.dataType]
+        }
+
+        Map<String, DataType> copied = [:]
+
         dataClass.allChildDataElements().each {dataElement ->
             dataElement.dataModel = newDataModel
-            DataType originalDataType = dataTypeRepository.readById(dataElement.dataType.id)
-            DataType alreadyCopied = newDataTypes.find {it.label == originalDataType.label }
-            if(alreadyCopied) {
+            DataType alreadyCopied = copied.get(dataElement.dataType.label)
+            if (alreadyCopied != null) {
                 dataElement.dataType = alreadyCopied
             } else {
-                DataType alreadyGot = newDataModel.dataTypes.find {it.label == originalDataType.label}
-                if (alreadyGot) {
+                DataType alreadyGot = newDataModel_labelOntoDataType.get(dataElement.dataType.label)
+                if (alreadyGot != null) {
                     dataElement.dataType = alreadyGot
+                    // Make sure it is in the list so that the DataElement can be created
+                    copied.put(dataElement.dataType.label, alreadyGot)
                 } else {
-                    DataType needToCopy = oldDataModel.dataTypes.find {it.label == originalDataType.label}
-                    if(needToCopy) {
+                    DataType needToCopy = oldDataModel_labelOntoDataType.get(dataElement.dataType.label)
+                    if (needToCopy != null) {
                         needToCopy.id = null
                         needToCopy.dataModel = newDataModel
                         dataElement.dataType = needToCopy
-                        if(dataElement.dataType.referenceClass) {
+                        if (dataElement.dataType.referenceClass) {
                             dataElement.dataType.referenceClass = findReferenceClass(dataElement.dataType.referenceClass, dataClass)
-                            if(!dataElement.dataType.referenceClass) {
+                            if (!dataElement.dataType.referenceClass) {
                                 ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "A data element uses a data type that refers to a dataclass not being copied")
                             }
                         }
-                        newDataTypes.add(needToCopy)
+                        copied.put(dataElement.dataType.label, needToCopy)
                     } else {
                         ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "DataClass includes an element with an invalid datatype")
                     }
                 }
             }
         }
-        return newDataTypes
+        return copied.values() as Set<DataType>
     }
 
-    protected void setDataElementParents(DataClass dataClass) {
+    protected void unsetDataElementIds(DataClass dataClass) {
+        dataClass.id = null
         dataClass.dataElements.each {
             it.id = null
-            it.dataClass = dataClass
         }
         dataClass.dataClasses.each {
-            it.id = null
-            setDataElementParents(it)
+            unsetDataElementIds(it)
         }
     }
 
