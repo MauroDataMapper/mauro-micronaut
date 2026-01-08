@@ -535,7 +535,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
             break
         }
 
-        final Model rootObject = modelRepository.findById(currentId)
+        final Model rootObject = modelRepository.readById(currentId)
         pathRepository.readParentItems(rootObject)
         rootObject.updatePath()
         rootObject.updateBreadcrumbs()
