@@ -1,6 +1,6 @@
 package org.maurodata.profile
 
-import org.maurodata.api.profile.MetadataNamespaceDTO
+import org.maurodata.api.profile.dto.MetadataNamespaceDTO
 import org.maurodata.plugin.MauroPluginDTO
 import org.maurodata.profile.applied.AppliedProfile
 import org.maurodata.testing.CommonDataSpec

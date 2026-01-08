@@ -1,4 +1,4 @@
-package org.maurodata.api.profile
+package org.maurodata.api.profile.dto
 
 import org.maurodata.domain.model.AdministeredItem
 
