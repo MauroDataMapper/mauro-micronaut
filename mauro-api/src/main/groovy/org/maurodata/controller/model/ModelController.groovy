@@ -184,11 +184,11 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
 
     @Transactional
     M moveFolder(UUID id, String destination) {
-        M existing = modelRepository.readById(id)
-        accessControlService.checkRole(Role.CONTAINER_ADMIN, existing)
-        M original = (M) existing.clone()
+        M original = modelRepository.readById(id)
+        accessControlService.checkRole(Role.CONTAINER_ADMIN, original)
+        M updated = (M) original.deepClone()
         if (destination == 'root') {
-            existing.folder = null
+            updated.folder = null
         } else {
             UUID destinationId
             try {
@@ -198,11 +198,12 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
             }
             Folder folder = folderRepository.readById(destinationId)
             accessControlService.checkRole(Role.EDITOR, folder)
-            existing.folder = folder
+            updated.folder = folder
         }
-        pathRepository.readParentItems(existing)
-        existing.updatePath()
-        modelRepository.update(original, existing)
+        modelRepository.update(original, updated)
+        pathRepository.readParentItems(updated)
+        updated.updatePath()
+        return updated
     }
 
     @Transactional

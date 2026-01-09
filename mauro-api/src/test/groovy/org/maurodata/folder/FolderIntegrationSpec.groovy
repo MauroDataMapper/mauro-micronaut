@@ -79,4 +79,44 @@ class FolderIntegrationSpec extends CommonDataSpec {
         folderListResponse.count == 2
         folderListResponse.items.path.collect { it.toString()}.sort() == ['fo:Updated folder', 'fo:Updated folder|fo:Updated child folder']
     }
+
+    void 'move folder to top level'() {
+        when:
+        ListResponse<Folder> folderListResponse = folderApi.listAll()
+        Folder topLevelFolder = folderListResponse.items.find {it.label == 'Updated folder'}
+        Folder lowerLevelFolder = folderListResponse.items.find {it.label == 'Updated child folder'}
+
+        folderApi.list(topLevelFolder.id).count == 1
+        folderApi.list(lowerLevelFolder.id).count == 0
+
+        folderApi.moveFolder(lowerLevelFolder.id, 'root')
+        folderListResponse = folderApi.listAll()
+        then:
+        folderListResponse.count == 2
+        folderListResponse.items.path.collect { it.toString()}.sort() == ['fo:Updated child folder', 'fo:Updated folder']
+
+        folderApi.list(topLevelFolder.id).count == 0
+        folderApi.list(lowerLevelFolder.id).count == 0
+    }
+
+    void 'move folder to inside another'() {
+        when:
+        ListResponse<Folder> folderListResponse = folderApi.listAll()
+        Folder topLevelFolder = folderListResponse.items.find {it.label == 'Updated folder'}
+        Folder lowerLevelFolder = folderListResponse.items.find {it.label == 'Updated child folder'}
+
+        folderApi.list(topLevelFolder.id).count == 0
+        folderApi.list(lowerLevelFolder.id).count == 0
+
+        folderApi.moveFolder(lowerLevelFolder.id, topLevelFolder.id.toString())
+        folderListResponse = folderApi.listAll()
+
+        then:
+        folderListResponse.count == 2
+        folderListResponse.items.path.collect { it.toString()}.sort() == ['fo:Updated folder', 'fo:Updated folder|fo:Updated child folder']
+
+        folderApi.list(topLevelFolder.id).count == 1
+        folderApi.list(lowerLevelFolder.id).count == 0
+    }
+
 }
