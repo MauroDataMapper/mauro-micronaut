@@ -179,22 +179,52 @@ def temurinDefault='21'
 def ubuntuDefault='noble'
 def detectLTS=false
 
-def dockerTag="eclipse-temurin:${latestLts('eclipse-temurin',temurinDefault,detectLTS)}-jre-${latestLts('ubuntu',ubuntuDefault,detectLTS)}"
+def dockerBaseImage="eclipse-temurin:${latestLts('eclipse-temurin',temurinDefault,detectLTS)}-jre-${latestLts('ubuntu',ubuntuDefault,detectLTS)}"
 
 def dockerIncludeDatabase = !gradle.startParameter.taskNames.any { it.contains('dockerBuild') && (it.contains("NoDatabase") || it.contains("Backend")) }
 def dockerIncludeUI = !gradle.startParameter.taskNames.any { it.contains('dockerBuild') && it.contains("Backend") }
 def dockerBackendOnly = !dockerIncludeDatabase && !dockerIncludeUI
+def dockerMultiArch = gradle.startParameter.taskNames.any { it.contains('dockerBuild') && (it.contains("MultiArch") || it.contains("Backend"))}
 
-tasks.register('printDockerTag') {
+def dockerHost=System.getenv('DOCKER_HOST')?:project.findProperty('dockerHost')?:null
+def dockerPort=dockerHost?(System.getenv('DOCKER_PORT')?:project.findProperty('dockerPort')?:null):null
+def dockerHostPort=[dockerHost,dockerPort].findAll { it != null && !it.isEmpty() }.join(':')
+
+def DOCKER_NAMESPACE=System.getenv('DOCKER_NAMESPACE')
+def dockerNamespaceProp = project.findProperty('dockerNamespace')
+def dockerNamespace=DOCKER_NAMESPACE!=null?DOCKER_NAMESPACE:dockerNamespaceProp!=null?dockerNamespaceProp:'maurodatamapper'
+
+def dockerRepository=System.getenv('DOCKER_REPOSITORY')?:project.findProperty('dockerRepository')?:'mauro'
+
+
+def DOCKER_TAG=System.getenv('DOCKER_TAG')
+def dockerTagProp=project.findProperty('dockerTag')
+def dockerTag=DOCKER_TAG!=null?DOCKER_TAG:dockerTagProp!=null?dockerTagProp:"${version}"
+
+def DOCKER_PREFIX=System.getenv('DOCKER_PREFIX')
+def dockerTagPrefixProp=project.findProperty('dockerTagPrefix')
+def dockerTagPrefix=dockerTag?(DOCKER_PREFIX!=null?DOCKER_PREFIX:dockerTagPrefixProp!=null?dockerTagPrefixProp:[(dockerMultiArch?null:"${System.getProperty('os.arch')}"),(dockerBackendOnly?'backend':null),(!dockerBackendOnly && !dockerIncludeDatabase?'nodb':null)].findAll {it != null && !it.isEmpty() }.join('-')):null
+
+def dockerHostPortAndNamespace=[(dockerHostPort?dockerHostPort:null),(dockerNamespace?dockerNamespace:null)].findAll { it != null && !it.isEmpty() }.join('/')
+def dockerHostPortAndNamespaceAndRepository=[dockerHostPortAndNamespace,dockerRepository].findAll { it != null && !it.isEmpty() }.join('/')
+def dockerTagWithPrefix="${dockerTagPrefix != null && !dockerTagPrefix.isEmpty()?dockerTagPrefix+'-':''}${dockerTag}"
+
+def dockerPushImage = [dockerHostPortAndNamespaceAndRepository,dockerTagWithPrefix].findAll { it != null && !it.isEmpty() }.join(':')
+
+/*
+https://docs.docker.com/reference/cli/docker/image/tag/#extended-description
+dockerPushImage = [DOCKER_HOST[:DOCKER_PORT]/][DOCKER_NAMESPACE/]DOCKER_REPOSITORY[:[DOCKER_PREFIX-]DOCKER_TAG]
+*/
+
+tasks.register('printDockerBaseImage') {
     doLast {
-        println "Would use Docker base image: ${dockerTag}"
+        println "Would use Docker base image: ${dockerBaseImage}"
     }
 }
 
-tasks.register('printItOut') {
-
+tasks.register('printDockerPushImage') {
     doLast {
-        println "dockerIncludeDatabase = ${dockerIncludeDatabase}"
+        println "Would push to : ${dockerPushImage}"
     }
 }
 
@@ -268,11 +298,11 @@ tasks.register('fetchMDMUI') {
 
 tasks.named('dockerBuild') {
     dependsOn(tasks.named('fetchMDMUI'))
-    if(!dockerIncludeDatabase) {
-        images = ["maurodatamapper/mauro:${System.getProperty('os.arch')}-nodb-${version}"]
-    } else {
-        images = ["maurodatamapper/mauro:${System.getProperty('os.arch')}-${version}"]
-    }
+    dependsOn(tasks.named('stageDockerFiles'))
+
+    images = [dockerPushImage]
+
+    println "🐳 Docker tag [ ${dockerPushImage} ]"
 }
 
 tasks.register('stageDockerFiles', Copy) {
@@ -290,12 +320,8 @@ tasks.register('stageDockerFiles', Copy) {
     }
 }
 
-tasks.named('dockerBuild') {
-    dependsOn 'stageDockerFiles'
-}
-
 tasks.named("dockerfile") {
-    baseImage("${dockerTag}")
+    baseImage("${dockerBaseImage}")
 
     def instructions
 
@@ -323,23 +349,15 @@ tasks.register('dockerBuildMultiArch') {
     dependsOn(tasks.named('fetchMDMUI'))
     dependsOn(tasks.named('stageDockerFiles'))
 
+    def locationFile = project.layout.buildDirectory.dir("docker/main").get().asFile
+
     doLast {
         println "🐳 Running docker build with multi-arch buildx command..."
+        println "🐳 Docker tag [ ${dockerPushImage} ]"
 
-        def imageName
-        if(dockerBackendOnly) {
-            imageName = "maurodatamapper/mauro:backend-${version}"
-        }
-        else {
-            if (!dockerIncludeDatabase) {
-                imageName = "maurodatamapper/mauro:nodb-${version}"
-            } else {
-                imageName = "maurodatamapper/mauro:${version}"
-            }
-        }
-        def location = project.layout.buildDirectory.dir("docker/main").get().asFile.absolutePath
+        def location = locationFile.absolutePath
 
-        def processBuilderDockerx = new ProcessBuilder('docker', 'buildx', 'build', '--platform', 'linux/amd64,linux/arm64', '--tag', "${imageName}", "${location}")
+        def processBuilderDockerx = new ProcessBuilder('docker', 'buildx', 'build', '--platform', 'linux/amd64,linux/arm64', '--tag', "${dockerPushImage}", "${location}")
         processBuilderDockerx.inheritIO()
         def processDockerx = processBuilderDockerx.start()
         def rc = processDockerx.waitFor()
