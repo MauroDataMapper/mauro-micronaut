@@ -61,7 +61,7 @@ to configure Micronaut. See above.
 
 Point the container at your *init/* directory, and expose the port micronaut is running on:
 
-    # docker run --rm -p 8080:8080 -v /path/to/your/init:/opt/init:ro -it maurodatamapper/mauro:0.0.2-SNAPSHOT
+    # docker run --rm -p 8080:8080 -v /path/to/your/init:/opt/init:ro -it maurodatamapper/mauro:0.0.2-beta
 
 ## Pointing the container to a database
 
