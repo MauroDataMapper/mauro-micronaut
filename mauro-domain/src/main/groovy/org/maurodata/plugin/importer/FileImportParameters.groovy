@@ -3,6 +3,9 @@ package org.maurodata.plugin.importer
 import org.maurodata.plugin.importer.config.ImportGroupConfig
 import org.maurodata.plugin.importer.config.ImportParameterConfig
 
+import groovy.transform.CompileStatic
+
+@CompileStatic
 class FileImportParameters extends ImportParameters{
 
     @ImportParameterConfig(

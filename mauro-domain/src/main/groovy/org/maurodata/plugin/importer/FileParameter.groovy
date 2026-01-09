@@ -17,15 +17,17 @@
  */
 package org.maurodata.plugin.importer
 
+import groovy.transform.CompileStatic
+
 /**
  * @since 06/03/2018
  */
+@CompileStatic
 class FileParameter {
 
     byte[] fileContents
     String fileName
     String fileType
-
     FileParameter() {
 
     }

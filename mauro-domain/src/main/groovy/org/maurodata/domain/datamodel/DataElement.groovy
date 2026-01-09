@@ -1,7 +1,15 @@
 package org.maurodata.domain.datamodel
 
+import org.maurodata.domain.diff.BaseCollectionDiff
+import org.maurodata.domain.diff.CollectionDiff
+import org.maurodata.domain.diff.DiffBuilder
+import org.maurodata.domain.diff.DiffableItem
+import org.maurodata.domain.diff.ObjectDiff
+import org.maurodata.domain.model.Item
 import org.maurodata.domain.model.ItemReference
 import org.maurodata.domain.model.ItemReferencer
+import org.maurodata.domain.model.ItemReferencerUtils
+import org.maurodata.domain.model.ItemUtils
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
@@ -15,13 +23,7 @@ import jakarta.persistence.Inheritance
 import jakarta.persistence.InheritanceType
 import jakarta.persistence.Transient
 import jakarta.validation.constraints.NotNull
-import org.maurodata.domain.diff.*
 
-import org.maurodata.domain.diff.BaseCollectionDiff
-import org.maurodata.domain.diff.CollectionDiff
-import org.maurodata.domain.diff.DiffBuilder
-import org.maurodata.domain.diff.DiffableItem
-import org.maurodata.domain.diff.ObjectDiff
 import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.domain.model.Model
 import org.maurodata.domain.model.ModelItem
@@ -200,6 +202,13 @@ class DataElement extends ModelItem<DataClass> implements DiffableItem<DataEleme
         enumerationType [:], closure
     }
 
+    DataType referenceType(String className) {
+        DataClass dataClass = this.dataModel.allDataClasses.find {it.label == className}
+        this.dataType = new DataType(label: "Reference to ${className}", referenceClass: dataClass, dataTypeKind: DataType.DataTypeKind.REFERENCE_TYPE, dataModel: this.dataModel)
+        this.dataModel.dataTypes.add(this.dataType)
+        this.dataType
+    }
+
     DataType dataType(Map args, @DelegatesTo(value = DataType, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
         DataType dataType = DataType.build(args + [dataModel: this.dataModel], closure)
         this.dataType = dataType
@@ -225,19 +234,37 @@ class DataElement extends ModelItem<DataClass> implements DiffableItem<DataEleme
     @Transient
     @JsonIgnore
     @Override
-    List<ItemReference> getItemReferences() {
-        List<ItemReference> pathsBeingReferenced = []
-        if (dataType != null) {
-            pathsBeingReferenced << ItemReference.from(dataType)
-        }
+    List<ItemReference> retrieveItemReferences() {
+        List<ItemReference> pathsBeingReferenced = [] + super.retrieveItemReferences()
+
+        ItemReferencerUtils.addItem(dataType, pathsBeingReferenced)
+
         return pathsBeingReferenced
     }
 
     @Override
-    void replaceItemReferences(Map<UUID, ItemReference> replacements) {
-        if (dataType != null) {
-            ItemReference replacementItemReference = replacements.get(dataType.id)
-            if (replacementItemReference != null) {dataType = (DataType) replacementItemReference.theItem}
-        }
+    void replaceItemReferencesByIdentity(IdentityHashMap<Item, Item> replacements, Map<UUID, Item> allItemsById, List<Item> notReplaced) {
+        super.replaceItemReferencesByIdentity(replacements, allItemsById, notReplaced)
+        dataModel = ItemReferencerUtils.replaceItemByIdentity(dataModel, replacements, notReplaced)
+        dataClass = ItemReferencerUtils.replaceItemByIdentity(dataClass, replacements, notReplaced)
+        dataType = ItemReferencerUtils.replaceItemByIdentity(dataType, replacements, notReplaced)
+    }
+
+    @Override
+    void copyInto(Item into) {
+        super.copyInto(into)
+        DataElement intoDataElement = (DataElement) into
+        intoDataElement.minMultiplicity = ItemUtils.copyItem(this.minMultiplicity, intoDataElement.minMultiplicity)
+        intoDataElement.maxMultiplicity = ItemUtils.copyItem(this.maxMultiplicity, intoDataElement.maxMultiplicity)
+        intoDataElement.dataModel = ItemUtils.copyItem(this.dataModel, intoDataElement.dataModel)
+        intoDataElement.dataClass = ItemUtils.copyItem(this.dataClass, intoDataElement.dataClass)
+        intoDataElement.dataType = ItemUtils.copyItem(this.dataType, intoDataElement.dataType)
+    }
+
+    @Override
+    Item shallowCopy() {
+        DataElement dataElementShallowCopy = new DataElement()
+        this.copyInto(dataElementShallowCopy)
+        return dataElementShallowCopy
     }
 }

@@ -19,9 +19,9 @@ class ItemReference {
 
     static ItemReference from(final Item item) {
         if (item instanceof AdministeredItem) {
-            return new ItemReference(pathToItem: item.path, itemId: item.id, itemDomainType: item.domainType, theItem: item)
+            return new ItemReference(pathToItem: item.path, itemId: item.id, itemDomainType: correctDomainType(item.domainType), theItem: item)
         }
-        return new ItemReference(pathToItem: null, itemId: item.id, itemDomainType: item.domainType, theItem: item)
+        return new ItemReference(pathToItem: null, itemId: item.id, itemDomainType: correctDomainType(item.domainType), theItem: item)
     }
 
     static ItemReference from(final Path path) {
@@ -29,15 +29,23 @@ class ItemReference {
     }
 
     static ItemReference from(final UUID id, final String domainType) {
-        return new ItemReference(pathToItem: null, itemId: id, itemDomainType: domainType, theItem: null)
+        return new ItemReference(pathToItem: null, itemId: id, itemDomainType: correctDomainType(domainType), theItem: null)
+    }
+
+    private static String correctDomainType(final String domainType) {
+        if (domainType == null) {return null}
+        if (domainType.endsWith("DTO")) {
+            return domainType.substring(0, domainType.length() - 3)
+        }
+        return domainType
     }
 
     @Override
     String toString() {
         String referenceTo = "ItemReference to"
-        if (pathToItem != null) {referenceTo += " " + pathToItem.toString()}
-        if (itemId != null) {referenceTo += " " + itemId.toString()}
-        if (itemDomainType != null) {referenceTo += " " + itemDomainType.toString()}
+        if (pathToItem != null) {referenceTo += " ${pathToItem}"}
+        if (itemId != null) {referenceTo += " ${itemId}"}
+        if (itemDomainType != null) {referenceTo += " ${itemDomainType}"}
         referenceTo += " " + hashCode()
         return referenceTo
     }

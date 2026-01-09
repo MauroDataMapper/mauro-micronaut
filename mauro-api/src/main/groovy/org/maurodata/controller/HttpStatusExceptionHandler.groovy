@@ -1,5 +1,6 @@
 package org.maurodata.controller
 
+import groovy.transform.CompileStatic
 import io.micronaut.context.annotation.Replaces
 import io.micronaut.http.server.exceptions.ExceptionHandler
 import io.micronaut.http.server.exceptions.HttpStatusHandler
@@ -9,6 +10,7 @@ import jakarta.inject.Singleton
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.exceptions.HttpStatusException
 
+@CompileStatic
 @Replaces(HttpStatusHandler.class)
 @Singleton
 class HttpStatusExceptionHandler implements ExceptionHandler<HttpStatusException, HttpResponse<Map<String, Object>>> {
@@ -29,7 +31,7 @@ class HttpStatusExceptionHandler implements ExceptionHandler<HttpStatusException
             exception.printStackTrace()
         }
 
-        Map<String, Object> errorMessage = Collections.singletonMap("message", message)
+        Map<String, String> errorMessage = Collections.singletonMap("message", message)
 
         Map<String, Object> embedded = new HashMap<>()
         embedded.put("errors", List.of(errorMessage))
@@ -40,7 +42,7 @@ class HttpStatusExceptionHandler implements ExceptionHandler<HttpStatusException
             "templated", false
         ))
 
-        Map<String, Object> body = new LinkedHashMap<>()
+        Map<String, Object> body = new LinkedHashMap<>(10)
         body.put("message", status.getReason())
         body.put("total", 1)
         body.put("errors", List.of(errorMessage))

@@ -6,7 +6,9 @@ import org.maurodata.profile.ProfileFieldDataType
 import org.maurodata.profile.ProfileSection
 
 import com.fasterxml.jackson.annotation.JsonIgnore
+import groovy.transform.CompileStatic
 
+@CompileStatic
 class AppliedProfileField extends ProfileField {
 
 

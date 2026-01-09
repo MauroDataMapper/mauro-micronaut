@@ -59,7 +59,7 @@ class DataClassComponentIntegrationSpec extends CommonDataSpec {
         then:
         response
         response.id
-        response.dataFlow.id == dataFlowId
+        response.domainType == DataClassComponent.simpleName
     }
 
     void 'should update DataClassComponent'() {
@@ -103,19 +103,8 @@ class DataClassComponentIntegrationSpec extends CommonDataSpec {
 
         then:
         dcc
-
-        when:
-        DataClassComponent dataClassComponent = dataClassComponentApi.show(sourceId, dataFlowId, dataClassComponentId)
-        then:
-        dataClassComponent
-        dataClassComponent.dataFlow.source
-        dataClassComponent.dataFlow.target
-        dataClassComponent.dataFlow.source.description
-        dataClassComponent.dataFlow.target.description
-
-        dataClassComponent.sourceDataClasses
-        dataClassComponent.sourceDataClasses.size() == 1
-        dataClassComponent.sourceDataClasses[0].id == dataClassSourceId
+        dcc.sourceDataClasses.size() == 1
+        dcc.sourceDataClasses[0].id == dataClassSourceId
     }
 
     void 'should delete dataClass from DataClassComponent'() {

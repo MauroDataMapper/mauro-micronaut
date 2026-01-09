@@ -4,14 +4,16 @@ import org.maurodata.domain.security.ApiKey
 import org.maurodata.domain.security.CatalogueUser
 import org.maurodata.persistence.cache.ItemCacheableRepository
 
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
-import io.micronaut.core.async.publisher.Publishers;
-import io.micronaut.http.HttpRequest;
-import io.micronaut.security.authentication.Authentication;
-import io.micronaut.security.token.validator.TokenValidator;
-import jakarta.inject.Singleton;
-import org.reactivestreams.Publisher;
+import io.micronaut.core.async.publisher.Publishers
+import io.micronaut.http.HttpRequest
+import io.micronaut.security.authentication.Authentication
+import io.micronaut.security.token.validator.TokenValidator
+import jakarta.inject.Singleton
+import org.reactivestreams.Publisher
 
+@CompileStatic
 @Slf4j
 @Singleton
 class ApiKeyTokenValidator implements TokenValidator<HttpRequest<?>>  {
@@ -40,7 +42,7 @@ class ApiKeyTokenValidator implements TokenValidator<HttpRequest<?>>  {
         if(!catalogueUser) {
             return Publishers.empty()
         }
-        Publishers.just(Authentication.build(catalogueUser.emailAddress, [id: catalogueUser.id]))
+        Publishers.just(Authentication.build(catalogueUser.emailAddress, [id: catalogueUser.id] as Map<String, Object>))
 
     }
 }

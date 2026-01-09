@@ -1,8 +1,12 @@
 package org.maurodata.domain.datamodel
 
+import org.maurodata.domain.model.Item
+import jakarta.persistence.PrePersist
 import org.maurodata.domain.model.ItemReference
 import org.maurodata.domain.model.ItemReferencer
-import org.maurodata.domain.model.Path
+import org.maurodata.domain.model.Model
+import org.maurodata.domain.model.ItemReferencerUtils
+import org.maurodata.domain.model.ItemUtils
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
@@ -65,7 +69,7 @@ class DataType extends ModelItem<DataModel> implements DiffableItem<DataType>, I
         }
 
         static DataTypeKind fromString(String text) {
-            values().find {it -> it.stringValue.equalsIgnoreCase(text) }
+            values().find {it -> it.stringValue.equalsIgnoreCase(text)}
         }
     }
 
@@ -93,9 +97,26 @@ class DataType extends ModelItem<DataModel> implements DiffableItem<DataType>, I
     @MappedProperty('model_resource_id')
     UUID modelResourceId
 
+    @Transient
+    Model modelResource
+
+    @PrePersist
+    void prePersist() {
+        if(dataTypeKind == DataTypeKind.MODEL_TYPE) {
+            if(modelResource) {
+                if(!modelResource.id) {
+                    System.err.println("Trying to save a dataType with a model which doesn't have an id!")
+                } else {
+                    modelResourceDomainType = modelResource.domainType
+                    modelResourceId = modelResource.id
+                }
+            }
+        }
+    }
+
     @Override
     String getDomainType() {
-        dataTypeKind?.toString()
+        dataTypeKind?.toString() ?:DataType.class.simpleName
     }
 
     @Override
@@ -176,8 +197,8 @@ class DataType extends ModelItem<DataModel> implements DiffableItem<DataType>, I
     @Transient
     ObjectDiff<DataType> diff(DataType other, String lhsPathRoot, String rhsPathRoot) {
         ObjectDiff<DataType> base = DiffBuilder.objectDiff(DataType)
-                .leftHandSide(id?.toString(), this)
-                .rightHandSide(other.id?.toString(), other)
+            .leftHandSide(id?.toString(), this)
+            .rightHandSide(other.id?.toString(), other)
         base.label = this.label
         base
     }
@@ -195,11 +216,11 @@ class DataType extends ModelItem<DataModel> implements DiffableItem<DataType>, I
 
     static DataType build(
         Map args,
-        @DelegatesTo(value = DataType, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
+        @DelegatesTo(value = DataType, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
         new DataType(args).tap(closure)
     }
 
-    static DataType build(@DelegatesTo(value = DataType, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
+    static DataType build(@DelegatesTo(value = DataType, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
         build [:], closure
     }
 
@@ -221,40 +242,64 @@ class DataType extends ModelItem<DataModel> implements DiffableItem<DataType>, I
         enumerationValue
     }
 
-    EnumerationValue enumerationValue(Map args, @DelegatesTo(value = EnumerationValue, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
+    EnumerationValue enumerationValue(Map args, @DelegatesTo(value = EnumerationValue, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
         EnumerationValue enumValue = EnumerationValue.build(args, closure)
         enumerationValue enumValue
     }
 
-    EnumerationValue enumerationValue(@DelegatesTo(value = EnumerationValue, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
+    EnumerationValue enumerationValue(@DelegatesTo(value = EnumerationValue, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
         enumerationValue [:], closure
     }
 
     @Transient
     @JsonIgnore
     @Override
-    List<ItemReference> getItemReferences() {
-        List<ItemReference> pathsBeingReferenced = []
-        if (referenceClass != null) {
-            pathsBeingReferenced << ItemReference.from(referenceClass)
-        }
-        if (modelResourceId != null) {
-            pathsBeingReferenced << ItemReference.from(modelResourceId,modelResourceDomainType)
-        }
+    List<ItemReference> retrieveItemReferences() {
+        List<ItemReference> pathsBeingReferenced = [] + super.retrieveItemReferences()
+
+        ItemReferencerUtils.addItems(this.enumerationValues, pathsBeingReferenced)
+        ItemReferencerUtils.addIdType(this.modelResourceId, modelResourceDomainType, pathsBeingReferenced)
+        ItemReferencerUtils.addItem(this.@referenceClass, pathsBeingReferenced)
+
         return pathsBeingReferenced
     }
 
     @Override
-    void replaceItemReferences(Map<UUID, ItemReference> replacements) {
-        if (referenceClass != null) {
-            ItemReference replacementItemReference = replacements.get(referenceClass.id)
-            if (replacementItemReference != null) {referenceClass = (DataClass) replacementItemReference.theItem}
+    void replaceItemReferencesByIdentity(IdentityHashMap<Item, Item> replacements, Map<UUID, Item> allItemsById, List<Item> notReplaced) {
+        super.replaceItemReferencesByIdentity(replacements, allItemsById, notReplaced)
+
+        this.parent = ItemReferencerUtils.replaceItemByIdentity(this.parent, replacements, notReplaced)
+        this.referenceClass = ItemReferencerUtils.replaceItemByIdentity(this.@referenceClass, replacements, notReplaced)
+        // This is not possible on Items
+        if (modelResource != null) {
+            modelResource = ItemReferencerUtils.replaceItemByIdentity(modelResource, replacements)
+        } else {
+            Item originalModelResource = allItemsById[modelResourceId]
+            modelResource = ItemReferencerUtils.replaceItemByIdentity(originalModelResource, replacements) as Model
         }
-        if (modelResourceId != null) {
-            ItemReference replacementItemReference = replacements.get(modelResourceId)
-            if (replacementItemReference != null) {
-                modelResourceId = replacementItemReference.itemId
-            }
-        }
+        this.enumerationValues = ItemReferencerUtils.replaceItemsByIdentity(this.@enumerationValues, replacements, notReplaced)
+    }
+
+    @Override
+    void copyInto(Item into) {
+        DataType intoDataType = (DataType) into
+        // A cart before the horse: domainType in AdministeredItem depends on dataTypeKind
+        intoDataType.dataTypeKind = ItemUtils.copyItem(this.@dataTypeKind, intoDataType.@dataTypeKind)
+        super.copyInto(into)
+        intoDataType.domainType = ItemUtils.copyItem(this.domainType, intoDataType.domainType)
+        intoDataType.dataTypeKind = ItemUtils.copyItem(this.@dataTypeKind, intoDataType.@dataTypeKind)
+        intoDataType.dataModel = ItemUtils.copyItem(this.@dataModel, intoDataType.@dataModel)
+        intoDataType.referenceClass = ItemUtils.copyItem(this.@referenceClass, intoDataType.@referenceClass)
+        intoDataType.modelResourceDomainType = ItemUtils.copyItem(this.@modelResourceDomainType, intoDataType.@modelResourceDomainType)
+        intoDataType.modelResourceId = ItemUtils.copyItem(this.@modelResourceId, intoDataType.@modelResourceId)
+        intoDataType.units = ItemUtils.copyItem(this.@units, intoDataType.@units)
+        intoDataType.enumerationValues = ItemUtils.copyItems(this.@enumerationValues, intoDataType.@enumerationValues)
+    }
+
+    @Override
+    Item shallowCopy() {
+        DataType dataTypeShallowCopy = new DataType()
+        this.copyInto(dataTypeShallowCopy)
+        return dataTypeShallowCopy
     }
 }

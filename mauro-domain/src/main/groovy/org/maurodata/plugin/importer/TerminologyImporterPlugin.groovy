@@ -1,8 +1,10 @@
 package org.maurodata.plugin.importer
 
-import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.terminology.Terminology
 
+import groovy.transform.CompileStatic
+
+@CompileStatic
 trait TerminologyImporterPlugin<P extends ImportParameters> extends ModelImporterPlugin<Terminology, P> {
 
     abstract List<Terminology> importDomain(P params)

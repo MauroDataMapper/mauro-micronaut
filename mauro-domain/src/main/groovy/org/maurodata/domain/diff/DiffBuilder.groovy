@@ -55,6 +55,7 @@ class DiffBuilder {
     static final String PATH_NODE_STRING = 'pathNodeString'
     static final String DIFF_IDENTIFIER = 'diffIdentifier'
     static final String ALL_DATA_CLASSES = 'allDataClasses'
+
     static final List<String> IGNORE_KEYS = [ID_KEY, DATE_CREATED_KEY, LAST_UPDATED_KEY, DOMAIN_TYPE, CLASS_KEY, FOLDER_KEY, LEFT_ID_KEY, RIGHT_ID_KEY, PATH_NODE_STRING,
                                              DIFF_IDENTIFIER, ENUMERATION_VALUES, ALL_DATA_CLASSES, PATH_IDENTIFIER, PATH_PREFIX]
     static final List<String> MODEL_COLLECTION_KEYS = [METADATA, ANNOTATION, RULE, SUMMARY_METADATA, SUMMARY_METADATA_REPORT, REFERENCE_FILES, DATA_CLASSES, DATA_TYPE,

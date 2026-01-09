@@ -4,9 +4,8 @@ import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.http.HttpStatus
 import jakarta.inject.Inject
+import jakarta.inject.Singleton
 import org.maurodata.ErrorHandler
-import org.maurodata.domain.classifier.ClassificationScheme
-import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.facet.federation.MauroLink
 import org.maurodata.domain.facet.federation.PublishedModel
 import org.maurodata.domain.facet.federation.SubscribedCatalogue
@@ -15,11 +14,8 @@ import org.maurodata.domain.facet.federation.SubscribedModelFederationParams
 import org.maurodata.domain.folder.Folder
 import org.maurodata.domain.model.Model
 import org.maurodata.importdata.ImportMetadata
+import org.maurodata.persistence.ContentsService
 import org.maurodata.persistence.cache.ItemCacheableRepository.SubscribedModelCacheableRepository
-import org.maurodata.persistence.classifier.ClassificationSchemeContentRepository
-import org.maurodata.persistence.datamodel.DataModelContentRepository
-import org.maurodata.persistence.folder.FolderContentRepository
-import org.maurodata.persistence.model.ModelContentRepository
 import org.maurodata.persistence.service.RepositoryService
 import org.maurodata.plugin.MauroPluginService
 import org.maurodata.plugin.exporter.ModelExporterPlugin
@@ -30,6 +26,7 @@ import org.maurodata.service.core.AuthorityService
 
 @CompileStatic
 @Slf4j
+@Singleton
 class SubscribedModelService {
     public static final String APPLICATION_CONTENT_TYPE = 'application/'
     public static final String MAURO_DOT = 'mauro.'
@@ -37,26 +34,19 @@ class SubscribedModelService {
     final RepositoryService repositoryService
     final MauroPluginService mauroPluginService
     final SubscribedCatalogueService subscribedCatalogueService
-    final ModelContentRepository<Model> modelContentRepository
     final SubscribedModelCacheableRepository subscribedModelCacheableRepository
     final AuthorityService authorityService
 
     @Inject
-    DataModelContentRepository dataModelContentRepository
-    @Inject
-    FolderContentRepository folderContentRepository
-    @Inject
-    ClassificationSchemeContentRepository classificationSchemeContentRepository
+    ContentsService contentsService
 
 
     @Inject
     SubscribedModelService(RepositoryService repositoryService, MauroPluginService mauroPluginService, SubscribedCatalogueService subscribedCatalogueService,
-                           ModelContentRepository<Model> modelContentRepository, SubscribedModelCacheableRepository subscribedModelCacheableRepository,
-                           AuthorityService authorityService) {
+                           SubscribedModelCacheableRepository subscribedModelCacheableRepository, AuthorityService authorityService) {
         this.repositoryService = repositoryService
         this.mauroPluginService = mauroPluginService
         this.subscribedCatalogueService = subscribedCatalogueService
-        this.modelContentRepository = modelContentRepository
         this.subscribedModelCacheableRepository = subscribedModelCacheableRepository
         this.authorityService = authorityService
     }
@@ -105,7 +95,7 @@ class SubscribedModelService {
         checkModelLabelAndVersionNotAlreadyImported(savedImported)
         if (savedImported) {
             savedImported.folder = folder
-            saveModelWithContent(savedImported)
+            (Model) contentsService.saveWithContent(savedImported)
         }
     }
 
@@ -163,19 +153,5 @@ class SubscribedModelService {
 
     }
 
-    protected Model saveModelWithContent(Model model) {
-        switch (model.domainType) {
-            case DataModel.class.simpleName: dataModelContentRepository.saveWithContent((DataModel) model as DataModel)
-                break
-            case Folder.class.simpleName: folderContentRepository.saveWithContent((Folder) model as Folder)
-                break
-            case ClassificationScheme.class.simpleName: classificationSchemeContentRepository.saveWithContent((ClassificationScheme) model as ClassificationScheme)
-                break
-            default:
-                modelContentRepository.saveWithContent(model)
-                break
-        }
-        model
-    }
 }
 

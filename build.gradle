@@ -1,17 +1,131 @@
-plugins {
-    id("groovy")
-    id("com.github.johnrengelman.shadow") version "8.1.1"
-    id 'codenarc'
-    id("maven-publish")
-}
+import com.vanniktech.maven.publish.JavaLibrary
+import com.vanniktech.maven.publish.JavadocJar
 
-version = "0.0.1-beta"
-group = "org.maurodata"
+plugins {
+    id 'java-library'
+    id 'groovy'
+    id "com.vanniktech.maven.publish" version "0.34.0"
+    id "org.graalvm.buildtools.native" version "0.11.0" apply false
+}
 
 repositories {
     mavenCentral()
 }
-java {
-    sourceCompatibility = JavaVersion.toVersion("17")
-    targetCompatibility = JavaVersion.toVersion("17")
+
+subprojects {
+    // Applies when maven-publish is present (Micronaut & Vanniktech both apply it)
+    plugins.withId("maven-publish") {
+        publishing {
+            publications.withType(MavenPublication).configureEach {
+                // prefer GROUP / VERSION_NAME if present; else fallback to Gradle's group/version
+                groupId    = (findProperty("GROUP") ?: project.group).toString()
+                artifactId = (findProperty("POM_ARTIFACT_ID") ?: project.name).toString()
+                version    = (findProperty("VERSION_NAME") ?: project.version).toString()
+            }
+
+            // your extra repos belong *here*
+            repositories {
+                maven {
+                    name = "MauroSnapshotRepository"
+                    url = uri("https://mauro-repository.com/libs-snapshot-local")
+                    credentials(PasswordCredentials)
+                    authentication { basic(BasicAuthentication) }
+                }
+            }
+        }
+    }
+
+    plugins.withId("com.vanniktech.maven.publish") {
+
+        java {
+            sourceCompatibility = JavaVersion.toVersion("17")
+            targetCompatibility = JavaVersion.toVersion("17")
+        }
+
+
+        mavenPublishing {
+            // Use GROUP/VERSION_NAME if present, else fall back to project.group/version
+            def g = (findProperty("GROUP") ?: project.group).toString()
+            def v = (findProperty("VERSION_NAME") ?: project.version).toString()
+            coordinates(g, project.name, v)
+
+            configure(new JavaLibrary(new JavadocJar.Empty(), /* sourcesJar */ true))
+
+            publishToMavenCentral()
+            signAllPublications()
+
+            pom {
+                url = "https://github.com/MauroDataMapper/mauro-micronaut"
+                licenses {
+                    license {
+                        name = 'The Apache License, Version 2.0'
+                        url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+                developers {
+                    developer {
+                        id = 'jamesrwelch'
+                        name = 'James Welch'
+                        email = 'james.welch@bdi.ox.ac.uk'
+                    }
+                    developer {
+                        id = 'joe-crawford'
+                        name = 'Joseph Crawford'
+                    }
+                    developer {
+                        id = 'edwardcrichton'
+                        name = 'Edward Crichton'
+                    }
+                }
+                scm {
+                    url = "https://github.com/MauroDataMapper/mauro-micronaut"
+                }
+
+            }
+        }
+    }
+}
+
+project(':mauro-domain') {
+    plugins.withId("com.vanniktech.maven.publish") {
+        mavenPublishing {
+            pom {
+                name = 'Mauro Domain'
+                description = 'The \'domain layer\' of Mauro which defines the underlying data model and additional Mauro concepts such as plugins, profiles, etc.'
+            }
+        }
+    }
+}
+
+project(':mauro-persistence') {
+    plugins.withId("com.vanniktech.maven.publish") {
+        mavenPublishing {
+            pom {
+                name = 'Mauro Persistence'
+                description = 'The code for persisting Mauro objects into a Postgres database, including an in-memory caching layer'
+            }
+        }
+    }
+}
+
+project(':mauro-client') {
+    plugins.withId("com.vanniktech.maven.publish") {
+        mavenPublishing {
+            pom {
+                name = 'Mauro Client'
+                description = 'Interfaces that Micronaut uses to generate client / SDK code for interacting with a Mauro API'
+            }
+        }
+    }
+}
+
+project(':mauro-api') {
+    plugins.withId("com.vanniktech.maven.publish") {
+        mavenPublishing {
+            pom {
+                name = 'Mauro API'
+                description = 'Controllers and business logic for defining the Mauro API: this is the \'application layer\' of Mauro'
+            }
+        }
+    }
 }

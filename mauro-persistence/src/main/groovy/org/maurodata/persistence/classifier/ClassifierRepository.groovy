@@ -3,6 +3,7 @@ package org.maurodata.persistence.classifier
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.Nullable
+import io.micronaut.data.annotation.Query
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.model.query.builder.sql.Dialect
 import jakarta.inject.Inject
@@ -19,6 +20,8 @@ abstract class ClassifierRepository implements ModelItemRepository<Classifier> {
 
     @Inject
     ClassifierDTORepository classifierDTORepository
+
+    abstract List<Classifier> readAllByClassificationSchemeIdIn(Collection<UUID> classificationSchemeIds)
 
     @Override
     @Nullable
@@ -43,6 +46,11 @@ abstract class ClassifierRepository implements ModelItemRepository<Classifier> {
         findAllByClassificationScheme((ClassificationScheme) parent)
     }
 
+
+    @Override
+    List<Classifier> findAllByLabel(String label) {
+        classifierDTORepository.findAllByLabel(label)
+    }
     @Nullable
     UUID addAdministeredItem(AdministeredItem administeredItem, Classifier classifier) {
         log.debug("Adding to joinAdministeredItemToClassifier : administered item $administeredItem.id , classifier: $classifier.id")
@@ -56,7 +64,7 @@ abstract class ClassifierRepository implements ModelItemRepository<Classifier> {
 
     @Nullable
     List<Classifier> findAllForAdministeredItem(String administeredItemDomainType, UUID administeredItemId) {
-        classifierDTORepository.findAllByAdministeredItem(administeredItemDomainType, administeredItemId)
+        classifierDTORepository.findAllByAdministeredItem(administeredItemDomainType, administeredItemId) as List<Classifier>
     }
 
     @Nullable
@@ -86,6 +94,9 @@ abstract class ClassifierRepository implements ModelItemRepository<Classifier> {
         classifierDTORepository.deleteAdministeredItemClassifier(administeredItem.domainType, administeredItem.id, classifierId)
     }
 
+    @Query('''delete from core.join_administered_item_to_classifier jaic where jaic.classifier_id in (:classifierIds)''')
+    abstract Long deleteAllJoinAdministeredItemToClassifierIds(Collection<UUID> classifierIds)
+
     Long deleteAllJoinAdministeredItemToClassifier(Classifier classifier) {
         classifierDTORepository.deleteAllForClassifier(classifier.id)
     }
@@ -108,7 +119,7 @@ abstract class ClassifierRepository implements ModelItemRepository<Classifier> {
     }
 
     List<Classifier> findAllByParent(Classifier classifier) {
-        classifierDTORepository.findAllByClassifier(classifier.id)
+        classifierDTORepository.findAllByClassifier(classifier.id) as List<Classifier>
     }
 
     List<Classifier> readAll(){

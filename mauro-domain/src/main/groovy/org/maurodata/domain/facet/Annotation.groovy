@@ -1,5 +1,10 @@
 package org.maurodata.domain.facet
 
+import groovy.util.logging.Slf4j
+import jakarta.persistence.PrePersist
+import org.maurodata.domain.model.Item
+import org.maurodata.domain.model.ItemUtils
+
 import com.fasterxml.jackson.annotation.JsonAlias
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
@@ -21,7 +26,12 @@ import org.maurodata.domain.security.CatalogueUser
 @MappedEntity(value = 'annotation', schema = 'core', alias = 'annotation_')
 @AutoClone
 @Indexes([@Index(columns = ['multi_facet_aware_item_id'])])
+@Slf4j
 class Annotation extends Facet implements DiffableItem<Annotation> {
+
+    @Transient
+    @JsonIgnore
+    Annotation parentAnnotation
 
     @JsonAlias(['parent_annotation_id'])
     UUID parentAnnotationId
@@ -37,9 +47,48 @@ class Annotation extends Facet implements DiffableItem<Annotation> {
     @Relation(Relation.Kind.ONE_TO_MANY)
     List<Annotation> childAnnotations = []
 
+    @PrePersist
+    void prePersist() {
+        if(parentAnnotation && (!parentAnnotationId || parentAnnotationId != parentAnnotation.id)) {
+            if(parentAnnotation.id) {
+                parentAnnotationId = parentAnnotation.id
+            } else {
+                log.error("Trying to save a child Annotation without parent id being saved")
+                log.error("" + label)
+                log.error("" + parentAnnotation.label)
+            }
+        }
+        if(!multiFacetAwareItemId) {
+            if(multiFacetAwareItem) {
+                multiFacetAwareItemId = multiFacetAwareItem.id
+                multiFacetAwareItemDomainType = multiFacetAwareItem.domainType
+            } else if(parentAnnotation) {
+                    multiFacetAwareItemId = parentAnnotation.multiFacetAwareItemId
+                    multiFacetAwareItemDomainType = parentAnnotation.multiFacetAwareItemDomainType
+            } else {
+                log.error("Trying to save Annotation without 'multiFacetAwareItem' set")
+
+                log.error("" + multiFacetAwareItem)
+                log.error("" + multiFacetAwareItemId)
+                log.error("" + parentAnnotation)
+                log.error("" + parentAnnotation?.multiFacetAwareItem)
+                log.error("" + parentAnnotation?.multiFacetAwareItemId)
+            }
+        }
+
+    }
 
     CatalogueUser getCreatedByUser() {
         createdByUser ? createdByUser : catalogueUser
+    }
+
+    void setAssociations() {
+        if(childAnnotations) {
+            childAnnotations.each {childAnnotation ->
+                childAnnotation.parentAnnotation = this
+                childAnnotation.setAssociations()
+            }
+        }
     }
 
     @Override
@@ -69,7 +118,8 @@ class Annotation extends Facet implements DiffableItem<Annotation> {
         base.label = this.label
         base.appendString(DiffBuilder.DESCRIPTION, this.description, other.description, this, other)
         if (!DiffBuilder.isNull(this.childAnnotations) || !DiffBuilder.isNull(other.childAnnotations)) {
-            base.appendCollection(DiffBuilder.CHILD_ANNOTATIONS, this.childAnnotations as Collection<DiffableItem>, other.childAnnotations as Collection<DiffableItem>, lhsPathRoot, rhsPathRoot)
+            base.appendCollection(DiffBuilder.CHILD_ANNOTATIONS, this.childAnnotations as Collection<DiffableItem>, other.childAnnotations as Collection<DiffableItem>,
+                                  lhsPathRoot, rhsPathRoot)
         }
         base
     }
@@ -86,5 +136,23 @@ class Annotation extends Facet implements DiffableItem<Annotation> {
     @Override
     String getPathIdentifier() {
         label
+    }
+
+    @Override
+    void copyInto(Item into) {
+        super.copyInto(into)
+        Annotation intoAnnotation = (Annotation) into
+        intoAnnotation.parentAnnotationId = ItemUtils.copyItem(this.parentAnnotationId, intoAnnotation.parentAnnotationId)
+        intoAnnotation.description = ItemUtils.copyItem(this.description, intoAnnotation.description)
+        intoAnnotation.label = ItemUtils.copyItem(this.label, intoAnnotation.label)
+        intoAnnotation.createdByUser = ItemUtils.copyItem(this.createdByUser, intoAnnotation.createdByUser)
+        intoAnnotation.childAnnotations = ItemUtils.copyItems(this.childAnnotations, intoAnnotation.childAnnotations)
+    }
+
+    @Override
+    Item shallowCopy() {
+        Annotation annotationShallowCopy = new Annotation()
+        this.copyInto(annotationShallowCopy)
+        return annotationShallowCopy
     }
 }

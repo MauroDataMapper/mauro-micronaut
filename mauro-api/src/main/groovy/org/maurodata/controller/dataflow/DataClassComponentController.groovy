@@ -1,22 +1,5 @@
 package org.maurodata.controller.dataflow
 
-import org.maurodata.ErrorHandler
-import org.maurodata.api.Paths
-import org.maurodata.api.dataflow.DataClassComponentApi
-import org.maurodata.audit.Audit
-import org.maurodata.controller.model.AdministeredItemController
-import org.maurodata.domain.dataflow.DataClassComponent
-import org.maurodata.domain.dataflow.DataFlow
-import org.maurodata.domain.dataflow.Type
-import org.maurodata.domain.datamodel.DataClass
-import org.maurodata.domain.security.Role
-import org.maurodata.persistence.cache.AdministeredItemCacheableRepository
-import org.maurodata.persistence.dataflow.DataClassComponentContentRepository
-import org.maurodata.persistence.dataflow.DataFlowRepository
-import org.maurodata.web.ListResponse
-
-import org.maurodata.web.PaginationParams
-
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
@@ -31,7 +14,21 @@ import io.micronaut.http.annotation.Post
 import io.micronaut.http.annotation.Put
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
-import jakarta.inject.Inject
+import org.maurodata.ErrorHandler
+import org.maurodata.api.Paths
+import org.maurodata.api.dataflow.DataClassComponentApi
+import org.maurodata.audit.Audit
+import org.maurodata.controller.model.AdministeredItemController
+import org.maurodata.domain.dataflow.DataClassComponent
+import org.maurodata.domain.dataflow.DataFlow
+import org.maurodata.domain.dataflow.Type
+import org.maurodata.domain.datamodel.DataClass
+import org.maurodata.domain.security.Role
+import org.maurodata.persistence.cache.AdministeredItemCacheableRepository
+import org.maurodata.persistence.cache.AdministeredItemCacheableRepository.DataClassCacheableRepository
+
+import org.maurodata.web.ListResponse
+import org.maurodata.web.PaginationParams
 
 @CompileStatic
 @Controller()
@@ -39,22 +36,20 @@ import jakarta.inject.Inject
 @Secured(SecurityRule.IS_AUTHENTICATED)
 class DataClassComponentController extends AdministeredItemController<DataClassComponent, DataFlow> implements DataClassComponentApi {
 
-    @Inject
     AdministeredItemCacheableRepository.DataClassCacheableRepository dataClassRepository
 
     AdministeredItemCacheableRepository.DataClassComponentCacheableRepository dataClassComponentRepository
 
-    DataClassComponentContentRepository dataClassComponentContentRepository
-
     AdministeredItemCacheableRepository.DataFlowCacheableRepository dataFlowRepository
+
 
     DataClassComponentController(AdministeredItemCacheableRepository.DataClassComponentCacheableRepository dataClassComponentRepository,
                                  AdministeredItemCacheableRepository.DataFlowCacheableRepository dataFlowRepository,
-                                 DataClassComponentContentRepository dataClassComponentContentRepository) {
-        super(DataClassComponent, dataClassComponentRepository, dataFlowRepository, dataClassComponentContentRepository)
+                                 DataClassCacheableRepository dataClassRepository) {
+        super(DataClassComponent, dataClassComponentRepository, dataFlowRepository)
         this.dataClassComponentRepository = dataClassComponentRepository
-        this.dataClassComponentContentRepository = dataClassComponentContentRepository
         this.dataFlowRepository = dataFlowRepository
+        this.dataClassRepository = dataClassRepository
     }
 
     @Audit
@@ -120,7 +115,7 @@ class DataClassComponentController extends AdministeredItemController<DataClassC
         DataClass dataClassToAdd = dataClassRepository.readById(dataClassId)
         ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, dataClassToAdd, "item not found : $id")
         accessControlService.checkRole(Role.EDITOR, dataClassToAdd)
-        DataClassComponent dataClassComponent = dataClassComponentContentRepository.readWithContentById(id)
+        DataClassComponent dataClassComponent = dataClassComponentRepository.loadWithContent(id)
         ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, dataClassComponent, "item not found : $id")
         accessControlService.checkRole(Role.EDITOR, dataClassComponent)
 
@@ -149,7 +144,7 @@ class DataClassComponentController extends AdministeredItemController<DataClassC
         DataClass dataClassToRemove = dataClassRepository.readById(dataClassId)
         ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, dataClassToRemove, "Item with id: $dataClassId not found")
         accessControlService.checkRole(Role.EDITOR, dataClassToRemove)
-        DataClassComponent dataClassComponent = dataClassComponentContentRepository.readWithContentById(id)
+        DataClassComponent dataClassComponent = dataClassComponentRepository.loadWithContent(id)
         ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, dataClassToRemove, "Item with id: $id not found")
         accessControlService.checkRole(Role.EDITOR, dataClassComponent)
 
@@ -169,7 +164,7 @@ class DataClassComponentController extends AdministeredItemController<DataClassC
                 break
             default:
                 ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "Type must be source or target")
-                break;
+                break
         }
         dataClassComponent
     }

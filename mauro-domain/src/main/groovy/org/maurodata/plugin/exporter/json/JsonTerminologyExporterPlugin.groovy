@@ -1,6 +1,7 @@
 package org.maurodata.plugin.exporter.json
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
@@ -8,6 +9,7 @@ import org.maurodata.domain.terminology.Terminology
 import org.maurodata.export.ExportModel
 import org.maurodata.plugin.exporter.TerminologyExporterPlugin
 
+@CompileStatic
 @Slf4j
 @Singleton
 class JsonTerminologyExporterPlugin implements TerminologyExporterPlugin {
@@ -46,7 +48,7 @@ class JsonTerminologyExporterPlugin implements TerminologyExporterPlugin {
     @Override
     byte[] exportModels(Collection<Terminology> terminologies) {
         ExportModel exportModel = new ExportModel(this)
-        exportModel.terminologies = terminologies
+        exportModel.terminologies = terminologies.toList()
         objectMapper.writeValueAsBytes(exportModel)
 
     }

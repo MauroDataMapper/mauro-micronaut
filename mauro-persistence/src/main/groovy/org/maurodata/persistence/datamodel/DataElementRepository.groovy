@@ -14,13 +14,14 @@ import jakarta.inject.Inject
 import org.maurodata.domain.datamodel.DataClass
 import org.maurodata.domain.datamodel.DataElement
 import org.maurodata.domain.model.AdministeredItem
+import org.maurodata.persistence.datamodel.dto.DataElementDTO
 import org.maurodata.persistence.datamodel.dto.DataElementDTORepository
 import org.maurodata.persistence.model.ModelItemRepository
 
 @Slf4j
 @CompileStatic
 @JdbcRepository(dialect = Dialect.POSTGRES)
-abstract class DataElementRepository implements  ModelItemRepository<DataElement> {
+abstract class DataElementRepository implements ModelItemRepository<DataElement> {
 
     @Inject
     DataElementDTORepository dataElementDTORepository
@@ -37,7 +38,7 @@ abstract class DataElementRepository implements  ModelItemRepository<DataElement
 
     @Nullable
     List<DataElement> findAllByParentAndPathIdentifier(UUID item,String pathIdentifier) {
-        dataElementDTORepository.findAllByParentAndPathIdentifier(item,pathIdentifier)
+        dataElementDTORepository.findAllByParentAndPathIdentifier(item,pathIdentifier) as List<DataElement>
     }
 
     @Nullable
@@ -62,9 +63,19 @@ abstract class DataElementRepository implements  ModelItemRepository<DataElement
     }
 
     @Nullable
+    @Override
+    List<DataElement> findAllByLabel(String label){
+        dataElementDTORepository.findAllByLabel(label)
+    }
+
+    @Nullable
     List<DataElement> readAllByDataTypeIn(List<DataType> dataTypes) {
         dataElementDTORepository.readAllByDataTypeIdIn(dataTypes.id) as List<DataElement>
     }
+
+    @Nullable
+    abstract List<DataElement> readAllByDataClassIdIn(Collection<UUID> dataClassIds)
+
 
     @Nullable
     List<DataElement> findAllByDataModel(DataModel dataModel) {
@@ -79,6 +90,9 @@ abstract class DataElementRepository implements  ModelItemRepository<DataElement
         readAllByDataClassIn(dataClasses)
     }
 
+    DataElement readByDataClassAndLabel(DataClass dataClass, String label) {
+        dataElementDTORepository.readByDataClassAndLabel(dataClass, label) as DataElement
+    }
 
 
     @Nullable

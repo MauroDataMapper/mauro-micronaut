@@ -1,5 +1,6 @@
 package org.maurodata.persistence.datamodel.dto
 
+import io.micronaut.core.annotation.Nullable
 import org.maurodata.domain.datamodel.DataElement
 import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.datamodel.DataType
@@ -23,10 +24,17 @@ abstract class DataElementDTORepository implements GenericRepository<DataElement
 
     abstract List<DataElementDTO> findAllByDataClassIdIn(Collection<UUID> ids)
 
+    abstract DataElementDTO readByDataClassAndLabel(DataClass dataClass, String label)
+
     abstract List<DataElementDTO> readAllByDataClassIdIn(Collection<UUID> ids)
 
     abstract List<DataElementDTO> readAllByDataTypeIdIn(Collection<UUID> ids)
 
     @Query('SELECT * FROM datamodel.data_element WHERE data_class_id = :item AND label = :pathIdentifier')
     abstract List<DataElement> findAllByParentAndPathIdentifier(UUID item, String pathIdentifier)
+
+
+    @Query('SELECT * FROM datamodel.data_element WHERE label = :label')
+    @Nullable
+    abstract List<DataElement> findAllByLabel(String label)
 }

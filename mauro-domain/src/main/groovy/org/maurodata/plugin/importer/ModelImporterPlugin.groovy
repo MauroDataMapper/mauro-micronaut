@@ -6,14 +6,13 @@ import groovy.util.logging.Slf4j
 import org.apache.commons.lang3.reflect.FieldUtils
 import org.maurodata.domain.model.Model
 import org.maurodata.domain.terminology.Terminology
-import org.maurodata.plugin.MauroPlugin
 import org.maurodata.plugin.PluginType
 import org.maurodata.plugin.importer.config.ImportParameterConfig
 
 import java.lang.reflect.Field
 
 @Slf4j
-trait ModelImporterPlugin <D extends Model, P extends ImportParameters> extends MauroPlugin {
+trait ModelImporterPlugin <D extends Model, P extends ImportParameters> extends ImporterPlugin {
 
     abstract List<D> importDomain(P params)
 
@@ -44,7 +43,7 @@ trait ModelImporterPlugin <D extends Model, P extends ImportParameters> extends 
         imported.each { importedModel ->
             importedModel.setAssociations()
             if (importedModel.modelType == Terminology.class.simpleName){
-                ((Terminology) importedModel as Terminology).termRelationshipTypes.each {
+                (importedModel as Terminology).termRelationshipTypes.each {
                     it.displayLabel = it.createDisplayLabel()
                 }
             }

@@ -43,11 +43,8 @@ abstract class AdministeredItem extends Item implements Pathable {
     /**
      * The label of an object.  Labels are used as identifiers within a context and so need to be unique within
      * that context. Labels of models must be unique when combined with the version number or branch name.
-     * <p>
-     *     A label cannot contain the characters `$`, `|` or `@`, since this values are used in the creation of paths.
      */
     @NotBlank
-    @Pattern(regexp = /[^\$@|]*/, message = 'Cannot contain $, | or @')
     String label
 
     /**
@@ -95,7 +92,8 @@ abstract class AdministeredItem extends Item implements Pathable {
      * The identifier of a breadcrumb tree object for navigation.
      */
     @Nullable
-    UUID breadcrumbTreeId // should be BreadcrumbTree type
+    UUID breadcrumbTreeId
+    // should be BreadcrumbTree type
 
     @Relation(Relation.Kind.ONE_TO_MANY)
     List<Edit> edits = []
@@ -116,10 +114,88 @@ abstract class AdministeredItem extends Item implements Pathable {
     List<ReferenceFile> referenceFiles = []
 
     @Transient
-    List<String> availableActions = []
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    List<String> availableActions = null
 
     @Relation(Relation.Kind.ONE_TO_MANY)
     List<SemanticLink> semanticLinks = []
+
+    @Transient
+    @JsonIgnore
+    void setAssociations() {
+        List<Facet> facets = []
+        [getEdits(),getMetadata(),getSummaryMetadata(),getRules(),getAnnotations(),getReferenceFiles(),getSemanticLinks()].each {
+            facets.addAll(it)
+        }
+        facets.each {
+            it.multiFacetAwareItem = this
+        }
+        getAnnotations().each {
+            it.setAssociations()
+        }
+        summaryMetadata.each {summaryMetadata ->
+            summaryMetadata.summaryMetadataReports.each { report ->
+                report.summaryMetadata = summaryMetadata
+            }
+        }
+        rules.each {rule ->
+            rule.ruleRepresentations.each { ruleRepresentation ->
+                ruleRepresentation.rule = rule
+            }
+        }
+    }
+
+    @Override
+    void copyInto(Item into) {
+        super.copyInto(into)
+        AdministeredItem intoAdministeredItem = (AdministeredItem) into
+        intoAdministeredItem.label = ItemUtils.copyItem(this.@label, intoAdministeredItem.@label)
+        intoAdministeredItem.description = ItemUtils.copyItem(this.description, intoAdministeredItem.description)
+        intoAdministeredItem.aliasesString = ItemUtils.copyItem(this.aliasesString, intoAdministeredItem.aliasesString)
+        intoAdministeredItem.path = ItemUtils.copyItem(this.path, intoAdministeredItem.path)
+        if (intoAdministeredItem.breadcrumbs != null) {intoAdministeredItem.breadcrumbs = [] + this.breadcrumbs}
+        intoAdministeredItem.availableActions = this.availableActions != null? ([] + this.availableActions) : null
+        intoAdministeredItem.breadcrumbTreeId = ItemUtils.copyItem(this.breadcrumbTreeId, intoAdministeredItem.breadcrumbTreeId)
+        intoAdministeredItem.edits = ItemUtils.copyItem(this.edits, intoAdministeredItem.edits)
+        intoAdministeredItem.metadata = ItemUtils.copyItem(this.metadata, intoAdministeredItem.metadata)
+        intoAdministeredItem.summaryMetadata = ItemUtils.copyItem(this.summaryMetadata, intoAdministeredItem.summaryMetadata)
+        intoAdministeredItem.rules = ItemUtils.copyItem(this.rules, intoAdministeredItem.rules)
+        intoAdministeredItem.annotations = ItemUtils.copyItem(this.annotations, intoAdministeredItem.annotations)
+        intoAdministeredItem.classifiers = ItemUtils.copyItem(this.classifiers, intoAdministeredItem.classifiers)
+        intoAdministeredItem.referenceFiles = ItemUtils.copyItem(this.referenceFiles, intoAdministeredItem.referenceFiles)
+        intoAdministeredItem.semanticLinks = ItemUtils.copyItem(this.semanticLinks, intoAdministeredItem.semanticLinks)
+    }
+
+    @Transient
+    @JsonIgnore
+    @Override
+    List<ItemReference> retrieveItemReferences() {
+        List<ItemReference> pathsBeingReferenced = [] + super.retrieveItemReferences()
+
+        ItemReferencerUtils.addItems(classifiers, pathsBeingReferenced)
+        ItemReferencerUtils.addItems(edits, pathsBeingReferenced)
+        ItemReferencerUtils.addItems(metadata, pathsBeingReferenced)
+        ItemReferencerUtils.addItems(summaryMetadata, pathsBeingReferenced)
+        ItemReferencerUtils.addItems(rules, pathsBeingReferenced)
+        ItemReferencerUtils.addItems(annotations, pathsBeingReferenced)
+        ItemReferencerUtils.addItems(referenceFiles, pathsBeingReferenced)
+        ItemReferencerUtils.addItems(semanticLinks, pathsBeingReferenced)
+
+        return pathsBeingReferenced
+    }
+
+    @Override
+    void replaceItemReferencesByIdentity(IdentityHashMap<Item, Item> replacements, Map<UUID, Item> allItemsById, List<Item> notReplaced) {
+        super.replaceItemReferencesByIdentity(replacements, allItemsById, notReplaced)
+
+        classifiers = ItemReferencerUtils.replaceItemsByIdentity(classifiers, replacements, notReplaced)
+        edits = ItemReferencerUtils.replaceItemsByIdentity(edits, replacements, notReplaced)
+        metadata = ItemReferencerUtils.replaceItemsByIdentity(metadata, replacements, notReplaced)
+        summaryMetadata = ItemReferencerUtils.replaceItemsByIdentity(summaryMetadata, replacements, notReplaced)
+        annotations = ItemReferencerUtils.replaceItemsByIdentity(annotations, replacements, notReplaced)
+        referenceFiles = ItemReferencerUtils.replaceItemsByIdentity(referenceFiles, replacements, notReplaced)
+        semanticLinks = ItemReferencerUtils.replaceItemsByIdentity(semanticLinks, replacements, notReplaced)
+    }
 
     /**
      * Helper method for returning the parent of this object, if one exists and is loaded.
@@ -193,6 +269,8 @@ abstract class AdministeredItem extends Item implements Pathable {
         return pathNodeString
     }
 
+
+
     /**
      * Recalculate this item's Path from its parents. This item must have all its parent items loaded.
      *
@@ -249,7 +327,7 @@ abstract class AdministeredItem extends Item implements Pathable {
         AdministeredItem node = this
         while (node) {
             breadcrumbs.add(new Breadcrumb(id: node.id, domainType: node.domainType, label: node.label, finalised: node instanceof Model ? node.finalised : null))
-            if (node.parent == node || node instanceof Model) break
+            if (node.parent === node || node instanceof Model) break
             // root of Breadcrumbs is the nearest Model type parent of the item
             i++; node = node.parent
             if (i > Path.PATH_MAX_NODES) throw new MauroInternalException("Breadcrumbs exceeded maximum depth of [$Path.PATH_MAX_NODES]")
@@ -268,8 +346,8 @@ abstract class AdministeredItem extends Item implements Pathable {
      */
 
     Map<String, String> metadataAsMap(String namespace) {
-        getMetadata().findAll { it.namespace == namespace }
-                .collectEntries { [it.key, it.value] }
+        getMetadata().findAll {it.namespace == namespace}
+            .collectEntries {[it.key, it.value]}
     }
 
 
@@ -289,7 +367,10 @@ abstract class AdministeredItem extends Item implements Pathable {
     AdministeredItem clone() {
         AdministeredItem cloned = super.clone() as AdministeredItem
 
-        List<Metadata> clonedMetadata = getMetadata().collect { it.clone() }
+        List<Edit> clonedEdits = getEdits().collect {it.clone()}
+        cloned.edits = clonedEdits
+
+        List<Metadata> clonedMetadata = getMetadata().collect {it.clone()}
         cloned.metadata = clonedMetadata
 
         List<Annotation> clonedAnnotations = getAnnotations().collect {
@@ -302,13 +383,19 @@ abstract class AdministeredItem extends Item implements Pathable {
         }
         cloned.annotations = clonedAnnotations
 
-        List<SummaryMetadata> clonedSummaryMetadata = getSummaryMetadata().collect { it.clone() }
+        List<SummaryMetadata> clonedSummaryMetadata = getSummaryMetadata().collect {it.clone()}
         cloned.summaryMetadata = clonedSummaryMetadata
 
-        List<ReferenceFile> clonedReferenceFiles = getReferenceFiles().collect { it.clone() }
+        List<ReferenceFile> clonedReferenceFiles = getReferenceFiles().collect {it.clone()}
         cloned.referenceFiles = clonedReferenceFiles
-        cloned
 
+        List<Rule> clonedRules = getRules().collect {it.clone()}
+        cloned.rules = clonedRules
+
+        List<SemanticLink> clonedSemanticLinks = getSemanticLinks().collect {it.clone()}
+        cloned.semanticLinks = clonedSemanticLinks
+
+        cloned
     }
 
     /**
@@ -320,20 +407,22 @@ abstract class AdministeredItem extends Item implements Pathable {
     }
 
     Map<String, String> findMetadataByNamespaceAsMap(String namespace) {
-        findMetadataByNamespace(namespace).collectEntries{ [it.key, it.value]}
+        findMetadataByNamespace(namespace).collectEntries {[it.key, it.value]}
     }
 
     Metadata findMetadataByNamespaceAndKey(String namespace, String key) {
-        metadata.find{it.namespace == namespace && it.key == key}
+        metadata.find {it.namespace == namespace && it.key == key}
     }
 
     boolean maybeAddMetadata(String namespace, String key, String value) {
-        if(!namespace || !key || !value) {
+        if (!namespace || !key || !value) {
             log.warn("Unable to add metadata with namespace: ${namespace}, key: ${key}, value: ${value}, because of a null value")
             return false
         }
-        if(findMetadataByNamespaceAndKey(namespace, key)) {
-            log.warn("Unable to add metadata with namespace: ${namespace}, key: ${key}, value: ${value}, because a metadata item with the same namespace and key is already present")
+        if (findMetadataByNamespaceAndKey(namespace, key)) {
+            log.warn(
+                "Unable to add metadata with namespace: ${namespace}, key: ${key}, value: ${value}, because a metadata item with the same namespace and key is already " +
+                "present")
             return false
         }
         metadata.add(new Metadata(namespace: namespace, key: key, value: value))
@@ -451,10 +540,28 @@ abstract class AdministeredItem extends Item implements Pathable {
      * @see #metadata
      */
     Metadata metadata(String namespace, String key, String value) {
-        Metadata md = Metadata.build(namespace: namespace, key: key, value: value)
+        Metadata md = new Metadata(
+            namespace: namespace,
+            key: key,
+            value: value,
+            multiFacetAwareItemDomainType: this.domainType,
+            multiFacetAwareItem: this)
         this.metadata.add(md)
         return md
     }
+
+    /**
+     * DSL helper method for adding to the metadata field.  Returns the newly-created metadata item.
+     *
+     * @see #metadata
+     */
+    Metadata metadata(Metadata metadata1) {
+        this.metadata.add(metadata1)
+        metadata1.multiFacetAwareItemDomainType = this.domainType
+        metadata1.multiFacetAwareItem = this
+        return metadata1
+    }
+
 
     /**
      * DSL helper method for adding to the metadata field.  Returns the metadata list passed in.
@@ -472,7 +579,7 @@ abstract class AdministeredItem extends Item implements Pathable {
      * @see #metadata
      */
     List<Metadata> metadata(String namespace, Map<String, String> keyValueMap) {
-        this.metadata.addAll(keyValueMap.collect { key, value ->
+        this.metadata.addAll(keyValueMap.collect {key, value ->
             new Metadata(namespace: namespace, key: key, value: value)
         })
         return metadata

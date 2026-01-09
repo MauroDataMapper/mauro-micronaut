@@ -1,11 +1,14 @@
 package org.maurodata.controller.bootstrap
 
 import org.maurodata.domain.authority.Authority
+import org.maurodata.domain.config.ApiProperty
 import org.maurodata.domain.security.ApiKey
 import org.maurodata.domain.security.ApplicationRole
 import org.maurodata.domain.security.CatalogueUser
 import org.maurodata.domain.security.UserGroup
 import org.maurodata.persistence.cache.ItemCacheableRepository
+import org.maurodata.persistence.cache.ItemCacheableRepository.ApiPropertyCacheableRepository
+import org.maurodata.persistence.config.ApiPropertyRepository
 import org.maurodata.security.utils.SecureRandomStringGenerator
 import org.maurodata.security.utils.SecurityUtils
 import org.maurodata.service.core.AuthorityService
@@ -18,6 +21,7 @@ import io.micronaut.core.order.Ordered
 import io.micronaut.discovery.event.ServiceReadyEvent
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
+import org.apache.commons.text.StringEscapeUtils
 
 @CompileStatic
 @Slf4j
@@ -35,6 +39,10 @@ class BootstrapUsers implements ApplicationEventListener<ServiceReadyEvent> {
 
     @Inject
     ItemCacheableRepository.ApiKeyCacheableRepository apiKeyCacheableRepository
+
+    @Inject
+
+    ApiPropertyCacheableRepository apiPropertyCacheableRepository
 
     @Override
     void onApplicationEvent(final ServiceReadyEvent event) {
@@ -163,7 +171,7 @@ class BootstrapUsers implements ApplicationEventListener<ServiceReadyEvent> {
 
                 if (userNamedApiKeys.isEmpty() && keyById == null) {
 
-                    log.info("apiKeyConfig.key " + apiKeyConfig.key?.toString())
+                    log.info("apiKeyConfig.key ${apiKeyConfig.key}")
 
                     ApiKey newApiKey = new ApiKey(
                         name: apiKeyConfig.name,
@@ -175,21 +183,47 @@ class BootstrapUsers implements ApplicationEventListener<ServiceReadyEvent> {
                         id: apiKeyConfig.key != null ? apiKeyConfig.key : UUID.randomUUID()
                     )
 
-                    log.info("newApiKey.id " + newApiKey.id?.toString())
+                    log.info("newApiKey.id ${newApiKey.id}")
 
                     apiKeyCacheableRepository.save(newApiKey)
-                    log.info("Created key '${newApiKey.name}' ${newApiKey.id.toString()} for user ${apiKeyConfig.email}")
+                    log.info("Created key '${newApiKey.name}' ${newApiKey.id} for user ${apiKeyConfig.email}")
                 } else {
                     if (!userNamedApiKeys.isEmpty()) {
-                        log.info("The User ${apiKeyConfig.email} has a key '${apiKeyConfig.name}' ${userNamedApiKeys.get(0).id.toString()}")
+                        log.info("The User ${apiKeyConfig.email} has a key '${apiKeyConfig.name}' ${userNamedApiKeys.get(0).id}")
                     } else {
                         log.warn(
-                            "A different user than ${apiKeyConfig.email} has a key ${apiKeyConfig.key.toString()} - it is already in use. Choose a different key, or leave " +
+                            "A different user than ${apiKeyConfig.email} has a key ${apiKeyConfig.key} - it is already in use. Choose a different key, or leave " +
                             "that field blank and it will be chosen for you")
                     }
                 }
             }
         }
 
+        if (mauroConfiguration.apiProperties != null) {
+
+            Iterator<MauroConfiguration.ApiPropertyConfig> apiPropertyConfigs = mauroConfiguration.apiProperties.iterator()
+            while (apiPropertyConfigs.hasNext()) {
+                MauroConfiguration.ApiPropertyConfig apiPropertyConfig = apiPropertyConfigs.next()
+
+                ApiProperty apiProperty = apiPropertyCacheableRepository.findByKey(apiPropertyConfig.key)
+
+                if (apiProperty != null) {
+                    log.info("There is an api-property for '${apiProperty.key}'")
+                } else {
+
+                    apiProperty = new ApiProperty(
+
+                        key: apiPropertyConfig.key,
+                        value: StringEscapeUtils.unescapeJava(apiPropertyConfig.value),
+                        publiclyVisible: apiPropertyConfig.publiclyVisible != null ? apiPropertyConfig.publiclyVisible : false,
+                        category: apiPropertyConfig.category != null && !apiPropertyConfig.category.trim().isEmpty() ? apiPropertyConfig.category : "Mauro"
+                    )
+
+                    apiPropertyCacheableRepository.save(apiProperty)
+                    log.info("Created api-property key '${apiProperty.key}'")
+                    log.info(apiProperty.value)
+                }
+            }
+        }
     }
 }

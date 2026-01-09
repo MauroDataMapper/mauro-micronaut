@@ -1,11 +1,11 @@
 plugins {
     id("groovy")
-    id("com.github.johnrengelman.shadow") version "8.1.1"
-    id("io.micronaut.application") version "4.4.5"
-    id("io.micronaut.aot") version "4.4.5"
-    id("maven-publish")
+    //id("com.gradleup.shadow") version "9.0.0"
+    id("io.micronaut.application") version "4.6.1"
+    id("io.micronaut.aot") version "4.6.1"
     id("codenarc")
     id("java-test-fixtures")
+    id "com.vanniktech.maven.publish" version "0.34.0"
 }
 
 repositories {
@@ -13,6 +13,13 @@ repositories {
 }
 
 dependencies {
+    implementation project(':mauro-domain')
+    implementation project(':mauro-client')
+    implementation project(':mauro-persistence')
+
+    testImplementation testFixtures(project(':mauro-client'))          // Pull in the filter that overwrites the port
+    testImplementation testFixtures(project(':mauro-persistence'))     // Pull in the containerized testing definition
+
     compileOnly("io.micronaut.openapi:micronaut-openapi") {
         //        exclude group: 'org.slf4j'
     }
@@ -37,10 +44,13 @@ dependencies {
     implementation("io.micronaut.flyway:micronaut-flyway")
     runtimeOnly("org.postgresql:postgresql")
     runtimeOnly("org.flywaydb:flyway-database-postgresql")
+    implementation("io.micronaut.cache:micronaut-cache-core")
+    implementation("io.micronaut.cache:micronaut-cache-caffeine")
+
 
     implementation("io.micronaut.sql:micronaut-jdbc-hikari")
-    implementation group: 'org.apache.groovy', name: 'groovy-json', version: '4.0.19'
-    implementation group: 'org.apache.groovy', name: 'groovy-xml', version: '4.0.25'
+    implementation('org.apache.groovy:groovy-json:4.0.19')
+    implementation('org.apache.groovy:groovy-xml:4.0.25')
 
 
     // Security
@@ -50,8 +60,8 @@ dependencies {
     implementation("io.micronaut.security:micronaut-security-oauth2")
     implementation("io.micronaut.security:micronaut-security-jwt")
 
-    implementation group: 'org.jboss.resteasy', name: 'resteasy-client', version: '7.0.0.Alpha4'
-    testImplementation group: 'org.htmlunit', name: 'htmlunit', version: '4.6.0'
+    implementation('org.jboss.resteasy:resteasy-client:7.0.0.Alpha4')
+    testImplementation('org.htmlunit:htmlunit:4.6.0')
     //Email
     implementation("io.micronaut.email:micronaut-email-javamail")
     runtimeOnly("org.eclipse.angus:angus-mail")
@@ -63,28 +73,29 @@ dependencies {
     testRuntimeOnly("org.postgresql:postgresql")
 
 
-    implementation group: 'org.apache.commons', name: 'commons-rng-simple', version: '1.5'
-    implementation group: 'org.apache.commons', name: 'commons-text', version: '1.10.0'
+    implementation('org.apache.commons:commons-rng-simple:1.5')
+    implementation('org.apache.commons:commons-text:1.15.0')
 
-
+    testRuntimeOnly "org.junit.platform:junit-platform-launcher"
     testImplementation "io.micronaut.test:micronaut-test-spock"
     testImplementation("org.spockframework:spock-core") {
         exclude group: "org.codehaus.groovy", module: "groovy-all"
     }
 
     testImplementation 'org.reflections:reflections:0.10.2'
+
+    codenarc 'org.apache.groovy:groovy-all:4.0.24'
+    codenarc 'org.codenarc:CodeNarc:3.6.0-groovy-4.0'
+
 }
 
 
 application {
     mainClass.set("org.maurodata.controller.Application")
 }
-java {
-    sourceCompatibility = JavaVersion.toVersion("17")
-    targetCompatibility = JavaVersion.toVersion("17")
-}
 
-graalvmNative.toolchainDetection = false
+//graalvmNative.toolchainDetection = false
+
 micronaut {
     runtime("netty")
     testRuntime("spock2")
@@ -105,39 +116,9 @@ micronaut {
     }
 }
 
-publishing {
-    repositories {
-        maven {
-            name = "MauroSnapshotRepository"
-            url = "https://mauro-repository.com/libs-snapshot-local"
-            credentials(PasswordCredentials)
-            authentication {
-                basic(BasicAuthentication)
-            }
-        }
-    }
-
-    publications {
-        mavenJava(MavenPublication) {
-            groupId = 'org.maurodata'
-            artifactId = 'mauro-api'
-            version = "0.0.1-beta"
-            from components.java
-        }
-    }
-}
-
-dependencies {
-    implementation project(':mauro-domain')
-    implementation project(':mauro-client')
-    implementation project(':mauro-persistence')
-
-    testImplementation testFixtures(project(':mauro-client'))          // Pull in the filter that overwrites the port
-    testImplementation testFixtures(project(':mauro-persistence'))     // Pull in the containerized testing definition
-}
 
 codenarc {
-    toolVersion = "3.3.0-groovy-4.0"
+    toolVersion = "3.6.0-groovy-4.0"
     configFile = rootProject.file("config/codenarc/codenarc.groovy")
 }
 
@@ -150,6 +131,13 @@ codenarcTest {
 }
 
 [codenarcMain, codenarcTest]*.ignoreFailures = true
+
+docker {
+    registryCredentials {
+        username = System.getenv('DOCKER_USERNAME')
+        password = System.getenv('DOCKER_PASSWORD')
+    }
+}
 
 import groovy.json.JsonSlurper
 
@@ -191,16 +179,67 @@ def temurinDefault='21'
 def ubuntuDefault='noble'
 def detectLTS=false
 
-def dockerTag="eclipse-temurin:${latestLts('eclipse-temurin',temurinDefault,detectLTS)}-jre-${latestLts('ubuntu',ubuntuDefault,detectLTS)}"
+def dockerBaseImage="eclipse-temurin:${latestLts('eclipse-temurin',temurinDefault,detectLTS)}-jre-${latestLts('ubuntu',ubuntuDefault,detectLTS)}"
 
-tasks.register('printDockerTag') {
+def dockerIncludeDatabase = !gradle.startParameter.taskNames.any { it.contains('dockerBuild') && (it.contains("NoDatabase") || it.contains("Backend")) }
+def dockerIncludeUI = !gradle.startParameter.taskNames.any { it.contains('dockerBuild') && it.contains("Backend") }
+def dockerBackendOnly = !dockerIncludeDatabase && !dockerIncludeUI
+def dockerMultiArch = gradle.startParameter.taskNames.any { it.contains('dockerBuild') && (it.contains("MultiArch") || it.contains("Backend"))}
+
+def dockerHost=System.getenv('DOCKER_HOST')?:project.findProperty('dockerHost')?:null
+def dockerPort=dockerHost?(System.getenv('DOCKER_PORT')?:project.findProperty('dockerPort')?:null):null
+def dockerHostPort=[dockerHost,dockerPort].findAll { it != null && !it.isEmpty() }.join(':')
+
+def DOCKER_NAMESPACE=System.getenv('DOCKER_NAMESPACE')
+def dockerNamespaceProp = project.findProperty('dockerNamespace')
+def dockerNamespace=DOCKER_NAMESPACE!=null?DOCKER_NAMESPACE:dockerNamespaceProp!=null?dockerNamespaceProp:'maurodatamapper'
+
+def dockerRepository=System.getenv('DOCKER_REPOSITORY')?:project.findProperty('dockerRepository')?:'mauro'
+
+
+def DOCKER_TAG=System.getenv('DOCKER_TAG')
+def dockerTagProp=project.findProperty('dockerTag')
+def dockerTag=DOCKER_TAG!=null?DOCKER_TAG:dockerTagProp!=null?dockerTagProp:"${version}"
+
+def DOCKER_PREFIX=System.getenv('DOCKER_PREFIX')
+def dockerTagPrefixProp=project.findProperty('dockerTagPrefix')
+def dockerTagPrefix=dockerTag?(DOCKER_PREFIX!=null?DOCKER_PREFIX:dockerTagPrefixProp!=null?dockerTagPrefixProp:[(dockerMultiArch?null:"${System.getProperty('os.arch')}"),(dockerBackendOnly?'backend':null),(!dockerBackendOnly && !dockerIncludeDatabase?'nodb':null)].findAll {it != null && !it.isEmpty() }.join('-')):null
+
+def dockerHostPortAndNamespace=[(dockerHostPort?dockerHostPort:null),(dockerNamespace?dockerNamespace:null)].findAll { it != null && !it.isEmpty() }.join('/')
+def dockerHostPortAndNamespaceAndRepository=[dockerHostPortAndNamespace,dockerRepository].findAll { it != null && !it.isEmpty() }.join('/')
+def dockerTagWithPrefix="${dockerTagPrefix != null && !dockerTagPrefix.isEmpty()?dockerTagPrefix+'-':''}${dockerTag}"
+
+def dockerPushImage = [dockerHostPortAndNamespaceAndRepository,dockerTagWithPrefix].findAll { it != null && !it.isEmpty() }.join(':')
+
+/*
+https://docs.docker.com/reference/cli/docker/image/tag/#extended-description
+dockerPushImage = [DOCKER_HOST[:DOCKER_PORT]/][DOCKER_NAMESPACE/]DOCKER_REPOSITORY[:[DOCKER_PREFIX-]DOCKER_TAG]
+*/
+
+tasks.register('printDockerBaseImage') {
     doLast {
-        println "Would use Docker base image: ${dockerTag}"
+        println "Would use Docker base image: ${dockerBaseImage}"
+    }
+}
+
+tasks.register('printDockerPushImage') {
+    doLast {
+        println "Would push to : ${dockerPushImage}"
     }
 }
 
 tasks.register('fetchMDMUI') {
     doLast {
+        if(!dockerIncludeUI) {
+
+            if(uiTargetDir.exists()) {
+                println "Removing UI files"
+                project.delete(uiTargetDir)
+            }
+
+            return
+        }
+
         println "Fetching UI list from $uiRepoApi"
         def jsonText = new URI(uiRepoApi).toURL().getText(requestProperties: ['Accept': 'application/json'])
         def parsed = new JsonSlurper().parseText(jsonText)
@@ -216,7 +255,7 @@ tasks.register('fetchMDMUI') {
         }
 
         def downloadUrl = "${mauroRepository}/${repositoryPath}/${fileName}"
-        println "Downloading UI: $fileName"
+        println "Downloading UI: $fileName from ${downloadUrl}"
         uiTargetDir.mkdirs()
 
         def tmpFile = File.createTempFile('mdmui', '.tgz')
@@ -224,25 +263,33 @@ tasks.register('fetchMDMUI') {
             out << new URI(downloadUrl).toURL().openStream()
         }
 
-        println "Extracting UI into ${uiTargetDir.absolutePath}"
-        project.exec {
-            commandLine 'tar', '-xzf', tmpFile.absolutePath, '-C', uiTargetDir.absolutePath, '--strip-components=1'
-        }
+        println "Extracting UI ${tmpFile.absolutePath} into ${uiTargetDir.absolutePath}"
+
+        def processTar = ['tar', '-xzf', tmpFile.absolutePath, '-C', uiTargetDir.absolutePath, '--strip-components=1'].execute()
+        processTar.waitFor()
+
         tmpFile.delete()
 
         println "Patching Angular API endpoint to relative /api"
         def jsFiles = fileTree(dir: uiTargetDir, include: 'main.*.js').files
 
         if (jsFiles) {
-            project.exec {
-                workingDir uiTargetDir
 
-                // macOS BSD sed needs an empty string after -i, GNU sed does not
-                def sedInlineArgs = System.getProperty("os.name").toLowerCase().contains("mac") ?
-                                    ['-i', ''] : ['-i']
+            def sedInlineArgs = System.getProperty("os.name").toLowerCase().contains("mac") ?
+                                ['-i', ''] : ['-i']
 
-                commandLine 'sed', *sedInlineArgs, 's|this.apiEndpoint="http://localhost:8080/api"|this.apiEndpoint="/api"|g', *jsFiles*.absolutePath
-            }
+            def jsFilePaths = jsFiles.collect { it.absolutePath }
+
+            def cmd = ['sed'] +
+                      sedInlineArgs +
+                      ['s|this.apiEndpoint="http://localhost:8080/api"|this.apiEndpoint="/api"|g'] +
+                      jsFilePaths
+
+            def processSed = new ProcessBuilder(cmd)
+            .directory(uiTargetDir)
+            .start()
+            processSed.waitFor()
+
         } else {
             logger.warn("No main.*.js files found in ${uiTargetDir}")
         }
@@ -251,60 +298,81 @@ tasks.register('fetchMDMUI') {
 
 tasks.named('dockerBuild') {
     dependsOn(tasks.named('fetchMDMUI'))
+    dependsOn(tasks.named('stageDockerFiles'))
+
+    images = [dockerPushImage]
+
+    println "🐳 Docker tag [ ${dockerPushImage} ]"
 }
 
 tasks.register('stageDockerFiles', Copy) {
-    from file('docker')
-    into project.layout.buildDirectory.dir("docker/main").get().asFile
-}
-
-tasks.named('dockerBuild') {
-    dependsOn 'stageDockerFiles'
+    def dockerMainScripts=project.layout.buildDirectory.dir("docker/main/scripts").get().asFile
+    if(dockerMainScripts.exists()){
+        delete(dockerMainScripts)
+    }
+    mkdir(dockerMainScripts)
+    if(!dockerIncludeDatabase) {
+        from file('docker/noDB')
+        into dockerMainScripts
+    } else {
+        from file('docker/all')
+        into dockerMainScripts
+    }
 }
 
 tasks.named("dockerfile") {
-    baseImage("${dockerTag}")
+    baseImage("${dockerBaseImage}")
 
-    instruction """
-ENV MICRONAUT_ENVIRONMENTS=docker
-ENV DATABASE_NAME=sandbox
-ENV DATABASE_USERNAME=sandbox
-ENV DATABASE_PASSWORD=sandbox
+    def instructions
 
-ENV INIT_DIR=/opt/init
-ENV DATABASE_DIRECTORY=/var/lib/postgresql/data
-ENV LOGS_DIRECTORY=/var/logs
-ENV DATABASE_LOGS_DIRECTORY=\${LOGS_DIRECTORY}/postgres
-ENV DATABASE_SNAPSHOTS_DIRECTORY=/database
+    if(!dockerIncludeDatabase) {
+        instructions = file('docker/noDB/instructions').text
+    } else {
+        instructions = file('docker/all/instructions').text
+    }
 
-RUN apt-get update && apt-get install -y --no-install-recommends postgresql postgresql-contrib unzip iproute2 && rm -rf /var/lib/apt/lists/*
-RUN mkdir -p \${DATABASE_DIRECTORY} && chown -R postgres:postgres /var/lib/postgresql
-RUN mkdir -p \${LOGS_DIRECTORY} && mkdir -p \${DATABASE_LOGS_DIRECTORY} && chown -R postgres:postgres \${DATABASE_LOGS_DIRECTORY}
-VOLUME ["\${DATABASE_DIRECTORY}","\${DATABASE_LOGS_DIRECTORY}"]
-RUN mkdir -p \${DATABASE_SNAPSHOTS_DIRECTORY} && chown -R postgres:postgres \${DATABASE_SNAPSHOTS_DIRECTORY}
-VOLUME ["\${DATABASE_SNAPSHOTS_DIRECTORY}"]
-RUN mkdir -p \${INIT_DIR}
-VOLUME ["\${INIT_DIR}"]
+    instruction "${instructions}"
 
-COPY postgres/* /usr/local/bin/
-COPY micronaut/* /usr/local/bin/
-COPY startup/* /usr/local/bin/
-RUN chmod +x /usr/local/bin/*
+    outputs.file("build/docker/main/Dockerfile")
 
-EXPOSE 5432
-ENTRYPOINT ["docker-startup.sh"]
-    """
-}
-
-tasks.named("dockerBuild") {
-    dependsOn("injectEnvIntoDockerfile")
-}
-
-tasks.register("injectEnvIntoDockerfile") {
     doLast {
         def dockerfile = file("build/docker/main/Dockerfile")
         def contents = dockerfile.text
         int entrypointPos = contents.lastIndexOf('ENTRYPOINT')
         dockerfile.text = dockerfile.text.substring(0,entrypointPos)
     }
+}
+
+tasks.register('dockerBuildMultiArch') {
+    dependsOn(tasks.named('buildLayers'))
+    dependsOn(tasks.named('dockerfile'))
+    dependsOn(tasks.named('fetchMDMUI'))
+    dependsOn(tasks.named('stageDockerFiles'))
+
+    def locationFile = project.layout.buildDirectory.dir("docker/main").get().asFile
+
+    doLast {
+        println "🐳 Running docker build with multi-arch buildx command..."
+        println "🐳 Docker tag [ ${dockerPushImage} ]"
+
+        def location = locationFile.absolutePath
+
+        def processBuilderDockerx = new ProcessBuilder('docker', 'buildx', 'build', '--platform', 'linux/amd64,linux/arm64', '--tag', "${dockerPushImage}", "${location}")
+        processBuilderDockerx.inheritIO()
+        def processDockerx = processBuilderDockerx.start()
+        def rc = processDockerx.waitFor()
+        if (rc != 0) throw new GradleException("buildx failed (${rc})")
+    }
+}
+
+tasks.register('dockerBuildNoDatabase') {
+    dependsOn(tasks.named('dockerBuild'))
+}
+
+tasks.register('dockerBuildMultiArchNoDatabase') {
+    dependsOn(tasks.named('dockerBuildMultiArch'))
+}
+
+tasks.register('dockerBuildBackend') {
+    dependsOn(tasks.named('dockerBuildMultiArch'))
 }

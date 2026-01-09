@@ -31,8 +31,8 @@ abstract class DataClassComponentRepository implements ModelItemRepository<DataC
     }
 
     @Nullable
-    List<DataClassComponentDTO> findAllByParentAndPathIdentifier(UUID item, String pathIdentifier) {
-        dataClassComponentDTORepository.findAllByParentAndPathIdentifier(item,pathIdentifier)
+    List<DataClassComponent> findAllByParentAndPathIdentifier(UUID item, String pathIdentifier) {
+        dataClassComponentDTORepository.findAllByParentAndPathIdentifier(item, pathIdentifier) as List<DataClassComponent>
     }
 
     @Nullable
@@ -45,11 +45,20 @@ abstract class DataClassComponentRepository implements ModelItemRepository<DataC
         dataClassComponentDTORepository.findAllByDataFlowId((dataFlow as DataFlow).id) as List<DataClassComponent>
     }
 
+    abstract List<DataClassComponent> readAllByDataFlowIdIn(List<UUID> dataFlowIds)
+
+
     @Nullable
     List<DataClassComponent> readAllByParent(AdministeredItem parent) {
         readAllByDataFlow((DataFlow) parent)
     }
 
+
+    @Nullable
+    @Override
+    List<DataClassComponentDTO> findAllByLabel(String label) {
+        dataClassComponentDTORepository.findAllByLabel(label)
+    }
 
     /**
      * Add sourcedataClass to dataClassComponent

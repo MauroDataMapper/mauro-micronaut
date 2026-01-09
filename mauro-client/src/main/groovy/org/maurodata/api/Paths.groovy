@@ -12,6 +12,7 @@ interface Paths {
     String ADMIN_IMPORTERS_LIST = '/api/admin/providers/importers'
     String ADMIN_EXPORTERS_LIST = '/api/admin/providers/exporters'
     String ADMIN_EMAILERS_LIST = '/api/admin/providers/emailers'
+    String ADMIN_DATALOADERS_LIST = '/api/admin/providers/dataLoaders'
     String ADMIN_EMAIL_SEND_TEST = '/api/admin/email/sendTestEmail'
     String ADMIN_EMAIL_TEST_CONNECTION = '/api/admin/email/testConnection'
     String ADMIN_EMAILS = '/api/admin/emails'
@@ -64,6 +65,7 @@ interface Paths {
     String SESSION_AUTH_DETAILS = '/api/session/authenticationDetails'
     String SESSION_CHECK_AUTHENTICATED = '/api/session/checkAuthenticated'
     String SESSION_CHECK_ANONYMOUS = '/api/session/checkAnonymous'
+    String SESSION_ADMIN_ACTIVE_SESSIONS = '/api/admin/activeSessions'
 
     /*
     * DataClassComponentApi
@@ -88,7 +90,10 @@ interface Paths {
     String DATA_FLOW_LIST = '/api/dataModels/{dataModelId}/dataFlows'
     String DATA_FLOW_ID = '/api/dataModels/{dataModelId}/dataFlows/{id}'
     String DATA_FLOW_LIST_PAGED = '/api/dataModels/{dataModelId}/dataFlows{?params*}'
-
+    String DATA_FLOW_EXPORT = '/api/dataModels/{dataModelId}/dataFlows/{id}/export{/namespace}{/name}{/version}'
+    String DATA_FLOW_IMPORT = '/api/dataModels/{dataModelId}/dataFlows/import{/namespace}{/name}{/version}'
+    String DATA_FLOW_EXPORTERS = '/api/dataFlows/providers/exporters'
+    String DATA_FLOW_IMPORTERS = '/api/dataFlows/providers/importers'
     /*
     * DataClassApi
     */
@@ -99,7 +104,7 @@ interface Paths {
     String DATA_CLASS_EXTENDS = '/api/dataModels/{dataModelId}/dataClasses/{id}/extends/{otherModelId}/{otherClassId}'
     String DATA_CLASS_DOI = '/api/dataClasses/{id}/doi'
     String DATA_CLASS_SEARCH = '/api/dataModels/{dataModelId}/dataClasses{?params*}'
-    String DATA_CLASS_COPY = '/api/dataModels/{dataModelId}/dataClasses/{otherModelId}/{dataClassId}'
+    String DATA_CLASS_COPY = '/api/dataModels/{toDataModelId}/dataClasses/{fromDataModelId}/{dataClassId}'
     String ALL_DATA_CLASSES = '/api/dataModels/{dataModelId}/allDataClasses'
 
     /*
@@ -129,12 +134,11 @@ interface Paths {
     String DATA_MODEL_SEARCH_GET = '/api/dataModels/{id}/search{?requestDTO*}'
     String DATA_MODEL_SEARCH_POST = '/api/dataModels/{id}/search'
     String DATA_MODEL_IMPORTERS = '/api/dataModels/providers/importers'
-    String DATA_MODEL_EXPORTERS = '/api/dataModels/providers/importers'
+    String DATA_MODEL_EXPORTERS = '/api/dataModels/providers/exporters'
     String DATA_MODEL_SUBSET = '/api/dataModels/{id}/subset/{otherId}'
     String DATA_MODEL_INTERSECTS_MANY = '/api/dataModels/{id}/intersectsMany'
     String DATA_MODEL_READ_BY_AUTHENTICATED = '/api/dataModels/{id}/readByAuthenticated'
     String DATA_MODEL_READ_BY_EVERYONE = '/api/dataModels/{id}/readByEveryone'
-    String DATA_MODEL_VERSION_LINKS = '/api/dataModels/{id}/versionLinks'
     String DATA_MODEL_SIMPLE_MODEL_VERSION_TREE = '/api/dataModels/{id}/simpleModelVersionTree'
     String DATA_MODEL_MODEL_VERSION_TREE = '/api/dataModels/{id}/modelVersionTree'
     String DATA_MODEL_CURRENT_MAIN_BRANCH = '/api/dataModels/{id}/currentMainBranch'
@@ -152,8 +156,14 @@ interface Paths {
     * DataTypeApi
     */
     String DATA_TYPE_LIST = '/api/dataModels/{dataModelId}/dataTypes'
-    String DATA_TYPE_ID = '/api/dataModels/{dataModelId}/dataTypes/{id}'
     String DATA_TYPE_LIST_PAGED = '/api/dataModels/{dataModelId}/dataTypes{?params*}'
+    String DATA_TYPE_ID = '/api/dataModels/{dataModelId}/dataTypes/{id}'
+    String DATA_TYPE_DATA_ELEMENTS = '/api/dataModels/{dataModelId}/dataTypes/{dataTypeId}/dataElements'
+    String DATA_TYPE_DATA_ELEMENTS_PAGED = '/api/dataModels/{dataModelId}/dataTypes/{dataTypeId}/dataElements{?params*}'
+    String PRIMITIVETYPE_DOI = '/api/primitiveTypes/{id}/doi'
+    String ENUMERATIONTYPE_DOI = '/api/enumerationTypes/{id}/doi'
+    String REFERENCETYPE_DOI = '/api/referenceTypes/{id}/doi'
+
 
     /*
     * EnumerationValueApi
@@ -186,7 +196,7 @@ interface Paths {
     String EDIT_LIST_PAGED = '/api/{domainType}/{domainId}/edits{?params*}'
 
     /*
-    * EditApi
+    * SemanticLinksApi
     */
     String SEMANTIC_LINKS_LIST = '/api/{domainType}/{domainId}/semanticLinks'
     String SEMANTIC_LINKS_ID = '/api/{domainType}/{domainId}/semanticLinks/{id}'
@@ -226,6 +236,14 @@ interface Paths {
     String SUMMARY_METADATA_REPORTS_LIST = '/api/{domainType}/{domainId}/summaryMetadata/{summaryMetadataId}/summaryMetadataReports'
     String SUMMARY_METADATA_REPORTS_ID = '/api/{domainType}/{domainId}/summaryMetadata/{summaryMetadataId}/summaryMetadataReports/{id}'
     String SUMMARY_METADATA_REPORTS_LIST_PAGED = '/api/{domainType}/{domainId}/summaryMetadata/{summaryMetadataId}/summaryMetadataReports{?params*}'
+
+    /*
+    * VersionLinksApi
+    */
+    String VERSION_LINKS_LIST = '/api/{domainType}/{domainId}/versionLinks'
+    String VERSION_LINKS_ID = '/api/{domainType}/{domainId}/versionLinks/{id}'
+    String VERSION_LINKS_LIST_PAGED = '/api/{domainType}/{domainId}/versionLinks{?params*}'
+
 
     /*
     * FolderApi
@@ -294,12 +312,15 @@ interface Paths {
     String PROFILE_ITEM = '/api/{domainType}/{domainId}/profile/{namespace}/{name}{/version}'
     String PROFILE_ITEM_VALIDATE = '/api/{domainType}/{domainId}/profile/{namespace}/{name}{/version}/validate'
     String PROFILE_NAMESPACES = '/api/metadata/namespaces{/prefix}'
+    String PROFILE_ITEM_GET_MANY = '/api/{domainType}/{domainId}/profile/getMany'
+    String PROFILE_ITEM_VALIDATE_MANY = '/api/{domainType}/{domainId}/profile/validateMany'
+    String PROFILE_ITEM_SAVE_MANY = '/api/{domainType}/{domainId}/profile/saveMany'
 
     /*
     * SearchApi
     */
-    String SEARCH_GET = '/api/search{?requestDTO*}'
-    String SEARCH_POST = '/api/search'
+    String SEARCH_GET = '/api/catalogueItems/search{?requestDTO*}'
+    String SEARCH_POST = '/api/catalogueItems/search'
 
     /*
     * OpenidProviderApi
@@ -312,10 +333,15 @@ interface Paths {
     String USER_ADMIN_REGISTER = '/api/admin/catalogueUsers/adminRegister'
     String USER_CURRENT_USER = '/api/catalogueUsers/currentUser'
     String USER_CHANGE_PASSWORD = '/api/catalogueUsers/currentUser/changePassword'
+    String USER_ID_CHANGE_PASSWORD = '/api/catalogueUsers/{id}/changePassword'
     String USER_ID = '/api/catalogueUsers/{id}'
     String USER_PREFERENCES = '/api/catalogueUsers/{id}/userPreferences'
     String USER_IMAGE = '/api/catalogueUsers/{id}/image'
-
+    String USER_ADMIN_PENDING_PAGED = '/api/admin/catalogueUsers/pending{?params*}{?disabled}'
+    String USER_ADMIN_USER_EXISTS = '/api/admin/catalogueUsers/userExists/{username}'
+    String USER_LIST = '/api/catalogueUsers'
+    String USER_ADMIN_PASSWORD_RESET= '/api/admin/catalogueUsers/{id}/adminPasswordReset'
+    String USER_SEARCH_POST = '/api/catalogueUsers/search'
 
     /*
     * SecurableResourceGroupRoleApi
@@ -328,6 +354,9 @@ interface Paths {
     */
 
     String USER_GROUP_LIST = '/api/userGroups'
+    String USER_GROUP_ID = '/api/userGroups/{id}'
+    String USER_GROUP_CATALOGUE_USERS_PAGED = '/api/userGroups/{id}/catalogueUsers{?params*}'
+    String USER_GROUP_ID_CATALOGUE_USERS_ID = '/api/userGroups/{userGroupId}/catalogueUsers/{id}'
 
     /*
     * CodeSetApi
@@ -346,6 +375,7 @@ interface Paths {
     String CODE_SET_DOI = '/api/codeSets/{id}/doi'
     String CODE_SET_LIST_PAGED = '/api/codeSets{?params*}'
     String CODE_SET_TERM_LIST_PAGED = '/api/codeSets/{id}/terms{?params*}'
+    String CODE_SET_IMPORT = '/api/codeSets/import/{namespace}/{name}{/version}'
     String CODE_SET_SIMPLE_MODEL_VERSION_TREE = '/api/codeSets/{id}/simpleModelVersionTree{?branchesOnly}'
 
 
@@ -472,4 +502,19 @@ interface Paths {
     */
     String REFERENCE_DATA_MODELS_LIST = '/api/referenceDataModels'
     String FOLDER_REFERENCE_DATA_MODELS= '/api/folders/{id}/referenceDataModels'
+
+    String RESOURCE_BY_PATH = '/api/{domainType}/path/{path}'
+    String RESOURCE_BY_PATH_FROM_RESOURCE = '/api/{domainType}/{domainId}/path/{path}'
+
+    /*
+    * DomainExportsApi
+    */
+
+    String DOMAIN_EXPORTS_LIST_PAGED = '/api/domainExports{?params*}'
+
+    /*
+    * JobsApi
+    */
+
+    String JOBS_LIST_PAGED = '/api/asyncJobs{?params*}'
 }

@@ -1,6 +1,7 @@
 package org.maurodata.persistence.terminology.dto
 
 import org.maurodata.domain.terminology.TermRelationship
+import org.maurodata.domain.terminology.TermRelationshipType
 
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.Nullable
@@ -44,4 +45,9 @@ abstract class TermRelationshipDTORepository implements GenericRepository<TermRe
     @Nullable
     @Query('SELECT * FROM terminology.term_relationship WHERE target_term_id = :item AND label = :pathIdentifier')
     abstract List<TermRelationship> findAllByParentAndPathIdentifier(UUID item, String pathIdentifier)
+
+
+    @Query('SELECT * FROM terminology.term_relationship WHERE label = :label')
+    @Nullable
+    abstract List<TermRelationship> findAllByLabel(String label)
 }

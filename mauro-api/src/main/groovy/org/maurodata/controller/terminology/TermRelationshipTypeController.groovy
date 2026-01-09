@@ -3,7 +3,6 @@ package org.maurodata.controller.terminology
 import org.maurodata.api.Paths
 import org.maurodata.api.terminology.TermRelationshipTypeApi
 import org.maurodata.audit.Audit
-import org.maurodata.domain.terminology.TermRelationship
 import org.maurodata.web.PaginationParams
 
 import groovy.transform.CompileStatic
@@ -18,7 +17,7 @@ import org.maurodata.domain.terminology.TermRelationshipType
 import org.maurodata.domain.terminology.Terminology
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository.TermRelationshipTypeCacheableRepository
 import org.maurodata.persistence.cache.ModelCacheableRepository.TerminologyCacheableRepository
-import org.maurodata.persistence.terminology.TermRelationshipTypeContentRepository
+
 import org.maurodata.web.ListResponse
 
 @CompileStatic
@@ -26,9 +25,8 @@ import org.maurodata.web.ListResponse
 @Secured(SecurityRule.IS_ANONYMOUS)
 class TermRelationshipTypeController extends AdministeredItemController<TermRelationshipType, Terminology> implements TermRelationshipTypeApi {
 
-    TermRelationshipTypeController(TermRelationshipTypeCacheableRepository termRelationshipTypeRepository, TerminologyCacheableRepository terminologyRepository,
-                                   TermRelationshipTypeContentRepository termRelationshipTypeContentRepository) {
-        super(TermRelationshipType, termRelationshipTypeRepository, terminologyRepository, termRelationshipTypeContentRepository)
+    TermRelationshipTypeController(TermRelationshipTypeCacheableRepository termRelationshipTypeRepository, TerminologyCacheableRepository terminologyRepository) {
+        super(TermRelationshipType, termRelationshipTypeRepository, terminologyRepository)
     }
 
     @Audit

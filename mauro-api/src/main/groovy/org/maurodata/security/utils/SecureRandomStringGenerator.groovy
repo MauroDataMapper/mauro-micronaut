@@ -17,16 +17,19 @@
  */
 package org.maurodata.security.utils
 
+import groovy.transform.CompileStatic
 import org.apache.commons.rng.UniformRandomProvider
 import org.apache.commons.rng.simple.RandomSource
 import org.apache.commons.text.CharacterPredicates
 import org.apache.commons.text.RandomStringGenerator
 
 import java.nio.charset.Charset
+import java.util.function.IntUnaryOperator
 
 /**
  * @since 07/08/2017
  */
+@CompileStatic
 class SecureRandomStringGenerator {
 
     private SecureRandomStringGenerator() {
@@ -51,11 +54,12 @@ class SecureRandomStringGenerator {
      */
     static RandomStringGenerator alphanumericGenerator() {
         UniformRandomProvider rng = RandomSource.MT.create()
+
         return new RandomStringGenerator.Builder()
                 .withinRange(MINIMUM_CODEPOINT, MAXIMUM_CODEPOINT)
-                .usingRandom(rng::nextInt)
+                .usingRandom({ int bound -> rng.nextInt(bound)} as IntUnaryOperator)
                 .filteredBy(CharacterPredicates.LETTERS, CharacterPredicates.DIGITS)
-                .build()
+                .get()
     }
 
     /**
@@ -68,12 +72,14 @@ class SecureRandomStringGenerator {
         UniformRandomProvider rng = RandomSource.MT.create()
         return new RandomStringGenerator.Builder()
                 .withinRange(MINIMUM_CODEPOINT, MAXIMUM_CODEPOINT)
-                .usingRandom(rng::nextInt)
-                .build()
+                .usingRandom(rng::nextInt() as IntUnaryOperator)
+                .get()
     }
 
     static byte[] generateSalt() {
-        return fullGenerator().generate(8).getBytes(Charset.defaultCharset())
+        final byte[] salt = new byte[16]
+        UniformRandomProvider rng = RandomSource.MT.create()
+        rng.nextBytes(salt)
+        return salt
     }
-
 }

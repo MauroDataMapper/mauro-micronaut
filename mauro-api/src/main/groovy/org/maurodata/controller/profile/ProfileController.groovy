@@ -1,7 +1,7 @@
 package org.maurodata.controller.profile
 
 import org.maurodata.api.Paths
-import org.maurodata.api.profile.MetadataNamespaceDTO
+import org.maurodata.api.profile.dto.MetadataNamespaceDTO
 import org.maurodata.api.profile.ProfileApi
 import org.maurodata.audit.Audit
 import org.maurodata.controller.model.AdministeredItemReader
@@ -10,6 +10,7 @@ import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.domain.security.Role
 import org.maurodata.persistence.cache.FacetCacheableRepository.MetadataCacheableRepository
 import org.maurodata.persistence.facet.MetadataRepository
+import org.maurodata.persistence.model.PathRepository
 import org.maurodata.persistence.profile.DynamicProfileService
 import org.maurodata.plugin.MauroPluginDTO
 import org.maurodata.profile.DataModelBasedProfile
@@ -52,6 +53,9 @@ class ProfileController implements AdministeredItemReader, ProfileApi {
 
     @Inject
     MetadataCacheableRepository metadataCacheableRepository
+
+    @Inject
+    PathRepository pathRepository
 
     ProfileController() {}
 
@@ -155,14 +159,19 @@ class ProfileController implements AdministeredItemReader, ProfileApi {
     @Audit
     @Post(Paths.PROFILE_ITEM)
     AppliedProfile applyProfile(String domainType, UUID domainId, String namespace, String name, @Nullable String version, @Body Map bodyMap) {
-        AdministeredItem administeredItem = readAdministeredItem(domainType, domainId)
+        AdministeredItem administeredItem = findAdministeredItem(domainType, domainId)
         accessControlService.canDoRole(Role.EDITOR, administeredItem)
         Profile profile = getProfileByName(namespace, name, version)
         handleProfileNotFound(profile, namespace, name, version)
         // Overwrite applied profile with metadata items from the bodyMap
         AppliedProfile appliedProfile = new AppliedProfile(profile, administeredItem, bodyMap)
         List<Metadata> profileMetadata = appliedProfile.metadata
-        metadataCacheableRepository.saveAll(profileMetadata)
+
+        // First delete the metadata saved previously for this profile
+        metadataCacheableRepository.deleteAll(administeredItem.metadata.findAll {it.namespace == appliedProfile.metadataNamespace})
+
+        // Then save the profile items as new metadata
+        metadataCacheableRepository.saveAll(profileMetadata.findAll {it.value})
         appliedProfile
     }
 
@@ -197,5 +206,77 @@ class ProfileController implements AdministeredItemReader, ProfileApi {
             throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Profile with namespace: ${namespace}, name: ${name} and version: ${version} not found")
         }
     }
+
+    // TODO: Refactor this to reuse existing classes / DTOs
+    @Audit
+    @Post(Paths.PROFILE_ITEM_GET_MANY)
+    Map getMany(String domainType, UUID domainId, @Body Map bodyMap) {
+        List<AdministeredItem> administeredItems = bodyMap['multiFacetAwareItems'].collect {
+            findAdministeredItem(it['multiFacetAwareItemDomainType'] as String, UUID.fromString(it['multiFacetAwareItemId'] as String))
+        }
+        administeredItems.each {
+            pathRepository.readParentItems(it)
+            it.updateBreadcrumbs()
+        }
+        Map profileMap = (bodyMap['profileProviderServices']as List)[0] as Map
+
+        Profile profile = getProfileByName(profileMap['namespace'] as String, profileMap['name'] as String, profileMap['version'] as String)
+
+        [count: administeredItems.size(), profilesProvided: administeredItems.collect {administeredItem ->
+            [profile: new AppliedProfile(profile, administeredItem), multiFacetAwareItem: administeredItem, profileProviderService: MauroPluginDTO.fromPlugin(profile)]
+        }]
+    }
+
+    // TODO: Refactor this to reuse existing classes / DTOs
+    @Audit
+    @Post(Paths.PROFILE_ITEM_VALIDATE_MANY)
+    Map validateMany(String domainType, UUID domainId, @Body Map bodyMap) {
+
+        List<Map> appliedProfileMap = (bodyMap['profilesProvided'] as List).collect { profileProvided ->
+            Profile profile = getProfileByName(profileProvided['profileProviderService']['namespace'] as String, profileProvided['profileProviderService']['name'] as String, profileProvided['profileProviderService']['version'] as String)
+            AdministeredItem administeredItem =
+                findAdministeredItem(
+                    profileProvided['profile']['domainType'] as String,
+                    UUID.fromString(profileProvided['profile']['id'] as String))
+            AppliedProfile appliedProfile = new AppliedProfile(profile, administeredItem, profileProvided['profile'] as Map)
+            [ profile: appliedProfile,
+              multiFacetAwareItem: administeredItem,
+              profileProviderService: MauroPluginDTO.fromPlugin(profile),
+              errors: appliedProfile.errors ] as Map
+        }
+
+        [count: appliedProfileMap.size(), profilesProvided: appliedProfileMap]
+    }
+
+    // TODO: Refactor this to reuse existing classes / DTOs
+    @Audit
+    @Post(Paths.PROFILE_ITEM_SAVE_MANY)
+    Map saveMany(String domainType, UUID domainId, @Body Map bodyMap) {
+        List<Map> appliedProfileMap = (bodyMap['profilesProvided'] as List).collect { profileProvided ->
+            Profile profile = getProfileByName(profileProvided['profileProviderService']['namespace'] as String, profileProvided['profileProviderService']['name'] as String, profileProvided['profileProviderService']['version'] as String)
+            AdministeredItem administeredItem =
+                findAdministeredItem(
+                    profileProvided['profile']['domainType'] as String,
+                    UUID.fromString(profileProvided['profile']['id'] as String))
+            AppliedProfile appliedProfile = new AppliedProfile(profile, administeredItem, profileProvided['profile'] as Map)
+
+            List<Metadata> profileMetadata = appliedProfile.metadata
+
+            // First delete the metadata saved previously for this profile
+            metadataCacheableRepository.deleteAll(administeredItem.metadata.findAll {it.namespace == appliedProfile.metadataNamespace})
+
+            // Then save the profile items as new metadata
+            metadataCacheableRepository.saveAll(profileMetadata.findAll {it.value})
+
+            [ profile: appliedProfile,
+              multiFacetAwareItem: administeredItem,
+              profileProviderService: MauroPluginDTO.fromPlugin(profile),
+              errors: appliedProfile.errors ] as Map
+
+        }
+        [count: appliedProfileMap.size(), profilesProvided: appliedProfileMap]
+    }
+
+
 
 }

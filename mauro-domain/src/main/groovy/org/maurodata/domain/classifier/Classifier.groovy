@@ -1,5 +1,11 @@
 package org.maurodata.domain.classifier
 
+import org.maurodata.domain.model.Item
+import org.maurodata.domain.model.ItemReference
+import org.maurodata.domain.model.ItemReferencer
+import org.maurodata.domain.model.ItemReferencerUtils
+import org.maurodata.domain.model.ItemUtils
+
 import com.fasterxml.jackson.annotation.JsonAlias
 import com.fasterxml.jackson.annotation.JsonIgnore
 import groovy.transform.AutoClone
@@ -12,9 +18,6 @@ import io.micronaut.data.annotation.Relation
 import jakarta.persistence.Inheritance
 import jakarta.persistence.InheritanceType
 import jakarta.persistence.Transient
-import org.maurodata.domain.datamodel.DataModel
-import org.maurodata.domain.diff.*
-
 import org.maurodata.domain.diff.BaseCollectionDiff
 import org.maurodata.domain.diff.CollectionDiff
 import org.maurodata.domain.diff.DiffBuilder
@@ -29,7 +32,7 @@ import org.maurodata.domain.model.ModelItem
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @MappedEntity(schema = 'core', value = 'classifier')
 @MapConstructor(includeSuperFields = true, includeSuperProperties = true, noArg = true)
-class Classifier extends ModelItem<ClassificationScheme> implements DiffableItem<Classifier> {
+class Classifier extends ModelItem<ClassificationScheme> implements DiffableItem<Classifier>, ItemReferencer {
 
     @JsonIgnore
     ClassificationScheme classificationScheme
@@ -47,6 +50,7 @@ class Classifier extends ModelItem<ClassificationScheme> implements DiffableItem
     @JsonIgnore
     AdministeredItem getParent() {
         parentClassifier?:classificationScheme
+
     }
 
     @Override
@@ -111,4 +115,71 @@ class Classifier extends ModelItem<ClassificationScheme> implements DiffableItem
         base
     }
 
+    @Override
+    void copyInto(Item into) {
+        super.copyInto(into)
+        Classifier intoClassifier = (Classifier) into
+        intoClassifier.classificationScheme = ItemUtils.copyItem(this.classificationScheme, intoClassifier.classificationScheme)
+        intoClassifier.childClassifiers = ItemUtils.copyItems(this.childClassifiers, intoClassifier.childClassifiers)
+        intoClassifier.parentClassifier = ItemUtils.copyItem(this.parentClassifier, intoClassifier.parentClassifier)
+        intoClassifier.breadcrumbTreeId = ItemUtils.copyItem(this.breadcrumbTreeId, intoClassifier.breadcrumbTreeId)
+    }
+
+    @Override
+    Item shallowCopy() {
+        Classifier classifierShallowCopy = new Classifier()
+        this.copyInto(classifierShallowCopy)
+        return classifierShallowCopy
+    }
+
+    @Transient
+    @JsonIgnore
+    @Override
+    List<ItemReference> retrieveItemReferences() {
+        List<ItemReference> pathsBeingReferenced = [] + super.retrieveItemReferences()
+
+        ItemReferencerUtils.addItem(classificationScheme, pathsBeingReferenced)
+        ItemReferencerUtils.addItems(childClassifiers, pathsBeingReferenced)
+
+        return pathsBeingReferenced
+    }
+
+    @Transient
+    @JsonIgnore
+    @Override
+    void replaceItemReferencesByIdentity(IdentityHashMap<Item, Item> replacements, Map<UUID, Item> allItemsById, List<Item> notReplaced) {
+        super.replaceItemReferencesByIdentity(replacements, allItemsById, notReplaced)
+        classificationScheme = ItemReferencerUtils.replaceItemByIdentity(classificationScheme, replacements, notReplaced)
+        parentClassifier = ItemReferencerUtils.replaceItemByIdentity(parentClassifier, replacements, notReplaced)
+        childClassifiers = ItemReferencerUtils.replaceItemsByIdentity(childClassifiers, replacements, notReplaced)
+    }
+
+    static Classifier build(
+        Map args,
+        @DelegatesTo(value = Classifier, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+        new Classifier(args).tap(closure)
+    }
+
+    static Classifier build(@DelegatesTo(value = Classifier, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+        build [:], closure
+    }
+
+    Classifier classifier(Classifier classifier) {
+        this.classifiers.add(classifier)
+        classifier.parentClassifier = this
+        this.classificationScheme.classifiers.add(classifier)
+        classifier
+    }
+
+    Classifier classifier(Map args, @DelegatesTo(value = Classifier, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+        Classifier classifier = build(args + [classificationScheme: this.classificationScheme], closure)
+        this.classifiers.add(classifier)
+        classifier.parentClassifier = this
+        this.classificationScheme.classifiers.add(classifier)
+        classifier
+    }
+
+    Classifier classifier(@DelegatesTo(value = Classifier, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+        classifier [:], closure
+    }
 }

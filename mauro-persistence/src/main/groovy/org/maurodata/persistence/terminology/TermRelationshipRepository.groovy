@@ -36,7 +36,7 @@ abstract class TermRelationshipRepository implements ModelItemRepository<TermRel
 
     @Nullable
     List<TermRelationship> findAllByParentAndPathIdentifier(UUID item, String pathIdentifier) {
-        termRelationshipDTORepository.findAllByParentAndPathIdentifier(item, pathIdentifier)
+        termRelationshipDTORepository.findAllByParentAndPathIdentifier(item, pathIdentifier) as List<TermRelationship>
     }
 
     @Nullable
@@ -56,6 +56,9 @@ abstract class TermRelationshipRepository implements ModelItemRepository<TermRel
     @Nullable
     abstract List<TermRelationship> readAllByTerminology(Terminology terminology)
 
+    @Nullable
+    abstract List<TermRelationship> readAllByTerminologyIdIn(Collection<UUID> terminologyIds)
+
     @Override
     @Nullable
     List<TermRelationship> readAllByParent(AdministeredItem parent) {
@@ -74,6 +77,12 @@ abstract class TermRelationshipRepository implements ModelItemRepository<TermRel
     @Nullable
     List<TermRelationship> findAllByTerminologyAndSourceTermOrTargetTerm(Terminology terminology, Term term) {
         termRelationshipDTORepository.findAllByTerminologyAndSourceTermOrTargetTerm(terminology, term, term) as List<TermRelationship>
+    }
+
+    @Override
+    @Nullable
+    List<TermRelationship> findAllByLabel(String label){
+        termRelationshipDTORepository.findAllByLabel(label)
     }
 
     @Override

@@ -2,6 +2,7 @@ package org.maurodata.service.email
 
 import org.maurodata.plugin.EmailPlugin
 
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
@@ -12,7 +13,7 @@ import org.maurodata.plugin.MauroPluginService
 
 import java.time.Instant
 
-
+@CompileStatic
 @Singleton
 @Slf4j
 class EmailService {

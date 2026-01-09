@@ -1,5 +1,10 @@
 package org.maurodata.controller.terminology
 
+import io.micronaut.http.MediaType
+import io.micronaut.http.annotation.Consumes
+import io.micronaut.http.server.multipart.MultipartBody
+import io.micronaut.scheduling.TaskExecutors
+import io.micronaut.scheduling.annotation.ExecuteOn
 import org.maurodata.ErrorHandler
 import org.maurodata.api.Paths
 import org.maurodata.api.model.ModelVersionedRefDTO
@@ -15,9 +20,10 @@ import org.maurodata.domain.security.Role
 import org.maurodata.domain.terminology.CodeSet
 import org.maurodata.domain.terminology.CodeSetService
 import org.maurodata.domain.terminology.Term
+import org.maurodata.domain.terminology.Terminology
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository
 import org.maurodata.persistence.cache.ModelCacheableRepository
-import org.maurodata.persistence.terminology.CodeSetContentRepository
+
 import org.maurodata.persistence.terminology.CodeSetRepository
 import org.maurodata.web.ListResponse
 import org.maurodata.web.PaginationParams
@@ -50,9 +56,10 @@ class CodeSetController extends ModelController<CodeSet> implements CodeSetApi {
     ModelCacheableRepository.CodeSetCacheableRepository codeSetRepository
 
     @Inject
-    CodeSetRepository codeSetRepositoryUnCached
+    ModelCacheableRepository.TerminologyCacheableRepository terminologyRepository
 
-    CodeSetContentRepository codeSetContentRepository
+    @Inject
+    CodeSetRepository codeSetRepositoryUnCached
 
     @Inject
     AdministeredItemCacheableRepository.TermCacheableRepository termRepository
@@ -60,12 +67,16 @@ class CodeSetController extends ModelController<CodeSet> implements CodeSetApi {
     CodeSetService codeSetService
 
     CodeSetController(ModelCacheableRepository.CodeSetCacheableRepository codeSetRepository, ModelCacheableRepository.FolderCacheableRepository folderRepository,
-                      CodeSetContentRepository codeSetContentRepository,
                       CodeSetService codeSetService) {
-        super(CodeSet, codeSetRepository, folderRepository, codeSetContentRepository, codeSetService)
+        super(CodeSet, codeSetRepository, folderRepository, codeSetService)
         this.codeSetRepository = codeSetRepository
-        this.codeSetContentRepository = codeSetContentRepository
         this.codeSetService = codeSetService
+    }
+
+    @Audit
+    @Get('/api/codeSets/undefined')
+    Map showUndef() {
+        [:]
     }
 
     @Audit
@@ -78,7 +89,31 @@ class CodeSetController extends ModelController<CodeSet> implements CodeSetApi {
     @Transactional
     @Post(value = Paths.FOLDER_LIST_CODE_SET)
     CodeSet create(UUID folderId, @Body @NonNull CodeSet codeSet) {
-        super.create(folderId, codeSet)
+        Set<Terminology> attachedTerminologies = codeSet.terminologies
+        codeSet.terminologies = null
+
+        Set<Term> attachedTerms = codeSet.terms
+        codeSet.terms = null
+
+        CodeSet newCodeSet = super.create(folderId, codeSet) as CodeSet
+
+        if(attachedTerminologies) {
+            attachedTerminologies.each {terminology ->
+               Terminology loadedTerminology = terminologyRepository.loadWithContent(terminology.id)
+               loadedTerminology.terms.each {term ->
+                   codeSetRepository.addTerm(newCodeSet.id, term.id)
+               }
+           }
+        }
+
+        if(attachedTerms) {
+            attachedTerms.each {term ->
+                codeSetRepository.addTerm(newCodeSet.id, term.id)
+            }
+        }
+
+        return newCodeSet
+
     }
 
     @Audit
@@ -148,7 +183,7 @@ class CodeSetController extends ModelController<CodeSet> implements CodeSetApi {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, 'CodeSet item not found')
         }
         accessControlService.checkRole(Role.READER, codeSet)
-        List<Term> associatedTerms = codeSetContentRepository.codeSetRepository.getTerms(id).each { it.updateBreadcrumbs() } as List<Term>
+        List<Term> associatedTerms = codeSetRepository.readTerms(id).each { it.updateBreadcrumbs() } as List<Term>
         ListResponse.from(associatedTerms, params)
     }
 
@@ -163,9 +198,9 @@ class CodeSetController extends ModelController<CodeSet> implements CodeSetApi {
     @Audit
     @Get(Paths.CODE_SET_DIFF)
     ObjectDiff diffModels(@NonNull UUID id, @NonNull UUID otherId) {
-        CodeSet codeSet = modelContentRepository.findWithContentById(id)
+        CodeSet codeSet = modelRepository.loadWithContent(id)
         ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, codeSet, "item not found : $id")
-        CodeSet other = modelContentRepository.findWithContentById(otherId)
+        CodeSet other = modelRepository.loadWithContent(otherId)
         ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, codeSet, "item not found : $otherId")
 
         accessControlService.checkRole(Role.READER, codeSet)
@@ -191,13 +226,25 @@ class CodeSetController extends ModelController<CodeSet> implements CodeSetApi {
         CodeSet existing = super.getExistingWithContent(id) as CodeSet
 
         CodeSet copy = createCopyModelWithAssociations(existing, createNewVersionData)
+        copy.setAssociations()
         copy.terms.clear()
-        CodeSet savedCopy = modelContentRepository.saveWithContent(copy)
-        List<Term> terms = codeSetContentRepository.codeSetRepository.getTerms(id) as List<Term>
+        CodeSet savedCopy = (CodeSet) contentsService.saveWithContent(copy)
+        List<Term> terms = termRepository.findAllByCodeSetsIdIn([id]) as List<Term>
         terms.each {
             addTerm(savedCopy.id, it.id)
         }
         savedCopy
+    }
+
+    @Override
+    @Audit(title = EditType.IMPORT, description = "Import codeSet")
+    @Transactional
+    @ExecuteOn(TaskExecutors.IO)
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @Post(Paths.CODE_SET_IMPORT)
+    ListResponse<CodeSet> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version) {
+        super.importModel(body, namespace, name, version)
+
     }
 
     //stub endpoint todo: actual

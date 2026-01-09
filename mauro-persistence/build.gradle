@@ -1,11 +1,11 @@
 plugins {
     id("groovy")
-    id("com.github.johnrengelman.shadow") version "8.1.1"
-    id("io.micronaut.library") version "4.4.5"
-    id("maven-publish")
+    //id("com.gradleup.shadow") version "9.0.0"
+    id("io.micronaut.library") version "4.6.1"
     id("codenarc")
     id("java-library")
     id("java-test-fixtures")
+    id "com.vanniktech.maven.publish" version "0.34.0"
 }
 
 
@@ -41,6 +41,7 @@ dependencies {
     testRuntimeOnly("org.testcontainers:testcontainers")
     testRuntimeOnly("org.testcontainers:postgresql")
     testRuntimeOnly("org.postgresql:postgresql")
+    testRuntimeOnly "org.junit.platform:junit-platform-launcher"
 
     testFixturesImplementation("io.micronaut.test:micronaut-test-spock")
     testFixturesImplementation("io.micronaut.sql:micronaut-jdbc-hikari")
@@ -49,47 +50,20 @@ dependencies {
 
     // To find flyway migrations in jars
     implementation 'io.github.classgraph:classgraph:4.8.158'
-}
 
-java {
-    sourceCompatibility = JavaVersion.toVersion("17")
-    targetCompatibility = JavaVersion.toVersion("17")
-    withJavadocJar()
-    withSourcesJar()
+    codenarc 'org.apache.groovy:groovy-all:4.0.24'
+    codenarc 'org.codenarc:CodeNarc:3.6.0-groovy-4.0'
+
+    implementation project(':mauro-domain')
 }
 
 test {
     useJUnitPlatform()
 }
 
-publishing {
-    repositories {
-        maven {
-            name = "MauroSnapshotRepository"
-            url = "https://mauro-repository.com/libs-snapshot-local"
-            credentials(PasswordCredentials)
-            authentication {
-                basic(BasicAuthentication)
-            }
-        }
-    }
-
-    publications {
-        mavenJava(MavenPublication) {
-            groupId = 'org.maurodata'
-            artifactId = 'mauro-persistence'
-            version = "0.0.1-beta"
-            from components.java
-        }
-    }
-}
-
-dependencies {
-    implementation project(':mauro-domain')
-}
 
 codenarc {
-    toolVersion = "3.3.0-groovy-4.0"
+    toolVersion = "3.6.0-groovy-4.0"
     configFile = rootProject.file("config/codenarc/codenarc.groovy")
 }
 

@@ -1,13 +1,13 @@
 package org.maurodata.persistence.profile
 
 import jakarta.inject.Inject
+import org.maurodata.persistence.ContentsService
 import spock.lang.Specification
 import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.folder.Folder
-import org.maurodata.persistence.Containerized
 import org.maurodata.persistence.ContainerizedTest
 import org.maurodata.persistence.cache.ModelCacheableRepository
-import org.maurodata.persistence.datamodel.DataModelContentRepository
+
 import org.maurodata.persistence.facet.MetadataRepository
 import org.maurodata.profile.Profile
 import org.maurodata.profile.test.DataModelBasedProfileTest
@@ -16,19 +16,19 @@ import org.maurodata.profile.test.DataModelBasedProfileTest
 class DynamicProfileServiceSpec extends Specification {
 
     @Inject
-    DataModelContentRepository dataModelContentRepository
+    ContentsService contentsService
 
     @Inject
     ModelCacheableRepository.FolderCacheableRepository folderRepository
-
-    @Inject
-    ModelCacheableRepository.DataModelCacheableRepository dataModelCacheableRepository
 
     @Inject
     DynamicProfileService dynamicProfileService
 
     @Inject
     MetadataRepository metadataRepository
+
+    @Inject
+    ModelCacheableRepository.DataModelCacheableRepository dataModelCacheableRepository
 
     def "Test getting all dynamic profiles"() {
         given:
@@ -41,10 +41,10 @@ class DynamicProfileServiceSpec extends Specification {
         DataModel testDataModel = DataModelBasedProfileTest.testProfileModel
         testDataModel.folder = myFirstFolder
 
-        UUID dataModelId = dataModelContentRepository.saveWithContent(testDataModel).id
+        UUID dataModelId = contentsService.saveWithContent(testDataModel, null).id
 
 
-        DataModel saved = dataModelContentRepository.findWithContentById(dataModelId)
+        DataModel saved = dataModelCacheableRepository.loadWithContent(dataModelId)
 
 
         List<Profile> profiles = dynamicProfileService.getDynamicProfiles()
@@ -74,7 +74,7 @@ class DynamicProfileServiceSpec extends Specification {
         DataModel testDataModel = DataModelBasedProfileTest.testProfileModel
         testDataModel.folder = myFirstFolder
 
-        dataModelContentRepository.saveWithContent(testDataModel).id
+        contentsService.saveWithContent(testDataModel).id
 
         List<Profile> profiles = dynamicProfileService.getDynamicProfiles()
         Profile dynamicProfile = profiles[0]

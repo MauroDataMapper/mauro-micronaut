@@ -1,7 +1,12 @@
 package org.maurodata.persistence.folder.dto
 
 import org.maurodata.domain.facet.VersionLink
+import org.maurodata.domain.model.Item
+import org.maurodata.domain.model.ItemReference
+import org.maurodata.domain.model.ItemReferencerUtils
+import org.maurodata.domain.model.ItemUtils
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.Introspected
 import io.micronaut.core.annotation.Nullable
@@ -20,16 +25,12 @@ import org.maurodata.domain.facet.SummaryMetadata
 import org.maurodata.domain.folder.Folder
 import org.maurodata.persistence.model.dto.AdministeredItemDTO
 
+import jakarta.persistence.Transient
+
 @CompileStatic
 @Introspected
 @MappedEntity(value = 'folder', schema = 'core', alias = 'folder_')
 class FolderDTO extends Folder implements AdministeredItemDTO {
-
-    @Override
-    String getDomainType()
-    {
-        return super.getDomainType()
-    }
 
     @Nullable
     @TypeDef(type = DataType.JSON)
@@ -37,6 +38,7 @@ class FolderDTO extends Folder implements AdministeredItemDTO {
     @ColumnTransformer(read = """(select json_agg(x) from
         (select edit.id,
                 edit.title,
+                edit.version,
                 edit.description,
                 edit.date_created,
                 row_to_json(catalogue_user) as catalogue_user
@@ -87,7 +89,8 @@ class FolderDTO extends Folder implements AdministeredItemDTO {
     @Nullable
     @TypeDef(type = DataType.JSON)
     @MappedProperty
-    @ColumnTransformer(read = '''(select json_agg( jsonb_build_object('id', reference_file.id, 'file_name', reference_file.file_name, 'file_size', reference_file.file_size, 'file_type',reference_file.file_type) ) from core.reference_file where multi_facet_aware_item_id = folder_.id)''')
+    @ColumnTransformer(read = '''(select json_agg( jsonb_build_object('id', reference_file.id, 'file_name', reference_file.file_name, 'file_size', reference_file.file_size,
+ 'file_type',reference_file.file_type) ) from core.reference_file where multi_facet_aware_item_id = folder_.id)''')
     List<ReferenceFile> referenceFiles = []
 
 
@@ -105,4 +108,72 @@ class FolderDTO extends Folder implements AdministeredItemDTO {
     @MappedProperty
     @ColumnTransformer(read = '(select json_agg(version_link) from core.version_link where multi_facet_aware_item_id = folder_.id)')
     List<VersionLink> versionLinks = []
+
+    @Transient
+    @JsonIgnore
+    @Override
+    List<ItemReference> retrieveItemReferences() {
+        List<ItemReference> pathsBeingReferenced = [] + super.retrieveItemReferences()
+
+        ItemReferencerUtils.addItems(edits, pathsBeingReferenced)
+        ItemReferencerUtils.addItems(metadata, pathsBeingReferenced)
+        ItemReferencerUtils.addItems(summaryMetadata, pathsBeingReferenced)
+        ItemReferencerUtils.addItems(rules, pathsBeingReferenced)
+        ItemReferencerUtils.addItems(annotations, pathsBeingReferenced)
+        ItemReferencerUtils.addItems(referenceFiles, pathsBeingReferenced)
+        ItemReferencerUtils.addItems(classifiers, pathsBeingReferenced)
+        ItemReferencerUtils.addItems(versionLinks, pathsBeingReferenced)
+        // ItemReferencerUtils.addItems(semanticLinks, pathsBeingReferenced)
+
+        return pathsBeingReferenced
+    }
+
+    @Transient
+    @JsonIgnore
+    @Override
+    void replaceItemReferencesByIdentity(IdentityHashMap<Item, Item> replacements, Map<UUID, Item> allItemsById, List<Item> notReplaced) {
+        super.replaceItemReferencesByIdentity(replacements, allItemsById, notReplaced)
+
+        edits = ItemReferencerUtils.replaceItemsByIdentity(edits, replacements, notReplaced)
+        metadata = ItemReferencerUtils.replaceItemsByIdentity(metadata, replacements, notReplaced)
+        summaryMetadata = ItemReferencerUtils.replaceItemsByIdentity(summaryMetadata, replacements, notReplaced)
+        rules = ItemReferencerUtils.replaceItemsByIdentity(rules, replacements, notReplaced)
+        annotations = ItemReferencerUtils.replaceItemsByIdentity(annotations, replacements, notReplaced)
+        referenceFiles = ItemReferencerUtils.replaceItemsByIdentity(referenceFiles, replacements, notReplaced)
+        classifiers = ItemReferencerUtils.replaceItemsByIdentity(classifiers, replacements, notReplaced)
+        versionLinks = ItemReferencerUtils.replaceItemsByIdentity(versionLinks, replacements, notReplaced)
+        // semanticLinks = ItemReferencerUtils.replaceItems(semanticLinks, replacements,notReplaced)
+    }
+
+    @Override
+    void copyInto(Item into) {
+        super.copyInto(into)
+        FolderDTO intoDTO = (FolderDTO) into
+
+        intoDTO.edits = ItemUtils.copyItems(this.edits, intoDTO.edits)
+        intoDTO.metadata = ItemUtils.copyItems(this.metadata, intoDTO.metadata)
+        intoDTO.summaryMetadata = ItemUtils.copyItems(this.summaryMetadata, intoDTO.summaryMetadata)
+        intoDTO.rules = ItemUtils.copyItems(this.rules, intoDTO.rules)
+        intoDTO.annotations = ItemUtils.copyItems(this.annotations, intoDTO.annotations)
+        intoDTO.classifiers = ItemUtils.copyItems(this.classifiers, intoDTO.classifiers)
+        intoDTO.referenceFiles = ItemUtils.copyItems(this.referenceFiles, intoDTO.referenceFiles)
+        intoDTO.versionLinks = ItemUtils.copyItems(this.versionLinks, intoDTO.versionLinks)
+    }
+
+    @Override
+    Item shallowCopy() {
+        FolderDTO dtoShallowCopy = new FolderDTO()
+        this.copyInto(dtoShallowCopy)
+        return dtoShallowCopy
+    }
+
+    @Transient
+    @Override
+    String getDomainType() {
+        if(branchName || modelVersion) {
+            return "VersionedFolder"
+        } else {
+            return "Folder"
+        }
+    }
 }

@@ -1,5 +1,6 @@
 package org.maurodata.controller.bootstrap
 
+import groovy.transform.CompileStatic
 import io.micronaut.core.convert.ConversionContext
 import io.micronaut.core.convert.TypeConverter
 import jakarta.inject.Singleton
@@ -12,6 +13,7 @@ import java.time.temporal.ChronoUnit
 import java.time.LocalDateTime
 import java.time.LocalDate
 
+@CompileStatic
 @Singleton
 class MapToApiKeyConfigTypeConverter implements TypeConverter<Map, MauroConfiguration.ApiKeyConfig> {
 
@@ -19,7 +21,7 @@ class MapToApiKeyConfigTypeConverter implements TypeConverter<Map, MauroConfigur
     Optional<MauroConfiguration.ApiKeyConfig> convert(Map object, Class<MauroConfiguration.ApiKeyConfig> targetType, ConversionContext context) {
 
         try {
-            return Optional.of(new MauroConfiguration.ApiKeyConfig() {
+            return (Optional<MauroConfiguration.ApiKeyConfig>) Optional.of(new MauroConfiguration.ApiKeyConfig() {
                 @Override
                 String getName() {
                     return object.get("name")

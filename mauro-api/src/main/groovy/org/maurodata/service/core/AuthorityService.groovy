@@ -1,5 +1,6 @@
 package org.maurodata.service.core
 
+import jakarta.inject.Singleton
 import org.maurodata.domain.authority.Authority
 import org.maurodata.persistence.cache.ItemCacheableRepository
 
@@ -9,6 +10,7 @@ import jakarta.inject.Inject
 
 @CompileStatic
 @Slf4j
+@Singleton
 class AuthorityService {
     final ItemCacheableRepository.AuthorityCacheableRepository authorityRepository
 

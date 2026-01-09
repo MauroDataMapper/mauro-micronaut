@@ -1,0 +1,49 @@
+LABEL org.opencontainers.image.security.capabilities="NET_BIND_SERVICE SETUID SETGID CHOWN only"
+
+ENV MICRONAUT_ENVIRONMENTS='docker,datasources,javamail,mauro'
+
+ENV INIT_DIR=/opt/init
+ENV DATABASE_DIRECTORY=/var/lib/postgresql/data
+ENV LOGS_DIRECTORY=/var/logs
+ENV DATABASE_LOGS_DIRECTORY=${LOGS_DIRECTORY}/postgres
+ENV DATABASE_SNAPSHOTS_DIRECTORY=/database
+
+RUN set -eux; \
+    arch="$(dpkg --print-architecture)"; \
+    case "${arch}" in \
+        amd64) \
+            MIRROR_HOST="archive.ubuntu.com"; \
+            MIRROR_PATH="ubuntu/"; \
+            ;; \
+        arm64) \
+            MIRROR_HOST="ports.ubuntu.com"; \
+            MIRROR_PATH="ubuntu-ports/"; \
+            ;; \
+        *) \
+            exit 1 \
+            ;; \
+    esac; \
+    cp -p "/etc/apt/sources.list.d/ubuntu.sources" "/etc/apt/sources.list.d/ubuntu-uk.sources" && sed -i -E "s|^URIs:.*|URIs: http://uk.${MIRROR_HOST}/${MIRROR_PATH}|g" "/etc/apt/sources.list.d/ubuntu-uk.sources"; \
+    cp -p "/etc/apt/sources.list.d/ubuntu.sources" "/etc/apt/sources.list.d/ubuntu-ie.sources" && sed -i -E "s|^URIs:.*|URIs: http://ie.${MIRROR_HOST}/${MIRROR_PATH}|g" "/etc/apt/sources.list.d/ubuntu-ie.sources"
+RUN apt-get update && apt-get dist-upgrade -y && apt-get install -y --no-install-recommends gosu postgresql postgresql-contrib unzip iproute2 && apt-get clean && rm -rf /var/lib/apt/lists/*
+RUN mkdir -p ${DATABASE_DIRECTORY} && chown -R postgres:postgres /var/lib/postgresql
+RUN mkdir -p ${LOGS_DIRECTORY} && mkdir -p ${DATABASE_LOGS_DIRECTORY} && chown -R postgres:postgres ${DATABASE_LOGS_DIRECTORY}
+VOLUME ["${DATABASE_DIRECTORY}","${DATABASE_LOGS_DIRECTORY}"]
+RUN mkdir -p ${DATABASE_SNAPSHOTS_DIRECTORY} && chown -R postgres:postgres ${DATABASE_SNAPSHOTS_DIRECTORY}
+VOLUME ["${DATABASE_SNAPSHOTS_DIRECTORY}"]
+RUN mkdir -p ${INIT_DIR}
+VOLUME ["${INIT_DIR}"]
+
+COPY scripts/postgres/* /usr/local/bin/
+COPY scripts/micronaut/* /usr/local/bin/
+COPY scripts/startup/* /usr/local/bin/
+RUN chmod +x /usr/local/bin/*
+
+RUN groupadd -r micronaut && useradd -r -g micronaut micronaut
+RUN JAVA_BIN="$(readlink -f "$(command -v java)")" && setcap 'cap_net_bind_service=+ep' "$JAVA_BIN"
+
+EXPOSE 5432
+
+HEALTHCHECK --interval=2m --timeout=5s --start-period=2m --retries=3 CMD curl -fsS http://localhost:8080/health || exit 1
+
+ENTRYPOINT ["docker-startup.sh"]

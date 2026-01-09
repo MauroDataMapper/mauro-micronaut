@@ -6,18 +6,15 @@ import org.maurodata.api.folder.FolderApi
 import org.maurodata.api.model.PermissionsDTO
 import org.maurodata.audit.Audit
 import org.maurodata.controller.model.ModelController
-import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.facet.EditType
 import org.maurodata.domain.folder.Folder
+import org.maurodata.domain.model.Model
 import org.maurodata.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
-import org.maurodata.persistence.folder.FolderContentRepository
+
 import org.maurodata.domain.search.dto.SearchRequestDTO
 import org.maurodata.domain.search.dto.SearchResultsDTO
 import org.maurodata.plugin.exporter.FolderExporterPlugin
-import org.maurodata.plugin.exporter.ModelExporterPlugin
-import org.maurodata.plugin.importer.DataModelImporterPlugin
 import org.maurodata.plugin.importer.FolderImporterPlugin
-import org.maurodata.service.plugin.PluginService
 import org.maurodata.web.ListResponse
 
 import groovy.transform.CompileStatic
@@ -43,7 +40,6 @@ import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
 import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
-import jakarta.inject.Named
 
 @Slf4j
 @CompileStatic
@@ -51,11 +47,8 @@ import jakarta.inject.Named
 @Secured(SecurityRule.IS_ANONYMOUS)
 class FolderController extends ModelController<Folder> implements FolderApi {
 
-    @Inject
-    FolderContentRepository folderContentRepository
-
-    FolderController(FolderCacheableRepository folderRepository, FolderContentRepository folderContentRepository) {
-        super(Folder, folderRepository, folderRepository, folderContentRepository)
+    FolderController(FolderCacheableRepository folderRepository) {
+        super(Folder, folderRepository, folderRepository)
     }
 
     @Audit
@@ -159,8 +152,10 @@ class FolderController extends ModelController<Folder> implements FolderApi {
 
     @Audit(title = EditType.EXPORT, description = 'Export folder')
     @Get(Paths.FOLDER_EXPORT)
+    @Override
     HttpResponse<byte[]> exportModel(UUID id, @Nullable String namespace, @Nullable String name, @Nullable String version) {
-        super.exportModel(id, namespace, name, version)
+        super.exportModel(id,namespace, name, version)
+
     }
 
     @Transactional
@@ -247,5 +242,10 @@ class FolderController extends ModelController<Folder> implements FolderApi {
         super.importModel(body, namespace, name, version)
     }
 */
+    @Override
+    void setBranchName(UUID parentFolderId, Folder folder) {
+        folder.branchName = null
+    }
+
 
 }

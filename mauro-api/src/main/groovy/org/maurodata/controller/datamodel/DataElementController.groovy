@@ -15,8 +15,7 @@ import org.maurodata.persistence.cache.AdministeredItemCacheableRepository.DataC
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository.DataElementCacheableRepository
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository.DataTypeCacheableRepository
 import org.maurodata.persistence.cache.ModelCacheableRepository.DataModelCacheableRepository
-import org.maurodata.persistence.datamodel.DataElementContentRepository
-import org.maurodata.persistence.datamodel.DataModelContentRepository
+
 import org.maurodata.service.datamodel.DataTypeService
 import org.maurodata.web.ListResponse
 import org.maurodata.web.PaginationParams
@@ -52,34 +51,30 @@ class DataElementController extends AdministeredItemController<DataElement, Data
 
     DataTypeCacheableRepository dataTypeRepository
 
-    DataElementContentRepository dataElementContentRepository
-
-    DataModelContentRepository dataModelContentRepository
-
     DataTypeService dataTypeService
 
     @Inject
     DataElementController(DataElementCacheableRepository dataElementRepository, DataClassCacheableRepository dataClassRepository,
-                          DataElementContentRepository dataElementContentRepository, DataModelCacheableRepository dataModelRepository,
-                          DataTypeCacheableRepository dataTypeCacheableRepository, DataModelContentRepository dataModelContentRepository,
-                         DataTypeService dataTypeService) {
-        super(DataElement, dataElementRepository, dataClassRepository, dataElementContentRepository)
+                          DataModelCacheableRepository dataModelRepository, DataTypeCacheableRepository dataTypeCacheableRepository,
+                          DataTypeService dataTypeService) {
+        super(DataElement, dataElementRepository, dataClassRepository)
         this.dataElementRepository = dataElementRepository
         this.dataModelRepository = dataModelRepository
         this.dataClassRepository = dataClassRepository
         this.dataTypeRepository = dataTypeCacheableRepository
-        this.dataElementContentRepository = dataElementContentRepository
-        this.dataModelContentRepository = dataModelContentRepository
         this.dataTypeService = dataTypeService
     }
 
     @Audit
     @Get(Paths.DATA_ELEMENT_ID)
     DataElement show(UUID dataModelId, UUID dataClassId, UUID id) {
-        DataElement dataElement = super.show(id)
+        log.debug("DataElementController show ${id}")
+        DataElement dataElement = super.show(id) as DataElement
         if (dataElement.dataType.isEnumerationType()) {
             dataElement.dataType = dataTypeService.getEnumerationValues(dataElement.dataType)
         }
+        log.debug("DataElementController show dataElement.availableActions ${dataElement.availableActions}")
+
         dataElement
     }
 
@@ -93,6 +88,12 @@ class DataElementController extends AdministeredItemController<DataElement, Data
         accessControlService.checkRole(Role.EDITOR, dataClass)
         dataElement.dataClass = dataClass
         createEntity(dataClass, dataElement)
+
+        // Clean before output
+        if(dataElement.dataType.referenceClass) {
+            dataElement.dataType.referenceClass.dataElements = []
+            dataElement.dataType.referenceClass.dataClasses = []
+        }
         return dataElement
     }
 
@@ -150,7 +151,7 @@ class DataElementController extends AdministeredItemController<DataElement, Data
     @Post(Paths. DATA_ELEMENT_COPY)
     @Transactional
     DataElement copyDataElement(UUID dataModelId, UUID dataClassId, UUID otherModelId, UUID otherDataClassId, UUID dataElementId) {
-        DataModel targetModel = dataModelContentRepository.findWithContentById(dataModelId)
+        DataModel targetModel = dataModelRepository.loadWithContent(dataModelId)
         accessControlService.checkRole(Role.EDITOR, targetModel)
         DataClass targetClass = dataClassRepository.findById(dataClassId)
         accessControlService.checkRole(Role.EDITOR, targetClass)
@@ -165,7 +166,7 @@ class DataElementController extends AdministeredItemController<DataElement, Data
         if (dataElement.dataClass.id != otherDataClass.id) {
             ErrorHandler.handleError(HttpStatus.BAD_REQUEST, "DataElement with id $dataElementId is not associated with data Class: $otherDataClassId")
         }
-        DataModel otherModel = dataModelContentRepository.findWithContentById(otherModelId)
+        DataModel otherModel = dataModelRepository.loadWithContent(otherModelId)
         accessControlService.canDoRole(Role.READER, otherModel)
         //verify
         if (otherDataClass.dataModel.id != otherModel.id ) {

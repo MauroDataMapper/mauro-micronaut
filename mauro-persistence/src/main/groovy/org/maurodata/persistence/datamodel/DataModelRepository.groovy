@@ -1,10 +1,13 @@
 package org.maurodata.persistence.datamodel
 
+import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import org.maurodata.FieldConstants
 import org.maurodata.domain.datamodel.DataModel
+import org.maurodata.domain.model.AdministeredItem
+import org.maurodata.persistence.ContentsService
 import org.maurodata.persistence.datamodel.dto.DataModelDTORepository
 import org.maurodata.persistence.model.ModelRepository
 
@@ -16,6 +19,10 @@ import jakarta.inject.Inject
 @JdbcRepository(dialect = Dialect.POSTGRES)
 abstract class DataModelRepository implements ModelRepository<DataModel> {
 
+    DataModelRepository(ContentsService contentsService) {
+        this.contentsService = contentsService
+    }
+
     @Inject
     DataModelDTORepository dataModelDTORepository
 
@@ -26,17 +33,33 @@ abstract class DataModelRepository implements ModelRepository<DataModel> {
 
     @Nullable
     List<DataModel> findAllByParentAndPathIdentifier(UUID item, String pathIdentifier) {
-        dataModelDTORepository.findAllByParentAndPathIdentifier(item, pathIdentifier)
+        dataModelDTORepository.findAllByParentAndPathIdentifier(item, pathIdentifier) as List<DataModel>
     }
 
+    @Nullable
+    @Override
+    List<DataModel> findAllByLabel(String pathIdentifier) {
+        dataModelDTORepository.findAllByLabel(pathIdentifier)
+    }
     @Override
     Class getDomainClass() {
         DataModel
     }
 
     @Override
+    Boolean handles(Class clazz) {
+        domainClass.isAssignableFrom(clazz)
+    }
+
+    @Override
     @Nullable
     abstract List<DataModel> findAllByFolderId(UUID folderId)
+
+    @Override
+    @Nullable
+    abstract List<DataModel> readAllByFolderIdIn(Collection<UUID> folderIds)
+
+
 
     // TODO: This method really needs caching
     @Query(value = '''

@@ -1,5 +1,7 @@
 package org.maurodata.persistence.datamodel.dto
 
+import org.maurodata.domain.datamodel.DataClass
+
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.annotation.Join
@@ -7,7 +9,6 @@ import io.micronaut.data.annotation.Query
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.repository.GenericRepository
-import org.maurodata.domain.datamodel.DataClass
 import org.maurodata.domain.datamodel.DataModel
 
 @CompileStatic
@@ -29,4 +30,8 @@ abstract class DataClassDTORepository implements GenericRepository<DataClassDTO,
     @Nullable
     @Query('SELECT * FROM datamodel.data_class WHERE label = :pathIdentifier AND ((parent_data_class_id IS NOT NULL AND parent_data_class_id = :item) OR (parent_data_class_id IS NULL AND data_model_id = :item))')
     abstract List<DataClass> findAllByParentAndPathIdentifier(UUID item, String pathIdentifier)
-    }
+
+    @Nullable
+    @Query('SELECT * FROM datamodel.data_class WHERE label = :label')
+    abstract List<DataClass> findAllByLabel(String label)
+}

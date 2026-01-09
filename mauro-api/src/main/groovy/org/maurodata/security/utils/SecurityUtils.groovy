@@ -17,11 +17,13 @@
  */
 package org.maurodata.security.utils
 
+import groovy.transform.CompileStatic
 import org.apache.commons.text.RandomStringGenerator
 
 import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
 
+@CompileStatic
 class SecurityUtils {
 
     static String generateRandomPassword() {

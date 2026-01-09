@@ -19,8 +19,9 @@ import org.maurodata.api.model.AdministeredItemApi
 import org.maurodata.domain.classifier.Classifier
 import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.domain.security.Role
+import org.maurodata.persistence.ContentsService
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository
-import org.maurodata.persistence.model.AdministeredItemContentRepository
+
 import org.maurodata.persistence.model.AdministeredItemRepository
 import org.maurodata.persistence.model.PathRepository
 import org.maurodata.persistence.service.RepositoryService
@@ -45,25 +46,25 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
 
     AdministeredItemRepository<P> parentItemRepository
 
-    AdministeredItemContentRepository administeredItemContentRepository
-
     @Inject
     PathRepository pathRepository
 
+    @Inject
+    ContentsService contentsService
 
-    AdministeredItemController(Class<I> itemClass, AdministeredItemRepository<I> administeredItemRepository, AdministeredItemRepository<P> parentItemRepository,
-                               AdministeredItemContentRepository administeredItemContentRepository) {
+    @Inject
+    AdministeredItemController(Class<I> itemClass, AdministeredItemRepository<I> administeredItemRepository, AdministeredItemRepository<P> parentItemRepository) {
         super(administeredItemRepository)
         this.itemClass = itemClass
         this.administeredItemRepository = administeredItemRepository
         this.parentItemRepository = parentItemRepository
-        this.administeredItemContentRepository = administeredItemContentRepository
-        this.administeredItemContentRepository.administeredItemRepository = administeredItemRepository
     }
+
+
 
     I show(UUID id) {
         I item = administeredItemRepository.findById(id)
-        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, item, "Item with id ${id.toString()} not found")
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, item, "Item with id ${id} not found")
         accessControlService.checkRole(Role.READER, item)
 
         updateDerivedProperties(item)
@@ -134,7 +135,7 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
 
     @Transactional
     HttpResponse delete(@NonNull UUID id, @Body @Nullable I item) {
-        I itemToDelete = (I) administeredItemContentRepository.readWithContentById(id)
+        I itemToDelete = (I) administeredItemRepository.loadWithContent(id)
         if (item == null) {item = itemToDelete}
 
         deletePre(itemToDelete)
@@ -147,7 +148,7 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
 
         if (item?.version) itemToDelete.version = item.version
 
-        Long deleted = administeredItemContentRepository.deleteWithContent(itemToDelete)
+        Boolean deleted = contentsService.deleteWithContent(itemToDelete)
         if (deleted) {
             HttpResponse.status(HttpStatus.NO_CONTENT)
         } else {
@@ -254,4 +255,5 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
             throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "DataClass ${dataClassToDelete.id} is extended by " + str)
         }
     }
+
 }

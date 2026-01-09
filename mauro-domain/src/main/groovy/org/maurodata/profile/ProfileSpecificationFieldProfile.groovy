@@ -23,4 +23,8 @@ class ProfileSpecificationFieldProfile extends JsonBasedProfile {
 
     String metadataNamespace = NAMESPACE
 
+    @Override
+    List<String> getProfileApplicableForDomains() {
+        return ['DataElement']
+    }
 }

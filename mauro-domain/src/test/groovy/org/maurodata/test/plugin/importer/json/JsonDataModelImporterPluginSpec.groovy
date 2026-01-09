@@ -63,6 +63,45 @@ class JsonDataModelImporterPluginSpec extends Specification  {
 
     }
 
+    def "test JSON mulitple data models import"() {
+
+        when:
+        DataModel testDataModel = DataModelSpec.testDataModel
+        DataModel testDataModel2 = DataModelSpec.testDataModel
+        testDataModel2.label = testDataModel.label + " 2"
+
+        ExportModel exportModel = ExportModel.build {
+            dataModels ([testDataModel, testDataModel2])
+            exportMetadata {
+                namespace NAMESPACE
+                name NAME
+                version VERSION
+            }
+        }
+
+        DataModelImporterPlugin jsonImportPlugin = mauroPluginService.getPlugin(DataModelImporterPlugin, NAMESPACE, NAME, VERSION)
+        FileImportParameters fileImportParameters = new FileImportParameters()
+        FileParameter fileParameter = new FileParameter()
+        fileParameter.fileName = "import.json"
+        fileParameter.fileType = "application/json"
+        fileParameter.fileContents = objectMapper.writeValueAsBytes(exportModel)
+        fileImportParameters.importFile = fileParameter
+
+        List<DataModel> importedModels = jsonImportPlugin.importModels(fileImportParameters)
+
+        then:
+        importedModels.size() == 2
+        // TODO: A diff between source and imported models would be good here
+        importedModels.first().label == testDataModel.label
+        importedModels.first().dataClasses.size() == testDataModel.dataClasses.size()
+        importedModels.first().dataTypes.size() == testDataModel.dataTypes.size()
+
+        importedModels[1].label == testDataModel2.label
+        importedModels[1].dataClasses.size() == testDataModel2.dataClasses.size()
+        importedModels[1].dataTypes.size() == testDataModel2.dataTypes.size()
+
+    }
+
     def "test JSON datamodel import- bad file -should fail with BADREQUEST exception"() {
         given:
         ExportModel exportModel = ExportModel.build {

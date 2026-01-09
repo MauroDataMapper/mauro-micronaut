@@ -85,7 +85,7 @@ class PathRepository {
             } else {
                 final AdministeredItemRepository administeredItemRepository = getRepositoryForDomainType(itemReference.itemDomainType)
                 final AdministeredItem resolvedAdministeredItem = (AdministeredItem) administeredItemRepository.findById(itemReference.itemId)
-                if (resolvedAdministeredItem == null) {throw new MauroInternalException("Did not find reference to " + itemReference.toString())}
+                if (resolvedAdministeredItem == null) {throw new MauroInternalException("Did not find reference to ${itemReference}")}
                 readParentItems(resolvedAdministeredItem)
                 resolvedAdministeredItem.updatePath()
                 resolved << resolvedAdministeredItem.getPathToEdge()

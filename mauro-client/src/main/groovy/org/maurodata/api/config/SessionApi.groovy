@@ -25,4 +25,7 @@ interface SessionApi {
 
     @Get(Paths.SESSION_CHECK_ANONYMOUS)
     String checkAnonymous()
+
+    @Get(Paths.SESSION_ADMIN_ACTIVE_SESSIONS)
+    Map activeSessions()
 }

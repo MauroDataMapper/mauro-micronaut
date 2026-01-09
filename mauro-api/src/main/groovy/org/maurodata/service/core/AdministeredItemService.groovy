@@ -1,15 +1,17 @@
 package org.maurodata.service.core
 
+import groovy.transform.CompileStatic
 import jakarta.inject.Inject
 import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.persistence.model.PathRepository
 
+@CompileStatic
 abstract class AdministeredItemService {
 
     @Inject
     PathRepository pathRepository
 
-    protected AdministeredItem updateDerivedProperties(AdministeredItem item) {
+    AdministeredItem updateDerivedProperties(AdministeredItem item) {
         pathRepository.readParentItems(item)
         item.updatePath()
         item.updateBreadcrumbs()
@@ -21,5 +23,18 @@ abstract class AdministeredItemService {
         item.version = null
         item.dateCreated = null
         item.lastUpdated = null
+    }
+
+    AdministeredItem updatePaths(AdministeredItem administeredItem) {
+        updateDerivedProperties(administeredItem)
+        administeredItem.getAllAssociations().each {
+            it.each {assoc ->
+                assoc.each {
+                    updateDerivedProperties(assoc)
+                    updatePaths(assoc)
+                }
+            }
+        }
+        administeredItem
     }
 }

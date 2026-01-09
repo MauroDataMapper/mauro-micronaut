@@ -1,5 +1,6 @@
 package org.maurodata.service.federation
 
+import jakarta.inject.Singleton
 import org.maurodata.ErrorHandler
 import org.maurodata.api.Paths
 import org.maurodata.controller.federation.client.FederationClient
@@ -21,6 +22,7 @@ import java.time.Instant
 
 @CompileStatic
 @Slf4j
+@Singleton
 class SubscribedCatalogueService {
 
     final FederationClient federationClient

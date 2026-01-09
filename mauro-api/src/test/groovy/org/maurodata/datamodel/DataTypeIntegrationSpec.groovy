@@ -7,7 +7,6 @@ import io.micronaut.http.client.exceptions.HttpClientResponseException
 import io.micronaut.http.uri.UriBuilder
 import io.micronaut.runtime.server.EmbeddedServer
 import io.micronaut.test.annotation.Sql
-import jakarta.inject.Inject
 import jakarta.inject.Singleton
 import jakarta.inject.Inject
 import org.maurodata.domain.datamodel.DataClass

@@ -1,5 +1,6 @@
 package org.maurodata.plugin.importer.json
 
+import groovy.transform.CompileStatic
 import io.micronaut.http.HttpStatus
 import jakarta.inject.Inject
 import org.maurodata.ErrorHandler
@@ -12,6 +13,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.util.logging.Slf4j
 import jakarta.inject.Singleton
 
+@CompileStatic
 @Slf4j
 @Singleton
 class JsonTerminologyImporterPlugin implements TerminologyImporterPlugin<FileImportParameters> {
@@ -31,7 +33,7 @@ class JsonTerminologyImporterPlugin implements TerminologyImporterPlugin<FileImp
         if (!importModel.terminology){
             ErrorHandler.handleError(HttpStatus.BAD_REQUEST, 'Cannot import JSON as terminology/ies is not present')
         }
-        if(importModel.terminology) {
+        if(importModel.terminology && !importModel.terminologies) {
             return [importModel.terminology]
         } else {
             return importModel.terminologies?:[]
@@ -50,4 +52,8 @@ class JsonTerminologyImporterPlugin implements TerminologyImporterPlugin<FileImp
         return FileImportParameters
     }
 
+    @Override
+    Class<Terminology> getHandlesModelType() {
+        Terminology
+    }
 }

@@ -10,19 +10,22 @@ import org.maurodata.domain.datamodel.IntersectsManyData
 import org.maurodata.domain.datamodel.SubsetData
 import org.maurodata.domain.folder.Folder
 import org.maurodata.persistence.ContainerizedTest
+import org.maurodata.persistence.ContentsService
+import org.maurodata.persistence.cache.ModelCacheableRepository
 import org.maurodata.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
-import org.maurodata.persistence.datamodel.DataModelContentRepository
 import org.maurodata.testing.CommonDataSpec
 import org.maurodata.web.ListResponse
 
 import jakarta.inject.Inject
-import jakarta.inject.Singleton
 import org.maurodata.web.PaginationParams
 import spock.lang.Shared
 
 @ContainerizedTest
-@Singleton
 class DataModelSubsetIntersectsSpec  extends CommonDataSpec {
+
+    @Inject
+    @Shared
+    ContentsService contentsService
 
     @Inject
     @Shared
@@ -30,7 +33,7 @@ class DataModelSubsetIntersectsSpec  extends CommonDataSpec {
 
     @Inject
     @Shared
-    DataModelContentRepository dataModelContentRepository
+    ModelCacheableRepository.DataModelCacheableRepository dataModelCacheableRepository
 
     @Inject
     DataModelApi dataModelApi
@@ -124,7 +127,7 @@ class DataModelSubsetIntersectsSpec  extends CommonDataSpec {
         )
 
         catalogueDataModel.setAssociations()
-        catalogueDataModel = dataModelContentRepository.saveWithContent(catalogueDataModel)
+        catalogueDataModel = (DataModel) contentsService.saveWithContent(catalogueDataModel)
 
         dataModelId = catalogueDataModel.id
         stringDataElementId = catalogueDataModel.dataElements.find {it.label == 'Test Data Element 4'}.id
@@ -143,8 +146,12 @@ class DataModelSubsetIntersectsSpec  extends CommonDataSpec {
         response.id == targetDataModelId
 
         when: 'subset elements are queried'
-        DataModel targetUpdated = dataModelContentRepository.findWithContentById(targetDataModelId)
+        DataModel targetUpdated = dataModelCacheableRepository.loadWithContent(targetDataModelId)
 
+        then: 'correct number of classes'
+        targetUpdated.allDataClasses.size() == 2
+
+        when:
         UUID copiedNumericDataElementId = targetUpdated.dataElements.find {it.label == 'Test Data Element 2'}.id
         UUID copiedEnumerationDataElementId = targetUpdated.dataElements.find {it.label == 'Test Data Element 5'}.id
         UUID copiedThirdDataClassId = targetUpdated.allDataClasses.find {it.label == 'Third class'}.id
@@ -162,13 +169,13 @@ class DataModelSubsetIntersectsSpec  extends CommonDataSpec {
         copiedEnumerationDataElement.dataType.label == 'Large EnumerationType'
 
         when: 'subset datatypes are queried'
-        DataType copiedBooleanDataType = dataTypeApi.show(targetUpdated.id, copiedNumericDataElement.dataType.id)
+        DataType copiedNumericDataType = dataTypeApi.show(targetUpdated.id, copiedNumericDataElement.dataType.id)
         DataType copiedEnumerationDataType = dataTypeApi.show(targetUpdated.id, copiedEnumerationDataElement.dataType.id)
 
         then: 'subset datatypes have correct paths and types'
-        copiedBooleanDataType.dataTypeKind == DataType.DataTypeKind.PRIMITIVE_TYPE
-        copiedBooleanDataType.label == 'Numeric'
-        copiedBooleanDataType.path.toString() == 'fo:Test folder|dm:Subset Target DataModel$main|dt:Numeric'
+        copiedNumericDataType.dataTypeKind == DataType.DataTypeKind.PRIMITIVE_TYPE
+        copiedNumericDataType.label == 'Numeric'
+        copiedNumericDataType.path.toString() == 'fo:Test folder|dm:Subset Target DataModel$main|dt:Numeric'
 
         copiedEnumerationDataType.dataTypeKind == DataType.DataTypeKind.ENUMERATION_TYPE
         copiedEnumerationDataType.label == 'Large EnumerationType'
@@ -214,7 +221,7 @@ class DataModelSubsetIntersectsSpec  extends CommonDataSpec {
         response.id == targetDataModelId
 
         when:
-        DataModel targetUpdated = dataModelContentRepository.findWithContentById(targetDataModelId)
+        DataModel targetUpdated = dataModelCacheableRepository.loadWithContent(targetDataModelId)
 
         then:
         targetUpdated.dataElements.size() == 4
@@ -256,7 +263,7 @@ class DataModelSubsetIntersectsSpec  extends CommonDataSpec {
         response.id == targetDataModelId
 
         when:
-        DataModel targetUpdated = dataModelContentRepository.findWithContentById(targetDataModelId)
+        DataModel targetUpdated = dataModelCacheableRepository.loadWithContent(targetDataModelId)
 
         then:
         targetUpdated.dataElements.size() == 2

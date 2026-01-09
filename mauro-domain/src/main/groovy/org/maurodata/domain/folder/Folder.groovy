@@ -1,7 +1,12 @@
 package org.maurodata.domain.folder
 
+import org.maurodata.domain.model.Item
+import org.maurodata.domain.model.ItemReference
+import org.maurodata.domain.model.ItemReferencer
+import org.maurodata.domain.model.ItemReferencerUtils
+import org.maurodata.domain.model.ItemUtils
+
 import com.fasterxml.jackson.annotation.JsonIgnore
-import com.fasterxml.jackson.annotation.JsonProperty
 import groovy.transform.CompileStatic
 import groovy.transform.MapConstructor
 import io.micronaut.core.annotation.Introspected
@@ -29,9 +34,7 @@ import org.maurodata.domain.terminology.Terminology
 @MappedEntity(schema = 'core')
 @Indexes([@Index(columns = ['parent_folder_id'])])
 @MapConstructor(includeSuperFields = true, includeSuperProperties = true, noArg = true)
-class Folder extends Model {
-
-    { versionableFlag=false }
+class Folder extends Model implements ItemReferencer {
 
     @JsonIgnore
     @Nullable
@@ -43,56 +46,15 @@ class Folder extends Model {
     @Transient
     String modelType = domainType
 
-    @SuppressWarnings('PropertyName')
-    @MappedProperty('class')
-    @JsonProperty('class')
-    @Nullable
-    @JsonIgnore
-    String class_
-
-    @JsonIgnore
-    void setClass_(final String class_)
-    {
-        this.class_=class_
-
-        if(this.class_!=null && "VersionedFolder" == this.class_)
-        {
-            setVersionable(true)
-        }
-        else
-        {
-            setVersionable(false)
-        }
-    }
-
     @Transient
     @Override
-    void setVersionable(final boolean versionable)
-    {
-        this.versionableFlag=versionable
-        if(versionable) {
-            this.class_ = "VersionedFolder"
-        }
-        else
-        {
-            this.class_ = null
-        }
-    }
-
-    @Transient
-    @Override
-    String getDomainType()
-    {
-        if(this.class_!=null && "VersionedFolder" == this.class_)
-        {
+    String getDomainType() {
+        if(branchName || modelVersion) {
             return "VersionedFolder"
-        }
-        else
-        {
+        } else {
             return "Folder"
         }
     }
-
 
     @Transient
     UUID breadcrumbTreeId
@@ -103,20 +65,6 @@ class Folder extends Model {
     @Nullable
     String author
 
-    // TODO: write a test for branch name
-
-    @Override
-    String getBranchName()
-    {
-        if(this.class_!=null && "VersionedFolder" == this.class_)
-        {
-            return super.branchName
-        }
-        else
-        {
-            return null
-        }
-    }
 
     @JsonIgnore
     @Transient
@@ -140,7 +88,6 @@ class Folder extends Model {
     List<DataModel> dataModels = []
 
     @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'terminology')
-    @JsonIgnore
     // have to parse separately due to internal references
     List<Terminology> terminologies = []
 
@@ -167,34 +114,18 @@ class Folder extends Model {
     @Override
     @Transient
     @JsonIgnore
-    Folder getOwner() {
-        this
+    Model getOwner() {
+        getModelWithVersion() ?: this
     }
 
     @Override
     @Transient
     @JsonIgnore
     String getPathPrefix() {
-
-        if(isVersionable())
-        {
+        if (domainType == "VersionedFolder") {
             return 'vf'
         }
-
         return 'fo'
-    }
-
-    @Override
-    @Transient
-    @JsonIgnore
-    @Nullable
-    String getPathModelIdentifier() {
-        if(!isVersionable())
-        {
-            return null
-        }
-        // I'm a model, you know what I mean
-        return super.getPathModelIdentifier()
     }
 
     @Transient
@@ -237,28 +168,28 @@ class Folder extends Model {
     @JsonIgnore
     @Override
     void setAssociations() {
-        childFolders.each { childFolder ->
+        super.setAssociations()
+        childFolders.each {childFolder ->
             childFolder.parentFolder = this
             childFolder.setAssociations()
         }
-        dataModels.each { dataModel ->
+        dataModels.each {dataModel ->
             dataModel.folder = this
             dataModel.setAssociations()
         }
-        terminologies.each { terminology ->
+        terminologies.each {terminology ->
             terminology.folder = this
             terminology.setAssociations()
         }
-        codeSets.each { codeSet ->
+        codeSets.each {codeSet ->
             codeSet.folder = this
             codeSet.setAssociations()
         }
-        classificationSchemes.each { classificationScheme ->
+        classificationSchemes.each {classificationScheme ->
             classificationScheme.folder = this
             classificationScheme.setAssociations()
         }
     }
-
 
 
     /****
@@ -266,13 +197,13 @@ class Folder extends Model {
      */
 
     static Folder build(
-            Map args,
-            @DelegatesTo(value = Folder, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+        Map args,
+        @DelegatesTo(value = Folder, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
         new Folder(args).tap(closure)
     }
 
     static Folder build(
-            @DelegatesTo(value = Folder, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+        @DelegatesTo(value = Folder, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
         build [:], closure
     }
 
@@ -290,5 +221,106 @@ class Folder extends Model {
     Folder folder(@DelegatesTo(value = Folder, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
         folder [:], closure
     }
+
+
+    @Transient
+    @JsonIgnore
+    @Override
+    List<ItemReference> retrieveItemReferences() {
+        List<ItemReference> pathsBeingReferenced = [] + super.retrieveItemReferences()
+
+        ItemReferencerUtils.addItems(childFolders, pathsBeingReferenced)
+        ItemReferencerUtils.addItems(dataModels, pathsBeingReferenced)
+        ItemReferencerUtils.addItems(terminologies, pathsBeingReferenced)
+        ItemReferencerUtils.addItems(codeSets, pathsBeingReferenced)
+        ItemReferencerUtils.addItems(classificationSchemes, pathsBeingReferenced)
+
+        return pathsBeingReferenced
+    }
+
+    @Transient
+    @JsonIgnore
+    @Override
+    void replaceItemReferencesByIdentity(IdentityHashMap<Item, Item> replacements, Map<UUID, Item> allItemsById, List<Item> notReplaced) {
+        super.replaceItemReferencesByIdentity(replacements, allItemsById, notReplaced)
+        parentFolder = ItemReferencerUtils.replaceItemByIdentity(parentFolder, replacements, notReplaced)
+        childFolders = ItemReferencerUtils.replaceItemsByIdentity(childFolders, replacements, notReplaced)
+        dataModels = ItemReferencerUtils.replaceItemsByIdentity(dataModels, replacements, notReplaced)
+        terminologies = ItemReferencerUtils.replaceItemsByIdentity(terminologies, replacements, notReplaced)
+        codeSets = ItemReferencerUtils.replaceItemsByIdentity(codeSets, replacements, notReplaced)
+        classificationSchemes = ItemReferencerUtils.replaceItemsByIdentity(classificationSchemes, replacements, notReplaced)
+    }
+
+    @Override
+    void copyInto(Item into) {
+        super.copyInto(into)
+        Folder intoFolder = (Folder) into
+        intoFolder.parentFolder = ItemUtils.copyItem(this.parentFolder, intoFolder.parentFolder)
+        intoFolder.aliasesString = ItemUtils.copyItem(this.aliasesString, intoFolder.aliasesString)
+        intoFolder.modelType = ItemUtils.copyItem(this.modelType, intoFolder.modelType)
+        intoFolder.breadcrumbTreeId = ItemUtils.copyItem(this.breadcrumbTreeId, intoFolder.breadcrumbTreeId)
+        intoFolder.organisation = ItemUtils.copyItem(this.organisation, intoFolder.organisation)
+        intoFolder.author = ItemUtils.copyItem(this.author, intoFolder.author)
+        intoFolder.childFolders = ItemUtils.copyItems(this.childFolders, intoFolder.childFolders)
+        intoFolder.dataModels = ItemUtils.copyItems(this.dataModels, intoFolder.dataModels)
+        intoFolder.terminologies = ItemUtils.copyItems(this.terminologies, intoFolder.terminologies)
+        intoFolder.codeSets = ItemUtils.copyItems(this.codeSets, intoFolder.codeSets)
+        intoFolder.classificationSchemes = ItemUtils.copyItems(this.classificationSchemes, intoFolder.classificationSchemes)
+    }
+
+    @Override
+    Item shallowCopy() {
+        Folder folderShallowCopy = new Folder()
+        this.copyInto(folderShallowCopy)
+        return folderShallowCopy
+    }
+    Terminology terminology(Terminology terminology) {
+        this.terminologies.add(terminology)
+        terminology.folder = this
+        terminology.parent = this
+        terminology
+    }
+
+    Terminology terminology(Map args, @DelegatesTo(value = Terminology, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+        Terminology terminology1 = Terminology.build(args + [parent: this, folder: this], closure)
+        terminology terminology1
+    }
+
+    Terminology terminology(@DelegatesTo(value = Terminology, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+        terminology [:], closure
+    }
+
+    CodeSet codeSet(CodeSet codeSet) {
+        this.codeSets.add(codeSet)
+        codeSet.folder = this
+        codeSet.parent = this
+        codeSet
+    }
+
+    CodeSet codeSet(Map args, @DelegatesTo(value = CodeSet, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+        CodeSet codeSet1 = CodeSet.build(args + [parent: this, folder: this], closure)
+        codeSet codeSet1
+    }
+
+    CodeSet codeSet(@DelegatesTo(value = CodeSet, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+        codeSet [:], closure
+    }
+
+    DataModel dataModel(DataModel dataModel) {
+        this.dataModels.add(dataModel)
+        dataModel.folder = this
+        dataModel.parent = this
+        dataModel
+    }
+
+    DataModel dataModel(Map args, @DelegatesTo(value = DataModel, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+        DataModel dataModel1 = DataModel.build(args + [parent: this, folder: this], closure)
+        dataModel dataModel1
+    }
+
+    DataModel dataModel(@DelegatesTo(value = DataModel, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+        dataModel [:], closure
+    }
+
 
 }

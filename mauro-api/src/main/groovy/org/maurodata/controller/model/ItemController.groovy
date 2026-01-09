@@ -23,7 +23,7 @@ abstract class ItemController<I extends Item> implements AdministeredItemReader 
      * Properties disallowed in a simple update request.
      */
     List<String> getDisallowedProperties() {
-        ['class_', 'class', 'id', 'dateCreated', 'lastUpdated', 'createdBy', 'versionable', 'domainType', 'version']
+        ['id', 'dateCreated', 'lastUpdated', 'createdBy', 'version']
     }
 
     /**
@@ -38,6 +38,7 @@ abstract class ItemController<I extends Item> implements AdministeredItemReader 
     ItemController(ItemRepository<I> itemRepository) {
         this.itemRepository = itemRepository
     }
+
 
     I cleanBody(I item, boolean strictProperties = true) {
         I defaultItem = (I) item.class.getDeclaredConstructor().newInstance()

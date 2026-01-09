@@ -1,6 +1,10 @@
 package org.maurodata.controller.datamodel
 
+import org.maurodata.api.model.CopyDataClassParamsDTO
+import org.maurodata.domain.model.Item
+
 import groovy.transform.CompileStatic
+import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpResponse
@@ -21,41 +25,37 @@ import org.maurodata.api.datamodel.DataClassApi
 import org.maurodata.audit.Audit
 import org.maurodata.controller.model.AdministeredItemController
 import org.maurodata.domain.datamodel.DataClass
+import org.maurodata.domain.datamodel.DataElement
 import org.maurodata.domain.datamodel.DataModel
+import org.maurodata.domain.datamodel.DataType
 import org.maurodata.domain.security.Role
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository
-import org.maurodata.persistence.cache.ModelCacheableRepository
 import org.maurodata.persistence.cache.ModelCacheableRepository.DataModelCacheableRepository
-import org.maurodata.persistence.datamodel.DataClassContentRepository
-import org.maurodata.persistence.datamodel.DataModelContentRepository
-import org.maurodata.service.datamodel.DataClassService
+
 import org.maurodata.web.ListResponse
 import org.maurodata.web.PaginationParams
-
+@Slf4j
 @CompileStatic
 @Controller
 @Secured(SecurityRule.IS_ANONYMOUS)
 class DataClassController extends AdministeredItemController<DataClass, DataModel> implements DataClassApi {
 
+    @Inject
     AdministeredItemCacheableRepository.DataClassCacheableRepository dataClassRepository
 
-    ModelCacheableRepository.DataModelCacheableRepository dataModelRepository
-
-    DataModelContentRepository dataModelContentRepository
-    DataClassContentRepository dataClassContentRepository
-    DataClassService dataClassService
+    @Inject
+    AdministeredItemCacheableRepository.DataTypeCacheableRepository dataTypeRepository
 
     @Inject
-    DataClassController(AdministeredItemCacheableRepository.DataClassCacheableRepository dataClassRepository, DataModelCacheableRepository dataModelRepository,
-                        DataModelContentRepository dataModelContentRepository,
-                        DataClassContentRepository dataClassContentRepository,
-                        DataClassService dataClassService) {
-        super(DataClass, dataClassRepository, dataModelRepository, dataClassContentRepository)
-        this.dataClassService = dataClassService
+    AdministeredItemCacheableRepository.DataElementCacheableRepository dataElementRepository
+
+    DataModelCacheableRepository dataModelRepository
+
+    @Inject
+    DataClassController(AdministeredItemCacheableRepository.DataClassCacheableRepository dataClassRepository, DataModelCacheableRepository dataModelRepository) {
+        super(DataClass, dataClassRepository, dataModelRepository)
         this.dataModelRepository = dataModelRepository
         this.dataClassRepository = dataClassRepository
-        this.dataModelContentRepository = dataModelContentRepository
-        this.dataClassContentRepository = dataClassContentRepository
     }
 
     @Audit
@@ -85,9 +85,9 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
     @Transactional
     @Delete(Paths.DATA_CLASS_ID)
     HttpResponse delete(UUID dataModelId, UUID id, @Body @Nullable DataClass dataClass) {
-        DataClass dataClassToDelete = dataClassRepository.readById(id)
+        DataClass dataClassToDelete = dataClassRepository.loadWithContent(id)
         ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, dataClassToDelete, "DataClass $id not found")
-
+        deleteDanglingReferenceTypes(dataClassToDelete.allChildDataClasses(), dataClassToDelete.allChildDataElements())
         HttpResponse deletedResponse = super.delete(id, dataClass)
         deletedResponse
     }
@@ -151,7 +151,11 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
     )
     @Delete(Paths.DATA_CLASS_CHILD_DATA_CLASS_ID)
     HttpResponse delete(UUID dataModelId, UUID parentDataClassId, UUID id, @Body @Nullable DataClass dataClass) {
-        super.delete(id, dataClass)
+        DataClass dataClassToDelete = dataClassRepository.loadWithContent(id)
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, dataClassToDelete, "DataClass $id not found")
+        deleteDanglingReferenceTypes(dataClassToDelete.allChildDataClasses(), dataClassToDelete.allChildDataElements())
+        HttpResponse deletedResponse = super.delete(id, dataClass)
+        deletedResponse
     }
 
     @Audit
@@ -192,30 +196,149 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
     @Audit
     @Post(Paths.DATA_CLASS_COPY)
     @Transactional
-    DataClass copyDataClass(UUID dataModelId, UUID otherModelId, UUID dataClassId) {
-        DataModel dataModel = dataModelContentRepository.findWithContentById(dataModelId)
-        accessControlService.checkRole(Role.EDITOR, dataModel)
-        DataClass dataClass = dataClassContentRepository.readWithContentById(dataClassId)
-        accessControlService.canDoRole(Role.EDITOR, dataClass)
-        DataModel otherModel = dataModelRepository.readById(otherModelId)
-        accessControlService.canDoRole(Role.READER, otherModel)
+    DataClass copyDataClass(UUID toDataModelId, UUID fromDataModelId, UUID dataClassId, @Body @Nullable CopyDataClassParamsDTO copyDataClassParams = null) {
+
+        DataModel toDataModel = dataModelRepository.loadWithContent(toDataModelId)
+        accessControlService.checkRole(Role.EDITOR, toDataModel)
+
+        DataModel fromDataModel = dataModelRepository.loadWithContent(fromDataModelId)
+        accessControlService.canDoRole(Role.READER, fromDataModel)
+
+        // It's loaded in with the DataModel content, so find it rather than loading another copy
+        DataClass fromDataClass = fromDataModel.dataClasses.find {DataClass dataClass -> dataClass.id == dataClassId}
         //verify
-        if (dataClass.dataModel.id != otherModel.id) {
-            ErrorHandler.handleError(HttpStatus.NOT_FOUND, "Cannot find dataClass $dataClassId for dataModel $otherModelId")
+        if (fromDataClass == null) {
+            ErrorHandler.handleError(HttpStatus.NOT_FOUND, "Cannot find dataClass $dataClassId for dataModel $fromDataModelId")
         }
-        DataClass copied = dataClass.clone()
-        copied.parentDataClass = null //do not keep existing source structure if source is child
-        DataClass savedCopy = createEntity(dataModel, copied)
-        savedCopy = dataClassService.copyReferenceTypes( savedCopy, dataModel)
-        savedCopy.dataClasses = dataClassService.copyChildren(savedCopy, savedCopy.dataClasses, dataModel)
-        savedCopy.dataElements = dataClassService.copyDataElementsAndDataTypes(savedCopy.dataElements, dataModel)
-        savedCopy
+        accessControlService.canDoRole(Role.EDITOR, fromDataClass)
+
+        // Make a deep clone, replacing fromDataModel with toDataModel throughout
+        IdentityHashMap<Item, Item> replacements = new IdentityHashMap<>(256)
+        replacements.put(fromDataModel, toDataModel)
+        DataClass toDataClass = fromDataClass.deepClone(replacements) as DataClass
+
+        Set<DataType> newDataTypes = copyDataTypes(toDataClass)
+        toDataModel.dataTypes = newDataTypes as List
+        toDataModel.dataClasses = [toDataClass]
+
+        if(copyDataClassParams != null && copyDataClassParams.copyLabel != null && !copyDataClassParams.copyLabel.trim().isEmpty()) {
+            toDataClass.label = copyDataClassParams.copyLabel.trim()
+        } else {
+            if (fromDataModel.id == toDataModel.id) {toDataClass.label = "${toDataClass.label} (Copy)"}
+        }
+        /*
+            TO DO: Question about copyPermissions
+            In grails copyPermissions == true is not implemented and throws an error if copyPermissions == true, which may mean
+             that the permissions are not copied by default, and default permissions and ownership are applied.
+            However, here in micronaut the permission properties are copied by default, including the catalogue user as this
+             is not overwritten. See: contentsService.saveContentOnly() not calling contentHandler.setCreateProperties
+             To implement copyPermissions would require doing nothing when copyPermissions is true, and recursively setting defaults
+             otherwise
+         */
+
+        // Trigger this to be saved
+        unsetDataElementIds(toDataClass)
+
+        try {
+            contentsService.saveContentOnly(toDataModel)
+        } catch (Throwable th) {
+            th.printStackTrace()
+            throw th
+        }
+
+        updateDerivedProperties(toDataClass)
+
+        // clean before responding
+        toDataClass.dataElements = []
+
+        toDataClass
     }
 
     @Get(Paths.DATA_CLASS_DOI)
     @Override
     Map doi(UUID id) {
         ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "Doi is not implemented")
+        return null
+    }
+
+    protected void deleteDanglingReferenceTypes(List<DataClass> deletedDataClassLookup, List<DataElement> allDataElements) {
+        List<DataType> dataTypes = dataTypeRepository.findByReferenceClassIn(deletedDataClassLookup).unique() as List<DataType>
+        List<DataElement> referencedDataElements = dataElementRepository.readAllByDataTypeIn(dataTypes)
+        if (!allDataElements.id.containsAll(referencedDataElements.id)){
+            // All datatypes are referenced by things that will be deleted
+            ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "DataClass(es) referenced as ReferencedDataType in data elements")
+        }
+        dataTypeRepository.deleteAll(dataTypes)
+    }
+
+    protected Set<DataType> copyDataTypes(DataClass dataClass) {
+
+        DataModel newDataModel = dataClass.dataModel
+
+        Map<String, DataType> newDataModel_labelOntoDataType = newDataModel.dataTypes.collectEntries {DataType dataType ->
+            [(dataType.label): dataType]
+        }
+
+        Map<String, DataType> oldDataModel_labelOntoDataType = dataClass.allChildDataElements().collectEntries {DataElement dataElement ->
+            [(dataElement.dataType.label): dataElement.dataType]
+        }
+
+        Map<String, DataType> copied = [:]
+
+        dataClass.allChildDataElements().each {dataElement ->
+            dataElement.dataModel = newDataModel
+            DataType alreadyCopied = copied.get(dataElement.dataType.label)
+            if (alreadyCopied != null) {
+                dataElement.dataType = alreadyCopied
+            } else {
+                DataType alreadyGot = newDataModel_labelOntoDataType.get(dataElement.dataType.label)
+                if (alreadyGot != null) {
+                    dataElement.dataType = alreadyGot
+                    // Make sure it is in the list so that the DataElement can be created
+                    copied.put(dataElement.dataType.label, alreadyGot)
+                } else {
+                    DataType needToCopy = oldDataModel_labelOntoDataType.get(dataElement.dataType.label)
+                    if (needToCopy != null) {
+                        needToCopy.id = null
+                        needToCopy.dataModel = newDataModel
+                        dataElement.dataType = needToCopy
+                        if (dataElement.dataType.referenceClass) {
+                            dataElement.dataType.referenceClass = findReferenceClass(dataElement.dataType.referenceClass, dataClass)
+                            if (!dataElement.dataType.referenceClass) {
+                                ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "A data element uses a data type that refers to a dataclass not being copied")
+                            }
+                        }
+                        copied.put(dataElement.dataType.label, needToCopy)
+                    } else {
+                        ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "DataClass includes an element with an invalid datatype")
+                    }
+                }
+            }
+        }
+        return copied.values() as Set<DataType>
+    }
+
+    protected void unsetDataElementIds(DataClass dataClass) {
+        dataClass.id = null
+        dataClass.dataElements.each {
+            it.id = null
+        }
+        dataClass.dataClasses.each {
+            unsetDataElementIds(it)
+        }
+    }
+
+    protected DataClass findReferenceClass(DataClass referenceClass, DataClass dataClass) {
+        if(referenceClass.id == dataClass.id) {
+            return dataClass
+        } else {
+            dataClass.dataClasses.each {
+                DataClass response = findReferenceClass(referenceClass, it)
+                if(response) {
+                    return response
+                }
+            }
+        }
         return null
     }
 }

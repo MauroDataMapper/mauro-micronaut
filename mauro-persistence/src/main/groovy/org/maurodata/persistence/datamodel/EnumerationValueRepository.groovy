@@ -29,7 +29,7 @@ abstract class EnumerationValueRepository implements ModelItemRepository<Enumera
 
     @Nullable
     List<EnumerationValue> findAllByParentAndPathIdentifier(UUID item,String pathIdentifier) {
-        enumerationValueDTORepository.findAllByParentAndPathIdentifier(item,pathIdentifier)
+        enumerationValueDTORepository.findAllByParentAndPathIdentifier(item,pathIdentifier) as List<EnumerationValue>
     }
 
     @Nullable
@@ -43,8 +43,16 @@ abstract class EnumerationValueRepository implements ModelItemRepository<Enumera
         findAllByEnumerationType((DataType) parent)
     }
 
+    @Override
+    @Nullable
+    List<EnumerationValue> findAllByLabel(String label){
+        enumerationValueDTORepository.findAllByLabel(label)
+    }
     @Nullable
     abstract Set<EnumerationValue> readAllByEnumerationTypeIn(Collection<DataType> dataTypes)
+
+    @Nullable
+    abstract List<EnumerationValue> readAllByEnumerationTypeIdIn(Collection<UUID> dataTypeIds)
 
     Set<EnumerationValue> findAllByEnumerationTypeIn(Collection<DataType> dataTypes) {
         enumerationValueDTORepository.findAllByEnumerationTypeIn(dataTypes) as Set<EnumerationValue>

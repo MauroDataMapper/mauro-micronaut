@@ -18,6 +18,8 @@ abstract class RuleRepresentationRepository implements ItemRepository<RuleRepres
     @Nullable
     abstract List<RuleRepresentation> findAllByRuleId(@NonNull UUID ruleId)
 
+    @Nullable
+    abstract List<RuleRepresentation> readAllByRuleIdIn(List<UUID> ruleIds)
 
     @Override
     Class getDomainClass() {

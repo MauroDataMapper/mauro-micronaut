@@ -24,7 +24,7 @@ import org.maurodata.domain.terminology.Term
 import org.maurodata.domain.terminology.Terminology
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository.TermCacheableRepository
 import org.maurodata.persistence.cache.ModelCacheableRepository.TerminologyCacheableRepository
-import org.maurodata.persistence.terminology.TermContentRepository
+
 import org.maurodata.persistence.terminology.TermRepository
 import org.maurodata.web.ListResponse
 
@@ -42,8 +42,8 @@ class TermController extends AdministeredItemController<Term, Terminology> imple
     @Inject
     TerminologyCacheableRepository terminologyRepository
 
-    TermController(TermCacheableRepository termRepository, TerminologyCacheableRepository terminologyRepository, TermContentRepository termContentRepository) {
-        super(Term, termRepository, terminologyRepository, termContentRepository)
+    TermController(TermCacheableRepository termRepository, TerminologyCacheableRepository terminologyRepository) {
+        super(Term, termRepository, terminologyRepository)
         this.termRepository = termRepository
     }
 

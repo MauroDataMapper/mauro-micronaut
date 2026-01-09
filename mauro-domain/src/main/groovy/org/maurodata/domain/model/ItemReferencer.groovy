@@ -1,24 +1,185 @@
 package org.maurodata.domain.model
 
+
 import com.fasterxml.jackson.annotation.JsonIgnore
+import groovy.transform.CompileStatic
 import jakarta.persistence.Transient
 
 /**
-Any item in the model that holds references to other items
-should implement ItemReferencer
+ Any item in the model that holds references to other items
+ should implement ItemReferencer
  */
-interface ItemReferencer {
+@CompileStatic
+trait ItemReferencer {
     /**
      * The list of ItemReference this holds references to
      */
     @Transient
     @JsonIgnore
-    List<ItemReference> getItemReferences()
+    abstract List<ItemReference> retrieveItemReferences()
 
     /**
-     * A map of ItemReference to replace with new references
+     * A map of Item to replace with new Item
+     * returns a list of any references that were not replaced
      */
     @Transient
     @JsonIgnore
-    void replaceItemReferences(final Map<UUID, ItemReference> replacements)
+    abstract void replaceItemReferencesByIdentity(final IdentityHashMap<Item, Item> replacements, Map<UUID, Item> allItemsById, List<Item> notReplaced = [])
+
+    /**
+     * A very shallow copy of this ItemReferencer
+     */
+    @Transient
+    @JsonIgnore
+    abstract Item shallowCopy()
+
+    /**
+     * A simple map of all Items, each item pointing to a set of Items that refer it
+     * E.g. for each item, what at the inbound references?
+     */
+    @Transient
+    @JsonIgnore
+    void predecessors(IdentityHashMap<Item, Set<Item>> predecessorMap = new IdentityHashMap<>(), IdentityHashMap<Item, Boolean> seen = new IdentityHashMap<>(), HashMap<UUID,Object> linkIds = [:]) {
+
+        Item me = (Item) this
+
+        // Been here already
+        if (seen.get(me) != null) {return}
+
+        seen.put(me, true)
+
+        List<ItemReference> itemReferences = me.retrieveItemReferences()
+        if (itemReferences != null) {
+            itemReferences.forEach {ItemReference beingReferenced ->
+                Item successor = beingReferenced.theItem
+                if (successor != null) {
+                    // No Luke, I am your predecessor
+                    Set successorReferencedBy = predecessorMap.get(successor)
+                    if (successorReferencedBy == null) {
+                        successorReferencedBy = Collections.newSetFromMap(new IdentityHashMap<>()) as Set<Item>
+                        predecessorMap.put(successor, successorReferencedBy)
+                    }
+                    successorReferencedBy.add(me)
+                } else if (beingReferenced.itemId != null && beingReferenced.itemDomainType != null) {
+                    // A link to something as yet unresolved
+                    linkIds.put(beingReferenced.itemId, beingReferenced.itemId)
+                }
+            }
+        }
+
+        // Recurse successors
+
+        if (itemReferences != null) {
+            itemReferences.forEach {ItemReference beingReferenced ->
+                Item successor = beingReferenced.theItem
+                if (successor != null) {
+                    ItemReferencer successorItemReferencer = successor
+                    successorItemReferencer.predecessors(predecessorMap, seen, linkIds)
+                }
+            }
+        }
+
+        // Do I have any predecessors? If not, create an empty set entry
+        if (predecessorMap.get(me) == null) {
+            predecessorMap.put(me, Collections.newSetFromMap(new IdentityHashMap<>()) as Set<Item>)
+        }
+    }
+
+    /**
+     * Walk a model fragment and populates a simple Set of all Items (seen), and any UUID links to Items (linkIds)
+     */
+    @Transient
+    @JsonIgnore
+    void walk(IdentityHashMap<Item, Boolean> seen = new IdentityHashMap<>(), HashSet<UUID> linkIds = [] as HashSet<UUID>) {
+
+        Item me = (Item) this
+
+        // Been here already
+        if (seen.get(me) != null) {return}
+
+        seen.put(me, true)
+
+        List<ItemReference> itemReferences = me.retrieveItemReferences()
+        if (itemReferences != null) {
+            itemReferences.forEach {ItemReference beingReferenced ->
+                Item successor = beingReferenced.theItem
+                if (successor != null) {
+                    // Recurse successors
+                    ItemReferencer successorItemReferencer = successor
+                    successorItemReferencer.walk(seen, linkIds)
+                } else if (successor == null && beingReferenced.itemId != null && beingReferenced.itemDomainType != null) {
+                    // A link to something as yet unresolved
+                    linkIds.add(beingReferenced.itemId)
+                }
+            }
+        }
+    }
+
+    /*
+        Given an ItemReferencer (e.g. a DataModel / VersionedFolder / Folder etc)
+        get a map of all id -> Item[]
+
+        Useful for finding any Item by id without having to traverse
+        but also for finding alternatively loaded items by id.
+        Example use: DataType.referenceClass may point to a DataClass that only has the id hydrated
+        use that id to find the DataClass in the model that has a label
+         */
+    @Transient
+    @JsonIgnore
+    Map<UUID, Set<Item>> itemLookupById() {
+        IdentityHashMap<Item, Boolean> seen = new IdentityHashMap<>()
+        this.walk(seen)
+
+        Map<UUID, Set<Item>> allItemLookup = new HashMap<>(seen.size())
+
+        seen.keySet().forEach {Item item ->
+
+            final UUID id = item.id
+            Set<Item> referencedItems = allItemLookup.get(id)
+            if (referencedItems == null) {
+                referencedItems = []
+                allItemLookup.put(id, referencedItems)
+            }
+            referencedItems << item
+        }
+
+        return allItemLookup
+    }
+
+    /**
+     A general deep clone does the following:
+
+     Call the predecessors to walk the graph and get all references to Item
+     Create an IdentityHashMap between Item and a shallow clone of the Item
+     Replace all references to the originals with the shallow clones in the shallow clones to produce deep clones
+     return the clone of this
+
+     Look at stuff like modelResourceId
+     */
+    @Transient
+    @JsonIgnore
+    Item deepClone(final IdentityHashMap<Item, Item> replacements = new IdentityHashMap<>(4096), final List<Item> notReplaced = []) {
+        final IdentityHashMap<Item, Boolean> seen = new IdentityHashMap<>(1024)
+        final HashSet<UUID> linkIds = [] as HashSet<UUID>
+        this.walk(seen, linkIds)
+
+        final HashMap<UUID, Item> allItemsById = new HashMap<>(linkIds.size())
+
+            seen.keySet().forEach {Item toClone ->
+            if (replacements.get(toClone) == null) {
+                final Item shallowCloned = (Item) toClone.shallowCopy()
+                replacements.put(toClone, shallowCloned)
+                if(linkIds.contains(toClone.id)) {
+                    allItemsById.put(toClone.id, toClone)
+                }
+            }
+        }
+
+        replacements.values().forEach {Item shallowCloned ->
+            final ItemReferencer shallowClonedAsItemReferencer = (ItemReferencer) shallowCloned
+            shallowClonedAsItemReferencer.replaceItemReferencesByIdentity(replacements, allItemsById, notReplaced)
+        }
+
+        return replacements.get(this)
+    }
 }

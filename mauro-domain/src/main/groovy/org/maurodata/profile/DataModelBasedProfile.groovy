@@ -4,11 +4,16 @@ import org.maurodata.domain.datamodel.DataClass
 import org.maurodata.domain.datamodel.DataElement
 import org.maurodata.domain.datamodel.DataModel
 
+import groovy.transform.CompileStatic
+
+@CompileStatic
 class DataModelBasedProfile implements Profile {
 
     String metadataNamespace
 
     String name
+
+    private List<String> profileApplicableForDomains
 
     DataModelBasedProfile(DataModel dataModel) {
         Map<String, String> metadataMap = dataModel.metadataAsMap(ProfileSpecificationProfile.NAMESPACE)
@@ -25,6 +30,11 @@ class DataModelBasedProfile implements Profile {
         }
         sections = dataModel.dataClasses.collect { sectionFromClass(it) }
 
+    }
+
+    @Override
+    List<String> getProfileApplicableForDomains() {
+        return this.@profileApplicableForDomains
     }
 
     private ProfileSection sectionFromClass(DataClass dataClass) {
@@ -44,7 +54,7 @@ class DataModelBasedProfile implements Profile {
             minMultiplicity = dataElement.minMultiplicity
             maxMultiplicity = dataElement.maxMultiplicity
             if(dataElement.dataType?.enumerationValues) {
-                allowedValues = dataElement.dataType?.enumerationValues.collect {it.key}
+                allowedValues = dataElement.dataType?.enumerationValues?.collect {it.key}
                 dataType = ProfileFieldDataType.ENUMERATION
             } else {
                 dataType = ProfileFieldDataType.fromString(dataElement.dataType?.label)

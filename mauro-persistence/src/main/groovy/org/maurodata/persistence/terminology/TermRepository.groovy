@@ -11,7 +11,6 @@ import jakarta.inject.Inject
 import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.domain.terminology.CodeSet
 import org.maurodata.domain.terminology.Term
-import org.maurodata.domain.terminology.TermRelationship
 import org.maurodata.domain.terminology.Terminology
 import org.maurodata.persistence.model.ModelItemRepository
 import org.maurodata.persistence.terminology.dto.TermDTORepository
@@ -41,6 +40,12 @@ abstract class TermRepository implements ModelItemRepository<Term> {
         termDTORepository.findAllByTerminology(terminology) as List<Term>
     }
 
+
+    @Nullable
+    Term findAllByTerminologyAndCode(Terminology terminology, String label) {
+        termDTORepository.findAllByTerminologyAndCode(terminology, label) as Term
+    }
+
     @Override
     @Nullable
     List<Term> findAllByParent(AdministeredItem parent) {
@@ -50,10 +55,19 @@ abstract class TermRepository implements ModelItemRepository<Term> {
     @Nullable
     abstract List<Term> readAllByTerminology(Terminology terminology)
 
+    @Nullable
+    abstract List<Term> readAllByTerminologyIdIn(Collection<UUID> terminologyIds)
+
     @Override
     @Nullable
     List<Term> readAllByParent(AdministeredItem parent) {
         readAllByTerminology((Terminology) parent)
+    }
+
+    @Override
+    @Nullable
+    List<Term> findAllByLabel(String label){
+        termDTORepository.findAllByLabel(label)
     }
 
     abstract Long deleteByTerminologyId(UUID terminologyId)
@@ -80,9 +94,18 @@ abstract class TermRepository implements ModelItemRepository<Term> {
     @Nullable
     abstract List<CodeSet> getCodeSets(@NonNull UUID uuid)
 
+    Set<Term> findAllByCodeSetsIdIn(@NonNull List<UUID> uuids) {
+        termDTORepository.findAllByCodeSetsIdIn(uuids) as Set<Term>
+    }
+
     @Override
     Class getDomainClass() {
         Term
+    }
+
+    @Override
+    Boolean handles(Class clazz) {
+        domainClass.isAssignableFrom(clazz)
     }
 
     Boolean handlesPathPrefix(final String pathPrefix) {

@@ -1,5 +1,6 @@
 package org.maurodata.security.authentication
 
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.context.annotation.Replaces
 import io.micronaut.context.annotation.Value
@@ -12,6 +13,7 @@ import io.micronaut.security.config.RedirectService
 import io.micronaut.security.endpoints.LoginControllerConfigurationProperties
 import io.micronaut.security.errors.PriorToLoginPersistence
 import io.micronaut.security.session.SessionLoginHandler
+import io.micronaut.security.session.SessionPopulator
 import io.micronaut.session.Session
 import io.micronaut.session.SessionStore
 import jakarta.inject.Inject
@@ -19,6 +21,7 @@ import jakarta.inject.Singleton
 import org.maurodata.persistence.cache.ItemCacheableRepository.CatalogueUserCacheableRepository
 import org.maurodata.security.AccessControlService
 
+@CompileStatic
 @Singleton
 @Slf4j
 @Replaces(SessionLoginHandler)
@@ -36,8 +39,10 @@ class MauroSessionLoginHandler extends SessionLoginHandler {
     @Value('${mauro.oauth.login-success:/}')
     URI loginSuccessUrl
 
-    MauroSessionLoginHandler(RedirectConfiguration redirectConfiguration, SessionStore<Session> sessionStore, @Nullable PriorToLoginPersistence<HttpRequest<?>, MutableHttpResponse<?>> priorToLoginPersistence, RedirectService redirectService) {
-        super(redirectConfiguration, sessionStore, priorToLoginPersistence, redirectService)
+    MauroSessionLoginHandler(RedirectConfiguration redirectConfiguration, SessionStore<Session> sessionStore,
+                             @Nullable PriorToLoginPersistence<HttpRequest<?>, MutableHttpResponse<?>> priorToLoginPersistence, RedirectService redirectService,
+                             List<SessionPopulator<HttpRequest<?>>> sessionPopulators) {
+        super(redirectConfiguration, sessionStore, priorToLoginPersistence, redirectService, sessionPopulators)
     }
 
     @Override
@@ -51,7 +56,7 @@ class MauroSessionLoginHandler extends SessionLoginHandler {
             } else {
                 log.debug 'Successful login, redirecting to login success URI'
                 MutableHttpResponse<?> response = HttpResponse.status(HttpStatus.SEE_OTHER)
-                MutableHttpHeaders headers = response.headers
+                MutableHttpHeaders headers = response.headers as MutableHttpHeaders
                 headers.location(loginSuccessUrl)
                 response
             }

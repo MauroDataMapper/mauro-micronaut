@@ -3,7 +3,9 @@ package org.maurodata.profile
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.ObjectReader
+import groovy.transform.CompileStatic
 
+@CompileStatic
 abstract class JsonBasedProfile implements Profile {
 
     @JsonIgnore

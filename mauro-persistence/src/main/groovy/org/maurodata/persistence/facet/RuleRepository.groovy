@@ -9,7 +9,7 @@ import io.micronaut.data.model.query.builder.sql.Dialect
 
 @CompileStatic
 @JdbcRepository(dialect = Dialect.POSTGRES)
-abstract class RuleRepository implements ItemRepository<Rule> {
+abstract class RuleRepository implements FacetRepository<Rule> {
 
     @Override
     Class getDomainClass() {

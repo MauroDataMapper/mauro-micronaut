@@ -1,6 +1,6 @@
 package org.maurodata.domain.facet.federation
 
-
+import jakarta.inject.Singleton
 import org.maurodata.domain.model.Model
 import org.maurodata.domain.terminology.CodeSet
 import org.maurodata.domain.terminology.Terminology
@@ -15,6 +15,7 @@ import org.apache.commons.lang3.StringUtils
 
 @CompileStatic
 @AutoClone
+@Singleton
 class PublishService {
     final EmbeddedServer embeddedServer
     final MauroPluginService mauroPluginService
@@ -40,7 +41,7 @@ class PublishService {
             ModelExporterPlugin.isInstance(it)
                 && ((ModelExporterPlugin) it).getHandlesModelType() == model.class
         }.sort().collect {mauroPlugin ->
-            new MauroLink("${uriString}/${modelUrlPath}/${model.id.toString()}/export/${mauroPlugin.namespace}/${mauroPlugin.name}/${mauroPlugin.version}",
+            new MauroLink("${uriString}/${modelUrlPath}/${model.id}/export/${mauroPlugin.namespace}/${mauroPlugin.name}/${mauroPlugin.version}",
                           ((ModelExporterPlugin) mauroPlugin).getContentType())
         }
         publishedModel

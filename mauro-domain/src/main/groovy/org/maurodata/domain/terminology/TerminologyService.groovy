@@ -49,7 +49,7 @@ class TerminologyService extends ModelService<Terminology> {
     }
     */
 
-    List<TreeItem> buildTree(Terminology fullTerminology, Term root, Integer depth = null) {
+    static List<TreeItem> buildTree(Terminology fullTerminology, Term root, Integer depth = null) {
         Map<UUID, Term> terms = fullTerminology.terms.collectEntries {[it.id, it]}
         Map<UUID, TermRelationshipType> termRelationshipTypes =
             fullTerminology.termRelationshipTypes.collectEntries {[it.id, it]}
@@ -70,7 +70,7 @@ class TerminologyService extends ModelService<Terminology> {
             if (termRelationshipTypes[it.relationshipType.id].parentalRelationship) {
                 child = terms[it.targetTerm.id]
                 parent = terms[it.sourceTerm.id]
-                if (parent.id in childTerms) {
+                if (parent.id in childTerms.keySet()) {
                     childTerms[parent.id].add(child)
                 } else {
                     childTerms[parent.id] = [child]

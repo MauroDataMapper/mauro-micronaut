@@ -1,5 +1,13 @@
 package org.maurodata.domain.facet
 
+import groovy.util.logging.Slf4j
+import io.micronaut.data.annotation.MappedEntity
+import jakarta.persistence.Entity
+import jakarta.persistence.PrePersist
+import org.maurodata.domain.model.ItemReference
+import org.maurodata.domain.model.ItemReferencer
+import org.maurodata.domain.model.ItemReferencerUtils
+import org.maurodata.domain.model.ItemUtils
 import org.maurodata.domain.model.Path
 import org.maurodata.domain.model.Pathable
 
@@ -14,8 +22,10 @@ import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.domain.model.Item
 
 @CompileStatic
-@AutoClone
-abstract class Facet extends Item implements Pathable {
+@Slf4j
+@MappedEntity(schema = 'core')
+@AutoClone(excludes = ['multiFacetAwareItem'])
+abstract class Facet extends Item implements Pathable, ItemReferencer {
 
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     @JsonAlias(['multi_facet_aware_item_domain_type'])
@@ -28,6 +38,20 @@ abstract class Facet extends Item implements Pathable {
     @Transient
     @JsonIgnore
     AdministeredItem multiFacetAwareItem
+
+    @PrePersist
+    void prePersist() {
+        if(!multiFacetAwareItemId) {
+            if(multiFacetAwareItem) {
+                multiFacetAwareItemId = multiFacetAwareItem.id
+                multiFacetAwareItemDomainType = multiFacetAwareItem.domainType
+            } else {
+                log.error("Trying to save Facet without 'multiFacetAwareItem' set")
+                log.error("" + multiFacetAwareItem)
+                log.error("" + multiFacetAwareItemId)
+            }
+        }
+    }
 
     @Transient
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
@@ -48,5 +72,40 @@ abstract class Facet extends Item implements Pathable {
     @Nullable
     String getPathModelIdentifier() {
         return null
+    }
+
+    @Override
+    void copyInto(Item into) {
+        super.copyInto(into)
+        Facet intoFacet = (Facet) into
+        intoFacet.multiFacetAwareItemDomainType = ItemUtils.copyItem(this.multiFacetAwareItemDomainType, intoFacet.multiFacetAwareItemDomainType)
+        intoFacet.multiFacetAwareItemId = ItemUtils.copyItem(this.multiFacetAwareItemId, intoFacet.multiFacetAwareItemId)
+        intoFacet.multiFacetAwareItem = ItemUtils.copyItem(this.multiFacetAwareItem, intoFacet.multiFacetAwareItem)
+        intoFacet.domainType = ItemUtils.copyItem(this.domainType, intoFacet.domainType)
+    }
+
+    @Transient
+    @JsonIgnore
+    @Override
+    List<ItemReference> retrieveItemReferences() {
+        List<ItemReference> pathsBeingReferenced = [] + super.retrieveItemReferences()
+
+        ItemReferencerUtils.addIdType(multiFacetAwareItemId, multiFacetAwareItemDomainType, pathsBeingReferenced)
+
+        return pathsBeingReferenced
+    }
+
+    @Transient
+    @JsonIgnore
+    @Override
+    void replaceItemReferencesByIdentity(IdentityHashMap<Item, Item> replacements, Map<UUID, Item> allItemsById, List<Item> notReplaced) {
+        super.replaceItemReferencesByIdentity(replacements, allItemsById, notReplaced)
+
+        if (multiFacetAwareItem) {
+            multiFacetAwareItem = ItemReferencerUtils.replaceItemByIdentity(multiFacetAwareItem, replacements)
+        } else { // Can this actually happen?
+            Item originalMultiFacetAwareItem = allItemsById[multiFacetAwareItemId]
+            multiFacetAwareItem = ItemReferencerUtils.replaceItemByIdentity(originalMultiFacetAwareItem, replacements) as AdministeredItem
+        }
     }
 }

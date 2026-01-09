@@ -9,8 +9,14 @@ import org.maurodata.domain.facet.ReferenceFile
 import org.maurodata.domain.facet.Rule
 import org.maurodata.domain.facet.SemanticLink
 import org.maurodata.domain.facet.SummaryMetadata
+import org.maurodata.domain.model.AdministeredItem
+import org.maurodata.domain.model.Item
+import org.maurodata.domain.model.ItemUtils
+import org.maurodata.domain.model.ItemReference
+import org.maurodata.domain.model.ItemReferencerUtils
 import org.maurodata.persistence.model.dto.AdministeredItemDTO
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.Introspected
@@ -20,6 +26,7 @@ import io.micronaut.data.annotation.MappedProperty
 import io.micronaut.data.annotation.TypeDef
 import io.micronaut.data.annotation.sql.ColumnTransformer
 import io.micronaut.data.model.DataType
+import jakarta.persistence.Transient
 
 @CompileStatic
 @Introspected
@@ -83,7 +90,8 @@ class DataClassDTO extends DataClass implements AdministeredItemDTO {
     @Nullable
     @TypeDef(type = DataType.JSON)
     @MappedProperty
-    @ColumnTransformer(read = '''(select json_agg( jsonb_build_object('id', reference_file.id, 'file_name', reference_file.file_name, 'file_size', reference_file.file_size, 'file_type',reference_file.file_type) ) from core.reference_file where multi_facet_aware_item_id = data_class_.id)''')
+    @ColumnTransformer(read = '''(select json_agg( jsonb_build_object('id', reference_file.id, 'file_name', reference_file.file_name, 'file_size', reference_file.file_size,
+ 'file_type',reference_file.file_type) ) from core.reference_file where multi_facet_aware_item_id = data_class_.id)''')
     List<ReferenceFile> referenceFiles = []
 
     @Nullable
@@ -108,4 +116,82 @@ class DataClassDTO extends DataClass implements AdministeredItemDTO {
     @MappedProperty
     @ColumnTransformer(read = '(select json_agg(semantic_link) from core.semantic_link where multi_facet_aware_item_id = data_class_.id)')
     List<SemanticLink> semanticLinks = []
+
+    @Transient
+    @JsonIgnore
+    @Override
+    List<ItemReference> retrieveItemReferences() {
+        List<ItemReference> pathsBeingReferenced = [] + super.retrieveItemReferences()
+
+        ItemReferencerUtils.addItems(edits, pathsBeingReferenced)
+        ItemReferencerUtils.addItems(metadata, pathsBeingReferenced)
+        ItemReferencerUtils.addItems(summaryMetadata, pathsBeingReferenced)
+        ItemReferencerUtils.addItems(rules, pathsBeingReferenced)
+        ItemReferencerUtils.addItems(annotations, pathsBeingReferenced)
+        ItemReferencerUtils.addItems(referenceFiles, pathsBeingReferenced)
+        ItemReferencerUtils.addItems(classifiers, pathsBeingReferenced)
+        ItemReferencerUtils.addItems(extendsDataClasses, pathsBeingReferenced)
+        ItemReferencerUtils.addItems(semanticLinks, pathsBeingReferenced)
+
+        return pathsBeingReferenced
+    }
+
+    @Transient
+    @JsonIgnore
+    @Override
+    void replaceItemReferencesByIdentity(IdentityHashMap<Item, Item> replacements, Map<UUID, Item> allItemsById, List<Item> notReplaced) {
+        super.replaceItemReferencesByIdentity(replacements, allItemsById, notReplaced)
+
+        edits = ItemReferencerUtils.replaceItemsByIdentity(edits, replacements, notReplaced)
+        metadata = ItemReferencerUtils.replaceItemsByIdentity(metadata, replacements, notReplaced)
+        summaryMetadata = ItemReferencerUtils.replaceItemsByIdentity(summaryMetadata, replacements, notReplaced)
+        rules = ItemReferencerUtils.replaceItemsByIdentity(rules, replacements, notReplaced)
+        annotations = ItemReferencerUtils.replaceItemsByIdentity(annotations, replacements, notReplaced)
+        referenceFiles = ItemReferencerUtils.replaceItemsByIdentity(referenceFiles, replacements, notReplaced)
+        classifiers = ItemReferencerUtils.replaceItemsByIdentity(classifiers, replacements, notReplaced)
+        extendsDataClasses = ItemReferencerUtils.replaceItemsByIdentity(extendsDataClasses, replacements, notReplaced)
+        semanticLinks = ItemReferencerUtils.replaceItemsByIdentity(semanticLinks, replacements, notReplaced)
+    }
+
+    @Override
+    void copyInto(Item into) {
+        super.copyInto(into)
+
+        if (into instanceof DataClassDTO) {
+            DataClassDTO intoDTO = (DataClassDTO) into
+
+            intoDTO.edits = ItemUtils.copyItems(this.edits, intoDTO.edits)
+            intoDTO.metadata = ItemUtils.copyItems(this.metadata, intoDTO.metadata)
+            intoDTO.summaryMetadata = ItemUtils.copyItems(this.summaryMetadata, intoDTO.summaryMetadata)
+            intoDTO.rules = ItemUtils.copyItems(this.rules, intoDTO.rules)
+            intoDTO.annotations = ItemUtils.copyItems(this.annotations, intoDTO.annotations)
+            intoDTO.referenceFiles = ItemUtils.copyItems(this.referenceFiles, intoDTO.referenceFiles)
+            intoDTO.classifiers = ItemUtils.copyItems(this.classifiers, intoDTO.classifiers)
+            intoDTO.extendsDataClasses = ItemUtils.copyItems(this.extendsDataClasses, intoDTO.extendsDataClasses)
+            intoDTO.semanticLinks = ItemUtils.copyItems(this.semanticLinks, intoDTO.semanticLinks)
+        } else {
+            AdministeredItem intoAM = (AdministeredItem) into
+
+            intoAM.edits = ItemUtils.copyItems(this.edits, intoAM.edits)
+            intoAM.metadata = ItemUtils.copyItems(this.metadata, intoAM.metadata)
+            intoAM.summaryMetadata = ItemUtils.copyItems(this.summaryMetadata, intoAM.summaryMetadata)
+            intoAM.rules = ItemUtils.copyItems(this.rules, intoAM.rules)
+            intoAM.annotations = ItemUtils.copyItems(this.annotations, intoAM.annotations)
+            intoAM.referenceFiles = ItemUtils.copyItems(this.referenceFiles, intoAM.referenceFiles)
+            intoAM.classifiers = ItemUtils.copyItems(this.classifiers, intoAM.classifiers)
+            intoAM.semanticLinks = ItemUtils.copyItems(this.semanticLinks, intoAM.semanticLinks)
+
+            if (into instanceof DataClass) {
+                DataClass intoDC = (DataClass) into
+                intoDC.extendsDataClasses = ItemUtils.copyItems(this.extendsDataClasses, intoDC.extendsDataClasses)
+            }
+        }
+    }
+
+    @Override
+    Item shallowCopy() {
+        DataClassDTO dtoShallowCopy = new DataClassDTO()
+        this.copyInto(dtoShallowCopy)
+        return dtoShallowCopy
+    }
 }

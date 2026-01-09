@@ -1,18 +1,20 @@
 package org.maurodata.controller.federation.client
 
+import groovy.transform.CompileStatic
 import io.micronaut.context.annotation.ConfigurationProperties
 import io.micronaut.context.annotation.Replaces
 import io.micronaut.http.client.HttpClientConfiguration
 import io.micronaut.runtime.ApplicationConfiguration
 
+@CompileStatic
 @ConfigurationProperties(PREFIX)
 //@Replaces(HttpClientConfiguration)
 class FederationClientConfiguration extends HttpClientConfiguration {
-    static final String PREFIX = "micronaut.federation.client";
+    static final String PREFIX = "micronaut.federation.client"
     static final String API_KEY_HEADER = 'apiKey'
     static final String API_PATH = 'api'
 
-    FederationClientConnectionPoolConfiguration connectionPoolConfiguration;
+    FederationClientConnectionPoolConfiguration connectionPoolConfiguration
 
     FederationClientConfiguration(ApplicationConfiguration applicationConfiguration,
                                   FederationClientConnectionPoolConfiguration connectionPoolConfiguration) {

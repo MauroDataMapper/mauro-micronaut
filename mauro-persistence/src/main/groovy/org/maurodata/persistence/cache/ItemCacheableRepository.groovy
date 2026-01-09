@@ -1,7 +1,9 @@
 package org.maurodata.persistence.cache
 
+import io.micronaut.cache.SyncCache
 import io.micronaut.core.annotation.Nullable
 import jakarta.inject.Inject
+import jakarta.inject.Named
 import org.maurodata.domain.security.ApiKey
 import org.maurodata.persistence.security.ApiKeyRepository
 
@@ -42,8 +44,16 @@ import org.maurodata.persistence.security.UserGroupRepository
 @CacheConfig(cacheNames = 'items-cache', keyGenerator = StringCacheKeyGenerator)
 abstract class ItemCacheableRepository<I extends Item> implements ItemRepository<I> {
 
+    @Inject
+    @Named("items-cache")
+    SyncCache<Object> entityCache
+
     static final String FIND_BY_ID = 'find'
     static final String READ_BY_ID = 'read'
+
+    static String generateReadKey(Item item) {
+        "${READ_BY_ID}_${item.domainType}_${item.id}"
+    }
 
     ItemRepository<I> repository
     String domainType
@@ -73,7 +83,9 @@ abstract class ItemCacheableRepository<I extends Item> implements ItemRepository
 
     List<I> saveAll(Iterable<I> items) {
         List<I> saved = repository.saveAll(items)
-        items.each { invalidate(it) }
+        saved.each { it ->
+            invalidate(it)
+        }
         saved
     }
 
@@ -222,6 +234,11 @@ abstract class ItemCacheableRepository<I extends Item> implements ItemRepository
             ((UserGroupRepository) repository).addCatalogueUser(uuid, catalogueUserId)
         }
 
+        long deleteCatalogueUser(@NonNull UUID uuid, @NonNull UUID catalogueUserId) {
+            invalidateAll()
+            ((UserGroupRepository) repository).deleteCatalogueUser(uuid, catalogueUserId)
+        }
+
         @Cacheable
         List<UserGroup> readAllByName(String name) {
             ((UserGroupRepository) repository).readAllByName(name)
@@ -238,8 +255,28 @@ abstract class ItemCacheableRepository<I extends Item> implements ItemRepository
 
         // not cached
 
+        List<CatalogueUser> readByPendingAndDisabled(boolean pending, boolean disabled) {
+            ((CatalogueUserRepository) repository).readByPendingAndDisabled(pending, disabled)
+        }
+
         CatalogueUser readByEmailAddress(String emailAddress) {
             ((CatalogueUserRepository) repository).readByEmailAddress(emailAddress)
+        }
+
+        boolean existsByEmailAddress(String emailAddress) {
+            ((CatalogueUserRepository) repository).existsByEmailAddress(emailAddress)
+        }
+
+        List<CatalogueUser> readAll() {
+            ((CatalogueUserRepository) repository).readAll()
+        }
+
+        List<CatalogueUser> readAllByUserGroupId(UUID userGroupId) {
+            ((CatalogueUserRepository) repository).readAllByUserGroupId(userGroupId)
+        }
+
+        List<CatalogueUser> readAllByEmailAddressIlike(String searchTerm) {
+            ((CatalogueUserRepository) repository).readAllByEmailAddressIlike(searchTerm)
         }
     }
 
@@ -306,6 +343,10 @@ abstract class ItemCacheableRepository<I extends Item> implements ItemRepository
             ((ApiPropertyRepository) repository).findByCategory(category)
         }
 
+        @Cacheable
+        ApiProperty findByKey(final String key) {
+            ((ApiPropertyRepository) repository).findByKey(key)
+        }
     }
 
     @Singleton
@@ -331,10 +372,8 @@ abstract class ItemCacheableRepository<I extends Item> implements ItemRepository
             updated
         }
 
-        List<SummaryMetadataReport> saveAll(Iterable<SummaryMetadataReport> items) {
-            List<SummaryMetadataReport> saved = repository.saveAll(items)
-            items.each { invalidate(it) }
-            saved
+        List<SummaryMetadataReport> readAllBySummaryMetadataIdIn(List<UUID> summaryMetadataIds) {
+            ((SummaryMetadataReportRepository) repository).readAllBySummaryMetadataIdIn(summaryMetadataIds)
         }
 
         private void invalidateChain(SummaryMetadataReport summaryMetadataReport, SummaryMetadata summaryMetadata) {
@@ -359,6 +398,11 @@ abstract class ItemCacheableRepository<I extends Item> implements ItemRepository
             Rule rule = ruleCacheableRepository.readById(item.ruleId)
             ruleCacheableRepository.invalidate(rule)
         }
+
+        List<RuleRepresentation> readAllByRuleIdIn(List<UUID> ruleIds) {
+            ((RuleRepresentationRepository) repository).readAllByRuleIdIn(ruleIds)
+        }
+
     }
 
     @CompileStatic

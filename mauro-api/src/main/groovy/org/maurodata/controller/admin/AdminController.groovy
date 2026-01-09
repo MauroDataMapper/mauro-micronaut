@@ -20,7 +20,8 @@ import org.maurodata.domain.security.CatalogueUser
 import org.maurodata.persistence.security.EmailRepository
 import org.maurodata.plugin.MauroPluginService
 import org.maurodata.plugin.exporter.ModelExporterPlugin
-import org.maurodata.plugin.importer.ModelImporterPlugin
+import org.maurodata.plugin.exporter.ModelItemExporterPlugin
+import org.maurodata.plugin.importer.ImporterPlugin
 import org.maurodata.security.AccessControlService
 import org.maurodata.plugin.EmailPlugin
 import org.maurodata.service.email.EmailService
@@ -60,7 +61,7 @@ class AdminController implements AdminApi {
     List<MauroPluginDTO> importers() {
         accessControlService.checkAdministrator()
 
-        mauroPluginService.listPluginsAsDTO(ModelImporterPlugin)
+        mauroPluginService.listPluginsAsDTO(ImporterPlugin)
     }
 
     @Audit
@@ -78,6 +79,11 @@ class AdminController implements AdminApi {
         mauroPluginService.listPluginsAsDTO(EmailPlugin)
     }
 
+    @Audit
+    @Get(Paths.ADMIN_DATALOADERS_LIST)
+    List<MauroPluginDTO> dataLoaders() {
+        []
+    }
 
     /**
      * This is new endpoint that can be used to test sending an email.  You should provide a catalogue user with a
@@ -145,7 +151,7 @@ class AdminController implements AdminApi {
         try {
             Email email = emailRepository.findById(emailId).get()
             if (!email) {
-                throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Email with id ${emailId.toString()} not found")
+                throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Email with id ${emailId} not found")
             }
             emailService.retrySendEmail(email, false)
             return true

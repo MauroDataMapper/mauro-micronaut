@@ -9,16 +9,13 @@ import spock.lang.Shared
 import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.folder.Folder
 import org.maurodata.persistence.ContainerizedTest
-import org.maurodata.persistence.datamodel.DataModelContentRepository
+
 import org.maurodata.domain.search.dto.SearchResultsDTO
 import org.maurodata.web.ListResponse
 
 @ContainerizedTest
 @Singleton
 class SearchIntegrationSpec extends CommonDataSpec {
-
-    @Inject
-    DataModelContentRepository dataModelContentRepository
 
     @Shared
     UUID folderId

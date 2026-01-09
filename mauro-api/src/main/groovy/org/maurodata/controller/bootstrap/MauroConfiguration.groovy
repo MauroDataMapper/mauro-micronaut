@@ -1,20 +1,23 @@
 package org.maurodata.controller.bootstrap
 
 import groovy.beans.Bindable
+import groovy.transform.CompileStatic
 import io.micronaut.context.annotation.ConfigurationProperties
+import io.micronaut.core.annotation.Nullable
 import jakarta.validation.constraints.NotBlank
 
 import java.time.Instant
 
-
+@CompileStatic
 @ConfigurationProperties("mauro")
 class MauroConfiguration {
 
     List<CatalogueUserConfig> users
     List<UserGroupConfig> groups
     List<ApiKeyConfig> apiKeys
+    List<ApiPropertyConfig> apiProperties
 
-    public static class CatalogueUserConfig {
+    static class CatalogueUserConfig {
 
         @NotBlank
         String email
@@ -26,7 +29,7 @@ class MauroConfiguration {
         String tempPassword
     }
 
-    public static class UserGroupConfig {
+    static class UserGroupConfig {
 
         @NotBlank
         String name
@@ -35,7 +38,7 @@ class MauroConfiguration {
         List<String> members
     }
 
-    public static class ApiKeyConfig {
+    static class ApiKeyConfig {
 
         // create unique index "idx_api_key_catalogue_user_id_name_unique" on  security.api_key (catalogue_user_id, name);
         @NotBlank
@@ -45,5 +48,19 @@ class MauroConfiguration {
         UUID key
         Boolean refreshable
         Instant expiry
+    }
+
+    static class ApiPropertyConfig {
+        @NotBlank
+        String key
+        @NotBlank
+        String value
+
+        @Nullable
+        Boolean publiclyVisible
+
+        @Nullable
+        @NotBlank
+        String category
     }
 }

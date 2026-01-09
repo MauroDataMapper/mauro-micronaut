@@ -32,9 +32,6 @@ import spock.lang.Shared
 @Singleton
 @Sql(scripts = "classpath:sql/tear-down-datamodel.sql", phase = Sql.Phase.AFTER_EACH)
 class DataModelSchemaMergeDiffsIntegrationSpec extends CommonDataSpec {
-    static String NAME = 'name'
-    static String CREATED = 'created'
-    static String DELETED = 'deleted'
 
     @Shared
     UUID folderId
@@ -180,6 +177,9 @@ class DataModelSchemaMergeDiffsIntegrationSpec extends CommonDataSpec {
         DataModel updated=dataModelApi.update(branch.id, new DataModel(label:"Changed label"))
         MergeDiffDTO mergeDiff = dataModelApi.mergeDiff(branch.id, main.id)
         then:
+        mergeDiff.diffs.forEach {
+            System.out.println(it.dump())
+        }
         mergeDiff.diffs.every {
             it.fieldName == 'label' && it.sourceValue == 'Changed label' && !it.isMergeConflict
         }
@@ -365,19 +365,6 @@ class DataModelSchemaMergeDiffsIntegrationSpec extends CommonDataSpec {
             it.name == 'branchName' || it.name == 'pathModelIdentifier'
         }
     }
-
-    /*
-    mergeDiff.diffs.forEach {
-            System.out.println(it.dump())
-        }
-        mergeDiff.diffs.every {
-            it.fieldName == 'dataClasses' && it.isMergeConflict && it._type == 'deletion'
-        }
-        mergeDiff.diffs.any {
-            it.fieldName == 'dataClasses' && it.isMergeConflict && it._type == 'deletion'
-        }
-     */
-
 }
 
 

@@ -3,6 +3,7 @@ package org.maurodata.domain.model
 import org.maurodata.domain.security.CatalogueUser
 
 import com.fasterxml.jackson.annotation.JsonAlias
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import groovy.transform.AutoClone
@@ -23,7 +24,7 @@ import java.time.Instant
  */
 @CompileStatic
 @AutoClone
-abstract class Item implements Serializable {
+abstract class Item implements Serializable, ItemReferencer {
 
     /**
      * The identity of an object.  UUIDs should be universally unique.
@@ -80,4 +81,36 @@ abstract class Item implements Serializable {
         dateCreated = null
         lastUpdated = null
     }
+
+    /**
+     * For making a shallow copy across all subclasses of Item.
+     * E.g. Calling copyInto() on a DataModel copies all properties
+     * of that DataModel into another one including calling copyInto on the
+     * super classes all the way to Item: DataModel -> Model -> AdministeredItem -> Item
+     * Ultimately used by implementers of ItemReferencer shallowCopy()
+     */
+    void copyInto(Item into) {
+        into.id = ItemUtils.copyItem(this.id, into.id)
+        into.version = ItemUtils.copyItem(this.version, into.version)
+        into.dateCreated = ItemUtils.copyItem(this.dateCreated, into.dateCreated)
+        into.lastUpdated = ItemUtils.copyItem(this.lastUpdated, into.lastUpdated)
+        into.catalogueUser = ItemUtils.copyItem(this.catalogueUser, into.catalogueUser)
+        into.domainType = ItemUtils.copyItem(this.domainType, into.domainType)
+    }
+
+    @Transient
+    @JsonIgnore
+    @Override
+    List<ItemReference> retrieveItemReferences() {
+        List<ItemReference> pathsBeingReferenced = []
+        ItemReferencerUtils.addItem(catalogueUser, pathsBeingReferenced)
+
+        return pathsBeingReferenced
+    }
+
+    @Override
+    void replaceItemReferencesByIdentity(IdentityHashMap<Item, Item> replacements, Map<UUID, Item> allItemsById, List<Item> notReplaced) {
+        catalogueUser = ItemReferencerUtils.replaceItemByIdentity(catalogueUser, replacements, notReplaced)
+    }
+
 }

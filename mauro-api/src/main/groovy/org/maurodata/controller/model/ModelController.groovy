@@ -1,18 +1,16 @@
 package org.maurodata.controller.model
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
-import io.micronaut.http.HttpHeaders
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.exceptions.HttpException
 import io.micronaut.http.exceptions.HttpStatusException
-import io.micronaut.http.multipart.CompletedFileUpload
-import io.micronaut.http.multipart.CompletedPart
 import io.micronaut.http.server.exceptions.InternalServerException
 import io.micronaut.http.server.multipart.MultipartBody
 import io.micronaut.scheduling.TaskExecutors
@@ -21,6 +19,7 @@ import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
 import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
+import jakarta.persistence.Transient
 import org.maurodata.ErrorHandler
 import org.maurodata.FieldConstants
 import org.maurodata.api.model.FieldPatchDataDTO
@@ -37,7 +36,6 @@ import org.maurodata.api.model.PermissionsDTO
 import org.maurodata.api.model.VersionLinkDTO
 import org.maurodata.api.model.VersionLinkTargetDTO
 import org.maurodata.controller.facet.EditController
-import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.diff.ArrayDiff
 import org.maurodata.domain.diff.CollectionDiff
 import org.maurodata.domain.diff.FieldDiff
@@ -60,30 +58,28 @@ import org.maurodata.domain.model.version.ModelVersion
 import org.maurodata.domain.security.CatalogueUser
 import org.maurodata.domain.security.Role
 import org.maurodata.domain.security.UserGroup
-import org.maurodata.domain.terminology.CodeSet
-import org.maurodata.domain.terminology.Terminology
+import org.maurodata.persistence.ContentsService
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository
 import org.maurodata.persistence.cache.FacetCacheableRepository
 import org.maurodata.persistence.cache.ModelCacheableRepository
 import org.maurodata.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
 import org.maurodata.persistence.facet.VersionLinkRepository
-import org.maurodata.persistence.model.AdministeredItemContentRepository
+
 import org.maurodata.persistence.model.AdministeredItemRepository
-import org.maurodata.persistence.model.ModelContentRepository
+
 import org.maurodata.plugin.MauroPluginService
 import org.maurodata.plugin.exporter.ModelExporterPlugin
-import org.maurodata.plugin.importer.FileParameter
 import org.maurodata.plugin.importer.FolderImporterPlugin
 import org.maurodata.plugin.importer.ImportParameters
 import org.maurodata.plugin.importer.ModelImporterPlugin
 import org.maurodata.service.core.AuthorityService
 import org.maurodata.service.plugin.PluginService
+import org.maurodata.util.exporter.ExporterUtils
+import org.maurodata.utils.importer.ImporterUtils
 import org.maurodata.web.ListResponse
 import org.maurodata.web.PaginationParams
-import reactor.core.publisher.Flux
 
 import java.lang.reflect.Method
-import java.nio.charset.StandardCharsets
 
 @Slf4j
 @CompileStatic
@@ -91,14 +87,19 @@ import java.nio.charset.StandardCharsets
 abstract class ModelController<M extends Model> extends AdministeredItemController<M, Folder> implements ModelApi<M> {
 
     @Inject
+    FacetCacheableRepository.VersionLinkCacheableRepository versionLinkCacheableRepository
+
+    @Inject
     FacetCacheableRepository.ReferenceFileCacheableRepository referenceFileCacheableRepository
+
+    @Inject
+    FolderCacheableRepository folderCacheableRepository
 
     @Override
     List<String> getDisallowedProperties() {
         log.debug '***** ModelController::getDisallowedProperties *****'
         super.disallowedProperties +
-        ['finalised', 'dateFinalised', 'readableByEveryone', 'readableByAuthenticatedUsers', 'modelType', 'deleted', 'folder', 'branchName',
-         'modelVersion', 'modelVersionTag']
+        ['finalised', 'dateFinalised', 'readableByEveryone', 'readableByAuthenticatedUsers', 'modelType', 'deleted', 'folder']
     }
 
     @Override
@@ -112,7 +113,8 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     @Inject
     MauroPluginService mauroPluginService
 
-    ModelContentRepository<M> modelContentRepository
+    @Inject
+    ContentsService contentsService
 
     ModelService<M> modelService
     @Inject
@@ -127,22 +129,20 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     @Inject
     EditController editController
 
-    @Inject
-    List<AdministeredItemContentRepository> administeredItemContentRepositories
 
-    ModelController(Class<M> modelClass, AdministeredItemCacheableRepository<M> modelRepository, FolderCacheableRepository folderRepository,
-                    ModelContentRepository<M> modelContentRepository) {
-        super(modelClass, modelRepository, folderRepository, modelContentRepository)
+    @Inject
+    ImporterUtils importerUtils
+
+    ModelController(Class<M> modelClass, AdministeredItemCacheableRepository<M> modelRepository, FolderCacheableRepository folderRepository) {
+        super(modelClass, modelRepository, folderRepository)
         this.itemClass = modelClass
         this.administeredItemRepository = modelRepository
         this.parentItemRepository = folderRepository
-        this.modelContentRepository = modelContentRepository
-        this.administeredItemContentRepository = modelContentRepository
     }
 
     ModelController(Class<M> modelClass, AdministeredItemCacheableRepository<M> modelRepository, FolderCacheableRepository folderRepository,
-                    ModelContentRepository<M> modelContentRepository, ModelService modelService) {
-        this(modelClass, modelRepository, folderRepository, modelContentRepository)
+                    ModelService modelService) {
+        this(modelClass, modelRepository, folderRepository)
         this.modelService = modelService
     }
 
@@ -153,7 +153,28 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     @Transactional
     M create(@NonNull UUID folderId, @Body @NonNull M model) {
         model.authority = authorityService.getDefaultAuthority()
+        setBranchName(folderId, model)
         super.create(folderId, model) as M
+    }
+
+    void setBranchName(UUID folderId, M model) {
+        Folder folder = getFolderAncestors(folderId)
+        if( folder &&
+            !folder.branchName &&
+            !folder.modelVersion &&
+            !folder.inAVersionedFolder()) {
+            model.branchName = Model.DEFAULT_BRANCH_NAME
+        } else {
+            model.branchName = null
+        }
+    }
+
+    Folder getFolderAncestors(UUID folderId) {
+        final Folder parentFolder = folderRepository.findById(folderId)
+        if(parentFolder && parentFolder.parentFolder) {
+            parentFolder.parentFolder = getFolderAncestors(parentFolder.parentFolder.id)
+        }
+        return parentFolder
     }
 
     @Transactional
@@ -163,11 +184,11 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
 
     @Transactional
     M moveFolder(UUID id, String destination) {
-        M existing = modelRepository.readById(id)
-        accessControlService.checkRole(Role.CONTAINER_ADMIN, existing)
-        M original = (M) existing.clone()
+        M original = modelRepository.readById(id)
+        accessControlService.checkRole(Role.CONTAINER_ADMIN, original)
+        M updated = (M) original.deepClone()
         if (destination == 'root') {
-            existing.folder = null
+            updated.folder = null
         } else {
             UUID destinationId
             try {
@@ -177,16 +198,18 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
             }
             Folder folder = folderRepository.readById(destinationId)
             accessControlService.checkRole(Role.EDITOR, folder)
-            existing.folder = folder
+            updated.folder = folder
         }
-        pathRepository.readParentItems(existing)
-        existing.updatePath()
-        modelRepository.update(original, existing)
+        modelRepository.update(original, updated)
+        pathRepository.readParentItems(updated)
+        updated.updatePath()
+        return updated
     }
 
     @Transactional
     HttpResponse delete(UUID id, @Body @Nullable M model, @Nullable Boolean permanent) {
-        M modelToDelete = (M) modelContentRepository.findWithContentById(id)
+        M modelToDelete = modelRepository.readById(id)
+
 
         if (modelToDelete == null) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, "Object not found for deletion")
@@ -194,13 +217,12 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
 
         accessControlService.checkRole(Role.CONTAINER_ADMIN, modelToDelete)
 
+        modelToDelete = (M) contentsService.loadWithContent(modelToDelete)
         if (model?.version) modelToDelete.version = model.version
 
         if (permanent) {
+            contentsService.deleteWithContent(modelToDelete)
 
-            if (!administeredItemContentRepository.deleteWithContent(modelToDelete)) {
-                throw new HttpStatusException(HttpStatus.NOT_FOUND, 'Not found for deletion')
-            }
         } else {
             modelToDelete.deleted(true)
             administeredItemRepository.update(modelToDelete)
@@ -210,7 +232,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
 
     @Transactional
     M putReadByAuthenticated(UUID id) {
-        M modelToUse = (M) modelContentRepository.findWithContentById(id)
+        M modelToUse = (M) modelRepository.loadWithContent(id)
 
         if (modelToUse == null) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, "Object not found for readByAuthenticated")
@@ -226,7 +248,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
 
     @Transactional
     HttpResponse deleteReadByAuthenticated(UUID id) {
-        M modelToUse = (M) modelContentRepository.findWithContentById(id)
+        M modelToUse = (M) modelRepository.loadWithContent(id)
 
         if (modelToUse == null) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, "Object not found for readByAuthenticated")
@@ -242,7 +264,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
 
     @Transactional
     M putReadByEveryone(UUID id) {
-        M modelToUse = (M) modelContentRepository.findWithContentById(id)
+        M modelToUse = (M) modelRepository.loadWithContent(id)
 
         if (modelToUse == null) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, "Object not found for readByAuthenticated")
@@ -258,7 +280,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
 
     @Transactional
     HttpResponse deleteReadByEveryone(UUID id) {
-        M modelToUse = (M) modelContentRepository.findWithContentById(id)
+        M modelToUse = (M) modelRepository.loadWithContent(id)
 
         if (modelToUse == null) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, "Object not found for readByAuthenticated")
@@ -295,29 +317,34 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     @Transactional
     M createNewBranchModelVersion(UUID id, @Body @Nullable CreateNewVersionData createNewVersionData) {
         if (!createNewVersionData) createNewVersionData = new CreateNewVersionData()
-        M existing = getExistingWithContent(id)
+        M existing = modelRepository.readById(id)
+        existing = (M) contentsService.loadWithContent(existing)
 
         if (existing == null) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, "Object not found")
         }
 
         M copy = createCopyModelWithAssociations(existing, createNewVersionData)
+        copy.setAssociations()
 
-        M savedCopy = modelContentRepository.saveWithContent(copy)
+        M savedCopy = (M) contentsService.saveWithContent(copy, accessControlService.getUser())
+        //modelContentRepository.saveWithContent(copy)
 
         final VersionLink versionLink = new VersionLink(versionLinkType: VersionLink.NEW_MODEL_VERSION_OF)
-        versionLink.setTargetModel(savedCopy)
-        existing.versionLinks.add(versionLink)
+        versionLink.setTargetModel(existing)
+        versionLink.setMultiFacetAwareItem(savedCopy)
 
-        final List<AdministeredItem> toSave = new LinkedList<>()
-        toSave.add(existing)
-        modelContentRepository.saveVersionLinks(toSave)
+        versionLinkCacheableRepository.save(versionLink)
+        // final List<AdministeredItem> toSave = [] as LinkedList
+        // toSave.add(existing)
+        // saveVersionLinks(toSave)
 
         modelRepository.readById(savedCopy.id) as M
     }
 
     protected M createCopyModelWithAssociations(M existing, CreateNewVersionData createNewVersionData) {
         M copy = modelService.createNewBranchModelVersion(existing, createNewVersionData.branchName)
+        copy.setAssociations()
         copy.parent = existing.parent
         updateCreationProperties(copy)
         updateDerivedProperties(copy)
@@ -327,7 +354,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     }
 
     protected M getExistingWithContent(UUID id) {
-        M existing = modelContentRepository.findWithContentById(id)
+        M existing = modelRepository.loadWithContent(id)
         existing.setAssociations()
         getReferenceFileFileContent(existing.getAllContents())
 
@@ -349,25 +376,15 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         administeredItemRepositories.find {it.handles(item.class) || it.handles(item.domainType)}
     }
 
-    <P extends ImportParameters> P readFromMultipartFormBody(MultipartBody body, Class<P> parametersClass) {
-        Map<String, Object> importMap = Flux.from(body).collectList().block().collectEntries {CompletedPart cp ->
-            if (cp instanceof CompletedFileUpload) {
-                return [cp.name, new FileParameter(cp.filename, cp.contentType.toString(), cp.bytes)]
-            } else {
-                return [cp.name, new String(cp.bytes, StandardCharsets.UTF_8)]
-            }
-        }
-        return objectMapper.convertValue(importMap, parametersClass)
-    }
 
     HttpResponse<byte[]> exportModel(UUID modelId, String namespace, String name, @Nullable String version) {
         ModelExporterPlugin mauroPlugin = mauroPluginService.getPlugin(ModelExporterPlugin, namespace, name, version)
         PluginService.handlePluginNotFound(mauroPlugin, namespace, name)
 
-        M existing = modelContentRepository.findWithContentById(modelId)
+        M existing = modelRepository.loadWithContent(modelId)
         existing.setAssociations()
 
-        createExportResponse(mauroPlugin, existing)
+        ExporterUtils.createExportResponse(mauroPlugin, existing)
     }
 
     ListResponse<M> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version) {
@@ -375,7 +392,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         ModelImporterPlugin mauroPlugin = mauroPluginService.getPlugin(ModelImporterPlugin, namespace, name, version)
         PluginService.handlePluginNotFound(mauroPlugin, namespace, name)
 
-        ImportParameters importParameters = readFromMultipartFormBody(body, mauroPlugin.importParametersClass())
+        ImportParameters importParameters = importerUtils.readFromMultipartFormBody(body, mauroPlugin.importParametersClass())
 
         Folder folder = null
         if (importParameters.folderId != null) {
@@ -387,36 +404,25 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         List<M> imported = (List<M>) mauroPlugin.importModels(importParameters)
 
         accessControlService.checkRole(Role.EDITOR, folder)
-        List<M> saved = imported.collect {M imp ->
+        List<M> saved = imported.collect { M imp ->
             imp.folder = folder
             log.info '** about to saveWithContentBatched... **'
-            updateCreationProperties(imp)
-            switch (imp.getDomainType()) {
-                case DataModel.class.simpleName: saveDataModel((DataModel) imp)
-                    break
-                case Folder.class.simpleName: saveFolder((Folder) imp)
-                    break
-                case CodeSet.class.simpleName: saveCodeSet((CodeSet) imp)
-                    break
-                case Terminology.class.simpleName: saveTerminology((Terminology) imp)
-                    break
-                default:
-                    saveModel(imp)
-                    break
-            }
-
+            //updateCreationProperties(imp)
+            M savedImported = (M) contentsService.saveWithContent(imp, accessControlService.getUser())
+            log.info '** finished saveWithContentBatched **'
+            savedImported
         }
-        log.info '** finished saveWithContentBatched **'
-        List<M> smallerResponse = saved.collect {model ->
+        List<M> smallerResponse = saved.collect { model ->
             show(model.id)
         }
         ListResponse.from(smallerResponse)
     }
 
-    ListResponse<DataModel> importModel(@Body io.micronaut.http.client.multipart.MultipartBody body, String namespace, String name, @Nullable String version) {
-        throw new Exception("Client version of importModel has been called")
-    }
 
+
+    ListResponse<M> importModel(@Body io.micronaut.http.client.multipart.MultipartBody body, String namespace, String name, @Nullable String version) {
+        throw new Exception("Client version of import model has been called.. hint client MultipartBody ")
+    }
 
     protected void getReferenceFileFileContent(Collection<AdministeredItem> administeredItems) {
         administeredItems.each {
@@ -434,32 +440,6 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     }
 
 
-    static protected HttpResponse<byte[]> createExportResponse(ModelExporterPlugin mauroPlugin, Model model) {
-        byte[] fileContents = mauroPlugin.exportModel(model)
-        String filename = mauroPlugin.getFileName(model)
-        HttpResponse
-            .ok(fileContents)
-            .header(HttpHeaders.CONTENT_LENGTH, Long.toString(fileContents.length))
-            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=${filename}")
-    }
-
-    protected VersionLinkDTO constructVersionLinkDTO(final M sourceModel, final VersionLink versionLink) {
-        // Look up target model
-
-        final M targetModel = show(versionLink.targetModelId)
-        if (targetModel == null) {
-            throw new HttpStatusException(HttpStatus.NOT_FOUND, "Object not found")
-        }
-
-        ModelRefDTO sourceModelDto = new ModelRefDTO(id: sourceModel.id, domainType: sourceModel.domainType, label: sourceModel.label)
-        ModelRefDTO targetModelDto = new ModelRefDTO(id: targetModel.id, domainType: targetModel.domainType, label: targetModel.label,
-                                                     model: targetModel.owner ? targetModel.owner.id : null)
-
-        final VersionLinkDTO versionLinkDTO = new VersionLinkDTO(id: versionLink.id, linkType: versionLink.versionLinkType, sourceModel: sourceModelDto,
-                                                                 targetModel: targetModelDto)
-
-        versionLinkDTO
-    }
 
     M findCommonAncestorBetweenModels(M leftModel, M rightModel) {
 
@@ -468,13 +448,13 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
 
         if (!finalisedLeftParent) {
             throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
-                                          "MS01. Model [${leftModel.id.toString()}] has no finalised parent therefore cannot have a common ancestor with Model " +
+                                          "MS01. Model [${leftModel.id}] has no finalised parent therefore cannot have a common ancestor with Model " +
                                           "[${rightModel.id}]")
         }
 
         if (!finalisedRightParent) {
             throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
-                                          "MS02. Model [${rightModel.id.toString()}] has no finalised parent therefore cannot have a common ancestor with Model " +
+                                          "MS02. Model [${rightModel.id}] has no finalised parent therefore cannot have a common ancestor with Model " +
                                           "[${leftModel.id}]")
         }
 
@@ -485,7 +465,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
                                           "MS04. Models don't share a common ancestor")
         }
 
-        chosenCommonAncestor
+        modelRepository.loadWithContent(chosenCommonAncestor.id)
     }
 
     M getFinalisedParent(final M model) {
@@ -495,14 +475,14 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
             if (currentModel == null) {
                 break
             }
-            if (currentModel.finalised && currentModel.isVersionable()) {
+            if (currentModel.finalised && currentModel.modelVersion) {
                 return currentModel
             }
             final UUID currentId = currentModel.id
             final UUID sourceModelUUID = versionLinkRepositoryUncached.findSourceModel(currentId)
 
             if (sourceModelUUID != null) {
-                currentModel = modelContentRepository.findWithContentById(sourceModelUUID)
+                currentModel = modelRepository.findById(sourceModelUUID)
                 continue
             }
             break
@@ -512,24 +492,23 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     }
 
     boolean isOnVersionPath(final M modelToFind, final M asAncestorOf) {
-        M currentModel = asAncestorOf
+        if (asAncestorOf == null) {return false}
 
+        UUID currentId = asAncestorOf.id
         for (; ;) {
-            if (currentModel == null) {
-                break
-            }
-            final UUID currentId = currentModel.id
             if (currentId == modelToFind.id) {return true}
 
             final UUID sourceModelUUID = versionLinkRepositoryUncached.findSourceModel(currentId)
 
             if (sourceModelUUID != null) {
-                currentModel = modelContentRepository.findWithContentById(sourceModelUUID)
-                continue
+                final boolean sourceModelExists = modelRepository.existsById(sourceModelUUID)
+                if (sourceModelExists) {
+                    currentId = sourceModelUUID
+                    continue
+                }
             }
             break
         }
-
         return false
     }
 
@@ -547,15 +526,22 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         for (; ;) {
             final UUID sourceModelUUID = versionLinkRepositoryUncached.findSourceModel(currentId)
             if (sourceModelUUID != null) {
-                currentId = sourceModelUUID
-                continue
+                // Check whether it actually exists (it could have been deleted and the trail stops here)
+                final boolean rootObjectExists = modelRepository.existsById(sourceModelUUID)
+                if (rootObjectExists) {
+                    currentId = sourceModelUUID
+                    continue
+                }
             }
             break
         }
 
-        final Model rootObject = modelContentRepository.findWithContentById(currentId)
+        final Model rootObject = modelRepository.readById(currentId)
+        pathRepository.readParentItems(rootObject)
+        rootObject.updatePath()
+        rootObject.updateBreadcrumbs()
 
-        if (rootObject == null) throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to find root object")
+        if (rootObject == null) {throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to find root object")}
 
         final ArrayList<Model> allModels = new ArrayList<>(10)
         allModels.add(rootObject)
@@ -594,11 +580,15 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
                 }
             }
 
-            final Model childModel = modelContentRepository.findWithContentById(targetModelId)
+            final Model childModel = modelRepository.findById(targetModelId)
 
             if (childModel == null) {
                 continue
             }
+
+            pathRepository.readParentItems(childModel)
+            childModel.updatePath()
+            childModel.updateBreadcrumbs()
 
             into.add(childModel)
             populateByVersionLink(childModel, into, flags, branchesOnly)
@@ -696,8 +686,6 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         // models are comparable
         // Root the path starting from the startingPathNodeString as the context item
 
-        System.out.println("flattenDiffIntoMap "+pathString+" trimUntil "+startingPathNodeString)
-
         final Path path
         try {
             path = new Path(pathString).trimUntil(startingPathNodeString)
@@ -705,7 +693,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         catch (IllegalArgumentException iae) {
             iae.printStackTrace()
 
-            System.err.println(fieldDiff.toString())
+            log.error(fieldDiff.toString())
             throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, iae.toString())
         }
 
@@ -719,7 +707,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     @Override
     PermissionsDTO permissions(UUID id) {
 
-        M modelToUse = (M) modelContentRepository.findWithContentById(id)
+        M modelToUse = (M) modelRepository.readById(id)
 
         if (modelToUse == null) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, "Object not found for permissions")
@@ -730,10 +718,10 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
 
         // TODO: Perhaps want to use SecurableResourceGroupRoleCacheableRepository to get the
         // list of SecurableResourceGroupRole
-        Set<UserGroup> readableByGroups = [];
-        Set<UserGroup> writeableByGroups = [];
-        Set<CatalogueUser> readableByUsers = [];
-        Set<CatalogueUser> writeableByUsers = [];
+        Set<UserGroup> readableByGroups = []
+        Set<UserGroup> writeableByGroups = []
+        Set<CatalogueUser> readableByUsers = []
+        Set<CatalogueUser> writeableByUsers = []
 
         PermissionsDTO permissions = new PermissionsDTO()
         permissions.readableByEveryone = readableByEveryone
@@ -746,29 +734,6 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         return permissions
     }
 
-    protected M saveDataModel(DataModel dataModel) {
-        DataModel savedImport = modelContentRepository.saveWithContent(dataModel as M) as DataModel
-        savedImport as M
-    }
-
-    protected M saveFolder(Folder folder) {
-        Folder savedImport = modelContentRepository.saveWithContent(folder as M) as Folder
-        savedImport as M
-    }
-
-    protected M saveCodeSet(CodeSet codeSet) {
-        CodeSet savedImport = modelContentRepository.saveWithContent(codeSet as M) as CodeSet
-        savedImport as M
-    }
-
-    protected M saveTerminology(Terminology terminology) {
-        Terminology savedImport = modelContentRepository.saveWithContent(terminology as M) as Terminology
-        savedImport as M
-    }
-
-    protected M saveModel(M model) {
-        modelContentRepository.saveWithContent(model)
-    }
 
     protected ModelVersionDTO latestModelVersion(UUID id) {
         final List<Model> allModels = populateVersionTree(id, false, null)
@@ -833,20 +798,17 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
             throw new HttpStatusException(HttpStatus.NOT_FOUND, "There are no versioned models")
         }
 
-        return new ModelVersionedRefDTO(id: highestVersionModel.id, domainType: highestVersionModel.domainType, label: highestVersionModel.label,
-                                        branch: highestVersionModel.branchName, branchName: highestVersionModel.branchName,
-                                        modelVersion: highestVersionModel.modelVersion?.toString(), modelVersionTag: highestVersionModel.modelVersionTag,
-                                        documentationVersion: highestVersionModel.documentationVersion, displayName: highestVersionModel.pathModelIdentifier)
+        return new ModelVersionedRefDTO(highestVersionModel)
     }
 
     protected M commonAncestor(UUID id, UUID other_model_id) {
         final M left = show(id)
         if (!left) {
-            throw new HttpStatusException(HttpStatus.NOT_FOUND, "No data model found for id [${left.id.toString()}]")
+            throw new HttpStatusException(HttpStatus.NOT_FOUND, "No data model found for id [${left.id}]")
         }
         final M right = show(other_model_id)
         if (!right) {
-            throw new HttpStatusException(HttpStatus.NOT_FOUND, "No data model found for id [${right.id.toString()}]")
+            throw new HttpStatusException(HttpStatus.NOT_FOUND, "No data model found for id [${right.id}]")
         }
 
         return findCommonAncestorBetweenModels(left, right)
@@ -883,12 +845,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         allModels.forEach {Model model ->
 
             if (!branchesOnly || !model.finalised) {
-                simpleModelVersionTreeList.add(
-                    new ModelVersionedRefDTO(id: model.id, domainType: model.domainType, label: model.label, model: model.owner.id, branch: model.branchName,
-                                             branchName: model.branchName,
-                                             modelVersion: model.modelVersion?.toString(), modelVersionTag: model.modelVersionTag,
-                                             documentationVersion: model.documentationVersion,
-                                             displayName: model.pathModelIdentifier))
+                simpleModelVersionTreeList.add(new ModelVersionedRefDTO(model))
             }
         }
 
@@ -905,13 +862,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         final ArrayList<ModelVersionedWithTargetsRefDTO> modelVersionTreeList = new ArrayList<>(allModels.size())
 
         for (Model model : allModels) {
-            final ModelVersionedWithTargetsRefDTO modelVersionedWithTargetsRefDTO = new ModelVersionedWithTargetsRefDTO(id: model.id, branch: model.branchName,
-                                                                                                                        branchName: model.branchName,
-                                                                                                                        modelVersion: model.modelVersion?.toString(),
-                                                                                                                        modelVersionTag: model.modelVersionTag,
-                                                                                                                        documentationVersion: model.documentationVersion,
-                                                                                                                        displayName: model.pathModelIdentifier,
-                                                                                                                        domainType: model.domainType)
+            final ModelVersionedWithTargetsRefDTO modelVersionedWithTargetsRefDTO = new ModelVersionedWithTargetsRefDTO(model)
 
             // Have any flags been set during recursion?
             final Map<String, Boolean> modelFlags = flags.get(modelVersionedWithTargetsRefDTO.id)
@@ -949,10 +900,10 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     }
 
     protected MergeDiffDTO mergeDiff(@NonNull UUID id, @NonNull UUID otherId) {
-        final M dataModelOne = modelContentRepository.findWithContentById(id)
+        final M dataModelOne = modelRepository.loadWithContent(id)
         ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, dataModelOne, "item with $id not found")
 
-        final M dataModelTwo = modelContentRepository.findWithContentById(otherId)
+        final M dataModelTwo = modelRepository.loadWithContent(otherId)
         ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, dataModelTwo, "item with $otherId not found")
 
         accessControlService.checkRole(Role.READER, dataModelOne)
@@ -1029,7 +980,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         final List<Map<String, FieldDiff>> flattenedDiffOneMapList = [flattenedDiffOneCreated, flattenedDiffOneModified, flattenedDiffOneDeleted]
         final List<Map<String, FieldDiff>> flattenedDiffTwoMapList = [flattenedDiffTwoCreated, flattenedDiffTwoModified, flattenedDiffTwoDeleted]
 
-        final Set<String> allPaths = new LinkedHashSet<>()
+        final Set<String> allPaths = [] as LinkedHashSet
         for (Map<String, FieldDiff> pathToFieldDiff : flattenedDiffOneMapList + flattenedDiffTwoMapList) {
             final Set keys = pathToFieldDiff.keySet()
             allPaths.addAll(keys)
@@ -1351,12 +1302,12 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
             throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, 'Target model id passed in request body does not match target model id in URI.')
         }
 
-        M sourceModel = modelContentRepository.findWithContentById(id)
+        M sourceModel = modelRepository.loadWithContent(id)
         if (sourceModel == null) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, id.toString())
         }
 
-        M targetModel = modelContentRepository.findWithContentById(otherId)
+        M targetModel = modelRepository.loadWithContent(otherId)
         if (targetModel == null) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, targetModel.toString())
         }
@@ -1399,7 +1350,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
                 case 'modification':
                     return processModificationPatchIntoModel(fieldPatch, targetModel, sourceModel, changeNotice, addedChangeNotice)
                 default:
-                    System.err.println('Unknown field patch type ' + fieldPatch._type)
+                    log.error('Unknown field patch type ' + fieldPatch._type)
             }
         }
 
@@ -1456,7 +1407,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
             }
         }
         catch (Exception ignored) {
-            throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to create path for ${creationPatch.path.toString()}")
+            throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to create path for ${creationPatch.path}")
         }
 
         // Find the Item referenced by the creationPatch in the source model
@@ -1479,15 +1430,15 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
                     administeredItemTargetParent = pathRepository.findResourcesByPathFromRootResource(targetModel, creationPatch.path.parent)
                 }
                 catch (Exception ignoredAgain) {
-                    throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to create path for ${creationPatch.path.toString()}")
+                    throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to create path for ${creationPatch.path}")
                 }
                 if (administeredItemTargetParent == null) {
-                    throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to create path for ${creationPatch.path.toString()}")
+                    throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to create path for ${creationPatch.path}")
                 }
             }
         }
         catch (Exception ignored) {
-            throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to create path for ${creationPatch.path.toString()}")
+            throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to create path for ${creationPatch.path}")
         }
 
         // Make a copy of the AdministeredItem from the source, then attach the copy to the target parent
@@ -1542,13 +1493,13 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
             // If so, clone those and ask the ItemReferencer to update its references to the
             // cloned ones
             ItemReferencer itemReferencer = (ItemReferencer) savedClonedAdministeredItem
-            List<ItemReference> referencedItems = itemReferencer.itemReferences
+            List<ItemReference> referencedItems = itemReferencer.retrieveItemReferences()
 
             // Resolve these to a list of paths
             List<Path> pathsToReferencedItems = pathRepository.resolveItemReferences(referencedItems)
 
             // Are any of these paths inside the source model?
-            final Map<UUID, ItemReference> toReplace = [:]
+            final IdentityHashMap<Item, Item> toReplace = new IdentityHashMap<>(pathsToReferencedItems.size())
             for (int p = 0; p < pathsToReferencedItems.size(); p++) {
                 Path pathToReferencedItem = pathsToReferencedItems.get(p)
 
@@ -1564,9 +1515,6 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
 
                     Path pathToReferencedItemFromTarget = pathToReferencedItem.trimUntil(targetModel.pathNodeString)
 
-                    //System.out.println("targetModel.pathNodeString "+targetModel.pathNodeString)
-                    //System.out.println("pathToReferencedItemFromTarget "+pathToReferencedItemFromTarget.toString())
-
                     AdministeredItem targetToReferencedItem
                     try {
                         targetToReferencedItem = pathRepository.findResourcesByPathFromRootResource(targetModel, pathToReferencedItemFromTarget)
@@ -1580,16 +1528,16 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
                             }
                             catch (Exception ignoredOnceMore) {
                                 ignoredOnceMore.printStackTrace()
-                                throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to create path for ${pathToReferencedItemFromTarget.toString()}")
+                                throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to create path for ${pathToReferencedItemFromTarget}")
                             }
                             if (targetToReferencedItem == null) {
-                                throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to create path for ${pathToReferencedItemFromTarget.toString()}")
+                                throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to create path for ${pathToReferencedItemFromTarget}")
                             }
                         }
                     }
                     catch (Exception ignored) {
                         ignored.printStackTrace()
-                        throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to create path for ${pathToReferencedItemFromTarget.toString()}")
+                        throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to create path for ${pathToReferencedItemFromTarget}")
                     }
 
                     // Resolve the source item from the path so it can be swapped out
@@ -1598,29 +1546,29 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
                     try {
                         sourceOfReferencedItem = pathRepository.findResourcesByPathFromRootResource(sourceModel, pathToReferencedItemFromSource)
                         if (sourceOfReferencedItem == null) {
-                            throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to find path for ${pathToReferencedItemFromSource.toString()}")
+                            throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to find path for ${pathToReferencedItemFromSource}")
                         }
                     }
                     catch (Exception ignored) {
-                        throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to find path for ${pathToReferencedItemFromSource.toString()}")
+                        throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to find path for ${pathToReferencedItemFromSource}")
                     }
 
                     // Record a map of the ItemReferences the ItemReferencer will need to update to use the new reference
-                    toReplace.put(sourceOfReferencedItem.id, ItemReference.from(targetToReferencedItem))
+                    toReplace.put(sourceOfReferencedItem, targetToReferencedItem)
                 }
             }
 
             // Ask the ItemReferencer to update to use the cloned items
-            itemReferencer.replaceItemReferences(toReplace)
+            Map<UUID, Item> toReplaceById = toReplace.values().collectEntries { value -> [value.id, value]}
+            itemReferencer.replaceItemReferencesByIdentity(toReplace, toReplaceById)
 
             // Then for each item, call update
 
-            toReplace.values().forEach {ItemReference itemReference ->
+            toReplace.values().forEach {Item replacedItem ->
 
-                if (itemReference.theItem && itemReference.theItem instanceof AdministeredItem) {
-                    AdministeredItemCacheableRepository administeredItemCacheableRepository =
-                        administeredItemContentRepository.getRepository((AdministeredItem) itemReference.theItem)
-                    administeredItemCacheableRepository.update((AdministeredItem) itemReference.theItem)
+                if (replacedItem instanceof AdministeredItem) {
+                    AdministeredItem replacedItemAdministeredItem = (AdministeredItem) replacedItem
+                    getAdministeredItemRepository(replacedItem.domainType).update(replacedItemAdministeredItem)
                 }
             }
         }
@@ -1651,7 +1599,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
             }
         }
         catch (Exception findingResource) {
-            throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to find path for ${deletionPatch.path.toString()}")
+            throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to find path for ${deletionPatch.path}")
         }
 
         String itemRemovedLabel = administeredItem.label ?: "No label"
@@ -1727,8 +1675,8 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     }
 
     AdministeredItem getWithContents(AdministeredItem item) {
-        AdministeredItemContentRepository specificAdministeredItemContentRepository = getAdministeredItemContentRepository(item)
-        AdministeredItem itemWithContents = specificAdministeredItemContentRepository.readWithContentById(item.id)
+        AdministeredItemRepository specificAdministeredItemRepository = getAdministeredItemRepository(item.domainType)
+        AdministeredItem itemWithContents = specificAdministeredItemRepository.loadWithContent(item.id)
         return itemWithContents
     }
 
@@ -1745,11 +1693,11 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
                 accessControlService.checkRole(Role.EDITOR, item)
             }
 
-            AdministeredItemContentRepository specificAdministeredItemContentRepository = getAdministeredItemContentRepository(item)
+            AdministeredItemRepository specificAdministeredItemRepository = getAdministeredItemRepository(item.domainType)
 
-            AdministeredItem itemWithContents = specificAdministeredItemContentRepository.readWithContentById(item.id)
+            AdministeredItem itemWithContents = specificAdministeredItemRepository.loadWithContent(item.id)
 
-            if (!specificAdministeredItemContentRepository.deleteWithContent(itemWithContents)) {
+            if (!contentsService.deleteWithContent(itemWithContents)) {
                 throw new HttpStatusException(HttpStatus.NOT_FOUND, 'Not found for deletion: ' + item.label)
             }
         }
@@ -1761,24 +1709,9 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         }
     }
 
-    @NonNull
-    AdministeredItemContentRepository getAdministeredItemContentRepository(AdministeredItem item) {
-        administeredItemContentRepositories.find {
-            it.getClass().simpleName != 'AdministeredItemContentRepository' &&
-            it.getClass().simpleName != 'ModelContentRepository' &&
-            it.handles(item.class)
-        } ?:
-        administeredItemContentRepositories.find {
-            it.getClass().simpleName != 'ModelContentRepository' &&
-            it.handles(item.class)
-        } ?:
-        administeredItemContentRepositories.find {
-            it.getClass().simpleName != 'AdministeredItemContentRepository'
-        }
-    }
-
-    private void connectFacets(AdministeredItem administeredItem){
-        if(administeredItem.metadata){
+    // TODO: Wonder whether this works given the shadowing in the DTOs?
+    private void connectFacets(AdministeredItem administeredItem) {
+        if (administeredItem.metadata) {
             administeredItem.metadata.each {
                 updateMultiAwareData(administeredItem, it)
             }
@@ -1796,7 +1729,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         if (administeredItem.annotations) {
             administeredItem.annotations.each {
                 updateMultiAwareData(administeredItem, it)
-                if(it.childAnnotations){
+                if (it.childAnnotations) {
                     it.childAnnotations.forEach {child ->
                         updateMultiAwareData(administeredItem, child)
                     }
@@ -1808,7 +1741,12 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
                 updateMultiAwareData(administeredItem, it)
             }
         }
-        if(administeredItem instanceof Model){
+        if (administeredItem.edits) {
+            administeredItem.edits.each {
+                updateMultiAwareData(administeredItem, it)
+            }
+        }
+        if (administeredItem instanceof Model) {
             if (((Model) administeredItem).versionLinks) {
                 ((Model) administeredItem).versionLinks.each {
                     updateMultiAwareData(administeredItem, it)
@@ -1826,6 +1764,26 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         it.multiFacetAwareItemDomainType = item.domainType
         it.multiFacetAwareItemId = item.id
         it.multiFacetAwareItem = item
+    }
+
+    void saveVersionLinks(List<AdministeredItem> items) {
+        List<VersionLink> versionLinks = []
+        items.each {item ->
+            if (item instanceof Model) {
+                final Model modelItem = (Model) item
+                if (modelItem.versionLinks) {
+                    modelItem.versionLinks.each {
+                        updateMultiAwareData(item, it)
+                    }
+                    versionLinks.addAll(modelItem.versionLinks)
+                }
+            }
+        }
+        versionLinks.each {
+            if (it.id == null || !versionLinkCacheableRepository.existsById(it.id)) {
+                versionLinkCacheableRepository.save(it)
+            }
+        }
     }
 
 }

@@ -1,7 +1,10 @@
 package org.maurodata.domain.terminology
 
+import org.maurodata.domain.model.Item
 import org.maurodata.domain.model.ItemReference
 import org.maurodata.domain.model.ItemReferencer
+import org.maurodata.domain.model.ItemReferencerUtils
+import org.maurodata.domain.model.ItemUtils
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import groovy.transform.AutoClone
@@ -17,7 +20,6 @@ import jakarta.persistence.JoinColumn
 import jakarta.persistence.JoinTable
 import jakarta.persistence.Transient
 import org.maurodata.domain.model.Model
-import org.maurodata.domain.model.ModelItem
 
 /**
  * A Terminology is a model that describes a number of terms, and some relationships between them.
@@ -33,12 +35,17 @@ class CodeSet extends Model implements ItemReferencer {
 
     @Relation(value = Relation.Kind.MANY_TO_MANY, cascade = Relation.Cascade.ALL)
     @JoinTable(
-            name = 'code_set_term',
-            joinColumns = @JoinColumn(name = 'code_set_id'),
-            inverseJoinColumns = @JoinColumn(name = 'term_id')
+        name = 'code_set_term',
+        joinColumns = @JoinColumn(name = 'code_set_id'),
+        inverseJoinColumns = @JoinColumn(name = 'term_id')
     )
-    @JsonIgnore
+
     Set<Term> terms = []
+
+    // This attribute is used when creating a new CodeSet and wanting to add all terms from one or more terminologies.
+    @Transient
+    Set<Terminology> terminologies = []
+
 
     @Override
     @Transient
@@ -64,15 +71,15 @@ class CodeSet extends Model implements ItemReferencer {
     @JsonIgnore
     @Override
     void setAssociations() {
-        []
+        super.setAssociations()
     }
 
 
     @Override
     String toString() {
         return "CodeSet{" +
-                "terms=" + terms +
-                '}'
+               "terms=" + terms +
+               '}'
     }
 
     /*
@@ -95,29 +102,65 @@ class CodeSet extends Model implements ItemReferencer {
     @Transient
     @JsonIgnore
     @Override
-    List<ItemReference> getItemReferences() {
-        List<ItemReference> pathsBeingReferenced = []
-        if (terms != null) {
-            terms.forEach {Term term ->
-                pathsBeingReferenced << ItemReference.from(term)
-            }
-        }
+    List<ItemReference> retrieveItemReferences() {
+        List<ItemReference> pathsBeingReferenced = [] + super.retrieveItemReferences()
+
+        ItemReferencerUtils.addItems(terms, pathsBeingReferenced)
+
         return pathsBeingReferenced
     }
 
     @Override
-    void replaceItemReferences(Map<UUID, ItemReference> replacements) {
-        if (terms != null) {
-            final Set<Term> replacementSet = []
-            terms.forEach {Term term ->
-                ItemReference replacementItemReference = replacements.get(term.id)
-                if (replacementItemReference != null) {
-                    replacementSet.add((Term) replacementItemReference.theItem)
-                } else {
-                    replacementSet.add(term)
-                }
-            }
-            terms = replacementSet
-        }
+    void replaceItemReferencesByIdentity(IdentityHashMap<Item, Item> replacements, Map<UUID, Item> allItemsById, List<Item> notReplaced) {
+        super.replaceItemReferencesByIdentity(replacements, allItemsById, notReplaced)
+
+        terms = ItemReferencerUtils.replaceItemsByIdentity(terms, replacements, notReplaced)
     }
+
+    @Override
+    void copyInto(Item into) {
+        super.copyInto(into)
+        CodeSet intoCodeSet = (CodeSet) into
+        intoCodeSet.terms = ItemUtils.copyItems(this.terms, intoCodeSet.terms)
+    }
+
+    @Override
+    Item shallowCopy() {
+        CodeSet codeSetShallowCopy = new CodeSet()
+        this.copyInto(codeSetShallowCopy)
+        return codeSetShallowCopy
+    }
+
+    /**
+     * Builder methods
+     * @param args
+     * @param closure
+     * @return
+     */
+    static CodeSet build(
+        Map args,
+        @DelegatesTo(value = CodeSet, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+        new CodeSet(args).tap(closure)
+    }
+
+    static CodeSet build(
+        @DelegatesTo(value = CodeSet, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+        build [:], closure
+    }
+
+
+    Term term (Term term) {
+        this.terms.add(term)
+        term
+    }
+
+    Term term(Map args, @DelegatesTo(value = Term, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+        Term term1 = Term.build(args , closure)
+        term term1
+    }
+
+    Term term(@DelegatesTo(value = Term, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+        term [:], closure
+    }
+
 }

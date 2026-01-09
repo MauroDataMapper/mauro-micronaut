@@ -1,5 +1,7 @@
 package org.maurodata.export
 
+import org.maurodata.domain.classifier.ClassificationScheme
+import org.maurodata.domain.dataflow.DataFlow
 import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.folder.Folder
 import org.maurodata.domain.terminology.CodeSet
@@ -9,6 +11,7 @@ import groovy.transform.CompileStatic
 import groovy.transform.MapConstructor
 import io.micronaut.core.annotation.Introspected
 import org.maurodata.plugin.exporter.ModelExporterPlugin
+import org.maurodata.plugin.exporter.ModelItemExporterPlugin
 
 import java.time.Instant
 
@@ -29,7 +32,13 @@ class ExportModel {
     List<Folder> folders = []
 
     CodeSet codeSet
-    List<CodeSet> codeSets= []
+    List<CodeSet> codeSets = []
+
+    ClassificationScheme classificationScheme
+    List<ClassificationScheme> classificationSchemes
+
+    DataFlow dataFlow
+    List<DataFlow> dataFlows = []
 
     ExportModel() {
 
@@ -37,11 +46,20 @@ class ExportModel {
 
     ExportModel(ModelExporterPlugin plugin) {
         exportMetadata = new ExportMetadata(
-                namespace: plugin.namespace,
-                name: plugin.name,
-                version: plugin.version,
+            namespace: plugin.namespace,
+            name: plugin.name,
+            version: plugin.version,
                 exportDate: Instant.now(),
                 exportedBy: "Anonymous User"
+        )
+    }
+    ExportModel(ModelItemExporterPlugin plugin) {
+        exportMetadata = new ExportMetadata(
+            namespace: plugin.namespace,
+            name: plugin.name,
+            version: plugin.version,
+            exportDate: Instant.now(),
+            exportedBy: "Anonymous User"
         )
     }
 
@@ -161,7 +179,7 @@ class ExportModel {
     }
 
     List<Folder> folders(List<Folder> folders) {
-        if(this.folder) {
+        if (this.folder) {
             this.folders.add(this.folder)
             this.folder = null
         }
@@ -169,5 +187,96 @@ class ExportModel {
         folders
     }
 
+    CodeSet codeSet(CodeSet codeSet) {
+        if (!this.codeSet && codeSets.size() == 0) {
+            this.codeSet = codeSet
+        } else {
+            if (this.codeSet) {
+                this.codeSets.add(this.codeSet)
+                this.codeSet = null
+            }
+            this.codeSets.add(codeSet)
+        }
+        codeSet
+    }
 
+    CodeSet codeSet(Map args, @DelegatesTo(value = CodeSet, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+        CodeSet codeSet1 = CodeSet.build(args, closure)
+        codeSet codeSet1
+    }
+
+    CodeSet codeSet(@DelegatesTo(value = CodeSet, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+        codeSet [:], closure
+    }
+
+    List<CodeSet> codeSets(List<CodeSet> codeSets) {
+        if (this.codeSet) {
+            this.codeSets.add(this.codeSet)
+            this.codeSet = null
+        }
+        this.codeSets.addAll(codeSets)
+        codeSets
+    }
+
+    ClassificationScheme classificationScheme(ClassificationScheme classificationScheme) {
+        if (!this.classificationScheme && classificationSchemes.size() == 0) {
+            this.classificationScheme = classificationScheme
+        } else {
+            if (this.classificationScheme) {
+                this.classificationSchemes.add(this.classificationScheme)
+                this.classificationScheme = null
+            }
+            this.classificationSchemes.add(classificationScheme)
+        }
+        classificationScheme
+    }
+
+    ClassificationScheme classificationScheme(Map args, @DelegatesTo(value = ClassificationScheme, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+        ClassificationScheme classificationScheme1 = ClassificationScheme.build(args, closure)
+        classificationScheme classificationScheme1
+    }
+
+    ClassificationScheme classificationScheme(@DelegatesTo(value = ClassificationScheme, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+        classificationScheme [:], closure
+    }
+
+    List<ClassificationScheme> classificationSchemes(List<ClassificationScheme> classificationSchemes) {
+        if (this.classificationScheme) {
+            this.classificationSchemes.add(this.classificationScheme)
+            this.classificationScheme = null
+        }
+        this.classificationSchemes.addAll(classificationSchemes)
+        classificationSchemes
+    }
+
+    DataFlow dataFlow (DataFlow dataFlow ) {
+        if (!this.dataFlow && dataFlows.size() == 0) {
+            this.dataFlow = dataFlow
+        } else {
+            if(this.dataFlow) {
+                this.dataFlows.add(this.dataFlow)
+                this.dataFlow = null
+            }
+            this.dataFlows.add(dataFlow)
+        }
+        dataFlow
+    }
+
+    DataFlow dataFlow(Map args, @DelegatesTo(value = DataFlow, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
+        DataFlow dataFlow1  = DataFlow.build(args, closure)
+        dataFlow dataFlow1
+    }
+
+    DataFlow dataFlow(@DelegatesTo(value = DataFlow, strategy = Closure.DELEGATE_FIRST) Closure closure = { }) {
+        dataFlow [:], closure
+    }
+
+    List<DataFlow> dataFlows(List<DataFlow> dataFlows) {
+        if(this.dataFlow) {
+            this.dataFlows.add(this.dataFlow)
+            this.dataFlow = null
+        }
+        this.dataFlows.addAll(dataFlows)
+        dataFlows
+    }
 }

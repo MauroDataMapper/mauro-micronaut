@@ -21,7 +21,7 @@ import java.time.Instant
 @Introspected
 @MappedEntity(schema = 'federation')
 @MapConstructor(includeSuperFields = true, includeSuperProperties = true, noArg = true)
-class SubscribedModel extends Item implements SecurableResource{
+class SubscribedModel extends Item implements SecurableResource {
     @NotNull
     SubscribedCatalogue subscribedCatalogue
 
@@ -51,4 +51,24 @@ class SubscribedModel extends Item implements SecurableResource{
     @NonNull
     UUID localModelId
 
+    @Override
+    void copyInto(Item into) {
+        super.copyInto(into)
+        SubscribedModel intoSubscribedModel = (SubscribedModel) into
+        intoSubscribedModel.subscribedCatalogue = this.subscribedCatalogue
+        intoSubscribedModel.subscribedModelId = this.subscribedModelId
+        intoSubscribedModel.folderId = folderId
+        intoSubscribedModel.subscribedModelType = subscribedModelType
+        intoSubscribedModel.readableByEveryone = readableByEveryone
+        intoSubscribedModel.readableByAuthenticatedUsers = readableByAuthenticatedUsers
+        intoSubscribedModel.lastRead = lastRead
+        intoSubscribedModel.localModelId = localModelId
+    }
+
+    @Override
+    Item shallowCopy() {
+        SubscribedModel subscribedModelShallowCopy = new SubscribedModel()
+        this.copyInto(subscribedModelShallowCopy)
+        return subscribedModelShallowCopy
+    }
 }

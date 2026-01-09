@@ -1,16 +1,18 @@
 package org.maurodata.controller.folder
 
-import org.maurodata.api.model.MergeIntoDTO
-import com.fasterxml.jackson.core.Versioned
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
-import io.micronaut.http.MediaType
-import io.micronaut.http.annotation.*
-import io.micronaut.http.exceptions.HttpStatusException
+import io.micronaut.http.annotation.Body
+import io.micronaut.http.annotation.Controller
+import io.micronaut.http.annotation.Delete
+import io.micronaut.http.annotation.Get
+import io.micronaut.http.annotation.Post
+import io.micronaut.http.annotation.Put
+import io.micronaut.http.annotation.QueryValue
 import io.micronaut.http.server.multipart.MultipartBody
 import io.micronaut.scheduling.TaskExecutors
 import io.micronaut.scheduling.annotation.ExecuteOn
@@ -22,29 +24,21 @@ import org.maurodata.ErrorHandler
 import org.maurodata.api.Paths
 import org.maurodata.api.folder.VersionedFolderApi
 import org.maurodata.api.model.MergeDiffDTO
-import org.maurodata.api.model.MergeFieldDiffDTO
+import org.maurodata.api.model.MergeIntoDTO
 import org.maurodata.api.model.ModelVersionDTO
 import org.maurodata.api.model.ModelVersionedRefDTO
 import org.maurodata.api.model.ModelVersionedWithTargetsRefDTO
 import org.maurodata.api.model.PermissionsDTO
-import org.maurodata.api.model.VersionLinkTargetDTO
 import org.maurodata.audit.Audit
 import org.maurodata.controller.model.ModelController
-import org.maurodata.domain.datamodel.DataModel
-import org.maurodata.domain.diff.FieldDiff
-import org.maurodata.domain.diff.ObjectDiff
-import org.maurodata.domain.facet.VersionLink
 import org.maurodata.domain.folder.Folder
 import org.maurodata.domain.folder.FolderService
-import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.domain.model.Model
-import org.maurodata.domain.model.Path
 import org.maurodata.domain.model.version.CreateNewVersionData
 import org.maurodata.domain.model.version.FinaliseData
-import org.maurodata.domain.model.version.ModelVersion
-import org.maurodata.domain.security.Role
+import org.maurodata.exception.MauroApplicationException
 import org.maurodata.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
-import org.maurodata.persistence.folder.FolderContentRepository
+
 import org.maurodata.web.ListResponse
 
 @Slf4j
@@ -53,16 +47,11 @@ import org.maurodata.web.ListResponse
 @Secured(SecurityRule.IS_ANONYMOUS)
 class VersionedFolderController extends ModelController<Folder> implements VersionedFolderApi {
 
-    private static final String MY_CLASS_TYPE = "VersionedFolder"
-
-    @Inject
-    FolderContentRepository folderContentRepository
-
     @Inject
     FolderService folderService
 
-    VersionedFolderController(FolderCacheableRepository folderRepository, FolderContentRepository folderContentRepository, FolderService folderService) {
-        super(Folder, folderRepository, folderRepository, folderContentRepository, folderService)
+    VersionedFolderController(FolderCacheableRepository folderRepository, FolderService folderService) {
+        super(Folder, folderRepository, folderRepository, folderService)
         this.folderService = folderService
     }
 
@@ -82,7 +71,7 @@ class VersionedFolderController extends ModelController<Folder> implements Versi
         cleanBody(folder)
         updateCreationProperties(folder)
         folder.authority = super.authorityService.getDefaultAuthority()
-        folder.setVersionable(true)
+        folder.branchName = Model.DEFAULT_BRANCH_NAME
 
         pathRepository.readParentItems(folder)
         folder.updatePath()
@@ -94,7 +83,7 @@ class VersionedFolderController extends ModelController<Folder> implements Versi
     @Transactional
     @Post(Paths.CHILD_VERSIONED_FOLDER_LIST)
     Folder create(UUID parentId, @Body @NonNull Folder folder) {
-        folder.setVersionable(true)
+        folder.branchName = Model.DEFAULT_BRANCH_NAME
         super.create(parentId, folder)
     }
 
@@ -113,9 +102,9 @@ class VersionedFolderController extends ModelController<Folder> implements Versi
     @Get(Paths.VERSIONED_FOLDER_LIST)
     ListResponse<Folder> listAll() {
 
-        final ListResponse<Folder> listResponse = super.listAll()
+        final ListResponse<Folder> listResponse = super.listAll() as ListResponse<Folder>
 
-        listResponse.items = listResponse.items.findAll {MY_CLASS_TYPE == ((Folder) it).getClass_()}
+        listResponse.items = listResponse.items.findAll {it.domainType == "VersionedFolder"}
         listResponse.count = listResponse.items.size()
 
         return listResponse
@@ -124,9 +113,9 @@ class VersionedFolderController extends ModelController<Folder> implements Versi
     @Get(Paths.CHILD_VERSIONED_FOLDER_LIST)
     ListResponse<Folder> list(UUID parentId) {
 
-        final ListResponse<Folder> listResponse = super.list(parentId)
+        final ListResponse<Folder> listResponse = super.list(parentId) as ListResponse<Folder>
 
-        listResponse.items = listResponse.items.findAll {MY_CLASS_TYPE == ((Folder) it).getClass_()}
+        listResponse.items = listResponse.items.findAll {it.domainType == "VersionedFolder"}
         listResponse.count = listResponse.items.size()
 
         return listResponse
@@ -144,6 +133,12 @@ class VersionedFolderController extends ModelController<Folder> implements Versi
     @Put(Paths.VERSIONED_FOLDER_NEW_BRANCH_MODEL_VERSION)
     Folder createNewBranchModelVersion(UUID id, @Body @Nullable CreateNewVersionData createNewVersionData) {
         super.createNewBranchModelVersion(id, createNewVersionData)
+    }
+
+
+    @Override
+    ListResponse<Folder> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version) {
+        super.importModel(body, namespace, name, version)
     }
 
     @Audit
@@ -253,4 +248,19 @@ class VersionedFolderController extends ModelController<Folder> implements Versi
     {
         super.mergeInto(id,otherId,mergeIntoDTO)
     }
+
+    @Override
+    void setBranchName(UUID parentFolderId, Folder folder) {
+        Folder parentFolder = getFolderAncestors(parentFolderId)
+        if(parentFolder &&
+           (parentFolder.branchName || parentFolder.modelVersion || parentFolder.inAVersionedFolder())) {
+               throw new MauroApplicationException("Cannot create a versioned folder inside another versioned folder")
+        } else {
+            // Otherwise, if a branch name isn't already set, we set it to the default
+            if(!folder.branchName) {
+                folder.branchName = Model.DEFAULT_BRANCH_NAME
+            } // Otherwise we leave it as set
+        }
+    }
+
 }
