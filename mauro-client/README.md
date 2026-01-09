@@ -25,8 +25,8 @@ repositories {
 dependencies {
     implementation 'org.apache.groovy:groovy:4.0.14'
     
-    implementation 'org.maurodata:mauro-client:0.0.1-SNAPSHOT'
-    implementation 'org.maurodata:mauro-domain:0.0.1-SNAPSHOT'
+    implementation 'org.maurodata:mauro-client:0.0.2-beta'
+    implementation 'org.maurodata:mauro-domain:0.0.2-beta'
 }
 ```
 This will bring in the domain model and the generated declarative client.  Obviously the version numbers will need replacing to match the latest build / release 
