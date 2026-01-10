@@ -134,8 +134,8 @@ codenarcTest {
 
 docker {
     registryCredentials {
-        username = System.getenv('DOCKER_USERNAME')
-        password = System.getenv('DOCKER_PASSWORD')
+        username = System.getenv('DOCKERHUB_USERNAME')
+        password = System.getenv('DOCKERHUB_PASSWORD')
     }
 }
 
