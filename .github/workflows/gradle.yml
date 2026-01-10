@@ -134,7 +134,7 @@ jobs:
         DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
         DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
       run: |
-          ./gradlew --stacktrace dockerPush --args='--uiVersion=7.4.0'
+          ./gradlew --stacktrace dockerPush
 
     - name: Send a stream message
       if: success() || failure()

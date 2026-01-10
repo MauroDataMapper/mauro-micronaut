@@ -247,7 +247,7 @@ tasks.register('fetchMDMUI') {
         def fileName
         if (uiVersion) {
             fileName = "mdm-ui-${uiVersion}.tgz"
-            if (!parsed.files*.name.contains(fileName)) {
+            if (!parsed.files*.name.find {it == fileName}) {
                 throw new GradleException("UI version ${uiVersion} not found in repository")
             }
         } else {
