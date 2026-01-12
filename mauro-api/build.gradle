@@ -141,10 +141,15 @@ docker {
 
 import groovy.json.JsonSlurper
 
-def mauroRepository = 'https://mauro-repository.com'
-def repositoryPath='artifacts-snapshots/mauroDataMapper/mdm-ui'
+def dockerUsername=System.getenv('DOCKERHUB_USERNAME')?:System.getenv('DOCKER_USERNAME')
+def dockerPassword=System.getenv('DOCKERHUB_PASSWORD')?:System.getenv('DOCKER_PASSWORD')
 
-def uiVersion = project.findProperty('uiVersion')
+def uiVersion = System.getenv('UI_VERSION')?:project.findProperty('uiVersion')?:null
+def uiRelease = System.getenv('UI_RELEASE')?:project.findProperty('uiRelease')?:null
+
+def mauroRepository = 'https://mauro-repository.com'
+def repositoryPath="${uiRelease?'artifacts':'artifacts-snapshots'}/mauroDataMapper/mdm-ui"
+
 def uiRepoApi  = "${mauroRepository}/api/maven/details/${repositoryPath}"
 def uiTargetDir = project.layout.buildDirectory.dir("docker/main/layers/resources/public").get().asFile
 
@@ -357,11 +362,46 @@ tasks.register('dockerBuildMultiArch') {
 
         def location = locationFile.absolutePath
 
-        def processBuilderDockerx = new ProcessBuilder('docker', 'buildx', 'build', '--push', '--platform', 'linux/amd64,linux/arm64', '--tag', "${dockerPushImage}", "${location}")
-        processBuilderDockerx.inheritIO()
-        def processDockerx = processBuilderDockerx.start()
+        boolean useLogin = dockerUsername && dockerPassword
+
+        if(useLogin) {
+            ProcessBuilder processBuilderDockerLogin = new ProcessBuilder(['docker', 'login', '--username', dockerUsername, '--password-stdin', dockerHostPort].findAll{ it})
+            Process processDockerLogin = processBuilderDockerLogin.start()
+
+            processDockerLogin.outputStream.withWriter('UTF-8') {writer ->
+                writer.write("${dockerPassword}\n")
+            }
+
+            Thread.start {
+                processDockerLogin.inputStream.eachLine { println it }
+            }
+            Thread.start {
+                processDockerLogin.errorStream.eachLine { System.err.println it }
+            }
+            def rc = processDockerLogin.waitFor()
+            if (rc != 0) {
+                throw new GradleException("docker login failed (${rc})")
+            }
+        }
+
+        if(useLogin) {
+            println "🐳 Logged in, build and push image ]"
+        } else {
+            println "🐳 Not logged in, build image without pushing ]"
+        }
+        ProcessBuilder processBuilderDockerx = new ProcessBuilder(['docker', 'buildx', 'build', '--platform', 'linux/amd64,linux/arm64', '--progress=plain',(useLogin?'--push':null), '--tag', dockerPushImage, location].findAll {it})
+
+        Process processDockerx = processBuilderDockerx.start()
+        Thread.start {
+            processDockerx.inputStream.eachLine { println it }
+        }
+        Thread.start {
+            processDockerx.errorStream.eachLine { System.err.println it }
+        }
         def rc = processDockerx.waitFor()
-        if (rc != 0) throw new GradleException("buildx failed (${rc})")
+        if (rc != 0) {
+            throw new GradleException("buildx failed (${rc})")
+        }
     }
 }
 
