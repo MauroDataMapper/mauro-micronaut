@@ -1,0 +1,22 @@
+mauro:
+  users:
+    -   email: admin@maurodatamapper.com
+        first-name: admin
+        last-name: admin
+        temp-password: password
+  groups:
+    -   name: Administrators
+        isAdmin: true
+        members:
+          - admin@maurodatamapper.com
+  api-keys:
+    -   name: My first API Key
+        email: admin@maurodatamapper.com
+        refreshable: true
+        expiry: 2025-12-31
+        key: a7e4632c-e4af-4b2b-87aa-b99b44b5274e
+    -   name: My second API Key
+        email: admin@maurodatamapper.com
+        refreshable: true
+        expiry: 2025-12-31
+        key: a7e4632c-e4af-4b2b-87aa-b99b44b5274f
