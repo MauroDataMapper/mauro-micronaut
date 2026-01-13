@@ -357,7 +357,7 @@ tasks.register('dockerBuildMultiArch') {
 
         def location = locationFile.absolutePath
 
-        def processBuilderDockerx = new ProcessBuilder('docker', 'buildx', 'build', '--platform', 'linux/amd64,linux/arm64', '--tag', "${dockerPushImage}", "${location}")
+        def processBuilderDockerx = new ProcessBuilder('docker', 'buildx', 'build', '--push', '--platform', 'linux/amd64,linux/arm64', '--tag', "${dockerPushImage}", "${location}")
         processBuilderDockerx.inheritIO()
         def processDockerx = processBuilderDockerx.start()
         def rc = processDockerx.waitFor()
