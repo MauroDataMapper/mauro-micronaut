@@ -13,10 +13,4 @@ mauro:
     -   name: My first API Key
         email: admin@maurodatamapper.com
         refreshable: true
-        expiry: 2025-12-31
         key: a7e4632c-e4af-4b2b-87aa-b99b44b5274e
-    -   name: My second API Key
-        email: admin@maurodatamapper.com
-        refreshable: true
-        expiry: 2025-12-31
-        key: a7e4632c-e4af-4b2b-87aa-b99b44b5274f
