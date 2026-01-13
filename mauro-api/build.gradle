@@ -376,3 +376,26 @@ tasks.register('dockerBuildMultiArchNoDatabase') {
 tasks.register('dockerBuildBackend') {
     dependsOn(tasks.named('dockerBuildMultiArch'))
 }
+
+
+File readyConfigurationDir = file("../ready-configuration")
+
+def zipTasks = readyConfigurationDir.listFiles()
+    .findAll { it.directory }
+    .collect { dir ->
+        tasks.register("zipReady${dir.name.capitalize()}", Zip) {
+            from dir
+            archiveBaseName.set(dir.name)
+            archiveVersion.set("")
+            destinationDirectory.set(readyConfigurationDir)
+        }
+    }
+
+tasks.register("zipReadyConfiguration") {
+    dependsOn(zipTasks)
+    finalizedBy "gitAddReadyConfigurationZips"
+}
+
+tasks.register("gitAddReadyConfigurationZips", Exec) {
+    commandLine 'git', 'add', '../ready-configuration'
+}
