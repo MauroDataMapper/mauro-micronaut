@@ -54,7 +54,10 @@ class VersionLinksController extends FacetController<VersionLink> implements Ver
         final List<VersionLinkDTO> versionList = new ArrayList<>()
 
         for (VersionLink versionLink : administeredItem.versionLinks) {
-            versionList.add(constructVersionLinkDTO((Model) administeredItem, versionLink))
+            // A model pointed to may not exist
+            if (existsAdministeredItem(versionLink.targetModelDomainType, versionLink.targetModelId)) {
+                versionList.add(constructVersionLinkDTO((Model) administeredItem, versionLink))
+            }
         }
 
         return ListResponse.from(versionList)

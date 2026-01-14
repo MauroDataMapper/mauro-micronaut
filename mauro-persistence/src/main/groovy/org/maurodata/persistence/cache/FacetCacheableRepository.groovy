@@ -88,6 +88,10 @@ abstract class FacetCacheableRepository<F extends Facet> extends ItemCacheableRe
             super(versionLinkRepository)
         }
 
+        Set<VersionLink> readAllByMultiFacetAwareItemId(UUID ownerId) {
+            ((VersionLinkRepository) repository).readAllByMultiFacetAwareItemId(ownerId)
+        }
+
         Set<VersionLink> readAllByMultiFacetAwareItemIdIn(Collection<UUID> itemIds) {
             ((VersionLinkRepository) repository).readAllByMultiFacetAwareItemIdIn(itemIds)
         }
