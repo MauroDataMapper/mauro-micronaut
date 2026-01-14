@@ -11,3 +11,6 @@ micronaut:
       connect-timeout: 100s
   security:
     enabled: false
+mauro:
+  login:
+    retry-wait: 0
