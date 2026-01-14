@@ -16,17 +16,25 @@ trait AdministeredItemReader {
     @Inject
     RepositoryService repositoryService
 
+    boolean existsAdministeredItem(String domainType, UUID domainId) {
+        AdministeredItemCacheableRepository administeredItemRepository = getAdministeredItemRepository(domainType)
+        return administeredItemRepository.existsById(domainId)
+    }
+
     AdministeredItem readAdministeredItem(String domainType, UUID domainId) {
         AdministeredItemCacheableRepository administeredItemRepository = getAdministeredItemRepository(domainType)
-        AdministeredItem administeredItem = administeredItemRepository.readById(domainId)
+        AdministeredItem administeredItem = administeredItemRepository.readById(domainId) as AdministeredItem
         if (!administeredItem) throw new HttpStatusException(HttpStatus.NOT_FOUND, 'AdministeredItem not found by ID')
         administeredItem
     }
 
     AdministeredItem findAdministeredItem(String domainType, UUID domainId) {
         AdministeredItemCacheableRepository administeredItemRepository = getAdministeredItemRepository(domainType)
-        AdministeredItem administeredItem = administeredItemRepository.findById(domainId)
-        if (!administeredItem) throw new HttpStatusException(HttpStatus.NOT_FOUND, 'AdministeredItem not found by ID')
+        AdministeredItem administeredItem = administeredItemRepository.findById(domainId) as AdministeredItem
+        if (!administeredItem) {
+            new Throwable().printStackTrace()
+            throw new HttpStatusException(HttpStatus.NOT_FOUND, 'AdministeredItem not found by ID')
+        }
         administeredItem
     }
 
