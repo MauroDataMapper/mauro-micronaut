@@ -4,6 +4,7 @@ import org.maurodata.domain.config.ApiProperty
 import org.maurodata.domain.search.dto.SearchRequestDTO
 import org.maurodata.domain.security.Role
 import org.maurodata.persistence.cache.ItemCacheableRepository.ApiPropertyCacheableRepository
+import org.maurodata.service.authentication.UsernamePasswordService
 import org.maurodata.service.email.EmailService
 import org.maurodata.domain.email.Email
 import org.maurodata.web.ListResponse
@@ -33,7 +34,6 @@ import org.maurodata.domain.security.UserGroup
 import org.maurodata.persistence.cache.ItemCacheableRepository
 import org.maurodata.persistence.cache.ItemCacheableRepository.CatalogueUserCacheableRepository
 import org.maurodata.security.utils.SecureRandomStringGenerator
-import org.maurodata.security.utils.SecurityUtils
 import org.maurodata.web.ChangePassword
 
 import org.apache.commons.text.StringSubstitutor
@@ -54,6 +54,9 @@ class CatalogueUserController extends ItemController<CatalogueUser> implements C
 
     @Inject
     ApiPropertyCacheableRepository apiPropertyCacheableRepository
+
+    @Inject
+    UsernamePasswordService usernamePasswordService
 
     CatalogueUserController(CatalogueUserCacheableRepository catalogueUserRepository) {
         super(catalogueUserRepository)
@@ -101,7 +104,7 @@ class CatalogueUserController extends ItemController<CatalogueUser> implements C
         newUser.disabled = false
         newUser.creationMethod = 'ADMIN_REGISTER'
         newUser.catalogueUser = accessControlService.user
-        newUser.tempPassword = SecurityUtils.generateRandomPassword()
+        newUser.tempPassword = usernamePasswordService.generateTemporaryPassword()
         newUser.salt = SecureRandomStringGenerator.generateSalt()
         newUser.password = null
         newUser.resetToken = null
@@ -186,21 +189,35 @@ class CatalogueUserController extends ItemController<CatalogueUser> implements C
 
         if (existing.tempPassword != null) {
             if (existing.tempPassword != changePasswordRequest.oldPassword) {
-                Thread.sleep(1000L)
+                usernamePasswordService.failWait()
                 throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, 'Old password is incorrect')
             }
         } else {
-            byte[] hashedOldPassword = SecurityUtils.getHash(changePasswordRequest.oldPassword, existing.salt)
-            byte[] actualOldPassword = existing.password
-            if (hashedOldPassword != actualOldPassword) {
-                Thread.sleep(1000L)
+            if (!usernamePasswordService.passwordEquals(existing.password, existing.salt, changePasswordRequest.oldPassword)) {
+                usernamePasswordService.failWait()
                 throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, 'Old password is incorrect')
             }
         }
 
+        final UsernamePasswordService.InputValidationCheckStatus inputValidationCheckStatus =
+            usernamePasswordService.inputValidationCheckPassword(changePasswordRequest.newPassword)
+
+        if (inputValidationCheckStatus != UsernamePasswordService.InputValidationCheckStatus.OK) {
+            usernamePasswordService.failWait()
+            throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, usernamePasswordService.getReasonMessage(inputValidationCheckStatus))
+        }
+
+        final UsernamePasswordService.PasswordRequirementsCheckStatus passwordRequirementsCheckStatus =
+            usernamePasswordService.passwordRequirementsCheck(existing.emailAddress, changePasswordRequest.newPassword, UsernamePasswordService.PasswordUse.MAIN)
+        if (passwordRequirementsCheckStatus != UsernamePasswordService.PasswordRequirementsCheckStatus.OK) {
+            usernamePasswordService.failWait()
+            throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, usernamePasswordService.getReasonMessage(passwordRequirementsCheckStatus, UsernamePasswordService.PasswordUse.MAIN))
+        }
+
         existing.salt = SecureRandomStringGenerator.generateSalt()
-        existing.password = SecurityUtils.getHash(changePasswordRequest.newPassword, existing.salt)
+        existing.password = usernamePasswordService.generateHash(changePasswordRequest.newPassword, existing.salt)
         existing.tempPassword = null
+        existing.resetToken = null
 
         catalogueUserRepository.update(existing)
 
@@ -365,7 +382,7 @@ class CatalogueUserController extends ItemController<CatalogueUser> implements C
 
         log.debug("Resetting user '${existing.emailAddress}' password(Actor: '${accessControlService.user.emailAddress}')")
 
-        existing.tempPassword = SecurityUtils.generateRandomPassword()
+        existing.tempPassword = usernamePasswordService.generateTemporaryPassword()
         existing.salt = SecureRandomStringGenerator.generateSalt()
         existing.password = null
         existing.resetToken = null
