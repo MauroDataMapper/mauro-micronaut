@@ -178,10 +178,12 @@ class MauroPluginService {
         ) as ApplicationContext
 
         applicationContext.getBeanDefinitions(MauroPlugin).forEach {BeanDefinition<MauroPlugin> beanDefinition ->
-            Class controllerClass = beanDefinition.beanType
-            if (mainContext.getBeansOfType(controllerClass).isEmpty()) {
-                log.info("Registering plugin ${controllerClass.simpleName}")
+            Class pluginClass = beanDefinition.beanType
+            if (mainContext.getBeansOfType(pluginClass).isEmpty()) {
+                log.info("Registering plugin ${pluginClass.simpleName}")
                 ((BeanDefinitionRegistry) mainContext).registerBeanDefinition(beanDefinition as RuntimeBeanDefinition<Object>)
+                Object controllerBean = applicationContext.getBean(pluginClass)
+                ((BeanDefinitionRegistry) mainContext).registerSingleton(controllerBean)
             }
         }
 
@@ -226,7 +228,8 @@ class MauroPluginService {
                                 log.info("Registering DELETE: ${value}")
                             }
                         }
-
+                        Object controllerBean = applicationContext.getBean(controllerClass)
+                        ((BeanDefinitionRegistry) mainContext).registerSingleton(controllerBean)
                     }
                 }
             }
