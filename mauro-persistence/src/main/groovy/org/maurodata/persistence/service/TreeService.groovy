@@ -81,7 +81,9 @@ class TreeService {
     }
 
     List<TreeItem> buildRootFolderTree(boolean foldersOnly) {
-        folderCacheableRepository.readAllRootFolders().collect {Folder folder ->
+        folderCacheableRepository.readAllRootFolders().
+            sort {it.label}.
+            collect {Folder folder ->
 
             pathRepository.readParentItems(folder)
             folder.updatePath()
