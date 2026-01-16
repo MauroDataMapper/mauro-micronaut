@@ -58,15 +58,15 @@ class SecurableGroupRoleIntegrationSpec extends SecuredIntegrationSpec {
         userGroupList.count == 1
 
         when:
-        UserGroup administratorsUserGroup = userGroupList.items.first
+        UserGroup administratorsUserGroup = userGroupList.items.first()
 
         securableResourceGroupRoleApi.create("folder", folderId, Role.EDITOR, administratorsUserGroup.id)
         securableResourceGroupRoleList = securableResourceGroupRoleApi.listSecurableResourceGroupRoles("folder", folderId)
 
         then:
         securableResourceGroupRoleList.count == 1
-        securableResourceGroupRoleList.items.first.userGroup.id == administratorsUserGroup.id
-        securableResourceGroupRoleList.items.first.role == Role.EDITOR
+        securableResourceGroupRoleList.items.first().userGroup.id == administratorsUserGroup.id
+        securableResourceGroupRoleList.items.first().role == Role.EDITOR
 
         // Now try and add a different role for the same user group - should fail
         when:
