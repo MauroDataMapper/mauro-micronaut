@@ -661,7 +661,9 @@ class ContentHandler {
     }
 
     private static <T> void inBatches(final Set<T> items, final int batchSize, @DelegatesTo(List) Closure saver) {
-        if (items == null || items.isEmpty()) return
+        if (items == null || items.isEmpty()) {
+            return
+        }
         final List<T> listItems = items as List<T>
         final int itemsCount = listItems.size()
         if (itemsCount <= batchSize) {
@@ -676,7 +678,9 @@ class ContentHandler {
     }
 
     private static <I, T> List<T> inBatchesRead(final List<I> inputs, final int batchSize, @DelegatesTo(List) Closure reader) {
-        if (inputs == null || inputs.isEmpty()) return []
+        if (inputs == null || inputs.isEmpty()) {
+            return []
+        }
         final int itemsCount = inputs.size()
         if (itemsCount <= batchSize) {
             return reader.call(inputs) as List<T>
@@ -692,7 +696,9 @@ class ContentHandler {
     }
 
     private static <I, T> Set<T> inBatchesReadSet(final List<I> inputs, final int batchSize, @DelegatesTo(List) Closure reader) {
-        if (inputs == null || inputs.isEmpty()) return [] as Set<T>
+        if (inputs == null || inputs.isEmpty()) {
+            return [] as Set<T>
+        }
         final int itemsCount = inputs.size()
         if (itemsCount <= batchSize) {
             return reader.call(inputs) as Set<T>
