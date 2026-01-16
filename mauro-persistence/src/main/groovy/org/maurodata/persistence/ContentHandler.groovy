@@ -647,7 +647,9 @@ class ContentHandler {
     }
 
     private static <T> void inBatches(final List<T> items, final int batchSize, @DelegatesTo(List) Closure saver) {
-        if (items == null || items.isEmpty()) return
+        if (items == null || items.isEmpty()) {
+            return
+        }
         final int itemsCount = items.size()
         if (itemsCount <= batchSize) {
             saver.call(items)
