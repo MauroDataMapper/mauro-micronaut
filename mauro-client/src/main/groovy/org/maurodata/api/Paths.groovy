@@ -346,8 +346,9 @@ interface Paths {
     /*
     * SecurableResourceGroupRoleApi
     */
-
-    String SECURABLE_ROLE_GROUP_ID = '/api/{securableResourceDomainType}/{securableResourceId}/roles/{role}/userGroups/{userGroupId}'
+    String SECURABLE_RESOURCE_GROUP_ROLES = '/api/{securableResourceDomainType}/{securableResourceId}/securableResourceGroupRoles{?params*}'
+    String GROUP_ROLES = '/api/{securableResourceDomainType}/{securableResourceId}/groupRoles{?params*}'
+    String SECURABLE_ROLE_GROUP_ID = '/api/{securableResourceDomainType}/{securableResourceId}/groupRoles/{role}/userGroups/{userGroupId}'
 
     /*
     * SecurableResourceGroupRoleApi
