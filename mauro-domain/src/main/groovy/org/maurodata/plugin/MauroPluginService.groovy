@@ -171,11 +171,25 @@ class MauroPluginService {
             apiClassLoader
         )
 
-        classLoaders.add(pluginLoader)
+        ApplicationContext applicationContext = null
+        try {
+            classLoaders.add(pluginLoader)
 
-        ApplicationContext applicationContext = ApplicationContext.run(
-            pluginLoader
-        ) as ApplicationContext
+            applicationContext = ApplicationContext.run(
+                pluginLoader
+            ) as ApplicationContext
+        } catch(Throwable th) {
+            log.error("** Failed to load plugin ${pluginLocation} **")
+            classLoaders.remove(pluginLoader)
+
+            try {
+                pluginLoader.close()
+                log.trace("Plugin ClassLoader closed")
+            } catch(IOException ioe) {
+                log.trace("Plugin ClassLoader didn't close")
+            }
+            return
+        }
 
         applicationContext.getBeanDefinitions(MauroPlugin).forEach {BeanDefinition<MauroPlugin> beanDefinition ->
             Class pluginClass = beanDefinition.beanType
