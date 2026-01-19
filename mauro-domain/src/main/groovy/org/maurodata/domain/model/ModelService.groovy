@@ -39,7 +39,7 @@ abstract class ModelService<M extends Model> {
         model.finalised = true
         model.dateFinalised = Instant.now()
         model.branchName = null
-        model.modelVersion = requestedModelVersion ?: (parentModel.modelVersion ?: new ModelVersion([:])).nextVersion(versionChangeType)
+        model.modelVersion = requestedModelVersion ?: (parentModel?.modelVersion ?: new ModelVersion([:])).nextVersion(versionChangeType)
         model.modelVersionTag = versionTag
 
         model
