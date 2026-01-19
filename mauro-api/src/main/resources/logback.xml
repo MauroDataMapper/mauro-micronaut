@@ -37,15 +37,12 @@
 
     <!-- If this is set to debug, then tests for cache performance will fail! -->
     <logger name="io.micronaut.cache" level="info" />
-    <logger name="io.micronaut.data" level="debug" />
-    <logger name="io.micronaut.data.query" level="debug" />
+    <logger name="io.micronaut.data" level="info" />
+    <logger name="io.micronaut.data.query" level="info" />
     <logger name="io.micronaut" level="info" />
     <logger name="io.micronaut.http.client.netty" level="debug" />
     <logger name="io.micronaut.security" level="debug" />
 
     <logger name="org.flywaydb" level="info" />
-
-    <logger name="org,maurodata" level="debug" />
-    <logger name="org.codehaus.groovy" level="debug" />
 
 </configuration>
