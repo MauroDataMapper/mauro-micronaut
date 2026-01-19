@@ -307,7 +307,9 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         M model = modelRepository.findById(id)
         accessControlService.checkRole(Role.EDITOR, model)
 
-        M finalised = modelService.finaliseModel(model, finaliseData.version, finaliseData.versionChangeType, finaliseData.versionTag)
+        Model parentModel = getFinalisedParent(model)
+
+        M finalised = modelService.finaliseModel(model, parentModel, finaliseData.version, finaliseData.versionChangeType, finaliseData.versionTag)
         modelRepository.update(finalised)
     }
 
