@@ -105,7 +105,7 @@ class ContentHandler {
     @Inject SummaryMetadataReportCacheableRepository summaryMetadataReportCacheableRepository
     @Inject VersionLinkCacheableRepository versionLinkCacheableRepository
 
-    int batchSize = 1000
+    int batchSize = 10000
 
     Map<UUID, AdministeredItem> allItems = [:]
 
