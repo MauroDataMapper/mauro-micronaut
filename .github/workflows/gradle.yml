@@ -53,6 +53,9 @@ jobs:
       with:
         cache-disabled: true
 
+    - name: Log Gradle version
+      run: ./gradlew --version
+
     - name: Test with Gradle
       run: ./gradlew test
 

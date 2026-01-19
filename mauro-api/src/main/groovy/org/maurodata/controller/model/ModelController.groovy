@@ -210,7 +210,6 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     HttpResponse delete(UUID id, @Body @Nullable M model, @Nullable Boolean permanent) {
         M modelToDelete = modelRepository.readById(id)
 
-
         if (modelToDelete == null) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, "Object not found for deletion")
         }
@@ -232,7 +231,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
 
     @Transactional
     M putReadByAuthenticated(UUID id) {
-        M modelToUse = (M) modelRepository.loadWithContent(id)
+        M modelToUse = (M) modelRepository.findById(id)
 
         if (modelToUse == null) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, "Object not found for readByAuthenticated")
@@ -248,7 +247,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
 
     @Transactional
     HttpResponse deleteReadByAuthenticated(UUID id) {
-        M modelToUse = (M) modelRepository.loadWithContent(id)
+        M modelToUse = (M) modelRepository.findById(id)
 
         if (modelToUse == null) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, "Object not found for readByAuthenticated")
@@ -264,7 +263,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
 
     @Transactional
     M putReadByEveryone(UUID id) {
-        M modelToUse = (M) modelRepository.loadWithContent(id)
+        M modelToUse = (M) modelRepository.findById(id)
 
         if (modelToUse == null) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, "Object not found for readByAuthenticated")
@@ -280,7 +279,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
 
     @Transactional
     HttpResponse deleteReadByEveryone(UUID id) {
-        M modelToUse = (M) modelRepository.loadWithContent(id)
+        M modelToUse = (M) modelRepository.findById(id)
 
         if (modelToUse == null) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, "Object not found for readByAuthenticated")
