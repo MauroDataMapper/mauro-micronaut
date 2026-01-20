@@ -32,7 +32,7 @@ class MauroOpenIdAuthenticationMapper extends DefaultOpenIdAuthenticationMapper 
     boolean requireVerifiedEmail
 
     @Property(name = "mauro.oauth.token-custom-validation")
-    Map<String, String> tokenCustomValidation
+    Map<String, String> tokenCustomValidation = [:]
 
     @Inject
     ItemCacheableRepository.CatalogueUserCacheableRepository catalogueUserCacheableRepository
@@ -49,7 +49,7 @@ class MauroOpenIdAuthenticationMapper extends DefaultOpenIdAuthenticationMapper 
         if (requireVerifiedEmail && !claims.email_verified) authenticationException("Attempt to login with unverified email address! [${claims.email}]") // Entra does not provide email_verified
 
         tokenCustomValidation.each { expectedKey, expectedValue ->
-            def tokenValue = claims[expectedKey]
+            Object tokenValue = claims[expectedKey]
 
             boolean invalid =
                     tokenValue == null ||
