@@ -6,11 +6,18 @@ micronaut:
 
   server:
     port: 8080
-    max-request-size: 500mb
+    max-request-size: 1000mb
     multipart:
-      max-file-size: 500mb
+      max-file-size: 1000mb
     cors:
       enabled: true
+      configurations:
+        ui:
+          allowed-origins:
+            - 'null'
+            - '*'
+            - 'http://localhost'
+            - 'http://localhost:4200'
   router:
     static-resources:
       default:
