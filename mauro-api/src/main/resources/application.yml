@@ -11,6 +11,10 @@ micronaut:
       max-file-size: 500mb
     cors:
       enabled: true
+    host-resolution:
+      protocol-header: X-Forwarded-Proto
+      host-header: Host
+      port-header: X-Forwarded-Port
   router:
     static-resources:
       default:

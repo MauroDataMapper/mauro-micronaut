@@ -76,12 +76,12 @@ class MauroSessionLoginHandler extends SessionLoginHandler {
 
             sessionStore.save(session)
                 .exceptionally(ex -> {
-                    log.error("Failed to save session", ex);
-                    return null;
+                    log.error("Failed to save session", ex)
+                    return null
                 })
 
             for (HttpSessionIdEncoder encoder : encoders) {
-                encoder.encodeId(request, defaultResponse, session);
+                encoder.encodeId(request, defaultResponse, session)
             }
         }
 
@@ -97,25 +97,36 @@ class MauroSessionLoginHandler extends SessionLoginHandler {
                 log.debug 'Successful login, returning Authentication'
                 return defaultResponse.body(catalogueUserCacheableRepository.readById((UUID) authentication.attributes.id))
             } else {
-                log.debug 'Successful login, redirecting to login success URI'
-                MutableHttpResponse<?> response = defaultResponse.status(HttpStatus.SEE_OTHER)
-                MutableHttpHeaders headers = response.headers as MutableHttpHeaders
-                URI redirectUri = loginSuccessUrl
+                String configuredAppLoginSuccessURL = authentication.attributes.get('app-login-success') as String
+                Optional<Cookie> cookieAppLoginSuccessURL = request.getCookies().findCookie(OAuthRedirectFilter.UI_REDIRECT_URL)
+
+                URI appLoginSuccess = null
                 try {
-                    Optional<Cookie> redirectCookie = request.getCookies().findCookie(OAuthRedirectFilter.UI_REDIRECT_URL)
-                    if (redirectCookie && redirectCookie.get()) {
-                        redirectUri = URI.create(redirectCookie.get().value)
-                    }
+                    appLoginSuccess =
+                        cookieAppLoginSuccessURL.present ? new URI(cookieAppLoginSuccessURL.get().value) :
+                        configuredAppLoginSuccessURL ? new URI(configuredAppLoginSuccessURL) :
+                        loginSuccessUrl
                 } catch (Exception e) {
-                    log.warn("Invalid value for Cookie '${OAuthRedirectFilter.UI_REDIRECT_URL}")
+                    if (cookieAppLoginSuccessURL.present) {
+                        log.warn("App login success redirect: Invalid value for Cookie '${OAuthRedirectFilter.UI_REDIRECT_URL}'")
+                    } else {
+                        log.warn("App login success redirect: Invalid value for Configured '${configuredAppLoginSuccessURL}'")
+                    }
                 }
-                headers.location(redirectUri)
-                response
+
+                if (appLoginSuccess) {
+                    log.debug 'Successful login, redirecting to login success URI'
+                    MutableHttpResponse<?> response = defaultResponse.status(HttpStatus.SEE_OTHER)
+                    MutableHttpHeaders headers = response.headers as MutableHttpHeaders
+                    headers.location(appLoginSuccess)
+                    return response
+                }
             }
-        } else {
-            defaultResponse
         }
+
+        defaultResponse
     }
+
 
     @Override
     MutableHttpResponse<?> loginFailed(AuthenticationResponse authenticationFailed, HttpRequest<?> request) {

@@ -30,13 +30,15 @@ class OAuthRedirectFilter implements HttpServerFilter {
         String host = httpHostResolver.resolve(request)
         URI requestHostURI = new URI(host)
 
+        boolean secure = requestHostURI.scheme == "https"
+
         // Use Mono.from to turn publisher -> Mono, then map the response
         return Mono.from(chain.proceed(request))
-            .map { MutableHttpResponse<?> resp ->
-                if(redirectUri) {
+            .map {MutableHttpResponse<?> resp ->
+                if (redirectUri) {
                     Cookie cookie = Cookie.of(UI_REDIRECT_URL, redirectUri)
-                        .secure(requestHostURI.scheme == "https")
-                        .sameSite(SameSite.None)
+                        .secure(secure)
+                        .sameSite(secure ? SameSite.None : SameSite.Lax)
                         .httpOnly(true)
                         .path("/")
                         .maxAge(300)
