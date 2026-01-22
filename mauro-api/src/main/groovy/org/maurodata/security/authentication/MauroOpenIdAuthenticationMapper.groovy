@@ -2,12 +2,14 @@ package org.maurodata.security.authentication
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
+import io.micronaut.context.annotation.Property
 import io.micronaut.context.annotation.Replaces
 import io.micronaut.context.annotation.Value
 import io.micronaut.security.authentication.AuthenticationException
 import io.micronaut.security.config.AuthenticationModeConfiguration
 import io.micronaut.security.oauth2.configuration.OpenIdAdditionalClaimsConfiguration
 import io.micronaut.security.oauth2.endpoint.token.response.DefaultOpenIdAuthenticationMapper
+import io.micronaut.security.oauth2.endpoint.token.response.OpenIdAuthenticationMapper
 import io.micronaut.security.oauth2.endpoint.token.response.OpenIdClaims
 import io.micronaut.security.oauth2.endpoint.token.response.OpenIdTokenResponse
 import io.micronaut.transaction.annotation.Transactional
@@ -29,6 +31,9 @@ class MauroOpenIdAuthenticationMapper extends DefaultOpenIdAuthenticationMapper 
     @Value('${mauro.oauth.require-verified-email:true}')
     boolean requireVerifiedEmail
 
+    @Property(name = "mauro.oauth.token-custom-validation")
+    Map<String, String> tokenCustomValidation = [:]
+
     @Inject
     ItemCacheableRepository.CatalogueUserCacheableRepository catalogueUserCacheableRepository
 
@@ -42,6 +47,20 @@ class MauroOpenIdAuthenticationMapper extends DefaultOpenIdAuthenticationMapper 
         Map<String, Object> claims = super.buildAttributes(providerName, tokenResponse, openIdClaims)
         if (!claims.email) authenticationException("Attempt to login with no  email address specified!")
         if (requireVerifiedEmail && !claims.email_verified) authenticationException("Attempt to login with unverified email address! [${claims.email}]") // Entra does not provide email_verified
+
+        tokenCustomValidation.each { expectedKey, expectedValue ->
+            Object tokenValue = claims[expectedKey]
+
+            boolean invalid =
+                    tokenValue == null ||
+                    (tokenValue instanceof String && tokenValue != expectedValue) ||
+                    (tokenValue instanceof Collection<?> && !((Collection<?>)tokenValue).contains(expectedValue))
+
+            if (invalid) {
+                log.info("Attempt to login with missing claim! [expecting '${expectedValue}' in JWT token claim '${expectedKey}']")
+                authenticationException("Please contact your system administrator for access")
+            }
+        }
 
         CatalogueUser user = catalogueUserCacheableRepository.readByEmailAddress((String) claims.email) ?: createUser(claims)
         if (!user) authenticationException("User does not exist for $claims.email")
