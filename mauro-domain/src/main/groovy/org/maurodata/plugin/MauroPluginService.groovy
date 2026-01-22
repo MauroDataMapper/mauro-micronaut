@@ -3,6 +3,7 @@ package org.maurodata.plugin
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.context.ApplicationContext
+import io.micronaut.context.ApplicationContextBuilder
 import io.micronaut.context.BeanDefinitionRegistry
 import io.micronaut.context.RuntimeBeanDefinition
 import io.micronaut.context.annotation.Context
@@ -171,13 +172,23 @@ class MauroPluginService {
             apiClassLoader
         )
 
+        Map<String, Object> cfg = [
+            "micronaut.security.oauth2.enabled": false,
+            "micronaut.security.oauth2.clients": [:]
+        ] as Map<String, Object>
+
         ApplicationContext applicationContext = null
         try {
             classLoaders.add(pluginLoader)
 
-            applicationContext = ApplicationContext.run(
-                pluginLoader
-            ) as ApplicationContext
+            ApplicationContextBuilder applicationContextBuilder = ApplicationContext.builder()
+                .classLoader(pluginLoader)
+                .banner(false)
+                .properties(cfg)
+
+            applicationContext = applicationContextBuilder.build()
+            applicationContext.start()
+
         } catch(Throwable th) {
             log.error("** Failed to load plugin ${pluginLocation} **")
             classLoaders.remove(pluginLoader)
