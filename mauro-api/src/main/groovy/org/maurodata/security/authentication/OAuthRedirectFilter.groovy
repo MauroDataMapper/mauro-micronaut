@@ -29,7 +29,6 @@ class OAuthRedirectFilter implements HttpServerFilter {
 
         String host = httpHostResolver.resolve(request)
         URI requestHostURI = new URI(host)
-        requestHostURI.scheme
 
         // Use Mono.from to turn publisher -> Mono, then map the response
         return Mono.from(chain.proceed(request))
