@@ -28,13 +28,15 @@ class OAuthRedirectFilter implements HttpServerFilter {
         // Use Mono.from to turn publisher -> Mono, then map the response
         return Mono.from(chain.proceed(request))
             .map { MutableHttpResponse<?> resp ->
-                Cookie cookie = Cookie.of(UI_REDIRECT_URL, redirectUri)
-                    .secure(false)   // For local dev remove secure; in prod keep it
-                    .sameSite(SameSite.None)
-                    .httpOnly(true)
-                    .path("/")
-                    .maxAge(300)
-                resp.cookie(cookie)  // attaches cookie to the outgoing response
+                if(redirectUri) {
+                    Cookie cookie = Cookie.of(UI_REDIRECT_URL, redirectUri)
+                        .secure(false) // For local dev remove secure; in prod keep it
+                        .sameSite(SameSite.None)
+                        .httpOnly(true)
+                        .path("/")
+                        .maxAge(300)
+                    resp.cookie(cookie) // attaches cookie to the outgoing response
+                }
                 return resp
             } as Publisher<MutableHttpResponse<?>>
     }
