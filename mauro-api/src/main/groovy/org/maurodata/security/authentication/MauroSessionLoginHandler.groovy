@@ -6,6 +6,7 @@ import io.micronaut.context.annotation.Replaces
 import io.micronaut.context.annotation.Value
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.*
+import io.micronaut.http.cookie.Cookie
 import io.micronaut.security.authentication.Authentication
 import io.micronaut.security.authentication.AuthenticationResponse
 import io.micronaut.security.config.RedirectConfiguration
@@ -57,7 +58,16 @@ class MauroSessionLoginHandler extends SessionLoginHandler {
                 log.debug 'Successful login, redirecting to login success URI'
                 MutableHttpResponse<?> response = HttpResponse.status(HttpStatus.SEE_OTHER)
                 MutableHttpHeaders headers = response.headers as MutableHttpHeaders
-                headers.location(loginSuccessUrl)
+                URI redirectUri = loginSuccessUrl
+                try {
+                    Optional<Cookie> redirectCookie = request.getCookies().findCookie(OAuthRedirectFilter.UI_REDIRECT_URL)
+                    if(redirectCookie.get()) {
+                        redirectUri = URI.create(redirectCookie.get().value)
+                    }
+                } catch (Exception e) {
+                    log.warn("Invalid value for Cookie '${OAuthRedirectFilter.UI_REDIRECT_URL}")
+                }
+                headers.location(redirectUri)
                 response
             }
         } else {
