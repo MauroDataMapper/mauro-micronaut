@@ -61,7 +61,7 @@ class MauroSessionLoginHandler extends SessionLoginHandler {
                 URI redirectUri = loginSuccessUrl
                 try {
                     Optional<Cookie> redirectCookie = request.getCookies().findCookie(OAuthRedirectFilter.UI_REDIRECT_URL)
-                    if(redirectCookie.get()) {
+                    if(redirectCookie && redirectCookie.get()) {
                         redirectUri = URI.create(redirectCookie.get().value)
                     }
                 } catch (Exception e) {

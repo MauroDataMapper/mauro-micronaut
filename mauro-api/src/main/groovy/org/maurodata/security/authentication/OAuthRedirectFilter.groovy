@@ -20,11 +20,7 @@ class OAuthRedirectFilter implements HttpServerFilter {
     @Override
     Publisher<MutableHttpResponse<?>> doFilter(HttpRequest<?> request, ServerFilterChain chain ) { // (1)
         String redirectUri = null
-        try {
-            redirectUri = request.getParameters().get("redirect_uri")
-        } catch (Exception e) {
-            log.warn("No redirect uri specified for login")
-        }
+        redirectUri = request.getParameters().get("redirect_uri")
         // Use Mono.from to turn publisher -> Mono, then map the response
         return Mono.from(chain.proceed(request))
             .map { MutableHttpResponse<?> resp ->
