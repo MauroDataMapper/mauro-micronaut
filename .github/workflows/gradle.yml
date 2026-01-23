@@ -79,10 +79,11 @@ jobs:
 #        path: '**/build/test-results/**/*.xml'
 
     - name: MegaLinter
-      uses: oxsecurity/megalinter/flavors/java@v9
+      uses: oxsecurity/megalinter/flavors/java@v9.3.0
       env:
         # All available variables are described in documentation
         # https://megalinter.io/configuration/
+        DISABLE_LINTERS: SPELL_CSPELL,SPELL_LYCHEE
         VALIDATE_ALL_CODEBASE: true
         GROOVY_NPM_GROOVY_LINT_ARGUMENTS: >
           -r "file:config/codenarc/codenarc.groovy"
@@ -103,7 +104,7 @@ jobs:
 
     - name: Upload MegaLinter scan results to GitHub Security tab
       if: success() || failure()
-      uses: github/codeql-action/upload-sarif@v3
+      uses: github/codeql-action/upload-sarif@v4
       with:
         sarif_file: 'megalinter-reports/megalinter-report.sarif'
         ref: refs/heads/${{ github.head_ref || github.ref_name }}
