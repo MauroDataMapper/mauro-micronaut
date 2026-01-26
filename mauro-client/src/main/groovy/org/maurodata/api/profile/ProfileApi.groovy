@@ -48,7 +48,10 @@ interface ProfileApi {
     @Post(Paths.PROFILE_ITEM_VALIDATE)
     AppliedProfile validateProfile(String domainType, UUID domainId, String namespace, String name, String version, @Body Map bodyMap)
 
-    // TODO: Refactor the UI so that this method isn't needed quite so often
+    @Post(Paths.PROFILE_ITEM)
+    AppliedProfile applyProfile(String domainType, UUID domainId, String namespace, String name, @Nullable String version, @Body Map bodyMap)
+
+        // TODO: Refactor the UI so that this method isn't needed quite so often
     @Get(Paths.PROFILE_NAMESPACES)
     List<MetadataNamespaceDTO> getNamespaces(@Nullable String prefix)
 
