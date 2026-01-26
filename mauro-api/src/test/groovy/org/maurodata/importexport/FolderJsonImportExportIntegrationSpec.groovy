@@ -18,7 +18,6 @@ import org.maurodata.persistence.ContainerizedTest
 import org.maurodata.testing.CommonDataSpec
 import org.maurodata.web.ListResponse
 
-import groovy.json.JsonSlurper
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.MediaType
 import io.micronaut.http.client.multipart.MultipartBody
@@ -41,8 +40,6 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
 
     @Shared
     UUID codeSetId
-
-    JsonSlurper jsonSlurper = new JsonSlurper()
 
     void setup() {
         folderId = folderApi.create(new Folder(label: 'Folder top level')).id

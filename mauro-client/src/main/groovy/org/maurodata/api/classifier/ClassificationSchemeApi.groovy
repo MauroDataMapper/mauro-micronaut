@@ -58,6 +58,9 @@ interface ClassificationSchemeApi extends ModelApi<ClassificationScheme> {
     @Get(Paths.CLASSIFICATION_SCHEMES_EXPORT)
     HttpResponse<byte[]> exportModel(UUID id, @Nullable String namespace, @Nullable String name, @Nullable String version)
 
+    @Post(Paths.CLASSIFICATION_SCHEMES_EXPORT_MANY)
+    HttpResponse<byte[]> exportModels(@Nullable String namespace, @Nullable String name, @Nullable String version, @Body List<UUID> ids )
+
     @ExecuteOn(TaskExecutors.IO)
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Post(Paths.CLASSIFICATION_SCHEMES_IMPORT)

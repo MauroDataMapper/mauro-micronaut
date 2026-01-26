@@ -31,6 +31,7 @@ import org.maurodata.api.model.ModelVersionedWithTargetsRefDTO
 import org.maurodata.api.model.PermissionsDTO
 import org.maurodata.audit.Audit
 import org.maurodata.controller.model.ModelController
+import org.maurodata.domain.facet.EditType
 import org.maurodata.domain.folder.Folder
 import org.maurodata.domain.folder.FolderService
 import org.maurodata.domain.model.Model
@@ -119,6 +120,21 @@ class VersionedFolderController extends ModelController<Folder> implements Versi
         listResponse.count = listResponse.items.size()
 
         return listResponse
+    }
+
+    @Audit(title = EditType.EXPORT, description = 'Export versioned folder')
+    @Get(Paths.VERSIONED_FOLDER_EXPORT)
+    @Override
+    HttpResponse<byte[]> exportModel(UUID id, @Nullable String namespace, @Nullable String name, @Nullable String version) {
+        super.exportModels(namespace, name, version, [id])
+    }
+
+    @Audit(title = EditType.EXPORT, description = 'Export versioned folders')
+    @Post(Paths.VERSIONED_FOLDER_EXPORT_MANY)
+    @Override
+    HttpResponse<byte[]> exportModels(@Nullable String namespace, @Nullable String name, @Nullable String version, @Body List<UUID> ids) {
+        super.exportModels(namespace, name, version, ids)
+
     }
 
     @Audit

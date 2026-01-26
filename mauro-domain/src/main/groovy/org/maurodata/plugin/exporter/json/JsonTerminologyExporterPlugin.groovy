@@ -48,7 +48,11 @@ class JsonTerminologyExporterPlugin implements TerminologyExporterPlugin {
     @Override
     byte[] exportModels(Collection<Terminology> terminologies) {
         ExportModel exportModel = new ExportModel(this)
-        exportModel.terminologies = terminologies.toList()
+        if(terminologies.size() > 1) {
+            exportModel.terminologies = terminologies.toList()
+        } else {
+            exportModel.terminology = terminologies[0]
+        }
         objectMapper.writeValueAsBytes(exportModel)
 
     }

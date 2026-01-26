@@ -34,6 +34,8 @@ interface ModelApi<M extends Model> extends AdministeredItemApi<M, Folder> {
 
     HttpResponse<byte[]> exportModel(UUID modelId, String namespace, String name, @Nullable String version)
 
+    HttpResponse<byte[]> exportModels(String namespace, String name, @Nullable String version, @Body List<UUID> modelIds)
+
     ListResponse<M> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version)
 
     // To be implemented by the controller

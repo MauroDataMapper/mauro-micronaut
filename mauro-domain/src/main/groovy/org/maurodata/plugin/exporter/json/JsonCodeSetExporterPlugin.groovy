@@ -44,7 +44,11 @@ class JsonCodeSetExporterPlugin implements CodeSetExporterPlugin {
     @Override
     byte[] exportModels(Collection<CodeSet> codeSet) {
         ExportModel exportModel = new ExportModel(this)
-        exportModel.codeSets = codeSet.toList()
+        if(codeSet.size() > 1) {
+            exportModel.codeSets = codeSet.toList()
+        } else {
+            exportModel.codeSet = codeSet[0]
+        }
         objectMapper.writeValueAsBytes(exportModel)
 
     }

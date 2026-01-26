@@ -79,6 +79,9 @@ interface DataModelApi extends ModelApi<DataModel> {
     @Get(value = Paths.DATA_MODEL_EXPORT, produces = MediaType.ALL)
     HttpResponse<byte[]> exportModel(UUID id, @Nullable String namespace, @Nullable String name, @Nullable String version)
 
+    @Post(value = Paths.DATA_MODEL_EXPORT_MANY, produces = MediaType.ALL)
+    HttpResponse<byte[]> exportModels(@Nullable String namespace, @Nullable String name, @Nullable String version, @Body List<UUID> ids)
+
     @ExecuteOn(TaskExecutors.IO)
     @Produces(MediaType.MULTIPART_FORM_DATA)
     @Post(Paths.DATA_MODEL_IMPORT)
