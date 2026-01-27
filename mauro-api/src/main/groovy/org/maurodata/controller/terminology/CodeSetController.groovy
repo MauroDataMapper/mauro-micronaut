@@ -119,7 +119,33 @@ class CodeSetController extends ModelController<CodeSet> implements CodeSetApi {
     @Audit
     @Put(value = Paths.CODE_SET_ID)
     CodeSet update(UUID id, @Body @NonNull CodeSet codeSet) {
-        super.update(id, codeSet)
+        Set<Terminology> attachedTerminologies = codeSet.terminologies
+        codeSet.terminologies = null
+
+        Set<Term> attachedTerms = codeSet.terms
+        codeSet.terms = null
+
+        CodeSet newCodeSet = super.update(id, codeSet) as CodeSet
+
+        if(attachedTerminologies || attachedTerms) {
+            codeSetRepository.removeAllAssociations([newCodeSet.id])
+        }
+        if(attachedTerminologies) {
+            attachedTerminologies.each {terminology ->
+                Terminology loadedTerminology = terminologyRepository.loadWithContent(terminology.id)
+                loadedTerminology.terms.each {term ->
+                    codeSetRepository.addTerm(newCodeSet.id, term.id)
+                }
+            }
+        }
+
+        if(attachedTerms) {
+            (attachedTerms.collect {it.id } as Set<UUID>).each {termId ->
+                codeSetRepository.addTerm(newCodeSet.id, termId)
+            }
+        }
+        return newCodeSet
+
     }
 
     @Audit(title = EditType.UPDATE, description = "Add term to CodeSet")
