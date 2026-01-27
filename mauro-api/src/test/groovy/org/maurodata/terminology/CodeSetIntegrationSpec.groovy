@@ -26,8 +26,27 @@ class CodeSetIntegrationSpec extends CommonDataSpec {
     @Shared
     UUID codeSetId
 
+    @Shared
+    UUID terminologyId
+
+    @Shared
+    Term term1
+
+    @Shared
+    Term term2
+
+    @Shared
+    Term term3
+
+
     def setup() {
         folderId = folderApi.create(folder()).id
+        Terminology terminology = terminologyApi.create(folderId, new Terminology(label: "My terminology"))
+        terminologyId = terminology.id
+        term1 = termApi.create(terminology.id, new Term(code: "1", definition: "First"))
+        term2 = termApi.create(terminology.id, new Term(code: "2", definition: "Second"))
+        term3 = termApi.create(terminology.id, new Term(code: "3", definition: "Third"))
+
     }
 
     void 'test post'() {
@@ -46,40 +65,31 @@ class CodeSetIntegrationSpec extends CommonDataSpec {
 
     void 'test post with terms'() {
         when:
-        Terminology terminology = terminologyApi.create(folderId, new Terminology(label: "My terminology"))
-        Term t1 = termApi.create(terminology.id, new Term(code: "1", definition: "First"))
-        termApi.create(terminology.id, new Term(code: "2", definition: "Second"))
-        Term t3 = termApi.create(terminology.id, new Term(code: "3", definition: "Third"))
 
-        CodeSet storedCodeSet = codeSetApi.create(folderId, new CodeSet(label: "My CodeSet", terms: [t1, t3]))
-
+        CodeSet storedCodeSet = codeSetApi.create(folderId, new CodeSet(label: "My CodeSet", terms: [term1, term3]))
         ListResponse<Term> storedTerms = codeSetApi.listAllTermsInCodeSet(storedCodeSet.id)
 
         then:
         storedCodeSet.label == "My CodeSet"
         storedTerms.items.size() == 2
-        storedTerms.items.find {it.code == "1" && it.definition == "First" && it.id == t1.id}
-        storedTerms.items.find {it.code == "3" && it.definition == "Third" && it.id == t3.id}
+        storedTerms.items.find {it.code == "1" && it.definition == "First" && it.id == term1.id}
+        storedTerms.items.find {it.code == "3" && it.definition == "Third" && it.id == term3.id}
     }
 
 
     void 'test post with terminology'() {
         when:
-        Terminology terminology = terminologyApi.create(folderId, new Terminology(label: "My terminology"))
-        Term t1 = termApi.create(terminology.id, new Term(code: "1", definition: "First"))
-        Term t2 = termApi.create(terminology.id, new Term(code: "2", definition: "Second"))
-        Term t3 = termApi.create(terminology.id, new Term(code: "3", definition: "Third"))
 
-        CodeSet storedCodeSet = codeSetApi.create(folderId, new CodeSet(label: "My CodeSet", terminologies: [terminology]))
+        CodeSet storedCodeSet = codeSetApi.create(folderId, new CodeSet(label: "My CodeSet", terminologies: [new Terminology(id: terminologyId)]))
 
         ListResponse<Term> storedTerms = codeSetApi.listAllTermsInCodeSet(storedCodeSet.id)
 
         then:
         storedCodeSet.label == "My CodeSet"
         storedTerms.items.size() == 3
-        storedTerms.items.find {it.code == "1" && it.definition == "First" && it.id == t1.id}
-        storedTerms.items.find {it.code == "2" && it.definition == "Second" && it.id == t2.id}
-        storedTerms.items.find {it.code == "3" && it.definition == "Third" && it.id == t3.id}
+        storedTerms.items.find {it.code == "1" && it.definition == "First" && it.id == term1.id}
+        storedTerms.items.find {it.code == "2" && it.definition == "Second" && it.id == term2.id}
+        storedTerms.items.find {it.code == "3" && it.definition == "Third" && it.id == term3.id}
     }
 
 
@@ -184,6 +194,47 @@ class CodeSetIntegrationSpec extends CommonDataSpec {
         putResponse.author == newAuthor
         putResponse.id == codeSetId
         putResponse.authority
+    }
+
+    void 'test update CodeSet with terms'() {
+        given:
+        CodeSet response = codeSetApi.create(folderId, codeSet())
+        codeSetId = response.id
+        def newAuthor = 'New author name'
+        CodeSet codeSet = codeSet()
+        codeSet.author = newAuthor
+        codeSet.terms = [term1, term3]
+
+        when:
+        CodeSet putResponse = codeSetApi.update(codeSetId, codeSet)
+
+        then:
+        putResponse
+        putResponse.author == newAuthor
+        putResponse.id == codeSetId
+        putResponse.authority
+        ListResponse<Term> updatedTerms = codeSetApi.listAllTermsInCodeSet(codeSetId)
+        updatedTerms.count == 2
+        updatedTerms.items.find {it.id == term1.id}
+        updatedTerms.items.find {it.id == term3.id}
+
+        when:
+        codeSet.terms = []
+        codeSet.terminologies = [new Terminology(id: terminologyId)]
+        putResponse = codeSetApi.update(codeSetId, codeSet)
+
+        then:
+        putResponse
+
+        when:
+        updatedTerms = codeSetApi.listAllTermsInCodeSet(codeSetId)
+
+        then:
+        updatedTerms.count == 3
+        updatedTerms.items.find {it.id == term1.id}
+        updatedTerms.items.find {it.id == term2.id}
+        updatedTerms.items.find {it.id == term3.id}
+
     }
 
     void 'add Term to CodeSet'() {
