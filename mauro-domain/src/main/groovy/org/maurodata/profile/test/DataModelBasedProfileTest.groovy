@@ -97,6 +97,14 @@ class DataModelBasedProfileTest {
                 //                metadata(ProfileSpecificationFieldProfile.NAMESPACE,
                 //                        ["metadataPropertyName": "deletedDate"])
             }
+            dataElement {
+                label "Expiry date"
+                description "Date the asset is to be expired"
+                dataType "Date"
+                // Test one without creating a metadata property name and having it generated automatically
+                //                metadata(ProfileSpecificationFieldProfile.NAMESPACE,
+                //                        ["metadataPropertyName": "deletedDate"])
+            }
         }
     }
 
@@ -109,7 +117,8 @@ class DataModelBasedProfileTest {
                   "contactEmail": "test@test.com",
                   "retired"     : "true",
                   "createdDate" : "2024-05-01",
-                  "Asset Creation/Deleted date" : "2024-06-01"])
+                  "Asset Creation/Deleted date" : "2024-06-01",
+                  "Asset Creation/Expiry date" : "2024-07-01"])
 
     }
 }

@@ -54,6 +54,7 @@ class DynamicProfileServiceSpec extends Specification {
         profiles[0].displayName == "Asset management profile"
         profiles[0].keys == [
                 "Asset Creation/Deleted date",
+                "Asset Creation/Expiry date",
                 "contactEmail",
                 "createdDate",
                 "priority",
