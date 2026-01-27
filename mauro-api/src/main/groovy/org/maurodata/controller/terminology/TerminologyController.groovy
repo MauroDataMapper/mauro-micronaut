@@ -150,10 +150,16 @@ class TerminologyController extends ModelController<Terminology> implements Term
         super.createNewBranchModelVersion(id, createNewVersionData)
     }
 
-    @Audit
+    @Audit(title = EditType.EXPORT, description = 'Export terminology')
     @Get(Paths.TERMINOLOGY_EXPORT)
     HttpResponse<byte[]> exportModel(UUID id, @Nullable String namespace, @Nullable String name, @Nullable String version) {
-        super.exportModel(id, namespace, name, version)
+        super.exportModels(namespace, name, version, [id])
+    }
+
+    @Audit(title = EditType.EXPORT, description = 'Export terminologies')
+    @Post(Paths.TERMINOLOGY_EXPORT_MANY)
+    HttpResponse<byte[]> exportModels(@Nullable String namespace, @Nullable String name, @Nullable String version, @Body List<UUID> ids){
+        super.exportModels(namespace, name, version, ids)
     }
 
     @Audit(title = EditType.IMPORT, description = "Import terminology")

@@ -375,15 +375,21 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         administeredItemRepositories.find {it.handles(item.class) || it.handles(item.domainType)}
     }
 
+    HttpResponse<byte[]> exportModel(UUID id, String namespace, String name, @Nullable String version) {
+        exportModels(namespace, name, version, [id])
+    }
 
-    HttpResponse<byte[]> exportModel(UUID modelId, String namespace, String name, @Nullable String version) {
+    HttpResponse<byte[]> exportModels(String namespace, String name, @Nullable String version, List<UUID> modelIds) {
         ModelExporterPlugin mauroPlugin = mauroPluginService.getPlugin(ModelExporterPlugin, namespace, name, version)
         PluginService.handlePluginNotFound(mauroPlugin, namespace, name)
 
-        M existing = modelRepository.loadWithContent(modelId)
-        existing.setAssociations()
+        List<Model> existingModels = modelIds.collect {modelId ->
+            M model = modelRepository.loadWithContent(modelId)
+            model.setAssociations()
+            return model
+        }
 
-        ExporterUtils.createExportResponse(mauroPlugin, existing)
+        ExporterUtils.createExportResponse(mauroPlugin, existingModels)
     }
 
     ListResponse<M> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version) {

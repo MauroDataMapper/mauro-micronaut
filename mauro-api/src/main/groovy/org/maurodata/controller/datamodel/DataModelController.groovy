@@ -190,11 +190,18 @@ class DataModelController extends ModelController<DataModel> implements DataMode
         super.createNewBranchModelVersion(id, createNewVersionData)
     }
 
-    @Audit
+    @Audit(title = EditType.EXPORT, description = 'Export data model')
     @Get(Paths.DATA_MODEL_EXPORT)
     HttpResponse<byte[]> exportModel(UUID id, @Nullable String namespace, @Nullable String name, @Nullable String version) {
-        super.exportModel(id, namespace, name, version)
+        super.exportModels(namespace, name, version, [id])
     }
+
+    @Audit(title = EditType.EXPORT, description = 'Export data models')
+    @Post(value = Paths.DATA_MODEL_EXPORT_MANY, produces = MediaType.ALL)
+    HttpResponse<byte[]> exportModels(@Nullable String namespace, @Nullable String name, @Nullable String version, @Body List<UUID> ids) {
+        super.exportModels(namespace, name, version, ids)
+    }
+
 
     @Transactional
     @ExecuteOn(TaskExecutors.IO)
