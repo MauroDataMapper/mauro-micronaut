@@ -4,6 +4,7 @@ import org.maurodata.domain.classifier.ClassificationScheme
 import org.maurodata.domain.datamodel.DataClass
 import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.folder.Folder
+import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.domain.security.CatalogueUser
 import org.maurodata.domain.security.Role
 import org.maurodata.domain.security.UserGroup
@@ -23,194 +24,265 @@ import spock.lang.Shared
 class TreeIntegrationSpec extends SecuredIntegrationSpec {
 
     @Shared
-    UUID rootFolderId
+    Folder rootFolder
 
     @Shared
-    UUID folder1Id
+    Folder folder1
 
     @Shared
-    UUID folder2Id
+    Folder folder2
 
     @Shared
-    UUID dataModelId
+    Folder folder3
 
     @Shared
-    UUID dataClassId
+    DataModel dataModel1
 
     @Shared
-    UUID codeSetId
+    DataModel dataModel2
 
     @Shared
-    UUID terminologyId
+    DataClass dataClass
+
+    @Shared
+    CodeSet codeSet
+
+    @Shared
+    Terminology terminology
 
     @Shared
     UUID userGroupId
 
     @Shared
-    UUID classificationSchemeId
+    ClassificationScheme classificationScheme
 
     void setupSpec() {
         loginAdmin()
-        rootFolderId = folderApi.create(new Folder(label: 'TreeIntegrationSpec root folder')).id
-        folder1Id = folderApi.create(rootFolderId, new Folder(label: 'TreeIntegrationSpec folder with contents')).id
-        folder2Id = folderApi.create(rootFolderId, new Folder(label: 'TreeIntegrationSpec empty folder')).id
+        /***
+         * rootFolder
+         *   |- folder1
+         *        |- folder3
+         *             |- dataModel2
+         *        |- dataModel1
+         *             |- dataClass
+         *        |- terminology
+         *        |- codeset
+         *        |- classification
+         *   |- folder2
+         *
+         *
+         *
+         *
+         */
 
-        dataModelId = dataModelApi.create(folder1Id, new DataModel(label: 'TreeIntegrationSpec data model')).id
-        dataClassId = dataClassApi.create(dataModelId, new DataClass(label: 'data class')).id
 
-        terminologyId = terminologyApi.create(folder1Id, new Terminology(label: 'TreeIntegrationSpec terminology')).id
-        codeSetId = codeSetApi.create(folder1Id, new CodeSet(label: 'TreeIntegrationSpec code set')).id
-        classificationSchemeId = classificationSchemeApi.create(folder1Id,  new ClassificationScheme(label: 'TreeIntegrationSpec classification scheme')).id
+        rootFolder = folderApi.create(new Folder(label: 'rootFolder'))
+        folder1 = folderApi.create(rootFolder.id, new Folder(label: 'folder1'))
+        folder2 = folderApi.create(rootFolder.id, new Folder(label: 'folder2'))
+        folder3 = folderApi.create(folder1.id, new Folder(label: 'folder3'))
+
+        dataModel1 = dataModelApi.create(folder1.id, new DataModel(label: 'dataModel1'))
+        dataClass = dataClassApi.create(dataModel1.id, new DataClass(label: 'dataClass'))
+
+        dataModel2 = dataModelApi.create(folder3.id, new DataModel(label: 'dataModel2'))
+
+        terminology = terminologyApi.create(folder1.id, new Terminology(label: 'terminology'))
+        codeSet = codeSetApi.create(folder1.id, new CodeSet(label: 'codeSet'))
+        classificationScheme = classificationSchemeApi.create(folder1.id,  new ClassificationScheme(label: 'classificationScheme'))
         logout()
     }
 
-    void 'admin can access tree'() {
-        when:
+    void 'tree created by admin - viewed by admin'() {
+        when: "Log in as admin"
         loginAdmin()
-        List<TreeItem> tree = treeApi.folderTree(null, false)
 
-        then:
-        tree
-        tree.size() >= 1
-        tree.find {it.label == 'TreeIntegrationSpec root folder' && it.domainType == 'Folder' && it.hasChildren && it.id == rootFolderId}
-
-        when:
-        tree = treeApi.folderTree(rootFolderId, false)
-
-        then:
-        tree
-        tree.size() == 2
-        tree.find {it.label == 'TreeIntegrationSpec folder with contents' && it.domainType == 'Folder' && it.hasChildren && it.id == folder1Id}
-        tree.find {it.label == 'TreeIntegrationSpec empty folder' && it.domainType == 'Folder' && !it.hasChildren && it.id == folder2Id}
-
-        when:
-        tree = treeApi.folderTree(folder1Id, false)
-
-        then:
-        tree
-        tree.size() == 4
-        tree.find {it.label == 'TreeIntegrationSpec data model' && it.domainType == 'DataModel' && it.hasChildren && it.id == dataModelId}
-        tree.find {it.label == 'TreeIntegrationSpec code set' && it.domainType == 'CodeSet' && !it.hasChildren && it.id == codeSetId}
-        tree.find {it.label == 'TreeIntegrationSpec terminology' && it.domainType == 'Terminology' && !it.hasChildren && it.id == terminologyId}
-        tree.find {it.label == 'TreeIntegrationSpec classification scheme' && it.domainType == 'ClassificationScheme' && !it.hasChildren && it.id == classificationSchemeId}
-
-        when:
-        tree = treeApi.itemTree("codeSet",codeSetId, false)
-
-        then:
-        tree.size() == 0
-
-        when:
-        tree = treeApi.itemTree("dataModel", dataModelId, false)
-
-        then:
-        tree
-        tree.size() == 1
-        tree.find {it.label == 'data class' && it.domainType == 'DataClass' && !it.hasChildren && it.id == dataClassId}
+        then: "Admin can see the whole tree"
+        canSeeTheWholeTree()
     }
 
-    void 'non-admin user cannot see tree without permissions'() {
-        when:
+    void 'tree created by admin - viewed by user'() {
+        when: "Log in as user"
         loginUser()
-        List<TreeItem> tree = treeApi.folderTree(null, false)
 
-        then:
-        !tree.find {it.label == 'TreeIntegrationSpec root folder'}
-
-        when:
-        treeApi.folderTree(rootFolderId, false)
-
-        then:
-        HttpClientResponseException exception = thrown()
-        exception.status == HttpStatus.FORBIDDEN
-
-        when:
-        treeApi.itemTree("dataModel", dataModelId, false)
-
-        then:
-        exception = thrown()
-        exception.status == HttpStatus.FORBIDDEN
+        then: "User can't see the tree at all"
+        cantSeeAnyTree(HttpStatus.FORBIDDEN)
     }
 
-    void 'non-admin user can see the tree when permissions are granted'() {
+    void 'tree created by admin - viewed by public'() {
+        when: "don't login - public"
+        logout()
+
+        then: "public can't see the tree at all"
+        cantSeeAnyTree(HttpStatus.UNAUTHORIZED)
+    }
+
+    void 'group read permissions are granted'() {
         given:
         loginAdmin()
         UserGroup readersGroup = userGroupApi.create(new UserGroup (name: 'Readers Group'))
         userGroupId = readersGroup.id
-        catalogueUserApi.update(user.id, new CatalogueUser(groups: [readersGroup.id] ))
-        securableResourceGroupRoleApi.create("folder", rootFolderId, Role.READER, readersGroup.id)
+        catalogueUserApi.update(user.id, new CatalogueUser(groups: [new UserGroup(id: readersGroup.id)] ))
+        securableResourceGroupRoleApi.create("folder", rootFolder.id, Role.READER, readersGroup.id)
         logout()
 
         when:
+        loginAdmin()
+        then:
+        canSeeTheWholeTree()
+
+        when:
+        logout()
+        then:
+        cantSeeAnyTree(HttpStatus.UNAUTHORIZED)
+
+        when:
         loginUser()
-        List<TreeItem> tree = treeApi.folderTree(null, false)
+        then:
+        canSeeTheWholeTree()
+
+        when: "Then revoke the permissions"
+        loginAdmin()
+        securableResourceGroupRoleApi.delete("folder", rootFolder.id, Role.READER, userGroupId)
 
         then:
-        tree
-        tree.size() >= 1
-        tree.find {it.label == 'TreeIntegrationSpec root folder' && it.domainType == 'Folder' && it.hasChildren && it.id == rootFolderId}
+        canSeeTheWholeTree()
 
         when:
-        tree = treeApi.folderTree(rootFolderId, false)
+        logout()
 
-        then:
-        tree
-        tree.size() == 2
-        tree.find {it.label == 'TreeIntegrationSpec folder with contents' && it.domainType == 'Folder' && it.hasChildren && it.id == folder1Id}
-        tree.find {it.label == 'TreeIntegrationSpec empty folder' && it.domainType == 'Folder' && !it.hasChildren && it.id == folder2Id}
+        then: "public can't see the tree at all"
+        cantSeeAnyTree(HttpStatus.UNAUTHORIZED)
 
         when:
-        tree = treeApi.folderTree(folder1Id, false)
+        loginUser()
+        then: "user can't see the tree at all"
+        cantSeeAnyTree(HttpStatus.FORBIDDEN)
 
-        then:
-        tree
-        tree.size() == 4
-        tree.find {it.label == 'TreeIntegrationSpec data model' && it.domainType == 'DataModel' && it.hasChildren && it.id == dataModelId}
-        tree.find {it.label == 'TreeIntegrationSpec code set' && it.domainType == 'CodeSet' && !it.hasChildren && it.id == codeSetId}
-        tree.find {it.label == 'TreeIntegrationSpec terminology' && it.domainType == 'Terminology' && !it.hasChildren && it.id == terminologyId}
-        tree.find {it.label == 'TreeIntegrationSpec classification scheme' && it.domainType == 'ClassificationScheme' && !it.hasChildren && it.id == classificationSchemeId}
-
-        when:
-        tree = treeApi.itemTree("codeSet", codeSetId, false)
-
-        then:
-        tree.size() == 0
-
-        when:
-        tree = treeApi.itemTree("dataModel", dataModelId, false)
-
-        then:
-        tree
-        tree.size() == 1
-        tree.find {it.label == 'data class' && it.domainType == 'DataClass' && !it.hasChildren && it.id == dataClassId}
     }
 
-
-    void 'non-admin user cannot see tree when permissions are removed'() {
+    void 'public read permissions are granted'() {
         given:
         loginAdmin()
-        securableResourceGroupRoleApi.delete("folder", rootFolderId, Role.READER, userGroupId)
+        folderApi.allowReadByEveryone(rootFolder.id)
         logout()
 
         when:
+        loginAdmin()
+        then:
+        canSeeTheWholeTree()
+
+        when:
+        logout()
+        then:
+        canSeeTheWholeTree()
+
+        when:
         loginUser()
-        List<TreeItem> tree = treeApi.folderTree(null, false)
-
         then:
-        !tree.find {it.label == 'TreeIntegrationSpec root folder'}
+        canSeeTheWholeTree()
+
+        when: "Then revoke the permissions"
+        loginAdmin()
+        folderApi.revokeReadByEveryone(rootFolder.id)
+        then:
+        canSeeTheWholeTree()
 
         when:
-        treeApi.folderTree(rootFolderId, false)
-
+        logout()
         then:
-        HttpClientResponseException exception = thrown()
-        exception.status == HttpStatus.FORBIDDEN
+        cantSeeAnyTree(HttpStatus.UNAUTHORIZED)
 
         when:
-        treeApi.itemTree("dataModel", dataModelId, false)
+        loginUser()
+        then: "public can't see the tree at all"
+        cantSeeAnyTree(HttpStatus.FORBIDDEN)
 
+    }
+
+    void 'authorized read permissions are granted'() {
+        given:
+        loginAdmin()
+        folderApi.allowReadByAuthenticated(rootFolder.id)
+        logout()
+
+        when:
+        loginAdmin()
         then:
-        exception = thrown()
-        exception.status == HttpStatus.FORBIDDEN
+        canSeeTheWholeTree()
+
+        when:
+        logout()
+        then:
+        cantSeeAnyTree(HttpStatus.UNAUTHORIZED)
+
+        when:
+        loginUser()
+        then:
+        canSeeTheWholeTree()
+
+        when: "Then revoke the permissions"
+        loginAdmin()
+        folderApi.revokeReadByAuthenticated(rootFolder.id)
+        then:
+        canSeeTheWholeTree()
+
+        when:
+        logout()
+        then:
+        cantSeeAnyTree(HttpStatus.UNAUTHORIZED)
+
+        when:
+        loginUser()
+        then: "user can't see the tree at all"
+        cantSeeAnyTree(HttpStatus.FORBIDDEN)
+
+    }
+
+    private treeContains(AdministeredItem parentItem, boolean foldersOnly, Map<AdministeredItem, Boolean> childItems) {
+        List<TreeItem> tree = []
+        if(parentItem == null || parentItem.domainType == "Folder" || parentItem.domainType == "VersionedFolder") {
+            tree = treeApi.folderTree(parentItem?.id, foldersOnly)
+        } else {
+            tree = treeApi.itemTree(parentItem.domainType, parentItem.id, foldersOnly)
+        }
+
+        assert tree != null
+        assert tree.size() == childItems.size()
+        assert childItems.every {childItem, hasChildren ->
+            tree.find {treeItem ->
+                treeItem.label == childItem.label &&
+                    treeItem.domainType == childItem.domainType &&
+                    treeItem.hasChildren == hasChildren &&
+                    treeItem.id == childItem.id
+            }
+        }
+        return true
+    }
+
+    private boolean canSeeTheWholeTree() {
+        assert treeContains(null, false, [(rootFolder): true])
+        assert treeContains(rootFolder, false, [(folder1): true, (folder2): false])
+        assert treeContains(folder1, false, [(folder3): true, (dataModel1): true, (codeSet): false, (terminology): false, (classificationScheme): false])
+        assert treeContains(codeSet, false, [:])
+        assert treeContains(classificationScheme, false, [:])
+        assert treeContains(terminology, false, [:])
+        assert treeContains(dataModel1, false, [(dataClass): false])
+        assert treeContains(folder3, false, [(dataModel2): false])
+        return true
+    }
+
+    private boolean cantSeeAnyTree(HttpStatus expectedStatus) {
+        assert treeContains(null, false, [:])
+
+        [rootFolder, folder1, folder2, folder3, dataModel1, dataModel2, dataClass, terminology, classificationScheme, codeSet].
+            each {treeItem ->
+            try {
+                treeContains(treeItem, false, [:])
+                assert false : "Exception should have been thrown"
+            } catch (HttpClientResponseException e){
+                assert e.status == expectedStatus
+            }
+        }
+        return true
     }
 }
