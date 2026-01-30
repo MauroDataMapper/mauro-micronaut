@@ -1,0 +1,18 @@
+<!doctype html>
+<html>
+<head>
+    <title>DataModel</title>
+</head>
+
+<body>
+    <h1 th:text="${label}">DataModel</h1>
+    <ol>
+        <li th:each="dataClass : ${childDataClasses}"><span th:text="${dataClass.label}">DataClass</span>
+            <ol>
+                <li th:each="dataClass : ${dataClass.dataClasses}" th:text="${dataClass.label}">Child DataClass</li>
+            </ol>
+            <br>
+        </li>
+    </ol>
+</body>
+</html>
