@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Content Browser</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.4.0/dist/css/tabler.min.css" />
+    <style>
+        @import url("https://fonts.googleapis.com/css?family=Open+Sans:300,300i,400,400i,700,700i&display=swap");
+
+        :root {
+            --tblr-border-radius-scale: 2;
+            /* font-size-adjust: 0.55; */
+            --tblr-body-font-size: 16px;
+            --tblr-font-sans-serif: Open Sans, system-ui, sans-serif;
+            --tblr-body-color: var(--tblr-gray-800);
+        }
+
+        .card {
+            --tblr-card-border-radius: 25px;
+        }
+
+        div.container-xl {
+            max-width: 1500px;
+        }
+
+        nav div, nav a {
+            width: fit-content;
+        }
+
+        nav, blockquote {
+            --tblr-border-style: dotted;
+            --tblr-border-width: 5px;
+            border-left-width: 5px;
+            --tblr-border-color: var(--tblr-blue-lt)
+        }
+
+        .nav {
+            --tblr-nav-link-padding-x: 0.9rem;
+            --tblr-nav-link-color: var(--tblr-gray-600);
+        }
+    </style>
+</head>
+
+<body class="p-3 bg-white">
+
+    
+    <div class="">
+        <header class="navbar shadow-none bg-transparent">
+            <div class="container-xl p-0 mb-2">
+                <div class="card w-100">
+                    <div class="card-body">
+                        <h2>Content Browser</h2>
+                    </div>
+                </div>
+            </div>
+        </header>
+    </div>
+    
+    <div class="container-xl">
+        <!--<h1>Hello, Tabler!</h1>-->
+        
+        <div class="row p-3 g-6">
+            <div class="col">
+                <nav class="nav nav-vertical nav-pills">
+                    <a class="nav-link" href="#">Schema</a>
+                    <a class="nav-link" href="#">Schema</a>
+                    <a class="nav-link" href="#">Schema</a>
+                    <div>
+                        <a class="nav-link active" href="#">Schema</a>
+                        <nav class="nav nav-vertical">
+                            <div>
+                                <a class="nav-link" href="/ui/base/colors/">Table</a>
+                            </div>
+                            <div>
+                                <a class="nav-link" href="/ui/base/colors/">Table</a>
+                            </div>
+                            <div>
+                                <a class="nav-link active" href="/ui/base/colors/">Table</a>
+                                <nav class="nav nav-vertical">
+                                    <div>
+                                        <a class="nav-link" href="/ui/base/colors/">Table</a>
+                                    </div>
+                                    <div>
+                                        <a class="nav-link" href="/ui/base/colors/">Table</a>
+                                    </div>
+                                    <div>
+                                        <a class="nav-link active" href="/ui/base/colors/">Table</a>
+                                    </div>
+                                    <div>
+                                        <a class="nav-link" href="/ui/base/colors/">Table</a>
+                                    </div>
+                                </nav>
+                            </div>
+                        </nav>
+                    </div>
+                    <a class="nav-link" href="#">Schema</a>
+                    <a class="nav-link" href="#">Schema</a>
+                </nav>
+            </div>
+            <div class="col-6">
+                <h1>Table</h1>
+                <p><strong>Row count</strong> #,###,###</p>
+
+                <h2>Key_Id</h2>
+                <p><strong>Description</strong><blockquote>The primary key for the Table table.</blockquote></p>
+
+                <div class="datagrid">
+                    <div class="datagrid-item w-100">
+                        <div class="datagrid-title">Row count</div>
+                        <div class="datagrid-text">#,###,###</div>
+                    </div>
+                    <div class="datagrid-item">
+                        <div class="datagrid-title">Description</div>
+                        <div class="datagrid-text"><blockquote>The primary key for the Table table.</blockquote></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col">
+                3 of 3
+            </div>
+        </div>
+     
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/jquery@4.0.0/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.4.0/dist/js/tabler.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js"></script>
+</body>
+</html>
