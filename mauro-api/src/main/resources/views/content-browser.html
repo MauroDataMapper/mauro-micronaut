@@ -88,70 +88,45 @@
         <div class="row p-3 g-6">
             <div class="col-3">
                 <nav class="nav nav-vertical nav-pills">
-                    <a class="nav-link" href="#">Schema</a>
-                    <a class="nav-link" href="#">Schema</a>
-                    <a class="nav-link" href="#">Schema</a>
+                    <a class="nav-link" href="#">Catalog</a>
                     <div>
-                        <a class="nav-link active" href="#">Schema</a>
+                        <a class="nav-link active" href="#">Catalog</a>
                         <nav class="nav nav-vertical">
                             <div>
-                                <a class="nav-link" href="/ui/base/colors/">Table</a>
+                                <a class="nav-link" href="#">Schema</a>
                             </div>
                             <div>
-                                <a class="nav-link" href="/ui/base/colors/">Table</a>
-                            </div>
-                            <div>
-                                <a class="nav-link active" href="/ui/base/colors/">Table</a>
+                                <a class="nav-link active" href="#">Schema</a>
                                 <nav class="nav nav-vertical">
-                                    <div>
-                                        <a class="nav-link" href="/ui/base/colors/">Table</a>
-                                    </div>
-                                    <div>
-                                        <a class="nav-link" href="/ui/base/colors/">Table</a>
-                                    </div>
-                                    <div>
-                                        <a class="nav-link active activetable" href="/ui/base/colors/">Table</a>
-                                    </div>
-                                    <div>
-                                        <a class="nav-link" href="/ui/base/colors/">Table</a>
+                                    <div th:each="table : ${tables}">
+                                        <a th:if="${!table.active}" th:text="${table.label}" class="nav-link" href="#">table.label</a>
+                                        <a th:if="${table.active}" th:text="${table.label}" class="nav-link active activetable" href="#">Table</a>
                                     </div>
                                 </nav>
                             </div>
                         </nav>
                     </div>
-                    <a class="nav-link" href="#">Schema</a>
-                    <a class="nav-link" href="#">Schema</a>
                 </nav>
             </div>
 
             <div class="col-6 maincontent">
-                <h1>Table</h1>
-                <p><strong>Row count:&ensp;</strong>#,###,###</p>
+                <h1 th:text="${label}">dataClass.label</h1>
+                <p><strong>Row count:&ensp;</strong><span th:text="${rowCount}">#,###,###</span></p>
 
-                <section class="dataelement">
-                    <h2 id="Key_Id">Key_Id</h2>
-                    <p><strong>Description:</strong><blockquote>The primary key for the Table table.<br><small>Source Documentation (2026)</small></blockquote></p>
-                    <p><strong>Data type:&ensp;</strong>LONG</p>
-                    <p><strong>Row count:&ensp;</strong>#,###,###</p>
-                    <p><strong>Distinct values:&ensp;</strong>#,###,###</p>
-                    <p><strong>Non-null values:&ensp;</strong>#,###,###</p>
-                </section>
-
-                <section class="dataelement">
-                    <h2 id="Field_Id">Field_Id</h2>
-                    <p><strong>Description:</strong><blockquote>The primary key for the Table table.<br><small>Source Documentation (2026)</small></blockquote></p>
-                    <p><strong>Data type:&ensp;</strong>LONG</p>
-                    <p><strong>Row count:&ensp;</strong>#,###,###</p>
-                    <p><strong>Distinct values:&ensp;</strong>#,###,###</p>
-                    <p><strong>Non-null values:&ensp;</strong>#,###,###</p>
+                <section th:each="dataElement : ${dataElements}" th:attr="id=${dataElement.label}" id="dataElement.label" class="dataelement">
+                    <h2 th:text="${dataElement.label}">dataElement.label</h2>
+                    <p th:if="${dataElement.description}"><strong>Description:</strong><div th:text="${dataElement.description}"><blockquote>Documentation description here<br><small>Documentation Source Name (yyyy)</small></blockquote></div></p>
+                    <p><strong>Data type:&ensp;</strong><span th:text="${dataElement.dataTypeLabel}">dataElement.dataTypeLabel</span></p>
+                    <p><strong>Row count:&ensp;</strong><span th:text="${dataElement.rowCount}">dataElement.rowCount</span></p>
+                    <p><strong>Distinct values:&ensp;</strong><span th:text="${dataElement.distinctValuesCount}">dataElement.distinctValuesCount</span></p>
+                    <p><strong>Non-null values:&ensp;</strong><span th:text="${dataElement.nonNullValuesCount}">dataElement.nonNullValuesCount</span></p>
                 </section>
 
             </div>
 
             <div class="col">
                 <nav class="nav nav-vertical nav-pills dataelementnav">
-                    <a class="nav-link" href="#">Key_Id</a>
-                    <a class="nav-link" href="#">Field_Id</a>
+                    <a th:each="dataElement : ${dataElements}" th:text="${dataElement.label}" th:attr="href=${'#'+dataElement.label}" class="nav-link" href="#dataElement.label">dataElement.label</a>
                 </nav>
             </div>
         </div>
