@@ -53,6 +53,17 @@
             /*--tblr-border-color: var(--tblr-green-lt);*/
             /*border-left: var(--tblr-azure-lt) dotted 5px;*/
         }
+
+        section.dataelement {
+            margin-top: 1.5em;
+            border-top: var(--tblr-cyan-lt) dotted 5px;
+            padding-top: 1.5em;
+        }
+
+        .dataelementnav {
+            border-left: var(--tblr-cyan-lt) dotted 5px;
+            padding-left: 8px;
+        }
     </style>
 </head>
 
@@ -75,7 +86,7 @@
         <!--<h1>Hello, Tabler!</h1>-->
 
         <div class="row p-3 g-6">
-            <div class="col">
+            <div class="col-3">
                 <nav class="nav nav-vertical nav-pills">
                     <a class="nav-link" href="#">Schema</a>
                     <a class="nav-link" href="#">Schema</a>
@@ -112,26 +123,36 @@
                     <a class="nav-link" href="#">Schema</a>
                 </nav>
             </div>
+
             <div class="col-6 maincontent">
                 <h1>Table</h1>
-                <p><strong>Row count</strong> #,###,###</p>
+                <p><strong>Row count:&ensp;</strong>#,###,###</p>
 
-                <h2>Key_Id</h2>
-                <p><strong>Description</strong><blockquote>The primary key for the Table table.</blockquote></p>
+                <section class="dataelement">
+                    <h2 id="Key_Id">Key_Id</h2>
+                    <p><strong>Description:</strong><blockquote>The primary key for the Table table.<br><small>Source Documentation (2026)</small></blockquote></p>
+                    <p><strong>Data type:&ensp;</strong>LONG</p>
+                    <p><strong>Row count:&ensp;</strong>#,###,###</p>
+                    <p><strong>Distinct values:&ensp;</strong>#,###,###</p>
+                    <p><strong>Non-null values:&ensp;</strong>#,###,###</p>
+                </section>
 
-                <div class="datagrid">
-                    <div class="datagrid-item w-100">
-                        <div class="datagrid-title">Row count</div>
-                        <div class="datagrid-text">#,###,###</div>
-                    </div>
-                    <div class="datagrid-item">
-                        <div class="datagrid-title">Description</div>
-                        <div class="datagrid-text"><blockquote>The primary key for the Table table.</blockquote></div>
-                    </div>
-                </div>
+                <section class="dataelement">
+                    <h2 id="Field_Id">Field_Id</h2>
+                    <p><strong>Description:</strong><blockquote>The primary key for the Table table.<br><small>Source Documentation (2026)</small></blockquote></p>
+                    <p><strong>Data type:&ensp;</strong>LONG</p>
+                    <p><strong>Row count:&ensp;</strong>#,###,###</p>
+                    <p><strong>Distinct values:&ensp;</strong>#,###,###</p>
+                    <p><strong>Non-null values:&ensp;</strong>#,###,###</p>
+                </section>
+
             </div>
+
             <div class="col">
-                3 of 3
+                <nav class="nav nav-vertical nav-pills dataelementnav">
+                    <a class="nav-link" href="#">Key_Id</a>
+                    <a class="nav-link" href="#">Field_Id</a>
+                </nav>
             </div>
         </div>
 
