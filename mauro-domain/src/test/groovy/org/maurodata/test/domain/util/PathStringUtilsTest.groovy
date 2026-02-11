@@ -53,7 +53,7 @@ class PathStringUtilsTest extends Specification {
         then:
         path.nodes.size() == expectedSize
         path.nodes.findIndexOf {it.modelIdentifier} == expectedModelIdentifierIndex
-        path.nodes.first.prefix
+        path.nodes[0].prefix
 
         where:
         fullPath                                                                                        | expectedSize  | expectedModelIdentifierIndex
