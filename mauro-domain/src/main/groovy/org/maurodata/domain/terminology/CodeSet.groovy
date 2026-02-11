@@ -1,5 +1,6 @@
 package org.maurodata.domain.terminology
 
+import jakarta.persistence.PrePersist
 import org.maurodata.domain.model.Item
 import org.maurodata.domain.model.ItemReference
 import org.maurodata.domain.model.ItemReferencer
@@ -82,18 +83,12 @@ class CodeSet extends Model implements ItemReferencer {
                '}'
     }
 
-    /*
-    boolean equals(o) {
-        if (this.is(o)) return true
-        if (!(o instanceof CodeSet)) return false
-
-        CodeSet codeSet = (CodeSet) o
-
-        if (terms != codeSet.terms) return false
-
-        return true
+    @PrePersist
+    void prePersist() {
+        if (!getModelWithVersion()) {
+            branchName = 'main'
+        }
     }
-    */
 
     int hashCode() {
         return (terms != null ? terms.hashCode() : 0)

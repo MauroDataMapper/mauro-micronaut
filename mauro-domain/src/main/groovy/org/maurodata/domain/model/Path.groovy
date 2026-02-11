@@ -36,7 +36,11 @@ class Path {
     }
 
     void setPathString(String pathString) {
-        setNodes(pathString?.split(/(?<!%)\|/)?.collect {PathNode.from(it)})
+        if(!pathString || pathString.isEmpty()) {
+            setNodes([])
+        } else {
+            setNodes(pathString?.split(/(?<!%)\|/)?.collect {PathNode.from(it)})
+        }
     }
 
     void setNodes(List<PathNode> nodes) {
@@ -143,6 +147,12 @@ class Path {
         trimmed.updatePathString()
         trimmed.pathString
     }
+
+    Path localPath() {
+        // Remove all the nodes until we find the one with the model versioning... then drop that one too.
+        new Path(nodes.dropWhile {!it.modelIdentifier}.drop(1))
+    }
+
 
     static class PathNode {
         String prefix

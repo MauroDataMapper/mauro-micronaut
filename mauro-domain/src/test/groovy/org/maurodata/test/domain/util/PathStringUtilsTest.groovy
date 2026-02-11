@@ -1,6 +1,7 @@
 package org.maurodata.test.domain.util
 
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
+import org.maurodata.domain.model.Path
 import org.maurodata.util.PathStringUtils
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -44,5 +45,26 @@ class PathStringUtilsTest extends Specification {
         "fo:soluta eum architecto"                                                                            | null
         "fo:soluta eum architecto|te:Dewey Decimal Classification v22\$main"                                  | "main"
     }
+
+    void 'test getting path from string'() {
+        when:
+        Path path = new Path(fullPath)
+
+        then:
+        path.nodes.size() == expectedSize
+        path.nodes.findIndexOf {it.modelIdentifier} == expectedModelIdentifierIndex
+        path.nodes[0].prefix
+
+        where:
+        fullPath                                                                                        | expectedSize  | expectedModelIdentifierIndex
+        "fo:soluta eum architecto|dm:modi unde est\$matrix|dc:est quasi vel|de:new data element label"  | 4             | 1
+        "dm:BC_Bloods\$2.0.0"                                                                           | 1             | 0
+        "fo:soluta eum architecto"                                                                      | 1             | -1
+        "fo:soluta eum architecto\$main|te:Dewey Decimal Classification v22"                            | 2             | 0
+        "fo:soluta eum architecto|te:Dewey Decimal Classification v22"                                  | 2             | -1
+        "fo:soluta eum architecto|dm:modi unde est\$1.0.0|dc:est quasi vel|dc:est sed hic"              | 4             | 1
+
+    }
+
 
 }

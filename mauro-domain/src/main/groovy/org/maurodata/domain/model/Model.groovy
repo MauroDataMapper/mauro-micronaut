@@ -8,7 +8,6 @@ import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.annotation.Relation
 import jakarta.persistence.Transient
 import org.maurodata.domain.authority.Authority
-import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.diff.CollectionDTO
 import org.maurodata.domain.diff.DiffBuilder
 import org.maurodata.domain.diff.DiffableItem

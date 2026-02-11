@@ -1,6 +1,6 @@
 package org.maurodata.domain.datamodel
 
-
+import jakarta.persistence.PrePersist
 import org.maurodata.domain.model.Item
 import org.maurodata.domain.model.ItemReference
 import org.maurodata.domain.model.ItemReferencer
@@ -71,6 +71,12 @@ class DataModel extends Model implements ItemReferencer {
         this.dataModelType = DataModelType.values().find {it.label.toLowerCase() == dataModelType.toLowerCase()}?.label
     }
 
+    @PrePersist
+    void prePersist() {
+        if (!getModelWithVersion()) {
+            branchName = 'main'
+        }
+    }
 
     @Override
     @Transient

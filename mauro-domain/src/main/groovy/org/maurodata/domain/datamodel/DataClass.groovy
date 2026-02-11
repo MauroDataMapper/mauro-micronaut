@@ -96,7 +96,7 @@ class DataClass extends ModelItem<DataModel> implements DiffableItem<DataClass>,
     @Transient
     @JsonIgnore
     Model getOwner() {
-        parentDataClass?.owner ?: dataModel ?: super.getOwner()
+        parentDataClass?.owner ?: dataModel?.owner ?: super.getOwner()
     }
 
     @Transient
