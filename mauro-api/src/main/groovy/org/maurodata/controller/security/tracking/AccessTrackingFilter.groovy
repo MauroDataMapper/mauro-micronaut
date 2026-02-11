@@ -9,6 +9,7 @@ import io.micronaut.http.MutableHttpResponse
 import io.micronaut.http.annotation.Filter
 import io.micronaut.http.filter.HttpServerFilter
 import io.micronaut.http.filter.ServerFilterChain
+import io.micronaut.http.filter.ServerFilterPhase
 import io.micronaut.security.utils.SecurityService
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
@@ -20,6 +21,8 @@ import reactor.core.publisher.Mono
 @Singleton
 class AccessTrackingFilter implements HttpServerFilter {
 
+    public static final Integer ORDER = ServerFilterPhase.SESSION.order() + 11
+
     private final SessionTracker tracker
     private final SecurityService securityService
 
@@ -27,6 +30,11 @@ class AccessTrackingFilter implements HttpServerFilter {
     AccessTrackingFilter(SessionTracker tracker, @Nullable SecurityService securityService) {
         this.tracker = tracker
         this.securityService = securityService
+    }
+
+    @Override
+    int getOrder() {
+        return ORDER
     }
 
     @Override
