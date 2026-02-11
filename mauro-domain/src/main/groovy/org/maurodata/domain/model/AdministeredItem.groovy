@@ -83,6 +83,16 @@ abstract class AdministeredItem extends Item implements Pathable {
     Path path
 
     /**
+     * The path of an object allows it to be navigated to from either the containing model, or the folder path within
+     * a system.  This value is calculated on persistence and saved to allow easy lookup.
+     */
+
+    @Transient
+    Path getLocalPath() {
+        path?.localPath()
+    }
+
+    /**
      * A different representation of the item's path.
      */
     @Transient
@@ -283,9 +293,14 @@ abstract class AdministeredItem extends Item implements Pathable {
         AdministeredItem node = this
         while (node) {
             pathNodes.add(0, new Path.PathNode(prefix: node.pathPrefix, identifier: node.pathIdentifier, modelIdentifier: node.pathModelIdentifier))
-            if (node.parent == node) break // disallow cycles
-            i++; node = node.parent
-            if (i > Path.PATH_MAX_NODES) throw new MauroInternalException("Path exceeded maximum depth of [$Path.PATH_MAX_NODES]")
+            if (node.parent == node) { // disallow cycles
+                break
+            }
+            i++;
+            node = node.parent
+            if (i > Path.PATH_MAX_NODES) {
+                throw new MauroInternalException("Path exceeded maximum depth of [$Path.PATH_MAX_NODES]")
+            }
         }
 
         path = new Path(pathNodes)

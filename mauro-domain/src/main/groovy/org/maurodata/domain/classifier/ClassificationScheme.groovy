@@ -1,6 +1,6 @@
 package org.maurodata.domain.classifier
 
-
+import jakarta.persistence.PrePersist
 import org.maurodata.domain.model.Item
 import org.maurodata.domain.model.ItemReference
 import org.maurodata.domain.model.ItemReferencer
@@ -134,6 +134,14 @@ class ClassificationScheme extends Model implements ItemReferencer {
         parent = ItemReferencerUtils.replaceItemByIdentity(parent, replacements, notReplaced)
         csClassifiers = ItemReferencerUtils.replaceItemsByIdentity(csClassifiers, replacements, notReplaced)
     }
+
+    @PrePersist
+    void prePersist() {
+        if (!getModelWithVersion()) {
+            branchName = 'main'
+        }
+    }
+
 
     /**
      * DSL builder

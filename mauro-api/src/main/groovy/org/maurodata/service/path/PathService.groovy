@@ -10,6 +10,8 @@ import org.maurodata.controller.model.AdministeredItemReader
 import org.maurodata.controller.model.AvailableActions
 import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.domain.model.Item
+import org.maurodata.domain.model.Model
+import org.maurodata.domain.model.Path
 import org.maurodata.domain.security.Role
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository
 import org.maurodata.persistence.model.PathRepository
@@ -47,22 +49,21 @@ class PathService implements AdministeredItemReader {
 
 
     AdministeredItem getResourceByPathFromResource(String domainType, UUID domainId, String path){
-        AdministeredItem fromModel = findAdministeredItem(domainType, domainId)
-        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, fromModel, "Model $domainType, $domainId not found")
+        AdministeredItem fromItem = findAdministeredItem(domainType, domainId)
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, fromItem, "Model $domainType, $domainId not found")
 
-        accessControlService.checkRole(Role.READER, fromModel)
-        updateDerivedProperties(fromModel)
+        accessControlService.checkRole(Role.READER, fromItem)
+        pathRepository.readParentItems(fromItem)
 
-        //verify model path in the input path
-        if (!path.contains(fromModel.path.pathString)) {
-            ErrorHandler.handleError(HttpStatus.NOT_FOUND, "Path $path does not belong to $domainType, $domainId")
+        Model owningModel = fromItem.getOwner()
+        if (!owningModel) {
+            ErrorHandler.handleError(HttpStatus.NOT_FOUND, "Item (${domainType}, ${domainId}) does not have an owning model")
         }
-        Tuple2<String, String> itemDomainTypeAndPath = getItemDomainTypeAndPath(path)
-        AdministeredItem administeredItem = findResourceByPath(itemDomainTypeAndPath.first, path)
-        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, administeredItem, "Item with $itemDomainTypeAndPath.first  and label $itemDomainTypeAndPath.v2 not found")
+        AdministeredItem administeredItem = findItemByPath(owningModel, new Path(path).nodes)
+
         accessControlService.checkRole(Role.READER, administeredItem)
-        updateDerivedProperties(administeredItem)
-        administeredItem
+        return administeredItem
+
     }
 
     /**
@@ -86,25 +87,6 @@ class PathService implements AdministeredItemReader {
         return findItemForPath(domainType, domainPath, versionString, path)
     }
 
-
-    /**
-     *
-     * @param path fullPath
-     * @return  the last path domainType and label/subPath
-     */
-    protected Tuple2<String,String> getItemDomainTypeAndPath(String path) {
-        String itemPath = lastSubPath(path)
-        //extract the item domain type from given input path
-        String[] itemParts = splitBy(itemPath, COLON)
-        if (itemParts.size() != 2){
-            ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "bad path $path")
-        }
-        String itemDomainType = getDomainTypeFromPathPrefix(itemParts[0])
-        String subPathOnly = itemParts[1].find(DISCARD_AFTER_VERSION) ?: itemParts[1]
-
-        String itemSubPath = subPathOnly.replaceAll(REMOVE_VERSION_DELIM, '')
-        new Tuple2(itemDomainType, itemSubPath)
-    }
 
     protected String getPathPrefixForDomainType(String domainType) {
         AdministeredItemCacheableRepository repo = repositoryService.administeredItemCacheableRepositories.find {
@@ -152,5 +134,33 @@ class PathService implements AdministeredItemReader {
             }
         }
         item
+    }
+
+
+
+    AdministeredItem findItemByPath(AdministeredItem parent, List<Path.PathNode> pathNodes) {
+        if(!pathNodes || pathNodes.size() == 0) {
+            return parent
+        }
+        Path.PathNode firstPathNode = pathNodes.remove(0)
+        String domainType = getDomainTypeFromPathPrefix(firstPathNode.prefix)
+        AdministeredItemCacheableRepository repository = getAdministeredItemRepository(domainType)
+        List<AdministeredItem> items = repository.findAllByLabel(firstPathNode.identifier) as List<AdministeredItem>
+        AdministeredItem nextItemInPath = null
+        if(firstPathNode.modelIdentifier) {
+            // We've got a new root node - find it and then start from there
+            nextItemInPath = items.find {it ->
+                Model model = it as Model
+                model.modelVersionTag == firstPathNode.modelIdentifier ||
+                model.branchName == firstPathNode.modelIdentifier ||
+                model.modelVersion.toString() == firstPathNode.modelIdentifier
+            }
+        } else {
+            nextItemInPath = items.find {it.parent && it.parent.id == parent.id }
+        }
+        if(!nextItemInPath) {
+            ErrorHandler.handleError(HttpStatus.NOT_FOUND, "Unknown path component: ${firstPathNode.toString()}")
+        }
+        return findItemByPath(nextItemInPath, pathNodes)
     }
 }

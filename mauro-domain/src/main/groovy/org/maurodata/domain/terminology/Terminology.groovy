@@ -1,5 +1,6 @@
 package org.maurodata.domain.terminology
 
+import jakarta.persistence.PrePersist
 import org.maurodata.domain.model.Item
 import org.maurodata.domain.model.ItemReference
 import org.maurodata.domain.model.ItemReferencer
@@ -97,6 +98,14 @@ class Terminology extends Model implements ItemReferencer {
 
         cloned
     }
+
+    @PrePersist
+    void prePersist() {
+        if (!getModelWithVersion()) {
+            branchName = 'main'
+        }
+    }
+
 
     /****
      * Methods for building a tree-like DSL
