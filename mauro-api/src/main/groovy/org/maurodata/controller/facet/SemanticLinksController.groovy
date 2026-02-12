@@ -121,6 +121,7 @@ class SemanticLinksController extends FacetController<SemanticLink> implements S
     }
 
     @Override
+    @Audit
     @Post(Paths.SEMANTIC_LINKS_LIST)
     SemanticLinkDTO create(@NonNull String domainType, @NonNull UUID domainId, @Body @NonNull SemanticLinkCreateDTO semanticLink) {
 
