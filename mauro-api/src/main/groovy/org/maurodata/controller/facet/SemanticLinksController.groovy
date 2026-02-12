@@ -163,9 +163,8 @@ class SemanticLinksController extends FacetController<SemanticLink> implements S
     }
 
     @Audit(deletedObjectDomainType = SemanticLink)
-    @Delete(Paths.SEMANTIC_LINKS_ID)
-    @Transactional
     @Override
+    @Delete(Paths.SEMANTIC_LINKS_ID)
     HttpResponse delete(@NonNull String domainType, @NonNull UUID domainId, UUID id) {
         accessControlService.checkRole(Role.EDITOR, readAdministeredItemForFacet(semanticLinkRepository.readById(id)))
         super.delete(id)
