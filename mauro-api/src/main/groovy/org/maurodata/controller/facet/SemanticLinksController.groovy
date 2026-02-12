@@ -1,5 +1,8 @@
 package org.maurodata.controller.facet
 
+import io.micronaut.http.annotation.Delete
+import io.micronaut.http.annotation.Post
+import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
 import org.maurodata.ErrorHandler
 import org.maurodata.api.Paths
@@ -7,6 +10,8 @@ import org.maurodata.api.facet.SemanticLinkCreateDTO
 import org.maurodata.api.facet.SemanticLinkDTO
 import org.maurodata.api.facet.SemanticLinksApi
 import org.maurodata.api.model.ModelRefDTO
+import org.maurodata.audit.Audit
+import org.maurodata.domain.facet.Rule
 import org.maurodata.domain.facet.SemanticLink
 import org.maurodata.domain.facet.SemanticLinkType
 import org.maurodata.domain.model.AdministeredItem
@@ -116,11 +121,7 @@ class SemanticLinksController extends FacetController<SemanticLink> implements S
     }
 
     @Override
-    HttpResponse delete(String domainType, UUID domainId, UUID id) {
-        return null
-    }
-
-    @Override
+    @Post(Paths.SEMANTIC_LINKS_LIST)
     SemanticLinkDTO create(@NonNull String domainType, @NonNull UUID domainId, @Body @NonNull SemanticLinkCreateDTO semanticLink) {
 
         // LHS
@@ -159,4 +160,14 @@ class SemanticLinksController extends FacetController<SemanticLink> implements S
 
         return createdSemanticLinkDTO
     }
+
+    @Audit(deletedObjectDomainType = SemanticLink)
+    @Delete(Paths.SEMANTIC_LINKS_ID)
+    @Transactional
+    @Override
+    HttpResponse delete(@NonNull String domainType, @NonNull UUID domainId, UUID id) {
+        accessControlService.checkRole(Role.EDITOR, readAdministeredItemForFacet(semanticLinkRepository.readById(id)))
+        super.delete(id)
+    }
+
 }
