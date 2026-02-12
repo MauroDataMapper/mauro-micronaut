@@ -113,7 +113,7 @@ interface Paths {
     * DataElementApi
     */
     String DATA_ELEMENT_LIST = '/api/dataModels/{dataModelId}/dataClasses/{dataClassId}/dataElements'
-    String DATA_ELEMENT_IN_MODEL_LIST = '/api/dataModels/{dataModelId}/dataElements'
+    String DATA_ELEMENT_IN_MODEL_LIST = '/api/dataModels/{dataModelId}/dataElements{?params}'
     String DATA_ELEMENT_ID = '/api/dataModels/{dataModelId}/dataClasses/{dataClassId}/dataElements/{id}'
     String DATA_ELEMENT_DOI = '/api/dataElements/{id}/doi'
     String DATA_ELEMENT_LIST_PAGED = '/api/dataModels/{dataModelId}/dataClasses/{dataClassId}/dataElements{?params*}'

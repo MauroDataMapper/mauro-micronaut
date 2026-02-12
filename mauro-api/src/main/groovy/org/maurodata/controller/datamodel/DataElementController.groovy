@@ -180,14 +180,13 @@ class DataElementController extends AdministeredItemController<DataElement, Data
 
     @Audit
     @Get(Paths.DATA_ELEMENT_IN_MODEL_LIST)
-    ListResponse<DataElement> byModelList(UUID dataModelId) {
+    ListResponse<DataElement> byModelList(UUID dataModelId, @Nullable PaginationParams params = new PaginationParams()) {
         DataModel dataModel = dataModelRepository.readById(dataModelId)
         accessControlService.checkRole(Role.READER, dataModel)
-
-        List<DataElement> dataElements = dataElementRepository.readAllByDataModel_Id(dataModelId).findAll({
-            accessControlService.canDoRole(Role.READER, it)
-        }).each {updateDerivedProperties(it)}
-        ListResponse.from(dataElements)
+        List<DataElement> dataElements = dataElementRepository.readAllByDataModel_Id(dataModelId)
+        ListResponse<DataElement> dataElementsResponse = ListResponse.from(dataElements, params)
+        dataElementsResponse.items.each {updateDerivedProperties(it as DataElement)}
+        dataElementsResponse
     }
 
     /**
