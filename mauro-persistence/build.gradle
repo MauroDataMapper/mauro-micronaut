@@ -38,8 +38,8 @@ dependencies {
     runtimeOnly("org.yaml:snakeyaml")
 
     testImplementation("io.micronaut.test:micronaut-test-spock")
-    testRuntimeOnly("org.testcontainers:testcontainers")
-    testRuntimeOnly("org.testcontainers:postgresql")
+    testRuntimeOnly("org.testcontainers:postgresql:2.0.3")
+    testRuntimeOnly("org.testcontainers:postgresql:1.21.4")
     testRuntimeOnly("org.postgresql:postgresql")
     testRuntimeOnly "org.junit.platform:junit-platform-launcher"
 
