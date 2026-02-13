@@ -62,6 +62,7 @@ jobs:
         echo "=== docker run hello-world ==="
         docker run --rm hello-world || true
 
+    - uses: actions/checkout@v4
     - name: Set up JDK 17
       uses: actions/setup-java@v4
       with:
@@ -130,7 +131,7 @@ jobs:
 
     - name: Upload MegaLinter scan results to GitHub Security tab
       if: success() || failure()
-      uses: github/codeql-action/upload-sarif@v3
+      uses: github/codeql-action/upload-sarif@v4
       with:
         sarif_file: 'megalinter-reports/megalinter-report.sarif'
         ref: refs/heads/${{ github.head_ref || github.ref_name }}
