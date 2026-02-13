@@ -55,10 +55,13 @@ jobs:
         echo "=== env vars ==="
         env | grep -E 'DOCKER|TESTCONTAINERS|DB|MICRONAUT' || true
 
-    - name: Run tests with stacktrace
-      run: ./gradlew test --no-daemon --stacktrace --info
+    - name: Docker smoke test
+      run: |
+        echo "=== docker ps ==="
+        docker ps -a
+        echo "=== docker run hello-world ==="
+        docker run --rm hello-world || true
 
-    - uses: actions/checkout@v4
     - name: Set up JDK 17
       uses: actions/setup-java@v4
       with:
@@ -74,7 +77,14 @@ jobs:
       run: ./gradlew --version
 
     - name: Test with Gradle
-      run: ./gradlew test
+      env:
+        # diagnostic: show lower-level Testcontainers logs
+        ORG_GRADLE_PROJECT_testLoggingLevel: info
+        # disable Ryuk only for troubleshooting (not a fix). Use temporarily.
+        TESTCONTAINERS_RYUK_DISABLED: "true"
+        # make Testcontainers/SLF4J log verbose
+        JAVA_TOOL_OPTIONS: "-Dorg.slf4j.simpleLogger.log.org.testcontainers=DEBUG -Dorg.slf4j.simpleLogger.defaultLogLevel=DEBUG"
+      run: ./gradlew test --no-daemon --stacktrace --info
 
     - name: Test Report
       uses: dorny/test-reporter@v1
