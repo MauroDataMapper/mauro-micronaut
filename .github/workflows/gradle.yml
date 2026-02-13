@@ -41,6 +41,23 @@ jobs:
           - 5432:5432
 
     steps:
+    - name: Show Docker & environment info
+      run: |
+        echo "=== runner info ==="
+        uname -a
+        echo "=== docker info ==="
+        if command -v docker >/dev/null 2>&1; then
+          docker version || true
+          docker info || true
+        else
+          echo "docker not found"
+        fi
+        echo "=== env vars ==="
+        env | grep -E 'DOCKER|TESTCONTAINERS|DB|MICRONAUT' || true
+
+    - name: Run tests with stacktrace
+      run: ./gradlew test --no-daemon --stacktrace --info
+
     - uses: actions/checkout@v4
     - name: Set up JDK 17
       uses: actions/setup-java@v4
