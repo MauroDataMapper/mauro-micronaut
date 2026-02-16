@@ -82,5 +82,8 @@ class MauroConfiguration {
         @Nullable
         @NotBlank
         String appLoginSuccess
+        @Nullable
+        @NotBlank
+        List<String> uiRedirectUrls
     }
 }
