@@ -348,6 +348,9 @@ class CatalogueUserController extends ItemController<CatalogueUser> implements C
     @Audit
     @Get(Paths.USER_ADMIN_USER_EXISTS)
     Map userExists(String username) {
+        if (!accessControlService.administrator) {
+            throw new AuthorizationException(accessControlService.userAuthentication)
+        }
         [userExists: catalogueUserRepository.existsByEmailAddress(username)]
     }
 
