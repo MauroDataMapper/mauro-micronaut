@@ -75,7 +75,11 @@ class ProfileController implements AdministeredItemReader, ProfileApi {
     @Audit
     @Get(Paths.PROFILE_DYNAMIC_PROVIDERS)
     List<DataModelBasedProfile> dynamicProviders() {
-        dynamicProfileService.getDynamicProfiles()
+        dynamicProfileService.getDynamicProfiles().collect {// Stub the datamodel for UI output
+            it.dataModel.dataClasses = []
+            it.dataModel.dataTypes = []
+            return it
+        }
     }
 
 
