@@ -52,6 +52,7 @@ class OpenidProviderController implements OpenidProviderApi {
     @Inject
     MauroConfiguration mauroConfiguration
 
+    @Nullable
     @Inject
     OauthRouteUrlBuilder oauthRouteUrlBuilder
 
@@ -72,7 +73,7 @@ class OpenidProviderController implements OpenidProviderApi {
     List<OpenidConnectProvider> list(@Nullable HttpRequest<?> request = null) {
 
         boolean fromOauthSingular = openidProviderId && label && standardProvider && authorizationEndpoint
-        boolean fromOauthsList = (mauroConfiguration.oauths != null && !mauroConfiguration.oauths.isEmpty())
+        boolean fromOauthsList = (oauthRouteUrlBuilder != null && mauroConfiguration != null && mauroConfiguration.oauths != null && !mauroConfiguration.oauths.isEmpty())
 
         if (!fromOauthSingular && !fromOauthsList) {
             log.debug("No OpenID Connect Provider configured (mauro.oauth.{id, label, standard-provider, authorization-endpoint, image-url} is not set)")
