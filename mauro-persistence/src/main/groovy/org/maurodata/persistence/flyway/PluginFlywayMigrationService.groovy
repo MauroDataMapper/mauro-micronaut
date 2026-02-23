@@ -38,6 +38,9 @@ class PluginFlywayMigrationService implements ApplicationEventListener<StartupEv
 
     static final Map<String, Boolean> haveRunPluginMigration = [:]
 
+    @Inject
+    MauroPluginService mauroPluginService
+
     @Override
     void onApplicationEvent(final StartupEvent event) {
         log.trace("Loading data at startup")
@@ -57,7 +60,7 @@ class PluginFlywayMigrationService implements ApplicationEventListener<StartupEv
     void runPluginMigrations() {
         log.trace("🔄 Scanning for plugin migrations...")
 
-        List<ClassLoader> toScan = [Thread.currentThread().contextClassLoader] + MauroPluginService.classLoaders
+        List<ClassLoader> toScan = [Thread.currentThread().contextClassLoader] + mauroPluginService.classLoaders
 
         Map<String, List<ClassLoader>> pluginDirs = [:]
 
