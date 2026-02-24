@@ -12,7 +12,6 @@ import io.micronaut.http.filter.HttpServerFilter
 import io.micronaut.http.filter.ServerFilterChain
 import io.micronaut.http.server.util.HttpHostResolver
 import io.micronaut.security.oauth2.url.OauthRouteUrlBuilder
-import jakarta.inject.Inject
 import org.maurodata.controller.bootstrap.MauroConfiguration
 import org.reactivestreams.Publisher
 import reactor.core.publisher.Mono
@@ -27,16 +26,12 @@ class OAuthRedirectFilter implements HttpServerFilter {
 
     static final String UI_REDIRECT_URL = "ui_redirect_url"
 
-    @Inject
-    HttpHostResolver httpHostResolver
+    final HttpHostResolver httpHostResolver
 
-    @Inject
-    MauroConfiguration mauroConfiguration
-
-    @Inject
-    OauthRouteUrlBuilder oauthRouteUrlBuilder
-
-    OAuthRedirectFilter() {
+    OAuthRedirectFilter(MauroConfiguration mauroConfiguration,
+                        OauthRouteUrlBuilder oauthRouteUrlBuilder,
+                        HttpHostResolver httpHostResolver) {
+        this.httpHostResolver = httpHostResolver
         if (mauroConfiguration && mauroConfiguration.oauths) {
             mauroConfiguration.oauths.forEach {MauroConfiguration.OAuthConfig oAuthConfig ->
                 final String providerName = oAuthConfig.oauthProvider
