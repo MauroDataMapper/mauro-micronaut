@@ -8,6 +8,7 @@ import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.*
 import io.micronaut.http.context.ServerContextPathProvider
 import io.micronaut.http.cookie.Cookie
+import io.micronaut.http.cookie.Cookies
 import io.micronaut.http.server.util.HttpHostResolver
 import io.micronaut.http.uri.UriBuilder
 import io.micronaut.security.authentication.Authentication
@@ -16,17 +17,21 @@ import io.micronaut.security.config.RedirectConfiguration
 import io.micronaut.security.config.RedirectService
 import io.micronaut.security.endpoints.LoginControllerConfigurationProperties
 import io.micronaut.security.errors.PriorToLoginPersistence
+import io.micronaut.security.filters.SecurityFilter
 import io.micronaut.security.session.SessionLoginHandler
 import io.micronaut.security.session.SessionPopulator
 import io.micronaut.session.Session
 import io.micronaut.session.SessionStore
 import io.micronaut.session.http.HttpSessionConfiguration
+import io.micronaut.session.http.HttpSessionFilter
 import io.micronaut.session.http.HttpSessionIdEncoder
 import io.micronaut.session.http.SessionForRequest
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
 import org.maurodata.persistence.cache.ItemCacheableRepository.CatalogueUserCacheableRepository
 import org.maurodata.security.AccessControlService
+
+import java.time.Duration
 
 @CompileStatic
 @Singleton
@@ -58,6 +63,9 @@ class MauroSessionLoginHandler extends SessionLoginHandler {
     @Inject
     HttpSessionIdEncoder[] encoders
 
+    @Inject
+    List<SessionPopulator<HttpRequest<?>>> sessionPopulators
+
     MauroSessionLoginHandler(RedirectConfiguration redirectConfiguration, SessionStore<Session> sessionStore,
                              @Nullable PriorToLoginPersistence<HttpRequest<?>, MutableHttpResponse<?>> priorToLoginPersistence, RedirectService redirectService,
                              List<SessionPopulator<HttpRequest<?>>> sessionPopulators) {
@@ -69,20 +77,38 @@ class MauroSessionLoginHandler extends SessionLoginHandler {
         log.debug 'At MauroSessionLoginHandler loginSuccess!'
         MutableHttpResponse defaultResponse = super.loginSuccess(authentication, request)
 
+        // Session to expire and remove
         Session session = SessionForRequest.find(request).get()
+        // Remember cookies to preserve UI_REDIRECT_URL
+        Cookies requestCookies = request.getCookies()
 
-        // Create set-cookie, save the session in the session store
         if (session != null) {
 
-            sessionStore.save(session)
+            // Create a new session and retire the session that led to this login
+            // and then tidy-up
+
+            Session loginSession = SessionForRequest.create(sessionStore, request)
+
+            sessionStore.save(loginSession)
                 .exceptionally(ex -> {
                     log.error("Failed to save session", ex)
                     return null
                 })
 
-            for (HttpSessionIdEncoder encoder : encoders) {
-                encoder.encodeId(request, defaultResponse, session)
-            }
+            session.setMaxInactiveInterval(Duration.ZERO)
+            sessionStore.deleteSession(session.id)
+
+            sessionPopulators.forEach(sessionPopulator -> sessionPopulator.populateSession(request, authentication, loginSession))
+            session.remove(SecurityFilter.AUTHENTICATION)
+
+            request.setAttribute(HttpSessionFilter.SESSION_ATTRIBUTE, loginSession)
+            request.getAttributes().put(HttpSessionFilter.SESSION_ATTRIBUTE, loginSession)
+
+            MutableHttpHeaders headers = defaultResponse.getHeaders() as MutableHttpHeaders
+            final String[] headerNames = configuration.getHeaderNames()
+            headers.remove(HttpHeaders.SET_COOKIE)
+            headers.remove(headerNames[0])
+            headers.add(headerNames[0], loginSession.getId())
         }
 
         if (defaultResponse.status == HttpStatus.OK) {
@@ -98,7 +124,7 @@ class MauroSessionLoginHandler extends SessionLoginHandler {
                 return defaultResponse.body(catalogueUserCacheableRepository.readById((UUID) authentication.attributes.id))
             } else {
                 String configuredAppLoginSuccessURL = authentication.attributes.get('app-login-success') as String
-                Optional<Cookie> cookieAppLoginSuccessURL = request.getCookies().findCookie(OAuthRedirectFilter.UI_REDIRECT_URL)
+                Optional<Cookie> cookieAppLoginSuccessURL = requestCookies.findCookie(OAuthRedirectFilter.UI_REDIRECT_URL)
 
                 URI appLoginSuccess = null
                 try {

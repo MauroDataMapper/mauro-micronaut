@@ -27,7 +27,7 @@ import reactor.core.publisher.Flux
 @Slf4j
 class SessionConveyingFilter implements HttpServerFilter {
 
-    public static final Integer ORDER = ServerFilterPhase.SESSION.order()+ 10
+    public static final Integer ORDER = ServerFilterPhase.SESSION.order() + 10
 
     @Inject
     private final SessionStore<Session> sessionStore
@@ -44,7 +44,7 @@ class SessionConveyingFilter implements HttpServerFilter {
     }
 
     @Inject
-        SessionConveyingFilter(SessionStore<Session> sessionStore,HttpSessionConfiguration configuration, HttpSessionIdResolver[] resolvers){
+    SessionConveyingFilter(SessionStore<Session> sessionStore, HttpSessionConfiguration configuration, HttpSessionIdResolver[] resolvers) {
         this.sessionStore = sessionStore
         this.configuration = configuration
         this.resolvers = resolvers
@@ -57,7 +57,6 @@ class SessionConveyingFilter implements HttpServerFilter {
 
         try {
             request.getCookies().findCookie(configuration.getCookieName()).ifPresent(cookie -> {
-                // String sessionId = cookie.getValue()
 
                 Session sessionIsThere = SessionForRequest.find(request).orElse(null)
                 if (!sessionIsThere) {
@@ -69,16 +68,18 @@ class SessionConveyingFilter implements HttpServerFilter {
                             sessionStore.findSession(sessionId).thenAccept(optionalSession -> {
                                 if (optionalSession.isPresent()) {
                                     Session session = optionalSession.get()
-                                    request.getAttributes().put(
-                                        HttpSessionFilter.SESSION_ATTRIBUTE, session
-                                    )
+                                    if (!session.isExpired()) {
+                                        request.getAttributes().put(
+                                            HttpSessionFilter.SESSION_ATTRIBUTE, session
+                                        )
+                                    }
                                 }
                             })
                         }
                     }
                 }
             })
-        } catch (Throwable th){
+        } catch (Throwable th) {
             th.printStackTrace()
         }
 
