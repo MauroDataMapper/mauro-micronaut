@@ -9,11 +9,19 @@ import io.micronaut.http.HttpResponse
 import jakarta.inject.Singleton
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.exceptions.HttpStatusException
+import java.util.regex.Pattern
 
 @CompileStatic
 @Replaces(HttpStatusHandler.class)
 @Singleton
 class HttpStatusExceptionHandler implements ExceptionHandler<HttpStatusException, HttpResponse<Map<String, Object>>> {
+
+    static String[] trap = ['select', 'insert', 'update', 'delete', 'sql', 'query', 'jdbc', 'table']
+    static Pattern trapPattern = ~/(?i)\b(${trap.join('|')})\b/
+
+    static boolean toTrap(final String message) {
+        message && (message =~ trapPattern)
+    }
 
     @Override
     HttpResponse<Map<String, Object>> handle(HttpRequest request, HttpStatusException exception) {
@@ -29,6 +37,11 @@ class HttpStatusExceptionHandler implements ExceptionHandler<HttpStatusException
         if (message == null || message.trim().isEmpty()) {
             System.err.println("Missing exception message!")
             exception.printStackTrace()
+        }
+
+        if (toTrap(message)) {
+            System.err.println(message)
+            message = 'No details'
         }
 
         Map<String, String> errorMessage = Collections.singletonMap("message", message)
