@@ -17,6 +17,7 @@ class MauroConfiguration {
     List<ApiKeyConfig> apiKeys
     List<ApiPropertyConfig> apiProperties
     List<OAuthConfig> oauths
+    @Nullable LegacyOAuthConfig oauth
 
     static class CatalogueUserConfig {
 
@@ -85,5 +86,18 @@ class MauroConfiguration {
         @Nullable
         @NotBlank
         List<String> uiRedirectUrls
+    }
+
+    @ConfigurationProperties("oauth")
+    static class LegacyOAuthConfig {
+
+        @Nullable @NotBlank String id
+        @Nullable String label
+        @Nullable Boolean standardProvider
+        @Nullable String authorizationEndpoint
+        @Nullable String imageUrl
+        @Nullable String loginSuccess
+        @Nullable Boolean createUser
+        @Nullable List<String> uiRedirectUrls
     }
 }

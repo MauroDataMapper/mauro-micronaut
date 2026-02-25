@@ -11,6 +11,7 @@ import io.micronaut.http.cookie.SameSite
 import io.micronaut.http.filter.HttpServerFilter
 import io.micronaut.http.filter.ServerFilterChain
 import io.micronaut.http.server.util.HttpHostResolver
+import io.micronaut.security.oauth2.configuration.OauthClientConfiguration
 import io.micronaut.security.oauth2.url.OauthRouteUrlBuilder
 import org.maurodata.controller.bootstrap.MauroConfiguration
 import org.reactivestreams.Publisher
@@ -28,28 +29,50 @@ class OAuthRedirectFilter implements HttpServerFilter {
 
     final HttpHostResolver httpHostResolver
 
+    private final Map<String, OauthClientConfiguration> clients
+
     OAuthRedirectFilter(MauroConfiguration mauroConfiguration,
                         OauthRouteUrlBuilder oauthRouteUrlBuilder,
-                        HttpHostResolver httpHostResolver) {
+                        HttpHostResolver httpHostResolver,
+                        Map<String, OauthClientConfiguration> clients) {
+        this.clients = clients
         this.httpHostResolver = httpHostResolver
-        if (mauroConfiguration && mauroConfiguration.oauths) {
-            mauroConfiguration.oauths.forEach {MauroConfiguration.OAuthConfig oAuthConfig ->
-                final String providerName = oAuthConfig.oauthProvider
+        if (mauroConfiguration){
+            if(mauroConfiguration.oauths) {
+                mauroConfiguration.oauths.forEach {MauroConfiguration.OAuthConfig oAuthConfig ->
+                    final String providerName = oAuthConfig.oauthProvider
 
-                try {
-                    // Get the login URI
-                    URI loginURI = oauthRouteUrlBuilder.buildLoginUri(providerName)
+                    try {
+                        // Get the login URI
+                        URI loginURI = oauthRouteUrlBuilder.buildLoginUri(providerName)
 
-                    // Map oauth login path -> list of acceptable ui_redirect_url
-                    loginPathToUiRedirectUrls.put(loginURI.getPath(), oAuthConfig.uiRedirectUrls ?: [])
+                        // Map oauth login path -> list of acceptable ui_redirect_url
+                        loginPathToUiRedirectUrls.put(loginURI.getPath(), oAuthConfig.uiRedirectUrls ?: [])
 
-                } catch (Throwable th) {
-                    log.warn("OAuth: Unable to apply ui_redirect_url check")
-                    log.warn(th.getMessage())
+                    } catch (Throwable th) {
+                        log.warn("OAuth: Unable to apply ui_redirect_url check")
+                        log.warn(th.getMessage())
+                    }
                 }
             }
-        }
+            else if (mauroConfiguration.oauth) {
+                clients.each {providerName, providerConfiguration ->
+                    try {
 
+                        // Use configured template or fall back to Micronaut default
+
+                        URI loginURI = oauthRouteUrlBuilder.buildLoginUri(providerName)
+                        // Map oauth login path -> list of acceptable ui_redirect_url
+                        loginPathToUiRedirectUrls.put(loginURI.getPath(), mauroConfiguration.oauth.uiRedirectUrls ?: [])
+
+                    } catch (Throwable th) {
+                        log.warn("OAuth: Unable to apply ui_redirect_url check - old OAuth config")
+                        log.warn(th.getMessage())
+                    }
+                }
+            }
+
+        }
     }
 
     @Override
