@@ -87,9 +87,9 @@ class FullTextSearchSpec extends Specification {
         'description'       | ['An import model', 'Twentieth class']
         'import'            | ['Another import model', 'An import model']
         'nothing'           | []
-        'first & class'     | ['First class', 'Twentieth class']
-        'first | class'     | ['First class', 'Second class', 'Twentieth class']
-        "'first class'"     | ['First class']
+        'first class'       | ['First class', 'Twentieth class']
+        'first or class'    | ['First class', 'Second class', 'Twentieth class']
+        '"first class"'     | ['First class']
     }
 
     def "test prefix search results across all domains" () {
@@ -197,9 +197,9 @@ class FullTextSearchSpec extends Specification {
         'description'       | ['An import model', 'Twentieth class']
         'import'            | ['Another import model', 'An import model']
         'nothing'           | []
-        'first & class'     | ['First class', 'Twentieth class']
-        'first | class'     | ['First class', 'Second class', 'Twentieth class']
-        "'first class'"     | ['First class']
+        'first class'       | ['First class', 'Twentieth class']
+        'first or class'    | ['First class', 'Second class', 'Twentieth class']
+        '"first class" '    | ['First class']
 
     }
 

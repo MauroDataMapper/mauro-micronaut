@@ -26,11 +26,11 @@ abstract class SearchRepository implements GenericRepository<SearchResultsDTO, U
             search_domains.last_updated,
             search_domains.ts,
             core.tsvector_agg(metadata.ts) as metadata_ts,
-            ts_rank(tsvector_concat(core.tsvector_agg(metadata.ts), search_domains.ts), to_tsquery('english', :searchTerm), 1)
+            ts_rank(tsvector_concat(core.tsvector_agg(metadata.ts), search_domains.ts), websearch_to_tsquery('english', :searchTerm), 1)
         from core.metadata
         right join core.search_domains on metadata.multi_facet_aware_item_id = search_domains.id
 
-        where  (metadata.ts @@ to_tsquery('english', :searchTerm) or search_domains.ts @@ to_tsquery('english', :searchTerm)) 
+        where  (metadata.ts @@ websearch_to_tsquery('english', :searchTerm) or search_domains.ts @@ websearch_to_tsquery('english', :searchTerm)) 
                 and ( (:domainTypes) is null or search_domains.domain_type in (:domainTypes)) 
                 and (:modelId is null or search_domains.model_id = :modelId)
                 and ( cast(:createdBefore as date) is null or :createdBefore > search_domains.date_created)
@@ -40,7 +40,7 @@ abstract class SearchRepository implements GenericRepository<SearchResultsDTO, U
         group by search_domains.id, search_domains.domain_type, search_domains.label, 
                 search_domains.description, search_domains.ts, search_domains.date_created, search_domains.last_updated
 
-        order by ts_rank(tsvector_concat(core.tsvector_agg(metadata.ts), search_domains.ts), to_tsquery('english', :searchTerm), 1) desc, label asc''',
+        order by ts_rank(tsvector_concat(core.tsvector_agg(metadata.ts), search_domains.ts), websearch_to_tsquery('english', :searchTerm), 1) desc, label asc''',
     nativeQuery = true)
     abstract List<SearchResultsDTO> search(String searchTerm, @Nullable List<String> domainTypes = [], @Nullable UUID modelId = null, @Nullable Date createdBefore = null, @Nullable Date createdAfter = null, @Nullable Date lastUpdatedBefore = null, @Nullable Date lastUpdatedAfter = null)
 
