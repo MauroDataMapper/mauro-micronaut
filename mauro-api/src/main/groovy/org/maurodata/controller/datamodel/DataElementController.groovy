@@ -148,33 +148,39 @@ class DataElementController extends AdministeredItemController<DataElement, Data
     }
 
     @Audit
-    @Post(Paths. DATA_ELEMENT_COPY)
+    @Post(Paths.DATA_ELEMENT_COPY)
     @Transactional
     DataElement copyDataElement(UUID dataModelId, UUID dataClassId, UUID otherModelId, UUID otherDataClassId, UUID dataElementId) {
         DataModel targetModel = dataModelRepository.loadWithContent(dataModelId)
         accessControlService.checkRole(Role.EDITOR, targetModel)
+        DataModel otherModel = dataModelRepository.loadWithContent(otherModelId)
+        accessControlService.canDoRole(Role.READER, otherModel)
+
         DataClass targetClass = dataClassRepository.findById(dataClassId)
-        accessControlService.checkRole(Role.EDITOR, targetClass)
         if (targetClass.dataModel.id != targetModel.id){
             ErrorHandler.handleError(HttpStatus.BAD_REQUEST, "Destination DataClass $targetClass.id dataModel id is not $targetModel.id")
         }
 
         DataClass otherDataClass = dataClassRepository.findById(otherDataClassId)
-        accessControlService.canDoRole(Role.EDITOR, otherDataClass)
         DataElement dataElement = dataElementRepository.findById(dataElementId)
-        accessControlService.canDoRole(Role.EDITOR, dataElement)
         if (dataElement.dataClass.id != otherDataClass.id) {
             ErrorHandler.handleError(HttpStatus.BAD_REQUEST, "DataElement with id $dataElementId is not associated with data Class: $otherDataClassId")
         }
-        DataModel otherModel = dataModelRepository.loadWithContent(otherModelId)
-        accessControlService.canDoRole(Role.READER, otherModel)
         //verify
         if (otherDataClass.dataModel.id != otherModel.id ) {
             ErrorHandler.handleError(HttpStatus.BAD_REQUEST, "DataClass  with id $otherDataClass.id is not associated with otherModel: $otherModel.id")
         }
-        DataElement copied = dataElement.clone()
-        DataElement savedCopy = createEntity(otherDataClass, copied)
-        savedCopy.dataType = copyDataType(savedCopy, targetModel)
+        DataElement copied = (DataElement) dataElement.deepClone()
+
+        if(dataModelId != otherModelId) {
+            List<DataType> targetDataTypes = dataTypeRepository.readAllByDataModelIdIn([targetModel.id])
+            DataType targetDataType = targetDataTypes.find {it.label == copied.dataType.label}
+            if(!targetDataType) {
+                targetDataType = copyDataType(copied, targetModel)
+            }
+            copied.dataType = targetDataType
+        }
+        DataElement savedCopy = createEntity(targetClass, copied)
         savedCopy
     }
 
