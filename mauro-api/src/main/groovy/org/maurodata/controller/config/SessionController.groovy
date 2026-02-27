@@ -1,5 +1,6 @@
 package org.maurodata.controller.config
 
+import io.swagger.v3.oas.annotations.Operation
 import org.maurodata.api.Paths
 import org.maurodata.api.config.SessionApi
 import org.maurodata.audit.Audit
@@ -35,6 +36,7 @@ class SessionController implements SessionApi {
     CatalogueUserRepository catalogueUserRepository
 
     @Audit
+    @Operation(summary = "Get a session", description = "Returns a session. Its availability is governed by access control checks on the requested resource.")
     @Get(Paths.SESSION_IS_AUTHENTICATED)
     Map<String, Boolean> isAuthenticated() {
         [
@@ -43,6 +45,7 @@ class SessionController implements SessionApi {
     }
 
     @Audit
+    @Operation(summary = "Get a session", description = "Returns a session. Its availability is governed by access control checks on the requested resource.")
     @Get(Paths.SESSION_IS_APP_ADMIN)
     Map<String, Boolean> isApplicationAdministration() {
         [
@@ -51,6 +54,7 @@ class SessionController implements SessionApi {
     }
 
     @Audit
+    @Operation(summary = "Get a session", description = "Returns a session.")
     @Get(Paths.SESSION_AUTH_DETAILS)
     Map authenticationDetails(@Nullable Authentication authentication) {
         [
@@ -60,6 +64,7 @@ class SessionController implements SessionApi {
     }
 
     @Audit
+    @Operation(summary = "Get a session", description = "Returns a session.")
     @Get(Paths.SESSION_CHECK_AUTHENTICATED)
     @Secured(SecurityRule.IS_AUTHENTICATED)
     String checkAuthenticated() {
@@ -67,6 +72,7 @@ class SessionController implements SessionApi {
     }
 
     @Audit
+    @Operation(summary = "Get a session", description = "Returns a session.")
     @Get(Paths.SESSION_CHECK_ANONYMOUS)
     String checkAnonymous() {
         'Anonymous'
@@ -74,6 +80,7 @@ class SessionController implements SessionApi {
 
     @Audit
     @Override
+    @Operation(summary = "Get a session", description = "Returns a session. It is only available to administrator users.")
     @Get(Paths.SESSION_ADMIN_ACTIVE_SESSIONS)
     Map activeSessions() {
         accessControlService.checkAdministrator()

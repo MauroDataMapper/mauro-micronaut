@@ -1,5 +1,6 @@
 package org.maurodata.controller.admin
 
+import io.swagger.v3.oas.annotations.Operation
 import org.maurodata.api.Paths
 import org.maurodata.api.admin.AdminApi
 import org.maurodata.audit.Audit
@@ -65,6 +66,7 @@ class AdminController implements AdminApi {
     }
 
     @Audit
+    @Operation(summary = "List the modules", description = "Returns the modules. It is only available to administrator users.")
     @Get(Paths.ADMIN_MODULES_LIST)
     List<LinkedHashMap<String, String>> modules() {
         accessControlService.checkAdministrator()
@@ -74,6 +76,7 @@ class AdminController implements AdminApi {
 
 
     @Audit
+    @Operation(summary = "List the importers", description = "Returns the importers. It is only available to administrator users.")
     @Get(Paths.ADMIN_IMPORTERS_LIST)
     List<MauroPluginDTO> importers() {
         accessControlService.checkAdministrator()
@@ -82,6 +85,7 @@ class AdminController implements AdminApi {
     }
 
     @Audit
+    @Operation(summary = "List the exporters", description = "Returns the exporters. It is only available to administrator users.")
     @Get(Paths.ADMIN_EXPORTERS_LIST)
     List<MauroPluginDTO> exporters() {
         accessControlService.checkAdministrator()
@@ -91,12 +95,14 @@ class AdminController implements AdminApi {
 
 
     @Audit
+    @Operation(summary = "List the emailers", description = "Returns the emailers.")
     @Get(Paths.ADMIN_EMAILERS_LIST)
     List<MauroPluginDTO> emailers() {
         mauroPluginService.listPluginsAsDTO(EmailPlugin)
     }
 
     @Audit
+    @Operation(summary = "List the data loaders", description = "Returns the data loaders.")
     @Get(Paths.ADMIN_DATALOADERS_LIST)
     List<MauroPluginDTO> dataLoaders() {
         []
@@ -125,6 +131,7 @@ class AdminController implements AdminApi {
      * @return
      */
     @Audit(level= Audit.AuditLevel.FILE_ONLY)
+    @Operation(summary = "Send a test email", description = "Sends a test email. It is only available to administrator users.")
     @Post(Paths.ADMIN_EMAIL_SEND_TEST)
     Boolean sendTestEmail(@Body CatalogueUser catalogueUser) {
         accessControlService.checkAdministrator()
@@ -153,6 +160,7 @@ class AdminController implements AdminApi {
      * @return
      */
     @Audit
+    @Operation(summary = "Test the email connection", description = "Tests the email connection. It is only available to administrator users.")
     @Get(Paths.ADMIN_EMAIL_TEST_CONNECTION)
     boolean testConnection() {
         accessControlService.checkAdministrator()
@@ -166,6 +174,7 @@ class AdminController implements AdminApi {
     }
 
     @Audit
+    @Operation(summary = "List the emails", description = "Returns the emails. It is only available to administrator users.")
     @Get(Paths.ADMIN_EMAILS)
     ListResponse<Email> listEmails() {
         accessControlService.checkAdministrator()
@@ -177,6 +186,7 @@ class AdminController implements AdminApi {
      * @return
      */
     @Audit(level= Audit.AuditLevel.FILE_ONLY)
+    @Operation(summary = "Retry an email", description = "Retries an email. It is only available to administrator users.")
     @Post(Paths.ADMIN_EMAIL_RETRY)
     boolean retryEmail(UUID emailId) {
         accessControlService.checkAdministrator()

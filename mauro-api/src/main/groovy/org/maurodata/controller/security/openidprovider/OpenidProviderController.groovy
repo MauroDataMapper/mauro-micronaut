@@ -1,5 +1,6 @@
 package org.maurodata.controller.security.openidprovider
 
+import io.swagger.v3.oas.annotations.Operation
 import org.maurodata.api.Paths
 import org.maurodata.api.security.openidprovider.OpenidConnectProvider
 import org.maurodata.api.security.openidprovider.OpenidProviderApi
@@ -69,6 +70,7 @@ class OpenidProviderController implements OpenidProviderApi {
     HttpServerConfiguration httpServerConfiguration
 
     @Audit
+    @Operation(summary = "List the openid providers", description = "Returns the openid providers.")
     @Get(Paths.OPENID_PROVIDER_LIST)
     List<OpenidConnectProvider> list(@Nullable HttpRequest<?> request = null) {
 

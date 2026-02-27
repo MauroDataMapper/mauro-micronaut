@@ -1,5 +1,6 @@
 package org.maurodata.controller.datamodel
 
+import io.swagger.v3.oas.annotations.Operation
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.context.annotation.Parameter
@@ -23,6 +24,7 @@ import io.micronaut.scheduling.annotation.ExecuteOn
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
 import io.micronaut.transaction.annotation.Transactional
+import io.swagger.v3.oas.annotations.responses.ApiResponse
 import jakarta.inject.Inject
 import org.maurodata.ErrorHandler
 import org.maurodata.api.Paths
@@ -101,6 +103,7 @@ class DataModelController extends ModelController<DataModel> implements DataMode
     }
 
     @Audit
+    @Operation(operationId = 'showDataModel', summary = "Get a data model", description = "Returns a data model.")
     @Get(Paths.DATA_MODEL_ID_ROUTE)
     DataModel show(UUID id) {
         super.show(id)
@@ -108,6 +111,7 @@ class DataModelController extends ModelController<DataModel> implements DataMode
 
     @Audit
     @Transactional
+    @Operation(operationId = 'createDataModel', summary = "Create a data model", description = "Creates a data model.")
     @Post(Paths.FOLDER_LIST_DATA_MODEL)
     DataModel create(UUID folderId, @Body @NonNull DataModel dataModel, @Nullable @QueryValue String defaultDataTypeProvider = null) {
         // First try and get the default datatypes if applicable
@@ -128,6 +132,7 @@ class DataModelController extends ModelController<DataModel> implements DataMode
     }
 
     @Audit
+    @Operation(operationId = 'updateDataModel', summary = "Update a data model", description = "Updates a data model.")
     @Put(Paths.DATA_MODEL_ID_ROUTE)
     @Transactional
     DataModel update(UUID id, @Body @NonNull DataModel dataModel) {
@@ -136,6 +141,8 @@ class DataModelController extends ModelController<DataModel> implements DataMode
 
     @Audit(level = Audit.AuditLevel.FILE_ONLY)
     @Transactional
+    @ApiResponse(responseCode = "204", description = "No content - deleted successfully")
+    @Operation(operationId = 'deleteDataModel', summary = "Delete a data model", description = "Deletes a data model.")
     @Delete(Paths.DATA_MODEL_ID_ROUTE)
     HttpResponse delete(UUID id, @Body @Nullable DataModel dataModel, @Nullable @QueryValue Boolean permanent) {
         permanent = permanent ?: true
@@ -144,6 +151,7 @@ class DataModelController extends ModelController<DataModel> implements DataMode
 
 
     @Audit
+    @Operation(summary = "List the data models", description = "Returns the data models. You must have read privileges on the item in question.")
     @Get(Paths.DATA_MODEL_SEARCH_GET)
     ListResponse<SearchResultsDTO> searchGet(UUID id, @Parameter @Nullable SearchRequestDTO requestDTO) {
         requestDTO.withinModelId = id
@@ -153,6 +161,7 @@ class DataModelController extends ModelController<DataModel> implements DataMode
     }
 
     @Audit(level = Audit.AuditLevel.FILE_ONLY)
+    @Operation(summary = "List the data models", description = "Returns the data models. You must have read privileges on the item in question.")
     @Post(Paths.DATA_MODEL_SEARCH_POST)
     ListResponse<SearchResultsDTO> searchPost(UUID id, @Body SearchRequestDTO requestDTO) {
         requestDTO.withinModelId = id
@@ -163,12 +172,14 @@ class DataModelController extends ModelController<DataModel> implements DataMode
 
 
     @Audit
+    @Operation(summary = "List the data models", description = "Returns the data models.")
     @Get(Paths.FOLDER_LIST_DATA_MODEL)
     ListResponse<DataModel> list(UUID folderId) {
         super.list(folderId)
     }
 
     @Audit
+    @Operation(operationId = 'listAllDataModel', summary = "List the data models", description = "Returns the data models.")
     @Get(Paths.DATA_MODEL_ROUTE)
     ListResponse<DataModel> listAll() {
         super.listAll()
@@ -176,6 +187,7 @@ class DataModelController extends ModelController<DataModel> implements DataMode
 
     @Audit(title = EditType.FINALISE, description = "Finalise data model")
     @Transactional
+    @Operation(operationId = 'finaliseDataModel', summary = "Update a data model", description = "Updates a data model.")
     @Put(Paths.DATA_MODEL_ID_FINALISE)
     DataModel finalise(UUID id, @Body FinaliseData finaliseData) {
         super.finalise(id, finaliseData)
@@ -183,18 +195,21 @@ class DataModelController extends ModelController<DataModel> implements DataMode
 
     @Transactional
     @Audit(title = EditType.COPY, description = "New version of data model")
+    @Operation(summary = "Update a data model", description = "Updates a data model.")
     @Put(Paths.DATA_MODEL_BRANCH_MODEL_VERSION)
     DataModel createNewBranchModelVersion(UUID id, @Body @Nullable CreateNewVersionData createNewVersionData) {
         super.createNewBranchModelVersion(id, createNewVersionData)
     }
 
     @Audit(title = EditType.EXPORT, description = 'Export data model')
+    @Operation(operationId = 'exportModelDataModel', summary = "Get a data model", description = "Returns a data model.")
     @Get(Paths.DATA_MODEL_EXPORT)
     HttpResponse<byte[]> exportModel(UUID id, @Nullable String namespace, @Nullable String name, @Nullable String version) {
         super.exportModels(namespace, name, version, [id])
     }
 
     @Audit(title = EditType.EXPORT, description = 'Export data models')
+    @Operation(summary = "Export the data model", description = "Exports the data model.")
     @Post(value = Paths.DATA_MODEL_EXPORT_MANY, produces = MediaType.ALL)
     HttpResponse<byte[]> exportModels(@Nullable String namespace, @Nullable String name, @Nullable String version, @Body List<UUID> ids) {
         super.exportModels(namespace, name, version, ids)
@@ -205,12 +220,14 @@ class DataModelController extends ModelController<DataModel> implements DataMode
     @ExecuteOn(TaskExecutors.IO)
     @Audit(title = EditType.IMPORT, description = "Import data model")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @Operation(operationId = 'importModelDataModel', summary = "Import the data model", description = "Imports the data model.")
     @Post(Paths.DATA_MODEL_IMPORT)
     ListResponse<DataModel> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version) {
         super.importModel(body, namespace, name, version)
     }
 
     @Audit
+    @Operation(summary = "Get a data model", description = "Returns a data model. You must have read privileges on the item in question.")
     @Get(Paths.DATA_MODEL_DIFF)
     ObjectDiff diffModels(@NonNull UUID id, @NonNull UUID otherId) {
         DataModel dataModel = (DataModel) contentsService.loadWithContent(modelRepository.readById(id))
@@ -230,6 +247,7 @@ class DataModelController extends ModelController<DataModel> implements DataMode
         dataModel.diff(otherDataModel)
     }
 
+    @Operation(summary = "List the data models", description = "Returns the data models.")
     @Get(Paths.DATA_MODEL_IMPORTERS)
     List<DataModelImporterPlugin> dataModelImporters() {
         mauroPluginService.listPlugins(DataModelImporterPlugin)
@@ -243,6 +261,7 @@ class DataModelController extends ModelController<DataModel> implements DataMode
      * @return the IDs of the new DataElements in the target DataModel
      */
     @Audit(title = EditType.UPDATE, description = "Subset data model")
+    @Operation(summary = "Update a data model", description = "Updates a data model. You must have read or edit privileges on the item in question, depending on the action.")
     @Put(Paths.DATA_MODEL_SUBSET)
     DataModel subset(UUID id, UUID otherId, @Body SubsetData subsetData) {
         DataModel dataModel = dataModelRepository.readById(id)
@@ -378,6 +397,7 @@ class DataModelController extends ModelController<DataModel> implements DataMode
      * DataModel
      */
     @Audit(level = Audit.AuditLevel.FILE_ONLY)
+    @Operation(summary = "Create a data model", description = "Creates a data model. You must have read privileges on the item in question.")
     @Post(Paths.DATA_MODEL_INTERSECTS_MANY)
     ListResponse<IntersectsData> intersectsMany(UUID id, @Body IntersectsManyData intersectsManyData) {
         DataModel sourceDataModel = dataModelRepository.readById(id)
@@ -428,6 +448,7 @@ class DataModelController extends ModelController<DataModel> implements DataMode
     }
 
     @Audit
+    @Operation(summary = "Update a data model", description = "Updates a data model.")
     @Put(Paths.DATA_MODEL_READ_BY_AUTHENTICATED)
     @Transactional
     DataModel allowReadByAuthenticated(UUID id) {
@@ -436,12 +457,15 @@ class DataModelController extends ModelController<DataModel> implements DataMode
 
     @Audit
     @Transactional
+    @ApiResponse(responseCode = "204", description = "No content - deleted successfully")
+    @Operation(summary = "Delete a data model", description = "Deletes a data model.")
     @Delete(Paths.DATA_MODEL_READ_BY_AUTHENTICATED)
     HttpResponse revokeReadByAuthenticated(UUID id) {
         super.deleteReadByAuthenticated(id)
     }
 
     @Audit
+    @Operation(summary = "Update a data model", description = "Updates a data model.")
     @Put(Paths.DATA_MODEL_READ_BY_EVERYONE)
     @Transactional
     DataModel allowReadByEveryone(UUID id) {
@@ -450,46 +474,55 @@ class DataModelController extends ModelController<DataModel> implements DataMode
 
     @Audit
     @Transactional
+    @ApiResponse(responseCode = "204", description = "No content - deleted successfully")
+    @Operation(summary = "Delete a data model", description = "Deletes a data model.")
     @Delete(Paths.DATA_MODEL_READ_BY_EVERYONE)
     HttpResponse revokeReadByEveryone(UUID id) {
         super.deleteReadByEveryone(id)
     }
 
     @Override
+    @Operation(summary = "List the data models", description = "Returns the data models.")
     @Get(Paths.DATA_MODEL_SIMPLE_MODEL_VERSION_TREE)
     List<ModelVersionedRefDTO> simpleModelVersionTree(UUID id, @Nullable Boolean branchesOnly) {
         super.simpleModelVersionTree(id, branchesOnly)
     }
 
     @Override
+    @Operation(summary = "List the data models", description = "Returns the data models.")
     @Get(Paths.DATA_MODEL_MODEL_VERSION_TREE)
     List<ModelVersionedWithTargetsRefDTO> modelVersionTree(UUID id) {
         super.modelVersionTree(id)
     }
 
     @Override
+    @Operation(summary = "Get a data model", description = "Returns a data model.")
     @Get(Paths.DATA_MODEL_CURRENT_MAIN_BRANCH)
     DataModel currentMainBranch(UUID id) {
         super.currentMainBranch(id)
     }
 
     @Override
+    @Operation(summary = "Get a data model", description = "Returns a data model.")
     @Get(Paths.DATA_MODEL_LATEST_MODEL_VERSION)
     ModelVersionDTO latestModelVersion(UUID id) {
         super.latestModelVersion(id)
     }
 
     @Override
+    @Operation(summary = "Get a data model", description = "Returns a data model.")
     @Get(Paths.DATA_MODEL_LATEST_FINALISED_MODEL)
     ModelVersionedRefDTO latestFinalisedModel(UUID id) {
         super.latestFinalisedModel(id)
     }
 
+    @Operation(summary = "Get a data model", description = "Returns a data model.")
     @Get(Paths.DATA_MODEL_COMMON_ANCESTOR)
     DataModel commonAncestor(UUID id, UUID other_model_id) {
         super.commonAncestor(id,other_model_id)
     }
 
+    @Operation(summary = "Get a data model", description = "Returns a data model.")
     @Get(Paths.DATA_MODEL_MERGE_DIFF)
     MergeDiffDTO mergeDiff(@NonNull UUID id, @NonNull UUID otherId) {
         super.mergeDiff(id,otherId)
@@ -498,22 +531,26 @@ class DataModelController extends ModelController<DataModel> implements DataMode
     @Audit
     @Transactional
     @ExecuteOn(TaskExecutors.BLOCKING)
+    @Operation(summary = "Update a data model", description = "Updates a data model.")
     @Put(Paths.DATA_MODEL_MERGE_INTO)
     DataModel mergeInto(@NonNull UUID id, @NonNull UUID otherId, @Body @Nullable MergeIntoDTO mergeIntoDTO){
         super.mergeInto(id,otherId,mergeIntoDTO)
     }
 
+    @Operation(summary = "List the data models", description = "Returns the data models.")
     @Get(Paths.DATA_MODEL_PERMISSIONS)
     @Override
     PermissionsDTO permissions(UUID id) {
         super.permissions(id)
     }
 
+    @Operation(summary = "List the data models", description = "Returns the data models.")
     @Get(Paths.DATA_MODEL_EXPORTERS)
     List<DataModelExporterPlugin> dataModelExporters() {
         mauroPluginService.listPlugins(DataModelExporterPlugin)
     }
 
+    @Operation(summary = "Get a data model", description = "Returns a data model.")
     @Get(Paths.DATA_MODEL_DOI)
     @Override
     Map doi(UUID id) {

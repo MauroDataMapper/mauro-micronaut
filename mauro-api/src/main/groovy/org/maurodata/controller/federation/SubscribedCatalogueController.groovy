@@ -1,5 +1,7 @@
 package org.maurodata.controller.federation
 
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.responses.ApiResponse
 import org.maurodata.ErrorHandler
 import org.maurodata.api.Paths
 import org.maurodata.api.federation.SubscribedCatalogueApi
@@ -60,6 +62,7 @@ class SubscribedCatalogueController extends ItemController<SubscribedCatalogue> 
     }
 
     @Audit
+    @Operation(operationId = 'listAllSubscribedCatalogue', summary = "List the subscribed catalogues", description = "Returns the subscribed catalogues. It is available to authenticated users.")
     @Get(Paths.ADMIN_SUBSCRIBED_CATALOGUES_LIST)
     ListResponse<SubscribedCatalogue> listAll() {
         accessControlService.checkAuthenticated()
@@ -67,6 +70,7 @@ class SubscribedCatalogueController extends ItemController<SubscribedCatalogue> 
     }
 
     @Audit
+    @Operation(operationId = 'showSubscribedCatalogue', summary = "Get a subscribed catalogue", description = "Returns a subscribed catalogue. It is available to authenticated users.")
     @Get(Paths.SUBSCRIBED_CATALOGUES_ID)
     SubscribedCatalogue show(@NonNull UUID subscribedCatalogueId) {
         accessControlService.checkAuthenticated()
@@ -74,6 +78,7 @@ class SubscribedCatalogueController extends ItemController<SubscribedCatalogue> 
     }
 
     @Audit
+    @Operation(summary = "List the subscribed catalogues", description = "Returns the subscribed catalogues. It is available to authenticated users.")
     @Get(Paths.SUBSCRIBED_CATALOGUES_LIST)
     ListResponse<SubscribedCatalogue> listSubscribedCatalogues(@Nullable @QueryValue Integer max) {
         accessControlService.checkAuthenticated()
@@ -88,6 +93,7 @@ class SubscribedCatalogueController extends ItemController<SubscribedCatalogue> 
     }
 
     @Audit(level = Audit.AuditLevel.FILE_ONLY)
+    @Operation(operationId = 'createSubscribedCatalogue', summary = "Create a subscribed catalogue", description = "Creates a subscribed catalogue. It is only available to administrator users.")
     @Post(Paths.ADMIN_SUBSCRIBED_CATALOGUES_LIST)
     @ExecuteOn(TaskExecutors.BLOCKING)
     @Transactional
@@ -104,6 +110,7 @@ class SubscribedCatalogueController extends ItemController<SubscribedCatalogue> 
 
 
     @Audit(level = Audit.AuditLevel.FILE_ONLY)
+    @Operation(operationId = 'updateSubscribedCatalogue', summary = "Update a subscribed catalogue", description = "Updates a subscribed catalogue. It is only available to administrator users.")
     @Put(Paths.ADMIN_SUBSCRIBED_CATALOGUES_ID)
     @ExecuteOn(TaskExecutors.BLOCKING)
     @Transactional
@@ -123,6 +130,7 @@ class SubscribedCatalogueController extends ItemController<SubscribedCatalogue> 
     }
 
     @Audit
+    @Operation(summary = "List the subscribed catalogues", description = "Returns the subscribed catalogues. It is available to authenticated users.")
     @Get(Paths.SUBSCRIBED_CATALOGUES_TYPES)
     ListResponse<SubscribedCatalogueType> types() {
         accessControlService.checkAuthenticated()
@@ -130,6 +138,7 @@ class SubscribedCatalogueController extends ItemController<SubscribedCatalogue> 
     }
 
     @Audit
+    @Operation(summary = "List the subscribed catalogues", description = "Returns the subscribed catalogues. It is only available to administrator users.")
     @Get(Paths.SUBSCRIBED_CATALOGUES_AUTHENTICATION_TYPES)
     ListResponse<SubscribedCatalogueAuthenticationType> authenticationTypes() {
         accessControlService.checkAdministrator()
@@ -137,6 +146,7 @@ class SubscribedCatalogueController extends ItemController<SubscribedCatalogue> 
     }
 
     @Audit
+    @Operation(summary = "Get a subscribed catalogue", description = "Returns a subscribed catalogue. It is only available to administrator users.")
     @Get(Paths.ADMIN_SUBSCRIBED_CATALOGUES_TEST_CONNECTION)
     @ExecuteOn(TaskExecutors.BLOCKING)
     HttpResponse testConnection(@NonNull UUID subscribedCatalogueId) {
@@ -152,6 +162,7 @@ class SubscribedCatalogueController extends ItemController<SubscribedCatalogue> 
 
 
     @Audit
+    @Operation(summary = "List the subscribed catalogues", description = "Returns the subscribed catalogues. It is available to authenticated users.")
     @Get(Paths.SUBSCRIBED_CATALOGUES_PUBLISHED_MODELS)
     @ExecuteOn(TaskExecutors.BLOCKING)
     ListResponse<PublishedModel> publishedModels(@NonNull UUID subscribedCatalogueId) {
@@ -163,6 +174,7 @@ class SubscribedCatalogueController extends ItemController<SubscribedCatalogue> 
     }
 
     @Audit
+    @Operation(summary = "List the subscribed catalogues", description = "Returns the subscribed catalogues. It is available to authenticated users.")
     @Get(Paths.SUBSCRIBED_CATALOGUES_PUBLISHED_MODELS_NEWER_VERSIONS)
     @ExecuteOn(TaskExecutors.BLOCKING)
     SubscribedCataloguesPublishedModelsNewerVersions publishedModelsNewerVersions(@NonNull UUID subscribedCatalogueId, @NonNull String publishedModelId) {
@@ -176,6 +188,8 @@ class SubscribedCatalogueController extends ItemController<SubscribedCatalogue> 
 
 
     @Audit(level = Audit.AuditLevel.FILE_ONLY)
+    @ApiResponse(responseCode = "204", description = "No content - deleted successfully")
+    @Operation(operationId = 'deleteSubscribedCatalogue', summary = "Delete a subscribed catalogue", description = "Deletes a subscribed catalogue. It is only available to administrator users.")
     @Delete(Paths.ADMIN_SUBSCRIBED_CATALOGUES_ID)
     @Transactional
     HttpResponse delete(@NonNull UUID subscribedCatalogueId, @Body @Nullable SubscribedCatalogue subscribedCatalogue) {
@@ -197,8 +211,3 @@ class SubscribedCatalogueController extends ItemController<SubscribedCatalogue> 
     }
 
 }
-
-
-
-
-

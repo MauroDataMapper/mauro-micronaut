@@ -1,5 +1,7 @@
 package org.maurodata.controller.datamodel
 
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.responses.ApiResponse
 import jakarta.inject.Inject
 import org.maurodata.ErrorHandler
 import org.maurodata.api.Paths
@@ -66,6 +68,7 @@ class DataElementController extends AdministeredItemController<DataElement, Data
     }
 
     @Audit
+    @Operation(operationId = 'showDataElement', summary = "Get a data element", description = "Returns a data element.")
     @Get(Paths.DATA_ELEMENT_ID)
     DataElement show(UUID dataModelId, UUID dataClassId, UUID id) {
         log.debug("DataElementController show ${id}")
@@ -79,6 +82,7 @@ class DataElementController extends AdministeredItemController<DataElement, Data
     }
 
     @Audit
+    @Operation(operationId = 'createDataElement', summary = "Create a data element", description = "Creates a data element. You must have edit privileges on the item in question.")
     @Post(Paths.DATA_ELEMENT_LIST)
     DataElement create(UUID dataModelId, UUID dataClassId, @Body @NonNull DataElement dataElement) {
         cleanBody(dataElement)
@@ -98,6 +102,7 @@ class DataElementController extends AdministeredItemController<DataElement, Data
     }
 
     @Audit
+    @Operation(operationId = 'updateDataElement', summary = "Update a data element", description = "Updates a data element. You must have edit privileges on the item in question.")
     @Put(Paths.DATA_ELEMENT_ID)
     @Transactional
     DataElement update(UUID dataModelId, UUID dataClassId, UUID id, @Body @NonNull DataElement dataElement) {
@@ -137,12 +142,15 @@ class DataElementController extends AdministeredItemController<DataElement, Data
         parentIdParamName = 'dataClassId',
         deletedObjectDomainType = DataElement
     )
+    @ApiResponse(responseCode = "204", description = "No content - deleted successfully")
+    @Operation(operationId = 'deleteDataElement', summary = "Delete a data element", description = "Deletes a data element.")
     @Delete(Paths.DATA_ELEMENT_ID)
     HttpResponse delete(UUID dataModelId, UUID dataClassId, UUID id, @Body @Nullable DataElement dataElement) {
         super.delete(id, dataElement)
     }
 
     @Audit
+    @Operation(operationId = 'listDataElementPaged', summary = "List the data elements", description = "Returns the data elements. You must have read privileges on the item in question.")
     @Get(Paths.DATA_ELEMENT_LIST_PAGED)
     ListResponse<DataElement> list(UUID dataModelId, UUID dataClassId, @Nullable PaginationParams params = new PaginationParams()) {
 
@@ -164,7 +172,8 @@ class DataElementController extends AdministeredItemController<DataElement, Data
     }
 
     @Audit
-    @Post(Paths.DATA_ELEMENT_COPY)
+    @Operation(summary = "Copy the data element", description = "Copies the data element. You must have read or edit privileges on the item in question, depending on the action.")
+    @Post(Paths. DATA_ELEMENT_COPY)
     @Transactional
     DataElement copyDataElement(UUID dataModelId, UUID dataClassId, UUID otherModelId, UUID otherDataClassId, UUID dataElementId) {
         DataModel targetModel = dataModelRepository.loadWithContent(dataModelId)
@@ -208,6 +217,7 @@ class DataElementController extends AdministeredItemController<DataElement, Data
     }
 
     @Audit
+    @Operation(summary = "List the data elements", description = "Returns the data elements. You must have read privileges on the item in question.")
     @Get(Paths.DATA_ELEMENT_IN_MODEL_LIST)
     ListResponse<DataElement> byModelList(UUID dataModelId, @Nullable PaginationParams params = new PaginationParams()) {
         DataModel dataModel = dataModelRepository.readById(dataModelId)
@@ -254,6 +264,7 @@ class DataElementController extends AdministeredItemController<DataElement, Data
 
 
 
+    @Operation(summary = "Get a data element", description = "Returns a data element.")
     @Get(Paths.DATA_ELEMENT_DOI)
     @Override
     Map doi(UUID id) {

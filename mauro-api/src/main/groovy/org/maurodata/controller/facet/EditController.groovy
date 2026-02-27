@@ -1,5 +1,7 @@
 package org.maurodata.controller.facet
 
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.responses.ApiResponse
 import org.maurodata.api.Paths
 import org.maurodata.api.facet.EditApi
 import org.maurodata.audit.Audit
@@ -43,6 +45,7 @@ class EditController extends FacetController<Edit> implements EditApi {
 
     @Audit
     @Override
+    @Operation(operationId = 'listEditPaged', summary = "List the edits", description = "Returns the edits. You must have read privileges on the item in question.")
     @Get(Paths.EDIT_LIST_PAGED)
     ListResponse<Edit> list(String domainType, UUID domainId, @Nullable PaginationParams params = new PaginationParams()) {
         AdministeredItem administeredItem = findAdministeredItem(domainType, domainId)
@@ -54,6 +57,7 @@ class EditController extends FacetController<Edit> implements EditApi {
     }
 
     @Audit
+    @Operation(operationId = 'showEdit', summary = "Get an edit", description = "Returns an edit. You must have read privileges on the item in question.")
     @Get(Paths.EDIT_ID)
     Edit show(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID id) {
         accessControlService.checkRole(Role.READER, readAdministeredItem(domainType, domainId))
@@ -63,6 +67,8 @@ class EditController extends FacetController<Edit> implements EditApi {
 
     @Override
     @Audit(deletedObjectDomainType = Edit)
+    @ApiResponse(responseCode = "204", description = "No content - deleted successfully")
+    @Operation(operationId = 'deleteEdit', summary = "Delete an edit", description = "Deletes an edit.")
     @Delete(Paths.EDIT_ID)
     HttpResponse delete(String domainType, UUID domainId, UUID id) {
         super.delete(id)

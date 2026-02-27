@@ -1,5 +1,6 @@
 package org.maurodata.controller.search
 
+import io.swagger.v3.oas.annotations.Operation
 import org.maurodata.api.Paths
 import org.maurodata.api.search.SearchApi
 import org.maurodata.audit.Audit
@@ -45,12 +46,14 @@ class SearchController implements AdministeredItemReader, SearchApi {
     ClassifierCacheableRepository classifierCacheableRepository
 
     @Audit
+    @Operation(summary = "List the searches", description = "Returns the searches. You must have read privileges on the item in question.")
     @Get(Paths.SEARCH_GET)
     ListResponse<SearchResultsDTO> searchGet(@RequestBean SearchRequestDTO requestDTO) {
         executeSearch(requestDTO)
     }
 
     @Audit(level = Audit.AuditLevel.FILE_ONLY)
+    @Operation(summary = "List the searches", description = "Returns the searches. You must have read privileges on the item in question.")
     @Post(Paths.SEARCH_POST)
     ListResponse<SearchResultsDTO> searchPost(@Body SearchRequestDTO requestDTO) {
         executeSearch(requestDTO)

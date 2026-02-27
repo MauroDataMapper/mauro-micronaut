@@ -1,5 +1,6 @@
 package org.maurodata.controller.importer
 
+import io.swagger.v3.oas.annotations.Operation
 import org.maurodata.api.Paths
 import org.maurodata.api.importer.ImporterApi
 import org.maurodata.audit.Audit
@@ -26,6 +27,7 @@ class ImporterController implements ImporterApi {
 
     // TODO: Update interface to handle a more intelligent rendering of this information
     @Audit
+    @Operation(summary = "Get an importer", description = "Returns an importer.")
     @Get(Paths.IMPORTER_PARAMS)
     Map<String, Object> getImporterParameters(String namespace, String name, @Nullable String version) {
 

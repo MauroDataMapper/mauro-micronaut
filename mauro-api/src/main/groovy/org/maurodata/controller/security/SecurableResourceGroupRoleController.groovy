@@ -1,7 +1,9 @@
 package org.maurodata.controller.security
 
+import io.swagger.v3.oas.annotations.Operation
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.annotation.Get
+import io.swagger.v3.oas.annotations.responses.ApiResponse
 import org.maurodata.api.Paths
 import org.maurodata.api.security.SecurableResourceGroupRoleApi
 import org.maurodata.audit.Audit
@@ -48,6 +50,7 @@ class SecurableResourceGroupRoleController extends ItemController<SecurableResou
         this.securableResourceGroupRoleRepository = securableResourceGroupRoleRepository
     }
 
+    @Operation(summary = "List the securable resource group roles", description = "Returns the securable resource group roles. You must have read privileges on the item in question.")
     @Get(Paths.SECURABLE_RESOURCE_GROUP_ROLES)
     ListResponse<SecurableResourceGroupRole> listSecurableResourceGroupRoles(@NonNull String securableResourceDomainType, @NonNull UUID securableResourceId, @Nullable PaginationParams params = new PaginationParams()) {
         AdministeredItem securableResource = readAdministeredItem(securableResourceDomainType, securableResourceId)
@@ -56,6 +59,7 @@ class SecurableResourceGroupRoleController extends ItemController<SecurableResou
     }
 
 
+    @Operation(summary = "List the securable resource group roles", description = "Returns the securable resource group roles.")
     @Get(Paths.GROUP_ROLES)
     ListResponse<Role.RoleDTO> listGroupRoles(@NonNull String securableResourceDomainType, @NonNull UUID securableResourceId, @Nullable PaginationParams params = new PaginationParams()) {
         ListResponse.from(Role.values().collect { role ->
@@ -66,6 +70,7 @@ class SecurableResourceGroupRoleController extends ItemController<SecurableResou
 
 
     @Audit(level = Audit.AuditLevel.FILE_ONLY)
+    @Operation(operationId = 'createSecurableResourceGroupRole', summary = "Create a securable resource group role", description = "Creates a securable resource group role.")
     @Post(Paths.SECURABLE_ROLE_GROUP_ID)
     SecurableResourceGroupRole create(@NonNull String securableResourceDomainType, @NonNull UUID securableResourceId, @NonNull Role role, @NonNull UUID userGroupId) {
         AdministeredItem securableResource = readAdministeredItem(securableResourceDomainType, securableResourceId)
@@ -96,6 +101,8 @@ class SecurableResourceGroupRoleController extends ItemController<SecurableResou
     }
 
     @Audit(level = Audit.AuditLevel.FILE_ONLY)
+    @ApiResponse(responseCode = "204", description = "No content - deleted successfully")
+    @Operation(operationId = 'deleteSecurableResource', summary = "Delete a securable resource group role", description = "Deletes a securable resource group role.")
     @Delete(Paths.SECURABLE_ROLE_GROUP_ID)
     HttpResponse delete(@NonNull String securableResourceDomainType, @NonNull UUID securableResourceId, @NonNull Role role, @NonNull UUID userGroupId) {
         AdministeredItem securableResource = readAdministeredItem(securableResourceDomainType, securableResourceId)

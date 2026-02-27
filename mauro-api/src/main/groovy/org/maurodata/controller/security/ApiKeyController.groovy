@@ -1,5 +1,7 @@
 package org.maurodata.controller.security
 
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.responses.ApiResponse
 import org.maurodata.api.Paths
 import org.maurodata.api.security.ApiKeyApi
 import org.maurodata.audit.Audit
@@ -36,6 +38,7 @@ class ApiKeyController extends ItemController<ApiKey> implements ApiKeyApi {
 
 
     @Audit
+    @Operation(operationId = 'indexApiKey',summary = "List the api keys", description = "Returns the api keys. It is available to administrator users and the owning user.")
     @Get(Paths.API_KEY_LIST)
     ListResponse<ApiKey> index(UUID userId) {
         accessControlService.checkAdminOrUser(userId)
@@ -44,6 +47,7 @@ class ApiKeyController extends ItemController<ApiKey> implements ApiKeyApi {
     }
 
     @Audit(level = Audit.AuditLevel.FILE_ONLY)
+    @Operation(operationId = 'createApiKey', summary = "Create an api key", description = "Creates an api key. It is available to administrator users and the owning user.")
     @Post(Paths.API_KEY_LIST)
     ApiKey create(UUID userId, @Body ApiKey apiKey) {
         accessControlService.checkAdminOrUser(userId)
@@ -59,6 +63,7 @@ class ApiKeyController extends ItemController<ApiKey> implements ApiKeyApi {
     }
 
     @Audit
+    @Operation(operationId = 'showApiKey', summary = "Get an api key", description = "Returns an api key. It is available to administrator users and the owning user.")
     @Get(Paths.API_KEY_ID)
     ApiKey show(UUID userId, UUID apiKeyId) {
         accessControlService.checkAdminOrUser(userId)
@@ -67,6 +72,8 @@ class ApiKeyController extends ItemController<ApiKey> implements ApiKeyApi {
     }
 
     @Audit(level = Audit.AuditLevel.FILE_ONLY)
+    @ApiResponse(responseCode = "204", description = "No content - deleted successfully")
+    @Operation(operationId = 'deleteApiKey', summary = "Delete an api key", description = "Deletes an api key. It is available to administrator users and the owning user.")
     @Delete(Paths.API_KEY_ID)
     HttpStatus delete(UUID userId, UUID apiKeyId) {
         accessControlService.checkAdminOrUser(userId)
@@ -77,6 +84,7 @@ class ApiKeyController extends ItemController<ApiKey> implements ApiKeyApi {
     }
 
     @Audit(level = Audit.AuditLevel.FILE_ONLY)
+    @Operation(summary = "Enable the api key", description = "Enables the api key. It is available to administrator users and the owning user.")
     @Put(Paths.API_KEY_ENABLE)
     ApiKey enable(UUID userId, UUID apiKeyId) {
         accessControlService.checkAdminOrUser(userId)
@@ -87,6 +95,7 @@ class ApiKeyController extends ItemController<ApiKey> implements ApiKeyApi {
     }
 
     @Audit(level = Audit.AuditLevel.FILE_ONLY)
+    @Operation(summary = "Disable the api key", description = "Disables the api key. It is available to administrator users and the owning user.")
     @Put(Paths.API_KEY_DISABLE)
     ApiKey disable(UUID userId, UUID apiKeyId) {
         accessControlService.checkAdminOrUser(userId)
@@ -97,6 +106,7 @@ class ApiKeyController extends ItemController<ApiKey> implements ApiKeyApi {
     }
 
     @Audit(level = Audit.AuditLevel.FILE_ONLY)
+    @Operation(summary = "Refresh the api key", description = "Refreshes the api key. It is available to administrator users and the owning user.")
     @Put(Paths.API_KEY_REFRESH)
     ApiKey refresh(UUID userId, UUID apiKeyId, long expireInDays) {
         accessControlService.checkAdminOrUser(userId)
