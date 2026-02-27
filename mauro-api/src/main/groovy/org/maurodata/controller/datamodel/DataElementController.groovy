@@ -173,10 +173,16 @@ class DataElementController extends AdministeredItemController<DataElement, Data
         DataElement copied = (DataElement) dataElement.deepClone()
 
         if(dataModelId != otherModelId) {
+            DataType originalDataType = dataTypeRepository.loadWithContent(dataElement.dataType.id)
             List<DataType> targetDataTypes = dataTypeRepository.readAllByDataModelIdIn([targetModel.id])
-            DataType targetDataType = targetDataTypes.find {it.label == copied.dataType.label}
+            DataType targetDataType = targetDataTypes.find {it.label == originalDataType.label}
             if(!targetDataType) {
-                targetDataType = copyDataType(copied, targetModel)
+                if (originalDataType.referenceClass || originalDataType.isModelType() ) {
+                    ErrorHandler.handleError(HttpStatus.INTERNAL_SERVER_ERROR, "Attempting to clone dataElement with a referenceType DataType. Datatype does not exist in target model $targetModel.id")
+                }
+                targetDataType = (DataType) originalDataType.deepClone()
+                targetDataType.dataModel = targetModel
+                targetDataType = (DataType) contentsService.saveWithContent(targetDataType)
             }
             copied.dataType = targetDataType
         }
@@ -224,16 +230,6 @@ class DataElementController extends AdministeredItemController<DataElement, Data
         existing
     }
 
-
-    protected DataType copyDataType(DataElement dataElement, DataModel target) {
-        DataType targetDataType = dataTypeService.findInModel(dataElement.dataType, target)
-        if (!targetDataType) {
-            if (dataElement.dataType.referenceClass || dataElement.dataType.isModelType() ) {
-                ErrorHandler.handleError(HttpStatus.INTERNAL_SERVER_ERROR, "Attempting to clone dataElement with a referenceType DataType. Datatype does not exist in target model $target.id")
-            }
-            dataTypeService.createAndSave(dataElement.dataType, target, null)
-        }
-    }
 
     @Get(Paths.DATA_ELEMENT_DOI)
     @Override
