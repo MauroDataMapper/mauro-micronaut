@@ -117,7 +117,7 @@ interface Paths {
     String DATA_ELEMENT_ID = '/api/dataModels/{dataModelId}/dataClasses/{dataClassId}/dataElements/{id}'
     String DATA_ELEMENT_DOI = '/api/dataElements/{id}/doi'
     String DATA_ELEMENT_LIST_PAGED = '/api/dataModels/{dataModelId}/dataClasses/{dataClassId}/dataElements{?params*}'
-    String DATA_ELEMENT_COPY = '/api/dataModels/{dataModelId}/dataClasses/dataElements/{dataClassId}/{otherModelId}/{otherDataClassId}/{dataElementId}'
+    String DATA_ELEMENT_COPY = '/api/dataModels/{dataModelId}/dataClasses/{dataClassId}/dataElements/{otherModelId}/{otherDataClassId}/{dataElementId}'
 
 
 

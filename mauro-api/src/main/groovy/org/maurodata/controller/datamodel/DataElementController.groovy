@@ -148,33 +148,46 @@ class DataElementController extends AdministeredItemController<DataElement, Data
     }
 
     @Audit
-    @Post(Paths. DATA_ELEMENT_COPY)
+    @Post(Paths.DATA_ELEMENT_COPY)
     @Transactional
     DataElement copyDataElement(UUID dataModelId, UUID dataClassId, UUID otherModelId, UUID otherDataClassId, UUID dataElementId) {
         DataModel targetModel = dataModelRepository.loadWithContent(dataModelId)
         accessControlService.checkRole(Role.EDITOR, targetModel)
+        DataModel otherModel = dataModelRepository.loadWithContent(otherModelId)
+        accessControlService.canDoRole(Role.READER, otherModel)
+
         DataClass targetClass = dataClassRepository.findById(dataClassId)
-        accessControlService.checkRole(Role.EDITOR, targetClass)
         if (targetClass.dataModel.id != targetModel.id){
-            ErrorHandler.handleError(HttpStatus.BAD_REQUEST, "Destination DataClass $targetClass.id dataModel id is not $targetModel.id")
+            ErrorHandler.handleError(HttpStatus.BAD_REQUEST, "Destination DataClass ${targetClass.id} dataModel id is not ${targetModel.id}")
         }
 
         DataClass otherDataClass = dataClassRepository.findById(otherDataClassId)
-        accessControlService.canDoRole(Role.EDITOR, otherDataClass)
-        DataElement dataElement = dataElementRepository.findById(dataElementId)
-        accessControlService.canDoRole(Role.EDITOR, dataElement)
+        DataElement dataElement = dataElementRepository.loadWithContent(dataElementId)
         if (dataElement.dataClass.id != otherDataClass.id) {
-            ErrorHandler.handleError(HttpStatus.BAD_REQUEST, "DataElement with id $dataElementId is not associated with data Class: $otherDataClassId")
+            ErrorHandler.handleError(HttpStatus.BAD_REQUEST, "DataElement with id ${dataElementId} is not associated with data Class: ${otherDataClassId}")
         }
-        DataModel otherModel = dataModelRepository.loadWithContent(otherModelId)
-        accessControlService.canDoRole(Role.READER, otherModel)
-        //verify
+
         if (otherDataClass.dataModel.id != otherModel.id ) {
-            ErrorHandler.handleError(HttpStatus.BAD_REQUEST, "DataClass  with id $otherDataClass.id is not associated with otherModel: $otherModel.id")
+            ErrorHandler.handleError(HttpStatus.BAD_REQUEST, "DataClass  with id ${otherDataClass.id} is not associated with otherModel: ${otherModel.id}")
         }
-        DataElement copied = dataElement.clone()
-        DataElement savedCopy = createEntity(otherDataClass, copied)
-        savedCopy.dataType = copyDataType(savedCopy, targetModel)
+        DataElement copied = (DataElement) dataElement.deepClone()
+
+        if(dataModelId != otherModelId) {
+            DataType originalDataType = dataTypeRepository.loadWithContent(dataElement.dataType.id)
+            List<DataType> targetDataTypes = dataTypeRepository.readAllByDataModelIdIn([targetModel.id])
+            DataType targetDataType = targetDataTypes.find {it.label == originalDataType.label}
+            if(!targetDataType) {
+                if (originalDataType.referenceClass || originalDataType.isModelType() ) {
+                    ErrorHandler.handleError(HttpStatus.INTERNAL_SERVER_ERROR, "Attempting to clone dataElement with a referenceType DataType. Datatype does not exist in target model $targetModel.id")
+                }
+                targetDataType = (DataType) originalDataType.deepClone()
+                targetDataType.dataModel = targetModel
+                targetDataType = (DataType) contentsService.saveWithContent(targetDataType)
+            }
+            copied.dataType = targetDataType
+        }
+        copied.dataClass = targetClass
+        DataElement savedCopy = (DataElement) contentsService.saveWithContent(copied, accessControlService.user)
         savedCopy
     }
 
@@ -217,16 +230,6 @@ class DataElementController extends AdministeredItemController<DataElement, Data
         existing
     }
 
-
-    protected DataType copyDataType(DataElement dataElement, DataModel target) {
-        DataType targetDataType = dataTypeService.findInModel(dataElement.dataType, target)
-        if (!targetDataType) {
-            if (dataElement.dataType.referenceClass || dataElement.dataType.isModelType() ) {
-                ErrorHandler.handleError(HttpStatus.INTERNAL_SERVER_ERROR, "Attempting to clone dataElement with a referenceType DataType. Datatype does not exist in target model $target.id")
-            }
-            dataTypeService.createAndSave(dataElement.dataType, target, null)
-        }
-    }
 
     @Get(Paths.DATA_ELEMENT_DOI)
     @Override
