@@ -432,6 +432,7 @@ interface Paths {
     String TERM_DOI = '/api/terms/{id}/doi'
     String TERM_LIST_PAGED = '/api/terminologies/{terminologyId}/terms{?params*}'
     String TERM_CODE_SETS_PAGED = '/api/terminologies/{terminologyId}/terms/{id}/codeSets{?params*}'
+    String TERM_COPY = '/api/terminologies/{terminologyId}/terms/copy/{termId}'
 
     /*
     * TermRelationshipsApi
