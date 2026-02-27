@@ -158,17 +158,17 @@ class DataElementController extends AdministeredItemController<DataElement, Data
 
         DataClass targetClass = dataClassRepository.findById(dataClassId)
         if (targetClass.dataModel.id != targetModel.id){
-            ErrorHandler.handleError(HttpStatus.BAD_REQUEST, "Destination DataClass $targetClass.id dataModel id is not $targetModel.id")
+            ErrorHandler.handleError(HttpStatus.BAD_REQUEST, "Destination DataClass ${targetClass.id} dataModel id is not ${targetModel.id}")
         }
 
         DataClass otherDataClass = dataClassRepository.findById(otherDataClassId)
-        DataElement dataElement = dataElementRepository.findById(dataElementId)
+        DataElement dataElement = dataElementRepository.loadWithContent(dataElementId)
         if (dataElement.dataClass.id != otherDataClass.id) {
-            ErrorHandler.handleError(HttpStatus.BAD_REQUEST, "DataElement with id $dataElementId is not associated with data Class: $otherDataClassId")
+            ErrorHandler.handleError(HttpStatus.BAD_REQUEST, "DataElement with id ${dataElementId} is not associated with data Class: ${otherDataClassId}")
         }
-        //verify
+
         if (otherDataClass.dataModel.id != otherModel.id ) {
-            ErrorHandler.handleError(HttpStatus.BAD_REQUEST, "DataClass  with id $otherDataClass.id is not associated with otherModel: $otherModel.id")
+            ErrorHandler.handleError(HttpStatus.BAD_REQUEST, "DataClass  with id ${otherDataClass.id} is not associated with otherModel: ${otherModel.id}")
         }
         DataElement copied = (DataElement) dataElement.deepClone()
 
@@ -180,7 +180,8 @@ class DataElementController extends AdministeredItemController<DataElement, Data
             }
             copied.dataType = targetDataType
         }
-        DataElement savedCopy = createEntity(targetClass, copied)
+        copied.dataClass = targetClass
+        DataElement savedCopy = (DataElement) contentsService.saveWithContent(copied, accessControlService.user)
         savedCopy
     }
 
