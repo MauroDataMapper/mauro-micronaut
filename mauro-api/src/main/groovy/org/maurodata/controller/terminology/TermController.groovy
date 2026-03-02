@@ -107,7 +107,7 @@ class TermController extends AdministeredItemController<Term, Terminology> imple
     @Audit
     @Override
     @Put(Paths.TERM_COPY)
-    Term copyTerm(UUID terminologyId, UUID termId, @Body @Nullable TermCopyDTO termCopyDTO) {
+    Term copyTerm(UUID terminologyId, UUID termId, @Body TermCopyDTO termCopyDTO) {
         Terminology terminology = terminologyRepository.readById(terminologyId)
         accessControlService.checkRole(Role.READER, terminology)
         Terminology targetTerminology = terminologyRepository.readById(termCopyDTO.targetTerminologyId)
