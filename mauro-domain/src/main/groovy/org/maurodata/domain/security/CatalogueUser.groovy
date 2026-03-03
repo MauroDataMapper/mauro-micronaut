@@ -1,11 +1,13 @@
 package org.maurodata.domain.security
 
+import com.fasterxml.jackson.core.JsonParser
+import com.fasterxml.jackson.databind.DeserializationContext
+import com.fasterxml.jackson.databind.deser.std.StdDeserializer
 import org.maurodata.domain.model.Item
 import org.maurodata.domain.model.ItemUtils
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import com.fasterxml.jackson.databind.util.StdConverter
 import groovy.transform.AutoClone
@@ -91,10 +93,42 @@ class CatalogueUser extends Item {
         }
     }
 
-    static class StringCatalogueUserConverter extends StdConverter<String, CatalogueUser> {
+    static class CatalogueUserDeserializer extends StdDeserializer<CatalogueUser> {
+
+        CatalogueUserDeserializer() { super(CatalogueUser.class) }
+
         @Override
-        CatalogueUser convert(String id) {
-            new CatalogueUser(id: UUID.fromString(id))
+        CatalogueUser deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
+            JsonNode node = p.getCodec().readTree(p)
+
+            if (node.isTextual()) {
+                return new CatalogueUser(id: UUID.fromString(node.asText()))
+            }
+
+            CatalogueUser catalogueUser = new CatalogueUser()
+            JsonNode idNode = node.get("id")
+            if (idNode != null && !idNode.isNull()) {
+                catalogueUser.setId(UUID.fromString(idNode.asText()))
+            }
+            if (node.has("email_address")) {
+                catalogueUser.setEmailAddress(node.get("email_address").asText(null))
+            }
+            if (node.has("first_name")) {
+                catalogueUser.setFirstName(node.get("first_name").asText(null))
+            }
+            if (node.has("last_name")) {
+                catalogueUser.setLastName(node.get("last_name").asText(null))
+            }
+            if (node.has("job_title")) {
+                catalogueUser.setJobTitle(node.get("job_title").asText(null))
+            }
+            if (node.has("organisation")) {
+                catalogueUser.setOrganisation(node.get("organisation").asText(null))
+            }
+            if (node.has("profile_picture")) {
+                catalogueUser.setProfilePicture(node.get("profile_picture").asText(null))
+            }
+            return catalogueUser
         }
     }
 
@@ -102,17 +136,6 @@ class CatalogueUser extends Item {
     @Transient
     String getFullName() {
         "$firstName $lastName"
-    }
-
-    CatalogueUser() {
-    }
-
-    CatalogueUser(String identity) {
-        this.id = UUID.fromString(identity)
-    }
-
-    CatalogueUser(UUID identity) {
-        this.id = identity
     }
 
     @Override

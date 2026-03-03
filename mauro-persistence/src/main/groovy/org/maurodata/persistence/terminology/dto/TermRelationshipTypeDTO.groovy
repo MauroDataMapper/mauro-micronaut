@@ -38,7 +38,7 @@ class TermRelationshipTypeDTO extends TermRelationshipType implements Administer
                 edit.title,
                 edit.description,
                 edit.date_created,
-                row_to_json(catalogue_user) as catalogue_user
+                row_to_json(catalogue_user) as created_by
          from core.edit left join security.catalogue_user
               on security.catalogue_user.id = core.edit.created_by
          where multi_facet_aware_item_id = term_relationship_type_.id

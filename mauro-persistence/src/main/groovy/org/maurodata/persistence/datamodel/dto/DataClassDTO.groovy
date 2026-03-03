@@ -42,7 +42,7 @@ class DataClassDTO extends DataClass implements AdministeredItemDTO {
                 edit.title,
                 edit.description,
                 edit.date_created,
-                row_to_json(catalogue_user) as catalogue_user
+                row_to_json(catalogue_user) as created_by
          from core.edit left join security.catalogue_user
               on security.catalogue_user.id = core.edit.created_by
          where multi_facet_aware_item_id = data_class_.id
