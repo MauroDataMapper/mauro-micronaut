@@ -3,7 +3,6 @@ package org.maurodata.domain.security
 import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.databind.DeserializationContext
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer
-import groovy.transform.MapConstructor
 import org.maurodata.domain.model.Item
 import org.maurodata.domain.model.ItemUtils
 
@@ -108,11 +107,27 @@ class CatalogueUser extends Item {
 
             CatalogueUser catalogueUser = new CatalogueUser()
             JsonNode idNode = node.get("id")
-            if (idNode != null && !idNode.isNull()) catalogueUser.setId(UUID.fromString(idNode.asText()));
-            if (node.has("email_address")) catalogueUser.setEmailAddress(node.get("email_address").asText(null))
-            if (node.has("first_name")) catalogueUser.setFirstName(node.get("first_name").asText(null))
-            if (node.has("last_name")) catalogueUser.setLastName(node.get("last_name").asText(null))
-            // ... map other fields
+            if (idNode != null && !idNode.isNull()) {
+                catalogueUser.setId(UUID.fromString(idNode.asText()))
+            }
+            if (node.has("email_address")) {
+                catalogueUser.setEmailAddress(node.get("email_address").asText(null))
+            }
+            if (node.has("first_name")) {
+                catalogueUser.setFirstName(node.get("first_name").asText(null))
+            }
+            if (node.has("last_name")) {
+                catalogueUser.setLastName(node.get("last_name").asText(null))
+            }
+            if (node.has("job_title")) {
+                catalogueUser.setJobTitle(node.get("job_title").asText(null))
+            }
+            if (node.has("organisation")) {
+                catalogueUser.setOrganisation(node.get("organisation").asText(null))
+            }
+            if (node.has("profile_picture")) {
+                catalogueUser.setProfilePicture(node.get("profile_picture").asText(null))
+            }
             return catalogueUser
         }
     }
