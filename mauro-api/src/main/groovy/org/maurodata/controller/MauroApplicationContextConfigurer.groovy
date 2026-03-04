@@ -84,31 +84,6 @@ class MauroApplicationContextConfigurer implements ApplicationContextConfigurer 
         }
     }
 
-    private static Path findProjectRoot(final Path start) {
-        Path current = start
-        while (current != null) {
-            if (Files.exists(current.resolve("build.gradle")) ||
-                Files.exists(current.resolve("pom.xml"))) {
-                return current
-            }
-            current = current.getParent()
-        }
-        return null
-    }
-
-    private static Path findAppRoot(final Path start) {
-        Path current = start
-        while (current != null) {
-            if (Files.exists(current.resolve("resources")) ||
-                Files.exists(current.resolve("plugins"))
-            ) {
-                return current
-            }
-            current = current.getParent()
-        }
-        return null
-    }
-
     private void loadPlugins(final Path pluginsDirPath, final ApplicationContext applicationContext) {
         log.debug("Loading plugins")
         try (DirectoryStream<Path> files = Files.newDirectoryStream(pluginsDirPath)) {
@@ -183,12 +158,12 @@ class MauroApplicationContextConfigurer implements ApplicationContextConfigurer 
 
                 ((BeanDefinitionRegistry) applicationContext).registerBeanDefinition(beanDefinition as RuntimeBeanDefinition<Object>)
 
-                if(Profile.class.isAssignableFrom(beanType)) {
+                if (Profile.class.isAssignableFrom(beanType)) {
                     log.info("Profile: ${ref}")
-                } else if(MauroPlugin.class.isAssignableFrom(beanType)) {
+                } else if (MauroPlugin.class.isAssignableFrom(beanType)) {
                     log.info("MauroPlugin: ${ref}")
                 } else {
-                    if (ref.hasAnnotation(Controller) ) {
+                    if (ref.hasAnnotation(Controller)) {
                         log.info("Controller: ${ref}")
                         Method[] methods = beanType.getMethods()
                         methods.each {Method method ->

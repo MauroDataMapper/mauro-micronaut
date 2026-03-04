@@ -27,3 +27,17 @@ echo "Detected ${CPU_COUNT} cores"
 export DOCKER_SUBNET="$(ip -o -4 addr show 2>/dev/null | awk '/scope global/ {split($4,a,"/");split(a[1],b,".");printf "%d.%d.%d.0/%s\n",b[1],b[2],b[3],a[2];exit}')"
 
 echo "Docker subnet ${DOCKER_SUBNET}"
+
+if [ -e /home/app/plugins ];
+then
+  MOUNTED_PLUGINS_AT=$(df -T "/home/app/plugins" | awk 'NR==2 {print $NF}')
+
+  if [ "${MOUNTED_PLUGINS_AT}" = "/" ];
+  then
+    export PLUGINS_IS_MOUNTED="false"
+  else
+    export PLUGINS_IS_MOUNTED="true"
+  fi
+else
+    export PLUGINS_IS_MOUNTED="false"
+fi

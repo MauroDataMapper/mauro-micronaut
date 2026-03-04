@@ -1,9 +1,20 @@
 #!/usr/bin/env bash
 set -e
 
+ADD_PLUGINS="true"
+
+if [ "${PLUGINS_IS_MOUNTED}" == "true" ];
+then
+  if [ "$(ls -1 /home/app/plugins)" != "" ];
+  then
+    echo "There are persisted plugins."
+    ADD_PLUGINS="false"
+  fi
+fi
+
 if [ -e /opt/init/micronaut ];
 then
-  mkdir -p /home/app/plugins
+  mkdir -p /home/app/plugins || true
   pushd /opt/init/micronaut
 
         shopt -s nullglob
@@ -20,8 +31,11 @@ then
                 fi
               ;;
             *.jar)
-              echo "Adding ${f} as plugin"
-              cp -pf ${f} /home/app/plugins/.
+              if [ "${ADD_PLUGINS}" == "true" ];
+              then
+                  echo "Adding ${f} as plugin"
+                  cp -pf ${f} /home/app/plugins/.
+              fi
               ;;
             *)
                   echo "Copying ${f} to micronaut resources"
@@ -74,5 +88,5 @@ echo "Starting Micronaut..."
 cd /home/app
 # Give the directory and contents to the micronaut user
 chown -R micronaut:micronaut /home/app
-echo ${JAVA_BIN} "${JAVA_OPTS}" -cp "/home/app/application.jar" "${APPLICATION_MAIN_CLASS}"
-gosu micronaut ${JAVA_BIN} ${JAVA_OPTS} -cp /home/app/application.jar "${APPLICATION_MAIN_CLASS}"
+echo ${JAVA_BIN} "${JAVA_OPTS}" -cp "/home/app/application.jar" -DPLUGINS_IS_MOUNTED=${PLUGINS_IS_MOUNTED} "${APPLICATION_MAIN_CLASS}"
+gosu micronaut ${JAVA_BIN} ${JAVA_OPTS} -cp /home/app/application.jar -DPLUGINS_IS_MOUNTED=${PLUGINS_IS_MOUNTED} "${APPLICATION_MAIN_CLASS}"
