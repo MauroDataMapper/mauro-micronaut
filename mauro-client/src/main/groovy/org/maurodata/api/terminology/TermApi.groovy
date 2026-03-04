@@ -50,4 +50,9 @@ interface TermApi extends AdministeredItemApi<Term, Terminology> {
 
     @Get(Paths.TERM_DOI)
     Map doi(UUID id)
+
+    // TODO: Replace this with something more like copying data elements
+    @Put(Paths.TERM_COPY)
+    Term copyTerm(UUID terminologyId, UUID termId, @Body @Nullable TermCopyDTO termCopyDTO)
+
 }

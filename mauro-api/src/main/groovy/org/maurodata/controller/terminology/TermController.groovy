@@ -1,5 +1,6 @@
 package org.maurodata.controller.terminology
 
+import org.maurodata.api.terminology.TermCopyDTO
 import org.maurodata.web.PaginationParams
 
 import io.micronaut.http.HttpStatus
@@ -101,4 +102,35 @@ class TermController extends AdministeredItemController<Term, Terminology> imple
         ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "Doi is not implemented")
         return null
     }
+
+    // TODO: Replace this with something more like copying data elements
+    @Audit
+    @Override
+    @Put(Paths.TERM_COPY)
+    Term copyTerm(UUID terminologyId, UUID termId, @Body TermCopyDTO termCopyDTO) {
+        Terminology terminology = terminologyRepository.readById(terminologyId)
+        accessControlService.checkRole(Role.READER, terminology)
+        Terminology targetTerminology = terminologyRepository.readById(termCopyDTO.targetTerminologyId)
+        accessControlService.checkRole(Role.EDITOR, targetTerminology)
+        Term term = termRepository.findById(termId)
+        if (term.terminology.id != terminology.id ) {
+            ErrorHandler.handleError(HttpStatus.BAD_REQUEST, "Term with id ${term.id} is not associated with terminology: ${terminologyId}")
+        }
+        if (terminologyId == termCopyDTO.targetTerminologyId && (term.code == termCopyDTO.code || !termCopyDTO.code) ) {
+            ErrorHandler.handleError(HttpStatus.BAD_REQUEST, "Cannot copy into the same terminology because the code is unchanged")
+        }
+        term = (Term) contentsService.loadWithContent(term)
+        Term newTerm = (Term) term.deepClone()
+        newTerm.terminology = targetTerminology
+        if(termCopyDTO.code && !termCopyDTO.code.isBlank()) {
+            newTerm.code = termCopyDTO.code
+            if(term.code == term.definition) {
+                newTerm.definition = newTerm.code
+            }
+
+        }
+
+        return (Term) contentsService.saveWithContent(newTerm)
+    }
+
 }
