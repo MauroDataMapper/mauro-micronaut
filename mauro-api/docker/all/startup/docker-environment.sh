@@ -35,3 +35,17 @@ export DOCKER_BRIDGE_ADDRESSES="host.docker.internal ${DOCKER_CONTAINER_NETWORK_
 
 echo "Docker internal addresses ${DOCKER_LOCAL_ADDRESSES}"
 echo "Docker bridge addresses ${DOCKER_BRIDGE_ADDRESSES}"
+
+if [ -e /home/app/plugins ];
+then
+  MOUNTED_PLUGINS_AT=$(df -T "/home/app/plugins" | awk 'NR==2 {print $NF}')
+
+  if [ "${MOUNTED_PLUGINS_AT}" = "/" ];
+  then
+    export PLUGINS_IS_MOUNTED="false"
+  else
+    export PLUGINS_IS_MOUNTED="true"
+  fi
+else
+    export PLUGINS_IS_MOUNTED="false"
+fi

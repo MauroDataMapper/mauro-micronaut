@@ -4,6 +4,7 @@ import org.maurodata.api.Paths
 import org.maurodata.api.admin.AdminApi
 import org.maurodata.audit.Audit
 import org.maurodata.plugin.MauroPluginDTO
+import org.maurodata.service.plugin.PluginRepositoryService
 
 import groovy.transform.CompileStatic
 import io.micronaut.http.HttpStatus
@@ -14,6 +15,7 @@ import io.micronaut.http.annotation.Post
 import io.micronaut.http.exceptions.HttpStatusException
 import io.micronaut.runtime.EmbeddedApplication
 import io.micronaut.scheduling.TaskExecutors
+import io.micronaut.scheduling.annotation.ExecuteOn
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
 import jakarta.inject.Inject
@@ -22,7 +24,6 @@ import org.maurodata.domain.security.CatalogueUser
 import org.maurodata.persistence.security.EmailRepository
 import org.maurodata.plugin.MauroPluginService
 import org.maurodata.plugin.exporter.ModelExporterPlugin
-import org.maurodata.plugin.exporter.ModelItemExporterPlugin
 import org.maurodata.plugin.importer.ImporterPlugin
 import org.maurodata.security.AccessControlService
 import org.maurodata.plugin.EmailPlugin
@@ -46,6 +47,9 @@ class AdminController implements AdminApi {
 
     @Inject
     EmailService emailService
+
+    @Inject
+    PluginRepositoryService service
 
     private final EmailRepository emailRepository
 
@@ -96,6 +100,22 @@ class AdminController implements AdminApi {
     @Get(Paths.ADMIN_DATALOADERS_LIST)
     List<MauroPluginDTO> dataLoaders() {
         []
+    }
+
+    @Audit
+    @ExecuteOn(TaskExecutors.BLOCKING)
+    @Get(Paths.ADMIN_AVAILABLE_PROVIDERS_LIST)
+    List<Map<String, String>> available() {
+        accessControlService.checkAdministrator()
+        service.listAvailablePlugins()
+    }
+
+    @Audit
+    @ExecuteOn(TaskExecutors.BLOCKING)
+    @Post(Paths.ADMIN_INSTALL_PROVIDER)
+    Map<String, Object> installPlugin(String plugin) {
+        accessControlService.checkAdministrator()
+        return service.installPlugin(plugin)
     }
 
     /**

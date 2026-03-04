@@ -18,6 +18,8 @@ interface Paths {
     String ADMIN_EMAILS = '/api/admin/emails'
     String ADMIN_EMAIL_RETRY = '/api/admin/emails/{emailId}/retry'
     String ADMIN_SHUTDOWN = '/api/admin/shutdown'
+    String ADMIN_AVAILABLE_PROVIDERS_LIST = '/api/admin/providers/available'
+    String ADMIN_INSTALL_PROVIDER = '/api/admin/provider/install/{plugin}'
 
     /*
     * ClassificationSchemeApi

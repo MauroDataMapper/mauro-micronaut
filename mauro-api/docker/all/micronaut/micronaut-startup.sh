@@ -1,10 +1,56 @@
 #!/usr/bin/env bash
 set -e
 
+ADD_PLUGINS="true"
+
+if [ "${PLUGINS_IS_MOUNTED}" == "true" ];
+then
+  if [ "$(ls -1 /home/app/plugins)" != "" ];
+  then
+    echo "There are persisted plugins."
+    ADD_PLUGINS="false"
+  fi
+fi
+
+if [ -e /opt/init/micronaut ];
+then
+  mkdir -p /home/app/plugins || true
+  pushd /opt/init/micronaut
+
+        shopt -s nullglob
+        for f in *
+        do
+          case "${f}" in
+            *.sh)
+                echo "Running ${f}"
+                if [ -x "${f}" ];
+                then
+                    /bin/bash "${f}"
+                else
+                    . "${f}"
+                fi
+              ;;
+            *.jar)
+              if [ "${ADD_PLUGINS}" == "true" ];
+              then
+                  echo "Adding ${f} as plugin"
+                  cp -pf ${f} /home/app/plugins/.
+              fi
+              ;;
+            *)
+                  echo "Copying ${f} to micronaut resources"
+                  cp "${f}" /home/app/resources/.
+              ;;
+          esac
+        done
+        shopt -u nullglob
+  popd
+else
+      echo "No /opt/init/micronaut for *.sh *.yml *.xml *.properties etc - skipping"
+fi
+
 # Figure out the java options
 
-if [ "${PG_SHARING_HOST}" == "true" ];
-then
 declare -A java_opts=(
   [4]="-server -Xms614M -Xmx2457M -XX:MaxNewSize=1126M -XX:NewSize=204M -XX:MetaspaceSize=256M -XX:MaxMetaspaceSize=784M -XX:NewRatio=2 -XX:SurvivorRatio=2 -XX:TargetSurvivorRatio=80 -XX:+UseParallelGC -XX:+AggressiveHeap -XX:GCTimeRatio=19 -XX:MaxGCPauseMillis=3500 -XX:InitialCodeCacheSize=48M -XX:ReservedCodeCacheSize=240M"
   [8]="-server -Xms1843M -Xmx7372M -XX:MaxNewSize=3379M -XX:NewSize=614M -XX:MetaspaceSize=768M -XX:MaxMetaspaceSize=2764M -XX:NewRatio=2 -XX:SurvivorRatio=2 -XX:TargetSurvivorRatio=80 -XX:+UseParallelGC -XX:+AggressiveHeap -XX:GCTimeRatio=19 -XX:MaxGCPauseMillis=3500 -XX:InitialCodeCacheSize=48M -XX:ReservedCodeCacheSize=307M"
@@ -56,5 +102,5 @@ echo "Starting Micronaut..."
 cd /home/app
 # Give the directory and contents to the micronaut user
 chown -R micronaut:micronaut /home/app
-echo ${JAVA_BIN} "${JAVA_OPTS}" -cp "/home/app/application.jar" "${APPLICATION_MAIN_CLASS}"
-gosu micronaut ${JAVA_BIN} ${JAVA_OPTS} -cp /home/app/application.jar "${APPLICATION_MAIN_CLASS}"
+echo ${JAVA_BIN} "${JAVA_OPTS}" -cp "/home/app/application.jar" -DPLUGINS_IS_MOUNTED=${PLUGINS_IS_MOUNTED} "${APPLICATION_MAIN_CLASS}"
+gosu micronaut ${JAVA_BIN} ${JAVA_OPTS} -cp /home/app/application.jar -DPLUGINS_IS_MOUNTED=${PLUGINS_IS_MOUNTED} "${APPLICATION_MAIN_CLASS}"

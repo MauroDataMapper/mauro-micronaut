@@ -59,4 +59,10 @@ interface AdminApi {
 
     @Post(Paths.ADMIN_SHUTDOWN)
     Boolean shutDown()
+
+    @Get(Paths.ADMIN_AVAILABLE_PROVIDERS_LIST)
+    List<Map> available()
+
+    @Post(Paths.ADMIN_INSTALL_PROVIDER)
+    Map<String, Object> installPlugin(String plugin)
 }
