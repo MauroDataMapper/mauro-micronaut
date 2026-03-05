@@ -1,6 +1,7 @@
 package org.maurodata.datamodel
 
 import io.micronaut.http.client.exceptions.HttpClientResponseException
+import jakarta.inject.Inject
 import org.maurodata.api.model.ModelVersionDTO
 import org.maurodata.domain.datamodel.DataClass
 import org.maurodata.domain.datamodel.DataElement
@@ -14,6 +15,7 @@ import org.maurodata.domain.model.version.VersionChangeType
 import org.maurodata.persistence.ContainerizedTest
 import org.maurodata.domain.search.dto.SearchRequestDTO
 import org.maurodata.domain.search.dto.SearchResultsDTO
+import org.maurodata.persistence.search.SearchIndexRefreshScheduler
 import org.maurodata.testing.CommonDataSpec
 import org.maurodata.web.ListResponse
 
@@ -61,6 +63,9 @@ class DataModelIntegrationSpec extends CommonDataSpec {
     @Shared
     UUID enumerationValueId
 
+    @Inject
+    @Shared
+    SearchIndexRefreshScheduler searchIndexRefreshScheduler
 
     void 'test data model'() {
         given:

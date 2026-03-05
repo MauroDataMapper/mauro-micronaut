@@ -13,6 +13,7 @@ import jakarta.inject.Inject
 import org.maurodata.controller.model.AdministeredItemReader
 import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.domain.security.Role
+import org.maurodata.persistence.model.PathRepository
 import org.maurodata.persistence.search.SearchRepository
 import org.maurodata.domain.search.dto.SearchRequestDTO
 import org.maurodata.domain.search.dto.SearchResultsDTO
@@ -31,6 +32,9 @@ class SearchController implements AdministeredItemReader, SearchApi {
     @Inject
     AccessControlService accessControlService
 
+    @Inject
+    PathRepository pathRepository
+
     @Audit
     @Get(Paths.SEARCH_GET)
     ListResponse<SearchResultsDTO> searchGet(@RequestBean SearchRequestDTO requestDTO) {
@@ -45,12 +49,19 @@ class SearchController implements AdministeredItemReader, SearchApi {
     @Audit(level = Audit.AuditLevel.FILE_ONLY)
     @Post(Paths.SEARCH_POST)
     ListResponse<SearchResultsDTO> searchPost(@Body SearchRequestDTO requestDTO) {
+        long startTime = System.currentTimeMillis()
         List<SearchResultsDTO> searchResults = searchRepository.search(requestDTO)
+        System.err.println("Time taken 1: " + (System.currentTimeMillis() - startTime))
+        //searchResults = searchResults.take(100)
         List<SearchResultsDTO> searchResultsReadable = searchResults.findAll {SearchResultsDTO result ->
             AdministeredItem item = readAdministeredItem(result.domainType, result.id)
+            pathRepository.readParentItems(item)
+            item.updateBreadcrumbs()
+            result.breadcrumbs = item.breadcrumbs
             accessControlService.canDoRole(Role.READER, item)
         }
-        ListResponse.from(searchResultsReadable)
+        System.err.println("Time taken 2: " + (System.currentTimeMillis() - startTime))
+        ListResponse.from(searchResultsReadable, requestDTO)
     }
 
 }

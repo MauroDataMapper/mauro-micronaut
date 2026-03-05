@@ -3,6 +3,7 @@ package org.maurodata.domain.search.dto
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.Introspected
 import jakarta.persistence.Transient
+import org.maurodata.domain.model.Breadcrumb
 
 import java.time.Instant
 
@@ -19,6 +20,9 @@ class SearchResultsDTO {
     Instant lastUpdated
     @Transient
     UUID modelId
+
+    @Transient
+    List<Breadcrumb> breadcrumbs
 
     Float tsRank
 
