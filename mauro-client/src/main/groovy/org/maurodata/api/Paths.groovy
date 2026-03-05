@@ -17,7 +17,7 @@ interface Paths {
     String ADMIN_EMAIL_TEST_CONNECTION = '/api/admin/email/testConnection'
     String ADMIN_EMAILS = '/api/admin/emails'
     String ADMIN_EMAIL_RETRY = '/api/admin/emails/{emailId}/retry'
-
+    String ADMIN_SHUTDOWN = '/api/admin/shutdown'
 
     /*
     * ClassificationSchemeApi

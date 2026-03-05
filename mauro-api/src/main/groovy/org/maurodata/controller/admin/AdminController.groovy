@@ -12,6 +12,8 @@ import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Get
 import io.micronaut.http.annotation.Post
 import io.micronaut.http.exceptions.HttpStatusException
+import io.micronaut.runtime.EmbeddedApplication
+import io.micronaut.scheduling.TaskExecutors
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
 import jakarta.inject.Inject
@@ -26,6 +28,10 @@ import org.maurodata.security.AccessControlService
 import org.maurodata.plugin.EmailPlugin
 import org.maurodata.service.email.EmailService
 import org.maurodata.web.ListResponse
+
+import jakarta.inject.Named
+
+import java.util.concurrent.ExecutorService
 
 @CompileStatic
 @Controller()
@@ -42,6 +48,13 @@ class AdminController implements AdminApi {
     EmailService emailService
 
     private final EmailRepository emailRepository
+
+    @Inject
+    @Named(TaskExecutors.IO)
+    ExecutorService executor
+
+    @Inject
+    private EmbeddedApplication<? extends EmbeddedApplication> application
 
     AdminController(EmailRepository emailRepository) {
         this.emailRepository = emailRepository
@@ -158,5 +171,23 @@ class AdminController implements AdminApi {
         } catch (Exception e) {
             throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.message)
         }
+    }
+
+    @Audit
+    @Post(Paths.ADMIN_SHUTDOWN)
+    Boolean shutDown() {
+        accessControlService.checkAdministrator()
+
+        executor.submit(
+            () -> {
+                try {
+                    Thread.sleep(1000)
+                } catch (InterruptedException ignored) {
+                }
+                application.stop()
+            }
+        )
+
+        return true
     }
 }
