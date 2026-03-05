@@ -56,4 +56,7 @@ interface AdminApi {
      */
     @Post(Paths.ADMIN_EMAIL_RETRY)
     boolean retryEmail(UUID emailId)
+
+    @Post(Paths.ADMIN_SHUTDOWN)
+    Boolean shutDown()
 }
