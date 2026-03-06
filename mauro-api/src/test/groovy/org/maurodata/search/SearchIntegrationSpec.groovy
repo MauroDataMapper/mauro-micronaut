@@ -65,6 +65,8 @@ class SearchIntegrationSpec extends CommonDataSpec {
 
     def "Test Get Search"() {
 
+        searchApi.rebuildIndexes()
+
         expect:
 
         SearchRequestDTO searchRequestDTO = new SearchRequestDTO(
@@ -78,12 +80,12 @@ class SearchIntegrationSpec extends CommonDataSpec {
         where:
 
         searchTerm  | domainTypes                   | withinModelId | expectedLabels
-        "first"     | []                            | null          | ["My first DataClass", "My First Test DataModel", "My first DataClass"]
+        "first"     | []                            | null          | ["My First Test DataModel", "My first DataClass", "My first DataClass"]
         "first"     | ["DataModel"]                 | null          | ["My First Test DataModel"]
         "first"     | ["DataClass"]                 | null          | ["My first DataClass", "My first DataClass"]
-        "first"     | ["DataClass", "DataModel"]    | null          | ["My first DataClass", "My First Test DataModel", "My first DataClass"]
+        "first"     | ["DataClass", "DataModel"]    | null          | ["My First Test DataModel", "My first DataClass", "My first DataClass"]
         "first"     | ["DataType"]                  | null          | []
-        "first"     | []                            | dataModelId1  | ["My first DataClass", "My First Test DataModel"]
+        "first"     | []                            | dataModelId1  | ["My First Test DataModel", "My first DataClass"]
         "first"     | []                            | dataModelId2  | ["My first DataClass"]
 
     }

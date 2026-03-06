@@ -20,4 +20,7 @@ interface SearchApi {
     @Post(Paths.SEARCH_POST)
     ListResponse<SearchResultsDTO> searchPost(@Body SearchRequestDTO requestDTO)
 
+    @Post(Paths.SEARCH_REBUILD_INDEXES)
+    boolean rebuildIndexes()
+
 }

@@ -153,22 +153,38 @@ class AdminAccessIntegrationSpec extends SecuredIntegrationSpec {
     void 'admin can search over all items'() {
         given:
         loginAdmin()
+        searchApi.rebuildIndexes()
 
         when:
         ListResponse<SearchResultsDTO> searchResults = searchApi.searchPost(new SearchRequestDTO(searchTerm: 'Updated'))
 
         then:
-        searchResults.items.label == ['Admin folder', 'User folder', 'Admin data model', 'User data model']
+        searchResults.items.label == ['Admin data model', 'Admin folder', 'User data model', 'User folder']
     }
 
     void 'non-admin user cannot search admin\'s items without permission'() {
         given:
+        loginAdmin()
+        searchApi.rebuildIndexes()
+        logout()
+
         loginUser()
 
         when:
         ListResponse<SearchResultsDTO> searchResults = searchApi.searchPost(new SearchRequestDTO(searchTerm: 'Updated'))
 
         then:
-        searchResults.items.label == ['User folder', 'User data model']
+        searchResults.items.label == ['User data model', 'User folder' ]
     }
+
+    void 'non-admin user cannot rebuild search indexes'() {
+        when:
+        loginUser()
+        searchApi.rebuildIndexes()
+
+        then:
+        HttpClientResponseException exception = thrown()
+        exception.status == HttpStatus.FORBIDDEN
+    }
+
 }

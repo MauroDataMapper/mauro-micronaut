@@ -427,6 +427,8 @@ class DataModelIntegrationSpec extends CommonDataSpec {
 
     void "test search within model"() {
 
+        searchApi.rebuildIndexes()
+
         expect:
 
         ListResponse<SearchResultsDTO> searchResults =

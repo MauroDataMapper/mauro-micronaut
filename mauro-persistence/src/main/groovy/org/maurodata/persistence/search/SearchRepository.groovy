@@ -27,7 +27,7 @@ SELECT
 FROM search.search_domains sd
 CROSS JOIN q
 WHERE sd.combined_ts @@ q.query
-  AND (:domainTypes IS NULL OR sd.domain_type IN (:domainTypes))
+  AND ((:domainTypes) IS NULL OR sd.domain_type IN (:domainTypes))
   AND (:modelId IS NULL OR sd.model_id = CAST(:modelId AS uuid))
   AND (CAST(:createdBefore AS timestamptz) IS NULL OR CAST(:createdBefore AS timestamptz) > sd.date_created)
   AND (CAST(:createdAfter AS timestamptz) IS NULL OR CAST(:createdAfter AS timestamptz) <= sd.date_created)
