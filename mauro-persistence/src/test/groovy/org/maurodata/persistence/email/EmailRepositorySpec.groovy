@@ -7,6 +7,7 @@ import org.maurodata.persistence.ContainerizedTest
 import org.maurodata.persistence.security.EmailRepository
 
 import java.time.Instant
+import java.time.temporal.ChronoUnit
 
 @ContainerizedTest
 class EmailRepositorySpec extends Specification {
@@ -26,7 +27,7 @@ class EmailRepositorySpec extends Specification {
                             Here is an email, 
                             Thank you"""
             emailServiceUsed "Default email service"
-            dateTimeSent Instant.now()
+            dateTimeSent Instant.now().truncatedTo(ChronoUnit.MICROS)
             successfullySent true
         }
 
