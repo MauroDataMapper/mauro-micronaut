@@ -13,4 +13,3 @@ mauro:
     -   name: My first API Key
         email: admin@maurodatamapper.com
         refreshable: true
-        key: a7e4632c-e4af-4b2b-87aa-b99b44b5274e

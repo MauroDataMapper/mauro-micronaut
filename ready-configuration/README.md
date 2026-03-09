@@ -1,6 +1,6 @@
 Docker configurations are held in sub-directories
 
-Run
+Run (from mauro-api)
 
 ```bash
  ./gradlew zipReadyConfiguration
