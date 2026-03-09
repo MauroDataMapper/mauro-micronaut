@@ -47,6 +47,9 @@ class SearchController implements AdministeredItemReader, SearchApi {
         List<SearchResultsDTO> searchResults = searchRepository.search(requestDTO)
         List<SearchResultsDTO> searchResultsReadable = searchResults.findAll {SearchResultsDTO result ->
             AdministeredItem item = readAdministeredItem(result.domainType, result.id)
+            pathRepository.readParentItems(item)
+            item.updateBreadcrumbs()
+            result.breadcrumbs = item.breadcrumbs
             accessControlService.canDoRole(Role.READER, item)
         }
         ListResponse.from(searchResultsReadable)
@@ -58,7 +61,6 @@ class SearchController implements AdministeredItemReader, SearchApi {
         long startTime = System.currentTimeMillis()
         List<SearchResultsDTO> searchResults = searchRepository.search(requestDTO)
         log.debug("Search time taken (retrieve): " + (System.currentTimeMillis() - startTime))
-        //searchResults = searchResults.take(100)
         List<SearchResultsDTO> searchResultsReadable = searchResults.findAll {SearchResultsDTO result ->
             AdministeredItem item = readAdministeredItem(result.domainType, result.id)
             pathRepository.readParentItems(item)

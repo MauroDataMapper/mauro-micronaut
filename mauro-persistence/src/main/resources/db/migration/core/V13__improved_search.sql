@@ -159,5 +159,6 @@ CREATE INDEX search_domains_last_updated_idx
 
 CREATE TABLE search.search_domains_dirty_flag (
     id BOOLEAN PRIMARY KEY DEFAULT TRUE,
-    version BIGINT NOT NULL DEFAULT 0
+    version BIGINT NOT NULL DEFAULT 0,
+    last_updated TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now()
 );

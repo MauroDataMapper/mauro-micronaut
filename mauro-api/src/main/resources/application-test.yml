@@ -14,3 +14,7 @@ micronaut:
 mauro:
   login:
     retry-wait: 0
+  search:
+    rebuild:
+      poll-inactivity-period: 2s
+      poll-interval: 1s
