@@ -27,3 +27,11 @@ echo "Detected ${CPU_COUNT} cores"
 export DOCKER_SUBNET="$(ip -o -4 addr show 2>/dev/null | awk '/scope global/ {split($4,a,"/");split(a[1],b,".");printf "%d.%d.%d.0/%s\n",b[1],b[2],b[3],a[2];exit}')"
 
 echo "Docker subnet ${DOCKER_SUBNET}"
+
+export DOCKER_LOCAL_ADDRESSES="localhost ::1 $(ip -o -4 addr show | awk ' {split($4,a,"/"); printf "%s ",a[1]} ')"
+export DOCKER_CONTAINER_NETWORK_PREFIX="$(ip -o -4 addr show 2>/dev/null | awk '/scope global/ {split($4,a,"/");split(a[1],b,".");printf "%d.%d.%d.*",b[1],b[2],b[3];exit}')"
+
+export DOCKER_BRIDGE_ADDRESSES="host.docker.internal ${DOCKER_CONTAINER_NETWORK_PREFIX}"
+
+echo "Docker internal addresses ${DOCKER_LOCAL_ADDRESSES}"
+echo "Docker bridge addresses ${DOCKER_BRIDGE_ADDRESSES}"
