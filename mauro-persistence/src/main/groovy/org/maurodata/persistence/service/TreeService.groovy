@@ -1,12 +1,11 @@
 package org.maurodata.persistence.service
 
-import org.maurodata.domain.classifier.ClassificationScheme
-import org.maurodata.domain.classifier.Classifier
-
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
+import org.maurodata.domain.classifier.ClassificationScheme
+import org.maurodata.domain.classifier.Classifier
 import org.maurodata.domain.datamodel.DataClass
 import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.folder.Folder
@@ -121,7 +120,7 @@ class TreeService {
 
                     List<TreeItem> theChildren
                     if (lookForChildren) {
-                        theChildren = buildTree(model as AdministeredItem, foldersOnly, false, setChildren)
+                        theChildren = buildTree(model as AdministeredItem, foldersOnly, setChildren, setChildren)
                         if (setChildren) {children = theChildren} else {children = []}
                         hasChildren = theChildren && theChildren.size() > 0
                     } else {
@@ -143,7 +142,7 @@ class TreeService {
 
             List<TreeItem> theChildren
             if (lookForChildren) {
-                theChildren = buildTree(administeredItem as AdministeredItem, foldersOnly, false, setChildren)
+                theChildren = buildTree(administeredItem as AdministeredItem, foldersOnly, setChildren, setChildren)
                 if (setChildren) {children = theChildren} else {children = []}
                 hasChildren = theChildren && theChildren.size() > 0
             } else {
@@ -165,7 +164,7 @@ class TreeService {
                     model = dataClass.dataModel
                     List<TreeItem> theChildren
                     if (lookForChildren) {
-                        theChildren = buildTree(dataClass, false, false, setChildren)
+                        theChildren = buildTree(dataClass, false, setChildren, setChildren)
                         if (setChildren) {children = theChildren} else {children = []}
                         hasChildren = theChildren && theChildren.size() > 0
                     } else {
@@ -188,7 +187,7 @@ class TreeService {
 
                 List<TreeItem> theChildren
                 if (lookForChildren) {
-                    theChildren = buildTree(childClass, false, false, setChildren)
+                    theChildren = buildTree(childClass, false, setChildren, setChildren)
                     if (setChildren) {children = theChildren} else {children = []}
                     hasChildren = theChildren && theChildren.size() > 0
                 } else {
@@ -208,7 +207,7 @@ class TreeService {
 
                 List<TreeItem> theChildren
                 if (lookForChildren) {
-                    theChildren = buildTree(term, false, false, setChildren)
+                    theChildren = buildTree(term, false, setChildren, setChildren)
                     if (setChildren) {children = theChildren} else {children = []}
                     hasChildren = theChildren && theChildren.size() > 0
                 } else {
@@ -227,7 +226,7 @@ class TreeService {
                 model = childTerm.terminology
                 List<TreeItem> theChildren
                 if (lookForChildren) {
-                    theChildren = buildTree(childTerm, false, false, setChildren)
+                    theChildren = buildTree(childTerm, false, setChildren, setChildren)
                     if (setChildren) {children = theChildren} else {children = []}
                     hasChildren = theChildren && theChildren.size() > 0
                 } else {
@@ -247,7 +246,7 @@ class TreeService {
                     model = childClassifier.classificationScheme
                     List<TreeItem> theChildren
                     if (lookForChildren) {
-                        theChildren = buildTree(childClassifier, false, false, setChildren)
+                        theChildren = buildTree(childClassifier, false, setChildren, setChildren)
                         if (setChildren) {children = theChildren} else {children = []}
                         hasChildren = theChildren && theChildren.size() > 0
                     } else {
@@ -267,7 +266,7 @@ class TreeService {
                 model = child.classificationScheme
                 List<TreeItem> theChildren
                 if (lookForChildren) {
-                    theChildren = buildTree(child, false, false, setChildren)
+                    theChildren = buildTree(child, false, setChildren, setChildren)
                     if (setChildren) {children = theChildren} else {children = []}
                     hasChildren = theChildren && theChildren.size() > 0
                 } else {

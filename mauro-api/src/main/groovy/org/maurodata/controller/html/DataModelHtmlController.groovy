@@ -13,10 +13,14 @@ import org.maurodata.controller.datamodel.DataClassController
 import org.maurodata.controller.datamodel.DataModelController
 import org.maurodata.domain.datamodel.DataClass
 import org.maurodata.domain.datamodel.DataModel
+import org.maurodata.domain.folder.Folder
+import org.maurodata.domain.model.AdministeredItem
+import org.maurodata.domain.tree.TreeItem
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository.DataElementCacheableRepository
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository.DataTypeCacheableRepository
 import org.maurodata.persistence.model.PathRepository
+import org.maurodata.persistence.service.TreeService
 
 @Slf4j
 @Controller
@@ -41,6 +45,9 @@ class DataModelHtmlController {
 
     @Inject
     PathRepository pathRepository
+
+    @Inject
+    TreeService treeService
 
     @Produces(MediaType.TEXT_HTML)
     @View('dataModel.html')
@@ -69,13 +76,17 @@ class DataModelHtmlController {
             it.dataType = dataTypeCacheableRepository.findById(it.dataType.id)
         }
 
-        String rowCount = dataClass.metadata.find {it.namespace == 'org.maurodata.plugin.sql.database.sqlserver' && it.key == 'row_count'}.value
+        String rowCount = dataClass.metadata.find {it.namespace in ['org.maurodata.plugin.sql.database.sqlserver', 'mauro.plugin.databricks'] && it.key == 'row_count'}?.value
 
         pathRepository.readParentItems(dataClass)
 
-        DataClass schemaClass = dataClass.parentDataClass
+        Folder folder = dataClass.owner.folder
 
-        List<DataClass> siblingTables = dataClassRepository.readAllByParentDataClass(schemaClass).sort {it.label}
+        List<TreeItem> tree = treeService.buildTree(folder, false, true, true)
+
+        treeToMapList(tree, dataClass)
+
+        null
 
         [
             label: dataClass.label,
@@ -84,9 +95,9 @@ class DataModelHtmlController {
                 [
                     label: it.label,
                     description: it.description,
-                    dataTypeLabel: it.metadata.find {it.namespace == 'org.maurodata.plugin.sql.database.sqlserver' && it.key == 'data_type'}?.value,
+                    dataTypeLabel: it.metadata.find {it.namespace == 'mauro.plugin.databricks' && it.key == 'full_data_type'}?.value ?: it.metadata.find {it.namespace == 'org.maurodata.plugin.sql.database.sqlserver' && it.key == 'data_type'}?.value,
                     rowCount: it.metadata.find {it.namespace == 'uk.ac.ox.softeng.maurodatamapper.plugins.explorer.research' && it.key == 'rowCount'}?.value,
-                    distinctValuesCount: it.metadata.find {it.namespace == 'org.maurodata.plugin.sql.database.sqlserver' && it.key == 'distinct_values_count'}?.value,
+                    distinctValuesCount: it.metadata.find {it.namespace in ['mauro.plugin.databricks', 'org.maurodata.plugin.sql.database.sqlserver'] && it.key == 'distinct_values_count'}?.value,
                     nonNullValuesCount: it.metadata.find {it.namespace == 'uk.ac.ox.softeng.maurodatamapper.plugins.explorer.research' && it.key == 'notNullValuesCount'}?.value
                 ]
             },
@@ -97,5 +108,41 @@ class DataModelHtmlController {
                 ]
             }
         ]
+    }
+
+    static List<Map<String, Object>> treeToMapList(List<TreeItem> tree, AdministeredItem activeItem) {
+        List<Map<String, Object>> mapList = tree.collect {treeItemToMap(it, null, activeItem)}
+
+        Map<UUID, Map<String, Object>> treeMap = flattenTree(mapList).collectEntries {[it.id, it]}
+
+        Map activeMap = treeMap.find {it.value.id == activeItem.id}.value
+
+        Map current = activeMap
+        while (current?.parent) {
+            current.containsActive = true
+            current = treeMap[current.parent]
+        }
+
+        mapList
+    }
+
+    static Map<String, Object> treeItemToMap(TreeItem treeItem, UUID parentId, AdministeredItem activeItem) {
+        [
+            id: treeItem.id,
+            label: treeItem.label,
+            domainType: treeItem.domainType,
+            children: treeItem.children.collect {treeItemToMap(it, treeItem.id, activeItem)},
+            parent: parentId,
+            active: treeItem.id == activeItem.id
+        ]
+    }
+
+    static List<Map> flattenTree(List<Map> tree) {
+        List<Map> childMaps = tree*.children.flatten()
+        if (childMaps) {
+            return tree + flattenTree(childMaps)
+        } else {
+            return tree
+        }
     }
 }
