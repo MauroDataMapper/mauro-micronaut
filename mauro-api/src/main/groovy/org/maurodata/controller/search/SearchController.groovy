@@ -44,20 +44,17 @@ class SearchController implements AdministeredItemReader, SearchApi {
     @Audit
     @Get(Paths.SEARCH_GET)
     ListResponse<SearchResultsDTO> searchGet(@RequestBean SearchRequestDTO requestDTO) {
-        List<SearchResultsDTO> searchResults = searchRepository.search(requestDTO)
-        List<SearchResultsDTO> searchResultsReadable = searchResults.findAll {SearchResultsDTO result ->
-            AdministeredItem item = readAdministeredItem(result.domainType, result.id)
-            pathRepository.readParentItems(item)
-            item.updateBreadcrumbs()
-            result.breadcrumbs = item.breadcrumbs
-            accessControlService.canDoRole(Role.READER, item)
-        }
-        ListResponse.from(searchResultsReadable)
+        executeSearch(requestDTO)
     }
 
     @Audit(level = Audit.AuditLevel.FILE_ONLY)
     @Post(Paths.SEARCH_POST)
     ListResponse<SearchResultsDTO> searchPost(@Body SearchRequestDTO requestDTO) {
+        executeSearch(requestDTO)
+    }
+
+
+    private ListResponse<SearchResultsDTO> executeSearch(SearchRequestDTO requestDTO) {
         long startTime = System.currentTimeMillis()
         List<SearchResultsDTO> searchResults = searchRepository.search(requestDTO)
         log.debug("Search time taken (retrieve): " + (System.currentTimeMillis() - startTime))
@@ -70,7 +67,9 @@ class SearchController implements AdministeredItemReader, SearchApi {
         }
         log.debug("Search time taken (retrieve + filter): " + (System.currentTimeMillis() - startTime))
         ListResponse.from(searchResultsReadable, requestDTO)
+
     }
+
 
     @Audit
     @Post(Paths.SEARCH_REBUILD_INDEXES)

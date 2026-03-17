@@ -746,7 +746,7 @@ class ContentHandler {
     ClassificationScheme loadWithContent(ClassificationScheme classificationScheme) {
         classificationSchemes = [classificationScheme] as Set
         loadContent()
-        return classificationScheme
+        return classificationSchemes.first()
     }
 
     DataModel loadWithContent(DataModel dataModel) {
