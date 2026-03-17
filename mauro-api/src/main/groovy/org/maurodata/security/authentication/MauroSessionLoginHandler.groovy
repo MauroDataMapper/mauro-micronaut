@@ -84,31 +84,47 @@ class MauroSessionLoginHandler extends SessionLoginHandler {
 
         if (session != null) {
 
-            // Create a new session and retire the session that led to this login
-            // and then tidy-up
+            log.debug("Existing session ${session.isNew()}")
 
-            Session loginSession = SessionForRequest.create(sessionStore, request)
+            if (session.isNew()) {
+                sessionStore.save(session)
+                    .exceptionally(ex -> {
+                        log.error("Failed to save session", ex)
+                        return null
+                    })
 
-            sessionStore.save(loginSession)
-                .exceptionally(ex -> {
-                    log.error("Failed to save session", ex)
-                    return null
-                })
+                for (HttpSessionIdEncoder encoder : encoders) {
+                    encoder.encodeId(request, defaultResponse, session)
+                }
+            } else {
+                // Create a new session and retire the session that led to this login
+                // and then tidy-up
 
-            session.setMaxInactiveInterval(Duration.ZERO)
-            sessionStore.deleteSession(session.id)
+                session.setMaxInactiveInterval(Duration.ZERO)
+                sessionStore.deleteSession(session.id)
 
-            sessionPopulators.forEach(sessionPopulator -> sessionPopulator.populateSession(request, authentication, loginSession))
-            session.remove(SecurityFilter.AUTHENTICATION)
+                session.remove(SecurityFilter.AUTHENTICATION)
 
-            request.setAttribute(HttpSessionFilter.SESSION_ATTRIBUTE, loginSession)
-            request.getAttributes().put(HttpSessionFilter.SESSION_ATTRIBUTE, loginSession)
+                Session loginSession = SessionForRequest.create(sessionStore, request)
+                request.setAttribute(HttpSessionFilter.SESSION_ATTRIBUTE, loginSession)
+                sessionPopulators.forEach(sessionPopulator -> sessionPopulator.populateSession(request, authentication, loginSession))
 
-            MutableHttpHeaders headers = defaultResponse.getHeaders() as MutableHttpHeaders
-            final String[] headerNames = configuration.getHeaderNames()
-            headers.remove(HttpHeaders.SET_COOKIE)
-            headers.remove(headerNames[0])
-            headers.add(headerNames[0], loginSession.getId())
+                sessionStore.save(loginSession)
+                    .exceptionally(ex -> {
+                        log.error("Failed to save session", ex)
+                        return null
+                    })
+
+                MutableHttpHeaders headers = defaultResponse.getHeaders() as MutableHttpHeaders
+                final String[] headerNames = configuration.getHeaderNames()
+                headers.remove(HttpHeaders.SET_COOKIE)
+                headers.remove(headerNames[0])
+                headers.add(headerNames[0], loginSession.getId())
+
+                for (HttpSessionIdEncoder encoder : encoders) {
+                    encoder.encodeId(request, defaultResponse, loginSession)
+                }
+            }
         }
 
         if (defaultResponse.status == HttpStatus.OK) {
