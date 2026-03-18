@@ -48,7 +48,7 @@ class UsernamePasswordAuthenticationProvider<B> implements HttpRequestAuthentica
 
             CatalogueUser catalogueUser = catalogueUserRepository.readByEmailAddress(emailAddress)
             boolean valid = false
-            if (catalogueUser) {
+            if (catalogueUser && !catalogueUser.disabled) {
                 if (catalogueUser.tempPassword == password) {
                     final UsernamePasswordService.PasswordRequirementsCheckStatus checkPasswordStatus = usernamePasswordService.passwordRequirementsCheck(emailAddress, password, UsernamePasswordService.PasswordUse.TEMPORARY)
                     // #CWE-521

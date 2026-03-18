@@ -65,7 +65,7 @@ class CatalogueUserController extends ItemController<CatalogueUser> implements C
 
     @Override
     List<String> getDisallowedProperties() {
-        super.getDisallowedProperties() + ['emailAddress', 'pending', 'disabled', 'resetToken', 'creationMethod', 'lastLogin', 'salt', 'password', 'tempPassword']
+        super.getDisallowedProperties() + ['emailAddress', 'pending', 'resetToken', 'creationMethod', 'lastLogin', 'salt', 'password', 'tempPassword']
     }
 
     @Audit(level = Audit.AuditLevel.FILE_ONLY)
@@ -246,8 +246,13 @@ class CatalogueUserController extends ItemController<CatalogueUser> implements C
         }
 
         // Only an Administrator can add a user to Groups
-        if (newGroups != null) {
+        if (newGroups != null && newGroups.size() > 0) {
             accessControlService.checkAdministrator()
+        }
+
+        if((catalogueUser.disabled != accessControlService.user.disabled) && accessControlService.user.id == id) {
+            log.debug("User trying to disable / enable themselves!")
+            throw new AuthorizationException(accessControlService.userAuthentication)
         }
 
         boolean hasChanged = updateProperties(existing, catalogueUser)
@@ -266,7 +271,7 @@ class CatalogueUserController extends ItemController<CatalogueUser> implements C
             catalogueUserRepository.update(existing)
         }
 
-        if (newGroups != null) {
+        if (newGroups != null && newGroups.size() > 0) {
             List<UUID> existingUserGroupIds = userGroupRepository.readAllByCatalogueUserId(existing.id).id
             List<UUID> newUserGroupIds = newGroups.collect {it.id}.findAll {it !in existingUserGroupIds}
             newUserGroupIds.each {UUID userGroupId ->
