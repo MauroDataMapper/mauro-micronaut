@@ -31,6 +31,9 @@ abstract class SecuredIntegrationSpec extends CommonDataSpec {
     @Shared
     CatalogueUser user
 
+    @Shared
+    UserGroup administrators
+
     void setupSpec() {
         CatalogueUser adminUser = new CatalogueUser(
             emailAddress: 'admin@example.com',
@@ -68,7 +71,7 @@ abstract class SecuredIntegrationSpec extends CommonDataSpec {
 
         this.user = catalogueUserRepository.save(user)
 
-        UserGroup administrators = new UserGroup(
+        administrators = new UserGroup(
             name: 'Administrators',
             undeletable: true,
             applicationRole: ApplicationRole.ADMIN

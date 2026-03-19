@@ -74,7 +74,7 @@ class AccessControlService implements Toggleable {
      */
     boolean isAdministrator() {
         if (!isUserAuthenticated()) return false
-
+        if (user.disabled) return false
         List<UserGroup> userGroups = userGroupRepository.readAllByCatalogueUserId(userId)
 
         if (userGroups.any {UserGroup userGroup -> userGroup.applicationRole == ApplicationRole.ADMIN}) {

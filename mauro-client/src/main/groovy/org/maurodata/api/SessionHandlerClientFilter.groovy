@@ -17,7 +17,8 @@ import jakarta.inject.Singleton
 @Slf4j
 class SessionHandlerClientFilter {
 
-    String sessionId
+    Map<UUID, String> sessionIds = [:]
+    UUID currentSession = UUID.randomUUID()
 
     HttpStatus lastStatus
 
@@ -26,8 +27,8 @@ class SessionHandlerClientFilter {
     @RequestFilter
     void doFilter(MutableHttpRequest<?> request) {
         log.trace("Applying request filter: ${this.class}")
-        if(sessionId) {
-            request.cookie(Cookie.of('SESSION', sessionId))
+        if(sessionIds[currentSession]) {
+            request.cookie(Cookie.of('SESSION', sessionIds[currentSession]))
         }
         if(apiKey) {
             request.header('apiKey', apiKey.toString())
@@ -42,8 +43,16 @@ class SessionHandlerClientFilter {
         log.trace("${response.body()}")
         Optional<Cookie> sessionCookie = response.getCookie('SESSION')
         if(sessionCookie) {
-            sessionId = sessionCookie.get().value
+            sessionIds[currentSession] = sessionCookie.get().value
         }
 
+    }
+
+
+    void withNewSession(Closure cl) {
+        UUID oldSessionId = currentSession
+        currentSession = UUID.randomUUID()
+        cl()
+        currentSession = oldSessionId
     }
 }
