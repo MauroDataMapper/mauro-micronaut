@@ -250,7 +250,7 @@ class CatalogueUserController extends ItemController<CatalogueUser> implements C
             accessControlService.checkAdministrator()
         }
 
-        if((catalogueUser.disabled != accessControlService.user.disabled) && accessControlService.user.id == id) {
+        if((catalogueUser.disabled != null && catalogueUser.disabled != accessControlService.user.disabled) && accessControlService.user.id == id) {
             log.debug("User trying to disable / enable themselves!")
             throw new AuthorizationException(accessControlService.userAuthentication)
         }
