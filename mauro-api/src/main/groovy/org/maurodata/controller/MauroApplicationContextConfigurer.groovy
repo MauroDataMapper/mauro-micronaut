@@ -22,6 +22,7 @@ import io.micronaut.inject.BeanDefinition
 import io.micronaut.core.io.service.ServiceDefinition
 import io.micronaut.core.io.service.SoftServiceLoader
 import io.micronaut.inject.BeanDefinitionReference
+import picocli.CommandLine
 
 import java.lang.annotation.Annotation
 import java.lang.reflect.Method
@@ -201,6 +202,8 @@ class MauroApplicationContextConfigurer implements ApplicationContextConfigurer 
                                 }
                             }
                         }
+                    } else if (ref.hasAnnotation(CommandLine.Command)) {
+                        log.info("Command line: ${ref}")
                     } else {
                         log.trace("Bean: ${ref}")
                     }
