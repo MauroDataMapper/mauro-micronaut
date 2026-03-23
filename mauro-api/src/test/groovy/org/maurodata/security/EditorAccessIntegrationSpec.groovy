@@ -206,7 +206,7 @@ class EditorAccessIntegrationSpec extends SecuredIntegrationSpec {
         Folder folder = folderApi.create(new Folder(label: 'Admin folder'))
         folderId = folder.id
 
-        UserGroup editorsGroup = userGroupApi.create(new UserGroup(name: 'Editors Group'))
+        UserGroup editorsGroup = userGroupApi.create(new UserGroup(name: 'Editors Group 2'))
         editorsGroupId = editorsGroup.id
 
         CatalogueUser catalogueUserResponse = catalogueUserApi.update(user.id, new CatalogueUser(groups: [editorsGroupId]))
