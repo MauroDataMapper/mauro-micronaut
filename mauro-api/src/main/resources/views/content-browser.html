@@ -71,8 +71,13 @@
 
     <!-- Thymeleaf fragment definitions -->
     <div style="display: none">
-        <div th:fragment="leftnav">
-
+        <div th:fragment="leftnav (navtree, depth)">
+            <div th:each = "item : ${navtree}">
+                <a class="nav-link" th:classappend="${item.active} ? ' active activetable' : (${item.containsActive} ? ' active')" href="#"  th:text="${item.label}">item.label</a>
+                <nav th:if="${item.containsActive and (depth < 5 and !#lists.isEmpty(item.children))}" class="nav nav-vertical">
+                    <div th:replace="~{ ::leftnav (${item.children}, ${depth+1})}"></div>
+                </nav>
+            </div>
         </div>
     </div>
 
@@ -95,25 +100,25 @@
 
         <div class="row p-3 g-6">
             <div class="col-3">
-                <nav class="nav nav-vertical nav-pills">
-                    <a class="nav-link" href="#">Catalog</a>
-                    <div>
-                        <a class="nav-link active" href="#">Catalog</a>
-                        <nav class="nav nav-vertical">
-                            <div>
-                                <a class="nav-link" href="#">Schema</a>
-                            </div>
-                            <div>
-                                <a class="nav-link active" href="#">Schema</a>
-                                <nav class="nav nav-vertical">
-                                    <div th:each="table : ${tables}">
-                                        <a th:if="${!table.active}" th:text="${table.label}" class="nav-link" href="#">table.label</a>
-                                        <a th:if="${table.active}" th:text="${table.label}" class="nav-link active activetable" href="#">Table</a>
-                                    </div>
-                                </nav>
-                            </div>
-                        </nav>
-                    </div>
+                <nav class="nav nav-vertical nav-pills" th:insert="~{::leftnav(${nav}, 0)}">
+<!--                    <a class="nav-link" href="#">Catalog</a>-->
+<!--                    <div>-->
+<!--                        <a class="nav-link active" href="#">Catalog</a>-->
+<!--                        <nav class="nav nav-vertical">-->
+<!--                            <div>-->
+<!--                                <a class="nav-link" href="#">Schema</a>-->
+<!--                            </div>-->
+<!--                            <div>-->
+<!--                                <a class="nav-link active" href="#">Schema</a>-->
+<!--                                <nav class="nav nav-vertical">-->
+<!--                                    <div th:each="table : ${tables}">-->
+<!--                                        <a th:if="${!table.active}" th:text="${table.label}" class="nav-link" href="#">table.label</a>-->
+<!--                                        <a th:if="${table.active}" th:text="${table.label}" class="nav-link active activetable" href="#">Table</a>-->
+<!--                                    </div>-->
+<!--                                </nav>-->
+<!--                            </div>-->
+<!--                        </nav>-->
+<!--                    </div>-->
                 </nav>
             </div>
 

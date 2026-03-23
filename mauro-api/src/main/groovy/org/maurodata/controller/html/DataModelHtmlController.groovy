@@ -1,5 +1,6 @@
 package org.maurodata.controller.html
 
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.Controller
@@ -24,7 +25,7 @@ import org.maurodata.persistence.service.TreeService
 
 @Slf4j
 @Controller
-//@CompileStatic
+@CompileStatic
 @Secured(SecurityRule.IS_ANONYMOUS)
 class DataModelHtmlController {
 
@@ -84,7 +85,7 @@ class DataModelHtmlController {
 
         List<TreeItem> tree = treeService.buildTree(folder, false, true, true)
 
-        treeToMapList(tree, dataClass)
+        List<Map<String, Object>> navTree = treeToMapList(tree, dataClass)
 
         null
 
@@ -101,12 +102,13 @@ class DataModelHtmlController {
                     nonNullValuesCount: it.metadata.find {it.namespace == 'uk.ac.ox.softeng.maurodatamapper.plugins.explorer.research' && it.key == 'notNullValuesCount'}?.value
                 ]
             },
-            tables: siblingTables.collect {
+            /*tables: siblingTables.collect {
                 [
                     label: it.label,
                     active: it.label == dataClass.label
                 ]
-            }
+            }*/
+            nav: navTree
         ]
     }
 
@@ -118,7 +120,7 @@ class DataModelHtmlController {
         Map activeMap = treeMap.find {it.value.id == activeItem.id}.value
 
         Map current = activeMap
-        while (current?.parent) {
+        while (current) {
             current.containsActive = true
             current = treeMap[current.parent]
         }
@@ -138,7 +140,7 @@ class DataModelHtmlController {
     }
 
     static List<Map> flattenTree(List<Map> tree) {
-        List<Map> childMaps = tree*.children.flatten()
+        List<Map> childMaps = tree*.children.flatten() as List<Map>
         if (childMaps) {
             return tree + flattenTree(childMaps)
         } else {
