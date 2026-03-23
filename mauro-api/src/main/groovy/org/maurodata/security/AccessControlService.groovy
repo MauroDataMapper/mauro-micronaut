@@ -107,7 +107,8 @@ class AccessControlService implements Toggleable {
     boolean canDoRole(@NonNull Role role, @NonNull AdministeredItem item) {
         if(item == null) return false
         if (!enabled) return true
-        if (isAdministrator()) return true // always allow Administrator full access
+        if (role <= Role.READER && isAdministrator()) return true // always allow Administrator full access
+
         pathRepository.readParentItems(item)
         Model owner = item.owner
 
@@ -116,9 +117,18 @@ class AccessControlService implements Toggleable {
             owner = air.readById(owner.id) as Model
         }
 
-        if (userAuthenticated && owner.catalogueUser && owner.catalogueUser.id == getUserId()) return true // always allow owner full access
-
         List<Model> parentModels = pathRepository.readParentItems(owner) as List<Model>
+        if(role <= Role.EDITOR) {
+            if(item.getOwner().finalised) {
+                return false
+            }
+            if(isAdministrator()) {
+                return true
+            }
+        }
+
+
+        if (userAuthenticated && owner.catalogueUser && owner.catalogueUser.id == getUserId()) return true // always allow owner full access
 
         // allow Reader access if owning model or parents are publicly readable
         if (role <= Role.READER &&
@@ -127,6 +137,7 @@ class AccessControlService implements Toggleable {
             }) {
             return true
         }
+
 
         if (!userAuthenticated) return false
 

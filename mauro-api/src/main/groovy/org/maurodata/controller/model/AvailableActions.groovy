@@ -150,6 +150,11 @@ class AvailableActions {
                                                         CREATE_VERSIONED_FOLDER,
                                                         CREATE_MODEL]
 
+    public static List<String> REMOVE_FROM_MODEL_ITEM_WHEN_FINALISED = [UPDATE_ACTION,
+                                                        SAVE_ACTION,
+                                                        DELETE_ACTION,
+                                                        EDIT_DESCRIPTION_ACTION]
+
     public static List<String> REMOVE_FROM_MODEL_ITEM = [SOFT_DELETE_ACTION,
                                                          FINALISE_ACTION]
 
@@ -229,6 +234,9 @@ class AvailableActions {
         }
 
         if (item instanceof ModelItem) {
+            if(item.owner?.finalised) {
+                item.availableActions.removeAll(REMOVE_FROM_MODEL_ITEM_WHEN_FINALISED)
+            }
             item.availableActions.removeAll(REMOVE_FROM_MODEL_ITEM)
         }
 
