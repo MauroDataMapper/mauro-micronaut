@@ -49,6 +49,21 @@ class MovingModelsIntegrationSpec extends CommonDataSpec {
         'Folder 2 / sub-folder' | 'Folder 3'
     }
 
+    void 'test moving folders and creating loops - failures'() {
+
+        when:
+        Folder folder = folderApi.moveFolder(ids[folderName], ids[destinationName].toString())
+        then:
+
+        HttpClientResponseException exception = thrown()
+        exception.status == HttpStatus.UNPROCESSABLE_ENTITY
+
+        where:
+        folderName              | destinationName
+        'Folder 1'              | 'Folder 1 / sub-folder'
+        'Folder 2'              | 'Folder 2 / sub-folder'
+    }
+
     void 'test moving data models between versioned folders - failures'() {
 
         when:

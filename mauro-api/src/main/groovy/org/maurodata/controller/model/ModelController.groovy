@@ -206,6 +206,10 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         if(original.owner?.id != updated.owner?.id) {
             throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, 'Cannot move a model into or out of a versioned folder!')
         }
+        if(updated.ancestors.find {it.id == updated.id}) {
+            throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, 'Cannot move a folder into one of its sub-folders!')
+        }
+
         modelRepository.update(original, updated)
         pathRepository.readParentItems(updated)
         updated.updatePath()
