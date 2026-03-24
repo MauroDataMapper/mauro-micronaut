@@ -101,13 +101,29 @@ class DataElementController extends AdministeredItemController<DataElement, Data
     @Put(Paths.DATA_ELEMENT_ID)
     @Transactional
     DataElement update(UUID dataModelId, UUID dataClassId, UUID id, @Body @NonNull DataElement dataElement) {
-        DataElement cleanItem = super.cleanBody(dataElement, false) as DataElement
         DataElement existing = administeredItemRepository.readById(id)
+        if (!existing) {
+            throw new HttpStatusException(HttpStatus.NOT_FOUND, "Data Element not found for update")
+        }
         accessControlService.checkRole(Role.EDITOR, existing)
+        DataClass newDataClass = dataElement.dataClass
+        DataElement cleanItem = super.cleanBody(dataElement, false) as DataElement
+        if(newDataClass) {
+            cleanItem.setParent(newDataClass)
+        }
+        pathRepository.readParentItems(existing.dataClass)
+        if(cleanItem.dataClass && cleanItem.dataClass.id) {
+            cleanItem.setParent(dataClassRepository.readById(dataElement.dataClass.id))
+            //dataElement.setAssociations()
+            pathRepository.readParentItems(cleanItem.dataClass)
+            if(cleanItem.dataClass.dataModel.id != existing.dataClass.dataModel.id) {
+                ErrorHandler.handleError(HttpStatus.BAD_REQUEST, "Destination DataClass ${cleanItem.dataClass.dataModel} dataModel id is not ${existing.dataModel.id}")
+            }
+        }
         boolean hasChanged = updateProperties(existing, cleanItem)
         if (!hasChanged && dataElement?.dataType?.id != existing.dataType?.id) hasChanged = true
-        existing = validateDataTypeChange(existing, dataElement)
-        updateDerivedProperties(existing)
+        existing = validateDataTypeChange(existing, cleanItem)
+        //updateDerivedProperties(existing)
         DataElement updated = existing
         if (hasChanged) {
             updated = administeredItemRepository.update(existing)
@@ -229,6 +245,13 @@ class DataElementController extends AdministeredItemController<DataElement, Data
         existing.dataType = dataElement.dataType
         existing
     }
+
+    @Audit
+    @Put(Paths.DATA_ELEMENT_MOVE)
+    DataElement moveDataDataElement(UUID dataModelId, UUID dataClassId, UUID id, @Body @Nullable DataElement dataElement) {
+        update(dataModelId, dataClassId, id, dataElement)
+    }
+
 
 
     @Get(Paths.DATA_ELEMENT_DOI)

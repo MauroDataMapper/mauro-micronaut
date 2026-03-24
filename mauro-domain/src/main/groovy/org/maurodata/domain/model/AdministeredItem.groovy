@@ -135,7 +135,7 @@ abstract class AdministeredItem extends Item implements Pathable {
     void setAssociations() {
         List<Facet> facets = []
         [getEdits(),getMetadata(),getSummaryMetadata(),getRules(),getAnnotations(),getReferenceFiles(),getSemanticLinks()].each {
-            facets.addAll(it)
+            facets.addAll(it?:[])
         }
         facets.each {
             it.multiFacetAwareItem = this

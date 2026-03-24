@@ -1,5 +1,6 @@
 package org.maurodata.controller.datamodel
 
+import io.micronaut.http.exceptions.HttpStatusException
 import org.maurodata.api.model.CopyDataClassParamsDTO
 import org.maurodata.domain.model.Item
 
@@ -75,6 +76,35 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
     DataClass update(UUID dataModelId, UUID id, @Body @NonNull DataClass dataClass) {
         super.update(id, dataClass)
     }
+
+    @Put(Paths.DATA_CLASS_MOVE)
+    DataClass moveDataClass(UUID dataModelId, UUID id, @Body @Nullable DataClass dataClass) {
+        if(dataClass.parentDataClass) {
+            if(dataClass.parentDataClass.id != id) {
+                return update(dataModelId, id, dataClass)
+            } else {
+                ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "Cannot move data class to inside itself")
+            }
+        } else {
+            DataClass existing = dataClassRepository.readById(id)
+
+            if (existing == null) {
+                throw new HttpStatusException(HttpStatus.NOT_FOUND, "Object not found")
+            }
+
+            accessControlService.checkRole(Role.EDITOR, existing)
+
+            existing.parentDataClass = null
+
+            DataClass updated = dataClassRepository.update(existing)
+
+            return updated
+
+        }
+    }
+
+
+
 
     @Audit(
         parentDomainType = DataModel,

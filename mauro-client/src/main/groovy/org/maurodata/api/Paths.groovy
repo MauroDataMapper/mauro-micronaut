@@ -106,6 +106,7 @@ interface Paths {
     String DATA_CLASS_EXTENDS = '/api/dataModels/{dataModelId}/dataClasses/{id}/extends/{otherModelId}/{otherClassId}'
     String DATA_CLASS_DOI = '/api/dataClasses/{id}/doi'
     String DATA_CLASS_SEARCH = '/api/dataModels/{dataModelId}/dataClasses{?params*}'
+    String DATA_CLASS_MOVE = '/api/dataModels/{dataModelId}/dataClasses/{id}/move'
     String DATA_CLASS_COPY = '/api/dataModels/{toDataModelId}/dataClasses/{fromDataModelId}/{dataClassId}'
     String ALL_DATA_CLASSES = '/api/dataModels/{dataModelId}/allDataClasses'
 
@@ -117,6 +118,7 @@ interface Paths {
     String DATA_ELEMENT_ID = '/api/dataModels/{dataModelId}/dataClasses/{dataClassId}/dataElements/{id}'
     String DATA_ELEMENT_DOI = '/api/dataElements/{id}/doi'
     String DATA_ELEMENT_LIST_PAGED = '/api/dataModels/{dataModelId}/dataClasses/{dataClassId}/dataElements{?params*}'
+    String DATA_ELEMENT_MOVE = '/api/dataModels/{dataModelId}/dataClasses/{dataClassId}/dataElements/{id}/move'
     String DATA_ELEMENT_COPY = '/api/dataModels/{dataModelId}/dataClasses/{dataClassId}/dataElements/{otherModelId}/{otherDataClassId}/{dataElementId}'
 
 
