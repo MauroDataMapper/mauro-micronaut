@@ -33,7 +33,6 @@ import org.maurodata.api.model.ModelVersionDTO
 import org.maurodata.api.model.ModelVersionedRefDTO
 import org.maurodata.api.model.ModelVersionedWithTargetsRefDTO
 import org.maurodata.api.model.PermissionsDTO
-import org.maurodata.api.model.VersionLinkDTO
 import org.maurodata.audit.Audit
 import org.maurodata.controller.model.ModelController
 import org.maurodata.domain.datamodel.DataClass
@@ -47,7 +46,6 @@ import org.maurodata.domain.datamodel.IntersectsManyData
 import org.maurodata.domain.datamodel.SubsetData
 import org.maurodata.domain.diff.ObjectDiff
 import org.maurodata.domain.facet.EditType
-import org.maurodata.domain.facet.VersionLink
 import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.domain.model.Model
 import org.maurodata.domain.model.version.CreateNewVersionData
@@ -531,6 +529,13 @@ class DataModelController extends ModelController<DataModel> implements DataMode
     @Override
     List<String> dataModelTypes() {
         return DataModelType.labels()
+    }
+
+    @Audit(description = 'Move folder')
+    @Transactional
+    @Put(Paths.DATA_MODEL_MOVE)
+    DataModel moveFolder(UUID id, String destination) {
+        super.moveFolder(id, destination)
     }
 
 }

@@ -107,4 +107,6 @@ interface TerminologyApi extends ModelApi<Terminology> {
     @Delete(Paths.TERMINOLOGY_READ_BY_AUTHENTICATED)
     HttpResponse revokeReadByAuthenticated(UUID id)
 
+    @Put(Paths.TERMINOLOGY_MOVE)
+    Terminology moveFolder(UUID id, String destination)
 }

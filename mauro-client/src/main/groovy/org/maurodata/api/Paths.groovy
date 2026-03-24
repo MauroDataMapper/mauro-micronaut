@@ -154,6 +154,7 @@ interface Paths {
     String DATA_MODEL_DATATYPE_PROVIDERS = '/api/dataModels/providers/defaultDataTypeProviders'
     String DATA_MODEL_TYPES = '/api/dataModels/types'
     String DATA_MODEL_MERGE_INTO = '/api/dataModels/{id}/mergeInto/{otherId}'
+    String DATA_MODEL_MOVE = '/api/dataModels/{id}/folder/{destination}'
 
     /*
     * DataTypeApi
@@ -385,6 +386,7 @@ interface Paths {
     String CODE_SET_TERM_LIST_PAGED = '/api/codeSets/{id}/terms{?params*}'
     String CODE_SET_IMPORT = '/api/codeSets/import/{namespace}/{name}{/version}'
     String CODE_SET_SIMPLE_MODEL_VERSION_TREE = '/api/codeSets/{id}/simpleModelVersionTree{?branchesOnly}'
+    String CODE_SET_MOVE = '/api/codeSets/{id}/folder/{destination}'
 
 
     /*
@@ -407,6 +409,7 @@ interface Paths {
     String TERMINOLOGY_LIST_IMPORTERS = '/api/terminologies/providers/importers'
     String TERMINOLOGY_LIST_EXPORTERS = '/api/terminologies/providers/exporters'
     String TERMINOLOGY_DOI = '/api/terminologies/{id}/doi'
+    String TERMINOLOGY_MOVE = '/api/terminologies/{id}/folder/{destination}'
 
     String TERMINOLOGY_SIMPLE_MODEL_VERSION_TREE = '/api/terminologies/{id}/simpleModelVersionTree{?branchesOnly}'
     String TERMINOLOGY_LIST_PAGED = '/api/terminologies{?params*}'

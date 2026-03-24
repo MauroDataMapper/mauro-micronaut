@@ -321,4 +321,12 @@ class CodeSetController extends ModelController<CodeSet> implements CodeSetApi {
         ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "Doi is not implemented")
         return null
     }
+
+    @Audit(description = 'Move folder')
+    @Transactional
+    @Put(Paths.CODE_SET_MOVE)
+    CodeSet moveFolder(UUID id, String destination) {
+        super.moveFolder(id, destination)
+    }
+
 }

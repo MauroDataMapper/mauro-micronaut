@@ -28,6 +28,7 @@ import org.maurodata.api.federation.PublishApi
 import org.maurodata.api.federation.SubscribedCatalogueApi
 import org.maurodata.api.federation.SubscribedModelApi
 import org.maurodata.api.folder.FolderApi
+import org.maurodata.api.folder.VersionedFolderApi
 import org.maurodata.api.importer.ImporterApi
 import org.maurodata.api.path.PathApi
 import org.maurodata.api.profile.ProfileApi
@@ -134,6 +135,7 @@ class CommonDataSpec extends Specification {
     @Shared @Inject RuleApi ruleApi
     @Shared @Inject RuleRepresentationApi ruleRepresentationApi
     @Shared @Inject FolderApi folderApi
+    @Shared @Inject VersionedFolderApi versionedFolderApi
     @Shared @Inject ImporterApi importerApi
     @Shared @Inject ProfileApi profileApi
     @Shared @Inject SearchApi searchApi

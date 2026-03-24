@@ -198,6 +198,14 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
             accessControlService.checkRole(Role.EDITOR, folder)
             updated.folder = folder
         }
+        pathRepository.readParentItems(original)
+        if(updated.folder) {
+            pathRepository.readParentItems(updated.folder)
+        }
+        // If the original model is in a versioned folder, it must be moved within the same versioned folder.
+        if(original.owner?.id != updated.owner?.id) {
+            throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, 'Cannot move a model into or out of a versioned folder!')
+        }
         modelRepository.update(original, updated)
         pathRepository.readParentItems(updated)
         updated.updatePath()

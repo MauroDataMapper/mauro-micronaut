@@ -293,4 +293,12 @@ class TerminologyController extends ModelController<Terminology> implements Term
 
         return simpleModelVersionTreeList
     }
+
+    @Audit(description = 'Move folder')
+    @Transactional
+    @Put(Paths.TERMINOLOGY_MOVE)
+    Terminology moveFolder(UUID id, String destination) {
+        super.moveFolder(id, destination)
+    }
+
 }
