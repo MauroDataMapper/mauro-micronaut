@@ -77,6 +77,7 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
         super.update(id, dataClass)
     }
 
+    @Audit
     @Put(Paths.DATA_CLASS_MOVE)
     DataClass moveDataClass(UUID dataModelId, UUID id, @Body @Nullable DataClass dataClass) {
         if(dataClass.parentDataClass) {
