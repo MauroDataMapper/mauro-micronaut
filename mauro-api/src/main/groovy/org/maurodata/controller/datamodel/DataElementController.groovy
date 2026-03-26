@@ -117,7 +117,7 @@ class DataElementController extends AdministeredItemController<DataElement, Data
             //dataElement.setAssociations()
             pathRepository.readParentItems(cleanItem.dataClass)
             if(cleanItem.dataClass.dataModel.id != existing.dataClass.dataModel.id) {
-                ErrorHandler.handleError(HttpStatus.BAD_REQUEST, "Destination DataClass ${cleanItem.dataClass.dataModel} dataModel id is not ${existing.dataModel.id}")
+                ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "Destination DataClass ${cleanItem.dataClass.dataModel} dataModel id is not ${existing.dataModel.id}")
             }
         }
         boolean hasChanged = updateProperties(existing, cleanItem)

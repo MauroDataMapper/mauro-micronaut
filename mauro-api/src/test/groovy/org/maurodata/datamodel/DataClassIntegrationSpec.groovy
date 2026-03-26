@@ -1,5 +1,7 @@
 package org.maurodata.datamodel
 
+import io.micronaut.http.HttpStatus
+import io.micronaut.http.client.exceptions.HttpClientResponseException
 import io.micronaut.test.annotation.Sql
 import jakarta.inject.Singleton
 import org.maurodata.domain.datamodel.DataClass
@@ -126,6 +128,18 @@ class DataClassIntegrationSpec extends CommonDataSpec {
 
     }
 
+    void 'test move class into sub-class'() {
+
+        when:
+        DataClass childDataClass = dataClassApi.create(dataModelId, dataClassId1, new DataClass(label: "Child data class"))
+
+        dataClassApi.moveDataClass(dataModelId, dataClassId1, new DataClass(parentDataClass: new DataClass(id: childDataClass.id)))
+        then:
+        HttpClientResponseException exception = thrown()
+        exception.status == HttpStatus.UNPROCESSABLE_ENTITY
+
+
+    }
 
 
 

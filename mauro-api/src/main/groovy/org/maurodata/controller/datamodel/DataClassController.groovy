@@ -2,6 +2,7 @@ package org.maurodata.controller.datamodel
 
 import io.micronaut.http.exceptions.HttpStatusException
 import org.maurodata.api.model.CopyDataClassParamsDTO
+import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.domain.model.Item
 
 import groovy.transform.CompileStatic
@@ -74,33 +75,31 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
     @Audit
     @Put(Paths.DATA_CLASS_ID)
     DataClass update(UUID dataModelId, UUID id, @Body @NonNull DataClass dataClass) {
+        DataClass existing = dataClassRepository.readById(id)
+        if (existing == null) {
+            throw new HttpStatusException(HttpStatus.NOT_FOUND, "Object not found")
+        }
+        if(dataClass.parentDataClass) {
+            guardAgainstBadMoves(id, dataClass.parentDataClass)
+        }
         super.update(id, dataClass)
     }
 
     @Audit
     @Put(Paths.DATA_CLASS_MOVE)
     DataClass moveDataClass(UUID dataModelId, UUID id, @Body @Nullable DataClass dataClass) {
-        if(dataClass.parentDataClass) {
-            if(dataClass.parentDataClass.id != id) {
-                return update(dataModelId, id, dataClass)
-            } else {
-                ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "Cannot move data class to inside itself")
-            }
-        } else {
-            DataClass existing = dataClassRepository.readById(id)
-
-            if (existing == null) {
-                throw new HttpStatusException(HttpStatus.NOT_FOUND, "Object not found")
-            }
-
+        DataClass existing = dataClassRepository.readById(id)
+        if (existing == null) {
+            throw new HttpStatusException(HttpStatus.NOT_FOUND, "Object not found")
+        }
+        if(dataClass.parentDataClass) { // Moving to inside another class
+            guardAgainstBadMoves(id, dataClass.parentDataClass)
+            return update(dataModelId, id, dataClass)
+        } else { // Moving to the top-level DataModel
             accessControlService.checkRole(Role.EDITOR, existing)
-
             existing.parentDataClass = null
-
             DataClass updated = dataClassRepository.update(existing)
-
             return updated
-
         }
     }
 
@@ -112,7 +111,6 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
         parentIdParamName = 'dataModelId',
         deletedObjectDomainType = DataClass
     )
-    
     @Transactional
     @Delete(Paths.DATA_CLASS_ID)
     HttpResponse delete(UUID dataModelId, UUID id, @Body @Nullable DataClass dataClass) {
@@ -371,5 +369,20 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
             }
         }
         return null
+    }
+
+    protected guardAgainstBadMoves(UUID dataClassId, DataClass parentDataClass) {
+        if(parentDataClass) {
+            if(!parentDataClass.id) {
+                ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "Cannot move data class - no id for parent set!")
+            }
+            if(parentDataClass.id == dataClassId) {
+                ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "Cannot move data class to inside itself")
+            }
+            List<AdministeredItem> allParents = pathRepository.readParentItems(parentDataClass)
+            if(allParents.find {it.id == dataClassId}) {
+                ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "Cannot move data class inside one of its children!")
+            }
+        }
     }
 }
