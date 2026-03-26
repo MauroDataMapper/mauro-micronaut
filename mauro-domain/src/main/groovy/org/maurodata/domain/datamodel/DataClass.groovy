@@ -113,6 +113,13 @@ class DataClass extends ModelItem<DataModel> implements DiffableItem<DataClass>,
         parentDataClass?.id // backwards compatibility
     }
 
+    @Transient
+    @Deprecated
+    @JsonProperty('parentDataClass')
+    void setParentDataClassId(UUID parentDataClassId) {
+        this.parentDataClass = new DataClass(id: parentDataClassId) // backwards compatibility
+    }
+
     @Override
     @Transient
     @JsonIgnore

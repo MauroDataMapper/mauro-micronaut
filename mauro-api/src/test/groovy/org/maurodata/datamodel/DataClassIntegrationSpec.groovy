@@ -1,35 +1,27 @@
 package org.maurodata.datamodel
 
+import io.micronaut.http.HttpStatus
+import io.micronaut.http.client.exceptions.HttpClientResponseException
+import io.micronaut.test.annotation.Sql
+import jakarta.inject.Singleton
 import org.maurodata.domain.datamodel.DataClass
 import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.folder.Folder
 import org.maurodata.persistence.ContainerizedTest
-import org.maurodata.testing.BaseIntegrationSpec
-
-import io.micronaut.runtime.EmbeddedApplication
-import jakarta.inject.Inject
+import org.maurodata.testing.CommonDataSpec
+import org.maurodata.web.ListResponse
 import spock.lang.Shared
 
 @ContainerizedTest
-class DataClassIntegrationSpec extends BaseIntegrationSpec {
-
-    @Inject
-    EmbeddedApplication<?> application
+@Singleton
+@Sql(scripts = "classpath:sql/tear-down-dataclass.sql", phase = Sql.Phase.AFTER_ALL)
+class DataClassIntegrationSpec extends CommonDataSpec {
 
     @Shared
     UUID folderId
 
     @Shared
     UUID dataModelId
-
-    @Shared
-    UUID dataTypeId1
-
-    @Shared
-    UUID dataTypeId2
-
-    @Shared
-    UUID dataTypeId3
 
     @Shared
     UUID dataClassId1
@@ -40,24 +32,17 @@ class DataClassIntegrationSpec extends BaseIntegrationSpec {
     @Shared
     UUID dataClassId3
 
-    @Shared
-    UUID dataElementId1
-
-    @Shared
-    UUID dataElementId2
-
-    @Shared
-    UUID enumerationValueId
-
     void 'test data class'() {
         given:
-        Folder folder = (Folder) POST('/api/folders', [label: 'Test folder'], Folder)
-        DataModel dataModel = (DataModel) POST("/api/folders/$folder.id/dataModels", [label: 'Test data model'], DataModel)
+        Folder folder = folderApi.create(new Folder(label: 'Test folder'))
+        folderId = folder.id
+        DataModel dataModel = dataModelApi.create(folder.id,  new DataModel(label: 'Test data model'))
         dataModelId = dataModel.id
 
         when:
 
-        DataClass dataClass = (DataClass) POST("/api/dataModels/$dataModelId/dataClasses", [label: 'My first Data Class'], DataClass)
+        DataClass dataClass = dataClassApi.create(dataModelId, new DataClass(label: 'My first Data Class'))
+        dataClassId1 = dataClass.id
 
         then:
         dataClass.label == 'My first Data Class'
@@ -66,13 +51,10 @@ class DataClassIntegrationSpec extends BaseIntegrationSpec {
 
     void 'test extend data class'() {
         given:
-            Folder folder = (Folder) POST('/api/folders', [label: 'Test folder'], Folder)
-            DataModel dataModel = (DataModel) POST("/api/folders/$folder.id/dataModels", [label: 'Test data model'], DataModel)
-            DataClass dataClass1 = (DataClass) POST("/api/dataModels/$dataModel.id/dataClasses", [label: 'My first Data Class'], DataClass)
-            DataClass dataClass2 = (DataClass) POST("/api/dataModels/$dataModel.id/dataClasses", [label: 'My second Data Class'], DataClass)
-
+            DataClass dataClass2 = dataClassApi.create(dataModelId, new DataClass(label: 'My second Data Class'))
+            dataClassId2 = dataClass2.id
         when:
-            Map response = PUT("/api/dataModels/$dataModel.id/dataClasses/$dataClass2.id/extends/$dataModel.id/$dataClass1.id", null)
+            DataClass response = dataClassApi.createExtension(dataModelId, dataClassId2, dataModelId, dataClassId1)
 
         then:
             response.label == 'My second Data Class'
@@ -80,7 +62,7 @@ class DataClassIntegrationSpec extends BaseIntegrationSpec {
             response.extendsDataClasses.first().label == 'My first Data Class'
 
         when:
-            response = GET("/api/dataModels/$dataModel.id/dataClasses/$dataClass2.id")
+            response = dataClassApi.show(dataModelId, dataClassId2)
 
         then:
             response.label == 'My second Data Class'
@@ -88,20 +70,78 @@ class DataClassIntegrationSpec extends BaseIntegrationSpec {
             response.extendsDataClasses.first().label == 'My first Data Class'
 
         when:
-            response = DELETE("/api/dataModels/$dataModel.id/dataClasses/$dataClass2.id/extends/$dataModel.id/$dataClass1.id")
+            response = dataClassApi.deleteExtension(dataModelId, dataClassId2, dataModelId, dataClassId1)
 
         then:
             response.label == 'My second Data Class'
             !response.extendsDataClasses
 
         when:
-            response = GET("/api/dataModels/$dataModel.id/dataClasses/$dataClass2.id")
+            response = dataClassApi.show(dataModelId, dataClassId2)
 
         then:
             response.label == 'My second Data Class'
             !response.extendsDataClasses
 
     }
+
+    void 'test move data class'() {
+        when:
+        DataClass dataClass = dataClassApi.create(dataModelId, new DataClass(label: 'My new Data Class'))
+        dataClassId3 = dataClass.id
+
+        ListResponse<DataClass> dataClasses = dataClassApi.list(dataModelId)
+        then:
+        dataClasses.items.size() == 3
+
+        when:
+        dataClass = dataClassApi.moveDataClass(dataModelId, dataClassId3, new DataClass(parentDataClass: new DataClass(id: dataClassId1)))
+        then:
+        dataClass.parentDataClass.id == dataClassId1
+
+        when:
+        dataClasses = dataClassApi.list(dataModelId)
+        then:
+        dataClasses.items.size() == 2
+
+        when:
+        dataClasses = dataClassApi.list(dataModelId, dataClassId1)
+        then:
+        dataClasses.items.size() == 1
+
+        // Now move it back again
+        when:
+        dataClass = dataClassApi.moveDataClass(dataModelId, dataClassId3, new DataClass())
+        then:
+        dataClass.parentDataClass == null
+
+        when:
+        dataClasses = dataClassApi.list(dataModelId)
+        then:
+        dataClasses.items.size() == 3
+
+        when:
+        dataClasses = dataClassApi.list(dataModelId, dataClassId1)
+        then:
+        dataClasses.items.size() == 0
+
+
+    }
+
+    void 'test move class into sub-class'() {
+
+        when:
+        DataClass childDataClass = dataClassApi.create(dataModelId, dataClassId1, new DataClass(label: "Child data class"))
+
+        dataClassApi.moveDataClass(dataModelId, dataClassId1, new DataClass(parentDataClass: new DataClass(id: childDataClass.id)))
+        then:
+        HttpClientResponseException exception = thrown()
+        exception.status == HttpStatus.UNPROCESSABLE_ENTITY
+
+
+    }
+
+
 
 
 }

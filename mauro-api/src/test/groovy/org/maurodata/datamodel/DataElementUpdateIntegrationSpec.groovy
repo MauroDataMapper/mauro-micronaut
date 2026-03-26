@@ -32,6 +32,9 @@ class DataElementUpdateIntegrationSpec extends CommonDataSpec {
     UUID dataClassId
 
     @Shared
+    UUID dataClass2Id
+
+    @Shared
     UUID dataElementId
 
     @Shared
@@ -45,6 +48,7 @@ class DataElementUpdateIntegrationSpec extends CommonDataSpec {
         dataModelId = dataModelApi.create(folderId, dataModelPayload()).id
         dataTypeId = dataTypeApi.create(dataModelId, dataTypesPayload()).id
         dataClassId = dataClassApi.create(dataModelId, dataClassPayload()).id
+        dataClass2Id = dataClassApi.create(dataModelId, dataClassPayload('Test Data Class 2')).id
         dataElementId = dataElementApi.create(
             dataModelId,
             dataClassId,
@@ -60,6 +64,44 @@ class DataElementUpdateIntegrationSpec extends CommonDataSpec {
         dataElementResponse
         dataElementResponse.label == 'Renamed data element'
         dataElementResponse.dataType.id == dataTypeId
+    }
+
+    void 'test move data element'() {
+        when:
+        DataElement dataElementResponse = dataElementApi.moveDataDataElement(dataModelId, dataClassId,dataElementId, new DataElement(dataClass: new DataClass(id: dataClass2Id)))
+        then:
+        dataElementResponse
+        dataElementResponse.label == 'Renamed data element'
+        dataElementResponse.dataClass.id == dataClass2Id
+
+        when:
+        ListResponse<DataElement> dataElements = dataElementApi.list(dataModelId, dataClassId)
+        then:
+        dataElements.items.size() == 0
+
+        when:
+        dataElements = dataElementApi.list(dataModelId, dataClass2Id)
+        then:
+        dataElements.items.size() == 1
+
+        // Move it back again
+        when:
+        dataElementResponse = dataElementApi.update(dataModelId, dataClass2Id, dataElementId, new DataElement(dataClass: new DataClass(id: dataClassId)))
+        then:
+        dataElementResponse
+        dataElementResponse.label == 'Renamed data element'
+        dataElementResponse.dataClass.id == dataClassId
+
+        when:
+        dataElements = dataElementApi.list(dataModelId, dataClass2Id)
+        then:
+        dataElements.items.size() == 0
+
+        when:
+        dataElements = dataElementApi.list(dataModelId, dataClassId)
+        then:
+        dataElements.items.size() == 1
+
     }
 
     void 'test update data element -new datatype has different datamodel -should throw exception'() {
