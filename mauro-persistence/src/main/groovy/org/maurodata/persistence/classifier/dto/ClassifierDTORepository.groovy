@@ -66,12 +66,17 @@ abstract class ClassifierDTORepository implements GenericRepository<ClassifierDT
     abstract long deleteAllForClassifier(UUID classifierId)
 
 
-    @Nullable
     @Join(value = 'catalogueUser', type = Join.Type.LEFT_FETCH)
-    @Query('''select * from core.classifier where parent_classifier_id = :classifierId ''')
-    abstract List<Classifier> findAllByClassifier(UUID classifierId)
+    abstract List<ClassifierDTO> findAllByParentClassifierId(UUID classifierId)
 
     @Nullable
-    @Query('''select * from core.classifier where label = :label ''')
-    abstract List<Classifier> findAllByLabel(String label)
+    abstract List<ClassifierDTO> findAllByLabel(String label)
+
+
+    @Query("""
+        select * from core.join_administered_item_to_classifier 
+        where catalogue_item_id in (:itemIds)
+    """)
+    abstract List<ClassifierJoinDTO> readClassifiersByItemIds(Collection<UUID> itemIds)
+
 }

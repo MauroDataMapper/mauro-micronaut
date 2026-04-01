@@ -11,6 +11,7 @@ import org.maurodata.domain.classifier.ClassificationScheme
 import org.maurodata.domain.classifier.Classifier
 import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.persistence.classifier.dto.ClassifierDTORepository
+import org.maurodata.persistence.classifier.dto.ClassifierJoinDTO
 import org.maurodata.persistence.model.ModelItemRepository
 
 @Slf4j
@@ -22,6 +23,8 @@ abstract class ClassifierRepository implements ModelItemRepository<Classifier> {
     ClassifierDTORepository classifierDTORepository
 
     abstract List<Classifier> readAllByClassificationSchemeIdIn(Collection<UUID> classificationSchemeIds)
+
+    abstract List<Classifier> readAllByIdIn(Collection<UUID> classifierIds)
 
     @Override
     @Nullable
@@ -49,7 +52,7 @@ abstract class ClassifierRepository implements ModelItemRepository<Classifier> {
 
     @Override
     List<Classifier> findAllByLabel(String label) {
-        classifierDTORepository.findAllByLabel(label)
+        classifierDTORepository.findAllByLabel(label) as List<Classifier>
     }
     @Nullable
     UUID addAdministeredItem(AdministeredItem administeredItem, Classifier classifier) {
@@ -118,10 +121,6 @@ abstract class ClassifierRepository implements ModelItemRepository<Classifier> {
         return domainType != null && domainType.toLowerCase() in ['classifier', 'classifiers']
     }
 
-    List<Classifier> findAllByParent(Classifier classifier) {
-        classifierDTORepository.findAllByClassifier(classifier.id) as List<Classifier>
-    }
-
     List<Classifier> readAll(){
         findAll()
     }
@@ -130,5 +129,10 @@ abstract class ClassifierRepository implements ModelItemRepository<Classifier> {
     Boolean handlesPathPrefix(final String pathPrefix) {
         'cl'.equalsIgnoreCase(pathPrefix)
     }
+
+    List<ClassifierJoinDTO> readClassifiersByItemIds(Collection<UUID> itemIds) {
+        return classifierDTORepository.readClassifiersByItemIds(itemIds)
+    }
+
 }
 

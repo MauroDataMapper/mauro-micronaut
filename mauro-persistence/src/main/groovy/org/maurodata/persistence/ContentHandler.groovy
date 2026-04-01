@@ -1,5 +1,6 @@
 package org.maurodata.persistence
 
+import org.maurodata.persistence.classifier.dto.ClassifierJoinDTO
 import org.maurodata.persistence.terminology.dto.CodeSetTermDTO
 
 import groovy.transform.CompileStatic
@@ -128,6 +129,8 @@ class ContentHandler {
     Set<DataElementComponent> dataElementComponents = []
 
     Set<Metadata> metadata = []
+    Set<ClassifierJoinDTO> classifierJoinDTOs = []
+    Set<Classifier> classifiersForItems = []
     Map<Integer, Set<Annotation>> annotations = [:]
     Set<Edit> edits = []
     Set<ReferenceFile> referenceFiles = []
@@ -1003,6 +1006,15 @@ class ContentHandler {
         edits = inBatchesReadSet(allItemsValuesId as List<UUID>, batchSize) {List batch ->
             editCacheableRepository.readAllByMultiFacetAwareItemIdIn(batch)
         }
+
+        classifierJoinDTOs = inBatchesReadSet(allItemsValuesId as List<UUID>, batchSize) {List batch ->
+            classifierCacheableRepository.readClassifiersByItemIds(batch)
+        }
+
+        classifiersForItems = inBatchesReadSet(classifierJoinDTOs*.classifierId as List<UUID>, batchSize) {List batch ->
+            classifierCacheableRepository.readAllByIdIn(batch)
+        }
+
         referenceFiles = inBatchesReadSet(allItemsValuesId as List<UUID>, batchSize) {List batch ->
             referenceFileRepository.readAllByMultiFacetAwareItemIdIn(batch)
         }
@@ -1124,6 +1136,15 @@ class ContentHandler {
             if(allItems[edit.multiFacetAwareItemId]) {
                 allItems[edit.multiFacetAwareItemId].edits.add(edit)
             }
+        }
+
+        Map<UUID, Classifier> classifierMap = classifiersForItems.collectEntries {
+            [it.id, it]
+        }
+        classifierJoinDTOs.each { classifierJoinDTO ->
+            allItems[classifierJoinDTO.catalogueItemId].classifiers.add(
+                classifierMap[classifierJoinDTO.classifierId]
+            )
         }
 
         annotations[0].each {annotation ->
