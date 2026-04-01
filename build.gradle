@@ -5,7 +5,7 @@ plugins {
     id 'java-library'
     id 'groovy'
     id "com.vanniktech.maven.publish" version "0.34.0"
-    id "org.graalvm.buildtools.native" version "0.11.0" apply false
+    id "org.graalvm.buildtools.native" version "0.11.5" apply false
 }
 
 repositories {
