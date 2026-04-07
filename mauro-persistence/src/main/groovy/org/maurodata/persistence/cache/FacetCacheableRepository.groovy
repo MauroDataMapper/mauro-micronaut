@@ -52,6 +52,16 @@ abstract class FacetCacheableRepository<F extends Facet> extends ItemCacheableRe
         // invalidate find of the parent item
         invalidateCachedLookupById(FIND_BY_ID, item.multiFacetAwareItemDomainType, item.multiFacetAwareItemId)
 
+        if(item.multiFacetAwareItemDomainType == 'VersionedFolder') {
+            // invalidate find of the parent item for Folder as well
+            invalidateCachedLookupById(FIND_BY_ID, 'Folder', item.multiFacetAwareItemId)
+        }
+
+        if(item.multiFacetAwareItemDomainType == 'Folder') {
+            // invalidate find of the parent item for Folder as well
+            invalidateCachedLookupById(FIND_BY_ID, 'VersionedFolder', item.multiFacetAwareItemId)
+        }
+
         // invalidate findAll of the parent collection
         AdministeredItemCacheableRepository<AdministeredItem> administeredItemAdministeredItemCacheableRepository = getRepository(item.multiFacetAwareItemDomainType)
 
