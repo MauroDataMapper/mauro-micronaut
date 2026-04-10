@@ -143,14 +143,6 @@ class DataClass extends ModelItem<DataModel> implements DiffableItem<DataClass>,
     @Override
     @JsonIgnore
     @Transient
-    CollectionDiff fromItem() {
-        new BaseCollectionDiff(id, getDiffIdentifier(), label)
-    }
-
-
-    @Override
-    @JsonIgnore
-    @Transient
     String getDiffIdentifier() {
         if (parentDataClass != null) {
             return "${parentDataClass.diffIdentifier}|${getPathNodeString()}"

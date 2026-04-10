@@ -180,12 +180,6 @@ class DataType extends ModelItem<DataModel> implements DiffableItem<DataType>, I
         this.dataTypeKind == DataTypeKind.ENUMERATION_TYPE
     }
 
-    @Override
-    @JsonIgnore
-    @Transient
-    CollectionDiff fromItem() {
-        new BaseCollectionDiff(id, getDiffIdentifier(), label)
-    }
 
     @Override
     @JsonIgnore

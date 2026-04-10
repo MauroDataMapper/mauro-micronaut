@@ -1,6 +1,11 @@
 package org.maurodata.domain.datamodel
 
 import jakarta.persistence.PrePersist
+import org.maurodata.domain.diff.BaseCollectionDiff
+import org.maurodata.domain.diff.CollectionDiff
+import org.maurodata.domain.diff.DiffBuilder
+import org.maurodata.domain.diff.DiffableItem
+import org.maurodata.domain.diff.ObjectDiff
 import org.maurodata.domain.model.Item
 import org.maurodata.domain.model.ItemReference
 import org.maurodata.domain.model.ItemReferencer
@@ -31,7 +36,7 @@ import org.maurodata.domain.model.ModelItem
 @Introspected
 @MappedEntity(schema = 'datamodel')
 @MapConstructor(includeSuperFields = true, includeSuperProperties = true, noArg = true)
-class DataModel extends Model implements ItemReferencer {
+class DataModel extends Model implements ItemReferencer, DiffableItem<DataModel> {
 
     @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'dataModel')
     List<DataType> dataTypes = []
@@ -170,6 +175,27 @@ class DataModel extends Model implements ItemReferencer {
     String getDiffIdentifier() {
         if (folder != null) {return "${folder.getDiffIdentifier()}|${getPathNodeString()}"}
         return "${getPathNodeString()}"
+    }
+
+    @Override
+    @JsonIgnore
+    @Transient
+    ObjectDiff<DataModel> diff(DataModel other, String lhsPathRoot, String rhsPathRoot) {
+        ObjectDiff<DataModel> base = DiffBuilder.objectDiff(DataModel)
+            .leftHandSide(id?.toString(), this)
+            .rightHandSide(other.id?.toString(), other)
+        base.label = this.label
+        base.appendString(DiffBuilder.DESCRIPTION, this.description, other.description, this, other)
+        base.appendString(DiffBuilder.ALIASES_STRING, this.aliasesString, other.aliasesString, this, other)
+        if (!DiffBuilder.isNullOrEmpty(this.dataClasses as Collection<Object>) || !DiffBuilder.isNullOrEmpty(other.dataClasses as Collection<Object>)) {
+            base.appendCollection(DiffBuilder.DATA_CLASSES, this.dataClasses as Collection<DiffableItem>, other.dataClasses as Collection<DiffableItem>, lhsPathRoot,
+                                  rhsPathRoot)
+        }
+        if (!DiffBuilder.isNullOrEmpty(this.dataTypes as Collection<Object>) || !DiffBuilder.isNullOrEmpty(other.dataTypes as Collection<Object>)) {
+            base.appendCollection(DiffBuilder.DATA_TYPE, this.dataTypes as Collection<DiffableItem>, other.dataTypes as Collection<DiffableItem>, lhsPathRoot,
+                                  rhsPathRoot)
+        }
+        base
     }
 
     @Transient

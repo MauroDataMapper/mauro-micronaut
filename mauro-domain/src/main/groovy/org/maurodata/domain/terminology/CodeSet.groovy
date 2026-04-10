@@ -1,6 +1,11 @@
 package org.maurodata.domain.terminology
 
 import jakarta.persistence.PrePersist
+import org.maurodata.domain.diff.BaseCollectionDiff
+import org.maurodata.domain.diff.CollectionDiff
+import org.maurodata.domain.diff.DiffBuilder
+import org.maurodata.domain.diff.DiffableItem
+import org.maurodata.domain.diff.ObjectDiff
 import org.maurodata.domain.model.Item
 import org.maurodata.domain.model.ItemReference
 import org.maurodata.domain.model.ItemReferencer
@@ -32,7 +37,7 @@ import org.maurodata.domain.model.Model
 @MappedEntity(schema = 'terminology')
 @MapConstructor(includeSuperFields = true, includeSuperProperties = true, noArg = true)
 @Indexes([@Index(columns = ['folder_id', 'label', 'branch_name', 'model_version'], unique = true)])
-class CodeSet extends Model implements ItemReferencer {
+class CodeSet extends Model implements ItemReferencer, DiffableItem<CodeSet> {
 
     @Relation(value = Relation.Kind.MANY_TO_MANY, cascade = Relation.Cascade.ALL)
     @JoinTable(
@@ -125,6 +130,23 @@ class CodeSet extends Model implements ItemReferencer {
         CodeSet codeSetShallowCopy = new CodeSet()
         this.copyInto(codeSetShallowCopy)
         return codeSetShallowCopy
+    }
+
+    @Override
+    @JsonIgnore
+    @Transient
+    ObjectDiff<CodeSet> diff(CodeSet other, String lhsPathRoot, String rhsPathRoot) {
+        ObjectDiff<CodeSet> base = DiffBuilder.objectDiff(CodeSet)
+            .leftHandSide(id?.toString(), this)
+            .rightHandSide(other.id?.toString(), other)
+        base.label = this.label
+        base.appendString(DiffBuilder.DESCRIPTION, this.description, other.description, this, other)
+        base.appendString(DiffBuilder.ALIASES_STRING, this.aliasesString, other.aliasesString, this, other)
+        if (!DiffBuilder.isNullOrEmpty(this.terms as Collection<Object>) || !DiffBuilder.isNullOrEmpty(other.terms as Collection<Object>)) {
+            base.appendCollection(DiffBuilder.TERMS, this.terms as Collection<DiffableItem>, other.terms as Collection<DiffableItem>, lhsPathRoot,
+                                  rhsPathRoot)
+        }
+        base
     }
 
     /**

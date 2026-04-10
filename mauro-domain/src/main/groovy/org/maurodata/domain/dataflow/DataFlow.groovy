@@ -1,5 +1,7 @@
 package org.maurodata.domain.dataflow
 
+import org.maurodata.domain.diff.DiffableItem
+import org.maurodata.domain.diff.ObjectDiff
 import org.maurodata.domain.model.Item
 import org.maurodata.domain.model.ItemUtils
 
@@ -133,5 +135,11 @@ class DataFlow extends ModelItem<DataModel> {
     static DataFlow build(
         @DelegatesTo(value = DataFlow, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
         build [:], closure
+    }
+
+    //TODO : Implement this
+    @Override
+    ObjectDiff diff(DiffableItem other, String lhsPathRoot, String rhsPathRoot) {
+        return null
     }
 }

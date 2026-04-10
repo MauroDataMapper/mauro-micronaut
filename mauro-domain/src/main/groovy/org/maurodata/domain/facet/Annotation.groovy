@@ -2,6 +2,8 @@ package org.maurodata.domain.facet
 
 import groovy.util.logging.Slf4j
 import jakarta.persistence.PrePersist
+import org.maurodata.domain.diff.AnnotationDiff
+import org.maurodata.domain.diff.RuleDiff
 import org.maurodata.domain.model.Item
 import org.maurodata.domain.model.ItemUtils
 
@@ -79,6 +81,14 @@ class Annotation extends Facet implements DiffableItem<Annotation> {
 
     }
 
+    @Override
+    @JsonIgnore
+    @Transient
+    CollectionDiff fromItem() {
+        new AnnotationDiff(id, label, description, childAnnotations, getDiffIdentifier())
+    }
+
+
     CatalogueUser getCreatedByUser() {
         createdByUser ? createdByUser : catalogueUser
     }
@@ -90,13 +100,6 @@ class Annotation extends Facet implements DiffableItem<Annotation> {
                 childAnnotation.setAssociations()
             }
         }
-    }
-
-    @Override
-    @JsonIgnore
-    @Transient
-    CollectionDiff fromItem() {
-        new BaseCollectionDiff(id, getDiffIdentifier(), label)
     }
 
     @Override

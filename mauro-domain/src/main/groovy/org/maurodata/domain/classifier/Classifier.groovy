@@ -86,13 +86,6 @@ class Classifier extends ModelItem<ClassificationScheme> implements DiffableItem
     @Override
     @JsonIgnore
     @Transient
-    CollectionDiff fromItem() {
-        new BaseCollectionDiff(id, getDiffIdentifier(), label)
-    }
-
-    @Override
-    @JsonIgnore
-    @Transient
     String getDiffIdentifier() {
         if (parentClassifier != null) {return "${parentClassifier.getDiffIdentifier()}|${getPathNodeString()}"}
         if (classificationScheme != null) {return "${classificationScheme.getDiffIdentifier()}|${getPathNodeString()}"}
