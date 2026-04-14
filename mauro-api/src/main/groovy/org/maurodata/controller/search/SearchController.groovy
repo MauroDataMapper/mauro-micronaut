@@ -76,6 +76,10 @@ class SearchController implements AdministeredItemReader, SearchApi {
 
         List<SearchResultsDTO> searchResultsReadable = searchResults.findAll {SearchResultsDTO result ->
             AdministeredItem item = findAdministeredItem(result.domainType, result.id)
+            if (!accessControlService.canDoRole(Role.READER, item)) {
+                return false
+            }
+            // We might not have read the parent items if we're an administrator.
             pathRepository.readParentItems(item)
             item.updateBreadcrumbs()
             result.breadcrumbs = item.breadcrumbs
@@ -88,7 +92,7 @@ class SearchController implements AdministeredItemReader, SearchApi {
             if(!classifierFilter) {
                 return false
             }
-            classifierFilter && accessControlService.canDoRole(Role.READER, item)
+            return true
         }
 
         log.debug("Search time taken (retrieve + filter): " + (System.currentTimeMillis() - startTime))
