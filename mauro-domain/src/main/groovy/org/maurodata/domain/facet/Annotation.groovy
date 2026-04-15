@@ -49,6 +49,7 @@ class Annotation extends Facet implements DiffableItem<Annotation> {
 
     @PrePersist
     void prePersist() {
+        super.prePersist()
         if(parentAnnotation && (!parentAnnotationId || parentAnnotationId != parentAnnotation.id)) {
             if(parentAnnotation.id) {
                 parentAnnotationId = parentAnnotation.id

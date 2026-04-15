@@ -48,6 +48,7 @@ class SummaryMetadataReport extends Item implements DiffableItem<SummaryMetadata
 
     @PrePersist
     void prePersist() {
+        super.prePersist()
         if(summaryMetadata) {
             summaryMetadataId = summaryMetadata.id
         }

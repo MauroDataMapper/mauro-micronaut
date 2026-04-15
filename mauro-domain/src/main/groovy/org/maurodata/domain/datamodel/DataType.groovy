@@ -102,6 +102,7 @@ class DataType extends ModelItem<DataModel> implements DiffableItem<DataType>, I
 
     @PrePersist
     void prePersist() {
+        super.prePersist()
         if(dataTypeKind == DataTypeKind.MODEL_TYPE) {
             if(modelResource) {
                 if(!modelResource.id) {

@@ -91,7 +91,7 @@ jackson:
 
 datasources:
   default:
-    url: jdbc:postgresql://localhost:5432/sandbox
+    url: jdbc:postgresql://localhost:5432/sandbox?reWriteBatchedInserts=true
     username: sandbox
     password: sandbox
     dialect: POSTGRES
