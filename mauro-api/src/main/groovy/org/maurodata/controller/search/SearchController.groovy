@@ -67,11 +67,9 @@ class SearchController implements AdministeredItemReader, SearchApi {
             // TODO: Next need to find all narrower classifiers and add those too
         }
         List<Classifier> allClassifiers = classifierCacheableRepository.readAllByIdIn(allClassifierIds)
-        Map<UUID, Set<UUID>> classifierMap = [:]
+        Map<UUID, Set<UUID>> classifierMap = [:].withDefault { []  as Set }
         allClassifiers.each {classifier ->
-            Set<UUID> classifiersPerClassificationScheme = classifierMap.get(classifier.classificationScheme.id, [] as Set)
-            classifiersPerClassificationScheme.add(classifier.id)
-            classifierMap[classifier.classificationScheme.id] = classifiersPerClassificationScheme
+            classifierMap[classifier.classificationScheme.id] << classifier.id
         }
 
         List<SearchResultsDTO> searchResultsReadable = searchResults.findAll {SearchResultsDTO result ->
@@ -84,10 +82,13 @@ class SearchController implements AdministeredItemReader, SearchApi {
             item.updateBreadcrumbs()
             result.breadcrumbs = item.breadcrumbs
             result.classifiers = item.classifiers
-            boolean classifierFilter = allClassifierIds.size() == 0 ||
-                classifierMap.every {classificationScheme, classifiers ->
-                    classifiers.find { classifier ->
-                        result.classifiers.id.find {it == classifier}}
+            Set<UUID> resultClassifierIds = result.classifiers.id as Set
+
+            boolean classifierFilter = allClassifierIds.isEmpty() ||
+                classifierMap.every {_, classifiers ->
+                    classifiers.any {
+                        resultClassifierIds.contains(it)
+                    }
                 }
             if(!classifierFilter) {
                 return false
