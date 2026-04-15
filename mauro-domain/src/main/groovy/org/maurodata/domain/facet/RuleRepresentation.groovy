@@ -51,6 +51,7 @@ class RuleRepresentation extends Item implements DiffableItem<RuleRepresentation
 
     @PrePersist
     void prePersist() {
+        super.prePersist()
         if(rule) {
             ruleId = rule.id
         }

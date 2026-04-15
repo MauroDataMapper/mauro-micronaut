@@ -41,6 +41,7 @@ abstract class Facet extends Item implements Pathable, ItemReferencer {
 
     @PrePersist
     void prePersist() {
+        super.prePersist()
         if(!multiFacetAwareItemId) {
             if(multiFacetAwareItem) {
                 multiFacetAwareItemId = multiFacetAwareItem.id

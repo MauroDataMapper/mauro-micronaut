@@ -85,6 +85,7 @@ class CodeSet extends Model implements ItemReferencer {
 
     @PrePersist
     void prePersist() {
+        super.prePersist()
         if (!getModelWithVersion()) {
             branchName = 'main'
         }

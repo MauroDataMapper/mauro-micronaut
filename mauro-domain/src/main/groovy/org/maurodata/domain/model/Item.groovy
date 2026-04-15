@@ -6,15 +6,17 @@ import com.fasterxml.jackson.annotation.JsonAlias
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
+import com.fasterxml.uuid.Generators
+import com.fasterxml.uuid.impl.TimeBasedEpochGenerator
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.annotation.DateCreated
 import io.micronaut.data.annotation.DateUpdated
-import io.micronaut.data.annotation.GeneratedValue
 import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.MappedProperty
 import io.micronaut.data.annotation.Version
+import jakarta.persistence.PrePersist
 import jakarta.persistence.Transient
 
 import java.time.Instant
@@ -31,8 +33,20 @@ abstract class Item implements Serializable, ItemReferencer {
      * Identities are usually created when the object is saved in the database, but can be manually set beforehand.
      */
     @Id
-    @GeneratedValue
     UUID id
+
+    static TimeBasedEpochGenerator timeBasedEpochGenerator = Generators.timeBasedEpochGenerator()
+
+    void ensureId() {
+        if (id == null) {
+            id = timeBasedEpochGenerator.generate()
+        }
+    }
+
+    @PrePersist
+    void prePersist() {
+        ensureId()
+    }
 
     /**
      * The version of an object - this is an internal number used for persistence purposes
