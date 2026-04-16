@@ -1,5 +1,6 @@
 package org.maurodata.domain.datamodel
 
+import groovy.util.logging.Slf4j
 import org.maurodata.domain.model.Item
 import jakarta.persistence.PrePersist
 import org.maurodata.domain.model.ItemReference
@@ -49,6 +50,7 @@ import org.maurodata.domain.model.ModelItem
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @MappedEntity(schema = 'datamodel', value = 'data_type')
 @MapConstructor(includeSuperFields = true, includeSuperProperties = true, noArg = true)
+@Slf4j
 class DataType extends ModelItem<DataModel> implements DiffableItem<DataType>, ItemReferencer {
 
     enum DataTypeKind {
@@ -106,7 +108,7 @@ class DataType extends ModelItem<DataModel> implements DiffableItem<DataType>, I
         if(dataTypeKind == DataTypeKind.MODEL_TYPE) {
             if(modelResource) {
                 if(!modelResource.id) {
-                    System.err.println("Trying to save a dataType with a model which doesn't have an id!")
+                    log.error("Trying to save a dataType with a model which doesn't have an id!")
                 } else {
                     modelResourceDomainType = modelResource.domainType
                     modelResourceId = modelResource.id

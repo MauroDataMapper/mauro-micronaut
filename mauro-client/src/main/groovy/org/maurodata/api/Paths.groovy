@@ -331,7 +331,7 @@ interface Paths {
     */
     String SEARCH_GET = '/api/catalogueItems/search{?requestDTO*}'
     String SEARCH_POST = '/api/catalogueItems/search'
-
+    String SEARCH_REBUILD_INDEXES = '/api/searchIndex/rebuild'
     /*
     * OpenidProviderApi
      */

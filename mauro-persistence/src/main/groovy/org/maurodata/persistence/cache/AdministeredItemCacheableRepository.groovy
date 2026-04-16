@@ -24,6 +24,7 @@ import org.maurodata.domain.terminology.TermRelationshipType
 import org.maurodata.domain.terminology.Terminology
 import org.maurodata.persistence.ContentsService
 import org.maurodata.persistence.classifier.ClassifierRepository
+import org.maurodata.persistence.classifier.dto.ClassifierJoinDTO
 import org.maurodata.persistence.dataflow.DataClassComponentRepository
 import org.maurodata.persistence.dataflow.DataElementComponentRepository
 import org.maurodata.persistence.dataflow.DataFlowRepository
@@ -410,6 +411,14 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
         @Nullable
         List<Classifier> findAllForAdministeredItem(AdministeredItem administeredItem) {
             ((ClassifierRepository) repository).findAllForAdministeredItem(administeredItem.domainType, administeredItem.id)
+        }
+
+        List<ClassifierJoinDTO> readClassifiersByItemIds(Collection<UUID> itemIds) {
+            ((ClassifierRepository) repository).readClassifiersByItemIds(itemIds)
+        }
+
+        List<Classifier> readAllByIdIn(Collection<UUID> classifierIds) {
+            ((ClassifierRepository) repository).readAllByIdIn(classifierIds)
         }
 
         // not cached
