@@ -19,8 +19,8 @@ abstract class DataModelDTORepository implements GenericRepository<DataModelDTO,
     @Nullable
     abstract DataModelDTO findById(UUID id)
 
-    @Join(value = 'authority', type = Join.Type.LEFT_FETCH)
-    @Join(value = 'catalogueUser', type = Join.Type.LEFT_FETCH)
+    //@Join(value = 'authority', type = Join.Type.LEFT_FETCH)
+    //@Join(value = 'catalogueUser', type = Join.Type.LEFT_FETCH)
     @Nullable
     @Query('SELECT * FROM datamodel.data_model WHERE folder_id = :item AND label = :pathIdentifier')
     abstract List<DataModel> findAllByParentAndPathIdentifier(UUID item, String pathIdentifier)

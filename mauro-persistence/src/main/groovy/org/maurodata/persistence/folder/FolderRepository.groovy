@@ -33,6 +33,7 @@ abstract class FolderRepository implements ModelRepository<Folder> {
     }
 
     @Nullable
+    @Override
     List<Folder> findAllByParentAndPathIdentifier(UUID item, String pathIdentifier) {
         folderDTORepository.findAllByParentAndPathIdentifier(item, pathIdentifier) as List<Folder>
     }

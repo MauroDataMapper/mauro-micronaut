@@ -30,10 +30,10 @@ abstract class DataElementComponentDTORepository implements GenericRepository<Da
     @Nullable
     abstract DataElementComponentDTO findById(UUID id)
 
-    @Join(value = 'catalogueUser', type = Join.Type.LEFT_FETCH)
-    @Join(value = 'dataClassComponent', type = Join.Type.LEFT_FETCH)
-    @Join(value = 'sourceDataElements', type = Join.Type.LEFT_FETCH)
-    @Join(value = 'targetDataElements', type = Join.Type.LEFT_FETCH)
+    //@Join(value = 'catalogueUser', type = Join.Type.LEFT_FETCH)
+    //@Join(value = 'dataClassComponent', type = Join.Type.LEFT_FETCH)
+    //@Join(value = 'sourceDataElements', type = Join.Type.LEFT_FETCH)
+    //@Join(value = 'targetDataElements', type = Join.Type.LEFT_FETCH)
     @Nullable
     @Query('SELECT * FROM dataflow.data_element_component WHERE data_class_component_id = :item AND label = :pathIdentifier')
     abstract List<DataElementComponent> findAllByParentAndPathIdentifier(UUID item, String pathIdentifier)
