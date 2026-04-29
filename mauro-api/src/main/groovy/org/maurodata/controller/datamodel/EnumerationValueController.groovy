@@ -83,7 +83,7 @@ class EnumerationValueController extends AdministeredItemController<EnumerationV
     ListResponse<EnumerationValue> list(UUID dataModelId, UUID enumerationTypeId, @Nullable PaginationParams params = new PaginationParams()) {
         
         DataType enumerationType = dataTypeRepository.readById(enumerationTypeId)
-        accessControlService.checkRole(Role.EDITOR, enumerationType)
+        accessControlService.checkRole(Role.READER, enumerationType)
         ListResponse.from(enumerationValueRepository.readAllByEnumerationType_Id(enumerationTypeId), params)
     }
 
