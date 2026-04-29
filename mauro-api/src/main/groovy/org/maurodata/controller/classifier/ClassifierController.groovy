@@ -131,14 +131,8 @@ class ClassifierController extends AdministeredItemController<Classifier, Classi
     }
 
     @Audit
-    @Get(Paths.CHILD_CLASSIFIERS_ROUTE)
-    ListResponse<Classifier> list(@NonNull UUID classificationSchemeId, @NonNull UUID parentClassifierId) {
-        list(classificationSchemeId, parentClassifierId, null)
-    }
-
-    @Audit
     @Get(Paths.CHILD_CLASSIFIERS_ROUTE_PAGED)
-    ListResponse<Classifier> list(@NonNull UUID classificationSchemeId, @NonNull UUID parentClassifierId, @Nullable PaginationParams params) {
+    ListResponse<Classifier> list(@NonNull UUID classificationSchemeId, @NonNull UUID parentClassifierId, @Nullable PaginationParams params = new PaginationParams()) {
         Classifier parentClassifier = classifierCacheableRepository.readById(parentClassifierId)
         accessControlService.checkRole(Role.READER, parentClassifier)
         ListResponse.from(classifierCacheableRepository.readAllByParentClassifier_Id(parentClassifierId), params)
