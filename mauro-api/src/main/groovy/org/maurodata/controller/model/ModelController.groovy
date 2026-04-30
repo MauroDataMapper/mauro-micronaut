@@ -426,10 +426,10 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         accessControlService.checkRole(Role.EDITOR, folder)
         List<M> saved = imported.collect { M imp ->
             imp.folder = folder
-            log.info '** about to saveWithContentBatched... **'
+            log.info '** about to importWithContentBatched... **'
             //updateCreationProperties(imp)
-            M savedImported = (M) contentsService.saveWithContent(imp, accessControlService.getUser())
-            log.info '** finished saveWithContentBatched **'
+            M savedImported = (M) contentsService.importWithContent(imp, accessControlService.getUser())
+            log.info '** finished importWithContentBatched **'
             savedImported
         }
         List<M> smallerResponse = saved.collect { model ->
