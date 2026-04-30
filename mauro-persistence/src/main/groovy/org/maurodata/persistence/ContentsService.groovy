@@ -15,6 +15,15 @@ class ContentsService {
 
     @Inject ApplicationContext applicationContext
 
+    AdministeredItem importWithContent(AdministeredItem item, CatalogueUser catalogueUser = null) {
+        ContentHandler contentHandler = applicationContext.createBean(ContentHandler)
+        item.setAssociations()
+        contentHandler.shred(item)
+        contentHandler.setCreateProperties(catalogueUser, true)
+        contentHandler.saveWithContent()
+        return item
+    }
+
     AdministeredItem saveWithContent(AdministeredItem item, CatalogueUser catalogueUser = null) {
         ContentHandler contentHandler = applicationContext.createBean(ContentHandler)
         item.setAssociations()

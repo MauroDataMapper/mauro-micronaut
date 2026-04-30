@@ -131,6 +131,7 @@ class ContentHandler {
     Set<Metadata> metadata = []
     Set<ClassifierJoinDTO> classifierJoinDTOs = []
     Set<Classifier> classifiersForItems = []
+    IdentityHashMap<AdministeredItem, Set<Classifier>> classifiersForItemsMap = new IdentityHashMap<>(64)
     Map<Integer, Set<Annotation>> annotations = [:]
     Set<Edit> edits = []
     Set<ReferenceFile> referenceFiles = []
@@ -140,6 +141,8 @@ class ContentHandler {
     Set<SummaryMetadata> summaryMetadata = []
     Set<SummaryMetadataReport> summaryMetadataReports = []
     Set<VersionLink> versionLinks = []
+
+    IdentityHashMap<Item, UUID> preservedIds = new IdentityHashMap<>(64)
 
     void shred(Folder folder, Integer depth = 0) {
         if(folders[depth]) {
@@ -249,10 +252,10 @@ class ContentHandler {
                 folderCacheableRepository.saveAll(batches)
             }
         }
-        inBatches(ensureIdsAndSort(classificationSchemes.findAll {!it.id}), batchSize) {List<ClassificationScheme> batches ->
+        inBatches(ensureIdsAndSort(classificationSchemes.findAll {!it.id}, preservedIds), batchSize) {List<ClassificationScheme> batches ->
             classificationSchemeCacheableRepository.saveAll(batches)
         }
-        inBatches(ensureIdsAndSort(classifiers.findAll {!it.id}), batchSize) {List<Classifier> batches ->
+        inBatches(ensureIdsAndSort(classifiers.findAll {!it.id}, preservedIds), batchSize) {List<Classifier> batches ->
             classifierCacheableRepository.saveAll(batches)
         }
         inBatches(ensureIdsAndSort(terminologies.findAll {!it.id}), batchSize) {List<Terminology> batches ->
@@ -352,7 +355,13 @@ class ContentHandler {
         inBatches(ensureIdsAndSort(versionLinks.findAll {!it.id}), batchSize) {List<VersionLink> batches ->
             versionLinkCacheableRepository.saveAll(batches)
         }
-
+        classifiersForItemsMap.each {item, classifiersForItem ->
+            inBatches(ensureIdsAndSort(classifiersForItem.findAll {!it.id}, preservedIds), batchSize) {List<Classifier> batches ->
+                batches.each {classifier ->
+                    classifierCacheableRepository.addAdministeredItem(item, classifier)
+                }
+            }
+        }
         Instant start = Instant.now()
         //metadata.each {it.prePersist() }
         inBatches(ensureIdsAndSort(metadata.findAll {!it.id}), batchSize) {List<Metadata> batch ->
@@ -362,17 +371,31 @@ class ContentHandler {
 
     }
 
-    void setCreateProperties(CatalogueUser catalogueUser) {
+    void setCreateProperties(CatalogueUser catalogueUser, boolean preserveIds = false) {
         folders.keySet().sort().each {depth ->
             folders[depth].each {folder ->
                 setCreateProperties(folder, catalogueUser)
             }
         }
         classificationSchemes.each {
+            if(preserveIds) {
+                preserveItemId(it)
+            }
             setCreateProperties(it, catalogueUser)
         }
         classifiers.each {
+            if(preserveIds) {
+                preserveItemId(it)
+            }
             setCreateProperties(it, catalogueUser)
+        }
+        classifiersForItemsMap.each {item, classifiersForItem ->
+            classifiersForItem.each {classifier ->
+                if(preserveIds) {
+                    preserveItemId(classifier)
+                }
+                setCreateProperties(classifier, catalogueUser)
+            }
         }
         terminologies.each {
             setCreateProperties(it, catalogueUser)
@@ -449,7 +472,6 @@ class ContentHandler {
         metadata.each {
             setCreateProperties(it, catalogueUser)
         }
-
     }
 
     static void setCreateProperties(Item item, CatalogueUser catalogueUser) {
@@ -466,6 +488,11 @@ class ContentHandler {
         }
     }
 
+    void preserveItemId(Item item) {
+        if(item.id != null) {
+            preservedIds.put(item, item.id)
+        }
+    }
 
     boolean deleteWithContent() {
 
@@ -626,6 +653,11 @@ class ContentHandler {
                 shred(it, 0)
             }
         }
+        if(item.classifiers) {
+            item.classifiers.each {classifier ->
+                classifiersForItemsMap.computeIfAbsent(item) {new HashSet<>()}.add(classifier)
+            }
+        }
     }
 
     void shred(Annotation annotation, Integer depth = 0) {
@@ -649,16 +681,21 @@ class ContentHandler {
 
     }
 
-    private static <T extends Item> List<T> ensureIdsAndSort(List<T> items) {
+    private static <T extends Item> Set<T> ensureIdsAndSort(Set<T> items) {
         items.each {item ->
             item.ensureId()
         }
         return sortById(items)
     }
 
-    private static <T extends Item> Set<T> ensureIdsAndSort(Set<T> items) {
+    private static <T extends Item> Set<T> ensureIdsAndSort(final Set<T> items, final IdentityHashMap<Item, UUID> preservedIds) {
         items.each {item ->
-            item.ensureId()
+            final UUID preservedId = preservedIds.get(item)
+            if(preservedId) {
+                item.id = preservedId
+            } else {
+                item.ensureId()
+            }
         }
         return sortById(items)
     }
