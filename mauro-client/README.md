@@ -5,7 +5,7 @@ To create a new client application in a new Groovy project, follow the steps bel
 
 ## Add the client dependencies - build.gradle
 
-The `build.gradle` at the root level: you need to include the micronaut library in the top-level plugins section: 
+The `build.gradle` at the root level: you need to include the micronaut library in the top-level plugins section:
 
 ```aiignore
 plugins {
@@ -29,7 +29,7 @@ dependencies {
     implementation 'org.maurodata:mauro-domain:0.0.2-beta'
 }
 ```
-This will bring in the domain model and the generated declarative client.  Obviously the version numbers will need replacing to match the latest build / release 
+This will bring in the domain model and the generated declarative client.  Obviously the version numbers will need replacing to match the latest build / release
 of Mauro.
 
 ## Micronaut connection configuration - application.yml
@@ -106,10 +106,10 @@ class SimpleApplication2 extends ApiClient {
     }
 }
 ```
-This application connects to a Mauro instance and retrieves the list of folders, taking the first one.  If there is such a folder, it creates 
+This application connects to a Mauro instance and retrieves the list of folders, taking the first one.  If there is such a folder, it creates
 ten data models in that folder, with different labels.  It then retrieves all the data models in that folder and prints their labels.
 
-Note that this uses the Mauro DSL to build a DataModel (`DataModel.build{}`) - there are other ways to do this. 
+Note that this uses the Mauro DSL to build a DataModel (`DataModel.build{}`) - there are other ways to do this.
 
 
 ## Optional - configure the logging outputs
