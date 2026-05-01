@@ -26,4 +26,3 @@ services:
       - type: bind
         source: ${PWD}/mauro-api/src/test/resources/keycloak/realm.json
         target: /opt/keycloak/data/import/realm.json
-
