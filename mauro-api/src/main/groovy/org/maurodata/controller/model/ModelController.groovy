@@ -57,6 +57,8 @@ import org.maurodata.domain.model.version.ModelVersion
 import org.maurodata.domain.security.CatalogueUser
 import org.maurodata.domain.security.Role
 import org.maurodata.domain.security.UserGroup
+import org.maurodata.domain.terminology.CodeSet
+import org.maurodata.domain.terminology.Term
 import org.maurodata.persistence.ContentsService
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository
 import org.maurodata.persistence.cache.FacetCacheableRepository
@@ -1068,7 +1070,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
                     ancestorBasedPath = new Path(ancestorBasedPath.nodes)
 
                     final MergeFieldDiffDTO mergeFieldDiffDTO = new MergeFieldDiffDTO(fieldName: fieldName, sourceValue: null, targetValue: null,
-                                                                                      commonAncestorValue: null, isMergeConflict: true, _type: "deletion",
+                                                                                      commonAncestorValue: null, isMergeConflict: false, _type: "deletion",
                                                                                       path: ancestorBasedPath)
                     diffs.add(mergeFieldDiffDTO)
                 }
@@ -1109,7 +1111,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
                             ancestorBasedPath = new Path(ancestorBasedPath.nodes)
 
                             final MergeFieldDiffDTO mergeFieldDiffDTO = new MergeFieldDiffDTO(fieldName: fieldName, sourceValue: null, targetValue: null,
-                                                                                              commonAncestorValue: null, isMergeConflict: true, _type: "deletion",
+                                                                                              commonAncestorValue: null, isMergeConflict: false, _type: "deletion",
                                                                                               path: ancestorBasedPath)
                             diffs.add(mergeFieldDiffDTO)
                         }
@@ -1150,7 +1152,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
                             ancestorBasedPath = new Path(ancestorBasedPath.nodes)
 
                             final MergeFieldDiffDTO mergeFieldDiffDTO = new MergeFieldDiffDTO(fieldName: fieldName, sourceValue: null, targetValue: null,
-                                                                                              commonAncestorValue: null, isMergeConflict: true, _type: "deletion",
+                                                                                              commonAncestorValue: null, isMergeConflict: false, _type: "deletion",
                                                                                               path: ancestorBasedPath)
                             diffs.add(mergeFieldDiffDTO)
                         }
@@ -1191,7 +1193,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
                             ancestorBasedPath = new Path(ancestorBasedPath.nodes)
 
                             final MergeFieldDiffDTO mergeFieldDiffDTO = new MergeFieldDiffDTO(fieldName: fieldName, sourceValue: null, targetValue: null,
-                                                                                              commonAncestorValue: null, isMergeConflict: true, _type: "deletion",
+                                                                                              commonAncestorValue: null, isMergeConflict: false, _type: "deletion",
                                                                                               path: ancestorBasedPath)
                             diffs.add(mergeFieldDiffDTO)
                         }
@@ -1359,7 +1361,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         sortedFieldPatchDataForMerging.each {fieldPatch ->
             switch (fieldPatch._type) {
                 case 'creation':
-                    return processCreationPatchIntoModel(fieldPatch, targetModel, sourceModel, changeNotice, addedChangeNotice)
+                     return processCreationPatchIntoModel(fieldPatch, targetModel, sourceModel, changeNotice, addedChangeNotice)
                 case 'deletion':
                     return
                 case 'modification':
@@ -1385,9 +1387,14 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
             // delete the model
         }
 
-        administeredItemRepository.update(targetModel)
+        M alreadySavedTargetModel = administeredItemRepository.readById(targetModel.id)
+        if(alreadySavedTargetModel.version <= targetModel.version) { // If saving the parent above didn't already save this one.
+            administeredItemRepository.update(targetModel)
+        }
 
-        targetModel
+        // return a smaller subset of the target model
+        return administeredItemRepository.readById(targetModel.id)
+
     }
 
     List<FieldPatchDataDTO> getSortedFieldPatchDataForMerging(ObjectPatchDataDTO objectPatchData) {
@@ -1457,7 +1464,16 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         }
 
         // Make a copy of the AdministeredItem from the source, then attach the copy to the target parent
-        final AdministeredItem clonedAdministeredItem = administeredItemSource.clone()
+
+        IdentityHashMap<Item, Item> replacements = new IdentityHashMap<>(4096)
+
+        // If there is a parent, don't clone it, reference it
+        if (administeredItemSource.parent != null) {
+            replacements.put(administeredItemSource.parent, administeredItemTargetParent)
+        }
+
+
+        final AdministeredItem clonedAdministeredItem = administeredItemSource.deepClone(replacements) as AdministeredItem
 
         // reset any properties to do with versioning or branches etc and, of course, the Id as it will
         // need a new one
@@ -1483,7 +1499,17 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         clonedAdministeredItem.updatePath()
         clonedAdministeredItem.updateBreadcrumbs()
         AdministeredItemRepository simpleRepositoryToUse = pathRepository.getRepository(clonedAdministeredItem)
-        final AdministeredItem savedClonedAdministeredItem = (AdministeredItem) simpleRepositoryToUse.save(clonedAdministeredItem)
+
+        final AdministeredItem savedClonedAdministeredItem
+        if(clonedAdministeredItem instanceof CodeSet) {
+            Set<Term> oldTerms = [] as Set
+            oldTerms.addAll(clonedAdministeredItem.terms)
+            clonedAdministeredItem.terms = [] as Set
+            savedClonedAdministeredItem = simpleRepositoryToUse.save(clonedAdministeredItem) as CodeSet
+            clonedAdministeredItem.terms.addAll(oldTerms)
+        } else {
+            savedClonedAdministeredItem = (AdministeredItem) simpleRepositoryToUse.save(clonedAdministeredItem)
+        }
 
         /*
          Is this clonedAdministeredItem referencing something within the scope of its own 'versionable' (Versioned folder, Data model)?
@@ -1511,12 +1537,12 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
             List<ItemReference> referencedItems = itemReferencer.retrieveItemReferences()
 
             // Resolve these to a list of paths
-            List<Path> pathsToReferencedItems = pathRepository.resolveItemReferences(referencedItems)
+            Map<Path, ItemReference> pathsToReferencedItems = pathRepository.resolveItemReferences(referencedItems)
 
             // Are any of these paths inside the source model?
             final IdentityHashMap<Item, Item> toReplace = new IdentityHashMap<>(pathsToReferencedItems.size())
-            for (int p = 0; p < pathsToReferencedItems.size(); p++) {
-                Path pathToReferencedItem = pathsToReferencedItems.get(p)
+            final HashMap<UUID, Item> toReplaceById = new HashMap<>(pathsToReferencedItems.size())
+            pathsToReferencedItems.each {pathToReferencedItem, itemReference ->
 
                 Path pathToReferencedItemFromSource = pathToReferencedItem.trimUntil(sourceModel.pathNodeString)
 
@@ -1569,23 +1595,35 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
                     }
 
                     // Record a map of the ItemReferences the ItemReferencer will need to update to use the new reference
-                    toReplace.put(sourceOfReferencedItem, targetToReferencedItem)
+                    if(itemReference.theItem) {
+                        toReplace.put(itemReference.theItem, targetToReferencedItem)
+                    } else {
+                        toReplace.put(targetToReferencedItem, targetToReferencedItem)
+                    }
+                    toReplaceById.put(itemReference.itemId, targetToReferencedItem)
                 }
             }
 
             // Ask the ItemReferencer to update to use the cloned items
-            Map<UUID, Item> toReplaceById = toReplace.values().collectEntries { value -> [value.id, value]}
+            // Map<UUID, Item> toReplaceById =
+            //    toReplace.collectEntries {source, target ->
+            //        [source.id, target]
+            //    }
+                //toReplace.values().collectEntries { value -> [value.id, value]}
             itemReferencer.replaceItemReferencesByIdentity(toReplace, toReplaceById)
-
             // Then for each item, call update
 
             toReplace.values().forEach {Item replacedItem ->
 
                 if (replacedItem instanceof AdministeredItem) {
                     AdministeredItem replacedItemAdministeredItem = (AdministeredItem) replacedItem
-                    getAdministeredItemRepository(replacedItem.domainType).update(replacedItemAdministeredItem)
+                    AdministeredItem alreadySavedAdministeredItem = getAdministeredItemRepository(replacedItem.domainType).repository.readById(replacedItemAdministeredItem.id) as AdministeredItem
+                    if(alreadySavedAdministeredItem.version <= replacedItemAdministeredItem.version) { // If saving the parent above didn't already save this one.
+                        getAdministeredItemRepository(replacedItem.domainType).update(replacedItemAdministeredItem)
+                    }
                 }
             }
+            getAdministeredItemRepository(savedClonedAdministeredItem.domainType).update(savedClonedAdministeredItem)
         }
 
         // Record edits

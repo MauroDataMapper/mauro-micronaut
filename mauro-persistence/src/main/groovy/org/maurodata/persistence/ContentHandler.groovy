@@ -267,18 +267,29 @@ class ContentHandler {
         inBatches(ensureIdsAndSort(termRelationships.findAll {!it.id}), batchSize) {List<TermRelationship> batches ->
             termRelationshipCacheableRepository.saveAll(batches)
         }
-        inBatches(ensureIdsAndSort(codeSets.findAll {!it.id}), batchSize) {List<CodeSet> batches ->
-            codeSetCacheableRepository.saveAll(batches)
+
+        codeSets.findAll {!it.id}.each {
+            try{
+                codeSetCacheableRepository.save(it)
+            } catch(Exception e) {
+                e.printStackTrace()
+            }
         }
+//        inBatches(ensureIdsAndSort(codeSets.findAll {!it.id}), batchSize) {List<CodeSet> batches ->
+//            try{
+//                codeSetCacheableRepository.saveAll(batches)
+//            } catch(Exception e) {
+//                e.printStackTrace()
+//            }
+//        }
 
         // TODO: Improve this by doing them in bulk
         // Actually maybe this happens automatically
-        /*        codeSets.each {codeSet ->
-                    codeSet.terms.each {term ->
-                        codeSetCacheableRepository.addTerm(codeSet.id, term.id)
-                    }
-                }
-        */
+        //codeSets.each {codeSet ->
+//            codeSet.terms.each {term ->
+//                codeSetCacheableRepository.addTerm(codeSet.id, term.id)
+//            }
+//        }
         inBatches(ensureIdsAndSort(dataModels.findAll {!it.id}), batchSize) {List<DataModel> batches ->
             dataModelCacheableRepository.saveAll(batches)
         }

@@ -73,7 +73,7 @@ abstract class AdministeredItem extends Item implements Pathable, DiffableItem {
         aliasesString?.split(";") as List
     }
 
-    @Transient
+    //@Transient
     @Relation(Relation.Kind.ONE_TO_MANY)
     List<Classifier> classifiers = []
 

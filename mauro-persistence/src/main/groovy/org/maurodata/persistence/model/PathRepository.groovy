@@ -40,17 +40,17 @@ class PathRepository {
 
     @NonNull
     AdministeredItemRepository getRepository(AdministeredItem item) {
-        cacheableRepositories.find {it.handles(item.class) || it.handles(item.domainType)} ?: administeredItemRepositories.find {it.handles(item.class) || it.handles(item.domainType)}
+        cacheableRepositories.find {it.handles(item.class) || it.handles(item.domainType)}?.repository ?: administeredItemRepositories.find {it.handles(item.class) || it.handles(item.domainType)}
     }
 
     @NonNull
     AdministeredItemRepository getRepositoryForPathPrefix(final String prefix) {
-        cacheableRepositories.find {it.handlesPathPrefix(prefix)} ?: administeredItemRepositories.find {it.handlesPathPrefix(prefix)}
+        cacheableRepositories.find {it.handlesPathPrefix(prefix)}?.repository ?: administeredItemRepositories.find {it.handlesPathPrefix(prefix)}
     }
 
     @NonNull
     AdministeredItemRepository getRepositoryForDomainType(final String domainType) {
-        cacheableRepositories.find {it.handles(domainType)} ?: administeredItemRepositories.find {it.handles(domainType)}
+        cacheableRepositories.find {it.handles(domainType)}?.repository ?: administeredItemRepositories.find {it.handles(domainType)}
     }
 
     AdministeredItem findResourcesByPathFromRootResource(final AdministeredItem resource, final Path path) {
@@ -76,12 +76,12 @@ class PathRepository {
         return findResourcesByPathFromRootResource(currentAdministeredItem, path, positionInPath + 1)
     }
 
-    List<Path> resolveItemReferences(final List<ItemReference> itemReferences) {
-        final List<Path> resolved = []
+    Map<Path, ItemReference> resolveItemReferences(final List<ItemReference> itemReferences) {
+        final Map<Path, ItemReference> resolved = [:]
         itemReferences.forEach {ItemReference itemReference ->
 
             if (itemReference.pathToItem != null) {
-                resolved << itemReference.pathToItem
+                resolved.put(itemReference.pathToItem, itemReference)
             } else {
                 final AdministeredItemRepository administeredItemRepository = getRepositoryForDomainType(itemReference.itemDomainType)
                 if(administeredItemRepository) { // Otherwise we're just an itemn
@@ -89,7 +89,8 @@ class PathRepository {
                     if (resolvedAdministeredItem == null) {throw new MauroInternalException("Did not find reference to ${itemReference}")}
                     readParentItems(resolvedAdministeredItem)
                     resolvedAdministeredItem.updatePath()
-                    resolved << resolvedAdministeredItem.getPathToEdge()
+                    resolved.put(resolvedAdministeredItem.getPathToEdge(), itemReference)
+                    //resolved << resolvedAdministeredItem.getPathToEdge()
                 }
             }
         }

@@ -78,6 +78,7 @@ import org.maurodata.domain.terminology.Terminology
 import org.maurodata.export.ExportModel
 import org.maurodata.importdata.ImportMetadata
 import org.maurodata.plugin.importer.json.JsonDataModelImporterPlugin
+import org.maurodata.plugin.importer.json.JsonFolderImporterPlugin
 import org.maurodata.plugin.importer.json.JsonTerminologyImporterPlugin
 import org.maurodata.web.ListResponse
 
@@ -109,6 +110,8 @@ class CommonDataSpec extends Specification {
 
     @Inject
     JsonTerminologyImporterPlugin jsonTerminologyImporterPlugin
+    @Inject
+    JsonFolderImporterPlugin jsonFolderImporterPlugin
 
     @Inject
     ObjectMapper objectMapper
@@ -380,6 +383,22 @@ class CommonDataSpec extends Specification {
         String version = jsonTerminologyImporterPlugin.version
 
         ListResponse<Terminology> response = terminologyApi.importModel(importRequest, namespace, name, version)
+        response.items.first().id
+    }
+
+    UUID importFolder(Folder folderToImport, Folder parentFolder) {
+        ExportModel exportModel = ExportModel.build {
+            folder folderToImport
+        }
+        MultipartBody importRequest = MultipartBody.builder()
+            .addPart('folderId', parentFolder.id.toString())
+            .addPart('importFile', 'file.json', MediaType.APPLICATION_JSON_TYPE, objectMapper.writeValueAsBytes(exportModel))
+            .build()
+        String namespace = jsonFolderImporterPlugin.namespace
+        String name = jsonFolderImporterPlugin.name
+        String version = jsonFolderImporterPlugin.version
+
+        ListResponse<Folder> response = folderApi.importModel(importRequest, namespace, name, version)
         response.items.first().id
     }
 
