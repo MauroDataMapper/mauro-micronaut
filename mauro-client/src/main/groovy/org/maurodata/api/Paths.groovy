@@ -108,6 +108,7 @@ interface Paths {
     String DATA_CLASS_SEARCH = '/api/dataModels/{dataModelId}/dataClasses{?params*}'
     String DATA_CLASS_MOVE = '/api/dataModels/{dataModelId}/dataClasses/{id}/move'
     String DATA_CLASS_COPY = '/api/dataModels/{toDataModelId}/dataClasses/{fromDataModelId}/{dataClassId}'
+    String DATA_CLASS_COPY_TO_CLASS = '/api/dataModels/{toDataModelId}/dataClasses/{toDataClassId}/dataClasses/{fromDataModelId}/{dataClassId}'
     String ALL_DATA_CLASSES = '/api/dataModels/{dataModelId}/allDataClasses'
 
     /*

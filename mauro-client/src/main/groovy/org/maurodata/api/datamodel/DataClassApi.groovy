@@ -72,6 +72,12 @@ interface DataClassApi extends AdministeredItemApi<DataClass, DataModel> {
     @Post(Paths.DATA_CLASS_COPY)
     DataClass copyDataClass(UUID toDataModelId, UUID fromDataModelId, UUID dataClassId)
 
+    @Post(Paths.DATA_CLASS_COPY_TO_CLASS)
+    DataClass copyDataClass(UUID toDataModelId, UUID toDataClassId, UUID fromDataModelId, UUID dataClassId, @Body @Nullable CopyDataClassParamsDTO copyDataClassParams)
+
+    @Post(Paths.DATA_CLASS_COPY_TO_CLASS)
+    DataClass copyDataClass(UUID toDataModelId, UUID toDataClassId, UUID fromDataModelId, UUID dataClassId)
+
     @Get(Paths.DATA_CLASS_DOI)
     Map doi(UUID id)
 }
