@@ -53,22 +53,21 @@ class MauroApplicationContextConfigurer implements ApplicationContextConfigurer 
 
     @Override
     void configure(ApplicationContext applicationContext) {
+
         if(autoRegisterPlugins) {
-            System.err.println("Configuring...")
+
             URL url = getClass().getProtectionDomain().getCodeSource().getLocation()
             Path baseDirPath = Paths.get(url.toURI())
-            System.err.println(baseDirPath.toString())
+
             final Path pluginsDirPath
 
             if (Files.isDirectory(baseDirPath)) {
                 // Application is in an IDE
                 pluginsDirPath = findProjectRoot(baseDirPath)?.resolve("plugins")
-                System.err.println("1 " + pluginsDirPath.toString())
                 log.debug("Application IDE Plugin base directory ${baseDirPath}")
             } else {
                 // Application is in a packaged jar
                 pluginsDirPath = findAppRoot(baseDirPath.getParent())?.resolve("plugins")
-                System.err.println("2 " + pluginsDirPath.toString())
                 log.debug("Application Plugin base directory ${baseDirPath}")
             }
 
