@@ -57,7 +57,7 @@ class SearchController implements AdministeredItemReader, SearchApi {
     }
 
 
-    private ListResponse<SearchResultsDTO> executeSearch(SearchRequestDTO requestDTO) {
+    ListResponse<SearchResultsDTO> executeSearch(SearchRequestDTO requestDTO) {
         long startTime = System.currentTimeMillis()
         List<SearchResultsDTO> searchResults = searchRepository.search(requestDTO)
         log.debug("Search time taken (retrieve): " + (System.currentTimeMillis() - startTime))

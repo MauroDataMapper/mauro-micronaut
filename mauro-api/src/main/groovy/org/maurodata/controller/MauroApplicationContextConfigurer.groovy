@@ -1,5 +1,6 @@
 package org.maurodata.controller
 
+import io.micronaut.context.annotation.Property
 import org.maurodata.plugin.MauroPlugin
 import org.maurodata.profile.Profile
 
@@ -34,6 +35,11 @@ import java.util.stream.Stream
 @ContextConfigurer
 class MauroApplicationContextConfigurer implements ApplicationContextConfigurer {
 
+    // Could be enabled in Docker-type deployments;
+    // Should be disabled when running in development mode via gradle, or in live environments where no additional plugins will be required
+    @Property(name = 'mauro.plugins.autoregister', defaultValue = 'true')
+    boolean autoRegisterPlugins
+
     @Override
     void configure(ApplicationContextBuilder builder) {
         System.out.println("""
@@ -47,31 +53,33 @@ class MauroApplicationContextConfigurer implements ApplicationContextConfigurer 
 
     @Override
     void configure(ApplicationContext applicationContext) {
-        System.err.println("Configuring...")
-        URL url = getClass().getProtectionDomain().getCodeSource().getLocation()
-        Path baseDirPath = Paths.get(url.toURI())
-        System.err.println(baseDirPath.toString())
-        final Path pluginsDirPath
+        if(autoRegisterPlugins) {
+            System.err.println("Configuring...")
+            URL url = getClass().getProtectionDomain().getCodeSource().getLocation()
+            Path baseDirPath = Paths.get(url.toURI())
+            System.err.println(baseDirPath.toString())
+            final Path pluginsDirPath
 
-        if (Files.isDirectory(baseDirPath)) {
-            // Application is in an IDE
-            pluginsDirPath = findProjectRoot(baseDirPath)?.resolve("plugins")
-            System.err.println("1 " + pluginsDirPath.toString())
-            log.debug("Application IDE Plugin base directory ${baseDirPath}")
-        } else {
-            // Application is in a packaged jar
-            pluginsDirPath = findAppRoot(baseDirPath.getParent())?.resolve("plugins")
-            System.err.println("2 " + pluginsDirPath.toString())
-            log.debug("Application Plugin base directory ${baseDirPath}")
-        }
+            if (Files.isDirectory(baseDirPath)) {
+                // Application is in an IDE
+                pluginsDirPath = findProjectRoot(baseDirPath)?.resolve("plugins")
+                System.err.println("1 " + pluginsDirPath.toString())
+                log.debug("Application IDE Plugin base directory ${baseDirPath}")
+            } else {
+                // Application is in a packaged jar
+                pluginsDirPath = findAppRoot(baseDirPath.getParent())?.resolve("plugins")
+                System.err.println("2 " + pluginsDirPath.toString())
+                log.debug("Application Plugin base directory ${baseDirPath}")
+            }
 
-        if (pluginsDirPath == null) {
-            log.warn("Failed to locate plugins directory")
-            return
-        }
+            if (pluginsDirPath == null) {
+                log.warn("Failed to locate plugins directory")
+                return
+            }
 
-        if (Files.exists(pluginsDirPath)) {
-            loadPlugins(pluginsDirPath, applicationContext)
+            if (Files.exists(pluginsDirPath)) {
+                loadPlugins(pluginsDirPath, applicationContext)
+            }
         }
     }
 
