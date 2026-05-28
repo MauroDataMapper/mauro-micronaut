@@ -113,6 +113,8 @@ javamail:
         host: $$host$$ # Replace me!
 
 mauro:
+  plugins:
+    autoregister: false
   federation:
     subscribed-catalogues.max: 50
   audit:
