@@ -1,5 +1,8 @@
 package org.maurodata.domain.terminology
 
+import org.maurodata.domain.diff.DiffBuilder
+import org.maurodata.domain.diff.DiffableItem
+import org.maurodata.domain.diff.ObjectDiff
 import org.maurodata.domain.model.Item
 import org.maurodata.domain.model.ItemReference
 import org.maurodata.domain.model.ItemReferencer
@@ -37,7 +40,7 @@ import org.maurodata.domain.model.ModelItem
     @Index(columns = ['source_term_id']),
     @Index(columns = ['target_term_id']),
     @Index(columns = ['relationship_type_id'])])
-class TermRelationship extends ModelItem<Terminology> implements ItemReferencer {
+class TermRelationship extends ModelItem<Terminology> implements ItemReferencer, DiffableItem<TermRelationship> {
 
     @JsonIgnore
     Terminology terminology
@@ -165,4 +168,17 @@ class TermRelationship extends ModelItem<Terminology> implements ItemReferencer 
         this.copyInto(termRelationshipShallowCopy)
         return termRelationshipShallowCopy
     }
+
+    @Override
+    @JsonIgnore
+    @Transient
+    ObjectDiff<TermRelationship> diff(TermRelationship other, String lhsPathRoot, String rhsPathRoot) {
+        ObjectDiff<TermRelationship> base = DiffBuilder.objectDiff(TermRelationship)
+            .leftHandSide(id?.toString(), this)
+            .rightHandSide(other.id?.toString(), other)
+        base.label = this.label
+        base.appendString(DiffBuilder.DESCRIPTION, this.description, other.description, this, other)
+        base
+    }
+
 }

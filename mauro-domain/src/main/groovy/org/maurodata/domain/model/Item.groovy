@@ -1,5 +1,6 @@
 package org.maurodata.domain.model
 
+import jakarta.persistence.PreUpdate
 import org.maurodata.domain.security.CatalogueUser
 
 import com.fasterxml.jackson.annotation.JsonAlias
@@ -44,6 +45,7 @@ abstract class Item implements Serializable, ItemReferencer {
     }
 
     @PrePersist
+    @PreUpdate
     void prePersist() {
         ensureId()
     }

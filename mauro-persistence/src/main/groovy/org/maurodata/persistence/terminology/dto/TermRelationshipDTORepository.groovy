@@ -38,10 +38,10 @@ abstract class TermRelationshipDTORepository implements GenericRepository<TermRe
     @Nullable
     abstract List<TermRelationshipDTO> findAllByTerminologyAndSourceTermOrTargetTerm(Terminology terminology, Term sourceTerm, Term targetTerm)
 
-    @Join(value = 'sourceTerm', type = Join.Type.LEFT_FETCH)
-    @Join(value = 'targetTerm', type = Join.Type.LEFT_FETCH)
-    @Join(value = 'relationshipType', type = Join.Type.LEFT_FETCH)
-    @Join(value = 'catalogueUser', type = Join.Type.LEFT_FETCH)
+    //@Join(value = 'sourceTerm', type = Join.Type.LEFT_FETCH)
+    //@Join(value = 'targetTerm', type = Join.Type.LEFT_FETCH)
+    //@Join(value = 'relationshipType', type = Join.Type.LEFT_FETCH)
+    //@Join(value = 'catalogueUser', type = Join.Type.LEFT_FETCH)
     @Nullable
     @Query('SELECT * FROM terminology.term_relationship WHERE target_term_id = :item AND label = :pathIdentifier')
     abstract List<TermRelationship> findAllByParentAndPathIdentifier(UUID item, String pathIdentifier)

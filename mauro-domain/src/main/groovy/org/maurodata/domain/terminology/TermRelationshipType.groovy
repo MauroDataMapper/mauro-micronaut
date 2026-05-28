@@ -1,5 +1,8 @@
 package org.maurodata.domain.terminology
 
+import org.maurodata.domain.diff.DiffBuilder
+import org.maurodata.domain.diff.DiffableItem
+import org.maurodata.domain.diff.ObjectDiff
 import org.maurodata.domain.model.Item
 import org.maurodata.domain.model.ItemReference
 import org.maurodata.domain.model.ItemReferencer
@@ -35,7 +38,7 @@ import org.maurodata.domain.model.ModelItem
 @MappedEntity(schema = 'terminology')
 @MapConstructor(includeSuperFields = true, includeSuperProperties = true, noArg = true)
 @Indexes([@Index(columns = ['terminology_id', 'label'], unique = true)])
-class TermRelationshipType extends ModelItem<Terminology> implements ItemReferencer {
+class TermRelationshipType extends ModelItem<Terminology> implements ItemReferencer, DiffableItem<TermRelationshipType> {
 
     @JsonIgnore
     Terminology terminology
@@ -152,5 +155,17 @@ class TermRelationshipType extends ModelItem<Terminology> implements ItemReferen
         TermRelationshipType termRelationshipTypeShallowCopy = new TermRelationshipType()
         this.copyInto(termRelationshipTypeShallowCopy)
         return termRelationshipTypeShallowCopy
+    }
+
+    @Override
+    @JsonIgnore
+    @Transient
+    ObjectDiff<TermRelationshipType> diff(TermRelationshipType other, String lhsPathRoot, String rhsPathRoot) {
+        ObjectDiff<TermRelationshipType> base = DiffBuilder.objectDiff(TermRelationshipType)
+            .leftHandSide(id?.toString(), this)
+            .rightHandSide(other.id?.toString(), other)
+        base.label = this.label
+        base.appendString(DiffBuilder.DESCRIPTION, this.description, other.description, this, other)
+        base
     }
 }

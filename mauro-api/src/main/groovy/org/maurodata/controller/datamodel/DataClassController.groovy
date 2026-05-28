@@ -116,6 +116,7 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
     HttpResponse delete(UUID dataModelId, UUID id, @Body @Nullable DataClass dataClass) {
         DataClass dataClassToDelete = dataClassRepository.loadWithContent(id)
         ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, dataClassToDelete, "DataClass $id not found")
+        pathRepository.readParentItems(dataClassToDelete)
         deleteDanglingReferenceTypes(dataClassToDelete.allChildDataClasses(), dataClassToDelete.allChildDataElements())
         HttpResponse deletedResponse = super.delete(id, dataClass)
         deletedResponse

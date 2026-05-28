@@ -1,6 +1,7 @@
 package org.maurodata.domain.datamodel
 
 import groovy.util.logging.Slf4j
+import jakarta.persistence.PreUpdate
 import org.maurodata.domain.model.Item
 import jakarta.persistence.PrePersist
 import org.maurodata.domain.model.ItemReference
@@ -102,6 +103,7 @@ class DataType extends ModelItem<DataModel> implements DiffableItem<DataType>, I
     @Transient
     Model modelResource
 
+    @PreUpdate
     @PrePersist
     void prePersist() {
         super.prePersist()
@@ -180,12 +182,6 @@ class DataType extends ModelItem<DataModel> implements DiffableItem<DataType>, I
         this.dataTypeKind == DataTypeKind.ENUMERATION_TYPE
     }
 
-    @Override
-    @JsonIgnore
-    @Transient
-    CollectionDiff fromItem() {
-        new BaseCollectionDiff(id, getDiffIdentifier(), label)
-    }
 
     @Override
     @JsonIgnore
