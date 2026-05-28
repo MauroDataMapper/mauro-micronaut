@@ -283,6 +283,74 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
         toDataClass
     }
 
+    @Audit
+    @Post(Paths.DATA_CLASS_COPY_TO_CLASS)
+    @Transactional
+    DataClass copyDataClass(UUID toDataModelId, UUID toDataClassId, UUID fromDataModelId, UUID dataClassId, @Body @Nullable CopyDataClassParamsDTO copyDataClassParams = null) {
+
+        DataModel toDataModel = dataModelRepository.loadWithContent(toDataModelId)
+        accessControlService.checkRole(Role.EDITOR, toDataModel)
+
+        DataModel fromDataModel = dataModelRepository.loadWithContent(fromDataModelId)
+        accessControlService.canDoRole(Role.READER, fromDataModel)
+
+        DataClass toDataClassParent = toDataModel.dataClasses.find {DataClass dataClass -> dataClass.id == toDataClassId}
+        //verify
+        if (toDataClassParent == null) {
+            ErrorHandler.handleError(HttpStatus.NOT_FOUND, "Cannot find dataClass $toDataClassId for dataModel $toDataModelId")
+        }
+        accessControlService.canDoRole(Role.EDITOR, toDataClassParent)
+
+        // It's loaded in with the DataModel content, so find it rather than loading another copy
+        DataClass fromDataClass = fromDataModel.dataClasses.find {DataClass dataClass -> dataClass.id == dataClassId}
+        //verify
+        if (fromDataClass == null) {
+            ErrorHandler.handleError(HttpStatus.NOT_FOUND, "Cannot find dataClass $dataClassId for dataModel $fromDataModelId")
+        }
+        accessControlService.canDoRole(Role.EDITOR, fromDataClass)
+
+        // Make a deep clone, replacing fromDataModel with toDataModel throughout
+        IdentityHashMap<Item, Item> replacements = new IdentityHashMap<>(256)
+        replacements.put(fromDataModel, toDataModel)
+        DataClass toDataClass = fromDataClass.deepClone(replacements) as DataClass
+        toDataClass.parentDataClass = toDataClassParent
+        Set<DataType> newDataTypes = copyDataTypes(toDataClass)
+        toDataModel.dataTypes = newDataTypes as List
+        toDataModel.dataClasses = [toDataClass]
+
+        if(copyDataClassParams != null && copyDataClassParams.copyLabel != null && !copyDataClassParams.copyLabel.trim().isEmpty()) {
+            toDataClass.label = copyDataClassParams.copyLabel.trim()
+        } else {
+            if (fromDataModel.id == toDataModel.id) {toDataClass.label = "${toDataClass.label} (Copy)"}
+        }
+        /*
+            TO DO: Question about copyPermissions
+            In grails copyPermissions == true is not implemented and throws an error if copyPermissions == true, which may mean
+             that the permissions are not copied by default, and default permissions and ownership are applied.
+            However, here in micronaut the permission properties are copied by default, including the catalogue user as this
+             is not overwritten. See: contentsService.saveContentOnly() not calling contentHandler.setCreateProperties
+             To implement copyPermissions would require doing nothing when copyPermissions is true, and recursively setting defaults
+             otherwise
+         */
+
+        // Trigger this to be saved
+        unsetDataElementIds(toDataClass)
+
+        try {
+            contentsService.saveContentOnly(toDataModel)
+        } catch (Throwable th) {
+            th.printStackTrace()
+            throw th
+        }
+
+        updateDerivedProperties(toDataClass)
+
+        // clean before responding
+        toDataClass.dataElements = []
+
+        toDataClass
+    }
+
     @Get(Paths.DATA_CLASS_DOI)
     @Override
     Map doi(UUID id) {
