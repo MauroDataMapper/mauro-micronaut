@@ -84,7 +84,7 @@ class DynamicProfileServiceSpec extends Specification {
 
 
         metadataRepository.getNamespaceKeys() == [
-                "org.maurodata.profile": ["metadataNamespace","profileApplicableForDomains"] as Set,
+                "org.maurodata.profile": ["metadataNamespace","domainsApplicable"] as Set,
                 "org.maurodata.profile.dataelement":["metadataPropertyName", "regularExpression"] as Set
         ]
 

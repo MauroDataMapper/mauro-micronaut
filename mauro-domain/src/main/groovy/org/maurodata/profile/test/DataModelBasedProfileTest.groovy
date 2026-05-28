@@ -16,7 +16,7 @@ class DataModelBasedProfileTest {
         finalised true
         metadata(ProfileSpecificationProfile.NAMESPACE,
                  ["metadataNamespace"          : testProfileModelNamespace,
-                  "profileApplicableForDomains": "DataModel; Terminology"])
+                  "domainsApplicable": "DataModel; Terminology"])
         primitiveType {
             label "Decimal"
         }
