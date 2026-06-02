@@ -28,6 +28,7 @@ import org.maurodata.domain.diff.ObjectDiff
 import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.domain.model.Model
 import org.maurodata.domain.model.ModelItem
+import org.maurodata.visitor.DomainVisitor
 
 /**
  * A datatype describes the range of values that a column or field in a dataset may take.  It may be one of the following kinds:
@@ -84,6 +85,11 @@ class DataClass extends ModelItem<DataModel> implements DiffableItem<DataClass>,
     @JsonIgnore
     @Nullable
     DataClass parentDataClass
+
+    @Override
+    <T> T accept(DomainVisitor<T> visitor) {
+        return visitor.visitDataClass(this)
+    }
 
     @Override
     @Transient
@@ -214,7 +220,9 @@ class DataClass extends ModelItem<DataModel> implements DiffableItem<DataClass>,
         this.dataElements.add(dataElement)
         dataElement.dataClass = this
         dataElement.dataModel = this.dataModel
-        dataModel.dataElements.add(dataElement)
+        if(dataModel) {
+            dataModel.dataElements.add(dataElement)
+        }
         dataElement
     }
 

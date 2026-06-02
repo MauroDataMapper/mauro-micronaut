@@ -16,6 +16,7 @@ import io.micronaut.data.annotation.*
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Pattern
 import org.maurodata.domain.diff.*
+import org.maurodata.visitor.DomainVisitor
 
 @CompileStatic
 @MappedEntity(value = 'summary_metadata', schema = 'core', alias = 'summary_metadata_')
@@ -36,6 +37,11 @@ class SummaryMetadata extends Facet implements DiffableItem<SummaryMetadata>, It
     @JsonAlias(['summary_metadata_reports'])
     @Relation(Relation.Kind.ONE_TO_MANY)
     Collection<SummaryMetadataReport> summaryMetadataReports = []
+
+    @Override
+    <T> T accept(DomainVisitor<T> visitor) {
+        return visitor.visitSummaryMetadata(this)
+    }
 
     @Override
     @JsonIgnore

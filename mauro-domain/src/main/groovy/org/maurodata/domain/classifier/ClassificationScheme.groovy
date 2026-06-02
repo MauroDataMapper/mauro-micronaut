@@ -24,6 +24,7 @@ import io.micronaut.data.annotation.Relation
 import jakarta.persistence.Transient
 import org.maurodata.domain.model.Model
 import org.maurodata.domain.model.ModelItem
+import org.maurodata.visitor.DomainVisitor
 
 /**
  *
@@ -39,14 +40,20 @@ class ClassificationScheme extends Model implements ItemReferencer, DiffableItem
     @JsonAlias("classifiers") // for importing models exported from the Grails implementation
     List<Classifier> csClassifiers = []
 
+    @Transient
+    UUID breadcrumbTreeId
+
+    @Override
+    <T> T accept(DomainVisitor<T> visitor) {
+        return visitor.visitClassificationScheme(this)
+    }
+
     @Override
     @Transient
     @JsonIgnore
     String getPathPrefix() {
         'csc'
     }
-    @Transient
-    UUID breadcrumbTreeId
 
     @Override
     String getDomainType(){

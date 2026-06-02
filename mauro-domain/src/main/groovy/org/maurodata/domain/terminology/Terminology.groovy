@@ -28,6 +28,7 @@ import io.micronaut.data.annotation.Relation
 import jakarta.persistence.Transient
 import org.maurodata.domain.model.Model
 import org.maurodata.domain.model.ModelItem
+import org.maurodata.visitor.DomainVisitor
 
 /**
  * A Terminology is a model that describes a number of terms, and some relationships between them.
@@ -52,6 +53,11 @@ class Terminology extends Model implements ItemReferencer, DiffableItem<Terminol
 
     @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'terminology')
     List<TermRelationship> termRelationships = []
+
+    @Override
+    <T> T accept(DomainVisitor<T> visitor) {
+        return visitor.visitTerminology(this)
+    }
 
     @Override
     @Transient

@@ -27,6 +27,7 @@ import jakarta.validation.constraints.NotNull
 import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.domain.model.Model
 import org.maurodata.domain.model.ModelItem
+import org.maurodata.visitor.DomainVisitor
 
 /**
  * A datatype describes the range of values that a column or field in a dataset may take.  It may be one of the following kinds:
@@ -64,6 +65,11 @@ class DataElement extends ModelItem<DataClass> implements DiffableItem<DataEleme
 
     @NotNull
     DataType dataType
+
+    @Override
+    <T> T accept(DomainVisitor<T> visitor) {
+        return visitor.visitDataElement(this)
+    }
 
     @Override
     @Transient

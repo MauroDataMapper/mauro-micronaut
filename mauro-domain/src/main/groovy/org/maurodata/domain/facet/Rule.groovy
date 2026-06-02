@@ -22,6 +22,7 @@ import io.micronaut.data.annotation.Relation
 import io.micronaut.data.annotation.Transient
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Pattern
+import org.maurodata.visitor.DomainVisitor
 
 @CompileStatic
 @MappedEntity(value = 'rule', schema = 'core', alias = 'rule_')
@@ -39,6 +40,11 @@ class Rule extends Facet implements DiffableItem<Rule> {
     @Relation(Relation.Kind.ONE_TO_MANY)
     @JsonAlias(['rule_representations'])
     List<RuleRepresentation> ruleRepresentations = []
+
+    @Override
+    <T> T accept(DomainVisitor<T> visitor) {
+        return visitor.visitRule(this)
+    }
 
     @Override
     @JsonIgnore

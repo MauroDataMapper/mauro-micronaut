@@ -24,6 +24,7 @@ import org.maurodata.domain.diff.DiffBuilder
 import org.maurodata.domain.diff.DiffableItem
 import org.maurodata.domain.diff.ObjectDiff
 import org.maurodata.domain.security.CatalogueUser
+import org.maurodata.visitor.DomainVisitor
 
 @CompileStatic
 @MappedEntity(value = 'annotation', schema = 'core', alias = 'annotation_')
@@ -49,6 +50,11 @@ class Annotation extends Facet implements DiffableItem<Annotation> {
     @JsonAlias(['child_annotations'])
     @Relation(Relation.Kind.ONE_TO_MANY)
     List<Annotation> childAnnotations = []
+
+    @Override
+    <T> T accept(DomainVisitor<T> visitor) {
+        return visitor.visitAnnotation(this)
+    }
 
     @PrePersist
     @PreUpdate

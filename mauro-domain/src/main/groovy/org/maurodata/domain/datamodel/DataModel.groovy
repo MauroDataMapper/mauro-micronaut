@@ -27,6 +27,7 @@ import io.micronaut.data.annotation.Relation
 import jakarta.persistence.Transient
 import org.maurodata.domain.model.Model
 import org.maurodata.domain.model.ModelItem
+import org.maurodata.visitor.DomainVisitor
 
 /**
  * A DataModel describes a data asset, or a data standard
@@ -65,6 +66,11 @@ class DataModel extends Model implements ItemReferencer, DiffableItem<DataModel>
     @JsonProperty('type')
     @MappedProperty('model_type')
     String dataModelType = DataModelType.DATA_ASSET.label
+
+    @Override
+    <T> T accept(DomainVisitor<T> visitor) {
+        return visitor.visitDataModel(this)
+    }
 
     @Override
     @Transient
