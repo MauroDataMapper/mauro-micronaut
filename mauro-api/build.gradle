@@ -19,6 +19,15 @@ plugins {
 }
 
 repositories {
+    mavenLocal()
+    maven { url "https://mauro-repository.com/libs-snapshot-local" }
+    maven { url "https://mauro-repository.com/libs-release-local" }
+
+    // For DaisyDiff
+//    maven {url "https://packages.atlassian.com/mvn/maven-atlassian-external"}
+    // For org.cyberneko:html
+//    maven {url "https://repository.ow2.org/nexus/content/repositories/public/"}
+
     mavenCentral()
 }
 
@@ -113,6 +122,10 @@ dependencies {
 
     // UUIDs
     implementation 'com.fasterxml.uuid:java-uuid-generator:5.1.0'
+
+//    runtimeOnly('org.maurodata.plugins:mauro-plugin-nhsdatadictionary:0.0.1-SNAPSHOT')
+//    runtimeOnly('org.maurodata.plugins:mauro-plugin-forms:0.0.1-SNAPSHOT')
+//    runtimeOnly('org.maurodata.plugins:mauro-plugin-ckan:0.0.1-SNAPSHOT')
 }
 
 apply from: 'build-docker.gradle'
