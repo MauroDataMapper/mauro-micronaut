@@ -6,9 +6,9 @@ micronaut:
 
   server:
     port: 8080
-    max-request-size: 500mb
+    max-request-size: 2gb
     multipart:
-      max-file-size: 500mb
+      max-file-size: 2gb
     cors:
       enabled: true
     host-resolution:
@@ -28,7 +28,7 @@ micronaut:
         paths: classpath:META-INF/swagger/views/swagger-ui
         mapping: /swagger-ui/**
   security:
-    enabled: false
+    enabled: true
     authentication: session
     redirect:
       enabled: false
@@ -41,18 +41,17 @@ micronaut:
         path: '/api/authentication/logout'
         get-allowed: true
       oauth:
-        enabled: false
+#        enabled: true
     reject-not-found: false
     authentication-provider-strategy: any
-#    Populate to enable OAuth2; see also mauro.oauth properties
 #    oauth2:
+#      callback-uri: http://localhost:8080/oauth/callback{/provider}
 #      clients:
 #        keycloak:
-#          client-id:
-#          client-secret:
+#          client-id: mauro
+#          client-secret: ZBXabk0H3TbnOlCvD4nrWzfSf32Ibgsx
 #          openid:
-#            issuer:
-
+#            issuer: http://localhost:9009/realms/mauro
 
   caches:
     items-cache:
@@ -120,14 +119,30 @@ mauro:
   audit:
     scope: ALL
 
-# Populate to enable OAuth2; see also micronaut.security properties
-#  oauth:
-#    id:
-#    label: Keycloak
-#    standard-provider: true
-#    authorization-endpoint:
-#    image-url:
-#    login-success:
-#    create-user:
-##    token-custom-validation:
-##      custom-claim-key: required-claim-value
+  # Populate to enable OAuth2; see also micronaut.security properties
+
+  #  oauth:
+  #    id: 00000000-0000-0000-0000-000000000002
+  #    label: Keycloak
+  #    standard-provider: true
+  #    authorization-endpoint: http://localhost:8080/oauth/login/keycloak
+  #    image-url: https://www.keycloak.org/resources/images/logo.svg
+  #    login-success: http://localhost:4200/redirects/open-id-connect-redirect.html
+  #    ui-redirect-urls:
+  #        - http://localhost:4200/redirects/open-id-connect-redirect.html
+  #        - http://localhost:4201/redirects/open-id-connect-redirect.html
+
+  #  create-user: true
+
+
+#  oauths:
+#    -   app-label: Keycloak
+#        app-image-url: https://www.keycloak.org/resources/images/logo.svg
+#        app-login-success: http://localhost:4200/redirects/open-id-connect-redirect.html
+#        oauth-provider: keycloak
+#        create-user: true
+#        require-verified-email: false
+#        ui-redirect-urls:
+#          - http://localhost:4200/redirects/open-id-connect-redirect.html
+#          - http://localhost:4201/redirects/open-id-connect-redirect.html
+
