@@ -11,6 +11,8 @@ import org.maurodata.domain.folder.Folder
 import org.maurodata.export.ExportModel
 import org.maurodata.plugin.JsonPluginConstants
 import org.maurodata.plugin.exporter.FolderExporterPlugin
+import org.maurodata.visitor.CommonVisitorRegistries
+import org.maurodata.visitor.GenericDomainTraversalVisitor
 
 @Slf4j
 @Singleton
@@ -64,6 +66,12 @@ class JsonFolderExporterPlugin implements FolderExporterPlugin {
             exportModel.folders = folders.toList()
         } else {
             exportModel.folder = folders[0]
+        }
+        def visitor = new GenericDomainTraversalVisitor(
+            CommonVisitorRegistries.treeifyVisitor() + CommonVisitorRegistries.smallExport()
+        )
+        folders.each {folder ->
+            folder.accept(visitor)
         }
         objectMapper.writeValueAsBytes(exportModel)
     }

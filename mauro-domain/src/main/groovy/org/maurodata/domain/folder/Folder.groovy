@@ -25,6 +25,7 @@ import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.domain.model.Model
 import org.maurodata.domain.terminology.CodeSet
 import org.maurodata.domain.terminology.Terminology
+import org.maurodata.visitor.DomainVisitor
 
 /**
  * A folder is a container for models, and, in the case of a VersionedFolder, may be a model in its own right.
@@ -102,6 +103,11 @@ class Folder extends Model implements ItemReferencer, DiffableItem<Folder> {
 
     @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'classificationScheme')
     List<ClassificationScheme> classificationSchemes = []
+
+    @Override
+    <T> T accept(DomainVisitor<T> visitor) {
+        return visitor.visitFolder(this)
+    }
 
     @Override
     @Transient

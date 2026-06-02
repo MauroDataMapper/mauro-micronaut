@@ -23,6 +23,7 @@ import io.micronaut.data.annotation.MappedEntity
 import jakarta.persistence.Transient
 import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.domain.model.ModelItem
+import org.maurodata.visitor.DomainVisitor
 
 /**
  * A TermRelationship defines a relation of a given type between two terms within a terminology.
@@ -52,6 +53,11 @@ class TermRelationship extends ModelItem<Terminology> implements ItemReferencer,
 
     @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator, property = 'label', scope = TermRelationshipType, resolver = DedupingObjectIdResolver)
     TermRelationshipType relationshipType
+
+    @Override
+    <T> T accept(DomainVisitor<T> visitor) {
+        return visitor.visitTermRelationship(this)
+    }
 
     @Override
     String getLabel() {
