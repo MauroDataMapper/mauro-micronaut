@@ -16,6 +16,7 @@ import org.maurodata.domain.facet.Edit
 import org.maurodata.domain.facet.Metadata
 import org.maurodata.domain.facet.ReferenceFile
 import org.maurodata.domain.facet.Rule
+import org.maurodata.domain.facet.RuleRepresentation
 import org.maurodata.domain.facet.SemanticLink
 import org.maurodata.domain.facet.SummaryMetadata
 import org.maurodata.domain.facet.SummaryMetadataReport
@@ -48,8 +49,13 @@ class GenericDomainTraversalVisitor implements DomainVisitor<Void> {
         this.registry = registry ?: new VisitorRegistry()
     }
 
-    <T extends Item> GenericDomainTraversalVisitor on(Class<T> type, Closure<?> handler) {
-        registry.on(type, handler)
+    <T extends Item> GenericDomainTraversalVisitor onEnter(Class<T> type, Closure<?> handler) {
+        registry.onEnter(type, handler)
+        return this
+    }
+
+    <T extends Item> GenericDomainTraversalVisitor onLeave(Class<T> type, Closure<?> handler) {
+        registry.onLeave(type, handler)
         return this
     }
 
@@ -106,192 +112,208 @@ class GenericDomainTraversalVisitor implements DomainVisitor<Void> {
         }
     }
 
-    protected final void applyHandlers(Item item) {
-        registry.apply(item)
+    protected final void visitNode(Item item, Closure<?> traverseChildren) {
+        registry.applyEnter(item)
+        traverseChildren.call()
+        if (item instanceof AdministeredItem) {
+            traverseFacets((AdministeredItem) item)
+        }
+        registry.applyLeave(item)
+    }
+
+    protected final void applyEnter(Item item) {
+        registry.applyEnter(item)
+    }
+
+    protected final void applyLeave(Item item) {
+        registry.applyLeave(item)
     }
 
     @Override
     final Void visitFolder(Folder folder) {
-        applyHandlers(folder)
-        traverseAll(folder.childFolders)
-        traverseAll(folder.dataModels)
-        traverseAll(folder.terminologies)
-        traverseAll(folder.codeSets)
-        traverseAll(folder.classificationSchemes)
-        traverseFacets(folder)
+        visitNode(folder) {
+            traverseAll(folder.childFolders)
+            traverseAll(folder.dataModels)
+            traverseAll(folder.terminologies)
+            traverseAll(folder.codeSets)
+            traverseAll(folder.classificationSchemes)
+        }
         return null
     }
 
     @Override
     final Void visitAnnotation(Annotation annotation) {
-        applyHandlers(annotation)
-        traverseAll(annotation.childAnnotations)
+        visitNode(annotation) {
+            traverseAll(annotation.childAnnotations)
+        }
         return null
     }
 
     @Override
     final Void visitEdit(Edit edit) {
-        applyHandlers(edit)
+        visitNode(edit) {}
         return null
     }
 
     @Override
     final Void visitMetadata(Metadata metadata) {
-        applyHandlers(metadata)
+        visitNode(metadata) {}
         return null
     }
 
     @Override
     final Void visitReferenceFile(ReferenceFile referenceFile) {
-        applyHandlers(referenceFile)
+        visitNode(referenceFile) {}
         return null
     }
 
     @Override
     final Void visitRule(Rule rule) {
-        applyHandlers(rule)
+        visitNode(rule) {
+            traverseAll(rule.ruleRepresentations)
+        }
+        return null
+    }
+
+    @Override
+    final Void visitRuleRepresentation(RuleRepresentation ruleRepresentation) {
+        visitNode(ruleRepresentation) { }
         return null
     }
 
     @Override
     final Void visitSemanticLink(SemanticLink semanticLink) {
-        applyHandlers(semanticLink)
+        visitNode(semanticLink) { }
         return null
     }
 
     @Override
     final Void visitSummaryMetadata(SummaryMetadata summaryMetadata) {
-        applyHandlers(summaryMetadata)
-        traverseAll(summaryMetadata.summaryMetadataReports)
+        visitNode(summaryMetadata) {
+            traverseAll(summaryMetadata.summaryMetadataReports)
+        }
         return null
     }
 
     @Override
     final Void visitSummaryMetadataReport(SummaryMetadataReport summaryMetadataReport) {
-        applyHandlers(summaryMetadataReport)
+        visitNode(summaryMetadataReport) { }
         return null
     }
 
     @Override
     final Void visitVersionLink(VersionLink versionLink) {
-        applyHandlers(versionLink)
+        visitNode(versionLink) { }
         return null
     }
 
     @Override
     final Void visitDataModel(DataModel dataModel) {
-        applyHandlers(dataModel)
-        traverseAll(dataModel.dataClasses)
-        traverseAll(dataModel.dataTypes)
-        traverseFacets(dataModel)
+        visitNode(dataModel) {
+            traverseAll(dataModel.dataClasses)
+            traverseAll(dataModel.dataTypes)
+        }
         return null
     }
 
     @Override
     final Void visitDataFlow(DataFlow dataFlow) {
-        applyHandlers(dataFlow)
-        traverseAll(dataFlow.dataClassComponents)
-        traverseFacets(dataFlow)
+        visitNode(dataFlow) {
+            traverseAll(dataFlow.dataClassComponents)
+        }
         return null
     }
 
     @Override
     final Void visitDataClassComponent(DataClassComponent dataClassComponent) {
-        applyHandlers(dataClassComponent)
-        traverseAll(dataClassComponent.dataElementComponents)
-        traverseFacets(dataClassComponent)
+        visitNode(dataClassComponent) {
+            traverseAll(dataClassComponent.dataElementComponents)
+        }
         return null
     }
 
     @Override
     final Void visitDataElementComponent(DataElementComponent dataElementComponent) {
-        applyHandlers(dataElementComponent)
-        traverseFacets(dataElementComponent)
+        visitNode(dataElementComponent) { }
         return null
     }
 
     @Override
     final Void visitDataClass(DataClass dataClass) {
-        applyHandlers(dataClass)
-        traverseAll(dataClass.dataClasses)
-        traverseAll(dataClass.dataElements)
-        traverseFacets(dataClass)
+        visitNode(dataClass) {
+            traverseAll(dataClass.dataClasses)
+            traverseAll(dataClass.dataElements)
+        }
         return null
     }
 
     @Override
     final Void visitDataElement(DataElement dataElement) {
-        applyHandlers(dataElement)
-        traverseFacets(dataElement)
+        visitNode(dataElement) { }
         return null
     }
 
     @Override
     final Void visitDataType(DataType dataType) {
-        applyHandlers(dataType)
-        traverseAll(dataType.enumerationValues)
-        traverseFacets(dataType)
+        visitNode(dataType) {
+            traverseAll(dataType.enumerationValues)
+        }
         return null
     }
 
     @Override
     final Void visitEnumerationValue(EnumerationValue enumerationValue) {
-        applyHandlers(enumerationValue)
-        traverseFacets(enumerationValue)
+        visitNode (enumerationValue) { }
         return null
     }
 
     @Override
     final Void visitTerminology(Terminology terminology) {
-        applyHandlers(terminology)
-        traverseAll(terminology.terms)
-        traverseAll(terminology.termRelationshipTypes)
-        traverseAll(terminology.termRelationships)
-        traverseFacets(terminology)
+        visitNode(terminology) {
+            traverseAll(terminology.terms)
+            traverseAll(terminology.termRelationshipTypes)
+            traverseAll(terminology.termRelationships)
+        }
         return null
     }
 
     @Override
     final Void visitTerm(Term term) {
-        applyHandlers(term)
-        traverseFacets(term)
+        visitNode (term) { }
         return null
     }
 
     @Override
     final Void visitTermRelationshipType(TermRelationshipType termRelationshipType) {
-        applyHandlers(termRelationshipType)
-        traverseFacets(termRelationshipType)
+        visitNode(termRelationshipType) { }
         return null
     }
 
     @Override
     final Void visitTermRelationship(TermRelationship termRelationship) {
-        applyHandlers(termRelationship)
-        traverseFacets(termRelationship)
+        visitNode(termRelationship) { }
         return null
     }
 
     @Override
     final Void visitCodeSet(CodeSet codeSet) {
-        applyHandlers(codeSet)
-        traverseFacets(codeSet)
+        visitNode(codeSet) { }
         return null
     }
 
     @Override
     final Void visitClassificationScheme(ClassificationScheme classificationScheme) {
-        applyHandlers(classificationScheme)
-        traverseAll(classificationScheme.csClassifiers)
-        traverseFacets(classificationScheme)
+        visitNode(classificationScheme) {
+            traverseAll(classificationScheme.csClassifiers)
+        }
         return null
     }
 
     @Override
     final Void visitClassifier(Classifier classifier) {
-        applyHandlers(classifier)
-        traverseAll(classifier.childClassifiers)
-        traverseFacets(classifier)
+        visitNode(classifier) {
+            traverseAll(classifier.childClassifiers)
+        }
         return null
     }
 }

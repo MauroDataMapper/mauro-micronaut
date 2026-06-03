@@ -16,6 +16,7 @@ import org.maurodata.domain.facet.Edit
 import org.maurodata.domain.facet.Metadata
 import org.maurodata.domain.facet.ReferenceFile
 import org.maurodata.domain.facet.Rule
+import org.maurodata.domain.facet.RuleRepresentation
 import org.maurodata.domain.facet.SemanticLink
 import org.maurodata.domain.facet.SummaryMetadata
 import org.maurodata.domain.facet.SummaryMetadataReport
@@ -47,31 +48,32 @@ abstract class AbstractDomainTraversalVisitor extends GenericDomainTraversalVisi
     }
 
     private void registerLegacyHooks() {
-        on(Folder) {Folder folder -> onVisitFolder(folder)}
-        on(Annotation) {Annotation annotation -> onVisitAnnotation(annotation)}
-        on(Edit) {Edit edit -> onVisitEdit(edit)}
-        on(Metadata) {Metadata metadata -> onVisitMetadata(metadata)}
-        on(ReferenceFile) {ReferenceFile referenceFile -> onVisitReferenceFile(referenceFile)}
-        on(Rule) {Rule rule -> onVisitRule(rule)}
-        on(SemanticLink) {SemanticLink semanticLink -> onVisitSemanticLink(semanticLink)}
-        on(SummaryMetadata) {SummaryMetadata summaryMetadata -> onVisitSummaryMetadata(summaryMetadata)}
-        on(SummaryMetadataReport) {SummaryMetadataReport report -> onVisitSummaryMetadataReport(report)}
-        on(VersionLink) {VersionLink versionLink -> onVisitVersionLink(versionLink)}
-        on(DataModel) {DataModel dataModel -> onVisitDataModel(dataModel)}
-        on(DataFlow) {DataFlow dataFlow -> onVisitDataFlow(dataFlow)}
-        on(DataClassComponent) {DataClassComponent dataClassComponent -> onVisitDataClassComponent(dataClassComponent)}
-        on(DataElementComponent) {DataElementComponent dataElementComponent -> onVisitDataElementComponent(dataElementComponent)}
-        on(DataClass) {DataClass dataClass -> onVisitDataClass(dataClass)}
-        on(DataElement) {DataElement dataElement -> onVisitDataElement(dataElement)}
-        on(DataType) {DataType dataType -> onVisitDataType(dataType)}
-        on(EnumerationValue) {EnumerationValue enumerationValue -> onVisitEnumerationValue(enumerationValue)}
-        on(Terminology) {Terminology terminology -> onVisitTerminology(terminology)}
-        on(Term) {Term term -> onVisitTerm(term)}
-        on(TermRelationshipType) {TermRelationshipType termRelationshipType -> onVisitTermRelationshipType(termRelationshipType)}
-        on(TermRelationship) {TermRelationship termRelationship -> onVisitTermRelationship(termRelationship)}
-        on(CodeSet) {CodeSet codeSet -> onVisitCodeSet(codeSet)}
-        on(ClassificationScheme) {ClassificationScheme classificationScheme -> onVisitClassificationScheme(classificationScheme)}
-        on(Classifier) {Classifier classifier -> onVisitClassifier(classifier)}
+        onEnter(Folder) {Folder folder -> onVisitFolder(folder)}
+        onEnter(Annotation) {Annotation annotation -> onVisitAnnotation(annotation)}
+        onEnter(Edit) {Edit edit -> onVisitEdit(edit)}
+        onEnter(Metadata) {Metadata metadata -> onVisitMetadata(metadata)}
+        onEnter(ReferenceFile) {ReferenceFile referenceFile -> onVisitReferenceFile(referenceFile)}
+        onEnter(Rule) {Rule rule -> onVisitRule(rule)}
+        onEnter(RuleRepresentation) {RuleRepresentation ruleRepresentation -> onVisitRuleRepresentation(ruleRepresentation)}
+        onEnter(SemanticLink) {SemanticLink semanticLink -> onVisitSemanticLink(semanticLink)}
+        onEnter(SummaryMetadata) {SummaryMetadata summaryMetadata -> onVisitSummaryMetadata(summaryMetadata)}
+        onEnter(SummaryMetadataReport) {SummaryMetadataReport report -> onVisitSummaryMetadataReport(report)}
+        onEnter(VersionLink) {VersionLink versionLink -> onVisitVersionLink(versionLink)}
+        onEnter(DataModel) {DataModel dataModel -> onVisitDataModel(dataModel)}
+        onEnter(DataFlow) {DataFlow dataFlow -> onVisitDataFlow(dataFlow)}
+        onEnter(DataClassComponent) {DataClassComponent dataClassComponent -> onVisitDataClassComponent(dataClassComponent)}
+        onEnter(DataElementComponent) {DataElementComponent dataElementComponent -> onVisitDataElementComponent(dataElementComponent)}
+        onEnter(DataClass) {DataClass dataClass -> onVisitDataClass(dataClass)}
+        onEnter(DataElement) {DataElement dataElement -> onVisitDataElement(dataElement)}
+        onEnter(DataType) {DataType dataType -> onVisitDataType(dataType)}
+        onEnter(EnumerationValue) {EnumerationValue enumerationValue -> onVisitEnumerationValue(enumerationValue)}
+        onEnter(Terminology) {Terminology terminology -> onVisitTerminology(terminology)}
+        onEnter(Term) {Term term -> onVisitTerm(term)}
+        onEnter(TermRelationshipType) {TermRelationshipType termRelationshipType -> onVisitTermRelationshipType(termRelationshipType)}
+        onEnter(TermRelationship) {TermRelationship termRelationship -> onVisitTermRelationship(termRelationship)}
+        onEnter(CodeSet) {CodeSet codeSet -> onVisitCodeSet(codeSet)}
+        onEnter(ClassificationScheme) {ClassificationScheme classificationScheme -> onVisitClassificationScheme(classificationScheme)}
+        onEnter(Classifier) {Classifier classifier -> onVisitClassifier(classifier)}
     }
 
     protected void onVisitFolder(Folder folder) {}
@@ -85,6 +87,8 @@ abstract class AbstractDomainTraversalVisitor extends GenericDomainTraversalVisi
     protected void onVisitReferenceFile(ReferenceFile referenceFile) {}
 
     protected void onVisitRule(Rule rule) {}
+
+    protected void onVisitRuleRepresentation(RuleRepresentation ruleRepresentation) {}
 
     protected void onVisitSemanticLink(SemanticLink semanticLink) {}
 
