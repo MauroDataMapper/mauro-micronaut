@@ -43,7 +43,7 @@ class VisitorRegistry {
         if (!type || !handler) {
             return this
         }
-        List<Closure<?>> handlers = enterHandlersByType.getOrDefault(type, [] as List<Closure<?>>)
+        List<Closure<?>> handlers = enterHandlersByType.computeIfAbsent(type) { [] as List<Closure<?>> }
         handlers.add(handler)
         return this
     }
@@ -52,7 +52,7 @@ class VisitorRegistry {
         if (!type || !handler) {
             return this
         }
-        List<Closure<?>> handlers = leaveHandlersByType.getOrDefault(type, [] as List<Closure<?>>)
+        List<Closure<?>> handlers = leaveHandlersByType.computeIfAbsent(type) { [] as List<Closure<?>> }
         handlers.add(handler)
         return this
     }
@@ -63,11 +63,11 @@ class VisitorRegistry {
         }
 
         other.enterHandlersByType.each {Class<? extends Item> type, List<Closure<?>> handlers ->
-            List<Closure<?>> currentHandlers = enterHandlersByType.getOrDefault(type, [] as List<Closure<?>>)
+            List<Closure<?>> currentHandlers = enterHandlersByType.computeIfAbsent(type) { [] as List<Closure<?>> }
             currentHandlers.addAll(handlers)
         }
         other.leaveHandlersByType.each {Class<? extends Item> type, List<Closure<?>> handlers ->
-            List<Closure<?>> currentHandlers = leaveHandlersByType.getOrDefault(type, [] as List<Closure<?>>)
+            List<Closure<?>> currentHandlers = leaveHandlersByType.computeIfAbsent(type) { [] as List<Closure<?>> }
             currentHandlers.addAll(handlers)
         }
         return this
