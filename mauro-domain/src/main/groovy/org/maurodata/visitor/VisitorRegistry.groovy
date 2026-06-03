@@ -9,23 +9,14 @@ import org.maurodata.domain.model.Item
 @CompileStatic
 class VisitorRegistry {
 
-    Map<Class<? extends Item>, List<Closure<?>>> handlersByType = [:]
+    Map<Class<? extends Item>, List<Closure<?>>> enterHandlersByType = [:]
+    Map<Class<? extends Item>, List<Closure<?>>> leaveHandlersByType = [:]
 
-    <T extends Item> VisitorRegistry on(Class<T> type, Closure<?> handler) {
-        if (!type || !handler) {
-            return this
-        }
-        List<Closure<?>> handlers = handlersByType.computeIfAbsent(type) {[] as List<Closure<?>>}
-        handlers.add(handler)
-        return this
-    }
-
-
-    void apply(Item item) {
+    void applyEnter(Item item) {
         if (!item) {
             return
         }
-        handlersByType.each {Class<? extends Item> type, List<Closure<?>> handlers ->
+        enterHandlersByType.each {Class<? extends Item> type, List<Closure<?>> handlers ->
             if (type.isInstance(item)) {
                 handlers.each {Closure<?> handler ->
                     handler.call(item)
@@ -34,13 +25,49 @@ class VisitorRegistry {
         }
     }
 
+    void applyLeave(Item item) {
+        if (!item) {
+            return
+        }
+        leaveHandlersByType.each {Class<? extends Item> type, List<Closure<?>> handlers ->
+            if (type.isInstance(item)) {
+                handlers.each {Closure<?> handler ->
+                    handler.call(item)
+                }
+            }
+        }
+    }
+
+
+    <T extends Item> VisitorRegistry onEnter(Class<T> type, Closure<?> handler) {
+        if (!type || !handler) {
+            return this
+        }
+        List<Closure<?>> handlers = enterHandlersByType.getOrDefault(type, [] as List<Closure<?>>)
+        handlers.add(handler)
+        return this
+    }
+
+    <T extends Item> VisitorRegistry onLeave(Class<T> type, Closure<?> handler) {
+        if (!type || !handler) {
+            return this
+        }
+        List<Closure<?>> handlers = leaveHandlersByType.getOrDefault(type, [] as List<Closure<?>>)
+        handlers.add(handler)
+        return this
+    }
+
     VisitorRegistry addAll(VisitorRegistry other) {
         if (!other) {
             return this
         }
 
-        other.handlersByType.each {Class<? extends Item> type, List<Closure<?>> handlers ->
-            List<Closure<?>> currentHandlers = handlersByType.computeIfAbsent(type) {[] as List<Closure<?>>}
+        other.enterHandlersByType.each {Class<? extends Item> type, List<Closure<?>> handlers ->
+            List<Closure<?>> currentHandlers = enterHandlersByType.getOrDefault(type, [] as List<Closure<?>>)
+            currentHandlers.addAll(handlers)
+        }
+        other.leaveHandlersByType.each {Class<? extends Item> type, List<Closure<?>> handlers ->
+            List<Closure<?>> currentHandlers = leaveHandlersByType.getOrDefault(type, [] as List<Closure<?>>)
             currentHandlers.addAll(handlers)
         }
         return this

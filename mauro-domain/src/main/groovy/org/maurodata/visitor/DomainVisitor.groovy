@@ -16,6 +16,7 @@ import org.maurodata.domain.facet.Edit
 import org.maurodata.domain.facet.Metadata
 import org.maurodata.domain.facet.ReferenceFile
 import org.maurodata.domain.facet.Rule
+import org.maurodata.domain.facet.RuleRepresentation
 import org.maurodata.domain.facet.SemanticLink
 import org.maurodata.domain.facet.SummaryMetadata
 import org.maurodata.domain.facet.SummaryMetadataReport
@@ -41,6 +42,8 @@ interface DomainVisitor<T> {
     T visitReferenceFile(ReferenceFile referenceFile)
 
     T visitRule(Rule rule)
+
+    T visitRuleRepresentation(RuleRepresentation ruleRepresentation)
 
     T visitSemanticLink(SemanticLink semanticLink)
 
