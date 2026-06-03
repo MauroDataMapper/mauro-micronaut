@@ -64,6 +64,11 @@ class GenericDomainTraversalVisitor implements DomainVisitor<Void> {
         return this
     }
 
+    GenericDomainTraversalVisitor plus(GenericDomainTraversalVisitor other) {
+        registry.addAll(other.registry)
+        return this
+    }
+
     void resetTraversalState() {
         visitedIds.clear()
         visitedIdentity.clear()

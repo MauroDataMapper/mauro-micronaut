@@ -4,9 +4,10 @@ import org.maurodata.domain.datamodel.DataType
 import org.maurodata.domain.datamodel.DataClass
 import org.maurodata.domain.model.Item
 
-import org.maurodata.visitor.CommonVisitorRegistries
+
 import org.maurodata.visitor.GenericDomainTraversalVisitor
 import org.maurodata.visitor.VisitorRegistry
+import org.maurodata.visitor.common.TreeifyVisitor
 import spock.lang.Specification
 
 class GenericDomainTraversalVisitorSpec extends Specification {
@@ -52,7 +53,6 @@ class GenericDomainTraversalVisitorSpec extends Specification {
 
     void 'treeify-like bundle can be reused with generic traversal visitor'() {
         given:
-        GenericDomainTraversalVisitor visitor = new GenericDomainTraversalVisitor(CommonVisitorRegistries.treeifyVisitor())
         DataType dataType = DataType.build {
             label 'Test DataType'
             referenceClass DataClass.build {
@@ -64,7 +64,7 @@ class GenericDomainTraversalVisitorSpec extends Specification {
         }
 
         when:
-        visitor.visitDataType(dataType)
+        dataType.accept(new TreeifyVisitor())
 
         then:
         dataType.referenceClass.label == 'Test DataClass'

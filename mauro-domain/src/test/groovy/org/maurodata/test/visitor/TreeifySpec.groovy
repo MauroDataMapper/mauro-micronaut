@@ -3,8 +3,7 @@ package org.maurodata.test.visitor
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import org.maurodata.domain.datamodel.DataClass
 import org.maurodata.domain.datamodel.DataType
-import org.maurodata.visitor.CommonVisitorRegistries
-import org.maurodata.visitor.GenericDomainTraversalVisitor
+import org.maurodata.visitor.common.TreeifyVisitor
 import spock.lang.Specification
 
 @MicronautTest
@@ -22,11 +21,9 @@ class TreeifySpec extends Specification {
                     }
                 }
             }
-        def visitor = new GenericDomainTraversalVisitor(
-            CommonVisitorRegistries.treeifyVisitor()
-        )
 
-        dataType.accept(visitor)
+
+        dataType.accept(new TreeifyVisitor())
         then:
         dataType.referenceClass.label == "Test DataClass"
         !dataType.referenceClass.dataElements
