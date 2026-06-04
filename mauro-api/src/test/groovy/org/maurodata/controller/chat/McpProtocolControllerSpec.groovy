@@ -1,0 +1,117 @@
+package org.maurodata.controller.chat
+
+import io.micronaut.http.HttpResponse
+import io.micronaut.http.HttpStatus
+import org.maurodata.service.chat.mcp.ExternalMcpRegistry
+import org.maurodata.service.chat.mcp.LocalMcpRegistry
+import org.maurodata.service.chat.mcp.McpProtocolService
+import org.maurodata.service.chat.mcp.McpToolRegistry
+import org.maurodata.service.chat.mcp.ToolHandler
+import spock.lang.Specification
+
+class McpProtocolControllerSpec extends Specification {
+
+    McpProtocolService mcpProtocolService = new McpProtocolService(
+        new McpToolRegistry(
+            new LocalMcpRegistry([new TestToolHandler()] as List<ToolHandler>),
+            new ExternalMcpRegistry()
+        )
+    )
+    McpProtocolController controller = new McpProtocolController(mcpProtocolService)
+
+    void 'post returns OK with JSON-RPC response body'() {
+        given:
+        Map<String, Object> request = [
+            jsonrpc: '2.0',
+            id     : 1,
+            method : 'initialize',
+            params : [:]
+        ] as Map<String, Object>
+        when:
+        HttpResponse<Object> response = controller.post(request)
+
+        then:
+        response.status == HttpStatus.OK
+        Map<String, Object> body = response.body() as Map<String, Object>
+        body.jsonrpc == '2.0'
+        body.id == 1
+        body.result.protocolVersion == '2025-03-26'
+    }
+
+    void 'post returns Accepted when protocol request is notification-only'() {
+        given:
+        Map<String, Object> request = [
+            jsonrpc: '2.0',
+            method : 'notifications/initialized'
+        ] as Map<String, Object>
+
+        when:
+        HttpResponse<Object> response = controller.post(request)
+
+        then:
+        response.status == HttpStatus.ACCEPTED
+        !response.body()
+    }
+
+    void 'post supports batch response bodies'() {
+        given:
+        List<Object> request = [
+            [
+                jsonrpc: '2.0',
+                method : 'notifications/initialized'
+            ],
+            [
+                jsonrpc: '2.0',
+                id     : 2,
+                method : 'tools/list',
+                params : [:]
+            ]
+        ] as List<Object>
+        when:
+        HttpResponse<Object> response = controller.post(request)
+
+        then:
+        response.status == HttpStatus.OK
+        List<Object> body = response.body() as List<Object>
+        body.size() == 1
+        (body[0] as Map<String, Object>).id == 2
+        ((body[0] as Map<String, Object>).result as Map<String, Object>).tools
+    }
+
+    static class TestToolHandler implements ToolHandler {
+
+        @Override
+        String name() {
+            'echo'
+        }
+
+        @Override
+        String description() {
+            'Echo tool'
+        }
+
+        @Override
+        Map<String, Object> inputSchema() {
+            [type: 'object'] as Map<String, Object>
+        }
+
+        @Override
+        Map<String, Object> routing() {
+            [
+                useWhen: ['testing tool invocation']
+            ] as Map<String, Object>
+        }
+
+        @Override
+        Map<String, Object> invoke(Map<String, Object> arguments) {
+            [
+                echo: arguments ?: [:]
+            ] as Map<String, Object>
+        }
+
+        @Override
+        String modelText(Map<String, Object> result) {
+            'Echoed hello'
+        }
+    }
+}

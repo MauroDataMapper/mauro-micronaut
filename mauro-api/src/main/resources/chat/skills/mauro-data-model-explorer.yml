@@ -1,0 +1,41 @@
+id: mauro-data-model-explorer
+name: Mauro Data Model Explorer
+description: Explore Data Models, Data Classes, Data Elements, and their structure
+scope: GLOBAL
+version: 1.0.0
+type: SKILL
+priority: 210
+keywords:
+  - data model
+  - data class
+  - data element
+  - data type
+  - model structure
+  - hierarchy
+  - form structure
+  - fields
+routing:
+  specificity: SPECIFIC
+  useWhen:
+    - users ask what is inside a Data Model, form, Data Class, Data Element, or model hierarchy
+    - users ask about form structure, sections, fields, model structure, or parent-child relationships
+    - users ask to inspect or explore Data Models, Data Classes, Data Elements, or Data Types
+  avoidWhen:
+    - users only ask for software documentation, installation, or Docker configuration
+    - users ask for broad search strategy rather than structure or hierarchy
+  examples:
+    - What fields are in this form?
+    - Show me the structure of a Data Model
+    - What is inside this Data Class?
+  tool:
+    name: skill_lookup
+    arguments:
+      id: mauro-data-model-explorer
+      includeInstruction: true
+instruction: |
+  Use this skill when users ask what is inside a Data Model, form, section, Data Class, Data Element, or model hierarchy.
+  Explain results using Mauro terms: Data Model as the container, Data Class as a grouping or section, Data Element as an individual field, and Data Type as the value structure.
+  Prefer catalogue_search for locating models/classes/elements, then summarize labels, item types, and likely parent/child context visible in the result.
+  If the user asks for the structure under a model or class, current search results may not be enough. State that a model tree or children lookup tool would be needed for precise exploration.
+  When results contain mixed item types, group them by domain type and explain how they may relate.
+  Do not assume a Data Element belongs to a particular Data Class unless that relationship is present in tool output.
