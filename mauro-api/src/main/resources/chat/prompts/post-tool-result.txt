@@ -1,0 +1,1 @@
+The previous tool result is sufficient for this request. Answer the user now. Do not call another tool unless the result explicitly says more data is required.

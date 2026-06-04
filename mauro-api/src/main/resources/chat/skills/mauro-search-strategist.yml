@@ -1,0 +1,58 @@
+id: mauro-search-strategist
+name: Mauro Search Strategist
+description: Choose effective Mauro catalogue searches and refine noisy result sets
+scope: GLOBAL
+version: 1.0.0
+type: SKILL
+priority: 220
+keywords:
+  - search
+  - find
+  - lookup
+  - query
+  - refine
+  - websearch_to_tsquery
+  - phrase search
+  - quoted phrase
+  - OR
+  - exclude
+  - synonyms
+  - noisy results
+  - no results
+routing:
+  specificity: FALLBACK
+  useWhen:
+    - users make broad, ambiguous, noisy, or unsuccessful catalogue search requests
+    - users ask how to refine a catalogue search or choose better search terms
+    - search results are poor, too broad, too sparse, or need synonyms, singular/plural variants, abbreviations, or related terms
+    - users ask to count, filter, narrow, or ask how many of all previous search results match an extra condition
+  avoidWhen:
+    - users ask for Mauro installation, configuration, Docker, administration, or documentation
+    - users ask for a direct glossary definition that can be handled by Mauro Glossary
+  examples:
+    - Find forms about diabetes
+    - I cannot find the right item
+    - Search for maternity care but narrow it down
+    - Out of all of those results, how many are about education?
+  tool:
+    name: skill_lookup
+    arguments:
+      id: mauro-search-strategist
+      includeInstruction: true
+instruction: |
+  Use this skill when a user's request is broad, ambiguous, or likely to need careful catalogue search.
+  catalogue_search uses PostgreSQL websearch_to_tsquery syntax for searchTerm:
+  - Unquoted words are ANDed, so maternity care means maternity AND care.
+  - Quoted phrases preserve word order, so "maternity care" searches for that phrase.
+  - OR broadens alternatives, so diabetes OR diabetic searches either term.
+  - A leading dash excludes terms or quoted phrases, so diabetes -outpatients or diabetes -"outpatients clinic" removes noisy matches.
+  Start with the user's exact phrase when it is specific. Quote multi-word labels or concepts when the user appears to want that exact phrase.
+  If results are poor, try likely synonyms, singular/plural variants, abbreviations, or related clinical/business terms joined with OR.
+  If results are noisy, keep the core term and exclude a repeated unwanted concept with -term or -"quoted phrase".
+  If the user asks to count, filter, or narrow all results from a previous catalogue_search, do not count only the visible page. Formulate a refined catalogue_search by combining the previous searchTerm with the new condition and preserving the previous domainTypes where applicable. Use the returned total count as the answer.
+  Example: if the previous search was searchTerm "age OR weight" with domainTypes ["DataElement"], and the user asks how many are about Education, call catalogue_search with searchTerm "age education OR weight education", domainTypes ["DataElement"], max 5, offset 0, then answer from count.
+  For broad searches, summarize the most relevant result clusters instead of listing everything.
+  When results are noisy, ask a focused follow-up question such as whether the user wants forms, data elements, terms, models, or governance metadata.
+  When no results are found, explain the search attempted and suggest alternative terms rather than giving a generic answer.
+  When you deliberately use quoted phrases, OR, or exclusions, briefly mention the search expression used if it helps the user understand why the result set changed.
+  Do not overuse tools when the prior tool result is already sufficient; summarize before searching again.

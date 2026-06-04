@@ -1,0 +1,116 @@
+id: mauro-docs-guide
+name: Mauro Documentation Guide
+description: Find the right Mauro documentation source for user guides, installation, glossary, REST resources, and concepts
+scope: GLOBAL
+version: 1.0.0
+type: SKILL
+priority: 230
+keywords:
+  - mauro
+  - docs
+  - documentation
+  - guide
+  - user guide
+  - using mauro
+  - getting started
+  - installation
+  - install
+  - docker
+  - container
+  - configuration
+  - configure
+  - download
+  - glossary
+  - rest api
+  - api
+  - semantic links
+  - search syntax
+  - finalise
+  - branch
+  - version
+routing:
+  specificity: SPECIFIC
+  useWhen:
+    - users ask how Mauro works or how to use a Mauro feature
+    - users ask for Mauro documentation, user guides, glossary pages, or REST/API resource documentation
+    - users ask about installing, downloading, running, configuring, administering, or backing up Mauro
+    - users ask about Docker setup, mounted directories, persistent database storage, /opt/init files, configuration files, or search re-indexing
+    - users ask about semantic links, search syntax, finalisation, branching, or version workflows
+  avoidWhen:
+    - users are asking to find live catalogue items, forms, models, data classes, data elements, terms, or metadata in the connected Mauro instance
+  examples:
+    - How do I install Mauro?
+    - Is there documentation on configuring Mauro after installation?
+    - What is a semantic link?
+  tool:
+    name: skill_lookup
+    arguments:
+      id: mauro-docs-guide
+      includeInstruction: true
+instruction: |
+  Use this skill when users ask how Mauro works, what a Mauro concept means, how to use a Mauro feature, or where documentation can be found.
+  When this skill has been retrieved, use it immediately to answer or signpost. Do not ask the user whether you should use this skill.
+  If the user asks about installing, downloading, running, configuring, or administering Mauro, provide the most relevant documentation URL directly and briefly explain what it covers.
+  Do not imply that every Mauro feature has configuration documentation in this source map. If asking a follow-up, offer only known documented areas such as Docker image setup, mounted directories, persistent Postgres data, /opt/init files, configuration files, administration, backup, search re-indexing, or REST/API resource docs.
+  Avoid vague follow-ups such as "configuring a specific feature". Prefer "Are you configuring the Docker container, persistent database storage, startup/init files, or administration tasks?"
+  Distinguish documentation questions from catalogue-content questions:
+  - Use docs guidance for "how does Mauro work?", "how do I install Mauro?", "how do I configure Mauro?", "what does this concept mean?", "how do I search?", "what is a semantic link?", and REST/API resource questions.
+  - Use catalogue tools for "find catalogue items about X", "list forms about X", "what data elements mention X", and similar content lookup questions.
+
+  Curated Mauro documentation sources:
+
+  - Mauro introduction
+    URL: https://maurodatamapper.github.io/about/introduction/
+    Match when users ask: what Mauro is, metadata catalogue purpose, standards, datasets, data definitions, provenance, semantic interoperability.
+  
+  - Get started with Mauro Data Mapper
+    URL: https://maurodatamapper.github.io/download/quick-start/
+    Match when users ask: getting started, how to install Mauro, install Mauro, download Mauro, quick start guide, first steps, Docker install.
+    Snippet: Install Docker, pull the Mauro Data Mapper image, create a persistent data folder, download quick-start configuration, and run the container on port 8080.
+
+  - Docker image background and configuration
+    URL: https://maurodatamapper.github.io/download/configure/
+    Match when users ask: Docker configuration, all-in-one image, what the container includes, mounted directories, persistent Postgres data, /opt/init, configuration files.
+    Snippet: The all-in-one Docker image contains the Micronaut backend, web frontend, and Postgres database; port 8080 exposes the REST API and UI; /opt/init and /var/lib/postgresql/data are key mount points.
+
+  - Administration
+    URL: https://maurodatamapper.github.io/archive/installing/administration/
+    Match when users ask: administering an installation, checking versions, backup, re-indexing search, Docker administration, debugging.
+
+  - User guides index
+    URL: https://maurodatamapper.github.io/user-guides/
+    Match when users ask: how to use Mauro, create Data Models, finalise models, export models, branch/version workflows, semantic-link workflows.
+
+  - How to search
+    URL: https://maurodatamapper.github.io/user-guides/how-to-search/how-to-search/
+    Match when users ask: search syntax, catalogue search, model tree search, searching within a model, exact phrase search, AND/OR/NOT, wildcard suffixes.
+
+  - Data Element glossary
+    URL: https://maurodatamapper.github.io/glossary/data-element/data-element/
+    Match when users ask: Data Element meaning, fields, variables, Data Types, parent hierarchy, multiplicity, properties, comments, links.
+
+  - Semantic Links glossary
+    URL: https://maurodatamapper.github.io/glossary/semantic-links/semantic-links/
+    Match when users ask: semantic interoperability, semantic links, Refines, Does not refine, relationships between data descriptions.
+
+  - Semantic Links tutorial
+    URL: https://maurodatamapper.github.io/tutorials/semantic-links/
+    Match when users ask: how semantic links are used, linking Data Elements, enumeration values, Terminology terms, refinement meaning.
+
+  - Data Model REST resource
+    URL: https://maurodatamapper.github.io/rest-api/resources/data-model/
+    Match when users ask: DataModel JSON fields, IDs, labels, aliases, descriptions, finalisation, branches, versions, endpoints.
+
+  - Data Element REST resource
+    URL: https://maurodatamapper.github.io/rest-api/resources/data-element/
+    Match when users ask: DataElement JSON shape, model references, DataClass references, DataType references, endpoints.
+
+  - Terminology REST resource
+    URL: https://maurodatamapper.github.io/rest-api/resources/terminology/
+    Match when users ask: Terminology object fields, labels, aliases, classifiers, finalised status, terminology endpoints.
+
+  - Semantic Link REST resource
+    URL: https://maurodatamapper.github.io/rest-api/resources/semantic-link/
+    Match when users ask: semantic link endpoints, links for catalogue items, links for terminology terms, link targets.
+
+  When answering from this skill, include the exact relevant URL from the source map in the user-visible answer. Do not merely name the guide without the URL. If the user needs detailed current documentation text, say that a future docs_search or docs_fetch tool would be needed to retrieve exact page content.
