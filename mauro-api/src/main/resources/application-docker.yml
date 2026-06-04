@@ -14,3 +14,6 @@ micronaut:
         path: '/api/authentication/login'
       logout:
         path: '/api/authentication/logout'
+mauro:
+  plugins:
+    autoregister: true
