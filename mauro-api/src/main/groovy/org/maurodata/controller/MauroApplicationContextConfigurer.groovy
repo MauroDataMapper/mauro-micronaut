@@ -35,13 +35,6 @@ import java.util.stream.Stream
 @ContextConfigurer
 class MauroApplicationContextConfigurer implements ApplicationContextConfigurer {
 
-    // Could be enabled in Docker-type deployments;
-    // Should be disabled when running in development mode via gradle, or in live environments where no additional plugins will be required
-    @Property(name = 'mauro.plugins.autoregister', defaultValue = 'true')
-    boolean autoRegisterPlugins
-
-
-
     @Override
     void configure(ApplicationContextBuilder builder) {
         System.out.println("""
@@ -56,6 +49,13 @@ class MauroApplicationContextConfigurer implements ApplicationContextConfigurer 
     @Override
     void configure(ApplicationContext applicationContext) {
 
+        // Could be enabled in Docker-type deployments;
+        // Should be disabled when running in development mode via gradle, or in live environments where no additional plugins will be required
+        boolean autoRegisterPlugins = applicationContext.environment
+            .getProperty('mauro.plugins.autoregister', Boolean)
+            .orElse(false)
+
+        log.debug("autoRegisterPlugins = {}", autoRegisterPlugins)
         if(autoRegisterPlugins) {
 
             URL url = getClass().getProtectionDomain().getCodeSource().getLocation()
