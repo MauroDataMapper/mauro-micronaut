@@ -12,16 +12,11 @@ import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
 import jakarta.inject.Inject
 import org.maurodata.controller.model.AdministeredItemReader
-import org.maurodata.domain.classifier.Classifier
-import org.maurodata.domain.model.AdministeredItem
-import org.maurodata.domain.security.Role
-import org.maurodata.persistence.cache.AdministeredItemCacheableRepository.ClassifierCacheableRepository
-import org.maurodata.persistence.model.PathRepository
 import org.maurodata.persistence.search.SearchIndexRefreshScheduler
-import org.maurodata.persistence.search.SearchRepository
 import org.maurodata.domain.search.dto.SearchRequestDTO
 import org.maurodata.domain.search.dto.SearchResultsDTO
 import org.maurodata.security.AccessControlService
+import org.maurodata.service.search.SearchExecutionService
 import org.maurodata.web.ListResponse
 
 @Slf4j
@@ -31,19 +26,13 @@ import org.maurodata.web.ListResponse
 class SearchController implements AdministeredItemReader, SearchApi {
 
     @Inject
-    SearchRepository searchRepository
-
-    @Inject
     AccessControlService accessControlService
-
-    @Inject
-    PathRepository pathRepository
 
     @Inject
     SearchIndexRefreshScheduler searchIndexRefreshScheduler
 
     @Inject
-    ClassifierCacheableRepository classifierCacheableRepository
+    SearchExecutionService searchExecutionService
 
     @Audit
     @Operation(summary = "List the searches", description = "Returns the searches. You must have read privileges on the item in question.")
@@ -61,47 +50,10 @@ class SearchController implements AdministeredItemReader, SearchApi {
 
 
     private ListResponse<SearchResultsDTO> executeSearch(SearchRequestDTO requestDTO) {
-        long startTime = System.currentTimeMillis()
-        List<SearchResultsDTO> searchResults = searchRepository.search(requestDTO)
-        log.debug("Search time taken (retrieve): " + (System.currentTimeMillis() - startTime))
-        Set<UUID> allClassifierIds = []
-        if(requestDTO.classifiers) {
-            allClassifierIds.addAll(requestDTO.classifiers)
-            // TODO: Next need to find all narrower classifiers and add those too
-        }
-        List<Classifier> allClassifiers = classifierCacheableRepository.readAllByIdIn(allClassifierIds)
-        Map<UUID, Set<UUID>> classifierMap = [:].withDefault { []  as Set }
-        allClassifiers.each {classifier ->
-            classifierMap[classifier.classificationScheme.id] << classifier.id
-        }
-
-        List<SearchResultsDTO> searchResultsReadable = searchResults.findAll {SearchResultsDTO result ->
-            AdministeredItem item = findAdministeredItem(result.domainType, result.id)
-            if (!accessControlService.canDoRole(Role.READER, item)) {
-                return false
-            }
-            // We might not have read the parent items if we're an administrator.
-            pathRepository.readParentItems(item)
-            item.updateBreadcrumbs()
-            result.breadcrumbs = item.breadcrumbs
-            result.classifiers = item.classifiers
-            Set<UUID> resultClassifierIds = result.classifiers.id as Set
-
-            boolean classifierFilter = allClassifierIds.isEmpty() ||
-                classifierMap.every {_, classifiers ->
-                    classifiers.any {
-                        resultClassifierIds.contains(it)
-                    }
-                }
-            if(!classifierFilter) {
-                return false
-            }
-            return true
-        }
-
-        log.debug("Search time taken (retrieve + filter): " + (System.currentTimeMillis() - startTime))
-        ListResponse.from(searchResultsReadable, requestDTO)
-
+        searchExecutionService.executeSearch(
+            requestDTO,
+            { String domainType, UUID id -> findAdministeredItem(domainType, id) }
+        )
     }
 
 

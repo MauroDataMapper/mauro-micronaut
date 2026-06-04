@@ -539,4 +539,35 @@ interface Paths {
     */
 
     String JOBS_LIST_PAGED = '/api/asyncJobs{?params*}'
+
+    /*
+    * ChatCapabilitiesApi
+    */
+    String CHAT_CAPABILITIES = '/api/chat/capabilities'
+
+    /*
+    * ChatMcpApi
+    */
+    String CHAT_MCP_SERVERS = '/api/chat/mcp/servers'
+    String CHAT_MCP_TOOL_INVOKE = '/api/chat/mcp/tools/{toolName}:invoke'
+
+    /*
+    * ChatProviderKeysApi
+    */
+    String CHAT_PROVIDER_KEYS = '/api/chat/keys/providers'
+    String CHAT_PROVIDER_KEYS_PROVIDER = '/api/chat/keys/providers/{provider}'
+
+    /*
+    * ChatSessionsApi
+    */
+    String CHAT_SESSIONS = '/api/chat/sessions'
+    String CHAT_SESSIONS_ID = '/api/chat/sessions/{sessionId}'
+    String CHAT_SESSIONS_MESSAGES = '/api/chat/sessions/{sessionId}/messages'
+    String CHAT_SESSIONS_MESSAGES_LIST = '/api/chat/sessions/{sessionId}/messages/list'
+    String CHAT_SESSIONS_SKILLS = '/api/chat/sessions/{sessionId}/skills'
+
+    /*
+    * ChatSkillsApi
+    */
+    String CHAT_SKILLS = '/api/chat/skills'
 }
