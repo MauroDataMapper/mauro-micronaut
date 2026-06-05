@@ -50,7 +50,8 @@ else
 fi
 
 # Figure out the java options
-
+if [ "${PG_SHARING_HOST}" == "true" ];
+then
 declare -A java_opts=(
   [4]="-server -Xms614M -Xmx2457M -XX:MaxNewSize=1126M -XX:NewSize=204M -XX:MetaspaceSize=256M -XX:MaxMetaspaceSize=784M -XX:NewRatio=2 -XX:SurvivorRatio=2 -XX:TargetSurvivorRatio=80 -XX:+UseParallelGC -XX:+AggressiveHeap -XX:GCTimeRatio=19 -XX:MaxGCPauseMillis=3500 -XX:InitialCodeCacheSize=48M -XX:ReservedCodeCacheSize=240M"
   [8]="-server -Xms1843M -Xmx7372M -XX:MaxNewSize=3379M -XX:NewSize=614M -XX:MetaspaceSize=768M -XX:MaxMetaspaceSize=2764M -XX:NewRatio=2 -XX:SurvivorRatio=2 -XX:TargetSurvivorRatio=80 -XX:+UseParallelGC -XX:+AggressiveHeap -XX:GCTimeRatio=19 -XX:MaxGCPauseMillis=3500 -XX:InitialCodeCacheSize=48M -XX:ReservedCodeCacheSize=307M"
