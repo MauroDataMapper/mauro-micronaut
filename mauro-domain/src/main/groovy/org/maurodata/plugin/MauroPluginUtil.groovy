@@ -11,7 +11,7 @@ import java.nio.file.Paths
 @Slf4j
 class MauroPluginUtil {
 
-    private static Path findProjectRoot(final Path start) {
+    static Path findProjectRoot(final Path start) {
         Path current = start
         while (current != null) {
             if (Files.exists(current.resolve("build.gradle")) ||
@@ -23,7 +23,7 @@ class MauroPluginUtil {
         return null
     }
 
-    private static Path findAppRoot(final Path start) {
+    static Path findAppRoot(final Path start) {
         Path current = start
         while (current != null) {
             if (Files.exists(current.resolve("resources")) ||
