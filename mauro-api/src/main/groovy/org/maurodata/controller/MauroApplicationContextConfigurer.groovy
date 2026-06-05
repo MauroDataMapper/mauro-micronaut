@@ -2,6 +2,7 @@ package org.maurodata.controller
 
 import io.micronaut.context.annotation.Property
 import org.maurodata.plugin.MauroPlugin
+import org.maurodata.plugin.MauroPluginUtil
 import org.maurodata.profile.Profile
 
 import groovy.transform.CompileStatic
@@ -65,11 +66,11 @@ class MauroApplicationContextConfigurer implements ApplicationContextConfigurer 
 
             if (Files.isDirectory(baseDirPath)) {
                 // Application is in an IDE
-                pluginsDirPath = findProjectRoot(baseDirPath)?.resolve("plugins")
+                pluginsDirPath = MauroPluginUtil.findProjectRoot(baseDirPath)?.resolve("plugins")
                 log.debug("Application IDE Plugin base directory ${baseDirPath}")
             } else {
                 // Application is in a packaged jar
-                pluginsDirPath = findAppRoot(baseDirPath.getParent())?.resolve("plugins")
+                pluginsDirPath = MauroPluginUtil.findAppRoot(baseDirPath.getParent())?.resolve("plugins")
                 log.debug("Application Plugin base directory ${baseDirPath}")
             }
 
