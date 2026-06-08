@@ -8,6 +8,7 @@ import jakarta.inject.Singleton
 import org.maurodata.ErrorHandler
 import org.maurodata.controller.model.AdministeredItemReader
 import org.maurodata.controller.model.AvailableActions
+import org.maurodata.domain.datamodel.DataElement
 import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.domain.model.Item
 import org.maurodata.domain.model.Model
@@ -60,6 +61,8 @@ class PathService implements AdministeredItemReader {
             ErrorHandler.handleError(HttpStatus.NOT_FOUND, "Item (${domainType}, ${domainId}) does not have an owning model")
         }
         AdministeredItem administeredItem = findItemByPath(owningModel, new Path(path).nodes)
+
+        pathRepository.readParentItems(administeredItem)
 
         accessControlService.checkRole(Role.READER, administeredItem)
         return administeredItem
