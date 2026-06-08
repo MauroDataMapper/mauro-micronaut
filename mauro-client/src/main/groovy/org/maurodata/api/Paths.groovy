@@ -181,6 +181,10 @@ interface Paths {
     String ENUMERATION_VALUE_ID = '/api/dataModels/{dataModelId}/dataTypes/{enumerationTypeId}/enumerationValues/{id}'
     String ENUMERATION_VALUE_LIST_PAGED = '/api/dataModels/{dataModelId}/dataTypes/{enumerationTypeId}/enumerationValues{?params*}'
 
+    String ENUMERATION_VALUE_LIST_LEGACY = '/api/dataModels/{dataModelId}/enumerationTypes/{enumerationTypeId}/enumerationValues'
+    String ENUMERATION_VALUE_ID_LEGACY = '/api/dataModels/{dataModelId}/enumerationTypes/{enumerationTypeId}/enumerationValues/{id}'
+    String ENUMERATION_VALUE_LIST_PAGED_LEGACY = '/api/dataModels/{dataModelId}/enumerationTypes/{enumerationTypeId}/enumerationValues{?params*}'
+
     /*
     * AnnotationApi
     */
