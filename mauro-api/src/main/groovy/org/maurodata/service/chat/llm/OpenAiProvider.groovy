@@ -47,7 +47,7 @@ class OpenAiProvider implements LlmProvider {
 
     @Override
     Publisher<ProviderChunk> streamChat(final ProviderRequest request) {
-        return Flux.create({ sink ->
+        return Flux.create({ reactor.core.publisher.FluxSink<ProviderChunk> sink ->
             final Runnable task = new Runnable() {
                 @Override
                 void run() {

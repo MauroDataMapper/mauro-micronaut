@@ -21,7 +21,7 @@ class LocalEchoToolHandler extends AbstractAnnotatedToolHandler {
 
     @Override
     protected Map<String, Object> doInvoke(Map<String, Object> arguments) {
-        [echo: arguments ?: [:]]
+        [echo: arguments ?: [:]] as Map<String, Object>
     }
 
     @Override
