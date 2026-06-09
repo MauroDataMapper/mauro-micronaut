@@ -57,6 +57,8 @@ jobs:
         run: ./gradlew --version
 
       - name: Test with Gradle
+        env:
+          GRADLE_OPTS: '-Xmx4g -XX:MaxMetaspaceSize=512m'
         run: ./gradlew test
 
       - name: Test Report
@@ -68,6 +70,8 @@ jobs:
           reporter: java-junit
 
       - name: Test Docker Build
+        env:
+          GRADLE_OPTS: '-Xmx4g -XX:MaxMetaspaceSize=512m'
         run: ./gradlew dockerBuild
 
 
