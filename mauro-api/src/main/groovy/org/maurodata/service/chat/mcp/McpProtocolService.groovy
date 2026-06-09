@@ -252,7 +252,7 @@ class McpProtocolService {
             if ('PERSONA'.equalsIgnoreCase(skill.type)) {
                 continue
             }
-            for (SkillToolApplicability applicability : skill.toolApplicability ?: []) {
+            for (SkillToolApplicability applicability : skill.toolApplicability ?: [] as List<SkillToolApplicability>) {
                 if (applicability == null || applicability.tool == null || applicability.tool.trim().isEmpty()) {
                     continue
                 }
