@@ -78,7 +78,7 @@ class OllamaProvider implements LlmProvider {
 
     @Override
     Publisher<ProviderChunk> streamChat(final ProviderRequest request) {
-        return reactor.core.publisher.Flux.create({ sink ->
+        return reactor.core.publisher.Flux.create({ reactor.core.publisher.FluxSink<ProviderChunk> sink ->
             final Thread worker = new Thread(new Runnable() {
                 @Override
                 void run() {
