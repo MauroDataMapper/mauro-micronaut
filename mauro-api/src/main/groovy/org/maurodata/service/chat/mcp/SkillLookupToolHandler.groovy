@@ -14,7 +14,8 @@ import org.maurodata.service.chat.ChatSkillService
     useWhen = [
         'the routing index says a specific skill applies',
         'users ask for Mauro documentation, installation, configuration, Docker, administration, how-to, glossary, or usage-guide help',
-        'users ask a Mauro-specific question that needs guidance beyond a direct catalogue search'
+        'users ask a Mauro-specific question that needs guidance beyond a direct catalogue search',
+        'there are ambiguities in how to answer a user question that can be resolved by looking up relevant skills and their guidance to choose the best one to apply'
     ],
     avoidWhen = [
         'the user is asking for live catalogue content and catalogue_search can answer directly',
@@ -72,16 +73,20 @@ class SkillLookupToolHandler extends AbstractAnnotatedToolHandler {
         int totalCount = asInteger(result.get('count')) ?: skills.size()
         boolean broadened = Boolean.TRUE.equals(result.get('broadened'))
 
-        StringBuilder builder = new StringBuilder(1024)
-        builder.append('Tool skill_lookup succeeded. It found ')
-            .append(totalCount)
-            .append(' available assistant skills.')
-            .append('\n')
+        List<String> status = [
+            'Tool skill_lookup succeeded.'
+        ]
+        List<String> metadata = [
+            "Available assistant skills found: ${totalCount}",
+            "Broadened result: ${broadened}"
+        ] as List<String>
+        List<String> interpretation = new ArrayList<String>()
         if (broadened) {
-            builder.append('No exact skill matched the query, so the result was broadened to all available skills. Choose the most relevant skill from this list if one applies.')
-                .append('\n')
+            interpretation.add('No exact skill matched the query, so the result was broadened to all available skills.')
+            interpretation.add('Choose the most relevant skill from this list if one applies.')
         }
 
+        List<String> output = new ArrayList<String>()
         for (int i = 0; i < skills.size(); i++) {
             Object skillObj = skills.get(i)
             if (!(skillObj instanceof Map)) {
@@ -89,36 +94,52 @@ class SkillLookupToolHandler extends AbstractAnnotatedToolHandler {
             }
             @SuppressWarnings('unchecked')
             Map<String, Object> skill = (Map<String, Object>) skillObj
-            builder.append(i + 1)
+            StringBuilder line = new StringBuilder(512)
+            line.append(i + 1)
                 .append('. ')
                 .append(asText(skill.get('name'), 'Unnamed skill'))
                 .append(' (id: ')
                 .append(asText(skill.get('id'), 'unknown'))
                 .append(') - ')
                 .append(asText(skill.get('description'), 'No description'))
-                .append('\n')
+            output.add(line.toString())
+            List<String> seeAlso = extractStringList(skill.get('seeAlso'))
+            if (!seeAlso.isEmpty()) {
+                output.add('See also skills: ' + seeAlso.join(', '))
+            }
             String instruction = asText(skill.get('instruction'), '')
             if (!instruction.trim().isEmpty()) {
                 if (skills.size() == 1) {
-                    builder.append('\n')
-                        .append('Full skill guidance:\n')
-                        .append(limitText(instruction.trim(), 6000))
-                        .append('\n')
+                    output.add('Full skill guidance:')
+                    output.add(limitText(instruction.trim(), 6000))
                 } else {
-                    builder.append('   Context: ')
-                        .append(firstLine(instruction))
-                        .append('\n')
+                    output.add('Context: ' + firstLine(instruction))
                 }
             }
         }
+        List<String> instructions = new ArrayList<String>()
         if (skills.size() == 1) {
-            builder.append('Use this skill guidance to answer the user directly. If the guidance contains relevant URLs, include the most relevant URL or URLs in your answer. Do not call skill_lookup again for this request.')
-                .append('\n')
+            instructions.add('Treat this skill guidance as internal context for understanding the domain and deciding how to answer.')
+            instructions.add('Answer the user directly in your own words; do not cite the skill name or say "according to the guide" unless the user asks what guidance you used.')
+            instructions.add('If the guidance contains relevant URLs, include the most relevant URL or URLs in your answer.')
+            instructions.add('If the See also skills are needed to answer fully, retrieve the most relevant one with skill_lookup by id.')
         } else {
-            builder.append('Answer the user with this skill list. Do not call skill_lookup again for this request.')
-                .append('\n')
+            instructions.add('Answer the user with this skill list.')
         }
-        builder.toString()
+        List<String> completionGuidance = [
+            'If this skill guidance answers the current user request, answer now from it.',
+            'Do not call skill_lookup again with identical arguments.',
+            'Only call skill_lookup again when the result explicitly points to a relevant See also skill needed to answer fully, or when a broadened result needs one specific skill fetched by id.'
+        ] as List<String>
+
+        renderModelTextSections([
+            'Tool Call Status'   : status,
+            'Result Metadata'    : metadata,
+            'Interpretation'     : interpretation,
+            'Returned Data'      : output,
+            'Answer Instructions': instructions,
+            'Completion Guidance': completionGuidance
+        ] as Map<String, Object>)
     }
 
     private static Map<String, Object> toMap(ChatSkillDefinition skill, boolean includeInstruction) {
@@ -128,7 +149,8 @@ class SkillLookupToolHandler extends AbstractAnnotatedToolHandler {
             description: skill.description,
             scope      : skill.scope,
             version    : skill.version,
-            keywords   : skill.keywords ?: []
+            keywords   : skill.keywords ?: [],
+            seeAlso    : skill.seeAlso ?: []
         ] as Map<String, Object>
         if (includeInstruction) {
             out.instruction = skill.instruction
@@ -165,6 +187,19 @@ class SkillLookupToolHandler extends AbstractAnnotatedToolHandler {
             return null
         }
         Integer.valueOf(text)
+    }
+
+    private static List<String> extractStringList(Object value) {
+        if (!(value instanceof Collection)) {
+            return []
+        }
+        List<String> strings = new ArrayList<String>()
+        for (Object item : (Collection<?>) value) {
+            if (item != null && !String.valueOf(item).trim().isEmpty()) {
+                strings.add(String.valueOf(item))
+            }
+        }
+        strings
     }
 
     private static String firstLine(String text) {

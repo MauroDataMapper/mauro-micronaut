@@ -14,6 +14,25 @@ keywords:
   - hierarchy
   - form structure
   - fields
+seeAlso:
+  - mauro-glossary
+  - mauro-data-model-diagrammer
+  - mauro-form-representation
+toolApplicability:
+  - tool: catalogue_search
+    relationship: RECOMMENDED_CONTEXT
+    useWhen:
+      - users ask about actual model, class, element, field, form structure, or hierarchy stored in the catalogue
+      - users want to locate Data Models, Data Classes, Data Elements, or Data Types before exploring their structure
+    avoidWhen:
+      - users only ask for general Mauro term definitions
+      - users only ask for software documentation, installation, or Docker configuration
+    examples:
+      - What fields are in this form?
+      - Find the model structure for a diabetes form
+    instructions:
+      - Use catalogue_search to locate candidate models, classes, or elements.
+      - Do not invent hierarchy unless the tool output includes parent/child structure.
 routing:
   specificity: SPECIFIC
   useWhen:
@@ -33,7 +52,11 @@ routing:
       id: mauro-data-model-explorer
       includeInstruction: true
 instruction: |
-  Use this skill when users ask what is inside a Data Model, form, section, Data Class, Data Element, or model hierarchy.
+  Use this skill to learn and apply Mauro model-exploration context prior to answering the user or choosing tool parameters.
+  This guidance is primarily internal context for the assistant. Do not present it as "the Mauro Data Model Explorer skill" or say "according to this skill" unless the user asks what guidance you used.
+  Answer the user's actual question directly, using this context to avoid inventing hierarchy or relationships that are not present in tool results.
+
+  Apply this context when users ask what is inside a Data Model, form, section, Data Class, Data Element, or model hierarchy.
   Explain results using Mauro terms: Data Model as the container, Data Class as a grouping or section, Data Element as an individual field, and Data Type as the value structure.
   Prefer catalogue_search for locating models/classes/elements, then summarize labels, item types, and likely parent/child context visible in the result.
   If the user asks for the structure under a model or class, current search results may not be enough. State that a model tree or children lookup tool would be needed for precise exploration.

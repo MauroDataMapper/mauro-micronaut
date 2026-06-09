@@ -2,6 +2,9 @@ package org.maurodata.controller.chat
 
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
+import org.maurodata.api.chat.SkillSummaryDto
+import org.maurodata.service.chat.ChatSkillDefinition
+import org.maurodata.service.chat.ChatSkillService
 import org.maurodata.service.chat.mcp.ExternalMcpRegistry
 import org.maurodata.service.chat.mcp.LocalMcpRegistry
 import org.maurodata.service.chat.mcp.McpProtocolService
@@ -15,7 +18,8 @@ class McpProtocolControllerSpec extends Specification {
         new McpToolRegistry(
             new LocalMcpRegistry([new TestToolHandler()] as List<ToolHandler>),
             new ExternalMcpRegistry()
-        )
+        ),
+        new TestSkillService()
     )
     McpProtocolController controller = new McpProtocolController(mcpProtocolService)
 
@@ -103,6 +107,16 @@ class McpProtocolControllerSpec extends Specification {
         }
 
         @Override
+        Map<String, Object> annotations() {
+            [
+                readOnlyHint   : true,
+                destructiveHint: false,
+                idempotentHint : true,
+                openWorldHint  : false
+            ] as Map<String, Object>
+        }
+
+        @Override
         Map<String, Object> invoke(Map<String, Object> arguments) {
             [
                 echo: arguments ?: [:]
@@ -112,6 +126,55 @@ class McpProtocolControllerSpec extends Specification {
         @Override
         String modelText(Map<String, Object> result) {
             'Echoed hello'
+        }
+    }
+
+    static class TestSkillService implements ChatSkillService {
+
+        List<ChatSkillDefinition> skills = [
+            new ChatSkillDefinition(
+                id: 'mauro-catalogue',
+                name: 'Mauro Catalogue',
+                description: 'Catalogue persona',
+                scope: 'GLOBAL',
+                version: '1.0.0',
+                type: 'PERSONA',
+                priority: 0,
+                instruction: 'You are Mauro catalogue assistant.'
+            )
+        ] as List<ChatSkillDefinition>
+
+        @Override
+        List<SkillSummaryDto> listSkills() {
+            skills.collect {ChatSkillDefinition skill ->
+                new SkillSummaryDto(
+                    id: skill.id,
+                    name: skill.name,
+                    description: skill.description,
+                    scope: skill.scope,
+                    version: skill.version
+                )
+            }
+        }
+
+        @Override
+        List<ChatSkillDefinition> listSkillDefinitions() {
+            skills
+        }
+
+        @Override
+        List<ChatSkillDefinition> listPersonaDefinitions() {
+            skills.findAll {ChatSkillDefinition skill -> 'PERSONA'.equalsIgnoreCase(skill.type)}
+        }
+
+        @Override
+        ChatSkillDefinition findSkill(String id) {
+            skills.find {ChatSkillDefinition skill -> skill.id == id}
+        }
+
+        @Override
+        List<ChatSkillDefinition> searchSkills(String query) {
+            skills
         }
     }
 }

@@ -14,7 +14,6 @@ class SessionDto {
     String title
     @NotBlank String status // ACTIVE | ARCHIVED
     String model
-    List<String> skillIds = []
     Instant createdAt
     Instant updatedAt
 }

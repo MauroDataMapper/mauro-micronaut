@@ -6,6 +6,8 @@ import jakarta.inject.Singleton
 import org.maurodata.api.chat.McpServerDto
 import org.maurodata.api.chat.ToolInvokeRequest
 import org.maurodata.api.chat.ToolInvokeResponse
+import org.maurodata.api.chat.UpsertMcpServerRequest
+import org.maurodata.service.chat.mcp.ExternalMcpRegistry
 import org.maurodata.service.chat.mcp.McpToolRegistry
 import org.maurodata.service.chat.mcp.ToolInvocationResult
 
@@ -16,9 +18,11 @@ import java.util.UUID
 class ChatMcpApiService implements ChatMcpService {
 
     private final McpToolRegistry mcpToolRegistry
+    private final ExternalMcpRegistry externalMcpRegistry
 
-    ChatMcpApiService(McpToolRegistry mcpToolRegistry) {
+    ChatMcpApiService(McpToolRegistry mcpToolRegistry, ExternalMcpRegistry externalMcpRegistry) {
         this.mcpToolRegistry = mcpToolRegistry
+        this.externalMcpRegistry = externalMcpRegistry
     }
 
     @Override
@@ -46,5 +50,20 @@ class ChatMcpApiService implements ChatMcpService {
         } finally {
             log.info('invokeTool completed invocationId={} toolName={} durationMs={}', invocationId, toolName, System.currentTimeMillis() - start)
         }
+    }
+
+    @Override
+    McpServerDto addServer(UpsertMcpServerRequest request) {
+        externalMcpRegistry.addServer(request)
+    }
+
+    @Override
+    McpServerDto updateServer(String serverId, UpsertMcpServerRequest request) {
+        externalMcpRegistry.updateServer(serverId, request)
+    }
+
+    @Override
+    void removeServer(String serverId) {
+        externalMcpRegistry.removeServer(serverId)
     }
 }

@@ -67,6 +67,11 @@ class OpenAiProvider implements LlmProvider {
                         while (continueLoop) {
                             final OpenAiTurnResult turn = streamOneTurn(request, workingMessages, sink)
                             if (!turn.toolCalls.isEmpty()) {
+                                ProviderMessage assistantToolCallMessage = buildAssistantToolCallMessage(turn.toolCalls)
+                                if (assistantToolCallMessage != null) {
+                                    workingMessages.add(assistantToolCallMessage)
+                                    emitProviderMessage(sink, request.messageId, assistantToolCallMessage)
+                                }
                                 for (int i = 0; i < turn.toolCalls.size(); i++) {
                                     final ToolCallAccumulator.CompletedToolCall call = turn.toolCalls.get(i)
                                     handleToolCall(call, workingMessages, request.messageId, sink)
@@ -196,7 +201,9 @@ class OpenAiProvider implements LlmProvider {
             output: invokeResponse.result,
             error : invokeResponse.error
         ])
-        workingMessages.add(new ProviderMessage('tool', toolResultJson, call.callId, toolName))
+        ProviderMessage toolMessage = new ProviderMessage('tool', invokeResponse.modelText ?: toolResultJson, call.callId, toolName)
+        workingMessages.add(toolMessage)
+        emitProviderMessage(sink, messageId, toolMessage)
     }
 
     private String buildRequestBody(final ProviderRequest request, final List<ProviderMessage> messages) {
@@ -212,6 +219,9 @@ class OpenAiProvider implements LlmProvider {
             if (m.name != null) {
                 wm.put('name', m.name)
             }
+            if (m.toolCalls != null && !m.toolCalls.isEmpty()) {
+                wm.put('tool_calls', m.toolCalls)
+            }
             wireMessages.add(wm)
         }
 
@@ -225,6 +235,64 @@ class OpenAiProvider implements LlmProvider {
         }
 
         return JsonOutput.toJson(body)
+    }
+
+    private static ProviderMessage buildAssistantToolCallMessage(final List<ToolCallAccumulator.CompletedToolCall> callsToRun) {
+        if (callsToRun == null || callsToRun.isEmpty()) {
+            return null
+        }
+        final List<Map<String, Object>> toolCalls = new ArrayList<Map<String, Object>>(callsToRun.size())
+        for (int i = 0; i < callsToRun.size(); i++) {
+            final ToolCallAccumulator.CompletedToolCall call = callsToRun.get(i)
+            if (call.functionName == null || call.functionName.trim().isEmpty()) {
+                continue
+            }
+            toolCalls.add([
+                id      : call.callId,
+                type    : call.toolType ?: 'function',
+                function: [
+                    name     : call.functionName,
+                    arguments: JsonOutput.toJson(call.argumentsJson ?: Collections.<String, Object>emptyMap())
+                ] as Map<String, Object>
+            ] as Map<String, Object>)
+        }
+        if (toolCalls.isEmpty()) {
+            return null
+        }
+        new ProviderMessage(
+            role: 'assistant',
+            content: '',
+            toolCalls: toolCalls
+        )
+    }
+
+    private static void emitProviderMessage(
+        final reactor.core.publisher.FluxSink<ProviderChunk> sink,
+        final String messageId,
+        final ProviderMessage message
+    ) {
+        if (sink == null || message == null) {
+            return
+        }
+        sink.next(new ProviderChunk('provider_message', messageId, null, [
+            providerMessage: providerMessageToMap(message)
+        ] as Map<String, Object>))
+    }
+
+    private static Map<String, Object> providerMessageToMap(final ProviderMessage message) {
+        final Map<String, Object> out = new LinkedHashMap<String, Object>()
+        out.put('role', message.role)
+        out.put('content', message.content ?: '')
+        if (message.toolCallId != null) {
+            out.put('toolCallId', message.toolCallId)
+        }
+        if (message.name != null) {
+            out.put('name', message.name)
+        }
+        if (message.toolCalls != null && !message.toolCalls.isEmpty()) {
+            out.put('toolCalls', message.toolCalls)
+        }
+        out
     }
 
     private static String asString(final Object value) {

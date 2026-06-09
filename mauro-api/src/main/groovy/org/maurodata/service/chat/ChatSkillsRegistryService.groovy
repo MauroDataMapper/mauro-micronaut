@@ -4,11 +4,11 @@ import jakarta.inject.Singleton
 import org.maurodata.api.chat.SkillSummaryDto
 
 @Singleton
-class ChatSkillsApiService implements ChatSkillService {
+class ChatSkillsRegistryService implements ChatSkillService {
 
     private final ChatSkillDefinitionLoader skillDefinitionLoader
 
-    ChatSkillsApiService(ChatSkillDefinitionLoader skillDefinitionLoader) {
+    ChatSkillsRegistryService(ChatSkillDefinitionLoader skillDefinitionLoader) {
         this.skillDefinitionLoader = skillDefinitionLoader
     }
 
@@ -35,8 +35,8 @@ class ChatSkillsApiService implements ChatSkillService {
         listSkillDefinitions()
             .findAll {ChatSkillDefinition skill -> 'PERSONA'.equalsIgnoreCase(skill.type)}
             .sort {ChatSkillDefinition left, ChatSkillDefinition right ->
-                Integer leftPriority = left.priority ?: Integer.valueOf(1000)
-                Integer rightPriority = right.priority ?: Integer.valueOf(1000)
+                Integer leftPriority = left.priority != null ? left.priority : Integer.valueOf(1000)
+                Integer rightPriority = right.priority != null ? right.priority : Integer.valueOf(1000)
                 int priorityCompare = leftPriority <=> rightPriority
                 priorityCompare != 0 ? priorityCompare : left.id <=> right.id
             }

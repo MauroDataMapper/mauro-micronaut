@@ -117,10 +117,40 @@ class ChatSkillDefinitionLoader {
             type: stringValue(data.get('type')) ?: 'SKILL',
             priority: intValue(data.get('priority')),
             keywords: stringList(data.get('keywords')),
+            seeAlso: stringList(data.get('seeAlso')),
+            toolApplicability: toolApplicabilityList(data.get('toolApplicability')),
             routing: routingValue(data.get('routing')),
             instruction: requiredString(path, data, 'instruction')
         )
         definition
+    }
+
+    private static List<SkillToolApplicability> toolApplicabilityList(Object value) {
+        if (!(value instanceof Collection)) {
+            return []
+        }
+        List<SkillToolApplicability> items = new ArrayList<SkillToolApplicability>()
+        for (Object item : (Collection<?>) value) {
+            if (!(item instanceof Map)) {
+                continue
+            }
+            @SuppressWarnings('unchecked')
+            Map<String, Object> data = (Map<String, Object>) item
+            String tool = stringValue(data.get('tool'))
+            if (tool == null || tool.trim().isEmpty()) {
+                continue
+            }
+            items.add(new SkillToolApplicability(
+                tool: tool,
+                relationship: stringValue(data.get('relationship')) ?: 'RECOMMENDED_PREREQUISITE',
+                triggerTerms: stringList(data.get('triggerTerms')),
+                useWhen: stringList(data.get('useWhen')),
+                avoidWhen: stringList(data.get('avoidWhen')),
+                examples: stringList(data.get('examples')),
+                instructions: stringList(data.get('instructions'))
+            ))
+        }
+        items
     }
 
     private static SkillRouting routingValue(Object value) {

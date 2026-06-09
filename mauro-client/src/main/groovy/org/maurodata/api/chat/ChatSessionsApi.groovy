@@ -9,10 +9,7 @@ import io.micronaut.http.annotation.Body
 import io.micronaut.http.annotation.Get
 import io.micronaut.http.annotation.PathVariable
 import io.micronaut.http.annotation.Post
-import io.micronaut.http.annotation.Put
 import io.micronaut.http.annotation.QueryValue
-import io.micronaut.http.annotation.Status
-import io.micronaut.http.HttpStatus
 import io.micronaut.core.annotation.Nullable
 import jakarta.validation.Valid
 
@@ -34,8 +31,4 @@ interface ChatSessionsApi {
         @QueryValue(defaultValue = '200') Integer limit,
         @Nullable @QueryValue String beforeMessageId
     )
-
-    @Status(HttpStatus.NO_CONTENT)
-    @Put(Paths.CHAT_SESSIONS_SKILLS)
-    void updateSessionSkills(@PathVariable String sessionId, @Body @Valid UpdateSessionSkillsRequest request)
 }
