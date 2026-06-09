@@ -12,7 +12,6 @@ import org.maurodata.api.chat.ListSessionMessagesResponseDto
 import org.maurodata.api.chat.MessageDto
 import org.maurodata.api.chat.SendMessageRequest
 import org.maurodata.api.chat.SessionDto
-import org.maurodata.api.chat.UpdateSessionSkillsRequest
 import org.maurodata.service.chat.llm.ProviderMessage
 import org.maurodata.service.chat.llm.ProviderRegistry
 import org.maurodata.service.chat.llm.ProviderRequest
@@ -58,7 +57,6 @@ class ChatSessionsApiService implements ChatSessionService {
             title: request.title,
             status: 'ACTIVE',
             model: request.model ?: defaultModel,
-            skillIds: request.skillIds ?: [],
             createdAt: now,
             updatedAt: now
         )
@@ -134,16 +132,26 @@ class ChatSessionsApiService implements ChatSessionService {
 	                    ],
 	                    routing : it.routing ?: [:]
 	                ]}
-            String skillInstruction = chatSkillService.listSkills()
-                .findAll {session.skillIds.contains(it.id)}
-                .collect {"${it.name}: ${it.description}"}
-                .join('\n')
             List<ChatSkillDefinition> skillDefinitions = chatSkillService.listSkillDefinitions()
             String personaInstruction = buildPersonaInstruction(chatSkillService.listPersonaDefinitions())
             String toolInstruction = buildToolInstruction(tools, promptResourceService)
             String routingInstruction = buildRoutingInstruction(skillDefinitions, tools)
+            String prerequisiteInstruction = buildPrerequisiteSkillInstruction(skillDefinitions, request.content ?: '')
 
             List<ProviderMessage> historyMessages = buildProviderHistory(timeline)
+            List<ProviderMessage> currentContextMessages = [
+                personaInstruction ? new ProviderMessage(role: 'system', content: personaInstruction) : null,
+                prerequisiteInstruction ? new ProviderMessage(role: 'system', content: prerequisiteInstruction) : null,
+                toolInstruction ? new ProviderMessage(role: 'system', content: toolInstruction) : null,
+                routingInstruction ? new ProviderMessage(role: 'system', content: routingInstruction) : null
+            ].findAll {it != null} as List<ProviderMessage>
+            userMessage.metadata.put('providerMessagesBefore', providerMessagesToMaps(currentContextMessages))
+            storeProviderMessageEvents(timeline, sessionId, assistantMessageId, currentContextMessages, 'current_context')
+            List<ChatEventDto> currentContextEvents = providerMessagesToEvents(
+                currentContextMessages,
+                assistantMessageId,
+                'current_context'
+            )
 
             ProviderRequest providerRequest = new ProviderRequest(
                 sessionId: session.id,
@@ -151,35 +159,36 @@ class ChatSessionsApiService implements ChatSessionService {
                 model: session.model,
                 tools: tools,
                 options: request.options ?: [:],
-                messages: [
-                    personaInstruction ? new ProviderMessage(role: 'system', content: personaInstruction) : null,
-                    toolInstruction ? new ProviderMessage(role: 'system', content: toolInstruction) : null,
-                    routingInstruction ? new ProviderMessage(role: 'system', content: routingInstruction) : null,
-                    skillInstruction ? new ProviderMessage(role: 'system', content: skillInstruction) : null
-                ].findAll {it != null}
+                messages: currentContextMessages
             )
             providerRequest.messages.addAll(historyMessages)
 
             Flux<ChatEventDto> stream = Flux.from(provider.streamChat(providerRequest))
+                .doOnNext {chunk ->
+                    if (chunk.type == 'provider_message') {
+                        storeProviderMessage(assistantMessage, chunk.metadata)
+                        storeProviderMessageEvent(timeline, sessionId, assistantMessageId, chunk.metadata, 'tool_loop')
+                    }
+                }
                 .filter {chunk -> !['done', 'message_complete'].contains(chunk.type)}
                 .map {chunk ->
-                    String eventType = chunk.type
+                    String eventType = eventTypeForChunk(chunk)
                     synchronized (assistantMessage) {
-                        if (eventType == 'token') {
+                        if (chunk.type == 'token') {
                             assistantMessage.content = (assistantMessage.content ?: '') + (chunk.content ?: '')
-                        } else if (eventType == 'thinking_token') {
+                        } else if (chunk.type == 'thinking_token') {
                             assistantMessage.thinkingContent = (assistantMessage.thinkingContent ?: '') + (chunk.content ?: '')
-                        } else if (eventType == 'error') {
+                        } else if (chunk.type == 'error') {
                             assistantMessage.status = 'error'
                             assistantMessage.metadata.put('error', chunk.content ?: 'Unknown error')
-                        } else if (eventType == 'tool_call' || eventType == 'tool_result') {
+                        } else if (chunk.type == 'tool_call' || chunk.type == 'tool_result') {
                             List<Map<String, Object>> toolEvents = (List<Map<String, Object>>) assistantMessage.metadata.get('toolEvents')
                             if (toolEvents == null) {
                                 toolEvents = new ArrayList<Map<String, Object>>()
                                 assistantMessage.metadata.put('toolEvents', toolEvents)
                             }
                             toolEvents.add([
-                                type      : eventType,
+                                type      : chunk.type,
                                 at        : ChatInMemoryStore.now().toString(),
                                 attributes: chunk.metadata ?: [:]
                             ])
@@ -189,8 +198,8 @@ class ChatSessionsApiService implements ChatSessionService {
                     new ChatEventDto(
                         type: eventType,
                         messageId: chunk.messageId ?: assistantMessageId,
-                        role: 'assistant',
-                        content: chunk.type == 'error' ? "Provider error: ${chunk.content ?: 'Unknown error'}" : (chunk.content ?: ''),
+                        role: roleForChunk(chunk),
+                        content: contentForChunk(chunk),
                         done: false,
                         metadata: chunk.metadata ?: [:]
                     )
@@ -206,6 +215,7 @@ class ChatSessionsApiService implements ChatSessionService {
                     done: false,
                     metadata: [sessionId: session.id, provider: provider.id()]
                 )),
+                Flux.fromIterable(currentContextEvents),
                 stream,
                 Flux.just(new ChatEventDto(
                     type: 'message_complete',
@@ -296,14 +306,6 @@ class ChatSessionsApiService implements ChatSessionService {
         response
     }
 
-    @Override
-    void updateSessionSkills(String sessionId, UpdateSessionSkillsRequest request) {
-        SessionDto session = getSession(sessionId)
-        session.skillIds = request.skillIds ?: []
-        session.updatedAt = ChatInMemoryStore.now()
-        log.info('updateSessionSkills sessionId={} skillCount={}', sessionId, session.skillIds.size())
-    }
-
     private static String buildToolInstruction(
         List<Map<String, Object>> tools,
         ChatPromptResourceService promptResourceService
@@ -331,6 +333,86 @@ class ChatSessionsApiService implements ChatSessionService {
         builder.toString()
     }
 
+    private static String buildPrerequisiteSkillInstruction(List<ChatSkillDefinition> skills, String userContent) {
+        if (!skills || userContent == null || userContent.trim().isEmpty()) {
+            return ''
+        }
+
+        List<ChatSkillDefinition> matchedSkills = new ArrayList<ChatSkillDefinition>()
+        for (ChatSkillDefinition skill : sortSkillsByPriority(skills)) {
+            if (skill == null || 'PERSONA'.equalsIgnoreCase(skill.type) || (skill.instruction ?: '').trim().isEmpty()) {
+                continue
+            }
+            if (requiredApplicabilityMatches(skill, userContent) && !matchedSkills.any {ChatSkillDefinition existing -> existing.id == skill.id}) {
+                matchedSkills.add(skill)
+            }
+        }
+        if (matchedSkills.isEmpty()) {
+            return ''
+        }
+
+        StringBuilder builder = new StringBuilder(2048)
+        builder.append('Required Mauro skill context for this turn. ')
+            .append('The backend selected this context from skill-owned tool prerequisites before tool use. ')
+            .append('Apply it when choosing tool arguments and domainTypes; do not ask the user to confirm use of these skills.')
+
+        for (ChatSkillDefinition skill : matchedSkills) {
+            builder.append('\n\n## ')
+                .append(skill.name ?: skill.id)
+                .append(' (')
+                .append(skill.id)
+                .append(')\n')
+                .append(skill.instruction.trim())
+        }
+        builder.toString()
+    }
+
+    private static boolean requiredApplicabilityMatches(ChatSkillDefinition skill, String userContent) {
+        for (SkillToolApplicability applicability : skill.toolApplicability ?: []) {
+            if (applicability == null || !isRequiredPrerequisite(applicability.relationship)) {
+                continue
+            }
+            // Notice: these are specific term matches rather than semantic matches
+            List<String> triggerTerms = applicability.triggerTerms ?: []
+            if (triggerTerms.isEmpty()) {
+                triggerTerms = skill.keywords ?: []
+            }
+            if (anyTermMatches(userContent, triggerTerms)) {
+                return true
+            }
+        }
+        false
+    }
+
+    private static boolean isRequiredPrerequisite(String relationship) {
+        String value = relationship == null ? '' : relationship.trim().toUpperCase(Locale.ROOT)
+        value == 'REQUIRED_PREREQUISITE' || value == 'REQUIRED_WHEN_MATCHES'
+    }
+
+    private static boolean anyTermMatches(String text, List<String> terms) {
+        if (text == null || terms == null || terms.isEmpty()) {
+            return false
+        }
+        String lowerText = text.toLowerCase(Locale.ROOT)
+        for (String term : terms) {
+            if (termMatches(lowerText, term)) {
+                return true
+            }
+        }
+        false
+    }
+
+    private static boolean termMatches(String lowerText, String term) {
+        if (term == null || term.trim().isEmpty()) {
+            return false
+        }
+        String lowerTerm = term.toLowerCase(Locale.ROOT).trim()
+        if (lowerTerm.contains(' ')) {
+            return lowerText.contains(lowerTerm)
+        }
+        lowerText ==~ /(?s).*(^|[^a-z0-9])${java.util.regex.Pattern.quote(lowerTerm)}([^a-z0-9]|$).*/
+    }
+
     private static String buildRoutingInstruction(List<ChatSkillDefinition> skills, List<Map<String, Object>> tools) {
         StringBuilder builder = new StringBuilder(2048)
         builder.append('Routing index for available Mauro assistance. Use this index to choose whether to call a tool or retrieve a skill. Individual skills own their own routing; do not rely on the persona to list every skill. Prefer the most specific matching skill route. Use GENERAL or FALLBACK routes only when no SPECIFIC route matches well.')
@@ -339,6 +421,16 @@ class ChatSessionsApiService implements ChatSessionService {
         if (!skillRoutes.isEmpty()) {
             builder.append('\n\nSkill routes:')
             for (String route : skillRoutes) {
+                builder.append('\n- ')
+                    .append(route)
+            }
+        }
+
+        List<String> toolApplicabilityRoutes = buildToolApplicabilityRoutes(skills)
+        if (!toolApplicabilityRoutes.isEmpty()) {
+            builder.append('\n\nTool prerequisite/context routes:')
+            builder.append('\nBefore calling a tool, check these skill-owned routes. REQUIRED_PREREQUISITE skills must be retrieved first when their useWhen matches. RECOMMENDED_PREREQUISITE and RECOMMENDED_CONTEXT skills should be retrieved when their useWhen matches unless the needed context is already present.')
+            for (String route : toolApplicabilityRoutes) {
                 builder.append('\n- ')
                     .append(route)
             }
@@ -355,23 +447,27 @@ class ChatSessionsApiService implements ChatSessionService {
         builder.toString()
     }
 
+    private static List<ChatSkillDefinition> sortSkillsByPriority(List<ChatSkillDefinition> skills) {
+        new ArrayList<ChatSkillDefinition>(skills ?: [])
+            .sort {ChatSkillDefinition left, ChatSkillDefinition right ->
+                Integer leftPriority = left.priority != null ? left.priority : Integer.valueOf(1000)
+                Integer rightPriority = right.priority != null ? right.priority : Integer.valueOf(1000)
+                int priorityCompare = leftPriority <=> rightPriority
+                priorityCompare != 0 ? priorityCompare : (left.id ?: '') <=> (right.id ?: '')
+            } as List<ChatSkillDefinition>
+    }
+
     private static List<String> buildSkillRoutes(List<ChatSkillDefinition> skills) {
         if (!skills) {
             return []
         }
-        List<ChatSkillDefinition> routedSkills = skills
+        List<ChatSkillDefinition> routedSkills = sortSkillsByPriority(skills)
             .findAll {ChatSkillDefinition skill ->
                 !'PERSONA'.equalsIgnoreCase(skill.type) &&
                     skill.routing != null &&
                     (!(skill.routing.useWhen ?: []).isEmpty() ||
                         !(skill.routing.avoidWhen ?: []).isEmpty() ||
                         !(skill.routing.examples ?: []).isEmpty())
-            }
-            .sort {ChatSkillDefinition left, ChatSkillDefinition right ->
-                Integer leftPriority = left.priority ?: Integer.valueOf(1000)
-                Integer rightPriority = right.priority ?: Integer.valueOf(1000)
-                int priorityCompare = leftPriority <=> rightPriority
-                priorityCompare != 0 ? priorityCompare : left.id <=> right.id
             }
 
         List<String> routes = new ArrayList<String>()
@@ -396,6 +492,11 @@ class ChatSessionsApiService implements ChatSessionService {
                     .append(routing.avoidWhen.join('; '))
                     .append('.')
             }
+            if (!(skill.seeAlso ?: []).isEmpty()) {
+                route.append(' See also: ')
+                    .append(skill.seeAlso.join(', '))
+                    .append('.')
+            }
 
             String toolName = routing.toolName ?: 'skill_lookup'
             Map<String, Object> toolArguments = routing.toolArguments && !routing.toolArguments.isEmpty()
@@ -413,6 +514,67 @@ class ChatSessionsApiService implements ChatSessionService {
                     .append('.')
             }
             routes.add(route.toString())
+        }
+        routes
+    }
+
+    private static List<String> buildToolApplicabilityRoutes(List<ChatSkillDefinition> skills) {
+        if (!skills) {
+            return []
+        }
+
+        List<ChatSkillDefinition> applicableSkills = sortSkillsByPriority(skills)
+            .findAll {ChatSkillDefinition skill ->
+                !'PERSONA'.equalsIgnoreCase(skill.type) && !(skill.toolApplicability ?: []).isEmpty()
+            }
+
+        List<String> routes = new ArrayList<String>()
+        for (ChatSkillDefinition skill : applicableSkills) {
+            for (SkillToolApplicability applicability : skill.toolApplicability ?: []) {
+                if (applicability == null || applicability.tool == null || applicability.tool.trim().isEmpty()) {
+                    continue
+                }
+                StringBuilder route = new StringBuilder(768)
+                route.append(applicability.tool)
+                    .append(' <- ')
+                    .append(skill.name)
+                    .append(' (')
+                    .append(skill.id)
+                    .append(', ')
+                    .append(applicability.relationship ?: 'RECOMMENDED_PREREQUISITE')
+                    .append('): ')
+                    .append(skill.description)
+                    .append('.')
+                if (!(applicability.useWhen ?: []).isEmpty()) {
+                    route.append(' Use when: ')
+                        .append(applicability.useWhen.join('; '))
+                        .append('.')
+                }
+                if (!(applicability.triggerTerms ?: []).isEmpty()) {
+                    route.append(' Trigger terms: ')
+                        .append(applicability.triggerTerms.join(', '))
+                        .append('.')
+                }
+                if (!(applicability.avoidWhen ?: []).isEmpty()) {
+                    route.append(' Avoid when: ')
+                        .append(applicability.avoidWhen.join('; '))
+                        .append('.')
+                }
+                if (!(applicability.instructions ?: []).isEmpty()) {
+                    route.append(' Instructions: ')
+                        .append(applicability.instructions.join('; '))
+                        .append('.')
+                }
+                route.append(' Retrieve with skill_lookup using arguments ')
+                    .append(JsonOutput.toJson([id: skill.id, includeInstruction: true]))
+                    .append('.')
+                if (!(applicability.examples ?: []).isEmpty()) {
+                    route.append(' Examples: ')
+                        .append(applicability.examples.take(3).join(' | '))
+                        .append('.')
+                }
+                routes.add(route.toString())
+            }
         }
         routes
     }
@@ -493,17 +655,225 @@ class ChatSessionsApiService implements ChatSessionService {
             if (message == null || message.status == 'event') {
                 continue
             }
+            if (message.role == 'user') {
+                history.addAll(providerMessagesFromMaps(message.metadata?.get('providerMessagesBefore')))
+            }
+            if (message.role == 'assistant') {
+                history.addAll(providerMessagesFromMaps(message.metadata?.get('providerMessages')))
+            }
             if (message.role == 'user' || message.role == 'assistant' || message.role == 'tool') {
                 if (message.content != null && !message.content.trim().isEmpty()) {
                     history.add(new ProviderMessage(role: message.role, content: message.content))
                 }
             }
             String toolMemory = buildToolHistoryMemory(message)
-            if (toolMemory != null && !toolMemory.trim().isEmpty()) {
+            if (message.metadata?.get('providerMessages') == null && toolMemory != null && !toolMemory.trim().isEmpty()) {
                 history.add(new ProviderMessage(role: 'system', content: toolMemory))
             }
         }
         history
+    }
+
+    private static void storeProviderMessage(MessageDto assistantMessage, Map<String, Object> metadata) {
+        if (assistantMessage == null || metadata == null) {
+            return
+        }
+        Object providerMessageObj = metadata.get('providerMessage')
+        if (!(providerMessageObj instanceof Map)) {
+            return
+        }
+        @SuppressWarnings('unchecked')
+        Map<String, Object> providerMessage = (Map<String, Object>) providerMessageObj
+        synchronized (assistantMessage) {
+            List<Map<String, Object>> providerMessages = (List<Map<String, Object>>) assistantMessage.metadata.get('providerMessages')
+            if (providerMessages == null) {
+                providerMessages = new ArrayList<Map<String, Object>>()
+                assistantMessage.metadata.put('providerMessages', providerMessages)
+            }
+            providerMessages.add(new LinkedHashMap<String, Object>(providerMessage))
+            assistantMessage.updatedAt = ChatInMemoryStore.now().toString()
+        }
+    }
+
+    private static void storeProviderMessageEvents(
+        List<MessageDto> timeline,
+        String sessionId,
+        String assistantMessageId,
+        List<ProviderMessage> messages,
+        String source
+    ) {
+        if (messages == null || messages.isEmpty()) {
+            return
+        }
+        for (ProviderMessage message : messages) {
+            storeProviderMessageEvent(timeline, sessionId, assistantMessageId, providerMessageToMap(message), source)
+        }
+    }
+
+    private static void storeProviderMessageEvent(
+        List<MessageDto> timeline,
+        String sessionId,
+        String assistantMessageId,
+        Map<String, Object> metadata,
+        String source
+    ) {
+        Map<String, Object> providerMessage = providerMessageFromMetadata(metadata)
+        if (timeline == null || providerMessage.isEmpty() || !'system'.equals(providerMessage.get('role'))) {
+            return
+        }
+        Instant now = ChatInMemoryStore.now()
+        timeline.add(new MessageDto(
+            id: UUID.randomUUID().toString(),
+            sessionId: sessionId,
+            role: 'system',
+            content: String.valueOf(providerMessage.get('content') ?: ''),
+            status: 'event',
+            thinkingContent: '',
+            createdAt: now.toString(),
+            updatedAt: now.toString(),
+            metadata: [
+                eventType      : 'system_message',
+                messageId      : assistantMessageId,
+                source         : source,
+                providerMessage: providerMessage
+            ] as Map<String, Object>
+        ))
+    }
+
+    private static List<ChatEventDto> providerMessagesToEvents(
+        List<ProviderMessage> messages,
+        String assistantMessageId,
+        String source
+    ) {
+        if (messages == null || messages.isEmpty()) {
+            return []
+        }
+        List<ChatEventDto> events = new ArrayList<ChatEventDto>(messages.size())
+        for (ProviderMessage message : messages) {
+            Map<String, Object> providerMessage = providerMessageToMap(message)
+            String eventType = 'system'.equals(providerMessage.get('role')) ? 'system_message' : 'provider_message'
+            Map<String, Object> metadata = [
+                source         : source,
+                providerMessage: providerMessage
+            ] as Map<String, Object>
+            events.add(new ChatEventDto(
+                type: eventType,
+                messageId: assistantMessageId,
+                role: String.valueOf(providerMessage.get('role') ?: 'assistant'),
+                content: String.valueOf(providerMessage.get('content') ?: ''),
+                done: false,
+                metadata: metadata
+            ))
+        }
+        events
+    }
+
+    private static String eventTypeForChunk(org.maurodata.service.chat.llm.ProviderChunk chunk) {
+        if (chunk == null || chunk.type != 'provider_message') {
+            return chunk?.type
+        }
+        Map<String, Object> providerMessage = providerMessageFromMetadata(chunk.metadata)
+        'system'.equals(providerMessage.get('role')) ? 'system_message' : 'provider_message'
+    }
+
+    private static String roleForChunk(org.maurodata.service.chat.llm.ProviderChunk chunk) {
+        if (chunk != null && chunk.type == 'provider_message') {
+            Map<String, Object> providerMessage = providerMessageFromMetadata(chunk.metadata)
+            return String.valueOf(providerMessage.get('role') ?: 'assistant')
+        }
+        'assistant'
+    }
+
+    private static String contentForChunk(org.maurodata.service.chat.llm.ProviderChunk chunk) {
+        if (chunk == null) {
+            return ''
+        }
+        if (chunk.type == 'error') {
+            return "Provider error: ${chunk.content ?: 'Unknown error'}"
+        }
+        if (chunk.type == 'provider_message') {
+            Map<String, Object> providerMessage = providerMessageFromMetadata(chunk.metadata)
+            return String.valueOf(providerMessage.get('content') ?: '')
+        }
+        chunk.content ?: ''
+    }
+
+    private static Map<String, Object> providerMessageFromMetadata(Map<String, Object> metadata) {
+        if (metadata == null) {
+            return [:] as Map<String, Object>
+        }
+        Object providerMessageObj = metadata.get('providerMessage')
+        if (providerMessageObj instanceof Map) {
+            @SuppressWarnings('unchecked')
+            Map<String, Object> providerMessage = (Map<String, Object>) providerMessageObj
+            return new LinkedHashMap<String, Object>(providerMessage)
+        }
+        if (metadata.containsKey('role') || metadata.containsKey('content') || metadata.containsKey('toolCalls')) {
+            return new LinkedHashMap<String, Object>(metadata)
+        }
+        [:] as Map<String, Object>
+    }
+
+    private static List<Map<String, Object>> providerMessagesToMaps(List<ProviderMessage> messages) {
+        if (messages == null || messages.isEmpty()) {
+            return []
+        }
+        List<Map<String, Object>> out = new ArrayList<Map<String, Object>>(messages.size())
+        for (ProviderMessage message : messages) {
+            Map<String, Object> map = providerMessageToMap(message)
+            if (!map.isEmpty()) {
+                out.add(map)
+            }
+        }
+        out
+    }
+
+    private static Map<String, Object> providerMessageToMap(ProviderMessage message) {
+        if (message == null || message.role == null || message.role.trim().isEmpty()) {
+            return [:] as Map<String, Object>
+        }
+        Map<String, Object> out = new LinkedHashMap<String, Object>()
+        out.put('role', message.role)
+        out.put('content', message.content ?: '')
+        if (message.toolCallId != null) {
+            out.put('toolCallId', message.toolCallId)
+        }
+        if (message.name != null) {
+            out.put('name', message.name)
+        }
+        if (message.toolCalls != null && !message.toolCalls.isEmpty()) {
+            out.put('toolCalls', message.toolCalls)
+        }
+        out
+    }
+
+    private static List<ProviderMessage> providerMessagesFromMaps(Object value) {
+        if (!(value instanceof List)) {
+            return []
+        }
+        List<ProviderMessage> messages = new ArrayList<ProviderMessage>()
+        for (Object item : (List<?>) value) {
+            if (!(item instanceof Map)) {
+                continue
+            }
+            @SuppressWarnings('unchecked')
+            Map<String, Object> map = (Map<String, Object>) item
+            String role = asString(map.get('role'))
+            if (role == null || role.trim().isEmpty()) {
+                continue
+            }
+            ProviderMessage message = new ProviderMessage(role: role, content: asString(map.get('content')) ?: '')
+            message.toolCallId = asString(map.get('toolCallId'))
+            message.name = asString(map.get('name'))
+            Object toolCallsObj = map.get('toolCalls')
+            if (toolCallsObj instanceof List) {
+                @SuppressWarnings('unchecked')
+                List<Map<String, Object>> toolCalls = (List<Map<String, Object>>) toolCallsObj
+                message.toolCalls = toolCalls
+            }
+            messages.add(message)
+        }
+        messages
     }
 
     private static String buildToolHistoryMemory(MessageDto message) {

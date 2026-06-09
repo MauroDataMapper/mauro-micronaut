@@ -17,6 +17,20 @@ keywords:
   - metadata
   - profile
   - folder
+toolApplicability:
+  - tool: catalogue_search
+    relationship: RECOMMENDED_CONTEXT
+    useWhen:
+      - Mauro terminology is unclear while choosing catalogue_search domainTypes or interpreting mixed result types
+      - users mention Data Model, Data Class, Data Element, Data Type, Terminology, Code Set, Folder, metadata, or profile in a way that suggests they may need term clarification
+    avoidWhen:
+      - users are only asking to search live catalogue content for a named item and the intended domain type is already clear
+      - users are asking for software installation, configuration, Docker, or administration documentation
+    examples:
+      - What is the difference between a Data Class and a Data Element before I search?
+    instructions:
+      - Use Mauro term definitions to choose or explain domainTypes.
+      - Do not replace catalogue_search when the user wants live catalogue items.
 routing:
   specificity: GENERAL
   useWhen:
@@ -36,6 +50,10 @@ routing:
       id: mauro-glossary
       includeInstruction: true
 instruction: |
+  Use this skill to learn and apply core Mauro terminology prior to answering the user or interpreting tool results.
+  This guidance is primarily internal context for the assistant. Do not present it as "the Mauro Glossary skill" or say "according to this skill" unless the user asks what guidance you used.
+  If the user asks directly for a definition, answer directly from these definitions in plain language.
+
   Core Mauro terms:
   - Catalogue item: a searchable Mauro object such as a model, class, element, terminology, code set, or folder.
   - Folder: an organisational container for models and other catalogue content.

@@ -5,7 +5,6 @@ import org.maurodata.api.chat.CreateSessionRequest
 import org.maurodata.api.chat.ListSessionMessagesResponseDto
 import org.maurodata.api.chat.SendMessageRequest
 import org.maurodata.api.chat.SessionDto
-import org.maurodata.api.chat.UpdateSessionSkillsRequest
 import org.reactivestreams.Publisher
 
 interface ChatSessionService {
@@ -13,5 +12,4 @@ interface ChatSessionService {
     SessionDto getSession(String sessionId)
     Publisher<ChatEventDto> sendMessage(String sessionId, SendMessageRequest request)
     ListSessionMessagesResponseDto listSessionMessages(String sessionId, Integer limit, String beforeMessageId)
-    void updateSessionSkills(String sessionId, UpdateSessionSkillsRequest request)
 }

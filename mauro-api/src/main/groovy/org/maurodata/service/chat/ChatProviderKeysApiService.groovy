@@ -53,6 +53,14 @@ class ChatProviderKeysApiService implements ChatProviderKeyService {
         return dto
     }
 
+    @Override
+    void removeProviderKey(String provider) {
+        final CapabilitiesProvider matched = findProvider(provider)
+        if (matched == null) {
+            throw new HttpStatusException(HttpStatus.NOT_FOUND, "Provider not found: ${provider}")
+        }
+    }
+
     private CapabilitiesProvider findProvider(final String providerId) {
         for (int i = 0; i < providers.size(); i++) {
             final CapabilitiesProvider provider = providers.get(i)
