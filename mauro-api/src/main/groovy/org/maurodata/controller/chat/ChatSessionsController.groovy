@@ -2,14 +2,11 @@ package org.maurodata.controller.chat
 
 import groovy.transform.CompileStatic
 import io.micronaut.http.MediaType
-import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Get
 import io.micronaut.http.annotation.PathVariable
 import io.micronaut.http.annotation.Post
-import io.micronaut.http.annotation.Put
-import io.micronaut.http.annotation.Status
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
 import io.micronaut.core.annotation.Nullable
@@ -21,7 +18,6 @@ import org.maurodata.api.chat.CreateSessionRequest
 import org.maurodata.api.chat.ListSessionMessagesResponseDto
 import org.maurodata.api.chat.SendMessageRequest
 import org.maurodata.api.chat.SessionDto
-import org.maurodata.api.chat.UpdateSessionSkillsRequest
 import org.maurodata.audit.Audit
 import org.maurodata.service.chat.ChatSessionService
 import org.reactivestreams.Publisher
@@ -67,13 +63,5 @@ class ChatSessionsController implements ChatSessionsApi {
         @Nullable String beforeMessageId
     ) {
         chatSessionService.listSessionMessages(sessionId, limit, beforeMessageId)
-    }
-
-    @Override
-    @Audit(level = Audit.AuditLevel.FILE_ONLY)
-    @Status(HttpStatus.NO_CONTENT)
-    @Put(Paths.CHAT_SESSIONS_SKILLS)
-    void updateSessionSkills(@PathVariable String sessionId, @Body @Valid UpdateSessionSkillsRequest request) {
-        chatSessionService.updateSessionSkills(sessionId, request)
     }
 }

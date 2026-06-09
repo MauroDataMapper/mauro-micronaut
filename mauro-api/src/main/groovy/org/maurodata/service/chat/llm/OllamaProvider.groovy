@@ -157,7 +157,11 @@ class OllamaProvider implements LlmProvider {
 
                             if (!callsToRun.isEmpty()) {
                                 toolRound++
-                                addAssistantToolCallMessage(workingMessages, callsToRun)
+                                ProviderMessage assistantToolCallMessage = buildAssistantToolCallMessage(callsToRun)
+                                if (assistantToolCallMessage != null) {
+                                    workingMessages.add(assistantToolCallMessage)
+                                    emitProviderMessage(sink, request.messageId, assistantToolCallMessage)
+                                }
                                 for (int i = 0; i < callsToRun.size(); i++) {
                                     final ToolCallAccumulator.CompletedToolCall call = callsToRun.get(i)
                                     final String callKey = toolCallKey(call)
@@ -354,6 +358,7 @@ class OllamaProvider implements LlmProvider {
 
                     String functionName = null
                     String argumentsRaw = null
+                    Map<String, Object> arguments = Collections.<String, Object>emptyMap()
                     if (functionObj instanceof Map) {
                         final Map<?, ?> fn = (Map<?, ?>) functionObj
                         functionName = asString(fn.get('name'))
@@ -362,9 +367,11 @@ class OllamaProvider implements LlmProvider {
                             @SuppressWarnings('unchecked')
                             final Map<String, Object> castArgs = (Map<String, Object>) argsObj
                             malformedStructuredCalls.add(new LinkedHashMap<String, Object>(castArgs))
+                            arguments = new LinkedHashMap<String, Object>(castArgs)
                             argumentsRaw = JsonOutput.toJson((Map<?, ?>) argsObj)
                         } else {
                             argumentsRaw = asString(argsObj)
+                            arguments = parseArguments(argumentsRaw)
                         }
                     }
                     if (functionName == null || functionName.trim().isEmpty()) {
@@ -384,6 +391,8 @@ class OllamaProvider implements LlmProvider {
                     meta.put('index', Integer.valueOf(i))
                     if (callId != null) meta.put('callId', callId)
                     if (functionName != null) meta.put('name', functionName)
+                    meta.put('arguments', arguments)
+                    if (argumentsRaw != null) meta.put('argumentsRaw', argumentsRaw)
                     sink.next(new ProviderChunk('tool_call', messageId, null, meta))
                 }
             }
@@ -404,6 +413,18 @@ class OllamaProvider implements LlmProvider {
         }
 
         try {
+            if (fallbackSynthesized) {
+                final Map<String, Object> toolMeta = new LinkedHashMap<String, Object>(4)
+                toolMeta.put('index', call.index)
+                toolMeta.put('callId', call.callId)
+                toolMeta.put('name', toolName)
+                toolMeta.put('arguments', call.argumentsJson ?: Collections.<String, Object>emptyMap())
+                if (call.argumentsRaw != null) {
+                    toolMeta.put('argumentsRaw', call.argumentsRaw)
+                }
+                sink.next(new ProviderChunk('tool_call', messageId, null, toolMeta))
+            }
+
             final ToolInvokeRequest invokeRequest = new ToolInvokeRequest(arguments: call.argumentsJson)
             final ToolInvokeResponse invokeResponse = mcpService.invokeTool(toolName, invokeRequest)
 
@@ -421,13 +442,17 @@ class OllamaProvider implements LlmProvider {
             sink.next(new ProviderChunk('tool_result', messageId, null, resultMeta))
 
             final String toolResultText = buildToolResultTextForModel(toolName, invokeResponse)
-            workingMessages.add(new ProviderMessage('tool', toolResultText, null, toolName))
-            workingMessages.add(new ProviderMessage(
+            ProviderMessage toolMessage = new ProviderMessage('tool', toolResultText, null, toolName)
+            workingMessages.add(toolMessage)
+            emitProviderMessage(sink, messageId, toolMessage)
+            ProviderMessage postToolMessage = new ProviderMessage(
                 'system',
                 promptResourceService.getPrompt(ChatPromptResourceService.POST_TOOL_RESULT),
                 null,
                 null
-            ))
+            )
+            workingMessages.add(postToolMessage)
+            emitProviderMessage(sink, messageId, postToolMessage)
             return ToolExecResult.executed()
         } catch (final Throwable t) {
             sink.next(new ProviderChunk('error', messageId, 'tool invocation failed: ' + t.getMessage(), Collections.<String, Object>emptyMap()))
@@ -481,6 +506,23 @@ class OllamaProvider implements LlmProvider {
 
     private static String asString(final Object value) {
         return value == null ? null : String.valueOf(value)
+    }
+
+    private static Map<String, Object> parseArguments(final String argumentsRaw) {
+        if (argumentsRaw == null || argumentsRaw.trim().isEmpty()) {
+            return Collections.<String, Object>emptyMap()
+        }
+        try {
+            final Object parsed = new JsonSlurper().parseText(argumentsRaw)
+            if (parsed instanceof Map) {
+                @SuppressWarnings('unchecked')
+                final Map<String, Object> typed = (Map<String, Object>) parsed
+                return new LinkedHashMap<String, Object>(typed)
+            }
+        } catch (final Throwable ignored) {
+            return Collections.<String, Object>emptyMap()
+        }
+        Collections.<String, Object>emptyMap()
     }
 
     private boolean resolveRequestedThink(final ProviderRequest request) {
@@ -793,12 +835,11 @@ class OllamaProvider implements LlmProvider {
         return "Tool ${toolName} succeeded. Result:\n" + JsonOutput.prettyPrint(JsonOutput.toJson(compactResultForModel(result)))
     }
 
-    private static void addAssistantToolCallMessage(
-        final List<ProviderMessage> workingMessages,
+    private static ProviderMessage buildAssistantToolCallMessage(
         final List<ToolCallAccumulator.CompletedToolCall> callsToRun
     ) {
-        if (workingMessages == null || callsToRun == null || callsToRun.isEmpty()) {
-            return
+        if (callsToRun == null || callsToRun.isEmpty()) {
+            return null
         }
 
         final List<Map<String, Object>> toolCalls = new ArrayList<Map<String, Object>>(callsToRun.size())
@@ -817,14 +858,43 @@ class OllamaProvider implements LlmProvider {
             ] as Map<String, Object>)
         }
         if (toolCalls.isEmpty()) {
-            return
+            return null
         }
 
-        workingMessages.add(new ProviderMessage(
+        new ProviderMessage(
             role: 'assistant',
             content: '',
             toolCalls: toolCalls
-        ))
+        )
+    }
+
+    private static void emitProviderMessage(
+        final reactor.core.publisher.FluxSink<ProviderChunk> sink,
+        final String messageId,
+        final ProviderMessage message
+    ) {
+        if (sink == null || message == null) {
+            return
+        }
+        sink.next(new ProviderChunk('provider_message', messageId, null, [
+            providerMessage: providerMessageToMap(message)
+        ] as Map<String, Object>))
+    }
+
+    private static Map<String, Object> providerMessageToMap(final ProviderMessage message) {
+        final Map<String, Object> out = new LinkedHashMap<String, Object>()
+        out.put('role', message.role)
+        out.put('content', message.content ?: '')
+        if (message.toolCallId != null) {
+            out.put('toolCallId', message.toolCallId)
+        }
+        if (message.name != null) {
+            out.put('name', message.name)
+        }
+        if (message.toolCalls != null && !message.toolCalls.isEmpty()) {
+            out.put('toolCalls', message.toolCalls)
+        }
+        out
     }
 
     private static List<Map<String, Object>> filterTools(

@@ -549,7 +549,7 @@ interface Paths {
     * ChatMcpApi
     */
     String CHAT_MCP_SERVERS = '/api/chat/mcp/servers'
-    String CHAT_MCP_TOOL_INVOKE = '/api/chat/mcp/tools/{toolName}:invoke'
+    String CHAT_MCP_SERVER = '/api/chat/mcp/servers/{serverId}'
 
     /*
     * ChatProviderKeysApi
@@ -564,10 +564,4 @@ interface Paths {
     String CHAT_SESSIONS_ID = '/api/chat/sessions/{sessionId}'
     String CHAT_SESSIONS_MESSAGES = '/api/chat/sessions/{sessionId}/messages'
     String CHAT_SESSIONS_MESSAGES_LIST = '/api/chat/sessions/{sessionId}/messages/list'
-    String CHAT_SESSIONS_SKILLS = '/api/chat/sessions/{sessionId}/skills'
-
-    /*
-    * ChatSkillsApi
-    */
-    String CHAT_SKILLS = '/api/chat/skills'
 }

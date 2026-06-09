@@ -8,6 +8,7 @@ interface ToolHandler {
     String description()
     Map<String, Object> inputSchema()
     Map<String, Object> routing()
+    Map<String, Object> annotations()
     Map<String, Object> invoke(Map<String, Object> arguments)
     String modelText(Map<String, Object> result)
 }

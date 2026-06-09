@@ -1,0 +1,117 @@
+id: mauro-data-model-diagrammer
+name: Mauro Data Model Diagrammer
+description: Explain and draw how a Mauro Data Model acts as a reusable structure for many real-world data instances
+scope: GLOBAL
+version: 1.0.0
+type: SKILL
+priority: 205
+keywords:
+  - data model
+  - diagram
+  - draw
+  - text diagram
+  - schema
+  - template
+  - instance
+  - data instance
+  - model instance
+  - form instance
+  - record
+  - reusable structure
+seeAlso:
+  - mauro-glossary
+  - mauro-form-representation
+  - mauro-data-model-explorer
+routing:
+  specificity: SPECIFIC
+  useWhen:
+    - users ask to explain or draw what a Mauro Data Model is
+    - users ask how a Data Model relates to many data instances, records, forms, datasets, messages, or implementations
+    - users ask for a conceptual text diagram of Data Models, Data Classes, Data Elements, Data Types, or Enumeration Values
+    - users are confused about whether a Mauro Data Model is data itself, a schema, a template, or an instance
+  avoidWhen:
+    - users ask to search live catalogue content for Data Models or forms
+    - users ask to inspect the actual children or structure of a specific Data Model in the catalogue
+    - users ask for Mauro installation, configuration, Docker, administration, or documentation
+  examples:
+    - Draw how a Mauro Data Model works
+    - Is a Data Model like a schema for many instances?
+    - Show a text diagram of a Data Model, Data Classes, fields, and records
+  tool:
+    name: skill_lookup
+    arguments:
+      id: mauro-data-model-diagrammer
+      includeInstruction: true
+instruction: |
+  Use this skill to learn and apply the conceptual relationship between Mauro Data Models and real-world data instances.
+  This guidance is primarily internal context for the assistant. Do not present it as "the Mauro Data Model Diagrammer skill" or say "according to this skill" unless the user asks what guidance you used.
+  Draw or include a text diagram only when the user asks for one, or when a short diagram materially clarifies the answer.
+
+  Apply this context when the user wants a conceptual explanation or text diagram of a Mauro Data Model.
+
+  Core idea:
+  - A Mauro Data Model is a reusable description of data structure, not usually the real-world data records themselves.
+  - It can act like a schema, template, or blueprint for many real-world data instances such as submitted forms, database rows, messages, extracts, or datasets.
+  - The Data Model describes what fields, sections, value types, meanings, and constraints those instances should have.
+  - Avoid implying that Mauro necessarily stores all real-world data instances. Mauro primarily stores and governs the metadata/description of the data.
+
+  Optional text diagram pattern:
+
+  ```text
+  Mauro Data Model
+  "Adult Diabetes Assessment Form"
+  = reusable metadata description / schema / template
+  |
+  +-- Data Class: Patient Details
+  |   = section, group, table, or entity
+  |   |
+  |   +-- Data Element: NHS Number
+  |   |   = field / attribute
+  |   |   +-- Data Type: Identifier / text pattern
+  |   |
+  |   +-- Data Element: Date of Birth
+  |       +-- Data Type: Date
+  |
+  +-- Data Class: Clinical Measurements
+      |
+      +-- Data Element: Weight
+      |   +-- Data Type: Decimal + unit kg
+      |
+      +-- Data Element: Smoking Status
+          +-- Data Type: Enumeration
+              +-- Enumeration Values: Current | Former | Never | Unknown
+
+  Many real-world data instances can conform to the model:
+
+  Form submission #1 / message #1 / database row set #1
+      Patient Details.NHS Number = ...
+      Clinical Measurements.Weight = ...
+
+  Form submission #2 / message #2 / database row set #2
+      Patient Details.NHS Number = ...
+      Clinical Measurements.Weight = ...
+  ```
+
+  Explain the levels like this:
+  - Data Model: the overall reusable description, often equivalent to a form, dataset, table set, message, extract, or logical model.
+  - Data Class: a grouping inside the model, such as a form section, table, entity, or nested structure.
+  - Data Element: an individual field or attribute, often equivalent to a form question, dataset column, message field, or database column.
+  - Data Type: the value shape for a field, such as text, integer, date, reference, or enumeration.
+  - Enumeration Value: an allowed coded value for an enumeration.
+
+  If useful, add a compact relationship summary:
+
+  ```text
+  One Data Model
+      contains many Data Classes
+      contains many Data Elements
+      references many Data Types
+      describes many possible real-world data instances
+  ```
+
+  Clarify the "instance" idea carefully:
+  - A Data Model is not usually a single filled-in form.
+  - A filled-in form, message, dataset row, or database record is an instance that can conform to the Data Model.
+  - Different systems can implement or exchange data according to the same Data Model.
+
+  If the user asks about a specific catalogue model's actual structure, say that a model tree or children lookup tool would be needed for precise structure unless the required structure is already visible in tool results.

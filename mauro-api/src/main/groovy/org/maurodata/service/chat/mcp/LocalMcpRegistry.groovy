@@ -32,7 +32,8 @@ class LocalMcpRegistry {
                     name: handler.name(),
                     description: handler.description(),
                     inputSchema: handler.inputSchema() ?: [:],
-                    routing: handler.routing() ?: [:]
+                    routing: handler.routing() ?: [:],
+                    annotations: handler.annotations() ?: [:]
                 )
             }
         )

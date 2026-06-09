@@ -6,9 +6,10 @@ import jakarta.validation.constraints.NotBlank
 
 @Introspected
 @CompileStatic
-class CreateSessionRequest {
-    @NotBlank String workspaceId
-    String title
-    String model
+class UpsertMcpServerRequest {
+    String id
+    @NotBlank String name
+    @NotBlank String url
+    Boolean enabled = Boolean.TRUE
     Map<String, Object> metadata = [:]
 }

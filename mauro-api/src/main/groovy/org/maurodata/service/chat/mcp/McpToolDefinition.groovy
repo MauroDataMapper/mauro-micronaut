@@ -19,4 +19,8 @@ import java.lang.annotation.Target
     String[] filtering() default []
     String[] paging() default []
     String[] limitations() default []
+    boolean readOnlyHint() default true
+    boolean destructiveHint() default false
+    boolean idempotentHint() default true
+    boolean openWorldHint() default false
 }

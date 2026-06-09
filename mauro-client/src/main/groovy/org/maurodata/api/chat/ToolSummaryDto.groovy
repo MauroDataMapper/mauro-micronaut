@@ -10,4 +10,5 @@ class ToolSummaryDto {
     String description
     Map<String, Object> inputSchema = [:]
     Map<String, Object> routing = [:]
+    Map<String, Object> annotations = [:]
 }
