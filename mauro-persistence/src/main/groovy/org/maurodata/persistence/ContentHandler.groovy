@@ -842,6 +842,12 @@ class ContentHandler {
         return dataTypes.first()
     }
 
+    EnumerationValue loadWithContent(EnumerationValue enumerationValue) {
+        enumerationValues = [enumerationValue] as Set
+        loadContent()
+        return enumerationValues.first()
+    }
+
     DataElement loadWithContent(DataElement dataElement) {
         dataElements = [dataElement] as Set
         loadContent()

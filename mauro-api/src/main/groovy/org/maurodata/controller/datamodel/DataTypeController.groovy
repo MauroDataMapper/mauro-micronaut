@@ -3,6 +3,7 @@ package org.maurodata.controller.datamodel
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import org.maurodata.domain.datamodel.DataElement
+import org.maurodata.domain.datamodel.EnumerationValue
 import org.maurodata.domain.model.Path
 import org.maurodata.persistence.cache.ModelCacheableRepository
 
@@ -92,7 +93,18 @@ class DataTypeController extends AdministeredItemController<DataType, DataModel>
     @Post(Paths.DATA_TYPE_LIST)
     @Transactional
     DataType create(UUID dataModelId, @Body @NonNull DataType dataType) {
+        DataModel dataModel = dataModelRepository.findById(dataModelId)
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, dataModel, "DataModel with id ${dataModelId} not found")
+        accessControlService.checkRole(Role.EDITOR, dataModel)
 
+        // Pull out the enumeration values for saving separately as they require the dataType to be saved first
+
+        List<EnumerationValue> enumerationValues = []
+        if(dataType.enumerationValues)
+        {
+            enumerationValues.addAll(dataType.enumerationValues)
+            dataType.enumerationValues = []
+        }
         DataType cleanItem = super.cleanBody(dataType) as DataType
         Item parent = super.validate(cleanItem, dataModelId)
         cleanItem = dataTypeService.validateDataType(cleanItem, parent)
@@ -147,9 +159,9 @@ class DataTypeController extends AdministeredItemController<DataType, DataModel>
         DataType created = super.createEntity(parent, cleanItem) as DataType
         created = super.validateAndAddClassifiers(created) as DataType
 
-        if (dataType.enumerationValues) {
-            dataType.enumerationValues.each {enumValue ->
-                enumValue.enumerationType = (DataType) dataType
+        if (enumerationValues) {
+            enumerationValues.each {enumValue ->
+                enumValue.enumerationType = dataType
                 enumerationValueRepository.save(enumValue)
             }
         }
