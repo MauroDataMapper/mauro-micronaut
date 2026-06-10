@@ -62,7 +62,7 @@ class PathMethodsTest extends Specification {
         "fo:soluta eum architecto|dm:modi unde est\$matrix|dc:est quasi vel|de:new data element label"  | 4             | 1
         "dm:BC_Bloods\$2.0.0"                                                                           | 1             | 0
         "fo:soluta eum architecto"                                                                      | 1             | -1
-        "fo:soluta eum architecto\$main|te:Dewey Decimal Classification v22"                            | 2             | 0
+        "vf:soluta eum architecto\$main|te:Dewey Decimal Classification v22"                            | 2             | 0
         "fo:soluta eum architecto|te:Dewey Decimal Classification v22"                                  | 2             | -1
         "fo:soluta eum architecto|dm:modi unde est\$1.0.0|dc:est quasi vel|dc:est sed hic"              | 4             | 1
 
