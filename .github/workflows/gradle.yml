@@ -56,10 +56,11 @@ jobs:
       - name: Log Gradle version
         run: ./gradlew --version
 
+      - name: Generate OpenAPI resources
+        run: ./gradlew --no-daemon --max-workers=1 -PopenApiGeneratorMaxHeap=4g :mauro-api:processResources
+
       - name: Test with Gradle
-        env:
-          GRADLE_OPTS: '-Xmx4g -XX:MaxMetaspaceSize=512m'
-        run: ./gradlew test
+        run: ./gradlew --no-daemon --max-workers=1 test
 
       - name: Test Report
         uses: dorny/test-reporter@v3
