@@ -153,7 +153,7 @@ class PathService implements AdministeredItemReader {
                 Model model = it as Model
                 model.modelVersionTag == firstPathNode.modelIdentifier ||
                 model.branchName == firstPathNode.modelIdentifier ||
-                model.modelVersion.toString() == firstPathNode.modelIdentifier
+                model.modelVersion?.toString() == firstPathNode.modelIdentifier
             }
         } else {
             nextItemInPath = items.find {it.parent && it.parent.id == parent.id }
