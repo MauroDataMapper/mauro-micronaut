@@ -228,7 +228,8 @@ class AccessControlService implements Toggleable {
         if (!enabled) {
             return null
         }
-        if (!securityService.authenticated) {
+        // if securityService is null, we assume security is turned off
+        if (securityService && !securityService.authenticated) {
             log.debug("User is not authenticated, throwing AuthenticationException")
             throw new AuthenticationException('User is not authenticated')
         }
