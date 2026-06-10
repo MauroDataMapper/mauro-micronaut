@@ -169,6 +169,7 @@ tasks.named('compileGroovy') {
 
 import groovy.json.JsonSlurper
 import org.yaml.snakeyaml.DumperOptions
+import org.yaml.snakeyaml.Yaml
 
 import java.security.MessageDigest
 import java.util.regex.Matcher
@@ -744,13 +745,12 @@ tasks.register('pruneTransitiveRefs') {
 
             if (modified) {
                 // write YAML back using SnakeYAML (available via buildscript classpath)
-                def DumperOptions = org.yaml.snakeyaml.DumperOptions
                 def dumperOptions = new DumperOptions()
                 dumperOptions.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK)
                 dumperOptions.setPrettyFlow(true)
                 dumperOptions.setDefaultScalarStyle(DumperOptions.ScalarStyle.PLAIN) // optional, avoids quoting where possible
 
-                def yamlDumper = new org.yaml.snakeyaml.Yaml(dumperOptions)
+                def yamlDumper = new Yaml(dumperOptions)
                 f.withWriter('UTF-8') { writer ->
                     yamlDumper.dump(root, writer)
                 }

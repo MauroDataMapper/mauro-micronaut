@@ -103,7 +103,7 @@ class TermRelationshipController extends AdministeredItemController<TermRelation
     }
 
     @Audit
-    @Operation(operationId = 'listTemRelationshipByTerm', summary = "List the term relationships", description = "Returns the term relationships. You must have read privileges on the item in question.")
+    @Operation(operationId = 'listTermRelationshipByTerm', summary = "List the term relationships", description = "Returns the term relationships. You must have read privileges on the item in question.")
     @Get(Paths.TERM_RELATIONSHIP_BY_TERM_ID_LIST)
     @Override
     ListResponse<TermRelationship> byTerminologyAndTermIdList(UUID terminologyId, UUID termId) {

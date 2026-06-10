@@ -79,7 +79,7 @@ class EnumerationValueController extends AdministeredItemController<EnumerationV
             deletedObjectDomainType = EnumerationValue
     )
     @ApiResponse(responseCode = "204", description = "No content - deleted successfully")
-    @Operation(operationId = 'deleteEnumarationValue', summary = "Delete an enumeration value", description = "Deletes an enumeration value.")
+    @Operation(operationId = 'deleteEnumerationValue', summary = "Delete an enumeration value", description = "Deletes an enumeration value.")
     @Delete(Paths.ENUMERATION_VALUE_ID)
     HttpResponse delete(UUID dataModelId, UUID enumerationTypeId, UUID id, @Body @Nullable EnumerationValue enumerationValue) {
         super.delete(id, enumerationValue)

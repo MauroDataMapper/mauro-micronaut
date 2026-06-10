@@ -102,7 +102,7 @@ class SecurableResourceGroupRoleController extends ItemController<SecurableResou
 
     @Audit(level = Audit.AuditLevel.FILE_ONLY)
     @ApiResponse(responseCode = "204", description = "No content - deleted successfully")
-    @Operation(operationId = 'deleteSecurableResource', summary = "Delete a securable resource group role", description = "Deletes a securable resource group role.")
+    @Operation(operationId = 'deleteSecurableResourceRole', summary = "Delete a securable resource group role", description = "Deletes a securable resource group role.")
     @Delete(Paths.SECURABLE_ROLE_GROUP_ID)
     HttpResponse delete(@NonNull String securableResourceDomainType, @NonNull UUID securableResourceId, @NonNull Role role, @NonNull UUID userGroupId) {
         AdministeredItem securableResource = readAdministeredItem(securableResourceDomainType, securableResourceId)

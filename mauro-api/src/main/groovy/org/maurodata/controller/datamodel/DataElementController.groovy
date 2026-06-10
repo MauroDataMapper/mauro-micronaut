@@ -173,7 +173,7 @@ class DataElementController extends AdministeredItemController<DataElement, Data
 
     @Audit
     @Operation(summary = "Copy the data element", description = "Copies the data element. You must have read or edit privileges on the item in question, depending on the action.")
-    @Post(Paths. DATA_ELEMENT_COPY)
+    @Post(Paths.DATA_ELEMENT_COPY)
     @Transactional
     DataElement copyDataElement(UUID dataModelId, UUID dataClassId, UUID otherModelId, UUID otherDataClassId, UUID dataElementId) {
         DataModel targetModel = dataModelRepository.loadWithContent(dataModelId)

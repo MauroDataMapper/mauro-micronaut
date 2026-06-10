@@ -73,7 +73,7 @@ class TermController extends AdministeredItemController<Term, Terminology> imple
 
     @Audit(deletedObjectDomainType = Term)
     @ApiResponse(responseCode = "204", description = "No content - deleted successfully")
-    @Operation(operationId = 'deleteTerminology', summary = "Delete a term", description = "Deletes a term.")
+    @Operation(operationId = 'deleteTerm', summary = "Delete a term", description = "Deletes a term.")
     @Delete(Paths.TERM_ID)
     HttpResponse delete(UUID terminologyId, UUID id, @Body @Nullable Term term) {
         super.delete(id, term)
