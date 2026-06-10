@@ -31,7 +31,7 @@ import java.time.Instant
  */
 @CompileStatic
 @Slf4j
-abstract class Model<M extends DiffableItem> extends AdministeredItem implements SecurableResource, ItemReferencer {
+abstract class Model extends AdministeredItem implements DiffableItem, SecurableResource, ItemReferencer {
 
     public static final String DEFAULT_BRANCH_NAME = 'main'
 

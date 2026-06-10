@@ -68,6 +68,10 @@ class ModelCacheableRepository<M extends Model> extends AdministeredItemCacheabl
         repository.readByLabelAndModelVersion(label, modelVersion)
     }
 
+    List<M> findAllByParentAndPathIdentifier(UUID item, String pathIdentifier) {
+        repository.findAllByParentAndPathIdentifier(item,  pathIdentifier)
+    }
+
     // Cacheable Model Repository definitions
 
     @CompileStatic

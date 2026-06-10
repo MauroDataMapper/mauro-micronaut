@@ -21,7 +21,7 @@ abstract class ClassifierDTORepository implements GenericRepository<ClassifierDT
     abstract ClassifierDTO findById(UUID id)
 
     @Nullable
-    @Join(value = 'catalogueUser', type = Join.Type.LEFT_FETCH)
+    //@Join(value = 'catalogueUser', type = Join.Type.LEFT_FETCH)
     @Query('''select * from core.classifier where label = :pathIdentifier AND ((parent_classifier_id IS NOT NULL AND parent_classifier_id = :item) OR (parent_classifier_id IS NULL AND classification_scheme_id = :item))''')
     abstract List<Classifier> findAllByParentAndPathIdentifier(UUID item, String pathIdentifier)
 

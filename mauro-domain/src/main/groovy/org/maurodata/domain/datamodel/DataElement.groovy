@@ -120,12 +120,6 @@ class DataElement extends ModelItem<DataClass> implements DiffableItem<DataEleme
         'de'
     }
 
-    @Override
-    @Transient
-    @JsonIgnore
-    CollectionDiff fromItem() {
-        new BaseCollectionDiff(id, getDiffIdentifier(), label)
-    }
 
     @Override
     @Transient

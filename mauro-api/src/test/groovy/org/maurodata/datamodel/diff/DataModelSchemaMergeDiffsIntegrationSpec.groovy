@@ -242,7 +242,7 @@ class DataModelSchemaMergeDiffsIntegrationSpec extends CommonDataSpec {
 
         then:
         mergeDiff.diffs.every {
-            it.fieldName == 'dataClasses' && it.isMergeConflict && it._type == 'deletion'
+            it.fieldName == 'dataClasses' && !it.isMergeConflict && it._type == 'deletion'
         }
     }
 
@@ -282,10 +282,10 @@ class DataModelSchemaMergeDiffsIntegrationSpec extends CommonDataSpec {
 
         then:
         mergeDiff.diffs.any {
-            it.fieldName == 'dataClasses' && it.isMergeConflict && it._type == 'deletion' && it.path=='dm:test label $main|dc:A data class'
+            it.fieldName == 'dataClasses' && !it.isMergeConflict && it._type == 'deletion' && it.path=='dm:test label $main|dc:A data class'
         }
         mergeDiff.diffs.any {
-            it.fieldName == 'dataClasses' && it.isMergeConflict && it._type == 'deletion' && it.path=='dm:test label $main|dc:A data class|dc:Test child'
+            it.fieldName == 'dataClasses' && !it.isMergeConflict && it._type == 'deletion' && it.path=='dm:test label $main|dc:A data class|dc:Test child'
         }
     }
 

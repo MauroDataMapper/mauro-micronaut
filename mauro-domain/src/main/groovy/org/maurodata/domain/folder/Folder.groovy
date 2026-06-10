@@ -1,5 +1,10 @@
 package org.maurodata.domain.folder
 
+import org.maurodata.domain.diff.BaseCollectionDiff
+import org.maurodata.domain.diff.CollectionDiff
+import org.maurodata.domain.diff.DiffBuilder
+import org.maurodata.domain.diff.DiffableItem
+import org.maurodata.domain.diff.ObjectDiff
 import org.maurodata.domain.model.Item
 import org.maurodata.domain.model.ItemReference
 import org.maurodata.domain.model.ItemReferencer
@@ -34,7 +39,7 @@ import org.maurodata.domain.terminology.Terminology
 @MappedEntity(schema = 'core')
 @Indexes([@Index(columns = ['parent_folder_id'])])
 @MapConstructor(includeSuperFields = true, includeSuperProperties = true, noArg = true)
-class Folder extends Model implements ItemReferencer {
+class Folder extends Model implements ItemReferencer, DiffableItem<Folder> {
 
     @JsonIgnore
     @Nullable
@@ -133,6 +138,39 @@ class Folder extends Model implements ItemReferencer {
     String getDiffIdentifier() {
         if (parentFolder != null) {return "${parentFolder.getDiffIdentifier()}|${getPathNodeString()}"}
         return "${getPathNodeString()}"
+    }
+
+    @Override
+    @JsonIgnore
+    @Transient
+    ObjectDiff<Folder> diff(Folder other, String lhsPathRoot, String rhsPathRoot) {
+        ObjectDiff<Folder> base = DiffBuilder.objectDiff(Folder)
+            .leftHandSide(id?.toString(), this)
+            .rightHandSide(other.id?.toString(), other)
+        base.label = this.label
+        base.appendString(DiffBuilder.DESCRIPTION, this.description, other.description, this, other)
+        base.appendString(DiffBuilder.ALIASES_STRING, this.aliasesString, other.aliasesString, this, other)
+        if (!DiffBuilder.isNullOrEmpty(this.childFolders as Collection<Object>) || !DiffBuilder.isNullOrEmpty(other.childFolders as Collection<Object>)) {
+            base.appendCollection(DiffBuilder.CHILD_FOLDERS, this.childFolders as Collection<DiffableItem>, other.childFolders as Collection<DiffableItem>, lhsPathRoot,
+                                  rhsPathRoot)
+        }
+        if (!DiffBuilder.isNullOrEmpty(this.dataModels as Collection<Object>) || !DiffBuilder.isNullOrEmpty(other.dataModels as Collection<Object>)) {
+            base.appendCollection(DiffBuilder.DATA_MODELS, this.dataModels as Collection<DiffableItem>, other.dataModels as Collection<DiffableItem>, lhsPathRoot,
+                                  rhsPathRoot)
+        }
+        if (!DiffBuilder.isNullOrEmpty(this.terminologies as Collection<Object>) || !DiffBuilder.isNullOrEmpty(other.terminologies as Collection<Object>)) {
+            base.appendCollection(DiffBuilder.TERMINOLOGIES, this.terminologies as Collection<DiffableItem>, other.terminologies as Collection<DiffableItem>, lhsPathRoot,
+                                  rhsPathRoot)
+        }
+        if (!DiffBuilder.isNullOrEmpty(this.codeSets as Collection<Object>) || !DiffBuilder.isNullOrEmpty(other.codeSets as Collection<Object>)) {
+            base.appendCollection(DiffBuilder.CODE_SETS, this.codeSets as Collection<DiffableItem>, other.codeSets as Collection<DiffableItem>, lhsPathRoot,
+                                  rhsPathRoot)
+        }
+        if (!DiffBuilder.isNullOrEmpty(this.classificationSchemes as Collection<Object>) || !DiffBuilder.isNullOrEmpty(other.classificationSchemes as Collection<Object>)) {
+            base.appendCollection(DiffBuilder.CLASSIFICATION_SCHEMES, this.classificationSchemes as Collection<DiffableItem>, other.classificationSchemes as Collection<DiffableItem>, lhsPathRoot,
+                                  rhsPathRoot)
+        }
+        base
     }
 
     @Override

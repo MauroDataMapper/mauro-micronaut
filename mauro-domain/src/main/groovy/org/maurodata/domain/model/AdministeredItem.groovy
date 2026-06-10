@@ -2,6 +2,9 @@ package org.maurodata.domain.model
 
 import groovy.util.logging.Slf4j
 import org.maurodata.domain.classifier.Classifier
+import org.maurodata.domain.diff.BaseCollectionDiff
+import org.maurodata.domain.diff.CollectionDiff
+import org.maurodata.domain.diff.DiffableItem
 import org.maurodata.domain.facet.Annotation
 import org.maurodata.domain.facet.Edit
 import org.maurodata.domain.facet.Facet
@@ -38,7 +41,7 @@ import java.time.Instant
 @CompileStatic
 @AutoClone
 @Slf4j
-abstract class AdministeredItem extends Item implements Pathable {
+abstract class AdministeredItem extends Item implements Pathable, DiffableItem {
 
     /**
      * The label of an object.  Labels are used as identifiers within a context and so need to be unique within
@@ -70,7 +73,7 @@ abstract class AdministeredItem extends Item implements Pathable {
         aliasesString?.split(";") as List
     }
 
-    @Transient
+    //@Transient
     @Relation(Relation.Kind.ONE_TO_MANY)
     List<Classifier> classifiers = []
 
@@ -272,12 +275,23 @@ abstract class AdministeredItem extends Item implements Pathable {
         (new Path.PathNode(prefix: this.pathPrefix, identifier: this.pathIdentifier, modelIdentifier: this.pathModelIdentifier)).toString()
     }
 
+    @Override
     @JsonIgnore
     @Transient
     String getDiffIdentifier() {
         if (parent != null) {return "${parent.getDiffIdentifier()}|${this.pathNodeString}"}
         return pathNodeString
     }
+
+
+    @Override
+    @JsonIgnore
+    @Transient
+    CollectionDiff fromItem() {
+        new BaseCollectionDiff(id, getDiffIdentifier(), label)
+    }
+
+
 
 
 

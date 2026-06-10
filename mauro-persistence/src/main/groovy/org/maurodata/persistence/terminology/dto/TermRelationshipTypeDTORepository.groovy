@@ -23,7 +23,7 @@ abstract class TermRelationshipTypeDTORepository implements GenericRepository<Te
     @Nullable
     abstract List<TermRelationshipTypeDTO> findAllByTerminology(Terminology terminology)
 
-    @Join(value = 'catalogueUser', type = Join.Type.LEFT_FETCH)
+    //@Join(value = 'catalogueUser', type = Join.Type.LEFT_FETCH)
     @Nullable
     @Query('SELECT * FROM terminology.term_relationship_type WHERE terminology_id = :item AND label = :pathIdentifier')
     abstract List<TermRelationshipType> findAllByParentAndPathIdentifier(UUID item, String pathIdentifier)

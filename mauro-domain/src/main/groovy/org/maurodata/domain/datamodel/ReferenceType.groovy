@@ -32,11 +32,6 @@ class ReferenceType extends ModelItem<DataType> implements DiffableItem<Referenc
     }
 
     @Override
-    CollectionDiff fromItem() {
-        new BaseCollectionDiff(id, getDiffIdentifier(), label)
-    }
-
-    @Override
     String getDiffIdentifier() {
         // TODO: Not sure what the path to this is supposed to be
         getPathNodeString()

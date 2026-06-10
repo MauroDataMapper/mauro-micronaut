@@ -26,10 +26,10 @@ abstract class DataClassComponentDTORepository implements GenericRepository<Data
     @Nullable
     abstract List<DataClassComponentDTO> findAllByDataFlowId(UUID uuid)
 
-    @Join(value = 'catalogueUser', type = Join.Type.LEFT_FETCH)
-    @Join(value = 'dataFlow', type = Join.Type.LEFT_FETCH)
-    @Join(value = 'sourceDataClasses', type = Join.Type.LEFT_FETCH)
-    @Join(value = 'targetDataClasses', type = Join.Type.LEFT_FETCH)
+    //@Join(value = 'catalogueUser', type = Join.Type.LEFT_FETCH)
+    //@Join(value = 'dataFlow', type = Join.Type.LEFT_FETCH)
+    //@Join(value = 'sourceDataClasses', type = Join.Type.LEFT_FETCH)
+    //@Join(value = 'targetDataClasses', type = Join.Type.LEFT_FETCH)
     @Nullable
     @Query('SELECT * FROM dataflow.data_class_component WHERE data_flow_id = :item AND label = :pathIdentifier')
     abstract List<DataClassComponentDTO> findAllByParentAndPathIdentifier(UUID item, String pathIdentifier)

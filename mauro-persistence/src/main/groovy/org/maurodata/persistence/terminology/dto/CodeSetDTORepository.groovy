@@ -16,7 +16,7 @@ abstract class CodeSetDTORepository implements GenericRepository<CodeSetDTO, UUI
     @Join(value = 'authority', type = Join.Type.LEFT_FETCH)
     abstract CodeSetDTO findById(UUID id)
 
-    @Join(value = 'authority', type = Join.Type.LEFT_FETCH)
+    //@Join(value = 'authority', type = Join.Type.LEFT_FETCH)
     @Query('SELECT * FROM terminology.code_set WHERE folder_id = :item AND label = :pathIdentifier')
     abstract List<CodeSet> findAllByParentAndPathIdentifier(UUID item, String pathIdentifier)
 

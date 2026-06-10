@@ -2,6 +2,7 @@ package org.maurodata.domain.facet
 
 import groovy.util.logging.Slf4j
 import jakarta.persistence.PrePersist
+import jakarta.persistence.PreUpdate
 import org.maurodata.domain.model.Item
 import org.maurodata.domain.model.ItemReference
 import org.maurodata.domain.model.ItemReferencer
@@ -45,6 +46,7 @@ class VersionLink extends Facet implements ItemReferencer {
     String targetModelDomainType
 
     @PrePersist
+    @PreUpdate
     void prePersist() {
         super.prePersist()
         if(target) {

@@ -24,6 +24,19 @@ class DiffBuilder {
     static final String ANNOTATION = 'annotations'
     static final String DOMAIN_TYPE = 'domainType'
     static final String RULE = 'rules'
+    static final String CHILD_FOLDERS = 'childFolders'
+    static final String DATA_MODELS = 'dataModels'
+    static final String TERMINOLOGIES = 'terminologies'
+    static final String CODE_SETS = 'codeSets'
+    static final String CLASSIFICATION_SCHEMES = 'classificationSchemes'
+    static final String TERMS = 'terms'
+    static final String TERM_RELATIONSHIP_TYPES = 'termRelationshipTypes'
+    static final String TERM_RELATIONSHIPS = 'termRelationships'
+    static final String CODE = 'code'
+    static final String DEFINITION = 'definition'
+    static final String URL = 'url'
+    static final String SOURCE_TERM_RELATIONSHIPS = 'sourceTermRelationships'
+    static final String TARGET_TERM_RELATIONSHIPS = 'targetTermRelationships'
     static final String CHILD_ANNOTATIONS = 'childAnnotations'
     static final String SUMMARY_METADATA = 'summaryMetadata'
     static final String SUMMARY_METADATA_TYPE = 'summaryMetadataType'
@@ -60,7 +73,8 @@ class DiffBuilder {
                                              DIFF_IDENTIFIER, ENUMERATION_VALUES, ALL_DATA_CLASSES, PATH_IDENTIFIER, PATH_PREFIX]
     static final List<String> MODEL_COLLECTION_KEYS = [METADATA, ANNOTATION, RULE, SUMMARY_METADATA, SUMMARY_METADATA_REPORT, REFERENCE_FILES, DATA_CLASSES, DATA_TYPE,
                                                        DATA_ELEMENTS,
-                                                       ENUMERATION_VALUES, REFERENCE_FILES, CLASSIFIERS, REFERENCE_TYPE]
+                                                       ENUMERATION_VALUES, REFERENCE_FILES, CLASSIFIERS, REFERENCE_TYPE,
+                                                       CHILD_FOLDERS, DATA_MODELS, TERMINOLOGIES, CODE_SETS, CLASSIFICATION_SCHEMES]
 
     static ArrayDiff arrayDiff() {
         new ArrayDiff()

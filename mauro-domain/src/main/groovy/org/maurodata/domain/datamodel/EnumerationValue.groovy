@@ -92,12 +92,6 @@ class EnumerationValue extends ModelItem<DataModel> implements DiffableItem<Enum
         key
     }
 
-    @Override
-    @Transient
-    @JsonIgnore
-    CollectionDiff fromItem() {
-        new BaseCollectionDiff(id, getDiffIdentifier(), label)
-    }
 
     @Override
     @Transient
