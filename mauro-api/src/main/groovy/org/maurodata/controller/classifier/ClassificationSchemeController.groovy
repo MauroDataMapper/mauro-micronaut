@@ -1,6 +1,7 @@
 package org.maurodata.controller.classifier
 
-
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.responses.ApiResponse
 import org.maurodata.ErrorHandler
 import org.maurodata.api.Paths
 import org.maurodata.api.classifier.ClassificationSchemeApi
@@ -52,6 +53,7 @@ class ClassificationSchemeController extends ModelController<ClassificationSchem
     }
 
     @Audit
+    @Operation(operationId = 'showClassificationScheme', summary = "Get a classification scheme", description = "Returns a classification scheme.")
     @Get(Paths.CLASSIFICATION_SCHEMES_ID_ROUTE)
     ClassificationScheme show(UUID id) {
         super.show(id)
@@ -59,12 +61,14 @@ class ClassificationSchemeController extends ModelController<ClassificationSchem
 
     @Audit
     @Transactional
+    @Operation(operationId = 'createClassificationScheme', summary = "Create a classification scheme", description = "Creates a classification scheme.")
     @Post(Paths.FOLDER_CLASSIFICATION_SCHEMES_ROUTE)
     ClassificationScheme create(UUID folderId, @Body @NonNull ClassificationScheme classificationScheme) {
         super.create(folderId, classificationScheme)
     }
 
     @Audit
+    @Operation(operationId = 'updateClassificationScheme', summary = "Update a classification scheme", description = "Updates a classification scheme.")
     @Put(Paths.CLASSIFICATION_SCHEMES_ID_ROUTE)
     ClassificationScheme update(UUID id, @Body @NonNull ClassificationScheme classificationScheme) {
         super.update(id, classificationScheme)
@@ -72,6 +76,8 @@ class ClassificationSchemeController extends ModelController<ClassificationSchem
 
     @Audit
     @Transactional
+    @ApiResponse(responseCode = "204", description = "No content - deleted successfully")
+    @Operation(summary = "Delete a classification scheme", description = "Deletes a classification scheme.")
     @Delete(Paths.CLASSIFICATION_SCHEMES_ID_ROUTE)
     HttpResponse delete(UUID id, @Body @Nullable ClassificationScheme classificationScheme, @Nullable @QueryValue Boolean permanent) {
         permanent = permanent ?: true
@@ -79,12 +85,14 @@ class ClassificationSchemeController extends ModelController<ClassificationSchem
     }
 
     @Audit
+    @Operation(operationId = 'listClassificationScheme', summary = "List the classification schemes", description = "Returns the classification schemes.")
     @Get(Paths.FOLDER_CLASSIFICATION_SCHEMES_ROUTE_PAGED)
     ListResponse<ClassificationScheme> list(UUID folderId, @Nullable PaginationParams params = new PaginationParams()) {
         super.list(folderId, params)
     }
 
     @Audit
+    @Operation(operationId = 'listAllClassificationSchemePaged', summary = "List the classification schemes", description = "Returns the classification schemes.")
     @Get(Paths.CLASSIFICATION_SCHEMES_LIST_PAGED)
     ListResponse<ClassificationScheme> listAll(@Nullable PaginationParams params = new PaginationParams()) {
         super.listAll(params)
@@ -92,18 +100,21 @@ class ClassificationSchemeController extends ModelController<ClassificationSchem
 
     @Audit(title = EditType.COPY, description = "Create new version of classification scheme")
     @Transactional
+    @Operation(summary = "Update a classification scheme", description = "Updates a classification scheme.")
     @Put(Paths.CLASSIFICATION_SCHEMES_BRANCH_MODEL_VERSION)
     ClassificationScheme createNewBranchModelVersion(UUID id, @Body @Nullable CreateNewVersionData createNewVersionData) {
         super.createNewBranchModelVersion(id, createNewVersionData)
     }
 
     @Audit(title = EditType.EXPORT, description = 'Export classification scheme')
+    @Operation(operationId = 'exportModelClassificationScheme', summary = "Get a classification scheme", description = "Returns a classification scheme.")
     @Get(Paths.CLASSIFICATION_SCHEMES_EXPORT)
     HttpResponse<byte[]> exportModel(UUID id, @Nullable String namespace, @Nullable String name, @Nullable String version) {
         super.exportModels(namespace, name, version, [id])
     }
 
     @Audit(title = EditType.EXPORT, description = 'Export classification schemes')
+    @Operation(summary = "Export the classification scheme", description = "Exports the classification scheme.")
     @Post(Paths.CLASSIFICATION_SCHEMES_EXPORT_MANY)
     HttpResponse<byte[]> exportModels(@Nullable String namespace, @Nullable String name, @Nullable String version, @Body List<UUID> ids) {
         super.exportModels(namespace, name, version, ids)
@@ -113,6 +124,7 @@ class ClassificationSchemeController extends ModelController<ClassificationSchem
     @Transactional
     @ExecuteOn(TaskExecutors.IO)
     @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @Operation(operationId = 'importModelClassificationScheme', summary = "Import the classification scheme", description = "Imports the classification scheme.")
     @Post(Paths.CLASSIFICATION_SCHEMES_IMPORT)
     ListResponse<ClassificationScheme> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version) {
         super.importModel(body, namespace, name, version)
@@ -120,6 +132,7 @@ class ClassificationSchemeController extends ModelController<ClassificationSchem
 
 
     @Audit
+    @Operation(summary = "Get a classification scheme", description = "Returns a classification scheme. You must have read privileges on the item in question.")
     @Get(Paths.CLASSIFICATION_SCHEMES_DIFF)
     ObjectDiff diffModels(@NonNull UUID id, @NonNull UUID otherId) {
         ClassificationScheme classificationScheme = modelRepository.loadWithContent(id)
@@ -144,6 +157,7 @@ class ClassificationSchemeController extends ModelController<ClassificationSchem
     }
 
     @Audit
+    @Operation(summary = "Update a classification scheme", description = "Updates a classification scheme.")
     @Put(Paths.CLASSIFICATION_SCHEMES_READ_BY_AUTHENTICATED)
     @Transactional
     ClassificationScheme allowReadByAuthenticated(UUID id) {
@@ -152,12 +166,15 @@ class ClassificationSchemeController extends ModelController<ClassificationSchem
 
     @Audit
     @Transactional
+    @ApiResponse(responseCode = "204", description = "No content - deleted successfully")
+    @Operation(summary = "Delete a classification scheme", description = "Deletes a classification scheme.")
     @Delete(Paths.CLASSIFICATION_SCHEMES_READ_BY_AUTHENTICATED)
     HttpResponse revokeReadByAuthenticated(UUID id) {
         super.deleteReadByAuthenticated(id)
     }
 
     @Audit
+    @Operation(summary = "Update a classification scheme", description = "Updates a classification scheme.")
     @Put(Paths.CLASSIFICATION_SCHEMES_READ_BY_EVERYONE)
     @Transactional
     ClassificationScheme allowReadByEveryone(UUID id) {
@@ -166,11 +183,14 @@ class ClassificationSchemeController extends ModelController<ClassificationSchem
 
     @Audit
     @Transactional
+    @ApiResponse(responseCode = "204", description = "No content - deleted successfully")
+    @Operation(summary = "Delete a classification scheme", description = "Deletes a classification scheme.")
     @Delete(Paths.CLASSIFICATION_SCHEMES_READ_BY_EVERYONE)
     HttpResponse revokeReadByEveryone(UUID id) {
         super.deleteReadByEveryone(id)
     }
 
+    @Operation(summary = "List the classification schemes", description = "Returns the classification schemes.")
     @Get(Paths.CLASSIFICATION_SCHEMES_PERMISSIONS)
     @Override
     PermissionsDTO permissions(UUID id) {

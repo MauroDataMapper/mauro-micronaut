@@ -1,5 +1,6 @@
 package org.maurodata.controller.security
 
+import io.swagger.v3.oas.annotations.Operation
 import org.maurodata.domain.config.ApiProperty
 import org.maurodata.domain.search.dto.SearchRequestDTO
 import org.maurodata.domain.security.Role
@@ -69,6 +70,7 @@ class CatalogueUserController extends ItemController<CatalogueUser> implements C
     }
 
     @Audit(level = Audit.AuditLevel.FILE_ONLY)
+    @Operation(operationId = 'adminRegisterCatalogueUser', summary = "Create a catalogue user", description = "Creates a catalogue user. It is only available to administrator users.")
     @Post(Paths.USER_ADMIN_REGISTER)
     CatalogueUser adminRegister(@Body @NonNull CatalogueUser newUser) {
         log.info 'Request to register a new user by admin'
@@ -127,6 +129,7 @@ class CatalogueUserController extends ItemController<CatalogueUser> implements C
     }
 
     @Audit
+    @Operation(summary = "Get a catalogue user", description = "Returns a catalogue user. Its availability is governed by access control checks on the requested resource.")
     @Get(Paths.USER_CURRENT_USER)
     CatalogueUser currentUser() {
         log.info 'Request to get current logged in user'
@@ -135,6 +138,7 @@ class CatalogueUserController extends ItemController<CatalogueUser> implements C
     }
 
     @Audit
+    @Operation(operationId = 'showCatalogueUser', summary = "Get a catalogue user", description = "Returns a catalogue user. It is available to authenticated users.")
     @Get(Paths.USER_ID)
     CatalogueUser show(UUID id) {
         accessControlService.checkAuthenticated()
@@ -152,6 +156,7 @@ class CatalogueUserController extends ItemController<CatalogueUser> implements C
     }
 
     @Audit(level = Audit.AuditLevel.FILE_ONLY)
+    @Operation(summary = "Update a catalogue user", description = "Updates a catalogue user. It is available to authenticated users.")
     @Put(Paths.USER_CHANGE_PASSWORD)
     CatalogueUser changePassword(@Body @NonNull ChangePassword changePasswordRequest) {
         log.info 'Request by user to change own password'
@@ -164,6 +169,7 @@ class CatalogueUserController extends ItemController<CatalogueUser> implements C
     }
 
     @Audit(level = Audit.AuditLevel.FILE_ONLY)
+    @Operation(summary = "Update a catalogue user", description = "Updates a catalogue user. It is available to authenticated users.")
     @Put(Paths.USER_ID_CHANGE_PASSWORD)
     CatalogueUser changePassword(UUID id, @Body @NonNull ChangePassword changePasswordRequest) {
 
@@ -225,6 +231,7 @@ class CatalogueUserController extends ItemController<CatalogueUser> implements C
     }
 
     @Audit(level = Audit.AuditLevel.FILE_ONLY)
+    @Operation(operationId = 'updateCatalogueUser', summary = "Update a catalogue user", description = "Updates a catalogue user. It is only available to administrator users.")
     @Put(Paths.USER_ID)
     CatalogueUser update(@NonNull UUID id, @Body @NonNull CatalogueUser catalogueUser) {
         log.info 'Request to update CatalogueUser by ID'
@@ -289,6 +296,7 @@ class CatalogueUserController extends ItemController<CatalogueUser> implements C
     }
 
     @Audit
+    @Operation(summary = "Get a catalogue user", description = "Returns a catalogue user. It is available to authenticated users.")
     @Get(Paths.USER_PREFERENCES)
     Map showUserPreferences(UUID id) {
         accessControlService.checkAuthenticated()
@@ -318,6 +326,7 @@ class CatalogueUserController extends ItemController<CatalogueUser> implements C
     }
 
     @Audit
+    @Operation(summary = "Update a catalogue user", description = "Updates a catalogue user. It is available to authenticated users.")
     @Put(Paths.USER_PREFERENCES)
     CatalogueUser updateUserPreferences(@NonNull UUID id, @Body @NonNull String userPreferencesBody) {
         accessControlService.checkAuthenticated()
@@ -341,6 +350,7 @@ class CatalogueUserController extends ItemController<CatalogueUser> implements C
     }
 
     @Audit
+    @Operation(summary = "List the catalogue users", description = "Returns the catalogue users. Its availability is governed by access control checks on the requested resource.")
     @Get(Paths.USER_ADMIN_PENDING_PAGED)
     ListResponse<CatalogueUser> pendingUsers(@Nullable PaginationParams params = new PaginationParams(), @Nullable Boolean disabled = Boolean.FALSE) {
         if (!accessControlService.administrator) {
@@ -351,6 +361,7 @@ class CatalogueUserController extends ItemController<CatalogueUser> implements C
     }
 
     @Audit
+    @Operation(summary = "Get a catalogue user", description = "Returns a catalogue user. Its availability is governed by access control checks on the requested resource.")
     @Get(Paths.USER_ADMIN_USER_EXISTS)
     Map userExists(String username) {
         if (!accessControlService.administrator) {
@@ -360,6 +371,7 @@ class CatalogueUserController extends ItemController<CatalogueUser> implements C
     }
 
     @Audit
+    @Operation(operationId = 'indexCatalogueUser', summary = "List the catalogue users", description = "Returns the catalogue users. Its availability is governed by access control checks on the requested resource.")
     @Get(Paths.USER_LIST)
     ListResponse<CatalogueUser> index(@Nullable PaginationParams params = new PaginationParams()) {
         if (!accessControlService.administrator) {
@@ -376,6 +388,7 @@ class CatalogueUserController extends ItemController<CatalogueUser> implements C
     }
 
     @Audit
+    @Operation(summary = "Update a catalogue user", description = "Updates a catalogue user. Its availability is governed by access control checks on the requested resource.")
     @Put(Paths.USER_ADMIN_PASSWORD_RESET)
     CatalogueUser adminPasswordReset(UUID id){
         if (!accessControlService.administrator) {
@@ -440,6 +453,7 @@ class CatalogueUserController extends ItemController<CatalogueUser> implements C
     }
 
     @Audit
+    @Operation(summary = "List the catalogue users", description = "Returns the catalogue users. Its availability is governed by access control checks on the requested resource.")
     @Post(Paths.USER_SEARCH_POST)
     ListResponse<CatalogueUser> searchPost(@Body SearchRequestDTO requestDTO) {
 
@@ -454,6 +468,7 @@ class CatalogueUserController extends ItemController<CatalogueUser> implements C
 
     @Audit
     @Override
+    @Operation(summary = "Get a catalogue user", description = "Returns a catalogue user.")
     @Get(Paths.USER_IMAGE)
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
     HttpResponse<byte[]> userImage(UUID id) {

@@ -1,5 +1,7 @@
 package org.maurodata.controller.facet
 
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.responses.ApiResponse
 import org.maurodata.audit.Audit
 
 import io.micronaut.core.annotation.Nullable
@@ -54,6 +56,7 @@ class RuleController extends FacetController<Rule> implements RuleApi {
     }
 
     @Audit
+    @Operation(operationId = 'listRulePaged', summary = "List the rules", description = "Returns the rules. You must have read privileges on the item in question.")
     @Get(Paths.RULE_LIST_PAGED)
     ListResponse<Rule> list(String domainType, UUID domainId, @Nullable PaginationParams params = new PaginationParams()) {
         
@@ -63,6 +66,7 @@ class RuleController extends FacetController<Rule> implements RuleApi {
     }
 
     @Audit
+    @Operation(operationId = 'showRule', summary = "Get a rule", description = "Returns a rule. You must have read privileges on the item in question.")
     @Get(Paths.RULE_ID)
     Rule show(@NonNull String domainType, @NonNull UUID domainId, UUID id) {
         Rule rule = super.show(domainType, domainId, id) as Rule
@@ -77,18 +81,22 @@ class RuleController extends FacetController<Rule> implements RuleApi {
     }
 
     @Audit
+    @Operation(operationId = 'createRule', summary = "Create a rule", description = "Creates a rule.")
     @Post(Paths.RULE_LIST)
     Rule create(@NonNull String domainType, @NonNull UUID domainId, @Body @NonNull Rule rule) {
         super.create(domainType, domainId, rule)
     }
 
     @Audit
+    @Operation(operationId = 'updateRule', summary = "Update a rule", description = "Updates a rule.")
     @Put(Paths.RULE_ID)
     Rule update(@NonNull String domainType, @NonNull UUID domainId, UUID id, @Body @NonNull Rule rule) {
         super.update(id, rule)
     }
 
     @Audit(deletedObjectDomainType = Rule)
+    @ApiResponse(responseCode = "204", description = "No content - deleted successfully")
+    @Operation(operationId = 'deleteRule', summary = "Delete a rule", description = "Deletes a rule. You must have read privileges on the item in question.")
     @Delete(Paths.RULE_ID)
     @Transactional
     @Override

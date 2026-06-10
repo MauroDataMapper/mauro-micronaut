@@ -1,5 +1,6 @@
 package org.maurodata.controller.profile
 
+import io.swagger.v3.oas.annotations.Operation
 import org.maurodata.api.Paths
 import org.maurodata.api.profile.dto.MetadataNamespaceDTO
 import org.maurodata.api.profile.ProfileApi
@@ -73,6 +74,7 @@ class ProfileController implements AdministeredItemReader, ProfileApi {
 
 
     @Audit
+    @Operation(summary = "List the profiles", description = "Returns the profiles.")
     @Get(Paths.PROFILE_DYNAMIC_PROVIDERS)
     List<DataModelBasedProfile> dynamicProviders() {
         dynamicProfileService.getDynamicProfiles().collect {// Stub the datamodel for UI output
@@ -84,6 +86,7 @@ class ProfileController implements AdministeredItemReader, ProfileApi {
 
 
     @Audit
+    @Operation(summary = "List the profiles", description = "Returns the profiles.")
     @Get(Paths.PROFILE_PROVIDERS)
     List<Profile> providers() {
         getAllProfiles()
@@ -91,12 +94,14 @@ class ProfileController implements AdministeredItemReader, ProfileApi {
 
 
     @Audit
+    @Operation(summary = "Get a profile", description = "Returns a profile.")
     @Get(Paths.PROFILE_SEARCH)
     Profile getProfileDetails(String namespace, String name) {
         getProfileByName(namespace, name)
     }
 
     @Audit
+    @Operation(summary = "Get a profile", description = "Returns a profile.")
     @Get(Paths.PROFILE_SEARCH_ITEM)
     Profile getProfileDetails(String domainType, UUID domainId, String namespace, String name) {
         // TODO: I don't think this endpoint is actually used
@@ -104,12 +109,14 @@ class ProfileController implements AdministeredItemReader, ProfileApi {
     }
 
     @Audit
+    @Operation(summary = "Get a profile", description = "Returns a profile.")
     @Get(Paths.PROFILE_DETAILS)
     Profile getProfileDetails(String namespace, String name, @Nullable String version) {
         getProfileByName(namespace, name, version)
     }
 
     @Audit
+    @Operation(summary = "List the profiles", description = "Returns the profiles. You must have read privileges on the item in question.")
     @Get(Paths.PROFILE_USED)
     List<MauroPluginDTO> getUsedProfiles(String domainType, UUID domainId) {
         AdministeredItem administeredItem = findAdministeredItem(domainType, domainId)
@@ -119,6 +126,7 @@ class ProfileController implements AdministeredItemReader, ProfileApi {
     }
 
     @Audit
+    @Operation(summary = "List the profiles", description = "Returns the profiles. You must have read privileges on the item in question.")
     @Get(Paths.PROFILE_UNUSED)
     List<MauroPluginDTO> getUnusedProfiles(String domainType, UUID domainId) {
         AdministeredItem administeredItem = findAdministeredItem(domainType, domainId)
@@ -128,6 +136,7 @@ class ProfileController implements AdministeredItemReader, ProfileApi {
     }
 
     @Audit
+    @Operation(summary = "List the profiles", description = "Returns the profiles. You must have read privileges on the item in question.")
     @Get(Paths.PROFILE_OTHER_METADATA)
     ListResponse<Metadata> getOtherMetadata(String domainType, UUID domainId) {
         AdministeredItem administeredItem = findAdministeredItem(domainType, domainId)
@@ -140,6 +149,7 @@ class ProfileController implements AdministeredItemReader, ProfileApi {
     }
 
     @Audit
+    @Operation(summary = "Get a profile", description = "Returns a profile. You must have read privileges on the item in question.")
     @Get(Paths.PROFILE_ITEM)
     AppliedProfile getProfiledItem(String domainType, UUID domainId, String namespace, String name, @Nullable String version) {
         AdministeredItem administeredItem = findAdministeredItem(domainType, domainId)
@@ -150,6 +160,7 @@ class ProfileController implements AdministeredItemReader, ProfileApi {
     }
 
     @Audit(level = Audit.AuditLevel.FILE_ONLY)
+    @Operation(summary = "Validate the profile", description = "Validates the profile. You must have read privileges on the item in question.")
     @Post(Paths.PROFILE_ITEM_VALIDATE)
     AppliedProfile validateProfile(String domainType, UUID domainId, String namespace, String name, @Nullable String version, @Body Map bodyMap) {
         AdministeredItem administeredItem = readAdministeredItem(domainType, domainId)
@@ -161,6 +172,7 @@ class ProfileController implements AdministeredItemReader, ProfileApi {
     }
 
     @Audit
+    @Operation(summary = "Apply the profile", description = "Applies the profile. You must have edit privileges on the item in question.")
     @Post(Paths.PROFILE_ITEM)
     AppliedProfile applyProfile(String domainType, UUID domainId, String namespace, String name, @Nullable String version, @Body Map bodyMap) {
         AdministeredItem administeredItem = findAdministeredItem(domainType, domainId)
@@ -181,6 +193,7 @@ class ProfileController implements AdministeredItemReader, ProfileApi {
 
     // TODO: Refactor the UI so that this method isn't needed quite so often
     @Audit
+    @Operation(summary = "List the profiles", description = "Returns the profiles.")
     @Get(Paths.PROFILE_NAMESPACES)
     List<MetadataNamespaceDTO> getNamespaces(@Nullable String prefix) {
 
@@ -213,6 +226,7 @@ class ProfileController implements AdministeredItemReader, ProfileApi {
 
     // TODO: Refactor this to reuse existing classes / DTOs
     @Audit
+    @Operation(summary = "Create a profile", description = "Creates a profile.")
     @Post(Paths.PROFILE_ITEM_GET_MANY)
     Map getMany(String domainType, UUID domainId, @Body Map bodyMap) {
         List<AdministeredItem> administeredItems = bodyMap['multiFacetAwareItems'].collect {
@@ -233,6 +247,7 @@ class ProfileController implements AdministeredItemReader, ProfileApi {
 
     // TODO: Refactor this to reuse existing classes / DTOs
     @Audit
+    @Operation(summary = "Validate the profile", description = "Validates the profile.")
     @Post(Paths.PROFILE_ITEM_VALIDATE_MANY)
     Map validateMany(String domainType, UUID domainId, @Body Map bodyMap) {
 
@@ -254,6 +269,7 @@ class ProfileController implements AdministeredItemReader, ProfileApi {
 
     // TODO: Refactor this to reuse existing classes / DTOs
     @Audit
+    @Operation(summary = "Save the profile", description = "Saves the profile.")
     @Post(Paths.PROFILE_ITEM_SAVE_MANY)
     Map saveMany(String domainType, UUID domainId, @Body Map bodyMap) {
         List<Map> appliedProfileMap = (bodyMap['profilesProvided'] as List).collect { profileProvided ->

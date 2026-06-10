@@ -1,5 +1,7 @@
 package org.maurodata.controller.facet
 
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.responses.ApiResponse
 import org.maurodata.api.Paths
 import org.maurodata.api.facet.ReferenceFileApi
 import org.maurodata.audit.Audit
@@ -42,6 +44,7 @@ class ReferenceFileController extends FacetController<ReferenceFile> implements 
 
 
     @Audit
+    @Operation(operationId = 'listReferenceFilePaged', summary = "List the reference files", description = "Returns the reference files. You must have read privileges on the item in question.")
     @Get(Paths.REFERENCE_FILE_LIST_PAGED)
     ListResponse<ReferenceFile> list(String domainType, UUID domainId, @Nullable PaginationParams params = new PaginationParams()) {
         
@@ -58,6 +61,7 @@ class ReferenceFileController extends FacetController<ReferenceFile> implements 
      * @return ReferenceFile
      */
     @Audit
+    @Operation(summary = "Get a reference file", description = "Returns a reference file. You must have read privileges on the item in question.")
     @Get(Paths.REFERENCE_FILE_ID)
     byte[] showAndReturnFile(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID id) {
         accessControlService.checkRole(Role.READER, readAdministeredItem(domainType, domainId))
@@ -72,6 +76,7 @@ class ReferenceFileController extends FacetController<ReferenceFile> implements 
     }
 
     @Audit
+    @Operation(operationId = 'updateReferenceFile', summary = "Update a reference file", description = "Updates a reference file.")
     @Put(Paths.REFERENCE_FILE_ID)
     ReferenceFile update(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID id, @Body @NonNull ReferenceFile referenceFile) {
         super.update(id, referenceFile)
@@ -79,6 +84,7 @@ class ReferenceFileController extends FacetController<ReferenceFile> implements 
 
 
     @Audit
+    @Operation(operationId = 'createReferenceFile', summary = "Create a reference file", description = "Creates a reference file.")
     @Post(Paths.REFERENCE_FILE_LIST)
     ReferenceFile create(@NonNull String domainType, @NonNull UUID domainId, @Body @NonNull ReferenceFile referenceFile) {
         referenceFile.setFileSize()
@@ -86,6 +92,8 @@ class ReferenceFileController extends FacetController<ReferenceFile> implements 
     }
 
     @Audit(deletedObjectDomainType = ReferenceFile)
+    @ApiResponse(responseCode = "204", description = "No content - deleted successfully")
+    @Operation(operationId = 'deleteReferenceFile', summary = "Delete a reference file", description = "Deletes a reference file. You must have edit privileges on the item in question.")
     @Delete(Paths.REFERENCE_FILE_ID)
     @Transactional
     HttpResponse delete(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID id) {

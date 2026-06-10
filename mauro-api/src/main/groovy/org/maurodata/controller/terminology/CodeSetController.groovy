@@ -1,10 +1,12 @@
 package org.maurodata.controller.terminology
 
+import io.swagger.v3.oas.annotations.Operation
 import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.Consumes
 import io.micronaut.http.server.multipart.MultipartBody
 import io.micronaut.scheduling.TaskExecutors
 import io.micronaut.scheduling.annotation.ExecuteOn
+import io.swagger.v3.oas.annotations.responses.ApiResponse
 import org.maurodata.ErrorHandler
 import org.maurodata.api.Paths
 import org.maurodata.api.model.ModelVersionedRefDTO
@@ -74,12 +76,7 @@ class CodeSetController extends ModelController<CodeSet> implements CodeSetApi {
     }
 
     @Audit
-    @Get('/api/codeSets/undefined')
-    Map showUndef() {
-        [:]
-    }
-
-    @Audit
+    @Operation(operationId = 'showCodeSet', summary = "Get a code set", description = "Returns a code set.")
     @Get(value = Paths.CODE_SET_ID)
     CodeSet show(UUID id) {
         super.show(id)
@@ -87,6 +84,7 @@ class CodeSetController extends ModelController<CodeSet> implements CodeSetApi {
 
     @Audit
     @Transactional
+    @Operation(operationId = 'createCodeSet', summary = "Create a code set", description = "Creates a code set.")
     @Post(value = Paths.FOLDER_LIST_CODE_SET)
     CodeSet create(UUID folderId, @Body @NonNull CodeSet codeSet) {
         Set<Terminology> attachedTerminologies = codeSet.terminologies
@@ -117,6 +115,7 @@ class CodeSetController extends ModelController<CodeSet> implements CodeSetApi {
     }
 
     @Audit
+    @Operation(operationId = 'updateCodeSet', summary = "Update a code set", description = "Updates a code set.")
     @Put(value = Paths.CODE_SET_ID)
     CodeSet update(UUID id, @Body @NonNull CodeSet codeSet) {
         Set<Terminology> attachedTerminologies = codeSet.terminologies
@@ -149,6 +148,7 @@ class CodeSetController extends ModelController<CodeSet> implements CodeSetApi {
     }
 
     @Audit(title = EditType.UPDATE, description = "Add term to CodeSet")
+    @Operation(summary = "Update a code set", description = "Updates a code set. You must have read or edit privileges on the item in question, depending on the action.")
     @Put(value = Paths.CODE_SET_TERM_ID)
     @Transactional
     CodeSet addTerm(@NonNull UUID id,
@@ -166,6 +166,8 @@ class CodeSetController extends ModelController<CodeSet> implements CodeSetApi {
 
     @Audit
     @Transactional
+    @ApiResponse(responseCode = "204", description = "No content - deleted successfully")
+    @Operation(operationId = 'deleteCodeSet', summary = "Delete a code set", description = "Deletes a code set.")
     @Delete(value = Paths.CODE_SET_ID)
     HttpResponse delete(UUID id, @Body @Nullable CodeSet codeSet, @Nullable @QueryValue Boolean permanent) {
         permanent = permanent ?: true
@@ -174,6 +176,8 @@ class CodeSetController extends ModelController<CodeSet> implements CodeSetApi {
 
     @Transactional
     @Audit(title = EditType.UPDATE, description = "Remove term from CodeSet")
+    @ApiResponse(responseCode = "204", description = "No content - deleted successfully")
+    @Operation(summary = "Delete a code set", description = "Deletes a code set. You must have edit privileges on the item in question.")
     @Delete(value = Paths.CODE_SET_TERM_ID)
     CodeSet removeTermFromCodeSet(@NonNull UUID id,
                                   @NonNull UUID termId) {
@@ -188,12 +192,14 @@ class CodeSetController extends ModelController<CodeSet> implements CodeSetApi {
 
 
     @Audit
+    @Operation(operationId = 'listCodeSet', summary = "List the code sets", description = "Returns the code sets.")
     @Get(value = Paths.FOLDER_LIST_CODE_SET)
     ListResponse<CodeSet> list(UUID folderId) {
         super.list(folderId)
     }
 
     @Audit
+    @Operation(operationId = 'listAllCodeSetPaged', summary = "List the code sets", description = "Returns the code sets.")
     @Get(value = Paths.CODE_SET_LIST_PAGED)
     ListResponse<CodeSet> listAll(@Nullable PaginationParams params = new PaginationParams()) {
         
@@ -201,6 +207,7 @@ class CodeSetController extends ModelController<CodeSet> implements CodeSetApi {
     }
 
     @Audit
+    @Operation(summary = "List the code sets", description = "Returns the code sets. You must have read privileges on the item in question.")
     @Get(value = Paths.CODE_SET_TERM_LIST_PAGED)
     ListResponse<Term> listAllTermsInCodeSet(@NonNull UUID id, @Nullable PaginationParams params = new PaginationParams()) {
         
@@ -215,6 +222,7 @@ class CodeSetController extends ModelController<CodeSet> implements CodeSetApi {
 
     @Transactional
     @Audit(title = EditType.FINALISE, description = "Finalise CodeSet")
+    @Operation(operationId = 'finaliseCodeSet', summary = "Update a code set", description = "Updates a code set.")
     @Put(value = Paths.CODE_SET_FINALISE)
     CodeSet finalise(UUID id, @Body FinaliseData finaliseData) {
         super.finalise(id, finaliseData)
@@ -222,6 +230,7 @@ class CodeSetController extends ModelController<CodeSet> implements CodeSetApi {
 
 
     @Audit
+    @Operation(summary = "Get a code set", description = "Returns a code set. You must have read privileges on the item in question.")
     @Get(Paths.CODE_SET_DIFF)
     ObjectDiff diffModels(@NonNull UUID id, @NonNull UUID otherId) {
         CodeSet codeSet = modelRepository.loadWithContent(id)
@@ -246,6 +255,7 @@ class CodeSetController extends ModelController<CodeSet> implements CodeSetApi {
 
     @Transactional
     @Audit(title = EditType.COPY, description = "New Version of CodeSet")
+    @Operation(summary = "Update a code set", description = "Updates a code set.")
     @Put(value = Paths.CODE_SET_NEW_BRANCH_MODEL_VERSION)
     CodeSet createNewBranchModelVersion(UUID id, @Body @Nullable CreateNewVersionData createNewVersionData) {
         if (!createNewVersionData) createNewVersionData = new CreateNewVersionData()
@@ -267,6 +277,7 @@ class CodeSetController extends ModelController<CodeSet> implements CodeSetApi {
     @Transactional
     @ExecuteOn(TaskExecutors.IO)
     @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @Operation(operationId = 'importModelCodeSet', summary = "Import the code set", description = "Imports the code set.")
     @Post(Paths.CODE_SET_IMPORT)
     ListResponse<CodeSet> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version) {
         super.importModel(body, namespace, name, version)
@@ -274,12 +285,14 @@ class CodeSetController extends ModelController<CodeSet> implements CodeSetApi {
     }
 
     //stub endpoint todo: actual
+    @Operation(summary = "List the code sets", description = "Returns the code sets.")
     @Get(Paths.CODE_SET_SIMPLE_MODEL_VERSION_TREE)
     List<ModelVersionedRefDTO> simpleModelVersionTree(UUID id, @Nullable Boolean branchesOnly) {
         super.simpleModelVersionTree(id,branchesOnly)
     }
 
     @Audit
+    @Operation(summary = "Update a code set", description = "Updates a code set.")
     @Put(Paths.CODE_SET_READ_BY_EVERYONE)
     @Transactional
     CodeSet allowReadByEveryone(UUID id) {
@@ -288,12 +301,15 @@ class CodeSetController extends ModelController<CodeSet> implements CodeSetApi {
 
     @Audit
     @Transactional
+    @ApiResponse(responseCode = "204", description = "No content - deleted successfully")
+    @Operation(summary = "Delete a code set", description = "Deletes a code set.")
     @Delete(Paths.CODE_SET_READ_BY_EVERYONE)
     HttpResponse revokeReadByEveryone(UUID id) {
         super.deleteReadByEveryone(id)
     }
 
     @Audit
+    @Operation(summary = "Update a code set", description = "Updates a code set.")
     @Put(Paths.CODE_SET_READ_BY_AUTHENTICATED)
     @Transactional
     CodeSet allowReadByAuthenticated(UUID id) {
@@ -302,12 +318,15 @@ class CodeSetController extends ModelController<CodeSet> implements CodeSetApi {
 
     @Audit
     @Transactional
+    @ApiResponse(responseCode = "204", description = "No content - deleted successfully")
+    @Operation(summary = "Delete a code set", description = "Deletes a code set.")
     @Delete(Paths.CODE_SET_READ_BY_AUTHENTICATED)
     HttpResponse revokeReadByAuthenticated(UUID id) {
         super.deleteReadByAuthenticated(id)
     }
 
     @Audit
+    @Operation(summary = "List the code sets", description = "Returns the code sets.")
     @Get(Paths.CODE_SET_FOLDER_PERMISSIONS)
     @Override
     PermissionsDTO permissions(UUID id) {
@@ -315,6 +334,7 @@ class CodeSetController extends ModelController<CodeSet> implements CodeSetApi {
     }
 
     @Audit
+    @Operation(summary = "Get a code set", description = "Returns a code set.")
     @Get(Paths.CODE_SET_DOI)
     @Override
     Map doi(UUID id) {

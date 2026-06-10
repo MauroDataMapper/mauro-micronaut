@@ -1,6 +1,8 @@
 package org.maurodata.controller.terminology
 
 import org.maurodata.api.terminology.TermCopyDTO
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.responses.ApiResponse
 import org.maurodata.web.PaginationParams
 
 import io.micronaut.http.HttpStatus
@@ -49,30 +51,36 @@ class TermController extends AdministeredItemController<Term, Terminology> imple
     }
 
     @Audit
+    @Operation(operationId = 'showTerm', summary = "Get a term", description = "Returns a term.")
     @Get(Paths.TERM_ID)
     Term show(UUID terminologyId, UUID id) {
         super.show(id)
     }
 
     @Audit
+    @Operation(operationId = 'createTerm', summary = "Create a term", description = "Creates a term.")
     @Post(Paths.TERM_LIST)
     Term create(UUID terminologyId, @Body @NonNull Term term) {
         super.create(terminologyId, term)
     }
 
     @Audit
+    @Operation(operationId = 'updateTerm', summary = "Update a term", description = "Updates a term.")
     @Put(Paths.TERM_ID)
     Term update(UUID terminologyId, UUID id, @Body @NonNull Term term) {
         super.update(id, term)
     }
 
     @Audit(deletedObjectDomainType = Term)
+    @ApiResponse(responseCode = "204", description = "No content - deleted successfully")
+    @Operation(operationId = 'deleteTerm', summary = "Delete a term", description = "Deletes a term.")
     @Delete(Paths.TERM_ID)
     HttpResponse delete(UUID terminologyId, UUID id, @Body @Nullable Term term) {
         super.delete(id, term)
     }
 
     @Audit
+    @Operation(operationId = 'listTermPaged', summary = "List the terms", description = "Returns the terms.")
     @Get(Paths.TERM_LIST_PAGED)
     ListResponse<Term> list(UUID terminologyId, @Nullable PaginationParams params = new PaginationParams()) {
         
@@ -80,6 +88,7 @@ class TermController extends AdministeredItemController<Term, Terminology> imple
     }
 
     @Audit
+    @Operation(summary = "List the terms", description = "Returns the terms. You must have read privileges on the item in question.")
     @Get(Paths.TERM_TREE)
     List<Term> tree(UUID terminologyId, @Nullable UUID id) {
         Terminology terminology = terminologyRepository.readById(terminologyId)
@@ -88,6 +97,7 @@ class TermController extends AdministeredItemController<Term, Terminology> imple
     }
 
     @Audit
+    @Operation(summary = "List the terms", description = "Returns the terms. You must have read privileges on the item in question.")
     @Get(Paths.TERM_CODE_SETS_PAGED)
     ListResponse<CodeSet> getCodeSetsForTerm(UUID terminologyId, UUID id, @Nullable PaginationParams params = new PaginationParams()) {
         
@@ -96,6 +106,7 @@ class TermController extends AdministeredItemController<Term, Terminology> imple
         ListResponse.from(codeSets, params)
     }
 
+    @Operation(summary = "Get a term", description = "Returns a term.")
     @Get(Paths.TERM_DOI)
     @Override
     Map doi(UUID id) {

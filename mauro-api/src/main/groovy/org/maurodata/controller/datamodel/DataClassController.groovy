@@ -1,5 +1,7 @@
 package org.maurodata.controller.datamodel
 
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.micronaut.http.exceptions.HttpStatusException
 import org.maurodata.api.model.CopyDataClassParamsDTO
 import org.maurodata.domain.model.AdministeredItem
@@ -61,18 +63,21 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
     }
 
     @Audit
+    @Operation(operationId = 'showDataClass', summary = "Get a data class", description = "Returns a data class.")
     @Get(Paths.DATA_CLASS_ID)
     DataClass show(UUID dataModelId, UUID id) {
         super.show(id)
     }
 
     @Audit
+    @Operation(operationId = 'createDataClass', summary = "Create a data class", description = "Creates a data class.")
     @Post(Paths.DATA_CLASS_LIST)
     DataClass create(UUID dataModelId, @Body @NonNull DataClass dataClass) {
         super.create(dataModelId, dataClass)
     }
 
     @Audit
+    @Operation(operationId = 'updateDataClass', summary = "Update a data class", description = "Updates a data class.")
     @Put(Paths.DATA_CLASS_ID)
     DataClass update(UUID dataModelId, UUID id, @Body @NonNull DataClass dataClass) {
         DataClass existing = dataClassRepository.readById(id)
@@ -112,6 +117,8 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
         deletedObjectDomainType = DataClass
     )
     @Transactional
+    @ApiResponse(responseCode = "204", description = "No content - deleted successfully")
+    @Operation(operationId = 'deleteDataClass', summary = "Delete a data class", description = "Deletes a data class.")
     @Delete(Paths.DATA_CLASS_ID)
     HttpResponse delete(UUID dataModelId, UUID id, @Body @Nullable DataClass dataClass) {
         DataClass dataClassToDelete = dataClassRepository.loadWithContent(id)
@@ -122,6 +129,7 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
     }
 
     @Audit
+    @Operation(operationId = 'listDataClassPaged', summary = "List the data classes", description = "Returns the data classes. You must have read privileges on the item in question.")
     @Get(Paths.DATA_CLASS_SEARCH)
     ListResponse<DataClass> list(UUID dataModelId, @Nullable PaginationParams params = new PaginationParams()) {
         DataModel dataModel = dataModelRepository.readById(dataModelId)
@@ -135,6 +143,7 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
 
 
     @Audit
+    @Operation(summary = "List the data classes", description = "Returns the data classes. You must have read privileges on the item in question.")
     @Get(Paths.ALL_DATA_CLASSES)
     ListResponse<DataClass> allDataClasses(@NonNull UUID dataModelId) {
         DataModel dataModel = dataModelRepository.readById(dataModelId)
@@ -148,12 +157,14 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
 
 
     @Audit
+    @Operation(operationId = 'showDataClassChild', summary = "Get a data class", description = "Returns a data class.")
     @Get(Paths.DATA_CLASS_CHILD_DATA_CLASS_ID)
     DataClass show(UUID dataModelId, UUID parentDataClassId, UUID id) {
         super.show(id)
     }
 
     @Audit
+    @Operation(summary = "Create a data class", description = "Creates a data class. You must have edit privileges on the item in question.")
     @Post(Paths.DATA_CLASS_CHILD_DATA_CLASS_LIST)
     DataClass create(UUID dataModelId, UUID parentDataClassId, @Body @NonNull DataClass dataClass) {
 
@@ -168,6 +179,7 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
     }
 
     @Audit
+    @Operation(operationId = 'updateDataClassChild', summary = "Update a data class", description = "Updates a data class.")
     @Put(Paths.DATA_CLASS_CHILD_DATA_CLASS_ID)
     DataClass update(UUID dataModelId, UUID parentDataClassId, UUID id, @Body @NonNull DataClass dataClass) {
         super.update(id, dataClass)
@@ -178,6 +190,8 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
         parentIdParamName = 'parentDataClassId',
         deletedObjectDomainType = DataClass
     )
+    @ApiResponse(responseCode = "204", description = "No content - deleted successfully")
+    @Operation(operationId = 'deleteDataClassChild', summary = "Delete a data class", description = "Deletes a data class.")
     @Delete(Paths.DATA_CLASS_CHILD_DATA_CLASS_ID)
     HttpResponse delete(UUID dataModelId, UUID parentDataClassId, UUID id, @Body @Nullable DataClass dataClass) {
         DataClass dataClassToDelete = dataClassRepository.loadWithContent(id)
@@ -188,6 +202,7 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
     }
 
     @Audit
+    @Operation(operationId = 'listDataClassChild', summary = "List the data classes", description = "Returns the data classes. You must have read privileges on the item in question.")
     @Get(Paths.DATA_CLASS_CHILD_DATA_CLASS_LIST)
     ListResponse<DataClass> list(UUID dataModelId, UUID parentDataClassId) {
         DataClass parentDataClass = dataClassRepository.readById(parentDataClassId)
@@ -197,6 +212,7 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
     }
 
     @Audit
+    @Operation(summary = "Update a data class", description = "Updates a data class. You must have edit privileges on the item in question.")
     @Put(Paths.DATA_CLASS_EXTENDS)
     DataClass createExtension(UUID dataModelId, UUID id, UUID otherModelId, UUID otherClassId) {
         DataClass sourceDataClass = dataClassRepository.readById(id)
@@ -212,6 +228,8 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
         deletedObjectDomainType = DataClass,
         description = 'Delete DataClass extends relationship'
     )
+    @ApiResponse(responseCode = "204", description = "No content - deleted successfully")
+    @Operation(summary = "Delete a data class", description = "Deletes a data class. You must have edit privileges on the item in question.")
     @Delete(Paths.DATA_CLASS_EXTENDS)
     DataClass deleteExtension(UUID dataModelId, UUID id, UUID otherModelId, UUID otherClassId) {
         DataClass sourceDataClass = dataClassRepository.readById(id)
@@ -223,6 +241,7 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
 
 
     @Audit
+    @Operation(summary = "Copy the data class", description = "Copies the data class. You must have read or edit privileges on the item in question, depending on the action.")
     @Post(Paths.DATA_CLASS_COPY)
     @Transactional
     DataClass copyDataClass(UUID toDataModelId, UUID fromDataModelId, UUID dataClassId, @Body @Nullable CopyDataClassParamsDTO copyDataClassParams = null) {

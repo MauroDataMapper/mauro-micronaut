@@ -1,5 +1,6 @@
 package org.maurodata.controller.dataflow
 
+import io.swagger.v3.oas.annotations.Operation
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
@@ -13,6 +14,7 @@ import io.micronaut.http.annotation.Post
 import io.micronaut.http.annotation.Put
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
+import io.swagger.v3.oas.annotations.responses.ApiResponse
 import jakarta.inject.Inject
 import org.maurodata.ErrorHandler
 import org.maurodata.api.Paths
@@ -52,30 +54,36 @@ class DataElementComponentController extends AdministeredItemController<DataElem
 
 
     @Audit
+    @Operation(operationId = 'showDataElementComponent', summary = "Get a data element component", description = "Returns a data element component.")
     @Get(value = Paths.DATA_FLOW_ELEMENT_COMPONENT_ID)
     DataElementComponent show(@NonNull UUID dataModelId, @NonNull UUID dataFlowId, @NonNull UUID dataClassComponentId, @NonNull UUID id) {
         super.show(id)
     }
 
     @Audit(level = Audit.AuditLevel.FILE_ONLY)
+    @Operation(operationId = 'createDataElementComponent', summary = "Create a data element component", description = "Creates a data element component.")
     @Post(Paths.DATA_FLOW_ELEMENT_COMPONENT_LIST)
     DataElementComponent create(@NonNull UUID dataModelId, @NonNull UUID dataFlowId, @NonNull UUID dataClassComponentId, @Body @NonNull DataElementComponent dataElementComponent) {
         super.create(dataClassComponentId, dataElementComponent)
     }
 
     @Audit(level = Audit.AuditLevel.FILE_ONLY)
+    @Operation(operationId = 'updateDataElementComponent', summary = "Update a data element component", description = "Updates a data element component.")
     @Put(value = Paths.DATA_FLOW_ELEMENT_COMPONENT_ID)
     DataElementComponent update(@NonNull UUID dataModelId, @NonNull UUID dataFlowId, @NonNull UUID dataClassComponentId, @NonNull UUID id, @Body @NonNull DataElementComponent dataElementComponent) {
         super.update(id, dataElementComponent)
     }
 
     @Audit(level = Audit.AuditLevel.FILE_ONLY)
+    @ApiResponse(responseCode = "204", description = "No content - deleted successfully")
+    @Operation(operationId = 'deleteDataFlowDataElementComponent', summary = "Delete a data element component", description = "Deletes a data element component.")
     @Delete(value = Paths.DATA_FLOW_ELEMENT_COMPONENT_ID)
     HttpResponse delete(@NonNull UUID dataModelId, @NonNull UUID dataFlowId, @NonNull UUID dataClassComponentId, @NonNull UUID id, @Body @Nullable DataElementComponent dataElementComponent) {
         super.delete(id, dataElementComponent)
     }
 
     @Audit
+    @Operation(operationId = 'listDataElementComponentPaged', summary = "List the data element components", description = "Returns the data element components.")
     @Get(Paths.DATA_FLOW_ELEMENT_COMPONENT_LIST_PAGED)
     ListResponse<DataElementComponent> list(@NonNull UUID dataModelId, @NonNull UUID dataFlowId, @NonNull UUID dataClassComponentId, @Nullable PaginationParams params = new PaginationParams()) {
         
@@ -83,6 +91,7 @@ class DataElementComponentController extends AdministeredItemController<DataElem
     }
 
     @Audit(level = Audit.AuditLevel.FILE_ONLY)
+    @Operation(summary = "Update a data element component", description = "Updates a data element component.")
     @Put(value = Paths.DATA_FLOW_ELEMENT_COMPONENT_SOURCE_ELEMENT)
     DataElementComponent updateSource(@NonNull UUID dataModelId, @NonNull UUID dataFlowId, @NonNull UUID dataClassComponentId, @NonNull UUID id, @NonNull UUID dataElementId) {
         DataElementComponent updated = addDataElement(Type.SOURCE, id, dataElementId, dataClassComponentId)
@@ -90,6 +99,7 @@ class DataElementComponentController extends AdministeredItemController<DataElem
     }
 
     @Audit(level = Audit.AuditLevel.FILE_ONLY)
+    @Operation(summary = "Update a data element component", description = "Updates a data element component.")
     @Put(value = Paths.DATA_FLOW_ELEMENT_COMPONENT_TARGET_ELEMENT)
     DataElementComponent updateTarget(@NonNull UUID dataModelId, @NonNull UUID dataFlowId, @NonNull UUID dataClassComponentId, @NonNull UUID id, @NonNull UUID dataElementId) {
         DataElementComponent updated = addDataElement(Type.TARGET, id, dataElementId, dataClassComponentId)
@@ -97,6 +107,8 @@ class DataElementComponentController extends AdministeredItemController<DataElem
     }
 
     @Audit(level = Audit.AuditLevel.FILE_ONLY)
+    @ApiResponse(responseCode = "204", description = "No content - deleted successfully")
+    @Operation(summary = "Delete a data element component", description = "Deletes a data element component.")
     @Delete(value = Paths.DATA_FLOW_ELEMENT_COMPONENT_SOURCE_ELEMENT)
     HttpResponse deleteSource(@NonNull UUID dataModelId, @NonNull UUID dataFlowId, @NonNull UUID dataClassComponentId, @NonNull UUID id, @NonNull UUID dataElementId) {
         removeDataElement(Type.SOURCE, id, dataElementId)
@@ -104,6 +116,8 @@ class DataElementComponentController extends AdministeredItemController<DataElem
     }
 
     @Audit(level = Audit.AuditLevel.FILE_ONLY)
+    @ApiResponse(responseCode = "204", description = "No content - deleted successfully")
+    @Operation(summary = "Delete a data element component", description = "Deletes a data element component.")
     @Delete(value = Paths.DATA_FLOW_ELEMENT_COMPONENT_TARGET_ELEMENT)
     HttpResponse deleteTarget(@NonNull UUID dataModelId, @NonNull UUID dataFlowId, @NonNull UUID dataClassComponentId, @NonNull UUID id, @NonNull UUID dataElementId) {
         removeDataElement(Type.TARGET, id, dataElementId)

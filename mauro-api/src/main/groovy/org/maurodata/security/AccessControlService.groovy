@@ -210,11 +210,11 @@ class AccessControlService implements Toggleable {
     }
 
     boolean isUserAuthenticated() {
-        securityService.authenticated && userAuthentication.attributes.id instanceof UUID
+        securityService !=null && securityService.authenticated && userAuthentication.attributes.id instanceof UUID
     }
 
     Authentication getUserAuthentication() {
-        if (!securityService.authenticated) {
+        if (securityService == null || !securityService.authenticated) {
             throw new AuthenticationException('User is not authenticated')
         }
         securityService.authentication.get()
@@ -228,10 +228,19 @@ class AccessControlService implements Toggleable {
         if (!enabled) {
             return null
         }
-        if (!securityService.authenticated) {
+        // if securityService is null, we assume security is turned off
+        if (securityService && !securityService.authenticated) {
+            log.debug("User is not authenticated, throwing AuthenticationException")
             throw new AuthenticationException('User is not authenticated')
         }
-        return catalogueUserRepository.findById(userId)
+
+        CatalogueUser user = catalogueUserRepository.findById(userId)
+        if (!user) {
+            log.debug("User with id ${userId} not found, throwing AuthenticationException")
+            throw new AuthenticationException('User not found')
+        }
+
+        return user
     }
 
     boolean isEnabled() {

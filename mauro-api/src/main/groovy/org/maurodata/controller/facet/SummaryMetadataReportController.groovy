@@ -1,5 +1,7 @@
 package org.maurodata.controller.facet
 
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.responses.ApiResponse
 import org.maurodata.api.Paths
 import org.maurodata.api.facet.SummaryMetadataReportApi
 import org.maurodata.audit.Audit
@@ -55,6 +57,7 @@ class SummaryMetadataReportController extends ItemController<SummaryMetadataRepo
     }
 
     @Audit
+    @Operation(operationId = 'createSummaryMetadataReport', summary = "Create a summary metadata report", description = "Creates a summary metadata report. You must have edit privileges on the item in question.")
     @Post(Paths.SUMMARY_METADATA_REPORTS_LIST)
     SummaryMetadataReport create(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID summaryMetadataId,
                                  @Body SummaryMetadataReport summaryMetadataReport) {
@@ -67,6 +70,7 @@ class SummaryMetadataReportController extends ItemController<SummaryMetadataRepo
     }
 
     @Audit
+    @Operation(operationId = 'listSummaryMetaReportPaged', summary = "List the summary metadata reports", description = "Returns the summary metadata reports. You must have read privileges on the item in question.")
     @Get(Paths.SUMMARY_METADATA_REPORTS_LIST_PAGED)
     ListResponse<SummaryMetadataReport> list(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID summaryMetadataId,
                                              @Nullable PaginationParams params = new PaginationParams()) {
@@ -78,6 +82,7 @@ class SummaryMetadataReportController extends ItemController<SummaryMetadataRepo
     }
 
     @Audit
+    @Operation(operationId = 'showSummaryMetadataReport', summary = "Get a summary metadata report", description = "Returns a summary metadata report. You must have read privileges on the item in question.")
     @Get(Paths.SUMMARY_METADATA_REPORTS_ID)
     SummaryMetadataReport show(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID summaryMetadataId,
                                @NonNull UUID id) {
@@ -87,6 +92,7 @@ class SummaryMetadataReportController extends ItemController<SummaryMetadataRepo
     }
 
     @Audit
+    @Operation(operationId = 'updateSummaryMetadataReport', summary = "Update a summary metadata report", description = "Updates a summary metadata report. You must have edit privileges on the item in question.")
     @Put(Paths.SUMMARY_METADATA_REPORTS_ID)
     SummaryMetadataReport update(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID summaryMetadataId,
                                  @NonNull UUID id, @Body @NonNull SummaryMetadataReport summaryMetadataReport) {
@@ -100,6 +106,8 @@ class SummaryMetadataReportController extends ItemController<SummaryMetadataRepo
     }
 
     @Audit(deletedObjectDomainType = SummaryMetadataReport)
+    @ApiResponse(responseCode = "204", description = "No content - deleted successfully")
+    @Operation(operationId = 'deleteSummaryMetadataReport', summary = "Delete a summary metadata report", description = "Deletes a summary metadata report. You must have edit privileges on the item in question.")
     @Delete(Paths.SUMMARY_METADATA_REPORTS_ID)
     @Transactional
     HttpResponse delete(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID summaryMetadataId,

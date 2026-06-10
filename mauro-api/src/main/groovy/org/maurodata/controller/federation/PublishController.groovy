@@ -1,5 +1,6 @@
 package org.maurodata.controller.federation
 
+import io.swagger.v3.oas.annotations.Operation
 import groovy.util.logging.Slf4j
 import org.maurodata.ErrorHandler
 import org.maurodata.api.Paths
@@ -47,6 +48,7 @@ class PublishController implements PublishApi {
     }
 
     @Audit
+    @Operation(operationId = 'showPublishedModels', summary = "Get a publish", description = "Returns a publish. It is available to authenticated users.")
     @Get(Paths.PUBLISHED_MODELS)
     PublishedModelResponse show() {
         accessControlService.checkAuthenticated()
@@ -67,6 +69,7 @@ class PublishController implements PublishApi {
 
 
     @Audit
+    @Operation(summary = "List the publishes", description = "Returns the publishes.")
     @Get(Paths.PUBLISHED_MODELS_NEWER_VERSIONS)
     PublishedModelResponse newerVersions(@NonNull UUID publishedModelId) {
         PublishedModelResponse publishedModelResponse
