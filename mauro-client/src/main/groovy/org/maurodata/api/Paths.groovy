@@ -562,6 +562,7 @@ interface Paths {
     */
     String CHAT_SESSIONS = '/api/chat/sessions'
     String CHAT_SESSIONS_ID = '/api/chat/sessions/{sessionId}'
+    String CHAT_SESSIONS_UPDATE = '/api/chat/sessions/{sessionId}'
     String CHAT_SESSIONS_MESSAGES = '/api/chat/sessions/{sessionId}/messages'
     String CHAT_SESSIONS_MESSAGES_LIST = '/api/chat/sessions/{sessionId}/messages/list'
 }

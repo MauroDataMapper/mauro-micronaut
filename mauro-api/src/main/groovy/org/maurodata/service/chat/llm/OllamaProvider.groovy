@@ -467,27 +467,7 @@ class OllamaProvider implements LlmProvider {
         final boolean thinkEnabled,
         final List<Map<String, Object>> availableTools
     ) {
-        final List<Map<String, Object>> wireMessages = new ArrayList<Map<String, Object>>(messages.size())
-        for (int i = 0; i < messages.size(); i++) {
-            final ProviderMessage m = messages.get(i)
-            final Map<String, Object> wm = new LinkedHashMap<String, Object>(4)
-            wm.put('role', m.role)
-            wm.put('content', m.content)
-            if (m.name != null) {
-                if ('tool'.equals(m.role)) {
-                    wm.put('tool_name', m.name)
-                } else {
-                    wm.put('name', m.name)
-                }
-            }
-            if (m.toolCallId != null) {
-                wm.put('tool_call_id', m.toolCallId)
-            }
-            if (m.toolCalls != null && !m.toolCalls.isEmpty()) {
-                wm.put('tool_calls', m.toolCalls)
-            }
-            wireMessages.add(wm)
-        }
+        final List<Map<String, Object>> wireMessages = ProviderWireMessages.toWireMessages(messages, true)
 
         final Map<String, Object> body = new LinkedHashMap<String, Object>(5)
         body.put('model', request.model)
