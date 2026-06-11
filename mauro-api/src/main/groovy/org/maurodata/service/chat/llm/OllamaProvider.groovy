@@ -876,7 +876,7 @@ class OllamaProvider implements LlmProvider {
         if (sink == null || message == null) {
             return
         }
-        sink.next(new ProviderChunk('provider_message', messageId, null, [
+        sink.next(new ProviderChunk('provider_request_message', messageId, null, [
             providerMessage: providerMessageToMap(message)
         ] as Map<String, Object>))
     }
