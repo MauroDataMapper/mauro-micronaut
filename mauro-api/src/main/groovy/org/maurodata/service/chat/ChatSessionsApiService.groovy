@@ -81,18 +81,15 @@ class ChatSessionsApiService implements ChatSessionService {
         String assistantMessageId = UUID.randomUUID().toString()
         Instant now = ChatInMemoryStore.now()
         List<MessageDto> timeline = store.messagesForSession(sessionId)
-        MessageDto userMessage = new MessageDto(
-            id: request.messageId ?: UUID.randomUUID().toString(),
-            sessionId: sessionId,
+        String userMessageId = request.messageId ?: UUID.randomUUID().toString()
+        appendChatEvent(timeline, sessionId, new ChatEventDto(
+            type: 'ui_user_message',
+            messageId: userMessageId,
             role: 'user',
             content: request.content ?: '',
-            status: 'complete',
-            thinkingContent: '',
-            createdAt: now.toString(),
-            updatedAt: now.toString(),
+            done: true,
             metadata: [attachments: request.attachments ?: [], contextRefs: request.contextRefs ?: []]
-        )
-        timeline.add(userMessage)
+        ))
         MessageDto assistantMessage = new MessageDto(
             id: assistantMessageId,
             sessionId: sessionId,
@@ -104,19 +101,14 @@ class ChatSessionsApiService implements ChatSessionService {
             updatedAt: now.toString(),
             metadata: [provider: '', model: session.model ?: '']
         )
-        timeline.add(assistantMessage)
-        MessageDto messageStartEvent = new MessageDto(
-            id: UUID.randomUUID().toString(),
-            sessionId: sessionId,
+        appendChatEvent(timeline, sessionId, new ChatEventDto(
+            type: 'message_start',
+            messageId: assistantMessageId,
             role: 'assistant',
             content: '',
-            status: 'event',
-            thinkingContent: '',
-            createdAt: now.toString(),
-            updatedAt: now.toString(),
-            metadata: [eventType: 'message_start', messageId: assistantMessageId]
-        )
-        timeline.add(messageStartEvent)
+            done: false,
+            metadata: [sessionId: sessionId]
+        ))
         log.info('sendMessage sessionId={} requestMessageId={}', sessionId, request.messageId)
         try {
             def provider = providerRegistry.byModel(session.model)
@@ -139,20 +131,12 @@ class ChatSessionsApiService implements ChatSessionService {
             String prerequisiteInstruction = buildPrerequisiteSkillInstruction(skillDefinitions, request.content ?: '')
 
             List<ProviderMessage> historyMessages = buildProviderHistory(timeline)
-            List<ProviderMessage> currentContextMessages = [
-                personaInstruction ? new ProviderMessage(role: 'system', content: personaInstruction) : null,
-                prerequisiteInstruction ? new ProviderMessage(role: 'system', content: prerequisiteInstruction) : null,
-                toolInstruction ? new ProviderMessage(role: 'system', content: toolInstruction) : null,
-                routingInstruction ? new ProviderMessage(role: 'system', content: routingInstruction) : null
-            ].findAll {it != null} as List<ProviderMessage>
-            userMessage.metadata.put('providerMessagesBefore', providerMessagesToMaps(currentContextMessages))
-            storeProviderMessageEvents(timeline, sessionId, assistantMessageId, currentContextMessages, 'current_context')
-            List<ChatEventDto> currentContextEvents = providerMessagesToEvents(
-                currentContextMessages,
-                assistantMessageId,
-                'current_context'
-            )
-
+            List<ProviderMessage> currentContextMessages = new ArrayList<ProviderMessage>()
+            List<Map<String, Object>> currentContextReplayMetadata = new ArrayList<Map<String, Object>>()
+            addProviderContextMessage(currentContextMessages, currentContextReplayMetadata, personaInstruction, 'persona', 'substitute', 'persona:active')
+            addProviderContextMessage(currentContextMessages, currentContextReplayMetadata, prerequisiteInstruction, 'skill_prerequisite', 'replay', null)
+            addProviderContextMessage(currentContextMessages, currentContextReplayMetadata, toolInstruction, 'tool_policy', 'substitute', 'tool_policy:active')
+            addProviderContextMessage(currentContextMessages, currentContextReplayMetadata, routingInstruction, 'routing', 'substitute', 'routing:index')
             ProviderRequest providerRequest = new ProviderRequest(
                 sessionId: session.id,
                 messageId: assistantMessageId,
@@ -162,22 +146,35 @@ class ChatSessionsApiService implements ChatSessionService {
                 messages: currentContextMessages
             )
             providerRequest.messages.addAll(historyMessages)
+            List<ChatEventDto> initialProviderRequestEvents = appendProviderRequestMessages(
+                timeline,
+                sessionId,
+                assistantMessageId,
+                provider.id(),
+                session.model ?: '',
+                providerRequest.messages,
+                providerReplayMetadata(currentContextReplayMetadata, historyMessages.size())
+            )
 
             Flux<ChatEventDto> stream = Flux.from(provider.streamChat(providerRequest))
                 .doOnNext {chunk ->
-                    if (chunk.type == 'provider_message') {
+                    if (chunk.type == 'provider_request_message') {
                         storeProviderMessage(assistantMessage, chunk.metadata)
-                        storeProviderMessageEvent(timeline, sessionId, assistantMessageId, chunk.metadata, 'tool_loop')
                     }
                 }
                 .filter {chunk -> !['done', 'message_complete'].contains(chunk.type)}
                 .map {chunk ->
                     String eventType = eventTypeForChunk(chunk)
+                    Map<String, Object> eventMetadata = chunk.metadata ? new LinkedHashMap<String, Object>(chunk.metadata) : [:]
+                    if (chunk.type == 'provider_request_message' && !eventMetadata.containsKey('source')) {
+                        eventMetadata.put('source', 'tool_loop')
+                    }
+                    if (chunk.type == 'provider_request_message' && !eventMetadata.containsKey('replayMode')) {
+                        eventMetadata.put('replayMode', 'replay')
+                    }
                     synchronized (assistantMessage) {
                         if (chunk.type == 'token') {
                             assistantMessage.content = (assistantMessage.content ?: '') + (chunk.content ?: '')
-                        } else if (chunk.type == 'thinking_token') {
-                            assistantMessage.thinkingContent = (assistantMessage.thinkingContent ?: '') + (chunk.content ?: '')
                         } else if (chunk.type == 'error') {
                             assistantMessage.status = 'error'
                             assistantMessage.metadata.put('error', chunk.content ?: 'Unknown error')
@@ -190,19 +187,21 @@ class ChatSessionsApiService implements ChatSessionService {
                             toolEvents.add([
                                 type      : chunk.type,
                                 at        : ChatInMemoryStore.now().toString(),
-                                attributes: chunk.metadata ?: [:]
+                                attributes: eventMetadata
                             ])
                         }
                         assistantMessage.updatedAt = ChatInMemoryStore.now().toString()
                     }
-                    new ChatEventDto(
+                    ChatEventDto event = new ChatEventDto(
                         type: eventType,
                         messageId: chunk.messageId ?: assistantMessageId,
                         role: roleForChunk(chunk),
                         content: contentForChunk(chunk),
                         done: false,
-                        metadata: chunk.metadata ?: [:]
+                        metadata: eventMetadata
                     )
+                    appendChatEvent(timeline, sessionId, event)
+                    event
                 }
 
             session.updatedAt = ChatInMemoryStore.now()
@@ -215,7 +214,7 @@ class ChatSessionsApiService implements ChatSessionService {
                     done: false,
                     metadata: [sessionId: session.id, provider: provider.id()]
                 )),
-                Flux.fromIterable(currentContextEvents),
+                Flux.fromIterable(initialProviderRequestEvents),
                 stream,
                 Flux.just(new ChatEventDto(
                     type: 'message_complete',
@@ -238,30 +237,24 @@ class ChatSessionsApiService implements ChatSessionService {
                     if (assistantMessage.status != 'error') {
                         assistantMessage.status = 'complete'
                     }
+                    assistantMessage.thinkingContent = ''
                     assistantMessage.updatedAt = ChatInMemoryStore.now().toString()
                 }
-                Instant finishedAt = ChatInMemoryStore.now()
-                timeline.add(new MessageDto(
-                    id: UUID.randomUUID().toString(),
-                    sessionId: sessionId,
+                appendChatEvent(timeline, sessionId, new ChatEventDto(
+                    type: 'message_complete',
+                    messageId: assistantMessageId,
                     role: 'assistant',
                     content: '',
-                    status: 'event',
-                    thinkingContent: '',
-                    createdAt: finishedAt.toString(),
-                    updatedAt: finishedAt.toString(),
-                    metadata: [eventType: 'message_complete', messageId: assistantMessageId]
+                    done: false,
+                    metadata: [timestamp: ChatInMemoryStore.now().toString()]
                 ))
-                timeline.add(new MessageDto(
-                    id: UUID.randomUUID().toString(),
-                    sessionId: sessionId,
+                appendChatEvent(timeline, sessionId, new ChatEventDto(
+                    type: 'done',
+                    messageId: assistantMessageId,
                     role: 'assistant',
                     content: '',
-                    status: 'event',
-                    thinkingContent: '',
-                    createdAt: finishedAt.toString(),
-                    updatedAt: finishedAt.toString(),
-                    metadata: [eventType: 'done', messageId: assistantMessageId]
+                    done: true,
+                    metadata: [:]
                 ))
             }
         } finally {
@@ -651,9 +644,40 @@ class ChatSessionsApiService implements ChatSessionService {
 
     private static List<ProviderMessage> buildProviderHistory(List<MessageDto> timeline) {
         List<ProviderMessage> history = new ArrayList<ProviderMessage>()
+        StringBuilder assistantBuffer = new StringBuilder(1024)
         for (MessageDto message : timeline) {
-            if (message == null || message.status == 'event') {
+            if (message == null) {
                 continue
+            }
+            if (message.status == 'event') {
+                String eventType = asString(message.metadata?.get('eventType'))
+                if (eventType == 'ui_user_message') {
+                    if (assistantBuffer.length() > 0) {
+                        history.add(new ProviderMessage(role: 'assistant', content: assistantBuffer.toString()))
+                        assistantBuffer.setLength(0)
+                    }
+                    history.add(new ProviderMessage(role: 'user', content: message.content ?: ''))
+                    continue
+                }
+                if (eventType == 'token') {
+                    assistantBuffer.append(message.content ?: '')
+                    continue
+                }
+                if (eventType == 'message_complete') {
+                    if (assistantBuffer.length() > 0) {
+                        history.add(new ProviderMessage(role: 'assistant', content: assistantBuffer.toString()))
+                        assistantBuffer.setLength(0)
+                    }
+                    continue
+                }
+                if (eventType == 'provider_request_message' && shouldReplayProviderRequestMessage(message.metadata)) {
+                    history.addAll(providerMessagesFromMaps([message.metadata?.get('providerMessage')]))
+                }
+                continue
+            }
+            if (assistantBuffer.length() > 0) {
+                history.add(new ProviderMessage(role: 'assistant', content: assistantBuffer.toString()))
+                assistantBuffer.setLength(0)
             }
             if (message.role == 'user') {
                 history.addAll(providerMessagesFromMaps(message.metadata?.get('providerMessagesBefore')))
@@ -671,7 +695,149 @@ class ChatSessionsApiService implements ChatSessionService {
                 history.add(new ProviderMessage(role: 'system', content: toolMemory))
             }
         }
+        if (assistantBuffer.length() > 0) {
+            history.add(new ProviderMessage(role: 'assistant', content: assistantBuffer.toString()))
+        }
         history
+    }
+
+    private static boolean shouldReplayProviderRequestMessage(Map<String, Object> metadata) {
+        if (metadata == null) {
+            return false
+        }
+        String replayMode = asString(metadata.get('replayMode'))
+        if (replayMode != null && !replayMode.trim().isEmpty()) {
+            return 'replay'.equalsIgnoreCase(replayMode)
+        }
+        // Legacy event logs recorded only source. Tool-loop provider messages were
+        // atomic LLM-visible messages; initial_request rows were whole request snapshots.
+        asString(metadata.get('source')) != 'initial_request'
+    }
+
+    private static void appendChatEvent(List<MessageDto> timeline, String sessionId, ChatEventDto event) {
+        if (timeline == null || event == null || event.type == null || event.type.trim().isEmpty()) {
+            return
+        }
+        MessageDto last = timeline.isEmpty() ? null : timeline.get(timeline.size() - 1)
+        if (canCollate(last, event)) {
+            last.content = (last.content ?: '') + (event.content ?: '')
+            last.updatedAt = ChatInMemoryStore.now().toString()
+            return
+        }
+
+        Instant now = ChatInMemoryStore.now()
+        Map<String, Object> metadata = event.metadata ? new LinkedHashMap<String, Object>(event.metadata) : [:]
+        metadata.put('eventType', event.type)
+        metadata.put('messageId', event.messageId)
+        metadata.put('done', Boolean.TRUE.equals(event.done))
+        timeline.add(new MessageDto(
+            id: UUID.randomUUID().toString(),
+            sessionId: sessionId,
+            role: event.role ?: 'assistant',
+            content: event.content ?: '',
+            status: 'event',
+            thinkingContent: '',
+            createdAt: now.toString(),
+            updatedAt: now.toString(),
+            metadata: metadata
+        ))
+    }
+
+    private static void addProviderContextMessage(
+        List<ProviderMessage> messages,
+        List<Map<String, Object>> replayMetadata,
+        String content,
+        String source,
+        String replayMode,
+        String substitutionKey
+    ) {
+        if (content == null || content.trim().isEmpty()) {
+            return
+        }
+        messages.add(new ProviderMessage(role: 'system', content: content))
+        Map<String, Object> metadata = [
+            source    : source,
+            replayMode: replayMode
+        ] as Map<String, Object>
+        if (substitutionKey != null && !substitutionKey.trim().isEmpty()) {
+            metadata.put('substitutionKey', substitutionKey)
+        }
+        replayMetadata.add(metadata)
+    }
+
+    private static List<Map<String, Object>> providerReplayMetadata(
+        List<Map<String, Object>> currentContextReplayMetadata,
+        int historyMessageCount
+    ) {
+        List<Map<String, Object>> replayMetadata = new ArrayList<Map<String, Object>>()
+        for (Map<String, Object> metadata : currentContextReplayMetadata ?: []) {
+            replayMetadata.add(new LinkedHashMap<String, Object>(metadata ?: [:]))
+        }
+        for (int i = 0; i < historyMessageCount; i++) {
+            replayMetadata.add([
+                source    : 'projected_history',
+                replayMode: 'omit'
+            ] as Map<String, Object>)
+        }
+        replayMetadata
+    }
+
+    private static List<ChatEventDto> appendProviderRequestMessages(
+        List<MessageDto> timeline,
+        String sessionId,
+        String assistantMessageId,
+        String provider,
+        String model,
+        List<ProviderMessage> messages,
+        List<Map<String, Object>> replayMetadata
+    ) {
+        if (messages == null || messages.isEmpty()) {
+            return []
+        }
+        List<ChatEventDto> events = new ArrayList<ChatEventDto>(messages.size())
+        for (int i = 0; i < messages.size(); i++) {
+            ProviderMessage message = messages.get(i)
+            Map<String, Object> providerMessage = providerMessageToMap(message)
+            if (providerMessage.isEmpty()) {
+                continue
+            }
+            ChatEventDto event = new ChatEventDto(
+                type: 'provider_request_message',
+                messageId: assistantMessageId,
+                role: String.valueOf(providerMessage.get('role') ?: 'assistant'),
+                content: String.valueOf(providerMessage.get('content') ?: ''),
+                done: true,
+                metadata: ([
+                    provider            : provider,
+                    model               : model,
+                    providerMessageIndex: i,
+                    providerMessage     : providerMessage
+                ] + providerReplayMetadataForIndex(replayMetadata, i)) as Map<String, Object>
+            )
+            appendChatEvent(timeline, sessionId, event)
+            events.add(event)
+        }
+        events
+    }
+
+    private static Map<String, Object> providerReplayMetadataForIndex(List<Map<String, Object>> replayMetadata, int index) {
+        if (replayMetadata != null && index >= 0 && index < replayMetadata.size() && replayMetadata.get(index) != null) {
+            return new LinkedHashMap<String, Object>(replayMetadata.get(index))
+        }
+        [
+            source    : 'provider_request',
+            replayMode: 'omit'
+        ] as Map<String, Object>
+    }
+
+    private static boolean canCollate(MessageDto last, ChatEventDto event) {
+        if (last == null || last.status != 'event' || !['token', 'thinking_token'].contains(event.type)) {
+            return false
+        }
+        last.metadata?.get('eventType') == event.type &&
+            last.role == (event.role ?: 'assistant') &&
+            last.metadata?.get('messageId') == event.messageId &&
+            Boolean.TRUE.equals(last.metadata?.get('done')) == Boolean.TRUE.equals(event.done)
     }
 
     private static void storeProviderMessage(MessageDto assistantMessage, Map<String, Object> metadata) {
@@ -695,89 +861,15 @@ class ChatSessionsApiService implements ChatSessionService {
         }
     }
 
-    private static void storeProviderMessageEvents(
-        List<MessageDto> timeline,
-        String sessionId,
-        String assistantMessageId,
-        List<ProviderMessage> messages,
-        String source
-    ) {
-        if (messages == null || messages.isEmpty()) {
-            return
-        }
-        for (ProviderMessage message : messages) {
-            storeProviderMessageEvent(timeline, sessionId, assistantMessageId, providerMessageToMap(message), source)
-        }
-    }
-
-    private static void storeProviderMessageEvent(
-        List<MessageDto> timeline,
-        String sessionId,
-        String assistantMessageId,
-        Map<String, Object> metadata,
-        String source
-    ) {
-        Map<String, Object> providerMessage = providerMessageFromMetadata(metadata)
-        if (timeline == null || providerMessage.isEmpty() || !'system'.equals(providerMessage.get('role'))) {
-            return
-        }
-        Instant now = ChatInMemoryStore.now()
-        timeline.add(new MessageDto(
-            id: UUID.randomUUID().toString(),
-            sessionId: sessionId,
-            role: 'system',
-            content: String.valueOf(providerMessage.get('content') ?: ''),
-            status: 'event',
-            thinkingContent: '',
-            createdAt: now.toString(),
-            updatedAt: now.toString(),
-            metadata: [
-                eventType      : 'system_message',
-                messageId      : assistantMessageId,
-                source         : source,
-                providerMessage: providerMessage
-            ] as Map<String, Object>
-        ))
-    }
-
-    private static List<ChatEventDto> providerMessagesToEvents(
-        List<ProviderMessage> messages,
-        String assistantMessageId,
-        String source
-    ) {
-        if (messages == null || messages.isEmpty()) {
-            return []
-        }
-        List<ChatEventDto> events = new ArrayList<ChatEventDto>(messages.size())
-        for (ProviderMessage message : messages) {
-            Map<String, Object> providerMessage = providerMessageToMap(message)
-            String eventType = 'system'.equals(providerMessage.get('role')) ? 'system_message' : 'provider_message'
-            Map<String, Object> metadata = [
-                source         : source,
-                providerMessage: providerMessage
-            ] as Map<String, Object>
-            events.add(new ChatEventDto(
-                type: eventType,
-                messageId: assistantMessageId,
-                role: String.valueOf(providerMessage.get('role') ?: 'assistant'),
-                content: String.valueOf(providerMessage.get('content') ?: ''),
-                done: false,
-                metadata: metadata
-            ))
-        }
-        events
-    }
-
     private static String eventTypeForChunk(org.maurodata.service.chat.llm.ProviderChunk chunk) {
-        if (chunk == null || chunk.type != 'provider_message') {
+        if (chunk == null || chunk.type != 'provider_request_message') {
             return chunk?.type
         }
-        Map<String, Object> providerMessage = providerMessageFromMetadata(chunk.metadata)
-        'system'.equals(providerMessage.get('role')) ? 'system_message' : 'provider_message'
+        'provider_request_message'
     }
 
     private static String roleForChunk(org.maurodata.service.chat.llm.ProviderChunk chunk) {
-        if (chunk != null && chunk.type == 'provider_message') {
+        if (chunk != null && chunk.type == 'provider_request_message') {
             Map<String, Object> providerMessage = providerMessageFromMetadata(chunk.metadata)
             return String.valueOf(providerMessage.get('role') ?: 'assistant')
         }
@@ -791,7 +883,7 @@ class ChatSessionsApiService implements ChatSessionService {
         if (chunk.type == 'error') {
             return "Provider error: ${chunk.content ?: 'Unknown error'}"
         }
-        if (chunk.type == 'provider_message') {
+        if (chunk.type == 'provider_request_message') {
             Map<String, Object> providerMessage = providerMessageFromMetadata(chunk.metadata)
             return String.valueOf(providerMessage.get('content') ?: '')
         }
