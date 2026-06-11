@@ -16,4 +16,5 @@ class SessionDto {
     String model
     Instant createdAt
     Instant updatedAt
+    Map<String, Object> metadata = [:]
 }

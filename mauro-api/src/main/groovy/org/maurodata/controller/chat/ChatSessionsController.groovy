@@ -5,6 +5,7 @@ import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Get
+import io.micronaut.http.annotation.Patch
 import io.micronaut.http.annotation.PathVariable
 import io.micronaut.http.annotation.Post
 import io.micronaut.security.annotation.Secured
@@ -18,6 +19,7 @@ import org.maurodata.api.chat.CreateSessionRequest
 import org.maurodata.api.chat.ListSessionMessagesResponseDto
 import org.maurodata.api.chat.SendMessageRequest
 import org.maurodata.api.chat.SessionDto
+import org.maurodata.api.chat.UpdateSessionRequest
 import org.maurodata.audit.Audit
 import org.maurodata.service.chat.ChatSessionService
 import org.reactivestreams.Publisher
@@ -45,6 +47,13 @@ class ChatSessionsController implements ChatSessionsApi {
     @Get(Paths.CHAT_SESSIONS_ID)
     SessionDto getSession(@PathVariable String sessionId) {
         chatSessionService.getSession(sessionId)
+    }
+
+    @Override
+    @Audit
+    @Patch(Paths.CHAT_SESSIONS_UPDATE)
+    SessionDto updateSession(@PathVariable String sessionId, @Body @Valid UpdateSessionRequest request) {
+        chatSessionService.updateSession(sessionId, request)
     }
 
     @Override
