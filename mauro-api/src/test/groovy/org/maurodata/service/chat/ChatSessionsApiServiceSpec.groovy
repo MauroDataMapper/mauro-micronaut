@@ -2,6 +2,8 @@ package org.maurodata.service.chat
 
 import org.maurodata.api.chat.MessageDto
 import org.maurodata.api.chat.SendMessageRequest
+import org.maurodata.api.chat.SessionDto
+import org.maurodata.api.chat.UpdateSessionRequest
 import org.maurodata.service.chat.llm.LlmProvider
 import org.maurodata.service.chat.llm.ProviderChunk
 import org.maurodata.service.chat.llm.ProviderMessage
@@ -100,7 +102,7 @@ class ChatSessionsApiServiceSpec extends Specification {
             new ChatPromptResourceService(),
             'llama3.1'
         )
-        String sessionId = service.createSession(new org.maurodata.api.chat.CreateSessionRequest(workspaceId: 'default')).id
+        String sessionId = service.createSession(new org.maurodata.api.chat.CreateSessionRequest(workspaceId: 'default', title: 'Existing title')).id
 
         when:
         Flux.from(service.sendMessage(sessionId, new SendMessageRequest(messageId: 'user-1', content: 'Find diabetes'))).collectList().block()
@@ -173,7 +175,7 @@ class ChatSessionsApiServiceSpec extends Specification {
             new ChatPromptResourceService(),
             'llama3.1'
         )
-        String sessionId = service.createSession(new org.maurodata.api.chat.CreateSessionRequest(workspaceId: 'default')).id
+        String sessionId = service.createSession(new org.maurodata.api.chat.CreateSessionRequest(workspaceId: 'default', title: 'Existing title')).id
 
         when:
         Flux.from(service.sendMessage(sessionId, new SendMessageRequest(messageId: 'user-1', content: 'First question'))).collectList().block()
@@ -190,6 +192,89 @@ class ChatSessionsApiServiceSpec extends Specification {
         providerRequests[1][1] == [role: 'user', content: 'First question']
         providerRequests[1][2] == [role: 'assistant', content: 'first answer']
         providerRequests[1][3] == [role: 'user', content: 'Second question']
+    }
+
+    void 'first assistant turn generates a session title when none is set'() {
+        given:
+        ChatInMemoryStore store = new ChatInMemoryStore()
+        List<ProviderRequest> providerRequests = []
+        LlmProvider provider = Stub(LlmProvider) {
+            id() >> 'ollama'
+            streamChat(_ as ProviderRequest) >> {ProviderRequest providerRequest ->
+                providerRequests.add(providerRequest)
+                if (providerRequest.options?.purpose == 'session_title') {
+                    return Flux.fromIterable([
+                        new ProviderChunk('token', providerRequest.messageId, 'Diabetes Forms Search', [:])
+                    ])
+                }
+                Flux.fromIterable([
+                    new ProviderChunk('token', providerRequest.messageId, 'Here are some diabetes forms.', [:])
+                ])
+            }
+        }
+        ChatSessionsApiService service = new ChatSessionsApiService(
+            store,
+            new ProviderRegistry([provider]),
+            Stub(ChatMcpService) { listServers() >> [] },
+            Stub(ChatSkillService) {
+                listSkillDefinitions() >> []
+                listPersonaDefinitions() >> []
+            },
+            new ChatPromptResourceService(),
+            'llama3.1'
+        )
+        String sessionId = service.createSession(new org.maurodata.api.chat.CreateSessionRequest(workspaceId: 'default')).id
+
+        when:
+        List events = Flux.from(service.sendMessage(sessionId, new SendMessageRequest(messageId: 'user-1', content: 'Find forms about diabetes'))).collectList().block()
+        SessionDto session = service.getSession(sessionId)
+        List<MessageDto> messages = service.listSessionMessages(sessionId, 50, null).items
+
+        then:
+        providerRequests.size() == 2
+        providerRequests[1].options.purpose == 'session_title'
+        session.title == 'Diabetes Forms Search'
+        session.metadata.titleSetByUser == false
+        session.metadata.titleSource == 'llm'
+        events.find {it.type == 'session_title'}?.content == 'Diabetes Forms Search'
+        messages.find {it.metadata?.eventType == 'session_title'}?.content == 'Diabetes Forms Search'
+    }
+
+    void 'user set session title is not overwritten by automatic title generation'() {
+        given:
+        ChatInMemoryStore store = new ChatInMemoryStore()
+        int providerCalls = 0
+        LlmProvider provider = Stub(LlmProvider) {
+            id() >> 'ollama'
+            streamChat(_ as ProviderRequest) >> {ProviderRequest providerRequest ->
+                providerCalls++
+                Flux.fromIterable([
+                    new ProviderChunk('token', providerRequest.messageId, 'Answer', [:])
+                ])
+            }
+        }
+        ChatSessionsApiService service = new ChatSessionsApiService(
+            store,
+            new ProviderRegistry([provider]),
+            Stub(ChatMcpService) { listServers() >> [] },
+            Stub(ChatSkillService) {
+                listSkillDefinitions() >> []
+                listPersonaDefinitions() >> []
+            },
+            new ChatPromptResourceService(),
+            'llama3.1'
+        )
+        String sessionId = service.createSession(new org.maurodata.api.chat.CreateSessionRequest(workspaceId: 'default')).id
+
+        when:
+        service.updateSession(sessionId, new UpdateSessionRequest(title: 'My explicit title'))
+        Flux.from(service.sendMessage(sessionId, new SendMessageRequest(messageId: 'user-1', content: 'Find forms about diabetes'))).collectList().block()
+
+        then:
+        service.getSession(sessionId).title == 'My explicit title'
+        service.getSession(sessionId).metadata.titleSetByUser == true
+        service.getSession(sessionId).metadata.titleSource == 'user'
+        providerCalls == 1
     }
 
     @SuppressWarnings('unchecked')

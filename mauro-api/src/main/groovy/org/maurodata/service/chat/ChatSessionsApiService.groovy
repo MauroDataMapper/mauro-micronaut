@@ -12,6 +12,8 @@ import org.maurodata.api.chat.ListSessionMessagesResponseDto
 import org.maurodata.api.chat.MessageDto
 import org.maurodata.api.chat.SendMessageRequest
 import org.maurodata.api.chat.SessionDto
+import org.maurodata.api.chat.UpdateSessionRequest
+import org.maurodata.service.chat.llm.LlmProvider
 import org.maurodata.service.chat.llm.ProviderMessage
 import org.maurodata.service.chat.llm.ProviderRegistry
 import org.maurodata.service.chat.llm.ProviderRequest
@@ -51,14 +53,19 @@ class ChatSessionsApiService implements ChatSessionService {
     SessionDto createSession(CreateSessionRequest request) {
         Instant now = ChatInMemoryStore.now()
         String id = UUID.randomUUID().toString()
+        String requestedTitle = request.title == null || request.title.trim().isEmpty() ? null : request.title.trim()
         SessionDto session = new SessionDto(
             id: id,
             workspaceId: request.workspaceId,
-            title: request.title,
+            title: requestedTitle,
             status: 'ACTIVE',
             model: request.model ?: defaultModel,
             createdAt: now,
-            updatedAt: now
+            updatedAt: now,
+            metadata: [
+                titleSetByUser: requestedTitle != null,
+                titleSource   : requestedTitle == null ? null : 'user'
+            ] as Map<String, Object>
         )
         store.sessions[id] = session
         log.info('createSession sessionId={} workspaceId={}', session.id, session.workspaceId)
@@ -71,6 +78,18 @@ class ChatSessionsApiService implements ChatSessionService {
         if (!session) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, "Session not found: ${sessionId}")
         }
+        session
+    }
+
+    @Override
+    SessionDto updateSession(String sessionId, UpdateSessionRequest request) {
+        SessionDto session = getSession(sessionId)
+        String title = request?.title
+        session.title = title == null || title.trim().isEmpty() ? null : title.trim()
+        session.metadata = session.metadata ?: [:]
+        session.metadata.put('titleSetByUser', session.title != null)
+        session.metadata.put('titleSource', session.title == null ? null : 'user')
+        session.updatedAt = ChatInMemoryStore.now()
         session
     }
 
@@ -216,6 +235,10 @@ class ChatSessionsApiService implements ChatSessionService {
                 )),
                 Flux.fromIterable(initialProviderRequestEvents),
                 stream,
+                Flux.defer {
+                    ChatEventDto titleEvent = generateInitialTitleEvent(timeline, session, assistantMessageId, provider, request.content ?: '', assistantMessage.content ?: '')
+                    titleEvent == null ? Flux.empty() : Flux.just(titleEvent)
+                },
                 Flux.just(new ChatEventDto(
                     type: 'message_complete',
                     messageId: assistantMessageId,
@@ -699,6 +722,103 @@ class ChatSessionsApiService implements ChatSessionService {
             history.add(new ProviderMessage(role: 'assistant', content: assistantBuffer.toString()))
         }
         history
+    }
+
+    private static ChatEventDto generateInitialTitleEvent(
+        List<MessageDto> timeline,
+        SessionDto session,
+        String assistantMessageId,
+        LlmProvider provider,
+        String userContent,
+        String assistantContent
+    ) {
+        if (session == null || provider == null || session.title != null || Boolean.TRUE.equals(session.metadata?.get('titleSetByUser'))) {
+            return null
+        }
+        String generatedTitle = generateSessionTitle(session, provider, userContent, assistantContent)
+        if (generatedTitle == null || generatedTitle.trim().isEmpty()) {
+            generatedTitle = fallbackSessionTitle(userContent)
+        }
+        if (generatedTitle == null || generatedTitle.trim().isEmpty()) {
+            return null
+        }
+        session.title = generatedTitle
+        session.metadata = session.metadata ?: [:]
+        session.metadata.put('titleSetByUser', false)
+        session.metadata.put('titleSource', 'llm')
+        session.updatedAt = ChatInMemoryStore.now()
+        ChatEventDto event = new ChatEventDto(
+            type: 'session_title',
+            messageId: assistantMessageId,
+            role: 'system',
+            content: generatedTitle,
+            done: true,
+            metadata: [
+                sessionId: session.id,
+                title    : generatedTitle,
+                source   : 'llm'
+            ] as Map<String, Object>
+        )
+        appendChatEvent(timeline, session.id, event)
+        event
+    }
+
+    private static String generateSessionTitle(SessionDto session, LlmProvider provider, String userContent, String assistantContent) {
+        try {
+            ProviderRequest titleRequest = new ProviderRequest(
+                sessionId: session.id,
+                messageId: UUID.randomUUID().toString(),
+                model: session.model,
+                tools: [],
+                options: [purpose: 'session_title'] as Map<String, Object>,
+                messages: [
+                    new ProviderMessage(
+                        role: 'system',
+                        content: 'Create a concise title for this chat session. Return only the title. Use at most six words. Do not use quotation marks, markdown, or a trailing full stop.'
+                    ),
+                    new ProviderMessage(
+                        role: 'user',
+                        content: "User asked:\n${userContent ?: ''}\n\nAssistant answered:\n${assistantContent ?: ''}"
+                    )
+                ]
+            )
+            StringBuilder title = new StringBuilder(80)
+            Flux.from(provider.streamChat(titleRequest))
+                .filter {chunk -> chunk != null && chunk.type == 'token' && chunk.content != null}
+                .map {chunk -> chunk.content}
+                .collectList()
+                .block()
+                ?.each {String token -> title.append(token)}
+            sanitizeSessionTitle(title.toString())
+        } catch (Exception ignored) {
+            fallbackSessionTitle(userContent)
+        }
+    }
+
+    private static String sanitizeSessionTitle(String title) {
+        if (title == null) {
+            return null
+        }
+        String cleaned = title
+            .replaceAll(/[\r\n]+/, ' ')
+            .replaceAll(/^["'`*_#\s]+|["'`*_\s.]+$/, '')
+            .replaceAll(/\s+/, ' ')
+            .trim()
+        if (cleaned.length() > 80) {
+            cleaned = cleaned.substring(0, 80).trim()
+        }
+        cleaned
+    }
+
+    private static String fallbackSessionTitle(String userContent) {
+        if (userContent == null) {
+            return null
+        }
+        String cleaned = userContent.replaceAll(/[\r\n]+/, ' ').replaceAll(/\s+/, ' ').trim()
+        if (cleaned.length() > 40) {
+            cleaned = cleaned.substring(0, 40).trim()
+        }
+        cleaned
     }
 
     private static boolean shouldReplayProviderRequestMessage(Map<String, Object> metadata) {

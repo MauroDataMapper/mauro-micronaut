@@ -30,6 +30,10 @@ class ApiKeyTokenValidator implements TokenValidator<HttpRequest<?>>  {
 
     @Override
     Publisher<Authentication> validateToken(String token, HttpRequest<?> request) {
+        if(!token) {
+            log.warn("API Key is empty")
+            return Publishers.empty()
+        }
         ApiKey apiKey = apiKeyCacheableRepository.readById(UUID.fromString(token))
         if(!apiKey) {
             return Publishers.empty()
