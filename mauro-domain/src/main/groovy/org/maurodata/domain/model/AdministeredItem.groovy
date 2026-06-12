@@ -355,8 +355,18 @@ abstract class AdministeredItem extends Item implements Pathable, DiffableItem {
         int i = 0
         AdministeredItem node = this
         while (node) {
-            breadcrumbs.add(new Breadcrumb(id: node.id, domainType: node.domainType, label: node.label, finalised: node instanceof Model ? node.finalised : null))
-            if (node.parent === node || node instanceof Model) break
+            Breadcrumb newBreadcrumb = new Breadcrumb(
+                id: node.id,
+                domainType: node.domainType,
+                label: node.label,
+                finalised: node instanceof Model ? node.finalised : null)
+            if(node instanceof Model) {
+                newBreadcrumb.modelVersionTag = node.modelVersionTag
+                newBreadcrumb.modelVersion = node.modelVersion
+                newBreadcrumb.branchName = node.branchName
+            }
+            breadcrumbs.add(newBreadcrumb)
+            if (node.parent === node || (node instanceof Model && (node.modelVersion || node.branchName || node.modelVersionTag)) ) break
             // root of Breadcrumbs is the nearest Model type parent of the item
             i++; node = node.parent
             if (i > Path.PATH_MAX_NODES) throw new MauroInternalException("Breadcrumbs exceeded maximum depth of [$Path.PATH_MAX_NODES]")
