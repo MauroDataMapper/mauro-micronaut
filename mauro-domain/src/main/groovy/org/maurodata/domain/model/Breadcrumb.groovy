@@ -11,4 +11,7 @@ class Breadcrumb {
     String domainType
     String label
     Boolean finalised
+    String branchName
+    String modelVersion
+    String modelVersionTag
 }
