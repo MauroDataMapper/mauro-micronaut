@@ -56,6 +56,20 @@ jobs:
       - name: Log Gradle version
         run: ./gradlew --version
 
+      - name: Set up QEMU
+        if: success() && github.ref == 'refs/heads/main'
+        uses: docker/setup-qemu-action@v4
+
+      - name: Set up Docker Buildx
+        if: success() && github.ref == 'refs/heads/main'
+        uses: docker/setup-buildx-action@v4
+
+      - name: Test Docker Build
+        env:
+          GRADLE_OPTS: '-Xmx4g -XX:MaxMetaspaceSize=512m'
+        run: ./gradlew dockerBuildMultiArch
+
+
       - name: Generate OpenAPI resources
         run: ./gradlew --no-daemon --max-workers=1 -PopenApiGeneratorMaxHeap=4g :mauro-api:processResources
 
@@ -69,12 +83,6 @@ jobs:
           name: Test Results
           path: '**/build/test-results/**/*.xml'
           reporter: java-junit
-
-      - name: Test Docker Build
-        env:
-          GRADLE_OPTS: '-Xmx4g -XX:MaxMetaspaceSize=512m'
-        run: ./gradlew dockerBuildMultiArch
-
 
             #    - name: Archive test report
   #      if: always()
@@ -134,14 +142,6 @@ jobs:
             ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.SONATYPE_PASSWORD }}
         run: |
             ./gradlew --stacktrace publishAllPublicationsToMavenCentralRepository    
-
-      - name: Set up QEMU
-        if: success() && github.ref == 'refs/heads/main'
-        uses: docker/setup-qemu-action@v4
-
-      - name: Set up Docker Buildx
-        if: success() && github.ref == 'refs/heads/main'
-        uses: docker/setup-buildx-action@v4
 
       - name: BuildMultiArch and publish to Docker Hub
         if: success() && github.ref == 'refs/heads/main'
