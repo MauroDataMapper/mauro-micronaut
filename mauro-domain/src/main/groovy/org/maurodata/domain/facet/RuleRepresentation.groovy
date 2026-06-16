@@ -1,6 +1,7 @@
 package org.maurodata.domain.facet
 
 import jakarta.persistence.PrePersist
+import jakarta.persistence.PreUpdate
 import org.maurodata.domain.diff.CollectionDiff
 import org.maurodata.domain.diff.DiffBuilder
 import org.maurodata.domain.diff.DiffableItem
@@ -50,7 +51,9 @@ class RuleRepresentation extends Item implements DiffableItem<RuleRepresentation
     }
 
     @PrePersist
+    @PreUpdate
     void prePersist() {
+        super.prePersist()
         if(rule) {
             ruleId = rule.id
         }

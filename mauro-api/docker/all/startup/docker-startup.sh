@@ -35,6 +35,7 @@ cleanup()
 }
 
 source "$(which docker-environment.sh)"
+source "$(which micronaut-config.sh)"
 source "$(which micronaut-config-for-postgres.sh)"
 gosu postgres postgres-startup.sh
 trap cleanup SIGTERM SIGINT

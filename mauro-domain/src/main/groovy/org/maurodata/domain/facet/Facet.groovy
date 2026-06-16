@@ -4,6 +4,7 @@ import groovy.util.logging.Slf4j
 import io.micronaut.data.annotation.MappedEntity
 import jakarta.persistence.Entity
 import jakarta.persistence.PrePersist
+import jakarta.persistence.PreUpdate
 import org.maurodata.domain.model.ItemReference
 import org.maurodata.domain.model.ItemReferencer
 import org.maurodata.domain.model.ItemReferencerUtils
@@ -40,7 +41,9 @@ abstract class Facet extends Item implements Pathable, ItemReferencer {
     AdministeredItem multiFacetAwareItem
 
     @PrePersist
+    @PreUpdate
     void prePersist() {
+        super.prePersist()
         if(!multiFacetAwareItemId) {
             if(multiFacetAwareItem) {
                 multiFacetAwareItemId = multiFacetAwareItem.id

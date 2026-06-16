@@ -1,9 +1,11 @@
 package org.maurodata.controller.security
 
+import io.swagger.v3.oas.annotations.Operation
 import org.maurodata.domain.config.ApiProperty
 import org.maurodata.domain.search.dto.SearchRequestDTO
 import org.maurodata.domain.security.Role
 import org.maurodata.persistence.cache.ItemCacheableRepository.ApiPropertyCacheableRepository
+import org.maurodata.service.authentication.UsernamePasswordService
 import org.maurodata.service.email.EmailService
 import org.maurodata.domain.email.Email
 import org.maurodata.web.ListResponse
@@ -33,7 +35,6 @@ import org.maurodata.domain.security.UserGroup
 import org.maurodata.persistence.cache.ItemCacheableRepository
 import org.maurodata.persistence.cache.ItemCacheableRepository.CatalogueUserCacheableRepository
 import org.maurodata.security.utils.SecureRandomStringGenerator
-import org.maurodata.security.utils.SecurityUtils
 import org.maurodata.web.ChangePassword
 
 import org.apache.commons.text.StringSubstitutor
@@ -55,6 +56,9 @@ class CatalogueUserController extends ItemController<CatalogueUser> implements C
     @Inject
     ApiPropertyCacheableRepository apiPropertyCacheableRepository
 
+    @Inject
+    UsernamePasswordService usernamePasswordService
+
     CatalogueUserController(CatalogueUserCacheableRepository catalogueUserRepository) {
         super(catalogueUserRepository)
         this.catalogueUserRepository = catalogueUserRepository
@@ -62,10 +66,11 @@ class CatalogueUserController extends ItemController<CatalogueUser> implements C
 
     @Override
     List<String> getDisallowedProperties() {
-        super.getDisallowedProperties() + ['emailAddress', 'pending', 'disabled', 'resetToken', 'creationMethod', 'lastLogin', 'salt', 'password', 'tempPassword']
+        super.getDisallowedProperties() + ['emailAddress', 'pending', 'resetToken', 'creationMethod', 'lastLogin', 'salt', 'password', 'tempPassword']
     }
 
     @Audit(level = Audit.AuditLevel.FILE_ONLY)
+    @Operation(operationId = 'adminRegisterCatalogueUser', summary = "Create a catalogue user", description = "Creates a catalogue user. It is only available to administrator users.")
     @Post(Paths.USER_ADMIN_REGISTER)
     CatalogueUser adminRegister(@Body @NonNull CatalogueUser newUser) {
         log.info 'Request to register a new user by admin'
@@ -101,7 +106,7 @@ class CatalogueUserController extends ItemController<CatalogueUser> implements C
         newUser.disabled = false
         newUser.creationMethod = 'ADMIN_REGISTER'
         newUser.catalogueUser = accessControlService.user
-        newUser.tempPassword = SecurityUtils.generateRandomPassword()
+        newUser.tempPassword = usernamePasswordService.generateTemporaryPassword()
         newUser.salt = SecureRandomStringGenerator.generateSalt()
         newUser.password = null
         newUser.resetToken = null
@@ -124,6 +129,7 @@ class CatalogueUserController extends ItemController<CatalogueUser> implements C
     }
 
     @Audit
+    @Operation(summary = "Get a catalogue user", description = "Returns a catalogue user. Its availability is governed by access control checks on the requested resource.")
     @Get(Paths.USER_CURRENT_USER)
     CatalogueUser currentUser() {
         log.info 'Request to get current logged in user'
@@ -132,6 +138,7 @@ class CatalogueUserController extends ItemController<CatalogueUser> implements C
     }
 
     @Audit
+    @Operation(operationId = 'showCatalogueUser', summary = "Get a catalogue user", description = "Returns a catalogue user. It is available to authenticated users.")
     @Get(Paths.USER_ID)
     CatalogueUser show(UUID id) {
         accessControlService.checkAuthenticated()
@@ -149,6 +156,7 @@ class CatalogueUserController extends ItemController<CatalogueUser> implements C
     }
 
     @Audit(level = Audit.AuditLevel.FILE_ONLY)
+    @Operation(summary = "Update a catalogue user", description = "Updates a catalogue user. It is available to authenticated users.")
     @Put(Paths.USER_CHANGE_PASSWORD)
     CatalogueUser changePassword(@Body @NonNull ChangePassword changePasswordRequest) {
         log.info 'Request by user to change own password'
@@ -161,6 +169,7 @@ class CatalogueUserController extends ItemController<CatalogueUser> implements C
     }
 
     @Audit(level = Audit.AuditLevel.FILE_ONLY)
+    @Operation(summary = "Update a catalogue user", description = "Updates a catalogue user. It is available to authenticated users.")
     @Put(Paths.USER_ID_CHANGE_PASSWORD)
     CatalogueUser changePassword(UUID id, @Body @NonNull ChangePassword changePasswordRequest) {
 
@@ -186,21 +195,35 @@ class CatalogueUserController extends ItemController<CatalogueUser> implements C
 
         if (existing.tempPassword != null) {
             if (existing.tempPassword != changePasswordRequest.oldPassword) {
-                Thread.sleep(1000L)
+                usernamePasswordService.failWait()
                 throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, 'Old password is incorrect')
             }
         } else {
-            byte[] hashedOldPassword = SecurityUtils.getHash(changePasswordRequest.oldPassword, existing.salt)
-            byte[] actualOldPassword = existing.password
-            if (hashedOldPassword != actualOldPassword) {
-                Thread.sleep(1000L)
+            if (!usernamePasswordService.passwordEquals(existing.password, existing.salt, changePasswordRequest.oldPassword)) {
+                usernamePasswordService.failWait()
                 throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, 'Old password is incorrect')
             }
         }
 
+        final UsernamePasswordService.InputValidationCheckStatus inputValidationCheckStatus =
+            usernamePasswordService.inputValidationCheckPassword(changePasswordRequest.newPassword)
+
+        if (inputValidationCheckStatus != UsernamePasswordService.InputValidationCheckStatus.OK) {
+            usernamePasswordService.failWait()
+            throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, usernamePasswordService.getReasonMessage(inputValidationCheckStatus))
+        }
+
+        final UsernamePasswordService.PasswordRequirementsCheckStatus passwordRequirementsCheckStatus =
+            usernamePasswordService.passwordRequirementsCheck(existing.emailAddress, changePasswordRequest.newPassword, UsernamePasswordService.PasswordUse.MAIN)
+        if (passwordRequirementsCheckStatus != UsernamePasswordService.PasswordRequirementsCheckStatus.OK) {
+            usernamePasswordService.failWait()
+            throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, usernamePasswordService.getReasonMessage(passwordRequirementsCheckStatus, UsernamePasswordService.PasswordUse.MAIN))
+        }
+
         existing.salt = SecureRandomStringGenerator.generateSalt()
-        existing.password = SecurityUtils.getHash(changePasswordRequest.newPassword, existing.salt)
+        existing.password = usernamePasswordService.generateHash(changePasswordRequest.newPassword, existing.salt)
         existing.tempPassword = null
+        existing.resetToken = null
 
         catalogueUserRepository.update(existing)
 
@@ -208,6 +231,7 @@ class CatalogueUserController extends ItemController<CatalogueUser> implements C
     }
 
     @Audit(level = Audit.AuditLevel.FILE_ONLY)
+    @Operation(operationId = 'updateCatalogueUser', summary = "Update a catalogue user", description = "Updates a catalogue user. It is only available to administrator users.")
     @Put(Paths.USER_ID)
     CatalogueUser update(@NonNull UUID id, @Body @NonNull CatalogueUser catalogueUser) {
         log.info 'Request to update CatalogueUser by ID'
@@ -229,8 +253,13 @@ class CatalogueUserController extends ItemController<CatalogueUser> implements C
         }
 
         // Only an Administrator can add a user to Groups
-        if (newGroups != null) {
+        if (newGroups != null && newGroups.size() > 0) {
             accessControlService.checkAdministrator()
+        }
+
+        if((catalogueUser.disabled != null && catalogueUser.disabled != accessControlService.user.disabled) && accessControlService.user.id == id) {
+            log.debug("User trying to disable / enable themselves!")
+            throw new AuthorizationException(accessControlService.userAuthentication)
         }
 
         boolean hasChanged = updateProperties(existing, catalogueUser)
@@ -249,7 +278,7 @@ class CatalogueUserController extends ItemController<CatalogueUser> implements C
             catalogueUserRepository.update(existing)
         }
 
-        if (newGroups != null) {
+        if (newGroups != null && newGroups.size() > 0) {
             List<UUID> existingUserGroupIds = userGroupRepository.readAllByCatalogueUserId(existing.id).id
             List<UUID> newUserGroupIds = newGroups.collect {it.id}.findAll {it !in existingUserGroupIds}
             newUserGroupIds.each {UUID userGroupId ->
@@ -267,6 +296,7 @@ class CatalogueUserController extends ItemController<CatalogueUser> implements C
     }
 
     @Audit
+    @Operation(summary = "Get a catalogue user", description = "Returns a catalogue user. It is available to authenticated users.")
     @Get(Paths.USER_PREFERENCES)
     Map showUserPreferences(UUID id) {
         accessControlService.checkAuthenticated()
@@ -296,6 +326,7 @@ class CatalogueUserController extends ItemController<CatalogueUser> implements C
     }
 
     @Audit
+    @Operation(summary = "Update a catalogue user", description = "Updates a catalogue user. It is available to authenticated users.")
     @Put(Paths.USER_PREFERENCES)
     CatalogueUser updateUserPreferences(@NonNull UUID id, @Body @NonNull String userPreferencesBody) {
         accessControlService.checkAuthenticated()
@@ -319,6 +350,7 @@ class CatalogueUserController extends ItemController<CatalogueUser> implements C
     }
 
     @Audit
+    @Operation(summary = "List the catalogue users", description = "Returns the catalogue users. Its availability is governed by access control checks on the requested resource.")
     @Get(Paths.USER_ADMIN_PENDING_PAGED)
     ListResponse<CatalogueUser> pendingUsers(@Nullable PaginationParams params = new PaginationParams(), @Nullable Boolean disabled = Boolean.FALSE) {
         if (!accessControlService.administrator) {
@@ -329,12 +361,17 @@ class CatalogueUserController extends ItemController<CatalogueUser> implements C
     }
 
     @Audit
+    @Operation(summary = "Get a catalogue user", description = "Returns a catalogue user. Its availability is governed by access control checks on the requested resource.")
     @Get(Paths.USER_ADMIN_USER_EXISTS)
     Map userExists(String username) {
+        if (!accessControlService.administrator) {
+            throw new AuthorizationException(accessControlService.userAuthentication)
+        }
         [userExists: catalogueUserRepository.existsByEmailAddress(username)]
     }
 
     @Audit
+    @Operation(operationId = 'indexCatalogueUser', summary = "List the catalogue users", description = "Returns the catalogue users. Its availability is governed by access control checks on the requested resource.")
     @Get(Paths.USER_LIST)
     ListResponse<CatalogueUser> index(@Nullable PaginationParams params = new PaginationParams()) {
         if (!accessControlService.administrator) {
@@ -351,6 +388,7 @@ class CatalogueUserController extends ItemController<CatalogueUser> implements C
     }
 
     @Audit
+    @Operation(summary = "Update a catalogue user", description = "Updates a catalogue user. Its availability is governed by access control checks on the requested resource.")
     @Put(Paths.USER_ADMIN_PASSWORD_RESET)
     CatalogueUser adminPasswordReset(UUID id){
         if (!accessControlService.administrator) {
@@ -365,7 +403,7 @@ class CatalogueUserController extends ItemController<CatalogueUser> implements C
 
         log.debug("Resetting user '${existing.emailAddress}' password(Actor: '${accessControlService.user.emailAddress}')")
 
-        existing.tempPassword = SecurityUtils.generateRandomPassword()
+        existing.tempPassword = usernamePasswordService.generateTemporaryPassword()
         existing.salt = SecureRandomStringGenerator.generateSalt()
         existing.password = null
         existing.resetToken = null
@@ -415,6 +453,7 @@ class CatalogueUserController extends ItemController<CatalogueUser> implements C
     }
 
     @Audit
+    @Operation(summary = "List the catalogue users", description = "Returns the catalogue users. Its availability is governed by access control checks on the requested resource.")
     @Post(Paths.USER_SEARCH_POST)
     ListResponse<CatalogueUser> searchPost(@Body SearchRequestDTO requestDTO) {
 
@@ -429,6 +468,7 @@ class CatalogueUserController extends ItemController<CatalogueUser> implements C
 
     @Audit
     @Override
+    @Operation(summary = "Get a catalogue user", description = "Returns a catalogue user.")
     @Get(Paths.USER_IMAGE)
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
     HttpResponse<byte[]> userImage(UUID id) {

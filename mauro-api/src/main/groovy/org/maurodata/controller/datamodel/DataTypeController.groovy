@@ -1,6 +1,9 @@
 package org.maurodata.controller.datamodel
 
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.responses.ApiResponse
 import org.maurodata.domain.datamodel.DataElement
+import org.maurodata.domain.datamodel.EnumerationValue
 import org.maurodata.domain.model.Path
 import org.maurodata.persistence.cache.ModelCacheableRepository
 
@@ -72,6 +75,7 @@ class DataTypeController extends AdministeredItemController<DataType, DataModel>
     }
 
     @Audit
+    @Operation(operationId = 'showDataType', summary = "Get a data type", description = "Returns a data type. You must have read privileges on the item in question.")
     @Get(Paths.DATA_TYPE_ID)
     DataType show(UUID dataModelId, UUID id) {
         DataType dataType
@@ -85,10 +89,22 @@ class DataTypeController extends AdministeredItemController<DataType, DataModel>
     }
 
     @Audit
+    @Operation(operationId = 'createDataType', summary = "Create a data type", description = "Creates a data type.")
     @Post(Paths.DATA_TYPE_LIST)
     @Transactional
     DataType create(UUID dataModelId, @Body @NonNull DataType dataType) {
+        DataModel dataModel = dataModelRepository.findById(dataModelId)
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, dataModel, "DataModel with id ${dataModelId} not found")
+        accessControlService.checkRole(Role.EDITOR, dataModel)
 
+        // Pull out the enumeration values for saving separately as they require the dataType to be saved first
+
+        List<EnumerationValue> enumerationValues = []
+        if(dataType.enumerationValues)
+        {
+            enumerationValues.addAll(dataType.enumerationValues)
+            dataType.enumerationValues = []
+        }
         DataType cleanItem = super.cleanBody(dataType) as DataType
         Item parent = super.validate(cleanItem, dataModelId)
         cleanItem = dataTypeService.validateDataType(cleanItem, parent)
@@ -143,9 +159,9 @@ class DataTypeController extends AdministeredItemController<DataType, DataModel>
         DataType created = super.createEntity(parent, cleanItem) as DataType
         created = super.validateAndAddClassifiers(created) as DataType
 
-        if (dataType.enumerationValues) {
-            dataType.enumerationValues.each {enumValue ->
-                enumValue.enumerationType = (DataType) dataType
+        if (enumerationValues) {
+            enumerationValues.each {enumValue ->
+                enumValue.enumerationType = dataType
                 enumerationValueRepository.save(enumValue)
             }
         }
@@ -153,6 +169,7 @@ class DataTypeController extends AdministeredItemController<DataType, DataModel>
     }
 
     @Audit
+    @Operation(operationId = 'updateDataType', summary = "Update a data type", description = "Updates a data type.")
     @Put(Paths.DATA_TYPE_ID)
     DataType update(UUID dataModelId, UUID id, @Body @NonNull DataType dataType) {
         super.update(id, dataType)
@@ -163,12 +180,15 @@ class DataTypeController extends AdministeredItemController<DataType, DataModel>
         parentIdParamName = 'dataModelId',
         deletedObjectDomainType = DataType
     )
+    @ApiResponse(responseCode = "204", description = "No content - deleted successfully")
+    @Operation(operationId = 'deleteDataType', summary = "Delete a data type", description = "Deletes a data type.")
     @Delete(Paths.DATA_TYPE_ID)
     HttpResponse delete(UUID dataModelId, UUID id, @Body @Nullable DataType dataType) {
         super.delete(id, dataType)
     }
 
     @Audit
+    @Operation(operationId = 'listDataTypePaged', summary = "List the data types", description = "Returns the data types. You must have read privileges on the item in question.")
     @Get(Paths.DATA_TYPE_LIST_PAGED)
     ListResponse<DataType> list(UUID dataModelId, @Nullable PaginationParams params = new PaginationParams()) {
         Item parent = parentItemRepository.readById(dataModelId)
@@ -183,6 +203,7 @@ class DataTypeController extends AdministeredItemController<DataType, DataModel>
         ListResponse.from(dataTypes, params)
     }
 
+    @Operation(summary = "List the data types", description = "Returns the data types. You must have read privileges on the item in question.")
     @Get(Paths.DATA_TYPE_DATA_ELEMENTS_PAGED)
     ListResponse<DataElement> listDataElementsForType(UUID dataModelId, UUID dataTypeId, @Nullable PaginationParams params = new PaginationParams()) {
         DataType dataType
@@ -194,18 +215,21 @@ class DataTypeController extends AdministeredItemController<DataType, DataModel>
         ListResponse.from(dataElements, params)
     }
 
+    @Operation(summary = "Get a data type", description = "Returns a data type.")
     @Get(Paths.PRIMITIVETYPE_DOI)
     Map primitiveTypeDoi(UUID id) {
         ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "Doi is not implemented")
         return null
     }
 
+    @Operation(summary = "Get a data type", description = "Returns a data type.")
     @Get(Paths.ENUMERATIONTYPE_DOI)
     Map enumerationTypeDoi(UUID id) {
         ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "Doi is not implemented")
         return null
     }
 
+    @Operation(summary = "Get a data type", description = "Returns a data type.")
     @Get(Paths.REFERENCETYPE_DOI)
     Map referenceTypeDoi(UUID id) {
         ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "Doi is not implemented")

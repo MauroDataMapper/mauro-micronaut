@@ -1,5 +1,8 @@
 package org.maurodata.security
 
+import org.maurodata.domain.datamodel.DataClass
+import org.maurodata.domain.model.version.FinaliseData
+import org.maurodata.domain.model.version.ModelVersion
 import org.maurodata.domain.security.Role
 
 import io.micronaut.http.HttpStatus
@@ -37,7 +40,7 @@ class EditorAccessIntegrationSpec extends SecuredIntegrationSpec {
         UserGroup editorsGroup = userGroupApi.create(new UserGroup(name: 'Editors Group'))
         editorsGroupId = editorsGroup.id
 
-        CatalogueUser catalougeUserResponse = catalogueUserApi.update(user.id, new CatalogueUser(groups: [editorsGroupId]))
+        CatalogueUser catalogueUserResponse = catalogueUserApi.update(user.id, new CatalogueUser(groups: [editorsGroupId]))
 
         SecurableResourceGroupRole securableResourceGroupRole = securableResourceGroupRoleApi.create("folder", folderId, Role.EDITOR, editorsGroupId)
 
@@ -196,4 +199,57 @@ class EditorAccessIntegrationSpec extends SecuredIntegrationSpec {
         exception = thrown()
         exception.status == HttpStatus.FORBIDDEN
     }
+
+    void 'editors and administrators cannot edit a finalised model or model component'() {
+        given:
+        loginAdmin()
+        Folder folder = folderApi.create(new Folder(label: 'Admin folder'))
+        folderId = folder.id
+
+        UserGroup editorsGroup = userGroupApi.create(new UserGroup(name: 'Editors Group 2'))
+        editorsGroupId = editorsGroup.id
+
+        CatalogueUser catalogueUserResponse = catalogueUserApi.update(user.id, new CatalogueUser(groups: [editorsGroupId]))
+
+        SecurableResourceGroupRole securableResourceGroupRole = securableResourceGroupRoleApi.create("folder", folderId, Role.EDITOR, editorsGroupId)
+
+        DataModel dataModel = dataModelApi.create(folderId, new DataModel(label: 'New Data Model'))
+        DataClass dataClass = dataClassApi.create(dataModel.id, new DataClass(label: 'New Data Class'))
+
+        dataModelApi.finalise(dataModel.id, new FinaliseData(version: ModelVersion.from( '1.0.0')))
+
+        when:
+        dataModelApi.update(dataModel.id, new DataModel(label: 'Changed Data Model'))
+
+        then:
+        HttpClientResponseException exception = thrown()
+        exception.status == HttpStatus.FORBIDDEN
+
+        when:
+
+        dataClassApi.update(dataModel.id, dataClass.id, new DataClass(label: 'Changed Data Class'))
+
+        then:
+        exception = thrown()
+        exception.status == HttpStatus.FORBIDDEN
+
+        when:
+        loginUser()
+
+        dataModelApi.update(dataModel.id, new DataModel(label: 'Changed Data Model'))
+
+        then:
+        exception = thrown()
+        exception.status == HttpStatus.FORBIDDEN
+
+        when:
+
+        dataClassApi.update(dataModel.id, dataClass.id, new DataClass(label: 'Changed Data Class'))
+
+        then:
+        exception = thrown()
+        exception.status == HttpStatus.FORBIDDEN
+
+    }
+
 }

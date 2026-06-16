@@ -1,5 +1,6 @@
 package org.maurodata.controller.reference
 
+import io.swagger.v3.oas.annotations.Operation
 import org.maurodata.ErrorHandler
 import org.maurodata.api.Paths
 import org.maurodata.api.reference.ReferenceDataModelApi
@@ -24,6 +25,7 @@ class ReferenceDataModelController implements ReferenceDataModelApi {
 
     ReferenceDataModelController(){}
 
+    @Operation(summary = "List the reference data models", description = "Returns the reference data models.")
     @Get(Paths.REFERENCE_DATA_MODELS_LIST)
     List<Map> listAll()
     {
@@ -31,6 +33,7 @@ class ReferenceDataModelController implements ReferenceDataModelApi {
     }
 
     @Audit
+    @Operation(operationId = 'createReferenceDataModel', summary = "Create a reference data model", description = "Creates a reference data model.")
     @Post(Paths.FOLDER_REFERENCE_DATA_MODELS)
     Map create(@NonNull UUID id, @Body @NonNull Map referenceDataModel)
     {

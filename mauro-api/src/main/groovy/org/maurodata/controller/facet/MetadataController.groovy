@@ -1,5 +1,7 @@
 package org.maurodata.controller.facet
 
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.responses.ApiResponse
 import org.maurodata.api.Paths
 import org.maurodata.api.facet.MetadataApi
 import org.maurodata.audit.Audit
@@ -43,6 +45,7 @@ class MetadataController extends FacetController<Metadata> implements MetadataAp
     }
 
     @Audit
+    @Operation(operationId = 'listMetadataPaged', summary = "List the metadatas", description = "Returns the metadatas. You must have read privileges on the item in question.")
     @Get(Paths.METADATA_LIST_PAGED)
     ListResponse<Metadata> list(String domainType, UUID domainId, @Nullable PaginationParams params = new PaginationParams()) {
         
@@ -52,6 +55,7 @@ class MetadataController extends FacetController<Metadata> implements MetadataAp
     }
 
     @Audit
+    @Operation(operationId = 'showMetadata', summary = "Get a metadata", description = "Returns a metadata. You must have read privileges on the item in question.")
     @Get(Paths.METADATA_ID)
     Metadata show(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID id) {
         accessControlService.checkRole(Role.READER, readAdministeredItem(domainType, domainId))
@@ -60,6 +64,7 @@ class MetadataController extends FacetController<Metadata> implements MetadataAp
     }
 
     @Audit
+    @Operation(operationId = 'updateMetadata', summary = "Update a metadata", description = "Updates a metadata.")
     @Put(Paths.METADATA_ID)
     Metadata update(@NonNull String domainType, @NonNull UUID domainId, UUID id, @Body @NonNull Metadata metadata) {
         super.update(id, metadata)
@@ -67,6 +72,7 @@ class MetadataController extends FacetController<Metadata> implements MetadataAp
 
 
     @Audit
+    @Operation(operationId = 'createMetadata', summary = "Create a metadata", description = "Creates a metadata.")
     @Post(Paths.METADATA_LIST)
     Metadata create(@NonNull String domainType, @NonNull UUID domainId, @Body @NonNull Metadata metadata) {
         super.create(domainType, domainId, metadata) as Metadata
@@ -74,6 +80,8 @@ class MetadataController extends FacetController<Metadata> implements MetadataAp
 
     @Override
     @Audit(deletedObjectDomainType = Metadata)
+    @ApiResponse(responseCode = "204", description = "No content - deleted successfully")
+    @Operation(operationId = 'deleteMetadata', summary = "Delete a metadata", description = "Deletes a metadata.")
     @Delete(Paths.METADATA_ID)
     HttpResponse delete(String domainType, UUID domainId, UUID id) {
         super.delete(id)

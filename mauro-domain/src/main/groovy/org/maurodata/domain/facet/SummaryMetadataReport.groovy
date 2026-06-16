@@ -1,6 +1,7 @@
 package org.maurodata.domain.facet
 
 import jakarta.persistence.PrePersist
+import jakarta.persistence.PreUpdate
 import org.maurodata.domain.diff.CollectionDiff
 import org.maurodata.domain.diff.DiffBuilder
 import org.maurodata.domain.diff.DiffableItem
@@ -47,7 +48,9 @@ class SummaryMetadataReport extends Item implements DiffableItem<SummaryMetadata
     Instant reportDate
 
     @PrePersist
+    @PreUpdate
     void prePersist() {
+        super.prePersist()
         if(summaryMetadata) {
             summaryMetadataId = summaryMetadata.id
         }

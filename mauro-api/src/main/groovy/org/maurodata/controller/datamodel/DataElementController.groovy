@@ -1,5 +1,7 @@
 package org.maurodata.controller.datamodel
 
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.responses.ApiResponse
 import jakarta.inject.Inject
 import org.maurodata.ErrorHandler
 import org.maurodata.api.Paths
@@ -66,6 +68,7 @@ class DataElementController extends AdministeredItemController<DataElement, Data
     }
 
     @Audit
+    @Operation(operationId = 'showDataElement', summary = "Get a data element", description = "Returns a data element.")
     @Get(Paths.DATA_ELEMENT_ID)
     DataElement show(UUID dataModelId, UUID dataClassId, UUID id) {
         log.debug("DataElementController show ${id}")
@@ -79,6 +82,7 @@ class DataElementController extends AdministeredItemController<DataElement, Data
     }
 
     @Audit
+    @Operation(operationId = 'createDataElement', summary = "Create a data element", description = "Creates a data element. You must have edit privileges on the item in question.")
     @Post(Paths.DATA_ELEMENT_LIST)
     DataElement create(UUID dataModelId, UUID dataClassId, @Body @NonNull DataElement dataElement) {
         cleanBody(dataElement)
@@ -98,16 +102,33 @@ class DataElementController extends AdministeredItemController<DataElement, Data
     }
 
     @Audit
+    @Operation(operationId = 'updateDataElement', summary = "Update a data element", description = "Updates a data element. You must have edit privileges on the item in question.")
     @Put(Paths.DATA_ELEMENT_ID)
     @Transactional
     DataElement update(UUID dataModelId, UUID dataClassId, UUID id, @Body @NonNull DataElement dataElement) {
-        DataElement cleanItem = super.cleanBody(dataElement, false) as DataElement
         DataElement existing = administeredItemRepository.readById(id)
+        if (!existing) {
+            throw new HttpStatusException(HttpStatus.NOT_FOUND, "Data Element not found for update")
+        }
         accessControlService.checkRole(Role.EDITOR, existing)
+        DataClass newDataClass = dataElement.dataClass
+        DataElement cleanItem = super.cleanBody(dataElement, false) as DataElement
+        if(newDataClass) {
+            cleanItem.setParent(newDataClass)
+        }
+        pathRepository.readParentItems(existing.dataClass)
+        if(cleanItem.dataClass && cleanItem.dataClass.id) {
+            cleanItem.setParent(dataClassRepository.readById(dataElement.dataClass.id))
+            //dataElement.setAssociations()
+            pathRepository.readParentItems(cleanItem.dataClass)
+            if(cleanItem.dataClass.dataModel.id != existing.dataClass.dataModel.id) {
+                ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "Destination DataClass ${cleanItem.dataClass.dataModel} dataModel id is not ${existing.dataModel.id}")
+            }
+        }
         boolean hasChanged = updateProperties(existing, cleanItem)
         if (!hasChanged && dataElement?.dataType?.id != existing.dataType?.id) hasChanged = true
-        existing = validateDataTypeChange(existing, dataElement)
-        updateDerivedProperties(existing)
+        existing = validateDataTypeChange(existing, cleanItem)
+        //updateDerivedProperties(existing)
         DataElement updated = existing
         if (hasChanged) {
             updated = administeredItemRepository.update(existing)
@@ -121,12 +142,15 @@ class DataElementController extends AdministeredItemController<DataElement, Data
         parentIdParamName = 'dataClassId',
         deletedObjectDomainType = DataElement
     )
+    @ApiResponse(responseCode = "204", description = "No content - deleted successfully")
+    @Operation(operationId = 'deleteDataElement', summary = "Delete a data element", description = "Deletes a data element.")
     @Delete(Paths.DATA_ELEMENT_ID)
     HttpResponse delete(UUID dataModelId, UUID dataClassId, UUID id, @Body @Nullable DataElement dataElement) {
         super.delete(id, dataElement)
     }
 
     @Audit
+    @Operation(operationId = 'listDataElementPaged', summary = "List the data elements", description = "Returns the data elements. You must have read privileges on the item in question.")
     @Get(Paths.DATA_ELEMENT_LIST_PAGED)
     ListResponse<DataElement> list(UUID dataModelId, UUID dataClassId, @Nullable PaginationParams params = new PaginationParams()) {
 
@@ -148,46 +172,60 @@ class DataElementController extends AdministeredItemController<DataElement, Data
     }
 
     @Audit
-    @Post(Paths. DATA_ELEMENT_COPY)
+    @Operation(summary = "Copy the data element", description = "Copies the data element. You must have read or edit privileges on the item in question, depending on the action.")
+    @Post(Paths.DATA_ELEMENT_COPY)
     @Transactional
     DataElement copyDataElement(UUID dataModelId, UUID dataClassId, UUID otherModelId, UUID otherDataClassId, UUID dataElementId) {
         DataModel targetModel = dataModelRepository.loadWithContent(dataModelId)
         accessControlService.checkRole(Role.EDITOR, targetModel)
+        DataModel otherModel = dataModelRepository.loadWithContent(otherModelId)
+        accessControlService.canDoRole(Role.READER, otherModel)
+
         DataClass targetClass = dataClassRepository.findById(dataClassId)
-        accessControlService.checkRole(Role.EDITOR, targetClass)
         if (targetClass.dataModel.id != targetModel.id){
-            ErrorHandler.handleError(HttpStatus.BAD_REQUEST, "Destination DataClass $targetClass.id dataModel id is not $targetModel.id")
+            ErrorHandler.handleError(HttpStatus.BAD_REQUEST, "Destination DataClass ${targetClass.id} dataModel id is not ${targetModel.id}")
         }
 
         DataClass otherDataClass = dataClassRepository.findById(otherDataClassId)
-        accessControlService.canDoRole(Role.EDITOR, otherDataClass)
-        DataElement dataElement = dataElementRepository.findById(dataElementId)
-        accessControlService.canDoRole(Role.EDITOR, dataElement)
+        DataElement dataElement = dataElementRepository.loadWithContent(dataElementId)
         if (dataElement.dataClass.id != otherDataClass.id) {
-            ErrorHandler.handleError(HttpStatus.BAD_REQUEST, "DataElement with id $dataElementId is not associated with data Class: $otherDataClassId")
+            ErrorHandler.handleError(HttpStatus.BAD_REQUEST, "DataElement with id ${dataElementId} is not associated with data Class: ${otherDataClassId}")
         }
-        DataModel otherModel = dataModelRepository.loadWithContent(otherModelId)
-        accessControlService.canDoRole(Role.READER, otherModel)
-        //verify
+
         if (otherDataClass.dataModel.id != otherModel.id ) {
-            ErrorHandler.handleError(HttpStatus.BAD_REQUEST, "DataClass  with id $otherDataClass.id is not associated with otherModel: $otherModel.id")
+            ErrorHandler.handleError(HttpStatus.BAD_REQUEST, "DataClass  with id ${otherDataClass.id} is not associated with otherModel: ${otherModel.id}")
         }
-        DataElement copied = dataElement.clone()
-        DataElement savedCopy = createEntity(otherDataClass, copied)
-        savedCopy.dataType = copyDataType(savedCopy, targetModel)
+        DataElement copied = (DataElement) dataElement.deepClone()
+
+        if(dataModelId != otherModelId) {
+            DataType originalDataType = dataTypeRepository.loadWithContent(dataElement.dataType.id)
+            List<DataType> targetDataTypes = dataTypeRepository.readAllByDataModelIdIn([targetModel.id])
+            DataType targetDataType = targetDataTypes.find {it.label == originalDataType.label}
+            if(!targetDataType) {
+                if (originalDataType.referenceClass || originalDataType.isModelType() ) {
+                    ErrorHandler.handleError(HttpStatus.INTERNAL_SERVER_ERROR, "Attempting to clone dataElement with a referenceType DataType. Datatype does not exist in target model $targetModel.id")
+                }
+                targetDataType = (DataType) originalDataType.deepClone()
+                targetDataType.dataModel = targetModel
+                targetDataType = (DataType) contentsService.saveWithContent(targetDataType)
+            }
+            copied.dataType = targetDataType
+        }
+        copied.dataClass = targetClass
+        DataElement savedCopy = (DataElement) contentsService.saveWithContent(copied, accessControlService.user)
         savedCopy
     }
 
     @Audit
+    @Operation(summary = "List the data elements", description = "Returns the data elements. You must have read privileges on the item in question.")
     @Get(Paths.DATA_ELEMENT_IN_MODEL_LIST)
-    ListResponse<DataElement> byModelList(UUID dataModelId) {
+    ListResponse<DataElement> byModelList(UUID dataModelId, @Nullable PaginationParams params = new PaginationParams()) {
         DataModel dataModel = dataModelRepository.readById(dataModelId)
         accessControlService.checkRole(Role.READER, dataModel)
-
-        List<DataElement> dataElements = dataElementRepository.readAllByDataModel_Id(dataModelId).findAll({
-            accessControlService.canDoRole(Role.READER, it)
-        }).each {updateDerivedProperties(it)}
-        ListResponse.from(dataElements)
+        List<DataElement> dataElements = dataElementRepository.readAllByDataModel_Id(dataModelId)
+        ListResponse<DataElement> dataElementsResponse = ListResponse.from(dataElements, params)
+        dataElementsResponse.items.each {updateDerivedProperties(it as DataElement)}
+        dataElementsResponse
     }
 
     /**
@@ -218,17 +256,15 @@ class DataElementController extends AdministeredItemController<DataElement, Data
         existing
     }
 
-
-    protected DataType copyDataType(DataElement dataElement, DataModel target) {
-        DataType targetDataType = dataTypeService.findInModel(dataElement.dataType, target)
-        if (!targetDataType) {
-            if (dataElement.dataType.referenceClass || dataElement.dataType.isModelType() ) {
-                ErrorHandler.handleError(HttpStatus.INTERNAL_SERVER_ERROR, "Attempting to clone dataElement with a referenceType DataType. Datatype does not exist in target model $target.id")
-            }
-            dataTypeService.createAndSave(dataElement.dataType, target, null)
-        }
+    @Audit
+    @Put(Paths.DATA_ELEMENT_MOVE)
+    DataElement moveDataDataElement(UUID dataModelId, UUID dataClassId, UUID id, @Body @Nullable DataElement dataElement) {
+        update(dataModelId, dataClassId, id, dataElement)
     }
 
+
+
+    @Operation(summary = "Get a data element", description = "Returns a data element.")
     @Get(Paths.DATA_ELEMENT_DOI)
     @Override
     Map doi(UUID id) {

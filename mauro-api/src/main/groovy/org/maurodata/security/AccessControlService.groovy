@@ -74,7 +74,7 @@ class AccessControlService implements Toggleable {
      */
     boolean isAdministrator() {
         if (!isUserAuthenticated()) return false
-
+        if (user.disabled) return false
         List<UserGroup> userGroups = userGroupRepository.readAllByCatalogueUserId(userId)
 
         if (userGroups.any {UserGroup userGroup -> userGroup.applicationRole == ApplicationRole.ADMIN}) {
@@ -107,7 +107,8 @@ class AccessControlService implements Toggleable {
     boolean canDoRole(@NonNull Role role, @NonNull AdministeredItem item) {
         if(item == null) return false
         if (!enabled) return true
-        if (isAdministrator()) return true // always allow Administrator full access
+        if (role <= Role.READER && isAdministrator()) return true // always allow Administrator full access
+
         pathRepository.readParentItems(item)
         Model owner = item.owner
 
@@ -116,9 +117,18 @@ class AccessControlService implements Toggleable {
             owner = air.readById(owner.id) as Model
         }
 
-        if (userAuthenticated && owner.catalogueUser && owner.catalogueUser.id == getUserId()) return true // always allow owner full access
-
         List<Model> parentModels = pathRepository.readParentItems(owner) as List<Model>
+        if(role <= Role.EDITOR) {
+            if(item.getOwner().finalised) {
+                return false
+            }
+            if(isAdministrator()) {
+                return true
+            }
+        }
+
+
+        if (userAuthenticated && owner.catalogueUser && owner.catalogueUser.id == getUserId()) return true // always allow owner full access
 
         // allow Reader access if owning model or parents are publicly readable
         if (role <= Role.READER &&
@@ -127,6 +137,7 @@ class AccessControlService implements Toggleable {
             }) {
             return true
         }
+
 
         if (!userAuthenticated) return false
 
@@ -199,11 +210,11 @@ class AccessControlService implements Toggleable {
     }
 
     boolean isUserAuthenticated() {
-        securityService.authenticated && userAuthentication.attributes.id instanceof UUID
+        securityService !=null && securityService.authenticated && userAuthentication.attributes.id instanceof UUID
     }
 
     Authentication getUserAuthentication() {
-        if (!securityService.authenticated) {
+        if (securityService == null || !securityService.authenticated) {
             throw new AuthenticationException('User is not authenticated')
         }
         securityService.authentication.get()
@@ -217,10 +228,19 @@ class AccessControlService implements Toggleable {
         if (!enabled) {
             return null
         }
-        if (!securityService.authenticated) {
+        // if securityService is null, we assume security is turned off
+        if (securityService && !securityService.authenticated) {
+            log.debug("User is not authenticated, throwing AuthenticationException")
             throw new AuthenticationException('User is not authenticated')
         }
-        return catalogueUserRepository.findById(userId)
+
+        CatalogueUser user = catalogueUserRepository.findById(userId)
+        if (!user) {
+            log.debug("User with id ${userId} not found, throwing AuthenticationException")
+            throw new AuthenticationException('User not found')
+        }
+
+        return user
     }
 
     boolean isEnabled() {

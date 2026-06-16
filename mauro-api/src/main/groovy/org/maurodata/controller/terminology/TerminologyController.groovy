@@ -1,5 +1,6 @@
 package org.maurodata.controller.terminology
 
+import io.swagger.v3.oas.annotations.Operation
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
@@ -22,6 +23,7 @@ import io.micronaut.scheduling.annotation.ExecuteOn
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
 import io.micronaut.transaction.annotation.Transactional
+import io.swagger.v3.oas.annotations.responses.ApiResponse
 import jakarta.inject.Inject
 import org.maurodata.ErrorHandler
 import org.maurodata.api.Paths
@@ -71,12 +73,14 @@ class TerminologyController extends ModelController<Terminology> implements Term
     }
 
     @Audit
+    @Operation(summary = "Get a terminology", description = "Returns a terminology.")
     @Get('/api/terminologies/undefined')
     Map showUndef() {
         [:]
     }
 
     @Audit
+    @Operation(operationId = 'showTerminology', summary = "Get a terminology", description = "Returns a terminology.")
     @Get(Paths.TERMINOLOGY_ID)
     Terminology show(UUID id) {
         super.show(id)
@@ -84,6 +88,7 @@ class TerminologyController extends ModelController<Terminology> implements Term
 
     @Audit
     @Transactional
+    @Operation(operationId = 'createTerminology', summary = "Create a terminology", description = "Creates a terminology.")
     @Post(Paths.FOLDER_LIST_TERMINOLOGY)
     Terminology create(UUID folderId, @Body @NonNull Terminology terminology) {
         log.debug '*** TerminologyController.create ***'
@@ -91,6 +96,7 @@ class TerminologyController extends ModelController<Terminology> implements Term
     }
 
     @Audit
+    @Operation(operationId = 'updateTerminology', summary = "Update a terminology", description = "Updates a terminology.")
     @Put(Paths.TERMINOLOGY_ID)
     Terminology update(UUID id, @Body @NonNull Terminology terminology) {
         super.update(id, terminology)
@@ -98,6 +104,8 @@ class TerminologyController extends ModelController<Terminology> implements Term
 
     @Audit(deletedObjectDomainType = Terminology)
     @Transactional
+    @ApiResponse(responseCode = "204", description = "No content - deleted successfully")
+    @Operation(operationId = 'deleteTerminology', summary = "Delete a terminology", description = "Deletes a terminology.")
     @Delete(Paths.TERMINOLOGY_ID)
     HttpResponse delete(UUID id, @Body @Nullable Terminology terminology, @Nullable @QueryValue Boolean permanent) {
         permanent = permanent ?: true
@@ -105,6 +113,7 @@ class TerminologyController extends ModelController<Terminology> implements Term
     }
 
     @Audit
+    @Operation(summary = "List the terminologies", description = "Returns the terminologies. You must have read privileges on the item in question.")
     @Get(Paths.TERMINOLOGY_SEARCH_GET)
     ListResponse<SearchResultsDTO> searchGet(UUID id, @RequestBean SearchRequestDTO requestDTO) {
         requestDTO.withinModelId = id
@@ -114,6 +123,7 @@ class TerminologyController extends ModelController<Terminology> implements Term
     }
 
     @Audit(level = Audit.AuditLevel.FILE_ONLY)
+    @Operation(summary = "List the terminologies", description = "Returns the terminologies. You must have read privileges on the item in question.")
     @Post(Paths.TERMINOLOGY_SEARCH_POST)
     ListResponse<SearchResultsDTO> searchPost(UUID id, @Body SearchRequestDTO requestDTO) {
         requestDTO.withinModelId = id
@@ -124,12 +134,14 @@ class TerminologyController extends ModelController<Terminology> implements Term
 
 
     @Audit
+    @Operation(operationId = 'listTerminologies', summary = "List the terminologies", description = "Returns the terminologies.")
     @Get(Paths.FOLDER_LIST_TERMINOLOGY)
     ListResponse<Terminology> list(UUID folderId) {
         super.list(folderId)
     }
 
     @Audit
+    @Operation(operationId = 'listAllTerminologyPaged', summary = "List the terminologies", description = "Returns the terminologies.")
     @Get(Paths.TERMINOLOGY_LIST_PAGED)
     ListResponse<Terminology> listAll(@Nullable PaginationParams params = new PaginationParams()) {
         
@@ -138,6 +150,7 @@ class TerminologyController extends ModelController<Terminology> implements Term
 
     @Transactional
     @Audit(title = EditType.FINALISE, description = "Finalise Terminology")
+    @Operation(operationId = 'finaliseTerminology', summary = "Update a terminology", description = "Updates a terminology.")
     @Put(Paths.TERMINOLOGY_FINALISE)
     Terminology finalise(UUID id, @Body FinaliseData finaliseData) {
         super.finalise(id, finaliseData)
@@ -145,21 +158,31 @@ class TerminologyController extends ModelController<Terminology> implements Term
 
     @Audit(title = EditType.COPY, description = "New Version of CodeSet")
     @Transactional
+    @Operation(summary = "Update a terminology", description = "Updates a terminology.")
     @Put(Paths.TERMINOLOGY_NEW_BRANCH_MODEL_VERSION)
     Terminology createNewBranchModelVersion(UUID id, @Body @Nullable CreateNewVersionData createNewVersionData) {
         super.createNewBranchModelVersion(id, createNewVersionData)
     }
 
-    @Audit
+    @Audit(title = EditType.EXPORT, description = 'Export terminology')
+    @Operation(operationId = 'exportModelTerminology', summary = "Get a terminology", description = "Returns a terminology.")
     @Get(Paths.TERMINOLOGY_EXPORT)
     HttpResponse<byte[]> exportModel(UUID id, @Nullable String namespace, @Nullable String name, @Nullable String version) {
-        super.exportModel(id, namespace, name, version)
+        super.exportModels(namespace, name, version, [id])
+    }
+
+    @Audit(title = EditType.EXPORT, description = 'Export terminologies')
+    @Operation(summary = "Export the terminology", description = "Exports the terminology.")
+    @Post(Paths.TERMINOLOGY_EXPORT_MANY)
+    HttpResponse<byte[]> exportModels(@Nullable String namespace, @Nullable String name, @Nullable String version, @Body List<UUID> ids){
+        super.exportModels(namespace, name, version, ids)
     }
 
     @Audit(title = EditType.IMPORT, description = "Import terminology")
     @Transactional
     @ExecuteOn(TaskExecutors.IO)
     @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @Operation(operationId = 'importModelTerminology', summary = "Import the terminology", description = "Imports the terminology.")
     @Post(Paths.TERMINOLOGY_IMPORT)
     ListResponse<Terminology> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version) {
         super.importModel(body, namespace, name, version)
@@ -169,6 +192,7 @@ class TerminologyController extends ModelController<Terminology> implements Term
     /*
         @Transactional
         @Consumes(MediaType.MULTIPART_FORM_DATA)
+        @Operation(summary = "Import the terminology", description = "Imports the terminology.")
         @Post('/terminologies/import{/namespace}{/name}{/version}')
         ListResponse<Terminology> importModel(@Body Map<String, String> importMap, @Nullable String namespace, @Nullable String name, @Nullable String version) {
             log.info '** start importModel **'
@@ -194,6 +218,7 @@ class TerminologyController extends ModelController<Terminology> implements Term
      */
 
     @Audit
+    @Operation(summary = "Get a terminology", description = "Returns a terminology. You must have read privileges on the item in question.")
     @Get(Paths.TERMINOLOGY_DIFF)
     ObjectDiff diffModels(@NonNull UUID id, @NonNull UUID otherId) {
         Terminology terminology = terminologyRepository.loadWithContent(id)
@@ -218,6 +243,7 @@ class TerminologyController extends ModelController<Terminology> implements Term
     }
 
     @Audit
+    @Operation(summary = "Update a terminology", description = "Updates a terminology.")
     @Put(Paths.TERMINOLOGY_READ_BY_AUTHENTICATED)
     @Transactional
     Terminology allowReadByAuthenticated(UUID id) {
@@ -226,12 +252,15 @@ class TerminologyController extends ModelController<Terminology> implements Term
 
     @Audit
     @Transactional
+    @ApiResponse(responseCode = "204", description = "No content - deleted successfully")
+    @Operation(summary = "Delete a terminology", description = "Deletes a terminology.")
     @Delete(Paths.TERMINOLOGY_READ_BY_AUTHENTICATED)
     HttpResponse revokeReadByAuthenticated(UUID id) {
         super.deleteReadByAuthenticated(id)
     }
 
     @Audit
+    @Operation(summary = "Update a terminology", description = "Updates a terminology.")
     @Put(Paths.TERMINOLOGY_READ_BY_EVERYONE)
     @Transactional
     Terminology allowReadByEveryone(UUID id) {
@@ -240,27 +269,33 @@ class TerminologyController extends ModelController<Terminology> implements Term
 
     @Audit
     @Transactional
+    @ApiResponse(responseCode = "204", description = "No content - deleted successfully")
+    @Operation(summary = "Delete a terminology", description = "Deletes a terminology.")
     @Delete(Paths.TERMINOLOGY_READ_BY_EVERYONE)
     HttpResponse revokeReadByEveryone(UUID id) {
         super.deleteReadByEveryone(id)
     }
 
+    @Operation(summary = "List the terminologies", description = "Returns the terminologies.")
     @Get(Paths.TERMINOLOGY_LIST_IMPORTERS)
     List<TerminologyImporterPlugin> terminologyImporters() {
         mauroPluginService.listPlugins(TerminologyImporterPlugin)
     }
 
+    @Operation(summary = "List the terminologies", description = "Returns the terminologies.")
     @Get(Paths.TERMINOLOGY_LIST_EXPORTERS)
     List<TerminologyExporterPlugin> terminologyExporters() {
         mauroPluginService.listPlugins(TerminologyExporterPlugin)
     }
 
+    @Operation(summary = "List the terminologies", description = "Returns the terminologies.")
     @Get(Paths.TERMINOLOGY_PERMISSIONS)
     @Override
     PermissionsDTO permissions(UUID id) {
         super.permissions(id)
     }
 
+    @Operation(summary = "Get a terminology", description = "Returns a terminology.")
     @Get(Paths.TERMINOLOGY_DOI)
     @Override
     Map doi(UUID id) {
@@ -269,6 +304,7 @@ class TerminologyController extends ModelController<Terminology> implements Term
     }
 
     @Override
+    @Operation(summary = "List the terminologies", description = "Returns the terminologies.")
     @Get(Paths.TERMINOLOGY_SIMPLE_MODEL_VERSION_TREE)
     List<ModelVersionedRefDTO> simpleModelVersionTree(UUID id, @Nullable Boolean branchesOnly) {
 
@@ -287,4 +323,12 @@ class TerminologyController extends ModelController<Terminology> implements Term
 
         return simpleModelVersionTreeList
     }
+
+    @Audit(description = 'Move folder')
+    @Transactional
+    @Put(Paths.TERMINOLOGY_MOVE)
+    Terminology moveFolder(UUID id, String destination) {
+        super.moveFolder(id, destination)
+    }
+
 }

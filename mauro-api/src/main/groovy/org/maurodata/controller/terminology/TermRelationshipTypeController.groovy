@@ -1,5 +1,7 @@
 package org.maurodata.controller.terminology
 
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.responses.ApiResponse
 import org.maurodata.api.Paths
 import org.maurodata.api.terminology.TermRelationshipTypeApi
 import org.maurodata.audit.Audit
@@ -30,12 +32,14 @@ class TermRelationshipTypeController extends AdministeredItemController<TermRela
     }
 
     @Audit
+    @Operation(operationId = 'showTermRelationshipType', summary = "Get a term relationship type", description = "Returns a term relationship type.")
     @Get(Paths.TERM_RELATIONSHIP_TYPE_ID)
     TermRelationshipType show(UUID terminologyId, UUID id) {
         super.show(id)
     }
 
     @Audit
+    @Operation(operationId = 'createTermRelationshipType', summary = "Create a term relationship type", description = "Creates a term relationship type.")
     @Post(Paths.TERM_RELATIONSHIP_TYPE_LIST)
     TermRelationshipType create(UUID terminologyId, @Body @NonNull TermRelationshipType termRelationshipType) {
         termRelationshipType.displayLabel = termRelationshipType.createDisplayLabel()
@@ -43,12 +47,14 @@ class TermRelationshipTypeController extends AdministeredItemController<TermRela
     }
 
     @Audit
+    @Operation(operationId = 'updateTermRelationshipType', summary = "Update a term relationship type", description = "Updates a term relationship type.")
     @Put(Paths.TERM_RELATIONSHIP_TYPE_ID)
     TermRelationshipType update(UUID terminologyId, UUID id, @Body @NonNull TermRelationshipType termRelationshipType) {
         super.update(id, termRelationshipType)
     }
 
     @Audit
+    @Operation(operationId = 'listTermRelationshipTypePaged', summary = "List the term relationship types", description = "Returns the term relationship types.")
     @Get(Paths.TERM_RELATIONSHIP_TYPE_LIST_PAGED)
     ListResponse<TermRelationshipType> list(UUID terminologyId, @Nullable PaginationParams params = new PaginationParams()) {
         
@@ -56,6 +62,8 @@ class TermRelationshipTypeController extends AdministeredItemController<TermRela
     }
 
     @Audit(deletedObjectDomainType = TermRelationshipType, parentDomainType = Terminology, parentIdParamName = "terminologyId")
+    @ApiResponse(responseCode = "204", description = "No content - deleted successfully")
+    @Operation(operationId = 'deleteTermRelationshipType', summary = "Delete a term relationship type", description = "Deletes a term relationship type.")
     @Delete(Paths.TERM_RELATIONSHIP_TYPE_ID)
     HttpResponse delete(UUID terminologyId, UUID id, @Body @Nullable TermRelationshipType termRelationshipType) {
         super.delete(id, termRelationshipType)

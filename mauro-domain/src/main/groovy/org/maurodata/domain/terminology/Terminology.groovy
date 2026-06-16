@@ -1,5 +1,10 @@
 package org.maurodata.domain.terminology
 
+import jakarta.persistence.PrePersist
+import jakarta.persistence.PreUpdate
+import org.maurodata.domain.diff.DiffBuilder
+import org.maurodata.domain.diff.DiffableItem
+import org.maurodata.domain.diff.ObjectDiff
 import org.maurodata.domain.model.Item
 import org.maurodata.domain.model.ItemReference
 import org.maurodata.domain.model.ItemReferencer
@@ -35,7 +40,7 @@ import org.maurodata.domain.model.ModelItem
 @MapConstructor(includeSuperFields = true, includeSuperProperties = true, noArg = true)
 @Indexes([@Index(columns = ['folder_id', 'label', 'branch_name', 'model_version'], unique = true)])
 @JsonPropertyOrder(['terms', 'termRelationshipTypes'])
-class Terminology extends Model implements ItemReferencer {
+class Terminology extends Model implements ItemReferencer, DiffableItem<Terminology> {
 
     @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'terminology')
     @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator, property = 'code', scope = Term, resolver = DedupingObjectIdResolver)
@@ -97,6 +102,41 @@ class Terminology extends Model implements ItemReferencer {
 
         cloned
     }
+
+    @PrePersist
+    @PreUpdate
+    void prePersist() {
+        super.prePersist()
+        if (!getModelWithVersion()) {
+            branchName = 'main'
+        }
+    }
+
+    @Override
+    @JsonIgnore
+    @Transient
+    ObjectDiff<Terminology> diff(Terminology other, String lhsPathRoot, String rhsPathRoot) {
+        ObjectDiff<Terminology> base = DiffBuilder.objectDiff(Terminology)
+            .leftHandSide(id?.toString(), this)
+            .rightHandSide(other.id?.toString(), other)
+        base.label = this.label
+        base.appendString(DiffBuilder.DESCRIPTION, this.description, other.description, this, other)
+        base.appendString(DiffBuilder.ALIASES_STRING, this.aliasesString, other.aliasesString, this, other)
+        if (!DiffBuilder.isNullOrEmpty(this.terms as Collection<Object>) || !DiffBuilder.isNullOrEmpty(other.terms as Collection<Object>)) {
+            base.appendCollection(DiffBuilder.TERMS, this.terms as Collection<DiffableItem>, other.terms as Collection<DiffableItem>, lhsPathRoot,
+                                  rhsPathRoot)
+        }
+        if (!DiffBuilder.isNullOrEmpty(this.termRelationshipTypes as Collection<Object>) || !DiffBuilder.isNullOrEmpty(other.termRelationshipTypes as Collection<Object>)) {
+            base.appendCollection(DiffBuilder.TERM_RELATIONSHIP_TYPES, this.termRelationshipTypes as Collection<DiffableItem>, other.termRelationshipTypes as Collection<DiffableItem>, lhsPathRoot,
+                                  rhsPathRoot)
+        }
+        if (!DiffBuilder.isNullOrEmpty(this.termRelationships as Collection<Object>) || !DiffBuilder.isNullOrEmpty(other.termRelationships as Collection<Object>)) {
+            base.appendCollection(DiffBuilder.TERM_RELATIONSHIPS, this.termRelationships as Collection<DiffableItem>, other.termRelationships as Collection<DiffableItem>, lhsPathRoot,
+                                  rhsPathRoot)
+        }
+        base
+    }
+
 
     /****
      * Methods for building a tree-like DSL

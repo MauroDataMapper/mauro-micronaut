@@ -248,19 +248,22 @@ ruleset {
     RequiredString
     StatelessClass
 
-    // rulesets/grails.xml
-    GrailsDomainGormMethods
-    GrailsDomainHasEquals
-    GrailsDomainHasToString
-    GrailsDomainReservedSqlKeywordName
-    GrailsDomainStringPropertyMaxSize
-    GrailsDomainWithServiceReference
-    GrailsDuplicateConstraint
-    GrailsDuplicateMapping
-    GrailsMassAssignment
-    GrailsPublicControllerMethod
-    GrailsServletContextReference
-    GrailsStatelessService
+    // rulesets/grails.xml - Excluded: this is a Micronaut project, not Grails.
+    // GrailsDomainGormMethods triggers a Groovy @AnnotationCollector metadata conflict
+    // when CodeNarc recompiles test sources that use @AnnotationCollector-based annotations
+    // (e.g. @Containerized) already present in the compiled test-fixtures classpath.
+    // GrailsDomainGormMethods
+    // GrailsDomainHasEquals
+    // GrailsDomainHasToString
+    // GrailsDomainReservedSqlKeywordName
+    // GrailsDomainStringPropertyMaxSize
+    // GrailsDomainWithServiceReference
+    // GrailsDuplicateConstraint
+    // GrailsDuplicateMapping
+    // GrailsMassAssignment
+    // GrailsPublicControllerMethod
+    // GrailsServletContextReference
+    // GrailsStatelessService
 
     // rulesets/groovyism.xml
     AssignCollectionSort

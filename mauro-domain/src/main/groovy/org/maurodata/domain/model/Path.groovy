@@ -36,7 +36,11 @@ class Path {
     }
 
     void setPathString(String pathString) {
-        setNodes(pathString?.split(/(?<!%)\|/)?.collect {PathNode.from(it)})
+        if(!pathString || pathString.isEmpty()) {
+            setNodes([])
+        } else {
+            setNodes(pathString?.split(/(?<!%)\|/)?.collect {PathNode.from(it)})
+        }
     }
 
     void setNodes(List<PathNode> nodes) {
@@ -45,6 +49,9 @@ class Path {
     }
 
     void updatePathString() {
+        final String modelIdentifier = getModelIdentifier()
+        nodes.each {PathNode pathNode -> pathNode.modelIdentifier = null}
+        setModelIdentifier(modelIdentifier)
         pathString = nodes.collect {it.toString()}.join('|')
     }
 
@@ -144,6 +151,48 @@ class Path {
         trimmed.pathString
     }
 
+    Path localPath() {
+        // Remove all the nodes until we find the one with the model versioning... then drop that one too.
+        new Path(nodes.dropWhile {!it.modelIdentifier}.drop(1))
+    }
+
+
+    @Transient
+    PathNode findLastPathNodeByPrefix(final String prefix) {
+        for (int p = nodes.size() - 1; p >= 0; p--) {
+            final PathNode pathNode = nodes.get(p)
+            if (pathNode.prefix == prefix) {return pathNode}
+        }
+        return null
+    }
+
+    @Transient
+    PathNode lastPathNode() {
+        if (nodes.isEmpty()) {return null}
+        return nodes.get(nodes.size() - 1)
+    }
+
+    @Transient
+    String getModelIdentifier() {
+        for (int p = 0, n = nodes.size(); p < n; p++) {
+            final PathNode pathNode = nodes.get(p)
+            if (!PathNode.canHaveModelIdentifier.contains(pathNode.prefix)) {continue}
+            if (pathNode.modelIdentifier) {return pathNode.modelIdentifier}
+        }
+        return null
+    }
+
+    void setModelIdentifier(final String modelIdentifier) {
+        nodes.each {PathNode pathNode -> pathNode.modelIdentifier = null}
+        for (int p = 0, n = nodes.size(); p < n; p++) {
+            final PathNode pathNode = nodes.get(p)
+            if (!PathNode.canHaveModelIdentifier.contains(pathNode.prefix)) {continue}
+            pathNode.modelIdentifier = modelIdentifier
+            break
+        }
+        pathString = nodes.collect {it.toString()}.join('|')
+    }
+
     static class PathNode {
         String prefix
         String identifier
@@ -176,6 +225,8 @@ class Path {
             if (input == null) return null
             return input.replaceAll(/%([$@|:%])/) {all, ch -> ch}
         }
+
+        static List<String> canHaveModelIdentifier = ['dm','vf','csc','cs','te']
 
         static PathNode from(String str) {
             Pattern nodePattern = ~/^(?<prefix>\w{2,3}):(?<identifier>(?:%[$@|:%]|[^@$|:%])*?)(?:\$(?<modelIdentifier>(?:%[$@|:%]|[^@$|:%])*))?(?:@(?<attribute>(?:%[$@|:%]|[^@$|:%])*))?$/

@@ -10,7 +10,6 @@ import org.maurodata.api.model.ModelApi
 import org.maurodata.api.model.ModelVersionDTO
 import org.maurodata.api.model.ModelVersionedRefDTO
 import org.maurodata.api.model.ModelVersionedWithTargetsRefDTO
-import org.maurodata.api.model.VersionLinkDTO
 import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.datamodel.IntersectsData
 import org.maurodata.domain.datamodel.IntersectsManyData
@@ -79,6 +78,9 @@ interface DataModelApi extends ModelApi<DataModel> {
     @Get(value = Paths.DATA_MODEL_EXPORT, produces = MediaType.ALL)
     HttpResponse<byte[]> exportModel(UUID id, @Nullable String namespace, @Nullable String name, @Nullable String version)
 
+    @Post(value = Paths.DATA_MODEL_EXPORT_MANY, produces = MediaType.ALL)
+    HttpResponse<byte[]> exportModels(@Nullable String namespace, @Nullable String name, @Nullable String version, @Body List<UUID> ids)
+
     @ExecuteOn(TaskExecutors.IO)
     @Produces(MediaType.MULTIPART_FORM_DATA)
     @Post(Paths.DATA_MODEL_IMPORT)
@@ -146,4 +148,7 @@ interface DataModelApi extends ModelApi<DataModel> {
 
     @Delete(Paths.DATA_MODEL_READ_BY_AUTHENTICATED)
     HttpResponse revokeReadByAuthenticated(UUID id)
+
+    @Put(Paths.DATA_MODEL_MOVE)
+    DataModel moveFolder(UUID id, String destination)
 }

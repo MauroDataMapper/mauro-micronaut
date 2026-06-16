@@ -1,5 +1,6 @@
 package org.maurodata.controller.jobs
 
+import io.swagger.v3.oas.annotations.Operation
 import org.maurodata.api.Paths
 import org.maurodata.api.jobs.JobsApi
 import org.maurodata.audit.Audit
@@ -20,6 +21,7 @@ import io.micronaut.security.rules.SecurityRule
 @Secured(SecurityRule.IS_ANONYMOUS)
 class JobsController implements JobsApi {
     @Audit
+    @Operation(operationId = 'indexJobs', summary = "List the jobs", description = "Returns the jobs.")
     @Get(Paths.JOBS_LIST_PAGED)
     ListResponse<Map> index(@Nullable PaginationParams params){
         ListResponse.from([])

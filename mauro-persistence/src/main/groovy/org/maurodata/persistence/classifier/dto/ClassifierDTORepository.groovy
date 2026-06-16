@@ -21,7 +21,7 @@ abstract class ClassifierDTORepository implements GenericRepository<ClassifierDT
     abstract ClassifierDTO findById(UUID id)
 
     @Nullable
-    @Join(value = 'catalogueUser', type = Join.Type.LEFT_FETCH)
+    //@Join(value = 'catalogueUser', type = Join.Type.LEFT_FETCH)
     @Query('''select * from core.classifier where label = :pathIdentifier AND ((parent_classifier_id IS NOT NULL AND parent_classifier_id = :item) OR (parent_classifier_id IS NULL AND classification_scheme_id = :item))''')
     abstract List<Classifier> findAllByParentAndPathIdentifier(UUID item, String pathIdentifier)
 
@@ -66,12 +66,17 @@ abstract class ClassifierDTORepository implements GenericRepository<ClassifierDT
     abstract long deleteAllForClassifier(UUID classifierId)
 
 
-    @Nullable
     @Join(value = 'catalogueUser', type = Join.Type.LEFT_FETCH)
-    @Query('''select * from core.classifier where parent_classifier_id = :classifierId ''')
-    abstract List<Classifier> findAllByClassifier(UUID classifierId)
+    abstract List<ClassifierDTO> findAllByParentClassifierId(UUID classifierId)
 
     @Nullable
-    @Query('''select * from core.classifier where label = :label ''')
-    abstract List<Classifier> findAllByLabel(String label)
+    abstract List<ClassifierDTO> findAllByLabel(String label)
+
+
+    @Query("""
+        select * from core.join_administered_item_to_classifier 
+        where catalogue_item_id in (:itemIds)
+    """)
+    abstract List<ClassifierJoinDTO> readClassifiersByItemIds(Collection<UUID> itemIds)
+
 }

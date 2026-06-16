@@ -1,5 +1,7 @@
 package org.maurodata.controller.config
 
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.responses.ApiResponse
 import org.maurodata.api.Paths
 import org.maurodata.api.config.ApiPropertyApi
 import org.maurodata.audit.Audit
@@ -42,6 +44,7 @@ class ApiPropertyController extends ItemController<ApiProperty> implements ApiPr
     }
 
     @Audit
+    @Operation(summary = "List the api properties", description = "Returns the api properties.")
     @Get(Paths.API_PROPERTY_LIST_PUBLIC_PAGED)
     ListResponse<ApiProperty> listPubliclyVisible(@Nullable PaginationParams params = new PaginationParams()) {
         
@@ -49,6 +52,7 @@ class ApiPropertyController extends ItemController<ApiProperty> implements ApiPr
     }
 
     @Audit
+    @Operation(operationId = 'listAllApiPropertyPaged', summary = "List the api properties", description = "Returns the api properties. It is only available to administrator users.")
     @Get(Paths.API_PROPERTY_LIST_ALL_PAGED)
     ListResponse<ApiProperty> listAll(@Nullable PaginationParams params = new PaginationParams()) {
         
@@ -57,6 +61,7 @@ class ApiPropertyController extends ItemController<ApiProperty> implements ApiPr
     }
 
     @Audit
+    @Operation(summary = "Get an api property", description = "Returns an api property. It is only available to administrator users.")
     @Get(Paths.API_PROPERTY_SHOW)
     ApiProperty show(UUID id) {
         accessControlService.checkAdministrator()
@@ -65,6 +70,7 @@ class ApiPropertyController extends ItemController<ApiProperty> implements ApiPr
     }
 
     @Audit(level = Audit.AuditLevel.FILE_ONLY)
+    @Operation(operationId = 'createApiProperty', summary = "Create an api property", description = "Creates an api property. It is only available to administrator users.")
     @Post(Paths.API_PROPERTY_LIST_ALL)
     ApiProperty create(@Body @NonNull ApiProperty apiProperty) {
         accessControlService.checkAdministrator()
@@ -77,6 +83,7 @@ class ApiPropertyController extends ItemController<ApiProperty> implements ApiPr
     }
 
     @Audit(level = Audit.AuditLevel.FILE_ONLY)
+    @Operation(operationId = 'updateApiProperty', summary = "Update an api property", description = "Updates an api property. It is only available to administrator users.")
     @Put(Paths.API_PROPERTY_SHOW)
     ApiProperty update(UUID id, @Body @NonNull ApiProperty apiProperty) {
         accessControlService.checkAdministrator()
@@ -94,6 +101,8 @@ class ApiPropertyController extends ItemController<ApiProperty> implements ApiPr
     }
 
     @Audit(level = Audit.AuditLevel.FILE_ONLY)
+    @ApiResponse(responseCode = "204", description = "No content - deleted successfully")
+    @Operation(summary = "Delete an api property", description = "Deletes an api property. It is only available to administrator users.")
     @Delete(Paths.API_PROPERTY_SHOW)
     HttpResponse delete(UUID id, @Body @Nullable ApiProperty apiProperty) {
         accessControlService.checkAdministrator()

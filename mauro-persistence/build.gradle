@@ -38,8 +38,8 @@ dependencies {
     runtimeOnly("org.yaml:snakeyaml")
 
     testImplementation("io.micronaut.test:micronaut-test-spock")
-    testRuntimeOnly("org.testcontainers:testcontainers")
-    testRuntimeOnly("org.testcontainers:postgresql")
+    testRuntimeOnly("org.testcontainers:testcontainers:2.0.3")
+    testRuntimeOnly("org.testcontainers:postgresql:1.21.4")
     testRuntimeOnly("org.postgresql:postgresql")
     testRuntimeOnly "org.junit.platform:junit-platform-launcher"
 
@@ -53,6 +53,9 @@ dependencies {
 
     codenarc 'org.apache.groovy:groovy-all:4.0.24'
     codenarc 'org.codenarc:CodeNarc:3.6.0-groovy-4.0'
+
+    // UUIDs
+    implementation 'com.fasterxml.uuid:java-uuid-generator:5.1.0'
 
     implementation project(':mauro-domain')
 }

@@ -67,6 +67,9 @@ interface TerminologyApi extends ModelApi<Terminology> {
     @Get(Paths.TERMINOLOGY_EXPORT)
     HttpResponse<byte[]> exportModel(UUID id, @Nullable String namespace, @Nullable String name, @Nullable String version)
 
+    @Post(Paths.TERMINOLOGY_EXPORT_MANY)
+    HttpResponse<byte[]> exportModels(@Nullable String namespace, @Nullable String name, @Nullable String version, @Body List<UUID> ids)
+
     @ExecuteOn(TaskExecutors.IO)
     @Produces(MediaType.MULTIPART_FORM_DATA)
     @Post(Paths.TERMINOLOGY_IMPORT)
@@ -104,4 +107,6 @@ interface TerminologyApi extends ModelApi<Terminology> {
     @Delete(Paths.TERMINOLOGY_READ_BY_AUTHENTICATED)
     HttpResponse revokeReadByAuthenticated(UUID id)
 
+    @Put(Paths.TERMINOLOGY_MOVE)
+    Terminology moveFolder(UUID id, String destination)
 }

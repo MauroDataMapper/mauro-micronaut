@@ -26,7 +26,7 @@ class AppliedProfileSection extends ProfileSection {
 
     @Override
     String getLabel() {
-        return sourceProfileSection.getLabel()
+        return sourceProfileSection?.getLabel() ?: super.label
     }
 
     @Override
@@ -47,9 +47,14 @@ class AppliedProfileSection extends ProfileSection {
     AppliedProfileSection(ProfileSection profileSection, AppliedProfile parentProfile, Map sectionBody) {
         this.sourceProfileSection = profileSection
         this.parentProfile = parentProfile
-        this.fields = profileSection.fields.collect {profileField ->
-            new AppliedProfileField(profileField, this,
-                                    sectionBody["fields"].find { it['metadataPropertyName'] == profileField.metadataPropertyName } as Map)
+        profileSection.fields.each {profileField ->
+            Map appliedField = sectionBody["fields"].find {
+                (profileField.metadataPropertyName && it['metadataPropertyName'] == profileField.metadataPropertyName) ||
+                (!profileField.metadataPropertyName && it['fieldName'] == profileField.fieldName)
+            } as Map
+            if(appliedField) {
+                this.fields.add(new AppliedProfileField(profileField, this, appliedField))
+            }
         }
     }
 

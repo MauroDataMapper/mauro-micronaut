@@ -45,7 +45,8 @@ function yaml_val {
     }
    }'
 }
-
+export PG_RUNNING_INTERNALLY="true"
+export PG_SHARING_HOST="true"
 if [ -e /home/app/resources ];
   then
       if [[ -v DATABASE_NAME ]];
@@ -59,6 +60,7 @@ if [ -e /home/app/resources ];
 
         if [ -e "/home/app/resources/application-datasources.yml" ];
         then
+          echo "Reading application-datasources.yml"
           datasources_default_url=$(yaml_val "/home/app/resources/application-datasources.yml" 'datasources_default_url')
           datasources_default_username=$(yaml_val "/home/app/resources/application-datasources.yml" 'datasources_default_username')
           datasources_default_password=$(yaml_val "/home/app/resources/application-datasources.yml" 'datasources_default_password')
@@ -74,6 +76,7 @@ if [ -e /home/app/resources ];
         if [ "${datasources_default_url}" == "" ];
         then
           datasources_default_url="jdbc:postgresql://localhost:5432/sandbox"
+          echo "Setting default jdbc url: ${datasources_default_url}"
         fi
 
         if [ "${datasources_default_username}" == "" ];
@@ -93,6 +96,42 @@ if [ -e /home/app/resources ];
         db="${db%%\?*}"
 
         export DATABASE_NAME="${db}"
+
+        URL_NO_PREFIX="${datasources_default_url#jdbc:postgresql://}"
+        HOSTPORT="${URL_NO_PREFIX%%/*}"
+        export POSTGRES_HOST="${HOSTPORT%%:*}"
+
+        export POSTGRES_PORT="${HOSTPORT##*:}"
+
+        if [ "$POSTGRES_PORT" = "$HOSTPORT" ]; then
+          export POSTGRES_PORT=5432
+        fi
+
+        export PG_RUNNING_INTERNALLY="false"
+
+        for addr in ${DOCKER_LOCAL_ADDRESSES}
+        do
+          case "$POSTGRES_HOST" in
+            $addr)
+              export PG_RUNNING_INTERNALLY="true"
+              break
+              ;;
+          esac
+        done
+
+        export PG_SHARING_HOST="false"
+        for addr in ${DOCKER_BRIDGE_ADDRESSES}
+        do
+          case "$POSTGRES_HOST" in
+            $addr)
+              export PG_SHARING_HOST="true"
+              break
+              ;;
+          esac
+        done
+
+        echo "PG_SHARING_HOST: ${PG_SHARING_HOST}"
+
       fi
 else
   echo "Missing resource files"

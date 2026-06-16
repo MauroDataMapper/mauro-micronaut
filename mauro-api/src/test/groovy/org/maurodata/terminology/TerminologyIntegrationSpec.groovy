@@ -130,6 +130,8 @@ class TerminologyIntegrationSpec extends CommonDataSpec {
 
     void "test search within model"() {
 
+        searchApi.rebuildIndexes()
+
         expect:
 
         ListResponse<SearchResultsDTO> searchResults = terminologyApi.searchGet(
@@ -143,7 +145,7 @@ class TerminologyIntegrationSpec extends CommonDataSpec {
         "term"              | []                                        | ["TEST-1: first term", "TEST-2: second term"]
         "term"              | ["Term"]                                  | ["TEST-1: first term", "TEST-2: second term"]
         "term"              | ["TermRelationship"]                      | []
-        "test"              | []                                        | ["Test terminology", "TEST-1: first term", "TEST-2: second term"]
+        "test"              | []                                        | ["TEST-1: first term", "TEST-2: second term", "Test terminology"]
         "test"              | ["Terminology"]                           | ["Test terminology"]
 
     }

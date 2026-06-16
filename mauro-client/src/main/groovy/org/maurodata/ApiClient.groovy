@@ -22,6 +22,7 @@ import org.maurodata.api.facet.ReferenceFileApi
 import org.maurodata.api.facet.SummaryMetadataApi
 import org.maurodata.api.facet.SummaryMetadataReportApi
 import org.maurodata.api.folder.FolderApi
+import org.maurodata.api.folder.VersionedFolderApi
 import org.maurodata.api.importer.ImporterApi
 import org.maurodata.api.profile.ProfileApi
 import org.maurodata.api.search.SearchApi
@@ -89,6 +90,7 @@ abstract class ApiClient {
     @Inject SummaryMetadataApi summaryMetadataApi
     @Inject SummaryMetadataReportApi summaryMetadataReportApi
     @Inject FolderApi folderApi
+    @Inject VersionedFolderApi versionedFolderApi
     @Inject ImporterApi importerApi
     @Inject ProfileApi profileApi
     @Inject SearchApi searchApi

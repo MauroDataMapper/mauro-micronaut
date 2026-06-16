@@ -59,7 +59,7 @@ class PathControllerIntegrationSpec extends CommonDataSpec {
 
     void 'test getResource by path -path not found -shouldThrowException'() {
         when:
-        pathApi.getResourceByPath('datamodel', 'not known label')
+        pathApi.getResourceByPath('datamodel', 'dm:not known label')
 
         then:
         HttpStatusException exception = thrown()
@@ -68,14 +68,14 @@ class PathControllerIntegrationSpec extends CommonDataSpec {
 
     void 'test getResource by path -unknown domainType  -shouldThrowException'() {
         when:
-        pathApi.getResourceByPath('whatisthis', EXPECTED_LABEL)
+        pathApi.getResourceByPath('whatisthis', "dm:${EXPECTED_LABEL}" )
 
         then:
         HttpStatusException exception = thrown()
         exception.status ==  HttpStatus.NOT_FOUND
     }
 
-    void 'test getResource by Path from Resource -should find resource'() {
+    void 'test getResource by Path from Resource1 -should find resource'() {
         DataModel dataModel = dataModelApi.create(folderId, dataModelPayload('datamodel label '))
         DataType dataType = dataTypeApi.create(dataModel.id, dataTypesPayload('label for datatype', DataType.DataTypeKind.ENUMERATION_TYPE))
         DataClass dataClass = dataClassApi.create(dataModel.id, dataClassPayload('label for dataclass'))
@@ -91,14 +91,14 @@ class PathControllerIntegrationSpec extends CommonDataSpec {
             value = 'no value'
         })
         when:
-        DataElement dataElementResponse = pathApi.getResourceByPathFromResource(DataModel.class.simpleName, dataModel.id, dataElement.getPath().pathString) as DataElement
+        DataElement dataElementResponse = pathApi.getResourceByPathFromResource(DataModel.class.simpleName, dataModel.id, dataElement.localPath.pathString) as DataElement
         then:
         dataElementResponse
         dataElementResponse.id == dataElement.id
 
         when:
         EnumerationValue enumerationValueResponse =
-            pathApi.getResourceByPathFromResource(DataModel.class.simpleName, dataModel.id, noValue.getPath().pathString) as EnumerationValue
+            pathApi.getResourceByPathFromResource(DataModel.class.simpleName, dataModel.id, noValue.localPath.pathString) as EnumerationValue
         then:
         enumerationValueResponse
         enumerationValueResponse.id == noValue.id
@@ -116,7 +116,7 @@ class PathControllerIntegrationSpec extends CommonDataSpec {
         when:
 
         DataModel resourceByPath =
-            pathApi.getResourceByPathFromResource(DataModel.class.simpleName, newBranchModelVersion.id, retrieved.path.pathString) as DataModel
+            pathApi.getResourceByPathFromResource(DataModel.class.simpleName, newBranchModelVersion.id, retrieved.localPath.pathString) as DataModel
         then:
         resourceByPath
         resourceByPath.id == newBranchModelVersion.id
@@ -124,7 +124,7 @@ class PathControllerIntegrationSpec extends CommonDataSpec {
 
 
     //todo: fixme the version info is not part of the  pathsstring for modelitems so unable to match exact version
-    void 'test getResource by Path from Resource -should find resource'() {
+    void 'test getResource by Path from Resource -should find resource 2'() {
         DataModel dataModel = dataModelApi.create(folderId, dataModelPayload('datamodel label '))
         DataClass dataClass = dataClassApi.create(dataModel.id, dataClassPayload('label for dataclass'))
 
@@ -140,7 +140,7 @@ class PathControllerIntegrationSpec extends CommonDataSpec {
         DataClass retrievedDataClass = dataClassApi.list(retrieved.id).items.first()
         DataClass fullRetrievedDataClass = dataClassApi.show(retrieved.id, retrievedDataClass.id)
 
-        String newModelVersionDataClassPathString = fullRetrievedDataClass.path.pathString
+        String newModelVersionDataClassPathString = fullRetrievedDataClass.localPath.pathString
         when:
         DataClass resourceByPath =
             pathApi.getResourceByPathFromResource(DataClass.class.simpleName, fullRetrievedDataClass.id, newModelVersionDataClassPathString) as DataClass

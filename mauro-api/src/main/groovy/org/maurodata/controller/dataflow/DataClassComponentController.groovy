@@ -1,5 +1,6 @@
 package org.maurodata.controller.dataflow
 
+import io.swagger.v3.oas.annotations.Operation
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
@@ -14,6 +15,7 @@ import io.micronaut.http.annotation.Post
 import io.micronaut.http.annotation.Put
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
+import io.swagger.v3.oas.annotations.responses.ApiResponse
 import org.maurodata.ErrorHandler
 import org.maurodata.api.Paths
 import org.maurodata.api.dataflow.DataClassComponentApi
@@ -53,30 +55,36 @@ class DataClassComponentController extends AdministeredItemController<DataClassC
     }
 
     @Audit
+    @Operation(operationId = 'showDataClassComponent', summary = "Get a data class component", description = "Returns a data class component.")
     @Get(Paths.DATA_FLOW_CLASS_COMPONENT_ID)
     DataClassComponent show(@NonNull UUID dataModelId, @NonNull UUID dataFlowId, @NonNull UUID id) {
         super.show(id)
     }
 
     @Audit(level = Audit.AuditLevel.FILE_ONLY)
+    @Operation(operationId = 'createDataClassComponent', summary = "Create a data class component", description = "Creates a data class component.")
     @Post(Paths.DATA_FLOW_CLASS_COMPONENT_LIST)
     DataClassComponent create(@NonNull UUID dataModelId, @NonNull UUID dataFlowId, @Body @NonNull DataClassComponent dataClassComponent) {
         super.create(dataFlowId, dataClassComponent)
     }
 
     @Audit(level = Audit.AuditLevel.FILE_ONLY)
+    @Operation(operationId = 'updateDataClassComponent', summary = "Update a data class component", description = "Updates a data class component.")
     @Put(Paths.DATA_FLOW_CLASS_COMPONENT_ID)
     DataClassComponent update(@NonNull UUID dataModelId, @NonNull UUID dataFlowId, @NonNull UUID id, @Body @NonNull DataClassComponent dataClassComponent) {
         super.update(id, dataClassComponent)
     }
 
     @Audit(level = Audit.AuditLevel.FILE_ONLY)
+    @ApiResponse(responseCode = "204", description = "No content - deleted successfully")
+    @Operation(operationId = 'deleteDataClassComponent', summary = "Delete a data class component", description = "Deletes a data class component.")
     @Delete(Paths.DATA_FLOW_CLASS_COMPONENT_ID)
     HttpResponse delete(@NonNull UUID dataModelId, @NonNull UUID dataFlowId, @NonNull UUID id, @Body @Nullable DataClassComponent dataClassComponent) {
         super.delete(id, dataClassComponent)
     }
 
     @Audit
+    @Operation(operationId = 'listDataClassComponent', summary = "List the data class components", description = "Returns the data class components.")
     @Get(Paths.DATA_FLOW_CLASS_COMPONENT_LIST_PAGED)
     ListResponse<DataClassComponent> list(@NonNull UUID dataModelId, @NonNull UUID dataFlowId, @Nullable PaginationParams params = new PaginationParams()) {
         
@@ -84,6 +92,7 @@ class DataClassComponentController extends AdministeredItemController<DataClassC
     }
 
     @Audit(level = Audit.AuditLevel.FILE_ONLY)
+    @Operation(summary = "Update a data class component", description = "Updates a data class component.")
     @Put(Paths.DATA_FLOW_CLASS_COMPONENT_SOURCE_CLASS)
     DataClassComponent updateSource(@NonNull UUID dataModelId, @NonNull UUID dataFlowId, @NonNull UUID id, @NonNull UUID dataClassId) {
         DataClassComponent updated = addDataClass(Type.SOURCE, id, dataClassId)
@@ -91,6 +100,7 @@ class DataClassComponentController extends AdministeredItemController<DataClassC
     }
 
     @Audit(level = Audit.AuditLevel.FILE_ONLY)
+    @Operation(summary = "Update a data class component", description = "Updates a data class component.")
     @Put(Paths.DATA_FLOW_CLASS_COMPONENT_TARGET_CLASS)
     DataClassComponent updateTarget(@NonNull UUID dataModelId, @NonNull UUID dataFlowId, @NonNull UUID id, @NonNull UUID dataClassId) {
         DataClassComponent updated = addDataClass(Type.TARGET, id, dataClassId)
@@ -98,6 +108,8 @@ class DataClassComponentController extends AdministeredItemController<DataClassC
     }
 
     @Audit(level = Audit.AuditLevel.FILE_ONLY)
+    @ApiResponse(responseCode = "204", description = "No content - deleted successfully")
+    @Operation(summary = "Delete a data class component", description = "Deletes a data class component.")
     @Delete(Paths.DATA_FLOW_CLASS_COMPONENT_SOURCE_CLASS)
     HttpResponse deleteSource(@NonNull UUID dataModelId, @NonNull UUID dataFlowId, @NonNull UUID id, @NonNull UUID dataClassId) {
         removeDataClass(Type.SOURCE, id, dataClassId)
@@ -105,6 +117,8 @@ class DataClassComponentController extends AdministeredItemController<DataClassC
     }
 
     @Audit(level = Audit.AuditLevel.FILE_ONLY)
+    @ApiResponse(responseCode = "204", description = "No content - deleted successfully")
+    @Operation(summary = "Delete a data class component", description = "Deletes a data class component.")
     @Delete(Paths.DATA_FLOW_CLASS_COMPONENT_TARGET_CLASS)
     HttpResponse deleteTarget(@NonNull UUID dataModelId, @NonNull UUID dataFlowId, @NonNull UUID id, @NonNull UUID dataClassId) {
         removeDataClass(Type.TARGET, id, dataClassId)

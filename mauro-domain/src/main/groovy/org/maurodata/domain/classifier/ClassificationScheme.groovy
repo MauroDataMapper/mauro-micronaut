@@ -1,6 +1,12 @@
 package org.maurodata.domain.classifier
 
-
+import jakarta.persistence.PrePersist
+import jakarta.persistence.PreUpdate
+import org.maurodata.domain.diff.BaseCollectionDiff
+import org.maurodata.domain.diff.CollectionDiff
+import org.maurodata.domain.diff.DiffBuilder
+import org.maurodata.domain.diff.DiffableItem
+import org.maurodata.domain.diff.ObjectDiff
 import org.maurodata.domain.model.Item
 import org.maurodata.domain.model.ItemReference
 import org.maurodata.domain.model.ItemReferencer
@@ -27,7 +33,7 @@ import org.maurodata.domain.model.ModelItem
 @Introspected
 @MappedEntity(schema = 'core')
 @MapConstructor(includeSuperFields = true, includeSuperProperties = true, noArg = true)
-class ClassificationScheme extends Model implements ItemReferencer {
+class ClassificationScheme extends Model implements ItemReferencer, DiffableItem<ClassificationScheme> {
 
     @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'classificationScheme')
     @JsonAlias("classifiers") // for importing models exported from the Grails implementation
@@ -77,14 +83,17 @@ class ClassificationScheme extends Model implements ItemReferencer {
     @JsonIgnore
     @Override
     void setAssociations() {
+        super.setAssociations()
         this.csClassifiers.collect {classifier ->
             classifier.classificationScheme = this
             classifier.childClassifiers.each {childClassifier ->
                 childClassifier.parentClassifier = classifier
                 childClassifier.classificationScheme = this
                 childClassifier.parent = childClassifier.parentClassifier
+                childClassifier.setAssociations()
             }
             classifier.parent = classifier.parentClassifier ?: classifier.classificationScheme
+            classifier.setAssociations()
             classifier
         }
         this
@@ -134,6 +143,33 @@ class ClassificationScheme extends Model implements ItemReferencer {
         parent = ItemReferencerUtils.replaceItemByIdentity(parent, replacements, notReplaced)
         csClassifiers = ItemReferencerUtils.replaceItemsByIdentity(csClassifiers, replacements, notReplaced)
     }
+
+    @PrePersist
+    @PreUpdate
+    void prePersist() {
+        super.prePersist()
+        if (!getModelWithVersion()) {
+            branchName = 'main'
+        }
+    }
+
+    @Override
+    @JsonIgnore
+    @Transient
+    ObjectDiff<ClassificationScheme> diff(ClassificationScheme other, String lhsPathRoot, String rhsPathRoot) {
+        ObjectDiff<ClassificationScheme> base = DiffBuilder.objectDiff(ClassificationScheme)
+            .leftHandSide(id?.toString(), this)
+            .rightHandSide(other.id?.toString(), other)
+        base.label = this.label
+        base.appendString(DiffBuilder.DESCRIPTION, this.description, other.description, this, other)
+        base.appendString(DiffBuilder.ALIASES_STRING, this.aliasesString, other.aliasesString, this, other)
+        if (!DiffBuilder.isNullOrEmpty(this.classifiers as Collection<Object>) || !DiffBuilder.isNullOrEmpty(other.classifiers as Collection<Object>)) {
+            base.appendCollection(DiffBuilder.CLASSIFIERS, this.classifiers as Collection<DiffableItem>, other.classifiers as Collection<DiffableItem>, lhsPathRoot,
+                                  rhsPathRoot)
+        }
+        base
+    }
+
 
     /**
      * DSL builder

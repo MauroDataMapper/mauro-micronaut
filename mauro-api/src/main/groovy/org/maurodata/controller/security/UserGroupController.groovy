@@ -1,5 +1,6 @@
 package org.maurodata.controller.security
 
+import io.swagger.v3.oas.annotations.Operation
 import org.maurodata.api.Paths
 import org.maurodata.api.security.UserGroupApi
 import org.maurodata.audit.Audit
@@ -44,6 +45,7 @@ class UserGroupController extends ItemController<UserGroup> implements UserGroup
 
     @Transactional
     @Audit(level = Audit.AuditLevel.FILE_ONLY)
+    @Operation(operationId = 'createUserGroup', summary = "Create a user group", description = "Creates a user group. It is only available to administrator users.")
     @Post(Paths.USER_GROUP_LIST)
     UserGroup create(@Body @NonNull UserGroup userGroup) {
         accessControlService.checkAdministrator()
@@ -51,6 +53,7 @@ class UserGroupController extends ItemController<UserGroup> implements UserGroup
     }
 
     @Audit
+    @Operation(operationId = 'indexUserGroup', summary = "List the user groups", description = "Returns the user groups. Its availability is governed by access control checks on the requested resource.")
     @Get(Paths.USER_GROUP_LIST)
     ListResponse<UserGroup> index(@Nullable PaginationParams params = new PaginationParams()) {
         if (!accessControlService.administrator) {
@@ -60,6 +63,7 @@ class UserGroupController extends ItemController<UserGroup> implements UserGroup
         return ListResponse.from(userGroupRepository.readAll(),params)
     }
 
+    @Operation(operationId = 'showUserGroup', summary = "Get a user group", description = "Returns a user group. It is available to authenticated users.")
     @Get(Paths.USER_GROUP_ID)
     UserGroup show(UUID id) {
         accessControlService.checkAuthenticated()
@@ -76,6 +80,7 @@ class UserGroupController extends ItemController<UserGroup> implements UserGroup
     }
 
     @Audit
+    @Operation(summary = "List the user groups", description = "Returns the user groups. It is available to authenticated users.")
     @Get(Paths.USER_GROUP_CATALOGUE_USERS_PAGED)
     ListResponse<CatalogueUser> users(UUID id, @Nullable PaginationParams params){
 
@@ -89,6 +94,7 @@ class UserGroupController extends ItemController<UserGroup> implements UserGroup
     }
 
     @Audit
+    @Operation(operationId = 'updateUserGroup', summary = "Update a user group", description = "Updates a user group. Its availability is governed by access control checks on the requested resource.")
     @Put(Paths.USER_GROUP_ID)
     UserGroup update(@NonNull UUID id, @Body @NonNull UserGroup userGroup){
         log.info 'Request to update UserGroup by ID'

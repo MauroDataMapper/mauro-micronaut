@@ -1,5 +1,6 @@
 package org.maurodata.controller.tree
 
+import io.swagger.v3.oas.annotations.Operation
 import org.maurodata.api.Paths
 import org.maurodata.api.tree.TreeApi
 import org.maurodata.audit.Audit
@@ -59,6 +60,7 @@ class TreeController implements TreeApi {
     SearchRepository searchRepository
 
     @Audit
+    @Operation(summary = "List the trees", description = "Returns the trees. You must have read privileges on the item in question.")
     @Get(Paths.TREE_FOLDER)
     List<TreeItem> folderTree(@Nullable UUID id, @Nullable @QueryValue Boolean foldersOnly) {
 
@@ -75,6 +77,7 @@ class TreeController implements TreeApi {
     }
 
     @Audit
+    @Operation(summary = "List the trees", description = "Returns the trees. You must have read privileges on the item in question.")
     @Get(Paths.TREE_ITEM)
     List<TreeItem> itemTree(String domainType, UUID id, @Nullable @QueryValue Boolean foldersOnly) {
         foldersOnly = foldersOnly ?: false
@@ -119,6 +122,7 @@ class TreeController implements TreeApi {
     is in the returned structure to determine the path
      */
 
+    @Operation(summary = "Get a tree", description = "Returns a tree. You must have read privileges on the item in question.")
     @Get(Paths.TREE_ITEM_ANCESTORS)
     TreeItem itemTreeAncestors(String domainType, UUID id) {
         AdministeredItemCacheableRepository repository = repositoryService.getAdministeredItemRepository(domainType)
@@ -166,6 +170,7 @@ class TreeController implements TreeApi {
         return currentParent
     }
 
+    @Operation(summary = "Get a tree", description = "Returns a tree. You must have read privileges on the item in question.")
     @Get(Paths.TREE_FOLDER_ANCESTORS)
     TreeItem folderTreeAncestors(UUID id) {
         AdministeredItemCacheableRepository repository = repositoryService.getAdministeredItemRepository("folder")
@@ -213,6 +218,7 @@ class TreeController implements TreeApi {
     }
 
     @Audit
+    @Operation(summary = "List the trees", description = "Returns the trees. You must have read privileges on the item in question.")
     @Get(Paths.TREE_FOLDER_SEARCH)
     List<SearchResultsDTO> itemTreeSearch(String searchTerm) {
 

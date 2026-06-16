@@ -33,7 +33,7 @@ class PaginationParams {
     String definition = null
 
     @Nullable
-    String all = false
+    String all = "false"
 
     @Nullable
     String domainType = null

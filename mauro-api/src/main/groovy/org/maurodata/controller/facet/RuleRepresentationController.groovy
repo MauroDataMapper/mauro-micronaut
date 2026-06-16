@@ -1,5 +1,7 @@
 package org.maurodata.controller.facet
 
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.responses.ApiResponse
 import org.maurodata.audit.Audit
 
 import io.micronaut.core.annotation.Nullable
@@ -62,6 +64,7 @@ class RuleRepresentationController extends ItemController<RuleRepresentation> im
     }
 
     @Audit
+    @Operation(operationId = 'createRuleRepresentation', summary = "Create a rule representation", description = "Creates a rule representation. You must have edit privileges on the item in question.")
     @Post(Paths.RULE_REPRESENTATIONS_LIST)
     RuleRepresentation create(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID ruleId,
                               @Body RuleRepresentation ruleRepresentation) {
@@ -74,6 +77,7 @@ class RuleRepresentationController extends ItemController<RuleRepresentation> im
     }
 
     @Audit
+    @Operation(operationId = 'showRuleRepresentation', summary = "Get a rule representation", description = "Returns a rule representation. You must have read privileges on the item in question.")
     @Get(Paths.RULE_REPRESENTATIONS_ID)
     RuleRepresentation show(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID ruleId,
                             @NonNull UUID id) {
@@ -84,6 +88,7 @@ class RuleRepresentationController extends ItemController<RuleRepresentation> im
 
 
     @Audit
+    @Operation(operationId = 'listRuleRepresentationsPaged', summary = "List the rule representations", description = "Returns the rule representations. You must have read privileges on the item in question.")
     @Get(Paths.RULE_REPRESENTATIONS_LIST_PAGED)
     ListResponse<Rule> list(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID ruleId, @Nullable PaginationParams params = new PaginationParams()) {
         
@@ -94,6 +99,7 @@ class RuleRepresentationController extends ItemController<RuleRepresentation> im
     }
 
     @Audit
+    @Operation(operationId = 'updateRuleRepresentation', summary = "Update a rule representation", description = "Updates a rule representation. You must have edit privileges on the item in question.")
     @Put(Paths.RULE_REPRESENTATIONS_ID)
     RuleRepresentation update(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID ruleId,
                               @NonNull UUID id, @Body @NonNull RuleRepresentation ruleRepresentation) {
@@ -107,6 +113,8 @@ class RuleRepresentationController extends ItemController<RuleRepresentation> im
     }
 
     @Audit(deletedObjectDomainType = RuleRepresentation)
+    @ApiResponse(responseCode = "204", description = "No content - deleted successfully")
+    @Operation(operationId = 'deleteRuleRepresentation', summary = "Delete a rule representation", description = "Deletes a rule representation. You must have edit privileges on the item in question.")
     @Delete(Paths.RULE_REPRESENTATIONS_ID)
     @Transactional
     HttpResponse delete(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID ruleId,

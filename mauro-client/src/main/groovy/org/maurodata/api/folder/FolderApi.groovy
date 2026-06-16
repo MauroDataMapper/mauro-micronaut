@@ -58,6 +58,9 @@ interface FolderApi extends ModelApi<Folder> {
     @Get(Paths.FOLDER_EXPORT)
     HttpResponse<byte[]> exportModel(UUID id, @Nullable String namespace, @Nullable String name, @Nullable String version)
 
+    @Post(Paths.FOLDER_EXPORT_MANY)
+    HttpResponse<byte[]> exportModels(@Nullable String namespace, @Nullable String name, @Nullable String version, @Body List<UUID> modelIds)
+
     @Produces(MediaType.MULTIPART_FORM_DATA)
     @Post(Paths.FOLDER_IMPORT)
     ListResponse<Folder> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version)

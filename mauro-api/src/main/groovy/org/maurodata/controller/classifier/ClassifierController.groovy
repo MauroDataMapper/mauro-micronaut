@@ -1,5 +1,7 @@
 package org.maurodata.controller.classifier
 
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.responses.ApiResponse
 import org.maurodata.ErrorHandler
 import org.maurodata.api.classifier.ClassifierApi
 import org.maurodata.audit.Audit
@@ -47,12 +49,14 @@ class ClassifierController extends AdministeredItemController<Classifier, Classi
     }
 
     @Audit
+    @Operation(operationId = 'showClassifier', summary = "Get a classifier", description = "Returns a classifier.")
     @Get(Paths.CLASSIFIERS_ROUTE_ID)
     Classifier show(@NonNull UUID classificationSchemeId, @NonNull UUID id) {
         super.show(id)
     }
 
     @Audit
+    @Operation(operationId = 'createClassifier', summary = "Create a classifier", description = "Creates a classifier.")
     @Post(Paths.CLASSIFIERS_ROUTE)
     @Transactional
     Classifier create(@NonNull UUID classificationSchemeId, @Body @NonNull Classifier classifier) {
@@ -60,6 +64,7 @@ class ClassifierController extends AdministeredItemController<Classifier, Classi
     }
 
     @Audit
+    @Operation(operationId = 'updateClassifier', summary = "Update a classifier", description = "Updates a classifier.")
     @Put(Paths.CLASSIFIERS_ROUTE_ID)
     @Transactional
     Classifier update(@NonNull UUID classificationSchemeId, @NonNull UUID id, @Body @NonNull Classifier classifier) {
@@ -71,6 +76,8 @@ class ClassifierController extends AdministeredItemController<Classifier, Classi
             parentIdParamName = 'classificationSchemeId',
             deletedObjectDomainType = Classifier
     )
+    @ApiResponse(responseCode = "204", description = "No content - deleted successfully")
+    @Operation(summary = "Delete a classifier", description = "Deletes a classifier.")
     @Delete(Paths.CLASSIFIERS_ROUTE_ID)
     @Transactional
     HttpResponse delete(@NonNull UUID classificationSchemeId, @NonNull UUID id, @Body @Nullable Classifier classifier) {
@@ -78,6 +85,7 @@ class ClassifierController extends AdministeredItemController<Classifier, Classi
     }
 
     @Audit
+    @Operation(operationId = 'listClassifier', summary = "List the classifiers", description = "Returns the classifiers.")
     @Get(Paths.CLASSIFIERS_ROUTE_PAGED)
     ListResponse<Classifier> list(UUID classificationSchemeId, @Nullable PaginationParams params = new PaginationParams()) {
 
@@ -85,6 +93,7 @@ class ClassifierController extends AdministeredItemController<Classifier, Classi
     }
 
     @Audit
+    @Operation(operationId = 'showClassifierChild', summary = "Get a classifier", description = "Returns a classifier.")
     @Get(Paths.CHILD_CLASSIFIERS_ID_ROUTE)
     Classifier showChildClassifier(@NonNull UUID classificationSchemeId, @NonNull UUID parentClassifierId, @NonNull UUID childClassifierId) {
         show(childClassifierId)
@@ -98,6 +107,7 @@ class ClassifierController extends AdministeredItemController<Classifier, Classi
      * @return
      */
     @Audit
+    @Operation(summary = "Create a classifier", description = "Creates a classifier. You must have edit privileges on the item in question.")
     @Post(Paths.CHILD_CLASSIFIERS_ROUTE)
     @Transactional
     Classifier create(@NonNull UUID classificationSchemeId, @NonNull UUID parentClassifierId, @Body @NonNull Classifier classifier) {
@@ -113,6 +123,7 @@ class ClassifierController extends AdministeredItemController<Classifier, Classi
     }
 
     @Audit
+    @Operation(operationId = 'updateClassifierChild', summary = "Update a classifier", description = "Updates a classifier.")
     @Put(Paths.CHILD_CLASSIFIERS_ID_ROUTE)
     @Transactional
     Classifier update(@NonNull UUID classificationSchemeId, @NonNull UUID parentClassifierId, @NonNull UUID childClassifierId, @Body @NonNull Classifier classifier) {
@@ -125,20 +136,17 @@ class ClassifierController extends AdministeredItemController<Classifier, Classi
             parentIdParamName = 'parentClassifierId',
             deletedObjectDomainType = Classifier
     )
+    @ApiResponse(responseCode = "204", description = "No content - deleted successfully")
+    @Operation(summary = "Delete a classifier", description = "Deletes a classifier.")
     @Delete(Paths.CHILD_CLASSIFIERS_ID_ROUTE)
     HttpResponse delete(@NonNull UUID classificationSchemeId, @NonNull UUID parentClassifierId, @NonNull UUID childClassifierId, @Body @Nullable Classifier classifier) {
         super.delete(childClassifierId, classifier)
     }
 
     @Audit
-    @Get(Paths.CHILD_CLASSIFIERS_ROUTE)
-    ListResponse<Classifier> list(@NonNull UUID classificationSchemeId, @NonNull UUID parentClassifierId) {
-        list(classificationSchemeId, parentClassifierId, null)
-    }
-
-    @Audit
+    @Operation(operationId = 'listClassifierChildPaged', summary = "List the classifiers", description = "Returns the classifiers. You must have read privileges on the item in question.")
     @Get(Paths.CHILD_CLASSIFIERS_ROUTE_PAGED)
-    ListResponse<Classifier> list(@NonNull UUID classificationSchemeId, @NonNull UUID parentClassifierId, @Nullable PaginationParams params) {
+    ListResponse<Classifier> list(@NonNull UUID classificationSchemeId, @NonNull UUID parentClassifierId, @Nullable PaginationParams params = new PaginationParams()) {
         Classifier parentClassifier = classifierCacheableRepository.readById(parentClassifierId)
         accessControlService.checkRole(Role.READER, parentClassifier)
         ListResponse.from(classifierCacheableRepository.readAllByParentClassifier_Id(parentClassifierId), params)
@@ -148,6 +156,7 @@ class ClassifierController extends AdministeredItemController<Classifier, Classi
      * Associate Classifier to administeredItem
      */
     @Audit(title = EditType.UPDATE, description = "Classify element")
+    @Operation(summary = "Update a classifier", description = "Updates a classifier. You must have read or edit privileges on the item in question, depending on the action.")
     @Put(Paths.ADMINISTERED_ITEM_CLASSIFIER_ID_ROUTE)
     @Transactional
     Classifier createAdministeredItemClassifier(@NonNull String administeredItemDomainType, @NonNull UUID administeredItemId, @NonNull UUID id) {
@@ -164,6 +173,7 @@ class ClassifierController extends AdministeredItemController<Classifier, Classi
      * Get Classifier for AdministeredItem
      */
     @Audit
+    @Operation(summary = "Get a classifier", description = "Returns a classifier. You must have read privileges on the item in question.")
     @Get(Paths.ADMINISTERED_ITEM_CLASSIFIER_ID_ROUTE)
     Classifier getAdministeredItemClassifier(@NonNull String administeredItemDomainType, @NonNull UUID administeredItemId, @NonNull UUID id) {
         accessControlService.checkRole(Role.READER, readAdministeredItem(Classifier.class.simpleName, id))
@@ -177,6 +187,7 @@ class ClassifierController extends AdministeredItemController<Classifier, Classi
      * Get AdministeredItem classifiers
      */
     @Audit
+    @Operation(summary = "List the classifiers", description = "Returns the classifiers. You must have read privileges on the item in question.")
     @Get(Paths.ADMINISTERED_ITEM_CLASSIFIER_ROUTE_PAGED)
     ListResponse<Classifier> findAllAdministeredItemClassifiers(@NonNull String administeredItemDomainType, @NonNull UUID administeredItemId, @Nullable PaginationParams params = new PaginationParams()) {
 
@@ -191,6 +202,8 @@ class ClassifierController extends AdministeredItemController<Classifier, Classi
             title = EditType.DELETE,
             description = 'Unclassify item'
     )
+    @ApiResponse(responseCode = "204", description = "No content - deleted successfully")
+    @Operation(summary = "Delete a classifier", description = "Deletes a classifier. You must have edit privileges on the item in question.")
     @Delete(Paths.ADMINISTERED_ITEM_CLASSIFIER_ID_ROUTE)
     @Transactional
     HttpResponse delete(@NonNull String administeredItemDomainType, @NonNull UUID administeredItemId, @NonNull UUID id) {
@@ -208,6 +221,7 @@ class ClassifierController extends AdministeredItemController<Classifier, Classi
     }
 
 
+    @Operation(summary = "List the classifiers", description = "Returns the classifiers.")
     @Get(Paths.ALL_CLASSIFIERS_ROUTE)
     ListResponse<Classifier> listAllClassifiers() {
         super.listAll()

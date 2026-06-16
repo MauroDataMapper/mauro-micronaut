@@ -10,6 +10,7 @@ import org.maurodata.domain.model.version.CreateNewVersionData
 import org.maurodata.domain.model.version.FinaliseData
 import org.maurodata.domain.terminology.CodeSet
 import org.maurodata.domain.terminology.Term
+import org.maurodata.domain.terminology.Terminology
 import org.maurodata.web.ListResponse
 import org.maurodata.web.PaginationParams
 
@@ -86,5 +87,8 @@ interface CodeSetApi extends ModelApi<CodeSet> {
 
     @Post(Paths.CODE_SET_IMPORT)
     ListResponse<CodeSet> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version)
+
+    @Put(Paths.CODE_SET_MOVE)
+    CodeSet moveFolder(UUID id, String destination)
 
 }

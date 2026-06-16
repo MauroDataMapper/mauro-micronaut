@@ -1,5 +1,7 @@
 package org.maurodata.controller.folder
 
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.responses.ApiResponse
 import org.maurodata.ErrorHandler
 import org.maurodata.api.Paths
 import org.maurodata.api.folder.FolderApi
@@ -52,18 +54,21 @@ class FolderController extends ModelController<Folder> implements FolderApi {
     }
 
     @Audit
+    @Operation(operationId = 'showFolder', summary = "Get a folder", description = "Returns a folder.")
     @Get(Paths.FOLDER_ID)
     Folder show(UUID id) {
         super.show(id)
     }
 
     @Audit
+    @Operation(operationId = 'showFolderChild', summary = "Get a folder", description = "Returns a folder.")
     @Get(Paths.CHILD_FOLDER_ID)
     Folder show(UUID parentId, UUID id) {
         super.show(id)
     }
 
     @Audit
+    @Operation(operationId = 'createFolder', summary = "Create a folder", description = "Creates a folder.")
     @Post(Paths.FOLDER_LIST)
     Folder create(@Body Folder folder) {
         cleanBody(folder)
@@ -76,18 +81,21 @@ class FolderController extends ModelController<Folder> implements FolderApi {
 
     @Audit
     @Transactional
+    @Operation(operationId = 'createChildFolder', summary = "Create a folder", description = "Creates a folder.")
     @Post(Paths.CHILD_FOLDER_LIST)
     Folder create(UUID parentId, @Body @NonNull Folder folder) {
         super.create(parentId, folder)
     }
 
     @Audit
+    @Operation(operationId = 'updateFolder', summary = "Update a folder", description = "Updates a folder.")
     @Put(Paths.FOLDER_ID)
     Folder update(UUID id, @Body @NonNull Folder folder) {
         super.update(id, folder)
     }
 
     @Audit
+    @Operation(operationId = 'updateFolderChild', summary = "Update a folder", description = "Updates a folder.")
     @Put(Paths.CHILD_FOLDER_ID)
     Folder update(UUID parentId, UUID id, @Body @NonNull Folder folder) {
         super.update(id, folder)
@@ -95,18 +103,21 @@ class FolderController extends ModelController<Folder> implements FolderApi {
 
     @Audit(description = 'Move folder')
     @Transactional
+    @Operation(summary = "Update a folder", description = "Updates a folder.")
     @Put(Paths.FOLDER_MOVE)
     Folder moveFolder(UUID id, String destination) {
         super.moveFolder(id, destination)
     }
 
     @Audit
+    @Operation(operationId = 'listAllFolder', summary = "List the folders", description = "Returns the folders.")
     @Get(Paths.FOLDER_LIST)
     ListResponse<Folder> listAll() {
         super.listAll()
     }
 
     @Audit
+    @Operation(operationId = 'listFolder', summary = "List the folders", description = "Returns the folders.")
     @Get(Paths.CHILD_FOLDER_LIST)
     ListResponse<Folder> list(UUID parentId) {
         super.list(parentId)
@@ -136,6 +147,8 @@ class FolderController extends ModelController<Folder> implements FolderApi {
 
     @Audit(level = Audit.AuditLevel.FILE_ONLY, deletedObjectDomainType = Folder)
     @Transactional
+    @ApiResponse(responseCode = "204", description = "No content - deleted successfully")
+    @Operation(summary = "Delete a folder", description = "Deletes a folder.")
     @Delete(Paths.FOLDER_ID)
     HttpResponse delete(UUID id, @Body @Nullable Folder folder, @Nullable @QueryValue Boolean permanent) {
         permanent = permanent ?: true
@@ -144,6 +157,8 @@ class FolderController extends ModelController<Folder> implements FolderApi {
 
     @Transactional
     @Audit(deletedObjectDomainType = Folder, parentDomainType = Folder)
+    @ApiResponse(responseCode = "204", description = "No content - deleted successfully")
+    @Operation(operationId = 'deleteFolder', summary = "Delete a folder", description = "Deletes a folder.")
     @Delete(Paths.CHILD_FOLDER_ID)
     HttpResponse delete(UUID parentId, UUID id, @Body @Nullable Folder folder, @Nullable @QueryValue Boolean permanent) {
         permanent = permanent ?: true
@@ -151,22 +166,32 @@ class FolderController extends ModelController<Folder> implements FolderApi {
     }
 
     @Audit(title = EditType.EXPORT, description = 'Export folder')
+    @Operation(operationId = 'exportModelFolder', summary = "Get a folder", description = "Returns a folder.")
     @Get(Paths.FOLDER_EXPORT)
     @Override
     HttpResponse<byte[]> exportModel(UUID id, @Nullable String namespace, @Nullable String name, @Nullable String version) {
-        super.exportModel(id,namespace, name, version)
+        super.exportModels(namespace, name, version, [id])
+    }
 
+    @Audit(title = EditType.EXPORT, description = 'Export folders')
+    @Operation(summary = "Export the folder", description = "Exports the folder.")
+    @Post(Paths.FOLDER_EXPORT_MANY)
+    @Override
+    HttpResponse<byte[]> exportModels(@Nullable String namespace, @Nullable String name, @Nullable String version, @Body List<UUID> ids) {
+        super.exportModels(namespace, name, version, ids)
     }
 
     @Transactional
     @ExecuteOn(TaskExecutors.IO)
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Audit(title = EditType.IMPORT, description = 'Import folder')
+    @Operation(operationId = 'importModelFolder', summary = "Import the folder", description = "Imports the folder.")
     @Post(Paths.FOLDER_IMPORT)
     ListResponse<Folder> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version) {
         super.importModel(body, namespace, name, version)
     }
 
+    @Operation(summary = "List the folders", description = "Returns the folders.")
     @Get('/api/folder/search{?requestDTO}')
     ListResponse<SearchResultsDTO> searchGet(@RequestBean SearchRequestDTO requestDTO) {
         // TODO
@@ -174,6 +199,7 @@ class FolderController extends ModelController<Folder> implements FolderApi {
     }
 
     @Audit
+    @Operation(summary = "List the folders", description = "Returns the folders.")
     @Post('/api/folder/search')
     ListResponse<SearchResultsDTO> searchPost(@Body SearchRequestDTO requestDTO) {
         // TODO
@@ -181,6 +207,7 @@ class FolderController extends ModelController<Folder> implements FolderApi {
     }
 
     @Audit
+    @Operation(summary = "Update a folder", description = "Updates a folder.")
     @Put(Paths.FOLDER_READ_BY_AUTHENTICATED)
     @Transactional
     Folder allowReadByAuthenticated(UUID id) {
@@ -189,12 +216,15 @@ class FolderController extends ModelController<Folder> implements FolderApi {
 
     @Audit
     @Transactional
+    @ApiResponse(responseCode = "204", description = "No content - deleted successfully")
+    @Operation(summary = "Delete a folder", description = "Deletes a folder.")
     @Delete(Paths.FOLDER_READ_BY_AUTHENTICATED)
     HttpResponse revokeReadByAuthenticated(UUID id) {
         super.deleteReadByAuthenticated(id)
     }
 
     @Audit
+    @Operation(summary = "Update a folder", description = "Updates a folder.")
     @Put(Paths.FOLDER_READ_BY_EVERYONE)
     @Transactional
     Folder allowReadByEveryone(UUID id) {
@@ -203,18 +233,22 @@ class FolderController extends ModelController<Folder> implements FolderApi {
 
     @Audit
     @Transactional
+    @ApiResponse(responseCode = "204", description = "No content - deleted successfully")
+    @Operation(summary = "Delete a folder", description = "Deletes a folder.")
     @Delete(Paths.FOLDER_READ_BY_EVERYONE)
     HttpResponse revokeReadByEveryone(UUID id) {
         super.deleteReadByEveryone(id)
     }
 
     @Audit
+    @Operation(summary = "List the folders", description = "Returns the folders.")
     @Get(Paths.FOLDER_PERMISSIONS)
     @Override
     PermissionsDTO permissions(UUID id) {
         super.permissions(id)
     }
 
+    @Operation(summary = "Get a folder", description = "Returns a folder.")
     @Get(Paths.FOLDER_DOI)
     @Override
     Map doi(UUID id) {
@@ -222,11 +256,13 @@ class FolderController extends ModelController<Folder> implements FolderApi {
         return null
     }
 
+    @Operation(summary = "List the folders", description = "Returns the folders.")
     @Get(Paths.FOLDER_IMPORTERS)
     List<FolderImporterPlugin> folderImporters() {
         mauroPluginService.listPlugins(FolderImporterPlugin)
     }
 
+    @Operation(summary = "List the folders", description = "Returns the folders.")
     @Get(Paths.FOLDER_EXPORTERS)
     List<FolderExporterPlugin> folderExporters() {
         mauroPluginService.listPlugins(FolderExporterPlugin)
@@ -237,6 +273,7 @@ class FolderController extends ModelController<Folder> implements FolderApi {
     @ExecuteOn(TaskExecutors.IO)
     @Audit(title = EditType.IMPORT, description = "Import folder")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @Operation(summary = "Import the folder", description = "Imports the folder.")
     @Post(Paths.FOLDER_IMPORT)
     ListResponse<Folder> importFolder(@Body MultipartBody body, String namespace, String name, @Nullable String version) {
         super.importModel(body, namespace, name, version)

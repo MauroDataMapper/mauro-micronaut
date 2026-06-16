@@ -1,5 +1,6 @@
 package org.maurodata.controller.facet
 
+import io.swagger.v3.oas.annotations.Operation
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
@@ -44,6 +45,7 @@ class VersionLinksController extends FacetController<VersionLink> implements Ver
     }
 
     @Override
+    @Operation(operationId = 'listVersionLinkPaged', summary = "List the version links", description = "Returns the version links. You must have read privileges on the item in question.")
     @Get(Paths.VERSION_LINKS_LIST_PAGED)
     ListResponse<VersionLinkDTO> list(@NonNull String domainType, @NonNull UUID domainId, @Nullable PaginationParams params = new PaginationParams()) {
 
@@ -54,7 +56,10 @@ class VersionLinksController extends FacetController<VersionLink> implements Ver
         final List<VersionLinkDTO> versionList = new ArrayList<>()
 
         for (VersionLink versionLink : administeredItem.versionLinks) {
-            versionList.add(constructVersionLinkDTO((Model) administeredItem, versionLink))
+            // A model pointed to may not exist
+            if (existsAdministeredItem(versionLink.targetModelDomainType, versionLink.targetModelId)) {
+                versionList.add(constructVersionLinkDTO((Model) administeredItem, versionLink))
+            }
         }
 
         return ListResponse.from(versionList)

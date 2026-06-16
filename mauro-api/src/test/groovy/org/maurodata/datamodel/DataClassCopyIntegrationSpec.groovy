@@ -29,6 +29,9 @@ class DataClassCopyIntegrationSpec extends CommonDataSpec {
     UUID targetId
 
     @Shared
+    UUID targetDataClassId
+
+    @Shared
     DataClass dataClass
 
     @Shared
@@ -51,6 +54,7 @@ class DataClassCopyIntegrationSpec extends CommonDataSpec {
         folderId = folderApi.create(new Folder(label: 'Test folder')).id
         dataModelId = dataModelApi.create(folderId, dataModelPayload('source label')).id
         targetId = dataModelApi.create(folderId, dataModelPayload('target label')).id
+        targetDataClassId = dataClassApi.create(targetId, dataClassPayload('target class label')).id
         Terminology terminology = terminologyApi.create(folderId, terminologyPayload())
         terminologyApi.finalise(terminology.id, finalisePayload())
         dataClass = dataClassApi.create(dataModelId, dataClassPayload('source label'))
@@ -195,6 +199,7 @@ class DataClassCopyIntegrationSpec extends CommonDataSpec {
 
         then:
         copied
+        !copied.parentDataClass
         copied.dataClasses.size() == 1
         DataClass copiedChild = copied.dataClasses[0]
         copiedChild.label == childDataClass.label
@@ -216,4 +221,39 @@ class DataClassCopyIntegrationSpec extends CommonDataSpec {
         dataTypes.items.size() == 1
         dataTypes.items.domainType.containsAll(List.of(DataType.DataTypeKind.MODEL_TYPE.stringValue))
     }
+
+    void 'test copy dataclass into another class - with child and child data element with modelType DataType'() {
+        given:
+        ListResponse<DataType> dataTypesBefore = dataTypeApi.list(targetId)
+        dataTypesBefore.items.isEmpty()
+        childDataElement = dataElementApi.create(dataModelId, childDataClass.id, dataElementPayload("data element label", modelTypeDataType))
+
+        when:
+        DataClass copied = dataClassApi.copyDataClass(targetId, targetDataClassId, dataModelId, dataClass.id)
+
+        then:
+        copied
+        copied.parentDataClass.id == targetDataClassId
+        copied.dataClasses.size() == 1
+        DataClass copiedChild = copied.dataClasses[0]
+        copiedChild.label == childDataClass.label
+        copiedChild.id != childDataClass.id
+        copiedChild.dataElements.size() == 1
+
+        DataElement copiedChildDataElement = copiedChild.dataElements[0]
+        copiedChildDataElement.id != childDataElement.id
+        copiedChildDataElement.label == childDataElement.label
+        copiedChildDataElement.dataType
+        copiedChildDataElement.dataType.id != modelTypeDataType.id
+        copiedChildDataElement.dataType.domainType == DataType.DataTypeKind.MODEL_TYPE.stringValue
+        copiedChildDataElement.dataType.modelResourceId == modelTypeDataType.modelResourceId
+
+        when:
+        ListResponse<DataType> dataTypes = dataTypeApi.list(targetId)
+        then:
+        dataTypes
+        dataTypes.items.size() == 1
+        dataTypes.items.domainType.containsAll(List.of(DataType.DataTypeKind.MODEL_TYPE.stringValue))
+    }
+
 }

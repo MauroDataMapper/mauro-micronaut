@@ -1,5 +1,6 @@
 package org.maurodata.controller.datamodel
 
+import io.swagger.v3.oas.annotations.Operation
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
@@ -12,6 +13,7 @@ import io.micronaut.http.annotation.Post
 import io.micronaut.http.annotation.Put
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
+import io.swagger.v3.oas.annotations.responses.ApiResponse
 import jakarta.inject.Inject
 import org.maurodata.api.Paths
 import org.maurodata.api.datamodel.EnumerationValueApi
@@ -46,13 +48,15 @@ class EnumerationValueController extends AdministeredItemController<EnumerationV
     }
 
     @Audit
-    @Get(Paths.ENUMERATION_VALUE_ID)
+    @Operation(operationId = 'showEnumerationValue', summary = "Get an enumeration value", description = "Returns an enumeration value.")
+    @Get(uris = [Paths.ENUMERATION_VALUE_ID, Paths.ENUMERATION_VALUE_ID_LEGACY])
     EnumerationValue show(UUID dataModelId, UUID enumerationTypeId, UUID id) {
         super.show(id)
     }
 
     @Audit
-    @Post(Paths.ENUMERATION_VALUE_LIST)
+    @Operation(operationId = 'createEnumerationValue', summary = "Create an enumeration value", description = "Creates an enumeration value. You must have edit privileges on the item in question.")
+    @Post(uris = [Paths.ENUMERATION_VALUE_LIST, Paths.ENUMERATION_VALUE_LIST_LEGACY])
     EnumerationValue create(UUID dataModelId, UUID enumerationTypeId, @Body @NonNull EnumerationValue enumerationValue) {
         cleanBody(enumerationValue)
         DataType dataType = dataTypeRepository.readById(enumerationTypeId)
@@ -63,7 +67,8 @@ class EnumerationValueController extends AdministeredItemController<EnumerationV
     }
 
     @Audit
-    @Put(Paths.ENUMERATION_VALUE_ID)
+    @Operation(operationId = 'updateEnumerationValue', summary = "Update an enumeration value", description = "Updates an enumeration value.")
+    @Put(uris = [Paths.ENUMERATION_VALUE_ID, Paths.ENUMERATION_VALUE_ID_LEGACY])
     EnumerationValue update(UUID dataModelId, UUID enumerationTypeId, UUID id, @Body @NonNull EnumerationValue enumerationValue) {
         super.update(id, enumerationValue)
     }
@@ -73,17 +78,20 @@ class EnumerationValueController extends AdministeredItemController<EnumerationV
             parentIdParamName = 'enumerationTypeId',
             deletedObjectDomainType = EnumerationValue
     )
-    @Delete(Paths.ENUMERATION_VALUE_ID)
+    @ApiResponse(responseCode = "204", description = "No content - deleted successfully")
+    @Operation(operationId = 'deleteEnumerationValue', summary = "Delete an enumeration value", description = "Deletes an enumeration value.")
+    @Delete(uris = [Paths.ENUMERATION_VALUE_ID, Paths.ENUMERATION_VALUE_ID_LEGACY])
     HttpResponse delete(UUID dataModelId, UUID enumerationTypeId, UUID id, @Body @Nullable EnumerationValue enumerationValue) {
         super.delete(id, enumerationValue)
     }
 
     @Audit
-    @Get(Paths.ENUMERATION_VALUE_LIST_PAGED)
+    @Operation(operationId = 'listEnumerationValuePaged', summary = "List the enumeration values", description = "Returns the enumeration values. You must have edit privileges on the item in question.")
+    @Get(uris=[Paths.ENUMERATION_VALUE_LIST_PAGED, Paths.ENUMERATION_VALUE_LIST_PAGED_LEGACY])
     ListResponse<EnumerationValue> list(UUID dataModelId, UUID enumerationTypeId, @Nullable PaginationParams params = new PaginationParams()) {
         
         DataType enumerationType = dataTypeRepository.readById(enumerationTypeId)
-        accessControlService.checkRole(Role.EDITOR, enumerationType)
+        accessControlService.checkRole(Role.READER, enumerationType)
         ListResponse.from(enumerationValueRepository.readAllByEnumerationType_Id(enumerationTypeId), params)
     }
 

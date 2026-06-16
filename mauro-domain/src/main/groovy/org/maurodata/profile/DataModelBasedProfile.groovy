@@ -9,32 +9,47 @@ import groovy.transform.CompileStatic
 @CompileStatic
 class DataModelBasedProfile implements Profile {
 
-    String metadataNamespace
+    DataModel dataModel
+    private Map<String, String> metadataMap
 
-    String name
+    @Override
+    String getName() {
+        return dataModel.label
+    }
 
-    private List<String> profileApplicableForDomains
+    @Override
+    String getDisplayName() {
+        return dataModel.label
+    }
 
-    DataModelBasedProfile(DataModel dataModel) {
-        Map<String, String> metadataMap = dataModel.metadataAsMap(ProfileSpecificationProfile.NAMESPACE)
-        name = dataModel.label
-        displayName = dataModel.label
-        version = dataModel.modelVersionTag?:dataModel.modelVersion
-        description = dataModel.description
-        metadataNamespace = metadataMap["metadataNamespace"]
-        if(metadataMap["canBeEditedAfterFinalisation"]) {
-            canBeEditedAfterFinalisation = Boolean.parseBoolean(metadataMap["canBeEditedAfterFinalisation"])
-        }
-        if(metadataMap["profileApplicableForDomains"]) {
-            profileApplicableForDomains = metadataMap["profileApplicableForDomains"].split(";").collect {it.trim()}
-        }
-        sections = dataModel.dataClasses.collect { sectionFromClass(it) }
+    @Override
+    String getVersion() {
+        dataModel.modelVersionTag?:dataModel.modelVersion
+    }
 
+    String getDescription() {
+        dataModel.description
+    }
+
+    @Override
+    String getMetadataNamespace() {
+        metadataMap["metadataNamespace"]
+    }
+
+    @Override
+    boolean getCanBeEditedAfterFinalisation(){
+        Boolean.parseBoolean(metadataMap["canBeEditedAfterFinalisation"]?:"false")
     }
 
     @Override
     List<String> getProfileApplicableForDomains() {
-        return this.@profileApplicableForDomains
+        (metadataMap["domainsApplicable"]?:"").split(";").collect {it.trim()}
+    }
+
+    DataModelBasedProfile(DataModel dataModel) {
+        this.dataModel = dataModel
+        this.metadataMap = dataModel.metadataAsMap(ProfileSpecificationProfile.NAMESPACE)
+        sections = dataModel.dataClasses.collect { sectionFromClass(it) }
     }
 
     private ProfileSection sectionFromClass(DataClass dataClass) {

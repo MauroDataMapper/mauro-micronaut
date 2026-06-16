@@ -1,5 +1,6 @@
 package org.maurodata.controller.path
 
+import io.swagger.v3.oas.annotations.Operation
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.http.annotation.Controller
@@ -26,6 +27,7 @@ class PathController implements PathApi {
 
     @Audit
     @Override
+    @Operation(summary = "Get a path", description = "Returns a path.")
     @Get(Paths.RESOURCE_BY_PATH)
     AdministeredItem getResourceByPath(String domainType, String path) {
         pathService.getResourceByPath(domainType, path)
@@ -33,6 +35,7 @@ class PathController implements PathApi {
 
     @Audit
     @Override
+    @Operation(summary = "Get a path", description = "Returns a path.")
     @Get(Paths.RESOURCE_BY_PATH_FROM_RESOURCE)
     AdministeredItem getResourceByPathFromResource(String domainType, UUID domainId, String path) {
         pathService.getResourceByPathFromResource(domainType, domainId, path)

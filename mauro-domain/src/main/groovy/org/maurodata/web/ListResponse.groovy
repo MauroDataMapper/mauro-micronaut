@@ -130,7 +130,7 @@ class ListResponse<T> {
         }
 
         // Paginate
-        if (params.all.equalsIgnoreCase(Boolean.TRUE.toString())) {
+        if (params.all && params.all.equalsIgnoreCase(Boolean.TRUE.toString())) {
             return sorted
         } else {
             int start = Math.max(0, params.offset ?: 0)

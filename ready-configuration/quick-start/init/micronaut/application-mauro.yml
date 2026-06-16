@@ -1,0 +1,17 @@
+mauro:
+    plugins:
+        autoregister: true
+    users:
+    -   email: admin@maurodatamapper.com
+        first-name: admin
+        last-name: admin
+        temp-password: password
+    groups:
+    -   name: Administrators
+        isAdmin: true
+        members:
+          - admin@maurodatamapper.com
+    api-keys:
+    -   name: My first API Key
+        email: admin@maurodatamapper.com
+        refreshable: true

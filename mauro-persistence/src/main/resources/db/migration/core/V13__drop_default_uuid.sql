@@ -1,0 +1,34 @@
+-- # Drop all default values for uuid columns in the database, as they are now generated in the application layer instead of the database layer.
+
+ALTER TABLE core."authority" ALTER COLUMN "id" DROP DEFAULT;
+ALTER TABLE "core"."metadata" ALTER COLUMN "id" DROP DEFAULT;
+ALTER TABLE "core"."version_link" ALTER COLUMN "id" DROP DEFAULT;
+ALTER TABLE core."folder" ALTER COLUMN "id" DROP DEFAULT;
+ALTER TABLE security."catalogue_user" ALTER COLUMN "id" DROP DEFAULT;
+ALTER TABLE security."user_group" ALTER COLUMN "id" DROP DEFAULT;
+ALTER TABLE security."securable_resource_group_role" ALTER COLUMN "id" DROP DEFAULT;
+ALTER TABLE terminology."terminology" ALTER COLUMN "id" DROP DEFAULT;
+ALTER TABLE terminology."term_relationship_type" ALTER COLUMN "id" DROP DEFAULT;
+ALTER TABLE terminology."term" ALTER COLUMN "id" DROP DEFAULT;
+ALTER TABLE terminology."term_relationship" ALTER COLUMN "id" DROP DEFAULT;
+ALTER TABLE datamodel."data_model" ALTER COLUMN "id" DROP DEFAULT;
+ALTER TABLE datamodel."data_class" ALTER COLUMN "id" DROP DEFAULT;
+ALTER TABLE datamodel."data_type" ALTER COLUMN "id" DROP DEFAULT;
+ALTER TABLE datamodel."data_element" ALTER COLUMN "id" DROP DEFAULT;
+ALTER TABLE datamodel."enumeration_value" ALTER COLUMN "id" DROP DEFAULT;
+ALTER TABLE "core"."edit" ALTER COLUMN "id" DROP DEFAULT;
+ALTER TABLE "core"."semantic_link" ALTER COLUMN "id" DROP DEFAULT;
+ALTER TABLE terminology.code_set ALTER COLUMN "id" DROP DEFAULT;
+ALTER TABLE core."summary_metadata" ALTER COLUMN "id" DROP DEFAULT;
+ALTER TABLE core.summary_metadata_report ALTER COLUMN "id" DROP DEFAULT;
+ALTER TABLE core."annotation" ALTER COLUMN "id" DROP DEFAULT;
+ALTER TABLE core.api_property ALTER COLUMN "id" DROP DEFAULT;
+ALTER TABLE "dataflow"."data_flow" ALTER COLUMN "id" DROP DEFAULT;
+ALTER TABLE "dataflow"."data_class_component" ALTER COLUMN "id" DROP DEFAULT;
+ALTER TABLE "dataflow"."data_element_component" ALTER COLUMN "id" DROP DEFAULT;
+ALTER TABLE core."reference_file" ALTER COLUMN "id" DROP DEFAULT;
+ALTER TABLE core."classification_scheme" ALTER COLUMN "id" DROP DEFAULT;
+ALTER TABLE core."classifier" ALTER COLUMN "id" DROP DEFAULT;
+ALTER TABLE security.api_key ALTER COLUMN "id" DROP DEFAULT;
+ALTER TABLE federation."subscribed_catalogue" ALTER COLUMN "id" DROP DEFAULT;
+ALTER TABLE federation."subscribed_model" ALTER COLUMN "id" DROP DEFAULT;

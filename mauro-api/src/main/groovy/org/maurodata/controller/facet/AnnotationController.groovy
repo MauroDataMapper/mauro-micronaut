@@ -1,5 +1,7 @@
 package org.maurodata.controller.facet
 
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.responses.ApiResponse
 import org.maurodata.api.Paths
 import org.maurodata.api.facet.AnnotationApi
 import org.maurodata.audit.Audit
@@ -52,6 +54,7 @@ class AnnotationController extends FacetController<Annotation> implements Annota
      * @return
      */
     @Audit
+    @Operation(operationId = 'listAnnotationPaged', summary = "List the annotations", description = "Returns the annotations. You must have read privileges on the item in question.")
     @Get(Paths.ANNOTATION_LIST_PAGED)
     ListResponse<Annotation> list(@NonNull String domainType, @NonNull UUID domainId, @Nullable PaginationParams params = new PaginationParams()) {
         
@@ -61,6 +64,7 @@ class AnnotationController extends FacetController<Annotation> implements Annota
     }
 
     @Audit
+    @Operation(operationId = 'showAnnotation', summary = "Get an annotation", description = "Returns an annotation. You must have read privileges on the item in question.")
     @Get(Paths.ANNOTATION_ID)
     Annotation show(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID id) {
         accessControlService.checkRole(Role.READER, readAdministeredItem(domainType, domainId))
@@ -70,6 +74,7 @@ class AnnotationController extends FacetController<Annotation> implements Annota
     }
 
     @Audit
+    @Operation(operationId = 'createAnnotation', summary = "Create an annotation", description = "Creates an annotation.")
     @Post(Paths.ANNOTATION_LIST)
     Annotation create(@NonNull String domainType, @NonNull UUID domainId, @Body @NonNull Annotation annotation) {
         super.create(domainType, domainId, annotation) as Annotation
@@ -84,6 +89,7 @@ class AnnotationController extends FacetController<Annotation> implements Annota
      * @return newly created child
      */
     @Audit
+    @Operation(operationId = 'createAnnotationChild', summary = "Create an annotation", description = "Creates an annotation. You must have edit privileges on the item in question.")
     @Post(Paths.ANNOTATION_CHILD_LIST)
     Annotation create(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID annotationId, @Body @NonNull Annotation childAnnotation) {
         accessControlService.checkRole(Role.EDITOR, readAdministeredItem(domainType, domainId))
@@ -105,6 +111,7 @@ class AnnotationController extends FacetController<Annotation> implements Annota
      * @return 'Child' annotation
      */
     @Audit
+    @Operation(summary = "Get an annotation", description = "Returns an annotation.")
     @Get(Paths.ANNOTATION_CHILD_ID)
     Annotation getChildAnnotation(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID annotationId,
                                   @NonNull UUID id) {
@@ -112,6 +119,8 @@ class AnnotationController extends FacetController<Annotation> implements Annota
     }
 
     @Audit(deletedObjectDomainType = Annotation)
+    @ApiResponse(responseCode = "204", description = "No content - deleted successfully")
+    @Operation(operationId = 'deleteAnnotation', summary = "Delete an annotation", description = "Deletes an annotation. You must have edit privileges on the item in question.")
     @Delete(Paths.ANNOTATION_ID)
     @Transactional
     HttpResponse delete(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID id) {
@@ -125,6 +134,8 @@ class AnnotationController extends FacetController<Annotation> implements Annota
     }
 
     @Audit(deletedObjectDomainType = Annotation)
+    @ApiResponse(responseCode = "204", description = "No content - deleted successfully")
+    @Operation(operationId = 'deleteAnnotationChild', summary = "Delete an annotation", description = "Deletes an annotation. You must have edit privileges on the item in question.")
     @Delete(Paths.ANNOTATION_CHILD_ID)
     @Transactional
     HttpResponse delete(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID annotationId,

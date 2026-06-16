@@ -33,6 +33,10 @@ class FullTextSearchSpec extends Specification {
     @Inject
     SearchRepository searchRepository
 
+    @Inject
+    @Shared
+    SearchIndexRefreshScheduler searchIndexRefreshScheduler
+
     @Shared
     UUID folderId
 
@@ -69,6 +73,7 @@ class FullTextSearchSpec extends Specification {
         }
         contentsService.saveWithContent(dataModel1)
         contentsService.saveWithContent(dataModel2)
+        searchIndexRefreshScheduler.refreshMaterializedViews()
     }
 
     def "test search results across all domains" () {
@@ -85,11 +90,11 @@ class FullTextSearchSpec extends Specification {
         'classes'           | ['First class', 'Second class', 'Twentieth class']
         'second'            | ['Second class']
         'description'       | ['An import model', 'Twentieth class']
-        'import'            | ['Another import model', 'An import model']
+        'import'            | ['An import model', 'Another import model']
         'nothing'           | []
-        'first & class'     | ['First class', 'Twentieth class']
-        'first | class'     | ['First class', 'Second class', 'Twentieth class']
-        "'first class'"     | ['First class']
+        'first class'       | ['First class', 'Twentieth class']
+        'first or class'    | ['First class', 'Twentieth class', 'Second class']
+        '"first class"'     | ['First class']
     }
 
     def "test prefix search results across all domains" () {
@@ -195,11 +200,11 @@ class FullTextSearchSpec extends Specification {
         'classes'           | ['First class', 'Second class', 'Twentieth class']
         'second'            | ['Second class']
         'description'       | ['An import model', 'Twentieth class']
-        'import'            | ['Another import model', 'An import model']
+        'import'            | ['An import model', 'Another import model']
         'nothing'           | []
-        'first & class'     | ['First class', 'Twentieth class']
-        'first | class'     | ['First class', 'Second class', 'Twentieth class']
-        "'first class'"     | ['First class']
+        'first class'       | ['First class', 'Twentieth class']
+        'first or class'    | ['First class', 'Twentieth class', 'Second class']
+        '"first class" '    | ['First class']
 
     }
 
@@ -218,7 +223,7 @@ class FullTextSearchSpec extends Specification {
         'class'             | null                  | ['First class', 'Second class', 'Twentieth class']
         'class'             | dataModel1.id         | ['First class', 'Second class', 'Twentieth class']
         'class'             | dataModel2.id         | []
-        'import'            | null                  | ['Another import model', 'An import model']
+        'import'            | null                  | ['An import model', 'Another import model']
         'import'            | dataModel1.id         | ['An import model']
         'import'            | dataModel2.id         | ['Another import model']
     }

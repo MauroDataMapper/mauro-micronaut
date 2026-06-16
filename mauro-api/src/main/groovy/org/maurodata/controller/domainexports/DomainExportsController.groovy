@@ -1,5 +1,6 @@
 package org.maurodata.controller.domainexports
 
+import io.swagger.v3.oas.annotations.Operation
 import org.maurodata.api.Paths
 import org.maurodata.api.domainexports.DomainExportsApi
 import org.maurodata.audit.Audit
@@ -20,6 +21,7 @@ import io.micronaut.security.rules.SecurityRule
 @Secured(SecurityRule.IS_ANONYMOUS)
 class DomainExportsController implements DomainExportsApi {
     @Audit
+    @Operation(operationId = 'indexDomainExports',summary = "List the domain exports", description = "Returns the domain exports.")
     @Get(Paths.DOMAIN_EXPORTS_LIST_PAGED)
     ListResponse<Map> index(@Nullable PaginationParams params){
         ListResponse.from([])

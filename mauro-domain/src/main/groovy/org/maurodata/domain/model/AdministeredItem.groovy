@@ -2,6 +2,9 @@ package org.maurodata.domain.model
 
 import groovy.util.logging.Slf4j
 import org.maurodata.domain.classifier.Classifier
+import org.maurodata.domain.diff.BaseCollectionDiff
+import org.maurodata.domain.diff.CollectionDiff
+import org.maurodata.domain.diff.DiffableItem
 import org.maurodata.domain.facet.Annotation
 import org.maurodata.domain.facet.Edit
 import org.maurodata.domain.facet.Facet
@@ -38,7 +41,7 @@ import java.time.Instant
 @CompileStatic
 @AutoClone
 @Slf4j
-abstract class AdministeredItem extends Item implements Pathable {
+abstract class AdministeredItem extends Item implements Pathable, DiffableItem {
 
     /**
      * The label of an object.  Labels are used as identifiers within a context and so need to be unique within
@@ -70,7 +73,7 @@ abstract class AdministeredItem extends Item implements Pathable {
         aliasesString?.split(";") as List
     }
 
-    @Transient
+    //@Transient
     @Relation(Relation.Kind.ONE_TO_MANY)
     List<Classifier> classifiers = []
 
@@ -81,6 +84,16 @@ abstract class AdministeredItem extends Item implements Pathable {
      */
     @Transient
     Path path
+
+    /**
+     * The path of an object allows it to be navigated to from either the containing model, or the folder path within
+     * a system.  This value is calculated on persistence and saved to allow easy lookup.
+     */
+
+    @Transient
+    Path getLocalPath() {
+        path?.localPath()
+    }
 
     /**
      * A different representation of the item's path.
@@ -125,7 +138,7 @@ abstract class AdministeredItem extends Item implements Pathable {
     void setAssociations() {
         List<Facet> facets = []
         [getEdits(),getMetadata(),getSummaryMetadata(),getRules(),getAnnotations(),getReferenceFiles(),getSemanticLinks()].each {
-            facets.addAll(it)
+            facets.addAll(it?:[])
         }
         facets.each {
             it.multiFacetAwareItem = this
@@ -262,12 +275,23 @@ abstract class AdministeredItem extends Item implements Pathable {
         (new Path.PathNode(prefix: this.pathPrefix, identifier: this.pathIdentifier, modelIdentifier: this.pathModelIdentifier)).toString()
     }
 
+    @Override
     @JsonIgnore
     @Transient
     String getDiffIdentifier() {
         if (parent != null) {return "${parent.getDiffIdentifier()}|${this.pathNodeString}"}
         return pathNodeString
     }
+
+
+    @Override
+    @JsonIgnore
+    @Transient
+    CollectionDiff fromItem() {
+        new BaseCollectionDiff(id, getDiffIdentifier(), label)
+    }
+
+
 
 
 
@@ -283,9 +307,14 @@ abstract class AdministeredItem extends Item implements Pathable {
         AdministeredItem node = this
         while (node) {
             pathNodes.add(0, new Path.PathNode(prefix: node.pathPrefix, identifier: node.pathIdentifier, modelIdentifier: node.pathModelIdentifier))
-            if (node.parent == node) break // disallow cycles
-            i++; node = node.parent
-            if (i > Path.PATH_MAX_NODES) throw new MauroInternalException("Path exceeded maximum depth of [$Path.PATH_MAX_NODES]")
+            if (node.parent == node) { // disallow cycles
+                break
+            }
+            i++;
+            node = node.parent
+            if (i > Path.PATH_MAX_NODES) {
+                throw new MauroInternalException("Path exceeded maximum depth of [$Path.PATH_MAX_NODES]")
+            }
         }
 
         path = new Path(pathNodes)
@@ -326,8 +355,18 @@ abstract class AdministeredItem extends Item implements Pathable {
         int i = 0
         AdministeredItem node = this
         while (node) {
-            breadcrumbs.add(new Breadcrumb(id: node.id, domainType: node.domainType, label: node.label, finalised: node instanceof Model ? node.finalised : null))
-            if (node.parent === node || node instanceof Model) break
+            Breadcrumb newBreadcrumb = new Breadcrumb(
+                id: node.id,
+                domainType: node.domainType,
+                label: node.label,
+                finalised: node instanceof Model ? node.finalised : null)
+            if(node instanceof Model) {
+                newBreadcrumb.modelVersionTag = node.modelVersionTag
+                newBreadcrumb.modelVersion = node.modelVersion
+                newBreadcrumb.branchName = node.branchName
+            }
+            breadcrumbs.add(newBreadcrumb)
+            if (node.parent === node || (node instanceof Model && (node.modelVersion || node.branchName || node.modelVersionTag)) ) break
             // root of Breadcrumbs is the nearest Model type parent of the item
             i++; node = node.parent
             if (i > Path.PATH_MAX_NODES) throw new MauroInternalException("Breadcrumbs exceeded maximum depth of [$Path.PATH_MAX_NODES]")

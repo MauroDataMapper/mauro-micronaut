@@ -76,7 +76,7 @@ class DataElement extends ModelItem<DataClass> implements DiffableItem<DataEleme
     @Transient
     @JsonIgnore
     Model getOwner() {
-        dataModel ?: super.getOwner()
+        dataClass?.getOwner() ?: dataModel?.getOwner() ?: super.getOwner()
     }
 
     @Transient
@@ -93,12 +93,24 @@ class DataElement extends ModelItem<DataClass> implements DiffableItem<DataEleme
         dataClass?.id // backwards compatibility
     }
 
+    @Transient
+    @Deprecated
+    @JsonProperty('dataClass')
+    void setDataClassId(UUID dataClassId) {
+        dataClass = new DataClass(id: dataClassId) // backwards compatibility
+    }
+
+
     @Override
     @Transient
     @JsonIgnore
     void setParent(AdministeredItem dataClass) {
-        this.dataClass = (DataClass) dataClass
-        this.dataModel = ((DataClass) dataClass).dataModel
+            this.dataClass = (DataClass) dataClass
+        if(dataClass) {
+            this.dataModel = ((DataClass) dataClass).dataModel
+        } else {
+            this.dataModel = null
+        }
     }
 
     @Override
@@ -108,12 +120,6 @@ class DataElement extends ModelItem<DataClass> implements DiffableItem<DataEleme
         'de'
     }
 
-    @Override
-    @Transient
-    @JsonIgnore
-    CollectionDiff fromItem() {
-        new BaseCollectionDiff(id, getDiffIdentifier(), label)
-    }
 
     @Override
     @Transient

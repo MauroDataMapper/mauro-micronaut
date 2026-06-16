@@ -1,6 +1,5 @@
 package org.maurodata.controller.bootstrap
 
-import org.maurodata.domain.authority.Authority
 import org.maurodata.domain.config.ApiProperty
 import org.maurodata.domain.security.ApiKey
 import org.maurodata.domain.security.ApplicationRole
@@ -8,16 +7,11 @@ import org.maurodata.domain.security.CatalogueUser
 import org.maurodata.domain.security.UserGroup
 import org.maurodata.persistence.cache.ItemCacheableRepository
 import org.maurodata.persistence.cache.ItemCacheableRepository.ApiPropertyCacheableRepository
-import org.maurodata.persistence.config.ApiPropertyRepository
 import org.maurodata.security.utils.SecureRandomStringGenerator
-import org.maurodata.security.utils.SecurityUtils
-import org.maurodata.service.core.AuthorityService
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.context.event.ApplicationEventListener
-import io.micronaut.core.annotation.Order
-import io.micronaut.core.order.Ordered
 import io.micronaut.discovery.event.ServiceReadyEvent
 import jakarta.inject.Inject
 import jakarta.inject.Singleton

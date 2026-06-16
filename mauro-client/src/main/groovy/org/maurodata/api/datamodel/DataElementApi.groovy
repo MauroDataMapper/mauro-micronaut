@@ -39,11 +39,16 @@ interface DataElementApi extends AdministeredItemApi<DataElement, DataClass> {
     ListResponse<DataElement> list(UUID dataModelId, UUID dataClassId)
 
     @Get(Paths.DATA_ELEMENT_IN_MODEL_LIST)
+    ListResponse<DataElement> byModelList(UUID dataModelId, @Nullable PaginationParams params)
+
+    @Get(Paths.DATA_ELEMENT_IN_MODEL_LIST)
     ListResponse<DataElement> byModelList(UUID dataModelId)
+
+    @Put(Paths.DATA_ELEMENT_MOVE)
+    DataElement moveDataDataElement(UUID dataModelId, UUID dataClassId, UUID id, @Body @Nullable DataElement dataElement)
 
     @Post(Paths.DATA_ELEMENT_COPY)
     DataElement copyDataElement(UUID dataModelId, UUID dataClassId, UUID otherModelId,  UUID otherDataClassId, UUID dataElementId)
-
 
     @Get(Paths.DATA_ELEMENT_DOI)
     Map doi(UUID id)

@@ -43,7 +43,11 @@ class JsonDataModelExporterPlugin implements DataModelExporterPlugin {
     @Override
     byte[] exportModels(Collection<DataModel> dataModels) {
         ExportModel exportModel = new ExportModel(this)
-        exportModel.dataModels = dataModels.toList()
+        if(dataModels.size() > 1) {
+            exportModel.dataModels = dataModels.toList()
+        } else {
+            exportModel.dataModel = dataModels[0]
+        }
         objectMapper.writeValueAsBytes(exportModel)
 
     }

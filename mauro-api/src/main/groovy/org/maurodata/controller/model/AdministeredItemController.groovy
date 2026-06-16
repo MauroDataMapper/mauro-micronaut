@@ -143,8 +143,8 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
         if (itemToDelete == null) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, "Object not found for deletion")
         }
-
-        accessControlService.checkRole(Role.EDITOR, item)
+        pathRepository.readParentItems(itemToDelete)
+        accessControlService.checkRole(Role.EDITOR, itemToDelete)
 
         if (item?.version) itemToDelete.version = item.version
 

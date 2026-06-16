@@ -1,6 +1,8 @@
 package org.maurodata.domain.terminology
 
-
+import org.maurodata.domain.diff.DiffBuilder
+import org.maurodata.domain.diff.DiffableItem
+import org.maurodata.domain.diff.ObjectDiff
 import org.maurodata.domain.model.Item
 import org.maurodata.domain.model.ItemReference
 import org.maurodata.domain.model.ItemReferencer
@@ -20,7 +22,6 @@ import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Relation
 import jakarta.persistence.Transient
 import jakarta.validation.constraints.NotBlank
-import jakarta.validation.constraints.Pattern
 import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.domain.model.ModelItem
 
@@ -38,7 +39,7 @@ import org.maurodata.domain.model.ModelItem
 @MappedEntity(schema = 'terminology')
 @MapConstructor(includeSuperFields = true, includeSuperProperties = true, noArg = true)
 @Indexes([@Index(columns = ['terminology_id', 'code'], unique = true)])
-class Term extends ModelItem<Terminology> implements ItemReferencer {
+class Term extends ModelItem<Terminology> implements ItemReferencer, DiffableItem<Term> {
 
     @Override
     String getLabel() {
@@ -115,6 +116,41 @@ class Term extends ModelItem<Terminology> implements ItemReferencer {
     @JsonProperty('model')
     UUID getModelId() {
         terminology?.id
+    }
+
+
+    @Override
+    @JsonIgnore
+    @Transient
+    String getDiffIdentifier() {
+        if (terminology != null) {
+            return "${terminology.diffIdentifier}|${getPathNodeString()}"
+        }
+        return "${getPathNodeString()}"
+    }
+
+    @Override
+    @JsonIgnore
+    @Transient
+    ObjectDiff<Term> diff(Term other, String lhsPathRoot, String rhsPathRoot) {
+        ObjectDiff<Term> base = DiffBuilder.objectDiff(Term)
+            .leftHandSide(id?.toString(), this)
+            .rightHandSide(other.id?.toString(), other)
+        base.label = this.label
+        base.appendString(DiffBuilder.DESCRIPTION, this.description, other.description, this, other)
+        base.appendString(DiffBuilder.CODE, this.code, other.code, this, other)
+        base.appendString(DiffBuilder.DEFINITION, this.definition, other.definition, this, other)
+        base.appendString(DiffBuilder.URL, this.url, other.url, this, other)
+        base.appendString(DiffBuilder.ALIASES_STRING, this.aliasesString, other.aliasesString, this, other)
+        if (!DiffBuilder.isNullOrEmpty(this.sourceTermRelationships as Collection<Object>) || !DiffBuilder.isNullOrEmpty(other.sourceTermRelationships as Collection<Object>)) {
+            base.appendCollection(DiffBuilder.SOURCE_TERM_RELATIONSHIPS, this.sourceTermRelationships as Collection<DiffableItem>, other.sourceTermRelationships as Collection<DiffableItem>, lhsPathRoot,
+                                  rhsPathRoot)
+        }
+        if (!DiffBuilder.isNullOrEmpty(this.targetTermRelationships as Collection<Object>) || !DiffBuilder.isNullOrEmpty(other.targetTermRelationships as Collection<Object>)) {
+            base.appendCollection(DiffBuilder.TARGET_TERM_RELATIONSHIPS, this.targetTermRelationships as Collection<DiffableItem>, other.targetTermRelationships as Collection<DiffableItem>, lhsPathRoot,
+                                  rhsPathRoot)
+        }
+        base
     }
 
 

@@ -1,5 +1,7 @@
 package org.maurodata.controller.federation
 
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.responses.ApiResponse
 import org.maurodata.audit.Audit
 
 import io.micronaut.http.HttpResponse
@@ -59,6 +61,7 @@ class SubscribedModelController extends ItemController<SubscribedModel> {
     }
 
     @Audit
+    @Operation(operationId = 'listAllSubscribedModel', summary = "List the subscribed models", description = "Returns the subscribed models. It is available to authenticated users.")
     @Get(Paths.SUBSCRIBED_MODELS_LIST)
     ListResponse<SubscribedModel> listAll(@NonNull UUID subscribedCatalogueId) {
         accessControlService.checkAuthenticated()
@@ -66,6 +69,7 @@ class SubscribedModelController extends ItemController<SubscribedModel> {
     }
 
     @Audit
+    @Operation(operationId = 'showSubscribedModel', summary = "Get a subscribed model", description = "Returns a subscribed model. It is available to authenticated users.")
     @Get(Paths.SUBSCRIBED_MODELS_ID)
     SubscribedModel show(@NonNull UUID subscribedCatalogueId, @NonNull UUID subscribedModelId) {
         accessControlService.checkAuthenticated()
@@ -77,6 +81,7 @@ class SubscribedModelController extends ItemController<SubscribedModel> {
     }
 
     @Audit(level = Audit.AuditLevel.FILE_ONLY)
+    @Operation(operationId = 'createSubscribedModel', summary = "Create a subscribed model", description = "Creates a subscribed model. It is available to authenticated users; you must have read privileges on the item in question.")
     @Post(Paths.SUBSCRIBED_MODELS_LIST)
     @ExecuteOn(TaskExecutors.BLOCKING)
     @Transactional
@@ -103,6 +108,8 @@ class SubscribedModelController extends ItemController<SubscribedModel> {
     }
 
     @Audit(level = Audit.AuditLevel.FILE_ONLY)
+    @ApiResponse(responseCode = "204", description = "No content - deleted successfully")
+    @Operation(operationId = 'deleteSubscribedModel', summary = "Delete a subscribed model", description = "Deletes a subscribed model. It is only available to administrator users.")
     @Delete(Paths.SUBSCRIBED_MODELS_ID)
     @Transactional
     HttpResponse delete(@NonNull UUID subscribedCatalogueId, @NonNull UUID subscribedModelId, @Body @Nullable SubscribedModel subscribedModel) {
@@ -123,5 +130,3 @@ class SubscribedModelController extends ItemController<SubscribedModel> {
         }
     }
 }
-
-

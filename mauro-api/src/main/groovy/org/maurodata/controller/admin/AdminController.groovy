@@ -1,9 +1,11 @@
 package org.maurodata.controller.admin
 
+import io.swagger.v3.oas.annotations.Operation
 import org.maurodata.api.Paths
 import org.maurodata.api.admin.AdminApi
 import org.maurodata.audit.Audit
 import org.maurodata.plugin.MauroPluginDTO
+import org.maurodata.service.plugin.PluginRepositoryService
 
 import groovy.transform.CompileStatic
 import io.micronaut.http.HttpStatus
@@ -12,6 +14,9 @@ import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Get
 import io.micronaut.http.annotation.Post
 import io.micronaut.http.exceptions.HttpStatusException
+import io.micronaut.runtime.EmbeddedApplication
+import io.micronaut.scheduling.TaskExecutors
+import io.micronaut.scheduling.annotation.ExecuteOn
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
 import jakarta.inject.Inject
@@ -20,12 +25,15 @@ import org.maurodata.domain.security.CatalogueUser
 import org.maurodata.persistence.security.EmailRepository
 import org.maurodata.plugin.MauroPluginService
 import org.maurodata.plugin.exporter.ModelExporterPlugin
-import org.maurodata.plugin.exporter.ModelItemExporterPlugin
 import org.maurodata.plugin.importer.ImporterPlugin
 import org.maurodata.security.AccessControlService
 import org.maurodata.plugin.EmailPlugin
 import org.maurodata.service.email.EmailService
 import org.maurodata.web.ListResponse
+
+import jakarta.inject.Named
+
+import java.util.concurrent.ExecutorService
 
 @CompileStatic
 @Controller()
@@ -41,13 +49,24 @@ class AdminController implements AdminApi {
     @Inject
     EmailService emailService
 
+    @Inject
+    PluginRepositoryService service
+
     private final EmailRepository emailRepository
+
+    @Inject
+    @Named(TaskExecutors.IO)
+    ExecutorService executor
+
+    @Inject
+    private EmbeddedApplication<? extends EmbeddedApplication> application
 
     AdminController(EmailRepository emailRepository) {
         this.emailRepository = emailRepository
     }
 
     @Audit
+    @Operation(summary = "List the modules", description = "Returns the modules. It is only available to administrator users.")
     @Get(Paths.ADMIN_MODULES_LIST)
     List<LinkedHashMap<String, String>> modules() {
         accessControlService.checkAdministrator()
@@ -57,6 +76,7 @@ class AdminController implements AdminApi {
 
 
     @Audit
+    @Operation(summary = "List the importers", description = "Returns the importers. It is only available to administrator users.")
     @Get(Paths.ADMIN_IMPORTERS_LIST)
     List<MauroPluginDTO> importers() {
         accessControlService.checkAdministrator()
@@ -65,6 +85,7 @@ class AdminController implements AdminApi {
     }
 
     @Audit
+    @Operation(summary = "List the exporters", description = "Returns the exporters. It is only available to administrator users.")
     @Get(Paths.ADMIN_EXPORTERS_LIST)
     List<MauroPluginDTO> exporters() {
         accessControlService.checkAdministrator()
@@ -74,15 +95,33 @@ class AdminController implements AdminApi {
 
 
     @Audit
+    @Operation(summary = "List the emailers", description = "Returns the emailers.")
     @Get(Paths.ADMIN_EMAILERS_LIST)
     List<MauroPluginDTO> emailers() {
         mauroPluginService.listPluginsAsDTO(EmailPlugin)
     }
 
     @Audit
+    @Operation(summary = "List the data loaders", description = "Returns the data loaders.")
     @Get(Paths.ADMIN_DATALOADERS_LIST)
     List<MauroPluginDTO> dataLoaders() {
         []
+    }
+
+    @Audit
+    @ExecuteOn(TaskExecutors.BLOCKING)
+    @Get(Paths.ADMIN_AVAILABLE_PROVIDERS_LIST)
+    List<Map<String, String>> available() {
+        accessControlService.checkAdministrator()
+        service.listAvailablePlugins()
+    }
+
+    @Audit
+    @ExecuteOn(TaskExecutors.BLOCKING)
+    @Post(Paths.ADMIN_INSTALL_PROVIDER)
+    Map<String, Object> installPlugin(String plugin) {
+        accessControlService.checkAdministrator()
+        return service.installPlugin(plugin)
     }
 
     /**
@@ -92,6 +131,7 @@ class AdminController implements AdminApi {
      * @return
      */
     @Audit(level= Audit.AuditLevel.FILE_ONLY)
+    @Operation(summary = "Send a test email", description = "Sends a test email. It is only available to administrator users.")
     @Post(Paths.ADMIN_EMAIL_SEND_TEST)
     Boolean sendTestEmail(@Body CatalogueUser catalogueUser) {
         accessControlService.checkAdministrator()
@@ -120,6 +160,7 @@ class AdminController implements AdminApi {
      * @return
      */
     @Audit
+    @Operation(summary = "Test the email connection", description = "Tests the email connection. It is only available to administrator users.")
     @Get(Paths.ADMIN_EMAIL_TEST_CONNECTION)
     boolean testConnection() {
         accessControlService.checkAdministrator()
@@ -133,6 +174,7 @@ class AdminController implements AdminApi {
     }
 
     @Audit
+    @Operation(summary = "List the emails", description = "Returns the emails. It is only available to administrator users.")
     @Get(Paths.ADMIN_EMAILS)
     ListResponse<Email> listEmails() {
         accessControlService.checkAdministrator()
@@ -144,6 +186,7 @@ class AdminController implements AdminApi {
      * @return
      */
     @Audit(level= Audit.AuditLevel.FILE_ONLY)
+    @Operation(summary = "Retry an email", description = "Retries an email. It is only available to administrator users.")
     @Post(Paths.ADMIN_EMAIL_RETRY)
     boolean retryEmail(UUID emailId) {
         accessControlService.checkAdministrator()
@@ -158,5 +201,23 @@ class AdminController implements AdminApi {
         } catch (Exception e) {
             throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.message)
         }
+    }
+
+    @Audit
+    @Post(Paths.ADMIN_SHUTDOWN)
+    Boolean shutDown() {
+        accessControlService.checkAdministrator()
+
+        executor.submit(
+            () -> {
+                try {
+                    Thread.sleep(1000)
+                } catch (InterruptedException ignored) {
+                }
+                application.stop()
+            }
+        )
+
+        return true
     }
 }

@@ -1,5 +1,6 @@
 package org.maurodata.controller.folder
 
+import io.swagger.v3.oas.annotations.Operation
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
@@ -19,6 +20,7 @@ import io.micronaut.scheduling.annotation.ExecuteOn
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
 import io.micronaut.transaction.annotation.Transactional
+import io.swagger.v3.oas.annotations.responses.ApiResponse
 import jakarta.inject.Inject
 import org.maurodata.ErrorHandler
 import org.maurodata.api.Paths
@@ -31,6 +33,7 @@ import org.maurodata.api.model.ModelVersionedWithTargetsRefDTO
 import org.maurodata.api.model.PermissionsDTO
 import org.maurodata.audit.Audit
 import org.maurodata.controller.model.ModelController
+import org.maurodata.domain.facet.EditType
 import org.maurodata.domain.folder.Folder
 import org.maurodata.domain.folder.FolderService
 import org.maurodata.domain.model.Model
@@ -55,17 +58,20 @@ class VersionedFolderController extends ModelController<Folder> implements Versi
         this.folderService = folderService
     }
 
+    @Operation(operationId = 'showVersionedFolder', summary = "Get a versioned folder", description = "Returns a versioned folder.")
     @Get(Paths.VERSIONED_FOLDER_ID)
     Folder show(UUID id) {
         super.show(id)
     }
 
+    @Operation(operationId = 'showVersionedFolderChild', summary = "Get a versioned folder", description = "Returns a versioned folder.")
     @Get(Paths.FOLDER_CHILD_VERSIONED_FOLDER_ID)
     Folder show(UUID parentId, UUID id) {
         super.show(id)
     }
 
     @Audit
+    @Operation(operationId = 'createVersionedFolder', summary = "Create a versioned folder", description = "Creates a versioned folder.")
     @Post(Paths.VERSIONED_FOLDER_LIST)
     Folder create(@Body Folder folder) {
         cleanBody(folder)
@@ -81,6 +87,7 @@ class VersionedFolderController extends ModelController<Folder> implements Versi
 
     @Audit
     @Transactional
+    @Operation(operationId = 'createChildVersionedFolder', summary = "Create a versioned folder", description = "Creates a versioned folder.")
     @Post(Paths.CHILD_VERSIONED_FOLDER_LIST)
     Folder create(UUID parentId, @Body @NonNull Folder folder) {
         folder.branchName = Model.DEFAULT_BRANCH_NAME
@@ -88,17 +95,20 @@ class VersionedFolderController extends ModelController<Folder> implements Versi
     }
 
     @Audit
+    @Operation(operationId = 'updateVersionedFolder', summary = "Update a versioned folder", description = "Updates a versioned folder.")
     @Put(Paths.VERSIONED_FOLDER_ID)
     Folder update(UUID id, @Body @NonNull Folder folder) {
         super.update(id, folder)
     }
 
     @Audit
+    @Operation(operationId = 'updateVersionedFolderChild', summary = "Update a versioned folder", description = "Updates a versioned folder.")
     @Put(Paths.FOLDER_CHILD_VERSIONED_FOLDER_ID)
     Folder update(UUID parentId, UUID id, @Body @NonNull Folder folder) {
         super.update(id, folder)
     }
 
+    @Operation(operationId = 'listAllVersionedFolder', summary = "List the versioned folders", description = "Returns the versioned folders.")
     @Get(Paths.VERSIONED_FOLDER_LIST)
     ListResponse<Folder> listAll() {
 
@@ -110,6 +120,7 @@ class VersionedFolderController extends ModelController<Folder> implements Versi
         return listResponse
     }
 
+    @Operation(operationId = 'listFolderChild', summary = "List the versioned folders", description = "Returns the versioned folders.")
     @Get(Paths.CHILD_VERSIONED_FOLDER_LIST)
     ListResponse<Folder> list(UUID parentId) {
 
@@ -121,8 +132,26 @@ class VersionedFolderController extends ModelController<Folder> implements Versi
         return listResponse
     }
 
+    @Audit(title = EditType.EXPORT, description = 'Export versioned folder')
+    @Operation(operationId = 'exportModelVersionedFolder', summary = "Get a versioned folder", description = "Returns a versioned folder.")
+    @Get(Paths.VERSIONED_FOLDER_EXPORT)
+    @Override
+    HttpResponse<byte[]> exportModel(UUID id, @Nullable String namespace, @Nullable String name, @Nullable String version) {
+        super.exportModels(namespace, name, version, [id])
+    }
+
+    @Audit(title = EditType.EXPORT, description = 'Export versioned folders')
+    @Operation(summary = "Export the versioned folder", description = "Exports the versioned folder.")
+    @Post(Paths.VERSIONED_FOLDER_EXPORT_MANY)
+    @Override
+    HttpResponse<byte[]> exportModels(@Nullable String namespace, @Nullable String name, @Nullable String version, @Body List<UUID> ids) {
+        super.exportModels(namespace, name, version, ids)
+
+    }
+
     @Audit
     @Transactional
+    @Operation(operationId = 'finaliseVersionedFolder', summary = "Update a versioned folder", description = "Updates a versioned folder.")
     @Put(Paths.VERSIONED_FOLDER_FINALISE)
     Folder finalise(UUID id, @Body FinaliseData finaliseData) {
         super.finalise(id, finaliseData)
@@ -130,6 +159,7 @@ class VersionedFolderController extends ModelController<Folder> implements Versi
 
     @Audit
     @Transactional
+    @Operation(summary = "Update a versioned folder", description = "Updates a versioned folder.")
     @Put(Paths.VERSIONED_FOLDER_NEW_BRANCH_MODEL_VERSION)
     Folder createNewBranchModelVersion(UUID id, @Body @Nullable CreateNewVersionData createNewVersionData) {
         super.createNewBranchModelVersion(id, createNewVersionData)
@@ -143,6 +173,8 @@ class VersionedFolderController extends ModelController<Folder> implements Versi
 
     @Audit
     @Transactional
+    @ApiResponse(responseCode = "204", description = "No content - deleted successfully")
+    @Operation(operationId = 'deleteVersionedFolder', summary = "Delete a versioned folder", description = "Deletes a versioned folder.")
     @Delete(Paths.VERSIONED_FOLDER_ID)
     HttpResponse delete(UUID id, @Body @Nullable Folder folder, @Nullable @QueryValue Boolean permanent) {
         permanent = permanent ?: true
@@ -151,6 +183,8 @@ class VersionedFolderController extends ModelController<Folder> implements Versi
 
     @Audit
     @Transactional
+    @ApiResponse(responseCode = "204", description = "No content - deleted successfully")
+    @Operation(operationId = 'deleteVersionedFolderChild', summary = "Delete a versioned folder", description = "Deletes a versioned folder.")
     @Delete(Paths.FOLDER_CHILD_VERSIONED_FOLDER_ID)
     HttpResponse delete(UUID parentId, UUID id, @Body @Nullable Folder folder, @Nullable @QueryValue Boolean permanent) {
         permanent = permanent ?: true
@@ -158,6 +192,7 @@ class VersionedFolderController extends ModelController<Folder> implements Versi
     }
 
     @Audit
+    @Operation(summary = "Update a versioned folder", description = "Updates a versioned folder.")
     @Put(Paths.VERSIONED_FOLDER_READ_BY_AUTHENTICATED)
     @Transactional
     Folder allowReadByAuthenticated(UUID id) {
@@ -166,12 +201,15 @@ class VersionedFolderController extends ModelController<Folder> implements Versi
 
     @Audit
     @Transactional
+    @ApiResponse(responseCode = "204", description = "No content - deleted successfully")
+    @Operation(summary = "Delete a versioned folder", description = "Deletes a versioned folder.")
     @Delete(Paths.VERSIONED_FOLDER_READ_BY_AUTHENTICATED)
     HttpResponse revokeReadByAuthenticated(UUID id) {
         super.deleteReadByAuthenticated(id)
     }
 
     @Audit
+    @Operation(summary = "Update a versioned folder", description = "Updates a versioned folder.")
     @Put(Paths.VERSIONED_FOLDER_READ_BY_EVERYONE)
     @Transactional
     Folder allowReadByEveryone(UUID id) {
@@ -180,17 +218,21 @@ class VersionedFolderController extends ModelController<Folder> implements Versi
 
     @Audit
     @Transactional
+    @ApiResponse(responseCode = "204", description = "No content - deleted successfully")
+    @Operation(summary = "Delete a versioned folder", description = "Deletes a versioned folder.")
     @Delete(Paths.VERSIONED_FOLDER_READ_BY_EVERYONE)
     HttpResponse revokeReadByEveryone(UUID id) {
         super.deleteReadByEveryone(id)
     }
 
+    @Operation(summary = "List the versioned folders", description = "Returns the versioned folders.")
     @Get(Paths.VERSIONED_FOLDER_PERMISSIONS)
     @Override
     PermissionsDTO permissions(UUID id) {
         super.permissions(id)
     }
 
+    @Operation(summary = "Get a versioned folder", description = "Returns a versioned folder.")
     @Get(Paths.VERSIONED_FOLDER_DOI)
     @Override
     Map doi(UUID id) {
@@ -199,40 +241,47 @@ class VersionedFolderController extends ModelController<Folder> implements Versi
     }
 
     @Override
+    @Operation(summary = "List the versioned folders", description = "Returns the versioned folders.")
     @Get(Paths.VERSIONED_FOLDER_SIMPLE_MODEL_VERSION_TREE)
     List<ModelVersionedRefDTO> simpleModelVersionTree(UUID id, @Nullable Boolean branchesOnly) {
         super.simpleModelVersionTree(id,branchesOnly)
     }
 
     @Override
+    @Operation(summary = "List the versioned folders", description = "Returns the versioned folders.")
     @Get(Paths.VERSIONED_FOLDER_MODEL_VERSION_TREE)
     List<ModelVersionedWithTargetsRefDTO> modelVersionTree(UUID id) {
         super.modelVersionTree(id)
     }
 
     @Override
+    @Operation(summary = "Get a versioned folder", description = "Returns a versioned folder.")
     @Get(Paths.VERSIONED_FOLDER_CURRENT_MAIN_BRANCH)
     Folder currentMainBranch(UUID id) {
         super.currentMainBranch(id)
     }
 
     @Override
+    @Operation(summary = "Get a versioned folder", description = "Returns a versioned folder.")
     @Get(Paths.VERSIONED_FOLDER_LATEST_MODEL_VERSION)
     ModelVersionDTO latestModelVersion(UUID id) {
         super.latestModelVersion(id)
     }
 
     @Override
+    @Operation(summary = "Get a versioned folder", description = "Returns a versioned folder.")
     @Get(Paths.VERSIONED_FOLDER_LATEST_FINALISED_MODEL)
     ModelVersionedRefDTO latestFinalisedModel(UUID id) {
         super.latestFinalisedModel(id)
     }
 
+    @Operation(summary = "Get a versioned folder", description = "Returns a versioned folder.")
     @Get(Paths.VERSIONED_FOLDER_COMMON_ANCESTOR)
     Folder commonAncestor(UUID id, UUID other_model_id) {
         super.commonAncestor(id,other_model_id)
     }
 
+    @Operation(summary = "Get a versioned folder", description = "Returns a versioned folder.")
     @Get(Paths.VERSIONED_FOLDER_MERGE_DIFF)
     MergeDiffDTO mergeDiff(@NonNull UUID id, @NonNull UUID otherId)
     {
@@ -243,6 +292,7 @@ class VersionedFolderController extends ModelController<Folder> implements Versi
     @Transactional
     @ExecuteOn(TaskExecutors.BLOCKING)
     @Override
+    @Operation(summary = "Update a versioned folder", description = "Updates a versioned folder.")
     @Put(Paths.VERSIONED_FOLDER_MERGE_INTO)
     Folder mergeInto(@NonNull UUID id, @NonNull UUID otherId, @Body @Nullable MergeIntoDTO mergeIntoDTO)
     {

@@ -1,5 +1,7 @@
 package org.maurodata.domain.security
 
+import com.fasterxml.jackson.annotation.JsonIgnore
+import jakarta.persistence.Transient
 import org.maurodata.domain.model.ItemUtils
 
 import groovy.transform.AutoClone
@@ -19,7 +21,26 @@ class SecurableResourceGroupRole extends Item {
     UUID securableResourceId
 
     UserGroup userGroup
+
+    @JsonIgnore
     Role role
+
+    @Transient
+    Role.RoleDTO getGroupRole() {
+        if(role) {
+            new Role.RoleDTO(this.role)
+        } else {
+            return null
+        }
+    }
+
+    @Transient
+    void setGroupRole(Role.RoleDTO roleDTO) {
+        if(roleDTO) {
+            role = Role.values().find {it.name() == roleDTO.name }
+        }
+    }
+
 
     @Override
     void copyInto(Item into) {

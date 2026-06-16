@@ -24,10 +24,28 @@ echo "Detected memory limit: ${MEMORY_AVAILABLE_GB}GB"
 export CPU_COUNT=$(nproc --all)
 echo "Detected ${CPU_COUNT} cores"
 
-INET=$(ip -o -f inet addr show eth0)
-CONTAINER_IP=$(echo "${INET}" | awk '{print $4}' | cut -d/ -f1)
-PREFIX=$(echo "${INET}" | awk '{print $4}' | cut -d/ -f2)
-IFS=. read -r a b c d <<< "$CONTAINER_IP"
-export DOCKER_SUBNET="$((a & 255)).$((b & 255)).0.0/$PREFIX"
+export DOCKER_SUBNET="$(ip -o -4 addr show 2>/dev/null | awk '/scope global/ {split($4,a,"/");split(a[1],b,".");printf "%d.%d.%d.0/%s\n",b[1],b[2],b[3],a[2];exit}')"
 
 echo "Docker subnet ${DOCKER_SUBNET}"
+
+export DOCKER_LOCAL_ADDRESSES="localhost ::1 $(ip -o -4 addr show | awk ' {split($4,a,"/"); printf "%s ",a[1]} ')"
+export DOCKER_CONTAINER_NETWORK_PREFIX="$(ip -o -4 addr show 2>/dev/null | awk '/scope global/ {split($4,a,"/");split(a[1],b,".");printf "%d.%d.%d.*",b[1],b[2],b[3];exit}')"
+
+export DOCKER_BRIDGE_ADDRESSES="host.docker.internal ${DOCKER_CONTAINER_NETWORK_PREFIX}"
+
+echo "Docker internal addresses ${DOCKER_LOCAL_ADDRESSES}"
+echo "Docker bridge addresses ${DOCKER_BRIDGE_ADDRESSES}"
+
+if [ -e /home/app/plugins ];
+then
+  MOUNTED_PLUGINS_AT=$(df -T "/home/app/plugins" | awk 'NR==2 {print $NF}')
+
+  if [ "${MOUNTED_PLUGINS_AT}" = "/" ];
+  then
+    export PLUGINS_IS_MOUNTED="false"
+  else
+    export PLUGINS_IS_MOUNTED="true"
+  fi
+else
+    export PLUGINS_IS_MOUNTED="false"
+fi

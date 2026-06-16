@@ -1,5 +1,10 @@
 package org.maurodata.controller.facet
 
+import io.swagger.v3.oas.annotations.Operation
+import io.micronaut.http.annotation.Delete
+import io.micronaut.http.annotation.Post
+import io.micronaut.transaction.annotation.Transactional
+import io.swagger.v3.oas.annotations.responses.ApiResponse
 import jakarta.inject.Inject
 import org.maurodata.ErrorHandler
 import org.maurodata.api.Paths
@@ -7,6 +12,8 @@ import org.maurodata.api.facet.SemanticLinkCreateDTO
 import org.maurodata.api.facet.SemanticLinkDTO
 import org.maurodata.api.facet.SemanticLinksApi
 import org.maurodata.api.model.ModelRefDTO
+import org.maurodata.audit.Audit
+import org.maurodata.domain.facet.Rule
 import org.maurodata.domain.facet.SemanticLink
 import org.maurodata.domain.facet.SemanticLinkType
 import org.maurodata.domain.model.AdministeredItem
@@ -51,6 +58,7 @@ class SemanticLinksController extends FacetController<SemanticLink> implements S
         this.semanticLinkRepository = semanticLinkRepository
     }
 
+    @Operation(operationId = 'listSemanticLinkPaged', summary = "List the semantic links", description = "Returns the semantic links. You must have read privileges on the item in question.")
     @Get(Paths.SEMANTIC_LINKS_LIST_PAGED)
     ListResponse<SemanticLinkDTO> list(@NonNull String domainType, @NonNull UUID domainId, @Nullable PaginationParams params = new PaginationParams()) {
         
@@ -116,11 +124,9 @@ class SemanticLinksController extends FacetController<SemanticLink> implements S
     }
 
     @Override
-    HttpResponse delete(String domainType, UUID domainId, UUID id) {
-        return null
-    }
-
-    @Override
+    @Audit
+    @Operation(operationId = 'createSemanticLink', summary = "Create a semantic link", description = "Creates a semantic link. You must have read privileges on the item in question.")
+    @Post(Paths.SEMANTIC_LINKS_LIST)
     SemanticLinkDTO create(@NonNull String domainType, @NonNull UUID domainId, @Body @NonNull SemanticLinkCreateDTO semanticLink) {
 
         // LHS
@@ -159,4 +165,15 @@ class SemanticLinksController extends FacetController<SemanticLink> implements S
 
         return createdSemanticLinkDTO
     }
+
+    @Audit(deletedObjectDomainType = SemanticLink)
+    @Override
+    @ApiResponse(responseCode = "204", description = "No content - deleted successfully")
+    @Operation(operationId = 'deleteSemanticLink', summary = "Delete a semantic link", description = "Deletes a semantic link. You must have edit privileges on the item in question.")
+    @Delete(Paths.SEMANTIC_LINKS_ID)
+    HttpResponse delete(@NonNull String domainType, @NonNull UUID domainId, UUID id) {
+        accessControlService.checkRole(Role.EDITOR, readAdministeredItemForFacet(semanticLinkRepository.readById(id)))
+        super.delete(id)
+    }
+
 }

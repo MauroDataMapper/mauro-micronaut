@@ -32,7 +32,7 @@ class DataModelProfileSpec extends Specification {
         dynamicProfile.sections.first().fields.first().fieldName == "Size"
         dynamicProfile.sections.first().fields.first().metadataPropertyName == "size"
         dynamicProfile.sections.last().label == "Asset Creation"
-        dynamicProfile.sections.last().fields.size() == 2
+        dynamicProfile.sections.last().fields.size() == 3
         dynamicProfile.sections.last().fields.first().fieldName == "Created date"
         dynamicProfile.sections.first().fields.first().getMetadataKey("Asset Creation") == "size"
     }
@@ -111,7 +111,7 @@ class DataModelProfileSpec extends Specification {
         Profile profile = new DataModelBasedProfile(DataModelBasedProfileTest.testProfileModel)
 
         then:
-        profile.getKeys() == ["Asset Creation/Deleted date", "contactEmail", "createdDate", "priority", "retired", "size"]
+        profile.getKeys().sort() == ["Asset Creation/Deleted date", "Asset Creation/Expiry date", "contactEmail", "createdDate", "priority", "retired", "size"]
 
     }
 

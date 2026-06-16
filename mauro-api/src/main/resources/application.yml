@@ -11,6 +11,10 @@ micronaut:
       max-file-size: 500mb
     cors:
       enabled: true
+    host-resolution:
+      protocol-header: X-Forwarded-Proto
+      host-header: Host
+      port-header: X-Forwarded-Port
   router:
     static-resources:
       default:
@@ -87,7 +91,7 @@ jackson:
 
 datasources:
   default:
-    url: jdbc:postgresql://localhost:5432/sandbox
+    url: jdbc:postgresql://localhost:5432/sandbox?reWriteBatchedInserts=true
     username: sandbox
     password: sandbox
     dialect: POSTGRES
@@ -109,6 +113,8 @@ javamail:
         host: $$host$$ # Replace me!
 
 mauro:
+  plugins:
+    autoregister: false
   federation:
     subscribed-catalogues.max: 50
   audit:
@@ -122,5 +128,6 @@ mauro:
 #    authorization-endpoint:
 #    image-url:
 #    login-success:
-
 #    create-user:
+##    token-custom-validation:
+##      custom-claim-key: required-claim-value

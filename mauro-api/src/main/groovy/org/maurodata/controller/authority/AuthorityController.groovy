@@ -1,7 +1,8 @@
 package org.maurodata.controller.authority
 
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.responses.ApiResponse
 import org.maurodata.audit.Audit
-import org.maurodata.domain.facet.EditType
 
 import io.micronaut.http.HttpResponse
 import org.maurodata.api.Paths
@@ -40,6 +41,7 @@ class AuthorityController extends ItemController<Authority> implements Authority
     }
 
     @Audit
+    @Operation(summary = "Get an authority", description = "Returns an authority. It is available to authenticated users.")
     @Get(Paths.AUTHORITY_ID)
     Authority show(@NonNull UUID id) {
         accessControlService.checkAuthenticated()
@@ -47,6 +49,7 @@ class AuthorityController extends ItemController<Authority> implements Authority
     }
 
     @Audit
+    @Operation(operationId = 'listAuthority', summary = "List the authorities", description = "Returns the authorities. It is available to authenticated users.")
     @Get(Paths.AUTHORITY_LIST)
     ListResponse<Authority> list() {
         accessControlService.checkAuthenticated()
@@ -55,6 +58,7 @@ class AuthorityController extends ItemController<Authority> implements Authority
 
     @Audit
     @Transactional
+    @Operation(operationId = 'createAuthority', summary = "Create an authority", description = "Creates an authority. It is only available to administrator users.")
     @Post(Paths.AUTHORITY_LIST)
     Authority create(@Body @NonNull Authority authority) {
         accessControlService.checkAdministrator()
@@ -64,6 +68,7 @@ class AuthorityController extends ItemController<Authority> implements Authority
     }
 
     @Audit
+    @Operation(operationId = 'updateAuthority',summary = "Update an authority", description = "Updates an authority. It is only available to administrator users.")
     @Put(Paths.AUTHORITY_ID)
     Authority update(UUID id, @Body @NonNull Authority authority) {
         accessControlService.checkAdministrator()
@@ -80,6 +85,8 @@ class AuthorityController extends ItemController<Authority> implements Authority
 
     @Audit(level = Audit.AuditLevel.FILE_ONLY)
     @Transactional
+    @ApiResponse(responseCode = "204", description = "No content - deleted successfully")
+    @Operation(summary = "Delete an authority", description = "Deletes an authority. It is only available to administrator users.")
     @Delete(Paths.AUTHORITY_ID)
     HttpResponse delete(UUID id, @Body @Nullable Authority authority) throws HttpStatusException {
         accessControlService.checkAdministrator()

@@ -1,6 +1,6 @@
 package org.maurodata.controller.bootstrap
 
-import groovy.beans.Bindable
+
 import groovy.transform.CompileStatic
 import io.micronaut.context.annotation.ConfigurationProperties
 import io.micronaut.core.annotation.Nullable
@@ -16,6 +16,8 @@ class MauroConfiguration {
     List<UserGroupConfig> groups
     List<ApiKeyConfig> apiKeys
     List<ApiPropertyConfig> apiProperties
+    List<OAuthConfig> oauths
+    @Nullable LegacyOAuthConfig oauth
 
     static class CatalogueUserConfig {
 
@@ -62,5 +64,40 @@ class MauroConfiguration {
         @Nullable
         @NotBlank
         String category
+    }
+
+    static class OAuthConfig {
+        @NotBlank
+        String oauthProvider
+        @Nullable
+        Boolean createUser
+        @Nullable
+        Boolean requireVerifiedEmail
+        @Nullable
+        Map<String, String> tokenCustomValidation
+        @NotBlank
+        String appLabel
+        @Nullable
+        @NotBlank
+        String appImageUrl
+        @Nullable
+        @NotBlank
+        String appLoginSuccess
+        @Nullable
+        @NotBlank
+        List<String> uiRedirectUrls
+    }
+
+    @ConfigurationProperties("oauth")
+    static class LegacyOAuthConfig {
+
+        @Nullable @NotBlank String id
+        @Nullable String label
+        @Nullable Boolean standardProvider
+        @Nullable String authorizationEndpoint
+        @Nullable String imageUrl
+        @Nullable String loginSuccess
+        @Nullable Boolean createUser
+        @Nullable List<String> uiRedirectUrls
     }
 }

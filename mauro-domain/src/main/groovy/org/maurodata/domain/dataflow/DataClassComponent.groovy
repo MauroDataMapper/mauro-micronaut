@@ -1,5 +1,7 @@
 package org.maurodata.domain.dataflow
 
+import org.maurodata.domain.diff.DiffableItem
+import org.maurodata.domain.diff.ObjectDiff
 import org.maurodata.domain.model.Item
 import org.maurodata.domain.model.ItemUtils
 
@@ -101,5 +103,11 @@ class DataClassComponent extends ModelItem<DataFlow> {
         DataClassComponent dataClassComponentShallowCopy = new DataClassComponent()
         this.copyInto(dataClassComponentShallowCopy)
         return dataClassComponentShallowCopy
+    }
+
+    //TODO : Implement this
+    @Override
+    ObjectDiff diff(DiffableItem other, String lhsPathRoot, String rhsPathRoot) {
+        return null
     }
 }

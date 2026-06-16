@@ -57,11 +57,6 @@ class MauroSessionLoginHandlerIntegrationSpec extends SecuredIntegrationSpec {
         }
 
         @Override
-        Cookies getCookies() {
-            return cookies
-        }
-
-        @Override
         URI getUri() {
             return UriBuilder.of(KEYCLOAK_LOGIN_PATH).build()
         }

@@ -1,5 +1,6 @@
 package org.maurodata.controller.dataflow
 
+import io.swagger.v3.oas.annotations.Operation
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
@@ -20,6 +21,7 @@ import io.micronaut.scheduling.TaskExecutors
 import io.micronaut.scheduling.annotation.ExecuteOn
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
+import io.swagger.v3.oas.annotations.responses.ApiResponse
 import jakarta.transaction.Transactional
 import jakarta.validation.constraints.NotNull
 import org.maurodata.ErrorHandler
@@ -67,12 +69,14 @@ class DataFlowController extends AdministeredItemController<DataFlow, DataModel>
     }
 
     @Audit
+    @Operation(operationId = 'showDataFlow', summary = "Get a data flow", description = "Returns a data flow.")
     @Get(Paths.DATA_FLOW_ID)
     DataFlow show(@NonNull UUID dataModelId, @NonNull UUID id) {
         super.show(id)
     }
 
     @Audit(level = Audit.AuditLevel.FILE_ONLY)
+    @Operation(operationId = 'createDataFlow', summary = "Create a data flow", description = "Creates a data flow. You must have read privileges on the item in question.")
     @Post(Paths.DATA_FLOW_LIST)
     DataFlow create(@NonNull UUID dataModelId, @Body @NonNull DataFlow dataFlow) {
         DataModel source = dataModelRepository.findById(dataFlow.source.id)
@@ -83,12 +87,15 @@ class DataFlowController extends AdministeredItemController<DataFlow, DataModel>
     }
 
     @Audit(level = Audit.AuditLevel.FILE_ONLY)
+    @Operation(operationId = 'updateDataFlow', summary = "Update a data flow", description = "Updates a data flow.")
     @Put(Paths.DATA_FLOW_ID)
     DataFlow update(@NonNull UUID dataModelId, @NonNull UUID id, @Body @NonNull DataFlow dataFlow) {
         super.update(id, dataFlow)
     }
 
     @Audit(level = Audit.AuditLevel.FILE_ONLY)
+    @ApiResponse(responseCode = "204", description = "No content - deleted successfully")
+    @Operation(operationId = 'deleteDataFlow', summary = "Delete a data flow", description = "Deletes a data flow.")
     @Delete(Paths.DATA_FLOW_ID)
     @Transactional
     HttpResponse delete(@NonNull UUID dataModelId, @NonNull UUID id, @Body @Nullable DataFlow dataFlow) {
@@ -96,6 +103,7 @@ class DataFlowController extends AdministeredItemController<DataFlow, DataModel>
     }
 
     @Audit
+    @Operation(operationId = 'listDataFlowPaged', summary = "List the data flows", description = "Returns the data flows. You must have read privileges on the item in question.")
     @Get(Paths.DATA_FLOW_LIST_PAGED)
     ListResponse<DataFlow> list(@NotNull UUID dataModelId, @Nullable @QueryValue(Paths.TYPE_QUERY) Type type, @Nullable PaginationParams params = new PaginationParams()) {
 
@@ -108,17 +116,20 @@ class DataFlowController extends AdministeredItemController<DataFlow, DataModel>
         ListResponse.from(sourceDataFlowList.findAll {accessControlService.canDoRole(Role.READER, it)}, params)
     }
 
+    @Operation(summary = "List the data flows", description = "Returns the data flows.")
     @Get(Paths.DATA_FLOW_EXPORTERS)
     List<DataFlowExporterPlugin> dataFlowExporters() {
         dataFlowService.getMauroPluginService().listPlugins(DataFlowExporterPlugin)
     }
 
+    @Operation(summary = "List the data flows", description = "Returns the data flows.")
     @Get(Paths.DATA_FLOW_IMPORTERS)
     List<DataFlowImporterPlugin> dataFlowImporters() {
         dataFlowService.getMauroPluginService().listPlugins(DataFlowImporterPlugin)
     }
 
     @Audit
+    @Operation(operationId = 'exportModelDataFlow', summary = "Get a data flow", description = "Returns a data flow. You must have read privileges on the item in question.")
     @Get(Paths.DATA_FLOW_EXPORT)
     HttpResponse<byte[]> exportModel(@NonNull UUID dataModelId, @NonNull UUID id, @Nullable String namespace, @Nullable String name, @Nullable String version) {
         ModelItemExporterPlugin mauroPlugin = dataFlowService.getModelItemExporterPlugin(namespace, name, version)
@@ -143,6 +154,7 @@ class DataFlowController extends AdministeredItemController<DataFlow, DataModel>
     @ExecuteOn(TaskExecutors.IO)
     @Audit(title = EditType.IMPORT, description = "Import data flow")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @Operation(operationId = 'importModelDataFlow', summary = "Import the data flow", description = "Imports the data flow. You must have edit privileges on the item in question.")
     @Post(Paths.DATA_FLOW_IMPORT)
     ListResponse<DataFlow> importModel(@NonNull UUID dataModelId, @Body MultipartBody body, @Nullable String namespace, @Nullable String name, @Nullable String version) {
         // check target model is in right state

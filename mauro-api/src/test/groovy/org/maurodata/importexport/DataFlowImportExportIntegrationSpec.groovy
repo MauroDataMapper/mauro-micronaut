@@ -1,7 +1,5 @@
 package org.maurodata.importexport
 
-
-import groovy.json.JsonSlurper
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.MediaType
 import io.micronaut.http.client.exceptions.HttpClientResponseException
@@ -37,8 +35,6 @@ class DataFlowImportExportIntegrationSpec extends CommonDataSpec {
     static final String IMPORTER_NAMESPACE = 'org.maurodata.plugin.importer.json'
     static final String IMPORTER_NAME = 'JsonDataFlowImporterPlugin'
     static final String IMPORTER_VERSION = '4.0.0'
-
-    JsonSlurper jsonSlurper = new JsonSlurper()
 
     @Shared
     UUID folderId

@@ -1,5 +1,7 @@
 package org.maurodata.controller.facet
 
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.responses.ApiResponse
 import org.maurodata.api.Paths
 import org.maurodata.api.facet.SummaryMetadataApi
 import org.maurodata.audit.Audit
@@ -53,6 +55,7 @@ class SummaryMetadataController extends FacetController<SummaryMetadata> impleme
     }
 
     @Audit
+    @Operation(operationId = 'listSummaryMetadata', summary = "List the summary metadatas", description = "Returns the summary metadatas. You must have read privileges on the item in question.")
     @Get(Paths.SUMMARY_METADATA_LIST_PAGED)
     ListResponse<SummaryMetadata> list(String domainType, UUID domainId, @Nullable PaginationParams params = new PaginationParams()) {
         
@@ -63,6 +66,7 @@ class SummaryMetadataController extends FacetController<SummaryMetadata> impleme
     }
 
     @Audit
+    @Operation(operationId = 'showSummaryMetadata', summary = "Get a summary metadata", description = "Returns a summary metadata. You must have read privileges on the item in question.")
     @Get(Paths.SUMMARY_METADATA_ID)
     SummaryMetadata show(@NonNull String domainType, @NonNull UUID domainId, UUID id) {
         SummaryMetadata summaryMetadata = super.show(domainType, domainId, id) as SummaryMetadata
@@ -77,6 +81,7 @@ class SummaryMetadataController extends FacetController<SummaryMetadata> impleme
     }
 
     @Audit
+    @Operation(operationId = 'createSummaryMetadata', summary = "Create a summary metadata", description = "Creates a summary metadata.")
     @Post(Paths.SUMMARY_METADATA_LIST)
     SummaryMetadata create(@NonNull String domainType, @NonNull UUID domainId, @Body @NonNull SummaryMetadata summaryMetadata) {
         super.create(domainType, domainId, summaryMetadata)
@@ -84,12 +89,15 @@ class SummaryMetadataController extends FacetController<SummaryMetadata> impleme
 
     @Audit
     @Override
+    @Operation(operationId = 'updateSummaryMetadata', summary = "Update a summary metadata", description = "Updates a summary metadata.")
     @Put(Paths.SUMMARY_METADATA_ID)
     SummaryMetadata update(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID id, @Body @NonNull SummaryMetadata summaryMetadata) {
         update(id, summaryMetadata)
     }
 
     @Audit(deletedObjectDomainType = SummaryMetadata)
+    @ApiResponse(responseCode = "204", description = "No content - deleted successfully")
+    @Operation(operationId = 'deleteSummaryMetadata', summary = "Delete a summary metadata", description = "Deletes a summary metadata. You must have read privileges on the item in question.")
     @Delete(Paths.SUMMARY_METADATA_ID)
     @Transactional
     @Override

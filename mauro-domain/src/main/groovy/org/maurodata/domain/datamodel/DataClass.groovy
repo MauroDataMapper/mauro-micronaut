@@ -96,7 +96,7 @@ class DataClass extends ModelItem<DataModel> implements DiffableItem<DataClass>,
     @Transient
     @JsonIgnore
     Model getOwner() {
-        parentDataClass?.owner ?: dataModel ?: super.getOwner()
+        parentDataClass?.owner ?: dataModel?.owner ?: super.getOwner()
     }
 
     @Transient
@@ -111,6 +111,13 @@ class DataClass extends ModelItem<DataModel> implements DiffableItem<DataClass>,
     @JsonProperty('parentDataClass')
     UUID getParentDataClassId() {
         parentDataClass?.id // backwards compatibility
+    }
+
+    @Transient
+    @Deprecated
+    @JsonProperty('parentDataClass')
+    void setParentDataClassId(UUID parentDataClassId) {
+        this.parentDataClass = new DataClass(id: parentDataClassId) // backwards compatibility
     }
 
     @Override
@@ -130,14 +137,6 @@ class DataClass extends ModelItem<DataModel> implements DiffableItem<DataClass>,
     @JsonIgnore
     String getPathPrefix() {
         'dc'
-    }
-
-
-    @Override
-    @JsonIgnore
-    @Transient
-    CollectionDiff fromItem() {
-        new BaseCollectionDiff(id, getDiffIdentifier(), label)
     }
 
 

@@ -1,6 +1,6 @@
 package org.maurodata.controller.model
 
-import com.fasterxml.jackson.annotation.JsonIgnore
+
 import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
@@ -19,7 +19,7 @@ import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
 import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
-import jakarta.persistence.Transient
+
 import org.maurodata.ErrorHandler
 import org.maurodata.FieldConstants
 import org.maurodata.api.model.FieldPatchDataDTO
@@ -27,13 +27,11 @@ import org.maurodata.api.model.MergeDiffDTO
 import org.maurodata.api.model.MergeFieldDiffDTO
 import org.maurodata.api.model.MergeIntoDTO
 import org.maurodata.api.model.ModelApi
-import org.maurodata.api.model.ModelRefDTO
 import org.maurodata.api.model.ModelVersionDTO
 import org.maurodata.api.model.ModelVersionedRefDTO
 import org.maurodata.api.model.ModelVersionedWithTargetsRefDTO
 import org.maurodata.api.model.ObjectPatchDataDTO
 import org.maurodata.api.model.PermissionsDTO
-import org.maurodata.api.model.VersionLinkDTO
 import org.maurodata.api.model.VersionLinkTargetDTO
 import org.maurodata.controller.facet.EditController
 import org.maurodata.domain.diff.ArrayDiff
@@ -46,6 +44,7 @@ import org.maurodata.domain.facet.ReferenceFile
 import org.maurodata.domain.facet.VersionLink
 import org.maurodata.domain.folder.Folder
 import org.maurodata.domain.model.AdministeredItem
+import org.maurodata.domain.model.Breadcrumb
 import org.maurodata.domain.model.Item
 import org.maurodata.domain.model.ItemReference
 import org.maurodata.domain.model.ItemReferencer
@@ -58,6 +57,8 @@ import org.maurodata.domain.model.version.ModelVersion
 import org.maurodata.domain.security.CatalogueUser
 import org.maurodata.domain.security.Role
 import org.maurodata.domain.security.UserGroup
+import org.maurodata.domain.terminology.CodeSet
+import org.maurodata.domain.terminology.Term
 import org.maurodata.persistence.ContentsService
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository
 import org.maurodata.persistence.cache.FacetCacheableRepository
@@ -200,6 +201,18 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
             accessControlService.checkRole(Role.EDITOR, folder)
             updated.folder = folder
         }
+        pathRepository.readParentItems(original)
+        if(updated.folder) {
+            pathRepository.readParentItems(updated.folder)
+        }
+        // If the original model is in a versioned folder, it must be moved within the same versioned folder.
+        if(original.owner?.id != updated.owner?.id) {
+            throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, 'Cannot move a model into or out of a versioned folder!')
+        }
+        if(updated.ancestors.find {it.id == updated.id}) {
+            throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, 'Cannot move a folder into one of its sub-folders!')
+        }
+
         modelRepository.update(original, updated)
         pathRepository.readParentItems(updated)
         updated.updatePath()
@@ -209,7 +222,6 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     @Transactional
     HttpResponse delete(UUID id, @Body @Nullable M model, @Nullable Boolean permanent) {
         M modelToDelete = modelRepository.readById(id)
-
 
         if (modelToDelete == null) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, "Object not found for deletion")
@@ -232,7 +244,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
 
     @Transactional
     M putReadByAuthenticated(UUID id) {
-        M modelToUse = (M) modelRepository.loadWithContent(id)
+        M modelToUse = (M) modelRepository.findById(id)
 
         if (modelToUse == null) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, "Object not found for readByAuthenticated")
@@ -248,7 +260,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
 
     @Transactional
     HttpResponse deleteReadByAuthenticated(UUID id) {
-        M modelToUse = (M) modelRepository.loadWithContent(id)
+        M modelToUse = (M) modelRepository.findById(id)
 
         if (modelToUse == null) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, "Object not found for readByAuthenticated")
@@ -264,7 +276,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
 
     @Transactional
     M putReadByEveryone(UUID id) {
-        M modelToUse = (M) modelRepository.loadWithContent(id)
+        M modelToUse = (M) modelRepository.findById(id)
 
         if (modelToUse == null) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, "Object not found for readByAuthenticated")
@@ -280,7 +292,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
 
     @Transactional
     HttpResponse deleteReadByEveryone(UUID id) {
-        M modelToUse = (M) modelRepository.loadWithContent(id)
+        M modelToUse = (M) modelRepository.findById(id)
 
         if (modelToUse == null) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, "Object not found for readByAuthenticated")
@@ -310,7 +322,9 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         M model = modelRepository.findById(id)
         accessControlService.checkRole(Role.EDITOR, model)
 
-        M finalised = modelService.finaliseModel(model, finaliseData.version, finaliseData.versionChangeType, finaliseData.versionTag)
+        Model parentModel = getFinalisedParent(model)
+
+        M finalised = modelService.finaliseModel(model, parentModel, finaliseData.version, finaliseData.versionChangeType, finaliseData.versionTag)
         modelRepository.update(finalised)
     }
 
@@ -376,15 +390,21 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         administeredItemRepositories.find {it.handles(item.class) || it.handles(item.domainType)}
     }
 
+    HttpResponse<byte[]> exportModel(UUID id, String namespace, String name, @Nullable String version) {
+        exportModels(namespace, name, version, [id])
+    }
 
-    HttpResponse<byte[]> exportModel(UUID modelId, String namespace, String name, @Nullable String version) {
+    HttpResponse<byte[]> exportModels(String namespace, String name, @Nullable String version, List<UUID> modelIds) {
         ModelExporterPlugin mauroPlugin = mauroPluginService.getPlugin(ModelExporterPlugin, namespace, name, version)
         PluginService.handlePluginNotFound(mauroPlugin, namespace, name)
 
-        M existing = modelRepository.loadWithContent(modelId)
-        existing.setAssociations()
+        List<Model> existingModels = modelIds.collect {modelId ->
+            M model = modelRepository.loadWithContent(modelId)
+            model.setAssociations()
+            return model
+        }
 
-        ExporterUtils.createExportResponse(mauroPlugin, existing)
+        ExporterUtils.createExportResponse(mauroPlugin, existingModels)
     }
 
     ListResponse<M> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version) {
@@ -406,10 +426,10 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         accessControlService.checkRole(Role.EDITOR, folder)
         List<M> saved = imported.collect { M imp ->
             imp.folder = folder
-            log.info '** about to saveWithContentBatched... **'
+            log.info '** about to importWithContentBatched... **'
             //updateCreationProperties(imp)
-            M savedImported = (M) contentsService.saveWithContent(imp, accessControlService.getUser())
-            log.info '** finished saveWithContentBatched **'
+            M savedImported = (M) contentsService.importWithContent(imp, accessControlService.getUser())
+            log.info '** finished importWithContentBatched **'
             savedImported
         }
         List<M> smallerResponse = saved.collect { model ->
@@ -479,7 +499,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
                 return currentModel
             }
             final UUID currentId = currentModel.id
-            final UUID sourceModelUUID = versionLinkRepositoryUncached.findSourceModel(currentId)
+            final UUID sourceModelUUID = versionLinkRepositoryUncached.findTargetModel(currentId)
 
             if (sourceModelUUID != null) {
                 currentModel = modelRepository.findById(sourceModelUUID)
@@ -498,7 +518,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         for (; ;) {
             if (currentId == modelToFind.id) {return true}
 
-            final UUID sourceModelUUID = versionLinkRepositoryUncached.findSourceModel(currentId)
+            final UUID sourceModelUUID = versionLinkRepositoryUncached.findTargetModel(currentId)
 
             if (sourceModelUUID != null) {
                 final boolean sourceModelExists = modelRepository.existsById(sourceModelUUID)
@@ -513,18 +533,12 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     }
 
     ArrayList<Model> populateVersionTree(UUID id, boolean branchesOnly, final Map<UUID, Map<String, Boolean>> flags) {
-        /*
-        Get the UUIDs of upstream versions using
-        versionLinkRepositoryUncached.findSourceModel
-         */
-
-        final Model givenModel = show(id)
-        if (givenModel == null) throw new HttpStatusException(HttpStatus.NOT_FOUND, "Object not found")
+        if (!modelRepository.existsById(id)) throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Object not found")
 
         UUID currentId = id
 
         for (; ;) {
-            final UUID sourceModelUUID = versionLinkRepositoryUncached.findSourceModel(currentId)
+            final UUID sourceModelUUID = versionLinkRepositoryUncached.findTargetModel(currentId)
             if (sourceModelUUID != null) {
                 // Check whether it actually exists (it could have been deleted and the trail stops here)
                 final boolean rootObjectExists = modelRepository.existsById(sourceModelUUID)
@@ -537,33 +551,30 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         }
 
         final Model rootObject = modelRepository.readById(currentId)
-        pathRepository.readParentItems(rootObject)
-        rootObject.updatePath()
-        rootObject.updateBreadcrumbs()
-
         if (rootObject == null) {throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to find root object")}
 
         final ArrayList<Model> allModels = new ArrayList<>(10)
         allModels.add(rootObject)
-        populateByVersionLink(rootObject, allModels, flags, branchesOnly)
+        populateByVersionLink(currentId, allModels, flags, branchesOnly)
 
         return allModels
     }
 
-    private void populateByVersionLink(final Model parent, final ArrayList<Model> into, final Map<UUID, Map<String, Boolean>> flags, final boolean branchesOnly) {
-        if (parent == null) {
-            return
-        }
-        if (parent.versionLinks == null) {
-            return
-        }
-        if (parent.versionLinks.isEmpty()) {
+    private void populateByVersionLink(final UUID targetId, final ArrayList<Model> into, final Map<UUID, Map<String, Boolean>> flags, final boolean branchesOnly) {
+
+        if (targetId == null) {
             return
         }
 
-        for (VersionLink childVersion : parent.versionLinks) {
-            final UUID targetModelId = childVersion.targetModelId
-            if (targetModelId == null) {
+        Set<VersionLink> versionLinks = versionLinkRepositoryUncached.findSourceModels(targetId)
+
+        if (versionLinks == null || versionLinks.isEmpty()) {
+            return
+        }
+
+        for (VersionLink childVersion : versionLinks) {
+            final UUID sourceModelId = childVersion.multiFacetAwareItemId
+            if (sourceModelId == null) {
                 continue
             }
 
@@ -574,24 +585,22 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
 
             if (flags != null) {
                 if (childVersion.versionLinkType == VersionLink.NEW_MODEL_VERSION_OF) {
-                    flags.put(targetModelId, ["isNewBranchModelVersion": true])
+                    flags.put(sourceModelId, ["isNewBranchModelVersion": true])
                 } else if (childVersion.versionLinkType == VersionLink.NEW_FORK_OF) {
-                    flags.put(targetModelId, ["isNewFork": true])
+                    flags.put(sourceModelId, ["isNewFork": true])
                 }
             }
 
-            final Model childModel = modelRepository.findById(targetModelId)
+            final Model childModel = modelRepository.findById(sourceModelId)
 
             if (childModel == null) {
                 continue
             }
 
             pathRepository.readParentItems(childModel)
-            childModel.updatePath()
-            childModel.updateBreadcrumbs()
 
             into.add(childModel)
-            populateByVersionLink(childModel, into, flags, branchesOnly)
+            populateByVersionLink(sourceModelId, into, flags, branchesOnly)
         }
     }
 
@@ -878,7 +887,15 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
                 }
             }
 
-            // Add in targets
+            modelVersionTreeList.add(modelVersionedWithTargetsRefDTO)
+        }
+
+        // Create links between them
+        for (Model model : allModels) {
+
+            final ModelVersionedWithTargetsRefDTO modelVersionedWithTargetsRefDTO = modelVersionTreeList.find {it.id == model.id}
+
+            // Add in sources
 
             if (model.versionLinks != null && !model.versionLinks.isEmpty()) {
                 for (VersionLink childVersion : model.versionLinks) {
@@ -887,13 +904,13 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
                         continue
                     }
 
-                    final VersionLinkTargetDTO versionLinkTargetDTO = new VersionLinkTargetDTO(id: targetModelId, description: childVersion.description)
+                    final ModelVersionedWithTargetsRefDTO targetModelVersionedWithTargetsRefDTO = modelVersionTreeList.find {it.id == targetModelId}
 
-                    modelVersionedWithTargetsRefDTO.targets.add(versionLinkTargetDTO)
+                    final VersionLinkTargetDTO versionLinkTargetDTO = new VersionLinkTargetDTO(id: modelVersionedWithTargetsRefDTO.id, description: childVersion.description)
+
+                    targetModelVersionedWithTargetsRefDTO.targets.add(versionLinkTargetDTO)
                 }
             }
-
-            modelVersionTreeList.add(modelVersionedWithTargetsRefDTO)
         }
 
         modelVersionTreeList
@@ -1053,7 +1070,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
                     ancestorBasedPath = new Path(ancestorBasedPath.nodes)
 
                     final MergeFieldDiffDTO mergeFieldDiffDTO = new MergeFieldDiffDTO(fieldName: fieldName, sourceValue: null, targetValue: null,
-                                                                                      commonAncestorValue: null, isMergeConflict: true, _type: "deletion",
+                                                                                      commonAncestorValue: null, isMergeConflict: false, _type: "deletion",
                                                                                       path: ancestorBasedPath)
                     diffs.add(mergeFieldDiffDTO)
                 }
@@ -1094,7 +1111,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
                             ancestorBasedPath = new Path(ancestorBasedPath.nodes)
 
                             final MergeFieldDiffDTO mergeFieldDiffDTO = new MergeFieldDiffDTO(fieldName: fieldName, sourceValue: null, targetValue: null,
-                                                                                              commonAncestorValue: null, isMergeConflict: true, _type: "deletion",
+                                                                                              commonAncestorValue: null, isMergeConflict: false, _type: "deletion",
                                                                                               path: ancestorBasedPath)
                             diffs.add(mergeFieldDiffDTO)
                         }
@@ -1135,7 +1152,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
                             ancestorBasedPath = new Path(ancestorBasedPath.nodes)
 
                             final MergeFieldDiffDTO mergeFieldDiffDTO = new MergeFieldDiffDTO(fieldName: fieldName, sourceValue: null, targetValue: null,
-                                                                                              commonAncestorValue: null, isMergeConflict: true, _type: "deletion",
+                                                                                              commonAncestorValue: null, isMergeConflict: false, _type: "deletion",
                                                                                               path: ancestorBasedPath)
                             diffs.add(mergeFieldDiffDTO)
                         }
@@ -1176,7 +1193,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
                             ancestorBasedPath = new Path(ancestorBasedPath.nodes)
 
                             final MergeFieldDiffDTO mergeFieldDiffDTO = new MergeFieldDiffDTO(fieldName: fieldName, sourceValue: null, targetValue: null,
-                                                                                              commonAncestorValue: null, isMergeConflict: true, _type: "deletion",
+                                                                                              commonAncestorValue: null, isMergeConflict: false, _type: "deletion",
                                                                                               path: ancestorBasedPath)
                             diffs.add(mergeFieldDiffDTO)
                         }
@@ -1370,9 +1387,14 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
             // delete the model
         }
 
-        administeredItemRepository.update(targetModel)
+        M alreadySavedTargetModel = administeredItemRepository.readById(targetModel.id)
+        if(alreadySavedTargetModel.version <= targetModel.version) { // If saving the parent above didn't already save this one.
+            administeredItemRepository.update(targetModel)
+        }
 
-        targetModel
+        // return a smaller subset of the target model
+        return administeredItemRepository.readById(targetModel.id)
+
     }
 
     List<FieldPatchDataDTO> getSortedFieldPatchDataForMerging(ObjectPatchDataDTO objectPatchData) {
@@ -1442,7 +1464,15 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         }
 
         // Make a copy of the AdministeredItem from the source, then attach the copy to the target parent
-        final AdministeredItem clonedAdministeredItem = administeredItemSource.clone()
+
+        IdentityHashMap<Item, Item> replacements = new IdentityHashMap<>(4096)
+
+        // If there is a parent, don't clone it, reference it
+        if (administeredItemSource.parent != null) {
+            replacements.put(administeredItemSource.parent, administeredItemTargetParent)
+        }
+
+        final AdministeredItem clonedAdministeredItem = administeredItemSource.deepClone(replacements) as AdministeredItem
 
         // reset any properties to do with versioning or branches etc and, of course, the Id as it will
         // need a new one
@@ -1468,7 +1498,17 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         clonedAdministeredItem.updatePath()
         clonedAdministeredItem.updateBreadcrumbs()
         AdministeredItemRepository simpleRepositoryToUse = pathRepository.getRepository(clonedAdministeredItem)
-        final AdministeredItem savedClonedAdministeredItem = (AdministeredItem) simpleRepositoryToUse.save(clonedAdministeredItem)
+
+        final AdministeredItem savedClonedAdministeredItem
+        if(clonedAdministeredItem instanceof CodeSet) {
+            Set<Term> oldTerms = [] as Set
+            oldTerms.addAll(clonedAdministeredItem.terms)
+            clonedAdministeredItem.terms = [] as Set
+            savedClonedAdministeredItem = simpleRepositoryToUse.save(clonedAdministeredItem) as CodeSet
+            clonedAdministeredItem.terms.addAll(oldTerms)
+        } else {
+            savedClonedAdministeredItem = (AdministeredItem) simpleRepositoryToUse.save(clonedAdministeredItem)
+        }
 
         /*
          Is this clonedAdministeredItem referencing something within the scope of its own 'versionable' (Versioned folder, Data model)?
@@ -1496,12 +1536,12 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
             List<ItemReference> referencedItems = itemReferencer.retrieveItemReferences()
 
             // Resolve these to a list of paths
-            List<Path> pathsToReferencedItems = pathRepository.resolveItemReferences(referencedItems)
+            Map<Path, ItemReference> pathsToReferencedItems = pathRepository.resolveItemReferences(referencedItems)
 
             // Are any of these paths inside the source model?
             final IdentityHashMap<Item, Item> toReplace = new IdentityHashMap<>(pathsToReferencedItems.size())
-            for (int p = 0; p < pathsToReferencedItems.size(); p++) {
-                Path pathToReferencedItem = pathsToReferencedItems.get(p)
+            final HashMap<UUID, Item> toReplaceById = new HashMap<>(pathsToReferencedItems.size())
+            pathsToReferencedItems.each {pathToReferencedItem, itemReference ->
 
                 Path pathToReferencedItemFromSource = pathToReferencedItem.trimUntil(sourceModel.pathNodeString)
 
@@ -1554,23 +1594,35 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
                     }
 
                     // Record a map of the ItemReferences the ItemReferencer will need to update to use the new reference
-                    toReplace.put(sourceOfReferencedItem, targetToReferencedItem)
+                    if(itemReference.theItem) {
+                        toReplace.put(itemReference.theItem, targetToReferencedItem)
+                    } else {
+                        toReplace.put(targetToReferencedItem, targetToReferencedItem)
+                    }
+                    toReplaceById.put(itemReference.itemId, targetToReferencedItem)
                 }
             }
 
             // Ask the ItemReferencer to update to use the cloned items
-            Map<UUID, Item> toReplaceById = toReplace.values().collectEntries { value -> [value.id, value]}
+            // Map<UUID, Item> toReplaceById =
+            //    toReplace.collectEntries {source, target ->
+            //        [source.id, target]
+            //    }
+                //toReplace.values().collectEntries { value -> [value.id, value]}
             itemReferencer.replaceItemReferencesByIdentity(toReplace, toReplaceById)
-
             // Then for each item, call update
 
             toReplace.values().forEach {Item replacedItem ->
 
                 if (replacedItem instanceof AdministeredItem) {
                     AdministeredItem replacedItemAdministeredItem = (AdministeredItem) replacedItem
-                    getAdministeredItemRepository(replacedItem.domainType).update(replacedItemAdministeredItem)
+                    AdministeredItem alreadySavedAdministeredItem = getAdministeredItemRepository(replacedItem.domainType).repository.readById(replacedItemAdministeredItem.id) as AdministeredItem
+                    if(alreadySavedAdministeredItem.version <= replacedItemAdministeredItem.version) { // If saving the parent above didn't already save this one.
+                        getAdministeredItemRepository(replacedItem.domainType).update(replacedItemAdministeredItem)
+                    }
                 }
             }
+            getAdministeredItemRepository(savedClonedAdministeredItem.domainType).update(savedClonedAdministeredItem)
         }
 
         // Record edits
