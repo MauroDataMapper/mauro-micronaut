@@ -56,12 +56,11 @@ jobs:
       - name: Log Gradle version
         run: ./gradlew --version
 
+      ## Set up for building docker multi-architecture images
       - name: Set up QEMU
-        if: success() && github.ref == 'refs/heads/main'
         uses: docker/setup-qemu-action@v4
 
       - name: Set up Docker Buildx
-        if: success() && github.ref == 'refs/heads/main'
         uses: docker/setup-buildx-action@v4
 
       - name: Test Docker Build
