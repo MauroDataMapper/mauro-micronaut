@@ -1,0 +1,217 @@
+import groovy.yaml.YamlSlurper
+
+import java.util.regex.Matcher
+import java.util.regex.Pattern
+
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath "org.yaml:snakeyaml:2.1.3"
+        classpath "org.apache.groovy:groovy-yaml:4.0.21"
+    }
+}
+
+def generateTaskClass = plugins.findPlugin("org.openapi.generator")
+    ?.class
+    ?.classLoader
+    ?.loadClass("org.openapitools.generator.gradle.plugin.tasks.GenerateTask")
+
+if (generateTaskClass == null) {
+    throw new GradleException("OpenAPI generator plugin is not available")
+}
+
+tasks.register('generateRawTypeScriptClient', generateTaskClass) {
+    dependsOn tasks.named('pruneTransitiveRefs')
+
+    generatorName.set('typescript-fetch')
+    skipValidateSpec.set(true)
+    cleanupOutput.set(true)
+
+    outputDir.set(layout.buildDirectory.dir('generated/typescript-client').get().asFile.absolutePath)
+    templateDir.set(file('src/main/openapi/templates/typescript').absolutePath)
+
+    // Keep generated package metadata deterministic for CI/publication.
+    additionalProperties.set([
+        npmName       : '@maurodata/mauro-api-client',
+        npmVersion    : project.version.toString(),
+        supportsES6   : 'true',
+        withInterfaces: 'true'
+    ])
+
+    // Lenient: same reasoning as normalizeOpenApiYamlWithGenerator
+    inputSpec.set(providers.provider {
+        (findSingleOpenApiSpec(false)
+            ?: layout.buildDirectory.file("classes/groovy/main/META-INF/swagger/openapi.yml").get().asFile
+        ).absolutePath
+    })
+
+    doFirst {
+        def selectedSpec = resolveSingleOpenApiSpec()   // strict
+        logger.lifecycle("Generating TypeScript client from ${selectedSpec}")
+    }
+}
+
+tasks.register('generateTypeScriptClient') {
+    dependsOn tasks.named('generateRawTypeScriptClient')
+
+    doLast {
+
+        def selectedSpec = resolveSingleOpenApiSpec()
+
+        def slurper = new YamlSlurper()
+        def root = slurper.parse(selectedSpec)
+
+        def familyOf = { String name ->
+            def m = (name =~ /^(.*)_([A-Za-z0-9]+)_$/)
+            return m ? m[0][1] : null
+        }
+
+        Map<String, List<String>> families = [:].withDefault { [] }
+
+        root.components.schemas.keySet().each { schemaName ->
+            def family = familyOf(schemaName)
+            if (family) {
+                families[family] << schemaName
+            }
+        }
+
+        Map<String, String> typeParameterOf = [:]
+
+        families.each { family, variants ->
+
+            variants.each { v ->
+                def inner = v.replace("${family}_", "").replace("_", "")
+                typeParameterOf[v] = inner
+            }
+        }
+
+        def outDir = layout.buildDirectory.dir("generated/typescript-client").get().asFile
+
+        def tsFiles = fileTree(outDir).matching {
+            include "**/*.ts"
+        }.files
+
+        logger.lifecycle("Post-processing generics in ${tsFiles.size()} TS files")
+
+        // index all interfaces
+        def interfaces = [:]  // name -> file content
+
+        tsFiles.each { f ->
+            def text = f.text
+
+            text.findAll(/export interface ([A-Za-z0-9_]+)/) { _, name ->
+                interfaces[name] = f
+            }
+        }
+
+        // rewrite files
+        families.each { family, variants ->
+
+            if (variants.size() < 2) return
+
+            logger.lifecycle("Collapsing generic family: ${family}")
+
+            def representativeInnerType = typeParameterOf[variants[0]]
+            // pick representative
+            def representativeFile = interfaces[representativeInnerType]
+            if(!representativeFile) {
+                logger.warn("No representative file found for family ${family} ${variants[0]}, skipping")
+                return
+            }
+
+            String genericBase = null
+
+            // replace all variant interfaces with type aliases
+            variants.each { v ->
+
+                def innerType = typeParameterOf[v]
+                def tsName = "${family}${innerType}".toString()
+                def tsGenerics = "${family}<${innerType}>".toString()
+                def tsFamily = family
+
+                def exportInterface = "(?ms)export interface ${tsName}\\s*\\{.*?^\\s*\\}\\s*".toString()
+                def exportTypeAlias = "export type ${tsName} = ${tsGenerics};".toString()
+                def importLine = "import { ${tsFamily} } from './${tsFamily}';".toString()
+                def replacementExportLine = "${importLine}\n${exportTypeAlias}\n\n".toString()
+
+                tsFiles.each {file ->
+
+                    String text = file.text
+
+                    if(!genericBase) {
+                        Pattern exportLinePattern = ~exportInterface
+                        Matcher matcher = exportLinePattern.matcher(text)
+                        if (matcher.find()) {
+                            genericBase = matcher.group(0)
+
+                            genericBase = genericBase.replace("interface ${tsName}".toString(), "interface ${family}<T>".toString())
+                            genericBase = genericBase.replaceAll("<${representativeInnerType}>".toString(), '<T>')
+                            genericBase = genericBase.replaceAll(tsName, family)
+
+                            genericBase = """/**
+ * 
+ * @export
+ * @interface ${family}
+ * @template T
+ */
+${genericBase}
+""".toString()
+                        }
+                    }
+
+                    boolean toSave=false
+
+                    String newText = text
+                        .replaceAll(
+                            exportInterface,
+                            replacementExportLine
+                        )
+                    if(text != newText) {
+                        logger.lifecycle("Replacing ${exportInterface} with ${replacementExportLine} in ${file}")
+                        text=newText
+                        toSave=true
+                    }
+
+                    if(toSave) {
+                        file.text = text
+                    }
+                }
+            }
+
+            if(genericBase) {
+                File genericFile = new File(representativeFile.parentFile, "${family}.ts")
+                genericFile.text = genericBase
+                logger.lifecycle("Created generic base file ${genericFile} for family ${family}")
+                println "${genericBase}"
+                // Add export statement to index.ts
+                File indexFile = new File(genericFile.parentFile, "index.ts")
+                String exportStatement = "export * from './${family}';\n"
+                String indexText = indexFile.text
+                if (!indexText.contains(exportStatement)) {
+                    if(!indexText.endsWith('\n')){
+                        indexText += '\n'
+                    }
+                    indexFile.text = indexText + exportStatement
+                    logger.lifecycle("Added export statement for ${family} to index.ts")
+                }
+            }
+
+        }
+    }
+}
+
+tasks.register('packageTypeScriptClient', Zip) {
+    dependsOn tasks.named('generateTypeScriptClient')
+
+    archiveBaseName.set(project.name)
+    archiveClassifier.set('typescript-client')
+    destinationDirectory.set(layout.buildDirectory.dir('distributions'))
+
+    from(layout.buildDirectory.dir('generated/typescript-client'))
+}
+
+tasks.named('assemble') {
+    dependsOn tasks.named('packageTypeScriptClient')
+}

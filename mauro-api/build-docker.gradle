@@ -1,0 +1,308 @@
+import groovy.json.JsonSlurper
+
+def dockerUsername=System.getenv('DOCKERHUB_USERNAME')?:System.getenv('DOCKER_USERNAME')
+def dockerPassword=System.getenv('DOCKERHUB_PASSWORD')?:System.getenv('DOCKER_PASSWORD')
+
+def uiVersion = System.getenv('UI_VERSION')?:project.findProperty('uiVersion')?:null
+def uiRelease = System.getenv('UI_RELEASE')?:project.findProperty('uiRelease')?:null
+
+def mauroRepository = 'https://mauro-repository.com'
+def repositoryPath="${uiRelease?'artifacts':'artifacts-snapshots'}/mauroDataMapper/mdm-ui"
+
+def uiRepoApi  = "${mauroRepository}/api/maven/details/${repositoryPath}"
+def uiTargetDir = project.layout.buildDirectory.dir("docker/main/layers/resources/public").get().asFile
+
+
+docker {
+    registryCredentials {
+        username = System.getenv('DOCKERHUB_USERNAME')
+        password = System.getenv('DOCKERHUB_PASSWORD')
+    }
+}
+
+def latestLts(product, fallback, detectLTS) {
+    if(!detectLTS){return fallback}
+    try {
+        def endoflife = 'https://endoflife.date/api/v1/products/'
+        def json = new JsonSlurper().parse(new URI("${endoflife}${product}").toURL())
+
+        def releases = json.result.releases
+        def ltsReleases = releases.findAll {r ->
+            (r.isLts == true) || (r.label =~ /LTS/)
+        }
+
+        def latest = ltsReleases.sort {a, b ->
+            b.releaseDate <=> a.releaseDate
+        }[0]
+
+        if (latest.codename == null) {
+            return latest.name
+        }
+
+        return latest.codename.substring(0, latest.codename.indexOf(' ')).toLowerCase()
+    }
+    catch(Exception e){
+        logger.warn("⚠️ Failed to fetch LTS info for ${product}, falling back to ${fallback} (reason: ${e.message})")
+        return fallback
+    }
+}
+
+def temurinDefault='21'
+def ubuntuDefault='noble'
+def detectLTS=false
+
+def dockerBaseImage="eclipse-temurin:${latestLts('eclipse-temurin',temurinDefault,detectLTS)}-jre-${latestLts('ubuntu',ubuntuDefault,detectLTS)}"
+
+def dockerIncludeDatabase = !gradle.startParameter.taskNames.any { it.contains('dockerBuild') && (it.contains("NoDatabase") || it.contains("Backend")) }
+def dockerIncludeUI = !gradle.startParameter.taskNames.any { it.contains('dockerBuild') && it.contains("Backend") }
+def dockerBackendOnly = !dockerIncludeDatabase && !dockerIncludeUI
+def dockerMultiArch = gradle.startParameter.taskNames.any { it.contains('dockerBuild') && (it.contains("MultiArch") || it.contains("Backend"))}
+
+def dockerHost=System.getenv('DOCKER_HOST')?:project.findProperty('dockerHost')?:null
+def dockerPort=dockerHost?(System.getenv('DOCKER_PORT')?:project.findProperty('dockerPort')?:null):null
+def dockerHostPort=[dockerHost,dockerPort].findAll { it != null && !it.isEmpty() }.join(':')
+
+def DOCKER_NAMESPACE=System.getenv('DOCKER_NAMESPACE')
+def dockerNamespaceProp = project.findProperty('dockerNamespace')
+def dockerNamespace=DOCKER_NAMESPACE!=null?DOCKER_NAMESPACE:dockerNamespaceProp!=null?dockerNamespaceProp:'maurodatamapper'
+
+def dockerRepository=System.getenv('DOCKER_REPOSITORY')?:project.findProperty('dockerRepository')?:'mauro'
+
+
+def DOCKER_TAG=System.getenv('DOCKER_TAG')
+def dockerTagProp=project.findProperty('dockerTag')
+def dockerTag=DOCKER_TAG!=null?DOCKER_TAG:dockerTagProp!=null?dockerTagProp:"${version}"
+
+def DOCKER_PREFIX=System.getenv('DOCKER_PREFIX')
+def dockerTagPrefixProp=project.findProperty('dockerTagPrefix')
+def dockerTagPrefix=dockerTag?(DOCKER_PREFIX!=null?DOCKER_PREFIX:dockerTagPrefixProp!=null?dockerTagPrefixProp:[(dockerMultiArch?null:"${System.getProperty('os.arch')}"),(dockerBackendOnly?'backend':null),(!dockerBackendOnly && !dockerIncludeDatabase?'nodb':null)].findAll {it != null && !it.isEmpty() }.join('-')):null
+
+def dockerHostPortAndNamespace=[(dockerHostPort?dockerHostPort:null),(dockerNamespace?dockerNamespace:null)].findAll { it != null && !it.isEmpty() }.join('/')
+def dockerHostPortAndNamespaceAndRepository=[dockerHostPortAndNamespace,dockerRepository].findAll { it != null && !it.isEmpty() }.join('/')
+def dockerTagWithPrefix="${dockerTagPrefix != null && !dockerTagPrefix.isEmpty()?dockerTagPrefix+'-':''}${dockerTag}"
+
+def dockerPushImage = [dockerHostPortAndNamespaceAndRepository,dockerTagWithPrefix].findAll { it != null && !it.isEmpty() }.join(':')
+
+/*
+https://docs.docker.com/reference/cli/docker/image/tag/#extended-description
+dockerPushImage = [DOCKER_HOST[:DOCKER_PORT]/][DOCKER_NAMESPACE/]DOCKER_REPOSITORY[:[DOCKER_PREFIX-]DOCKER_TAG]
+*/
+
+tasks.register('printDockerBaseImage') {
+    doLast {
+        println "Would use Docker base image: ${dockerBaseImage}"
+    }
+}
+
+tasks.register('printDockerPushImage') {
+    doLast {
+        println "Would push to : ${dockerPushImage}"
+    }
+}
+
+tasks.register('fetchMDMUI') {
+    doLast {
+        if(!dockerIncludeUI) {
+
+            if(uiTargetDir.exists()) {
+                println "Removing UI files"
+                project.delete(uiTargetDir)
+            }
+
+            return
+        }
+
+        println "Fetching UI list from $uiRepoApi"
+        def jsonText = new URI(uiRepoApi).toURL().getText(requestProperties: ['Accept': 'application/json'])
+        def parsed = new JsonSlurper().parseText(jsonText)
+
+        def fileName
+        if (uiVersion) {
+            fileName = "mdm-ui-${uiVersion}.tgz"
+            if (!parsed.files*.name.find {it == fileName}) {
+                throw new GradleException("UI version ${uiVersion} not found in repository")
+            }
+        } else {
+            fileName = parsed.files.last().name
+        }
+
+        def downloadUrl = "${mauroRepository}/${repositoryPath}/${fileName}"
+        println "Downloading UI: $fileName from ${downloadUrl}"
+        uiTargetDir.mkdirs()
+
+        def tmpFile = File.createTempFile('mdmui', '.tgz')
+        tmpFile.withOutputStream { out ->
+            out << new URI(downloadUrl).toURL().openStream()
+        }
+
+        println "Extracting UI ${tmpFile.absolutePath} into ${uiTargetDir.absolutePath}"
+
+        def processTar = ['tar', '-xzf', tmpFile.absolutePath, '-C', uiTargetDir.absolutePath, '--strip-components=1'].execute()
+        processTar.waitFor()
+
+        tmpFile.delete()
+
+        println "Patching Angular API endpoint to relative /api"
+        def jsFiles = fileTree(dir: uiTargetDir, include: 'main.*.js').files
+
+        if (jsFiles) {
+
+            def sedInlineArgs = System.getProperty("os.name").toLowerCase().contains("mac") ?
+                                ['-i', ''] : ['-i']
+
+            def jsFilePaths = jsFiles.collect { it.absolutePath }
+
+            def cmd = ['sed'] +
+                      sedInlineArgs +
+                      ['s|this.apiEndpoint="http://localhost:8080/api"|this.apiEndpoint="/api"|g'] +
+                      jsFilePaths
+
+            def processSed = new ProcessBuilder(cmd)
+                .directory(uiTargetDir)
+                .start()
+            processSed.waitFor()
+
+        } else {
+            logger.warn("No main.*.js files found in ${uiTargetDir}")
+        }
+    }
+}
+
+tasks.named('dockerBuild') {
+    dependsOn(tasks.named('fetchMDMUI'))
+    dependsOn(tasks.named('stageDockerFiles'))
+
+    images = [dockerPushImage]
+
+    println "🐳 Docker tag [ ${dockerPushImage} ]"
+}
+
+tasks.register('stageDockerFiles', Copy) {
+    def dockerMainScripts=project.layout.buildDirectory.dir("docker/main/scripts").get().asFile
+    if(dockerMainScripts.exists()){
+        delete(dockerMainScripts)
+    }
+    mkdir(dockerMainScripts)
+    if(!dockerIncludeDatabase) {
+        from file('docker/noDB')
+        into dockerMainScripts
+    } else {
+        from file('docker/all')
+        into dockerMainScripts
+    }
+}
+
+tasks.named("dockerfile") {
+    baseImage("${dockerBaseImage}")
+
+    def instructions
+
+    if(!dockerIncludeDatabase) {
+        instructions = file('docker/noDB/instructions').text
+    } else {
+        instructions = file('docker/all/instructions').text
+    }
+
+    instruction "${instructions}"
+
+    outputs.file("build/docker/main/Dockerfile")
+
+    doLast {
+        def dockerfile = file("build/docker/main/Dockerfile")
+        def contents = dockerfile.text
+        int entrypointPos = contents.lastIndexOf('ENTRYPOINT')
+        dockerfile.text = dockerfile.text.substring(0,entrypointPos)
+    }
+}
+
+tasks.register('dockerBuildMultiArch') {
+    dependsOn(tasks.named('buildLayers'))
+    dependsOn(tasks.named('dockerfile'))
+    dependsOn(tasks.named('fetchMDMUI'))
+    dependsOn(tasks.named('stageDockerFiles'))
+
+    def locationFile = project.layout.buildDirectory.dir("docker/main").get().asFile
+
+    doLast {
+        println "🐳 Running docker build with multi-arch buildx command..."
+        println "🐳 Docker tag [ ${dockerPushImage} ]"
+
+        def location = locationFile.absolutePath
+
+        boolean useLogin = dockerUsername && dockerPassword
+
+        if(useLogin) {
+            ProcessBuilder processBuilderDockerLogin = new ProcessBuilder(['docker', 'login', '--username', dockerUsername, '--password-stdin', dockerHostPort].findAll{ it})
+            Process processDockerLogin = processBuilderDockerLogin.start()
+
+            processDockerLogin.outputStream.withWriter('UTF-8') {writer ->
+                writer.write("${dockerPassword}\n")
+            }
+
+            Thread.start {
+                processDockerLogin.inputStream.eachLine { println it }
+            }
+            Thread.start {
+                processDockerLogin.errorStream.eachLine { System.err.println it }
+            }
+            def rc = processDockerLogin.waitFor()
+            if (rc != 0) {
+                throw new GradleException("docker login failed (${rc})")
+            }
+        }
+
+        if(useLogin) {
+            println "🐳 Logged in, build and push image ]"
+        } else {
+            println "🐳 Not logged in, build image without pushing ]"
+        }
+        ProcessBuilder processBuilderDockerx = new ProcessBuilder(['docker', 'buildx', 'build', '--platform', 'linux/amd64,linux/arm64', '--progress=plain',(useLogin?'--push':null), '--tag', dockerPushImage, location].findAll {it})
+
+        Process processDockerx = processBuilderDockerx.start()
+        Thread.start {
+            processDockerx.inputStream.eachLine { println it }
+        }
+        Thread.start {
+            processDockerx.errorStream.eachLine { System.err.println it }
+        }
+        def rc = processDockerx.waitFor()
+        if (rc != 0) {
+            throw new GradleException("buildx failed (${rc})")
+        }
+    }
+}
+
+tasks.register('dockerBuildNoDatabase') {
+    dependsOn(tasks.named('dockerBuild'))
+}
+
+tasks.register('dockerBuildMultiArchNoDatabase') {
+    dependsOn(tasks.named('dockerBuildMultiArch'))
+}
+
+tasks.register('dockerBuildBackend') {
+    dependsOn(tasks.named('dockerBuildMultiArch'))
+}
+
+
+File readyConfigurationDir = file("../ready-configuration")
+
+def zipTasks = readyConfigurationDir.listFiles()
+    .findAll { it.directory }
+    .collect { dir ->
+        tasks.register("zipReady${dir.name.capitalize()}", Zip) {
+            from dir
+            archiveBaseName.set(dir.name)
+            archiveVersion.set("")
+            destinationDirectory.set(readyConfigurationDir)
+        }
+    }
+
+tasks.register("zipReadyConfiguration") {
+    dependsOn(zipTasks)
+    finalizedBy "gitAddReadyConfigurationZips"
+}
+
+tasks.register("gitAddReadyConfigurationZips", Exec) {
+    commandLine 'git', 'add', '../ready-configuration'
+}
