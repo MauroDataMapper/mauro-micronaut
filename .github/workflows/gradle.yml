@@ -129,6 +129,7 @@ jobs:
       - name: Publish Snapshot to Mauro Snapshot Repository
         if: success() && github.ref == 'refs/heads/develop'
         env:
+            GRADLE_OPTS: '-Xmx4g -XX:MaxMetaspaceSize=512m'
             ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SIGNING_IN_MEMORY_KEY }}
             ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_IN_MEMORY_KEY_PASSWORD }}
         run: |
@@ -137,6 +138,7 @@ jobs:
       - name: Publish to Maven Central
         if: success() && github.ref == 'refs/heads/main'
         env:
+            GRADLE_OPTS: '-Xmx4g -XX:MaxMetaspaceSize=512m'
             ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SIGNING_IN_MEMORY_KEY }}
             ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_IN_MEMORY_KEY_PASSWORD }}
             ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.SONATYPE_USERNAME }}
