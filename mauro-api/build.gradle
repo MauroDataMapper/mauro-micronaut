@@ -1,3 +1,9 @@
+import groovy.json.JsonOutput
+import groovy.yaml.YamlSlurper
+import groovy.yaml.YamlBuilder
+import org.openapitools.generator.gradle.plugin.tasks.GenerateTask
+import org.gradle.api.publish.maven.MavenPublication
+
 buildscript {
     repositories {
         mavenCentral()
@@ -104,9 +110,6 @@ dependencies {
     implementation 'com.fasterxml.uuid:java-uuid-generator:5.1.0'
 }
 
-apply from: 'build-docker.gradle'
-apply from: 'build-open-api.gradle'
-apply from: 'build-typescript-client.gradle'
 
 application {
     mainClass.set("org.maurodata.controller.Application")
@@ -146,6 +149,12 @@ codenarcTest {
 
 [codenarcMain, codenarcTest]*.ignoreFailures = true
 
+docker {
+    registryCredentials {
+        username = System.getenv('DOCKERHUB_USERNAME')
+        password = System.getenv('DOCKERHUB_PASSWORD')
+    }
+}
 
 tasks.named('compileGroovy') {
     options.fork = true
@@ -158,8 +167,931 @@ tasks.named('compileGroovy') {
 }
 
 
+import groovy.json.JsonSlurper
+import org.yaml.snakeyaml.DumperOptions
+import org.yaml.snakeyaml.Yaml
+
+import java.security.MessageDigest
+import java.util.regex.Matcher
+import java.util.regex.Pattern
+
+def dockerUsername=System.getenv('DOCKERHUB_USERNAME')?:System.getenv('DOCKER_USERNAME')
+def dockerPassword=System.getenv('DOCKERHUB_PASSWORD')?:System.getenv('DOCKER_PASSWORD')
+
+def uiVersion = System.getenv('UI_VERSION')?:project.findProperty('uiVersion')?:null
+def uiRelease = System.getenv('UI_RELEASE')?:project.findProperty('uiRelease')?:null
+
+def mauroRepository = 'https://mauro-repository.com'
+def repositoryPath="${uiRelease?'artifacts':'artifacts-snapshots'}/mauroDataMapper/mdm-ui"
+
+def uiRepoApi  = "${mauroRepository}/api/maven/details/${repositoryPath}"
+def uiTargetDir = project.layout.buildDirectory.dir("docker/main/layers/resources/public").get().asFile
+
+def latestLts(product, fallback, detectLTS) {
+    if(!detectLTS){return fallback}
+    try {
+        def endoflife = 'https://endoflife.date/api/v1/products/'
+        def json = new JsonSlurper().parse(new URI("${endoflife}${product}").toURL())
+
+        def releases = json.result.releases
+        def ltsReleases = releases.findAll {r ->
+            (r.isLts == true) || (r.label =~ /LTS/)
+        }
+
+        def latest = ltsReleases.sort {a, b ->
+            b.releaseDate <=> a.releaseDate
+        }[0]
+
+        if (latest.codename == null) {
+            return latest.name
+        }
+
+        return latest.codename.substring(0, latest.codename.indexOf(' ')).toLowerCase()
+    }
+    catch(Exception e){
+        logger.warn("⚠️ Failed to fetch LTS info for ${product}, falling back to ${fallback} (reason: ${e.message})")
+        return fallback
+    }
+}
+
+def temurinDefault='21'
+def ubuntuDefault='noble'
+def detectLTS=false
+
+def dockerBaseImage="eclipse-temurin:${latestLts('eclipse-temurin',temurinDefault,detectLTS)}-jre-${latestLts('ubuntu',ubuntuDefault,detectLTS)}"
+
+def dockerIncludeDatabase = !gradle.startParameter.taskNames.any { it.contains('dockerBuild') && (it.contains("NoDatabase") || it.contains("Backend")) }
+def dockerIncludeUI = !gradle.startParameter.taskNames.any { it.contains('dockerBuild') && it.contains("Backend") }
+def dockerBackendOnly = !dockerIncludeDatabase && !dockerIncludeUI
+def dockerMultiArch = gradle.startParameter.taskNames.any { it.contains('dockerBuild') && (it.contains("MultiArch") || it.contains("Backend"))}
+
+def dockerHost=System.getenv('DOCKER_HOST')?:project.findProperty('dockerHost')?:null
+def dockerPort=dockerHost?(System.getenv('DOCKER_PORT')?:project.findProperty('dockerPort')?:null):null
+def dockerHostPort=[dockerHost,dockerPort].findAll { it != null && !it.isEmpty() }.join(':')
+
+def DOCKER_NAMESPACE=System.getenv('DOCKER_NAMESPACE')
+def dockerNamespaceProp = project.findProperty('dockerNamespace')
+def dockerNamespace=DOCKER_NAMESPACE!=null?DOCKER_NAMESPACE:dockerNamespaceProp!=null?dockerNamespaceProp:'maurodatamapper'
+
+def dockerRepository=System.getenv('DOCKER_REPOSITORY')?:project.findProperty('dockerRepository')?:'mauro'
 
 
+def DOCKER_TAG=System.getenv('DOCKER_TAG')
+def dockerTagProp=project.findProperty('dockerTag')
+def dockerTag=DOCKER_TAG!=null?DOCKER_TAG:dockerTagProp!=null?dockerTagProp:"${version}"
+
+def DOCKER_PREFIX=System.getenv('DOCKER_PREFIX')
+def dockerTagPrefixProp=project.findProperty('dockerTagPrefix')
+def dockerTagPrefix=dockerTag?(DOCKER_PREFIX!=null?DOCKER_PREFIX:dockerTagPrefixProp!=null?dockerTagPrefixProp:[(dockerMultiArch?null:"${System.getProperty('os.arch')}"),(dockerBackendOnly?'backend':null),(!dockerBackendOnly && !dockerIncludeDatabase?'nodb':null)].findAll {it != null && !it.isEmpty() }.join('-')):null
+
+def dockerHostPortAndNamespace=[(dockerHostPort?dockerHostPort:null),(dockerNamespace?dockerNamespace:null)].findAll { it != null && !it.isEmpty() }.join('/')
+def dockerHostPortAndNamespaceAndRepository=[dockerHostPortAndNamespace,dockerRepository].findAll { it != null && !it.isEmpty() }.join('/')
+def dockerTagWithPrefix="${dockerTagPrefix != null && !dockerTagPrefix.isEmpty()?dockerTagPrefix+'-':''}${dockerTag}"
+
+def dockerPushImage = [dockerHostPortAndNamespaceAndRepository,dockerTagWithPrefix].findAll { it != null && !it.isEmpty() }.join(':')
+
+/*
+https://docs.docker.com/reference/cli/docker/image/tag/#extended-description
+dockerPushImage = [DOCKER_HOST[:DOCKER_PORT]/][DOCKER_NAMESPACE/]DOCKER_REPOSITORY[:[DOCKER_PREFIX-]DOCKER_TAG]
+*/
+
+tasks.register('printDockerBaseImage') {
+    doLast {
+        println "Would use Docker base image: ${dockerBaseImage}"
+    }
+}
+
+tasks.register('printDockerPushImage') {
+    doLast {
+        println "Would push to : ${dockerPushImage}"
+    }
+}
+
+tasks.register('fetchMDMUI') {
+    doLast {
+        if(!dockerIncludeUI) {
+
+            if(uiTargetDir.exists()) {
+                println "Removing UI files"
+                project.delete(uiTargetDir)
+            }
+
+            return
+        }
+
+        println "Fetching UI list from $uiRepoApi"
+        def jsonText = new URI(uiRepoApi).toURL().getText(requestProperties: ['Accept': 'application/json'])
+        def parsed = new JsonSlurper().parseText(jsonText)
+
+        def fileName
+        if (uiVersion) {
+            fileName = "mdm-ui-${uiVersion}.tgz"
+            if (!parsed.files*.name.find {it == fileName}) {
+                throw new GradleException("UI version ${uiVersion} not found in repository")
+            }
+        } else {
+            fileName = parsed.files.last().name
+        }
+
+        def downloadUrl = "${mauroRepository}/${repositoryPath}/${fileName}"
+        println "Downloading UI: $fileName from ${downloadUrl}"
+        uiTargetDir.mkdirs()
+
+        def tmpFile = File.createTempFile('mdmui', '.tgz')
+        tmpFile.withOutputStream { out ->
+            out << new URI(downloadUrl).toURL().openStream()
+        }
+
+        println "Extracting UI ${tmpFile.absolutePath} into ${uiTargetDir.absolutePath}"
+
+        def processTar = ['tar', '-xzf', tmpFile.absolutePath, '-C', uiTargetDir.absolutePath, '--strip-components=1'].execute()
+        processTar.waitFor()
+
+        tmpFile.delete()
+
+        println "Patching Angular API endpoint to relative /api"
+        def jsFiles = fileTree(dir: uiTargetDir, include: 'main.*.js').files
+
+        if (jsFiles) {
+
+            def sedInlineArgs = System.getProperty("os.name").toLowerCase().contains("mac") ?
+                                ['-i', ''] : ['-i']
+
+            def jsFilePaths = jsFiles.collect { it.absolutePath }
+
+            def cmd = ['sed'] +
+                      sedInlineArgs +
+                      ['s|this.apiEndpoint="http://localhost:8080/api"|this.apiEndpoint="/api"|g'] +
+                      jsFilePaths
+
+            def processSed = new ProcessBuilder(cmd)
+            .directory(uiTargetDir)
+            .start()
+            processSed.waitFor()
+
+        } else {
+            logger.warn("No main.*.js files found in ${uiTargetDir}")
+        }
+    }
+}
+
+tasks.named('dockerBuild') {
+    dependsOn(tasks.named('fetchMDMUI'))
+    dependsOn(tasks.named('stageDockerFiles'))
+
+    images = [dockerPushImage]
+
+    println "🐳 Docker tag [ ${dockerPushImage} ]"
+}
+
+tasks.register('stageDockerFiles', Copy) {
+    def dockerMainScripts=project.layout.buildDirectory.dir("docker/main/scripts").get().asFile
+    if(dockerMainScripts.exists()){
+        delete(dockerMainScripts)
+    }
+    mkdir(dockerMainScripts)
+    if(!dockerIncludeDatabase) {
+        from file('docker/noDB')
+        into dockerMainScripts
+    } else {
+        from file('docker/all')
+        into dockerMainScripts
+    }
+}
+
+tasks.named("dockerfile") {
+    baseImage("${dockerBaseImage}")
+
+    def instructions
+
+    if(!dockerIncludeDatabase) {
+        instructions = file('docker/noDB/instructions').text
+    } else {
+        instructions = file('docker/all/instructions').text
+    }
+
+    instruction "${instructions}"
+
+    outputs.file("build/docker/main/Dockerfile")
+
+    doLast {
+        def dockerfile = file("build/docker/main/Dockerfile")
+        def contents = dockerfile.text
+        int entrypointPos = contents.lastIndexOf('ENTRYPOINT')
+        dockerfile.text = dockerfile.text.substring(0,entrypointPos)
+    }
+}
+
+tasks.register('dockerBuildMultiArch') {
+    dependsOn(tasks.named('buildLayers'))
+    dependsOn(tasks.named('dockerfile'))
+    dependsOn(tasks.named('fetchMDMUI'))
+    dependsOn(tasks.named('stageDockerFiles'))
+
+    def locationFile = project.layout.buildDirectory.dir("docker/main").get().asFile
+
+    doLast {
+        println "🐳 Running docker build with multi-arch buildx command..."
+        println "🐳 Docker tag [ ${dockerPushImage} ]"
+
+        def location = locationFile.absolutePath
+
+        boolean useLogin = dockerUsername && dockerPassword
+
+        if(useLogin) {
+            ProcessBuilder processBuilderDockerLogin = new ProcessBuilder(['docker', 'login', '--username', dockerUsername, '--password-stdin', dockerHostPort].findAll{ it})
+            Process processDockerLogin = processBuilderDockerLogin.start()
+
+            processDockerLogin.outputStream.withWriter('UTF-8') {writer ->
+                writer.write("${dockerPassword}\n")
+            }
+
+            Thread.start {
+                processDockerLogin.inputStream.eachLine { println it }
+            }
+            Thread.start {
+                processDockerLogin.errorStream.eachLine { System.err.println it }
+            }
+            def rc = processDockerLogin.waitFor()
+            if (rc != 0) {
+                throw new GradleException("docker login failed (${rc})")
+            }
+        }
+
+        if(useLogin) {
+            println "🐳 Logged in, build and push image ]"
+        } else {
+            println "🐳 Not logged in, build image without pushing ]"
+        }
+        ProcessBuilder processBuilderDockerx = new ProcessBuilder(['docker', 'buildx', 'build', '--platform', 'linux/amd64,linux/arm64', '--progress=plain',(useLogin?'--push':null), '--tag', dockerPushImage, location].findAll {it})
+
+        Process processDockerx = processBuilderDockerx.start()
+        Thread.start {
+            processDockerx.inputStream.eachLine { println it }
+        }
+        Thread.start {
+            processDockerx.errorStream.eachLine { System.err.println it }
+        }
+        def rc = processDockerx.waitFor()
+        if (rc != 0) {
+            throw new GradleException("buildx failed (${rc})")
+        }
+    }
+}
+
+tasks.register('dockerBuildNoDatabase') {
+    dependsOn(tasks.named('dockerBuild'))
+}
+
+tasks.register('dockerBuildMultiArchNoDatabase') {
+    dependsOn(tasks.named('dockerBuildMultiArch'))
+}
+
+tasks.register('dockerBuildBackend') {
+    dependsOn(tasks.named('dockerBuildMultiArch'))
+}
+
+
+File readyConfigurationDir = file("../ready-configuration")
+
+def zipTasks = readyConfigurationDir.listFiles()
+    .findAll { it.directory }
+    .collect { dir ->
+        tasks.register("zipReady${dir.name.capitalize()}", Zip) {
+            from dir
+            archiveBaseName.set(dir.name)
+            archiveVersion.set("")
+            destinationDirectory.set(readyConfigurationDir)
+        }
+    }
+
+tasks.register("zipReadyConfiguration") {
+    dependsOn(zipTasks)
+    finalizedBy "gitAddReadyConfigurationZips"
+}
+
+tasks.register("gitAddReadyConfigurationZips", Exec) {
+    commandLine 'git', 'add', '../ready-configuration'
+}
+
+tasks.register('pruneTransitiveRefs') {
+    dependsOn tasks.named('normalizeAllOpenApiYaml')
+
+    doLast {
+        def classesDir = layout.buildDirectory.dir("classes").get().asFile
+
+        def swaggerFiles = fileTree(classesDir).matching {
+            include "**/META-INF/swagger/*.yml"
+            include "**/META-INF/swagger/*.yaml"
+        }.files.toList()
+
+        if (swaggerFiles.isEmpty()) {
+            logger.lifecycle("pruneTransitiveRefs: no OpenAPI YAML files found")
+            return
+        }
+
+        logger.lifecycle("pruneTransitiveRefs: processing ${swaggerFiles.size()} file(s)")
+
+        def slurper = new YamlSlurper()
+
+        // helper: extract schema name from $ref like '#/components/schemas/Foo'
+        def refToName = { ref ->
+            if (!(ref instanceof String)) return null
+            def m = (ref =~ /#\/components\/schemas\/(.+)/)
+            m ? m[0][1] : null
+        }
+
+        swaggerFiles.each { File f ->
+            logger.lifecycle(" prune: ${f}")
+
+            def root = slurper.parse(f)
+            if (!(root?.components?.schemas instanceof Map)) {
+                logger.lifecycle("  - no components.schemas, skipping")
+                return
+            }
+
+            def schemas = root.components.schemas as Map
+
+            // Build directRefs as a plain map that won't auto-create entries on read
+            Map<String, Set<String>> directRefs = [:]
+
+            schemas.each { schemaName, schema ->
+                if (!(schema instanceof Map)) return
+                def aof = schema.allOf
+                if (aof instanceof Collection) {
+                    aof.each { entry ->
+                        if (entry instanceof Map && entry['$ref']) {
+                            def refName = refToName(entry['$ref'])
+                            if (refName) {
+                                if (!directRefs.containsKey(schemaName)) {
+                                    directRefs[schemaName] = new LinkedHashSet<String>()
+                                }
+                                directRefs[schemaName].add(refName)
+                            }
+                        }
+                    }
+                }
+                // handle top-level $ref if present
+                if (schema instanceof Map && schema['$ref']) {
+                    def refName = refToName(schema['$ref'])
+                    if (refName) {
+                        if (!directRefs.containsKey(schemaName)) {
+                            directRefs[schemaName] = new LinkedHashSet<String>()
+                        }
+                        directRefs[schemaName].add(refName)
+                    }
+                }
+            }
+
+            // Compute transitive closure without mutating directRefs while iterating its keyset
+            Map<String, Set<String>> transitive = [:].withDefault { new LinkedHashSet<String>() }
+
+            // iterate over a snapshot of keys to be extra-safe
+            def keysSnapshot = new ArrayList(directRefs.keySet())
+            keysSnapshot.each { s ->
+                def visited = new LinkedHashSet<String>()
+                def stack = new ArrayDeque<String>()
+                // push the direct neighbors if any (no creation on read)
+                def neighbors = directRefs.get(s)
+                if (neighbors) stack.addAll(neighbors)
+
+                while (!stack.isEmpty()) {
+                    def cur = stack.removeFirst()
+                    if (!cur || visited.contains(cur)) continue
+                    visited.add(cur)
+                    transitive[s].add(cur)
+                    // only read neighbors if the key exists (no creation)
+                    def curNeighbors = directRefs.get(cur)
+                    if (curNeighbors) {
+                        curNeighbors.each { rr ->
+                            if (!visited.contains(rr)) stack.addLast(rr)
+                        }
+                    }
+                }
+            }
+
+            // Prune redundant refs
+            boolean modified = false
+
+            schemas.each { name, schema ->
+                if (!(schema instanceof Map && schema.allOf instanceof Collection)) return
+
+                def refs = schema.allOf.findAll { it instanceof Map && it['$ref'] }
+                def refNames = refs.collect { refToName(it['$ref']) }
+
+                def redundant = new LinkedHashSet<String>()
+                for (int i = 0; i < refNames.size(); i++) {
+                    def r = refNames[i]
+                    if (!r) continue
+                    for (int j = 0; j < refNames.size(); j++) {
+                        if (i == j) continue
+                        def q = refNames[j]
+                        if (!q) continue
+                        if (transitive[q]?.contains(r)) {
+                            redundant.add(r)
+                        }
+                    }
+                }
+
+                if (!redundant.isEmpty()) {
+                    schema.allOf = schema.allOf.findAll {
+                        if (it instanceof Map && it['$ref']) {
+                            def rn = refToName(it['$ref'])
+                            return !(rn in redundant)
+                        }
+                        return true
+                    }
+                    logger.lifecycle("  - ${name}: removed redundant refs ${redundant}")
+                    modified = true
+                }
+            }
+
+            schemas.each {name, schema ->
+                if (schema instanceof Map && schema.size() == 1 && schema.containsKey('$ref')) {
+                    Object ref = schema['$ref']
+                    schema.clear()
+                    schema['type'] = 'object'
+                    schema['allOf'] = [['$ref': ref]]
+                    modified = true
+                }
+            }
+
+            //
+
+            def canonicaliseSchema
+
+            canonicaliseSchema = { Object schema ->
+
+                if (!(schema instanceof Map)) return schema
+
+                def ignoredKeys = [
+                    'description',
+                    'title',
+                    'example',
+                    'examples',
+                    'deprecated',
+                    'externalDocs'
+                ] as Set
+
+                def normalised = [:]
+
+                schema.keySet()
+                    .findAll { !(it in ignoredKeys) }
+                    .sort()
+                    .each { k ->
+
+                        def v = schema[k]
+
+                        normalised[k] =
+                            (v instanceof Map) ? canonicaliseSchema(v) :
+                            (v instanceof List) ? v.collect {
+                                it instanceof Map ? canonicaliseSchema(it) : it
+                            } :
+                            v
+                    }
+
+                return normalised
+            }
+
+            def schemaHash = { Object schema ->
+                def json = JsonOutput.toJson(canonicaliseSchema(schema))
+                def md = MessageDigest.getInstance("SHA-256")
+                md.digest(json.bytes).encodeHex().toString()
+            }
+
+            Map<String, String> schemaRegistry = [:]
+
+            def internSchema = { String baseName, Object schema ->
+
+                if (!(schema instanceof Map) || schema['$ref']) {
+                    return schema
+                }
+
+                def hash = schemaHash(schema)
+
+                if (schemaRegistry.containsKey(hash)) {
+                    return [
+                        '$ref': "#/components/schemas/${schemaRegistry[hash]}".toString()
+                    ]
+                }
+
+                // create new canonical schema
+                def name = baseName
+                    .replaceAll(/[^A-Za-z0-9]/, '_')
+                    .replaceAll(/_+/, '_')
+
+                def finalName = name
+                int i = 1
+
+                while (root.components.schemas.containsKey(finalName)) {
+                    finalName = "${name}_${i++}"
+                }
+
+                // register
+                schemaRegistry[hash] = finalName
+                root.components.schemas[finalName] = schema
+
+                return [
+                    '$ref': "#/components/schemas/${finalName}".toString()
+                ]
+            }
+
+            root.paths.each { path, methods ->
+                methods.each { method, op ->
+
+                    def content = op?.requestBody?.content as Map
+                    def schema = content?.get('application/json')?.schema
+
+                    if (schema && !(schema instanceof Map && schema['$ref'])) {
+                        content['application/json'].schema =
+                            internSchema("${op.operationId}_Request".toString(), schema)
+                    }
+
+                    def res200 = op?.responses?.get('200')
+                    def resContent = res200?.content as Map
+                    def resSchema = resContent?.get('application/json')?.schema
+
+                    if (resSchema && !(resSchema instanceof Map && resSchema['$ref'])) {
+                        resContent['application/json'].schema =
+                            internSchema("${op.operationId}_Response".toString(), resSchema)
+                    }
+                }
+            }
+
+            // Mark allOf schemas as internal to hint to codegen that they should not be generated as top-level classes
+
+            root.components?.schemas?.each { name, schema ->
+                if (name.endsWith('_allOf') && schema instanceof Map) {
+                    schema['x-internal'] = true
+                }
+            }
+
+            // Ensure apiKeyAuth security scheme is defined in components.securitySchemes
+
+            root.components = root.components ?: [:]
+            root.components.securitySchemes = root.components.securitySchemes ?: [:]
+            if (!root.components.securitySchemes.containsKey('apiKeyAuth')) {
+                root.components.securitySchemes['apiKeyAuth'] = [type: 'apiKey', in: 'header', name: 'apiKey', description: 'API key authentication']
+                modified = true
+            }
+
+            // Make sure security is defined at the root level
+            if (!root.containsKey('security')) {
+                root['security'] = [[ apiKeyAuth: [] ]]
+                modified = true
+            }
+
+            //
+
+            if (modified) {
+                // write YAML back using SnakeYAML (available via buildscript classpath)
+                def dumperOptions = new DumperOptions()
+                dumperOptions.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK)
+                dumperOptions.setPrettyFlow(true)
+                dumperOptions.setDefaultScalarStyle(DumperOptions.ScalarStyle.PLAIN) // optional, avoids quoting where possible
+
+                def yamlDumper = new Yaml(dumperOptions)
+                f.withWriter('UTF-8') { writer ->
+                    yamlDumper.dump(root, writer)
+                }
+                logger.lifecycle("  - wrote pruned YAML")
+            } else {
+                logger.lifecycle("  - no changes needed")
+            }
+        }
+    }
+}
+
+configurations {
+    openApiGeneratorCli6
+    openApiGeneratorCli7
+}
+
+dependencies {
+    openApiGeneratorCli6 "org.openapitools:openapi-generator-cli:6.6.0"
+    openApiGeneratorCli7 "org.openapitools:openapi-generator-cli:7.21.0"
+}
+
+def normalizers = [
+    REF_AS_PARENT_IN_ALLOF              : 'true',
+    REFACTOR_ALLOF_WITH_PROPERTIES_ONLY : 'true',
+    SET_CONTAINER_TO_NULLABLE           : 'array|set|map'
+]
+
+def findOpenApiSpecs = {
+    def swaggerRoot = layout.buildDirectory.dir("classes").get().asFile
+    fileTree(swaggerRoot).matching {
+        include "**/META-INF/swagger/*.yml"
+        include "**/META-INF/swagger/*.yaml"
+    }.files.toList().sort { a, b -> a.absolutePath <=> b.absolutePath }
+}
+
+/**
+ * Lenient resolution: returns null (rather than throwing) when the spec files don't yet exist.
+ * Safe to call from lazy providers during Gradle's dependency-resolution phase (before compileGroovy runs).
+ */
+def findSingleOpenApiSpec = { boolean strict ->
+    def explicit = project.findProperty('openApiSpec')?.toString()?.trim()
+    if (explicit) {
+        def f = project.file(explicit)
+        if (!f.exists() && strict) {
+            throw new GradleException("openApiSpec does not exist: ${f}")
+        }
+        return f.exists() ? f : null
+    }
+    def specs = findOpenApiSpecs()
+    if (specs.isEmpty()) {
+        if (strict) {
+            throw new GradleException("No OpenAPI YAML files found under build/classes. Run compileGroovy first or pass -PopenApiSpec=...")
+        }
+        return null
+    }
+    if (specs.size() > 1 && strict) {
+        throw new GradleException("Found multiple OpenAPI specs (${specs*.name}). Pass -PopenApiSpec=<path> to choose one")
+    }
+    specs.first()
+}
+
+/** Strict resolution: throws if spec cannot be resolved. Use inside doFirst / doLast actions. */
+def resolveSingleOpenApiSpec = { findSingleOpenApiSpec(true) }
+
+def specStem = { File specFile ->
+    def fileName = specFile.name
+    def dotIndex = fileName.lastIndexOf('.')
+    dotIndex > 0 ? fileName.substring(0, dotIndex) : fileName
+}
+
+tasks.register('normalizeOpenApiYamlWithGenerator', JavaExec) {
+    dependsOn tasks.named('compileGroovy')
+
+    classpath = configurations.openApiGeneratorCli6
+    mainClass.set('org.openapitools.codegen.OpenAPIGenerator')
+
+    // Run generator in a dedicated JVM; default heap can be overridden with -PopenApiGeneratorMaxHeap=6g.
+    def openApiGeneratorMaxHeap = (project.findProperty('openApiGeneratorMaxHeap') ?: '4g').toString()
+    jvmArgs "-Xmx${openApiGeneratorMaxHeap}"
+
+    // Declare inputs/outputs at configuration time for proper UP-TO-DATE checking.
+    inputs.files(providers.provider {
+        def spec = findSingleOpenApiSpec(false)
+        spec ? [spec] : []
+    }).withPropertyName('inputSpec').optional(true)
+    outputs.dir(providers.provider {
+        def spec = findSingleOpenApiSpec(false)
+        def stem = spec ? specStem(spec) : 'openapi'
+        layout.buildDirectory.dir("openapi/normalized/${stem}").get().asFile
+    }).withPropertyName('normalizedOutput')
+
+    doFirst {
+        def selectedSpec = resolveSingleOpenApiSpec()   // strict — throws if genuinely missing
+        def normalizedOutputDir = layout.buildDirectory.dir("openapi/normalized/${specStem(selectedSpec)}").get().asFile
+        normalizedOutputDir.mkdirs()
+
+        // Build --openapi-normalizer flags from the map; use one flag per rule so values with
+        // commas (e.g. SET_CONTAINER_TO_NULLABLE=array,set,map) are passed correctly.
+        def normalizerArgs = normalizers.collectMany { k, v -> ['--openapi-normalizer', "${k}=${v}"] }
+
+        args = ['generate',
+                '-i', selectedSpec.absolutePath,
+                '-g', 'openapi-yaml',
+                *normalizerArgs,
+                '-o', normalizedOutputDir.absolutePath,
+                '--skip-validate-spec']
+
+        logger.lifecycle("Normalizing OpenAPI spec: ${selectedSpec}")
+        logger.lifecycle("Output dir: ${normalizedOutputDir}")
+    }
+}
+
+tasks.register('normalizeAllOpenApiYaml') {
+    dependsOn tasks.named('normalizeOpenApiYamlWithGenerator')
+
+    doLast {
+        def selectedSpec = resolveSingleOpenApiSpec()
+        def normalizedOutputDir = layout.buildDirectory.dir("openapi/normalized/${specStem(selectedSpec)}").get().asFile
+
+        def normalizedFiles = fileTree(normalizedOutputDir).matching {
+            include '**/*.yml'
+            include '**/*.yaml'
+        }.files
+
+        if (!normalizedFiles) {
+            throw new GradleException("Normalization produced no YAML for ${selectedSpec} (looked in ${normalizedOutputDir})")
+        }
+
+        def normalized = normalizedFiles.iterator().next()
+        selectedSpec.withOutputStream { os ->
+            normalized.withInputStream { ins ->
+                os << ins
+            }
+        }
+
+        logger.lifecycle("Replaced ${selectedSpec} with normalized output (${selectedSpec.length()} bytes)")
+    }
+}
+
+tasks.named('processResources') {
+    dependsOn tasks.named('normalizeAllOpenApiYaml')
+}
+
+// Make processResources depend on pruneTransitiveRefs (so packaging uses pruned YAMLs)
+tasks.named('processResources') {
+    dependsOn tasks.named('pruneTransitiveRefs')
+}
+
+tasks.register('generateRawTypeScriptClient', GenerateTask) {
+    dependsOn tasks.named('pruneTransitiveRefs')
+
+    generatorName.set('typescript-fetch')
+    skipValidateSpec.set(true)
+    cleanupOutput.set(true)
+
+    outputDir.set(layout.buildDirectory.dir('generated/typescript-client').get().asFile.absolutePath)
+    templateDir.set(file('src/main/openapi/templates/typescript').absolutePath)
+
+    // Keep generated package metadata deterministic for CI/publication.
+    additionalProperties.set([
+        npmName       : '@maurodata/mauro-api-client',
+        npmVersion    : project.version.toString(),
+        supportsES6   : 'true',
+        withInterfaces: 'true'
+    ])
+
+    // Lenient: same reasoning as normalizeOpenApiYamlWithGenerator
+    inputSpec.set(providers.provider {
+        (findSingleOpenApiSpec(false)
+            ?: layout.buildDirectory.file("classes/groovy/main/META-INF/swagger/openapi.yml").get().asFile
+        ).absolutePath
+    })
+
+    doFirst {
+        def selectedSpec = resolveSingleOpenApiSpec()   // strict
+        logger.lifecycle("Generating TypeScript client from ${selectedSpec}")
+    }
+}
+
+tasks.register('generateTypeScriptClient') {
+    dependsOn tasks.named('generateRawTypeScriptClient')
+
+    doLast {
+
+        def selectedSpec = resolveSingleOpenApiSpec()
+
+        def slurper = new YamlSlurper()
+        def root = slurper.parse(selectedSpec)
+
+        def familyOf = { String name ->
+            def m = (name =~ /^(.*)_([A-Za-z0-9]+)_$/)
+            return m ? m[0][1] : null
+        }
+
+        Map<String, List<String>> families = [:].withDefault { [] }
+
+        root.components.schemas.keySet().each { schemaName ->
+            def family = familyOf(schemaName)
+            if (family) {
+                families[family] << schemaName
+            }
+        }
+
+        Map<String, String> typeParameterOf = [:]
+
+        families.each { family, variants ->
+
+            variants.each { v ->
+                def inner = v.replace("${family}_", "").replace("_", "")
+                typeParameterOf[v] = inner
+            }
+        }
+
+        def outDir = layout.buildDirectory.dir("generated/typescript-client").get().asFile
+
+        def tsFiles = fileTree(outDir).matching {
+            include "**/*.ts"
+        }.files
+
+        logger.lifecycle("Post-processing generics in ${tsFiles.size()} TS files")
+
+        // index all interfaces
+        def interfaces = [:]  // name -> file content
+
+        tsFiles.each { f ->
+            def text = f.text
+
+            text.findAll(/export interface ([A-Za-z0-9_]+)/) { _, name ->
+                interfaces[name] = f
+            }
+        }
+
+        // rewrite files
+        families.each { family, variants ->
+
+            if (variants.size() < 2) return
+
+            logger.lifecycle("Collapsing generic family: ${family}")
+
+            def representativeInnerType = typeParameterOf[variants[0]]
+            // pick representative
+            def representativeFile = interfaces[representativeInnerType]
+            if(!representativeFile) {
+                logger.warn("No representative file found for family ${family} ${variants[0]}, skipping")
+                return
+            }
+
+            String genericBase = null
+
+            // replace all variant interfaces with type aliases
+            variants.each { v ->
+
+                def innerType = typeParameterOf[v]
+                def tsName = "${family}${innerType}".toString()
+                def tsGenerics = "${family}<${innerType}>".toString()
+                def tsFamily = family
+
+                def exportInterface = "(?ms)export interface ${tsName}\\s*\\{.*?^\\s*\\}\\s*".toString()
+                def exportTypeAlias = "export type ${tsName} = ${tsGenerics};".toString()
+                def importLine = "import { ${tsFamily} } from './${tsFamily}';".toString()
+                def replacementExportLine = "${importLine}\n${exportTypeAlias}\n\n".toString()
+
+                tsFiles.each {file ->
+
+                    String text = file.text
+
+                    if(!genericBase) {
+                        Pattern exportLinePattern = ~exportInterface
+                        Matcher matcher = exportLinePattern.matcher(text)
+                        if (matcher.find()) {
+                            genericBase = matcher.group(0)
+
+                            genericBase = genericBase.replace("interface ${tsName}".toString(), "interface ${family}<T>".toString())
+                            genericBase = genericBase.replaceAll("<${representativeInnerType}>".toString(), '<T>')
+                            genericBase = genericBase.replaceAll(tsName, family)
+
+                            genericBase = """/**
+ * 
+ * @export
+ * @interface ${family}
+ * @template T
+ */
+${genericBase}
+""".toString()
+                        }
+                    }
+
+                    boolean toSave=false
+
+                    String newText = text
+                        .replaceAll(
+                            exportInterface,
+                            replacementExportLine
+                        )
+                    if(text != newText) {
+                        logger.lifecycle("Replacing ${exportInterface} with ${replacementExportLine} in ${file}")
+                        text=newText
+                        toSave=true
+                    }
+
+                    if(toSave) {
+                        file.text = text
+                    }
+                }
+            }
+
+            if(genericBase) {
+                File genericFile = new File(representativeFile.parentFile, "${family}.ts")
+                genericFile.text = genericBase
+                logger.lifecycle("Created generic base file ${genericFile} for family ${family}")
+                println "${genericBase}"
+                // Add export statement to index.ts
+                File indexFile = new File(genericFile.parentFile, "index.ts")
+                String exportStatement = "export * from './${family}';\n"
+                String indexText = indexFile.text
+                if (!indexText.contains(exportStatement)) {
+                    if(!indexText.endsWith('\n')){
+                        indexText += '\n'
+                    }
+                    indexFile.text = indexText + exportStatement
+                    logger.lifecycle("Added export statement for ${family} to index.ts")
+                }
+            }
+
+        }
+    }
+}
+
+tasks.register('packageTypeScriptClient', Zip) {
+    dependsOn tasks.named('generateTypeScriptClient')
+
+    archiveBaseName.set(project.name)
+    archiveClassifier.set('typescript-client')
+    destinationDirectory.set(layout.buildDirectory.dir('distributions'))
+
+    from(layout.buildDirectory.dir('generated/typescript-client'))
+}
+
+tasks.named('assemble') {
+    dependsOn tasks.named('packageTypeScriptClient')
+}
 
 plugins.withId('maven-publish') {
     publishing {
