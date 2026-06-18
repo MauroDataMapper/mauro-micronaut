@@ -3,6 +3,8 @@ import groovy.yaml.YamlSlurper
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
+apply from: rootProject.file('gradle/open-api-helpers.gradle')
+
 buildscript {
     repositories {
         mavenCentral()

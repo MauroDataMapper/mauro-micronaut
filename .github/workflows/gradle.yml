@@ -73,7 +73,9 @@ jobs:
         run: ./gradlew --no-daemon --max-workers=1 -PopenApiGeneratorMaxHeap=4g :mauro-api:processResources
 
       - name: Test with Gradle
-        run: ./gradlew --no-daemon --max-workers=1 test
+        env:
+          GRADLE_OPTS: '-Xmx4g -XX:MaxMetaspaceSize=512m'
+        run: ./gradlew --no-daemon test
 
       - name: Test Report
         uses: dorny/test-reporter@v3
