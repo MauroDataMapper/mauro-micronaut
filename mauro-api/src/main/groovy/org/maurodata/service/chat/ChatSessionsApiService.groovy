@@ -3,6 +3,8 @@ package org.maurodata.service.chat
 import groovy.json.JsonOutput
 import groovy.util.logging.Slf4j
 import io.micronaut.context.annotation.Value
+import io.micronaut.http.HttpHeaders
+import io.micronaut.http.HttpRequest
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.exceptions.HttpStatusException
 import jakarta.inject.Singleton
@@ -95,6 +97,11 @@ class ChatSessionsApiService implements ChatSessionService {
 
     @Override
     Publisher<ChatEventDto> sendMessage(String sessionId, SendMessageRequest request) {
+        sendMessage(sessionId, request, null)
+    }
+
+    @Override
+    Publisher<ChatEventDto> sendMessage(String sessionId, SendMessageRequest request, HttpRequest<?> httpRequest) {
         long start = System.currentTimeMillis()
         SessionDto session = getSession(sessionId)
         String assistantMessageId = UUID.randomUUID().toString()
@@ -150,21 +157,28 @@ class ChatSessionsApiService implements ChatSessionService {
             String prerequisiteInstruction = buildPrerequisiteSkillInstruction(skillDefinitions, request.content ?: '')
 
             List<ProviderMessage> historyMessages = buildProviderHistory(timeline)
-            List<ProviderMessage> currentContextMessages = new ArrayList<ProviderMessage>()
-            List<Map<String, Object>> currentContextReplayMetadata = new ArrayList<Map<String, Object>>()
-            addProviderContextMessage(currentContextMessages, currentContextReplayMetadata, personaInstruction, 'persona', 'substitute', 'persona:active')
-            addProviderContextMessage(currentContextMessages, currentContextReplayMetadata, prerequisiteInstruction, 'skill_prerequisite', 'replay', null)
-            addProviderContextMessage(currentContextMessages, currentContextReplayMetadata, toolInstruction, 'tool_policy', 'substitute', 'tool_policy:active')
-            addProviderContextMessage(currentContextMessages, currentContextReplayMetadata, routingInstruction, 'routing', 'substitute', 'routing:index')
+            List<ProviderMessage> providerMessages = new ArrayList<ProviderMessage>()
+            List<Map<String, Object>> providerMessageReplayMetadata = new ArrayList<Map<String, Object>>()
+            addProviderContextMessage(providerMessages, providerMessageReplayMetadata, personaInstruction, 'persona', 'substitute', 'persona:active')
+            addProviderContextMessage(providerMessages, providerMessageReplayMetadata, toolInstruction, 'tool_policy', 'substitute', 'tool_policy:active')
+            addProviderContextMessage(providerMessages, providerMessageReplayMetadata, routingInstruction, 'routing', 'substitute', 'routing:index')
+            int currentUserPromptIndex = lastCurrentUserPromptIndex(historyMessages, request.content ?: '')
+            if (currentUserPromptIndex >= 0) {
+                addProjectedHistoryMessages(providerMessages, providerMessageReplayMetadata, historyMessages, 0, currentUserPromptIndex)
+                addProviderContextMessage(providerMessages, providerMessageReplayMetadata, prerequisiteInstruction, 'skill_prerequisite', 'replay', null)
+                addProjectedHistoryMessages(providerMessages, providerMessageReplayMetadata, historyMessages, currentUserPromptIndex, historyMessages.size())
+            } else {
+                addProjectedHistoryMessages(providerMessages, providerMessageReplayMetadata, historyMessages, 0, historyMessages.size())
+                addProviderContextMessage(providerMessages, providerMessageReplayMetadata, prerequisiteInstruction, 'skill_prerequisite', 'replay', null)
+            }
             ProviderRequest providerRequest = new ProviderRequest(
                 sessionId: session.id,
                 messageId: assistantMessageId,
                 model: session.model,
                 tools: tools,
-                options: request.options ?: [:],
-                messages: currentContextMessages
+                options: providerOptions(request.options ?: [:], httpRequest),
+                messages: providerMessages
             )
-            providerRequest.messages.addAll(historyMessages)
             List<ChatEventDto> initialProviderRequestEvents = appendProviderRequestMessages(
                 timeline,
                 sessionId,
@@ -172,7 +186,7 @@ class ChatSessionsApiService implements ChatSessionService {
                 provider.id(),
                 session.model ?: '',
                 providerRequest.messages,
-                providerReplayMetadata(currentContextReplayMetadata, historyMessages.size())
+                providerMessageReplayMetadata
             )
 
             Flux<ChatEventDto> stream = Flux.from(provider.streamChat(providerRequest))
@@ -349,6 +363,34 @@ class ChatSessionsApiService implements ChatSessionService {
         builder.toString()
     }
 
+    private static Map<String, Object> providerOptions(Map<String, Object> requestOptions, HttpRequest<?> httpRequest) {
+        Map<String, Object> options = new LinkedHashMap<String, Object>(requestOptions ?: [:])
+        Map<String, List<String>> headers = forwardedHeaders(httpRequest)
+        if (!headers.isEmpty()) {
+            options.put('_mauroForwardHeaders', headers)
+        }
+        options
+    }
+
+    private static Map<String, List<String>> forwardedHeaders(HttpRequest<?> httpRequest) {
+        Map<String, List<String>> headers = new LinkedHashMap<String, List<String>>()
+        if (httpRequest == null) {
+            return headers
+        }
+        copyForwardedHeader(httpRequest, headers, 'apiKey')
+        copyForwardedHeader(httpRequest, headers, HttpHeaders.COOKIE)
+        copyForwardedHeader(httpRequest, headers, HttpHeaders.AUTHORIZATION)
+        headers
+    }
+
+    private static void copyForwardedHeader(HttpRequest<?> httpRequest, Map<String, List<String>> headers, String name) {
+        List<String> values = httpRequest.headers.getAll(name)
+            .findAll {String value -> value != null && !value.trim().isEmpty()} as List<String>
+        if (!values.isEmpty()) {
+            headers.put(name, values)
+        }
+    }
+
     private static String buildPrerequisiteSkillInstruction(List<ChatSkillDefinition> skills, String userContent) {
         if (!skills || userContent == null || userContent.trim().isEmpty()) {
             return ''
@@ -368,9 +410,10 @@ class ChatSessionsApiService implements ChatSessionService {
         }
 
         StringBuilder builder = new StringBuilder(2048)
-        builder.append('Required Mauro skill context for this turn. ')
-            .append('The backend selected this context from skill-owned tool prerequisites before tool use. ')
-            .append('Apply it when choosing tool arguments and domainTypes; do not ask the user to confirm use of these skills.')
+        builder.append('# Required skill')
+            .append('\n- The following skill has been selected; informing the use of the available tools.')
+            .append('\n- Apply this skill when choosing tool arguments.')
+            .append('\n- Use these selected skills directly when choosing tool arguments.')
 
         for (ChatSkillDefinition skill : matchedSkills) {
             builder.append('\n\n## ')
@@ -431,32 +474,38 @@ class ChatSessionsApiService implements ChatSessionService {
 
     private static String buildRoutingInstruction(List<ChatSkillDefinition> skills, List<Map<String, Object>> tools) {
         StringBuilder builder = new StringBuilder(2048)
-        builder.append('Routing index for available Mauro assistance. Use this index to choose whether to call a tool or retrieve a skill. Individual skills own their own routing; do not rely on the persona to list every skill. Prefer the most specific matching skill route. Use GENERAL or FALLBACK routes only when no SPECIFIC route matches well.')
+        builder.append('# Routing index')
+        builder.append('\n- Use this index to choose whether to call a tool or retrieve a skill.')
+        builder.append('\n- Not every skill is listed here.')
+        builder.append('\n- Skills may be GENERAL, SPECIFIC, or FALLBACK.')
+        builder.append('\n- Prefer the SPECIFIC skill route, using GENERAL or FALLBACK routes only when no SPECIFIC route matches well.')
 
         List<String> skillRoutes = buildSkillRoutes(skills)
         if (!skillRoutes.isEmpty()) {
-            builder.append('\n\nSkill routes:')
+            builder.append('\n\n## Skill routes')
             for (String route : skillRoutes) {
-                builder.append('\n- ')
+                builder.append('\n\n')
                     .append(route)
             }
         }
 
         List<String> toolApplicabilityRoutes = buildToolApplicabilityRoutes(skills)
         if (!toolApplicabilityRoutes.isEmpty()) {
-            builder.append('\n\nTool prerequisite/context routes:')
-            builder.append('\nBefore calling a tool, check these skill-owned routes. REQUIRED_PREREQUISITE skills must be retrieved first when their useWhen matches. RECOMMENDED_PREREQUISITE and RECOMMENDED_CONTEXT skills should be retrieved when their useWhen matches unless the needed context is already present.')
+            builder.append('\n\n## Tool prerequisite/context routes')
+            builder.append('\n- Before calling a tool, check these skill-owned routes.')
+            builder.append('\n- REQUIRED_PREREQUISITE skills must be retrieved first when their Use when conditions match.')
+            builder.append('\n- RECOMMENDED_PREREQUISITE and RECOMMENDED_CONTEXT skills should be retrieved when their Use when conditions match unless the needed context is already present.')
             for (String route : toolApplicabilityRoutes) {
-                builder.append('\n- ')
+                builder.append('\n\n')
                     .append(route)
             }
         }
 
         List<String> toolRoutes = buildToolRoutes(tools)
         if (!toolRoutes.isEmpty()) {
-            builder.append('\n\nTool routes:')
+            builder.append('\n\n## Tool routes')
             for (String route : toolRoutes) {
-                builder.append('\n- ')
+                builder.append('\n\n')
                     .append(route)
             }
         }
@@ -473,11 +522,39 @@ class ChatSessionsApiService implements ChatSessionService {
             } as List<ChatSkillDefinition>
     }
 
+    private static List<ChatSkillDefinition> sortSkillsByRouteOrder(List<ChatSkillDefinition> skills) {
+        new ArrayList<ChatSkillDefinition>(skills ?: [])
+            .sort {ChatSkillDefinition left, ChatSkillDefinition right ->
+                int specificityCompare = specificityRank(left?.routing?.specificity) <=> specificityRank(right?.routing?.specificity)
+                if (specificityCompare != 0) {
+                    return specificityCompare
+                }
+                Integer leftPriority = left.priority != null ? left.priority : Integer.valueOf(1000)
+                Integer rightPriority = right.priority != null ? right.priority : Integer.valueOf(1000)
+                int priorityCompare = leftPriority <=> rightPriority
+                priorityCompare != 0 ? priorityCompare : (left.id ?: '') <=> (right.id ?: '')
+            } as List<ChatSkillDefinition>
+    }
+
+    private static int specificityRank(String specificity) {
+        String value = specificity == null ? '' : specificity.trim().toUpperCase(Locale.ROOT)
+        if (value == 'GENERAL') {
+            return 0
+        }
+        if (value == 'SPECIFIC') {
+            return 1
+        }
+        if (value == 'FALLBACK') {
+            return 2
+        }
+        1
+    }
+
     private static List<String> buildSkillRoutes(List<ChatSkillDefinition> skills) {
         if (!skills) {
             return []
         }
-        List<ChatSkillDefinition> routedSkills = sortSkillsByPriority(skills)
+        List<ChatSkillDefinition> routedSkills = sortSkillsByRouteOrder(skills)
             .findAll {ChatSkillDefinition skill ->
                 !'PERSONA'.equalsIgnoreCase(skill.type) &&
                     skill.routing != null &&
@@ -489,46 +566,32 @@ class ChatSessionsApiService implements ChatSessionService {
         List<String> routes = new ArrayList<String>()
         for (ChatSkillDefinition skill : routedSkills) {
             SkillRouting routing = skill.routing
-            StringBuilder route = new StringBuilder(512)
-            route.append(skill.name)
-                .append(' (')
-                .append(skill.id)
-                .append('): ')
-                .append(skill.description)
-                .append(' Specificity: ')
-                .append(routing.specificity ?: 'NORMAL')
-                .append('.')
-            if (!(routing.useWhen ?: []).isEmpty()) {
-                route.append(' Use when: ')
-                    .append(routing.useWhen.join('; '))
-                    .append('.')
-            }
-            if (!(routing.avoidWhen ?: []).isEmpty()) {
-                route.append(' Avoid when: ')
-                    .append(routing.avoidWhen.join('; '))
-                    .append('.')
-            }
-            if (!(skill.seeAlso ?: []).isEmpty()) {
-                route.append(' See also: ')
-                    .append(skill.seeAlso.join(', '))
-                    .append('.')
-            }
-
-            String toolName = routing.toolName ?: 'skill_lookup'
+            String toolName = routing.toolName ?: 'mauro_skill'
             Map<String, Object> toolArguments = routing.toolArguments && !routing.toolArguments.isEmpty()
                 ? routing.toolArguments
                 : [id: skill.id, includeInstruction: true] as Map<String, Object>
-            route.append(' Retrieve with ')
+            StringBuilder route = new StringBuilder(768)
+            route.append('### ')
+                .append(skill.name)
+                .append('\n')
+            route.append('id: ')
+                .append(skill.id)
+                .append('\n')
+            route.append('description: ')
+                .append(skill.description ?: '')
+                .append('\n')
+            route.append('Specificity: ')
+                .append(routing.specificity ?: 'NORMAL')
+            appendMarkdownList(route, 'Use when', routing.useWhen)
+            appendMarkdownListOrNone(route, 'Avoid when', routing.avoidWhen)
+            appendMarkdownList(route, 'See also', skill.seeAlso)
+            appendMarkdownList(route, 'Examples', (routing.examples ?: []).take(3))
+            route.append('\nFull instructions:')
+                .append('\nCall the tool ')
                 .append(toolName)
                 .append(' using arguments ')
                 .append(JsonOutput.toJson(toolArguments))
                 .append('.')
-
-            if (!(routing.examples ?: []).isEmpty()) {
-                route.append(' Examples: ')
-                    .append(routing.examples.take(3).join(' | '))
-                    .append('.')
-            }
             routes.add(route.toString())
         }
         routes
@@ -539,7 +602,7 @@ class ChatSessionsApiService implements ChatSessionService {
             return []
         }
 
-        List<ChatSkillDefinition> applicableSkills = sortSkillsByPriority(skills)
+        List<ChatSkillDefinition> applicableSkills = sortSkillsByRouteOrder(skills)
             .findAll {ChatSkillDefinition skill ->
                 !'PERSONA'.equalsIgnoreCase(skill.type) && !(skill.toolApplicability ?: []).isEmpty()
             }
@@ -551,44 +614,31 @@ class ChatSessionsApiService implements ChatSessionService {
                     continue
                 }
                 StringBuilder route = new StringBuilder(768)
-                route.append(applicability.tool)
+                route.append('### ')
+                    .append(applicability.tool)
                     .append(' <- ')
                     .append(skill.name)
-                    .append(' (')
+                    .append('\n')
+                route.append('skill id: ')
                     .append(skill.id)
-                    .append(', ')
+                    .append('\n')
+                route.append('description: ')
+                    .append(skill.description ?: '')
+                    .append('\n')
+                route.append('Specificity: ')
+                    .append(skill.routing?.specificity ?: 'NORMAL')
+                    .append('\n')
+                route.append('Relationship: ')
                     .append(applicability.relationship ?: 'RECOMMENDED_PREREQUISITE')
-                    .append('): ')
-                    .append(skill.description)
-                    .append('.')
-                if (!(applicability.useWhen ?: []).isEmpty()) {
-                    route.append(' Use when: ')
-                        .append(applicability.useWhen.join('; '))
-                        .append('.')
-                }
-                if (!(applicability.triggerTerms ?: []).isEmpty()) {
-                    route.append(' Trigger terms: ')
-                        .append(applicability.triggerTerms.join(', '))
-                        .append('.')
-                }
-                if (!(applicability.avoidWhen ?: []).isEmpty()) {
-                    route.append(' Avoid when: ')
-                        .append(applicability.avoidWhen.join('; '))
-                        .append('.')
-                }
-                if (!(applicability.instructions ?: []).isEmpty()) {
-                    route.append(' Instructions: ')
-                        .append(applicability.instructions.join('; '))
-                        .append('.')
-                }
-                route.append(' Retrieve with skill_lookup using arguments ')
+                appendMarkdownList(route, 'Use when', applicability.useWhen)
+                appendMarkdownList(route, 'Trigger terms', applicability.triggerTerms)
+                appendMarkdownListOrNone(route, 'Avoid when', applicability.avoidWhen)
+                appendMarkdownList(route, 'Instructions', applicability.instructions)
+                appendMarkdownList(route, 'Examples', (applicability.examples ?: []).take(3))
+                route.append('\nFull instructions:')
+                    .append('\nCall the tool mauro_skill using arguments ')
                     .append(JsonOutput.toJson([id: skill.id, includeInstruction: true]))
                     .append('.')
-                if (!(applicability.examples ?: []).isEmpty()) {
-                    route.append(' Examples: ')
-                        .append(applicability.examples.take(3).join(' | '))
-                        .append('.')
-                }
                 routes.add(route.toString())
             }
         }
@@ -600,7 +650,11 @@ class ChatSessionsApiService implements ChatSessionService {
             return []
         }
         List<String> routes = new ArrayList<String>()
-        for (Map<String, Object> tool : tools) {
+        List<Map<String, Object>> sortedTools = new ArrayList<Map<String, Object>>(tools)
+            .sort {Map<String, Object> left, Map<String, Object> right ->
+                toolNameForRoute(left) <=> toolNameForRoute(right)
+            } as List<Map<String, Object>>
+        for (Map<String, Object> tool : sortedTools) {
             Object functionObj = tool.get('function')
             if (!(functionObj instanceof Map)) {
                 continue
@@ -614,7 +668,7 @@ class ChatSessionsApiService implements ChatSessionService {
             }
             Map<String, Object> routing = getMap(tool.get('routing'))
             if (routing.isEmpty()) {
-                routes.add("${name}: ${description}")
+                routes.add(buildToolRoute(name, description, [:] as Map<String, Object>))
             } else {
                 routes.add(buildToolRoute(name, description, routing))
             }
@@ -624,35 +678,76 @@ class ChatSessionsApiService implements ChatSessionService {
 
     private static String buildToolRoute(String name, String description, Map<String, Object> routing) {
         StringBuilder route = new StringBuilder(768)
-        route.append(name)
-            .append(': ')
-            .append(description)
-        appendStringSection(route, ' Purpose: ', routing.get('purpose'))
-        appendListSection(route, ' Use when: ', routing.get('useWhen'))
-        appendListSection(route, ' Avoid when: ', routing.get('avoidWhen'))
-        appendListSection(route, ' Search syntax: ', routing.get('syntax'))
-        appendListSection(route, ' Filtering: ', routing.get('filtering'))
-        appendListSection(route, ' Paging: ', routing.get('paging'))
-        appendListSection(route, ' Limitations: ', routing.get('limitations'))
-        appendListSection(route, ' Examples: ', routing.get('examples'))
+        route.append('### ')
+            .append(name)
+            .append('\n')
+        route.append('description: ')
+            .append(description ?: '')
+        appendStringSection(route, 'Purpose', routing.get('purpose'))
+        appendMarkdownList(route, 'Use when', asStringList(routing.get('useWhen')))
+        appendMarkdownListOrNone(route, 'Avoid when', asStringList(routing.get('avoidWhen')))
+        appendMarkdownList(route, 'Search syntax', asStringList(routing.get('syntax')))
+        appendMarkdownList(route, 'Filtering', asStringList(routing.get('filtering')))
+        appendMarkdownList(route, 'Paging', asStringList(routing.get('paging')))
+        appendMarkdownList(route, 'Limitations', asStringList(routing.get('limitations')))
+        appendMarkdownList(route, 'Examples', asStringList(routing.get('examples')).take(3))
         route.toString()
+    }
+
+    private static String toolNameForRoute(Map<String, Object> tool) {
+        if (tool == null) {
+            return ''
+        }
+        Object functionObj = tool.get('function')
+        if (!(functionObj instanceof Map)) {
+            return ''
+        }
+        @SuppressWarnings('unchecked')
+        Map<String, Object> function = (Map<String, Object>) functionObj
+        asString(function.get('name')) ?: ''
     }
 
     private static void appendStringSection(StringBuilder builder, String label, Object value) {
         String text = asString(value)
         if (text != null && !text.trim().isEmpty()) {
-            builder.append(label)
+            builder.append('\n\n')
+                .append(label)
+                .append(': ')
                 .append(text)
-                .append('.')
         }
     }
 
-    private static void appendListSection(StringBuilder builder, String label, Object value) {
-        List<String> values = asStringList(value)
+    private static void appendMarkdownList(StringBuilder builder, String label, Object value) {
+        appendMarkdownList(builder, label, asStringList(value))
+    }
+
+    private static void appendMarkdownList(StringBuilder builder, String label, List<String> values) {
         if (!values.isEmpty()) {
-            builder.append(label)
-                .append(values.join('; '))
-                .append('.')
+            builder.append('\n\n')
+                .append(label)
+                .append(':')
+            for (String item : values) {
+                builder.append('\n- ')
+                    .append(item)
+            }
+        }
+    }
+
+    private static void appendMarkdownListOrNone(StringBuilder builder, String label, Object value) {
+        appendMarkdownListOrNone(builder, label, asStringList(value))
+    }
+
+    private static void appendMarkdownListOrNone(StringBuilder builder, String label, List<String> values) {
+        builder.append('\n\n')
+            .append(label)
+            .append(':')
+        if (values.isEmpty()) {
+            builder.append('\n- None specified.')
+            return
+        }
+        for (String item : values) {
+            builder.append('\n- ')
+                .append(item)
         }
     }
 
@@ -770,7 +865,11 @@ class ChatSessionsApiService implements ChatSessionService {
                 messageId: UUID.randomUUID().toString(),
                 model: session.model,
                 tools: [],
-                options: [purpose: 'session_title'] as Map<String, Object>,
+                options: [
+                    purpose    : 'session_title',
+                    think      : false,
+                    num_predict: 32
+                ] as Map<String, Object>,
                 messages: [
                     new ProviderMessage(
                         role: 'system',
@@ -789,7 +888,8 @@ class ChatSessionsApiService implements ChatSessionService {
                 .collectList()
                 .block()
                 ?.each {String token -> title.append(token)}
-            sanitizeSessionTitle(title.toString())
+            String sanitized = sanitizeSessionTitle(title.toString())
+            looksLikeTitle(sanitized) ? sanitized : fallbackSessionTitle(userContent)
         } catch (Exception ignored) {
             fallbackSessionTitle(userContent)
         }
@@ -799,7 +899,12 @@ class ChatSessionsApiService implements ChatSessionService {
         if (title == null) {
             return null
         }
-        String cleaned = title
+        String source = title
+        int thinkClose = source.lastIndexOf('</think>')
+        if (thinkClose >= 0) {
+            source = source.substring(thinkClose + '</think>'.length())
+        }
+        String cleaned = source
             .replaceAll(/[\r\n]+/, ' ')
             .replaceAll(/^["'`*_#\s]+|["'`*_\s.]+$/, '')
             .replaceAll(/\s+/, ' ')
@@ -808,6 +913,28 @@ class ChatSessionsApiService implements ChatSessionService {
             cleaned = cleaned.substring(0, 80).trim()
         }
         cleaned
+    }
+
+    private static boolean looksLikeTitle(String title) {
+        if (title == null || title.trim().isEmpty()) {
+            return false
+        }
+        String cleaned = title.trim()
+        String lower = cleaned.toLowerCase(Locale.ROOT)
+        if (lower.contains('</think>') ||
+            lower.startsWith('okay,') ||
+            lower.startsWith('okay ') ||
+            lower.startsWith('let me ') ||
+            lower.startsWith('i need ') ||
+            lower.startsWith('i should ') ||
+            lower.startsWith('the user ') ||
+            lower.contains('the user wants') ||
+            lower.contains('looking at the conversation') ||
+            lower.contains('concise title') ||
+            lower.contains('chat session')) {
+            return false
+        }
+        cleaned.split(/\s+/).length <= 8
     }
 
     private static String fallbackSessionTitle(String userContent) {
@@ -883,6 +1010,41 @@ class ChatSessionsApiService implements ChatSessionService {
             metadata.put('substitutionKey', substitutionKey)
         }
         replayMetadata.add(metadata)
+    }
+
+    private static void addProjectedHistoryMessages(
+        List<ProviderMessage> messages,
+        List<Map<String, Object>> replayMetadata,
+        List<ProviderMessage> historyMessages,
+        int fromIndex,
+        int toIndex
+    ) {
+        if (historyMessages == null || historyMessages.isEmpty()) {
+            return
+        }
+        int start = Math.max(fromIndex, 0)
+        int end = Math.min(toIndex, historyMessages.size())
+        for (int i = start; i < end; i++) {
+            messages.add(historyMessages.get(i))
+            replayMetadata.add([
+                source    : 'projected_history',
+                replayMode: 'omit'
+            ] as Map<String, Object>)
+        }
+    }
+
+    private static int lastCurrentUserPromptIndex(List<ProviderMessage> historyMessages, String userContent) {
+        if (historyMessages == null || historyMessages.isEmpty()) {
+            return -1
+        }
+        String content = userContent ?: ''
+        for (int i = historyMessages.size() - 1; i >= 0; i--) {
+            ProviderMessage message = historyMessages.get(i)
+            if (message?.role == 'user' && (message.content ?: '') == content) {
+                return i
+            }
+        }
+        -1
     }
 
     private static List<Map<String, Object>> providerReplayMetadata(
@@ -1128,7 +1290,7 @@ class ChatSessionsApiService implements ChatSessionService {
         }
         @SuppressWarnings('unchecked')
         Map<String, Object> wrappedOutput = (Map<String, Object>) wrappedOutputObj
-        if (asString(wrappedOutput.get('tool')) != 'catalogue_search') {
+        if (asString(wrappedOutput.get('tool')) != 'mauro_keyword_search') {
             return ''
         }
 
@@ -1151,7 +1313,7 @@ class ChatSessionsApiService implements ChatSessionService {
         }
 
         StringBuilder builder = new StringBuilder(512)
-        builder.append('Previous catalogue_search result memory: searchTerm "')
+        builder.append('Previous mauro_keyword_search result memory: searchTerm "')
             .append(searchTerm)
             .append('"')
         if (count != null) {
@@ -1169,11 +1331,11 @@ class ChatSessionsApiService implements ChatSessionService {
             .append(', hasMore ')
             .append(hasMore)
             .append('.')
-        builder.append(' If the user asks to count, filter, narrow, or ask how many of all previous results match an additional condition, do not count only the visible page. Call catalogue_search again with the same domainTypes and a refined searchTerm that combines the prior search with the new condition, then answer from the returned total count. If the prior searchTerm uses OR, distribute the new condition across the alternatives, for example age education OR weight education.')
+        builder.append(' If the user asks to count, filter, narrow, or ask how many of all previous results match an additional condition, do not count only the visible page. Call mauro_keyword_search again with the same domainTypes and a refined searchTerm that combines the prior search with the new condition, then answer from the returned total count. If the prior searchTerm uses OR, distribute the new condition across the alternatives, for example age education OR weight education.')
 
         if (hasMore) {
             Map<String, Object> nextPageToolCall = [
-                name     : 'catalogue_search',
+                name     : 'mauro_keyword_search',
                 arguments: [
                     searchTerm: searchTerm,
                     domainTypes: domainTypes,

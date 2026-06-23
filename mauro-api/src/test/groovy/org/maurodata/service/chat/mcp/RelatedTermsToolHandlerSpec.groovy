@@ -45,7 +45,7 @@ class RelatedTermsToolHandlerSpec extends Specification {
         then:
         modelText.contains('Suggested Search Expression')
         modelText.contains('"diabetes mellitus"')
-        modelText.contains('call catalogue_search next')
+        modelText.contains('call mauro_keyword_search next')
     }
 
     static class FakeTextGenerationService implements TextGenerationService {

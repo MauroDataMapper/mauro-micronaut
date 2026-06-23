@@ -8,17 +8,17 @@ import org.maurodata.service.chat.ChatSkillService
 @CompileStatic
 @Singleton
 @McpToolDefinition(
-    name = 'skill_lookup',
+    name = 'mauro_skill',
     description = 'Look up Mauro assistant skills, documentation guidance, glossary context, and usage guidance by id or query.',
     purpose = 'Retrieve modular Mauro guidance skills, including documentation guidance, glossary context, terminology help, data model exploration guidance, and search strategy.',
     useWhen = [
         'the routing index says a specific skill applies',
-        'users ask for Mauro documentation, installation, configuration, Docker, administration, how-to, glossary, or usage-guide help',
-        'users ask a Mauro-specific question that needs guidance beyond a direct catalogue search',
-        'there are ambiguities in how to answer a user question that can be resolved by looking up relevant skills and their guidance to choose the best one to apply'
+        'answering Mauro documentation, installation, configuration, Docker, administration, how-to, glossary, or usage-guide questions',
+        'answering a Mauro-specific question that needs guidance beyond a direct catalogue search',
+        'resolving answer ambiguity by looking up relevant skills and their guidance to choose the best one to apply'
     ],
     avoidWhen = [
-        'the user is asking for live catalogue content and catalogue_search can answer directly',
+        'finding live catalogue content when mauro_keyword_search can answer directly',
         'the previous tool result already contains enough information to answer'
     ],
     examples = [
@@ -74,7 +74,7 @@ class SkillLookupToolHandler extends AbstractAnnotatedToolHandler {
         boolean broadened = Boolean.TRUE.equals(result.get('broadened'))
 
         List<String> status = [
-            'Tool skill_lookup succeeded.'
+            'Tool mauro_skill succeeded.'
         ]
         List<String> metadata = [
             "Available assistant skills found: ${totalCount}",
@@ -122,14 +122,14 @@ class SkillLookupToolHandler extends AbstractAnnotatedToolHandler {
             instructions.add('Treat this skill guidance as internal context for understanding the domain and deciding how to answer.')
             instructions.add('Answer the user directly in your own words; do not cite the skill name or say "according to the guide" unless the user asks what guidance you used.')
             instructions.add('If the guidance contains relevant URLs, include the most relevant URL or URLs in your answer.')
-            instructions.add('If the See also skills are needed to answer fully, retrieve the most relevant one with skill_lookup by id.')
+            instructions.add('If the See also skills are needed to answer fully, retrieve the most relevant one with mauro_skill by id.')
         } else {
             instructions.add('Answer the user with this skill list.')
         }
         List<String> completionGuidance = [
             'If this skill guidance answers the current user request, answer now from it.',
-            'Do not call skill_lookup again with identical arguments.',
-            'Only call skill_lookup again when the result explicitly points to a relevant See also skill needed to answer fully, or when a broadened result needs one specific skill fetched by id.'
+            'Do not call mauro_skill again with identical arguments.',
+            'Only call mauro_skill again when the result explicitly points to a relevant See also skill needed to answer fully, or when a broadened result needs one specific skill fetched by id.'
         ] as List<String>
 
         renderModelTextSections([

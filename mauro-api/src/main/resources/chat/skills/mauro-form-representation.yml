@@ -1,8 +1,8 @@
 id: mauro-form-representation
 name: Mauro Form Representation
-description: Explain precisely how a form is represented using Mauro Data Models, Data Classes, Data Elements, Data Types, and values
+description: Interpreting form language as Mauro catalogue concepts
 scope: GLOBAL
-version: 1.0.0
+version: 1.1.0
 type: SKILL
 priority: 206
 keywords:
@@ -20,10 +20,11 @@ keywords:
   - submission
 seeAlso:
   - mauro-glossary
+  - mauro-form-representation-explainer
   - mauro-data-model-diagrammer
   - mauro-data-model-explorer
 toolApplicability:
-  - tool: catalogue_search
+  - tool: mauro_keyword_search
     relationship: REQUIRED_PREREQUISITE
     triggerTerms:
       - form
@@ -43,124 +44,66 @@ toolApplicability:
       - record
       - records
     useWhen:
-      - users ask for form questions, fields, answers, sections, submissions, records, or controls about a topic
-      - users use form language and the Mauro mapping to Data Model, Data Class, Data Element, or Data Type may affect the search
-      - users ask for questions related to a topic and likely mean form fields/Data Elements
+      - interpreting forms, form questions, fields, answers, sections, submissions, records, or controls about a topic
+      - mapping form language to DataModel, DataClass, DataElement, or DataType for mauro_keyword_search arguments
     avoidWhen:
-      - users ask for general product documentation, installation, configuration, Docker, or administration help
+      - answering product documentation, installation, configuration, Docker, or administration questions
     examples:
       - Can I have a single form about diabetes?
-      - Would you find forms relating to diabetes by suggesting related terms and then searching?
+      - Look up forms about maternity
       - Could you list some questions related to smoking?
       - Find fields about maternity care
     instructions:
-      - Treat this as internal context for interpreting the user's words prior to choosing catalogue_search domainTypes.
-      - If the user asks for forms or whole form templates, use catalogue_search domainTypes ["DataModel"]. Do not use only DataElement for forms.
-      - If the user asks for form questions, fields, or controls, use catalogue_search domainTypes ["DataElement"].
-      - If the user asks for form sections or groups, use catalogue_search domainTypes ["DataClass"].
-      - If the user explicitly asks for both whole forms and their questions/fields, use domainTypes ["DataModel","DataElement"].
+      - Use this as internal context before choosing mauro_keyword_search domainTypes.
+      - Forms or whole form templates map to DataModel.
+      - Form questions, fields, or controls map to DataElement.
+      - Form sections or groups map to DataClass.
+      - Completed submissions or records are data instances, not the form model itself.
 routing:
   specificity: SPECIFIC
   useWhen:
-    - users ask how a form is represented in Mauro
-    - users ask how form sections, fields, answers, or submissions map to Mauro catalogue concepts
-    - users ask for form questions or questions related to a topic and may mean form fields/Data Elements
-    - users ask whether a form is a Data Model, Data Class, Data Element, or data instance
-    - users ask for a precise explanation of form metadata versus filled-in form data
+    - mapping form terms to Mauro concepts
+    - deciding whether a form is a Data Model, Data Class, Data Element, or data instance
+    - interpreting form questions or questions related to a topic as possible form fields/DataElements
   avoidWhen:
-    - users ask to find live forms in the catalogue
-    - users ask to inspect the exact structure of a specific form already stored in the catalogue
-    - users ask general installation, configuration, Docker, administration, or documentation questions
+    - finding live forms in the catalogue
+    - explaining form representation with a user-facing diagram or narrative
+    - inspecting the exact structure of a specific stored catalogue form
+    - answering installation, configuration, Docker, administration, or documentation questions
   examples:
-    - How is a Form represented by a Mauro model?
+    - Are DataElements forms?
     - Is a form a Data Model or a Data Class?
     - How do form fields map to Mauro Data Elements?
-    - Could you list some questions related to smoking?
   tool:
-    name: skill_lookup
+    name: mauro_skill
     arguments:
       id: mauro-form-representation
       includeInstruction: true
 instruction: |
-  Use this skill to learn and apply Mauro's form-representation model prior to answering the user or choosing tool parameters.
-  This guidance is primarily internal context for the assistant. Do not present it as "the Mauro Form Representation guide" or say "according to this skill" unless the user asks what guidance you used.
-  Answer the user's actual question directly, using this mapping to avoid terminology mistakes.
-
-  Identity rules:
-  - A Data Element is not a Form.
-  - A Data Element is a component within a form-like structure: it describes one field, question, or control.
-  - A whole Form is usually represented as a Mauro Data Model in this Mauro context.
-  - Therefore, if the user asks "Are DataElements forms?", answer "No. Data Elements are not forms; they usually represent fields or questions within a form. The whole form is usually represented as a Data Model."
-
-  Search parameter decision rules:
-  - If the user asks for "forms about X", "forms relating to X", "a form about X", or "form templates about X", search with domainTypes ["DataModel"].
-  - If the user asks for "questions about X", "fields about X", or "controls about X", search with domainTypes ["DataElement"].
-  - If the user asks for "sections about X" or "groups about X", search with domainTypes ["DataClass"].
-  - If the user explicitly asks for both whole forms and fields/questions, search with domainTypes ["DataModel","DataElement"].
-  - Never choose only ["DataElement"] for a request that asks for whole forms. Data Elements are components inside forms, not forms themselves.
+  Internal decision-making context. Use this skill to interpret the user's form language and choose correct Mauro concepts or tool arguments. Do not present this as a guide to the user unless asked.
 
   Core mapping:
-  - A Form is usually represented as a Mauro Data Model when the whole form is being described as a reusable structure.
-  - Form sections, pages, groups, or repeating groups are usually represented as Data Classes.
-  - Form questions, fields, or controls are usually represented as Data Elements. This does not make a Data Element a Form; it makes it a field/question/control within the form structure.
-  - The expected answer/value shape for a field is represented by a Data Type.
-  - Pick lists, coded answers, and fixed choices are usually represented using Enumeration Types and Enumeration Values, or by links to Terminology/Code Set content when governed codes are needed.
-  - A completed form submission is an instance of data that conforms to the Data Model. Mauro generally describes and governs the form metadata; it is not necessarily storing the completed submissions.
-  - If the user asks for "forms related to X", they usually mean whole form definitions/templates. In Mauro terms, those are usually represented as Data Models. Use catalogue_search with domainTypes ["DataModel"] if the user wants actual catalogue items.
-  - If the user asks for "questions related to X", they often mean form questions/fields about X. In Mauro terms, those are usually represented as Data Elements. Use catalogue_search with domainTypes ["DataElement"] if the user wants actual catalogue items.
+  - A whole form definition/template is usually represented as a Mauro DataModel.
+  - A form section, page, group, or repeating group is usually represented as a DataClass.
+  - A form question, field, or control is usually represented as a DataElement.
+  - A field's expected answer/value shape is represented by a DataType.
+  - Fixed choices are usually represented with Enumeration Types and Enumeration Values, or with Terminology/Code Set content when governed codes are needed.
+  - A completed form submission or record is data that conforms to the DataModel. It is not the DataModel itself.
 
-  Optional explanation pattern:
-  Use this kind of diagram only when the user asks for an explanation or when a short diagram would clarify the answer. Do not include it for simple yes/no terminology questions unless needed.
+  Identity rules:
+  - A DataElement is not a form.
+  - A DataElement is a component inside a form-like structure.
+  - A DataElement describes a field/question/control; it is not the user-entered value for one submission.
+  - If the user asks "Are DataElements forms?", answer directly: "No. DataElements are fields or questions within a form. A whole form is usually represented as a DataModel."
 
-  ```text
-  Form: Adult Diabetes Assessment
-  = represented as a Mauro Data Model
-  |
-  +-- Section: Patient Details
-  |   = Data Class
-  |   |
-  |   +-- Field: NHS Number
-  |   |   = Data Element
-  |   |   +-- Answer type: identifier/text pattern
-  |   |       = Data Type
-  |   |
-  |   +-- Field: Date of Birth
-  |       = Data Element
-  |       +-- Answer type: date
-  |           = Data Type
-  |
-  +-- Section: Clinical Measurements
-      = Data Class
-      |
-      +-- Field: Weight
-      |   = Data Element
-      |   +-- Answer type: decimal, unit kg
-      |       = Data Type
-      |
-      +-- Field: Smoking Status
-          = Data Element
-          +-- Answer type: choice list
-              = Enumeration Type
-              +-- Choices: Current | Former | Never | Unknown
-                  = Enumeration Values
+  Search parameter rules:
+  - "forms about X", "forms relating to X", "a form about X", or "form templates about X" -> mauro_keyword_search domainTypes ["DataModel"].
+  - "questions about X", "fields about X", or "controls about X" -> mauro_keyword_search domainTypes ["DataElement"].
+  - "sections about X" or "groups about X" -> mauro_keyword_search domainTypes ["DataClass"].
+  - Explicit requests for both whole forms and fields/questions -> mauro_keyword_search domainTypes ["DataModel","DataElement"].
+  - Never choose only ["DataElement"] for a request asking for whole forms.
 
-  Completed submission #1
-      is data that conforms to the model
-      Patient Details.NHS Number = ...
-      Clinical Measurements.Weight = ...
-
-  Completed submission #2
-      is another data instance that conforms to the same model
-  ```
-
-  Explain common confusions:
-  - The form definition/template is metadata and is modelled in Mauro.
-  - A filled-in form is data, not the Data Model itself.
-  - A form can be implemented in different systems while sharing the same Mauro metadata description.
-  - A Data Class is not a Java/class programming construct; in Mauro it is a grouping or structure inside a Data Model.
-  - A Data Element is not a form; it is a field/question/control within a form-like Data Model.
-  - A Data Element describes a field/question; it is not the user-entered value for one submission.
-
-  If the user asks for a broader diagram of Data Model structure, see also mauro-data-model-diagrammer.
-  If the user needs definitions of individual Mauro terms, see also mauro-glossary.
-  If the user wants the exact fields/sections for a specific catalogue form, use or suggest catalogue/model exploration tools rather than inventing structure.
+  Explanation routing:
+  - If the user wants a user-facing explanation or diagram of how forms are represented, use mauro-form-representation-explainer.
+  - If the user asks for a broader Data Model structure diagram, use mauro-data-model-diagrammer.
+  - If the user needs definitions of individual Mauro terms, use mauro-glossary.

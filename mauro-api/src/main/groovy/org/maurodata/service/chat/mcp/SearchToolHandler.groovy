@@ -17,8 +17,8 @@ class SearchToolHandler extends AbstractAnnotatedToolHandler {
 
     private final SearchExecutionService searchExecutionService
     private final AdministeredItemLookupService administeredItemLookupService
-    private static final int DEFAULT_PAGE_SIZE = 10
-    private static final int DEFAULT_MAX_PAGE_SIZE = 50
+    private static final int DEFAULT_PAGE_SIZE = 5
+    private static final int DEFAULT_MAX_PAGE_SIZE = 20
 
     SearchToolHandler(
         SearchExecutionService searchExecutionService,
@@ -35,7 +35,7 @@ class SearchToolHandler extends AbstractAnnotatedToolHandler {
         if (searchTerm == null || searchTerm.trim().isEmpty()) {
             throw new HttpStatusException(
                 HttpStatus.BAD_REQUEST,
-                'catalogue_search requires searchTerm (or query/term/text)'
+                'mauro_keyword_search requires searchTerm (or query/term/text)'
             )
         }
 
@@ -105,7 +105,7 @@ class SearchToolHandler extends AbstractAnnotatedToolHandler {
         int rangeEnd = offset + returnedCount
 
         List<String> status = [
-            'Tool catalogue_search succeeded.'
+            'Tool mauro_keyword_search succeeded.'
         ]
 
         List<String> metadata = [
@@ -125,63 +125,73 @@ class SearchToolHandler extends AbstractAnnotatedToolHandler {
         }
 
         List<String> instructions = new ArrayList<String>()
-        instructions.add("Tell the user the exact catalogue search term/expression used: ${searchTerm}".toString())
+        instructions.add("COMMON: Tell the user the exact catalogue search term/expression used: ${searchTerm}".toString())
         if (!domainTypes.isEmpty()) {
-            instructions.add("Tell the user the domain type filter used: ${domainTypes.join(', ')}.".toString())
+            instructions.add("COMMON: Tell the user the domain type filter used: ${domainTypes.join(', ')}.".toString())
         }
         if (returnedCount > 0) {
-            instructions.add('When presenting these catalogue_search results, follow these tool-owned formatting instructions rather than any general persona wording.')
-            instructions.add("Tell the user the total number of matching catalogue items is ${totalCount}.".toString())
-            instructions.add("Use this pagination summary in your answer: Page ${pageNumber} of ${totalPages}. Showing ${rangeStart}-${rangeEnd} of ${totalCount} matching catalogue items, ${pageSize} results at a time.".toString())
-            instructions.add('Present the returned matches as a Markdown table. Use exactly these columns when possible: Label, Type, Description.')
-            instructions.add('Keep descriptions short and leave the Description cell blank when no description is available.')
-            instructions.add('Include each returned item from the Returned Data section unless the user explicitly asked for fewer results.')
+            instructions.add('COMMON: When presenting these mauro_keyword_search results, follow these tool-owned formatting instructions rather than any general persona wording.')
+            instructions.add("COMMON: Tell the user the total number of matching catalogue items is ${totalCount}.".toString())
+            instructions.add("COMMON: Use this pagination summary in your answer: Page ${pageNumber} of ${totalPages}. Showing ${rangeStart}-${rangeEnd} of ${totalCount} matching catalogue items, ${pageSize} results at a time.".toString())
+            instructions.add('COMMON: Present the returned matches as a Markdown table. Use exactly these columns when possible: Label, Type, ID, Description.')
+            instructions.add('COMMON: Escape pipe characters inside Markdown table cell values as \\|.')
+            instructions.add('COMMON: Keep descriptions short and leave the Description cell blank when no description is available.')
+            instructions.add('COMMON: Include each returned item from the Returned Data section unless the user explicitly asked for fewer results.')
+            instructions.add('COMMON: When the user refers to an ordinal result such as the first one, second one, or third one, use the ID from the matching numbered Returned Data item or Available Next Action. Do not guess or copy an ID from a different row.')
+            instructions.add('COMMON: When the user later names one of these returned labels, use the ID from the same Returned Data row as that exact label. Verify the label and ID together before calling mauro_get.')
+            instructions.add('COMMON: If you cannot find the named label in the visible Returned Data rows, call mauro_keyword_search again for that label and the appropriate domainTypes rather than reusing an unrelated ID.')
             if (!domainTypes.isEmpty()) {
-                instructions.add("Tell the user these results are filtered to ${domainTypes.join(', ')} only.".toString())
-            }
-            if (hasMore) {
-                instructions.add('Explicitly say that more results are available and offer to show the next page.')
+                instructions.add("COMMON: Tell the user these results are filtered to ${domainTypes.join(', ')} only.".toString())
             }
         } else {
-            instructions.add('Tell the user that this exact catalogue search returned no matching items.')
+            instructions.add('COMMON: Tell the user that this exact catalogue search returned no matching items.')
         }
 
-        List<String> clarificationGuidance = new ArrayList<String>()
+        List<String> continuationGate = [
+            'Choose exactly one branch flag for this tool result: CW or FR.',
+            'CW = Continue Workflow. Choose CW when the current user request has remaining planned/requested steps and an exact Available Next Action or Follow-up Action can complete the next unfinished requested step.',
+            'FR = Final Response. Choose FR when the current user request is complete, or when no exact Available Next Action or Follow-up Action can complete the next unfinished requested step.',
+            'If unsure, introspect privately: list the requested actions from the current user request and mark each as complete or incomplete.',
+            'After choosing CW or FR, follow COMMON instructions and the instructions with the chosen flag. Ignore instructions with the other flag.'
+        ] as List<String>
+
+        List<String> continueWorkflowGuidance = [
+            'CW: Present any required current result briefly if needed, then execute the exact matching action in this turn.',
+            'CW: Use this branch to complete the next unfinished requested step; keep moving through the user\'s requested workflow.',
+            'CW: Treat the current user request as sufficient confirmation for its requested steps.',
+            'CW: Phrases such as "then take a closer look at the first one" are requested actions, not optional actions to offer.',
+            'CW: Continue by calling the exact action rather than presenting that action as a user choice.',
+            'CW: Skip FR instructions, pagination offers, refinement choices, and search-expansion questions while an exact action can complete an unfinished requested step.'
+        ] as List<String>
+
+        List<String> finalResponseGuidance = new ArrayList<String>()
+        finalResponseGuidance.add('FR: Answer the user from this result when the requested workflow is complete or cannot be continued by an exact action.')
+        if (hasMore) {
+            finalResponseGuidance.add('FR: Say that more results are available and that you can show the next page.')
+        }
         if (unexpandedKeywordSearch) {
-            clarificationGuidance.add('This looks like an exact keyword search using one unexpanded term.')
-            clarificationGuidance.add("When asking the user how to proceed, explicitly state that the current search used searchTerm \"${searchTerm}\"".toString() + (domainTypes.isEmpty() ? '.' : " and domainTypes [${domainTypes.join(', ')}].".toString()))
-            clarificationGuidance.add("Also state the current exact-term result count: ${returnedCount} returned on this page, ${totalCount} total matching catalogue items.".toString())
-            clarificationGuidance.add('Still show the returned results from this page using the table format from Answer Instructions; the clarification question is an addition, not a replacement for the result list.')
-            clarificationGuidance.add('Ask the user whether they want to keep the exact keyword search, or expand the keyword expression with related terms and alternatives.')
-            clarificationGuidance.add('Do not silently choose the expanded keyword route for the user.')
-            clarificationGuidance.add('If they choose the expanded keyword route, call related_terms for the current search term, then call catalogue_search with the expanded keyword expression and searchIntent "expanded".')
-            clarificationGuidance.add('If they choose the exact keyword route, continue from the current exact-term result and use searchIntent "exact" for follow-up pages or refinements.')
-            clarificationGuidance.add('Give the user an outcome in this turn: ask the focused choice question and briefly state that the current exact-term search has already returned results.')
+            finalResponseGuidance.add('FR: This looks like an exact keyword search using one unexpanded term.')
+            finalResponseGuidance.add("FR: For a final response that asks about search expansion, state that the current search used searchTerm \"${searchTerm}\"".toString() + (domainTypes.isEmpty() ? '.' : " and domainTypes [${domainTypes.join(', ')}].".toString()))
+            finalResponseGuidance.add("FR: Also state the current exact-term result count: ${returnedCount} returned on this page, ${totalCount} total matching catalogue items.".toString())
+            finalResponseGuidance.add('FR: Show the returned results from this page using the table format from Answer Instructions; any search-expansion question is an addition, not a replacement for the result list.')
+            finalResponseGuidance.add('FR: For search expansion, ask for a focused choice between keeping the exact keyword search and expanding the keyword expression with related terms and alternatives.')
+            finalResponseGuidance.add('FR: Use the expanded keyword route only after the user chooses expansion.')
+            finalResponseGuidance.add('FR: If they choose the expanded keyword route, call mauro_terms for the current search term, then call mauro_keyword_search with the expanded keyword expression and searchIntent "expanded".')
+            finalResponseGuidance.add('FR: If they choose the exact keyword route, continue from the current exact-term result and use searchIntent "exact" for follow-up pages or refinements.')
+            finalResponseGuidance.add('FR: Give the user an outcome: show the returned page results and ask the focused search-expansion choice question.')
         }
         if (zeroResultAndSearch) {
-            clarificationGuidance.add('This exact search returned no matches and appears to require all supplied words to be present.')
-            clarificationGuidance.add('Explain that catalogue_search is a keyword/full-text search. The backend treats unquoted words as AND terms, so this keyword expression may have been too narrow.')
-            clarificationGuidance.add('Use the retry tool call in Follow-up Actions to search the same user-supplied terms as OR alternatives; do not rewrite the terms semantically and do not stop after reporting zero results.')
+            continueWorkflowGuidance.add('CW: Use the OR retry Follow-up Action to search the same user-supplied terms as alternatives.')
+            finalResponseGuidance.add('FR: This exact search returned no matches and appears to require all supplied words to be present.')
+            finalResponseGuidance.add('FR: Explain that mauro_keyword_search is a keyword/full-text search. The backend treats unquoted words as AND terms, so this keyword expression may have been too narrow.')
         }
 
         List<String> constraints = new ArrayList<String>()
         if (!domainTypes.isEmpty()) {
-            constraints.add('Do not present items of other domain types as matches.')
+            constraints.add('COMMON: Do not present items of other domain types as matches.')
         }
         if (hasMore) {
-            constraints.add('Do not use only this returned page to answer aggregate questions about all matches.')
-        }
-        List<String> completionGuidance = [
-            'If the returned data answers the current user request, answer now from this result.',
-            'Do not call catalogue_search again with identical arguments.',
-            'Only call catalogue_search again when the user asks for more results, requests a different page, or asks an aggregate/filtering follow-up about all matches.'
-        ] as List<String>
-        if (unexpandedKeywordSearch) {
-            completionGuidance.add('Because Clarification Guidance is present, show the returned page results and then ask the focused choice question rather than presenting the search intent as settled.')
-            completionGuidance.add('Even when asking that focused choice question, include the exact search term/expression and domain type filter used.')
-        }
-        if (zeroResultAndSearch) {
-            completionGuidance.add('Because this exact keyword search returned zero results and Follow-up Actions contains an OR retry call, call catalogue_search again with that retry call rather than asking the user to reformulate.')
+            constraints.add('COMMON: Do not use only this returned page to answer aggregate questions about all matches.')
         }
 
         List<String> output = new ArrayList<String>()
@@ -217,7 +227,7 @@ class SearchToolHandler extends AbstractAnnotatedToolHandler {
         List<String> followUp = new ArrayList<String>()
         if (hasMore) {
             Map<String, Object> nextPageToolCall = [
-                name     : 'catalogue_search',
+                name     : 'mauro_keyword_search',
                 arguments: [
                     searchTerm: searchTerm,
                     domainTypes: domainTypes,
@@ -227,17 +237,17 @@ class SearchToolHandler extends AbstractAnnotatedToolHandler {
                     searchIntent: searchIntent
                 ] as Map<String, Object>
             ] as Map<String, Object>
-            followUp.add('More results are available.')
-            followUp.add('If the user asks for the next page, use this exact tool call: ' + JsonOutput.toJson(nextPageToolCall))
-            followUp.add('Do not increase max or reset offset when the user asks for the next page.')
-            followUp.add('If asking a clarifying question, also mention that additional result pages are available.')
+            followUp.add('FR: More results are available.')
+            followUp.add('FR: In a later turn, if the user asks for the next page, use this exact tool call: ' + JsonOutput.toJson(nextPageToolCall))
+            followUp.add('FR: Do not increase max or reset offset when the user asks for the next page.')
+            followUp.add('FR: If asking a clarifying question, also mention that additional result pages are available.')
         } else if (returnedCount < max) {
-            followUp.add('There are no more pages for this exact search.')
-            followUp.add('If the user wants more possibilities, try an expanded keyword expression rather than increasing the offset.')
+            followUp.add('FR: There are no more pages for this exact search.')
+            followUp.add('FR: If the user wants more possibilities, try an expanded keyword expression rather than increasing the offset.')
         }
         if (zeroResultAndSearch) {
             Map<String, Object> retryCall = [
-                name     : 'catalogue_search',
+                name     : 'mauro_keyword_search',
                 arguments: [
                     searchTerm  : buildOrSearchTerm(orRetryTerms),
                     domainTypes : domainTypes,
@@ -247,19 +257,25 @@ class SearchToolHandler extends AbstractAnnotatedToolHandler {
                     searchIntent  : 'expanded'
                 ] as Map<String, Object>
             ] as Map<String, Object>
-            followUp.add('The exact keyword search returned zero results and used only AND-style terms.')
-            followUp.add('Retry with this exact OR keyword search call using the same user-supplied terms: ' + JsonOutput.toJson(retryCall))
+            followUp.add('CW: The exact keyword search returned zero results and used only AND-style terms.')
+            followUp.add('CW: Retry with this exact OR keyword search call using the same user-supplied terms: ' + JsonOutput.toJson(retryCall))
         }
-
+        List<String> end = [
+            'END: Use COMMON plus exactly one branch flag: CW or FR.',
+            'END: If CW is chosen, continue with an exact tool action as work you perform for the user.',
+            'END: If FR is chosen, provide the final user-facing answer and mention only relevant optional follow-up actions.'
+        ] as List<String>
         renderModelTextSections([
             'Tool Call Status'   : status,
             'Result Metadata'    : metadata,
             'Returned Data'      : output,
             'Answer Instructions': instructions,
-            'Clarification Guidance': clarificationGuidance,
+            'Continuation Gate'   : continuationGate,
+            'Continue Workflow branch': continueWorkflowGuidance,
+            'Final Response branch': finalResponseGuidance,
             'Constraints'        : constraints,
-            'Completion Guidance': completionGuidance,
-            'Follow-up Actions'  : followUp
+            'Follow-up Actions'  : followUp,
+            'END'                : end
         ] as Map<String, Object>)
     }
 

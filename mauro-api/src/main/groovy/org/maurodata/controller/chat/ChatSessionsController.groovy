@@ -1,6 +1,7 @@
 package org.maurodata.controller.chat
 
 import groovy.transform.CompileStatic
+import io.micronaut.http.HttpRequest
 import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.annotation.Controller
@@ -11,6 +12,7 @@ import io.micronaut.http.annotation.Post
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
 import io.micronaut.core.annotation.Nullable
+import io.micronaut.http.context.ServerRequestContext
 import jakarta.validation.Valid
 import org.maurodata.api.Paths
 import org.maurodata.api.chat.ChatEventDto
@@ -58,9 +60,9 @@ class ChatSessionsController implements ChatSessionsApi {
 
     @Override
     @Audit(level = Audit.AuditLevel.FILE_ONLY)
-    @Post(uri = Paths.CHAT_SESSIONS_MESSAGES, produces = MediaType.TEXT_EVENT_STREAM)
-    Publisher<ChatEventDto> sendMessage(@PathVariable String sessionId, @Body @Valid SendMessageRequest request) {
-        chatSessionService.sendMessage(sessionId, request)
+    Publisher<ChatEventDto> sendMessage(String sessionId, SendMessageRequest request) {
+        Optional<HttpRequest<Object>> currentRequest = ServerRequestContext.currentRequest()
+        chatSessionService.sendMessage(sessionId, request, currentRequest.orElse(null))
     }
 
     @Override

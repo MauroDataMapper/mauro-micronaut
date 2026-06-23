@@ -29,14 +29,14 @@ final class OllamaTextToolCallExtractor {
             return null
         }
 
-        final String candidate = extractJsonCandidate(text)
+        final JsonCandidate candidate = extractJsonCandidate(text)
         if (candidate == null) {
             return null
         }
 
         final Object parsed
         try {
-            parsed = slurper.parseText(candidate)
+            parsed = slurper.parseText(candidate.json)
         } catch (Throwable ignored) {
             return null
         }
@@ -47,22 +47,51 @@ final class OllamaTextToolCallExtractor {
         @SuppressWarnings('unchecked')
         final Map<String, Object> root = (Map<String, Object>) parsed
 
-        final ExtractedToolCall shapeA = fromNameParameters(root, candidate, allowedToolNames)
+        final ExtractedToolCall prefixed = fromPrefixedToolName(candidate.toolName, root, candidate.json, allowedToolNames)
+        if (prefixed != null) {
+            return prefixed
+        }
+
+        final ExtractedToolCall shapeA = fromNameParameters(root, candidate.json, allowedToolNames)
         if (shapeA != null) {
             return shapeA
         }
 
-        final ExtractedToolCall shapeB = fromToolInput(root, candidate, allowedToolNames)
+        final ExtractedToolCall shapeB = fromToolInput(root, candidate.json, allowedToolNames)
         if (shapeB != null) {
             return shapeB
         }
 
-        final ExtractedToolCall shapeC = fromSingleToolKey(root, candidate, allowedToolNames)
+        final ExtractedToolCall shapeC = fromSingleToolKey(root, candidate.json, allowedToolNames)
         if (shapeC != null) {
             return shapeC
         }
 
         return null
+    }
+
+    static boolean looksLikeTextToolCall(final String text) {
+        if (text == null || text.trim().isEmpty()) {
+            return false
+        }
+        final String trimmed = text.trim()
+        return trimmed.contains('[TOOL_CALLS]') || trimmed.toLowerCase(Locale.ROOT).contains('[tool_calls]')
+    }
+
+    private ExtractedToolCall fromPrefixedToolName(
+        final String name,
+        final Map<String, Object> root,
+        final String rawJson,
+        final Set<String> allowedToolNames
+    ) {
+        if (isBlank(name) || !isAllowed(name, allowedToolNames)) {
+            return null
+        }
+        final Map<String, Object> params = coerceParams(root, name)
+        if (params == null) {
+            return null
+        }
+        return new ExtractedToolCall(name, params, rawJson)
     }
 
     private ExtractedToolCall fromNameParameters(
@@ -130,9 +159,6 @@ final class OllamaTextToolCallExtractor {
     }
 
     private Map<String, Object> coerceParams(final Object obj, final String toolName) {
-        if ('echo'.equals(toolName) && !(obj instanceof Map)) {
-            return new LinkedHashMap<String, Object>()
-        }
         Map<String, Object> params
         if (obj == null) {
             params = new LinkedHashMap<String, Object>()
@@ -143,39 +169,7 @@ final class OllamaTextToolCallExtractor {
         } else {
             return null
         }
-        return normalizeParams(toolName, params)
-    }
-
-    private Map<String, Object> normalizeParams(final String toolName, final Map<String, Object> params) {
-        if ('echo'.equals(toolName)) {
-            if (looksLikeEchoNoise(params)) {
-                return new LinkedHashMap<String, Object>()
-            }
-            return params
-        }
         return params
-    }
-
-    private boolean looksLikeEchoNoise(final Map<String, Object> params) {
-        if (params.isEmpty()) {
-            return false
-        }
-        if (params.containsKey('args')) {
-            return true
-        }
-        int nullishCount = 0
-        for (Map.Entry<String, Object> entry : params.entrySet()) {
-            final Object value = entry.getValue()
-            if (value == null) {
-                nullishCount++
-                continue
-            }
-            final String s = asString(value)
-            if ('<null>'.equals(s) || 'null'.equals(s)) {
-                nullishCount++
-            }
-        }
-        return nullishCount > 0 && nullishCount >= params.size()
     }
 
     private boolean isAllowed(final String toolName, final Set<String> allowedToolNames) {
@@ -189,7 +183,7 @@ final class OllamaTextToolCallExtractor {
         return value == null || value.trim().isEmpty()
     }
 
-    private String extractJsonCandidate(final String text) {
+    private JsonCandidate extractJsonCandidate(final String text) {
         final String trimmed = text.trim()
 
         final int fenceStart = trimmed.indexOf('```')
@@ -199,7 +193,7 @@ final class OllamaTextToolCallExtractor {
                 final int fenceEnd = trimmed.indexOf('```', firstLineEnd + 1)
                 if (fenceEnd > firstLineEnd) {
                     final String inside = trimmed.substring(firstLineEnd + 1, fenceEnd).trim()
-                    final String byBraces = sliceFirstBalancedObject(inside)
+                    final JsonCandidate byBraces = sliceFirstBalancedObject(inside)
                     if (byBraces != null) {
                         return byBraces
                     }
@@ -210,7 +204,7 @@ final class OllamaTextToolCallExtractor {
         return sliceFirstBalancedObject(trimmed)
     }
 
-    private String sliceFirstBalancedObject(final String text) {
+    private JsonCandidate sliceFirstBalancedObject(final String text) {
         final int start = text.indexOf('{')
         if (start < 0) {
             return null
@@ -244,7 +238,7 @@ final class OllamaTextToolCallExtractor {
             } else if (ch == '}') {
                 depth--
                 if (depth == 0) {
-                    return text.substring(start, i + 1)
+                    return new JsonCandidate(text.substring(start, i + 1), extractPrefixedToolName(text.substring(0, start)))
                 }
             }
         }
@@ -252,7 +246,53 @@ final class OllamaTextToolCallExtractor {
         return null
     }
 
+    private static String extractPrefixedToolName(final String prefix) {
+        if (prefix == null || prefix.trim().isEmpty()) {
+            return null
+        }
+        String cleaned = prefix.trim()
+        final int marker = cleaned.lastIndexOf('[TOOL_CALLS]')
+        if (marker >= 0) {
+            cleaned = cleaned.substring(marker + '[TOOL_CALLS]'.length()).trim()
+        }
+        final int lowerMarker = cleaned.toLowerCase(Locale.ROOT).lastIndexOf('[tool_calls]')
+        if (lowerMarker >= 0) {
+            cleaned = cleaned.substring(lowerMarker + '[tool_calls]'.length()).trim()
+        }
+        int end = cleaned.length()
+        while (end > 0) {
+            final char ch = cleaned.charAt(end - 1)
+            if (Character.isLetterOrDigit(ch) || ch == '_' || ch == '-' || ch == '.') {
+                break
+            }
+            end--
+        }
+        int start = end
+        while (start > 0) {
+            final char ch = cleaned.charAt(start - 1)
+            if (!(Character.isLetterOrDigit(ch) || ch == '_' || ch == '-' || ch == '.')) {
+                break
+            }
+            start--
+        }
+        if (start < end) {
+            return cleaned.substring(start, end)
+        }
+        return null
+    }
+
     private static String asString(final Object value) {
         return value == null ? null : String.valueOf(value)
+    }
+
+    @CompileStatic
+    private static final class JsonCandidate {
+        final String json
+        final String toolName
+
+        JsonCandidate(final String json, final String toolName) {
+            this.json = json
+            this.toolName = toolName
+        }
     }
 }

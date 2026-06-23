@@ -1,6 +1,7 @@
 package org.maurodata.controller.chat
 
 import io.micronaut.http.HttpResponse
+import io.micronaut.http.HttpRequest
 import io.micronaut.http.HttpStatus
 import org.maurodata.api.chat.SkillSummaryDto
 import org.maurodata.service.chat.ChatSkillDefinition
@@ -32,7 +33,7 @@ class McpProtocolControllerSpec extends Specification {
             params : [:]
         ] as Map<String, Object>
         when:
-        HttpResponse<Object> response = controller.post(request)
+        HttpResponse<Object> response = controller.post(HttpRequest.POST('/mcp', request), request)
 
         then:
         response.status == HttpStatus.OK
@@ -50,7 +51,7 @@ class McpProtocolControllerSpec extends Specification {
         ] as Map<String, Object>
 
         when:
-        HttpResponse<Object> response = controller.post(request)
+        HttpResponse<Object> response = controller.post(HttpRequest.POST('/mcp', request), request)
 
         then:
         response.status == HttpStatus.ACCEPTED
@@ -72,7 +73,7 @@ class McpProtocolControllerSpec extends Specification {
             ]
         ] as List<Object>
         when:
-        HttpResponse<Object> response = controller.post(request)
+        HttpResponse<Object> response = controller.post(HttpRequest.POST('/mcp', request), request)
 
         then:
         response.status == HttpStatus.OK

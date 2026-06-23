@@ -1,0 +1,93 @@
+id: mauro-form-representation-explainer
+name: Mauro Form Representation Explainer
+description: Explaining and diagramming how forms are represented in Mauro
+scope: GLOBAL
+version: 1.0.0
+type: SKILL
+priority: 207
+keywords:
+  - explain form representation
+  - form diagram
+  - form model diagram
+  - how forms are represented
+  - data model diagram
+seeAlso:
+  - mauro-form-representation
+  - mauro-glossary
+  - mauro-data-model-diagrammer
+routing:
+  specificity: SPECIFIC
+  useWhen:
+    - explaining how forms are represented in Mauro
+    - drawing or using a diagram/example showing Form, DataModel, DataClass, DataElement, DataType, and values
+    - clarifying the difference between a form template and a completed form submission
+  avoidWhen:
+    - selecting internal search parameters only
+    - finding live catalogue forms or fields
+    - inspecting a specific stored catalogue form
+    - answering installation, configuration, Docker, administration, or documentation questions
+  examples:
+    - Can you explain how a form is represented in Mauro?
+    - Draw a text diagram of a Mauro form model
+    - What is the difference between a form definition and a completed submission?
+  tool:
+    name: mauro_skill
+    arguments:
+      id: mauro-form-representation-explainer
+      includeInstruction: true
+instruction: |
+  Use this skill when answering the user with an explanation of form representation. Keep explanations short unless the user asks for detail.
+
+  Basic explanation:
+  - A form definition/template is metadata and is usually represented as a Mauro DataModel.
+  - Sections, pages, groups, and repeating groups are usually DataClasses.
+  - Fields, questions, and controls are usually DataElements.
+  - The answer/value shape for a field is a DataType.
+  - A completed submission is data that conforms to the model; it is not the DataModel itself.
+
+  Optional text diagram:
+  Use this kind of diagram only when the user asks for an explanation or when a short diagram would clarify the answer.
+
+  ```text
+  Form: Adult Diabetes Assessment
+  = Mauro DataModel
+  |
+  +-- Section: Patient Details
+  |   = DataClass
+  |   |
+  |   +-- Field: NHS Number
+  |   |   = DataElement
+  |   |   +-- Answer type: identifier/text pattern
+  |   |       = DataType
+  |   |
+  |   +-- Field: Date of Birth
+  |       = DataElement
+  |       +-- Answer type: date
+  |           = DataType
+  |
+  +-- Section: Clinical Measurements
+      = DataClass
+      |
+      +-- Field: Weight
+      |   = DataElement
+      |   +-- Answer type: decimal, unit kg
+      |       = DataType
+      |
+      +-- Field: Smoking Status
+          = DataElement
+          +-- Answer type: choice list
+              = Enumeration Type
+              +-- Choices: Current | Former | Never | Unknown
+                  = Enumeration Values
+
+  Completed submission #1
+      is data that conforms to the model
+      Patient Details.NHS Number = ...
+      Clinical Measurements.Weight = ...
+  ```
+
+  Common confusions:
+  - A DataElement is not a form; it is a field/question/control within a form-like DataModel.
+  - A DataClass is not a Java/class programming construct; in Mauro it is a grouping or structure inside a DataModel.
+  - A filled-in form is data, not the DataModel itself.
+  - A form can be implemented in different systems while sharing the same Mauro metadata description.

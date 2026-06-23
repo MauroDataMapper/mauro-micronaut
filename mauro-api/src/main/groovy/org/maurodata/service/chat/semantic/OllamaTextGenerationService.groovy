@@ -18,15 +18,18 @@ class OllamaTextGenerationService implements TextGenerationService {
 
     private final String baseUrl
     private final Duration requestTimeout
+    private final int numPredict
     private final HttpClient client
     private final JsonSlurper slurper = new JsonSlurper()
 
     OllamaTextGenerationService(
         @Value('${chat.providers.ollama.base-url:http://localhost:11434}') String baseUrl,
-        @Value('${chat.semantic.related-terms.generation-timeout-seconds:12}') Integer timeoutSeconds
+        @Value('${chat.semantic.related-terms.generation-timeout-seconds:6}') Integer timeoutSeconds,
+        @Value('${chat.semantic.related-terms.generation-num-predict:96}') Integer numPredict
     ) {
         this.baseUrl = baseUrl
-        this.requestTimeout = Duration.ofSeconds(Math.max(timeoutSeconds ?: 12, 1))
+        this.requestTimeout = Duration.ofSeconds(Math.max(timeoutSeconds ?: 6, 1))
+        this.numPredict = Math.max(numPredict ?: 96, 16)
         this.client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build()
     }
 
@@ -36,9 +39,13 @@ class OllamaTextGenerationService implements TextGenerationService {
             throw new IllegalArgumentException('Text generation requires a model')
         }
         String body = JsonOutput.toJson([
-            model : model,
-            prompt: prompt,
-            stream: false
+            model  : model,
+            prompt : prompt,
+            stream : false,
+            think  : false,
+            options: [
+                num_predict: numPredict
+            ]
         ])
         HttpRequest request = HttpRequest.newBuilder()
             .uri(URI.create(baseUrl + '/api/generate'))

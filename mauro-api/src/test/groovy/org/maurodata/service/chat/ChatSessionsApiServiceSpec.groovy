@@ -41,10 +41,10 @@ class ChatSessionsApiServiceSpec extends Specification {
                             content: '',
                             toolCalls: [[
                                 type: 'function',
-                                function: [name: 'catalogue_search', arguments: [searchTerm: 'diabetes', domainTypes: ['DataModel']]]
+                                function: [name: 'mauro_keyword_search', arguments: [searchTerm: 'diabetes', domainTypes: ['DataModel']]]
                             ]]
                         ],
-                        [role: 'tool', name: 'catalogue_search', content: 'Tool catalogue_search succeeded.'],
+                        [role: 'tool', name: 'mauro_keyword_search', content: 'Tool mauro_keyword_search succeeded.'],
                         [role: 'system', content: 'post tool result context']
                     ]
                 ]
@@ -61,12 +61,12 @@ class ChatSessionsApiServiceSpec extends Specification {
             'routing context',
             'Find forms about diabetes',
             '',
-            'Tool catalogue_search succeeded.',
+            'Tool mauro_keyword_search succeeded.',
             'post tool result context',
             'I found forms about diabetes.'
         ]
-        history[3].toolCalls[0].function.name == 'catalogue_search'
-        history[4].name == 'catalogue_search'
+        history[3].toolCalls[0].function.name == 'mauro_keyword_search'
+        history[4].name == 'mauro_keyword_search'
     }
 
     void 'stored messages preserve event order and keep thinking separate from final assistant content'() {
@@ -79,7 +79,7 @@ class ChatSessionsApiServiceSpec extends Specification {
                 new ProviderChunk('thinking_token', 'assistant-ignored', 'thinking first', [:]),
                 new ProviderChunk('thinking_token', 'assistant-ignored', ' thinking second', [:]),
                 new ProviderChunk('thinking_end', 'assistant-ignored', '', [:]),
-                new ProviderChunk('tool_call', 'assistant-ignored', null, [callId: 'call-1', name: 'catalogue_search', arguments: [searchTerm: 'diabetes']]),
+                new ProviderChunk('tool_call', 'assistant-ignored', null, [callId: 'call-1', name: 'mauro_keyword_search', arguments: [searchTerm: 'diabetes']]),
                 new ProviderChunk('tool_result', 'assistant-ignored', null, [callId: 'call-1', ok: true, output: [count: 1]]),
                 new ProviderChunk('token', 'assistant-ignored', 'final ', [:]),
                 new ProviderChunk('token', 'assistant-ignored', 'answer', [:])
