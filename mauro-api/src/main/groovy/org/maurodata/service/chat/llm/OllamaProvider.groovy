@@ -25,7 +25,7 @@ import org.slf4j.LoggerFactory
 @Singleton
 class OllamaProvider implements LlmProvider {
     private static final Logger LOG = LoggerFactory.getLogger(OllamaProvider.class)
-    private static final Set<String> REUSABLE_TOOLS = new LinkedHashSet<String>(Arrays.asList('skill_lookup')).asImmutable()
+    private static final Set<String> REUSABLE_TOOLS = new LinkedHashSet<String>(Arrays.asList('mauro_skill')).asImmutable()
 
     private final String baseUrl
     private final boolean toolsEnabled
@@ -34,6 +34,10 @@ class OllamaProvider implements LlmProvider {
     private final boolean traceTurnDebug
     private final boolean traceThinking
     private final long thinkingCapabilityCacheSeconds
+    private final int defaultNumCtx
+    private final int maxNumCtx
+    private final int defaultNumPredict
+    private final int promptCharsPerToken
     private final ChatMcpService mcpService
     private final ChatPromptResourceService promptResourceService
     private final JsonSlurper slurper = new JsonSlurper()
@@ -48,6 +52,10 @@ class OllamaProvider implements LlmProvider {
         @Value('${chat.providers.ollama.trace-turn-debug:false}') final boolean traceTurnDebug,
         @Value('${chat.providers.ollama.trace-thinking:false}') final boolean traceThinking,
         @Value('${chat.providers.ollama.thinking-capability-cache-seconds:300}') final long thinkingCapabilityCacheSeconds,
+        @Value('${chat.providers.ollama.default-num-ctx:8192}') final int defaultNumCtx,
+        @Value('${chat.providers.ollama.max-num-ctx:32768}') final int maxNumCtx,
+        @Value('${chat.providers.ollama.default-num-predict:2048}') final int defaultNumPredict,
+        @Value('${chat.providers.ollama.prompt-chars-per-token:4}') final int promptCharsPerToken,
         final ChatMcpService mcpService,
         final ChatPromptResourceService promptResourceService
     ) {
@@ -58,16 +66,24 @@ class OllamaProvider implements LlmProvider {
         this.traceTurnDebug = traceTurnDebug
         this.traceThinking = traceThinking
         this.thinkingCapabilityCacheSeconds = thinkingCapabilityCacheSeconds
+        this.defaultNumCtx = Math.max(4096, defaultNumCtx)
+        this.maxNumCtx = Math.max(this.defaultNumCtx, maxNumCtx)
+        this.defaultNumPredict = Math.max(256, defaultNumPredict)
+        this.promptCharsPerToken = Math.max(1, promptCharsPerToken)
         this.mcpService = mcpService
         this.promptResourceService = promptResourceService
         LOG.info(
-            'OLLAMA_CONFIG baseUrl={} toolsEnabled={} defaultThink={} legacyThinkDefault={} traceWire={} traceTurnDebug={} traceThinking={}',
+            'OLLAMA_CONFIG baseUrl={} toolsEnabled={} defaultThink={} traceWire={} traceTurnDebug={} traceThinking={} defaultNumCtx={} maxNumCtx={} defaultNumPredict={} promptCharsPerToken={}',
             this.baseUrl,
             Boolean.valueOf(this.toolsEnabled),
             Boolean.valueOf(this.defaultThink),
             Boolean.valueOf(this.traceWire),
             Boolean.valueOf(this.traceTurnDebug),
-            Boolean.valueOf(this.traceThinking)
+            Boolean.valueOf(this.traceThinking),
+            Integer.valueOf(this.defaultNumCtx),
+            Integer.valueOf(this.maxNumCtx),
+            Integer.valueOf(this.defaultNumPredict),
+            Integer.valueOf(this.promptCharsPerToken)
         )
     }
 
@@ -115,7 +131,8 @@ class OllamaProvider implements LlmProvider {
 
                             List<ToolCallAccumulator.CompletedToolCall> callsToRun = executableCalls
                             boolean fallbackSynthesized = false
-                            if (toolIntent && OllamaToolingPolicy.shouldRunFallbackExtractor(executableCalls.size())) {
+                            if ((toolIntent || OllamaTextToolCallExtractor.looksLikeTextToolCall(turn.assistantText)) &&
+                                OllamaToolingPolicy.shouldRunFallbackExtractor(executableCalls.size())) {
                                 debug.fallbackAttempted = true
                                 final OllamaTextToolCallExtractor.ExtractedToolCall extracted =
                                     textToolCallExtractor.extract(turn.assistantText, allowedToolNames)
@@ -157,7 +174,10 @@ class OllamaProvider implements LlmProvider {
 
                             if (!callsToRun.isEmpty()) {
                                 toolRound++
-                                ProviderMessage assistantToolCallMessage = buildAssistantToolCallMessage(callsToRun)
+                                ProviderMessage assistantToolCallMessage = buildAssistantToolCallMessage(
+                                    callsToRun,
+                                    visibleAssistantContentBeforeToolCall(turn.assistantText)
+                                )
                                 if (assistantToolCallMessage != null) {
                                     workingMessages.add(assistantToolCallMessage)
                                     emitProviderMessage(sink, request.messageId, assistantToolCallMessage)
@@ -170,7 +190,12 @@ class OllamaProvider implements LlmProvider {
                                         continue
                                     }
                                     final ToolExecResult exec = handleToolCallStrict(
-                                        call, workingMessages, request.messageId, sink, fallbackSynthesized
+                                        call,
+                                        workingMessages,
+                                        request.messageId,
+                                        sink,
+                                        fallbackSynthesized,
+                                        forwardedHeadersFromOptions(request.options)
                                     )
                                     if (exec.executed) {
                                         executedToolCallKeys.add(callKey)
@@ -224,6 +249,8 @@ class OllamaProvider implements LlmProvider {
         final StringBuilder assistantTextBuffer = new StringBuilder(512)
         final HeaderFilterState headerFilterState = new HeaderFilterState()
         final ThinkingState thinkingState = new ThinkingState()
+        final TextToolCallSuppressionState textToolCallSuppressionState = new TextToolCallSuppressionState()
+        final OllamaResponseDiagnostics responseDiagnostics = new OllamaResponseDiagnostics()
         final Object requestThink = extractRequestThinkValue(request)
         final boolean requestedThink = resolveRequestedThink(request)
         final boolean thinkingCapability = isThinkingSupportedByApi(request.model)
@@ -271,7 +298,7 @@ class OllamaProvider implements LlmProvider {
                     LOG.info('OLLAMA_WIRE_RESPONSE_LINE sessionId={} messageId={} line={}', request.sessionId, request.messageId, line)
                 }
                 decodeOllamaLine(
-                    line, request.messageId, sink, accumulator, malformedStructuredCalls, assistantTextBuffer, toolIntent, debug, headerFilterState, thinkingState
+                    line, request.messageId, sink, accumulator, malformedStructuredCalls, assistantTextBuffer, toolIntent, debug, headerFilterState, thinkingState, textToolCallSuppressionState, responseDiagnostics
                 )
                 line = reader.readLine()
             }
@@ -288,6 +315,16 @@ class OllamaProvider implements LlmProvider {
         final List<ToolCallAccumulator.CompletedToolCall> calls =
             accumulator.hasAny() ? accumulator.completeAll() : Collections.<ToolCallAccumulator.CompletedToolCall>emptyList()
 
+        if ('length'.equals(responseDiagnostics.doneReason)) {
+            final String message = "Ollama stopped because the context/output limit was reached. prompt_eval_count=${responseDiagnostics.promptEvalCount ?: 'unknown'}, eval_count=${responseDiagnostics.evalCount ?: 'unknown'}."
+            LOG.warn('OLLAMA_LENGTH_STOP sessionId={} messageId={} model={} {}', request.sessionId, request.messageId, request.model, message)
+            sink.next(new ProviderChunk('error', request.messageId, message, [
+                doneReason     : responseDiagnostics.doneReason,
+                promptEvalCount: responseDiagnostics.promptEvalCount,
+                evalCount      : responseDiagnostics.evalCount
+            ] as Map<String, Object>))
+        }
+
         return new OllamaTurnResult(calls, malformedStructuredCalls, assistantTextBuffer.toString())
     }
 
@@ -301,7 +338,9 @@ class OllamaProvider implements LlmProvider {
         final boolean toolIntent,
         final TurnDebugAccumulator debug,
         final HeaderFilterState headerFilterState,
-        final ThinkingState thinkingState
+        final ThinkingState thinkingState,
+        final TextToolCallSuppressionState textToolCallSuppressionState,
+        final OllamaResponseDiagnostics responseDiagnostics
     ) {
         if (line == null || line.trim().isEmpty()) {
             return
@@ -312,6 +351,7 @@ class OllamaProvider implements LlmProvider {
             return
         }
         final Map<?, ?> root = (Map<?, ?>) parsed
+        captureResponseDiagnostics(root, responseDiagnostics)
         final String rootError = asString(root.get('error'))
         if (rootError != null && !rootError.trim().isEmpty()) {
             sink.next(new ProviderChunk('error', messageId, 'Ollama error: ' + rootError, Collections.<String, Object>emptyMap()))
@@ -343,7 +383,7 @@ class OllamaProvider implements LlmProvider {
 
         if (content != null && !content.isEmpty()) {
             debug.rawTokenChunks++
-            routeThinkingAwareContent(content, messageId, sink, assistantTextBuffer, debug, headerFilterState, thinkingState)
+            routeThinkingAwareContent(content, messageId, sink, assistantTextBuffer, debug, headerFilterState, thinkingState, textToolCallSuppressionState)
         }
 
         final Object toolCallsObj = message.get('tool_calls')
@@ -404,7 +444,8 @@ class OllamaProvider implements LlmProvider {
         final List<ProviderMessage> workingMessages,
         final String messageId,
         final reactor.core.publisher.FluxSink<ProviderChunk> sink,
-        final boolean fallbackSynthesized
+        final boolean fallbackSynthesized,
+        final Map<String, List<String>> forwardHeaders
     ) {
         final String toolName = call.functionName
         if (toolName == null || toolName.isEmpty()) {
@@ -425,7 +466,10 @@ class OllamaProvider implements LlmProvider {
                 sink.next(new ProviderChunk('tool_call', messageId, null, toolMeta))
             }
 
-            final ToolInvokeRequest invokeRequest = new ToolInvokeRequest(arguments: call.argumentsJson)
+            final ToolInvokeRequest invokeRequest = new ToolInvokeRequest(
+                arguments: call.argumentsJson,
+                forwardHeaders: forwardHeaders ?: Collections.<String, List<String>>emptyMap()
+            )
             final ToolInvokeResponse invokeResponse = mcpService.invokeTool(toolName, invokeRequest)
 
             final Map<String, Object> resultMeta = new LinkedHashMap<String, Object>(3)
@@ -445,14 +489,6 @@ class OllamaProvider implements LlmProvider {
             ProviderMessage toolMessage = new ProviderMessage('tool', toolResultText, null, toolName)
             workingMessages.add(toolMessage)
             emitProviderMessage(sink, messageId, toolMessage)
-            ProviderMessage postToolMessage = new ProviderMessage(
-                'system',
-                promptResourceService.getPrompt(ChatPromptResourceService.POST_TOOL_RESULT),
-                null,
-                null
-            )
-            workingMessages.add(postToolMessage)
-            emitProviderMessage(sink, messageId, postToolMessage)
             return ToolExecResult.executed()
         } catch (final Throwable t) {
             sink.next(new ProviderChunk('error', messageId, 'tool invocation failed: ' + t.getMessage(), Collections.<String, Object>emptyMap()))
@@ -468,6 +504,7 @@ class OllamaProvider implements LlmProvider {
         final List<Map<String, Object>> availableTools
     ) {
         final List<Map<String, Object>> wireMessages = ProviderWireMessages.toWireMessages(messages, true)
+        final Map<String, Object> ollamaOptions = buildOllamaOptions(request, wireMessages, availableTools)
 
         final Map<String, Object> body = new LinkedHashMap<String, Object>(5)
         body.put('model', request.model)
@@ -477,11 +514,118 @@ class OllamaProvider implements LlmProvider {
             body.put('tools', availableTools)
         }
         if (request.options != null && !request.options.isEmpty()) {
-            body.putAll(request.options)
+            for (Map.Entry<String, Object> entry : request.options.entrySet()) {
+                if (!'options'.equals(entry.key) && !'num_ctx'.equals(entry.key) && !'num_predict'.equals(entry.key) && !'_mauroForwardHeaders'.equals(entry.key)) {
+                    body.put(entry.key, entry.value)
+                }
+            }
+        }
+        if (!ollamaOptions.isEmpty()) {
+            body.put('options', ollamaOptions)
         }
         body.put('think', Boolean.valueOf(thinkEnabled))
 
         return JsonOutput.toJson(body)
+    }
+
+    private Map<String, Object> buildOllamaOptions(
+        final ProviderRequest request,
+        final List<Map<String, Object>> wireMessages,
+        final List<Map<String, Object>> availableTools
+    ) {
+        final Map<String, Object> options = new LinkedHashMap<String, Object>()
+        if (request.options != null) {
+            final Object nestedOptions = request.options.get('options')
+            if (nestedOptions instanceof Map) {
+                @SuppressWarnings('unchecked')
+                final Map<String, Object> typed = (Map<String, Object>) nestedOptions
+                options.putAll(typed)
+            }
+            copyTopLevelOption(request.options, options, 'num_ctx')
+            copyTopLevelOption(request.options, options, 'num_predict')
+        }
+        if (!options.containsKey('num_predict')) {
+            options.put('num_predict', Integer.valueOf(defaultNumPredict))
+        }
+        if (!options.containsKey('num_ctx')) {
+            final int estimatedPromptTokens = estimatePromptTokens(wireMessages, availableTools)
+            final int numPredict = asPositiveInt(options.get('num_predict'), defaultNumPredict)
+            final int desiredContext = nextPowerOfTwo(estimatedPromptTokens + numPredict + 512)
+            options.put('num_ctx', Integer.valueOf(clamp(desiredContext, defaultNumCtx, maxNumCtx)))
+        }
+        options
+    }
+
+    private static void copyTopLevelOption(
+        final Map<String, Object> requestOptions,
+        final Map<String, Object> ollamaOptions,
+        final String name
+    ) {
+        if (requestOptions.containsKey(name) && !ollamaOptions.containsKey(name)) {
+            ollamaOptions.put(name, requestOptions.get(name))
+        }
+    }
+
+    private static Map<String, List<String>> forwardedHeadersFromOptions(final Map<String, Object> options) {
+        if (options == null) {
+            return Collections.<String, List<String>>emptyMap()
+        }
+        final Object raw = options.get('_mauroForwardHeaders')
+        if (!(raw instanceof Map)) {
+            return Collections.<String, List<String>>emptyMap()
+        }
+        final Map<String, List<String>> headers = new LinkedHashMap<String, List<String>>()
+        for (Map.Entry<?, ?> entry : ((Map<?, ?>) raw).entrySet()) {
+            if (entry.key == null || !(entry.value instanceof Collection)) {
+                continue
+            }
+            final List<String> values = new ArrayList<String>()
+            for (Object value : (Collection<?>) entry.value) {
+                if (value != null && !String.valueOf(value).trim().isEmpty()) {
+                    values.add(String.valueOf(value))
+                }
+            }
+            if (!values.isEmpty()) {
+                headers.put(String.valueOf(entry.key), values)
+            }
+        }
+        headers
+    }
+
+    private int estimatePromptTokens(final List<Map<String, Object>> wireMessages, final List<Map<String, Object>> availableTools) {
+        int chars = JsonOutput.toJson(wireMessages ?: Collections.<Map<String, Object>>emptyList()).length()
+        if (availableTools != null && !availableTools.isEmpty()) {
+            chars += JsonOutput.toJson(availableTools).length()
+        }
+        Math.max(1, (int) Math.ceil(chars / (double) promptCharsPerToken))
+    }
+
+    private static int asPositiveInt(final Object value, final int fallback) {
+        if (value instanceof Number) {
+            final int parsed = ((Number) value).intValue()
+            return parsed > 0 ? parsed : fallback
+        }
+        if (value != null) {
+            try {
+                final int parsed = Integer.parseInt(String.valueOf(value))
+                return parsed > 0 ? parsed : fallback
+            } catch (final NumberFormatException ignored) {
+                return fallback
+            }
+        }
+        fallback
+    }
+
+    private static int nextPowerOfTwo(final int value) {
+        int out = 4096
+        while (out < value && out < 65536) {
+            out *= 2
+        }
+        out
+    }
+
+    private static int clamp(final int value, final int min, final int max) {
+        Math.max(min, Math.min(max, value))
     }
 
     private static String asString(final Object value) {
@@ -503,6 +647,32 @@ class OllamaProvider implements LlmProvider {
             return Collections.<String, Object>emptyMap()
         }
         Collections.<String, Object>emptyMap()
+    }
+
+    private static void captureResponseDiagnostics(final Map<?, ?> root, final OllamaResponseDiagnostics diagnostics) {
+        if (root == null || diagnostics == null) {
+            return
+        }
+        final String doneReason = asString(root.get('done_reason'))
+        if (doneReason != null && !doneReason.trim().isEmpty()) {
+            diagnostics.doneReason = doneReason
+        }
+        diagnostics.promptEvalCount = asInteger(root.get('prompt_eval_count'), diagnostics.promptEvalCount)
+        diagnostics.evalCount = asInteger(root.get('eval_count'), diagnostics.evalCount)
+    }
+
+    private static Integer asInteger(final Object value, final Integer fallback) {
+        if (value instanceof Number) {
+            return Integer.valueOf(((Number) value).intValue())
+        }
+        if (value != null) {
+            try {
+                return Integer.valueOf(Integer.parseInt(String.valueOf(value)))
+            } catch (final NumberFormatException ignored) {
+                return fallback
+            }
+        }
+        fallback
     }
 
     private boolean resolveRequestedThink(final ProviderRequest request) {
@@ -621,7 +791,8 @@ class OllamaProvider implements LlmProvider {
         final StringBuilder assistantTextBuffer,
         final TurnDebugAccumulator debug,
         final HeaderFilterState headerFilterState,
-        final ThinkingState thinkingState
+        final ThinkingState thinkingState,
+        final TextToolCallSuppressionState textToolCallSuppressionState
     ) {
         if (thinkingState.inThinking && thinkingState.explicitThinkingMode) {
             sink.next(new ProviderChunk('thinking_end', messageId, '', Collections.<String, Object>emptyMap()))
@@ -644,7 +815,7 @@ class OllamaProvider implements LlmProvider {
                 thinkingState.forceThinkingUntilTagEnd = false
                 final String remainder = input.substring(closeForced + '</think>'.length())
                 if (!remainder.isEmpty()) {
-                    emitVisibleSegment(remainder, messageId, sink, assistantTextBuffer, headerFilterState, debug)
+                    emitVisibleSegment(remainder, messageId, sink, assistantTextBuffer, headerFilterState, textToolCallSuppressionState, debug)
                 }
                 return
             }
@@ -674,7 +845,7 @@ class OllamaProvider implements LlmProvider {
             final int open = input.indexOf('<think>', index)
             if (open >= 0) {
                 final String visible = input.substring(index, open)
-                emitVisibleSegment(visible, messageId, sink, assistantTextBuffer, headerFilterState, debug)
+                emitVisibleSegment(visible, messageId, sink, assistantTextBuffer, headerFilterState, textToolCallSuppressionState, debug)
                 sink.next(new ProviderChunk('thinking_start', messageId, '', Collections.<String, Object>emptyMap()))
                 thinkingState.inThinking = true
                 thinkingState.explicitThinkingMode = false
@@ -684,7 +855,7 @@ class OllamaProvider implements LlmProvider {
             }
 
             final String tailHeld = holdTailForTag(input.substring(index), '<think>', thinkingState.carry)
-            emitVisibleSegment(tailHeld, messageId, sink, assistantTextBuffer, headerFilterState, debug)
+            emitVisibleSegment(tailHeld, messageId, sink, assistantTextBuffer, headerFilterState, textToolCallSuppressionState, debug)
             break
         }
     }
@@ -712,18 +883,81 @@ class OllamaProvider implements LlmProvider {
         final reactor.core.publisher.FluxSink<ProviderChunk> sink,
         final StringBuilder assistantTextBuffer,
         final HeaderFilterState headerFilterState,
+        final TextToolCallSuppressionState textToolCallSuppressionState,
         final TurnDebugAccumulator debug
     ) {
         if (segment == null || segment.isEmpty()) {
+            return
+        }
+        if (textToolCallSuppressionState != null && textToolCallSuppressionState.suppressing) {
+            assistantTextBuffer.append(segment)
+            debug.filteredControlTokenChunks++
             return
         }
         if (isFilteredHeaderToken(segment, headerFilterState) || OllamaToolingPolicy.isControlToken(segment)) {
             debug.filteredControlTokenChunks++
             return
         }
+        final int markerAt = textToolCallMarkerIndex(segment)
+        if (markerAt >= 0) {
+            final String beforeMarker = segment.substring(0, markerAt)
+            final String markerAndAfter = segment.substring(markerAt)
+            if (!beforeMarker.isEmpty()) {
+                sink.next(new ProviderChunk('token', messageId, beforeMarker, Collections.<String, Object>emptyMap()))
+                assistantTextBuffer.append(beforeMarker)
+                debug.publishedTokenChunks++
+            }
+            assistantTextBuffer.append(markerAndAfter)
+            if (textToolCallSuppressionState != null) {
+                textToolCallSuppressionState.suppressing = true
+            }
+            debug.filteredControlTokenChunks++
+            return
+        }
+        if (shouldSuppressTextToolCallSegment(assistantTextBuffer, segment)) {
+            assistantTextBuffer.append(segment)
+            if (textToolCallSuppressionState != null) {
+                textToolCallSuppressionState.suppressing = true
+            }
+            debug.filteredControlTokenChunks++
+            return
+        }
         sink.next(new ProviderChunk('token', messageId, segment, Collections.<String, Object>emptyMap()))
         assistantTextBuffer.append(segment)
         debug.publishedTokenChunks++
+    }
+
+    private static boolean shouldSuppressTextToolCallSegment(final StringBuilder assistantTextBuffer, final String segment) {
+        final String current = assistantTextBuffer == null ? '' : assistantTextBuffer.toString()
+        final String combined = (current + (segment ?: '')).trim()
+        if (combined.isEmpty()) {
+            return false
+        }
+        if (OllamaTextToolCallExtractor.looksLikeTextToolCall(combined)) {
+            return true
+        }
+        final String marker = '[TOOL_CALLS]'
+        final String lowerMarker = '[tool_calls]'
+        if (current.trim().isEmpty()) {
+            final String trimmed = combined
+            return marker.startsWith(trimmed) || lowerMarker.startsWith(trimmed.toLowerCase(Locale.ROOT))
+        }
+        return OllamaTextToolCallExtractor.looksLikeTextToolCall(current)
+    }
+
+    private static int textToolCallMarkerIndex(final String segment) {
+        if (segment == null || segment.isEmpty()) {
+            return -1
+        }
+        final int upper = segment.indexOf('[TOOL_CALLS]')
+        final int lower = segment.toLowerCase(Locale.ROOT).indexOf('[tool_calls]')
+        if (upper < 0) {
+            return lower
+        }
+        if (lower < 0) {
+            return upper
+        }
+        return Math.min(upper, lower)
     }
 
     private void emitThinkingSegment(
@@ -816,7 +1050,8 @@ class OllamaProvider implements LlmProvider {
     }
 
     private static ProviderMessage buildAssistantToolCallMessage(
-        final List<ToolCallAccumulator.CompletedToolCall> callsToRun
+        final List<ToolCallAccumulator.CompletedToolCall> callsToRun,
+        final String assistantContent
     ) {
         if (callsToRun == null || callsToRun.isEmpty()) {
             return null
@@ -843,9 +1078,20 @@ class OllamaProvider implements LlmProvider {
 
         new ProviderMessage(
             role: 'assistant',
-            content: '',
+            content: assistantContent ?: '',
             toolCalls: toolCalls
         )
+    }
+
+    private static String visibleAssistantContentBeforeToolCall(final String assistantText) {
+        if (assistantText == null || assistantText.isEmpty()) {
+            return ''
+        }
+        final int markerAt = textToolCallMarkerIndex(assistantText)
+        if (markerAt < 0) {
+            return assistantText
+        }
+        assistantText.substring(0, markerAt).trim()
     }
 
     private static void emitProviderMessage(
@@ -989,6 +1235,18 @@ class OllamaProvider implements LlmProvider {
         boolean explicitThinkingMode = false
         boolean forceThinkingUntilTagEnd = false
         final StringBuilder carry = new StringBuilder(16)
+    }
+
+    @CompileStatic
+    private static final class TextToolCallSuppressionState {
+        boolean suppressing = false
+    }
+
+    @CompileStatic
+    private static final class OllamaResponseDiagnostics {
+        String doneReason
+        Integer promptEvalCount
+        Integer evalCount
     }
 
     @CompileStatic

@@ -1,6 +1,6 @@
 id: mauro-data-model-diagrammer
 name: Mauro Data Model Diagrammer
-description: Explain and draw how a Mauro Data Model acts as a reusable structure for many real-world data instances
+description: Understanding, explaining, and drawing Mauro Data Models as reusable structures for many real-world data instances
 scope: GLOBAL
 version: 1.0.0
 type: SKILL
@@ -25,20 +25,20 @@ seeAlso:
 routing:
   specificity: SPECIFIC
   useWhen:
-    - users ask to explain or draw what a Mauro Data Model is
-    - users ask how a Data Model relates to many data instances, records, forms, datasets, messages, or implementations
-    - users ask for a conceptual text diagram of Data Models, Data Classes, Data Elements, Data Types, or Enumeration Values
-    - users are confused about whether a Mauro Data Model is data itself, a schema, a template, or an instance
+    - explaining or drawing what a Mauro Data Model is
+    - relating a Data Model to many data instances, records, forms, datasets, messages, or implementations
+    - presenting conceptual text diagram of Data Models, Data Classes, Data Elements, Data Types, or Enumeration Values
+    - resolving confusion about whether a Mauro Data Model is data itself, a schema, a template, or an instance
   avoidWhen:
-    - users ask to search live catalogue content for Data Models or forms
-    - users ask to inspect the actual children or structure of a specific Data Model in the catalogue
-    - users ask for Mauro installation, configuration, Docker, administration, or documentation
+    - searching live catalogue content for Data Models or forms
+    - inspecting the actual children or structure of a specific Data Model in the catalogue
+    - finding information about Mauro installation, configuration, Docker, administration, or documentation
   examples:
     - Draw how a Mauro Data Model works
     - Is a Data Model like a schema for many instances?
     - Show a text diagram of a Data Model, Data Classes, fields, and records
   tool:
-    name: skill_lookup
+    name: mauro_skill
     arguments:
       id: mauro-data-model-diagrammer
       includeInstruction: true

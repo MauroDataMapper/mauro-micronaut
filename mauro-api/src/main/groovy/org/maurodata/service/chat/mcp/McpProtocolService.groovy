@@ -3,6 +3,10 @@ package org.maurodata.service.chat.mcp
 import groovy.json.JsonOutput
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
+import io.micronaut.http.HttpHeaders
+import io.micronaut.http.HttpRequest
+import io.micronaut.runtime.server.EmbeddedServer
+import jakarta.inject.Inject
 import jakarta.inject.Singleton
 import org.maurodata.api.chat.McpServerDto
 import org.maurodata.api.chat.ToolSummaryDto
@@ -10,6 +14,11 @@ import org.maurodata.service.chat.ChatSkillDefinition
 import org.maurodata.service.chat.ChatSkillService
 import org.maurodata.service.chat.SkillRouting
 import org.maurodata.service.chat.SkillToolApplicability
+
+import java.net.URI
+import java.net.http.HttpClient
+import java.net.http.HttpResponse
+import java.time.Duration
 
 @CompileStatic
 @Slf4j
@@ -20,27 +29,52 @@ class McpProtocolService {
 
     private final McpToolRegistry mcpToolRegistry
     private final ChatSkillService chatSkillService
+    private final McpHttpResourceRegistry mcpHttpResourceRegistry
+    private final EmbeddedServer embeddedServer
+    private final HttpClient httpClient
 
-    McpProtocolService(McpToolRegistry mcpToolRegistry, ChatSkillService chatSkillService) {
+    McpProtocolService(
+        McpToolRegistry mcpToolRegistry,
+        ChatSkillService chatSkillService
+    ) {
+        this(mcpToolRegistry, chatSkillService, null, null)
+    }
+
+    @Inject
+    McpProtocolService(
+        McpToolRegistry mcpToolRegistry,
+        ChatSkillService chatSkillService,
+        McpHttpResourceRegistry mcpHttpResourceRegistry,
+        EmbeddedServer embeddedServer
+    ) {
         this.mcpToolRegistry = mcpToolRegistry
         this.chatSkillService = chatSkillService
+        this.mcpHttpResourceRegistry = mcpHttpResourceRegistry
+        this.embeddedServer = embeddedServer
+        this.httpClient = HttpClient.newBuilder()
+            .connectTimeout(Duration.ofSeconds(5))
+            .build()
     }
 
     Object handle(Object requestBody) {
+        handle(requestBody, null)
+    }
+
+    Object handle(Object requestBody, HttpRequest<?> inboundRequest) {
         if (requestBody instanceof List) {
             List<Object> responses = new ArrayList<Object>()
             for (Object item : (List<?>) requestBody) {
-                Object response = handleSingle(item)
+                Object response = handleSingle(item, inboundRequest)
                 if (response != null) {
                     responses.add(response)
                 }
             }
             return responses.isEmpty() ? null : responses
         }
-        handleSingle(requestBody)
+        handleSingle(requestBody, inboundRequest)
     }
 
-    private Object handleSingle(Object requestBody) {
+    private Object handleSingle(Object requestBody, HttpRequest<?> inboundRequest) {
         if (!(requestBody instanceof Map)) {
             return error(null, -32600, 'Invalid Request')
         }
@@ -71,6 +105,12 @@ class McpProtocolService {
                     return notification ? null : success(id, promptsListResult())
                 case 'prompts/get':
                     return notification ? null : success(id, getPromptResult(request))
+                case 'resources/list':
+                    return notification ? null : success(id, resourcesListResult())
+                case 'resources/templates/list':
+                    return notification ? null : success(id, resourceTemplatesListResult())
+                case 'resources/read':
+                    return notification ? null : success(id, readResourceResult(request, inboundRequest))
                 default:
                     return notification ? null : error(id, -32601, "Method not found: ${method}")
             }
@@ -93,6 +133,11 @@ class McpProtocolService {
                 ] as Map<String, Object>,
                 prompts: [
                     listChanged: false
+                ] as Map<String, Object>,
+                resources: [
+                    listChanged     : false,
+                    subscribe       : false,
+                    templatesChanged: false
                 ] as Map<String, Object>
             ] as Map<String, Object>,
             serverInfo     : [
@@ -126,6 +171,102 @@ class McpProtocolService {
         [
             prompts: prompts
         ] as Map<String, Object>
+    }
+
+    private Map<String, Object> resourcesListResult() {
+        if (mcpHttpResourceRegistry == null) {
+            throw new IllegalArgumentException('resources/list is not available')
+        }
+        [
+            resources: mcpHttpResourceRegistry.listConcreteResources()
+                .collect {McpHttpResourceRegistry.McpHttpResource resource -> resourceDescriptor(resource)}
+        ] as Map<String, Object>
+    }
+
+    private Map<String, Object> resourceTemplatesListResult() {
+        if (mcpHttpResourceRegistry == null) {
+            throw new IllegalArgumentException('resources/templates/list is not available')
+        }
+        [
+            resourceTemplates: mcpHttpResourceRegistry.listResourceTemplates()
+                .collect {McpHttpResourceRegistry.McpHttpResource resource -> resourceTemplateDescriptor(resource)}
+        ] as Map<String, Object>
+    }
+
+    private Map<String, Object> readResourceResult(Map<String, Object> request, HttpRequest<?> inboundRequest) {
+        Map<String, Object> params = getMap(request.get('params'))
+        String uri = asString(params.get('uri'))
+        if (uri == null || uri.trim().isEmpty()) {
+            throw new IllegalArgumentException('resources/read requires params.uri')
+        }
+        if (mcpHttpResourceRegistry == null || embeddedServer == null) {
+            throw new IllegalArgumentException('resources/read is not available')
+        }
+        String path = pathFromResourceUri(uri)
+        if (path == null || path.trim().isEmpty()) {
+            throw new IllegalArgumentException("Unsupported resource URI: ${uri}")
+        }
+
+        McpHttpResourceRegistry.McpHttpResource resource = mcpHttpResourceRegistry.findByUri(uri)
+        if (resource == null) {
+            throw new IllegalArgumentException("Unknown resource: ${uri}")
+        }
+
+        HttpResponse<String> response = readHttpGet(path, inboundRequest)
+        String mimeType = response.headers().firstValue(HttpHeaders.CONTENT_TYPE).orElse(resource.mimeType ?: 'application/json')
+        String body = response.body() ?: ''
+        String text = body
+        if (response.statusCode() < 200 || response.statusCode() >= 300) {
+            mimeType = 'application/json'
+            text = JsonOutput.prettyPrint(JsonOutput.toJson([
+                uri       : uri,
+                path      : path,
+                method    : 'GET',
+                statusCode: response.statusCode(),
+                error     : body
+            ] as Map<String, Object>))
+        }
+
+        [
+            contents: [
+                [
+                    uri     : uri,
+                    mimeType: mimeType,
+                    text    : text
+                ] as Map<String, Object>
+            ]
+        ] as Map<String, Object>
+    }
+
+    private HttpResponse<String> readHttpGet(String path, HttpRequest<?> inboundRequest) {
+        URI target = embeddedServer.URI.resolve(path.startsWith('/') ? path : '/' + path)
+        java.net.http.HttpRequest.Builder builder = java.net.http.HttpRequest.newBuilder()
+            .uri(target)
+            .timeout(Duration.ofSeconds(30))
+            .GET()
+            .header(HttpHeaders.ACCEPT, 'application/json')
+        copyInboundHeader(inboundRequest, builder, 'apiKey')
+        copyInboundHeader(inboundRequest, builder, HttpHeaders.COOKIE)
+        copyInboundHeader(inboundRequest, builder, HttpHeaders.AUTHORIZATION)
+        httpClient.send(builder.build(), HttpResponse.BodyHandlers.ofString())
+    }
+
+    private static void copyInboundHeader(HttpRequest<?> inboundRequest, java.net.http.HttpRequest.Builder builder, String headerName) {
+        if (inboundRequest == null || headerName == null || headerName.trim().isEmpty()) {
+            return
+        }
+        for (String value : inboundRequest.headers.getAll(headerName) ?: []) {
+            if (value != null && !value.trim().isEmpty()) {
+                builder.header(headerName, value)
+            }
+        }
+    }
+
+    private static String pathFromResourceUri(String uri) {
+        if (uri == null || !uri.startsWith(McpHttpResourceRegistry.URI_PREFIX)) {
+            return null
+        }
+        uri.substring(McpHttpResourceRegistry.URI_PREFIX.length())
     }
 
     private Map<String, Object> getPromptResult(Map<String, Object> request) {
@@ -348,6 +489,38 @@ class McpProtocolService {
             ],
             structuredContent: invocationResult.output ?: [:],
             isError: false
+        ] as Map<String, Object>
+    }
+
+    private static Map<String, Object> resourceDescriptor(McpHttpResourceRegistry.McpHttpResource resource) {
+        [
+            uri        : resource.resourceUri,
+            name       : resource.name,
+            title      : resource.name,
+            description: resource.description,
+            mimeType   : resource.mimeType,
+            _meta      : [
+                method    : 'GET',
+                path      : resource.path,
+                controller: resource.controller,
+                action    : resource.method
+            ] as Map<String, Object>
+        ] as Map<String, Object>
+    }
+
+    private static Map<String, Object> resourceTemplateDescriptor(McpHttpResourceRegistry.McpHttpResource resource) {
+        [
+            uriTemplate: resource.uriTemplate,
+            name       : resource.name,
+            title      : resource.name,
+            description: resource.description,
+            mimeType   : resource.mimeType,
+            _meta      : [
+                method    : 'GET',
+                path      : resource.path,
+                controller: resource.controller,
+                action    : resource.method
+            ] as Map<String, Object>
         ] as Map<String, Object>
     }
 

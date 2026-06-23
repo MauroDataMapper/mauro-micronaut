@@ -19,7 +19,7 @@ abstract class AbstractAnnotatedToolHandler implements ToolHandler {
         }
         this.toolName = definition.name()
         this.toolDescription = definition.description()
-        this.toolInputSchema = parseSchema(definition.inputSchema())
+        this.toolInputSchema = addStandardGuidanceOption(parseSchema(definition.inputSchema()))
         this.toolRouting = buildRouting(definition)
         this.toolAnnotations = buildAnnotations(definition)
     }
@@ -165,5 +165,32 @@ abstract class AbstractAnnotatedToolHandler implements ToolHandler {
             return typed
         }
         [type: 'object'] as Map<String, Object>
+    }
+
+    private static Map<String, Object> addStandardGuidanceOption(Map<String, Object> schema) {
+        Map<String, Object> enriched = new LinkedHashMap<String, Object>(schema ?: [:] as Map<String, Object>)
+        Object type = enriched.get('type')
+        if (type != null && String.valueOf(type) != 'object') {
+            return enriched
+        }
+        enriched.put('type', 'object')
+
+        Map<String, Object> properties
+        Object rawProperties = enriched.get('properties')
+        if (rawProperties instanceof Map) {
+            @SuppressWarnings('unchecked')
+            Map<String, Object> typedProperties = (Map<String, Object>) rawProperties
+            properties = new LinkedHashMap<String, Object>(typedProperties)
+        } else {
+            properties = new LinkedHashMap<String, Object>()
+        }
+        if (!properties.containsKey('withGuidance')) {
+            properties.put('withGuidance', [
+                type       : 'boolean',
+                description: 'Whether to include model-facing interpretation, constraints, and available next actions. Defaults to true.'
+            ] as Map<String, Object>)
+        }
+        enriched.put('properties', properties)
+        enriched
     }
 }

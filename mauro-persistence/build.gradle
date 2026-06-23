@@ -45,6 +45,7 @@ dependencies {
 
     testFixturesImplementation("io.micronaut.test:micronaut-test-spock")
     testFixturesImplementation("io.micronaut.sql:micronaut-jdbc-hikari")
+    testFixturesImplementation("org.testcontainers:postgresql:1.21.4")
     testFixturesImplementation("org.junit.jupiter:junit-jupiter-api:5.2.0")
     testFixturesImplementation("org.junit.jupiter:junit-jupiter-engine:5.2.0")
 

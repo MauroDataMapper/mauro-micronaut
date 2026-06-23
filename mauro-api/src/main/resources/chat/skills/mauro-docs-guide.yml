@@ -1,6 +1,6 @@
 id: mauro-docs-guide
 name: Mauro Documentation Guide
-description: Find the right Mauro documentation source for user guides, installation, glossary, REST resources, and concepts
+description: Finding Mauro documentation sources for guides, installation, glossary, REST resources, and concepts
 scope: GLOBAL
 version: 1.0.0
 type: SKILL
@@ -31,25 +31,25 @@ keywords:
 routing:
   specificity: SPECIFIC
   useWhen:
-    - users ask how Mauro works or how to use a Mauro feature
-    - users ask for Mauro documentation, user guides, glossary pages, or REST/API resource documentation
-    - users ask about installing, downloading, running, configuring, administering, or backing up Mauro
-    - users ask about Docker setup, mounted directories, persistent database storage, /opt/init files, configuration files, or search re-indexing
-    - users ask about semantic links, search syntax, finalisation, branching, or version workflows
+    - explaining how Mauro works or how to use a Mauro feature
+    - finding Mauro documentation, user guides, glossary pages, or REST/API resource documentation
+    - installing, downloading, running, configuring, administering, or backing up Mauro
+    - explaining Docker setup, mounted directories, persistent database storage, /opt/init files, configuration files, or search re-indexing
+    - explaining semantic links, search syntax, finalisation, branching, or version workflows
   avoidWhen:
-    - users are asking to find live catalogue items, forms, models, data classes, data elements, terms, or metadata in the connected Mauro instance
+    - finding live catalogue items, forms, models, data classes, data elements, terms, or metadata in the connected Mauro instance
   examples:
     - How do I install Mauro?
     - Is there documentation on configuring Mauro after installation?
     - What is a semantic link?
   tool:
-    name: skill_lookup
+    name: mauro_skill
     arguments:
       id: mauro-docs-guide
       includeInstruction: true
 instruction: |
   Use this skill when users ask how Mauro works, what a Mauro concept means, how to use a Mauro feature, or where documentation can be found.
-  When this skill has been retrieved, use it immediately to answer or signpost. Do not ask the user whether you should use this skill.
+  When this skill has been retrieved, use it immediately to answer or signpost.
   If the user asks about installing, downloading, running, configuring, or administering Mauro, provide the most relevant documentation URL directly and briefly explain what it covers.
   Do not imply that every Mauro feature has configuration documentation in this source map. If asking a follow-up, offer only known documented areas such as Docker image setup, mounted directories, persistent Postgres data, /opt/init files, configuration files, administration, backup, search re-indexing, or REST/API resource docs.
   Avoid vague follow-ups such as "configuring a specific feature". Prefer "Are you configuring the Docker container, persistent database storage, startup/init files, or administration tasks?"

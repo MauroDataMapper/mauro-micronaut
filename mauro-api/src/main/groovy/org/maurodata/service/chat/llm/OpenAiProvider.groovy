@@ -74,7 +74,7 @@ class OpenAiProvider implements LlmProvider {
                                 }
                                 for (int i = 0; i < turn.toolCalls.size(); i++) {
                                     final ToolCallAccumulator.CompletedToolCall call = turn.toolCalls.get(i)
-                                    handleToolCall(call, workingMessages, request.messageId, sink)
+                                    handleToolCall(call, workingMessages, request.messageId, sink, forwardedHeadersFromOptions(request.options))
                                 }
                             } else {
                                 continueLoop = false
@@ -164,7 +164,8 @@ class OpenAiProvider implements LlmProvider {
         final ToolCallAccumulator.CompletedToolCall call,
         final List<ProviderMessage> workingMessages,
         final String messageId,
-        final reactor.core.publisher.FluxSink<ProviderChunk> sink
+        final reactor.core.publisher.FluxSink<ProviderChunk> sink,
+        final Map<String, List<String>> forwardHeaders
     ) {
         final String toolName = call.functionName
         if (toolName == null || toolName.isEmpty()) {
@@ -178,7 +179,10 @@ class OpenAiProvider implements LlmProvider {
         toolMeta.put('arguments', call.argumentsJson)
         sink.next(new ProviderChunk('tool_call', messageId, null, toolMeta))
 
-        final ToolInvokeRequest invokeRequest = new ToolInvokeRequest(arguments: call.argumentsJson)
+        final ToolInvokeRequest invokeRequest = new ToolInvokeRequest(
+            arguments: call.argumentsJson,
+            forwardHeaders: forwardHeaders ?: Collections.<String, List<String>>emptyMap()
+        )
         final ToolInvokeResponse invokeResponse = mcpService.invokeTool(toolName, invokeRequest)
 
         final Map<String, Object> resultMeta = new LinkedHashMap<String, Object>(3)
@@ -215,10 +219,40 @@ class OpenAiProvider implements LlmProvider {
         body.put('messages', wireMessages)
         body.put('tools', request.tools != null ? request.tools : Collections.<Map<String, Object>>emptyList())
         if (request.options != null && !request.options.isEmpty()) {
-            body.putAll(request.options)
+            for (Map.Entry<String, Object> entry : request.options.entrySet()) {
+                if (!'_mauroForwardHeaders'.equals(entry.key)) {
+                    body.put(entry.key, entry.value)
+                }
+            }
         }
 
         return JsonOutput.toJson(body)
+    }
+
+    private static Map<String, List<String>> forwardedHeadersFromOptions(final Map<String, Object> options) {
+        if (options == null) {
+            return Collections.<String, List<String>>emptyMap()
+        }
+        final Object raw = options.get('_mauroForwardHeaders')
+        if (!(raw instanceof Map)) {
+            return Collections.<String, List<String>>emptyMap()
+        }
+        final Map<String, List<String>> headers = new LinkedHashMap<String, List<String>>()
+        for (Map.Entry<?, ?> entry : ((Map<?, ?>) raw).entrySet()) {
+            if (entry.key == null || !(entry.value instanceof Collection)) {
+                continue
+            }
+            final List<String> values = new ArrayList<String>()
+            for (Object value : (Collection<?>) entry.value) {
+                if (value != null && !String.valueOf(value).trim().isEmpty()) {
+                    values.add(String.valueOf(value))
+                }
+            }
+            if (!values.isEmpty()) {
+                headers.put(String.valueOf(entry.key), values)
+            }
+        }
+        headers
     }
 
     private static ProviderMessage buildAssistantToolCallMessage(final List<ToolCallAccumulator.CompletedToolCall> callsToRun) {

@@ -1,6 +1,7 @@
 package org.maurodata.controller.chat
 
 import groovy.transform.CompileStatic
+import io.micronaut.http.HttpRequest
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.annotation.Controller
@@ -23,8 +24,8 @@ class McpProtocolController {
 
     @Audit(level = Audit.AuditLevel.FILE_ONLY)
     @Post('/mcp')
-    HttpResponse<Object> post(@Body Object body) {
-        Object response = mcpProtocolService.handle(body)
+    HttpResponse<Object> post(HttpRequest<?> request, @Body Object body) {
+        Object response = mcpProtocolService.handle(body, request)
         response == null
             ? HttpResponse.accepted()
             : HttpResponse.ok(response)

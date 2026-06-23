@@ -1,6 +1,6 @@
 id: mauro-data-model-explorer
 name: Mauro Data Model Explorer
-description: Explore Data Models, Data Classes, Data Elements, and their structure
+description: Exploring Data Models, Data Classes, Data Elements, and their structure
 scope: GLOBAL
 version: 1.0.0
 type: SKILL
@@ -19,35 +19,52 @@ seeAlso:
   - mauro-data-model-diagrammer
   - mauro-form-representation
 toolApplicability:
-  - tool: catalogue_search
+  - tool: mauro_keyword_search
     relationship: RECOMMENDED_CONTEXT
     useWhen:
-      - users ask about actual model, class, element, field, form structure, or hierarchy stored in the catalogue
-      - users want to locate Data Models, Data Classes, Data Elements, or Data Types before exploring their structure
+      - exploring actual model, class, element, field, form structure, or hierarchy stored in the catalogue
+      - locating Data Models, Data Classes, Data Elements, or Data Types before exploring their structure
     avoidWhen:
-      - users only ask for general Mauro term definitions
-      - users only ask for software documentation, installation, or Docker configuration
+      - defining general Mauro terms only
+      - answering software documentation, installation, or Docker configuration questions
     examples:
       - What fields are in this form?
       - Find the model structure for a diabetes form
     instructions:
-      - Use catalogue_search to locate candidate models, classes, or elements.
+      - Use mauro_keyword_search to locate candidate models, classes, or elements.
       - Do not invent hierarchy unless the tool output includes parent/child structure.
+  - tool: mauro_get
+    relationship: RECOMMENDED_CONTEXT
+    useWhen:
+      - inspecting a known Data Model, Data Class, Data Element, or Data Type after its id is known
+      - taking a closer look at a previously returned catalogue item
+      - retrieving authoritative JSON for a specific model item rather than searching again
+    avoidWhen:
+      - locating an unknown model item by label or keyword
+      - choosing between several candidate catalogue search results
+    examples:
+      - Take a closer look at the Braden Risk Assessment Data Model
+      - Inspect this DataModel id
+      - Retrieve the full definition for that model
+    instructions:
+      - Skills are not callable tools; use mauro_get, not mauro-data-model-explorer, when an item id is already known.
+      - For a known DataModel id, call mauro_get with mauro-api://http-get/api/dataModels/{id} after replacing {id}.
+      - Use the returned JSON to summarise the model identity and available structural fields.
 routing:
   specificity: SPECIFIC
   useWhen:
-    - users ask what is inside a Data Model, form, Data Class, Data Element, or model hierarchy
-    - users ask about form structure, sections, fields, model structure, or parent-child relationships
-    - users ask to inspect or explore Data Models, Data Classes, Data Elements, or Data Types
+    - exploring what is inside a Data Model, form, Data Class, Data Element, or model hierarchy
+    - interpreting form structure, sections, fields, model structure, or parent-child relationships
+    - inspecting or exploring Data Models, Data Classes, Data Elements, or Data Types
   avoidWhen:
-    - users only ask for software documentation, installation, or Docker configuration
-    - users ask for broad search strategy rather than structure or hierarchy
+    - answering software documentation, installation, or Docker configuration questions
+    - refining broad search strategy rather than structure or hierarchy
   examples:
     - What fields are in this form?
     - Show me the structure of a Data Model
     - What is inside this Data Class?
   tool:
-    name: skill_lookup
+    name: mauro_skill
     arguments:
       id: mauro-data-model-explorer
       includeInstruction: true
@@ -58,7 +75,7 @@ instruction: |
 
   Apply this context when users ask what is inside a Data Model, form, section, Data Class, Data Element, or model hierarchy.
   Explain results using Mauro terms: Data Model as the container, Data Class as a grouping or section, Data Element as an individual field, and Data Type as the value structure.
-  Prefer catalogue_search for locating models/classes/elements, then summarize labels, item types, and likely parent/child context visible in the result.
-  If the user asks for the structure under a model or class, current search results may not be enough. State that a model tree or children lookup tool would be needed for precise exploration.
+  Prefer mauro_keyword_search for locating models/classes/elements, then summarize labels, item types, and likely parent/child context visible in the result.
+  If the user asks to inspect a known Data Model by id, read the DataModel resource using mauro_get and then summarise the returned structure.
   When results contain mixed item types, group them by domain type and explain how they may relate.
   Do not assume a Data Element belongs to a particular Data Class unless that relationship is present in tool output.
