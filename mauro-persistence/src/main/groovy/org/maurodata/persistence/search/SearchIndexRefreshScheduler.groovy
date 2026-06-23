@@ -2,6 +2,7 @@ package org.maurodata.persistence.search
 
 import groovy.util.logging.Slf4j
 import io.micronaut.context.annotation.Value
+import io.micronaut.context.event.ApplicationEventPublisher
 import io.micronaut.scheduling.annotation.Scheduled
 import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
@@ -22,6 +23,9 @@ class SearchIndexRefreshScheduler {
 
     @Inject
     DataSource dataSource
+
+    @Inject
+    ApplicationEventPublisher<SearchDomainsRefreshedEvent> eventPublisher
 
     @Value('${mauro.search.rebuild.poll-inactivity-period:30s}')
     Duration debounce
@@ -74,6 +78,7 @@ class SearchIndexRefreshScheduler {
                 log.info("Debounce passed. Running rebuild for version ${freshVersion} (processed=${lastSeenVersion})")
                 refreshMaterializedViews()   // implement your refresh/indexing logic here
                 lastSeenVersion = freshVersion
+                eventPublisher.publishEvent(new SearchDomainsRefreshedEvent(freshVersion, Instant.now()))
                 log.info("Rebuild finished. processedVersion set to ${lastSeenVersion}")
             } finally {
                 releaseAdvisoryLock(advisoryLockKey)

@@ -7,4 +7,5 @@ import io.micronaut.core.annotation.Introspected
 @CompileStatic
 class ToolInvokeRequest {
     Map<String, Object> arguments = [:]
+    Map<String, List<String>> forwardHeaders = [:]
 }

@@ -1,6 +1,6 @@
 id: mauro-glossary
 name: Mauro Glossary
-description: Core Mauro Data Mapper terminology terms and concepts
+description: Defining core Mauro Data Mapper terminology, terms, and concepts
 scope: GLOBAL
 version: 1.0.0
 type: SKILL
@@ -18,34 +18,34 @@ keywords:
   - profile
   - folder
 toolApplicability:
-  - tool: catalogue_search
+  - tool: mauro_keyword_search
     relationship: RECOMMENDED_CONTEXT
     useWhen:
-      - Mauro terminology is unclear while choosing catalogue_search domainTypes or interpreting mixed result types
-      - users mention Data Model, Data Class, Data Element, Data Type, Terminology, Code Set, Folder, metadata, or profile in a way that suggests they may need term clarification
+      - clarifying Mauro terminology while choosing mauro_keyword_search domainTypes or interpreting mixed result types
+      - interpreting Data Model, Data Class, Data Element, Data Type, Terminology, Code Set, Folder, metadata, or profile terms
     avoidWhen:
-      - users are only asking to search live catalogue content for a named item and the intended domain type is already clear
-      - users are asking for software installation, configuration, Docker, or administration documentation
+      - searching live catalogue content for a named item when the intended domain type is already clear
+      - answering software installation, configuration, Docker, or administration documentation questions
     examples:
       - What is the difference between a Data Class and a Data Element before I search?
     instructions:
       - Use Mauro term definitions to choose or explain domainTypes.
-      - Do not replace catalogue_search when the user wants live catalogue items.
+      - Do not replace mauro_keyword_search when the user wants live catalogue items.
 routing:
   specificity: GENERAL
   useWhen:
-    - users ask what a Mauro term or catalogue concept means
-    - users need definitions for Data Model, Data Class, Data Element, Data Type, Terminology, Code Set, metadata, profile, Folder, or catalogue item
-    - users ask for a glossary-style explanation of Mauro terminology
+    - defining a Mauro term or catalogue concept
+    - providing definitions for Data Model, Data Class, Data Element, Data Type, Terminology, Code Set, metadata, profile, Folder, or catalogue item
+    - giving a glossary-style explanation of Mauro terminology
   avoidWhen:
-    - users are asking to search live catalogue content for a named item
-    - users are asking for software installation, configuration, Docker, or administration documentation
+    - searching live catalogue content for a named item
+    - answering software installation, configuration, Docker, or administration documentation questions
   examples:
     - What is a Data Element in Mauro?
     - What is the difference between a Data Class and a Data Model?
     - What does Code Set mean?
   tool:
-    name: skill_lookup
+    name: mauro_skill
     arguments:
       id: mauro-glossary
       includeInstruction: true

@@ -1,6 +1,6 @@
 id: mauro-search-strategist
 name: Mauro Search Strategist
-description: Choose effective Mauro catalogue searches and refine noisy result sets
+description: Choosing effective Mauro catalogue searches and refining noisy result sets
 scope: GLOBAL
 version: 1.0.0
 type: SKILL
@@ -20,15 +20,15 @@ keywords:
   - noisy results
   - no results
 toolApplicability:
-  - tool: catalogue_search
+  - tool: mauro_keyword_search
     relationship: RECOMMENDED_CONTEXT
     useWhen:
-      - search request is broad, ambiguous, noisy, unsuccessful, or needs query syntax/refinement
-      - user asks to count, filter, narrow, or ask how many of all previous search results match an extra condition
-      - the model needs to choose quoted phrases, OR alternatives, exclusions, domainTypes, max, or offset
+      - refining broad, ambiguous, noisy, unsuccessful, or syntax-sensitive search requests
+      - counting, filtering, narrowing, or asking how many of all previous search results match an extra condition
+      - choosing quoted phrases, OR alternatives, exclusions, domainTypes, max, or offset
     avoidWhen:
-      - users ask for Mauro installation, configuration, Docker, administration, or documentation
-      - users ask for a direct glossary definition
+      - answering Mauro installation, configuration, Docker, administration, or documentation questions
+      - giving a direct glossary definition
     examples:
       - Out of all of those results, how many are about Education?
       - Search for maternity care but narrow it down
@@ -38,20 +38,20 @@ toolApplicability:
 routing:
   specificity: FALLBACK
   useWhen:
-    - users make broad, ambiguous, noisy, or unsuccessful catalogue search requests
-    - users ask how to refine a catalogue search or choose better search terms
+    - refining broad, ambiguous, noisy, or unsuccessful catalogue search requests
+    - choosing how to refine a catalogue search or select better search terms
     - search results are poor, too broad, too sparse, or need synonyms, singular/plural variants, abbreviations, or related terms
-    - users ask to count, filter, narrow, or ask how many of all previous search results match an extra condition
+    - counting, filtering, narrowing, or asking how many of all previous search results match an extra condition
   avoidWhen:
-    - users ask for Mauro installation, configuration, Docker, administration, or documentation
-    - users ask for a direct glossary definition that can be handled by Mauro Glossary
+    - answering Mauro installation, configuration, Docker, administration, or documentation questions
+    - giving a direct glossary definition handled by Mauro Glossary
   examples:
     - Find forms about diabetes
     - I cannot find the right item
     - Search for maternity care but narrow it down
     - Out of all of those results, how many are about education?
   tool:
-    name: skill_lookup
+    name: mauro_skill
     arguments:
       id: mauro-search-strategist
       includeInstruction: true
@@ -61,10 +61,10 @@ instruction: |
   Answer the user's actual question or perform the search; do not explain the search strategy unless it helps the user understand a changed or refined result set.
 
   Apply this context when a user's request is broad, ambiguous, or likely to need careful catalogue search.
-  Treat polite wording such as "Would you find X by suggesting related terms and then searching?" as a request to perform that workflow: prepare/refine terms if useful, then search. Do not stop at a theoretical yes/no answer unless the user explicitly asks only about strategy.
-  If related terms have been looked up for the current search task, use them in the subsequent catalogue_search expression. Do not silently discard the expansion and search only a narrower term unless the user asks for narrowing or the related terms are clearly irrelevant.
-  catalogue_search is a PostgreSQL full-text keyword search, not semantic/vector search. Do not rewrite the user's supplied keywords as if the tool understood semantic intent.
-  catalogue_search uses PostgreSQL websearch_to_tsquery syntax for searchTerm:
+  Treat polite wording such as "Would you find X by suggesting related terms and then searching?" as a request to perform that workflow: prepare/refine terms if useful, then search. Give a theoretical yes/no answer only when the user explicitly asks only about strategy.
+  If related terms have been looked up for the current search task, use them in the subsequent mauro_keyword_search expression unless the user asks for narrowing or the related terms are clearly irrelevant.
+  mauro_keyword_search is a PostgreSQL full-text keyword search, not semantic/vector search. Do not rewrite the user's supplied keywords as if the tool understood semantic intent.
+  mauro_keyword_search uses PostgreSQL websearch_to_tsquery syntax for searchTerm:
   - The backend treats unquoted words as AND terms, so maternity care means maternity AND care.
   - Quoted phrases preserve word order, so "maternity care" searches for that phrase.
   - OR expresses keyword alternatives, so diabetes OR diabetic searches either term.
@@ -72,8 +72,8 @@ instruction: |
   Start with the user's exact phrase when it is specific. Quote multi-word labels or concepts when the user appears to want that exact phrase.
   If results are poor, try likely synonyms, singular/plural variants, abbreviations, or related clinical/business terms joined with OR. Preserve user-supplied alternative terms unless there is a clear reason to remove one.
   If results are noisy, keep the core term and exclude a repeated unwanted concept with -term or -"quoted phrase".
-  If the user asks to count, filter, or narrow all results from a previous catalogue_search, do not count only the visible page. Formulate a refined catalogue_search by combining the previous searchTerm with the new condition and preserving the previous domainTypes where applicable. Use the returned total count as the answer.
-  Example: if the previous search was searchTerm "age OR weight" with domainTypes ["DataElement"], and the user asks how many are about Education, call catalogue_search with searchTerm "age education OR weight education", domainTypes ["DataElement"], max 5, offset 0, then answer from count.
+  If the user asks to count, filter, or narrow all results from a previous mauro_keyword_search, do not count only the visible page. Formulate a refined mauro_keyword_search by combining the previous searchTerm with the new condition and preserving the previous domainTypes where applicable. Use the returned total count as the answer.
+  Example: if the previous search was searchTerm "age OR weight" with domainTypes ["DataElement"], and the user asks how many are about Education, call mauro_keyword_search with searchTerm "age education OR weight education", domainTypes ["DataElement"], max 5, offset 0, then answer from count.
   For broad searches, summarize the most relevant result clusters instead of listing everything.
   When results are noisy, ask a focused follow-up question such as whether the user wants forms, data elements, terms, models, or governance metadata.
   When no results are found, explain the search attempted and suggest alternative terms rather than giving a generic answer.

@@ -10,11 +10,9 @@ import java.nio.charset.StandardCharsets
 class ChatPromptResourceService {
 
     static final String TOOL_POLICY = 'tool-policy'
-    static final String POST_TOOL_RESULT = 'post-tool-result'
 
     private static final Map<String, String> RESOURCE_PATHS = [
-        (TOOL_POLICY)     : 'chat/prompts/tool-policy.txt',
-        (POST_TOOL_RESULT): 'chat/prompts/post-tool-result.txt'
+        (TOOL_POLICY): 'chat/prompts/tool-policy.txt'
     ].asImmutable() as Map<String, String>
 
     private final Map<String, String> prompts

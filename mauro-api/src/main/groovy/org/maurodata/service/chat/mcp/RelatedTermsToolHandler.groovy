@@ -10,18 +10,18 @@ import org.maurodata.service.chat.semantic.TermExpansionPrompt
 @CompileStatic
 @Singleton
 @McpToolDefinition(
-    name = 'related_terms',
+    name = 'mauro_terms',
     description = 'Find or prepare semantically related terms for a word or phrase in a Mauro context.',
-    purpose = 'Return stored or generated related terms for a word or phrase so the model can refine or expand a later catalogue search. If the user asks for related terms as part of a search task, this tool is the expansion step, not the final answer.',
+    purpose = 'Return stored or generated related terms for a word or phrase so the model can refine or expand a later catalogue search. When related terms are requested as part of a search task, this tool is the expansion step, not the final answer.',
     useWhen = [
-        'users ask for related terms, synonyms, aliases, alternative search terms, or semantic neighbours',
-        'a catalogue search query needs expansion',
-        'a user asks what other terms might be used for a concept',
-        'users ask for related terms as part of a catalogue search task; after this tool returns, call catalogue_search next unless they explicitly ask only for suggestions and no search'
+        'finding related terms, synonyms, aliases, alternative search terms, or semantic neighbours',
+        'expanding a catalogue search query',
+        'identifying what other terms might be used for a concept',
+        'finding related terms as part of a catalogue search task; after this tool returns, call mauro_keyword_search next unless the request explicitly asks only for suggestions and no search'
     ],
     avoidWhen = [
-        'the user asks for live catalogue items and the search term is already clear',
-        'the user asks for a definition that can be answered by Mauro glossary guidance'
+        'finding live catalogue items when the search term is already clear',
+        'answering a definition that can be handled by Mauro glossary guidance'
     ],
     examples = [
         'related terms for diabetes',
@@ -44,7 +44,7 @@ class RelatedTermsToolHandler extends AbstractAnnotatedToolHandler {
     protected Map<String, Object> doInvoke(Map<String, Object> arguments) {
         String text = asString(arguments.get('text'))
         if (text == null || text.trim().isEmpty()) {
-            throw new IllegalArgumentException('related_terms requires text')
+            throw new IllegalArgumentException('mauro_terms requires text')
         }
         RelatedTermsResult result = relatedTermsService.lookup(
             text,
@@ -81,7 +81,7 @@ class RelatedTermsToolHandler extends AbstractAnnotatedToolHandler {
         List<String> searchExpression = buildSearchExpression(result.get('inputText'), terms)
 
         renderModelTextSections([
-            'Tool Call Status'   : ['Tool related_terms succeeded.'],
+            'Tool Call Status'   : ['Tool mauro_terms succeeded.'],
             'Result Metadata'    : [
                 "Input text: ${result.get('inputText')}",
                 "Context: ${result.get('context')}",
@@ -94,17 +94,19 @@ class RelatedTermsToolHandler extends AbstractAnnotatedToolHandler {
             'Expansion Prompts'  : promptSummaries,
             'Answer Instructions': [
                 'If the user only asked for suggestions, present the related terms clearly.',
-                'If the user asked for terms as part of a search task, or framed this as query expansion for a catalogue search, use these terms to call catalogue_search next rather than only telling the user to search themselves.',
-                'When the user explicitly asks to use related terms in a search task, carry the looked-up related terms into catalogue_search; do not replace them with a narrower single-term search.',
-                'When calling catalogue_search after this tool, use the Suggested Search Expression as the catalogue_search searchTerm unless there is a clear tool-schema reason not to. Preserve any domainTypes implied by already-injected representation skills.',
+                'If the user asked for terms as part of a search task, or framed this as query expansion for a catalogue search, use these terms to call mauro_keyword_search next rather than only telling the user to search themselves.',
+                'If presenting a Suggested Search Expression without immediately searching, frame it as a search you can perform for the user rather than as a search the user should try themselves.',
+                'If the user later gives a brief confirmation such as "ok", "yes", "sure", "please", or "go ahead", treat that as permission to run mauro_keyword_search with the Suggested Search Expression.',
+                'When the user explicitly asks to use related terms in a search task, carry the looked-up related terms into mauro_keyword_search; do not replace them with a narrower single-term search.',
+                'When calling mauro_keyword_search after this tool, use the Suggested Search Expression as the mauro_keyword_search searchTerm unless there is a clear tool-schema reason not to. Preserve any domainTypes implied by already-injected representation skills.',
                 'If you omit any looked-up related terms from the search expression because there are too many or they are irrelevant, briefly state that you used a subset and why.',
                 'If no terms are present but prompts are available, say that term-generation prompts are available for the next indexing/expansion step.',
                 'Do not claim vector similarity was used unless the lookup strategy or result explicitly says so.'
             ],
             'Completion Guidance': [
                 'If the user only asked for related-term suggestions, answer now from this result.',
-                'If the user asked for related terms as part of a search task, this result is not the final answer; call catalogue_search next using the Suggested Search Expression.',
-                'Do not call related_terms again with identical text and context unless the user asks for a different expansion.'
+                'If the user asked for related terms as part of a search task, this result is not the final answer; call mauro_keyword_search next using the Suggested Search Expression.',
+                'Do not call mauro_terms again with identical text and context unless the user asks for a different expansion.'
             ]
         ] as Map<String, Object>)
     }
@@ -157,7 +159,7 @@ class RelatedTermsToolHandler extends AbstractAnnotatedToolHandler {
         if (values.isEmpty()) {
             return []
         }
-        ['Use this as a candidate catalogue_search searchTerm: ' + values.take(8).join(' OR ')]
+        ['Use this as a candidate mauro_keyword_search searchTerm: ' + values.take(8).join(' OR ')]
     }
 
     private static String quoteIfNeeded(String text) {

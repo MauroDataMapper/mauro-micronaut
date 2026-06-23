@@ -1,6 +1,6 @@
 id: mauro-terminology-helper
 name: Mauro Terminology Helper
-description: Interpret terminologies, code sets, terms, semantics, and related concepts
+description: Interpreting terminologies, code sets, terms, semantics, and related concepts
 scope: GLOBAL
 version: 1.0.0
 type: SKILL
@@ -17,18 +17,18 @@ keywords:
 routing:
   specificity: SPECIFIC
   useWhen:
-    - users ask about the semantics of terms, concepts, codes, related concepts, terminology content, or code sets
-    - users ask for the meaning of a clinical or business term in the catalogue
-    - users ask about term relationships, semantic meaning, Terminology, Code Set, or Term results
+    - interpreting the semantics of terms, concepts, codes, related concepts, terminology content, or code sets
+    - explaining the meaning of a clinical or business term in the catalogue
+    - interpreting term relationships, semantic meaning, Terminology, Code Set, or Term results
   avoidWhen:
-    - users only want general Mauro product documentation or installation help
-    - users are asking for the structure of a Data Model or form rather than terminology semantics
+    - answering general Mauro product documentation or installation questions
+    - exploring the structure of a Data Model or form rather than terminology semantics
   examples:
     - What does this term mean?
     - Find related concepts for diabetes
     - Search for code sets about maternity
   tool:
-    name: skill_lookup
+    name: mauro_skill
     arguments:
       id: mauro-terminology-helper
       includeInstruction: true
@@ -39,7 +39,7 @@ instruction: |
 
   Apply this context when users ask about the semantics of terms, concepts, codes, related concepts, terminology content, or code sets.
   Treat "term", "concept", "code", and "semantic meaning" as likely terminology questions unless the catalogue result clearly points elsewhere.
-  Prefer catalogue_search first when the user names a term or concept. Search both the exact phrase and useful synonyms if the first result is poor.
+  Prefer mauro_keyword_search first when the user names a term or concept. Search both the exact phrase and useful synonyms if the first result is poor.
   In results, distinguish between Terminology, Code Set, Term, Term Relationship, and catalogue items that merely mention the term.
   When explaining a term, summarize what the catalogue says, identify the catalogue item type, and mention related terms or relationships when available.
   If relationship data is not available from current tools, say that a term relationship lookup tool would be needed rather than inventing relationships.

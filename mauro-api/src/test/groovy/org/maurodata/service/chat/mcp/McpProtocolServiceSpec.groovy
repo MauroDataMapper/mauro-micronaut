@@ -7,6 +7,7 @@ import org.maurodata.service.chat.ChatSkillService
 import org.maurodata.service.chat.ChatSkillsRegistryService
 import org.maurodata.service.chat.SkillRouting
 import org.maurodata.service.chat.SkillToolApplicability
+import jakarta.inject.Inject
 import spock.lang.Specification
 
 class McpProtocolServiceSpec extends Specification {
@@ -18,6 +19,18 @@ class McpProtocolServiceSpec extends Specification {
     )
     TestSkillService skillService = new TestSkillService()
     McpProtocolService service = new McpProtocolService(mcpToolRegistry, skillService)
+
+    void 'production constructor is injectable with resource dependencies'() {
+        expect:
+        McpProtocolService.declaredConstructors.any {constructor ->
+            constructor.parameterTypes.toList() == [
+                McpToolRegistry,
+                ChatSkillService,
+                McpHttpResourceRegistry,
+                io.micronaut.runtime.server.EmbeddedServer
+            ] && constructor.getAnnotation(Inject) != null
+        }
+    }
 
     void 'initialize returns MCP server capabilities'() {
         when:
@@ -155,7 +168,7 @@ class McpProtocolServiceSpec extends Specification {
         String text = response.result.messages[0].content.text
         text.contains('## Persona')
         text.contains('## Skill routes')
-        text.contains('catalogue_search <- mauro-glossary')
+        text.contains('mauro_keyword_search <- mauro-glossary')
         text.contains('## Available tools')
         text.contains('echo: Echo tool')
     }
@@ -195,7 +208,7 @@ class McpProtocolServiceSpec extends Specification {
         response.error.message == 'prompts/get requires params.name'
     }
 
-    void 'unknown method returns json rpc method not found error'() {
+    void 'resources list without resource registry returns invalid params error'() {
         when:
         Map<String, Object> response = service.handle([
             jsonrpc: '2.0',
@@ -207,8 +220,8 @@ class McpProtocolServiceSpec extends Specification {
         then:
         response.jsonrpc == '2.0'
         response.id == 3
-        response.error.code == -32601
-        response.error.message == 'Method not found: resources/list'
+        response.error.code == -32602
+        response.error.message == 'resources/list is not available'
     }
 
     void 'tools call missing name returns invalid params error'() {
@@ -322,7 +335,7 @@ class McpProtocolServiceSpec extends Specification {
                 ),
                 toolApplicability: [
                     new SkillToolApplicability(
-                        tool: 'catalogue_search',
+                        tool: 'mauro_keyword_search',
                         relationship: 'RECOMMENDED_CONTEXT',
                         useWhen: ['Mauro terminology is unclear'],
                         instructions: ['Use terms to choose domainTypes.']

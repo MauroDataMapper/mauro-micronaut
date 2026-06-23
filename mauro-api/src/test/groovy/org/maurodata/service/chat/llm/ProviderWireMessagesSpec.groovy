@@ -11,7 +11,7 @@ class ProviderWireMessagesSpec extends Specification {
             new ProviderMessage(role: 'system', content: 'routing'),
             new ProviderMessage(role: 'user', content: 'Find forms about maternity'),
             new ProviderMessage(role: 'system', content: 'post tool guidance'),
-            new ProviderMessage(role: 'tool', content: 'Tool result', toolCallId: 'call-1', name: 'catalogue_search'),
+            new ProviderMessage(role: 'tool', content: 'Tool result', toolCallId: 'call-1', name: 'mauro_keyword_search'),
             new ProviderMessage(role: 'system', content: 'final instruction')
         ]
 
@@ -27,7 +27,7 @@ class ProviderWireMessagesSpec extends Specification {
             'Tool result',
             'final instruction'
         ]
-        wireMessages[3].tool_name == 'catalogue_search'
+        wireMessages[3].tool_name == 'mauro_keyword_search'
         wireMessages[3].tool_call_id == 'call-1'
     }
 }

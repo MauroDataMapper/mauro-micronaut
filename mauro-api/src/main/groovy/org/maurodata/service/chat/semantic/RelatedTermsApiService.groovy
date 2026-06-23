@@ -17,6 +17,7 @@ class RelatedTermsApiService implements RelatedTermsService {
     private final String defaultEmbeddingModel
     private final String defaultGenerationModel
     private final List<String> defaultGenerationCategories
+    private final int maxGenerationCategories
 
     RelatedTermsApiService(
         SemanticTermStore semanticTermStore,
@@ -27,7 +28,8 @@ class RelatedTermsApiService implements RelatedTermsService {
         @Value('${chat.semantic.default-embedding-provider:}') String defaultEmbeddingProvider,
         @Value('${chat.semantic.default-embedding-model:}') String defaultEmbeddingModel,
         @Value('${chat.providers.default-model:llama3.2:1b}') String defaultGenerationModel,
-        @Value('${chat.semantic.related-terms.default-categories:synonym,neighbours,alternativeExpressions,searchKeywords,usageSignals}') String defaultGenerationCategories
+        @Value('${chat.semantic.related-terms.default-categories:synonym,neighbours,searchKeywords}') String defaultGenerationCategories,
+        @Value('${chat.semantic.related-terms.max-generation-categories:2}') Integer maxGenerationCategories
     ) {
         this.semanticTermStore = semanticTermStore
         this.promptFactory = promptFactory
@@ -38,6 +40,7 @@ class RelatedTermsApiService implements RelatedTermsService {
         this.defaultEmbeddingModel = defaultEmbeddingModel
         this.defaultGenerationModel = defaultGenerationModel
         this.defaultGenerationCategories = parseCategories(defaultGenerationCategories)
+        this.maxGenerationCategories = Math.max(maxGenerationCategories ?: 2, 1)
     }
 
     @Override
@@ -51,7 +54,7 @@ class RelatedTermsApiService implements RelatedTermsService {
 
         List<RelatedTerm> matches = semanticTermStore.findSimilar(inputText, resolvedContext, resolvedProvider, resolvedModel, resolvedMax)
         if (matches.isEmpty() && generateWhenMissing) {
-            List<RelatedTerm> generated = generateTerms(inputText, resolvedContext, resolvedLocale, resolvedGenerationModel)
+            List<RelatedTerm> generated = generateTerms(inputText, resolvedContext, resolvedLocale, resolvedGenerationModel, resolvedMax)
             semanticTermStore.saveTerms(inputText, resolvedContext, generated)
             matches = generated.take(resolvedMax)
         }
@@ -68,8 +71,8 @@ class RelatedTermsApiService implements RelatedTermsService {
         )
     }
 
-    private List<RelatedTerm> generateTerms(String inputText, String context, String locale, String generationModel) {
-        Map<String, String> conceptPrompts = generationPromptMap(inputText, context, locale, defaultGenerationCategories)
+    private List<RelatedTerm> generateTerms(String inputText, String context, String locale, String generationModel, int maxTerms) {
+        Map<String, String> conceptPrompts = generationPromptMap(inputText, context, locale, defaultGenerationCategories.take(maxGenerationCategories))
         List<String> rawTerms = new ArrayList<String>()
         Map<String, String> relationByTerm = new LinkedHashMap<String, String>()
         for (Map.Entry<String, String> entry : conceptPrompts.entrySet()) {
@@ -85,6 +88,9 @@ class RelatedTermsApiService implements RelatedTermsService {
                     rawTerms.add(term.toLowerCase(Locale.ROOT))
                     relationByTerm.put(key, entry.key)
                 }
+            }
+            if (rawTerms.size() >= Math.max(maxTerms * 2, 6)) {
+                break
             }
         }
 
