@@ -412,7 +412,7 @@ class DataModelController extends ModelController<DataModel> implements DataMode
                                                                                           "Intersection DataElements must be within the source DataModel")
         }
 
-        Map<UUID, List<DataElement>> targetDataModelsDataElementsMap = targetDataModels.collectEntries {[it.id, dataElementRepository.readAllByDataModelId(it.id)]}
+        Map<UUID, List<DataElement>> targetDataModelsDataElementsMap = targetDataModels.collectEntries {[it.id, dataElementRepository.readAllByDataClassDataModelIdIn([it.id])]}
 
         Map<UUID, List<DataElement>> potentialTargetDataModelsIntersects =
             targetDataModelsDataElementsMap.collectEntries {UUID targetDataModelId, List<DataElement> targetDataElements ->

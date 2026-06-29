@@ -222,7 +222,7 @@ class DataElementController extends AdministeredItemController<DataElement, Data
     ListResponse<DataElement> byModelList(UUID dataModelId, @Nullable PaginationParams params = new PaginationParams()) {
         DataModel dataModel = dataModelRepository.readById(dataModelId)
         accessControlService.checkRole(Role.READER, dataModel)
-        List<DataElement> dataElements = dataElementRepository.readAllByDataModel_Id(dataModelId)
+        List<DataElement> dataElements = dataElementRepository.readAllByDataClassDataModelIdIn([dataModelId])
         ListResponse<DataElement> dataElementsResponse = ListResponse.from(dataElements, params)
         dataElementsResponse.items.each {updateDerivedProperties(it as DataElement)}
         dataElementsResponse
