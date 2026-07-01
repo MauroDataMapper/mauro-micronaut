@@ -256,6 +256,20 @@ class DataModel extends Model implements ItemReferencer, DiffableItem<DataModel>
             setDataClassAssociations(childDataClass, dataTypesMap, referenceTypes)
             childDataClass.parentDataClass = dataClass
         }
+        List<DataClass> extendsDataClasses = []
+        dataClass.extendsDataClasses.each {superClass ->
+            final DataClass foundDataClass = allDataClasses.find {dataClass1 ->
+                (superClass.id && dataClass1.id && dataClass1.id == superClass.id) ||
+                (superClass.label && dataClass1.label && dataClass1.label == superClass.label)
+            }
+            if(foundDataClass) {
+                extendsDataClasses.add(foundDataClass)
+            } else {
+                log.error("DataModel setAssociations() setDataClassAssociations() failed to find a DataClass for ${superClass.id} or else ${superClass.label}")
+            }
+        }
+        dataClass.extendsDataClasses = extendsDataClasses
+
         dataClass.dataElements.each {dataElement ->
             dataElement.dataModel = this
             if (!dataElement.dataModel.dataElements.contains(dataElement)) {

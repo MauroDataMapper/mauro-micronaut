@@ -41,6 +41,7 @@ class TreeifyVisitor extends GenericDomainTraversalVisitor {
         }
         onEnter(DataClass) {DataClass dataClass ->
             dataClass.extendedBy = []
+            dataClass.extendsDataClasses = replaceWithStub(dataClass.extendsDataClasses)
             dataClass.referenceTypes = []
             dataClass.dataModel = null
         }
@@ -111,6 +112,15 @@ class TreeifyVisitor extends GenericDomainTraversalVisitor {
         }
 
         return stub
+    }
+
+    private static <T extends AdministeredItem> Collection<T> replaceWithStub(Collection<T> administeredItems) {
+        if (!administeredItems) {
+            return null
+        }
+        Collection<T> replacements = []
+        replacements.addAll(administeredItems.collect {replaceWithStub(it)})
+        return replacements
     }
 
 }

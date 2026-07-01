@@ -1,6 +1,7 @@
 package org.maurodata.persistence
 
-import org.maurodata.persistence.classifier.dto.ClassifierJoinDTO
+import org.maurodata.persistence.model.ItemRepository
+import org.maurodata.shredder.ShreddedContent
 import org.maurodata.persistence.terminology.dto.CodeSetTermDTO
 
 import groovy.transform.CompileStatic
@@ -15,27 +16,16 @@ import org.maurodata.domain.datamodel.DataClass
 import org.maurodata.domain.datamodel.DataElement
 import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.datamodel.DataType
-import org.maurodata.domain.datamodel.EnumerationValue
 import org.maurodata.domain.facet.Annotation
-import org.maurodata.domain.facet.Edit
-import org.maurodata.domain.facet.Facet
-import org.maurodata.domain.facet.Metadata
-import org.maurodata.domain.facet.ReferenceFile
 import org.maurodata.domain.facet.Rule
-import org.maurodata.domain.facet.RuleRepresentation
-import org.maurodata.domain.facet.SemanticLink
 import org.maurodata.domain.facet.SummaryMetadata
-import org.maurodata.domain.facet.SummaryMetadataReport
-import org.maurodata.domain.facet.VersionLink
 import org.maurodata.domain.folder.Folder
 import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.domain.model.Item
 import org.maurodata.domain.model.Model
-import org.maurodata.domain.security.CatalogueUser
 import org.maurodata.domain.terminology.CodeSet
 import org.maurodata.domain.terminology.Term
 import org.maurodata.domain.terminology.TermRelationship
-import org.maurodata.domain.terminology.TermRelationshipType
 import org.maurodata.domain.terminology.Terminology
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository.DataClassCacheableRepository
@@ -59,8 +49,6 @@ import org.maurodata.persistence.cache.ModelCacheableRepository.FolderCacheableR
 import org.maurodata.persistence.cache.ModelCacheableRepository.TerminologyCacheableRepository
 import org.maurodata.persistence.cache.ModelCacheableRepository.DataModelCacheableRepository
 import org.maurodata.persistence.datamodel.dto.DataClassExtensionDTO
-import org.maurodata.persistence.facet.MetadataRepository
-import org.maurodata.persistence.folder.FolderRepository
 
 import java.time.Duration
 import java.time.Instant
@@ -73,7 +61,6 @@ class ContentHandler {
     @Inject DataSource dataSource
 
     @Inject FolderCacheableRepository folderCacheableRepository
-    @Inject FolderRepository folderRepository
     @Inject ModelCacheableRepository.ClassificationSchemeCacheableRepository classificationSchemeCacheableRepository
     @Inject AdministeredItemCacheableRepository.ClassifierCacheableRepository classifierCacheableRepository
     @Inject TerminologyCacheableRepository terminologyCacheableRepository
@@ -93,8 +80,6 @@ class ContentHandler {
 
     @Inject MetadataCacheableRepository metadataCacheableRepository
 
-    @Inject MetadataRepository metadataRepository
-
     @Inject FacetCacheableRepository.AnnotationCacheableRepository annotationRepository
     @Inject FacetCacheableRepository.AnnotationCacheableRepository annotationCacheableRepository
     @Inject EditCacheableRepository editCacheableRepository
@@ -108,685 +93,121 @@ class ContentHandler {
 
     int batchSize = 10000
 
-    Map<UUID, AdministeredItem> allItems = [:]
 
 
-    Map<Integer, Set<Folder>> folders = [:]
-    Set<ClassificationScheme> classificationSchemes = []
-    Set<Classifier> classifiers = []
-    Set<DataModel> dataModels = []
-    Map<Integer, Set<DataClass>> dataClasses = [:]
-    Set<DataType> dataTypes = []
-    Set<DataElement> dataElements = []
-    Set<EnumerationValue> enumerationValues = []
-    Set<Terminology> terminologies = []
-    Set<Term> terms = []
-    Set<TermRelationshipType> termRelationshipTypes = []
-    Set<TermRelationship> termRelationships = []
-    Set<CodeSet> codeSets = []
-    Set<DataFlow> dataFlows = []
-    Set<DataClassComponent> dataClassComponents = []
-    Set<DataElementComponent> dataElementComponents = []
 
-    Set<Metadata> metadata = []
-    Set<ClassifierJoinDTO> classifierJoinDTOs = []
-    Set<Classifier> classifiersForItems = []
-    IdentityHashMap<AdministeredItem, Set<Classifier>> classifiersForItemsMap = new IdentityHashMap<>(64)
-    Map<Integer, Set<Annotation>> annotations = [:]
-    Set<Edit> edits = []
-    Set<ReferenceFile> referenceFiles = []
-    Set<Rule> rules = []
-    Set<RuleRepresentation> ruleRepresentations = []
-    Set<SemanticLink> semanticLinks = []
-    Set<SummaryMetadata> summaryMetadata = []
-    Set<SummaryMetadataReport> summaryMetadataReports = []
-    Set<VersionLink> versionLinks = []
 
-    IdentityHashMap<Item, UUID> preservedIds = new IdentityHashMap<>(64)
+    /**
+     * Shred a folder hierarchy using the visitor pattern.
+     * Traverses the entire domain tree and collects items into organized collections.
+     */
 
-    void shred(Folder folder, Integer depth = 0) {
-        if(folders[depth]) {
-            folders[depth].add(folder)
-        } else {
-            folders[depth] = [folder] as Set
-        }
-        shredFacets(folder)
-        folder.childFolders.each {shred(it, depth+1)}
-        folder.terminologies.each {shred(it)}
-        folder.dataModels.each {shred(it)}
-        folder.codeSets.each {shred(it)}
-        folder.classificationSchemes.each { shred(it)}
-    }
-
-    void shred(ClassificationScheme classificationScheme) {
-        classificationSchemes.add(classificationScheme)
-        shredFacets(classificationScheme)
-        classificationScheme.csClassifiers.each {shred(it)}
-    }
-
-    void shred(Classifier classifier) {
-        classifiers.add(classifier)
-        shredFacets(classifier)
-    }
-
-    void shred(Terminology terminology) {
-        terminologies.add(terminology)
-        shredFacets(terminology)
-        terminology.terms.each {shred(it)}
-        terminology.termRelationships.each {shred(it)}
-        terminology.termRelationshipTypes.each {shred(it)}
-    }
-
-    void shred(Term term) {
-        terms.add(term)
-        shredFacets(term)
-    }
-
-    void shred(TermRelationshipType termRelationshipType) {
-        termRelationshipTypes.add(termRelationshipType)
-        shredFacets(termRelationshipType)
-    }
-
-    void shred(TermRelationship termRelationship) {
-        termRelationships.add(termRelationship)
-        shredFacets(termRelationship)
-    }
-
-    void shred(CodeSet codeSet) {
-        codeSets.add(codeSet)
-        shredFacets(codeSet)
-    }
-
-    void shred(DataModel dataModel) {
-        dataModels.add(dataModel)
-        shredFacets(dataModel)
-        dataModel.dataClasses.each {shred(it)}
-        dataModel.dataTypes.each {shred(it) }
-    }
-
-    void shred(DataClass dataClass, Integer depth = 0) {
-        if(dataClasses[depth]) {
-            dataClasses[depth].add(dataClass)
-        } else {
-            dataClasses[depth] = [dataClass] as Set
-        }
-        shredFacets(dataClass)
-        dataClass.dataClasses.each {shred(it, depth+1)}
-        dataClass.dataElements.each {shred(it)}
-    }
-
-    void shred(DataType dataType) {
-        dataTypes.add(dataType)
-        shredFacets(dataType)
-        dataType.enumerationValues.each {shred(it)}
-    }
-    void shred(EnumerationValue enumerationValue) {
-        shredFacets(enumerationValue)
-        enumerationValues.add(enumerationValue)
-    }
-    void shred(DataElement dataElement) {
-        dataElements.add(dataElement)
-        shredFacets(dataElement)
-    }
-
-    void shred(DataFlow dataFlow) {
-        dataFlows.add(dataFlow)
-        shredFacets(dataFlow)
-        dataFlow.dataClassComponents.each { shred(it)}
-    }
-
-    void shred(DataClassComponent dataClassComponent) {
-        dataClassComponents.add(dataClassComponent)
-        shredFacets(dataClassComponent)
-        dataClassComponent.dataElementComponents.each { shred(it)}
-    }
-
-    void shred(DataElementComponent dataElementComponent) {
-        dataElementComponents.add(dataElementComponent)
-        shredFacets(dataElementComponent)
-    }
-
-    void saveWithContent() {
-        folders.keySet().sort().each {depth ->
-            inBatches(ensureIdsAndSort(folders[depth].findAll {!it.id}), batchSize) {List<Folder> batches ->
-                folderCacheableRepository.saveAll(batches)
-            }
-        }
-        inBatches(ensureIdsAndSort(classificationSchemes.findAll {!it.id}, preservedIds), batchSize) {List<ClassificationScheme> batches ->
-            classificationSchemeCacheableRepository.saveAll(batches)
-        }
-        inBatches(ensureIdsAndSort(classifiers.findAll {!it.id}, preservedIds), batchSize) {List<Classifier> batches ->
-            classifierCacheableRepository.saveAll(batches)
-        }
-        inBatches(ensureIdsAndSort(terminologies.findAll {!it.id}), batchSize) {List<Terminology> batches ->
-            terminologyCacheableRepository.saveAll(batches)
-        }
-        inBatches(ensureIdsAndSort(terms.findAll {!it.id}), batchSize) {List<Term> batches ->
-            termCacheableRepository.saveAll(batches)
-        }
-        inBatches(ensureIdsAndSort(termRelationshipTypes.findAll {!it.id}), batchSize) {List<TermRelationshipType> batches ->
-            termRelationshipTypeCacheableRepository.saveAll(batches)
-        }
-        inBatches(ensureIdsAndSort(termRelationships.findAll {!it.id}), batchSize) {List<TermRelationship> batches ->
-            termRelationshipCacheableRepository.saveAll(batches)
-        }
-
-        codeSets.findAll {!it.id}.each {
-            try{
-                codeSetCacheableRepository.save(it)
-            } catch(Exception e) {
-                e.printStackTrace()
-            }
-        }
-//        inBatches(ensureIdsAndSort(codeSets.findAll {!it.id}), batchSize) {List<CodeSet> batches ->
-//            try{
-//                codeSetCacheableRepository.saveAll(batches)
-//            } catch(Exception e) {
-//                e.printStackTrace()
-//            }
-//        }
+    void saveWithContent(ShreddedContent shreddedContent) {
+        Instant start = Instant.now()
+        saveHierarchyByBatch(shreddedContent.folders, folderCacheableRepository)
+        saveAllByBatch(shreddedContent.classificationSchemes, classificationSchemeCacheableRepository)
+        saveAllByBatch(shreddedContent.classifiers, classifierCacheableRepository)
+        saveAllByBatch(shreddedContent.terminologies, terminologyCacheableRepository)
+        saveAllByBatch(shreddedContent.terms, termCacheableRepository)
+        saveAllByBatch(shreddedContent.termRelationshipTypes, termRelationshipTypeCacheableRepository)
+        saveAllByBatch(shreddedContent.termRelationships, termRelationshipCacheableRepository)
+        saveAllByBatch(shreddedContent.codeSets, codeSetCacheableRepository)
 
         // TODO: Improve this by doing them in bulk
         // Actually maybe this happens automatically
-        //codeSets.each {codeSet ->
-//            codeSet.terms.each {term ->
-//                codeSetCacheableRepository.addTerm(codeSet.id, term.id)
-//            }
-//        }
-        inBatches(ensureIdsAndSort(dataModels.findAll {!it.id}), batchSize) {List<DataModel> batches ->
-            dataModelCacheableRepository.saveAll(batches)
-        }
+        /*        codeSets.each {codeSet ->
+                    codeSet.terms.each {term ->
+                        codeSetCacheableRepository.addTerm(codeSet.id, term.id)
+                    }
+                }
+        */
 
-        dataClasses.keySet().sort().each {depth ->
-            inBatches(ensureIdsAndSort(dataClasses[depth].findAll {!it.id}), batchSize) {List<DataClass> batches ->
-                dataClassCacheableRepository.saveAll(batches)
-            }
-        }
+        saveAllByBatch(shreddedContent.dataModels, dataModelCacheableRepository)
+        saveHierarchyByBatch(shreddedContent.dataClasses, dataClassCacheableRepository)
         // Note: didn't batch this one
-        ((List<DataClass>) dataClasses.values().flatten()).each {DataClass dataClass ->
+        ((List<DataClass>) shreddedContent.dataClasses.values().flatten()).each {DataClass dataClass ->
             dataClass.extendsDataClasses.each {superClass ->
                 dataClassCacheableRepository.addDataClassExtensionRelationship(dataClass.id, superClass.id)
             }
         }
-        inBatches(ensureIdsAndSort(dataTypes.findAll {!it.id}), batchSize) {List<DataType> batches ->
-            dataTypeCacheableRepository.saveAll(batches)
-        }
-        inBatches(ensureIdsAndSort(dataElements.findAll {!it.id}), batchSize) {List<DataElement> batches ->
-            dataElementCacheableRepository.saveAll(batches)
-        }
-        inBatches(ensureIdsAndSort(enumerationValues.findAll {!it.id}), batchSize) {List<EnumerationValue> batches ->
-            enumerationValueCacheableRepository.saveAll(batches)
-        }
-
-        inBatches(ensureIdsAndSort(dataFlows.findAll {!it.id}), batchSize) {List<DataFlow> batches ->
-            dataFlowCacheableRepository.saveAll(batches)
-        }
-        inBatches(ensureIdsAndSort(dataClassComponents.findAll {!it.id}), batchSize) {List<DataClassComponent> batches ->
-            dataClassComponentCacheableRepository.saveAll(batches)
-        }
-        inBatches(ensureIdsAndSort(dataElementComponents.findAll {!it.id}), batchSize) {List<DataElementComponent> batches ->
-            dataElementComponentCacheableRepository.saveAll(batches)
-
-        }
-
-        annotations.keySet().sort().each {depth ->
-            //annotations[depth].each {it.prePersist() }
-            inBatches(ensureIdsAndSort(annotations[depth].findAll {!it.id}), batchSize) {List<Annotation> batches ->
-                annotationRepository.saveAll(batches)
-            }
-        }
-
-        //edits.each {it.prePersist() }
-        inBatches(ensureIdsAndSort(edits.findAll {!it.id}), batchSize) {List<Edit> batches ->
-            editCacheableRepository.saveAll(batches)
-        }
-        //referenceFiles.each {it.prePersist() }
-        inBatches(ensureIdsAndSort(referenceFiles.findAll {!it.id}), batchSize) {List<ReferenceFile> batches ->
-            referenceFileRepository.saveAll(batches)
-        }
-        //rules.each {it.prePersist() }
-        inBatches(ensureIdsAndSort(rules.findAll {!it.id}), batchSize) {List<Rule> batches ->
-            ruleRepository.saveAll(batches)
-        }
-        inBatches(ensureIdsAndSort(ruleRepresentations.findAll {!it.id}), batchSize) {List<RuleRepresentation> batches ->
-            ruleRepresentationCacheableRepository.saveAll(batches)
-        }
-        //semanticLinks.each {it.prePersist() }
-        inBatches(ensureIdsAndSort(semanticLinks.findAll {!it.id}), batchSize) {List<SemanticLink> batches ->
-            semanticLinkRepository.saveAll(batches)
-        }
-        //summaryMetadata.each {it.prePersist() }
-        inBatches(ensureIdsAndSort(summaryMetadata.findAll {!it.id}), batchSize) {List<SummaryMetadata> batches ->
-            summaryMetadataCacheableRepository.saveAll(batches)
-        }
-        inBatches(ensureIdsAndSort(summaryMetadataReports.findAll {!it.id}), batchSize) {List<SummaryMetadataReport> batches ->
-            summaryMetadataReportCacheableRepository.saveAll(batches)
-        }
-        //versionLinks.each {it.prePersist() }
-        inBatches(ensureIdsAndSort(versionLinks.findAll {!it.id}), batchSize) {List<VersionLink> batches ->
-            versionLinkCacheableRepository.saveAll(batches)
-        }
-        classifiersForItemsMap.each {item, classifiersForItem ->
-            inBatches(ensureIdsAndSort(classifiersForItem.findAll {!it.id}, preservedIds), batchSize) {List<Classifier> batches ->
-                batches.each {classifier ->
-                    classifierCacheableRepository.addAdministeredItem(item, classifier)
-                }
-            }
-        }
-        Instant start = Instant.now()
-        //metadata.each {it.prePersist() }
-        inBatches(ensureIdsAndSort(metadata.findAll {!it.id}), batchSize) {List<Metadata> batch ->
-            metadataRepository.saveAll(batch)
-        }
+        saveAllByBatch(shreddedContent.dataTypes, dataTypeCacheableRepository)
+        saveAllByBatch(shreddedContent.dataElements, dataElementCacheableRepository)
+        saveAllByBatch(shreddedContent.enumerationValues, enumerationValueCacheableRepository)
+        saveAllByBatch(shreddedContent.dataFlows, dataFlowCacheableRepository)
+        saveAllByBatch(shreddedContent.dataClassComponents, dataClassComponentCacheableRepository)
+        saveAllByBatch(shreddedContent.dataElementComponents, dataElementComponentCacheableRepository)
+        saveHierarchyByBatch(shreddedContent.annotations, annotationRepository)
+        saveAllByBatch(shreddedContent.edits, editCacheableRepository)
+        saveAllByBatch(shreddedContent.referenceFiles, referenceFileRepository)
+        saveAllByBatch(shreddedContent.rules, ruleRepository)
+        saveAllByBatch(shreddedContent.ruleRepresentations, ruleRepresentationCacheableRepository)
+        saveAllByBatch(shreddedContent.semanticLinks, semanticLinkRepository)
+        saveAllByBatch(shreddedContent.summaryMetadata, summaryMetadataCacheableRepository)
+        saveAllByBatch(shreddedContent.summaryMetadataReports, summaryMetadataReportCacheableRepository)
+        saveAllByBatch(shreddedContent.versionLinks, versionLinkCacheableRepository)
+        saveAllByBatch(shreddedContent.metadata, metadataCacheableRepository)
         printTimeTaken(start)
-
     }
 
-    void setCreateProperties(CatalogueUser catalogueUser, boolean preserveIds = false) {
-        folders.keySet().sort().each {depth ->
-            folders[depth].each {folder ->
-                setCreateProperties(folder, catalogueUser)
-            }
-        }
-        classificationSchemes.each {
-            if(preserveIds) {
-                preserveItemId(it)
-            }
-            setCreateProperties(it, catalogueUser)
-        }
-        classifiers.each {
-            if(preserveIds) {
-                preserveItemId(it)
-            }
-            setCreateProperties(it, catalogueUser)
-        }
-        classifiersForItemsMap.each {item, classifiersForItem ->
-            classifiersForItem.each {classifier ->
-                if(preserveIds) {
-                    preserveItemId(classifier)
-                }
-                setCreateProperties(classifier, catalogueUser)
-            }
-        }
-        terminologies.each {
-            setCreateProperties(it, catalogueUser)
-        }
-        terms.each {
-            setCreateProperties(it, catalogueUser)
-        }
-        termRelationshipTypes.each {
-            setCreateProperties(it, catalogueUser)
-        }
-        termRelationships.each {
-            setCreateProperties(it, catalogueUser)
-        }
-        codeSets.each {
-            setCreateProperties(it, catalogueUser)
-        }
-        dataModels.each {
-            setCreateProperties(it, catalogueUser)
-        }
-        dataClasses.keySet().sort().each {depth ->
-            dataClasses[depth].each {
-                setCreateProperties(it, catalogueUser)
-            }
-        }
-        dataTypes.each {
-            setCreateProperties(it, catalogueUser)
-        }
-        dataElements.each {
-            setCreateProperties(it, catalogueUser)
-        }
-        enumerationValues.each {
-            setCreateProperties(it, catalogueUser)
-        }
 
-        dataFlows.each {
-            setCreateProperties(it, catalogueUser)
-        }
-        dataClassComponents.each {
-            setCreateProperties(it, catalogueUser)
-        }
-        dataElementComponents.each {
-            setCreateProperties(it, catalogueUser)
-        }
+    boolean deleteWithContent(ShreddedContent shreddedContent) {
 
-        annotations.keySet().sort().each {depth ->
-            annotations[depth].each {
-                setCreateProperties(it, catalogueUser)
-            }
-        }
-        edits.each {
-            setCreateProperties(it, catalogueUser)
-        }
-        referenceFiles.each {
-            setCreateProperties(it, catalogueUser)
-        }
-        rules.each {
-            setCreateProperties(it, catalogueUser)
-        }
-        ruleRepresentations.each {
-            setCreateProperties(it, catalogueUser)
-        }
-        semanticLinks.each {
-            setCreateProperties(it, catalogueUser)
-        }
-        summaryMetadata.each {
-            setCreateProperties(it, catalogueUser)
-        }
-        summaryMetadataReports.each {
-            setCreateProperties(it, catalogueUser)
-        }
-        versionLinks.each {
-            setCreateProperties(it, catalogueUser)
-        }
-        metadata.each {
-            setCreateProperties(it, catalogueUser)
-        }
-    }
+        deleteAllByBatch(shreddedContent.metadata, metadataCacheableRepository)
+        deleteAllByBatch(shreddedContent.versionLinks, versionLinkCacheableRepository)
+        deleteAllByBatch(shreddedContent.summaryMetadataReports, summaryMetadataReportCacheableRepository)
+        deleteAllByBatch(shreddedContent.summaryMetadata, summaryMetadataCacheableRepository)
+        deleteAllByBatch(shreddedContent.semanticLinks, semanticLinkRepository)
+        deleteAllByBatch(shreddedContent.ruleRepresentations, ruleRepresentationCacheableRepository)
+        deleteAllByBatch(shreddedContent.rules, ruleRepository)
+        deleteAllByBatch(shreddedContent.referenceFiles, referenceFileRepository)
+        deleteAllByBatch(shreddedContent.edits, editCacheableRepository)
+        deleteHierarchyByBatch(shreddedContent.annotations, annotationRepository)
 
-    static void setCreateProperties(Item item, CatalogueUser catalogueUser) {
-        item.id = null
-        item.version = null
-        item.dateCreated = null
-        item.lastUpdated = null
-        item.catalogueUser = catalogueUser
-        if(item instanceof Facet && item.multiFacetAwareItem) {
-            item.multiFacetAwareItemId = null
-        }
-        if(item instanceof Annotation && item.parentAnnotation) {
-            item.parentAnnotationId = null
-        }
-    }
-
-    void preserveItemId(Item item) {
-        if(item.id != null) {
-            preservedIds.put(item, item.id)
-        }
-    }
-
-    boolean deleteWithContent() {
-
-        Instant start = Instant.now()
-        inBatches(sortById(metadata), batchSize) {List<Metadata> batch ->
-            metadataRepository.deleteAll(batch)
-        }
-        printTimeTaken(start)
-        inBatches(sortById(versionLinks), batchSize) {List<VersionLink> batch ->
-            versionLinkCacheableRepository.deleteAll(batch)
-        }
-        inBatches(sortById(summaryMetadataReports), batchSize) {List<SummaryMetadataReport> batch ->
-            summaryMetadataReportCacheableRepository.deleteAll(batch)
-        }
-
-        inBatches(sortById(summaryMetadata), batchSize) {List<SummaryMetadata> batch ->
-            summaryMetadataCacheableRepository.deleteAll(batch)
-        }
-        inBatches(sortById(semanticLinks), batchSize) {List<SemanticLink> batch ->
-            semanticLinkRepository.deleteAll(batch)
-        }
-        inBatches(sortById(ruleRepresentations), batchSize) {List<RuleRepresentation> batch ->
-            ruleRepresentationCacheableRepository.deleteAll(ruleRepresentations)
-        }
-        inBatches(sortById(rules), batchSize) {List<Rule> batch ->
-            ruleRepository.deleteAll(batch)
-        }
-        inBatches(sortById(referenceFiles), batchSize) {List<ReferenceFile> batch ->
-            referenceFileRepository.deleteAll(batch)
-        }
-        inBatches(sortById(edits), batchSize) {List<Edit> batch ->
-            editCacheableRepository.deleteAll(batch)
-        }
-        annotations.keySet().sort().reverse().each {depth ->
-            inBatches(sortById(annotations[depth]), batchSize) {List<Annotation> batch ->
-                annotationRepository.deleteAll(batch)
-            }
-        }
-
-        inBatches(sortById(dataElementComponents), batchSize) {List<DataElementComponent> batch ->
+        inBatches(sortById(shreddedContent.dataElementComponents), batchSize) {List<DataElementComponent> batch ->
             // TODO: Do this in batch
             batch.each {dataElementComponent ->
                 dataElementComponentCacheableRepository.removeSourceDataElements(dataElementComponent.id)
                 dataElementComponentCacheableRepository.removeTargetDataElements(dataElementComponent.id)
             }
         }
-        inBatches(sortById(dataElementComponents), batchSize) {List<DataElementComponent> batch ->
-            dataElementComponentCacheableRepository.deleteAll(batch)
-        }
+        deleteAllByBatch(shreddedContent.dataElementComponents, dataElementComponentCacheableRepository)
 
-        inBatches(sortById(dataClassComponents), batchSize) {List<DataClassComponent> batch ->
+        inBatches(sortById(shreddedContent.dataClassComponents), batchSize) {List<DataClassComponent> batch ->
             batch.each {dataClassComponent ->
                 dataClassComponentCacheableRepository.removeSourceDataClasses(dataClassComponent.id)
                 dataClassComponentCacheableRepository.removeTargetDataClasses(dataClassComponent.id)
             }
         }
-        inBatches(sortById(dataClassComponents), batchSize) {List<DataClassComponent> batch ->
-            dataClassComponentCacheableRepository.deleteAll(batch)
-        }
-        inBatches(sortById(dataFlows), batchSize) {List<DataFlow> batch ->
-            dataFlowCacheableRepository.deleteAll(batch)
-        }
-        inBatches(sortById(enumerationValues), batchSize) {List<EnumerationValue> batch ->
-            enumerationValueCacheableRepository.deleteAll(batch)
-        }
-        inBatches(sortById(dataElements), batchSize) {List<DataElement> batch ->
-            dataElementCacheableRepository.deleteAll(batch)
-        }
-        inBatches(sortById(dataTypes), batchSize) {List<DataType> batch ->
-            dataTypeCacheableRepository.deleteAll(batch)
-        }
-        inBatches(sortById((List<DataClass>) dataClasses.values().flatten()), batchSize) {List<DataClass> batch ->
+        deleteAllByBatch(shreddedContent.dataClassComponents, dataClassComponentCacheableRepository)
+        deleteAllByBatch(shreddedContent.dataFlows, dataFlowCacheableRepository)
+
+        deleteAllByBatch(shreddedContent.enumerationValues, enumerationValueCacheableRepository)
+        deleteAllByBatch(shreddedContent.dataElements, dataElementCacheableRepository)
+        deleteAllByBatch(shreddedContent.dataTypes, dataTypeCacheableRepository)
+        inBatches(sortById((List<DataClass>) shreddedContent.dataClasses.values().flatten()), batchSize) {List<DataClass> batch ->
             dataClassCacheableRepository.deleteExtensionRelationships(batch.collect {DataClass it -> it.id})
         }
-        dataClasses.keySet().sort().reverse().each {depth ->
-            inBatches(sortById(dataClasses[depth]), batchSize) {List<DataClass> batch ->
-                dataClassCacheableRepository.deleteAll(batch)
-            }
-        }
-        inBatches(sortById(dataModels), batchSize) {List<DataModel> batch ->
-            dataModelCacheableRepository.deleteAll(batch)
-        }
-        inBatches(sortById(codeSets), batchSize) {List<CodeSet> batch ->
+        deleteHierarchyByBatch(shreddedContent.dataClasses, dataClassCacheableRepository)
+        deleteAllByBatch(shreddedContent.dataModels, dataModelCacheableRepository)
+        inBatches(sortById(shreddedContent.codeSets), batchSize) {List<CodeSet> batch ->
             codeSetCacheableRepository.removeAllAssociations(batch*.id)
         }
-        inBatches(sortById(codeSets), batchSize) {List<CodeSet> batch ->
-            codeSetCacheableRepository.deleteAll(batch)
-        }
-        inBatches(sortById(termRelationships), batchSize) {List<TermRelationship> batch ->
-            termRelationshipCacheableRepository.deleteAll(batch)
-        }
-        inBatches(sortById(termRelationshipTypes), batchSize) {List<TermRelationshipType> batch ->
-            termRelationshipTypeCacheableRepository.deleteAll(batch)
-        }
-        inBatches(sortById(terms), batchSize) {List<Term> batch ->
-            termCacheableRepository.deleteAll(batch)
-        }
-        inBatches(sortById(terminologies), batchSize) {List<Terminology> batch ->
-            terminologyCacheableRepository.deleteAll(batch)
-        }
-        inBatches(sortById(classifiers), batchSize) {List<Classifier> batch ->
+        deleteAllByBatch(shreddedContent.codeSets, codeSetCacheableRepository)
+        deleteAllByBatch(shreddedContent.termRelationships, termRelationshipCacheableRepository)
+        deleteAllByBatch(shreddedContent.termRelationshipTypes, termRelationshipTypeCacheableRepository)
+        deleteAllByBatch(shreddedContent.terms, termCacheableRepository)
+        deleteAllByBatch(shreddedContent.terminologies, terminologyCacheableRepository)
+
+        inBatches(sortById(shreddedContent.classifiers), batchSize) {List<Classifier> batch ->
             classifierCacheableRepository.deleteAllJoinAdministeredItemToClassifierIds(batch*.id)
         }
-        inBatches(sortById(classifiers), batchSize) {List<Classifier> batch ->
-            classifierCacheableRepository.deleteAll(batch)
-        }
-        inBatches(sortById(classificationSchemes), batchSize) {List<ClassificationScheme> batch ->
-            classificationSchemeCacheableRepository.deleteAll(batch)
-        }
-        folders.keySet().sort().reverse().each {depth ->
-            inBatches(sortById(folders[depth]), batchSize) {List<Folder> batch ->
-                folderCacheableRepository.deleteAll(batch)
-            }
-        }
+        deleteAllByBatch(shreddedContent.classifiers, classifierCacheableRepository)
+        deleteAllByBatch(shreddedContent.classificationSchemes, classificationSchemeCacheableRepository)
+        deleteHierarchyByBatch(shreddedContent.folders, folderCacheableRepository)
 
         true
-
     }
 
-    void shredFacets(AdministeredItem item) {
-        if(item.metadata) {
-            item.metadata.each {
-                it.multiFacetAwareItem = item
-                it.multiFacetAwareItemDomainType = item.domainType
-            }
-            metadata.addAll(item.metadata)
-        }
-        if(item instanceof Model && item.versionLinks) {
-            versionLinks.addAll(item.versionLinks)
-        }
-        if(item.summaryMetadata) {
-            summaryMetadata.addAll(item.summaryMetadata)
-            item.summaryMetadata.each {sm ->
-                if(sm.summaryMetadataReports) {
-                    summaryMetadataReports.addAll(sm.summaryMetadataReports)
-                }
-            }
-        }
-        if(item.semanticLinks) {
-            semanticLinks.addAll(item.semanticLinks)
-        }
-        if(item.rules) {
-            rules.addAll(item.rules)
-            item.rules.each {r ->
-                if(r.ruleRepresentations) {
-                    ruleRepresentations.addAll(r.ruleRepresentations)
-                }
-            }
-        }
-        if(item.referenceFiles) {
-            referenceFiles.addAll(item.referenceFiles)
-        }
-        if(item.edits) {
-            edits.addAll(item.edits)
-        }
-        if(item.annotations) {
-            item.annotations.each {
-                shred(it, 0)
-            }
-        }
-        if(item.classifiers) {
-            item.classifiers.each {classifier ->
-                classifiersForItemsMap.computeIfAbsent(item) {new HashSet<>()}.add(classifier)
-            }
-        }
-    }
-
-    void shred(Annotation annotation, Integer depth = 0) {
-        if (annotations[depth]) {
-            annotations[depth].add(annotation)
-        } else {
-            annotations[depth] = [annotation] as Set
-        }
-        annotation.childAnnotations.each {
-            shred(it, depth + 1)
-        }
-    }
-
-
-    static void printTimeTaken(Instant start) {
-        Duration timeTaken = Duration.between(start, Instant.now())
-        log.info(String.format("Time taken: %sm %ss %sms",
-                                         timeTaken.toMinutesPart(),
-                                         timeTaken.toSecondsPart(),
-                                         timeTaken.toMillisPart()))
-
-    }
-
-    private static <T extends Item> Set<T> ensureIdsAndSort(Set<T> items) {
-        items.each {item ->
-            item.ensureId()
-        }
-        return sortById(items)
-    }
-
-    private static <T extends Item> Set<T> ensureIdsAndSort(final Set<T> items, final IdentityHashMap<Item, UUID> preservedIds) {
-        items.each {item ->
-            final UUID preservedId = preservedIds.get(item)
-            if(preservedId) {
-                item.id = preservedId
-            } else {
-                item.ensureId()
-            }
-        }
-        return sortById(items)
-    }
-
-    private static <T extends Item> List<T> sortById(List<T> items) {
-        return items.sort {it.id}
-    }
-
-    private static <T extends Item> Set<T> sortById(Set<T> items) {
-        return items.sort {it.id} as Set<T>
-    }
-
-    private static <T> void inBatches(final List<T> items, final int batchSize, @DelegatesTo(List) Closure saver) {
-        if (items == null || items.isEmpty()) {
-            return
-        }
-        final int itemsCount = items.size()
-        if (itemsCount <= batchSize) {
-            saver.call(items)
-            return
-        }
-        for (int i = 0; i < itemsCount; i += batchSize) {
-            final int end = Math.min(i + batchSize, itemsCount)
-            final List<T> batch = items.subList(i, end)
-            saver.call(batch)
-        }
-    }
-
-    private static <T> void inBatches(final Set<T> items, final int batchSize, @DelegatesTo(List) Closure saver) {
-        if (items == null || items.isEmpty()) {
-            return
-        }
-        final List<T> listItems = items as List<T>
-        final int itemsCount = listItems.size()
-        if (itemsCount <= batchSize) {
-            saver.call(listItems)
-            return
-        }
-        for (int i = 0; i < itemsCount; i += batchSize) {
-            final int end = Math.min(i + batchSize, itemsCount)
-            final List<T> batch = listItems.subList(i, end)
-            saver.call(batch)
-        }
-    }
-
-    private static <I, T> List<T> inBatchesRead(final List<I> inputs, final int batchSize, @DelegatesTo(List) Closure reader) {
-        if (inputs == null || inputs.isEmpty()) {
-            return []
-        }
-        final int itemsCount = inputs.size()
-        if (itemsCount <= batchSize) {
-            return reader.call(inputs) as List<T>
-        }
-        final List<T> results = []
-        for (int i = 0; i < itemsCount; i += batchSize) {
-            final int end = Math.min(i + batchSize, itemsCount)
-            final List<I> batch = inputs.subList(i, end)
-            final List<T> page = reader.call(batch) as List<T>
-            results.addAll(page)
-        }
-        return results
-    }
-
-    private static <I, T> Set<T> inBatchesReadSet(final List<I> inputs, final int batchSize, @DelegatesTo(List) Closure reader) {
-        if (inputs == null || inputs.isEmpty()) {
-            return [] as Set<T>
-        }
-        final int itemsCount = inputs.size()
-        if (itemsCount <= batchSize) {
-            return reader.call(inputs) as Set<T>
-        }
-        final List<T> results = []
-        for (int i = 0; i < itemsCount; i += batchSize) {
-            final int end = Math.min(i + batchSize, itemsCount)
-            final List<I> batch = inputs.subList(i, end)
-            final List<T> page = reader.call(batch) as List<T>
-            results.addAll(page)
-        }
-        return results as Set<T>
-    }
 
     Folder loadWithContent(Folder folder) {
         folders[0] = [folder] as Set
@@ -872,29 +293,30 @@ class ContentHandler {
         return dataElementComponents.first()
     }
 
-    void loadContent() {
-        if (folders[0]) {
+    void loadContent(ShreddedContent shreddedContent) {
+        if (shreddedContent.folders[0]) {
             int depth = 1
-            Set<UUID> foundFolders = folders[0]*.id as Set<UUID>
+            Set<UUID> foundFolders = shreddedContent.folders[0]*.id as Set<UUID>
             do {
-                List<Folder> retrievedFolders = inBatchesRead(foundFolders as List<UUID>, batchSize) {List batch ->
+                Set<Folder> retrievedFolders = inBatchesRead(foundFolders as List<UUID>, batchSize) {List batch ->
                     folderCacheableRepository.readAllByFolderIdIn(batch)
                 }
                 foundFolders = retrievedFolders*.id as Set
                 if (foundFolders) {
-                    folders[depth] = retrievedFolders as Set
+                    shreddedContent.folders[depth] = retrievedFolders as Set
                 }
                 depth++
             } while (foundFolders.size() > 0)
         }
-        final Set<Folder> foldersValuesFlatten = (Set<Folder>) folders.values().flatten()
-        allItems.putAll(foldersValuesFlatten.collectEntries {[it.id, it]})
+        final Set<Folder> foldersValuesFlatten = (Set<Folder>) shreddedContent.folders.values().flatten()
+        shreddedContent.allAdministeredItems.putAll(foldersValuesFlatten.collectEntries {[it.id, it]})
         if (foldersValuesFlatten) {
-            classificationSchemes = inBatchesReadSet(foldersValuesFlatten*.id, batchSize) {List<UUID> batch ->
+            shreddedContent.classificationSchemes = inBatchesReadSet(foldersValuesFlatten*.id, batchSize) {List<UUID> batch ->
                 classificationSchemeCacheableRepository.readAllByFolderIdIn(batch)
             }
         }
-        allItems.putAll(classificationSchemes.collectEntries {[it.id, it]})
+        shreddedContent.allAdministeredItems.putAll(shreddedContent.classificationSchemes.collectEntries {[it.id, it]})
+
         if (classificationSchemes) {
             classifiers = inBatchesReadSet(classificationSchemes*.id, batchSize) {List<UUID> batch ->
                 classifierCacheableRepository.readAllByClassificationSchemeIdIn(batch)
@@ -1249,6 +671,88 @@ class ContentHandler {
 
         metadata.each {metadata ->
             allItems[metadata.multiFacetAwareItemId].metadata.add(metadata)
+        }
+    }
+
+    static void printTimeTaken(Instant start) {
+        Duration timeTaken = Duration.between(start, Instant.now())
+        log.info(String.format("Time taken: %sm %ss %sms",
+                               timeTaken.toMinutesPart(),
+                               timeTaken.toSecondsPart(),
+                               timeTaken.toMillisPart()))
+    }
+
+    private static <T extends Item> Collection<T> ensureIdsAndSort(Collection<T> items) {
+        items.each {item ->
+            item.ensureId()
+        }
+        return sortById(items)
+    }
+
+    private static <T extends Item> Collection<T> sortById(Collection<T> items) {
+        return items.sort {it.id}
+    }
+
+    private static <T> void  inBatches(final Collection<T> items, final int batchSize, @DelegatesTo(List) Closure saver) {
+        if (items == null || items.isEmpty()) {
+            return
+        }
+        final List<T> listItems = items as List<T>
+        final int itemsCount = listItems.size()
+        if (itemsCount <= batchSize) {
+            saver.call(listItems)
+            return
+        }
+        for (int i = 0; i < itemsCount; i += batchSize) {
+            final int end = Math.min(i + batchSize, itemsCount)
+            final List<T> batch = listItems.subList(i, end)
+            saver.call(batch)
+        }
+    }
+
+    private static <I, T> Set<T> inBatchesReadSet(final List<I> inputs, final int batchSize, @DelegatesTo(List) Closure reader) {
+        if (inputs == null || inputs.isEmpty()) {
+            return [] as Set<T>
+        }
+        final int itemsCount = inputs.size()
+        if (itemsCount <= batchSize) {
+            return reader.call(inputs) as Set<T>
+        }
+        final List<T> results = []
+        for (int i = 0; i < itemsCount; i += batchSize) {
+            final int end = Math.min(i + batchSize, itemsCount)
+            final List<I> batch = inputs.subList(i, end)
+            final List<T> page = reader.call(batch) as List<T>
+            results.addAll(page)
+        }
+        return results as Set<T>
+    }
+
+
+    private <T extends Item> void deleteAllByBatch(Collection<T> items, ItemRepository<T> itemRepository) {
+        inBatches(sortById(items), batchSize) {List<T> batch ->
+            itemRepository.deleteAll(batch)
+        }
+    }
+    private <T extends Item> void deleteHierarchyByBatch(Map<Integer, Set<T>> items, ItemRepository<T> itemRepository) {
+        items.keySet().sort().reverse().each {depth ->
+            inBatches(sortById(items[depth]), batchSize) {List<T> batch ->
+                itemRepository.deleteAll(batch)
+            }
+        }
+    }
+
+    private <T extends Item> void saveHierarchyByBatch(Map<Integer, Set<T>> items, ItemRepository<T> itemRepository) {
+        items.keySet().sort().each {depth ->
+            inBatches(ensureIdsAndSort(items[depth]), batchSize) {List<T> batches ->
+                itemRepository.saveAll(batches)
+            }
+        }
+    }
+
+    private <T extends Item> void saveAllByBatch(Collection<T> items, ItemRepository<T> itemRepository) {
+        inBatches(ensureIdsAndSort(items), batchSize) { List<T> batch ->
+            itemRepository.saveAll(batch)
         }
     }
 
