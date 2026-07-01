@@ -8,13 +8,13 @@ import io.micronaut.http.HttpRequest
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.exceptions.HttpStatusException
 import jakarta.inject.Singleton
-import org.maurodata.api.chat.ChatEventDto
-import org.maurodata.api.chat.CreateSessionRequest
-import org.maurodata.api.chat.ListSessionMessagesResponseDto
-import org.maurodata.api.chat.MessageDto
-import org.maurodata.api.chat.SendMessageRequest
-import org.maurodata.api.chat.SessionDto
-import org.maurodata.api.chat.UpdateSessionRequest
+import org.maurodata.plugin.chat.api.chat.ChatEventDto
+import org.maurodata.plugin.chat.api.chat.CreateSessionRequest
+import org.maurodata.plugin.chat.api.chat.ListSessionMessagesResponseDto
+import org.maurodata.plugin.chat.api.chat.MessageDto
+import org.maurodata.plugin.chat.api.chat.SendMessageRequest
+import org.maurodata.plugin.chat.api.chat.SessionDto
+import org.maurodata.plugin.chat.api.chat.UpdateSessionRequest
 import org.maurodata.service.chat.llm.LlmProvider
 import org.maurodata.service.chat.llm.ProviderMessage
 import org.maurodata.service.chat.llm.ProviderRegistry
@@ -649,6 +649,7 @@ class ChatSessionsApiService implements ChatSessionService {
         if (!tools) {
             return []
         }
+        Set<String> hiddenFromDefaultRouting = ['mauro_keyword_search', 'mauro_semantic_search'] as Set<String>
         List<String> routes = new ArrayList<String>()
         List<Map<String, Object>> sortedTools = new ArrayList<Map<String, Object>>(tools)
             .sort {Map<String, Object> left, Map<String, Object> right ->
@@ -664,6 +665,9 @@ class ChatSessionsApiService implements ChatSessionService {
             String name = asString(function.get('name'))
             String description = asString(function.get('description'))
             if (name == null || name.trim().isEmpty() || description == null || description.trim().isEmpty()) {
+                continue
+            }
+            if (hiddenFromDefaultRouting.contains(name)) {
                 continue
             }
             Map<String, Object> routing = getMap(tool.get('routing'))
@@ -1290,7 +1294,8 @@ class ChatSessionsApiService implements ChatSessionService {
         }
         @SuppressWarnings('unchecked')
         Map<String, Object> wrappedOutput = (Map<String, Object>) wrappedOutputObj
-        if (asString(wrappedOutput.get('tool')) != 'mauro_keyword_search') {
+        String toolName = asString(wrappedOutput.get('tool'))
+        if (!(toolName in ['mauro_search', 'mauro_keyword_search'])) {
             return ''
         }
 
@@ -1313,7 +1318,9 @@ class ChatSessionsApiService implements ChatSessionService {
         }
 
         StringBuilder builder = new StringBuilder(512)
-        builder.append('Previous mauro_keyword_search result memory: searchTerm "')
+        builder.append('Previous ')
+            .append(toolName)
+            .append(' result memory: searchTerm "')
             .append(searchTerm)
             .append('"')
         if (count != null) {
@@ -1331,11 +1338,13 @@ class ChatSessionsApiService implements ChatSessionService {
             .append(', hasMore ')
             .append(hasMore)
             .append('.')
-        builder.append(' If the user asks to count, filter, narrow, or ask how many of all previous results match an additional condition, do not count only the visible page. Call mauro_keyword_search again with the same domainTypes and a refined searchTerm that combines the prior search with the new condition, then answer from the returned total count. If the prior searchTerm uses OR, distribute the new condition across the alternatives, for example age education OR weight education.')
+        builder.append(' If the user asks to count, filter, narrow, or ask how many of all previous results match an additional condition, do not count only the visible page. Call ')
+            .append(toolName)
+            .append(' again with the same domainTypes and a refined searchTerm that combines the prior search with the new condition, then answer from the returned total count. If the prior searchTerm uses OR, distribute the new condition across the alternatives, for example age education OR weight education.')
 
         if (hasMore) {
             Map<String, Object> nextPageToolCall = [
-                name     : 'mauro_keyword_search',
+                name     : toolName,
                 arguments: [
                     searchTerm: searchTerm,
                     domainTypes: domainTypes,

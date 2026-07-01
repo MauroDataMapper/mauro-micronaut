@@ -3,11 +3,11 @@ package org.maurodata.service.chat
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import jakarta.inject.Singleton
-import org.maurodata.api.chat.CapabilitiesDto
-import org.maurodata.api.chat.McpServerDto
-import org.maurodata.api.chat.ModelDto
-import org.maurodata.api.chat.ProviderDto
-import org.maurodata.api.chat.SkillSummaryDto
+import org.maurodata.plugin.chat.api.chat.CapabilitiesDto
+import org.maurodata.plugin.chat.api.chat.McpServerDto
+import org.maurodata.plugin.chat.api.chat.ModelDto
+import org.maurodata.plugin.chat.api.chat.ProviderDto
+import org.maurodata.plugin.chat.api.chat.SkillSummaryDto
 import org.maurodata.service.chat.capabilities.CapabilitiesProvider
 
 @CompileStatic

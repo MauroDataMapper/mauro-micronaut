@@ -4,11 +4,11 @@ import groovy.util.logging.Slf4j
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.exceptions.HttpStatusException
 import jakarta.inject.Singleton
-import org.maurodata.api.chat.McpServerDto
-import org.maurodata.api.chat.ToolInvokeRequest
-import org.maurodata.api.chat.ToolInvokeResponse
-import org.maurodata.api.chat.ToolSummaryDto
-import org.maurodata.api.chat.UpsertMcpServerRequest
+import org.maurodata.plugin.chat.api.chat.McpServerDto
+import org.maurodata.plugin.chat.api.chat.ToolInvokeRequest
+import org.maurodata.plugin.chat.api.chat.ToolInvokeResponse
+import org.maurodata.plugin.chat.api.chat.ToolSummaryDto
+import org.maurodata.plugin.chat.api.chat.UpsertMcpServerRequest
 import org.maurodata.service.chat.mcp.ExternalMcpRegistry
 import org.maurodata.service.chat.mcp.McpToolRegistry
 import org.maurodata.service.chat.mcp.ToolInvocationResult

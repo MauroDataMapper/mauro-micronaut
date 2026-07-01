@@ -4,8 +4,8 @@ import groovy.transform.CompileStatic
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.exceptions.HttpStatusException
 import jakarta.inject.Singleton
-import org.maurodata.api.chat.McpServerDto
-import org.maurodata.api.chat.UpsertMcpServerRequest
+import org.maurodata.plugin.chat.api.chat.McpServerDto
+import org.maurodata.plugin.chat.api.chat.UpsertMcpServerRequest
 
 @CompileStatic
 @Singleton

@@ -4,6 +4,7 @@ import groovy.transform.CompileStatic
 import io.micronaut.context.annotation.Requires
 import jakarta.inject.Singleton
 import org.maurodata.domain.model.AdministeredItem
+import org.maurodata.domain.search.dto.SearchResultsDTO
 import org.maurodata.domain.search.dto.SemanticSearchRequestDTO
 import org.maurodata.domain.search.dto.SemanticSearchResultsDTO
 import org.maurodata.web.ListResponse
@@ -26,5 +27,11 @@ class NoOpSemanticSearchService implements SemanticSearchService {
     @Override
     SemanticSearchAvailability availability(String indexName) {
         SemanticSearchAvailability.unavailable(REASON)
+    }
+
+    @Override
+    List<SearchResultsDTO> projectResults(List<SearchResultsDTO> sourceItems,
+                                          List<String> targetDomainTypes) {
+        sourceItems ?: [] as List<SearchResultsDTO>
     }
 }

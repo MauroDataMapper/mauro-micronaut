@@ -1,9 +1,9 @@
 package org.maurodata.service.chat
 
 import jakarta.inject.Singleton
-import org.maurodata.api.chat.MessageDto
-import org.maurodata.api.chat.ProviderKeyStatusDto
-import org.maurodata.api.chat.SessionDto
+import org.maurodata.plugin.chat.api.chat.MessageDto
+import org.maurodata.plugin.chat.api.chat.ProviderKeyStatusDto
+import org.maurodata.plugin.chat.api.chat.SessionDto
 
 import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap

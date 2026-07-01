@@ -2,6 +2,7 @@ package org.maurodata.service.search
 
 import groovy.transform.CompileStatic
 import org.maurodata.domain.model.AdministeredItem
+import org.maurodata.domain.search.dto.SearchResultsDTO
 import org.maurodata.domain.search.dto.SemanticSearchRequestDTO
 import org.maurodata.domain.search.dto.SemanticSearchResultsDTO
 import org.maurodata.web.ListResponse
@@ -15,4 +16,7 @@ interface SemanticSearchService {
                                                          BiFunction<String, UUID, AdministeredItem> itemLookup)
 
     SemanticSearchAvailability availability(String indexName)
+
+    List<SearchResultsDTO> projectResults(List<SearchResultsDTO> sourceItems,
+                                          List<String> targetDomainTypes)
 }
