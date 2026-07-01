@@ -9,6 +9,11 @@ import org.maurodata.domain.folder.Folder
 import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.domain.model.Model
 import org.maurodata.domain.security.CatalogueUser
+import org.maurodata.persistence.shredder.ShredVisitor
+import org.maurodata.visitor.GenericDomainTraversalVisitor
+import org.maurodata.visitor.common.SetCreatePropertiesVisitor
+import org.maurodata.visitor.common.SmallExportVisitor
+import org.maurodata.visitor.common.TreeifyVisitor
 
 @Slf4j
 @Singleton
@@ -28,9 +33,12 @@ class ContentsService {
     AdministeredItem saveWithContent(AdministeredItem item, CatalogueUser catalogueUser = null) {
         ContentHandler contentHandler = applicationContext.createBean(ContentHandler)
         item.setAssociations()
-        contentHandler.shred(item)
-        contentHandler.setCreateProperties(catalogueUser)
-        contentHandler.saveWithContent()
+
+        ShredVisitor shredVisitor = new ShredVisitor()
+        GenericDomainTraversalVisitor visitor = new SetCreatePropertiesVisitor(catalogueUser) + shredVisitor
+        item.accept(visitor)
+
+        contentHandler.saveWithContent(shredVisitor.shreddedContent)
         return item
     }
 

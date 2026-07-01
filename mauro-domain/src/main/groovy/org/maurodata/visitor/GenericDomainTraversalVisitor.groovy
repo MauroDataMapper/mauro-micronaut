@@ -41,6 +41,7 @@ class GenericDomainTraversalVisitor implements DomainVisitor<Void> {
     protected final Set<Item> visitedIdentity = Collections.newSetFromMap(new IdentityHashMap<Item, Boolean>())
     protected final VisitorRegistry registry
 
+
     GenericDomainTraversalVisitor() {
         this(new VisitorRegistry())
     }
