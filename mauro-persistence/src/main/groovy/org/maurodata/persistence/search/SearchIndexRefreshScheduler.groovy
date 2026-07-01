@@ -3,6 +3,7 @@ package org.maurodata.persistence.search
 import groovy.util.logging.Slf4j
 import io.micronaut.context.annotation.Value
 import io.micronaut.context.event.ApplicationEventPublisher
+import io.micronaut.data.connection.annotation.Connectable
 import io.micronaut.scheduling.annotation.Scheduled
 import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
@@ -30,12 +31,16 @@ class SearchIndexRefreshScheduler {
     @Value('${mauro.search.rebuild.poll-inactivity-period:30s}')
     Duration debounce
 
+    @Value('${mauro.search.rebuild.single-instance:true}')
+    boolean singleInstance
+
     final long advisoryLockKey = 123454321L
 
     private volatile long lastSeenVersion = -1
     private volatile boolean refreshInProgress = false
 
     @Scheduled(fixedDelay = '${mauro.search.rebuild.poll-interval:10s}')
+    @Connectable
     synchronized void scheduledCheck() {
         log.trace("Scheduled Check...")
         if (refreshInProgress) {
@@ -59,29 +64,46 @@ class SearchIndexRefreshScheduler {
                           (debounce.minus(sinceLast).toMillis() / 1000.0).round(1))
                 return
             }
-            // Debounce passed and dbVersion > processedVersion -> attempt to run rebuild
-            boolean locked = tryAcquireAdvisoryLock(advisoryLockKey)
-            if (!locked) {
-                log.info("Could not acquire advisory lock; another instance may be rebuilding. Will retry later.")
-                return
-            }
-
-            try {
-                // Re-check DB after acquiring lock to avoid races
-                Map freshResponse = readVersionAndTimestamp()
-                long freshVersion = freshResponse.version
-                if (freshVersion <= lastSeenVersion) {
-                    log.debug("No new version after acquiring lock (freshVersion=${freshVersion} processed=${lastSeenVersion}).")
-                    return
+            // Debounce passed and dbVersion > processedVersion -> attempt to run rebuild.
+            // PostgreSQL advisory locks are session-scoped, so acquire and release must use
+            // the same JDBC connection. Returning a pooled connection does not close the
+            // database session, and can otherwise leave the lock held by the pool.
+            try (Connection advisoryLockConnection = dataSource.getConnection()) {
+                boolean locked = tryAcquireAdvisoryLock(advisoryLockConnection, advisoryLockKey)
+                if (!locked) {
+                    if (singleInstance) {
+                        int terminatedLockHolders = terminateAdvisoryLockHolders(advisoryLockConnection, advisoryLockKey)
+                        if (terminatedLockHolders > 0) {
+                            log.warn(
+                                "Terminated {} stale advisory lock holder(s) for search index rebuild in single-instance mode; retrying lock acquisition.",
+                                Integer.valueOf(terminatedLockHolders)
+                            )
+                            locked = tryAcquireAdvisoryLock(advisoryLockConnection, advisoryLockKey)
+                        }
+                    }
+                    if (!locked) {
+                        log.info("Could not acquire advisory lock; another instance may be rebuilding. Will retry later.")
+                        return
+                    }
                 }
 
-                log.info("Debounce passed. Running rebuild for version ${freshVersion} (processed=${lastSeenVersion})")
-                refreshMaterializedViews()   // implement your refresh/indexing logic here
-                lastSeenVersion = freshVersion
-                eventPublisher.publishEvent(new SearchDomainsRefreshedEvent(freshVersion, Instant.now()))
-                log.info("Rebuild finished. processedVersion set to ${lastSeenVersion}")
-            } finally {
-                releaseAdvisoryLock(advisoryLockKey)
+                try {
+                    // Re-check DB after acquiring lock to avoid races
+                    Map freshResponse = readVersionAndTimestamp()
+                    long freshVersion = freshResponse.version
+                    if (freshVersion <= lastSeenVersion) {
+                        log.debug("No new version after acquiring lock (freshVersion=${freshVersion} processed=${lastSeenVersion}).")
+                        return
+                    }
+
+                    log.info("Debounce passed. Running rebuild for version ${freshVersion} (processed=${lastSeenVersion})")
+                    refreshMaterializedViews()   // implement your refresh/indexing logic here
+                    lastSeenVersion = freshVersion
+                    eventPublisher.publishEvent(new SearchDomainsRefreshedEvent(freshVersion, Instant.now()))
+                    log.info("Rebuild finished. processedVersion set to ${lastSeenVersion}")
+                } finally {
+                    releaseAdvisoryLock(advisoryLockConnection, advisoryLockKey)
+                }
             }
 
         } catch (Exception e) {
@@ -124,10 +146,8 @@ class SearchIndexRefreshScheduler {
      * Try to get Postgres advisory lock for a 64-bit key.
      * Returns true if lock acquired.
      */
-    @Transactional
-    boolean tryAcquireAdvisoryLock(long key) {
-        try (Connection conn = dataSource.getConnection()) {
-            PreparedStatement ps = conn.prepareStatement("SELECT pg_try_advisory_lock(?)")
+    boolean tryAcquireAdvisoryLock(Connection conn, long key) {
+        try (PreparedStatement ps = conn.prepareStatement("SELECT pg_try_advisory_lock(?)")) {
             ps.setLong(1, key)
             try (ResultSet rs = ps.executeQuery()) {
                 rs.next()
@@ -139,13 +159,54 @@ class SearchIndexRefreshScheduler {
     /**
      * Release the advisory lock for the key.
      */
-    @Transactional
-    void releaseAdvisoryLock(long key) {
-        try (Connection conn = dataSource.getConnection()) {
-            PreparedStatement ps = conn.prepareStatement("SELECT pg_advisory_unlock(?)")
+    void releaseAdvisoryLock(Connection conn, long key) {
+        try (PreparedStatement ps = conn.prepareStatement("SELECT pg_advisory_unlock(?)")) {
             ps.setLong(1, key)
             ps.executeQuery()
         }
+    }
+
+    /**
+     * In single-instance deployments a held scheduler advisory lock is assumed stale if
+     * it belongs to another backend. PostgreSQL advisory locks cannot be unlocked from a
+     * different session, so the recovery action is terminating the backend that owns it.
+     */
+    int terminateAdvisoryLockHolders(Connection conn, long key) {
+        long highKey = key >> 32
+        long lowKey = key & 0xffffffffL
+        List<Integer> lockHolderPids = []
+
+        try (PreparedStatement ps = conn.prepareStatement(
+            "SELECT pid FROM pg_locks " +
+            "WHERE locktype = 'advisory' " +
+            "AND granted " +
+            "AND objsubid = 1 " +
+            "AND classid = (?::bigint)::oid " +
+            "AND objid = (?::bigint)::oid " +
+            "AND pid <> pg_backend_pid()")) {
+            ps.setLong(1, highKey)
+            ps.setLong(2, lowKey)
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    lockHolderPids.add(Integer.valueOf(rs.getInt(1)))
+                }
+            }
+        }
+
+        int terminated = 0
+        for (Integer pid : lockHolderPids) {
+            try (PreparedStatement ps = conn.prepareStatement("SELECT pg_terminate_backend(?)")) {
+                ps.setInt(1, pid.intValue())
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next() && rs.getBoolean(1)) {
+                        terminated++
+                    }
+                }
+            } catch (SQLException e) {
+                log.warn("Could not terminate stale advisory lock holder pid={}", pid, e)
+            }
+        }
+        return terminated
     }
 
     /**

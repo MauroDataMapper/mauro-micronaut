@@ -1,7 +1,7 @@
 package org.maurodata.service.chat
 
 import jakarta.inject.Singleton
-import org.maurodata.api.chat.SkillSummaryDto
+import org.maurodata.plugin.chat.api.chat.SkillSummaryDto
 
 @Singleton
 class ChatSkillsRegistryService implements ChatSkillService {

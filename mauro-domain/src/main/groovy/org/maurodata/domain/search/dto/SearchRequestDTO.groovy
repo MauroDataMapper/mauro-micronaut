@@ -21,6 +21,15 @@ class SearchRequestDTO extends PaginationParams {
     @Nullable
     UUID withinModelId
 
+    void setModelId(UUID modelId) {
+        withinModelId = modelId
+    }
+
+    @Nullable
+    UUID getModelId() {
+        withinModelId
+    }
+
     // boolean labelOnly // TODO: Implement support for this
 
     @Nullable

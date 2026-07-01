@@ -1,6 +1,6 @@
 package org.maurodata.service.chat
 
-import org.maurodata.api.chat.AffordanceDto
+import org.maurodata.plugin.chat.api.chat.AffordanceDto
 import spock.lang.Specification
 
 class AffordanceBrokerSpec extends Specification {

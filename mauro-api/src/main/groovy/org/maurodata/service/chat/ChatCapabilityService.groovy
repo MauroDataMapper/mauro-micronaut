@@ -1,6 +1,6 @@
 package org.maurodata.service.chat
 
-import org.maurodata.api.chat.CapabilitiesDto
+import org.maurodata.plugin.chat.api.chat.CapabilitiesDto
 
 interface ChatCapabilityService {
     CapabilitiesDto getCapabilities()

@@ -1,6 +1,6 @@
 package org.maurodata.service.chat.mcp
 
-import org.maurodata.api.chat.SkillSummaryDto
+import org.maurodata.plugin.chat.api.chat.SkillSummaryDto
 import org.maurodata.service.chat.ChatSkillDefinition
 import org.maurodata.service.chat.ChatSkillDefinitionLoader
 import org.maurodata.service.chat.ChatSkillService

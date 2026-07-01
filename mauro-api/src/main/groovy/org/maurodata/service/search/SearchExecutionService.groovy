@@ -22,14 +22,15 @@ import java.util.function.BiFunction
 @Singleton
 @McpToolDefinition(
     name = 'mauro_keyword_search',
-    description = 'Search stored Mauro catalogue content and return matching catalogue items.',
-    purpose = 'Run a PostgreSQL full-text keyword search over stored Mauro catalogue content such as forms/Data Models, Data Classes, Data Elements, Terms, metadata, and other catalogue items. This is not a semantic/vector search.',
+    description = 'Search stored Mauro catalogue content using PostgreSQL keyword/full-text matching only.',
+    purpose = 'Run the narrower PostgreSQL full-text keyword search over stored Mauro catalogue content. For ordinary catalogue searches use mauro_search, which combines keyword search with semantic search when available. Use this specialist tool when exact keyword syntax or a previous keyword-only search must be preserved.',
     useWhen = [
-        'finding, searching, listing, or inspecting live catalogue content in the connected Mauro instance',
-        'finding forms, Data Models, Data Classes, Data Elements, Terms, metadata, or other catalogue items about a subject',
+        'the user explicitly asks for keyword/full-text search only',
+        'exact PostgreSQL keyword syntax, quoted phrase matching, OR, or exclusion must be preserved exactly',
         'retrieving another page of a previous mauro_keyword_search result'
     ],
     avoidWhen = [
+        'ordinary catalogue searching where combined keyword plus semantic retrieval is appropriate; use mauro_search',
         'answering Mauro installation, configuration, Docker, administration, or documentation/how-to questions',
         'answering general medical or domain knowledge questions rather than finding catalogue content',
         'interpreting ambiguous form language such as questions, fields, answers, sections, submissions, or records when the Mauro meaning is not yet clear; retrieve a relevant skill route first'
@@ -66,7 +67,7 @@ import java.util.function.BiFunction
     limitations = [
         'not for Mauro installation, configuration, Docker, administration, or documentation/how-to questions'
     ],
-    inputSchema = '{"type":"object","properties":{"searchTerm":{"type":"string","description":"Keyword search expression using PostgreSQL websearch_to_tsquery syntax. This is not semantic/vector search. The backend treats unquoted words as AND terms, quoted phrases preserve word order, OR expresses alternatives, and - excludes a term or quoted phrase. Preserve the user supplied keywords unless intentionally converting a comma/list of alternatives into OR. Examples: \\"maternity care\\", \\"\\\\\\"maternity care\\\\\\"\\", \\"diabetes OR diabetic\\", \\"diabetes -outpatients\\", \\"signal -\\\\\\"segmentation fault\\\\\\"\\"."},"domainTypes":{"type":"array","items":{"type":"string","enum":["DataModel","DataClass","DataElement","DataType","EnumerationType","EnumerationValue","CodeSet","Terminology","Term","Folder","VersionedFolder","ClassificationScheme","Classifier"]},"description":"Optional catalogue domain type filter. Omit for no domain type filter. Use when the request clearly restricts results to a type, for example [\\"DataModel\\"] for Data Model results only, [\\"DataClass\\"] for Data Class results only, or [\\"DataElement\\"] for Data Element results only."},"max":{"type":"integer","minimum":1,"maximum":20,"description":"Optional maximum number of results to return for this page. Omit to use the default page size of 10; maximum is 20. Use max 1 only when the user asks for a single result; do not use max 1 merely because a later step asks to inspect the first item after listing results."},"offset":{"type":"integer","minimum":0,"description":"Optional zero-based offset for paging through additional results. Omit for the first page."},"withGuidance":{"type":"boolean","description":"Optional. When true, the tool may include guidance for the assistant to ask a focused follow-up question or carry out a follow-up workflow. Omit to use the default value true."},"searchIntent":{"type":"string","enum":["unsaid","exact","expanded"],"description":"Optional user intent for the supplied keyword expression. Omit to use unsaid. The search engine is always PostgreSQL full-text keyword search. unsaid means the user did not state exact versus expanded keyword matching. exact means use the supplied keywords as written. expanded means related terms or alternatives have already been included in searchTerm."}},"required":["searchTerm"]}'
+    inputSchema = '{"type":"object","properties":{"searchTerm":{"type":"string","description":"Keyword search expression using PostgreSQL websearch_to_tsquery syntax. This is not semantic/vector search. The backend treats unquoted words as AND terms, quoted phrases preserve word order, OR expresses alternatives, and - excludes a term or quoted phrase. Preserve the user supplied keywords unless intentionally converting a comma/list of alternatives into OR. Examples: \\"maternity care\\", \\"\\\\\\"maternity care\\\\\\"\\", \\"diabetes OR diabetic\\", \\"diabetes -outpatients\\", \\"signal -\\\\\\"segmentation fault\\\\\\"\\"."},"domainTypes":{"type":"array","items":{"type":"string","enum":["DataModel","DataClass","DataElement","DataType","EnumerationType","EnumerationValue","CodeSet","Terminology","Term","Folder","VersionedFolder","ClassificationScheme","Classifier"]},"description":"Optional catalogue domain type filter. Omit for no domain type filter. Use when the request clearly restricts results to a type, for example [\\"DataModel\\"] for Data Model results only, [\\"DataClass\\"] for Data Class results only, or [\\"DataElement\\"] for Data Element results only."},"modelId":{"type":"string","format":"uuid","description":"Optional UUID of a DataModel, Terminology, CodeSet, Folder, or VersionedFolder to scope the search. Folder scopes include descendant folders and contained models."},"max":{"type":"integer","minimum":1,"maximum":20,"description":"Optional maximum number of results to return for this page. Omit to use the default page size of 10; maximum is 20. Use max 1 only when the user asks for a single result; do not use max 1 merely because a later step asks to inspect the first item after listing results."},"offset":{"type":"integer","minimum":0,"description":"Optional zero-based offset for paging through additional results. Omit for the first page."},"withGuidance":{"type":"boolean","description":"Optional. When true, the tool may include guidance for the assistant to ask a focused follow-up question or carry out a follow-up workflow. Omit to use the default value true."},"searchIntent":{"type":"string","enum":["unsaid","exact","expanded"],"description":"Optional user intent for the supplied keyword expression. Omit to use unsaid. The search engine is always PostgreSQL full-text keyword search. unsaid means the user did not state exact versus expanded keyword matching. exact means use the supplied keywords as written. expanded means related terms or alternatives have already been included in searchTerm."}},"required":["searchTerm"]}'
 )
 class SearchExecutionService {
 
@@ -92,9 +93,24 @@ class SearchExecutionService {
         BiFunction<String, UUID, AdministeredItem> itemLookup
     ) {
         long startTime = System.currentTimeMillis()
-        List<SearchResultsDTO> searchResults = searchRepository.search(requestDTO)
+        List<SearchResultsDTO> searchResults = retrieveSearchResults(requestDTO)
         log.debug('Search time taken (retrieve): {}', System.currentTimeMillis() - startTime)
 
+        List<SearchResultsDTO> searchResultsReadable = filterReadable(searchResults, requestDTO, itemLookup)
+
+        log.debug('Search time taken (retrieve + filter): {}', System.currentTimeMillis() - startTime)
+        ListResponse.from(searchResultsReadable, requestDTO)
+    }
+
+    List<SearchResultsDTO> retrieveSearchResults(SearchRequestDTO requestDTO) {
+        searchRepository.search(requestDTO)
+    }
+
+    List<SearchResultsDTO> filterReadable(
+        List<SearchResultsDTO> searchResults,
+        SearchRequestDTO requestDTO,
+        BiFunction<String, UUID, AdministeredItem> itemLookup
+    ) {
         Set<UUID> allClassifierIds = [] as Set<UUID>
         if (requestDTO.classifiers) {
             allClassifierIds.addAll(requestDTO.classifiers as Collection<UUID>)
@@ -121,9 +137,6 @@ class SearchExecutionService {
                     classifiers.any { UUID cid -> resultClassifierIds.contains(cid) }
                 }
             classifierFilter
-        }
-
-        log.debug('Search time taken (retrieve + filter): {}', System.currentTimeMillis() - startTime)
-        ListResponse.from(searchResultsReadable, requestDTO)
+        } as List<SearchResultsDTO>
     }
 }

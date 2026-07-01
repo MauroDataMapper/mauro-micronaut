@@ -2,6 +2,7 @@ package org.maurodata.service.search
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
+import io.micronaut.context.annotation.Value
 import io.micronaut.data.connection.annotation.Connectable
 import jakarta.inject.Singleton
 import org.maurodata.domain.model.AdministeredItem
@@ -27,8 +28,7 @@ import java.util.function.BiFunction
         'searching broadly where exact labels and semantically related wording may both be useful'
     ],
     avoidWhen = [
-        'exact PostgreSQL keyword syntax, quoted phrase matching, OR, or exclusion must be preserved exactly; use mauro_keyword_search',
-        'the user explicitly asks for semantic/vector search only; use mauro_semantic_search',
+        'the user explicitly asks for a narrower specialist search mode only',
         'reading a known resource URI or id; use mauro_get'
     ],
     examples = [
@@ -36,17 +36,29 @@ import java.util.function.BiFunction
         'Find data models about risk assessments => searchTerm "risk assessments", domainTypes ["DataModel"]',
         'Look up questions about smoking => searchTerm "smoking", domainTypes ["DataElement"]'
     ],
-    inputSchema = '{"type":"object","properties":{"searchTerm":{"type":"string","description":"Search text. The keyword leg uses PostgreSQL full-text matching; the semantic leg embeds the same text when semantic search is available."},"query":{"type":"string","description":"Alias for searchTerm."},"domainTypes":{"type":"array","items":{"type":"string","enum":["DataModel","DataClass","DataElement","DataType","EnumerationType","EnumerationValue","CodeSet","Terminology","Term","Folder","VersionedFolder","ClassificationScheme","Classifier"]},"description":"Optional catalogue domain type filter."},"max":{"type":"integer","minimum":1,"maximum":20,"description":"Maximum returned results for this page. Omit for default page size."},"offset":{"type":"integer","minimum":0,"description":"Zero-based offset for paging."},"withGuidance":{"type":"boolean","description":"Optional. Omit to use true."}},"required":["searchTerm"]}'
+    inputSchema = '{"type":"object","properties":{"searchTerm":{"type":"string","description":"Search text. The keyword leg uses PostgreSQL full-text matching; the semantic leg embeds the same text when semantic search is available."},"query":{"type":"string","description":"Alias for searchTerm."},"domainTypes":{"type":"array","items":{"type":"string","enum":["DataModel","DataClass","DataElement","DataType","EnumerationType","EnumerationValue","CodeSet","Terminology","Term","Folder","VersionedFolder","ClassificationScheme","Classifier"]},"description":"Optional catalogue domain type filter."},"modelId":{"type":"string","format":"uuid","description":"Optional UUID of a DataModel, Terminology, CodeSet, Folder, or VersionedFolder to scope the search. Folder scopes include descendant folders and contained models."},"max":{"type":"integer","minimum":1,"maximum":20,"description":"Maximum returned results for this page. Omit for default page size."},"offset":{"type":"integer","minimum":0,"description":"Zero-based offset for paging."},"withGuidance":{"type":"boolean","description":"Optional. Omit to use true."}},"required":["searchTerm"]}'
 )
 class HybridSearchExecutionService {
 
     private final SearchExecutionService searchExecutionService
     private final SemanticSearchService semanticSearchService
+    private final double keywordWeight
+    private final double semanticWeight
+    private final int rankConstant
+    private final int rankWindow
 
     HybridSearchExecutionService(SearchExecutionService searchExecutionService,
-                                 SemanticSearchService semanticSearchService) {
+                                 SemanticSearchService semanticSearchService,
+                                 @Value('${chat.semantic.hybrid.keyword-weight:1.0}') Double keywordWeight,
+                                 @Value('${chat.semantic.hybrid.semantic-weight:1.0}') Double semanticWeight,
+                                 @Value('${chat.semantic.hybrid.rank-constant:60}') Integer rankConstant,
+                                 @Value('${chat.semantic.hybrid.rank-window:100}') Integer rankWindow) {
         this.searchExecutionService = searchExecutionService
         this.semanticSearchService = semanticSearchService
+        this.keywordWeight = keywordWeight == null ? 1.0D : Math.max(keywordWeight, 0D)
+        this.semanticWeight = semanticWeight == null ? 1.0D : Math.max(semanticWeight, 0D)
+        this.rankConstant = Math.max(rankConstant ?: 60, 1)
+        this.rankWindow = Math.max(rankWindow ?: 100, 1)
     }
 
     @Connectable
@@ -59,7 +71,18 @@ class HybridSearchExecutionService {
     HybridSearchResult executeSearchDetailed(SearchRequestDTO requestDTO,
                                              BiFunction<String, UUID, AdministeredItem> itemLookup) {
         SearchRequestDTO safeRequest = requestDTO ?: new SearchRequestDTO()
-        ListResponse<SearchResultsDTO> keywordResponse = searchExecutionService.executeSearch(unpagedKeywordRequest(safeRequest), itemLookup)
+        boolean projectKeywordResults = safeRequest.domainTypes != null && !safeRequest.domainTypes.isEmpty()
+        List<SearchResultsDTO> rawKeywordItems = searchExecutionService.retrieveSearchResults(unpagedKeywordRequest(safeRequest, projectKeywordResults))
+        List<SearchResultsDTO> keywordItems = projectKeywordResults ?
+            semanticSearchService.projectResults(rawKeywordItems, safeRequest.domainTypes) :
+            rawKeywordItems
+        int keywordCount = projectKeywordResults ?
+            keywordItems.collect {SearchResultsDTO item -> key(item.domainType, item.id)}.unique().size() :
+            keywordItems.size()
+        ListResponse<SearchResultsDTO> keywordResponse = new ListResponse<SearchResultsDTO>(
+            count: keywordCount,
+            items: keywordItems
+        )
 
         ListResponse<SemanticSearchResultsDTO> semanticResponse = null
         SemanticSearchAvailability semanticAvailability = semanticSearchService.availability('catalogue-items-default')
@@ -76,7 +99,8 @@ class HybridSearchExecutionService {
         }
 
         if (semanticResponse == null) {
-            ListResponse<SearchResultsDTO> fallbackResponse = searchExecutionService.executeSearch(safeRequest, itemLookup)
+            List<SearchResultsDTO> readableKeywordItems = searchExecutionService.filterReadable(keywordResponse.items ?: [], safeRequest, itemLookup)
+            ListResponse<SearchResultsDTO> fallbackResponse = ListResponse.from(readableKeywordItems, safeRequest)
             return new HybridSearchResult(
                 response: fallbackResponse,
                 keywordCount: keywordResponse.count ?: 0,
@@ -88,46 +112,44 @@ class HybridSearchExecutionService {
             )
         }
 
-        List<SearchResultsDTO> merged = merge(keywordResponse.items ?: [], semanticResponse.items ?: [])
-        int offset = Math.max(safeRequest.offset ?: 0, 0)
-        int max = safeRequest.max == null ? -1 : safeRequest.max
-        List<SearchResultsDTO> page = max != null && max > 0 ?
-            merged.drop(offset).take(max) :
-            merged
-        ListResponse<SearchResultsDTO> response = new ListResponse<SearchResultsDTO>(
-            count: merged.size(),
-            items: page
-        )
+        MergeResult mergeResult = merge(keywordResponse.items ?: [], keywordResponse.count ?: 0, semanticResponse.items ?: [], semanticResponse.count ?: 0)
+        List<SearchResultsDTO> readableMerged = searchExecutionService.filterReadable(mergeResult.items, safeRequest, itemLookup)
+        ListResponse<SearchResultsDTO> response = ListResponse.from(readableMerged, safeRequest)
         new HybridSearchResult(
             response: response,
             keywordCount: keywordResponse.count ?: 0,
             semanticAvailable: true,
             semanticRan: true,
             semanticCount: semanticResponse.count ?: 0,
-            mergedCount: merged.size(),
+            mergedCount: response.count ?: 0,
             fallbackReason: null
         )
     }
 
-    private static SearchRequestDTO unpagedKeywordRequest(SearchRequestDTO source) {
+    private static SearchRequestDTO unpagedKeywordRequest(SearchRequestDTO source, boolean clearDomainTypes = false) {
         SearchRequestDTO request = copySearchRequest(source)
         request.offset = 0
         request.max = -1
         request.sort = null
+        if (clearDomainTypes) {
+            request.domainTypes = Collections.<String>emptyList()
+            request.domainType = null
+        }
         request
     }
 
-    private static SemanticSearchRequestDTO semanticRequest(SearchRequestDTO source) {
+    private SemanticSearchRequestDTO semanticRequest(SearchRequestDTO source) {
         SemanticSearchRequestDTO request = new SemanticSearchRequestDTO()
         copySearchFields(source, request)
         request.query = source.searchTerm
         request.searchTerm = source.searchTerm
         request.offset = 0
-        request.max = Math.max(100, Math.min(Math.max((source.offset ?: 0) + (source.max ?: 10), 10), 100))
+        request.max = Math.max(rankWindow, Math.min(Math.max((source.offset ?: 0) + (source.max ?: 10), 10), rankWindow))
         request.topM = request.max
-        request.topN = 100
+        request.topN = rankWindow
         request.includeChunks = true
         request.rebuildIfEmpty = false
+        request.deepSearch = false
         request
     }
 
@@ -159,32 +181,74 @@ class HybridSearchExecutionService {
         target.domainType = source.domainType
     }
 
-    private static List<SearchResultsDTO> merge(List<SearchResultsDTO> keywordItems, List<SemanticSearchResultsDTO> semanticItems) {
+    private MergeResult merge(List<SearchResultsDTO> keywordItems,
+                              int keywordCount,
+                              List<SemanticSearchResultsDTO> semanticItems,
+                              int semanticCount) {
         Map<String, HybridResult> byKey = new LinkedHashMap<String, HybridResult>()
-        for (int i = 0; i < keywordItems.size(); i++) {
+        for (int i = 0; i < Math.min(keywordItems.size(), rankWindow); i++) {
             SearchResultsDTO item = keywordItems.get(i)
             HybridResult result = byKey.computeIfAbsent(key(item.domainType, item.id)) {
                 new HybridResult(item: item)
             }
             result.item = mergeItem(result.item, item)
             result.keywordRank = i + 1
-            result.keywordScore = keywordScore(item, i)
+            result.keywordScore = reciprocalRank(i + 1, keywordWeight)
         }
-        for (int i = 0; i < semanticItems.size(); i++) {
+        for (int i = 0; i < Math.min(semanticItems.size(), rankWindow); i++) {
             SemanticSearchResultsDTO item = semanticItems.get(i)
             HybridResult result = byKey.computeIfAbsent(key(item.domainType, item.id)) {
                 new HybridResult(item: item)
             }
             result.item = mergeItem(result.item, item)
             result.semanticRank = i + 1
-            result.semanticScore = item.semanticScore ?: item.rerankScore ?: 0D
+            result.semanticScore = reciprocalRank(i + 1, semanticWeight)
         }
 
-        byKey.values().toList().sort {HybridResult left, HybridResult right ->
-            (right.hybridScore() <=> left.hybridScore()) ?: (label(left) <=> label(right))
+        List<SearchResultsDTO> items = byKey.values().toList().sort {HybridResult left, HybridResult right ->
+            (left.rankBucket() <=> right.rankBucket()) ?:
+                (right.hybridScore() <=> left.hybridScore()) ?:
+                (stableKey(left) <=> stableKey(right))
         }.collect {HybridResult result ->
+            applyHybridEvidence(result)
             result.item
         } as List<SearchResultsDTO>
+        int semanticOnlyInWindow = byKey.values().count {HybridResult result ->
+            result.semanticRank != null && result.keywordRank == null
+        }.intValue()
+        new MergeResult(
+            items: items,
+            count: Math.max(items.size(), keywordCount + Math.min(semanticOnlyInWindow, Math.max(semanticCount, 0)))
+        )
+    }
+
+    private static void applyHybridEvidence(HybridResult result) {
+        if (!(result.item instanceof SemanticSearchResultsDTO)) {
+            return
+        }
+        SemanticSearchResultsDTO semantic = (SemanticSearchResultsDTO) result.item
+        semantic.keywordRank = result.keywordRank
+        semantic.semanticRank = result.semanticRank
+        semantic.hybridScore = result.hybridScore()
+        List<String> evidence = semantic.evidence == null ? new ArrayList<String>() : new ArrayList<String>(semantic.evidence)
+        if (result.keywordRank != null) {
+            evidence.add(0, "keyword rank ${result.keywordRank}".toString())
+        }
+        if (result.semanticRank != null) {
+            evidence.add(result.keywordRank == null ? 0 : 1, "semantic rank ${result.semanticRank}".toString())
+        }
+        semantic.evidence = evidence.unique() as List<String>
+
+        List<Map<String, Object>> evidenceDetails = semantic.evidenceDetails == null ?
+            new ArrayList<Map<String, Object>>() :
+            new ArrayList<Map<String, Object>>(semantic.evidenceDetails)
+        if (result.semanticRank != null) {
+            evidenceDetails.add(0, [match: 'semantic', confidence: "rank ${result.semanticRank}".toString()] as Map<String, Object>)
+        }
+        if (result.keywordRank != null) {
+            evidenceDetails.add(0, [match: 'keyword', confidence: "rank ${result.keywordRank}".toString()] as Map<String, Object>)
+        }
+        semantic.evidenceDetails = evidenceDetails
     }
 
     private static SearchResultsDTO mergeItem(SearchResultsDTO existing, SearchResultsDTO incoming) {
@@ -210,10 +274,8 @@ class HybridSearchExecutionService {
         semantic
     }
 
-    private static double keywordScore(SearchResultsDTO item, int rankIndex) {
-        double rankScore = 1D / (rankIndex + 1D)
-        double tsRank = item.tsRank == null ? 0D : item.tsRank.doubleValue()
-        Math.max(rankScore, Math.min(tsRank, 1D))
+    private double reciprocalRank(int rank, double weight) {
+        weight / (rankConstant + rank)
     }
 
     private static String key(String domainType, UUID id) {
@@ -224,6 +286,14 @@ class HybridSearchExecutionService {
         result.item?.label ?: ''
     }
 
+    private static String stableKey(HybridResult result) {
+        [
+            result.item?.domainType ?: '',
+            result.item?.label ?: '',
+            result.item?.id?.toString() ?: ''
+        ].join('|')
+    }
+
     private static class HybridResult {
         SearchResultsDTO item
         Integer keywordRank
@@ -232,12 +302,27 @@ class HybridSearchExecutionService {
         Double semanticScore = 0D
 
         double hybridScore() {
-            double score = (keywordScore ?: 0D) * 0.60D + (semanticScore ?: 0D) * 0.40D
+            double score = (keywordScore ?: 0D) + (semanticScore ?: 0D)
             if (keywordRank != null && semanticRank != null) {
-                score += 0.25D
+                score += 0.005D
             }
             score
         }
+
+        int rankBucket() {
+            if (keywordRank != null && semanticRank != null) {
+                return 0
+            }
+            if (keywordRank != null) {
+                return 1
+            }
+            2
+        }
+    }
+
+    private static class MergeResult {
+        List<SearchResultsDTO> items = []
+        Integer count = 0
     }
 
     static class HybridSearchResult {

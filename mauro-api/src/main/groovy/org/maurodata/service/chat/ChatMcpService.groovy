@@ -1,9 +1,9 @@
 package org.maurodata.service.chat
 
-import org.maurodata.api.chat.McpServerDto
-import org.maurodata.api.chat.ToolInvokeRequest
-import org.maurodata.api.chat.ToolInvokeResponse
-import org.maurodata.api.chat.UpsertMcpServerRequest
+import org.maurodata.plugin.chat.api.chat.McpServerDto
+import org.maurodata.plugin.chat.api.chat.ToolInvokeRequest
+import org.maurodata.plugin.chat.api.chat.ToolInvokeResponse
+import org.maurodata.plugin.chat.api.chat.UpsertMcpServerRequest
 
 interface ChatMcpService {
     List<McpServerDto> listServers()

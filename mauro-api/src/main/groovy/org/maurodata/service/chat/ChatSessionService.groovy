@@ -1,11 +1,11 @@
 package org.maurodata.service.chat
 
-import org.maurodata.api.chat.ChatEventDto
-import org.maurodata.api.chat.CreateSessionRequest
-import org.maurodata.api.chat.ListSessionMessagesResponseDto
-import org.maurodata.api.chat.SendMessageRequest
-import org.maurodata.api.chat.SessionDto
-import org.maurodata.api.chat.UpdateSessionRequest
+import org.maurodata.plugin.chat.api.chat.ChatEventDto
+import org.maurodata.plugin.chat.api.chat.CreateSessionRequest
+import org.maurodata.plugin.chat.api.chat.ListSessionMessagesResponseDto
+import org.maurodata.plugin.chat.api.chat.SendMessageRequest
+import org.maurodata.plugin.chat.api.chat.SessionDto
+import org.maurodata.plugin.chat.api.chat.UpdateSessionRequest
 import io.micronaut.http.HttpRequest
 import org.reactivestreams.Publisher
 

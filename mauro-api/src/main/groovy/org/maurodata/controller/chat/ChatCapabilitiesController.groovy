@@ -5,9 +5,9 @@ import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Get
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
-import org.maurodata.api.Paths
-import org.maurodata.api.chat.CapabilitiesDto
-import org.maurodata.api.chat.ChatCapabilitiesApi
+import org.maurodata.plugin.chat.api.Paths
+import org.maurodata.plugin.chat.api.chat.CapabilitiesDto
+import org.maurodata.plugin.chat.api.chat.ChatCapabilitiesApi
 import org.maurodata.audit.Audit
 import org.maurodata.service.chat.ChatCapabilityService
 

@@ -11,15 +11,18 @@ class ChatPromptResourceService {
 
     static final String TOOL_POLICY = 'tool-policy'
 
-    private static final Map<String, String> RESOURCE_PATHS = [
-        (TOOL_POLICY): 'chat/prompts/tool-policy.txt'
-    ].asImmutable() as Map<String, String>
+    private static final Map<String, List<String>> RESOURCE_PATHS = [
+        (TOOL_POLICY): [
+            'META-INF/mauro/chat/prompts/tool-policy.txt',
+            'chat/prompts/tool-policy.txt'
+        ] as List<String>
+    ].asImmutable() as Map<String, List<String>>
 
     private final Map<String, String> prompts
 
     ChatPromptResourceService() {
         Map<String, String> loaded = new LinkedHashMap<String, String>()
-        for (Map.Entry<String, String> entry : RESOURCE_PATHS.entrySet()) {
+        for (Map.Entry<String, List<String>> entry : RESOURCE_PATHS.entrySet()) {
             loaded.put(entry.key, loadRequired(entry.value))
         }
         this.prompts = loaded.asImmutable() as Map<String, String>
@@ -33,10 +36,16 @@ class ChatPromptResourceService {
         prompt
     }
 
-    private static String loadRequired(String path) {
-        InputStream inputStream = ChatPromptResourceService.classLoader.getResourceAsStream(path)
+    private static String loadRequired(List<String> paths) {
+        InputStream inputStream = null
+        for (String path : paths) {
+            inputStream = ChatPromptResourceService.classLoader.getResourceAsStream(path)
+            if (inputStream != null) {
+                break
+            }
+        }
         if (inputStream == null) {
-            throw new IllegalStateException("Missing chat prompt resource: ${path}")
+            throw new IllegalStateException("Missing chat prompt resource: ${paths.join(', ')}")
         }
         try {
             return inputStream.getText(StandardCharsets.UTF_8.name()).trim()

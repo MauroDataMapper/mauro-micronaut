@@ -11,9 +11,14 @@ class SemanticChunkMatchDTO {
 
     UUID chunkId
     String chunkKind
+    String chunkGroup
     Integer chunkOrdinal
+    String matchedSourceDomainType
+    String matchedSourceLabel
     String sourceText
     String embeddingProfile
+    Double significanceWeight
+    Double weightedSimilarity
     Double distance
     Double similarity
     Instant indexedAt
