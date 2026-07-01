@@ -5,8 +5,8 @@ import io.micronaut.http.HttpStatus
 import io.micronaut.http.exceptions.HttpStatusException
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
-import org.maurodata.api.chat.McpServerDto
-import org.maurodata.api.chat.ToolSummaryDto
+import org.maurodata.plugin.chat.api.chat.McpServerDto
+import org.maurodata.plugin.chat.api.chat.ToolSummaryDto
 
 @CompileStatic
 @Singleton

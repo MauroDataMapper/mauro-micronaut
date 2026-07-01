@@ -4,6 +4,14 @@ import io.micronaut.context.annotation.Property
 import org.maurodata.plugin.MauroPlugin
 import org.maurodata.plugin.MauroPluginUtil
 import org.maurodata.profile.Profile
+import org.maurodata.service.chat.capabilities.CapabilitiesProvider
+import org.maurodata.service.chat.llm.LlmProvider
+import org.maurodata.service.chat.mcp.ResultInterpretation
+import org.maurodata.service.chat.mcp.ToolHandler
+import org.maurodata.service.search.SemanticSearchService
+import org.maurodata.service.semantic.SemanticEmbeddingModelAdministration
+import org.maurodata.service.semantic.SemanticIndexAdministrationService
+import org.maurodata.service.semantic.SemanticProfileAdministrationService
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
@@ -163,6 +171,22 @@ class MauroApplicationContextConfigurer implements ApplicationContextConfigurer 
                     log.info("Profile: ${ref}")
                 } else if (MauroPlugin.class.isAssignableFrom(beanType)) {
                     log.info("MauroPlugin: ${ref}")
+                } else if (LlmProvider.class.isAssignableFrom(beanType)) {
+                    log.info("LLM Provider: ${ref}")
+                } else if (CapabilitiesProvider.class.isAssignableFrom(beanType)) {
+                    log.info("Capabilities Provider: ${ref}")
+                } else if (ToolHandler.class.isAssignableFrom(beanType)) {
+                    log.info("MCP Tool: ${ref}")
+                } else if (ResultInterpretation.class.isAssignableFrom(beanType)) {
+                    log.info("Result Interpretation: ${ref}")
+                } else if (SemanticSearchService.class.isAssignableFrom(beanType)) {
+                    log.info("Semantic Search Service: ${ref}")
+                } else if (SemanticIndexAdministrationService.class.isAssignableFrom(beanType)) {
+                    log.info("Semantic Index Administration: ${ref}")
+                } else if (SemanticProfileAdministrationService.class.isAssignableFrom(beanType)) {
+                    log.info("Semantic Profile Administration: ${ref}")
+                } else if (SemanticEmbeddingModelAdministration.class.isAssignableFrom(beanType)) {
+                    log.info("Semantic Embedding Model Administration: ${ref}")
                 } else {
                     if (ref.hasAnnotation(Controller)) {
                         log.info("Controller: ${ref}")

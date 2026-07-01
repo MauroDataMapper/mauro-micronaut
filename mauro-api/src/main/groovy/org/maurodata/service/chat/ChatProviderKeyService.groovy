@@ -1,7 +1,7 @@
 package org.maurodata.service.chat
 
-import org.maurodata.api.chat.ProviderKeyStatusDto
-import org.maurodata.api.chat.UpsertProviderKeyRequest
+import org.maurodata.plugin.chat.api.chat.ProviderKeyStatusDto
+import org.maurodata.plugin.chat.api.chat.UpsertProviderKeyRequest
 
 interface ChatProviderKeyService {
     List<ProviderKeyStatusDto> listProviderKeyStatus()

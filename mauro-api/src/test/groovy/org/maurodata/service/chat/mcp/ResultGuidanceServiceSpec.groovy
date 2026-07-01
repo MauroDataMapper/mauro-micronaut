@@ -1,12 +1,14 @@
 package org.maurodata.service.chat.mcp
 
+import org.maurodata.plugin.chat.mcp.DataModelResourceInterpretation
+import org.maurodata.service.chat.AffordanceBroker
 import spock.lang.Specification
 
 class ResultGuidanceServiceSpec extends Specification {
 
     void 'adds available next actions for returned DataModel artefacts'() {
         given:
-        ResultGuidanceService service = new ResultGuidanceService()
+        ResultGuidanceService service = guidanceServiceWithDataModelInterpretation()
         Map<String, Object> result = [
             withGuidance: true,
             items       : [
@@ -35,7 +37,7 @@ class ResultGuidanceServiceSpec extends Specification {
 
     void 'inserts available next actions before END section when present'() {
         given:
-        ResultGuidanceService service = new ResultGuidanceService()
+        ResultGuidanceService service = guidanceServiceWithDataModelInterpretation()
         Map<String, Object> result = [
             withGuidance: true,
             items       : [
@@ -53,7 +55,7 @@ class ResultGuidanceServiceSpec extends Specification {
 
     void 'does not add guidance when withGuidance is false'() {
         given:
-        ResultGuidanceService service = new ResultGuidanceService()
+        ResultGuidanceService service = guidanceServiceWithDataModelInterpretation()
 
         when:
         String text = service.applyToolGuidance('mauro_keyword_search', [
@@ -69,7 +71,7 @@ class ResultGuidanceServiceSpec extends Specification {
 
     void 'limits DataModel actions to avoid flooding the model'() {
         given:
-        ResultGuidanceService service = new ResultGuidanceService()
+        ResultGuidanceService service = guidanceServiceWithDataModelInterpretation()
 
         when:
         String text = service.applyToolGuidance('mauro_keyword_search', [
@@ -90,7 +92,7 @@ class ResultGuidanceServiceSpec extends Specification {
 
     void 'adds resource read interpretation for successful DataModel resources'() {
         given:
-        ResultGuidanceService service = new ResultGuidanceService()
+        ResultGuidanceService service = guidanceServiceWithDataModelInterpretation()
 
         when:
         String text = service.applyToolGuidance('mauro_get', [
@@ -132,7 +134,7 @@ class ResultGuidanceServiceSpec extends Specification {
 
     void 'adds resource read failure interpretation from backend status'() {
         given:
-        ResultGuidanceService service = new ResultGuidanceService()
+        ResultGuidanceService service = guidanceServiceWithDataModelInterpretation()
 
         when:
         String text = service.applyToolGuidance('mauro_get', [
@@ -150,7 +152,7 @@ class ResultGuidanceServiceSpec extends Specification {
 
     void 'executable DataModel interpretation matches by resource name and distils identity fields'() {
         given:
-        ResultGuidanceService service = new ResultGuidanceService()
+        ResultGuidanceService service = guidanceServiceWithDataModelInterpretation()
 
         when:
         List<ResultInterpretationOutput> outputs = service.interpret(new ResultContext(
@@ -187,7 +189,7 @@ class ResultGuidanceServiceSpec extends Specification {
 
     void 'DataModel interpretation does not treat resource route description as model description'() {
         given:
-        ResultGuidanceService service = new ResultGuidanceService()
+        ResultGuidanceService service = guidanceServiceWithDataModelInterpretation()
 
         when:
         String text = service.applyToolGuidance('mauro_get', [
@@ -213,5 +215,15 @@ class ResultGuidanceServiceSpec extends Specification {
         text.contains('- path: fo:Forms|dm:Braden Risk Assessment$main')
         !text.contains('| description | HTTP GET /api/dataModels/{id} (DataModel.show) |')
         !text.contains('- description: HTTP GET /api/dataModels/{id} (DataModel.show)')
+    }
+
+    private static ResultGuidanceService guidanceServiceWithDataModelInterpretation() {
+        new ResultGuidanceService(
+            new AffordanceBroker(),
+            [
+                new FailedHttpResourceInterpretation(),
+                new DataModelResourceInterpretation()
+            ] as List<ResultInterpretation>
+        )
     }
 }

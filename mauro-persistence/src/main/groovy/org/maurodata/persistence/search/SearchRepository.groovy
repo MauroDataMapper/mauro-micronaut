@@ -23,12 +23,50 @@ abstract class SearchRepository implements GenericRepository<SearchResultsDTO, U
 SELECT
   sd.id, sd.domain_type, sd.label, sd.description,
   sd.date_created, sd.last_updated,
-  ts_rank_cd(sd.combined_ts, q.query) AS ts_rank
+  ts_rank_cd(
+    setweight(to_tsvector('english', COALESCE(sd.label, '')), 'A') ||
+    setweight(to_tsvector('english', COALESCE(sd.description, '')), 'B') ||
+    setweight(COALESCE(sd.metadata_ts, ''::tsvector), 'C'),
+    q.query
+  ) AS ts_rank
 FROM search.search_domains sd
 CROSS JOIN q
 WHERE sd.combined_ts @@ q.query
   AND ((:domainTypes) IS NULL OR sd.domain_type IN (:domainTypes))
-  AND (:modelId IS NULL OR sd.model_id = CAST(:modelId AS uuid))
+  AND (:modelId IS NULL OR sd.model_id IN (
+      WITH RECURSIVE requested_scope(id) AS (
+          SELECT CAST(:modelId AS uuid)
+      ),
+      scoped_folders(id) AS (
+          SELECT folder.id
+          FROM core.folder folder
+               JOIN requested_scope scope ON scope.id = folder.id
+          UNION ALL
+          SELECT child.id
+          FROM core.folder child
+               JOIN scoped_folders parent ON child.parent_folder_id = parent.id
+      ),
+      scoped_model_ids(id) AS (
+          SELECT scope.id
+          FROM requested_scope scope
+          WHERE EXISTS (SELECT 1 FROM datamodel.data_model data_model WHERE data_model.id = scope.id)
+             OR EXISTS (SELECT 1 FROM terminology.terminology terminology WHERE terminology.id = scope.id)
+             OR EXISTS (SELECT 1 FROM terminology.code_set code_set WHERE code_set.id = scope.id)
+          UNION
+          SELECT data_model.id
+          FROM datamodel.data_model data_model
+               JOIN scoped_folders folder ON folder.id = data_model.folder_id
+          UNION
+          SELECT terminology.id
+          FROM terminology.terminology terminology
+               JOIN scoped_folders folder ON folder.id = terminology.folder_id
+          UNION
+          SELECT code_set.id
+          FROM terminology.code_set code_set
+               JOIN scoped_folders folder ON folder.id = code_set.folder_id
+      )
+      SELECT id FROM scoped_model_ids
+  ))
   AND (CAST(:createdBefore AS timestamptz) IS NULL OR CAST(:createdBefore AS timestamptz) > sd.date_created)
   AND (CAST(:createdAfter AS timestamptz) IS NULL OR CAST(:createdAfter AS timestamptz) <= sd.date_created)
   AND (CAST(:lastUpdatedBefore AS timestamptz) IS NULL OR CAST(:lastUpdatedBefore AS timestamptz) > sd.last_updated)
@@ -49,7 +87,40 @@ ORDER BY ts_rank DESC, label ASC''',
 
         where  search_domains.label ilike :searchTerm || '%'
                 and ( (:domainTypes) is null or search_domains.domain_type in (:domainTypes)) 
-                and (:modelId is null or search_domains.model_id = :modelId)
+                and (:modelId is null or search_domains.model_id in (
+                    with recursive requested_scope(id) as (
+                        select cast(:modelId as uuid)
+                    ),
+                    scoped_folders(id) as (
+                        select folder.id
+                        from core.folder folder
+                             join requested_scope scope on scope.id = folder.id
+                        union all
+                        select child.id
+                        from core.folder child
+                             join scoped_folders parent on child.parent_folder_id = parent.id
+                    ),
+                    scoped_model_ids(id) as (
+                        select scope.id
+                        from requested_scope scope
+                        where exists (select 1 from datamodel.data_model data_model where data_model.id = scope.id)
+                           or exists (select 1 from terminology.terminology terminology where terminology.id = scope.id)
+                           or exists (select 1 from terminology.code_set code_set where code_set.id = scope.id)
+                        union
+                        select data_model.id
+                        from datamodel.data_model data_model
+                             join scoped_folders folder on folder.id = data_model.folder_id
+                        union
+                        select terminology.id
+                        from terminology.terminology terminology
+                             join scoped_folders folder on folder.id = terminology.folder_id
+                        union
+                        select code_set.id
+                        from terminology.code_set code_set
+                             join scoped_folders folder on folder.id = code_set.folder_id
+                    )
+                    select id from scoped_model_ids
+                ))
                 and ( cast(:createdBefore as date) is null or :createdBefore > search_domains.date_created)
                 and ( cast(:createdAfter as date) is null or :createdAfter <= search_domains.date_created)
                 and ( cast(:lastUpdatedBefore as date) is null or :lastUpdatedBefore > search_domains.last_updated)

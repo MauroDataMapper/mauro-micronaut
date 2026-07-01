@@ -16,7 +16,10 @@ import java.util.jar.JarFile
 @Singleton
 class ChatSkillDefinitionLoader {
 
-    private static final String SKILL_RESOURCE_DIR = 'chat/skills'
+    private static final List<String> SKILL_RESOURCE_DIRS = [
+        'META-INF/mauro/chat/skills',
+        'chat/skills'
+    ] as List<String>
 
     private final List<ChatSkillDefinition> definitions
 
@@ -57,22 +60,24 @@ class ChatSkillDefinitionLoader {
 
     private static List<String> discoverSkillResourcePaths(ClassLoader classLoader) {
         Set<String> paths = new TreeSet<String>()
-        Enumeration<URL> resources = classLoader.getResources(SKILL_RESOURCE_DIR)
-        while (resources.hasMoreElements()) {
-            URL url = resources.nextElement()
-            if ('file'.equals(url.protocol)) {
-                paths.addAll(discoverFileResourcePaths(url))
-            } else if ('jar'.equals(url.protocol)) {
-                paths.addAll(discoverJarResourcePaths(url))
+        for (String resourceDir : SKILL_RESOURCE_DIRS) {
+            Enumeration<URL> resources = classLoader.getResources(resourceDir)
+            while (resources.hasMoreElements()) {
+                URL url = resources.nextElement()
+                if ('file'.equals(url.protocol)) {
+                    paths.addAll(discoverFileResourcePaths(resourceDir, url))
+                } else if ('jar'.equals(url.protocol)) {
+                    paths.addAll(discoverJarResourcePaths(resourceDir, url))
+                }
             }
         }
         if (paths.isEmpty()) {
-            throw new IllegalStateException("No chat skill definition resources found under ${SKILL_RESOURCE_DIR}")
+            throw new IllegalStateException("No chat skill definition resources found under ${SKILL_RESOURCE_DIRS.join(', ')}")
         }
         new ArrayList<String>(paths)
     }
 
-    private static List<String> discoverFileResourcePaths(URL url) {
+    private static List<String> discoverFileResourcePaths(String resourceDir, URL url) {
         Path dir = Paths.get(url.toURI())
         if (!Files.exists(dir)) {
             return []
@@ -82,12 +87,12 @@ class ChatSkillDefinitionLoader {
             stream
                 .filter {Path path -> Files.isRegularFile(path)}
                 .filter {Path path -> isSkillFile(path.fileName.toString())}
-                .forEach {Path path -> paths.add(SKILL_RESOURCE_DIR + '/' + path.fileName.toString()) }
+                .forEach {Path path -> paths.add(resourceDir + '/' + path.fileName.toString()) }
         }
         paths
     }
 
-    private static List<String> discoverJarResourcePaths(URL url) {
+    private static List<String> discoverJarResourcePaths(String resourceDir, URL url) {
         JarURLConnection connection = (JarURLConnection) url.openConnection()
         JarFile jarFile = connection.jarFile
         List<String> paths = new ArrayList<String>()
@@ -95,7 +100,7 @@ class ChatSkillDefinitionLoader {
         while (entries.hasMoreElements()) {
             JarEntry entry = entries.nextElement()
             String name = entry.name
-            if (!entry.directory && name.startsWith(SKILL_RESOURCE_DIR + '/') && isSkillFile(name)) {
+            if (!entry.directory && name.startsWith(resourceDir + '/') && isSkillFile(name)) {
                 paths.add(name)
             }
         }

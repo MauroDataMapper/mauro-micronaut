@@ -1,9 +1,9 @@
 package org.maurodata.service.chat
 
-import org.maurodata.api.chat.MessageDto
-import org.maurodata.api.chat.SendMessageRequest
-import org.maurodata.api.chat.SessionDto
-import org.maurodata.api.chat.UpdateSessionRequest
+import org.maurodata.plugin.chat.api.chat.MessageDto
+import org.maurodata.plugin.chat.api.chat.SendMessageRequest
+import org.maurodata.plugin.chat.api.chat.SessionDto
+import org.maurodata.plugin.chat.api.chat.UpdateSessionRequest
 import org.maurodata.service.chat.llm.LlmProvider
 import org.maurodata.service.chat.llm.ProviderChunk
 import org.maurodata.service.chat.llm.ProviderMessage
@@ -102,7 +102,7 @@ class ChatSessionsApiServiceSpec extends Specification {
             new ChatPromptResourceService(),
             'llama3.1'
         )
-        String sessionId = service.createSession(new org.maurodata.api.chat.CreateSessionRequest(workspaceId: 'default', title: 'Existing title')).id
+        String sessionId = service.createSession(new org.maurodata.plugin.chat.api.chat.CreateSessionRequest(workspaceId: 'default', title: 'Existing title')).id
 
         when:
         Flux.from(service.sendMessage(sessionId, new SendMessageRequest(messageId: 'user-1', content: 'Find diabetes'))).collectList().block()
@@ -131,7 +131,7 @@ class ChatSessionsApiServiceSpec extends Specification {
         providerRequestMessages[0].metadata.source == 'persona'
         providerRequestMessages[0].metadata.replayMode == 'substitute'
         providerRequestMessages[0].metadata.substitutionKey == 'persona:active'
-        providerRequestMessages[1].content.startsWith('Routing index for available Mauro assistance.')
+        providerRequestMessages[1].content.startsWith('# Routing index')
         providerRequestMessages[1].metadata.source == 'routing'
         providerRequestMessages[1].metadata.replayMode == 'substitute'
         providerRequestMessages[1].metadata.substitutionKey == 'routing:index'
@@ -175,7 +175,7 @@ class ChatSessionsApiServiceSpec extends Specification {
             new ChatPromptResourceService(),
             'llama3.1'
         )
-        String sessionId = service.createSession(new org.maurodata.api.chat.CreateSessionRequest(workspaceId: 'default', title: 'Existing title')).id
+        String sessionId = service.createSession(new org.maurodata.plugin.chat.api.chat.CreateSessionRequest(workspaceId: 'default', title: 'Existing title')).id
 
         when:
         Flux.from(service.sendMessage(sessionId, new SendMessageRequest(messageId: 'user-1', content: 'First question'))).collectList().block()
@@ -184,11 +184,11 @@ class ChatSessionsApiServiceSpec extends Specification {
         then:
         providerRequests.size() == 2
         providerRequests[0]*.role == ['system', 'user']
-        providerRequests[0][0].content.startsWith('Routing index for available Mauro assistance.')
+        providerRequests[0][0].content.startsWith('# Routing index')
         providerRequests[0][1] == [role: 'user', content: 'First question']
 
         providerRequests[1]*.role == ['system', 'user', 'assistant', 'user']
-        providerRequests[1][0].content.startsWith('Routing index for available Mauro assistance.')
+        providerRequests[1][0].content.startsWith('# Routing index')
         providerRequests[1][1] == [role: 'user', content: 'First question']
         providerRequests[1][2] == [role: 'assistant', content: 'first answer']
         providerRequests[1][3] == [role: 'user', content: 'Second question']
@@ -223,7 +223,7 @@ class ChatSessionsApiServiceSpec extends Specification {
             new ChatPromptResourceService(),
             'llama3.1'
         )
-        String sessionId = service.createSession(new org.maurodata.api.chat.CreateSessionRequest(workspaceId: 'default')).id
+        String sessionId = service.createSession(new org.maurodata.plugin.chat.api.chat.CreateSessionRequest(workspaceId: 'default')).id
 
         when:
         List events = Flux.from(service.sendMessage(sessionId, new SendMessageRequest(messageId: 'user-1', content: 'Find forms about diabetes'))).collectList().block()
@@ -264,7 +264,7 @@ class ChatSessionsApiServiceSpec extends Specification {
             new ChatPromptResourceService(),
             'llama3.1'
         )
-        String sessionId = service.createSession(new org.maurodata.api.chat.CreateSessionRequest(workspaceId: 'default')).id
+        String sessionId = service.createSession(new org.maurodata.plugin.chat.api.chat.CreateSessionRequest(workspaceId: 'default')).id
 
         when:
         service.updateSession(sessionId, new UpdateSessionRequest(title: 'My explicit title'))

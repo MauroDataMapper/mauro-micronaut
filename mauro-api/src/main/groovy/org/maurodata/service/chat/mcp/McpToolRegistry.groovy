@@ -2,7 +2,7 @@ package org.maurodata.service.chat.mcp
 
 import groovy.transform.CompileStatic
 import jakarta.inject.Singleton
-import org.maurodata.api.chat.McpServerDto
+import org.maurodata.plugin.chat.api.chat.McpServerDto
 
 @CompileStatic
 @Singleton

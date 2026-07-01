@@ -1,8 +1,8 @@
 package org.maurodata.service.chat.capabilities
 
 import groovy.transform.CompileStatic
-import org.maurodata.api.chat.ModelDto
-import org.maurodata.api.chat.ProviderDto
+import org.maurodata.plugin.chat.api.chat.ModelDto
+import org.maurodata.plugin.chat.api.chat.ProviderDto
 
 @CompileStatic
 interface CapabilitiesProvider {

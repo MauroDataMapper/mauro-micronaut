@@ -4,7 +4,7 @@ import groovy.json.JsonOutput
 import groovy.transform.CompileStatic
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
-import org.maurodata.api.chat.AffordanceDto
+import org.maurodata.plugin.chat.api.chat.AffordanceDto
 import org.maurodata.service.chat.mcp.McpHttpResourceRegistry
 
 @CompileStatic

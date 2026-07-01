@@ -4,9 +4,9 @@ import groovy.transform.CompileStatic
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.exceptions.HttpStatusException
 import jakarta.inject.Singleton
-import org.maurodata.api.chat.ProviderKeyStatusDto
-import org.maurodata.api.chat.ProviderDto
-import org.maurodata.api.chat.UpsertProviderKeyRequest
+import org.maurodata.plugin.chat.api.chat.ProviderKeyStatusDto
+import org.maurodata.plugin.chat.api.chat.ProviderDto
+import org.maurodata.plugin.chat.api.chat.UpsertProviderKeyRequest
 import org.maurodata.service.chat.capabilities.CapabilitiesProvider
 
 import java.time.Instant

@@ -192,8 +192,7 @@ class ResultGuidanceService {
 
     private static List<ResultInterpretation> defaultInterpretations() {
         [
-            new FailedHttpResourceInterpretation(),
-            new DataModelResourceInterpretation()
+            new FailedHttpResourceInterpretation()
         ] as List<ResultInterpretation>
     }
 

@@ -12,10 +12,10 @@ import io.micronaut.http.annotation.Status
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
 import jakarta.validation.Valid
-import org.maurodata.api.Paths
-import org.maurodata.api.chat.ChatMcpApi
-import org.maurodata.api.chat.McpServerDto
-import org.maurodata.api.chat.UpsertMcpServerRequest
+import org.maurodata.plugin.chat.api.Paths
+import org.maurodata.plugin.chat.api.chat.ChatMcpApi
+import org.maurodata.plugin.chat.api.chat.McpServerDto
+import org.maurodata.plugin.chat.api.chat.UpsertMcpServerRequest
 import org.maurodata.audit.Audit
 import org.maurodata.service.chat.ChatMcpService
 

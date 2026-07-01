@@ -1,6 +1,6 @@
 package org.maurodata.service.chat
 
-import org.maurodata.api.chat.SkillSummaryDto
+import org.maurodata.plugin.chat.api.chat.SkillSummaryDto
 
 interface ChatSkillService {
     List<SkillSummaryDto> listSkills()

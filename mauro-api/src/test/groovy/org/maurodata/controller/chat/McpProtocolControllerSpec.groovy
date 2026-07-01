@@ -3,7 +3,7 @@ package org.maurodata.controller.chat
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpRequest
 import io.micronaut.http.HttpStatus
-import org.maurodata.api.chat.SkillSummaryDto
+import org.maurodata.plugin.chat.api.chat.SkillSummaryDto
 import org.maurodata.service.chat.ChatSkillDefinition
 import org.maurodata.service.chat.ChatSkillService
 import org.maurodata.service.chat.mcp.ExternalMcpRegistry

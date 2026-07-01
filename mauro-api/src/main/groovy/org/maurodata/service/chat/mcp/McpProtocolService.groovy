@@ -8,8 +8,8 @@ import io.micronaut.http.HttpRequest
 import io.micronaut.runtime.server.EmbeddedServer
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
-import org.maurodata.api.chat.McpServerDto
-import org.maurodata.api.chat.ToolSummaryDto
+import org.maurodata.plugin.chat.api.chat.McpServerDto
+import org.maurodata.plugin.chat.api.chat.ToolSummaryDto
 import org.maurodata.service.chat.ChatSkillDefinition
 import org.maurodata.service.chat.ChatSkillService
 import org.maurodata.service.chat.SkillRouting
