@@ -519,6 +519,9 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
         List<DataFlow> findAllBySource(DataModel dataModel) {
             ((DataFlowRepository) repository).findAllBySource(dataModel) as List<DataFlow>
         }
+        List<DataFlow> readAllBySourceIdIn(List<UUID> sourceIds) {
+            ((DataFlowRepository) repository).readAllBySourceIdIn(sourceIds)
+        }
 
         List<DataFlow> readAllBySourceIdIn(List<UUID> dataModelIds) {
             ((DataFlowRepository) repository).readAllBySourceIdIn(dataModelIds)
