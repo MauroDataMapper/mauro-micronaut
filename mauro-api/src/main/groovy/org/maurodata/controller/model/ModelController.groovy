@@ -77,6 +77,7 @@ import org.maurodata.service.core.AuthorityService
 import org.maurodata.service.plugin.PluginService
 import org.maurodata.util.exporter.ExporterUtils
 import org.maurodata.utils.importer.ImporterUtils
+import org.maurodata.visitor.common.RemoveIdVisitor
 import org.maurodata.web.ListResponse
 import org.maurodata.web.PaginationParams
 
@@ -341,6 +342,8 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         M copy = createCopyModelWithAssociations(existing, createNewVersionData)
         copy.setAssociations()
 
+        RemoveIdVisitor removeIdVisitor = new RemoveIdVisitor()
+        copy.accept(removeIdVisitor)
         M savedCopy = (M) contentsService.saveWithContent(copy, accessControlService.getUser())
         //modelContentRepository.saveWithContent(copy)
 
