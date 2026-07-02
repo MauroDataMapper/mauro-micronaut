@@ -60,7 +60,4 @@ interface DataFlowApi extends AdministeredItemApi<DataFlow, DataModel> {
     @Produces(MediaType.MULTIPART_FORM_DATA)
     @Post(Paths.DATA_FLOW_IMPORT)
     ListResponse<DataFlow> importModel(@NonNull UUID dataModelId, @Body MultipartBody body, @Nullable String namespace, @Nullable String name, @Nullable String version)
-
-    // This is the version that will be implemented by the controller
-    ListResponse<DataFlow> importModel(@NonNull UUID dataModelId, @Body io.micronaut.http.server.multipart.MultipartBody body, String namespace, String name, @Nullable String version)
 }

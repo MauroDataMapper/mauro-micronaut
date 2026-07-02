@@ -1,6 +1,5 @@
 package org.maurodata.api.terminology
 
-import io.micronaut.http.server.multipart.MultipartBody
 import org.maurodata.api.MauroApi
 import org.maurodata.api.Paths
 
@@ -10,7 +9,6 @@ import org.maurodata.domain.model.version.CreateNewVersionData
 import org.maurodata.domain.model.version.FinaliseData
 import org.maurodata.domain.terminology.CodeSet
 import org.maurodata.domain.terminology.Term
-import org.maurodata.domain.terminology.Terminology
 import org.maurodata.web.ListResponse
 import org.maurodata.web.PaginationParams
 
@@ -22,6 +20,7 @@ import io.micronaut.http.annotation.Delete
 import io.micronaut.http.annotation.Get
 import io.micronaut.http.annotation.Post
 import io.micronaut.http.annotation.Put
+import io.micronaut.http.client.multipart.MultipartBody
 
 @MauroApi
 interface CodeSetApi extends ModelApi<CodeSet> {

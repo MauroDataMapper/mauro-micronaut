@@ -18,6 +18,8 @@
 package org.maurodata.plugin.importer
 
 import groovy.transform.CompileStatic
+import java.io.ByteArrayInputStream
+import java.io.InputStream
 
 /**
  * @since 06/03/2018
@@ -26,6 +28,7 @@ import groovy.transform.CompileStatic
 class FileParameter {
 
     byte[] fileContents
+    InputStream inputStream
     String fileName
     String fileType
     FileParameter() {
@@ -35,23 +38,36 @@ class FileParameter {
     FileParameter(String fileName, String fileType, byte[] fileContents) {
         this.fileName = fileName
         this.fileType = fileType
-        this.fileContents = Arrays.copyOf(fileContents, fileContents.size())
+        this.fileContents = fileContents
+    }
+
+    FileParameter(String fileName, String fileType, InputStream inputStream) {
+        this.fileName = fileName
+        this.fileType = fileType
+        this.inputStream = inputStream
     }
 
     byte[] getFileContents() {
-        Arrays.copyOf(fileContents, fileContents.size())
+        if (fileContents == null && inputStream != null) {
+            fileContents = inputStream.bytes
+            inputStream = null
+        }
+        fileContents
     }
 
     void setFileContents(byte[] fileContents) {
-        this.fileContents = Arrays.copyOf(fileContents, fileContents.size())
+        this.fileContents = fileContents
+        this.inputStream = null
     }
 
-    //void setFileContents(ByteArrayInputStream fileContents) {
-    //    setFileContents(fileContents.readAllBytes())
-    //}
-
     InputStream getInputStream() {
-        new ByteArrayInputStream(fileContents)
+        if (inputStream != null) {
+            return inputStream
+        }
+        if (fileContents != null) {
+            return new ByteArrayInputStream(fileContents)
+        }
+        InputStream.nullInputStream()
     }
 
 

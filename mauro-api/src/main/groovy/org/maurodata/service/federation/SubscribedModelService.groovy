@@ -16,6 +16,7 @@ import org.maurodata.domain.model.Model
 import org.maurodata.importdata.ImportMetadata
 import org.maurodata.persistence.ContentsService
 import org.maurodata.persistence.cache.ItemCacheableRepository.SubscribedModelCacheableRepository
+import org.maurodata.persistence.cache.ModelCacheableRepository
 import org.maurodata.persistence.service.RepositoryService
 import org.maurodata.plugin.MauroPluginService
 import org.maurodata.plugin.exporter.ModelExporterPlugin
@@ -141,8 +142,10 @@ class SubscribedModelService {
     }
 
     void checkModelLabelAndVersionNotAlreadyImported(Model model) {
-        Model existing = repositoryService.modelCacheableRepositories.find {it.domainType == model.domainType}
-            .readByLabelAndModelVersion(model.label, model.modelVersion)
+        ModelCacheableRepository repository = repositoryService.modelCacheableRepositories.find {it.domainType == model.domainType}
+        Model existing = model.modelVersion ?
+            repository.readByLabelAndModelVersion(model.label, model.modelVersion) :
+            repository.readByLabelAndModelVersionIsNull(model.label)
         if (existing != null) {
             ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "Model already exists with label $model.label and model version $model.modelVersion")
         }
@@ -154,4 +157,3 @@ class SubscribedModelService {
     }
 
 }
-

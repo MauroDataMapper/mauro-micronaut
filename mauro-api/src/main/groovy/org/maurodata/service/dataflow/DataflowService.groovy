@@ -4,7 +4,6 @@ import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpStatus
-import io.micronaut.http.annotation.Body
 import io.micronaut.http.server.multipart.MultipartBody
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
@@ -24,7 +23,6 @@ import org.maurodata.persistence.cache.ModelCacheableRepository
 import org.maurodata.plugin.MauroPluginService
 import org.maurodata.plugin.exporter.ModelItemExporterPlugin
 import org.maurodata.plugin.importer.DataFlowFileImportParameters
-import org.maurodata.plugin.importer.ImportParameters
 import org.maurodata.plugin.importer.ModelItemImporterPlugin
 import org.maurodata.security.AccessControlService
 import org.maurodata.service.core.AdministeredItemService
@@ -65,33 +63,34 @@ class DataflowService extends AdministeredItemService {
         mauroPlugin
     }
 
-    List<ModelItem> importModelItem(Class aClazz, DataModel target, @Body MultipartBody body, String namespace, String name, @Nullable String version) {
+    List<ModelItem> importModelItem(Class aClazz, DataModel target, MultipartBody body, String namespace, String name, @Nullable String version) {
         ModelItemImporterPlugin mauroPlugin = mauroPluginService.getPlugin(aClazz, namespace, name, version) as ModelItemImporterPlugin
         PluginService.handlePluginNotFound(mauroPlugin, namespace, name)
 
-        DataFlowFileImportParameters importParameters = (DataFlowFileImportParameters) importerUtils.readFromMultipartFormBody(body as MultipartBody, mauroPlugin.importParametersClass())
+        List<DataFlowFileImportParameters> parametersList = importerUtils.readListFromMultipartFormBody(body, DataFlowFileImportParameters)
+        DataFlowFileImportParameters firstParameters = parametersList.first()
 
-        if (importParameters.folderId == null) {
-            ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, importParameters.folderId, "Please choose the folder into which the Model/s should be imported.")
+        if (firstParameters.folderId == null) {
+            ErrorHandler.handleErrorOnNullObject(HttpStatus.UNPROCESSABLE_ENTITY, firstParameters.folderId, "Please choose the folder into which the Model/s should be imported.")
         }
-        if (importParameters.sourceDataModelId == null) {
-            ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, importParameters.sourceDataModelId,
+        if (firstParameters.sourceDataModelId == null) {
+            ErrorHandler.handleErrorOnNullObject(HttpStatus.UNPROCESSABLE_ENTITY, firstParameters.sourceDataModelId,
                                                  "Please choose the source dataModel into which the DataFlow ModelItem/s should be imported.")
         }
-        List<ModelItem> imported = (List<ModelItem>) mauroPlugin.importModelItem(importParameters)
+        List<ModelItem> imported = (List<ModelItem>) mauroPlugin.importModelItem(parametersList)
 
         pathRepository.readParentItems(target)
         target.updatePath()
 
-        DataModel source = dataModelRepository.loadWithContent(importParameters.sourceDataModelId)
-        ErrorHandler.handleErrorOnNullObject(HttpStatus.BAD_REQUEST, source, "Datamodel with id $importParameters.sourceDataModelId not found")
+        DataModel source = dataModelRepository.loadWithContent(firstParameters.sourceDataModelId)
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.BAD_REQUEST, source, "Datamodel with id $firstParameters.sourceDataModelId not found")
         accessControlService.checkRole(Role.EDITOR, source)
 
         pathRepository.readParentItems(source)
         source.updatePath()
 
-        Folder folder = folderRepository.readById(importParameters.folderId)
-        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, folder, "Folder with id $importParameters.folderId not found")
+        Folder folder = folderRepository.readById(firstParameters.folderId)
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, folder, "Folder with id $firstParameters.folderId not found")
         accessControlService.checkRole(Role.EDITOR, folder)
 
         pathRepository.readParentItems(folder)

@@ -108,9 +108,9 @@ class DataModelJsonImportExportIntegrationSpec extends CommonDataSpec {
 
         and:
         MultipartBody importRequest = MultipartBody.builder()
-                .addPart('folderId', folderId.toString())
-                .addPart('importFile', 'file.json', MediaType.APPLICATION_JSON_TYPE, response.body())
-                .build()
+            .addPart('folderId', folderId.toString())
+            .addPart('importFile', 'file.json', MediaType.APPLICATION_JSON_TYPE, response.body())
+            .build()
         when:
         ListResponse<DataModel> dataModelResponse = dataModelApi.importModel(importRequest, 'org.maurodata.plugin.importer.json', 'JsonDataModelImporterPlugin', '4.0.0')
 
@@ -162,9 +162,9 @@ class DataModelJsonImportExportIntegrationSpec extends CommonDataSpec {
 
 
         MultipartBody importRequest = MultipartBody.builder()
-                .addPart('folderId', folderId.toString())
-                .addPart('importFile', 'file.json', MediaType.APPLICATION_JSON_TYPE, payload)
-                .build()
+            .addPart('folderId', folderId.toString())
+            .addPart('importFile', 'file.json', MediaType.APPLICATION_JSON_TYPE, payload)
+            .build()
 
         ListResponse<DataModel> response = dataModelApi.importModel(importRequest, 'org.maurodata.plugin.importer.json', 'JsonDataModelImporterPlugin', '4.0.0')
         response.items[0].id

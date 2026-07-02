@@ -38,9 +38,6 @@ interface ModelApi<M extends Model> extends AdministeredItemApi<M, Folder> {
 
     ListResponse<M> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version)
 
-    // To be implemented by the controller
-    ListResponse<M> importModel(@Body io.micronaut.http.server.multipart.MultipartBody body, String namespace, String name, @Nullable String version)
-
     M allowReadByAuthenticated(UUID id)
 
     HttpResponse revokeReadByAuthenticated(UUID id)

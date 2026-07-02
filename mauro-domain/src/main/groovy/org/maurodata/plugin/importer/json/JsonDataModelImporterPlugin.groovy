@@ -29,8 +29,14 @@ class JsonDataModelImporterPlugin implements DataModelImporterPlugin<FileImportP
     @Override
     List<DataModel> importDomain(FileImportParameters params) {
         log.info '** start importModel **'
-        ExportModel importModel = objectMapper.readValue(params.importFile.fileContents, ExportModel)
-        log.info '*** imported JSON model ***'
+        long start = System.nanoTime()
+        if (!params.importFile) {
+            ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, 'Import file is required')
+        }
+        ExportModel importModel = params.importFile.inputStream.withCloseable {InputStream inputStream ->
+            objectMapper.readValue(inputStream, ExportModel)
+        }
+        log.info '*** imported JSON model in {} ms ***', (System.nanoTime() - start).intdiv(1000000L)
         if (!importModel.dataModel && !importModel.dataModels) {
             ErrorHandler.handleError(HttpStatus.BAD_REQUEST, 'Cannot import JSON as datamodel/s not present')
         }

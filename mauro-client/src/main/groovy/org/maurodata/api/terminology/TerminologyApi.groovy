@@ -75,10 +75,6 @@ interface TerminologyApi extends ModelApi<Terminology> {
     @Post(Paths.TERMINOLOGY_IMPORT)
     ListResponse<Terminology> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version)
 
-    // This is the version that will be implemented by the controller
-    ListResponse<Terminology> importModel(@Body io.micronaut.http.server.multipart.MultipartBody body, String namespace, String name, @Nullable String version)
-
-
     /*
     @Transactional
     @Consumes(MediaType.MULTIPART_FORM_DATA)

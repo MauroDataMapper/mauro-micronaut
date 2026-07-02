@@ -16,6 +16,8 @@ import org.maurodata.plugin.JsonPluginConstants
 import org.maurodata.plugin.importer.FileImportParameters
 import org.maurodata.plugin.importer.FolderImporterPlugin
 
+import java.util.concurrent.TimeUnit
+
 @Slf4j
 @Singleton
 @CompileStatic
@@ -34,11 +36,15 @@ class JsonFolderImporterPlugin implements FolderImporterPlugin<FileImportParamet
     List<Folder> importDomain(FileImportParameters params) {
         log.info '** start importModel **'
 
-        JsonNode importModelTree = objectMapper.readTree(params.importFile.fileContents)
-
-        ExportModel importModel = objectMapper.treeToValue(importModelTree, ExportModel)
-        log.info '*** imported JSON model ***'
-        if (!importModel.folder && !importModel.folders){
+        long start = System.nanoTime()
+        if (!params.importFile) {
+            ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, 'Import file is required')
+        }
+        ExportModel importModel = params.importFile.inputStream.withCloseable {InputStream inputStream ->
+            objectMapper.readValue(inputStream, ExportModel)
+        }
+        log.info '*** imported JSON model in {} ms ***', TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start)
+        if (!importModel.folder && !importModel.folders) {
             ErrorHandler.handleError(HttpStatus.BAD_REQUEST, 'Cannot import JSON as folder/s not present')
         }
         if (importModel.folder) {

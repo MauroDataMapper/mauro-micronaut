@@ -172,4 +172,51 @@ class DataModelJsonImportExportSpec extends CommonDataSpec {
         copiedSummaryMetadataReport.items.size() == 1
         copiedSummaryMetadataReport.items.first().id != summaryMetadataReportId
     }
+
+    void 'import dataModel with zero files'() {
+        given:
+        ZeroFileDataModelImporterPlugin.reset()
+        UUID targetFolderId = folderApi.create(new Folder(label: 'Zero file import folder')).id
+        MultipartBody importRequest = MultipartBody.builder()
+            .addPart('folderId', targetFolderId.toString())
+            .addPart('modelName', 'Imported without file')
+            .build()
+
+        when:
+        ListResponse<DataModel> response =
+            dataModelApi.importModel(
+                importRequest,
+                'org.maurodata.datamodel',
+                'ZeroFileDataModelImporterPlugin',
+                '1.0.0')
+
+        then:
+        response.count == 1
+        response.items.first().label == 'Imported without file'
+        ZeroFileDataModelImporterPlugin.importCount == 1
+    }
+
+    void 'import dataModels with multiple files'() {
+        given:
+        MultiFileDataModelImporterPlugin.reset()
+        UUID targetFolderId = folderApi.create(new Folder(label: 'Multi file import folder')).id
+        MultipartBody importRequest = MultipartBody.builder()
+            .addPart('folderId', targetFolderId.toString())
+            .addPart('importFile', 'one.json', MediaType.APPLICATION_JSON_TYPE, '{}'.bytes)
+            .addPart('importFile', 'two.json', MediaType.APPLICATION_JSON_TYPE, '{}'.bytes)
+            .build()
+
+        when:
+        ListResponse<DataModel> response =
+            dataModelApi.importModel(
+                importRequest,
+                'org.maurodata.datamodel',
+                'MultiFileDataModelImporterPlugin',
+                '1.0.0')
+
+        then:
+        response.count == 2
+        response.items.label as Set == ['Imported one.json', 'Imported two.json'] as Set
+        MultiFileDataModelImporterPlugin.importedFileNames == ['one.json', 'two.json']
+    }
 }

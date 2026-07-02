@@ -86,9 +86,6 @@ interface DataModelApi extends ModelApi<DataModel> {
     @Post(Paths.DATA_MODEL_IMPORT)
     ListResponse<DataModel> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version)
 
-    // This is the version that will be implemented by the controller
-    ListResponse<DataModel> importModel(@Body io.micronaut.http.server.multipart.MultipartBody body, String namespace, String name, @Nullable String version)
-
     @Get(Paths.DATA_MODEL_DIFF)
     ObjectDiff diffModels(@NonNull UUID id, @NonNull UUID otherId)
 
