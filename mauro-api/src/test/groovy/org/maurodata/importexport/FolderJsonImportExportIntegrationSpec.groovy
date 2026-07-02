@@ -196,9 +196,9 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
 
 
         MultipartBody importRequest = MultipartBody.builder()
-                .addPart('folderId', folderId.toString())
-                .addPart('importFile', 'file.json', MediaType.APPLICATION_JSON_TYPE, exportResponse.body())
-                .build()
+            .addPart('folderId', folderId.toString())
+            .addPart('importFile', 'file.json', MediaType.APPLICATION_JSON_TYPE, exportResponse.body())
+            .build()
 
         when:
         ListResponse<Folder> response = folderApi.importModel(importRequest, 'org.maurodata.plugin.importer.json', 'JsonFolderImporterPlugin', '4.0.0')
@@ -415,9 +415,9 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
         HttpResponse<byte[]> exportResponse = folderApi.exportModel(folderId, 'org.maurodata.plugin.exporter.json', 'JsonFolderExporterPlugin', '4.0.0')
 
         MultipartBody importRequest = MultipartBody.builder()
-                .addPart('folderId', childFolderId.toString())
-                .addPart('importFile', 'file.json', MediaType.APPLICATION_JSON_TYPE, exportResponse.body())
-                .build()
+            .addPart('folderId', childFolderId.toString())
+            .addPart('importFile', 'file.json', MediaType.APPLICATION_JSON_TYPE, exportResponse.body())
+            .build()
 
         when:
         ListResponse<Folder> response = folderApi.importModel(importRequest, 'org.maurodata.plugin.importer.json', 'JsonFolderImporterPlugin', '4.0.0')

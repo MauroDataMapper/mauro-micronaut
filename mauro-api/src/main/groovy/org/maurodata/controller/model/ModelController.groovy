@@ -412,16 +412,19 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         ModelImporterPlugin mauroPlugin = mauroPluginService.getPlugin(ModelImporterPlugin, namespace, name, version)
         PluginService.handlePluginNotFound(mauroPlugin, namespace, name)
 
-        ImportParameters importParameters = importerUtils.readFromMultipartFormBody(body, mauroPlugin.importParametersClass())
+        List<ImportParameters> parametersList = importerUtils.readListFromMultipartFormBody(body, mauroPlugin.importParametersClass())
+        ImportParameters firstParameters = parametersList.first()
 
         Folder folder = null
-        if (importParameters.folderId != null) {
-            folder = folderRepository.readById(importParameters.folderId)
-        } else if( !(mauroPlugin instanceof FolderImporterPlugin)) { // folderId is null and plugin is not a folder import
-            ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, importParameters.folderId, "Please choose the folder into which the Model/s should be imported.")
+        if (firstParameters.folderId != null) {
+            folder = folderRepository.readById(firstParameters.folderId)
+        } else if (!(mauroPlugin instanceof FolderImporterPlugin)) {
+            // folderId is null and plugin is not a folder import
+            ErrorHandler
+                .handleErrorOnNullObject(HttpStatus.UNPROCESSABLE_ENTITY, firstParameters.folderId, "Please choose the folder into which the Model/s should be imported.")
         }
 
-        List<M> imported = (List<M>) mauroPlugin.importModels(importParameters)
+        List<M> imported = (List<M>) mauroPlugin.importModels(parametersList)
 
         accessControlService.checkRole(Role.EDITOR, folder)
         List<M> saved = imported.collect { M imp ->

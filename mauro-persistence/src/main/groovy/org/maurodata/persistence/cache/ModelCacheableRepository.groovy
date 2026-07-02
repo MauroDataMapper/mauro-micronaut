@@ -68,6 +68,11 @@ class ModelCacheableRepository<M extends Model> extends AdministeredItemCacheabl
         repository.readByLabelAndModelVersion(label, modelVersion)
     }
 
+    @Override
+    M readByLabelAndModelVersionIsNull(String label) {
+        repository.readByLabelAndModelVersionIsNull(label)
+    }
+
     List<M> findAllByParentAndPathIdentifier(UUID item, String pathIdentifier) {
         repository.findAllByParentAndPathIdentifier(item,  pathIdentifier)
     }

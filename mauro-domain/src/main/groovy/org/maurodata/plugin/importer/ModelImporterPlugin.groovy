@@ -16,6 +16,12 @@ trait ModelImporterPlugin <D extends Model, P extends ImportParameters> extends 
 
     abstract List<D> importDomain(P params)
 
+    List<D> importDomain(List<P> paramsList) {
+        paramsList.collectMany {P params ->
+            importDomain(params)
+        } as List<D>
+    }
+
     Boolean getCanImportMultipleDomains() {
         true
     }
@@ -39,7 +45,11 @@ trait ModelImporterPlugin <D extends Model, P extends ImportParameters> extends 
     }
 
     List<D> importModels(P parameters) {
-        List<D> imported = importDomain(parameters)
+        importModels([parameters])
+    }
+
+    List<D> importModels(List<P> parametersList) {
+        List<D> imported = importDomain(parametersList)
         imported.each { importedModel ->
             importedModel.setAssociations()
             if (importedModel.modelType == Terminology.class.simpleName){

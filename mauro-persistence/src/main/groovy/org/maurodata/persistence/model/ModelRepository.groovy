@@ -39,6 +39,9 @@ trait ModelRepository<M extends Model> implements AdministeredItemRepository<M> 
     @Nullable
     abstract M readByLabelAndModelVersion(String label, ModelVersion modelVersion)
 
+    @Nullable
+    abstract M readByLabelAndModelVersionIsNull(String label)
+
     abstract Boolean handles(String domainType)
 
 

@@ -72,9 +72,6 @@ interface FolderApi extends ModelApi<Folder> {
     @Post(Paths.FOLDER_IMPORT)
     ListResponse<Folder> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version)
 
-    // This is the version that will be implemented by the controller
-    ListResponse<Folder> importModel(@Body io.micronaut.http.server.multipart.MultipartBody body, String namespace, String name, @Nullable String version)
-
     @Get(Paths.FOLDER_DOI)
     Map doi(UUID id)
 

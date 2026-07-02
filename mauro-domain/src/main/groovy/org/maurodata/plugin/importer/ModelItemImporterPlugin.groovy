@@ -15,6 +15,12 @@ trait ModelItemImporterPlugin<D extends ModelItem, P extends ImportParameters> e
 
     abstract List<D> importDomain(P params)
 
+    List<D> importDomain(List<P> paramsList) {
+        paramsList.collectMany {P params ->
+            importDomain(params)
+        } as List<D>
+    }
+
     Boolean getCanImportMultipleDomains() {
         true
     }
@@ -38,7 +44,11 @@ trait ModelItemImporterPlugin<D extends ModelItem, P extends ImportParameters> e
     }
 
     List<D> importModelItem(P parameters) {
-        List<D> imported = importDomain(parameters)
+        importModelItem([parameters])
+    }
+
+    List<D> importModelItem(List<P> parametersList) {
+        List<D> imported = importDomain(parametersList)
         imported.each { importedModelItem ->
 
             log.info '* start updateCreationProperties *'

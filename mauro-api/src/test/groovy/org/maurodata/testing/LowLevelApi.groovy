@@ -147,9 +147,9 @@ class LowLevelApi {
             dataModel dataModelToImport
         }
         MultipartBody importRequest = MultipartBody.builder()
-                .addPart('folderId', folder.id.toString())
-                .addPart('importFile', 'file.json', MediaType.APPLICATION_JSON_TYPE, objectMapper.writeValueAsBytes(exportModel))
-                .build()
+            .addPart('folderId', folder.id.toString())
+            .addPart('importFile', 'file.json', MediaType.APPLICATION_JSON_TYPE, objectMapper.writeValueAsBytes(exportModel))
+            .build()
         String namespace = jsonDataModelImporterPlugin.namespace
         String name = jsonDataModelImporterPlugin.name
         String version = jsonDataModelImporterPlugin.version
@@ -163,9 +163,9 @@ class LowLevelApi {
             terminology terminologyToImport
         }
         MultipartBody importRequest = MultipartBody.builder()
-                .addPart('folderId', folder.id.toString())
-                .addPart('importFile', 'file.json', MediaType.APPLICATION_JSON_TYPE, objectMapper.writeValueAsBytes(exportModel))
-                .build()
+            .addPart('folderId', folder.id.toString())
+            .addPart('importFile', 'file.json', MediaType.APPLICATION_JSON_TYPE, objectMapper.writeValueAsBytes(exportModel))
+            .build()
         String namespace = jsonTerminologyImporterPlugin.namespace
         String name = jsonTerminologyImporterPlugin.name
         String version = jsonTerminologyImporterPlugin.version
