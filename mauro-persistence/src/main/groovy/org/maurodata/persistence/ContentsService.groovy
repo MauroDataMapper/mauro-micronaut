@@ -9,6 +9,7 @@ import org.maurodata.domain.security.CatalogueUser
 import org.maurodata.persistence.shredder.ShredVisitor
 import org.maurodata.persistence.shredder.ShreddedContent
 import org.maurodata.visitor.GenericDomainTraversalVisitor
+import org.maurodata.visitor.common.RemoveIdVisitor
 import org.maurodata.visitor.common.SetCreatePropertiesVisitor
 
 @Slf4j
@@ -26,21 +27,12 @@ class ContentsService {
         contentHandlerProvider.get()
     }
 
-    AdministeredItem importWithContent(AdministeredItem item, CatalogueUser catalogueUser = null) {
-        ContentHandler contentHandler = applicationContext.createBean(ContentHandler)
-        item.setAssociations()
-        contentHandler.shred(item)
-        contentHandler.setCreateProperties(catalogueUser, true)
-        contentHandler.saveWithContent()
+    AdministeredItem saveWithContent(AdministeredItem item, CatalogueUser catalogueUser = null, boolean resetIds = false) {
+        contentHandler.saveWithContent(shred(item, catalogueUser, true, resetIds))
         return item
     }
 
-    AdministeredItem saveWithContent(AdministeredItem item, CatalogueUser catalogueUser = null) {
-        contentHandler.saveWithContent(shred(item, catalogueUser, true))
-        return item
-    }
-
-    DataModel saveContentOnly(DataModel dataModel, CatalogueUser catalogueUser = null) {
+    DataModel saveContentOnly(DataModel dataModel, CatalogueUser catalogueUser = null, boolean resetIds = false) {
         ShreddedContent shreddedContent = shred(dataModel, catalogueUser, true)
         shreddedContent.dataModels = []
         contentHandler.saveWithContent(shreddedContent)
@@ -57,10 +49,16 @@ class ContentsService {
         return administeredItem
     }
 
-    static ShreddedContent shred(AdministeredItem item, CatalogueUser catalogueUser = null, boolean setCreateProperties = false) {
+    static ShreddedContent shred(AdministeredItem item, CatalogueUser catalogueUser = null, boolean setCreateProperties = false, boolean resetIds = false) {
         item.setAssociations()
         ShredVisitor shredVisitor = new ShredVisitor()
-        GenericDomainTraversalVisitor visitor = setCreateProperties ? (new SetCreatePropertiesVisitor(catalogueUser) + shredVisitor) : shredVisitor
+        GenericDomainTraversalVisitor visitor = shredVisitor
+        if(setCreateProperties) {
+            visitor += new SetCreatePropertiesVisitor(catalogueUser)
+        }
+        if(resetIds) {
+            visitor += new RemoveIdVisitor()
+        }
         item.accept(visitor)
         return shredVisitor.shreddedContent
     }

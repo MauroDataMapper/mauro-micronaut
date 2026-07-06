@@ -172,7 +172,7 @@ class DataFlowController extends AdministeredItemController<DataFlow, DataModel>
         List<DataFlow> saved = modelItems.each {imp ->
             log.info '** about to saveWithContentBatched... dataFlow **'
 
-            contentsService.saveWithContent(imp as DataFlow)
+            contentsService.saveWithContent(imp as DataFlow, accessControlService.user, false)
             log.info '** finished saveWithContentBatched ** dataFlow'
         } as List<DataFlow>
 

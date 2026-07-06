@@ -344,7 +344,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
 
         RemoveIdVisitor removeIdVisitor = new RemoveIdVisitor()
         copy.accept(removeIdVisitor)
-        M savedCopy = (M) contentsService.saveWithContent(copy, accessControlService.getUser())
+        M savedCopy = (M) contentsService.saveWithContent(copy, accessControlService.getUser(), true)
         //modelContentRepository.saveWithContent(copy)
 
         final VersionLink versionLink = new VersionLink(versionLinkType: VersionLink.NEW_MODEL_VERSION_OF)
@@ -431,8 +431,8 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
             imp.folder = folder
             log.info '** about to importWithContentBatched... **'
             //updateCreationProperties(imp)
-            M savedImported = (M) contentsService.importWithContent(imp, accessControlService.getUser())
-            log.info '** finished importWithContentBatched **'
+            M savedImported = (M) contentsService.saveWithContent(imp, accessControlService.getUser(), true)
+            log.info '** finished saveWithContentBatched **'
             savedImported
         }
         List<M> smallerResponse = saved.collect { model ->

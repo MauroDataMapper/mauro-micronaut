@@ -207,8 +207,11 @@ class ShreddedContent {
             dataClasses[depth].each {dataClass ->
                 if(dataClass.parentDataClass && allItems[dataClass.parentDataClass.id] ) {
                     ((DataClass) allItems[dataClass.parentDataClass.id]).dataClasses.add(dataClass)
+                    DataModel parent = (DataModel) allItems[((DataClass) allItems[dataClass.parentDataClass.id]).dataModel.id]
+                    parent.allDataClasses.add(dataClass)
                 } else if(allItems[dataClass.dataModel.id]) {
                     ((DataModel) allItems[dataClass.dataModel.id]).dataClasses.add(dataClass)
+                    ((DataModel) allItems[dataClass.dataModel.id]).allDataClasses.add(dataClass)
                 }
             }
         }
