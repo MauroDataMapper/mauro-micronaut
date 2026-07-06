@@ -289,7 +289,7 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
         unsetDataElementIds(toDataClass)
 
         try {
-            contentsService.saveContentOnly(toDataModel)
+            contentsService.saveContentOnly(toDataModel, accessControlService.user, true)
         } catch (Throwable th) {
             th.printStackTrace()
             throw th
@@ -357,7 +357,7 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
         unsetDataElementIds(toDataClass)
 
         try {
-            contentsService.saveContentOnly(toDataModel)
+            contentsService.saveContentOnly(toDataModel, accessControlService.user, true)
         } catch (Throwable th) {
             th.printStackTrace()
             throw th
