@@ -7,6 +7,12 @@ import java.security.MessageDigest
 
 apply from: rootProject.file('gradle/open-api-helpers.gradle')
 
+def requireOpenApiEnabled = {
+    if (!project.ext.openApiEnabled) {
+        throw new GradleException('OpenAPI generation is disabled. Re-run with -PenableOpenApi=true to generate/normalize OpenAPI output.')
+    }
+}
+
 buildscript {
     repositories {
         mavenCentral()
@@ -23,6 +29,7 @@ tasks.register('pruneTransitiveRefs') {
     dependsOn tasks.named('normalizeAllOpenApiYaml')
 
     doLast {
+        requireOpenApiEnabled()
         def classesDir = layout.buildDirectory.dir("classes").get().asFile
 
         def swaggerFiles = fileTree(classesDir).matching {
@@ -347,6 +354,7 @@ tasks.register('normalizeOpenApiYamlWithGenerator', JavaExec) {
     }).withPropertyName('normalizedOutput')
 
     doFirst {
+        requireOpenApiEnabled()
         def selectedSpec = resolveSingleOpenApiSpec()   // strict — throws if genuinely missing
         def normalizedOutputDir = layout.buildDirectory.dir("openapi/normalized/${specStem(selectedSpec)}").get().asFile
         normalizedOutputDir.mkdirs()
@@ -371,6 +379,7 @@ tasks.register('normalizeAllOpenApiYaml') {
     dependsOn tasks.named('normalizeOpenApiYamlWithGenerator')
 
     doLast {
+        requireOpenApiEnabled()
         def selectedSpec = resolveSingleOpenApiSpec()
         def normalizedOutputDir = layout.buildDirectory.dir("openapi/normalized/${specStem(selectedSpec)}").get().asFile
 
@@ -394,11 +403,13 @@ tasks.register('normalizeAllOpenApiYaml') {
     }
 }
 
-tasks.named('processResources') {
-    dependsOn tasks.named('normalizeAllOpenApiYaml')
-}
+if (project.ext.openApiEnabled) {
+    tasks.named('processResources') {
+        dependsOn tasks.named('normalizeAllOpenApiYaml')
+    }
 
-// Make processResources depend on pruneTransitiveRefs (so packaging uses pruned YAMLs)
-tasks.named('processResources') {
-    dependsOn tasks.named('pruneTransitiveRefs')
+    // Make processResources depend on pruneTransitiveRefs (so packaging uses pruned YAMLs)
+    tasks.named('processResources') {
+        dependsOn tasks.named('pruneTransitiveRefs')
+    }
 }
