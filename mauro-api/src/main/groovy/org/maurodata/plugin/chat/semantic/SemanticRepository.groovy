@@ -5,9 +5,12 @@ import org.maurodata.service.search.*
 import org.maurodata.service.semantic.*
 
 import com.zaxxer.hikari.HikariDataSource
+import groovy.json.JsonOutput
+import groovy.json.JsonSlurper
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.context.annotation.Value
+import io.micronaut.data.connection.annotation.Connectable
 import jakarta.inject.Singleton
 import org.maurodata.domain.search.dto.SearchResultsDTO
 
@@ -16,6 +19,7 @@ import java.security.MessageDigest
 import java.sql.Connection
 import java.sql.PreparedStatement
 import java.sql.ResultSet
+import java.sql.SQLException
 import java.sql.Statement
 import java.sql.Timestamp
 import java.time.Instant
@@ -23,6 +27,7 @@ import java.time.Instant
 @CompileStatic
 @Singleton
 @Slf4j
+@Connectable
 class SemanticRepository {
 
     private final DataSource dataSource
@@ -155,6 +160,956 @@ class SemanticRepository {
                     ] as Map<String, Object>)
                 }
                 indexes
+            }
+        }
+    }
+
+    List<Map<String, Object>> corpora(boolean includeInternal = false) {
+        String visibilityClause = includeInternal ? '' : 'WHERE api_visible = TRUE'
+        String sql = """
+            SELECT id,
+                   name,
+                   source,
+                   description,
+                   enabled,
+                   origin,
+                   api_visible,
+                   api_manageable,
+                   chunk_delete_api_enabled,
+                   created_at,
+                   updated_at
+            FROM semantic.semantic_corpus
+            ${visibilityClause}
+            ORDER BY name
+        """
+        try (Connection connection = dataSource.connection;
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            try (ResultSet rs = statement.executeQuery()) {
+                List<Map<String, Object>> rows = new ArrayList<Map<String, Object>>()
+                while (rs.next()) {
+                    rows.add(corpusMap(rs))
+                }
+                rows
+            }
+        }
+    }
+
+    Map<String, Object> createCorpus(Map<String, Object> request) {
+        try (Connection connection = dataSource.connection;
+             PreparedStatement statement = connection.prepareStatement('''
+                 INSERT INTO semantic.semantic_corpus (
+                     name,
+                     source,
+                     description,
+                     enabled,
+                     origin,
+                     api_visible,
+                     api_manageable,
+                     chunk_delete_api_enabled
+                 )
+                 VALUES (?, ?, ?, ?, 'api', TRUE, TRUE, ?)
+                 ON CONFLICT (name) DO UPDATE
+                 SET source = EXCLUDED.source,
+                     description = EXCLUDED.description,
+                     enabled = EXCLUDED.enabled,
+                     updated_at = now()
+                 WHERE semantic_corpus.api_manageable = TRUE
+                 RETURNING id,
+                           name,
+                           source,
+                           description,
+                           enabled,
+                           origin,
+                           api_visible,
+                           api_manageable,
+                           chunk_delete_api_enabled,
+                           created_at,
+                           updated_at
+             ''')) {
+            statement.setString(1, requiredString(request, 'name'))
+            statement.setString(2, stringValue(request, 'source') ?: 'api')
+            statement.setString(3, stringValue(request, 'description'))
+            statement.setBoolean(4, booleanValue(request, 'enabled', true))
+            statement.setBoolean(5, booleanValue(request, 'chunkDeleteApiEnabled', false))
+            try (ResultSet rs = statement.executeQuery()) {
+                if (!rs.next()) {
+                    throw new IllegalArgumentException("Semantic corpus ${stringValue(request, 'name')} is not API manageable")
+                }
+                corpusMap(rs)
+            }
+        }
+    }
+
+    List<String> apiCorpusNames() {
+        try (Connection connection = dataSource.connection;
+             PreparedStatement statement = connection.prepareStatement('''
+                 SELECT name
+                 FROM semantic.semantic_corpus
+                 WHERE enabled = TRUE
+                   AND api_visible = TRUE
+                 ORDER BY name
+             ''')) {
+            try (ResultSet rs = statement.executeQuery()) {
+                List<String> names = new ArrayList<String>()
+                while (rs.next()) {
+                    names.add(rs.getString('name'))
+                }
+                names
+            }
+        }
+    }
+
+    boolean apiCorpusVisible(String corpusName) {
+        if (corpusName == null || corpusName.trim().isEmpty()) {
+            return false
+        }
+        try (Connection connection = dataSource.connection;
+             PreparedStatement statement = connection.prepareStatement('''
+                 SELECT enabled = TRUE AND api_visible = TRUE
+                 FROM semantic.semantic_corpus
+                 WHERE name = ?
+             ''')) {
+            statement.setString(1, corpusName)
+            try (ResultSet rs = statement.executeQuery()) {
+                rs.next() && rs.getBoolean(1)
+            }
+        }
+    }
+
+    List<String> apiCorpusNamesForModelIndex(UUID mauroModelId, String requestedCorpusName = null) {
+        if (mauroModelId == null) {
+            return requestedCorpusName == null || requestedCorpusName.trim().isEmpty() ?
+                apiCorpusNames() :
+                (apiCorpusVisible(requestedCorpusName) ? [requestedCorpusName] as List<String> : Collections.<String>emptyList())
+        }
+        String corpusClause = requestedCorpusName == null || requestedCorpusName.trim().isEmpty() ? '' : 'AND c.name = ?'
+        String sql = """
+            SELECT DISTINCT c.name
+            FROM semantic.semantic_model_index mi
+                 JOIN semantic.semantic_corpus c ON c.id = mi.corpus_id
+            WHERE mi.mauro_model_id = ?
+              AND mi.enabled = TRUE
+              AND mi.status = 'READY'
+              AND c.enabled = TRUE
+              AND c.api_visible = TRUE
+              ${corpusClause}
+            ORDER BY c.name
+        """
+        try (Connection connection = dataSource.connection;
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setObject(1, mauroModelId)
+            if (requestedCorpusName != null && !requestedCorpusName.trim().isEmpty()) {
+                statement.setString(2, requestedCorpusName)
+            }
+            try (ResultSet rs = statement.executeQuery()) {
+                List<String> names = new ArrayList<String>()
+                while (rs.next()) {
+                    names.add(rs.getString('name'))
+                }
+                names
+            }
+        }
+    }
+
+    List<EmbeddingProfile> profilesForCorpora(List<String> corpusNames) {
+        if (corpusNames == null || corpusNames.isEmpty()) {
+            return Collections.<EmbeddingProfile>emptyList()
+        }
+        String placeholders = corpusNames.collect {'?'}.join(',')
+        String sql = """
+            SELECT DISTINCT profile.id,
+                            profile.name,
+                            profile.provider,
+                            profile.embedding_model,
+                            profile.dimension,
+                            profile.distance_metric,
+                            profile.description
+            FROM (
+                SELECT p.id, p.name, p.provider, p.embedding_model, p.dimension, p.distance_metric, p.description
+                FROM semantic.embedding_profile p
+                     JOIN semantic.semantic_index_profile ip ON ip.embedding_profile_id = p.id
+                     JOIN semantic.semantic_index i ON i.id = ip.semantic_index_id
+                     JOIN semantic.semantic_corpus c ON c.id = i.corpus_id
+                WHERE p.enabled = TRUE
+                  AND c.enabled = TRUE
+                  AND c.api_visible = TRUE
+                  AND c.name IN (${placeholders})
+                UNION
+                SELECT p.id, p.name, p.provider, p.embedding_model, p.dimension, p.distance_metric, p.description
+                FROM semantic.embedding_profile p
+                     JOIN semantic.semantic_model_index mi ON mi.embedding_profile_id = p.id
+                     JOIN semantic.semantic_corpus c ON c.id = mi.corpus_id
+                WHERE p.enabled = TRUE
+                  AND mi.enabled = TRUE
+                  AND mi.status = 'READY'
+                  AND c.enabled = TRUE
+                  AND c.api_visible = TRUE
+                  AND c.name IN (${placeholders})
+            ) profile
+            ORDER BY profile.name
+        """
+        try (Connection connection = dataSource.connection;
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            for (int i = 0; i < corpusNames.size(); i++) {
+                statement.setString(i + 1, corpusNames.get(i))
+            }
+            for (int i = 0; i < corpusNames.size(); i++) {
+                statement.setString(corpusNames.size() + i + 1, corpusNames.get(i))
+            }
+            try (ResultSet rs = statement.executeQuery()) {
+                List<EmbeddingProfile> profiles = new ArrayList<EmbeddingProfile>()
+                while (rs.next()) {
+                    profiles.add(profileFrom(rs))
+                }
+                profiles
+            }
+        }
+    }
+
+    Map<String, Object> indexingStatus() {
+        Map<String, Object> global = indexingControl('global')
+        Map<String, Object> autoReconcile = indexingControl('auto-reconcile')
+        [
+            enabled: Boolean.TRUE.equals(global.get('enabled')),
+            updatedAt: global.get('updatedAt'),
+            autoReconcile: Boolean.TRUE.equals(autoReconcile.get('enabled')),
+            autoReconcileUpdatedAt: autoReconcile.get('updatedAt')
+        ] as Map<String, Object>
+    }
+
+    private Map<String, Object> indexingControl(String name) {
+        try (Connection connection = dataSource.connection;
+             PreparedStatement statement = connection.prepareStatement('''
+                 SELECT enabled, updated_at
+                 FROM semantic.semantic_indexing_control
+                 WHERE name = ?
+             ''')) {
+            statement.setString(1, name)
+            try (ResultSet rs = statement.executeQuery()) {
+                if (!rs.next()) {
+                    return [enabled: false] as Map<String, Object>
+                }
+                [
+                    enabled: rs.getBoolean('enabled'),
+                    updatedAt: rs.getTimestamp('updated_at')?.toInstant()?.toString()
+                ] as Map<String, Object>
+            }
+        }
+    }
+
+    boolean indexingEnabled() {
+        Boolean.TRUE.equals(indexingStatus().get('enabled'))
+    }
+
+    boolean autoReconcileEnabled() {
+        Boolean.TRUE.equals(indexingStatus().get('autoReconcile'))
+    }
+
+    Map<String, Object> setIndexingEnabled(boolean enabled) {
+        Map<String, Object> control = setIndexingControl('global', enabled)
+        Map<String, Object> status = indexingStatus()
+        status.put('changedControl', control)
+        status
+    }
+
+    Map<String, Object> setAutoReconcileEnabled(boolean enabled) {
+        Map<String, Object> control = setIndexingControl('auto-reconcile', enabled)
+        Map<String, Object> status = indexingStatus()
+        status.put('changedControl', control)
+        status
+    }
+
+    private Map<String, Object> setIndexingControl(String name, boolean enabled) {
+        try (Connection connection = dataSource.connection;
+             PreparedStatement statement = connection.prepareStatement('''
+                 INSERT INTO semantic.semantic_indexing_control (name, enabled, updated_at)
+                 VALUES (?, ?, now())
+                 ON CONFLICT (name) DO UPDATE
+                 SET enabled = EXCLUDED.enabled,
+                     updated_at = now()
+                 RETURNING name, enabled, updated_at
+             ''')) {
+            statement.setString(1, name)
+            statement.setBoolean(2, enabled)
+            try (ResultSet rs = statement.executeQuery()) {
+                rs.next()
+                [
+                    name: rs.getString('name'),
+                    enabled: rs.getBoolean('enabled'),
+                    updatedAt: rs.getTimestamp('updated_at')?.toInstant()?.toString()
+                ] as Map<String, Object>
+            }
+        }
+    }
+
+    List<Map<String, Object>> cancelActiveJobs(String reason) {
+        List<Map<String, Object>> activeJobs = jobs(['QUEUED', 'TO_RESTART', 'RUNNING'] as List<String>)
+        for (Map<String, Object> job : activeJobs) {
+            cancelJob(UUID.fromString(String.valueOf(job.get('jobId'))), reason ?: 'semantic indexing was disabled')
+        }
+        activeJobs
+    }
+
+    Map<String, Object> cancelJob(UUID jobId, String reason) {
+        Map<String, Object> existingJob = job(jobId)
+        String status = String.valueOf(existingJob.get('status'))
+        if (['SUCCEEDED', 'FAILED', 'CANCELLED'].contains(status)) {
+            return existingJob
+        }
+        updateJobStatus(
+            jobId,
+            'CANCELLED',
+            [
+                stage: 'cancelled',
+                previousStatus: status,
+                reason: reason ?: 'semantic indexing job was cancelled',
+                cancelledAt: Instant.now().toString()
+            ] as Map<String, Object>,
+            null
+        )
+        job(jobId)
+    }
+
+    List<Map<String, Object>> modelIndexes() {
+        try (Connection connection = dataSource.connection;
+             PreparedStatement statement = connection.prepareStatement('''
+                 SELECT mi.id,
+                        mi.mauro_model_id,
+                        COALESCE(model_label.label, mi.mauro_model_id::text) AS mauro_model_label,
+                        mi.label AS model_index_label,
+                        mi.enabled,
+                        mi.status,
+                        mi.last_error,
+                        c.name AS corpus_name,
+                        p.name AS profile_name
+                 FROM semantic.semantic_model_index mi
+                      JOIN semantic.semantic_corpus c ON c.id = mi.corpus_id
+                      JOIN semantic.embedding_profile p ON p.id = mi.embedding_profile_id
+                      LEFT JOIN LATERAL (
+                          SELECT sd.label
+                          FROM search.search_domains sd
+                          WHERE sd.id = mi.mauro_model_id
+                          ORDER BY CASE
+                              WHEN sd.domain_type IN ('Folder', 'DataModel', 'Terminology', 'CodeSet') THEN 0
+                              ELSE 1
+                          END
+                          LIMIT 1
+                      ) model_label ON TRUE
+                 ORDER BY mi.updated_at DESC, mi.created_at DESC
+             ''')) {
+            try (ResultSet rs = statement.executeQuery()) {
+                List<Map<String, Object>> rows = new ArrayList<Map<String, Object>>()
+                while (rs.next()) {
+                    rows.add(modelIndexSummaryMap(rs))
+                }
+                rows
+            }
+        }
+    }
+
+    List<Map<String, Object>> modelIndexStats(UUID mauroModelId) {
+        try (Connection connection = dataSource.connection;
+             PreparedStatement statement = connection.prepareStatement('''
+                 SELECT mi.id,
+                        mi.mauro_model_id,
+                        COALESCE(model_label.label, mi.mauro_model_id::text) AS mauro_model_label,
+                        mi.label AS model_index_label,
+                        mi.enabled,
+                        mi.status,
+                        mi.last_indexed_at,
+                        mi.stale_requested_at,
+                        mi.indexing_started_at,
+                        mi.last_checked_at,
+                        mi.last_error,
+                        mi.created_at,
+                        mi.updated_at,
+                        c.name AS corpus_name,
+                        p.name AS profile_name,
+                        p.provider,
+                        p.embedding_model,
+                        p.dimension,
+                        (SELECT count(*)
+                         FROM semantic.semantic_chunk chunk
+                         WHERE chunk.corpus_id = mi.corpus_id
+                           AND chunk.mauro_model_id IN (
+                               WITH RECURSIVE requested_scope(id) AS (
+                                   SELECT mi.mauro_model_id
+                               ),
+                               scoped_folders(id) AS (
+                                   SELECT folder.id
+                                   FROM core.folder folder
+                                        JOIN requested_scope scope ON scope.id = folder.id
+                                   UNION ALL
+                                   SELECT child.id
+                                   FROM core.folder child
+                                        JOIN scoped_folders parent ON child.parent_folder_id = parent.id
+                               ),
+                               scoped_model_ids(id) AS (
+                                   SELECT scope.id
+                                   FROM requested_scope scope
+                                   WHERE EXISTS (SELECT 1 FROM datamodel.data_model data_model WHERE data_model.id = scope.id)
+                                      OR EXISTS (SELECT 1 FROM terminology.terminology terminology WHERE terminology.id = scope.id)
+                                      OR EXISTS (SELECT 1 FROM terminology.code_set code_set WHERE code_set.id = scope.id)
+                                   UNION
+                                   SELECT data_model.id
+                                   FROM datamodel.data_model data_model
+                                        JOIN scoped_folders folder ON folder.id = data_model.folder_id
+                                   UNION
+                                   SELECT terminology.id
+                                   FROM terminology.terminology terminology
+                                        JOIN scoped_folders folder ON folder.id = terminology.folder_id
+                                   UNION
+                                   SELECT code_set.id
+                                   FROM terminology.code_set code_set
+                                        JOIN scoped_folders folder ON folder.id = code_set.folder_id
+                               )
+                               SELECT id FROM scoped_model_ids
+                           )) AS chunks,
+                        (SELECT count(*)
+                         FROM semantic.semantic_embedding embedding
+                              JOIN semantic.semantic_chunk chunk ON chunk.id = embedding.chunk_id
+                         WHERE chunk.corpus_id = mi.corpus_id
+                           AND embedding.embedding_profile_id = mi.embedding_profile_id
+                           AND chunk.mauro_model_id IN (
+                               WITH RECURSIVE requested_scope(id) AS (
+                                   SELECT mi.mauro_model_id
+                               ),
+                               scoped_folders(id) AS (
+                                   SELECT folder.id
+                                   FROM core.folder folder
+                                        JOIN requested_scope scope ON scope.id = folder.id
+                                   UNION ALL
+                                   SELECT child.id
+                                   FROM core.folder child
+                                        JOIN scoped_folders parent ON child.parent_folder_id = parent.id
+                               ),
+                               scoped_model_ids(id) AS (
+                                   SELECT scope.id
+                                   FROM requested_scope scope
+                                   WHERE EXISTS (SELECT 1 FROM datamodel.data_model data_model WHERE data_model.id = scope.id)
+                                      OR EXISTS (SELECT 1 FROM terminology.terminology terminology WHERE terminology.id = scope.id)
+                                      OR EXISTS (SELECT 1 FROM terminology.code_set code_set WHERE code_set.id = scope.id)
+                                   UNION
+                                   SELECT data_model.id
+                                   FROM datamodel.data_model data_model
+                                        JOIN scoped_folders folder ON folder.id = data_model.folder_id
+                                   UNION
+                                   SELECT terminology.id
+                                   FROM terminology.terminology terminology
+                                        JOIN scoped_folders folder ON folder.id = terminology.folder_id
+                                   UNION
+                                   SELECT code_set.id
+                                   FROM terminology.code_set code_set
+                                        JOIN scoped_folders folder ON folder.id = code_set.folder_id
+                               )
+                               SELECT id FROM scoped_model_ids
+                           )) AS embeddings
+                 FROM semantic.semantic_model_index mi
+                      JOIN semantic.semantic_corpus c ON c.id = mi.corpus_id
+                      JOIN semantic.embedding_profile p ON p.id = mi.embedding_profile_id
+                      LEFT JOIN LATERAL (
+                          SELECT sd.label
+                          FROM search.search_domains sd
+                          WHERE sd.id = mi.mauro_model_id
+                          ORDER BY CASE
+                              WHEN sd.domain_type IN ('Folder', 'DataModel', 'Terminology', 'CodeSet') THEN 0
+                              ELSE 1
+                          END
+                          LIMIT 1
+                      ) model_label ON TRUE
+                 WHERE mi.mauro_model_id = ?
+                 ORDER BY mi.updated_at DESC, mi.created_at DESC
+             ''')) {
+            statement.setObject(1, mauroModelId)
+            try (ResultSet rs = statement.executeQuery()) {
+                List<Map<String, Object>> rows = new ArrayList<Map<String, Object>>()
+                while (rs.next()) {
+                    rows.add(modelIndexMap(rs))
+                }
+                rows
+            }
+        }
+    }
+
+    Map<String, Object> createModelIndex(UUID mauroModelId, String profileName, String corpusName, boolean enabled, String label = null) {
+        try (Connection connection = dataSource.connection;
+             PreparedStatement statement = connection.prepareStatement('''
+                 INSERT INTO semantic.semantic_model_index (corpus_id, mauro_model_id, embedding_profile_id, enabled, status, label)
+                 SELECT c.id, ?::uuid, p.id, ?, 'STALE', ?
+                 FROM semantic.semantic_corpus c
+                      CROSS JOIN semantic.embedding_profile p
+                 WHERE c.name = ?
+                   AND p.name = ?
+                 ON CONFLICT (corpus_id, mauro_model_id, embedding_profile_id) DO UPDATE
+                 SET enabled = EXCLUDED.enabled,
+                     label = COALESCE(EXCLUDED.label, semantic_model_index.label),
+                     updated_at = now()
+                 RETURNING id
+             ''')) {
+            statement.setObject(1, mauroModelId)
+            statement.setBoolean(2, enabled)
+            statement.setString(3, label)
+            statement.setString(4, corpusName ?: 'catalogue-items')
+            statement.setString(5, profileName)
+            try (ResultSet rs = statement.executeQuery()) {
+                if (!rs.next()) {
+                    throw new IllegalArgumentException("No semantic corpus/profile matched ${corpusName ?: 'catalogue-items'} / ${profileName}")
+                }
+                modelIndex((UUID) rs.getObject('id'))
+            }
+        }
+    }
+
+    Map<String, Object> deleteModelIndex(UUID mauroModelId, String profileName) {
+        int deleted
+        try (Connection connection = dataSource.connection;
+             PreparedStatement statement = connection.prepareStatement('''
+                 DELETE FROM semantic.semantic_model_index mi
+                 USING semantic.embedding_profile p
+                 WHERE mi.embedding_profile_id = p.id
+                   AND mi.mauro_model_id = ?
+                   AND p.name = ?
+             ''')) {
+            statement.setObject(1, mauroModelId)
+            statement.setString(2, profileName)
+            deleted = statement.executeUpdate()
+        }
+        [mauroModelId: mauroModelId.toString(), profileName: profileName, deleted: deleted] as Map<String, Object>
+    }
+
+    List<Map<String, Object>> staleEnabledModelIndexes() {
+        modelIndexes().findAll {Map<String, Object> row ->
+            Boolean.TRUE.equals(row.get('enabled')) && row.get('status') != 'READY'
+        } as List<Map<String, Object>>
+    }
+
+    Map<String, Object> modelIndex(UUID modelIndexId) {
+        try (Connection connection = dataSource.connection;
+             PreparedStatement statement = connection.prepareStatement('''
+                 SELECT mi.id,
+                        mi.mauro_model_id,
+                        COALESCE(model_label.label, mi.mauro_model_id::text) AS mauro_model_label,
+                        mi.label AS model_index_label,
+                        mi.enabled,
+                        mi.status,
+                        mi.last_indexed_at,
+                        mi.stale_requested_at,
+                        mi.indexing_started_at,
+                        mi.last_checked_at,
+                        mi.last_error,
+                        mi.created_at,
+                        mi.updated_at,
+                        c.name AS corpus_name,
+                        p.name AS profile_name,
+                        p.provider,
+                        p.embedding_model,
+                        p.dimension,
+                        0::bigint AS chunks,
+                        0::bigint AS embeddings
+                 FROM semantic.semantic_model_index mi
+                      JOIN semantic.semantic_corpus c ON c.id = mi.corpus_id
+                      JOIN semantic.embedding_profile p ON p.id = mi.embedding_profile_id
+                      LEFT JOIN LATERAL (
+                          SELECT sd.label
+                          FROM search.search_domains sd
+                          WHERE sd.id = mi.mauro_model_id
+                          ORDER BY CASE
+                              WHEN sd.domain_type IN ('Folder', 'DataModel', 'Terminology', 'CodeSet') THEN 0
+                              ELSE 1
+                          END
+                          LIMIT 1
+                      ) model_label ON TRUE
+                 WHERE mi.id = ?
+             ''')) {
+            statement.setObject(1, modelIndexId)
+            try (ResultSet rs = statement.executeQuery()) {
+                if (!rs.next()) {
+                    throw new IllegalArgumentException("No semantic model index ${modelIndexId}")
+                }
+                modelIndexMap(rs)
+            }
+        }
+    }
+
+    Map<String, Object> modelIndex(UUID mauroModelId, String profileName, String corpusName = null) {
+        modelIndexes().find {Map<String, Object> row ->
+            row.get('mauroModelId') == mauroModelId.toString() &&
+                row.get('profileName') == profileName &&
+                (corpusName == null || row.get('corpusName') == corpusName)
+        }
+    }
+
+    void updateModelIndexStatus(UUID mauroModelId, String profileName, String corpusName, String status, String error = null) {
+        try (Connection connection = dataSource.connection;
+             PreparedStatement statement = connection.prepareStatement('''
+                 UPDATE semantic.semantic_model_index mi
+                 SET status = ?,
+                     last_indexed_at = CASE WHEN ? = 'READY' THEN now() ELSE last_indexed_at END,
+                     indexing_started_at = CASE WHEN ? = 'INDEXING' THEN now() ELSE indexing_started_at END,
+                     stale_requested_at = CASE WHEN ? = 'READY' THEN NULL ELSE stale_requested_at END,
+                     last_error = ?,
+                     updated_at = now()
+                 FROM semantic.embedding_profile p,
+                      semantic.semantic_corpus c
+                 WHERE p.id = mi.embedding_profile_id
+                   AND c.id = mi.corpus_id
+                   AND mi.mauro_model_id = ?
+                   AND p.name = ?
+                   AND c.name = ?
+             ''')) {
+            statement.setString(1, status)
+            statement.setString(2, status)
+            statement.setString(3, status)
+            statement.setString(4, status)
+            statement.setString(5, error)
+            statement.setObject(6, mauroModelId)
+            statement.setString(7, profileName)
+            statement.setString(8, corpusName ?: 'catalogue-items')
+            statement.executeUpdate()
+        }
+    }
+
+    void markModelIndexStale(UUID mauroModelId, String profileName, String corpusName, String reason = null) {
+        try (Connection connection = dataSource.connection;
+             PreparedStatement statement = connection.prepareStatement('''
+                 UPDATE semantic.semantic_model_index mi
+                 SET status = CASE WHEN mi.status = 'INDEXING' THEN mi.status ELSE 'STALE' END,
+                     stale_requested_at = now(),
+                     last_error = NULL,
+                     updated_at = now()
+                 FROM semantic.embedding_profile p,
+                      semantic.semantic_corpus c
+                 WHERE p.id = mi.embedding_profile_id
+                   AND c.id = mi.corpus_id
+                   AND mi.mauro_model_id = ?
+                   AND p.name = ?
+                   AND c.name = ?
+             ''')) {
+            statement.setObject(1, mauroModelId)
+            statement.setString(2, profileName)
+            statement.setString(3, corpusName ?: 'catalogue-items')
+            statement.executeUpdate()
+        }
+    }
+
+    boolean modelIndexChangedDuringRun(UUID mauroModelId, String profileName, String corpusName) {
+        try (Connection connection = dataSource.connection;
+             PreparedStatement statement = connection.prepareStatement('''
+                 SELECT mi.stale_requested_at IS NOT NULL
+                    AND mi.indexing_started_at IS NOT NULL
+                    AND mi.stale_requested_at > mi.indexing_started_at
+                 FROM semantic.semantic_model_index mi
+                      JOIN semantic.embedding_profile p ON p.id = mi.embedding_profile_id
+                      JOIN semantic.semantic_corpus c ON c.id = mi.corpus_id
+                 WHERE mi.mauro_model_id = ?
+                   AND p.name = ?
+                   AND c.name = ?
+             ''')) {
+            statement.setObject(1, mauroModelId)
+            statement.setString(2, profileName)
+            statement.setString(3, corpusName ?: 'catalogue-items')
+            try (ResultSet rs = statement.executeQuery()) {
+                rs.next() && rs.getBoolean(1)
+            }
+        }
+    }
+
+    Map<String, Object> activeJobForModelIndex(UUID mauroModelId, String profileName, String corpusName) {
+        try (Connection connection = dataSource.connection;
+             PreparedStatement statement = connection.prepareStatement('''
+                 SELECT job.id,
+                        job.mauro_model_id,
+                        COALESCE(model_label.label, job.mauro_model_id::text) AS mauro_model_label,
+                        mi.label AS model_index_label,
+                        job.status,
+                        job.force,
+                        job.max_rows,
+                        job.batch_size,
+                        job.result::text AS result_json,
+                        job.error,
+                        job.started_at,
+                        job.completed_at,
+                        job.created_at,
+                        job.updated_at,
+                        c.name AS corpus_name,
+                        p.name AS profile_name
+                 FROM semantic.semantic_index_job job
+                      LEFT JOIN semantic.semantic_corpus c ON c.id = job.corpus_id
+                      JOIN semantic.embedding_profile p ON p.id = job.embedding_profile_id
+                      LEFT JOIN semantic.semantic_model_index mi ON mi.id = job.model_index_id
+                      LEFT JOIN LATERAL (
+                          SELECT sd.label
+                          FROM search.search_domains sd
+                          WHERE sd.id = job.mauro_model_id
+                          ORDER BY CASE
+                              WHEN sd.domain_type IN ('Folder', 'DataModel', 'Terminology', 'CodeSet') THEN 0
+                              ELSE 1
+                          END
+                          LIMIT 1
+                      ) model_label ON TRUE
+                 WHERE job.mauro_model_id = ?
+                   AND p.name = ?
+                   AND c.name = ?
+                   AND job.status IN ('QUEUED', 'TO_RESTART', 'RUNNING')
+                 ORDER BY job.created_at ASC, job.id ASC
+                 LIMIT 1
+             ''')) {
+            statement.setObject(1, mauroModelId)
+            statement.setString(2, profileName)
+            statement.setString(3, corpusName ?: 'catalogue-items')
+            try (ResultSet rs = statement.executeQuery()) {
+                rs.next() ? jobMap(rs) : null
+            }
+        }
+    }
+
+    UUID createIndexJob(UUID mauroModelId, String profileName, String corpusName, boolean force, Integer maxRows, Integer batchSize) {
+        try (Connection connection = dataSource.connection;
+             PreparedStatement statement = connection.prepareStatement('''
+                 INSERT INTO semantic.semantic_index_job (
+                     model_index_id, corpus_id, mauro_model_id, embedding_profile_id, status, force, max_rows, batch_size
+                 )
+                 SELECT mi.id, mi.corpus_id, mi.mauro_model_id, mi.embedding_profile_id, 'QUEUED', ?, ?, ?
+                 FROM semantic.semantic_model_index mi
+                      JOIN semantic.embedding_profile p ON p.id = mi.embedding_profile_id
+                      JOIN semantic.semantic_corpus c ON c.id = mi.corpus_id
+                 WHERE mi.mauro_model_id = ?
+                   AND p.name = ?
+                   AND c.name = ?
+                 RETURNING id
+             ''')) {
+            statement.setBoolean(1, force)
+            setInteger(statement, 2, maxRows)
+            setInteger(statement, 3, batchSize)
+            statement.setObject(4, mauroModelId)
+            statement.setString(5, profileName)
+            statement.setString(6, corpusName ?: 'catalogue-items')
+            try (ResultSet rs = statement.executeQuery()) {
+                if (!rs.next()) {
+                    throw new IllegalArgumentException("No semantic model index for ${mauroModelId} / ${profileName}")
+                }
+                (UUID) rs.getObject('id')
+            }
+        }
+    }
+
+    @Connectable
+    Map<String, Object> job(UUID jobId) {
+        try (Connection connection = dataSource.connection;
+             PreparedStatement statement = connection.prepareStatement('''
+                 SELECT job.id,
+                        job.mauro_model_id,
+                        COALESCE(model_label.label, job.mauro_model_id::text) AS mauro_model_label,
+                        mi.label AS model_index_label,
+                        job.status,
+                        job.force,
+                        job.max_rows,
+                        job.batch_size,
+                        job.result::text AS result_json,
+                        job.error,
+                        job.started_at,
+                        job.completed_at,
+                        job.created_at,
+                        job.updated_at,
+                        c.name AS corpus_name,
+                        p.name AS profile_name
+                 FROM semantic.semantic_index_job job
+                      LEFT JOIN semantic.semantic_corpus c ON c.id = job.corpus_id
+                      JOIN semantic.embedding_profile p ON p.id = job.embedding_profile_id
+                      LEFT JOIN semantic.semantic_model_index mi ON mi.id = job.model_index_id
+                      LEFT JOIN LATERAL (
+                          SELECT sd.label
+                          FROM search.search_domains sd
+                          WHERE sd.id = job.mauro_model_id
+                          ORDER BY CASE
+                              WHEN sd.domain_type IN ('Folder', 'DataModel', 'Terminology', 'CodeSet') THEN 0
+                              ELSE 1
+                          END
+                          LIMIT 1
+                      ) model_label ON TRUE
+                 WHERE job.id = ?
+             ''')) {
+            statement.setObject(1, jobId)
+            try (ResultSet rs = statement.executeQuery()) {
+                if (!rs.next()) {
+                    throw new IllegalArgumentException("No semantic indexing job ${jobId}")
+                }
+                jobMap(rs)
+            }
+        }
+    }
+
+    List<Map<String, Object>> jobs(List<String> statuses = null) {
+        String statusClause = statuses == null || statuses.isEmpty() ? '' : 'WHERE job.status = ANY (?::varchar[])'
+        try (Connection connection = dataSource.connection;
+             PreparedStatement statement = connection.prepareStatement("""
+                 SELECT job.id,
+                        job.mauro_model_id,
+                        COALESCE(model_label.label, job.mauro_model_id::text) AS mauro_model_label,
+                        mi.label AS model_index_label,
+                        job.status,
+                        job.force,
+                        job.max_rows,
+                        job.batch_size,
+                        job.result::text AS result_json,
+                        job.error,
+                        job.started_at,
+                        job.completed_at,
+                        job.created_at,
+                        job.updated_at,
+                        c.name AS corpus_name,
+                        p.name AS profile_name
+                 FROM semantic.semantic_index_job job
+                      LEFT JOIN semantic.semantic_corpus c ON c.id = job.corpus_id
+                      JOIN semantic.embedding_profile p ON p.id = job.embedding_profile_id
+                      LEFT JOIN semantic.semantic_model_index mi ON mi.id = job.model_index_id
+                      LEFT JOIN LATERAL (
+                          SELECT sd.label
+                          FROM search.search_domains sd
+                          WHERE sd.id = job.mauro_model_id
+                          ORDER BY CASE
+                              WHEN sd.domain_type IN ('Folder', 'DataModel', 'Terminology', 'CodeSet') THEN 0
+                              ELSE 1
+                          END
+                          LIMIT 1
+                      ) model_label ON TRUE
+                 ${statusClause}
+                 ORDER BY job.created_at DESC, job.id DESC
+             """)) {
+            if (statuses != null && !statuses.isEmpty()) {
+                statement.setArray(1, connection.createArrayOf('varchar', statuses.toArray(new String[0])))
+            }
+            try (ResultSet rs = statement.executeQuery()) {
+                List<Map<String, Object>> rows = new ArrayList<Map<String, Object>>()
+                while (rs.next()) {
+                    rows.add(jobMap(rs))
+                }
+                rows
+            }
+        }
+    }
+
+    List<Map<String, Object>> recoverableJobs() {
+        jobs(['QUEUED', 'RUNNING', 'INTERRUPTED', 'TO_RESTART'] as List<String>)
+    }
+
+    void updateJobStatus(UUID jobId, String status, Map<String, Object> result = null, String error = null) {
+        try (Connection connection = dataSource.connection;
+             PreparedStatement statement = connection.prepareStatement('''
+                 UPDATE semantic.semantic_index_job
+                 SET status = ?,
+                     result = COALESCE(?::jsonb, result),
+                     error = ?,
+                     started_at = CASE WHEN ? = 'RUNNING' AND started_at IS NULL THEN now() ELSE started_at END,
+                     completed_at = CASE
+                         WHEN ? IN ('RUNNING', 'TO_RESTART') THEN NULL
+                         WHEN ? IN ('SUCCEEDED', 'FAILED', 'CANCELLED', 'INTERRUPTED') THEN now()
+                         ELSE completed_at
+                     END,
+                     updated_at = now()
+                 WHERE id = ?
+                   AND NOT (status = 'CANCELLED' AND ? = 'RUNNING')
+             ''')) {
+            statement.setString(1, status)
+            statement.setString(2, result == null ? null : JsonOutput.toJson(result))
+            statement.setString(3, error)
+            statement.setString(4, status)
+            statement.setString(5, status)
+            statement.setString(6, status)
+            statement.setObject(7, jobId)
+            statement.setString(8, status)
+            int updated = statement.executeUpdate()
+            if (updated > 0) {
+                insertJobEvent(connection, jobId, status, result, error)
+            }
+        }
+    }
+
+    void appendJobEvent(UUID jobId, String status, Map<String, Object> event = null, String error = null) {
+        try (Connection connection = dataSource.connection) {
+            insertJobEvent(connection, jobId, status, event, error)
+        }
+    }
+
+    private static void insertJobEvent(Connection connection,
+                                       UUID jobId,
+                                       String status,
+                                       Map<String, Object> event = null,
+                                       String error = null) {
+        Map<String, Object> payload = new LinkedHashMap<String, Object>()
+        if (event != null) {
+            payload.putAll(event)
+        }
+        if (error != null) {
+            payload.put('error', error)
+        }
+        payload.put('status', status)
+        try (PreparedStatement statement = connection.prepareStatement('''
+                 INSERT INTO semantic.semantic_index_job_event (job_id, status, event)
+                 VALUES (?, ?, ?::jsonb)
+             ''')) {
+            statement.setObject(1, jobId)
+            statement.setString(2, status)
+            statement.setString(3, JsonOutput.toJson(payload))
+            statement.executeUpdate()
+        }
+    }
+
+    @Connectable
+    String jobEvents(UUID jobId) {
+        List<String> lines = jobEventLinesAfter(jobId, 0L)
+        lines.add(jobSnapshotLine(jobId))
+        lines.join('\n') + (lines.isEmpty() ? '' : '\n')
+    }
+
+    @Connectable
+    List<String> jobEventLinesAfter(UUID jobId, long afterSequence) {
+        try (Connection connection = dataSource.connection;
+             PreparedStatement statement = connection.prepareStatement('''
+                 SELECT id, status, event::text AS event_json, created_at
+                 FROM semantic.semantic_index_job_event
+                 WHERE job_id = ?
+                   AND id > ?
+                 ORDER BY id
+             ''')) {
+            statement.setObject(1, jobId)
+            statement.setLong(2, Math.max(afterSequence, 0L))
+            try (ResultSet rs = statement.executeQuery()) {
+                List<String> lines = new ArrayList<String>()
+                while (rs.next()) {
+                    Map<String, Object> line = new LinkedHashMap<String, Object>()
+                    line.put('sequence', rs.getLong('id'))
+                    line.put('jobId', jobId.toString())
+                    line.put('status', rs.getString('status'))
+                    line.put('createdAt', rs.getTimestamp('created_at')?.toInstant()?.toString())
+                    line.put('event', parseJson(rs.getString('event_json')))
+                    lines.add(JsonOutput.toJson(line))
+                }
+                lines
+            }
+        }
+    }
+
+    @Connectable
+    String jobSnapshotLine(UUID jobId) {
+        Map<String, Object> currentJob = job(jobId)
+        JsonOutput.toJson([
+            snapshot: true,
+            jobId: String.valueOf(currentJob.get('jobId')),
+            status: String.valueOf(currentJob.get('status')),
+            observedAt: Instant.now().toString(),
+            updatedAt: currentJob.get('updatedAt'),
+            event: currentJob.get('result') ?: [:]
+        ] as Map<String, Object>)
+    }
+
+    boolean jobCancelled(UUID jobId) {
+        try (Connection connection = dataSource.connection;
+             PreparedStatement statement = connection.prepareStatement('SELECT status = ? FROM semantic.semantic_index_job WHERE id = ?')) {
+            statement.setString(1, 'CANCELLED')
+            statement.setObject(2, jobId)
+            try (ResultSet rs = statement.executeQuery()) {
+                rs.next() && rs.getBoolean(1)
             }
         }
     }
@@ -321,12 +1276,26 @@ class SemanticRepository {
     Map<String, Object> deleteChunksForCorpus(String corpusName) {
         int deleted
         try (Connection connection = dataSource.connection;
+             PreparedStatement allowedStatement = connection.prepareStatement('''
+                 SELECT chunk_delete_api_enabled
+                 FROM semantic.semantic_corpus
+                 WHERE name = ?
+             ''');
              PreparedStatement statement = connection.prepareStatement('''
                  DELETE FROM semantic.semantic_chunk chunk
                  USING semantic.semantic_corpus corpus
                  WHERE chunk.corpus_id = corpus.id
                    AND corpus.name = ?
              ''')) {
+            allowedStatement.setString(1, corpusName)
+            try (ResultSet rs = allowedStatement.executeQuery()) {
+                if (!rs.next()) {
+                    throw new IllegalArgumentException("No semantic corpus named ${corpusName}")
+                }
+                if (!rs.getBoolean('chunk_delete_api_enabled')) {
+                    throw new IllegalArgumentException("Semantic corpus ${corpusName} does not allow API chunk deletion")
+                }
+            }
             statement.setString(1, corpusName)
             deleted = statement.executeUpdate()
         }
@@ -374,10 +1343,117 @@ class SemanticRepository {
         }
     }
 
+    boolean modelIndexNeedsRefresh(String corpusName, UUID mauroModelId, String profileName) {
+        String sql = """
+            WITH source_rows AS (
+                ${catalogueSourceRowsSql(Collections.<String>emptyList(), mauroModelId, null)}
+            ),
+            chunks AS (
+                ${catalogueGeneratedChunksSql(true)}
+            ),
+            scoped_model_ids(id) AS (
+                ${scopedModelIdsSql()}
+            )
+            SELECT
+                EXISTS (
+                    SELECT 1
+                    FROM chunks generated
+                         JOIN semantic.semantic_corpus corpus ON corpus.name = ?
+                         LEFT JOIN semantic.semantic_chunk existing
+                              ON existing.corpus_id = corpus.id
+                             AND existing.source_type = 'catalogue-item'
+                             AND existing.source_id = generated.id
+                             AND existing.source_domain_type = generated.domain_type
+                             AND existing.chunk_kind = generated.chunk_kind
+                             AND existing.chunk_ordinal = generated.chunk_ordinal
+                    WHERE existing.id IS NULL
+                       OR existing.source_label IS DISTINCT FROM generated.label
+                       OR existing.mauro_model_id IS DISTINCT FROM generated.model_id
+                       OR existing.chunk_group IS DISTINCT FROM generated.chunk_group
+                       OR existing.source_text IS DISTINCT FROM generated.source_text
+                       OR existing.content_hash IS DISTINCT FROM encode(sha256(convert_to(generated.source_text, 'UTF8')), 'hex')
+                       OR existing.date_created IS DISTINCT FROM generated.date_created
+                       OR existing.last_updated IS DISTINCT FROM generated.last_updated
+                )
+                OR EXISTS (
+                    SELECT 1
+                    FROM semantic.semantic_chunk existing
+                         JOIN semantic.semantic_corpus corpus ON corpus.id = existing.corpus_id
+                         LEFT JOIN chunks generated
+                              ON generated.id = existing.source_id
+                             AND generated.domain_type = existing.source_domain_type
+                             AND generated.chunk_kind = existing.chunk_kind
+                             AND generated.chunk_ordinal = existing.chunk_ordinal
+                    WHERE corpus.name = ?
+                      AND existing.source_type = 'catalogue-item'
+                      AND existing.mauro_model_id IN (SELECT id FROM scoped_model_ids)
+                      AND generated.id IS NULL
+                )
+                OR EXISTS (
+                    SELECT 1
+                    FROM chunks generated
+                         JOIN semantic.semantic_corpus corpus ON corpus.name = ?
+                         JOIN semantic.semantic_chunk existing
+                              ON existing.corpus_id = corpus.id
+                             AND existing.source_type = 'catalogue-item'
+                             AND existing.source_id = generated.id
+                             AND existing.source_domain_type = generated.domain_type
+                             AND existing.chunk_kind = generated.chunk_kind
+                             AND existing.chunk_ordinal = generated.chunk_ordinal
+                    WHERE NOT EXISTS (
+                        SELECT 1
+                        FROM semantic.semantic_embedding embedding
+                             JOIN semantic.embedding_profile profile ON profile.id = embedding.embedding_profile_id
+                        WHERE embedding.chunk_id = existing.id
+                          AND embedding.content_hash = existing.content_hash
+                          AND profile.name = ?
+                    )
+                ) AS needs_refresh
+        """
+        boolean needsRefresh
+        try (Connection connection = dataSource.connection;
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            int index = bindCatalogueSourceRows(statement, connection, Collections.<String>emptyList(), mauroModelId, null)
+            statement.setObject(index++, mauroModelId)
+            statement.setString(index++, corpusName ?: 'catalogue-items')
+            statement.setString(index++, corpusName ?: 'catalogue-items')
+            statement.setString(index++, corpusName ?: 'catalogue-items')
+            statement.setString(index, profileName)
+            try (ResultSet rs = statement.executeQuery()) {
+                rs.next()
+                needsRefresh = rs.getBoolean('needs_refresh')
+            }
+        }
+        updateModelIndexCheckedAt(mauroModelId, profileName)
+        needsRefresh
+    }
+
+    private void updateModelIndexCheckedAt(UUID mauroModelId, String profileName) {
+        try (Connection connection = dataSource.connection;
+             PreparedStatement statement = connection.prepareStatement('''
+                 UPDATE semantic.semantic_model_index mi
+                 SET last_checked_at = now(),
+                     updated_at = now()
+                 FROM semantic.embedding_profile p
+                 WHERE p.id = mi.embedding_profile_id
+                   AND mi.mauro_model_id = ?
+                   AND p.name = ?
+             ''')) {
+            statement.setObject(1, mauroModelId)
+            statement.setString(2, profileName)
+            statement.executeUpdate()
+        }
+    }
+
     int reconcileCatalogueChunks(String corpusName, List<String> domainTypes = [], UUID mauroModelId = null, Integer maxRows = null) {
+        Map<String, Integer> result = reconcileCatalogueChunksDetailed(corpusName, domainTypes, mauroModelId, maxRows)
+        (result.get('upsertedChunks') ?: 0) + (result.get('deletedChunks') ?: 0)
+    }
+
+    Map<String, Integer> reconcileCatalogueChunksDetailed(String corpusName, List<String> domainTypes = [], UUID mauroModelId = null, Integer maxRows = null) {
         UUID corpusId = corpusId(corpusName ?: 'catalogue-items')
         if (corpusId == null) {
-            return 0
+            return [upsertedChunks: 0, deletedChunks: 0, changedChunks: 0] as Map<String, Integer>
         }
         String sql = """
             WITH source_rows AS (
@@ -427,8 +1503,13 @@ class SemanticRepository {
              PreparedStatement statement = connection.prepareStatement(sql)) {
             int index = bindCatalogueSourceRows(statement, connection, domainTypes, mauroModelId, maxRows)
             statement.setObject(index, corpusId)
-            int changed = statement.executeUpdate()
-            changed + deleteStaleCatalogueChunks(connection, corpusId, domainTypes, mauroModelId, maxRows)
+            int upserted = statement.executeUpdate()
+            int deleted = deleteStaleCatalogueChunks(connection, corpusId, domainTypes, mauroModelId, maxRows)
+            [
+                upsertedChunks: upserted,
+                deletedChunks: deleted,
+                changedChunks: upserted + deleted
+            ] as Map<String, Integer>
         }
     }
 
@@ -437,6 +1518,12 @@ class SemanticRepository {
                                            List<String> domainTypes = [],
                                            UUID mauroModelId = null,
                                            Integer maxRows = null) {
+        String scopedModelIdsCte = mauroModelId == null ? '' : """,
+            scoped_model_ids(id) AS (
+                ${scopedModelIdsSql()}
+            )
+        """
+        String scopedModelClause = mauroModelId == null ? '' : 'AND existing.mauro_model_id IN (SELECT id FROM scoped_model_ids)'
         String sql = """
             WITH source_rows AS (
                 ${catalogueSourceRowsSql(domainTypes, mauroModelId, maxRows)}
@@ -444,12 +1531,11 @@ class SemanticRepository {
             chunks AS (
                 ${catalogueGeneratedChunksSql(false)}
             )
+            ${scopedModelIdsCte}
             DELETE FROM semantic.semantic_chunk existing
-            USING source_rows selected
             WHERE existing.corpus_id = ?::uuid
               AND existing.source_type = 'catalogue-item'
-              AND existing.source_id = selected.id
-              AND existing.source_domain_type = selected.domain_type
+              ${scopedModelClause}
               AND NOT EXISTS (
                   SELECT 1
                   FROM chunks generated
@@ -461,6 +1547,9 @@ class SemanticRepository {
         """
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
             int index = bindCatalogueSourceRows(statement, connection, domainTypes, mauroModelId, maxRows)
+            if (mauroModelId != null) {
+                statement.setObject(index++, mauroModelId)
+            }
             statement.setObject(index, corpusId)
             statement.executeUpdate()
         }
@@ -1187,6 +2276,7 @@ class SemanticRepository {
         """
         try (Connection connection = dataSource.connection;
              PreparedStatement statement = connection.prepareStatement(sql)) {
+            applyHnswSearchSetting(connection, chunkGroup, topN)
             int index = 1
             String[] requestedDomainTypes = hasDomainTypes ? domainTypes.toArray(new String[0]) as String[] : ['__none__'] as String[]
             statement.setArray(index++, connection.createArrayOf('varchar', requestedDomainTypes))
@@ -1235,6 +2325,7 @@ class SemanticRepository {
                        ts_rank_cd(to_tsvector('english', c.source_text), query.tsquery)::float8 AS lexical_rank,
                        CASE c.chunk_kind
                            WHEN 'label' THEN 1.35
+                           WHEN 'label-identifier' THEN 1.30
                            WHEN 'label-phrase' THEN 1.25
                            WHEN 'summary' THEN 1.10
                            WHEN 'term-definition' THEN 1.05
@@ -1414,6 +2505,90 @@ class SemanticRepository {
         ] as Map<String, Object>
     }
 
+    private static Map<String, Object> corpusMap(ResultSet rs) {
+        [
+            id: String.valueOf(rs.getObject('id')),
+            name: rs.getString('name'),
+            source: rs.getString('source'),
+            description: rs.getString('description'),
+            enabled: rs.getBoolean('enabled'),
+            origin: rs.getString('origin'),
+            apiVisible: rs.getBoolean('api_visible'),
+            apiManageable: rs.getBoolean('api_manageable'),
+            chunkDeleteApiEnabled: rs.getBoolean('chunk_delete_api_enabled'),
+            createdAt: rs.getTimestamp('created_at')?.toInstant()?.toString(),
+            updatedAt: rs.getTimestamp('updated_at')?.toInstant()?.toString()
+        ] as Map<String, Object>
+    }
+
+    private static Map<String, Object> modelIndexMap(ResultSet rs) {
+        [
+            id: String.valueOf(rs.getObject('id')),
+            mauroModelId: String.valueOf(rs.getObject('mauro_model_id')),
+            mauroModelLabel: rs.getString('mauro_model_label'),
+            label: rs.getString('model_index_label'),
+            corpusName: rs.getString('corpus_name'),
+            profileName: rs.getString('profile_name'),
+            provider: rs.getString('provider'),
+            embeddingModel: rs.getString('embedding_model'),
+            dimension: rs.getInt('dimension'),
+            enabled: rs.getBoolean('enabled'),
+            status: rs.getString('status'),
+            lastIndexedAt: rs.getTimestamp('last_indexed_at')?.toInstant()?.toString(),
+            staleRequestedAt: timestampString(rs, 'stale_requested_at'),
+            indexingStartedAt: timestampString(rs, 'indexing_started_at'),
+            lastCheckedAt: timestampString(rs, 'last_checked_at'),
+            lastError: rs.getString('last_error'),
+            chunks: rs.getLong('chunks'),
+            embeddings: rs.getLong('embeddings'),
+            createdAt: rs.getTimestamp('created_at')?.toInstant()?.toString(),
+            updatedAt: rs.getTimestamp('updated_at')?.toInstant()?.toString()
+        ] as Map<String, Object>
+    }
+
+    private static Map<String, Object> modelIndexSummaryMap(ResultSet rs) {
+        [
+            id: String.valueOf(rs.getObject('id')),
+            mauroModelId: String.valueOf(rs.getObject('mauro_model_id')),
+            mauroModelLabel: rs.getString('mauro_model_label'),
+            label: rs.getString('model_index_label'),
+            corpusName: rs.getString('corpus_name'),
+            profileName: rs.getString('profile_name'),
+            enabled: rs.getBoolean('enabled'),
+            status: rs.getString('status'),
+            lastError: rs.getString('last_error')
+        ] as Map<String, Object>
+    }
+
+    private static String timestampString(ResultSet rs, String column) {
+        try {
+            rs.getTimestamp(column)?.toInstant()?.toString()
+        } catch (SQLException ignored) {
+            null
+        }
+    }
+
+    private static Map<String, Object> jobMap(ResultSet rs) {
+        [
+            jobId: String.valueOf(rs.getObject('id')),
+            mauroModelId: String.valueOf(rs.getObject('mauro_model_id')),
+            mauroModelLabel: rs.getString('mauro_model_label'),
+            label: rs.getString('model_index_label'),
+            profileName: rs.getString('profile_name'),
+            corpusName: rs.getString('corpus_name'),
+            status: rs.getString('status'),
+            rebuildEmbeddings: rs.getBoolean('force'),
+            maxRows: integerOrNull(rs, 'max_rows'),
+            batchSize: integerOrNull(rs, 'batch_size'),
+            result: parseJson(rs.getString('result_json')),
+            error: rs.getString('error'),
+            startedAt: rs.getTimestamp('started_at')?.toInstant()?.toString(),
+            completedAt: rs.getTimestamp('completed_at')?.toInstant()?.toString(),
+            createdAt: rs.getTimestamp('created_at')?.toInstant()?.toString(),
+            updatedAt: rs.getTimestamp('updated_at')?.toInstant()?.toString()
+        ] as Map<String, Object>
+    }
+
     private static List<String> arrayToList(Object array) {
         if (array instanceof Object[]) {
             return ((Object[]) array).collect {Object item -> String.valueOf(item)} as List<String>
@@ -1445,6 +2620,26 @@ class SemanticRepository {
     private static boolean booleanValue(Map<String, Object> request, String key, boolean fallback) {
         Object value = request == null ? null : request.get(key)
         value == null ? fallback : Boolean.valueOf(String.valueOf(value))
+    }
+
+    private static void setInteger(PreparedStatement statement, int index, Integer value) {
+        if (value == null) {
+            statement.setObject(index, null)
+        } else {
+            statement.setInt(index, value)
+        }
+    }
+
+    private static Integer integerOrNull(ResultSet rs, String column) {
+        int value = rs.getInt(column)
+        rs.wasNull() ? null : Integer.valueOf(value)
+    }
+
+    private static Object parseJson(String json) {
+        if (json == null || json.trim().isEmpty()) {
+            return [:] as Map<String, Object>
+        }
+        new JsonSlurper().parseText(json)
     }
 
     private static boolean hasColumn(ResultSet rs, String columnName) {
@@ -1492,6 +2687,7 @@ class SemanticRepository {
         List<SemanticChunk> chunks = new ArrayList<SemanticChunk>()
         addChunk(chunks, corpusId, sourceId, domainType, label, mauroModelId, 'label', 0, label, dateCreated, lastUpdated)
         addLabelSubchunks(chunks, corpusId, sourceId, domainType, label, mauroModelId, dateCreated, lastUpdated)
+        addIdentifierLabelChunk(chunks, corpusId, sourceId, domainType, label, mauroModelId, dateCreated, lastUpdated)
         List<String> descriptionSections = descriptionSections(description)
         for (int i = 0; i < descriptionSections.size(); i++) {
             addChunk(chunks, corpusId, sourceId, domainType, label, mauroModelId, 'description-section', 100 + i, descriptionSections.get(i), dateCreated, lastUpdated)
@@ -1516,6 +2712,20 @@ class SemanticRepository {
         }
     }
 
+    private static void addIdentifierLabelChunk(List<SemanticChunk> chunks,
+                                                UUID corpusId,
+                                                UUID sourceId,
+                                                String domainType,
+                                                String label,
+                                                UUID mauroModelId,
+                                                Instant dateCreated,
+                                                Instant lastUpdated) {
+        List<String> words = identifierLabelWords(label)
+        if (words.size() >= 2) {
+            addChunk(chunks, corpusId, sourceId, domainType, label, mauroModelId, 'label-identifier', 60, words.join(' '), dateCreated, lastUpdated)
+        }
+    }
+
     private static List<String> labelWords(String label) {
         if (label == null || label.trim().isEmpty()) {
             return Collections.<String>emptyList()
@@ -1524,6 +2734,23 @@ class SemanticRepository {
             .trim()
             .split(/\s+/)
             .findAll {String word -> word ==~ /[A-Za-z]+/ && word.length() >= 4}
+            .toList() as List<String>
+    }
+
+    private static List<String> identifierLabelWords(String label) {
+        if (label == null || label.trim().isEmpty()) {
+            return Collections.<String>emptyList()
+        }
+        label
+            .replaceAll(/([A-Z]+)([A-Z][a-z])/, '$1 $2')
+            .replaceAll(/([a-z0-9])([A-Z])/, '$1 $2')
+            .replaceAll(/([A-Za-z])([0-9])/, '$1 $2')
+            .replaceAll(/([0-9])([A-Za-z])/, '$1 $2')
+            .replaceAll(/[^A-Za-z0-9]+/, ' ')
+            .trim()
+            .split(/\s+/)
+            .findAll {String word -> word ==~ /[A-Za-z0-9]+/ }
+            .collect {String word -> word.toLowerCase(Locale.ROOT)}
             .toList() as List<String>
     }
 
@@ -1552,7 +2779,10 @@ class SemanticRepository {
             return
         }
         final String clean = text.trim()
-        if(clean.isEmpty()) {
+        if (clean.isEmpty()) {
+            return
+        }
+        if (chunks.any {SemanticChunk chunk -> chunk.sourceText == clean}) {
             return
         }
         chunks.add(new SemanticChunk(
@@ -1618,6 +2848,40 @@ class SemanticRepository {
         """
     }
 
+    private static String scopedModelIdsSql() {
+        """
+            WITH RECURSIVE requested_scope(id) AS (
+                SELECT ?::uuid
+            ),
+            scoped_folders(id) AS (
+                SELECT folder.id
+                FROM core.folder folder
+                     JOIN requested_scope scope ON scope.id = folder.id
+                UNION ALL
+                SELECT child.id
+                FROM core.folder child
+                     JOIN scoped_folders parent ON child.parent_folder_id = parent.id
+            )
+            SELECT scope.id
+            FROM requested_scope scope
+            WHERE EXISTS (SELECT 1 FROM datamodel.data_model data_model WHERE data_model.id = scope.id)
+               OR EXISTS (SELECT 1 FROM terminology.terminology terminology WHERE terminology.id = scope.id)
+               OR EXISTS (SELECT 1 FROM terminology.code_set code_set WHERE code_set.id = scope.id)
+            UNION
+            SELECT data_model.id
+            FROM datamodel.data_model data_model
+                 JOIN scoped_folders folder ON folder.id = data_model.folder_id
+            UNION
+            SELECT terminology.id
+            FROM terminology.terminology terminology
+                 JOIN scoped_folders folder ON folder.id = terminology.folder_id
+            UNION
+            SELECT code_set.id
+            FROM terminology.code_set code_set
+                 JOIN scoped_folders folder ON folder.id = code_set.folder_id
+        """
+    }
+
     private static String catalogueSourceRowsSql(List<String> domainTypes, UUID mauroModelId, Integer maxRows, boolean identifiersOnly = false) {
         String domainClause = domainTypes == null || domainTypes.isEmpty() ? '' : ' AND sd.domain_type = ANY (?::varchar[])'
         String mauroModelClause = modelScopeClause(mauroModelId, 'sd.model_id')
@@ -1641,149 +2905,211 @@ class SemanticRepository {
         """
             SELECT ${selectColumns}
             FROM (
-                SELECT id,
-                       domain_type,
-                       label,
-                       model_id,
-                       'label'::varchar AS chunk_kind,
-                       0 AS chunk_ordinal,
-                       label AS source_text,
-                       date_created,
-                       last_updated
-                FROM source_rows
-
-                UNION ALL
-                SELECT id,
-                       domain_type,
-                       label,
-                       model_id,
-                       'summary'::varchar AS chunk_kind,
-                       2 AS chunk_ordinal,
-                       concat_ws('. ', NULLIF(btrim(label), ''), NULLIF(btrim(description), '')) AS source_text,
-                       date_created,
-                       last_updated
-                FROM source_rows
-
-                UNION ALL
-                SELECT id,
-                       domain_type,
-                       label,
-                       model_id,
-                       'label-phrase'::varchar AS chunk_kind,
-                       40 + (filtered_ordinal - 1)::integer AS chunk_ordinal,
-                       concat_ws(' ', word, next_word, next_next_word) AS source_text,
-                       date_created,
-                       last_updated
+                SELECT generated.*,
+                       row_number() OVER (
+                           PARTITION BY generated.id, generated.domain_type, btrim(generated.source_text)
+                           ORDER BY CASE generated.chunk_kind
+                               WHEN 'label' THEN 0
+                               WHEN 'label-identifier' THEN 1
+                               WHEN 'label-phrase' THEN 2
+                               WHEN 'summary' THEN 3
+                               ELSE 4
+                           END,
+                           generated.chunk_ordinal,
+                           generated.chunk_kind
+                       ) AS duplicate_rank
                 FROM (
                     SELECT id,
                            domain_type,
                            label,
                            model_id,
+                           'label'::varchar AS chunk_kind,
+                           0 AS chunk_ordinal,
+                           label AS source_text,
                            date_created,
-                           last_updated,
-                           word,
-                           row_number() OVER (PARTITION BY id ORDER BY word_ordinal) AS filtered_ordinal,
-                           lead(word) OVER (PARTITION BY id ORDER BY word_ordinal) AS next_word,
-                           lead(word, 2) OVER (PARTITION BY id ORDER BY word_ordinal) AS next_next_word
+                           last_updated
                     FROM source_rows
-                         CROSS JOIN LATERAL regexp_split_to_table(regexp_replace(label, '[^A-Za-z]+', ' ', 'g'), '[[:space:]]+') WITH ORDINALITY AS label_word(word, word_ordinal)
-                    WHERE word !~ '[^A-Za-z]'
-                      AND length(word) >= 4
-                ) label_words
-                WHERE next_word IS NOT NULL
-                  AND next_next_word IS NOT NULL
 
-                UNION ALL
-                SELECT id,
-                       domain_type,
-                       label,
-                       model_id,
-                       'description-section'::varchar AS chunk_kind,
-                       100 + section_ordinal::integer AS chunk_ordinal,
-                       section_text AS source_text,
-                       date_created,
-                       last_updated
-                FROM source_rows
-                     CROSS JOIN LATERAL regexp_split_to_table(description, E'(?:\\r?\\n\\s*){2,}') WITH ORDINALITY AS section(section_text, section_ordinal)
+                    UNION ALL
+                    SELECT id,
+                           domain_type,
+                           label,
+                           model_id,
+                           'summary'::varchar AS chunk_kind,
+                           2 AS chunk_ordinal,
+                           concat_ws('. ', NULLIF(btrim(label), ''), NULLIF(btrim(description), '')) AS source_text,
+                           date_created,
+                           last_updated
+                    FROM source_rows
 
-                UNION ALL
-                SELECT sr.id,
-                       sr.domain_type,
-                       sr.label,
-                       sr.model_id,
-                       'enumeration-key'::varchar AS chunk_kind,
-                       20 AS chunk_ordinal,
-                       ev.key AS source_text,
-                       sr.date_created,
-                       sr.last_updated
-                FROM source_rows sr
-                     JOIN datamodel.enumeration_value ev ON ev.id = sr.id
-                WHERE sr.domain_type = 'EnumerationValue'
+                    UNION ALL
+                    SELECT id,
+                           domain_type,
+                           label,
+                           model_id,
+                           'label-phrase'::varchar AS chunk_kind,
+                           40 + (filtered_ordinal - 1)::integer AS chunk_ordinal,
+                           concat_ws(' ', word, next_word, next_next_word) AS source_text,
+                           date_created,
+                           last_updated
+                    FROM (
+                        SELECT id,
+                               domain_type,
+                               label,
+                               model_id,
+                               date_created,
+                               last_updated,
+                               word,
+                               row_number() OVER (PARTITION BY id ORDER BY word_ordinal) AS filtered_ordinal,
+                               lead(word) OVER (PARTITION BY id ORDER BY word_ordinal) AS next_word,
+                               lead(word, 2) OVER (PARTITION BY id ORDER BY word_ordinal) AS next_next_word
+                        FROM source_rows
+                             CROSS JOIN LATERAL regexp_split_to_table(regexp_replace(label, '[^A-Za-z]+', ' ', 'g'), '[[:space:]]+') WITH ORDINALITY AS label_word(word, word_ordinal)
+                        WHERE word !~ '[^A-Za-z]'
+                          AND length(word) >= 4
+                    ) label_words
+                    WHERE next_word IS NOT NULL
+                      AND next_next_word IS NOT NULL
 
-                UNION ALL
-                SELECT sr.id,
-                       sr.domain_type,
-                       sr.label,
-                       sr.model_id,
-                       'enumeration-value'::varchar AS chunk_kind,
-                       21 AS chunk_ordinal,
-                       ev.value AS source_text,
-                       sr.date_created,
-                       sr.last_updated
-                FROM source_rows sr
-                     JOIN datamodel.enumeration_value ev ON ev.id = sr.id
-                WHERE sr.domain_type = 'EnumerationValue'
+                    UNION ALL
+                    SELECT id,
+                           domain_type,
+                           label,
+                           model_id,
+                           'label-identifier'::varchar AS chunk_kind,
+                           60 AS chunk_ordinal,
+                           identifier_text AS source_text,
+                           date_created,
+                           last_updated
+                    FROM (
+                        SELECT id,
+                               domain_type,
+                               label,
+                               model_id,
+                               date_created,
+                               last_updated,
+                               lower(
+                                   btrim(
+                                       regexp_replace(
+                                           regexp_replace(
+                                               regexp_replace(
+                                                   regexp_replace(
+                                                       regexp_replace(label, '([[:upper:]]+)([[:upper:]][[:lower:]])', '\\1 \\2', 'g'),
+                                                       '([[:lower:][:digit:]])([[:upper:]])',
+                                                       '\\1 \\2',
+                                                       'g'
+                                                   ),
+                                                   '([[:alpha:]])([[:digit:]])',
+                                                   '\\1 \\2',
+                                                   'g'
+                                               ),
+                                               '([[:digit:]])([[:alpha:]])',
+                                               '\\1 \\2',
+                                               'g'
+                                           ),
+                                           '[^[:alnum:]]+',
+                                           ' ',
+                                           'g'
+                                       )
+                                   )
+                               ) AS identifier_text
+                        FROM source_rows
+                    ) identifier_labels
+                    WHERE identifier_text ~ '[[:alnum:]]+[[:space:]]+[[:alnum:]]+'
 
-                UNION ALL
-                SELECT sr.id,
-                       sr.domain_type,
-                       sr.label,
-                       sr.model_id,
-                       'enumeration-category'::varchar AS chunk_kind,
-                       22 AS chunk_ordinal,
-                       ev.category AS source_text,
-                       sr.date_created,
-                       sr.last_updated
-                FROM source_rows sr
-                     JOIN datamodel.enumeration_value ev ON ev.id = sr.id
-                WHERE sr.domain_type = 'EnumerationValue'
+                    UNION ALL
+                    SELECT id,
+                           domain_type,
+                           label,
+                           model_id,
+                           'description-section'::varchar AS chunk_kind,
+                           100 + section_ordinal::integer AS chunk_ordinal,
+                           section_text AS source_text,
+                           date_created,
+                           last_updated
+                    FROM source_rows
+                         CROSS JOIN LATERAL regexp_split_to_table(description, E'(?:\\r?\\n\\s*){2,}') WITH ORDINALITY AS section(section_text, section_ordinal)
 
-                UNION ALL
-                SELECT sr.id,
-                       sr.domain_type,
-                       sr.label,
-                       sr.model_id,
-                       'term-definition'::varchar AS chunk_kind,
-                       21 AS chunk_ordinal,
-                       term.definition AS source_text,
-                       sr.date_created,
-                       sr.last_updated
-                FROM source_rows sr
-                     JOIN terminology.term term ON term.id = sr.id
-                WHERE sr.domain_type = 'Term'
+                    UNION ALL
+                    SELECT sr.id,
+                           sr.domain_type,
+                           sr.label,
+                           sr.model_id,
+                           'enumeration-key'::varchar AS chunk_kind,
+                           20 AS chunk_ordinal,
+                           ev.key AS source_text,
+                           sr.date_created,
+                           sr.last_updated
+                    FROM source_rows sr
+                         JOIN datamodel.enumeration_value ev ON ev.id = sr.id
+                    WHERE sr.domain_type = 'EnumerationValue'
 
-                UNION ALL
-                SELECT sr.id,
-                       sr.domain_type,
-                       sr.label,
-                       sr.model_id,
-                       context.context_kind AS chunk_kind,
-                       2000 + (row_number() OVER (
-                           PARTITION BY sr.id, sr.domain_type, context.context_kind
-                           ORDER BY context.relationship_depth, context.context_text, context.context_id
-                       ))::integer AS chunk_ordinal,
-                       context.context_text AS source_text,
-                       sr.date_created,
-                       GREATEST(sr.last_updated, context.last_updated) AS last_updated
-                FROM source_rows sr
-                     JOIN search.administered_item_context context
-                       ON context.source_id = sr.id
-                      AND context.source_domain_type = sr.domain_type
-                      AND context.context_kind NOT IN ('metadata-key-value', 'classification')
+                    UNION ALL
+                    SELECT sr.id,
+                           sr.domain_type,
+                           sr.label,
+                           sr.model_id,
+                           'enumeration-value'::varchar AS chunk_kind,
+                           21 AS chunk_ordinal,
+                           ev.value AS source_text,
+                           sr.date_created,
+                           sr.last_updated
+                    FROM source_rows sr
+                         JOIN datamodel.enumeration_value ev ON ev.id = sr.id
+                    WHERE sr.domain_type = 'EnumerationValue'
+
+                    UNION ALL
+                    SELECT sr.id,
+                           sr.domain_type,
+                           sr.label,
+                           sr.model_id,
+                           'enumeration-category'::varchar AS chunk_kind,
+                           22 AS chunk_ordinal,
+                           ev.category AS source_text,
+                           sr.date_created,
+                           sr.last_updated
+                    FROM source_rows sr
+                         JOIN datamodel.enumeration_value ev ON ev.id = sr.id
+                    WHERE sr.domain_type = 'EnumerationValue'
+
+                    UNION ALL
+                    SELECT sr.id,
+                           sr.domain_type,
+                           sr.label,
+                           sr.model_id,
+                           'term-definition'::varchar AS chunk_kind,
+                           21 AS chunk_ordinal,
+                           term.definition AS source_text,
+                           sr.date_created,
+                           sr.last_updated
+                    FROM source_rows sr
+                         JOIN terminology.term term ON term.id = sr.id
+                    WHERE sr.domain_type = 'Term'
+
+                    UNION ALL
+                    SELECT sr.id,
+                           sr.domain_type,
+                           sr.label,
+                           sr.model_id,
+                           context.context_kind AS chunk_kind,
+                           2000 + (row_number() OVER (
+                               PARTITION BY sr.id, sr.domain_type, context.context_kind
+                               ORDER BY context.relationship_depth, context.context_text, context.context_id
+                           ))::integer AS chunk_ordinal,
+                           context.context_text AS source_text,
+                           sr.date_created,
+                           GREATEST(sr.last_updated, context.last_updated) AS last_updated
+                    FROM source_rows sr
+                         JOIN search.administered_item_context context
+                           ON context.source_id = sr.id
+                          AND context.source_domain_type = sr.domain_type
+                          AND context.context_kind NOT IN ('metadata-key-value', 'classification')
+                ) generated
+                WHERE source_text IS NOT NULL
+                  AND btrim(source_text) <> ''
+                  AND domain_type NOT IN ('ClassificationScheme', 'Classifier')
             ) generated
-            WHERE source_text IS NOT NULL
-              AND btrim(source_text) <> ''
-              AND domain_type NOT IN ('ClassificationScheme', 'Classifier')
+            WHERE duplicate_rank = 1
         """
     }
 

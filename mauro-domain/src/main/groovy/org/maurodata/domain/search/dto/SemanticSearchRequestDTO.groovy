@@ -12,9 +12,6 @@ class SemanticSearchRequestDTO extends SearchRequestDTO {
     String query
 
     @Nullable
-    String corpus = 'catalogue-items'
-
-    @Nullable
     String indexName = 'catalogue-items-default'
 
     @Nullable

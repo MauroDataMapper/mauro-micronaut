@@ -42,7 +42,7 @@ import org.maurodata.web.ListResponse
         'use max and offset for returned-result paging',
         'use deepSearch only when the user explicitly wants broader semantic recall and accepts slower results'
     ],
-    inputSchema = '{"type":"object","properties":{"query":{"type":"string","description":"Text to search by semantic similarity."},"searchTerm":{"type":"string","description":"Alias for query."},"domainTypes":{"type":"array","items":{"type":"string","enum":["DataModel","DataClass","DataElement","DataType","EnumerationType","EnumerationValue","CodeSet","Terminology","Term","Folder","VersionedFolder"]},"description":"Optional catalogue result type filter."},"modelId":{"type":"string","format":"uuid","description":"Optional UUID of a DataModel, Terminology, CodeSet, Folder, or VersionedFolder to scope the search. Folder scopes include descendant folders and contained models."},"max":{"type":"integer","minimum":1,"maximum":20,"description":"Maximum returned results. Omit for default page size."},"offset":{"type":"integer","minimum":0,"description":"Zero-based offset for paging."},"includeChunks":{"type":"boolean","description":"Whether to include matched evidence snippets. Defaults to true."},"deepSearch":{"type":"boolean","description":"When true, prioritise broader semantic recall over speed. Defaults to false."}}}'
+    inputSchema = '{"type":"object","properties":{"query":{"type":"string","description":"Text to search by semantic similarity."},"searchTerm":{"type":"string","description":"Alias for query."},"domainTypes":{"type":"array","items":{"type":"string","enum":["DataModel","DataClass","DataElement","DataType","EnumerationType","EnumerationValue","CodeSet","Terminology","Term","Folder","VersionedFolder"]},"description":"Optional catalogue result type filter."},"modelId":{"type":"string","format":"uuid","description":"Optional UUID of a DataModel, Terminology, CodeSet, Folder, or VersionedFolder to scope the search. Folder scopes include descendant folders and contained models."},"corpus":{"type":"string","description":"Optional API-visible semantic corpus name. Omit to search API-visible corpora for the requested model scope."},"max":{"type":"integer","minimum":1,"maximum":20,"description":"Maximum returned results. Omit for default page size."},"offset":{"type":"integer","minimum":0,"description":"Zero-based offset for paging."},"includeChunks":{"type":"boolean","description":"Whether to include matched evidence snippets. Defaults to true."},"deepSearch":{"type":"boolean","description":"When true, prioritise broader semantic recall over speed. Defaults to false."}}}'
 )
 class SemanticSearchToolHandler extends AbstractAnnotatedToolHandler {
 
@@ -81,6 +81,7 @@ class SemanticSearchToolHandler extends AbstractAnnotatedToolHandler {
         SemanticSearchRequestDTO request = new SemanticSearchRequestDTO(
             query: query,
             searchTerm: query,
+            corpus: asString(arguments.get('corpus') ?: arguments.get('corpusName')),
             domainTypes: extractStringList(arguments.get('domainTypes')).findAll {String domainType -> ALLOWED_DOMAIN_TYPES.contains(domainType)} as List<String>,
             withinModelId: asUuid(arguments.get('modelId') ?: arguments.get('withinModelId')),
             embeddingProfiles: [],
@@ -93,7 +94,7 @@ class SemanticSearchToolHandler extends AbstractAnnotatedToolHandler {
             deepSearch: asBoolean(arguments.get('deepSearch'), false),
             rebuildIfEmpty: false
         )
-        SemanticSearchAvailability availability = semanticSearchService.availability(request.indexName)
+        SemanticSearchAvailability availability = semanticSearchService.availability(request.corpus, request.withinModelId)
         ListResponse<SemanticSearchResultsDTO> response = semanticSearchService.executeSearch(
             request,
             { String domainType, UUID id -> administeredItemLookupService.findAdministeredItem(domainType, id) }
@@ -104,6 +105,7 @@ class SemanticSearchToolHandler extends AbstractAnnotatedToolHandler {
         }
         [
             query: query,
+            corpus: request.corpus,
             domainTypes: request.domainTypes,
             modelId: request.withinModelId?.toString(),
             count: response.count ?: 0,
@@ -140,6 +142,7 @@ class SemanticSearchToolHandler extends AbstractAnnotatedToolHandler {
                 "Semantic available: ${result.get('semanticAvailable')}",
                 result.get('fallbackReason') ? "Semantic fallback reason: ${result.get('fallbackReason')}" : null,
                 "Domain type filter: ${((List<?>) (result.get('domainTypes') ?: [])).join(', ')}",
+                result.get('corpus') ? "Corpus: ${result.get('corpus')}" : null,
                 result.get('modelId') ? "Model scope: ${result.get('modelId')}" : null,
                 "Deep search: ${result.get('deepSearch')}",
                 "Has more results: ${result.get('hasMore')}"

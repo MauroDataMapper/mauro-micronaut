@@ -21,6 +21,9 @@ class SearchRequestDTO extends PaginationParams {
     @Nullable
     UUID withinModelId
 
+    @Nullable
+    String corpus
+
     void setModelId(UUID modelId) {
         withinModelId = modelId
     }
@@ -28,6 +31,15 @@ class SearchRequestDTO extends PaginationParams {
     @Nullable
     UUID getModelId() {
         withinModelId
+    }
+
+    void setCorpusName(String corpusName) {
+        corpus = corpusName
+    }
+
+    @Nullable
+    String getCorpusName() {
+        corpus
     }
 
     // boolean labelOnly // TODO: Implement support for this

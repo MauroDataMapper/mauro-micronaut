@@ -7,6 +7,8 @@ import io.micronaut.http.annotation.Delete
 import io.micronaut.http.annotation.Get
 import io.micronaut.http.annotation.PathVariable
 import io.micronaut.http.annotation.Post
+import io.micronaut.http.annotation.Produces
+import io.micronaut.http.annotation.QueryValue
 import io.micronaut.http.annotation.RequestBean
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
@@ -24,6 +26,8 @@ import org.maurodata.service.semantic.SemanticEmbeddingModelAdministration
 import org.maurodata.service.semantic.SemanticIndexAdministrationService
 import org.maurodata.service.semantic.SemanticProfileAdministrationService
 import org.maurodata.web.ListResponse
+import org.reactivestreams.Publisher
+import reactor.core.publisher.Flux
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
@@ -82,8 +86,22 @@ class SemanticSearchController implements AdministeredItemReader, SemanticSearch
             uuidValue(request, 'mauroModelId'),
             integerValue(request, 'maxRows'),
             integerValue(request, 'batchSize'),
-            booleanValue(request, 'force', false)
+            booleanValue(request, 'rebuildEmbeddings', false)
         )
+    }
+
+    @Audit
+    @Get(Paths.SEMANTIC_CORPORA)
+    List<Map<String, Object>> semanticCorpora() {
+        accessControlService.checkAdministrator()
+        semanticIndexAdministrationService.corpora()
+    }
+
+    @Audit
+    @Post(Paths.SEMANTIC_CORPORA)
+    Map<String, Object> createSemanticCorpus(@Body Map<String, Object> request) {
+        accessControlService.checkAdministrator()
+        semanticIndexAdministrationService.createCorpus(request)
     }
 
     @Audit
@@ -179,6 +197,133 @@ class SemanticSearchController implements AdministeredItemReader, SemanticSearch
         String provider = providerValue == null ? null : String.valueOf(providerValue)
         String model = modelValue == null ? null : String.valueOf(modelValue)
         semanticEmbeddingModelAdministration.pull(provider, model)
+    }
+
+    @Audit
+    @Get(Paths.SEMANTIC_INDEXING_STATUS)
+    Map<String, Object> semanticIndexingStatus() {
+        accessControlService.checkAdministrator()
+        semanticIndexAdministrationService.indexingStatus()
+    }
+
+    @Audit
+    @Post(Paths.SEMANTIC_INDEXING_ENABLE)
+    Map<String, Object> enableSemanticIndexing() {
+        accessControlService.checkAdministrator()
+        semanticIndexAdministrationService.setIndexingEnabled(true)
+    }
+
+    @Audit
+    @Post(Paths.SEMANTIC_INDEXING_DISABLE)
+    Map<String, Object> disableSemanticIndexing() {
+        accessControlService.checkAdministrator()
+        semanticIndexAdministrationService.setIndexingEnabled(false)
+    }
+
+    @Audit
+    @Post(Paths.SEMANTIC_INDEXING_AUTO_RECONCILE_ENABLE)
+    Map<String, Object> enableSemanticIndexingAutoReconcile() {
+        accessControlService.checkAdministrator()
+        semanticIndexAdministrationService.setAutoReconcileEnabled(true)
+    }
+
+    @Audit
+    @Post(Paths.SEMANTIC_INDEXING_AUTO_RECONCILE_DISABLE)
+    Map<String, Object> disableSemanticIndexingAutoReconcile() {
+        accessControlService.checkAdministrator()
+        semanticIndexAdministrationService.setAutoReconcileEnabled(false)
+    }
+
+    @Audit
+    @Get(Paths.SEMANTIC_MODEL_INDEXES)
+    List<Map<String, Object>> semanticModelIndexes() {
+        accessControlService.checkAdministrator()
+        semanticIndexAdministrationService.modelIndexes()
+    }
+
+    @Audit
+    @Get(Paths.SEMANTIC_MODEL_INDEX_STATS)
+    List<Map<String, Object>> semanticModelIndexStats(@PathVariable UUID modelId) {
+        accessControlService.checkAdministrator()
+        semanticIndexAdministrationService.modelIndexStats(modelId)
+    }
+
+    @Audit
+    @Post(Paths.SEMANTIC_MODEL_INDEXES)
+    Map<String, Object> createSemanticModelIndex(@Body Map<String, Object> request) {
+        accessControlService.checkAdministrator()
+        semanticIndexAdministrationService.createModelIndex(request)
+    }
+
+    @Audit
+    @Delete(Paths.SEMANTIC_MODEL_INDEX)
+    Map<String, Object> deleteSemanticModelIndex(@PathVariable UUID modelId, @PathVariable String profileName) {
+        accessControlService.checkAdministrator()
+        semanticIndexAdministrationService.deleteModelIndex(modelId, profileName)
+    }
+
+    @Audit
+    @Delete(Paths.SEMANTIC_MODEL_INDEX_DEFAULT_PROFILE)
+    Map<String, Object> deleteDefaultSemanticModelIndex(@PathVariable UUID modelId) {
+        accessControlService.checkAdministrator()
+        semanticIndexAdministrationService.deleteModelIndex(modelId, null)
+    }
+
+    @Audit
+    @Post(Paths.SEMANTIC_MODEL_INDEX_START)
+    Map<String, Object> startSemanticModelIndex(@PathVariable UUID modelId,
+                                                @PathVariable String profileName,
+                                                @Body @Nullable Map<String, Object> request) {
+        accessControlService.checkAdministrator()
+        semanticIndexAdministrationService.startModelIndexJob(modelId, profileName, request)
+    }
+
+    @Audit
+    @Post(Paths.SEMANTIC_MODEL_INDEX_START_DEFAULT_PROFILE)
+    Map<String, Object> startDefaultSemanticModelIndex(@PathVariable UUID modelId,
+                                                       @Body @Nullable Map<String, Object> request) {
+        accessControlService.checkAdministrator()
+        semanticIndexAdministrationService.startModelIndexJob(modelId, null, request)
+    }
+
+    @Audit
+    @Get(Paths.SEMANTIC_INDEX_JOBS)
+    List<Map<String, Object>> semanticIndexJobs(@QueryValue(defaultValue = 'false') Boolean includeHistory) {
+        accessControlService.checkAdministrator()
+        semanticIndexAdministrationService.jobs(includeHistory == true)
+    }
+
+    @Audit
+    @Get(Paths.SEMANTIC_INDEX_JOB)
+    Map<String, Object> semanticIndexJob(@PathVariable UUID jobId) {
+        accessControlService.checkAdministrator()
+        semanticIndexAdministrationService.jobStatus(jobId)
+    }
+
+    @Audit
+    @Post(Paths.SEMANTIC_INDEX_JOB_CANCEL)
+    Map<String, Object> cancelSemanticIndexJob(@PathVariable UUID jobId) {
+        accessControlService.checkAdministrator()
+        semanticIndexAdministrationService.cancelJob(jobId)
+    }
+
+    @Audit
+    @Post(Paths.SEMANTIC_INDEX_JOB_RESUME)
+    Map<String, Object> resumeSemanticIndexJob(@PathVariable UUID jobId) {
+        accessControlService.checkAdministrator()
+        semanticIndexAdministrationService.resumeJob(jobId)
+    }
+
+    @Audit
+    @Get(Paths.SEMANTIC_INDEX_JOB_EVENTS)
+    @Produces('application/x-ndjson')
+    Publisher<String> semanticIndexJobEvents(@PathVariable UUID jobId,
+                                             @QueryValue(defaultValue = 'false') Boolean follow,
+                                             @QueryValue(defaultValue = '0') Long after) {
+        accessControlService.checkAdministrator()
+        Boolean.TRUE.equals(follow) ?
+            semanticIndexAdministrationService.followJobEvents(jobId, after) :
+            Flux.just(semanticIndexAdministrationService.jobEvents(jobId))
     }
 
     private static String stringValue(Map<String, Object> request, String key) {

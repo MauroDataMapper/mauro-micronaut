@@ -8,7 +8,19 @@ import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.context.annotation.Value
 import io.micronaut.data.connection.annotation.Connectable
+import jakarta.annotation.PreDestroy
 import jakarta.inject.Singleton
+import org.reactivestreams.Publisher
+import reactor.core.publisher.Flux
+
+import java.util.concurrent.CancellationException
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
+import java.util.concurrent.ThreadFactory
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
+import java.time.Duration
+import java.util.function.Consumer
 
 @Slf4j
 @CompileStatic
@@ -24,6 +36,8 @@ class SemanticIndexingService implements SemanticIndexAdministrationService {
     private final boolean reuseDuplicateContentBeforeEmbedding
     private final int minimumAdaptiveBatchSize
     private final long progressLogIntervalMillis
+    private final String defaultEmbeddingProfile
+    private final ExecutorService executorService
 
     SemanticIndexingService(SemanticRepository semanticRepository,
                             EmbeddingProviderRegistry embeddingProviderRegistry,
@@ -33,9 +47,15 @@ class SemanticIndexingService implements SemanticIndexAdministrationService {
                             @Value('${chat.semantic.embeddings.rebuild-vector-index-after-partial-load:false}') Boolean rebuildVectorIndexAfterPartialLoad,
                             @Value('${chat.semantic.embeddings.reuse-duplicate-content-before-embedding:false}') Boolean reuseDuplicateContentBeforeEmbedding,
                             @Value('${chat.semantic.embeddings.adaptive-min-batch-size:128}') Integer minimumAdaptiveBatchSize,
-                            @Value('${chat.semantic.embeddings.progress-log-interval-seconds:30}') Integer progressLogIntervalSeconds) {
+                            @Value('${chat.semantic.embeddings.progress-log-interval-seconds:30}') Integer progressLogIntervalSeconds,
+                            @Value('${chat.semantic.default-embedding-profile:ollama-nomic-embed-text}') String defaultEmbeddingProfile,
+                            @Value('${chat.semantic.indexing.worker-threads:1}') Integer workerThreads) {
         this.semanticRepository = semanticRepository
         this.embeddingProviderRegistry = embeddingProviderRegistry
+        this.executorService = Executors.newFixedThreadPool(
+            Math.max(workerThreads ?: 1, 1),
+            semanticIndexThreadFactory()
+        )
         this.embeddingBatchSize = Math.max(embeddingBatchSize ?: 32, 1)
         this.deferVectorIndexThreshold = Math.max(deferVectorIndexThreshold ?: 0, 0)
         this.deferVectorIndexWithExistingEmbeddings = deferVectorIndexWithExistingEmbeddings == true
@@ -43,6 +63,28 @@ class SemanticIndexingService implements SemanticIndexAdministrationService {
         this.reuseDuplicateContentBeforeEmbedding = reuseDuplicateContentBeforeEmbedding == true
         this.minimumAdaptiveBatchSize = Math.max(minimumAdaptiveBatchSize ?: 128, 1)
         this.progressLogIntervalMillis = Math.max(progressLogIntervalSeconds ?: 30, 1) * 1000L
+        this.defaultEmbeddingProfile = defaultEmbeddingProfile ?: 'ollama-nomic-embed-text'
+    }
+
+    @PreDestroy
+    void shutdownExecutor() {
+        executorService.shutdownNow()
+        try {
+            if (!executorService.awaitTermination(5L, TimeUnit.SECONDS)) {
+                log.warn('Semantic indexing executor did not terminate cleanly within shutdown timeout')
+            }
+        } catch (InterruptedException ignored) {
+            Thread.currentThread().interrupt()
+        }
+    }
+
+    private static ThreadFactory semanticIndexThreadFactory() {
+        AtomicInteger threadNumber = new AtomicInteger(1)
+        return {Runnable runnable ->
+            Thread thread = new Thread(runnable, "semantic-indexing-worker-${threadNumber.getAndIncrement()}".toString())
+            thread.daemon = true
+            thread
+        } as ThreadFactory
     }
 
     @Connectable
@@ -60,14 +102,65 @@ class SemanticIndexingService implements SemanticIndexAdministrationService {
         if (profiles.isEmpty()) {
             throw new IllegalStateException("No embedding profiles configured for semantic index ${indexName}")
         }
+        rebuildCatalogueIndexWithProfiles(profiles, indexName, corpusName, domainTypes, mauroModelId, maxRows, batchSize, force)
+    }
 
+    private Map<String, Object> rebuildCatalogueIndexWithProfiles(List<EmbeddingProfile> profiles,
+                                                                  String indexName = 'catalogue-items-default',
+                                                                  String corpusName = 'catalogue-items',
+                                                                  List<String> domainTypes = [],
+                                                                  UUID mauroModelId = null,
+                                                                  Integer maxRows = null,
+                                                                  Integer batchSize = null,
+                                                                  boolean force = false,
+                                                                  Closure<Boolean> cancellationRequested = null,
+                                                                  Consumer<Map<String, Object>> progressConsumer = null) {
+        long start = System.currentTimeMillis()
+        int effectiveBatchSize = Math.max(batchSize ?: embeddingBatchSize, 1)
+        if (profiles == null || profiles.isEmpty()) {
+            throw new IllegalStateException("No embedding profiles configured for semantic index ${indexName}")
+        }
+
+        List<String> profileNames = profiles.collect {EmbeddingProfile profile -> profile.name} as List<String>
+        emitProgress(progressConsumer, baseProgress(
+            'starting',
+            start,
+            indexName,
+            corpusName,
+            mauroModelId,
+            profileNames,
+            effectiveBatchSize,
+            force
+        ))
+        emitProgress(progressConsumer, baseProgress(
+            'refreshing_context',
+            start,
+            indexName,
+            corpusName,
+            mauroModelId,
+            profileNames,
+            effectiveBatchSize,
+            force
+        ))
         boolean contextRefreshed = semanticRepository.refreshAdministeredItemContextIfExists()
+        Map<String, Object> contextProgress = baseProgress(
+            'context_refreshed',
+            start,
+            indexName,
+            corpusName,
+            mauroModelId,
+            profileNames,
+            effectiveBatchSize,
+            force
+        )
+        contextProgress.put('administeredItemContextRefreshed', contextRefreshed)
+        emitProgress(progressConsumer, contextProgress)
         semanticRepository.updateIndexStatus(indexName, 'INDEXING')
         log.info(
             'Semantic index rebuild starting indexName={} corpusName={} profiles={} domainTypes={} mauroModelId={} maxRows={} batchSize={} force={} administeredItemContextRefreshed={}',
             indexName,
             corpusName,
-            profiles.collect {EmbeddingProfile profile -> profile.name},
+            profileNames,
             domainTypes ?: [],
             mauroModelId,
             maxRows,
@@ -76,9 +169,76 @@ class SemanticIndexingService implements SemanticIndexAdministrationService {
             Boolean.valueOf(contextRefreshed)
         )
 
+        emitProgress(progressConsumer, baseProgress(
+            'counting_candidate_chunks',
+            start,
+            indexName,
+            corpusName,
+            mauroModelId,
+            profileNames,
+            effectiveBatchSize,
+            force
+        ))
         int chunkCount = semanticRepository.countCatalogueCandidateChunks(corpusName, domainTypes, mauroModelId, maxRows)
         log.info('Semantic index rebuild selected {} candidate chunks for indexName={}', Integer.valueOf(chunkCount), indexName)
-        int changedChunkCount = semanticRepository.reconcileCatalogueChunks(corpusName, domainTypes, mauroModelId, maxRows)
+        Map<String, Object> countedProgress = baseProgress(
+            'candidate_chunks_counted',
+            start,
+            indexName,
+            corpusName,
+            mauroModelId,
+            profileNames,
+            effectiveBatchSize,
+            force
+        )
+        countedProgress.put('chunks', chunkCount)
+        emitProgress(progressConsumer, countedProgress)
+        Map<String, Object> reconcileProgress = baseProgress(
+            'reconciling_chunks',
+            start,
+            indexName,
+            corpusName,
+            mauroModelId,
+            profileNames,
+            effectiveBatchSize,
+            force
+        )
+        reconcileProgress.put('chunks', chunkCount)
+        emitProgress(progressConsumer, reconcileProgress)
+        Map<String, Integer> chunkReconcileResult = semanticRepository.reconcileCatalogueChunksDetailed(corpusName, domainTypes, mauroModelId, maxRows)
+        int upsertedChunkCount = chunkReconcileResult.get('upsertedChunks') ?: 0
+        int deletedChunkCount = chunkReconcileResult.get('deletedChunks') ?: 0
+        int changedChunkCount = chunkReconcileResult.get('changedChunks') ?: 0
+        Map<String, Object> reconciledProgress = baseProgress(
+            'chunks_reconciled',
+            start,
+            indexName,
+            corpusName,
+            mauroModelId,
+            profileNames,
+            effectiveBatchSize,
+            force
+        )
+        reconciledProgress.put('chunks', chunkCount)
+        reconciledProgress.put('changedChunks', changedChunkCount)
+        reconciledProgress.put('upsertedChunks', upsertedChunkCount)
+        reconciledProgress.put('deletedChunks', deletedChunkCount)
+        emitProgress(progressConsumer, reconciledProgress)
+        Map<String, Object> syncProgress = baseProgress(
+            'syncing_embedding_chunk_groups',
+            start,
+            indexName,
+            corpusName,
+            mauroModelId,
+            profileNames,
+            effectiveBatchSize,
+            force
+        )
+        syncProgress.put('chunks', chunkCount)
+        syncProgress.put('changedChunks', changedChunkCount)
+        syncProgress.put('upsertedChunks', upsertedChunkCount)
+        syncProgress.put('deletedChunks', deletedChunkCount)
+        emitProgress(progressConsumer, syncProgress)
         int syncedEmbeddingGroups = semanticRepository.syncEmbeddingChunkGroups(corpusName, domainTypes, mauroModelId, maxRows)
         int embeddingCount = 0
         int skippedEmbeddingCount = 0
@@ -86,10 +246,47 @@ class SemanticIndexingService implements SemanticIndexAdministrationService {
         Map<String, Integer> profileEmbeddingCounts = new LinkedHashMap<String, Integer>()
         Map<String, Integer> profileSkippedCounts = new LinkedHashMap<String, Integer>()
         Map<String, Integer> profileReusedCounts = new LinkedHashMap<String, Integer>()
-        log.info('Semantic index rebuild reconciled chunk records for indexName={} candidateChunks={} changedChunkRows={} syncedEmbeddingChunkGroups={}', indexName, Integer.valueOf(chunkCount), Integer.valueOf(changedChunkCount), Integer.valueOf(syncedEmbeddingGroups))
+        log.info(
+            'Semantic index rebuild reconciled chunk records for indexName={} candidateChunks={} changedChunkRows={} upsertedChunkRows={} deletedChunkRows={} syncedEmbeddingChunkGroups={}',
+            indexName,
+            Integer.valueOf(chunkCount),
+            Integer.valueOf(changedChunkCount),
+            Integer.valueOf(upsertedChunkCount),
+            Integer.valueOf(deletedChunkCount),
+            Integer.valueOf(syncedEmbeddingGroups)
+        )
+        Map<String, Object> syncedProgress = baseProgress(
+            'embedding_chunk_groups_synced',
+            start,
+            indexName,
+            corpusName,
+            mauroModelId,
+            profileNames,
+            effectiveBatchSize,
+            force
+        )
+        syncedProgress.put('chunks', chunkCount)
+        syncedProgress.put('changedChunks', changedChunkCount)
+        syncedProgress.put('upsertedChunks', upsertedChunkCount)
+        syncedProgress.put('deletedChunks', deletedChunkCount)
+        syncedProgress.put('syncedEmbeddingChunkGroups', syncedEmbeddingGroups)
+        emitProgress(progressConsumer, syncedProgress)
 
         try {
             for (EmbeddingProfile profile : profiles) {
+                Map<String, Object> preparingProfileProgress = baseProgress(
+                    'preparing_embedding_profile',
+                    start,
+                    indexName,
+                    corpusName,
+                    mauroModelId,
+                    profileNames,
+                    effectiveBatchSize,
+                    force
+                )
+                preparingProfileProgress.put('profileName', profile.name)
+                preparingProfileProgress.put('chunks', chunkCount)
+                emitProgress(progressConsumer, preparingProfileProgress)
                 EmbeddingProvider provider = embeddingProviderRegistry.providerFor(profile)
                 log.info('Semantic index profile {} preparing embeddings: deleting stale rows', profile.name)
                 List<Map<String, Object>> staleCounts = semanticRepository.staleEmbeddingCountsByChunkKind(profile, 12)
@@ -176,6 +373,24 @@ class SemanticIndexingService implements SemanticIndexAdministrationService {
                 UUID lastProcessedChunkId = null
                 boolean completedEmbeddingLoad = false
                 Throwable embeddingLoadFailure = null
+                emitProgress(progressConsumer, [
+                    stage: 'embedding_profile_started',
+                    indexName: indexName,
+                    corpusName: corpusName,
+                    mauroModelId: mauroModelId?.toString(),
+                    profileName: profile.name,
+                    chunks: chunkCount,
+                    chunksToEmbed: chunksToEmbedCount,
+                    embeddedForProfile: embeddedForProfile,
+                    skippedForProfile: skippedForProfile,
+                    reusedForProfile: reusedForProfile,
+                    staleDeletedForProfile: staleEmbeddings,
+                    batchSize: effectiveBatchSize,
+                    batchNumber: batchNumber,
+                    totalBatches: totalBatches,
+                    rebuildEmbeddings: force,
+                    elapsedMs: System.currentTimeMillis() - start
+                ] as Map<String, Object>)
                 try {
                     for (;;) {
                         long fetchStart = System.currentTimeMillis()
@@ -192,6 +407,9 @@ class SemanticIndexingService implements SemanticIndexAdministrationService {
                         chunkFetchMillis += System.currentTimeMillis() - fetchStart
                         if (batch.isEmpty()) {
                             break
+                        }
+                        if (cancellationRequested != null && Boolean.TRUE.equals(cancellationRequested.call())) {
+                            throw new CancellationException('semantic indexing job was cancelled')
                         }
                         batchNumber++
                         BatchEmbeddingResult batchEmbeddingResult = embedAndUpsertAdaptively(provider, profile, batch, batch.size())
@@ -214,6 +432,28 @@ class SemanticIndexingService implements SemanticIndexAdministrationService {
                             double chunksPerSecond = (embeddedForProfile * 1000.0D) / elapsedMillis
                             int remainingChunks = Math.max(chunksToEmbedCount - embeddedForProfile, 0)
                             long etaMillis = chunksPerSecond > 0.0D ? Math.round((remainingChunks * 1000.0D) / chunksPerSecond) : 0L
+                            emitProgress(progressConsumer, [
+                                stage: 'embedding_profile_running',
+                                indexName: indexName,
+                                corpusName: corpusName,
+                                mauroModelId: mauroModelId?.toString(),
+                                profileName: profile.name,
+                                chunks: chunkCount,
+                                chunksToEmbed: chunksToEmbedCount,
+                                embeddedForProfile: embeddedForProfile,
+                                totalEmbedded: embeddingCount,
+                                skippedForProfile: skippedForProfile,
+                                reusedForProfile: reusedForProfile,
+                                batchNumber: batchNumber,
+                                totalBatches: totalBatches,
+                                remainingChunks: remainingChunks,
+                                chunksPerSecond: Math.round(chunksPerSecond * 10D) / 10D,
+                                etaMs: etaMillis,
+                                elapsedMs: System.currentTimeMillis() - start,
+                                fetchMs: chunkFetchMillis,
+                                embeddingMs: providerEmbedMillis,
+                                upsertMs: embeddingUpsertMillis
+                            ] as Map<String, Object>)
                             log.info(
                                 'Semantic index profile {} progress: embedded {}/{} chunks (batch {}/{}), elapsed={}, rate={} chunks/s, eta={}, cumulative(fetch={}, embed={}, upsert={}), window(fetch={}, embed={}, upsert={})',
                                 profile.name,
@@ -234,6 +474,22 @@ class SemanticIndexingService implements SemanticIndexAdministrationService {
                         }
                     }
                     completedEmbeddingLoad = embeddedForProfile >= chunksToEmbedCount
+                    emitProgress(progressConsumer, [
+                        stage: 'embedding_profile_completed',
+                        indexName: indexName,
+                        corpusName: corpusName,
+                        mauroModelId: mauroModelId?.toString(),
+                        profileName: profile.name,
+                        chunks: chunkCount,
+                        chunksToEmbed: chunksToEmbedCount,
+                        embeddedForProfile: embeddedForProfile,
+                        totalEmbedded: embeddingCount,
+                        skippedForProfile: skippedForProfile,
+                        reusedForProfile: reusedForProfile,
+                        batchNumber: batchNumber,
+                        totalBatches: totalBatches,
+                        elapsedMs: System.currentTimeMillis() - start
+                    ] as Map<String, Object>)
                 } catch (Throwable t) {
                     embeddingLoadFailure = t
                     log.error(
@@ -333,7 +589,8 @@ class SemanticIndexingService implements SemanticIndexAdministrationService {
                 )
                 throw t
             }
-            int splitSize = Math.max(batch.size().intdiv(2), minimumAdaptiveBatchSize)
+            int halfBatchSize = batch.size().intdiv(2) as int
+            int splitSize = halfBatchSize > minimumAdaptiveBatchSize ? halfBatchSize : minimumAdaptiveBatchSize
             log.warn(
                 'Semantic index profile {} embedding batch of {} chunks failed after {}; retrying as sub-batches of up to {} chunks (original configured batch size={}); cause={}: {}',
                 profile.name,
@@ -366,6 +623,33 @@ class SemanticIndexingService implements SemanticIndexAdministrationService {
             batchNumber % 25 == 0 ||
             lastProgressLog == 0L ||
             now - lastProgressLog >= progressLogIntervalMillis
+    }
+
+    private static void emitProgress(Consumer<Map<String, Object>> progressConsumer,
+                                     Map<String, Object> progress) {
+        if (progressConsumer != null) {
+            progressConsumer.accept(progress)
+        }
+    }
+
+    private static Map<String, Object> baseProgress(String stage,
+                                                    long start,
+                                                    String indexName,
+                                                    String corpusName,
+                                                    UUID mauroModelId,
+                                                    List<String> profileNames,
+                                                    int batchSize,
+                                                    boolean rebuildEmbeddings) {
+        [
+            stage: stage,
+            indexName: indexName,
+            corpusName: corpusName,
+            mauroModelId: mauroModelId?.toString(),
+            profiles: profileNames,
+            batchSize: batchSize,
+            rebuildEmbeddings: rebuildEmbeddings,
+            elapsedMs: System.currentTimeMillis() - start
+        ] as Map<String, Object>
     }
 
     private static String formatDuration(long millis) {
@@ -431,23 +715,36 @@ class SemanticIndexingService implements SemanticIndexAdministrationService {
     @Connectable
     @Override
     List<Map<String, Object>> reconcileDeclaredIndexes() {
-        List<Map<String, Object>> indexes = semanticRepository.indexes()
+        if (!semanticRepository.indexingEnabled()) {
+            log.info('Semantic index reconcile skipped because indexing is disabled')
+            return Collections.singletonList([enabled: false, skipped: true, reason: 'semantic indexing is disabled'] as Map<String, Object>)
+        }
+        List<Map<String, Object>> indexes = semanticRepository.modelIndexes().findAll {Map<String, Object> index ->
+            Boolean.TRUE.equals(index.get('enabled'))
+        } as List<Map<String, Object>>
         List<Map<String, Object>> results = new ArrayList<Map<String, Object>>()
         for (Map<String, Object> index : indexes) {
-            String indexName = String.valueOf(index.get('name'))
-            List<?> enabledProfiles = index.get('enabledProfiles') instanceof List ? (List<?>) index.get('enabledProfiles') : []
-            if (enabledProfiles.isEmpty()) {
-                log.info('Skipping semantic index {} because it has no enabled linked profiles', indexName)
+            UUID mauroModelId = UUID.fromString(String.valueOf(index.get('mauroModelId')))
+            String profileName = String.valueOf(index.get('profileName'))
+            String corpusName = String.valueOf(index.get('corpusName') ?: 'catalogue-items')
+            boolean alreadyStale = String.valueOf(index.get('status')) != 'READY'
+            boolean needsRefresh = alreadyStale || semanticRepository.modelIndexNeedsRefresh(corpusName, mauroModelId, profileName)
+            if (!needsRefresh) {
                 continue
             }
-            results.add(rebuildCatalogueIndex(
-                indexName,
-                String.valueOf(index.get('corpusName') ?: 'catalogue-items'),
-                Collections.<String>emptyList(),
+            semanticRepository.markModelIndexStale(mauroModelId, profileName, corpusName, 'declared semantic model index changed')
+            results.add(queueModelIndexJob(
+                mauroModelId,
+                profileName,
+                corpusName,
                 null,
                 null,
-                null,
-                false
+                false,
+                [
+                    accepted: true,
+                    source: 'auto-reconcile',
+                    staleDetected: true
+                ] as Map<String, Object>
             ))
         }
         results
@@ -457,5 +754,521 @@ class SemanticIndexingService implements SemanticIndexAdministrationService {
     @Override
     boolean hasEmbeddings(String indexName = 'catalogue-items-default') {
         semanticRepository.hasEmbeddings(indexName)
+    }
+
+    @Connectable
+    @Override
+    boolean hasEmbeddings(String indexName = 'catalogue-items-default', UUID mauroModelId) {
+        if (mauroModelId == null) {
+            return semanticRepository.hasEmbeddings(indexName)
+        }
+        semanticRepository.modelIndexes().any {Map<String, Object> index ->
+            index.get('mauroModelId') == mauroModelId.toString() &&
+                Boolean.TRUE.equals(index.get('enabled')) &&
+                index.get('status') == 'READY' &&
+                ((Number) index.get('embeddings')).longValue() > 0L
+        }
+    }
+
+    @Connectable
+    @Override
+    Map<String, Object> indexingStatus() {
+        semanticRepository.indexingStatus()
+    }
+
+    @Connectable
+    @Override
+    Map<String, Object> setIndexingEnabled(boolean enabled) {
+        Map<String, Object> status = semanticRepository.setIndexingEnabled(enabled)
+        if (!enabled) {
+            status.put('cancelledJobs', semanticRepository.cancelActiveJobs('semantic indexing was disabled'))
+        } else if (semanticRepository.autoReconcileEnabled()) {
+            status.put('reconcileResults', reconcileDeclaredIndexes())
+        }
+        status
+    }
+
+    @Connectable
+    @Override
+    boolean autoReconcileEnabled() {
+        semanticRepository.autoReconcileEnabled()
+    }
+
+    @Connectable
+    @Override
+    Map<String, Object> setAutoReconcileEnabled(boolean enabled) {
+        Map<String, Object> status = semanticRepository.setAutoReconcileEnabled(enabled)
+        if (enabled && semanticRepository.indexingEnabled()) {
+            status.put('reconcileResults', reconcileDeclaredIndexes())
+        }
+        status
+    }
+
+    @Connectable
+    @Override
+    List<Map<String, Object>> modelIndexes() {
+        semanticRepository.modelIndexes()
+    }
+
+    @Connectable
+    @Override
+    List<Map<String, Object>> corpora() {
+        semanticRepository.corpora(false)
+    }
+
+    @Connectable
+    @Override
+    Map<String, Object> createCorpus(Map<String, Object> request) {
+        semanticRepository.createCorpus(request)
+    }
+
+    @Connectable
+    @Override
+    List<Map<String, Object>> modelIndexStats(UUID mauroModelId) {
+        semanticRepository.modelIndexStats(mauroModelId)
+    }
+
+    @Connectable
+    @Override
+    Map<String, Object> createModelIndex(Map<String, Object> request) {
+        UUID mauroModelId = uuidValue(request, 'mauroModelId') ?: uuidValue(request, 'modelId')
+        if (mauroModelId == null) {
+            throw new IllegalArgumentException('Missing required field mauroModelId')
+        }
+        String profileName = stringValue(request, 'profileName') ?: stringValue(request, 'embeddingProfileName') ?: defaultEmbeddingProfile
+        String corpusName = stringValue(request, 'corpusName') ?: stringValue(request, 'corpus') ?: 'catalogue-items'
+        String label = stringValue(request, 'label')
+        boolean enabled = booleanValue(request, 'enabled', true)
+        Map<String, Object> declaration = semanticRepository.createModelIndex(mauroModelId, profileName, corpusName, enabled, label)
+        if (enabled && semanticRepository.indexingEnabled() && semanticRepository.autoReconcileEnabled()) {
+            semanticRepository.markModelIndexStale(mauroModelId, profileName, corpusName, 'enabled semantic model index declaration created while auto reconcile is active')
+            declaration.put('job', queueModelIndexJob(
+                mauroModelId,
+                profileName,
+                corpusName,
+                null,
+                null,
+                false,
+                [
+                    accepted: true,
+                    source: 'model-index-created',
+                    staleDetected: true
+                ] as Map<String, Object>
+            ))
+        }
+        declaration
+    }
+
+    @Connectable
+    @Override
+    Map<String, Object> deleteModelIndex(UUID mauroModelId, String profileName) {
+        semanticRepository.deleteModelIndex(mauroModelId, profileName ?: defaultEmbeddingProfile)
+    }
+
+    @Connectable
+    @Override
+    Map<String, Object> startModelIndexJob(UUID mauroModelId, String profileName, Map<String, Object> request) {
+        boolean runWhenIndexingDisabled = booleanValue(request, 'runWhenIndexingDisabled', false)
+        boolean rebuildEmbeddings = booleanValue(request, 'rebuildEmbeddings', false)
+        if (!semanticRepository.indexingEnabled() && !runWhenIndexingDisabled) {
+            return [
+                mauroModelId: mauroModelId?.toString(),
+                profileName: profileName ?: defaultEmbeddingProfile,
+                status: 'skipped',
+                reason: 'semantic indexing is disabled',
+                hint: 'Call with runWhenIndexingDisabled: true to start this explicit indexing job while global indexing is disabled.'
+            ] as Map<String, Object>
+        }
+        String resolvedProfileName = profileName ?: defaultEmbeddingProfile
+        String corpusName = stringValue(request, 'corpusName') ?: stringValue(request, 'corpus') ?: 'catalogue-items'
+        Map<String, Object> declaration = semanticRepository.modelIndex(mauroModelId, resolvedProfileName, corpusName)
+        if (declaration == null) {
+            declaration = semanticRepository.createModelIndex(mauroModelId, resolvedProfileName, corpusName, true)
+        }
+        Map<String, Object> job = queueModelIndexJob(
+            mauroModelId,
+            resolvedProfileName,
+            corpusName,
+            integerValue(request, 'maxRows'),
+            integerValue(request, 'batchSize'),
+            rebuildEmbeddings,
+            [
+                accepted: true,
+                runWhenIndexingDisabled: runWhenIndexingDisabled,
+                source: 'manual-start'
+            ] as Map<String, Object>
+        )
+        job
+    }
+
+    @Connectable
+    @Override
+    List<Map<String, Object>> jobs(boolean includeHistory) {
+        includeHistory ?
+            semanticRepository.jobs() :
+            semanticRepository.jobs(['QUEUED', 'TO_RESTART', 'RUNNING'] as List<String>)
+    }
+
+    @Connectable
+    @Override
+    Map<String, Object> jobStatus(UUID jobId) {
+        semanticRepository.job(jobId)
+    }
+
+    @Connectable
+    @Override
+    Map<String, Object> cancelJob(UUID jobId) {
+        semanticRepository.cancelJob(jobId, 'semantic indexing job was cancelled by API request')
+    }
+
+    @Connectable
+    @Override
+    Map<String, Object> resumeJob(UUID jobId) {
+        Map<String, Object> job = semanticRepository.job(jobId)
+        String status = String.valueOf(job.get('status'))
+        if (['SUCCEEDED', 'FAILED', 'CANCELLED', 'RUNNING'].contains(status)) {
+            return job
+        }
+        resumeRecoverableJob(job)
+    }
+
+    @Connectable
+    @Override
+    String jobEvents(UUID jobId) {
+        semanticRepository.jobEvents(jobId)
+    }
+
+    @Override
+    Publisher<String> followJobEvents(UUID jobId, Long afterSequence) {
+        Flux.defer({
+            long startAfter = Math.max(afterSequence ?: 0L, 0L)
+            Flux.interval(Duration.ZERO, Duration.ofSeconds(1L))
+                .scan([after: startAfter, done: false, lines: Collections.<String>emptyList()] as Map<String, Object>) {Map<String, Object> state, Long tick ->
+                    if (Boolean.TRUE.equals(state.get('done'))) {
+                        return state
+                    }
+                    long after = ((Number) state.get('after')).longValue()
+                    List<String> lines = semanticRepository.jobEventLinesAfter(jobId, after)
+                    long nextAfter = after
+                    for (String line : lines) {
+                        Long sequence = sequenceFromLine(line)
+                        if (sequence != null) {
+                            nextAfter = Math.max(nextAfter, sequence.longValue())
+                        }
+                    }
+                    Map<String, Object> job = semanticRepository.job(jobId)
+                    boolean terminal = terminalJobStatus(String.valueOf(job.get('status')))
+                    if (lines.isEmpty() && !terminal) {
+                        lines = [semanticRepository.jobSnapshotLine(jobId)] as List<String>
+                    }
+                    boolean done = terminal && lines.isEmpty()
+                    [after: nextAfter, done: done, lines: lines] as Map<String, Object>
+                }
+                .takeUntil {Map<String, Object> state -> Boolean.TRUE.equals(state.get('done'))}
+                .flatMapIterable {Map<String, Object> state ->
+                    ((List<String>) state.get('lines')).collect {String line -> line + '\n'} as List<String>
+                }
+        })
+    }
+
+    @Connectable
+    @Override
+    List<Map<String, Object>> recoverInterruptedJobs() {
+        List<Map<String, Object>> recoverableJobs = semanticRepository.recoverableJobs()
+        recoverableJobs.sort {Map<String, Object> left, Map<String, Object> right ->
+            String.valueOf(left.get('createdAt')) <=> String.valueOf(right.get('createdAt'))
+        }
+        List<Map<String, Object>> recovered = new ArrayList<Map<String, Object>>()
+        Set<String> recoveredDeclarations = new LinkedHashSet<String>()
+        for (Map<String, Object> job : recoverableJobs) {
+            String declarationKey = "${job.get('corpusName')}:${job.get('mauroModelId')}:${job.get('profileName')}".toString()
+            if (recoveredDeclarations.contains(declarationKey)) {
+                UUID duplicateJobId = UUID.fromString(String.valueOf(job.get('jobId')))
+                recovered.add(semanticRepository.cancelJob(
+                    duplicateJobId,
+                    'semantic indexing job was superseded by an equivalent recovered job'
+                ))
+                continue
+            }
+            recoveredDeclarations.add(declarationKey)
+            recovered.add(resumeRecoverableJob(job))
+        }
+        recovered
+    }
+
+    private Map<String, Object> queueModelIndexJob(UUID mauroModelId,
+                                                   String profileName,
+                                                   String corpusName,
+                                                   Integer maxRows,
+                                                   Integer batchSize,
+                                                   boolean rebuildEmbeddings,
+                                                   Map<String, Object> metadata = null) {
+        Map<String, Object> activeJob = semanticRepository.activeJobForModelIndex(mauroModelId, profileName, corpusName)
+        if (activeJob != null) {
+            String activeStatus = String.valueOf(activeJob.get('status'))
+            if (activeStatus == 'RUNNING') {
+                semanticRepository.markModelIndexStale(mauroModelId, profileName, corpusName, 'semantic model index changed while job was running')
+                activeJob.put('accepted', true)
+                activeJob.put('coalesced', true)
+                activeJob.put('followUpRequired', true)
+                activeJob.put('reason', 'equivalent semantic indexing job is already running; declaration marked stale for a follow-up pass')
+                if (metadata != null) {
+                    activeJob.putAll(metadata)
+                }
+                return activeJob
+            }
+            activeJob.put('accepted', true)
+            activeJob.put('deduplicated', true)
+            activeJob.put('reason', 'equivalent semantic indexing job is already queued')
+            if (metadata != null) {
+                activeJob.putAll(metadata)
+            }
+            return activeJob
+        }
+
+        UUID jobId = semanticRepository.createIndexJob(
+            mauroModelId,
+            profileName,
+            corpusName,
+            rebuildEmbeddings,
+            maxRows,
+            batchSize
+        )
+        submitIndexJob(
+            jobId,
+            mauroModelId,
+            profileName,
+            corpusName,
+            maxRows,
+            batchSize,
+            rebuildEmbeddings,
+            'QUEUED'
+        )
+        Map<String, Object> job = semanticRepository.job(jobId)
+        if (metadata != null) {
+            job.putAll(metadata)
+        }
+        job
+    }
+
+    private Map<String, Object> resumeRecoverableJob(Map<String, Object> job) {
+        UUID jobId = UUID.fromString(String.valueOf(job.get('jobId')))
+        UUID mauroModelId = UUID.fromString(String.valueOf(job.get('mauroModelId')))
+        String profileName = String.valueOf(job.get('profileName'))
+        String corpusName = String.valueOf(job.get('corpusName') ?: 'catalogue-items')
+        String previousStatus = String.valueOf(job.get('status'))
+        semanticRepository.markModelIndexStale(mauroModelId, profileName, corpusName, 'application restarted while semantic indexing was active')
+        if (previousStatus == 'RUNNING') {
+            semanticRepository.updateJobStatus(jobId, 'INTERRUPTED', [
+                stage: 'interrupted',
+                reason: 'application restarted while job was running',
+                interruptedAt: new Date().toInstant().toString()
+            ] as Map<String, Object>, null)
+        }
+        semanticRepository.updateJobStatus(jobId, 'TO_RESTART', [
+            stage: 'to_restart',
+            previousStatus: previousStatus,
+            reason: previousStatus == 'QUEUED' ?
+                'submitting queued semantic indexing job after application restart' :
+                'application restarted while semantic indexing was active; rerunning declaration from current catalogue state',
+            restartedAt: new Date().toInstant().toString()
+        ] as Map<String, Object>, null)
+        submitIndexJob(
+            jobId,
+            mauroModelId,
+            profileName,
+            corpusName,
+            (Integer) job.get('maxRows'),
+            (Integer) job.get('batchSize'),
+            Boolean.TRUE.equals(job.get('rebuildEmbeddings')),
+            'TO_RESTART'
+        )
+        semanticRepository.job(jobId)
+    }
+
+    private void submitIndexJob(UUID jobId,
+                                UUID mauroModelId,
+                                String profileName,
+                                String corpusName,
+                                Integer maxRows,
+                                Integer batchSize,
+                                boolean rebuildEmbeddings,
+                                String submitStatus) {
+        semanticRepository.updateJobStatus(jobId, submitStatus, [
+            stage: 'submitted_to_executor',
+            reason: 'semantic indexing job submitted to executor',
+            submittedAt: new Date().toInstant().toString()
+        ] as Map<String, Object>, null)
+        log.info('Semantic model index job {} submitted to executor for model {} profile {} status={}', jobId, mauroModelId, profileName, submitStatus)
+        executorService.submit({
+            log.info('Semantic model index job {} executor task entered for model {} profile {}', jobId, mauroModelId, profileName)
+            try {
+                semanticRepository.updateJobStatus(jobId, submitStatus, [
+                    stage: 'executor_task_entered',
+                    reason: 'semantic indexing executor task entered',
+                    enteredAt: new Date().toInstant().toString()
+                ] as Map<String, Object>, null)
+                runModelIndexJob(
+                    jobId,
+                    mauroModelId,
+                    profileName,
+                    corpusName,
+                    maxRows,
+                    batchSize,
+                    rebuildEmbeddings
+                )
+            } catch (Throwable t) {
+                String message = t.message ?: t.class.name
+                semanticRepository.updateJobStatus(jobId, 'FAILED', [
+                    stage: 'executor_task_failed',
+                    reason: message
+                ] as Map<String, Object>, message)
+                log.error('Semantic model index job {} executor task failed before job runner handled it', jobId, t)
+            }
+        } as Runnable)
+    }
+
+    private Map<String, Object> runModelIndexJob(UUID jobId,
+                                                 UUID mauroModelId,
+                                                 String profileName,
+                                                 String corpusName,
+                                                 Integer maxRows,
+                                                 Integer batchSize,
+                                                 boolean force) {
+        try {
+            semanticRepository.updateJobStatus(jobId, 'RUNNING', [
+                stage: 'running',
+                reason: 'semantic indexing worker started',
+                startedAt: new Date().toInstant().toString()
+            ] as Map<String, Object>)
+            log.info('Semantic model index job {} worker started for model {} profile {}', jobId, mauroModelId, profileName)
+            semanticRepository.updateJobStatus(jobId, 'RUNNING', [
+                stage: 'updating_model_index_status',
+                reason: 'marking model index declaration as indexing',
+                modelId: mauroModelId.toString(),
+                profileName: profileName
+            ] as Map<String, Object>)
+            semanticRepository.updateModelIndexStatus(mauroModelId, profileName, corpusName, 'INDEXING')
+            semanticRepository.updateJobStatus(jobId, 'RUNNING', [
+                stage: 'model_index_status_updated',
+                reason: 'model index declaration marked as indexing',
+                modelId: mauroModelId.toString(),
+                profileName: profileName
+            ] as Map<String, Object>)
+            semanticRepository.updateJobStatus(jobId, 'RUNNING', [
+                stage: 'looking_up_embedding_profile',
+                reason: 'resolving embedding profile for indexing',
+                profileName: profileName
+            ] as Map<String, Object>)
+            EmbeddingProfile profile = semanticRepository.findProfileByName(profileName)
+            if (profile == null) {
+                throw new IllegalArgumentException("No enabled semantic embedding profile named ${profileName}")
+            }
+            semanticRepository.updateJobStatus(jobId, 'RUNNING', [
+                stage: 'embedding_profile_resolved',
+                reason: 'embedding profile resolved',
+                profileName: profile.name,
+                provider: profile.provider,
+                embeddingModel: profile.embeddingModel,
+                dimension: profile.dimension
+            ] as Map<String, Object>)
+            log.info('Semantic model index job {} resolved embedding profile {} provider={} model={}', jobId, profile.name, profile.provider, profile.embeddingModel)
+            semanticRepository.updateJobStatus(jobId, 'RUNNING', [
+                stage: 'starting_index_rebuild',
+                reason: 'entering semantic index rebuild',
+                modelId: mauroModelId.toString(),
+                profileName: profile.name,
+                corpusName: corpusName ?: 'catalogue-items',
+                rebuildEmbeddings: force
+            ] as Map<String, Object>)
+            Map<String, Object> result = rebuildCatalogueIndexWithProfiles(
+                [profile] as List<EmbeddingProfile>,
+                "model-${mauroModelId}-${profileName}".toString(),
+                corpusName ?: 'catalogue-items',
+                Collections.<String>emptyList(),
+                mauroModelId,
+                maxRows,
+                batchSize,
+                force,
+                { -> semanticRepository.jobCancelled(jobId) } as Closure<Boolean>,
+                {Map<String, Object> progress -> semanticRepository.updateJobStatus(jobId, 'RUNNING', progress)} as Consumer<Map<String, Object>>
+            )
+            boolean changedDuringRun = semanticRepository.modelIndexChangedDuringRun(mauroModelId, profileName, corpusName)
+            boolean stillNeedsRefresh = changedDuringRun || semanticRepository.modelIndexNeedsRefresh(corpusName ?: 'catalogue-items', mauroModelId, profileName)
+            result.put('changedDuringRun', changedDuringRun)
+            result.put('stillNeedsRefresh', stillNeedsRefresh)
+            if (stillNeedsRefresh) {
+                semanticRepository.markModelIndexStale(mauroModelId, profileName, corpusName, 'semantic model index changed during indexing; queuing follow-up pass')
+                result.put('followUpQueued', true)
+            } else {
+                semanticRepository.updateModelIndexStatus(mauroModelId, profileName, corpusName, 'READY')
+            }
+            semanticRepository.updateJobStatus(jobId, 'SUCCEEDED', result)
+            if (stillNeedsRefresh) {
+                queueModelIndexJob(
+                    mauroModelId,
+                    profileName,
+                    corpusName ?: 'catalogue-items',
+                    maxRows,
+                    batchSize,
+                    false,
+                    [
+                        accepted: true,
+                        source: 'follow-up',
+                        reason: 'semantic model index changed during previous indexing pass'
+                    ] as Map<String, Object>
+                )
+            }
+            semanticRepository.job(jobId)
+        } catch (CancellationException e) {
+            String message = e.message ?: 'semantic indexing job was cancelled'
+            semanticRepository.updateModelIndexStatus(mauroModelId, profileName, corpusName, 'STALE')
+            semanticRepository.updateJobStatus(jobId, 'CANCELLED', [
+                stage: 'cancelled',
+                reason: message
+            ] as Map<String, Object>, null)
+            semanticRepository.job(jobId)
+        } catch (Throwable t) {
+            String message = t.message ?: t.class.name
+            semanticRepository.updateModelIndexStatus(mauroModelId, profileName, corpusName, 'FAILED', message)
+            semanticRepository.updateJobStatus(jobId, 'FAILED', null, message)
+            log.error('Semantic model index job {} failed for model {} profile {}', jobId, mauroModelId, profileName, t)
+            semanticRepository.job(jobId)
+        }
+    }
+
+    private static String stringValue(Map<String, Object> request, String key) {
+        Object value = request == null ? null : request.get(key)
+        value == null ? null : String.valueOf(value)
+    }
+
+    private static UUID uuidValue(Map<String, Object> request, String key) {
+        String value = stringValue(request, key)
+        value == null || value.trim().isEmpty() ? null : UUID.fromString(value)
+    }
+
+    private static Integer integerValue(Map<String, Object> request, String key) {
+        Object value = request == null ? null : request.get(key)
+        if (value == null || String.valueOf(value).trim().isEmpty()) {
+            return null
+        }
+        value instanceof Number ? ((Number) value).intValue() : Integer.valueOf(String.valueOf(value))
+    }
+
+    private static boolean booleanValue(Map<String, Object> request, String key, boolean fallback) {
+        Object value = request == null ? null : request.get(key)
+        value == null ? fallback : Boolean.valueOf(String.valueOf(value))
+    }
+
+    private static boolean terminalJobStatus(String status) {
+        ['SUCCEEDED', 'FAILED', 'CANCELLED'].contains(status)
+    }
+
+    private static Long sequenceFromLine(String line) {
+        if (line == null) {
+            return null
+        }
+        java.util.regex.Matcher matcher = line =~ /"sequence":(\d+)/
+        matcher.find() ? Long.valueOf(matcher.group(1)) : null
     }
 }
