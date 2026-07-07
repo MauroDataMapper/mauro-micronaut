@@ -366,6 +366,52 @@ class SemanticRepository {
         }
     }
 
+    Map<String, List<EmbeddingProfile>> profilesForModelIndexCorpora(UUID mauroModelId, List<String> corpusNames) {
+        Map<String, List<EmbeddingProfile>> byCorpus = new LinkedHashMap<String, List<EmbeddingProfile>>()
+        if (mauroModelId == null || corpusNames == null || corpusNames.isEmpty()) {
+            return byCorpus
+        }
+        String placeholders = corpusNames.collect {'?'}.join(',')
+        String sql = """
+            SELECT c.name AS corpus_name,
+                   p.id,
+                   p.name,
+                   p.provider,
+                   p.embedding_model,
+                   p.dimension,
+                   p.distance_metric,
+                   p.description
+            FROM semantic.semantic_model_index mi
+                 JOIN semantic.semantic_corpus c ON c.id = mi.corpus_id
+                 JOIN semantic.embedding_profile p ON p.id = mi.embedding_profile_id
+            WHERE mi.mauro_model_id = ?
+              AND mi.enabled = TRUE
+              AND mi.status = 'READY'
+              AND c.enabled = TRUE
+              AND c.api_visible = TRUE
+              AND c.name IN (${placeholders})
+              AND p.enabled = TRUE
+            ORDER BY c.name, p.name
+        """
+        try (Connection connection = dataSource.connection;
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setObject(1, mauroModelId)
+            for (int i = 0; i < corpusNames.size(); i++) {
+                statement.setString(i + 2, corpusNames.get(i))
+            }
+            try (ResultSet rs = statement.executeQuery()) {
+                while (rs.next()) {
+                    String corpusName = rs.getString('corpus_name')
+                    List<EmbeddingProfile> profiles = byCorpus.computeIfAbsent(corpusName) {
+                        new ArrayList<EmbeddingProfile>()
+                    }
+                    profiles.add(profileFrom(rs))
+                }
+            }
+        }
+        byCorpus
+    }
+
     Map<String, Object> indexingStatus() {
         Map<String, Object> global = indexingControl('global')
         Map<String, Object> autoReconcile = indexingControl('auto-reconcile')

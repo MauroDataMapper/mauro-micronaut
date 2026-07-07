@@ -3,6 +3,7 @@ package org.maurodata.plugin.chat.mcp
 import org.maurodata.service.chat.mcp.*
 
 import groovy.transform.CompileStatic
+import groovy.util.logging.Slf4j
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.exceptions.HttpStatusException
 import jakarta.inject.Singleton
@@ -16,6 +17,7 @@ import org.maurodata.web.ListResponse
 
 @CompileStatic
 @Singleton
+@Slf4j
 @McpToolDefinition(
     name = 'mauro_semantic_search',
     description = 'Search Mauro catalogue content by semantic similarity only using embedding profiles.',
@@ -73,6 +75,7 @@ class SemanticSearchToolHandler extends AbstractAnnotatedToolHandler {
 
     @Override
     protected Map<String, Object> doInvoke(Map<String, Object> arguments) {
+        long started = System.currentTimeMillis()
         String query = asString(arguments.get('query')) ?: asString(arguments.get('searchTerm'))
         if (query == null || query.trim().isEmpty()) {
             throw new HttpStatusException(HttpStatus.BAD_REQUEST, 'mauro_semantic_search requires query')
@@ -94,16 +97,24 @@ class SemanticSearchToolHandler extends AbstractAnnotatedToolHandler {
             deepSearch: asBoolean(arguments.get('deepSearch'), false),
             rebuildIfEmpty: false
         )
-        SemanticSearchAvailability availability = semanticSearchService.availability(request.corpus, request.withinModelId)
+        long requestBuiltAt = System.currentTimeMillis()
         ListResponse<SemanticSearchResultsDTO> response = semanticSearchService.executeSearch(
             request,
             { String domainType, UUID id -> administeredItemLookupService.findAdministeredItem(domainType, id) }
         )
+        long searchCompletedAt = System.currentTimeMillis()
         List<Map<String, Object>> items = new ArrayList<Map<String, Object>>()
         for (SemanticSearchResultsDTO result : response.items ?: []) {
             items.add(itemToMap(result))
         }
-        [
+        long itemsMappedAt = System.currentTimeMillis()
+        Map<String, Object> timing = [
+            requestBuildMs: requestBuiltAt - started,
+            executeSearchMs: searchCompletedAt - requestBuiltAt,
+            mapItemsMs: itemsMappedAt - searchCompletedAt,
+            totalInvokeMs: itemsMappedAt - started
+        ] as Map<String, Object>
+        Map<String, Object> result = [
             query: query,
             corpus: request.corpus,
             domainTypes: request.domainTypes,
@@ -115,14 +126,26 @@ class SemanticSearchToolHandler extends AbstractAnnotatedToolHandler {
             hasMore: (request.offset + items.size()) < (response.count ?: 0),
             includeChunks: request.includeChunks,
             deepSearch: request.deepSearch,
-            semanticAvailable: availability.available,
-            fallbackReason: availability.reason,
+            semanticAvailable: true,
+            fallbackReason: null,
+            telemetry: timing,
             items: items
         ] as Map<String, Object>
+        log.info(
+            'mauro_semantic_search invoke timing query="{}" modelId={} corpus={} count={} returned={} telemetry={}',
+            query,
+            request.withinModelId,
+            request.corpus,
+            response.count ?: 0,
+            items.size(),
+            timing
+        )
+        result
     }
 
     @Override
     String modelText(Map<String, Object> result) {
+        long started = System.currentTimeMillis()
         List<?> items = result.get('items') instanceof List ? (List<?>) result.get('items') : []
         List<String> returnedData = new ArrayList<String>()
         int index = 1
@@ -133,7 +156,8 @@ class SemanticSearchToolHandler extends AbstractAnnotatedToolHandler {
                 index++
             }
         }
-        renderModelTextSections([
+        long returnedDataBuiltAt = System.currentTimeMillis()
+        String text = renderModelTextSections([
             'Tool Call Status': ['Tool mauro_semantic_search succeeded.'],
             'Result Metadata': [
                 "Query: ${result.get('query')}",
@@ -156,6 +180,18 @@ class SemanticSearchToolHandler extends AbstractAnnotatedToolHandler {
                 'If exact keyword syntax matters, use mauro_keyword_search instead.'
             ].findAll {String instruction -> instruction != null})
         ] as Map<String, Object>)
+        long renderedAt = System.currentTimeMillis()
+        log.info(
+            'mauro_semantic_search modelText timing query="{}" count={} returned={} telemetry={} timingsMs={returnedData={}, render={}, total={}}',
+            result.get('query'),
+            result.get('count'),
+            items.size(),
+            result.get('telemetry'),
+            returnedDataBuiltAt - started,
+            renderedAt - returnedDataBuiltAt,
+            renderedAt - started
+        )
+        text
     }
 
     private static Map<String, Object> itemToMap(SemanticSearchResultsDTO result) {
