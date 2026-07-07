@@ -22,6 +22,14 @@ repositories {
     mavenCentral()
 }
 
+ext.openApiEnabled = String.valueOf(findProperty('enableOpenApi') ?: 'false').equalsIgnoreCase('true')
+
+if (!openApiEnabled) {
+    configurations.configureEach {
+        exclude group: 'io.micronaut.openapi', module: 'micronaut-openapi'
+    }
+}
+
 dependencies {
     implementation project(':mauro-domain')
     implementation project(':mauro-client')
@@ -31,8 +39,11 @@ dependencies {
     testImplementation testFixtures(project(':mauro-persistence'))     // Pull in the containerized testing definition
 
     //implementation "io.swagger.core.v3:swagger-annotations:2.2.8"
-//    implementation("io.micronaut.openapi:micronaut-openapi")
-    implementation("io.micronaut.openapi:micronaut-openapi")
+    if (openApiEnabled) {
+        implementation("io.micronaut.openapi:micronaut-openapi")
+    } else {
+        compileOnly("io.micronaut.openapi:micronaut-openapi-annotations")
+    }
 
     compileOnly("io.swagger.core.v3:swagger-annotations")
     compileOnly("io.micronaut.data:micronaut-data-processor")
