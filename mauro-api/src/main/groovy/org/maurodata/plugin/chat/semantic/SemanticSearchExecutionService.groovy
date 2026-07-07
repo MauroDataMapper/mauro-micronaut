@@ -25,6 +25,7 @@ import org.maurodata.service.semantic.EmbeddingProvider
 
 import org.maurodata.web.ListResponse
 
+import java.security.MessageDigest
 import java.util.function.BiFunction
 
 @Slf4j
@@ -42,6 +43,8 @@ class SemanticSearchExecutionService implements SemanticSearchService {
     private final int maximumCandidateWindow
     private final int deepCandidateWindow
     private final boolean includeContext
+    private final int queryEmbeddingCacheSize
+    private final Map<String, float[]> queryEmbeddingCache
 
     SemanticSearchExecutionService(SemanticRepository semanticRepository,
                                    EmbeddingProviderRegistry embeddingProviderRegistry,
@@ -52,7 +55,8 @@ class SemanticSearchExecutionService implements SemanticSearchService {
                                    @Value('${chat.semantic.search.minimum-candidate-window:400}') Integer minimumCandidateWindow,
                                    @Value('${chat.semantic.search.maximum-candidate-window:600}') Integer maximumCandidateWindow,
                                    @Value('${chat.semantic.search.deep-candidate-window:1600}') Integer deepCandidateWindow,
-                                   @Value('${chat.semantic.search.include-context:false}') Boolean includeContext) {
+                                   @Value('${chat.semantic.search.include-context:false}') Boolean includeContext,
+                                   @Value('${chat.semantic.search.query-embedding-cache-size:1000}') Integer queryEmbeddingCacheSize) {
         this.semanticRepository = semanticRepository
         this.embeddingProviderRegistry = embeddingProviderRegistry
         this.semanticIndexingService = semanticIndexingService
@@ -63,6 +67,14 @@ class SemanticSearchExecutionService implements SemanticSearchService {
         this.maximumCandidateWindow = Math.max(maximumCandidateWindow ?: 2000, this.minimumCandidateWindow)
         this.deepCandidateWindow = Math.max(deepCandidateWindow ?: 2000, this.maximumCandidateWindow)
         this.includeContext = Boolean.TRUE.equals(includeContext)
+        this.queryEmbeddingCacheSize = Math.max(queryEmbeddingCacheSize ?: 1000, 0)
+        this.queryEmbeddingCache = Collections.synchronizedMap(new LinkedHashMap<String, float[]>(128, 0.75F, true) {
+            @Override
+            protected boolean removeEldestEntry(Map.Entry<String, float[]> eldest) {
+                SemanticSearchExecutionService.this.queryEmbeddingCacheSize > 0 &&
+                    size() > SemanticSearchExecutionService.this.queryEmbeddingCacheSize
+            }
+        })
     }
 
     @Connectable
@@ -80,7 +92,11 @@ class SemanticSearchExecutionService implements SemanticSearchService {
             semanticIndexingService.rebuildCatalogueIndex(indexName, safeRequest.corpus ?: 'catalogue-items', safeRequest.domainTypes, safeRequest.withinModelId)
         }
 
-        List<EmbeddingProfile> profiles = profiles(safeRequest)
+        List<String> corpusNames = searchCorpora(safeRequest)
+        if (corpusNames.isEmpty()) {
+            return ListResponse.from([] as List<SemanticSearchResultsDTO>, safeRequest)
+        }
+        Map<String, List<EmbeddingProfile>> profilesByCorpus = profilesByCorpus(safeRequest, corpusNames)
         int requestedTopN = Math.max(1, safeRequest.topN ?: 50)
         int topM = Math.max(1, Math.min(safeRequest.topM ?: safeRequest.max ?: 10, 100))
         int topN = candidateWindow(requestedTopN, topM, safeRequest.domainTypes, safeRequest.deepSearch == true)
@@ -90,21 +106,27 @@ class SemanticSearchExecutionService implements SemanticSearchService {
         long vectorCatalogueMillis = 0L
         long vectorContextMillis = 0L
         Map<EmbeddingProfile, float[]> queryEmbeddings = new LinkedHashMap<EmbeddingProfile, float[]>()
-        for (EmbeddingProfile profile : profiles) {
-            EmbeddingProvider provider = embeddingProviderRegistry.providerFor(profile)
-            float[] queryEmbedding = provider.embed(profile, [queryText] as List<String>).first()
-            queryEmbeddings.put(profile, queryEmbedding)
-            long vectorCatalogueStart = System.currentTimeMillis()
-            List<SemanticCandidate> catalogueCandidates = semanticRepository.search(profile, queryEmbedding, safeRequest.corpus ?: 'catalogue-items', safeRequest.domainTypes, safeRequest.withinModelId, topN, 'catalogue')
-            vectorCatalogueMillis += System.currentTimeMillis() - vectorCatalogueStart
-            candidateCounts.put("${profile.name}:catalogue".toString(), catalogueCandidates.size())
-            candidates.addAll(catalogueCandidates)
-            if (includeContext) {
-                long vectorContextStart = System.currentTimeMillis()
-                List<SemanticCandidate> contextCandidates = semanticRepository.search(profile, queryEmbedding, safeRequest.corpus ?: 'catalogue-items', safeRequest.domainTypes, safeRequest.withinModelId, topN, 'context')
-                vectorContextMillis += System.currentTimeMillis() - vectorContextStart
-                candidateCounts.put("${profile.name}:context".toString(), contextCandidates.size())
-                candidates.addAll(contextCandidates)
+        Map<String, String> queryEmbeddingFingerprints = new LinkedHashMap<String, String>()
+        for (String corpusName : corpusNames) {
+            for (EmbeddingProfile profile : profilesByCorpus.get(corpusName) ?: Collections.<EmbeddingProfile>emptyList()) {
+                float[] queryEmbedding = queryEmbeddings.get(profile)
+                if (queryEmbedding == null) {
+                    queryEmbedding = queryEmbeddingFor(profile, queryText)
+                    queryEmbeddings.put(profile, queryEmbedding)
+                    queryEmbeddingFingerprints.put(profile.name, vectorFingerprint(queryEmbedding))
+                }
+                long vectorCatalogueStart = System.currentTimeMillis()
+                List<SemanticCandidate> catalogueCandidates = semanticRepository.search(profile, queryEmbedding, corpusName, safeRequest.domainTypes, safeRequest.withinModelId, topN, 'catalogue')
+                vectorCatalogueMillis += System.currentTimeMillis() - vectorCatalogueStart
+                candidateCounts.put("${corpusName}:${profile.name}:catalogue".toString(), catalogueCandidates.size())
+                candidates.addAll(catalogueCandidates)
+                if (includeContext) {
+                    long vectorContextStart = System.currentTimeMillis()
+                    List<SemanticCandidate> contextCandidates = semanticRepository.search(profile, queryEmbedding, corpusName, safeRequest.domainTypes, safeRequest.withinModelId, topN, 'context')
+                    vectorContextMillis += System.currentTimeMillis() - vectorContextStart
+                    candidateCounts.put("${corpusName}:${profile.name}:context".toString(), contextCandidates.size())
+                    candidates.addAll(contextCandidates)
+                }
             }
         }
 
@@ -121,7 +143,7 @@ class SemanticSearchExecutionService implements SemanticSearchService {
                 'Semantic search returned no readable results query="{}" domainTypes={} profiles={} topN={} candidateCounts={} ranked={} unreadable={}',
                 queryText,
                 safeRequest.domainTypes ?: [],
-                profiles.collect {EmbeddingProfile profile -> profile.name},
+                profileNames(profilesByCorpus),
                 topN,
                 candidateCounts,
                 ranked.size(),
@@ -133,10 +155,10 @@ class SemanticSearchExecutionService implements SemanticSearchService {
         int max = safeRequest.max != null && safeRequest.max > 0 ? safeRequest.max : topM
         List<SemanticSearchResultsDTO> page = readable.drop(offset).take(max)
         log.info(
-            'Semantic search timing query="{}" domainTypes={} profiles={} topN={} deepSearch={} candidateCounts={} ranked={} readable={} unreadable={} returned={} timingsMs={vectorCatalogue={}, vectorContext={}, rerank={}, accessFilter={}, total={}}',
+            'Semantic search timing query="{}" domainTypes={} profiles={} topN={} deepSearch={} candidateCounts={} ranked={} readable={} unreadable={} returned={} queryEmbeddings={} returnedKeys={} timingsMs={vectorCatalogue={}, vectorContext={}, rerank={}, accessFilter={}, total={}}',
             queryText,
             safeRequest.domainTypes ?: [],
-            profiles.collect {EmbeddingProfile profile -> profile.name},
+            profileNames(profilesByCorpus),
             topN,
             safeRequest.deepSearch == true,
             candidateCounts,
@@ -144,6 +166,8 @@ class SemanticSearchExecutionService implements SemanticSearchService {
             readable.size(),
             unreadableCount,
             page.size(),
+            queryEmbeddingFingerprints,
+            resultKeys(page),
             vectorCatalogueMillis,
             vectorContextMillis,
             rerankMillis,
@@ -159,14 +183,28 @@ class SemanticSearchExecutionService implements SemanticSearchService {
     @Connectable
     @Override
     SemanticSearchAvailability availability(String indexName) {
+        availability(indexName, null)
+    }
+
+    @Connectable
+    @Override
+    SemanticSearchAvailability availability(String indexName, UUID mauroModelId) {
         try {
-            String safeIndexName = indexName ?: 'catalogue-items-default'
-            if (!semanticIndexingService.hasEmbeddings(safeIndexName)) {
-                return SemanticSearchAvailability.unavailable("no semantic embeddings are available for ${safeIndexName}".toString())
+            String requestedCorpus = semanticRepository.apiCorpusVisible(indexName) ? indexName : null
+            List<String> corpusNames = mauroModelId == null ?
+                (requestedCorpus == null ? semanticRepository.apiCorpusNames() : [requestedCorpus] as List<String>) :
+                semanticRepository.apiCorpusNamesForModelIndex(mauroModelId, requestedCorpus)
+            List<EmbeddingProfile> profiles = distinctProfiles(profilesByCorpus(new SemanticSearchRequestDTO(corpus: requestedCorpus, withinModelId: mauroModelId), corpusNames))
+            if (profiles.isEmpty() && requestedCorpus == null && indexName != null && !indexName.trim().isEmpty()) {
+                String safeIndexName = indexName ?: 'catalogue-items-default'
+                if (!semanticIndexingService.hasEmbeddings(safeIndexName, mauroModelId)) {
+                    String scope = mauroModelId == null ? safeIndexName : "${safeIndexName} scoped to ${mauroModelId}".toString()
+                    return SemanticSearchAvailability.unavailable("no semantic embeddings are available for ${scope}".toString())
+                }
+                profiles = semanticRepository.profilesForIndex(safeIndexName)
             }
-            List<EmbeddingProfile> profiles = semanticRepository.profilesForIndex(safeIndexName)
             if (profiles.isEmpty()) {
-                return SemanticSearchAvailability.unavailable("no enabled embedding profiles are linked to ${safeIndexName}".toString())
+                return SemanticSearchAvailability.unavailable('no enabled semantic profiles are available for the requested corpus/model scope')
             }
             boolean meaningful = profiles.any {EmbeddingProfile profile -> meaningfulSemanticProfile(profile)}
             meaningful ?
@@ -185,16 +223,120 @@ class SemanticSearchExecutionService implements SemanticSearchService {
         semanticRepository.projectSearchResults(sourceItems, targetDomainTypes)
     }
 
-    private List<EmbeddingProfile> profiles(SemanticSearchRequestDTO request) {
-        if (request.embeddingProfiles != null && !request.embeddingProfiles.isEmpty()) {
-            return request.embeddingProfiles.collect {String name -> semanticRepository.findProfileByName(name)}
-                .findAll {EmbeddingProfile profile -> profile != null} as List<EmbeddingProfile>
+    private Map<String, List<EmbeddingProfile>> profilesByCorpus(SemanticSearchRequestDTO request, List<String> corpusNames) {
+        Map<String, List<EmbeddingProfile>> byCorpus = new LinkedHashMap<String, List<EmbeddingProfile>>()
+        if (corpusNames == null || corpusNames.isEmpty()) {
+            return byCorpus
         }
-        semanticRepository.profilesForIndex(request.indexName ?: 'catalogue-items-default')
+        if (request.embeddingProfiles != null && !request.embeddingProfiles.isEmpty()) {
+            List<EmbeddingProfile> profiles = request.embeddingProfiles.collect {String name -> semanticRepository.findProfileByName(name)}
+                .findAll {EmbeddingProfile profile -> profile != null} as List<EmbeddingProfile>
+            corpusNames.each {String corpusName -> byCorpus.put(corpusName, profiles)}
+            return byCorpus
+        }
+        if (request.withinModelId != null) {
+            List<Map<String, Object>> modelIndexes = semanticRepository.modelIndexes().findAll {Map<String, Object> index ->
+                index.get('mauroModelId') == request.withinModelId.toString() &&
+                    Boolean.TRUE.equals(index.get('enabled')) &&
+                    index.get('status') == 'READY' &&
+                    corpusNames.contains(String.valueOf(index.get('corpusName')))
+            } as List<Map<String, Object>>
+            for (String corpusName : corpusNames) {
+                List<EmbeddingProfile> profiles = modelIndexes.findAll {Map<String, Object> index ->
+                    index.get('corpusName') == corpusName
+                }.collect {Map<String, Object> index ->
+                    semanticRepository.findProfileByName(String.valueOf(index.get('profileName')))
+                }.findAll {EmbeddingProfile profile -> profile != null} as List<EmbeddingProfile>
+                byCorpus.put(corpusName, profiles)
+            }
+            return byCorpus
+        }
+        List<EmbeddingProfile> profiles = semanticRepository.profilesForCorpora(corpusNames)
+        corpusNames.each {String corpusName -> byCorpus.put(corpusName, profiles)}
+        byCorpus
+    }
+
+    private List<String> searchCorpora(SemanticSearchRequestDTO request) {
+        String requestedCorpus = request.corpus == null || request.corpus.trim().isEmpty() ? null : request.corpus.trim()
+        if (request.withinModelId != null) {
+            return semanticRepository.apiCorpusNamesForModelIndex(request.withinModelId, requestedCorpus)
+        }
+        if (requestedCorpus != null) {
+            return semanticRepository.apiCorpusVisible(requestedCorpus) ? [requestedCorpus] as List<String> : Collections.<String>emptyList()
+        }
+        semanticRepository.apiCorpusNames()
+    }
+
+    private static List<String> profileNames(Map<String, List<EmbeddingProfile>> profilesByCorpus) {
+        distinctProfiles(profilesByCorpus).collect {EmbeddingProfile profile -> profile.name} as List<String>
+    }
+
+    private static List<EmbeddingProfile> distinctProfiles(Map<String, List<EmbeddingProfile>> profilesByCorpus) {
+        Map<String, EmbeddingProfile> byName = new LinkedHashMap<String, EmbeddingProfile>()
+        profilesByCorpus.values().each {List<EmbeddingProfile> profiles ->
+            profiles.each {EmbeddingProfile profile ->
+                if (profile != null && !byName.containsKey(profile.name)) {
+                    byName.put(profile.name, profile)
+                }
+            }
+        }
+        new ArrayList<EmbeddingProfile>(byName.values())
     }
 
     private static String queryText(SemanticSearchRequestDTO request) {
         request.query ?: request.searchTerm
+    }
+
+    private float[] queryEmbeddingFor(EmbeddingProfile profile, String queryText) {
+        String key = queryEmbeddingCacheKey(profile, queryText)
+        if (queryEmbeddingCacheSize > 0) {
+            float[] cached = queryEmbeddingCache.get(key)
+            if (cached != null) {
+                return cached
+            }
+        }
+        EmbeddingProvider provider = embeddingProviderRegistry.providerFor(profile)
+        float[] embedding = provider.embed(profile, [queryText] as List<String>).first()
+        if (queryEmbeddingCacheSize > 0) {
+            queryEmbeddingCache.put(key, embedding)
+        }
+        embedding
+    }
+
+    private static String queryEmbeddingCacheKey(EmbeddingProfile profile, String queryText) {
+        [
+            profile.id?.toString() ?: '',
+            profile.provider ?: '',
+            profile.embeddingModel ?: '',
+            String.valueOf(profile.dimension ?: 0),
+            queryText ?: ''
+        ].join('|')
+    }
+
+    private static String vectorFingerprint(float[] vector) {
+        if (vector == null) {
+            return ''
+        }
+        MessageDigest digest = MessageDigest.getInstance('SHA-256')
+        for (float value : vector) {
+            int bits = Float.floatToIntBits(value)
+            digest.update((byte) ((bits >>> 24) & 0xff))
+            digest.update((byte) ((bits >>> 16) & 0xff))
+            digest.update((byte) ((bits >>> 8) & 0xff))
+            digest.update((byte) (bits & 0xff))
+        }
+        byte[] hash = digest.digest()
+        StringBuilder builder = new StringBuilder(16)
+        for (int i = 0; i < Math.min(hash.length, 8); i++) {
+            builder.append(String.format('%02x', hash[i] & 0xff))
+        }
+        builder.toString()
+    }
+
+    private static List<String> resultKeys(List<SemanticSearchResultsDTO> results) {
+        (results ?: Collections.<SemanticSearchResultsDTO>emptyList()).collect {SemanticSearchResultsDTO result ->
+            "${result.domainType}:${result.id}".toString()
+        } as List<String>
     }
 
     private static boolean meaningfulSemanticProfile(EmbeddingProfile profile) {
@@ -321,6 +463,8 @@ class SemanticSearchExecutionService implements SemanticSearchService {
         switch (chunkKind) {
             case 'label':
                 return 1.35D
+            case 'label-identifier':
+                return 1.30D
             case 'label-phrase':
                 return 1.25D
             case 'summary':

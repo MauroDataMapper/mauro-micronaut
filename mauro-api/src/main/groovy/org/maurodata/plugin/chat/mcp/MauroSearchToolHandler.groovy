@@ -46,6 +46,7 @@ class MauroSearchToolHandler extends AbstractAnnotatedToolHandler {
 
         SearchRequestDTO request = new SearchRequestDTO()
         request.searchTerm = searchTerm
+        request.corpus = asString(arguments.get('corpus') ?: arguments.get('corpusName'))
         request.domainTypes = extractStringList(arguments.get('domainTypes'))
         request.withinModelId = asUuid(arguments.get('modelId') ?: arguments.get('withinModelId'))
         Integer requestedMax = asInteger(arguments.get('max'), DEFAULT_PAGE_SIZE)
@@ -85,6 +86,7 @@ class MauroSearchToolHandler extends AbstractAnnotatedToolHandler {
 
         [
             searchTerm: searchTerm,
+            corpus: request.corpus,
             domainTypes: request.domainTypes,
             modelId: request.withinModelId?.toString(),
             count: response.count ?: 0,
@@ -113,6 +115,7 @@ class MauroSearchToolHandler extends AbstractAnnotatedToolHandler {
         int nextOffset = asInteger(result.get('nextOffset'), offset + returnedCount)
         boolean hasMore = Boolean.TRUE.equals(result.get('hasMore'))
         String searchTerm = asString(result.get('searchTerm')) ?: ''
+        String corpus = asString(result.get('corpus'))
         List<String> domainTypes = extractStringList(result.get('domainTypes'))
         String modelId = asString(result.get('modelId'))
         boolean semanticEvidencePresent = items.any {Object item ->
@@ -159,6 +162,7 @@ class MauroSearchToolHandler extends AbstractAnnotatedToolHandler {
                 name: 'mauro_search',
                 arguments: [
                     searchTerm: searchTerm,
+                    corpus: corpus,
                     domainTypes: domainTypes,
                     modelId: modelId,
                     max: max,
@@ -168,6 +172,9 @@ class MauroSearchToolHandler extends AbstractAnnotatedToolHandler {
             ] as Map<String, Object>
             if (!modelId) {
                 ((Map<String, Object>) nextPageToolCall.arguments).remove('modelId')
+            }
+            if (!corpus) {
+                ((Map<String, Object>) nextPageToolCall.arguments).remove('corpus')
             }
             followUp.add('FR: More results are available.')
             followUp.add('FR: In a later turn, if the user asks for the next page, use this exact tool call: ' + JsonOutput.toJson(nextPageToolCall))
@@ -188,6 +195,7 @@ class MauroSearchToolHandler extends AbstractAnnotatedToolHandler {
                 "Page: ${pageNumber} of ${totalPages}",
                 "Visible range: ${rangeStart}-${rangeEnd} of ${totalCount}",
                 "Domain type filter: ${domainTypes.join(', ')}",
+                corpus ? "Corpus: ${corpus}" : null,
                 modelId ? "Model scope: ${modelId}" : null,
                 "Semantic evidence present: ${semanticEvidencePresent}",
                 "Has more results: ${hasMore}"

@@ -36,7 +36,7 @@ import java.util.function.BiFunction
         'Find data models about risk assessments => searchTerm "risk assessments", domainTypes ["DataModel"]',
         'Look up questions about smoking => searchTerm "smoking", domainTypes ["DataElement"]'
     ],
-    inputSchema = '{"type":"object","properties":{"searchTerm":{"type":"string","description":"Search text. The keyword leg uses PostgreSQL full-text matching; the semantic leg embeds the same text when semantic search is available."},"query":{"type":"string","description":"Alias for searchTerm."},"domainTypes":{"type":"array","items":{"type":"string","enum":["DataModel","DataClass","DataElement","DataType","EnumerationType","EnumerationValue","CodeSet","Terminology","Term","Folder","VersionedFolder","ClassificationScheme","Classifier"]},"description":"Optional catalogue domain type filter."},"modelId":{"type":"string","format":"uuid","description":"Optional UUID of a DataModel, Terminology, CodeSet, Folder, or VersionedFolder to scope the search. Folder scopes include descendant folders and contained models."},"max":{"type":"integer","minimum":1,"maximum":20,"description":"Maximum returned results for this page. Omit for default page size."},"offset":{"type":"integer","minimum":0,"description":"Zero-based offset for paging."},"withGuidance":{"type":"boolean","description":"Optional. Omit to use true."}},"required":["searchTerm"]}'
+    inputSchema = '{"type":"object","properties":{"searchTerm":{"type":"string","description":"Search text. The keyword leg uses PostgreSQL full-text matching; the semantic leg embeds the same text when semantic search is available."},"query":{"type":"string","description":"Alias for searchTerm."},"domainTypes":{"type":"array","items":{"type":"string","enum":["DataModel","DataClass","DataElement","DataType","EnumerationType","EnumerationValue","CodeSet","Terminology","Term","Folder","VersionedFolder","ClassificationScheme","Classifier"]},"description":"Optional catalogue domain type filter."},"modelId":{"type":"string","format":"uuid","description":"Optional UUID of a DataModel, Terminology, CodeSet, Folder, or VersionedFolder to scope the search. Folder scopes include descendant folders and contained models."},"corpus":{"type":"string","description":"Optional API-visible semantic corpus name used to constrain the semantic leg. Omit to search API-visible semantic corpora for the requested model scope."},"max":{"type":"integer","minimum":1,"maximum":20,"description":"Maximum returned results for this page. Omit for default page size."},"offset":{"type":"integer","minimum":0,"description":"Zero-based offset for paging."},"withGuidance":{"type":"boolean","description":"Optional. Omit to use true."}},"required":["searchTerm"]}'
 )
 class HybridSearchExecutionService {
 
@@ -85,7 +85,7 @@ class HybridSearchExecutionService {
         )
 
         ListResponse<SemanticSearchResultsDTO> semanticResponse = null
-        SemanticSearchAvailability semanticAvailability = semanticSearchService.availability('catalogue-items-default')
+        SemanticSearchAvailability semanticAvailability = semanticSearchService.availability(safeRequest.corpus, safeRequest.withinModelId)
         String fallbackReason = null
         if (semanticAvailability.available) {
             try {
@@ -161,6 +161,7 @@ class HybridSearchExecutionService {
 
     private static void copySearchFields(SearchRequestDTO source, SearchRequestDTO target) {
         target.searchTerm = source.searchTerm
+        target.corpus = source.corpus
         target.domainTypes = source.domainTypes == null ? Collections.<String>emptyList() : new ArrayList<String>(source.domainTypes)
         target.withinModelId = source.withinModelId
         target.prefixSearch = source.prefixSearch

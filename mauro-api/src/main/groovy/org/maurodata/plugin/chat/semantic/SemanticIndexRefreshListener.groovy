@@ -6,7 +6,6 @@ import org.maurodata.service.semantic.*
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
-import io.micronaut.context.annotation.Value
 import io.micronaut.context.event.ApplicationEventListener
 import jakarta.inject.Singleton
 import org.maurodata.persistence.search.SearchDomainsRefreshedEvent
@@ -17,19 +16,16 @@ import org.maurodata.persistence.search.SearchDomainsRefreshedEvent
 class SemanticIndexRefreshListener implements ApplicationEventListener<SearchDomainsRefreshedEvent> {
 
     private final SemanticIndexAdministrationService semanticIndexAdministrationService
-    private final boolean autoReconcile
     private volatile boolean reconcileInProgress = false
     private volatile long lastProcessedVersion = -1L
 
-    SemanticIndexRefreshListener(SemanticIndexAdministrationService semanticIndexAdministrationService,
-                                 @Value('${chat.semantic.indexing.auto-reconcile:true}') Boolean autoReconcile) {
+    SemanticIndexRefreshListener(SemanticIndexAdministrationService semanticIndexAdministrationService) {
         this.semanticIndexAdministrationService = semanticIndexAdministrationService
-        this.autoReconcile = autoReconcile != false
     }
 
     @Override
     synchronized void onApplicationEvent(SearchDomainsRefreshedEvent event) {
-        if (!autoReconcile) {
+        if (!semanticIndexAdministrationService.autoReconcileEnabled()) {
             log.debug('Semantic index auto reconcile disabled; ignoring search domains refresh version {}', Long.valueOf(event.version()))
             return
         }
