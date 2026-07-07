@@ -30,6 +30,11 @@ class NoOpSemanticSearchService implements SemanticSearchService {
     }
 
     @Override
+    SemanticSearchAvailability availability(String indexName, UUID mauroModelId) {
+        SemanticSearchAvailability.unavailable(REASON)
+    }
+
+    @Override
     List<SearchResultsDTO> projectResults(List<SearchResultsDTO> sourceItems,
                                           List<String> targetDomainTypes) {
         sourceItems ?: [] as List<SearchResultsDTO>

@@ -17,6 +17,8 @@ interface SemanticSearchService {
 
     SemanticSearchAvailability availability(String indexName)
 
+    SemanticSearchAvailability availability(String indexName, UUID mauroModelId)
+
     List<SearchResultsDTO> projectResults(List<SearchResultsDTO> sourceItems,
                                           List<String> targetDomainTypes)
 }
