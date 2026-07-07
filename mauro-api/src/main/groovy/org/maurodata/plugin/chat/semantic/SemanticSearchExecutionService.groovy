@@ -86,6 +86,7 @@ class SemanticSearchExecutionService implements SemanticSearchService {
         if (queryText == null || queryText.trim().isEmpty()) {
             return ListResponse.from([] as List<SemanticSearchResultsDTO>, safeRequest)
         }
+        long totalStart = System.currentTimeMillis()
 
         String indexName = safeRequest.indexName ?: 'catalogue-items-default'
         if (Boolean.TRUE.equals(safeRequest.rebuildIfEmpty) && !semanticIndexingService.hasEmbeddings(indexName)) {
@@ -93,10 +94,12 @@ class SemanticSearchExecutionService implements SemanticSearchService {
         }
 
         List<String> corpusNames = searchCorpora(safeRequest)
+        long corpusResolvedAt = System.currentTimeMillis()
         if (corpusNames.isEmpty()) {
             return ListResponse.from([] as List<SemanticSearchResultsDTO>, safeRequest)
         }
         Map<String, List<EmbeddingProfile>> profilesByCorpus = profilesByCorpus(safeRequest, corpusNames)
+        long profilesResolvedAt = System.currentTimeMillis()
         int requestedTopN = Math.max(1, safeRequest.topN ?: 50)
         int topM = Math.max(1, Math.min(safeRequest.topM ?: safeRequest.max ?: 10, 100))
         int topN = candidateWindow(requestedTopN, topM, safeRequest.domainTypes, safeRequest.deepSearch == true)
@@ -155,7 +158,7 @@ class SemanticSearchExecutionService implements SemanticSearchService {
         int max = safeRequest.max != null && safeRequest.max > 0 ? safeRequest.max : topM
         List<SemanticSearchResultsDTO> page = readable.drop(offset).take(max)
         log.info(
-            'Semantic search timing query="{}" domainTypes={} profiles={} topN={} deepSearch={} candidateCounts={} ranked={} readable={} unreadable={} returned={} queryEmbeddings={} returnedKeys={} timingsMs={vectorCatalogue={}, vectorContext={}, rerank={}, accessFilter={}, total={}}',
+            'Semantic search timing query="{}" domainTypes={} profiles={} topN={} deepSearch={} candidateCounts={} ranked={} readable={} unreadable={} returned={} queryEmbeddings={} returnedKeys={} timingsMs={corpusResolve={}, profileResolve={}, vectorCatalogue={}, vectorContext={}, rerank={}, accessFilter={}, total={}}',
             queryText,
             safeRequest.domainTypes ?: [],
             profileNames(profilesByCorpus),
@@ -168,11 +171,13 @@ class SemanticSearchExecutionService implements SemanticSearchService {
             page.size(),
             queryEmbeddingFingerprints,
             resultKeys(page),
+            corpusResolvedAt - totalStart,
+            profilesResolvedAt - corpusResolvedAt,
             vectorCatalogueMillis,
             vectorContextMillis,
             rerankMillis,
             accessFilterMillis,
-            System.currentTimeMillis() - searchStart
+            System.currentTimeMillis() - totalStart
         )
         new ListResponse<SemanticSearchResultsDTO>(
             count: readable.size(),
@@ -235,19 +240,10 @@ class SemanticSearchExecutionService implements SemanticSearchService {
             return byCorpus
         }
         if (request.withinModelId != null) {
-            List<Map<String, Object>> modelIndexes = semanticRepository.modelIndexes().findAll {Map<String, Object> index ->
-                index.get('mauroModelId') == request.withinModelId.toString() &&
-                    Boolean.TRUE.equals(index.get('enabled')) &&
-                    index.get('status') == 'READY' &&
-                    corpusNames.contains(String.valueOf(index.get('corpusName')))
-            } as List<Map<String, Object>>
+            Map<String, List<EmbeddingProfile>> profilesByModelCorpus =
+                semanticRepository.profilesForModelIndexCorpora(request.withinModelId, corpusNames)
             for (String corpusName : corpusNames) {
-                List<EmbeddingProfile> profiles = modelIndexes.findAll {Map<String, Object> index ->
-                    index.get('corpusName') == corpusName
-                }.collect {Map<String, Object> index ->
-                    semanticRepository.findProfileByName(String.valueOf(index.get('profileName')))
-                }.findAll {EmbeddingProfile profile -> profile != null} as List<EmbeddingProfile>
-                byCorpus.put(corpusName, profiles)
+                byCorpus.put(corpusName, profilesByModelCorpus.get(corpusName) ?: Collections.<EmbeddingProfile>emptyList())
             }
             return byCorpus
         }
