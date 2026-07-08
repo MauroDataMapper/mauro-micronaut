@@ -272,7 +272,7 @@ class DataModel extends Model implements ItemReferencer, DiffableItem<DataModel>
 
         dataClass.dataElements.each {dataElement ->
             dataElement.dataModel = this
-            if (!dataElement.dataModel.dataElements.contains(dataElement)) {
+            if (!this.dataElements.id.contains(dataElement.id)) {
                 dataElement.dataModel.dataElements.add(dataElement)
             }
             dataElement.dataClass = dataClass
@@ -280,8 +280,9 @@ class DataModel extends Model implements ItemReferencer, DiffableItem<DataModel>
             if (foundDataType == null) {
                 log.error(
                     "DataModel setAssociations() setDataClassAssociations() failed to find a DataType for ${dataElement.dataType?.id} or else ${dataElement.dataType?.label}")
+            } else {
+                dataElement.dataType = foundDataType
             }
-            dataElement.dataType = foundDataType
             if (!this.dataElements.contains(dataElement)) {
                 this.dataElements.add(dataElement)
             }

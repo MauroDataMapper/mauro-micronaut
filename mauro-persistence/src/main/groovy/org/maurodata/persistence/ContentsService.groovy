@@ -33,9 +33,13 @@ class ContentsService {
     }
 
     DataModel saveContentOnly(DataModel dataModel, CatalogueUser catalogueUser = null, boolean resetIds = false) {
-        ShreddedContent shreddedContent = shred(dataModel, catalogueUser, true)
+        // Cache the dataModel id, because the shredder will reset it to null if resetIds is true
+        UUID dataModelId = dataModel.id
+        ShreddedContent shreddedContent = shred(dataModel, catalogueUser, true, resetIds)
+        dataModel.id = dataModelId
         shreddedContent.dataModels = []
         contentHandler.saveWithContent(shreddedContent)
+        dataModel.setAssociations()
         return dataModel
     }
 
@@ -46,6 +50,7 @@ class ContentsService {
     <T extends AdministeredItem> T loadWithContent(T administeredItem) {
         ShreddedContent shreddedContent = new ShreddedContent(administeredItem)
         contentHandler.loadContent(shreddedContent)
+        administeredItem.setAssociations()
         return administeredItem
     }
 

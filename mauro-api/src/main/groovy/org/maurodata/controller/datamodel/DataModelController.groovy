@@ -271,19 +271,29 @@ class DataModelController extends ModelController<DataModel> implements DataMode
         // target i.e. request model
         accessControlService.canDoRole(Role.EDITOR, otherDataModel)
 
-        List<DataElement> additionDataElements = subsetData.additions?.collect {dataElementCacheableRepository.findById(it)}
-        additionDataElements?.each {DataElement dataElement ->
-            pathRepository.readParentItems(dataElement)
-            if (dataElement.owner.id != dataModel.id) throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Subset DataElements for Addition must be within the source DataModel")
-        }
-
         DataModel additionSubset = new DataModel()
 
-        // copy missing DataElements and intermediate DataClasses into additionSubset
+        List<DataElement> additionDataElements = dataElementCacheableRepository.findAllByIdIn(subsetData.additions)
+
+        Set<DataType> additionDataTypes = additionDataElements?.dataType as Set<DataType>
+
+        // Do an initial check that we're not trying to add DataElements from a different DataModel
         additionDataElements?.each {DataElement dataElement ->
             log.debug "subset: processing data element addition for id [$dataElement.id], label [$dataElement.label]"
             List<AdministeredItem> parents = pathRepository.readParentItems(dataElement)
-            List<DataClass> dataClassParents = parents.takeWhile {it !instanceof Model}.tail().reverse() as List<DataClass>
+            if (dataElement.owner.id != dataModel.id) {
+                throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Subset DataElements for Addition must be within the source DataModel")
+            }
+        }
+
+
+        additionDataElements?.each {DataElement dataElement ->
+            log.debug "subset: processing data element addition for id [$dataElement.id], label [$dataElement.label]"
+            List<AdministeredItem> parents = pathRepository.readParentItems(dataElement)
+            if (dataElement.owner.id != dataModel.id) {
+                throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Subset DataElements for Addition must be within the source DataModel")
+            }
+            List<DataClass> dataClassParents = parents.takeWhile {it !instanceof DataModel}.tail().reverse() as List<DataClass>
             DataClass currentOtherModelOrAdditionParent = new DataClass(dataClasses: otherDataModel.dataClasses)
             // maintain as the copy of the parent of `DataClass child` in the otherDataModel
             dataClassParents.eachWithIndex {DataClass child, int idx ->
@@ -352,11 +362,12 @@ class DataModelController extends ModelController<DataModel> implements DataMode
 
         // Reconnect the elements with the new datatypes
         additionSubset.dataElements.each {dataElement ->
-            dataElement.dataType = additionSubset.dataTypes.find {it.label == dataElement.dataType.label}
+            String dataTypeLabel = dataElement.dataType?.label
+            dataElement.dataType = additionSubset.dataTypes.find {it.label == dataTypeLabel} ?: otherDataModel.dataTypes.find {it.label == dataTypeLabel}
         }
 
         additionSubset.id = otherDataModel.id
-        additionSubset.setAssociations()
+        //additionSubset.setAssociations()
 
         log.debug "subset: saving additions to datamodel id [$additionSubset.id]"
         contentsService.saveContentOnly(additionSubset)
@@ -385,7 +396,7 @@ class DataModelController extends ModelController<DataModel> implements DataMode
             }
         }
 
-        dataModelRepository.findById(otherId)
+        return (DataModel) dataModelRepository.findById(otherId)
     }
 
     /**

@@ -483,8 +483,8 @@ class ContentHandler {
 
     static private <T extends Item> void saveHierarchyByBatch(Map<Integer, Set<T>> items, ItemRepository<T> itemRepository) {
         items.keySet().sort().each {depth ->
-            inBatches(ensureIdsAndSort(items[depth])) {List<T> batches ->
-                itemRepository.saveAll(batches)
+            inBatches(ensureIdsAndSort(items[depth])) {List<T> batch ->
+                itemRepository.saveAll(batch)
             }
         }
     }
