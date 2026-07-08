@@ -1,5 +1,6 @@
 package org.maurodata.persistence.shredder
 
+import groovy.util.logging.Slf4j
 import org.maurodata.domain.classifier.ClassificationScheme
 import org.maurodata.domain.classifier.Classifier
 import org.maurodata.domain.dataflow.DataClassComponent
@@ -30,6 +31,7 @@ import org.maurodata.domain.terminology.TermRelationshipType
 import org.maurodata.domain.terminology.Terminology
 import org.maurodata.persistence.classifier.dto.ClassifierJoinDTO
 
+@Slf4j
 class ShreddedContent {
 
     Map<Integer, Set<Folder>> folders = [:]
@@ -207,11 +209,8 @@ class ShreddedContent {
             dataClasses[depth].each {dataClass ->
                 if(dataClass.parentDataClass && allItems[dataClass.parentDataClass.id] ) {
                     ((DataClass) allItems[dataClass.parentDataClass.id]).dataClasses.add(dataClass)
-                    DataModel parent = (DataModel) allItems[((DataClass) allItems[dataClass.parentDataClass.id]).dataModel.id]
-                    parent.allDataClasses.add(dataClass)
                 } else if(allItems[dataClass.dataModel.id]) {
                     ((DataModel) allItems[dataClass.dataModel.id]).dataClasses.add(dataClass)
-                    ((DataModel) allItems[dataClass.dataModel.id]).allDataClasses.add(dataClass)
                 }
             }
         }
@@ -235,15 +234,44 @@ class ShreddedContent {
             }
         }
 
+        dataFlows.each {dataFlow ->
+            if(allItems[dataFlow.source.id]) {
+                dataFlow.source = ((DataModel) allItems[dataFlow.source.id])
+            }
+            if(allItems[dataFlow.target.id]) {
+                dataFlow.target = ((DataModel) allItems[dataFlow.target.id])
+            }
+        }
+
         dataClassComponents.each {dataClassComponent ->
             if(allItems[dataClassComponent.dataFlow.id]) {
                 ((DataFlow) allItems[dataClassComponent.dataFlow.id]).dataClassComponents.add(dataClassComponent)
+            }
+            dataClassComponent.sourceDataClasses.each {sourceDataClass ->
+                if(allItems[sourceDataClass.id]) {
+                    dataClassComponent.sourceDataClasses.add((DataClass) allItems[sourceDataClass.id])
+                }
+            }
+            dataClassComponent.targetDataClasses.each {targetDataClass ->
+                if(allItems[targetDataClass.id]) {
+                    dataClassComponent.targetDataClasses.add((DataClass) allItems[targetDataClass.id])
+                }
             }
         }
 
         dataElementComponents.each {dataElementComponent ->
             if(allItems[dataElementComponent.dataClassComponent.id]) {
                 ((DataClassComponent) allItems[dataElementComponent.dataClassComponent.id]).dataElementComponents.add(dataElementComponent)
+            }
+            dataElementComponent.sourceDataElements.each {sourceDataElement ->
+                if(allItems[sourceDataElement.id]) {
+                    dataElementComponent.sourceDataElements.add((DataElement) allItems[sourceDataElement.id])
+                }
+            }
+            dataElementComponent.targetDataElements.each {targetDataElement ->
+                if (allItems[targetDataElement.id]) {
+                    dataElementComponent.targetDataElements.add((DataElement) allItems[targetDataElement.id])
+                }
             }
         }
 
@@ -293,6 +321,9 @@ class ShreddedContent {
 
         semanticLinks.each {semanticLink ->
             allItems[semanticLink.multiFacetAwareItemId].semanticLinks.add(semanticLink)
+            if(allItems[semanticLink.targetMultiFacetAwareItemId]) {
+                semanticLink.target = allItems[semanticLink.targetMultiFacetAwareItemId]
+            }
         }
 
         summaryMetadata.each {summaryMetadata ->
