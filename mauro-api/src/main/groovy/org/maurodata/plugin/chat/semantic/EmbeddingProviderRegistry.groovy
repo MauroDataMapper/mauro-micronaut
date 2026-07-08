@@ -24,4 +24,8 @@ class EmbeddingProviderRegistry {
         }
         provider
     }
+
+    EmbeddingProvider providerFor(String providerId, String embeddingModel) {
+        providerFor(new EmbeddingProfile(provider: providerId, embeddingModel: embeddingModel))
+    }
 }
