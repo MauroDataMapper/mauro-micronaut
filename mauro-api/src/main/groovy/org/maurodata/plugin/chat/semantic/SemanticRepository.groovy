@@ -92,12 +92,8 @@ class SemanticRepository {
                         p.dimension,
                         p.distance_metric,
                         p.enabled,
-                        p.description,
-                        COALESCE(array_agg(i.name ORDER BY i.name) FILTER (WHERE i.name IS NOT NULL), ARRAY[]::text[]) AS indexes
+                        p.description
                  FROM semantic.embedding_profile p
-                      LEFT JOIN semantic.semantic_index_profile ip ON ip.embedding_profile_id = p.id
-                      LEFT JOIN semantic.semantic_index i ON i.id = ip.semantic_index_id
-                 GROUP BY p.id, p.name, p.provider, p.embedding_model, p.dimension, p.distance_metric, p.enabled, p.description
                  ORDER BY p.name
              ''')) {
             try (ResultSet rs = statement.executeQuery()) {
@@ -111,55 +107,10 @@ class SemanticRepository {
                         dimension: rs.getInt('dimension'),
                         distanceMetric: rs.getString('distance_metric'),
                         enabled: rs.getBoolean('enabled'),
-                        description: rs.getString('description'),
-                        indexes: arrayToList(rs.getArray('indexes')?.array)
+                        description: rs.getString('description')
                     ] as Map<String, Object>)
                 }
                 profiles
-            }
-        }
-    }
-
-    List<Map<String, Object>> indexes() {
-        try (Connection connection = dataSource.connection;
-             PreparedStatement statement = connection.prepareStatement('''
-                 SELECT i.id,
-                        i.name,
-                        i.status,
-                        i.last_indexed_at,
-                        c.name AS corpus_name,
-                        c.source AS corpus_source,
-                        COALESCE(array_agg(p.name ORDER BY p.name) FILTER (WHERE p.name IS NOT NULL), ARRAY[]::text[]) AS profiles,
-                        COALESCE(array_agg(p.name ORDER BY p.name) FILTER (WHERE p.name IS NOT NULL AND p.enabled = TRUE), ARRAY[]::text[]) AS enabled_profiles,
-                        (SELECT count(*) FROM semantic.semantic_chunk chunk WHERE chunk.corpus_id = i.corpus_id) AS chunks,
-                        (SELECT count(*)
-                         FROM semantic.semantic_embedding e
-                              JOIN semantic.semantic_chunk chunk ON chunk.id = e.chunk_id
-                         WHERE chunk.corpus_id = i.corpus_id) AS embeddings
-                 FROM semantic.semantic_index i
-                      JOIN semantic.semantic_corpus c ON c.id = i.corpus_id
-                      LEFT JOIN semantic.semantic_index_profile ip ON ip.semantic_index_id = i.id
-                      LEFT JOIN semantic.embedding_profile p ON p.id = ip.embedding_profile_id
-                 GROUP BY i.id, i.name, i.status, i.last_indexed_at, c.name, c.source, i.corpus_id
-                 ORDER BY i.name
-             ''')) {
-            try (ResultSet rs = statement.executeQuery()) {
-                List<Map<String, Object>> indexes = new ArrayList<Map<String, Object>>()
-                while (rs.next()) {
-                    indexes.add([
-                        id: String.valueOf(rs.getObject('id')),
-                        name: rs.getString('name'),
-                        status: rs.getString('status'),
-                        lastIndexedAt: rs.getTimestamp('last_indexed_at')?.toInstant()?.toString(),
-                        corpusName: rs.getString('corpus_name'),
-                        corpusSource: rs.getString('corpus_source'),
-                        profiles: arrayToList(rs.getArray('profiles')?.array),
-                        enabledProfiles: arrayToList(rs.getArray('enabled_profiles')?.array),
-                        chunks: rs.getLong('chunks'),
-                        embeddings: rs.getLong('embeddings')
-                    ] as Map<String, Object>)
-                }
-                indexes
             }
         }
     }
@@ -706,21 +657,61 @@ class SemanticRepository {
         }
     }
 
-    Map<String, Object> deleteModelIndex(UUID mauroModelId, String profileName) {
+    Map<String, Object> deleteModelIndex(UUID mauroModelId, String profileName, String corpusName = 'catalogue-items') {
         int deleted
         try (Connection connection = dataSource.connection;
              PreparedStatement statement = connection.prepareStatement('''
                  DELETE FROM semantic.semantic_model_index mi
-                 USING semantic.embedding_profile p
+                 USING semantic.embedding_profile p,
+                       semantic.semantic_corpus c
                  WHERE mi.embedding_profile_id = p.id
+                   AND mi.corpus_id = c.id
                    AND mi.mauro_model_id = ?
                    AND p.name = ?
+                   AND c.name = ?
              ''')) {
             statement.setObject(1, mauroModelId)
             statement.setString(2, profileName)
+            statement.setString(3, corpusName ?: 'catalogue-items')
             deleted = statement.executeUpdate()
         }
-        [mauroModelId: mauroModelId.toString(), profileName: profileName, deleted: deleted] as Map<String, Object>
+        [
+            mauroModelId: mauroModelId.toString(),
+            profileName: profileName,
+            corpusName: corpusName ?: 'catalogue-items',
+            deleted: deleted
+        ] as Map<String, Object>
+    }
+
+    Map<String, Object> deleteEmbeddingsForModelIndex(UUID mauroModelId, String profileName, String corpusName = 'catalogue-items') {
+        int deleted
+        try (Connection connection = dataSource.connection;
+             PreparedStatement statement = connection.prepareStatement("""
+                 WITH scoped_model_ids(id) AS (
+                     ${scopedModelIdsSql()}
+                 )
+                 DELETE FROM semantic.semantic_embedding embedding
+                 USING semantic.semantic_chunk chunk,
+                       semantic.embedding_profile profile,
+                       semantic.semantic_corpus corpus
+                 WHERE embedding.chunk_id = chunk.id
+                   AND embedding.embedding_profile_id = profile.id
+                   AND chunk.corpus_id = corpus.id
+                   AND chunk.mauro_model_id IN (SELECT id FROM scoped_model_ids)
+                   AND profile.name = ?
+                   AND corpus.name = ?
+             """)) {
+            statement.setObject(1, mauroModelId)
+            statement.setString(2, profileName)
+            statement.setString(3, corpusName ?: 'catalogue-items')
+            deleted = statement.executeUpdate()
+        }
+        [
+            mauroModelId: mauroModelId.toString(),
+            profileName: profileName,
+            corpusName: corpusName ?: 'catalogue-items',
+            deletedEmbeddings: deleted
+        ] as Map<String, Object>
     }
 
     List<Map<String, Object>> staleEnabledModelIndexes() {
@@ -1160,43 +1151,6 @@ class SemanticRepository {
         }
     }
 
-    Map<String, Object> createIndex(String indexName, String corpusName = 'catalogue-items') {
-        try (Connection connection = dataSource.connection;
-             PreparedStatement statement = connection.prepareStatement('''
-                 INSERT INTO semantic.semantic_index (name, corpus_id, status)
-                 SELECT ?, c.id, 'STALE'
-                 FROM semantic.semantic_corpus c
-                 WHERE c.name = ?
-                 ON CONFLICT (name) DO UPDATE
-                 SET updated_at = now()
-                 RETURNING id, name, status
-             ''')) {
-            statement.setString(1, indexName)
-            statement.setString(2, corpusName ?: 'catalogue-items')
-            try (ResultSet rs = statement.executeQuery()) {
-                if (!rs.next()) {
-                    throw new IllegalArgumentException("No semantic corpus named ${corpusName}")
-                }
-                [
-                    id: String.valueOf(rs.getObject('id')),
-                    name: rs.getString('name'),
-                    status: rs.getString('status'),
-                    corpusName: corpusName ?: 'catalogue-items'
-                ] as Map<String, Object>
-            }
-        }
-    }
-
-    Map<String, Object> deleteIndex(String indexName) {
-        int deleted
-        try (Connection connection = dataSource.connection;
-             PreparedStatement statement = connection.prepareStatement('DELETE FROM semantic.semantic_index WHERE name = ?')) {
-            statement.setString(1, indexName)
-            deleted = statement.executeUpdate()
-        }
-        [indexName: indexName, deleted: deleted] as Map<String, Object>
-    }
-
     Map<String, Object> createProfile(Map<String, Object> request) {
         try (Connection connection = dataSource.connection;
              PreparedStatement statement = connection.prepareStatement('''
@@ -1256,69 +1210,6 @@ class SemanticRepository {
         }
     }
 
-    Map<String, Object> linkProfileToIndex(String indexName, String profileName) {
-        try (Connection connection = dataSource.connection;
-             PreparedStatement statement = connection.prepareStatement('''
-                 INSERT INTO semantic.semantic_index_profile (semantic_index_id, embedding_profile_id)
-                 SELECT i.id, p.id
-                 FROM semantic.semantic_index i
-                      CROSS JOIN semantic.embedding_profile p
-                 WHERE i.name = ?
-                   AND p.name = ?
-                 ON CONFLICT DO NOTHING
-             ''')) {
-            statement.setString(1, indexName)
-            statement.setString(2, profileName)
-            statement.executeUpdate()
-        }
-        [
-            indexName: indexName,
-            profileName: profileName,
-            linked: true
-        ] as Map<String, Object>
-    }
-
-    Map<String, Object> unlinkProfileFromIndex(String indexName, String profileName) {
-        int deleted
-        try (Connection connection = dataSource.connection;
-             PreparedStatement statement = connection.prepareStatement('''
-                 DELETE FROM semantic.semantic_index_profile ip
-                 USING semantic.semantic_index i,
-                       semantic.embedding_profile p
-                 WHERE ip.semantic_index_id = i.id
-                   AND ip.embedding_profile_id = p.id
-                   AND i.name = ?
-                   AND p.name = ?
-             ''')) {
-            statement.setString(1, indexName)
-            statement.setString(2, profileName)
-            deleted = statement.executeUpdate()
-        }
-        [
-            indexName: indexName,
-            profileName: profileName,
-            linked: false,
-            removed: deleted
-        ] as Map<String, Object>
-    }
-
-    Map<String, Object> deleteEmbeddingsForIndex(String indexName) {
-        int deleted
-        try (Connection connection = dataSource.connection;
-             PreparedStatement statement = connection.prepareStatement('''
-                 DELETE FROM semantic.semantic_embedding e
-                 USING semantic.semantic_index i,
-                       semantic.semantic_index_profile ip
-                 WHERE ip.semantic_index_id = i.id
-                   AND ip.embedding_profile_id = e.embedding_profile_id
-                   AND i.name = ?
-             ''')) {
-            statement.setString(1, indexName)
-            deleted = statement.executeUpdate()
-        }
-        [indexName: indexName, deletedEmbeddings: deleted] as Map<String, Object>
-    }
-
     Map<String, Object> deleteChunksForCorpus(String corpusName) {
         int deleted
         try (Connection connection = dataSource.connection;
@@ -1354,17 +1245,6 @@ class SemanticRepository {
             statement.setString(1, corpusName ?: 'catalogue-items')
             try (ResultSet rs = statement.executeQuery()) {
                 rs.next() ? (UUID) rs.getObject(1) : null
-            }
-        }
-    }
-
-    boolean indexExists(String indexName) {
-        try (Connection connection = dataSource.connection;
-             PreparedStatement statement = connection.prepareStatement('SELECT EXISTS (SELECT 1 FROM semantic.semantic_index WHERE name = ?)')) {
-            statement.setString(1, indexName)
-            try (ResultSet rs = statement.executeQuery()) {
-                rs.next()
-                rs.getBoolean(1)
             }
         }
     }

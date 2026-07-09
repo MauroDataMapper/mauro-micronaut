@@ -106,10 +106,23 @@ class SearchExecutionService {
         searchRepository.search(requestDTO)
     }
 
+    List<SearchResultsDTO> retrieveSearchResults(SearchRequestDTO requestDTO, Integer limit) {
+        searchRepository.search(requestDTO, limit)
+    }
+
     List<SearchResultsDTO> filterReadable(
         List<SearchResultsDTO> searchResults,
         SearchRequestDTO requestDTO,
         BiFunction<String, UUID, AdministeredItem> itemLookup
+    ) {
+        filterReadableUntil(searchResults, requestDTO, itemLookup, Integer.MAX_VALUE).readable
+    }
+
+    FilteredSearchResults filterReadableUntil(
+        List<SearchResultsDTO> searchResults,
+        SearchRequestDTO requestDTO,
+        BiFunction<String, UUID, AdministeredItem> itemLookup,
+        int requiredReadable
     ) {
         Set<UUID> allClassifierIds = [] as Set<UUID>
         if (requestDTO.classifiers) {
@@ -121,10 +134,15 @@ class SearchExecutionService {
             classifierMap[classifier.classificationScheme.id] << classifier.id
         }
 
-        List<SearchResultsDTO> searchResultsReadable = searchResults.findAll { SearchResultsDTO result ->
+        int unreadableCount = 0
+        int scannedCount = 0
+        List<SearchResultsDTO> readable = new ArrayList<SearchResultsDTO>()
+        for (SearchResultsDTO result : searchResults ?: Collections.<SearchResultsDTO>emptyList()) {
+            scannedCount++
             AdministeredItem item = itemLookup.apply(result.domainType, result.id)
             if (!accessControlService.canDoRole(Role.READER, item)) {
-                return false
+                unreadableCount++
+                continue
             }
             pathRepository.readParentItems(item)
             item.updateBreadcrumbs()
@@ -136,7 +154,31 @@ class SearchExecutionService {
                 classifierMap.every { UUID ignored, Set<UUID> classifiers ->
                     classifiers.any { UUID cid -> resultClassifierIds.contains(cid) }
                 }
-            classifierFilter
-        } as List<SearchResultsDTO>
+            if (!classifierFilter) {
+                continue
+            }
+            readable.add(result)
+            if (readable.size() >= requiredReadable) {
+                return new FilteredSearchResults(
+                    readable: readable,
+                    unreadableCount: unreadableCount,
+                    scannedCount: scannedCount,
+                    exhausted: scannedCount >= (searchResults?.size() ?: 0)
+                )
+            }
+        }
+        new FilteredSearchResults(
+            readable: readable,
+            unreadableCount: unreadableCount,
+            scannedCount: scannedCount,
+            exhausted: true
+        )
+    }
+
+    static class FilteredSearchResults {
+        List<SearchResultsDTO> readable = []
+        int unreadableCount
+        int scannedCount
+        boolean exhausted
     }
 }

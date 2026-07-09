@@ -48,6 +48,9 @@ class SearchRequestDTO extends PaginationParams {
     Boolean prefixSearch = false
 
     @Nullable
+    Boolean deepSearch = false
+
+    @Nullable
     Date lastUpdatedAfter
     @Nullable
     Date lastUpdatedBefore

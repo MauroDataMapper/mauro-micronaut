@@ -51,9 +51,9 @@ class SemanticSearchExecutionService implements SemanticSearchService {
                                    SemanticIndexingService semanticIndexingService,
                                    AccessControlService accessControlService,
                                    PathRepository pathRepository,
-                                   @Value('${chat.semantic.search.access-filter-fetch-multiplier:100}') Integer accessFilterFetchMultiplier,
-                                   @Value('${chat.semantic.search.minimum-candidate-window:400}') Integer minimumCandidateWindow,
-                                   @Value('${chat.semantic.search.maximum-candidate-window:600}') Integer maximumCandidateWindow,
+                                   @Value('${chat.semantic.search.access-filter-fetch-multiplier:20}') Integer accessFilterFetchMultiplier,
+                                   @Value('${chat.semantic.search.minimum-candidate-window:100}') Integer minimumCandidateWindow,
+                                   @Value('${chat.semantic.search.maximum-candidate-window:200}') Integer maximumCandidateWindow,
                                    @Value('${chat.semantic.search.deep-candidate-window:1600}') Integer deepCandidateWindow,
                                    @Value('${chat.semantic.search.include-context:false}') Boolean includeContext,
                                    @Value('${chat.semantic.search.query-embedding-cache-size:1000}') Integer queryEmbeddingCacheSize) {
@@ -105,6 +105,8 @@ class SemanticSearchExecutionService implements SemanticSearchService {
         int topN = candidateWindow(requestedTopN, topM, safeRequest.domainTypes, safeRequest.deepSearch == true)
         List<SemanticCandidate> candidates = new ArrayList<SemanticCandidate>()
         Map<String, Integer> candidateCounts = new LinkedHashMap<String, Integer>()
+        Map<String, Long> queryEmbeddingTimings = new LinkedHashMap<String, Long>()
+        Map<String, Long> vectorTimings = new LinkedHashMap<String, Long>()
         long searchStart = System.currentTimeMillis()
         long vectorCatalogueMillis = 0L
         long vectorContextMillis = 0L
@@ -114,30 +116,43 @@ class SemanticSearchExecutionService implements SemanticSearchService {
             for (EmbeddingProfile profile : profilesByCorpus.get(corpusName) ?: Collections.<EmbeddingProfile>emptyList()) {
                 float[] queryEmbedding = queryEmbeddings.get(profile)
                 if (queryEmbedding == null) {
+                    long queryEmbeddingStart = System.currentTimeMillis()
                     queryEmbedding = queryEmbeddingFor(profile, queryText)
+                    long queryEmbeddingMillis = System.currentTimeMillis() - queryEmbeddingStart
                     queryEmbeddings.put(profile, queryEmbedding)
                     queryEmbeddingFingerprints.put(profile.name, vectorFingerprint(queryEmbedding))
+                    queryEmbeddingTimings.put(profile.name, queryEmbeddingMillis)
                 }
                 long vectorCatalogueStart = System.currentTimeMillis()
                 List<SemanticCandidate> catalogueCandidates = semanticRepository.search(profile, queryEmbedding, corpusName, safeRequest.domainTypes, safeRequest.withinModelId, topN, 'catalogue')
-                vectorCatalogueMillis += System.currentTimeMillis() - vectorCatalogueStart
-                candidateCounts.put("${corpusName}:${profile.name}:catalogue".toString(), catalogueCandidates.size())
+                long catalogueMillis = System.currentTimeMillis() - vectorCatalogueStart
+                String catalogueKey = "${corpusName}:${profile.name}:catalogue".toString()
+                vectorCatalogueMillis += catalogueMillis
+                vectorTimings.put(catalogueKey, catalogueMillis)
+                candidateCounts.put(catalogueKey, catalogueCandidates.size())
                 candidates.addAll(catalogueCandidates)
                 if (includeContext) {
                     long vectorContextStart = System.currentTimeMillis()
                     List<SemanticCandidate> contextCandidates = semanticRepository.search(profile, queryEmbedding, corpusName, safeRequest.domainTypes, safeRequest.withinModelId, topN, 'context')
-                    vectorContextMillis += System.currentTimeMillis() - vectorContextStart
-                    candidateCounts.put("${corpusName}:${profile.name}:context".toString(), contextCandidates.size())
+                    long contextMillis = System.currentTimeMillis() - vectorContextStart
+                    String contextKey = "${corpusName}:${profile.name}:context".toString()
+                    vectorContextMillis += contextMillis
+                    vectorTimings.put(contextKey, contextMillis)
+                    candidateCounts.put(contextKey, contextCandidates.size())
                     candidates.addAll(contextCandidates)
                 }
             }
         }
 
+        int offset = safeRequest.offset ?: 0
+        int max = safeRequest.max != null && safeRequest.max > 0 ? safeRequest.max : topM
+        int requiredReadable = Math.max(offset + max, max)
+
         long rerankStart = System.currentTimeMillis()
         List<SemanticSearchResultsDTO> ranked = rerank(candidates, safeRequest.includeChunks != false)
         long rerankMillis = System.currentTimeMillis() - rerankStart
         long accessFilterStart = System.currentTimeMillis()
-        FilteredSemanticResults filtered = filterReadable(ranked, itemLookup)
+        FilteredSemanticResults filtered = filterReadable(ranked, itemLookup, requiredReadable)
         List<SemanticSearchResultsDTO> readable = filtered.readable
         int unreadableCount = filtered.unreadableCount
         long accessFilterMillis = System.currentTimeMillis() - accessFilterStart
@@ -154,35 +169,48 @@ class SemanticSearchExecutionService implements SemanticSearchService {
             )
         }
 
-        int offset = safeRequest.offset ?: 0
-        int max = safeRequest.max != null && safeRequest.max > 0 ? safeRequest.max : topM
+        long pageStart = System.currentTimeMillis()
         List<SemanticSearchResultsDTO> page = readable.drop(offset).take(max)
+        int responseCount = filtered.exhausted ?
+            readable.size() :
+            Math.max(readable.size(), offset + page.size() + 1)
+        long pageMillis = System.currentTimeMillis() - pageStart
+        long responseStart = System.currentTimeMillis()
+        ListResponse<SemanticSearchResultsDTO> response = new ListResponse<SemanticSearchResultsDTO>(
+            count: responseCount,
+            countIsExact: filtered.exhausted,
+            items: page
+        )
+        long responseMillis = System.currentTimeMillis() - responseStart
         log.info(
-            'Semantic search timing query="{}" domainTypes={} profiles={} topN={} deepSearch={} candidateCounts={} ranked={} readable={} unreadable={} returned={} queryEmbeddings={} returnedKeys={} timingsMs={corpusResolve={}, profileResolve={}, vectorCatalogue={}, vectorContext={}, rerank={}, accessFilter={}, total={}}',
+            'Semantic search timing query="{}" domainTypes={} profiles={} topN={} deepSearch={} candidateCounts={} vectorTimingsMs={} ranked={} accessScanned={} checkedAllForAccess={} readable={} unreadable={} returned={} countIsExact={} queryEmbeddings={} queryEmbeddingTimingsMs={} timingsMs={corpusResolve={}, profileResolve={}, vectorCatalogue={}, vectorContext={}, rerank={}, accessFilter={}, page={}, response={}, total={}}',
             queryText,
             safeRequest.domainTypes ?: [],
             profileNames(profilesByCorpus),
             topN,
             safeRequest.deepSearch == true,
             candidateCounts,
+            vectorTimings,
             ranked.size(),
+            filtered.scannedCount,
+            filtered.exhausted,
             readable.size(),
             unreadableCount,
             page.size(),
+            filtered.exhausted,
             queryEmbeddingFingerprints,
-            resultKeys(page),
+            queryEmbeddingTimings,
             corpusResolvedAt - totalStart,
             profilesResolvedAt - corpusResolvedAt,
             vectorCatalogueMillis,
             vectorContextMillis,
             rerankMillis,
             accessFilterMillis,
+            pageMillis,
+            responseMillis,
             System.currentTimeMillis() - totalStart
         )
-        new ListResponse<SemanticSearchResultsDTO>(
-            count: readable.size(),
-            items: page
-        )
+        response
     }
 
     @Connectable
@@ -329,12 +357,6 @@ class SemanticSearchExecutionService implements SemanticSearchService {
         builder.toString()
     }
 
-    private static List<String> resultKeys(List<SemanticSearchResultsDTO> results) {
-        (results ?: Collections.<SemanticSearchResultsDTO>emptyList()).collect {SemanticSearchResultsDTO result ->
-            "${result.domainType}:${result.id}".toString()
-        } as List<String>
-    }
-
     private static boolean meaningfulSemanticProfile(EmbeddingProfile profile) {
         if (profile == null) {
             return false
@@ -359,10 +381,13 @@ class SemanticSearchExecutionService implements SemanticSearchService {
     }
 
     private FilteredSemanticResults filterReadable(List<SemanticSearchResultsDTO> ranked,
-                                                   BiFunction<String, UUID, AdministeredItem> itemLookup) {
+                                                   BiFunction<String, UUID, AdministeredItem> itemLookup,
+                                                   int requiredReadable) {
         int unreadableCount = 0
+        int scannedCount = 0
         List<SemanticSearchResultsDTO> readable = new ArrayList<SemanticSearchResultsDTO>()
         for (SemanticSearchResultsDTO result : ranked) {
+            scannedCount++
             AdministeredItem item = itemLookup.apply(result.domainType, result.id)
             if (!accessControlService.canDoRole(Role.READER, item)) {
                 unreadableCount++
@@ -373,8 +398,21 @@ class SemanticSearchExecutionService implements SemanticSearchService {
             result.breadcrumbs = item.breadcrumbs
             result.classifiers = item.classifiers
             readable.add(result)
+            if (readable.size() >= requiredReadable) {
+                return new FilteredSemanticResults(
+                    readable: readable,
+                    unreadableCount: unreadableCount,
+                    scannedCount: scannedCount,
+                    exhausted: scannedCount >= ranked.size()
+                )
+            }
         }
-        new FilteredSemanticResults(readable: readable, unreadableCount: unreadableCount)
+        new FilteredSemanticResults(
+            readable: readable,
+            unreadableCount: unreadableCount,
+            scannedCount: scannedCount,
+            exhausted: true
+        )
     }
 
     private static List<SemanticSearchResultsDTO> rerank(List<SemanticCandidate> candidates, boolean includeChunks) {
@@ -407,7 +445,7 @@ class SemanticSearchExecutionService implements SemanticSearchService {
                 evidenceDetails: evidenceDetails(sorted)
             )
             if (includeChunks) {
-                dto.chunks = sorted.take(5).collect {SemanticCandidate candidate ->
+                dto.chunks = displayEvidenceCandidates(sorted, 5).collect {SemanticCandidate candidate ->
                     double significanceWeight = chunkKindWeight(candidate.chunkKind)
                     new SemanticChunkMatchDTO(
                         chunkId: candidate.chunkId,
@@ -431,6 +469,26 @@ class SemanticSearchExecutionService implements SemanticSearchService {
             ((right.rerankScore ?: 0D) <=> (left.rerankScore ?: 0D)) ?:
                 (resultStableKey(left) <=> resultStableKey(right))
         } as List<SemanticSearchResultsDTO>
+    }
+
+    private static List<SemanticCandidate> displayEvidenceCandidates(List<SemanticCandidate> sorted, int max) {
+        List<SemanticCandidate> display = new ArrayList<SemanticCandidate>()
+        Set<String> seen = new LinkedHashSet<String>()
+        for (SemanticCandidate candidate : sorted) {
+            String key = evidenceSnippetKey(candidate)
+            if (seen.add(key)) {
+                display.add(candidate)
+            }
+            if (display.size() >= max) {
+                break
+            }
+        }
+        display
+    }
+
+    private static String evidenceSnippetKey(SemanticCandidate candidate) {
+        String text = candidate.sourceText == null ? '' : candidate.sourceText.trim().replaceAll(/\s+/, ' ').toLowerCase(Locale.ROOT)
+        text ?: candidate.chunkId?.toString() ?: candidateStableKey(candidate)
     }
 
     private static String candidateStableKey(SemanticCandidate candidate) {
@@ -625,5 +683,7 @@ class SemanticSearchExecutionService implements SemanticSearchService {
     private static class FilteredSemanticResults {
         List<SemanticSearchResultsDTO> readable
         int unreadableCount
+        int scannedCount
+        boolean exhausted
     }
 }

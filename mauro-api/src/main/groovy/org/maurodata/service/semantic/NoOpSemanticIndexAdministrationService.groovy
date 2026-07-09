@@ -3,6 +3,15 @@ package org.maurodata.service.semantic
 import groovy.transform.CompileStatic
 import io.micronaut.context.annotation.Requires
 import jakarta.inject.Singleton
+import org.maurodata.domain.search.dto.SemanticCorpusDTO
+import org.maurodata.domain.search.dto.SemanticCorpusRequestDTO
+import org.maurodata.domain.search.dto.SemanticIndexJobDTO
+import org.maurodata.domain.search.dto.SemanticIndexRebuildResponseDTO
+import org.maurodata.domain.search.dto.SemanticIndexingStatusDTO
+import org.maurodata.domain.search.dto.SemanticModelIndexDTO
+import org.maurodata.domain.search.dto.SemanticModelIndexJobStartRequestDTO
+import org.maurodata.domain.search.dto.SemanticModelIndexOperationResponseDTO
+import org.maurodata.domain.search.dto.SemanticModelIndexRequestDTO
 import org.reactivestreams.Publisher
 import reactor.core.publisher.Flux
 
@@ -14,23 +23,23 @@ class NoOpSemanticIndexAdministrationService implements SemanticIndexAdministrat
     static final String REASON = 'semantic index implementation is not installed'
 
     @Override
-    Map<String, Object> rebuildCatalogueIndex(String indexName,
-                                              String corpusName,
-                                              List<String> domainTypes,
-                                              UUID mauroModelId,
-                                              Integer maxRows,
-                                              Integer batchSize,
-                                              boolean force) {
-        [
+    SemanticIndexRebuildResponseDTO rebuildCatalogueIndex(String indexName,
+                                                          String corpusName,
+                                                          List<String> domainTypes,
+                                                          UUID mauroModelId,
+                                                          Integer maxRows,
+                                                          Integer batchSize,
+                                                          boolean force) {
+        SemanticIndexRebuildResponseDTO.fromMap([
             indexName: indexName ?: 'catalogue-items-default',
             corpusName: corpusName ?: 'catalogue-items',
             status: 'unavailable',
             reason: REASON
-        ] as Map<String, Object>
+        ] as Map<String, Object>)
     }
 
     @Override
-    List<Map<String, Object>> reconcileDeclaredIndexes() {
+    List<SemanticIndexJobDTO> reconcileDeclaredIndexes() {
         Collections.emptyList()
     }
 
@@ -45,13 +54,13 @@ class NoOpSemanticIndexAdministrationService implements SemanticIndexAdministrat
     }
 
     @Override
-    Map<String, Object> indexingStatus() {
-        [enabled: false, autoReconcile: false, reason: REASON] as Map<String, Object>
+    SemanticIndexingStatusDTO indexingStatus() {
+        SemanticIndexingStatusDTO.fromMap([enabled: false, autoReconcile: false, reason: REASON] as Map<String, Object>)
     }
 
     @Override
-    Map<String, Object> setIndexingEnabled(boolean enabled) {
-        [enabled: false, requestedEnabled: enabled, reason: REASON] as Map<String, Object>
+    SemanticIndexingStatusDTO setIndexingEnabled(boolean enabled) {
+        SemanticIndexingStatusDTO.fromMap([enabled: false, requestedEnabled: enabled, reason: REASON] as Map<String, Object>)
     }
 
     @Override
@@ -60,63 +69,87 @@ class NoOpSemanticIndexAdministrationService implements SemanticIndexAdministrat
     }
 
     @Override
-    Map<String, Object> setAutoReconcileEnabled(boolean enabled) {
-        [enabled: false, autoReconcile: false, requestedAutoReconcile: enabled, reason: REASON] as Map<String, Object>
+    SemanticIndexingStatusDTO setAutoReconcileEnabled(boolean enabled) {
+        SemanticIndexingStatusDTO.fromMap([enabled: false, autoReconcile: false, requestedAutoReconcile: enabled, reason: REASON] as Map<String, Object>)
     }
 
     @Override
-    List<Map<String, Object>> corpora() {
+    List<SemanticCorpusDTO> corpora() {
         Collections.emptyList()
     }
 
     @Override
-    Map<String, Object> createCorpus(Map<String, Object> request) {
-        [status: 'unavailable', reason: REASON] as Map<String, Object>
+    SemanticCorpusDTO createCorpus(SemanticCorpusRequestDTO request) {
+        SemanticCorpusDTO.fromMap([name: request?.name, enabled: false, description: REASON] as Map<String, Object>)
     }
 
     @Override
-    List<Map<String, Object>> modelIndexes() {
+    List<SemanticModelIndexDTO> modelIndexes() {
         Collections.emptyList()
     }
 
     @Override
-    List<Map<String, Object>> modelIndexStats(UUID mauroModelId) {
+    List<SemanticModelIndexDTO> modelIndexStats(UUID mauroModelId) {
         Collections.emptyList()
     }
 
     @Override
-    Map<String, Object> createModelIndex(Map<String, Object> request) {
-        [status: 'unavailable', reason: REASON] as Map<String, Object>
+    SemanticModelIndexDTO createModelIndex(SemanticModelIndexRequestDTO request) {
+        SemanticModelIndexDTO.fromMap([mauroModelId: request?.mauroModelId ?: request?.modelId, profileName: request?.profileName, corpusName: request?.corpusName, enabled: false, status: 'unavailable', lastError: REASON] as Map<String, Object>)
     }
 
     @Override
-    Map<String, Object> deleteModelIndex(UUID mauroModelId, String profileName) {
-        [mauroModelId: mauroModelId?.toString(), profileName: profileName, deleted: 0, reason: REASON] as Map<String, Object>
+    SemanticModelIndexOperationResponseDTO deleteModelIndex(UUID mauroModelId, String profileName, String corpusName, boolean deleteEmbeddings) {
+        SemanticModelIndexOperationResponseDTO.fromMap([
+            mauroModelId: mauroModelId?.toString(),
+            profileName: profileName,
+            corpusName: corpusName ?: 'catalogue-items',
+            deleted: 0,
+            deleteEmbeddings: deleteEmbeddings,
+            reason: REASON
+        ] as Map<String, Object>)
     }
 
     @Override
-    Map<String, Object> startModelIndexJob(UUID mauroModelId, String profileName, Map<String, Object> request) {
-        [mauroModelId: mauroModelId?.toString(), profileName: profileName, status: 'unavailable', reason: REASON] as Map<String, Object>
+    SemanticModelIndexOperationResponseDTO deleteModelIndexEmbeddings(UUID mauroModelId, String profileName, String corpusName) {
+        SemanticModelIndexOperationResponseDTO.fromMap([
+            mauroModelId: mauroModelId?.toString(),
+            profileName: profileName,
+            corpusName: corpusName ?: 'catalogue-items',
+            deletedEmbeddings: 0,
+            reason: REASON
+        ] as Map<String, Object>)
     }
 
     @Override
-    List<Map<String, Object>> jobs(boolean includeHistory) {
+    SemanticModelIndexOperationResponseDTO startModelIndexJobs(UUID mauroModelId, String profileName, String corpusName, SemanticModelIndexJobStartRequestDTO request) {
+        SemanticModelIndexOperationResponseDTO.fromMap([
+            mauroModelId: mauroModelId?.toString(),
+            profileName: profileName,
+            corpusName: corpusName,
+            status: 'unavailable',
+            reason: REASON
+        ] as Map<String, Object>)
+    }
+
+    @Override
+    List<SemanticIndexJobDTO> jobs(boolean includeHistory) {
         Collections.emptyList()
     }
 
     @Override
-    Map<String, Object> jobStatus(UUID jobId) {
-        [jobId: jobId?.toString(), status: 'unavailable', reason: REASON] as Map<String, Object>
+    SemanticIndexJobDTO jobStatus(UUID jobId) {
+        SemanticIndexJobDTO.fromMap([jobId: jobId?.toString(), status: 'unavailable', error: REASON] as Map<String, Object>)
     }
 
     @Override
-    Map<String, Object> cancelJob(UUID jobId) {
-        [jobId: jobId?.toString(), status: 'unavailable', reason: REASON] as Map<String, Object>
+    SemanticIndexJobDTO cancelJob(UUID jobId) {
+        SemanticIndexJobDTO.fromMap([jobId: jobId?.toString(), status: 'unavailable', error: REASON] as Map<String, Object>)
     }
 
     @Override
-    Map<String, Object> resumeJob(UUID jobId) {
-        [jobId: jobId?.toString(), status: 'unavailable', reason: REASON] as Map<String, Object>
+    SemanticIndexJobDTO resumeJob(UUID jobId) {
+        SemanticIndexJobDTO.fromMap([jobId: jobId?.toString(), status: 'unavailable', error: REASON] as Map<String, Object>)
     }
 
     @Override
@@ -130,7 +163,7 @@ class NoOpSemanticIndexAdministrationService implements SemanticIndexAdministrat
     }
 
     @Override
-    List<Map<String, Object>> recoverInterruptedJobs() {
+    List<SemanticIndexJobDTO> recoverInterruptedJobs() {
         Collections.emptyList()
     }
 }

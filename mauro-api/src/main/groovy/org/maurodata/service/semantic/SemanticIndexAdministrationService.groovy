@@ -1,58 +1,69 @@
 package org.maurodata.service.semantic
 
 import groovy.transform.CompileStatic
+import org.maurodata.domain.search.dto.SemanticCorpusDTO
+import org.maurodata.domain.search.dto.SemanticCorpusRequestDTO
+import org.maurodata.domain.search.dto.SemanticIndexJobDTO
+import org.maurodata.domain.search.dto.SemanticIndexRebuildResponseDTO
+import org.maurodata.domain.search.dto.SemanticIndexingStatusDTO
+import org.maurodata.domain.search.dto.SemanticModelIndexDTO
+import org.maurodata.domain.search.dto.SemanticModelIndexJobStartRequestDTO
+import org.maurodata.domain.search.dto.SemanticModelIndexOperationResponseDTO
+import org.maurodata.domain.search.dto.SemanticModelIndexRequestDTO
 import org.reactivestreams.Publisher
 
 @CompileStatic
 interface SemanticIndexAdministrationService {
 
-    Map<String, Object> rebuildCatalogueIndex(String indexName,
-                                              String corpusName,
-                                              List<String> domainTypes,
-                                              UUID mauroModelId,
-                                              Integer maxRows,
-                                              Integer batchSize,
-                                              boolean force)
+    SemanticIndexRebuildResponseDTO rebuildCatalogueIndex(String indexName,
+                                                          String corpusName,
+                                                          List<String> domainTypes,
+                                                          UUID mauroModelId,
+                                                          Integer maxRows,
+                                                          Integer batchSize,
+                                                          boolean force)
 
-    List<Map<String, Object>> reconcileDeclaredIndexes()
+    List<SemanticIndexJobDTO> reconcileDeclaredIndexes()
 
     boolean hasEmbeddings(String indexName)
 
     boolean hasEmbeddings(String indexName, UUID mauroModelId)
 
-    Map<String, Object> indexingStatus()
+    SemanticIndexingStatusDTO indexingStatus()
 
-    Map<String, Object> setIndexingEnabled(boolean enabled)
+    SemanticIndexingStatusDTO setIndexingEnabled(boolean enabled)
 
     boolean autoReconcileEnabled()
 
-    Map<String, Object> setAutoReconcileEnabled(boolean enabled)
+    SemanticIndexingStatusDTO setAutoReconcileEnabled(boolean enabled)
 
-    List<Map<String, Object>> corpora()
+    List<SemanticCorpusDTO> corpora()
 
-    Map<String, Object> createCorpus(Map<String, Object> request)
+    SemanticCorpusDTO createCorpus(SemanticCorpusRequestDTO request)
 
-    List<Map<String, Object>> modelIndexes()
+    List<SemanticModelIndexDTO> modelIndexes()
 
-    List<Map<String, Object>> modelIndexStats(UUID mauroModelId)
+    List<SemanticModelIndexDTO> modelIndexStats(UUID mauroModelId)
 
-    Map<String, Object> createModelIndex(Map<String, Object> request)
+    SemanticModelIndexDTO createModelIndex(SemanticModelIndexRequestDTO request)
 
-    Map<String, Object> deleteModelIndex(UUID mauroModelId, String profileName)
+    SemanticModelIndexOperationResponseDTO deleteModelIndex(UUID mauroModelId, String profileName, String corpusName, boolean deleteEmbeddings)
 
-    Map<String, Object> startModelIndexJob(UUID mauroModelId, String profileName, Map<String, Object> request)
+    SemanticModelIndexOperationResponseDTO deleteModelIndexEmbeddings(UUID mauroModelId, String profileName, String corpusName)
 
-    List<Map<String, Object>> jobs(boolean includeHistory)
+    SemanticModelIndexOperationResponseDTO startModelIndexJobs(UUID mauroModelId, String profileName, String corpusName, SemanticModelIndexJobStartRequestDTO request)
 
-    Map<String, Object> jobStatus(UUID jobId)
+    List<SemanticIndexJobDTO> jobs(boolean includeHistory)
 
-    Map<String, Object> cancelJob(UUID jobId)
+    SemanticIndexJobDTO jobStatus(UUID jobId)
 
-    Map<String, Object> resumeJob(UUID jobId)
+    SemanticIndexJobDTO cancelJob(UUID jobId)
+
+    SemanticIndexJobDTO resumeJob(UUID jobId)
 
     String jobEvents(UUID jobId)
 
     Publisher<String> followJobEvents(UUID jobId, Long afterSequence)
 
-    List<Map<String, Object>> recoverInterruptedJobs()
+    List<SemanticIndexJobDTO> recoverInterruptedJobs()
 }

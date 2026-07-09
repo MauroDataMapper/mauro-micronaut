@@ -30,9 +30,6 @@ class SemanticSearchRequestDTO extends SearchRequestDTO {
     Boolean rebuildIfEmpty = false
 
     @Nullable
-    Boolean deepSearch = false
-
-    @Nullable
     UUID likeItemId
 
     @Nullable

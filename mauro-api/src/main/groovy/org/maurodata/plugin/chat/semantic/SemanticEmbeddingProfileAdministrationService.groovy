@@ -3,6 +3,9 @@ package org.maurodata.plugin.chat.semantic
 import org.maurodata.service.chat.semantic.*
 import org.maurodata.service.search.*
 import org.maurodata.service.semantic.*
+import org.maurodata.domain.search.dto.SemanticCorpusDTO
+import org.maurodata.domain.search.dto.SemanticEmbeddingProfileDTO
+import org.maurodata.domain.search.dto.SemanticEmbeddingProfileRequestDTO
 
 import groovy.transform.CompileStatic
 import io.micronaut.data.connection.annotation.Connectable
@@ -13,96 +16,71 @@ import jakarta.inject.Singleton
 class SemanticEmbeddingProfileAdministrationService implements SemanticProfileAdministrationService {
 
     private final SemanticRepository semanticRepository
+    private final EmbeddingProviderRegistry embeddingProviderRegistry
 
-    SemanticEmbeddingProfileAdministrationService(SemanticRepository semanticRepository) {
+    SemanticEmbeddingProfileAdministrationService(SemanticRepository semanticRepository,
+                                                 EmbeddingProviderRegistry embeddingProviderRegistry) {
         this.semanticRepository = semanticRepository
+        this.embeddingProviderRegistry = embeddingProviderRegistry
     }
 
     @Connectable
     @Override
-    List<Map<String, Object>> profiles() {
-        semanticRepository.profiles()
+    List<SemanticEmbeddingProfileDTO> profiles() {
+        semanticRepository.profiles().collect {Map<String, Object> profile -> SemanticEmbeddingProfileDTO.fromMap(profile)} as List<SemanticEmbeddingProfileDTO>
     }
 
     @Connectable
     @Override
-    List<Map<String, Object>> indexes() {
-        semanticRepository.indexes()
-    }
-
-    @Connectable
-    @Override
-    Map<String, Object> createIndex(Map<String, Object> request) {
-        semanticRepository.createIndex(requiredString(request, 'name'), stringValue(request, 'corpusName') ?: 'catalogue-items')
-    }
-
-    @Connectable
-    @Override
-    Map<String, Object> deleteIndex(String indexName) {
-        assertIndexExists(indexName)
-        semanticRepository.deleteIndex(indexName)
-    }
-
-    @Connectable
-    @Override
-    Map<String, Object> createProfile(Map<String, Object> request) {
-        semanticRepository.createProfile(request)
-    }
-
-    @Connectable
-    @Override
-    Map<String, Object> deleteProfile(String profileName) {
-        assertProfileExists(profileName)
-        semanticRepository.deleteProfile(profileName)
-    }
-
-    @Connectable
-    @Override
-    Map<String, Object> enable(String profileName) {
-        semanticRepository.setProfileEnabled(profileName, true)
-    }
-
-    @Connectable
-    @Override
-    Map<String, Object> disable(String profileName) {
-        semanticRepository.setProfileEnabled(profileName, false)
-    }
-
-    @Connectable
-    @Override
-    Map<String, Object> link(String indexName, String profileName) {
-        assertIndexExists(indexName)
-        assertProfileExists(profileName)
-        Map<String, Object> result = semanticRepository.linkProfileToIndex(indexName, profileName)
-        result.put('profile', semanticRepository.findProfileByName(profileName)?.name ?: profileName)
-        result
-    }
-
-    @Connectable
-    @Override
-    Map<String, Object> unlink(String indexName, String profileName) {
-        assertIndexExists(indexName)
-        assertProfileExists(profileName)
-        semanticRepository.unlinkProfileFromIndex(indexName, profileName)
-    }
-
-    @Connectable
-    @Override
-    Map<String, Object> deleteEmbeddingsForIndex(String indexName) {
-        assertIndexExists(indexName)
-        semanticRepository.deleteEmbeddingsForIndex(indexName)
-    }
-
-    @Connectable
-    @Override
-    Map<String, Object> deleteChunksForCorpus(String corpusName) {
-        semanticRepository.deleteChunksForCorpus(corpusName)
-    }
-
-    private void assertIndexExists(String indexName) {
-        if (!semanticRepository.indexExists(indexName)) {
-            throw new IllegalArgumentException("No semantic index named ${indexName}")
+    SemanticEmbeddingProfileDTO createProfile(SemanticEmbeddingProfileRequestDTO request) {
+        Map<String, Object> safeRequest = request == null ?
+            new LinkedHashMap<String, Object>() :
+            new LinkedHashMap<String, Object>(request.toMap())
+        String embeddingModel = stringValue(safeRequest, 'embeddingModel') ?: stringValue(safeRequest, 'model')
+        if (embeddingModel != null && !embeddingModel.trim().isEmpty()) {
+            safeRequest.put('embeddingModel', embeddingModel.trim())
         }
+        boolean dimensionInferred = false
+        if (safeRequest.get('dimension') == null) {
+            String provider = requiredString(safeRequest, 'provider')
+            String model = requiredString(safeRequest, 'embeddingModel')
+            try {
+                safeRequest.put('dimension', embeddingProviderRegistry.dimensionFor(provider, model))
+            } catch (Exception e) {
+                throw new IllegalArgumentException("Could not infer embedding dimension for ${provider}/${model}: ${e.message}", e)
+            }
+            dimensionInferred = true
+        }
+        Map<String, Object> profile = semanticRepository.createProfile(safeRequest)
+        if (dimensionInferred) {
+            profile.put('dimensionInferred', true)
+        }
+        SemanticEmbeddingProfileDTO.fromMap(profile)
+    }
+
+    @Connectable
+    @Override
+    SemanticEmbeddingProfileDTO deleteProfile(String profileName) {
+        assertProfileExists(profileName)
+        SemanticEmbeddingProfileDTO.fromMap(semanticRepository.deleteProfile(profileName))
+    }
+
+    @Connectable
+    @Override
+    SemanticEmbeddingProfileDTO enable(String profileName) {
+        SemanticEmbeddingProfileDTO.fromMap(semanticRepository.setProfileEnabled(profileName, true))
+    }
+
+    @Connectable
+    @Override
+    SemanticEmbeddingProfileDTO disable(String profileName) {
+        SemanticEmbeddingProfileDTO.fromMap(semanticRepository.setProfileEnabled(profileName, false))
+    }
+
+    @Connectable
+    @Override
+    SemanticCorpusDTO deleteChunksForCorpus(String corpusName) {
+        SemanticCorpusDTO.fromMap(semanticRepository.deleteChunksForCorpus(corpusName))
     }
 
     private void assertProfileExists(String profileName) {

@@ -36,7 +36,7 @@ import java.util.function.BiFunction
         'Find data models about risk assessments => searchTerm "risk assessments", domainTypes ["DataModel"]',
         'Look up questions about smoking => searchTerm "smoking", domainTypes ["DataElement"]'
     ],
-    inputSchema = '{"type":"object","properties":{"searchTerm":{"type":"string","description":"Search text. The keyword leg uses PostgreSQL full-text matching; the semantic leg embeds the same text when semantic search is available."},"query":{"type":"string","description":"Alias for searchTerm."},"domainTypes":{"type":"array","items":{"type":"string","enum":["DataModel","DataClass","DataElement","DataType","EnumerationType","EnumerationValue","CodeSet","Terminology","Term","Folder","VersionedFolder","ClassificationScheme","Classifier"]},"description":"Optional catalogue domain type filter."},"modelId":{"type":"string","format":"uuid","description":"Optional UUID of a DataModel, Terminology, CodeSet, Folder, or VersionedFolder to scope the search. Folder scopes include descendant folders and contained models."},"corpus":{"type":"string","description":"Optional API-visible semantic corpus name used to constrain the semantic leg. Omit to search API-visible semantic corpora for the requested model scope."},"max":{"type":"integer","minimum":1,"maximum":20,"description":"Maximum returned results for this page. Omit for default page size."},"offset":{"type":"integer","minimum":0,"description":"Zero-based offset for paging."},"withGuidance":{"type":"boolean","description":"Optional. Omit to use true."}},"required":["searchTerm"]}'
+    inputSchema = '{"type":"object","properties":{"searchTerm":{"type":"string","description":"Search text. The keyword leg uses PostgreSQL full-text matching; the semantic leg embeds the same text when semantic search is available."},"query":{"type":"string","description":"Alias for searchTerm."},"domainTypes":{"type":"array","items":{"type":"string","enum":["DataModel","DataClass","DataElement","DataType","EnumerationType","EnumerationValue","CodeSet","Terminology","Term","Folder","VersionedFolder","ClassificationScheme","Classifier"]},"description":"Optional catalogue domain type filter."},"modelId":{"type":"string","format":"uuid","description":"Optional UUID of a DataModel, Terminology, CodeSet, Folder, or VersionedFolder to scope the search. Folder scopes include descendant folders and contained models."},"corpus":{"type":"string","description":"Optional API-visible semantic corpus name used to constrain the semantic leg. Omit to search API-visible semantic corpora for the requested model scope."},"deepSearch":{"type":"boolean","description":"When true, use broader unbounded retrieval windows. Omit for the faster bounded hybrid search."},"max":{"type":"integer","minimum":1,"maximum":20,"description":"Maximum returned results for this page. Omit for default page size."},"offset":{"type":"integer","minimum":0,"description":"Zero-based offset for paging."},"withGuidance":{"type":"boolean","description":"Optional. Omit to use true."}},"required":["searchTerm"]}'
 )
 class HybridSearchExecutionService {
 
@@ -46,19 +46,36 @@ class HybridSearchExecutionService {
     private final double semanticWeight
     private final int rankConstant
     private final int rankWindow
+    private final int keywordFetchMultiplier
+    private final int resultCacheSize
+    private final long resultCacheTtlMillis
+    private final Map<String, CachedHybridCandidates> resultCache
 
     HybridSearchExecutionService(SearchExecutionService searchExecutionService,
                                  SemanticSearchService semanticSearchService,
                                  @Value('${chat.semantic.hybrid.keyword-weight:1.0}') Double keywordWeight,
                                  @Value('${chat.semantic.hybrid.semantic-weight:1.0}') Double semanticWeight,
                                  @Value('${chat.semantic.hybrid.rank-constant:60}') Integer rankConstant,
-                                 @Value('${chat.semantic.hybrid.rank-window:100}') Integer rankWindow) {
+                                 @Value('${chat.semantic.hybrid.rank-window:100}') Integer rankWindow,
+                                 @Value('${chat.semantic.hybrid.keyword-fetch-multiplier:10}') Integer keywordFetchMultiplier,
+                                 @Value('${chat.semantic.hybrid.result-cache-size:128}') Integer resultCacheSize,
+                                 @Value('${chat.semantic.hybrid.result-cache-ttl-ms:300000}') Long resultCacheTtlMillis) {
         this.searchExecutionService = searchExecutionService
         this.semanticSearchService = semanticSearchService
         this.keywordWeight = keywordWeight == null ? 1.0D : Math.max(keywordWeight, 0D)
         this.semanticWeight = semanticWeight == null ? 1.0D : Math.max(semanticWeight, 0D)
         this.rankConstant = Math.max(rankConstant ?: 60, 1)
         this.rankWindow = Math.max(rankWindow ?: 100, 1)
+        this.keywordFetchMultiplier = Math.max(keywordFetchMultiplier ?: 10, 1)
+        this.resultCacheSize = Math.max(resultCacheSize ?: 128, 0)
+        this.resultCacheTtlMillis = Math.max(resultCacheTtlMillis ?: 300000L, 0L)
+        this.resultCache = Collections.synchronizedMap(new LinkedHashMap<String, CachedHybridCandidates>(64, 0.75F, true) {
+            @Override
+            protected boolean removeEldestEntry(Map.Entry<String, CachedHybridCandidates> eldest) {
+                HybridSearchExecutionService.this.resultCacheSize > 0 &&
+                    size() > HybridSearchExecutionService.this.resultCacheSize
+            }
+        })
     }
 
     @Connectable
@@ -70,58 +87,159 @@ class HybridSearchExecutionService {
     @Connectable
     HybridSearchResult executeSearchDetailed(SearchRequestDTO requestDTO,
                                              BiFunction<String, UUID, AdministeredItem> itemLookup) {
+        long totalStart = System.currentTimeMillis()
         SearchRequestDTO safeRequest = requestDTO ?: new SearchRequestDTO()
+        int offset = safeRequest.offset ?: 0
+        int max = safeRequest.max != null && safeRequest.max > 0 ? safeRequest.max : -1
+        int requiredReadable = max > 0 ? Math.max(offset + max, max) : Integer.MAX_VALUE
         boolean projectKeywordResults = safeRequest.domainTypes != null && !safeRequest.domainTypes.isEmpty()
-        List<SearchResultsDTO> rawKeywordItems = searchExecutionService.retrieveSearchResults(unpagedKeywordRequest(safeRequest, projectKeywordResults))
-        List<SearchResultsDTO> keywordItems = projectKeywordResults ?
-            semanticSearchService.projectResults(rawKeywordItems, safeRequest.domainTypes) :
-            rawKeywordItems
-        int keywordCount = projectKeywordResults ?
-            keywordItems.collect {SearchResultsDTO item -> key(item.domainType, item.id)}.unique().size() :
-            keywordItems.size()
-        ListResponse<SearchResultsDTO> keywordResponse = new ListResponse<SearchResultsDTO>(
-            count: keywordCount,
-            items: keywordItems
-        )
-
-        ListResponse<SemanticSearchResultsDTO> semanticResponse = null
         SemanticSearchAvailability semanticAvailability = semanticSearchService.availability(safeRequest.corpus, safeRequest.withinModelId)
+        long availabilityMillis = System.currentTimeMillis() - totalStart
+        if (!semanticAvailability.available) {
+            long keywordStart = System.currentTimeMillis()
+            ListResponse<SearchResultsDTO> keywordOnlyResponse = searchExecutionService.executeSearch(safeRequest, itemLookup)
+            long keywordMillis = System.currentTimeMillis() - keywordStart
+            log.info(
+                'Hybrid search timing query="{}" semanticRan=false fallbackToKeyword=true keyword={} returned={} countIsExact={} timingsMs={availability={}, keyword={}, total={}}',
+                safeRequest.searchTerm,
+                keywordOnlyResponse.count ?: 0,
+                keywordOnlyResponse.items?.size() ?: 0,
+                keywordOnlyResponse.countIsExact,
+                availabilityMillis,
+                keywordMillis,
+                System.currentTimeMillis() - totalStart
+            )
+            return new HybridSearchResult(
+                response: keywordOnlyResponse,
+                keywordCount: keywordOnlyResponse.count ?: 0,
+                semanticAvailable: false,
+                semanticRan: false,
+                semanticCount: 0,
+                mergedCount: keywordOnlyResponse.count ?: 0,
+                countIsExact: keywordOnlyResponse.countIsExact,
+                fallbackReason: semanticAvailability.reason
+            )
+        }
+
+        int keywordLimit = keywordFetchLimit(safeRequest, projectKeywordResults, requiredReadable)
+        String cacheKey = cacheKey(safeRequest, projectKeywordResults, keywordLimit)
+        CachedHybridCandidates cached = readCache(cacheKey)
+        boolean cacheHit = cached != null
+        long keywordMillis = 0L
+        long semanticMillis = 0L
+        long mergeMillis = 0L
+        CachedHybridCandidates candidates = cached
         String fallbackReason = null
-        if (semanticAvailability.available) {
+        if (candidates == null) {
+            long keywordStart = System.currentTimeMillis()
+            List<SearchResultsDTO> rawKeywordItems = searchExecutionService.retrieveSearchResults(
+                unpagedKeywordRequest(safeRequest, projectKeywordResults),
+                keywordLimit
+            )
+            List<SearchResultsDTO> keywordItems = projectKeywordResults ?
+                semanticSearchService.projectResults(rawKeywordItems, safeRequest.domainTypes) :
+                rawKeywordItems
+            List<SearchResultsDTO> keywordMergeItems = keywordItems.take(rankWindow)
+            keywordMillis = System.currentTimeMillis() - keywordStart
+            int keywordCount = projectKeywordResults ?
+                keywordItems.collect {SearchResultsDTO item -> key(item.domainType, item.id)}.unique().size() :
+                keywordItems.size()
+
+            ListResponse<SemanticSearchResultsDTO> semanticResponse = null
             try {
+                long semanticStart = System.currentTimeMillis()
                 semanticResponse = semanticSearchService.executeSearch(semanticRequest(safeRequest), itemLookup)
+                semanticMillis = System.currentTimeMillis() - semanticStart
             } catch (Exception e) {
                 log.warn('Hybrid search semantic leg failed; falling back to keyword-only search', e)
                 fallbackReason = e.message ?: e.class.simpleName
             }
-        } else {
-            fallbackReason = semanticAvailability.reason
-        }
 
-        if (semanticResponse == null) {
-            List<SearchResultsDTO> readableKeywordItems = searchExecutionService.filterReadable(keywordResponse.items ?: [], safeRequest, itemLookup)
-            ListResponse<SearchResultsDTO> fallbackResponse = ListResponse.from(readableKeywordItems, safeRequest)
-            return new HybridSearchResult(
-                response: fallbackResponse,
-                keywordCount: keywordResponse.count ?: 0,
-                semanticAvailable: false,
-                semanticRan: false,
-                semanticCount: 0,
-                mergedCount: fallbackResponse.count ?: 0,
-                fallbackReason: fallbackReason ?: 'semantic search did not return a result'
+            if (semanticResponse == null) {
+                long fallbackKeywordStart = System.currentTimeMillis()
+                ListResponse<SearchResultsDTO> fallbackResponse = searchExecutionService.executeSearch(safeRequest, itemLookup)
+                long fallbackKeywordMillis = System.currentTimeMillis() - fallbackKeywordStart
+                log.info(
+                    'Hybrid search timing query="{}" semanticRan=false fallbackToKeyword=true cacheHit=false keyword={} keywordLimit={} projected={} returned={} countIsExact={} timingsMs={availability={}, keyword={}, semantic={}, fallbackKeyword={}, total={}}',
+                    safeRequest.searchTerm,
+                    rawKeywordItems.size(),
+                    keywordLimit,
+                    keywordItems.size(),
+                    fallbackResponse.items?.size() ?: 0,
+                    fallbackResponse.countIsExact,
+                    availabilityMillis,
+                    keywordMillis,
+                    semanticMillis,
+                    fallbackKeywordMillis,
+                    System.currentTimeMillis() - totalStart
+                )
+                return new HybridSearchResult(
+                    response: fallbackResponse,
+                    keywordCount: keywordCount,
+                    semanticAvailable: false,
+                    semanticRan: false,
+                    semanticCount: 0,
+                    mergedCount: fallbackResponse.count ?: 0,
+                    countIsExact: fallbackResponse.countIsExact,
+                    fallbackReason: fallbackReason ?: 'semantic search did not return a result'
+                )
+            }
+
+            long mergeStart = System.currentTimeMillis()
+            MergeResult mergeResult = merge(keywordMergeItems, keywordCount, semanticResponse.items ?: [], semanticResponse.count ?: 0)
+            mergeMillis = System.currentTimeMillis() - mergeStart
+            candidates = new CachedHybridCandidates(
+                items: mergeResult.items,
+                keywordCount: keywordCount,
+                rawKeywordCount: rawKeywordItems.size(),
+                projectedKeywordCount: keywordItems.size(),
+                semanticCount: semanticResponse.count ?: 0,
+                mergedCandidateCount: mergeResult.items.size(),
+                createdAtMillis: System.currentTimeMillis()
             )
+            writeCache(cacheKey, candidates)
         }
 
-        MergeResult mergeResult = merge(keywordResponse.items ?: [], keywordResponse.count ?: 0, semanticResponse.items ?: [], semanticResponse.count ?: 0)
-        List<SearchResultsDTO> readableMerged = searchExecutionService.filterReadable(mergeResult.items, safeRequest, itemLookup)
-        ListResponse<SearchResultsDTO> response = ListResponse.from(readableMerged, safeRequest)
+        long accessStart = System.currentTimeMillis()
+        SearchExecutionService.FilteredSearchResults filtered = searchExecutionService.filterReadableUntil(candidates.items, safeRequest, itemLookup, requiredReadable)
+        long accessMillis = System.currentTimeMillis() - accessStart
+        List<SearchResultsDTO> page = max > 0 ? filtered.readable.drop(offset).take(max) : filtered.readable
+        int responseCount = filtered.exhausted ?
+            filtered.readable.size() :
+            Math.max(filtered.readable.size(), offset + page.size() + 1)
+        ListResponse<SearchResultsDTO> response = new ListResponse<SearchResultsDTO>(
+            count: responseCount,
+            countIsExact: filtered.exhausted,
+            items: page
+        )
+        log.info(
+            'Hybrid search timing query="{}" semanticRan=true cacheHit={} keyword={} keywordLimit={} projected={} semantic={} merged={} accessScanned={} checkedAllForAccess={} returned={} countIsExact={} timingsMs={keyword={}, availability={}, semantic={}, merge={}, accessFilter={}, total={}}',
+            safeRequest.searchTerm,
+            cacheHit,
+            candidates.rawKeywordCount,
+            keywordLimit,
+            candidates.projectedKeywordCount,
+            candidates.semanticCount,
+            candidates.mergedCandidateCount,
+            filtered.scannedCount,
+            filtered.exhausted,
+            page.size(),
+            filtered.exhausted,
+            keywordMillis,
+            availabilityMillis,
+            semanticMillis,
+            mergeMillis,
+            accessMillis,
+            System.currentTimeMillis() - totalStart
+        )
         new HybridSearchResult(
             response: response,
-            keywordCount: keywordResponse.count ?: 0,
+            keywordCount: candidates.keywordCount,
             semanticAvailable: true,
             semanticRan: true,
-            semanticCount: semanticResponse.count ?: 0,
+            semanticCount: candidates.semanticCount,
             mergedCount: response.count ?: 0,
+            countIsExact: response.countIsExact,
             fallbackReason: null
         )
     }
@@ -149,8 +267,81 @@ class HybridSearchExecutionService {
         request.topN = rankWindow
         request.includeChunks = true
         request.rebuildIfEmpty = false
-        request.deepSearch = false
+        request.deepSearch = source.deepSearch == true
         request
+    }
+
+    private int keywordFetchLimit(SearchRequestDTO request, boolean projectKeywordResults, int requiredReadable) {
+        if (request.deepSearch == true || requiredReadable == Integer.MAX_VALUE) {
+            return -1
+        }
+        int base = Math.max(rankWindow, requiredReadable)
+        long calculated = projectKeywordResults ? (long) base * keywordFetchMultiplier : (long) base
+        calculated > Integer.MAX_VALUE ? Integer.MAX_VALUE : calculated.intValue()
+    }
+
+    private CachedHybridCandidates readCache(String key) {
+        if (resultCacheSize <= 0 || resultCacheTtlMillis <= 0L || key == null) {
+            return null
+        }
+        CachedHybridCandidates cached = resultCache.get(key)
+        if (cached == null) {
+            return null
+        }
+        if (System.currentTimeMillis() - cached.createdAtMillis > resultCacheTtlMillis) {
+            resultCache.remove(key)
+            return null
+        }
+        cached
+    }
+
+    private void writeCache(String key, CachedHybridCandidates value) {
+        if (resultCacheSize <= 0 || resultCacheTtlMillis <= 0L || key == null || value == null) {
+            return
+        }
+        resultCache.put(key, value)
+    }
+
+    private String cacheKey(SearchRequestDTO request, boolean projectKeywordResults, int keywordLimit) {
+        [
+            'hybrid-v1',
+            rankWindow,
+            rankConstant,
+            keywordWeight,
+            semanticWeight,
+            keywordFetchMultiplier,
+            keywordLimit,
+            projectKeywordResults,
+            normalizedString(request.searchTerm),
+            normalizedString(request.corpus),
+            request.withinModelId?.toString() ?: '',
+            request.prefixSearch == true,
+            request.deepSearch == true,
+            normalizedStrings(request.domainTypes),
+            normalizedStrings(request.classifiers == null ? Collections.<String>emptyList() : request.classifiers.collect {UUID id -> id.toString()} as List<String>),
+            dateKey(request.createdBefore),
+            dateKey(request.createdAfter),
+            dateKey(request.lastUpdatedBefore),
+            dateKey(request.lastUpdatedAfter),
+            normalizedString(request.domainType)
+        ].join('|')
+    }
+
+    private static String normalizedString(String value) {
+        value == null ? '' : value.trim()
+    }
+
+    private static String normalizedStrings(List<String> values) {
+        if (values == null || values.isEmpty()) {
+            return ''
+        }
+        new ArrayList<String>(values.findAll {String value -> value != null}.collect {String value -> value.trim()} as List<String>)
+            .sort()
+            .join(',')
+    }
+
+    private static String dateKey(Object value) {
+        value == null ? '' : String.valueOf(value)
     }
 
     private static SearchRequestDTO copySearchRequest(SearchRequestDTO source) {
@@ -165,6 +356,7 @@ class HybridSearchExecutionService {
         target.domainTypes = source.domainTypes == null ? Collections.<String>emptyList() : new ArrayList<String>(source.domainTypes)
         target.withinModelId = source.withinModelId
         target.prefixSearch = source.prefixSearch
+        target.deepSearch = source.deepSearch
         target.lastUpdatedAfter = source.lastUpdatedAfter
         target.lastUpdatedBefore = source.lastUpdatedBefore
         target.createdAfter = source.createdAfter
@@ -326,6 +518,16 @@ class HybridSearchExecutionService {
         Integer count = 0
     }
 
+    private static class CachedHybridCandidates {
+        List<SearchResultsDTO> items = []
+        Integer keywordCount = 0
+        Integer rawKeywordCount = 0
+        Integer projectedKeywordCount = 0
+        Integer semanticCount = 0
+        Integer mergedCandidateCount = 0
+        Long createdAtMillis = 0L
+    }
+
     static class HybridSearchResult {
         ListResponse<SearchResultsDTO> response
         Integer keywordCount = 0
@@ -333,6 +535,7 @@ class HybridSearchExecutionService {
         Boolean semanticRan = false
         Integer semanticCount = 0
         Integer mergedCount = 0
+        Boolean countIsExact = true
         String fallbackReason
     }
 
