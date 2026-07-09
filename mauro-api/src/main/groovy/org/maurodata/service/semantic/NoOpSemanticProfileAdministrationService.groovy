@@ -3,6 +3,9 @@ package org.maurodata.service.semantic
 import groovy.transform.CompileStatic
 import io.micronaut.context.annotation.Requires
 import jakarta.inject.Singleton
+import org.maurodata.domain.search.dto.SemanticCorpusDTO
+import org.maurodata.domain.search.dto.SemanticEmbeddingProfileDTO
+import org.maurodata.domain.search.dto.SemanticEmbeddingProfileRequestDTO
 
 @CompileStatic
 @Singleton
@@ -12,68 +15,36 @@ class NoOpSemanticProfileAdministrationService implements SemanticProfileAdminis
     static final String REASON = 'semantic profile administration implementation is not installed'
 
     @Override
-    List<Map<String, Object>> profiles() {
+    List<SemanticEmbeddingProfileDTO> profiles() {
         Collections.emptyList()
     }
 
     @Override
-    List<Map<String, Object>> indexes() {
-        Collections.emptyList()
+    SemanticEmbeddingProfileDTO createProfile(SemanticEmbeddingProfileRequestDTO request) {
+        unavailableProfile(request?.name)
     }
 
     @Override
-    Map<String, Object> createIndex(Map<String, Object> request) {
-        unavailable()
+    SemanticEmbeddingProfileDTO deleteProfile(String profileName) {
+        unavailableProfile(profileName)
     }
 
     @Override
-    Map<String, Object> deleteIndex(String indexName) {
-        unavailable(indexName: indexName)
+    SemanticEmbeddingProfileDTO enable(String profileName) {
+        unavailableProfile(profileName)
     }
 
     @Override
-    Map<String, Object> createProfile(Map<String, Object> request) {
-        unavailable()
+    SemanticEmbeddingProfileDTO disable(String profileName) {
+        unavailableProfile(profileName)
     }
 
     @Override
-    Map<String, Object> deleteProfile(String profileName) {
-        unavailable(profileName: profileName)
+    SemanticCorpusDTO deleteChunksForCorpus(String corpusName) {
+        SemanticCorpusDTO.fromMap([name: corpusName, enabled: false, description: REASON] as Map<String, Object>)
     }
 
-    @Override
-    Map<String, Object> enable(String profileName) {
-        unavailable(profileName: profileName)
-    }
-
-    @Override
-    Map<String, Object> disable(String profileName) {
-        unavailable(profileName: profileName)
-    }
-
-    @Override
-    Map<String, Object> link(String indexName, String profileName) {
-        unavailable(indexName: indexName, profileName: profileName)
-    }
-
-    @Override
-    Map<String, Object> unlink(String indexName, String profileName) {
-        unavailable(indexName: indexName, profileName: profileName)
-    }
-
-    @Override
-    Map<String, Object> deleteEmbeddingsForIndex(String indexName) {
-        unavailable(indexName: indexName)
-    }
-
-    @Override
-    Map<String, Object> deleteChunksForCorpus(String corpusName) {
-        unavailable(corpusName: corpusName)
-    }
-
-    private static Map<String, Object> unavailable(Map<String, Object> extra = Collections.<String, Object>emptyMap()) {
-        Map<String, Object> result = [status: 'unavailable', reason: REASON] as Map<String, Object>
-        result.putAll(extra)
-        result
+    private static SemanticEmbeddingProfileDTO unavailableProfile(String profileName) {
+        SemanticEmbeddingProfileDTO.fromMap([name: profileName, enabled: false, description: REASON] as Map<String, Object>)
     }
 }

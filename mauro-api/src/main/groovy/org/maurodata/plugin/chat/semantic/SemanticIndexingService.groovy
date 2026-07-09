@@ -3,6 +3,15 @@ package org.maurodata.plugin.chat.semantic
 import org.maurodata.service.chat.semantic.*
 import org.maurodata.service.search.*
 import org.maurodata.service.semantic.*
+import org.maurodata.domain.search.dto.SemanticCorpusDTO
+import org.maurodata.domain.search.dto.SemanticCorpusRequestDTO
+import org.maurodata.domain.search.dto.SemanticIndexJobDTO
+import org.maurodata.domain.search.dto.SemanticIndexRebuildResponseDTO
+import org.maurodata.domain.search.dto.SemanticIndexingStatusDTO
+import org.maurodata.domain.search.dto.SemanticModelIndexDTO
+import org.maurodata.domain.search.dto.SemanticModelIndexJobStartRequestDTO
+import org.maurodata.domain.search.dto.SemanticModelIndexOperationResponseDTO
+import org.maurodata.domain.search.dto.SemanticModelIndexRequestDTO
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
@@ -89,20 +98,20 @@ class SemanticIndexingService implements SemanticIndexAdministrationService {
 
     @Connectable
     @Override
-    Map<String, Object> rebuildCatalogueIndex(String indexName = 'catalogue-items-default',
-                                              String corpusName = 'catalogue-items',
-                                              List<String> domainTypes = [],
-                                              UUID mauroModelId = null,
-                                              Integer maxRows = null,
-                                              Integer batchSize = null,
-                                              boolean force = false) {
+    SemanticIndexRebuildResponseDTO rebuildCatalogueIndex(String indexName = 'catalogue-items-default',
+                                                          String corpusName = 'catalogue-items',
+                                                          List<String> domainTypes = [],
+                                                          UUID mauroModelId = null,
+                                                          Integer maxRows = null,
+                                                          Integer batchSize = null,
+                                                          boolean force = false) {
         long start = System.currentTimeMillis()
         int effectiveBatchSize = Math.max(batchSize ?: embeddingBatchSize, 1)
         List<EmbeddingProfile> profiles = semanticRepository.profilesForIndex(indexName)
         if (profiles.isEmpty()) {
             throw new IllegalStateException("No embedding profiles configured for semantic index ${indexName}")
         }
-        rebuildCatalogueIndexWithProfiles(profiles, indexName, corpusName, domainTypes, mauroModelId, maxRows, batchSize, force)
+        SemanticIndexRebuildResponseDTO.fromMap(rebuildCatalogueIndexWithProfiles(profiles, indexName, corpusName, domainTypes, mauroModelId, maxRows, batchSize, force))
     }
 
     private Map<String, Object> rebuildCatalogueIndexWithProfiles(List<EmbeddingProfile> profiles,
@@ -714,10 +723,10 @@ class SemanticIndexingService implements SemanticIndexAdministrationService {
 
     @Connectable
     @Override
-    List<Map<String, Object>> reconcileDeclaredIndexes() {
+    List<SemanticIndexJobDTO> reconcileDeclaredIndexes() {
         if (!semanticRepository.indexingEnabled()) {
             log.info('Semantic index reconcile skipped because indexing is disabled')
-            return Collections.singletonList([enabled: false, skipped: true, reason: 'semantic indexing is disabled'] as Map<String, Object>)
+            return Collections.singletonList(SemanticIndexJobDTO.fromMap([status: 'skipped', result: [enabled: false, reason: 'semantic indexing is disabled']] as Map<String, Object>))
         }
         List<Map<String, Object>> indexes = semanticRepository.modelIndexes().findAll {Map<String, Object> index ->
             Boolean.TRUE.equals(index.get('enabled'))
@@ -747,7 +756,7 @@ class SemanticIndexingService implements SemanticIndexAdministrationService {
                 ] as Map<String, Object>
             ))
         }
-        results
+        SemanticIndexJobDTO.listFrom(results)
     }
 
     @Connectable
@@ -762,7 +771,7 @@ class SemanticIndexingService implements SemanticIndexAdministrationService {
         if (mauroModelId == null) {
             return semanticRepository.hasEmbeddings(indexName)
         }
-        semanticRepository.modelIndexes().any {Map<String, Object> index ->
+        semanticRepository.modelIndexStats(mauroModelId).any {Map<String, Object> index ->
             index.get('mauroModelId') == mauroModelId.toString() &&
                 Boolean.TRUE.equals(index.get('enabled')) &&
                 index.get('status') == 'READY' &&
@@ -772,20 +781,20 @@ class SemanticIndexingService implements SemanticIndexAdministrationService {
 
     @Connectable
     @Override
-    Map<String, Object> indexingStatus() {
-        semanticRepository.indexingStatus()
+    SemanticIndexingStatusDTO indexingStatus() {
+        SemanticIndexingStatusDTO.fromMap(semanticRepository.indexingStatus())
     }
 
     @Connectable
     @Override
-    Map<String, Object> setIndexingEnabled(boolean enabled) {
+    SemanticIndexingStatusDTO setIndexingEnabled(boolean enabled) {
         Map<String, Object> status = semanticRepository.setIndexingEnabled(enabled)
         if (!enabled) {
             status.put('cancelledJobs', semanticRepository.cancelActiveJobs('semantic indexing was disabled'))
         } else if (semanticRepository.autoReconcileEnabled()) {
             status.put('reconcileResults', reconcileDeclaredIndexes())
         }
-        status
+        SemanticIndexingStatusDTO.fromMap(status)
     }
 
     @Connectable
@@ -796,49 +805,50 @@ class SemanticIndexingService implements SemanticIndexAdministrationService {
 
     @Connectable
     @Override
-    Map<String, Object> setAutoReconcileEnabled(boolean enabled) {
+    SemanticIndexingStatusDTO setAutoReconcileEnabled(boolean enabled) {
         Map<String, Object> status = semanticRepository.setAutoReconcileEnabled(enabled)
         if (enabled && semanticRepository.indexingEnabled()) {
             status.put('reconcileResults', reconcileDeclaredIndexes())
         }
-        status
+        SemanticIndexingStatusDTO.fromMap(status)
     }
 
     @Connectable
     @Override
-    List<Map<String, Object>> modelIndexes() {
-        semanticRepository.modelIndexes()
+    List<SemanticModelIndexDTO> modelIndexes() {
+        SemanticModelIndexDTO.listFrom(semanticRepository.modelIndexes())
     }
 
     @Connectable
     @Override
-    List<Map<String, Object>> corpora() {
-        semanticRepository.corpora(false)
+    List<SemanticCorpusDTO> corpora() {
+        semanticRepository.corpora(false).collect {Map<String, Object> corpus -> SemanticCorpusDTO.fromMap(corpus)} as List<SemanticCorpusDTO>
     }
 
     @Connectable
     @Override
-    Map<String, Object> createCorpus(Map<String, Object> request) {
-        semanticRepository.createCorpus(request)
+    SemanticCorpusDTO createCorpus(SemanticCorpusRequestDTO request) {
+        SemanticCorpusDTO.fromMap(semanticRepository.createCorpus(request == null ? null : request.toMap()))
     }
 
     @Connectable
     @Override
-    List<Map<String, Object>> modelIndexStats(UUID mauroModelId) {
-        semanticRepository.modelIndexStats(mauroModelId)
+    List<SemanticModelIndexDTO> modelIndexStats(UUID mauroModelId) {
+        SemanticModelIndexDTO.listFrom(semanticRepository.modelIndexStats(mauroModelId))
     }
 
     @Connectable
     @Override
-    Map<String, Object> createModelIndex(Map<String, Object> request) {
-        UUID mauroModelId = uuidValue(request, 'mauroModelId') ?: uuidValue(request, 'modelId')
+    SemanticModelIndexDTO createModelIndex(SemanticModelIndexRequestDTO request) {
+        Map<String, Object> requestMap = request == null ? Collections.<String, Object>emptyMap() : request.toMap()
+        UUID mauroModelId = request?.mauroModelId ?: request?.modelId ?: uuidValue(requestMap, 'mauroModelId') ?: uuidValue(requestMap, 'modelId')
         if (mauroModelId == null) {
             throw new IllegalArgumentException('Missing required field mauroModelId')
         }
-        String profileName = stringValue(request, 'profileName') ?: stringValue(request, 'embeddingProfileName') ?: defaultEmbeddingProfile
-        String corpusName = stringValue(request, 'corpusName') ?: stringValue(request, 'corpus') ?: 'catalogue-items'
-        String label = stringValue(request, 'label')
-        boolean enabled = booleanValue(request, 'enabled', true)
+        String profileName = requiredString(requestMap, 'profileName')
+        String corpusName = requiredString(requestMap, 'corpusName')
+        String label = stringValue(requestMap, 'label')
+        boolean enabled = booleanValue(requestMap, 'enabled', true)
         Map<String, Object> declaration = semanticRepository.createModelIndex(mauroModelId, profileName, corpusName, enabled, label)
         if (enabled && semanticRepository.indexingEnabled() && semanticRepository.autoReconcileEnabled()) {
             semanticRepository.markModelIndexStale(mauroModelId, profileName, corpusName, 'enabled semantic model index declaration created while auto reconcile is active')
@@ -856,80 +866,130 @@ class SemanticIndexingService implements SemanticIndexAdministrationService {
                 ] as Map<String, Object>
             ))
         }
-        declaration
+        SemanticModelIndexDTO.fromMap(declaration)
     }
 
     @Connectable
     @Override
-    Map<String, Object> deleteModelIndex(UUID mauroModelId, String profileName) {
-        semanticRepository.deleteModelIndex(mauroModelId, profileName ?: defaultEmbeddingProfile)
+    SemanticModelIndexOperationResponseDTO deleteModelIndex(UUID mauroModelId, String profileName, String corpusName, boolean deleteEmbeddings) {
+        List<Map<String, Object>> declarations = matchingModelIndexes(mauroModelId, profileName, corpusName)
+        List<Map<String, Object>> deleted = new ArrayList<Map<String, Object>>()
+        for (Map<String, Object> declaration : declarations) {
+            String declarationProfile = String.valueOf(declaration.get('profileName'))
+            String declarationCorpus = String.valueOf(declaration.get('corpusName'))
+            Map<String, Object> result = semanticRepository.deleteModelIndex(mauroModelId, declarationProfile, declarationCorpus)
+            if (deleteEmbeddings && ((Number) result.get('deleted')).intValue() > 0) {
+                result.put('embeddings', semanticRepository.deleteEmbeddingsForModelIndex(mauroModelId, declarationProfile, declarationCorpus))
+            }
+            deleted.add(result)
+        }
+        SemanticModelIndexOperationResponseDTO.fromMap([
+            mauroModelId: mauroModelId?.toString(),
+            profileName: profileName,
+            corpusName: corpusName,
+            deleteEmbeddings: deleteEmbeddings,
+            matched: declarations.size(),
+            deleted: deleted
+        ] as Map<String, Object>)
     }
 
     @Connectable
     @Override
-    Map<String, Object> startModelIndexJob(UUID mauroModelId, String profileName, Map<String, Object> request) {
-        boolean runWhenIndexingDisabled = booleanValue(request, 'runWhenIndexingDisabled', false)
-        boolean rebuildEmbeddings = booleanValue(request, 'rebuildEmbeddings', false)
+    SemanticModelIndexOperationResponseDTO deleteModelIndexEmbeddings(UUID mauroModelId, String profileName, String corpusName) {
+        List<Map<String, Object>> declarations = matchingModelIndexes(mauroModelId, profileName, corpusName)
+        List<Map<String, Object>> deleted = new ArrayList<Map<String, Object>>()
+        for (Map<String, Object> declaration : declarations) {
+            deleted.add(semanticRepository.deleteEmbeddingsForModelIndex(
+                mauroModelId,
+                String.valueOf(declaration.get('profileName')),
+                String.valueOf(declaration.get('corpusName'))
+            ))
+        }
+        SemanticModelIndexOperationResponseDTO.fromMap([
+            mauroModelId: mauroModelId?.toString(),
+            profileName: profileName,
+            corpusName: corpusName,
+            matched: declarations.size(),
+            deleted: deleted
+        ] as Map<String, Object>)
+    }
+
+    @Connectable
+    @Override
+    SemanticModelIndexOperationResponseDTO startModelIndexJobs(UUID mauroModelId, String profileName, String corpusName, SemanticModelIndexJobStartRequestDTO request) {
+        Map<String, Object> requestMap = request == null ? Collections.<String, Object>emptyMap() : request.toMap()
+        boolean runWhenIndexingDisabled = booleanValue(requestMap, 'runWhenIndexingDisabled', false)
+        boolean rebuildEmbeddings = booleanValue(requestMap, 'rebuildEmbeddings', false)
         if (!semanticRepository.indexingEnabled() && !runWhenIndexingDisabled) {
-            return [
+            return SemanticModelIndexOperationResponseDTO.fromMap([
                 mauroModelId: mauroModelId?.toString(),
-                profileName: profileName ?: defaultEmbeddingProfile,
+                profileName: profileName,
+                corpusName: corpusName,
                 status: 'skipped',
                 reason: 'semantic indexing is disabled',
                 hint: 'Call with runWhenIndexingDisabled: true to start this explicit indexing job while global indexing is disabled.'
-            ] as Map<String, Object>
+            ] as Map<String, Object>)
         }
-        String resolvedProfileName = profileName ?: defaultEmbeddingProfile
-        String corpusName = stringValue(request, 'corpusName') ?: stringValue(request, 'corpus') ?: 'catalogue-items'
-        Map<String, Object> declaration = semanticRepository.modelIndex(mauroModelId, resolvedProfileName, corpusName)
-        if (declaration == null) {
-            declaration = semanticRepository.createModelIndex(mauroModelId, resolvedProfileName, corpusName, true)
+        List<Map<String, Object>> declarations = matchingModelIndexes(mauroModelId, profileName, corpusName).findAll {Map<String, Object> declaration ->
+            Boolean.TRUE.equals(declaration.get('enabled'))
+        } as List<Map<String, Object>>
+        List<Map<String, Object>> jobs = new ArrayList<Map<String, Object>>()
+        for (Map<String, Object> declaration : declarations) {
+            jobs.add(queueModelIndexJob(
+                mauroModelId,
+                String.valueOf(declaration.get('profileName')),
+                String.valueOf(declaration.get('corpusName')),
+                integerValue(requestMap, 'maxRows'),
+                integerValue(requestMap, 'batchSize'),
+                rebuildEmbeddings,
+                [
+                    accepted: true,
+                    runWhenIndexingDisabled: runWhenIndexingDisabled,
+                    source: 'manual-start'
+                ] as Map<String, Object>
+            ))
         }
-        Map<String, Object> job = queueModelIndexJob(
-            mauroModelId,
-            resolvedProfileName,
-            corpusName,
-            integerValue(request, 'maxRows'),
-            integerValue(request, 'batchSize'),
-            rebuildEmbeddings,
-            [
-                accepted: true,
-                runWhenIndexingDisabled: runWhenIndexingDisabled,
-                source: 'manual-start'
-            ] as Map<String, Object>
-        )
-        job
+        SemanticModelIndexOperationResponseDTO.fromMap([
+            mauroModelId: mauroModelId?.toString(),
+            profileName: profileName,
+            corpusName: corpusName,
+            status: jobs.isEmpty() ? 'skipped' : 'submitted',
+            matched: declarations.size(),
+            jobs: jobs,
+            reason: jobs.isEmpty() ? 'no enabled semantic model index declarations matched this scope' : null
+        ] as Map<String, Object>)
     }
 
     @Connectable
     @Override
-    List<Map<String, Object>> jobs(boolean includeHistory) {
-        includeHistory ?
+    List<SemanticIndexJobDTO> jobs(boolean includeHistory) {
+        List<Map<String, Object>> rows = includeHistory ?
             semanticRepository.jobs() :
             semanticRepository.jobs(['QUEUED', 'TO_RESTART', 'RUNNING'] as List<String>)
+        SemanticIndexJobDTO.listFrom(rows)
     }
 
     @Connectable
     @Override
-    Map<String, Object> jobStatus(UUID jobId) {
-        semanticRepository.job(jobId)
+    SemanticIndexJobDTO jobStatus(UUID jobId) {
+        SemanticIndexJobDTO.fromMap(semanticRepository.job(jobId))
     }
 
     @Connectable
     @Override
-    Map<String, Object> cancelJob(UUID jobId) {
-        semanticRepository.cancelJob(jobId, 'semantic indexing job was cancelled by API request')
+    SemanticIndexJobDTO cancelJob(UUID jobId) {
+        SemanticIndexJobDTO.fromMap(semanticRepository.cancelJob(jobId, 'semantic indexing job was cancelled by API request'))
     }
 
     @Connectable
     @Override
-    Map<String, Object> resumeJob(UUID jobId) {
+    SemanticIndexJobDTO resumeJob(UUID jobId) {
         Map<String, Object> job = semanticRepository.job(jobId)
         String status = String.valueOf(job.get('status'))
         if (['SUCCEEDED', 'FAILED', 'CANCELLED', 'RUNNING'].contains(status)) {
-            return job
+            return SemanticIndexJobDTO.fromMap(job)
         }
-        resumeRecoverableJob(job)
+        SemanticIndexJobDTO.fromMap(resumeRecoverableJob(job))
     }
 
     @Connectable
@@ -973,7 +1033,7 @@ class SemanticIndexingService implements SemanticIndexAdministrationService {
 
     @Connectable
     @Override
-    List<Map<String, Object>> recoverInterruptedJobs() {
+    List<SemanticIndexJobDTO> recoverInterruptedJobs() {
         List<Map<String, Object>> recoverableJobs = semanticRepository.recoverableJobs()
         recoverableJobs.sort {Map<String, Object> left, Map<String, Object> right ->
             String.valueOf(left.get('createdAt')) <=> String.valueOf(right.get('createdAt'))
@@ -993,7 +1053,15 @@ class SemanticIndexingService implements SemanticIndexAdministrationService {
             recoveredDeclarations.add(declarationKey)
             recovered.add(resumeRecoverableJob(job))
         }
-        recovered
+        SemanticIndexJobDTO.listFrom(recovered)
+    }
+
+    private List<Map<String, Object>> matchingModelIndexes(UUID mauroModelId, String profileName, String corpusName) {
+        semanticRepository.modelIndexes().findAll {Map<String, Object> declaration ->
+            declaration.get('mauroModelId') == mauroModelId?.toString() &&
+                (profileName == null || declaration.get('profileName') == profileName) &&
+                (corpusName == null || declaration.get('corpusName') == corpusName)
+        } as List<Map<String, Object>>
     }
 
     private Map<String, Object> queueModelIndexJob(UUID mauroModelId,
@@ -1240,6 +1308,14 @@ class SemanticIndexingService implements SemanticIndexAdministrationService {
     private static String stringValue(Map<String, Object> request, String key) {
         Object value = request == null ? null : request.get(key)
         value == null ? null : String.valueOf(value)
+    }
+
+    private static String requiredString(Map<String, Object> request, String key) {
+        String value = stringValue(request, key)
+        if (value == null || value.trim().isEmpty()) {
+            throw new IllegalArgumentException("Missing required field ${key}")
+        }
+        value.trim()
     }
 
     private static UUID uuidValue(Map<String, Object> request, String key) {

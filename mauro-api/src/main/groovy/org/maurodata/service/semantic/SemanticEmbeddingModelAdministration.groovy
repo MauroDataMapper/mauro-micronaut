@@ -1,9 +1,10 @@
 package org.maurodata.service.semantic
 
 import groovy.transform.CompileStatic
+import org.maurodata.domain.search.dto.SemanticEmbeddingModelPullResponseDTO
 
 @CompileStatic
 interface SemanticEmbeddingModelAdministration {
 
-    Map<String, Object> pull(String provider, String model)
+    SemanticEmbeddingModelPullResponseDTO pull(String provider, String model)
 }

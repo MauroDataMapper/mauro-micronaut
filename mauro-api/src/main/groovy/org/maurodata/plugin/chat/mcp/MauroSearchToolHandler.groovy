@@ -49,6 +49,7 @@ class MauroSearchToolHandler extends AbstractAnnotatedToolHandler {
         request.corpus = asString(arguments.get('corpus') ?: arguments.get('corpusName'))
         request.domainTypes = extractStringList(arguments.get('domainTypes'))
         request.withinModelId = asUuid(arguments.get('modelId') ?: arguments.get('withinModelId'))
+        request.deepSearch = asBoolean(arguments.get('deepSearch'), false)
         Integer requestedMax = asInteger(arguments.get('max'), DEFAULT_PAGE_SIZE)
         request.max = Math.min(Math.max(requestedMax, 1), DEFAULT_MAX_PAGE_SIZE)
         request.offset = asInteger(arguments.get('offset'), 0)
@@ -89,7 +90,9 @@ class MauroSearchToolHandler extends AbstractAnnotatedToolHandler {
             corpus: request.corpus,
             domainTypes: request.domainTypes,
             modelId: request.withinModelId?.toString(),
+            deepSearch: request.deepSearch == true,
             count: response.count ?: 0,
+            countIsExact: response.countIsExact,
             max: request.max,
             offset: request.offset,
             nextOffset: request.offset + items.size(),
@@ -100,6 +103,7 @@ class MauroSearchToolHandler extends AbstractAnnotatedToolHandler {
             semanticRan: hybridResult.semanticRan,
             semanticCount: hybridResult.semanticCount,
             mergedCount: hybridResult.mergedCount,
+            mergedCountIsExact: hybridResult.countIsExact,
             fallbackReason: hybridResult.fallbackReason,
             items: items
         ] as Map<String, Object>
@@ -123,6 +127,10 @@ class MauroSearchToolHandler extends AbstractAnnotatedToolHandler {
         }
         boolean semanticRan = Boolean.TRUE.equals(result.get('semanticRan'))
         boolean semanticAvailable = Boolean.TRUE.equals(result.get('semanticAvailable'))
+        boolean countIsExact = result.get('countIsExact') != false
+        String countDescription = countIsExact ?
+            "${totalCount}".toString() :
+            "at least ${totalCount}".toString()
         int pageNumber = offset.intdiv(max) + 1
         int totalPages = Math.max((int) Math.ceil(totalCount / (double) max), returnedCount > 0 ? 1 : 0)
         int rangeStart = returnedCount > 0 ? offset + 1 : 0
@@ -146,8 +154,8 @@ class MauroSearchToolHandler extends AbstractAnnotatedToolHandler {
             semanticRan ? 'COMMON: Say that you searched the Mauro catalogue for matching and related items.' : 'COMMON: Say that you searched the Mauro catalogue for matching items.',
             'COMMON: Do not mention internal retrieval evidence, semantic availability, hybrid scores, keyword ranks, semantic ranks, or embedding profiles unless the user asks how the search was ranked.',
             "COMMON: Tell the user the exact search term used: ${searchTerm}".toString(),
-            "COMMON: Tell the user the total number of matching catalogue items is ${totalCount}.".toString(),
-            "COMMON: Use this pagination summary in your answer: Page ${pageNumber} of ${totalPages}. Showing ${rangeStart}-${rangeEnd} of ${totalCount} matching catalogue items, ${max} results at a time.".toString(),
+            "COMMON: Tell the user the number of matching catalogue items is ${countDescription}.".toString(),
+            "COMMON: Use this pagination summary in your answer: Page ${pageNumber} of ${totalPages}. Showing ${rangeStart}-${rangeEnd} of ${countDescription} matching catalogue items, ${max} results at a time.".toString(),
             'COMMON: Present the returned matches as a Markdown table. Use columns Label, Type, ID, Description.',
             'COMMON: Escape pipe characters inside Markdown table cell values as \\|.',
             'COMMON: When the user refers to an ordinal result, use the ID from the matching numbered Returned Data item.'
@@ -165,6 +173,7 @@ class MauroSearchToolHandler extends AbstractAnnotatedToolHandler {
                     corpus: corpus,
                     domainTypes: domainTypes,
                     modelId: modelId,
+                    deepSearch: result.get('deepSearch') == true,
                     max: max,
                     offset: nextOffset,
                     withGuidance: result.get('withGuidance') != false
@@ -176,6 +185,9 @@ class MauroSearchToolHandler extends AbstractAnnotatedToolHandler {
             if (!corpus) {
                 ((Map<String, Object>) nextPageToolCall.arguments).remove('corpus')
             }
+            if (result.get('deepSearch') != true) {
+                ((Map<String, Object>) nextPageToolCall.arguments).remove('deepSearch')
+            }
             followUp.add('FR: More results are available.')
             followUp.add('FR: In a later turn, if the user asks for the next page, use this exact tool call: ' + JsonOutput.toJson(nextPageToolCall))
         }
@@ -184,12 +196,14 @@ class MauroSearchToolHandler extends AbstractAnnotatedToolHandler {
             'Tool Call Status': ['Tool mauro_search succeeded.'],
             'Result Metadata': [
                 "Search term: ${searchTerm}",
-                "Total matching catalogue items: ${totalCount}",
+                "Matching catalogue items: ${countDescription}",
+                "Count is exact: ${countIsExact}",
                 "Keyword leg count: ${result.get('keywordCount')}",
                 "Semantic available: ${semanticAvailable}",
                 "Semantic leg ran: ${semanticRan}",
                 "Semantic leg count: ${result.get('semanticCount')}",
                 "Merged result count: ${result.get('mergedCount')}",
+                "Merged count is exact: ${result.get('mergedCountIsExact')}",
                 result.get('fallbackReason') ? "Semantic fallback reason: ${result.get('fallbackReason')}" : null,
                 "Returned items for this page: ${returnedCount}",
                 "Page: ${pageNumber} of ${totalPages}",

@@ -18,6 +18,18 @@ import org.maurodata.audit.Audit
 import org.maurodata.controller.model.AdministeredItemReader
 import org.maurodata.domain.search.dto.SemanticSearchRequestDTO
 import org.maurodata.domain.search.dto.SemanticSearchResultsDTO
+import org.maurodata.domain.search.dto.SemanticCorpusDTO
+import org.maurodata.domain.search.dto.SemanticCorpusRequestDTO
+import org.maurodata.domain.search.dto.SemanticEmbeddingModelPullRequestDTO
+import org.maurodata.domain.search.dto.SemanticEmbeddingModelPullResponseDTO
+import org.maurodata.domain.search.dto.SemanticEmbeddingProfileDTO
+import org.maurodata.domain.search.dto.SemanticEmbeddingProfileRequestDTO
+import org.maurodata.domain.search.dto.SemanticIndexJobDTO
+import org.maurodata.domain.search.dto.SemanticIndexingStatusDTO
+import org.maurodata.domain.search.dto.SemanticModelIndexDTO
+import org.maurodata.domain.search.dto.SemanticModelIndexJobStartRequestDTO
+import org.maurodata.domain.search.dto.SemanticModelIndexOperationResponseDTO
+import org.maurodata.domain.search.dto.SemanticModelIndexRequestDTO
 import org.maurodata.plugin.chat.api.Paths
 import org.maurodata.plugin.chat.api.search.SemanticSearchApi
 import org.maurodata.security.AccessControlService
@@ -30,9 +42,7 @@ import org.reactivestreams.Publisher
 import reactor.core.publisher.Flux
 
 import groovy.transform.CompileStatic
-import groovy.util.logging.Slf4j
 
-@Slf4j
 @CompileStatic
 @Controller
 @Secured(SecurityRule.IS_ANONYMOUS)
@@ -75,241 +85,252 @@ class SemanticSearchController implements AdministeredItemReader, SemanticSearch
     }
 
     @Audit
-    @Post(Paths.SEARCH_REBUILD_SEMANTIC_INDEXES)
-    Map<String, Object> rebuildSemanticIndexes(@Body @Nullable Map<String, Object> request) {
-        accessControlService.checkAdministrator()
-        log.warn("Rebuild semantic index API endpoint called - ordinarily this should be for testing purposes only")
-        semanticIndexAdministrationService.rebuildCatalogueIndex(
-            stringValue(request, 'indexName') ?: 'catalogue-items-default',
-            stringValue(request, 'corpusName') ?: 'catalogue-items',
-            stringList(request == null ? null : request.get('domainTypes')),
-            uuidValue(request, 'mauroModelId'),
-            integerValue(request, 'maxRows'),
-            integerValue(request, 'batchSize'),
-            booleanValue(request, 'rebuildEmbeddings', false)
-        )
-    }
-
-    @Audit
     @Get(Paths.SEMANTIC_CORPORA)
-    List<Map<String, Object>> semanticCorpora() {
+    List<SemanticCorpusDTO> semanticCorpora() {
         accessControlService.checkAdministrator()
         semanticIndexAdministrationService.corpora()
     }
 
     @Audit
     @Post(Paths.SEMANTIC_CORPORA)
-    Map<String, Object> createSemanticCorpus(@Body Map<String, Object> request) {
+    SemanticCorpusDTO createSemanticCorpus(@Body SemanticCorpusRequestDTO request) {
         accessControlService.checkAdministrator()
         semanticIndexAdministrationService.createCorpus(request)
     }
 
     @Audit
-    @Get(Paths.SEMANTIC_INDEXES)
-    List<Map<String, Object>> semanticIndexes() {
-        accessControlService.checkAdministrator()
-        semanticProfileAdministrationService.indexes()
-    }
-
-    @Audit
-    @Post(Paths.SEMANTIC_INDEXES)
-    Map<String, Object> createSemanticIndex(@Body Map<String, Object> request) {
-        accessControlService.checkAdministrator()
-        semanticProfileAdministrationService.createIndex(request)
-    }
-
-    @Audit
-    @Delete(Paths.SEMANTIC_INDEX)
-    Map<String, Object> deleteSemanticIndex(@PathVariable String indexName) {
-        accessControlService.checkAdministrator()
-        semanticProfileAdministrationService.deleteIndex(indexName)
-    }
-
-    @Audit
-    @Delete(Paths.SEMANTIC_INDEX_EMBEDDINGS)
-    Map<String, Object> deleteSemanticIndexEmbeddings(@PathVariable String indexName) {
-        accessControlService.checkAdministrator()
-        semanticProfileAdministrationService.deleteEmbeddingsForIndex(indexName)
-    }
-
-    @Audit
     @Delete(Paths.SEMANTIC_INDEX_CORPUS_CHUNKS)
-    Map<String, Object> deleteSemanticCorpusChunks(@PathVariable String corpusName) {
+    SemanticCorpusDTO deleteSemanticCorpusChunks(@PathVariable String corpusName) {
         accessControlService.checkAdministrator()
         semanticProfileAdministrationService.deleteChunksForCorpus(corpusName)
     }
 
     @Audit
     @Get(Paths.SEMANTIC_INDEX_PROFILES)
-    List<Map<String, Object>> semanticIndexProfiles() {
+    List<SemanticEmbeddingProfileDTO> semanticIndexProfiles() {
         accessControlService.checkAdministrator()
         semanticProfileAdministrationService.profiles()
     }
 
     @Audit
     @Post(Paths.SEMANTIC_INDEX_PROFILES)
-    Map<String, Object> createSemanticIndexProfile(@Body Map<String, Object> request) {
+    SemanticEmbeddingProfileDTO createSemanticIndexProfile(@Body SemanticEmbeddingProfileRequestDTO request) {
         accessControlService.checkAdministrator()
         semanticProfileAdministrationService.createProfile(request)
     }
 
     @Audit
     @Delete(Paths.SEMANTIC_INDEX_PROFILE)
-    Map<String, Object> deleteSemanticIndexProfile(@PathVariable String profileName) {
+    SemanticEmbeddingProfileDTO deleteSemanticIndexProfile(@PathVariable String profileName) {
         accessControlService.checkAdministrator()
         semanticProfileAdministrationService.deleteProfile(profileName)
     }
 
     @Audit
     @Post(Paths.SEMANTIC_INDEX_PROFILE_ENABLE)
-    Map<String, Object> enableSemanticIndexProfile(@PathVariable String profileName) {
+    SemanticEmbeddingProfileDTO enableSemanticIndexProfile(@PathVariable String profileName) {
         accessControlService.checkAdministrator()
         semanticProfileAdministrationService.enable(profileName)
     }
 
     @Audit
     @Post(Paths.SEMANTIC_INDEX_PROFILE_DISABLE)
-    Map<String, Object> disableSemanticIndexProfile(@PathVariable String profileName) {
+    SemanticEmbeddingProfileDTO disableSemanticIndexProfile(@PathVariable String profileName) {
         accessControlService.checkAdministrator()
         semanticProfileAdministrationService.disable(profileName)
     }
 
     @Audit
-    @Post(Paths.SEMANTIC_INDEX_PROFILE_LINK)
-    Map<String, Object> linkSemanticIndexProfile(@PathVariable String indexName, @PathVariable String profileName) {
-        accessControlService.checkAdministrator()
-        semanticProfileAdministrationService.link(indexName, profileName)
-    }
-
-    @Audit
-    @Post(Paths.SEMANTIC_INDEX_PROFILE_UNLINK)
-    Map<String, Object> unlinkSemanticIndexProfile(@PathVariable String indexName, @PathVariable String profileName) {
-        accessControlService.checkAdministrator()
-        semanticProfileAdministrationService.unlink(indexName, profileName)
-    }
-
-    @Audit
     @Post(Paths.SEMANTIC_INDEX_EMBEDDING_MODEL_PULL)
-    Map<String, Object> pullEmbeddingModel(@Body Map<String, Object> request) {
+    SemanticEmbeddingModelPullResponseDTO pullEmbeddingModel(@Body SemanticEmbeddingModelPullRequestDTO request) {
         accessControlService.checkAdministrator()
-        Object providerValue = request == null ? null : request.get('provider')
-        Object modelValue = request == null ? null : request.get('model')
-        String provider = providerValue == null ? null : String.valueOf(providerValue)
-        String model = modelValue == null ? null : String.valueOf(modelValue)
-        semanticEmbeddingModelAdministration.pull(provider, model)
+        semanticEmbeddingModelAdministration.pull(request?.provider, request?.model)
     }
 
     @Audit
     @Get(Paths.SEMANTIC_INDEXING_STATUS)
-    Map<String, Object> semanticIndexingStatus() {
+    SemanticIndexingStatusDTO semanticIndexingStatus() {
         accessControlService.checkAdministrator()
         semanticIndexAdministrationService.indexingStatus()
     }
 
     @Audit
     @Post(Paths.SEMANTIC_INDEXING_ENABLE)
-    Map<String, Object> enableSemanticIndexing() {
+    SemanticIndexingStatusDTO enableSemanticIndexing() {
         accessControlService.checkAdministrator()
         semanticIndexAdministrationService.setIndexingEnabled(true)
     }
 
     @Audit
     @Post(Paths.SEMANTIC_INDEXING_DISABLE)
-    Map<String, Object> disableSemanticIndexing() {
+    SemanticIndexingStatusDTO disableSemanticIndexing() {
         accessControlService.checkAdministrator()
         semanticIndexAdministrationService.setIndexingEnabled(false)
     }
 
     @Audit
     @Post(Paths.SEMANTIC_INDEXING_AUTO_RECONCILE_ENABLE)
-    Map<String, Object> enableSemanticIndexingAutoReconcile() {
+    SemanticIndexingStatusDTO enableSemanticIndexingAutoReconcile() {
         accessControlService.checkAdministrator()
         semanticIndexAdministrationService.setAutoReconcileEnabled(true)
     }
 
     @Audit
     @Post(Paths.SEMANTIC_INDEXING_AUTO_RECONCILE_DISABLE)
-    Map<String, Object> disableSemanticIndexingAutoReconcile() {
+    SemanticIndexingStatusDTO disableSemanticIndexingAutoReconcile() {
         accessControlService.checkAdministrator()
         semanticIndexAdministrationService.setAutoReconcileEnabled(false)
     }
 
     @Audit
     @Get(Paths.SEMANTIC_MODEL_INDEXES)
-    List<Map<String, Object>> semanticModelIndexes() {
+    List<SemanticModelIndexDTO> semanticModelIndexes() {
         accessControlService.checkAdministrator()
         semanticIndexAdministrationService.modelIndexes()
     }
 
     @Audit
     @Get(Paths.SEMANTIC_MODEL_INDEX_STATS)
-    List<Map<String, Object>> semanticModelIndexStats(@PathVariable UUID modelId) {
+    List<SemanticModelIndexDTO> semanticModelIndexStats(@PathVariable UUID modelId) {
         accessControlService.checkAdministrator()
         semanticIndexAdministrationService.modelIndexStats(modelId)
     }
 
     @Audit
     @Post(Paths.SEMANTIC_MODEL_INDEXES)
-    Map<String, Object> createSemanticModelIndex(@Body Map<String, Object> request) {
+    SemanticModelIndexDTO createSemanticModelIndex(@Body SemanticModelIndexRequestDTO request) {
         accessControlService.checkAdministrator()
         semanticIndexAdministrationService.createModelIndex(request)
     }
 
     @Audit
-    @Delete(Paths.SEMANTIC_MODEL_INDEX)
-    Map<String, Object> deleteSemanticModelIndex(@PathVariable UUID modelId, @PathVariable String profileName) {
+    @Delete(Paths.SEMANTIC_MODEL_INDEX_MODEL)
+    SemanticModelIndexOperationResponseDTO deleteSemanticModelIndexesForModel(@PathVariable UUID modelId,
+                                                           @QueryValue(defaultValue = 'false') Boolean deleteEmbeddings) {
         accessControlService.checkAdministrator()
-        semanticIndexAdministrationService.deleteModelIndex(modelId, profileName)
+        semanticIndexAdministrationService.deleteModelIndex(modelId, null, null, deleteEmbeddings == true)
     }
 
     @Audit
-    @Delete(Paths.SEMANTIC_MODEL_INDEX_DEFAULT_PROFILE)
-    Map<String, Object> deleteDefaultSemanticModelIndex(@PathVariable UUID modelId) {
+    @Delete(Paths.SEMANTIC_MODEL_INDEX_MODEL_PROFILE)
+    SemanticModelIndexOperationResponseDTO deleteSemanticModelIndexesForModelProfile(@PathVariable UUID modelId,
+                                                                  @PathVariable String profileName,
+                                                                  @QueryValue(defaultValue = 'false') Boolean deleteEmbeddings) {
         accessControlService.checkAdministrator()
-        semanticIndexAdministrationService.deleteModelIndex(modelId, null)
+        semanticIndexAdministrationService.deleteModelIndex(modelId, profileName, null, deleteEmbeddings == true)
     }
 
     @Audit
-    @Post(Paths.SEMANTIC_MODEL_INDEX_START)
-    Map<String, Object> startSemanticModelIndex(@PathVariable UUID modelId,
+    @Delete(Paths.SEMANTIC_CORPUS_MODEL_INDEX_MODEL)
+    SemanticModelIndexOperationResponseDTO deleteSemanticModelIndexesForCorpusModel(@PathVariable String corpusName,
+                                                                 @PathVariable UUID modelId,
+                                                                 @QueryValue(defaultValue = 'false') Boolean deleteEmbeddings) {
+        accessControlService.checkAdministrator()
+        semanticIndexAdministrationService.deleteModelIndex(modelId, null, corpusName, deleteEmbeddings == true)
+    }
+
+    @Audit
+    @Delete(Paths.SEMANTIC_CORPUS_MODEL_INDEX_MODEL_PROFILE)
+    SemanticModelIndexOperationResponseDTO deleteSemanticModelIndex(@PathVariable String corpusName,
+                                                 @PathVariable UUID modelId,
+                                                 @PathVariable String profileName,
+                                                 @QueryValue(defaultValue = 'false') Boolean deleteEmbeddings) {
+        accessControlService.checkAdministrator()
+        semanticIndexAdministrationService.deleteModelIndex(modelId, profileName, corpusName, deleteEmbeddings == true)
+    }
+
+    @Audit
+    @Delete(Paths.SEMANTIC_MODEL_INDEX_MODEL_EMBEDDINGS)
+    SemanticModelIndexOperationResponseDTO deleteSemanticModelIndexEmbeddingsForModel(@PathVariable UUID modelId) {
+        accessControlService.checkAdministrator()
+        semanticIndexAdministrationService.deleteModelIndexEmbeddings(modelId, null, null)
+    }
+
+    @Audit
+    @Delete(Paths.SEMANTIC_MODEL_INDEX_MODEL_PROFILE_EMBEDDINGS)
+    SemanticModelIndexOperationResponseDTO deleteSemanticModelIndexEmbeddingsForModelProfile(@PathVariable UUID modelId,
+                                                                          @PathVariable String profileName) {
+        accessControlService.checkAdministrator()
+        semanticIndexAdministrationService.deleteModelIndexEmbeddings(modelId, profileName, null)
+    }
+
+    @Audit
+    @Delete(Paths.SEMANTIC_CORPUS_MODEL_INDEX_MODEL_EMBEDDINGS)
+    SemanticModelIndexOperationResponseDTO deleteSemanticModelIndexEmbeddingsForCorpusModel(@PathVariable String corpusName,
+                                                                         @PathVariable UUID modelId) {
+        accessControlService.checkAdministrator()
+        semanticIndexAdministrationService.deleteModelIndexEmbeddings(modelId, null, corpusName)
+    }
+
+    @Audit
+    @Delete(Paths.SEMANTIC_CORPUS_MODEL_INDEX_MODEL_PROFILE_EMBEDDINGS)
+    SemanticModelIndexOperationResponseDTO deleteSemanticModelIndexEmbeddings(@PathVariable String corpusName,
+                                                           @PathVariable UUID modelId,
+                                                           @PathVariable String profileName) {
+        accessControlService.checkAdministrator()
+        semanticIndexAdministrationService.deleteModelIndexEmbeddings(modelId, profileName, corpusName)
+    }
+
+    @Audit
+    @Post(Paths.SEMANTIC_MODEL_INDEX_MODEL_START)
+    SemanticModelIndexOperationResponseDTO startSemanticModelIndexesForModel(@PathVariable UUID modelId,
+                                                                            @Body @Nullable SemanticModelIndexJobStartRequestDTO request) {
+        accessControlService.checkAdministrator()
+        semanticIndexAdministrationService.startModelIndexJobs(modelId, null, null, request)
+    }
+
+    @Audit
+    @Post(Paths.SEMANTIC_MODEL_INDEX_MODEL_PROFILE_START)
+    SemanticModelIndexOperationResponseDTO startSemanticModelIndexesForModelProfile(@PathVariable UUID modelId,
+                                                                 @PathVariable String profileName,
+                                                                 @Body @Nullable SemanticModelIndexJobStartRequestDTO request) {
+        accessControlService.checkAdministrator()
+        semanticIndexAdministrationService.startModelIndexJobs(modelId, profileName, null, request)
+    }
+
+    @Audit
+    @Post(Paths.SEMANTIC_CORPUS_MODEL_INDEX_MODEL_START)
+    SemanticModelIndexOperationResponseDTO startSemanticModelIndexesForCorpusModel(@PathVariable String corpusName,
+                                                                @PathVariable UUID modelId,
+                                                                @Body @Nullable SemanticModelIndexJobStartRequestDTO request) {
+        accessControlService.checkAdministrator()
+        semanticIndexAdministrationService.startModelIndexJobs(modelId, null, corpusName, request)
+    }
+
+    @Audit
+    @Post(Paths.SEMANTIC_CORPUS_MODEL_INDEX_MODEL_PROFILE_START)
+    SemanticModelIndexOperationResponseDTO startSemanticModelIndex(@PathVariable String corpusName,
+                                                @PathVariable UUID modelId,
                                                 @PathVariable String profileName,
-                                                @Body @Nullable Map<String, Object> request) {
+                                                @Body @Nullable SemanticModelIndexJobStartRequestDTO request) {
         accessControlService.checkAdministrator()
-        semanticIndexAdministrationService.startModelIndexJob(modelId, profileName, request)
-    }
-
-    @Audit
-    @Post(Paths.SEMANTIC_MODEL_INDEX_START_DEFAULT_PROFILE)
-    Map<String, Object> startDefaultSemanticModelIndex(@PathVariable UUID modelId,
-                                                       @Body @Nullable Map<String, Object> request) {
-        accessControlService.checkAdministrator()
-        semanticIndexAdministrationService.startModelIndexJob(modelId, null, request)
+        semanticIndexAdministrationService.startModelIndexJobs(modelId, profileName, corpusName, request)
     }
 
     @Audit
     @Get(Paths.SEMANTIC_INDEX_JOBS)
-    List<Map<String, Object>> semanticIndexJobs(@QueryValue(defaultValue = 'false') Boolean includeHistory) {
+    List<SemanticIndexJobDTO> semanticIndexJobs(@QueryValue(defaultValue = 'false') Boolean includeHistory) {
         accessControlService.checkAdministrator()
         semanticIndexAdministrationService.jobs(includeHistory == true)
     }
 
     @Audit
     @Get(Paths.SEMANTIC_INDEX_JOB)
-    Map<String, Object> semanticIndexJob(@PathVariable UUID jobId) {
+    SemanticIndexJobDTO semanticIndexJob(@PathVariable UUID jobId) {
         accessControlService.checkAdministrator()
         semanticIndexAdministrationService.jobStatus(jobId)
     }
 
     @Audit
     @Post(Paths.SEMANTIC_INDEX_JOB_CANCEL)
-    Map<String, Object> cancelSemanticIndexJob(@PathVariable UUID jobId) {
+    SemanticIndexJobDTO cancelSemanticIndexJob(@PathVariable UUID jobId) {
         accessControlService.checkAdministrator()
         semanticIndexAdministrationService.cancelJob(jobId)
     }
 
     @Audit
     @Post(Paths.SEMANTIC_INDEX_JOB_RESUME)
-    Map<String, Object> resumeSemanticIndexJob(@PathVariable UUID jobId) {
+    SemanticIndexJobDTO resumeSemanticIndexJob(@PathVariable UUID jobId) {
         accessControlService.checkAdministrator()
         semanticIndexAdministrationService.resumeJob(jobId)
     }
@@ -324,39 +345,6 @@ class SemanticSearchController implements AdministeredItemReader, SemanticSearch
         Boolean.TRUE.equals(follow) ?
             semanticIndexAdministrationService.followJobEvents(jobId, after) :
             Flux.just(semanticIndexAdministrationService.jobEvents(jobId))
-    }
-
-    private static String stringValue(Map<String, Object> request, String key) {
-        Object value = request == null ? null : request.get(key)
-        value == null ? null : String.valueOf(value)
-    }
-
-    private static Integer integerValue(Map<String, Object> request, String key) {
-        Object value = request == null ? null : request.get(key)
-        if (value == null || String.valueOf(value).trim().isEmpty()) {
-            return null
-        }
-        value instanceof Number ? ((Number) value).intValue() : Integer.valueOf(String.valueOf(value))
-    }
-
-    private static UUID uuidValue(Map<String, Object> request, String key) {
-        String value = stringValue(request, key)
-        value == null || value.trim().isEmpty() ? null : UUID.fromString(value)
-    }
-
-    private static List<String> stringList(Object value) {
-        if (value instanceof Collection) {
-            return ((Collection<?>) value).collect {Object item -> String.valueOf(item)}.findAll {String item -> item?.trim()} as List<String>
-        }
-        if (value == null || String.valueOf(value).trim().isEmpty()) {
-            return []
-        }
-        String.valueOf(value).split(/\s*,\s*/).findAll {String item -> item?.trim()} as List<String>
-    }
-
-    private static boolean booleanValue(Map<String, Object> request, String key, boolean fallback) {
-        Object value = request == null ? null : request.get(key)
-        value == null ? fallback : Boolean.valueOf(String.valueOf(value))
     }
 
 }
