@@ -28,4 +28,19 @@ class EmbeddingProviderRegistry {
     EmbeddingProvider providerFor(String providerId, String embeddingModel) {
         providerFor(new EmbeddingProfile(provider: providerId, embeddingModel: embeddingModel))
     }
+
+    int dimensionFor(String providerId, String embeddingModel) {
+        EmbeddingProvider provider = providerFor(providerId, embeddingModel)
+        EmbeddingProfile probeProfile = new EmbeddingProfile(
+            provider: providerId,
+            embeddingModel: embeddingModel,
+            distanceMetric: 'cosine'
+        )
+        List<float[]> embeddings = provider.embed(probeProfile, ['dimension probe'] as List<String>)
+        float[] vector = embeddings ? embeddings.first() : null
+        if (vector == null) {
+            throw new IllegalStateException('embedding provider returned no vector')
+        }
+        vector.length
+    }
 }

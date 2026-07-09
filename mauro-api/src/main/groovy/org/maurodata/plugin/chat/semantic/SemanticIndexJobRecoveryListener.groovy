@@ -1,6 +1,7 @@
 package org.maurodata.plugin.chat.semantic
 
 import org.maurodata.service.semantic.SemanticIndexAdministrationService
+import org.maurodata.domain.search.dto.SemanticIndexJobDTO
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
@@ -22,7 +23,7 @@ class SemanticIndexJobRecoveryListener implements ApplicationEventListener<Start
     @Override
     void onApplicationEvent(StartupEvent event) {
         try {
-            List<Map<String, Object>> recovered = semanticIndexAdministrationService.recoverInterruptedJobs()
+            List<SemanticIndexJobDTO> recovered = semanticIndexAdministrationService.recoverInterruptedJobs()
             if (!recovered.isEmpty()) {
                 log.warn('Recovered {} interrupted semantic indexing jobs: {}', Integer.valueOf(recovered.size()), recovered)
             }

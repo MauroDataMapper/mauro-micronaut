@@ -3,6 +3,18 @@ package org.maurodata.plugin.chat.api.search
 import org.maurodata.api.MauroApi
 import org.maurodata.domain.search.dto.SemanticSearchRequestDTO
 import org.maurodata.domain.search.dto.SemanticSearchResultsDTO
+import org.maurodata.domain.search.dto.SemanticCorpusDTO
+import org.maurodata.domain.search.dto.SemanticCorpusRequestDTO
+import org.maurodata.domain.search.dto.SemanticEmbeddingModelPullRequestDTO
+import org.maurodata.domain.search.dto.SemanticEmbeddingModelPullResponseDTO
+import org.maurodata.domain.search.dto.SemanticEmbeddingProfileDTO
+import org.maurodata.domain.search.dto.SemanticEmbeddingProfileRequestDTO
+import org.maurodata.domain.search.dto.SemanticIndexJobDTO
+import org.maurodata.domain.search.dto.SemanticIndexingStatusDTO
+import org.maurodata.domain.search.dto.SemanticModelIndexDTO
+import org.maurodata.domain.search.dto.SemanticModelIndexJobStartRequestDTO
+import org.maurodata.domain.search.dto.SemanticModelIndexOperationResponseDTO
+import org.maurodata.domain.search.dto.SemanticModelIndexRequestDTO
 import org.maurodata.plugin.chat.api.Paths
 import org.maurodata.web.ListResponse
 
@@ -25,101 +37,123 @@ interface SemanticSearchApi {
     @Post(Paths.SEARCH_SEMANTIC_POST)
     ListResponse<SemanticSearchResultsDTO> semanticSearchPost(@Body SemanticSearchRequestDTO requestDTO)
 
-    @Post(Paths.SEARCH_REBUILD_SEMANTIC_INDEXES)
-    Map<String, Object> rebuildSemanticIndexes(@Body Map<String, Object> request)
-
     @Get(Paths.SEMANTIC_CORPORA)
-    List<Map<String, Object>> semanticCorpora()
+    List<SemanticCorpusDTO> semanticCorpora()
 
     @Post(Paths.SEMANTIC_CORPORA)
-    Map<String, Object> createSemanticCorpus(@Body Map<String, Object> request)
-
-    @Get(Paths.SEMANTIC_INDEXES)
-    List<Map<String, Object>> semanticIndexes()
-
-    @Post(Paths.SEMANTIC_INDEXES)
-    Map<String, Object> createSemanticIndex(@Body Map<String, Object> request)
-
-    @Delete(Paths.SEMANTIC_INDEX)
-    Map<String, Object> deleteSemanticIndex(@PathVariable String indexName)
-
-    @Delete(Paths.SEMANTIC_INDEX_EMBEDDINGS)
-    Map<String, Object> deleteSemanticIndexEmbeddings(@PathVariable String indexName)
+    SemanticCorpusDTO createSemanticCorpus(@Body SemanticCorpusRequestDTO request)
 
     @Delete(Paths.SEMANTIC_INDEX_CORPUS_CHUNKS)
-    Map<String, Object> deleteSemanticCorpusChunks(@PathVariable String corpusName)
+    SemanticCorpusDTO deleteSemanticCorpusChunks(@PathVariable String corpusName)
 
     @Get(Paths.SEMANTIC_INDEX_PROFILES)
-    List<Map<String, Object>> semanticIndexProfiles()
+    List<SemanticEmbeddingProfileDTO> semanticIndexProfiles()
 
     @Post(Paths.SEMANTIC_INDEX_PROFILES)
-    Map<String, Object> createSemanticIndexProfile(@Body Map<String, Object> request)
+    SemanticEmbeddingProfileDTO createSemanticIndexProfile(@Body SemanticEmbeddingProfileRequestDTO request)
 
     @Delete(Paths.SEMANTIC_INDEX_PROFILE)
-    Map<String, Object> deleteSemanticIndexProfile(@PathVariable String profileName)
+    SemanticEmbeddingProfileDTO deleteSemanticIndexProfile(@PathVariable String profileName)
 
     @Post(Paths.SEMANTIC_INDEX_PROFILE_ENABLE)
-    Map<String, Object> enableSemanticIndexProfile(@PathVariable String profileName)
+    SemanticEmbeddingProfileDTO enableSemanticIndexProfile(@PathVariable String profileName)
 
     @Post(Paths.SEMANTIC_INDEX_PROFILE_DISABLE)
-    Map<String, Object> disableSemanticIndexProfile(@PathVariable String profileName)
-
-    @Post(Paths.SEMANTIC_INDEX_PROFILE_LINK)
-    Map<String, Object> linkSemanticIndexProfile(@PathVariable String indexName, @PathVariable String profileName)
-
-    @Post(Paths.SEMANTIC_INDEX_PROFILE_UNLINK)
-    Map<String, Object> unlinkSemanticIndexProfile(@PathVariable String indexName, @PathVariable String profileName)
+    SemanticEmbeddingProfileDTO disableSemanticIndexProfile(@PathVariable String profileName)
 
     @Post(Paths.SEMANTIC_INDEX_EMBEDDING_MODEL_PULL)
-    Map<String, Object> pullEmbeddingModel(@Body Map<String, Object> request)
+    SemanticEmbeddingModelPullResponseDTO pullEmbeddingModel(@Body SemanticEmbeddingModelPullRequestDTO request)
 
     @Get(Paths.SEMANTIC_INDEXING_STATUS)
-    Map<String, Object> semanticIndexingStatus()
+    SemanticIndexingStatusDTO semanticIndexingStatus()
 
     @Post(Paths.SEMANTIC_INDEXING_ENABLE)
-    Map<String, Object> enableSemanticIndexing()
+    SemanticIndexingStatusDTO enableSemanticIndexing()
 
     @Post(Paths.SEMANTIC_INDEXING_DISABLE)
-    Map<String, Object> disableSemanticIndexing()
+    SemanticIndexingStatusDTO disableSemanticIndexing()
 
     @Post(Paths.SEMANTIC_INDEXING_AUTO_RECONCILE_ENABLE)
-    Map<String, Object> enableSemanticIndexingAutoReconcile()
+    SemanticIndexingStatusDTO enableSemanticIndexingAutoReconcile()
 
     @Post(Paths.SEMANTIC_INDEXING_AUTO_RECONCILE_DISABLE)
-    Map<String, Object> disableSemanticIndexingAutoReconcile()
+    SemanticIndexingStatusDTO disableSemanticIndexingAutoReconcile()
 
     @Get(Paths.SEMANTIC_MODEL_INDEXES)
-    List<Map<String, Object>> semanticModelIndexes()
+    List<SemanticModelIndexDTO> semanticModelIndexes()
 
     @Get(Paths.SEMANTIC_MODEL_INDEX_STATS)
-    List<Map<String, Object>> semanticModelIndexStats(@PathVariable UUID modelId)
+    List<SemanticModelIndexDTO> semanticModelIndexStats(@PathVariable UUID modelId)
 
     @Post(Paths.SEMANTIC_MODEL_INDEXES)
-    Map<String, Object> createSemanticModelIndex(@Body Map<String, Object> request)
+    SemanticModelIndexDTO createSemanticModelIndex(@Body SemanticModelIndexRequestDTO request)
 
-    @Delete(Paths.SEMANTIC_MODEL_INDEX)
-    Map<String, Object> deleteSemanticModelIndex(@PathVariable UUID modelId, @PathVariable String profileName)
+    @Delete(Paths.SEMANTIC_MODEL_INDEX_MODEL)
+    SemanticModelIndexOperationResponseDTO deleteSemanticModelIndexesForModel(@PathVariable UUID modelId,
+                                                           @QueryValue(defaultValue = 'false') Boolean deleteEmbeddings)
 
-    @Delete(Paths.SEMANTIC_MODEL_INDEX_DEFAULT_PROFILE)
-    Map<String, Object> deleteDefaultSemanticModelIndex(@PathVariable UUID modelId)
+    @Delete(Paths.SEMANTIC_MODEL_INDEX_MODEL_PROFILE)
+    SemanticModelIndexOperationResponseDTO deleteSemanticModelIndexesForModelProfile(@PathVariable UUID modelId,
+                                                                  @PathVariable String profileName,
+                                                                  @QueryValue(defaultValue = 'false') Boolean deleteEmbeddings)
 
-    @Post(Paths.SEMANTIC_MODEL_INDEX_START)
-    Map<String, Object> startSemanticModelIndex(@PathVariable UUID modelId, @PathVariable String profileName, @Body Map<String, Object> request)
+    @Delete(Paths.SEMANTIC_CORPUS_MODEL_INDEX_MODEL)
+    SemanticModelIndexOperationResponseDTO deleteSemanticModelIndexesForCorpusModel(@PathVariable String corpusName,
+                                                                 @PathVariable UUID modelId,
+                                                                 @QueryValue(defaultValue = 'false') Boolean deleteEmbeddings)
 
-    @Post(Paths.SEMANTIC_MODEL_INDEX_START_DEFAULT_PROFILE)
-    Map<String, Object> startDefaultSemanticModelIndex(@PathVariable UUID modelId, @Body Map<String, Object> request)
+    @Delete(Paths.SEMANTIC_CORPUS_MODEL_INDEX_MODEL_PROFILE)
+    SemanticModelIndexOperationResponseDTO deleteSemanticModelIndex(@PathVariable String corpusName,
+                                                 @PathVariable UUID modelId,
+                                                 @PathVariable String profileName,
+                                                 @QueryValue(defaultValue = 'false') Boolean deleteEmbeddings)
+
+    @Delete(Paths.SEMANTIC_MODEL_INDEX_MODEL_EMBEDDINGS)
+    SemanticModelIndexOperationResponseDTO deleteSemanticModelIndexEmbeddingsForModel(@PathVariable UUID modelId)
+
+    @Delete(Paths.SEMANTIC_MODEL_INDEX_MODEL_PROFILE_EMBEDDINGS)
+    SemanticModelIndexOperationResponseDTO deleteSemanticModelIndexEmbeddingsForModelProfile(@PathVariable UUID modelId,
+                                                                          @PathVariable String profileName)
+
+    @Delete(Paths.SEMANTIC_CORPUS_MODEL_INDEX_MODEL_EMBEDDINGS)
+    SemanticModelIndexOperationResponseDTO deleteSemanticModelIndexEmbeddingsForCorpusModel(@PathVariable String corpusName,
+                                                                         @PathVariable UUID modelId)
+
+    @Delete(Paths.SEMANTIC_CORPUS_MODEL_INDEX_MODEL_PROFILE_EMBEDDINGS)
+    SemanticModelIndexOperationResponseDTO deleteSemanticModelIndexEmbeddings(@PathVariable String corpusName,
+                                                           @PathVariable UUID modelId,
+                                                           @PathVariable String profileName)
+
+    @Post(Paths.SEMANTIC_MODEL_INDEX_MODEL_START)
+    SemanticModelIndexOperationResponseDTO startSemanticModelIndexesForModel(@PathVariable UUID modelId, @Body SemanticModelIndexJobStartRequestDTO request)
+
+    @Post(Paths.SEMANTIC_MODEL_INDEX_MODEL_PROFILE_START)
+    SemanticModelIndexOperationResponseDTO startSemanticModelIndexesForModelProfile(@PathVariable UUID modelId,
+                                                                 @PathVariable String profileName,
+                                                                 @Body SemanticModelIndexJobStartRequestDTO request)
+
+    @Post(Paths.SEMANTIC_CORPUS_MODEL_INDEX_MODEL_START)
+    SemanticModelIndexOperationResponseDTO startSemanticModelIndexesForCorpusModel(@PathVariable String corpusName,
+                                                                @PathVariable UUID modelId,
+                                                                @Body SemanticModelIndexJobStartRequestDTO request)
+
+    @Post(Paths.SEMANTIC_CORPUS_MODEL_INDEX_MODEL_PROFILE_START)
+    SemanticModelIndexOperationResponseDTO startSemanticModelIndex(@PathVariable String corpusName,
+                                                @PathVariable UUID modelId,
+                                                @PathVariable String profileName,
+                                                @Body SemanticModelIndexJobStartRequestDTO request)
 
     @Get(Paths.SEMANTIC_INDEX_JOBS)
-    List<Map<String, Object>> semanticIndexJobs(@QueryValue(defaultValue = 'false') Boolean includeHistory)
+    List<SemanticIndexJobDTO> semanticIndexJobs(@QueryValue(defaultValue = 'false') Boolean includeHistory)
 
     @Get(Paths.SEMANTIC_INDEX_JOB)
-    Map<String, Object> semanticIndexJob(@PathVariable UUID jobId)
+    SemanticIndexJobDTO semanticIndexJob(@PathVariable UUID jobId)
 
     @Post(Paths.SEMANTIC_INDEX_JOB_CANCEL)
-    Map<String, Object> cancelSemanticIndexJob(@PathVariable UUID jobId)
+    SemanticIndexJobDTO cancelSemanticIndexJob(@PathVariable UUID jobId)
 
     @Post(Paths.SEMANTIC_INDEX_JOB_RESUME)
-    Map<String, Object> resumeSemanticIndexJob(@PathVariable UUID jobId)
+    SemanticIndexJobDTO resumeSemanticIndexJob(@PathVariable UUID jobId)
 
     @Get(Paths.SEMANTIC_INDEX_JOB_EVENTS)
     @Produces('application/x-ndjson')

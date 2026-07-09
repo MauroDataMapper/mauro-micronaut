@@ -1,31 +1,22 @@
 package org.maurodata.service.semantic
 
 import groovy.transform.CompileStatic
+import org.maurodata.domain.search.dto.SemanticCorpusDTO
+import org.maurodata.domain.search.dto.SemanticEmbeddingProfileDTO
+import org.maurodata.domain.search.dto.SemanticEmbeddingProfileRequestDTO
 
 @CompileStatic
 interface SemanticProfileAdministrationService {
 
-    List<Map<String, Object>> profiles()
+    List<SemanticEmbeddingProfileDTO> profiles()
 
-    List<Map<String, Object>> indexes()
+    SemanticEmbeddingProfileDTO createProfile(SemanticEmbeddingProfileRequestDTO request)
 
-    Map<String, Object> createIndex(Map<String, Object> request)
+    SemanticEmbeddingProfileDTO deleteProfile(String profileName)
 
-    Map<String, Object> deleteIndex(String indexName)
+    SemanticEmbeddingProfileDTO enable(String profileName)
 
-    Map<String, Object> createProfile(Map<String, Object> request)
+    SemanticEmbeddingProfileDTO disable(String profileName)
 
-    Map<String, Object> deleteProfile(String profileName)
-
-    Map<String, Object> enable(String profileName)
-
-    Map<String, Object> disable(String profileName)
-
-    Map<String, Object> link(String indexName, String profileName)
-
-    Map<String, Object> unlink(String indexName, String profileName)
-
-    Map<String, Object> deleteEmbeddingsForIndex(String indexName)
-
-    Map<String, Object> deleteChunksForCorpus(String corpusName)
+    SemanticCorpusDTO deleteChunksForCorpus(String corpusName)
 }

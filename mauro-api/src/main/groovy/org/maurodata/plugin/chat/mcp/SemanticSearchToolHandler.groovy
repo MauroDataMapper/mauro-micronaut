@@ -44,7 +44,7 @@ import org.maurodata.web.ListResponse
         'use max and offset for returned-result paging',
         'use deepSearch only when the user explicitly wants broader semantic recall and accepts slower results'
     ],
-    inputSchema = '{"type":"object","properties":{"query":{"type":"string","description":"Text to search by semantic similarity."},"searchTerm":{"type":"string","description":"Alias for query."},"domainTypes":{"type":"array","items":{"type":"string","enum":["DataModel","DataClass","DataElement","DataType","EnumerationType","EnumerationValue","CodeSet","Terminology","Term","Folder","VersionedFolder"]},"description":"Optional catalogue result type filter."},"modelId":{"type":"string","format":"uuid","description":"Optional UUID of a DataModel, Terminology, CodeSet, Folder, or VersionedFolder to scope the search. Folder scopes include descendant folders and contained models."},"corpus":{"type":"string","description":"Optional API-visible semantic corpus name. Omit to search API-visible corpora for the requested model scope."},"max":{"type":"integer","minimum":1,"maximum":20,"description":"Maximum returned results. Omit for default page size."},"offset":{"type":"integer","minimum":0,"description":"Zero-based offset for paging."},"includeChunks":{"type":"boolean","description":"Whether to include matched evidence snippets. Defaults to true."},"deepSearch":{"type":"boolean","description":"When true, prioritise broader semantic recall over speed. Defaults to false."}}}'
+    inputSchema = '{"type":"object","properties":{"query":{"type":"string","description":"Text to search by semantic similarity."},"searchTerm":{"type":"string","description":"Alias for query."},"domainTypes":{"type":"array","items":{"type":"string","enum":["DataModel","DataClass","DataElement","DataType","EnumerationType","EnumerationValue","CodeSet","Terminology","Term","Folder","VersionedFolder"]},"description":"Optional catalogue result type filter."},"modelId":{"type":"string","format":"uuid","description":"Optional UUID of a DataModel, Terminology, CodeSet, Folder, or VersionedFolder to scope the search. Folder scopes include descendant folders and contained models."},"corpus":{"type":"string","description":"Optional API-visible semantic corpus name. Omit to search API-visible corpora for the requested model scope."},"embeddingProfiles":{"type":"array","items":{"type":"string"},"description":"Optional enabled embedding profile names to search. Omit to use all enabled profiles for the requested corpus/model scope."},"profileName":{"type":"string","description":"Alias for a single embedding profile name."},"max":{"type":"integer","minimum":1,"maximum":20,"description":"Maximum returned results. Omit for default page size."},"offset":{"type":"integer","minimum":0,"description":"Zero-based offset for paging."},"includeChunks":{"type":"boolean","description":"Whether to include matched evidence snippets. Defaults to true."},"deepSearch":{"type":"boolean","description":"When true, prioritise broader semantic recall over speed. Defaults to false."}}}'
 )
 class SemanticSearchToolHandler extends AbstractAnnotatedToolHandler {
 
@@ -87,7 +87,7 @@ class SemanticSearchToolHandler extends AbstractAnnotatedToolHandler {
             corpus: asString(arguments.get('corpus') ?: arguments.get('corpusName')),
             domainTypes: extractStringList(arguments.get('domainTypes')).findAll {String domainType -> ALLOWED_DOMAIN_TYPES.contains(domainType)} as List<String>,
             withinModelId: asUuid(arguments.get('modelId') ?: arguments.get('withinModelId')),
-            embeddingProfiles: [],
+            embeddingProfiles: embeddingProfiles(arguments),
             indexName: 'catalogue-items-default',
             topN: 50,
             topM: 10,
@@ -119,7 +119,9 @@ class SemanticSearchToolHandler extends AbstractAnnotatedToolHandler {
             corpus: request.corpus,
             domainTypes: request.domainTypes,
             modelId: request.withinModelId?.toString(),
+            embeddingProfiles: request.embeddingProfiles,
             count: response.count ?: 0,
+            countIsExact: response.countIsExact,
             max: request.max,
             offset: request.offset,
             nextOffset: request.offset + items.size(),
@@ -157,15 +159,21 @@ class SemanticSearchToolHandler extends AbstractAnnotatedToolHandler {
             }
         }
         long returnedDataBuiltAt = System.currentTimeMillis()
+        boolean countIsExact = result.get('countIsExact') != false
+        String countDescription = countIsExact ?
+            "${result.get('count')}".toString() :
+            "at least ${result.get('count')}".toString()
         String text = renderModelTextSections([
             'Tool Call Status': ['Tool mauro_semantic_search succeeded.'],
             'Result Metadata': [
                 "Query: ${result.get('query')}",
-                "Total matching semantic candidates: ${result.get('count')}",
+                "Matching semantic candidates: ${countDescription}",
+                "Count is exact: ${countIsExact}",
                 "Returned items for this page: ${items.size()}",
                 "Semantic available: ${result.get('semanticAvailable')}",
                 result.get('fallbackReason') ? "Semantic fallback reason: ${result.get('fallbackReason')}" : null,
                 "Domain type filter: ${((List<?>) (result.get('domainTypes') ?: [])).join(', ')}",
+                "Embedding profiles: ${((List<?>) (result.get('embeddingProfiles') ?: [])).join(', ')}",
                 result.get('corpus') ? "Corpus: ${result.get('corpus')}" : null,
                 result.get('modelId') ? "Model scope: ${result.get('modelId')}" : null,
                 "Deep search: ${result.get('deepSearch')}",
@@ -224,6 +232,15 @@ class SemanticSearchToolHandler extends AbstractAnnotatedToolHandler {
             return []
         }
         String.valueOf(value).split(/\s*,\s*/).findAll {String item -> item?.trim()} as List<String>
+    }
+
+    private static List<String> embeddingProfiles(Map<String, Object> arguments) {
+        List<String> profiles = extractStringList(arguments.get('embeddingProfiles') ?: arguments.get('profiles'))
+        String profileName = asString(arguments.get('profileName') ?: arguments.get('embeddingProfile'))
+        if (profileName != null && !profileName.trim().isEmpty()) {
+            profiles.add(profileName.trim())
+        }
+        profiles.unique() as List<String>
     }
 
     private static String asString(Object value) {

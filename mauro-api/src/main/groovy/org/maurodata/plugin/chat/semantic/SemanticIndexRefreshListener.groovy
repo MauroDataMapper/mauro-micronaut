@@ -9,6 +9,7 @@ import groovy.util.logging.Slf4j
 import io.micronaut.context.event.ApplicationEventListener
 import jakarta.inject.Singleton
 import org.maurodata.persistence.search.SearchDomainsRefreshedEvent
+import org.maurodata.domain.search.dto.SemanticIndexJobDTO
 
 @Slf4j
 @CompileStatic
@@ -41,7 +42,7 @@ class SemanticIndexRefreshListener implements ApplicationEventListener<SearchDom
         reconcileInProgress = true
         try {
             log.info('Semantic index reconcile triggered by search domains refresh version {}', Long.valueOf(event.version()))
-            List<Map<String, Object>> results = semanticIndexAdministrationService.reconcileDeclaredIndexes()
+            List<SemanticIndexJobDTO> results = semanticIndexAdministrationService.reconcileDeclaredIndexes()
             lastProcessedVersion = event.version()
             log.info('Semantic index reconcile completed for search domains version {} with {} index results', Long.valueOf(event.version()), Integer.valueOf(results.size()))
         } catch (Exception e) {
