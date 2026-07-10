@@ -20,9 +20,14 @@ class AppliedProfileSection extends ProfileSection {
     @JsonIgnore
     AppliedProfile parentProfile
 
+    @JsonIgnore
+    AppliedProfileSection parentSection
+
     AppliedProfileSection() {}
 
     List<AppliedProfileField> fields = []
+
+    List<AppliedProfileSection> sections = []
 
     @Override
     String getLabel() {
@@ -34,19 +39,32 @@ class AppliedProfileSection extends ProfileSection {
         return sourceProfileSection.getDescription()
     }
 
-    AppliedProfileSection(ProfileSection profileSection, AppliedProfile parentProfile, AdministeredItem administeredItem) {
+    AppliedProfileSection(ProfileSection profileSection, AppliedProfile parentProfile, AdministeredItem administeredItem, AppliedProfileSection parentSection = null) {
         this.sourceProfileSection = profileSection
         this.administeredItem = administeredItem
         this.parentProfile = parentProfile
+        this.parentSection = parentSection
+        this.sections = profileSection.sections.collect {
+            new AppliedProfileSection(it, this.parentProfile, administeredItem, this)
+        }
         this.fields = profileSection.fields.collect {
             new AppliedProfileField(it, this, administeredItem)
         }
     }
 
     @CompileDynamic
-    AppliedProfileSection(ProfileSection profileSection, AppliedProfile parentProfile, Map sectionBody) {
+    AppliedProfileSection(ProfileSection profileSection, AppliedProfile parentProfile, Map sectionBody, AppliedProfileSection parentSection = null) {
         this.sourceProfileSection = profileSection
         this.parentProfile = parentProfile
+        this.parentSection = parentSection
+        profileSection.sections.each {childProfileSection ->
+            Map appliedSection = sectionBody["sections"].find {
+                (it['name'] == childProfileSection.name)
+            } as Map
+            if(appliedSection) {
+                this.sections.add(new AppliedProfileSection(childProfileSection, this.parentProfile, appliedSection, this))
+            }
+        }
         profileSection.fields.each {profileField ->
             Map appliedField = sectionBody["fields"].find {
                 (profileField.metadataPropertyName && it['metadataPropertyName'] == profileField.metadataPropertyName) ||
