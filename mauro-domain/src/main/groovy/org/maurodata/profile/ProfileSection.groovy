@@ -14,7 +14,9 @@ class ProfileSection {
     @JsonAlias('sectionDescription')
     String description
 
-    List<ProfileField> fields
+    List<ProfileField> fields = []
+
+    List<ProfileSection> sections = []
 
     @Deprecated
     String getName() {
