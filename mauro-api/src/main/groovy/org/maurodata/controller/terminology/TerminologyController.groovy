@@ -34,6 +34,7 @@ import org.maurodata.audit.Audit
 import org.maurodata.controller.model.ModelController
 import org.maurodata.domain.diff.ObjectDiff
 import org.maurodata.domain.facet.EditType
+import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.domain.model.Model
 import org.maurodata.domain.model.version.CreateNewVersionData
 import org.maurodata.domain.model.version.FinaliseData
@@ -119,7 +120,14 @@ class TerminologyController extends ModelController<Terminology> implements Term
         requestDTO.withinModelId = id
         Terminology terminology = terminologyRepository.readById(requestDTO.withinModelId)
         accessControlService.checkRole(Role.READER, terminology)
-        ListResponse.from(searchRepository.search(requestDTO))
+        List<SearchResultsDTO> searchResultsDTOs = searchRepository.search(requestDTO)
+        searchResultsDTOs.each {result ->
+            AdministeredItem item = findAdministeredItem(result.domainType, result.id)
+            pathRepository.readParentItems(item)
+            item.updateBreadcrumbs()
+            result.breadcrumbs = item.breadcrumbs
+        }
+        ListResponse.from(searchResultsDTOs)
     }
 
     @Audit(level = Audit.AuditLevel.FILE_ONLY)
@@ -129,7 +137,14 @@ class TerminologyController extends ModelController<Terminology> implements Term
         requestDTO.withinModelId = id
         Terminology terminology = terminologyRepository.readById(requestDTO.withinModelId)
         accessControlService.checkRole(Role.READER, terminology)
-        ListResponse.from(searchRepository.search(requestDTO))
+        List<SearchResultsDTO> searchResultsDTOs = searchRepository.search(requestDTO)
+        searchResultsDTOs.each {result ->
+            AdministeredItem item = findAdministeredItem(result.domainType, result.id)
+            pathRepository.readParentItems(item)
+            item.updateBreadcrumbs()
+            result.breadcrumbs = item.breadcrumbs
+        }
+        ListResponse.from(searchResultsDTOs)
     }
 
 
