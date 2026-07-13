@@ -45,7 +45,7 @@ final class ToolCallAccumulator {
         }
     }
 
-    private final Map<Integer, ToolCallState> statesByIndex = new LinkedHashMap<Integer, ToolCallState>()
+    private final Map<String, ToolCallState> statesByKey = new LinkedHashMap<String, ToolCallState>()
     private final JsonSlurper slurper = new JsonSlurper()
 
     void applyDelta(
@@ -59,10 +59,11 @@ final class ToolCallAccumulator {
             return
         }
 
-        ToolCallState state = statesByIndex.get(index)
+        final String key = stateKey(index, callId)
+        ToolCallState state = statesByKey.get(key)
         if (state == null) {
             state = new ToolCallState(index)
-            statesByIndex.put(index, state)
+            statesByKey.put(key, state)
         }
 
         if (callId != null && !callId.isEmpty()) {
@@ -80,8 +81,8 @@ final class ToolCallAccumulator {
     }
 
     List<CompletedToolCall> completeAll() {
-        final List<CompletedToolCall> out = new ArrayList<CompletedToolCall>(statesByIndex.size())
-        for (Map.Entry<Integer, ToolCallState> entry : statesByIndex.entrySet()) {
+        final List<CompletedToolCall> out = new ArrayList<CompletedToolCall>(statesByKey.size())
+        for (Map.Entry<String, ToolCallState> entry : statesByKey.entrySet()) {
             final ToolCallState state = entry.getValue()
             final String argsRaw = state.argumentsBuilder.toString()
 
@@ -111,15 +112,22 @@ final class ToolCallAccumulator {
             )
         }
 
-        statesByIndex.clear()
+        statesByKey.clear()
         return out
     }
 
     boolean hasAny() {
-        return !statesByIndex.isEmpty()
+        return !statesByKey.isEmpty()
     }
 
     void clear() {
-        statesByIndex.clear()
+        statesByKey.clear()
+    }
+
+    private static String stateKey(final Integer index, final String callId) {
+        if (callId != null && !callId.trim().isEmpty()) {
+            return 'id:' + callId
+        }
+        'index:' + index
     }
 }
