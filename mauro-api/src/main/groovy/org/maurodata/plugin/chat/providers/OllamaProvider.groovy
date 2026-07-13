@@ -28,7 +28,7 @@ import org.slf4j.LoggerFactory
 @Singleton
 class OllamaProvider implements LlmProvider {
     private static final Logger LOG = LoggerFactory.getLogger(OllamaProvider.class)
-    private static final Set<String> REUSABLE_TOOLS = new LinkedHashSet<String>(Arrays.asList('mauro_skill')).asImmutable()
+    private static final Set<String> REUSABLE_TOOLS = new LinkedHashSet<String>(Arrays.asList('mauro_skill', 'mauro_get')).asImmutable()
 
     private final String baseUrl
     private final boolean toolsEnabled
@@ -41,6 +41,7 @@ class OllamaProvider implements LlmProvider {
     private final int maxNumCtx
     private final int defaultNumPredict
     private final int promptCharsPerToken
+    private final int timeoutSeconds
     private final ChatMcpService mcpService
     private final ChatPromptResourceService promptResourceService
     private final JsonSlurper slurper = new JsonSlurper()
@@ -59,6 +60,7 @@ class OllamaProvider implements LlmProvider {
         @Value('${chat.providers.ollama.max-num-ctx:32768}') final int maxNumCtx,
         @Value('${chat.providers.ollama.default-num-predict:2048}') final int defaultNumPredict,
         @Value('${chat.providers.ollama.prompt-chars-per-token:4}') final int promptCharsPerToken,
+        @Value('${chat.providers.ollama.timeout-seconds:300}') final int timeoutSeconds,
         final ChatMcpService mcpService,
         final ChatPromptResourceService promptResourceService
     ) {
@@ -73,10 +75,11 @@ class OllamaProvider implements LlmProvider {
         this.maxNumCtx = Math.max(this.defaultNumCtx, maxNumCtx)
         this.defaultNumPredict = Math.max(256, defaultNumPredict)
         this.promptCharsPerToken = Math.max(1, promptCharsPerToken)
+        this.timeoutSeconds = Math.max(1, timeoutSeconds)
         this.mcpService = mcpService
         this.promptResourceService = promptResourceService
         LOG.info(
-            'OLLAMA_CONFIG baseUrl={} toolsEnabled={} defaultThink={} traceWire={} traceTurnDebug={} traceThinking={} defaultNumCtx={} maxNumCtx={} defaultNumPredict={} promptCharsPerToken={}',
+            'OLLAMA_CONFIG baseUrl={} toolsEnabled={} defaultThink={} traceWire={} traceTurnDebug={} traceThinking={} defaultNumCtx={} maxNumCtx={} defaultNumPredict={} promptCharsPerToken={} timeoutSeconds={}',
             this.baseUrl,
             Boolean.valueOf(this.toolsEnabled),
             Boolean.valueOf(this.defaultThink),
@@ -86,7 +89,8 @@ class OllamaProvider implements LlmProvider {
             Integer.valueOf(this.defaultNumCtx),
             Integer.valueOf(this.maxNumCtx),
             Integer.valueOf(this.defaultNumPredict),
-            Integer.valueOf(this.promptCharsPerToken)
+            Integer.valueOf(this.promptCharsPerToken),
+            Integer.valueOf(this.timeoutSeconds)
         )
     }
 
@@ -112,22 +116,31 @@ class OllamaProvider implements LlmProvider {
 
                         int toolRound = 0
                         int toolErrors = 0
+                        int emptyContinuationRetries = 0
+                        int missingToolCallRetries = 0
                         final Set<String> executedToolNames = new LinkedHashSet<String>()
                         final Set<String> executedToolCallKeys = new LinkedHashSet<String>()
+                        boolean hasToolResultContext = false
+                        boolean finalAnswerOnly = false
                         boolean continueLoop = true
                         while (continueLoop) {
                             final TurnDebugAccumulator debug = new TurnDebugAccumulator()
-                            final List<Map<String, Object>> availableTools = filterTools(request.tools, executedToolNames)
+                            final List<Map<String, Object>> availableTools = finalAnswerOnly
+                                ? Collections.<Map<String, Object>>emptyList()
+                                : filterTools(request.tools, executedToolNames)
                             final Set<String> allowedToolNames = toolNamesFromTools(availableTools)
                             final OllamaTurnResult turn = streamOneTurn(request, workingMessages, sink, toolIntent, debug, availableTools)
                             debug.structuredToolCalls = turn.toolCalls.size()
 
                             final List<ToolCallAccumulator.CompletedToolCall> executableCalls = new ArrayList<ToolCallAccumulator.CompletedToolCall>()
+                            final List<ToolCallAccumulator.CompletedToolCall> blockedCalls = new ArrayList<ToolCallAccumulator.CompletedToolCall>()
                             for (int i = 0; i < turn.toolCalls.size(); i++) {
-                                final ToolCallAccumulator.CompletedToolCall call = turn.toolCalls.get(i)
+                                final ToolCallAccumulator.CompletedToolCall call = normalizeToolCall(turn.toolCalls.get(i), allowedToolNames)
                                 final String fn = call.functionName
                                 if (fn != null && !fn.trim().isEmpty() && allowedToolNames.contains(fn)) {
                                     executableCalls.add(call)
+                                } else if (fn != null && !fn.trim().isEmpty()) {
+                                    blockedCalls.add(call)
                                 }
                             }
                             debug.executableStructuredToolCalls = executableCalls.size()
@@ -174,11 +187,15 @@ class OllamaProvider implements LlmProvider {
                                 }
                             }
                             int successfulToolExecutions = 0
+                            int blockedToolFeedbacks = 0
 
-                            if (!callsToRun.isEmpty()) {
+                            if (!callsToRun.isEmpty() || !blockedCalls.isEmpty()) {
                                 toolRound++
+                                List<ToolCallAccumulator.CompletedToolCall> acknowledgedCalls = new ArrayList<ToolCallAccumulator.CompletedToolCall>()
+                                acknowledgedCalls.addAll(callsToRun)
+                                acknowledgedCalls.addAll(blockedCalls)
                                 ProviderMessage assistantToolCallMessage = buildAssistantToolCallMessage(
-                                    callsToRun,
+                                    acknowledgedCalls,
                                     visibleAssistantContentBeforeToolCall(turn.assistantText)
                                 )
                                 if (assistantToolCallMessage != null) {
@@ -190,6 +207,9 @@ class OllamaProvider implements LlmProvider {
                                     final String callKey = toolCallKey(call)
                                     if (executedToolCallKeys.contains(callKey)) {
                                         LOG.info('Ignored repeated tool call messageId={} toolName={} arguments={}', request.messageId, call.functionName, call.argumentsRaw)
+                                        final String reason = repeatedToolCallReason(call)
+                                        emitBlockedToolResult(call, reason, allowedToolNames, workingMessages, request.messageId, sink)
+                                        blockedToolFeedbacks++
                                         continue
                                     }
                                     final ToolExecResult exec = handleToolCallStrict(
@@ -212,19 +232,72 @@ class OllamaProvider implements LlmProvider {
                                         debug.toolErrors++
                                     }
                                 }
+                                for (int i = 0; i < blockedCalls.size(); i++) {
+                                    final ToolCallAccumulator.CompletedToolCall call = blockedCalls.get(i)
+                                    final String reason = blockedToolCallReason(call, request.tools, allowedToolNames, executedToolNames)
+                                    LOG.info(
+                                        'Blocked tool call messageId={} toolName={} arguments={} reason={}',
+                                        request.messageId,
+                                        call.functionName,
+                                        call.argumentsRaw,
+                                        reason
+                                    )
+                                    emitBlockedToolResult(call, reason, allowedToolNames, workingMessages, request.messageId, sink)
+                                    blockedToolFeedbacks++
+                                }
                             }
                             debug.assistantTextLength = turn.assistantText == null ? 0 : turn.assistantText.length()
                             if (traceTurnDebug) {
                                 LOG.info('OLLAMA_TURN_DEBUG {}', debug.snapshot(request.sessionId, request.messageId))
                             }
 
+                            if (shouldRetryPromisedToolCall(turn, allowedToolNames, callsToRun, blockedCalls, missingToolCallRetries)) {
+                                missingToolCallRetries++
+                                ProviderMessage toolCallNudge = new ProviderMessage(
+                                    role: 'system',
+                                    content: 'You said you would use an available tool, but did not emit a structured tool call. Continue now by emitting the appropriate tool_call with concrete arguments. If no tool is actually needed, provide the final answer directly. Do not ask the user for clarification when the current request already contains enough search terms.'
+                                )
+                                workingMessages.add(toolCallNudge)
+                                emitProviderMessage(sink, request.messageId, toolCallNudge)
+                                LOG.info('OLLAMA_MISSING_TOOL_CALL_RETRY sessionId={} messageId={} retry={}', request.sessionId, request.messageId, Integer.valueOf(missingToolCallRetries))
+                                continue
+                            }
+
+                            if (shouldRetryEmptyToolContinuation(turn, hasToolResultContext, callsToRun, blockedCalls, emptyContinuationRetries)) {
+                                emptyContinuationRetries++
+                                ProviderMessage continuationNudge = new ProviderMessage(
+                                    role: 'system',
+                                    content: 'The previous tool result has been provided. Continue the user request now: either call the next required tool with concrete arguments, or provide the final answer from the available tool results. Do not return an empty message.'
+                                )
+                                workingMessages.add(continuationNudge)
+                                emitProviderMessage(sink, request.messageId, continuationNudge)
+                                LOG.info('OLLAMA_EMPTY_TOOL_CONTINUATION_RETRY sessionId={} messageId={} retry={}', request.sessionId, request.messageId, Integer.valueOf(emptyContinuationRetries))
+                                continue
+                            }
+
+                            if ((successfulToolExecutions > 0 || blockedToolFeedbacks > 0) && toolRound >= ToolLoopGuards.MAX_TOOL_ROUNDS) {
+                                hasToolResultContext = true
+                                finalAnswerOnly = true
+                                ProviderMessage finalAnswerNudge = new ProviderMessage(
+                                    role: 'system',
+                                    content: 'The maximum tool-call rounds for this response has been reached. Do not call more tools. Provide the final answer now using the tool results already available, and clearly mention any missing information.'
+                                )
+                                workingMessages.add(finalAnswerNudge)
+                                emitProviderMessage(sink, request.messageId, finalAnswerNudge)
+                                LOG.info('OLLAMA_FINAL_ANSWER_AFTER_MAX_TOOL_ROUNDS sessionId={} messageId={} toolRound={}', request.sessionId, request.messageId, Integer.valueOf(toolRound))
+                                continue
+                            }
+
                             continueLoop = ToolLoopGuards.shouldContinueToolLoop(
                                 toolRound,
                                 toolErrors,
-                                successfulToolExecutions,
+                                successfulToolExecutions + blockedToolFeedbacks,
                                 sink,
                                 request.messageId
                             )
+                            if (successfulToolExecutions > 0 || blockedToolFeedbacks > 0) {
+                                hasToolResultContext = true
+                            }
                         }
                     } catch (final Throwable t) {
                         sink.next(new ProviderChunk('error', request.messageId, t.getMessage(), Collections.<String, Object>emptyMap()))
@@ -277,7 +350,7 @@ class OllamaProvider implements LlmProvider {
         final HttpRequest httpRequest = HttpRequest.newBuilder()
             .uri(URI.create(baseUrl + '/api/chat'))
             .header('Content-Type', 'application/json')
-            .timeout(Duration.ofSeconds(120))
+            .timeout(Duration.ofSeconds(timeoutSeconds))
             .POST(HttpRequest.BodyPublishers.ofString(body))
             .build()
 
@@ -489,7 +562,7 @@ class OllamaProvider implements LlmProvider {
             sink.next(new ProviderChunk('tool_result', messageId, null, resultMeta))
 
             final String toolResultText = buildToolResultTextForModel(toolName, invokeResponse)
-            ProviderMessage toolMessage = new ProviderMessage('tool', toolResultText, null, toolName)
+            ProviderMessage toolMessage = new ProviderMessage('tool', toolResultText, call.callId, toolName)
             workingMessages.add(toolMessage)
             emitProviderMessage(sink, messageId, toolMessage)
             return ToolExecResult.executed()
@@ -497,6 +570,31 @@ class OllamaProvider implements LlmProvider {
             sink.next(new ProviderChunk('error', messageId, 'tool invocation failed: ' + t.getMessage(), Collections.<String, Object>emptyMap()))
             return ToolExecResult.error()
         }
+    }
+
+    private void emitBlockedToolResult(
+        final ToolCallAccumulator.CompletedToolCall call,
+        final String reason,
+        final Set<String> allowedToolNames,
+        final List<ProviderMessage> workingMessages,
+        final String messageId,
+        final reactor.core.publisher.FluxSink<ProviderChunk> sink
+    ) {
+        final String toolName = call.functionName ?: 'unknown'
+        final String error = reason ?: 'Tool call was blocked by provider policy.'
+        final Map<String, Object> resultMeta = new LinkedHashMap<String, Object>(5)
+        resultMeta.put('callId', call.callId)
+        resultMeta.put('ok', Boolean.FALSE)
+        resultMeta.put('error', error)
+        resultMeta.put('blocked', Boolean.TRUE)
+        resultMeta.put('arguments', call.argumentsJson ?: Collections.<String, Object>emptyMap())
+        resultMeta.put('availableTools', allowedToolNames == null ? [] : new ArrayList<String>(allowedToolNames))
+        sink.next(new ProviderChunk('tool_result', messageId, null, resultMeta))
+
+        final String toolResultText = blockedToolResultText(toolName, error, allowedToolNames)
+        ProviderMessage toolMessage = new ProviderMessage('tool', toolResultText, call.callId, toolName)
+        workingMessages.add(toolMessage)
+        emitProviderMessage(sink, messageId, toolMessage)
     }
 
     private String buildRequestBody(
@@ -1052,6 +1150,74 @@ class OllamaProvider implements LlmProvider {
         return "Tool ${toolName} succeeded. Result:\n" + JsonOutput.prettyPrint(JsonOutput.toJson(compactResultForModel(result)))
     }
 
+    private static boolean shouldRetryEmptyToolContinuation(
+        final OllamaTurnResult turn,
+        final boolean hasToolResultContext,
+        final List<ToolCallAccumulator.CompletedToolCall> callsToRun,
+        final List<ToolCallAccumulator.CompletedToolCall> blockedCalls,
+        final int emptyContinuationRetries
+    ) {
+        if (!hasToolResultContext || emptyContinuationRetries > 0) {
+            return false
+        }
+        if (callsToRun != null && !callsToRun.isEmpty()) {
+            return false
+        }
+        if (blockedCalls != null && !blockedCalls.isEmpty()) {
+            return false
+        }
+        if (turn == null) {
+            return false
+        }
+        if (turn.toolCalls != null && !turn.toolCalls.isEmpty()) {
+            return false
+        }
+        final String assistantText = turn.assistantText
+        assistantText == null || assistantText.trim().isEmpty()
+    }
+
+    private static boolean shouldRetryPromisedToolCall(
+        final OllamaTurnResult turn,
+        final Set<String> allowedToolNames,
+        final List<ToolCallAccumulator.CompletedToolCall> callsToRun,
+        final List<ToolCallAccumulator.CompletedToolCall> blockedCalls,
+        final int missingToolCallRetries
+    ) {
+        if (missingToolCallRetries > 0 || allowedToolNames == null || allowedToolNames.isEmpty()) {
+            return false
+        }
+        if (callsToRun != null && !callsToRun.isEmpty()) {
+            return false
+        }
+        if (blockedCalls != null && !blockedCalls.isEmpty()) {
+            return false
+        }
+        if (turn == null || (turn.toolCalls != null && !turn.toolCalls.isEmpty())) {
+            return false
+        }
+        final String assistantText = turn.assistantText
+        if (assistantText == null || assistantText.trim().isEmpty()) {
+            return false
+        }
+        final String lower = assistantText.toLowerCase(Locale.ROOT)
+        final boolean futureToolIntent =
+            lower.contains('i will ') ||
+                lower.contains("i'll ") ||
+                lower.contains('let me ') ||
+                lower.contains('i am going to ') ||
+                lower.contains('i can now ') ||
+                lower.contains('i need to ')
+        if (!futureToolIntent) {
+            return false
+        }
+        for (String toolName : allowedToolNames) {
+            if (toolName != null && !toolName.trim().isEmpty() && lower.contains(toolName.toLowerCase(Locale.ROOT))) {
+                return true
+            }
+        }
+        false
+    }
+
     private static ProviderMessage buildAssistantToolCallMessage(
         final List<ToolCallAccumulator.CompletedToolCall> callsToRun,
         final String assistantContent
@@ -1160,6 +1326,101 @@ class OllamaProvider implements LlmProvider {
             }
         }
         return names
+    }
+
+    private static String blockedToolCallReason(
+        final ToolCallAccumulator.CompletedToolCall call,
+        final List<Map<String, Object>> allTools,
+        final Set<String> allowedToolNames,
+        final Set<String> excludedToolNames
+    ) {
+        final String toolName = call.functionName
+        if (toolName == null || toolName.trim().isEmpty()) {
+            return 'Tool call was missing a function name.'
+        }
+        if (allowedToolNames != null && allowedToolNames.contains(toolName)) {
+            return 'Tool call was not executable.'
+        }
+        if (excludedToolNames != null && excludedToolNames.contains(toolName)) {
+            return "Tool ${toolName} was already used in this assistant turn. Choose another available tool or answer using the results already returned."
+        }
+        final Set<String> allToolNames = toolNamesFromTools(allTools)
+        if (!allToolNames.contains(toolName)) {
+            return "Tool ${toolName} is not available. Choose one of the advertised tools."
+        }
+        return "Tool ${toolName} is not available for this continuation. Choose another available tool or answer using the results already returned."
+    }
+
+    private static String blockedToolResultText(
+        final String toolName,
+        final String error,
+        final Set<String> allowedToolNames
+    ) {
+        final List<String> available = allowedToolNames == null ?
+            Collections.<String>emptyList() :
+            new ArrayList<String>(allowedToolNames).sort(false)
+        final String availableText = available.isEmpty() ?
+            'No tools are currently available in this continuation.' :
+            'Currently available tools: ' + available.join(', ') + '.'
+        "Tool ${toolName} was not executed: ${error}\n${availableText}\nRecover by calling one of the available tools with concrete arguments, or answer using the tool results already available."
+    }
+
+    private static ToolCallAccumulator.CompletedToolCall normalizeToolCall(
+        final ToolCallAccumulator.CompletedToolCall call,
+        final Set<String> allowedToolNames
+    ) {
+        if (call == null || call.functionName == null || allowedToolNames == null) {
+            return call
+        }
+        if (allowedToolNames.contains(call.functionName)) {
+            return call
+        }
+        if (!allowedToolNames.contains('mauro_skill')) {
+            return call
+        }
+        final String skillId = skillIdFromPseudoToolName(call.functionName)
+        if (skillId == null) {
+            return call
+        }
+        final Map<String, Object> normalizedArgs = new LinkedHashMap<String, Object>(call.argumentsJson ?: Collections.<String, Object>emptyMap())
+        if (!normalizedArgs.containsKey('id')) {
+            normalizedArgs.put('id', skillId)
+        }
+        final String normalizedRaw = JsonOutput.toJson(normalizedArgs)
+        return new ToolCallAccumulator.CompletedToolCall(
+            call.index,
+            call.callId,
+            call.toolType,
+            'mauro_skill',
+            normalizedRaw,
+            normalizedArgs
+        )
+    }
+
+    private static String skillIdFromPseudoToolName(final String toolName) {
+        if (toolName == null || toolName.trim().isEmpty()) {
+            return null
+        }
+        final String trimmed = toolName.trim()
+        if (trimmed == 'mauro_skill') {
+            return null
+        }
+        if (trimmed.startsWith('mauro_')) {
+            return 'mauro-' + trimmed.substring('mauro_'.length()).replace('_', '-')
+        }
+        if (trimmed.startsWith('mauro-')) {
+            return trimmed
+        }
+        null
+    }
+
+    private static String repeatedToolCallReason(final ToolCallAccumulator.CompletedToolCall call) {
+        final String toolName = call?.functionName ?: 'unknown'
+        final String args = call?.argumentsRaw
+        if (args != null && !args.trim().isEmpty()) {
+            return "The exact ${toolName} call with arguments ${args} has already been executed in this assistant turn. Use the existing result, call the next different tool/input needed, or provide the final answer."
+        }
+        "The exact ${toolName} call has already been executed in this assistant turn. Use the existing result, call the next different tool/input needed, or provide the final answer."
     }
 
     private static String toolName(final Map<String, Object> tool) {

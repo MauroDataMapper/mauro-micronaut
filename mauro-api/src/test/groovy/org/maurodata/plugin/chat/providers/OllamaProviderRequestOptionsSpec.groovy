@@ -101,6 +101,7 @@ class OllamaProviderRequestOptionsSpec extends Specification {
             maxNumCtx,
             defaultNumPredict,
             4,
+            300,
             Stub(ChatMcpService),
             new ChatPromptResourceService()
         )

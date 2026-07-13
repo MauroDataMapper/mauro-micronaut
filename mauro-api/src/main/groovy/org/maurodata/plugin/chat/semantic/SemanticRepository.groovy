@@ -30,18 +30,154 @@ import java.time.Instant
 @Connectable
 class SemanticRepository {
 
+    private static final Set<String> SOLITARY_NOISE_WORDS = Collections.unmodifiableSet(new LinkedHashSet<String>(Arrays.asList(
+        'a',
+        'about',
+        'above',
+        'after',
+        'again',
+        'against',
+        'all',
+        'am',
+        'an',
+        'and',
+        'any',
+        'are',
+        'as',
+        'at',
+        'be',
+        'because',
+        'been',
+        'before',
+        'being',
+        'between',
+        'both',
+        'but',
+        'by',
+        'can',
+        'could',
+        'did',
+        'do',
+        'does',
+        'doing',
+        'during',
+        'each',
+        'for',
+        'from',
+        'further',
+        'had',
+        'has',
+        'have',
+        'having',
+        'he',
+        'her',
+        'here',
+        'hers',
+        'herself',
+        'him',
+        'himself',
+        'his',
+        'how',
+        'i',
+        'if',
+        'in',
+        'into',
+        'is',
+        'it',
+        'its',
+        'itself',
+        'may',
+        'me',
+        'might',
+        'more',
+        'most',
+        'my',
+        'myself',
+        'nor',
+        'of',
+        'off',
+        'on',
+        'once',
+        'only',
+        'or',
+        'our',
+        'ours',
+        'ourselves',
+        'out',
+        'over',
+        'own',
+        'per',
+        'same',
+        'she',
+        'should',
+        'so',
+        'some',
+        'such',
+        'than',
+        'that',
+        'the',
+        'their',
+        'theirs',
+        'them',
+        'themselves',
+        'then',
+        'there',
+        'these',
+        'they',
+        'this',
+        'those',
+        'through',
+        'to',
+        'too',
+        'under',
+        'until',
+        'up',
+        'upon',
+        'very',
+        'was',
+        'we',
+        'were',
+        'what',
+        'when',
+        'where',
+        'which',
+        'while',
+        'who',
+        'whom',
+        'why',
+        'will',
+        'with',
+        'would',
+        'you',
+        'your',
+        'yours',
+        'yourself',
+        'yourselves'
+    )))
+
+    private static final Set<String> NOISE_FILTERED_CHUNK_KINDS = Collections.unmodifiableSet(new LinkedHashSet<String>(Arrays.asList(
+        'label',
+        'summary',
+        'description-section',
+        'label-identifier',
+        'label-phrase'
+    )))
+
     private final DataSource dataSource
     private final int hnswCatalogueEfSearch
     private final int hnswContextEfSearch
+    private final int modelIndexRefreshCheckTimeoutSeconds
 
     SemanticRepository(DataSource dataSource,
                        @Value('${chat.semantic.search.hnsw-ef-search:10}') Integer hnswEfSearch,
                        @Value('${chat.semantic.search.catalogue-hnsw-ef-search:10}') Integer hnswCatalogueEfSearch,
-                       @Value('${chat.semantic.search.context-hnsw-ef-search:40}') Integer hnswContextEfSearch) {
+                       @Value('${chat.semantic.search.context-hnsw-ef-search:40}') Integer hnswContextEfSearch,
+                       @Value('${chat.semantic.indexing.model-refresh-check-timeout-seconds:10}') Integer modelIndexRefreshCheckTimeoutSeconds) {
         this.dataSource = dataSource
         int fallback = Math.max(hnswEfSearch ?: 10, 1)
         this.hnswCatalogueEfSearch = Math.max(hnswCatalogueEfSearch ?: fallback, 1)
         this.hnswContextEfSearch = Math.max(hnswContextEfSearch ?: Math.max(fallback, 40), 1)
+        this.modelIndexRefreshCheckTimeoutSeconds = Math.max(modelIndexRefreshCheckTimeoutSeconds ?: 10, 1)
     }
 
     EmbeddingProfile findProfileByName(String name) {
@@ -1339,6 +1475,7 @@ class SemanticRepository {
         boolean needsRefresh
         try (Connection connection = dataSource.connection;
              PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setQueryTimeout(modelIndexRefreshCheckTimeoutSeconds)
             int index = bindCatalogueSourceRows(statement, connection, Collections.<String>emptyList(), mauroModelId, null)
             statement.setObject(index++, mauroModelId)
             statement.setString(index++, corpusName ?: 'catalogue-items')
@@ -2708,6 +2845,9 @@ class SemanticRepository {
         if (clean.isEmpty()) {
             return
         }
+        if (isSolitaryNoisyLabelOrDescriptionChunk(kind, clean)) {
+            return
+        }
         if (chunks.any {SemanticChunk chunk -> chunk.sourceText == clean}) {
             return
         }
@@ -2726,6 +2866,18 @@ class SemanticRepository {
             dateCreated: dateCreated,
             lastUpdated: lastUpdated
         ))
+    }
+
+    private static boolean isSolitaryNoisyLabelOrDescriptionChunk(String kind, String text) {
+        if (!NOISE_FILTERED_CHUNK_KINDS.contains(kind) || text == null) {
+            return false
+        }
+        String normalized = text.trim().toLowerCase(Locale.ROOT).replaceAll(/[^a-z]+/, '')
+        !normalized.isEmpty() && SOLITARY_NOISE_WORDS.contains(normalized)
+    }
+
+    private static String quotedSqlList(Collection<String> values) {
+        values.collect {String value -> "'${value}'".toString() }.join(', ')
     }
 
     private static String vectorLiteral(float[] vector) {
@@ -3034,6 +3186,10 @@ class SemanticRepository {
                 WHERE source_text IS NOT NULL
                   AND btrim(source_text) <> ''
                   AND domain_type NOT IN ('ClassificationScheme', 'Classifier')
+                  AND NOT (
+                      generated.chunk_kind IN (${quotedSqlList(NOISE_FILTERED_CHUNK_KINDS)})
+                      AND lower(regexp_replace(btrim(generated.source_text), '[^[:alpha:]]+', '', 'g')) IN (${quotedSqlList(SOLITARY_NOISE_WORDS)})
+                  )
             ) generated
             WHERE duplicate_rank = 1
         """

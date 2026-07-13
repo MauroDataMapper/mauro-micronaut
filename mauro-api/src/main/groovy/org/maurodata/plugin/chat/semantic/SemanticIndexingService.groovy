@@ -737,8 +737,7 @@ class SemanticIndexingService implements SemanticIndexAdministrationService {
             String profileName = String.valueOf(index.get('profileName'))
             String corpusName = String.valueOf(index.get('corpusName') ?: 'catalogue-items')
             boolean alreadyStale = String.valueOf(index.get('status')) != 'READY'
-            boolean needsRefresh = alreadyStale || semanticRepository.modelIndexNeedsRefresh(corpusName, mauroModelId, profileName)
-            if (!needsRefresh) {
+            if (!alreadyStale) {
                 continue
             }
             semanticRepository.markModelIndexStale(mauroModelId, profileName, corpusName, 'declared semantic model index changed')
@@ -1262,7 +1261,7 @@ class SemanticIndexingService implements SemanticIndexAdministrationService {
                 {Map<String, Object> progress -> semanticRepository.updateJobStatus(jobId, 'RUNNING', progress)} as Consumer<Map<String, Object>>
             )
             boolean changedDuringRun = semanticRepository.modelIndexChangedDuringRun(mauroModelId, profileName, corpusName)
-            boolean stillNeedsRefresh = changedDuringRun || semanticRepository.modelIndexNeedsRefresh(corpusName ?: 'catalogue-items', mauroModelId, profileName)
+            boolean stillNeedsRefresh = changedDuringRun || modelIndexNeedsRefreshFailSoft(corpusName ?: 'catalogue-items', mauroModelId, profileName)
             result.put('changedDuringRun', changedDuringRun)
             result.put('stillNeedsRefresh', stillNeedsRefresh)
             if (stillNeedsRefresh) {
@@ -1302,6 +1301,21 @@ class SemanticIndexingService implements SemanticIndexAdministrationService {
             semanticRepository.updateJobStatus(jobId, 'FAILED', null, message)
             log.error('Semantic model index job {} failed for model {} profile {}', jobId, mauroModelId, profileName, t)
             semanticRepository.job(jobId)
+        }
+    }
+
+    private boolean modelIndexNeedsRefreshFailSoft(String corpusName, UUID mauroModelId, String profileName) {
+        try {
+            return semanticRepository.modelIndexNeedsRefresh(corpusName, mauroModelId, profileName)
+        } catch (Throwable t) {
+            log.warn(
+                'Semantic model index refresh check failed; treating index as stale. modelId={} profile={} corpus={} error={}',
+                mauroModelId,
+                profileName,
+                corpusName,
+                t.message
+            )
+            return true
         }
     }
 
