@@ -18,16 +18,6 @@ final class ToolLoopGuards {
         final reactor.core.publisher.FluxSink<ProviderChunk> sink,
         final String messageId
     ) {
-        if (toolRound >= MAX_TOOL_ROUNDS) {
-            sink.next(new ProviderChunk(
-                'error',
-                messageId,
-                'Provider stopped: reached maximum tool-call rounds.',
-                Collections.<String, Object>emptyMap()
-            ))
-            return false
-        }
-
         if (toolErrors >= MAX_TOOL_ERRORS) {
             sink.next(new ProviderChunk(
                 'error',
@@ -38,6 +28,20 @@ final class ToolLoopGuards {
             return false
         }
 
-        return successfulToolExecutions > 0
+        if (successfulToolExecutions <= 0) {
+            return false
+        }
+
+        if (toolRound > MAX_TOOL_ROUNDS) {
+            sink.next(new ProviderChunk(
+                'error',
+                messageId,
+                'Provider stopped: reached maximum tool-call rounds.',
+                Collections.<String, Object>emptyMap()
+            ))
+            return false
+        }
+
+        return true
     }
 }

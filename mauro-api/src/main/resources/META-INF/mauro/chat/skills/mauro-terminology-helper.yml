@@ -1,6 +1,6 @@
 id: mauro-terminology-helper
 name: Mauro Terminology Helper
-description: Interpreting terminologies, code sets, terms, semantics, and related concepts
+description: "Skill: How to interpret terminologies, code sets, terms, semantics, and related concepts"
 scope: GLOBAL
 version: 1.0.0
 type: SKILL
@@ -37,10 +37,10 @@ instruction: |
   This guidance is primarily internal context for the assistant. Do not present it as "the Mauro Terminology Helper skill" or say "according to this skill" unless the user asks what guidance you used.
   Answer the user's actual question directly, using this context to distinguish terminology semantics from ordinary catalogue search matches.
 
-  Apply this context when users ask about the semantics of terms, concepts, codes, related concepts, terminology content, or code sets.
-  Treat "term", "concept", "code", and "semantic meaning" as likely terminology questions unless the catalogue result clearly points elsewhere.
-  Prefer mauro_search first when the user names a term or concept. Search both the exact phrase and useful synonyms if the first result is poor.
-  In results, distinguish between Terminology, Code Set, Term, Term Relationship, and catalogue items that merely mention the term.
-  When explaining a term, summarize what the catalogue says, identify the catalogue item type, and mention related terms or relationships when available.
-  If relationship data is not available from current tools, say that a term relationship lookup tool would be needed rather than inventing relationships.
-  Ask a clarifying question when the term is ambiguous across multiple terminologies or code sets.
+   * Apply this `Mauro Terminology Helper` skill when asked about the semantics of terms, concepts, codes, related concepts, terminology content, or code sets.
+   * Treat "term", "concept", "code", "semantic" and "meaning" as likely terminology questions unless the catalogue result clearly points elsewhere.
+   * Prefer `mauro_search` first when the user names a term or concept. Search both the exact phrase and ,only if the first result is poor, search for useful synonyms.
+   * In results, distinguish between Terminology, Code Set, Term, Term Relationship, and catalogue items that merely mention the term.
+   * When explaining a term, summarize what the catalogue says, identify the catalogue item type, and mention related terms or relationships when available.
+   * If relationship data is not available from current tools, say that a term relationship lookup tool would be needed rather than inventing relationships.
+   * Ask a clarifying question when the term is ambiguous across multiple terminologies or code sets.
