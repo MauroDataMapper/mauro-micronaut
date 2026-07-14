@@ -43,7 +43,11 @@ class DataModelBasedProfile implements Profile {
 
     @Override
     List<String> getProfileApplicableForDomains() {
-        (metadataMap["domainsApplicable"]?:"").split(";").collect {it.trim()}
+        String domainsApplicable = metadataMap["domainsApplicable"]
+        if(!domainsApplicable || "" == domainsApplicable) {
+            return []
+        }
+        domainsApplicable.split(";").collect {it.trim()}
     }
 
     DataModelBasedProfile(DataModel dataModel) {
