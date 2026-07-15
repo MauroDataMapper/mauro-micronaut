@@ -25,6 +25,7 @@ import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.annotation.Relation
 import jakarta.persistence.Transient
 import jakarta.validation.constraints.NotBlank
+import org.maurodata.visitor.common.SetAssociationsVisitor
 
 import java.time.Instant
 
@@ -135,26 +136,8 @@ abstract class AdministeredItem extends Item implements Pathable, DiffableItem {
     @Transient
     @JsonIgnore
     void setAssociations() {
-        List<Facet> facets = []
-        [getEdits(),getMetadata(),getSummaryMetadata(),getRules(),getAnnotations(),getReferenceFiles(),getSemanticLinks()].each {
-            facets.addAll(it?:[])
-        }
-        facets.each {
-            it.multiFacetAwareItem = this
-        }
-        getAnnotations().each {
-            it.setAssociations()
-        }
-        summaryMetadata.each {summaryMetadata ->
-            summaryMetadata.summaryMetadataReports.each { report ->
-                report.summaryMetadata = summaryMetadata
-            }
-        }
-        rules.each {rule ->
-            rule.ruleRepresentations.each { ruleRepresentation ->
-                ruleRepresentation.rule = rule
-            }
-        }
+        SetAssociationsVisitor setAssociationsVisitor = new SetAssociationsVisitor()
+        this.accept(setAssociationsVisitor)
     }
 
     @Override
