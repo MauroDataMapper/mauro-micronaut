@@ -86,25 +86,6 @@ class ClassificationScheme extends Model implements ItemReferencer, DiffableItem
         cloned
     }
 
-    @Transient
-    @JsonIgnore
-    @Override
-    void setAssociations() {
-        super.setAssociations()
-        this.csClassifiers.collect {classifier ->
-            classifier.classificationScheme = this
-            classifier.childClassifiers.each {childClassifier ->
-                childClassifier.parentClassifier = classifier
-                childClassifier.classificationScheme = this
-                childClassifier.parent = childClassifier.parentClassifier
-                childClassifier.setAssociations()
-            }
-            classifier.parent = classifier.parentClassifier ?: classifier.classificationScheme
-            classifier.setAssociations()
-            classifier
-        }
-        this
-    }
 
     @Override
     @JsonIgnore

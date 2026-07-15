@@ -73,28 +73,6 @@ class Terminology extends Model implements ItemReferencer, DiffableItem<Terminol
         [terms, termRelationshipTypes, termRelationships] as List<List<ModelItem<Terminology>>>
     }
 
-    @Transient
-    @JsonIgnore
-    @Override
-    void setAssociations() {
-        super.setAssociations()
-        Map<UUID, Term> termsMap = terms.collectEntries {[it.id?:it.code, it]}
-        Map<UUID, TermRelationshipType> termRelationshipTypesMap = termRelationshipTypes.collectEntries {[it.id?:it.label, it]}
-
-        terms.each {
-            it.parent = this
-        }
-        termRelationshipTypes.each {
-            it.parent = this
-        }
-        termRelationships.each {
-            it.parent = this
-            it.relationshipType = termRelationshipTypesMap[it.relationshipType.id?:it.relationshipType.label]
-            it.sourceTerm = termsMap[it.sourceTerm.id?:it.sourceTerm.code]
-            it.targetTerm = termsMap[it.targetTerm.id?:it.targetTerm.code]
-        }
-    }
-
     @Override
     Terminology clone() {
         log.debug '*** Terminology.clone() ***'

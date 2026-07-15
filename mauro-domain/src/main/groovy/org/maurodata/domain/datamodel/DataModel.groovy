@@ -207,38 +207,6 @@ class DataModel extends Model implements ItemReferencer, DiffableItem<DataModel>
         base
     }
 
-    @Transient
-    @JsonIgnore
-    @Override
-    void setAssociations() {
-        super.setAssociations()
-        Map<String, DataType> dataTypesMap = dataTypes.collectEntries { if(it.id) {[it.id, it]}}
-        dataTypesMap.putAll(dataTypes.collectEntries { {[it.label, it]}})
-        List<? extends DataType> referenceTypes = dataTypeReferenceTypes()
-
-        dataTypes.each {dataType ->
-            dataType.parent = this
-            dataType.dataModel = this
-            dataType.setAssociations()
-        }
-
-        dataClasses.each {dataClass ->
-            setDataClassAssociations(dataClass, dataTypesMap, referenceTypes)
-        }
-        dataTypes.each {dataType ->
-            if(dataType.dataTypeKind == DataType.DataTypeKind.REFERENCE_TYPE) {
-                if(!dataType.dataModel.allDataClasses.contains(dataType.referenceClass)) {
-                    dataType.referenceClass = dataType.dataModel.allDataClasses.find {dataClass ->
-                        (dataType.referenceClass.id && dataClass.id && dataClass.id == dataType.referenceClass.id) ||
-                        (dataType.referenceClass.label && dataClass.label && dataClass.label == dataType.referenceClass.label)
-                    }
-                }
-            }
-        }
-
-        this
-    }
-
     void setDataClassAssociations(DataClass dataClass, Map<String, DataType> dataTypesMap,
                                   List<? extends DataType> referenceTypes) {
         dataClass.setAssociations()

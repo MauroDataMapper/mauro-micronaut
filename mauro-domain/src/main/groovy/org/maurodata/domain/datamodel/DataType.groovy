@@ -125,18 +125,6 @@ class DataType extends ModelItem<DataModel> implements DiffableItem<DataType>, I
         }
     }
 
-    @Transient
-    @JsonIgnore
-    @Override
-    void setAssociations() {
-        super.setAssociations()
-        enumerationValues.each {enumerationValue ->
-            enumerationValue.enumerationType = this
-            dataModel.enumerationValues.add(enumerationValue)
-            enumerationValue.dataModel = this.dataModel
-        }
-
-    }
 
     @Override
     String getDomainType() {

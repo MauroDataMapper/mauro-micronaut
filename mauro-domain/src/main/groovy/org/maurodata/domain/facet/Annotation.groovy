@@ -101,14 +101,6 @@ class Annotation extends Facet implements DiffableItem<Annotation> {
         createdByUser ? createdByUser : catalogueUser
     }
 
-    void setAssociations() {
-        if(childAnnotations) {
-            childAnnotations.each {childAnnotation ->
-                childAnnotation.parentAnnotation = this
-                childAnnotation.setAssociations()
-            }
-        }
-    }
 
     @Override
     @JsonIgnore

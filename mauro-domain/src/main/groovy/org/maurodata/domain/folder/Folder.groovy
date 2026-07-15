@@ -208,33 +208,6 @@ class Folder extends Model implements ItemReferencer, DiffableItem<Folder> {
         cloned
     }
 
-    @Transient
-    @JsonIgnore
-    @Override
-    void setAssociations() {
-        super.setAssociations()
-        childFolders.each {childFolder ->
-            childFolder.parentFolder = this
-            childFolder.setAssociations()
-        }
-        dataModels.each {dataModel ->
-            dataModel.folder = this
-            dataModel.setAssociations()
-        }
-        terminologies.each {terminology ->
-            terminology.folder = this
-            terminology.setAssociations()
-        }
-        codeSets.each {codeSet ->
-            codeSet.folder = this
-            codeSet.setAssociations()
-        }
-        classificationSchemes.each {classificationScheme ->
-            classificationScheme.folder = this
-            classificationScheme.setAssociations()
-        }
-    }
-
 
     /****
      * Methods for building a tree-like DSL

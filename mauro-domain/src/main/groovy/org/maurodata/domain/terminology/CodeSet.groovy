@@ -77,14 +77,6 @@ class CodeSet extends Model implements ItemReferencer, DiffableItem<CodeSet> {
     }
 
 
-    @Transient
-    @JsonIgnore
-    @Override
-    void setAssociations() {
-        super.setAssociations()
-    }
-
-
     @Override
     String toString() {
         return "CodeSet{" +

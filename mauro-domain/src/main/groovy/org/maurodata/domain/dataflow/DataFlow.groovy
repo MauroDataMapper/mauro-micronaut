@@ -62,23 +62,6 @@ class DataFlow extends ModelItem<DataModel> {
         dataClassComponents
     }
 
-    @Transient
-    @JsonIgnore
-    @Override
-    void setAssociations() {
-        super.setAssociations()
-        dataClassComponents.each {dataClassComponent ->
-            dataClassComponent.dataFlow = this
-            dataClassComponent.setAssociations()
-            dataClassComponent.dataElementComponents.each {dataElementComponent ->
-                dataElementComponent.dataClassComponent = dataClassComponent
-                dataElementComponent.setAssociations()
-            }
-        }
-
-    }
-
-
     @Override
     @Transient
     @JsonIgnore
