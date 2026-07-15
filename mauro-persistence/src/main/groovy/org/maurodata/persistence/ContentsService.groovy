@@ -7,8 +7,8 @@ import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.folder.Folder
 import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.domain.security.CatalogueUser
-import org.maurodata.persistence.shredder.ShredVisitor
-import org.maurodata.persistence.shredder.ShreddedContent
+import org.maurodata.shredder.ShredVisitor
+import org.maurodata.shredder.ShreddedContent
 import org.maurodata.visitor.GenericDomainTraversalVisitor
 import org.maurodata.visitor.common.RemoveIdVisitor
 import org.maurodata.visitor.common.SetCreatePropertiesVisitor
@@ -42,6 +42,10 @@ class ContentsService {
         contentHandler.saveWithContent(shreddedContent)
         dataModel.setAssociations()
         return dataModel
+    }
+
+    void saveShreddedContent(ShreddedContent shreddedContent) {
+        contentHandler.saveWithContent(shreddedContent)
     }
 
     boolean deleteWithContent(AdministeredItem item) {

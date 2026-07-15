@@ -364,7 +364,7 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
         }
 
         List<DataElement> findAllByIdIn(Collection<UUID> dataElementIds){
-            ((DataElementRepository) repository).findAllByIdIn(dataElementIds)
+            ((DataElementRepository) repository).findAllByIdIn(dataElementIds) as List<DataElement>
         }
 
     }

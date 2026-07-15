@@ -1,4 +1,4 @@
-package org.maurodata.persistence.shredder
+package org.maurodata.shredder
 
 import groovy.transform.CompileStatic
 import org.maurodata.domain.classifier.ClassificationScheme
@@ -46,9 +46,18 @@ class ShredVisitor extends GenericDomainTraversalVisitor {
     private int dataClassDepth = 0
     private int annotationDepth = 0
 
+    ShredVisitor(ShreddedContent shreddedContent) {
+        super()
+        this.shreddedContent = shreddedContent
+        registerHandlers()
+    }
+
     ShredVisitor() {
         super()
+        registerHandlers()
+    }
 
+    void registerHandlers() {
         // Folders - track depth with stack
         onEnter(Folder) { Folder folder ->
             shreddedContent.addFolderAtDepth(folder, folderDepth++)

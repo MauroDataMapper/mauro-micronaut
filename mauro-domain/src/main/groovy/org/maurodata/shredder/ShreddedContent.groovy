@@ -1,4 +1,4 @@
-package org.maurodata.persistence.shredder
+package org.maurodata.shredder
 
 import groovy.util.logging.Slf4j
 import org.maurodata.domain.classifier.ClassificationScheme
@@ -29,7 +29,6 @@ import org.maurodata.domain.terminology.Term
 import org.maurodata.domain.terminology.TermRelationship
 import org.maurodata.domain.terminology.TermRelationshipType
 import org.maurodata.domain.terminology.Terminology
-import org.maurodata.persistence.classifier.dto.ClassifierJoinDTO
 
 @Slf4j
 class ShreddedContent {
@@ -52,7 +51,7 @@ class ShreddedContent {
     Set<DataElementComponent> dataElementComponents = []
 
     Set<Metadata> metadata = []
-    Set<ClassifierJoinDTO> classifierJoinDTOs = []
+    Map<UUID, Set<UUID>> classifierJoins = [:]
     Set<Classifier> classifiersForItems = []
     Map<Integer, Set<Annotation>> annotations = [:] as Map<Integer, Set<Annotation>>
     Set<Edit> edits = []
@@ -284,9 +283,9 @@ class ShreddedContent {
         Map<UUID, Classifier> classifierMap = classifiersForItems.collectEntries {
             [it.id, it]
         }
-        classifierJoinDTOs.each { classifierJoinDTO ->
-            allItems[classifierJoinDTO.catalogueItemId].classifiers.add(
-                classifierMap[classifierJoinDTO.classifierId]
+        classifierJoins.each { classifierJoin ->
+            allItems[classifierJoin.key].classifiers.addAll(
+                classifierJoin.value.collect { classifierMap[it]}
             )
         }
 
@@ -341,6 +340,12 @@ class ShreddedContent {
 
         metadata.each {metadata ->
             allItems[metadata.multiFacetAwareItemId].metadata.add(metadata)
+        }
+    }
+
+    void unsetIdentifiers() {
+        allAdministeredItems.each {item ->
+            item.id = null
         }
     }
 
