@@ -67,6 +67,7 @@ import org.maurodata.plugin.datatype.DefaultDataTypeProviderPlugin
 import org.maurodata.plugin.exporter.DataModelExporterPlugin
 import org.maurodata.plugin.importer.DataModelImporterPlugin
 import org.maurodata.service.plugin.PluginService
+import org.maurodata.shredder.ShreddedContent
 import org.maurodata.web.ListResponse
 
 @Slf4j
@@ -271,128 +272,47 @@ class DataModelController extends ModelController<DataModel> implements DataMode
         // target i.e. request model
         accessControlService.canDoRole(Role.EDITOR, otherDataModel)
 
-        DataModel additionSubset = new DataModel()
+        if(subsetData.additions) {
+            List<DataElement> additionDataElements = dataElementCacheableRepository.findAllByIdIn(subsetData.additions)
 
-        List<DataElement> additionDataElements = dataElementCacheableRepository.findAllByIdIn(subsetData.additions)
-
-        Set<DataType> additionDataTypes = additionDataElements?.dataType as Set<DataType>
-
-        // Do an initial check that we're not trying to add DataElements from a different DataModel
-        additionDataElements?.each {DataElement dataElement ->
-            log.debug "subset: processing data element addition for id [$dataElement.id], label [$dataElement.label]"
-            List<AdministeredItem> parents = pathRepository.readParentItems(dataElement)
-            if (dataElement.owner.id != dataModel.id) {
-                throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Subset DataElements for Addition must be within the source DataModel")
-            }
-        }
-
-
-        additionDataElements?.each {DataElement dataElement ->
-            log.debug "subset: processing data element addition for id [$dataElement.id], label [$dataElement.label]"
-            List<AdministeredItem> parents = pathRepository.readParentItems(dataElement)
-            if (dataElement.owner.id != dataModel.id) {
-                throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Subset DataElements for Addition must be within the source DataModel")
-            }
-            List<DataClass> dataClassParents = parents.takeWhile {it !instanceof DataModel}.tail().reverse() as List<DataClass>
-            DataClass currentOtherModelOrAdditionParent = new DataClass(dataClasses: otherDataModel.dataClasses)
-            // maintain as the copy of the parent of `DataClass child` in the otherDataModel
-            dataClassParents.eachWithIndex {DataClass child, int idx ->
-                DataClass otherModelOrAdditionChild = currentOtherModelOrAdditionParent?.dataClasses?.find {it.label == child.label}
-                if (otherModelOrAdditionChild) {
-                    if(idx == 0) {
-                        if(!additionSubset.dataClasses.find {it.label == child.label}) {
-                            additionSubset.dataClasses.add(otherModelOrAdditionChild)
-                            additionSubset.allDataClasses.add(otherModelOrAdditionChild)
-                            currentOtherModelOrAdditionParent = otherModelOrAdditionChild
-                        }
-                        else {
-                            currentOtherModelOrAdditionParent = additionSubset.dataClasses.find {it.label == child.label}
-                        }
-                    } else {
-                        currentOtherModelOrAdditionParent = otherModelOrAdditionChild
-//                        currentOtherModelOrAdditionParent.dataClasses.add(otherModelOrAdditionChild)
-//                        additionSubset.allDataClasses.add(otherModelOrAdditionChild)
-                    }
-                } else {
-                    child.id = null
-                    child.version = null
-                    if(idx == 0) {
-                        if (!additionSubset.dataClasses.find {it.label == child.label}) {
-                            additionSubset.dataClasses.add(child)
-                            additionSubset.allDataClasses.add(child)
-                            child.dataModel = additionSubset
-                            currentOtherModelOrAdditionParent = child
-                        } else {
-                            currentOtherModelOrAdditionParent = additionSubset.dataClasses.find {it.label == child.label}
-                        }
-                    } else {
-                        currentOtherModelOrAdditionParent.dataClasses.add(child)
-                        child.parentDataClass = currentOtherModelOrAdditionParent
-                        currentOtherModelOrAdditionParent = child
-                    }
+            ShreddedContent shreddedContent = new ShreddedContent()
+            additionDataElements?.each {DataElement dataElement ->
+                log.debug "subset: processing data element addition for id [$dataElement.id], label [$dataElement.label]"
+                // Do an initial check that we're not trying to add DataElements from a different DataModel
+                List<AdministeredItem> parents = pathRepository.readParentItems(dataElement)
+                if (dataElement.owner.id != dataModel.id) {
+                    throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Subset DataElements for Addition must be within the source DataModel")
                 }
+                dataElement.updatePath()
+                dataElement.dataType = dataTypeCacheableRepository.loadWithContent(dataElement.dataType.id)
+                otherDataModel.addDataElementAtPath(dataElement, dataElement.path, shreddedContent)
+            }
+            shreddedContent.unsetIdentifiers()
+            contentsService.saveShreddedContent(shreddedContent)
+        }
+        if(subsetData.deletions) {
+            // process DataElements for deletion
+            List<DataElement> deletionDataElements = subsetData.deletions.collect {dataElementCacheableRepository.findById(it)}
+            deletionDataElements.each {DataElement dataElement ->
+                pathRepository.readParentItems(dataElement)
+                if (dataElement.owner.id != dataModel.id) throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Subset DataElements for Deletion must be within the source DataModel")
             }
 
-            if (!currentOtherModelOrAdditionParent.dataElements.find {it.label == dataElement.label}) {
-                dataElement.dataModel = additionSubset
-                dataElement.dataClass = currentOtherModelOrAdditionParent
-                additionSubset.dataElements.add(dataElement)
-                currentOtherModelOrAdditionParent.dataElements.add(dataElement)
-                dataElement.id = null
-                dataElement.version = null
-            }
-        }
+            otherDataModel = dataModelRepository.loadWithContent(otherId)
 
-        // copy missing DataTypes into additionSubset
-        List<DataType> dataTypes = []
-            dataTypeCacheableRepository.findAllByParent(dataModel).each {
-                dataTypes.add(contentsService.loadWithContent(it) as DataType)
-        }
-        Set<String> additionDataTypeLabels = (additionSubset.dataElements.dataType.label - otherDataModel.dataTypes.label) as Set
-        dataTypes.findAll {additionDataTypeLabels.contains(it.label)}.each {DataType dataType ->
-            dataType.dataModel = additionSubset
-            additionSubset.dataTypes.add(dataType)
-            dataType.id = null
-            dataType.version = null
-            dataType.enumerationValues.each {
-                it.id = null
-                it.version = null
-            }
-        }
+            deletionDataElements?.each {DataElement dataElement ->
+                log.debug "subset: processing data element deletion for id [$dataElement.id], label [$dataElement.label]"
+                List<AdministeredItem> parents = pathRepository.readParentItems(dataElement)
+                List<DataClass> dataClassParents = parents.takeWhile {it !instanceof Model}.tail().reverse() as List<DataClass>
+                DataClass currentOtherModelParent = new DataClass(dataClasses: otherDataModel.dataClasses)
+                dataClassParents.each {DataClass child ->
+                    currentOtherModelParent = currentOtherModelParent?.dataClasses?.find {it.label == child.label}
+                }
 
-        // Reconnect the elements with the new datatypes
-        additionSubset.dataElements.each {dataElement ->
-            String dataTypeLabel = dataElement.dataType?.label
-            dataElement.dataType = additionSubset.dataTypes.find {it.label == dataTypeLabel} ?: otherDataModel.dataTypes.find {it.label == dataTypeLabel}
-        }
-
-        additionSubset.id = otherDataModel.id
-        //additionSubset.setAssociations()
-
-        log.debug "subset: saving additions to datamodel id [$additionSubset.id]"
-        contentsService.saveContentOnly(additionSubset)
-
-        // process DataElements for deletion
-        List<DataElement> deletionDataElements = subsetData.deletions?.collect {dataElementCacheableRepository.findById(it)}
-        deletionDataElements?.each {DataElement dataElement ->
-            pathRepository.readParentItems(dataElement)
-            if (dataElement.owner.id != dataModel.id) throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Subset DataElements for Deletion must be within the source DataModel")
-        }
-
-        otherDataModel = dataModelRepository.loadWithContent(otherId)
-
-        deletionDataElements?.each {DataElement dataElement ->
-            log.debug "subset: processing data element deletion for id [$dataElement.id], label [$dataElement.label]"
-            List<AdministeredItem> parents = pathRepository.readParentItems(dataElement)
-            List<DataClass> dataClassParents = parents.takeWhile {it !instanceof Model}.tail().reverse() as List<DataClass>
-            DataClass currentOtherModelParent = new DataClass(dataClasses: otherDataModel.dataClasses)
-            dataClassParents.each {DataClass child ->
-                currentOtherModelParent = currentOtherModelParent?.dataClasses?.find {it.label == child.label}
-            }
-
-            DataElement targetDataElement = currentOtherModelParent.dataElements.find {it.label == dataElement.label}
-            if (targetDataElement) {
-                dataElementCacheableRepository.delete(targetDataElement)
+                DataElement targetDataElement = currentOtherModelParent.dataElements.find {it.label == dataElement.label}
+                if (targetDataElement) {
+                    dataElementCacheableRepository.delete(targetDataElement)
+                }
             }
         }
 

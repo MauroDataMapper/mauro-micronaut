@@ -30,7 +30,7 @@ abstract class DataElementDTORepository implements GenericRepository<DataElement
 
     abstract List<DataElementDTO> readAllByDataTypeIdIn(Collection<UUID> ids)
 
-    abstract Collection<DataElement> findAllByIdIn(Collection<UUID> dataElementIds)
+    abstract Collection<DataElementDTO> findAllByIdIn(Collection<UUID> dataElementIds)
 
     @Query('SELECT * FROM datamodel.data_element WHERE data_class_id = :item AND label = :pathIdentifier')
     abstract List<DataElement> findAllByParentAndPathIdentifier(UUID item, String pathIdentifier)

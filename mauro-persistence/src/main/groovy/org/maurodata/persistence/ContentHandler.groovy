@@ -1,6 +1,7 @@
 package org.maurodata.persistence
 
 import jakarta.inject.Singleton
+import org.maurodata.persistence.classifier.dto.ClassifierJoinDTO
 import org.maurodata.persistence.model.ItemRepository
 import org.maurodata.shredder.ShreddedContent
 import org.maurodata.persistence.terminology.dto.CodeSetTermDTO
@@ -377,11 +378,14 @@ class ContentHandler {
             editCacheableRepository.readAllByMultiFacetAwareItemIdIn(batch)
         }
 
-        shreddedContent.classifierJoinDTOs = inBatchesReadSet(allAdministeredItemIds) {List batch ->
+        shreddedContent.classifierJoins = inBatchesReadSet(allAdministeredItemIds) {List batch ->
             classifierCacheableRepository.readClassifiersByItemIds(batch)
-        }
+        }.groupBy {classiferJoinDTO -> ((ClassifierJoinDTO) classiferJoinDTO).catalogueItemId }
+            .collectEntries { a, ps ->
+                [(a): ps.collect { ((ClassifierJoinDTO) it).classifierId } as Set]
+            }
 
-        shreddedContent.classifiersForItems = inBatchesReadSet(shreddedContent.classifierJoinDTOs*.classifierId) {List batch ->
+        shreddedContent.classifiersForItems = inBatchesReadSet(shreddedContent.classifierJoins.values().flatten() as List<UUID>) {List batch ->
             classifierCacheableRepository.readAllByIdIn(batch)
         }
 

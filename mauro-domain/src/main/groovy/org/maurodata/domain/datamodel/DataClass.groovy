@@ -1,5 +1,6 @@
 package org.maurodata.domain.datamodel
 
+import groovy.util.logging.Slf4j
 import org.maurodata.domain.model.Item
 import org.maurodata.domain.model.ItemReference
 import org.maurodata.domain.model.ItemReferencer
@@ -28,6 +29,9 @@ import org.maurodata.domain.diff.ObjectDiff
 import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.domain.model.Model
 import org.maurodata.domain.model.ModelItem
+import org.maurodata.domain.model.Path
+import org.maurodata.shredder.ShredVisitor
+import org.maurodata.shredder.ShreddedContent
 import org.maurodata.visitor.DomainVisitor
 
 /**
@@ -42,6 +46,7 @@ import org.maurodata.visitor.DomainVisitor
  *
  */
 
+@Slf4j
 @CompileStatic
 @AutoClone(excludes = ['dataModel'])
 @Introspected
@@ -182,6 +187,38 @@ class DataClass extends ModelItem<DataModel> implements DiffableItem<DataClass>,
         base
     }
 
+    /**
+     *
+     * @param dataElement
+     * @param path
+     * @return List of AdministeredItems that have been created as part of this operation - for saving to the database.
+     * This will include the DataElement and any DataClasses, DataTypes that were created as part of the path.
+     */
+    void addDataElementAtPath(DataElement dataElement, Path path, ShreddedContent shreddedContent) {
+        if(path.nodes.first().prefix == "dc") {
+            DataClass dataClass = dataClasses.find {it.label == path.nodes.first().identifier}
+            if(!dataClass) {
+                dataClass = new DataClass(label: path.nodes.first().identifier, dataModel: this.dataModel, parentDataClass: this)
+                dataClasses.add(dataClass)
+                ShredVisitor shredVisitor = new ShredVisitor(shreddedContent)
+                dataClass.accept(shredVisitor)
+            }
+            path.nodes.remove(0)
+            dataClass.addDataElementAtPath(dataElement, path, shreddedContent)
+        } else if(path.nodes.first().prefix == "de") {
+            if(dataElements.find {it.label == path.nodes.first().identifier}) {
+                log.warn("DataElement with label ${path.nodes.first().identifier} already exists in DataClass ${this.label}")
+            } else {
+                dataElements.add(dataElement)
+                dataElement.dataClass = this
+                ShredVisitor shredVisitor = new ShredVisitor(shreddedContent)
+                dataElement.accept(shredVisitor)
+            }
+        } else {
+            throw new IllegalArgumentException("Path must start with a DataClass node (dc) or DataElement node (de) for adding a DataElement")
+        }
+
+    }
     /****
      * Methods for building a tree-like DSL
      */

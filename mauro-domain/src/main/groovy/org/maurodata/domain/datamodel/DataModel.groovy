@@ -1,12 +1,6 @@
 package org.maurodata.domain.datamodel
 
 import jakarta.persistence.PrePersist
-import jakarta.persistence.PreUpdate
-import org.maurodata.domain.diff.BaseCollectionDiff
-import org.maurodata.domain.diff.CollectionDiff
-import org.maurodata.domain.diff.DiffBuilder
-import org.maurodata.domain.diff.DiffableItem
-import org.maurodata.domain.diff.ObjectDiff
 import org.maurodata.domain.model.Item
 import org.maurodata.domain.model.ItemReference
 import org.maurodata.domain.model.ItemReferencer
@@ -27,6 +21,9 @@ import io.micronaut.data.annotation.Relation
 import jakarta.persistence.Transient
 import org.maurodata.domain.model.Model
 import org.maurodata.domain.model.ModelItem
+import org.maurodata.domain.model.Path
+import org.maurodata.shredder.ShredVisitor
+import org.maurodata.shredder.ShreddedContent
 import org.maurodata.visitor.DomainVisitor
 
 /**
@@ -218,13 +215,6 @@ class DataModel extends Model implements ItemReferencer, DiffableItem<DataModel>
         dataTypes.each {dataType ->
             dataType.parent = this
             dataType.dataModel = this
-            dataType.enumerationValues.each {enumerationValue ->
-                enumerationValue.parent = dataType
-                enumerationValue.enumerationType = dataType
-                enumerationValues.add(enumerationValue)
-                enumerationValue.dataModel = this
-                this.enumerationValues.add(enumerationValue)
-            }
             dataType.setAssociations()
         }
 
@@ -295,6 +285,41 @@ class DataModel extends Model implements ItemReferencer, DiffableItem<DataModel>
         dataTypes.findAll {it.isReferenceType()}
     }
 
+    /**
+     *
+     * @param dataElement
+     * @param path
+     * @return List of AdministeredItems that have been created as part of this operation - for saving to the database.
+     * This will include the DataElement and any DataClasses, DataTypes that were created as part of the path.
+     */
+    void addDataElementAtPath(DataElement dataElement, Path path, ShreddedContent shreddedContent) {
+        while(path.nodes.size() > 0 && path.nodes.first().prefix != "dc") {
+            path.nodes.remove(0)
+        }
+        if(path.nodes.size() == 0) {
+            log.error("Invalid path for adding a DataElement ${dataElement.label} to DataModel ${label} - path must start with a DataClass node (dc)")
+            log.error("Path provided was ${path}")
+            throw new IllegalArgumentException("Path must start with a DataClass node (dc) for adding a DataElement")
+        }
+        DataType linkedDataType = dataTypes.find {it.label == dataElement.dataType.label || it.id == dataElement.dataType.id}
+        if(linkedDataType) {
+            dataElement.dataType.id = linkedDataType.id
+        } else {
+            dataTypes.add(dataElement.dataType)
+            dataElement.dataType.dataModel = this
+            ShredVisitor shredVisitor = new ShredVisitor(shreddedContent)
+            dataElement.dataType.accept(shredVisitor)
+        }
+        DataClass dataClass = dataClasses.find {it.label == path.nodes.first().identifier}
+        if(!dataClass) {
+            dataClass = new DataClass(label: path.nodes.first().identifier, dataModel: this)
+            dataClasses.add(dataClass)
+            ShredVisitor shredVisitor = new ShredVisitor(shreddedContent)
+            dataClass.accept(shredVisitor)
+        }
+        path.nodes.remove(0)
+        dataClass.addDataElementAtPath(dataElement, path, shreddedContent)
+    }
 
     /****
      * Methods for building a tree-like DSL
