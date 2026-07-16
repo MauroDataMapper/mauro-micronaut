@@ -204,7 +204,7 @@ class Folder extends Model implements ItemReferencer, DiffableItem<Folder> {
         }
         cloned.codeSets = codeSets.collect {it.clone()}
 
-        cloned.setAssociations()
+        //cloned.setAssociations()
         cloned
     }
 
