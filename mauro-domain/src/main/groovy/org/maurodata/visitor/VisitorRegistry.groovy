@@ -13,7 +13,7 @@ class VisitorRegistry {
     Map<Class<? extends Item>, List<Closure<?>>> leaveHandlersByType = [:]
 
     void applyEnter(Item item) {
-        if (!item) {
+        if (item == null) {
             return
         }
         enterHandlersByType.each {Class<? extends Item> type, List<Closure<?>> handlers ->
@@ -26,7 +26,7 @@ class VisitorRegistry {
     }
 
     void applyLeave(Item item) {
-        if (!item) {
+        if (item == null) {
             return
         }
         leaveHandlersByType.each {Class<? extends Item> type, List<Closure<?>> handlers ->
@@ -40,7 +40,7 @@ class VisitorRegistry {
 
 
     <T extends Item> VisitorRegistry onEnter(Class<T> type, Closure<?> handler) {
-        if (!type || !handler) {
+        if (type == null || handler == null) {
             return this
         }
         List<Closure<?>> handlers = enterHandlersByType.computeIfAbsent(type) { [] as List<Closure<?>> }
@@ -49,7 +49,7 @@ class VisitorRegistry {
     }
 
     <T extends Item> VisitorRegistry onLeave(Class<T> type, Closure<?> handler) {
-        if (!type || !handler) {
+        if (type == null || handler == null) {
             return this
         }
         List<Closure<?>> handlers = leaveHandlersByType.computeIfAbsent(type) { [] as List<Closure<?>> }
@@ -58,7 +58,7 @@ class VisitorRegistry {
     }
 
     VisitorRegistry addAll(VisitorRegistry other) {
-        if (!other) {
+        if (other == null) {
             return this
         }
 
@@ -80,5 +80,4 @@ class VisitorRegistry {
         return merged
     }
 }
-
 
