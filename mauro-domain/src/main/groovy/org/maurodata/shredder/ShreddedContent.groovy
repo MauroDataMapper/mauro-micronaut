@@ -246,16 +246,11 @@ class ShreddedContent {
             if(allItems[dataClassComponent.dataFlow.id]) {
                 ((DataFlow) allItems[dataClassComponent.dataFlow.id]).dataClassComponents.add(dataClassComponent)
             }
-            dataClassComponent.sourceDataClasses.each {sourceDataClass ->
-                if(allItems[sourceDataClass.id]) {
-                    dataClassComponent.sourceDataClasses.add((DataClass) allItems[sourceDataClass.id])
-                }
-            }
-            dataClassComponent.targetDataClasses.each {targetDataClass ->
-                if(allItems[targetDataClass.id]) {
-                    dataClassComponent.targetDataClasses.add((DataClass) allItems[targetDataClass.id])
-                }
-            }
+            dataClassComponent.sourceDataClasses =
+                dataClassComponent.sourceDataClasses.collect {DataClass dc -> (allItems[dc.id] as DataClass) ?: dc }
+
+            dataClassComponent.targetDataClasses =
+                dataClassComponent.targetDataClasses.collect {DataClass dc -> (allItems[dc.id] as DataClass) ?: dc }
         }
 
         dataElementComponents.each {dataElementComponent ->
@@ -267,11 +262,11 @@ class ShreddedContent {
                     dataElementComponent.sourceDataElements.add((DataElement) allItems[sourceDataElement.id])
                 }
             }
-            dataElementComponent.targetDataElements.each {targetDataElement ->
-                if (allItems[targetDataElement.id]) {
-                    dataElementComponent.targetDataElements.add((DataElement) allItems[targetDataElement.id])
-                }
-            }
+            dataElementComponent.sourceDataElements =
+                dataElementComponent.sourceDataElements.collect {DataElement de -> (allItems[de.id] as DataElement) ?: de }
+
+            dataElementComponent.targetDataElements =
+                dataElementComponent.targetDataElements.collect {DataElement de -> (allItems[de.id] as DataElement) ?: de }
         }
 
         edits.each {edit ->

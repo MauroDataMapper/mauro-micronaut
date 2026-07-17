@@ -207,52 +207,6 @@ class DataModel extends Model implements ItemReferencer, DiffableItem<DataModel>
         base
     }
 
-    void setDataClassAssociations(DataClass dataClass, Map<String, DataType> dataTypesMap,
-                                  List<? extends DataType> referenceTypes) {
-        dataClass.setAssociations()
-        dataClass.dataModel = this
-        if (!dataClass.dataModel.allDataClasses.contains(dataClass)) {
-            dataClass.dataModel.allDataClasses.add(dataClass)
-        }
-        dataClass.dataClasses.each {childDataClass ->
-            setDataClassAssociations(childDataClass, dataTypesMap, referenceTypes)
-            childDataClass.parentDataClass = dataClass
-        }
-        List<DataClass> extendsDataClasses = []
-        dataClass.extendsDataClasses.each {superClass ->
-            final DataClass foundDataClass = allDataClasses.find {dataClass1 ->
-                (superClass.id && dataClass1.id && dataClass1.id == superClass.id) ||
-                (superClass.label && dataClass1.label && dataClass1.label == superClass.label)
-            }
-            if(foundDataClass) {
-                extendsDataClasses.add(foundDataClass)
-            } else {
-                log.error("DataModel setAssociations() setDataClassAssociations() failed to find a DataClass for ${superClass.id} or else ${superClass.label}")
-            }
-        }
-        dataClass.extendsDataClasses = extendsDataClasses
-
-        dataClass.dataElements.each {dataElement ->
-            dataElement.dataModel = this
-            if (!this.dataElements.id.contains(dataElement.id)) {
-                dataElement.dataModel.dataElements.add(dataElement)
-            }
-            dataElement.dataClass = dataClass
-            final DataType foundDataType = dataTypesMap[dataElement.dataType?.id ?: dataElement.dataType?.label]
-            if (foundDataType == null) {
-                log.error(
-                    "DataModel setAssociations() setDataClassAssociations() failed to find a DataType for ${dataElement.dataType?.id} or else ${dataElement.dataType?.label}")
-            } else {
-                dataElement.dataType = foundDataType
-            }
-            if (!this.dataElements.contains(dataElement)) {
-                this.dataElements.add(dataElement)
-            }
-            dataElement.setAssociations()
-        }
-        dataClass.referenceTypes = referenceTypes.findAll {it.referenceClass?.id == dataClass.id} as List<DataType>
-    }
-
     protected List<DataType> dataTypeReferenceTypes() {
         dataTypes.findAll {it.isReferenceType()}
     }

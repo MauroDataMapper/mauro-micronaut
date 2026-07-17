@@ -254,7 +254,7 @@ class ContentHandler {
                 depth++
             } while (foundFolders.size() > 0)
         }
-        final Set<Folder> foldersValuesFlatten = (Set<Folder>) shreddedContent.folders.values().flatten()
+        final Set<Folder> foldersValuesFlatten = shreddedContent.folders.values().flatten() as Set<Folder>
 
         if (foldersValuesFlatten) {
             shreddedContent.classificationSchemes = inBatchesReadSet(foldersValuesFlatten*.id) {List<UUID> batch ->
@@ -338,7 +338,7 @@ class ContentHandler {
                 depth++
             }
 
-            dataClassesValuesFlatten = (Set<DataClass>) shreddedContent.dataClasses.values().flatten()
+            dataClassesValuesFlatten = shreddedContent.dataClasses.values().flatten() as Set<DataClass>
 
             Map<UUID, DataClass> dataClassMap = dataClassesValuesFlatten.collectEntries {[it.id, it]}
 
