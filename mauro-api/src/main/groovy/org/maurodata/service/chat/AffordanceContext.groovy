@@ -14,5 +14,5 @@ class AffordanceContext {
 
     List<Map<String, Object>> availableTools = []
     List<Map<String, Object>> availableResources = []
-    List<ChatSkillDefinition> availableSkills = []
+    List<ChatPromptAssetDefinition> availableSkills = []
 }

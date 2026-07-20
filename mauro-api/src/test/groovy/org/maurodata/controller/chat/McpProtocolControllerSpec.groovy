@@ -3,9 +3,8 @@ package org.maurodata.controller.chat
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpRequest
 import io.micronaut.http.HttpStatus
-import org.maurodata.plugin.chat.api.chat.SkillSummaryDto
-import org.maurodata.service.chat.ChatSkillDefinition
-import org.maurodata.service.chat.ChatSkillService
+import org.maurodata.service.chat.ChatPromptAssetDefinition
+import org.maurodata.service.chat.ChatPromptAssetService
 import org.maurodata.service.chat.mcp.ExternalMcpRegistry
 import org.maurodata.service.chat.mcp.LocalMcpRegistry
 import org.maurodata.service.chat.mcp.McpProtocolService
@@ -130,10 +129,10 @@ class McpProtocolControllerSpec extends Specification {
         }
     }
 
-    static class TestSkillService implements ChatSkillService {
+    static class TestSkillService implements ChatPromptAssetService {
 
-        List<ChatSkillDefinition> skills = [
-            new ChatSkillDefinition(
+        List<ChatPromptAssetDefinition> skills = [
+            new ChatPromptAssetDefinition(
                 id: 'mauro-catalogue',
                 name: 'Mauro Catalogue',
                 description: 'Catalogue persona',
@@ -143,38 +142,25 @@ class McpProtocolControllerSpec extends Specification {
                 priority: 0,
                 instruction: 'You are Mauro catalogue assistant.'
             )
-        ] as List<ChatSkillDefinition>
+        ] as List<ChatPromptAssetDefinition>
 
         @Override
-        List<SkillSummaryDto> listSkills() {
-            skills.collect {ChatSkillDefinition skill ->
-                new SkillSummaryDto(
-                    id: skill.id,
-                    name: skill.name,
-                    description: skill.description,
-                    scope: skill.scope,
-                    version: skill.version
-                )
-            }
-        }
-
-        @Override
-        List<ChatSkillDefinition> listSkillDefinitions() {
+        List<ChatPromptAssetDefinition> listAssets() {
             skills
         }
 
         @Override
-        List<ChatSkillDefinition> listPersonaDefinitions() {
-            skills.findAll {ChatSkillDefinition skill -> 'PERSONA'.equalsIgnoreCase(skill.type)}
+        List<ChatPromptAssetDefinition> listAssetsByType(String type) {
+            skills.findAll {ChatPromptAssetDefinition skill -> type.equalsIgnoreCase(skill.type)}
         }
 
         @Override
-        ChatSkillDefinition findSkill(String id) {
-            skills.find {ChatSkillDefinition skill -> skill.id == id}
+        ChatPromptAssetDefinition findAsset(String id) {
+            skills.find {ChatPromptAssetDefinition skill -> skill.id == id}
         }
 
         @Override
-        List<ChatSkillDefinition> searchSkills(String query) {
+        List<ChatPromptAssetDefinition> searchAssets(String query) {
             skills
         }
     }

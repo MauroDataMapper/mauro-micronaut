@@ -6,9 +6,12 @@ import org.maurodata.plugin.chat.api.chat.ListSessionMessagesResponseDto
 import org.maurodata.plugin.chat.api.chat.SendMessageRequest
 import org.maurodata.plugin.chat.api.chat.SessionDto
 import org.maurodata.plugin.chat.api.chat.UpdateSessionRequest
+
+import groovy.transform.CompileStatic
 import io.micronaut.http.HttpRequest
 import org.reactivestreams.Publisher
 
+@CompileStatic
 interface ChatSessionService {
     SessionDto createSession(CreateSessionRequest request)
     SessionDto getSession(String sessionId)

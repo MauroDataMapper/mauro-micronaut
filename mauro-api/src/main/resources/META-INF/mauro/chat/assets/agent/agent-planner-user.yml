@@ -1,0 +1,23 @@
+id: agent-planner-user
+name: Agent Planner User Prompt
+description: User prompt template for plan creation and replanning
+scope: GLOBAL
+version: 1.0.0
+type: ROLE_PROMPT
+priority: 100
+keywords:
+  - agent
+  - planner
+  - plan
+instruction: |
+  Goal:
+  {{goal}}
+
+  Resolved planning context:
+  {{resolvedContext}}
+
+  Available tools:
+  {{toolAffordances}}
+  {{replanReasonBlock}}
+  {{evidenceBlock}}
+  {{remainingWorkInstruction}}

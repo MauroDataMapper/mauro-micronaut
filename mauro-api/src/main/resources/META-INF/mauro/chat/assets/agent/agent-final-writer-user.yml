@@ -1,0 +1,29 @@
+id: agent-final-writer-user
+name: Agent Final Writer User Prompt
+description: User prompt template for final answer writing
+scope: GLOBAL
+version: 1.0.0
+type: ROLE_PROMPT
+priority: 100
+keywords:
+  - agent
+  - final writer
+  - answer
+instruction: |
+  Goal:
+  {{goal}}
+
+  Persona and planning context:
+  {{finalContext}}
+
+  Plan:
+  {{planGoal}}
+
+  Success criteria:
+  {{successCriteria}}
+
+  Evidence:
+  {{evidence}}
+
+  Final-answer tool guidance to follow:
+  {{finalGuidance}}

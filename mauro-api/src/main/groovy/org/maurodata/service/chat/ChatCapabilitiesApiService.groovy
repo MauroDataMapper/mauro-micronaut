@@ -7,7 +7,6 @@ import org.maurodata.plugin.chat.api.chat.CapabilitiesDto
 import org.maurodata.plugin.chat.api.chat.McpServerDto
 import org.maurodata.plugin.chat.api.chat.ModelDto
 import org.maurodata.plugin.chat.api.chat.ProviderDto
-import org.maurodata.plugin.chat.api.chat.SkillSummaryDto
 import org.maurodata.service.chat.capabilities.CapabilitiesProvider
 
 @CompileStatic
@@ -16,16 +15,16 @@ import org.maurodata.service.chat.capabilities.CapabilitiesProvider
 class ChatCapabilitiesApiService implements ChatCapabilityService {
 
     private final List<CapabilitiesProvider> providers
-    private final ChatSkillService chatSkillService
+    private final ChatPromptAssetService promptAssetService
     private final ChatMcpService chatMcpService
 
     ChatCapabilitiesApiService(
         final List<CapabilitiesProvider> providers,
-        final ChatSkillService chatSkillService,
+        final ChatPromptAssetService promptAssetService,
         final ChatMcpService chatMcpService
     ) {
         this.providers = providers
-        this.chatSkillService = chatSkillService
+        this.promptAssetService = promptAssetService
         this.chatMcpService = chatMcpService
     }
 
@@ -74,22 +73,12 @@ class ChatCapabilitiesApiService implements ChatCapabilityService {
         final CapabilitiesDto dto = new CapabilitiesDto()
         dto.models = dedupeModels(discoveredModels)
         dto.providers = providerDtos
-        dto.skills = safeSkills()
+        dto.skills = Collections.emptyList()
         dto.mcpServers = safeMcpServers()
         dto.limits = new LinkedHashMap<String, Object>()
         dto.limits.put('maxInputTokens', Integer.valueOf(64000))
         dto.limits.put('maxOutputTokens', Integer.valueOf(8192))
         return dto
-    }
-
-    private List<SkillSummaryDto> safeSkills() {
-        try {
-            final List<SkillSummaryDto> skills = chatSkillService.listSkills()
-            return skills == null ? Collections.<SkillSummaryDto>emptyList() : skills
-        } catch (Throwable t) {
-            log.warn('Failed to load skills: {}', t.getMessage())
-            return Collections.<SkillSummaryDto>emptyList()
-        }
     }
 
     private List<McpServerDto> safeMcpServers() {

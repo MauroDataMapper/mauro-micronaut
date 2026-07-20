@@ -3,7 +3,7 @@ package org.maurodata.service.chat
 import groovy.transform.CompileStatic
 
 @CompileStatic
-class ChatSkillDefinition {
+class ChatPromptAssetDefinition {
     String id
     String name
     String description
@@ -13,9 +13,12 @@ class ChatSkillDefinition {
     Integer priority
     List<String> keywords = []
     List<String> seeAlso = []
+    List<String> fragments = []
     List<SkillToolApplicability> toolApplicability = []
     SkillRouting routing = new SkillRouting()
     String instruction
+    String sourcePath
+    Map<String, Object> metadata = [:]
 }
 
 @CompileStatic

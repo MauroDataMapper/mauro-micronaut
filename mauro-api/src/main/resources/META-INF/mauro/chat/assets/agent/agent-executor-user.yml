@@ -1,0 +1,33 @@
+id: agent-executor-user
+name: Agent Executor User Prompt
+description: User prompt template for step execution
+scope: GLOBAL
+version: 1.0.0
+type: ROLE_PROMPT
+priority: 100
+keywords:
+  - agent
+  - executor
+  - step
+instruction: |
+  Goal:
+  {{goal}}
+
+  Resolved context and skill guidance:
+  {{operationalContext}}
+
+  Plan:
+  {{planGoal}}
+
+  Current step:
+  {{stepTitle}}
+  {{stepObjective}}
+
+  Expected output:
+  {{expectedOutput}}
+
+  Prior evidence:
+  {{priorEvidence}}
+
+  Prior tool guidance:
+  {{priorGuidance}}

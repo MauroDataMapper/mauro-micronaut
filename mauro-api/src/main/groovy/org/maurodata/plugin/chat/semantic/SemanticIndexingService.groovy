@@ -77,6 +77,14 @@ class SemanticIndexingService implements SemanticIndexAdministrationService {
 
     @PreDestroy
     void shutdownExecutor() {
+        try {
+            List<Map<String, Object>> cancelledJobs = semanticRepository.cancelActiveJobs('application is shutting down; semantic indexing job will not be auto-recovered')
+            if (!cancelledJobs.isEmpty()) {
+                log.info('Cancelled {} active semantic indexing jobs during shutdown', Integer.valueOf(cancelledJobs.size()))
+            }
+        } catch (Throwable t) {
+            log.warn('Failed to mark active semantic indexing jobs as cancelled during shutdown', t)
+        }
         executorService.shutdownNow()
         try {
             if (!executorService.awaitTermination(5L, TimeUnit.SECONDS)) {
@@ -1049,10 +1057,28 @@ class SemanticIndexingService implements SemanticIndexAdministrationService {
                 ))
                 continue
             }
+            UUID jobId = UUID.fromString(String.valueOf(job.get('jobId')))
+            UUID mauroModelId = UUID.fromString(String.valueOf(job.get('mauroModelId')))
+            String profileName = String.valueOf(job.get('profileName'))
+            String corpusName = String.valueOf(job.get('corpusName') ?: 'catalogue-items')
+            if (modelIndexReady(mauroModelId, profileName, corpusName)) {
+                recovered.add(semanticRepository.cancelJob(
+                    jobId,
+                    'semantic indexing job recovery skipped because the model index declaration is already READY'
+                ))
+                continue
+            }
             recoveredDeclarations.add(declarationKey)
             recovered.add(resumeRecoverableJob(job))
         }
         SemanticIndexJobDTO.listFrom(recovered)
+    }
+
+    private boolean modelIndexReady(UUID mauroModelId, String profileName, String corpusName) {
+        Map<String, Object> declaration = semanticRepository.modelIndex(mauroModelId, profileName, corpusName)
+        declaration != null &&
+            Boolean.TRUE.equals(declaration.get('enabled')) &&
+            String.valueOf(declaration.get('status')) == 'READY'
     }
 
     private List<Map<String, Object>> matchingModelIndexes(UUID mauroModelId, String profileName, String corpusName) {
@@ -1261,7 +1287,7 @@ class SemanticIndexingService implements SemanticIndexAdministrationService {
                 {Map<String, Object> progress -> semanticRepository.updateJobStatus(jobId, 'RUNNING', progress)} as Consumer<Map<String, Object>>
             )
             boolean changedDuringRun = semanticRepository.modelIndexChangedDuringRun(mauroModelId, profileName, corpusName)
-            boolean stillNeedsRefresh = changedDuringRun || modelIndexNeedsRefreshFailSoft(corpusName ?: 'catalogue-items', mauroModelId, profileName)
+            boolean stillNeedsRefresh = changedDuringRun
             result.put('changedDuringRun', changedDuringRun)
             result.put('stillNeedsRefresh', stillNeedsRefresh)
             if (stillNeedsRefresh) {
@@ -1301,21 +1327,6 @@ class SemanticIndexingService implements SemanticIndexAdministrationService {
             semanticRepository.updateJobStatus(jobId, 'FAILED', null, message)
             log.error('Semantic model index job {} failed for model {} profile {}', jobId, mauroModelId, profileName, t)
             semanticRepository.job(jobId)
-        }
-    }
-
-    private boolean modelIndexNeedsRefreshFailSoft(String corpusName, UUID mauroModelId, String profileName) {
-        try {
-            return semanticRepository.modelIndexNeedsRefresh(corpusName, mauroModelId, profileName)
-        } catch (Throwable t) {
-            log.warn(
-                'Semantic model index refresh check failed; treating index as stale. modelId={} profile={} corpus={} error={}',
-                mauroModelId,
-                profileName,
-                corpusName,
-                t.message
-            )
-            return true
         }
     }
 

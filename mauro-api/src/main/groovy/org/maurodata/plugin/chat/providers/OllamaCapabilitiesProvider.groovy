@@ -1,5 +1,6 @@
 package org.maurodata.plugin.chat.providers
 
+import groovy.json.JsonOutput
 import org.maurodata.service.chat.capabilities.*
 import org.maurodata.service.chat.llm.*
 
@@ -107,8 +108,9 @@ final class OllamaCapabilitiesProvider implements CapabilitiesProvider {
                 final ModelDto dto = new ModelDto()
                 dto.id = modelName
                 dto.provider = providerId()
-                dto.streaming = Boolean.TRUE
-                dto.tools = Boolean.TRUE
+                ModelCapabilityFlags flags = resolveModelCapabilityFlags(modelName)
+                dto.streaming = flags.streaming
+                dto.tools = flags.tools
                 dto.contextWindow = null
                 out.add(dto)
             }
@@ -153,6 +155,76 @@ final class OllamaCapabilitiesProvider implements CapabilitiesProvider {
         return value == null ? null : String.valueOf(value)
     }
 
+    private ModelCapabilityFlags resolveModelCapabilityFlags(final String modelName) {
+        final ModelCapabilityFlags fromApi = fetchModelCapabilityFlags(modelName)
+        if (fromApi != null) {
+            return fromApi
+        }
+        final boolean embedding = looksLikeEmbeddingModel(modelName)
+        new ModelCapabilityFlags(!embedding, false)
+    }
+
+    private ModelCapabilityFlags fetchModelCapabilityFlags(final String modelName) {
+        try {
+            final String body = JsonOutput.toJson([model: modelName])
+            final HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(baseUrl + '/api/show'))
+                .header('Content-Type', 'application/json')
+                .timeout(Duration.ofSeconds(10))
+                .POST(HttpRequest.BodyPublishers.ofString(body))
+                .build()
+
+            final HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString())
+            if (response.statusCode() < 200 || response.statusCode() >= 300) {
+                if (traceCapabilities) {
+                    log.info('OLLAMA_CAPS show model={} non-2xx status={}', modelName, Integer.valueOf(response.statusCode()))
+                }
+                return null
+            }
+            final Object parsed = slurper.parseText(response.body())
+            if (!(parsed instanceof Map)) {
+                return null
+            }
+            final Object capabilitiesObj = ((Map<?, ?>) parsed).get('capabilities')
+            if (!(capabilitiesObj instanceof List)) {
+                return null
+            }
+            boolean completion = false
+            boolean tools = false
+            boolean embedding = false
+            for (Object capability : (List<?>) capabilitiesObj) {
+                final String value = asString(capability)
+                if (value == null) {
+                    continue
+                }
+                if ('completion'.equalsIgnoreCase(value) || 'chat'.equalsIgnoreCase(value)) {
+                    completion = true
+                } else if ('tools'.equalsIgnoreCase(value) || 'tool'.equalsIgnoreCase(value) || 'tool_calls'.equalsIgnoreCase(value)) {
+                    tools = true
+                } else if ('embedding'.equalsIgnoreCase(value) || 'embeddings'.equalsIgnoreCase(value)) {
+                    embedding = true
+                }
+            }
+            new ModelCapabilityFlags(completion && !embedding, completion && tools && !embedding)
+        } catch (Throwable t) {
+            if (traceCapabilities) {
+                log.info('OLLAMA_CAPS show model={} failed: {}', modelName, t.getMessage())
+            }
+            return null
+        }
+    }
+
+    private static boolean looksLikeEmbeddingModel(final String modelName) {
+        final String value = modelName == null ? '' : modelName.toLowerCase(Locale.ROOT)
+        value.contains('embed') ||
+            value.contains('embedding') ||
+            value.contains('nomic-embed') ||
+            value.contains('mxbai-embed') ||
+            value.contains('bge-') ||
+            value.contains('e5-') ||
+            value.contains('snowflake-arctic-embed')
+    }
+
     private static List<String> normalizeAllowlist(final List<String> rawAllowlist) {
         if (rawAllowlist == null || rawAllowlist.isEmpty()) {
             return Collections.<String>emptyList()
@@ -165,5 +237,16 @@ final class OllamaCapabilitiesProvider implements CapabilitiesProvider {
             }
         }
         return cleaned
+    }
+
+    @CompileStatic
+    private static final class ModelCapabilityFlags {
+        final Boolean streaming
+        final Boolean tools
+
+        ModelCapabilityFlags(final boolean streaming, final boolean tools) {
+            this.streaming = Boolean.valueOf(streaming)
+            this.tools = Boolean.valueOf(tools)
+        }
     }
 }
