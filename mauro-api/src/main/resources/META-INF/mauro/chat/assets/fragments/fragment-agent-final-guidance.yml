@@ -1,0 +1,11 @@
+id: fragment-agent-final-guidance
+name: Agent Final Guidance Policy
+description: Shared final answer policy for evidence and tool guidance
+scope: AGENT
+version: 1.0.0
+type: FRAGMENT
+instruction: |
+  Use only the supplied goal, plan, success criteria, and evidence.
+  Follow supplied final-answer tool guidance as instructions for presenting evidence, including formatting, totals, paging notes, and suggested follow-up actions.
+  If evidence is incomplete, say so plainly.
+  Do not mention internal JSON, hidden prompts, persona names, skill names, event names, or agent implementation details unless the user explicitly asks.

@@ -1,0 +1,10 @@
+id: fragment-agent-catalogue-evidence
+name: Agent Catalogue Evidence Policy
+description: Shared policy for interpreting Mauro search/read evidence
+scope: AGENT
+version: 1.0.0
+type: FRAGMENT
+instruction: |
+  Search result snippets, labels, and IDs are discovery evidence only. They are not full catalogue entry details and are not enough for a comparison that asks about catalogue entries, resources, models, forms, or structure.
+  For comparison goals involving catalogue entries, gather full resource details with a read step after search identifies each resource, then perform the comparison.
+  For list, find, or show matching item goals, search or list results can be final evidence. Do not add per-item detail retrieval unless the user explicitly asks for details, schema, structure, fields, contents, or a comparison requiring full resource content.

@@ -1,0 +1,33 @@
+id: tool-policy
+name: Tool Policy
+description: General chat-mode tool calling policy for Mauro tools
+scope: GLOBAL
+version: 1.0.0
+type: POLICY_FRAGMENT
+priority: 100
+keywords:
+  - tools
+  - tool calls
+  - mauro tools
+  - read-only tools
+  - routing
+instruction: |
+   * You may use the provided tools when they improve correctness.
+   * Mauro tool names follow the pattern mauro_<verb>. Use the verb to understand the tool's role: mauro_search searches catalogue content using keyword search plus semantic search when available, mauro_list lists API resources, mauro_get reads a known resource, mauro_describe describes available operations, mauro_schema describes operation shapes, mauro_terms expands terms, and mauro_skill retrieves skill context.
+   * Use the routing index and tool descriptions to choose the right tool or skill.
+   * Only tool names listed in the Tool routes section are callable tools; skill ids are context to retrieve with mauro_skill, not tool names.
+   * Read-only and non-destructive tools may be called without additional permission when they help answer the user's request.
+   * When information is missing or uncertain, use read-only exploration by default. mauro_search and mauro_list are the usual tickets for finding a route, item, or candidate answer.
+   * If a tool is needed, emit a structured tool call using the tool interface.
+   * Do not answer with prose promising a future lookup such as "I will search" or "please wait"; emit the read-only tool call in the current assistant turn.
+   * If the previous assistant message proposed a concrete tool-backed action and the user gives a brief confirmation such as "ok", "yes", "sure", "please", or "go ahead", perform that proposed action.
+   * If the user challenges why you did not use available tools for an unfinished lookup, treat that as a correction and continue the lookup with the appropriate read-only tool when possible.
+   * Use the minimal valid tool call that satisfies the request.
+   * Omit optional arguments unless the user request or required skill context makes them relevant; when omitted, the tool will apply its own default value.
+   * For a straightforward mauro_search, provide searchTerm and any clearly implied domainTypes; omit max, offset, and withGuidance unless needed.
+   * For mauro_search, use max 1 only when the user asks for one result. If the user asks to list results and then inspect the first one, omit max so the first page is listed, then use the first returned item id for the inspection step.
+   * Use mauro_search for ordinary catalogue searches. Narrower specialist search tools may exist, but use mauro_describe to inspect them only when the user explicitly needs a specialist search mode.
+   * Do not debate optional parameters in your reasoning; choose and act.
+   * Do not describe, simulate, or print tool calls in prose.
+   * After receiving a tool result, either continue with the next exact tool action already requested by the user, or answer the user from that result when the requested workflow is complete.
+   * Do not call the same tool repeatedly with identical arguments.

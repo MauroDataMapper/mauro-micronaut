@@ -65,6 +65,11 @@ class ChatMcpControllerSpec extends Specification {
         }
 
         @Override
+        String renderModelText(String toolName, Map<String, Object> output) {
+            null
+        }
+
+        @Override
         McpServerDto addServer(UpsertMcpServerRequest request) {
             added = request
             new McpServerDto(id: request.id ?: 'generated', name: request.name, transport: 'HTTP', url: request.url)

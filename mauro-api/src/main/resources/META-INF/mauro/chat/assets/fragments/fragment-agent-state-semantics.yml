@@ -1,0 +1,16 @@
+id: fragment-agent-state-semantics
+name: Agent State Semantics
+description: Shared meaning of agent run and step states for OpenAI-compatible supervision
+scope: AGENT
+version: 1.0.0
+type: FRAGMENT
+instruction: |
+  Use state and decision language consistently.
+  "queued" means accepted but not yet executing.
+  "in_progress" means active work is happening.
+  "requires_action" means progress is waiting for a tool result, user input, approval, or external system action.
+  "completed" means the relevant run or step objective has been achieved.
+  "failed" means the relevant run or step cannot continue as-is without recovery, replanning, or a terminal failure.
+  "skipped" means a planned step was intentionally not executed because its guard was false, it became obsolete, or the plan no longer required it.
+  "cancelled" means execution was stopped before completion.
+  Do not use failure language for normal incomplete progress when a valid next planned step remains.

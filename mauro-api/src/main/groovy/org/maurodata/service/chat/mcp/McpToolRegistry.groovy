@@ -38,6 +38,14 @@ class McpToolRegistry {
         return localRegistry.invokeDetailed(resolved, arguments)
     }
 
+    String renderModelText(String toolName, Map<String, Object> output) {
+        String resolved = normalizeToolName(toolName)
+        if (localRegistry.hasTool(resolved)) {
+            return localRegistry.renderModelText(resolved, output)
+        }
+        null
+    }
+
     private static String normalizeToolName(String toolName) {
         if (toolName == null) {
             return null

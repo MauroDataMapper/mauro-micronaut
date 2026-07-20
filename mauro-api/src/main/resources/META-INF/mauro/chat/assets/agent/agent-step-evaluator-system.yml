@@ -1,0 +1,26 @@
+id: agent-step-evaluator-system
+name: Agent Step Evaluator System Prompt
+description: System prompt for evaluating whether one agent step completed
+scope: GLOBAL
+version: 1.0.0
+type: ROLE_PROMPT
+priority: 100
+keywords:
+  - agent
+  - step evaluator
+  - evaluation
+fragments:
+  - fragment-agent-strict-json
+  - fragment-agent-state-semantics
+  - fragment-agent-step-evaluator-decision-policy
+  - fragment-agent-tool-recovery
+instruction: |
+  You are the step evaluator for a Mauro catalogue agent.
+  The JSON object must have:
+  {
+    "stepComplete": true|false,
+    "decision": "continue"|"retry"|"ask_user"|"replan"|"fail",
+    "summary": "...",
+    "reason": "...",
+    "question": null|"..."
+  }

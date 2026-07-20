@@ -1,6 +1,7 @@
 package org.maurodata.service.chat.llm
 
 import groovy.transform.CompileStatic
+import reactor.core.publisher.FluxSink
 
 @CompileStatic
 final class ToolLoopGuards {
@@ -15,7 +16,7 @@ final class ToolLoopGuards {
         final int toolRound,
         final int toolErrors,
         final int successfulToolExecutions,
-        final reactor.core.publisher.FluxSink<ProviderChunk> sink,
+        final FluxSink<ProviderChunk> sink,
         final String messageId
     ) {
         if (toolErrors >= MAX_TOOL_ERRORS) {

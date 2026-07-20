@@ -1,6 +1,9 @@
 package org.maurodata.service.chat
 
+import org.maurodata.service.chat.llm.ProviderChunk
+
 import groovy.json.JsonOutput
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.context.annotation.Value
 import io.micronaut.http.HttpHeaders
@@ -15,6 +18,7 @@ import org.maurodata.plugin.chat.api.chat.MessageDto
 import org.maurodata.plugin.chat.api.chat.SendMessageRequest
 import org.maurodata.plugin.chat.api.chat.SessionDto
 import org.maurodata.plugin.chat.api.chat.UpdateSessionRequest
+import org.maurodata.service.chat.agent.AgentSupervisorService
 import org.maurodata.service.chat.llm.LlmProvider
 import org.maurodata.service.chat.llm.ProviderMessage
 import org.maurodata.service.chat.llm.ProviderRegistry
@@ -23,32 +27,63 @@ import org.reactivestreams.Publisher
 import reactor.core.publisher.Flux
 
 import java.time.Instant
+import java.util.regex.Pattern
 
 @Slf4j
 @Singleton
+@CompileStatic
 class ChatSessionsApiService implements ChatSessionService {
 
     private final ChatInMemoryStore store
     private final ProviderRegistry providerRegistry
     private final ChatMcpService chatMcpService
-    private final ChatSkillService chatSkillService
+    private final ChatPromptAssetService promptAssetService
     private final ChatPromptResourceService promptResourceService
+    private final AgentSupervisorService agentSupervisorService
     private final String defaultModel
+    private final String defaultMode
 
     ChatSessionsApiService(
         ChatInMemoryStore store,
         ProviderRegistry providerRegistry,
         ChatMcpService chatMcpService,
-        ChatSkillService chatSkillService,
+        ChatPromptAssetService promptAssetService,
         ChatPromptResourceService promptResourceService,
-        @Value('${chat.providers.default-model:llama3.1}') String defaultModel
+        AgentSupervisorService agentSupervisorService,
+        @Value('${chat.providers.default-model:llama3.1}') String defaultModel,
+        @Value('${chat.agent.default-mode:chat}') String defaultMode
     ) {
         this.store = store
         this.providerRegistry = providerRegistry
         this.chatMcpService = chatMcpService
-        this.chatSkillService = chatSkillService
+        this.promptAssetService = promptAssetService
         this.promptResourceService = promptResourceService
+        this.agentSupervisorService = agentSupervisorService
         this.defaultModel = defaultModel
+        this.defaultMode = defaultMode ?: 'chat'
+    }
+
+    ChatSessionsApiService(
+        ChatInMemoryStore store,
+        ProviderRegistry providerRegistry,
+        ChatMcpService chatMcpService,
+        ChatPromptAssetService promptAssetService,
+        ChatPromptResourceService promptResourceService,
+        AgentSupervisorService agentSupervisorService,
+        String defaultModel
+    ) {
+        this(store, providerRegistry, chatMcpService, promptAssetService, promptResourceService, agentSupervisorService, defaultModel, 'chat')
+    }
+
+    ChatSessionsApiService(
+        ChatInMemoryStore store,
+        ProviderRegistry providerRegistry,
+        ChatMcpService chatMcpService,
+        ChatPromptAssetService promptAssetService,
+        ChatPromptResourceService promptResourceService,
+        String defaultModel
+    ) {
+        this(store, providerRegistry, chatMcpService, promptAssetService, promptResourceService, null, defaultModel, 'chat')
     }
 
     @Override
@@ -114,7 +149,7 @@ class ChatSessionsApiService implements ChatSessionService {
             role: 'user',
             content: request.content ?: '',
             done: true,
-            metadata: [attachments: request.attachments ?: [], contextRefs: request.contextRefs ?: []]
+            metadata: [attachments: request.attachments ?: [], contextRefs: request.contextRefs ?: []] as Map<String, Object>
         ))
         MessageDto assistantMessage = new MessageDto(
             id: assistantMessageId,
@@ -125,7 +160,7 @@ class ChatSessionsApiService implements ChatSessionService {
             thinkingContent: '',
             createdAt: now.toString(),
             updatedAt: now.toString(),
-            metadata: [provider: '', model: session.model ?: '']
+            metadata: [provider: '', model: session.model ?: ''] as Map<String, Object>
         )
         appendChatEvent(timeline, sessionId, new ChatEventDto(
             type: 'message_start',
@@ -133,12 +168,95 @@ class ChatSessionsApiService implements ChatSessionService {
             role: 'assistant',
             content: '',
             done: false,
-            metadata: [sessionId: sessionId]
+            metadata: [sessionId: sessionId] as Map<String, Object>
         ))
         log.info('sendMessage sessionId={} requestMessageId={}', sessionId, request.messageId)
         try {
             def provider = providerRegistry.byModel(session.model)
             assistantMessage.metadata.put('provider', provider.id())
+            if (agentMode(request)) {
+                if (agentSupervisorService == null) {
+                    throw new IllegalStateException('Agent mode is enabled but AgentSupervisorService is not available')
+                }
+                Flux<ChatEventDto> agentStream = Flux.from(agentSupervisorService.streamAgentRun(
+                    session,
+                    request,
+                    assistantMessageId,
+                    timeline,
+                    httpRequest
+                )).map {ChatEventDto event ->
+                    if (event.type == 'token') {
+                        synchronized (assistantMessage) {
+                            assistantMessage.content = (assistantMessage.content ?: '') + (event.content ?: '')
+                            assistantMessage.updatedAt = ChatInMemoryStore.now().toString()
+                        }
+                    } else if (event.type == 'error') {
+                        synchronized (assistantMessage) {
+                            assistantMessage.status = 'error'
+                            assistantMessage.metadata.put('error', event.content ?: 'Unknown error')
+                            assistantMessage.updatedAt = ChatInMemoryStore.now().toString()
+                        }
+                    }
+                    event
+                }
+
+                session.updatedAt = ChatInMemoryStore.now()
+                return Flux.concat(
+                    Flux.just(new ChatEventDto(
+                        type: 'message_start',
+                        messageId: assistantMessageId,
+                        role: 'assistant',
+                        content: '',
+                        done: false,
+                        metadata: [sessionId: session.id, provider: provider.id(), mode: 'agent'] as Map<String, Object>
+                    )),
+                    agentStream,
+                    Flux.defer {
+                        ChatEventDto titleEvent = generateInitialTitleEvent(timeline, session, assistantMessageId, provider, request.content ?: '', assistantMessage.content ?: '')
+                        titleEvent == null ? Flux.empty() : Flux.just(titleEvent)
+                    },
+                    Flux.just(new ChatEventDto(
+                        type: 'message_complete',
+                        messageId: assistantMessageId,
+                        role: 'assistant',
+                        content: '',
+                        done: false,
+                        metadata: [timestamp: ChatInMemoryStore.now().toString(), mode: 'agent'] as Map<String, Object>
+                    )),
+                    Flux.just(new ChatEventDto(
+                        type: 'done',
+                        messageId: assistantMessageId,
+                        role: 'assistant',
+                        content: '',
+                        done: true,
+                        metadata: [mode: 'agent'] as Map<String, Object>
+                    ))
+                ).doFinally {
+                    synchronized (assistantMessage) {
+                        if (assistantMessage.status != 'error') {
+                            assistantMessage.status = 'complete'
+                        }
+                        assistantMessage.thinkingContent = ''
+                        assistantMessage.updatedAt = ChatInMemoryStore.now().toString()
+                    }
+                    appendChatEvent(timeline, sessionId, new ChatEventDto(
+                        type: 'message_complete',
+                        messageId: assistantMessageId,
+                        role: 'assistant',
+                        content: '',
+                        done: false,
+                        metadata: [timestamp: ChatInMemoryStore.now().toString(), mode: 'agent'] as Map<String, Object>
+                    ))
+                    appendChatEvent(timeline, sessionId, new ChatEventDto(
+                        type: 'done',
+                        messageId: assistantMessageId,
+                        role: 'assistant',
+                        content: '',
+                        done: true,
+                        metadata: [mode: 'agent'] as Map<String, Object>
+                    ))
+                } as Publisher<ChatEventDto>
+            }
             List<Map<String, Object>> tools = chatMcpService.listServers()
                 .collectMany {it.tools}
 	                .collect {[
@@ -149,9 +267,9 @@ class ChatSessionsApiService implements ChatSessionService {
 	                        parameters : it.inputSchema ?: [type: 'object']
 	                    ],
 	                    routing : it.routing ?: [:]
-	                ]}
-            List<ChatSkillDefinition> skillDefinitions = chatSkillService.listSkillDefinitions()
-            String personaInstruction = buildPersonaInstruction(chatSkillService.listPersonaDefinitions())
+	                ]} as List<Map<String, Object>>
+            List<ChatPromptAssetDefinition> skillDefinitions = promptAssetService.listAssetsByType('SKILL') ?: []
+            String personaInstruction = buildPersonaInstruction(promptAssetService.listAssetsByType('PERSONA') ?: [])
             String toolInstruction = buildToolInstruction(tools, promptResourceService)
             String routingInstruction = buildRoutingInstruction(skillDefinitions, tools)
             String prerequisiteInstruction = buildPrerequisiteSkillInstruction(skillDefinitions, request.content ?: '')
@@ -245,7 +363,7 @@ class ChatSessionsApiService implements ChatSessionService {
                     role: 'assistant',
                     content: '',
                     done: false,
-                    metadata: [sessionId: session.id, provider: provider.id()]
+                    metadata: [sessionId: session.id, provider: provider.id()] as Map<String, Object>
                 )),
                 Flux.fromIterable(initialProviderRequestEvents),
                 stream,
@@ -259,7 +377,7 @@ class ChatSessionsApiService implements ChatSessionService {
                     role: 'assistant',
                     content: '',
                     done: false,
-                    metadata: [timestamp: ChatInMemoryStore.now().toString()]
+                    metadata: [timestamp: ChatInMemoryStore.now().toString()] as Map<String, Object>
                 )),
                 Flux.just(new ChatEventDto(
                     type: 'done',
@@ -267,7 +385,7 @@ class ChatSessionsApiService implements ChatSessionService {
                     role: 'assistant',
                     content: '',
                     done: true,
-                    metadata: [:]
+                    metadata: [:] as Map<String, Object>
                 ))
             ).doFinally {
                 synchronized (assistantMessage) {
@@ -283,7 +401,7 @@ class ChatSessionsApiService implements ChatSessionService {
                     role: 'assistant',
                     content: '',
                     done: false,
-                    metadata: [timestamp: ChatInMemoryStore.now().toString()]
+                    metadata: [timestamp: ChatInMemoryStore.now().toString()] as Map<String, Object>
                 ))
                 appendChatEvent(timeline, sessionId, new ChatEventDto(
                     type: 'done',
@@ -291,12 +409,18 @@ class ChatSessionsApiService implements ChatSessionService {
                     role: 'assistant',
                     content: '',
                     done: true,
-                    metadata: [:]
+                    metadata: [:] as Map<String, Object>
                 ))
-            }
+            } as Publisher<ChatEventDto>
         } finally {
             log.info('sendMessage completed sessionId={} durationMs={}', sessionId, System.currentTimeMillis() - start)
         }
+    }
+
+    private boolean agentMode(SendMessageRequest request) {
+        Object mode = request?.options?.get('mode')
+        String resolvedMode = mode == null || String.valueOf(mode).trim().isEmpty() ? defaultMode : String.valueOf(mode)
+        'agent'.equalsIgnoreCase(resolvedMode)
     }
 
     @Override
@@ -346,13 +470,13 @@ class ChatSessionsApiService implements ChatSessionService {
         promptResourceService.getPrompt(ChatPromptResourceService.TOOL_POLICY)
     }
 
-    private static String buildPersonaInstruction(List<ChatSkillDefinition> personas) {
+    private static String buildPersonaInstruction(List<ChatPromptAssetDefinition> personas) {
         if (!personas) {
             return ''
         }
         StringBuilder builder = new StringBuilder(1024)
         for (int i = 0; i < personas.size(); i++) {
-            ChatSkillDefinition persona = personas.get(i)
+            ChatPromptAssetDefinition persona = personas.get(i)
             if (persona.instruction != null && !persona.instruction.trim().isEmpty()) {
                 if (builder.length() > 0) {
                     builder.append('\n\n')
@@ -391,17 +515,17 @@ class ChatSessionsApiService implements ChatSessionService {
         }
     }
 
-    private static String buildPrerequisiteSkillInstruction(List<ChatSkillDefinition> skills, String userContent) {
+    private static String buildPrerequisiteSkillInstruction(List<ChatPromptAssetDefinition> skills, String userContent) {
         if (!skills || userContent == null || userContent.trim().isEmpty()) {
             return ''
         }
 
-        List<ChatSkillDefinition> matchedSkills = new ArrayList<ChatSkillDefinition>()
-        for (ChatSkillDefinition skill : sortSkillsByPriority(skills)) {
+        List<ChatPromptAssetDefinition> matchedSkills = new ArrayList<ChatPromptAssetDefinition>()
+        for (ChatPromptAssetDefinition skill : sortSkillsByPriority(skills)) {
             if (skill == null || 'PERSONA'.equalsIgnoreCase(skill.type) || (skill.instruction ?: '').trim().isEmpty()) {
                 continue
             }
-            if (requiredApplicabilityMatches(skill, userContent) && !matchedSkills.any {ChatSkillDefinition existing -> existing.id == skill.id}) {
+            if (requiredApplicabilityMatches(skill, userContent) && !matchedSkills.any {ChatPromptAssetDefinition existing -> existing.id == skill.id}) {
                 matchedSkills.add(skill)
             }
         }
@@ -415,7 +539,7 @@ class ChatSessionsApiService implements ChatSessionService {
             .append('\n- Apply this skill when choosing tool arguments.')
             .append('\n- Use these selected skills directly when choosing tool arguments.')
 
-        for (ChatSkillDefinition skill : matchedSkills) {
+        for (ChatPromptAssetDefinition skill : matchedSkills) {
             builder.append('\n\n## ')
                 .append(skill.name ?: skill.id)
                 .append(' (')
@@ -426,8 +550,8 @@ class ChatSessionsApiService implements ChatSessionService {
         builder.toString()
     }
 
-    private static boolean requiredApplicabilityMatches(ChatSkillDefinition skill, String userContent) {
-        for (SkillToolApplicability applicability : skill.toolApplicability ?: []) {
+    private static boolean requiredApplicabilityMatches(ChatPromptAssetDefinition skill, String userContent) {
+        for (SkillToolApplicability applicability : (skill.toolApplicability ?: [] as List<SkillToolApplicability>)) {
             if (applicability == null || !isRequiredPrerequisite(applicability.relationship)) {
                 continue
             }
@@ -469,10 +593,10 @@ class ChatSessionsApiService implements ChatSessionService {
         if (lowerTerm.contains(' ')) {
             return lowerText.contains(lowerTerm)
         }
-        lowerText ==~ /(?s).*(^|[^a-z0-9])${java.util.regex.Pattern.quote(lowerTerm)}([^a-z0-9]|$).*/
+        lowerText ==~ /(?s).*(^|[^a-z0-9])${Pattern.quote(lowerTerm)}([^a-z0-9]|$).*/
     }
 
-    private static String buildRoutingInstruction(List<ChatSkillDefinition> skills, List<Map<String, Object>> tools) {
+    private static String buildRoutingInstruction(List<ChatPromptAssetDefinition> skills, List<Map<String, Object>> tools) {
         StringBuilder builder = new StringBuilder(2048)
         builder.append('# Routing index')
         builder.append('\n- Use this index to choose whether to call a tool or retrieve a skill.')
@@ -512,19 +636,19 @@ class ChatSessionsApiService implements ChatSessionService {
         builder.toString()
     }
 
-    private static List<ChatSkillDefinition> sortSkillsByPriority(List<ChatSkillDefinition> skills) {
-        new ArrayList<ChatSkillDefinition>(skills ?: [])
-            .sort {ChatSkillDefinition left, ChatSkillDefinition right ->
+    private static List<ChatPromptAssetDefinition> sortSkillsByPriority(List<ChatPromptAssetDefinition> skills) {
+        new ArrayList<ChatPromptAssetDefinition>(skills ?: [])
+            .sort {ChatPromptAssetDefinition left, ChatPromptAssetDefinition right ->
                 Integer leftPriority = left.priority != null ? left.priority : Integer.valueOf(1000)
                 Integer rightPriority = right.priority != null ? right.priority : Integer.valueOf(1000)
                 int priorityCompare = leftPriority <=> rightPriority
                 priorityCompare != 0 ? priorityCompare : (left.id ?: '') <=> (right.id ?: '')
-            } as List<ChatSkillDefinition>
+            } as List<ChatPromptAssetDefinition>
     }
 
-    private static List<ChatSkillDefinition> sortSkillsByRouteOrder(List<ChatSkillDefinition> skills) {
-        new ArrayList<ChatSkillDefinition>(skills ?: [])
-            .sort {ChatSkillDefinition left, ChatSkillDefinition right ->
+    private static List<ChatPromptAssetDefinition> sortSkillsByRouteOrder(List<ChatPromptAssetDefinition> skills) {
+        new ArrayList<ChatPromptAssetDefinition>(skills ?: [])
+            .sort {ChatPromptAssetDefinition left, ChatPromptAssetDefinition right ->
                 int specificityCompare = specificityRank(left?.routing?.specificity) <=> specificityRank(right?.routing?.specificity)
                 if (specificityCompare != 0) {
                     return specificityCompare
@@ -533,7 +657,7 @@ class ChatSessionsApiService implements ChatSessionService {
                 Integer rightPriority = right.priority != null ? right.priority : Integer.valueOf(1000)
                 int priorityCompare = leftPriority <=> rightPriority
                 priorityCompare != 0 ? priorityCompare : (left.id ?: '') <=> (right.id ?: '')
-            } as List<ChatSkillDefinition>
+            } as List<ChatPromptAssetDefinition>
     }
 
     private static int specificityRank(String specificity) {
@@ -550,12 +674,12 @@ class ChatSessionsApiService implements ChatSessionService {
         1
     }
 
-    private static List<String> buildSkillRoutes(List<ChatSkillDefinition> skills) {
+    private static List<String> buildSkillRoutes(List<ChatPromptAssetDefinition> skills) {
         if (!skills) {
             return []
         }
-        List<ChatSkillDefinition> routedSkills = sortSkillsByRouteOrder(skills)
-            .findAll {ChatSkillDefinition skill ->
+        List<ChatPromptAssetDefinition> routedSkills = sortSkillsByRouteOrder(skills)
+            .findAll {ChatPromptAssetDefinition skill ->
                 !'PERSONA'.equalsIgnoreCase(skill.type) &&
                     skill.routing != null &&
                     (!(skill.routing.useWhen ?: []).isEmpty() ||
@@ -564,7 +688,7 @@ class ChatSessionsApiService implements ChatSessionService {
             }
 
         List<String> routes = new ArrayList<String>()
-        for (ChatSkillDefinition skill : routedSkills) {
+        for (ChatPromptAssetDefinition skill : routedSkills) {
             SkillRouting routing = skill.routing
             String toolName = routing.toolName ?: 'mauro_skill'
             Map<String, Object> toolArguments = routing.toolArguments && !routing.toolArguments.isEmpty()
@@ -585,7 +709,7 @@ class ChatSessionsApiService implements ChatSessionService {
             appendMarkdownList(route, 'Use when', routing.useWhen)
             appendMarkdownListOrNone(route, 'Avoid when', routing.avoidWhen)
             appendMarkdownList(route, 'See also', skill.seeAlso)
-            appendMarkdownList(route, 'Examples', (routing.examples ?: []).take(3))
+            appendMarkdownList(route, 'Examples', (routing.examples ?: []).take(3) as List<String>)
             route.append('\nFull instructions:')
                 .append('\nCall the tool ')
                 .append(toolName)
@@ -597,19 +721,19 @@ class ChatSessionsApiService implements ChatSessionService {
         routes
     }
 
-    private static List<String> buildToolApplicabilityRoutes(List<ChatSkillDefinition> skills) {
+    private static List<String> buildToolApplicabilityRoutes(List<ChatPromptAssetDefinition> skills) {
         if (!skills) {
             return []
         }
 
-        List<ChatSkillDefinition> applicableSkills = sortSkillsByRouteOrder(skills)
-            .findAll {ChatSkillDefinition skill ->
+        List<ChatPromptAssetDefinition> applicableSkills = sortSkillsByRouteOrder(skills)
+            .findAll {ChatPromptAssetDefinition skill ->
                 !'PERSONA'.equalsIgnoreCase(skill.type) && !(skill.toolApplicability ?: []).isEmpty()
             }
 
         List<String> routes = new ArrayList<String>()
-        for (ChatSkillDefinition skill : applicableSkills) {
-            for (SkillToolApplicability applicability : skill.toolApplicability ?: []) {
+        for (ChatPromptAssetDefinition skill : applicableSkills) {
+            for (SkillToolApplicability applicability : (skill.toolApplicability ?: [] as List<SkillToolApplicability>)) {
                 if (applicability == null || applicability.tool == null || applicability.tool.trim().isEmpty()) {
                     continue
                 }
@@ -634,7 +758,7 @@ class ChatSessionsApiService implements ChatSessionService {
                 appendMarkdownList(route, 'Trigger terms', applicability.triggerTerms)
                 appendMarkdownListOrNone(route, 'Avoid when', applicability.avoidWhen)
                 appendMarkdownList(route, 'Instructions', applicability.instructions)
-                appendMarkdownList(route, 'Examples', (applicability.examples ?: []).take(3))
+                appendMarkdownList(route, 'Examples', (applicability.examples ?: []).take(3) as List<String>)
                 route.append('\nFull instructions:')
                     .append('\nCall the tool mauro_skill using arguments ')
                     .append(JsonOutput.toJson([id: skill.id, includeInstruction: true]))
@@ -831,7 +955,7 @@ class ChatSessionsApiService implements ChatSessionService {
         String userContent,
         String assistantContent
     ) {
-        if (session == null || provider == null || session.title != null || Boolean.TRUE.equals(session.metadata?.get('titleSetByUser'))) {
+        if (session == null || provider == null || session.title != null || Boolean.TRUE == session.metadata?.get('titleSetByUser')) {
             return null
         }
         String generatedTitle = generateSessionTitle(session, provider, userContent, assistantContent)
@@ -980,7 +1104,7 @@ class ChatSessionsApiService implements ChatSessionService {
         Map<String, Object> metadata = event.metadata ? new LinkedHashMap<String, Object>(event.metadata) : [:]
         metadata.put('eventType', event.type)
         metadata.put('messageId', event.messageId)
-        metadata.put('done', Boolean.TRUE.equals(event.done))
+        metadata.put('done', Boolean.TRUE == event.done)
         timeline.add(new MessageDto(
             id: UUID.randomUUID().toString(),
             sessionId: sessionId,
@@ -1121,9 +1245,9 @@ class ChatSessionsApiService implements ChatSessionService {
             return false
         }
         last.metadata?.get('eventType') == event.type &&
-            last.role == (event.role ?: 'assistant') &&
-            last.metadata?.get('messageId') == event.messageId &&
-            Boolean.TRUE.equals(last.metadata?.get('done')) == Boolean.TRUE.equals(event.done)
+        last.role == (event.role ?: 'assistant') &&
+        last.metadata?.get('messageId') == event.messageId &&
+        Boolean.TRUE == last.metadata?.get('done') == (Boolean.TRUE == event.done)
     }
 
     private static void storeProviderMessage(MessageDto assistantMessage, Map<String, Object> metadata) {
@@ -1147,14 +1271,14 @@ class ChatSessionsApiService implements ChatSessionService {
         }
     }
 
-    private static String eventTypeForChunk(org.maurodata.service.chat.llm.ProviderChunk chunk) {
+    private static String eventTypeForChunk(ProviderChunk chunk) {
         if (chunk == null || chunk.type != 'provider_request_message') {
             return chunk?.type
         }
         'provider_request_message'
     }
 
-    private static String roleForChunk(org.maurodata.service.chat.llm.ProviderChunk chunk) {
+    private static String roleForChunk(ProviderChunk chunk) {
         if (chunk != null && chunk.type == 'provider_request_message') {
             Map<String, Object> providerMessage = providerMessageFromMetadata(chunk.metadata)
             return String.valueOf(providerMessage.get('role') ?: 'assistant')
@@ -1162,7 +1286,7 @@ class ChatSessionsApiService implements ChatSessionService {
         'assistant'
     }
 
-    private static String contentForChunk(org.maurodata.service.chat.llm.ProviderChunk chunk) {
+    private static String contentForChunk(ProviderChunk chunk) {
         if (chunk == null) {
             return ''
         }
@@ -1312,7 +1436,7 @@ class ChatSessionsApiService implements ChatSessionService {
         Integer max = asInteger(output.get('max'))
         Integer offset = asInteger(output.get('offset'))
         Integer nextOffset = asInteger(output.get('nextOffset'))
-        boolean hasMore = Boolean.TRUE.equals(output.get('hasMore'))
+        boolean hasMore = Boolean.TRUE == output.get('hasMore')
         if (searchTerm == null || searchTerm.trim().isEmpty() || max == null || offset == null || nextOffset == null) {
             return ''
         }

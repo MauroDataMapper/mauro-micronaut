@@ -32,7 +32,8 @@ class LocalMcpRegistry {
         new McpServerDto(
             id: LOCAL_SERVER_ID,
             name: 'Local MCP',
-            transport: 'STDIO',
+            transport: 'HTTP',
+            url: '/mcp',
             level: 'WORKSPACE',
             status: 'CONNECTED',
             tools: handlersByName.values().collect { ToolHandler handler ->
@@ -69,5 +70,15 @@ class LocalMcpRegistry {
             output: output,
             modelText: resultGuidanceService != null ? resultGuidanceService.applyToolGuidance(toolName, output, modelText) : modelText
         )
+    }
+
+    String renderModelText(String toolName, Map<String, Object> output) {
+        ToolHandler handler = handlersByName[toolName]
+        if (!handler) {
+            return null
+        }
+        Map<String, Object> safeOutput = output ?: [:] as Map<String, Object>
+        String modelText = handler.modelText(safeOutput)
+        resultGuidanceService != null ? resultGuidanceService.applyToolGuidance(toolName, safeOutput, modelText) : modelText
     }
 }

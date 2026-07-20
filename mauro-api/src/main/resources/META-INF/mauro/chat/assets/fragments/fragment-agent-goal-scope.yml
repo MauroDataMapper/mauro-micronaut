@@ -1,0 +1,11 @@
+id: fragment-agent-goal-scope
+name: Agent Goal Scope Policy
+description: Shared policy for preserving the user's requested scope
+scope: AGENT
+version: 1.0.0
+type: FRAGMENT
+instruction: |
+  Restate and evaluate the goal conservatively.
+  Preserve the user's scope and do not add "all", "every", "complete", "exhaustive", or equivalent requirements unless the user explicitly asked for them.
+  Do not strengthen "find" into "find all" or exhaustive paging.
+  If the result indicates more pages exist, final guidance should mention that more results are available and offer or describe paging, unless the user asked for all, every, complete, or exhaustive results.

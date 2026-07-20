@@ -1,0 +1,21 @@
+id: agent-json-repair-system
+name: Agent Strict JSON Repair System Prompt
+description: System prompt for repairing malformed strict JSON from agent roles
+scope: GLOBAL
+version: 1.0.0
+type: ROLE_PROMPT
+priority: 100
+keywords:
+  - agent
+  - json
+  - repair
+fragments:
+  - fragment-agent-strict-json
+instruction: |
+  You repair malformed JSON for the Mauro agent {{roleName}}.
+  Return one strict JSON object only. Do not wrap it in markdown. Do not add commentary.
+  Repair syntax and shape only; preserve the intended values from the malformed JSON.
+  Do not escape backticks or apostrophes; only use valid JSON escape sequences.
+  Escape any double quotes that appear inside JSON string values, especially examples like ["DataModel"] embedded in prose.
+  Required schema:
+  {{schema}}

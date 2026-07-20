@@ -1,0 +1,21 @@
+id: agent-json-repair-user
+name: Agent JSON Repair User Prompt
+description: User prompt template for strict JSON repair
+scope: GLOBAL
+version: 1.0.0
+type: ROLE_PROMPT
+priority: 100
+keywords:
+  - agent
+  - json
+  - repair
+instruction: |
+  The {{roleName}} response could not be parsed as strict JSON.
+
+  Parser error:
+  {{error}}
+
+  Malformed response:
+  {{malformedText}}
+
+  Return the corrected strict JSON object only.

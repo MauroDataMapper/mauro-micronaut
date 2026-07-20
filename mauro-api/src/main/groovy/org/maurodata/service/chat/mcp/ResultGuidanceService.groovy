@@ -115,7 +115,7 @@ class ResultGuidanceService {
     }
 
     private static boolean withGuidance(Map<String, Object> result) {
-        !Boolean.FALSE.equals(result?.get('withGuidance'))
+        Boolean.FALSE != result?.get('withGuidance')
     }
 
     private static String appendInterpretations(String text, List<ResultInterpretationOutput> outputs) {

@@ -1,0 +1,9 @@
+id: fragment-agent-strict-json
+name: Agent Strict JSON Contract
+description: Shared strict JSON instruction for agent roles that return structured objects
+scope: AGENT
+version: 1.0.0
+type: FRAGMENT
+instruction: |
+  Return strict JSON only. Do not wrap it in markdown.
+  Do not put raw JSON snippets inside string values. If you need to mention tool arguments, describe them in prose or ensure any double quotes are valid JSON escapes.

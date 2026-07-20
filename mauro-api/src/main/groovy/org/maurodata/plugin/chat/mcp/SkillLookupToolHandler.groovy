@@ -4,8 +4,8 @@ import org.maurodata.service.chat.mcp.*
 
 import groovy.transform.CompileStatic
 import jakarta.inject.Singleton
-import org.maurodata.service.chat.ChatSkillDefinition
-import org.maurodata.service.chat.ChatSkillService
+import org.maurodata.service.chat.ChatPromptAssetDefinition
+import org.maurodata.service.chat.ChatPromptAssetService
 
 @CompileStatic
 @Singleton
@@ -32,11 +32,11 @@ import org.maurodata.service.chat.ChatSkillService
 )
 class SkillLookupToolHandler extends AbstractAnnotatedToolHandler {
 
-    private final ChatSkillService chatSkillService
+    private final ChatPromptAssetService promptAssetService
 
-    SkillLookupToolHandler(ChatSkillService chatSkillService) {
+    SkillLookupToolHandler(ChatPromptAssetService promptAssetService) {
         super(SkillLookupToolHandler)
-        this.chatSkillService = chatSkillService
+        this.promptAssetService = promptAssetService
     }
 
     @Override
@@ -45,16 +45,16 @@ class SkillLookupToolHandler extends AbstractAnnotatedToolHandler {
         String query = extractQuery(arguments)
         boolean includeInstruction = asBoolean(arguments.get('includeInstruction'), true)
 
-        List<ChatSkillDefinition> matches
+        List<ChatPromptAssetDefinition> matches
         boolean broadened = false
         if (id != null && !id.trim().isEmpty()) {
-            ChatSkillDefinition skill = chatSkillService.findSkill(id)
-            matches = skill == null || isPersona(skill) ? [] : [skill]
+            ChatPromptAssetDefinition skill = promptAssetService.findAsset(id)
+            matches = skill == null || !isSkill(skill) ? [] : [skill]
         } else if (isListRequest(arguments) || query == null || query.trim().isEmpty()) {
             matches = lookupSkills()
         } else {
-            matches = chatSkillService.searchSkills(query)
-                .findAll {ChatSkillDefinition skill -> !isPersona(skill)}
+            matches = promptAssetService.searchAssets(query)
+                .findAll {ChatPromptAssetDefinition skill -> isSkill(skill)}
             if (matches.isEmpty()) {
                 broadened = true
                 matches = lookupSkills()
@@ -65,7 +65,7 @@ class SkillLookupToolHandler extends AbstractAnnotatedToolHandler {
             query      : query,
             broadened  : broadened,
             count      : matches.size(),
-            skills     : matches.collect {ChatSkillDefinition skill -> toMap(skill, includeInstruction)}
+            skills     : matches.collect {ChatPromptAssetDefinition skill -> toMap(skill, includeInstruction)}
         ] as Map<String, Object>
     }
 
@@ -144,7 +144,7 @@ class SkillLookupToolHandler extends AbstractAnnotatedToolHandler {
         ] as Map<String, Object>)
     }
 
-    private static Map<String, Object> toMap(ChatSkillDefinition skill, boolean includeInstruction) {
+    private static Map<String, Object> toMap(ChatPromptAssetDefinition skill, boolean includeInstruction) {
         Map<String, Object> out = [
             id         : skill.id,
             name       : skill.name,
@@ -160,13 +160,13 @@ class SkillLookupToolHandler extends AbstractAnnotatedToolHandler {
         out
     }
 
-    private List<ChatSkillDefinition> lookupSkills() {
-        chatSkillService.listSkillDefinitions()
-            .findAll {ChatSkillDefinition skill -> !isPersona(skill)}
+    private List<ChatPromptAssetDefinition> lookupSkills() {
+        promptAssetService.listAssetsByType('SKILL')
+            .findAll {ChatPromptAssetDefinition skill -> isSkill(skill)}
     }
 
-    private static boolean isPersona(ChatSkillDefinition skill) {
-        skill != null && 'PERSONA'.equalsIgnoreCase(skill.type)
+    private static boolean isSkill(ChatPromptAssetDefinition skill) {
+        skill != null && 'SKILL'.equalsIgnoreCase(skill.type)
     }
 
     private static String asString(Object value) {

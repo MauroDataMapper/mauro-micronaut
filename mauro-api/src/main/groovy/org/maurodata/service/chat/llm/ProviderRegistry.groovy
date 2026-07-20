@@ -1,8 +1,10 @@
 package org.maurodata.service.chat.llm
 
+import groovy.transform.CompileStatic
 import jakarta.inject.Singleton
 
 @Singleton
+@CompileStatic
 class ProviderRegistry {
 
     private final Map<String, LlmProvider> providers

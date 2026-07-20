@@ -1,10 +1,9 @@
 package org.maurodata.service.chat.mcp
 
-import org.maurodata.plugin.chat.api.chat.SkillSummaryDto
-import org.maurodata.service.chat.ChatSkillDefinition
-import org.maurodata.service.chat.ChatSkillDefinitionLoader
-import org.maurodata.service.chat.ChatSkillService
-import org.maurodata.service.chat.ChatSkillsRegistryService
+import org.maurodata.service.chat.ChatPromptAssetDefinition
+import org.maurodata.service.chat.ChatPromptAssetDefinitionLoader
+import org.maurodata.service.chat.ChatPromptAssetRegistryService
+import org.maurodata.service.chat.ChatPromptAssetService
 import org.maurodata.service.chat.SkillRouting
 import org.maurodata.service.chat.SkillToolApplicability
 import jakarta.inject.Inject
@@ -25,7 +24,7 @@ class McpProtocolServiceSpec extends Specification {
         McpProtocolService.declaredConstructors.any {constructor ->
             constructor.parameterTypes.toList() == [
                 McpToolRegistry,
-                ChatSkillService,
+                ChatPromptAssetService,
                 McpHttpResourceRegistry,
                 io.micronaut.runtime.server.EmbeddedServer
             ] && constructor.getAnnotation(Inject) != null
@@ -121,7 +120,7 @@ class McpProtocolServiceSpec extends Specification {
         then:
         response.jsonrpc == '2.0'
         response.id == 'prompts'
-        response.result.prompts*.name == ['mauro-assistant-context', 'mauro-catalogue', 'mauro-glossary']
+        response.result.prompts*.name == ['mauro-assistant-context', 'mauro-glossary']
         response.result.prompts[0].title == 'Mauro Assistant Context'
     }
 
@@ -129,7 +128,7 @@ class McpProtocolServiceSpec extends Specification {
         given:
         McpProtocolService realSkillService = new McpProtocolService(
             mcpToolRegistry,
-            new ChatSkillsRegistryService(new ChatSkillDefinitionLoader())
+            new ChatPromptAssetRegistryService(new ChatPromptAssetDefinitionLoader())
         )
 
         when:
@@ -145,8 +144,8 @@ class McpProtocolServiceSpec extends Specification {
         response.id == 'real-prompts'
         !response.error
         response.result.prompts*.name.contains('mauro-assistant-context')
-        response.result.prompts*.name.contains('mauro-catalogue')
         response.result.prompts*.name.contains('mauro-glossary')
+        !response.result.prompts*.name.contains('mauro-catalogue')
     }
 
     void 'prompts get returns assistant context prompt with persona routing and tools'() {
@@ -309,10 +308,10 @@ class McpProtocolServiceSpec extends Specification {
         }
     }
 
-    static class TestSkillService implements ChatSkillService {
+    static class TestSkillService implements ChatPromptAssetService {
 
-        List<ChatSkillDefinition> skills = [
-            new ChatSkillDefinition(
+        List<ChatPromptAssetDefinition> skills = [
+            new ChatPromptAssetDefinition(
                 id: 'mauro-catalogue',
                 name: 'Mauro Catalogue',
                 description: 'Catalogue persona',
@@ -322,7 +321,7 @@ class McpProtocolServiceSpec extends Specification {
                 priority: 0,
                 instruction: 'You are Mauro catalogue assistant.'
             ),
-            new ChatSkillDefinition(
+            new ChatPromptAssetDefinition(
                 id: 'mauro-glossary',
                 name: 'Mauro Glossary',
                 description: 'Glossary terms',
@@ -343,38 +342,25 @@ class McpProtocolServiceSpec extends Specification {
                 ],
                 instruction: 'Use glossary terms.'
             )
-        ] as List<ChatSkillDefinition>
+        ] as List<ChatPromptAssetDefinition>
 
         @Override
-        List<SkillSummaryDto> listSkills() {
-            skills.collect {ChatSkillDefinition skill ->
-                new SkillSummaryDto(
-                    id: skill.id,
-                    name: skill.name,
-                    description: skill.description,
-                    scope: skill.scope,
-                    version: skill.version
-                )
-            }
-        }
-
-        @Override
-        List<ChatSkillDefinition> listSkillDefinitions() {
+        List<ChatPromptAssetDefinition> listAssets() {
             skills
         }
 
         @Override
-        List<ChatSkillDefinition> listPersonaDefinitions() {
-            skills.findAll {ChatSkillDefinition skill -> 'PERSONA'.equalsIgnoreCase(skill.type)}
+        List<ChatPromptAssetDefinition> listAssetsByType(String type) {
+            skills.findAll {ChatPromptAssetDefinition skill -> type.equalsIgnoreCase(skill.type)}
         }
 
         @Override
-        ChatSkillDefinition findSkill(String id) {
-            skills.find {ChatSkillDefinition skill -> skill.id == id}
+        ChatPromptAssetDefinition findAsset(String id) {
+            skills.find {ChatPromptAssetDefinition skill -> skill.id == id}
         }
 
         @Override
-        List<ChatSkillDefinition> searchSkills(String query) {
+        List<ChatPromptAssetDefinition> searchAssets(String query) {
             skills
         }
     }

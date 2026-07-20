@@ -112,6 +112,7 @@ class OllamaProvider implements LlmProvider {
                         }
                         final String userPrompt = extractLatestUserPrompt(request.messages)
                         final boolean toolIntent = OllamaToolingPolicy.isToolIntent(userPrompt)
+                        final boolean disableToolLoop = Boolean.TRUE.equals(request.options?.get('_mauroDisableToolLoop'))
                         final List<ProviderMessage> workingMessages = new ArrayList<ProviderMessage>(request.messages)
 
                         int toolRound = 0
@@ -188,6 +189,16 @@ class OllamaProvider implements LlmProvider {
                             }
                             int successfulToolExecutions = 0
                             int blockedToolFeedbacks = 0
+
+                            if (disableToolLoop && (!callsToRun.isEmpty() || !blockedCalls.isEmpty())) {
+                                if (fallbackSynthesized) {
+                                    for (int i = 0; i < callsToRun.size(); i++) {
+                                        emitToolCallChunk(callsToRun.get(i), request.messageId, sink, Integer.valueOf(i))
+                                    }
+                                }
+                                LOG.info('OLLAMA_TOOL_LOOP_DISABLED sessionId={} messageId={} toolCalls={}', request.sessionId, request.messageId, Integer.valueOf(callsToRun.size() + blockedCalls.size()))
+                                break
+                            }
 
                             if (!callsToRun.isEmpty() || !blockedCalls.isEmpty()) {
                                 toolRound++
@@ -393,11 +404,14 @@ class OllamaProvider implements LlmProvider {
 
         if ('length'.equals(responseDiagnostics.doneReason)) {
             final String message = "Ollama stopped because the context/output limit was reached. prompt_eval_count=${responseDiagnostics.promptEvalCount ?: 'unknown'}, eval_count=${responseDiagnostics.evalCount ?: 'unknown'}."
+            final String partialOutput = shortSnippet(assistantTextBuffer.toString(), 1200)
             LOG.warn('OLLAMA_LENGTH_STOP sessionId={} messageId={} model={} {}', request.sessionId, request.messageId, request.model, message)
             sink.next(new ProviderChunk('error', request.messageId, message, [
-                doneReason     : responseDiagnostics.doneReason,
-                promptEvalCount: responseDiagnostics.promptEvalCount,
-                evalCount      : responseDiagnostics.evalCount
+                doneReason        : responseDiagnostics.doneReason,
+                promptEvalCount   : responseDiagnostics.promptEvalCount,
+                evalCount         : responseDiagnostics.evalCount,
+                partialOutputChars: Integer.valueOf(assistantTextBuffer.length()),
+                partialOutput     : partialOutput
             ] as Map<String, Object>))
         }
 
@@ -531,15 +545,7 @@ class OllamaProvider implements LlmProvider {
 
         try {
             if (fallbackSynthesized) {
-                final Map<String, Object> toolMeta = new LinkedHashMap<String, Object>(4)
-                toolMeta.put('index', call.index)
-                toolMeta.put('callId', call.callId)
-                toolMeta.put('name', toolName)
-                toolMeta.put('arguments', call.argumentsJson ?: Collections.<String, Object>emptyMap())
-                if (call.argumentsRaw != null) {
-                    toolMeta.put('argumentsRaw', call.argumentsRaw)
-                }
-                sink.next(new ProviderChunk('tool_call', messageId, null, toolMeta))
+                emitToolCallChunk(call, messageId, sink, call.index)
             }
 
             final ToolInvokeRequest invokeRequest = new ToolInvokeRequest(
@@ -570,6 +576,26 @@ class OllamaProvider implements LlmProvider {
             sink.next(new ProviderChunk('error', messageId, 'tool invocation failed: ' + t.getMessage(), Collections.<String, Object>emptyMap()))
             return ToolExecResult.error()
         }
+    }
+
+    private static void emitToolCallChunk(
+        final ToolCallAccumulator.CompletedToolCall call,
+        final String messageId,
+        final reactor.core.publisher.FluxSink<ProviderChunk> sink,
+        final Integer index
+    ) {
+        if (call == null) {
+            return
+        }
+        final Map<String, Object> toolMeta = new LinkedHashMap<String, Object>(4)
+        toolMeta.put('index', index == null ? call.index : index)
+        toolMeta.put('callId', call.callId)
+        toolMeta.put('name', call.functionName)
+        toolMeta.put('arguments', call.argumentsJson ?: Collections.<String, Object>emptyMap())
+        if (call.argumentsRaw != null) {
+            toolMeta.put('argumentsRaw', call.argumentsRaw)
+        }
+        sink.next(new ProviderChunk('tool_call', messageId, null, toolMeta))
     }
 
     private void emitBlockedToolResult(
@@ -616,7 +642,7 @@ class OllamaProvider implements LlmProvider {
         }
         if (request.options != null && !request.options.isEmpty()) {
             for (Map.Entry<String, Object> entry : request.options.entrySet()) {
-                if (!'options'.equals(entry.key) && !'num_ctx'.equals(entry.key) && !'num_predict'.equals(entry.key) && !'_mauroForwardHeaders'.equals(entry.key)) {
+                if (!'options'.equals(entry.key) && !'num_ctx'.equals(entry.key) && !'num_predict'.equals(entry.key) && !isInternalOption(entry.key)) {
                     body.put(entry.key, entry.value)
                 }
             }
@@ -627,6 +653,10 @@ class OllamaProvider implements LlmProvider {
         body.put('think', Boolean.valueOf(thinkEnabled))
 
         return JsonOutput.toJson(body)
+    }
+
+    private static boolean isInternalOption(final String key) {
+        key != null && key.startsWith('_mauro')
     }
 
     private Map<String, Object> buildOllamaOptions(
@@ -731,6 +761,14 @@ class OllamaProvider implements LlmProvider {
 
     private static String asString(final Object value) {
         return value == null ? null : String.valueOf(value)
+    }
+
+    private static String shortSnippet(final String text, final int maxLength) {
+        final String value = text == null ? '' : text.trim()
+        if (value.length() <= maxLength) {
+            return value
+        }
+        return value.substring(0, Math.max(0, maxLength - 3)) + '...'
     }
 
     private static Map<String, Object> parseArguments(final String argumentsRaw) {

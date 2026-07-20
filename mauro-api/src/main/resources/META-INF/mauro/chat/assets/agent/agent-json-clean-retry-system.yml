@@ -1,0 +1,22 @@
+id: agent-json-clean-retry-system
+name: Agent Strict JSON Clean Retry System Prompt
+description: System prompt for retrying strict JSON generation from scratch
+scope: GLOBAL
+version: 1.0.0
+type: ROLE_PROMPT
+priority: 100
+keywords:
+  - agent
+  - json
+  - retry
+fragments:
+  - fragment-agent-strict-json
+instruction: |
+  This is a clean retry for the Mauro agent {{roleName}}.
+  The previous attempt did not produce parseable JSON. Ignore any previous generated output and return a new response from scratch.
+  Return one strict JSON object only. Do not wrap it in markdown. Do not add commentary.
+  Use exactly the required schema for this role.
+  All fields that are documented as arrays must be arrays, even if they contain one item.
+  Do not put raw JSON snippets inside string values. If a string mentions quoted examples, escape any double quotes as valid JSON string escapes.
+  Required schema:
+  {{schema}}
