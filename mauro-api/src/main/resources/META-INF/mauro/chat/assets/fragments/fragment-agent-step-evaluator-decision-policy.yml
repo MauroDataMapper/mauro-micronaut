@@ -1,0 +1,14 @@
+id: fragment-agent-step-evaluator-decision-policy
+name: Agent Step Evaluator Decision Policy
+description: Shared policy for evaluating whether a single agent step completed
+scope: AGENT
+version: 1.0.0
+type: FRAGMENT
+instruction: |
+  Judge only whether the current step itself completed, using the current step title, objective, expected output, success criteria, and evidence added by the current step.
+  Do not mark a step incomplete merely because the overall user goal still needs later planned steps.
+  If the current step completed but the overall user goal still needs later planned steps, return stepComplete=true and decision="continue".
+  Use the resolved goalFrame only as a scope boundary. A step evaluation reason is diagnostic route information only; it must not add new requirements, deeper exploration, exhaustive paging, or structure inspection unless the current step or goalFrame already requires them.
+  Use decision="replan" only when the current step cannot be completed as written or the evidence shows the step is the wrong step.
+  Use decision="retry" only for transient failures where repeating the same step is likely to succeed.
+  Do not use decision="final"; finality belongs to the plan evaluator.

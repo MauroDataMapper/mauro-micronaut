@@ -10,12 +10,11 @@ import jakarta.inject.Inject
 import jakarta.inject.Singleton
 import org.maurodata.plugin.chat.api.chat.McpServerDto
 import org.maurodata.plugin.chat.api.chat.ToolSummaryDto
-import org.maurodata.service.chat.ChatSkillDefinition
-import org.maurodata.service.chat.ChatSkillService
+import org.maurodata.service.chat.ChatPromptAssetDefinition
+import org.maurodata.service.chat.ChatPromptAssetService
 import org.maurodata.service.chat.SkillRouting
 import org.maurodata.service.chat.SkillToolApplicability
 
-import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpResponse
 import java.time.Duration
@@ -28,27 +27,27 @@ class McpProtocolService {
     static final String SUPPORTED_PROTOCOL_VERSION = '2025-03-26'
 
     private final McpToolRegistry mcpToolRegistry
-    private final ChatSkillService chatSkillService
+    private final ChatPromptAssetService promptAssetService
     private final McpHttpResourceRegistry mcpHttpResourceRegistry
     private final EmbeddedServer embeddedServer
     private final HttpClient httpClient
 
     McpProtocolService(
         McpToolRegistry mcpToolRegistry,
-        ChatSkillService chatSkillService
+        ChatPromptAssetService promptAssetService
     ) {
-        this(mcpToolRegistry, chatSkillService, null, null)
+        this(mcpToolRegistry, promptAssetService, null, null)
     }
 
     @Inject
     McpProtocolService(
         McpToolRegistry mcpToolRegistry,
-        ChatSkillService chatSkillService,
+        ChatPromptAssetService promptAssetService,
         McpHttpResourceRegistry mcpHttpResourceRegistry,
         EmbeddedServer embeddedServer
     ) {
         this.mcpToolRegistry = mcpToolRegistry
-        this.chatSkillService = chatSkillService
+        this.promptAssetService = promptAssetService
         this.mcpHttpResourceRegistry = mcpHttpResourceRegistry
         this.embeddedServer = embeddedServer
         this.httpClient = HttpClient.newBuilder()
@@ -157,7 +156,7 @@ class McpProtocolService {
             description: 'Persona, routing, and tool prerequisite guidance for using Mauro MCP tools with an external model.'
         ] as Map<String, Object>)
 
-        for (ChatSkillDefinition skill : sortedSkills()) {
+        for (ChatPromptAssetDefinition skill : sortedSkillAssets()) {
             if (skill == null || skill.id == null || skill.id.trim().isEmpty()) {
                 log.warn('Skipping MCP prompt for chat skill with missing id: {}', skill)
                 continue
@@ -285,7 +284,10 @@ class McpProtocolService {
             ] as Map<String, Object>
         }
 
-        ChatSkillDefinition skill = chatSkillService.findSkill(name)
+        ChatPromptAssetDefinition skill = promptAssetService.findAsset(name)
+        if (skill != null && !isPromptAssetType(skill, 'SKILL')) {
+            skill = null
+        }
         if (skill == null) {
             throw new IllegalArgumentException("Unknown prompt: ${name}")
         }
@@ -303,10 +305,10 @@ class McpProtocolService {
             .append('If your client supports system or developer messages, this content is suitable for that role; otherwise include it as high-priority conversation context.')
             .append('\n\n')
 
-        List<ChatSkillDefinition> personas = chatSkillService.listPersonaDefinitions()
+        List<ChatPromptAssetDefinition> personas = sortedPromptAssets(promptAssetService.listAssetsByType('PERSONA') ?: [])
         if (!personas.isEmpty()) {
             builder.append('## Persona\n')
-            for (ChatSkillDefinition persona : personas) {
+            for (ChatPromptAssetDefinition persona : personas) {
                 if (persona.instruction != null && !persona.instruction.trim().isEmpty()) {
                     builder.append(persona.instruction.trim())
                         .append('\n\n')
@@ -316,10 +318,7 @@ class McpProtocolService {
 
         builder.append('## Skill routes\n')
         builder.append('Retrieve the most specific relevant skill prompt before using tools when domain context is needed.\n')
-        for (ChatSkillDefinition skill : sortedSkills()) {
-            if ('PERSONA'.equalsIgnoreCase(skill.type)) {
-                continue
-            }
+        for (ChatPromptAssetDefinition skill : sortedSkillAssets()) {
             builder.append('- ')
                 .append(skill.id)
                 .append(': ')
@@ -367,7 +366,7 @@ class McpProtocolService {
         builder.toString().trim()
     }
 
-    private String buildSkillPrompt(ChatSkillDefinition skill) {
+    private static String buildSkillPrompt(ChatPromptAssetDefinition skill) {
         StringBuilder builder = new StringBuilder(2048)
         builder.append('Use this Mauro skill guidance when it is relevant to the user request.')
             .append('\n\n')
@@ -389,10 +388,7 @@ class McpProtocolService {
 
     private List<String> buildToolApplicabilityRoutes() {
         List<String> routes = new ArrayList<String>()
-        for (ChatSkillDefinition skill : sortedSkills()) {
-            if ('PERSONA'.equalsIgnoreCase(skill.type)) {
-                continue
-            }
+        for (ChatPromptAssetDefinition skill : sortedSkillAssets()) {
             for (SkillToolApplicability applicability : skill.toolApplicability ?: [] as List<SkillToolApplicability>) {
                 if (applicability == null || applicability.tool == null || applicability.tool.trim().isEmpty()) {
                     continue
@@ -420,15 +416,23 @@ class McpProtocolService {
         routes
     }
 
-    private List<ChatSkillDefinition> sortedSkills() {
-        List<ChatSkillDefinition> skills = new ArrayList<ChatSkillDefinition>(chatSkillService.listSkillDefinitions() ?: [])
-        skills
-            .sort {ChatSkillDefinition left, ChatSkillDefinition right ->
+    private List<ChatPromptAssetDefinition> sortedSkillAssets() {
+        sortedPromptAssets(promptAssetService.listAssetsByType('SKILL') ?: [])
+    }
+
+    private static List<ChatPromptAssetDefinition> sortedPromptAssets(List<ChatPromptAssetDefinition> assets) {
+        List<ChatPromptAssetDefinition> promptAssets = new ArrayList<ChatPromptAssetDefinition>(assets ?: [])
+        promptAssets
+            .sort {ChatPromptAssetDefinition left, ChatPromptAssetDefinition right ->
                 Integer leftPriority = left.priority != null ? left.priority : Integer.valueOf(1000)
                 Integer rightPriority = right.priority != null ? right.priority : Integer.valueOf(1000)
                 int priorityCompare = leftPriority <=> rightPriority
                 priorityCompare != 0 ? priorityCompare : (left.id ?: '') <=> (right.id ?: '')
-            } as List<ChatSkillDefinition>
+            } as List<ChatPromptAssetDefinition>
+    }
+
+    private static boolean isPromptAssetType(ChatPromptAssetDefinition asset, String type) {
+        asset != null && type != null && type.equalsIgnoreCase(asset.type)
     }
 
     private static Map<String, Object> promptMessage(String text) {

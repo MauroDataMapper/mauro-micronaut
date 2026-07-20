@@ -4,6 +4,7 @@ import org.maurodata.plugin.chat.api.chat.MessageDto
 import org.maurodata.plugin.chat.api.chat.SendMessageRequest
 import org.maurodata.plugin.chat.api.chat.SessionDto
 import org.maurodata.plugin.chat.api.chat.UpdateSessionRequest
+import org.maurodata.service.chat.agent.AgentSupervisorService
 import org.maurodata.service.chat.llm.LlmProvider
 import org.maurodata.service.chat.llm.ProviderChunk
 import org.maurodata.service.chat.llm.ProviderMessage
@@ -85,10 +86,10 @@ class ChatSessionsApiServiceSpec extends Specification {
                 new ProviderChunk('token', 'assistant-ignored', 'answer', [:])
             ])
         }
-        ChatSkillService skillService = Stub(ChatSkillService) {
-            listSkillDefinitions() >> []
-            listPersonaDefinitions() >> [
-                new ChatSkillDefinition(id: 'mauro-catalogue', name: 'Mauro Catalogue', type: 'PERSONA', instruction: 'persona context')
+        ChatPromptAssetService skillService = Stub(ChatPromptAssetService) {
+            listAssetsByType('SKILL') >> []
+            listAssetsByType('PERSONA') >> [
+                new ChatPromptAssetDefinition(id: 'mauro-catalogue', name: 'Mauro Catalogue', type: 'PERSONA', instruction: 'persona context')
             ]
         }
         ChatMcpService mcpService = Stub(ChatMcpService) {
@@ -160,9 +161,8 @@ class ChatSessionsApiServiceSpec extends Specification {
                 ])
             }
         }
-        ChatSkillService skillService = Stub(ChatSkillService) {
-            listSkillDefinitions() >> []
-            listPersonaDefinitions() >> []
+        ChatPromptAssetService skillService = Stub(ChatPromptAssetService) {
+            listAssetsByType(_) >> []
         }
         ChatMcpService mcpService = Stub(ChatMcpService) {
             listServers() >> []
@@ -216,9 +216,8 @@ class ChatSessionsApiServiceSpec extends Specification {
             store,
             new ProviderRegistry([provider]),
             Stub(ChatMcpService) { listServers() >> [] },
-            Stub(ChatSkillService) {
-                listSkillDefinitions() >> []
-                listPersonaDefinitions() >> []
+            Stub(ChatPromptAssetService) {
+                listAssetsByType(_) >> []
             },
             new ChatPromptResourceService(),
             'llama3.1'
@@ -257,9 +256,8 @@ class ChatSessionsApiServiceSpec extends Specification {
             store,
             new ProviderRegistry([provider]),
             Stub(ChatMcpService) { listServers() >> [] },
-            Stub(ChatSkillService) {
-                listSkillDefinitions() >> []
-                listPersonaDefinitions() >> []
+            Stub(ChatPromptAssetService) {
+                listAssetsByType(_) >> []
             },
             new ChatPromptResourceService(),
             'llama3.1'
@@ -275,6 +273,194 @@ class ChatSessionsApiServiceSpec extends Specification {
         service.getSession(sessionId).metadata.titleSetByUser == true
         service.getSession(sessionId).metadata.titleSource == 'user'
         providerCalls == 1
+    }
+
+    void 'agent mode routes the message through the agent supervisor'() {
+        given:
+        ChatInMemoryStore store = new ChatInMemoryStore()
+        LlmProvider provider = Stub(LlmProvider) {
+            id() >> 'ollama'
+            streamChat(_ as ProviderRequest) >> {ProviderRequest providerRequest ->
+                switch (providerRequest.options?.purpose) {
+                    case 'agent_context_resolver':
+                        return Flux.fromIterable([
+                            new ProviderChunk('token', providerRequest.messageId, '''{
+                              "goalRestatement": "Resolve context",
+                              "domainContext": ["Mauro catalogue"],
+                              "relevantTools": [],
+                              "recommendedSkills": [],
+                              "relevantResources": [],
+                              "planningHints": [],
+                              "constraints": []
+                            }''', [:])
+                        ])
+                    case 'agent_planner':
+                        return Flux.fromIterable([
+                            new ProviderChunk('token', providerRequest.messageId, '''{
+                              "goalRestatement":"Answer directly",
+                              "fitness":"usable",
+                              "successCriteria":["answer"],
+                              "assumptions":[],
+                              "risks":[],
+                              "steps":[]
+                            }''', [:])
+                        ])
+                    case 'agent_final':
+                        return Flux.fromIterable([
+                            new ProviderChunk('token', providerRequest.messageId, 'agent answer', [:])
+                        ])
+                    default:
+                        return Flux.empty()
+                }
+            }
+        }
+        ChatMcpService mcpService = Stub(ChatMcpService) {
+            listServers() >> []
+        }
+        AgentSupervisorService agentSupervisor = new AgentSupervisorService(
+            store,
+            new ProviderRegistry([provider]),
+            mcpService,
+            4,
+            8
+        )
+        ChatSessionsApiService service = new ChatSessionsApiService(
+            store,
+            new ProviderRegistry([provider]),
+            mcpService,
+            Stub(ChatPromptAssetService) {
+                listAssetsByType(_) >> []
+            },
+            new ChatPromptResourceService(),
+            agentSupervisor,
+            'llama3.1'
+        )
+        String sessionId = service.createSession(new org.maurodata.plugin.chat.api.chat.CreateSessionRequest(workspaceId: 'default', title: 'Existing title')).id
+
+        when:
+        List events = Flux.from(service.sendMessage(sessionId, new SendMessageRequest(
+            messageId: 'user-1',
+            content: 'Compare items',
+            options: [mode: 'agent']
+        ))).collectList().block()
+
+        then:
+        events*.type == ['message_start', 'agent_run_created', 'agent_run_started', 'agent_progress', 'agent_context_context', 'agent_context_resolved', 'agent_progress', 'agent_run_failed', 'agent_progress', 'error', 'message_complete', 'done']
+        events.findAll {it.type == 'agent_progress'}*.metadata*.phase == ['run_started', 'context_resolved', 'run_failed']
+        events.find {it.type == 'agent_context_context'}.metadata.visibility == 'debug'
+        events.find {it.type == 'error'}.content.contains('Planner returned no steps')
+        store.agentRuns.values().first().status == 'failed'
+    }
+
+    void 'agent mode streams a completed agent answer through the existing endpoint'() {
+        given:
+        ChatInMemoryStore store = new ChatInMemoryStore()
+        LlmProvider provider = Stub(LlmProvider) {
+            id() >> 'ollama'
+            streamChat(_ as ProviderRequest) >> {ProviderRequest providerRequest ->
+                switch (providerRequest.options?.purpose) {
+                    case 'agent_context_resolver':
+                        return Flux.fromIterable([
+                            new ProviderChunk('token', providerRequest.messageId, '''{
+                              "goalRestatement": "Resolve context",
+                              "domainContext": ["Mauro catalogue"],
+                              "relevantTools": [],
+                              "recommendedSkills": [],
+                              "relevantResources": [],
+                              "planningHints": [],
+                              "constraints": []
+                            }''', [:])
+                        ])
+                    case 'agent_planner':
+                        return Flux.fromIterable([
+                            new ProviderChunk('token', providerRequest.messageId, '''{
+                              "goalRestatement":"Answer through one step",
+                              "fitness":"usable",
+                              "successCriteria":["answer"],
+                              "assumptions":[],
+                              "risks":[],
+                              "steps":[{
+                                "title":"Prepare answer",
+                                "objective":"Prepare the final answer",
+                                "kind":"summarize",
+                                "allowedTools":[],
+                                "expectedOutput":"answer material",
+                                "successCriteria":["ready"]
+                              }]
+                            }''', [:])
+                        ])
+                    case 'agent_executor':
+                        return Flux.fromIterable([
+                            new ProviderChunk('token', providerRequest.messageId, 'ready', [:])
+                        ])
+                    case 'agent_step_evaluator':
+                        return Flux.fromIterable([
+                            new ProviderChunk('token', providerRequest.messageId, '''{
+                              "stepComplete": true,
+                              "decision": "continue",
+                              "summary": "Ready.",
+                              "reason": "Ready.",
+                              "question": null
+                            }''', [:])
+                        ])
+                    case 'agent_plan_evaluator':
+                        return Flux.fromIterable([
+                            new ProviderChunk('token', providerRequest.messageId, '''{
+                              "decision": "final",
+                              "summary": "Ready.",
+                              "reason": "Ready.",
+                              "question": null,
+                              "missing": [],
+                              "obsoleteStepIds": []
+                            }''', [:])
+                        ])
+                    case 'agent_final':
+                        return Flux.fromIterable([
+                            new ProviderChunk('token', providerRequest.messageId, 'agent answer', [:])
+                        ])
+                    default:
+                        return Flux.empty()
+                }
+            }
+        }
+        ChatMcpService mcpService = Stub(ChatMcpService) {
+            listServers() >> []
+        }
+        AgentSupervisorService agentSupervisor = new AgentSupervisorService(
+            store,
+            new ProviderRegistry([provider]),
+            mcpService,
+            4,
+            8
+        )
+        ChatSessionsApiService service = new ChatSessionsApiService(
+            store,
+            new ProviderRegistry([provider]),
+            mcpService,
+            Stub(ChatPromptAssetService) {
+                listAssetsByType(_) >> []
+            },
+            new ChatPromptResourceService(),
+            agentSupervisor,
+            'llama3.1'
+        )
+        String sessionId = service.createSession(new org.maurodata.plugin.chat.api.chat.CreateSessionRequest(workspaceId: 'default', title: 'Existing title')).id
+
+        when:
+        List events = Flux.from(service.sendMessage(sessionId, new SendMessageRequest(
+            messageId: 'user-1',
+            content: 'Compare items',
+            options: [mode: 'agent']
+        ))).collectList().block()
+
+        then:
+        events*.type.containsAll(['message_start', 'agent_run_started', 'agent_plan_created', 'agent_step_started', 'agent_step_completed', 'agent_plan_evaluated', 'agent_final_started', 'agent_final_context', 'token', 'agent_run_completed', 'message_complete', 'done'])
+        events.find {it.type == 'agent_plan_created'}.metadata.successCriteriaMarkdown == '## Success Criteria\n- answer'
+        events.find {it.type == 'agent_final_context'}.metadata.visibility == 'debug'
+        events.find {it.type == 'agent_final_context'}.content.contains('Success criteria:')
+        events.findAll {it.type == 'token'}*.content.join('') == 'agent answer'
+        events*.type.contains('agent_evidence_added')
+        service.listSessionMessages(sessionId, 50, null).items.findAll {it.metadata?.eventType == 'token'}*.content.join('') == 'agent answer'
     }
 
     @SuppressWarnings('unchecked')

@@ -9,6 +9,9 @@ import io.micronaut.web.router.Router
 import io.micronaut.web.router.UriRouteInfo
 import jakarta.inject.Singleton
 
+import java.util.regex.Matcher
+import java.util.regex.Pattern
+
 @CompileStatic
 @Singleton
 class McpHttpResourceRegistry {
@@ -202,7 +205,7 @@ class McpHttpResourceRegistry {
 
     private static List<String> pathParameterNames(String path) {
         List<String> names = new ArrayList<String>()
-        java.util.regex.Matcher matcher = (path =~ /\{([^}]+)}/)
+        Matcher matcher = (path =~ /\{([^}]+)}/)
         while (matcher.find()) {
             names.add(matcher.group(1))
         }
@@ -225,10 +228,7 @@ class McpHttpResourceRegistry {
     }
 
     private static Map<String, Object> bodySchema(UriRouteInfo<?, ?> route) {
-        Optional<Argument<?>> bodyArgument = route.bodyArgument
-        if (!bodyArgument.present) {
-            bodyArgument = route.requestBodyType
-        }
+        Optional<Argument<?>> bodyArgument = route.requestBodyType
         if (!bodyArgument.present) {
             return null
         }
@@ -288,7 +288,7 @@ class McpHttpResourceRegistry {
             if (value == null) {
                 continue
             }
-            java.util.regex.Matcher matcher = (value =~ /(?:listAll|list|show|get|create|update|delete)([A-Z][A-Za-z0-9]+)/)
+            Matcher matcher = (value =~ /(?:listAll|list|show|get|create|update|delete)([A-Z][A-Za-z0-9]+)/)
             if (matcher.find()) {
                 return matcher.group(1)
             }
@@ -339,7 +339,7 @@ class McpHttpResourceRegistry {
 
     private static String normalizedControllerName(Class<?> declaringType) {
         String simpleName = declaringType.simpleName ?: declaringType.name
-        java.util.regex.Matcher matcher = (simpleName =~ /([A-Za-z0-9_]+Controller)/)
+        Matcher matcher = (simpleName =~ /([A-Za-z0-9_]+Controller)/)
         if (matcher.find()) {
             simpleName = matcher.group(1)
         }
@@ -372,13 +372,13 @@ class McpHttpResourceRegistry {
         while (index < template.length()) {
             int open = template.indexOf('{', index)
             if (open < 0) {
-                regex.append(java.util.regex.Pattern.quote(template.substring(index)))
+                regex.append(Pattern.quote(template.substring(index)))
                 break
             }
-            regex.append(java.util.regex.Pattern.quote(template.substring(index, open)))
+            regex.append(Pattern.quote(template.substring(index, open)))
             int close = template.indexOf('}', open)
             if (close < 0) {
-                regex.append(java.util.regex.Pattern.quote(template.substring(open)))
+                regex.append(Pattern.quote(template.substring(open)))
                 break
             }
             regex.append('[^/]+')

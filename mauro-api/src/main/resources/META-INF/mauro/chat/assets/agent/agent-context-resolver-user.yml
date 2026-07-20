@@ -1,0 +1,30 @@
+id: agent-context-resolver-user
+name: Agent Context Resolver User Prompt
+description: User prompt template for context resolution
+scope: GLOBAL
+version: 1.0.0
+type: ROLE_PROMPT
+priority: 100
+keywords:
+  - agent
+  - context
+  - perceive
+instruction: |
+  Goal:
+  {{goal}}
+
+  Persona guidance:
+  {{personaGuidance}}
+
+  Skill lookup result:
+  {{skillLookupResult}}
+
+  Advertised tool affordances:
+  {{toolAffordances}}
+  {{sessionContinuityBlock}}
+  {{replanReasonBlock}}
+  {{evidenceBlock}}
+  {{guidanceBlock}}
+
+  Resolve the context needed for planning or replanning. Use the persona guidance as standing agent context. Use the skill lookup result to recommend any relevant skills, and identify relevant read-only tools and resource suggestions from the affordances above.
+  If this is a follow-up goal, resolve references from the prior session continuity context and carry forward only the facts, evidence ids, guidance ids, caveats, and mechanics needed for this run.

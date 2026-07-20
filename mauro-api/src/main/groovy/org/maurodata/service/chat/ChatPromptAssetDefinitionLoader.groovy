@@ -4,8 +4,6 @@ import groovy.transform.CompileStatic
 import jakarta.inject.Singleton
 import org.yaml.snakeyaml.Yaml
 
-import java.net.JarURLConnection
-import java.net.URL
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -14,39 +12,38 @@ import java.util.jar.JarFile
 
 @CompileStatic
 @Singleton
-class ChatSkillDefinitionLoader {
+class ChatPromptAssetDefinitionLoader {
 
-    private static final List<String> SKILL_RESOURCE_DIRS = [
-        'META-INF/mauro/chat/skills',
-        'chat/skills'
+    private static final List<String> PROMPT_ASSET_RESOURCE_DIRS = [
+        'META-INF/mauro/chat/assets',
+        'chat/assets'
     ] as List<String>
 
-    private final List<ChatSkillDefinition> definitions
+    private final List<ChatPromptAssetDefinition> definitions
 
-    ChatSkillDefinitionLoader() {
-        this.definitions = loadDefinitions().asImmutable() as List<ChatSkillDefinition>
+    ChatPromptAssetDefinitionLoader() {
+        this.definitions = loadDefinitions().asImmutable() as List<ChatPromptAssetDefinition>
     }
 
-    List<ChatSkillDefinition> listDefinitions() {
+    List<ChatPromptAssetDefinition> listDefinitions() {
         definitions
     }
 
-    private static List<ChatSkillDefinition> loadDefinitions() {
+    private static List<ChatPromptAssetDefinition> loadDefinitions() {
         Yaml yaml = new Yaml()
-        List<ChatSkillDefinition> loaded = new ArrayList<ChatSkillDefinition>()
-        ClassLoader classLoader = ChatSkillDefinitionLoader.classLoader
-        List<String> resourcePaths = discoverSkillResourcePaths(classLoader)
+        List<ChatPromptAssetDefinition> loaded = new ArrayList<ChatPromptAssetDefinition>()
+        ClassLoader classLoader = ChatPromptAssetDefinitionLoader.classLoader
+        List<String> resourcePaths = discoverPromptAssetResourcePaths(classLoader)
 
-        for (int i = 0; i < resourcePaths.size(); i++) {
-            String path = resourcePaths.get(i)
+        for (String path : resourcePaths) {
             InputStream inputStream = classLoader.getResourceAsStream(path)
             if (inputStream == null) {
-                throw new IllegalStateException("Missing chat skill definition resource: ${path}")
+                throw new IllegalStateException("Missing chat prompt asset resource: ${path}")
             }
             try {
                 Object parsed = yaml.load(inputStream)
                 if (!(parsed instanceof Map)) {
-                    throw new IllegalStateException("Chat skill definition must be a map: ${path}")
+                    throw new IllegalStateException("Chat prompt asset definition must be a map: ${path}")
                 }
                 @SuppressWarnings('unchecked')
                 Map<String, Object> data = (Map<String, Object>) parsed
@@ -58,9 +55,9 @@ class ChatSkillDefinitionLoader {
         loaded
     }
 
-    private static List<String> discoverSkillResourcePaths(ClassLoader classLoader) {
+    private static List<String> discoverPromptAssetResourcePaths(ClassLoader classLoader) {
         Set<String> paths = new TreeSet<String>()
-        for (String resourceDir : SKILL_RESOURCE_DIRS) {
+        for (String resourceDir : PROMPT_ASSET_RESOURCE_DIRS) {
             Enumeration<URL> resources = classLoader.getResources(resourceDir)
             while (resources.hasMoreElements()) {
                 URL url = resources.nextElement()
@@ -72,7 +69,7 @@ class ChatSkillDefinitionLoader {
             }
         }
         if (paths.isEmpty()) {
-            throw new IllegalStateException("No chat skill definition resources found under ${SKILL_RESOURCE_DIRS.join(', ')}")
+            throw new IllegalStateException("No chat prompt asset definition resources found under ${PROMPT_ASSET_RESOURCE_DIRS.join(', ')}")
         }
         new ArrayList<String>(paths)
     }
@@ -83,11 +80,14 @@ class ChatSkillDefinitionLoader {
             return []
         }
         List<String> paths = new ArrayList<String>()
-        Files.list(dir).withCloseable {java.util.stream.Stream<Path> stream ->
+        Files.walk(dir).withCloseable {java.util.stream.Stream<Path> stream ->
             stream
                 .filter {Path path -> Files.isRegularFile(path)}
-                .filter {Path path -> isSkillFile(path.fileName.toString())}
-                .forEach {Path path -> paths.add(resourceDir + '/' + path.fileName.toString()) }
+                .filter {Path path -> isPromptAssetFile(path.fileName.toString())}
+                .forEach {Path path ->
+                    String relative = dir.relativize(path).toString().replace(File.separatorChar, '/' as char)
+                    paths.add(resourceDir + '/' + relative)
+                }
         }
         paths
     }
@@ -100,20 +100,20 @@ class ChatSkillDefinitionLoader {
         while (entries.hasMoreElements()) {
             JarEntry entry = entries.nextElement()
             String name = entry.name
-            if (!entry.directory && name.startsWith(resourceDir + '/') && isSkillFile(name)) {
+            if (!entry.directory && name.startsWith(resourceDir + '/') && isPromptAssetFile(name)) {
                 paths.add(name)
             }
         }
         paths
     }
 
-    private static boolean isSkillFile(String path) {
+    private static boolean isPromptAssetFile(String path) {
         String lower = path.toLowerCase(Locale.ROOT)
         lower.endsWith('.yml') || lower.endsWith('.yaml')
     }
 
-    private static ChatSkillDefinition fromMap(String path, Map<String, Object> data) {
-        ChatSkillDefinition definition = new ChatSkillDefinition(
+    private static ChatPromptAssetDefinition fromMap(String path, Map<String, Object> data) {
+        new ChatPromptAssetDefinition(
             id: requiredString(path, data, 'id'),
             name: requiredString(path, data, 'name'),
             description: requiredString(path, data, 'description'),
@@ -123,11 +123,13 @@ class ChatSkillDefinitionLoader {
             priority: intValue(data.get('priority')),
             keywords: stringList(data.get('keywords')),
             seeAlso: stringList(data.get('seeAlso')),
+            fragments: stringList(data.get('fragments')),
             toolApplicability: toolApplicabilityList(data.get('toolApplicability')),
             routing: routingValue(data.get('routing')),
-            instruction: requiredString(path, data, 'instruction')
+            instruction: requiredString(path, data, 'instruction'),
+            sourcePath: path,
+            metadata: new LinkedHashMap<String, Object>(data)
         )
-        definition
     }
 
     private static List<SkillToolApplicability> toolApplicabilityList(Object value) {
@@ -196,7 +198,7 @@ class ChatSkillDefinitionLoader {
     private static String requiredString(String path, Map<String, Object> data, String key) {
         String value = stringValue(data.get(key))
         if (value == null || value.trim().isEmpty()) {
-            throw new IllegalStateException("Missing required chat skill field '${key}' in ${path}")
+            throw new IllegalStateException("Missing required chat prompt asset field '${key}' in ${path}")
         }
         value
     }
@@ -220,8 +222,7 @@ class ChatSkillDefinitionLoader {
             return []
         }
         List<String> strings = new ArrayList<String>()
-        Collection<?> collection = (Collection<?>) value
-        for (Object item : collection) {
+        for (Object item : (Collection<?>) value) {
             if (item != null && !String.valueOf(item).trim().isEmpty()) {
                 strings.add(String.valueOf(item))
             }

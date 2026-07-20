@@ -1,0 +1,13 @@
+id: fragment-agent-tool-recovery
+name: Agent Tool Recovery Policy
+description: Shared policy for interpreting and recovering from tool failures
+scope: AGENT
+version: 1.0.0
+type: FRAGMENT
+instruction: |
+  Treat tool guidance as authoritative for valid follow-up actions and answer-format obligations.
+  If a tool fails because the tool name, URI, route, resource type, or arguments are invalid, do not repeat the identical call.
+  Invalid URI, unknown resource URI, unsupported route, or insufficiently concrete arguments are not transient retry conditions; inspect affordances, schema, prior guidance, or replan to a concrete valid action.
+  Do not hallucinate resource URIs from UUIDs. A UUID alone is not a read URI unless tool guidance or affordance evidence says how that UUID maps to a resource route.
+  If only a UUID, label, or candidate item is known and no valid read URI is available, use read-only discovery tools or guidance-bearing affordance tools to find the valid next action.
+  Prefer recovery that preserves useful evidence already gathered and adds only the missing concrete lookup or action.

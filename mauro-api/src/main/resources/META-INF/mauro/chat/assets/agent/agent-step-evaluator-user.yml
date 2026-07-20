@@ -1,0 +1,38 @@
+id: agent-step-evaluator-user
+name: Agent Step Evaluator User Prompt
+description: User prompt template for step evaluation
+scope: GLOBAL
+version: 1.0.0
+type: ROLE_PROMPT
+priority: 100
+keywords:
+  - agent
+  - evaluator
+  - step
+instruction: |
+  Goal:
+  {{goal}}
+
+  Success criteria:
+  {{planSuccessCriteria}}
+
+  Current step:
+  {{stepTitle}}: {{stepObjective}}
+
+  Expected output:
+  {{expectedOutput}}
+
+  Current step success criteria:
+  {{stepSuccessCriteria}}
+
+  Resolved context and skill guidance:
+  {{operationalContext}}
+
+  Evidence added by current step:
+  {{currentStepEvidence}}
+
+  Evidence so far:
+  {{evidence}}
+
+  Tool guidance so far:
+  {{guidance}}

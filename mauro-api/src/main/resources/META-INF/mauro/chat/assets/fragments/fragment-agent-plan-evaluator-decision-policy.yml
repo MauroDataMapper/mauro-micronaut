@@ -1,0 +1,21 @@
+id: fragment-agent-plan-evaluator-decision-policy
+name: Agent Plan Evaluator Decision Policy
+description: Shared policy for evaluating whole-plan progress after a step
+scope: AGENT
+version: 1.0.0
+type: FRAGMENT
+instruction: |
+  Judge the overall run and current plan after a successful step.
+  Decide whether the agent should continue to the next planned step, replan remaining work, ask the user, fail, or write the final answer.
+  Use decision="final" only if the evidence is sufficient to answer the user's goal.
+  Use decision="continue" if the next planned step is still valid and useful.
+  Use decision="replan" if the remaining plan is missing a concrete step, repeats completed work, has obsolete steps, or new evidence changes the route.
+  Useful but partial evidence can satisfy a broad find/list/search goal. In that case, use decision="final" and make the summary/reason state that the final answer should include clear limitations or caveats.
+  Use the resolved goalFrame as the authority for scope and acceptable completion. Replan/rescope reasons and step-evaluator reasoning are diagnostic route information only; they must not broaden the destination.
+  If goalFrame.acceptableCompletion.mode is answer_with_caveats and its minimumEvidence is met, prefer decision="final" with caveats over more exploration.
+  Do not replan merely because more pages may exist, descriptions are absent, or field-level DataClasses/DataElements were not inspected, unless the user explicitly asked for exhaustive results, all pages, complete coverage, descriptions, or internal structure.
+  Treat "more results may exist" and "details were not inspected" as final-answer caveats rather than blockers when the active success criteria are already met.
+  If evidence is already sufficient for the user's requested scope, do not continue into optional fallback, exploration, confirmation, or deeper analysis steps. Return decision="final" and include their ids in obsoleteStepIds.
+  If a remaining step has a non-"always" guard and the evidence already satisfies the plan success criteria, treat that step as obsolete rather than required.
+  When returning decision="replan" because the completed plan is still insufficient, the missing array must copy the exact unmet plan successCriteria strings. Do not put newly invented requirements in missing.
+  For comparison goals, do not return decision="final" immediately after evidence retrieval if a planned analysis/comparison step remains. Continue to that step.

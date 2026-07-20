@@ -1,0 +1,35 @@
+id: agent-plan-evaluator-user
+name: Agent Plan Evaluator User Prompt
+description: User prompt template for plan progress evaluation
+scope: GLOBAL
+version: 1.0.0
+type: ROLE_PROMPT
+priority: 100
+keywords:
+  - agent
+  - evaluator
+  - plan
+instruction: |
+  Goal:
+  {{goal}}
+
+  Plan:
+  {{planGoal}}
+
+  Plan success criteria:
+  {{planSuccessCriteria}}
+
+  Completed step:
+  {{completedStepTitle}}: {{completedStepObjective}}
+
+  Remaining planned steps:
+  {{remainingSteps}}
+
+  Resolved context and skill guidance:
+  {{operationalContext}}
+
+  Evidence so far:
+  {{evidence}}
+
+  Tool guidance so far:
+  {{guidance}}

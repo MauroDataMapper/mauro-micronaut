@@ -17,7 +17,7 @@ final class ProviderWireMessages {
             wm.put('role', m.role)
             wm.put('content', m.content)
             if (m.name != null) {
-                if (ollamaToolNames && 'tool'.equals(m.role)) {
+                if (ollamaToolNames && 'tool' == m.role) {
                     wm.put('tool_name', m.name)
                 } else {
                     wm.put('name', m.name)
@@ -46,7 +46,7 @@ final class ProviderWireMessages {
             if (message == null) {
                 continue
             }
-            if ('system'.equals(message.role) && message.toolCallId == null && message.name == null &&
+            if ('system' == message.role && message.toolCallId == null && message.name == null &&
                 (message.toolCalls == null || message.toolCalls.isEmpty())) {
                 if (systemBuffer.length() > 0) {
                     systemBuffer.append('\n\n')

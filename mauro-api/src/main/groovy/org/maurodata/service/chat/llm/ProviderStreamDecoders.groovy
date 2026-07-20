@@ -44,7 +44,7 @@ final class ProviderStreamDecoders {
                 out.add(new ProviderChunk('token', assistantMessageId, content, metadata))
             }
 
-            if (Boolean.TRUE.equals(done)) {
+            if (Boolean.TRUE == done) {
                 out.add(new ProviderChunk('message_complete', assistantMessageId, null, Collections.<String, Object>emptyMap()))
                 out.add(new ProviderChunk('done', assistantMessageId, null, Collections.<String, Object>emptyMap()))
             }
@@ -67,7 +67,7 @@ final class ProviderStreamDecoders {
                 return Collections.<ProviderChunk>emptyList()
             }
 
-            if ('[DONE]'.equals(payload)) {
+            if ('[DONE]' == payload) {
                 final List<ProviderChunk> doneChunks = new ArrayList<ProviderChunk>(2)
                 doneChunks.add(new ProviderChunk('message_complete', assistantMessageId, null, Collections.<String, Object>emptyMap()))
                 doneChunks.add(new ProviderChunk('done', assistantMessageId, null, Collections.<String, Object>emptyMap()))

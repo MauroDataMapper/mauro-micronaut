@@ -1,5 +1,6 @@
 package org.maurodata.service.chat
 
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.exceptions.HttpStatusException
@@ -13,10 +14,9 @@ import org.maurodata.service.chat.mcp.ExternalMcpRegistry
 import org.maurodata.service.chat.mcp.McpToolRegistry
 import org.maurodata.service.chat.mcp.ToolInvocationResult
 
-import java.util.UUID
-
 @Slf4j
 @Singleton
+@CompileStatic
 class ChatMcpApiService implements ChatMcpService {
 
     private final McpToolRegistry mcpToolRegistry
@@ -47,7 +47,7 @@ class ChatMcpApiService implements ChatMcpService {
             log.info('invokeTool nonce invocationId={} nonce={}', invocationId, nonce)
             new ToolInvokeResponse(
                 success: true,
-                result: [invocationId: invocationId, nonce: nonce, tool: toolName, output: invocationResult.output],
+                result: [invocationId: invocationId, nonce: nonce, tool: toolName, output: invocationResult.output] as Map<String, Object>,
                 modelText: invocationResult.modelText,
                 error: null
             )
@@ -59,6 +59,11 @@ class ChatMcpApiService implements ChatMcpService {
         } finally {
             log.info('invokeTool completed invocationId={} toolName={} durationMs={}', invocationId, toolName, System.currentTimeMillis() - start)
         }
+    }
+
+    @Override
+    String renderModelText(String toolName, Map<String, Object> output) {
+        mcpToolRegistry.renderModelText(toolName, output)
     }
 
     @Override
