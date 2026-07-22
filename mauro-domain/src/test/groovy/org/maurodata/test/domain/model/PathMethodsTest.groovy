@@ -29,6 +29,8 @@ class PathMethodsTest extends Specification {
         'fo'       | "fo:soluta eum architecto|te:Dewey Decimal Classification v22\$main"                           | "soluta eum architecto"
         'te'       | "fo:soluta eum architecto|te:Dewey Decimal Classification v22\$main"                           | "Dewey Decimal Classification v22"
         'dc'       | "fo:soluta eum architecto|dm:modi unde est\$1.0.0|dc:est quasi vel|dc:est sed hic"              | "est sed hic"
+        'DE'       | "fo:soluta eum architecto|dm:modi unde est\$matrix|dc:est quasi vel|de:new data element label" | "new data element label"
+        'dm'       | "FO:soluta eum architecto|DM:modi unde est\$matrix|DC:est quasi vel|DE:new data element label" | "modi unde est"
     }
 
     @Unroll
@@ -46,6 +48,35 @@ class PathMethodsTest extends Specification {
         'fo:soluta eum architecto'                                                                          | null
         'fo:soluta eum architecto|te:Dewey Decimal Classification v22$main'                                 | "main"
         'fo:soluta eum architecto|vf:versionio de folder$main|te:Dewey Decimal Classification v22$main'     | "main"
+        'FO:soluta eum architecto|DM:modi unde est$matrix|DC:est quasi vel|DE:new data element label$2.0.0' | "matrix"
+        'VF:versionio de folder$main|TE:Dewey Decimal Classification v22'                                   | "main"
+    }
+
+    @Unroll
+    void 'test trimUntil keeps identifiers case sensitive and prefixes case insensitive for #pathRoot'() {
+        when:
+        Path trimmedPath = new Path(fullPath).trimUntil(pathRoot)
+
+        then:
+        trimmedPath.toString() == expectedPath
+
+        where:
+        fullPath                                                                                       | pathRoot              | expectedPath
+        'FO:Folder|DM:Model$main|DC:Name|DE:Element'                                                   | 'dm:Model$main'       | 'DM:Model$main|DC:Name|DE:Element'
+        'FO:Folder|DM:Model$main|DC:Name|DE:Element'                                                   | 'dm:model$main'       | ''
+        'fo:Folder|dm:Model$main|dc:Name|de:Element'                                                   | 'DM:Model$main'       | 'dm:Model$main|dc:Name|de:Element'
+        'fo:Folder|dm:Model$main|dc:Name|de:Element'                                                   | 'DM:model$main'       | ''
+    }
+
+    void 'test set modelIdentifier recognises mixed case model prefixes'() {
+        given:
+        Path path = new Path('FO:Folder|DM:Model|DC:Name')
+
+        when:
+        path.modelIdentifier = 'main'
+
+        then:
+        path.toString() == 'FO:Folder|DM:Model$main|DC:Name'
     }
 
     void 'test getting path from string'() {
@@ -65,6 +96,7 @@ class PathMethodsTest extends Specification {
         "vf:soluta eum architecto\$main|te:Dewey Decimal Classification v22"                            | 2             | 0
         "fo:soluta eum architecto|te:Dewey Decimal Classification v22"                                  | 2             | -1
         "fo:soluta eum architecto|dm:modi unde est\$1.0.0|dc:est quasi vel|dc:est sed hic"              | 4             | 1
+        "FO:soluta eum architecto|DM:modi unde est\$matrix|DC:est quasi vel|DE:new data element label"  | 4             | 1
 
     }
 

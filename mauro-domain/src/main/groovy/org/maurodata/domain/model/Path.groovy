@@ -119,7 +119,7 @@ class Path {
         for (from = 0; from < nodes.size(); from++) {
             final PathNode node = nodes.get(from)
 
-            if (node.prefix == toMatch.prefix && node.identifier == toMatch.identifier) {break}
+            if (node.prefix?.equalsIgnoreCase(toMatch.prefix) && node.identifier == toMatch.identifier) {break}
         }
         for (int copy = from; copy < nodes.size(); copy++) {
             lessNodes.add(nodes.get(copy))
@@ -161,7 +161,7 @@ class Path {
     PathNode findLastPathNodeByPrefix(final String prefix) {
         for (int p = nodes.size() - 1; p >= 0; p--) {
             final PathNode pathNode = nodes.get(p)
-            if (pathNode.prefix == prefix) {return pathNode}
+            if (pathNode.prefix?.equalsIgnoreCase(prefix)) {return pathNode}
         }
         return null
     }
@@ -176,7 +176,7 @@ class Path {
     String getModelIdentifier() {
         for (int p = 0, n = nodes.size(); p < n; p++) {
             final PathNode pathNode = nodes.get(p)
-            if (!PathNode.canHaveModelIdentifier.contains(pathNode.prefix)) {continue}
+            if (!PathNode.canHaveModelIdentifier(pathNode.prefix)) {continue}
             if (pathNode.modelIdentifier) {return pathNode.modelIdentifier}
         }
         return null
@@ -186,7 +186,7 @@ class Path {
         nodes.each {PathNode pathNode -> pathNode.modelIdentifier = null}
         for (int p = 0, n = nodes.size(); p < n; p++) {
             final PathNode pathNode = nodes.get(p)
-            if (!PathNode.canHaveModelIdentifier.contains(pathNode.prefix)) {continue}
+            if (!PathNode.canHaveModelIdentifier(pathNode.prefix)) {continue}
             pathNode.modelIdentifier = modelIdentifier
             break
         }
@@ -227,6 +227,10 @@ class Path {
         }
 
         static List<String> canHaveModelIdentifier = ['dm','vf','csc','cs','te']
+
+        static boolean canHaveModelIdentifier(final String prefix) {
+            canHaveModelIdentifier.any {it.equalsIgnoreCase(prefix)}
+        }
 
         static PathNode from(String str) {
             Pattern nodePattern = ~/^(?<prefix>\w{2,3}):(?<identifier>(?:%[$@|:%]|[^@$|:%])*?)(?:\$(?<modelIdentifier>(?:%[$@|:%]|[^@$|:%])*))?(?:@(?<attribute>(?:%[$@|:%]|[^@$|:%])*))?$/

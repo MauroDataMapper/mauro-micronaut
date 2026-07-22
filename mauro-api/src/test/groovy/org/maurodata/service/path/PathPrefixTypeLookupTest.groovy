@@ -58,7 +58,12 @@ class PathPrefixTypeLookupTest extends Specification {
         'ev'       | EnumerationValue.class.simpleName
         'csc'      | ClassificationScheme.class.simpleName
         'cl'       | Classifier.class.simpleName
+        'FO'       | Folder.class.simpleName
+        'vF'       | Folder.class.simpleName
+        'DM'       | DataModel.class.simpleName
+        'dC'       | DataClass.class.simpleName
+        'DCC'      | DataClassComponent.class.simpleName
+        'CSC'      | ClassificationScheme.class.simpleName
     }
 }
-
 
