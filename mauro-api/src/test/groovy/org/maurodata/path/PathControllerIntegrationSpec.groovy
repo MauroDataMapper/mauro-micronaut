@@ -54,6 +54,38 @@ class PathControllerIntegrationSpec extends CommonDataSpec {
         domainType | path
         'codeSet'  | EXPECTED_PATH
         'codesets' | EXPECTED_PATH
+        'CODESET'  | EXPECTED_PATH
+        'CoDeSeTs' | EXPECTED_PATH
+        'codeSet'  | 'FO:Test folder|CS:test label$main'
+        'CODESET'  | 'Fo:Test folder|Cs:test label$main'
+    }
+
+    void 'test getResource by path -label case differs -shouldThrowException'() {
+        when:
+        pathApi.getResourceByPath('codeSet', 'fo:Test folder|cs:Test Label$main')
+
+        then:
+        HttpStatusException exception = thrown()
+        exception.status == HttpStatus.NOT_FOUND
+    }
+
+    void 'test getResource by path -labels differing only by case are distinct'() {
+        given:
+        CodeSet upperCaseCodeSet = codeSetApi.create(folderId, codeSet(EXPECTED_LABEL.toUpperCase()))
+
+        when:
+        CodeSet lowerCaseCodeSet = pathApi.getResourceByPath('codeSet', EXPECTED_PATH) as AdministeredItem as CodeSet
+
+        then:
+        lowerCaseCodeSet.id == codeSetId
+        lowerCaseCodeSet.label == EXPECTED_LABEL
+
+        when:
+        CodeSet retrievedUpperCaseCodeSet = pathApi.getResourceByPath('codeSet', 'fo:Test folder|cs:TEST LABEL$main') as AdministeredItem as CodeSet
+
+        then:
+        retrievedUpperCaseCodeSet.id == upperCaseCodeSet.id
+        retrievedUpperCaseCodeSet.label == EXPECTED_LABEL.toUpperCase()
     }
 
 
@@ -183,4 +215,3 @@ class PathControllerIntegrationSpec extends CommonDataSpec {
 
     }
 }
-

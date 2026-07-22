@@ -126,7 +126,6 @@ abstract class DataClassComponentRepository implements ModelItemRepository<DataC
     abstract Long removeTargetDataClasses(@NonNull UUID id)
 
     Boolean handlesPathPrefix(final String pathPrefix) {
-        'dsc'.equalsIgnoreCase(pathPrefix)
+        'dcc'.equalsIgnoreCase(pathPrefix)
     }
 }
-

@@ -29,6 +29,7 @@ class PathTest extends Specification {
         'vf:My%$versioned%%%|folder|dm:data%|model|de:data%|element@attribute' | 3
         'vf:My%$versioned%%%|folder|dm:data%|model|de:data%|element%@home@attribute' | 3
         'vf:My%$versioned%%%|folder%:%:|dm:data%|model|de:data%|element%@home@attribute' | 3
+        'VF:versioned folder$main|DM:Data Model|DE:Data Element' | 3
     }
 
     @Unroll
@@ -51,6 +52,17 @@ class PathTest extends Specification {
         'vf:My%$versioned%%%|folder|dm:data%|model|de:data%|element@attribute' | ''
         'vf:My%$versioned%%%|folder|dm:data%|model|de:data%|element%@home@attribute' | ''
         'vf:My%$versioned%%%|folder%:|dm:data%|model|de:data%|element%@home@attribute' | ''
+        'VF:versioned folder$main|DM:Data Model|DE:Data Element' | ''
+    }
+
+    void 'test path node identifiers are case sensitive'() {
+        when:
+        Path.PathNode upperCaseIdentifier = Path.PathNode.from('dc:Name')
+        Path.PathNode lowerCaseIdentifier = Path.PathNode.from('dc:name')
+
+        then:
+        upperCaseIdentifier.prefix == lowerCaseIdentifier.prefix
+        upperCaseIdentifier.identifier != lowerCaseIdentifier.identifier
     }
 
     @Unroll
