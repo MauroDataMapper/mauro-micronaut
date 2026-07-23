@@ -6,6 +6,7 @@ import org.maurodata.domain.folder.Folder
 import org.maurodata.persistence.SecuredContainerizedTest
 import org.maurodata.security.SecuredIntegrationSpec
 import org.maurodata.web.ListResponse
+import org.maurodata.web.PaginationParams
 
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Delete
@@ -54,6 +55,13 @@ class AuditIntegrationSpec extends SecuredIntegrationSpec {
         editResponse.items.size() == 2
         editResponse.items.sort {it.dateCreated}.last().description == 'Updated Folder'
         editResponse.items.sort {it.dateCreated}.last().title == EditType.UPDATE
+
+        when:
+        editResponse = editApi.list("folder", folderResponse.id, new PaginationParams(max: 1))
+
+        then:
+        editResponse.count == 2
+        editResponse.items.size() == 1
         logout()
     }
 

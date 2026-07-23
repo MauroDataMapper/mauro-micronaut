@@ -18,6 +18,7 @@ import org.maurodata.domain.search.dto.SearchResultsDTO
 import org.maurodata.persistence.search.SearchIndexRefreshScheduler
 import org.maurodata.testing.CommonDataSpec
 import org.maurodata.web.ListResponse
+import org.maurodata.web.PaginationParams
 
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
@@ -214,6 +215,20 @@ class DataModelIntegrationSpec extends CommonDataSpec {
         dataClassListResponse.items.path.collect {it.toString()}.sort() == ['fo:Test folder|dm:Test data model$1.0.0|dc:First data class', 'fo:Test folder|dm:Test data model$1.0.0|dc:Second data class']
 
         when:
+        dataClassListResponse = dataClassApi.list(dataModelId, new PaginationParams(label: 'DATA CLASS', max: 1, offset: 1))
+
+        then:
+        dataClassListResponse.count == 2
+        dataClassListResponse.items*.label == ['Second data class']
+
+        when:
+        dataClassListResponse = dataClassApi.list(dataModelId, new PaginationParams(code: 'anything'))
+
+        then:
+        dataClassListResponse.count == 0
+        dataClassListResponse.items.isEmpty()
+
+        when:
         dataClassResponse = dataClassApi.create(
             dataModelId,
             dataClassId2,
@@ -303,6 +318,27 @@ class DataModelIntegrationSpec extends CommonDataSpec {
         then:
         dataElementListResponse.count == 2
         dataElementListResponse.items.label.sort() == ['First data element', 'Second data element']
+
+        when:
+        dataElementListResponse = dataElementApi.list(dataModelId, dataClassId1, new PaginationParams(label: 'DATA ELEMENT', max: 1, offset: 1))
+
+        then:
+        dataElementListResponse.count == 2
+        dataElementListResponse.items*.label == ['Second data element']
+
+        when:
+        dataElementListResponse = dataElementApi.byModelList(dataModelId, new PaginationParams(description: 'THE', max: 1))
+
+        then:
+        dataElementListResponse.count == 2
+        dataElementListResponse.items.size() == 1
+
+        when:
+        dataElementListResponse = dataElementApi.byModelList(dataModelId, new PaginationParams(dataClass: 'FIRST DATA CLASS'))
+
+        then:
+        dataElementListResponse.count == 2
+        dataElementListResponse.items*.label.sort() == ['First data element', 'Second data element']
 
         when:
         dataElementResponse = dataElementApi.update(
@@ -402,6 +438,13 @@ class DataModelIntegrationSpec extends CommonDataSpec {
 
         enumerationValueListResponse.items.find { it -> it.key == 'T' }
         enumerationValueListResponse.items.find { it -> it.key == 'F' }
+
+        when:
+        enumerationValueListResponse = enumerationValueApi.list(dataModelId, enumerationTypeId, new PaginationParams(label: 'F', max: 1))
+
+        then:
+        enumerationValueListResponse.count == 1
+        enumerationValueListResponse.items*.key == ['F']
 
         when:
         enumerationValueResponse = enumerationValueApi.update(

@@ -158,9 +158,8 @@ class DataElementController extends AdministeredItemController<DataElement, Data
 
         DataClass dataClass = dataClassRepository.readById(dataClassId)
         accessControlService.checkRole(Role.READER, dataClass)
-        List<DataElement> dataElements = dataElementRepository.readAllByDataClass_Id(dataClassId)
 
-        ListResponse<DataElement> theList = ListResponse<DataElement>.from(dataElements, params)
+        ListResponse<DataElement> theList = dataElementRepository.readListResponseByDataClassId(dataClassId, params)
 
         theList.items.each {Object that ->
             DataElement it = (DataElement) that
@@ -224,8 +223,7 @@ class DataElementController extends AdministeredItemController<DataElement, Data
     ListResponse<DataElement> byModelList(UUID dataModelId, @Nullable PaginationParams params = new PaginationParams()) {
         DataModel dataModel = dataModelRepository.readById(dataModelId)
         accessControlService.checkRole(Role.READER, dataModel)
-        List<DataElement> dataElements = dataElementRepository.readAllByDataClassDataModelIdIn([dataModelId])
-        ListResponse<DataElement> dataElementsResponse = ListResponse.from(dataElements, params)
+        ListResponse<DataElement> dataElementsResponse = dataElementRepository.readListResponseByDataModelId(dataModelId, params)
         dataElementsResponse.items.each {updateDerivedProperties(it as DataElement)}
         dataElementsResponse
     }

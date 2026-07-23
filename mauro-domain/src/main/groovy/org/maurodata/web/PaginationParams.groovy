@@ -37,4 +37,7 @@ class PaginationParams {
 
     @Nullable
     String domainType = null
+
+    @Nullable
+    String dataClass = null
 }

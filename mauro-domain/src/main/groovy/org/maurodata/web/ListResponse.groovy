@@ -40,6 +40,10 @@ class ListResponse<T> {
         new ListResponse(count: items.size(), items: items ?: [])
     }
 
+    static ListResponse from(List items, Number totalCount) {
+        new ListResponse(count: totalCount as Integer, items: items ?: [])
+    }
+
     static ListResponse from(List items, PaginationParams params) {
 
         // If you want to have no sorting, use ListResponse.from() without PaginationParams

@@ -189,6 +189,48 @@ class DataTypeIntegrationSpec extends CommonDataSpec {
         dataType2.referenceClass == dataClass2
     }
 
+    void 'list dataTypes applies filters count sorting and pagination through repository'() {
+        given:
+        dataTypeApi.create(dataModelId, new DataType(label: 'Alpha type',
+                                                     description: 'Fast primitive description',
+                                                     dataTypeKind: DataType.DataTypeKind.PRIMITIVE_TYPE))
+        dataTypeApi.create(dataModelId, new DataType(label: 'Beta type',
+                                                     description: 'Fast enumeration description',
+                                                     dataTypeKind: DataType.DataTypeKind.ENUMERATION_TYPE))
+        dataTypeApi.create(dataModelId, new DataType(label: 'Gamma type',
+                                                     description: 'Reference description',
+                                                     dataTypeKind: DataType.DataTypeKind.REFERENCE_TYPE,
+                                                     referenceClass: [id: dataClassId1]))
+
+        when:
+        ListResponse<DataType> paged = dataTypeApi.list(dataModelId, new PaginationParams(label: 'TYPE', max: 1, offset: 1))
+
+        then:
+        paged.count == 3
+        paged.items*.label == ['Beta type']
+
+        when:
+        ListResponse<DataType> descriptionFiltered = dataTypeApi.list(dataModelId, new PaginationParams(description: 'FAST'))
+
+        then:
+        descriptionFiltered.count == 2
+        descriptionFiltered.items*.label == ['Alpha type', 'Beta type']
+
+        when:
+        ListResponse<DataType> domainTypeFiltered = dataTypeApi.list(dataModelId, new PaginationParams(domainType: 'primitive'))
+
+        then:
+        domainTypeFiltered.count == 1
+        domainTypeFiltered.items*.domainType == [DataType.DataTypeKind.PRIMITIVE_TYPE.stringValue]
+
+        when:
+        ListResponse<DataType> unsupportedTermFilter = dataTypeApi.list(dataModelId, new PaginationParams(code: 'anything'))
+
+        then:
+        unsupportedTermFilter.count == 0
+        unsupportedTermFilter.items.isEmpty()
+    }
+
     void 'create dataType with DataTypeKind modelType and finalised- should create'() {
         given:
         CodeSet codeSet = codeSetApi.create(folderId, codeSet())

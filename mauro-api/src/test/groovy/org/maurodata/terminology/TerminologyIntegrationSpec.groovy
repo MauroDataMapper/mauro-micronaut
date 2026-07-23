@@ -12,6 +12,7 @@ import org.maurodata.domain.search.dto.SearchRequestDTO
 import org.maurodata.domain.search.dto.SearchResultsDTO
 import org.maurodata.testing.CommonDataSpec
 import org.maurodata.web.ListResponse
+import org.maurodata.web.PaginationParams
 
 import jakarta.inject.Singleton
 import spock.lang.Shared
@@ -73,6 +74,20 @@ class TerminologyIntegrationSpec extends CommonDataSpec {
         termListResponse
         termListResponse.count == 2
         termListResponse.items.path.collect{ it.toString() }.sort() == ['fo:Test folder|te:Test terminology$main|tm:TEST-1', 'fo:Test folder|te:Test terminology$main|tm:TEST-2']
+
+        when:
+        termListResponse = termApi.list(terminologyId, new PaginationParams(code: 'test', max: 1, offset: 1))
+
+        then:
+        termListResponse.count == 2
+        termListResponse.items*.code == ['TEST-2']
+
+        when:
+        termListResponse = termApi.list(terminologyId, new PaginationParams(definition: 'SECOND'))
+
+        then:
+        termListResponse.count == 1
+        termListResponse.items*.code == ['TEST-2']
     }
 
     void 'test term relationship types'() {
