@@ -135,11 +135,11 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
     ListResponse<DataClass> list(UUID dataModelId, @Nullable PaginationParams params = new PaginationParams()) {
         DataModel dataModel = dataModelRepository.readById(dataModelId)
         accessControlService.checkRole(Role.READER, dataModel)
-        List<DataClass> classes = dataClassRepository.readAllByDataModelAndParentDataClassIsNull(dataModel)
-        classes.each {
+        ListResponse<DataClass> classes = dataClassRepository.readListResponseByDataModelAndParentDataClassIsNull(dataModel, params)
+        classes.items.each {
             updateDerivedProperties(it)
         }
-        ListResponse<DataClass>.from(classes,params)
+        classes
     }
 
 

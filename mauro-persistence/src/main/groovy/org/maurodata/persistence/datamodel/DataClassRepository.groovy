@@ -15,6 +15,8 @@ import io.micronaut.data.model.query.builder.sql.Dialect
 import jakarta.inject.Inject
 import org.maurodata.persistence.datamodel.dto.DataClassExtensionDTO
 import org.maurodata.persistence.model.ModelItemRepository
+import org.maurodata.web.ListResponse
+import org.maurodata.web.PaginationParams
 
 @Slf4j
 @CompileStatic
@@ -107,6 +109,87 @@ abstract class DataClassRepository implements ModelItemRepository<DataClass> {
         readAllByDataModel((DataModel) parent)
     }
 
+    @Nullable
+    ListResponse<DataClass> readListResponseByDataModelAndParentDataClassIsNull(DataModel dataModel, @Nullable PaginationParams params) {
+        if (params == null) {
+            return ListResponse.from(readAllByDataModelAndParentDataClassIsNull(dataModel), params)
+        }
+        if (params.code || params.definition || params.domainType) {
+            return ListResponse.from([], 0)
+        }
+
+        String label = filterValue(params.label)
+        String description = filterValue(params.description)
+        Long total = countAllByDataModelIdAndParentDataClassIsNullAndFilters(dataModel.id, label, description)
+        List<DataClass> dataClasses
+
+        if ((params.max != null && params.max <= 0) || params.all?.equalsIgnoreCase(Boolean.TRUE.toString())) {
+            dataClasses = params.order?.equalsIgnoreCase('desc')
+                ? readAllByDataModelIdAndParentDataClassIsNullAndFiltersDesc(dataModel.id, label, description)
+                : readAllByDataModelIdAndParentDataClassIsNullAndFiltersAsc(dataModel.id, label, description)
+        } else {
+            Integer max = params.max ?: 50
+            Integer offset = Math.max(0, params.offset ?: 0)
+            dataClasses = params.order?.equalsIgnoreCase('desc')
+                ? readAllByDataModelIdAndParentDataClassIsNullAndFiltersDesc(dataModel.id, label, description, max, offset)
+                : readAllByDataModelIdAndParentDataClassIsNullAndFiltersAsc(dataModel.id, label, description, max, offset)
+        }
+
+        ListResponse.from(dataClasses, total)
+    }
+
+    private static String filterValue(String value) {
+        value ? value : null
+    }
+
+    @Query('''SELECT count(*)
+              FROM datamodel.data_class
+              WHERE data_model_id = :dataModelId
+                AND parent_data_class_id IS NULL
+                AND (:label IS NULL OR lower(label) LIKE concat('%', lower(:label), '%'))
+                AND (:description IS NULL OR lower(description) LIKE concat('%', lower(:description), '%'))''')
+    abstract Long countAllByDataModelIdAndParentDataClassIsNullAndFilters(UUID dataModelId, @Nullable String label, @Nullable String description)
+
+    @Query('''SELECT *
+              FROM datamodel.data_class
+              WHERE data_model_id = :dataModelId
+                AND parent_data_class_id IS NULL
+                AND (:label IS NULL OR lower(label) LIKE concat('%', lower(:label), '%'))
+                AND (:description IS NULL OR lower(description) LIKE concat('%', lower(:description), '%'))
+              ORDER BY idx ASC NULLS FIRST, label ASC NULLS FIRST''')
+    abstract List<DataClass> readAllByDataModelIdAndParentDataClassIsNullAndFiltersAsc(UUID dataModelId, @Nullable String label, @Nullable String description)
+
+    @Query('''SELECT *
+              FROM datamodel.data_class
+              WHERE data_model_id = :dataModelId
+                AND parent_data_class_id IS NULL
+                AND (:label IS NULL OR lower(label) LIKE concat('%', lower(:label), '%'))
+                AND (:description IS NULL OR lower(description) LIKE concat('%', lower(:description), '%'))
+              ORDER BY idx DESC NULLS LAST, label DESC NULLS LAST''')
+    abstract List<DataClass> readAllByDataModelIdAndParentDataClassIsNullAndFiltersDesc(UUID dataModelId, @Nullable String label, @Nullable String description)
+
+    @Query('''SELECT *
+              FROM datamodel.data_class
+              WHERE data_model_id = :dataModelId
+                AND parent_data_class_id IS NULL
+                AND (:label IS NULL OR lower(label) LIKE concat('%', lower(:label), '%'))
+                AND (:description IS NULL OR lower(description) LIKE concat('%', lower(:description), '%'))
+              ORDER BY idx ASC NULLS FIRST, label ASC NULLS FIRST
+              LIMIT :max OFFSET :offset''')
+    abstract List<DataClass> readAllByDataModelIdAndParentDataClassIsNullAndFiltersAsc(UUID dataModelId, @Nullable String label, @Nullable String description,
+                                                                                       Integer max, Integer offset)
+
+    @Query('''SELECT *
+              FROM datamodel.data_class
+              WHERE data_model_id = :dataModelId
+                AND parent_data_class_id IS NULL
+                AND (:label IS NULL OR lower(label) LIKE concat('%', lower(:label), '%'))
+                AND (:description IS NULL OR lower(description) LIKE concat('%', lower(:description), '%'))
+              ORDER BY idx DESC NULLS LAST, label DESC NULLS LAST
+              LIMIT :max OFFSET :offset''')
+    abstract List<DataClass> readAllByDataModelIdAndParentDataClassIsNullAndFiltersDesc(UUID dataModelId, @Nullable String label, @Nullable String description,
+                                                                                        Integer max, Integer offset)
+
     abstract Long deleteByDataModelId(UUID dataModelId)
 
     //    @Override
@@ -134,4 +217,3 @@ abstract class DataClassRepository implements ModelItemRepository<DataClass> {
         'dc'.equalsIgnoreCase(pathPrefix)
     }
 }
-

@@ -4,6 +4,8 @@ import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.Nullable
 import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.persistence.ContentsService
+import org.maurodata.web.ListResponse
+import org.maurodata.web.PaginationParams
 
 @CompileStatic
 trait AdministeredItemRepository<I extends AdministeredItem> implements ItemRepository<I> {
@@ -18,6 +20,11 @@ trait AdministeredItemRepository<I extends AdministeredItem> implements ItemRepo
 
     @Nullable
     abstract List<I> readAllByParent(AdministeredItem item)
+
+    @Nullable
+    ListResponse<I> readListResponseByParent(AdministeredItem item, @Nullable PaginationParams params) {
+        ListResponse.from(readAllByParent(item), params)
+    }
 
     @Nullable
     List<I> findAllByParentAndPathIdentifier(UUID item, String pathIdentifier){

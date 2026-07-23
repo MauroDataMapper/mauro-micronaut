@@ -14,6 +14,8 @@ import org.maurodata.domain.terminology.Term
 import org.maurodata.domain.terminology.Terminology
 import org.maurodata.persistence.model.ModelItemRepository
 import org.maurodata.persistence.terminology.dto.TermDTORepository
+import org.maurodata.web.ListResponse
+import org.maurodata.web.PaginationParams
 
 @Slf4j
 @CompileStatic
@@ -65,6 +67,101 @@ abstract class TermRepository implements ModelItemRepository<Term> {
     List<Term> readAllByParent(AdministeredItem parent) {
         readAllByTerminology((Terminology) parent)
     }
+
+    @Override
+    @Nullable
+    ListResponse<Term> readListResponseByParent(AdministeredItem parent, @Nullable PaginationParams params) {
+        if (params == null) {
+            return ListResponse.from(readAllByParent(parent), params)
+        }
+
+        // ListResponse filters domainType to DataType instances only, so this filter excludes Term rows.
+        if (params.domainType) {
+            return ListResponse.from([], 0)
+        }
+
+        UUID terminologyId = parent.id
+        String label = filterValue(params.label)
+        String description = filterValue(params.description)
+        String code = filterValue(params.code)
+        String definition = filterValue(params.definition)
+        Long total = countAllByTerminologyIdAndFilters(terminologyId, label, description, code, definition)
+        List<Term> terms
+
+        if ((params.max != null && params.max <= 0) || params.all?.equalsIgnoreCase(Boolean.TRUE.toString())) {
+            terms = params.order?.equalsIgnoreCase('desc')
+                ? readAllByTerminologyIdAndFiltersDesc(terminologyId, label, description, code, definition)
+                : readAllByTerminologyIdAndFiltersAsc(terminologyId, label, description, code, definition)
+        } else {
+            Integer max = params.max ?: 50
+            Integer offset = Math.max(0, params.offset ?: 0)
+            terms = params.order?.equalsIgnoreCase('desc')
+                ? readAllByTerminologyIdAndFiltersDesc(terminologyId, label, description, code, definition, max, offset)
+                : readAllByTerminologyIdAndFiltersAsc(terminologyId, label, description, code, definition, max, offset)
+        }
+
+        ListResponse.from(terms, total)
+    }
+
+    private static String filterValue(String value) {
+        value ? value : null
+    }
+
+    @Query('''SELECT count(*)
+              FROM terminology.term
+              WHERE terminology_id = :terminologyId
+                AND (:label IS NULL OR lower(label) LIKE concat('%', lower(:label), '%'))
+                AND (:description IS NULL OR lower(description) LIKE concat('%', lower(:description), '%'))
+                AND (:code IS NULL OR lower(code) LIKE concat('%', lower(:code), '%'))
+                AND (:definition IS NULL OR lower(definition) LIKE concat('%', lower(:definition), '%'))''')
+    abstract Long countAllByTerminologyIdAndFilters(UUID terminologyId, @Nullable String label, @Nullable String description,
+                                                    @Nullable String code, @Nullable String definition)
+
+    @Query('''SELECT *
+              FROM terminology.term
+              WHERE terminology_id = :terminologyId
+                AND (:label IS NULL OR lower(label) LIKE concat('%', lower(:label), '%'))
+                AND (:description IS NULL OR lower(description) LIKE concat('%', lower(:description), '%'))
+                AND (:code IS NULL OR lower(code) LIKE concat('%', lower(:code), '%'))
+                AND (:definition IS NULL OR lower(definition) LIKE concat('%', lower(:definition), '%'))
+              ORDER BY idx ASC NULLS FIRST, label ASC NULLS FIRST''')
+    abstract List<Term> readAllByTerminologyIdAndFiltersAsc(UUID terminologyId, @Nullable String label, @Nullable String description,
+                                                            @Nullable String code, @Nullable String definition)
+
+    @Query('''SELECT *
+              FROM terminology.term
+              WHERE terminology_id = :terminologyId
+                AND (:label IS NULL OR lower(label) LIKE concat('%', lower(:label), '%'))
+                AND (:description IS NULL OR lower(description) LIKE concat('%', lower(:description), '%'))
+                AND (:code IS NULL OR lower(code) LIKE concat('%', lower(:code), '%'))
+                AND (:definition IS NULL OR lower(definition) LIKE concat('%', lower(:definition), '%'))
+              ORDER BY idx DESC NULLS LAST, label DESC NULLS LAST''')
+    abstract List<Term> readAllByTerminologyIdAndFiltersDesc(UUID terminologyId, @Nullable String label, @Nullable String description,
+                                                             @Nullable String code, @Nullable String definition)
+
+    @Query('''SELECT *
+              FROM terminology.term
+              WHERE terminology_id = :terminologyId
+                AND (:label IS NULL OR lower(label) LIKE concat('%', lower(:label), '%'))
+                AND (:description IS NULL OR lower(description) LIKE concat('%', lower(:description), '%'))
+                AND (:code IS NULL OR lower(code) LIKE concat('%', lower(:code), '%'))
+                AND (:definition IS NULL OR lower(definition) LIKE concat('%', lower(:definition), '%'))
+              ORDER BY idx ASC NULLS FIRST, label ASC NULLS FIRST
+              LIMIT :max OFFSET :offset''')
+    abstract List<Term> readAllByTerminologyIdAndFiltersAsc(UUID terminologyId, @Nullable String label, @Nullable String description,
+                                                            @Nullable String code, @Nullable String definition, Integer max, Integer offset)
+
+    @Query('''SELECT *
+              FROM terminology.term
+              WHERE terminology_id = :terminologyId
+                AND (:label IS NULL OR lower(label) LIKE concat('%', lower(:label), '%'))
+                AND (:description IS NULL OR lower(description) LIKE concat('%', lower(:description), '%'))
+                AND (:code IS NULL OR lower(code) LIKE concat('%', lower(:code), '%'))
+                AND (:definition IS NULL OR lower(definition) LIKE concat('%', lower(:definition), '%'))
+              ORDER BY idx DESC NULLS LAST, label DESC NULLS LAST
+              LIMIT :max OFFSET :offset''')
+    abstract List<Term> readAllByTerminologyIdAndFiltersDesc(UUID terminologyId, @Nullable String label, @Nullable String description,
+                                                             @Nullable String code, @Nullable String definition, Integer max, Integer offset)
 
     @Override
     @Nullable
