@@ -431,7 +431,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
             imp.folder = folder
             log.info '** about to importWithContentBatched... **'
             //updateCreationProperties(imp)
-            M savedImported = (M) contentsService.saveWithContent(imp, accessControlService.getUser(), true)
+            M savedImported = (M) contentsService.saveWithContent(imp, accessControlService.getUser(), false)
             log.info '** finished saveWithContentBatched **'
             savedImported
         }
