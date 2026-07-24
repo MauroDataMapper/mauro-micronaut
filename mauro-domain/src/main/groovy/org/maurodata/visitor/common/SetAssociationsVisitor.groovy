@@ -71,14 +71,6 @@ import org.maurodata.visitor.GenericDomainTraversalVisitor
 @CompileStatic
 class SetAssociationsVisitor extends GenericDomainTraversalVisitor {
 
-    /**
-     * Per-DataModel lookup maps stored while the visitor is inside a DataModel subtree.
-     * Using IdentityHashMap so that two DataModel instances that happen to be equal by value
-     * are still treated as distinct entries.
-     */
-    private final Map<DataModel, Map<String, DataType>> dataTypesMapByModel  = new IdentityHashMap<>()
-    private final Map<DataModel, List<DataType>>         referenceTypesByModel = new IdentityHashMap<>()
-
     SetAssociationsVisitor() {
 
         // -----------------------------------------------------------------------
@@ -166,47 +158,60 @@ class SetAssociationsVisitor extends GenericDomainTraversalVisitor {
         // Mirrors: DataModel.setAssociations()
         // -----------------------------------------------------------------------
         onEnter(DataModel) { DataModel dataModel ->
-            // Build a lookup map: id (as String) → DataType, and label → DataType
-            Map<String, DataType> dataTypesMap = new HashMap<String, DataType>()
-            dataModel.dataTypes.each { DataType dt ->
-                if (dt.id)    dataTypesMap.put(dt.id.toString(), dt)
-                if (dt.label) dataTypesMap.put(dt.label, dt)
-            }
-            dataTypesMapByModel.put(dataModel,  dataTypesMap)
-            referenceTypesByModel.put(dataModel, dataModel.dataTypes.findAll { DataType dt -> dt.isReferenceType() })
 
-            // Wire DataType back-references
-            dataModel.dataTypes.each { DataType dataType ->
-                dataType.parent    = dataModel
-                dataType.dataModel = dataModel
+            dataModel.dataTypes.each {
+                it.dataModel = dataModel
             }
-
-            // Seed dataModel on top-level DataClasses so onEnter(DataClass) can
-            // read it without needing the parent as an explicit parameter.
-            dataModel.dataClasses.each { DataClass dc ->
-                dc.dataModel = dataModel
+            dataModel.dataClasses.each {
+                it.dataModel = dataModel
             }
         }
 
         // -----------------------------------------------------------------------
         // DataModel (leave) – resolve referenceClass on REFERENCE_TYPE DataTypes
         // now that allDataClasses has been fully populated by the traversal.
-        // Clean up per-model state.
-        // Mirrors: the post-loop referenceClass fix in DataModel.setAssociations()
         // -----------------------------------------------------------------------
         onLeave(DataModel) { DataModel dataModel ->
             dataModel.dataTypes.each { DataType dataType ->
-                if (dataType.dataTypeKind == DataType.DataTypeKind.REFERENCE_TYPE && dataType.referenceClass) {
-                    if (!dataModel.allDataClasses.contains(dataType.referenceClass)) {
-                        dataType.referenceClass = dataModel.allDataClasses.find { DataClass dc ->
-                            (dataType.referenceClass.id && dc.id && dc.id == dataType.referenceClass.id) ||
-                            (dataType.referenceClass.label && dc.label && dc.label == dataType.referenceClass.label)
-                        }
+                if (dataType.referenceType) {
+                    DataClass refClass =
+                        dataType.referenceClass.id ?
+                        dataModel.allDataClasses.find { DataClass dc ->
+                        dc.id == dataType.referenceClass.id } :
+                        dataModel.allDataClasses.find { DataClass dc ->
+                            dc.label == dataType.referenceClass.label }
+
+                    if (refClass) {
+                        dataType.referenceClass = refClass
+                    } else {
+                        log.error(
+                            'SetAssociationsVisitor onLeave(DataModel) failed to find a DataClass ' +
+                            "for referenceClass id=${dataType.referenceClass?.id} or label=${dataType.referenceClass?.label}")
                     }
                 }
             }
-            dataTypesMapByModel.remove(dataModel)
-            referenceTypesByModel.remove(dataModel)
+
+            dataModel.allDataClasses.each {dataClass ->
+                if(dataClass.extendsDataClasses) {
+                    List<DataClass> resolvedExtends = []
+                    dataClass.extendsDataClasses.each { DataClass superClass ->
+                        DataClass found =
+                            superClass.id ? dataModel.allDataClasses.find { DataClass dc ->
+                                dc.id == superClass.id } :
+                            dataModel.allDataClasses.find { DataClass dc ->
+                                dc.label == superClass.label }
+                        if (found) {
+                            resolvedExtends.add(found)
+                        } else {
+                            log.error(
+                                'SetAssociationsVisitor onLeave(DataModel) failed to find a DataClass ' +
+                                "for id=${superClass.id} or label=${superClass.label}")
+                        }
+                    }
+                    dataClass.extendsDataClasses = resolvedExtends
+                }
+            }
+
         }
 
         // -----------------------------------------------------------------------
@@ -217,62 +222,19 @@ class SetAssociationsVisitor extends GenericDomainTraversalVisitor {
         // Mirrors: DataModel.setDataClassAssociations() (structural part)
         // -----------------------------------------------------------------------
         onEnter(DataClass) { DataClass dataClass ->
-            DataModel dataModel = dataClass.dataModel
-            if (!dataModel) return
-
-            if (!dataModel.allDataClasses.contains(dataClass)) {
-                dataModel.allDataClasses.add(dataClass)
+            if (!dataClass.dataModel.allDataClasses.contains(dataClass)) {
+                dataClass.dataModel.allDataClasses.add(dataClass)
             }
-
-            // Propagate dataModel and parentDataClass onto direct child DataClasses.
-            // Their onEnter(DataClass) will handle their own children in turn.
-            dataClass.dataClasses?.each { DataClass child ->
-                child.dataModel       = dataModel
-                child.parentDataClass = dataClass
+            dataClass.dataClasses.each {
+                it.parentDataClass = dataClass
+                it.dataModel = dataClass.dataModel
             }
-
-            // Wire DataElement back-references so onEnter(DataElement) can see them.
-            dataClass.dataElements?.each { DataElement de ->
-                de.dataClass = dataClass
-                de.dataModel = dataModel
-            }
-
-            // Identify which reference DataTypes point at this DataClass
-            List<DataType> referenceTypes = referenceTypesByModel.get(dataModel)
-            if (referenceTypes != null) {
-                dataClass.referenceTypes = referenceTypes.findAll { DataType dt ->
-                    dt.referenceClass?.id == dataClass.id
-                } as List<DataType>
+            dataClass.dataElements.each {
+                it.dataClass = dataClass
+                it.dataModel = dataClass.dataModel
             }
         }
 
-        // -----------------------------------------------------------------------
-        // DataClass (leave) – resolve extendsDataClasses stubs against the real
-        // DataClass instances now in allDataClasses.  Firing on leave (rather than
-        // enter) means all descendants are already registered, matching the
-        // depth-first resolution order of the original setDataClassAssociations().
-        // Mirrors: DataModel.setDataClassAssociations() (extendsDataClasses part)
-        // -----------------------------------------------------------------------
-        onLeave(DataClass) { DataClass dataClass ->
-            DataModel dataModel = dataClass.dataModel
-            if (!dataModel || !dataClass.extendsDataClasses) return
-
-            List<DataClass> resolvedExtends = []
-            dataClass.extendsDataClasses.each { DataClass superClass ->
-                DataClass found = dataModel.allDataClasses.find { DataClass dc ->
-                    (superClass.id && dc.id && dc.id == superClass.id) ||
-                    (superClass.label && dc.label && dc.label == superClass.label)
-                }
-                if (found) {
-                    resolvedExtends.add(found)
-                } else {
-                    log.error(
-                        'SetAssociationsVisitor onLeave(DataClass) failed to find a DataClass ' +
-                        "for id=${superClass.id} or label=${superClass.label}")
-                }
-            }
-            dataClass.extendsDataClasses = resolvedExtends
-        }
 
         // -----------------------------------------------------------------------
         // DataElement (enter) – resolve the dataType stub and register the element
@@ -281,34 +243,23 @@ class SetAssociationsVisitor extends GenericDomainTraversalVisitor {
         // Mirrors: DataModel.setDataClassAssociations() (DataElement part)
         // -----------------------------------------------------------------------
         onEnter(DataElement) { DataElement dataElement ->
-            DataModel dataModel = dataElement.dataModel
-            if (!dataModel) return
+            if(!dataElement.dataModel.dataElements.contains(dataElement)) {
+                dataElement.dataModel.dataElements.add(dataElement)
+            }
 
             // Resolve dataType reference
             if (dataElement.dataType) {
-                Map<String, DataType> dataTypesMap = dataTypesMapByModel.get(dataModel)
-                if (dataTypesMap) {
-                    String key = dataElement.dataType.id?.toString() ?: dataElement.dataType.label
-                    if (key) {
-                        DataType found = dataTypesMap.get(key)
-                        if (found == null) {
-                            log.error(
-                                'SetAssociationsVisitor onEnter(DataElement) failed to find a DataType ' +
-                                "for id=${dataElement.dataType?.id} or label=${dataElement.dataType?.label}")
-                        } else {
-                            dataElement.dataType = found
-                        }
-                    }
-                }
-            }
+                DataType resolvedType = dataElement.dataType.id ?
+                    dataElement.dataModel.dataTypes.find { DataType dt -> dt.id == dataElement.dataType.id } :
+                    dataElement.dataModel.dataTypes.find { DataType dt -> dt.label == dataElement.dataType.label }
 
-            // Register the element on the DataModel (avoid duplicates)
-            if (dataElement.id) {
-                if (!dataModel.dataElements.any { DataElement e -> e.id == dataElement.id }) {
-                    dataModel.dataElements.add(dataElement)
+                if (resolvedType) {
+                    dataElement.dataType = resolvedType
+                } else {
+                    log.error(
+                        'SetAssociationsVisitor onEnter(DataElement) failed to find a DataType ' +
+                        "for id=${dataElement.dataType?.id} or label=${dataElement.dataType?.label}")
                 }
-            } else if (!dataModel.dataElements.contains(dataElement)) {
-                dataModel.dataElements.add(dataElement)
             }
         }
 
