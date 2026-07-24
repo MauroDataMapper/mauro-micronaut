@@ -3,6 +3,9 @@ package org.maurodata.api.profile
 import org.maurodata.api.MauroApi
 import org.maurodata.api.Paths
 import org.maurodata.api.profile.dto.MetadataNamespaceDTO
+import org.maurodata.api.profile.dto.ProfileManyGetRequestDTO
+import org.maurodata.api.profile.dto.ProfileManyProvidedRequestDTO
+import org.maurodata.api.profile.dto.ProfileManyResponseDTO
 import org.maurodata.domain.facet.Metadata
 import org.maurodata.plugin.MauroPluginDTO
 import org.maurodata.profile.DataModelBasedProfile
@@ -56,12 +59,12 @@ interface ProfileApi {
     List<MetadataNamespaceDTO> getNamespaces(@Nullable String prefix)
 
     @Post(Paths.PROFILE_ITEM_GET_MANY)
-    Map getMany(String domainType, UUID domainId, @Body Map bodyMap)
+    ProfileManyResponseDTO getMany(String domainType, UUID domainId, @Body ProfileManyGetRequestDTO body)
 
     @Post(Paths.PROFILE_ITEM_VALIDATE_MANY)
-    Map validateMany(String domainType, UUID domainId, @Body Map bodyMap)
+    ProfileManyResponseDTO validateMany(String domainType, UUID domainId, @Body ProfileManyProvidedRequestDTO body)
 
     @Post(Paths.PROFILE_ITEM_SAVE_MANY)
-    Map saveMany(String domainType, UUID domainId, @Body Map bodyMap)
+    ProfileManyResponseDTO saveMany(String domainType, UUID domainId, @Body ProfileManyProvidedRequestDTO body)
 
 }

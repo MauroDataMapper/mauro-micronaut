@@ -2,8 +2,16 @@ package org.maurodata.controller.profile
 
 import io.swagger.v3.oas.annotations.Operation
 import org.maurodata.api.Paths
+import org.maurodata.api.model.ModelRefDTO
+import org.maurodata.api.profile.dto.AppliedProfilePayloadDTO
 import org.maurodata.api.profile.dto.MetadataNamespaceDTO
 import org.maurodata.api.profile.ProfileApi
+import org.maurodata.api.profile.dto.MultiFacetAwareItemRefDTO
+import org.maurodata.api.profile.dto.ProfileManyGetRequestDTO
+import org.maurodata.api.profile.dto.ProfileManyProvidedRequestDTO
+import org.maurodata.api.profile.dto.ProfileManyResponseDTO
+import org.maurodata.api.profile.dto.ProfileProvidedDTO
+import org.maurodata.api.profile.dto.ProfileProvidedRequestDTO
 import org.maurodata.audit.Audit
 import org.maurodata.controller.model.AdministeredItemReader
 import org.maurodata.domain.facet.Metadata
@@ -18,6 +26,8 @@ import org.maurodata.profile.DataModelBasedProfile
 import org.maurodata.profile.Profile
 import org.maurodata.profile.ProfileService
 import org.maurodata.profile.applied.AppliedProfile
+import org.maurodata.profile.applied.AppliedProfileField
+import org.maurodata.profile.applied.AppliedProfileSection
 import org.maurodata.security.AccessControlService
 import org.maurodata.web.ListResponse
 
@@ -224,61 +234,82 @@ class ProfileController implements AdministeredItemReader, ProfileApi {
         }
     }
 
-    // TODO: Refactor this to reuse existing classes / DTOs
+    private static Map<String, Object> appliedProfileSectionsToBodyMap(List<AppliedProfileSection> sections) {
+        [
+            sections: sections.collect {AppliedProfileSection section ->
+                [
+                    name: section.name,
+                    label: section.label,
+                    fields: section.fields.collect {AppliedProfileField field ->
+                        [
+                            fieldName: field.fieldName,
+                            metadataPropertyName: field.metadataPropertyName,
+                            currentValue: field.currentValue
+                        ] as Map<String, Object>
+                    }
+                ] as Map<String, Object>
+            }
+        ] as Map<String, Object>
+    }
+
     @Audit
     @Operation(summary = "Create a profile", description = "Creates a profile.")
     @Post(Paths.PROFILE_ITEM_GET_MANY)
-    Map getMany(String domainType, UUID domainId, @Body Map bodyMap) {
-        List<AdministeredItem> administeredItems = bodyMap['multiFacetAwareItems'].collect {
-            findAdministeredItem(it['multiFacetAwareItemDomainType'] as String, UUID.fromString(it['multiFacetAwareItemId'] as String))
+    ProfileManyResponseDTO getMany(String domainType, UUID domainId, @Body ProfileManyGetRequestDTO body) {
+        List<AdministeredItem> administeredItems = body.multiFacetAwareItems.collect {MultiFacetAwareItemRefDTO itemRef ->
+            findAdministeredItem(itemRef.multiFacetAwareItemDomainType, itemRef.multiFacetAwareItemId)
         }
         administeredItems.each {
             pathRepository.readParentItems(it)
             it.updateBreadcrumbs()
         }
-        Map profileMap = (bodyMap['profileProviderServices']as List)[0] as Map
+        MauroPluginDTO profileProviderService = body.profileProviderServices[0]
 
-        Profile profile = getProfileByName(profileMap['namespace'] as String, profileMap['name'] as String, profileMap['version'] as String)
+        Profile profile = getProfileByName(profileProviderService.namespace, profileProviderService.name, profileProviderService.version)
 
-        [count: administeredItems.size(), profilesProvided: administeredItems.collect {administeredItem ->
-            [profile: new AppliedProfile(profile, administeredItem), multiFacetAwareItem: administeredItem, profileProviderService: MauroPluginDTO.fromPlugin(profile)]
-        }]
+        new ProfileManyResponseDTO(
+            count: administeredItems.size(),
+            profilesProvided: administeredItems.collect {AdministeredItem administeredItem ->
+                new ProfileProvidedDTO(
+                    profile: new AppliedProfilePayloadDTO(new AppliedProfile(profile, administeredItem)),
+                    multiFacetAwareItem: new ModelRefDTO(administeredItem),
+                    profileProviderService: MauroPluginDTO.fromPlugin(profile))
+            })
     }
 
-    // TODO: Refactor this to reuse existing classes / DTOs
     @Audit
     @Operation(summary = "Validate the profile", description = "Validates the profile.")
     @Post(Paths.PROFILE_ITEM_VALIDATE_MANY)
-    Map validateMany(String domainType, UUID domainId, @Body Map bodyMap) {
+    ProfileManyResponseDTO validateMany(String domainType, UUID domainId, @Body ProfileManyProvidedRequestDTO body) {
 
-        List<Map> appliedProfileMap = (bodyMap['profilesProvided'] as List).collect { profileProvided ->
-            Profile profile = getProfileByName(profileProvided['profileProviderService']['namespace'] as String, profileProvided['profileProviderService']['name'] as String, profileProvided['profileProviderService']['version'] as String)
+        List<ProfileProvidedDTO> appliedProfiles = body.profilesProvided.collect {ProfileProvidedRequestDTO profileProvided ->
+            Profile profile = getProfileByName(profileProvided.profileProviderService.namespace, profileProvided.profileProviderService.name, profileProvided.profileProviderService.version)
             AdministeredItem administeredItem =
                 findAdministeredItem(
-                    profileProvided['profile']['domainType'] as String,
-                    UUID.fromString(profileProvided['profile']['id'] as String))
-            AppliedProfile appliedProfile = new AppliedProfile(profile, administeredItem, profileProvided['profile'] as Map)
-            [ profile: appliedProfile,
-              multiFacetAwareItem: administeredItem,
-              profileProviderService: MauroPluginDTO.fromPlugin(profile),
-              errors: appliedProfile.errors ] as Map
+                    profileProvided.profile.domainType,
+                    profileProvided.profile.id)
+            AppliedProfile appliedProfile = new AppliedProfile(profile, administeredItem, appliedProfileSectionsToBodyMap(profileProvided.profile.sections))
+            new ProfileProvidedDTO(
+                profile: new AppliedProfilePayloadDTO(appliedProfile),
+                multiFacetAwareItem: new ModelRefDTO(administeredItem),
+                profileProviderService: MauroPluginDTO.fromPlugin(profile),
+                errors: appliedProfile.errors)
         }
 
-        [count: appliedProfileMap.size(), profilesProvided: appliedProfileMap]
+        new ProfileManyResponseDTO(count: appliedProfiles.size(), profilesProvided: appliedProfiles)
     }
 
-    // TODO: Refactor this to reuse existing classes / DTOs
     @Audit
     @Operation(summary = "Save the profile", description = "Saves the profile.")
     @Post(Paths.PROFILE_ITEM_SAVE_MANY)
-    Map saveMany(String domainType, UUID domainId, @Body Map bodyMap) {
-        List<Map> appliedProfileMap = (bodyMap['profilesProvided'] as List).collect { profileProvided ->
-            Profile profile = getProfileByName(profileProvided['profileProviderService']['namespace'] as String, profileProvided['profileProviderService']['name'] as String, profileProvided['profileProviderService']['version'] as String)
+    ProfileManyResponseDTO saveMany(String domainType, UUID domainId, @Body ProfileManyProvidedRequestDTO body) {
+        List<ProfileProvidedDTO> appliedProfiles = body.profilesProvided.collect {ProfileProvidedRequestDTO profileProvided ->
+            Profile profile = getProfileByName(profileProvided.profileProviderService.namespace, profileProvided.profileProviderService.name, profileProvided.profileProviderService.version)
             AdministeredItem administeredItem =
                 findAdministeredItem(
-                    profileProvided['profile']['domainType'] as String,
-                    UUID.fromString(profileProvided['profile']['id'] as String))
-            AppliedProfile appliedProfile = new AppliedProfile(profile, administeredItem, profileProvided['profile'] as Map)
+                    profileProvided.profile.domainType,
+                    profileProvided.profile.id)
+            AppliedProfile appliedProfile = new AppliedProfile(profile, administeredItem, appliedProfileSectionsToBodyMap(profileProvided.profile.sections))
 
             List<Metadata> profileMetadata = appliedProfile.metadata
 
@@ -288,13 +319,14 @@ class ProfileController implements AdministeredItemReader, ProfileApi {
             // Then save the profile items as new metadata
             metadataCacheableRepository.saveAll(profileMetadata.findAll {it.value})
 
-            [ profile: appliedProfile,
-              multiFacetAwareItem: administeredItem,
-              profileProviderService: MauroPluginDTO.fromPlugin(profile),
-              errors: appliedProfile.errors ] as Map
+            new ProfileProvidedDTO(
+                profile: new AppliedProfilePayloadDTO(appliedProfile),
+                multiFacetAwareItem: new ModelRefDTO(administeredItem),
+                profileProviderService: MauroPluginDTO.fromPlugin(profile),
+                errors: appliedProfile.errors)
 
         }
-        [count: appliedProfileMap.size(), profilesProvided: appliedProfileMap]
+        new ProfileManyResponseDTO(count: appliedProfiles.size(), profilesProvided: appliedProfiles)
     }
 
 

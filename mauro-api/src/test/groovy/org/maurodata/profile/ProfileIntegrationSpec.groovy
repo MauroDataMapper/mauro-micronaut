@@ -1,10 +1,18 @@
 package org.maurodata.profile
 
+import org.maurodata.api.profile.dto.AppliedProfilePayloadDTO
 import org.maurodata.api.profile.dto.MetadataNamespaceDTO
+import org.maurodata.api.profile.dto.MultiFacetAwareItemRefDTO
+import org.maurodata.api.profile.dto.ProfileManyGetRequestDTO
+import org.maurodata.api.profile.dto.ProfileManyProvidedRequestDTO
+import org.maurodata.api.profile.dto.ProfileManyResponseDTO
+import org.maurodata.api.profile.dto.ProfileProvidedDTO
+import org.maurodata.api.profile.dto.ProfileProvidedRequestDTO
 import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.facet.Metadata
 import org.maurodata.plugin.MauroPluginDTO
 import org.maurodata.profile.applied.AppliedProfile
+import org.maurodata.profile.applied.AppliedProfileField
 import org.maurodata.testing.CommonDataSpec
 import org.maurodata.domain.folder.Folder
 import org.maurodata.persistence.ContainerizedTest
@@ -48,6 +56,28 @@ class ProfileIntegrationSpec extends CommonDataSpec {
         'createdDate'                : '2024-05-01',
         // 'Asset Creation/Deleted date': '2024-06-01' // Ignore this one for testing for now
     ]
+
+    static void setFieldValue(AppliedProfile appliedProfile, String metadataPropertyName, String currentValue) {
+        AppliedProfileField field = appliedProfile.sections.fields.flatten().find {
+            ((AppliedProfileField) it).metadataPropertyName == metadataPropertyName
+        } as AppliedProfileField
+        field.currentValue = currentValue
+    }
+
+    static ProfileManyProvidedRequestDTO toProvidedRequest(ProfileManyResponseDTO response) {
+        new ProfileManyProvidedRequestDTO(
+            count: response.count,
+            profilesProvided: response.profilesProvided.collect {ProfileProvidedDTO profileProvided ->
+                new ProfileProvidedRequestDTO(
+                    profile: new AppliedProfilePayloadDTO(
+                        id: profileProvided.profile.id,
+                        domainType: profileProvided.profile.domainType,
+                        sections: profileProvided.profile.sections),
+                    multiFacetAwareItem: profileProvided.multiFacetAwareItem,
+                    profileProviderService: profileProvided.profileProviderService,
+                    errors: profileProvided.errors)
+            })
+    }
 
 
     void 'get namespaces'() {
@@ -257,5 +287,77 @@ class ProfileIntegrationSpec extends CommonDataSpec {
         metadata.items.find {it.key == 'contactEmail'}.value == 'test@test.com'
         metadata.items.find {it.key == 'retired'}.value == 'true'
 
+    }
+
+    void 'get validate and save many profiles'() {
+        given:
+        DataModel firstDataModel = dataModelApi.create(folderId, new DataModel(label: 'First many profile data model'))
+        DataModel secondDataModel = dataModelApi.create(folderId, new DataModel(label: 'Second many profile data model'))
+        ProfileManyGetRequestDTO request = new ProfileManyGetRequestDTO(
+            multiFacetAwareItems: [
+                new MultiFacetAwareItemRefDTO(
+                    multiFacetAwareItemDomainType: 'dataModel',
+                    multiFacetAwareItemId: firstDataModel.id),
+                new MultiFacetAwareItemRefDTO(
+                    multiFacetAwareItemDomainType: 'dataModel',
+                    multiFacetAwareItemId: secondDataModel.id)
+            ],
+            profileProviderServices: [
+                new MauroPluginDTO(
+                    namespace: profileNamespace,
+                    name: profileName,
+                    version: profileVersion)
+            ])
+
+        when:
+        ProfileManyResponseDTO manyProfiles = profileApi.getMany('dataModel', firstDataModel.id, request)
+
+        then:
+        manyProfiles.count == 2
+        manyProfiles.profilesProvided.multiFacetAwareItem.id.toSet() == [firstDataModel.id, secondDataModel.id].toSet()
+        manyProfiles.profilesProvided.every {
+            it.profileProviderService.namespace == profileNamespace &&
+                it.profileProviderService.name == profileName &&
+                it.profileProviderService.version == profileVersion
+        }
+
+        when:
+        manyProfiles.profilesProvided.each {
+            setFieldValue(it.profile, 'createdDate', '2024-05-01')
+            setFieldValue(it.profile, 'size', '1.5')
+            setFieldValue(it.profile, 'priority', '3')
+            setFieldValue(it.profile, 'contactEmail', 'test@test.com')
+            setFieldValue(it.profile, 'retired', 'true')
+        }
+        ProfileManyResponseDTO validatedProfiles = profileApi.validateMany('dataModel', firstDataModel.id, toProvidedRequest(manyProfiles))
+
+        then:
+        validatedProfiles.count == 2
+        validatedProfiles.profilesProvided.every {
+            it.errors.isEmpty() && it.profile.sections.fields.flatten().every {field -> ((AppliedProfileField) field).errors.isEmpty() }
+        }
+
+        when:
+        ProfileManyResponseDTO savedProfiles = profileApi.saveMany('dataModel', firstDataModel.id, toProvidedRequest(validatedProfiles))
+
+        then:
+        savedProfiles.count == 2
+        savedProfiles.profilesProvided.every {it.errors.isEmpty()}
+
+        when:
+        ListResponse<Metadata> firstMetadata = metadataApi.list('dataModel', firstDataModel.id)
+        ListResponse<Metadata> secondMetadata = metadataApi.list('dataModel', secondDataModel.id)
+
+        then:
+        firstMetadata.items.find {it.key == 'createdDate'}.value == '2024-05-01'
+        firstMetadata.items.find {it.key == 'size'}.value == '1.5'
+        firstMetadata.items.find {it.key == 'priority'}.value == '3'
+        firstMetadata.items.find {it.key == 'contactEmail'}.value == 'test@test.com'
+        firstMetadata.items.find {it.key == 'retired'}.value == 'true'
+        secondMetadata.items.find {it.key == 'createdDate'}.value == '2024-05-01'
+        secondMetadata.items.find {it.key == 'size'}.value == '1.5'
+        secondMetadata.items.find {it.key == 'priority'}.value == '3'
+        secondMetadata.items.find {it.key == 'contactEmail'}.value == 'test@test.com'
+        secondMetadata.items.find {it.key == 'retired'}.value == 'true'
     }
 }
