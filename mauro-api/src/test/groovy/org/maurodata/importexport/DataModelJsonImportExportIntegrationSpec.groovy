@@ -6,6 +6,8 @@ import io.micronaut.http.HttpResponse
 import io.micronaut.http.MediaType
 import io.micronaut.http.client.multipart.MultipartBody
 import jakarta.inject.Singleton
+import org.maurodata.domain.classifier.ClassificationScheme
+import org.maurodata.domain.classifier.Classifier
 import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.datamodel.DataType
 import org.maurodata.domain.facet.Annotation
@@ -143,6 +145,47 @@ class DataModelJsonImportExportIntegrationSpec extends CommonDataSpec {
         importedDataTypes
         importedDataTypes.count == 1
         importedDataTypes.items.domainType.first() == dataType.domainType
+    }
+
+    void 'test consume export data model with existing classifier - should import and attach classifier'() {
+        given:
+        ClassificationScheme classificationScheme =
+            classificationSchemeApi.create(folderId, new ClassificationScheme(label: 'Classification scheme for data model import'))
+        Classifier classifier =
+            classifierApi.create(classificationScheme.id, new Classifier(label: 'Classifier for data model import'))
+        classifierApi.createAdministeredItemClassifier('dataModel', dataModelId, classifier.id)
+
+        and:
+        HttpResponse<byte[]> response = dataModelApi.exportModel(dataModelId, 'org.maurodata.plugin.exporter.json', 'JsonDataModelExporterPlugin', '4.0.0')
+        Map parsedJson = jsonSlurper.parseText(new String(response.body())) as Map
+
+        expect:
+        parsedJson.dataModel.classifiers.id == List.of(classifier.id.toString())
+
+        when:
+        MultipartBody importRequest = MultipartBody.builder()
+            .addPart('folderId', folderId.toString())
+            .addPart('importFile', 'file.json', MediaType.APPLICATION_JSON_TYPE, response.body())
+            .build()
+        ListResponse<DataModel> dataModelResponse = dataModelApi.importModel(importRequest, 'org.maurodata.plugin.importer.json', 'JsonDataModelImporterPlugin', '4.0.0')
+        UUID importedDataModelId = dataModelResponse.items.first().id
+
+        then:
+        importedDataModelId != dataModelId
+
+        when:
+        DataModel importedDataModel = dataModelApi.show(importedDataModelId)
+
+        then:
+        importedDataModel.classifiers.size() == 1
+        importedDataModel.classifiers.first().id == classifier.id
+
+        when:
+        Classifier joinedClassifier = classifierApi.getAdministeredItemClassifier('dataModel', importedDataModelId, classifier.id)
+
+        then:
+        joinedClassifier
+        joinedClassifier.id == classifier.id
     }
 
     // TODO: Is this used, or could it be?
