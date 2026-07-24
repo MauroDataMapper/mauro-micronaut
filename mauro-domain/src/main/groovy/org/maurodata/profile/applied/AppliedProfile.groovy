@@ -19,22 +19,22 @@ class AppliedProfile extends MauroPluginDTO {
 
     @Override
     String getMetadataNamespace() {
-        return sourceProfile.metadataNamespace
+        return sourceProfile?.metadataNamespace ?: super.metadataNamespace
     }
 
     @Override
     String getName() {
-        return sourceProfile.getName()
+        return sourceProfile?.getName() ?: super.name
     }
 
     @Override
     String getDisplayName() {
-        return sourceProfile.getDisplayName()
+        return sourceProfile?.getDisplayName() ?: super.displayName
     }
 
     @Override
     List<String> getProfileApplicableForDomains() {
-        return sourceProfile.getProfileApplicableForDomains()
+        return sourceProfile?.getProfileApplicableForDomains() ?: super.profileApplicableForDomains
     }
 
     List<String> errors = []

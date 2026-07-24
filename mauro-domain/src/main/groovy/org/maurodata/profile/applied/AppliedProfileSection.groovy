@@ -31,7 +31,7 @@ class AppliedProfileSection extends ProfileSection {
 
     @Override
     String getDescription() {
-        return sourceProfileSection.getDescription()
+        return sourceProfileSection?.getDescription() ?: super.description
     }
 
     AppliedProfileSection(ProfileSection profileSection, AppliedProfile parentProfile, AdministeredItem administeredItem) {
