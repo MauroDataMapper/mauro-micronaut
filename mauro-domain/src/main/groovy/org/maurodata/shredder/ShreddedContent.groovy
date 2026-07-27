@@ -334,7 +334,9 @@ class ShreddedContent {
         }
 
         metadata.each {metadata ->
-            allItems[metadata.multiFacetAwareItemId].metadata.add(metadata)
+            if(metadata.value) {
+                allItems[metadata.multiFacetAwareItemId].metadata.add(metadata)
+            }
         }
     }
 
