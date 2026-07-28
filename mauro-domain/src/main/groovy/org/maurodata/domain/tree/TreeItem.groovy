@@ -47,6 +47,7 @@ class TreeItem {
     String path
     String localPath
     String branchName
+    Boolean deleted
 
     Boolean getFinalised() {
         if (!(item instanceof Model)) {return null}
@@ -61,7 +62,8 @@ class TreeItem {
                      parent: item.getParent(),
                      branchName: (item instanceof Model)? item.branchName : null,
                      modelVersion: (item instanceof Model)? item.modelVersion : null,
-                     modelVersionTag: (item instanceof Model)? item.modelVersionTag : null
+                     modelVersionTag: (item instanceof Model)? item.modelVersionTag : null,
+                     deleted: (item instanceof Model)? item.deleted : null
                      )
     }
 }
