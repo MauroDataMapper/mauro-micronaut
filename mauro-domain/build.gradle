@@ -26,12 +26,12 @@ dependencies {
     // For importer parameters introspection
     implementation('org.apache.commons:commons-lang3:3.18.0')
 
-    implementation('org.apache.groovy:groovy-json:4.0.19')
+    implementation('org.apache.groovy:groovy-json:4.0.33')
 
     testRuntimeOnly "org.junit.platform:junit-platform-launcher"
     testImplementation "io.micronaut.test:micronaut-test-spock"
 
-    codenarc 'org.apache.groovy:groovy-all:4.0.24'
+    codenarc 'org.apache.groovy:groovy-all:4.0.33'
     codenarc 'org.codenarc:CodeNarc:3.6.0-groovy-4.0'
 
     // UUIDs
