@@ -222,9 +222,9 @@ class ClassifierController extends AdministeredItemController<Classifier, Classi
 
 
     @Operation(summary = "List the classifiers", description = "Returns the classifiers.")
-    @Get(Paths.ALL_CLASSIFIERS_ROUTE)
-    ListResponse<Classifier> listAllClassifiers() {
-        super.listAll()
+    @Get(Paths.ALL_CLASSIFIERS_ROUTE_PAGED)
+    ListResponse<Classifier> listAllClassifiers(@Nullable PaginationParams params = new PaginationParams()) {
+        super.listAll(params)
 
     }
 }

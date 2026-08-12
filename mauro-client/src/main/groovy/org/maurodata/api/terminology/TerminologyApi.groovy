@@ -49,7 +49,10 @@ interface TerminologyApi extends ModelApi<Terminology> {
     @Post(Paths.TERMINOLOGY_SEARCH_POST)
     ListResponse<SearchResultsDTO> searchPost(UUID id, @Body SearchRequestDTO requestDTO)
 
-    @Get(Paths.FOLDER_LIST_TERMINOLOGY)
+    @Get(Paths.FOLDER_LIST_TERMINOLOGY_PAGED)
+    ListResponse<Terminology> list(UUID folderId, @Nullable PaginationParams params)
+
+    @Get(Paths.FOLDER_LIST_TERMINOLOGY_PAGED)
     ListResponse<Terminology> list(UUID folderId)
 
     @Get(Paths.TERMINOLOGY_LIST)

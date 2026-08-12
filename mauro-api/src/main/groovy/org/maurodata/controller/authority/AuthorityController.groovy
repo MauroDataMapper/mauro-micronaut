@@ -11,6 +11,7 @@ import org.maurodata.controller.model.ItemController
 import org.maurodata.domain.authority.Authority
 import org.maurodata.service.core.AuthorityService
 import org.maurodata.web.ListResponse
+import org.maurodata.web.PaginationParams
 
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
@@ -50,10 +51,10 @@ class AuthorityController extends ItemController<Authority> implements Authority
 
     @Audit
     @Operation(operationId = 'listAuthority', summary = "List the authorities", description = "Returns the authorities. It is available to authenticated users.")
-    @Get(Paths.AUTHORITY_LIST)
-    ListResponse<Authority> list() {
+    @Get(Paths.AUTHORITY_LIST_PAGED)
+    ListResponse<Authority> list(@Nullable PaginationParams params = new PaginationParams()) {
         accessControlService.checkAuthenticated()
-        ListResponse.from(authorityService.findAll())
+        ListResponse.from(authorityService.findAll(), params)
     }
 
     @Audit

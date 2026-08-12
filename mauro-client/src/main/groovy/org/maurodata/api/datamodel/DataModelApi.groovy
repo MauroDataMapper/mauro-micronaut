@@ -23,6 +23,7 @@ import org.maurodata.plugin.datatype.DefaultDataTypeProviderPlugin
 import org.maurodata.plugin.exporter.DataModelExporterPlugin
 import org.maurodata.plugin.importer.DataModelImporterPlugin
 import org.maurodata.web.ListResponse
+import org.maurodata.web.PaginationParams
 
 import io.micronaut.context.annotation.Parameter
 import io.micronaut.core.annotation.NonNull
@@ -63,10 +64,16 @@ interface DataModelApi extends ModelApi<DataModel> {
     @Post(Paths.DATA_MODEL_SEARCH_POST)
     ListResponse<SearchResultsDTO> searchPost(UUID id, @Body SearchRequestDTO requestDTO)
 
-    @Get(Paths.FOLDER_LIST_DATA_MODEL)
+    @Get(Paths.FOLDER_LIST_DATA_MODEL_PAGED)
+    ListResponse<DataModel> list(UUID folderId, @Nullable PaginationParams params)
+
+    @Get(Paths.FOLDER_LIST_DATA_MODEL_PAGED)
     ListResponse<DataModel> list(UUID folderId)
 
-    @Get(Paths.DATA_MODEL_ROUTE)
+    @Get(Paths.DATA_MODEL_ROUTE_PAGED)
+    ListResponse<DataModel> listAll(@Nullable PaginationParams params)
+
+    @Get(Paths.DATA_MODEL_ROUTE_PAGED)
     ListResponse<DataModel> listAll()
 
     @Put(Paths.DATA_MODEL_ID_FINALISE)

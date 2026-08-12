@@ -39,7 +39,10 @@ interface DataClassApi extends AdministeredItemApi<DataClass, DataModel> {
     @Get(Paths.DATA_CLASS_SEARCH)
     ListResponse<DataClass> list(UUID dataModelId)
 
-    @Get(Paths.ALL_DATA_CLASSES)
+    @Get(Paths.ALL_DATA_CLASSES_PAGED)
+    ListResponse<DataClass> allDataClasses(@NonNull UUID dataModelId, @Nullable PaginationParams params)
+
+    @Get(Paths.ALL_DATA_CLASSES_PAGED)
     ListResponse<DataClass> allDataClasses(@NonNull UUID dataModelId)
 
     @Get(Paths.DATA_CLASS_CHILD_DATA_CLASS_ID)
@@ -54,7 +57,10 @@ interface DataClassApi extends AdministeredItemApi<DataClass, DataModel> {
     @Delete(Paths.DATA_CLASS_CHILD_DATA_CLASS_ID)
     HttpResponse delete(UUID dataModelId, UUID parentDataClassId, UUID id, @Body @Nullable DataClass dataClass)
 
-    @Get(Paths.DATA_CLASS_CHILD_DATA_CLASS_LIST)
+    @Get(Paths.DATA_CLASS_CHILD_DATA_CLASS_LIST_PAGED)
+    ListResponse<DataClass> list(UUID dataModelId, UUID parentDataClassId, @Nullable PaginationParams params)
+
+    @Get(Paths.DATA_CLASS_CHILD_DATA_CLASS_LIST_PAGED)
     ListResponse<DataClass> list(UUID dataModelId, UUID parentDataClassId)
 
     @Put(Paths.DATA_CLASS_EXTENDS)

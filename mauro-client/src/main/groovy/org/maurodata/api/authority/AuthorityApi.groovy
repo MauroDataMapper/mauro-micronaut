@@ -8,6 +8,7 @@ import org.maurodata.api.MauroApi
 import org.maurodata.api.Paths
 import org.maurodata.domain.authority.Authority
 import org.maurodata.web.ListResponse
+import org.maurodata.web.PaginationParams
 
 @MauroApi
 interface AuthorityApi {
@@ -15,7 +16,10 @@ interface AuthorityApi {
     @Get(Paths.AUTHORITY_ID)
     Authority show(@NonNull UUID id)
 
-    @Get(Paths.AUTHORITY_LIST)
+    @Get(Paths.AUTHORITY_LIST_PAGED)
+    ListResponse<Authority> list(@Nullable PaginationParams params)
+
+    @Get(Paths.AUTHORITY_LIST_PAGED)
     ListResponse<Authority> list()
 
     @Post(Paths.AUTHORITY_LIST)
