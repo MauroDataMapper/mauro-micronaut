@@ -68,6 +68,7 @@ import org.maurodata.plugin.exporter.DataModelExporterPlugin
 import org.maurodata.plugin.importer.DataModelImporterPlugin
 import org.maurodata.service.plugin.PluginService
 import org.maurodata.web.ListResponse
+import org.maurodata.web.PaginationParams
 
 @Slf4j
 @Controller
@@ -173,16 +174,16 @@ class DataModelController extends ModelController<DataModel> implements DataMode
 
     @Audit
     @Operation(summary = "List the data models", description = "Returns the data models.")
-    @Get(Paths.FOLDER_LIST_DATA_MODEL)
-    ListResponse<DataModel> list(UUID folderId) {
-        super.list(folderId)
+    @Get(Paths.FOLDER_LIST_DATA_MODEL_PAGED)
+    ListResponse<DataModel> list(UUID folderId, @Nullable PaginationParams params = new PaginationParams()) {
+        super.list(folderId, params)
     }
 
     @Audit
     @Operation(operationId = 'listAllDataModel', summary = "List the data models", description = "Returns the data models.")
-    @Get(Paths.DATA_MODEL_ROUTE)
-    ListResponse<DataModel> listAll() {
-        super.listAll()
+    @Get(Paths.DATA_MODEL_ROUTE_PAGED)
+    ListResponse<DataModel> listAll(@Nullable PaginationParams params = new PaginationParams()) {
+        super.listAll(params)
     }
 
     @Audit(title = EditType.FINALISE, description = "Finalise data model")

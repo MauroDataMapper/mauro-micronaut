@@ -145,15 +145,15 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
 
     @Audit
     @Operation(summary = "List the data classes", description = "Returns the data classes. You must have read privileges on the item in question.")
-    @Get(Paths.ALL_DATA_CLASSES)
-    ListResponse<DataClass> allDataClasses(@NonNull UUID dataModelId) {
+    @Get(Paths.ALL_DATA_CLASSES_PAGED)
+    ListResponse<DataClass> allDataClasses(@NonNull UUID dataModelId, @Nullable PaginationParams params = new PaginationParams()) {
         DataModel dataModel = dataModelRepository.readById(dataModelId)
         accessControlService.checkRole(Role.READER, dataModel)
         List<DataClass> classes = dataClassRepository.readAllByDataModel(dataModel)
         classes.each {
             updateDerivedProperties(it)
         }
-        ListResponse<DataClass>.from(classes)
+        ListResponse<DataClass>.from(classes, params)
     }
 
 
@@ -204,11 +204,11 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
 
     @Audit
     @Operation(operationId = 'listDataClassChild', summary = "List the data classes", description = "Returns the data classes. You must have read privileges on the item in question.")
-    @Get(Paths.DATA_CLASS_CHILD_DATA_CLASS_LIST)
-    ListResponse<DataClass> list(UUID dataModelId, UUID parentDataClassId) {
+    @Get(Paths.DATA_CLASS_CHILD_DATA_CLASS_LIST_PAGED)
+    ListResponse<DataClass> list(UUID dataModelId, UUID parentDataClassId, @Nullable PaginationParams params = new PaginationParams()) {
         DataClass parentDataClass = dataClassRepository.readById(parentDataClassId)
         accessControlService.checkRole(Role.READER, parentDataClass)
-        ListResponse.from(dataClassRepository.readAllByParentDataClass_Id(parentDataClassId))
+        ListResponse.from(dataClassRepository.readAllByParentDataClass_Id(parentDataClassId), params)
 
     }
 

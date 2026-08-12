@@ -43,6 +43,7 @@ import org.maurodata.exception.MauroApplicationException
 import org.maurodata.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
 
 import org.maurodata.web.ListResponse
+import org.maurodata.web.PaginationParams
 
 @Slf4j
 @CompileStatic
@@ -109,27 +110,23 @@ class VersionedFolderController extends ModelController<Folder> implements Versi
     }
 
     @Operation(operationId = 'listAllVersionedFolder', summary = "List the versioned folders", description = "Returns the versioned folders.")
-    @Get(Paths.VERSIONED_FOLDER_LIST)
-    ListResponse<Folder> listAll() {
+    @Get(Paths.VERSIONED_FOLDER_LIST_PAGED)
+    ListResponse<Folder> listAll(@Nullable PaginationParams params = new PaginationParams()) {
 
         final ListResponse<Folder> listResponse = super.listAll() as ListResponse<Folder>
+        final List<Folder> versionedFolders = listResponse.items.findAll {it.domainType == "VersionedFolder"} as List<Folder>
 
-        listResponse.items = listResponse.items.findAll {it.domainType == "VersionedFolder"}
-        listResponse.count = listResponse.items.size()
-
-        return listResponse
+        return ListResponse.from(versionedFolders, params)
     }
 
     @Operation(operationId = 'listFolderChild', summary = "List the versioned folders", description = "Returns the versioned folders.")
-    @Get(Paths.CHILD_VERSIONED_FOLDER_LIST)
-    ListResponse<Folder> list(UUID parentId) {
+    @Get(Paths.CHILD_VERSIONED_FOLDER_LIST_PAGED)
+    ListResponse<Folder> list(UUID parentId, @Nullable PaginationParams params = new PaginationParams()) {
 
         final ListResponse<Folder> listResponse = super.list(parentId) as ListResponse<Folder>
+        final List<Folder> versionedFolders = listResponse.items.findAll {it.domainType == "VersionedFolder"} as List<Folder>
 
-        listResponse.items = listResponse.items.findAll {it.domainType == "VersionedFolder"}
-        listResponse.count = listResponse.items.size()
-
-        return listResponse
+        return ListResponse.from(versionedFolders, params)
     }
 
     @Audit(title = EditType.EXPORT, description = 'Export versioned folder')

@@ -135,9 +135,9 @@ class TerminologyController extends ModelController<Terminology> implements Term
 
     @Audit
     @Operation(operationId = 'listTerminologies', summary = "List the terminologies", description = "Returns the terminologies.")
-    @Get(Paths.FOLDER_LIST_TERMINOLOGY)
-    ListResponse<Terminology> list(UUID folderId) {
-        super.list(folderId)
+    @Get(Paths.FOLDER_LIST_TERMINOLOGY_PAGED)
+    ListResponse<Terminology> list(UUID folderId, @Nullable PaginationParams params = new PaginationParams()) {
+        super.list(folderId, params)
     }
 
     @Audit

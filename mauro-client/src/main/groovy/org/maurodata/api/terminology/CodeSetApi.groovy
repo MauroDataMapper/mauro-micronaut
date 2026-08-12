@@ -46,7 +46,10 @@ interface CodeSetApi extends ModelApi<CodeSet> {
     CodeSet removeTermFromCodeSet(@NonNull UUID id,
                                   @NonNull UUID termId)
 
-    @Get(value = Paths.FOLDER_LIST_CODE_SET)
+    @Get(value = Paths.FOLDER_LIST_CODE_SET_PAGED)
+    ListResponse<CodeSet> list(UUID folderId, @Nullable PaginationParams params)
+
+    @Get(value = Paths.FOLDER_LIST_CODE_SET_PAGED)
     ListResponse<CodeSet> list(UUID folderId)
 
     @Get(value = Paths.CODE_SET_LIST)

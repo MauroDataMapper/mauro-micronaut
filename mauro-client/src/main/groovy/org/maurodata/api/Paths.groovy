@@ -51,6 +51,7 @@ interface Paths {
     String CHILD_CLASSIFIERS_ROUTE_PAGED = '/api/classificationSchemes/{classificationSchemeId}/classifiers/{parentClassifierId}/classifiers{?params*}'
     String ADMINISTERED_ITEM_CLASSIFIER_ROUTE_PAGED = '/api/{administeredItemDomainType}/{administeredItemId}/classifiers{?params*}'
     String ALL_CLASSIFIERS_ROUTE = '/api/classifiers'
+    String ALL_CLASSIFIERS_ROUTE_PAGED = '/api/classifiers{?params*}'
     /*
     * ApiPropertyApi
      */
@@ -108,16 +109,18 @@ interface Paths {
     String DATA_CLASS_EXTENDS = '/api/dataModels/{dataModelId}/dataClasses/{id}/extends/{otherModelId}/{otherClassId}'
     String DATA_CLASS_DOI = '/api/dataClasses/{id}/doi'
     String DATA_CLASS_SEARCH = '/api/dataModels/{dataModelId}/dataClasses{?params*}'
+    String DATA_CLASS_CHILD_DATA_CLASS_LIST_PAGED = '/api/dataModels/{dataModelId}/dataClasses/{parentDataClassId}/dataClasses{?params*}'
     String DATA_CLASS_MOVE = '/api/dataModels/{dataModelId}/dataClasses/{id}/move'
     String DATA_CLASS_COPY = '/api/dataModels/{toDataModelId}/dataClasses/{fromDataModelId}/{dataClassId}'
     String DATA_CLASS_COPY_TO_CLASS = '/api/dataModels/{toDataModelId}/dataClasses/{toDataClassId}/dataClasses/{fromDataModelId}/{dataClassId}'
     String ALL_DATA_CLASSES = '/api/dataModels/{dataModelId}/allDataClasses'
+    String ALL_DATA_CLASSES_PAGED = '/api/dataModels/{dataModelId}/allDataClasses{?params*}'
 
     /*
     * DataElementApi
     */
     String DATA_ELEMENT_LIST = '/api/dataModels/{dataModelId}/dataClasses/{dataClassId}/dataElements'
-    String DATA_ELEMENT_IN_MODEL_LIST = '/api/dataModels/{dataModelId}/dataElements{?params}'
+    String DATA_ELEMENT_IN_MODEL_LIST = '/api/dataModels/{dataModelId}/dataElements{?params*}'
     String DATA_ELEMENT_ID = '/api/dataModels/{dataModelId}/dataClasses/{dataClassId}/dataElements/{id}'
     String DATA_ELEMENT_DOI = '/api/dataElements/{id}/doi'
     String DATA_ELEMENT_LIST_PAGED = '/api/dataModels/{dataModelId}/dataClasses/{dataClassId}/dataElements{?params*}'
@@ -133,6 +136,8 @@ interface Paths {
     String DATA_MODEL_ID_ROUTE = '/api/dataModels/{id}'
     String DATA_MODEL_ID_FINALISE = '/api/dataModels/{id}/finalise'
     String FOLDER_LIST_DATA_MODEL = '/api/folders/{folderId}/dataModels'
+    String FOLDER_LIST_DATA_MODEL_PAGED = '/api/folders/{folderId}/dataModels{?params*}'
+    String DATA_MODEL_ROUTE_PAGED = '/api/dataModels{?params*}'
     String CREATE_DATA_MODEL = '/api/folders/{folderId}/dataModels{?defaultDataTypeProvider}'
     String DATA_MODEL_BRANCH_MODEL_VERSION = '/api/dataModels/{id}/newBranchModelVersion'
     String DATA_MODEL_EXPORT = '/api/dataModels/{id}/export{/namespace}{/name}{/version}'
@@ -262,9 +267,11 @@ interface Paths {
     * FolderApi
     */
     String FOLDER_LIST = '/api/folders'
+    String FOLDER_LIST_PAGED = '/api/folders{?params*}'
     String FOLDER_ID = '/api/folders/{id}'
 
     String CHILD_FOLDER_LIST = '/api/folders/{parentId}/folders'
+    String CHILD_FOLDER_LIST_PAGED = '/api/folders/{parentId}/folders{?params*}'
     String CHILD_FOLDER_ID = '/api/folders/{parentId}/folders/{id}'
 
     String FOLDER_MOVE = '/api/folders/{id}/folder/{destination}'
@@ -285,9 +292,11 @@ interface Paths {
     * VersionedFolderApi
      */
     String VERSIONED_FOLDER_LIST = '/api/versionedFolders'
+    String VERSIONED_FOLDER_LIST_PAGED = '/api/versionedFolders{?params*}'
     String VERSIONED_FOLDER_ID = '/api/versionedFolders/{id}'
 
     String CHILD_VERSIONED_FOLDER_LIST = '/api/folders/{parentId}/versionedFolders'
+    String CHILD_VERSIONED_FOLDER_LIST_PAGED = '/api/folders/{parentId}/versionedFolders{?params*}'
     String FOLDER_CHILD_VERSIONED_FOLDER_ID = '/api/folders/{parentId}/versionedFolders/{id}'
 
     String VERSIONED_FOLDER_EXPORT = '/api/versionedFolders/{id}/export{/namespace}{/name}{/version}'
@@ -386,6 +395,7 @@ interface Paths {
     String CODE_SET_FINALISE = '/api/codeSets/{id}/finalise'
     String CODE_SET_NEW_BRANCH_MODEL_VERSION = '/api/codeSets/{id}/newBranchModelVersion'
     String FOLDER_LIST_CODE_SET = '/api/folders/{folderId}/codeSets'
+    String FOLDER_LIST_CODE_SET_PAGED = '/api/folders/{folderId}/codeSets{?params*}'
     String CODE_SET_DIFF = '/api/codeSets/{id}/diff/{otherId}'
     String CODE_SET_READ_BY_AUTHENTICATED = '/api/codeSets/{id}/readByAuthenticated'
     String CODE_SET_READ_BY_EVERYONE = '/api/codeSets/{id}/readByEveryone'
@@ -406,6 +416,7 @@ interface Paths {
     String TERMINOLOGY_FINALISE = '/api/terminologies/{id}/finalise'
     String TERMINOLOGY_NEW_BRANCH_MODEL_VERSION = '/api/terminologies/{id}/newBranchModelVersion'
     String FOLDER_LIST_TERMINOLOGY = '/api/folders/{folderId}/terminologies'
+    String FOLDER_LIST_TERMINOLOGY_PAGED = '/api/folders/{folderId}/terminologies{?params*}'
     String TERMINOLOGY_DIFF = '/api/terminologies/{id}/diff/{otherId}'
     String TERMINOLOGY_SEARCH_GET = '/api/terminologies/{id}/terms/search{?requestDTO*}'
     String TERMINOLOGY_SEARCH_POST = '/api/terminologies/{id}/terms/search'
@@ -451,7 +462,7 @@ interface Paths {
     */
     String TERM_RELATIONSHIP_LIST = '/api/terminologies/{terminologyId}/termRelationships'
     String TERM_RELATIONSHIP_ID = '/api/terminologies/{terminologyId}/termRelationships/{id}'
-    String TERM_RELATIONSHIP_LIST_PAGED = '/api/terminologies/{terminologyId}/termRelationships'
+    String TERM_RELATIONSHIP_LIST_PAGED = '/api/terminologies/{terminologyId}/termRelationships{?params*}'
     String TERM_RELATIONSHIP_BY_TERM_ID_LIST = '/api/terminologies/{terminologyId}/terms/{termId}/termRelationships'
     String TERM_RELATIONSHIP_BY_TERM_ID_ID = '/api/terminologies/{terminologyId}/terms/{termId}/termRelationships/{id}'
 
@@ -492,6 +503,7 @@ interface Paths {
     * AuthorityApi
     */
     String AUTHORITY_LIST = '/api/authorities'
+    String AUTHORITY_LIST_PAGED = '/api/authorities{?params*}'
     String AUTHORITY_ID = '/api/authorities/{id}'
 
     /*

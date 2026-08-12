@@ -18,6 +18,7 @@ import org.maurodata.domain.search.dto.SearchResultsDTO
 import org.maurodata.plugin.exporter.FolderExporterPlugin
 import org.maurodata.plugin.importer.FolderImporterPlugin
 import org.maurodata.web.ListResponse
+import org.maurodata.web.PaginationParams
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
@@ -111,16 +112,16 @@ class FolderController extends ModelController<Folder> implements FolderApi {
 
     @Audit
     @Operation(operationId = 'listAllFolder', summary = "List the folders", description = "Returns the folders.")
-    @Get(Paths.FOLDER_LIST)
-    ListResponse<Folder> listAll() {
-        super.listAll()
+    @Get(Paths.FOLDER_LIST_PAGED)
+    ListResponse<Folder> listAll(@Nullable PaginationParams params = new PaginationParams()) {
+        super.listAll(params)
     }
 
     @Audit
     @Operation(operationId = 'listFolder', summary = "List the folders", description = "Returns the folders.")
-    @Get(Paths.CHILD_FOLDER_LIST)
-    ListResponse<Folder> list(UUID parentId) {
-        super.list(parentId)
+    @Get(Paths.CHILD_FOLDER_LIST_PAGED)
+    ListResponse<Folder> list(UUID parentId, @Nullable PaginationParams params = new PaginationParams()) {
+        super.list(parentId, params)
     }
 
     //    // Todo: needs repository method 'deleteWithContent'

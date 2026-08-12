@@ -17,6 +17,7 @@ import org.maurodata.domain.folder.Folder
 import org.maurodata.domain.model.version.CreateNewVersionData
 import org.maurodata.domain.model.version.FinaliseData
 import org.maurodata.web.ListResponse
+import org.maurodata.web.PaginationParams
 
 @MauroApi
 interface VersionedFolderApi extends ModelApi<Folder> {
@@ -39,10 +40,16 @@ interface VersionedFolderApi extends ModelApi<Folder> {
     @Put(Paths.FOLDER_CHILD_VERSIONED_FOLDER_ID)
     Folder update(UUID parentId, UUID id, @Body @NonNull Folder folder)
 
-    @Get(Paths.VERSIONED_FOLDER_LIST)
+    @Get(Paths.VERSIONED_FOLDER_LIST_PAGED)
+    ListResponse<Folder> listAll(@Nullable PaginationParams params)
+
+    @Get(Paths.VERSIONED_FOLDER_LIST_PAGED)
     ListResponse<Folder> listAll()
 
-    @Get(Paths.CHILD_VERSIONED_FOLDER_LIST)
+    @Get(Paths.CHILD_VERSIONED_FOLDER_LIST_PAGED)
+    ListResponse<Folder> list(UUID parentId, @Nullable PaginationParams params)
+
+    @Get(Paths.CHILD_VERSIONED_FOLDER_LIST_PAGED)
     ListResponse<Folder> list(UUID parentId)
 
     @Put(Paths.VERSIONED_FOLDER_FINALISE)

@@ -18,6 +18,7 @@ import org.maurodata.domain.folder.Folder
 import org.maurodata.plugin.exporter.FolderExporterPlugin
 import org.maurodata.plugin.importer.FolderImporterPlugin
 import org.maurodata.web.ListResponse
+import org.maurodata.web.PaginationParams
 
 @MauroApi
 interface FolderApi extends ModelApi<Folder> {
@@ -43,10 +44,16 @@ interface FolderApi extends ModelApi<Folder> {
     @Put(Paths.FOLDER_MOVE)
     Folder moveFolder(UUID id, String destination)
 
-    @Get(Paths.FOLDER_LIST)
+    @Get(Paths.FOLDER_LIST_PAGED)
+    ListResponse<Folder> listAll(@Nullable PaginationParams params)
+
+    @Get(Paths.FOLDER_LIST_PAGED)
     ListResponse<Folder> listAll()
 
-    @Get(Paths.CHILD_FOLDER_LIST)
+    @Get(Paths.CHILD_FOLDER_LIST_PAGED)
+    ListResponse<Folder> list(UUID parentId, @Nullable PaginationParams params)
+
+    @Get(Paths.CHILD_FOLDER_LIST_PAGED)
     ListResponse<Folder> list(UUID parentId)
 
     @Delete(Paths.FOLDER_ID)

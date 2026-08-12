@@ -193,9 +193,9 @@ class CodeSetController extends ModelController<CodeSet> implements CodeSetApi {
 
     @Audit
     @Operation(operationId = 'listCodeSet', summary = "List the code sets", description = "Returns the code sets.")
-    @Get(value = Paths.FOLDER_LIST_CODE_SET)
-    ListResponse<CodeSet> list(UUID folderId) {
-        super.list(folderId)
+    @Get(value = Paths.FOLDER_LIST_CODE_SET_PAGED)
+    ListResponse<CodeSet> list(UUID folderId, @Nullable PaginationParams params = new PaginationParams()) {
+        super.list(folderId, params)
     }
 
     @Audit
