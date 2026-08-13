@@ -21,7 +21,8 @@ enum ProfileFieldDataType {
     FOLDER('folder'),
     MODEL('model'),
     ENUMERATION('enumeration'),
-    JSON('json')
+    JSON('json'),
+    SOURCECODE('sourcecode')
 
     @JsonValue
     String label
