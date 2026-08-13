@@ -348,11 +348,11 @@ abstract class Model extends AdministeredItem implements DiffableItem, Securable
         intoModel.organisation = ItemUtils.copyItem(this.organisation, intoModel.organisation)
         intoModel.deleted = ItemUtils.copyItem(this.deleted, intoModel.deleted)
         intoModel.author = ItemUtils.copyItem(this.author, intoModel.author)
-        intoModel.branchName = ItemUtils.copyItem(this.branchName, intoModel.branchName)
+        intoModel.branchName = ItemUtils.copyItem(this.@branchName, intoModel.@branchName)
         intoModel.folder = ItemUtils.copyItem(this.folder, intoModel.folder)
         intoModel.authority = ItemUtils.copyItem(this.authority, intoModel.authority)
-        intoModel.modelVersion = ItemUtils.copyItem(this.modelVersion, intoModel.modelVersion)
-        intoModel.modelVersionTag = ItemUtils.copyItem(this.modelVersionTag, intoModel.modelVersionTag)
+        intoModel.modelVersion = ItemUtils.copyItem(this.@modelVersion, intoModel.@modelVersion)
+        intoModel.modelVersionTag = ItemUtils.copyItem(this.@modelVersionTag, intoModel.@modelVersionTag)
         intoModel.versionLinks = ItemUtils.copyItems(this.versionLinks, intoModel.versionLinks)
     }
 }
