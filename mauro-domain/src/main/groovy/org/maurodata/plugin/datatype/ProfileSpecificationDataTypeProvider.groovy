@@ -29,7 +29,8 @@ class ProfileSpecificationDataTypeProvider implements DefaultDataTypeProviderPlu
             'time'    : 'time of day [no time zone)',
             'folder'  : 'pointer to a folder in this Mauro instance',
             'model'   : 'pointer to a model in this Mauro instance',
-            'json'    : 'a text field containing valid json syntax'
+            'json'    : 'a text field containing valid json syntax',
+            'sourcecode' : 'a json object containing {"language":"source language", "source":"source code"}'
         ].collect {
             name, desc ->
                 new DataType(
