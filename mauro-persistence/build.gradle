@@ -49,7 +49,7 @@ dependencies {
     testFixturesImplementation("org.junit.jupiter:junit-jupiter-engine:5.2.0")
 
     // To find flyway migrations in jars
-    implementation 'io.github.classgraph:classgraph:4.8.158'
+    implementation 'io.github.classgraph:classgraph:4.8.191'
 
     codenarc 'org.apache.groovy:groovy-all:4.0.24'
     codenarc 'org.codenarc:CodeNarc:3.6.0-groovy-4.0'
