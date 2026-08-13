@@ -458,7 +458,7 @@ class DataModelIntegrationSpec extends CommonDataSpec {
         ListResponse<DataType> dataTypes = dataTypeApi.list(dataModelId)
 
         then:
-        dataTypes.count == 11
+        dataTypes.count == 12
         dataTypes.find {it.label == 'string' &&
             it.description == 'short variable-length character string (plain-text)'}
     }
