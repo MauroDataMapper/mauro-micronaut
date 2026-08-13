@@ -24,7 +24,7 @@ dependencies {
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
 
     // For importer parameters introspection
-    implementation('org.apache.commons:commons-lang3:3.18.0')
+    implementation('org.apache.commons:commons-lang3:3.20.0')
 
     implementation('org.apache.groovy:groovy-json:4.0.33')
 
