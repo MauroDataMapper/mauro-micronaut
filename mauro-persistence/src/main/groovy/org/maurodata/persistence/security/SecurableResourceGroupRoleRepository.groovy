@@ -17,6 +17,8 @@ abstract class SecurableResourceGroupRoleRepository implements ItemRepository<Se
 
     abstract Long deleteBySecurableResourceDomainTypeAndSecurableResourceIdAndRoleAndUserGroupId(String securableResourceDomainType, UUID securableResourceId, Role role, UUID userGroupId)
 
+    abstract List<SecurableResourceGroupRole> readAllByUserGroupIdIn(Collection<UUID> userGroupIds)
+
     @Override
     Class getDomainClass() {
         SecurableResourceGroupRole

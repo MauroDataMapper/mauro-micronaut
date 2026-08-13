@@ -1,5 +1,6 @@
 package org.maurodata.controller.tree
 
+import groovy.util.logging.Slf4j
 import io.swagger.v3.oas.annotations.Operation
 import org.maurodata.api.Paths
 import org.maurodata.api.tree.TreeApi
@@ -13,15 +14,25 @@ import org.maurodata.domain.model.Item
 import org.maurodata.domain.model.Model
 import org.maurodata.domain.model.Path
 import org.maurodata.domain.security.Role
+import org.maurodata.domain.security.SecurableResourceGroupRole
+import org.maurodata.domain.security.UserGroup
 import org.maurodata.domain.tree.TreeItem
+import org.maurodata.persistence.ContentHandler
+import org.maurodata.persistence.ContentsService
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository
+import org.maurodata.persistence.cache.ItemCacheableRepository
+import org.maurodata.persistence.cache.ItemCacheableRepository.UserGroupCacheableRepository
 import org.maurodata.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
+import org.maurodata.persistence.classifier.ClassificationSchemeRepository
+import org.maurodata.persistence.datamodel.DataModelRepository
+import org.maurodata.persistence.dto.HasChildrenDTO
 import org.maurodata.persistence.model.PathRepository
 import org.maurodata.persistence.search.SearchRepository
 import org.maurodata.domain.search.dto.SearchRequestDTO
 import org.maurodata.domain.search.dto.SearchResultsDTO
 import org.maurodata.persistence.service.RepositoryService
 import org.maurodata.persistence.service.TreeService
+import org.maurodata.persistence.terminology.TerminologyRepository
 import org.maurodata.security.AccessControlService
 
 import groovy.transform.CompileStatic
@@ -38,6 +49,7 @@ import jakarta.inject.Inject
 
 @CompileStatic
 @Controller
+@Slf4j
 @Secured(SecurityRule.IS_ANONYMOUS)
 class TreeController implements TreeApi {
 
@@ -51,6 +63,21 @@ class TreeController implements TreeApi {
     FolderCacheableRepository folderRepository
 
     @Inject
+    DataModelRepository dataModelRepository
+
+    @Inject
+    TerminologyRepository terminologyRepository
+
+    @Inject
+    ClassificationSchemeRepository classificationSchemeRepository
+
+    @Inject
+    UserGroupCacheableRepository userGroupRepository
+
+    @Inject
+    ItemCacheableRepository.SecurableResourceGroupRoleCacheableRepository securableResourceGroupRoleRepository
+
+    @Inject
     AccessControlService accessControlService
 
     @Inject
@@ -59,21 +86,128 @@ class TreeController implements TreeApi {
     @Inject
     SearchRepository searchRepository
 
+    @Inject
+    ContentsService contentsService
+
+    TreeController() {
+    }
+
+
     @Audit
     @Operation(summary = "List the trees", description = "Returns the trees. You must have read privileges on the item in question.")
     @Get(Paths.TREE_FOLDER)
     List<TreeItem> folderTree(@Nullable UUID id, @Nullable @QueryValue Boolean foldersOnly) {
 
-        List<TreeItem> treeItems
-        foldersOnly = foldersOnly ?: false
+        long startTime = System.currentTimeMillis()
+        Folder rootFolder = null
         if (id) {
-            Folder folder = folderRepository.readById(id)
-            accessControlService.checkRole(Role.READER, folder)
-            treeItems = filterTreeByReadable(treeService.buildTree(folder, foldersOnly, false, true))
-        } else {
-            treeItems = filterTreeByReadable(treeService.buildRootFolderTree(foldersOnly))
+             rootFolder = folderRepository.readById(id)
         }
-        treeItems
+        log.error("Time taken 1: {}", System.currentTimeMillis() - startTime)
+        startTime = System.currentTimeMillis()
+
+        ContentHandler contentHandler = contentsService.loadTree(rootFolder, foldersOnly?:false) // rootFolder may be null
+        log.error("Time taken 2: {}", System.currentTimeMillis() - startTime)
+        startTime = System.currentTimeMillis()
+        List<SecurableResourceGroupRole> userRoles = []
+        if(accessControlService.userAuthenticated) {
+            List<UserGroup> userGroups = userGroupRepository.readAllByCatalogueUserId(accessControlService.userId)
+            userRoles = securableResourceGroupRoleRepository.readAllByUserGroupIdIn(userGroups.id)
+        }
+        log.error("Time taken 3: {}", System.currentTimeMillis() - startTime)
+        startTime = System.currentTimeMillis()
+
+        // Now we filter the tree by what we can read
+        Set<UUID> readableItems = [] as HashSet<UUID>
+        if(accessControlService.isAdministrator()) {
+            readableItems = contentHandler.allItems.keySet()
+        } else {
+            boolean userAuthenticated = accessControlService.userAuthenticated
+            Set<UUID> roleAllowedIds = userRoles.collect {it.securableResourceId } as Set
+            log.error("Time taken 4: {}", System.currentTimeMillis() - startTime)
+            startTime = System.currentTimeMillis()
+
+            contentHandler.allItems.values().each {AdministeredItem administeredItem ->
+                // We know these are really models
+                Model model = (Model) administeredItem
+                if (readableItems.contains(model.id)) {
+                    // We've already seen this folder somehow
+                    return
+                }
+                if (model.readableByEveryone
+                    ||  (model.readableByAuthenticatedUsers && userAuthenticated)
+                    ||  roleAllowedIds.contains(model.id)
+                ) {
+                    // First make parents visible
+                    Model m = model
+                    while(m) {
+                        readableItems.add(m.id)
+                        m = m.parent
+                    }
+                    // Then make all children visible
+                    if(model instanceof Folder) {
+                        makeChildrenVisible(model, readableItems)
+                    }
+
+                }
+            }
+            log.error("Time taken 5: {}", System.currentTimeMillis() - startTime)
+            startTime = System.currentTimeMillis()
+
+        }
+        Set<Model> allModels = [] as Set<Model>
+
+        Set<UUID> hasChildren = [] as Set<UUID>
+
+        if(id) {
+            Folder originalFolder = contentHandler.folders[0].first()
+            allModels.addAll(originalFolder.childFolders.findAll {readableItems.contains(it.id)})
+            allModels.addAll(originalFolder.classificationSchemes.findAll {readableItems.contains(it.id)})
+            allModels.addAll(originalFolder.terminologies.findAll {readableItems.contains(it.id)})
+            allModels.addAll(originalFolder.codeSets.findAll {readableItems.contains(it.id)})
+            allModels.addAll(originalFolder.dataModels.findAll {readableItems.contains(it.id)})
+
+            dataModelRepository.getHasChildrenDTOs(originalFolder.dataModels.findAll {readableItems.contains(it.id)}.id).each {
+                if(it.hasChildren) {
+                    hasChildren.add(it.id)
+                }
+            }
+            terminologyRepository.getHasChildrenDTOs(originalFolder.terminologies.findAll {readableItems.contains(it.id)}.id).each {
+                if(it.hasChildren) {
+                    hasChildren.add(it.id)
+                }
+            }
+            classificationSchemeRepository.getHasChildrenDTOs(originalFolder.classificationSchemes.findAll {readableItems.contains(it.id)}.id).each {
+                if(it.hasChildren) {
+                    hasChildren.add(it.id)
+                }
+            }
+        } else {
+            allModels.addAll(contentHandler.folders[0].findAll{readableItems.contains(it.id)})
+        }
+
+        List<TreeItem> items = allModels.collect {TreeItem ti = TreeItem.from(it)
+            if(it instanceof Folder) {
+                ti.hasChildren = (it.childFolders || it.classificationSchemes || it.terminologies || it.codeSets || it.dataModels)
+            } else {
+                ti.hasChildren = hasChildren.contains(it.id)
+            }
+            return ti
+        }
+        return items.sort{it.label + it.branchName + it.modelVersionTag + it.modelVersion}
+    }
+
+
+
+
+    void makeChildrenVisible(Folder folder, Set<UUID> readableItems) {
+        readableItems.addAll(folder.classificationSchemes.id as Set<UUID>)
+        readableItems.addAll(folder.terminologies.id as Set<UUID>)
+        readableItems.addAll(folder.codeSets.id as Set<UUID>)
+        readableItems.addAll(folder.dataModels.id as Set<UUID>)
+        folder.childFolders.each {childFolder ->
+            makeChildrenVisible(childFolder, readableItems)
+        }
     }
 
     @Audit

@@ -2,6 +2,7 @@ package org.maurodata.persistence.terminology
 
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.Nullable
+import io.micronaut.data.annotation.Query
 import io.micronaut.data.annotation.Repository
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.model.query.builder.sql.Dialect
@@ -9,6 +10,7 @@ import jakarta.inject.Inject
 import org.maurodata.FieldConstants
 import org.maurodata.domain.terminology.Terminology
 import org.maurodata.persistence.ContentsService
+import org.maurodata.persistence.dto.HasChildrenDTO
 import org.maurodata.persistence.model.ModelRepository
 import org.maurodata.persistence.terminology.dto.TerminologyDTORepository
 
@@ -58,6 +60,15 @@ abstract class TerminologyRepository implements ModelRepository<Terminology> {
     @Override
     @Nullable
     abstract List<Terminology> findAllByFolderId(UUID folderId)
+
+    @Query(value = '''
+        select id,
+        exists(select 1 from terminology.term where terminology_id = t.id) as has_children
+        from terminology.terminology as t
+        where t.id in (:tids)''', nativeQuery = true)
+    abstract List<HasChildrenDTO> getHasChildrenDTOs(Collection<UUID> tids)
+
+
 
     @Override
     Boolean handles(String domainType) {
