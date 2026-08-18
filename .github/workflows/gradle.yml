@@ -75,7 +75,7 @@ jobs:
       - name: Test with Gradle
         env:
           GRADLE_OPTS: '-Xmx4g -XX:MaxMetaspaceSize=512m'
-        run: ./gradlew --no-daemon test
+        run: ./gradlew --no-daemon --max-workers=1 test
 
       - name: Test Report
         uses: dorny/test-reporter@v3
