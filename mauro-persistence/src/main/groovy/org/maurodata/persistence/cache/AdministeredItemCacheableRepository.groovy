@@ -315,6 +315,10 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
             ((DataElementRepository) repository).findAllByDataClass(dataClass)
         }
 
+        List<DataElement> findAllByIdIn(Collection<UUID> dataElementIds){
+            ((DataElementRepository) repository).findAllByIdIn(dataElementIds) as List<DataElement>
+        }
+
     }
 
     @Singleton
@@ -453,6 +457,9 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
 
         List<DataFlow> findAllBySource(DataModel dataModel) {
             ((DataFlowRepository) repository).findAllBySource(dataModel) as List<DataFlow>
+        }
+        List<DataFlow> readAllBySourceIdIn(List<UUID> sourceIds) {
+            ((DataFlowRepository) repository).readAllBySourceIdIn(sourceIds)
         }
 
         @Override

@@ -2,8 +2,6 @@ package org.maurodata.domain.datamodel
 
 import jakarta.persistence.PrePersist
 import jakarta.persistence.PreUpdate
-import org.maurodata.domain.diff.BaseCollectionDiff
-import org.maurodata.domain.diff.CollectionDiff
 import org.maurodata.domain.diff.DiffBuilder
 import org.maurodata.domain.diff.DiffableItem
 import org.maurodata.domain.diff.ObjectDiff
@@ -27,6 +25,10 @@ import io.micronaut.data.annotation.Relation
 import jakarta.persistence.Transient
 import org.maurodata.domain.model.Model
 import org.maurodata.domain.model.ModelItem
+import org.maurodata.domain.model.Path
+import org.maurodata.shredder.ShredVisitor
+import org.maurodata.shredder.ShreddedContent
+import org.maurodata.visitor.DomainVisitor
 
 /**
  * A DataModel describes a data asset, or a data standard
@@ -65,6 +67,11 @@ class DataModel extends Model implements ItemReferencer, DiffableItem<DataModel>
     @JsonProperty('type')
     @MappedProperty('model_type')
     String dataModelType = DataModelType.DATA_ASSET.label
+
+    @Override
+    <T> T accept(DomainVisitor<T> visitor) {
+        return visitor.visitDataModel(this)
+    }
 
     @Override
     @Transient
@@ -200,80 +207,45 @@ class DataModel extends Model implements ItemReferencer, DiffableItem<DataModel>
         base
     }
 
-    @Transient
-    @JsonIgnore
-    @Override
-    void setAssociations() {
-        super.setAssociations()
-        Map<String, DataType> dataTypesMap = dataTypes.collectEntries { if(it.id) {[it.id, it]}}
-        dataTypesMap.putAll(dataTypes.collectEntries { {[it.label, it]}})
-        List<? extends DataType> referenceTypes = dataTypeReferenceTypes()
-
-        dataTypes.each {dataType ->
-            dataType.parent = this
-            dataType.dataModel = this
-            dataType.enumerationValues.each {enumerationValue ->
-                enumerationValue.parent = dataType
-                enumerationValue.enumerationType = dataType
-                enumerationValues.add(enumerationValue)
-                enumerationValue.dataModel = this
-                this.enumerationValues.add(enumerationValue)
-            }
-            dataType.setAssociations()
-        }
-
-        dataClasses.each {dataClass ->
-            setDataClassAssociations(dataClass, dataTypesMap, referenceTypes)
-        }
-        dataTypes.each {dataType ->
-            if(dataType.dataTypeKind == DataType.DataTypeKind.REFERENCE_TYPE) {
-                if(!dataType.dataModel.allDataClasses.contains(dataType.referenceClass)) {
-                    dataType.referenceClass = dataType.dataModel.allDataClasses.find {dataClass ->
-                        (dataType.referenceClass.id && dataClass.id && dataClass.id == dataType.referenceClass.id) ||
-                        (dataType.referenceClass.label && dataClass.label && dataClass.label == dataType.referenceClass.label)
-                    }
-                }
-            }
-        }
-
-        this
-    }
-
-    void setDataClassAssociations(DataClass dataClass, Map<String, DataType> dataTypesMap,
-                                  List<? extends DataType> referenceTypes) {
-        dataClass.setAssociations()
-        dataClass.dataModel = this
-        if (!dataClass.dataModel.allDataClasses.contains(dataClass)) {
-            dataClass.dataModel.allDataClasses.add(dataClass)
-        }
-        dataClass.dataClasses.each {childDataClass ->
-            setDataClassAssociations(childDataClass, dataTypesMap, referenceTypes)
-            childDataClass.parentDataClass = dataClass
-        }
-        dataClass.dataElements.each {dataElement ->
-            dataElement.dataModel = this
-            if (!dataElement.dataModel.dataElements.contains(dataElement)) {
-                dataElement.dataModel.dataElements.add(dataElement)
-            }
-            dataElement.dataClass = dataClass
-            final DataType foundDataType = dataTypesMap[dataElement.dataType?.id ?: dataElement.dataType?.label]
-            if (foundDataType == null) {
-                log.error(
-                    "DataModel setAssociations() setDataClassAssociations() failed to find a DataType for ${dataElement.dataType?.id} or else ${dataElement.dataType?.label}")
-            }
-            dataElement.dataType = foundDataType
-            if (!this.dataElements.contains(dataElement)) {
-                this.dataElements.add(dataElement)
-            }
-            dataElement.setAssociations()
-        }
-        dataClass.referenceTypes = referenceTypes.findAll {it.referenceClass?.id == dataClass.id} as List<DataType>
-    }
-
     protected List<DataType> dataTypeReferenceTypes() {
         dataTypes.findAll {it.isReferenceType()}
     }
 
+    /**
+     *
+     * @param dataElement
+     * @param path
+     * @return List of AdministeredItems that have been created as part of this operation - for saving to the database.
+     * This will include the DataElement and any DataClasses, DataTypes that were created as part of the path.
+     */
+    void addDataElementAtPath(DataElement dataElement, Path path, ShreddedContent shreddedContent) {
+        while(path.nodes.size() > 0 && path.nodes.first().prefix != "dc") {
+            path.nodes.remove(0)
+        }
+        if(path.nodes.size() == 0) {
+            log.error("Invalid path for adding a DataElement ${dataElement.label} to DataModel ${label} - path must start with a DataClass node (dc)")
+            log.error("Path provided was ${path}")
+            throw new IllegalArgumentException("Path must start with a DataClass node (dc) for adding a DataElement")
+        }
+        DataType linkedDataType = dataTypes.find {it.label == dataElement.dataType.label || it.id == dataElement.dataType.id}
+        if(linkedDataType) {
+            dataElement.dataType.id = linkedDataType.id
+        } else {
+            dataTypes.add(dataElement.dataType)
+            dataElement.dataType.dataModel = this
+            ShredVisitor shredVisitor = new ShredVisitor(shreddedContent)
+            dataElement.dataType.accept(shredVisitor)
+        }
+        DataClass dataClass = dataClasses.find {it.label == path.nodes.first().identifier}
+        if(!dataClass) {
+            dataClass = new DataClass(label: path.nodes.first().identifier, dataModel: this)
+            dataClasses.add(dataClass)
+            ShredVisitor shredVisitor = new ShredVisitor(shreddedContent)
+            dataClass.accept(shredVisitor)
+        }
+        path.nodes.remove(0)
+        dataClass.addDataElementAtPath(dataElement, path, shreddedContent)
+    }
 
     /****
      * Methods for building a tree-like DSL

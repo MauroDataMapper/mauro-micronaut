@@ -17,6 +17,7 @@ import org.maurodata.domain.diff.DiffableItem
 import org.maurodata.domain.diff.MetadataDiff
 
 import org.maurodata.domain.diff.ObjectDiff
+import org.maurodata.visitor.DomainVisitor
 
 @CompileStatic
 @MappedEntity(schema = 'core')
@@ -30,6 +31,11 @@ class Metadata extends Facet implements DiffableItem<Metadata> {
     String key
 
     String value
+
+    @Override
+    <T> T accept(DomainVisitor<T> visitor) {
+        return visitor.visitMetadata(this)
+    }
 
     @Override
     @JsonIgnore

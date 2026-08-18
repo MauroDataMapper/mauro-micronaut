@@ -25,6 +25,7 @@ import org.maurodata.domain.diff.DiffableItem
 import org.maurodata.domain.diff.ObjectDiff
 import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.domain.model.ModelItem
+import org.maurodata.visitor.DomainVisitor
 
 @CompileStatic
 @AutoClone(excludes = ['classificationScheme'])
@@ -44,6 +45,11 @@ class Classifier extends ModelItem<ClassificationScheme> implements DiffableItem
     @Nullable
     @JsonIgnore
     Classifier parentClassifier
+
+    @Override
+    <T> T accept(DomainVisitor<T> visitor) {
+        return visitor.visitClassifier(this)
+    }
 
     @Override
     @Transient

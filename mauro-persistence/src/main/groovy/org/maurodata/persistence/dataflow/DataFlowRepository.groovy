@@ -39,6 +39,8 @@ abstract class DataFlowRepository implements ModelItemRepository<DataFlow> {
         dataFlowDTORepository.findAllBySource(dataModel) as List<DataFlow>
     }
 
+    @Nullable
+    abstract List<DataFlow> readAllBySourceIdIn(List<UUID> sourceIds)
 
     @Nullable
     List<DataFlow> findAllByLabel(String label){

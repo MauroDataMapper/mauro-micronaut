@@ -32,6 +32,7 @@ import org.maurodata.domain.diff.DiffableItem
 import org.maurodata.domain.diff.ObjectDiff
 import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.domain.model.ModelItem
+import org.maurodata.visitor.DomainVisitor
 
 /**
  * A datatype describes the range of values that a column or field in a dataset may take.  It may be one of the following kinds:
@@ -103,6 +104,11 @@ class DataType extends ModelItem<DataModel> implements DiffableItem<DataType>, I
     @Transient
     Model modelResource
 
+    @Override
+    <T> T accept(DomainVisitor<T> visitor) {
+        return visitor.visitDataType(this)
+    }
+
     @PreUpdate
     @PrePersist
     void prePersist() {
@@ -118,6 +124,7 @@ class DataType extends ModelItem<DataModel> implements DiffableItem<DataType>, I
             }
         }
     }
+
 
     @Override
     String getDomainType() {
@@ -232,6 +239,25 @@ class DataType extends ModelItem<DataModel> implements DiffableItem<DataType>, I
         this.units = units
         this.units
     }
+
+    DataClass referenceClass(DataClass dataClass) {
+        this.referenceClass = dataClass
+        dataClass.dataModel = this.dataModel
+        if(this.dataModel) {
+            this.dataModel.dataClasses.add(dataClass)
+        }
+        this.referenceClass
+    }
+
+    DataClass referenceClass(Map args, @DelegatesTo(value = DataClass, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+        DataClass dataClass1 = DataClass.build(args + [dataModel: this.dataModel], closure)
+        referenceClass dataClass1
+    }
+
+    DataClass referenceClass(@DelegatesTo(value = DataClass, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+        referenceClass [:], closure
+    }
+
 
     EnumerationValue enumerationValue(EnumerationValue enumerationValue) {
         enumerationValues.add(enumerationValue)

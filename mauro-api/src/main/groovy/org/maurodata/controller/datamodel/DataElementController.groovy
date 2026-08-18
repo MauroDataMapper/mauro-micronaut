@@ -207,12 +207,12 @@ class DataElementController extends AdministeredItemController<DataElement, Data
                 }
                 targetDataType = (DataType) originalDataType.deepClone()
                 targetDataType.dataModel = targetModel
-                targetDataType = (DataType) contentsService.saveWithContent(targetDataType)
+                targetDataType = (DataType) contentsService.saveWithContent(targetDataType, accessControlService.user, true)
             }
             copied.dataType = targetDataType
         }
         copied.dataClass = targetClass
-        DataElement savedCopy = (DataElement) contentsService.saveWithContent(copied, accessControlService.user)
+        DataElement savedCopy = (DataElement) contentsService.saveWithContent(copied, accessControlService.user, true)
         savedCopy
     }
 

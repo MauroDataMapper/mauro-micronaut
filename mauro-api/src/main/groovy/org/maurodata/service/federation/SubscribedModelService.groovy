@@ -22,6 +22,7 @@ import org.maurodata.plugin.exporter.ModelExporterPlugin
 import org.maurodata.plugin.importer.FileImportParameters
 import org.maurodata.plugin.importer.FileParameter
 import org.maurodata.plugin.importer.ModelImporterPlugin
+import org.maurodata.security.AccessControlService
 import org.maurodata.service.core.AuthorityService
 
 @CompileStatic
@@ -39,6 +40,9 @@ class SubscribedModelService {
 
     @Inject
     ContentsService contentsService
+
+    @Inject
+    AccessControlService accessControlService
 
 
     @Inject
@@ -95,7 +99,7 @@ class SubscribedModelService {
         checkModelLabelAndVersionNotAlreadyImported(savedImported)
         if (savedImported) {
             savedImported.folder = folder
-            (Model) contentsService.saveWithContent(savedImported)
+            (Model) contentsService.saveWithContent(savedImported, accessControlService.user, true)
         }
     }
 

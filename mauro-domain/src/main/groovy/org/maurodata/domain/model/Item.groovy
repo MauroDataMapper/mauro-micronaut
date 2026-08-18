@@ -19,6 +19,8 @@ import io.micronaut.data.annotation.MappedProperty
 import io.micronaut.data.annotation.Version
 import jakarta.persistence.PrePersist
 import jakarta.persistence.Transient
+import org.maurodata.visitor.DomainVisitor
+import org.maurodata.visitor.VisitableDomain
 
 import java.time.Instant
 
@@ -27,7 +29,7 @@ import java.time.Instant
  */
 @CompileStatic
 @AutoClone
-abstract class Item implements Serializable, ItemReferencer {
+abstract class Item implements Serializable, ItemReferencer, VisitableDomain {
 
     /**
      * The identity of an object.  UUIDs should be universally unique.
@@ -90,6 +92,11 @@ abstract class Item implements Serializable, ItemReferencer {
      */
     @Transient
     String domainType = this.class.simpleName
+
+    @Override
+    <T> T accept(DomainVisitor<T> visitor) {
+        throw new UnsupportedOperationException("Visitor not implemented for ${this.class.name}")
+    }
 
     void updateCreationProperties() {
         id = null

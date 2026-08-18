@@ -112,6 +112,6 @@ class CacheableRepositorySpec extends Specification {
         // warning: if debug logging in io.micronaut.cache is enabled, this takes longer!
         then: 'takes less than 10 seconds'
         endTime - startTime < 10 * 1000
-        log.info "folderCacheableRepository.findById took ${endTime - startTime}ms for 1000000 invocations"
+        log.warn "folderCacheableRepository.findById took ${endTime - startTime}ms for 1000000 invocations"
     }
 }

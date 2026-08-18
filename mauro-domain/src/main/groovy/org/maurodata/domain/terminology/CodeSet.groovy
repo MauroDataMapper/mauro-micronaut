@@ -25,6 +25,7 @@ import jakarta.persistence.JoinColumn
 import jakarta.persistence.JoinTable
 import jakarta.persistence.Transient
 import org.maurodata.domain.model.Model
+import org.maurodata.visitor.DomainVisitor
 
 /**
  * A Terminology is a model that describes a number of terms, and some relationships between them.
@@ -50,6 +51,11 @@ class CodeSet extends Model implements ItemReferencer, DiffableItem<CodeSet> {
     @Transient
     Set<Terminology> terminologies = []
 
+    @Override
+    <T> T accept(DomainVisitor<T> visitor) {
+        return visitor.visitCodeSet(this)
+    }
+
 
     @Override
     @Transient
@@ -68,14 +74,6 @@ class CodeSet extends Model implements ItemReferencer, DiffableItem<CodeSet> {
     CodeSet addTerm(Term term) {
         terms.add(term)
         this
-    }
-
-
-    @Transient
-    @JsonIgnore
-    @Override
-    void setAssociations() {
-        super.setAssociations()
     }
 
 
