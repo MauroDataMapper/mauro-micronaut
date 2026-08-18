@@ -18,7 +18,7 @@ dependencies {
     implementation("io.micronaut:micronaut-jackson-databind")
 
     // camel case
-    implementation("com.google.guava:guava:33.4.8-jre")
+    implementation("com.google.guava:guava:33.7.1-jre")
 
     // For parsing java dates / instants
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
