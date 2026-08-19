@@ -133,7 +133,7 @@ jobs:
             ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SIGNING_IN_MEMORY_KEY }}
             ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_IN_MEMORY_KEY_PASSWORD }}
         run: |
-            ./gradlew --stacktrace -PenableOpenApi=true -PMauroSnapshotRepositoryUsername=${{secrets.MAURO_SNAPSHOT_REPOSITORY_USERNAME}} -PMauroSnapshotRepositoryPassword=${{secrets.MAURO_SNAPSHOT_REPOSITORY_PASSWORD}} publishAllPublicationsToMauroSnapshotRepositoryRepository
+            ./gradlew --stacktrace --no-daemon --max-workers=1 -PenableOpenApi=true -PopenApiGeneratorMaxHeap=4g -PMauroSnapshotRepositoryUsername=${{secrets.MAURO_SNAPSHOT_REPOSITORY_USERNAME}} -PMauroSnapshotRepositoryPassword=${{secrets.MAURO_SNAPSHOT_REPOSITORY_PASSWORD}} publishAllPublicationsToMauroSnapshotRepositoryRepository
 
       - name: Publish to Maven Central
         if: success() && github.ref == 'refs/heads/main'
@@ -144,7 +144,7 @@ jobs:
             ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.SONATYPE_USERNAME }}
             ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.SONATYPE_PASSWORD }}
         run: |
-            ./gradlew --stacktrace -PenableOpenApi=true publishAllPublicationsToMavenCentralRepository    
+            ./gradlew --stacktrace --no-daemon --max-workers=1 -PenableOpenApi=true -PopenApiGeneratorMaxHeap=4g publishAllPublicationsToMavenCentralRepository    
 
       - name: BuildMultiArch and publish to Docker Hub
         if: success() && github.ref == 'refs/heads/main'
@@ -153,7 +153,7 @@ jobs:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
           DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
         run: |
-          ./gradlew --stacktrace -PenableOpenApi=true dockerBuildMultiArch
+          ./gradlew --stacktrace --no-daemon --max-workers=1 -PenableOpenApi=true dockerBuildMultiArch
 
       - name: Send a stream message
         if: success() || failure()
