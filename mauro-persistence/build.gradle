@@ -9,12 +9,7 @@ plugins {
 }
 
 
-repositories {
-    mavenCentral()
-}
-
 dependencies {
-    implementation("io.micronaut.groovy:micronaut-runtime-groovy")
     implementation("jakarta.annotation:jakarta.annotation-api")
     implementation("io.micronaut:micronaut-management")
     compileOnly("io.micronaut:micronaut-inject-groovy")
@@ -26,22 +21,15 @@ dependencies {
     implementation("org.flywaydb:flyway-core")
     compileOnly("io.micronaut.data:micronaut-data-processor")
     compileOnly("io.micronaut.validation:micronaut-validation-processor")
-    implementation("io.micronaut:micronaut-jackson-databind")
     implementation("io.micronaut.data:micronaut-data-jdbc")
-    implementation("io.micronaut.groovy:micronaut-runtime-groovy")
-    runtimeOnly("ch.qos.logback:logback-classic")
-    implementation("io.micronaut.validation:micronaut-validation")
     implementation("io.micronaut.cache:micronaut-cache-core")
 //    implementation("io.micronaut.cache:micronaut-cache-ehcache")
     implementation("io.micronaut.cache:micronaut-cache-caffeine")
     implementation("io.micronaut.cache:micronaut-cache-management")
-    runtimeOnly("org.yaml:snakeyaml")
 
-    testImplementation("io.micronaut.test:micronaut-test-spock")
     testRuntimeOnly("org.testcontainers:testcontainers:2.0.3")
     testRuntimeOnly("org.testcontainers:postgresql:1.21.4")
     testRuntimeOnly("org.postgresql:postgresql")
-    testRuntimeOnly "org.junit.platform:junit-platform-launcher"
 
     testFixturesImplementation("io.micronaut.test:micronaut-test-spock")
     testFixturesImplementation("io.micronaut.sql:micronaut-jdbc-hikari")
@@ -51,34 +39,8 @@ dependencies {
     // To find flyway migrations in jars
     implementation 'io.github.classgraph:classgraph:4.8.191'
 
-    codenarc 'org.apache.groovy:groovy-all:4.0.33'
-    codenarc 'org.codenarc:CodeNarc:3.6.0-groovy-4.0'
-
-    // UUIDs
-    implementation 'com.fasterxml.uuid:java-uuid-generator:5.1.0'
-
     implementation project(':mauro-domain')
 }
-
-test {
-    useJUnitPlatform()
-}
-
-
-codenarc {
-    toolVersion = "3.7.0"
-    configFile = rootProject.file("config/codenarc/codenarc.groovy")
-}
-
-codenarcMain {
-    compilationClasspath = sourceSets.main.compileClasspath + sourceSets.main.output
-}
-
-codenarcTest {
-    compilationClasspath = codenarcMain.compilationClasspath + sourceSets.test.compileClasspath + sourceSets.test.output
-}
-
-[codenarcMain, codenarcTest, codenarcTestFixtures]*.ignoreFailures = true
 
 jar {
     exclude("**/logback.xml")
