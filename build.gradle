@@ -134,3 +134,7 @@ tasks.withType(GroovyCompile).configureEach {
     groovyOptions.forkOptions.memoryInitialSize = '256m'
     groovyOptions.forkOptions.memoryMaximumSize = '4g'
 }
+
+test {
+    maxParallelForks = 1
+}
