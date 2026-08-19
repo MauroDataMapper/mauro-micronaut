@@ -104,6 +104,8 @@ abstract class DataElementRepository implements ModelItemRepository<DataElement>
 
     abstract Long deleteByDataClassId(UUID dataClassId)
 
+    abstract List<DataElement> readAllByDataClassDataModelIdInAndLabelContains(Collection<UUID> dataModelIds, String label)
+
     //    @Override
     Long deleteByOwnerId(UUID ownerId) {
         deleteByDataClassId(ownerId)
