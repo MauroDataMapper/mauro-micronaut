@@ -298,18 +298,18 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
             ((DataElementRepository) repository).readAllByDataTypeIn(dataTypes)
         }
 
-
-        List<DataElement> readAllByDataModel_Id(UUID dataModelId){
-            ((DataElementRepository) repository).readAllByDataModelId(dataModelId)
-        }
-
         DataElement readByDataClassAndLabel(DataClass dataClass, String label) {
             ((DataElementRepository) repository).readByDataClassAndLabel(dataClass, label)
         }
 
-        List<DataElement> readAllByDataClassIdIn(List<UUID> dataClassIds){
+        List<DataElement> readAllByDataClassIdIn(Collection<UUID> dataClassIds){
             ((DataElementRepository) repository).readAllByDataClassIdIn(dataClassIds)
         }
+
+        List<DataElement> readAllByDataClassDataModelIdIn(Collection<UUID> dataModelIds){
+            ((DataElementRepository) repository).readAllByDataClassDataModelIdIn(dataModelIds)
+        }
+
 
         List<DataElement> findAllByDataClass(DataClass dataClass){
             ((DataElementRepository) repository).findAllByDataClass(dataClass)
