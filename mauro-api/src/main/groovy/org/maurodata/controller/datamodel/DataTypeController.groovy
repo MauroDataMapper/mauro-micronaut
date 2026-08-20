@@ -24,11 +24,13 @@ import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
 import org.maurodata.ErrorHandler
 import org.maurodata.api.Paths
+import org.maurodata.api.ProducesJsonAndYaml
 import org.maurodata.api.datamodel.DataTypeApi
 import org.maurodata.audit.Audit
 import org.maurodata.controller.model.AdministeredItemController
 import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.datamodel.DataType
+import org.maurodata.domain.comparison.ComparisonResult
 import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.domain.model.Item
 import org.maurodata.domain.model.Model
@@ -37,6 +39,7 @@ import org.maurodata.persistence.cache.AdministeredItemCacheableRepository.DataT
 import org.maurodata.persistence.cache.ModelCacheableRepository.DataModelCacheableRepository
 
 import org.maurodata.persistence.datamodel.EnumerationValueRepository
+import org.maurodata.service.datamodel.DataTypeComparisonService
 import org.maurodata.service.datamodel.DataTypeService
 import org.maurodata.web.ListResponse
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository
@@ -63,15 +66,17 @@ class DataTypeController extends AdministeredItemController<DataType, DataModel>
     RepositoryService repositoryService
 
     final DataTypeService dataTypeService
+    final DataTypeComparisonService dataTypeComparisonService
 
     AdministeredItemCacheableRepository.DataClassCacheableRepository dataClassRepository
 
     DataTypeController(DataTypeService dataTypeService, DataTypeCacheableRepository dataTypeRepository, DataModelCacheableRepository dataModelRepository,
-                       AdministeredItemCacheableRepository.DataClassCacheableRepository dataClassRepository) {
+                       AdministeredItemCacheableRepository.DataClassCacheableRepository dataClassRepository, DataTypeComparisonService dataTypeComparisonService) {
         super(DataType, dataTypeRepository, dataModelRepository)
         this.dataTypeService = dataTypeService
         this.dataTypeRepository = dataTypeRepository
         this.dataClassRepository = dataClassRepository
+        this.dataTypeComparisonService = dataTypeComparisonService
     }
 
     @Audit
@@ -215,6 +220,14 @@ class DataTypeController extends AdministeredItemController<DataType, DataModel>
 
         List<DataElement> dataElements = dataElementRepository.readAllByDataTypeIn([dataType])
         ListResponse.from(dataElements, params)
+    }
+
+    @Audit
+    @Operation(operationId = 'compareDataTypes', summary = "Compare data types", description = "Compares two data types using available comparison providers.")
+    @ProducesJsonAndYaml
+    @Get(Paths.DATA_TYPE_COMPARE)
+    ListResponse<ComparisonResult> compare(UUID id, UUID otherId) {
+        ListResponse.from(dataTypeComparisonService.compare(id, otherId))
     }
 
     @Operation(summary = "Get a data type", description = "Returns a data type.")

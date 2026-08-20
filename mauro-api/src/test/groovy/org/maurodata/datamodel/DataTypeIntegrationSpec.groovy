@@ -1,7 +1,9 @@
 package org.maurodata.datamodel
 
 import io.micronaut.http.HttpResponse
+import io.micronaut.http.HttpRequest
 import io.micronaut.http.HttpStatus
+import io.micronaut.http.MediaType
 import io.micronaut.http.client.HttpClient
 import io.micronaut.http.client.exceptions.HttpClientResponseException
 import io.micronaut.http.uri.UriBuilder
@@ -12,9 +14,13 @@ import jakarta.inject.Inject
 import org.maurodata.domain.datamodel.DataClass
 import org.maurodata.domain.datamodel.DataType
 import org.maurodata.domain.datamodel.EnumerationValue
+import org.maurodata.domain.comparison.ComparisonConclusion
+import org.maurodata.domain.comparison.ComparisonResult
 import org.maurodata.domain.folder.Folder
 import org.maurodata.domain.model.Model
 import org.maurodata.domain.terminology.CodeSet
+import org.maurodata.domain.terminology.Term
+import org.maurodata.domain.terminology.Terminology
 import org.maurodata.persistence.ContainerizedTest
 import org.maurodata.testing.CommonDataSpec
 import org.maurodata.web.ListResponse
@@ -350,6 +356,291 @@ class DataTypeIntegrationSpec extends CommonDataSpec {
         dataTypeListResponse.items.size() == 1
         dataTypeListResponse.items.first().enumerationValues.size() == 2
 
+    }
+
+    void 'compare primitive dataTypes syntactically reports label difference'() {
+        given:
+        DataType stringType = dataTypeApi.create(dataModelId, new DataType(label: 'String',
+                                                                           description: 'String primitive',
+                                                                           dataTypeKind: DataType.DataTypeKind.PRIMITIVE_TYPE,
+                                                                           units: 'characters'))
+        DataType varcharType = dataTypeApi.create(dataModelId, new DataType(label: 'Varchar',
+                                                                            description: 'Variable character primitive',
+                                                                            dataTypeKind: DataType.DataTypeKind.PRIMITIVE_TYPE,
+                                                                            units: 'characters'))
+
+        when:
+        ListResponse<ComparisonResult> response = dataTypeApi.compare(stringType.id, varcharType.id)
+
+        then:
+        response.count == 4
+
+        ComparisonResult kindComparison = response.items.find {it.comparisonType == 'dataTypeKind'}
+        kindComparison
+        kindComparison.conclusion == ComparisonConclusion.STRUCTURALLY_IDENTICAL
+        kindComparison.left == DataType.DataTypeKind.PRIMITIVE_TYPE.stringValue
+        kindComparison.right == DataType.DataTypeKind.PRIMITIVE_TYPE.stringValue
+
+        ComparisonResult labelComparison = response.items.find {it.comparisonType == 'label'}
+        labelComparison
+        labelComparison.conclusion == ComparisonConclusion.STRUCTURALLY_DIFFERENT
+        labelComparison.left == 'String'
+        labelComparison.right == 'Varchar'
+
+        ComparisonResult labelTokensComparison = response.items.find {it.comparisonType == 'labelTokens'}
+        labelTokensComparison
+        labelTokensComparison.conclusion == ComparisonConclusion.SETS_DISJOINT
+        labelTokensComparison.metadata.jaccardSimilarity == 0
+
+        ComparisonResult unitsComparison = response.items.find {it.comparisonType == 'units'}
+        unitsComparison
+        unitsComparison.conclusion == ComparisonConclusion.STRUCTURALLY_IDENTICAL
+        unitsComparison.metadata.compatible
+        !unitsComparison.metadata.convertible
+    }
+
+    void 'compare primitive dataTypes can produce yaml when requested by accept header'() {
+        given:
+        DataType stringType = dataTypeApi.create(dataModelId, new DataType(label: 'String',
+                                                                           description: 'String primitive',
+                                                                           dataTypeKind: DataType.DataTypeKind.PRIMITIVE_TYPE,
+                                                                           units: 'characters'))
+        DataType varcharType = dataTypeApi.create(dataModelId, new DataType(label: 'Varchar',
+                                                                            description: 'Variable character primitive',
+                                                                            dataTypeKind: DataType.DataTypeKind.PRIMITIVE_TYPE,
+                                                                            units: 'characters'))
+        URI uri = UriBuilder.of(embeddedServer.contextURI)
+            .path("/api/dataTypes/${stringType.id}/compare/${varcharType.id}")
+            .build()
+
+        when:
+        HttpResponse<String> response = httpClient.toBlocking().exchange(
+            HttpRequest.GET(uri).accept(MediaType.APPLICATION_YAML),
+            String
+        )
+
+        then:
+        response.contentType.get().name == MediaType.APPLICATION_YAML
+        response.body().contains('count:')
+        response.body().contains('comparisonType:')
+        response.body().contains('label')
+        response.body().contains('String')
+        response.body().contains('Varchar')
+    }
+
+    void 'compare primitive dataTypes reports convertible units'() {
+        given:
+        DataType centimetresType = dataTypeApi.create(dataModelId, new DataType(label: 'Length in centimetres',
+                                                                                dataTypeKind: DataType.DataTypeKind.PRIMITIVE_TYPE,
+                                                                                units: 'cm'))
+        DataType metresType = dataTypeApi.create(dataModelId, new DataType(label: 'Length in metres',
+                                                                           dataTypeKind: DataType.DataTypeKind.PRIMITIVE_TYPE,
+                                                                           units: 'm'))
+
+        when:
+        ListResponse<ComparisonResult> response = dataTypeApi.compare(centimetresType.id, metresType.id)
+
+        then:
+        ComparisonResult unitsComparison = response.items.find {it.comparisonType == 'units'}
+        unitsComparison
+        unitsComparison.conclusion == ComparisonConclusion.STRUCTURALLY_OVERLAPPING
+        unitsComparison.left == 'cm'
+        unitsComparison.right == 'm'
+        unitsComparison.metadata.compatible
+        unitsComparison.metadata.convertible
+        unitsComparison.metadata.leftDimension == 'length'
+        unitsComparison.metadata.rightDimension == 'length'
+        unitsComparison.metadata.conversion == 'cm = m * 100'
+    }
+
+    void 'compare enumeration dataTypes reports literal value subset direction'() {
+        given:
+        DataType leftEnumeration = dataTypeApi.create(dataModelId, new DataType(label: 'left enumeration',
+                                                                                dataTypeKind: DataType.DataTypeKind.ENUMERATION_TYPE))
+        enumerationValueApi.create(dataModelId, leftEnumeration.id, new EnumerationValue(key: 'A', value: 'Alpha'))
+        enumerationValueApi.create(dataModelId, leftEnumeration.id, new EnumerationValue(key: 'B', value: 'Bravo'))
+
+        DataType rightEnumeration = dataTypeApi.create(dataModelId, new DataType(label: 'right enumeration',
+                                                                                 dataTypeKind: DataType.DataTypeKind.ENUMERATION_TYPE))
+        enumerationValueApi.create(dataModelId, rightEnumeration.id, new EnumerationValue(key: 'A', value: 'Alpha'))
+        enumerationValueApi.create(dataModelId, rightEnumeration.id, new EnumerationValue(key: 'B', value: 'Bravo'))
+        enumerationValueApi.create(dataModelId, rightEnumeration.id, new EnumerationValue(key: 'C', value: 'Charlie'))
+
+        when:
+        ListResponse<ComparisonResult> response = dataTypeApi.compare(leftEnumeration.id, rightEnumeration.id)
+
+        then:
+        ComparisonResult declaredValueSetComparison = response.items.find {it.comparisonType == 'declaredValueSet'}
+        declaredValueSetComparison
+        declaredValueSetComparison.conclusion == ComparisonConclusion.LEFT_IS_SUBSET_OF_RIGHT
+        declaredValueSetComparison.metadata.jaccardSimilarity == 2 / 3
+        declaredValueSetComparison.metadata.shared == ['A', 'B']
+        declaredValueSetComparison.metadata.leftOnlyCount == 0
+        declaredValueSetComparison.metadata.rightOnly == ['C']
+        declaredValueSetComparison.metadata.rightOnlyCount == 1
+
+        ComparisonResult valueComparison = response.items.find {it.comparisonType == 'declaredValueValues'}
+        valueComparison
+        valueComparison.conclusion == ComparisonConclusion.STRUCTURALLY_IDENTICAL
+        valueComparison.metadata.comparedCodesCount == 2
+        valueComparison.metadata.changedCount == 0
+    }
+
+    void 'compare model resource dataTypes reports terminology and code set overlap'() {
+        given:
+        Terminology terminology = terminologyApi.create(folderId, new Terminology(label: 'comparison terminology'))
+        Term termA = termApi.create(terminology.id, new Term(code: 'A', definition: 'Alpha'))
+        Term termB = termApi.create(terminology.id, new Term(code: 'B', definition: 'Bravo'))
+        Term termC = termApi.create(terminology.id, new Term(code: 'C', definition: 'Charlie'))
+        Terminology finalisedTerminology = terminologyApi.finalise(terminology.id, finalisePayload())
+
+        CodeSet codeSet = codeSetApi.create(folderId, new CodeSet(label: 'comparison code set', terms: [termB, termC] as Set<Term>))
+        CodeSet finalisedCodeSet = codeSetApi.finalise(codeSet.id, finalisePayload())
+
+        DataType terminologyType = dataTypeApi.create(dataModelId, new DataType(label: 'terminology model type',
+                                                                                dataTypeKind: DataType.DataTypeKind.MODEL_TYPE,
+                                                                                modelResourceDomainType: Terminology.simpleName,
+                                                                                modelResourceId: finalisedTerminology.id))
+        DataType codeSetType = dataTypeApi.create(dataModelId, new DataType(label: 'code set model type',
+                                                                            dataTypeKind: DataType.DataTypeKind.MODEL_TYPE,
+                                                                            modelResourceDomainType: CodeSet.simpleName,
+                                                                            modelResourceId: finalisedCodeSet.id))
+
+        when:
+        ListResponse<ComparisonResult> response = dataTypeApi.compare(terminologyType.id, codeSetType.id)
+
+        then:
+        ComparisonResult declaredValueSetComparison = response.items.find {it.comparisonType == 'declaredValueSet'}
+        declaredValueSetComparison
+        declaredValueSetComparison.conclusion == ComparisonConclusion.RIGHT_IS_SUBSET_OF_LEFT
+        declaredValueSetComparison.metadata.shared == ['B', 'C']
+        declaredValueSetComparison.metadata.leftOnly == ['A']
+        declaredValueSetComparison.metadata.leftOnlyCount == 1
+        declaredValueSetComparison.metadata.rightOnlyCount == 0
+        declaredValueSetComparison.metadata.leftSource == 'left:Terminology'
+        declaredValueSetComparison.metadata.rightSource == 'right:CodeSet'
+    }
+
+    void 'compare dataTypes reports incompatible dataTypeKind'() {
+        given:
+        DataType primitiveType = dataTypeApi.create(dataModelId, new DataType(label: 'String',
+                                                                              dataTypeKind: DataType.DataTypeKind.PRIMITIVE_TYPE))
+        DataType enumerationType = dataTypeApi.create(dataModelId, new DataType(label: 'enumeration',
+                                                                                dataTypeKind: DataType.DataTypeKind.ENUMERATION_TYPE))
+
+        when:
+        ListResponse<ComparisonResult> response = dataTypeApi.compare(primitiveType.id, enumerationType.id)
+
+        then:
+        ComparisonResult kindComparison = response.items.find {it.comparisonType == 'dataTypeKind'}
+        kindComparison
+        kindComparison.conclusion == ComparisonConclusion.STRUCTURALLY_INCOMPATIBLE
+        kindComparison.left == DataType.DataTypeKind.PRIMITIVE_TYPE.stringValue
+        kindComparison.right == DataType.DataTypeKind.ENUMERATION_TYPE.stringValue
+    }
+
+    void 'compare enumeration dataTypes reports equal literal value sets'() {
+        given:
+        DataType leftEnumeration = createEnumerationDataType('left equal enumeration', ['A': 'Alpha', 'B': 'Bravo'])
+        DataType rightEnumeration = createEnumerationDataType('right equal enumeration', ['A': 'Alpha', 'B': 'Bravo'])
+
+        when:
+        ListResponse<ComparisonResult> response = dataTypeApi.compare(leftEnumeration.id, rightEnumeration.id)
+
+        then:
+        ComparisonResult declaredValueSetComparison = response.items.find {it.comparisonType == 'declaredValueSet'}
+        declaredValueSetComparison
+        declaredValueSetComparison.conclusion == ComparisonConclusion.SETS_EQUAL
+        declaredValueSetComparison.metadata.leftCount == 2
+        declaredValueSetComparison.metadata.rightCount == 2
+        declaredValueSetComparison.metadata.sharedCount == 2
+        declaredValueSetComparison.metadata.leftOnlyCount == 0
+        declaredValueSetComparison.metadata.rightOnlyCount == 0
+    }
+
+    void 'compare enumeration dataTypes reports right literal value set as subset of left'() {
+        given:
+        DataType leftEnumeration = createEnumerationDataType('left larger enumeration', ['A': 'Alpha', 'B': 'Bravo', 'C': 'Charlie'])
+        DataType rightEnumeration = createEnumerationDataType('right smaller enumeration', ['A': 'Alpha', 'C': 'Charlie'])
+
+        when:
+        ListResponse<ComparisonResult> response = dataTypeApi.compare(leftEnumeration.id, rightEnumeration.id)
+
+        then:
+        ComparisonResult declaredValueSetComparison = response.items.find {it.comparisonType == 'declaredValueSet'}
+        declaredValueSetComparison
+        declaredValueSetComparison.conclusion == ComparisonConclusion.RIGHT_IS_SUBSET_OF_LEFT
+        declaredValueSetComparison.metadata.shared == ['A', 'C']
+        declaredValueSetComparison.metadata.leftOnly == ['B']
+        declaredValueSetComparison.metadata.rightOnlyCount == 0
+    }
+
+    void 'compare enumeration dataTypes reports overlapping literal value sets'() {
+        given:
+        DataType leftEnumeration = createEnumerationDataType('left overlapping enumeration', ['A': 'Alpha', 'B': 'Bravo'])
+        DataType rightEnumeration = createEnumerationDataType('right overlapping enumeration', ['B': 'Bravo', 'C': 'Charlie'])
+
+        when:
+        ListResponse<ComparisonResult> response = dataTypeApi.compare(leftEnumeration.id, rightEnumeration.id)
+
+        then:
+        ComparisonResult declaredValueSetComparison = response.items.find {it.comparisonType == 'declaredValueSet'}
+        declaredValueSetComparison
+        declaredValueSetComparison.conclusion == ComparisonConclusion.SETS_OVERLAP
+        declaredValueSetComparison.metadata.shared == ['B']
+        declaredValueSetComparison.metadata.leftOnly == ['A']
+        declaredValueSetComparison.metadata.rightOnly == ['C']
+    }
+
+    void 'compare enumeration dataTypes reports disjoint literal value sets'() {
+        given:
+        DataType leftEnumeration = createEnumerationDataType('left disjoint enumeration', ['A': 'Alpha'])
+        DataType rightEnumeration = createEnumerationDataType('right disjoint enumeration', ['B': 'Bravo'])
+
+        when:
+        ListResponse<ComparisonResult> response = dataTypeApi.compare(leftEnumeration.id, rightEnumeration.id)
+
+        then:
+        ComparisonResult declaredValueSetComparison = response.items.find {it.comparisonType == 'declaredValueSet'}
+        declaredValueSetComparison
+        declaredValueSetComparison.conclusion == ComparisonConclusion.SETS_DISJOINT
+        declaredValueSetComparison.metadata.sharedCount == 0
+        declaredValueSetComparison.metadata.jaccardSimilarity == 0
+        declaredValueSetComparison.metadata.leftOnly == ['A']
+        declaredValueSetComparison.metadata.rightOnly == ['B']
+
+        ComparisonResult valueComparison = response.items.find {it.comparisonType == 'declaredValueValues'}
+        valueComparison
+        valueComparison.conclusion == ComparisonConclusion.NOT_COMPARABLE_BY_THIS_PROVIDER
+        valueComparison.metadata.reason == 'noSharedCodes'
+        valueComparison.metadata.comparedCodesCount == 0
+    }
+
+    void 'compare enumeration dataTypes reports different values for shared literal codes'() {
+        given:
+        DataType leftEnumeration = createEnumerationDataType('left value enumeration', ['A': 'Alpha'])
+        DataType rightEnumeration = createEnumerationDataType('right value enumeration', ['A': 'Aleph'])
+
+        when:
+        ListResponse<ComparisonResult> response = dataTypeApi.compare(leftEnumeration.id, rightEnumeration.id)
+
+        then:
+        ComparisonResult valueComparison = response.items.find {it.comparisonType == 'declaredValueValues'}
+        valueComparison
+        valueComparison.conclusion == ComparisonConclusion.STRUCTURALLY_DIFFERENT
+        valueComparison.metadata.changed.first().code == 'A'
+        valueComparison.metadata.changed.first().left == 'Alpha'
+        valueComparison.metadata.changed.first().right == 'Aleph'
+        valueComparison.metadata.changedCount == 1
+    }
+
+    private DataType createEnumerationDataType(String label, Map<String, String> values) {
+        DataType enumerationType = dataTypeApi.create(dataModelId, new DataType(label: label,
+                                                                                dataTypeKind: DataType.DataTypeKind.ENUMERATION_TYPE))
+        values.each {String key, String value ->
+            enumerationValueApi.create(dataModelId, enumerationType.id, new EnumerationValue(key: key, value: value))
+        }
+        enumerationType
     }
 
 }
