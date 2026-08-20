@@ -7,15 +7,8 @@ plugins {
 }
 
 
-repositories {
-    mavenCentral()
-}
-
 dependencies {
-    runtimeOnly("ch.qos.logback:logback-classic")
     implementation("io.micronaut.data:micronaut-data-processor")
-    implementation("io.micronaut.validation:micronaut-validation")
-    implementation("io.micronaut:micronaut-jackson-databind")
 
     // camel case
     implementation("com.google.guava:guava:33.7.1-jre")
@@ -25,35 +18,6 @@ dependencies {
 
     // For importer parameters introspection
     implementation('org.apache.commons:commons-lang3:3.20.0')
-
-    implementation('org.apache.groovy:groovy-json:4.0.33')
-
-    testRuntimeOnly "org.junit.platform:junit-platform-launcher"
-    testImplementation "io.micronaut.test:micronaut-test-spock"
-
-    codenarc 'org.apache.groovy:groovy-all:4.0.33'
-    codenarc 'org.codenarc:CodeNarc:3.6.0-groovy-4.0'
-
-    // UUIDs
-    implementation 'com.fasterxml.uuid:java-uuid-generator:5.1.0'
 }
 
 
-test {
-    useJUnitPlatform()
-}
-
-codenarc {
-    toolVersion = "3.7.0"
-    configFile = rootProject.file("config/codenarc/codenarc.groovy")
-}
-
-codenarcMain {
-    compilationClasspath = sourceSets.main.compileClasspath + sourceSets.main.output
-}
-
-codenarcTest {
-    compilationClasspath = codenarcMain.compilationClasspath + sourceSets.test.compileClasspath + sourceSets.test.output
-}
-
-[codenarcMain, codenarcTest]*.ignoreFailures = true

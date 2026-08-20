@@ -13,6 +13,76 @@ repositories {
 }
 
 subprojects {
+    repositories {
+        mavenLocal()
+        mavenCentral()
+    }
+
+    plugins.withType(JavaPlugin).configureEach {
+        java {
+            sourceCompatibility = JavaVersion.toVersion("17")
+            targetCompatibility = JavaVersion.toVersion("17")
+        }
+
+        dependencies {
+            implementation("io.micronaut:micronaut-jackson-databind")
+            implementation("io.micronaut.validation:micronaut-validation")
+            implementation("jakarta.validation:jakarta.validation-api")
+            implementation("io.micronaut.groovy:micronaut-runtime-groovy")
+            implementation("org.apache.groovy:groovy-json:4.0.33")
+            implementation("org.apache.groovy:groovy-xml:4.0.33")
+            implementation("ch.qos.logback:logback-classic")
+            implementation("ch.qos.logback:logback-core")
+            runtimeOnly("org.yaml:snakeyaml")
+            implementation('com.fasterxml.uuid:java-uuid-generator:5.1.0')
+
+            testImplementation "io.micronaut.test:micronaut-test-spock"
+            testRuntimeOnly "org.junit.platform:junit-platform-launcher"
+            testRuntimeOnly("ch.qos.logback:logback-classic")
+        }
+
+        tasks.withType(Test).configureEach {
+            useJUnitPlatform()
+            maxParallelForks = 1
+        }
+    }
+
+    afterEvaluate {
+        if (plugins.hasPlugin('java-test-fixtures')) {
+            dependencies {
+                testFixturesImplementation("jakarta.validation:jakarta.validation-api")
+            }
+        }
+
+        if (plugins.hasPlugin('codenarc')) {
+            dependencies {
+                codenarc 'org.apache.groovy:groovy-all:4.0.33'
+                codenarc 'org.codenarc:CodeNarc:3.6.0-groovy-4.0'
+            }
+
+            codenarc {
+                toolVersion = "3.7.0"
+                configFile = rootProject.file("config/codenarc/codenarc.groovy")
+            }
+
+            tasks.matching { it.name.startsWith('codenarc') }.configureEach {
+                ignoreFailures = true
+            }
+
+            if (tasks.names.contains('codenarcMain')) {
+                tasks.named('codenarcMain').configure {
+                    compilationClasspath = sourceSets.main.compileClasspath + sourceSets.main.output
+                }
+            }
+
+            if (tasks.names.contains('codenarcTest')) {
+                tasks.named('codenarcTest').configure {
+                    compilationClasspath = tasks.named('codenarcMain').map { it.compilationClasspath }.get() + sourceSets.test.compileClasspath + sourceSets.test.output
+                }
+            }
+        }
+    }
+
     // Applies when maven-publish is present (Micronaut & Vanniktech both apply it)
     plugins.withId("maven-publish") {
         publishing {

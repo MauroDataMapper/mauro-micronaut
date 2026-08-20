@@ -10,10 +10,6 @@ plugins {
 }
 
 
-repositories {
-    mavenCentral()
-}
-
 ext.openApiEnabled = String.valueOf(findProperty('enableOpenApi') ?: 'false').equalsIgnoreCase('true')
 
 if (!openApiEnabled) {
@@ -28,12 +24,9 @@ dependencies {
     annotationProcessor "io.micronaut:micronaut-inject-java"
     annotationProcessor("io.micronaut:micronaut-inject-groovy")
     testImplementation 'org.junit.jupiter:junit-jupiter'
-    testImplementation("io.micronaut.test:micronaut-test-spock")
     if (openApiEnabled) {
         implementation("io.micronaut.openapi:micronaut-openapi")
     }
-    implementation("io.micronaut:micronaut-jackson-databind")
-    runtimeOnly("org.yaml:snakeyaml")
     implementation 'io.micronaut:micronaut-http-client'
     implementation 'io.micronaut:micronaut-http-server'
     implementation "io.micronaut:micronaut-runtime"
@@ -42,18 +35,11 @@ dependencies {
     implementation("io.micronaut.security:micronaut-security")
     annotationProcessor("info.picocli:picocli-codegen")
 
-    testRuntimeOnly "org.junit.platform:junit-platform-launcher"
     testFixturesImplementation("io.micronaut.test:micronaut-test-spock")
     testFixturesImplementation("io.micronaut.sql:micronaut-jdbc-hikari")
     testFixturesImplementation('io.micronaut:micronaut-http-server')
     testFixturesImplementation("org.junit.jupiter:junit-jupiter-api:5.2.0")
     testFixturesImplementation("org.junit.jupiter:junit-jupiter-engine:5.2.0")
-
-    codenarc 'org.apache.groovy:groovy-all:4.0.33'
-    codenarc 'org.codenarc:CodeNarc:3.6.0-groovy-4.0'
-
-    // UUIDs
-    implementation 'com.fasterxml.uuid:java-uuid-generator:5.1.0'
 }
 
 // This is necessary to ensure the TestApiClientFilter is turned into a bean and injectable
@@ -66,24 +52,3 @@ micronaut {
 jar {
     exclude("**/logback.xml")
 }
-
-test {
-    useJUnitPlatform()
-}
-
-
-
-codenarc {
-    toolVersion = "3.7.0"
-    configFile = rootProject.file("config/codenarc/codenarc.groovy")
-}
-
-codenarcMain {
-    compilationClasspath = sourceSets.main.compileClasspath + sourceSets.main.output
-}
-
-codenarcTest {
-    compilationClasspath = codenarcMain.compilationClasspath + sourceSets.test.compileClasspath + sourceSets.test.output
-}
-
-[codenarcMain, codenarcTest, codenarcTestFixtures]*.ignoreFailures = true
