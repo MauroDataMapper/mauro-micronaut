@@ -57,7 +57,7 @@ subprojects {
         if (plugins.hasPlugin('codenarc')) {
             dependencies {
                 codenarc 'org.apache.groovy:groovy-all:4.0.33'
-                codenarc 'org.codenarc:CodeNarc:3.6.0-groovy-4.0'
+                codenarc 'org.codenarc:CodeNarc:3.7.0'
             }
 
             codenarc {
