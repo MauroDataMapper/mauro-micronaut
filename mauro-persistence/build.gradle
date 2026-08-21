@@ -37,7 +37,7 @@ dependencies {
     testFixturesImplementation("org.junit.jupiter:junit-jupiter-engine:6.1.3")
 
     // To find flyway migrations in jars
-    implementation 'io.github.classgraph:classgraph:4.8.191'
+    implementation 'io.github.classgraph:classgraph:4.8.193'
 
     implementation project(':mauro-domain')
 }
