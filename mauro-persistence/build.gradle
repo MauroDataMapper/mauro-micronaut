@@ -33,8 +33,8 @@ dependencies {
 
     testFixturesImplementation("io.micronaut.test:micronaut-test-spock")
     testFixturesImplementation("io.micronaut.sql:micronaut-jdbc-hikari")
-    testFixturesImplementation("org.junit.jupiter:junit-jupiter-api:5.14.4")
-    testFixturesImplementation("org.junit.jupiter:junit-jupiter-engine:5.14.4")
+    testFixturesImplementation("org.junit.jupiter:junit-jupiter-api:6.1.3")
+    testFixturesImplementation("org.junit.jupiter:junit-jupiter-engine:6.1.3")
 
     // To find flyway migrations in jars
     implementation 'io.github.classgraph:classgraph:4.8.191'
