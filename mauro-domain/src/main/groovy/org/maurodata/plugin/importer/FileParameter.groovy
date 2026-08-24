@@ -18,17 +18,25 @@
 package org.maurodata.plugin.importer
 
 import groovy.transform.CompileStatic
+import java.io.BufferedInputStream
 import java.io.ByteArrayInputStream
+import java.io.Closeable
+import java.io.File
 import java.io.InputStream
+import java.nio.file.Files
+import java.nio.file.Path
 
 /**
  * @since 06/03/2018
  */
 @CompileStatic
-class FileParameter {
+class FileParameter implements Closeable {
 
     byte[] fileContents
     InputStream inputStream
+    Path filePath
+    Boolean temporaryFile = false
+    Long fileSize
     String fileName
     String fileType
     FileParameter() {
@@ -47,10 +55,20 @@ class FileParameter {
         this.inputStream = inputStream
     }
 
+    FileParameter(String fileName, String fileType, Path filePath, Boolean temporaryFile = false, Long fileSize = null) {
+        this.fileName = fileName
+        this.fileType = fileType
+        this.filePath = filePath
+        this.temporaryFile = temporaryFile
+        this.fileSize = fileSize
+    }
+
     byte[] getFileContents() {
         if (fileContents == null && inputStream != null) {
             fileContents = inputStream.bytes
             inputStream = null
+        } else if (fileContents == null && filePath != null) {
+            fileContents = Files.readAllBytes(filePath)
         }
         fileContents
     }
@@ -67,8 +85,22 @@ class FileParameter {
         if (fileContents != null) {
             return new ByteArrayInputStream(fileContents)
         }
+        if (filePath != null) {
+            return new BufferedInputStream(Files.newInputStream(filePath), 8192)
+        }
         InputStream.nullInputStream()
     }
 
+    File getFile() {
+        filePath?.toFile()
+    }
+
+    @Override
+    void close() {
+        if (temporaryFile && filePath != null) {
+            Files.deleteIfExists(filePath)
+            filePath = null
+        }
+    }
 
 }

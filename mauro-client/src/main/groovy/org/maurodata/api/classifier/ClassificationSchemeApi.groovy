@@ -14,7 +14,7 @@ import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.Body
-import io.micronaut.http.annotation.Consumes
+import io.micronaut.http.annotation.Produces
 import io.micronaut.http.annotation.Delete
 import io.micronaut.http.annotation.Get
 import io.micronaut.http.annotation.Post
@@ -62,7 +62,7 @@ interface ClassificationSchemeApi extends ModelApi<ClassificationScheme> {
     HttpResponse<byte[]> exportModels(@Nullable String namespace, @Nullable String name, @Nullable String version, @Body List<UUID> ids )
 
     @ExecuteOn(TaskExecutors.IO)
-    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @Produces(MediaType.MULTIPART_FORM_DATA)
     @Post(Paths.CLASSIFICATION_SCHEMES_IMPORT)
     ListResponse<ClassificationScheme> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version)
 

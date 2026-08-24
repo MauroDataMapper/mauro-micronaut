@@ -3,8 +3,9 @@ package org.maurodata.service.dataflow
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.Nullable
+import io.micronaut.http.HttpRequest
 import io.micronaut.http.HttpStatus
-import io.micronaut.http.server.multipart.MultipartBody
+import io.micronaut.http.multipart.StreamingFileUpload
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
 import org.maurodata.ErrorHandler
@@ -29,6 +30,7 @@ import org.maurodata.service.core.AdministeredItemService
 import org.maurodata.service.path.PathService
 import org.maurodata.service.plugin.PluginService
 import org.maurodata.utils.importer.ImporterUtils
+import org.reactivestreams.Publisher
 
 @CompileStatic
 @Slf4j
@@ -63,11 +65,11 @@ class DataflowService extends AdministeredItemService {
         mauroPlugin
     }
 
-    List<ModelItem> importModelItem(Class aClazz, DataModel target, MultipartBody body, String namespace, String name, @Nullable String version) {
+    List<ModelItem> importModelItem(Class aClazz, DataModel target, HttpRequest<?> request, @Nullable Publisher<StreamingFileUpload> importFile, String namespace, String name, @Nullable String version) {
         ModelItemImporterPlugin mauroPlugin = mauroPluginService.getPlugin(aClazz, namespace, name, version) as ModelItemImporterPlugin
         PluginService.handlePluginNotFound(mauroPlugin, namespace, name)
 
-        List<DataFlowFileImportParameters> parametersList = importerUtils.readListFromMultipartFormBody(body, DataFlowFileImportParameters)
+        List<DataFlowFileImportParameters> parametersList = importerUtils.readFromStreamingMultipart(request, importFile, DataFlowFileImportParameters)
         DataFlowFileImportParameters firstParameters = parametersList.first()
 
         if (firstParameters.folderId == null) {
@@ -77,7 +79,18 @@ class DataflowService extends AdministeredItemService {
             ErrorHandler.handleErrorOnNullObject(HttpStatus.UNPROCESSABLE_ENTITY, firstParameters.sourceDataModelId,
                                                  "Please choose the source dataModel into which the DataFlow ModelItem/s should be imported.")
         }
-        List<ModelItem> imported = (List<ModelItem>) mauroPlugin.importModelItem(parametersList)
+        List<ModelItem> imported
+        long importStart = System.nanoTime()
+        try {
+            log.debug('Starting model item import using plugin [{}] with [{}] parameter set(s)', mauroPlugin.name, parametersList.size())
+            imported = (List<ModelItem>) mauroPlugin.importModelItem(parametersList)
+            log.debug('Completed model item import using plugin [{}] in [{} ms]; imported [{}] model item(s)',
+                      mauroPlugin.name,
+                      (System.nanoTime() - importStart).intdiv(1000000L),
+                      imported.size())
+        } finally {
+            ImporterUtils.cleanupTemporaryFiles(parametersList)
+        }
 
         pathRepository.readParentItems(target)
         target.updatePath()

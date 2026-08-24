@@ -5,6 +5,7 @@ import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
+import io.micronaut.http.HttpRequest
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.MediaType
@@ -16,7 +17,8 @@ import io.micronaut.http.annotation.Get
 import io.micronaut.http.annotation.Post
 import io.micronaut.http.annotation.Put
 import io.micronaut.http.annotation.QueryValue
-import io.micronaut.http.server.multipart.MultipartBody
+import io.micronaut.http.annotation.Part
+import io.micronaut.http.multipart.StreamingFileUpload
 import io.micronaut.scheduling.TaskExecutors
 import io.micronaut.scheduling.annotation.ExecuteOn
 import io.micronaut.security.annotation.Secured
@@ -45,6 +47,7 @@ import org.maurodata.plugin.importer.json.JsonDataFlowImporterPlugin
 import org.maurodata.service.dataflow.DataflowService
 import org.maurodata.util.exporter.ExporterUtils
 import org.maurodata.web.ListResponse
+import org.reactivestreams.Publisher
 import org.maurodata.web.PaginationParams
 
 @Slf4j
@@ -156,7 +159,7 @@ class DataFlowController extends AdministeredItemController<DataFlow, DataModel>
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Operation(operationId = 'importModelDataFlow', summary = "Import the data flow", description = "Imports the data flow. You must have edit privileges on the item in question.")
     @Post(Paths.DATA_FLOW_IMPORT)
-    ListResponse<DataFlow> importModel(@NonNull UUID dataModelId, @Body MultipartBody body, @Nullable String namespace, @Nullable String name, @Nullable String version) {
+    ListResponse<DataFlow> importModel(@NonNull UUID dataModelId, HttpRequest<?> request, @Part('importFile') @Nullable Publisher<StreamingFileUpload> importFile, @Nullable String namespace, @Nullable String name, @Nullable String version) {
         // check target model is in right state
         DataModel target = dataModelRepository.readById(dataModelId)
         ErrorHandler.handleErrorOnNullObject(HttpStatus.BAD_REQUEST, target, "Datamodel with id $dataModelId not found")
@@ -165,7 +168,7 @@ class DataFlowController extends AdministeredItemController<DataFlow, DataModel>
             ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "Target model is finalised: $target.id")
         }
 
-        List<ModelItem> modelItems = dataFlowService.importModelItem(JsonDataFlowImporterPlugin, target, body, namespace, name, version).findAll {
+        List<ModelItem> modelItems = dataFlowService.importModelItem(JsonDataFlowImporterPlugin, target, request, importFile, namespace, name, version).findAll {
             it.domainType == DataFlow.class.simpleName && (it as DataFlow).target?.id == dataModelId
         }
 
