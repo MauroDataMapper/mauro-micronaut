@@ -6,13 +6,15 @@ import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
+import io.micronaut.http.HttpRequest
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.Body
+import io.micronaut.http.annotation.Part
 import io.micronaut.http.exceptions.HttpException
 import io.micronaut.http.exceptions.HttpStatusException
+import io.micronaut.http.multipart.StreamingFileUpload
 import io.micronaut.http.server.exceptions.InternalServerException
-import io.micronaut.http.server.multipart.MultipartBody
 import io.micronaut.scheduling.TaskExecutors
 import io.micronaut.scheduling.annotation.ExecuteOn
 import io.micronaut.security.annotation.Secured
@@ -78,6 +80,7 @@ import org.maurodata.service.plugin.PluginService
 import org.maurodata.util.exporter.ExporterUtils
 import org.maurodata.utils.importer.ImporterUtils
 import org.maurodata.web.ListResponse
+import org.reactivestreams.Publisher
 import org.maurodata.web.PaginationParams
 
 import java.lang.reflect.Method
@@ -407,12 +410,12 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         ExporterUtils.createExportResponse(mauroPlugin, existingModels)
     }
 
-    ListResponse<M> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version) {
+    ListResponse<M> importModel(HttpRequest<?> request, @Part('importFile') @Nullable Publisher<StreamingFileUpload> importFile, String namespace, String name, @Nullable String version) {
 
         ModelImporterPlugin mauroPlugin = mauroPluginService.getPlugin(ModelImporterPlugin, namespace, name, version)
         PluginService.handlePluginNotFound(mauroPlugin, namespace, name)
 
-        List<ImportParameters> parametersList = importerUtils.readListFromMultipartFormBody(body, mauroPlugin.importParametersClass())
+        List<ImportParameters> parametersList = importerUtils.readFromStreamingMultipart(request, importFile, mauroPlugin.importParametersClass())
         ImportParameters firstParameters = parametersList.first()
 
         Folder folder = null
@@ -424,7 +427,18 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
                 .handleErrorOnNullObject(HttpStatus.UNPROCESSABLE_ENTITY, firstParameters.folderId, "Please choose the folder into which the Model/s should be imported.")
         }
 
-        List<M> imported = (List<M>) mauroPlugin.importModels(parametersList)
+        List<M> imported
+        long importStart = System.nanoTime()
+        try {
+            log.debug('Starting model import using plugin [{}] with [{}] parameter set(s)', mauroPlugin.name, parametersList.size())
+            imported = (List<M>) mauroPlugin.importModels(parametersList)
+            log.debug('Completed model import using plugin [{}] in [{} ms]; imported [{}] model(s)',
+                      mauroPlugin.name,
+                      (System.nanoTime() - importStart).intdiv(1000000L),
+                      imported.size())
+        } finally {
+            ImporterUtils.cleanupTemporaryFiles(parametersList)
+        }
 
         accessControlService.checkRole(Role.EDITOR, folder)
         List<M> saved = imported.collect { M imp ->

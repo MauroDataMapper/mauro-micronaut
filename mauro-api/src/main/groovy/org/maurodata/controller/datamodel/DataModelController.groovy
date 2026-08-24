@@ -6,6 +6,7 @@ import groovy.util.logging.Slf4j
 import io.micronaut.context.annotation.Parameter
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
+import io.micronaut.http.HttpRequest
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.MediaType
@@ -17,8 +18,9 @@ import io.micronaut.http.annotation.Get
 import io.micronaut.http.annotation.Post
 import io.micronaut.http.annotation.Put
 import io.micronaut.http.annotation.QueryValue
+import io.micronaut.http.annotation.Part
 import io.micronaut.http.exceptions.HttpStatusException
-import io.micronaut.http.server.multipart.MultipartBody
+import io.micronaut.http.multipart.StreamingFileUpload
 import io.micronaut.scheduling.TaskExecutors
 import io.micronaut.scheduling.annotation.ExecuteOn
 import io.micronaut.security.annotation.Secured
@@ -26,6 +28,7 @@ import io.micronaut.security.rules.SecurityRule
 import io.micronaut.transaction.annotation.Transactional
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import jakarta.inject.Inject
+import org.reactivestreams.Publisher
 import org.maurodata.ErrorHandler
 import org.maurodata.api.Paths
 import org.maurodata.api.datamodel.DataModelApi
@@ -223,8 +226,8 @@ class DataModelController extends ModelController<DataModel> implements DataMode
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Operation(operationId = 'importModelDataModel', summary = "Import the data model", description = "Imports the data model.")
     @Post(Paths.DATA_MODEL_IMPORT)
-    ListResponse<DataModel> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version) {
-        super.importModel(body, namespace, name, version)
+    ListResponse<DataModel> importModel(HttpRequest<?> request, @Part('importFile') @Nullable Publisher<StreamingFileUpload> importFile, String namespace, String name, @Nullable String version) {
+        super.importModel(request, importFile, namespace, name, version)
     }
 
     @Audit

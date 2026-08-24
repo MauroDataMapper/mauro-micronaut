@@ -1,9 +1,11 @@
 package org.maurodata.controller.terminology
 
 import io.swagger.v3.oas.annotations.Operation
+import io.micronaut.http.HttpRequest
 import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.Consumes
-import io.micronaut.http.server.multipart.MultipartBody
+import io.micronaut.http.annotation.Part
+import io.micronaut.http.multipart.StreamingFileUpload
 import io.micronaut.scheduling.TaskExecutors
 import io.micronaut.scheduling.annotation.ExecuteOn
 import io.swagger.v3.oas.annotations.responses.ApiResponse
@@ -29,6 +31,7 @@ import org.maurodata.persistence.cache.ModelCacheableRepository
 import org.maurodata.persistence.terminology.CodeSetRepository
 import org.maurodata.web.ListResponse
 import org.maurodata.web.PaginationParams
+import org.reactivestreams.Publisher
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
@@ -279,8 +282,8 @@ class CodeSetController extends ModelController<CodeSet> implements CodeSetApi {
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Operation(operationId = 'importModelCodeSet', summary = "Import the code set", description = "Imports the code set.")
     @Post(Paths.CODE_SET_IMPORT)
-    ListResponse<CodeSet> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version) {
-        super.importModel(body, namespace, name, version)
+    ListResponse<CodeSet> importModel(HttpRequest<?> request, @Part('importFile') @Nullable Publisher<StreamingFileUpload> importFile, String namespace, String name, @Nullable String version) {
+        super.importModel(request, importFile, namespace, name, version)
 
     }
 

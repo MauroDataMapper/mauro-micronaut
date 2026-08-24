@@ -219,4 +219,28 @@ class DataModelJsonImportExportSpec extends CommonDataSpec {
         response.items.label as Set == ['Imported one.json', 'Imported two.json'] as Set
         MultiFileDataModelImporterPlugin.importedFileNames == ['one.json', 'two.json']
     }
+
+    void 'import dataModel with optional file importer and zero files'() {
+        given:
+        OptionalFileDataModelImporterPlugin.reset()
+        UUID targetFolderId = folderApi.create(new Folder(label: 'Optional file import folder')).id
+        MultipartBody importRequest = MultipartBody.builder()
+            .addPart('folderId', targetFolderId.toString())
+            .addPart('modelName', 'Imported with optional file omitted')
+            .build()
+
+        when:
+        ListResponse<DataModel> response =
+            dataModelApi.importModel(
+                importRequest,
+                'org.maurodata.datamodel',
+                'OptionalFileDataModelImporterPlugin',
+                '1.0.0')
+
+        then:
+        response.count == 1
+        response.items.first().label == 'Imported with optional file omitted'
+        OptionalFileDataModelImporterPlugin.importCount == 1
+        OptionalFileDataModelImporterPlugin.receivedImportFile == false
+    }
 }
