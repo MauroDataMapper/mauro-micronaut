@@ -2,6 +2,8 @@ package org.maurodata.service.search
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
+import io.micronaut.http.HttpStatus
+import io.micronaut.http.exceptions.HttpStatusException
 import jakarta.inject.Singleton
 import org.maurodata.domain.classifier.Classifier
 import org.maurodata.domain.model.AdministeredItem
@@ -128,7 +130,9 @@ class SearchExecutionService {
         if (requestDTO.classifiers) {
             allClassifierIds.addAll(requestDTO.classifiers as Collection<UUID>)
         }
-        List<Classifier> allClassifiers = classifierCacheableRepository.readAllByIdIn(allClassifierIds)
+        List<Classifier> allClassifiers = allClassifierIds.isEmpty() ?
+            Collections.<Classifier>emptyList() :
+            classifierCacheableRepository.readAllByIdIn(allClassifierIds)
         Map<UUID, Set<UUID>> classifierMap = [:].withDefault { [] as Set<UUID> } as Map<UUID, Set<UUID>>
         allClassifiers.each { Classifier classifier ->
             classifierMap[classifier.classificationScheme.id] << classifier.id
@@ -139,7 +143,22 @@ class SearchExecutionService {
         List<SearchResultsDTO> readable = new ArrayList<SearchResultsDTO>()
         for (SearchResultsDTO result : searchResults ?: Collections.<SearchResultsDTO>emptyList()) {
             scannedCount++
-            AdministeredItem item = itemLookup.apply(result.domainType, result.id)
+            AdministeredItem item
+            try {
+                item = itemLookup.apply(result.domainType, result.id)
+            } catch (HttpStatusException e) {
+                if (e.status == HttpStatus.NOT_FOUND) {
+                    unreadableCount++
+                    log.debug('Skipping stale search result for deleted or missing {} {}', result.domainType, result.id)
+                    continue
+                }
+                throw e
+            }
+            if (item == null) {
+                unreadableCount++
+                log.debug('Skipping stale search result for deleted or missing {} {}', result.domainType, result.id)
+                continue
+            }
             if (!accessControlService.canDoRole(Role.READER, item)) {
                 unreadableCount++
                 continue

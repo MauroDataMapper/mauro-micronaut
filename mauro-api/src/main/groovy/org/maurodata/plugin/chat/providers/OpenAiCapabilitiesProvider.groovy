@@ -9,6 +9,8 @@ import io.micronaut.context.annotation.Value
 import jakarta.inject.Singleton
 import org.maurodata.plugin.chat.api.chat.ModelDto
 import org.maurodata.plugin.chat.api.chat.ProviderDto
+import org.maurodata.service.chat.llm.config.ChatProviderConfiguration
+import org.maurodata.service.chat.llm.config.ChatProviderConfigurationResolver
 
 import java.net.URI
 import java.net.http.HttpClient
@@ -23,17 +25,20 @@ final class OpenAiCapabilitiesProvider implements CapabilitiesProvider {
     private final String baseUrl
     private final String apiKey
     private final List<String> allowlist
+    private final ChatProviderConfigurationResolver configurationResolver
     private final HttpClient client
     private final JsonSlurper slurper
 
     OpenAiCapabilitiesProvider(
-        @Value('${chat.providers.openai.base-url:https://api.openai.com}') final String baseUrl,
+        @Value('${chat.providers.openai.base-url:https://api.openai.com/v1}') final String baseUrl,
         @Value('${chat.providers.openai.api-key:}') final String apiKey,
-        @Value('${chat.providers.openai.model-allowlist:}') final List<String> allowlist
+        @Value('${chat.providers.openai.model-allowlist:}') final List<String> allowlist,
+        final ChatProviderConfigurationResolver configurationResolver
     ) {
         this.baseUrl = baseUrl
         this.apiKey = apiKey
         this.allowlist = normalizeAllowlist(allowlist)
+        this.configurationResolver = configurationResolver
         this.client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build()
         this.slurper = new JsonSlurper()
     }
@@ -43,15 +48,19 @@ final class OpenAiCapabilitiesProvider implements CapabilitiesProvider {
 
     @Override
     List<ModelDto> listModels() {
-        if (apiKey == null || apiKey.trim().isEmpty()) {
+        final ChatProviderConfiguration configuration = configurationResolver.resolve(providerId())
+        final String resolvedApiKey = configuration.apiKey ?: apiKey
+        final String resolvedBaseUrl = configuration.baseUrl ?: baseUrl
+        final List<String> resolvedAllowlist = configuration.modelAllowlist ?: allowlist
+        if (resolvedApiKey == null || resolvedApiKey.trim().isEmpty()) {
             return Collections.<ModelDto>emptyList()
         }
 
         try {
             final HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(baseUrl + '/v1/models'))
+                .uri(URI.create(modelsUrl(resolvedBaseUrl)))
                 .timeout(Duration.ofSeconds(10))
-                .header('Authorization', 'Bearer ' + apiKey)
+                .header('Authorization', 'Bearer ' + resolvedApiKey)
                 .GET()
                 .build()
 
@@ -85,8 +94,8 @@ final class OpenAiCapabilitiesProvider implements CapabilitiesProvider {
                     continue
                 }
 
-                if (!allowlist.isEmpty()) {
-                    if (!allowlist.contains(modelId)) {
+                if (!resolvedAllowlist.isEmpty()) {
+                    if (!resolvedAllowlist.contains(modelId)) {
                         continue
                     }
                 } else if (!modelId.startsWith('gpt-') && !modelId.startsWith('o')) {
@@ -112,8 +121,11 @@ final class OpenAiCapabilitiesProvider implements CapabilitiesProvider {
     ProviderDto providerStatus() {
         final ProviderDto dto = new ProviderDto()
         dto.id = providerId()
+        final ChatProviderConfiguration configuration = configurationResolver.resolve(providerId())
+        final String resolvedApiKey = configuration.apiKey ?: apiKey
+        final String resolvedBaseUrl = configuration.baseUrl ?: baseUrl
 
-        if (apiKey == null || apiKey.trim().isEmpty()) {
+        if (resolvedApiKey == null || resolvedApiKey.trim().isEmpty()) {
             dto.status = 'NOT_SET'
             dto.message = 'Missing API key'
             return dto
@@ -121,9 +133,9 @@ final class OpenAiCapabilitiesProvider implements CapabilitiesProvider {
 
         try {
             final HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(baseUrl + '/v1/models'))
+                .uri(URI.create(modelsUrl(resolvedBaseUrl)))
                 .timeout(Duration.ofSeconds(10))
-                .header('Authorization', 'Bearer ' + apiKey)
+                .header('Authorization', 'Bearer ' + resolvedApiKey)
                 .GET()
                 .build()
 
@@ -139,6 +151,11 @@ final class OpenAiCapabilitiesProvider implements CapabilitiesProvider {
 
     private static String asString(final Object value) {
         return value == null ? null : String.valueOf(value)
+    }
+
+    private static String modelsUrl(final String baseUrl) {
+        final String trimmed = baseUrl == null || baseUrl.trim().isEmpty() ? 'https://api.openai.com/v1' : baseUrl.trim()
+        trimmed.endsWith('/models') ? trimmed : trimmed.replaceAll('/+$', '') + '/models'
     }
 
     private static List<String> normalizeAllowlist(final List<String> rawAllowlist) {

@@ -32,7 +32,6 @@ trait AdministeredItemReader {
         AdministeredItemCacheableRepository administeredItemRepository = getAdministeredItemRepository(domainType)
         AdministeredItem administeredItem = administeredItemRepository.findById(domainId) as AdministeredItem
         if (!administeredItem) {
-            new Throwable().printStackTrace()
             throw new HttpStatusException(HttpStatus.NOT_FOUND, 'AdministeredItem not found by ID')
         }
         administeredItem

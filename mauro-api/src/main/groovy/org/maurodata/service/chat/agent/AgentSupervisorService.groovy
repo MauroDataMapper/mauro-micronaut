@@ -25,7 +25,9 @@ import org.maurodata.service.chat.ChatPromptRenderResult
 import org.maurodata.service.chat.SkillToolApplicability
 import org.maurodata.service.chat.llm.LlmProvider
 import org.maurodata.service.chat.llm.ProviderChunk
+import org.maurodata.service.chat.llm.ProviderError
 import org.maurodata.service.chat.llm.ProviderMessage
+import org.maurodata.service.chat.llm.ProviderOperationException
 import org.maurodata.service.chat.llm.ProviderRegistry
 import org.maurodata.service.chat.llm.ProviderRequest
 import org.reactivestreams.Publisher
@@ -654,7 +656,7 @@ class AgentSupervisorService {
                     return plan
                 } catch (Throwable failure) {
                     failOperation(operation, failure, timeline, sink, sessionId, messageId)
-                    if (retryOperationIfAvailable(operation, failure.message ?: failure.class.simpleName, timeline, sink, sessionId, messageId)) {
+                    if (retryOperationIfAvailable(operation, failure, timeline, sink, sessionId, messageId)) {
                         continue
                     }
                     exhaustOperation(operation, failure.message ?: failure.class.simpleName, timeline, sink, sessionId, messageId)
@@ -730,7 +732,7 @@ class AgentSupervisorService {
                     return context
                 } catch (Throwable failure) {
                     failOperation(operation, failure, timeline, sink, sessionId, messageId)
-                    if (retryOperationIfAvailable(operation, failure.message ?: failure.class.simpleName, timeline, sink, sessionId, messageId)) {
+                    if (retryOperationIfAvailable(operation, failure, timeline, sink, sessionId, messageId)) {
                         continue
                     }
                     exhaustOperation(operation, failure.message ?: failure.class.simpleName, timeline, sink, sessionId, messageId)
@@ -1061,7 +1063,7 @@ class AgentSupervisorService {
                     return assessment
                 } catch (Throwable failure) {
                     failOperation(operation, failure, timeline, sink, sessionId, messageId)
-                    if (retryOperationIfAvailable(operation, failure.message ?: failure.class.simpleName, timeline, sink, sessionId, messageId)) {
+                    if (retryOperationIfAvailable(operation, failure, timeline, sink, sessionId, messageId)) {
                         continue
                     }
                     exhaustOperation(operation, failure.message ?: failure.class.simpleName, timeline, sink, sessionId, messageId)
@@ -1127,7 +1129,7 @@ class AgentSupervisorService {
                     return assessment
                 } catch (Throwable failure) {
                     failOperation(operation, failure, timeline, sink, sessionId, messageId)
-                    if (retryOperationIfAvailable(operation, failure.message ?: failure.class.simpleName, timeline, sink, sessionId, messageId)) {
+                    if (retryOperationIfAvailable(operation, failure, timeline, sink, sessionId, messageId)) {
                         continue
                     }
                     exhaustOperation(operation, failure.message ?: failure.class.simpleName, timeline, sink, sessionId, messageId)
@@ -1573,7 +1575,11 @@ class AgentSupervisorService {
             if (chunk.type == 'token' && chunk.content != null) {
                 out.append(chunk.content)
             } else if (chunk.type == 'error') {
-                throw new IllegalStateException(providerErrorMessage(roleName, chunk))
+                String message = providerErrorMessage(roleName, chunk)
+                if (chunk.error != null) {
+                    throw new ProviderOperationException(message, chunk.error)
+                }
+                throw new IllegalStateException(message)
             }
         }
         stripCodeFence(out.toString().trim())
@@ -2145,13 +2151,14 @@ class AgentSupervisorService {
 
     private boolean retryOperationIfAvailable(
         AgentOperationRecord operation,
-        String reason,
+        Throwable failure,
         List<MessageDto> timeline,
         FluxSink<ChatEventDto> sink,
         String sessionId,
         String messageId
     ) {
-        if (providerContextLimitFailure(reason)) {
+        String reason = failure?.message ?: failure?.class?.simpleName
+        if (terminalProviderFailure(failure, reason)) {
             return false
         }
         if (operation == null || (operation.attempt ?: 1) >= (operation.maxAttempts ?: 1)) {
@@ -2166,12 +2173,51 @@ class AgentSupervisorService {
         true
     }
 
-    private static boolean providerContextLimitFailure(String reason) {
+    private boolean retryOperationIfAvailable(
+        AgentOperationRecord operation,
+        String reason,
+        List<MessageDto> timeline,
+        FluxSink<ChatEventDto> sink,
+        String sessionId,
+        String messageId
+    ) {
+        retryOperationIfAvailable(operation, new IllegalStateException(reason ?: 'Operation failed'), timeline, sink, sessionId, messageId)
+    }
+
+    private static boolean terminalProviderFailure(Throwable failure, String reason) {
+        if (failure instanceof ProviderOperationException) {
+            ProviderError error = ((ProviderOperationException) failure).providerError
+            if (error?.retryable != null) {
+                return !Boolean.TRUE.equals(error.retryable)
+            }
+        }
+        terminalProviderFailure(reason)
+    }
+
+    private static boolean terminalProviderFailure(String reason) {
         String normalized = reason == null ? '' : reason.toLowerCase(Locale.ROOT)
-        normalized.contains('context/output limit') ||
+        if (normalized.contains('context/output limit') ||
             normalized.contains('context limit') ||
             normalized.contains('output limit') ||
-            normalized.contains('prompt_eval_count')
+            normalized.contains('prompt_eval_count')) {
+            return true
+        }
+
+        normalized.contains('insufficient_quota') ||
+            normalized.contains('exceeded your current quota') ||
+            normalized.contains('quota exceeded') ||
+            normalized.contains('billing') ||
+            normalized.contains('invalid_api_key') ||
+            normalized.contains('invalid api key') ||
+            normalized.contains('incorrect api key') ||
+            normalized.contains('missing api key') ||
+            normalized.contains('unauthorized') ||
+            normalized.contains('authentication') ||
+            normalized.contains('forbidden') ||
+            normalized.contains('permission denied') ||
+            normalized.contains('access denied') ||
+            normalized.contains('model_not_found') ||
+            normalized.contains('model not found')
     }
 
     private void exhaustOperation(
