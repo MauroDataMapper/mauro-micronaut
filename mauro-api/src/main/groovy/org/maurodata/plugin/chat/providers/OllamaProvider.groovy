@@ -107,7 +107,7 @@ class OllamaProvider implements LlmProvider {
                 void run() {
                     try {
                         if (request.model == null || request.model.trim().isEmpty()) {
-                            sink.next(new ProviderChunk('error', request.messageId, 'Missing model for Ollama request', Collections.<String, Object>emptyMap()))
+                            sink.next(errorChunk(request.messageId, ProviderErrorClassifier.configuration(id(), 'Missing model for Ollama request')))
                             return
                         }
                         final String userPrompt = extractLatestUserPrompt(request.messages)
@@ -311,7 +311,7 @@ class OllamaProvider implements LlmProvider {
                             }
                         }
                     } catch (final Throwable t) {
-                        sink.next(new ProviderChunk('error', request.messageId, t.getMessage(), Collections.<String, Object>emptyMap()))
+                        sink.next(errorChunk(request.messageId, ProviderErrorClassifier.classify(id(), t)))
                     } finally {
                         sink.complete()
                     }
@@ -406,13 +406,14 @@ class OllamaProvider implements LlmProvider {
             final String message = "Ollama stopped because the context/output limit was reached. prompt_eval_count=${responseDiagnostics.promptEvalCount ?: 'unknown'}, eval_count=${responseDiagnostics.evalCount ?: 'unknown'}."
             final String partialOutput = shortSnippet(assistantTextBuffer.toString(), 1200)
             LOG.warn('OLLAMA_LENGTH_STOP sessionId={} messageId={} model={} {}', request.sessionId, request.messageId, request.model, message)
-            sink.next(new ProviderChunk('error', request.messageId, message, [
+            Map<String, Object> metadata = [
                 doneReason        : responseDiagnostics.doneReason,
                 promptEvalCount   : responseDiagnostics.promptEvalCount,
                 evalCount         : responseDiagnostics.evalCount,
                 partialOutputChars: Integer.valueOf(assistantTextBuffer.length()),
                 partialOutput     : partialOutput
-            ] as Map<String, Object>))
+            ] as Map<String, Object>
+            sink.next(errorChunk(request.messageId, ProviderErrorClassifier.contextLimit(id(), message, metadata), metadata))
         }
 
         return new OllamaTurnResult(calls, malformedStructuredCalls, assistantTextBuffer.toString())
@@ -444,7 +445,7 @@ class OllamaProvider implements LlmProvider {
         captureResponseDiagnostics(root, responseDiagnostics)
         final String rootError = asString(root.get('error'))
         if (rootError != null && !rootError.trim().isEmpty()) {
-            sink.next(new ProviderChunk('error', messageId, 'Ollama error: ' + rootError, Collections.<String, Object>emptyMap()))
+            sink.next(errorChunk(messageId, ProviderErrorClassifier.classify(id(), 'Ollama error: ' + rootError)))
             return
         }
         final Object messageObj = root.get('message')
@@ -573,7 +574,7 @@ class OllamaProvider implements LlmProvider {
             emitProviderMessage(sink, messageId, toolMessage)
             return ToolExecResult.executed()
         } catch (final Throwable t) {
-            sink.next(new ProviderChunk('error', messageId, 'tool invocation failed: ' + t.getMessage(), Collections.<String, Object>emptyMap()))
+            sink.next(errorChunk(messageId, ProviderErrorClassifier.toolExecution(id(), 'tool invocation failed: ' + t.getMessage())))
             return ToolExecResult.error()
         }
     }
@@ -1510,6 +1511,14 @@ class OllamaProvider implements LlmProvider {
             return trimmed
         }
         return trimmed.substring(0, 500)
+    }
+
+    static ProviderChunk errorChunk(final String messageId, final ProviderError error, final Map<String, Object> metadata = Collections.<String, Object>emptyMap()) {
+        Map<String, Object> out = new LinkedHashMap<String, Object>(metadata ?: Collections.<String, Object>emptyMap())
+        if (error != null) {
+            out.put('error', error.toMetadata())
+        }
+        new ProviderChunk('error', messageId, error?.message ?: 'Provider error', out, error)
     }
 
     @CompileStatic

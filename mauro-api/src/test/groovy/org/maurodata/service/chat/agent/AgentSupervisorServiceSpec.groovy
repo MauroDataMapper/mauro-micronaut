@@ -14,6 +14,7 @@ import org.maurodata.service.chat.ChatInMemoryStore
 import org.maurodata.service.chat.ChatMcpService
 import org.maurodata.service.chat.llm.LlmProvider
 import org.maurodata.service.chat.llm.ProviderChunk
+import org.maurodata.service.chat.llm.ProviderErrorClassifier
 import org.maurodata.service.chat.llm.ProviderRegistry
 import org.maurodata.service.chat.llm.ProviderRequest
 import reactor.core.publisher.Flux
@@ -586,6 +587,59 @@ class AgentSupervisorServiceSpec extends Specification {
         !events*.type.contains('agent_run_failed')
         events*.type.contains('agent_run_completed')
         events.find {it.type == 'token'}.content == 'Found matching forms.'
+    }
+
+    void 'terminal provider errors fail agent operations without retrying'() {
+        given:
+        ChatInMemoryStore store = new ChatInMemoryStore()
+        int contextAttempts = 0
+        LlmProvider provider = Stub(LlmProvider) {
+            id() >> 'openai'
+            streamChat(_ as ProviderRequest) >> {ProviderRequest request ->
+                if (request.options?.purpose == 'agent_context_resolver') {
+                    contextAttempts++
+                    def providerError = ProviderErrorClassifier.classify('openai', '''{
+                      "error": {
+                        "message": "You exceeded your current quota, please check your plan and billing details.",
+                        "type": "insufficient_quota",
+                        "code": "insufficient_quota"
+                      }
+                    }''')
+                    return Flux.fromIterable([
+                        new ProviderChunk('error', request.messageId, '''{
+                          "error": {
+                            "message": "You exceeded your current quota, please check your plan and billing details.",
+                            "type": "insufficient_quota",
+                            "code": "insufficient_quota"
+                          }
+                        }''', [error: providerError.toMetadata()] as Map<String, Object>, providerError)
+                    ])
+                }
+                Flux.empty()
+            }
+        }
+        ChatMcpService mcpService = Stub(ChatMcpService) {
+            listServers() >> []
+        }
+        AgentSupervisorService service = new AgentSupervisorService(store, new ProviderRegistry([provider]), mcpService, 4, 8, 2)
+        SessionDto session = new SessionDto(id: 'session-terminal-provider-error', workspaceId: 'default', model: 'gpt-4o-mini')
+
+        when:
+        List<ChatEventDto> events = Flux.from(service.streamAgentRun(
+            session,
+            new SendMessageRequest(content: 'hello!'),
+            'assistant-terminal-provider-error',
+            store.messagesForSession(session.id),
+            null
+        )).collectList().block()
+
+        then:
+        contextAttempts == 1
+        events.find {it.type == 'agent_operation_failed' && it.metadata.roleName == 'context_resolver'}
+        events.find {it.type == 'agent_operation_exhausted' && it.metadata.roleName == 'context_resolver'}
+        !events.find {it.type == 'agent_operation_retrying' && it.metadata.roleName == 'context_resolver'}
+        events.find {it.type == 'agent_run_failed'}
+        events.find {it.type == 'error'}.content.contains('insufficient_quota')
     }
 
     void 'supervisor does not write final answer when evaluator reports incomplete step with continue decision'() {
