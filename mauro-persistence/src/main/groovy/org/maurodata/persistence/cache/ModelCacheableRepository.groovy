@@ -59,6 +59,17 @@ class ModelCacheableRepository<M extends Model> extends AdministeredItemCacheabl
     }
 
     @Override
+    List<UUID> readAllIdByFolderIdIn(Collection<UUID> folderIds) {
+        repository.readAllIdByFolderIdIn(folderIds)
+    }
+
+
+    @Override
+    Long deleteAllByFolderIdIn(Collection<UUID> folderIds) {
+        repository.deleteAllByIdIn(folderIds)
+    }
+
+    @Override
     List<M> readAllByFinalisedTrue() {
         repository.readAllByFinalisedTrue()
     }

@@ -76,6 +76,9 @@ abstract class DataElementRepository implements ModelItemRepository<DataElement>
     abstract List<DataElement> readAllByDataClassIdIn(Collection<UUID> dataClassIds)
 
     @Nullable
+    abstract List<UUID> readAllIdByDataClassIdIn(Collection<UUID> dataClassIds)
+
+    @Nullable
     List<DataElement> findAllByDataClassDataModelIdIn(Collection<UUID> dataModelIds) {
         dataElementDTORepository.findAllByDataClassDataModelIdIn(dataModelIds) as List<DataElement>
     }

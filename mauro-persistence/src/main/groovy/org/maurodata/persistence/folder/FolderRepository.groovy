@@ -52,10 +52,27 @@ abstract class FolderRepository implements ModelRepository<Folder> {
     @Nullable
     abstract List<Folder> readAllByParentFolderIdInList(Collection<UUID> folderId)
 
+    @Nullable
+    abstract List<UUID> readAllIdByParentFolderIdInList(Collection<UUID> folderId)
+
+    @Nullable
+    abstract Long deleteAllByParentFolderIdInList(Collection<UUID> folderId)
+
+    List<UUID> readAllIdByFolderIdIn(Collection<UUID> folderIds) {
+        readAllIdByParentFolderIdInList(folderIds)
+    }
+
     @Override
     @Nullable
     List<Folder> readAllByFolderIdIn(Collection<UUID> folderIds) {
         readAllByParentFolderIdInList(folderIds)
+    }
+
+
+    @Override
+    @Nullable
+    Long deleteAllByFolderIdIn(Collection<UUID> folderIds) {
+        deleteAllByParentFolderIdInList(folderIds)
     }
 
 

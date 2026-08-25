@@ -45,10 +45,8 @@ class ContentsService {
 
 
     boolean deleteWithContent(AdministeredItem item) {
-        ContentHandler contentHandler = applicationContext.createBean(ContentHandler)
-        item.setAssociations()
-        contentHandler.shred(item)
-        return contentHandler.deleteWithContent()
+        IdOnlyContentHandler contentHandler = applicationContext.createBean(IdOnlyContentHandler)
+        return contentHandler.deleteContent(item)
     }
 
     AdministeredItem loadWithContent(Model model) {

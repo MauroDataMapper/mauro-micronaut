@@ -47,6 +47,8 @@ abstract class DataClassComponentRepository implements ModelItemRepository<DataC
 
     abstract List<DataClassComponent> readAllByDataFlowIdIn(List<UUID> dataFlowIds)
 
+    abstract List<UUID> readAllIdByDataFlowIdIn(List<UUID> dataFlowIds)
+
 
     @Nullable
     List<DataClassComponent> readAllByParent(AdministeredItem parent) {

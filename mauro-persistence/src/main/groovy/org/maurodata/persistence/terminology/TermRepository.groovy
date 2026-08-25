@@ -58,6 +58,8 @@ abstract class TermRepository implements ModelItemRepository<Term> {
     @Nullable
     abstract List<Term> readAllByTerminologyIdIn(Collection<UUID> terminologyIds)
 
+    abstract List<UUID> readAllIdByTerminologyIdIn(Collection<UUID> terminologyIds)
+
     @Override
     @Nullable
     List<Term> readAllByParent(AdministeredItem parent) {
