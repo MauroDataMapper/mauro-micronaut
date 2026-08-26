@@ -57,10 +57,14 @@ jobs:
         run: ./gradlew --version
 
       ## Set up for building docker multi-architecture images
+      ## Only test the docker build if we are on the develop branch
       - name: Set up QEMU
+        if: github.ref == 'refs/heads/develop'
         uses: docker/setup-qemu-action@v4
 
+      ## Only test the docker build if we are on the develop branch
       - name: Set up Docker Buildx
+        if: github.ref == 'refs/heads/develop'
         uses: docker/setup-buildx-action@v4
 
       ## Only test the docker build if we are on the develop branch
@@ -70,7 +74,7 @@ jobs:
           GRADLE_OPTS: '-Xmx4g -XX:MaxMetaspaceSize=512m'
         run: ./gradlew dockerBuildMultiArch
 
-      ## Only test the docker build if we are on the develop branch
+      ## Only generate OpenAPI resources if we are on the develop branch
       - name: Generate OpenAPI resources
         if: github.ref == 'refs/heads/develop'
         run: ./gradlew --no-daemon --max-workers=1 -PenableOpenApi=true -PopenApiGeneratorMaxHeap=4g :mauro-api:processResources
