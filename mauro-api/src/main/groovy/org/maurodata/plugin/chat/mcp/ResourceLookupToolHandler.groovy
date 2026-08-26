@@ -53,9 +53,9 @@ class ResourceLookupToolHandler extends AbstractAnnotatedToolHandler {
             operations = operations.findAll {McpHttpResourceRegistry.McpHttpOperation candidate -> candidate.template}
         }
         if (query != null && !query.trim().isEmpty()) {
-            String lower = query.toLowerCase(Locale.ROOT)
+            List<String> queryTokens = queryTokens(query)
             operations = operations.findAll {McpHttpResourceRegistry.McpHttpOperation candidate ->
-                [
+                String searchable = [
                     candidate.name,
                     candidate.path,
                     candidate.description,
@@ -65,7 +65,10 @@ class ResourceLookupToolHandler extends AbstractAnnotatedToolHandler {
                     candidate.summary,
                     candidate.resourceType,
                     candidate.operationKind
-                ].any {String value -> value != null && value.toLowerCase(Locale.ROOT).contains(lower)}
+                ].findAll {String value -> value != null && !value.trim().isEmpty()}
+                    .join(' ')
+                    .toLowerCase(Locale.ROOT)
+                queryTokens.every {String token -> searchable.contains(token)}
             } as List<McpHttpResourceRegistry.McpHttpOperation>
         }
         [
@@ -135,6 +138,15 @@ class ResourceLookupToolHandler extends AbstractAnnotatedToolHandler {
             'If the conversation already contains a DataModel id, read it directly with mauro_get using URI mauro-api://http-get/api/dataModels/{id} after replacing {id}.',
             'For a known DataModel id, do not call mauro_describe again just to rediscover the route.'
         ] as List<String>
+    }
+
+    private static List<String> queryTokens(String query) {
+        (query ?: '')
+            .toLowerCase(Locale.ROOT)
+            .split(/[^a-z0-9{}\/._-]+/)
+            .collect {String token -> token.trim() }
+            .findAll {String token -> !token.isEmpty() }
+            .unique() as List<String>
     }
 
     private static Map<String, Object> operationToMap(McpHttpResourceRegistry.McpHttpOperation operation) {

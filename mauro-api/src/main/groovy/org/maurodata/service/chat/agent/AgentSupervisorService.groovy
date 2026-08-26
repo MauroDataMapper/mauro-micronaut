@@ -35,7 +35,6 @@ import reactor.core.publisher.Flux
 import reactor.core.publisher.FluxSink
 
 import java.time.Instant
-import java.util.Locale
 import java.util.regex.Pattern
 
 @Slf4j
@@ -253,7 +252,7 @@ class AgentSupervisorService {
 
                             if (stepAssessment.completed) {
                                 PlanAssessment planAssessment = evaluatePlanOperation(run, plan, context, step, evidence, guidance, provider, timeline, sink as FluxSink<ChatEventDto>, session.id, assistantMessageId)
-                                planAssessment = normalizePlanAssessmentWithTransitionService(planAssessment, plan, evidence)
+                                planAssessment = normalizePlanAssessmentWithTransitionService(planAssessment, plan, evidence, tools)
                                 applyObsoleteStepSkips(run, plan, planAssessment, timeline, sink as FluxSink<ChatEventDto>, session.id, assistantMessageId)
                                 emit(timeline, sink as FluxSink<ChatEventDto>, session.id, agentEvent('agent_plan_evaluated', assistantMessageId, 'system', planAssessment.summary ?: '', false, [
                                     runId   : run.id,
@@ -507,19 +506,38 @@ class AgentSupervisorService {
                         }
                     }
                     if (stoppedIncomplete) {
-                        transitionRun(run, AgentStateTransitionService.RUN_FAILED, 'run_failed', incompleteReason, timeline, sink as FluxSink<ChatEventDto>, session.id, assistantMessageId, [
-                            planId: plan.id
-                        ] as Map<String, Object>)
-                        emit(timeline, sink as FluxSink<ChatEventDto>, session.id, agentEvent('agent_run_failed', assistantMessageId, 'assistant', incompleteReason, false, [
-                            runId : run.id,
-                            planId: plan.id,
-                            status: run.status,
-                            reason: incompleteReason
-                        ] as Map<String, Object>))
-                        emitProgress(timeline, sink as FluxSink<ChatEventDto>, session.id, assistantMessageId, 'run_failed', "Stopped: ${shortText(incompleteReason)}", [
-                            runId: run.id,
-                            planId: plan.id
-                        ] as Map<String, Object>)
+                        if (!finalWritten && finalizableToolEvidencePresent(evidence)) {
+                            transitionPlan(plan, AgentStateTransitionService.PLAN_COMPLETE, 'partial_evidence_final', incompleteReason, timeline, sink as FluxSink<ChatEventDto>, session.id, assistantMessageId, [
+                                partialEvidence: true
+                            ] as Map<String, Object>)
+                            emit(timeline, sink as FluxSink<ChatEventDto>, session.id, agentEvent('agent_partial_evidence_final', assistantMessageId, 'system', incompleteReason ?: 'Writing final answer from partial evidence.', false, [
+                                runId : run.id,
+                                planId: plan.id,
+                                reason: incompleteReason,
+                                evidenceCount: evidence.size()
+                            ] as Map<String, Object>))
+                            emitProgress(timeline, sink as FluxSink<ChatEventDto>, session.id, assistantMessageId, 'partial_evidence_final', "Answering with caveats: ${shortText(incompleteReason)}", [
+                                runId: run.id,
+                                planId: plan.id
+                            ] as Map<String, Object>)
+                            writeFinalOperation(run, plan, context, evidence, guidance, provider, timeline, sink as FluxSink<ChatEventDto>, session.id, assistantMessageId)
+                            finalWritten = true
+                            stoppedIncomplete = false
+                        } else {
+                            transitionRun(run, AgentStateTransitionService.RUN_FAILED, 'run_failed', incompleteReason, timeline, sink as FluxSink<ChatEventDto>, session.id, assistantMessageId, [
+                                planId: plan.id
+                            ] as Map<String, Object>)
+                            emit(timeline, sink as FluxSink<ChatEventDto>, session.id, agentEvent('agent_run_failed', assistantMessageId, 'assistant', incompleteReason, false, [
+                                runId : run.id,
+                                planId: plan.id,
+                                status: run.status,
+                                reason: incompleteReason
+                            ] as Map<String, Object>))
+                            emitProgress(timeline, sink as FluxSink<ChatEventDto>, session.id, assistantMessageId, 'run_failed', "Stopped: ${shortText(incompleteReason)}", [
+                                runId: run.id,
+                                planId: plan.id
+                            ] as Map<String, Object>)
+                        }
                     }
                     if (run.status != 'requires_action' && run.status != 'failed') {
                         transitionRun(run, AgentStateTransitionService.RUN_COMPLETED, 'run_completed', null, timeline, sink as FluxSink<ChatEventDto>, session.id, assistantMessageId, [
@@ -612,7 +630,7 @@ class AgentSupervisorService {
             tools: [],
             options: [purpose: 'agent_planner', think: false, temperature: 0.3, num_predict: 2048, format: 'json'] as Map<String, Object>,
             messages: [
-                new ProviderMessage(role: 'system', content: agentPromptService.plannerSystemPrompt(toolNames)),
+                new ProviderMessage(role: 'system', content: agentPromptService.plannerSystemPrompt(toolNames, replanReason)),
                 new ProviderMessage(role: 'user', content: agentPromptService.plannerUserPrompt(run, tools, evidence, replanReason, context))
             ]
         )
@@ -680,7 +698,7 @@ class AgentSupervisorService {
     ) {
         List<ChatPromptAssetDefinition> personas = personaAssets()
         List<ChatPromptAssetDefinition> matchingSkills = lookupSkillAssetsForGoal(run.goal)
-        ChatPromptRenderResult systemPrompt = agentPromptService.contextResolverSystemPromptRender(toolNames(tools))
+        ChatPromptRenderResult systemPrompt = agentPromptService.contextResolverSystemPromptRender(toolNames(tools), replanReason)
         ChatPromptRenderResult userPrompt = agentPromptService.contextResolverUserPromptRender(run, tools, evidence, guidance, replanReason, personas, matchingSkills, renderSessionContinuity(sessionContinuity))
         ProviderRequest request = new ProviderRequest(
             sessionId: run.sessionId,
@@ -836,6 +854,8 @@ class AgentSupervisorService {
         List<Map<String, Object>> calls = new ArrayList<Map<String, Object>>()
         List<AgentEvidenceRecord> evidence = new ArrayList<AgentEvidenceRecord>()
         List<AgentGuidanceRecord> guidance = new ArrayList<AgentGuidanceRecord>()
+        Set<String> executedToolCallKeys = new LinkedHashSet<String>()
+        int executedToolCalls = 0
         for (ProviderChunk chunk : Flux.from(provider.streamChat(request)).collectList().block() ?: []) {
             if (chunk.type == 'token') {
                 text.append(chunk.content ?: '')
@@ -891,17 +911,29 @@ class AgentSupervisorService {
         }
 
         String executorOutput = text.toString().trim()
+        boolean noToolStep = stepTools.isEmpty()
         if (!executorOutput.isEmpty() && evidence.isEmpty() && calls.isEmpty()) {
-            AgentEvidenceRecord observed = evidenceFromExecutorOutput(run, step, executorOutput)
-            evidence.add(observed)
-            store.agentEvidence[observed.id] = observed
-            emit(timeline, sink, sessionId, agentEvent('agent_evidence_added', assistantMessageId, 'system', observed.summary ?: '', false, [
-                runId: run.id,
-                planId: plan.id,
-                stepId: step.id,
-                evidenceId: observed.id,
-                sourceName: observed.sourceName
-            ] as Map<String, Object>))
+            if (noToolStep) {
+                AgentEvidenceRecord observed = evidenceFromExecutorOutput(run, step, executorOutput)
+                evidence.add(observed)
+                store.agentEvidence[observed.id] = observed
+                emit(timeline, sink, sessionId, agentEvent('agent_evidence_added', assistantMessageId, 'system', observed.summary ?: '', false, [
+                    runId: run.id,
+                    planId: plan.id,
+                    stepId: step.id,
+                    evidenceId: observed.id,
+                    sourceName: observed.sourceName
+                ] as Map<String, Object>))
+            } else {
+                executorOperation.metadata.put('executorDebugText', executorOutput)
+                emit(timeline, sink, sessionId, agentEvent('agent_executor_debug_text', assistantMessageId, 'system', '', false, [
+                    runId: run.id,
+                    planId: plan.id,
+                    stepId: step.id,
+                    chars: executorOutput.length(),
+                    visibility: 'debug'
+                ] as Map<String, Object>))
+            }
         }
 
         for (Map<String, Object> call : calls) {
@@ -911,6 +943,70 @@ class AgentSupervisorService {
             }
             String toolName = asString(call.get('name'))
             Map<String, Object> arguments = completeToolArgumentsFromContext(context, toolName, getMap(call.get('arguments')))
+            String toolCallKey = toolCallKey(toolName, arguments)
+            if (executedToolCallKeys.contains(toolCallKey)) {
+                String reason = repeatedToolCallReason(toolName, arguments)
+                AgentActionRecord blockedAction = new AgentActionRecord(
+                    id: UUID.randomUUID().toString(),
+                    runId: run.id,
+                    stepId: step.id,
+                    kind: 'tool',
+                    status: 'failed',
+                    toolName: toolName,
+                    callId: callId,
+                    arguments: arguments,
+                    error: reason,
+                    blocked: true,
+                    startedAt: ChatInMemoryStore.now(),
+                    completedAt: ChatInMemoryStore.now(),
+                    metadata: [
+                        suppressionReason: 'duplicate_tool_call',
+                        duplicateToolCallKey: toolCallKey
+                    ] as Map<String, Object>
+                )
+                store.agentActions[blockedAction.id] = blockedAction
+                Map<String, Object> resultMeta = [
+                    callId: callId,
+                    ok: false,
+                    blocked: true,
+                    duplicate: true,
+                    arguments: arguments,
+                    output: [
+                        tool: toolName,
+                        arguments: arguments,
+                        blocked: true,
+                        duplicate: true
+                    ] as Map<String, Object>,
+                    error: reason,
+                    runId: run.id,
+                    planId: plan.id,
+                    stepId: step.id
+                ] as Map<String, Object>
+                AgentEvidenceRecord observed = evidenceFromToolResult(run, step, resultMeta)
+                blockedAction.resultRef = observed.id
+                evidence.add(observed)
+                store.agentEvidence[observed.id] = observed
+                resultMeta.put('evidenceId', observed.id)
+                emit(timeline, sink, sessionId, agentEvent('agent_tool_call_suppressed', assistantMessageId, 'system', reason, false, [
+                    runId: run.id,
+                    planId: plan.id,
+                    stepId: step.id,
+                    toolName: toolName,
+                    callId: callId,
+                    arguments: arguments,
+                    reason: reason,
+                    suppressionReason: 'duplicate_tool_call'
+                ] as Map<String, Object>))
+                emit(timeline, sink, sessionId, new ChatEventDto(type: 'tool_result', messageId: assistantMessageId, role: 'assistant', content: '', done: false, metadata: resultMeta))
+                emit(timeline, sink, sessionId, agentEvent('agent_evidence_added', assistantMessageId, 'system', observed.summary ?: '', false, [
+                    runId: run.id,
+                    planId: plan.id,
+                    stepId: step.id,
+                    evidenceId: observed.id,
+                    sourceName: observed.sourceName
+                ] as Map<String, Object>))
+                continue
+            }
             AgentOperationRecord toolOperation = startOperation(run, plan, step, 'tool_call', "Call tool ${toolName ?: 'unknown'}".toString(), 1, 1, timeline, sink, sessionId, assistantMessageId, [
                 toolName: toolName,
                 callId: callId,
@@ -931,6 +1027,8 @@ class AgentSupervisorService {
             ToolInvokeResponse response
             try {
                 response = invokeTool(toolName, arguments, httpRequest)
+                executedToolCallKeys.add(toolCallKey)
+                executedToolCalls++
             } catch (Throwable toolFailure) {
                 response = new ToolInvokeResponse(
                     success: false,
@@ -996,7 +1094,7 @@ class AgentSupervisorService {
             ] as Map<String, Object>))
         }
 
-        StepExecution result = new StepExecution(summary: executorOutput, evidence: evidence, guidance: guidance, toolCalls: evidence.size())
+        StepExecution result = new StepExecution(summary: noToolStep ? executorOutput : '', evidence: evidence, guidance: guidance, toolCalls: executedToolCalls)
         completeOperation(executorOperation, "Executor produced ${evidence.size()} evidence item${evidence.size() == 1 ? '' : 's'}.".toString(), timeline, sink, sessionId, assistantMessageId)
         result
         } catch (Throwable failure) {
@@ -1102,7 +1200,8 @@ class AgentSupervisorService {
             reason: asString(json.get('reason')),
             question: asString(json.get('question')),
             missing: asStringList(json.get('missing')),
-            obsoleteStepIds: asStringList(json.get('obsoleteStepIds'))
+            obsoleteStepIds: asStringList(json.get('obsoleteStepIds')),
+            replanJustification: replanJustificationFromJson(getMap(json.get('replanJustification')))
         )
     }
 
@@ -1596,24 +1695,166 @@ class AgentSupervisorService {
         message
     }
 
-    private PlanAssessment normalizePlanAssessmentWithTransitionService(PlanAssessment assessment, AgentPlanRecord plan, List<AgentEvidenceRecord> evidence) {
+    private PlanAssessment normalizePlanAssessmentWithTransitionService(PlanAssessment assessment, AgentPlanRecord plan, List<AgentEvidenceRecord> evidence, List<Map<String, Object>> tools) {
         PlanAssessment source = assessment ?: new PlanAssessment(decision: 'continue')
+        PlanAssessment supported = normalizeUnsupportedReplan(source, plan, evidence, availableToolNames(tools))
         PlanDecisionTransition transition = transitionService.normalizePlanDecision(
-            source.decision,
+            supported.decision,
             plan,
             evidence,
-            source.missing,
-            source.summary,
-            source.reason
+            supported.missing,
+            supported.summary,
+            supported.reason
         )
         new PlanAssessment(
             decision: transition.decision,
             summary: transition.summary,
             reason: transition.reason,
-            question: source.question,
+            question: supported.question,
             missing: transition.missing,
-            obsoleteStepIds: source.obsoleteStepIds
+            obsoleteStepIds: supported.obsoleteStepIds,
+            replanJustification: supported.replanJustification
         )
+    }
+
+    private static PlanAssessment normalizeUnsupportedReplan(PlanAssessment source, AgentPlanRecord plan, List<AgentEvidenceRecord> evidence, Set<String> availableToolNames) {
+        if (source.decision != 'replan' || validReplanJustification(source.replanJustification, plan, evidence, availableToolNames)) {
+            return source
+        }
+        boolean remaining = hasRemainingPlannedSteps(plan)
+        if (remaining) {
+            return new PlanAssessment(
+                decision: 'continue',
+                summary: source.summary ?: 'Continuing with the next planned step.',
+                reason: 'The evaluator requested replanning without a structurally supported replan justification; continuing with the remaining valid plan.',
+                question: source.question,
+                missing: [],
+                obsoleteStepIds: source.obsoleteStepIds,
+                replanJustification: source.replanJustification
+            )
+        }
+        if (finalAnswerEvidencePresent(evidence)) {
+            return new PlanAssessment(
+                decision: 'final',
+                summary: 'No remaining planned steps are available; preparing the final answer from the evidence gathered.',
+                reason: 'The evaluator requested replanning without a structurally supported replan justification after planned steps completed and final evidence is present.',
+                question: source.question,
+                missing: [],
+                obsoleteStepIds: source.obsoleteStepIds,
+                replanJustification: source.replanJustification
+            )
+        }
+        source
+    }
+
+    private static ReplanJustification replanJustificationFromJson(Map<String, Object> json) {
+        if (!json) {
+            return null
+        }
+        new ReplanJustification(
+            category: asString(json.get('category')),
+            evidenceIds: asStringList(json.get('evidenceIds')),
+            affectedStepIds: asStringList(json.get('affectedStepIds')),
+            unmetSuccessCriteriaIds: asStringList(json.get('unmetSuccessCriteriaIds')),
+            proposedChange: asString(json.get('proposedChange'))
+        )
+    }
+
+    private static boolean validReplanJustification(ReplanJustification justification, AgentPlanRecord plan, List<AgentEvidenceRecord> evidence, Set<String> availableToolNames) {
+        String category = justification?.category
+        if (!category || category == 'no_structural_category_applies') {
+            return false
+        }
+        List<AgentStepRecord> affected = affectedRemainingSteps(justification, plan)
+        switch (category) {
+            case 'missing_required_step':
+                return validSuccessCriterionIds(justification.unmetSuccessCriteriaIds, plan) && hasText(justification.proposedChange)
+            case 'remaining_step_obsolete':
+            case 'remaining_step_not_executable':
+                return !affected.isEmpty() && hasText(justification.proposedChange)
+            case 'tool_or_capability_unavailable':
+                return !affected.isEmpty() && affected.any {AgentStepRecord step ->
+                    !Boolean.TRUE.equals(step.optional) &&
+                        (step.allowedTools ?: [] as List<String>).any {String toolName -> toolName && !availableToolNames.contains(toolName)}
+                } && hasText(justification.proposedChange)
+            case 'new_evidence_changes_route':
+                return evidenceIdsExist(justification.evidenceIds, evidence) && !affected.isEmpty() && hasText(justification.proposedChange)
+            case 'previous_step_failed':
+                return affectedStepIdsExist(justification.affectedStepIds, plan) &&
+                    (plan.steps ?: [] as List<AgentStepRecord>).any {AgentStepRecord step ->
+                        justification.affectedStepIds.contains(step.id) && step.status == AgentStateTransitionService.STEP_FAILED
+                    }
+            default:
+                return false
+        }
+    }
+
+    private static List<AgentStepRecord> affectedRemainingSteps(ReplanJustification justification, AgentPlanRecord plan) {
+        Set<String> ids = new LinkedHashSet<String>(justification?.affectedStepIds ?: [])
+        (plan?.steps ?: ([] as List<AgentStepRecord>)).findAll {AgentStepRecord step ->
+            ids.contains(step.id) && step.kind != 'final_answer' && (step.status == null || step.status in [
+                AgentStateTransitionService.STEP_PENDING,
+                AgentStateTransitionService.STEP_IN_PROGRESS,
+                AgentStateTransitionService.STEP_REQUIRES_ACTION
+            ])
+        } as List<AgentStepRecord>
+    }
+
+    private static boolean affectedStepIdsExist(List<String> affectedStepIds, AgentPlanRecord plan) {
+        Set<String> ids = new LinkedHashSet<String>((plan?.steps ?: ([] as List<AgentStepRecord>)).collect {AgentStepRecord step -> step.id})
+        affectedStepIds && affectedStepIds.every {String id -> ids.contains(id)}
+    }
+
+    private static boolean evidenceIdsExist(List<String> evidenceIds, List<AgentEvidenceRecord> evidence) {
+        Set<String> ids = new LinkedHashSet<String>((evidence ?: ([] as List<AgentEvidenceRecord>)).collect {AgentEvidenceRecord item -> item.id})
+        evidenceIds && evidenceIds.every {String id -> ids.contains(id)}
+    }
+
+    private static boolean validSuccessCriterionIds(List<String> criterionIds, AgentPlanRecord plan) {
+        Set<String> ids = new LinkedHashSet<String>()
+        int size = (plan?.successCriteria ?: []).size()
+        for (int i = 1; i <= size; i++) {
+            ids.add("criterion-${i}".toString())
+        }
+        criterionIds && criterionIds.every {String id -> ids.contains(id)}
+    }
+
+    private static boolean hasRemainingPlannedSteps(AgentPlanRecord plan) {
+        (plan?.steps ?: ([] as List<AgentStepRecord>)).any {AgentStepRecord step ->
+            step.kind != 'final_answer' && (step.status == null || step.status in [
+                AgentStateTransitionService.STEP_PENDING,
+                AgentStateTransitionService.STEP_IN_PROGRESS,
+                AgentStateTransitionService.STEP_REQUIRES_ACTION
+            ])
+        }
+    }
+
+    private static boolean finalAnswerEvidencePresent(List<AgentEvidenceRecord> evidence) {
+        (evidence ?: ([] as List<AgentEvidenceRecord>)).any {AgentEvidenceRecord item ->
+            Boolean.TRUE == item.metadata?.get('pertinentToFinal')
+        }
+    }
+
+    private static boolean finalizableToolEvidencePresent(List<AgentEvidenceRecord> evidence) {
+        (evidence ?: ([] as List<AgentEvidenceRecord>)).any {AgentEvidenceRecord item ->
+            item.sourceType == 'tool_result' && Boolean.TRUE == item.metadata?.get('ok') && Boolean.TRUE == item.metadata?.get('pertinentToFinal')
+        }
+    }
+
+    private static boolean hasText(String text) {
+        text != null && !text.trim().isEmpty()
+    }
+
+    private static Set<String> availableToolNames(List<Map<String, Object>> tools) {
+        Set<String> names = new LinkedHashSet<String>()
+        for (Map<String, Object> tool : tools ?: ([] as List<Map<String, Object>>)) {
+            Map<String, Object> function = getMap(tool.get('function'))
+            String name = asString(function.get('name')) ?: asString(tool.get('name'))
+            if (name) {
+                names.add(name)
+            }
+        }
+        names
     }
 
     private static String criteriaMarkdown(List<String> items) {
@@ -1630,7 +1871,7 @@ class AgentSupervisorService {
     private static AgentEvidenceRecord evidenceFromToolResult(AgentRunRecord run, AgentStepRecord step, Map<String, Object> meta) {
         String tool = asString(getMap(meta.get('output')).get('tool')) ?: asString(meta.get('name')) ?: asString(meta.get('tool')) ?: 'tool'
         Object output = meta.get('output')
-        String outputText = summarizeObject(output)
+        String outputText = evidenceContentForTool(tool, output)
         boolean ok = Boolean.TRUE == meta.get('ok')
         String evidenceRole = ok ? 'tool_result' : 'tool_error'
         AgentEvidenceRecord evidence = new AgentEvidenceRecord(
@@ -1723,6 +1964,28 @@ class AgentSupervisorService {
         ok ? "Tool ${tool} completed.".toString() : "Tool ${tool} returned a result.".toString()
     }
 
+    private static String toolCallKey(String toolName, Map<String, Object> arguments) {
+        "${toolName ?: ''}:${JsonOutput.toJson(canonicalize(arguments ?: Collections.<String, Object>emptyMap()))}".toString()
+    }
+
+    private static String repeatedToolCallReason(String toolName, Map<String, Object> arguments) {
+        "Suppressed repeated tool call ${toolName ?: 'unknown'} with identical arguments ${shortText(JsonOutput.toJson(arguments ?: Collections.<String, Object>emptyMap()), 400)}.".toString()
+    }
+
+    private static Object canonicalize(Object value) {
+        if (value instanceof Map) {
+            Map<String, Object> out = new TreeMap<String, Object>()
+            ((Map<?, ?>) value).each {Object key, Object item ->
+                out.put(String.valueOf(key), canonicalize(item))
+            }
+            return out
+        }
+        if (value instanceof Collection) {
+            return ((Collection<?>) value).collect {Object item -> canonicalize(item)}
+        }
+        value
+    }
+
     private static AgentEvidenceRecord evidenceFromExecutorOutput(AgentRunRecord run, AgentStepRecord step, String text) {
         new AgentEvidenceRecord(
             id: UUID.randomUUID().toString(),
@@ -1756,6 +2019,69 @@ class AgentSupervisorService {
         json.length() > 3000 ? json.substring(0, 3000) : json
     }
 
+    private static String evidenceContentForTool(String tool, Object output) {
+        if (tool == 'mauro_get') {
+            String readEvidence = summarizeMauroGetEvidence(output)
+            if (readEvidence != null && !readEvidence.trim().isEmpty()) {
+                return readEvidence
+            }
+        }
+        summarizeObject(output)
+    }
+
+    private static String summarizeMauroGetEvidence(Object output) {
+        Map<String, Object> wrapper = getMap(output)
+        Map<String, Object> resource = getMap(wrapper.get('output'))
+        if (resource.isEmpty()) {
+            resource = wrapper
+        }
+        StringBuilder builder = new StringBuilder(12288)
+        appendEvidenceLine(builder, 'URI', resource.get('uri'))
+        appendEvidenceLine(builder, 'Path', resource.get('path'))
+        appendEvidenceLine(builder, 'Status', resource.get('statusCode'))
+        appendEvidenceLine(builder, 'ID', resource.get('id'))
+        appendEvidenceLine(builder, 'Label', resource.get('label'))
+        appendEvidenceLine(builder, 'Domain type', resource.get('domainType'))
+        appendEvidenceLine(builder, 'Description', resource.get('description'))
+        String content = asString(resource.get('content'))
+        if (content != null && !content.trim().isEmpty()) {
+            appendReturnedDataView(builder, content.trim(), Boolean.TRUE == resource.containsKey('data'))
+        } else if (resource.get('data') != null) {
+            appendReturnedDataView(builder, JsonOutput.toJson(resource.get('data')), true)
+        }
+        builder.toString().trim()
+    }
+
+    private static void appendReturnedDataView(StringBuilder builder, String text, boolean sourceJsonWellFormed) {
+        int totalChars = text == null ? 0 : text.length()
+        int shownChars = Math.min(totalChars, 12000)
+        boolean complete = totalChars <= 12000
+        builder.append('\nReturned Data View: chars ')
+            .append(shownChars)
+            .append(' of ')
+            .append(totalChars)
+            .append('; complete=')
+            .append(complete)
+            .append('; sourceJsonWellFormed=')
+            .append(sourceJsonWellFormed)
+            .append('; omitted fields are not evidence of absence')
+            .append('\n')
+        if (text != null) {
+            builder.append(text.take(12000))
+        }
+        if (!complete) {
+            builder.append('\n...[truncated returned data view]')
+        }
+    }
+
+    private static void appendEvidenceLine(StringBuilder builder, String label, Object value) {
+        String text = asString(value)
+        if (text == null || text.trim().isEmpty()) {
+            return
+        }
+        builder.append(label).append(': ').append(text.trim()).append('\n')
+    }
+
     private List<Map<String, Object>> providerTools() {
         chatMcpService.listServers()
             .collectMany {McpServerDto server -> server.tools ?: ([] as List<ToolSummaryDto>)}
@@ -1786,9 +2112,6 @@ class AgentSupervisorService {
         List<ChatPromptAssetDefinition> requiredMatches = allSkills.findAll {ChatPromptAssetDefinition asset ->
             requiredApplicabilityMatches(asset, goal ?: '')
         } as List<ChatPromptAssetDefinition>
-        if (matches.isEmpty()) {
-            matches = allSkills
-        }
         List<ChatPromptAssetDefinition> combined = []
         for (ChatPromptAssetDefinition asset : sortPromptAssets(requiredMatches + matches)) {
             if (!combined.any {ChatPromptAssetDefinition existing -> existing.id == asset.id}) {
@@ -2060,23 +2383,7 @@ class AgentSupervisorService {
         if (statusCode != null) {
             return statusCode >= 400 && statusCode < 500 && !(statusCode in [408, 409, 425, 429])
         }
-        if (Boolean.FALSE == evidence.metadata?.get('ok')) {
-            String error = asString(evidence.structuredContent?.get('error')) ?: asString(evidence.metadata?.get('error'))
-            return deterministicToolError(error)
-        }
         false
-    }
-
-    private static boolean deterministicToolError(String error) {
-        if (error == null || error.trim().isEmpty()) {
-            return false
-        }
-        String normalized = error.toLowerCase(Locale.ROOT)
-        normalized.contains('unknown resource uri') ||
-            normalized.contains('bad request') ||
-            normalized.contains('uuid string too large') ||
-            normalized.contains('failed to convert argument') ||
-            normalized.contains('invalid argument')
     }
 
     private static Integer asInteger(Object value) {
@@ -3022,10 +3329,7 @@ ${outputJson}""".toString()
                 continue
             }
             List<String> triggerTerms = applicability.triggerTerms ?: []
-            if (triggerTerms.isEmpty()) {
-                triggerTerms = asset.keywords ?: []
-            }
-            if (anyTermMatches(userContent, triggerTerms)) {
+            if (!triggerTerms.isEmpty() && anyTermMatches(userContent, triggerTerms)) {
                 return true
             }
         }
@@ -3126,6 +3430,16 @@ ${outputJson}""".toString()
         String question
         List<String> missing = []
         List<String> obsoleteStepIds = []
+        ReplanJustification replanJustification
+    }
+
+    @CompileStatic
+    private static class ReplanJustification {
+        String category
+        List<String> evidenceIds = []
+        List<String> affectedStepIds = []
+        List<String> unmetSuccessCriteriaIds = []
+        String proposedChange
     }
 
     @CompileStatic

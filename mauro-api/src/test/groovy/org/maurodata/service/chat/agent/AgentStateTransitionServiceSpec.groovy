@@ -57,6 +57,12 @@ class AgentStateTransitionServiceSpec extends Specification {
         service.normalizeStepDecision('fail', false, 0, 2).with {
             decision == 'fail' && targetStepStatus == 'failed' && targetRunStatus == 'failed'
         }
+        service.normalizeStepDecision('requires_action', false, 0, 2).with {
+            requestedDecision == 'requires_action' && decision == 'replan' && targetStepStatus == 'failed' && targetRunStatus == null
+        }
+        service.normalizeStepDecision('requires_action', true, 0, 2).with {
+            requestedDecision == 'requires_action' && decision == 'continue' && stepComplete && targetStepStatus == 'completed'
+        }
     }
 
     void 'normalizes plan continue to final when no remaining steps exist'() {
@@ -77,34 +83,7 @@ class AgentStateTransitionServiceSpec extends Specification {
         transition.summary.contains('No remaining planned steps')
     }
 
-    void 'normalizes unsupported replan to final when no declared criteria are missing and final evidence exists'() {
-        given:
-        AgentPlanRecord plan = new AgentPlanRecord(
-            status: 'active',
-            successCriteria: ['Evidence: Search results retrieved.'],
-            steps: [
-                new AgentStepRecord(kind: 'search', status: 'completed')
-            ]
-        )
-        List<AgentEvidenceRecord> evidence = [
-            new AgentEvidenceRecord(metadata: [pertinentToFinal: true])
-        ]
-
-        when:
-        PlanDecisionTransition transition = service.normalizePlanDecision(
-            'replan',
-            plan,
-            evidence,
-            ['Invented: Fetch every page.']
-        )
-
-        then:
-        transition.decision == 'final'
-        transition.targetPlanStatus == 'complete'
-        transition.missing == []
-    }
-
-    void 'preserves replan when evaluator names an unmet declared criterion'() {
+    void 'preserves plan evaluator replan decisions without text-based criteria filtering'() {
         given:
         AgentPlanRecord plan = new AgentPlanRecord(
             status: 'active',
@@ -128,6 +107,6 @@ class AgentStateTransitionServiceSpec extends Specification {
         then:
         transition.decision == 'replan'
         transition.targetPlanStatus == 'superseded'
-        transition.missing == ['Answer: Present the list.']
+        transition.missing == ['Answer: Present the list.', 'Invented: Fetch every page.']
     }
 }

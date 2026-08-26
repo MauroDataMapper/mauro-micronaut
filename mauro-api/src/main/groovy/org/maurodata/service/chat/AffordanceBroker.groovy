@@ -12,7 +12,6 @@ import org.maurodata.service.chat.mcp.McpHttpResourceRegistry
 class AffordanceBroker {
 
     private static final int MAX_ACTIONS_PER_TYPE = 3
-    private static final String DATA_MODEL_SHOW_FALLBACK = McpHttpResourceRegistry.URI_PREFIX + '/api/dataModels/{id}'
 
     private final McpHttpResourceRegistry resourceRegistry
 
@@ -30,7 +29,7 @@ class AffordanceBroker {
             return Collections.<AffordanceDto>emptyList()
         }
         List<AffordanceDto> affordances = new ArrayList<AffordanceDto>()
-        affordances.addAll(dataModelResourceReadAffordances(context, extractDataModelArtefacts(context)))
+        affordances.addAll(resourceReadAffordances(context, extractResourceArtefacts(context)))
         affordances.sort {AffordanceDto left, AffordanceDto right ->
             Integer.valueOf(left.priority ?: 100) <=> Integer.valueOf(right.priority ?: 100)
         }
@@ -73,27 +72,28 @@ class AffordanceBroker {
         actions
     }
 
-    private List<AffordanceDto> dataModelResourceReadAffordances(AffordanceContext context, List<Map<String, String>> dataModels) {
-        if (dataModels.isEmpty()) {
-            return Collections.<AffordanceDto>emptyList()
-        }
-        String template = dataModelShowUriTemplate()
-        if (template == null || template.trim().isEmpty()) {
+    private List<AffordanceDto> resourceReadAffordances(AffordanceContext context, List<Map<String, String>> artefacts) {
+        if (artefacts.isEmpty()) {
             return Collections.<AffordanceDto>emptyList()
         }
 
         List<AffordanceDto> affordances = new ArrayList<AffordanceDto>()
-        int limit = Math.min(dataModels.size(), MAX_ACTIONS_PER_TYPE)
+        int limit = Math.min(artefacts.size(), MAX_ACTIONS_PER_TYPE)
         for (int i = 0; i < limit; i++) {
-            Map<String, String> dataModel = dataModels.get(i)
-            String id = dataModel.id
-            String label = dataModel.label ?: id
-            String resultOrdinal = dataModel.get('ordinal') ?: String.valueOf(i + 1)
+            Map<String, String> artefact = artefacts.get(i)
+            String type = artefact.type
+            String id = artefact.id
+            String template = readUriTemplate(type, context)
+            if (template == null || template.trim().isEmpty()) {
+                continue
+            }
+            String label = artefact.label ?: id
+            String resultOrdinal = artefact.get('ordinal') ?: String.valueOf(i + 1)
             String uri = template.replace('{id}', id)
             affordances.add(new AffordanceDto(
-                id: "mauro_get:DataModel:${id}".toString(),
+                id: "mauro_get:${type}:${id}".toString(),
                 kind: 'tool_call',
-                title: "Read result ${resultOrdinal} DataModel ${label}".toString(),
+                title: "Read result ${resultOrdinal} ${type} ${label}".toString(),
                 description: "Read the authoritative structured Mauro API representation for result ${resultOrdinal} (${label}).".toString(),
                 sourceType: context.sourceType,
                 sourceName: context.sourceName,
@@ -105,10 +105,10 @@ class AffordanceBroker {
                     uri: uri
                 ] as Map<String, Object>,
                 artefact: [
-                    type      : 'DataModel',
+                    type      : type,
                     id        : id,
                     label     : label,
-                    domainType: 'DataModel',
+                    domainType: type,
                     ordinal   : resultOrdinal
                 ] as Map<String, Object>,
                 modelVisible: true,
@@ -119,11 +119,11 @@ class AffordanceBroker {
         affordances
     }
 
-    private static List<Map<String, String>> extractDataModelArtefacts(AffordanceContext context) {
+    private static List<Map<String, String>> extractResourceArtefacts(AffordanceContext context) {
         List<Map<String, String>> artefacts = new ArrayList<Map<String, String>>()
         for (Object artefactObj : context.artefacts ?: []) {
             if (artefactObj instanceof Map) {
-                addDataModelArtefact(artefacts, (Map<?, ?>) artefactObj, null)
+                addResourceArtefact(artefacts, (Map<?, ?>) artefactObj, null)
             }
         }
         Object rawItems = context.result == null ? null : context.result.get('items')
@@ -131,7 +131,7 @@ class AffordanceBroker {
             int index = 1
             for (Object itemObj : (Collection<?>) rawItems) {
                 if (itemObj instanceof Map) {
-                    addDataModelArtefact(artefacts, (Map<?, ?>) itemObj, String.valueOf(index))
+                    addResourceArtefact(artefacts, (Map<?, ?>) itemObj, String.valueOf(index))
                 }
                 index++
             }
@@ -139,14 +139,14 @@ class AffordanceBroker {
         artefacts
     }
 
-    private static void addDataModelArtefact(List<Map<String, String>> artefacts, Map<?, ?> item, String ordinal) {
-        String domainType = asString(item.get('domainType'))
-        String type = asString(item.get('type'))
+    private static void addResourceArtefact(List<Map<String, String>> artefacts, Map<?, ?> item, String ordinal) {
+        String type = asString(item.get('domainType')) ?: asString(item.get('type'))
         String id = asString(item.get('id'))
-        if ((domainType == 'DataModel' || type == 'DataModel') && id != null && !id.trim().isEmpty()) {
+        if (type != null && !type.trim().isEmpty() && id != null && !id.trim().isEmpty()) {
             Map<String, String> existing = artefacts.find {Map<String, String> candidate -> candidate.id == id}
             if (existing == null) {
                 artefacts.add([
+                    type   : type,
                     id     : id,
                     label  : asString(item.get('label')) ?: id,
                     ordinal: ordinal
@@ -157,17 +157,37 @@ class AffordanceBroker {
         }
     }
 
-    private String dataModelShowUriTemplate() {
+    private String readUriTemplate(String resourceType, AffordanceContext context) {
+        String template = readUriTemplateFromContext(resourceType, context)
+        if (template != null && !template.trim().isEmpty()) {
+            return template
+        }
         if (resourceRegistry != null) {
-            McpHttpResourceRegistry.McpHttpResource resource = resourceRegistry.listResourceTemplates()
-                .find {McpHttpResourceRegistry.McpHttpResource candidate ->
-                    candidate.name == 'DataModel.show' || candidate.path == '/api/dataModels/{id}'
+            McpHttpResourceRegistry.McpHttpOperation operation = resourceRegistry.listOperations(resourceType, 'get')
+                .find {McpHttpResourceRegistry.McpHttpOperation candidate ->
+                    candidate.httpMethod == 'GET' &&
+                        candidate.template &&
+                        candidate.pathParameters?.contains('id') &&
+                        candidate.path?.contains('{id}')
                 }
-            if (resource != null && resource.uriTemplate != null && !resource.uriTemplate.trim().isEmpty()) {
-                return resource.uriTemplate
+            if (operation != null && operation.path != null && !operation.path.trim().isEmpty()) {
+                return McpHttpResourceRegistry.URI_PREFIX + operation.path
             }
         }
-        DATA_MODEL_SHOW_FALLBACK
+        null
+    }
+
+    private static String readUriTemplateFromContext(String resourceType, AffordanceContext context) {
+        for (Map<String, Object> resource : context?.availableResources ?: ([] as List<Map<String, Object>>)) {
+            String name = asString(resource.get('name'))
+            String path = asString(resource.get('path'))
+            String uriTemplate = asString(resource.get('uriTemplate')) ?: asString(resource.get('uri'))
+            if ((name == "${resourceType}.show".toString() || (path != null && path.contains('{id}'))) &&
+                uriTemplate != null && uriTemplate.contains('{id}')) {
+                return uriTemplate
+            }
+        }
+        null
     }
 
     private static String toolName(Map<String, Object> affordance) {

@@ -8,6 +8,7 @@ instruction: |
   Judge only whether the current step itself completed, using the current step title, objective, expected output, success criteria, and evidence added by the current step.
   Do not mark a step incomplete merely because the overall user goal still needs later planned steps.
   If the current step completed but the overall user goal still needs later planned steps, return stepComplete=true and decision="continue".
+  Do not use decision="ask_user" to confirm selected ids, choose among already returned search results, or ask about missing optional read/resource URIs when the current step produced usable evidence. Mark the step complete and leave caveats or enrichment to later plan/final evaluation.
   Use the resolved goalFrame only as a scope boundary. A step evaluation reason is diagnostic route information only; it must not add new requirements, deeper exploration, exhaustive paging, or structure inspection unless the current step or goalFrame already requires them.
   Use decision="replan" only when the current step cannot be completed as written or the evidence shows the step is the wrong step.
   Use decision="retry" only for transient failures where repeating the same step is likely to succeed.

@@ -1,0 +1,14 @@
+id: fragment-agent-context-operating-policy
+name: Agent Context Operating Policy
+description: Agentic lookup and continuity policy for the context resolver
+scope: AGENT
+version: 1.0.0
+type: FRAGMENT
+instruction: |
+  Use available context, retrieved skills, tool results, and advertised affordances to ground Mauro-specific interpretation before planning.
+  If the user asks for a task and available read-only tools can supply needed context, resolve the task route rather than only explaining how it could be done.
+  When information is missing or uncertain, prefer safe read-only lookup, prior evidence reuse, or a focused context request over asking the user to repeat information already present in the conversation.
+  If the user asks for preparatory work as part of a task, preserve that continuation in the planning context unless they explicitly ask only for advice.
+  If the user has already requested multiple steps, preserve the requested sequence before optional alternatives such as paging or refinement.
+  When an exact next action would complete a requested step, encode that as planner/executor guidance rather than making it a user decision.
+  If prior assistant output proposed a concrete action and the latest user message is a brief confirmation such as "ok", "yes", "sure", "please", or "go ahead", resolve the confirmation as permission to continue that action.

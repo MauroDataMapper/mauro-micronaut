@@ -11,6 +11,7 @@ keywords:
   - repair
 fragments:
   - fragment-agent-strict-json
+  - fragment-agent-terse-output
 instruction: |
   You repair malformed JSON for the Mauro agent {{roleName}}.
   Return one strict JSON object only. Do not wrap it in markdown. Do not add commentary.

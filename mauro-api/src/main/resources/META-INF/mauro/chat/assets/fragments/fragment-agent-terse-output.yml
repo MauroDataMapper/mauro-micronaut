@@ -1,0 +1,11 @@
+id: fragment-agent-terse-output
+name: Agent Terse Output Policy
+description: Shared token-budget policy for agent role outputs
+scope: AGENT
+version: 1.0.0
+type: FRAGMENT
+instruction: |
+  Use terse headings and bullets where format allows.
+  JSON string values must be short phrases, not paragraphs.
+  Do not add process summaries, recaps, preambles, or closing summaries.
+  Mention only decision-critical facts, ids, resource refs, counts, caveats, and next actions.

@@ -1,13 +1,14 @@
 package org.maurodata.service.chat
 
 import org.maurodata.plugin.chat.api.chat.AffordanceDto
+import org.maurodata.service.chat.mcp.McpHttpResourceRegistry
 import spock.lang.Specification
 
 class AffordanceBrokerSpec extends Specification {
 
     void 'derives mauro_get affordance from DataModel artefact state'() {
         given:
-        AffordanceBroker broker = new AffordanceBroker()
+        AffordanceBroker broker = new AffordanceBroker(new FakeRegistry())
 
         when:
         List<AffordanceDto> affordances = broker.derive(new AffordanceContext(
@@ -33,7 +34,7 @@ class AffordanceBrokerSpec extends Specification {
 
     void 'renders model actions from structured affordance maps'() {
         given:
-        AffordanceBroker broker = new AffordanceBroker()
+        AffordanceBroker broker = new AffordanceBroker(new FakeRegistry())
         List<Map<String, Object>> affordances = broker.deriveMaps(new AffordanceContext(
             sourceType: 'tool_result',
             sourceName: 'mauro_keyword_search',
@@ -58,5 +59,30 @@ class AffordanceBrokerSpec extends Specification {
         rendered.join('\n').contains('as progress through work you are doing for the user')
         rendered.last().contains('FR: Mention optional follow-up actions')
         rendered.join('\n').indexOf('CW: Read result 1 DataModel Braden Risk Assessment') < rendered.join('\n').indexOf('CW: If an exact action above completes the next unfinished requested action')
+    }
+
+    static class FakeRegistry extends McpHttpResourceRegistry {
+
+        FakeRegistry() {
+            super(null)
+        }
+
+        @Override
+        List<McpHttpResourceRegistry.McpHttpOperation> listOperations(String resourceType, String operationKind = null) {
+            if (resourceType == 'DataModel' && operationKind == 'get') {
+                return [
+                    new McpHttpResourceRegistry.McpHttpOperation(
+                        resourceType: 'DataModel',
+                        operationKind: 'get',
+                        name: 'DataModel.show',
+                        httpMethod: 'GET',
+                        path: '/api/dataModels/{id}',
+                        template: true,
+                        pathParameters: ['id']
+                    )
+                ]
+            }
+            []
+        }
     }
 }

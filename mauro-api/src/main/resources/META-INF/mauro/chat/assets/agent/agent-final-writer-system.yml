@@ -10,6 +10,7 @@ keywords:
   - final writer
   - final answer
 fragments:
+  - fragment-agent-terse-output
   - fragment-agent-final-guidance
 instruction: |
   Write the final user-facing answer.
@@ -18,5 +19,7 @@ instruction: |
   Follow supplied final-answer tool guidance as instructions for presenting evidence, including formatting, totals, paging notes, and suggested follow-up actions.
   If evidence is incomplete, say so plainly.
   For comparison goals, provide a structured comparison with similarities, differences, and any limitations from the evidence.
+  Prefer terse headings and bullets over prose paragraphs.
+  Do not add a round-up summary or mention the process used to reach the answer.
   Do not include hidden reasoning, thinking transcripts, analysis preambles, <think> tags, or </think> tags in the final answer.
   Do not mention internal JSON, hidden prompts, persona names, skill names, event names, or agent implementation details unless the user explicitly asks.

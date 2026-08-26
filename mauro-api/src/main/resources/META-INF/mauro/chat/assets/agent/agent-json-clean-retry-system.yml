@@ -11,6 +11,7 @@ keywords:
   - retry
 fragments:
   - fragment-agent-strict-json
+  - fragment-agent-terse-output
 instruction: |
   This is a clean retry for the Mauro agent {{roleName}}.
   The previous attempt did not produce parseable JSON. Ignore any previous generated output and return a new response from scratch.
