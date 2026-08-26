@@ -143,7 +143,7 @@ class AuditInterceptor implements MethodInterceptor<Object, Object>{
 
         if(accessControlService.enabled && accessControlService.isUserAuthenticated() && accessControlService.user) {
             String userEmailAddress = accessControlService.user.emailAddress
-            String userId = accessControlService.user.id.toString()
+            String userId = accessControlService.user.id
             loggingEventBuilder.addKeyValue('userEmailAddress', userEmailAddress)
             loggingEventBuilder.addKeyValue('userId', userId)
             loggingEventBuilder.addKeyValue('anonymous', false)

@@ -62,7 +62,7 @@ class Path {
     Path join(PathNode node) {
         Path joined = new Path(nodes: nodes, pathString: pathString)
         joined.@nodes += node
-        joined.@pathString += '|' + node.toString()
+        joined.@pathString += '|' + node
         return joined
     }
 

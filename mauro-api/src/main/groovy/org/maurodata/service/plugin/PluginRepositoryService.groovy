@@ -249,7 +249,7 @@ class PluginRepositoryService {
         }
 
         if (!Files.exists(pluginsDirPath)) {
-            throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, 'Missing plugins directory: ' + pluginsDirPath.toString())
+            throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, 'Missing plugins directory: ' + pluginsDirPath)
         }
 
         final String PLUGINS_IS_MOUNTED = System.getenv("PLUGINS_IS_MOUNTED")
@@ -269,7 +269,7 @@ class PluginRepositoryService {
         String path = saveUrl.getPath()
         int lastSlash = path.lastIndexOf('/')
         if (lastSlash == -1) {
-            throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, 'Malformed URL. Missing path: ' + saveUrl.toString())
+            throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, 'Malformed URL. Missing path: ' + saveUrl)
         }
 
         String fileName = path.substring(lastSlash + 1)
