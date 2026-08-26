@@ -163,7 +163,9 @@ class ClassifierController extends AdministeredItemController<Classifier, Classi
         AdministeredItem administeredItem = readAdministeredItem(administeredItemDomainType, administeredItemId)
         accessControlService.checkRole(Role.EDITOR, administeredItem)
         Classifier classifier = administeredItemRepository.findById(id)
-        if (!classifier) return null
+        if (!classifier) {
+            return null
+        }
         accessControlService.checkRole(Role.READER, classifier)
         classifierCacheableRepository.addAdministeredItem(administeredItem, classifier)
         classifier

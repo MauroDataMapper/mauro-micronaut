@@ -192,7 +192,9 @@ class DataTypeController extends AdministeredItemController<DataType, DataModel>
     @Get(Paths.DATA_TYPE_LIST_PAGED)
     ListResponse<DataType> list(UUID dataModelId, @Nullable PaginationParams params = new PaginationParams()) {
         Item parent = parentItemRepository.readById(dataModelId)
-        if (!parent) return null
+        if (!parent) {
+            return null
+        }
         accessControlService.checkRole(Role.READER, parent)
         List<DataType> dataTypes = administeredItemRepository.readAllByParent(parent)
         dataTypes.each {

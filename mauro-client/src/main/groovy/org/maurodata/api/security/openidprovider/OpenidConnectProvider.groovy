@@ -12,9 +12,13 @@ class OpenidConnectProvider {
 
     OpenidConnectProvider(String openidProviderId, String label, Boolean standardProvider,
                           String authorizationEndpoint, String imageUrl) {
-        if (openidProviderId != null) this.id = UUID.fromString(openidProviderId)
+        if (openidProviderId != null) {
+            this.id = UUID.fromString(openidProviderId)
+        }
         this.label = label
-        if (standardProvider != null) this.standardProvider = standardProvider
+        if (standardProvider != null) {
+            this.standardProvider = standardProvider
+        }
         this.authorizationEndpoint = authorizationEndpoint
         this.imageUrl = imageUrl
     }

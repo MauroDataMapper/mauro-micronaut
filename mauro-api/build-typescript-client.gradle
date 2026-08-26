@@ -111,7 +111,9 @@ tasks.register('generateTypeScriptClient') {
         // rewrite files
         families.each { family, variants ->
 
-            if (variants.size() < 2) return
+            if (variants.size() < 2) {
+                return
+            }
 
             logger.lifecycle("Collapsing generic family: ${family}")
 

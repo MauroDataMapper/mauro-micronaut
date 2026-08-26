@@ -146,7 +146,9 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
         pathRepository.readParentItems(itemToDelete)
         accessControlService.checkRole(Role.EDITOR, itemToDelete)
 
-        if (item?.version) itemToDelete.version = item.version
+        if (item?.version) {
+            itemToDelete.version = item.version
+        }
 
         Boolean deleted = contentsService.deleteWithContent(itemToDelete)
         if (deleted) {
@@ -214,7 +216,9 @@ abstract class AdministeredItemController<I extends AdministeredItem, P extends 
 
     protected List<I> listItems(UUID parentId) {
         P parent = parentItemRepository.readById(parentId)
-        if (!parent) return null
+        if (!parent) {
+            return null
+        }
         accessControlService.checkRole(Role.READER, parent)
         List<I> items = administeredItemRepository.readAllByParent(parent)
         items.each {

@@ -75,7 +75,9 @@ abstract class FacetController<I extends Facet> extends ItemController<I> implem
     HttpResponse delete(UUID id) {
         I facetToDelete = facetRepository.readById(id)
         accessControlService.checkRole(Role.EDITOR, readAdministeredItemForFacet(facetToDelete))
-        if (facetToDelete?.version) facetToDelete.version = facetToDelete.version
+        if (facetToDelete?.version) {
+            facetToDelete.version = facetToDelete.version
+        }
         Long deleted = facetRepository.delete(facetToDelete)
         if (deleted) {
             HttpResponse.status(HttpStatus.NO_CONTENT)
@@ -85,7 +87,9 @@ abstract class FacetController<I extends Facet> extends ItemController<I> implem
     }
 
     protected AdministeredItem readAdministeredItemForFacet(I facet) {
-        if (facet) readAdministeredItem(facet.multiFacetAwareItemDomainType, facet.multiFacetAwareItemId)
+        if (facet) {
+            readAdministeredItem(facet.multiFacetAwareItemDomainType, facet.multiFacetAwareItemId)
+        }
     }
 
     protected I validateAndGet(String domainType, UUID domainId, UUID id) {

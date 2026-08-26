@@ -83,7 +83,9 @@ class TermRelationshipType extends ModelItem<Terminology> implements ItemReferen
 
     String createDisplayLabel() {
         displayLabel = label
-        if (!displayLabel) return
+        if (!displayLabel) {
+            return
+        }
         // Replace all spaces and hyphens with underscores
         displayLabel = displayLabel.replaceAll(/[ \-]/, '_')
         // Convert all camel casing to underscores

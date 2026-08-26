@@ -233,7 +233,9 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         accessControlService.checkRole(Role.CONTAINER_ADMIN, modelToDelete)
 
         // modelToDelete = (M) contentsService.loadWithContent(modelToDelete)
-        if (model?.version) modelToDelete.version = model.version
+        if (model?.version) {
+            modelToDelete.version = model.version
+        }
 
         if (permanent) {
             contentsService.deleteWithContent(modelToDelete)
@@ -332,7 +334,9 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
 
     @Transactional
     M createNewBranchModelVersion(UUID id, @Body @Nullable CreateNewVersionData createNewVersionData) {
-        if (!createNewVersionData) createNewVersionData = new CreateNewVersionData()
+        if (!createNewVersionData) {
+            createNewVersionData = new CreateNewVersionData()
+        }
         M existing = modelRepository.readById(id)
         existing = (M) contentsService.loadWithContent(existing)
 
@@ -467,7 +471,9 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
                     if (!referenceFile.fileContents) {
                         log.debug("Model $it.id has reference files. file: $referenceFile.fileName, filecontents is $referenceFile.fileContents")
                         ReferenceFile retrieved = referenceFileCacheableRepository.findById(referenceFile.id) as ReferenceFile
-                        if (!retrieved) throw new HttpStatusException(HttpStatus.NOT_FOUND, "Not found for item $it.id")
+                        if (!retrieved) {
+                            throw new HttpStatusException(HttpStatus.NOT_FOUND, "Not found for item $it.id")
+                        }
                         referenceFile.fileContents = retrieved.fileContent()
                     }
                 }
@@ -549,7 +555,9 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     }
 
     ArrayList<Model> populateVersionTree(UUID id, boolean branchesOnly, final Map<UUID, Map<String, Boolean>> flags) {
-        if (!modelRepository.existsById(id)) throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Object not found")
+        if (!modelRepository.existsById(id)) {
+            throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Object not found")
+        }
 
         UUID currentId = id
 

@@ -261,7 +261,9 @@ class CodeSetController extends ModelController<CodeSet> implements CodeSetApi {
     @Operation(summary = "Update a code set", description = "Updates a code set.")
     @Put(value = Paths.CODE_SET_NEW_BRANCH_MODEL_VERSION)
     CodeSet createNewBranchModelVersion(UUID id, @Body @Nullable CreateNewVersionData createNewVersionData) {
-        if (!createNewVersionData) createNewVersionData = new CreateNewVersionData()
+        if (!createNewVersionData) {
+            createNewVersionData = new CreateNewVersionData()
+        }
         CodeSet existing = super.getExistingWithContent(id) as CodeSet
 
         CodeSet copy = createCopyModelWithAssociations(existing, createNewVersionData)

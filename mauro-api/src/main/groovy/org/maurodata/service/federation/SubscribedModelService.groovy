@@ -125,10 +125,12 @@ class SubscribedModelService {
 
     private ModelImporterPlugin getImporterPlugin(ImportMetadata importMetadata) {
         if (importMetadata.allFieldsPresent()) {
-            mauroPluginService.getPlugin(ModelImporterPlugin, importMetadata.namespace, importMetadata.name, importMetadata.version)
+            return mauroPluginService.getPlugin(ModelImporterPlugin, importMetadata.namespace, importMetadata.name, importMetadata.version)
         } else if (importMetadata.hasName() && importMetadata.hasNameSpace()) {
-            mauroPluginService.getPlugin(ModelImporterPlugin, importMetadata.namespace, importMetadata.name)
-        } else null
+            return mauroPluginService.getPlugin(ModelImporterPlugin, importMetadata.namespace, importMetadata.name)
+        } else {
+            return null
+        }
     }
 
     private ModelImporterPlugin getImporterPluginForContentTypeOrUrl(String contentType) {

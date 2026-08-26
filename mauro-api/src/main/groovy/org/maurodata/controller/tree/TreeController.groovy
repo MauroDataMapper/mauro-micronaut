@@ -93,7 +93,11 @@ class TreeController implements TreeApi {
     }
 
     protected List<TreeItem> filterTreeByReadable(List<TreeItem> treeItems) {
-        treeItems.each {if (!it.item) throw new IllegalArgumentException('TreeItem must have item set for security check')}
+        treeItems.each {
+            if (!it.item) {
+                throw new IllegalArgumentException('TreeItem must have item set for security check')
+            }
+        }
         treeItems = treeItems.findAll {accessControlService.canDoRole(Role.READER, it.item)}
         treeItems.each {
             it.children = it.children.findAll {accessControlService.canDoRole(Role.READER, it.item)}

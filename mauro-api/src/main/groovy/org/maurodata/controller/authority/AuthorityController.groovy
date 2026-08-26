@@ -93,7 +93,9 @@ class AuthorityController extends ItemController<Authority> implements Authority
         accessControlService.checkAdministrator()
 
         Authority authorityToDelete = authorityService.readById(id)
-        if (authorityToDelete?.version) authorityToDelete.version = authority.version
+        if (authorityToDelete?.version) {
+            authorityToDelete.version = authority.version
+        }
         Long deleted = authorityService.delete(authorityToDelete)
         if (deleted) {
             return HttpResponse.status(HttpStatus.NO_CONTENT)

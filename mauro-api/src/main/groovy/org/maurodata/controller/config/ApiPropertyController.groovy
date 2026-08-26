@@ -109,7 +109,9 @@ class ApiPropertyController extends ItemController<ApiProperty> implements ApiPr
 
         ApiProperty apiPropertyToDelete = apiPropertyRepository.readById(id)
 
-        if (apiProperty?.version) apiPropertyToDelete.version = apiProperty.version
+        if (apiProperty?.version) {
+            apiPropertyToDelete.version = apiProperty.version
+        }
         Long deleted = apiPropertyRepository.delete(apiPropertyToDelete)
         if (deleted) {
             HttpResponse.status(HttpStatus.NO_CONTENT)

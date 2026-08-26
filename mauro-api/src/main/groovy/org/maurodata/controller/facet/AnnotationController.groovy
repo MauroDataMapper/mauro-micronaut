@@ -95,7 +95,9 @@ class AnnotationController extends FacetController<Annotation> implements Annota
         accessControlService.checkRole(Role.EDITOR, readAdministeredItem(domainType, domainId))
         super.cleanBody(childAnnotation)
         Annotation parent = super.validateAndGet(domainType, domainId, annotationId) as Annotation
-        if (!parent || parent.parentAnnotationId) throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Parent Annotation not found or has parent $annotationId")
+        if (!parent || parent.parentAnnotationId) {
+            throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Parent Annotation not found or has parent $annotationId")
+        }
         childAnnotation.parentAnnotationId = parent.id
         childAnnotation.multiFacetAwareItemId = parent.multiFacetAwareItemId
         childAnnotation.multiFacetAwareItemDomainType = parent.multiFacetAwareItemDomainType

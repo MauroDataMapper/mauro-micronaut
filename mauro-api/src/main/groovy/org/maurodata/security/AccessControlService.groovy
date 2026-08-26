@@ -50,9 +50,13 @@ class AccessControlService implements Toggleable {
      * @return if logged in, throw AuthorizationException otherwise
      */
     void checkAuthenticated() {
-        if (!enabled) return
+        if (!enabled) {
+            return
+        }
 
-        if (!userAuthenticated) throw new AuthorizationException(null)
+        if (!userAuthenticated) {
+            throw new AuthorizationException(null)
+        }
     }
 
     /**
@@ -60,7 +64,9 @@ class AccessControlService implements Toggleable {
      * @return if an admin is logged in, throw AuthorizationException otherwise
      */
     void checkAdministrator() {
-        if (!enabled) return
+        if (!enabled) {
+            return
+        }
 
         checkAuthenticated()
 
@@ -73,8 +79,12 @@ class AccessControlService implements Toggleable {
      * @return true if user is an admin, false otherwise
      */
     boolean isAdministrator() {
-        if (!isUserAuthenticated()) return false
-        if (user.disabled) return false
+        if (!isUserAuthenticated()) {
+            return false
+        }
+        if (user.disabled) {
+            return false
+        }
         List<UserGroup> userGroups = userGroupRepository.readAllByCatalogueUserId(userId)
 
         if (userGroups.any {UserGroup userGroup -> userGroup.applicationRole == ApplicationRole.ADMIN}) {
@@ -90,12 +100,18 @@ class AccessControlService implements Toggleable {
      * @return if authorised, throw AuthorizationException otherwise
      */
     void checkRole(@NonNull Role role, @NonNull AdministeredItem item) {
-        if (!enabled) return
+        if (!enabled) {
+            return
+        }
 
         // if item is null, allow access to continue, e.g. to return a not found message
-        if (!item) return
+        if (!item) {
+            return
+        }
 
-        if (!canDoRole(role, item)) throw new AuthorizationException(userAuthentication)
+        if (!canDoRole(role, item)) {
+            throw new AuthorizationException(userAuthentication)
+        }
     }
 
 
@@ -105,9 +121,15 @@ class AccessControlService implements Toggleable {
      * @return true if authorised, false otherwise
      */
     boolean canDoRole(@NonNull Role role, @NonNull AdministeredItem item) {
-        if(item == null) return false
-        if (!enabled) return true
-        if (role <= Role.READER && isAdministrator()) return true // always allow Administrator full access
+        if(item == null) {
+            return false
+        }
+        if (!enabled) {
+            return true
+        }
+        if (role <= Role.READER && isAdministrator()) {
+            return true
+        } // always allow Administrator full access
 
         pathRepository.readParentItems(item)
         Model owner = item.owner
@@ -139,7 +161,9 @@ class AccessControlService implements Toggleable {
         }
 
 
-        if (!userAuthenticated) return false
+        if (!userAuthenticated) {
+            return false
+        }
 
         // allow role access according to user groups
         List<UserGroup> userGroups = userGroupRepository.readAllByCatalogueUserId(userId)
@@ -155,15 +179,21 @@ class AccessControlService implements Toggleable {
         final List<Role> allRoles = Arrays.asList(Role.values())
 
         // All roles
-        if (!enabled) return allRoles
-        if (isAdministrator()) return allRoles
+        if (!enabled) {
+            return allRoles
+        }
+        if (isAdministrator()) {
+            return allRoles
+        }
         pathRepository.readParentItems(item)
         Model owner = item.owner
         if (owner.catalogueUser == null) {
             AdministeredItemRepository air = pathRepository.getRepository(owner)
             owner = air.readById(owner.id) as Model
         }
-        if (userAuthenticated && owner.catalogueUser && owner.catalogueUser.id == getUserId()) return allRoles
+        if (userAuthenticated && owner.catalogueUser && owner.catalogueUser.id == getUserId()) {
+            return allRoles
+        }
 
         // Permitted roles
         final List<Model> parentModels = pathRepository.readParentItems(owner) as List<Model>
@@ -182,7 +212,9 @@ class AccessControlService implements Toggleable {
                 canDo.add(role)
             }
 
-            if (!userAuthenticated) break
+            if (!userAuthenticated) {
+                break
+            }
 
             if (parentModels.any {canDoRoleWithGroups(role, userGroups, it)}) {
                 canDo.add(role)
@@ -253,7 +285,9 @@ class AccessControlService implements Toggleable {
      * @return if authorised, throw AuthorizationException otherwise
      */
     void checkAdminOrUser(UUID catalogueUserId = null) {
-        if (!enabled) return
+        if (!enabled) {
+            return
+        }
 
         if (!securityService.authenticated) {
             throw new AuthenticationException('User is not authenticated')

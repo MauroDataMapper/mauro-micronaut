@@ -49,7 +49,9 @@ class MauroOpenIdAuthenticationMapper extends DefaultOpenIdAuthenticationMapper 
     @Transactional
     Map<String, Object> buildAttributes(String providerName, OpenIdTokenResponse tokenResponse, OpenIdClaims openIdClaims) {
         Map<String, Object> claims = super.buildAttributes(providerName, tokenResponse, openIdClaims)
-        if (!claims.email) authenticationException("Attempt to login with no email address specified!")
+        if (!claims.email) {
+            authenticationException("Attempt to login with no email address specified!")
+        }
 
         claims.put("provider-name", providerName)
 
@@ -74,7 +76,9 @@ class MauroOpenIdAuthenticationMapper extends DefaultOpenIdAuthenticationMapper 
         }
 
         // Entra does not provide email_verified
-        if (toRequireVerifiedEmail && !claims.email_verified) authenticationException("Attempt to login with unverified email address! [${claims.email}]")
+        if (toRequireVerifiedEmail && !claims.email_verified) {
+            authenticationException("Attempt to login with unverified email address! [${claims.email}]")
+        }
 
         if( toTokenCustomValidation !=null && !toTokenCustomValidation.isEmpty()) {
             log.debug("Checking token custom claims")
@@ -96,7 +100,9 @@ class MauroOpenIdAuthenticationMapper extends DefaultOpenIdAuthenticationMapper 
         }
 
         CatalogueUser user = catalogueUserCacheableRepository.readByEmailAddress((String) claims.email) ?: toCreateUser ? createUser(claims) : null
-        if (!user) authenticationException("User does not exist for $claims.email")
+        if (!user) {
+            authenticationException("User does not exist for $claims.email")
+        }
         claims.id = user.id
         claims.forEach {String claim, Object claimValue ->
             log.debug("claims: {}: {}", claim, claimValue)

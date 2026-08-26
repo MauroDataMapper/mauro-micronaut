@@ -73,34 +73,64 @@ class PublishedModel implements Comparable<PublishedModel> {
 
 
     void setDescription(String description) {
-        if (description && description != title) this.description = description
+        if (description && description != title) {
+            this.description = description
+        }
     }
 
     @Override
     int compareTo(PublishedModel that) {
         int res = this.modelLabel <=> that.modelLabel
-        if (res == 0) res = this.modelVersion <=> that.modelVersion
+        if (res == 0) {
+            res = this.modelVersion <=> that.modelVersion
+        }
         res
     }
 
 
     boolean equals(o) {
-        if (this.is(o)) return true
-        if (!(o instanceof PublishedModel)) return false
+        if (this.is(o)) {
+            return true
+        }
+        if (!(o instanceof PublishedModel)) {
+            return false
+        }
 
         PublishedModel that = (PublishedModel) o
 
-        if (author != that.author) return false
-        if (dateCreated != that.dateCreated) return false
-        if (datePublished != that.datePublished) return false
-        if (description != that.description) return false
-        if (lastUpdated != that.lastUpdated) return false
-        if (links != that.links) return false
-        if (modelId != that.modelId) return false
-        if (modelLabel != that.modelLabel) return false
-        if (modelType != that.modelType) return false
-        if (modelVersion != that.modelVersion) return false
-        if (modelVersionTag != that.modelVersionTag) return false
+        if (author != that.author) {
+            return false
+        }
+        if (dateCreated != that.dateCreated) {
+            return false
+        }
+        if (datePublished != that.datePublished) {
+            return false
+        }
+        if (description != that.description) {
+            return false
+        }
+        if (lastUpdated != that.lastUpdated) {
+            return false
+        }
+        if (links != that.links) {
+            return false
+        }
+        if (modelId != that.modelId) {
+            return false
+        }
+        if (modelLabel != that.modelLabel) {
+            return false
+        }
+        if (modelType != that.modelType) {
+            return false
+        }
+        if (modelVersion != that.modelVersion) {
+            return false
+        }
+        if (modelVersionTag != that.modelVersionTag) {
+            return false
+        }
         return true
     }
 

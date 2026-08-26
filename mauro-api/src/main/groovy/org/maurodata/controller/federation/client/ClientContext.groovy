@@ -14,7 +14,9 @@ class ClientContext {
         if (subscribedCatalogue.subscribedCatalogueType == SubscribedCatalogueType.MAURO_JSON) {
             String hostUriPath = formattedPath(hostUri.path)
 
-            if (!hostUriPath.endsWith(FederationClientConfiguration.API_PATH)) hostUriPath = hostUriPath + FederationClientConfiguration.API_PATH
+            if (!hostUriPath.endsWith(FederationClientConfiguration.API_PATH)) {
+                hostUriPath = hostUriPath + FederationClientConfiguration.API_PATH
+            }
             hostUriPath
         } else {
             hostUri.path

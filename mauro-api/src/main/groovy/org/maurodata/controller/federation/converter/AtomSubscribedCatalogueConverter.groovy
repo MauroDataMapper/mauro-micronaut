@@ -69,9 +69,15 @@ class AtomSubscribedCatalogueConverter implements SubscribedCatalogueConverter {
         new PublishedModel().tap {
             modelId = entry.id
             modelLabel = entry.title
-            if (entry.contentItemVersion.text()) modelVersionTag = entry.contentItemVersion.text()
-            if (entry.updated.text()) lastUpdated = convert(entry.updated.text())
-            if (entry.published.text()) datePublished = convert(entry.published.text())
+            if (entry.contentItemVersion.text()) {
+                modelVersionTag = entry.contentItemVersion.text()
+            }
+            if (entry.updated.text()) {
+                lastUpdated = convert(entry.updated.text())
+            }
+            if (entry.published.text()) {
+                datePublished = convert(entry.published.text())
+            }
             author = entry.author.name ?: subscribedCatalogueModelsFeed.author.name
             description = entry.summary
             links = entry.link.collect {link ->

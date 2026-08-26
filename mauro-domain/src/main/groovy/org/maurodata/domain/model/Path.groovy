@@ -205,13 +205,19 @@ class Path {
         @Override
         String toString() {
             String value = prefix + ':' + escapeIdentifier(identifier)
-            if (modelIdentifier) value += '$' + escapeIdentifier(modelIdentifier)
-            if (attribute) value += '@' + escapeIdentifier(attribute)
+            if (modelIdentifier) {
+                value += '$' + escapeIdentifier(modelIdentifier)
+            }
+            if (attribute) {
+                value += '@' + escapeIdentifier(attribute)
+            }
             value
         }
 
         static String escapeIdentifier(final String input) {
-            if (input == null) return null
+            if (input == null) {
+                return null
+            }
             // escape '%' first, otherwise we'll double-escape later
             return input
                 .replaceAll('%', '%%')
@@ -222,7 +228,9 @@ class Path {
         }
 
         static String unescapeIdentifier(final String input) {
-            if (input == null) return null
+            if (input == null) {
+                return null
+            }
             return input.replaceAll(/%([$@|:%])/) {all, ch -> ch}
         }
 

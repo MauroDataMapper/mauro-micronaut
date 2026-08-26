@@ -278,7 +278,9 @@ class DataModelController extends ModelController<DataModel> implements DataMode
         List<DataElement> additionDataElements = subsetData.additions?.collect {dataElementCacheableRepository.findById(it)}
         additionDataElements?.each {DataElement dataElement ->
             pathRepository.readParentItems(dataElement)
-            if (dataElement.owner.id != dataModel.id) throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Subset DataElements for Addition must be within the source DataModel")
+            if (dataElement.owner.id != dataModel.id) {
+                throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Subset DataElements for Addition must be within the source DataModel")
+            }
         }
 
         DataModel additionSubset = new DataModel()
@@ -369,7 +371,9 @@ class DataModelController extends ModelController<DataModel> implements DataMode
         List<DataElement> deletionDataElements = subsetData.deletions?.collect {dataElementCacheableRepository.findById(it)}
         deletionDataElements?.each {DataElement dataElement ->
             pathRepository.readParentItems(dataElement)
-            if (dataElement.owner.id != dataModel.id) throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Subset DataElements for Deletion must be within the source DataModel")
+            if (dataElement.owner.id != dataModel.id) {
+                throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Subset DataElements for Deletion must be within the source DataModel")
+            }
         }
 
         otherDataModel = dataModelRepository.loadWithContent(otherId)
@@ -411,8 +415,10 @@ class DataModelController extends ModelController<DataModel> implements DataMode
         List<DataElement> dataElements = intersectsManyData.dataElementIds.collect {dataElementCacheableRepository.readById(it)}
         dataElements.each {DataElement dataElement ->
             pathRepository.readParentItems(dataElement)
-            if (dataElement.owner.id != sourceDataModel.id) throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
-                                                                                          "Intersection DataElements must be within the source DataModel")
+            if (dataElement.owner.id != sourceDataModel.id) {
+                throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
+                                              "Intersection DataElements must be within the source DataModel")
+            }
         }
 
         Map<UUID, List<DataElement>> targetDataModelsDataElementsMap = targetDataModels.collectEntries {[it.id, dataElementRepository.readAllByDataClassDataModelIdIn([it.id])]}

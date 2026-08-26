@@ -147,7 +147,9 @@ abstract class ApiClient {
     ListResponse<Folder> importFolder(Folder folder, UUID parentFolderId = null) {
 
         MultipartBody.Builder importRequest = MultipartBody.builder()
-            .tap {if (parentFolderId) it.addPart('folderId', parentFolderId.toString())}
+            .tap {if (parentFolderId) {
+                it.addPart('folderId', parentFolderId.toString())
+            }}
             .addPart('importFile', 'file.json', MediaType.APPLICATION_JSON_TYPE, jsonFolderExporterPlugin.exportModel(folder))
 
         folderApi.importModel(

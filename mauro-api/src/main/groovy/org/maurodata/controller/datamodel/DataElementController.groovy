@@ -126,7 +126,9 @@ class DataElementController extends AdministeredItemController<DataElement, Data
             }
         }
         boolean hasChanged = updateProperties(existing, cleanItem)
-        if (!hasChanged && dataElement?.dataType?.id != existing.dataType?.id) hasChanged = true
+        if (!hasChanged && dataElement?.dataType?.id != existing.dataType?.id) {
+            hasChanged = true
+        }
         existing = validateDataTypeChange(existing, cleanItem)
         //updateDerivedProperties(existing)
         DataElement updated = existing
@@ -236,7 +238,9 @@ class DataElementController extends AdministeredItemController<DataElement, Data
      * @return existing, updated with new DTid
      */
     protected DataElement validateDataTypeChange(DataElement existing, DataElement dataElement) {
-        if (!dataElement.dataType) return existing
+        if (!dataElement.dataType) {
+            return existing
+        }
 
         DataType dataElementDataType = dataTypeRepository.readById(dataElement.dataType.id)
         if (!dataElementDataType) {

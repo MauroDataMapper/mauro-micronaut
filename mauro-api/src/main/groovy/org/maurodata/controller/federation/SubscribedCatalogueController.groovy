@@ -201,7 +201,9 @@ class SubscribedCatalogueController extends ItemController<SubscribedCatalogue> 
         if (deletedCount) {
             log.debug("Removed $deletedCount of associated models")
         }
-        if (subscribedCatalogue?.version) catalogueToDelete.version = subscribedCatalogue.version
+        if (subscribedCatalogue?.version) {
+            catalogueToDelete.version = subscribedCatalogue.version
+        }
         Long deleted = subscribedCatalogueCacheableRepository.delete(catalogueToDelete)
         if (deleted) {
             HttpResponse.status(HttpStatus.NO_CONTENT)

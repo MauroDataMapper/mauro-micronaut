@@ -27,14 +27,24 @@ class PathRepository {
         AdministeredItem node = item.id ? (AdministeredItem) getRepository(item).readById(item.id) : item
         while (node) {
             items.add(node)
-            if (node.parent) node = (AdministeredItem) getRepository(node.parent).readById(node.parent.id)
-            else node = null
+            if (node.parent) {
+                node = (AdministeredItem) getRepository(node.parent).readById(node.parent.id)
+            }
+            else {
+                node = null
+            }
             i++
-            if (i > Path.PATH_MAX_NODES) throw new MauroInternalException("Path exceeded maximum depth of [$Path.PATH_MAX_NODES]")
+            if (i > Path.PATH_MAX_NODES) {
+                throw new MauroInternalException("Path exceeded maximum depth of [$Path.PATH_MAX_NODES]")
+            }
         }
-        if (items[1]) item.parent = items[1]
+        if (items[1]) {
+            item.parent = items[1]
+        }
         items.eachWithIndex {AdministeredItem it, Integer j ->
-            if (items[j+1]) it.parent = items[j+1]
+            if (items[j+1]) {
+                it.parent = items[j+1]
+            }
         }
     }
 

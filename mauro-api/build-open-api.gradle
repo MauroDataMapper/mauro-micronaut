@@ -48,7 +48,9 @@ tasks.register('pruneTransitiveRefs') {
 
         // helper: extract schema name from $ref like '#/components/schemas/Foo'
         def refToName = { ref ->
-            if (!(ref instanceof String)) return null
+            if (!(ref instanceof String)) {
+                return null
+            }
             def m = (ref =~ /#\/components\/schemas\/(.+)/)
             m ? m[0][1] : null
         }
@@ -68,7 +70,9 @@ tasks.register('pruneTransitiveRefs') {
             Map<String, Set<String>> directRefs = [:]
 
             schemas.each { schemaName, schema ->
-                if (!(schema instanceof Map)) return
+                if (!(schema instanceof Map)) {
+                    return
+                }
                 def aof = schema.allOf
                 if (aof instanceof Collection) {
                     aof.each { entry ->
@@ -105,18 +109,24 @@ tasks.register('pruneTransitiveRefs') {
                 def stack = new ArrayDeque<String>()
                 // push the direct neighbors if any (no creation on read)
                 def neighbors = directRefs.get(s)
-                if (neighbors) stack.addAll(neighbors)
+                if (neighbors) {
+                    stack.addAll(neighbors)
+                }
 
                 while (!stack.isEmpty()) {
                     def cur = stack.removeFirst()
-                    if (!cur || visited.contains(cur)) continue
+                    if (!cur || visited.contains(cur)) {
+                        continue
+                    }
                     visited.add(cur)
                     transitive[s].add(cur)
                     // only read neighbors if the key exists (no creation)
                     def curNeighbors = directRefs.get(cur)
                     if (curNeighbors) {
                         curNeighbors.each { rr ->
-                            if (!visited.contains(rr)) stack.addLast(rr)
+                            if (!visited.contains(rr)) {
+                                stack.addLast(rr)
+                            }
                         }
                     }
                 }
@@ -126,7 +136,9 @@ tasks.register('pruneTransitiveRefs') {
             boolean modified = false
 
             schemas.each { name, schema ->
-                if (!(schema instanceof Map && schema.allOf instanceof Collection)) return
+                if (!(schema instanceof Map && schema.allOf instanceof Collection)) {
+                    return
+                }
 
                 def refs = schema.allOf.findAll { it instanceof Map && it['$ref'] }
                 def refNames = refs.collect { refToName(it['$ref']) }
@@ -134,11 +146,17 @@ tasks.register('pruneTransitiveRefs') {
                 def redundant = new LinkedHashSet<String>()
                 for (int i = 0; i < refNames.size(); i++) {
                     def r = refNames[i]
-                    if (!r) continue
+                    if (!r) {
+                        continue
+                    }
                     for (int j = 0; j < refNames.size(); j++) {
-                        if (i == j) continue
+                        if (i == j) {
+                            continue
+                        }
                         def q = refNames[j]
-                        if (!q) continue
+                        if (!q) {
+                            continue
+                        }
                         if (transitive[q]?.contains(r)) {
                             redundant.add(r)
                         }
@@ -174,7 +192,9 @@ tasks.register('pruneTransitiveRefs') {
 
             canonicaliseSchema = { Object schema ->
 
-                if (!(schema instanceof Map)) return schema
+                if (!(schema instanceof Map)) {
+                    return schema
+                }
 
                 def ignoredKeys = [
                     'description',

@@ -32,9 +32,15 @@ abstract class ModelService<M extends Model> {
     }
 
     M finaliseModel(M model, M parentModel, @Nullable ModelVersion requestedModelVersion, @Nullable VersionChangeType versionChangeType, @Nullable String versionTag) {
-        if (!requestedModelVersion && !versionChangeType) throw new IllegalArgumentException('A version or versionChangeType must be specified to finalise a Model')
-        if (model.branchName != Model.DEFAULT_BRANCH_NAME) throw new MauroApplicationException("Cannot finalise Model [$model.label] as it is not on branch 'main'")
-        if (model.finalised) throw new MauroApplicationException("Cannot finalise Model [$model.label] as it is already finalised")
+        if (!requestedModelVersion && !versionChangeType) {
+            throw new IllegalArgumentException('A version or versionChangeType must be specified to finalise a Model')
+        }
+        if (model.branchName != Model.DEFAULT_BRANCH_NAME) {
+            throw new MauroApplicationException("Cannot finalise Model [$model.label] as it is not on branch 'main'")
+        }
+        if (model.finalised) {
+            throw new MauroApplicationException("Cannot finalise Model [$model.label] as it is already finalised")
+        }
 
         model.finalised = true
         model.dateFinalised = Instant.now()
