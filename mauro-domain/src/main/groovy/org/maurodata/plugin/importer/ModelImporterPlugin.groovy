@@ -90,8 +90,9 @@ trait ModelImporterPlugin <D extends Model, P extends ImportParameters> extends 
                     fieldType = field.getType().getSimpleName()
             }
             ImportParameterConfig config = field.getAnnotation(ImportParameterConfig)
-            if (config.password())
+            if (config.password()) {
                 fieldType = 'Password'
+            }
 
             return [
                 groupName: config.group().name(),

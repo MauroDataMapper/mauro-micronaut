@@ -175,10 +175,12 @@ class LowLevelApi {
 
 
     void addHeaders(MutableHttpRequest<Object> request) {
-        if(apiKey)
+        if(apiKey) {
             request.header('apiKey', apiKey.toString())
-        if (sessionCookie)
+        }
+        if (sessionCookie) {
             request.cookie(sessionCookie)
+        }
     }
 
 

@@ -259,11 +259,13 @@ class AccessControlService implements Toggleable {
             throw new AuthenticationException('User is not authenticated')
         }
 
-        if(administrator)
+        if(administrator) {
             return
+        }
 
-        if(catalogueUserId && user.id == catalogueUserId)
+        if(catalogueUserId && user.id == catalogueUserId) {
             return
+        }
 
 
         throw new AuthorizationException(userAuthentication)
