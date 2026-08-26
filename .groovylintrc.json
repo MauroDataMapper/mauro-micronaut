@@ -19,6 +19,7 @@
     "SpaceAfterComma": "off",
     "ConsecutiveBlankLines": "off",
     "SpaceAroundOperator": "off",
+    "SpaceInsideParentheses": "off",
 
     "CompileStatic": "off",
 
@@ -36,6 +37,11 @@
     "UnnecessaryGetter": "off",
     "UnnecessarySetter": "off",
     "UnnecessaryReturnKeyword": "off",
+    "UnnecessaryObjectReference": "off",
+
+    "ConfusingMethodName": "off",
+
+    "GetterMethodCouldBeProperty": "off",
 
     "ClassJavadoc": "off",
     "MethodJavadoc": "off",
@@ -56,6 +62,7 @@
 
 
     "JUnitPublicProperty": "off",
-    "JUnitPublicNonTestMethod": "off"
+    "JUnitPublicNonTestMethod": "off",
+    "JUnitTestMethodWithoutAssert": "off"
   }
 }
