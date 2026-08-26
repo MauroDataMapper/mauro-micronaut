@@ -7,8 +7,6 @@ import org.maurodata.domain.folder.Folder
 import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository
 
-import java.util.Locale
-
 @CompileStatic
 @Slf4j
 class PathPrefixTypeLookup {

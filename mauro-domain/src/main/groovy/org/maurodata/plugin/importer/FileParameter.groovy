@@ -18,11 +18,6 @@
 package org.maurodata.plugin.importer
 
 import groovy.transform.CompileStatic
-import java.io.BufferedInputStream
-import java.io.ByteArrayInputStream
-import java.io.Closeable
-import java.io.File
-import java.io.InputStream
 import java.nio.file.Files
 import java.nio.file.Path
 
