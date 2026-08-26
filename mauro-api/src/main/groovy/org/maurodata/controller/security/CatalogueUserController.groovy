@@ -397,7 +397,7 @@ class CatalogueUserController extends ItemController<CatalogueUser> implements C
 
         if(existing==null){
             log.debug("User with id ${id} not found")
-            throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, 'User with id ${id} not found')
+            throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "User with id ${id} not found")
         }
 
         log.debug("Resetting user '${existing.emailAddress}' password(Actor: '${accessControlService.user.emailAddress}')")
