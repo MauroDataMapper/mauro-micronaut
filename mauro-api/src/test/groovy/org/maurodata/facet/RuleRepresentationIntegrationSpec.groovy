@@ -33,7 +33,7 @@ class RuleRepresentationIntegrationSpec extends CommonDataSpec {
 
     void 'list empty Rule Representations'() {
         when:
-        def response = ruleRepresentationApi.list('folder', folderId, rule.id)
+        ListResponse<RuleRepresentation> response = ruleRepresentationApi.list('folder', folderId, rule.id)
         then:
         response.count == 0
     }

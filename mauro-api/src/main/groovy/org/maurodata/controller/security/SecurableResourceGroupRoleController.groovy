@@ -118,7 +118,7 @@ class SecurableResourceGroupRoleController extends ItemController<SecurableResou
         }
     }
 
-    protected checkCanEditRoleOnItem(Role role, AdministeredItem securableResource) {
+    protected void checkCanEditRoleOnItem(Role role, AdministeredItem securableResource) {
         if (securableResource instanceof Folder) {
             accessControlService.checkRole(Role.CONTAINER_ADMIN, securableResource)
         } else {

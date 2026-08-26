@@ -1233,7 +1233,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
 
             lookingInOne:
             for (Map<String, FieldDiff> pathToFieldDiff : flattenedDiffOneMapList) {
-                final foundFieldDiff = pathToFieldDiff.get(key)
+                final FieldDiff foundFieldDiff = pathToFieldDiff.get(key)
                 if (foundFieldDiff != null) {
                     fieldDiffOne = foundFieldDiff
                     if (pathToFieldDiff == flattenedDiffOneCreated) {
@@ -1248,7 +1248,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
             FieldDiff fieldDiffTwo = null
             lookingInTwo:
             for (Map<String, FieldDiff> pathToFieldDiff : flattenedDiffTwoMapList) {
-                final foundFieldDiff = pathToFieldDiff.get(key)
+                final FieldDiff foundFieldDiff = pathToFieldDiff.get(key)
                 if (foundFieldDiff != null) {
                     fieldDiffTwo = foundFieldDiff
                     break lookingInTwo

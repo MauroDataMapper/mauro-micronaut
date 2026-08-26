@@ -7,6 +7,7 @@
     "SpaceAfterOpeningBrace": "off",
     "SpaceBeforeOpeningBrace": "off",
     "SpaceBeforeClosingBrace": "off",
+    "SpaceAfterClosingBrace": "off",
     "Indentation": "off",
     "TrailingWhitespace": "off",
     "ClassStartsWithBlankLine": "off",
@@ -18,6 +19,8 @@
     "SpaceAfterComma": "off",
     "ConsecutiveBlankLines": "off",
     "SpaceAroundOperator": "off",
+
+    "CompileStatic": "off",
 
     "PublicMethodsBeforeNonPublicMethods": "off",
     "StaticMethodsBeforeInstanceMethods": "off",
@@ -52,6 +55,7 @@
     "Instanceof": "off",
 
 
-    "JUnitPublicProperty": "off"
+    "JUnitPublicProperty": "off",
+    "JUnitPublicNonTestMethod": "off"
   }
 }

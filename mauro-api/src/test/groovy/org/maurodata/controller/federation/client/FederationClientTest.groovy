@@ -12,7 +12,7 @@ class FederationClientTest extends Specification {
         federationClient.getSubscribedCatalogueModelsFromAtomFeed()
         then:
         Exception exception = thrown()
-        exception.isAssignableFrom(SAXParseException.class)
+        exception instanceof SAXParseException
     }
 
     void 'test IO exception - should throw '() {
@@ -21,6 +21,6 @@ class FederationClientTest extends Specification {
         federationClient.getSubscribedCatalogueModelsFromAtomFeed()
         then:
         Exception exception = thrown()
-        exception.isAssignableFrom(FileNotFoundException.class)
+        exception instanceof FileNotFoundException
     }
 }

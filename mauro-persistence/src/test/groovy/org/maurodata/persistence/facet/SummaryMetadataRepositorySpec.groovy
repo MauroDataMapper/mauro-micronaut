@@ -38,7 +38,7 @@ class SummaryMetadataRepositorySpec extends Specification {
     @Shared
     UUID dataModelId
 
-    def TestRuleAndRepresentations() {
+    void TestRuleAndRepresentations() {
         given:
 
         myFirstFolder = folderRepository.save(new Folder(

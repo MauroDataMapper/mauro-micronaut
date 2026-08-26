@@ -44,7 +44,7 @@ class DataModelRepositorySpec extends Specification {
 
 //    def "Test try storing a terminology"() {
 
-    def TestTerminology() {
+    void TestTerminology() {
         given:
 
         Folder folder = folderRepository.save(new Folder(

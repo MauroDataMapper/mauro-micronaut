@@ -44,7 +44,7 @@ class EmailIntegrationSpec extends CommonDataSpec {
         when:
         adminApi.sendTestEmail(testUserFail)
         then:
-        def e = thrown(Exception)
+        Exception e = thrown(Exception)
         e.message == "Internal Server Error"
 
         when:

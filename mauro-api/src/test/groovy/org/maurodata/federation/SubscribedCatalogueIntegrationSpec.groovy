@@ -1,5 +1,6 @@
 package org.maurodata.federation
 
+import groovy.xml.slurpersupport.GPathResult
 import org.maurodata.controller.federation.converter.AtomSubscribedCatalogueConverter
 import org.maurodata.domain.facet.federation.PublishedModel
 import org.maurodata.domain.facet.federation.SubscribedCatalogue
@@ -387,7 +388,7 @@ class SubscribedCatalogueIntegrationSpec extends SecuredIntegrationSpec {
 
 
     List<PublishedModel> atomExpectedResponse() {
-        def atomResults = new XmlSlurper().parse(new File('src/test/resources/xml-federated-data-test.xml'))
+        GPathResult atomResults = new XmlSlurper().parse(new File('src/test/resources/xml-federated-data-test.xml'))
         atomResults.entry.collect { AtomSubscribedCatalogueConverter.convertEntryToPublishedModel(atomResults, it)}.sort {l, r ->
             r.lastUpdated <=> l.lastUpdated ?:
             l.modelLabel.compareToIgnoreCase(r.modelLabel) ?:

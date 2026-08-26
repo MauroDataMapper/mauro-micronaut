@@ -47,7 +47,7 @@ class LoginLogoutIntegrationSpec extends SecuredIntegrationSpec {
         response
 
         when:
-        def modulesResponse = adminApi.modules()
+        List<LinkedHashMap<String, String>> modulesResponse = adminApi.modules()
 
         then:
         modulesResponse

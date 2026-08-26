@@ -46,7 +46,7 @@ class FullTextSearchSpec extends Specification {
     @Shared
     DataModel dataModel2
 
-    def setupSpec() {
+    void setupSpec() {
         Folder myFirstFolder = folderRepository.save(new Folder(
             label: "My Search Folder"
         ))

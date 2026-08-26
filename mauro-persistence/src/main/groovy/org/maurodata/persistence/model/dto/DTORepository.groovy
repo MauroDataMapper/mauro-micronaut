@@ -8,5 +8,5 @@ abstract class DTORepository<DTO extends Item> implements GenericRepository<DTO,
 
     // Should be overriden if additional joins needed
     @Join(value = 'authority', type = Join.Type.LEFT_FETCH)
-    abstract DTO findById(UUID)
+    abstract DTO findById(UUID uuid)
 }

@@ -459,7 +459,7 @@ class DataClassController extends AdministeredItemController<DataClass, DataMode
         return null
     }
 
-    protected guardAgainstBadMoves(UUID dataClassId, DataClass parentDataClass) {
+    protected void guardAgainstBadMoves(UUID dataClassId, DataClass parentDataClass) {
         if(parentDataClass) {
             if(!parentDataClass.id) {
                 ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "Cannot move data class - no id for parent set!")

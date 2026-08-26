@@ -19,7 +19,7 @@ class AnnotationSpec extends Specification {
     @Shared
     AnnotationService annotationService
 
-    def setupSpec(){
+    void setupSpec(){
         annotationService = new AnnotationService()
     }
 

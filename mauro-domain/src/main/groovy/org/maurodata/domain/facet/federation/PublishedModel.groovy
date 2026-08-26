@@ -88,7 +88,7 @@ class PublishedModel implements Comparable<PublishedModel> {
     }
 
 
-    boolean equals(o) {
+    boolean equals(Object o) {
         if (this.is(o)) {
             return true
         }

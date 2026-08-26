@@ -73,7 +73,7 @@ class RuleRepositorySpec extends Specification {
         dataModelId = contentsService.saveWithContent(dataModel).id
     }
 
-    def TestRuleAndRepresentations() {
+    void TestRuleAndRepresentations() {
         when:
         DataModel retrievedDataModel = dataModelRepository.loadWithContent(dataModelId)
 
@@ -89,7 +89,7 @@ class RuleRepositorySpec extends Specification {
         retrievedDataModel.rules.first().ruleRepresentations.find { it.language == "Java"}
     }
 
-    def TestCacheInvalidation() {
+    void TestCacheInvalidation() {
         when:
         DataModel retrievedDataModel = dataModelRepository.loadWithContent(dataModelId)
 

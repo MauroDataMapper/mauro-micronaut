@@ -160,7 +160,7 @@ class ApiKeyIntegrationSpec extends SecuredIntegrationSpec {
 
         adminApi.listEmails()
         then:
-        def e = thrown(Exception)
+        Exception e = thrown(Exception)
         e.message == "Unauthorized"
 
         when:
@@ -212,7 +212,7 @@ class ApiKeyIntegrationSpec extends SecuredIntegrationSpec {
 
         adminApi.listEmails()
         then:
-        def e = thrown(Exception)
+        Exception e = thrown(Exception)
         e.message == "Unauthorized"
 
         when:
@@ -265,7 +265,7 @@ class ApiKeyIntegrationSpec extends SecuredIntegrationSpec {
         catalogueUserApi.currentUser()
 
         then:
-        def e = thrown(Exception)
+        Exception e = thrown(Exception)
         e.message == "User is not authenticated"
 
         when:
@@ -298,7 +298,7 @@ class ApiKeyIntegrationSpec extends SecuredIntegrationSpec {
         catalogueUserApi.currentUser()
 
         then:
-        def e = thrown(Exception)
+        Exception e = thrown(Exception)
         e.message == "User is not authenticated"
 
         when:
@@ -331,7 +331,7 @@ class ApiKeyIntegrationSpec extends SecuredIntegrationSpec {
         catalogueUserApi.currentUser()
 
         then:
-        def e = thrown(Exception)
+        Exception e = thrown(Exception)
         e.message == "User is not authenticated"
 
         when:

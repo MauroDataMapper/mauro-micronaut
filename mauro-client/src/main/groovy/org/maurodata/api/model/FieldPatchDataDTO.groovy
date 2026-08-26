@@ -48,7 +48,7 @@ class FieldPatchDataDTO implements Comparable<FieldPatchDataDTO>{
     }
 
     @Override
-    boolean equals(o) {
+    boolean equals(Object o) {
         if (this.is(o)) {
             return true
         }

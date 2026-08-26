@@ -25,7 +25,7 @@ class ApiKeyRepositorySpec extends Specification {
     @Shared
     CatalogueUser savedUser
 
-    def setup() {
+    void setup() {
         CatalogueUser adminUser = new CatalogueUser(
             emailAddress: 'admin@example.com',
             firstName: 'Admin',

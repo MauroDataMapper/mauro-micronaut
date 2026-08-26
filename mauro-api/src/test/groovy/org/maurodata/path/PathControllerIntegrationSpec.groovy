@@ -35,7 +35,7 @@ class PathControllerIntegrationSpec extends CommonDataSpec {
     UUID codeSetId
 
 
-    def setup() {
+    void setup() {
         folderId = folderApi.create(folder()).id
         codeSetId = codeSetApi.create(folderId, codeSet(EXPECTED_LABEL)).id
     }

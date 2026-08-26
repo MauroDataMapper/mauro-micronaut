@@ -2,6 +2,7 @@ package org.maurodata
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
+import io.micronaut.http.HttpResponse
 import jakarta.inject.Singleton
 import org.maurodata.api.admin.AdminApi
 import org.maurodata.api.classifier.ClassificationSchemeApi
@@ -160,14 +161,14 @@ abstract class ApiClient {
     }
 
     DataModel exportDataModel(UUID dataModelId) {
-        def response = dataModelApi.exportModel(dataModelId, jsonDataModelExporterPlugin.namespace, jsonDataModelExporterPlugin.name, jsonDataModelExporterPlugin.version)
+        HttpResponse<byte[]> response = dataModelApi.exportModel(dataModelId, jsonDataModelExporterPlugin.namespace, jsonDataModelExporterPlugin.name, jsonDataModelExporterPlugin.version)
         ExportModel exportModel = objectMapper.readValue(response.body(), ExportModel)
         DataModel dataModel = exportModel.dataModel
         return dataModel
     }
 
     Terminology exportTerminology(UUID terminologyId) {
-        def response = terminologyApi.exportModel(terminologyId, jsonTerminologyExporterPlugin.namespace, jsonTerminologyExporterPlugin.name, jsonTerminologyExporterPlugin.version)
+        HttpResponse<byte[]> response = terminologyApi.exportModel(terminologyId, jsonTerminologyExporterPlugin.namespace, jsonTerminologyExporterPlugin.name, jsonTerminologyExporterPlugin.version)
         ExportModel exportModel = objectMapper.readValue(response.body(), ExportModel)
         Terminology terminology = exportModel.terminology
         return terminology

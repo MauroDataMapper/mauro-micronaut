@@ -36,7 +36,7 @@ class LowLevelApi {
     }
 
     <T> T GET(String uri, Class<T> type, Class internalType = null) {
-        def response = client.toBlocking().retrieve(HttpRequest.GET(uri).tap {
+        T response = client.toBlocking().retrieve(HttpRequest.GET(uri).tap {
             addHeaders(it)
         }, type)
         if(type == ListResponse && internalType) {

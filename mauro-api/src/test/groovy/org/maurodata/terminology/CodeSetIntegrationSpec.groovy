@@ -39,7 +39,7 @@ class CodeSetIntegrationSpec extends CommonDataSpec {
     Term term3
 
 
-    def setup() {
+    void setup() {
         folderId = folderApi.create(folder()).id
         Terminology terminology = terminologyApi.create(folderId, new Terminology(label: "My terminology"))
         terminologyId = terminology.id
@@ -51,7 +51,7 @@ class CodeSetIntegrationSpec extends CommonDataSpec {
 
     void 'test post'() {
         when:
-        def response = codeSetApi.create(folderId, codeSet())
+        CodeSet response = codeSetApi.create(folderId, codeSet())
 
         then:
         response
@@ -95,8 +95,8 @@ class CodeSetIntegrationSpec extends CommonDataSpec {
 
     void 'test codeSet getById'() {
         given:
-        def codeSetPayload = codeSet()
-        def response = codeSetApi.create(folderId, codeSetPayload)
+        CodeSet codeSetPayload = codeSet()
+        CodeSet response = codeSetApi.create(folderId, codeSetPayload)
         codeSetId = response.id
 
         when:
@@ -182,7 +182,7 @@ class CodeSetIntegrationSpec extends CommonDataSpec {
         given:
         CodeSet response = codeSetApi.create(folderId, codeSet())
         codeSetId = response.id
-        def newAuthor = 'New author name'
+        String newAuthor = 'New author name'
         CodeSet codeSet = codeSet()
         codeSet.author = newAuthor
 
@@ -200,7 +200,7 @@ class CodeSetIntegrationSpec extends CommonDataSpec {
         given:
         CodeSet response = codeSetApi.create(folderId, codeSet())
         codeSetId = response.id
-        def newAuthor = 'New author name'
+        String newAuthor = 'New author name'
         CodeSet codeSet = codeSet()
         codeSet.author = newAuthor
         codeSet.terms = [term1, term3]
@@ -300,7 +300,7 @@ class CodeSetIntegrationSpec extends CommonDataSpec {
 
     void 'test getTermsForCodeSet'() {
         given:
-        def response = codeSetApi.create(folderId, codeSet())
+        CodeSet response = codeSetApi.create(folderId, codeSet())
         codeSetId = response.id
         CodeSet codeSet = codeSet() as CodeSet
         codeSet.id = codeSetId

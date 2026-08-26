@@ -7,7 +7,7 @@ import java.security.MessageDigest
 
 apply from: rootProject.file('gradle/open-api-helpers.gradle')
 
-def requireOpenApiEnabled = {
+Closure requireOpenApiEnabled = {
     if (!project.ext.openApiEnabled) {
         throw new GradleException('OpenAPI generation is disabled. Re-run with -PenableOpenApi=true to generate/normalize OpenAPI output.')
     }
@@ -30,9 +30,9 @@ tasks.register('pruneTransitiveRefs') {
 
     doLast {
         requireOpenApiEnabled()
-        def classesDir = layout.buildDirectory.dir("classes").get().asFile
+        File classesDir = layout.buildDirectory.dir("classes").get().asFile
 
-        def swaggerFiles = fileTree(classesDir).matching {
+        List<File> swaggerFiles = fileTree(classesDir).matching {
             include "**/META-INF/swagger/*.yml"
             include "**/META-INF/swagger/*.yaml"
         }.files.toList()
@@ -44,10 +44,10 @@ tasks.register('pruneTransitiveRefs') {
 
         logger.lifecycle("pruneTransitiveRefs: processing ${swaggerFiles.size()} file(s)")
 
-        def slurper = new YamlSlurper()
+        YamlSlurper slurper = new YamlSlurper()
 
         // helper: extract schema name from $ref like '#/components/schemas/Foo'
-        def refToName = { ref ->
+        Closure refToName = { ref ->
             if (!(ref instanceof String)) {
                 return null
             }
@@ -58,13 +58,13 @@ tasks.register('pruneTransitiveRefs') {
         swaggerFiles.each { File f ->
             logger.lifecycle(" prune: ${f}")
 
-            def root = slurper.parse(f)
+            Object root = slurper.parse(f)
             if (!(root?.components?.schemas instanceof Map)) {
                 logger.lifecycle("  - no components.schemas, skipping")
                 return
             }
 
-            def schemas = root.components.schemas as Map
+            Map<String, Object> schemas = root.components.schemas as Map<String, Object>
 
             // Build directRefs as a plain map that won't auto-create entries on read
             Map<String, Set<String>> directRefs = [:]
@@ -89,7 +89,7 @@ tasks.register('pruneTransitiveRefs') {
                 }
                 // handle top-level $ref if present
                 if (schema instanceof Map && schema['$ref']) {
-                    def refName = refToName(schema['$ref'])
+                    String refName = refToName(schema['$ref'])
                     if (refName) {
                         if (!directRefs.containsKey(schemaName)) {
                             directRefs[schemaName] = new LinkedHashSet<String>()
@@ -103,7 +103,7 @@ tasks.register('pruneTransitiveRefs') {
             Map<String, Set<String>> transitive = [:].withDefault { new LinkedHashSet<String>() }
 
             // iterate over a snapshot of keys to be extra-safe
-            def keysSnapshot = new ArrayList(directRefs.keySet())
+            List<String> keysSnapshot = new ArrayList(directRefs.keySet())
             keysSnapshot.each { s ->
                 def visited = new LinkedHashSet<String>()
                 def stack = new ArrayDeque<String>()
@@ -114,14 +114,14 @@ tasks.register('pruneTransitiveRefs') {
                 }
 
                 while (!stack.isEmpty()) {
-                    def cur = stack.removeFirst()
+                    String cur = stack.removeFirst()
                     if (!cur || visited.contains(cur)) {
                         continue
                     }
                     visited.add(cur)
                     transitive[s].add(cur)
                     // only read neighbors if the key exists (no creation)
-                    def curNeighbors = directRefs.get(cur)
+                    Set<String> curNeighbors = directRefs.get(cur)
                     if (curNeighbors) {
                         curNeighbors.each { rr ->
                             if (!visited.contains(rr)) {
@@ -140,12 +140,12 @@ tasks.register('pruneTransitiveRefs') {
                     return
                 }
 
-                def refs = schema.allOf.findAll { it instanceof Map && it['$ref'] }
-                def refNames = refs.collect { refToName(it['$ref']) }
+                List<Object> refs = schema.allOf.findAll { it instanceof Map && it['$ref'] }
+                List<String> refNames = refs.collect { refToName(it['$ref']) }
 
-                def redundant = new LinkedHashSet<String>()
+                Set<String> redundant = new LinkedHashSet<String>()
                 for (int i = 0; i < refNames.size(); i++) {
-                    def r = refNames[i]
+                    String r = refNames[i]
                     if (!r) {
                         continue
                     }
@@ -153,7 +153,7 @@ tasks.register('pruneTransitiveRefs') {
                         if (i == j) {
                             continue
                         }
-                        def q = refNames[j]
+                        String q = refNames[j]
                         if (!q) {
                             continue
                         }
@@ -166,7 +166,7 @@ tasks.register('pruneTransitiveRefs') {
                 if (!redundant.isEmpty()) {
                     schema.allOf = schema.allOf.findAll {
                         if (it instanceof Map && it['$ref']) {
-                            def rn = refToName(it['$ref'])
+                            String rn = refToName(it['$ref'])
                             return !(rn in redundant)
                         }
                         return true
@@ -196,7 +196,7 @@ tasks.register('pruneTransitiveRefs') {
                     return schema
                 }
 
-                def ignoredKeys = [
+                Set<String> ignoredKeys = [
                     'description',
                     'title',
                     'example',
@@ -205,14 +205,14 @@ tasks.register('pruneTransitiveRefs') {
                     'externalDocs'
                 ] as Set
 
-                def normalised = [:]
+                Map<String, Object> normalised = [:]
 
                 schema.keySet()
                     .findAll { !(it in ignoredKeys) }
                     .sort()
                     .each { k ->
 
-                        def v = schema[k]
+                        Object v = schema[k]
 
                         normalised[k] =
                             (v instanceof Map) ? canonicaliseSchema(v) :
@@ -225,21 +225,21 @@ tasks.register('pruneTransitiveRefs') {
                 return normalised
             }
 
-            def schemaHash = { Object schema ->
-                def json = JsonOutput.toJson(canonicaliseSchema(schema))
-                def md = MessageDigest.getInstance("SHA-256")
+            Closure<String> schemaHash = { Object schema ->
+                String json = JsonOutput.toJson(canonicaliseSchema(schema))
+                MessageDigest md = MessageDigest.getInstance("SHA-256")
                 md.digest(json.bytes).encodeHex().toString()
             }
 
             Map<String, String> schemaRegistry = [:]
 
-            def internSchema = { String baseName, Object schema ->
+            Closure internSchema = { String baseName, Object schema ->
 
                 if (!(schema instanceof Map) || schema['$ref']) {
                     return schema
                 }
 
-                def hash = schemaHash(schema)
+                String hash = schemaHash(schema)
 
                 if (schemaRegistry.containsKey(hash)) {
                     return [
@@ -248,11 +248,11 @@ tasks.register('pruneTransitiveRefs') {
                 }
 
                 // create new canonical schema
-                def name = baseName
+                String name = baseName
                     .replaceAll(/[^A-Za-z0-9]/, '_')
                     .replaceAll(/_+/, '_')
 
-                def finalName = name
+                String finalName = name
                 int i = 1
 
                 while (root.components.schemas.containsKey(finalName)) {
@@ -271,17 +271,17 @@ tasks.register('pruneTransitiveRefs') {
             root.paths.each { path, methods ->
                 methods.each { method, op ->
 
-                    def content = op?.requestBody?.content as Map
-                    def schema = content?.get('application/json')?.schema
+                    Map<String, Object> content = op?.requestBody?.content as Map
+                    Map<String, Object> schema = content?.get('application/json')?.schema
 
                     if (schema && !(schema instanceof Map && schema['$ref'])) {
                         content['application/json'].schema =
                             internSchema("${op.operationId}_Request".toString(), schema)
                     }
 
-                    def res200 = op?.responses?.get('200')
-                    def resContent = res200?.content as Map
-                    def resSchema = resContent?.get('application/json')?.schema
+                    Object res200 = op?.responses?.get('200')
+                    Map<String, Object> resContent = res200?.content as Map
+                    Map<String, Object> resSchema = resContent?.get('application/json')?.schema
 
                     if (resSchema && !(resSchema instanceof Map && resSchema['$ref'])) {
                         resContent['application/json'].schema =
@@ -317,12 +317,12 @@ tasks.register('pruneTransitiveRefs') {
 
             if (modified) {
                 // write YAML back using SnakeYAML (available via buildscript classpath)
-                def dumperOptions = new DumperOptions()
+                DumperOptions dumperOptions = new DumperOptions()
                 dumperOptions.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK)
                 dumperOptions.setPrettyFlow(true)
                 dumperOptions.setDefaultScalarStyle(DumperOptions.ScalarStyle.PLAIN) // optional, avoids quoting where possible
 
-                def yamlDumper = new Yaml(dumperOptions)
+                Yaml yamlDumper = new Yaml(dumperOptions)
                 f.withWriter('UTF-8') { writer ->
                     yamlDumper.dump(root, writer)
                 }
@@ -344,7 +344,7 @@ dependencies {
     openApiGeneratorCli7 "org.openapitools:openapi-generator-cli:7.21.0"
 }
 
-def normalizers = [
+Map<String, String> normalizers = [
     REF_AS_PARENT_IN_ALLOF              : 'true',
     REFACTOR_ALLOF_WITH_PROPERTIES_ONLY : 'true',
     SET_CONTAINER_TO_NULLABLE           : 'array|set|map'
@@ -359,29 +359,29 @@ tasks.register('normalizeOpenApiYamlWithGenerator', JavaExec) {
     mainClass.set('org.openapitools.codegen.OpenAPIGenerator')
 
     // Run generator in a dedicated JVM; default heap can be overridden with -PopenApiGeneratorMaxHeap=6g.
-    def openApiGeneratorMaxHeap = (project.findProperty('openApiGeneratorMaxHeap') ?: '4g').toString()
+    String openApiGeneratorMaxHeap = (project.findProperty('openApiGeneratorMaxHeap') ?: '4g')
     jvmArgs "-Xmx${openApiGeneratorMaxHeap}"
 
     // Declare inputs/outputs at configuration time for proper UP-TO-DATE checking.
     inputs.files(providers.provider {
-        def spec = findSingleOpenApiSpec(false)
+        File spec = findSingleOpenApiSpec(false)
         spec ? [spec] : []
     }).withPropertyName('inputSpec').optional(true)
     outputs.dir(providers.provider {
-        def spec = findSingleOpenApiSpec(false)
-        def stem = spec ? specStem(spec) : 'openapi'
+        File spec = findSingleOpenApiSpec(false)
+        String stem = spec ? specStem(spec) : 'openapi'
         layout.buildDirectory.dir("openapi/normalized/${stem}").get().asFile
     }).withPropertyName('normalizedOutput')
 
     doFirst {
         requireOpenApiEnabled()
-        def selectedSpec = resolveSingleOpenApiSpec()   // strict — throws if genuinely missing
-        def normalizedOutputDir = layout.buildDirectory.dir("openapi/normalized/${specStem(selectedSpec)}").get().asFile
+        File selectedSpec = resolveSingleOpenApiSpec()   // strict — throws if genuinely missing
+        File normalizedOutputDir = layout.buildDirectory.dir("openapi/normalized/${specStem(selectedSpec)}").get().asFile
         normalizedOutputDir.mkdirs()
 
         // Build --openapi-normalizer flags from the map; use one flag per rule so values with
         // commas (e.g. SET_CONTAINER_TO_NULLABLE=array,set,map) are passed correctly.
-        def normalizerArgs = normalizers.collectMany { k, v -> ['--openapi-normalizer', "${k}=${v}"] }
+        List<String> normalizerArgs = normalizers.collectMany { k, v -> ['--openapi-normalizer', "${k}=${v}"] }
 
         args = ['generate',
                 '-i', selectedSpec.absolutePath,
@@ -401,9 +401,9 @@ tasks.register('normalizeAllOpenApiYaml') {
     doLast {
         requireOpenApiEnabled()
         def selectedSpec = resolveSingleOpenApiSpec()
-        def normalizedOutputDir = layout.buildDirectory.dir("openapi/normalized/${specStem(selectedSpec)}").get().asFile
+        File normalizedOutputDir = layout.buildDirectory.dir("openapi/normalized/${specStem(selectedSpec)}").get().asFile
 
-        def normalizedFiles = fileTree(normalizedOutputDir).matching {
+        Set<File> normalizedFiles = fileTree(normalizedOutputDir).matching {
             include '**/*.yml'
             include '**/*.yaml'
         }.files

@@ -182,7 +182,7 @@ class DataClassComponentIntegrationSpec extends CommonDataSpec {
         httpResponse.status == HttpStatus.NO_CONTENT
 
         when:
-        def response = dataClassComponentApi.show(sourceId, dataFlowId, dataClassComponentId)
+        DataClassComponent response = dataClassComponentApi.show(sourceId, dataFlowId, dataClassComponentId)
         then:
         !response
         //HttpClientResponseException exception = thrown()

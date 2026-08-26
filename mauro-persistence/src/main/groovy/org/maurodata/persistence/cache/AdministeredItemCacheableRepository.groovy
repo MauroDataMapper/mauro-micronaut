@@ -464,8 +464,8 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
 
             if (administeredItem?.parent?.id) {
                 invalidateCachedLookupById(FIND_ALL_BY_PARENT, administeredItem.parent.domainType,
-            }
                         administeredItem.parent.id)
+            }
             deleted
         }
 

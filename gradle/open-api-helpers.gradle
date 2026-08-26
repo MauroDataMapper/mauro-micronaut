@@ -1,6 +1,6 @@
 
     ext.findOpenApiSpecs = {
-        def swaggerRoot = layout.buildDirectory.dir("classes").get().asFile
+        File swaggerRoot = layout.buildDirectory.dir("classes").get().asFile
         fileTree(swaggerRoot).matching {
             include "**/META-INF/swagger/*.yml"
             include "**/META-INF/swagger/*.yaml"
@@ -12,15 +12,15 @@
  * Safe to call from lazy providers during Gradle's dependency-resolution phase (before compileGroovy runs).
  */
     ext.findSingleOpenApiSpec = { boolean strict ->
-        def explicit = project.findProperty('openApiSpec')?.toString()?.trim()
+        String explicit = project.findProperty('openApiSpec')?.toString()?.trim()
         if (explicit) {
-            def f = project.file(explicit)
+            File f = project.file(explicit)
             if (!f.exists() && strict) {
                 throw new GradleException("openApiSpec does not exist: ${f}")
             }
             return f.exists() ? f : null
         }
-        def specs = findOpenApiSpecs()
+        Set<File> specs = findOpenApiSpecs()
         if (specs.isEmpty()) {
             if (strict) {
                 throw new GradleException("No OpenAPI YAML files found under build/classes. Run compileGroovy first or pass -PopenApiSpec=...")
@@ -37,8 +37,8 @@
     ext.resolveSingleOpenApiSpec = { findSingleOpenApiSpec(true) }
 
     ext.specStem = { File specFile ->
-        def fileName = specFile.name
-        def dotIndex = fileName.lastIndexOf('.')
+        String fileName = specFile.name
+        int dotIndex = fileName.lastIndexOf('.')
         dotIndex > 0 ? fileName.substring(0, dotIndex) : fileName
     }
 

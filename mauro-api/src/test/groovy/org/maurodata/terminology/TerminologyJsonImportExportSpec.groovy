@@ -58,7 +58,7 @@ class TerminologyJsonImportExportSpec extends CommonDataSpec {
             .addPart('importFile', 'file.json', MediaType.APPLICATION_JSON_TYPE, objectMapper.writeValueAsBytes(exportModel))
             .build()
 
-        def request = terminologyApi.importModel(
+        ListResponse<Terminology> request = terminologyApi.importModel(
             importRequest,
             'org.maurodata.plugin.importer.json',
             'JsonTerminologyImporterPlugin',

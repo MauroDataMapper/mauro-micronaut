@@ -32,7 +32,7 @@ class RuleIntegrationSpec extends CommonDataSpec {
 
     void 'list empty Rules'() {
         when:
-        def response =
+        ListResponse<Rule> response =
                 ruleApi.list('folder', folderId)
 
         then:

@@ -144,7 +144,7 @@ class DataModelWithFacetsIntegrationSpec extends CommonDataSpec {
         httpResponse.status == HttpStatus.NO_CONTENT
 
         when:
-        def response = dataModelApi.show(dataModelId)
+        DataModel response = dataModelApi.show(dataModelId)
 
         then: 'the show endpoint shows the update'
         !response
