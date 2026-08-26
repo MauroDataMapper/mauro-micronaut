@@ -1,15 +1,11 @@
 package org.maurodata.security
 
-import org.maurodata.api.SessionHandlerClientFilter
 import org.maurodata.domain.folder.Folder
 import org.maurodata.domain.security.CatalogueUser
 import org.maurodata.web.ListResponse
 
-import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.client.exceptions.HttpClientResponseException
-import io.micronaut.runtime.EmbeddedApplication
-import jakarta.inject.Inject
 import org.maurodata.persistence.SecuredContainerizedTest
 
 import jakarta.inject.Singleton

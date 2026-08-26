@@ -21,7 +21,6 @@ import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Relation
 import io.micronaut.data.annotation.Transient
 import jakarta.validation.constraints.NotBlank
-import jakarta.validation.constraints.Pattern
 
 @CompileStatic
 @MappedEntity(value = 'rule', schema = 'core', alias = 'rule_')

@@ -2,10 +2,7 @@ package org.maurodata.folder
 
 import org.maurodata.testing.CommonDataSpec
 
-import org.maurodata.domain.authority.Authority
 
-import io.micronaut.runtime.EmbeddedApplication
-import jakarta.inject.Inject
 import jakarta.inject.Singleton
 import spock.lang.Shared
 import org.maurodata.domain.folder.Folder

@@ -14,7 +14,6 @@ import groovy.transform.CompileStatic
 import groovy.transform.MapConstructor
 import io.micronaut.data.annotation.*
 import jakarta.validation.constraints.NotBlank
-import jakarta.validation.constraints.Pattern
 import org.maurodata.domain.diff.*
 
 @CompileStatic

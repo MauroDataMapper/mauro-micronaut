@@ -10,7 +10,6 @@ import io.micronaut.http.annotation.*
 import io.micronaut.http.exceptions.HttpStatusException
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
-import io.micronaut.transaction.annotation.Transactional
 import org.maurodata.controller.model.ItemController
 import org.maurodata.domain.facet.Facet
 import org.maurodata.domain.model.AdministeredItem

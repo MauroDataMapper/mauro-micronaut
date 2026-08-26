@@ -1,6 +1,5 @@
 package org.maurodata.domain.diff
 
-import org.maurodata.domain.model.Path
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
@@ -8,7 +7,6 @@ import org.maurodata.domain.model.Model
 
 import java.time.Instant
 import java.util.Map.Entry
-import javax.swing.DefaultListSelectionModel
 
 @Slf4j
 @CompileStatic

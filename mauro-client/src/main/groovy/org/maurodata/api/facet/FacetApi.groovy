@@ -6,9 +6,6 @@ import org.maurodata.domain.facet.Facet
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.annotation.Body
-import io.micronaut.http.annotation.Delete
-import io.micronaut.http.annotation.Get
-import io.micronaut.http.annotation.Post
 
 
 @MauroApi

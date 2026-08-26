@@ -1,8 +1,6 @@
 package org.maurodata.folder
 
-import io.micronaut.runtime.EmbeddedApplication
 import io.micronaut.test.annotation.Sql
-import jakarta.inject.Inject
 import jakarta.inject.Singleton
 import spock.lang.Shared
 import org.maurodata.domain.facet.SummaryMetadata

@@ -1,7 +1,6 @@
 package org.maurodata.facet
 
 import io.micronaut.http.HttpResponse
-import io.micronaut.http.client.exceptions.HttpClientException
 import jakarta.inject.Singleton
 import org.maurodata.domain.facet.Rule
 import org.maurodata.domain.facet.RuleRepresentation
@@ -11,10 +10,7 @@ import org.maurodata.testing.CommonDataSpec
 import org.maurodata.web.ListResponse
 
 import io.micronaut.http.HttpStatus
-import io.micronaut.http.client.exceptions.HttpClientResponseException
-import io.micronaut.runtime.EmbeddedApplication
 import io.micronaut.test.annotation.Sql
-import jakarta.inject.Inject
 import spock.lang.Shared
 
 @ContainerizedTest

@@ -1,8 +1,6 @@
 package org.maurodata.domain.model
 
 import groovy.transform.CompileStatic
-import groovy.transform.Immutable
-import groovy.transform.ImmutableOptions
 
 /**
  * An abstracted reference to an Item or an AdministeredItem

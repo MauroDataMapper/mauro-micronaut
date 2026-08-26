@@ -1,14 +1,9 @@
 package org.maurodata.config
 
-import org.maurodata.api.config.ApiPropertyApi
-import org.maurodata.api.security.LoginApi
 import org.maurodata.domain.config.ApiProperty
 
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.client.exceptions.HttpClientResponseException
-import io.micronaut.runtime.EmbeddedApplication
-import jakarta.inject.Inject
-import io.micronaut.security.authentication.UsernamePasswordCredentials
 import jakarta.inject.Singleton
 import spock.lang.Shared
 import org.maurodata.persistence.SecuredContainerizedTest

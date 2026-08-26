@@ -7,12 +7,9 @@ import org.maurodata.domain.security.CatalogueUser
 import org.maurodata.persistence.SecuredContainerizedTest
 import org.maurodata.web.ListResponse
 
-import io.micronaut.http.HttpRequest
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.client.exceptions.HttpClientResponseException
-import io.micronaut.runtime.EmbeddedApplication
 import io.micronaut.test.annotation.Sql
-import jakarta.inject.Inject
 import spock.lang.Shared
 
 @SecuredContainerizedTest

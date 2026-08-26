@@ -2,7 +2,6 @@ package org.maurodata.controller.security.session
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
-import io.micronaut.core.async.publisher.Publishers
 import io.micronaut.core.util.CollectionUtils
 import io.micronaut.http.HttpRequest
 import io.micronaut.http.MutableHttpResponse
@@ -19,7 +18,6 @@ import io.micronaut.session.http.SessionForRequest
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
 import org.reactivestreams.Publisher
-import reactor.core.publisher.Flux
 
 @CompileStatic
 @Filter("/**")

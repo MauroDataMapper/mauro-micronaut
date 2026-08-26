@@ -1,6 +1,5 @@
 package org.maurodata.test.domain.model
 
-import groovy.transform.CompileStatic
 import spock.lang.Specification
 import org.maurodata.domain.model.version.ModelVersion
 import org.maurodata.domain.model.version.VersionChangeType

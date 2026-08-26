@@ -5,12 +5,7 @@ import org.maurodata.api.model.MergeDiffDTO
 import org.maurodata.api.model.MergeIntoDTO
 import org.maurodata.api.model.ObjectPatchDataDTO
 import org.maurodata.domain.datamodel.DataClass
-import org.maurodata.domain.datamodel.DataElement
 import org.maurodata.domain.datamodel.DataModel
-import org.maurodata.domain.datamodel.DataType
-import org.maurodata.domain.diff.ArrayDiff
-import org.maurodata.domain.diff.DiffBuilder
-import org.maurodata.domain.diff.FieldDiff
 import org.maurodata.domain.diff.ObjectDiff
 import org.maurodata.domain.folder.Folder
 import org.maurodata.domain.model.Path
@@ -21,7 +16,6 @@ import org.maurodata.persistence.ContainerizedTest
 import org.maurodata.testing.CommonDataSpec
 import org.maurodata.web.ListResponse
 
-import io.micronaut.core.annotation.NonNull
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.client.exceptions.HttpClientResponseException
 import io.micronaut.test.annotation.Sql

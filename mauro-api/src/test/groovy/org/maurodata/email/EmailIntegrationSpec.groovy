@@ -1,15 +1,11 @@
 package org.maurodata.email
 
-import org.maurodata.api.admin.AdminApi
 import org.maurodata.plugin.MauroPluginDTO
 
-import io.micronaut.runtime.EmbeddedApplication
-import jakarta.inject.Inject
 
 import org.maurodata.domain.email.Email
 import org.maurodata.domain.security.CatalogueUser
 import org.maurodata.persistence.ContainerizedTest
-import org.maurodata.plugin.EmailPlugin
 import org.maurodata.testing.CommonDataSpec
 import org.maurodata.web.ListResponse
 

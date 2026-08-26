@@ -3,7 +3,6 @@ package org.maurodata.controller.security
 import io.swagger.v3.oas.annotations.Operation
 import org.maurodata.domain.config.ApiProperty
 import org.maurodata.domain.search.dto.SearchRequestDTO
-import org.maurodata.domain.security.Role
 import org.maurodata.persistence.cache.ItemCacheableRepository.ApiPropertyCacheableRepository
 import org.maurodata.service.authentication.UsernamePasswordService
 import org.maurodata.service.email.EmailService

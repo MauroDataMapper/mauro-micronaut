@@ -3,7 +3,6 @@ package org.maurodata.service.authentication
 import org.maurodata.security.utils.SecureRandomStringGenerator
 
 import groovy.transform.CompileStatic
-import groovy.util.logging.Slf4j
 import io.micronaut.context.annotation.Property
 import jakarta.inject.Singleton
 import org.apache.commons.text.RandomStringGenerator

@@ -1,6 +1,5 @@
 package org.maurodata.controller
 
-import io.micronaut.context.annotation.Property
 import org.maurodata.plugin.MauroPlugin
 import org.maurodata.plugin.MauroPluginUtil
 import org.maurodata.profile.Profile

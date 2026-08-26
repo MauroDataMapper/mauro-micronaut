@@ -3,7 +3,6 @@ package org.maurodata.controller.facet
 import io.swagger.v3.oas.annotations.Operation
 import io.micronaut.http.annotation.Delete
 import io.micronaut.http.annotation.Post
-import io.micronaut.transaction.annotation.Transactional
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import jakarta.inject.Inject
 import org.maurodata.ErrorHandler
@@ -13,7 +12,6 @@ import org.maurodata.api.facet.SemanticLinkDTO
 import org.maurodata.api.facet.SemanticLinksApi
 import org.maurodata.api.model.ModelRefDTO
 import org.maurodata.audit.Audit
-import org.maurodata.domain.facet.Rule
 import org.maurodata.domain.facet.SemanticLink
 import org.maurodata.domain.facet.SemanticLinkType
 import org.maurodata.domain.model.AdministeredItem

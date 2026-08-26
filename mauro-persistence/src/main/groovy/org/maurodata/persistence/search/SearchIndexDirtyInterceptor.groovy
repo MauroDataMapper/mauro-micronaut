@@ -5,10 +5,8 @@ import groovy.util.logging.Slf4j
 import io.micronaut.aop.InterceptorBean
 import io.micronaut.aop.MethodInterceptor
 import io.micronaut.aop.MethodInvocationContext
-import io.micronaut.context.annotation.Bean
 import io.micronaut.context.event.ApplicationEventPublisher
 import io.micronaut.data.annotation.Repository
-import jakarta.inject.Inject
 import org.maurodata.persistence.facet.EditRepository
 
 @InterceptorBean(Repository) // bind to Micronaut Data repository beans

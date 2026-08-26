@@ -17,8 +17,6 @@ import io.micronaut.data.annotation.Indexes
 import io.micronaut.data.annotation.MappedEntity
 import jakarta.persistence.Transient
 import jakarta.validation.constraints.NotNull
-import org.maurodata.domain.diff.BaseCollectionDiff
-import org.maurodata.domain.diff.CollectionDiff
 import org.maurodata.domain.diff.DiffBuilder
 import org.maurodata.domain.diff.DiffableItem
 

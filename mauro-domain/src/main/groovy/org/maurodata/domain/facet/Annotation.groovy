@@ -4,7 +4,6 @@ import groovy.util.logging.Slf4j
 import jakarta.persistence.PrePersist
 import jakarta.persistence.PreUpdate
 import org.maurodata.domain.diff.AnnotationDiff
-import org.maurodata.domain.diff.RuleDiff
 import org.maurodata.domain.model.Item
 import org.maurodata.domain.model.ItemUtils
 
@@ -18,7 +17,6 @@ import io.micronaut.data.annotation.Indexes
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Relation
 import io.micronaut.data.annotation.Transient
-import org.maurodata.domain.diff.BaseCollectionDiff
 import org.maurodata.domain.diff.CollectionDiff
 import org.maurodata.domain.diff.DiffBuilder
 import org.maurodata.domain.diff.DiffableItem

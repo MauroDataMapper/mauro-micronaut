@@ -3,7 +3,6 @@ package org.maurodata.search
 import org.maurodata.domain.search.dto.SearchRequestDTO
 import org.maurodata.testing.CommonDataSpec
 
-import jakarta.inject.Inject
 import jakarta.inject.Singleton
 import spock.lang.Shared
 import org.maurodata.domain.datamodel.DataModel

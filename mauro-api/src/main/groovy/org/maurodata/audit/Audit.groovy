@@ -1,14 +1,11 @@
 package org.maurodata.audit
 
 import org.maurodata.domain.facet.EditType
-import org.maurodata.domain.model.AdministeredItem
 
 import io.micronaut.aop.Around
 
-import java.lang.annotation.ElementType
 import java.lang.annotation.Retention
 import java.lang.annotation.RetentionPolicy
-import java.lang.annotation.Target
 
 
 /*

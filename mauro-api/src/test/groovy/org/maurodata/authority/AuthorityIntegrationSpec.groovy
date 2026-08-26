@@ -8,9 +8,7 @@ import org.maurodata.web.ListResponse
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.client.exceptions.HttpClientResponseException
-import io.micronaut.runtime.EmbeddedApplication
 import io.micronaut.test.annotation.Sql
-import jakarta.inject.Inject
 import jakarta.inject.Singleton
 
 @Singleton

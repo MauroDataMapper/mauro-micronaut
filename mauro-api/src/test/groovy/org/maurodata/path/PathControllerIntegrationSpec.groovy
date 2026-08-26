@@ -17,7 +17,6 @@ import org.maurodata.domain.terminology.CodeSet
 import org.maurodata.persistence.ContainerizedTest
 import org.maurodata.testing.CommonDataSpec
 import org.maurodata.web.ListResponse
-import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Unroll
 

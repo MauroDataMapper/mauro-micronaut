@@ -4,21 +4,15 @@ import io.micronaut.http.HttpResponse
 import jakarta.inject.Singleton
 import org.maurodata.domain.facet.Rule
 import org.maurodata.domain.facet.RuleRepresentation
-import org.maurodata.domain.facet.SummaryMetadata
-import org.maurodata.domain.facet.SummaryMetadataReport
 import org.maurodata.domain.folder.Folder
 import org.maurodata.persistence.ContainerizedTest
 import org.maurodata.testing.CommonDataSpec
 import org.maurodata.web.ListResponse
 
 import io.micronaut.http.HttpStatus
-import io.micronaut.http.client.exceptions.HttpClientResponseException
-import io.micronaut.runtime.EmbeddedApplication
 import io.micronaut.test.annotation.Sql
-import jakarta.inject.Inject
 import spock.lang.Shared
 
-import java.time.Instant
 
 @ContainerizedTest
 @Singleton

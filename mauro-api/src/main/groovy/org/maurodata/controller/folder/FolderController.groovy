@@ -44,7 +44,6 @@ import io.micronaut.scheduling.annotation.ExecuteOn
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
 import io.micronaut.transaction.annotation.Transactional
-import jakarta.inject.Inject
 import org.reactivestreams.Publisher
 
 @Slf4j

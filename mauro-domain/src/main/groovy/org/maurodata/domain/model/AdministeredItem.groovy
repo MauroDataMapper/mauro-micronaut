@@ -25,7 +25,6 @@ import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.annotation.Relation
 import jakarta.persistence.Transient
 import jakarta.validation.constraints.NotBlank
-import jakarta.validation.constraints.Pattern
 
 import java.time.Instant
 

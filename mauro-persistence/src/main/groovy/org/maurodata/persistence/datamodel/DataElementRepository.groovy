@@ -1,13 +1,11 @@
 package org.maurodata.persistence.datamodel
 
-import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.datamodel.DataType
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.annotation.Join
-import io.micronaut.data.annotation.Query
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.model.query.builder.sql.Dialect
 import jakarta.inject.Inject

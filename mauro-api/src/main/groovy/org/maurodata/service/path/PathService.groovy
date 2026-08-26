@@ -8,7 +8,6 @@ import jakarta.inject.Singleton
 import org.maurodata.ErrorHandler
 import org.maurodata.controller.model.AdministeredItemReader
 import org.maurodata.controller.model.AvailableActions
-import org.maurodata.domain.datamodel.DataElement
 import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.domain.model.Item
 import org.maurodata.domain.model.Model

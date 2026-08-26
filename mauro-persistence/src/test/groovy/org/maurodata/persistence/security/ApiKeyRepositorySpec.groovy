@@ -9,7 +9,6 @@ import jakarta.inject.Inject
 import spock.lang.Shared
 import spock.lang.Specification
 
-import java.time.Instant
 
 @ContainerizedTest
 class ApiKeyRepositorySpec extends Specification {

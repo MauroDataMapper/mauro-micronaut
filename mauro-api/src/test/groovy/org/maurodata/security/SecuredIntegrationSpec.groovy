@@ -1,7 +1,5 @@
 package org.maurodata.security
 
-import org.maurodata.api.SessionHandlerClientFilter
-import org.maurodata.api.security.LoginApi
 
 import io.micronaut.http.HttpRequest
 import io.micronaut.http.HttpResponse

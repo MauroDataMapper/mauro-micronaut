@@ -1,6 +1,5 @@
 package org.maurodata.test.domain.terminology
 
-import groovy.transform.CompileStatic
 import spock.lang.Specification
 import org.maurodata.domain.terminology.Term
 

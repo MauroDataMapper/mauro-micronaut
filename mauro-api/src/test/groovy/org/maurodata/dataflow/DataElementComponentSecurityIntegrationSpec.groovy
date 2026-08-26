@@ -3,30 +3,16 @@ package org.maurodata.dataflow
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.client.exceptions.HttpClientResponseException
-import io.micronaut.runtime.EmbeddedApplication
 import io.micronaut.test.annotation.Sql
-import jakarta.inject.Inject
 import jakarta.inject.Singleton
 import spock.lang.Shared
-import org.maurodata.api.dataflow.DataClassComponentApi
-import org.maurodata.api.dataflow.DataElementComponentApi
-import org.maurodata.api.dataflow.DataFlowApi
-import org.maurodata.api.datamodel.DataClassApi
-import org.maurodata.api.datamodel.DataElementApi
-import org.maurodata.api.datamodel.DataModelApi
-import org.maurodata.api.datamodel.DataTypeApi
-import org.maurodata.api.folder.FolderApi
 import org.maurodata.domain.dataflow.DataClassComponent
 import org.maurodata.domain.dataflow.DataElementComponent
-import org.maurodata.domain.dataflow.DataFlow
 import org.maurodata.domain.datamodel.DataClass
 import org.maurodata.domain.datamodel.DataElement
-import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.datamodel.DataType
-import org.maurodata.domain.folder.Folder
 import org.maurodata.persistence.SecuredContainerizedTest
 import org.maurodata.security.SecuredIntegrationSpec
-import org.maurodata.web.ListResponse
 
 @SecuredContainerizedTest
 @Singleton

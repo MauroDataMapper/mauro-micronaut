@@ -7,7 +7,6 @@ import org.maurodata.domain.datamodel.DataType
 import org.maurodata.domain.diff.ObjectDiff
 import org.maurodata.domain.facet.SummaryMetadataType
 import org.maurodata.domain.model.Item
-import org.maurodata.domain.terminology.Terminology
 
 import spock.lang.Specification
 

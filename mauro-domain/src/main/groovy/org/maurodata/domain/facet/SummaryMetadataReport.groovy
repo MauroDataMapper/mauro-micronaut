@@ -23,7 +23,6 @@ import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Transient
 
 import java.time.Instant
-import java.time.format.DateTimeFormatter
 
 @CompileStatic
 @MappedEntity(value = 'summary_metadata_report', schema = 'core', alias = 'summary_metadata_report_')
