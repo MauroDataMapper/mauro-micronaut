@@ -16,7 +16,6 @@ import org.maurodata.domain.security.Role
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository
 import org.maurodata.persistence.model.PathRepository
 import org.maurodata.security.AccessControlService
-import org.maurodata.domain.model.Path
 
 
 @CompileStatic
