@@ -30,7 +30,7 @@ class JsonDataModelImporterPluginSpec extends Specification  {
     MauroPluginService mauroPluginService
 
 
-    def "test JSON data model import"() {
+    void "test JSON data model import"() {
 
         when:
         DataModel testDataModel = DataModelSpec.testDataModel
@@ -63,7 +63,7 @@ class JsonDataModelImporterPluginSpec extends Specification  {
 
     }
 
-    def "test JSON mulitple data models import"() {
+    void "test JSON mulitple data models import"() {
 
         when:
         DataModel testDataModel = DataModelSpec.testDataModel
@@ -102,7 +102,7 @@ class JsonDataModelImporterPluginSpec extends Specification  {
 
     }
 
-    def "test JSON datamodel import- bad file -should fail with BADREQUEST exception"() {
+    void "test JSON datamodel import- bad file -should fail with BADREQUEST exception"() {
         given:
         ExportModel exportModel = ExportModel.build {
             exportMetadata {

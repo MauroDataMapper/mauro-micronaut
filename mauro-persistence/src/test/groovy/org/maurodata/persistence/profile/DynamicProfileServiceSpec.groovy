@@ -30,7 +30,7 @@ class DynamicProfileServiceSpec extends Specification {
     @Inject
     ModelCacheableRepository.DataModelCacheableRepository dataModelCacheableRepository
 
-    def "Test getting all dynamic profiles"() {
+    void "Test getting all dynamic profiles"() {
         given:
 
         Folder myFirstFolder = folderRepository.save(new Folder(
@@ -64,7 +64,7 @@ class DynamicProfileServiceSpec extends Specification {
 
     }
 
-    def "Test getting profile keys"() {
+    void "Test getting profile keys"() {
         given:
 
         Folder myFirstFolder = folderRepository.save(new Folder(

@@ -45,7 +45,7 @@ class ApiKeyRepositorySpec extends Specification {
 
     }
 
-    def "Test store and retrieve api key (cacheable)"() {
+    void "Test store and retrieve api key (cacheable)"() {
 
         when:
         ApiKey apiKey = ApiKey.build {
@@ -80,7 +80,7 @@ class ApiKeyRepositorySpec extends Specification {
         !apiKeyRepository.findById(savedApiKey.id)
     }
 
-    def "Test store and retrieve api key"() {
+    void "Test store and retrieve api key"() {
 
         when:
         ApiKey apiKey = ApiKey.build {

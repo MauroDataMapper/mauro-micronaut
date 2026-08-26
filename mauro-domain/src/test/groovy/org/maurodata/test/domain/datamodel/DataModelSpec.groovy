@@ -115,7 +115,7 @@ class DataModelSpec extends Specification {
         classReferencing.dataModel = testDataModel
     }
 
-    def "Test the DSL for creating objects"() {
+    void "Test the DSL for creating objects"() {
 
         when:
         testDataModel

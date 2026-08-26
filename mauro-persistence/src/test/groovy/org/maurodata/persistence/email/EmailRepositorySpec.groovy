@@ -15,7 +15,7 @@ class EmailRepositorySpec extends Specification {
     @Inject
     EmailRepository emailRepository
 
-    def "Test store and retrieve email"() {
+    void "Test store and retrieve email"() {
 
         when:
 

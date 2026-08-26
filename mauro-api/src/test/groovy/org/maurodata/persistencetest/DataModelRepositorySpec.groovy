@@ -28,7 +28,7 @@ class DataModelRepositorySpec extends Specification {
     ModelCacheableRepository.FolderCacheableRepository folderRepository
 
 
-    /*    def "Test try storing a datamodel"() {
+    /*    void "Test try storing a datamodel"() {
 
             when:
                 DataModel dataModel = DataModel.build {
@@ -42,7 +42,7 @@ class DataModelRepositorySpec extends Specification {
         }
     */
 
-//    def "Test try storing a terminology"() {
+//    void "Test try storing a terminology"() {
 
     void TestTerminology() {
         given:

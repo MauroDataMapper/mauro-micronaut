@@ -10,7 +10,7 @@ import org.maurodata.domain.model.version.VersionChangeType
  */
 class ModelVersionSpec extends Specification {
 
-    def "Test the DSL for creating objects"() {
+    void "Test the DSL for creating objects"() {
 
         when:
 
@@ -42,7 +42,7 @@ class ModelVersionSpec extends Specification {
 
     }
 
-    def "Test incrementing the version"() {
+    void "Test incrementing the version"() {
 
         when:
         ModelVersion modelVersion1 = ModelVersion.build(major: 1, minor: 2, patch: 3, snapshot: true)

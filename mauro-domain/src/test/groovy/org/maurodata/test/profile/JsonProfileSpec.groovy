@@ -21,7 +21,7 @@ class JsonProfileSpec extends Specification {
     @Inject
     MauroPluginService mauroPluginService
 
-    def "test getting all static profiles"() {
+    void "test getting all static profiles"() {
         expect:
         mauroPluginService.listStandardPlugins(Profile).size() == 2
         profileService.staticProfiles.size() >= 2
@@ -31,7 +31,7 @@ class JsonProfileSpec extends Specification {
     }
 
 
-    def "test construction of json profile"() {
+    void "test construction of json profile"() {
         when:
         Profile p = profileService.staticProfiles.find { it.displayName == "Profile Specification Profile" }
 
@@ -45,7 +45,7 @@ class JsonProfileSpec extends Specification {
     }
 
 
-    def "test validating an item against a profile - success"() {
+    void "test validating an item against a profile - success"() {
 
         when:
         Profile profile = profileService.staticProfiles.find { it.displayName == "Profile Specification Profile" }
@@ -68,7 +68,7 @@ class JsonProfileSpec extends Specification {
         new AppliedProfile(profile, dm).collateErrors() == []
     }
 
-    def "test validating an item against a profile - failure"() {
+    void "test validating an item against a profile - failure"() {
 
         when:
         Profile profile = profileService.staticProfiles.find { it.displayName == "Profile Specification Profile" }
@@ -101,7 +101,7 @@ class JsonProfileSpec extends Specification {
 
     }
 
-    def "test get profile keys"() {
+    void "test get profile keys"() {
         when:
         Profile profile = profileService.staticProfiles.find { it.displayName == "Profile Specification Profile" }
 

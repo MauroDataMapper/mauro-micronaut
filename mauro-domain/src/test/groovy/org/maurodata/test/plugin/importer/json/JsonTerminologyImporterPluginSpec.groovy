@@ -28,7 +28,7 @@ class JsonTerminologyImporterPluginSpec extends Specification {
     @Inject
     MauroPluginService mauroPluginService
 
-    def "test JSON terminology import"() {
+    void "test JSON terminology import"() {
 
         when:
         Terminology testTerminology = TerminologySpec.testTerminology
@@ -55,7 +55,7 @@ class JsonTerminologyImporterPluginSpec extends Specification {
         importedModels.first().termRelationshipTypes.first().displayLabel == 'Broader Than'
     }
 
-    def "test JSON terminology import- bad file -should fail with BADREQUEST exception"() {
+    void "test JSON terminology import- bad file -should fail with BADREQUEST exception"() {
         given:
         ExportModel exportModel = ExportModel.build {
             exportMetadata {

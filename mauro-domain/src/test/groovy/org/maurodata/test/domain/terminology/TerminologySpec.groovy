@@ -52,7 +52,7 @@ class TerminologySpec extends Specification {
     }
 
 
-    def "Test the DSL for creating objects"() {
+    void "Test the DSL for creating objects"() {
 
         when:
         testTerminology

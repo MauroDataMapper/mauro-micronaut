@@ -9,7 +9,7 @@ import org.maurodata.domain.datamodel.DataElement
  */
 class MetadataSpec extends Specification {
 
-    def "Test retrieving metadata as map"() {
+    void "Test retrieving metadata as map"() {
         when:
         DataElement dataElement = DataElement.build {
             label "My test data element"
@@ -30,7 +30,7 @@ class MetadataSpec extends Specification {
 
     }
 
-    def "Test adding metadata as a map"() {
+    void "Test adding metadata as a map"() {
         when:
         DataElement dataElement = DataElement.build {
             label "My test data element"

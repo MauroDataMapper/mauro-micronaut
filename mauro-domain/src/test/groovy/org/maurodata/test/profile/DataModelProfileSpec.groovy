@@ -18,7 +18,7 @@ class DataModelProfileSpec extends Specification {
     @Inject
     MauroPluginService mauroPluginService
 
-    def "test construction of datamodel profile"() {
+    void "test construction of datamodel profile"() {
         when:
         Profile dynamicProfile = new DataModelBasedProfile(DataModelBasedProfileTest.testProfileModel)
 
@@ -37,7 +37,7 @@ class DataModelProfileSpec extends Specification {
         dynamicProfile.sections.first().fields.first().getMetadataKey("Asset Creation") == "size"
     }
 
-    def "test validating an item against a dynamic profile - success"() {
+    void "test validating an item against a dynamic profile - success"() {
         when:
         DataModel dataModel = DataModel.build {
             label "My first asset"
@@ -60,7 +60,7 @@ class DataModelProfileSpec extends Specification {
 
     }
 
-    def "test validating an item against a dynamic profile - failure"() {
+    void "test validating an item against a dynamic profile - failure"() {
         when:
         DataClass dataClass = DataClass.build {
             label "My first asset"
@@ -106,7 +106,7 @@ class DataModelProfileSpec extends Specification {
         errors.find { it == "Value '19/19/2024' does not match specified data type: date" }
     }
 
-    def "test get profile keys"() {
+    void "test get profile keys"() {
         when:
         Profile profile = new DataModelBasedProfile(DataModelBasedProfileTest.testProfileModel)
 

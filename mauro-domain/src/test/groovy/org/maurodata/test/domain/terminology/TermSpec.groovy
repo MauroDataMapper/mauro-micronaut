@@ -9,7 +9,7 @@ import org.maurodata.domain.terminology.Term
  */
 class TermSpec extends Specification {
 
-    def "Test the DSL for creating objects"() {
+    void "Test the DSL for creating objects"() {
 
         when:
 

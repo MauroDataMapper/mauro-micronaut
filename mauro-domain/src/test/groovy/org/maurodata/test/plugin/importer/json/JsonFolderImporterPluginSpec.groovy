@@ -32,7 +32,7 @@ class JsonFolderImporterPluginSpec extends Specification {
     MauroPluginService mauroPluginService
 
 
-    def "test simple JSON folder import"() {
+    void "test simple JSON folder import"() {
         when:
         Folder testFolder = FolderSpec.testFolder
 
@@ -69,7 +69,7 @@ class JsonFolderImporterPluginSpec extends Specification {
         importedModels.first().description == testFolder.description
     }
 
-    def "test JSON folder, datamodel import"() {
+    void "test JSON folder, datamodel import"() {
         when:
         Folder testFolder = FolderSpec.testFolder
         DataModel testDataModel = DataModelSpec.testDataModel
@@ -111,7 +111,7 @@ class JsonFolderImporterPluginSpec extends Specification {
     }
 
 
-    def "test JSON folders import- bad file -should fail with BADREQUEST exception"() {
+    void "test JSON folders import- bad file -should fail with BADREQUEST exception"() {
         given:
         ExportModel exportModel = ExportModel.build {
             exportMetadata {

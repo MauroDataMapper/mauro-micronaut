@@ -64,7 +64,7 @@ class SearchIntegrationSpec extends CommonDataSpec {
 
     }
 
-    def "Test Get Search"() {
+    void "Test Get Search"() {
 
         searchApi.rebuildIndexes()
 
@@ -91,7 +91,7 @@ class SearchIntegrationSpec extends CommonDataSpec {
 
     }
 
-    def "Test Get Search after auto rebuild"() {
+    void "Test Get Search after auto rebuild"() {
 
         when:
 
