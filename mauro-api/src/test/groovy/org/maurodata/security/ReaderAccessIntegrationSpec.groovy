@@ -36,9 +36,9 @@ class ReaderAccessIntegrationSpec extends SecuredIntegrationSpec {
         UserGroup editorsGroup = userGroupApi.create(new UserGroup(name: 'Readers Group'))
         readersGroupId = editorsGroup.id
 
-        CatalogueUser catalogueUserResponse = catalogueUserApi.update(user.id, new CatalogueUser(groups: [readersGroupId]))
+        catalogueUserApi.update(user.id, new CatalogueUser(groups: [readersGroupId]))
 
-        SecurableResourceGroupRole securableResourceGroupRole = securableResourceGroupRoleApi.create("folder", folderId, Role.READER, readersGroupId)
+        securableResourceGroupRoleApi.create("folder", folderId, Role.READER, readersGroupId)
 
         loginUser()
 
@@ -50,7 +50,7 @@ class ReaderAccessIntegrationSpec extends SecuredIntegrationSpec {
         folder.label == 'Admin folder'
 
         when:
-        folder = folderApi.update(folderId, new Folder(description: 'Updated'))
+        folderApi.update(folderId, new Folder(description: 'Updated'))
 
         then:
         HttpClientResponseException exception = thrown()
@@ -80,7 +80,7 @@ class ReaderAccessIntegrationSpec extends SecuredIntegrationSpec {
         dataModel.label == 'Admin data model'
 
         when:
-        dataModel = dataModelApi.update(dataModelId, new DataModel(description: 'Updated'))
+        dataModelApi.update(dataModelId, new DataModel(description: 'Updated'))
 
         then:
         HttpClientResponseException exception = thrown()
@@ -182,7 +182,7 @@ class ReaderAccessIntegrationSpec extends SecuredIntegrationSpec {
         dataModel.label == 'Admin data model'
 
         when:
-        dataModel = dataModelApi.update(dataModelId, new DataModel(description: 'Updated again'))
+        dataModelApi.update(dataModelId, new DataModel(description: 'Updated again'))
 
         then:
         exception = thrown()
@@ -206,14 +206,14 @@ class ReaderAccessIntegrationSpec extends SecuredIntegrationSpec {
 
         logout()
 
-        Folder foundFolder = folderApi.show(folderId)
+        folderApi.show(folderId)
 
         then:
         HttpClientResponseException exception = thrown()
         exception.status == HttpStatus.UNAUTHORIZED
 
         when:
-        DataModel foundDataModel = dataModelApi.show(dataModel.id)
+        dataModelApi.show(dataModel.id)
 
         then:
         exception = thrown()
@@ -225,13 +225,13 @@ class ReaderAccessIntegrationSpec extends SecuredIntegrationSpec {
         folderApi.allowReadByEveryone(folderId)
 
         logout()
-        foundFolder = folderApi.show(folderId)
+        Folder foundFolder = folderApi.show(folderId)
 
         then:
         foundFolder.label == "Test folder"
 
         when:
-        foundDataModel = dataModelApi.show(dataModel.id)
+        DataModel foundDataModel = dataModelApi.show(dataModel.id)
 
         then:
         foundDataModel.label == "Test dataModel"

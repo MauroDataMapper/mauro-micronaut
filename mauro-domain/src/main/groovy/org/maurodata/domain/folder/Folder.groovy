@@ -1,5 +1,6 @@
 package org.maurodata.domain.folder
 
+import io.micronaut.data.annotation.Relation
 import org.maurodata.domain.diff.DiffBuilder
 import org.maurodata.domain.diff.DiffableItem
 import org.maurodata.domain.diff.ObjectDiff
@@ -14,7 +15,9 @@ import groovy.transform.CompileStatic
 import groovy.transform.MapConstructor
 import io.micronaut.core.annotation.Introspected
 import io.micronaut.core.annotation.Nullable
-import io.micronaut.data.annotation.*
+import io.micronaut.data.annotation.Index
+import io.micronaut.data.annotation.Indexes
+import io.micronaut.data.annotation.MappedEntity
 import jakarta.persistence.Transient
 import org.maurodata.domain.classifier.ClassificationScheme
 import org.maurodata.domain.datamodel.DataModel

@@ -92,8 +92,7 @@ class DataElementComponentIntegrationSpec extends CommonDataSpec {
 
     void 'should list DataElementComponents'() {
         given:
-        DataElementComponent response =
-                dataElementComponentApi.create(sourceId, dataFlowId, dataClassComponentId, new DataElementComponent(label: 'test data element component'))
+        dataElementComponentApi.create(sourceId, dataFlowId, dataClassComponentId, new DataElementComponent(label: 'test data element component'))
         when:
         ListResponse<DataElementComponent> listResponse =
                 dataElementComponentApi.list(sourceId,dataFlowId,dataClassComponentId)

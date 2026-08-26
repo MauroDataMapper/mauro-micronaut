@@ -184,7 +184,7 @@ class Path {
 
     void setModelIdentifier(final String modelIdentifier) {
         nodes.each {PathNode pathNode -> pathNode.modelIdentifier = null}
-        for (int p = 0, n = nodes.size(); p < n; p++) {
+        for (int p = 0; p < nodes.size(); p++) {
             final PathNode pathNode = nodes.get(p)
             if (!PathNode.canHaveModelIdentifier(pathNode.prefix)) {continue}
             pathNode.modelIdentifier = modelIdentifier

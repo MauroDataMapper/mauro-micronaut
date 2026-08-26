@@ -311,7 +311,7 @@ abstract class AdministeredItem extends Item implements Pathable, DiffableItem {
             if (node.parent == node) { // disallow cycles
                 break
             }
-            i++;
+            i++
             node = node.parent
             if (i > Path.PATH_MAX_NODES) {
                 throw new MauroInternalException("Path exceeded maximum depth of [$Path.PATH_MAX_NODES]")

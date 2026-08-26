@@ -11,6 +11,7 @@ import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.annotation.Part
+import io.micronaut.http.client.multipart.MultipartBody
 import io.micronaut.http.exceptions.HttpException
 import io.micronaut.http.exceptions.HttpStatusException
 import io.micronaut.http.multipart.StreamingFileUpload
@@ -460,7 +461,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
 
 
 
-    ListResponse<M> importModel(@Body io.micronaut.http.client.multipart.MultipartBody body, String namespace, String name, @Nullable String version) {
+    ListResponse<M> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version) {
         throw new Exception("Client version of import model has been called.. hint client MultipartBody ")
     }
 
@@ -1464,7 +1465,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         final AdministeredItem administeredItemSource = getWithContents(pathRepository.findResourcesByPathFromRootResource(sourceModel, creationPatch.path))
 
         // The target parent path
-        AdministeredItem administeredItemTargetParent = null
+        AdministeredItem administeredItemTargetParent
 
         try {
             administeredItemTargetParent = pathRepository.findResourcesByPathFromRootResource(targetModel, creationPatch.path.parent)

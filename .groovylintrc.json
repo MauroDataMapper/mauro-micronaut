@@ -20,6 +20,7 @@
     "ConsecutiveBlankLines": "off",
     "SpaceAroundOperator": "off",
     "SpaceInsideParentheses": "off",
+    "SpaceAfterMethodCallName": "off",
 
     "CompileStatic": "off",
 
@@ -37,7 +38,7 @@
     "UnnecessaryGetter": "off",
     "UnnecessarySetter": "off",
     "UnnecessaryReturnKeyword": "off",
-    "UnnecessaryObjectReference": "off",
+    "UnnecessaryObjectReferences": "off",
 
     "ConfusingMethodName": "off",
 

@@ -20,7 +20,7 @@ class SearchIndexDirtyInterceptor implements MethodInterceptor<Object, Object> {
         this.publisher = publisher
     }
 
-    final Set<Class> EXCLUDED_CLASSES = [EditRepository] as Set<Class>
+    private static final Set<Class> EXCLUDED_CLASSES = [EditRepository] as Set<Class>
 
     @Override
     Object intercept(MethodInvocationContext<Object, Object> context) {

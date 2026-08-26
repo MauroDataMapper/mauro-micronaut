@@ -3,7 +3,10 @@ package org.maurodata.api.federation
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpResponse
-import io.micronaut.http.annotation.*
+import io.micronaut.http.annotation.Body
+import io.micronaut.http.annotation.Delete
+import io.micronaut.http.annotation.Get
+import io.micronaut.http.annotation.Post
 import org.maurodata.api.Paths
 import org.maurodata.api.MauroApi
 import org.maurodata.domain.facet.federation.SubscribedModel

@@ -44,7 +44,7 @@ class DynamicProfileServiceSpec extends Specification {
         UUID dataModelId = contentsService.saveWithContent(testDataModel, null).id
 
 
-        DataModel saved = dataModelCacheableRepository.loadWithContent(dataModelId)
+        dataModelCacheableRepository.loadWithContent(dataModelId)
 
 
         List<Profile> profiles = dynamicProfileService.getDynamicProfiles()
@@ -78,7 +78,7 @@ class DynamicProfileServiceSpec extends Specification {
         contentsService.saveWithContent(testDataModel).id
 
         List<Profile> profiles = dynamicProfileService.getDynamicProfiles()
-        Profile dynamicProfile = profiles[0]
+        profiles[0]
 
         then:
 

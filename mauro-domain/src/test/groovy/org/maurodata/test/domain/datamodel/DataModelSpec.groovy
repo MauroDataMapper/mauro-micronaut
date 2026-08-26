@@ -176,7 +176,7 @@ class DataModelSpec extends Specification {
         dataClass3.extendsDataClasses.first() == dataClass1
     }
 
-    def 'clone the datamodel -should deep copy object and all modelitems'() {
+    void 'clone the datamodel -should deep copy object and all modelitems'() {
         given:
         DataModel original = testDataModel
         when:
@@ -219,7 +219,7 @@ class DataModelSpec extends Specification {
         objectDiff.numberOfDiffs == 0
     }
 
-    def 'deep clone the datamodel -should deep copy object and all modelitems and facets'() {
+    void 'deep clone the datamodel -should deep copy object and all modelitems and facets'() {
         given:
         DataModel original = testDataModel
         when:
@@ -278,7 +278,7 @@ class DataModelSpec extends Specification {
         objectDiff.numberOfDiffs == 0
     }
 
-    def 'itemLookupById should give two Classes'() {
+    void 'itemLookupById should give two Classes'() {
         given:
         testDataModel
         when:

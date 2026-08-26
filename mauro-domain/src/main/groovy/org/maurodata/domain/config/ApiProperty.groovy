@@ -7,7 +7,11 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.Nullable
-import io.micronaut.data.annotation.*
+import io.micronaut.data.annotation.Index
+import io.micronaut.data.annotation.Indexes
+import io.micronaut.data.annotation.MappedEntity
+import io.micronaut.data.annotation.MappedProperty
+import io.micronaut.data.annotation.Transient
 import jakarta.validation.constraints.NotBlank
 import org.maurodata.domain.model.Item
 import org.maurodata.domain.security.CatalogueUser

@@ -26,7 +26,7 @@ import spock.lang.Unroll
 @Singleton
 @Sql(scripts = ["classpath:sql/tear-down-datamodel.sql"], phase = Sql.Phase.AFTER_EACH)
 class DataTypeIntegrationSpec extends CommonDataSpec {
-    static String DATATYPE_LABEL = 'test modelType dataType label'
+    private static final String DATATYPE_LABEL = 'test modelType dataType label'
     @Shared
     UUID folderId
 

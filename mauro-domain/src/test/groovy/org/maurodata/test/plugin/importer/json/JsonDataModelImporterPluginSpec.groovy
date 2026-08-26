@@ -19,9 +19,9 @@ import org.maurodata.test.domain.datamodel.DataModelSpec
 @MicronautTest
 class JsonDataModelImporterPluginSpec extends Specification  {
 
-    static String NAMESPACE = JsonPluginConstants.NAMESPACE
-    static String NAME = JsonPluginConstants.JSON_DATA_MODEL_NAME
-    static String VERSION = JsonPluginConstants.VERSION
+    private static final String NAMESPACE = JsonPluginConstants.NAMESPACE
+    private static final String NAME = JsonPluginConstants.JSON_DATA_MODEL_NAME
+    private static final String VERSION = JsonPluginConstants.VERSION
 
     @Inject
     ObjectMapper objectMapper

@@ -177,7 +177,7 @@ class DataElementComponentSecurityIntegrationSpec extends SecuredIntegrationSpec
         when:
         logout()
         loginUser()
-        HttpResponse httpResponse = dataElementComponentApi.deleteSource(sourceId, dataFlowId, dataClassComponentId, dataElementComponentId, dataElementId)
+        dataElementComponentApi.deleteSource(sourceId, dataFlowId, dataClassComponentId, dataElementComponentId, dataElementId)
 
         then:
         HttpClientResponseException exception = thrown()

@@ -30,7 +30,7 @@ class PathPrefixTypeLookupTest extends Specification {
     List<AdministeredItemCacheableRepository> administeredItemCacheableRepositories
 
     @Unroll
-    def 'PathPrefixTypeLookup -should get #expectedDomainType for #pathPrefix'() {
+    void 'PathPrefixTypeLookup -should get #expectedDomainType for #pathPrefix'() {
         PathPrefixTypeLookup pathPrefixTypeLookup = new PathPrefixTypeLookup(administeredItemCacheableRepositories)
 
         when:

@@ -110,7 +110,7 @@ class DataModelSchemaMergeDiffsIntegrationSpec extends CommonDataSpec {
 
     void 'mergediff without finalised ancestor - 1st param should throw error'() {
         when:
-        MergeDiffDTO mergeDiff = dataModelApi.mergeDiff(one.id, two.id)
+        dataModelApi.mergeDiff(one.id, two.id)
         then:
         HttpClientResponseException exception = thrown()
         exception.status == HttpStatus.UNPROCESSABLE_ENTITY
@@ -121,7 +121,7 @@ class DataModelSchemaMergeDiffsIntegrationSpec extends CommonDataSpec {
 
     void 'mergediff without finalised ancestor - 2nd param should throw error'() {
         when:
-        MergeDiffDTO mergeDiff = dataModelApi.mergeDiff(main.id, two.id)
+        dataModelApi.mergeDiff(main.id, two.id)
         then:
         HttpClientResponseException exception = thrown()
         exception.status == HttpStatus.UNPROCESSABLE_ENTITY
@@ -132,7 +132,7 @@ class DataModelSchemaMergeDiffsIntegrationSpec extends CommonDataSpec {
 
     void 'mergediff with finalised target - should throw error'() {
         when:
-        MergeDiffDTO mergeDiff = dataModelApi.mergeDiff(ancestor.id, ancestorAlternative.id)
+        dataModelApi.mergeDiff(ancestor.id, ancestorAlternative.id)
         then:
         HttpClientResponseException exception = thrown()
         exception.status == HttpStatus.UNPROCESSABLE_ENTITY
@@ -143,7 +143,7 @@ class DataModelSchemaMergeDiffsIntegrationSpec extends CommonDataSpec {
 
     void 'mergediff with unrelated ancestors - should throw error'() {
         when:
-        MergeDiffDTO mergeDiff = dataModelApi.mergeDiff(main.id, mainAlternative.id)
+        dataModelApi.mergeDiff(main.id, mainAlternative.id)
         then:
         HttpClientResponseException exception = thrown()
         exception.status == HttpStatus.UNPROCESSABLE_ENTITY
@@ -168,7 +168,7 @@ class DataModelSchemaMergeDiffsIntegrationSpec extends CommonDataSpec {
 
     void 'mergediff update branch datamodel label - should label update diff'() {
         when:
-        DataModel updated=dataModelApi.update(branch.id, new DataModel(label:"Changed label"))
+        dataModelApi.update(branch.id, new DataModel(label:"Changed label"))
         MergeDiffDTO mergeDiff = dataModelApi.mergeDiff(branch.id, main.id)
         then:
         mergeDiff.diffs.forEach {
@@ -198,7 +198,7 @@ class DataModelSchemaMergeDiffsIntegrationSpec extends CommonDataSpec {
             description: 'other test description',
             minMultiplicity: -1))
 
-        DataClass childDataClass = dataClassApi.create(branch.id, dataClass.id, new DataClass(
+        dataClassApi.create(branch.id, dataClass.id, new DataClass(
             label: 'Test child',
             description: 'child test description',
             minMultiplicity: -2))
@@ -262,7 +262,7 @@ class DataModelSchemaMergeDiffsIntegrationSpec extends CommonDataSpec {
         ListResponse<DataClass> dataClassListResponse_main = dataClassApi.allDataClasses(main.id)
         DataClass dataClass_main = dataClassListResponse_main.items.get(0)
 
-        DataClass childDataClass = dataClassApi.create(main.id, dataClass_main.id, new DataClass(
+        dataClassApi.create(main.id, dataClass_main.id, new DataClass(
             label: 'Test child',
             description: 'child test description',
             minMultiplicity: -2))
@@ -285,7 +285,7 @@ class DataModelSchemaMergeDiffsIntegrationSpec extends CommonDataSpec {
 
     void 'mergeinto update branch label'() {
         when:
-        DataModel updated=dataModelApi.update(branch.id, new DataModel(label:"Changed label"))
+        dataModelApi.update(branch.id, new DataModel(label:"Changed label"))
         MergeDiffDTO mergeDiff = dataModelApi.mergeDiff(branch.id, main.id)
 
         MergeIntoDTO mergeIntoDTO=mergeIntoDTOFromMergeDiffDTO(mergeDiff)
@@ -307,7 +307,7 @@ class DataModelSchemaMergeDiffsIntegrationSpec extends CommonDataSpec {
         ListResponse<DataClass> dataClassListResponse_main = dataClassApi.allDataClasses(main.id)
         DataClass dataClass_main = dataClassListResponse_main.items.get(0)
 
-        DataClass childDataClass = dataClassApi.create(main.id, dataClass_main.id, new DataClass(
+        dataClassApi.create(main.id, dataClass_main.id, new DataClass(
             label: 'Test child',
             description: 'child test description',
             minMultiplicity: -2))
@@ -321,7 +321,7 @@ class DataModelSchemaMergeDiffsIntegrationSpec extends CommonDataSpec {
 
         MergeIntoDTO mergeIntoDTO=mergeIntoDTOFromMergeDiffDTO(mergeDiff)
 
-        DataModel resultOfMerge = dataModelApi.mergeInto(mergeIntoDTO.patch.sourceId, mergeIntoDTO.patch.targetId, mergeIntoDTO)
+        dataModelApi.mergeInto(mergeIntoDTO.patch.sourceId, mergeIntoDTO.patch.targetId, mergeIntoDTO)
 
         ObjectDiff objectDiff = dataModelApi.diffModels(branch.id, main.id)
 
@@ -339,7 +339,7 @@ class DataModelSchemaMergeDiffsIntegrationSpec extends CommonDataSpec {
             description: 'other test description',
             minMultiplicity: -1))
 
-        DataClass childDataClass = dataClassApi.create(branch.id, dataClass.id, new DataClass(
+        dataClassApi.create(branch.id, dataClass.id, new DataClass(
             label: 'Test child',
             description: 'child test description',
             minMultiplicity: -2))
@@ -348,7 +348,7 @@ class DataModelSchemaMergeDiffsIntegrationSpec extends CommonDataSpec {
 
         MergeIntoDTO mergeIntoDTO=mergeIntoDTOFromMergeDiffDTO(mergeDiff)
 
-        DataModel resultOfMerge = dataModelApi.mergeInto(mergeIntoDTO.patch.sourceId, mergeIntoDTO.patch.targetId, mergeIntoDTO)
+        dataModelApi.mergeInto(mergeIntoDTO.patch.sourceId, mergeIntoDTO.patch.targetId, mergeIntoDTO)
 
 
 

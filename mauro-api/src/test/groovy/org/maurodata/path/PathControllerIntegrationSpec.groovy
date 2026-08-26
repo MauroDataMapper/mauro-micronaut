@@ -142,7 +142,7 @@ class PathControllerIntegrationSpec extends CommonDataSpec {
             branchName: 'newBranchName'
         })
 
-        ListResponse<DataClass> response = dataClassApi.list(newBranchModelVersion.id)
+        dataClassApi.list(newBranchModelVersion.id)
         DataModel retrieved  = dataModelApi.show(newBranchModelVersion.id)
         when:
 
@@ -157,7 +157,7 @@ class PathControllerIntegrationSpec extends CommonDataSpec {
     //todo: fixme the version info is not part of the  pathsstring for modelitems so unable to match exact version
     void 'test getResource by Path from Resource -should find resource 2'() {
         DataModel dataModel = dataModelApi.create(folderId, dataModelPayload('datamodel label '))
-        DataClass dataClass = dataClassApi.create(dataModel.id, dataClassPayload('label for dataclass'))
+        dataClassApi.create(dataModel.id, dataClassPayload('label for dataclass'))
 
         DataModel finalised = dataModelApi.finalise(dataModel.id,
                                                     new FinaliseData(versionChangeType: VersionChangeType.MAJOR, versionTag: 'random version tag'))

@@ -80,7 +80,7 @@ class RuleRepositorySpec extends Specification {
         then:
         retrievedDataModel.rules.size() == 1
 
-        List<RuleRepresentation> ruleRepresentations = ruleRepresentationRepository.findAllByRuleId(retrievedDataModel.rules.first().id)
+        ruleRepresentationRepository.findAllByRuleId(retrievedDataModel.rules.first().id)
 
         retrievedDataModel.rules.first().ruleRepresentations.size() == 2
 
@@ -96,10 +96,10 @@ class RuleRepositorySpec extends Specification {
         then:
         retrievedDataModel.rules.size() == 1
 
-        List<RuleRepresentation> ruleRepresentations = ruleRepresentationRepository.findAllByRuleId(retrievedDataModel.rules.first().id)
+        ruleRepresentationRepository.findAllByRuleId(retrievedDataModel.rules.first().id)
 
         retrievedDataModel.rules.first().ruleRepresentations.size() == 2
-        UUID ruleId = retrievedDataModel.rules.first().id
+        retrievedDataModel.rules.first().id
 
         when:
         ruleRepresentationRepository.delete(retrievedDataModel.rules.first().ruleRepresentations.first())

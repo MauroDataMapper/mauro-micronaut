@@ -1,5 +1,10 @@
 package org.maurodata.security
 
+import org.maurodata.domain.security.ApplicationRole
+import org.maurodata.domain.security.CatalogueUser
+import org.maurodata.domain.security.Role
+import org.maurodata.domain.security.SecurableResourceGroupRole
+import org.maurodata.domain.security.UserGroup
 import org.maurodata.persistence.model.AdministeredItemRepository
 
 import groovy.transform.CompileStatic
@@ -16,7 +21,6 @@ import jakarta.inject.Inject
 import jakarta.inject.Singleton
 import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.domain.model.Model
-import org.maurodata.domain.security.*
 import org.maurodata.persistence.cache.ItemCacheableRepository
 import org.maurodata.persistence.cache.ItemCacheableRepository.CatalogueUserCacheableRepository
 import org.maurodata.persistence.model.PathRepository

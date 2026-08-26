@@ -95,7 +95,7 @@ class ApiKeyIntegrationSpec extends SecuredIntegrationSpec {
         loginUser()
 
         when:
-        ApiKey response = apiKeyApi.create(adminUser.id, new ApiKey(
+        apiKeyApi.create(adminUser.id, new ApiKey(
             name         : "Test Key For Another User",
             expiresInDays: 10,
             refreshable  : true
@@ -178,7 +178,7 @@ class ApiKeyIntegrationSpec extends SecuredIntegrationSpec {
         userResponse.id == user.id
 
         when: // But we still can't get the email list which requires an administrator
-        ListResponse<Email> emailsResponse = adminApi.listEmails()
+        adminApi.listEmails()
 
         then:
         e = thrown(Exception)
@@ -256,7 +256,7 @@ class ApiKeyIntegrationSpec extends SecuredIntegrationSpec {
             refreshable  : true
         ))
 
-        UUID apiKeyId = response.id
+        assert response.id
 
         logout()
 
@@ -270,7 +270,7 @@ class ApiKeyIntegrationSpec extends SecuredIntegrationSpec {
 
         when:
         setApiKey(UUID.randomUUID())
-        CatalogueUser userResponse = catalogueUserApi.currentUser()
+        catalogueUserApi.currentUser()
 
         then:
         e = thrown(Exception)
@@ -303,7 +303,7 @@ class ApiKeyIntegrationSpec extends SecuredIntegrationSpec {
 
         when:
         setApiKey(apiKeyId)
-        CatalogueUser userResponse = catalogueUserApi.currentUser()
+        catalogueUserApi.currentUser()
 
         then:
         e = thrown(Exception)
@@ -336,7 +336,7 @@ class ApiKeyIntegrationSpec extends SecuredIntegrationSpec {
 
         when:
         setApiKey(apiKeyId)
-        CatalogueUser userResponse = catalogueUserApi.currentUser()
+        catalogueUserApi.currentUser()
 
         then:
         e = thrown(Exception)

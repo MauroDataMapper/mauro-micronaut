@@ -55,8 +55,8 @@ class DeleteFolderIntegrationSpec extends CommonDataSpec {
         codeSetApi.addTerm(codeSet.id, term.id)
 
         ClassificationScheme classificationScheme = classificationSchemeApi.create(folderId, classificationSchemePayload(true, true))
-        Classifier classifier1 = classifierApi.create(classificationScheme.id, classifierPayload('classifier one label') )
-        Classifier classifier2 = classifierApi.create(classificationScheme.id, classifierPayload('classifier two label') )
+        classifierApi.create(classificationScheme.id, classifierPayload('classifier one label') )
+        classifierApi.create(classificationScheme.id, classifierPayload('classifier two label') )
         Folder folder = folderApi.show(folderId)
 
         when:

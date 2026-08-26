@@ -11,11 +11,11 @@ import org.maurodata.domain.terminology.Terminology
 import org.maurodata.test.domain.TestModelData
 
 class FolderSpec extends Specification {
-    static String LABEL = 'My Test Folder'
-    static String AUTHOR = 'My Test Folder author : anon'
-    static String DESCRIPTION = 'This is an example of a folder'
+    private static final String LABEL = 'My Test Folder'
+    private static final String AUTHOR = 'My Test Folder author : anon'
+    private static final String DESCRIPTION = 'This is an example of a folder'
 
-    static Folder testFolder = Folder.build(label: "$LABEL", author: "$AUTHOR", description: "$DESCRIPTION") {}
+    private static final Folder testFolder = Folder.build(label: "$LABEL", author: "$AUTHOR", description: "$DESCRIPTION") {}
 
     void "Test the DSL for creating objects"() {
 

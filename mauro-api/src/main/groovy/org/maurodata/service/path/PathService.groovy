@@ -142,7 +142,7 @@ class PathService implements AdministeredItemReader {
         String domainType = getDomainTypeFromPathPrefix(firstPathNode.prefix)
         AdministeredItemCacheableRepository repository = getAdministeredItemRepository(domainType)
         List<AdministeredItem> items = repository.findAllByLabel(firstPathNode.identifier) as List<AdministeredItem>
-        AdministeredItem nextItemInPath = null
+        AdministeredItem nextItemInPath
         if(firstPathNode.modelIdentifier) {
             // We've got a new root node - find it and then start from there
             nextItemInPath = items.find {it ->

@@ -15,7 +15,7 @@ import org.maurodata.security.authentication.MauroSessionLoginHandler
 @SecuredContainerizedTest
 class MauroSessionLoginHandlerIntegrationSpec extends SecuredIntegrationSpec {
 
-    static String KEYCLOAK_LOGIN_PATH = '/oauth/login/keycloak'
+    private static final String KEYCLOAK_LOGIN_PATH = '/oauth/login/keycloak'
 
     @Inject
     @Shared

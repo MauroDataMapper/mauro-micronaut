@@ -31,7 +31,7 @@ class MovingModelsIntegrationSpec extends CommonDataSpec {
     void 'test moving folders between versioned folders - failures'() {
 
         when:
-        Folder folder = folderApi.moveFolder(ids[folderName], ids[destinationName].toString())
+        folderApi.moveFolder(ids[folderName], ids[destinationName].toString())
         then:
 
         HttpClientResponseException exception = thrown()
@@ -52,7 +52,7 @@ class MovingModelsIntegrationSpec extends CommonDataSpec {
     void 'test moving folders and creating loops - failures'() {
 
         when:
-        Folder folder = folderApi.moveFolder(ids[folderName], ids[destinationName].toString())
+        folderApi.moveFolder(ids[folderName], ids[destinationName].toString())
         then:
 
         HttpClientResponseException exception = thrown()
@@ -67,7 +67,7 @@ class MovingModelsIntegrationSpec extends CommonDataSpec {
     void 'test moving data models between versioned folders - failures'() {
 
         when:
-        DataModel dataModel = dataModelApi.moveFolder(ids[dataModelName], ids[destinationName].toString())
+        dataModelApi.moveFolder(ids[dataModelName], ids[destinationName].toString())
         then:
 
         HttpClientResponseException exception = thrown()
@@ -89,7 +89,7 @@ class MovingModelsIntegrationSpec extends CommonDataSpec {
     void 'test moving terminologies between versioned folders - failures'() {
 
         when:
-        Terminology terminology = terminologyApi.moveFolder(ids[terminologyName], ids[destinationName].toString())
+        terminologyApi.moveFolder(ids[terminologyName], ids[destinationName].toString())
         then:
 
         HttpClientResponseException exception = thrown()
@@ -111,7 +111,7 @@ class MovingModelsIntegrationSpec extends CommonDataSpec {
     void 'test moving code sets between versioned folders - failures'() {
 
         when:
-        CodeSet codeSet = codeSetApi.moveFolder(ids[codeSetName], ids[destinationName].toString())
+        codeSetApi.moveFolder(ids[codeSetName], ids[destinationName].toString())
         then:
 
         HttpClientResponseException exception = thrown()

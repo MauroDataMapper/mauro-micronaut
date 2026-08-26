@@ -57,8 +57,8 @@ class Annotation extends Facet implements DiffableItem<Annotation> {
                 parentAnnotationId = parentAnnotation.id
             } else {
                 log.error("Trying to save a child Annotation without parent id being saved")
-                log.error("" + label)
-                log.error("" + parentAnnotation.label)
+                log.error(label)
+                log.error(parentAnnotation.label)
             }
         }
         if(!multiFacetAwareItemId) {
@@ -71,11 +71,11 @@ class Annotation extends Facet implements DiffableItem<Annotation> {
             } else {
                 log.error("Trying to save Annotation without 'multiFacetAwareItem' set")
 
-                log.error("" + multiFacetAwareItem)
-                log.error("" + multiFacetAwareItemId)
-                log.error("" + parentAnnotation)
-                log.error("" + parentAnnotation?.multiFacetAwareItem)
-                log.error("" + parentAnnotation?.multiFacetAwareItemId)
+                log.error(multiFacetAwareItem.toString())
+                log.error(multiFacetAwareItemId.toString())
+                log.error(parentAnnotation.toString())
+                log.error(parentAnnotation?.multiFacetAwareItem?.toString())
+                log.error(parentAnnotation?.multiFacetAwareItemId?.toString())
             }
         }
 
