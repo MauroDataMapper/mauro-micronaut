@@ -62,6 +62,7 @@ import org.maurodata.domain.security.UserGroup
 import org.maurodata.domain.terminology.CodeSet
 import org.maurodata.domain.terminology.Term
 import org.maurodata.persistence.ContentsService
+import org.maurodata.persistence.IdOnlyContentHandler
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository
 import org.maurodata.persistence.cache.FacetCacheableRepository
 import org.maurodata.persistence.cache.ModelCacheableRepository
@@ -232,12 +233,11 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
 
         accessControlService.checkRole(Role.CONTAINER_ADMIN, modelToDelete)
 
-        modelToDelete = (M) contentsService.loadWithContent(modelToDelete)
+        // modelToDelete = (M) contentsService.loadWithContent(modelToDelete)
         if (model?.version) modelToDelete.version = model.version
 
         if (permanent) {
             contentsService.deleteWithContent(modelToDelete)
-
         } else {
             modelToDelete.deleted(true)
             administeredItemRepository.update(modelToDelete)

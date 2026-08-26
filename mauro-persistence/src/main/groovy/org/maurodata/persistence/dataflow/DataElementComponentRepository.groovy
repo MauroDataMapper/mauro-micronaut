@@ -51,6 +51,8 @@ abstract class DataElementComponentRepository implements ModelItemRepository<Dat
 
     abstract List<DataElementComponent> readAllByDataClassComponentIdIn(List<UUID> dataClassComponentIds)
 
+    abstract List<UUID> readAllIdByDataClassComponentIdIn(List<UUID> dataClassComponentIds)
+
 
     @Nullable
     @Override

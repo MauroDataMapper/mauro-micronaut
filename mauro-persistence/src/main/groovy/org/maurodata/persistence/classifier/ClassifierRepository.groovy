@@ -26,6 +26,8 @@ abstract class ClassifierRepository implements ModelItemRepository<Classifier> {
 
     abstract List<Classifier> readAllByIdIn(Collection<UUID> classifierIds)
 
+    abstract List<UUID> readAllIdByClassificationSchemeIdIn(List<UUID> classificationSchemeIds)
+
     @Override
     @Nullable
     Classifier findById(UUID id) {

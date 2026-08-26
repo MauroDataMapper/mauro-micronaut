@@ -22,6 +22,10 @@ abstract class AnnotationRepository implements FacetRepository<Annotation> {
 
     abstract Set<Annotation> readAllByParentAnnotationIdIn(Collection<UUID> parentAnnotationIds)
 
+    abstract Set<UUID> readAllIdByMultiFacetAwareItemIdInAndParentAnnotationIdIsNull(@NonNull Collection<UUID> ids)
+
+    abstract Set<UUID> readAllIdByParentAnnotationIdIn(Collection<UUID> parentAnnotationIds)
+
     @Override
     Class getDomainClass() {
         Annotation

@@ -11,6 +11,8 @@ import io.micronaut.data.model.query.builder.sql.Dialect
 @JdbcRepository(dialect = Dialect.POSTGRES)
 abstract class RuleRepository implements FacetRepository<Rule> {
 
+
+
     @Override
     Class getDomainClass() {
         Rule

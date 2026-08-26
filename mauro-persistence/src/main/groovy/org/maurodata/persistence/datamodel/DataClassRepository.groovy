@@ -67,6 +67,8 @@ abstract class DataClassRepository implements ModelItemRepository<DataClass> {
     @Nullable
     abstract List<DataClass> readAllByDataModelIdInAndParentDataClassIsNull(Collection<UUID> dataModelIds)
 
+    @Nullable
+    abstract List<UUID> readAllIdByDataModelIdInAndParentDataClassIsNull(Collection<UUID> dataModelIds)
 
     @Nullable
     abstract List<DataClass> readAllByParentDataClass_Id(UUID dataClassId)
@@ -76,6 +78,9 @@ abstract class DataClassRepository implements ModelItemRepository<DataClass> {
 
     @Nullable
     abstract List<DataClass> readAllByParentDataClassIdIn(Collection<UUID> dataClassIds)
+
+    @Nullable
+    abstract List<UUID> readAllIdByParentDataClassIdIn(Collection<UUID> dataClassIds)
 
     @Nullable
     abstract DataClass readByParentDataClassAndLabel(DataClass parentDataClass, String label)

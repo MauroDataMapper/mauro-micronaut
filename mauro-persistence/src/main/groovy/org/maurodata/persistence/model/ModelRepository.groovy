@@ -32,6 +32,12 @@ trait ModelRepository<M extends Model> implements AdministeredItemRepository<M> 
     @Nullable
     abstract List<M> readAllByFolderIdIn(Collection<UUID> folderIds)
 
+    @Nullable
+    abstract List<UUID> readAllIdByFolderIdIn(Collection<UUID> folderIds)
+
+    @Nullable
+    abstract Long deleteAllByFolderIdIn(Collection<UUID> folderIds)
+
 
     @Nullable
     abstract List<M> readAllByFinalisedTrue()

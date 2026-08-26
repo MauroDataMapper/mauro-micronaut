@@ -106,6 +106,10 @@ abstract class FacetCacheableRepository<F extends Facet> extends ItemCacheableRe
             ((VersionLinkRepository) repository).readAllByMultiFacetAwareItemIdIn(itemIds)
         }
 
+        Long deleteByMultiFacetAwareItemIdIn(List<UUID> versionLinkIds) {
+            ((VersionLinkRepository) repository).deleteByMultiFacetAwareItemIdIn(versionLinkIds)
+        }
+
     }
 
     @Singleton
@@ -117,6 +121,15 @@ abstract class FacetCacheableRepository<F extends Facet> extends ItemCacheableRe
         Set<SummaryMetadata> readAllByMultiFacetAwareItemIdIn(Collection<UUID> itemIds) {
             ((SummaryMetadataRepository) repository).readAllByMultiFacetAwareItemIdIn(itemIds)
         }
+
+        Set<UUID> readAllIdByMultiFacetAwareItemIdIn(Collection<UUID> itemIds) {
+            ((SummaryMetadataRepository) repository).readAllIdByMultiFacetAwareItemIdIn(itemIds)
+        }
+
+        Long deleteByMultiFacetAwareItemIdIn(List<UUID> itemIds) {
+            ((SummaryMetadataRepository) repository).deleteByMultiFacetAwareItemIdIn(itemIds)
+        }
+
     }
 
     @Singleton
@@ -127,6 +140,10 @@ abstract class FacetCacheableRepository<F extends Facet> extends ItemCacheableRe
         }
         Set<Edit> readAllByMultiFacetAwareItemIdIn(Collection<UUID> itemIds) {
             ((EditRepository) repository).readAllByMultiFacetAwareItemIdIn(itemIds)
+        }
+
+        Long deleteByMultiFacetAwareItemIdIn(List<UUID> itemIds) {
+            ((EditRepository) repository).deleteByMultiFacetAwareItemIdIn(itemIds)
         }
 
     }
@@ -141,6 +158,15 @@ abstract class FacetCacheableRepository<F extends Facet> extends ItemCacheableRe
         Set<Rule> readAllByMultiFacetAwareItemIdIn(Collection<UUID> itemIds) {
             ((RuleRepository) repository).readAllByMultiFacetAwareItemIdIn(itemIds)
         }
+
+        Set<UUID> readAllIdByMultiFacetAwareItemIdIn(Collection<UUID> itemIds) {
+            ((RuleRepository) repository).readAllIdByMultiFacetAwareItemIdIn(itemIds)
+        }
+
+        Long deleteByMultiFacetAwareItemIdIn(List<UUID> itemIds) {
+            ((RuleRepository) repository).deleteByMultiFacetAwareItemIdIn(itemIds)
+        }
+
     }
 
     @Singleton
@@ -160,6 +186,14 @@ abstract class FacetCacheableRepository<F extends Facet> extends ItemCacheableRe
 
         Set<Annotation> readAllByParentAnnotationIdIn(Collection<UUID> parentAnnotationIds) {
             ((AnnotationRepository) repository).readAllByParentAnnotationIdIn(parentAnnotationIds)
+        }
+
+        Set<UUID> readAllIdByMultiFacetAwareItemIdInAndParentAnnotationIdIsNull(@NonNull Collection<UUID> ids) {
+            ((AnnotationRepository) repository).readAllIdByMultiFacetAwareItemIdInAndParentAnnotationIdIsNull(ids)
+        }
+
+        Set<UUID> readAllIdByParentAnnotationIdIn(Collection<UUID> parentAnnotationIds) {
+            ((AnnotationRepository) repository).readAllIdByParentAnnotationIdIn(parentAnnotationIds)
         }
 
 
@@ -206,6 +240,11 @@ abstract class FacetCacheableRepository<F extends Facet> extends ItemCacheableRe
             ((ReferenceFileRepository) repository).readAllByMultiFacetAwareItemIdIn(itemIds)
         }
 
+        Long deleteByMultiFacetAwareItemIdIn(List<UUID> itemIds) {
+            ((ReferenceFileRepository) repository).deleteByMultiFacetAwareItemIdIn(itemIds)
+        }
+
+
     }
 
     @Singleton
@@ -233,6 +272,10 @@ abstract class FacetCacheableRepository<F extends Facet> extends ItemCacheableRe
 
         Set<SemanticLink> readAllByTargetMultiFacetAwareItemId(UUID itemId) {
             ((SemanticLinkRepository) repository).readAllByTargetMultiFacetAwareItemId(itemId)
+        }
+
+        Long deleteByMultiFacetAwareItemIdIn(List<UUID> itemIds) {
+            ((SemanticLinkRepository) repository).deleteByMultiFacetAwareItemIdIn(itemIds)
         }
 
     }

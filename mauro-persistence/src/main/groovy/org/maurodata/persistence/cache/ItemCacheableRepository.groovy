@@ -113,6 +113,12 @@ abstract class ItemCacheableRepository<I extends Item> implements ItemRepository
         deleted
     }
 
+    Long deleteAllByIdIn(Iterable<UUID> items) {
+        Long deleted = repository.deleteAllByIdIn(items)
+        invalidateAll()
+        deleted
+    }
+
 
     List<I> readAll() {
         repository.readAll()
@@ -136,6 +142,9 @@ abstract class ItemCacheableRepository<I extends Item> implements ItemRepository
             case READ_BY_ID -> repository.readById(id)
         }
     }
+
+    @CacheInvalidate(all = true)
+    void invalidateAll() {}
 
     void invalidate(I item) {
         invalidate(item.id)
@@ -182,9 +191,6 @@ abstract class ItemCacheableRepository<I extends Item> implements ItemRepository
         void invalidateCachedLookupById(String lookup, String domainType, UUID id) {
             null
         }
-
-        @CacheInvalidate(all = true)
-        void invalidateAll() {}
 
         List<SecurableResourceGroupRole> readAllBySecurableResourceDomainTypeAndSecurableResourceId(String securableResourceDomainType, UUID securableResourceId) {
             mutableReadAllBySecurableResourceDomainTypeAndSecurableResourceId(securableResourceDomainType, securableResourceId).collect {it.clone()}
@@ -376,6 +382,10 @@ abstract class ItemCacheableRepository<I extends Item> implements ItemRepository
             ((SummaryMetadataReportRepository) repository).readAllBySummaryMetadataIdIn(summaryMetadataIds)
         }
 
+        Long deleteAllBySummaryMetadataIdIn(List<UUID> summaryMetadataIds) {
+            ((SummaryMetadataReportRepository) repository).deleteAllBySummaryMetadataIdIn(summaryMetadataIds)
+        }
+
         private void invalidateChain(SummaryMetadataReport summaryMetadataReport, SummaryMetadata summaryMetadata) {
             invalidate(summaryMetadataReport)
             summaryMetadataCacheableRepository.invalidate(summaryMetadata)
@@ -401,6 +411,10 @@ abstract class ItemCacheableRepository<I extends Item> implements ItemRepository
 
         List<RuleRepresentation> readAllByRuleIdIn(List<UUID> ruleIds) {
             ((RuleRepresentationRepository) repository).readAllByRuleIdIn(ruleIds)
+        }
+
+        Long deleteAllByRuleIdIn(List<UUID> ruleIds) {
+            ((RuleRepresentationRepository) repository).deleteAllByRuleIdIn(ruleIds)
         }
 
     }

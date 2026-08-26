@@ -17,6 +17,9 @@ trait FacetRepository<F extends Facet> implements ItemRepository<F> {
 
     abstract Set<F> readAllByMultiFacetAwareItemIdIn(Collection<UUID> ownerIds)
 
+    abstract Set<UUID> readAllIdByMultiFacetAwareItemIdIn(Collection<UUID> ownerIds)
+
+    abstract Long deleteByMultiFacetAwareItemIdIn(List<UUID> itemIds)
 
     abstract Class<F> getDomainClass()
 

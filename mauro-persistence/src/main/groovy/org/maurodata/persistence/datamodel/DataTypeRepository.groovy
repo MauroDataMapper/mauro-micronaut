@@ -57,6 +57,9 @@ abstract class DataTypeRepository implements ModelItemRepository<DataType> {
     @Nullable
     abstract List<DataType> readAllByDataModelIdIn(Collection<UUID> dataModelIds)
 
+    @Nullable
+    abstract List<UUID> readAllIdByDataModelIdIn(Collection<UUID> dataModelIds)
+
     @Override
     @Nullable
     List<DataType> readAllByParent(AdministeredItem parent) {
