@@ -112,7 +112,9 @@ class AgentStateTransitionService {
     }
 
     StepDecisionTransition normalizeStepDecision(String decision, Boolean stepComplete, Integer attemptCount = 0, Integer maxRetries = 0) {
-        String normalizedDecision = normalizeDecision(decision, 'continue')
+        String requestedDecision = normalizeDecision(decision, 'continue')
+        boolean requestedComplete = Boolean.TRUE == stepComplete
+        String normalizedDecision = normalizeStepEvaluatorDecision(requestedDecision, requestedComplete)
         boolean completed = stepComplete == null ? normalizedDecision == 'continue' : Boolean.TRUE == stepComplete
         if (normalizedDecision == 'continue') {
             completed = true
@@ -149,6 +151,13 @@ class AgentStateTransitionService {
         )
     }
 
+    private static String normalizeStepEvaluatorDecision(String decision, boolean stepComplete) {
+        if (decision in ['continue', 'retry', 'replan', 'ask_user', 'fail']) {
+            return decision
+        }
+        stepComplete ? 'continue' : 'replan'
+    }
+
     PlanDecisionTransition normalizePlanDecision(
         String decision,
         AgentPlanRecord plan,
@@ -166,18 +175,6 @@ class AgentStateTransitionService {
             normalizedDecision = 'final'
             normalizedSummary = 'No remaining planned steps are available; preparing the final answer from the evidence gathered.'
             normalizedReason = 'The evaluator requested continuation, but the current plan has no remaining pending steps. The transition service normalized the decision to final.'
-        }
-
-        if (normalizedDecision == 'replan' && !hasRemainingPlannedSteps(plan) && finalAnswerEvidencePresent(evidence)) {
-            List<String> declaredMissing = unmetDeclaredSuccessCriteria(normalizedMissing, plan)
-            if (declaredMissing.isEmpty()) {
-                normalizedDecision = 'final'
-                normalizedSummary = 'No declared success criteria remain unmet; preparing the final answer from the evidence gathered.'
-                normalizedReason = 'The evaluator requested replanning after all planned steps completed, but did not identify an unmet active-plan success criterion.'
-                normalizedMissing = []
-            } else {
-                normalizedMissing = declaredMissing
-            }
         }
 
         String runStatus = null
@@ -239,25 +236,6 @@ class AgentStateTransitionService {
         (plan?.steps ?: ([] as List<AgentStepRecord>)).any {AgentStepRecord step ->
             step.kind != 'final_answer' && (step.status == null || step.status in [STEP_PENDING, STEP_IN_PROGRESS, STEP_REQUIRES_ACTION])
         }
-    }
-
-    private static boolean finalAnswerEvidencePresent(List<AgentEvidenceRecord> evidence) {
-        (evidence ?: ([] as List<AgentEvidenceRecord>)).any {AgentEvidenceRecord item ->
-            Boolean.TRUE == item.metadata?.get('pertinentToFinal')
-        }
-    }
-
-    private static List<String> unmetDeclaredSuccessCriteria(List<String> missing, AgentPlanRecord plan) {
-        Set<String> declared = ((plan?.successCriteria ?: []) as List<String>).collect {String criterion ->
-            (criterion ?: '').trim()
-        }.findAll {String criterion ->
-            !criterion.isEmpty()
-        }.toSet()
-        (missing ?: ([] as List<String>)).collect {String item ->
-            (item ?: '').trim()
-        }.findAll {String item ->
-            declared.contains(item)
-        } as List<String>
     }
 
     private static String stepDecisionReason(String decision, boolean completed, boolean retryAllowed) {

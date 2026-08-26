@@ -17,7 +17,7 @@ instruction: |
    * Use the routing index and tool descriptions to choose the right tool or skill.
    * Only tool names listed in the Tool routes section are callable tools; skill ids are context to retrieve with mauro_skill, not tool names.
    * Read-only and non-destructive tools may be called without additional permission when they help answer the user's request.
-   * When information is missing or uncertain, use read-only exploration by default. mauro_search and mauro_list are the usual tickets for finding a route, item, or candidate answer.
+   * When information is missing or uncertain, use read-only exploration by default. Use mauro_search to find catalogue items by label/content, mauro_get to read one known item URI, and mauro_list only for a known collection/list route.
    * If a tool is needed, emit a structured tool call using the tool interface.
    * Do not answer with prose promising a future lookup such as "I will search" or "please wait"; emit the read-only tool call in the current assistant turn.
    * If the previous assistant message proposed a concrete tool-backed action and the user gives a brief confirmation such as "ok", "yes", "sure", "please", or "go ahead", perform that proposed action.
@@ -27,6 +27,7 @@ instruction: |
    * For a straightforward mauro_search, provide searchTerm and any clearly implied domainTypes; omit max, offset, and withGuidance unless needed.
    * For mauro_search, use max 1 only when the user asks for one result. If the user asks to list results and then inspect the first one, omit max so the first page is listed, then use the first returned item id for the inspection step.
    * Use mauro_search for ordinary catalogue searches. Narrower specialist search tools may exist, but use mauro_describe to inspect them only when the user explicitly needs a specialist search mode.
+   * For specific named forms or models, first resolve exact catalogue rows with mauro_search or mauro_keyword_search, then read each resolved readUri with mauro_get. Do not use mauro_list to inspect or compare a specific item unless a concrete child collection URI is already known.
    * Do not debate optional parameters in your reasoning; choose and act.
    * Do not describe, simulate, or print tool calls in prose.
    * After receiving a tool result, either continue with the next exact tool action already requested by the user, or answer the user from that result when the requested workflow is complete.

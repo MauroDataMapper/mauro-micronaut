@@ -68,11 +68,17 @@ abstract class LangChain4jStreamingProvider implements LlmProvider {
                         ProviderRequest effectiveRequest = withDefaultParameters(request, configuration)
                         StreamingChatModel model = modelFactory.createStreamingModel(configuration, effectiveRequest.model)
                         List<ChatMessage> workingMessages = mapper.toChatMessages(effectiveRequest.messages)
+                        boolean disableToolLoop = Boolean.TRUE.equals(effectiveRequest.options?.get('_mauroDisableToolLoop'))
 
                         boolean continueLoop = true
                         while (continueLoop) {
                             TurnResult turn = streamOneTurn(model, effectiveRequest, workingMessages, sink)
                             if (turn.toolRequests.isEmpty()) {
+                                continueLoop = false
+                            } else if (disableToolLoop) {
+                                for (ToolExecutionRequest toolRequest : turn.toolRequests) {
+                                    emitToolCall(toolRequest, effectiveRequest, sink)
+                                }
                                 continueLoop = false
                             } else {
                                 ChatMessage aiMessage = mapper.toAiMessage(turn.toolRequests, turn.visibleText.toString())
@@ -114,6 +120,7 @@ abstract class LangChain4jStreamingProvider implements LlmProvider {
         Map<String, Object> options = new LinkedHashMap<String, Object>()
         options.putAll(configuration.defaultParameters ?: Collections.<String, Object>emptyMap())
         options.putAll(request.options ?: Collections.<String, Object>emptyMap())
+        options = LangChain4jRequestOptionsPolicy.sanitize(configuration.effectiveType(), request.model, options)
         new ProviderRequest(
             sessionId: request.sessionId,
             messageId: request.messageId,
@@ -209,11 +216,7 @@ abstract class LangChain4jStreamingProvider implements LlmProvider {
         FluxSink<ProviderChunk> sink
     ) {
         Map<String, Object> arguments = argumentsMap(toolRequest.arguments())
-        sink.next(new ProviderChunk('tool_call', providerRequest.messageId, null, [
-            callId   : toolRequest.id(),
-            name     : toolRequest.name(),
-            arguments: arguments
-        ] as Map<String, Object>))
+        emitToolCall(toolRequest, providerRequest, sink)
 
         ToolInvokeResponse invokeResponse = mcpService.invokeTool(toolRequest.name(), new ToolInvokeRequest(
             arguments: arguments,
@@ -249,6 +252,14 @@ abstract class LangChain4jStreamingProvider implements LlmProvider {
         )
         workingMessages.add(toolMessage)
         emitProviderMessage(sink, providerRequest.messageId, toolMessage)
+    }
+
+    private void emitToolCall(ToolExecutionRequest toolRequest, ProviderRequest providerRequest, FluxSink<ProviderChunk> sink) {
+        sink.next(new ProviderChunk('tool_call', providerRequest.messageId, null, [
+            callId   : toolRequest.id(),
+            name     : toolRequest.name(),
+            arguments: argumentsMap(toolRequest.arguments())
+        ] as Map<String, Object>))
     }
 
     private Map<String, Object> argumentsMap(String argumentsJson) {

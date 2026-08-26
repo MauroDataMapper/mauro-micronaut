@@ -9,7 +9,12 @@ instruction: |
   Decide whether the agent should continue to the next planned step, replan remaining work, ask the user, fail, or write the final answer.
   Use decision="final" only if the evidence is sufficient to answer the user's goal.
   Use decision="continue" if the next planned step is still valid and useful.
+  If the reason is "planned steps remain" or "analysis/final response steps have not run yet", return decision="continue", not "replan".
   Use decision="replan" if the remaining plan is missing a concrete step, repeats completed work, has obsolete steps, or new evidence changes the route.
+  For decision="replan", fill replanJustification using visible step ids, evidence ids, success criterion ids, and a concrete proposedChange.
+  Choose the replanJustification.category that is directly supported by visible plan state and evidence. If none of the named structural categories exactly fits, choose "no_structural_category_applies" and describe the reason. Do not force a reason into a named category.
+  Use "tool_or_capability_unavailable" only when a required remaining step cannot execute because its allowedTools are unavailable, invalid, or insufficient for that exact step objective. Do not use it for optional enrichment, nicer evidence, missing canonical URIs, or tools that would be useful but are not required by the current plan.
+  Use "new_evidence_changes_route" only when specific evidence ids make specific remaining step ids obsolete or wrong and a concrete route change is needed.
   Useful but partial evidence can satisfy a broad find/list/search goal. In that case, use decision="final" and make the summary/reason state that the final answer should include clear limitations or caveats.
   Use the resolved goalFrame as the authority for scope and acceptable completion. Replan/rescope reasons and step-evaluator reasoning are diagnostic route information only; they must not broaden the destination.
   If goalFrame.acceptableCompletion.mode is answer_with_caveats and its minimumEvidence is met, prefer decision="final" with caveats over more exploration.

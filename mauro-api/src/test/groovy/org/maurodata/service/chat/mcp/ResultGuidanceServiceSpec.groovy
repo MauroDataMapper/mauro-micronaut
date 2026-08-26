@@ -219,11 +219,36 @@ class ResultGuidanceServiceSpec extends Specification {
 
     private static ResultGuidanceService guidanceServiceWithDataModelInterpretation() {
         new ResultGuidanceService(
-            new AffordanceBroker(),
+            new AffordanceBroker(new FakeRegistry()),
             [
                 new FailedHttpResourceInterpretation(),
                 new DataModelResourceInterpretation()
             ] as List<ResultInterpretation>
         )
+    }
+
+    static class FakeRegistry extends McpHttpResourceRegistry {
+
+        FakeRegistry() {
+            super(null)
+        }
+
+        @Override
+        List<McpHttpResourceRegistry.McpHttpOperation> listOperations(String resourceType, String operationKind = null) {
+            if (resourceType == 'DataModel' && operationKind == 'get') {
+                return [
+                    new McpHttpResourceRegistry.McpHttpOperation(
+                        resourceType: 'DataModel',
+                        operationKind: 'get',
+                        name: 'DataModel.show',
+                        httpMethod: 'GET',
+                        path: '/api/dataModels/{id}',
+                        template: true,
+                        pathParameters: ['id']
+                    )
+                ]
+            }
+            []
+        }
     }
 }

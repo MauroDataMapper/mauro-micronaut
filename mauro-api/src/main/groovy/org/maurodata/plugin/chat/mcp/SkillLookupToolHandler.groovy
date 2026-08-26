@@ -11,10 +11,12 @@ import org.maurodata.service.chat.ChatPromptAssetService
 @Singleton
 @McpToolDefinition(
     name = 'mauro_skill',
-    description = 'Look up Mauro assistant skills, documentation guidance, glossary context, and usage guidance by id or query.',
-    purpose = 'Retrieve modular Mauro guidance skills, including documentation guidance, glossary context, terminology help, data model exploration guidance, and search strategy.',
+    description = 'Search Mauro assistant skills by query, fetch a skill by id, or list all available skills and guidance.',
+    purpose = 'Discover and retrieve modular Mauro guidance skills. Use it to search skills by topic, fetch exact skill guidance by id, or list all available skills when no specific match is known.',
     useWhen = [
         'the routing index says a specific skill applies',
+        'the agent needs to search available skills by query before choosing domain guidance',
+        'no matching skill was preselected and the agent needs to list available skills explicitly',
         'answering Mauro documentation, installation, configuration, Docker, administration, how-to, glossary, or usage-guide questions',
         'answering a Mauro-specific question that needs guidance beyond a direct catalogue search',
         'resolving answer ambiguity by looking up relevant skills and their guidance to choose the best one to apply'
@@ -24,6 +26,8 @@ import org.maurodata.service.chat.ChatPromptAssetService
         'the previous tool result already contains enough information to answer'
     ],
     examples = [
+        'list all available skills with {"list":true}',
+        'search skills with {"query":"installation documentation"}',
         'look up mauro-docs-guide for installation documentation',
         'look up mauro-glossary for a Mauro concept definition',
         'look up mauro-data-model-explorer for model structure guidance'

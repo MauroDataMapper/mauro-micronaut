@@ -17,9 +17,10 @@ class AgentPromptService {
         this.composer = composer
     }
 
-    String plannerSystemPrompt(List<String> toolNames) {
+    String plannerSystemPrompt(List<String> toolNames, String replanReason = null) {
         composer.render('agent-planner-system', [
-            toolNames: (toolNames ?: []).join(', ')
+            toolNames: (toolNames ?: []).join(', '),
+            planningModeInstructions: plannerModeInstructions(replanReason)
         ] as Map<String, Object>)
     }
 
@@ -27,16 +28,54 @@ class AgentPromptService {
         contextResolverSystemPromptRender(toolNames).text
     }
 
+    private static String plannerModeInstructions(String replanReason) {
+        if (replanReason != null && !replanReason.trim().isEmpty()) {
+            return '''Planning mode: replan.
+Replan reason is provided in the user prompt.
+Preserve the original user goal and success criteria. Do not narrow success criteria to only work already completed.
+Do not repeat completed work unless the previous evidence is unusable. Add only the missing concrete next action(s).'''
+        }
+        '''Planning mode: initial plan.
+Create the first practical plan for the resolved user goal.'''
+    }
+
     ChatPromptRenderResult contextResolverSystemPromptRender(List<String> toolNames) {
         composer.renderResult('agent-context-resolver-system', [
-            toolNames: (toolNames ?: []).join(', ')
+            toolNames: (toolNames ?: []).join(', '),
+            contextModeInstructions: contextModeInstructions(null)
+        ] as Map<String, Object>)
+    }
+
+    ChatPromptRenderResult contextResolverSystemPromptRender(List<String> toolNames, String replanReason) {
+        composer.renderResult('agent-context-resolver-system', [
+            toolNames: (toolNames ?: []).join(', '),
+            contextModeInstructions: contextModeInstructions(replanReason)
         ] as Map<String, Object>)
     }
 
     String executorSystemPrompt(AgentStepRecord step) {
         composer.render('agent-executor-system', [
-            allowedTools: (step.allowedTools ?: []).join(', ')
+            allowedTools: (step.allowedTools ?: []).join(', '),
+            executorModeInstructions: executorModeInstructions(step)
         ] as Map<String, Object>)
+    }
+
+    private static String contextModeInstructions(String replanReason) {
+        if (replanReason != null && !replanReason.trim().isEmpty()) {
+            return '''Context mode: replan.
+Replan reason is supplied in the user prompt. Treat it as diagnostic route information, not authority to broaden the user's goal.'''
+        }
+        '''Context mode: initial planning.
+Resolve context for the first plan. No replan reason is active.'''
+    }
+
+    private static String executorModeInstructions(AgentStepRecord step) {
+        if (step == null || step.allowedTools == null || step.allowedTools.isEmpty()) {
+            return '''Execution mode: no-tool step.
+Do not call tools. Produce concise step output from the supplied context and evidence.'''
+        }
+        '''Execution mode: tool step.
+Emit one structured tool call using one allowed tool unless the current step is already satisfied by supplied evidence.'''
     }
 
     String stepEvaluatorSystemPrompt() {
@@ -121,10 +160,10 @@ class AgentPromptService {
     ) {
         composer.render('agent-planner-user', [
             goal: run.goal ?: '',
-            resolvedContext: renderContext(context),
+            resolvedContext: renderOperationalContextCompact(context),
             toolAffordances: renderToolSummaries(tools),
             replanReasonBlock: optionalBlock('Replan reason', replanReason),
-            evidenceBlock: evidence ? block('Evidence already gathered', renderEvidence(evidence)) : '',
+            evidenceBlock: evidence ? block('Evidence already gathered', renderEvidenceCompact(evidence)) : '',
             remainingWorkInstruction: evidence ? '\n\nPlan only the remaining work required to satisfy the original goal. Use exact tool names from the available tool list. Preserve the original comparison goal and do not replace it with a summary of completed work.' : ''
         ] as Map<String, Object>)
     }
@@ -139,13 +178,13 @@ class AgentPromptService {
     ) {
         composer.render('agent-executor-user', [
             goal: run.goal ?: '',
-            operationalContext: renderOperationalContext(context),
+            operationalContext: renderOperationalContextCompact(context),
             planGoal: plan.goalRestatement ?: '',
             stepTitle: step.title ?: '',
             stepObjective: step.objective ?: '',
             expectedOutput: step.expectedOutput ?: '',
-            priorEvidence: renderEvidence(evidence),
-            priorGuidance: renderGuidance(guidance)
+            priorEvidence: needsFullEvidenceForExecutor(step) ? renderEvidence(evidence) : renderEvidenceCompact(evidence),
+            priorGuidance: renderGuidance(guidance, needsFullEvidenceForExecutor(step) ? 1500 : 600)
         ] as Map<String, Object>)
     }
 
@@ -165,10 +204,10 @@ class AgentPromptService {
             stepObjective: step.objective ?: '',
             expectedOutput: step.expectedOutput ?: '',
             stepSuccessCriteria: criteriaMarkdown(step.successCriteria),
-            operationalContext: renderOperationalContext(context),
-            currentStepEvidence: renderEvidence(currentStepEvidence),
-            evidence: renderEvidence(evidence),
-            guidance: renderGuidance(guidance)
+            operationalContext: renderOperationalContextCompact(context),
+            currentStepEvidence: renderCurrentStepEvidenceForEvaluator(currentStepEvidence),
+            evidence: renderEvidenceCompact(evidence),
+            guidance: renderGuidance(guidance, 600)
         ] as Map<String, Object>)
     }
 
@@ -186,13 +225,13 @@ class AgentPromptService {
         composer.render('agent-plan-evaluator-user', [
             goal: run.goal ?: '',
             planGoal: plan.goalRestatement ?: '',
-            planSuccessCriteria: criteriaMarkdown(plan.successCriteria),
+            planSuccessCriteria: criteriaMarkdownWithIds(plan.successCriteria),
             completedStepTitle: completedStep.title ?: '',
             completedStepObjective: completedStep.objective ?: '',
             remainingSteps: renderSteps(remainingSteps),
-            operationalContext: renderOperationalContext(context),
-            evidence: renderEvidence(evidence),
-            guidance: renderGuidance(guidance)
+            operationalContext: renderOperationalContextCompact(context),
+            evidence: renderEvidenceCompact(evidence),
+            guidance: renderGuidance(guidance, 600)
         ] as Map<String, Object>)
     }
 
@@ -249,37 +288,44 @@ class AgentPromptService {
       "mustNotBlockOn": ["string"]
     }
   },
-  "domainContext": ["string"],
-  "relevantTools": [{"name": "exact advertised tool name", "reason": "string", "readOnly": true|false}],
-  "recommendedSkills": [{"id": "string", "reason": "string", "usage": "string"}],
-  "relevantResources": [{"name": "string", "reason": "string", "uri": null|"string"}],
-  "instructions": [{"type": "string", "target": "planner|executor|step_evaluator|plan_evaluator|final_writer|all", "instruction": "string"}],
-  "resolvedReferences": [{"phrase": "string", "evidenceId": null|"string", "resourceRef": null|"string", "reason": "string"}],
-  "resolvedResources": [{"label": "string", "id": null|"string", "domainType": null|"string", "uri": null|"string", "evidenceId": null|"string", "reason": "string"}],
-  "priorEvidenceToReuse": [{"evidenceId": "string", "reason": "string"}],
-  "priorGuidanceToFollow": [{"guidanceId": "string", "reason": "string"}],
-  "contextRequests": [{"type": "session_memory_page|session_resource_lookup", "query": "string", "reason": "string"}],
-  "planningHints": ["string"],
-  "constraints": ["string"]
+  "domainContext": ["terse phrase"],
+  "relevantTools": [{"name": "exact advertised tool name", "reason": "terse phrase", "readOnly": true|false}],
+  "recommendedSkills": [{"id": "string", "reason": "terse phrase", "usage": "terse phrase"}],
+  "relevantResources": [{"name": "string", "reason": "terse phrase", "uri": null|"string"}],
+  "instructions": [{"type": "string", "target": "planner|executor|step_evaluator|plan_evaluator|final_writer|all", "instruction": "terse phrase"}],
+  "resolvedReferences": [{"phrase": "string", "evidenceId": null|"string", "resourceRef": null|"string", "reason": "terse phrase"}],
+  "resolvedResources": [{"label": "string", "id": null|"string", "domainType": null|"string", "uri": null|"string", "evidenceId": null|"string", "reason": "terse phrase"}],
+  "priorEvidenceToReuse": [{"evidenceId": "string", "reason": "terse phrase"}],
+  "priorGuidanceToFollow": [{"guidanceId": "string", "reason": "terse phrase"}],
+  "contextRequests": [{"type": "session_memory_page|session_resource_lookup", "query": "string", "reason": "terse phrase"}],
+  "planningHints": ["terse phrase"],
+  "constraints": ["terse phrase"]
 }'''
         }
         if (roleName == 'step_evaluator') {
             return '''{
   "stepComplete": true|false,
   "decision": "continue"|"retry"|"ask_user"|"replan"|"fail",
-  "summary": "string",
-  "reason": "string",
+  "summary": "terse outcome",
+  "reason": "terse evidence-based reason",
   "question": null|"string"
 }'''
         }
         if (roleName == 'plan_evaluator') {
             return '''{
   "decision": "continue"|"final"|"ask_user"|"replan"|"fail",
-  "summary": "string",
-  "reason": "string",
+  "summary": "terse outcome",
+  "reason": "terse evidence-based reason",
   "question": null|"string",
-  "missing": ["string"],
-  "obsoleteStepIds": ["string"]
+  "missing": ["exact unmet criterion"],
+  "obsoleteStepIds": ["string"],
+  "replanJustification": {
+    "category": "missing_required_step|remaining_step_obsolete|remaining_step_not_executable|tool_or_capability_unavailable|new_evidence_changes_route|previous_step_failed|no_structural_category_applies",
+    "evidenceIds": ["string"],
+    "affectedStepIds": ["string"],
+    "unmetSuccessCriteriaIds": ["criterion-1"],
+    "proposedChange": null|"terse phrase"
+  }
 }'''
         }
         '''{
@@ -295,9 +341,9 @@ class AgentPromptService {
       "kind": "string",
       "allowedTools": ["exact advertised tool name"],
       "guard": "always|if_no_final_evidence|if_no_successful_tool_evidence|if_previous_step_failed",
-      "guardReason": "string",
+      "guardReason": "terse phrase",
       "optional": true|false,
-      "expectedOutput": "string",
+      "expectedOutput": "terse phrase",
       "successCriteria": ["Short, testable criterion for this step. Use an area label such as Tool:, Evidence:, Analysis:, or Output:"]
     }
   ]
@@ -337,6 +383,22 @@ class AgentPromptService {
         builder.toString().trim()
     }
 
+    private static String criteriaMarkdownWithIds(List<String> items) {
+        if (!items) {
+            return ''
+        }
+        StringBuilder builder = new StringBuilder('## Success Criteria\n')
+        int index = 1
+        for (String item : items) {
+            builder.append('- criterion-')
+                .append(index++)
+                .append(': ')
+                .append(item ?: '')
+                .append('\n')
+        }
+        builder.toString().trim()
+    }
+
     private static String renderEvidence(List<AgentEvidenceRecord> evidence) {
         if (!evidence) {
             return 'No evidence yet.'
@@ -352,9 +414,81 @@ class AgentPromptService {
                 builder.append(item.summary.trim()).append('\n')
             }
             if (item.content != null && !item.content.trim().isEmpty()) {
-                builder.append(item.content.take(1500)).append('\n')
+                builder.append(renderEvidencePayloadView(item, evidenceContentLimit(item, 1500), 'Evidence payload'))
             }
             builder.append('\n')
+        }
+        builder.toString().trim()
+    }
+
+    private static String renderEvidenceCompact(List<AgentEvidenceRecord> evidence) {
+        if (!evidence) {
+            return 'No evidence yet.'
+        }
+        StringBuilder builder = new StringBuilder(1024)
+        int index = 1
+        for (AgentEvidenceRecord item : evidence) {
+            Map<String, Object> keys = compactEvidenceKeys(item)
+            builder.append('- E')
+                .append(index++)
+                .append(' id=')
+                .append(item.id ?: '')
+                .append(' source=')
+                .append(item.sourceName ?: item.sourceType ?: '')
+                .append(' role=')
+                .append(asString(item.metadata?.get('evidenceRole')) ?: '')
+                .append(' ok=')
+                .append(item.metadata?.get('ok'))
+                .append('\n')
+            if (item.title != null && !item.title.trim().isEmpty()) {
+                builder.append('  title: ').append(limitText(item.title.trim(), 160)).append('\n')
+            }
+            if (item.summary != null && !item.summary.trim().isEmpty()) {
+                builder.append('  summary: ').append(limitText(item.summary.trim(), 240)).append('\n')
+            }
+            builder.append('  view: compact projection; not a complete payload; omitted fields are not evidence of absence')
+                .append('; contentChars=')
+                .append(item.content == null ? 0 : item.content.length())
+                .append('\n')
+            if (!keys.isEmpty()) {
+                builder.append('  keys: ').append(JsonOutput.toJson(keys)).append('\n')
+            }
+        }
+        builder.toString().trim()
+    }
+
+    private static String renderCurrentStepEvidenceForEvaluator(List<AgentEvidenceRecord> evidence) {
+        if (!evidence) {
+            return 'No evidence yet.'
+        }
+        StringBuilder builder = new StringBuilder(4096)
+        int index = 1
+        for (AgentEvidenceRecord item : evidence) {
+            builder.append('- E')
+                .append(index++)
+                .append(' id=')
+                .append(item.id ?: '')
+                .append(' source=')
+                .append(item.sourceName ?: item.sourceType ?: '')
+                .append(' role=')
+                .append(asString(item.metadata?.get('evidenceRole')) ?: '')
+                .append(' ok=')
+                .append(item.metadata?.get('ok'))
+                .append('\n')
+            if (item.title != null && !item.title.trim().isEmpty()) {
+                builder.append('  title: ').append(limitText(item.title.trim(), 160)).append('\n')
+            }
+            if (item.summary != null && !item.summary.trim().isEmpty()) {
+                builder.append('  summary: ').append(limitText(item.summary.trim(), 240)).append('\n')
+            }
+            if (item.content != null && !item.content.trim().isEmpty()) {
+                builder.append(renderEvidencePayloadView(item, evidenceContentLimit(item, 6000), '  payload'))
+            } else {
+                Map<String, Object> keys = compactEvidenceKeys(item)
+                if (!keys.isEmpty()) {
+                    builder.append('  keys: ').append(JsonOutput.toJson(keys)).append('\n')
+                }
+            }
         }
         builder.toString().trim()
     }
@@ -379,7 +513,7 @@ ${renderEvidence(allEvidence)}""".toString()
                 builder.append(item.summary.trim()).append('\n')
             }
             if (item.content != null && !item.content.trim().isEmpty()) {
-                builder.append(item.content.take(2500)).append('\n')
+                builder.append(renderEvidencePayloadView(item, evidenceContentLimit(item, 2500), 'Evidence payload'))
             }
             builder.append('\n')
         }
@@ -431,6 +565,147 @@ ${renderGuidanceDiagnostics(guidance)}""".toString()
         }
         """The following guidance came from tools that produced evidence in the final-answer context. Apply it when writing the answer.
 ${renderGuidance(finalGuidance, 8000)}""".toString()
+    }
+
+    private static boolean needsFullEvidenceForExecutor(AgentStepRecord step) {
+        if (step == null) {
+            return false
+        }
+        step.allowedTools == null || step.allowedTools.isEmpty()
+    }
+
+    private static int evidenceContentLimit(AgentEvidenceRecord item, int defaultLimit) {
+        item?.sourceName == 'mauro_get' ? Math.max(defaultLimit, 12000) : defaultLimit
+    }
+
+    private static String renderEvidencePayloadView(AgentEvidenceRecord item, int maxChars, String label) {
+        String text = item?.content?.trim()
+        if (text == null || text.isEmpty()) {
+            return ''
+        }
+        int totalChars = text.length()
+        int shownChars = Math.min(totalChars, maxChars)
+        boolean complete = totalChars <= maxChars
+        StringBuilder builder = new StringBuilder(shownChars + 160)
+        builder.append(label)
+            .append(' view: chars ')
+            .append(shownChars)
+            .append(' of ')
+            .append(totalChars)
+            .append('; complete=')
+            .append(complete)
+            .append('; omitted fields are not evidence of absence')
+            .append('\n')
+            .append(text.take(maxChars))
+        if (!complete) {
+            builder.append('\n...[truncated evidence view]')
+        }
+        builder.append('\n')
+        builder.toString()
+    }
+
+    private static Map<String, Object> compactEvidenceKeys(AgentEvidenceRecord item) {
+        Map<String, Object> out = new LinkedHashMap<String, Object>()
+        if (item == null) {
+            return out
+        }
+        putIfPresent(out, 'callId', item.metadata?.get('callId'))
+        putIfPresent(out, 'sourceId', item.sourceId)
+        putIfPresent(out, 'ok', item.metadata?.get('ok'))
+        collectKeyValues(item.structuredContent, out)
+        out
+    }
+
+    private static void collectKeyValues(Object value, Map<String, Object> out) {
+        if (value instanceof Map) {
+            Map<?, ?> map = (Map<?, ?>) value
+            for (Map.Entry<?, ?> entry : map.entrySet()) {
+                String key = asString(entry.key)
+                Object item = entry.value
+                if (key == null) {
+                    continue
+                }
+                if (key in ['tool', 'resourceRef', 'readUri', 'uri', 'href', 'id', 'label', 'domainType', 'count', 'total', 'hasMore', 'nextOffset', 'statusCode', 'error', 'blocked', 'duplicate']) {
+                    putIfPresent(out, key, compactScalarOrList(item))
+                } else if (key == 'arguments') {
+                    Map<String, Object> args = compactArguments(getMap(item))
+                    if (!args.isEmpty()) {
+                        out.put('arguments', args)
+                    }
+                } else if (key in ['items', 'resources', 'results'] && item instanceof Collection) {
+                    List<Map<String, Object>> items = compactItems((Collection<?>) item)
+                    if (!items.isEmpty()) {
+                        out.put(key, items)
+                    }
+                } else {
+                    collectKeyValues(item, out)
+                }
+            }
+        } else if (value instanceof Collection) {
+            for (Object item : (Collection<?>) value) {
+                collectKeyValues(item, out)
+            }
+        }
+    }
+
+    private static Object compactScalarOrList(Object value) {
+        if (value instanceof Collection) {
+            return ((Collection<?>) value)
+                .take(5)
+                .collect {Object item -> compactScalarOrList(item)}
+        }
+        if (value instanceof Map) {
+            Map<String, Object> compact = new LinkedHashMap<String, Object>()
+            collectKeyValues(value, compact)
+            return compact
+        }
+        String text = asString(value)
+        text == null ? null : limitText(text, 220)
+    }
+
+    private static List<Map<String, Object>> compactItems(Collection<?> items) {
+        List<Map<String, Object>> out = new ArrayList<Map<String, Object>>()
+        for (Object raw : (items ?: [])) {
+            if (out.size() >= 5) {
+                break
+            }
+            Map<String, Object> map = getMap(raw)
+            if (map.isEmpty()) {
+                continue
+            }
+            Map<String, Object> compact = new LinkedHashMap<String, Object>()
+            for (String key : ['label', 'id', 'domainType', 'resourceRef', 'readUri', 'uri', 'href']) {
+                putIfPresent(compact, key, map.get(key))
+            }
+            if (!compact.isEmpty()) {
+                out.add(compact)
+            }
+        }
+        out
+    }
+
+    private static Map<String, Object> compactArguments(Map<String, Object> arguments) {
+        Map<String, Object> out = new LinkedHashMap<String, Object>()
+        for (String key : ['uri', 'resourceRef', 'id', 'searchTerm', 'domainTypes', 'offset', 'max']) {
+            putIfPresent(out, key, compactScalarOrList(arguments.get(key)))
+        }
+        out
+    }
+
+    private static void putIfPresent(Map<String, Object> out, String key, Object value) {
+        if (value == null) {
+            return
+        }
+        if (value instanceof String && ((String) value).trim().isEmpty()) {
+            return
+        }
+        if (value instanceof Collection && ((Collection<?>) value).isEmpty()) {
+            return
+        }
+        if (value instanceof Map && ((Map<?, ?>) value).isEmpty()) {
+            return
+        }
+        out.put(key, value)
     }
 
     private static String renderGuidanceDiagnostics(List<AgentGuidanceRecord> guidance) {
@@ -530,17 +805,19 @@ ${renderGuidance(finalGuidance, 8000)}""".toString()
                 .append('\n')
         }
         appendStringList(builder, 'Domain context', context.domainContext)
-        appendMapList(builder, 'Recommended skills', context.recommendedSkills)
         appendMap(builder, 'Goal frame', context.goalFrame)
-        appendMapList(builder, 'Scoped instructions', context.instructions)
+        appendMapList(builder, 'Final writer instructions', finalWriterInstructions(context.instructions))
         appendMapList(builder, 'Resolved references', context.resolvedReferences)
         appendMapList(builder, 'Resolved resources', context.resolvedResources)
-        appendMapList(builder, 'Prior evidence to reuse', context.priorEvidenceToReuse)
-        appendMapList(builder, 'Prior guidance to follow', context.priorGuidanceToFollow)
-        appendMapList(builder, 'Context requests', context.contextRequests)
-        appendStringList(builder, 'Planning hints', context.planningHints)
         appendStringList(builder, 'Constraints', context.constraints)
         builder.toString().trim()
+    }
+
+    private static List<Map<String, Object>> finalWriterInstructions(List<Map<String, Object>> instructions) {
+        (instructions ?: []).findAll {Map<String, Object> item ->
+            String target = asString(item?.get('target'))?.trim()
+            target == 'final_writer' || target == 'all'
+        } as List<Map<String, Object>>
     }
 
     private static String renderOperationalContext(AgentContextRecord context) {
@@ -564,6 +841,50 @@ ${renderGuidance(finalGuidance, 8000)}""".toString()
         builder.toString().trim()
     }
 
+    private static String renderOperationalContextCompact(AgentContextRecord context) {
+        if (context == null) {
+            return 'No resolved context.'
+        }
+        StringBuilder builder = new StringBuilder(2048)
+        builder.append('Goal: ').append(limitText(context.goalRestatement ?: '', 240)).append('\n')
+        if (context.followUpInterpretation != null && !context.followUpInterpretation.trim().isEmpty()) {
+            builder.append('Follow-up: ').append(context.followUpInterpretation).append('\n')
+        }
+        String personaGuidance = asString(context.metadata?.get('personaGuidance'))
+        if (personaGuidance != null && !personaGuidance.trim().isEmpty()) {
+            builder.append('Persona:\n- ').append(limitText(personaGuidance.trim(), 700)).append('\n')
+        }
+        String skillLookupGuidance = asString(context.metadata?.get('skillLookupGuidance'))
+        if (skillLookupGuidance != null && !skillLookupGuidance.trim().isEmpty()) {
+            builder.append('Selected skill:\n- ').append(limitText(skillLookupGuidance.trim(), 1200)).append('\n')
+        }
+        appendCompactMap(builder, 'Goal frame', context.goalFrame)
+        appendStringList(builder, 'Domain', context.domainContext)
+        appendMapList(builder, 'Resolved resources', context.resolvedResources)
+        appendMapList(builder, 'Resolved references', context.resolvedReferences)
+        appendMapList(builder, 'Prior evidence ids', context.priorEvidenceToReuse)
+        appendMapList(builder, 'Prior guidance ids', context.priorGuidanceToFollow)
+        appendMapList(builder, 'Scoped instructions', context.instructions)
+        appendStringList(builder, 'Planning hints', context.planningHints)
+        appendStringList(builder, 'Constraints', context.constraints)
+        String sessionContinuity = asString(context.metadata?.get('sessionContinuity'))
+        if (sessionContinuity != null && !sessionContinuity.trim().isEmpty()) {
+            builder.append('\nSession continuity available to Perceive:\n')
+                .append(sessionContinuity.take(1200))
+                .append('\n')
+        }
+        builder.toString().trim()
+    }
+
+    private static void appendCompactMap(StringBuilder builder, String title, Map<String, Object> item) {
+        if (!item) {
+            return
+        }
+        builder.append(title).append(':\n')
+            .append(JsonOutput.toJson(item))
+            .append('\n')
+    }
+
     private static void appendMap(StringBuilder builder, String title, Map<String, Object> item) {
         if (!item) {
             return
@@ -581,13 +902,44 @@ ${renderGuidance(finalGuidance, 8000)}""".toString()
         StringBuilder builder = new StringBuilder(2048)
         for (Map<String, Object> tool : tools ?: []) {
             Map<String, Object> fn = getMap(tool.get('function'))
+            Map<String, Object> routing = getMap(tool.get('routing'))
             builder.append('- ')
                 .append(asString(fn.get('name')) ?: '')
                 .append(': ')
                 .append(limitText(asString(fn.get('description')) ?: '', maxDescriptionChars))
                 .append('\n')
+            appendToolRouting(builder, routing)
         }
         builder.toString().trim()
+    }
+
+    private static void appendToolRouting(StringBuilder builder, Map<String, Object> routing) {
+        if (!routing) {
+            return
+        }
+        appendToolRoutingValue(builder, '  purpose: ', routing.get('purpose'), 220)
+        appendToolRoutingValue(builder, '  use when: ', routing.get('useWhen'), 260)
+        appendToolRoutingValue(builder, '  avoid when: ', routing.get('avoidWhen'), 320)
+    }
+
+    private static void appendToolRoutingValue(StringBuilder builder, String label, Object value, int maxChars) {
+        String text = routingText(value)
+        if (text == null || text.trim().isEmpty()) {
+            return
+        }
+        builder.append(label)
+            .append(limitText(text, maxChars))
+            .append('\n')
+    }
+
+    private static String routingText(Object value) {
+        if (value instanceof Collection) {
+            return ((Collection<?>) value)
+                .collect {Object item -> asString(item)}
+                .findAll {String item -> item != null && !item.trim().isEmpty()}
+                .join('; ')
+        }
+        asString(value)
     }
 
     static String renderPersonaSummaries(List<ChatPromptAssetDefinition> personas) {
@@ -629,7 +981,7 @@ ${renderGuidance(finalGuidance, 8000)}""".toString()
 
     static String renderSkillLookup(List<ChatPromptAssetDefinition> skills, boolean includeInstruction = false) {
         if (!skills) {
-            return 'No matching non-persona skills found.'
+            return 'No matching non-persona skills found. If broader skill context is needed, plan an explicit mauro_skill call with {"list":true}.'
         }
         StringBuilder builder = new StringBuilder(4096)
         for (ChatPromptAssetDefinition skill : sortPromptAssets(skills)) {

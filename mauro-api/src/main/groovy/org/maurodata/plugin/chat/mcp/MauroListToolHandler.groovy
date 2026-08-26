@@ -21,22 +21,26 @@ import java.time.Duration
 @Singleton
 @McpToolDefinition(
     name = 'mauro_list',
-    description = 'List Mauro API resources using concrete read-only ListResponse-style GET routes with pagination and filters.',
-    purpose = 'Dispatch to Mauro API GET list endpoints that return ListResponse-style data. Use this for typed resource listing when the resource route is known or can be selected from a resource type.',
+    description = 'List collections from known Mauro API ListResponse-style GET routes; not for reading or drilling into one catalogue item.',
+    purpose = 'Dispatch to Mauro API GET list endpoints that return ListResponse-style data. Use this for broad typed collection listing when the concrete list route is known. Do not use it to inspect a specific form/model found by search; read that item first with mauro_get.',
     useWhen = [
-        'listing resources of a known Mauro API type such as DataModel, Terminology, CodeSet, DataClass, DataElement, Folder, ClassificationScheme, or Classifier',
+        'listing a collection of a known Mauro API type such as all DataModels, Terminologies, CodeSets, Folders, ClassificationSchemes, or Classifiers',
         'using pagination, sorting, or simple ListResponse filters over a concrete Mauro API list route',
-        'reading a known concrete mauro-api://http-get list URI with optional PaginationParams-style query parameters'
+        'reading a known concrete mauro-api://http-get list URI with optional PaginationParams-style query parameters',
+        'listing child resources only after mauro_get or mauro_describe has provided a concrete non-template list URI for that child collection'
     ],
     avoidWhen = [
         'searching catalogue content; use mauro_search',
         'reading a single known resource by URI or id; use mauro_get',
+        'inspecting or comparing specific named forms/models before their exact resource URIs have been read with mauro_get',
+        'guessing child routes such as classes/elements under a DataModel from an id alone; use mauro_get first and only list a concrete child collection URI returned or described by the API',
         'discovering available resource templates and operations without listing data; use mauro_describe'
     ],
     examples = [
         'list DataModels => resourceType "DataModel", max 10, offset 0',
         'list Terminologies with label diabetes => resourceType "Terminology", label "diabetes"',
-        'list from known route => uri "mauro-api://http-get/api/dataModels", max 20'
+        'list from known route => uri "mauro-api://http-get/api/dataModels", max 20',
+        'compare two named forms => use mauro_search to resolve exact DataModel rows, then mauro_get each readUri; do not start with mauro_list'
     ],
     filtering = [
         'supports PaginationParams-style filters where the selected endpoint supports them: offset, max, sort, order, label, description, code, definition, all, and domainType',
@@ -181,8 +185,9 @@ class MauroListToolHandler extends AbstractAnnotatedToolHandler {
             'Answer Instructions': success ? [
                 'Present the listed items clearly and include the total count when reported.',
                 'If more results are available, mention that you can fetch the next page with the same selected resource and filters using the next offset.',
-                'Use mauro_get for a single returned item when the user asks to inspect it more closely.'
-            ] : [
+                    'Use mauro_get for a single returned item when the user asks to inspect it more closely.',
+                    'For comparison of named forms/models, use mauro_get on each resolved item before considering any child collection listing.'
+                ] : [
                 "Explain that the list resource could not be read and include HTTP status ${status}.".toString(),
                 'Do not interpret the returned body as a successful list response.'
             ]

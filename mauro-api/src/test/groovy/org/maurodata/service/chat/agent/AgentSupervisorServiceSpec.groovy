@@ -196,6 +196,254 @@ class AgentSupervisorServiceSpec extends Specification {
         store.agentEvidence.size() == 1
     }
 
+    void 'supervisor preserves mauro_get resource body for step evaluator inspection'() {
+        given:
+        ChatInMemoryStore store = new ChatInMemoryStore()
+        List<String> stepEvaluatorPrompts = []
+        String padding = 'x' * 5000
+        String returnedContent = """{"id":"model-1","label":"Pre-Transplant Assessment","domainType":"DataModel","description":"${padding}","dataClasses":[{"label":"Late section marker","dataElements":[{"label":"Late field marker"}]}]}"""
+        LlmProvider provider = Stub(LlmProvider) {
+            id() >> 'ollama'
+            streamChat(_ as ProviderRequest) >> {ProviderRequest request ->
+                switch (request.options?.purpose as String) {
+                    case 'agent_context_resolver':
+                        return Flux.fromIterable([token(request, contextJson())])
+                    case 'agent_planner':
+                        return Flux.fromIterable([token(request, '''{
+                          "goalRestatement":"Inspect the Pre-Transplant Assessment form",
+                          "fitness":"usable",
+                          "successCriteria":["Evidence: requested form resource is read","Answer: useful available details are shown"],
+                          "assumptions":[],
+                          "risks":[],
+                          "steps":[{
+                            "title":"Read form",
+                            "objective":"Read the known form resource",
+                            "kind":"read",
+                            "allowedTools":["mauro_get"],
+                            "guard":"always",
+                            "guardReason":"The form id is known.",
+                            "optional":false,
+                            "expectedOutput":"Resource details",
+                            "successCriteria":["Tool: mauro_get returned the resource"]
+                          }]
+                        }''')])
+                    case 'agent_executor':
+                        return Flux.fromIterable([
+                            new ProviderChunk('tool_call', request.messageId, null, [
+                                callId: 'call-read-1',
+                                name: 'mauro_get',
+                                arguments: [uri: 'mauro-api://http-get/api/dataModels/model-1']
+                            ])
+                        ])
+                    case 'agent_step_evaluator':
+                        stepEvaluatorPrompts.add(request.messages.last().content)
+                        return Flux.fromIterable([token(request, '''{
+                          "stepComplete": true,
+                          "decision": "continue",
+                          "summary": "Read evidence is available.",
+                          "reason": "The read step returned the requested resource.",
+                          "question": null
+                        }''')])
+                    case 'agent_plan_evaluator':
+                        return Flux.fromIterable([token(request, '''{
+                          "decision": "final",
+                          "summary": "Enough evidence is available.",
+                          "reason": "The read evidence can support an answer.",
+                          "question": null,
+                          "missing": [],
+                          "obsoleteStepIds": []
+                        }''')])
+                    case 'agent_final':
+                        return Flux.fromIterable([token(request, 'Final form details.')])
+                    default:
+                        return Flux.empty()
+                }
+            }
+        }
+        ChatMcpService mcpService = Stub(ChatMcpService) {
+            listServers() >> [
+                new McpServerDto(
+                    id: 'local-mcp',
+                    name: 'Local MCP',
+                    tools: [
+                        new ToolSummaryDto(
+                            name: 'mauro_get',
+                            description: 'Read Mauro resource',
+                            inputSchema: [type: 'object']
+                        )
+                    ]
+                )
+            ]
+            invokeTool('mauro_get', _ as ToolInvokeRequest) >> {String toolName, ToolInvokeRequest request ->
+                new ToolInvokeResponse(
+                    success: true,
+                    result: [
+                        invocationId: 'invocation-read',
+                        nonce: 'nonce-read',
+                        tool: toolName,
+                        output: [
+                            uri: request.arguments.uri,
+                            path: '/api/dataModels/model-1',
+                            statusCode: 200,
+                            id: 'model-1',
+                            label: 'Pre-Transplant Assessment',
+                            domainType: 'DataModel',
+                            content: returnedContent
+                        ]
+                    ] as Map<String, Object>,
+                    modelText: 'Tool mauro_get completed.'
+                )
+            }
+        }
+        AgentSupervisorService service = new AgentSupervisorService(
+            store,
+            new ProviderRegistry([provider]),
+            mcpService,
+            Stub(ChatPromptAssetService),
+            4,
+            8,
+            3
+        )
+        SessionDto session = new SessionDto(id: 'session-read', workspaceId: 'default', model: 'fake-model')
+
+        when:
+        Flux.from(service.streamAgentRun(
+            session,
+            new SendMessageRequest(content: 'Could I take a closer look at the Pre-Transplant Assessment form?'),
+            'assistant-read',
+            store.messagesForSession(session.id),
+            null
+        )).collectList().block()
+
+        then:
+        store.agentEvidence.values().first().content.contains('Returned Data View: chars')
+        store.agentEvidence.values().first().content.contains('omitted fields are not evidence of absence')
+        stepEvaluatorPrompts.first().contains('Late section marker')
+        stepEvaluatorPrompts.first().contains('Late field marker')
+    }
+
+    void 'supervisor writes caveated final instead of failing when partial final evidence exists'() {
+        given:
+        ChatInMemoryStore store = new ChatInMemoryStore()
+        LlmProvider provider = Stub(LlmProvider) {
+            id() >> 'ollama'
+            streamChat(_ as ProviderRequest) >> {ProviderRequest request ->
+                switch (request.options?.purpose as String) {
+                    case 'agent_context_resolver':
+                        return Flux.fromIterable([token(request, contextJson())])
+                    case 'agent_planner':
+                        return Flux.fromIterable([token(request, '''{
+                          "goalRestatement":"Inspect the Pre-Transplant Assessment form",
+                          "fitness":"usable",
+                          "successCriteria":["Evidence: requested DataModel is read","Evidence: useful available details are shown with caveats"],
+                          "assumptions":[],
+                          "risks":[],
+                          "steps":[{
+                            "title":"Read form",
+                            "objective":"Read the known form resource",
+                            "kind":"read",
+                            "allowedTools":["mauro_get"],
+                            "guard":"always",
+                            "guardReason":"The DataModel id is known.",
+                            "optional":false,
+                            "expectedOutput":"Resource details",
+                            "successCriteria":["Tool: mauro_get returned the resource"]
+                          }]
+                        }''')])
+                    case 'agent_executor':
+                        return Flux.fromIterable([
+                            new ProviderChunk('tool_call', request.messageId, null, [
+                                callId: 'call-read-partial',
+                                name: 'mauro_get',
+                                arguments: [uri: 'mauro-api://http-get/api/dataModels/019ddee8-a68d-7fc9-b84b-017d9e687e2c']
+                            ])
+                        ])
+                    case 'agent_step_evaluator':
+                        return Flux.fromIterable([token(request, '''{
+                          "stepComplete": true,
+                          "decision": "continue",
+                          "summary": "DataModel read evidence is available.",
+                          "reason": "The read step returned the requested resource.",
+                          "question": null
+                        }''')])
+                    case 'agent_plan_evaluator':
+                        return Flux.fromIterable([token(request, '''{
+                          "decision": "fail",
+                          "summary": "Internal structure pointers are unavailable.",
+                          "reason": "Criterion-1 is met via mauro_get of DataModel id 019ddee8-a68d-7fc9-b84b-017d9e687e2c, but no tool output yet provides the internal structure pointers (dataClasses/dataElements) for that specific DataModel.",
+                          "question": null,
+                          "missing": ["Evidence: useful available details are shown with caveats"],
+                          "obsoleteStepIds": []
+                        }''')])
+                    case 'agent_final':
+                        return Flux.fromIterable([token(request, 'Pre-Transplant Assessment was read. The available payload does not expose dataClasses/dataElements, so field structure is not confirmed.')])
+                    default:
+                        return Flux.empty()
+                }
+            }
+        }
+        ChatMcpService mcpService = Stub(ChatMcpService) {
+            listServers() >> [
+                new McpServerDto(
+                    id: 'local-mcp',
+                    name: 'Local MCP',
+                    tools: [
+                        new ToolSummaryDto(
+                            name: 'mauro_get',
+                            description: 'Read Mauro resource',
+                            inputSchema: [type: 'object']
+                        )
+                    ]
+                )
+            ]
+            invokeTool('mauro_get', _ as ToolInvokeRequest) >> {String toolName, ToolInvokeRequest request ->
+                new ToolInvokeResponse(
+                    success: true,
+                    result: [
+                        invocationId: 'invocation-partial',
+                        nonce: 'nonce-partial',
+                        tool: toolName,
+                        output: [
+                            uri: request.arguments.uri,
+                            path: '/api/dataModels/019ddee8-a68d-7fc9-b84b-017d9e687e2c',
+                            statusCode: 200,
+                            id: '019ddee8-a68d-7fc9-b84b-017d9e687e2c',
+                            label: 'Pre-Transplant Assessment',
+                            domainType: 'DataModel',
+                            content: '{"id":"019ddee8-a68d-7fc9-b84b-017d9e687e2c","label":"Pre-Transplant Assessment","domainType":"DataModel"}'
+                        ]
+                    ] as Map<String, Object>,
+                    modelText: 'Tool mauro_get completed.'
+                )
+            }
+        }
+        AgentSupervisorService service = new AgentSupervisorService(
+            store,
+            new ProviderRegistry([provider]),
+            mcpService,
+            Stub(ChatPromptAssetService),
+            4,
+            8,
+            3
+        )
+        SessionDto session = new SessionDto(id: 'session-partial-final', workspaceId: 'default', model: 'fake-model')
+
+        when:
+        List<ChatEventDto> events = Flux.from(service.streamAgentRun(
+            session,
+            new SendMessageRequest(content: 'Could I take a closer look at the Pre-Transplant Assessment form?'),
+            'assistant-partial-final',
+            store.messagesForSession(session.id),
+            null
+        )).collectList().block()
+
+        then:
+        events*.type.contains('agent_partial_evidence_final')
+        !events*.type.contains('agent_run_failed')
+        events.find {it.type == 'token'}.content.contains('field structure is not confirmed')
+        events.find {it.type == 'agent_run_completed'}.metadata.status == 'completed'
+    }
+
     void 'supervisor skips guarded fallback step when final evidence already exists'() {
         given:
         ChatInMemoryStore store = new ChatInMemoryStore()
@@ -1247,6 +1495,7 @@ class AgentSupervisorServiceSpec extends Specification {
     void 'successful search evidence is rendered without supervisor intent guessing'() {
         given:
         ChatInMemoryStore store = new ChatInMemoryStore()
+        List<String> plannerPrompts = []
         List<String> executorPrompts = []
         List<String> planEvaluatorPrompts = []
         LlmProvider provider = Stub(LlmProvider) {
@@ -1256,6 +1505,7 @@ class AgentSupervisorServiceSpec extends Specification {
                     case 'agent_context_resolver':
                         return Flux.fromIterable([token(request, contextJson())])
                     case 'agent_planner':
+                        plannerPrompts.add(request.messages.last().content)
                         return Flux.fromIterable([
                             token(request, '''{
                               "goalRestatement":"List diabetes forms",
@@ -1296,11 +1546,11 @@ class AgentSupervisorServiceSpec extends Specification {
                         planEvaluatorPrompts.add(request.messages.last().content)
                         return Flux.fromIterable([
                             token(request, '''{
-                              "decision": "replan",
-                              "summary": "The first page returned matching forms but hasMore is true.",
-                              "reason": "The search returned 6 total results and only 5 were shown on the first page. Since the user asked to find forms, fetch the next page.",
+                              "decision": "final",
+                              "summary": "The first page returned matching forms and a pagination caveat is enough for this goal.",
+                              "reason": "Useful search evidence is available and the user did not ask for exhaustive paging.",
                               "question": null,
-                              "missing": ["next page"],
+                              "missing": [],
                               "obsoleteStepIds": []
                             }''')
                         ])
@@ -1336,6 +1586,8 @@ class AgentSupervisorServiceSpec extends Specification {
         evidence.metadata.evidenceRole == 'tool_result'
         evidence.metadata.pertinentToFinal == true
         store.agentGuidance.values().first().followForFinal == true
+        plannerPrompts.first().contains('mauro-form-representation')
+        plannerPrompts.first().contains('mauro_search domainTypes ["DataModel"]')
         executorPrompts.first().contains('mauro-form-representation')
         executorPrompts.first().contains('"forms about X"')
         executorPrompts.first().contains('mauro_search domainTypes ["DataModel"]')
@@ -1348,9 +1600,124 @@ class AgentSupervisorServiceSpec extends Specification {
         finalContext.content.contains('COMMON: Use this pagination summary in your answer: Page 1 of 2. Showing 1-5 of 6 matching catalogue items, 5 results at a time.')
         !finalContext.content.contains('No final-answer tool guidance.')
         events.find {it.type == 'agent_plan_evaluated'}.metadata.decision == 'final'
-        events.find {it.type == 'agent_plan_evaluated'}.metadata.reason.contains('did not identify an unmet')
         !events*.type.contains('agent_replan_started')
         events*.type.contains('agent_guidance_added')
+    }
+
+    void 'required skill applicability does not fall back to broad asset keywords'() {
+        given:
+        ChatInMemoryStore store = new ChatInMemoryStore()
+        List<String> contextPrompts = []
+        LlmProvider provider = Stub(LlmProvider) {
+            id() >> 'ollama'
+            streamChat(_ as ProviderRequest) >> {ProviderRequest request ->
+                switch (request.options?.purpose as String) {
+                    case 'agent_context_resolver':
+                        contextPrompts.add(request.messages.last().content)
+                        return Flux.fromIterable([token(request, contextJson())])
+                    case 'agent_planner':
+                        return Flux.fromIterable([token(request, '''{
+                          "goalRestatement":"Find forms",
+                          "fitness":"usable",
+                          "successCriteria":["Evidence: forms found"],
+                          "assumptions":[],
+                          "risks":[],
+                          "steps":[{
+                            "title":"Search forms",
+                            "objective":"Search for forms",
+                            "kind":"search",
+                            "allowedTools":["mauro_search"],
+                            "guard":"always",
+                            "guardReason":"Need evidence",
+                            "optional":false,
+                            "expectedOutput":"Search rows",
+                            "successCriteria":["Tool: mauro_search called"]
+                          }]
+                        }''')])
+                    case 'agent_executor':
+                        return Flux.fromIterable([
+                            new ProviderChunk('tool_call', request.messageId, null, [
+                                callId: 'call-search',
+                                name: 'mauro_search',
+                                arguments: [searchTerm: 'forms']
+                            ])
+                        ])
+                    case 'agent_step_evaluator':
+                        return Flux.fromIterable([token(request, '''{
+                          "stepComplete": true,
+                          "decision": "continue",
+                          "summary": "Search done",
+                          "reason": "Evidence exists",
+                          "question": null
+                        }''')])
+                    case 'agent_plan_evaluator':
+                        return Flux.fromIterable([token(request, '''{
+                          "decision": "final",
+                          "summary": "Evidence available",
+                          "reason": "Criteria met",
+                          "question": null,
+                          "missing": [],
+                          "obsoleteStepIds": []
+                        }''')])
+                    case 'agent_final':
+                        return Flux.fromIterable([token(request, 'Found forms.')])
+                    default:
+                        return Flux.empty()
+                }
+            }
+        }
+        ChatMcpService mcpService = Stub(ChatMcpService) {
+            listServers() >> [
+                new McpServerDto(id: 'local-mcp', name: 'Local MCP', tools: [
+                    new ToolSummaryDto(name: 'mauro_search', description: 'Search Mauro catalogue', inputSchema: [type: 'object'])
+                ])
+            ]
+            invokeTool('mauro_search', _ as ToolInvokeRequest) >> new ToolInvokeResponse(
+                success: true,
+                result: [tool: 'mauro_search', output: [count: 0, items: []]],
+                modelText: 'No matches.'
+            )
+        }
+        ChatPromptAssetService promptAssetService = Stub(ChatPromptAssetService) {
+            listAssetsByType('PERSONA') >> []
+            listAssetsByType('SKILL') >> [
+                new ChatPromptAssetDefinition(
+                    id: 'keyword-only-required-skill',
+                    name: 'Keyword Only Required Skill',
+                    type: 'SKILL',
+                    priority: 1,
+                    description: 'Should not be injected from broad keywords alone.',
+                    keywords: ['form', 'forms'],
+                    toolApplicability: [
+                        new SkillToolApplicability(
+                            tool: 'mauro_search',
+                            relationship: 'REQUIRED_PREREQUISITE',
+                            triggerTerms: [],
+                            instructions: ['Do not inject unless explicit trigger terms match.']
+                        )
+                    ],
+                    instruction: 'BROAD KEYWORD ONLY SKILL INSTRUCTION'
+                )
+            ]
+            searchAssets(_ as String) >> []
+        }
+        AgentSupervisorService service = new AgentSupervisorService(store, new ProviderRegistry([provider]), mcpService, promptAssetService, 4, 8, 2)
+        SessionDto session = new SessionDto(id: 'session-keyword-only-skill', workspaceId: 'default', model: 'fake-model')
+
+        when:
+        Flux.from(service.streamAgentRun(
+            session,
+            new SendMessageRequest(content: 'Find forms'),
+            'assistant-keyword-only-skill',
+            store.messagesForSession(session.id),
+            null
+        )).collectList().block()
+
+        then:
+        contextPrompts.first().contains('No matching non-persona skills found.')
+        contextPrompts.first().contains('plan an explicit mauro_skill call with {"list":true}')
+        !contextPrompts.first().contains('keyword-only-required-skill')
+        !contextPrompts.first().contains('BROAD KEYWORD ONLY SKILL INSTRUCTION')
     }
 
     void 'final context includes successful guidance for rendered tool evidence'() {
@@ -2737,6 +3104,542 @@ class AgentSupervisorServiceSpec extends Specification {
         events.find {it.type == 'agent_context_resolved'}.metadata.resolvedResources.first().label == 'Old Diabetes Education Form'
         invokedTools == ['mauro_get']
         events.find {it.type == 'token'}.content == 'Old form answer.'
+    }
+
+    void 'analysis-only executor output does not consume tool call budget'() {
+        given:
+        ChatInMemoryStore store = new ChatInMemoryStore()
+        int executorCalls = 0
+        int planEvaluatorCalls = 0
+        LlmProvider provider = Stub(LlmProvider) {
+            id() >> 'openai'
+            streamChat(_ as ProviderRequest) >> {ProviderRequest request ->
+                switch (request.options?.purpose as String) {
+                    case 'agent_context_resolver':
+                        return Flux.fromIterable([token(request, contextJson())])
+                    case 'agent_planner':
+                        return Flux.fromIterable([token(request, '''{
+                          "goalRestatement":"Compare two forms",
+                          "fitness":"usable",
+                          "successCriteria":["Evidence: form evidence is available","Comparison: the forms are compared"],
+                          "assumptions":[],
+                          "risks":[],
+                          "steps":[
+                            {
+                              "title":"Search forms",
+                              "objective":"Find the two forms",
+                              "kind":"search",
+                              "allowedTools":["mauro_search"],
+                              "guard":"always",
+                              "guardReason":"Evidence is needed before comparison",
+                              "optional":false,
+                              "expectedOutput":"Search result evidence for the forms",
+                              "successCriteria":["Tool: mauro_search was called"]
+                            },
+                            {
+                              "title":"Compare forms",
+                              "objective":"Compare the gathered form evidence",
+                              "kind":"analysis",
+                              "allowedTools":[],
+                              "guard":"always",
+                              "guardReason":"The user asked for a comparison",
+                              "optional":false,
+                              "expectedOutput":"A concise comparison",
+                              "successCriteria":["Analysis: comparison output exists"]
+                            }
+                          ]
+                        }''')])
+                    case 'agent_executor':
+                        executorCalls++
+                        if (executorCalls == 1) {
+                            return Flux.fromIterable([
+                                new ProviderChunk('tool_call', request.messageId, null, [
+                                    callId: 'call-search-forms',
+                                    name: 'mauro_search',
+                                    arguments: [searchTerm: '"Form A" OR "Form B"', domainTypes: ['DataModel']]
+                                ])
+                            ])
+                        }
+                        return Flux.fromIterable([token(request, 'Form A and Form B cover the same broad domain, but Form A has admission fields while Form B has follow-up fields.')])
+                    case 'agent_step_evaluator':
+                        return Flux.fromIterable([token(request, '''{
+                          "stepComplete": true,
+                          "decision": "continue",
+                          "summary": "The step completed.",
+                          "reason": "Required output is present.",
+                          "question": null
+                        }''')])
+                    case 'agent_plan_evaluator':
+                        planEvaluatorCalls++
+                        return Flux.fromIterable([token(request, planEvaluatorCalls == 1 ? '''{
+                          "decision": "continue",
+                          "summary": "Comparison step remains.",
+                          "reason": "Evidence is available and the analysis step is still pending.",
+                          "question": null,
+                          "missing": [],
+                          "obsoleteStepIds": []
+                        }''' : '''{
+                          "decision": "final",
+                          "summary": "Comparison evidence is available.",
+                          "reason": "The comparison step produced output.",
+                          "question": null,
+                          "missing": [],
+                          "obsoleteStepIds": []
+                        }''')])
+                    case 'agent_final':
+                        return Flux.fromIterable([token(request, 'Final comparison answer.')])
+                    default:
+                        return Flux.empty()
+                }
+            }
+        }
+        ChatMcpService mcpService = Stub(ChatMcpService) {
+            listServers() >> [
+                new McpServerDto(
+                    id: 'local-mcp',
+                    name: 'Local MCP',
+                    tools: [
+                        new ToolSummaryDto(name: 'mauro_search', description: 'Search Mauro catalogue', inputSchema: [type: 'object'])
+                    ]
+                )
+            ]
+            invokeTool('mauro_search', _ as ToolInvokeRequest) >> new ToolInvokeResponse(
+                success: true,
+                result: [
+                    tool: 'mauro_search',
+                    output: [
+                        count: 2,
+                        items: [
+                            [label: 'Form A', id: 'form-a', domainType: 'DataModel'],
+                            [label: 'Form B', id: 'form-b', domainType: 'DataModel']
+                        ]
+                    ]
+                ],
+                modelText: 'Found Form A and Form B.'
+            )
+        }
+        AgentSupervisorService service = new AgentSupervisorService(store, new ProviderRegistry([provider]), mcpService, 4, 1, 0)
+        SessionDto session = new SessionDto(id: 'session-analysis-budget', workspaceId: 'default', model: 'gpt-5')
+
+        when:
+        List<ChatEventDto> events = Flux.from(service.streamAgentRun(
+            session,
+            new SendMessageRequest(content: 'Compare Form A with Form B'),
+            'assistant-analysis-budget',
+            store.messagesForSession(session.id),
+            null
+        )).collectList().block()
+
+        then:
+        executorCalls == 2
+        events.findAll {it.type == 'tool_call'}*.metadata*.name == ['mauro_search']
+        events.find {it.type == 'token'}.content == 'Final comparison answer.'
+        !events.find {it.type == 'error' && (it.content ?: '').contains('max tool calls')}
+    }
+
+    void 'unsupported plan replan continues when remaining planned step is valid'() {
+        given:
+        ChatInMemoryStore store = new ChatInMemoryStore()
+        int executorCalls = 0
+        int planEvaluatorCalls = 0
+        LlmProvider provider = Stub(LlmProvider) {
+            id() >> 'openai'
+            streamChat(_ as ProviderRequest) >> {ProviderRequest request ->
+                switch (request.options?.purpose as String) {
+                    case 'agent_context_resolver':
+                        return Flux.fromIterable([token(request, contextJson())])
+                    case 'agent_planner':
+                        return Flux.fromIterable([token(request, '''{
+                          "goalRestatement":"Find and summarize forms",
+                          "fitness":"usable",
+                          "successCriteria":["Evidence: forms found","Answer: summarize forms"],
+                          "assumptions":[],
+                          "risks":[],
+                          "steps":[
+                            {
+                              "title":"Search forms",
+                              "objective":"Find forms",
+                              "kind":"search",
+                              "allowedTools":["mauro_search"],
+                              "guard":"always",
+                              "guardReason":"Need search evidence",
+                              "optional":false,
+                              "expectedOutput":"Search rows",
+                              "successCriteria":["Tool: mauro_search was called"]
+                            },
+                            {
+                              "title":"Summarize forms",
+                              "objective":"Summarize gathered search evidence",
+                              "kind":"analysis",
+                              "allowedTools":[],
+                              "guard":"always",
+                              "guardReason":"Need final synthesis",
+                              "optional":false,
+                              "expectedOutput":"Short summary",
+                              "successCriteria":["Analysis: summary exists"]
+                            }
+                          ]
+                        }''')])
+                    case 'agent_executor':
+                        executorCalls++
+                        if (executorCalls == 1) {
+                            return Flux.fromIterable([
+                                new ProviderChunk('tool_call', request.messageId, null, [
+                                    callId: 'call-search',
+                                    name: 'mauro_search',
+                                    arguments: [searchTerm: 'forms']
+                                ])
+                            ])
+                        }
+                        return Flux.fromIterable([token(request, 'Two forms were found and can be summarized.')])
+                    case 'agent_step_evaluator':
+                        return Flux.fromIterable([token(request, '''{
+                          "stepComplete": true,
+                          "decision": "continue",
+                          "summary": "Step completed.",
+                          "reason": "The expected output is present.",
+                          "question": null
+                        }''')])
+                    case 'agent_plan_evaluator':
+                        planEvaluatorCalls++
+                        if (planEvaluatorCalls == 1) {
+                            return Flux.fromIterable([token(request, '''{
+                              "decision": "replan",
+                              "summary": "A plan change might be useful.",
+                              "reason": "The evaluator has no structural category for this replan.",
+                              "question": null,
+                              "missing": [],
+                              "obsoleteStepIds": [],
+                              "replanJustification": {
+                                "category": "no_structural_category_applies",
+                                "evidenceIds": [],
+                                "affectedStepIds": [],
+                                "unmetSuccessCriteriaIds": [],
+                                "proposedChange": "Maybe revise the route."
+                              }
+                            }''')])
+                        }
+                        return Flux.fromIterable([token(request, '''{
+                          "decision": "final",
+                          "summary": "Summary is available.",
+                          "reason": "The planned analysis step completed.",
+                          "question": null,
+                          "missing": [],
+                          "obsoleteStepIds": []
+                        }''')])
+                    case 'agent_final':
+                        return Flux.fromIterable([token(request, 'Final form summary.')])
+                    default:
+                        return Flux.empty()
+                }
+            }
+        }
+        ChatMcpService mcpService = Stub(ChatMcpService) {
+            listServers() >> [
+                new McpServerDto(id: 'local-mcp', name: 'Local MCP', tools: [
+                    new ToolSummaryDto(name: 'mauro_search', description: 'Search Mauro catalogue', inputSchema: [type: 'object'])
+                ])
+            ]
+            invokeTool('mauro_search', _ as ToolInvokeRequest) >> new ToolInvokeResponse(
+                success: true,
+                result: [tool: 'mauro_search', output: [count: 2, items: [[label: 'Form A'], [label: 'Form B']]]],
+                modelText: 'Search completed.'
+            )
+        }
+        AgentSupervisorService service = new AgentSupervisorService(store, new ProviderRegistry([provider]), mcpService, 4, 8, 0)
+        SessionDto session = new SessionDto(id: 'session-unsupported-replan-continue', workspaceId: 'default', model: 'gpt-5')
+
+        when:
+        List<ChatEventDto> events = Flux.from(service.streamAgentRun(
+            session,
+            new SendMessageRequest(content: 'Find and summarize forms'),
+            'assistant-unsupported-replan-continue',
+            store.messagesForSession(session.id),
+            null
+        )).collectList().block()
+
+        then:
+        executorCalls == 2
+        events.find {it.type == 'agent_plan_evaluated'}.metadata.decision == 'continue'
+        !events*.type.contains('agent_replan_started')
+        events.find {it.type == 'token'}.content == 'Final form summary.'
+    }
+
+    void 'unsupported plan replan finalizes when no planned steps remain and final evidence exists'() {
+        given:
+        ChatInMemoryStore store = new ChatInMemoryStore()
+        LlmProvider provider = Stub(LlmProvider) {
+            id() >> 'openai'
+            streamChat(_ as ProviderRequest) >> {ProviderRequest request ->
+                switch (request.options?.purpose as String) {
+                    case 'agent_context_resolver':
+                        return Flux.fromIterable([token(request, contextJson())])
+                    case 'agent_planner':
+                        return Flux.fromIterable([token(request, '''{
+                          "goalRestatement":"Find forms",
+                          "fitness":"usable",
+                          "successCriteria":["Evidence: forms found"],
+                          "assumptions":[],
+                          "risks":[],
+                          "steps":[{
+                            "title":"Search forms",
+                            "objective":"Find forms",
+                            "kind":"search",
+                            "allowedTools":["mauro_search"],
+                            "guard":"always",
+                            "guardReason":"Need evidence",
+                            "optional":false,
+                            "expectedOutput":"Search rows",
+                            "successCriteria":["Tool: mauro_search was called"]
+                          }]
+                        }''')])
+                    case 'agent_executor':
+                        return Flux.fromIterable([
+                            new ProviderChunk('tool_call', request.messageId, null, [
+                                callId: 'call-search',
+                                name: 'mauro_search',
+                                arguments: [searchTerm: 'forms']
+                            ])
+                        ])
+                    case 'agent_step_evaluator':
+                        return Flux.fromIterable([token(request, '''{
+                          "stepComplete": true,
+                          "decision": "continue",
+                          "summary": "Search completed.",
+                          "reason": "Search evidence exists.",
+                          "question": null
+                        }''')])
+                    case 'agent_plan_evaluator':
+                        return Flux.fromIterable([token(request, '''{
+                          "decision": "replan",
+                          "summary": "Maybe fetch more.",
+                          "reason": "The evaluator has no structural category for this replan.",
+                          "question": null,
+                          "missing": [],
+                          "obsoleteStepIds": [],
+                          "replanJustification": {
+                            "category": "no_structural_category_applies",
+                            "evidenceIds": [],
+                            "affectedStepIds": [],
+                            "unmetSuccessCriteriaIds": [],
+                            "proposedChange": "Maybe fetch more."
+                          }
+                        }''')])
+                    case 'agent_final':
+                        return Flux.fromIterable([token(request, 'Found forms.')])
+                    default:
+                        return Flux.empty()
+                }
+            }
+        }
+        ChatMcpService mcpService = Stub(ChatMcpService) {
+            listServers() >> [
+                new McpServerDto(id: 'local-mcp', name: 'Local MCP', tools: [
+                    new ToolSummaryDto(name: 'mauro_search', description: 'Search Mauro catalogue', inputSchema: [type: 'object'])
+                ])
+            ]
+            invokeTool('mauro_search', _ as ToolInvokeRequest) >> new ToolInvokeResponse(
+                success: true,
+                result: [tool: 'mauro_search', output: [count: 1, items: [[label: 'Form A']]]],
+                modelText: 'Search completed.'
+            )
+        }
+        AgentSupervisorService service = new AgentSupervisorService(store, new ProviderRegistry([provider]), mcpService, 4, 8, 0)
+        SessionDto session = new SessionDto(id: 'session-unsupported-replan-final', workspaceId: 'default', model: 'gpt-5')
+
+        when:
+        List<ChatEventDto> events = Flux.from(service.streamAgentRun(
+            session,
+            new SendMessageRequest(content: 'Find forms'),
+            'assistant-unsupported-replan-final',
+            store.messagesForSession(session.id),
+            null
+        )).collectList().block()
+
+        then:
+        events.find {it.type == 'agent_plan_evaluated'}.metadata.decision == 'final'
+        !events*.type.contains('agent_replan_started')
+        events.find {it.type == 'token'}.content == 'Found forms.'
+    }
+
+    void 'tool-step executor prose is debug only and not evaluator evidence'() {
+        given:
+        ChatInMemoryStore store = new ChatInMemoryStore()
+        List<String> stepEvaluatorPrompts = []
+        LlmProvider provider = Stub(LlmProvider) {
+            id() >> 'openai'
+            streamChat(_ as ProviderRequest) >> {ProviderRequest request ->
+                switch (request.options?.purpose as String) {
+                    case 'agent_context_resolver':
+                        return Flux.fromIterable([token(request, contextJson())])
+                    case 'agent_planner':
+                        return Flux.fromIterable([token(request, '''{
+                          "goalRestatement":"Find forms",
+                          "fitness":"usable",
+                          "successCriteria":["Evidence: forms found"],
+                          "assumptions":[],
+                          "risks":[],
+                          "steps":[{
+                            "title":"Search forms",
+                            "objective":"Find forms",
+                            "kind":"search",
+                            "allowedTools":["mauro_search"],
+                            "guard":"always",
+                            "guardReason":"Need evidence",
+                            "optional":false,
+                            "expectedOutput":"Search rows",
+                            "successCriteria":["Tool: mauro_search was called"]
+                          }]
+                        }''')])
+                    case 'agent_executor':
+                        return Flux.fromIterable([token(request, 'We need to resolve a URI before calling mauro_get.')])
+                    case 'agent_step_evaluator':
+                        stepEvaluatorPrompts.add(request.messages.last().content)
+                        return Flux.fromIterable([token(request, '''{
+                          "stepComplete": false,
+                          "decision": "fail",
+                          "summary": "No tool evidence was produced.",
+                          "reason": "The search step did not call the required tool.",
+                          "question": null
+                        }''')])
+                    default:
+                        return Flux.empty()
+                }
+            }
+        }
+        ChatMcpService mcpService = Stub(ChatMcpService) {
+            listServers() >> [
+                new McpServerDto(id: 'local-mcp', name: 'Local MCP', tools: [
+                    new ToolSummaryDto(name: 'mauro_search', description: 'Search Mauro catalogue', inputSchema: [type: 'object'])
+                ])
+            ]
+        }
+        AgentSupervisorService service = new AgentSupervisorService(store, new ProviderRegistry([provider]), mcpService, 4, 8, 0)
+        SessionDto session = new SessionDto(id: 'session-tool-prose-debug', workspaceId: 'default', model: 'gpt-5')
+
+        when:
+        List<ChatEventDto> events = Flux.from(service.streamAgentRun(
+            session,
+            new SendMessageRequest(content: 'Find forms'),
+            'assistant-tool-prose-debug',
+            store.messagesForSession(session.id),
+            null
+        )).collectList().block()
+
+        then:
+        store.agentEvidence.isEmpty()
+        events*.type.contains('agent_executor_debug_text')
+        !stepEvaluatorPrompts.first().contains('We need to resolve a URI')
+        stepEvaluatorPrompts.first().contains('Evidence added by current step:')
+        stepEvaluatorPrompts.first().contains('No evidence yet.')
+        events*.type.contains('agent_run_failed')
+    }
+
+    void 'supervisor suppresses duplicate same tool and arguments from one executor turn'() {
+        given:
+        ChatInMemoryStore store = new ChatInMemoryStore()
+        int invokedTools = 0
+        LlmProvider provider = Stub(LlmProvider) {
+            id() >> 'openai'
+            streamChat(_ as ProviderRequest) >> {ProviderRequest request ->
+                switch (request.options?.purpose as String) {
+                    case 'agent_context_resolver':
+                        return Flux.fromIterable([token(request, contextJson())])
+                    case 'agent_planner':
+                        return Flux.fromIterable([token(request, '''{
+                          "goalRestatement":"Find diabetes forms",
+                          "fitness":"usable",
+                          "successCriteria":["Evidence: diabetes form search result exists"],
+                          "assumptions":[],
+                          "risks":[],
+                          "steps":[{
+                            "title":"Search diabetes forms",
+                            "objective":"Search for diabetes forms.",
+                            "kind":"search",
+                            "allowedTools":["mauro_search"],
+                            "guard":"always",
+                            "guardReason":"Evidence is needed.",
+                            "optional":false,
+                            "expectedOutput":"Search result evidence.",
+                            "successCriteria":["Tool: mauro_search was called"]
+                          }]
+                        }''')])
+                    case 'agent_executor':
+                        return Flux.fromIterable([
+                            new ProviderChunk('tool_call', request.messageId, null, [
+                                callId: 'call-search-1',
+                                name: 'mauro_search',
+                                arguments: [searchTerm: 'diabetes forms', domainTypes: ['DataModel']]
+                            ]),
+                            new ProviderChunk('tool_call', request.messageId, null, [
+                                callId: 'call-search-2',
+                                name: 'mauro_search',
+                                arguments: [domainTypes: ['DataModel'], searchTerm: 'diabetes forms']
+                            ])
+                        ])
+                    case 'agent_step_evaluator':
+                        return Flux.fromIterable([token(request, '''{
+                          "stepComplete": true,
+                          "decision": "continue",
+                          "summary": "The search produced evidence and the duplicate was suppressed.",
+                          "reason": "The successful tool result is enough for this step.",
+                          "question": null
+                        }''')])
+                    case 'agent_plan_evaluator':
+                        return Flux.fromIterable([token(request, '''{
+                          "decision": "final",
+                          "summary": "Search evidence is available.",
+                          "reason": "The goal can be answered from the single search result.",
+                          "question": null,
+                          "missing": [],
+                          "obsoleteStepIds": []
+                        }''')])
+                    case 'agent_final':
+                        return Flux.fromIterable([token(request, 'Found diabetes forms.')])
+                    default:
+                        return Flux.empty()
+                }
+            }
+        }
+        ChatMcpService mcpService = Stub(ChatMcpService) {
+            listServers() >> [
+                new McpServerDto(
+                    id: 'local-mcp',
+                    name: 'Local MCP',
+                    tools: [new ToolSummaryDto(name: 'mauro_search', description: 'Search Mauro catalogue', inputSchema: [type: 'object'])]
+                )
+            ]
+            invokeTool('mauro_search', _ as ToolInvokeRequest) >> {String toolName, ToolInvokeRequest toolRequest ->
+                invokedTools++
+                new ToolInvokeResponse(
+                    success: true,
+                    result: [
+                        tool: toolName,
+                        arguments: toolRequest.arguments,
+                        output: [count: 1, items: [[label: 'Adult Diabetes Education Form', domainType: 'DataModel']]]
+                    ],
+                    modelText: 'Search completed.'
+                )
+            }
+        }
+        AgentSupervisorService service = new AgentSupervisorService(store, new ProviderRegistry([provider]), mcpService, 4, 1, 0)
+        SessionDto session = new SessionDto(id: 'session-duplicate-tool-call', workspaceId: 'default', model: 'gpt-5')
+
+        when:
+        List<ChatEventDto> events = Flux.from(service.streamAgentRun(
+            session,
+            new SendMessageRequest(content: 'Find diabetes forms'),
+            'assistant-duplicate-tool-call',
+            store.messagesForSession(session.id),
+            null
+        )).collectList().block()
+
+        then:
+        invokedTools == 1
+        events.find {it.type == 'agent_tool_call_suppressed'}.metadata.suppressionReason == 'duplicate_tool_call'
+        events.findAll {it.type == 'tool_result'}*.metadata*.blocked == [null, true]
+        events.find {it.type == 'token'}.content == 'Found diabetes forms.'
+        !events.find {it.type == 'error' && (it.content ?: '').contains('max tool calls')}
     }
 
     private static ProviderChunk token(ProviderRequest request, String content) {

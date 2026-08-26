@@ -11,6 +11,7 @@ keywords:
   - evaluation
 fragments:
   - fragment-agent-strict-json
+  - fragment-agent-terse-output
   - fragment-agent-state-semantics
   - fragment-agent-step-evaluator-decision-policy
   - fragment-agent-tool-recovery
@@ -20,7 +21,7 @@ instruction: |
   {
     "stepComplete": true|false,
     "decision": "continue"|"retry"|"ask_user"|"replan"|"fail",
-    "summary": "...",
-    "reason": "...",
+    "summary": "terse outcome",
+    "reason": "terse evidence-based reason",
     "question": null|"..."
   }

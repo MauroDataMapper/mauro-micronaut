@@ -26,5 +26,5 @@ instruction: |
   {{evidenceBlock}}
   {{guidanceBlock}}
 
-  Resolve the context needed for planning or replanning. Use the persona guidance as standing agent context. Use the skill lookup result to recommend any relevant skills, and identify relevant read-only tools and resource suggestions from the affordances above.
+  Resolve the context needed for this run. Use the persona guidance as standing agent context. Use the skill lookup result to recommend any relevant skills, and identify relevant read-only tools and resource suggestions from the affordances above.
   If this is a follow-up goal, resolve references from the prior session continuity context and carry forward only the facts, evidence ids, guidance ids, caveats, and mechanics needed for this run.

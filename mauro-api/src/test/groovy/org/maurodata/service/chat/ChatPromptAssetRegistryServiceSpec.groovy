@@ -1,5 +1,6 @@
 package org.maurodata.service.chat
 
+import org.maurodata.service.chat.agent.AgentPromptService
 import spock.lang.Specification
 
 class ChatPromptAssetRegistryServiceSpec extends Specification {
@@ -23,6 +24,7 @@ class ChatPromptAssetRegistryServiceSpec extends Specification {
         assets.find {it.id == 'fragment-agent-goal-scope'}.priority == null
         assets.find {it.id == 'agent-planner-system'}.fragments == [
             'fragment-agent-strict-json',
+            'fragment-agent-terse-output',
             'fragment-agent-goal-scope',
             'fragment-agent-catalogue-evidence',
             'fragment-agent-tool-recovery'
@@ -59,7 +61,10 @@ class ChatPromptAssetRegistryServiceSpec extends Specification {
         ChatPromptComposer composer = new ChatPromptComposer(assetService)
 
         when:
-        ChatPromptRenderResult result = composer.renderResult('agent-planner-system', [toolNames: 'mauro_search'] as Map<String, Object>)
+        ChatPromptRenderResult result = composer.renderResult('agent-planner-system', [
+            toolNames: 'mauro_search',
+            planningModeInstructions: 'Planning mode: initial plan.'
+        ] as Map<String, Object>)
         String rendered = result.text
 
         then:
@@ -68,15 +73,37 @@ class ChatPromptAssetRegistryServiceSpec extends Specification {
         rendered.contains('Search result snippets, labels, and IDs are discovery evidence only.')
         rendered.contains('Do not hallucinate resource URIs from UUIDs.')
         rendered.contains('You are the planner for a Mauro catalogue agent.')
+        rendered.contains('Planning mode: initial plan.')
+        !rendered.contains('When replanning')
+        rendered.contains('Do not add a mauro_describe step merely to learn how to interpret a known catalogue item before reading it.')
         result.assetId == 'agent-planner-system'
         result.assetVersion == '1.0.0'
         result.fragments*.id == [
             'fragment-agent-strict-json',
+            'fragment-agent-terse-output',
             'fragment-agent-goal-scope',
             'fragment-agent-catalogue-evidence',
             'fragment-agent-tool-recovery'
         ]
-        result.variableNames == ['toolNames']
+        result.variableNames == ['planningModeInstructions', 'toolNames']
         result.redactedVariableNames == []
+    }
+
+    void 'agent planner system prompt renders explicit planning mode'() {
+        given:
+        ChatPromptAssetRegistryService assetService = new ChatPromptAssetRegistryService(new ChatPromptAssetDefinitionLoader())
+        AgentPromptService promptService = new AgentPromptService(new ChatPromptComposer(assetService))
+
+        when:
+        String initial = promptService.plannerSystemPrompt(['mauro_get'])
+        String replan = promptService.plannerSystemPrompt(['mauro_get'], 'previous read failed')
+
+        then:
+        initial.contains('Planning mode: initial plan.')
+        !initial.contains('Planning mode: replan.')
+        !initial.contains('Do not repeat completed work unless the previous evidence is unusable.')
+        replan.contains('Planning mode: replan.')
+        replan.contains('Replan reason is provided in the user prompt.')
+        replan.contains('Do not repeat completed work unless the previous evidence is unusable.')
     }
 }
