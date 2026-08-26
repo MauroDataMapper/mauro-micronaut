@@ -155,7 +155,7 @@ class ClassificationSchemeSpec extends Specification {
         then:
         original.csClassifiers.size() == 1
         Classifier result = original.csClassifiers[0]
-        result.getParent().domainType == ClassificationScheme.class.simpleName
+        result.getParent().domainType == ClassificationScheme.simpleName
 
 
 

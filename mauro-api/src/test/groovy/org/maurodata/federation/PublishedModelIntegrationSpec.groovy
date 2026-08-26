@@ -72,7 +72,7 @@ class PublishedModelIntegrationSpec extends SecuredIntegrationSpec {
 
         List<String> linksUrl = publishedModelResponse.publishedModels.collectMany {it.links.collect {it.url}}.toSorted()
         linksUrl.size() == 3
-        PublishedModel terminologyPublishedModel = publishedModelResponse.publishedModels.find {it.modelType == Terminology.class.simpleName}
+        PublishedModel terminologyPublishedModel = publishedModelResponse.publishedModels.find {it.modelType == Terminology.simpleName}
         terminologyPublishedModel.links ?[0].url.contains(terminologyId.toString())
         terminologyPublishedModel.datePublished >= startTime
         terminologyPublishedModel.lastUpdated >= startTime

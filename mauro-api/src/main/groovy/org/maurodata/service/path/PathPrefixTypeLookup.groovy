@@ -32,7 +32,7 @@ class PathPrefixTypeLookup {
             lookup.putIfAbsent(normalisePathPrefix(domainClass.getPathPrefix()), domainClass.getDomainType())
         }
         //special case ->VersionedFolder = folder with isVersionable() set.
-        lookup.put(normalisePathPrefix('vf'), Folder.class.simpleName)
+        lookup.put(normalisePathPrefix('vf'), Folder.simpleName)
         pathPrefixDomainType = lookup.asImmutable()
 
     }

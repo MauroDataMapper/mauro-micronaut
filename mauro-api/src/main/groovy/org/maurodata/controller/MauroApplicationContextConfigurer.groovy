@@ -136,7 +136,7 @@ class MauroApplicationContextConfigurer implements ApplicationContextConfigurer 
 
         SoftServiceLoader<BeanDefinitionReference> loader =
             SoftServiceLoader.load(
-                BeanDefinitionReference.class,
+                BeanDefinitionReference,
                 pluginLoader
             )
 
@@ -158,9 +158,9 @@ class MauroApplicationContextConfigurer implements ApplicationContextConfigurer 
 
                 ((BeanDefinitionRegistry) applicationContext).registerBeanDefinition(beanDefinition as RuntimeBeanDefinition<Object>)
 
-                if (Profile.class.isAssignableFrom(beanType)) {
+                if (Profile.isAssignableFrom(beanType)) {
                     log.info("Profile: ${ref}")
-                } else if (MauroPlugin.class.isAssignableFrom(beanType)) {
+                } else if (MauroPlugin.isAssignableFrom(beanType)) {
                     log.info("MauroPlugin: ${ref}")
                 } else {
                     if (ref.hasAnnotation(Controller)) {

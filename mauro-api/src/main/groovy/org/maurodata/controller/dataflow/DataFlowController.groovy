@@ -169,7 +169,7 @@ class DataFlowController extends AdministeredItemController<DataFlow, DataModel>
         }
 
         List<ModelItem> modelItems = dataFlowService.importModelItem(JsonDataFlowImporterPlugin, target, request, importFile, namespace, name, version).findAll {
-            it.domainType == DataFlow.class.simpleName && (it as DataFlow).target?.id == dataModelId
+            it.domainType == DataFlow.simpleName && (it as DataFlow).target?.id == dataModelId
         }
 
         List<DataFlow> saved = modelItems.each {imp ->

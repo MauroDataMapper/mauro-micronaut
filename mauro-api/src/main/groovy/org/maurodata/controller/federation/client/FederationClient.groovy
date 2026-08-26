@@ -25,7 +25,7 @@ import org.xml.sax.SAXException
 @Singleton
 class FederationClient {
 
-    @Client(id = FederationClientConfiguration.PREFIX, configuration = FederationClientConfiguration.class)
+    @Client(id = FederationClientConfiguration.PREFIX, configuration = FederationClientConfiguration)
     HttpClient httpClient
 
     private final FederationClientConfiguration federationClientConfiguration

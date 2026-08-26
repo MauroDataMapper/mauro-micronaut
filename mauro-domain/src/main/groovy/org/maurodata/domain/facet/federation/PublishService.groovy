@@ -48,10 +48,10 @@ class PublishService {
     }
 
     private static String deduceModelUrlPath(String domainType) {
-        if (domainType == Terminology.class.simpleName) {
+        if (domainType == Terminology.simpleName) {
             return 'terminologies'
         } else {
-            if (domainType == CodeSet.class.simpleName) {
+            if (domainType == CodeSet.simpleName) {
                 return 'codeSets'
             } else {
                 return StringUtils.uncapitalize(domainType) + 's'

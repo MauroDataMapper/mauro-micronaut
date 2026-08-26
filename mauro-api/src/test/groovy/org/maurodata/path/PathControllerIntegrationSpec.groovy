@@ -122,14 +122,14 @@ class PathControllerIntegrationSpec extends CommonDataSpec {
             value = 'no value'
         })
         when:
-        DataElement dataElementResponse = pathApi.getResourceByPathFromResource(DataModel.class.simpleName, dataModel.id, dataElement.localPath.pathString) as DataElement
+        DataElement dataElementResponse = pathApi.getResourceByPathFromResource(DataModel.simpleName, dataModel.id, dataElement.localPath.pathString) as DataElement
         then:
         dataElementResponse
         dataElementResponse.id == dataElement.id
 
         when:
         EnumerationValue enumerationValueResponse =
-            pathApi.getResourceByPathFromResource(DataModel.class.simpleName, dataModel.id, noValue.localPath.pathString) as EnumerationValue
+            pathApi.getResourceByPathFromResource(DataModel.simpleName, dataModel.id, noValue.localPath.pathString) as EnumerationValue
         then:
         enumerationValueResponse
         enumerationValueResponse.id == noValue.id
@@ -147,7 +147,7 @@ class PathControllerIntegrationSpec extends CommonDataSpec {
         when:
 
         DataModel resourceByPath =
-            pathApi.getResourceByPathFromResource(DataModel.class.simpleName, newBranchModelVersion.id, retrieved.localPath.pathString) as DataModel
+            pathApi.getResourceByPathFromResource(DataModel.simpleName, newBranchModelVersion.id, retrieved.localPath.pathString) as DataModel
         then:
         resourceByPath
         resourceByPath.id == newBranchModelVersion.id
@@ -174,7 +174,7 @@ class PathControllerIntegrationSpec extends CommonDataSpec {
         String newModelVersionDataClassPathString = fullRetrievedDataClass.localPath.pathString
         when:
         DataClass resourceByPath =
-            pathApi.getResourceByPathFromResource(DataClass.class.simpleName, fullRetrievedDataClass.id, newModelVersionDataClassPathString) as DataClass
+            pathApi.getResourceByPathFromResource(DataClass.simpleName, fullRetrievedDataClass.id, newModelVersionDataClassPathString) as DataClass
         then:
         resourceByPath
         resourceByPath.label == fullRetrievedDataClass.label
@@ -189,7 +189,7 @@ class PathControllerIntegrationSpec extends CommonDataSpec {
         DataElement dataElement = dataElementApi.create(dataModel.id, dataClass.id, dataElementPayload('label for datatype', dataType))
 
         when:
-        pathApi.getResourceByPathFromResource( DataModel.class.simpleName, otherModel.id, dataElement.getPath().pathString) as DataElement
+        pathApi.getResourceByPathFromResource( DataModel.simpleName, otherModel.id, dataElement.getPath().pathString) as DataElement
 
         then:
         HttpStatusException exception = thrown()
@@ -205,7 +205,7 @@ class PathControllerIntegrationSpec extends CommonDataSpec {
         String fullPath = dataElement.getPath().pathString
 
         when:
-        pathApi.getResourceByPathFromResource( DataModel.class.simpleName, otherModel.id, fullPath + 'something' ) as DataElement
+        pathApi.getResourceByPathFromResource( DataModel.simpleName, otherModel.id, fullPath + 'something' ) as DataElement
 
         then:
         HttpStatusException exception = thrown()

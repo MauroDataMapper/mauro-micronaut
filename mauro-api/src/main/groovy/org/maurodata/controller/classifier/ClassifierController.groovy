@@ -176,7 +176,7 @@ class ClassifierController extends AdministeredItemController<Classifier, Classi
     @Operation(summary = "Get a classifier", description = "Returns a classifier. You must have read privileges on the item in question.")
     @Get(Paths.ADMINISTERED_ITEM_CLASSIFIER_ID_ROUTE)
     Classifier getAdministeredItemClassifier(@NonNull String administeredItemDomainType, @NonNull UUID administeredItemId, @NonNull UUID id) {
-        accessControlService.checkRole(Role.READER, readAdministeredItem(Classifier.class.simpleName, id))
+        accessControlService.checkRole(Role.READER, readAdministeredItem(Classifier.simpleName, id))
         AdministeredItem administeredItem = readAdministeredItem(administeredItemDomainType, administeredItemId)
         accessControlService.checkRole(Role.READER, administeredItem)
         Classifier classifier = classifierCacheableRepository.findByAdministeredItemAndClassifier(administeredItem.domainType, administeredItemId, id)

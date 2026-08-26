@@ -78,7 +78,7 @@ class KeycloakIntegrationSpec extends CommonDataSpec {
 
         then:
         resp
-        Map<String, String> responseEntity = resp.readEntity(Map.class)
+        Map<String, String> responseEntity = resp.readEntity(Map)
         resp.status == HttpStatus.OK.code
 
         def currentAccessToken = responseEntity.get('access_token')

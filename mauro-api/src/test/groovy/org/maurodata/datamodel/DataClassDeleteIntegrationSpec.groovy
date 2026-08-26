@@ -70,7 +70,7 @@ class DataClassDeleteIntegrationSpec extends CommonDataSpec {
         terminologyApi.finalise(terminologyId, finalisePayload())
 
         referenceTypeDataType = dataTypeApi.create(dataModelId, referenceTypeDataTypePayload(grandChildDataClassId1, 'datatype reference class label grandchild DC'))
-        modelTypeDataType = dataTypeApi.create(dataModelId, modelTypeDataTypePayload(terminologyId, Terminology.class.simpleName))
+        modelTypeDataType = dataTypeApi.create(dataModelId, modelTypeDataTypePayload(terminologyId, Terminology.simpleName))
         childDataElement = dataElementApi.create(dataModelId, childDataClassId2, dataElementPayload("data element label childDC2", referenceTypeDataType))
         dataElement = dataElementApi.create(dataModelId, dataClassId2, dataElementPayload("data element label childDC2", modelTypeDataType))
     }

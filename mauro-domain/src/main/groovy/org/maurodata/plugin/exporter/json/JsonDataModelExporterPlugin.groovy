@@ -54,6 +54,6 @@ class JsonDataModelExporterPlugin implements DataModelExporterPlugin {
 
     @Override
     String getContentType() {
-        "application/mauro.${DataModel.class.simpleName.toLowerCase()}+json"
+        "application/mauro.${DataModel.simpleName.toLowerCase()}+json"
     }
 }

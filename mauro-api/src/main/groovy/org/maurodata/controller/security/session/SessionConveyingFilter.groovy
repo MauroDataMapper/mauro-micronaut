@@ -51,7 +51,7 @@ class SessionConveyingFilter implements HttpServerFilter {
     @Override
     Publisher<MutableHttpResponse<?>> doFilter(HttpRequest<?> request,
                                                ServerFilterChain chain) {
-        request.setAttribute(SessionConveyingFilter.class.getName(), true)
+        request.setAttribute(SessionConveyingFilter.getName(), true)
 
         try {
             request.getCookies().findCookie(configuration.getCookieName()).ifPresent(cookie -> {

@@ -55,7 +55,7 @@ class JsonCodeSetExporterPlugin implements CodeSetExporterPlugin {
 
     @Override
     String getContentType() {
-        "application/mauro.${CodeSet.class.simpleName.toLowerCase()}+json"
+        "application/mauro.${CodeSet.simpleName.toLowerCase()}+json"
     }
 
 }

@@ -40,7 +40,7 @@ class AnnotationSpec extends Specification {
 
         where:
         iteration << [
-                Annotation.class.simpleName,
+                Annotation.simpleName,
                 "annotations"
         ]
     }

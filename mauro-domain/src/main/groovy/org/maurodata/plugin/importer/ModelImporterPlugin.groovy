@@ -52,7 +52,7 @@ trait ModelImporterPlugin <D extends Model, P extends ImportParameters> extends 
         List<D> imported = importDomain(parametersList)
         imported.each { importedModel ->
             importedModel.setAssociations()
-            if (importedModel.modelType == Terminology.class.simpleName){
+            if (importedModel.modelType == Terminology.simpleName){
                 (importedModel as Terminology).termRelationshipTypes.each {
                     it.displayLabel = it.createDisplayLabel()
                 }

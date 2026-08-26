@@ -50,6 +50,6 @@ class  JsonDataFlowExporterPlugin implements DataFlowExporterPlugin {
 
     @Override
     String getContentType() {
-        "application/mauro.${DataFlow.class.simpleName.toLowerCase()}+json"
+        "application/mauro.${DataFlow.simpleName.toLowerCase()}+json"
     }
 }

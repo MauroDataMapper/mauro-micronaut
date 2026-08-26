@@ -110,7 +110,7 @@ class TreeService {
         }
 
         models.sort {Model model -> model.label}
-            .findAll {Model model -> !foldersOnly || model.domainType.contains(Folder.class.simpleName)}
+            .findAll {Model model -> !foldersOnly || model.domainType.contains(Folder.simpleName)}
             .collect {Model model ->
 
                 pathRepository.readParentItems(model)

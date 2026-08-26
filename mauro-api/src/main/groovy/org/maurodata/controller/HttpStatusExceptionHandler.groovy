@@ -11,7 +11,7 @@ import io.micronaut.http.HttpStatus
 import io.micronaut.http.exceptions.HttpStatusException
 
 @CompileStatic
-@Replaces(HttpStatusHandler.class)
+@Replaces(HttpStatusHandler)
 @Singleton
 class HttpStatusExceptionHandler implements ExceptionHandler<HttpStatusException, HttpResponse<Map<String, Object>>> {
 

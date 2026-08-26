@@ -81,6 +81,6 @@ class JsonFolderExporterPlugin implements FolderExporterPlugin {
 
     @Override
     String getContentType() {
-        "application/mauro.${Folder.class.simpleName.toLowerCase()}+json"
+        "application/mauro.${Folder.simpleName.toLowerCase()}+json"
     }
 }

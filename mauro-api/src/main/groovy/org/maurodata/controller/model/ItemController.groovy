@@ -73,7 +73,7 @@ abstract class ItemController<I extends Item> implements AdministeredItemReader 
     }
 
     protected boolean isNotClassifiersCollection(String key) {
-        !key.toLowerCase().contains(Classifier.class.simpleName.toLowerCase())
+        !key.toLowerCase().contains(Classifier.simpleName.toLowerCase())
     }
 
     protected Item updateCreationProperties(Item item) {

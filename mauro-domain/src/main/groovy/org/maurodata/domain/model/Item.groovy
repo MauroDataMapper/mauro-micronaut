@@ -77,7 +77,7 @@ abstract class Item implements Serializable, ItemReferencer {
     @JsonAlias(['created_by'])
     @MappedProperty('created_by')
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-    @JsonDeserialize(using = CatalogueUser.CatalogueUserDeserializer.class)
+    @JsonDeserialize(using = CatalogueUser.CatalogueUserDeserializer)
     CatalogueUser catalogueUser
 
     @Transient
