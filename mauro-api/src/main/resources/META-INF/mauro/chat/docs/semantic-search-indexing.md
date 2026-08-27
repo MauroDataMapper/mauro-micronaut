@@ -77,10 +77,23 @@ This matches scoped search semantics elsewhere in Mauro.
 
 ### Chunk
 
-A chunk is the text unit embedded for semantic retrieval.
-Chunks are generated from catalogue content: labels, descriptions, summaries, identifiers, and other text that is likely to carry meaning.
+A chunk is the text unit / fragment embedded for semantic retrieval.
 
-Chunking deliberately includes small label-derived chunks for database-style identifiers. For example:
+#### Chunk algorithm
+
+Catalogue chunks are generated from rows in `search.search_domains`.
+The selected source rows can be restricted by domain type, by model scope, and by `maxRows`.
+When a model scope is supplied, folders are expanded to their descendant DataModels, Terminologies, and CodeSets before source rows are selected.
+
+Every selected source row can produce these catalogue chunks:
+
+- `label`, ordinal `0`: the item label.
+- `summary`, ordinal `2`: the label and description joined as a short summary.
+- `label-phrase`, ordinals from `40`: sliding three-word phrases from the label, after keeping only alphabetic words of at least four characters.
+- `label-identifier`, ordinal `60`: a normalised identifier phrase derived from the label when it contains at least two identifier parts.
+- `description-section`, ordinals from `101`: description paragraphs split on blank lines.
+
+Chunking deliberately includes label-derived chunks for database or code-style identifiers. For example:
 
 ```text
 Date_Created
@@ -94,7 +107,26 @@ Date Created
 
 This helps semantic search find terms near a conceptual cluster without turning semantic search into exact lexical search.
 
-Duplicate chunks are avoided where the same source would otherwise produce identical text for multiple chunk kinds.
+Some source domain types add specialised catalogue chunks:
+
+- `EnumerationValue` rows add `enumeration-key`, `enumeration-value`, and `enumeration-category` chunks from the corresponding enumeration value fields.
+- `Term` rows add a `term-definition` chunk from the terminology term definition.
+
+Context chunks are also generated from `search.administered_item_context`.
+The indexing path currently includes annotation and semantic-link context, including transitive `REFINES` and `ABSTRACTS` semantic links.
+Metadata key/value and classification context are present in that view but are excluded from generated chunks.
+
+Chunks are grouped as either `catalogue` or `context`.
+If present, annotation, classification, metadata key/value, and `semantic-link-*` chunk kinds are context-group chunks; all other chunk kinds are catalogue-group chunks.
+This grouping is stored on chunks and embeddings and is used by the vector indexes and search weighting.
+
+Empty source text is ignored.
+Classification schemes and classifiers are not indexed as source rows.
+Solitary noise words such as "and", "the", or "of" are filtered from label, summary, description-section, label-identifier, and label-phrase chunks.
+
+Duplicate chunks are avoided where the same source row would otherwise produce identical text for multiple chunk kinds.
+When duplicates occur, the retained chunk is chosen by kind priority: `label`, then `label-identifier`, then `label-phrase`, then `summary`,
+then the remaining chunk kinds by ordinal and kind name.
 That keeps storage, embedding work, result evidence, and network payloads smaller.
 
 ### Embedding
@@ -146,7 +178,8 @@ This is useful for controlled manual testing.
 ### Explicit Declarations Prevent Surprise Work
 
 The catalogue can contain enormous models.
-A single broad "turn on semantic indexing" switch would be unsafe because it might start hours of embedding work across data that nobody intended to index.
+A single broad "turn on semantic indexing" switch would be unsafe; it might start hours of embedding work across data that nobody
+intended to index.
 
 The model-index declaration makes the operational decision explicit:
 
@@ -184,7 +217,8 @@ Corpus and model constraints combine to narrow the search area.
 
 ### Hybrid Search Uses Semantic When Available
 
-Hybrid search is to become the ordinary search surface.
+Two search api endpoints / methods support hybrid search: the new semantic search, and the existing search becomes the default keyword search.
+Hybrid search becomes the ordinary search surface.
 It combines keyword retrieval and semantic retrieval when semantic search is available.
 If semantic search is unavailable, it behaves exactly like the default keyword search.
 
@@ -213,6 +247,8 @@ The implementation provides:
 - hybrid search that falls back to keyword search when semantic search is unavailable;
 - normal fast semantic candidate windows and `deepSearch` for broader recall;
 - cached hybrid candidates for faster paging while preserving per-request access filtering.
+- searches provide evidence, match score, and ranking.
+- detailed statistics on chunk and embedding counts.
 
 ## Operational Story
 
