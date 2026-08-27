@@ -1034,7 +1034,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         pathNodes.add(0, new Path.PathNode(prefix: node.pathPrefix, identifier: node.pathIdentifier, modelIdentifier: node.pathModelIdentifier))
 
         final Path path = new Path(pathNodes)
-        final String sourcePath = path
+        final String sourcePath = path.toString()
 
         final List<MergeFieldDiffDTO> diffs = []
         final MergeDiffDTO mergeDiffDTO = new MergeDiffDTO(sourceId: dataModelOne.id, targetId: dataModelTwo.id, path: sourcePath, label: dataModelOne.label, diffs: diffs)

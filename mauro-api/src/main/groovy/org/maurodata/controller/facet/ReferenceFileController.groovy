@@ -103,7 +103,7 @@ class ReferenceFileController extends FacetController<ReferenceFile> implements 
     @Transactional
     HttpResponse delete(@NonNull String domainType, @NonNull UUID domainId, @NonNull UUID id) {
         accessControlService.checkRole(Role.EDITOR, readAdministeredItem(domainType, domainId))
-        super.validateAndGet(domainType, domainId, id) as ReferenceFile
+        super.validateAndGet(domainType, domainId, id)
         super.delete(id)
     }
 

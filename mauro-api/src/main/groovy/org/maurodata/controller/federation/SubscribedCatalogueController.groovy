@@ -87,7 +87,6 @@ class SubscribedCatalogueController extends ItemController<SubscribedCatalogue> 
         if (subscribedCatalogues.size() < max) {
             ListResponse.from(subscribedCatalogues)
         } else {
-            subscribedCatalogues.subList(0, max)
             ListResponse.from(subscribedCatalogues.subList(0, max))
         }
     }

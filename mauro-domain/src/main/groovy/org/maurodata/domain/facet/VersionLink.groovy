@@ -29,7 +29,7 @@ import org.maurodata.domain.model.Model
 class VersionLink extends Facet implements ItemReferencer {
 
     final static String NEW_FORK_OF = "NEW_FORK_OF", NEW_MODEL_VERSION_OF = "NEW_MODEL_VERSION_OF"
-    static Map<String, String> descriptions = [:]
+    final static Map<String, String> descriptions = [:]
 
     static {
         descriptions.put(NEW_FORK_OF, "New Fork Of")
