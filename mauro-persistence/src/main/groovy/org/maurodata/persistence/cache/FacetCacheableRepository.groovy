@@ -89,6 +89,15 @@ abstract class FacetCacheableRepository<F extends Facet> extends ItemCacheableRe
             ((MetadataRepository) repository).readAllByMultiFacetAwareItemIdIn(itemIds)
         }
 
+        List<Metadata> findByMultiFacetAwareItemIdInAndNamespaceAndKey(List<UUID> itemIds, String namespace, String key) {
+            ((MetadataRepository) repository).findByMultiFacetAwareItemIdInAndNamespaceAndKey(itemIds, namespace, key)
+        }
+
+        List<Metadata> findByMultiFacetAwareItemIdInAndKey(List<UUID> ownerIds, String key) {
+            ((MetadataRepository) repository).findByMultiFacetAwareItemIdInAndKey(ownerIds, key)
+        }
+
+
     }
 
     @Singleton
