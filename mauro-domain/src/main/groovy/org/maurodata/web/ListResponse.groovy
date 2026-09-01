@@ -23,8 +23,6 @@ class ListResponse<T> {
 
     Integer count
 
-    Boolean countIsExact = true
-
     @JsonInclude
     List<T> items
 

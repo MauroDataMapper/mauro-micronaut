@@ -12,7 +12,6 @@ import org.maurodata.persistence.ContainerizedTest
 
 import org.maurodata.domain.search.dto.SearchResultsDTO
 import org.maurodata.web.ListResponse
-import spock.util.concurrent.PollingConditions
 
 @ContainerizedTest
 @Singleton
@@ -112,21 +111,37 @@ class SearchIntegrationSpec extends CommonDataSpec {
             }
         }
         dataModelId3 = importDataModel(dataModel3, folder)
-        searchApi.rebuildIndexes()
 
-        then:
 
-        new PollingConditions(timeout: 10, delay: 1).eventually {
-            testCases.each { testCase ->
-                SearchRequestDTO searchRequestDTO = new SearchRequestDTO(
-                    searchTerm: testCase.searchTerm,
-                    domainTypes: testCase.domainTypes as List<String>,
-                    withinModelId: testCase.withinModelId == "dataModelId3" ? dataModelId3 : (testCase.withinModelId as UUID))
+        then: // Search results are unchanged until after rebuild
 
-                ListResponse<SearchResultsDTO> searchResults = searchApi.searchGet(searchRequestDTO)
+        testCases.each { testCase ->
+            SearchRequestDTO searchRequestDTO = new SearchRequestDTO(
+                searchTerm: testCase.searchTerm,
+                domainTypes: testCase.domainTypes as List<String>,
+                withinModelId: testCase.withinModelId == "dataModelId3"?dataModelId3:(testCase.withinModelId as UUID))
 
-                assert searchResults.items.label == testCase.expectedLabelsAfterAddition
-            }
+            ListResponse<SearchResultsDTO> searchResults = searchApi.searchGet(searchRequestDTO)
+
+            assert searchResults.items.label == testCase.expectedLabels
+        }
+
+
+        when:
+
+        Thread.sleep(5*1000)
+
+        then: // Search results are unchanged until after rebuild
+
+        testCases.each { testCase ->
+            SearchRequestDTO searchRequestDTO = new SearchRequestDTO(
+                searchTerm: testCase.searchTerm,
+                domainTypes: testCase.domainTypes as List<String>,
+                withinModelId: testCase.withinModelId == "dataModelId3"?dataModelId3:(testCase.withinModelId as UUID))
+
+            ListResponse<SearchResultsDTO> searchResults = searchApi.searchGet(searchRequestDTO)
+
+            assert searchResults.items.label == testCase.expectedLabelsAfterAddition
         }
 
     }
