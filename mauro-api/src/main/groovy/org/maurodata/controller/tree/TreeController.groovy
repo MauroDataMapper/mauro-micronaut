@@ -104,18 +104,18 @@ class TreeController implements TreeApi {
             rootFolder = folderRepository.readById(id)
             accessControlService.checkRole(Role.READER, rootFolder)
         }
-        log.error("Time taken 1: {}", System.currentTimeMillis() - startTime)
+        log.trace("Time taken 1: {}", System.currentTimeMillis() - startTime)
         startTime = System.currentTimeMillis()
 
         ContentHandler contentHandler = contentsService.loadTree(rootFolder, foldersOnly?:false) // rootFolder may be null
-        log.error("Time taken 2: {}", System.currentTimeMillis() - startTime)
+        log.trace("Time taken 2: {}", System.currentTimeMillis() - startTime)
         startTime = System.currentTimeMillis()
         List<SecurableResourceGroupRole> userRoles = []
         if(accessControlService.userAuthenticated) {
             List<UserGroup> userGroups = userGroupRepository.readAllByCatalogueUserId(accessControlService.userId)
             userRoles = securableResourceGroupRoleRepository.readAllByUserGroupIdIn(userGroups.id)
         }
-        log.error("Time taken 3: {}", System.currentTimeMillis() - startTime)
+        log.trace("Time taken 3: {}", System.currentTimeMillis() - startTime)
         startTime = System.currentTimeMillis()
 
         // Now we filter the tree by what we can read
@@ -125,7 +125,7 @@ class TreeController implements TreeApi {
         } else {
             boolean userAuthenticated = accessControlService.userAuthenticated
             Set<UUID> roleAllowedIds = userRoles.collect {it.securableResourceId } as Set
-            log.error("Time taken 4: {}", System.currentTimeMillis() - startTime)
+            log.trace("Time taken 4: {}", System.currentTimeMillis() - startTime)
             startTime = System.currentTimeMillis()
 
             contentHandler.allItems.values().each {AdministeredItem administeredItem ->
@@ -153,7 +153,7 @@ class TreeController implements TreeApi {
 
                 }
             }
-            log.error("Time taken 5: {}", System.currentTimeMillis() - startTime)
+            log.trace("Time taken 5: {}", System.currentTimeMillis() - startTime)
             startTime = System.currentTimeMillis()
 
         }
