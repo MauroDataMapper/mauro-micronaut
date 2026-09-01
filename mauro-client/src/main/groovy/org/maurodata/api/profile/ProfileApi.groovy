@@ -27,6 +27,9 @@ interface ProfileApi {
     @Get(Paths.PROFILE_PROVIDERS)
     List<Profile> providers()
 
+    @Get(Paths.PROFILE_CLASSIFYING_PROVIDERS)
+    List<Profile> classifyingProviders(@Nullable String classifierNamespace, @Nullable String classifierLabel)
+
     @Get(Paths.PROFILE_SEARCH)
     Profile getProfileDetails(String namespace, String name)
 

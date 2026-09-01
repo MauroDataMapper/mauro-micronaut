@@ -17,6 +17,10 @@ trait Profile extends MauroPlugin {
 
     abstract String getMetadataNamespace()
 
+    List<ProfileClassifier> getClassifiers() {
+        return []
+    }
+
     @Override
     PluginType getPluginType() {
         return PluginType.Profile
