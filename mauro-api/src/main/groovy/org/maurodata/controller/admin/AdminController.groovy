@@ -4,16 +4,21 @@ import io.swagger.v3.oas.annotations.Operation
 import org.maurodata.api.Paths
 import org.maurodata.api.admin.AdminApi
 import org.maurodata.audit.Audit
+import org.maurodata.service.command.CommandService
 import org.maurodata.plugin.MauroPluginDTO
 import org.maurodata.service.plugin.PluginRepositoryService
 
 import groovy.transform.CompileStatic
+import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
+import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Get
+import io.micronaut.http.annotation.Part
 import io.micronaut.http.annotation.Post
 import io.micronaut.http.exceptions.HttpStatusException
+import io.micronaut.http.multipart.CompletedFileUpload
 import io.micronaut.runtime.EmbeddedApplication
 import io.micronaut.scheduling.TaskExecutors
 import io.micronaut.scheduling.annotation.ExecuteOn
@@ -61,8 +66,11 @@ class AdminController implements AdminApi {
     @Inject
     private EmbeddedApplication<? extends EmbeddedApplication> application
 
-    AdminController(EmailRepository emailRepository) {
+    private final CommandService commandService
+
+    AdminController(EmailRepository emailRepository, CommandService commandService) {
         this.emailRepository = emailRepository
+        this.commandService = commandService
     }
 
     @Audit
@@ -219,5 +227,51 @@ class AdminController implements AdminApi {
         )
 
         return true
+    }
+
+    @Audit
+    @Get(Paths.ADMIN_COMMANDS)
+    List<Map<String,String>> commands() {
+        accessControlService.checkAdministrator()
+        commandService.commands()
+    }
+
+    @Audit
+    @Post(Paths.ADMIN_COMMAND_PREPARE)
+    Map<String,Object> planCommand(String commandName, @Body String[] commandArgs) {
+        accessControlService.checkAdministrator()
+        commandService.planCommand( commandName, commandArgs)
+    }
+
+    @Audit
+    @Post(uri = Paths.ADMIN_COMMAND_UPLOAD_FILE, consumes = MediaType.MULTIPART_FORM_DATA)
+    HttpResponse<?> fileCommand(UUID executionId, @Part("position") int position, @Part("file") CompletedFileUpload file) {
+
+        accessControlService.checkAdministrator()
+        commandService.fileCommand(executionId.toString(), position, file.getFilename(), file.getInputStream())
+
+        return HttpResponse.ok()
+    }
+
+    @Audit
+    @Post(uri = Paths.ADMIN_COMMAND_RUN)
+    HttpResponse<InputStream> runCommand(UUID executionId) {
+        accessControlService.checkAdministrator()
+        try {
+            return HttpResponse.ok(commandService.runCommand(executionId.toString()))
+                                       .contentType(MediaType.APPLICATION_OCTET_STREAM)
+
+        } catch(Throwable th) {
+            th.printStackTrace()
+            throw th
+        }
+    }
+
+    @Audit
+    @Post(uri = Paths.ADMIN_COMMAND_CLOSE)
+    HttpResponse<?> closeCommand(UUID executionId) {
+        accessControlService.checkAdministrator()
+        commandService.closeCommand(executionId.toString())
+        return HttpResponse.ok()
     }
 }
