@@ -256,7 +256,7 @@ tasks.register('dockerBuildMultiArch') {
         } else {
             println "🐳 Not logged in, build image without pushing ]"
         }
-        ProcessBuilder processBuilderDockerx = new ProcessBuilder(['docker', 'buildx', 'build', '--platform', 'linux/amd64,linux/arm64', '--progress=plain',(useLogin?'--push':null), '--tag', dockerPushImage, location].findAll {it})
+        ProcessBuilder processBuilderDockerx = new ProcessBuilder(['docker', 'buildx', 'build', '--no-cache', '--platform', 'linux/amd64,linux/arm64', '--progress=plain',(useLogin?'--push':null), '--tag', dockerPushImage, location].findAll {it})
 
         Process processDockerx = processBuilderDockerx.start()
         Thread.start {
