@@ -101,7 +101,8 @@ class TreeController implements TreeApi {
         long startTime = System.currentTimeMillis()
         Folder rootFolder = null
         if (id) {
-             rootFolder = folderRepository.readById(id)
+            rootFolder = folderRepository.readById(id)
+            accessControlService.checkRole(Role.READER, rootFolder)
         }
         log.error("Time taken 1: {}", System.currentTimeMillis() - startTime)
         startTime = System.currentTimeMillis()
@@ -137,6 +138,7 @@ class TreeController implements TreeApi {
                 if (model.readableByEveryone
                     ||  (model.readableByAuthenticatedUsers && userAuthenticated)
                     ||  roleAllowedIds.contains(model.id)
+                    || model.id == id // We've already checked this model is readable, and it might be readable via its parent
                 ) {
                     // First make parents visible
                     Model m = model
@@ -206,6 +208,7 @@ class TreeController implements TreeApi {
         readableItems.addAll(folder.codeSets.id as Set<UUID>)
         readableItems.addAll(folder.dataModels.id as Set<UUID>)
         folder.childFolders.each {childFolder ->
+            readableItems.add(childFolder.id)
             makeChildrenVisible(childFolder, readableItems)
         }
     }

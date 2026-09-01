@@ -171,12 +171,12 @@ class AccessControlService implements Toggleable {
         }
 
         // We can also do anything if we created the model in question
-        if (userId && owningModel.catalogueUser && owningModel.catalogueUser.id == userId) {
+        if (isUserAuthenticated() && userId && owningModel.catalogueUser && owningModel.catalogueUser.id == userId) {
             return true
         }
 
         List<Folder> owningFolders = parents.findAll {it instanceof Folder} as List<Folder>
-        List<UserGroup> userGroups = userGroupRepository.readAllByCatalogueUserId(userId)
+        List<UserGroup> userGroups = isUserAuthenticated() ? userGroupRepository.readAllByCatalogueUserId(userId) : []
 
         switch (role) {
             case Role.READER:
@@ -270,8 +270,16 @@ class AccessControlService implements Toggleable {
         boolean canDoRole = securableResourceGroupRoles.find { SecurableResourceGroupRole securableResourceGroupRole ->
              role <= securableResourceGroupRole.role && securableResourceGroupRole.userGroup.id in userGroups.id
         }
-
-        canDoRole
+        if(canDoRole) {
+            return true
+        } else {
+            return parentFolders.any {parentFolder ->
+                List<SecurableResourceGroupRole> folderSecurableResourceGroupRoles = securableResourceGroupRoleRepository.readAllBySecurableResourceDomainTypeAndSecurableResourceId(parentFolder.domainType, parentFolder.id)
+                folderSecurableResourceGroupRoles.any { SecurableResourceGroupRole securableResourceGroupRole ->
+                    role <= securableResourceGroupRole.role && securableResourceGroupRole.userGroup.id in userGroups.id
+                }
+            }
+        }
     }
 
     boolean isUserAuthenticated() {
