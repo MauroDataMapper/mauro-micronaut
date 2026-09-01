@@ -23,9 +23,8 @@ RUN set -eux; \
             exit 1 \
             ;; \
     esac; \
-    cp -p "/etc/apt/sources.list.d/ubuntu.sources" "/etc/apt/sources.list.d/ubuntu-uk.sources" && sed -i -E "s|^URIs:.*|URIs: http://uk.${MIRROR_HOST}/${MIRROR_PATH}|g" "/etc/apt/sources.list.d/ubuntu-uk.sources"; \
-    cp -p "/etc/apt/sources.list.d/ubuntu.sources" "/etc/apt/sources.list.d/ubuntu-ie.sources" && sed -i -E "s|^URIs:.*|URIs: http://ie.${MIRROR_HOST}/${MIRROR_PATH}|g" "/etc/apt/sources.list.d/ubuntu-ie.sources"
-RUN apt-get update && apt-get dist-upgrade -y && apt-get install -y --no-install-recommends gosu postgresql postgresql-contrib unzip iproute2 && apt-get clean && rm -rf /var/lib/apt/lists/*
+    sed -i -E "s|^URIs:.*|URIs: http://uk.${MIRROR_HOST}/${MIRROR_PATH} http://ie.${MIRROR_HOST}/${MIRROR_PATH} http://${MIRROR_HOST}/${MIRROR_PATH}|g" "/etc/apt/sources.list.d/ubuntu.sources"
+RUN apt-get -o Acquire::http::No-Cache=true -o Acquire::http::Pipeline-Depth=0 update && apt-get dist-upgrade -y && apt-get install -y --no-install-recommends gosu postgresql postgresql-contrib unzip iproute2 && apt-get clean && rm -rf /var/lib/apt/lists/*
 RUN mkdir -p ${DATABASE_DIRECTORY} && chown -R postgres:postgres /var/lib/postgresql
 RUN mkdir -p ${LOGS_DIRECTORY} && mkdir -p ${DATABASE_LOGS_DIRECTORY} && chown -R postgres:postgres ${DATABASE_LOGS_DIRECTORY}
 VOLUME ["${DATABASE_DIRECTORY}","${DATABASE_LOGS_DIRECTORY}"]
