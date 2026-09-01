@@ -1,5 +1,6 @@
 package org.maurodata.security
 
+import org.maurodata.domain.folder.Folder
 import org.maurodata.exception.MauroApplicationException
 import org.maurodata.domain.security.ApplicationRole
 import org.maurodata.domain.security.CatalogueUser
@@ -126,112 +127,75 @@ class AccessControlService implements Toggleable {
      * @return true if authorised, false otherwise
      */
     boolean canDoRole(@NonNull Role role, @NonNull AdministeredItem item) {
+        if (item == null || role == null) return false
 
-        if(item == null) return false
+        return (
+            permissionsAllowAction(role, item)
+                &&
+            itemAllowsAction(role, item)
+        )
+    }
 
-        // Discharge some easy options before loading more data
-        if (!enabled) return true
+    boolean itemAllowsAction(@NonNull Role role, @NonNull AdministeredItem item) {
 
-        // If we're not authenticated, and we want to do more than read, then we can't.
-        if(role != Role.READER && !userAuthenticated) {
-            return false
+        List<AdministeredItem> parents = pathRepository.readParentItems(item)
+        Model owningModel = item.owner
+
+        switch(role) {
+            case Role.READER:
+                return true
+            case Role.REVIEWER:
+            case Role.AUTHOR:
+            case Role.EDITOR:
+            case Role.CONTAINER_ADMIN:
+                return !owningModel.finalised
+            default:
+                return false
+        }
+    }
+
+    boolean permissionsAllowAction(@NonNull Role role, @NonNull AdministeredItem item) {
+        // if security is disabled, allow all actions
+        if (!enabled) {
+            return true
+        }
+        // if we're an administrator, then we can do anything
+        if (isAdministrator()) {
+            return true
         }
 
         List<AdministeredItem> parents = pathRepository.readParentItems(item)
-        Model owner = item.owner
-        if(!owner && item instanceof Model) {
-            owner = item
-        }
-        if(!owner) {
-            throw new MauroApplicationException("Item ${item.label} does not have an owner and should")
-        }
-        if (owner.catalogueUser == null) {
-            AdministeredItemRepository air = pathRepository.getRepository(owner)
-            owner = air.readById(owner.id) as Model
+        Model owningModel = item.owner
+        if(!owningModel) {
+            throw new MauroApplicationException("Item ${item.label} does not have an owner and should have one")
         }
 
-        if(role == Role.EDITOR || role == Role.AUTHOR) {
-            if(owner.finalised) return false
+        // We can also do anything if we created the model in question
+        if (userId && owningModel.catalogueUser && owningModel.catalogueUser.id == userId) {
+            return true
         }
 
-        if(isAdministrator()) return true
-
-        if(role == Role.READER) {
-            if (parents.any {AdministeredItem parent ->
-                parent instanceof Model && (
-                    parent.readableByEveryone ||
-                    (parent.readableByAuthenticatedUsers && userAuthenticated)
-                )
-            }) {
-                return true
-            }
-        }
-
-        // Now if we're not logged in, we'll have no groups, so we just return false...
-        if(!userAuthenticated) {
-            return false
-        }
-
-        // If we created the item, we can do as we please
-        if (owner.catalogueUser && owner.catalogueUser.id == getUserId()) return true
-
-        // Exhausted all the easy options - let's see if any groups we belong to have the right permissions
+        List<Folder> owningFolders = parents.findAll {it instanceof Folder} as List<Folder>
         List<UserGroup> userGroups = userGroupRepository.readAllByCatalogueUserId(userId)
 
-        return parents.any {parent ->
-            parent instanceof Model && canDoRoleWithGroups(role, userGroups, parent)}
-
-
-
-        /**
-        switch(role) {
+        switch (role) {
             case Role.READER:
-                if(isAdministrator()) return true
-                if (userAuthenticated && owner.catalogueUser && owner.catalogueUser.id == getUserId()) return true // always allow owner full access
-
-                // allow Reader access if owning model or parents are publicly readable
-                if (parentModels.any {Model model ->
-                    model.readableByEveryone || (model.readableByAuthenticatedUsers && userAuthenticated)
-                }) {
+                if (owningModel.readableByEveryone || owningFolders.find {it.readableByEveryone}) {
                     return true
                 }
-                List<UserGroup> userGroups = userGroupRepository.readAllByCatalogueUserId(userId)
-                parentModels.any {canDoRoleWithGroups(role, userGroups, it)}
-                return false
+                if (owningModel.readableByAuthenticatedUsers || owningFolders.find {it.readableByAuthenticatedUsers}) {
+                    return isUserAuthenticated()
+                }
             case Role.REVIEWER:
-                if(isAdministrator()) return true
-                if (userAuthenticated && owner.catalogueUser && owner.catalogueUser.id == getUserId()) return true // always allow owner full access
-
-                List<UserGroup> userGroups = userGroupRepository.readAllByCatalogueUserId(userId)
-                parentModels.any {canDoRoleWithGroups(role, userGroups, it)}
-                return false
             case Role.AUTHOR:
-                if(item.getOwner().finalised) return false
-                if(isAdministrator()) return true
-                if (userAuthenticated && owner.catalogueUser && owner.catalogueUser.id == getUserId()) return true // always allow owner full access
-                List<UserGroup> userGroups = userGroupRepository.readAllByCatalogueUserId(userId)
-                parentModels.any {canDoRoleWithGroups(role, userGroups, it)}
-                return false
             case Role.EDITOR:
-                if(item.getOwner().finalised) return false
-                if(isAdministrator()) return true
-                if (userAuthenticated && owner.catalogueUser && owner.catalogueUser.id == getUserId()) return true // always allow owner full access
-
-                List<UserGroup> userGroups = userGroupRepository.readAllByCatalogueUserId(userId)
-                parentModels.any {canDoRoleWithGroups(role, userGroups, it)}
-                return false
             case Role.CONTAINER_ADMIN:
-                if(isAdministrator()) return true
-                if (userAuthenticated && owner.catalogueUser && owner.catalogueUser.id == getUserId()) return true // always allow owner full access
-
-                List<UserGroup> userGroups = userGroupRepository.readAllByCatalogueUserId(userId)
-                parentModels.any {canDoRoleWithGroups(role, userGroups, it)}
-                return false
             default:
-                log.error("Unhandled role: {}", role)
-                return false
+                if(!userAuthenticated) {
+                    return false
+                }
+                return canDoRoleWithGroups(role, userGroups, owningModel, owningFolders)
         }
-**/
 
     }
 
@@ -262,6 +226,7 @@ class AccessControlService implements Toggleable {
 
         // Permitted roles
         final List<Model> parentModels = pathRepository.readParentItems(owner) as List<Model>
+        final List<Folder> parentFolders = parentModels.findAll {it instanceof Folder} as List<Folder>
         List<UserGroup> userGroups = []
         if (userAuthenticated) {
             userGroups = userGroupRepository.readAllByCatalogueUserId(userId)
@@ -281,7 +246,7 @@ class AccessControlService implements Toggleable {
                 break
             }
 
-            if (parentModels.any {canDoRoleWithGroups(role, userGroups, it)}) {
+            if (canDoRoleWithGroups(role, userGroups, owner, parentFolders)) {
                 canDo.add(role)
             }
         }
@@ -298,11 +263,14 @@ class AccessControlService implements Toggleable {
      * role on the model, checking the permissions on the specific model only.
      * @return true if authorised, false otherwise
      */
-    private boolean canDoRoleWithGroups(Role role, List<UserGroup> userGroups, Model model) {
+    private boolean canDoRoleWithGroups(Role role, List<UserGroup> userGroups, Model model, List<Folder> parentFolders) {
         List<SecurableResourceGroupRole> securableResourceGroupRoles = securableResourceGroupRoleRepository.readAllBySecurableResourceDomainTypeAndSecurableResourceId(model.domainType, model.id)
-        boolean canDoRole = securableResourceGroupRoles.find {
-            SecurableResourceGroupRole securableResourceGroupRole -> role <= securableResourceGroupRole.role && securableResourceGroupRole.userGroup.id in userGroups.id
+
+
+        boolean canDoRole = securableResourceGroupRoles.find { SecurableResourceGroupRole securableResourceGroupRole ->
+             role <= securableResourceGroupRole.role && securableResourceGroupRole.userGroup.id in userGroups.id
         }
+
         canDoRole
     }
 
@@ -365,7 +333,6 @@ class AccessControlService implements Toggleable {
         if(catalogueUserId && user.id == catalogueUserId) {
             return
         }
-
 
         throw new AuthorizationException(userAuthentication)
     }
