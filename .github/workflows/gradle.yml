@@ -145,11 +145,46 @@ jobs:
             externalRefs: .externalPropertyFileReferences
           }' megalinter-reports/megalinter-report.sarif
 
+      - name: Find SARIF results with unusable message
+        if: github.ref == 'refs/heads/develop' && (success() || failure())
+        run: |
+          for f in megalinter-reports/*.sarif; do
+            echo "=== $f ==="
+            jq -r '
+              .runs[] as $run
+              | ($run.results // []) | to_entries[]
+              | .key as $i
+              | .value as $res
+              | select(
+                  (
+                    (($res.message.text? // "" | gsub("\\s+";"") | length) > 0)
+                    or (($res.message.markdown? // "" | gsub("\\s+";"") | length) > 0)
+                    or (
+                      ($res.message.id? | type == "string")
+                      and (
+                        ($res.message.id) as $mid
+                        | ($res.ruleId // null) as $rid
+                        | (
+                            [ $run.tool.driver.globalMessageStrings[$mid]? ] +
+                            [ $run.tool.extensions[]?.globalMessageStrings[$mid]? ] +
+                            (if $rid == null then [] else [ $run.tool.driver.rules[]? | select(.id == $rid) | .messageStrings[$mid]? ] end)
+                          )
+                        | map(select((.text? // .markdown?) != null))
+                        | length > 0
+                      )
+                    )
+                  ) | not
+                )
+              | "result[\($i)] ruleId=\($res.ruleId // "null") message=\($res.message|tostring)"
+          done
+          ' "$f"
+          done
+
       - name: Upload MegaLinter scan results to GitHub Security tab
         if: (success() || failure())
         uses: github/codeql-action/upload-sarif@v4
         with:
-          sarif_file: megalinter-reports
+          sarif_file: megalinter-reports/megalinter-report.sarif
           ref: refs/heads/${{ github.head_ref || github.ref_name }}
           sha: ${{ github.event.pull_request.head.sha || github.sha }}
           category: MegaLinter-Groovy
