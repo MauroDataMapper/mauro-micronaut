@@ -121,17 +121,15 @@ jobs:
               megalinter-reports
               mega-linter.log
 
-## Temporarily disabled until we can get the MegaLinter scan results to upload correctly to the Security tab
-
-#      - name: Upload MegaLinter scan results to GitHub Security tab
-#        if: github.ref == 'refs/heads/develop' && (success() || failure())
-#        uses: github/codeql-action/upload-sarif@v4
-#        with:
-#          sarif_file: megalinter-reports/megalinter-report.sarif
-#          ref: refs/heads/${{ github.head_ref || github.ref_name }}
-#          sha: ${{ github.event.pull_request.head.sha || github.sha }}
-#          category: MegaLinter-Groovy
-#          wait-for-processing: true
+      - name: Upload MegaLinter scan results to GitHub Security tab
+        if: github.ref == 'refs/heads/develop' && (success() || failure())
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: megalinter-reports/megalinter-report.sarif
+          ref: refs/heads/${{ github.head_ref || github.ref_name }}
+          sha: ${{ github.event.pull_request.head.sha || github.sha }}
+          category: MegaLinter-Groovy
+          wait-for-processing: true
 
 
       - name: Publish Snapshot to Mauro Snapshot Repository
