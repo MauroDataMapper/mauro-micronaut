@@ -33,7 +33,7 @@ jobs:
           POSTGRES_DB: sandbox
           POSTGRES_PASSWORD: sandbox
         options: >-
-          --health-cmd pg_isready
+          --health-cmd "pg_isready -U sandbox -d sandbox"
           --health-interval 1s
           --health-timeout 5s
           --health-retries 50
@@ -149,7 +149,7 @@ jobs:
         if: (success() || failure())
         uses: github/codeql-action/upload-sarif@v4
         with:
-          sarif_file: megalinter-reports/megalinter-report.sarif
+          sarif_file: megalinter-reports
           ref: refs/heads/${{ github.head_ref || github.ref_name }}
           sha: ${{ github.event.pull_request.head.sha || github.sha }}
           category: MegaLinter-Groovy
