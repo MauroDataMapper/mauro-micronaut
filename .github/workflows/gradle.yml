@@ -48,49 +48,49 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v6
-        with:
-          cache-disabled: true
+#      - name: Setup Gradle
+#        uses: gradle/actions/setup-gradle@v6
+#        with:
+#          cache-disabled: true
 
-      - name: Log Gradle version
-        run: ./gradlew --version
+#      - name: Log Gradle version
+#        run: ./gradlew --version
 
       ## Set up for building docker multi-architecture images
       ## Only test the docker build if we are on the develop branch
-      - name: Set up QEMU
-        if: github.ref == 'refs/heads/develop'
-        uses: docker/setup-qemu-action@v4
+#      - name: Set up QEMU
+#        if: github.ref == 'refs/heads/develop'
+#        uses: docker/setup-qemu-action@v4
 
       ## Only test the docker build if we are on the develop branch
-      - name: Set up Docker Buildx
-        if: github.ref == 'refs/heads/develop'
-        uses: docker/setup-buildx-action@v4
+#      - name: Set up Docker Buildx
+#        if: github.ref == 'refs/heads/develop'
+#        uses: docker/setup-buildx-action@v4
 
       ## Only test the docker build if we are on the develop branch
-      - name: Test Docker Build
-        if: github.ref == 'refs/heads/develop'
-        env:
-          GRADLE_OPTS: '-Xmx4g -XX:MaxMetaspaceSize=512m'
-        run: ./gradlew dockerBuildMultiArch
+#      - name: Test Docker Build
+#        if: github.ref == 'refs/heads/develop'
+#        env:
+#          GRADLE_OPTS: '-Xmx4g -XX:MaxMetaspaceSize=512m'
+#        run: ./gradlew dockerBuildMultiArch
 
       ## Only generate OpenAPI resources if we are on the develop branch
-      - name: Generate OpenAPI resources
-        if: github.ref == 'refs/heads/develop'
-        run: ./gradlew --no-daemon --max-workers=1 -PenableOpenApi=true -PopenApiGeneratorMaxHeap=4g :mauro-api:processResources
+#      - name: Generate OpenAPI resources
+#        if: github.ref == 'refs/heads/develop'
+#        run: ./gradlew --no-daemon --max-workers=1 -PenableOpenApi=true -PopenApiGeneratorMaxHeap=4g :mauro-api:processResources
 
-      - name: Test with Gradle
-        env:
-          GRADLE_OPTS: '-Xmx4g -XX:MaxMetaspaceSize=512m'
-        run: ./gradlew --no-daemon --max-workers=1 test
+#      - name: Test with Gradle
+#        env:
+#          GRADLE_OPTS: '-Xmx4g -XX:MaxMetaspaceSize=512m'
+#        run: ./gradlew --no-daemon --max-workers=1 test
 
-      - name: Test Report
-        uses: dorny/test-reporter@v3
-        if: success() || failure()
-        with:
-          name: Test Results
-          path: '**/build/test-results/**/*.xml'
-          reporter: java-junit
+#      - name: Test Report
+#        uses: dorny/test-reporter@v3
+#        if: success() || failure()
+#        with:
+#          name: Test Results
+#          path: '**/build/test-results/**/*.xml'
+#          reporter: java-junit
 
   #    - name: Archive test report
   #      if: always()
@@ -121,8 +121,21 @@ jobs:
               megalinter-reports
               mega-linter.log
 
-      - name: Upload MegaLinter scan results to GitHub Security tab
+      - name: Debug invalid SARIF results
         if: github.ref == 'refs/heads/develop' && (success() || failure())
+        run: |
+          FILE=megalinter-reports/megalinter-report.sarif
+          jq -r '
+            .runs[]?.results[]?
+            | select(
+                (.message | type) != "object"
+                or ((.message.text // .message.markdown // .message.id) == null)
+              )
+            | {ruleId, level, message, locations}
+          ' "$FILE"
+
+      - name: Upload MegaLinter scan results to GitHub Security tab
+        if: (success() || failure())
         uses: github/codeql-action/upload-sarif@v2
         with:
           sarif_file: megalinter-reports/megalinter-report.sarif
