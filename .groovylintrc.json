@@ -34,6 +34,7 @@
     "DuplicateStringLiteral": "off",
     "DuplicateMapLiteral": "off",
     "DuplicateNumberLiteral": "off",
+    "UnnecessaryToString": "off",
 
     "UnnecessaryGetter": "off",
     "UnnecessarySetter": "off",

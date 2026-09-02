@@ -20,8 +20,8 @@ docker {
     }
 }
 
-String latestLts(String product, String fallback, String detectLTS) {
-    if(!detectLTS){return fallback}
+String latestLts(String product, String fallback, boolean detectLTS) {
+    if (!detectLTS) { return fallback }
     try {
         String endoflife = 'https://endoflife.date/api/v1/products/'
         Object json = new JsonSlurper().parse(new URI("${endoflife}${product}").toURL())
@@ -49,7 +49,7 @@ String latestLts(String product, String fallback, String detectLTS) {
 
 String temurinDefault = '21'
 String ubuntuDefault = 'noble'
-String detectLTS = false
+boolean detectLTS = false
 
 String dockerBaseImage = "eclipse-temurin:${latestLts('eclipse-temurin',temurinDefault,detectLTS)}-jre-${latestLts('ubuntu',ubuntuDefault,detectLTS)}"
 

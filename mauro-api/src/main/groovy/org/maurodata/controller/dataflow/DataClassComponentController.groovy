@@ -161,7 +161,7 @@ class DataClassComponentController extends AdministeredItemController<DataClassC
         ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, dataClassToRemove, "Item with id: $dataClassId not found")
         accessControlService.checkRole(Role.EDITOR, dataClassToRemove)
         DataClassComponent dataClassComponent = dataClassComponentRepository.loadWithContent(id)
-        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, dataClassToRemove, "Item with id: $id not found")
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, dataClassComponent, "Item with id: $id not found")
         accessControlService.checkRole(Role.EDITOR, dataClassComponent)
 
         switch (type) {

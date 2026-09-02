@@ -62,7 +62,7 @@ subprojects {
 
             codenarc {
                 toolVersion = "3.7.0"
-                //configFile = rootProject.file(".groovylintrc.json")
+                configFile = rootProject.file(".groovylintrc.groovy")
             }
 
             tasks.matching { it.name.startsWith('codenarc') }.configureEach {

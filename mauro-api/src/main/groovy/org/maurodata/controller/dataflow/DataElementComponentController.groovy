@@ -161,7 +161,7 @@ class DataElementComponentController extends AdministeredItemController<DataElem
         DataElementComponent dataElementComponent = dataElementComponentRepository.loadWithContent(id)
         ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, dataElementComponent, "Item with id: $id not found")
 
-        accessControlService.checkRole(Role.EDITOR, dataElementToRemove)
+        accessControlService.checkRole(Role.EDITOR, dataElementComponent)
         switch (type) {
             case Type.TARGET:
                 if (!dataElementComponent.targetDataElements.removeIf(de -> de.id == dataElementId)) {

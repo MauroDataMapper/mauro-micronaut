@@ -71,9 +71,9 @@ class Annotation extends Facet implements DiffableItem<Annotation> {
             } else {
                 log.error("Trying to save Annotation without 'multiFacetAwareItem' set")
 
-                log.error(multiFacetAwareItem.toString())
-                log.error(multiFacetAwareItemId.toString())
-                log.error(parentAnnotation.toString())
+                log.error(multiFacetAwareItem?.toString())
+                log.error(multiFacetAwareItemId?.toString())
+                log.error(parentAnnotation?.toString())
                 log.error(parentAnnotation?.multiFacetAwareItem?.toString())
                 log.error(parentAnnotation?.multiFacetAwareItemId?.toString())
             }
