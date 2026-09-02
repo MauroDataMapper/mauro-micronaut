@@ -30,8 +30,8 @@ class DataModelHelper {
 
     static Boolean isValidModelDomainType(String modelResourceDomainType) {
         switch (modelResourceDomainType.toLowerCase()) {
-            case [Folder.class.simpleName.toLowerCase(), CodeSet.class.simpleName.toLowerCase(), DataModel.class.simpleName.toLowerCase(),
-                  Terminology.class.simpleName.toLowerCase()] ->
+            case [Folder.simpleName.toLowerCase(), CodeSet.simpleName.toLowerCase(), DataModel.simpleName.toLowerCase(),
+                  Terminology.simpleName.toLowerCase()] ->
                 true
             default -> false
         }

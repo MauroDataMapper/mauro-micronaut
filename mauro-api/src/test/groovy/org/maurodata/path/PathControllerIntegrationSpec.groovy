@@ -17,7 +17,6 @@ import org.maurodata.domain.terminology.CodeSet
 import org.maurodata.persistence.ContainerizedTest
 import org.maurodata.testing.CommonDataSpec
 import org.maurodata.web.ListResponse
-import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Unroll
 
@@ -36,7 +35,7 @@ class PathControllerIntegrationSpec extends CommonDataSpec {
     UUID codeSetId
 
 
-    def setup() {
+    void setup() {
         folderId = folderApi.create(folder()).id
         codeSetId = codeSetApi.create(folderId, codeSet(EXPECTED_LABEL)).id
     }
@@ -123,14 +122,14 @@ class PathControllerIntegrationSpec extends CommonDataSpec {
             value = 'no value'
         })
         when:
-        DataElement dataElementResponse = pathApi.getResourceByPathFromResource(DataModel.class.simpleName, dataModel.id, dataElement.localPath.pathString) as DataElement
+        DataElement dataElementResponse = pathApi.getResourceByPathFromResource(DataModel.simpleName, dataModel.id, dataElement.localPath.pathString) as DataElement
         then:
         dataElementResponse
         dataElementResponse.id == dataElement.id
 
         when:
         EnumerationValue enumerationValueResponse =
-            pathApi.getResourceByPathFromResource(DataModel.class.simpleName, dataModel.id, noValue.localPath.pathString) as EnumerationValue
+            pathApi.getResourceByPathFromResource(DataModel.simpleName, dataModel.id, noValue.localPath.pathString) as EnumerationValue
         then:
         enumerationValueResponse
         enumerationValueResponse.id == noValue.id
@@ -143,12 +142,12 @@ class PathControllerIntegrationSpec extends CommonDataSpec {
             branchName: 'newBranchName'
         })
 
-        ListResponse<DataClass> response = dataClassApi.list(newBranchModelVersion.id)
+        dataClassApi.list(newBranchModelVersion.id)
         DataModel retrieved  = dataModelApi.show(newBranchModelVersion.id)
         when:
 
         DataModel resourceByPath =
-            pathApi.getResourceByPathFromResource(DataModel.class.simpleName, newBranchModelVersion.id, retrieved.localPath.pathString) as DataModel
+            pathApi.getResourceByPathFromResource(DataModel.simpleName, newBranchModelVersion.id, retrieved.localPath.pathString) as DataModel
         then:
         resourceByPath
         resourceByPath.id == newBranchModelVersion.id
@@ -158,7 +157,7 @@ class PathControllerIntegrationSpec extends CommonDataSpec {
     //todo: fixme the version info is not part of the  pathsstring for modelitems so unable to match exact version
     void 'test getResource by Path from Resource -should find resource 2'() {
         DataModel dataModel = dataModelApi.create(folderId, dataModelPayload('datamodel label '))
-        DataClass dataClass = dataClassApi.create(dataModel.id, dataClassPayload('label for dataclass'))
+        dataClassApi.create(dataModel.id, dataClassPayload('label for dataclass'))
 
         DataModel finalised = dataModelApi.finalise(dataModel.id,
                                                     new FinaliseData(versionChangeType: VersionChangeType.MAJOR, versionTag: 'random version tag'))
@@ -175,7 +174,7 @@ class PathControllerIntegrationSpec extends CommonDataSpec {
         String newModelVersionDataClassPathString = fullRetrievedDataClass.localPath.pathString
         when:
         DataClass resourceByPath =
-            pathApi.getResourceByPathFromResource(DataClass.class.simpleName, fullRetrievedDataClass.id, newModelVersionDataClassPathString) as DataClass
+            pathApi.getResourceByPathFromResource(DataClass.simpleName, fullRetrievedDataClass.id, newModelVersionDataClassPathString) as DataClass
         then:
         resourceByPath
         resourceByPath.label == fullRetrievedDataClass.label
@@ -190,7 +189,7 @@ class PathControllerIntegrationSpec extends CommonDataSpec {
         DataElement dataElement = dataElementApi.create(dataModel.id, dataClass.id, dataElementPayload('label for datatype', dataType))
 
         when:
-        pathApi.getResourceByPathFromResource( DataModel.class.simpleName, otherModel.id, dataElement.getPath().pathString) as DataElement
+        pathApi.getResourceByPathFromResource( DataModel.simpleName, otherModel.id, dataElement.getPath().pathString) as DataElement
 
         then:
         HttpStatusException exception = thrown()
@@ -206,7 +205,7 @@ class PathControllerIntegrationSpec extends CommonDataSpec {
         String fullPath = dataElement.getPath().pathString
 
         when:
-        pathApi.getResourceByPathFromResource( DataModel.class.simpleName, otherModel.id, fullPath + 'something' ) as DataElement
+        pathApi.getResourceByPathFromResource( DataModel.simpleName, otherModel.id, fullPath + 'something' ) as DataElement
 
         then:
         HttpStatusException exception = thrown()

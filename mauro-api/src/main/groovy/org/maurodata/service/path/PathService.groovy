@@ -8,7 +8,6 @@ import jakarta.inject.Singleton
 import org.maurodata.ErrorHandler
 import org.maurodata.controller.model.AdministeredItemReader
 import org.maurodata.controller.model.AvailableActions
-import org.maurodata.domain.datamodel.DataElement
 import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.domain.model.Item
 import org.maurodata.domain.model.Model
@@ -17,7 +16,6 @@ import org.maurodata.domain.security.Role
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository
 import org.maurodata.persistence.model.PathRepository
 import org.maurodata.security.AccessControlService
-import org.maurodata.domain.model.Path
 
 
 @CompileStatic
@@ -122,7 +120,7 @@ class PathService implements AdministeredItemReader {
             item = items[0] as AdministeredItem
         } else {
             if (!versionString) {
-                log.warn("No version found in path: ${path.toString()}; returning 1st item")
+                log.warn("No version found in path: ${path}; returning 1st item")
                 return items.first()
             }
             item = (items as List<AdministeredItem>).find {
@@ -144,7 +142,7 @@ class PathService implements AdministeredItemReader {
         String domainType = getDomainTypeFromPathPrefix(firstPathNode.prefix)
         AdministeredItemCacheableRepository repository = getAdministeredItemRepository(domainType)
         List<AdministeredItem> items = repository.findAllByLabel(firstPathNode.identifier) as List<AdministeredItem>
-        AdministeredItem nextItemInPath = null
+        AdministeredItem nextItemInPath
         if(firstPathNode.modelIdentifier) {
             // We've got a new root node - find it and then start from there
             nextItemInPath = items.find {it ->
@@ -157,7 +155,7 @@ class PathService implements AdministeredItemReader {
             nextItemInPath = items.find {it.parent && it.parent.id == parent.id }
         }
         if(!nextItemInPath) {
-            ErrorHandler.handleError(HttpStatus.NOT_FOUND, "Unknown path component: ${firstPathNode.toString()}")
+            ErrorHandler.handleError(HttpStatus.NOT_FOUND, "Unknown path component: ${firstPathNode}")
         }
         return findItemByPath(nextItemInPath, pathNodes)
     }

@@ -61,7 +61,7 @@ class DataModelRepositorySpec extends Specification {
         }
     }
 
-    def TestDataModel() {
+    void TestDataModel() {
         when:
         DataModel dataModel = DataModel.build {
             label "My first data model"
@@ -76,7 +76,7 @@ class DataModelRepositorySpec extends Specification {
     }
 
 
-    def TestDataModel() {
+    void TestDataModel() {
         when:
             DataModel dataModel = DataModel.build {
                 label "My first data model"
@@ -90,7 +90,7 @@ class DataModelRepositorySpec extends Specification {
             dataModelCacheableRepository.readAll().size() == 1
     }
 
-    def testImportAndExportFromCacheableRepo() {
+    void testImportAndExportFromCacheableRepo() {
         when:
             DataModel importedModel = contentsService.saveWithContent(testDataModel(myFirstFolder))
             importedModel = dataModelCacheableRepository.readById(importedModel.id)
@@ -117,7 +117,8 @@ class DataModelRepositorySpec extends Specification {
             enumerationValueRepository.readAllByParent(allDataTypes.get(0)).size() == 2
 
     }
-    def testImportAndFindWithContent() {
+
+    void testImportAndFindWithContent() {
         when:
             DataModel importedModel = contentsService.saveWithContent(testDataModel(myFirstFolder))
 
@@ -146,7 +147,7 @@ class DataModelRepositorySpec extends Specification {
 
     }
 
-    def "Test Retrieving Data Models by Namespace"() {
+    void "Test Retrieving Data Models by Namespace"() {
 
         when:
         contentsService.saveWithContent(DataModel.build {

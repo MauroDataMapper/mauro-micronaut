@@ -8,7 +8,7 @@ import org.maurodata.profile.ProfileFieldDataType
 class ProfileFieldDataTypeSpec extends  Specification{
 
 
-    def "Test validation of profile field values"() {
+    void "Test validation of profile field values"() {
 
         expect:
         ProfileFieldDataType.fromString(dataType).validateStringAgainstType(value) == result

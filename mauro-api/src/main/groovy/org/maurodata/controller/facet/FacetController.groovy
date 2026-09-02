@@ -6,11 +6,10 @@ import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
-import io.micronaut.http.annotation.*
+import io.micronaut.http.annotation.Body
 import io.micronaut.http.exceptions.HttpStatusException
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
-import io.micronaut.transaction.annotation.Transactional
 import org.maurodata.controller.model.ItemController
 import org.maurodata.domain.facet.Facet
 import org.maurodata.domain.model.AdministeredItem
@@ -76,7 +75,9 @@ abstract class FacetController<I extends Facet> extends ItemController<I> implem
     HttpResponse delete(UUID id) {
         I facetToDelete = facetRepository.readById(id)
         accessControlService.checkRole(Role.EDITOR, readAdministeredItemForFacet(facetToDelete))
-        if (facetToDelete?.version) facetToDelete.version = facetToDelete.version
+        if (facetToDelete?.version) {
+            facetToDelete.version = facetToDelete.version
+        }
         Long deleted = facetRepository.delete(facetToDelete)
         if (deleted) {
             HttpResponse.status(HttpStatus.NO_CONTENT)
@@ -86,7 +87,9 @@ abstract class FacetController<I extends Facet> extends ItemController<I> implem
     }
 
     protected AdministeredItem readAdministeredItemForFacet(I facet) {
-        if (facet) readAdministeredItem(facet.multiFacetAwareItemDomainType, facet.multiFacetAwareItemId)
+        if (facet) {
+            readAdministeredItem(facet.multiFacetAwareItemDomainType, facet.multiFacetAwareItemId)
+        }
     }
 
     protected I validateAndGet(String domainType, UUID domainId, UUID id) {

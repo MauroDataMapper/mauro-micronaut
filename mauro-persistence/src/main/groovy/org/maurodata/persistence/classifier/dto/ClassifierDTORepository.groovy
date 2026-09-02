@@ -31,7 +31,7 @@ abstract class ClassifierDTORepository implements GenericRepository<ClassifierDT
 
 
     @Query(''' insert into core.join_administered_item_to_classifier (catalogue_item_id, catalogue_item_domain_type,classifier_id) values (:catalogueItemId, :catalogueItemDomainType, :classifierId) ''')
-    abstract UUID addAdministeredItem(@NonNull UUID catalogueItemId, @NonNull catalogueItemDomainType, @NonNull UUID classifierId)
+    abstract UUID addAdministeredItem(@NonNull UUID catalogueItemId, @NonNull String catalogueItemDomainType, @NonNull UUID classifierId)
 
     @Nullable
     @Query(''' select * from core.classifier c 

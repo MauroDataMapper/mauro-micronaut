@@ -10,7 +10,7 @@ class SubscribedCatalogueTypeTest extends Specification{
     void 'subscribedCatalogueType -with label can be constructed'(){
         when:
         ObjectMapper mapper = new ObjectMapper()
-        SubscribedCatalogueType type1 = mapper.readValue("\"Mauro JSON\"", SubscribedCatalogueType.class)
+        SubscribedCatalogueType type1 = mapper.readValue("\"Mauro JSON\"", SubscribedCatalogueType)
         then:
         type1
         type1.label == 'Mauro JSON'

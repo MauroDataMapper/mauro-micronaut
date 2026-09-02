@@ -3,6 +3,68 @@
   "rules": {
     "LineLength": {
       "length": 200
-    }
+    },
+    "SpaceAfterOpeningBrace": "off",
+    "SpaceBeforeOpeningBrace": "off",
+    "SpaceBeforeClosingBrace": "off",
+    "SpaceAfterClosingBrace": "off",
+    "Indentation": "off",
+    "TrailingWhitespace": "off",
+    "ClassStartsWithBlankLine": "off",
+    "ClassEndsWithBlankLine": "off",
+    "SpaceAfterIf": "off",
+    "BlockEndsWithBlankLine": "off",
+    "BlockStartsWithBlankLine": "off",
+    "MissingBlankLineBeforeAnnotatedField": "off",
+    "SpaceAfterComma": "off",
+    "ConsecutiveBlankLines": "off",
+    "SpaceAroundOperator": "off",
+    "SpaceInsideParentheses": "off",
+    "SpaceAfterMethodCallName": "off",
+
+    "CompileStatic": "off",
+
+    "PublicMethodsBeforeNonPublicMethods": "off",
+    "StaticMethodsBeforeInstanceMethods": "off",
+    "StaticFieldsBeforeInstanceFields": "off",
+
+    "NestedBlockDepth": "off",
+    "ParameterCount": "off",
+    "UnnecessaryGString": "off",
+    "DuplicateStringLiteral": "off",
+    "DuplicateMapLiteral": "off",
+    "DuplicateNumberLiteral": "off",
+    "UnnecessaryToString": "off",
+
+    "UnnecessaryGetter": "off",
+    "UnnecessarySetter": "off",
+    "UnnecessaryReturnKeyword": "off",
+    "UnnecessaryObjectReferences": "off",
+
+    "ConfusingMethodName": "off",
+
+    "GetterMethodCouldBeProperty": "off",
+
+    "ClassJavadoc": "off",
+    "MethodJavadoc": "off",
+    "FieldJavadoc": "off",
+    "PackageJavadoc": "off",
+    "JavadocEmptyReturnTag": "off",
+
+    "ImplicitReturnStatement": "off",
+    "ImplicitClosureParameter": "off",
+
+    "UnusedMethodParameter": "off",
+    "FactoryMethodName": "off",
+    "MethodName": "off",
+    "UnnecessaryElseStatement": "off",
+    "UnnecessaryOverridingMethod": "off",
+    "ParameterReassignment": "off",
+    "Instanceof": "off",
+
+
+    "JUnitPublicProperty": "off",
+    "JUnitPublicNonTestMethod": "off",
+    "JUnitTestMethodWithoutAssert": "off"
   }
 }

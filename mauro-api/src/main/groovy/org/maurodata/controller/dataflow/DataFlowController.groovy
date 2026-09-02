@@ -1,5 +1,6 @@
 package org.maurodata.controller.dataflow
 
+import io.micronaut.http.client.multipart.MultipartBody
 import io.swagger.v3.oas.annotations.Operation
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
@@ -169,7 +170,7 @@ class DataFlowController extends AdministeredItemController<DataFlow, DataModel>
         }
 
         List<ModelItem> modelItems = dataFlowService.importModelItem(JsonDataFlowImporterPlugin, target, request, importFile, namespace, name, version).findAll {
-            it.domainType == DataFlow.class.simpleName && (it as DataFlow).target?.id == dataModelId
+            it.domainType == DataFlow.simpleName && (it as DataFlow).target?.id == dataModelId
         }
 
         List<DataFlow> saved = modelItems.each {imp ->
@@ -186,7 +187,7 @@ class DataFlowController extends AdministeredItemController<DataFlow, DataModel>
 
     }
     @Override
-    ListResponse<DataFlow> importModel(@NonNull UUID dataModelId, @Body io.micronaut.http.client.multipart.MultipartBody body, @Nullable String namespace,
+    ListResponse<DataFlow> importModel(@NonNull UUID dataModelId, @Body MultipartBody body, @Nullable String namespace,
                                        @Nullable String name, @Nullable String version) {
         throw new Exception("Client version of import model has been called.. hint client MultipartBody ")
     }

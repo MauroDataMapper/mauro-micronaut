@@ -14,7 +14,12 @@ import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
-import io.micronaut.http.annotation.*
+import io.micronaut.http.annotation.Body
+import io.micronaut.http.annotation.Controller
+import io.micronaut.http.annotation.Delete
+import io.micronaut.http.annotation.Get
+import io.micronaut.http.annotation.Post
+import io.micronaut.http.annotation.Put
 import io.micronaut.http.exceptions.HttpStatusException
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
@@ -163,7 +168,9 @@ class ClassifierController extends AdministeredItemController<Classifier, Classi
         AdministeredItem administeredItem = readAdministeredItem(administeredItemDomainType, administeredItemId)
         accessControlService.checkRole(Role.EDITOR, administeredItem)
         Classifier classifier = administeredItemRepository.findById(id)
-        if (!classifier) return null
+        if (!classifier) {
+            return null
+        }
         accessControlService.checkRole(Role.READER, classifier)
         classifierCacheableRepository.addAdministeredItem(administeredItem, classifier)
         classifier
@@ -176,7 +183,7 @@ class ClassifierController extends AdministeredItemController<Classifier, Classi
     @Operation(summary = "Get a classifier", description = "Returns a classifier. You must have read privileges on the item in question.")
     @Get(Paths.ADMINISTERED_ITEM_CLASSIFIER_ID_ROUTE)
     Classifier getAdministeredItemClassifier(@NonNull String administeredItemDomainType, @NonNull UUID administeredItemId, @NonNull UUID id) {
-        accessControlService.checkRole(Role.READER, readAdministeredItem(Classifier.class.simpleName, id))
+        accessControlService.checkRole(Role.READER, readAdministeredItem(Classifier.simpleName, id))
         AdministeredItem administeredItem = readAdministeredItem(administeredItemDomainType, administeredItemId)
         accessControlService.checkRole(Role.READER, administeredItem)
         Classifier classifier = classifierCacheableRepository.findByAdministeredItemAndClassifier(administeredItem.domainType, administeredItemId, id)

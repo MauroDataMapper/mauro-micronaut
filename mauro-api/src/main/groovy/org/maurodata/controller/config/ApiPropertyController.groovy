@@ -15,7 +15,12 @@ import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
-import io.micronaut.http.annotation.*
+import io.micronaut.http.annotation.Body
+import io.micronaut.http.annotation.Controller
+import io.micronaut.http.annotation.Delete
+import io.micronaut.http.annotation.Get
+import io.micronaut.http.annotation.Post
+import io.micronaut.http.annotation.Put
 import io.micronaut.http.exceptions.HttpStatusException
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
@@ -109,7 +114,9 @@ class ApiPropertyController extends ItemController<ApiProperty> implements ApiPr
 
         ApiProperty apiPropertyToDelete = apiPropertyRepository.readById(id)
 
-        if (apiProperty?.version) apiPropertyToDelete.version = apiProperty.version
+        if (apiProperty?.version) {
+            apiPropertyToDelete.version = apiProperty.version
+        }
         Long deleted = apiPropertyRepository.delete(apiPropertyToDelete)
         if (deleted) {
             HttpResponse.status(HttpStatus.NO_CONTENT)

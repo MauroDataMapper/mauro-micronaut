@@ -7,7 +7,11 @@ import jakarta.inject.Singleton
 import spock.lang.Shared
 import org.maurodata.domain.diff.DiffBuilder
 import org.maurodata.domain.facet.Annotation
-import org.maurodata.domain.terminology.*
+import org.maurodata.domain.terminology.CodeSet
+import org.maurodata.domain.terminology.Term
+import org.maurodata.domain.terminology.TermRelationship
+import org.maurodata.domain.terminology.TermRelationshipType
+import org.maurodata.domain.terminology.Terminology
 import org.maurodata.persistence.ContainerizedTest
 import org.maurodata.testing.CommonDataSpec
 import org.maurodata.web.ListResponse

@@ -36,7 +36,7 @@ class AuditInterceptor implements MethodInterceptor<Object, Object>{
     @Value('${mauro.audit.scope}')
     protected AuditScope auditScope = AuditScope.NONE
 
-    Logger auditLogger = LoggerFactory.getLogger("audit")
+    private static final Logger auditLogger = LoggerFactory.getLogger("audit")
 
     @Inject
     EditRepository editRepository

@@ -1,12 +1,10 @@
 package org.maurodata.persistence.facet
 
 import groovy.transform.CompileStatic
-import io.micronaut.core.annotation.Introspected
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.model.query.builder.sql.Dialect
 import org.maurodata.domain.facet.Metadata
-import org.maurodata.persistence.model.ItemRepository
 
 @CompileStatic
 @JdbcRepository(dialect = Dialect.POSTGRES)

@@ -312,7 +312,7 @@ class AnnotationIntegrationSpec extends CommonDataSpec {
         given:
         Annotation parent = annotationApi.create("folder", folderId, annotationPayload())
         and:
-        Annotation child = annotationApi.create("folder", folderId, parent.id, annotationPayload('child label', 'child description'))
+        annotationApi.create("folder", folderId, parent.id, annotationPayload('child label', 'child description'))
         when:
         annotationApi.delete("folder", folderId, parent.id, parent.id)
 

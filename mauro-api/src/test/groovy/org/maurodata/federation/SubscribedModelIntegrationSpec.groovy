@@ -20,10 +20,10 @@ import spock.lang.Unroll
 @Sql(scripts = ["classpath:sql/tear-down-datamodel.sql", "classpath:sql/tear-down-subscribed-catalogue.sql",], phase = Sql.Phase.AFTER_EACH)
 class SubscribedModelIntegrationSpec extends SecuredIntegrationSpec {
 
-    static String EXPORTER_URL = "http://maurosandbox.com/sandbox/api/dataModels/0b97751d-b6bf-476c-a9e6-95d3352e8008/export/uk.ac.ox.softeng.maurodatamapper.datamodel." +
+    private static final  String EXPORTER_URL = "http://maurosandbox.com/sandbox/api/dataModels/0b97751d-b6bf-476c-a9e6-95d3352e8008/export/uk.ac.ox.softeng.maurodatamapper.datamodel." +
                                  "provider." +
                                  "exporter/DataModelJsonExporterService/3.2"
-    static String MAURO_DATA_MODEL_CONTENT_TYPE = 'application/mauro.datamodel+json'
+    private static final String MAURO_DATA_MODEL_CONTENT_TYPE = 'application/mauro.datamodel+json'
 
     @Inject
     EmbeddedApplication<?> application
@@ -230,7 +230,7 @@ class SubscribedModelIntegrationSpec extends SecuredIntegrationSpec {
 
         SubscribedCatalogue created = subscribedCatalogueApi.create(mauroJsonSubscribedCataloguePayload('label1'))
         UUID folderId = folderApi.create(folder()).id
-        SubscribedModel subscribedModel = subscribedModelApi.create(created.id, subscribedModelPayload(folderId))
+        subscribedModelApi.create(created.id, subscribedModelPayload(folderId))
 
         when:
         HttpResponse httpResponse = subscribedCatalogueApi.delete(created.id, new SubscribedCatalogue())

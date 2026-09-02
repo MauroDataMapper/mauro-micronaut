@@ -12,8 +12,8 @@ import groovy.transform.CompileStatic
         include = JsonTypeInfo.As.PROPERTY,
         property = "type")
 @JsonSubTypes([
-    @JsonSubTypes.Type(value = FieldDiff.class, name = "fieldDiff"),
-    @JsonSubTypes.Type(value = ArrayDiff.class, name = "arrayDiff")])
+    @JsonSubTypes.Type(value = FieldDiff, name = "fieldDiff"),
+    @JsonSubTypes.Type(value = ArrayDiff, name = "arrayDiff")])
 class FieldDiff<F> {
 
     String name

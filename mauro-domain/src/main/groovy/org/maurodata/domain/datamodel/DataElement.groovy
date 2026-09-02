@@ -1,7 +1,5 @@
 package org.maurodata.domain.datamodel
 
-import org.maurodata.domain.diff.BaseCollectionDiff
-import org.maurodata.domain.diff.CollectionDiff
 import org.maurodata.domain.diff.DiffBuilder
 import org.maurodata.domain.diff.DiffableItem
 import org.maurodata.domain.diff.ObjectDiff

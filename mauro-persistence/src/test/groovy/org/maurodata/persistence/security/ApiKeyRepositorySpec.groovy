@@ -9,7 +9,6 @@ import jakarta.inject.Inject
 import spock.lang.Shared
 import spock.lang.Specification
 
-import java.time.Instant
 
 @ContainerizedTest
 class ApiKeyRepositorySpec extends Specification {
@@ -26,7 +25,7 @@ class ApiKeyRepositorySpec extends Specification {
     @Shared
     CatalogueUser savedUser
 
-    def setup() {
+    void setup() {
         CatalogueUser adminUser = new CatalogueUser(
             emailAddress: 'admin@example.com',
             firstName: 'Admin',
@@ -46,7 +45,7 @@ class ApiKeyRepositorySpec extends Specification {
 
     }
 
-    def "Test store and retrieve api key (cacheable)"() {
+    void "Test store and retrieve api key (cacheable)"() {
 
         when:
         ApiKey apiKey = ApiKey.build {
@@ -81,7 +80,7 @@ class ApiKeyRepositorySpec extends Specification {
         !apiKeyRepository.findById(savedApiKey.id)
     }
 
-    def "Test store and retrieve api key"() {
+    void "Test store and retrieve api key"() {
 
         when:
         ApiKey apiKey = ApiKey.build {

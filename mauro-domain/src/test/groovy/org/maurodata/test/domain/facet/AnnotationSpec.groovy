@@ -19,7 +19,7 @@ class AnnotationSpec extends Specification {
     @Shared
     AnnotationService annotationService
 
-    def setupSpec(){
+    void setupSpec(){
         annotationService = new AnnotationService()
     }
 
@@ -40,7 +40,7 @@ class AnnotationSpec extends Specification {
 
         where:
         iteration << [
-                Annotation.class.simpleName,
+                Annotation.simpleName,
                 "annotations"
         ]
     }

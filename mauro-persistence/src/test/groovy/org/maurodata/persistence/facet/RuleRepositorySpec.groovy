@@ -73,14 +73,14 @@ class RuleRepositorySpec extends Specification {
         dataModelId = contentsService.saveWithContent(dataModel).id
     }
 
-    def TestRuleAndRepresentations() {
+    void TestRuleAndRepresentations() {
         when:
         DataModel retrievedDataModel = dataModelRepository.loadWithContent(dataModelId)
 
         then:
         retrievedDataModel.rules.size() == 1
 
-        List<RuleRepresentation> ruleRepresentations = ruleRepresentationRepository.findAllByRuleId(retrievedDataModel.rules.first().id)
+        ruleRepresentationRepository.findAllByRuleId(retrievedDataModel.rules.first().id)
 
         retrievedDataModel.rules.first().ruleRepresentations.size() == 2
 
@@ -89,17 +89,17 @@ class RuleRepositorySpec extends Specification {
         retrievedDataModel.rules.first().ruleRepresentations.find { it.language == "Java"}
     }
 
-    def TestCacheInvalidation() {
+    void TestCacheInvalidation() {
         when:
         DataModel retrievedDataModel = dataModelRepository.loadWithContent(dataModelId)
 
         then:
         retrievedDataModel.rules.size() == 1
 
-        List<RuleRepresentation> ruleRepresentations = ruleRepresentationRepository.findAllByRuleId(retrievedDataModel.rules.first().id)
+        ruleRepresentationRepository.findAllByRuleId(retrievedDataModel.rules.first().id)
 
         retrievedDataModel.rules.first().ruleRepresentations.size() == 2
-        UUID ruleId = retrievedDataModel.rules.first().id
+        retrievedDataModel.rules.first().id
 
         when:
         ruleRepresentationRepository.delete(retrievedDataModel.rules.first().ruleRepresentations.first())

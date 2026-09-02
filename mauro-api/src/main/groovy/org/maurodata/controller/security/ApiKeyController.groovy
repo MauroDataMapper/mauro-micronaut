@@ -7,7 +7,6 @@ import org.maurodata.api.security.ApiKeyApi
 import org.maurodata.audit.Audit
 import org.maurodata.controller.model.ItemController
 import org.maurodata.domain.security.ApiKey
-import org.maurodata.domain.security.Role
 import org.maurodata.persistence.cache.ItemCacheableRepository
 import org.maurodata.web.ListResponse
 

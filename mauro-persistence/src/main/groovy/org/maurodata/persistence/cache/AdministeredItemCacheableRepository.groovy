@@ -458,12 +458,14 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
         Long deleteJoinAdministeredItemToClassifier(AdministeredItem administeredItem, UUID classifierId) {
             Long deleted = ((ClassifierRepository) repository).deleteJoinAdministeredItemToClassifier(administeredItem, classifierId)
 
-            if (administeredItem?.id)
+            if (administeredItem?.id) {
                 invalidateCachedLookupById(FIND_BY_ID, administeredItem.domainType, administeredItem.id)
+            }
 
-            if (administeredItem?.parent?.id)
+            if (administeredItem?.parent?.id) {
                 invalidateCachedLookupById(FIND_ALL_BY_PARENT, administeredItem.parent.domainType,
                         administeredItem.parent.id)
+            }
             deleted
         }
 

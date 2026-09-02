@@ -61,7 +61,7 @@ class DataElementCopyIntegrationSpec extends CommonDataSpec {
 
         referenceTypeDataType = dataTypeApi.create(dataModelId, referenceTypeDataTypePayload(dataClass1.id, 'datatype reference class label'))
         primitiveDataType = dataTypeApi.create(dataModelId, dataTypesPayload())
-        modelTypeDataType = dataTypeApi.create(dataModelId, modelTypeDataTypePayload(terminology.id, Terminology.class.simpleName))
+        modelTypeDataType = dataTypeApi.create(dataModelId, modelTypeDataTypePayload(terminology.id, Terminology.simpleName))
         dataElement1 = dataElementApi.create(dataModelId, dataClass2.id, dataElementPayload('data element label', referenceTypeDataType))
         dataElement2 = dataElementApi.create(dataModelId, dataClass2.id, dataElementPayload('data element label', modelTypeDataType))
     }

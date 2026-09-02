@@ -15,7 +15,7 @@ buildscript {
     }
 }
 
-def generateTaskClass = plugins.findPlugin("org.openapi.generator")
+Class generateTaskClass = plugins.findPlugin("org.openapi.generator")
     ?.class
     ?.classLoader
     ?.loadClass("org.openapitools.generator.gradle.plugin.tasks.GenerateTask")
@@ -50,7 +50,7 @@ tasks.register('generateRawTypeScriptClient', generateTaskClass) {
     })
 
     doFirst {
-        def selectedSpec = resolveSingleOpenApiSpec()   // strict
+        File selectedSpec = resolveSingleOpenApiSpec()   // strict
         logger.lifecycle("Generating TypeScript client from ${selectedSpec}")
     }
 }
@@ -60,12 +60,12 @@ tasks.register('generateTypeScriptClient') {
 
     doLast {
 
-        def selectedSpec = resolveSingleOpenApiSpec()
+        File selectedSpec = resolveSingleOpenApiSpec()
 
-        def slurper = new YamlSlurper()
-        def root = slurper.parse(selectedSpec)
+        YamlSlurper slurper = new YamlSlurper()
+        Object root = slurper.parse(selectedSpec)
 
-        def familyOf = { String name ->
+        Closure familyOf = { String name ->
             def m = (name =~ /^(.*)_([A-Za-z0-9]+)_$/)
             return m ? m[0][1] : null
         }
@@ -73,7 +73,7 @@ tasks.register('generateTypeScriptClient') {
         Map<String, List<String>> families = [:].withDefault { [] }
 
         root.components.schemas.keySet().each { schemaName ->
-            def family = familyOf(schemaName)
+            Object family = familyOf(schemaName)
             if (family) {
                 families[family] << schemaName
             }
@@ -84,24 +84,24 @@ tasks.register('generateTypeScriptClient') {
         families.each { family, variants ->
 
             variants.each { v ->
-                def inner = v.replace("${family}_", "").replace("_", "")
+                String inner = v.replace("${family}_", "").replace("_", "")
                 typeParameterOf[v] = inner
             }
         }
 
-        def outDir = layout.buildDirectory.dir("generated/typescript-client").get().asFile
+        File outDir = layout.buildDirectory.dir("generated/typescript-client").get().asFile
 
-        def tsFiles = fileTree(outDir).matching {
+        Set<File> tsFiles = fileTree(outDir).matching {
             include "**/*.ts"
         }.files
 
         logger.lifecycle("Post-processing generics in ${tsFiles.size()} TS files")
 
         // index all interfaces
-        def interfaces = [:]  // name -> file content
+        Map<String, File> interfaces = [:]  // name -> file content
 
         tsFiles.each { f ->
-            def text = f.text
+            String text = f.text
 
             text.findAll(/export interface ([A-Za-z0-9_]+)/) { _, name ->
                 interfaces[name] = f
@@ -111,13 +111,15 @@ tasks.register('generateTypeScriptClient') {
         // rewrite files
         families.each { family, variants ->
 
-            if (variants.size() < 2) return
+            if (variants.size() < 2) {
+                return
+            }
 
             logger.lifecycle("Collapsing generic family: ${family}")
 
-            def representativeInnerType = typeParameterOf[variants[0]]
+            String representativeInnerType = typeParameterOf[variants[0]]
             // pick representative
-            def representativeFile = interfaces[representativeInnerType]
+            File representativeFile = interfaces[representativeInnerType]
             if(!representativeFile) {
                 logger.warn("No representative file found for family ${family} ${variants[0]}, skipping")
                 return
@@ -128,15 +130,15 @@ tasks.register('generateTypeScriptClient') {
             // replace all variant interfaces with type aliases
             variants.each { v ->
 
-                def innerType = typeParameterOf[v]
-                def tsName = "${family}${innerType}".toString()
-                def tsGenerics = "${family}<${innerType}>".toString()
-                def tsFamily = family
+                String innerType = typeParameterOf[v]
+                String tsName = "${family}${innerType}".toString()
+                String tsGenerics = "${family}<${innerType}>".toString()
+                String tsFamily = family
 
-                def exportInterface = "(?ms)export interface ${tsName}\\s*\\{.*?^\\s*\\}\\s*".toString()
-                def exportTypeAlias = "export type ${tsName} = ${tsGenerics};".toString()
-                def importLine = "import { ${tsFamily} } from './${tsFamily}';".toString()
-                def replacementExportLine = "${importLine}\n${exportTypeAlias}\n\n".toString()
+                String exportInterface = "(?ms)export interface ${tsName}\\s*\\{.*?^\\s*\\}\\s*".toString()
+                String exportTypeAlias = "export type ${tsName} = ${tsGenerics};".toString()
+                String importLine = "import { ${tsFamily} } from './${tsFamily}';".toString()
+                String replacementExportLine = "${importLine}\n${exportTypeAlias}\n\n".toString()
 
                 tsFiles.each {file ->
 

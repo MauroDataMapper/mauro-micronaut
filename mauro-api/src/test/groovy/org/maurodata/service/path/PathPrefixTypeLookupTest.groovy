@@ -30,7 +30,7 @@ class PathPrefixTypeLookupTest extends Specification {
     List<AdministeredItemCacheableRepository> administeredItemCacheableRepositories
 
     @Unroll
-    def 'PathPrefixTypeLookup -should get #expectedDomainType for #pathPrefix'() {
+    void 'PathPrefixTypeLookup -should get #expectedDomainType for #pathPrefix'() {
         PathPrefixTypeLookup pathPrefixTypeLookup = new PathPrefixTypeLookup(administeredItemCacheableRepositories)
 
         when:
@@ -41,29 +41,29 @@ class PathPrefixTypeLookupTest extends Specification {
 
         where:
         pathPrefix | expectedDomainType
-        'fo'       | Folder.class.simpleName
-        'vf'       | Folder.class.simpleName
-        'te'       | Terminology.class.simpleName
-        'tm'       | Term.class.simpleName
-        'trt'      | TermRelationshipType.class.simpleName
-        'tr'       | TermRelationship.class.simpleName
-        'cs'       | CodeSet.class.simpleName
-        'df'       | DataFlow.class.simpleName
-        'dcc'      | DataClassComponent.class.simpleName
-        'dec'      | DataElementComponent.class.simpleName
-        'dm'       | DataModel.class.simpleName
-        'dc'       | DataClass.class.simpleName
-        'dt'       | DataType.class.simpleName
-        'de'       | DataElement.class.simpleName
-        'ev'       | EnumerationValue.class.simpleName
-        'csc'      | ClassificationScheme.class.simpleName
-        'cl'       | Classifier.class.simpleName
-        'FO'       | Folder.class.simpleName
-        'vF'       | Folder.class.simpleName
-        'DM'       | DataModel.class.simpleName
-        'dC'       | DataClass.class.simpleName
-        'DCC'      | DataClassComponent.class.simpleName
-        'CSC'      | ClassificationScheme.class.simpleName
+        'fo'       | Folder.simpleName
+        'vf'       | Folder.simpleName
+        'te'       | Terminology.simpleName
+        'tm'       | Term.simpleName
+        'trt'      | TermRelationshipType.simpleName
+        'tr'       | TermRelationship.simpleName
+        'cs'       | CodeSet.simpleName
+        'df'       | DataFlow.simpleName
+        'dcc'      | DataClassComponent.simpleName
+        'dec'      | DataElementComponent.simpleName
+        'dm'       | DataModel.simpleName
+        'dc'       | DataClass.simpleName
+        'dt'       | DataType.simpleName
+        'de'       | DataElement.simpleName
+        'ev'       | EnumerationValue.simpleName
+        'csc'      | ClassificationScheme.simpleName
+        'cl'       | Classifier.simpleName
+        'FO'       | Folder.simpleName
+        'vF'       | Folder.simpleName
+        'DM'       | DataModel.simpleName
+        'dC'       | DataClass.simpleName
+        'DCC'      | DataClassComponent.simpleName
+        'CSC'      | ClassificationScheme.simpleName
     }
 }
 

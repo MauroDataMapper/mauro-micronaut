@@ -151,7 +151,7 @@ class DataModelJsonImportExportSpec extends CommonDataSpec {
 
         then:
         copyDataElements
-        def copyDataElementId = copyDataElements.items.first().id
+        UUID copyDataElementId = copyDataElements.items.first().id
         copyDataElementId != dataElementId
 
 
@@ -161,7 +161,7 @@ class DataModelJsonImportExportSpec extends CommonDataSpec {
         then:
         copiedSummaryMetadata
         copiedSummaryMetadata.items.size() == 1
-        def copiedSummaryMetadataId = copiedSummaryMetadata.items.first().id
+        UUID copiedSummaryMetadataId = copiedSummaryMetadata.items.first().id
         copiedSummaryMetadataId != summaryMetadataId
 
         when:

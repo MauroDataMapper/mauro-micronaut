@@ -22,9 +22,9 @@ import spock.lang.Shared
 @Singleton
 @Sql(scripts = "classpath:sql/tear-down-datamodel.sql", phase = Sql.Phase.AFTER_EACH)
 class DataModelSchemaDiffsIntegrationSpec extends CommonDataSpec {
-    static String NAME = 'name'
+    private static final String NAME = 'name'
     // static String CREATED = 'created'
-    static String DELETED = 'deleted'
+    private static final String DELETED = 'deleted'
 
     @Shared
     UUID folderId
@@ -80,7 +80,7 @@ class DataModelSchemaDiffsIntegrationSpec extends CommonDataSpec {
     void 'diff dataModels with same modified data class - should show diff with nested child data class '() {
         given:
         //modified comparison key = label
-        DataClass leftDataClass = dataClassApi.create(left.id, dataClassPayload())
+        dataClassApi.create(left.id, dataClassPayload())
 
         DataClass rightDataClass = dataClassApi.create(right.id, new DataClass(
             label: 'Test data class',
@@ -117,7 +117,7 @@ class DataModelSchemaDiffsIntegrationSpec extends CommonDataSpec {
     void 'diff dataModels with same modified data class 2 - should show diff with nested child data class '() {
         given:
         //modified comparison key = label
-        DataClass leftDataClass = dataClassApi.create(left.id, dataClassPayload())
+        dataClassApi.create(left.id, dataClassPayload())
 
         DataClass rightDataClass = dataClassApi.create(left2.id, new DataClass(
                 label: 'Test data class',
@@ -155,7 +155,7 @@ class DataModelSchemaDiffsIntegrationSpec extends CommonDataSpec {
     void 'diff dataModels with same modified data class with left and right sides reversed - count should be same as previous test '() {
         given:
         //modified comparison key = label
-        DataClass rightDataClass = dataClassApi.create(left2.id, dataClassPayload())
+        dataClassApi.create(left2.id, dataClassPayload())
 
         DataClass leftDataClass = dataClassApi.create(left.id, new DataClass(
             label: 'Test data class',
@@ -238,8 +238,8 @@ class DataModelSchemaDiffsIntegrationSpec extends CommonDataSpec {
         //modified comparison key = label
         DataClass leftDataClass =
             dataClassApi.create(left.id, dataClassPayload())
-        DataClass rightDataClass =
-            dataClassApi.create(right.id, dataClassPayload())
+
+        dataClassApi.create(right.id, dataClassPayload())
 
         DataType leftDataTypeResponse =
             dataTypeApi.create(left.id, dataTypesPayload())
@@ -277,8 +277,7 @@ class DataModelSchemaDiffsIntegrationSpec extends CommonDataSpec {
         //modified comparison key = label
         DataClass leftDataClass =
             dataClassApi.create(left.id, dataClassPayload())
-        DataClass rightDataClass =
-            dataClassApi.create(left2.id, dataClassPayload())
+        dataClassApi.create(left2.id, dataClassPayload())
 
         DataType leftDataTypeResponse =
             dataTypeApi.create(left.id, dataTypesPayload())
@@ -314,10 +313,10 @@ class DataModelSchemaDiffsIntegrationSpec extends CommonDataSpec {
     void 'diff dataModels with DataClasses and nested DataElements on RHS  -should give same counts as when on LHS'() {
         given:
         //modified comparison key = label
-        DataClass leftDataClass = dataClassApi.create(left.id, dataClassPayload())
+        dataClassApi.create(left.id, dataClassPayload())
         DataClass rightDataClass = dataClassApi.create(right.id, dataClassPayload())
 
-        DataType leftDataTypeResponse = dataTypeApi.create(left.id, dataTypesPayload())
+        dataTypeApi.create(left.id, dataTypesPayload())
         DataType rightDataTypeResponse = dataTypeApi.create(right.id, dataTypesPayload())
 
 
@@ -359,10 +358,10 @@ class DataModelSchemaDiffsIntegrationSpec extends CommonDataSpec {
     void 'diff dataModels with DataClasses and nested DataElements on RHS  -should give same counts as when on LHS 2'() {
         given:
         //modified comparison key = label
-        DataClass leftDataClass = dataClassApi.create(left.id, dataClassPayload())
+        dataClassApi.create(left.id, dataClassPayload())
         DataClass rightDataClass = dataClassApi.create(left2.id, dataClassPayload())
 
-        DataType leftDataTypeResponse = dataTypeApi.create(left.id, dataTypesPayload())
+        dataTypeApi.create(left.id, dataTypesPayload())
         DataType rightDataTypeResponse = dataTypeApi.create(left2.id, dataTypesPayload())
 
 

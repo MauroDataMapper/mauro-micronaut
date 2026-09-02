@@ -18,7 +18,7 @@ class TerminologyRepositorySpec extends Specification {
     @Inject
     ModelCacheableRepository.FolderCacheableRepository folderRepository
 
-    def TestTerminology() {
+    void TestTerminology() {
         given:
 
         Folder folder = folderRepository.save(new Folder(

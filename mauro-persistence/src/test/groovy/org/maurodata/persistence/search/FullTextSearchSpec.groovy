@@ -46,7 +46,7 @@ class FullTextSearchSpec extends Specification {
     @Shared
     DataModel dataModel2
 
-    def setupSpec() {
+    void setupSpec() {
         Folder myFirstFolder = folderRepository.save(new Folder(
             label: "My Search Folder"
         ))
@@ -76,7 +76,7 @@ class FullTextSearchSpec extends Specification {
         searchIndexRefreshScheduler.refreshMaterializedViews()
     }
 
-    def "test search results across all domains" () {
+    void "test search results across all domains" () {
         expect:
         List<SearchResultsDTO> searchResults = searchRepository.search(searchTerm)
         isSortedByRank(searchResults)
@@ -97,7 +97,7 @@ class FullTextSearchSpec extends Specification {
         '"first class"'     | ['First class']
     }
 
-    def "test prefix search results across all domains" () {
+    void "test prefix search results across all domains" () {
         expect:
         List<SearchResultsDTO> searchResults = searchRepository.prefixSearch(searchTerm)
         isSortedByLabel(searchResults)
@@ -117,7 +117,7 @@ class FullTextSearchSpec extends Specification {
         'first class'       | ['First class']
     }
 
-    def "test search results across particular domains" () {
+    void "test search results across particular domains" () {
         expect:
         List<SearchResultsDTO> searchResults = searchRepository.search(searchTerm, domainTypes)
         isSortedByRank(searchResults)
@@ -135,7 +135,7 @@ class FullTextSearchSpec extends Specification {
         'nothing'           | []                    | []
     }
 
-    def "test prefix search results across particular domains" () {
+    void "test prefix search results across particular domains" () {
 
         expect:
         List<SearchResultsDTO> searchResults = searchRepository.prefixSearch(searchTerm, domainTypes)
@@ -167,7 +167,7 @@ class FullTextSearchSpec extends Specification {
     }
 
 
-    def "Test searching with date parameters"() {
+    void "Test searching with date parameters"() {
         // Test dates
         LocalDate today = LocalDate.now()
         LocalDate tomorrow = today.plusDays(1)
@@ -208,7 +208,7 @@ class FullTextSearchSpec extends Specification {
 
     }
 
-    def "test search results within a model" () {
+    void "test search results within a model" () {
         expect:
         List<SearchResultsDTO> searchResults = searchRepository.search(searchTerm, [], modelId)
         isSortedByRank(searchResults)
@@ -228,7 +228,7 @@ class FullTextSearchSpec extends Specification {
         'import'            | dataModel2.id         | ['Another import model']
     }
 
-    def "test prefix search results within a model" () {
+    void "test prefix search results within a model" () {
 
         expect:
         List<SearchResultsDTO> searchResults = searchRepository.prefixSearch(searchTerm, [], dataModelId)

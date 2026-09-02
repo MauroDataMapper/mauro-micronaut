@@ -130,7 +130,7 @@ class DataFlowIntegrationSpec extends CommonDataSpec {
         dataflowList.items[0].id == dataFlow.id
 
         when:
-        dataflowList = dataflowList = dataFlowApi.list(sourceId, Type.SOURCE)
+        dataflowList = dataFlowApi.list(sourceId, Type.SOURCE)
         then:
         dataflowList
         dataflowList.items.size() == 1

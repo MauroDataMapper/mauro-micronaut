@@ -28,6 +28,8 @@ import org.maurodata.domain.datamodel.DataClass
 import org.maurodata.domain.security.Role
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository.DataClassCacheableRepository
+import org.maurodata.persistence.cache.AdministeredItemCacheableRepository.DataClassComponentCacheableRepository
+import org.maurodata.persistence.cache.AdministeredItemCacheableRepository.DataFlowCacheableRepository
 
 import org.maurodata.web.ListResponse
 import org.maurodata.web.PaginationParams
@@ -38,11 +40,11 @@ import org.maurodata.web.PaginationParams
 @Secured(SecurityRule.IS_AUTHENTICATED)
 class DataClassComponentController extends AdministeredItemController<DataClassComponent, DataFlow> implements DataClassComponentApi {
 
-    AdministeredItemCacheableRepository.DataClassCacheableRepository dataClassRepository
+    DataClassCacheableRepository dataClassRepository
 
-    AdministeredItemCacheableRepository.DataClassComponentCacheableRepository dataClassComponentRepository
+    DataClassComponentCacheableRepository dataClassComponentRepository
 
-    AdministeredItemCacheableRepository.DataFlowCacheableRepository dataFlowRepository
+    DataFlowCacheableRepository dataFlowRepository
 
 
     DataClassComponentController(AdministeredItemCacheableRepository.DataClassComponentCacheableRepository dataClassComponentRepository,
@@ -159,22 +161,21 @@ class DataClassComponentController extends AdministeredItemController<DataClassC
         ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, dataClassToRemove, "Item with id: $dataClassId not found")
         accessControlService.checkRole(Role.EDITOR, dataClassToRemove)
         DataClassComponent dataClassComponent = dataClassComponentRepository.loadWithContent(id)
-        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, dataClassToRemove, "Item with id: $id not found")
+        ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, dataClassComponent, "Item with id: $id not found")
         accessControlService.checkRole(Role.EDITOR, dataClassComponent)
 
-        Long result
         switch (type) {
             case Type.TARGET:
                 if (!dataClassComponent.targetDataClasses.removeIf(dc -> dc.id == dataClassId)) {
                     ErrorHandler.handleError(HttpStatus.NOT_FOUND, "Item does not exist in table DataClassComponentTargetDataClass: $dataClassId")
                 }
-                result = dataClassComponentRepository.removeTargetDataClass(dataClassComponent.id, dataClassId)
+                dataClassComponentRepository.removeTargetDataClass(dataClassComponent.id, dataClassId)
                 break
             case Type.SOURCE:
                 if (!dataClassComponent.sourceDataClasses.removeIf(dc -> dc.id == dataClassId)) {
                     ErrorHandler.handleError(HttpStatus.NOT_FOUND, "Item does not exist in table DataClassComponentSourceDataClass: $dataClassId")
                 }
-                result = dataClassComponentRepository.removeSourceDataClass(dataClassComponent.id, dataClassId)
+                dataClassComponentRepository.removeSourceDataClass(dataClassComponent.id, dataClassId)
                 break
             default:
                 ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "Type must be source or target")

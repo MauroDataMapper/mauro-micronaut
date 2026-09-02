@@ -1,7 +1,5 @@
 package org.maurodata.test.domain.model
 
-import org.maurodata.domain.model.Path
-
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import org.maurodata.domain.model.Path
 import spock.lang.Specification

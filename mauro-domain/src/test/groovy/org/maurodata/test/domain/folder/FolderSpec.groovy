@@ -11,13 +11,13 @@ import org.maurodata.domain.terminology.Terminology
 import org.maurodata.test.domain.TestModelData
 
 class FolderSpec extends Specification {
-    static String LABEL = 'My Test Folder'
-    static String AUTHOR = 'My Test Folder author : anon'
-    static String DESCRIPTION = 'This is an example of a folder'
+    private static final String LABEL = 'My Test Folder'
+    private static final String AUTHOR = 'My Test Folder author : anon'
+    private static final String DESCRIPTION = 'This is an example of a folder'
 
-    static Folder testFolder = Folder.build(label: "$LABEL", author: "$AUTHOR", description: "$DESCRIPTION") {}
+    private static final Folder testFolder = Folder.build(label: "$LABEL", author: "$AUTHOR", description: "$DESCRIPTION") {}
 
-    def "Test the DSL for creating objects"() {
+    void "Test the DSL for creating objects"() {
 
         given:
         testFolder
@@ -205,7 +205,7 @@ class FolderSpec extends Specification {
         diff.numberOfDiffs == 0
     }
 
-    def "Test non versioned folder with non versioned data model"()
+    void "Test non versioned folder with non versioned data model"()
     {
         given:
             Folder folderWithoutVersion = Folder.build(label: "$LABEL", author: "$AUTHOR", description: "$DESCRIPTION") {}
@@ -219,7 +219,7 @@ class FolderSpec extends Specification {
             folderWithoutVersion.getPathModelIdentifier() == null
     }
 
-    def "Test non versioned folder with non versioned sub folder"()
+    void "Test non versioned folder with non versioned sub folder"()
     {
         given:
             Folder folderWithoutVersion = Folder.build(label: "$LABEL", author: "$AUTHOR", description: "$DESCRIPTION") {}
@@ -233,7 +233,7 @@ class FolderSpec extends Specification {
             folderWithoutVersion.getPathModelIdentifier() == null
     }
 
-    def "Test non versioned folder with versioned data model"()
+    void "Test non versioned folder with versioned data model"()
     {
         given:
             Folder folderWithoutVersion = Folder.build(label: "$LABEL", author: "$AUTHOR", description: "$DESCRIPTION") {}
@@ -250,7 +250,7 @@ class FolderSpec extends Specification {
     }
 
     @Ignore("'Versioned non-versionable' is no-longer a thing")
-    def "Test a versioned non-versionable folder "()
+    void "Test a versioned non-versionable folder "()
     {
         given:
             Folder folderWithVersion = Folder.build(label: "$LABEL", author: "$AUTHOR", description: "$DESCRIPTION") {}
@@ -264,7 +264,7 @@ class FolderSpec extends Specification {
             folderWithVersion.getPathModelIdentifier() == null
     }
 
-    def "Test a versioned versionable folder "()
+    void "Test a versioned versionable folder "()
     {
         given:
         Folder folderWithVersion = Folder.build(label: "$LABEL", author: "$AUTHOR", description: "$DESCRIPTION") {}
@@ -279,7 +279,7 @@ class FolderSpec extends Specification {
     }
 
     @Ignore("'Versioned non-versionable' is no-longer a thing")
-    def "Test a versioned versionable folder with a versioned non-versionable sub folder"()
+    void "Test a versioned versionable folder with a versioned non-versionable sub folder"()
     {
         given:
         Folder folderWithVersion = Folder.build(label: "$LABEL", author: "$AUTHOR", description: "$DESCRIPTION") {}
@@ -301,7 +301,7 @@ class FolderSpec extends Specification {
     }
 
     @Ignore("VersionedFolders should live inside VersionedFolders")
-    def "Test a versioned versionable folder with a versioned versionable sub folder"()
+    void "Test a versioned versionable folder with a versioned versionable sub folder"()
     {
         given:
         Folder folderWithVersion = Folder.build(label: "$LABEL", author: "$AUTHOR", description: "$DESCRIPTION") {}
@@ -323,7 +323,7 @@ class FolderSpec extends Specification {
     }
 
     @Ignore("'Versioned non-versionable' is no-longer a thing")
-    def "Test a versioned non-versionable folder with a versioned datamodel"()
+    void "Test a versioned non-versionable folder with a versioned datamodel"()
     {
         given:
         Folder folderWithVersion = Folder.build(label: "$LABEL", author: "$AUTHOR", description: "$DESCRIPTION") {}

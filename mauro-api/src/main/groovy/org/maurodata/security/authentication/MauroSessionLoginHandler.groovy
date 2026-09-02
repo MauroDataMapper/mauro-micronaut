@@ -5,7 +5,12 @@ import groovy.util.logging.Slf4j
 import io.micronaut.context.annotation.Replaces
 import io.micronaut.context.annotation.Value
 import io.micronaut.core.annotation.Nullable
-import io.micronaut.http.*
+import io.micronaut.http.HttpHeaders
+import io.micronaut.http.HttpRequest
+import io.micronaut.http.HttpResponse
+import io.micronaut.http.HttpStatus
+import io.micronaut.http.MutableHttpHeaders
+import io.micronaut.http.MutableHttpResponse
 import io.micronaut.http.context.ServerContextPathProvider
 import io.micronaut.http.cookie.Cookie
 import io.micronaut.http.cookie.Cookies

@@ -2,9 +2,7 @@ package org.maurodata.export
 
 import com.fasterxml.jackson.annotation.JsonAlias
 import com.fasterxml.jackson.annotation.JsonProperty
-import org.maurodata.domain.model.AdministeredItem
 
-import com.fasterxml.jackson.annotation.JsonFormat
 import groovy.transform.CompileStatic
 import groovy.transform.MapConstructor
 import io.micronaut.core.annotation.Introspected

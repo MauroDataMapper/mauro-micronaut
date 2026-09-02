@@ -51,7 +51,7 @@ class JsonCodeSetImporterPlugin implements CodeSetImporterPlugin<FileImportParam
 
     @Override
     Boolean handlesContentType(String contentType) {
-        return contentType == "application/mauro.${CodeSet.class.simpleName.toLowerCase()}+json"
+        return contentType == "application/mauro.${CodeSet.simpleName.toLowerCase()}+json"
     }
 
     @Override

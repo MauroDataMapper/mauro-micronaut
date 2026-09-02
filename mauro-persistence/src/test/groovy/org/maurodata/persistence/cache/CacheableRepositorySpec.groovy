@@ -65,7 +65,6 @@ class CacheableRepositorySpec extends Specification {
         given:
         Folder folder = new Folder(label: 'parent folder')
         folder = folderCacheableRepository.save(folder)
-        UUID folderId = folder.id
         (1..10).each {Integer i ->
             DataModel dataModel = new DataModel(label: "dm $i", folder: folder)
             dataModelCacheableRepository.save(dataModel)

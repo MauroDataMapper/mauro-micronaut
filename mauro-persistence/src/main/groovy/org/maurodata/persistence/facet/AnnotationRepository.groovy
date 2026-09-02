@@ -7,7 +7,6 @@ import io.micronaut.data.annotation.Query
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.model.query.builder.sql.Dialect
 import org.maurodata.domain.facet.Annotation
-import org.maurodata.persistence.model.ItemRepository
 
 @CompileStatic
 @JdbcRepository(dialect = Dialect.POSTGRES)

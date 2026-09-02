@@ -13,7 +13,11 @@ import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
-import io.micronaut.http.annotation.*
+import io.micronaut.http.annotation.Body
+import io.micronaut.http.annotation.Controller
+import io.micronaut.http.annotation.Delete
+import io.micronaut.http.annotation.Get
+import io.micronaut.http.annotation.Post
 import io.micronaut.http.exceptions.HttpStatusException
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
@@ -95,7 +99,9 @@ class AnnotationController extends FacetController<Annotation> implements Annota
         accessControlService.checkRole(Role.EDITOR, readAdministeredItem(domainType, domainId))
         super.cleanBody(childAnnotation)
         Annotation parent = super.validateAndGet(domainType, domainId, annotationId) as Annotation
-        if (!parent || parent.parentAnnotationId) throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Parent Annotation not found or has parent $annotationId")
+        if (!parent || parent.parentAnnotationId) {
+            throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Parent Annotation not found or has parent $annotationId")
+        }
         childAnnotation.parentAnnotationId = parent.id
         childAnnotation.multiFacetAwareItemId = parent.multiFacetAwareItemId
         childAnnotation.multiFacetAwareItemDomainType = parent.multiFacetAwareItemDomainType

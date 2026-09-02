@@ -2,7 +2,6 @@ package org.maurodata.domain.model.version
 
 import com.fasterxml.jackson.databind.util.StdConverter
 import groovy.transform.CompileStatic
-import io.micronaut.context.annotation.Prototype
 import io.micronaut.core.convert.ConversionContext
 import io.micronaut.data.model.runtime.convert.AttributeConverter
 import jakarta.inject.Singleton

@@ -1,14 +1,9 @@
 package org.maurodata.facet
 
-import org.maurodata.api.facet.MetadataApi
-import org.maurodata.api.folder.FolderApi
 import org.maurodata.testing.CommonDataSpec
 
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
-import io.micronaut.http.client.exceptions.HttpClientResponseException
-import io.micronaut.runtime.EmbeddedApplication
-import jakarta.inject.Inject
 import jakarta.inject.Singleton
 import spock.lang.Shared
 import org.maurodata.domain.facet.Metadata

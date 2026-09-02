@@ -1,6 +1,5 @@
 package org.maurodata.test.domain.terminology
 
-import groovy.transform.CompileStatic
 import spock.lang.Specification
 import org.maurodata.domain.terminology.Term
 
@@ -10,7 +9,7 @@ import org.maurodata.domain.terminology.Term
  */
 class TermSpec extends Specification {
 
-    def "Test the DSL for creating objects"() {
+    void "Test the DSL for creating objects"() {
 
         when:
 

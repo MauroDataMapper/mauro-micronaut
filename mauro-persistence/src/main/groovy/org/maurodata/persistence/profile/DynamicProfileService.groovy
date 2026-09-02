@@ -2,7 +2,6 @@ package org.maurodata.persistence.profile
 
 import org.maurodata.persistence.ContentsService
 import org.maurodata.persistence.cache.ModelCacheableRepository
-import org.maurodata.persistence.datamodel.DataModelRepository
 import org.maurodata.profile.DataModelBasedProfile
 import org.maurodata.profile.ProfileSpecificationProfile
 

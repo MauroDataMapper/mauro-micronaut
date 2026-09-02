@@ -14,7 +14,7 @@ import org.maurodata.security.authentication.MauroOpenIdAuthenticationMapper
 @SecuredContainerizedTest
 class MauroOpenIdAuthenticationMapperSpec extends SecuredIntegrationSpec {
 
-    static String UNKNOWN_EMAIL = "unknownToMauroMicronaut@email.com"
+    private static final String UNKNOWN_EMAIL = "unknownToMauroMicronaut@email.com"
 
     @Inject
     @Shared

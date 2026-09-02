@@ -11,6 +11,7 @@ import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.annotation.Part
+import io.micronaut.http.client.multipart.MultipartBody
 import io.micronaut.http.exceptions.HttpException
 import io.micronaut.http.exceptions.HttpStatusException
 import io.micronaut.http.multipart.StreamingFileUpload
@@ -46,7 +47,6 @@ import org.maurodata.domain.facet.ReferenceFile
 import org.maurodata.domain.facet.VersionLink
 import org.maurodata.domain.folder.Folder
 import org.maurodata.domain.model.AdministeredItem
-import org.maurodata.domain.model.Breadcrumb
 import org.maurodata.domain.model.Item
 import org.maurodata.domain.model.ItemReference
 import org.maurodata.domain.model.ItemReferencer
@@ -234,7 +234,9 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         accessControlService.checkRole(Role.CONTAINER_ADMIN, modelToDelete)
 
         // modelToDelete = (M) contentsService.loadWithContent(modelToDelete)
-        if (model?.version) modelToDelete.version = model.version
+        if (model?.version) {
+            modelToDelete.version = model.version
+        }
 
         if (permanent) {
             contentsService.deleteWithContent(modelToDelete)
@@ -333,7 +335,9 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
 
     @Transactional
     M createNewBranchModelVersion(UUID id, @Body @Nullable CreateNewVersionData createNewVersionData) {
-        if (!createNewVersionData) createNewVersionData = new CreateNewVersionData()
+        if (!createNewVersionData) {
+            createNewVersionData = new CreateNewVersionData()
+        }
         M existing = modelRepository.readById(id)
         existing = (M) contentsService.loadWithContent(existing)
 
@@ -457,7 +461,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
 
 
 
-    ListResponse<M> importModel(@Body io.micronaut.http.client.multipart.MultipartBody body, String namespace, String name, @Nullable String version) {
+    ListResponse<M> importModel(@Body MultipartBody body, String namespace, String name, @Nullable String version) {
         throw new Exception("Client version of import model has been called.. hint client MultipartBody ")
     }
 
@@ -468,7 +472,9 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
                     if (!referenceFile.fileContents) {
                         log.debug("Model $it.id has reference files. file: $referenceFile.fileName, filecontents is $referenceFile.fileContents")
                         ReferenceFile retrieved = referenceFileCacheableRepository.findById(referenceFile.id) as ReferenceFile
-                        if (!retrieved) throw new HttpStatusException(HttpStatus.NOT_FOUND, "Not found for item $it.id")
+                        if (!retrieved) {
+                            throw new HttpStatusException(HttpStatus.NOT_FOUND, "Not found for item $it.id")
+                        }
                         referenceFile.fileContents = retrieved.fileContent()
                     }
                 }
@@ -550,7 +556,9 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
     }
 
     ArrayList<Model> populateVersionTree(UUID id, boolean branchesOnly, final Map<UUID, Map<String, Boolean>> flags) {
-        if (!modelRepository.existsById(id)) throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Object not found")
+        if (!modelRepository.existsById(id)) {
+            throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Object not found")
+        }
 
         UUID currentId = id
 
@@ -1226,7 +1234,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
 
             lookingInOne:
             for (Map<String, FieldDiff> pathToFieldDiff : flattenedDiffOneMapList) {
-                final foundFieldDiff = pathToFieldDiff.get(key)
+                final FieldDiff foundFieldDiff = pathToFieldDiff.get(key)
                 if (foundFieldDiff != null) {
                     fieldDiffOne = foundFieldDiff
                     if (pathToFieldDiff == flattenedDiffOneCreated) {
@@ -1241,7 +1249,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
             FieldDiff fieldDiffTwo = null
             lookingInTwo:
             for (Map<String, FieldDiff> pathToFieldDiff : flattenedDiffTwoMapList) {
-                final foundFieldDiff = pathToFieldDiff.get(key)
+                final FieldDiff foundFieldDiff = pathToFieldDiff.get(key)
                 if (foundFieldDiff != null) {
                     fieldDiffTwo = foundFieldDiff
                     break lookingInTwo
@@ -1457,7 +1465,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         final AdministeredItem administeredItemSource = getWithContents(pathRepository.findResourcesByPathFromRootResource(sourceModel, creationPatch.path))
 
         // The target parent path
-        AdministeredItem administeredItemTargetParent = null
+        AdministeredItem administeredItemTargetParent
 
         try {
             administeredItemTargetParent = pathRepository.findResourcesByPathFromRootResource(targetModel, creationPatch.path.parent)

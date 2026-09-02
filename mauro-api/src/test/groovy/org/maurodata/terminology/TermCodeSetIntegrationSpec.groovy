@@ -25,7 +25,7 @@ class TermCodeSetIntegrationSpec extends CommonDataSpec {
     @Shared
     UUID termId
 
-    def setup() {
+    void setup() {
         Folder folderResponse = folderApi.create(folder())
         folderId = folderResponse.id
         Terminology terminologyResp = terminologyApi.create(folderId, terminologyPayload())

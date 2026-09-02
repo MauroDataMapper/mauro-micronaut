@@ -24,21 +24,21 @@ class SemanticLinkIntegrationSpec extends CommonDataSpec {
     UUID dataModelId
 
     @Shared
-    UUID dataClassId_1
+    UUID dataClassId1
 
     @Shared
-    UUID dataClassId_2
+    UUID dataClassId2
 
     void setup() {
         folderId = folderApi.create(folder()).id
         dataModelId = dataModelApi.create(folderId, dataModelPayload()).id
-        dataClassId_1 = dataClassApi.create(dataModelId, dataClassPayload("Data class 1")).id
-        dataClassId_2 = dataClassApi.create(dataModelId, dataClassPayload("Data class 2")).id
+        dataClassId1 = dataClassApi.create(dataModelId, dataClassPayload("Data class 1")).id
+        dataClassId2 = dataClassApi.create(dataModelId, dataClassPayload("Data class 2")).id
     }
 
     void 'list empty semantic links'() {
         when:
-        ListResponse<SemanticLinkDTO> semanticLinks = semanticLinksApi.list("dataClasses", dataClassId_1)
+        ListResponse<SemanticLinkDTO> semanticLinks = semanticLinksApi.list("dataClasses", dataClassId1)
 
         then:
         semanticLinks.count == 0
@@ -46,8 +46,8 @@ class SemanticLinkIntegrationSpec extends CommonDataSpec {
 
     void 'create semantic link'() {
         when:
-        SemanticLinkCreateDTO semanticLinkToCreate = new SemanticLinkCreateDTO(linkType: "Refines", targetMultiFacetAwareItemDomainType: "DataClass", targetMultiFacetAwareItemId: dataClassId_2)
-        SemanticLinkDTO createdSemanticLink = semanticLinksApi.create("DataClass", dataClassId_1, semanticLinkToCreate)
+        SemanticLinkCreateDTO semanticLinkToCreate = new SemanticLinkCreateDTO(linkType: "Refines", targetMultiFacetAwareItemDomainType: "DataClass", targetMultiFacetAwareItemId: dataClassId2)
+        SemanticLinkDTO createdSemanticLink = semanticLinksApi.create("DataClass", dataClassId1, semanticLinkToCreate)
         then:
         createdSemanticLink
         createdSemanticLink.id
@@ -55,16 +55,16 @@ class SemanticLinkIntegrationSpec extends CommonDataSpec {
         createdSemanticLink.domainType == "SemanticLink"
         createdSemanticLink.unconfirmed == false
         createdSemanticLink.sourceMultiFacetAwareItem
-        createdSemanticLink.sourceMultiFacetAwareItem.id == dataClassId_1
+        createdSemanticLink.sourceMultiFacetAwareItem.id == dataClassId1
         createdSemanticLink.sourceMultiFacetAwareItem.label == "Data class 1"
         createdSemanticLink.sourceMultiFacetAwareItem.domainType == "DataClass"
         createdSemanticLink.targetMultiFacetAwareItem
-        createdSemanticLink.targetMultiFacetAwareItem.id == dataClassId_2
+        createdSemanticLink.targetMultiFacetAwareItem.id == dataClassId2
         createdSemanticLink.targetMultiFacetAwareItem.label == "Data class 2"
         createdSemanticLink.targetMultiFacetAwareItem.domainType == "DataClass"
 
         when:
-        ListResponse<SemanticLinkDTO> semanticLinks = semanticLinksApi.list("dataClasses", dataClassId_1)
+        ListResponse<SemanticLinkDTO> semanticLinks = semanticLinksApi.list("dataClasses", dataClassId1)
 
         then:
         semanticLinks.count == 1
@@ -73,8 +73,8 @@ class SemanticLinkIntegrationSpec extends CommonDataSpec {
     void 'clone model with internal semantic link'() {
         when:
 
-        SemanticLinkCreateDTO semanticLinkToCreate = new SemanticLinkCreateDTO(linkType: "Refines", targetMultiFacetAwareItemDomainType: "DataClass", targetMultiFacetAwareItemId: dataClassId_2)
-        SemanticLinkDTO createdSemanticLink = semanticLinksApi.create("DataClass", dataClassId_1, semanticLinkToCreate)
+        SemanticLinkCreateDTO semanticLinkToCreate = new SemanticLinkCreateDTO(linkType: "Refines", targetMultiFacetAwareItemDomainType: "DataClass", targetMultiFacetAwareItemId: dataClassId2)
+        semanticLinksApi.create("DataClass", dataClassId1, semanticLinkToCreate)
 
         dataModelApi.finalise(dataModelId, new FinaliseData(version: ModelVersion.from("1.0.0")))
         DataModel clonedDataModel = dataModelApi.createNewBranchModelVersion(dataModelId, new CreateNewVersionData(branchName: "main"))
@@ -88,8 +88,8 @@ class SemanticLinkIntegrationSpec extends CommonDataSpec {
         DataClass clonedDataClass2 = clonedDataClasses.find {it.label == "Data class 2"}
 
         then:
-        clonedDataClass1.id != dataClassId_1
-        clonedDataClass2.id != dataClassId_2
+        clonedDataClass1.id != dataClassId1
+        clonedDataClass2.id != dataClassId2
 
         when:
         List<SemanticLinkDTO> clonedSemanticLinks = semanticLinksApi.list("dataClass", clonedDataClass1.id).items
@@ -107,7 +107,7 @@ class SemanticLinkIntegrationSpec extends CommonDataSpec {
         UUID externalDataModelId = dataModelApi.create(folderId, dataModelPayload()).id
 
         SemanticLinkCreateDTO semanticLinkToCreate = new SemanticLinkCreateDTO(linkType: "Refines", targetMultiFacetAwareItemDomainType: "DataModel", targetMultiFacetAwareItemId: externalDataModelId)
-        SemanticLinkDTO createdSemanticLink = semanticLinksApi.create("DataClass", dataClassId_1, semanticLinkToCreate)
+        semanticLinksApi.create("DataClass", dataClassId1, semanticLinkToCreate)
 
         dataModelApi.finalise(dataModelId, new FinaliseData(version: ModelVersion.from("1.0.0")))
         DataModel clonedDataModel = dataModelApi.createNewBranchModelVersion(dataModelId, new CreateNewVersionData(branchName: "main"))
@@ -121,8 +121,8 @@ class SemanticLinkIntegrationSpec extends CommonDataSpec {
         DataClass clonedDataClass2 = clonedDataClasses.find {it.label == "Data class 2"}
 
         then:
-        clonedDataClass1.id != dataClassId_1
-        clonedDataClass2.id != dataClassId_2
+        clonedDataClass1.id != dataClassId1
+        clonedDataClass2.id != dataClassId2
 
         when:
         List<SemanticLinkDTO> clonedSemanticLinks = semanticLinksApi.list("dataClass", clonedDataClass1.id).items

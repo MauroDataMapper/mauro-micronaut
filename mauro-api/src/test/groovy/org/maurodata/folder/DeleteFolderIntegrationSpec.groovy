@@ -55,8 +55,8 @@ class DeleteFolderIntegrationSpec extends CommonDataSpec {
         codeSetApi.addTerm(codeSet.id, term.id)
 
         ClassificationScheme classificationScheme = classificationSchemeApi.create(folderId, classificationSchemePayload(true, true))
-        Classifier classifier1 = classifierApi.create(classificationScheme.id, classifierPayload('classifier one label') )
-        Classifier classifier2 = classifierApi.create(classificationScheme.id, classifierPayload('classifier two label') )
+        classifierApi.create(classificationScheme.id, classifierPayload('classifier one label') )
+        classifierApi.create(classificationScheme.id, classifierPayload('classifier two label') )
         Folder folder = folderApi.show(folderId)
 
         when:
@@ -88,7 +88,7 @@ class DeleteFolderIntegrationSpec extends CommonDataSpec {
             versionTag = '2.2'
         } )
 
-        dataTypeApi.create(dataModel.id, modelTypeDataTypePayload(terminology.id, Terminology.class.simpleName))
+        dataTypeApi.create(dataModel.id, modelTypeDataTypePayload(terminology.id, Terminology.simpleName))
 
         Folder folder = folderApi.show(folderId)
 
@@ -110,9 +110,9 @@ class DeleteFolderIntegrationSpec extends CommonDataSpec {
 
         summaryMetadataApi.create("terminology", terminology.id, summaryMetadataPayload())
 
-        semanticLinksApi.create(Terminology.class.simpleName, terminology2.id, new SemanticLinkCreateDTO().tap{
+        semanticLinksApi.create(Terminology.simpleName, terminology2.id, new SemanticLinkCreateDTO().tap{
             linkType = 'Refines'
-            targetMultiFacetAwareItemDomainType = Terminology.class.simpleName
+            targetMultiFacetAwareItemDomainType = Terminology.simpleName
             targetMultiFacetAwareItemId  = terminology.id
         })
 

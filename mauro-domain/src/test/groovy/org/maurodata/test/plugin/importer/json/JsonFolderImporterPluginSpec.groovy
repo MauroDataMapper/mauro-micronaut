@@ -7,6 +7,8 @@ import io.micronaut.http.exceptions.HttpStatusException
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
 import org.maurodata.domain.datamodel.DataModel
+import org.maurodata.domain.diff.DiffableItem
+import org.maurodata.domain.diff.ObjectDiff
 import org.maurodata.domain.folder.Folder
 import org.maurodata.domain.terminology.Terminology
 import org.maurodata.export.ExportModel
@@ -30,7 +32,7 @@ class JsonFolderImporterPluginSpec extends Specification {
     MauroPluginService mauroPluginService
 
 
-    def "test simple JSON folder import"() {
+    void "test simple JSON folder import"() {
         when:
         Folder testFolder = FolderSpec.testFolder
 
@@ -60,14 +62,14 @@ class JsonFolderImporterPluginSpec extends Specification {
         importedModels[0].author == FolderSpec.AUTHOR
         importedModels[0].description == FolderSpec.DESCRIPTION
 
-        def diffResult = importedModels.first().diff(testFolder)
+        ObjectDiff<DiffableItem> diffResult = importedModels.first().diff(testFolder)
         diffResult.diffs.isEmpty()
 
         importedModels.first().label == testFolder.label
         importedModels.first().description == testFolder.description
     }
 
-    def "test JSON folder, datamodel import"() {
+    void "test JSON folder, datamodel import"() {
         when:
         Folder testFolder = FolderSpec.testFolder
         DataModel testDataModel = DataModelSpec.testDataModel
@@ -101,7 +103,7 @@ class JsonFolderImporterPluginSpec extends Specification {
         importedModels[0].author == FolderSpec.AUTHOR
         importedModels[0].description == FolderSpec.DESCRIPTION
 
-        def diffResult = importedModels.first().diff(testFolder)
+        ObjectDiff<DiffableItem> diffResult = importedModels.first().diff(testFolder)
         diffResult.diffs.isEmpty()
 
         importedModels.first().label == testFolder.label
@@ -109,7 +111,7 @@ class JsonFolderImporterPluginSpec extends Specification {
     }
 
 
-    def "test JSON folders import- bad file -should fail with BADREQUEST exception"() {
+    void "test JSON folders import- bad file -should fail with BADREQUEST exception"() {
         given:
         ExportModel exportModel = ExportModel.build {
             exportMetadata {

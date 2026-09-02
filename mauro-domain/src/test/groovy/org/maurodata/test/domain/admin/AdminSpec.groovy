@@ -18,7 +18,7 @@ class AdminSpec extends Specification {
     @Inject
     MauroPluginService mauroPluginService
 
-    def "test the module list"() {
+    void "test the module list"() {
         when:
             List modulesList = mauroPluginService.getModulesList()
             String javaVersion = System.getProperty("java.version")
@@ -29,7 +29,7 @@ class AdminSpec extends Specification {
             modulesList.find {it["name"] == "java.base" && it["version"] == javaVersion}
     }
 
-    def "test listing all standard plugins"() {
+    void "test listing all standard plugins"() {
         when:
             List pluginsList = mauroPluginService.listStandardPlugins()
 
@@ -122,7 +122,7 @@ class AdminSpec extends Specification {
             exportersList == pluginsList.findAll{it.pluginType == PluginType.Exporter}
     }
 
-    def "test find plugin by name"() {
+    void "test find plugin by name"() {
         when:
         MauroPlugin plugin = mauroPluginService.getPlugin("org.maurodata.plugin.importer.json","JsonDataModelImporterPlugin")
 

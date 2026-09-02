@@ -1,6 +1,5 @@
 package org.maurodata.domain.diff
 
-import org.maurodata.domain.model.Path
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
@@ -8,7 +7,6 @@ import org.maurodata.domain.model.Model
 
 import java.time.Instant
 import java.util.Map.Entry
-import javax.swing.DefaultListSelectionModel
 
 @Slf4j
 @CompileStatic
@@ -95,13 +93,13 @@ class DiffBuilder {
 
     static ObjectDiff buildBaseDiff(Model lhs, Model rhs, String lhsPathRoot, String rhsPathRoot) {
         Map lhsMap = lhs.properties
-        lhsMap.removeAll {excluded(it as Map.Entry<String, Object>)}
+        lhsMap.removeAll {excluded(it as Entry<String, Object>)}
         Map<String, String> leftStrFields = lhsMap.findAll {isAssignableFrom(it.value, String)} as Map<String, String>
         Map<String, Boolean> leftBooleanFields = lhsMap.findAll {isAssignableFrom(it.value, Boolean)} as Map<String, Boolean>
         Map<String, Instant> leftInstantFields = lhsMap.findAll {isAssignableFrom(it.value, Instant)} as Map<String, Instant>
 
         Map rhsMap = rhs.properties
-        rhsMap.removeAll {excluded(it as Map.Entry<String, Object>)}
+        rhsMap.removeAll {excluded(it as Entry<String, Object>)}
         Map<String, String> rightStrFields = rhsMap.findAll {isAssignableFrom(it.value, String)} as Map<String, String>
         Map<String, Boolean> rightBooleanFields = rhsMap.findAll {isAssignableFrom(it.value, Boolean)} as Map<String, Boolean>
         Map<String, Instant> rightInstantFields = rhsMap.findAll {isAssignableFrom(it.value, Instant)} as Map<String, Instant>
@@ -209,11 +207,11 @@ class DiffBuilder {
         }
     }
 
-    static boolean excluded(Map.Entry<String, Object> it) {
+    static boolean excluded(Entry<String, Object> it) {
         IGNORE_KEYS.contains(it.key) || isNull(it)
     }
 
-    static boolean isNull(Map.Entry<String, Object> it) {
+    static boolean isNull(Entry<String, Object> it) {
         isNull(it.key) || isNull(it.value)
     }
 

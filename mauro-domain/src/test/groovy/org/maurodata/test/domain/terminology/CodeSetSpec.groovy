@@ -23,7 +23,7 @@ class CodeSetSpec extends Specification {
     @Unroll()
     void "Testing the constructor  #iteration.testName"() {
         when:
-        def codeSet = new CodeSet()
+        CodeSet codeSet = new CodeSet()
         codeSet.label = iteration.label
         codeSet.catalogueUser = new CatalogueUser(emailAddress: iteration.createdBy)
         codeSet.folder = iteration.folder

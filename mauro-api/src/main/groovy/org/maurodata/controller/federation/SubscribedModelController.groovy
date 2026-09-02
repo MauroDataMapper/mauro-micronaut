@@ -121,7 +121,9 @@ class SubscribedModelController extends ItemController<SubscribedModel> {
         SubscribedModel subscribedModelToDelete = subscribedModelCacheableRepository.findById(subscribedModelId)
         ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, subscribedModelToDelete, "Item $subscribedModelId not found")
 
-        if (subscribedModel?.version) subscribedModel.version = subscribedModel.version
+        if (subscribedModel?.version) {
+            subscribedModel.version = subscribedModel.version
+        }
         Long deleted = subscribedModelCacheableRepository.delete(subscribedModelToDelete)
         if (deleted) {
             HttpResponse.status(HttpStatus.NO_CONTENT)

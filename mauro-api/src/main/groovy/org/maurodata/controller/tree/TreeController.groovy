@@ -88,12 +88,16 @@ class TreeController implements TreeApi {
         AvailableActions.updateAvailableActions(item, accessControlService)
 
         accessControlService.checkRole(Role.READER, item)
-        List<TreeItem> treeItems = filterTreeByReadable(treeService.buildTree(item, domainType.contains(Folder.class.simpleName) ? foldersOnly : false, false, true))
+        List<TreeItem> treeItems = filterTreeByReadable(treeService.buildTree(item, domainType.contains(Folder.simpleName) ? foldersOnly : false, false, true))
         treeItems
     }
 
     protected List<TreeItem> filterTreeByReadable(List<TreeItem> treeItems) {
-        treeItems.each {if (!it.item) throw new IllegalArgumentException('TreeItem must have item set for security check')}
+        treeItems.each {
+            if (!it.item) {
+                throw new IllegalArgumentException('TreeItem must have item set for security check')
+            }
+        }
         treeItems = treeItems.findAll {accessControlService.canDoRole(Role.READER, it.item)}
         treeItems.each {
             it.children = it.children.findAll {accessControlService.canDoRole(Role.READER, it.item)}

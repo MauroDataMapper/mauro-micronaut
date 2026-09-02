@@ -6,7 +6,6 @@ import org.maurodata.domain.terminology.Terminology
 import org.maurodata.export.ExportModel
 import org.maurodata.web.ListResponse
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import io.micronaut.http.HttpRequest
 import io.micronaut.http.MediaType
 import io.micronaut.http.MutableHttpRequest
@@ -37,7 +36,7 @@ class LowLevelApi {
     }
 
     <T> T GET(String uri, Class<T> type, Class internalType = null) {
-        def response = client.toBlocking().retrieve(HttpRequest.GET(uri).tap {
+        T response = client.toBlocking().retrieve(HttpRequest.GET(uri).tap {
             addHeaders(it)
         }, type)
         if(type == ListResponse && internalType) {
@@ -176,10 +175,12 @@ class LowLevelApi {
 
 
     void addHeaders(MutableHttpRequest<Object> request) {
-        if(apiKey)
+        if(apiKey) {
             request.header('apiKey', apiKey.toString())
-        if (sessionCookie)
+        }
+        if (sessionCookie) {
             request.cookie(sessionCookie)
+        }
     }
 
 

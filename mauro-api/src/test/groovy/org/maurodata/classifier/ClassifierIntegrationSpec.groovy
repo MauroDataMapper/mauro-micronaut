@@ -189,11 +189,10 @@ class ClassifierIntegrationSpec extends CommonDataSpec {
         given:
         Classifier classifier = classifierApi.create(classificationSchemeId, classifierPayload())
         //add facet to classifier
-        SummaryMetadata summaryMetadata =
-            summaryMetadataApi.create(
-    'classifier',
-                classifier.id,
-                new SummaryMetadata(summaryMetadataType: SummaryMetadataType.STRING, label: 'summary metadata label'))
+        summaryMetadataApi.create(
+'classifier',
+            classifier.id,
+            new SummaryMetadata(summaryMetadataType: SummaryMetadataType.STRING, label: 'summary metadata label'))
 
         DataModel dataModel = dataModelApi.create(folderId, new DataModel(label: 'Test data model'))
 

@@ -3,7 +3,6 @@ package org.maurodata.search
 import org.maurodata.domain.search.dto.SearchRequestDTO
 import org.maurodata.testing.CommonDataSpec
 
-import jakarta.inject.Inject
 import jakarta.inject.Singleton
 import spock.lang.Shared
 import org.maurodata.domain.datamodel.DataModel
@@ -65,7 +64,7 @@ class SearchIntegrationSpec extends CommonDataSpec {
 
     }
 
-    def "Test Get Search"() {
+    void "Test Get Search"() {
 
         searchApi.rebuildIndexes()
 
@@ -92,7 +91,7 @@ class SearchIntegrationSpec extends CommonDataSpec {
 
     }
 
-    def "Test Get Search after auto rebuild"() {
+    void "Test Get Search after auto rebuild"() {
 
         when:
 

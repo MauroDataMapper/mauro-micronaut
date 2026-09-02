@@ -26,7 +26,7 @@ import spock.lang.Unroll
 @Singleton
 @Sql(scripts = ["classpath:sql/tear-down-datamodel.sql"], phase = Sql.Phase.AFTER_EACH)
 class DataTypeIntegrationSpec extends CommonDataSpec {
-    static String DATATYPE_LABEL = 'test modelType dataType label'
+    private static final String DATATYPE_LABEL = 'test modelType dataType label'
     @Shared
     UUID folderId
 
@@ -200,7 +200,7 @@ class DataTypeIntegrationSpec extends CommonDataSpec {
                          description: 'Test model type description',
                          dataTypeKind: DataType.DataTypeKind.MODEL_TYPE,
                          domainType: 'ModelType',
-                         modelResourceDomainType: CodeSet.class.simpleName,
+                         modelResourceDomainType: CodeSet.simpleName,
                          modelResourceId:  (codeSet as Model).id))
         then:
         HttpClientResponseException exception = thrown()
@@ -215,14 +215,14 @@ class DataTypeIntegrationSpec extends CommonDataSpec {
                          description: 'Test model type description',
                          dataTypeKind: DataType.DataTypeKind.MODEL_TYPE,
                          domainType: 'ModelType',
-                         modelResourceDomainType: CodeSet.class.simpleName,
+                         modelResourceDomainType: CodeSet.simpleName,
                          modelResourceId:  (finalised as Model).id))
 
         then:
         created
         created.domainType == DataType.DataTypeKind.MODEL_TYPE.stringValue
         created.label == DATATYPE_LABEL
-        created.modelResourceDomainType == CodeSet.class.simpleName
+        created.modelResourceDomainType == CodeSet.simpleName
         created.modelResourceId == (finalised as Model).id
 
         when:
@@ -230,7 +230,7 @@ class DataTypeIntegrationSpec extends CommonDataSpec {
         then:
         retrieved
         retrieved.modelResourceId == codeSet.id
-        retrieved.modelResourceDomainType == CodeSet.class.simpleName
+        retrieved.modelResourceDomainType == CodeSet.simpleName
 
         URI uri = UriBuilder.of(embeddedServer.getContextURI())
             .path("/api/dataModels/".concat(dataModelId.toString()).concat('/dataTypes'))
@@ -268,7 +268,7 @@ class DataTypeIntegrationSpec extends CommonDataSpec {
 
         where:
         domainType      | modelResourceDomainType    | modelResourceId   | expectedException
-        'ModelType'     | DataClass.class.simpleName | dataClassId1      | HttpStatus.UNPROCESSABLE_ENTITY
+        'ModelType'     | DataClass.simpleName | dataClassId1      | HttpStatus.UNPROCESSABLE_ENTITY
         'ModelType'     | _                          | UUID.randomUUID() | HttpStatus.UNPROCESSABLE_ENTITY
         'ReferenceType' | _                          | UUID.randomUUID() | HttpStatus.UNPROCESSABLE_ENTITY
     }

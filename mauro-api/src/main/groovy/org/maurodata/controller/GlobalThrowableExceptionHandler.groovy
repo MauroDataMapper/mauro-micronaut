@@ -39,7 +39,9 @@ class GlobalThrowableExceptionHandler implements ExceptionHandler<Throwable, Htt
 
     private static Throwable rootCause(Throwable t) {
         Throwable cur = t
-        while (cur?.cause && cur.cause != cur) cur = cur.cause
+        while (cur?.cause && cur.cause != cur) {
+            cur = cur.cause
+        }
         cur
     }
 

@@ -15,13 +15,13 @@ import groovy.transform.CompileStatic
 class AvailableActions {
 
     // Purposes
-    public static String PURPOSE_VERSIONING = "VERSIONING"
-    public static String PURPOSE_STANDARD = "STANDARD"
-    public static String PURPOSE_SECURABLE = "SECURABLE"
-    public static String PURPOSE_MODEL = "MODEL"
-    public static String PURPOSE_FOLDER = "FOLDER"
-    public static String PURPOSE_DATAMODEL = "DATAMODEL"
-    public static String PURPOSE_MODELITEM = "MODELITEM"
+    public static final String PURPOSE_VERSIONING = "VERSIONING"
+    public static final String PURPOSE_STANDARD = "STANDARD"
+    public static final String PURPOSE_SECURABLE = "SECURABLE"
+    public static final String PURPOSE_MODEL = "MODEL"
+    public static final String PURPOSE_FOLDER = "FOLDER"
+    public static final String PURPOSE_DATAMODEL = "DATAMODEL"
+    public static final String PURPOSE_MODELITEM = "MODELITEM"
 
     // Actions
     public static final String SHOW_ACTION = 'show'
@@ -141,7 +141,7 @@ class AvailableActions {
 
     }
 
-    public static List<String> REMOVE_WHEN_FINALISED = [UPDATE_ACTION,
+    public static final List<String> REMOVE_WHEN_FINALISED = [UPDATE_ACTION,
                                                         SAVE_ACTION,
                                                         EDIT_DESCRIPTION_ACTION,
                                                         FINALISE_ACTION,
@@ -150,12 +150,12 @@ class AvailableActions {
                                                         CREATE_VERSIONED_FOLDER,
                                                         CREATE_MODEL]
 
-    public static List<String> REMOVE_FROM_MODEL_ITEM_WHEN_FINALISED = [UPDATE_ACTION,
+    public static final List<String> REMOVE_FROM_MODEL_ITEM_WHEN_FINALISED = [UPDATE_ACTION,
                                                         SAVE_ACTION,
                                                         DELETE_ACTION,
                                                         EDIT_DESCRIPTION_ACTION]
 
-    public static List<String> REMOVE_FROM_MODEL_ITEM = [SOFT_DELETE_ACTION,
+    public static final List<String> REMOVE_FROM_MODEL_ITEM = [SOFT_DELETE_ACTION,
                                                          FINALISE_ACTION]
 
     private static final List<String> empty_list = []

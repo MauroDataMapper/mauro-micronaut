@@ -48,7 +48,7 @@ class BaseIntegrationSpec extends Specification {
     }
 
     <T> T GET(String uri, Class<T> type, Class internalType = null) {
-        def response = createRequest(HttpRequest.GET(uri), type)
+        T response = createRequest(HttpRequest.GET(uri), type)
         if(type == ListResponse && internalType) {
             ((ListResponse) response).bindItems(objectMapper, internalType)
         }

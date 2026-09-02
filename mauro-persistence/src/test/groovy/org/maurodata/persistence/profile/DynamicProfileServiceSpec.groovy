@@ -30,7 +30,7 @@ class DynamicProfileServiceSpec extends Specification {
     @Inject
     ModelCacheableRepository.DataModelCacheableRepository dataModelCacheableRepository
 
-    def "Test getting all dynamic profiles"() {
+    void "Test getting all dynamic profiles"() {
         given:
 
         Folder myFirstFolder = folderRepository.save(new Folder(
@@ -44,7 +44,7 @@ class DynamicProfileServiceSpec extends Specification {
         UUID dataModelId = contentsService.saveWithContent(testDataModel, null).id
 
 
-        DataModel saved = dataModelCacheableRepository.loadWithContent(dataModelId)
+        dataModelCacheableRepository.loadWithContent(dataModelId)
 
 
         List<Profile> profiles = dynamicProfileService.getDynamicProfiles()
@@ -64,7 +64,7 @@ class DynamicProfileServiceSpec extends Specification {
 
     }
 
-    def "Test getting profile keys"() {
+    void "Test getting profile keys"() {
         given:
 
         Folder myFirstFolder = folderRepository.save(new Folder(
@@ -78,7 +78,7 @@ class DynamicProfileServiceSpec extends Specification {
         contentsService.saveWithContent(testDataModel).id
 
         List<Profile> profiles = dynamicProfileService.getDynamicProfiles()
-        Profile dynamicProfile = profiles[0]
+        profiles[0]
 
         then:
 

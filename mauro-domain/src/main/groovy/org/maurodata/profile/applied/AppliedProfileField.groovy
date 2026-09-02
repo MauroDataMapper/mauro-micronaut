@@ -2,8 +2,6 @@ package org.maurodata.profile.applied
 
 import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.profile.ProfileField
-import org.maurodata.profile.ProfileFieldDataType
-import org.maurodata.profile.ProfileSection
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import groovy.transform.CompileStatic

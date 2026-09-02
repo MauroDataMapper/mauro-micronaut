@@ -26,8 +26,9 @@ import java.nio.charset.Charset
 @SecuredContainerizedTest
 class KeycloakIntegrationSpec extends CommonDataSpec {
 
-    static String PASSWORD_GRANT_TYPE = 'password'
-    static String OPEN_ID = 'openid'
+    private static final String PASSWORD_GRANT_TYPE = 'password'
+    private static final String OPEN_ID = 'openid'
+
     @Shared
     String tokenEndpoint = 'http://localhost:9009/realms/mauro/protocol/openid-connect/token'
 
@@ -78,10 +79,10 @@ class KeycloakIntegrationSpec extends CommonDataSpec {
 
         then:
         resp
-        Map<String, String> responseEntity = resp.readEntity(Map.class)
+        Map<String, String> responseEntity = resp.readEntity(Map)
         resp.status == HttpStatus.OK.code
 
-        def currentAccessToken = responseEntity.get('access_token')
+        String currentAccessToken = responseEntity.get('access_token')
         currentAccessToken
     }
 

@@ -7,8 +7,6 @@ import org.maurodata.domain.security.Role
 
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.client.exceptions.HttpClientResponseException
-import io.micronaut.runtime.EmbeddedApplication
-import jakarta.inject.Inject
 import jakarta.inject.Singleton
 import spock.lang.Shared
 import org.maurodata.domain.datamodel.DataModel
@@ -40,9 +38,9 @@ class EditorAccessIntegrationSpec extends SecuredIntegrationSpec {
         UserGroup editorsGroup = userGroupApi.create(new UserGroup(name: 'Editors Group'))
         editorsGroupId = editorsGroup.id
 
-        CatalogueUser catalogueUserResponse = catalogueUserApi.update(user.id, new CatalogueUser(groups: [editorsGroupId]))
+        catalogueUserApi.update(user.id, new CatalogueUser(groups: [editorsGroupId]))
 
-        SecurableResourceGroupRole securableResourceGroupRole = securableResourceGroupRoleApi.create("folder", folderId, Role.EDITOR, editorsGroupId)
+        securableResourceGroupRoleApi.create("folder", folderId, Role.EDITOR, editorsGroupId)
 
         loginUser()
 
@@ -209,9 +207,9 @@ class EditorAccessIntegrationSpec extends SecuredIntegrationSpec {
         UserGroup editorsGroup = userGroupApi.create(new UserGroup(name: 'Editors Group 2'))
         editorsGroupId = editorsGroup.id
 
-        CatalogueUser catalogueUserResponse = catalogueUserApi.update(user.id, new CatalogueUser(groups: [editorsGroupId]))
+        catalogueUserApi.update(user.id, new CatalogueUser(groups: [editorsGroupId]))
 
-        SecurableResourceGroupRole securableResourceGroupRole = securableResourceGroupRoleApi.create("folder", folderId, Role.EDITOR, editorsGroupId)
+        securableResourceGroupRoleApi.create("folder", folderId, Role.EDITOR, editorsGroupId)
 
         DataModel dataModel = dataModelApi.create(folderId, new DataModel(label: 'New Data Model'))
         DataClass dataClass = dataClassApi.create(dataModel.id, new DataClass(label: 'New Data Class'))

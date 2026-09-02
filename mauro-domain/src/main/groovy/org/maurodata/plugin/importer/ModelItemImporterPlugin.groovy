@@ -83,8 +83,9 @@ trait ModelItemImporterPlugin<D extends ModelItem, P extends ImportParameters> e
                     fieldType = field.getType().getSimpleName()
             }
             ImportParameterConfig config = field.getAnnotation(ImportParameterConfig)
-            if (config.password())
+            if (config.password()) {
                 fieldType = 'Password'
+            }
 
             return [
                 groupName: config.group().name(),

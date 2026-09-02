@@ -57,12 +57,12 @@ subprojects {
         if (plugins.hasPlugin('codenarc')) {
             dependencies {
                 codenarc 'org.apache.groovy:groovy-all:4.0.33'
-                codenarc 'org.codenarc:CodeNarc:3.7.0'
+                codenarc 'org.codenarc:CodeNarc:3.7.0-groovy-4.0'
             }
 
             codenarc {
                 toolVersion = "3.7.0"
-                configFile = rootProject.file("config/codenarc/codenarc.groovy")
+                configFile = rootProject.file(".groovylintrc.groovy")
             }
 
             tasks.matching { it.name.startsWith('codenarc') }.configureEach {
@@ -115,8 +115,8 @@ subprojects {
 
         mavenPublishing {
             // Use GROUP/VERSION_NAME if present, else fall back to project.group/version
-            def g = (findProperty("GROUP") ?: project.group).toString()
-            def v = (findProperty("VERSION_NAME") ?: project.version).toString()
+            String g = (findProperty("GROUP") ?: project.group).toString()
+            String v = (findProperty("VERSION_NAME") ?: project.version).toString()
             coordinates(g, project.name, v)
 
             configure(new JavaLibrary(new JavadocJar.Empty(), /* sourcesJar */ true))

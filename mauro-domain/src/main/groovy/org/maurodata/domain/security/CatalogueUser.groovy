@@ -95,7 +95,7 @@ class CatalogueUser extends Item {
 
     static class CatalogueUserDeserializer extends StdDeserializer<CatalogueUser> {
 
-        CatalogueUserDeserializer() { super(CatalogueUser.class) }
+        CatalogueUserDeserializer() { super(CatalogueUser) }
 
         @Override
         CatalogueUser deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {

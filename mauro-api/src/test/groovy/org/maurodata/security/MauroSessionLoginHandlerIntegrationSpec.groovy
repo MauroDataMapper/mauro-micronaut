@@ -3,7 +3,6 @@ package org.maurodata.security
 import io.micronaut.context.annotation.Replaces
 import io.micronaut.http.HttpMethod
 import io.micronaut.http.MutableHttpResponse
-import io.micronaut.http.cookie.Cookies
 import io.micronaut.http.simple.SimpleHttpRequest
 import io.micronaut.http.uri.UriBuilder
 import io.micronaut.security.authentication.Authentication
@@ -16,7 +15,7 @@ import org.maurodata.security.authentication.MauroSessionLoginHandler
 @SecuredContainerizedTest
 class MauroSessionLoginHandlerIntegrationSpec extends SecuredIntegrationSpec {
 
-    static String KEYCLOAK_LOGIN_PATH = '/oauth/login/keycloak'
+    private static final String KEYCLOAK_LOGIN_PATH = '/oauth/login/keycloak'
 
     @Inject
     @Shared

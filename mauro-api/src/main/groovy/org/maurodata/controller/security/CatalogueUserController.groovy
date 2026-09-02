@@ -1,9 +1,12 @@
 package org.maurodata.controller.security
 
+import io.micronaut.http.annotation.Get
+import io.micronaut.http.annotation.Post
+import io.micronaut.http.annotation.Produces
+import io.micronaut.http.annotation.Put
 import io.swagger.v3.oas.annotations.Operation
 import org.maurodata.domain.config.ApiProperty
 import org.maurodata.domain.search.dto.SearchRequestDTO
-import org.maurodata.domain.security.Role
 import org.maurodata.persistence.cache.ItemCacheableRepository.ApiPropertyCacheableRepository
 import org.maurodata.service.authentication.UsernamePasswordService
 import org.maurodata.service.email.EmailService
@@ -21,7 +24,8 @@ import org.maurodata.audit.Audit
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
-import io.micronaut.http.annotation.*
+import io.micronaut.http.annotation.Body
+import io.micronaut.http.annotation.Controller
 import io.micronaut.http.exceptions.HttpStatusException
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.authentication.AuthorizationException
@@ -398,7 +402,7 @@ class CatalogueUserController extends ItemController<CatalogueUser> implements C
 
         if(existing==null){
             log.debug("User with id ${id} not found")
-            throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, 'User with id ${id} not found')
+            throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "User with id ${id} not found")
         }
 
         log.debug("Resetting user '${existing.emailAddress}' password(Actor: '${accessControlService.user.emailAddress}')")
@@ -413,8 +417,8 @@ class CatalogueUserController extends ItemController<CatalogueUser> implements C
         final String SITE_URL = ApiProperty.ApiPropertyEnum.SITE_URL.key
         final String EMAIL_PASSWORD_RESET_SUBJECT = ApiProperty.ApiPropertyEnum.EMAIL_PASSWORD_RESET_SUBJECT.key
         final String EMAIL_PASSWORD_RESET_BODY = ApiProperty.ApiPropertyEnum.EMAIL_PASSWORD_RESET_BODY.key
-        final String EMAIL_FROM_NAME = ApiProperty.ApiPropertyEnum.EMAIL_FROM_NAME.key
-        final String EMAIL_FROM_ADDRESS = ApiProperty.ApiPropertyEnum.EMAIL_FROM_ADDRESS.key
+        // final String EMAIL_FROM_NAME = ApiProperty.ApiPropertyEnum.EMAIL_FROM_NAME.key
+        // final String EMAIL_FROM_ADDRESS = ApiProperty.ApiPropertyEnum.EMAIL_FROM_ADDRESS.key
 
         ApiProperty siteUrlProperty = apiPropertyCacheableRepository.findByKey(SITE_URL)
         ApiProperty emailPasswordResetSubjectProperty = apiPropertyCacheableRepository.findByKey(EMAIL_PASSWORD_RESET_SUBJECT)

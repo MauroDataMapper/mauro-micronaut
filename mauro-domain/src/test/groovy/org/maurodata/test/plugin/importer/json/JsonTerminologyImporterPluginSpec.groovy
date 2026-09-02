@@ -18,9 +18,9 @@ import spock.lang.Specification
 
 @MicronautTest
 class JsonTerminologyImporterPluginSpec extends Specification {
-    static String NAMESPACE = JsonPluginConstants.NAMESPACE
-    static String NAME = JsonPluginConstants.JSON_TERMINOLOGY_NAME
-    static String VERSION = JsonPluginConstants.VERSION
+    private static final String NAMESPACE = JsonPluginConstants.NAMESPACE
+    private static final String NAME = JsonPluginConstants.JSON_TERMINOLOGY_NAME
+    private static final String VERSION = JsonPluginConstants.VERSION
 
     @Inject
     ObjectMapper objectMapper
@@ -28,7 +28,7 @@ class JsonTerminologyImporterPluginSpec extends Specification {
     @Inject
     MauroPluginService mauroPluginService
 
-    def "test JSON terminology import"() {
+    void "test JSON terminology import"() {
 
         when:
         Terminology testTerminology = TerminologySpec.testTerminology
@@ -55,7 +55,7 @@ class JsonTerminologyImporterPluginSpec extends Specification {
         importedModels.first().termRelationshipTypes.first().displayLabel == 'Broader Than'
     }
 
-    def "test JSON terminology import- bad file -should fail with BADREQUEST exception"() {
+    void "test JSON terminology import- bad file -should fail with BADREQUEST exception"() {
         given:
         ExportModel exportModel = ExportModel.build {
             exportMetadata {

@@ -25,7 +25,6 @@ import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.annotation.Relation
 import jakarta.persistence.Transient
 import jakarta.validation.constraints.NotBlank
-import jakarta.validation.constraints.Pattern
 
 import java.time.Instant
 
@@ -301,7 +300,9 @@ abstract class AdministeredItem extends Item implements Pathable, DiffableItem {
      * @return The new Path
      */
     Path updatePath() {
-        if (!pathPrefix) throw new MauroInternalException("Class [${this.class.simpleName}] is not Pathable")
+        if (!pathPrefix) {
+            throw new MauroInternalException("Class [${this.class.simpleName}] is not Pathable")
+        }
         List<Path.PathNode> pathNodes = []
         int i = 0
         AdministeredItem node = this
@@ -310,7 +311,7 @@ abstract class AdministeredItem extends Item implements Pathable, DiffableItem {
             if (node.parent == node) { // disallow cycles
                 break
             }
-            i++;
+            i++
             node = node.parent
             if (i > Path.PATH_MAX_NODES) {
                 throw new MauroInternalException("Path exceeded maximum depth of [$Path.PATH_MAX_NODES]")
@@ -330,14 +331,18 @@ abstract class AdministeredItem extends Item implements Pathable, DiffableItem {
     @Transient
     @JsonIgnore
     Path getPathToEdge() {
-        if (!pathPrefix) throw new MauroInternalException("Class [${this.class.simpleName}] is not Pathable")
+        if (!pathPrefix) {
+            throw new MauroInternalException("Class [${this.class.simpleName}] is not Pathable")
+        }
         List<Path.PathNode> pathNodes = []
         int i = 0
         AdministeredItem node = this
         while (node) {
             pathNodes.add(0, new Path.PathNode(prefix: node.pathPrefix, identifier: node.pathIdentifier, modelIdentifier: node.pathModelIdentifier, node: node))
             i++; node = node.parent
-            if (i > Path.PATH_MAX_NODES) throw new MauroInternalException("Path exceeded maximum depth of [$Path.PATH_MAX_NODES]")
+            if (i > Path.PATH_MAX_NODES) {
+                throw new MauroInternalException("Path exceeded maximum depth of [$Path.PATH_MAX_NODES]")
+            }
         }
 
         Path pathToEdge = new Path()
@@ -366,10 +371,14 @@ abstract class AdministeredItem extends Item implements Pathable, DiffableItem {
                 newBreadcrumb.branchName = node.branchName
             }
             breadcrumbs.add(newBreadcrumb)
-            if (node.parent === node || (node instanceof Model && (node.modelVersion || node.branchName || node.modelVersionTag)) ) break
+            if (node.parent === node || (node instanceof Model && (node.modelVersion || node.branchName || node.modelVersionTag)) ) {
+                break
+            }
             // root of Breadcrumbs is the nearest Model type parent of the item
             i++; node = node.parent
-            if (i > Path.PATH_MAX_NODES) throw new MauroInternalException("Breadcrumbs exceeded maximum depth of [$Path.PATH_MAX_NODES]")
+            if (i > Path.PATH_MAX_NODES) {
+                throw new MauroInternalException("Breadcrumbs exceeded maximum depth of [$Path.PATH_MAX_NODES]")
+            }
         }
 
         this.breadcrumbs = breadcrumbs.tail().reverse()

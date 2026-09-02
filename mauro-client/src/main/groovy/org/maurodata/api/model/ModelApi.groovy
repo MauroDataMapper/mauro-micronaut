@@ -1,7 +1,5 @@
 package org.maurodata.api.model
 
-import io.micronaut.http.annotation.Delete
-import io.micronaut.http.annotation.Put
 import org.maurodata.domain.folder.Folder
 import org.maurodata.domain.model.Model
 import org.maurodata.domain.model.version.CreateNewVersionData

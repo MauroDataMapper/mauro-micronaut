@@ -2,7 +2,6 @@ package org.maurodata.domain.facet
 
 import groovy.util.logging.Slf4j
 import io.micronaut.data.annotation.MappedEntity
-import jakarta.persistence.Entity
 import jakarta.persistence.PrePersist
 import jakarta.persistence.PreUpdate
 import org.maurodata.domain.model.ItemReference
@@ -50,8 +49,8 @@ abstract class Facet extends Item implements Pathable, ItemReferencer {
                 multiFacetAwareItemDomainType = multiFacetAwareItem.domainType
             } else {
                 log.error("Trying to save Facet without 'multiFacetAwareItem' set")
-                log.error("" + multiFacetAwareItem)
-                log.error("" + multiFacetAwareItemId)
+                log.error(multiFacetAwareItem?.toString())
+                log.error(multiFacetAwareItemId?.toString())
             }
         }
     }

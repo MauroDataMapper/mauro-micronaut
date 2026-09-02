@@ -15,6 +15,8 @@ class ErrorHandler {
     }
 
     static void handleErrorOnNullObject(HttpStatus httpStatus, @Nullable Object object, String errorMessage) {
-        if (!object) handleError(httpStatus, errorMessage)
+        if (!object) {
+            handleError(httpStatus, errorMessage)
+        }
     }
 }

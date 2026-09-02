@@ -14,7 +14,10 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
 import groovy.transform.MapConstructor
-import io.micronaut.data.annotation.*
+import io.micronaut.data.annotation.Index
+import io.micronaut.data.annotation.Indexes
+import io.micronaut.data.annotation.MappedEntity
+import io.micronaut.data.annotation.Transient
 import org.maurodata.domain.model.Model
 
 @CompileStatic
@@ -27,6 +30,7 @@ class VersionLink extends Facet implements ItemReferencer {
 
     final static String NEW_FORK_OF = "NEW_FORK_OF", NEW_MODEL_VERSION_OF = "NEW_MODEL_VERSION_OF"
     final static Map<String, String> descriptions = [:]
+
     static {
         descriptions.put(NEW_FORK_OF, "New Fork Of")
         descriptions.put(NEW_MODEL_VERSION_OF, "New Model Version Of")

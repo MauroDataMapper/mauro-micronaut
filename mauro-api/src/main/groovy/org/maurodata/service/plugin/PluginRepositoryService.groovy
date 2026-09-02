@@ -39,10 +39,14 @@ class PluginRepositoryService {
 
         plugins.collect {plugin ->
             String version = getLatestVersion(plugin)
-            if (!version) return null
+            if (!version) {
+                return null
+            }
 
             String[] jarUrl = resolveJarUrl(plugin, version)
-            if (!jarUrl) return null
+            if (!jarUrl) {
+                return null
+            }
 
             [
                 plugin : plugin,
@@ -105,11 +109,15 @@ class PluginRepositoryService {
 
         if (version.endsWith("SNAPSHOT")) {
             resolvedVersion = resolveSnapshotVersion(plugin, version)
-            if (resolvedVersion == null) return null
+            if (resolvedVersion == null) {
+                return null
+            }
         }
 
         String moduleFile = resolveModuleFilename(plugin, version, resolvedVersion)
-        if (moduleFile == null) return null
+        if (moduleFile == null) {
+            return null
+        }
 
         return selectJarFromModule(plugin, version, resolvedVersion, moduleFile)
     }
@@ -191,10 +199,14 @@ class PluginRepositoryService {
                         break
                     }
                 }
-                if (selectedVariant != null) break
+                if (selectedVariant != null) {
+                    break
+                }
             }
 
-            if (selectedVariant == null) return null
+            if (selectedVariant == null) {
+                return null
+            }
 
             List<Map<String, Object>> files =
                 (List<Map<String, Object>>) selectedVariant.get("files")
@@ -249,7 +261,7 @@ class PluginRepositoryService {
         }
 
         if (!Files.exists(pluginsDirPath)) {
-            throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, 'Missing plugins directory: ' + pluginsDirPath.toString())
+            throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, 'Missing plugins directory: ' + pluginsDirPath)
         }
 
         final String PLUGINS_IS_MOUNTED = System.getenv("PLUGINS_IS_MOUNTED")
@@ -269,7 +281,7 @@ class PluginRepositoryService {
         String path = saveUrl.getPath()
         int lastSlash = path.lastIndexOf('/')
         if (lastSlash == -1) {
-            throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, 'Malformed URL. Missing path: ' + saveUrl.toString())
+            throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, 'Malformed URL. Missing path: ' + saveUrl)
         }
 
         String fileName = path.substring(lastSlash + 1)

@@ -40,7 +40,7 @@ class AuditIntegrationSpec extends SecuredIntegrationSpec {
 
         when:
         folderApi.update(folderResponse.id, new Folder(label: "Test folder (updated)"))
-        folderResponse2 = folderResponse2 = folderApi.show(folderResponse.id)
+        folderResponse2 = folderApi.show(folderResponse.id)
 
         then:
         folderResponse2.edits.size() == 2

@@ -37,7 +37,7 @@ class JsonTerminologyExporterPlugin implements TerminologyExporterPlugin {
 
     @Override
     String getContentType() {
-        "application/mauro.${Terminology.class.simpleName.toLowerCase()}+json"
+        "application/mauro.${Terminology.simpleName.toLowerCase()}+json"
     }
 
     @Override

@@ -247,7 +247,7 @@ class DataModelIntegrationSpec extends CommonDataSpec {
         // dataClassListResponse.items.path.sort().collect {it.toString()} == ['dm:Test data model$main|dc:Second data class|dc:Third data class (renamed)']
 
         when:
-        HttpResponse response = dataClassApi.delete(
+        dataClassApi.delete(
             dataModelId,
             dataClassId2,
             dataClassId3,
@@ -469,7 +469,7 @@ class DataModelIntegrationSpec extends CommonDataSpec {
         Folder response = folderApi.create(new Folder(label: 'Test folder'))
         folderId = response.id
 
-        DataModel dataModel = dataModelApi.create(folderId, new DataModel(label: 'Test data model'), 'UnknownDataTypeProvider')
+        dataModelApi.create(folderId, new DataModel(label: 'Test data model'), 'UnknownDataTypeProvider')
 
         then:
         HttpClientResponseException exception = thrown()

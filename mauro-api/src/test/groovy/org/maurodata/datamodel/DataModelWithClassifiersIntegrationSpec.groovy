@@ -1,30 +1,13 @@
 package org.maurodata.datamodel
 
-import org.maurodata.api.classifier.ClassificationSchemeApi
-import org.maurodata.api.classifier.ClassifierApi
-import org.maurodata.api.datamodel.DataClassApi
-import org.maurodata.api.datamodel.DataElementApi
-import org.maurodata.api.datamodel.DataModelApi
-import org.maurodata.api.datamodel.DataTypeApi
-import org.maurodata.api.datamodel.EnumerationValueApi
-import org.maurodata.api.facet.MetadataApi
-import org.maurodata.api.facet.ReferenceFileApi
-import org.maurodata.api.facet.SummaryMetadataApi
-import org.maurodata.api.facet.SummaryMetadataReportApi
-import org.maurodata.api.folder.FolderApi
 
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
-import io.micronaut.http.client.exceptions.HttpClientResponseException
-import io.micronaut.runtime.EmbeddedApplication
-import jakarta.inject.Inject
 import jakarta.inject.Singleton
 import spock.lang.Shared
-import org.maurodata.domain.classifier.ClassificationScheme
 import org.maurodata.domain.classifier.Classifier
 import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.facet.Metadata
-import org.maurodata.domain.folder.Folder
 import org.maurodata.persistence.ContainerizedTest
 import org.maurodata.testing.CommonDataSpec
 

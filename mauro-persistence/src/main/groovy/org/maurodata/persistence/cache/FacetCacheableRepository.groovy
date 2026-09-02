@@ -67,7 +67,9 @@ abstract class FacetCacheableRepository<F extends Facet> extends ItemCacheableRe
 
         if (administeredItemAdministeredItemCacheableRepository) {
             AdministeredItem parent = getRepository(item.multiFacetAwareItemDomainType).readById(item.multiFacetAwareItemId)
-            if (parent?.parent?.id) invalidateCachedLookupById(FIND_ALL_BY_PARENT, item.multiFacetAwareItemDomainType, parent.parent.id)
+            if (parent?.parent?.id) {
+                invalidateCachedLookupById(FIND_ALL_BY_PARENT, item.multiFacetAwareItemDomainType, parent.parent.id)
+            }
         }
     }
 

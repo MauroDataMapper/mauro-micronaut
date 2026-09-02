@@ -4,7 +4,6 @@ import groovy.util.logging.Slf4j
 import jakarta.persistence.PrePersist
 import jakarta.persistence.PreUpdate
 import org.maurodata.domain.diff.AnnotationDiff
-import org.maurodata.domain.diff.RuleDiff
 import org.maurodata.domain.model.Item
 import org.maurodata.domain.model.ItemUtils
 
@@ -18,7 +17,6 @@ import io.micronaut.data.annotation.Indexes
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Relation
 import io.micronaut.data.annotation.Transient
-import org.maurodata.domain.diff.BaseCollectionDiff
 import org.maurodata.domain.diff.CollectionDiff
 import org.maurodata.domain.diff.DiffBuilder
 import org.maurodata.domain.diff.DiffableItem
@@ -59,8 +57,8 @@ class Annotation extends Facet implements DiffableItem<Annotation> {
                 parentAnnotationId = parentAnnotation.id
             } else {
                 log.error("Trying to save a child Annotation without parent id being saved")
-                log.error("" + label)
-                log.error("" + parentAnnotation.label)
+                log.error(label)
+                log.error(parentAnnotation.label)
             }
         }
         if(!multiFacetAwareItemId) {
@@ -73,11 +71,11 @@ class Annotation extends Facet implements DiffableItem<Annotation> {
             } else {
                 log.error("Trying to save Annotation without 'multiFacetAwareItem' set")
 
-                log.error("" + multiFacetAwareItem)
-                log.error("" + multiFacetAwareItemId)
-                log.error("" + parentAnnotation)
-                log.error("" + parentAnnotation?.multiFacetAwareItem)
-                log.error("" + parentAnnotation?.multiFacetAwareItemId)
+                log.error(multiFacetAwareItem?.toString())
+                log.error(multiFacetAwareItemId?.toString())
+                log.error(parentAnnotation?.toString())
+                log.error(parentAnnotation?.multiFacetAwareItem?.toString())
+                log.error(parentAnnotation?.multiFacetAwareItemId?.toString())
             }
         }
 

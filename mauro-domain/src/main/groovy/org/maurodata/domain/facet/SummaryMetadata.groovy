@@ -1,5 +1,6 @@
 package org.maurodata.domain.facet
 
+import org.maurodata.domain.diff.SummaryMetadataDiff
 import org.maurodata.domain.model.Item
 import org.maurodata.domain.model.ItemReference
 import org.maurodata.domain.model.ItemReferencer
@@ -12,10 +13,16 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
 import groovy.transform.MapConstructor
-import io.micronaut.data.annotation.*
+import io.micronaut.data.annotation.Index
+import io.micronaut.data.annotation.Indexes
+import io.micronaut.data.annotation.MappedEntity
+import io.micronaut.data.annotation.Relation
+import io.micronaut.data.annotation.Transient
 import jakarta.validation.constraints.NotBlank
-import jakarta.validation.constraints.Pattern
-import org.maurodata.domain.diff.*
+import org.maurodata.domain.diff.CollectionDiff
+import org.maurodata.domain.diff.DiffBuilder
+import org.maurodata.domain.diff.DiffableItem
+import org.maurodata.domain.diff.ObjectDiff
 
 @CompileStatic
 @MappedEntity(value = 'summary_metadata', schema = 'core', alias = 'summary_metadata_')

@@ -1,7 +1,6 @@
 package org.maurodata.persistence.terminology.dto
 
 import org.maurodata.domain.terminology.TermRelationship
-import org.maurodata.domain.terminology.TermRelationshipType
 
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.Nullable

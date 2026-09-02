@@ -64,7 +64,9 @@ abstract class ItemController<I extends Item> implements AdministeredItemReader 
             if (defaultItem.hasProperty(key).properties.setter
                 && (isNotClassifiersCollection(key) && it.value instanceof Collection)
                 || it.value instanceof Map) {
-                if (item[key]) throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Collection or Map $key cannot be set directly")
+                if (item[key]) {
+                    throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Collection or Map $key cannot be set directly")
+                }
                 item[key] = null
             }
         }
@@ -73,7 +75,7 @@ abstract class ItemController<I extends Item> implements AdministeredItemReader 
     }
 
     protected boolean isNotClassifiersCollection(String key) {
-        !key.toLowerCase().contains(Classifier.class.simpleName.toLowerCase())
+        !key.toLowerCase().contains(Classifier.simpleName.toLowerCase())
     }
 
     protected Item updateCreationProperties(Item item) {

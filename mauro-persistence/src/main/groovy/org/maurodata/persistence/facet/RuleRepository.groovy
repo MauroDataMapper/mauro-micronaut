@@ -1,7 +1,6 @@
 package org.maurodata.persistence.facet
 
 import org.maurodata.domain.facet.Rule
-import org.maurodata.persistence.model.ItemRepository
 
 import groovy.transform.CompileStatic
 import io.micronaut.data.jdbc.annotation.JdbcRepository

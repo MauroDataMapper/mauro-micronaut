@@ -1,6 +1,5 @@
 package org.maurodata.persistence.security
 
-import org.maurodata.domain.model.AdministeredItem
 
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull

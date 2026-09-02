@@ -36,9 +36,9 @@ class MockFederationClient extends FederationClient {
     @Override
     Map<String, Object> fetchFederatedClientDataAsMap(SubscribedCatalogue subscribedCatalogue, String requestPath) {
         if (requestPath.endsWith("/newerVersions")) {
-            return objectMapper.readValue(newerVersionsString, Map.class)
+            return objectMapper.readValue(newerVersionsString, Map)
         } else {
-            return objectMapper.readValue(publishedModelsString, Map.class)
+            return objectMapper.readValue(publishedModelsString, Map)
         }
     }
 

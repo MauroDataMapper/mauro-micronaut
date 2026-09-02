@@ -161,20 +161,19 @@ class DataElementComponentController extends AdministeredItemController<DataElem
         DataElementComponent dataElementComponent = dataElementComponentRepository.loadWithContent(id)
         ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, dataElementComponent, "Item with id: $id not found")
 
-        accessControlService.checkRole(Role.EDITOR, dataElementToRemove)
-        Long result
+        accessControlService.checkRole(Role.EDITOR, dataElementComponent)
         switch (type) {
             case Type.TARGET:
                 if (!dataElementComponent.targetDataElements.removeIf(de -> de.id == dataElementId)) {
                     ErrorHandler.handleError(HttpStatus.NOT_FOUND, "Item already exists in table DataClassComponentTargetDataElement: $dataElementId")
                 }
-                result = dataElementComponentRepository.removeTargetDataElement(dataElementComponent.id, dataElementId)
+                dataElementComponentRepository.removeTargetDataElement(dataElementComponent.id, dataElementId)
                 break
             case Type.SOURCE:
                 if (!dataElementComponent.sourceDataElements.removeIf(de -> de.id == dataElementId)) {
                     ErrorHandler.handleError(HttpStatus.NOT_FOUND, "Item already exists in table DataClassComponentSourceDataElement: $dataElementId")
                 }
-                result = dataElementComponentRepository.removeSourceDataElement(dataElementComponent.id, dataElementId)
+                dataElementComponentRepository.removeSourceDataElement(dataElementComponent.id, dataElementId)
                 break
             default:
                 ErrorHandler.handleErrorOnNullObject(HttpStatus.UNPROCESSABLE_ENTITY, type, "Type must be source or target")

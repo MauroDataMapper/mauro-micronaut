@@ -12,7 +12,7 @@ import org.maurodata.test.domain.TestModelData
  */
 class TerminologySpec extends Specification {
 
-    static testTerminology = Terminology.build(label: 'ICD 10') {
+    static Terminology testTerminology = Terminology.build(label: 'ICD 10') {
         author "James Welch"
         description "The World Health Organization (WHO) International Classification of Diseases (ICD) is the global standard which categorises and reports diseases to compile health information related to deaths, illness or injury worldwide."
         id UUID.randomUUID()
@@ -52,7 +52,7 @@ class TerminologySpec extends Specification {
     }
 
 
-    def "Test the DSL for creating objects"() {
+    void "Test the DSL for creating objects"() {
 
         when:
         testTerminology

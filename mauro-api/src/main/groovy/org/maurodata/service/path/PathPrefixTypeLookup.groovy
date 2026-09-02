@@ -7,8 +7,6 @@ import org.maurodata.domain.folder.Folder
 import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository
 
-import java.util.Locale
-
 @CompileStatic
 @Slf4j
 class PathPrefixTypeLookup {
@@ -32,7 +30,7 @@ class PathPrefixTypeLookup {
             lookup.putIfAbsent(normalisePathPrefix(domainClass.getPathPrefix()), domainClass.getDomainType())
         }
         //special case ->VersionedFolder = folder with isVersionable() set.
-        lookup.put(normalisePathPrefix('vf'), Folder.class.simpleName)
+        lookup.put(normalisePathPrefix('vf'), Folder.simpleName)
         pathPrefixDomainType = lookup.asImmutable()
 
     }
