@@ -29,8 +29,8 @@ subprojects {
             implementation("io.micronaut.validation:micronaut-validation")
             implementation("jakarta.validation:jakarta.validation-api")
             implementation("io.micronaut.groovy:micronaut-runtime-groovy")
-            implementation("org.apache.groovy:groovy-json:4.0.33")
-            implementation("org.apache.groovy:groovy-xml:4.0.33")
+            implementation("org.apache.groovy:groovy-json:5.1.1")
+            implementation("org.apache.groovy:groovy-xml:5.1.1")
             implementation("ch.qos.logback:logback-classic")
             implementation("ch.qos.logback:logback-core")
             runtimeOnly("org.yaml:snakeyaml")
@@ -56,7 +56,7 @@ subprojects {
 
         if (plugins.hasPlugin('codenarc')) {
             dependencies {
-                codenarc 'org.apache.groovy:groovy-all:4.0.33'
+                codenarc 'org.apache.groovy:groovy-all:5.1.1'
                 codenarc 'org.codenarc:CodeNarc:3.7.0-groovy-4.0'
             }
 
