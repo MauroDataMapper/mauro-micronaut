@@ -176,8 +176,7 @@ jobs:
                   ) | not
                 )
               | "result[\($i)] ruleId=\($res.ruleId // "null") message=\($res.message|tostring)"
-          done
-          ' "$f"
+            ' "$f"
           done
 
       - name: Upload MegaLinter scan results to GitHub Security tab
