@@ -62,4 +62,6 @@ ruleset {
     JUnitPublicProperty(enabled: false)
     JUnitPublicNonTestMethod(enabled: false)
     JUnitTestMethodWithoutAssert(enabled: false)
+
+    ImplementationAsType(enabled: false)
 }

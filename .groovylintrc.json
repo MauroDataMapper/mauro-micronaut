@@ -65,6 +65,8 @@
 
     "JUnitPublicProperty": "off",
     "JUnitPublicNonTestMethod": "off",
-    "JUnitTestMethodWithoutAssert": "off"
+    "JUnitTestMethodWithoutAssert": "off",
+
+    "ImplementationAsType": "off"
   }
 }
