@@ -122,7 +122,7 @@ jobs:
               mega-linter.log
 
       - name: Debug invalid SARIF results
-        if: github.ref == 'refs/heads/develop' && (success() || failure())
+        if: (success() || failure())
         run: |
           FILE=megalinter-reports/megalinter-report.sarif
           jq -r '
@@ -136,7 +136,7 @@ jobs:
 
       - name: Upload MegaLinter scan results to GitHub Security tab
         if: (success() || failure())
-        uses: github/codeql-action/upload-sarif@v2
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: megalinter-reports/megalinter-report.sarif
           ref: refs/heads/${{ github.head_ref || github.ref_name }}
