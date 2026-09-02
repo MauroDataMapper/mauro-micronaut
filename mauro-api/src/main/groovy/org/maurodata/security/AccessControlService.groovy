@@ -2,6 +2,8 @@ package org.maurodata.security
 
 import org.maurodata.domain.folder.Folder
 import org.maurodata.exception.MauroApplicationException
+import org.maurodata.persistence.ContentHandler
+import org.maurodata.persistence.ContentsService
 import org.maurodata.domain.security.ApplicationRole
 import org.maurodata.domain.security.CatalogueUser
 import org.maurodata.domain.security.Role
@@ -35,6 +37,9 @@ class AccessControlService implements Toggleable {
     @Inject
     @Nullable
     SecurityService securityService
+
+    @Inject
+    ContentsService contentsService
 
     @Inject
     PathRepository pathRepository
@@ -155,6 +160,9 @@ class AccessControlService implements Toggleable {
     }
 
     boolean permissionsAllowAction(@NonNull Role role, @NonNull AdministeredItem item) {
+        // We clone the item so that any changes made as part of calculating permissions... e.g. parents / children are ignored
+        AdministeredItem itemCopy = item.clone()
+
         // if security is disabled, allow all actions
         if (!enabled) {
             return true
@@ -164,10 +172,10 @@ class AccessControlService implements Toggleable {
             return true
         }
 
-        List<AdministeredItem> parents = pathRepository.readParentItems(item)
-        Model owningModel = item.owner
+        List<AdministeredItem> parents = pathRepository.readParentItems(itemCopy)
+        Model owningModel = itemCopy.owner
         if(!owningModel) {
-            throw new MauroApplicationException("Item ${item.label} does not have an owner and should have one")
+            throw new MauroApplicationException("Item ${itemCopy.label} does not have an owner and should have one")
         }
 
         // We can also do anything if we created the model in question
@@ -178,12 +186,23 @@ class AccessControlService implements Toggleable {
         List<Folder> owningFolders = parents.findAll {it instanceof Folder} as List<Folder>
         List<UserGroup> userGroups = isUserAuthenticated() ? userGroupRepository.readAllByCatalogueUserId(userId) : []
 
+        List<Model> childModels = []
+        if(itemCopy instanceof Folder) {
+            ContentHandler contentHandler = contentsService.loadTree(itemCopy, false) // rootFolder may be null
+            childModels = contentHandler.allItems.values() as List<Model> // These are all models when loading the tree
+        }
+
+
         switch (role) {
             case Role.READER:
-                if (owningModel.readableByEveryone || owningFolders.find {it.readableByEveryone}) {
+                if (owningModel.readableByEveryone
+                    || owningFolders.find {it.readableByEveryone}
+                    || childModels.find {it.readableByEveryone}) {
                     return true
                 }
-                if (owningModel.readableByAuthenticatedUsers || owningFolders.find {it.readableByAuthenticatedUsers}) {
+                if (owningModel.readableByAuthenticatedUsers
+                    || owningFolders.find {it.readableByAuthenticatedUsers}
+                    || childModels.find {it.readableByAuthenticatedUsers}) {
                     return isUserAuthenticated()
                 }
             case Role.REVIEWER:
