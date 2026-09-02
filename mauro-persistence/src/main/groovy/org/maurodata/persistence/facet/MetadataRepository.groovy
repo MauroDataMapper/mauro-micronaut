@@ -17,6 +17,10 @@ abstract class MetadataRepository implements FacetRepository<Metadata> {
 
     abstract List<Metadata> findByMultiFacetAwareItemIdAndNamespace(UUID ownerId, String namespace)
 
+    abstract List<Metadata> findByMultiFacetAwareItemIdInAndNamespaceAndKey(List<UUID> ownerIds, String namespace, String key)
+
+    abstract List<Metadata> findByMultiFacetAwareItemIdInAndKey(List<UUID> ownerIds, String key)
+
 
 
     @Query(value = '''select distinct namespace, key from core.metadata order by namespace;''')
