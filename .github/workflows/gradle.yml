@@ -146,7 +146,7 @@ jobs:
           }' megalinter-reports/megalinter-report.sarif
 
       - name: Find SARIF results with unusable message
-        if: github.ref == 'refs/heads/develop' && (success() || failure())
+        if: (success() || failure())
         run: |
           for f in megalinter-reports/*.sarif; do
             echo "=== $f ==="
