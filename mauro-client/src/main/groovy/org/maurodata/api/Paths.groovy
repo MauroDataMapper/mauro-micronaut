@@ -347,6 +347,8 @@ interface Paths {
     */
     String SEARCH_GET = '/api/catalogueItems/search{?requestDTO*}'
     String SEARCH_POST = '/api/catalogueItems/search'
+    String SEARCH_KEYWORD_GET = '/api/catalogueItems/keywordSearch{?requestDTO*}'
+    String SEARCH_KEYWORD_POST = '/api/catalogueItems/keywordSearch'
     String SEARCH_REBUILD_INDEXES = '/api/searchIndex/rebuild'
     /*
     * OpenidProviderApi
