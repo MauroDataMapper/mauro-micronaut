@@ -19,11 +19,14 @@ import org.maurodata.persistence.facet.SummaryMetadataRepository
 import org.maurodata.persistence.facet.VersionLinkRepository
 import org.maurodata.persistence.model.ItemRepository
 import org.maurodata.persistence.facet.SemanticLinkRepository
+import org.maurodata.web.ListResponse
+import org.maurodata.web.PaginationParams
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.cache.annotation.CacheConfig
 import io.micronaut.core.annotation.NonNull
+import io.micronaut.core.annotation.Nullable
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
 
@@ -153,6 +156,9 @@ abstract class FacetCacheableRepository<F extends Facet> extends ItemCacheableRe
             ((EditRepository) repository).readAllByMultiFacetAwareItemIdIn(itemIds)
         }
 
+        ListResponse<Edit> readListResponseByMultiFacetAwareItemId(UUID ownerId, @Nullable PaginationParams params) {
+            ((EditRepository) repository).readListResponseByMultiFacetAwareItemId(ownerId, params)
+        }
         Long deleteByMultiFacetAwareItemIdIn(List<UUID> itemIds) {
             ((EditRepository) repository).deleteByMultiFacetAwareItemIdIn(itemIds)
         }

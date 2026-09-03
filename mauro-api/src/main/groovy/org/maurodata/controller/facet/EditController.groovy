@@ -53,7 +53,7 @@ class EditController extends FacetController<Edit> implements EditApi {
         if (params.sort == null) {
             params.sort = 'dateCreated'
         }
-        ListResponse.from(!administeredItem.edits ? [] : administeredItem.edits, params)
+        editRepository.readListResponseByMultiFacetAwareItemId(administeredItem.id, params)
     }
 
     @Audit

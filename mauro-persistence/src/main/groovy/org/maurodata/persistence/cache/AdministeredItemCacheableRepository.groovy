@@ -37,6 +37,8 @@ import org.maurodata.persistence.model.AdministeredItemRepository
 import org.maurodata.persistence.terminology.TermRelationshipRepository
 import org.maurodata.persistence.terminology.TermRelationshipTypeRepository
 import org.maurodata.persistence.terminology.TermRepository
+import org.maurodata.web.ListResponse
+import org.maurodata.web.PaginationParams
 
 @Slf4j
 @CompileStatic
@@ -64,6 +66,10 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
 
     List<I> readAllByParent(AdministeredItem parent) {
         cachedLookupByParent(READ_ALL_BY_PARENT, domainType, parent)
+    }
+
+    ListResponse<I> readListResponseByParent(AdministeredItem parent, @Nullable PaginationParams params) {
+        repository.readListResponseByParent(parent, params)
     }
 
 
@@ -231,6 +237,10 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
             ((DataClassRepository) repository).readAllByDataModelAndParentDataClassIsNull(dataModel)
         }
 
+        ListResponse<DataClass> readListResponseByDataModelAndParentDataClassIsNull(DataModel dataModel, @Nullable PaginationParams params) {
+            ((DataClassRepository) repository).readListResponseByDataModelAndParentDataClassIsNull(dataModel, params)
+        }
+
         // not cached
         DataClass readByDataModelAndLabelAndParentDataClassIsNull(DataModel dataModel, String label) {
             ((DataClassRepository) repository).readByDataModelAndLabelAndParentDataClassIsNull(dataModel, label)
@@ -316,8 +326,16 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
             ((DataElementRepository) repository).readAllByDataClassId(dataClassId)
         }
 
+        ListResponse<DataElement> readListResponseByDataClassId(UUID dataClassId, @Nullable PaginationParams params) {
+            ((DataElementRepository) repository).readListResponseByDataClassId(dataClassId, params)
+        }
+
         List<DataElement> readAllByDataTypeIn(List<DataType> dataTypes){
             ((DataElementRepository) repository).readAllByDataTypeIn(dataTypes)
+        }
+
+        ListResponse<DataElement> readListResponseByDataModelId(UUID dataModelId, @Nullable PaginationParams params) {
+            ((DataElementRepository) repository).readListResponseByDataModelId(dataModelId, params)
         }
 
         DataElement readByDataClassAndLabel(DataClass dataClass, String label) {
@@ -387,6 +405,10 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
         // not cached
         List<EnumerationValue> readAllByEnumerationType_Id(UUID enumerationTypeId) {
             ((EnumerationValueRepository) repository).readAllByEnumerationTypeId(enumerationTypeId)
+        }
+
+        ListResponse<EnumerationValue> readListResponseByEnumerationTypeId(UUID enumerationTypeId, @Nullable PaginationParams params) {
+            ((EnumerationValueRepository) repository).readListResponseByEnumerationTypeId(enumerationTypeId, params)
         }
 
         List<EnumerationValue> readAllByEnumerationTypeIdIn(Collection<UUID> dataTypeIds) {

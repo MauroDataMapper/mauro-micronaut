@@ -196,13 +196,13 @@ class DataTypeController extends AdministeredItemController<DataType, DataModel>
             return null
         }
         accessControlService.checkRole(Role.READER, parent)
-        List<DataType> dataTypes = administeredItemRepository.readAllByParent(parent)
-        dataTypes.each {
+        ListResponse<DataType> dataTypes = dataTypeRepository.readListResponseByParent(parent, params)
+        dataTypes.items.each {
             updateDerivedProperties(it)
             dataTypeService.getReferenceClassProperties(it)
             dataTypeService.getEnumerationValues(it)
         }
-        ListResponse.from(dataTypes, params)
+        dataTypes
     }
 
     @Operation(summary = "List the data types", description = "Returns the data types. You must have read privileges on the item in question.")
