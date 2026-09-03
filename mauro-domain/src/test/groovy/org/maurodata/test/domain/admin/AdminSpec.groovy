@@ -34,7 +34,7 @@ class AdminSpec extends Specification {
             List pluginsList = mauroPluginService.listStandardPlugins()
 
         then:
-            pluginsList.size() == 14
+            pluginsList.size() == 16
             pluginsList.find {
                 it.name == "JsonDataModelImporterPlugin" &&
                 it.displayName == "JSON DataModel Importer" &&
@@ -109,6 +109,18 @@ class AdminSpec extends Specification {
                 it.name == "ProfileSpecificationDataTypeProvider" &&
                 it.displayName == "Profile Specification DataTypes" &&
                 it.version == "1.0.0"
+            }
+            pluginsList.find {
+                it.name == "SyntacticDataElementComparisonProvider" &&
+                it.displayName == "Syntactic DataElement Comparison Provider" &&
+                it.version == "1.0.0" &&
+                it.pluginType == PluginType.DataElementComparisonProvider
+            }
+            pluginsList.find {
+                it.name == "SyntacticDataTypeComparisonProvider" &&
+                it.displayName == "Syntactic DataType Comparison Provider" &&
+                it.version == "1.0.0" &&
+                it.pluginType == PluginType.DataTypeComparisonProvider
             }
 
         when:

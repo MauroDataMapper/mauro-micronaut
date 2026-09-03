@@ -5,9 +5,11 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import jakarta.inject.Inject
 import org.maurodata.ErrorHandler
 import org.maurodata.api.Paths
+import org.maurodata.api.ProducesJsonAndYaml
 import org.maurodata.api.datamodel.DataElementApi
 import org.maurodata.audit.Audit
 import org.maurodata.controller.model.AdministeredItemController
+import org.maurodata.domain.comparison.ComparisonResult
 import org.maurodata.domain.datamodel.DataClass
 import org.maurodata.domain.datamodel.DataElement
 import org.maurodata.domain.datamodel.DataModel
@@ -18,6 +20,7 @@ import org.maurodata.persistence.cache.AdministeredItemCacheableRepository.DataE
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository.DataTypeCacheableRepository
 import org.maurodata.persistence.cache.ModelCacheableRepository.DataModelCacheableRepository
 
+import org.maurodata.service.datamodel.DataElementComparisonService
 import org.maurodata.service.datamodel.DataTypeService
 import org.maurodata.web.ListResponse
 import org.maurodata.web.PaginationParams
@@ -55,16 +58,19 @@ class DataElementController extends AdministeredItemController<DataElement, Data
 
     DataTypeService dataTypeService
 
+    DataElementComparisonService dataElementComparisonService
+
     @Inject
     DataElementController(DataElementCacheableRepository dataElementRepository, DataClassCacheableRepository dataClassRepository,
                           DataModelCacheableRepository dataModelRepository, DataTypeCacheableRepository dataTypeCacheableRepository,
-                          DataTypeService dataTypeService) {
+                          DataTypeService dataTypeService, DataElementComparisonService dataElementComparisonService) {
         super(DataElement, dataElementRepository, dataClassRepository)
         this.dataElementRepository = dataElementRepository
         this.dataModelRepository = dataModelRepository
         this.dataClassRepository = dataClassRepository
         this.dataTypeRepository = dataTypeCacheableRepository
         this.dataTypeService = dataTypeService
+        this.dataElementComparisonService = dataElementComparisonService
     }
 
     @Audit
@@ -228,6 +234,14 @@ class DataElementController extends AdministeredItemController<DataElement, Data
         ListResponse<DataElement> dataElementsResponse = ListResponse.from(dataElements, params)
         dataElementsResponse.items.each {updateDerivedProperties(it as DataElement)}
         dataElementsResponse
+    }
+
+    @Audit
+    @Operation(operationId = 'compareDataElements', summary = "Compare data elements", description = "Compares two data elements using available comparison providers.")
+    @ProducesJsonAndYaml
+    @Get(Paths.DATA_ELEMENT_COMPARE)
+    ListResponse<ComparisonResult> compare(UUID id, UUID otherId) {
+        ListResponse.from(dataElementComparisonService.compare(id, otherId))
     }
 
     /**
