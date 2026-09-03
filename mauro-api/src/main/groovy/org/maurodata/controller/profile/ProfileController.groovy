@@ -102,6 +102,19 @@ class ProfileController implements AdministeredItemReader, ProfileApi {
         getAllProfiles()
     }
 
+    @Audit
+    @Operation(summary = "List the classifying profiles", description = "Returns the classifying profiles.")
+    @Get(Paths.PROFILE_CLASSIFYING_PROVIDERS)
+    List<Profile> classifyingProviders(@Nullable String classifierNamespace, @Nullable String classifierLabel) {
+        if (classifierNamespace && classifierLabel) {
+            return profileService.getClassifyingProfiles(classifierNamespace, classifierLabel)
+        }
+        if (classifierNamespace) {
+            return profileService.getClassifyingProfiles(classifierNamespace)
+        }
+        profileService.getClassifyingProfiles()
+    }
+
 
     @Audit
     @Operation(summary = "Get a profile", description = "Returns a profile.")

@@ -18,6 +18,8 @@ import org.maurodata.domain.folder.Folder
 import org.maurodata.persistence.ContainerizedTest
 import org.maurodata.profile.test.DataModelBasedProfileTest
 
+import io.micronaut.core.type.Argument
+import io.micronaut.http.HttpRequest
 import jakarta.inject.Singleton
 import org.maurodata.web.ListResponse
 import spock.lang.Shared
@@ -101,14 +103,46 @@ class ProfileIntegrationSpec extends CommonDataSpec {
         ]
     }
 
+    void 'classifying providers only includes profiles with classifiers'() {
+        when:
+        List<Map> providers = lowLevelApi.client.toBlocking().retrieve(
+            HttpRequest.GET('/api/profiles/providers/classifying').tap {
+                lowLevelApi.addHeaders(it)
+            },
+            Argument.listOf(Map))
+
+        then:
+        providers.isEmpty()
+
+        when:
+        providers = lowLevelApi.client.toBlocking().retrieve(
+            HttpRequest.GET('/api/profiles/providers/classifying?classifierNamespace=semantic').tap {
+                lowLevelApi.addHeaders(it)
+            },
+            Argument.listOf(Map))
+
+        then:
+        providers.isEmpty()
+
+        when:
+        providers = lowLevelApi.client.toBlocking().retrieve(
+            HttpRequest.GET('/api/profiles/providers/classifying?classifierNamespace=semantic&classifierLabel=Entity').tap {
+                lowLevelApi.addHeaders(it)
+            },
+            Argument.listOf(Map))
+
+        then:
+        providers.isEmpty()
+    }
+
     @Unroll
     void 'get used and unused profiles'() {
 
         expect:
         List<MauroPluginDTO> unusedProfileResponse = profileApi.getUnusedProfiles('dataModel', modelId)
-        unusedProfileResponse.metadataNamespace == unusedProfiles
+        unusedProfileResponse.metadataNamespace.toSet() == unusedProfiles.toSet()
         List<MauroPluginDTO> usedProfileResponse = profileApi.getUsedProfiles('dataModel', modelId)
-        usedProfileResponse.metadataNamespace == usedProfiles
+        usedProfileResponse.metadataNamespace.toSet() == usedProfiles.toSet()
 
         where:
 

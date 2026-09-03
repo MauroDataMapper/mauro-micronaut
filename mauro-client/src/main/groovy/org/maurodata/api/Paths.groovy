@@ -329,6 +329,7 @@ interface Paths {
     */
     String PROFILE_DYNAMIC_PROVIDERS = '/api/profiles/providers/dynamic'
     String PROFILE_PROVIDERS = '/api/profiles/providers'
+    String PROFILE_CLASSIFYING_PROVIDERS = '/api/profiles/providers/classifying{?classifierNamespace,classifierLabel}'
     String PROFILE_SEARCH = '/api/profiles/{namespace}/{name}'
     String PROFILE_SEARCH_ITEM = '/api/{domainType}/{domainId}/profiles/{namespace}/{name}/search'
     String PROFILE_DETAILS = '/api/profiles/providers/{namespace}/{name}{/version}'
