@@ -33,7 +33,7 @@ jobs:
           POSTGRES_DB: sandbox
           POSTGRES_PASSWORD: sandbox
         options: >-
-          --health-cmd pg_isready
+          --health-cmd "pg_isready -U sandbox -d sandbox"
           --health-interval 1s
           --health-timeout 5s
           --health-retries 50
