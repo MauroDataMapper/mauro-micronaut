@@ -27,7 +27,7 @@ dependencies {
     implementation("io.micronaut.cache:micronaut-cache-caffeine")
     implementation("io.micronaut.cache:micronaut-cache-management")
 
-    testRuntimeOnly("org.testcontainers:testcontainers:2.0.3")
+    testRuntimeOnly("org.testcontainers:testcontainers:2.0.5")
     testRuntimeOnly("org.testcontainers:postgresql:1.21.4")
     testRuntimeOnly("org.postgresql:postgresql")
 
