@@ -1,10 +1,16 @@
 package org.maurodata.controller.security
 
+import io.micronaut.http.HttpResponse
+import io.micronaut.http.HttpStatus
+import io.micronaut.http.annotation.Delete
+import io.micronaut.http.exceptions.HttpStatusException
 import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.responses.ApiResponse
 import org.maurodata.api.Paths
 import org.maurodata.api.security.UserGroupApi
 import org.maurodata.audit.Audit
 import org.maurodata.domain.security.CatalogueUser
+import org.maurodata.domain.security.SecurableResourceGroupRole
 import org.maurodata.web.ListResponse
 import org.maurodata.web.PaginationParams
 
@@ -37,6 +43,8 @@ class UserGroupController extends ItemController<UserGroup> implements UserGroup
 
     @Inject
     ItemCacheableRepository.CatalogueUserCacheableRepository catalogueUserRepository
+    @Inject
+    ItemCacheableRepository.SecurableResourceGroupRoleCacheableRepository securableResourceGroupRoleRepository
 
     UserGroupController(ItemCacheableRepository.UserGroupCacheableRepository userGroupRepository) {
         super(userGroupRepository)
@@ -50,6 +58,31 @@ class UserGroupController extends ItemController<UserGroup> implements UserGroup
     UserGroup create(@Body @NonNull UserGroup userGroup) {
         accessControlService.checkAdministrator()
         userGroupRepository.save(userGroup)
+    }
+
+    @Transactional
+    @ApiResponse(responseCode = "204", description = "No content - deleted successfully")
+    @Audit(level = Audit.AuditLevel.FILE_ONLY)
+    @Operation(operationId = 'deleteUserGroup', summary = "Delete a user group", description = "Deletes a user group. It is only available to administrator users.")
+    @Delete(Paths.USER_GROUP_ID)
+    HttpResponse delete(UUID id, @Body @Nullable UserGroup userGroup) {
+        accessControlService.checkAdministrator()
+        UserGroup userGroupToDelete = userGroupRepository.findById(id)
+        List<SecurableResourceGroupRole> securableResourceGroupRoleList =
+            securableResourceGroupRoleRepository.readAllByUserGroupIdIn([id])
+        if(securableResourceGroupRoleList.size() > 0) {
+            securableResourceGroupRoleRepository.deleteAll (securableResourceGroupRoleList)
+        }
+
+        if (userGroupToDelete?.version) {
+            userGroupToDelete.version = userGroup.version
+        }
+        Long deleted = userGroupRepository.delete(userGroup)
+        if (deleted) {
+            return HttpResponse.status(HttpStatus.NO_CONTENT)
+        } else {
+            throw new HttpStatusException(HttpStatus.NOT_FOUND, 'Not found for deletion')
+        }
     }
 
     @Audit

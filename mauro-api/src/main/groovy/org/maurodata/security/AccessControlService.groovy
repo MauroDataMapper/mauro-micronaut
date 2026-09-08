@@ -213,7 +213,7 @@ class AccessControlService implements Toggleable {
                 if(!userAuthenticated) {
                     return false
                 }
-                return canDoRoleWithGroups(role, userGroups, owningModel, owningFolders)
+                return canDoRoleWithGroups(role, userGroups, owningModel, owningFolders, childModels)
         }
 
     }
@@ -282,7 +282,18 @@ class AccessControlService implements Toggleable {
      * role on the model, checking the permissions on the specific model only.
      * @return true if authorised, false otherwise
      */
-    private boolean canDoRoleWithGroups(Role role, List<UserGroup> userGroups, Model model, List<Folder> parentFolders) {
+    private boolean canDoRoleWithGroups(Role role, List<UserGroup> userGroups, Model model, List<Folder> parentFolders, List<Model> childModels = null) {
+
+        if(childModels == null) {
+            if(model instanceof Folder) {
+                ContentHandler contentHandler = contentsService.loadTree(model, false) // rootFolder may be null
+                childModels = contentHandler.allItems.values() as List<Model> // These are all models when loading the tree
+            } else {
+                childModels = []
+            }
+        }
+
+
         List<SecurableResourceGroupRole> securableResourceGroupRoles = securableResourceGroupRoleRepository.readAllBySecurableResourceDomainTypeAndSecurableResourceId(model.domainType, model.id)
 
 
@@ -292,6 +303,16 @@ class AccessControlService implements Toggleable {
         if(canDoRole) {
             return true
         } else {
+            if(role == Role.READER) {
+                if(childModels.any { childModel ->
+                    securableResourceGroupRoleRepository.readAllBySecurableResourceDomainTypeAndSecurableResourceId(childModel.domainType, childModel.id).any { SecurableResourceGroupRole securableResourceGroupRole ->
+                        role <= securableResourceGroupRole.role && securableResourceGroupRole.userGroup.id in userGroups.id
+                    }
+                }) {
+                    return true
+                }
+            }
+
             return parentFolders.any {parentFolder ->
                 List<SecurableResourceGroupRole> folderSecurableResourceGroupRoles = securableResourceGroupRoleRepository.readAllBySecurableResourceDomainTypeAndSecurableResourceId(parentFolder.domainType, parentFolder.id)
                 folderSecurableResourceGroupRoles.any { SecurableResourceGroupRole securableResourceGroupRole ->

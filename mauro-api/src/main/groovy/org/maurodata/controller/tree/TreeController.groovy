@@ -128,6 +128,16 @@ class TreeController implements TreeApi {
             log.trace("Time taken 4: {}", System.currentTimeMillis() - startTime)
             startTime = System.currentTimeMillis()
 
+
+            if( rootFolder && ((pathRepository.readParentItems(rootFolder) as Collection<Folder>)).any {AdministeredItem administeredItem ->
+                Model model = (Model) administeredItem
+                (model.readableByEveryone
+                    ||  (model.readableByAuthenticatedUsers && userAuthenticated)
+                    ||  roleAllowedIds.contains(model.id))
+            }) {
+                readableItems.add(rootFolder.id)
+                makeChildrenVisible(rootFolder, readableItems)
+            }
             contentHandler.allItems.values().each {AdministeredItem administeredItem ->
                 // We know these are really models
                 Model model = (Model) administeredItem
@@ -138,7 +148,6 @@ class TreeController implements TreeApi {
                 if (model.readableByEveryone
                     ||  (model.readableByAuthenticatedUsers && userAuthenticated)
                     ||  roleAllowedIds.contains(model.id)
-                    || model.id == id // We've already checked this model is readable, and it might be readable via its parent
                 ) {
                     // First make parents visible
                     Model m = model
