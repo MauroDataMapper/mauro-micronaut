@@ -222,9 +222,9 @@ class AccessControlServiceSpec extends SecuredIntegrationSpec {
 
     void addModelsToAllPaths() {
         componentsByPath.keySet().each {path ->
-            addModelAtPath(path, new DataModel(label: path.last.label + " data model"))
-            addModelAtPath(path, new Terminology(label: path.last.label + " terminology"))
-            addModelAtPath(path, new CodeSet(label: path.last.label + " codeset"))
+            addModelAtPath(path, new DataModel(label: path.last().label + " data model"))
+            addModelAtPath(path, new Terminology(label: path.last().label + " terminology"))
+            addModelAtPath(path, new CodeSet(label: path.last().label + " codeset"))
         }
     }
 
