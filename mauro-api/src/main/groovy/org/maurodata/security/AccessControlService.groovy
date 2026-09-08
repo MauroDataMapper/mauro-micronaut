@@ -1,5 +1,9 @@
 package org.maurodata.security
 
+import org.maurodata.domain.folder.Folder
+import org.maurodata.exception.MauroApplicationException
+import org.maurodata.persistence.ContentHandler
+import org.maurodata.persistence.ContentsService
 import org.maurodata.domain.security.ApplicationRole
 import org.maurodata.domain.security.CatalogueUser
 import org.maurodata.domain.security.Role
@@ -33,6 +37,9 @@ class AccessControlService implements Toggleable {
     @Inject
     @Nullable
     SecurityService securityService
+
+    @Inject
+    ContentsService contentsService
 
     @Inject
     PathRepository pathRepository
@@ -125,53 +132,90 @@ class AccessControlService implements Toggleable {
      * @return true if authorised, false otherwise
      */
     boolean canDoRole(@NonNull Role role, @NonNull AdministeredItem item) {
-        if(item == null) {
-            return false
+        if (item == null || role == null) return false
+
+        return (
+            permissionsAllowAction(role, item)
+                &&
+            itemAllowsAction(role, item)
+        )
+    }
+
+    boolean itemAllowsAction(@NonNull Role role, @NonNull AdministeredItem item) {
+
+        List<AdministeredItem> parents = pathRepository.readParentItems(item)
+        Model owningModel = item.owner
+
+        switch(role) {
+            case Role.READER:
+                return true
+            case Role.REVIEWER:
+            case Role.AUTHOR:
+            case Role.EDITOR:
+            case Role.CONTAINER_ADMIN:
+                return !owningModel.finalised
+            default:
+                return false
         }
+    }
+
+    boolean permissionsAllowAction(@NonNull Role role, @NonNull AdministeredItem item) {
+        // We clone the item so that any changes made as part of calculating permissions... e.g. parents / children are ignored
+        AdministeredItem itemCopy = item.clone()
+
+        // if security is disabled, allow all actions
         if (!enabled) {
             return true
         }
-        if (role <= Role.READER && isAdministrator()) {
-            return true
-        } // always allow Administrator full access
-
-        pathRepository.readParentItems(item)
-        Model owner = item.owner
-
-        if (owner.catalogueUser == null) {
-            AdministeredItemRepository air = pathRepository.getRepository(owner)
-            owner = air.readById(owner.id) as Model
-        }
-
-        List<Model> parentModels = pathRepository.readParentItems(owner) as List<Model>
-        if(role <= Role.EDITOR) {
-            if(item.getOwner().finalised) {
-                return false
-            }
-            if(isAdministrator()) {
-                return true
-            }
-        }
-
-
-        if (userAuthenticated && owner.catalogueUser && owner.catalogueUser.id == getUserId()) return true // always allow owner full access
-
-        // allow Reader access if owning model or parents are publicly readable
-        if (role <= Role.READER &&
-            parentModels.any {Model model ->
-                model.readableByEveryone || (model.readableByAuthenticatedUsers && userAuthenticated)
-            }) {
+        // if we're an administrator, then we can do anything
+        if (isAdministrator()) {
             return true
         }
 
-
-        if (!userAuthenticated) {
-            return false
+        List<AdministeredItem> parents = pathRepository.readParentItems(itemCopy)
+        Model owningModel = itemCopy.owner
+        if(!owningModel) {
+            throw new MauroApplicationException("Item ${itemCopy.label} does not have an owner and should have one")
         }
 
-        // allow role access according to user groups
-        List<UserGroup> userGroups = userGroupRepository.readAllByCatalogueUserId(userId)
-        parentModels.any {canDoRoleWithGroups(role, userGroups, it)}
+        // We can also do anything if we created the model in question
+        if (isUserAuthenticated() && userId && owningModel.catalogueUser && owningModel.catalogueUser.id == userId) {
+            return true
+        }
+
+        List<Folder> owningFolders = parents.findAll {it instanceof Folder} as List<Folder>
+        List<UserGroup> userGroups = isUserAuthenticated() ? userGroupRepository.readAllByCatalogueUserId(userId) : []
+
+        List<Model> childModels = []
+        if(itemCopy instanceof Folder) {
+            ContentHandler contentHandler = contentsService.loadTree(itemCopy, false) // rootFolder may be null
+            childModels = contentHandler.allItems.values() as List<Model> // These are all models when loading the tree
+        }
+
+
+        switch (role) {
+            case Role.READER:
+                if (owningModel.readableByEveryone
+                    || owningFolders.find {it.readableByEveryone}
+                    || childModels.find {it.readableByEveryone}) {
+                    return true
+                }
+                if (owningModel.readableByAuthenticatedUsers
+                    || owningFolders.find {it.readableByAuthenticatedUsers}
+                    || childModels.find {it.readableByAuthenticatedUsers}) {
+                    return isUserAuthenticated()
+                }
+            case Role.REVIEWER:
+            case Role.AUTHOR:
+            case Role.EDITOR:
+            case Role.CONTAINER_ADMIN:
+            default:
+                if(!userAuthenticated) {
+                    return false
+                }
+                return canDoRoleWithGroups(role, userGroups, owningModel, owningFolders, childModels)
+        }
+
     }
 
     /**
@@ -201,6 +245,7 @@ class AccessControlService implements Toggleable {
 
         // Permitted roles
         final List<Model> parentModels = pathRepository.readParentItems(owner) as List<Model>
+        final List<Folder> parentFolders = parentModels.findAll {it instanceof Folder} as List<Folder>
         List<UserGroup> userGroups = []
         if (userAuthenticated) {
             userGroups = userGroupRepository.readAllByCatalogueUserId(userId)
@@ -220,7 +265,7 @@ class AccessControlService implements Toggleable {
                 break
             }
 
-            if (parentModels.any {canDoRoleWithGroups(role, userGroups, it)}) {
+            if (canDoRoleWithGroups(role, userGroups, owner, parentFolders)) {
                 canDo.add(role)
             }
         }
@@ -237,12 +282,44 @@ class AccessControlService implements Toggleable {
      * role on the model, checking the permissions on the specific model only.
      * @return true if authorised, false otherwise
      */
-    private boolean canDoRoleWithGroups(Role role, List<UserGroup> userGroups, Model model) {
-        List<SecurableResourceGroupRole> securableResourceGroupRoles = securableResourceGroupRoleRepository.readAllBySecurableResourceDomainTypeAndSecurableResourceId(model.domainType, model.id)
-        boolean canDoRole = securableResourceGroupRoles.find {
-            SecurableResourceGroupRole securableResourceGroupRole -> role <= securableResourceGroupRole.role && securableResourceGroupRole.userGroup.id in userGroups.id
+    private boolean canDoRoleWithGroups(Role role, List<UserGroup> userGroups, Model model, List<Folder> parentFolders, List<Model> childModels = null) {
+
+        if(childModels == null) {
+            if(model instanceof Folder) {
+                ContentHandler contentHandler = contentsService.loadTree(model, false) // rootFolder may be null
+                childModels = contentHandler.allItems.values() as List<Model> // These are all models when loading the tree
+            } else {
+                childModels = []
+            }
         }
-        canDoRole
+
+
+        List<SecurableResourceGroupRole> securableResourceGroupRoles = securableResourceGroupRoleRepository.readAllBySecurableResourceDomainTypeAndSecurableResourceId(model.domainType, model.id)
+
+
+        boolean canDoRole = securableResourceGroupRoles.find { SecurableResourceGroupRole securableResourceGroupRole ->
+             role <= securableResourceGroupRole.role && securableResourceGroupRole.userGroup.id in userGroups.id
+        }
+        if(canDoRole) {
+            return true
+        } else {
+            if(role == Role.READER) {
+                if(childModels.any { childModel ->
+                    securableResourceGroupRoleRepository.readAllBySecurableResourceDomainTypeAndSecurableResourceId(childModel.domainType, childModel.id).any { SecurableResourceGroupRole securableResourceGroupRole ->
+                        role <= securableResourceGroupRole.role && securableResourceGroupRole.userGroup.id in userGroups.id
+                    }
+                }) {
+                    return true
+                }
+            }
+
+            return parentFolders.any {parentFolder ->
+                List<SecurableResourceGroupRole> folderSecurableResourceGroupRoles = securableResourceGroupRoleRepository.readAllBySecurableResourceDomainTypeAndSecurableResourceId(parentFolder.domainType, parentFolder.id)
+                folderSecurableResourceGroupRoles.any { SecurableResourceGroupRole securableResourceGroupRole ->
+                    role <= securableResourceGroupRole.role && securableResourceGroupRole.userGroup.id in userGroups.id
+                }
+            }
+        }
     }
 
     boolean isUserAuthenticated() {
@@ -304,7 +381,6 @@ class AccessControlService implements Toggleable {
         if(catalogueUserId && user.id == catalogueUserId) {
             return
         }
-
 
         throw new AuthorizationException(userAuthentication)
     }
