@@ -65,5 +65,7 @@ interface SemanticIndexAdministrationService {
 
     Publisher<String> followJobEvents(UUID jobId, Long afterSequence)
 
+    List<Map<String, Object>> cancelLongRunningDatabaseQueries()
+
     List<SemanticIndexJobDTO> recoverInterruptedJobs()
 }

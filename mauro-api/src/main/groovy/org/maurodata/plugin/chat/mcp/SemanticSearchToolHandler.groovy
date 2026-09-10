@@ -94,8 +94,7 @@ class SemanticSearchToolHandler extends AbstractAnnotatedToolHandler {
             max: Math.min(Math.max(asInteger(arguments.get('max'), DEFAULT_PAGE_SIZE), 1), 20),
             offset: asInteger(arguments.get('offset'), 0),
             includeChunks: asBoolean(arguments.get('includeChunks'), true),
-            deepSearch: asBoolean(arguments.get('deepSearch'), false),
-            rebuildIfEmpty: false
+            deepSearch: asBoolean(arguments.get('deepSearch'), false)
         )
         long requestBuiltAt = System.currentTimeMillis()
         ListResponse<SemanticSearchResultsDTO> response = semanticSearchService.executeSearch(

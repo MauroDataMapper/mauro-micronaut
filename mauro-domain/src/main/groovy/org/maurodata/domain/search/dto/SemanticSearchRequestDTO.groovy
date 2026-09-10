@@ -27,9 +27,6 @@ class SemanticSearchRequestDTO extends SearchRequestDTO {
     Boolean includeChunks = true
 
     @Nullable
-    Boolean rebuildIfEmpty = false
-
-    @Nullable
     UUID likeItemId
 
     @Nullable

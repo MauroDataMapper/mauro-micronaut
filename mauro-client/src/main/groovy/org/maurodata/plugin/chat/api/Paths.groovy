@@ -29,6 +29,14 @@ interface Paths {
     String CHAT_SESSIONS_MESSAGES_LIST = '/api/chat/sessions/{sessionId}/messages/list'
 
     /*
+    * SetSemanticSearchController
+    */
+    String SEMANTIC_SET_SEARCH = '/api/semanticSets/search'
+    String SEMANTIC_SET_CANDIDATES = '/api/semanticSets/{domainType}/{setId}/candidates'
+    String SEMANTIC_SET_INDEX_REBUILD = '/api/semanticSets/indexes/{modelId}/rebuild'
+    String SEMANTIC_SET_INDEX_STATUS = '/api/semanticSets/indexes/{modelId}/status'
+
+    /*
     * SemanticSearchApi
     */
     String SEARCH_SEMANTIC_GET = '/api/catalogueItems/semanticSearch{?requestDTO*}'

@@ -538,6 +538,46 @@ class SemanticRepository {
         Boolean.TRUE.equals(indexingStatus().get('autoReconcile'))
     }
 
+    List<Map<String, Object>> cancelLongRunningSemanticQueries(int minimumAgeSeconds = 60) {
+        try (Connection connection = dataSource.connection;
+             PreparedStatement statement = connection.prepareStatement('''
+                 SELECT pid,
+                        now() - query_start AS query_age,
+                        left(regexp_replace(query, '\\s+', ' ', 'g'), 500) AS query_text,
+                        pg_cancel_backend(pid) AS cancelled
+                 FROM pg_stat_activity
+                 WHERE datname = current_database()
+                   AND pid <> pg_backend_pid()
+                   AND application_name = 'mauro-micronaut'
+                   AND state = 'active'
+                   AND now() - query_start > (?::text || ' seconds')::interval
+                   AND (
+                       query ILIKE '%semantic.semantic_chunk%'
+                    OR query ILIKE '%semantic.semantic_embedding%'
+                    OR query ILIKE '%semantic.set_semantic_embedding%'
+                    OR (
+                           query ILIKE '%WITH selected_sources AS (%'
+                       AND query ILIKE '%search.search_domains%'
+                       )
+                   )
+                 ORDER BY query_start
+             ''')) {
+            statement.setInt(1, Math.max(minimumAgeSeconds, 1))
+            try (ResultSet rs = statement.executeQuery()) {
+                List<Map<String, Object>> rows = new ArrayList<Map<String, Object>>()
+                while (rs.next()) {
+                    rows.add([
+                        pid: Integer.valueOf(rs.getInt('pid')),
+                        queryAge: rs.getString('query_age'),
+                        query: rs.getString('query_text'),
+                        cancelled: Boolean.valueOf(rs.getBoolean('cancelled'))
+                    ] as Map<String, Object>)
+                }
+                rows
+            }
+        }
+    }
+
     Map<String, Object> setIndexingEnabled(boolean enabled) {
         Map<String, Object> control = setIndexingControl('global', enabled)
         Map<String, Object> status = indexingStatus()
@@ -1068,6 +1108,14 @@ class SemanticRepository {
 
     @Connectable
     Map<String, Object> job(UUID jobId) {
+        Map<String, Object> row = findJob(jobId)
+        if (row == null) {
+            throw new IllegalArgumentException("No semantic indexing job ${jobId}")
+        }
+        row
+    }
+
+    Map<String, Object> findJob(UUID jobId) {
         try (Connection connection = dataSource.connection;
              PreparedStatement statement = connection.prepareStatement('''
                  SELECT job.id,
@@ -1105,7 +1153,7 @@ class SemanticRepository {
             statement.setObject(1, jobId)
             try (ResultSet rs = statement.executeQuery()) {
                 if (!rs.next()) {
-                    throw new IllegalArgumentException("No semantic indexing job ${jobId}")
+                    return null
                 }
                 jobMap(rs)
             }
@@ -1166,7 +1214,7 @@ class SemanticRepository {
         jobs(['QUEUED', 'RUNNING', 'INTERRUPTED', 'TO_RESTART'] as List<String>)
     }
 
-    void updateJobStatus(UUID jobId, String status, Map<String, Object> result = null, String error = null) {
+    boolean updateJobStatus(UUID jobId, String status, Map<String, Object> result = null, String error = null) {
         try (Connection connection = dataSource.connection;
              PreparedStatement statement = connection.prepareStatement('''
                  UPDATE semantic.semantic_index_job
@@ -1181,7 +1229,7 @@ class SemanticRepository {
                      END,
                      updated_at = now()
                  WHERE id = ?
-                   AND NOT (status = 'CANCELLED' AND ? = 'RUNNING')
+                   AND (status <> 'CANCELLED' OR ? = 'CANCELLED')
              ''')) {
             statement.setString(1, status)
             statement.setString(2, result == null ? null : JsonOutput.toJson(result))
@@ -1194,7 +1242,9 @@ class SemanticRepository {
             int updated = statement.executeUpdate()
             if (updated > 0) {
                 insertJobEvent(connection, jobId, status, result, error)
+                return true
             }
+            false
         }
     }
 
@@ -1624,6 +1674,9 @@ class SemanticRepository {
                                     UUID mauroModelId = null,
                                     Integer maxRows = null,
                                     boolean force = false) {
+        if ((domainTypes == null || domainTypes.isEmpty()) && mauroModelId != null && maxRows == null) {
+            return countChunksNeedingEmbeddingForModelScope(profile, corpusName, mauroModelId, force)
+        }
         String filterClause = chunkSourceFilterClause(domainTypes, mauroModelId, maxRows)
         String embeddingClause = force ? '' : '''
               AND NOT EXISTS (
@@ -1659,6 +1712,45 @@ class SemanticRepository {
         }
     }
 
+    private int countChunksNeedingEmbeddingForModelScope(EmbeddingProfile profile,
+                                                         String corpusName,
+                                                         UUID mauroModelId,
+                                                         boolean force) {
+        String embeddingClause = force ? '' : '''
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM semantic.semantic_embedding e
+                  WHERE e.chunk_id = c.id
+                    AND e.embedding_profile_id = ?
+                    AND e.content_hash = c.content_hash
+              )
+        '''
+        String sql = """
+            WITH scoped_model_ids(id) AS (
+                ${scopedModelIdsSql()}
+            )
+            SELECT count(*)
+            FROM semantic.semantic_chunk c
+                 JOIN semantic.semantic_corpus corpus ON corpus.id = c.corpus_id
+            WHERE corpus.name = ?
+              AND c.mauro_model_id IN (SELECT id FROM scoped_model_ids)
+              ${embeddingClause}
+        """
+        try (Connection connection = dataSource.connection;
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            int index = 1
+            statement.setObject(index++, mauroModelId)
+            statement.setString(index++, corpusName ?: 'catalogue-items')
+            if (!force) {
+                statement.setObject(index, profile.id)
+            }
+            try (ResultSet rs = statement.executeQuery()) {
+                rs.next()
+                rs.getInt(1)
+            }
+        }
+    }
+
     List<SemanticChunk> nextChunksNeedingEmbedding(EmbeddingProfile profile,
                                                    String corpusName,
                                                    List<String> domainTypes = [],
@@ -1667,6 +1759,9 @@ class SemanticRepository {
                                                    boolean force = false,
                                                    int limit = 512,
                                                    UUID afterChunkId = null) {
+        if ((domainTypes == null || domainTypes.isEmpty()) && mauroModelId != null && maxRows == null) {
+            return nextChunksNeedingEmbeddingForModelScope(profile, corpusName, mauroModelId, force, limit, afterChunkId)
+        }
         String filterClause = chunkSourceFilterClause(domainTypes, mauroModelId, maxRows)
         String keysetClause = afterChunkId == null ? '' : ' AND c.id > ?'
         String embeddingClause = force ? '' : '''
@@ -1708,6 +1803,71 @@ class SemanticRepository {
         try (Connection connection = dataSource.connection;
              PreparedStatement statement = connection.prepareStatement(sql)) {
             int index = bindCatalogueSourceRows(statement, connection, domainTypes, mauroModelId, maxRows)
+            statement.setString(index++, corpusName ?: 'catalogue-items')
+            if (afterChunkId != null) {
+                statement.setObject(index++, afterChunkId)
+            }
+            if (!force) {
+                statement.setObject(index++, profile.id)
+            }
+            statement.setInt(index, Math.max(limit, 1))
+            try (ResultSet rs = statement.executeQuery()) {
+                List<SemanticChunk> chunks = new ArrayList<SemanticChunk>()
+                while (rs.next()) {
+                    chunks.add(chunkFrom(rs))
+                }
+                chunks
+            }
+        }
+    }
+
+    private List<SemanticChunk> nextChunksNeedingEmbeddingForModelScope(EmbeddingProfile profile,
+                                                                        String corpusName,
+                                                                        UUID mauroModelId,
+                                                                        boolean force,
+                                                                        int limit,
+                                                                        UUID afterChunkId) {
+        String keysetClause = afterChunkId == null ? '' : ' AND c.id > ?'
+        String embeddingClause = force ? '' : '''
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM semantic.semantic_embedding e
+                  WHERE e.chunk_id = c.id
+                    AND e.embedding_profile_id = ?
+                    AND e.content_hash = c.content_hash
+              )
+        '''
+        String sql = """
+            WITH scoped_model_ids(id) AS (
+                ${scopedModelIdsSql()}
+            )
+            SELECT c.id,
+                   c.corpus_id,
+                   c.source_type,
+                   c.source_id,
+                   c.source_domain_type,
+                   c.source_label,
+                   c.mauro_model_id,
+                   c.chunk_kind,
+                   c.chunk_group,
+                   c.chunk_ordinal,
+                   c.source_text,
+                   c.content_hash,
+                   c.date_created,
+                   c.last_updated
+            FROM semantic.semantic_chunk c
+                 JOIN semantic.semantic_corpus corpus ON corpus.id = c.corpus_id
+            WHERE corpus.name = ?
+              AND c.mauro_model_id IN (SELECT id FROM scoped_model_ids)
+              ${keysetClause}
+              ${embeddingClause}
+            ORDER BY c.id
+            LIMIT ?
+        """
+        try (Connection connection = dataSource.connection;
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            int index = 1
+            statement.setObject(index++, mauroModelId)
             statement.setString(index++, corpusName ?: 'catalogue-items')
             if (afterChunkId != null) {
                 statement.setObject(index++, afterChunkId)
@@ -2015,6 +2175,253 @@ class SemanticRepository {
         }
     }
 
+    List<SetSemanticMemberEmbedding> setSemanticMemberEmbeddings(EmbeddingProfile profile,
+                                                                 String corpusName,
+                                                                 UUID mauroModelId) {
+        if (profile == null || mauroModelId == null) {
+            return Collections.<SetSemanticMemberEmbedding>emptyList()
+        }
+        String vectorCast = "vector(${Math.max(profile.dimension ?: 0, 1)})"
+        String sql = """
+            WITH scoped_model_ids(id) AS (${scopedModelIdsSql()}),
+            members AS (
+                SELECT t.id AS set_id, 'Terminology'::varchar AS set_domain_type, t.label AS set_label,
+                       t.id AS mauro_model_id, m.id AS member_id, 'Term'::varchar AS member_domain_type,
+                       m.label AS member_label, m.definition AS meaning, m.code AS identifier
+                FROM terminology.terminology t
+                JOIN scoped_model_ids s ON s.id = t.id
+                LEFT JOIN terminology.term m ON m.terminology_id = t.id
+                UNION ALL
+                SELECT cs.id, 'CodeSet', cs.label, cs.id, m.id, 'Term', m.label, m.definition, m.code
+                FROM terminology.code_set cs
+                JOIN scoped_model_ids s ON s.id = cs.id
+                LEFT JOIN terminology.code_set_term cst ON cst.code_set_id = cs.id
+                LEFT JOIN terminology.term m ON m.id = cst.term_id
+                UNION ALL
+                SELECT dt.id, 'DataType', dt.label, dt.data_model_id, ev.id, 'EnumerationValue', ev.label, ev.value, ev.key
+                FROM datamodel.data_type dt
+                JOIN scoped_model_ids s ON s.id = dt.data_model_id
+                LEFT JOIN datamodel.enumeration_value ev ON ev.enumeration_type_id = dt.id
+                WHERE dt.domain_type = 'EnumerationType'
+            )
+            SELECT m.*, family.vector_family, btrim(family.member_text) AS member_text,
+                   embedded.content_hash, embedded.embedding_text
+            FROM members m
+            CROSS JOIN LATERAL (VALUES ('meaning', m.meaning), ('identifier', m.identifier)) family(vector_family, member_text)
+            LEFT JOIN LATERAL (
+                SELECT e.content_hash, e.embedding::${vectorCast}::text AS embedding_text
+                FROM semantic.semantic_chunk c
+                JOIN semantic.semantic_corpus corpus ON corpus.id = c.corpus_id AND corpus.name = ?
+                JOIN semantic.semantic_embedding e ON e.chunk_id = c.id AND e.embedding_profile_id = ?
+                WHERE c.source_type = 'catalogue-item' AND c.source_id = m.member_id
+                  AND c.source_domain_type = m.member_domain_type
+                  AND c.source_text = btrim(family.member_text) AND e.content_hash = c.content_hash
+                ORDER BY c.chunk_ordinal, c.id
+                LIMIT 1
+            ) embedded ON true
+            ORDER BY m.set_domain_type, m.set_id, family.vector_family, m.member_id
+        """
+        try (Connection connection = dataSource.connection;
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setObject(1, mauroModelId)
+            statement.setString(2, corpusName ?: 'catalogue-items')
+            statement.setObject(3, profile.id)
+            try (ResultSet rs = statement.executeQuery()) {
+                List<SetSemanticMemberEmbedding> rows = new ArrayList<SetSemanticMemberEmbedding>()
+                while (rs.next()) {
+                    rows.add(new SetSemanticMemberEmbedding(
+                        setId: (UUID) rs.getObject('set_id'),
+                        setDomainType: rs.getString('set_domain_type'),
+                        setLabel: rs.getString('set_label'),
+                        mauroModelId: (UUID) rs.getObject('mauro_model_id'),
+                        vectorFamily: rs.getString('vector_family'),
+                        memberId: (UUID) rs.getObject('member_id'),
+                        memberDomainType: rs.getString('member_domain_type'),
+                        memberLabel: rs.getString('member_label'),
+                        memberText: rs.getString('member_text'),
+                        contentHash: rs.getString('content_hash'),
+                        embedding: parseVector(rs.getString('embedding_text'))
+                    ))
+                }
+                rows
+            }
+        }
+    }
+
+    void createSetVectorIndex(EmbeddingProfile profile) {
+        String vectorCast = "vector(${Math.max(profile.dimension ?: 0, 1)})"
+        String operatorClass = vectorOperatorClass(profile)
+        String profileId = profile.id.toString().replace("'", "''")
+        String indexName = setVectorIndexName(profile)
+        executeIndexStatementWithProgress(indexName, """
+            CREATE INDEX IF NOT EXISTS ${indexName}
+            ON semantic.set_semantic_embedding
+            USING hnsw ((embedding::${vectorCast}) ${operatorClass})
+            WHERE embedding_profile_id = '${profileId}'
+        """)
+    }
+
+    List<SetSemanticCentroid> setSemanticCentroids(EmbeddingProfile profile,
+                                                  String corpusName,
+                                                  UUID setId,
+                                                  String setDomainType = null) {
+        if (profile == null || setId == null) {
+            return Collections.<SetSemanticCentroid>emptyList()
+        }
+        String vectorCast = "vector(${Math.max(profile.dimension ?: 0, 1)})"
+        String domainClause = setDomainType == null || setDomainType.trim().isEmpty() ? '' : 'AND sse.set_domain_type = ?'
+        String sql = """
+            SELECT sse.set_id,
+                   sse.set_domain_type,
+                   sse.set_label,
+                   sse.mauro_model_id,
+                   sse.vector_family,
+                   sse.centroid_kind,
+                   sse.region_ordinal,
+                   sse.member_count,
+                   sse.source_member_count,
+                   sse.residual_radius,
+                   sse.local_radius,
+                   sse.source_fingerprint,
+                   sse.embedding::${vectorCast}::text AS embedding_text,
+                   sse.metadata::text AS metadata_json
+            FROM semantic.set_semantic_embedding sse
+                 JOIN semantic.semantic_corpus corpus ON corpus.id = sse.corpus_id
+            WHERE corpus.name = ?
+              AND sse.embedding_profile_id = ?
+              AND sse.set_id = ?
+              ${domainClause}
+            ORDER BY sse.vector_family, sse.centroid_kind, sse.region_ordinal
+        """
+        try (Connection connection = dataSource.connection;
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            int index = 1
+            statement.setString(index++, corpusName ?: 'catalogue-items')
+            statement.setObject(index++, profile.id)
+            statement.setObject(index++, setId)
+            if (setDomainType != null && !setDomainType.trim().isEmpty()) {
+                statement.setString(index, setDomainType)
+            }
+            try (ResultSet rs = statement.executeQuery()) {
+                List<SetSemanticCentroid> rows = new ArrayList<SetSemanticCentroid>()
+                while (rs.next()) {
+                    rows.add(setCentroidFrom(rs))
+                }
+                rows
+            }
+        }
+    }
+
+    List<SetSemanticCandidate> searchSetSemanticCandidates(EmbeddingProfile profile,
+                                                           String corpusName,
+                                                           List<SetSemanticCentroid> sourceCentroids,
+                                                           int topN) {
+        querySetSemanticCandidates(profile, corpusName, sourceCentroids, topN, null)
+    }
+
+    /** Score only ANN-shortlisted owners against the source overall centroid. */
+    List<SetSemanticCandidate> overallSetSemanticCandidates(EmbeddingProfile profile, String corpusName,
+                                                           List<SetSemanticCentroid> sources, List<UUID> owners) {
+        if (!owners) return []
+        querySetSemanticCandidates(profile, corpusName,
+            sources.findAll { it.centroidKind == 'overall' && it.vectorFamily == 'meaning' }, owners.size(), owners)
+    }
+
+    List<SetSemanticCandidate> scopedSetSemanticCandidates(EmbeddingProfile profile, String corpus,
+            List<SetSemanticCentroid> sources, int topN, List<UUID> eligible) {
+        if (!eligible) return []
+        querySetSemanticCandidates(profile, corpus, sources, topN, null, eligible, true)
+    }
+
+    private List<SetSemanticCandidate> querySetSemanticCandidates(EmbeddingProfile profile, String corpusName,
+                                                                 List<SetSemanticCentroid> sourceCentroids, int topN,
+                                                                 List<UUID> owners, List<UUID> eligible = null, boolean includeSelf = false) {
+        if (profile == null || sourceCentroids == null || sourceCentroids.isEmpty()) {
+            return Collections.<SetSemanticCandidate>emptyList()
+        }
+        String vectorCast = "vector(${Math.max(profile.dimension ?: 0, 1)})"
+        String distanceExpression = "(sse.embedding::${vectorCast} <=> ?::${vectorCast})"
+        String ownerClause = owners == null ? '' : "AND sse.centroid_kind = 'overall' AND sse.set_id = ANY (?::uuid[])"
+        String sql = """
+            SELECT sse.set_id,
+                   sse.set_domain_type,
+                   sse.set_label,
+                   sse.mauro_model_id,
+                   sse.vector_family,
+                   sse.centroid_kind,
+                   sse.region_ordinal,
+                   sse.member_count,
+                   sse.source_member_count,
+                   sse.metadata::text AS metadata_json,
+                   ${distanceExpression} AS distance
+            FROM semantic.set_semantic_embedding sse
+                 JOIN semantic.semantic_corpus corpus ON corpus.id = sse.corpus_id
+            WHERE corpus.name = ?
+              AND sse.embedding_profile_id = ?
+              AND sse.vector_family = ?
+              AND (? OR NOT (sse.set_id = ? AND sse.set_domain_type = ?))
+              ${eligible == null ? '' : 'AND sse.set_id = ANY (?::uuid[])'}
+              ${ownerClause}
+            ${owners == null ? """ORDER BY sse.embedding::${vectorCast} <=> ?::${vectorCast},
+                         sse.set_domain_type,
+                         sse.set_label,
+                         sse.set_id,
+                         sse.centroid_kind,
+                         sse.region_ordinal""" : ''}
+            LIMIT ?
+        """
+        List<SetSemanticCandidate> candidates = new ArrayList<SetSemanticCandidate>()
+        try (Connection connection = dataSource.connection;
+             SetCandidatePlanScope planScope = owners == null ? new SetCandidatePlanScope(connection) : null;
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            applyHnswSearchSetting(connection, 'catalogue', topN)
+            for (SetSemanticCentroid source : sourceCentroids) {
+                if (source.embedding == null || source.embedding.length == 0) {
+                    continue
+                }
+                String queryVector = vectorLiteral(source.embedding)
+                int index = 1
+                statement.setString(index++, queryVector)
+                statement.setString(index++, corpusName ?: 'catalogue-items')
+                statement.setObject(index++, profile.id)
+                statement.setString(index++, source.vectorFamily)
+                statement.setBoolean(index++, includeSelf || owners != null)
+                statement.setObject(index++, source.setId)
+                statement.setString(index++, source.setDomainType)
+                if (eligible != null) statement.setArray(index++, connection.createArrayOf('uuid', eligible.toArray()))
+                if (owners != null) statement.setArray(index++, connection.createArrayOf('uuid', owners.toArray()))
+                if (owners == null) statement.setString(index++, queryVector)
+                statement.setInt(index, Math.max(1, topN))
+                try (ResultSet rs = statement.executeQuery()) {
+                    while (rs.next()) {
+                        double distance = rs.getDouble('distance')
+                        candidates.add(new SetSemanticCandidate(
+                            sourceSetId: source.setId,
+                            sourceSetDomainType: source.setDomainType,
+                            sourceVectorFamily: source.vectorFamily,
+                            sourceCentroidKind: source.centroidKind,
+                            sourceRegionOrdinal: source.regionOrdinal,
+                            targetSetId: (UUID) rs.getObject('set_id'),
+                            targetSetDomainType: rs.getString('set_domain_type'),
+                            targetSetLabel: rs.getString('set_label'),
+                            targetMauroModelId: (UUID) rs.getObject('mauro_model_id'),
+                            targetVectorFamily: rs.getString('vector_family'),
+                            targetCentroidKind: rs.getString('centroid_kind'),
+                            targetRegionOrdinal: rs.getInt('region_ordinal'),
+                            targetMemberCount: rs.getInt('member_count'),
+                            targetSourceMemberCount: rs.getInt('source_member_count'),
+                            targetMetadata: parseJson(rs.getString('metadata_json')) as Map<String, Object>,
+                            distance: distance,
+                            similarity: 1D - distance
+                        ))
+                    }
+                }
+
+            }
+        }
+        candidates
+    }
+
     void dropVectorIndex(EmbeddingProfile profile) {
         executeIndexStatement("DROP INDEX IF EXISTS semantic.${vectorIndexName(profile)}")
         executeIndexStatement("DROP INDEX IF EXISTS semantic.${vectorIndexName(profile, 'catalogue')}")
@@ -2194,6 +2601,7 @@ class SemanticRepository {
                      c.chunk_id
         """
         try (Connection connection = dataSource.connection;
+             SetCandidatePlanScope planScope = new SetCandidatePlanScope(connection);
              PreparedStatement statement = connection.prepareStatement(sql)) {
             applyHnswSearchSetting(connection, chunkGroup, topN)
             int index = 1
@@ -2338,6 +2746,7 @@ class SemanticRepository {
                      c.chunk_id
         """
         try (Connection connection = dataSource.connection;
+             SetCandidatePlanScope planScope = new SetCandidatePlanScope(connection);
              PreparedStatement statement = connection.prepareStatement(sql)) {
             applyHnswSearchSetting(connection, chunkGroup, topN)
             int index = 1
@@ -2698,6 +3107,11 @@ class SemanticRepository {
         rs.wasNull() ? null : Integer.valueOf(value)
     }
 
+    private static Double doubleOrNull(ResultSet rs, String column) {
+        double value = rs.getDouble(column)
+        rs.wasNull() ? null : Double.valueOf(value)
+    }
+
     private static Object parseJson(String json) {
         if (json == null || json.trim().isEmpty()) {
             return [:] as Map<String, Object>
@@ -2736,6 +3150,25 @@ class SemanticRepository {
             similarity: 1D - distance,
             dateCreated: instant(rs, 'date_created'),
             lastUpdated: instant(rs, 'last_updated')
+        )
+    }
+
+    private static SetSemanticCentroid setCentroidFrom(ResultSet rs) {
+        new SetSemanticCentroid(
+            setId: (UUID) rs.getObject('set_id'),
+            setDomainType: rs.getString('set_domain_type'),
+            setLabel: rs.getString('set_label'),
+            mauroModelId: (UUID) rs.getObject('mauro_model_id'),
+            vectorFamily: rs.getString('vector_family'),
+            centroidKind: rs.getString('centroid_kind'),
+            regionOrdinal: rs.getInt('region_ordinal'),
+            memberCount: rs.getInt('member_count'),
+            sourceMemberCount: rs.getInt('source_member_count'),
+            residualRadius: doubleOrNull(rs, 'residual_radius'),
+            localRadius: doubleOrNull(rs, 'local_radius'),
+            sourceFingerprint: rs.getString('source_fingerprint'),
+            embedding: parseVector(rs.getString('embedding_text')),
+            metadata: parseJson(rs.getString('metadata_json')) as Map<String, Object>
         )
     }
 
@@ -2884,6 +3317,25 @@ class SemanticRepository {
         '[' + vector.collect {float value -> Float.toString(value)}.join(',') + ']'
     }
 
+    private static float[] parseVector(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return new float[0]
+        }
+        String trimmed = value.trim()
+        if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+            trimmed = trimmed.substring(1, trimmed.length() - 1)
+        }
+        if (trimmed.trim().isEmpty()) {
+            return new float[0]
+        }
+        String[] parts = trimmed.split(',')
+        float[] vector = new float[parts.length]
+        for (int i = 0; i < parts.length; i++) {
+            vector[i] = Float.parseFloat(parts[i].trim())
+        }
+        vector
+    }
+
     private static String modelScopeClause(UUID mauroModelId, String modelIdColumn) {
         if (mauroModelId == null) {
             return ''
@@ -2924,6 +3376,18 @@ class SemanticRepository {
                 SELECT id FROM scoped_model_ids
             )
         """
+    }
+
+    List<UUID> setIndexModelScopes(UUID scopeId) {
+        try (Connection connection = dataSource.connection;
+             PreparedStatement statement = connection.prepareStatement(scopedModelIdsSql())) {
+            statement.setObject(1, scopeId)
+            try (ResultSet rs = statement.executeQuery()) {
+                List<UUID> ids = []
+                while (rs.next()) ids.add((UUID) rs.getObject('id'))
+                ids
+            }
+        }
     }
 
     private static String scopedModelIdsSql() {
@@ -3107,6 +3571,20 @@ class SemanticRepository {
                            last_updated
                     FROM source_rows
                          CROSS JOIN LATERAL regexp_split_to_table(description, E'(?:\\r?\\n\\s*){2,}') WITH ORDINALITY AS section(section_text, section_ordinal)
+
+                    UNION ALL
+                    SELECT sr.id,
+                           sr.domain_type,
+                           sr.label,
+                           sr.model_id,
+                           'term-code'::varchar AS chunk_kind,
+                           20 AS chunk_ordinal,
+                           term.code AS source_text,
+                           sr.date_created,
+                           sr.last_updated
+                    FROM source_rows sr
+                         JOIN terminology.term term ON term.id = sr.id
+                    WHERE sr.domain_type = 'Term'
 
                     UNION ALL
                     SELECT sr.id,
@@ -3727,11 +4205,11 @@ class SemanticRepository {
         ProgressLogger progressLogger = new ProgressLogger(dataSource, indexName)
         Thread progressThread = new Thread(progressLogger, "semantic-index-progress-${indexName}")
         progressThread.daemon = true
-        log.info('Creating semantic HNSW index {}', indexName)
+        log.debug('Ensuring semantic HNSW index exists: {}', indexName)
         progressThread.start()
         try {
             executeIndexStatement(sql)
-            log.info('Created semantic HNSW index {} in {}', indexName, formatDuration(System.currentTimeMillis() - start))
+            log.debug('Semantic HNSW index available: {} (checked/created in {})', indexName, formatDuration(System.currentTimeMillis() - start))
         } finally {
             progressLogger.stop()
             progressThread.interrupt()
@@ -3862,6 +4340,18 @@ class SemanticRepository {
         "semantic_embedding_${safeName}${groupSuffix}_hnsw_idx"
     }
 
+    private static String setVectorIndexName(EmbeddingProfile profile) {
+        String safeName = (profile.name ?: 'profile')
+            .replaceAll('[^A-Za-z0-9]+', '_')
+            .replaceAll('^_+', '')
+            .replaceAll('_+$', '')
+            .toLowerCase()
+        if (safeName.length() > 42) {
+            safeName = safeName.substring(0, 42)
+        }
+        "set_semantic_embedding_${safeName}_hnsw_idx"
+    }
+
     private static String vectorOperatorClass(EmbeddingProfile profile) {
         switch (profile.distanceMetric) {
             case 'l2':
@@ -3889,6 +4379,14 @@ class SemanticRepository {
             statement.setTimestamp(index, null)
         } else {
             statement.setTimestamp(index, Timestamp.from(instant))
+        }
+    }
+
+    private static void setDouble(PreparedStatement statement, int index, Double value) {
+        if (value == null) {
+            statement.setObject(index, null)
+        } else {
+            statement.setDouble(index, value)
         }
     }
 
