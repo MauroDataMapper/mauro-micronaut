@@ -163,6 +163,11 @@ class NoOpSemanticIndexAdministrationService implements SemanticIndexAdministrat
     }
 
     @Override
+    List<Map<String, Object>> cancelLongRunningDatabaseQueries() {
+        Collections.emptyList()
+    }
+
+    @Override
     List<SemanticIndexJobDTO> recoverInterruptedJobs() {
         Collections.emptyList()
     }

@@ -23,6 +23,10 @@ class SemanticIndexJobRecoveryListener implements ApplicationEventListener<Start
     @Override
     void onApplicationEvent(StartupEvent event) {
         try {
+            List<Map<String, Object>> cancelledQueries = semanticIndexAdministrationService.cancelLongRunningDatabaseQueries()
+            if (!cancelledQueries.isEmpty()) {
+                log.warn('Cancelled {} long-running semantic database queries during startup: {}', Integer.valueOf(cancelledQueries.size()), cancelledQueries)
+            }
             List<SemanticIndexJobDTO> recovered = semanticIndexAdministrationService.recoverInterruptedJobs()
             if (!recovered.isEmpty()) {
                 log.warn('Recovered {} interrupted semantic indexing jobs: {}', Integer.valueOf(recovered.size()), recovered)

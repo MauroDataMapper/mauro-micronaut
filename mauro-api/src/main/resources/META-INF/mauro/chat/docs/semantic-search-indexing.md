@@ -255,6 +255,7 @@ The implementation provides:
 This section describes a realistic workflow from first inspection to useful search.
 It assumes an administrator is using `curl` and an `apiKey` header.
 
+
 ```shell
 API_KEY='...'
 BASE='http://localhost:8080'
@@ -977,3 +978,241 @@ chat:
 
 For a least-work startup, omit this section entirely or keep the values close to the defaults above.
 Then use the API to create or enable embedding profiles, create explicit model indexes, enable auto-reconcile if desired, and finally enable indexing.
+
+## Derived semantic set indexes
+
+Set indexes shortlist Terminologies, CodeSets and enumeration DataTypes for later semantic comparison. They do not infer term mappings or equivalence. Ordinary catalogue/context semantic search is unchanged. The set-search services and routes belong to the plugin implementation.
+
+### Representation and coverage
+
+Meaning vectors reuse term definitions and enumeration values. Empty definitions are ineligible, with no label fallback. An existing chunk of another kind can be reused if its text is exactly the current definition/value: catalogue chunk deduplication sometimes retains that text as a label. Missing, stale or invalid member embeddings are reported as incomplete coverage of eligible members. Identifier vectors (codes and enumeration keys) are optional and kept in a separate family.
+
+Each usable member is normalised before averaging. The overall vector is the normalised mean of every usable member, including isolated members. A zero/cancelling mean is not indexed; local vectors provide coverage instead. Mixed dimensions fail the rebuild.
+
+Farthest-point sampling starts with the overall vector and stops when the maximum nearest-vector cosine distance reaches the coverage target, or the local-region cap is reached. Member-to-seed distances are cached. Each seed grows a neighbourhood in parallel rounds, taking its next nearest member within the configured neighbourhood radius and strictly before the nearest other seed. Ordinary members can overlap between neighbourhoods; another seed cannot be included. Expansion stops when all members contribute locally, or no neighbourhood can grow.
+
+After averaging, neighbourhoods that move their centroid beyond the coverage radius from their own seed shrink from the furthest end. Coverage is then measured against the actual overall/local centroid vectors. Poorly represented members seed additional regions through the same process. Isolated members can become singleton regions. Not contributing to a local neighbourhood alone does not trigger repair: a member may already be represented by another indexed vector, including the overall vector.
+
+The completed seed construction is compacted using coverage-preserving merges. Nearby region pairs are considered first, with deterministic tie-breakers. Their centroid averages the union of contributing normalised members, counting overlapping contributors only once. A merge is accepted only if every previously covered member remains within the coverage radius of the overall centroid or a remaining region. Cancelling means are rejected.
+
+After no further merge is available, a free slot is filled with the most distant uncovered member as a singleton, and merging is attempted again. This repeats until coverage is met or the configured cap prevents further additions. Singletons that cannot usefully merge remain valid regions. Overall centroids and the primary discovery ranking rule are unchanged. Better geometric coverage does not guarantee identical candidate shortlists.
+
+`coverage-merge-refill-v3` replaces `coverage-regions-v2`. Its version participates in the configuration fingerprint. When indexing and automatic reconciliation are enabled, the existing declaration/rebuild lifecycle regenerates old derived indexes from stored member embeddings. Otherwise use the existing explicit set-index rebuild endpoint. No new embedding-provider calls are required by this derived rebuild. Old vectors remain available until their replacement is published.
+
+Operational metadata includes `mergeCount`, `addedSingletonCount`, covered/uncovered member counts and the final residual radius. Diagnostic coverage/retrieval experiment endpoints and their request fields have been removed; use normal candidates responses and index status for day-to-day operation.
+
+The cap counts **local regions**, excluding the overall centroid. Reaching the cap can leave a measured coverage gap; the index does not claim complete geometric coverage in that case. The recorded seed residual curve describes the initial seed construction and its smoothing repairs, before merging/refill. Every published vector's `residualRadius` is the final worst-covered distance for the entire represented set; `localRadius` is the maximum distance from its contributing members to that vector.
+
+```yaml
+chat:
+  semantic:
+    set-index:
+      max-local-region-count: 16
+      coverage-radius: 0.15
+      neighbourhood-radius: 0.20
+      include-identifiers: false
+      poll-interval: 10s
+      max-centroid-hits-per-vector: 1000
+```
+
+Radii are cosine distances in [0, 2]. These are provisional defaults: calibrate them against subset-retrieval recall on representative catalogue data. One marginally small seed improvement does not terminate sampling. No set-cardinality similarity filter is applied.
+
+### Independent rebuild lifecycle
+
+`semantic.set_semantic_index_state` records derived work separately from ordinary embedding jobs. Automatic reconciliation discovers owners within enabled model/folder declarations. A queued derived rebuild reads existing embeddings; it never invokes an embedding provider, regenerates catalogue chunks, or marks ordinary indexes stale. An explicit derived rebuild can run without a catalogue declaration; subsequent automatic maintenance requires an enabled declaration. Disabling/removing a declaration stops that automatic maintenance but retains the published vectors. The global semantic indexing switch pauses processing; auto-reconcile controls automatic discovery of declarations/configuration changes.
+
+V18 is applied migration history. V19 adds this independent lifecycle without changing ordinary index statuses. It does not attempt to cancel existing jobs or reset stale states left by V18, which cannot safely be distinguished from genuine catalogue changes.
+
+Statuses are `QUEUED`, `RUNNING`, `READY`, `PARTIAL` and `FAILED`. Failures include a completion timestamp and error; the previously published vectors survive. Interrupted workers are detected using PostgreSQL advisory locks and requeued on startup or reconciliation. Changes during a generation increment a revision; publication records the revision read and queues a follow-up if newer changes exist. A source change during calculation discards the attempted replacement and queues another pass. Replacement of vectors in an owner scope and publication of state use one database transaction. If a set has incomplete replacement inputs and previous vectors exist, those vectors are retained and remain explicitly stale/partial. Sets without previous vectors can publish their available partial representation.
+
+Database triggers invalidate containing Terminologies, dependent CodeSets and the DataModels owning enumeration DataTypes when member text, membership, chunks or embeddings change. CodeSets read shared term embeddings, and later source embedding updates queue another derived pass if an earlier pass saw incomplete inputs. Owner deletion removes its derived vectors. Source-chunk deletion immediately marks dependent generations stale; their old vectors remain searchable until a replacement is published. Profile/corpus deletion cascades to derived state and vectors.
+
+An indexed profile cannot change provider, model, dimension or distance metric. Use a new embedding profile for a new embedding model/version, including changed weights behind a mutable model alias. Equal vector dimensions do not establish a shared embedding space. Generation metadata records the profile/model name, algorithm version and configuration fingerprint; external model aliases are not independently versioned by this index.
+
+### Plugin API
+
+All routes below use JSON POST bodies. Reader access is checked for source and returned target sets. Rebuild and full model-state operations require administrator access. `embeddingProfile` and `corpus` are optional for discovery: omission searches all established eligible set-index dimensions. Explicit profiles must be enabled cosine profiles; corpora must be enabled and publicly visible. Rebuild/status operations still require an explicit profile and corpus.
+
+| Route | Operation |
+| --- | --- |
+| `/api/semanticSets/search` | Free-text set search (`query` required). |
+| `/api/semanticSets/{domainType}/{setId}/candidates` | Candidate sets for one source. |
+| `/api/semanticSets/indexes/{modelId}/rebuild` | Queue a derived-only rebuild; folder scopes expand to their models. |
+| `/api/semanticSets/indexes/{modelId}/status` | Inspect derived state for one model owner. |
+
+`domainType` is `Terminology`, `CodeSet` or `DataType`; a source DataType must be an EnumerationType. Enumeration ownership remains `DataType`, not a new domain type.
+
+Example candidate request:
+
+```json
+{"embeddingProfile":"ollama-nomic-embed-text","max":20,"includeIdentifiers":false}
+```
+
+`max` is the number of candidate **sets**, between 1 and 100. Retrieval uses `candidateLimit` (default 100, maximum 1000), capped by `max-centroid-hits-per-vector`, independently of page size and offset. Results expose `candidateBudgetReached` so a bounded, approximate shortlist is not mistaken for an exhaustive comparison. Candidate-set ranking uses overall meaning-centroid similarity where available; text-query ranking uses the best meaning-vector match. Identifier-only candidates follow meaning candidates when identifier retrieval is requested. A single matching region is sufficient evidence for retrieval.
+
+
+Results contain matching-region evidence and an `index` object with freshness, status and generation metadata. Counts distinguish total members, meaning-eligible members, currently usable embeddings, represented members, local contributors and members within the geometric coverage target. `PARTIAL` means some eligible member embeddings were unavailable; geometric coverage gaps are reported separately. A partial generation can be current (`stale: false`). `inputAvailability` describes inputs observed by the last rebuild, separately from retained generation metadata. Metadata describes the published generation; `stale` warns that the underlying source or configuration has since changed.
+
+The derived worker processes up to `chat.semantic.set-index.jobs-per-poll` model/profile
+scopes per poll (default `100`), sequentially, from a queue snapshot. The
+`poll-interval` delay applies after that batch. Poll logs report the initial queue,
+eligible requests, attempts and deferred requests; concurrent invalidations can add
+further work. Attempt logs include the resulting status and source/current revisions,
+so a calculation discarded because its sources changed is distinguishable from a
+published generation. `calculatedVectors` counts the attempted calculation, not any
+older vectors retained for incomplete inputs.
+
+Candidate-set ranking uses meaning overall-to-overall cosine similarity as its
+primary score (`similarity` and `overallSimilarity`). Overall scores are fetched
+for ANN-shortlisted owners even when ANN returned only their regions. Local hits
+still discover candidates; they do not override available overall context.
+`bestVectorSimilarity` retains the strongest individual match. Candidates without
+an available overall comparison follow candidates with overall evidence and use
+best-vector similarity as a fallback (`rankingBasis: best-vector`). Text queries
+continue to use their best vector match.
+
+`sourceRegionCount`, `retrievedSourceRegionCount`, and
+`retrievedSourceRegionFraction` describe distinct meaning source regions with
+retrieved hits relative to all indexed meaning source regions. Multiple target
+hits from one source region count once. These are ANN retrieval diagnostics,
+not thresholded semantic coverage, and do not affect ranking. Missing regions
+may be absent because of the ANN budget. No term-to-term comparison is performed.
+
+### Scoped discovery and catalogue projections
+
+Set discovery accepts `withinModelId` (alias `modelId`) and `domainTypes` using
+ordinary search conventions. A scope may identify a model or a Folder/VersionedFolder;
+folder scopes include models in descendant folders. `domainTypes` may request
+`DataElement`, `DataClass`, `DataModel`, `DataType`, `Terminology` or `CodeSet`.
+An omitted scope searches globally; omitted result types return sets.
+
+The source path accepts a `DataElement` or `DataType` as well as a Terminology or
+CodeSet. A DataElement resolves through its DataType; a ModelDataType resolves its
+Terminology/CodeSet reference, while an EnumerationType uses its own set vectors.
+Unsupported source types produce HTTP 422. The source catalogue item must be readable.
+
+For example, discover candidate standard elements within a destination model:
+
+```shell
+SOURCE_ELEMENT_ID='...'
+DESTINATION_MODEL_ID='...'
+
+curl -sS -X POST \
+  -H "apiKey: $API_KEY" \
+  -H 'Content-Type: application/json' \
+  "$BASE/api/semanticSets/DataElement/$SOURCE_ELEMENT_ID/candidates" \
+  -d "{
+    \"embeddingProfile\": \"ollama-embeddinggemma\",
+    \"withinModelId\": \"$DESTINATION_MODEL_ID\",
+    \"domainTypes\": [\"DataElement\"],
+    \"max\": 20,
+    \"offset\": 0
+  }" | jq
+```
+
+Destination eligibility is resolved before the vector candidate limit: external
+sets referenced by items inside the destination model remain eligible. Different
+items using the same source set remain discoverable; the source item itself is
+excluded. DataClass projection includes all ancestors within scope. Returned
+items are deduplicated, ranked by their strongest supporting overall set similarity,
+and paged after checking access to the projected items. `supportingSets` records
+additional evidence; identifiers and index details of unreadable supporting sets
+are omitted. This does not compare term mappings or establish element equivalence.
+
+Search and candidate endpoints return `SetSemanticSearchResponse`, a `ListResponse`
+with `items`, `count`, and `countIsExact`, plus existing discovery diagnostics.
+For bounded vector searches the count describes the retrieved readable shortlist
+and `countIsExact` is false; it is not an exhaustive count of every possible match.
+Stable score/type/ID ordering supports offset paging for unchanged inputs, although
+ANN search and concurrent index changes do not provide snapshot pagination.
+
+For batch comparison workflows, the caller selects source items and invokes
+`/api/semanticSets/{domainType}/{setId}/candidates` for each source.
+
+### Discovery defaults and response options (2026-09-09)
+
+Discovery has no implicit profile or corpus. Omitted dimensions select all
+established enabled public set-index dimensions; no term embeddings or index jobs
+are created. Source-unavailable dimensions are reported in `dimensions` and do
+not contribute candidates. Explicit invalid dimensions return 422. Omitted scope
+searches globally. `domainTypes` continues to select the requested projection;
+without a projection request the endpoint returns its natural set results.
+
+For more than one contributing corpus/profile, results are deduplicated by type/ID
+and ordered by reciprocal rank fusion: each dimension contributes `1/(60+rank)`.
+`rankingScore` is a fusion score, not cosine similarity. Raw cosine similarities
+remain under `evidence`, attributed to their profile and corpus. Within each
+independent dimension, overall-centroid ranking and strongest-set projection
+aggregation remain unchanged. With one dimension, `similarity` retains its cosine
+meaning. A dimension without usable source vectors contributes no ranking vote.
+
+Responses are compact by default: identity, label, ranking basis/score, per-dimension
+evidence, supporting-set references, and quality summaries. `diagnostics: true`
+restores detailed matches and generation metadata. The compact quality summary
+separates `generationIncomplete`, `inputIncomplete`, `stale`, and
+`coverageTargetMet`; a region-cap-limited generation can have complete inputs.
+No algorithm or stored vector changes are required for these response options.
+
+`candidateLimit` controls the fixed per-source-vector shortlist budget (default
+100), capped by the server setting. Keep it constant across page requests. Neither
+`max` nor `offset` expands the vector window. `countScope: retrieved-shortlist`
+qualifies the returned count; `countIsExact: false` does not claim an exhaustive
+catalogue total. `candidateBudgetReached` reports a full retrieved vector window
+(or truncated source scan for all-source discovery); false does not prove ANN
+exhaustiveness. Pages beyond the shortlist are empty; increase candidateLimit
+explicitly for a broader search. Vector retrieval breaks distance ties by set
+type, label, ID, centroid kind and region ordinal before applying the SQL limit,
+following ordinary semantic search's stable retrieval ordering. Fusion and final
+ranking also use stable identity tie-breakers. This is not a snapshot guarantee
+for ANN or concurrent changes.
+
+Set candidate vector retrieval uses `force_custom_plan` within the retrieval
+scope, restoring the caller's previous setting afterwards, including on query
+failure. This prevents the observed automatic switch to a generic plan as a
+pooled connection warms up. PostgreSQL still chooses the custom plan's access
+path; The observed HNSW path remained repeatable in the runtime tests. The exact
+overall-score follow-up does not force custom planning.
+
+Ordinary semantic search uses the same scoped custom planning in both global
+and model-scoped vector retrieval, including catalogue and context queries.
+Lexical retrieval does not use this scope. The setting is restored before the
+connection is returned to its caller or pool.
+
+### Example: discovery across established dimensions
+
+For example, use all established profiles/corpora to discover DataElements:
+
+```shell
+curl -sS -X POST \
+  -H "apiKey: $API_KEY" \
+  -H 'Content-Type: application/json' \
+  "$BASE/api/semanticSets/DataElement/$SOURCE_ELEMENT_ID/candidates" \
+  -d '{"domainTypes":["DataElement"],"max":5,"offset":0,"candidateLimit":100}' | jq
+```
+
+Add `withinModelId` to constrain destination scope, `embeddingProfile`/`corpus`
+to constrain evidence dimensions, or `diagnostics: true` for investigation.
+Coverage-algorithm tuning remains a separate evaluation step: the cap and radii
+have not been changed by this iteration.
+
+Empty discovery dimensions expose `emptyReason` alongside `sourceAvailable` and
+`retrievedCount`:
+
+- `no_source_vectors`: this source has no usable selected-family set vectors in
+  the dimension.
+- `no_eligible_indexed_destinations`: destination resolution found no indexed
+  sets projecting to eligible items after scope/type and source-item exclusion.
+  This does not distinguish missing destination indexes from absent usage links.
+- `no_readable_candidates_retrieved`: retrieval and final access filtering yielded
+  no candidates within the fixed budget; this is not proof that no match exists.
+
+If no established dimensions are selected, the response-level `emptyReason` is
+`no_established_index_dimensions`. An empty requested page beyond an existing
+shortlist is not reported as an empty dimension.
+
+Rank fusion applies only when more than one dimension contributes candidates.
+When several dimensions are selected but only one contributes, the response
+retains that dimension's cosine `similarity`, original `rankingBasis`, and
+`embeddingProfile`. Empty dimensions remain visible in `dimensions`. Source index
+quality also comes from the contributing dimension, even if an empty dimension
+was examined first.

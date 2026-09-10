@@ -266,7 +266,6 @@ class HybridSearchExecutionService {
         request.topM = request.max
         request.topN = rankWindow
         request.includeChunks = true
-        request.rebuildIfEmpty = false
         request.deepSearch = source.deepSearch == true
         request
     }

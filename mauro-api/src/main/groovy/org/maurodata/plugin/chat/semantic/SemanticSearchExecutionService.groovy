@@ -88,11 +88,6 @@ class SemanticSearchExecutionService implements SemanticSearchService {
         }
         long totalStart = System.currentTimeMillis()
 
-        String indexName = safeRequest.indexName ?: 'catalogue-items-default'
-        if (Boolean.TRUE.equals(safeRequest.rebuildIfEmpty) && !semanticIndexingService.hasEmbeddings(indexName)) {
-            semanticIndexingService.rebuildCatalogueIndex(indexName, safeRequest.corpus ?: 'catalogue-items', safeRequest.domainTypes, safeRequest.withinModelId)
-        }
-
         List<String> corpusNames = searchCorpora(safeRequest)
         long corpusResolvedAt = System.currentTimeMillis()
         if (corpusNames.isEmpty()) {
