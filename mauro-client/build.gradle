@@ -20,6 +20,8 @@ if (!openApiEnabled) {
 
 dependencies {
     implementation project(':mauro-domain')
+    // Proto-plugin: move with SetSemanticSearchResponse to the extracted plugin build.
+    compileOnly 'io.micronaut.data:micronaut-data-model'
 
     annotationProcessor "io.micronaut:micronaut-inject-java"
     annotationProcessor("io.micronaut:micronaut-inject-groovy")
