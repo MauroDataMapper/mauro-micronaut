@@ -97,6 +97,7 @@ dependencies {
 
     // UUIDs
     implementation 'com.fasterxml.uuid:java-uuid-generator:5.1.0'
+    implementation("io.micronaut.picocli:micronaut-picocli")
 }
 
 apply from: 'build-docker.gradle'
