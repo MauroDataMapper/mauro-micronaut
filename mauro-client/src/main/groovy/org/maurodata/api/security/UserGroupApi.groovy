@@ -1,5 +1,7 @@
 package org.maurodata.api.security
 
+import io.micronaut.http.HttpResponse
+import io.micronaut.http.annotation.Delete
 import org.maurodata.api.MauroApi
 import org.maurodata.api.Paths
 import org.maurodata.domain.security.CatalogueUser
@@ -19,6 +21,9 @@ interface UserGroupApi {
 
     @Post(Paths.USER_GROUP_LIST)
     UserGroup create(@Body @NonNull UserGroup userGroup)
+
+    @Delete(Paths.USER_GROUP_ID)
+    HttpResponse delete(UUID id, @Body @Nullable UserGroup userGroup)
 
     @Get(Paths.USER_GROUP_LIST)
     ListResponse<UserGroup> index(@Nullable PaginationParams params)

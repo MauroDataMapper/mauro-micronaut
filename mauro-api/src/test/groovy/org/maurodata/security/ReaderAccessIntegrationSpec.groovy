@@ -154,20 +154,20 @@ class ReaderAccessIntegrationSpec extends SecuredIntegrationSpec {
         loginUser()
 
         when:
-        folderApi.show(folderId)
+        // If you can edit a model, you can see its parent folder
+        Folder showFolder = folderApi.show(folderId)
+
+        then:
+        showFolder.id == folderId
+
+        when: // But not update it
+        folderApi.update(folderId, new Folder(description: 'Updated'))
 
         then:
         HttpClientResponseException exception = thrown()
         exception.status == HttpStatus.FORBIDDEN
 
-        when:
-        folderApi.update(folderId, new Folder(description: 'Updated'))
-
-        then:
-        exception = thrown()
-        exception.status == HttpStatus.FORBIDDEN
-
-        when:
+        when: // or delete it
         folderApi.delete(folderId, new Folder(), true)
 
         then:

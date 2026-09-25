@@ -7,6 +7,7 @@ import org.maurodata.FieldConstants
 import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.persistence.ContentsService
 import org.maurodata.persistence.datamodel.dto.DataModelDTORepository
+import org.maurodata.persistence.dto.HasChildrenDTO
 import org.maurodata.persistence.model.ModelRepository
 
 import groovy.transform.CompileStatic
@@ -68,6 +69,14 @@ abstract class DataModelRepository implements ModelRepository<DataModel> {
 ''',
         nativeQuery = true)
     abstract List<DataModel> getAllModelsByNamespace(String namespace)
+
+
+    @Query(value = '''
+        select id,
+        exists(select 1 from datamodel.data_class where data_model_id = dm.id) as has_children
+        from datamodel.data_model as dm
+        where dm.id in (:dmids)''', nativeQuery = true)
+    abstract List<HasChildrenDTO> getHasChildrenDTOs(Collection<UUID> dmids)
 
 
     @Override

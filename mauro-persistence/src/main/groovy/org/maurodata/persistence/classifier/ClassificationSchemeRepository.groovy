@@ -2,6 +2,7 @@ package org.maurodata.persistence.classifier
 
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.Nullable
+import io.micronaut.data.annotation.Query
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.model.query.builder.sql.Dialect
 import jakarta.inject.Inject
@@ -9,6 +10,7 @@ import org.maurodata.FieldConstants
 import org.maurodata.domain.classifier.ClassificationScheme
 import org.maurodata.persistence.ContentsService
 import org.maurodata.persistence.classifier.dto.ClassificationSchemeDTORepository
+import org.maurodata.persistence.dto.HasChildrenDTO
 import org.maurodata.persistence.model.ModelRepository
 
 @CompileStatic
@@ -45,6 +47,13 @@ abstract class ClassificationSchemeRepository implements ModelRepository<Classif
     Boolean handles(Class clazz) {
         domainClass.isAssignableFrom(clazz)
     }
+
+    @Query(value = '''
+        select id,
+        exists(select 1 from core.classifier where classification_scheme_id = cs.id) as has_children
+        from core.classification_scheme as cs
+        where cs.id in (:csids)''', nativeQuery = true)
+    abstract List<HasChildrenDTO> getHasChildrenDTOs(Collection<UUID> csids)
 
     @Override
     @Nullable
