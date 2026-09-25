@@ -2,10 +2,12 @@ package org.maurodata.api.datamodel
 
 import org.maurodata.api.MauroApi
 import org.maurodata.api.Paths
+import org.maurodata.api.ProducesJsonAndYaml
 import org.maurodata.api.model.AdministeredItemApi
 import org.maurodata.domain.datamodel.DataElement
 import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.datamodel.DataType
+import org.maurodata.domain.comparison.ComparisonResult
 import org.maurodata.web.ListResponse
 import org.maurodata.web.PaginationParams
 
@@ -44,6 +46,10 @@ interface DataTypeApi extends AdministeredItemApi<DataType, DataModel> {
 
     @Get(Paths.DATA_TYPE_DATA_ELEMENTS_PAGED)
     ListResponse<DataElement> listDataElementsForType(UUID dataModelId, UUID dataTypeId, @Nullable PaginationParams params)
+
+    @Get(Paths.DATA_TYPE_COMPARE)
+    @ProducesJsonAndYaml
+    ListResponse<ComparisonResult> compare(UUID id, UUID otherId)
 
     @Get(Paths.PRIMITIVETYPE_DOI)
     Map primitiveTypeDoi(UUID id)
