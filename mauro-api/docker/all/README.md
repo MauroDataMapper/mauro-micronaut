@@ -72,9 +72,17 @@ Point the container at your *init/* directory, and expose the port micronaut is 
 
 To persist the data between shutdown and startup, you must also connect the container to */var/lib/postgresql/data* as read/write.
 
+To start only the internal Postgres database without starting Mauro, pass the
+`--database-maintenance` startup flag:
+
+    # docker run --rm -p 5432:5432 -v /path/to/postgres-data:/var/lib/postgresql/data -it maurodatamapper/mauro:0.0.2-beta --database-maintenance
+
+The container remains running while Postgres is available and exits if Postgres
+stops. The flag requires the image's internal Postgres database; it cannot be
+used when configured to connect to an external database.
+
 ## Running the container with existing data
 
 Either import *.sql* scripts are present in */opt/init/postgres* to be imported at startup, or a pre-existing postgres database
 is present in */var/lib/postgresql/data*. In both these cases, make sure that the datasource for postgres matches up with the
 *application.yml* configuration
-
