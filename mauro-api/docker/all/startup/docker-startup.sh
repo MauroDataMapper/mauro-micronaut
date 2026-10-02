@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
 set -e
 
+rm -f /tmp/database-maintenance
 DATABASE_MAINTENANCE="false"
 for arg in "$@"; do
   case "${arg}" in
     --database-maintenance)
       DATABASE_MAINTENANCE="true"
+      touch /tmp/database-maintenance
       ;;
     *)
       echo "ERROR: Unsupported startup option: ${arg}"
