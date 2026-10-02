@@ -43,6 +43,6 @@ RUN JAVA_BIN="$(readlink -f "$(command -v java)")" && setcap 'cap_net_bind_servi
 
 EXPOSE 5432
 
-HEALTHCHECK --interval=2m --timeout=5s --start-period=2m --retries=3 CMD curl -fsS http://localhost:8080/health || exit 1
+HEALTHCHECK --interval=2m --timeout=5s --start-period=2m --retries=3 CMD docker-healthcheck.sh || exit 1
 
 ENTRYPOINT ["docker-startup.sh"]
