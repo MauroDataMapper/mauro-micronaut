@@ -1,7 +1,10 @@
 package org.maurodata.api.admin
 
+import io.micronaut.http.HttpResponse
+import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.annotation.Get
+import io.micronaut.http.annotation.Part
 import io.micronaut.http.annotation.Post
 import org.maurodata.api.MauroApi
 import org.maurodata.api.Paths
@@ -9,6 +12,8 @@ import org.maurodata.domain.email.Email
 import org.maurodata.domain.security.CatalogueUser
 import org.maurodata.plugin.MauroPluginDTO
 import org.maurodata.web.ListResponse
+
+import io.micronaut.http.multipart.CompletedFileUpload
 
 @MauroApi()
 interface AdminApi {
@@ -65,4 +70,19 @@ interface AdminApi {
 
     @Post(Paths.ADMIN_INSTALL_PROVIDER)
     Map<String, Object> installPlugin(String plugin)
+
+    @Get(Paths.ADMIN_COMMANDS)
+    List<Map<String, String>> commands()
+
+    @Post(Paths.ADMIN_COMMAND_PREPARE)
+    Map<String,Object> planCommand(String commandName, @Body String[] commandArgs)
+
+    @Post(uri = Paths.ADMIN_COMMAND_UPLOAD_FILE, consumes = MediaType.MULTIPART_FORM_DATA)
+    HttpResponse<?> fileCommand(UUID executionId, @Part("position") int position, @Part("file") CompletedFileUpload file)
+
+    @Post(uri = Paths.ADMIN_COMMAND_RUN)
+    HttpResponse<InputStream> runCommand(UUID executionId)
+
+    @Post(uri = Paths.ADMIN_COMMAND_CLOSE)
+    HttpResponse<?> closeCommand(UUID executionId)
 }

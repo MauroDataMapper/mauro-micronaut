@@ -20,6 +20,11 @@ interface Paths {
     String ADMIN_SHUTDOWN = '/api/admin/shutdown'
     String ADMIN_AVAILABLE_PROVIDERS_LIST = '/api/admin/providers/available'
     String ADMIN_INSTALL_PROVIDER = '/api/admin/provider/install/{plugin}'
+    String ADMIN_COMMANDS = '/api/admin/commands'
+    String ADMIN_COMMAND_PREPARE = '/api/admin/command/prepare/{commandName}'
+    String ADMIN_COMMAND_UPLOAD_FILE ='/api/admin/command/file/{executionId}'
+    String ADMIN_COMMAND_RUN = '/api/admin/command/run/{executionId}'
+    String ADMIN_COMMAND_CLOSE = '/api/admin/command/close/{executionId}'
 
     /*
     * ClassificationSchemeApi
