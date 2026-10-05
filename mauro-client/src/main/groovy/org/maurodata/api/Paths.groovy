@@ -354,6 +354,11 @@ interface Paths {
     String OPENID_PROVIDER_LIST = '/api/openidConnectProviders'
 
     /*
+    * SelfClassifierApi
+     */
+    String SELF_CLASSIFIER_PROVIDERS = '/api/selfClassifier/providers{?pluginKind,classifierNamespace,classifierLabel}'
+
+    /*
     * CatalogueUserApi
     */
     String USER_ADMIN_REGISTER = '/api/admin/catalogueUsers/adminRegister'

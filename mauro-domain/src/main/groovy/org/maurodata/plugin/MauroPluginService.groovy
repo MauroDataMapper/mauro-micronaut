@@ -2,6 +2,7 @@ package org.maurodata.plugin
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
+import io.micronaut.core.annotation.Nullable
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
 
@@ -96,5 +97,33 @@ class MauroPluginService {
                 }).sort {it.name}
     }
 
+    List<MauroPlugin> getClassifyingPlugins(@Nullable String pluginKind) {
+        listPlugins().findAll {MauroPlugin plugin ->
+            if (pluginKind != null) {
+                if (plugin.getPluginType().kindMatches(pluginKind)) {
+                    return plugin.getClassifiers()
+                }
+            } else {
+                return plugin.getClassifiers()
+            }
+        }
+    }
 
+    List<MauroPlugin> getClassifyingPlugins(@Nullable String pluginKind, String classifierNamespace) {
+        getClassifyingPlugins(pluginKind).findAll {MauroPlugin plugin ->
+
+            plugin.getClassifiers().find {SelfClassifier classifier ->
+                classifier.namespace == classifierNamespace
+            }
+        }
+    }
+
+    List<MauroPlugin> getClassifyingPlugins(@Nullable String pluginKind, String classifierNamespace, String classifierLabel) {
+        getClassifyingPlugins(pluginKind).findAll {MauroPlugin plugin ->
+            plugin.getClassifiers().find {SelfClassifier classifier ->
+                classifier.namespace == classifierNamespace &&
+                classifier.label == classifierLabel
+            }
+        }
+    }
 }
