@@ -52,6 +52,7 @@ import org.maurodata.domain.datamodel.SubsetData
 import org.maurodata.domain.diff.ObjectDiff
 import org.maurodata.domain.facet.EditType
 import org.maurodata.domain.model.AdministeredItem
+import org.maurodata.domain.model.Breadcrumb
 import org.maurodata.domain.model.Model
 import org.maurodata.domain.model.version.CreateNewVersionData
 import org.maurodata.domain.model.version.FinaliseData
@@ -447,14 +448,23 @@ class DataModelController extends ModelController<DataModel> implements DataMode
 
                 [targetDataModelId, potentialIntersects.findAll {DataElement intersect ->
                     potentialTargetIntersects
-                        .find {intersect.breadcrumbs.tail().collect {new Tuple2(it.domainType, it.label)} == it.breadcrumbs.tail().collect {new Tuple2(it.domainType, it.
-                            label)}}
+                        .find {DataElement targetIntersect ->
+                            modelRelativeBreadcrumbs(intersect.breadcrumbs) == modelRelativeBreadcrumbs(targetIntersect.breadcrumbs)
+                        }
                 }]
             }
 
         ListResponse.from(dataElementsIntersects.collect {UUID targetDataModelId, List<DataElement> intersects ->
             new IntersectsData(sourceDataModelId: sourceDataModel.id, targetDataModelId: targetDataModelId, intersects: intersects.id)
         })
+    }
+
+    private static List<Tuple2<String, String>> modelRelativeBreadcrumbs(List<Breadcrumb> breadcrumbs) {
+        int ownerIndex = breadcrumbs.findIndexOf { Breadcrumb breadcrumb ->
+            breadcrumb.modelVersion || breadcrumb.branchName || breadcrumb.modelVersionTag
+        }
+        List<Breadcrumb> relativeBreadcrumbs = ownerIndex < 0 ? breadcrumbs.tail() : breadcrumbs.subList(ownerIndex + 1, breadcrumbs.size())
+        relativeBreadcrumbs.collect { Breadcrumb breadcrumb -> new Tuple2<String, String>(breadcrumb.domainType, breadcrumb.label) }
     }
 
     @Audit
