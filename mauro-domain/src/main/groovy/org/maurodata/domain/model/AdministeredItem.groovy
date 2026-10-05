@@ -353,12 +353,14 @@ abstract class AdministeredItem extends Item implements Pathable, DiffableItem {
 
     /**
      * Recalculate this item's breadcrumbs from its parents. This item must have all its parent items loaded.
+     * Breadcrumbs contain the item's ancestors, in catalogue order. They include the owning model and continue through
+     * any containing folders to the root of the catalogue.
      * @return The new breadcrumbs
      */
     List<Breadcrumb> updateBreadcrumbs() {
         List<Breadcrumb> breadcrumbs = []
         int i = 0
-        AdministeredItem node = this
+        AdministeredItem node = this.parent === this ? null : this.parent
         while (node) {
             Breadcrumb newBreadcrumb = new Breadcrumb(
                 id: node.id,
@@ -371,17 +373,17 @@ abstract class AdministeredItem extends Item implements Pathable, DiffableItem {
                 newBreadcrumb.branchName = node.branchName
             }
             breadcrumbs.add(newBreadcrumb)
-            if (node.parent === node || (node instanceof Model && (node.modelVersion || node.branchName || node.modelVersionTag)) ) {
+            if (node.parent === node) {
                 break
             }
-            // root of Breadcrumbs is the nearest Model type parent of the item
             i++; node = node.parent
             if (i > Path.PATH_MAX_NODES) {
                 throw new MauroInternalException("Breadcrumbs exceeded maximum depth of [$Path.PATH_MAX_NODES]")
             }
         }
 
-        this.breadcrumbs = breadcrumbs.tail().reverse()
+        Collections.reverse(breadcrumbs)
+        this.breadcrumbs = breadcrumbs
         this.breadcrumbs
     }
 
