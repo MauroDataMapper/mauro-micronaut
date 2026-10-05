@@ -133,11 +133,12 @@ class AccessControlService implements Toggleable {
      */
     boolean canDoRole(@NonNull Role role, @NonNull AdministeredItem item) {
         if (item == null || role == null) return false
-
+        // Take a copy of the item so that any changes made as part of calculating permissions... e.g. parents / children are ignored
+        AdministeredItem itemCopy = (AdministeredItem) item.shallowCopy()
         return (
-            permissionsAllowAction(role, item)
+            permissionsAllowAction(role, itemCopy)
                 &&
-            itemAllowsAction(role, item)
+            itemAllowsAction(role, itemCopy)
         )
     }
 
@@ -152,17 +153,15 @@ class AccessControlService implements Toggleable {
             case Role.REVIEWER:
             case Role.AUTHOR:
             case Role.EDITOR:
-            case Role.CONTAINER_ADMIN:
                 return !owningModel.finalised
+            case Role.CONTAINER_ADMIN:
+                return true
             default:
                 return false
         }
     }
 
     boolean permissionsAllowAction(@NonNull Role role, @NonNull AdministeredItem item) {
-        // We clone the item so that any changes made as part of calculating permissions... e.g. parents / children are ignored
-        AdministeredItem itemCopy = item.clone()
-
         // if security is disabled, allow all actions
         if (!enabled) {
             return true
@@ -172,10 +171,10 @@ class AccessControlService implements Toggleable {
             return true
         }
 
-        List<AdministeredItem> parents = pathRepository.readParentItems(itemCopy)
-        Model owningModel = itemCopy.owner
+        List<AdministeredItem> parents = pathRepository.readParentItems(item)
+        Model owningModel = item.owner
         if(!owningModel) {
-            throw new MauroApplicationException("Item ${itemCopy.label} does not have an owner and should have one")
+            throw new MauroApplicationException("Item ${item.label} does not have an owner and should have one")
         }
 
         // We can also do anything if we created the model in question
@@ -187,8 +186,8 @@ class AccessControlService implements Toggleable {
         List<UserGroup> userGroups = isUserAuthenticated() ? userGroupRepository.readAllByCatalogueUserId(userId) : []
 
         List<Model> childModels = []
-        if(itemCopy instanceof Folder) {
-            ContentHandler contentHandler = contentsService.loadTree(itemCopy, false) // rootFolder may be null
+        if(item instanceof Folder) {
+            ContentHandler contentHandler = contentsService.loadTree(item, false) // rootFolder may be null
             childModels = contentHandler.allItems.values() as List<Model> // These are all models when loading the tree
         }
 

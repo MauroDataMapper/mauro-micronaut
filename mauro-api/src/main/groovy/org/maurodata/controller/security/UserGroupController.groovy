@@ -68,16 +68,19 @@ class UserGroupController extends ItemController<UserGroup> implements UserGroup
     HttpResponse delete(UUID id, @Body @Nullable UserGroup userGroup) {
         accessControlService.checkAdministrator()
         UserGroup userGroupToDelete = userGroupRepository.findById(id)
+        if(!userGroupToDelete) {
+            throw new HttpStatusException(HttpStatus.NOT_FOUND, 'Not found for deletion')
+        }
         List<SecurableResourceGroupRole> securableResourceGroupRoleList =
             securableResourceGroupRoleRepository.readAllByUserGroupIdIn([id])
         if(securableResourceGroupRoleList.size() > 0) {
             securableResourceGroupRoleRepository.deleteAll (securableResourceGroupRoleList)
         }
 
-        if (userGroupToDelete?.version) {
+        if (userGroup?.version) {
             userGroupToDelete.version = userGroup.version
         }
-        Long deleted = userGroupRepository.delete(userGroup)
+        Long deleted = userGroupRepository.delete(userGroupToDelete)
         if (deleted) {
             return HttpResponse.status(HttpStatus.NO_CONTENT)
         } else {

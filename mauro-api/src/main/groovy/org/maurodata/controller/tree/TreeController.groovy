@@ -89,9 +89,7 @@ class TreeController implements TreeApi {
     @Inject
     ContentsService contentsService
 
-    TreeController() {
-    }
-
+    static final String SORT_DELIMITER = '~'
 
     @Audit
     @Operation(summary = "List the trees", description = "Returns the trees. You must have read privileges on the item in question.")
@@ -197,7 +195,10 @@ class TreeController implements TreeApi {
             allModels.addAll(contentHandler.folders[0].findAll{readableItems.contains(it.id)})
         }
 
-        List<TreeItem> items = allModels.collect {TreeItem ti = TreeItem.from(it)
+        List<TreeItem> items = allModels.collect {
+
+            AvailableActions.updateAvailableActions(it, accessControlService)
+            TreeItem ti = TreeItem.from(it)
             if(it instanceof Folder) {
                 ti.hasChildren = (it.childFolders || it.classificationSchemes || it.terminologies || it.codeSets || it.dataModels)
             } else {
@@ -205,7 +206,8 @@ class TreeController implements TreeApi {
             }
             return ti
         }
-        return items.sort{it.label + it.branchName + it.modelVersionTag + it.modelVersion}
+
+        return items.sort{it.label + SORT_DELIMITER + it.branchName + SORT_DELIMITER +  it.modelVersionTag + SORT_DELIMITER + it.modelVersion}
     }
 
 
