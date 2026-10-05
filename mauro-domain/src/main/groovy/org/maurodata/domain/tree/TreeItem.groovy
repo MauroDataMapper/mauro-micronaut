@@ -55,7 +55,11 @@ class TreeItem {
     }
 
     static TreeItem from(AdministeredItem item) {
-        new TreeItem(id: item.id, label: item.label, domainType: item.domainType, item: item, availableActions: new ArrayList<String>(item.availableActions?:[]),
+        new TreeItem(id: item.id,
+                     label: item.label,
+                     domainType: item.domainType,
+                     item: item,
+                     availableActions: new ArrayList<String>(item.availableActions?:[]),
                      path: item.updatePath().toString(),
                      localPath: item.localPath.toString(),
                      model: item.getOwner(),

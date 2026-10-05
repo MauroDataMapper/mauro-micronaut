@@ -754,6 +754,48 @@ class ContentHandler {
         return dataElementComponents.first()
     }
 
+    void loadTreeContent(Folder folder = null, Boolean foldersOnly = false) {
+
+        if (!folder) {
+            folders[0] = folderCacheableRepository.readAllRootFolders() as Set<Folder>
+        } else {
+            folders[0] = [folder] as Set<Folder>
+        }
+        int depth = 1
+        Set<UUID> foundFolders = folders[0]*.id as Set<UUID>
+        do {
+            List<Folder> retrievedFolders = inBatchesRead(foundFolders as List<UUID>, batchSize) {List batch ->
+                folderCacheableRepository.readAllByFolderIdIn(batch)
+            }
+            foundFolders = retrievedFolders*.id as Set
+            if (foundFolders) {
+                folders[depth] = retrievedFolders as Set
+            }
+            depth++
+        } while (foundFolders.size() > 0)
+        final Set<Folder> foldersValuesFlatten = (Set<Folder>) folders.values().flatten()
+        allItems.putAll(foldersValuesFlatten.collectEntries {[it.id, it]})
+        if (foldersValuesFlatten && !foldersOnly) {
+            classificationSchemes = inBatchesReadSet(foldersValuesFlatten*.id, batchSize) {List<UUID> batch ->
+                classificationSchemeCacheableRepository.readAllByFolderIdIn(batch)
+            }
+            allItems.putAll(classificationSchemes.collectEntries {[it.id, it]})
+            terminologies = inBatchesReadSet(foldersValuesFlatten*.id, batchSize) {List batch ->
+                terminologyCacheableRepository.readAllByFolderIdIn(batch)
+            }
+            allItems.putAll(terminologies.collectEntries {[it.id, it]})
+            codeSets = inBatchesReadSet(foldersValuesFlatten*.id, batchSize) {List batch ->
+                codeSetCacheableRepository.readAllByFolderIdIn(batch)
+            }
+            allItems.putAll(codeSets.collectEntries {[it.id, it]})
+            dataModels = inBatchesReadSet(foldersValuesFlatten*.id, batchSize) {List batch ->
+                dataModelCacheableRepository.readAllByFolderIdIn(batch)
+            }
+            allItems.putAll(dataModels.collectEntries {[it.id, it]})
+        }
+        reassemble()
+    }
+
     void loadContent() {
         if (folders[0]) {
             int depth = 1
@@ -1090,19 +1132,20 @@ class ContentHandler {
                 classifierMap[classifierJoinDTO.classifierId]
             )
         }
-
-        annotations[0].each {annotation ->
-            if(allItems[annotation.multiFacetAwareItemId]) {
-                allItems[annotation.multiFacetAwareItemId].annotations.add(annotation)
+        if(annotations[0]) {
+            annotations[0].each {annotation ->
+                if(allItems[annotation.multiFacetAwareItemId]) {
+                    allItems[annotation.multiFacetAwareItemId].annotations.add(annotation)
+                }
             }
-        }
-        annotations.keySet().sort().each {depth ->
-            if(depth > 0) {
-                annotations[depth].each {annotation ->
-                    if (annotation.parentAnnotationId) {
-                        annotations[depth-1].find {it.id == annotation.parentAnnotationId}.childAnnotations.add(annotation)
-                    } else {
-                        log.error("'parentAnnotationId' not set on child Annotation: ${annotation.label}")
+            annotations.keySet().sort().each {depth ->
+                if(depth > 0) {
+                    annotations[depth].each {annotation ->
+                        if (annotation.parentAnnotationId) {
+                            annotations[depth-1].find {it.id == annotation.parentAnnotationId}.childAnnotations.add(annotation)
+                        } else {
+                            log.error("'parentAnnotationId' not set on child Annotation: ${annotation.label}")
+                        }
                     }
                 }
             }

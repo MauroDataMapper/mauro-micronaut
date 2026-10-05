@@ -5,6 +5,7 @@ import io.micronaut.context.ApplicationContext
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
 import org.maurodata.domain.datamodel.DataModel
+import org.maurodata.domain.folder.Folder
 import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.domain.model.Model
 import org.maurodata.domain.security.CatalogueUser
@@ -62,5 +63,12 @@ class ContentsService {
         item.setAssociations()
         return item
     }
+
+    ContentHandler loadTree(Folder folder = null, Boolean foldersOnly = false) {
+        ContentHandler contentHandler = applicationContext.createBean(ContentHandler)
+        contentHandler.loadTreeContent(folder, foldersOnly)
+        return contentHandler
+    }
+
 
 }

@@ -137,7 +137,7 @@ class TreeIntegrationSpec extends SecuredIntegrationSpec {
         loginAdmin()
         UserGroup readersGroup = userGroupApi.create(new UserGroup (name: 'Readers Group'))
         userGroupId = readersGroup.id
-        catalogueUserApi.update(user.id, new CatalogueUser(groups: [readersGroup.id] ))
+        catalogueUserApi.update(user.id, new CatalogueUser(groups: [readersGroup] ))
         securableResourceGroupRoleApi.create("folder", rootFolderId, Role.READER, readersGroup.id)
         logout()
 

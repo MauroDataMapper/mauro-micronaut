@@ -201,6 +201,10 @@ abstract class ItemCacheableRepository<I extends Item> implements ItemRepository
             ((SecurableResourceGroupRoleRepository) repository).readAllBySecurableResourceDomainTypeAndSecurableResourceId(securableResourceDomainType, securableResourceId)
         }
 
+        @Cacheable
+        List<SecurableResourceGroupRole> readAllByUserGroupIdIn(Collection<UUID> userGroupIds) {
+            ((SecurableResourceGroupRoleRepository) repository).readAllByUserGroupIdIn(userGroupIds)
+        }
         // not cached
 
         Long deleteBySecurableResourceDomainTypeAndSecurableResourceIdAndRoleAndUserGroupId(String securableResourceDomainType, UUID securableResourceId, Role role, UUID userGroupId) {
