@@ -30,6 +30,7 @@ import org.maurodata.api.federation.SubscribedModelApi
 import org.maurodata.api.folder.FolderApi
 import org.maurodata.api.folder.VersionedFolderApi
 import org.maurodata.api.importer.ImporterApi
+import org.maurodata.api.inspect.InspectApi
 import org.maurodata.api.path.PathApi
 import org.maurodata.api.profile.ProfileApi
 import org.maurodata.api.search.SearchApi
@@ -140,6 +141,7 @@ class CommonDataSpec extends Specification {
     @Shared @Inject FolderApi folderApi
     @Shared @Inject VersionedFolderApi versionedFolderApi
     @Shared @Inject ImporterApi importerApi
+    @Shared @Inject InspectApi inspectApi
     @Shared @Inject ProfileApi profileApi
     @Shared @Inject SearchApi searchApi
     @Shared @Inject OpenidProviderApi openidProviderApi
@@ -535,5 +537,4 @@ class CommonDataSpec extends Specification {
     }
 
 }
-
 
