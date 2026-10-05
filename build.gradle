@@ -34,7 +34,7 @@ subprojects {
             implementation("ch.qos.logback:logback-classic")
             implementation("ch.qos.logback:logback-core")
             runtimeOnly("org.yaml:snakeyaml")
-            implementation('com.fasterxml.uuid:java-uuid-generator:5.1.0')
+            implementation('com.fasterxml.uuid:java-uuid-generator:5.2.0')
 
             testImplementation "io.micronaut.test:micronaut-test-spock"
             testRuntimeOnly "org.junit.platform:junit-platform-launcher"
