@@ -57,6 +57,7 @@ dependencies {
     compileOnly("io.micronaut:micronaut-http-validation")
     implementation("io.micronaut:micronaut-management")
     compileOnly("io.micronaut:micronaut-inject-groovy")
+    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml")
     implementation("org.snakeyaml:snakeyaml-engine:3.0")
 
     implementation("io.micronaut.flyway:micronaut-flyway")
