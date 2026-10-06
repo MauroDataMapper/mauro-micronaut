@@ -353,14 +353,13 @@ abstract class AdministeredItem extends Item implements Pathable, DiffableItem {
 
     /**
      * Recalculate this item's breadcrumbs from its parents. This item must have all its parent items loaded.
-     * Breadcrumbs contain the item's ancestors, in catalogue order. They include the owning model and continue through
-     * any containing folders to the root of the catalogue.
+     * Breadcrumbs contain this item and its ancestors, in catalogue order, through the root of the catalogue.
      * @return The new breadcrumbs
      */
     List<Breadcrumb> updateBreadcrumbs() {
         List<Breadcrumb> breadcrumbs = []
         int i = 0
-        AdministeredItem node = this.parent === this ? null : this.parent
+        AdministeredItem node = this
         while (node) {
             Breadcrumb newBreadcrumb = new Breadcrumb(
                 id: node.id,
@@ -373,7 +372,7 @@ abstract class AdministeredItem extends Item implements Pathable, DiffableItem {
                 newBreadcrumb.branchName = node.branchName
             }
             breadcrumbs.add(newBreadcrumb)
-            if (node.parent === node) {
+            if (node.parent === node || node.parent === this) {
                 break
             }
             i++; node = node.parent
