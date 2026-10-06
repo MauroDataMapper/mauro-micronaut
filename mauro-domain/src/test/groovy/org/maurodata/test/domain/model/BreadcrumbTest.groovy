@@ -10,7 +10,7 @@ import spock.lang.Specification
 @MicronautTest
 class BreadcrumbTest extends Specification {
 
-    void 'breadcrumbs include the owning model and all containing folders'() {
+    void 'breadcrumbs include this item, the owning model and all containing folders'() {
         given:
         Folder catalogueFolder = new Folder(id: UUID.randomUUID(), label: 'Catalogue')
         Folder nestedFolder = new Folder(id: UUID.randomUUID(), label: 'Nested folder', parentFolder: catalogueFolder)
@@ -21,11 +21,11 @@ class BreadcrumbTest extends Specification {
         List<Breadcrumb> breadcrumbs = dataClass.updateBreadcrumbs()
 
         then:
-        breadcrumbs*.label == ['Catalogue', 'Nested folder', 'Model']
+        breadcrumbs*.label == ['Catalogue', 'Nested folder', 'Model', 'Data class']
         dataClass.breadcrumbs.is(breadcrumbs)
     }
 
-    void 'breadcrumbs for a model include its containing folders'() {
+    void 'breadcrumbs for a model include itself and its containing folders'() {
         given:
         Folder catalogueFolder = new Folder(id: UUID.randomUUID(), label: 'Catalogue')
         Folder nestedFolder = new Folder(id: UUID.randomUUID(), label: 'Nested folder', parentFolder: catalogueFolder)
@@ -35,6 +35,6 @@ class BreadcrumbTest extends Specification {
         List<Breadcrumb> breadcrumbs = model.updateBreadcrumbs()
 
         then:
-        breadcrumbs*.label == ['Catalogue', 'Nested folder']
+        breadcrumbs*.label == ['Catalogue', 'Nested folder', 'Model']
     }
 }
