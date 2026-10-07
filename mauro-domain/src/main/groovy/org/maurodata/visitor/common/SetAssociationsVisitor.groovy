@@ -243,12 +243,12 @@ class SetAssociationsVisitor extends GenericDomainTraversalVisitor {
         // Mirrors: DataModel.setDataClassAssociations() (DataElement part)
         // -----------------------------------------------------------------------
         onEnter(DataElement) { DataElement dataElement ->
-            if(!dataElement.dataModel.dataElements.contains(dataElement)) {
+            if(dataElement.dataModel && !dataElement.dataModel.dataElements.contains(dataElement)) {
                 dataElement.dataModel.dataElements.add(dataElement)
             }
 
             // Resolve dataType reference
-            if (dataElement.dataType) {
+            if (dataElement.dataModel && dataElement.dataType) {
                 DataType resolvedType = dataElement.dataType.id ?
                     dataElement.dataModel.dataTypes.find { DataType dt -> dt.id == dataElement.dataType.id } :
                     dataElement.dataModel.dataTypes.find { DataType dt -> dt.label == dataElement.dataType.label }

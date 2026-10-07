@@ -74,10 +74,10 @@ class ContentsService {
     }
 
 
-    ContentHandler loadTree(Folder folder = null, Boolean foldersOnly = false) {
-        ContentHandler contentHandler = applicationContext.createBean(ContentHandler)
-        contentHandler.loadTreeContent(folder, foldersOnly)
-        return contentHandler
+    ShreddedContent loadTree(Folder folder = null, Boolean foldersOnly = false) {
+        ShreddedContent shreddedContent = new ShreddedContent(folder)
+        contentHandler.loadTreeContent(shreddedContent, foldersOnly)
+        return shreddedContent
     }
 
 

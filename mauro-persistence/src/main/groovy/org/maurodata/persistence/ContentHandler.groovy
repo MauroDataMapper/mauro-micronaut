@@ -206,7 +206,7 @@ class ContentHandler {
         int depth = 1
         Set<UUID> foundFolders = shreddedContent.folders[0]*.id as Set<UUID>
         do {
-            List<Folder> retrievedFolders = inBatchesRead(foundFolders as List<UUID>, batchSize) {List batch ->
+            Set<Folder> retrievedFolders = inBatchesReadSet(foundFolders as List<UUID>) {List batch ->
                 folderCacheableRepository.readAllByFolderIdIn(batch)
             }
             foundFolders = retrievedFolders*.id as Set
@@ -216,26 +216,21 @@ class ContentHandler {
             depth++
         } while (foundFolders.size() > 0)
         final Set<Folder> foldersValuesFlatten = (Set<Folder>) shreddedContent.folders.values().flatten()
-        allItems.putAll(foldersValuesFlatten.collectEntries {[it.id, it]})
         if (foldersValuesFlatten && !foldersOnly) {
-            shreddedContent.classificationSchemes = inBatchesReadSet(foldersValuesFlatten*.id, batchSize) {List<UUID> batch ->
+            shreddedContent.classificationSchemes = inBatchesReadSet(foldersValuesFlatten*.id) {List<UUID> batch ->
                 classificationSchemeCacheableRepository.readAllByFolderIdIn(batch)
             }
-            allItems.putAll(classificationSchemes.collectEntries {[it.id, it]})
-            shreddedContent.terminologies = inBatchesReadSet(foldersValuesFlatten*.id, batchSize) {List batch ->
+            shreddedContent.terminologies = inBatchesReadSet(foldersValuesFlatten*.id) {List batch ->
                 terminologyCacheableRepository.readAllByFolderIdIn(batch)
             }
-            allItems.putAll(terminologies.collectEntries {[it.id, it]})
-            shreddedContent.codeSets = inBatchesReadSet(foldersValuesFlatten*.id, batchSize) {List batch ->
+            shreddedContent.codeSets = inBatchesReadSet(foldersValuesFlatten*.id) {List batch ->
                 codeSetCacheableRepository.readAllByFolderIdIn(batch)
             }
-            allItems.putAll(codeSets.collectEntries {[it.id, it]})
-            shreddedContent.dataModels = inBatchesReadSet(foldersValuesFlatten*.id, batchSize) {List batch ->
+            shreddedContent.dataModels = inBatchesReadSet(foldersValuesFlatten*.id) {List batch ->
                 dataModelCacheableRepository.readAllByFolderIdIn(batch)
             }
-            allItems.putAll(dataModels.collectEntries {[it.id, it]})
         }
-        reassemble()
+        shreddedContent.reassemble()
     }
 
 
