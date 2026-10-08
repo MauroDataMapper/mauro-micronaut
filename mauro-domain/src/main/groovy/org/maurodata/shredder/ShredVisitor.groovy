@@ -22,6 +22,7 @@ import org.maurodata.domain.facet.SummaryMetadata
 import org.maurodata.domain.facet.SummaryMetadataReport
 import org.maurodata.domain.facet.VersionLink
 import org.maurodata.domain.folder.Folder
+import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.domain.terminology.CodeSet
 import org.maurodata.domain.terminology.Term
 import org.maurodata.domain.terminology.TermRelationship
@@ -58,6 +59,13 @@ class ShredVisitor extends GenericDomainTraversalVisitor {
     }
 
     void registerHandlers() {
+
+        onEnter(AdministeredItem) { AdministeredItem administeredItem ->
+            if(administeredItem.classifiers) {
+                shreddedContent.classifierJoins.put(administeredItem, administeredItem.classifiers.id as Set<UUID>)
+            }
+        }
+
         // Folders - track depth with stack
         onEnter(Folder) { Folder folder ->
             shreddedContent.addFolderAtDepth(folder, folderDepth++)

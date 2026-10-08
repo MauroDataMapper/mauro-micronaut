@@ -3,7 +3,9 @@ package org.maurodata.importexport
 import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.json.JsonSlurper
 import io.micronaut.http.HttpResponse
+import io.micronaut.http.HttpStatus
 import io.micronaut.http.MediaType
+import io.micronaut.http.client.exceptions.HttpClientResponseException
 import io.micronaut.http.client.multipart.MultipartBody
 import jakarta.inject.Singleton
 import org.maurodata.domain.classifier.ClassificationScheme
@@ -18,6 +20,7 @@ import org.maurodata.domain.folder.Folder
 import org.maurodata.export.ExportModel
 import org.maurodata.persistence.ContainerizedTest
 import org.maurodata.testing.CommonDataSpec
+import org.maurodata.visitor.common.RemoveIdVisitor
 import org.maurodata.web.ListResponse
 import spock.lang.Shared
 
@@ -113,8 +116,26 @@ class DataModelJsonImportExportIntegrationSpec extends CommonDataSpec {
             .addPart('folderId', folderId.toString())
             .addPart('importFile', 'file.json', MediaType.APPLICATION_JSON_TYPE, response.body())
             .build()
+
+        when: // If we try and import with the same ids, it should fail
+        dataModelApi.importModel(importRequest, 'org.maurodata.plugin.importer.json', 'JsonDataModelImporterPlugin', '4.0.0')
+        then:
+
+        HttpClientResponseException exception = thrown()
+        exception.status == HttpStatus.INTERNAL_SERVER_ERROR
+
         when:
+        ExportModel exportModel = objectMapper.readValue(response.body(), ExportModel)
+        RemoveIdVisitor removeIdVisitor = new RemoveIdVisitor()
+        exportModel.dataModel.accept(removeIdVisitor)
+        importRequest = MultipartBody.builder()
+            .addPart('folderId', folderId.toString())
+            .addPart('importFile', 'file.json', MediaType.APPLICATION_JSON_TYPE, objectMapper.writeValueAsBytes(exportModel))
+            .build()
+
         ListResponse<DataModel> dataModelResponse = dataModelApi.importModel(importRequest, 'org.maurodata.plugin.importer.json', 'JsonDataModelImporterPlugin', '4.0.0')
+
+
 
         then:
         dataModelResponse
@@ -167,7 +188,24 @@ class DataModelJsonImportExportIntegrationSpec extends CommonDataSpec {
             .addPart('folderId', folderId.toString())
             .addPart('importFile', 'file.json', MediaType.APPLICATION_JSON_TYPE, response.body())
             .build()
+        dataModelApi.importModel(importRequest, 'org.maurodata.plugin.importer.json', 'JsonDataModelImporterPlugin', '4.0.0')
+
+        then:
+        HttpClientResponseException exception = thrown()
+        exception.status == HttpStatus.INTERNAL_SERVER_ERROR
+
+
+        when:
+        ExportModel exportModel = objectMapper.readValue(response.body(), ExportModel)
+        //exportModel.dataModel.setAssociations()
+        exportModel.dataModel.accept(new RemoveIdVisitor())
+
+        importRequest = MultipartBody.builder()
+            .addPart('folderId', folderId.toString())
+            .addPart('importFile', 'file.json', MediaType.APPLICATION_JSON_TYPE, objectMapper.writeValueAsBytes(exportModel))
+            .build()
         ListResponse<DataModel> dataModelResponse = dataModelApi.importModel(importRequest, 'org.maurodata.plugin.importer.json', 'JsonDataModelImporterPlugin', '4.0.0')
+
         UUID importedDataModelId = dataModelResponse.items.first().id
 
         then:

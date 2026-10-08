@@ -1,6 +1,7 @@
 package org.maurodata.persistence
 
 import jakarta.inject.Singleton
+import org.maurodata.persistence.classifier.dto.ClassifierDTORepository
 import org.maurodata.persistence.classifier.dto.ClassifierJoinDTO
 import org.maurodata.persistence.model.ItemRepository
 import org.maurodata.shredder.ShreddedContent
@@ -84,6 +85,7 @@ class ContentHandler {
     @Inject SummaryMetadataCacheableRepository summaryMetadataCacheableRepository
     @Inject SummaryMetadataReportCacheableRepository summaryMetadataReportCacheableRepository
     @Inject VersionLinkCacheableRepository versionLinkCacheableRepository
+    @Inject ClassifierDTORepository classifierDTORepository
 
     /**
      * Shred a folder hierarchy using the visitor pattern.
@@ -126,6 +128,12 @@ class ContentHandler {
         saveAllByBatch(shreddedContent.dataElementComponents, dataElementComponentCacheableRepository)
         saveHierarchyByBatch(shreddedContent.annotations, annotationRepository)
         saveAllByBatch(shreddedContent.edits, editCacheableRepository)
+
+        shreddedContent.classifierJoins.each {item, classifiersForItem ->
+            classifiersForItem.each {classifier ->
+                classifierDTORepository.addAdministeredItem(item.id, item.domainType, classifier)
+            }
+        }
         saveAllByBatch(shreddedContent.referenceFiles, referenceFileRepository)
         saveAllByBatch(shreddedContent.rules, ruleRepository)
         saveAllByBatch(shreddedContent.ruleRepresentations, ruleRepresentationCacheableRepository)

@@ -51,7 +51,7 @@ class ShreddedContent {
     Set<DataElementComponent> dataElementComponents = []
 
     Set<Metadata> metadata = []
-    Map<UUID, Set<UUID>> classifierJoins = [:]
+    Map<AdministeredItem, Set<UUID>> classifierJoins = [:]
     Set<Classifier> classifiersForItems = []
     Map<Integer, Set<Annotation>> annotations = [:] as Map<Integer, Set<Annotation>>
     Set<Edit> edits = []
