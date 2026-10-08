@@ -77,7 +77,7 @@ class TerminologyJsonImportExportSpec extends CommonDataSpec {
         // Remove ids from all the items so that they don't get re-created.
         // The term codes are all distinct so the relationships can be reconstructed and preserved
         exportModel.terminology.setAssociations()
-        exportModel.terminology.accept(new RemoveIdVisitor())
+        exportModel.terminology.removeIds()
 
         importRequest = MultipartBody.builder()
             .addPart('folderId', folderId.toString())

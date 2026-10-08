@@ -126,8 +126,7 @@ class DataModelJsonImportExportIntegrationSpec extends CommonDataSpec {
 
         when:
         ExportModel exportModel = objectMapper.readValue(response.body(), ExportModel)
-        RemoveIdVisitor removeIdVisitor = new RemoveIdVisitor()
-        exportModel.dataModel.accept(removeIdVisitor)
+        exportModel.dataModel.removeIds()
         importRequest = MultipartBody.builder()
             .addPart('folderId', folderId.toString())
             .addPart('importFile', 'file.json', MediaType.APPLICATION_JSON_TYPE, objectMapper.writeValueAsBytes(exportModel))
@@ -198,7 +197,7 @@ class DataModelJsonImportExportIntegrationSpec extends CommonDataSpec {
         when:
         ExportModel exportModel = objectMapper.readValue(response.body(), ExportModel)
         //exportModel.dataModel.setAssociations()
-        exportModel.dataModel.accept(new RemoveIdVisitor())
+        exportModel.dataModel.removeIds()
 
         importRequest = MultipartBody.builder()
             .addPart('folderId', folderId.toString())

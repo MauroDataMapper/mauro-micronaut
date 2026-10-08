@@ -350,8 +350,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         M copy = createCopyModelWithAssociations(existing, createNewVersionData)
         copy.setAssociations()
 
-        RemoveIdVisitor removeIdVisitor = new RemoveIdVisitor()
-        copy.accept(removeIdVisitor)
+        copy.removeIds()
         M savedCopy = (M) contentsService.saveWithContent(copy, accessControlService.getUser(), true)
         //modelContentRepository.saveWithContent(copy)
 

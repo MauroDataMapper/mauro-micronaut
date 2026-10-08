@@ -215,7 +215,7 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
         // Remove ids from all the items so that they don't get re-created.
         // The term codes are all distinct so the relationships can be reconstructed and preserved
         exportModel.folder.setAssociations()
-        exportModel.folder.accept(new RemoveIdVisitor())
+        exportModel.folder.removeIds()
 
         importRequest = MultipartBody.builder()
             .addPart('folderId', folderId.toString())
@@ -402,7 +402,7 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
         // Remove ids from all the items so that they don't get re-created.
         // The term codes are all distinct so the relationships can be reconstructed and preserved
         exportModel.folder.setAssociations()
-        exportModel.folder.accept(new RemoveIdVisitor())
+        exportModel.folder.removeIds()
 
         importRequest = MultipartBody.builder()
             .addPart('folderId', folderId.toString())
@@ -556,7 +556,7 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
 
         when:
         export.folder.setAssociations()
-        export.folder.accept(new RemoveIdVisitor())
+        export.folder.removeIds()
 
         importRequest = MultipartBody.builder()
             .addPart('folderId', folderId.toString())

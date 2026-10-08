@@ -21,6 +21,7 @@ import jakarta.persistence.PrePersist
 import jakarta.persistence.Transient
 import org.maurodata.visitor.DomainVisitor
 import org.maurodata.visitor.VisitableDomain
+import org.maurodata.visitor.common.RemoveIdVisitor
 
 import java.time.Instant
 
@@ -96,6 +97,10 @@ abstract class Item implements Serializable, ItemReferencer, VisitableDomain {
     @Override
     <T> T accept(DomainVisitor<T> visitor) {
         throw new UnsupportedOperationException("Visitor not implemented for ${this.class.name}")
+    }
+
+    void removeIds() {
+        this.accept(new RemoveIdVisitor())
     }
 
     void updateCreationProperties() {

@@ -132,7 +132,7 @@ class DataModelJsonImportExportSpec extends CommonDataSpec {
         // Remove ids from all the items so that they don't get re-created.
         // The dataclass labels are all distinct so the 'extends' relationship can be preserved
         exportModel.dataModel.setAssociations()
-        exportModel.dataModel.accept(new RemoveIdVisitor())
+        exportModel.dataModel.removeIds()
 
         importRequest = MultipartBody.builder()
             .addPart('folderId', folderId.toString())
