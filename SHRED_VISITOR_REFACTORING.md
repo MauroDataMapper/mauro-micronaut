@@ -56,15 +56,14 @@ Set<DataModel> dataModels = visitor.dataModels
    }
    ```
 
-2. **Stack-Based Depth Tracking**: Uses separate stacks for folders and data classes to properly track nesting:
-   - Folders use `folderDepthStack`
-   - Data Classes use `dataClassDepthStack`
-   - This prevents depth confusion when traversing multiple hierarchies
-
+2. . **Depth Tracking**: Tracks current depth for folders and data classes during traversal:
+   - Folders use `folderDepth`
+   - Data Classes use `dataClassDepth`
+   - 
 3. **Automatic Traversal**: The visitor pattern automatically handles:
    - Preventing revisits (via `shouldVisit()`)
    - Dispatch to correct handler based on type
-   - Breadth-first traversal of the entire domain tree
+   - Depth-first traversal of the entire domain tree
 
 ### ContentHandler Changes
 

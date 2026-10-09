@@ -257,11 +257,6 @@ class ShreddedContent {
             if(allItems[dataElementComponent.dataClassComponent.id]) {
                 ((DataClassComponent) allItems[dataElementComponent.dataClassComponent.id]).dataElementComponents.add(dataElementComponent)
             }
-            dataElementComponent.sourceDataElements.each {sourceDataElement ->
-                if(allItems[sourceDataElement.id]) {
-                    dataElementComponent.sourceDataElements.add((DataElement) allItems[sourceDataElement.id])
-                }
-            }
             dataElementComponent.sourceDataElements =
                 dataElementComponent.sourceDataElements.collect {DataElement de -> (allItems[de.id] as DataElement) ?: de }
 
