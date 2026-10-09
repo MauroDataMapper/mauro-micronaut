@@ -25,6 +25,7 @@ import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.domain.model.Model
 import org.maurodata.domain.terminology.CodeSet
 import org.maurodata.domain.terminology.Terminology
+import org.maurodata.visitor.DomainVisitor
 
 /**
  * A folder is a container for models, and, in the case of a VersionedFolder, may be a model in its own right.
@@ -102,6 +103,11 @@ class Folder extends Model implements ItemReferencer, DiffableItem<Folder> {
 
     @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'classificationScheme')
     List<ClassificationScheme> classificationSchemes = []
+
+    @Override
+    <T> T accept(DomainVisitor<T> visitor) {
+        return visitor.visitFolder(this)
+    }
 
     @Override
     @Transient
@@ -199,35 +205,8 @@ class Folder extends Model implements ItemReferencer, DiffableItem<Folder> {
         }
         cloned.codeSets = codeSets.collect {it.clone()}
 
-        cloned.setAssociations()
+        //cloned.setAssociations()
         cloned
-    }
-
-    @Transient
-    @JsonIgnore
-    @Override
-    void setAssociations() {
-        super.setAssociations()
-        childFolders.each {childFolder ->
-            childFolder.parentFolder = this
-            childFolder.setAssociations()
-        }
-        dataModels.each {dataModel ->
-            dataModel.folder = this
-            dataModel.setAssociations()
-        }
-        terminologies.each {terminology ->
-            terminology.folder = this
-            terminology.setAssociations()
-        }
-        codeSets.each {codeSet ->
-            codeSet.folder = this
-            codeSet.setAssociations()
-        }
-        classificationSchemes.each {classificationScheme ->
-            classificationScheme.folder = this
-            classificationScheme.setAssociations()
-        }
     }
 
 

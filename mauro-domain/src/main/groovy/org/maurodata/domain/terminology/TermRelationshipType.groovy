@@ -23,6 +23,7 @@ import io.micronaut.data.annotation.Relation
 import jakarta.persistence.Transient
 import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.domain.model.ModelItem
+import org.maurodata.visitor.DomainVisitor
 
 /**
  * A TermRelationshipType defines a kind of relationship between terms with a terminology.
@@ -53,6 +54,11 @@ class TermRelationshipType extends ModelItem<Terminology> implements ItemReferen
 
     @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'relationshipType')
     List<TermRelationship> termRelationships = []
+
+    @Override
+    <T> T accept(DomainVisitor<T> visitor) {
+        return visitor.visitTermRelationshipType(this)
+    }
 
     @Transient
     @JsonIgnore

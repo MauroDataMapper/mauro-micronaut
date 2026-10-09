@@ -18,6 +18,7 @@ import jakarta.validation.constraints.NotNull
 import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.domain.model.ModelItem
+import org.maurodata.visitor.DomainVisitor
 
 /**
  * A DataFlow is has source and target dataModels
@@ -46,6 +47,11 @@ class DataFlow extends ModelItem<DataModel> {
     @Transient
     UUID breadcrumbTreeId
 
+    @Override
+    <T> T accept(DomainVisitor<T> visitor) {
+        return visitor.visitDataFlow(this)
+    }
+
 
     @Override
     String getDomainType() {
@@ -55,23 +61,6 @@ class DataFlow extends ModelItem<DataModel> {
     Boolean hasChildren() {
         dataClassComponents
     }
-
-    @Transient
-    @JsonIgnore
-    @Override
-    void setAssociations() {
-        super.setAssociations()
-        dataClassComponents.each {dataClassComponent ->
-            dataClassComponent.dataFlow = this
-            dataClassComponent.setAssociations()
-            dataClassComponent.dataElementComponents.each {dataElementComponent ->
-                dataElementComponent.dataClassComponent = dataClassComponent
-                dataElementComponent.setAssociations()
-            }
-        }
-
-    }
-
 
     @Override
     @Transient

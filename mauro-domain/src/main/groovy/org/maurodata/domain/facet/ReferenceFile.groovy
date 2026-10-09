@@ -15,6 +15,7 @@ import org.maurodata.domain.diff.CollectionDiff
 import org.maurodata.domain.diff.DiffBuilder
 import org.maurodata.domain.diff.DiffableItem
 import org.maurodata.domain.diff.ObjectDiff
+import org.maurodata.visitor.DomainVisitor
 
 @CompileStatic
 @MappedEntity(value = 'reference_file', schema = 'core', alias = 'reference_file_')
@@ -22,6 +23,11 @@ import org.maurodata.domain.diff.ObjectDiff
 @Indexes([@Index(columns = ['multi_facet_aware_item_id'])])
 @JsonIgnoreProperties(ignoreUnknown = true)
 class ReferenceFile extends CatalogueFile implements DiffableItem<ReferenceFile> {
+
+    @Override
+    <T> T accept(DomainVisitor<T> visitor) {
+        return visitor.visitReferenceFile(this)
+    }
 
     void setFileSize() {
         this.fileSize = fileContents.size()

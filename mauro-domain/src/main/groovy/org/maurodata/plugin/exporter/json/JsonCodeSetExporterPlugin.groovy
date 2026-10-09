@@ -9,6 +9,8 @@ import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
+import org.maurodata.visitor.common.SmallExportVisitor
+import org.maurodata.visitor.common.TreeifyVisitor
 
 @CompileStatic
 @Slf4j
@@ -42,15 +44,20 @@ class JsonCodeSetExporterPlugin implements CodeSetExporterPlugin {
     }
 
     @Override
-    byte[] exportModels(Collection<CodeSet> codeSet) {
+    byte[] exportModels(Collection<CodeSet> codeSets) {
         ExportModel exportModel = new ExportModel(this)
-        if(codeSet.size() > 1) {
-            exportModel.codeSets = codeSet.toList()
+        if(codeSets.size() > 1) {
+            exportModel.codeSets = codeSets.toList()
         } else {
-            exportModel.codeSet = codeSet[0]
+            exportModel.codeSet = codeSets[0]
         }
-        objectMapper.writeValueAsBytes(exportModel)
+        def visitor = new TreeifyVisitor() + new SmallExportVisitor()
 
+        codeSets.each {codeSet ->
+            codeSet.accept(visitor)
+        }
+
+        objectMapper.writeValueAsBytes(exportModel)
     }
 
     @Override

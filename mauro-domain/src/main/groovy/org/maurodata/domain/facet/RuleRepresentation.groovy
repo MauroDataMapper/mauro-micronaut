@@ -19,6 +19,7 @@ import groovy.transform.MapConstructor
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Transient
+import org.maurodata.visitor.DomainVisitor
 
 @CompileStatic
 @MappedEntity(value = 'rule_representation', schema = 'core', alias = 'rule_representation_')
@@ -57,6 +58,11 @@ class RuleRepresentation extends Item implements DiffableItem<RuleRepresentation
         if(rule) {
             ruleId = rule.id
         }
+    }
+
+    @Override
+    <T> T accept(DomainVisitor<T> visitor) {
+        return visitor.visitRuleRepresentation(this)
     }
 
 

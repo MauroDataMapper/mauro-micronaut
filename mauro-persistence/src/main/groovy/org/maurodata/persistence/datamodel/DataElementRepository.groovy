@@ -36,6 +36,10 @@ abstract class DataElementRepository implements ModelItemRepository<DataElement>
         dataElementDTORepository.findById(id) as DataElement
     }
 
+    Collection<DataElement> findAllByIdIn(Collection<UUID> dataElementIds) {
+        dataElementDTORepository.findAllByIdIn(dataElementIds) as List<DataElement>
+    }
+
     @Nullable
     List<DataElement> findAllByParentAndPathIdentifier(UUID item,String pathIdentifier) {
         dataElementDTORepository.findAllByParentAndPathIdentifier(item,pathIdentifier) as List<DataElement>

@@ -21,6 +21,7 @@ import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Transient
+import org.maurodata.visitor.DomainVisitor
 
 import java.time.Instant
 
@@ -54,6 +55,12 @@ class SummaryMetadataReport extends Item implements DiffableItem<SummaryMetadata
             summaryMetadataId = summaryMetadata.id
         }
     }
+
+    @Override
+    <T> T accept(DomainVisitor<T> visitor) {
+        return visitor.visitSummaryMetadataReport(this)
+    }
+
 
     @Override
     @JsonIgnore

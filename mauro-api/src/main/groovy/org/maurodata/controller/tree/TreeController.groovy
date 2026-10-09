@@ -46,6 +46,7 @@ import io.micronaut.security.annotation.Secured
 import io.micronaut.security.authentication.AuthorizationException
 import io.micronaut.security.rules.SecurityRule
 import jakarta.inject.Inject
+import org.maurodata.shredder.ShreddedContent
 
 @CompileStatic
 @Controller
@@ -105,7 +106,7 @@ class TreeController implements TreeApi {
         log.trace("Time taken 1: {}", System.currentTimeMillis() - startTime)
         startTime = System.currentTimeMillis()
 
-        ContentHandler contentHandler = contentsService.loadTree(rootFolder, foldersOnly?:false) // rootFolder may be null
+        ShreddedContent shreddedContent = contentsService.loadTree(rootFolder, foldersOnly?: false) // rootFolder may be null
         log.trace("Time taken 2: {}", System.currentTimeMillis() - startTime)
         startTime = System.currentTimeMillis()
         List<SecurableResourceGroupRole> userRoles = []
@@ -119,7 +120,7 @@ class TreeController implements TreeApi {
         // Now we filter the tree by what we can read
         Set<UUID> readableItems = [] as HashSet<UUID>
         if(accessControlService.isAdministrator()) {
-            readableItems = contentHandler.allItems.keySet()
+            readableItems = shreddedContent.getAllAdministeredItemIds() as Set<UUID>
         } else {
             boolean userAuthenticated = accessControlService.userAuthenticated
             Set<UUID> roleAllowedIds = userRoles.collect {it.securableResourceId } as Set
@@ -136,7 +137,7 @@ class TreeController implements TreeApi {
                 readableItems.add(rootFolder.id)
                 makeChildrenVisible(rootFolder, readableItems)
             }
-            contentHandler.allItems.values().each {AdministeredItem administeredItem ->
+            shreddedContent.getAllAdministeredItems().each {AdministeredItem administeredItem ->
                 // We know these are really models
                 Model model = (Model) administeredItem
                 if (readableItems.contains(model.id)) {
@@ -169,7 +170,7 @@ class TreeController implements TreeApi {
         Set<UUID> hasChildren = [] as Set<UUID>
 
         if(id) {
-            Folder originalFolder = contentHandler.folders[0].first()
+            Folder originalFolder = shreddedContent.folders[0].first()
             allModels.addAll(originalFolder.childFolders.findAll {readableItems.contains(it.id)})
             allModels.addAll(originalFolder.classificationSchemes.findAll {readableItems.contains(it.id)})
             allModels.addAll(originalFolder.terminologies.findAll {readableItems.contains(it.id)})
@@ -192,7 +193,7 @@ class TreeController implements TreeApi {
                 }
             }
         } else {
-            allModels.addAll(contentHandler.folders[0].findAll{readableItems.contains(it.id)})
+            allModels.addAll(shreddedContent.folders[0].findAll{readableItems.contains(it.id)})
         }
 
         List<TreeItem> items = allModels.collect {
