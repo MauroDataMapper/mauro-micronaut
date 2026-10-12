@@ -30,6 +30,8 @@ import org.maurodata.domain.terminology.TermRelationshipType
 import org.maurodata.domain.terminology.Terminology
 
 import org.maurodata.visitor.GenericDomainTraversalVisitor
+import org.maurodata.visitor.ItemHandler
+import org.maurodata.domain.model.Item
 
 /**
  * Visitor that traverses the domain hierarchy and shreds items into organized collections,
@@ -38,7 +40,7 @@ import org.maurodata.visitor.GenericDomainTraversalVisitor
  * Uses a stack-based approach to track depth as we traverse nested hierarchies.
  */
 @CompileStatic
-class ShredVisitor extends GenericDomainTraversalVisitor {
+class ShredVisitor extends GenericDomainTraversalVisitor implements ItemHandler {
 
     ShreddedContent shreddedContent = new ShreddedContent()
 
@@ -50,157 +52,114 @@ class ShredVisitor extends GenericDomainTraversalVisitor {
     ShredVisitor(ShreddedContent shreddedContent) {
         super()
         this.shreddedContent = shreddedContent
-        registerHandlers()
+        addHandler(this)
     }
 
     ShredVisitor() {
         super()
-        registerHandlers()
+        addHandler(this)
     }
 
-    void registerHandlers() {
-
-        onEnter(AdministeredItem) { AdministeredItem administeredItem ->
-            if(administeredItem.classifiers) {
+    // Direct dispatch avoids per-node closure calls; order matches the original handler registration order.
+    @Override
+    void enter(Item item) {
+        if (item instanceof AdministeredItem) {
+            AdministeredItem administeredItem = (AdministeredItem) item
+            if (administeredItem.classifiers) {
                 shreddedContent.classifierJoins.put(administeredItem, administeredItem.classifiers.id as Set<UUID>)
             }
         }
+        if (item instanceof Folder) {
+            shreddedContent.addFolderAtDepth((Folder) item, folderDepth++)
+        }
+        if (item instanceof ClassificationScheme) {
+            shreddedContent.classificationSchemes.add((ClassificationScheme) item)
+        }
+        if (item instanceof Classifier) {
+            shreddedContent.classifiers.add((Classifier) item)
+        }
+        if (item instanceof DataModel) {
+            shreddedContent.dataModels.add((DataModel) item)
+        }
+        if (item instanceof DataClass) {
+            shreddedContent.addDataClassAtDepth((DataClass) item, dataClassDepth++)
+        }
+        if (item instanceof DataType) {
+            shreddedContent.dataTypes.add((DataType) item)
+        }
+        if (item instanceof DataElement) {
+            shreddedContent.dataElements.add((DataElement) item)
+        }
+        if (item instanceof EnumerationValue) {
+            shreddedContent.enumerationValues.add((EnumerationValue) item)
+        }
+        if (item instanceof Terminology) {
+            shreddedContent.terminologies.add((Terminology) item)
+        }
+        if (item instanceof Term) {
+            shreddedContent.terms.add((Term) item)
+        }
+        if (item instanceof TermRelationshipType) {
+            shreddedContent.termRelationshipTypes.add((TermRelationshipType) item)
+        }
+        if (item instanceof TermRelationship) {
+            shreddedContent.termRelationships.add((TermRelationship) item)
+        }
+        if (item instanceof CodeSet) {
+            shreddedContent.codeSets.add((CodeSet) item)
+        }
+        if (item instanceof DataFlow) {
+            shreddedContent.dataFlows.add((DataFlow) item)
+        }
+        if (item instanceof DataClassComponent) {
+            shreddedContent.dataClassComponents.add((DataClassComponent) item)
+        }
+        if (item instanceof DataElementComponent) {
+            shreddedContent.dataElementComponents.add((DataElementComponent) item)
+        }
+        if (item instanceof Metadata) {
+            shreddedContent.metadata.add((Metadata) item)
+        }
+        if (item instanceof VersionLink) {
+            shreddedContent.versionLinks.add((VersionLink) item)
+        }
+        if (item instanceof SummaryMetadata) {
+            shreddedContent.summaryMetadata.add((SummaryMetadata) item)
+        }
+        if (item instanceof SummaryMetadataReport) {
+            shreddedContent.summaryMetadataReports.add((SummaryMetadataReport) item)
+        }
+        if (item instanceof SemanticLink) {
+            shreddedContent.semanticLinks.add((SemanticLink) item)
+        }
+        if (item instanceof Rule) {
+            shreddedContent.rules.add((Rule) item)
+        }
+        if (item instanceof RuleRepresentation) {
+            shreddedContent.ruleRepresentations.add((RuleRepresentation) item)
+        }
+        if (item instanceof ReferenceFile) {
+            shreddedContent.referenceFiles.add((ReferenceFile) item)
+        }
+        if (item instanceof Edit) {
+            shreddedContent.edits.add((Edit) item)
+        }
+        if (item instanceof Annotation) {
+            shreddedContent.addAnnotationAtDepth((Annotation) item, annotationDepth++)
+        }
+    }
 
-        // Folders - track depth with stack
-        onEnter(Folder) { Folder folder ->
-            shreddedContent.addFolderAtDepth(folder, folderDepth++)
+    @Override
+    void leave(Item item) {
+        if (item instanceof Folder && folderDepth != 0) {
+            folderDepth--
         }
-
-        onLeave(Folder) { Folder folder ->
-            if (folderDepth != 0) {
-                folderDepth --
-            }
+        if (item instanceof DataClass && dataClassDepth != 0) {
+            dataClassDepth--
         }
-
-        // Classification Schemes
-        onEnter(ClassificationScheme) { ClassificationScheme scheme ->
-            shreddedContent.classificationSchemes.add(scheme)
+        if (item instanceof Annotation && annotationDepth != 0) {
+            annotationDepth--
         }
-
-        // Classifiers
-        onEnter(Classifier) { Classifier classifier ->
-            shreddedContent.classifiers.add(classifier)
-        }
-
-        // Data Models
-        onEnter(DataModel) { DataModel dataModel ->
-            shreddedContent.dataModels.add(dataModel)
-        }
-
-        // Data Classes - track depth with stack
-        onEnter(DataClass) { DataClass dataClass ->
-            shreddedContent.addDataClassAtDepth(dataClass, dataClassDepth++)
-        }
-
-        onLeave(DataClass) { DataClass dataClass ->
-            if (dataClassDepth != 0) {
-                dataClassDepth--
-            }
-        }
-
-        // Data Types
-        onEnter(DataType) { DataType dataType ->
-            shreddedContent.dataTypes.add(dataType)
-        }
-
-        // Data Elements
-        onEnter(DataElement) { DataElement dataElement ->
-            shreddedContent.dataElements.add(dataElement)
-        }
-
-        // Enumeration Values
-        onEnter(EnumerationValue) { EnumerationValue enumerationValue ->
-            shreddedContent.enumerationValues.add(enumerationValue)
-        }
-
-        // Terminologies
-        onEnter(Terminology) { Terminology terminology ->
-            shreddedContent.terminologies.add(terminology)
-        }
-
-        // Terms
-        onEnter(Term) { Term term ->
-            shreddedContent.terms.add(term)
-        }
-
-        // Term Relationship Types
-        onEnter(TermRelationshipType) { TermRelationshipType termRelationshipType ->
-            shreddedContent.termRelationshipTypes.add(termRelationshipType)
-        }
-
-        // Term Relationships
-        onEnter(TermRelationship) { TermRelationship termRelationship ->
-            shreddedContent.termRelationships.add(termRelationship)
-        }
-
-        // Code Sets
-        onEnter(CodeSet) { CodeSet codeSet ->
-            shreddedContent.codeSets.add(codeSet)
-        }
-
-        // Data Flows
-        onEnter(DataFlow) { DataFlow dataFlow ->
-            shreddedContent.dataFlows.add(dataFlow)
-        }
-
-        // Data Class Components
-        onEnter(DataClassComponent) { DataClassComponent dataClassComponent ->
-            shreddedContent.dataClassComponents.add(dataClassComponent)
-        }
-
-        // Data Element Components
-        onEnter(DataElementComponent) { DataElementComponent dataElementComponent ->
-            shreddedContent.dataElementComponents.add(dataElementComponent)
-        }
-
-        onEnter(Metadata) {Metadata metadata ->
-            shreddedContent.metadata.add(metadata)
-        }
-
-        onEnter(VersionLink) {VersionLink versionLink ->
-            shreddedContent.versionLinks.add(versionLink)
-        }
-
-        onEnter(SummaryMetadata) {SummaryMetadata summaryMetadata ->
-            shreddedContent.summaryMetadata.add(summaryMetadata)
-        }
-        onEnter(SummaryMetadataReport) {SummaryMetadataReport summaryMetadataReport ->
-            shreddedContent.summaryMetadataReports.add(summaryMetadataReport)
-        }
-
-        onEnter(SemanticLink) {SemanticLink semanticLink ->
-            shreddedContent.semanticLinks.add(semanticLink)
-        }
-
-        onEnter(Rule) {Rule rule ->
-            shreddedContent.rules.add(rule)
-        }
-        onEnter(RuleRepresentation) {RuleRepresentation ruleRepresentation ->
-            shreddedContent.ruleRepresentations.add(ruleRepresentation)
-        }
-        onEnter(ReferenceFile) {ReferenceFile referenceFile ->
-            shreddedContent.referenceFiles.add(referenceFile)
-        }
-        onEnter(Edit) {Edit edit ->
-            shreddedContent.edits.add(edit)
-        }
-
-        // Data Classes - track depth with stack
-        onEnter(Annotation) { Annotation annotation ->
-            shreddedContent.addAnnotationAtDepth(annotation, annotationDepth++)
-        }
-
-        onLeave(Annotation) { Annotation annotation ->
-            if (annotationDepth != 0) {
-                annotationDepth--
-            }
-        }
-
     }
 }
 

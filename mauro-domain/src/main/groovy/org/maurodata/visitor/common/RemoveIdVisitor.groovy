@@ -1,21 +1,29 @@
 package org.maurodata.visitor.common
 
+import groovy.transform.CompileStatic
 import org.maurodata.domain.facet.Facet
 import org.maurodata.domain.model.Item
-import org.maurodata.domain.security.CatalogueUser
 import org.maurodata.visitor.GenericDomainTraversalVisitor
+import org.maurodata.visitor.ItemHandler
 
-class RemoveIdVisitor extends GenericDomainTraversalVisitor {
+@CompileStatic
+class RemoveIdVisitor extends GenericDomainTraversalVisitor implements ItemHandler {
 
     RemoveIdVisitor() {
+        addHandler(this)
+    }
 
-        onEnter(Item) {Item item ->
-            item.id = null
-        }
-
-        onEnter(Facet) {Facet facet ->
+    @Override
+    void enter(Item item) {
+        item.id = null
+        if (item instanceof Facet) {
+            Facet facet = (Facet) item
             facet.multiFacetAwareItemId = null
             facet.multiFacetAwareItemDomainType = null
         }
-   }
+    }
+
+    @Override
+    void leave(Item item) {
+    }
 }

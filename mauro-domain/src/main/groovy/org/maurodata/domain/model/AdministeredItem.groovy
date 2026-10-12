@@ -136,8 +136,7 @@ abstract class AdministeredItem extends Item implements Pathable, DiffableItem {
     @Transient
     @JsonIgnore
     void setAssociations() {
-        SetAssociationsVisitor setAssociationsVisitor = new SetAssociationsVisitor()
-        this.accept(setAssociationsVisitor)
+        SetAssociationsVisitor.setAssociations(this)
     }
 
     @Override

@@ -1,5 +1,6 @@
 package org.maurodata.visitor.common
 
+import groovy.transform.CompileStatic
 import org.maurodata.domain.classifier.Classifier
 import org.maurodata.domain.dataflow.DataClassComponent
 import org.maurodata.domain.dataflow.DataElementComponent
@@ -20,79 +21,102 @@ import org.maurodata.domain.terminology.Term
 import org.maurodata.domain.terminology.TermRelationship
 import org.maurodata.domain.terminology.TermRelationshipType
 import org.maurodata.visitor.GenericDomainTraversalVisitor
+import org.maurodata.visitor.ItemHandler
 import org.maurodata.visitor.VisitorRegistry
 
-class TreeifyVisitor extends GenericDomainTraversalVisitor {
+@CompileStatic
+class TreeifyVisitor extends GenericDomainTraversalVisitor implements ItemHandler {
 
     TreeifyVisitor() {
-        onEnter(Folder) {Folder folder ->
-            folder.parent = null
+        addHandler(this)
+    }
+
+    // Direct dispatch avoids per-node closure calls; order matches the original handler registration order.
+    @Override
+    void enter(Item item) {
+        if (item instanceof Folder) {
+            ((Folder) item).parent = null
         }
-        onEnter(Model) {Model model ->
-            model.folder = null
+        if (item instanceof Model) {
+            ((Model) item).folder = null
         }
-        onEnter(AdministeredItem) {AdministeredItem administeredItem ->
+        if (item instanceof AdministeredItem) {
+            AdministeredItem administeredItem = (AdministeredItem) item
             administeredItem.classifiers = administeredItem.classifiers.collect {classifier -> replaceWithStub(classifier)}
         }
-        onEnter(DataModel) {DataModel dataModel ->
+        if (item instanceof DataModel) {
+            DataModel dataModel = (DataModel) item
             dataModel.dataElements = []
             dataModel.allDataClasses = []
             dataModel.enumerationValues = []
         }
-        onEnter(DataClass) {DataClass dataClass ->
+        if (item instanceof DataClass) {
+            DataClass dataClass = (DataClass) item
             dataClass.extendedBy = []
-            dataClass.extendsDataClasses = replaceWithStub(dataClass.extendsDataClasses)
+            dataClass.extendsDataClasses = replaceWithStub(dataClass.extendsDataClasses) as List<DataClass>
             dataClass.referenceTypes = []
             dataClass.dataModel = null
         }
-        onEnter(DataElement) {DataElement dataElement ->
-            dataElement.dataModel = null
+        if (item instanceof DataElement) {
+            ((DataElement) item).dataModel = null
         }
-        onEnter(DataType) {DataType dataType ->
+        if (item instanceof DataType) {
+            DataType dataType = (DataType) item
             dataType.referenceClass = replaceWithStub(dataType.referenceClass)
             dataType.modelResource = replaceWithStub(dataType.modelResource)
         }
-        onEnter(EnumerationValue) {EnumerationValue enumerationValue ->
-            enumerationValue.dataModel = null
+        if (item instanceof EnumerationValue) {
+            ((EnumerationValue) item).dataModel = null
         }
-        onEnter(Term) {Term term ->
-            term.terminology = null
+        if (item instanceof Term) {
+            ((Term) item).terminology = null
         }
-        onEnter(TermRelationshipType) {TermRelationshipType relationshipType ->
-            relationshipType.terminology = null
+        if (item instanceof TermRelationshipType) {
+            ((TermRelationshipType) item).terminology = null
         }
-        onEnter(TermRelationship) {TermRelationship relationship ->
+        if (item instanceof TermRelationship) {
+            TermRelationship relationship = (TermRelationship) item
             relationship.sourceTerm = replaceWithStub(relationship.sourceTerm)
             relationship.targetTerm = replaceWithStub(relationship.targetTerm)
             relationship.relationshipType = replaceWithStub(relationship.relationshipType)
             relationship.terminology = null
         }
-        onEnter(CodeSet) {CodeSet codeSet ->
+        if (item instanceof CodeSet) {
+            CodeSet codeSet = (CodeSet) item
             codeSet.terms = codeSet.terms.collect {term -> replaceWithStub(term)} as Set<Term>
         }
-        onEnter(Classifier) {Classifier classifier ->
-            classifier.classificationScheme = null
+        if (item instanceof Classifier) {
+            ((Classifier) item).classificationScheme = null
         }
-        onEnter(DataFlow) {DataFlow dataFlow ->
+        if (item instanceof DataFlow) {
+            DataFlow dataFlow = (DataFlow) item
             dataFlow.source = replaceWithStub(dataFlow.source)
             dataFlow.target = replaceWithStub(dataFlow.target)
         }
-        onEnter(DataClassComponent) {DataClassComponent component ->
+        if (item instanceof DataClassComponent) {
+            DataClassComponent component = (DataClassComponent) item
             component.sourceDataClasses = component.sourceDataClasses.collect {replaceWithStub(it)}
             component.targetDataClasses = component.targetDataClasses.collect {replaceWithStub(it)}
             component.dataFlow = null
         }
-        onEnter(DataElementComponent) {DataElementComponent component ->
+        if (item instanceof DataElementComponent) {
+            DataElementComponent component = (DataElementComponent) item
             component.sourceDataElements = component.sourceDataElements.collect {replaceWithStub(it)}
             component.targetDataElements = component.targetDataElements.collect {replaceWithStub(it)}
             component.dataClassComponent = null
         }
-        onEnter(SemanticLink) {SemanticLink semanticLink ->
+        if (item instanceof SemanticLink) {
+            SemanticLink semanticLink = (SemanticLink) item
             semanticLink.target = replaceWithStub(semanticLink.target)
         }
-        onEnter(VersionLink) {VersionLink versionLink ->
+        if (item instanceof VersionLink) {
+            VersionLink versionLink = (VersionLink) item
             versionLink.target = replaceWithStub(versionLink.target)
         }
+    }
+
+    @Override
+    void leave(Item item) {
     }
 
     private static <T extends AdministeredItem> T replaceWithStub(T administeredItem) {
