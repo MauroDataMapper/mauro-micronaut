@@ -9,6 +9,8 @@ enum PluginType {
     Exporter,
     Email,
     Profile,
-    DefaultDataTypeProvider
+    DefaultDataTypeProvider,
+    DataTypeComparisonProvider,
+    DataElementComparisonProvider
 
 }

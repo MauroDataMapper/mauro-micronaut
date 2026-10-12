@@ -2,7 +2,9 @@ package org.maurodata.api.datamodel
 
 import org.maurodata.api.MauroApi
 import org.maurodata.api.Paths
+import org.maurodata.api.ProducesJsonAndYaml
 import org.maurodata.api.model.AdministeredItemApi
+import org.maurodata.domain.comparison.ComparisonResult
 import org.maurodata.domain.datamodel.DataClass
 import org.maurodata.domain.datamodel.DataElement
 import org.maurodata.web.ListResponse
@@ -49,6 +51,10 @@ interface DataElementApi extends AdministeredItemApi<DataElement, DataClass> {
 
     @Post(Paths.DATA_ELEMENT_COPY)
     DataElement copyDataElement(UUID dataModelId, UUID dataClassId, UUID otherModelId,  UUID otherDataClassId, UUID dataElementId)
+
+    @Get(Paths.DATA_ELEMENT_COMPARE)
+    @ProducesJsonAndYaml
+    ListResponse<ComparisonResult> compare(UUID id, UUID otherId)
 
     @Get(Paths.DATA_ELEMENT_DOI)
     Map doi(UUID id)
