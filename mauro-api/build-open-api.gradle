@@ -18,7 +18,7 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath "org.yaml:snakeyaml:2.1.3"
+        classpath "org.yaml:snakeyaml:2.7"
         classpath "org.apache.groovy:groovy-yaml:4.0.33"
     }
 }
@@ -336,12 +336,11 @@ tasks.register('pruneTransitiveRefs') {
 
 configurations {
     openApiGeneratorCli6
-    openApiGeneratorCli7
 }
 
 dependencies {
+    // OpenAPI Generator 7.x balloons the recursive normalized spec and breaks pruneTransitiveRefs.
     openApiGeneratorCli6 "org.openapitools:openapi-generator-cli:6.6.0"
-    openApiGeneratorCli7 "org.openapitools:openapi-generator-cli:7.21.0"
 }
 
 Map<String, String> normalizers = [
