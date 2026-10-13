@@ -1,18 +1,13 @@
 package org.maurodata.persistencetest
 
-import io.micronaut.context.annotation.Property
-import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
 import spock.lang.Specification
 import org.maurodata.domain.folder.Folder
 import org.maurodata.domain.terminology.Terminology
 import org.maurodata.persistence.cache.ModelCacheableRepository
+import org.maurodata.persistence.ContainerizedTest
 
-@MicronautTest(startApplication = true)
-@Property(name = "datasources.default.driver-class-name",
-    value = "org.testcontainers.jdbc.ContainerDatabaseDriver")
-@Property(name = "datasources.default.url",
-    value = "jdbc:tc:postgresql:16-alpine:///db")
+@ContainerizedTest
 class DataModelRepositorySpec extends Specification {
 
 //    @Inject

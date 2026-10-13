@@ -6,14 +6,20 @@ micronaut:
             expire-after-write: 1h
             record-stats: true
 
+mauro:
+    search:
+        rebuild:
+            scheduled:
+                enabled: false
+
 datasources:
     default:
-        url: jdbc:postgresql://localhost:5432/sandbox?reWriteBatchedInserts=true
+        url: "jdbc:tc:postgresql:${POSTGRES_VERSION:16}-alpine:///db"
         username: sandbox
         password: sandbox
         dialect: POSTGRES
         db-type: postgres
-        driver-class-name: org.postgresql.Driver
+        driver-class-name: org.testcontainers.jdbc.ContainerDatabaseDriver
 logger:
     levels:
 #       io.micronaut.data: DEBUG

@@ -2,7 +2,6 @@ package org.maurodata.persistence.search
 
 import groovy.util.logging.Slf4j
 import io.micronaut.context.annotation.Value
-import io.micronaut.scheduling.annotation.Scheduled
 import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
@@ -31,8 +30,7 @@ class SearchIndexRefreshScheduler {
     private volatile long lastSeenVersion = -1
     private volatile boolean refreshInProgress = false
 
-    @Scheduled(fixedDelay = '${mauro.search.rebuild.poll-interval:10s}')
-    synchronized void scheduledCheck() {
+    synchronized void checkAt(Instant now) {
         log.trace("Scheduled Check...")
         if (refreshInProgress) {
             return
@@ -49,7 +47,7 @@ class SearchIndexRefreshScheduler {
                 return
             }
             // If the last change is recent, wait for inactivity window
-            Duration sinceLast = Duration.between(lastUpdated, Instant.now())
+            Duration sinceLast = Duration.between(lastUpdated, now)
             if (sinceLast < debounce) {
                 log.debug("Change observed but debounce window not passed ({}s left)",
                           (debounce.minus(sinceLast).toMillis() / 1000.0).round(1))
@@ -107,10 +105,11 @@ class SearchIndexRefreshScheduler {
     @Transactional
     void markIndexDirty() {
         try (Connection conn = dataSource.getConnection()) {
-            PreparedStatement ps = conn.prepareStatement("UPDATE search.search_domains_dirty_flag " +
-                                                         "SET version = version + 1, " +
-                                                         "last_updated = now() " +
-                                                         "WHERE id = TRUE")
+            PreparedStatement ps = conn.prepareStatement("INSERT INTO search.search_domains_dirty_flag (id, version, last_updated) " +
+                                                         "VALUES (TRUE, 1, now()) " +
+                                                         "ON CONFLICT (id) DO UPDATE " +
+                                                         "SET version = search.search_domains_dirty_flag.version + 1, " +
+                                                         "last_updated = now()")
             ps.executeUpdate()
         }
     }

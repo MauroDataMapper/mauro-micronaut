@@ -2,19 +2,24 @@ package org.maurodata.search
 
 import org.maurodata.domain.search.dto.SearchRequestDTO
 import org.maurodata.testing.CommonDataSpec
+import jakarta.inject.Inject
 
 import jakarta.inject.Singleton
+import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import spock.lang.Shared
 import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.folder.Folder
-import org.maurodata.persistence.ContainerizedTest
+import org.maurodata.persistence.search.SearchIndexRefreshScheduler
 
 import org.maurodata.domain.search.dto.SearchResultsDTO
 import org.maurodata.web.ListResponse
 
-@ContainerizedTest
+@MicronautTest(startApplication = true, transactional = false)
 @Singleton
 class SearchIntegrationSpec extends CommonDataSpec {
+
+    @Inject
+    SearchIndexRefreshScheduler searchIndexRefreshScheduler
 
     @Shared
     Folder folder
@@ -128,7 +133,9 @@ class SearchIntegrationSpec extends CommonDataSpec {
 
         when:
 
-        Thread.sleep(5*1000)
+        Map dirtyState = searchIndexRefreshScheduler.readVersionAndTimestamp()
+        searchIndexRefreshScheduler.checkAt(
+            dirtyState.lastUpdated.plus(searchIndexRefreshScheduler.debounce).plusNanos(1))
 
         then: // Search results are unchanged until after rebuild
 

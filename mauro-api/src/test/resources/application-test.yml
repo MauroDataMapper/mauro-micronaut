@@ -16,5 +16,15 @@ mauro:
     retry-wait: 0
   search:
     rebuild:
+      scheduled:
+        enabled: false
       poll-inactivity-period: 2s
       poll-interval: 1s
+datasources:
+  default:
+    url: "jdbc:tc:postgresql:${POSTGRES_VERSION:16}-alpine:///db"
+    username: sandbox
+    password: sandbox
+    dialect: POSTGRES
+    db-type: postgres
+    driver-class-name: org.testcontainers.jdbc.ContainerDatabaseDriver
