@@ -23,6 +23,9 @@ jobs:
       POSTGRES_VERSION: '16'
     steps:
       - uses: actions/checkout@v6
+        with:
+          # Changed-file linting and PR secret scans need the base commit available locally.
+          fetch-depth: 0
       - name: Set up JDK 17
         uses: actions/setup-java@v5
         with:
@@ -50,7 +53,24 @@ jobs:
           path: '**/build/test-results/**/*.xml'
           reporter: java-junit
 
-      - name: MegaLinter
+      - name: MegaLinter (changed files and PR secrets)
+        if: github.event_name == 'pull_request' && (success() || failure())
+        uses: oxsecurity/megalinter/flavors/java@v9
+        env:
+          VALIDATE_ALL_CODEBASE: "false"
+          DEFAULT_BRANCH: ${{ github.base_ref }}
+          ENABLE_LINTERS: ACTION_ACTIONLINT,API_SPECTRAL,BASH_EXEC,BASH_SHFMT,GROOVY_NPM_GROOVY_LINT,JSON_JSONLINT,JSON_V8R,JSON_PRETTIER,MARKDOWN_MARKDOWNLINT,MARKDOWN_MARKDOWN_TABLE_FORMATTER,REPOSITORY_GITLEAKS,XML_XMLLINT,YAML_PRETTIER,YAML_YAMLLINT,YAML_V8R
+          PULL_REQUEST: "true"
+          REPOSITORY_GITLEAKS_PR_COMMITS_SCAN: "true"
+          REPOSITORY_GITLEAKS_PR_SOURCE_SHA: ${{ github.event.pull_request.head.sha }}
+          REPOSITORY_GITLEAKS_PR_TARGET_SHA: ${{ github.event.pull_request.base.sha }}
+          GROOVY_NPM_GROOVY_LINT_FILE_EXTENSIONS: .groovy,.gradle
+          DISABLE_ERRORS: true
+          SARIF_REPORTER: true
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: MegaLinter (full repository)
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main') && (success() || failure())
         uses: oxsecurity/megalinter/flavors/java@v9
         env:
           VALIDATE_ALL_CODEBASE: true
@@ -61,7 +81,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Archive lint reports
-        if: github.event_name == 'push' && github.ref == 'refs/heads/develop' && (success() || failure())
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main') && (success() || failure())
         uses: actions/upload-artifact@v7
         with:
           name: MegaLinter reports
@@ -70,7 +90,7 @@ jobs:
             mega-linter.log
 
       - name: Upload MegaLinter scan results to GitHub Security tab
-        if: github.event_name == 'push' && github.ref == 'refs/heads/develop' && (success() || failure())
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main') && (success() || failure())
         uses: github/codeql-action/upload-sarif@v2
         with:
           sarif_file: megalinter-reports/megalinter-report.sarif
