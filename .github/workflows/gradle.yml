@@ -1,9 +1,4 @@
-# This workflow uses actions that are not certified by GitHub.
-# They are provided by a third-party and are governed by
-# separate terms of service, privacy policy, and support
-# documentation.
-# This workflow will build a Java project with Gradle and cache/restore any dependencies to improve the workflow execution time
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-java-with-gradle
+# This workflow will build and test a Java project with Gradle.
 
 name: Java CI with Gradle
 
@@ -22,24 +17,10 @@ permissions:
 jobs:
   build:
     permissions: write-all
-
     runs-on: ubuntu-latest
-
-    services:
-      postgres:
-        image: postgres:latest
-        env:
-          POSTGRES_USER: sandbox
-          POSTGRES_DB: sandbox
-          POSTGRES_PASSWORD: sandbox
-        options: >-
-          --health-cmd "pg_isready -U sandbox -d sandbox"
-          --health-interval 1s
-          --health-timeout 5s
-          --health-retries 50
-        ports:
-          - 5432:5432
-
+    env:
+      # Change this single setting to use a different PostgreSQL version for CI tests.
+      POSTGRES_VERSION: '16'
     steps:
       - uses: actions/checkout@v6
       - name: Set up JDK 17
@@ -56,29 +37,6 @@ jobs:
       - name: Log Gradle version
         run: ./gradlew --version
 
-      ## Set up for building docker multi-architecture images
-      ## Only test the docker build if we are on the develop branch
-      - name: Set up QEMU
-        if: github.ref == 'refs/heads/develop'
-        uses: docker/setup-qemu-action@v4
-
-      ## Only test the docker build if we are on the develop branch
-      - name: Set up Docker Buildx
-        if: github.ref == 'refs/heads/develop'
-        uses: docker/setup-buildx-action@v4
-
-      ## Only test the docker build if we are on the develop branch
-      - name: Test Docker Build
-        if: github.ref == 'refs/heads/develop'
-        env:
-          GRADLE_OPTS: '-Xmx4g -XX:MaxMetaspaceSize=512m'
-        run: ./gradlew dockerBuildMultiArch
-
-      ## Only generate OpenAPI resources if we are on the develop branch
-      - name: Generate OpenAPI resources
-        if: github.ref == 'refs/heads/develop'
-        run: ./gradlew --no-daemon --max-workers=1 -PenableOpenApi=true -PopenApiGeneratorMaxHeap=4g :mauro-api:processResources
-
       - name: Test with Gradle
         env:
           GRADLE_OPTS: '-Xmx4g -XX:MaxMetaspaceSize=512m'
@@ -92,37 +50,27 @@ jobs:
           path: '**/build/test-results/**/*.xml'
           reporter: java-junit
 
-  #    - name: Archive test report
-  #      if: always()
-  #      uses: actions/upload-artifact@v3
-  #      with:
-  #        name: test-report
-  #        path: '**/build/test-results/**/*.xml'
-
       - name: MegaLinter
         uses: oxsecurity/megalinter/flavors/java@v9
-        # if: github.ref == 'refs/heads/develop'
         env:
-          # All available variables are described in documentation
-          # https://megalinter.io/configuration/
           VALIDATE_ALL_CODEBASE: true
           ENABLE_LINTERS: ACTION_ACTIONLINT,API_SPECTRAL,BASH_EXEC,BASH_SHFMT,GROOVY_NPM_GROOVY_LINT,JSON_JSONLINT,JSON_V8R,JSON_PRETTIER,MARKDOWN_MARKDOWNLINT,MARKDOWN_MARKDOWN_TABLE_FORMATTER,REPOSITORY_GIT_DIFF,REPOSITORY_GITLEAKS,REPOSITORY_GRYPE,REPOSITORY_SECRETLINT,REPOSITORY_SYFT,REPOSITORY_TRIVY,REPOSITORY_TRIVY_SBOM,REPOSITORY_TRUFFLEHOG,XML_XMLLINT,YAML_PRETTIER,YAML_YAMLLINT,YAML_V8R
           GROOVY_NPM_GROOVY_LINT_FILE_EXTENSIONS: .groovy,.gradle
-          DISABLE_ERRORS: true #Flag to have the linter complete with exit code 0 even if errors were detected.
+          DISABLE_ERRORS: true
           SARIF_REPORTER: true
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # see the results in PRs
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Archive lint reports
-        if: github.ref == 'refs/heads/develop' && (success() || failure())
+        if: github.event_name == 'push' && github.ref == 'refs/heads/develop' && (success() || failure())
         uses: actions/upload-artifact@v7
         with:
           name: MegaLinter reports
           path: |
-              megalinter-reports
-              mega-linter.log
+            megalinter-reports
+            mega-linter.log
 
       - name: Upload MegaLinter scan results to GitHub Security tab
-        if: github.ref == 'refs/heads/develop' && (success() || failure())
+        if: github.event_name == 'push' && github.ref == 'refs/heads/develop' && (success() || failure())
         uses: github/codeql-action/upload-sarif@v2
         with:
           sarif_file: megalinter-reports/megalinter-report.sarif
@@ -131,38 +79,130 @@ jobs:
           category: MegaLinter-Groovy
           wait-for-processing: true
 
+  docker-develop:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          java-version: '17'
+          distribution: 'temurin'
 
-      - name: Publish Snapshot to Mauro Snapshot Repository
-        if: success() && github.ref == 'refs/heads/develop'
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-disabled: true
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Test Docker Build
         env:
-            GRADLE_OPTS: '-Xmx4g -XX:MaxMetaspaceSize=512m'
-            ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SIGNING_IN_MEMORY_KEY }}
-            ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_IN_MEMORY_KEY_PASSWORD }}
-        run: |
-            ./gradlew --stacktrace --no-daemon --max-workers=1 -PenableOpenApi=true -PopenApiGeneratorMaxHeap=4g -PMauroSnapshotRepositoryUsername=${{secrets.MAURO_SNAPSHOT_REPOSITORY_USERNAME}} -PMauroSnapshotRepositoryPassword=${{secrets.MAURO_SNAPSHOT_REPOSITORY_PASSWORD}} publishAllPublicationsToMauroSnapshotRepositoryRepository
+          GRADLE_OPTS: '-Xmx4g -XX:MaxMetaspaceSize=512m'
+        run: ./gradlew --no-daemon --max-workers=1 dockerBuildMultiArch
+
+  snapshot-publish:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+    needs: [build, docker-develop]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-disabled: true
+
+      - name: Generate OpenAPI resources and publish snapshot
+        env:
+          GRADLE_OPTS: '-Xmx4g -XX:MaxMetaspaceSize=512m'
+          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SIGNING_IN_MEMORY_KEY }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_IN_MEMORY_KEY_PASSWORD }}
+        run: >-
+          ./gradlew --stacktrace --no-daemon --max-workers=1
+          -PenableOpenApi=true -PopenApiGeneratorMaxHeap=4g
+          -PMauroSnapshotRepositoryUsername=${{ secrets.MAURO_SNAPSHOT_REPOSITORY_USERNAME }}
+          -PMauroSnapshotRepositoryPassword=${{ secrets.MAURO_SNAPSHOT_REPOSITORY_PASSWORD }}
+          publishAllPublicationsToMauroSnapshotRepositoryRepository
+
+  maven-central-publish:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-disabled: true
 
       - name: Publish to Maven Central
-        if: success() && github.ref == 'refs/heads/main'
         env:
-            GRADLE_OPTS: '-Xmx4g -XX:MaxMetaspaceSize=512m'
-            ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SIGNING_IN_MEMORY_KEY }}
-            ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_IN_MEMORY_KEY_PASSWORD }}
-            ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.SONATYPE_USERNAME }}
-            ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.SONATYPE_PASSWORD }}
-        run: |
-            ./gradlew --stacktrace --no-daemon --max-workers=1 -PenableOpenApi=true -PopenApiGeneratorMaxHeap=4g publishAllPublicationsToMavenCentralRepository    
+          GRADLE_OPTS: '-Xmx4g -XX:MaxMetaspaceSize=512m'
+          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SIGNING_IN_MEMORY_KEY }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_IN_MEMORY_KEY_PASSWORD }}
+          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.SONATYPE_USERNAME }}
+          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.SONATYPE_PASSWORD }}
+        run: >-
+          ./gradlew --stacktrace --no-daemon --max-workers=1
+          -PenableOpenApi=true -PopenApiGeneratorMaxHeap=4g
+          publishAllPublicationsToMavenCentralRepository
 
-      - name: BuildMultiArch and publish to Docker Hub
-        if: success() && github.ref == 'refs/heads/main'
+  dockerhub-publish:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: maven-central-publish
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-disabled: true
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build and publish multi-architecture image
         env:
           GRADLE_OPTS: '-Xmx4g -XX:MaxMetaspaceSize=512m'
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
           DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
-        run: |
-          ./gradlew --stacktrace --no-daemon --max-workers=1 -PenableOpenApi=true dockerBuildMultiArch
+        run: >-
+          ./gradlew --stacktrace --no-daemon --max-workers=1
+          -PenableOpenApi=true -PopenApiGeneratorMaxHeap=4g dockerBuildMultiArch
 
+  notify:
+    if: always()
+    needs: [build, docker-develop, snapshot-publish, maven-central-publish, dockerhub-publish]
+    runs-on: ubuntu-latest
+    steps:
       - name: Send a stream message
-        if: success() || failure()
         uses: zulip/github-actions-zulip/send-message@v2
         with:
           api-key: ${{ secrets.ZULIP_API_KEY }}
@@ -171,4 +211,8 @@ jobs:
           to: "build/github-actions"
           type: "stream"
           topic: "${{github.repository}}"
-          content: "${{ job.status == 'success' && ':check_mark:' || ':cross_mark:' }} ${{github.repository}} : **${{github.ref}}**\nGitHub Actions build result: **${{ job.status }}**\n${{ github.event.pull_request.html_url || github.event.head_commit.url }}"
+          content: >-
+            ${{ (contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')) && ':cross_mark:' || ':check_mark:' }}
+            ${{github.repository}} : **${{github.ref}}**
+            GitHub Actions results: build=${{needs.build.result}}, develop-docker=${{needs.docker-develop.result}}, snapshot=${{needs.snapshot-publish.result}}, maven-central=${{needs.maven-central-publish.result}}, dockerhub=${{needs.dockerhub-publish.result}}
+            ${{ github.event.pull_request.html_url || github.event.head_commit.url }}
