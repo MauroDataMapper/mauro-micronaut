@@ -43,11 +43,11 @@ tasks.register('generateRawTypeScriptClient', generateTaskClass) {
     ])
 
     // Lenient: same reasoning as normalizeOpenApiYamlWithGenerator
-    inputSpec.set(providers.provider {
+    inputSpec.set(layout.file(providers.provider {
         (findSingleOpenApiSpec(false)
             ?: layout.buildDirectory.file("classes/groovy/main/META-INF/swagger/openapi.yml").get().asFile
-        ).absolutePath
-    })
+        )
+    }))
 
     doFirst {
         File selectedSpec = resolveSingleOpenApiSpec()   // strict
