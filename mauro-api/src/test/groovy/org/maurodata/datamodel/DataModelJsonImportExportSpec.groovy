@@ -1,5 +1,7 @@
 package org.maurodata.datamodel
 
+import io.micronaut.http.HttpStatus
+import io.micronaut.http.client.exceptions.HttpClientResponseException
 import org.maurodata.domain.datamodel.DataClass
 import org.maurodata.domain.datamodel.DataElement
 import org.maurodata.domain.datamodel.DataModel
@@ -10,6 +12,7 @@ import org.maurodata.domain.folder.Folder
 import org.maurodata.export.ExportModel
 import org.maurodata.persistence.ContainerizedTest
 import org.maurodata.testing.CommonDataSpec
+import org.maurodata.visitor.common.RemoveIdVisitor
 import org.maurodata.web.ListResponse
 
 import groovy.json.JsonSlurper
@@ -113,6 +116,30 @@ class DataModelJsonImportExportSpec extends CommonDataSpec {
             .addPart('folderId', folderId.toString())
             .addPart('importFile', 'file.json', MediaType.APPLICATION_JSON_TYPE, objectMapper.writeValueAsBytes(exportModel))
             .build()
+
+        when:
+        dataModelApi.importModel(
+                importRequest,
+                'org.maurodata.plugin.importer.json',
+                'JsonDataModelImporterPlugin',
+                '4.0.0')
+
+        then:
+        HttpClientResponseException exception = thrown()
+        exception.status == HttpStatus.INTERNAL_SERVER_ERROR
+
+        when:
+        // Remove ids from all the items so that they don't get re-created.
+        // The dataclass labels are all distinct so the 'extends' relationship can be preserved
+        exportModel.dataModel.setAssociations()
+        exportModel.dataModel.removeIds()
+
+        importRequest = MultipartBody.builder()
+            .addPart('folderId', folderId.toString())
+            .addPart('importFile', 'file.json', MediaType.APPLICATION_JSON_TYPE, objectMapper.writeValueAsBytes(exportModel))
+            .build()
+
+
         ListResponse<DataModel> response =
             dataModelApi.importModel(
                 importRequest,
@@ -120,7 +147,8 @@ class DataModelJsonImportExportSpec extends CommonDataSpec {
                 'JsonDataModelImporterPlugin',
                 '4.0.0')
 
-        when:
+
+
         UUID importedDataModelId = response.items.first().id
         DataModel dataModel = dataModelApi.show(importedDataModelId)
 

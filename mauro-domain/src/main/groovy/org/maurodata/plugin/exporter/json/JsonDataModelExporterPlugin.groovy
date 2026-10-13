@@ -8,6 +8,8 @@ import jakarta.inject.Singleton
 import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.export.ExportModel
 import org.maurodata.plugin.exporter.DataModelExporterPlugin
+import org.maurodata.visitor.common.SmallExportVisitor
+import org.maurodata.visitor.common.TreeifyVisitor
 
 @CompileStatic
 @Slf4j
@@ -48,8 +50,12 @@ class JsonDataModelExporterPlugin implements DataModelExporterPlugin {
         } else {
             exportModel.dataModel = dataModels[0]
         }
-        objectMapper.writeValueAsBytes(exportModel)
+        def visitor = new TreeifyVisitor() + new SmallExportVisitor()
 
+        dataModels.each {dataModel ->
+            dataModel.accept(visitor)
+        }
+        objectMapper.writeValueAsBytes(exportModel)
     }
 
     @Override

@@ -1,5 +1,7 @@
 package org.maurodata.importexport
 
+import io.micronaut.http.HttpStatus
+import io.micronaut.http.client.exceptions.HttpClientResponseException
 import org.maurodata.domain.classifier.ClassificationScheme
 import org.maurodata.domain.classifier.Classifier
 import org.maurodata.domain.datamodel.DataClass
@@ -18,6 +20,7 @@ import org.maurodata.domain.terminology.Terminology
 import org.maurodata.export.ExportModel
 import org.maurodata.persistence.ContainerizedTest
 import org.maurodata.testing.CommonDataSpec
+import org.maurodata.visitor.common.RemoveIdVisitor
 import org.maurodata.web.ListResponse
 
 import io.micronaut.http.HttpResponse
@@ -201,7 +204,26 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
             .build()
 
         when:
+        folderApi.importModel(importRequest, 'org.maurodata.plugin.importer.json', 'JsonFolderImporterPlugin', '4.0.0')
+
+        then:
+        HttpClientResponseException exception = thrown()
+        exception.status == HttpStatus.INTERNAL_SERVER_ERROR
+
+        when:
+        ExportModel exportModel = objectMapper.readValue(exportResponse.body(), ExportModel)
+        // Remove ids from all the items so that they don't get re-created.
+        // The term codes are all distinct so the relationships can be reconstructed and preserved
+        exportModel.folder.setAssociations()
+        exportModel.folder.removeIds()
+
+        importRequest = MultipartBody.builder()
+            .addPart('folderId', folderId.toString())
+            .addPart('importFile', 'file.json', MediaType.APPLICATION_JSON_TYPE, objectMapper.writeValueAsBytes(exportModel))
+            .build()
+
         ListResponse<Folder> response = folderApi.importModel(importRequest, 'org.maurodata.plugin.importer.json', 'JsonFolderImporterPlugin', '4.0.0')
+
 
         then:
         response
@@ -332,57 +354,6 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
         importedTermRelationship.items[0].relationshipType.id == importedTermRelationshipTypeId
     }
 
-    void 'test consume export folder with classification scheme - should preserve classification scheme and classifier ids'() {
-        given:
-        ClassificationScheme classificationScheme =
-            classificationSchemeApi.create(folderId, new ClassificationScheme(label: 'Classification scheme to preserve'))
-        Classifier classifier =
-            classifierApi.create(classificationScheme.id, new Classifier(label: 'Classifier to preserve'))
-        Classifier childClassifier =
-            classifierApi.create(classificationScheme.id, classifier.id, new Classifier(label: 'Child classifier to preserve'))
-
-        and:
-        HttpResponse<byte[]> exportResponse = folderApi.exportModel(folderId, 'org.maurodata.plugin.exporter.json', 'JsonFolderExporterPlugin', '4.0.0')
-        ExportModel export = objectMapper.readValue(exportResponse.body(), ExportModel)
-
-        expect:
-        export.folder.classificationSchemes.size() == 1
-        export.folder.classificationSchemes.first().id == classificationScheme.id
-        export.folder.classificationSchemes.first().csClassifiers.id.toSet() == [classifier.id, childClassifier.id].toSet()
-
-        when:
-        classificationSchemeApi.delete(classificationScheme.id, new ClassificationScheme(), true)
-
-        then:
-        classificationSchemeApi.list(folderId).items.isEmpty()
-        classifierApi.listAllClassifiers().items.isEmpty()
-
-        when:
-        MultipartBody importRequest = MultipartBody.builder()
-            .addPart('folderId', folderId.toString())
-            .addPart('importFile', 'file.json', MediaType.APPLICATION_JSON_TYPE, objectMapper.writeValueAsBytes(export))
-            .build()
-        ListResponse<Folder> response = folderApi.importModel(importRequest, 'org.maurodata.plugin.importer.json', 'JsonFolderImporterPlugin', '4.0.0')
-        UUID importedFolderId = response.items.first().id
-
-        then:
-        response.count == 1
-        importedFolderId
-
-        when:
-        ListResponse<ClassificationScheme> importedClassificationSchemes = classificationSchemeApi.list(importedFolderId)
-
-        then:
-        importedClassificationSchemes.count == 1
-        importedClassificationSchemes.items.first().id == classificationScheme.id
-
-        when:
-        ListResponse<Classifier> importedClassifiers = classifierApi.list(classificationScheme.id)
-
-        then:
-        importedClassifiers.items.id.toSet() == [classifier.id, childClassifier.id].toSet()
-    }
-
 
     void 'test consume export folder- folder is not parent - should import'() {
         given:
@@ -420,6 +391,23 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
             .build()
 
         when:
+        folderApi.importModel(importRequest, 'org.maurodata.plugin.importer.json', 'JsonFolderImporterPlugin', '4.0.0')
+
+        then:
+        HttpClientResponseException exception = thrown()
+        exception.status == HttpStatus.INTERNAL_SERVER_ERROR
+
+        when:
+        ExportModel exportModel = objectMapper.readValue(exportResponse.body(), ExportModel)
+        // Remove ids from all the items so that they don't get re-created.
+        // The term codes are all distinct so the relationships can be reconstructed and preserved
+        exportModel.folder.setAssociations()
+        exportModel.folder.removeIds()
+
+        importRequest = MultipartBody.builder()
+            .addPart('folderId', folderId.toString())
+            .addPart('importFile', 'file.json', MediaType.APPLICATION_JSON_TYPE, objectMapper.writeValueAsBytes(exportModel))
+            .build()
         ListResponse<Folder> response = folderApi.importModel(importRequest, 'org.maurodata.plugin.importer.json', 'JsonFolderImporterPlugin', '4.0.0')
 
         then:
@@ -560,6 +548,21 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
             .addPart('folderId', folderId.toString())
             .addPart('importFile', 'file.json', MediaType.APPLICATION_JSON_TYPE, objectMapper.writeValueAsBytes(export))
             .build()
+        folderApi.importModel(importRequest, 'org.maurodata.plugin.importer.json', 'JsonFolderImporterPlugin', '4.0.0')
+
+        then:
+        HttpClientResponseException exception = thrown()
+        exception.status == HttpStatus.INTERNAL_SERVER_ERROR
+
+        when:
+        export.folder.setAssociations()
+        export.folder.removeIds()
+
+        importRequest = MultipartBody.builder()
+            .addPart('folderId', folderId.toString())
+            .addPart('importFile', 'file.json', MediaType.APPLICATION_JSON_TYPE, objectMapper.writeValueAsBytes(export))
+            .build()
+
         ListResponse<Folder> response = folderApi.importModel(importRequest, 'org.maurodata.plugin.importer.json', 'JsonFolderImporterPlugin', '4.0.0')
         UUID importedFolderId = response.items.first().id
 

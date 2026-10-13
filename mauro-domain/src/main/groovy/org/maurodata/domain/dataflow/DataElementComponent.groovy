@@ -20,6 +20,7 @@ import jakarta.validation.constraints.NotNull
 import org.maurodata.domain.datamodel.DataElement
 import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.domain.model.ModelItem
+import org.maurodata.visitor.DomainVisitor
 
 /**
  * A DataElementComponent is associated with a DataClassComponent.
@@ -54,6 +55,11 @@ class DataElementComponent extends ModelItem<DataClassComponent> {
 
     @Transient
     UUID breadcrumbTreeId
+
+    @Override
+    <T> T accept(DomainVisitor<T> visitor) {
+        return visitor.visitDataElementComponent(this)
+    }
 
     @Override
     @Transient

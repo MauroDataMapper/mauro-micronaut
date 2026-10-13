@@ -8,6 +8,8 @@ import jakarta.inject.Singleton
 import org.maurodata.domain.terminology.Terminology
 import org.maurodata.export.ExportModel
 import org.maurodata.plugin.exporter.TerminologyExporterPlugin
+import org.maurodata.visitor.common.SmallExportVisitor
+import org.maurodata.visitor.common.TreeifyVisitor
 
 @CompileStatic
 @Slf4j
@@ -53,6 +55,12 @@ class JsonTerminologyExporterPlugin implements TerminologyExporterPlugin {
         } else {
             exportModel.terminology = terminologies[0]
         }
+        def visitor = new TreeifyVisitor() + new SmallExportVisitor()
+
+        terminologies.each {terminology ->
+            terminology.accept(visitor)
+        }
+
         objectMapper.writeValueAsBytes(exportModel)
 
     }

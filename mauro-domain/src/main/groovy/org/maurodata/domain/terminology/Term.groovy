@@ -24,6 +24,7 @@ import jakarta.persistence.Transient
 import jakarta.validation.constraints.NotBlank
 import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.domain.model.ModelItem
+import org.maurodata.visitor.DomainVisitor
 
 /**
  * A term describes a value with a code and a meaning, within the context of a terminology.
@@ -80,6 +81,11 @@ class Term extends ModelItem<Terminology> implements ItemReferencer, DiffableIte
 
     @Relation(value = Relation.Kind.MANY_TO_MANY, mappedBy = 'terms')
     Set<CodeSet> codeSets = []
+
+    @Override
+    <T> T accept(DomainVisitor<T> visitor) {
+        return visitor.visitTerm(this)
+    }
 
 
     @Override

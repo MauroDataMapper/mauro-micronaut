@@ -1,5 +1,7 @@
 package org.maurodata.terminology
 
+import io.micronaut.http.HttpStatus
+import io.micronaut.http.client.exceptions.HttpClientResponseException
 import org.maurodata.domain.folder.Folder
 import org.maurodata.domain.terminology.Term
 import org.maurodata.domain.terminology.TermRelationship
@@ -8,6 +10,7 @@ import org.maurodata.domain.terminology.Terminology
 import org.maurodata.export.ExportModel
 import org.maurodata.persistence.ContainerizedTest
 import org.maurodata.testing.CommonDataSpec
+import org.maurodata.visitor.common.RemoveIdVisitor
 import org.maurodata.web.ListResponse
 
 import io.micronaut.http.MediaType
@@ -58,13 +61,37 @@ class TerminologyJsonImportExportSpec extends CommonDataSpec {
             .addPart('importFile', 'file.json', MediaType.APPLICATION_JSON_TYPE, objectMapper.writeValueAsBytes(exportModel))
             .build()
 
+
+        when:
+        terminologyApi.importModel(
+            importRequest,
+            'org.maurodata.plugin.importer.json',
+            'JsonTerminologyImporterPlugin',
+            '4.0.0')
+
+        then:
+        HttpClientResponseException exception = thrown()
+        exception.status == HttpStatus.INTERNAL_SERVER_ERROR
+
+        when:
+        // Remove ids from all the items so that they don't get re-created.
+        // The term codes are all distinct so the relationships can be reconstructed and preserved
+        exportModel.terminology.setAssociations()
+        exportModel.terminology.removeIds()
+
+        importRequest = MultipartBody.builder()
+            .addPart('folderId', folderId.toString())
+            .addPart('importFile', 'file.json', MediaType.APPLICATION_JSON_TYPE, objectMapper.writeValueAsBytes(exportModel))
+            .build()
+
+
         ListResponse<Terminology> request = terminologyApi.importModel(
             importRequest,
             'org.maurodata.plugin.importer.json',
             'JsonTerminologyImporterPlugin',
             '4.0.0')
 
-        when:
+
         UUID importedTerminologyId = request.items.first().id
         Terminology terminology = terminologyApi.show(importedTerminologyId)
 

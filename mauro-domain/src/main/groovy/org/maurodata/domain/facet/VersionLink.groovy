@@ -19,6 +19,7 @@ import io.micronaut.data.annotation.Indexes
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Transient
 import org.maurodata.domain.model.Model
+import org.maurodata.visitor.DomainVisitor
 
 @CompileStatic
 @MappedEntity(value = 'version_link', schema = 'core')
@@ -48,6 +49,11 @@ class VersionLink extends Facet implements ItemReferencer {
 
     @JsonAlias(['target_model_domain_type'])
     String targetModelDomainType
+
+    @Override
+    <T> T accept(DomainVisitor<T> visitor) {
+        return visitor.visitVersionLink(this)
+    }
 
     @PrePersist
     @PreUpdate

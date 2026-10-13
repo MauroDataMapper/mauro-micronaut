@@ -80,6 +80,7 @@ import org.maurodata.service.core.AuthorityService
 import org.maurodata.service.plugin.PluginService
 import org.maurodata.util.exporter.ExporterUtils
 import org.maurodata.utils.importer.ImporterUtils
+import org.maurodata.visitor.common.RemoveIdVisitor
 import org.maurodata.web.ListResponse
 import org.reactivestreams.Publisher
 import org.maurodata.web.PaginationParams
@@ -239,6 +240,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         }
 
         if (permanent) {
+            contentsService.loadWithContent(modelToDelete)
             contentsService.deleteWithContent(modelToDelete)
         } else {
             modelToDelete.deleted(true)
@@ -348,7 +350,8 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         M copy = createCopyModelWithAssociations(existing, createNewVersionData)
         copy.setAssociations()
 
-        M savedCopy = (M) contentsService.saveWithContent(copy, accessControlService.getUser())
+        copy.removeIds()
+        M savedCopy = (M) contentsService.saveWithContent(copy, accessControlService.getUser(), true)
         //modelContentRepository.saveWithContent(copy)
 
         final VersionLink versionLink = new VersionLink(versionLinkType: VersionLink.NEW_MODEL_VERSION_OF)
@@ -449,8 +452,9 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
             imp.folder = folder
             log.info '** about to importWithContentBatched... **'
             //updateCreationProperties(imp)
-            M savedImported = (M) contentsService.importWithContent(imp, accessControlService.getUser())
-            log.info '** finished importWithContentBatched **'
+            imp.setAssociations()
+            M savedImported = (M) contentsService.saveWithContent(imp, accessControlService.getUser(), false)
+            log.info '** finished saveWithContentBatched **'
             savedImported
         }
         List<M> smallerResponse = saved.collect { model ->

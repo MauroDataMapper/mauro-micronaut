@@ -146,7 +146,7 @@ class TermController extends AdministeredItemController<Term, Terminology> imple
 
         }
 
-        return (Term) contentsService.saveWithContent(newTerm)
+        return (Term) contentsService.saveWithContent(newTerm, accessControlService.user, true)
     }
 
 }

@@ -28,6 +28,7 @@ import org.maurodata.domain.model.Model
 import org.maurodata.persistence.cache.ItemCacheableRepository
 import org.maurodata.persistence.cache.ItemCacheableRepository.CatalogueUserCacheableRepository
 import org.maurodata.persistence.model.PathRepository
+import org.maurodata.shredder.ShreddedContent
 
 @CompileStatic
 @Singleton
@@ -187,8 +188,8 @@ class AccessControlService implements Toggleable {
 
         List<Model> childModels = []
         if(item instanceof Folder) {
-            ContentHandler contentHandler = contentsService.loadTree(item, false) // rootFolder may be null
-            childModels = contentHandler.allItems.values() as List<Model> // These are all models when loading the tree
+            ShreddedContent shreddedContent = contentsService.loadTree(item, false) // rootFolder may be null
+            childModels = shreddedContent.getAllAdministeredItems() as List<Model> // These are all models when loading the tree
         }
 
 
@@ -285,8 +286,8 @@ class AccessControlService implements Toggleable {
 
         if(childModels == null) {
             if(model instanceof Folder) {
-                ContentHandler contentHandler = contentsService.loadTree(model, false) // rootFolder may be null
-                childModels = contentHandler.allItems.values() as List<Model> // These are all models when loading the tree
+                ShreddedContent shreddedContent = contentsService.loadTree(model, false) // rootFolder may be null
+                childModels = shreddedContent.getAllAdministeredItems() as List<Model> // These are all models when loading the tree
             } else {
                 childModels = []
             }

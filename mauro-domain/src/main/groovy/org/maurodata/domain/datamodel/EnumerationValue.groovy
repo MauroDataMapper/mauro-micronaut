@@ -23,6 +23,7 @@ import org.maurodata.domain.diff.DiffableItem
 import org.maurodata.domain.diff.ObjectDiff
 import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.domain.model.ModelItem
+import org.maurodata.visitor.DomainVisitor
 
 /**
  * A term describes a value with a code and a meaning, within the context of a terminology.
@@ -61,6 +62,11 @@ class EnumerationValue extends ModelItem<DataModel> implements DiffableItem<Enum
 
     @NotNull
     String value
+
+    @Override
+    <T> T accept(DomainVisitor<T> visitor) {
+        return visitor.visitEnumerationValue(this)
+    }
 
     @Override
     @Transient

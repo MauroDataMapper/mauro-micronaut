@@ -19,6 +19,7 @@ import io.micronaut.data.annotation.Index
 import io.micronaut.data.annotation.Indexes
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Transient
+import org.maurodata.visitor.DomainVisitor
 
 @CompileStatic
 @MappedEntity(schema = 'core')
@@ -42,6 +43,11 @@ class SemanticLink extends Facet implements ItemReferencer {
 
     // Default is false
     Boolean unconfirmed
+
+    @Override
+    <T> T accept(DomainVisitor<T> visitor) {
+        return visitor.visitSemanticLink(this)
+    }
 
     SemanticLink() {
         unconfirmed = false

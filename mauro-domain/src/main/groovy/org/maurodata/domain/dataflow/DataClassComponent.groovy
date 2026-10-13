@@ -20,6 +20,7 @@ import jakarta.validation.constraints.NotNull
 import org.maurodata.domain.datamodel.DataClass
 import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.domain.model.ModelItem
+import org.maurodata.visitor.DomainVisitor
 
 /**
  * A DataClassComponent is associated with a DataFlow.
@@ -58,6 +59,11 @@ class DataClassComponent extends ModelItem<DataFlow> {
 
     @Transient
     UUID breadcrumbTreeId
+
+    @Override
+    <T> T accept(DomainVisitor<T> visitor) {
+        return visitor.visitDataClassComponent(this)
+    }
 
     @Override
     @Transient

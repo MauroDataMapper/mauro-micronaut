@@ -23,6 +23,7 @@ import org.maurodata.domain.diff.CollectionDiff
 import org.maurodata.domain.diff.DiffBuilder
 import org.maurodata.domain.diff.DiffableItem
 import org.maurodata.domain.diff.ObjectDiff
+import org.maurodata.visitor.DomainVisitor
 
 @CompileStatic
 @MappedEntity(value = 'summary_metadata', schema = 'core', alias = 'summary_metadata_')
@@ -43,6 +44,11 @@ class SummaryMetadata extends Facet implements DiffableItem<SummaryMetadata>, It
     @JsonAlias(['summary_metadata_reports'])
     @Relation(Relation.Kind.ONE_TO_MANY)
     Collection<SummaryMetadataReport> summaryMetadataReports = []
+
+    @Override
+    <T> T accept(DomainVisitor<T> visitor) {
+        return visitor.visitSummaryMetadata(this)
+    }
 
     @Override
     @JsonIgnore

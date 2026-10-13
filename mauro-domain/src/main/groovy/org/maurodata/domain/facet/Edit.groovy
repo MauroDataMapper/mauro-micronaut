@@ -11,6 +11,7 @@ import io.micronaut.data.annotation.Index
 import io.micronaut.data.annotation.Indexes
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Transient
+import org.maurodata.visitor.DomainVisitor
 
 @CompileStatic
 @MappedEntity(schema = 'core')
@@ -22,6 +23,11 @@ class Edit extends Facet {
 
     EditType title
     String description
+
+    @Override
+    <T> T accept(DomainVisitor<T> visitor) {
+        return visitor.visitEdit(this)
+    }
 
     /****
      * Methods for building a tree-like DSL

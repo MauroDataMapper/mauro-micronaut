@@ -119,14 +119,6 @@ abstract class Model extends AdministeredItem implements DiffableItem, Securable
         getAllAssociations().flatten() as List<AdministeredItem>
     }
 
-    @Transient
-    @JsonIgnore
-    void setAssociations() {
-        super.setAssociations()
-        versionLinks.each {
-            it.multiFacetAwareItem = this
-        }
-    }
 
     Boolean hasSameDomainType(Model other) {
         boolean result = this.domainType == other.domainType && this.class == other.class

@@ -363,6 +363,10 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
             ((DataElementRepository) repository).findAllByDataClassDataModelIdIn(dataModelIds)
         }
 
+        List<DataElement> findAllByIdIn(Collection<UUID> dataElementIds){
+            ((DataElementRepository) repository).findAllByIdIn(dataElementIds) as List<DataElement>
+        }
+
     }
 
     @Singleton
