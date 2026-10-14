@@ -325,6 +325,12 @@ interface Paths {
     String IMPORTER_PARAMS = '/api/importer/parameters/{namespace}/{name}/{version}'
 
     /*
+    * InspectApi
+    */
+    String INSPECT_ITEM = '/api/inspect/{domainType}/{id}'
+    String INSPECT_ITEM_OVERVIEW = '/api/inspect/{domainType}/{id}/overview'
+
+    /*
     * ProfileApi
     */
     String PROFILE_DYNAMIC_PROVIDERS = '/api/profiles/providers/dynamic'
