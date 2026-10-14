@@ -451,23 +451,23 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
 
         if(imported && imported.size() == 1) {
             if(firstParameters.modelName) {
-                imported.first.label = firstParameters.modelName.trim()
+                imported.first().label = firstParameters.modelName.trim()
             }
             if(firstParameters.description) {
-                imported.first.description = firstParameters.description.trim()
+                imported.first().description = firstParameters.description.trim()
             }
             if(firstParameters.author) {
-                imported.first.author = firstParameters.author.trim()
+                imported.first().author = firstParameters.author.trim()
             }
             if(firstParameters.organisation) {
-                imported.first.organisation = firstParameters.organisation.trim()
+                imported.first().organisation = firstParameters.organisation.trim()
             }
-            if(!folder.getOwner() || imported.first.finalised || imported.first.modelVersion) { // i.e. We expect the imported model to be its own owner
+            if(!folder.getOwner() || imported.first().finalised || imported.first().modelVersion) { // i.e. We expect the imported model to be its own owner
                 if(firstParameters.finalised) {
-                    imported.first.finalised = firstParameters.finalised
+                    imported.first().finalised = firstParameters.finalised
                 }
                 if(firstParameters.newBranchName) {
-                    imported.first.branchName = firstParameters.newBranchName
+                    imported.first().branchName = firstParameters.newBranchName
                 }
             }
 
