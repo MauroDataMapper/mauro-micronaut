@@ -53,6 +53,15 @@ jobs:
           path: '**/build/test-results/**/*.xml'
           reporter: java-junit
 
+      - name: Upload Gradle test diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: Gradle test diagnostics
+          path: '**/build/reports/tests/**'
+          if-no-files-found: warn
+          retention-days: 7
+
       - name: MegaLinter (changed files and PR secrets)
         if: github.event_name == 'pull_request' && (success() || failure())
         uses: oxsecurity/megalinter/flavors/java@v9
