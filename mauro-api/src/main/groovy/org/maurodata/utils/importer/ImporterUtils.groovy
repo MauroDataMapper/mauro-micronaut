@@ -17,34 +17,37 @@ import org.maurodata.plugin.importer.FileParameter
 import org.maurodata.plugin.importer.ImportParameters
 import org.reactivestreams.Publisher
 import reactor.core.publisher.Flux
+import reactor.core.publisher.Mono
+import reactor.core.scheduler.Schedulers
 
 import java.lang.reflect.Field
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.charset.StandardCharsets
-import java.nio.file.StandardOpenOption
+import java.io.IOException
 
 @Slf4j
 @CompileStatic
 @Singleton
 class ImporterUtils {
-    protected static final Integer COPY_BUFFER_SIZE = 1024 * 1024
-    protected static final Long COPY_PROGRESS_BYTES = 100L * 1024L * 1024L
-    protected static final Long COPY_PROGRESS_MILLIS = 10_000L
-
     @Inject
     ObjectMapper objectMapper
 
     <P extends ImportParameters> List<P> readFromStreamingMultipart(HttpRequest<?> request, @Nullable Publisher<StreamingFileUpload> importFiles, Class<P> parametersClass) {
         long start = System.nanoTime()
         log.debug('Reading streaming multipart import request for parameter class [{}]', parametersClass.simpleName)
-        List<FileParameter> fileParameters = importFiles ?
-            Flux.from(importFiles).map {StreamingFileUpload importFile ->
-                createTemporaryFileParameter(importFile.filename,
-                                             importFile.contentType.map {it.toString()}.orElse(null),
-                                             importFile.asInputStream())
-            }.collectList().block() :
-            []
+        List<FileParameter> completedFileParameters = []
+        List<FileParameter> fileParameters
+        try {
+            fileParameters = importFiles ?
+                Flux.from(importFiles).concatMap {StreamingFileUpload importFile ->
+                    transferToTemporaryFile(importFile)
+                }.doOnNext {FileParameter fileParameter -> completedFileParameters.add(fileParameter)}.collectList().block() :
+                []
+        } catch (Throwable throwable) {
+            cleanupTemporaryFileParameters(completedFileParameters)
+            throw throwable
+        }
         Map<String, Object> scalarParts = readUnclaimedScalarParts(request)
 
         log.debug('Read streaming multipart import request for parameter class [{}] in [{} ms]: [{}] scalar part(s), [{}] import file part(s)',
@@ -100,55 +103,40 @@ class ImporterUtils {
         }
     }
 
-    protected static FileParameter createTemporaryFileParameter(String filename, String contentType, InputStream inputStream) {
-        Path temporaryFile = Files.createTempFile('mauro-import-', '.tmp')
-        long start = System.nanoTime()
-        try {
-            log.debug('Buffering import file [{}] with content type [{}] to temporary file [{}]', filename, contentType, temporaryFile)
-            long copied = copyToTemporaryFile(inputStream, temporaryFile, filename)
-            log.debug('Buffered import file [{}] to temporary file [{}]: [{}] in [{} ms]',
-                      filename,
-                      temporaryFile,
-                      formatBytes(copied),
-                      elapsedMillis(start))
-            new FileParameter(filename, contentType, temporaryFile, true, copied)
-        } catch (Throwable throwable) {
-            log.debug('Failed buffering import file [{}] to temporary file [{}] after [{} ms]; deleting temporary file',
-                      filename,
-                      temporaryFile,
-                      elapsedMillis(start),
-                      throwable)
-            Files.deleteIfExists(temporaryFile)
-            throw throwable
-        }
-    }
-
-    protected static long copyToTemporaryFile(InputStream inputStream, Path temporaryFile, String filename) {
-        long copied = 0
-        long lastProgressBytes = 0
-        long lastProgressTime = System.nanoTime()
-        byte[] buffer = new byte[COPY_BUFFER_SIZE]
-
-        inputStream.withCloseable {InputStream source ->
-            Files.newOutputStream(temporaryFile, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING).withCloseable {OutputStream target ->
-                int read = source.read(buffer)
-                while (read != -1) {
-                    target.write(buffer, 0, read)
-                    copied += read
-                    long now = System.nanoTime()
-                    if (copied - lastProgressBytes >= COPY_PROGRESS_BYTES || elapsedMillis(lastProgressTime, now) >= COPY_PROGRESS_MILLIS) {
-                        log.debug('Buffered [{}] of import file [{}] to temporary file [{}]',
-                                  formatBytes(copied),
-                                  filename,
-                                  temporaryFile)
-                        lastProgressBytes = copied
-                        lastProgressTime = now
+    protected static Mono<FileParameter> transferToTemporaryFile(StreamingFileUpload importFile) {
+        String filename = importFile.filename
+        String contentType = importFile.contentType.map {it.toString()}.orElse(null)
+        Mono.<Path>fromCallable({Files.createTempFile('mauro-import-', '.tmp')})
+            .subscribeOn(Schedulers.boundedElastic())
+            .flatMap {Path temporaryFile ->
+                long start = System.nanoTime()
+                log.debug('Buffering import file [{}] with content type [{}] to temporary file [{}]', filename, contentType, temporaryFile)
+                Mono.from(importFile.transferTo(temporaryFile.toFile()))
+                    .flatMap {Boolean transferred ->
+                        if (!transferred) {
+                            return Mono.<FileParameter>error(new IOException("Failed to transfer import file [${filename}] to temporary file [${temporaryFile}]"))
+                        }
+                        Mono.<FileParameter>fromCallable({
+                            long copied = Files.size(temporaryFile)
+                            log.debug('Buffered import file [{}] to temporary file [{}]: [{}] in [{} ms]',
+                                      filename,
+                                      temporaryFile,
+                                      formatBytes(copied),
+                                      elapsedMillis(start))
+                            new FileParameter(filename, contentType, temporaryFile, true, copied)
+                        }).subscribeOn(Schedulers.boundedElastic())
                     }
-                    read = source.read(buffer)
-                }
+                    .onErrorResume {Throwable throwable ->
+                        log.debug('Failed buffering import file [{}] to temporary file [{}] after [{} ms]; deleting temporary file',
+                                  filename,
+                                  temporaryFile,
+                                  elapsedMillis(start),
+                                  throwable)
+                        Mono.fromCallable({Files.deleteIfExists(temporaryFile)})
+                            .subscribeOn(Schedulers.boundedElastic())
+                            .then(Mono.<FileParameter>error(throwable))
+                    }
             }
-        }
-        copied
     }
 
     protected static Long elapsedMillis(long start) {
