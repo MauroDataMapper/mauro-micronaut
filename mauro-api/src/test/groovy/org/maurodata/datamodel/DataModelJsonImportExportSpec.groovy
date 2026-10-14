@@ -12,7 +12,6 @@ import org.maurodata.domain.folder.Folder
 import org.maurodata.export.ExportModel
 import org.maurodata.persistence.ContainerizedTest
 import org.maurodata.testing.CommonDataSpec
-import org.maurodata.visitor.common.RemoveIdVisitor
 import org.maurodata.web.ListResponse
 
 import groovy.json.JsonSlurper
@@ -210,6 +209,8 @@ class DataModelJsonImportExportSpec extends CommonDataSpec {
             '4.0.0').body()
 
         exportModel = objectMapper.readValue(responseBytes, ExportModel)
+
+        exportModel.dataModel.removeIds()
 
         MultipartBody importRequest = MultipartBody.builder()
             .addPart('folderId', folderId.toString())
