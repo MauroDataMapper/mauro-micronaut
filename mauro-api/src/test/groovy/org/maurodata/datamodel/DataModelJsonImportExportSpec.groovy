@@ -12,7 +12,6 @@ import org.maurodata.domain.folder.Folder
 import org.maurodata.export.ExportModel
 import org.maurodata.persistence.ContainerizedTest
 import org.maurodata.testing.CommonDataSpec
-import org.maurodata.visitor.common.RemoveIdVisitor
 import org.maurodata.web.ListResponse
 
 import groovy.json.JsonSlurper
@@ -201,7 +200,42 @@ class DataModelJsonImportExportSpec extends CommonDataSpec {
         copiedSummaryMetadataReport.items.first().id != summaryMetadataReportId
     }
 
-    void 'import dataModel with zero files'() {
+    void 'import dataModel and override name / description'() {
+        given:
+        byte[] responseBytes = dataModelApi.exportModel(
+            dataModelId,
+            'org.maurodata.plugin.exporter.json',
+            'JsonDataModelExporterPlugin',
+            '4.0.0').body()
+
+        exportModel = objectMapper.readValue(responseBytes, ExportModel)
+
+        exportModel.dataModel.removeIds()
+
+        MultipartBody importRequest = MultipartBody.builder()
+            .addPart('folderId', folderId.toString())
+            .addPart('importFile', 'file.json', MediaType.APPLICATION_JSON_TYPE, objectMapper.writeValueAsBytes(exportModel))
+            .addPart('modelName', 'My imported data model')
+            .addPart('description', 'My description')
+            .build()
+        ListResponse<DataModel> response =
+            dataModelApi.importModel(
+                importRequest,
+                'org.maurodata.plugin.importer.json',
+                'JsonDataModelImporterPlugin',
+                '4.0.0')
+
+        when:
+        UUID importedDataModelId = response.items.first().id
+        DataModel dataModel = dataModelApi.show(importedDataModelId)
+
+        then:
+        dataModel.label == 'My imported data model'
+        dataModel.description == 'My description'
+    }
+
+
+        void 'import dataModel with zero files'() {
         given:
         ZeroFileDataModelImporterPlugin.reset()
         UUID targetFolderId = folderApi.create(new Folder(label: 'Zero file import folder')).id

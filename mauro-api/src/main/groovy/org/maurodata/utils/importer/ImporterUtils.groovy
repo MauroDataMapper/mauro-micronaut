@@ -24,7 +24,6 @@ import java.lang.reflect.Field
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.charset.StandardCharsets
-import java.io.IOException
 
 @Slf4j
 @CompileStatic
