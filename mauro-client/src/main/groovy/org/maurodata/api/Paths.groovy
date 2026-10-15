@@ -38,6 +38,19 @@ interface Paths {
     String CLASSIFICATION_SCHEMES_LIST_PAGED = '/api/classificationSchemes{?params*}'
     String FOLDER_CLASSIFICATION_SCHEMES_ROUTE_PAGED = '/api/folders/{folderId}/classificationSchemes{?params*}'
 
+    String OVERLAYS_LIST = '/api/overlays'
+    String OVERLAYS_ID_ROUTE = '/api/overlays/{id}'
+    String FOLDER_OVERLAYS_ROUTE = '/api/folders/{folderId}/overlays'
+    String OVERLAYS_LIST_PAGED = '/api/overlays{?params*}'
+    String FOLDER_OVERLAYS_ROUTE_PAGED = '/api/folders/{folderId}/overlays{?params*}'
+    String OVERLAYS_BRANCH_MODEL_VERSION = '/api/overlays/{id}/newBranchModelVersion'
+    String OVERLAYS_FINALISE = '/api/overlays/{id}/finalise'
+    String OVERLAYS_PERMISSIONS = '/api/overlays/{id}/permissions'
+    String OVERLAYS_APPLY = '/api/overlays/apply'
+    String OVERLAYS_MATCHES = '/api/overlays/matches'
+    String OVERLAYS_READ_BY_AUTHENTICATED = '/api/overlays/{id}/readByAuthenticated'
+    String OVERLAYS_READ_BY_EVERYONE = '/api/overlays/{id}/readByEveryone'
+
     /*
     * ClassificationSchemeApi
     */

@@ -1,6 +1,7 @@
 package org.maurodata.domain.model
 
 import com.fasterxml.jackson.annotation.JsonValue
+import com.fasterxml.jackson.annotation.JsonCreator
 import groovy.transform.CompileStatic
 import io.micronaut.context.annotation.Prototype
 import io.micronaut.core.annotation.Introspected
@@ -27,6 +28,7 @@ class Path {
 
     }
 
+    @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
     Path(String str) {
         setPathString(str)
     }
@@ -57,6 +59,41 @@ class Path {
 
     String toString() {
         return pathString
+    }
+
+    /**
+     * Match this absolute path against a selector relative to {@code rootPath}.
+     * A selector may omit model identifiers to match all versions; when it supplies one,
+     * that node must have the same model identifier. A terminal selector attribute is
+     * retained as the selected item property and does not affect the item-path comparison.
+     */
+    boolean matchesRelativeTo(Path rootPath, Path selector, boolean exact = true) {
+        if (rootPath == null || selector == null || nodes == null || rootPath.nodes == null || selector.nodes == null) return false
+        if (nodes.size() < rootPath.nodes.size()) return false
+        for (int i = 0; i < rootPath.nodes.size(); i++) {
+            if (!matchesNode(rootPath.nodes[i], nodes[i], true)) return false
+        }
+        List<PathNode> relativeNodes = nodes.drop(rootPath.nodes.size())
+        if (relativeNodes.size() < selector.nodes.size() || (exact && relativeNodes.size() != selector.nodes.size())) return false
+        for (int i = 0; i < selector.nodes.size(); i++) {
+            PathNode selectorNode = selector.nodes[i]
+            if (i == selector.nodes.size() - 1 && selectorNode.attribute) {
+                PathNode itemNode = new PathNode(prefix: selectorNode.prefix, identifier: selectorNode.identifier,
+                    modelIdentifier: selectorNode.modelIdentifier)
+                if (!matchesNode(itemNode, relativeNodes[i], false)) return false
+            } else if (!matchesNode(selectorNode, relativeNodes[i], false)) return false
+        }
+        true
+    }
+
+    @Transient
+    String getAttribute() { nodes ? nodes.last().attribute : null }
+
+    private static boolean matchesNode(PathNode expected, PathNode actual, boolean compareAbsentModelIdentifier) {
+        if (!expected.prefix?.equalsIgnoreCase(actual.prefix) || expected.identifier != actual.identifier) return false
+        if (expected.modelIdentifier != null && expected.modelIdentifier != actual.modelIdentifier) return false
+        if (compareAbsentModelIdentifier && expected.modelIdentifier == null && actual.modelIdentifier != null) return false
+        expected.attribute == null || expected.attribute == actual.attribute
     }
 
     Path join(PathNode node) {
@@ -234,7 +271,7 @@ class Path {
             return input.replaceAll(/%([$@|:%])/) {all, ch -> ch}
         }
 
-        static List<String> canHaveModelIdentifier = ['dm','vf','csc','cs','te']
+        static List<String> canHaveModelIdentifier = ['dm','vf','csc','cs','te','ov']
 
         static boolean canHaveModelIdentifier(final String prefix) {
             canHaveModelIdentifier.any {it.equalsIgnoreCase(prefix)}
