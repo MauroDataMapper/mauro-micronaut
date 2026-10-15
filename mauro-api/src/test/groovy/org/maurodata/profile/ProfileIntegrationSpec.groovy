@@ -106,9 +106,9 @@ class ProfileIntegrationSpec extends CommonDataSpec {
 
         expect:
         List<MauroPluginDTO> unusedProfileResponse = profileApi.getUnusedProfiles('dataModel', modelId)
-        unusedProfileResponse.metadataNamespace == unusedProfiles
+        unusedProfileResponse.metadataNamespace.toSet() == unusedProfiles.toSet()
         List<MauroPluginDTO> usedProfileResponse = profileApi.getUsedProfiles('dataModel', modelId)
-        usedProfileResponse.metadataNamespace == usedProfiles
+        usedProfileResponse.metadataNamespace.toSet() == usedProfiles.toSet()
 
         where:
 

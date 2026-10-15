@@ -27,4 +27,8 @@ trait MauroPlugin {
         pluginType.toString()
     }
 
+    List<SelfClassifier> getClassifiers() {
+        return []
+    }
+
 }
