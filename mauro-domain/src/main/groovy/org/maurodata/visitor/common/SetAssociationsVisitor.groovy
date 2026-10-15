@@ -33,6 +33,7 @@ import org.maurodata.domain.terminology.TermRelationshipType
 import org.maurodata.domain.terminology.Terminology
 import org.maurodata.visitor.GenericDomainTraversalVisitor
 import org.maurodata.visitor.ItemHandler
+import org.maurodata.domain.overlay.Overlay
 
 /**
  * A visitor that re-establishes all parent-child back-references, cross-references, and
@@ -231,6 +232,7 @@ class SetAssociationsVisitor extends GenericDomainTraversalVisitor implements It
         for (Terminology f : folder.terminologies) { f.folder = folder }
         for (CodeSet f : folder.codeSets) { f.folder = folder }
         for (ClassificationScheme f : folder.classificationSchemes) { f.folder = folder }
+        for (Overlay f : folder.overlays) { f.folder = folder }
     }
 
     private void enterDataClass(DataClass dataClass) {

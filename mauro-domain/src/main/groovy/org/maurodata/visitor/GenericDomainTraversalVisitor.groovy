@@ -30,6 +30,7 @@ import org.maurodata.domain.terminology.Term
 import org.maurodata.domain.terminology.TermRelationship
 import org.maurodata.domain.terminology.TermRelationshipType
 import org.maurodata.domain.terminology.Terminology
+import org.maurodata.domain.overlay.Overlay
 
 /**
  * Generic hook-driven traversal visitor for the Mauro domain hierarchy.
@@ -152,6 +153,7 @@ class GenericDomainTraversalVisitor implements DomainVisitor<Void> {
         traverseAll(folder.terminologies)
         traverseAll(folder.codeSets)
         traverseAll(folder.classificationSchemes)
+        traverseAll(folder.overlays)
         leaveNode(folder)
         return null
     }
@@ -345,6 +347,11 @@ class GenericDomainTraversalVisitor implements DomainVisitor<Void> {
         leaveNode(classifier)
         return null
     }
+
+    @Override
+    final Void visitOverlay(Overlay overlay) {
+        applyEnter(overlay)
+        leaveNode(overlay)
+        return null
+    }
 }
-
-

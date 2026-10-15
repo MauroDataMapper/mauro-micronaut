@@ -28,6 +28,7 @@ import org.maurodata.domain.terminology.Term
 import org.maurodata.domain.terminology.TermRelationship
 import org.maurodata.domain.terminology.TermRelationshipType
 import org.maurodata.domain.terminology.Terminology
+import org.maurodata.domain.overlay.Overlay
 
 import org.maurodata.visitor.GenericDomainTraversalVisitor
 import org.maurodata.visitor.ItemHandler
@@ -75,6 +76,7 @@ class ShredVisitor extends GenericDomainTraversalVisitor implements ItemHandler 
         if (item instanceof ClassificationScheme) {
             shreddedContent.classificationSchemes.add((ClassificationScheme) item)
         }
+        if (item instanceof Overlay) shreddedContent.overlays.add((Overlay) item)
         if (item instanceof Classifier) {
             shreddedContent.classifiers.add((Classifier) item)
         }
@@ -162,5 +164,4 @@ class ShredVisitor extends GenericDomainTraversalVisitor implements ItemHandler 
         }
     }
 }
-
 

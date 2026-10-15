@@ -15,6 +15,7 @@ import org.maurodata.domain.model.Model
 import org.maurodata.domain.terminology.CodeSet
 import org.maurodata.domain.terminology.Term
 import org.maurodata.domain.terminology.Terminology
+import org.maurodata.domain.overlay.Overlay
 import org.maurodata.persistence.ContentsService
 import org.maurodata.persistence.classifier.ClassificationSchemeRepository
 import org.maurodata.persistence.datamodel.DataModelRepository
@@ -22,6 +23,7 @@ import org.maurodata.persistence.folder.FolderRepository
 import org.maurodata.persistence.model.ModelRepository
 import org.maurodata.persistence.terminology.CodeSetRepository
 import org.maurodata.persistence.terminology.TerminologyRepository
+import org.maurodata.persistence.overlay.OverlayRepository
 import org.maurodata.persistence.terminology.dto.CodeSetTermDTO
 
 @Slf4j
@@ -192,6 +194,17 @@ class ModelCacheableRepository<M extends Model> extends AdministeredItemCacheabl
         Boolean handles(Class clazz) {
             return repository.handles(clazz)
         }
+    }
+
+    @CompileStatic
+    @Singleton
+    static class OverlayCacheableRepository extends ModelCacheableRepository<Overlay> {
+        OverlayCacheableRepository(OverlayRepository overlayRepository, ContentsService contentsService) {
+            super(overlayRepository, contentsService)
+        }
+
+        @Override Boolean handles(String domainType) { repository.handles(domainType) }
+        @Override Boolean handles(Class clazz) { repository.handles(clazz) }
     }
 
 }
