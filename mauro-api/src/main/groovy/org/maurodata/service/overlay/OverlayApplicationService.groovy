@@ -230,7 +230,7 @@ class OverlayApplicationService {
             }
             if (type.isEnum()) {
                 for (Object enumConstant : type.enumConstants) {
-                    Enum<?> enumValue = (Enum<?>) enumConstant
+                    Enum enumValue = (Enum) enumConstant
                     if (enumValue.name() == text) return enumValue
                 }
                 throw new IllegalArgumentException("Unknown enum value: $text")
