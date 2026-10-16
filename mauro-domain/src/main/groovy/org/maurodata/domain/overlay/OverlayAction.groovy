@@ -3,7 +3,7 @@ package org.maurodata.domain.overlay
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.Introspected
 
-/** A change applied to each item selected by an Overlay rule. */
+/** A change applied to each item selected by an OverlayRule. */
 @CompileStatic
 @Introspected
 class OverlayAction {

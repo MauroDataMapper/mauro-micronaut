@@ -50,6 +50,7 @@ interface Paths {
     String OVERLAYS_MATCHES = '/api/overlays/matches'
     String OVERLAYS_READ_BY_AUTHENTICATED = '/api/overlays/{id}/readByAuthenticated'
     String OVERLAYS_READ_BY_EVERYONE = '/api/overlays/{id}/readByEveryone'
+    String OVERLAYS_MOVE = '/api/overlays/{id}/move'
 
     /*
     * ClassificationSchemeApi

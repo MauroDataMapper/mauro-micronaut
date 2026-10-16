@@ -22,7 +22,7 @@ create table if not exists core.overlay (
     branch_name varchar(255),
     model_version varchar(255),
     model_version_tag varchar(255),
-    rules jsonb not null default '[]'::jsonb
+    overlay_rules jsonb not null default '[]'::jsonb
 );
 
 create index if not exists idx_overlay_folder_id on core.overlay(folder_id);

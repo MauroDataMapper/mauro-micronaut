@@ -58,14 +58,14 @@ class OverlayApplicationService {
 
         List<PlannedAction> plan = []
         overlays.each { Overlay overlay ->
-            overlay.rules?.each { OverlayRule rule ->
-                List<AdministeredItem> matches = items.findAll { AdministeredItem item -> matchesPath(item, root, rule.match) }
-                if (matches.size() > 1 && !(rule.match?.allowMultipleModels)) {
+            overlay.overlayRules?.each { OverlayRule overlayRule ->
+                List<AdministeredItem> matches = items.findAll { AdministeredItem item -> matchesPath(item, root, overlayRule.match) }
+                if (matches.size() > 1 && !(overlayRule.match?.allowMultipleModels)) {
                     Set<UUID> matchingModels = matches.collect { nearestModelId(it, root) }.findAll { it != null } as Set<UUID>
-                    if (matchingModels.size() > 1) throw new HttpStatusException(HttpStatus.CONFLICT, "Overlay [$overlay.label] rule is ambiguous across Models; specify modelIdentifier or allowMultipleModels")
+                    if (matchingModels.size() > 1) throw new HttpStatusException(HttpStatus.CONFLICT, "Overlay [$overlay.label] OverlayRule is ambiguous across Models; specify modelIdentifier or allowMultipleModels")
                 }
-                matches.each { AdministeredItem item -> rule.actions?.each { OverlayAction action ->
-                    String pathAttribute = rule.match?.path?.attribute
+                matches.each { AdministeredItem item -> overlayRule.actions?.each { OverlayAction action ->
+                    String pathAttribute = overlayRule.match?.path?.attribute
                     if (pathAttribute && action.field && normalizeField(action.field) != pathAttribute) {
                         throw new HttpStatusException(HttpStatus.BAD_REQUEST, 'Overlay match attribute and action field must agree')
                     }
@@ -89,9 +89,10 @@ class OverlayApplicationService {
         if (!target) throw new HttpStatusException(HttpStatus.NOT_FOUND, 'Target item is not within the supplied root')
         List<OverlayMatchResultDTO> result = []
         readOverlays(request.overlayIds).each { Overlay overlay ->
-            overlay.rules?.each { OverlayRule rule ->
-                if (matchesPath(target, root, rule.match)) {
-                    result.add(new OverlayMatchResultDTO(overlayId: overlay.id, ruleId: rule.id, actionIds: rule.actions*.id))
+            overlay.overlayRules?.each { OverlayRule overlayRule ->
+                if (matchesPath(target, root, overlayRule.match)) {
+                    result.add(new OverlayMatchResultDTO(overlayId: overlay.id, overlayRuleId: overlayRule.id,
+                        overlayActionIds: overlayRule.actions*.id))
                 }
             }
         }
@@ -157,7 +158,7 @@ class OverlayApplicationService {
             if (policy == OverlayActionPolicy.ADD) throw new HttpStatusException(HttpStatus.BAD_REQUEST, 'Add policy is only supported for metadata values')
             if (accepted) {
                 item[field] = convertValue(action.value, propertyType, field)
-                repositoryService.getAdministeredItemRepository(item.class).save(item)
+                repositoryService.getAdministeredItemRepository(item.class).update(item)
             }
         } else if ((action.type ?: '').equalsIgnoreCase('metadata')) {
             if (!action.namespace || !action.key) throw new HttpStatusException(HttpStatus.BAD_REQUEST, 'Metadata actions require namespace and key')
@@ -171,11 +172,14 @@ class OverlayApplicationService {
             accepted = policy == OverlayActionPolicy.ALWAYS || policy == OverlayActionPolicy.ADD || isEmptyValue(before)
             if (accepted) {
                 if (!facet) {
-                    facet = new Metadata(namespace: action.namespace, key: action.key, value: result, multiFacetAwareItem: item,
+                    facet = new Metadata(id: UUID.randomUUID(), namespace: action.namespace, key: action.key, value: result, multiFacetAwareItem: item,
                                          multiFacetAwareItemId: item.id, multiFacetAwareItemDomainType: item.domainType)
                     item.metadata.add(facet)
-                } else facet.value = result
-                metadataRepository.save(facet)
+                    metadataRepository.save(facet)
+                } else {
+                    facet.value = result
+                    metadataRepository.update(facet)
+                }
             }
         } else {
             throw new HttpStatusException(HttpStatus.BAD_REQUEST, "Unsupported Overlay action type: $action.type")
@@ -224,7 +228,13 @@ class OverlayApplicationService {
                 if (type == Double || type == double) return number.doubleValue()
                 if (type == BigDecimal) return number
             }
-            if (type.isEnum()) return Enum.valueOf(type, text)
+            if (type.isEnum()) {
+                for (Object enumConstant : type.enumConstants) {
+                    Enum<?> enumValue = (Enum<?>) enumConstant
+                    if (enumValue.name() == text) return enumValue
+                }
+                throw new IllegalArgumentException("Unknown enum value: $text")
+            }
         } catch (Exception ignored) {
             throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Value cannot be converted for Overlay field: $field")
         }
@@ -240,8 +250,9 @@ class OverlayApplicationService {
 
     static boolean isEmptyValue(Object value) {
         if (value == null) return true
-        if (value instanceof CharSequence) return value.toString().trim().isEmpty()
-        if (value instanceof Collection || value instanceof Map) return value.isEmpty()
+        if (value instanceof CharSequence) return value.toString().trim().length() == 0
+        if (value instanceof Collection) return ((Collection) value).isEmpty()
+        if (value instanceof Map) return ((Map) value).isEmpty()
         false
     }
 
@@ -252,11 +263,14 @@ class OverlayApplicationService {
         if (!values.contains(source)) values.add(source)
         String value = encodeCsv(values)
         if (!sources) {
-            sources = new Metadata(namespace: NAMESPACE, key: SOURCES_KEY, value: value, multiFacetAwareItem: item,
+            sources = new Metadata(id: UUID.randomUUID(), namespace: NAMESPACE, key: SOURCES_KEY, value: value, multiFacetAwareItem: item,
                                   multiFacetAwareItemId: item.id, multiFacetAwareItemDomainType: item.domainType)
             item.metadata.add(sources)
-        } else sources.value = value
-        metadataRepository.save(sources)
+            metadataRepository.save(sources)
+        } else {
+            sources.value = value
+            metadataRepository.update(sources)
+        }
     }
 
     private static String mergeCsv(String current, String incoming) {

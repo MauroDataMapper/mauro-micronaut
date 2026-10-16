@@ -7,6 +7,6 @@ import io.micronaut.core.annotation.Introspected
 @Introspected
 class OverlayMatchResultDTO {
     UUID overlayId
-    UUID ruleId
-    List<UUID> actionIds = []
+    UUID overlayRuleId
+    List<UUID> overlayActionIds = []
 }
