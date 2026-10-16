@@ -57,6 +57,7 @@ class ContentHandler {
 
     @Inject FolderCacheableRepository folderCacheableRepository
     @Inject ModelCacheableRepository.ClassificationSchemeCacheableRepository classificationSchemeCacheableRepository
+    @Inject ModelCacheableRepository.OverlayCacheableRepository overlayCacheableRepository
     @Inject AdministeredItemCacheableRepository.ClassifierCacheableRepository classifierCacheableRepository
     @Inject TerminologyCacheableRepository terminologyCacheableRepository
     @Inject TermCacheableRepository termCacheableRepository
@@ -96,6 +97,7 @@ class ContentHandler {
         Instant start = Instant.now()
         saveHierarchyByBatch(shreddedContent.folders, folderCacheableRepository)
         saveAllByBatch(shreddedContent.classificationSchemes, classificationSchemeCacheableRepository)
+        saveAllByBatch(shreddedContent.overlays, overlayCacheableRepository)
         saveAllByBatch(shreddedContent.classifiers, classifierCacheableRepository)
         saveAllByBatch(shreddedContent.terminologies, terminologyCacheableRepository)
         saveAllByBatch(shreddedContent.terms, termCacheableRepository)
@@ -199,6 +201,7 @@ class ContentHandler {
         }
         deleteAllByBatch(shreddedContent.classifiers, classifierCacheableRepository)
         deleteAllByBatch(shreddedContent.classificationSchemes, classificationSchemeCacheableRepository)
+        deleteAllByBatch(shreddedContent.overlays, overlayCacheableRepository)
         deleteHierarchyByBatch(shreddedContent.folders, folderCacheableRepository)
 
         true
@@ -227,6 +230,9 @@ class ContentHandler {
         if (foldersValuesFlatten && !foldersOnly) {
             shreddedContent.classificationSchemes = inBatchesReadSet(foldersValuesFlatten*.id) {List<UUID> batch ->
                 classificationSchemeCacheableRepository.readAllByFolderIdIn(batch)
+            }
+            shreddedContent.overlays = inBatchesReadSet(foldersValuesFlatten*.id) {List<UUID> batch ->
+                overlayCacheableRepository.readAllByFolderIdIn(batch)
             }
             shreddedContent.terminologies = inBatchesReadSet(foldersValuesFlatten*.id) {List batch ->
                 terminologyCacheableRepository.readAllByFolderIdIn(batch)
@@ -262,6 +268,9 @@ class ContentHandler {
         if (foldersValuesFlatten) {
             shreddedContent.classificationSchemes = inBatchesReadSet(foldersValuesFlatten*.id) {List<UUID> batch ->
                 classificationSchemeCacheableRepository.readAllByFolderIdIn(batch)
+            }
+            shreddedContent.overlays = inBatchesReadSet(foldersValuesFlatten*.id) {List<UUID> batch ->
+                overlayCacheableRepository.readAllByFolderIdIn(batch)
             }
         }
 

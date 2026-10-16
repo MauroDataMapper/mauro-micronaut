@@ -67,6 +67,10 @@ class JsonFolderImporterPluginSpec extends Specification {
 
         importedModels.first().label == testFolder.label
         importedModels.first().description == testFolder.description
+        importedModels.first().overlays.size() == 1
+        importedModels.first().overlays[0].label == 'Overlay in stock folder'
+        importedModels.first().overlays[0].overlayRules[0].match.path.toString() == 'dm:Stock model$main'
+        importedModels.first().overlays[0].overlayRules[0].actions[0].value == 'Stock model description'
     }
 
     void "test JSON folder, datamodel import"() {
@@ -139,4 +143,3 @@ class JsonFolderImporterPluginSpec extends Specification {
         exception.status == HttpStatus.BAD_REQUEST
     }
 }
-

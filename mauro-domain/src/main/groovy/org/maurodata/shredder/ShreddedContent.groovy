@@ -29,12 +29,14 @@ import org.maurodata.domain.terminology.Term
 import org.maurodata.domain.terminology.TermRelationship
 import org.maurodata.domain.terminology.TermRelationshipType
 import org.maurodata.domain.terminology.Terminology
+import org.maurodata.domain.overlay.Overlay
 
 @Slf4j
 class ShreddedContent {
 
     Map<Integer, Set<Folder>> folders = [:]
     Set<ClassificationScheme> classificationSchemes = []
+    Set<Overlay> overlays = []
     Set<Classifier> classifiers = []
     Set<DataModel> dataModels = []
     Map<Integer, Set<DataClass>> dataClasses = [:]
@@ -67,6 +69,7 @@ class ShreddedContent {
         List<AdministeredItem> administeredItems = []
         administeredItems.addAll(folders.values().flatten() as List<Folder>)
         administeredItems.addAll(classificationSchemes)
+        administeredItems.addAll(overlays)
         administeredItems.addAll(classifiers)
         administeredItems.addAll(dataModels)
         administeredItems.addAll(dataClasses.values().flatten() as List<DataClass>)
@@ -121,6 +124,8 @@ class ShreddedContent {
             addFolderAtDepth((Folder) administeredItem, 0)
         } else if (administeredItem instanceof ClassificationScheme) {
             classificationSchemes.add((ClassificationScheme) administeredItem)
+        } else if (administeredItem instanceof Overlay) {
+            overlays.add((Overlay) administeredItem)
         } else if (administeredItem instanceof Classifier) {
             classifiers.add((Classifier) administeredItem)
         } else if (administeredItem instanceof DataModel) {
@@ -167,6 +172,9 @@ class ShreddedContent {
             if(allItems[classificationScheme.folder.id]) {
                 ((Folder) allItems[classificationScheme.folder.id]).classificationSchemes.add(classificationScheme)
             }
+        }
+        overlays.each { overlay ->
+            if (allItems[overlay.folder.id]) ((Folder) allItems[overlay.folder.id]).overlays.add(overlay)
         }
 
         classifiers.each {classifier ->

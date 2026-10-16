@@ -2,9 +2,17 @@ package org.maurodata.test.domain.folder
 
 import spock.lang.Ignore
 import spock.lang.Specification
+import org.maurodata.domain.datamodel.DataClass
 import org.maurodata.domain.datamodel.DataModel
+import org.maurodata.domain.datamodel.DataElement
+import org.maurodata.domain.datamodel.EnumerationValue
 import org.maurodata.domain.diff.ObjectDiff
 import org.maurodata.domain.folder.Folder
+import org.maurodata.domain.model.Path
+import org.maurodata.domain.overlay.Overlay
+import org.maurodata.domain.overlay.OverlayAction
+import org.maurodata.domain.overlay.OverlayMatch
+import org.maurodata.domain.overlay.OverlayRule
 import org.maurodata.domain.model.version.ModelVersion
 import org.maurodata.domain.terminology.Term
 import org.maurodata.domain.terminology.Terminology
@@ -15,7 +23,12 @@ class FolderSpec extends Specification {
     private static final String AUTHOR = 'My Test Folder author : anon'
     private static final String DESCRIPTION = 'This is an example of a folder'
 
-    private static final Folder testFolder = Folder.build(label: "$LABEL", author: "$AUTHOR", description: "$DESCRIPTION") {}
+    private static final Folder testFolder = Folder.build(label: "$LABEL", author: "$AUTHOR", description: "$DESCRIPTION") {
+        overlays = [new Overlay(label: 'Overlay in stock folder', overlayRules: [
+            new OverlayRule(match: new OverlayMatch(path: new Path('dm:Stock model$main')),
+                actions: [new OverlayAction(type: 'value', field: 'description', value: 'Stock model description', source: 'folder-fixture')])
+        ])]
+    }
 
     void "Test the DSL for creating objects"() {
 
@@ -51,8 +64,8 @@ class FolderSpec extends Specification {
         then:
         cloned
         !cloned.is(folder)
-        cloned.childFolders.folder.size() == 1
-        folder.childFolders.folder.size() == 1
+        cloned.childFolders.size() == 1
+        folder.childFolders.size() == 1
         !cloned.childFolders.folder[0].is(folder.childFolders.folder[0])
 
         !cloned.dataModels.is(folder.dataModels)
@@ -136,25 +149,34 @@ class FolderSpec extends Specification {
         when:
         Folder cloned = (Folder) folder.deepClone()
         cloned.setAssociations()
+        List<DataClass> clonedDataClasses = cloned.dataModels.collectMany { DataModel dataModel -> dataModel.allDataClasses as List<DataClass> }
+        List<DataClass> originalDataClasses = folder.dataModels.collectMany { DataModel dataModel -> dataModel.allDataClasses as List<DataClass> }
+        List<DataElement> clonedDataElements = cloned.dataModels.collectMany { DataModel dataModel -> dataModel.dataElements }
+        List<DataElement> originalDataElements = folder.dataModels.collectMany { DataModel dataModel -> dataModel.dataElements }
+        List<EnumerationValue> clonedEnumerationValues = cloned.dataModels.collectMany { DataModel dataModel -> dataModel.enumerationValues as List<EnumerationValue> }
+        List<EnumerationValue> originalEnumerationValues = folder.dataModels.collectMany { DataModel dataModel -> dataModel.enumerationValues as List<EnumerationValue> }
         then:
         cloned
         !cloned.is(folder)
         cloned.childFolders.folder.size() == 1
         folder.childFolders.folder.size() == 1
-        !cloned.childFolders.folder[0].is(folder.childFolders.folder[0])
+        !cloned.childFolders[0].is(folder.childFolders[0])
 
         !cloned.dataModels.is(folder.dataModels)
         cloned.dataModels.dataTypes == folder.dataModels.dataTypes
         !cloned.dataModels.dataTypes.is(folder.dataModels.dataTypes)  //groovy object equality. cloned is not original
 
-        cloned.dataModels.allDataClasses == folder.dataModels.allDataClasses
-        !cloned.dataModels.allDataClasses.is(folder.dataModels.allDataClasses)
+        clonedDataClasses*.id.sort() == originalDataClasses*.id.sort()
+        clonedDataClasses.size() == originalDataClasses.size()
+        clonedDataClasses.every { DataClass clonedDataClass -> !originalDataClasses.any { DataClass originalDataClass -> clonedDataClass.is(originalDataClass) } }
 
-        cloned.dataModels.dataElements == folder.dataModels.dataElements
-        !cloned.dataModels.dataElements.is(folder.dataModels.dataElements)
+        clonedDataElements*.id.sort() == originalDataElements*.id.sort()
+        clonedDataElements.size() == originalDataElements.size()
+        clonedDataElements.every { DataElement clonedDataElement -> !originalDataElements.any { DataElement originalDataElement -> clonedDataElement.is(originalDataElement) } }
 
-        cloned.dataModels.enumerationValues == folder.dataModels.enumerationValues
-        !cloned.dataModels.enumerationValues.is(folder.dataModels.enumerationValues)  //groovy object equal
+        clonedEnumerationValues*.id.sort() == originalEnumerationValues*.id.sort()
+        clonedEnumerationValues.size() == originalEnumerationValues.size()
+        clonedEnumerationValues.every { EnumerationValue clonedValue -> !originalEnumerationValues.any { EnumerationValue originalValue -> clonedValue.is(originalValue) } }
 
         cloned.dataModels.dataElements.dataClass.toSet().each{
             cloned.dataModels.allDataClasses.contains(it)
