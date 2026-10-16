@@ -6,6 +6,7 @@ import groovy.transform.CompileStatic
 import groovy.transform.MapConstructor
 import io.micronaut.core.annotation.Introspected
 import io.micronaut.data.annotation.MappedEntity
+import io.micronaut.data.annotation.MappedProperty
 import io.micronaut.data.annotation.TypeDef
 import io.micronaut.data.model.DataType
 import jakarta.persistence.PrePersist
@@ -26,7 +27,8 @@ import org.maurodata.visitor.DomainVisitor
 @MapConstructor(includeSuperFields = true, includeSuperProperties = true, noArg = true)
 class Overlay extends Model implements DiffableItem<Overlay> {
     @TypeDef(type = DataType.JSON)
-    List<OverlayRule> rules = []
+    @MappedProperty('overlay_rules')
+    List<OverlayRule> overlayRules = []
 
     @Override
     <T> T accept(DomainVisitor<T> visitor) { visitor.visitOverlay(this) }
@@ -51,10 +53,10 @@ class Overlay extends Model implements DiffableItem<Overlay> {
     @Override
     void copyInto(Item into) {
         super.copyInto(into)
-        ((Overlay) into).rules = rules.collect { OverlayRule rule ->
-            new OverlayRule(id: rule.id ?: UUID.randomUUID(), match: new OverlayMatch(path: rule.match?.path ? new Path(rule.match.path.toString()) : new Path(''),
-                                                    allowMultipleModels: rule.match?.allowMultipleModels),
-                            actions: rule.actions?.collect { OverlayAction action -> new OverlayAction(id: action.id ?: UUID.randomUUID(), type: action.type, field: action.field,
+        ((Overlay) into).overlayRules = overlayRules.collect { OverlayRule overlayRule ->
+            new OverlayRule(id: UUID.randomUUID(), match: new OverlayMatch(path: overlayRule.match?.path ? new Path(overlayRule.match.path.toString()) : new Path(''),
+                                                    allowMultipleModels: overlayRule.match?.allowMultipleModels),
+                            actions: overlayRule.actions?.collect { OverlayAction action -> new OverlayAction(id: UUID.randomUUID(), type: action.type, field: action.field,
                                 namespace: action.namespace, key: action.key, value: action.value, policy: action.policy, source: action.source) } ?: [])
         }
     }

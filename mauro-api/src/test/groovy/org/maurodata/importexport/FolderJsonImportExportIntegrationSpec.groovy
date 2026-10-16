@@ -12,11 +12,17 @@ import org.maurodata.domain.facet.Metadata
 import org.maurodata.domain.facet.SummaryMetadata
 import org.maurodata.domain.facet.SummaryMetadataReport
 import org.maurodata.domain.folder.Folder
+import org.maurodata.domain.model.Path
+import org.maurodata.domain.overlay.Overlay
+import org.maurodata.domain.overlay.OverlayAction
+import org.maurodata.domain.overlay.OverlayMatch
+import org.maurodata.domain.overlay.OverlayRule
 import org.maurodata.domain.terminology.CodeSet
 import org.maurodata.domain.terminology.Term
 import org.maurodata.domain.terminology.TermRelationship
 import org.maurodata.domain.terminology.TermRelationshipType
 import org.maurodata.domain.terminology.Terminology
+import org.maurodata.api.overlay.OverlayApi
 import org.maurodata.export.ExportModel
 import org.maurodata.persistence.ContainerizedTest
 import org.maurodata.testing.CommonDataSpec
@@ -27,6 +33,7 @@ import io.micronaut.http.HttpResponse
 import io.micronaut.http.MediaType
 import io.micronaut.http.client.multipart.MultipartBody
 import io.micronaut.test.annotation.Sql
+import jakarta.inject.Inject
 import jakarta.inject.Singleton
 import spock.lang.Shared
 
@@ -35,7 +42,7 @@ import spock.lang.Shared
 @Sql(scripts = ["classpath:sql/tear-down-annotation.sql", "classpath:sql/tear-down-metadata.sql",
         "classpath:sql/tear-down-summary-metadata.sql", "classpath:sql/tear-down-datamodel.sql",
         "classpath:sql/tear-down-classifiers.sql", "classpath:sql/tear-down.sql",
-        "classpath:sql/tear-down-folder.sql"], phase = Sql.Phase.AFTER_EACH)
+        "classpath:sql/tear-down-overlay.sql", "classpath:sql/tear-down-folder.sql"], phase = Sql.Phase.AFTER_EACH)
 class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
 
     @Shared
@@ -47,9 +54,22 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
     @Shared
     UUID codeSetId
 
+    @Shared @Inject
+    OverlayApi overlayApi
+
+    @Shared
+    UUID overlayId
+
     void setup() {
         folderId = folderApi.create(new Folder(label: 'Folder top level')).id
         dataModelId = dataModelApi.create(folderId, new DataModel(label: 'Test data model')).id
+        Overlay createdOverlay = overlayApi.create(folderId, new Overlay(label: 'Test folder overlay', overlayRules: [
+            new OverlayRule(match: new OverlayMatch(path: new Path('dm:Test data model$main')),
+                actions: [new OverlayAction(type: 'value', field: 'description', value: 'Enriched model description', source: 'folder-import-export-test')])
+            ]))
+        assert createdOverlay.overlayRules[0].match.path.toString() == 'dm:Test data model$main'
+        assert createdOverlay.overlayRules[0].actions[0].value == 'Enriched model description'
+        overlayId = createdOverlay.id
     }
 
     void 'create folder, dataModels, metadata, summaryMetadata, summaryMetadataReports, annotations, terminology, codeset and export'() {
@@ -87,6 +107,11 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
         exportModel.folder.dataModels.size() == 1
         exportModel.folder.dataModels[0].id == dataModelId
         exportModel.folder.dataModels[0].label == 'Test data model'
+        exportModel.folder.overlays.size() == 1
+        exportModel.folder.overlays[0].id == overlayId
+        exportModel.folder.overlays[0].label == 'Test folder overlay'
+        exportModel.folder.overlays[0].overlayRules[0].match.path.toString() == 'dm:Test data model$main'
+        exportModel.folder.overlays[0].overlayRules[0].actions[0].value == 'Enriched model description'
         exportModel.folder.dataModels[0].dataTypes.size() == 1
         exportModel.folder.dataModels[0].dataTypes[0].label == 'Test data type'
         exportModel.folder.dataModels[0].dataTypes[0].id == dataTypeId
@@ -234,6 +259,13 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
 
         then:
         importedFolder
+
+        ListResponse<Overlay> importedOverlays = overlayApi.list(importedFolderId)
+        importedOverlays.items.size() == 1
+        importedOverlays.items[0].id != overlayId
+        importedOverlays.items[0].label == 'Test folder overlay'
+        importedOverlays.items[0].overlayRules[0].match.path.toString() == 'dm:Test data model$main'
+        importedOverlays.items[0].overlayRules[0].actions[0].value == 'Enriched model description'
 
         when:
         ListResponse<DataModel> importedDataModelListResponse = dataModelApi.list(importedFolderId)

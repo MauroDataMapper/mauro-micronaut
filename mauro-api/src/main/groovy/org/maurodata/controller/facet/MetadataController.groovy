@@ -51,7 +51,7 @@ class MetadataController extends FacetController<Metadata> implements MetadataAp
         
         AdministeredItem administeredItem = findAdministeredItem(domainType, domainId)
         accessControlService.checkRole(Role.READER, administeredItem)
-        ListResponse.from(!administeredItem.metadata ? [] : administeredItem.metadata, params)
+        ListResponse.from(metadataRepository.readAllByMultiFacetAwareItemIdIn([domainId]) as List<Metadata>, params)
     }
 
     @Audit

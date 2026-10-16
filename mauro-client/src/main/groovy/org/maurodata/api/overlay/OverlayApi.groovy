@@ -44,6 +44,9 @@ interface OverlayApi extends ModelApi<Overlay> {
     @Get(Paths.OVERLAYS_LIST_PAGED)
     ListResponse<Overlay> listAll(@Nullable PaginationParams params)
 
+    @Put(Paths.OVERLAYS_MOVE)
+    Overlay moveFolder(UUID id, String destination)
+
     @Put(Paths.OVERLAYS_BRANCH_MODEL_VERSION)
     Overlay createNewBranchModelVersion(UUID id, @Body @Nullable CreateNewVersionData createNewVersionData)
 
