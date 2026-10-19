@@ -7,6 +7,7 @@ import org.maurodata.domain.dataflow.DataElementComponent
 import org.maurodata.domain.dataflow.DataFlow
 import org.maurodata.domain.datamodel.DataClass
 import org.maurodata.domain.datamodel.DataElement
+import org.maurodata.domain.datamodel.DataComponent
 import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.datamodel.DataType
 import org.maurodata.domain.datamodel.EnumerationValue
@@ -59,6 +60,9 @@ class TreeifyVisitor extends GenericDomainTraversalVisitor implements ItemHandle
         }
         if (item instanceof DataElement) {
             ((DataElement) item).dataModel = null
+        }
+        if (item instanceof DataComponent) {
+            ((DataComponent) item).dataModel = null
         }
         if (item instanceof DataType) {
             DataType dataType = (DataType) item
