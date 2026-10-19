@@ -116,6 +116,9 @@ interface Paths {
     String ALL_DATA_CLASSES = '/api/dataModels/{dataModelId}/allDataClasses'
     String ALL_DATA_CLASSES_PAGED = '/api/dataModels/{dataModelId}/allDataClasses{?params*}'
 
+    String DATA_FLOW_NETWORK_COMPONENT_LIST = '/api/dataModels/{dataModelId}/dataFlowNetwork/components'
+    String DATA_FLOW_NETWORK_COMPONENT_ID = '/api/dataModels/{dataModelId}/dataFlowNetwork/components/{id}'
+
     /*
     * DataElementApi
     */
@@ -219,6 +222,15 @@ interface Paths {
     String SEMANTIC_LINKS_LIST = '/api/{domainType}/{domainId}/semanticLinks'
     String SEMANTIC_LINKS_ID = '/api/{domainType}/{domainId}/semanticLinks/{id}'
     String SEMANTIC_LINKS_LIST_PAGED = '/api/{domainType}/{domainId}/semanticLinks{?params*}'
+
+    String DATA_FLOW_NETWORK_SOURCE_LIST = '/api/{domainType}/{domainId}/dataFlowNetwork/sources'
+    String DATA_FLOW_NETWORK_SOURCE_ID = '/api/{domainType}/{domainId}/dataFlowNetwork/sources/{id}'
+
+    /*
+    * ItemLinkGraphApi
+    */
+    String ITEM_LINK_KINDS = '/api/itemLinks/kinds'
+    String ITEM_LINK_GRAPH = '/api/{domainType}/{domainId}/incomingLinks{?linkTypes*}'
 
     /*
     * RuleApi

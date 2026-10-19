@@ -8,6 +8,7 @@ import groovy.transform.CompileStatic
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
 import org.maurodata.domain.datamodel.DataClass
+import org.maurodata.domain.datamodel.DataComponent
 import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.folder.Folder
 import org.maurodata.domain.model.AdministeredItem
@@ -18,6 +19,7 @@ import org.maurodata.domain.terminology.Terminology
 import org.maurodata.domain.tree.TreeItem
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository.DataClassCacheableRepository
+import org.maurodata.persistence.cache.AdministeredItemCacheableRepository.DataComponentCacheableRepository
 import org.maurodata.persistence.cache.ModelCacheableRepository
 import org.maurodata.persistence.cache.ModelCacheableRepository.DataModelCacheableRepository
 import org.maurodata.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
@@ -39,6 +41,9 @@ class TreeService {
 
     @Inject
     DataClassCacheableRepository dataClassCacheableRepository
+
+    @Inject
+    DataComponentCacheableRepository dataComponentCacheableRepository
 
     @Inject
     AdministeredItemCacheableRepository.TermCacheableRepository termCacheableRepository
@@ -67,6 +72,7 @@ class TreeService {
 
             case DataModel -> buildTreeForDataModel(item, setChildren, lookForChildren)
             case DataClass -> buildTreeForDataClass(item, setChildren, lookForChildren)
+            case DataComponent -> []
 
             case Terminology -> buildTreeForTerminology(item, setChildren, lookForChildren)
             case Term -> buildTreeForTerm(item, setChildren, lookForChildren)
@@ -173,6 +179,18 @@ class TreeService {
                     }
                 }
             }
+        treeItems.addAll(dataComponentCacheableRepository.readAllByDataModel(dataModel)
+            .sort {a, b -> a.order <=> b.order ?: a.label <=> b.label}
+            .collect {DataComponent component ->
+                pathRepository.readParentItems(component)
+                component.updatePath()
+                component.updateBreadcrumbs()
+                TreeItem.from(component).tap {
+                    model = dataModel
+                    children = []
+                    hasChildren = false
+                }
+            })
         treeItems
     }
 

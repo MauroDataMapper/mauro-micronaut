@@ -8,6 +8,7 @@ import org.maurodata.domain.dataflow.DataClassComponent
 import org.maurodata.domain.dataflow.DataElementComponent
 import org.maurodata.domain.dataflow.DataFlow
 import org.maurodata.domain.datamodel.DataClass
+import org.maurodata.domain.datamodel.DataComponent
 import org.maurodata.domain.datamodel.DataElement
 import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.datamodel.DataType
@@ -61,6 +62,7 @@ class IdOnlyContentHandler {
     @Inject CodeSetCacheableRepository codeSetCacheableRepository
     @Inject DataModelCacheableRepository dataModelCacheableRepository
     @Inject DataClassCacheableRepository dataClassCacheableRepository
+    @Inject AdministeredItemCacheableRepository.DataComponentCacheableRepository dataComponentCacheableRepository
     @Inject DataTypeCacheableRepository dataTypeCacheableRepository
     @Inject DataElementCacheableRepository dataElementCacheableRepository
     @Inject EnumerationValueCacheableRepository enumerationValueCacheableRepository
@@ -80,6 +82,7 @@ class IdOnlyContentHandler {
     @Inject FacetCacheableRepository.RuleCacheableRepository ruleRepository
     @Inject RuleRepresentationCacheableRepository ruleRepresentationCacheableRepository
     @Inject FacetCacheableRepository.SemanticLinkCacheableRepository semanticLinkRepository
+    @Inject FacetCacheableRepository.ItemLinkCacheableRepository itemLinkRepository
     @Inject SummaryMetadataCacheableRepository summaryMetadataCacheableRepository
     @Inject SummaryMetadataReportCacheableRepository summaryMetadataReportCacheableRepository
     @Inject VersionLinkCacheableRepository versionLinkCacheableRepository
@@ -106,6 +109,7 @@ class IdOnlyContentHandler {
             versionLinkCacheableRepository.deleteByMultiFacetAwareItemIdIn(batch)
             summaryMetadataCacheableRepository.deleteByMultiFacetAwareItemIdIn(batch)
             semanticLinkRepository.deleteByMultiFacetAwareItemIdIn(batch)
+            itemLinkRepository.deleteByMultiFacetAwareItemIdIn(batch)
             ruleRepository.deleteByMultiFacetAwareItemIdIn(batch)
             referenceFileRepository.deleteByMultiFacetAwareItemIdIn(batch)
             editCacheableRepository.deleteByMultiFacetAwareItemIdIn(batch)
@@ -146,6 +150,9 @@ class IdOnlyContentHandler {
         }
         inBatches(parentDomains["DataElement"]?.sort(), batchSize) {List<UUID> batch ->
             dataElementCacheableRepository.deleteAllByIdIn(batch)
+        }
+        inBatches(parentDomains["DataComponent"]?.sort(), batchSize) {List<UUID> batch ->
+            dataComponentCacheableRepository.deleteAllByIdIn(batch)
         }
         inBatches(parentDomains["DataType"]?.sort(), batchSize) {List<UUID> batch ->
             dataTypeCacheableRepository.deleteAllByIdIn(batch)
@@ -431,6 +438,13 @@ class IdOnlyContentHandler {
             }
         }
         allItems.addAll(parentDomains['DataModel']?:[])
+
+        if (parentDomains['DataModel']) {
+            parentDomains['DataComponent'] = inBatchesReadSet(parentDomains['DataModel'], batchSize) {List<UUID> batch ->
+                ((org.maurodata.persistence.datamodel.DataComponentRepository) dataComponentCacheableRepository.repository).readAllIdByDataModelIdIn(batch)
+            }
+        }
+        allItems.addAll(parentDomains['DataComponent'] ?: [])
 
         final List<UUID> allDataClasses = []
         if (parentDomains['DataModel']) {
