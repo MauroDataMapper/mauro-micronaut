@@ -110,6 +110,27 @@ abstract class Model extends AdministeredItem implements DiffableItem, Securable
     }
 
     /**
+     * Whether this Model's finalised, version-owning Model is identified by
+     * a value used in a Path modelIdentifier.
+     */
+    boolean matchesFinalisedPathModelIdentifier(String identifier) {
+        Model versionOwner = owner
+        versionOwner?.finalised && identifier != null && (
+            (versionOwner.modelVersion != null && versionOwner.modelVersion.toString() == identifier) ||
+                (versionOwner.modelVersionTag != null && versionOwner.modelVersionTag == identifier)
+        )
+    }
+
+    /**
+     * Whether this Model's draft, version-owning Model is identified by a
+     * branch name used in a Path modelIdentifier.
+     */
+    boolean matchesDraftPathModelIdentifier(String identifier) {
+        Model versionOwner = owner
+        versionOwner != null && !versionOwner.finalised && identifier != null && versionOwner.branchName == identifier
+    }
+
+    /**
      * For a model which has all its associations loaded, return a collection of all its direct child items.
      * The collection should be ordered so that all the items can be saved in order.
      */

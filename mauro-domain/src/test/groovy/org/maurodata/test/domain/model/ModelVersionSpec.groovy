@@ -3,12 +3,39 @@ package org.maurodata.test.domain.model
 import spock.lang.Specification
 import org.maurodata.domain.model.version.ModelVersion
 import org.maurodata.domain.model.version.VersionChangeType
+import org.maurodata.domain.datamodel.DataModel
+import org.maurodata.domain.folder.Folder
 
 /**
  * ModelVersionSpec is a class for testing functionality relating to the ModelVersion class
  * @see ModelVersion
  */
 class ModelVersionSpec extends Specification {
+
+    void 'path model identifier matching distinguishes finalised identifiers from draft branches'() {
+        given:
+        DataModel finalisedModel = new DataModel(finalised: true, modelVersion: ModelVersion.from('1.2.3'), modelVersionTag: 'published')
+        DataModel draftModel = new DataModel(finalised: false, branchName: 'main')
+
+        expect:
+        finalisedModel.matchesFinalisedPathModelIdentifier('1.2.3')
+        finalisedModel.matchesFinalisedPathModelIdentifier('published')
+        !finalisedModel.matchesDraftPathModelIdentifier('main')
+        draftModel.matchesDraftPathModelIdentifier('main')
+        !draftModel.matchesFinalisedPathModelIdentifier('1.2.3')
+        !draftModel.matchesFinalisedPathModelIdentifier('main')
+    }
+
+    void 'path model identifier matching uses the version owning ancestor'() {
+        given:
+        Folder versionOwningFolder = new Folder(finalised: true, modelVersion: ModelVersion.from('2.0.0'), modelVersionTag: 'release')
+        DataModel nestedModel = new DataModel(folder: versionOwningFolder)
+
+        expect:
+        nestedModel.matchesFinalisedPathModelIdentifier('2.0.0')
+        nestedModel.matchesFinalisedPathModelIdentifier('release')
+        !nestedModel.matchesDraftPathModelIdentifier('main')
+    }
 
     void "Test the DSL for creating objects"() {
 
