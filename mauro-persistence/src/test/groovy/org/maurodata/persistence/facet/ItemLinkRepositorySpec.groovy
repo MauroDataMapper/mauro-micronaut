@@ -73,6 +73,22 @@ class ItemLinkRepositorySpec extends Specification {
         (itemLinkRepository.readAllByMultiFacetAwareItemId(secondOwnerId)*.id as Set) == [otherOwnerPath.id] as Set
     }
 
+    void 'repository finds links by type and any candidate source path across potential target owners'() {
+        given:
+        ItemLink matchingPath = saveItemLink(firstOwnerId, 'DataFlow', 'dc:Known source')
+        ItemLink matchingPathOtherOwner = saveItemLink(secondOwnerId, 'DataFlow', 'dc:Known source')
+        ItemLink matchingAlternatePath = saveItemLink(firstOwnerId, 'DataFlow', 'dc:Known source two')
+        saveItemLink(firstOwnerId, 'SemanticLink', 'dc:Known source')
+        saveItemLink(firstOwnerId, 'DataFlow', 'dc:Other source')
+
+        when:
+        Set<ItemLink> matches = itemLinkRepository.readAllByTypeAndPathIn('DataFlow',
+            ['dc:Known source', 'dc:Known source two'])
+
+        then:
+        matches*.id as Set == [matchingPath.id, matchingPathOtherOwner.id, matchingAlternatePath.id] as Set
+    }
+
     private ItemLink saveItemLink(UUID ownerId, String type, String path) {
         itemLinkRepository.save(new ItemLink(
             multiFacetAwareItemDomainType: 'DataClass',

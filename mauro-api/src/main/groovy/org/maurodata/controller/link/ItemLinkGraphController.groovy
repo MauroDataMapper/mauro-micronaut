@@ -37,7 +37,7 @@ class ItemLinkGraphController implements ItemLinkGraphApi, AdministeredItemReade
 
     @Override
     @Audit
-    @Operation(operationId = 'traverseIncomingItemLinks', summary = 'Traverse incoming item links', description = 'Returns a breadth-first graph of incoming links and readable items for the selected link kinds.')
+    @Operation(operationId = 'traverseIncomingItemLinks', summary = 'Traverse item links for a graph', description = 'Returns a breadth-first graph following source paths and includes readable target items that refer to each reached item. Newly included target items are not expanded.')
     @Get(Paths.ITEM_LINK_GRAPH)
     ItemLinkGraphDTO traverseIncomingLinks(String domainType, UUID domainId, @QueryValue('linkTypes') List<String> linkTypes) {
         AdministeredItem target = readAdministeredItem(domainType, domainId)
