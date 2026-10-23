@@ -10,6 +10,8 @@ import org.maurodata.domain.facet.ItemLink
 @JdbcRepository(dialect = Dialect.POSTGRES)
 abstract class ItemLinkRepository implements FacetRepository<ItemLink> {
     abstract Set<ItemLink> readAllByMultiFacetAwareItemIdAndType(UUID ownerId, String type)
+    abstract Set<ItemLink> readAllByMultiFacetAwareItemIdInAndType(Collection<UUID> ownerIds, String type)
+
     @Query('select * from core.item_link where type = :type and path in (:paths)')
     abstract Set<ItemLink> readAllByTypeAndPathIn(String type, Collection<String> paths)
 
