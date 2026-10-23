@@ -35,6 +35,8 @@ class DataFlowNetworkService {
     @Inject VisiblePathModelResolver visiblePathModelResolver
     @Inject FacetCacheableRepository.ItemLinkCacheableRepository itemLinkRepository
     @Inject AdministeredItemCacheableRepository.DataComponentCacheableRepository dataComponentRepository
+    @Inject AdministeredItemCacheableRepository.DataClassCacheableRepository dataClassRepository
+    @Inject AdministeredItemCacheableRepository.DataElementCacheableRepository dataElementRepository
     @Inject ModelCacheableRepository.DataModelCacheableRepository dataModelRepository
     @Inject PathPrefixTypeLookup pathPrefixTypeLookup
     @Inject ContentsService contentsService
@@ -43,6 +45,7 @@ class DataFlowNetworkService {
         itemLinkRepository.readAllByMultiFacetAwareItemIdAndType(target.id, DATA_FLOW_LINK_TYPE) as List<ItemLink>
     }
 
+    // ItemLinks are stored on the target item; each Path identifies the source item.
     ItemLink create(AdministeredItem target, String pathString) {
         Path path = normaliseAndValidate(pathString, target)
         if (list(target).any { it.path?.toString() == path.toString() }) {
@@ -108,9 +111,9 @@ class DataFlowNetworkService {
         }
 
         (request.produces ?: [] as List<DataFlowSourceCreateDTO>).each { produce ->
-            AdministeredItem outputTarget = resolveProducedTarget(dataModel, produce?.path)
-            accessControlService.checkRole(Role.EDITOR, outputTarget)
-            create(outputTarget, component.path.localPath().toString())
+            AdministeredItem producedTarget = resolveProducedTarget(dataModel, produce?.path)
+            accessControlService.checkRole(Role.EDITOR, producedTarget)
+            create(producedTarget, component.path.localPath().toString())
         }
         component
     }
@@ -133,8 +136,10 @@ class DataFlowNetworkService {
         DataComponent component = dataComponentRepository.loadWithContent(id)
         ensureComponentOwner(component, dataModel)
         pathRepository.readParentItems(component)
+        component.updatePath()
         accessControlService.checkRole(Role.EDITOR, component)
         ensureTargetModelEditable(component)
+        deleteLocalTargetLinksWithComponentAsSource(dataModel, component)
         contentsService.deleteWithContent(component)
     }
 
@@ -187,6 +192,9 @@ class DataFlowNetworkService {
         if (target instanceof DataComponent && target.type != DataComponent.DATA_FLOW_TYPE) {
             throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, 'The DataComponent target must have type DataFlow')
         }
+        if (target instanceof DataComponent && sourceDomainType == 'DataComponent') {
+            throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, 'DataFlow links cannot connect two DataComponents')
+        }
         if (!(target instanceof DataComponent) && sourceDomainType != 'DataComponent') {
             throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, 'A DataFlow link must have a DataFlow component at one end')
         }
@@ -199,12 +207,6 @@ class DataFlowNetworkService {
         if (resolved instanceof DataComponent) {
             if (resolved.type != DataComponent.DATA_FLOW_TYPE) {
                 throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, 'The DataComponent source must have type DataFlow')
-            }
-            DataModel sourceDataModel = owningDataModel(resolved)
-            DataModel targetDataModel = owningDataModel(target)
-            if (sourceDataModel && targetDataModel && sourceDataModel.id != targetDataModel.id) {
-                throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
-                    'A DataFlow component source and its DataFlow target must belong to the same DataModel')
             }
         }
         if (resolved?.id == target.id && resolved.domainType == target.domainType) {
@@ -227,8 +229,8 @@ class DataFlowNetworkService {
             throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, 'Produces paths must be relative to the component DataModel')
         }
         String targetDomainType = pathPrefixTypeLookup.getDomainType(relativePath.lastPathNode()?.prefix)
-        if (!(targetDomainType in ['DataClass', 'DataElement', 'DataComponent'])) {
-            throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, 'DataFlow targets must be DataClasses, DataElements or DataFlow components')
+        if (!(targetDomainType in ['DataClass', 'DataElement'])) {
+            throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, 'DataFlow produced targets must be DataClasses or DataElements')
         }
         pathRepository.readParentItems(dataModel)
         dataModel.updatePath()
@@ -238,14 +240,24 @@ class DataFlowNetworkService {
         Path fullPath = new Path(([dataModelNode] + relativePath.nodes) as List<Path.PathNode>)
         AdministeredItem resolved = pathRepository.findResourcesByPathFromRootResource(dataModel, fullPath)
         if (!resolved) throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, 'A produces target path did not resolve in the component DataModel')
-        if (resolved instanceof DataComponent && resolved.type != DataComponent.DATA_FLOW_TYPE) {
-            throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, 'A produces DataComponent target must have type DataFlow')
-        }
         pathRepository.readParentItems(resolved)
         if (owningDataModel(resolved)?.id != dataModel.id) {
             throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, 'Produces targets must belong to the component DataModel')
         }
         resolved
+    }
+
+    private void deleteLocalTargetLinksWithComponentAsSource(DataModel dataModel, DataComponent component) {
+        List<UUID> targetIds = []
+        targetIds.addAll((dataClassRepository.readAllByDataModel(dataModel) ?: []).collect { DataClass item -> item.id })
+        targetIds.addAll((dataElementRepository.readAllByDataClassDataModelIdIn([dataModel.id]) ?: [])
+            .collect { DataElement item -> item.id })
+        if (!targetIds) return
+
+        Set<String> componentSourcePaths = [component.path.localPath().toString(), component.path.toString()] as Set<String>
+        itemLinkRepository.readAllByMultiFacetAwareItemIdInAndType(targetIds.unique(), DATA_FLOW_LINK_TYPE)
+            .findAll { ItemLink itemLink -> itemLink.path?.toString() in componentSourcePaths }
+            .each { ItemLink itemLink -> itemLinkRepository.delete(itemLink) }
     }
 
     private static DataModel owningDataModel(AdministeredItem item) {
