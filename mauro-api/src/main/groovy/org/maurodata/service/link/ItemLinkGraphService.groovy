@@ -16,22 +16,25 @@ import org.maurodata.domain.facet.Annotation
 import org.maurodata.domain.facet.Metadata
 import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.domain.model.Model
+import org.maurodata.domain.security.Role
 import org.maurodata.persistence.cache.FacetCacheableRepository
 import org.maurodata.persistence.model.PathRepository
+import org.maurodata.persistence.service.RepositoryService
 import org.maurodata.security.AccessControlService
 
 @CompileStatic
 @Singleton
 class ItemLinkGraphService {
-    @Inject List<IncomingItemLinkProvider> linkProviders
+    @Inject List<ItemLinkGraphProvider> linkProviders
     @Inject ItemLinkPathResolver itemLinkPathResolver
     @Inject PathRepository pathRepository
+    @Inject RepositoryService repositoryService
     @Inject AccessControlService accessControlService
     @Inject FacetCacheableRepository.MetadataCacheableRepository metadataRepository
     @Inject FacetCacheableRepository.AnnotationCacheableRepository annotationRepository
 
     List<ItemLinkKindDTO> supportedKinds() {
-        providersByType().values().collect { IncomingItemLinkProvider provider ->
+        providersByType().values().collect { ItemLinkGraphProvider provider ->
             new ItemLinkKindDTO(type: provider.type, label: provider.label)
         }.sort(false) { ItemLinkKindDTO kind -> kind.type }
     }
@@ -41,7 +44,7 @@ class ItemLinkGraphService {
             throw new HttpStatusException(HttpStatus.BAD_REQUEST, 'At least one link type must be selected')
         }
 
-        Map<String, IncomingItemLinkProvider> providers = providersByType()
+        Map<String, ItemLinkGraphProvider> providers = providersByType()
         List<String> types = requestedTypes.findAll { it != null && !it.trim().isEmpty() }.unique()
         if (!types) {
             throw new HttpStatusException(HttpStatus.BAD_REQUEST, 'At least one link type must be selected')
@@ -50,57 +53,98 @@ class ItemLinkGraphService {
         if (unsupported) {
             throw new HttpStatusException(HttpStatus.BAD_REQUEST, "Unsupported link type(s): ${unsupported.join(', ')}")
         }
-        List<IncomingItemLinkProvider> selectedProviders = types.collect { providers[it] }
-            .sort(false) { IncomingItemLinkProvider provider -> provider.type }
+        List<ItemLinkGraphProvider> selectedProviders = types.collect { providers[it] }
+            .sort(false) { ItemLinkGraphProvider provider -> provider.type }
 
         ItemLinkGraphDTO graph = new ItemLinkGraphDTO()
         LinkedHashMap<String, ItemLinkItemDTO> itemsByKey = new LinkedHashMap<>()
+        LinkedHashSet<String> linksById = new LinkedHashSet<>()
         LinkedHashSet<String> expanded = new LinkedHashSet<>()
+        LinkedHashSet<String> queued = new LinkedHashSet<>()
         ArrayDeque<AdministeredItem> queue = new ArrayDeque<>()
         addItem(root, graph, itemsByKey)
         queue.add(root)
+        queued.add(itemKey(root))
 
         while (!queue.isEmpty()) {
             AdministeredItem target = queue.removeFirst()
             String targetKey = itemKey(target)
             if (!expanded.add(targetKey)) continue
 
-            selectedProviders.each { IncomingItemLinkProvider provider ->
-                provider.findIncomingLinks(target).sort(false) { IncomingItemLink link -> link.path?.toString() ?: '' }
-                    .each { IncomingItemLink link ->
-                        ResolvedItemLinkPath resolved = itemLinkPathResolver.resolve(target, link.path)
+            selectedProviders.each { ItemLinkGraphProvider provider ->
+                provider.findLinksOwnedByTarget(target)
+                    .sort(false) { ItemLinkGraphReference reference -> reference.sourcePath?.toString() ?: '' }
+                    .each { ItemLinkGraphReference reference ->
+                        ResolvedItemLinkPath resolved = itemLinkPathResolver.resolve(target, reference.sourcePath)
                         AdministeredItem source = resolved.source
-                        graph.links << new ItemLinkDTO(
-                            id: link.id,
-                            type: link.type,
+                        addLink(graph, linksById, new ItemLinkDTO(
+                            id: reference.id,
+                            type: reference.type,
                             path: resolved.path?.toString(),
                             sourceId: source?.id,
                             sourceDomainType: source?.domainType,
                             targetId: target.id,
                             targetDomainType: target.domainType
-                        )
+                        ))
                         if (source) {
                             String sourceKey = itemKey(source)
                             if (!itemsByKey.containsKey(sourceKey)) {
                                 addItem(source, graph, itemsByKey)
-                                queue.addLast(source)
                             }
+                            if (!expanded.contains(sourceKey) && queued.add(sourceKey)) queue.addLast(source)
                         }
+                    }
+
+                provider.findTargetsReferencingSource(target)
+                    .sort(false) { ItemLinkGraphReference reference ->
+                        "${reference.targetDomainType?.toLowerCase() ?: ''}:${reference.targetId}:${reference.sourcePath?.toString() ?: ''}"
+                    }
+                    .each { ItemLinkGraphReference reference ->
+                        AdministeredItem linkTarget = loadReadableTarget(reference)
+                        if (!linkTarget) return
+
+                        ResolvedItemLinkPath resolved = itemLinkPathResolver.resolve(linkTarget, reference.sourcePath)
+                        if (!resolved.source || itemKey(resolved.source) != targetKey) return
+
+                        String linkTargetKey = itemKey(linkTarget)
+                        if (!itemsByKey.containsKey(linkTargetKey)) addItem(linkTarget, graph, itemsByKey)
+                        addLink(graph, linksById, new ItemLinkDTO(
+                            id: reference.id,
+                            type: reference.type,
+                            path: resolved.path?.toString(),
+                            sourceId: target.id,
+                            sourceDomainType: target.domainType,
+                            targetId: linkTarget.id,
+                            targetDomainType: linkTarget.domainType
+                        ))
                     }
             }
         }
         graph
     }
 
-    private Map<String, IncomingItemLinkProvider> providersByType() {
-        Map<String, IncomingItemLinkProvider> result = [:]
-        linkProviders.each { IncomingItemLinkProvider provider -> result[provider.type] = provider }
+    private Map<String, ItemLinkGraphProvider> providersByType() {
+        Map<String, ItemLinkGraphProvider> result = [:]
+        linkProviders.each { ItemLinkGraphProvider provider -> result[provider.type] = provider }
         result
+    }
+
+    private AdministeredItem loadReadableTarget(ItemLinkGraphReference reference) {
+        if (!reference.targetId || !reference.targetDomainType) return null
+        AdministeredItem target = repositoryService.getAdministeredItemRepository(reference.targetDomainType)
+            ?.readById(reference.targetId) as AdministeredItem
+        if (!target || !accessControlService.canDoRole(Role.READER, target)) return null
+        target
+    }
+
+    private static void addLink(ItemLinkGraphDTO graph, Set<String> linksById, ItemLinkDTO link) {
+        if (link.id && linksById.add(link.id.toString())) graph.links << link
     }
 
     private void addItem(AdministeredItem item, ItemLinkGraphDTO graph, Map<String, ItemLinkItemDTO> itemsByKey) {
         pathRepository.readParentItems(item)
         item.updatePath()
+        item.updateBreadcrumbs()
         Model owner = item.owner
         if (owner) {
             pathRepository.readParentItems(owner)
@@ -114,6 +158,7 @@ class ItemLinkGraphService {
             domainType: item.domainType,
             label: item.label,
             description: item.description,
+            breadcrumbs: item.breadcrumbs,
             owningModel: owner ? new ItemLinkModelDTO(
                 id: owner.id,
                 domainType: owner.domainType,
