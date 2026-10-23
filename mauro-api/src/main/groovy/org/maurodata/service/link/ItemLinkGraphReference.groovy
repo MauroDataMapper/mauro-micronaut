@@ -4,8 +4,10 @@ import groovy.transform.CompileStatic
 import org.maurodata.domain.model.Path
 
 @CompileStatic
-class IncomingItemLink {
+class ItemLinkGraphReference {
     UUID id
     String type
-    Path path
+    Path sourcePath
+    UUID targetId
+    String targetDomainType
 }

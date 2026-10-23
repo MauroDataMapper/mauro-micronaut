@@ -171,10 +171,16 @@ class DataFlowNetworkIntegrationSpec extends CommonDataSpec {
         consumes*.path == [fullNamePath]
         producedLinks*.size() == [1, 1, 1]
         producedLinks.flatten()*.path == [flow.path.localPath().toString()] * 3
-        outputGraphs*.items*.id == nameParts.collect { DataElement element -> [element.id, flow.id, fullName.id] }
         outputGraphs.every { ItemLinkGraphDTO graph ->
-            graph.links*.sourceId == [flow.id, fullName.id] &&
-                graph.links*.targetId == [graph.items[0].id, flow.id]
+            List<UUID> siblingIds = nameParts.findAll { DataElement element -> element.id != graph.items[0].id }
+                .collect { DataElement element -> element.id }.sort()
+            graph.items*.id == [graph.items[0].id, flow.id, fullName.id] + siblingIds
+        }
+        outputGraphs.every { ItemLinkGraphDTO graph ->
+            List<UUID> siblingIds = nameParts.findAll { DataElement element -> element.id != graph.items[0].id }
+                .collect { DataElement element -> element.id }.sort()
+            graph.links*.sourceId == [flow.id, fullName.id] + ([flow.id] * siblingIds.size()) &&
+                graph.links*.targetId == [graph.items[0].id, flow.id] + siblingIds
         }
     }
 
@@ -389,6 +395,73 @@ class DataFlowNetworkIntegrationSpec extends CommonDataSpec {
         graph.links*.type == ['DataFlow', 'DataFlow', 'DataFlow', 'DataFlow']
     }
 
+    void 'graph item summaries include catalogue breadcrumbs through nested DataClasses to DataElements'() {
+        given:
+        DataClass nestedClass = dataClassApi.create(dataModelId, targetDataClassId,
+            new DataClass(label: 'Nested graph class'))
+        DataType outputType = dataTypeApi.create(dataModelId, primitiveDataType('Graph output type'))
+        DataElement outputElement = dataElementApi.create(dataModelId, nestedClass.id,
+            new DataElement(label: 'Graph output element', dataType: new DataType(id: outputType.id)))
+        DataComponent flow = createDataFlowNetworkComponent(dataModelId, 'Graph breadcrumb process',
+            ['dc:DataFlow source'], ['dc:DataFlow target|dc:Nested graph class|de:Graph output element'])
+
+        when:
+        ItemLinkGraphDTO graph = itemLinkGraphApi.traverseIncomingLinks('DataElement', outputElement.id, ['DataFlow'])
+
+        then:
+        graph.items*.id == [outputElement.id, flow.id, sourceDataClassId]
+        graph.items[0].breadcrumbs*.id == [folderId, dataModelId, targetDataClassId, nestedClass.id, outputElement.id]
+        graph.items[0].breadcrumbs*.domainType == ['Folder', 'DataModel', 'DataClass', 'DataClass', 'DataElement']
+        graph.items[0].breadcrumbs*.label == [
+            folderApi.show(folderId).label,
+            dataModelApi.show(dataModelId).label,
+            'DataFlow target', 'Nested graph class', 'Graph output element'
+        ]
+        graph.items[1].breadcrumbs*.id == [folderId, dataModelId, flow.id]
+        graph.items[1].breadcrumbs*.domainType == ['Folder', 'DataModel', 'DataComponent']
+        graph.items[2].breadcrumbs*.id == [folderId, dataModelId, sourceDataClassId]
+    }
+
+    void 'graph includes readable targets that reference the root without following their links'() {
+        given:
+        DataComponent referencingComponent = createDataFlowNetworkComponent(dataModelId, 'References graph root',
+            ['dc:DataFlow target', 'dc:DataFlow source'], [])
+
+        when:
+        ItemLinkGraphDTO graph = itemLinkGraphApi.traverseIncomingLinks('DataClass', targetDataClassId, ['DataFlow'])
+
+        then:
+        graph.items*.id == [targetDataClassId, referencingComponent.id]
+        graph.links.size() == 1
+        graph.links[0].sourceId == targetDataClassId
+        graph.links[0].sourceDomainType == 'DataClass'
+        graph.links[0].targetId == referencingComponent.id
+        graph.links[0].targetDomainType == 'DataComponent'
+        graph.links[0].path == absolutePath(dataClassApi.show(dataModelId, targetDataClassId).path)
+        !graph.items*.id.contains(sourceDataClassId)
+    }
+
+    void 'graph finds readable targets referring to every item in the source traversal without expanding them'() {
+        given:
+        DataClass additionalSource = dataClassApi.create(dataModelId,
+            new DataClass(label: 'Additional unexpanded source'))
+        DataComponent incomingFlow = createDataFlowNetworkComponent(dataModelId, 'Graph incoming flow',
+            ['dc:DataFlow source'], ['dc:DataFlow target'])
+        DataComponent referencingComponent = createDataFlowNetworkComponent(dataModelId, 'References reached source',
+            ['dc:DataFlow source', 'dc:Additional unexpanded source'], [])
+
+        when:
+        ItemLinkGraphDTO graph = itemLinkGraphApi.traverseIncomingLinks('DataClass', targetDataClassId, ['DataFlow'])
+
+        then:
+        graph.items*.id == [targetDataClassId, incomingFlow.id, sourceDataClassId, referencingComponent.id]
+        graph.links.size() == 3
+        graph.links*.sourceId == [incomingFlow.id, sourceDataClassId, sourceDataClassId]
+        graph.links*.targetId == [targetDataClassId, incomingFlow.id, referencingComponent.id]
+        !graph.items*.id.contains(additionalSource.id)
+        !graph.links*.sourceId.contains(additionalSource.id)
+    }
+
     void 'incoming link traversal requires at least one supported kind'() {
         when:
         itemLinkGraphApi.traverseIncomingLinks('DataClass', targetDataClassId, [])
@@ -433,10 +506,10 @@ class DataFlowNetworkIntegrationSpec extends CommonDataSpec {
         ItemLinkGraphDTO graph = itemLinkGraphApi.traverseIncomingLinks('DataClass', targetDataClassId, ['DataFlow'])
 
         then:
-        graph.items*.id == [targetDataClassId, firstFlow.id, sourceDataClassId, secondFlow.id]
+        graph.items*.id == [targetDataClassId, firstFlow.id, secondFlow.id, sourceDataClassId]
         graph.links.size() == 4
-        graph.links*.targetId == [targetDataClassId, firstFlow.id, sourceDataClassId, secondFlow.id]
-        graph.links*.sourceId == [firstFlow.id, sourceDataClassId, secondFlow.id, targetDataClassId]
+        graph.links*.targetId == [targetDataClassId, secondFlow.id, firstFlow.id, sourceDataClassId]
+        graph.links*.sourceId == [firstFlow.id, targetDataClassId, sourceDataClassId, secondFlow.id]
     }
 
     void 'incoming absolute links include finalized owning model version details'() {
