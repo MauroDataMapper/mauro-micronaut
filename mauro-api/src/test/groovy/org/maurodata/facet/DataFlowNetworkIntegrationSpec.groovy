@@ -233,20 +233,23 @@ class DataFlowNetworkIntegrationSpec extends CommonDataSpec {
         graph.links.drop(1)*.path as Set == ([sourceAlphaPath, sourceBetaPath] as Set)
     }
 
-    void 'a DataComponent can consume another DataComponent in the same DataModel'() {
+    void 'DataFlow rejects links between two DataComponents'() {
         when:
-        DataComponent downstream = createDataFlowNetworkComponent(dataModelId, 'Downstream process',
+        createDataFlowNetworkComponent(dataModelId, 'Downstream process',
             ['dcp:DataFlow%: Flow process'], [])
-        List<ItemLinkDTO> incoming = dataFlowNetworkApi.list('DataComponent', downstream.id).items
-        ItemLinkGraphDTO graph = itemLinkGraphApi.traverseIncomingLinks(
-            'DataComponent', downstream.id, ['DataFlow'])
 
         then:
-        incoming*.path == ['dcp:DataFlow%: Flow process']
-        graph.items*.id == [downstream.id, dataComponentId]
-        graph.links*.sourceId == [dataComponentId]
-        graph.links*.targetId == [downstream.id]
-        graph.links*.path == [absolutePath(dataFlowNetworkApi.showDataFlowNetworkComponent(dataModelId, dataComponentId).path)]
+        HttpClientResponseException resolvedComponentLink = thrown()
+        resolvedComponentLink.status == HttpStatus.UNPROCESSABLE_ENTITY
+        !dataFlowNetworkApi.listDataFlowNetworkComponents(dataModelId).items*.label.contains('Downstream process')
+
+        when:
+        dataFlowNetworkApi.create('DataComponent', dataComponentId,
+            new DataFlowSourceCreateDTO(path: 'dcp:Missing component'))
+
+        then:
+        HttpClientResponseException unresolvedComponentLink = thrown()
+        unresolvedComponentLink.status == HttpStatus.UNPROCESSABLE_ENTITY
     }
 
     void 'DataFlow rejects unsupported endpoints and links that bypass a DataComponent'() {
@@ -265,7 +268,7 @@ class DataFlowNetworkIntegrationSpec extends CommonDataSpec {
         unsupportedSource.status == HttpStatus.UNPROCESSABLE_ENTITY
     }
 
-    void 'a resolved DataComponent source must share the target DataModel'() {
+    void 'a DataComponent in a finalised DataModel can source a link to a different editable DataModel'() {
         given:
         Folder sourceVersionedFolder = versionedFolderApi.create(folder('External process'))
         DataModel sourceModel = dataModelApi.create(sourceVersionedFolder.id, dataModelPayload('External process model'))
@@ -274,13 +277,27 @@ class DataFlowNetworkIntegrationSpec extends CommonDataSpec {
         versionedFolderApi.finalise(sourceVersionedFolder.id,
             new FinaliseData(version: ModelVersion.from('4.0.0')))
         String sourcePath = dataFlowNetworkApi.showDataFlowNetworkComponent(sourceModel.id, source.id).path.toString()
+        DataType targetType = dataTypeApi.create(dataModelId, primitiveDataType('External flow output type'))
+        DataElement targetElement = dataElementApi.create(dataModelId, targetDataClassId,
+            new DataElement(label: 'External flow output', dataType: new DataType(id: targetType.id)))
 
         when:
-        dataFlowNetworkApi.create('DataClass', targetDataClassId, new DataFlowSourceCreateDTO(path: sourcePath))
+        ItemLinkDTO output = dataFlowNetworkApi.create('DataClass', targetDataClassId,
+            new DataFlowSourceCreateDTO(path: sourcePath))
+        ItemLinkDTO elementOutput = dataFlowNetworkApi.create('DataElement', targetElement.id,
+            new DataFlowSourceCreateDTO(path: sourcePath))
+        ItemLinkGraphDTO graph = itemLinkGraphApi.traverseIncomingLinks('DataClass', targetDataClassId, ['DataFlow'])
+        ItemLinkGraphDTO elementGraph = itemLinkGraphApi.traverseIncomingLinks('DataElement', targetElement.id, ['DataFlow'])
 
         then:
-        HttpClientResponseException exception = thrown()
-        exception.status == HttpStatus.UNPROCESSABLE_ENTITY
+        output.path == sourcePath
+        elementOutput.path == sourcePath
+        dataFlowNetworkApi.list('DataClass', targetDataClassId).items*.id == [output.id]
+        dataFlowNetworkApi.list('DataElement', targetElement.id).items*.id == [elementOutput.id]
+        graph.links.first().sourceId == source.id
+        graph.links.first().targetId == targetDataClassId
+        elementGraph.links.first().sourceId == source.id
+        elementGraph.links.first().targetId == targetElement.id
     }
 
     void 'DataComponent creation rejects produced targets outside its DataModel atomically'() {
@@ -297,6 +314,44 @@ class DataFlowNetworkIntegrationSpec extends CommonDataSpec {
         HttpClientResponseException exception = thrown()
         exception.status == HttpStatus.UNPROCESSABLE_ENTITY
         !dataFlowNetworkApi.listDataFlowNetworkComponents(dataModelId).items*.label.contains('Rejected process')
+    }
+
+    void 'DataComponent creation rejects another DataComponent as a produced target'() {
+        when:
+        dataFlowNetworkApi.createDataFlowNetworkComponent(dataModelId, new DataComponentCreateDTO(
+            label: 'Rejected component output', produces: [new DataFlowSourceCreateDTO(path: 'dcp:DataFlow%: Flow process')]))
+
+        then:
+        HttpClientResponseException exception = thrown()
+        exception.status == HttpStatus.UNPROCESSABLE_ENTITY
+        !dataFlowNetworkApi.listDataFlowNetworkComponents(dataModelId).items*.label.contains('Rejected component output')
+    }
+
+    void 'deleting a DataComponent removes local output links but preserves other links'() {
+        given:
+        DataType outputType = dataTypeApi.create(dataModelId, primitiveDataType('Output value type'))
+        DataElement outputElement = dataElementApi.create(dataModelId, targetDataClassId,
+            new DataElement(label: 'Output value', dataType: new DataType(id: outputType.id)))
+        DataComponent component = createDataFlowNetworkComponent(dataModelId, 'Component to delete',
+            ['dc:DataFlow source'], ['dc:DataFlow target', 'dc:DataFlow target|de:Output value'])
+        DataComponent otherComponent = createDataFlowNetworkComponent(dataModelId, 'Component to retain',
+            [], ['dc:DataFlow target'])
+        ItemLinkDTO otherOutput = dataFlowNetworkApi.list('DataClass', targetDataClassId).items
+            .find { ItemLinkDTO link -> link.path == otherComponent.path.localPath().toString() }
+
+        expect:
+        dataFlowNetworkApi.list('DataClass', targetDataClassId).count == 2
+        dataFlowNetworkApi.list('DataElement', outputElement.id).count == 1
+        otherOutput
+
+        when:
+        dataFlowNetworkApi.deleteDataFlowNetworkComponent(dataModelId, component.id)
+
+        then:
+        dataFlowNetworkApi.list('DataClass', targetDataClassId).items*.id == [otherOutput.id]
+        dataFlowNetworkApi.list('DataElement', outputElement.id).count == 0
+        dataFlowNetworkApi.listDataFlowNetworkComponents(dataModelId).items*.id.contains(otherComponent.id)
+        !dataFlowNetworkApi.listDataFlowNetworkComponents(dataModelId).items*.id.contains(component.id)
     }
 
     void 'DataFlow API and graph ignore links of other types on the same item and path'() {
@@ -762,16 +817,25 @@ class DataFlowNetworkIntegrationSpec extends CommonDataSpec {
         Folder sourceVersionedFolder = versionedFolderApi.create(folder('Versioned data flow source'))
         DataModel sourceModel = dataModelApi.create(sourceVersionedFolder.id, dataModelPayload('Versioned lineage model'))
         DataClass sourceClass = dataClassApi.create(sourceModel.id, dataClassPayload('Versioned data flow source class'))
+        DataType sourceType = dataTypeApi.create(sourceModel.id, primitiveDataType('Versioned source type'))
+        DataElement sourceElement = dataElementApi.create(sourceModel.id, sourceClass.id,
+            new DataElement(label: 'Versioned source element', dataType: new DataType(id: sourceType.id)))
         versionedFolderApi.finalise(sourceVersionedFolder.id,
             new FinaliseData(version: ModelVersion.from('2.0.0')))
         String absoluteSourcePath = dataClassApi.show(sourceModel.id, sourceClass.id).path.toString()
+        String absoluteSourceElementPath = dataElementApi.show(sourceModel.id, sourceClass.id, sourceElement.id).path.toString()
 
         when:
         ItemLinkDTO created = dataFlowNetworkApi.create('DataComponent', dataComponentId,
             new DataFlowSourceCreateDTO(path: absoluteSourcePath))
+        ItemLinkDTO createdElementSource = dataFlowNetworkApi.create('DataComponent', dataComponentId,
+            new DataFlowSourceCreateDTO(path: absoluteSourceElementPath))
 
         then:
         created.path == absoluteSourcePath
+        createdElementSource.path == absoluteSourceElementPath
+        dataFlowNetworkApi.list('DataComponent', dataComponentId).items*.path as Set ==
+            ([absoluteSourcePath, absoluteSourceElementPath] as Set)
     }
 
     void 'relative lineage resolves between data elements in different data models in a versioned folder'() {

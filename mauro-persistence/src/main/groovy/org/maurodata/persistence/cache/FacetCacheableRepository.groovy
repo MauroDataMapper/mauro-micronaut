@@ -312,6 +312,10 @@ abstract class FacetCacheableRepository<F extends Facet> extends ItemCacheableRe
             ((ItemLinkRepository) repository).readAllByMultiFacetAwareItemIdAndType(ownerId, type)
         }
 
+        Set<ItemLink> readAllByMultiFacetAwareItemIdInAndType(Collection<UUID> ownerIds, String type) {
+            ((ItemLinkRepository) repository).readAllByMultiFacetAwareItemIdInAndType(ownerIds, type)
+        }
+
         Set<ItemLink> readAllByTypeAndPathIn(String type, Collection<String> paths) {
             ((ItemLinkRepository) repository).readAllByTypeAndPathIn(type, paths)
         }
