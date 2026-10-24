@@ -201,7 +201,7 @@ project(':mauro-api') {
 
 tasks.withType(GroovyCompile).configureEach {
     groovyOptions.forkOptions.memoryInitialSize = '256m'
-    groovyOptions.forkOptions.memoryMaximumSize = '4g'
+    groovyOptions.forkOptions.memoryMaximumSize = '12g'
 }
 
 test {
