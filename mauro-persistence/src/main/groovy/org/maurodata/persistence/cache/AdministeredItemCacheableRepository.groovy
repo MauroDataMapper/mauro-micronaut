@@ -14,6 +14,7 @@ import org.maurodata.domain.dataflow.DataElementComponent
 import org.maurodata.domain.dataflow.DataFlow
 import org.maurodata.domain.datamodel.DataClass
 import org.maurodata.domain.datamodel.DataElement
+import org.maurodata.domain.datamodel.DataComponent
 import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.datamodel.DataType
 import org.maurodata.domain.datamodel.EnumerationValue
@@ -30,6 +31,7 @@ import org.maurodata.persistence.dataflow.DataElementComponentRepository
 import org.maurodata.persistence.dataflow.DataFlowRepository
 import org.maurodata.persistence.datamodel.DataClassRepository
 import org.maurodata.persistence.datamodel.DataElementRepository
+import org.maurodata.persistence.datamodel.DataComponentRepository
 import org.maurodata.persistence.datamodel.DataTypeRepository
 import org.maurodata.persistence.datamodel.EnumerationValueRepository
 import org.maurodata.persistence.datamodel.dto.DataClassExtensionDTO
@@ -311,6 +313,26 @@ abstract class AdministeredItemCacheableRepository<I extends AdministeredItem> e
         @Override
         Boolean handles(String domainType) {
             domainClass.simpleName.equalsIgnoreCase(domainType) || (domainClass.simpleName + 'es').equalsIgnoreCase(domainType)
+        }
+    }
+
+    @CompileStatic
+    @Singleton
+    static class DataComponentCacheableRepository extends AdministeredItemCacheableRepository<DataComponent> {
+        DataComponentCacheableRepository(DataComponentRepository repository, ContentsService contentsService) {
+            super(repository, contentsService)
+        }
+
+        List<DataComponent> readAllByDataModel(DataModel dataModel) {
+            ((DataComponentRepository) repository).readAllByDataModel(dataModel)
+        }
+
+        List<DataComponent> readAllByDataModelIds(Collection<UUID> dataModelIds) {
+            ((DataComponentRepository) repository).readAllByDataModelIdIn(dataModelIds)
+        }
+
+        List<UUID> readAllIdByDataModelIdIn(Collection<UUID> dataModelIds) {
+            ((DataComponentRepository) repository).readAllIdByDataModelIdIn(dataModelIds)
         }
     }
 
