@@ -61,7 +61,8 @@ ruleset {
 
     JUnitPublicProperty(enabled: false)
     JUnitPublicNonTestMethod(enabled: false)
-    JUnitTestMethodWithoutAssert(enabled: false)
 
-    ImplementationAsType(enabled: false)
+    UnnecessaryGroovyImport(violationMessage: "Unused Import")
+    JUnitTestMethodWithoutAssert(violationMessage: "Test method without assert")
+    ImplementationAsType(violationMessage: "Implementation as Type")
 }
