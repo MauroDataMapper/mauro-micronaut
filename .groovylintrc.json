@@ -65,8 +65,16 @@
 
     "JUnitPublicProperty": "off",
     "JUnitPublicNonTestMethod": "off",
-    "JUnitTestMethodWithoutAssert": "off",
 
-    "ImplementationAsType": "off"
+    "UnnecessaryGroovyImport": {
+      "violationMessage": "Unused Import"
+    },
+    "JUnitTestMethodWithoutAssert": {
+      "violationMessage": "Test method without assert"
+    },
+    "ImplementationAsType": {
+      "violationMessage": "Implementation as Type"
+    }
+
   }
 }

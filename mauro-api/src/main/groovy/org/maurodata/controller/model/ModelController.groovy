@@ -428,6 +428,8 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
         Folder folder = null
         if (firstParameters.folderId != null) {
             folder = folderRepository.readById(firstParameters.folderId)
+            pathRepository.readParentItems(folder)
+            accessControlService.checkRole(Role.EDITOR, folder)
         } else if (!(mauroPlugin instanceof FolderImporterPlugin)) {
             // folderId is null and plugin is not a folder import
             ErrorHandler
@@ -447,7 +449,30 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
             ImporterUtils.cleanupTemporaryFiles(parametersList)
         }
 
-        accessControlService.checkRole(Role.EDITOR, folder)
+        if(imported && imported.size() == 1) {
+            if(firstParameters.modelName) {
+                imported.first().label = firstParameters.modelName.trim()
+            }
+            if(firstParameters.description) {
+                imported.first().description = firstParameters.description.trim()
+            }
+            if(firstParameters.author) {
+                imported.first().author = firstParameters.author.trim()
+            }
+            if(firstParameters.organisation) {
+                imported.first().organisation = firstParameters.organisation.trim()
+            }
+            if(!folder.getOwner() || imported.first().finalised || imported.first().modelVersion) { // i.e. We expect the imported model to be its own owner
+                if(firstParameters.finalised) {
+                    imported.first().finalised = firstParameters.finalised
+                }
+                if(firstParameters.newBranchName) {
+                    imported.first().branchName = firstParameters.newBranchName
+                }
+            }
+
+        }
+
         List<M> saved = imported.collect { M imp ->
             imp.folder = folder
             log.info '** about to importWithContentBatched... **'
