@@ -4,8 +4,6 @@ import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import org.maurodata.domain.datamodel.DataElement
 import org.maurodata.domain.datamodel.EnumerationValue
-import org.maurodata.domain.model.Path
-import org.maurodata.persistence.cache.ModelCacheableRepository
 
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
@@ -27,20 +25,17 @@ import org.maurodata.api.Paths
 import org.maurodata.api.datamodel.DataTypeApi
 import org.maurodata.audit.Audit
 import org.maurodata.controller.model.AdministeredItemController
+import org.maurodata.controller.model.AvailableActions
 import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.datamodel.DataType
-import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.domain.model.Item
-import org.maurodata.domain.model.Model
 import org.maurodata.domain.security.Role
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository.DataTypeCacheableRepository
 import org.maurodata.persistence.cache.ModelCacheableRepository.DataModelCacheableRepository
 
-import org.maurodata.persistence.datamodel.EnumerationValueRepository
 import org.maurodata.service.datamodel.DataTypeService
 import org.maurodata.web.ListResponse
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository
-import org.maurodata.persistence.service.RepositoryService
 import org.maurodata.web.PaginationParams
 
 @CompileStatic
@@ -55,12 +50,6 @@ class DataTypeController extends AdministeredItemController<DataType, DataModel>
 
     @Inject
     AdministeredItemCacheableRepository.DataElementCacheableRepository dataElementRepository
-
-    @Inject
-    EnumerationValueRepository enumerationValueRepository
-
-    @Inject
-    RepositoryService repositoryService
 
     final DataTypeService dataTypeService
 
@@ -97,8 +86,6 @@ class DataTypeController extends AdministeredItemController<DataType, DataModel>
         ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, dataModel, "DataModel with id ${dataModelId} not found")
         accessControlService.checkRole(Role.EDITOR, dataModel)
 
-        // Pull out the enumeration values for saving separately as they require the dataType to be saved first
-
         List<EnumerationValue> enumerationValues = []
         if(dataType.enumerationValues)
         {
@@ -106,65 +93,9 @@ class DataTypeController extends AdministeredItemController<DataType, DataModel>
             dataType.enumerationValues = []
         }
         DataType cleanItem = super.cleanBody(dataType) as DataType
-        Item parent = super.validate(cleanItem, dataModelId)
-        cleanItem = dataTypeService.validateDataType(cleanItem, parent)
-
-        if (cleanItem.isReferenceType()) {
-            if (cleanItem.referenceClass.id == parent.id) {
-                ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "Data class element shouldn't reference it")
-            }
-        }
-        if (dataType.isModelType()) {
-
-            // Either the dataType is finalised
-            // or this model and the data type are in the
-            // same versioned folder
-
-            ModelCacheableRepository domainRepository = repositoryService.getModelRepository(dataType.modelResourceDomainType)
-
-            AdministeredItem dataTypeAdministeredItem = (AdministeredItem) domainRepository.readById(dataType.modelResourceId)
-
-            pathRepository.readParentItems(dataTypeAdministeredItem)
-            pathRepository.readParentItems(parent)
-
-            Path pathToDataType = dataTypeAdministeredItem.getPathToEdge()
-            Path pathToDataModel = parent.getPathToEdge()
-
-            Item dataTypeVersionedFolder = pathToDataType.findAncestorNodeItem(dataType.modelResourceId, "VersionedFolder")
-            Item dataModelVersionedFolder = null
-
-            if (dataTypeVersionedFolder != null) {
-                dataModelVersionedFolder = pathToDataModel.findAncestorNodeItem(parent.id, "VersionedFolder")
-            }
-            if (dataTypeVersionedFolder == null || dataModelVersionedFolder == null || dataTypeVersionedFolder.id != dataModelVersionedFolder.id) {
-                validateModelResource(dataType)
-            }
-        }
-
-        // give it a label
-        if (!cleanItem.label) {
-            if (cleanItem.isReferenceType()) {
-                cleanItem.label = "Reference to ${cleanItem.referenceClass.label}"
-            } else if (cleanItem.modelResourceId) {
-                final UUID modelResourceId = cleanItem.modelResourceId
-                final String modelResourceDomainType = cleanItem.modelResourceDomainType
-
-                AdministeredItemCacheableRepository repository = repositoryService.getAdministeredItemRepository(modelResourceDomainType)
-
-                AdministeredItem item = (AdministeredItem) repository.readById(modelResourceId)
-                cleanItem.label = "Reference to ${item.label}"
-            }
-        }
-
-        DataType created = super.createEntity(parent, cleanItem) as DataType
-        created = super.validateAndAddClassifiers(created) as DataType
-
-        if (enumerationValues) {
-            enumerationValues.each {enumValue ->
-                enumValue.enumerationType = dataType
-                enumerationValueRepository.save(enumValue)
-            }
-        }
+        DataModel parent = super.validate(cleanItem, dataModelId)
+        DataType created = dataTypeService.createDataType(cleanItem, parent, enumerationValues)
+        AvailableActions.updateAvailableActions(created, accessControlService)
         created
     }
 
@@ -236,17 +167,5 @@ class DataTypeController extends AdministeredItemController<DataType, DataModel>
     Map referenceTypeDoi(UUID id) {
         ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "Doi is not implemented")
         return null
-    }
-
-
-    protected void validateModelResource(DataType dataType) {
-        AdministeredItem modelResource = super.readAdministeredItem(dataType.modelResourceDomainType, dataType.modelResourceId) as Model
-        if (!modelResource) {
-            ErrorHandler.handleError(HttpStatus.NOT_FOUND, "Item not found : $dataType.modelResourceId, $dataType.modelResourceDomainType")
-        }
-        accessControlService.checkRole(Role.READER, modelResource)
-        if (!modelResource.finalised) {
-            ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "Model resource is not finalised: $dataType.modelResourceId, $dataType.modelResourceDomainType")
-        }
     }
 }

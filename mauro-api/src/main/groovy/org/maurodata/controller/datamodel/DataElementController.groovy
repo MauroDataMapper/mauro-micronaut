@@ -126,10 +126,17 @@ class DataElementController extends AdministeredItemController<DataElement, Data
             }
         }
         boolean hasChanged = updateProperties(existing, cleanItem)
-        if (!hasChanged && dataElement?.dataType?.id != existing.dataType?.id) {
-            hasChanged = true
+        if(dataElement.dataType) {
+            if(dataElement.dataType.id && (dataElement.dataType.id != existing.dataType.id)) {
+                existing = validateDataTypeChange(existing, cleanItem)
+                hasChanged = true
+            } else if(!dataElement.dataType.id) {
+                dataElement.dataType.dataModel = dataElement.dataModel
+                existing.dataType = dataTypeService.createDataType(dataElement.dataType, dataElement.dataModel, [])
+                hasChanged = true
+            }
         }
-        existing = validateDataTypeChange(existing, cleanItem)
+
         //updateDerivedProperties(existing)
         DataElement updated = existing
         if (hasChanged) {
