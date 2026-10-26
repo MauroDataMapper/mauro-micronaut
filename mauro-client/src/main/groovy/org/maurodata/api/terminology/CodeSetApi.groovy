@@ -4,6 +4,10 @@ import org.maurodata.api.MauroApi
 import org.maurodata.api.Paths
 
 import org.maurodata.api.model.ModelApi
+import org.maurodata.api.model.ModelVersionDTO
+import org.maurodata.api.model.ModelVersionedRefDTO
+import org.maurodata.api.model.ModelVersionedWithTargetsRefDTO
+import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.diff.ObjectDiff
 import org.maurodata.domain.model.version.CreateNewVersionData
 import org.maurodata.domain.model.version.FinaliseData
@@ -92,5 +96,23 @@ interface CodeSetApi extends ModelApi<CodeSet> {
 
     @Put(Paths.CODE_SET_MOVE)
     CodeSet moveFolder(UUID id, String destination)
+
+    @Get(Paths.CODE_SET_SIMPLE_MODEL_VERSION_TREE)
+    List<ModelVersionedRefDTO> simpleModelVersionTree(UUID id, @Nullable Boolean branchesOnly)
+
+    @Get(Paths.CODE_SET_MODEL_VERSION_TREE)
+    List<ModelVersionedWithTargetsRefDTO> modelVersionTree(UUID id)
+
+    @Get(Paths.CODE_SET_CURRENT_MAIN_BRANCH)
+    CodeSet currentMainBranch(UUID id)
+
+    @Get(Paths.CODE_SET_LATEST_MODEL_VERSION)
+    ModelVersionDTO latestModelVersion(UUID id)
+
+    @Get(Paths.CODE_SET_LATEST_FINALISED_MODEL)
+    ModelVersionedRefDTO latestFinalisedModel(UUID id)
+
+    @Get(Paths.CODE_SET_COMMON_ANCESTOR)
+    CodeSet commonAncestor(UUID id, UUID other_model_id)
 
 }

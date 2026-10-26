@@ -27,6 +27,9 @@ import io.micronaut.security.rules.SecurityRule
 import io.micronaut.transaction.annotation.Transactional
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import jakarta.inject.Inject
+import org.maurodata.api.model.ModelVersionDTO
+import org.maurodata.api.model.ModelVersionedWithTargetsRefDTO
+import org.maurodata.domain.datamodel.DataModel
 import org.reactivestreams.Publisher
 import org.maurodata.ErrorHandler
 import org.maurodata.api.Paths
@@ -348,5 +351,41 @@ class TerminologyController extends ModelController<Terminology> implements Term
     Terminology moveFolder(UUID id, String destination) {
         super.moveFolder(id, destination)
     }
+
+
+    @Override
+    @Operation(summary = "List the data models", description = "Returns the data models.")
+    @Get(Paths.TERMINOLOGY_MODEL_VERSION_TREE)
+    List<ModelVersionedWithTargetsRefDTO> modelVersionTree(UUID id) {
+        super.modelVersionTree(id)
+    }
+
+    @Override
+    @Operation(summary = "Get a data model", description = "Returns a data model.")
+    @Get(Paths.TERMINOLOGY_CURRENT_MAIN_BRANCH)
+    Terminology currentMainBranch(UUID id) {
+        super.currentMainBranch(id)
+    }
+
+    @Override
+    @Operation(summary = "Get a data model", description = "Returns a data model.")
+    @Get(Paths.TERMINOLOGY_LATEST_MODEL_VERSION)
+    ModelVersionDTO latestModelVersion(UUID id) {
+        super.latestModelVersion(id)
+    }
+
+    @Override
+    @Operation(summary = "Get a data model", description = "Returns a data model.")
+    @Get(Paths.TERMINOLOGY_LATEST_FINALISED_MODEL)
+    ModelVersionedRefDTO latestFinalisedModel(UUID id) {
+        super.latestFinalisedModel(id)
+    }
+
+    @Operation(summary = "Get a data model", description = "Returns a data model.")
+    @Get(Paths.TERMINOLOGY_COMMON_ANCESTOR)
+    Terminology commonAncestor(UUID id, UUID other_model_id) {
+        super.commonAncestor(id,other_model_id)
+    }
+
 
 }

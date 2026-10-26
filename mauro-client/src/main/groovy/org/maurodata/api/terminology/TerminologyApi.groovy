@@ -3,7 +3,10 @@ package org.maurodata.api.terminology
 import org.maurodata.api.MauroApi
 import org.maurodata.api.Paths
 import org.maurodata.api.model.ModelApi
+import org.maurodata.api.model.ModelVersionDTO
 import org.maurodata.api.model.ModelVersionedRefDTO
+import org.maurodata.api.model.ModelVersionedWithTargetsRefDTO
+import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.diff.ObjectDiff
 import org.maurodata.domain.model.version.CreateNewVersionData
 import org.maurodata.domain.model.version.FinaliseData
@@ -93,6 +96,22 @@ interface TerminologyApi extends ModelApi<Terminology> {
 
     @Get(Paths.TERMINOLOGY_SIMPLE_MODEL_VERSION_TREE)
     List<ModelVersionedRefDTO> simpleModelVersionTree(UUID id, @Nullable Boolean branchesOnly)
+
+    @Get(Paths.TERMINOLOGY_MODEL_VERSION_TREE)
+    List<ModelVersionedWithTargetsRefDTO> modelVersionTree(UUID id)
+
+    @Get(Paths.TERMINOLOGY_CURRENT_MAIN_BRANCH)
+    Terminology currentMainBranch(UUID id)
+
+    @Get(Paths.TERMINOLOGY_LATEST_MODEL_VERSION)
+    ModelVersionDTO latestModelVersion(UUID id)
+
+    @Get(Paths.TERMINOLOGY_LATEST_FINALISED_MODEL)
+    ModelVersionedRefDTO latestFinalisedModel(UUID id)
+
+    @Get(Paths.TERMINOLOGY_COMMON_ANCESTOR)
+    Terminology commonAncestor(UUID id, UUID other_model_id)
+
 
     @Put(Paths.TERMINOLOGY_READ_BY_EVERYONE)
     Terminology allowReadByEveryone(UUID id)

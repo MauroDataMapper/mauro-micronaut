@@ -11,7 +11,9 @@ import io.micronaut.scheduling.annotation.ExecuteOn
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import org.maurodata.ErrorHandler
 import org.maurodata.api.Paths
+import org.maurodata.api.model.ModelVersionDTO
 import org.maurodata.api.model.ModelVersionedRefDTO
+import org.maurodata.api.model.ModelVersionedWithTargetsRefDTO
 import org.maurodata.api.model.PermissionsDTO
 import org.maurodata.api.terminology.CodeSetApi
 import org.maurodata.audit.Audit
@@ -353,5 +355,40 @@ class CodeSetController extends ModelController<CodeSet> implements CodeSetApi {
     CodeSet moveFolder(UUID id, String destination) {
         super.moveFolder(id, destination)
     }
+
+    @Override
+    @Operation(summary = "List the data models", description = "Returns the data models.")
+    @Get(Paths.CODE_SET_MODEL_VERSION_TREE)
+    List<ModelVersionedWithTargetsRefDTO> modelVersionTree(UUID id) {
+        super.modelVersionTree(id)
+    }
+
+    @Override
+    @Operation(summary = "Get a data model", description = "Returns a data model.")
+    @Get(Paths.CODE_SET_CURRENT_MAIN_BRANCH)
+    CodeSet currentMainBranch(UUID id) {
+        super.currentMainBranch(id)
+    }
+
+    @Override
+    @Operation(summary = "Get a data model", description = "Returns a data model.")
+    @Get(Paths.CODE_SET_LATEST_MODEL_VERSION)
+    ModelVersionDTO latestModelVersion(UUID id) {
+        super.latestModelVersion(id)
+    }
+
+    @Override
+    @Operation(summary = "Get a data model", description = "Returns a data model.")
+    @Get(Paths.CODE_SET_LATEST_FINALISED_MODEL)
+    ModelVersionedRefDTO latestFinalisedModel(UUID id) {
+        super.latestFinalisedModel(id)
+    }
+
+    @Operation(summary = "Get a data model", description = "Returns a data model.")
+    @Get(Paths.CODE_SET_COMMON_ANCESTOR)
+    CodeSet commonAncestor(UUID id, UUID other_model_id) {
+        super.commonAncestor(id,other_model_id)
+    }
+
 
 }

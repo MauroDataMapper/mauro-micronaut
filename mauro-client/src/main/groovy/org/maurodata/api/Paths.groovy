@@ -405,6 +405,11 @@ interface Paths {
     String CODE_SET_TERM_LIST_PAGED = '/api/codeSets/{id}/terms{?params*}'
     String CODE_SET_IMPORT = '/api/codeSets/import/{namespace}/{name}{/version}'
     String CODE_SET_SIMPLE_MODEL_VERSION_TREE = '/api/codeSets/{id}/simpleModelVersionTree{?branchesOnly}'
+    String CODE_SET_MODEL_VERSION_TREE = '/api/codeSets/{id}/modelVersionTree'
+    String CODE_SET_CURRENT_MAIN_BRANCH = '/api/codeSets/{id}/currentMainBranch'
+    String CODE_SET_LATEST_MODEL_VERSION = '/api/codeSets/{id}/latestModelVersion'
+    String CODE_SET_LATEST_FINALISED_MODEL = '/api/codeSets/{id}/latestFinalisedModel'
+    String CODE_SET_COMMON_ANCESTOR = '/api/codeSets/{id}/commonAncestor/{other_model_id}'
     String CODE_SET_MOVE = '/api/codeSets/{id}/folder/{destination}'
 
 
@@ -428,10 +433,16 @@ interface Paths {
     String TERMINOLOGY_PERMISSIONS = '/api/terminologies/{id}/permissions'
     String TERMINOLOGY_LIST_IMPORTERS = '/api/terminologies/providers/importers'
     String TERMINOLOGY_LIST_EXPORTERS = '/api/terminologies/providers/exporters'
+
     String TERMINOLOGY_DOI = '/api/terminologies/{id}/doi'
     String TERMINOLOGY_MOVE = '/api/terminologies/{id}/folder/{destination}'
 
     String TERMINOLOGY_SIMPLE_MODEL_VERSION_TREE = '/api/terminologies/{id}/simpleModelVersionTree{?branchesOnly}'
+    String TERMINOLOGY_MODEL_VERSION_TREE = '/api/terminologies/{id}/modelVersionTree'
+    String TERMINOLOGY_CURRENT_MAIN_BRANCH = '/api/terminologies/{id}/currentMainBranch'
+    String TERMINOLOGY_LATEST_MODEL_VERSION = '/api/terminologies/{id}/latestModelVersion'
+    String TERMINOLOGY_LATEST_FINALISED_MODEL = '/api/terminologies/{id}/latestFinalisedModel'
+    String TERMINOLOGY_COMMON_ANCESTOR = '/api/terminologies/{id}/commonAncestor/{other_model_id}'
     String TERMINOLOGY_LIST_PAGED = '/api/terminologies{?params*}'
 
 
