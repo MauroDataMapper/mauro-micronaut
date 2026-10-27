@@ -60,7 +60,7 @@ subprojects {
             }
 
             codenarc {
-                toolVersion = "3.7.0"
+                toolVersion = "4.0.0"
                 configFile = rootProject.file(".groovylintrc.groovy")
             }
 
