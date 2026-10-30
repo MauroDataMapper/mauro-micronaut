@@ -14,6 +14,7 @@ import org.maurodata.domain.classifier.Classifier
 import org.maurodata.domain.dataflow.DataClassComponent
 import org.maurodata.domain.dataflow.DataElementComponent
 import org.maurodata.domain.datamodel.DataClass
+import org.maurodata.domain.datamodel.DataComponent
 import org.maurodata.domain.facet.Annotation
 import org.maurodata.domain.folder.Folder
 import org.maurodata.domain.model.Item
@@ -65,6 +66,7 @@ class ContentHandler {
     @Inject CodeSetCacheableRepository codeSetCacheableRepository
     @Inject DataModelCacheableRepository dataModelCacheableRepository
     @Inject DataClassCacheableRepository dataClassCacheableRepository
+    @Inject AdministeredItemCacheableRepository.DataComponentCacheableRepository dataComponentCacheableRepository
     @Inject DataTypeCacheableRepository dataTypeCacheableRepository
     @Inject DataElementCacheableRepository dataElementCacheableRepository
     @Inject EnumerationValueCacheableRepository enumerationValueCacheableRepository
@@ -82,6 +84,7 @@ class ContentHandler {
     @Inject FacetCacheableRepository.RuleCacheableRepository ruleRepository
     @Inject RuleRepresentationCacheableRepository ruleRepresentationCacheableRepository
     @Inject FacetCacheableRepository.SemanticLinkCacheableRepository semanticLinkRepository
+    @Inject FacetCacheableRepository.ItemLinkCacheableRepository itemLinkRepository
     @Inject SummaryMetadataCacheableRepository summaryMetadataCacheableRepository
     @Inject SummaryMetadataReportCacheableRepository summaryMetadataReportCacheableRepository
     @Inject VersionLinkCacheableRepository versionLinkCacheableRepository
@@ -113,6 +116,7 @@ class ContentHandler {
         */
 
         saveAllByBatch(shreddedContent.dataModels, dataModelCacheableRepository)
+        saveAllByBatch(shreddedContent.dataComponents, dataComponentCacheableRepository)
         saveHierarchyByBatch(shreddedContent.dataClasses, dataClassCacheableRepository)
         // Note: didn't batch this one
         ((List<DataClass>) shreddedContent.dataClasses.values().flatten()).each {DataClass dataClass ->
@@ -138,6 +142,7 @@ class ContentHandler {
         saveAllByBatch(shreddedContent.rules, ruleRepository)
         saveAllByBatch(shreddedContent.ruleRepresentations, ruleRepresentationCacheableRepository)
         saveAllByBatch(shreddedContent.semanticLinks, semanticLinkRepository)
+        saveAllByBatch(shreddedContent.itemLinkSources, itemLinkRepository)
         saveAllByBatch(shreddedContent.summaryMetadata, summaryMetadataCacheableRepository)
         saveAllByBatch(shreddedContent.summaryMetadataReports, summaryMetadataReportCacheableRepository)
         saveAllByBatch(shreddedContent.versionLinks, versionLinkCacheableRepository)
@@ -153,6 +158,7 @@ class ContentHandler {
         deleteAllByBatch(shreddedContent.summaryMetadataReports, summaryMetadataReportCacheableRepository)
         deleteAllByBatch(shreddedContent.summaryMetadata, summaryMetadataCacheableRepository)
         deleteAllByBatch(shreddedContent.semanticLinks, semanticLinkRepository)
+        deleteAllByBatch(shreddedContent.itemLinkSources, itemLinkRepository)
         deleteAllByBatch(shreddedContent.ruleRepresentations, ruleRepresentationCacheableRepository)
         deleteAllByBatch(shreddedContent.rules, ruleRepository)
         deleteAllByBatch(shreddedContent.referenceFiles, referenceFileRepository)
@@ -179,6 +185,7 @@ class ContentHandler {
 
         deleteAllByBatch(shreddedContent.enumerationValues, enumerationValueCacheableRepository)
         deleteAllByBatch(shreddedContent.dataElements, dataElementCacheableRepository)
+        deleteAllByBatch(shreddedContent.dataComponents, dataComponentCacheableRepository)
         deleteAllByBatch(shreddedContent.dataTypes, dataTypeCacheableRepository)
         inBatches(sortById((List<DataClass>) shreddedContent.dataClasses.values().flatten())) {List<DataClass> batch ->
             dataClassCacheableRepository.deleteExtensionRelationships(batch.collect {DataClass it -> it.id})
@@ -322,6 +329,10 @@ class ContentHandler {
         }
 
         if (shreddedContent.dataModels) {
+            shreddedContent.dataComponents = inBatchesReadSet(shreddedContent.dataModels*.id) {List<UUID> batch ->
+                ((AdministeredItemCacheableRepository.DataComponentCacheableRepository) dataComponentCacheableRepository)
+                    .readAllByDataModelIds(batch)
+            } as Set
             shreddedContent.dataClasses.put(0, inBatchesReadSet(shreddedContent.dataModels*.id) {List<UUID> batch ->
                 dataClassCacheableRepository.readAllByDataModelIdInAndParentDataClassIsNull(batch)
             })
@@ -442,6 +453,9 @@ class ContentHandler {
         }
         shreddedContent.semanticLinks = inBatchesReadSet(allAdministeredItemIds) {List batch ->
             semanticLinkRepository.readAllByMultiFacetAwareItemIdIn(batch)
+        }
+        shreddedContent.itemLinkSources = inBatchesReadSet(allAdministeredItemIds) {List batch ->
+            itemLinkRepository.readAllByMultiFacetAwareItemIdIn(batch)
         }
         shreddedContent.summaryMetadata = inBatchesReadSet(allAdministeredItemIds) {List batch ->
             summaryMetadataCacheableRepository.readAllByMultiFacetAwareItemIdIn(batch)
