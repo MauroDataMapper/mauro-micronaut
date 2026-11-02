@@ -51,4 +51,5 @@ micronaut {
 
 jar {
     exclude("**/logback.xml")
+    exclude("application.yml")
 }
