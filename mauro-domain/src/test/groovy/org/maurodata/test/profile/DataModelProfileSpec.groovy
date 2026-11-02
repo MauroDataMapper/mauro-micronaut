@@ -1,5 +1,7 @@
 package org.maurodata.test.profile
 
+import org.maurodata.profile.ProfileField
+import org.maurodata.profile.ProfileSection
 import org.maurodata.profile.applied.AppliedProfile
 
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
@@ -27,14 +29,32 @@ class DataModelProfileSpec extends Specification {
         dynamicProfile.metadataNamespace == "com.test.assets"
         dynamicProfile.profileApplicableForDomains == ["DataModel", "Terminology"]
         dynamicProfile.sections.size() == 2
-        dynamicProfile.sections.first().label == "Asset details"
-        dynamicProfile.sections.first().fields.size() == 4
-        dynamicProfile.sections.first().fields.first().fieldName == "Size"
-        dynamicProfile.sections.first().fields.first().metadataPropertyName == "size"
-        dynamicProfile.sections.last().label == "Asset Creation"
-        dynamicProfile.sections.last().fields.size() == 3
-        dynamicProfile.sections.last().fields.first().fieldName == "Created date"
-        dynamicProfile.sections.first().fields.first().getMetadataKey("Asset Creation") == "size"
+
+        when:
+        ProfileSection profileSection = dynamicProfile.sections.find {it.label == "Asset details"}
+
+        then:
+        profileSection.fields.size() == 4
+
+        when:
+        ProfileField profileField = profileSection.fields.find {it.fieldName == "Size" }
+
+        then:
+        profileField.metadataPropertyName == "size"
+
+        when:
+        profileSection = dynamicProfile.sections.find {it.label == "Asset Creation"}
+
+        then:
+        profileSection.label == "Asset Creation"
+        profileSection.fields.size() == 3
+
+        when:
+        profileField = profileSection.fields.find {it.fieldName == "Created date" }
+
+        then:
+        profileField.getMetadataKey("Asset Creation") == "createdDate"
+
     }
 
     void "test validating an item against a dynamic profile - success"() {
