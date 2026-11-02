@@ -1,10 +1,11 @@
 
     ext.findOpenApiSpecs = {
-        File swaggerRoot = layout.buildDirectory.dir("classes").get().asFile
-        fileTree(swaggerRoot).matching {
-            include "**/META-INF/swagger/*.yml"
-            include "**/META-INF/swagger/*.yaml"
-        }.files.toList().sort { a, b -> a.absolutePath <=> b.absolutePath }
+        sourceSets.main.output.classesDirs.files.collectMany { File classesDir ->
+            fileTree(classesDir).matching {
+                include "**/META-INF/swagger/*.yml"
+                include "**/META-INF/swagger/*.yaml"
+            }.files
+        }.toSet().toList().sort { a, b -> a.absolutePath <=> b.absolutePath }
     }
 
 /**
@@ -41,4 +42,3 @@
         int dotIndex = fileName.lastIndexOf('.')
         dotIndex > 0 ? fileName.substring(0, dotIndex) : fileName
     }
-
