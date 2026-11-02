@@ -12,9 +12,10 @@ class ProfileField {
     String description
     Integer maxMultiplicity
     Integer minMultiplicity
-    List<String> allowedValues
+    Map<String, String> allowedValues
     String regularExpression
     String defaultValue
+    UUID referenceTerminology
 
     ProfileFieldDataType dataType
 

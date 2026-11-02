@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonValue
 import groovy.json.JsonSlurper
 import groovy.transform.CompileStatic
 import org.apache.commons.lang3.time.DateUtils
+import org.maurodata.domain.terminology.Terminology
 
 @CompileStatic
 enum ProfileFieldDataType {
@@ -22,7 +23,8 @@ enum ProfileFieldDataType {
     MODEL('model'),
     ENUMERATION('enumeration'),
     JSON('json'),
-    SOURCECODE('sourcecode')
+    SOURCECODE('sourcecode'),
+    TERMINOLOGY('terminology')
 
     @JsonValue
     String label
@@ -111,6 +113,14 @@ enum ProfileFieldDataType {
             case 'json':
                 try {
                     jsonSlurper.parseText(input)
+                } catch (Exception ignored) {
+                    return false
+                }
+                break
+            case 'terminology':
+                try {
+                    UUID.fromString(input)
+                    // TODO - check there's actually a terminology here?
                 } catch (Exception ignored) {
                     return false
                 }

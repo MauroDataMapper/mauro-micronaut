@@ -53,14 +53,18 @@ class DataModelBasedProfile implements Profile {
     DataModelBasedProfile(DataModel dataModel) {
         this.dataModel = dataModel
         this.metadataMap = dataModel.metadataAsMap(ProfileSpecificationProfile.NAMESPACE)
-        sections = dataModel.dataClasses.collect { sectionFromClass(it) }
+        sections = dataModel.dataClasses
+            .sort {a, b -> a.order <=> b.order ?: a.label <=> b.label}
+            .collect { sectionFromClass(it) }
     }
 
     private ProfileSection sectionFromClass(DataClass dataClass) {
         new ProfileSection().tap {
             label = dataClass.label
             description = dataClass.description
-            fields = dataClass.dataElements.collect { fieldFromElement(it) }
+            fields = dataClass.dataElements
+                .sort {a, b -> a.order <=> b.order ?: a.label <=> b.label}
+                .collect { fieldFromElement(it) }
         }
     }
 
@@ -72,8 +76,14 @@ class DataModelBasedProfile implements Profile {
             description = dataElement.description
             minMultiplicity = dataElement.minMultiplicity
             maxMultiplicity = dataElement.maxMultiplicity
-            if(dataElement.dataType?.enumerationValues) {
-                allowedValues = dataElement.dataType?.enumerationValues?.collect {it.key}
+            if(dataElement.dataType.modelResourceDomainType && dataElement.dataType.modelResourceId) {
+                if(dataElement.dataType.modelResourceDomainType == 'Terminology') {
+                    dataType = ProfileFieldDataType.TERMINOLOGY
+                    referenceTerminology = dataElement.dataType.modelResourceId
+                }
+            }
+            else if(dataElement.dataType?.enumerationValues) {
+                allowedValues = dataElement.dataType?.enumerationValues?.collectEntries {[it.key, it.value]}
                 dataType = ProfileFieldDataType.ENUMERATION
             } else {
                 dataType = ProfileFieldDataType.fromString(dataElement.dataType?.label)
