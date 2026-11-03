@@ -127,7 +127,7 @@ class DataFlowNetworkIntegrationSpec extends CommonDataSpec {
             ['dc:DataFlow source'], ['dc:DataFlow target'])
         List<ItemLinkDTO> inputs = dataFlowNetworkApi.list('DataComponent', flow.id).items
         List<ItemLinkDTO> outputs = dataFlowNetworkApi.list('DataClass', targetDataClassId).items
-        ItemLinkGraphDTO graph = itemLinkGraphApi.traverseIncomingLinks('DataClass', targetDataClassId, ['DataFlow'])
+        ItemLinkGraphDTO graph = itemLinkGraphApi.traverseIncomingLinks('DataClass', targetDataClassId, ['DataFlow'], false, false, false)
 
         then:
         inputs*.path == ['dc:DataFlow source']
@@ -164,7 +164,7 @@ class DataFlowNetworkIntegrationSpec extends CommonDataSpec {
             dataFlowNetworkApi.list('DataElement', element.id).items
         }
         List<ItemLinkGraphDTO> outputGraphs = nameParts.collect { DataElement element ->
-            itemLinkGraphApi.traverseIncomingLinks('DataElement', element.id, ['DataFlow'])
+            itemLinkGraphApi.traverseIncomingLinks('DataElement', element.id, ['DataFlow'], false, false, false)
         }
 
         then:
@@ -172,15 +172,11 @@ class DataFlowNetworkIntegrationSpec extends CommonDataSpec {
         producedLinks*.size() == [1, 1, 1]
         producedLinks.flatten()*.path == [flow.path.localPath().toString()] * 3
         outputGraphs.every { ItemLinkGraphDTO graph ->
-            List<UUID> siblingIds = nameParts.findAll { DataElement element -> element.id != graph.items[0].id }
-                .collect { DataElement element -> element.id }.sort()
-            graph.items*.id == [graph.items[0].id, flow.id, fullName.id] + siblingIds
+            graph.items*.id == [graph.items[0].id, flow.id, fullName.id]
         }
         outputGraphs.every { ItemLinkGraphDTO graph ->
-            List<UUID> siblingIds = nameParts.findAll { DataElement element -> element.id != graph.items[0].id }
-                .collect { DataElement element -> element.id }.sort()
-            graph.links*.sourceId == [flow.id, fullName.id] + ([flow.id] * siblingIds.size()) &&
-                graph.links*.targetId == [graph.items[0].id, flow.id] + siblingIds
+            graph.links*.sourceId == [flow.id, fullName.id] &&
+                graph.links*.targetId == [graph.items[0].id, flow.id]
         }
     }
 
@@ -215,7 +211,7 @@ class DataFlowNetworkIntegrationSpec extends CommonDataSpec {
             [sourceAlphaPath, sourceBetaPath], ['dc:DataFlow target|de:mergedKey'])
         List<ItemLinkDTO> consumes = dataFlowNetworkApi.list('DataComponent', flow.id).items
         List<ItemLinkDTO> producedLinks = dataFlowNetworkApi.list('DataElement', target.id).items
-        ItemLinkGraphDTO graph = itemLinkGraphApi.traverseIncomingLinks('DataElement', target.id, ['DataFlow'])
+        ItemLinkGraphDTO graph = itemLinkGraphApi.traverseIncomingLinks('DataElement', target.id, ['DataFlow'], false, false, false)
 
         then:
         consumes.size() == 2
@@ -286,8 +282,9 @@ class DataFlowNetworkIntegrationSpec extends CommonDataSpec {
             new DataFlowSourceCreateDTO(path: sourcePath))
         ItemLinkDTO elementOutput = dataFlowNetworkApi.create('DataElement', targetElement.id,
             new DataFlowSourceCreateDTO(path: sourcePath))
-        ItemLinkGraphDTO graph = itemLinkGraphApi.traverseIncomingLinks('DataClass', targetDataClassId, ['DataFlow'])
-        ItemLinkGraphDTO elementGraph = itemLinkGraphApi.traverseIncomingLinks('DataElement', targetElement.id, ['DataFlow'])
+        ItemLinkGraphDTO graph = itemLinkGraphApi.traverseIncomingLinks(
+            'DataClass', targetDataClassId, ['DataFlow'], false, false, false)
+        ItemLinkGraphDTO elementGraph = itemLinkGraphApi.traverseIncomingLinks('DataElement', targetElement.id, ['DataFlow'], false, false, false)
 
         then:
         output.path == sourcePath
@@ -369,7 +366,7 @@ class DataFlowNetworkIntegrationSpec extends CommonDataSpec {
 
         when:
         ListResponse<ItemLinkDTO> listed = dataFlowNetworkApi.list('DataComponent', dataComponentId)
-        ItemLinkGraphDTO graph = itemLinkGraphApi.traverseIncomingLinks('DataComponent', dataComponentId, ['DataFlow'])
+        ItemLinkGraphDTO graph = itemLinkGraphApi.traverseIncomingLinks('DataComponent', dataComponentId, ['DataFlow'], false, false, false)
 
         then:
         listed.items*.id == [dataFlow.id]
@@ -424,7 +421,10 @@ class DataFlowNetworkIntegrationSpec extends CommonDataSpec {
 
         when:
         ListResponse<ItemLinkKindDTO> kinds = itemLinkGraphApi.listSupportedLinkKinds()
-        ItemLinkGraphDTO graph = itemLinkGraphApi.traverseIncomingLinks('DataClass', targetDataClassId, ['DataFlow'])
+        ItemLinkGraphDTO withoutSummary = itemLinkGraphApi.traverseIncomingLinks(
+            'DataClass', targetDataClassId, ['DataFlow'], false, false, false)
+        ItemLinkGraphDTO graph = itemLinkGraphApi.traverseIncomingLinks(
+            'DataClass', targetDataClassId, ['DataFlow'], false, true, true)
 
         then:
         kinds.items*.type == ['DataFlow']
@@ -439,6 +439,9 @@ class DataFlowNetworkIntegrationSpec extends CommonDataSpec {
         graph.items[2].annotations*.label == ['Source context']
         graph.items[2].annotations[0].description == 'Context description'
         graph.items[4].metadata*.value == ['meaningful source']
+        withoutSummary.items.every { it.metadata == null && it.annotations == null }
+        !objectMapper.writeValueAsString(withoutSummary.items[0]).contains('"metadata"')
+        !objectMapper.writeValueAsString(withoutSummary.items[0]).contains('"annotations"')
         graph.links*.targetId == [targetDataClassId, targetFlow.id, sourceDataClassId, sourceFlow.id]
         graph.links*.sourceId == [targetFlow.id, sourceDataClassId, sourceFlow.id, furtherSource.id]
         graph.links*.path == [
@@ -461,7 +464,7 @@ class DataFlowNetworkIntegrationSpec extends CommonDataSpec {
             ['dc:DataFlow source'], ['dc:DataFlow target|dc:Nested graph class|de:Graph output element'])
 
         when:
-        ItemLinkGraphDTO graph = itemLinkGraphApi.traverseIncomingLinks('DataElement', outputElement.id, ['DataFlow'])
+        ItemLinkGraphDTO graph = itemLinkGraphApi.traverseIncomingLinks('DataElement', outputElement.id, ['DataFlow'], false, false, false)
 
         then:
         graph.items*.id == [outputElement.id, flow.id, sourceDataClassId]
@@ -477,26 +480,86 @@ class DataFlowNetworkIntegrationSpec extends CommonDataSpec {
         graph.items[2].breadcrumbs*.id == [folderId, dataModelId, sourceDataClassId]
     }
 
-    void 'graph includes readable targets that reference the root without following their links'() {
+    void 'incoming graph can include only immediate children of the requested DataClass'() {
+        given:
+        DataClass childClass = dataClassApi.create(dataModelId, targetDataClassId,
+            new DataClass(label: 'Immediate child class'))
+        DataClass grandchildClass = dataClassApi.create(dataModelId, childClass.id,
+            new DataClass(label: 'Grandchild class'))
+        DataType type = dataTypeApi.create(dataModelId, primitiveDataType('Child graph element type'))
+        DataElement childElement = dataElementApi.create(dataModelId, targetDataClassId,
+            new DataElement(label: 'Immediate child element', dataType: new DataType(id: type.id)))
+        DataElement grandchildElement = dataElementApi.create(dataModelId, grandchildClass.id,
+            new DataElement(label: 'Grandchild element', dataType: new DataType(id: type.id)))
+        DataComponent flow = createDataFlowNetworkComponent(dataModelId, 'Flow into child element',
+            ['dc:DataFlow source'], ['dc:DataFlow target|de:Immediate child element'])
+
+        when:
+        ItemLinkGraphDTO withoutChildren = itemLinkGraphApi.traverseIncomingLinks(
+            'DataClass', targetDataClassId, ['DataFlow'], false, false, false)
+        ItemLinkGraphDTO withChildren = itemLinkGraphApi.traverseIncomingLinks(
+            'DataClass', targetDataClassId, ['DataFlow'], true, false, false)
+
+        then:
+        withoutChildren.items*.id == [targetDataClassId]
+        withoutChildren.links.empty
+        withChildren.items*.id == [targetDataClassId, childElement.id, flow.id, sourceDataClassId]
+        !withChildren.items*.id.contains(childClass.id)
+        !withChildren.items*.id.contains(grandchildElement.id)
+        withChildren.links*.sourceId == [flow.id, sourceDataClassId]
+        withChildren.links*.targetId == [childElement.id, flow.id]
+    }
+
+    void 'incoming graph includes a direct child that is reached as a resolved source'() {
+        given:
+        DataType type = dataTypeApi.create(dataModelId, primitiveDataType('Child source type'))
+        DataElement childSource = dataElementApi.create(dataModelId, targetDataClassId,
+            new DataElement(label: 'Child source element', dataType: new DataType(id: type.id)))
+        DataComponent flow = createDataFlowNetworkComponent(dataModelId, 'Flow from direct child',
+            ['dc:DataFlow target|de:Child source element'], ['dc:DataFlow target'])
+
+        when:
+        ItemLinkGraphDTO graph = itemLinkGraphApi.traverseIncomingLinks(
+            'DataClass', targetDataClassId, ['DataFlow'], false, false, false)
+
+        then:
+        graph.items*.id == [targetDataClassId, flow.id, childSource.id]
+        graph.items*.domainType == ['DataClass', 'DataComponent', 'DataElement']
+        graph.links*.targetId == [targetDataClassId, flow.id]
+        graph.links*.sourceId == [flow.id, childSource.id]
+    }
+
+    void 'incoming graph can include direct DataModel children without descending into DataClasses'() {
+        given:
+        DataClass nestedClass = dataClassApi.create(dataModelId, targetDataClassId,
+            new DataClass(label: 'Nested model child'))
+
+        when:
+        ItemLinkGraphDTO graph = itemLinkGraphApi.traverseIncomingLinks('DataModel', dataModelId, ['DataFlow'], true, false, false)
+
+        then:
+        graph.items.first().id == dataModelId
+        graph.items*.id == [dataModelId]
+        !graph.items*.id.contains(nestedClass.id)
+        graph.links.empty
+    }
+
+    void 'incoming graph excludes targets that reference the root'() {
         given:
         DataComponent referencingComponent = createDataFlowNetworkComponent(dataModelId, 'References graph root',
             ['dc:DataFlow target', 'dc:DataFlow source'], [])
 
         when:
-        ItemLinkGraphDTO graph = itemLinkGraphApi.traverseIncomingLinks('DataClass', targetDataClassId, ['DataFlow'])
+        ItemLinkGraphDTO graph = itemLinkGraphApi.traverseIncomingLinks('DataClass', targetDataClassId, ['DataFlow'], false, false, false)
 
         then:
-        graph.items*.id == [targetDataClassId, referencingComponent.id]
-        graph.links.size() == 1
-        graph.links[0].sourceId == targetDataClassId
-        graph.links[0].sourceDomainType == 'DataClass'
-        graph.links[0].targetId == referencingComponent.id
-        graph.links[0].targetDomainType == 'DataComponent'
-        graph.links[0].path == absolutePath(dataClassApi.show(dataModelId, targetDataClassId).path)
+        graph.items*.id == [targetDataClassId]
+        graph.links.empty
+        !graph.items*.id.contains(referencingComponent.id)
         !graph.items*.id.contains(sourceDataClassId)
     }
 
-    void 'graph finds readable targets referring to every item in the source traversal without expanding them'() {
+    void 'incoming graph excludes components that consume reached source items'() {
         given:
         DataClass additionalSource = dataClassApi.create(dataModelId,
             new DataClass(label: 'Additional unexpanded source'))
@@ -506,27 +569,28 @@ class DataFlowNetworkIntegrationSpec extends CommonDataSpec {
             ['dc:DataFlow source', 'dc:Additional unexpanded source'], [])
 
         when:
-        ItemLinkGraphDTO graph = itemLinkGraphApi.traverseIncomingLinks('DataClass', targetDataClassId, ['DataFlow'])
+        ItemLinkGraphDTO graph = itemLinkGraphApi.traverseIncomingLinks('DataClass', targetDataClassId, ['DataFlow'], false, false, false)
 
         then:
-        graph.items*.id == [targetDataClassId, incomingFlow.id, sourceDataClassId, referencingComponent.id]
-        graph.links.size() == 3
-        graph.links*.sourceId == [incomingFlow.id, sourceDataClassId, sourceDataClassId]
-        graph.links*.targetId == [targetDataClassId, incomingFlow.id, referencingComponent.id]
+        graph.items*.id == [targetDataClassId, incomingFlow.id, sourceDataClassId]
+        graph.links.size() == 2
+        graph.links*.sourceId == [incomingFlow.id, sourceDataClassId]
+        graph.links*.targetId == [targetDataClassId, incomingFlow.id]
+        !graph.items*.id.contains(referencingComponent.id)
         !graph.items*.id.contains(additionalSource.id)
         !graph.links*.sourceId.contains(additionalSource.id)
     }
 
     void 'incoming link traversal requires at least one supported kind'() {
         when:
-        itemLinkGraphApi.traverseIncomingLinks('DataClass', targetDataClassId, [])
+        itemLinkGraphApi.traverseIncomingLinks('DataClass', targetDataClassId, [], false, false, false)
 
         then:
         HttpClientResponseException emptySelection = thrown()
         emptySelection.status == HttpStatus.BAD_REQUEST
 
         when:
-        itemLinkGraphApi.traverseIncomingLinks('DataClass', targetDataClassId, ['UnknownLink'])
+        itemLinkGraphApi.traverseIncomingLinks('DataClass', targetDataClassId, ['UnknownLink'], false, false, false)
 
         then:
         HttpClientResponseException unsupported = thrown()
@@ -539,7 +603,7 @@ class DataFlowNetworkIntegrationSpec extends CommonDataSpec {
         dataFlowNetworkApi.create('DataComponent', dataComponentId, new DataFlowSourceCreateDTO(path: unresolvedPath))
 
         when:
-        ItemLinkGraphDTO graph = itemLinkGraphApi.traverseIncomingLinks('DataComponent', dataComponentId, ['DataFlow'])
+        ItemLinkGraphDTO graph = itemLinkGraphApi.traverseIncomingLinks('DataComponent', dataComponentId, ['DataFlow'], false, false, false)
 
         then:
         graph.items*.id == [dataComponentId]
@@ -558,13 +622,13 @@ class DataFlowNetworkIntegrationSpec extends CommonDataSpec {
             ['dc:DataFlow target'], ['dc:DataFlow source'])
 
         when:
-        ItemLinkGraphDTO graph = itemLinkGraphApi.traverseIncomingLinks('DataClass', targetDataClassId, ['DataFlow'])
+        ItemLinkGraphDTO graph = itemLinkGraphApi.traverseIncomingLinks('DataClass', targetDataClassId, ['DataFlow'], false, false, false)
 
         then:
-        graph.items*.id == [targetDataClassId, firstFlow.id, secondFlow.id, sourceDataClassId]
+        graph.items*.id == [targetDataClassId, firstFlow.id, sourceDataClassId, secondFlow.id]
         graph.links.size() == 4
-        graph.links*.targetId == [targetDataClassId, secondFlow.id, firstFlow.id, sourceDataClassId]
-        graph.links*.sourceId == [firstFlow.id, targetDataClassId, sourceDataClassId, secondFlow.id]
+        graph.links*.targetId == [targetDataClassId, firstFlow.id, sourceDataClassId, secondFlow.id]
+        graph.links*.sourceId == [firstFlow.id, sourceDataClassId, secondFlow.id, targetDataClassId]
     }
 
     void 'incoming absolute links include finalized owning model version details'() {
@@ -578,7 +642,7 @@ class DataFlowNetworkIntegrationSpec extends CommonDataSpec {
             new DataFlowSourceCreateDTO(path: source.path.toString()))
 
         when:
-        ItemLinkGraphDTO graph = itemLinkGraphApi.traverseIncomingLinks('DataComponent', dataComponentId, ['DataFlow'])
+        ItemLinkGraphDTO graph = itemLinkGraphApi.traverseIncomingLinks('DataComponent', dataComponentId, ['DataFlow'], false, false, false)
 
         then:
         graph.items*.id == [dataComponentId, source.id]
@@ -607,7 +671,7 @@ class DataFlowNetworkIntegrationSpec extends CommonDataSpec {
             [relativePath], ['dc:Graph target table|de:Graph target key'])
 
         when:
-        ItemLinkGraphDTO graph = itemLinkGraphApi.traverseIncomingLinks('DataElement', targetColumn.id, ['DataFlow'])
+        ItemLinkGraphDTO graph = itemLinkGraphApi.traverseIncomingLinks('DataElement', targetColumn.id, ['DataFlow'], false, false, false)
 
         then:
         graph.items*.id == [targetColumn.id, flow.id, sourceColumn.id]

@@ -30,6 +30,11 @@ abstract class DataComponentRepository implements ModelItemRepository<DataCompon
         dataComponentDTORepository.findById(id) as DataComponent
     }
 
+    @Nullable
+    List<DataComponent> readAllByIdIn(Collection<UUID> itemIds) {
+        dataComponentDTORepository.findAllByIdIn(itemIds) as List<DataComponent>
+    }
+
     @Override
     @Nullable
     List<DataComponent> findAllByParent(AdministeredItem parent) {

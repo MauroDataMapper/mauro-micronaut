@@ -17,5 +17,8 @@ interface ItemLinkGraphApi {
     @Get(Paths.ITEM_LINK_GRAPH)
     ItemLinkGraphDTO traverseIncomingLinks(@NonNull String domainType,
                                            @NonNull UUID domainId,
-                                           @QueryValue("linkTypes") @NonNull List<String> linkTypes)
+                                           @QueryValue("linkTypes") @NonNull List<String> linkTypes,
+                                           @QueryValue(value = "includeChildren", defaultValue = "false") boolean includeChildren,
+                                           @QueryValue(value = "includeMetadata", defaultValue = "false") boolean includeMetadata,
+                                           @QueryValue(value = "includeAnnotations", defaultValue = "false") boolean includeAnnotations)
 }

@@ -6,8 +6,7 @@ import org.maurodata.domain.model.Path
 @CompileStatic
 class ItemLinkGraphReference {
     UUID id
+    UUID targetId
     String type
     Path sourcePath
-    UUID targetId
-    String targetDomainType
 }

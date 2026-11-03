@@ -67,6 +67,15 @@ class PathRepository {
         findResourcesByPathFromRootResource(resource, path, 1)
     }
 
+    /**
+     * Resolve paths while reusing already loaded path prefixes for this request. This is
+     * useful for graph traversals where many source paths share model, folder and class nodes.
+     */
+    AdministeredItem findResourcesByPathFromRootResource(final AdministeredItem resource, final Path path,
+                                                         Map<String, AdministeredItem> pathPrefixCache) {
+        findResourcesByPathFromRootResourceUsingCache(resource, path, 1, pathPrefixCache)
+    }
+
     protected AdministeredItem findResourcesByPathFromRootResource(final AdministeredItem resource, final Path path, final int positionInPath) {
 
         if (positionInPath >= path.nodes.size()) {
@@ -84,6 +93,33 @@ class PathRepository {
         }
         final AdministeredItem currentAdministeredItem = (AdministeredItem) children.get(0)
         return findResourcesByPathFromRootResource(currentAdministeredItem, path, positionInPath + 1)
+    }
+
+    private AdministeredItem findResourcesByPathFromRootResourceUsingCache(final AdministeredItem resource, final Path path,
+                                                                           final int positionInPath,
+                                                                           final Map<String, AdministeredItem> pathPrefixCache) {
+        if (positionInPath >= path.nodes.size()) {
+            resource.updatePath()
+            return resource
+        }
+
+        Path.PathNode currentNode = path.nodes.get(positionInPath)
+        String prefixKey = "${resource.id}|${path.nodes.subList(0, positionInPath + 1).collect { Path.PathNode node -> node.toString() }.join('|')}"
+        AdministeredItem currentAdministeredItem
+        if (pathPrefixCache.containsKey(prefixKey)) {
+            currentAdministeredItem = pathPrefixCache[prefixKey]
+            if (!currentAdministeredItem) return null
+        } else {
+            AdministeredItemRepository prefixRepository = getRepositoryForPathPrefix(currentNode.prefix)
+            if (prefixRepository == null) throw new MauroInternalException("No repository claims to handle the prefix " + currentNode.prefix)
+            List<AdministeredItem> children = prefixRepository.findAllByParentAndPathIdentifier(resource.id, currentNode.identifier)
+            if (children.size() > 1) throw new MauroInternalException("More than one Item returned for " + currentNode.prefix + " " + currentNode.identifier)
+            currentAdministeredItem = children ? children.get(0) : null
+            pathPrefixCache[prefixKey] = currentAdministeredItem
+            if (!currentAdministeredItem) return null
+        }
+        currentAdministeredItem.parent = resource
+        findResourcesByPathFromRootResourceUsingCache(currentAdministeredItem, path, positionInPath + 1, pathPrefixCache)
     }
 
     Map<Path, ItemReference> resolveItemReferences(final List<ItemReference> itemReferences) {

@@ -20,6 +20,9 @@ abstract class DataComponentDTORepository implements GenericRepository<DataCompo
     abstract List<DataComponentDTO> findAllByDataModel(DataModel dataModel)
 
     @Nullable
+    abstract List<DataComponentDTO> findAllByIdIn(Collection<UUID> itemIds)
+
+    @Nullable
     @Query("select * from datamodel.data_component where data_model_id = :parentId and type || ': ' || label = :pathIdentifier")
     abstract List<DataComponent> findAllByParentAndPathIdentifier(UUID parentId, String pathIdentifier)
 

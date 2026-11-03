@@ -230,7 +230,7 @@ interface Paths {
     * ItemLinkGraphApi
     */
     String ITEM_LINK_KINDS = '/api/itemLinks/kinds'
-    String ITEM_LINK_GRAPH = '/api/{domainType}/{domainId}/incomingLinks{?linkTypes*}'
+    String ITEM_LINK_GRAPH = '/api/{domainType}/{domainId}/incomingLinks{?linkTypes*,includeChildren,includeMetadata,includeAnnotations}'
 
     /*
     * RuleApi
