@@ -9,6 +9,7 @@ import org.maurodata.persistence.ContainerizedTest
 import org.maurodata.persistence.cache.FacetCacheableRepository
 import org.maurodata.persistence.cache.ModelCacheableRepository
 import org.maurodata.persistence.datamodel.DataModelRepository
+import org.maurodata.persistence.facet.dto.ItemLinkGraphRow
 import jakarta.inject.Inject
 import spock.lang.Specification
 
@@ -49,6 +50,7 @@ class ItemLinkRepositorySpec extends Specification {
         Set<ItemLink> firstOwnerPaths = itemLinkRepository.readAllByMultiFacetAwareItemId(firstOwnerId)
         Set<ItemLink> firstOwnerDataFlowPaths = itemLinkRepository.readAllByMultiFacetAwareItemIdAndType(firstOwnerId, 'DataFlow')
         Set<ItemLink> bothOwnersPaths = itemLinkRepository.readAllByMultiFacetAwareItemIdIn([firstOwnerId, secondOwnerId])
+        List<ItemLinkGraphRow> graphRows = itemLinkRepository.readGraphRowsByMultiFacetAwareItemIdInAndType([firstOwnerId, secondOwnerId], 'DataFlow')
         Set<ItemLink> cacheablePaths = itemLinkCacheableRepository.readAllByMultiFacetAwareItemId(firstOwnerId)
         Set<ItemLink> cacheableDataFlowPaths = itemLinkCacheableRepository.readAllByMultiFacetAwareItemIdAndType(firstOwnerId, 'DataFlow')
 
@@ -58,6 +60,10 @@ class ItemLinkRepositorySpec extends Specification {
         firstOwnerPaths.find { it.type == 'SemanticLink' && it.path.toString() == 'dc:Source one' }
         firstOwnerDataFlowPaths*.id as Set == [firstPath.id, secondPath.id] as Set
         bothOwnersPaths*.id as Set == [firstPath.id, secondPath.id, otherTypeSamePath.id, otherOwnerPath.id] as Set
+        graphRows*.id as Set == [firstPath.id, secondPath.id, otherOwnerPath.id] as Set
+        graphRows*.targetId as Set == [firstOwnerId, secondOwnerId] as Set
+        graphRows*.type as Set == ['DataFlow'] as Set
+        graphRows*.path as Set == ['dc:Source one', 'dm:External$1.0.0|dc:Source two'] as Set
         cacheablePaths*.id as Set == [firstPath.id, secondPath.id, otherTypeSamePath.id] as Set
         cacheableDataFlowPaths*.id as Set == [firstPath.id, secondPath.id] as Set
         itemLinkRepository.handles(ItemLink)

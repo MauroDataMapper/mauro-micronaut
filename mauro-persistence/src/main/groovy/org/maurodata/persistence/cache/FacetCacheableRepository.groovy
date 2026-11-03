@@ -21,6 +21,7 @@ import org.maurodata.persistence.facet.VersionLinkRepository
 import org.maurodata.persistence.model.ItemRepository
 import org.maurodata.persistence.facet.SemanticLinkRepository
 import org.maurodata.persistence.facet.ItemLinkRepository
+import org.maurodata.persistence.facet.dto.ItemLinkGraphRow
 import org.maurodata.web.ListResponse
 import org.maurodata.web.PaginationParams
 
@@ -314,6 +315,18 @@ abstract class FacetCacheableRepository<F extends Facet> extends ItemCacheableRe
 
         Set<ItemLink> readAllByMultiFacetAwareItemIdInAndType(Collection<UUID> ownerIds, String type) {
             ((ItemLinkRepository) repository).readAllByMultiFacetAwareItemIdInAndType(ownerIds, type)
+        }
+
+        List<ItemLinkGraphRow> readGraphRowsByMultiFacetAwareItemIdInAndType(Collection<UUID> ownerIds, String type) {
+            ((ItemLinkRepository) repository).readGraphRowsByMultiFacetAwareItemIdInAndType(ownerIds, type)
+        }
+
+        List<ItemLinkGraphRow> readGraphRowsOwnedByDataModelChildren(UUID dataModelId, String type) {
+            ((ItemLinkRepository) repository).readGraphRowsOwnedByDataModelChildren(dataModelId, type)
+        }
+
+        List<ItemLinkGraphRow> readGraphRowsOwnedByDataClassChildren(UUID dataClassId, String type) {
+            ((ItemLinkRepository) repository).readGraphRowsOwnedByDataClassChildren(dataClassId, type)
         }
 
         Set<ItemLink> readAllByTypeAndPathIn(String type, Collection<String> paths) {
