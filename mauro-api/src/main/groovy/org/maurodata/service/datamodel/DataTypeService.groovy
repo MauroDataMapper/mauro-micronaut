@@ -4,18 +4,26 @@ import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.http.HttpStatus
+import io.micronaut.transaction.annotation.Transactional
 import jakarta.inject.Inject
 import org.maurodata.ErrorHandler
+import org.maurodata.domain.classifier.Classifier
 import org.maurodata.domain.datamodel.DataClass
 import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.datamodel.DataType
 import org.maurodata.domain.datamodel.EnumerationValue
 import org.maurodata.domain.model.AdministeredItem
+import org.maurodata.domain.model.Item
+import org.maurodata.domain.model.Model
+import org.maurodata.domain.model.Path
 import org.maurodata.domain.security.Role
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository
+import org.maurodata.persistence.cache.AdministeredItemCacheableRepository.ClassifierCacheableRepository
+import org.maurodata.persistence.cache.ModelCacheableRepository
 import org.maurodata.security.AccessControlService
 import jakarta.inject.Singleton
 import org.maurodata.service.core.AdministeredItemService
+import org.maurodata.persistence.service.RepositoryService
 
 @CompileStatic
 @Singleton
@@ -25,16 +33,107 @@ class DataTypeService extends AdministeredItemService {
     AdministeredItemCacheableRepository.DataClassCacheableRepository dataClassRepository
     AdministeredItemCacheableRepository.EnumerationValueCacheableRepository enumerationValueRepository
     AccessControlService accessControlService
+    RepositoryService repositoryService
 
     @Inject
     DataTypeService(AdministeredItemCacheableRepository.DataTypeCacheableRepository dataTypeRepository,
                     AdministeredItemCacheableRepository.DataClassCacheableRepository dataClassRepository,
                     AdministeredItemCacheableRepository.EnumerationValueCacheableRepository enumerationValueRepository,
-                   AccessControlService accessControlService) {
+                    AccessControlService accessControlService,
+                    RepositoryService repositoryService) {
         this.dataTypeRepository = dataTypeRepository
         this.dataClassRepository = dataClassRepository
         this.enumerationValueRepository = enumerationValueRepository
         this.accessControlService = accessControlService
+        this.repositoryService = repositoryService
+    }
+
+    @Transactional
+    DataType createDataType(DataType cleanItem, AdministeredItem parent, List<EnumerationValue> enumerationValues) {
+        cleanItem = validateDataType(cleanItem, parent)
+
+        if (cleanItem.isReferenceType() && cleanItem.referenceClass.id == parent.id) {
+            ErrorHandler.handleError(HttpStatus.UNPROCESSABLE_ENTITY, "Data class element shouldn't reference it")
+        }
+
+        if (cleanItem.isModelType()) {
+            ModelCacheableRepository modelRepository = repositoryService.getModelRepository(cleanItem.modelResourceDomainType)
+            Model modelResource = modelRepository.readById(cleanItem.modelResourceId)
+            ErrorHandler.handleErrorOnNullObject(
+                HttpStatus.NOT_FOUND,
+                modelResource,
+                "Item not found : $cleanItem.modelResourceId, $cleanItem.modelResourceDomainType"
+            )
+
+            pathRepository.readParentItems(modelResource)
+            pathRepository.readParentItems(parent)
+
+            Path pathToModelResource = modelResource.getPathToEdge()
+            Path pathToDataModel = parent.getPathToEdge()
+            Item resourceVersionedFolder = pathToModelResource.findAncestorNodeItem(cleanItem.modelResourceId, "VersionedFolder")
+            Item dataModelVersionedFolder = resourceVersionedFolder != null ?
+                pathToDataModel.findAncestorNodeItem(parent.id, "VersionedFolder") : null
+
+            if (resourceVersionedFolder == null || dataModelVersionedFolder == null ||
+                resourceVersionedFolder.id != dataModelVersionedFolder.id) {
+                validateModelResource(cleanItem, modelResource)
+            }
+        }
+
+        if (!cleanItem.label) {
+            if (cleanItem.isReferenceType()) {
+                cleanItem.label = "Reference to ${cleanItem.referenceClass.label}"
+            } else if (cleanItem.modelResourceId) {
+                AdministeredItemCacheableRepository resourceRepository =
+                    repositoryService.getAdministeredItemRepository(cleanItem.modelResourceDomainType)
+                AdministeredItem resource = resourceRepository.readById(cleanItem.modelResourceId)
+                cleanItem.label = "Reference to ${resource.label}"
+            }
+        }
+
+        cleanItem.updateCreationProperties()
+        cleanItem.catalogueUser = accessControlService.getUser()
+        cleanItem.parent = parent
+        updateDerivedProperties(cleanItem)
+        DataType created = dataTypeRepository.save(cleanItem)
+        created.classifiers = validateClassifiers(created)
+        created.classifiers.each { Classifier classifier ->
+            classifierRepository(classifier.domainType).addAdministeredItem(created, classifier)
+        }
+
+        if (enumerationValues) {
+            enumerationValues.each { EnumerationValue enumValue ->
+                enumValue.enumerationType = created
+                enumerationValueRepository.save(enumValue)
+            }
+        }
+        created
+    }
+
+    private void validateModelResource(DataType dataType, Model modelResource) {
+        accessControlService.checkRole(Role.READER, modelResource)
+        if (!modelResource.finalised) {
+            ErrorHandler.handleError(
+                HttpStatus.UNPROCESSABLE_ENTITY,
+                "Model resource is not finalised: $dataType.modelResourceId, $dataType.modelResourceDomainType"
+            )
+        }
+    }
+
+    private List<Classifier> validateClassifiers(DataType dataType) {
+        if (!dataType.classifiers) {
+            return []
+        }
+        dataType.classifiers.collect { Classifier classifier ->
+            Classifier retrieved = classifierRepository(classifier.domainType).readById(classifier.id)
+            ErrorHandler.handleErrorOnNullObject(HttpStatus.NOT_FOUND, retrieved, " Item with id: $classifier.id not found ")
+            accessControlService.checkRole(Role.EDITOR, retrieved)
+            retrieved
+        }
+    }
+
+    private ClassifierCacheableRepository classifierRepository(String domainType) {
+        repositoryService.getAdministeredItemRepository(domainType) as ClassifierCacheableRepository
     }
 
     DataType validateDataType(DataType dataType, AdministeredItem parent) {
