@@ -37,7 +37,11 @@ class ItemLinkGraphController implements ItemLinkGraphApi, AdministeredItemReade
 
     @Override
     @Audit
-    @Operation(operationId = 'traverseIncomingItemLinks', summary = 'Traverse incoming item links for a graph', description = 'Returns a breadth-first graph following source paths for the selected link types. When includeChildren is true, only immediate children with incoming links of a selected type are included. Metadata and annotations are omitted unless requested.')
+    @Operation(
+        operationId = 'traverseIncomingItemLinks',
+        summary = 'Traverse incoming item links for a graph',
+        description = 'Returns a breadth-first graph following selected incoming links. Optional child, metadata, and annotation details are included when requested.'
+    )
     @Get(Paths.ITEM_LINK_GRAPH)
     ItemLinkGraphDTO traverseIncomingLinks(String domainType, UUID domainId, @QueryValue('linkTypes') List<String> linkTypes,
                                            @QueryValue(value = 'includeChildren', defaultValue = 'false') boolean includeChildren,

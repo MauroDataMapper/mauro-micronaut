@@ -23,30 +23,36 @@ class ItemLinkPathResolver {
     /** Per-request caches; never shared between graph requests or callers. */
     static class ResolutionContext {
         final Map<UUID, Model> targetModels = [:]
-        final Set<UUID> parentItemsLoaded = new HashSet<>()
+        final Set<UUID> parentItemsLoaded = [] as Set<UUID>
         final Map<String, PathModelCandidates> visibleModelCandidates = [:]
         final Map<String, ResolvedItemLinkPath> resolvedPaths = [:]
         final Map<String, AdministeredItem> pathPrefixItems = [:]
     }
 
-    ResolutionContext newResolutionContext() { new ResolutionContext() }
+    static ResolutionContext newResolutionContext() { new ResolutionContext() }
 
     ResolvedItemLinkPath resolve(AdministeredItem target, Path storedPath) {
         resolve(newResolutionContext(), target, storedPath)
     }
 
     ResolvedItemLinkPath resolve(ResolutionContext context, AdministeredItem target, Path storedPath) {
-        if (!storedPath || !storedPath.nodes) return new ResolvedItemLinkPath(path: storedPath)
+        if (!storedPath || !storedPath.nodes) {
+            return new ResolvedItemLinkPath(path: storedPath)
+        }
 
         Path path = new Path(storedPath.toString())
         Model targetModel = versionOwningModel(context, target)
-        if (!targetModel) return new ResolvedItemLinkPath(path: path)
+        if (!targetModel) {
+            return new ResolvedItemLinkPath(path: path)
+        }
 
         Path absolutePath = path
         Model sourceModel
         if (path.isAbsolute()) {
             Path.PathNode modelRoot = path.modelRootNode
-            if (!modelRoot) return new ResolvedItemLinkPath(path: path)
+            if (!modelRoot) {
+                return new ResolvedItemLinkPath(path: path)
+            }
             String rootKey = modelRoot.toString()
             PathModelCandidates candidates = context.visibleModelCandidates[rootKey]
             if (candidates == null) {
@@ -59,14 +65,18 @@ class ItemLinkPathResolver {
             sourceModel = candidates.finalisedModels[0]
         } else {
             Path.PathNode modelRoot = targetModel.path?.modelRootNode
-            if (!modelRoot) return new ResolvedItemLinkPath(path: path)
+            if (!modelRoot) {
+                return new ResolvedItemLinkPath(path: path)
+            }
             absolutePath = new Path(([modelRoot] + path.nodes) as List<Path.PathNode>)
             sourceModel = targetModel
         }
 
         String absolutePathKey = absolutePath.toString()
         ResolvedItemLinkPath cached = context.resolvedPaths[absolutePathKey]
-        if (cached != null) return cached
+        if (cached != null) {
+            return cached
+        }
 
         if (sourceModel.id && !context.parentItemsLoaded.contains(sourceModel.id)) {
             pathRepository.readParentItems(sourceModel)
@@ -80,7 +90,9 @@ class ItemLinkPathResolver {
             return unresolved
         }
 
-        if (source.id) context.parentItemsLoaded.add(source.id)
+        if (source.id) {
+            context.parentItemsLoaded.add(source.id)
+        }
         source.updatePath()
         if (!accessControlService.canDoRole(Role.READER, source)) {
             ResolvedItemLinkPath inaccessible = new ResolvedItemLinkPath(path: absolutePath)
@@ -92,12 +104,16 @@ class ItemLinkPathResolver {
         resolved
     }
 
-    void rememberTargetModel(ResolutionContext context, AdministeredItem item, Model model) {
-        if (item?.id) context.targetModels[item.id] = model
+    static void rememberTargetModel(ResolutionContext context, AdministeredItem item, Model model) {
+        if (item?.id) {
+            context.targetModels[item.id] = model
+        }
     }
 
     private Model versionOwningModel(ResolutionContext context, AdministeredItem item) {
-        if (context.targetModels.containsKey(item.id)) return context.targetModels[item.id]
+        if (context.targetModels.containsKey(item.id)) {
+            return context.targetModels[item.id]
+        }
         if (!context.parentItemsLoaded.contains(item.id)) {
             pathRepository.readParentItems(item)
             context.parentItemsLoaded.add(item.id)

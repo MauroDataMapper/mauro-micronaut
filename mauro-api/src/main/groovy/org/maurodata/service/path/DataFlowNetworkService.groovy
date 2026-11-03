@@ -29,6 +29,8 @@ import io.micronaut.transaction.annotation.Transactional
 @Singleton
 class DataFlowNetworkService {
     private static final String DATA_FLOW_LINK_TYPE = DataComponent.DATA_FLOW_TYPE
+    private static final Set<String> DATA_FLOW_ENDPOINT_TYPES = ['DataClass', 'DataElement', 'DataComponent'] as Set<String>
+    private static final Set<String> DATA_FLOW_PRODUCED_TARGET_TYPES = ['DataClass', 'DataElement'] as Set<String>
 
     @Inject PathRepository pathRepository
     @Inject AccessControlService accessControlService
@@ -48,7 +50,7 @@ class DataFlowNetworkService {
     // ItemLinks are stored on the target item; each Path identifies the source item.
     ItemLink create(AdministeredItem target, String pathString) {
         Path path = normaliseAndValidate(pathString, target)
-        if (list(target).any { it.path?.toString() == path.toString() }) {
+        if (list(target).any { ItemLink itemLink -> itemLink.path?.toString() == path.toString() }) {
             throw new HttpStatusException(HttpStatus.CONFLICT, 'This data flow path already exists on the item')
         }
         itemLinkRepository.save(new ItemLink(type: DATA_FLOW_LINK_TYPE, path: path).tap {
@@ -62,7 +64,9 @@ class DataFlowNetworkService {
 
     List<DataComponent> listDataFlowNetworkComponents(UUID dataModelId) {
         DataModel dataModel = dataModelRepository.readById(dataModelId)
-        if (!dataModel) throw new HttpStatusException(HttpStatus.NOT_FOUND, 'DataModel not found')
+        if (!dataModel) {
+            throw new HttpStatusException(HttpStatus.NOT_FOUND, 'DataModel not found')
+        }
         accessControlService.checkRole(Role.READER, dataModel)
         List<DataComponent> components = (dataComponentRepository.readAllByDataModel(dataModel) ?: [])
             .findAll { DataComponent component -> component.type == DataComponent.DATA_FLOW_TYPE }
@@ -77,7 +81,9 @@ class DataFlowNetworkService {
     @Transactional
     DataComponent createDataFlowNetworkComponent(UUID dataModelId, DataComponentCreateDTO request) {
         DataModel dataModel = dataModelRepository.readById(dataModelId)
-        if (!dataModel) throw new HttpStatusException(HttpStatus.NOT_FOUND, 'DataModel not found')
+        if (!dataModel) {
+            throw new HttpStatusException(HttpStatus.NOT_FOUND, 'DataModel not found')
+        }
         accessControlService.checkRole(Role.EDITOR, dataModel)
         if (!request?.label?.trim()) {
             throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, 'A DataFlow component label is required')
@@ -103,14 +109,14 @@ class DataFlowNetworkService {
         pathRepository.readParentItems(component)
         component.updatePath()
 
-        (request.consumes ?: [] as List<DataFlowSourceCreateDTO>).each {consume ->
+        (request.consumes ?: [] as List<DataFlowSourceCreateDTO>).each { DataFlowSourceCreateDTO consume ->
             if (!consume?.path?.trim()) {
                 throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, 'Each consumes entry requires a path')
             }
             create(component, consume.path)
         }
 
-        (request.produces ?: [] as List<DataFlowSourceCreateDTO>).each { produce ->
+        (request.produces ?: [] as List<DataFlowSourceCreateDTO>).each { DataFlowSourceCreateDTO produce ->
             AdministeredItem producedTarget = resolveProducedTarget(dataModel, produce?.path)
             accessControlService.checkRole(Role.EDITOR, producedTarget)
             create(producedTarget, component.path.localPath().toString())
@@ -120,7 +126,9 @@ class DataFlowNetworkService {
 
     DataComponent showDataFlowNetworkComponent(UUID dataModelId, UUID id) {
         DataModel dataModel = dataModelRepository.readById(dataModelId)
-        if (!dataModel) throw new HttpStatusException(HttpStatus.NOT_FOUND, 'DataModel not found')
+        if (!dataModel) {
+            throw new HttpStatusException(HttpStatus.NOT_FOUND, 'DataModel not found')
+        }
         DataComponent component = dataComponentRepository.readById(id)
         ensureComponentOwner(component, dataModel)
         accessControlService.checkRole(Role.READER, component)
@@ -132,7 +140,9 @@ class DataFlowNetworkService {
     @Transactional
     boolean deleteDataFlowNetworkComponent(UUID dataModelId, UUID id) {
         DataModel dataModel = dataModelRepository.readById(dataModelId)
-        if (!dataModel) throw new HttpStatusException(HttpStatus.NOT_FOUND, 'DataModel not found')
+        if (!dataModel) {
+            throw new HttpStatusException(HttpStatus.NOT_FOUND, 'DataModel not found')
+        }
         DataComponent component = dataComponentRepository.loadWithContent(id)
         ensureComponentOwner(component, dataModel)
         pathRepository.readParentItems(component)
@@ -164,7 +174,7 @@ class DataFlowNetworkService {
         Path path
         try {
             path = Path.fromPathRootedAtFirstModelIdentifier(pathString)
-        } catch (RuntimeException e) {
+        } catch (IllegalArgumentException e) {
             throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Invalid data flow path: ${e.message}")
         }
         boolean absolute = path.isAbsolute()
@@ -183,10 +193,10 @@ class DataFlowNetworkService {
         }
 
         String sourceDomainType = pathPrefixTypeLookup.getDomainType(path.lastPathNode()?.prefix)
-        if (!(sourceDomainType in ['DataClass', 'DataElement', 'DataComponent'])) {
+        if (!DATA_FLOW_ENDPOINT_TYPES.contains(sourceDomainType)) {
             throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, 'DataFlow sources must be DataClasses, DataElements or DataFlow components')
         }
-        if (!(target.domainType in ['DataClass', 'DataElement', 'DataComponent'])) {
+        if (!DATA_FLOW_ENDPOINT_TYPES.contains(target.domainType)) {
             throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, 'DataFlow targets must be DataClasses, DataElements or DataFlow components')
         }
         if (target instanceof DataComponent && target.type != DataComponent.DATA_FLOW_TYPE) {
@@ -222,24 +232,28 @@ class DataFlowNetworkService {
         Path relativePath
         try {
             relativePath = Path.fromPathRootedAtFirstModelIdentifier(pathString)
-        } catch (RuntimeException e) {
+        } catch (IllegalArgumentException e) {
             throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Invalid produces path: ${e.message}")
         }
         if (relativePath.isAbsolute() || !relativePath.nodes) {
             throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, 'Produces paths must be relative to the component DataModel')
         }
         String targetDomainType = pathPrefixTypeLookup.getDomainType(relativePath.lastPathNode()?.prefix)
-        if (!(targetDomainType in ['DataClass', 'DataElement'])) {
+        if (!DATA_FLOW_PRODUCED_TARGET_TYPES.contains(targetDomainType)) {
             throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, 'DataFlow produced targets must be DataClasses or DataElements')
         }
         pathRepository.readParentItems(dataModel)
         dataModel.updatePath()
         Path basePath = dataModel.path
         Path.PathNode dataModelNode = basePath?.lastPathNode()
-        if (!dataModelNode) throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, 'The DataModel has no path')
+        if (!dataModelNode) {
+            throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, 'The DataModel has no path')
+        }
         Path fullPath = new Path(([dataModelNode] + relativePath.nodes) as List<Path.PathNode>)
         AdministeredItem resolved = pathRepository.findResourcesByPathFromRootResource(dataModel, fullPath)
-        if (!resolved) throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, 'A produces target path did not resolve in the component DataModel')
+        if (!resolved) {
+            throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, 'A produces target path did not resolve in the component DataModel')
+        }
         pathRepository.readParentItems(resolved)
         if (owningDataModel(resolved)?.id != dataModel.id) {
             throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, 'Produces targets must belong to the component DataModel')
@@ -249,10 +263,15 @@ class DataFlowNetworkService {
 
     private void deleteLocalTargetLinksWithComponentAsSource(DataModel dataModel, DataComponent component) {
         List<UUID> targetIds = []
-        targetIds.addAll((dataClassRepository.readAllByDataModel(dataModel) ?: []).collect { DataClass item -> item.id })
-        targetIds.addAll((dataElementRepository.readAllByDataClassDataModelIdIn([dataModel.id]) ?: [])
-            .collect { DataElement item -> item.id })
-        if (!targetIds) return
+        (dataClassRepository.readAllByDataModel(dataModel) ?: [] as List<DataClass>).each { DataClass dataClass ->
+            targetIds.add(dataClass.id)
+        }
+        (dataElementRepository.readAllByDataClassDataModelIdIn([dataModel.id]) ?: [] as List<DataElement>).each { DataElement dataElement ->
+            targetIds.add(dataElement.id)
+        }
+        if (!targetIds) {
+            return
+        }
 
         Set<String> componentSourcePaths = [component.path.localPath().toString(), component.path.toString()] as Set<String>
         itemLinkRepository.readAllByMultiFacetAwareItemIdInAndType(targetIds.unique(), DATA_FLOW_LINK_TYPE)
@@ -261,9 +280,15 @@ class DataFlowNetworkService {
     }
 
     private static DataModel owningDataModel(AdministeredItem item) {
-        if (item instanceof DataClass) return ((DataClass) item).dataModel
-        if (item instanceof DataElement) return ((DataElement) item).dataModel
-        if (item instanceof DataComponent) return ((DataComponent) item).dataModel
+        if (item instanceof DataClass) {
+            return ((DataClass) item).dataModel
+        }
+        if (item instanceof DataElement) {
+            return ((DataElement) item).dataModel
+        }
+        if (item instanceof DataComponent) {
+            return ((DataComponent) item).dataModel
+        }
         null
     }
 
@@ -290,11 +315,15 @@ class DataFlowNetworkService {
             pathRepository.readParentItems(model)
             model.updatePath()
             Path.PathNode root = model.path?.modelRootNode
-            if (!root) return null
+            if (!root) {
+                return null
+            }
             resolvedPath = new Path(([root] + path.nodes) as List<Path.PathNode>)
         } else {
             PathModelCandidates candidates = visiblePathModelResolver.findVisibleModelCandidatesForPathRoot(path.nodes[0])
-            if (candidates.finalisedModels.size() != 1) return null
+            if (candidates.finalisedModels.size() != 1) {
+                return null
+            }
             model = candidates.finalisedModels[0]
         }
         pathRepository.findResourcesByPathFromRootResource(model, resolvedPath)

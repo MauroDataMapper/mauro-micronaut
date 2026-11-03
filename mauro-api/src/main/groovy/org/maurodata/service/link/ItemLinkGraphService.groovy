@@ -73,11 +73,11 @@ class ItemLinkGraphService {
             .sort(false) { ItemLinkGraphProvider provider -> provider.type }
 
         ItemLinkGraphDTO graph = new ItemLinkGraphDTO()
-        LinkedHashMap<String, ItemLinkItemDTO> itemsByKey = new LinkedHashMap<>()
-        LinkedHashMap<String, AdministeredItem> domainItemsByKey = new LinkedHashMap<>()
-        LinkedHashSet<String> linksById = new LinkedHashSet<>()
-        LinkedHashSet<String> expanded = new LinkedHashSet<>()
-        LinkedHashSet<String> queued = new LinkedHashSet<>()
+        Map<String, ItemLinkItemDTO> itemsByKey = [:]
+        Map<String, AdministeredItem> domainItemsByKey = [:]
+        Set<String> linksById = [] as Set<String>
+        Set<String> expanded = [] as Set<String>
+        Set<String> queued = [] as Set<String>
         ItemLinkPathResolver.ResolutionContext resolutionContext = itemLinkPathResolver.newResolutionContext()
 
         addItem(root, graph, itemsByKey, domainItemsByKey, resolutionContext)
@@ -91,7 +91,7 @@ class ItemLinkGraphService {
             selectedProviders.each { ItemLinkGraphProvider provider ->
                 preloadedLinks[provider.type] = groupByTarget(provider.findLinksOwnedByDirectChildren(root))
             }
-            Set<UUID> participatingIds = new LinkedHashSet<>()
+            Set<UUID> participatingIds = [] as Set<UUID>
             preloadedLinks.values().each { Map<UUID, List<ItemLinkGraphReference>> grouped ->
                 participatingIds.addAll(grouped.keySet())
             }
@@ -100,8 +100,12 @@ class ItemLinkGraphService {
                 .sort(false) { AdministeredItem left, AdministeredItem right -> compareModelItems(left, right) }
             children.each { AdministeredItem child ->
                 String childKey = itemKey(child)
-                if (!itemsByKey.containsKey(childKey)) addItem(child, graph, itemsByKey, domainItemsByKey, resolutionContext)
-                if (queued.add(childKey)) frontier.add(child)
+                if (!itemsByKey.containsKey(childKey)) {
+                    addItem(child, graph, itemsByKey, domainItemsByKey, resolutionContext)
+                }
+                if (queued.add(childKey)) {
+                    frontier.add(child)
+                }
             }
         }
 
@@ -109,7 +113,9 @@ class ItemLinkGraphService {
             List<AdministeredItem> current = frontier.findAll { AdministeredItem item ->
                 !expanded.contains(itemKey(item))
             }
-            if (!current) break
+            if (!current) {
+                break
+            }
             current.each { AdministeredItem item -> expanded.add(itemKey(item)) }
 
             // One batched link query per selected provider for this breadth-first frontier.
@@ -119,9 +125,11 @@ class ItemLinkGraphService {
                 Map<UUID, List<ItemLinkGraphReference>> preloaded = preloadedLinks[provider.type] ?: [:]
                 current.each { AdministeredItem target ->
                     List<ItemLinkGraphReference> cached = preloaded[target.id]
-                    if (cached != null) linksByTarget[target.id] = cached
+                    if (cached != null) {
+                        linksByTarget[target.id] = cached
+                    }
                 }
-                List<UUID> missingTargetIds = current.collect { AdministeredItem target -> target.id }
+                List<UUID> missingTargetIds = current*.id
                     .findAll { UUID targetId -> !linksByTarget.containsKey(targetId) }.unique()
                 if (missingTargetIds) {
                     groupByTarget(provider.findLinksOwnedByTargets(missingTargetIds)).each {
@@ -154,7 +162,9 @@ class ItemLinkGraphService {
                             if (!itemsByKey.containsKey(sourceKey)) {
                                 addItem(source, graph, itemsByKey, domainItemsByKey, resolutionContext)
                             }
-                            if (!expanded.contains(sourceKey) && queued.add(sourceKey)) nextFrontier.add(source)
+                            if (!expanded.contains(sourceKey) && queued.add(sourceKey)) {
+                                nextFrontier.add(source)
+                            }
                         }
                     }
                 }
@@ -162,13 +172,19 @@ class ItemLinkGraphService {
             frontier = nextFrontier
         }
 
-        if (includeMetadata) addMetadata(graph, domainItemsByKey)
-        if (includeAnnotations) addAnnotations(graph, domainItemsByKey)
+        if (includeMetadata) {
+            addMetadata(graph, domainItemsByKey)
+        }
+        if (includeAnnotations) {
+            addAnnotations(graph, domainItemsByKey)
+        }
         graph
     }
 
     private List<AdministeredItem> loadChildren(AdministeredItem parent, Set<UUID> participatingIds) {
-        if (!participatingIds) return []
+        if (!participatingIds) {
+            return []
+        }
         List<AdministeredItem> result = []
         if (parent instanceof DataModel) {
             result.addAll(dataClassRepository.readAllByIdIn(participatingIds))
@@ -180,10 +196,12 @@ class ItemLinkGraphService {
         result
     }
 
-    private Map<UUID, List<ItemLinkGraphReference>> groupByTarget(List<ItemLinkGraphReference> references) {
+    private static Map<UUID, List<ItemLinkGraphReference>> groupByTarget(List<ItemLinkGraphReference> references) {
         Map<UUID, List<ItemLinkGraphReference>> grouped = [:]
         references.each { ItemLinkGraphReference reference ->
-            if (!grouped.containsKey(reference.targetId)) grouped[reference.targetId] = []
+            if (!grouped.containsKey(reference.targetId)) {
+                grouped[reference.targetId] = []
+            }
             grouped[reference.targetId] << reference
         }
         grouped
@@ -202,7 +220,9 @@ class ItemLinkGraphService {
     }
 
     private static void addLink(ItemLinkGraphDTO graph, Set<String> linksById, ItemLinkDTO link) {
-        if (link.id && linksById.add(link.id.toString())) graph.links << link
+        if (link.id && linksById.add(link.id.toString())) {
+            graph.links << link
+        }
     }
 
     private void addItem(AdministeredItem item, ItemLinkGraphDTO graph,
@@ -248,11 +268,15 @@ class ItemLinkGraphService {
     }
 
     private void addMetadata(ItemLinkGraphDTO graph, Map<String, AdministeredItem> domainItemsByKey) {
-        if (!domainItemsByKey) return
-        List<UUID> itemIds = domainItemsByKey.values().collect { AdministeredItem item -> item.id }.unique()
+        if (!domainItemsByKey) {
+            return
+        }
+        List<UUID> itemIds = domainItemsByKey.values()*.id.unique()
         Map<UUID, List<ItemLinkMetadataDTO>> metadataByItemId = [:]
         (metadataRepository.readAllByMultiFacetAwareItemIdIn(itemIds) as List<Metadata>).each { Metadata metadata ->
-            if (!metadataByItemId.containsKey(metadata.multiFacetAwareItemId)) metadataByItemId[metadata.multiFacetAwareItemId] = []
+            if (!metadataByItemId.containsKey(metadata.multiFacetAwareItemId)) {
+                metadataByItemId[metadata.multiFacetAwareItemId] = []
+            }
             metadataByItemId[metadata.multiFacetAwareItemId] << new ItemLinkMetadataDTO(
                 id: metadata.id, namespace: metadata.namespace, key: metadata.key, value: metadata.value)
         }
@@ -264,26 +288,34 @@ class ItemLinkGraphService {
     }
 
     private void addAnnotations(ItemLinkGraphDTO graph, Map<String, AdministeredItem> domainItemsByKey) {
-        if (!domainItemsByKey) return
-        List<UUID> itemIds = domainItemsByKey.values().collect { AdministeredItem item -> item.id }.unique()
+        if (!domainItemsByKey) {
+            return
+        }
+        List<UUID> itemIds = domainItemsByKey.values()*.id.unique()
         List<Annotation> allAnnotations = annotationRepository.readAllByMultiFacetAwareItemIdInAndParentAnnotationIdIsNull(itemIds) as List<Annotation>
         List<Annotation> frontier = allAnnotations
-        Set<UUID> fetchedParents = new LinkedHashSet<>()
+        Set<UUID> fetchedParents = [] as Set<UUID>
         Map<UUID, List<Annotation>> childrenByParentId = [:]
         while (frontier) {
-            List<UUID> parentIds = frontier.collect { Annotation annotation -> annotation.id }
+            List<UUID> parentIds = frontier*.id
                 .findAll { UUID id -> id != null && fetchedParents.add(id) }
-            if (!parentIds) break
+            if (!parentIds) {
+                break
+            }
             List<Annotation> children = annotationRepository.readAllByParentAnnotationIdIn(parentIds) as List<Annotation>
             children.each { Annotation child ->
-                if (!childrenByParentId.containsKey(child.parentAnnotationId)) childrenByParentId[child.parentAnnotationId] = []
+                if (!childrenByParentId.containsKey(child.parentAnnotationId)) {
+                    childrenByParentId[child.parentAnnotationId] = []
+                }
                 childrenByParentId[child.parentAnnotationId] << child
             }
             frontier = children
         }
         Map<UUID, List<ItemLinkAnnotationDTO>> topLevelByItemId = [:]
         allAnnotations.each { Annotation annotation ->
-            if (!topLevelByItemId.containsKey(annotation.multiFacetAwareItemId)) topLevelByItemId[annotation.multiFacetAwareItemId] = []
+            if (!topLevelByItemId.containsKey(annotation.multiFacetAwareItemId)) {
+                topLevelByItemId[annotation.multiFacetAwareItemId] = []
+            }
             topLevelByItemId[annotation.multiFacetAwareItemId] << toAnnotationDTO(annotation, childrenByParentId)
         }
         graph.items.each { ItemLinkItemDTO dto ->

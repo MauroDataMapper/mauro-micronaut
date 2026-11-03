@@ -28,11 +28,15 @@ class VisiblePathModelResolver {
                 pathRepository.readParentItems(model)
                 model.updatePath()
                 Model versionOwner = model.owner
-                if (!versionOwner) return
+                if (!versionOwner) {
+                    return
+                }
                 pathRepository.readParentItems(versionOwner)
                 versionOwner.updatePath()
                 Path.PathNode modelRoot = versionOwner.path?.modelRootNode
-                if (!root.hasSamePrefixAndIdentifier(modelRoot) || !accessControlService.canDoRole(Role.READER, versionOwner)) return
+                if (!root.hasSamePrefixAndIdentifier(modelRoot) || !accessControlService.canDoRole(Role.READER, versionOwner)) {
+                    return
+                }
 
                 if (versionOwner.matchesFinalisedPathModelIdentifier(root.modelIdentifier)) {
                     finalisedModels[versionOwner.id] = versionOwner

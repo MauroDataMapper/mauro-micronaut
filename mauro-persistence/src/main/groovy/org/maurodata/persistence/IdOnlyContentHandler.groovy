@@ -206,14 +206,6 @@ class IdOnlyContentHandler {
     }
 
 
-    private static <T extends Item> List<T> sortById(List<T> items) {
-        return items.sort {it.id}
-    }
-
-    private static <T extends Item> Set<T> sortById(Set<T> items) {
-        return items.sort {it.id} as Set<T>
-    }
-
     private static <T> void inBatches(final List<T> items, final int batchSize, @DelegatesTo(List) Closure saver) {
         if (items == null || items.isEmpty()) {
             return
