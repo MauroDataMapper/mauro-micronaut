@@ -25,7 +25,9 @@ class DataFlowItemLinkGraphProvider implements ItemLinkGraphProvider {
 
     @Override
     List<ItemLinkGraphReference> findLinksOwnedByTargets(Collection<UUID> targetIds) {
-        if (!targetIds) return []
+        if (!targetIds) {
+            return []
+        }
         List<ItemLinkGraphReference> references = []
         (targetIds as List<UUID>).unique().collate(TARGET_ID_BATCH_SIZE).each { List<UUID> batch ->
             references.addAll(toReferences(itemLinkRepository.readGraphRowsByMultiFacetAwareItemIdInAndType(batch, type)))

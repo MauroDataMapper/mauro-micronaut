@@ -104,19 +104,27 @@ class PathRepository {
         }
 
         Path.PathNode currentNode = path.nodes.get(positionInPath)
-        String prefixKey = "${resource.id}|${path.nodes.subList(0, positionInPath + 1).collect { Path.PathNode node -> node.toString() }.join('|')}"
+        String prefixKey = "${resource.id}|${path.nodes.subList(0, positionInPath + 1)*.toString().join('|')}"
         AdministeredItem currentAdministeredItem
         if (pathPrefixCache.containsKey(prefixKey)) {
             currentAdministeredItem = pathPrefixCache[prefixKey]
-            if (!currentAdministeredItem) return null
+            if (!currentAdministeredItem) {
+                return null
+            }
         } else {
             AdministeredItemRepository prefixRepository = getRepositoryForPathPrefix(currentNode.prefix)
-            if (prefixRepository == null) throw new MauroInternalException("No repository claims to handle the prefix " + currentNode.prefix)
+            if (prefixRepository == null) {
+                throw new MauroInternalException("No repository claims to handle the prefix " + currentNode.prefix)
+            }
             List<AdministeredItem> children = prefixRepository.findAllByParentAndPathIdentifier(resource.id, currentNode.identifier)
-            if (children.size() > 1) throw new MauroInternalException("More than one Item returned for " + currentNode.prefix + " " + currentNode.identifier)
-            currentAdministeredItem = children ? children.get(0) : null
+            if (children.size() > 1) {
+                throw new MauroInternalException("More than one Item returned for " + currentNode.prefix + " " + currentNode.identifier)
+            }
+            currentAdministeredItem = children ? children.get(0) as AdministeredItem : null
             pathPrefixCache[prefixKey] = currentAdministeredItem
-            if (!currentAdministeredItem) return null
+            if (!currentAdministeredItem) {
+                return null
+            }
         }
         currentAdministeredItem.parent = resource
         findResourcesByPathFromRootResourceUsingCache(currentAdministeredItem, path, positionInPath + 1, pathPrefixCache)

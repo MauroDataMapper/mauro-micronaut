@@ -2,7 +2,6 @@ package org.maurodata.persistence.datamodel
 
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.Nullable
-import io.micronaut.data.annotation.Query
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.model.query.builder.sql.Dialect
 import jakarta.inject.Inject
