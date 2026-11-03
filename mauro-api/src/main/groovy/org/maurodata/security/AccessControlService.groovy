@@ -143,10 +143,12 @@ class AccessControlService implements Toggleable {
         )
     }
 
+    /**
+     * Check if the current authenticated user can perform a specific action on an AdministeredItem.
+     * @return true if the user can perform the action, false otherwise
+     */
     boolean itemAllowsAction(@NonNull Role role, @NonNull AdministeredItem item) {
 
-        List<AdministeredItem> parents = pathRepository.readParentItems(item)
-        Model owningModel = item.owner
 
         switch(role) {
             case Role.READER:
@@ -154,6 +156,8 @@ class AccessControlService implements Toggleable {
             case Role.REVIEWER:
             case Role.AUTHOR:
             case Role.EDITOR:
+                List<AdministeredItem> parents = pathRepository.readParentItems(item)
+                Model owningModel = item.owner
                 return !owningModel.finalised
             case Role.CONTAINER_ADMIN:
                 return true
