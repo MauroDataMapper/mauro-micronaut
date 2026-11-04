@@ -25,6 +25,7 @@ import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.domain.model.Model
 import org.maurodata.domain.terminology.CodeSet
 import org.maurodata.domain.terminology.Terminology
+import org.maurodata.domain.overlay.Overlay
 import org.maurodata.visitor.DomainVisitor
 
 /**
@@ -104,6 +105,9 @@ class Folder extends Model implements ItemReferencer, DiffableItem<Folder> {
     @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'classificationScheme')
     List<ClassificationScheme> classificationSchemes = []
 
+    @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'folder')
+    List<Overlay> overlays = []
+
     @Override
     <T> T accept(DomainVisitor<T> visitor) {
         return visitor.visitFolder(this)
@@ -177,6 +181,9 @@ class Folder extends Model implements ItemReferencer, DiffableItem<Folder> {
             base.appendCollection(DiffBuilder.CLASSIFICATION_SCHEMES, this.classificationSchemes as Collection<DiffableItem>, other.classificationSchemes as Collection<DiffableItem>, lhsPathRoot,
                                   rhsPathRoot)
         }
+        if (!DiffBuilder.isNullOrEmpty(this.overlays as Collection<Object>) || !DiffBuilder.isNullOrEmpty(other.overlays as Collection<Object>)) {
+            base.appendCollection('overlays', this.overlays as Collection<DiffableItem>, other.overlays as Collection<DiffableItem>, lhsPathRoot, rhsPathRoot)
+        }
         base
     }
 
@@ -204,6 +211,7 @@ class Folder extends Model implements ItemReferencer, DiffableItem<Folder> {
             }
         }
         cloned.codeSets = codeSets.collect {it.clone()}
+        cloned.overlays = overlays.collect { it.clone().tap { it.folder = cloned } }
 
         cloned.setAssociations()
         cloned
@@ -252,6 +260,7 @@ class Folder extends Model implements ItemReferencer, DiffableItem<Folder> {
         ItemReferencerUtils.addItems(terminologies, pathsBeingReferenced)
         ItemReferencerUtils.addItems(codeSets, pathsBeingReferenced)
         ItemReferencerUtils.addItems(classificationSchemes, pathsBeingReferenced)
+        ItemReferencerUtils.addItems(overlays, pathsBeingReferenced)
 
         return pathsBeingReferenced
     }
@@ -267,6 +276,7 @@ class Folder extends Model implements ItemReferencer, DiffableItem<Folder> {
         terminologies = ItemReferencerUtils.replaceItemsByIdentity(terminologies, replacements, notReplaced)
         codeSets = ItemReferencerUtils.replaceItemsByIdentity(codeSets, replacements, notReplaced)
         classificationSchemes = ItemReferencerUtils.replaceItemsByIdentity(classificationSchemes, replacements, notReplaced)
+        overlays = ItemReferencerUtils.replaceItemsByIdentity(overlays, replacements, notReplaced)
     }
 
     @Override
@@ -284,6 +294,7 @@ class Folder extends Model implements ItemReferencer, DiffableItem<Folder> {
         intoFolder.terminologies = ItemUtils.copyItems(this.terminologies, intoFolder.terminologies)
         intoFolder.codeSets = ItemUtils.copyItems(this.codeSets, intoFolder.codeSets)
         intoFolder.classificationSchemes = ItemUtils.copyItems(this.classificationSchemes, intoFolder.classificationSchemes)
+        intoFolder.overlays = ItemUtils.copyItems(this.overlays, intoFolder.overlays)
     }
 
     @Override
@@ -338,6 +349,21 @@ class Folder extends Model implements ItemReferencer, DiffableItem<Folder> {
 
     DataModel dataModel(@DelegatesTo(value = DataModel, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
         dataModel [:], closure
+    }
+
+    Overlay overlay(Overlay overlay) {
+        overlays.add(overlay)
+        overlay.folder = this
+        overlay.parent = this
+        overlay
+    }
+
+    Overlay overlay(Map args, @DelegatesTo(value = Overlay, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+        overlay Overlay.build(args + [parent: this, folder: this], closure)
+    }
+
+    Overlay overlay(@DelegatesTo(value = Overlay, strategy = Closure.DELEGATE_FIRST) Closure closure = {}) {
+        overlay([:], closure)
     }
 
 
