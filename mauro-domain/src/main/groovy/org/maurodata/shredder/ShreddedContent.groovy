@@ -8,6 +8,7 @@ import org.maurodata.domain.dataflow.DataElementComponent
 import org.maurodata.domain.dataflow.DataFlow
 import org.maurodata.domain.datamodel.DataClass
 import org.maurodata.domain.datamodel.DataElement
+import org.maurodata.domain.datamodel.DataComponent
 import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.datamodel.DataType
 import org.maurodata.domain.datamodel.EnumerationValue
@@ -21,6 +22,7 @@ import org.maurodata.domain.facet.SemanticLink
 import org.maurodata.domain.facet.SummaryMetadata
 import org.maurodata.domain.facet.SummaryMetadataReport
 import org.maurodata.domain.facet.VersionLink
+import org.maurodata.domain.facet.ItemLink
 import org.maurodata.domain.folder.Folder
 import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.domain.model.Model
@@ -40,6 +42,7 @@ class ShreddedContent {
     Map<Integer, Set<DataClass>> dataClasses = [:]
     Set<DataType> dataTypes = []
     Set<DataElement> dataElements = []
+    Set<DataComponent> dataComponents = []
     Set<EnumerationValue> enumerationValues = []
     Set<Terminology> terminologies = []
     Set<Term> terms = []
@@ -59,6 +62,7 @@ class ShreddedContent {
     Set<Rule> rules = []
     Set<RuleRepresentation> ruleRepresentations = []
     Set<SemanticLink> semanticLinks = []
+    Set<ItemLink> itemLinkSources = []
     Set<SummaryMetadata> summaryMetadata = []
     Set<SummaryMetadataReport> summaryMetadataReports = []
     Set<VersionLink> versionLinks = []
@@ -72,6 +76,7 @@ class ShreddedContent {
         administeredItems.addAll(dataClasses.values().flatten() as List<DataClass>)
         administeredItems.addAll(dataTypes)
         administeredItems.addAll(dataElements)
+        administeredItems.addAll(dataComponents)
         administeredItems.addAll(enumerationValues)
         administeredItems.addAll(terminologies)
         administeredItems.addAll(terms)
@@ -131,6 +136,8 @@ class ShreddedContent {
             dataTypes.add((DataType) administeredItem)
         } else if (administeredItem instanceof DataElement) {
             dataElements.add((DataElement) administeredItem)
+        } else if (administeredItem instanceof DataComponent) {
+            dataComponents.add((DataComponent) administeredItem)
         } else if (administeredItem instanceof EnumerationValue) {
             enumerationValues.add((EnumerationValue) administeredItem)
         } else if (administeredItem instanceof Terminology) {
@@ -233,6 +240,14 @@ class ShreddedContent {
             }
         }
 
+        dataComponents.each {component ->
+            if (allItems[component.dataModel.id]) {
+                DataModel dataModel = (DataModel) allItems[component.dataModel.id]
+                dataModel.dataComponents.add(component)
+                component.dataModel = dataModel
+            }
+        }
+
         dataFlows.each {dataFlow ->
             if(allItems[dataFlow.source.id]) {
                 dataFlow.source = ((DataModel) allItems[dataFlow.source.id])
@@ -313,6 +328,10 @@ class ShreddedContent {
             if(allItems[semanticLink.targetMultiFacetAwareItemId]) {
                 semanticLink.target = allItems[semanticLink.targetMultiFacetAwareItemId]
             }
+        }
+
+        itemLinkSources.each {itemLink ->
+            allItems[itemLink.multiFacetAwareItemId].itemLinkSources.add(itemLink)
         }
 
         summaryMetadata.each {summaryMetadata ->

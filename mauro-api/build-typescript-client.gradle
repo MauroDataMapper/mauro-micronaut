@@ -2,6 +2,8 @@ import groovy.yaml.YamlSlurper
 
 import java.util.regex.Matcher
 import java.util.regex.Pattern
+import java.nio.file.Files
+import java.nio.file.Path
 
 apply from: rootProject.file('gradle/open-api-helpers.gradle')
 
@@ -66,7 +68,7 @@ tasks.register('generateTypeScriptClient') {
         Object root = slurper.parse(selectedSpec)
 
         Closure familyOf = { String name ->
-            def m = (name =~ /^(.*)_([A-Za-z0-9]+)_$/)
+            Matcher m = (name =~ /^(.*)_([A-Za-z0-9]+)_$/)
             return m ? m[0][1] : null
         }
 
@@ -97,13 +99,61 @@ tasks.register('generateTypeScriptClient') {
 
         logger.lifecycle("Post-processing generics in ${tsFiles.size()} TS files")
 
+        // OpenAPI Generator can emit an import for an unused multipart form schema
+        // even when skipFormModel has omitted the corresponding models file.
+        // Remove only missing model imports whose symbols are not used elsewhere
+        // in the generated API file; retain any unresolved import that generated
+        // code actually depends on so it remains visible as a generation error.
+        Pattern generatedModelImport = Pattern.compile("(?ms)^import \\{\\r?\\n(.*?)^\\} from '([^']+)';\\r?\\n")
+        Pattern importedSymbol = Pattern.compile('(?m)^\\s*(?:type\\s+)?([A-Za-z_$][A-Za-z0-9_$]*),\\s*$')
+        tsFiles.findAll { apiFile -> apiFile.toPath().parent.fileName.toString() == 'apis' }.each { apiFile ->
+            Path apiPath = apiFile.toPath()
+            String text = Files.readString(apiPath)
+            Matcher matcher = generatedModelImport.matcher(text)
+            List<int[]> removals = []
+            while (matcher.find()) {
+                String modulePath = matcher.group(2)
+                if (!modulePath.startsWith('../models/')) {
+                    continue
+                }
+                Path modelPath = apiPath.parent.resolve("${modulePath}.ts")
+                if (Files.exists(modelPath)) {
+                    continue
+                }
+
+                List<String> symbols = []
+                Matcher symbolMatcher = importedSymbol.matcher(matcher.group(1))
+                while (symbolMatcher.find()) {
+                    symbols << symbolMatcher.group(1)
+                }
+                String remaining = text.substring(0, matcher.start()) + text.substring(matcher.end())
+                boolean anySymbolUsed = symbols.any { String symbol ->
+                    boolean declaredLocally = Pattern.compile(
+                        "(?m)^export\\s+(?:declare\\s+)?(?:interface|type|class|function|const|enum)\\s+${Pattern.quote(symbol)}\\b"
+                    ).matcher(remaining).find()
+                    !declaredLocally && Pattern.compile("\\b${Pattern.quote(symbol)}\\b").matcher(remaining).find()
+                }
+                if (!anySymbolUsed) {
+                    removals << ([matcher.start(), matcher.end()] as int[])
+                }
+            }
+            removals.sort(false) { int[] left, int[] right -> right[0] <=> left[0] }
+            removals.each { int[] range ->
+                text = text.substring(0, range[0]) + text.substring(range[1])
+            }
+            if (removals) {
+                logger.lifecycle("Removed ${removals.size()} unused imports from missing model modules in ${apiFile.name}")
+                Files.writeString(apiPath, text)
+            }
+        }
+
         // index all interfaces
         Map<String, File> interfaces = [:]  // name -> file content
 
         tsFiles.each { f ->
             String text = f.text
 
-            text.findAll(/export interface ([A-Za-z0-9_]+)/) { _, name ->
+            text.findAll(/export interface ([A-Za-z0-9_]+)/) { matchedText, name ->
                 interfaces[name] = f
             }
         }
