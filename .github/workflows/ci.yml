@@ -13,7 +13,7 @@ permissions:
 
 jobs:
   test:
-    uses: MauroDataMapper/mauro-ci/.github/workflows/gradle-test.yml@01c5abd2d6c0df162d9dd05f5ceca37814f7912b
+    uses: MauroDataMapper/mauro-ci/.github/workflows/gradle-test.yml@d0e63ad3bec1c04d5b3eec43df0f43b79aae3714
     with:
       java-version: "17"
       gradle-task: test
@@ -24,7 +24,7 @@ jobs:
       (github.event_name == 'push' &&
        (github.ref == 'refs/heads/develop' ||
         github.ref == 'refs/heads/main'))
-    uses: MauroDataMapper/mauro-ci/.github/workflows/megalinter.yml@01c5abd2d6c0df162d9dd05f5ceca37814f7912b
+    uses: MauroDataMapper/mauro-ci/.github/workflows/megalinter.yml@d0e63ad3bec1c04d5b3eec43df0f43b79aae3714
     with:
       language: groovy
       scan-mode: ${{ github.event_name == 'pull_request' && 'changed' || 'full' }}
@@ -37,7 +37,7 @@ jobs:
       actions: read
       checks: write
       contents: read
-    uses: MauroDataMapper/mauro-ci/.github/workflows/junit-report.yml@01c5abd2d6c0df162d9dd05f5ceca37814f7912b
+    uses: MauroDataMapper/mauro-ci/.github/workflows/junit-report.yml@d0e63ad3bec1c04d5b3eec43df0f43b79aae3714
 
   sarif-upload:
     if: always()
@@ -46,19 +46,19 @@ jobs:
       actions: read
       contents: read
       security-events: write
-    uses: MauroDataMapper/mauro-ci/.github/workflows/sarif-upload.yml@01c5abd2d6c0df162d9dd05f5ceca37814f7912b
+    uses: MauroDataMapper/mauro-ci/.github/workflows/sarif-upload.yml@d0e63ad3bec1c04d5b3eec43df0f43b79aae3714
 
   docker-develop:
     if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
     needs: [test, lint, junit-report, sarif-upload]
-    uses: MauroDataMapper/mauro-ci/.github/workflows/docker-build.yml@01c5abd2d6c0df162d9dd05f5ceca37814f7912b
+    uses: MauroDataMapper/mauro-ci/.github/workflows/docker-build.yml@d0e63ad3bec1c04d5b3eec43df0f43b79aae3714
     with:
       java-version: "17"
 
   snapshot-publish:
     if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
     needs: [test, lint, junit-report, sarif-upload, docker-develop]
-    uses: MauroDataMapper/mauro-ci/.github/workflows/gradle-publish.yml@01c5abd2d6c0df162d9dd05f5ceca37814f7912b
+    uses: MauroDataMapper/mauro-ci/.github/workflows/gradle-publish.yml@d0e63ad3bec1c04d5b3eec43df0f43b79aae3714
     with:
       target: snapshot
       java-version: "17"
@@ -71,7 +71,7 @@ jobs:
   maven-central-publish:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: [test, lint, junit-report, sarif-upload]
-    uses: MauroDataMapper/mauro-ci/.github/workflows/gradle-publish.yml@01c5abd2d6c0df162d9dd05f5ceca37814f7912b
+    uses: MauroDataMapper/mauro-ci/.github/workflows/gradle-publish.yml@d0e63ad3bec1c04d5b3eec43df0f43b79aae3714
     with:
       target: maven-central
       java-version: "17"
@@ -84,7 +84,7 @@ jobs:
   dockerhub-publish:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: maven-central-publish
-    uses: MauroDataMapper/mauro-ci/.github/workflows/docker-publish.yml@01c5abd2d6c0df162d9dd05f5ceca37814f7912b
+    uses: MauroDataMapper/mauro-ci/.github/workflows/docker-publish.yml@d0e63ad3bec1c04d5b3eec43df0f43b79aae3714
     with:
       java-version: "17"
     secrets:
@@ -103,7 +103,7 @@ jobs:
       - maven-central-publish
       - dockerhub-publish
     permissions: {}
-    uses: MauroDataMapper/mauro-ci/.github/workflows/zulip-notify.yml@01c5abd2d6c0df162d9dd05f5ceca37814f7912b
+    uses: MauroDataMapper/mauro-ci/.github/workflows/zulip-notify.yml@d0e63ad3bec1c04d5b3eec43df0f43b79aae3714
     with:
       workflow-name: ${{ github.workflow }}
       build-result: >-
