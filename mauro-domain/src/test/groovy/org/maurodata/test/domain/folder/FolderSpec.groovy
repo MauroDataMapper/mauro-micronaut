@@ -11,7 +11,7 @@ import org.maurodata.domain.folder.Folder
 import org.maurodata.domain.model.Path
 import org.maurodata.domain.overlay.Overlay
 import org.maurodata.domain.overlay.OverlayAction
-import org.maurodata.domain.overlay.OverlayMatch
+import org.maurodata.domain.model.ModelPathMatch
 import org.maurodata.domain.overlay.OverlayRule
 import org.maurodata.domain.model.version.ModelVersion
 import org.maurodata.domain.terminology.Term
@@ -25,7 +25,7 @@ class FolderSpec extends Specification {
 
     private static final Folder testFolder = Folder.build(label: "$LABEL", author: "$AUTHOR", description: "$DESCRIPTION") {
         overlays = [new Overlay(label: 'Overlay in stock folder', overlayRules: [
-            new OverlayRule(match: new OverlayMatch(path: new Path('dm:Stock model$main')),
+            new OverlayRule(match: new ModelPathMatch(path: new Path('dm:Stock model$main')),
                 actions: [new OverlayAction(type: 'value', field: 'description', value: 'Stock model description', source: 'folder-fixture')])
         ])]
     }

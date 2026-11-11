@@ -1,14 +1,12 @@
 package org.maurodata.domain.overlay
 
 import com.fasterxml.jackson.annotation.JsonIgnore
+import com.fasterxml.jackson.annotation.JsonInclude
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
 import groovy.transform.MapConstructor
 import io.micronaut.core.annotation.Introspected
 import io.micronaut.data.annotation.MappedEntity
-import io.micronaut.data.annotation.MappedProperty
-import io.micronaut.data.annotation.TypeDef
-import io.micronaut.data.model.DataType
 import jakarta.persistence.PrePersist
 import jakarta.persistence.PreUpdate
 import jakarta.persistence.Transient
@@ -17,6 +15,7 @@ import org.maurodata.domain.diff.DiffBuilder
 import org.maurodata.domain.diff.DiffableItem
 import org.maurodata.domain.diff.ObjectDiff
 import org.maurodata.domain.model.Item
+import org.maurodata.domain.model.ModelPathMatch
 import org.maurodata.domain.model.Path
 import org.maurodata.visitor.DomainVisitor
 
@@ -26,9 +25,9 @@ import org.maurodata.visitor.DomainVisitor
 @MappedEntity(schema = 'core')
 @MapConstructor(includeSuperFields = true, includeSuperProperties = true, noArg = true)
 class Overlay extends Model implements DiffableItem<Overlay> {
-    @TypeDef(type = DataType.JSON)
-    @MappedProperty('overlay_rules')
-    List<OverlayRule> overlayRules = []
+    @Transient
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    List<OverlayRule> overlayRules
 
     @Override
     <T> T accept(DomainVisitor<T> visitor) { visitor.visitOverlay(this) }
@@ -53,12 +52,16 @@ class Overlay extends Model implements DiffableItem<Overlay> {
     @Override
     void copyInto(Item into) {
         super.copyInto(into)
-        ((Overlay) into).overlayRules = overlayRules.collect { OverlayRule overlayRule ->
-            new OverlayRule(id: UUID.randomUUID(), match: new OverlayMatch(path: overlayRule.match?.path ? new Path(overlayRule.match.path.toString()) : new Path(''),
-                                                    allowMultipleModels: overlayRule.match?.allowMultipleModels),
-                            actions: overlayRule.actions?.collect { OverlayAction action -> new OverlayAction(id: UUID.randomUUID(), type: action.type, field: action.field,
-                                namespace: action.namespace, key: action.key, value: action.value, policy: action.policy, source: action.source) } ?: [])
-        }
+        ((Overlay) into).overlayRules = overlayRules?.collect { OverlayRule overlayRule ->
+            new OverlayRule(id: overlayRule.id, overlayId: overlayRule.overlayId, order: overlayRule.order,
+                match: new ModelPathMatch(path: overlayRule.match?.path ? new Path(overlayRule.match.path.toString()) : new Path(''),
+                                                    allowMultipleModels: overlayRule.match?.allowMultipleModels,
+                                                    matchPathSuffix: overlayRule.match?.matchPathSuffix,
+                                                    matchFirstNodeIdentifierSuffix: overlayRule.match?.matchFirstNodeIdentifierSuffix),
+                actions: overlayRule.actions?.collect { OverlayAction action -> new OverlayAction(id: action.id, type: action.type, field: action.field,
+                    namespace: action.namespace, key: action.key, value: action.value, policy: action.policy, source: action.source,
+                    label: action.label, description: action.description) } ?: [])
+        } ?: null
     }
 
     @Override
@@ -72,6 +75,10 @@ class Overlay extends Model implements DiffableItem<Overlay> {
     @PreUpdate
     void prePersist() {
         super.prePersist()
+        overlayRules?.each { OverlayRule overlayRule ->
+            overlayRule.ensureId()
+            overlayRule.actions?.each { OverlayAction action -> action.ensureId() }
+        }
         if (!getModelWithVersion()) branchName = 'main'
     }
 

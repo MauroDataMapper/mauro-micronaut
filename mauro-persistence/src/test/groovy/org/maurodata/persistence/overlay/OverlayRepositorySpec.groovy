@@ -3,6 +3,9 @@ package org.maurodata.persistence.overlay
 import jakarta.inject.Inject
 import org.maurodata.domain.folder.Folder
 import org.maurodata.domain.overlay.Overlay
+import org.maurodata.domain.model.ModelPathMatch
+import org.maurodata.domain.overlay.OverlayRule
+import org.maurodata.domain.model.Path
 import org.maurodata.persistence.ContentsService
 import org.maurodata.persistence.ContainerizedTest
 import org.maurodata.persistence.cache.ModelCacheableRepository
@@ -22,6 +25,8 @@ class OverlayRepositorySpec extends Specification {
 
     @Inject
     ContentsService contentsService
+
+    @Inject OverlayRuleRepository overlayRuleRepository
 
     void 'repository identifies Overlay types and path prefixes'() {
         expect:
@@ -53,5 +58,23 @@ class OverlayRepositorySpec extends Specification {
         found.label == 'First overlay'
         firstFolderOverlays*.id as Set == ([firstOverlay.id, secondOverlay.id] as Set)
         overlaysInBothFolders*.id as Set == ([firstOverlay.id, secondOverlay.id, otherFolderOverlay.id] as Set)
+    }
+
+    void 'Folder content persists and reloads OverlayRules in backend order'() {
+        given:
+        Folder folder = folderRepository.save(new Folder(label: 'Overlay rule folder'))
+        Overlay overlay = new Overlay(label: 'Ordered rules', folder: folder, overlayRules: [
+            new OverlayRule(match: new ModelPathMatch(path: new Path('dc:First'))),
+            new OverlayRule(match: new ModelPathMatch(path: new Path('dc:Second')))
+        ])
+
+        when:
+        Overlay saved = contentsService.saveWithContent(overlay) as Overlay
+        Overlay loaded = contentsService.loadWithContent(overlayRepository.readById(saved.id)) as Overlay
+
+        then:
+        overlayRuleRepository.countByOverlayId(saved.id) == 2L
+        loaded.overlayRules.collect { it.match.path.toString() } == ['dc:First', 'dc:Second']
+        loaded.overlayRules*.order == [1000L, 2000L]
     }
 }

@@ -66,22 +66,30 @@ class Path {
      * A selector may omit model identifiers to match all versions; when it supplies one,
      * that node must have the same model identifier. A terminal selector attribute is
      * retained as the selected item property and does not affect the item-path comparison.
+     * With {@code suffix}, the selector is matched against the end of the root-relative path.
+     * The first selector node can optionally compare its identifier by suffix.
      */
-    boolean matchesRelativeTo(Path rootPath, Path selector, boolean exact = true) {
+    boolean matchesRelativeTo(Path rootPath, Path selector, boolean exact = true, boolean suffix = false,
+                              boolean firstNodeIdentifierSuffix = false) {
         if (rootPath == null || selector == null || nodes == null || rootPath.nodes == null || selector.nodes == null) return false
         if (nodes.size() < rootPath.nodes.size()) return false
         for (int i = 0; i < rootPath.nodes.size(); i++) {
             if (!matchesNode(rootPath.nodes[i], nodes[i], true)) return false
         }
         List<PathNode> relativeNodes = nodes.drop(rootPath.nodes.size())
+        if (suffix) {
+            if (relativeNodes.size() < selector.nodes.size()) return false
+            relativeNodes = relativeNodes.takeRight(selector.nodes.size())
+        }
         if (relativeNodes.size() < selector.nodes.size() || (exact && relativeNodes.size() != selector.nodes.size())) return false
         for (int i = 0; i < selector.nodes.size(); i++) {
             PathNode selectorNode = selector.nodes[i]
+            boolean suffixIdentifier = i == 0 && firstNodeIdentifierSuffix
             if (i == selector.nodes.size() - 1 && selectorNode.attribute) {
                 PathNode itemNode = new PathNode(prefix: selectorNode.prefix, identifier: selectorNode.identifier,
                     modelIdentifier: selectorNode.modelIdentifier)
-                if (!matchesNode(itemNode, relativeNodes[i], false)) return false
-            } else if (!matchesNode(selectorNode, relativeNodes[i], false)) return false
+                if (!matchesNode(itemNode, relativeNodes[i], false, suffixIdentifier)) return false
+            } else if (!matchesNode(selectorNode, relativeNodes[i], false, suffixIdentifier)) return false
         }
         true
     }
@@ -89,8 +97,12 @@ class Path {
     @Transient
     String getAttribute() { nodes ? nodes.last().attribute : null }
 
-    private static boolean matchesNode(PathNode expected, PathNode actual, boolean compareAbsentModelIdentifier) {
-        if (!expected.prefix?.equalsIgnoreCase(actual.prefix) || expected.identifier != actual.identifier) return false
+    private static boolean matchesNode(PathNode expected, PathNode actual, boolean compareAbsentModelIdentifier,
+                                       boolean identifierSuffix = false) {
+        if (!expected.prefix?.equalsIgnoreCase(actual.prefix)) return false
+        if (identifierSuffix) {
+            if (!actual.identifier?.endsWith(expected.identifier)) return false
+        } else if (expected.identifier != actual.identifier) return false
         if (expected.modelIdentifier != null && expected.modelIdentifier != actual.modelIdentifier) return false
         if (compareAbsentModelIdentifier && expected.modelIdentifier == null && actual.modelIdentifier != null) return false
         expected.attribute == null || expected.attribute == actual.attribute

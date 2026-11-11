@@ -33,4 +33,50 @@ class PathRelativeMatchingTest extends Specification {
         !candidate.matchesRelativeTo(root, selector)
         candidate.matchesRelativeTo(root, selector, false)
     }
+
+    void 'matches selectors with explicit first-node suffix matching across models'() {
+        given:
+        Path root = new Path('vf:Silver$1.0.0')
+        Path selector = new Path('dc:Order_Text|de:Description@description')
+
+        expect:
+        new Path('vf:Silver$1.0.0|fo:OUHFT|dm:Ouh_Cerner|dc:Ouh_Cerner_Order_Text|de:Description@description')
+            .matchesRelativeTo(root, selector, true, true, true)
+        !new Path('vf:Silver$1.0.0|fo:RBHFT|dm:Rbhft_Cerner|dc:Rbhft_Cerner_Other|de:Description@description')
+            .matchesRelativeTo(root, selector, true, true, true)
+    }
+
+    void 'a leading asterisk is a literal identifier character, not a suffix selector'() {
+        given:
+        Path root = new Path('vf:Silver$1.0.0')
+        Path candidate = new Path('vf:Silver$1.0.0|dc:Ouh_Order')
+
+        expect:
+        !candidate.matchesRelativeTo(root, new Path('dc:*Order'))
+        candidate.matchesRelativeTo(root, new Path('dc:Order'), true, false, true)
+    }
+
+    void 'suffix matching is explicit and applies only to the first selector node'() {
+        given:
+        Path root = new Path('vf:Silver$1.0.0')
+        Path selector = new Path('fo:HFT|dc:Ouh_Order|de:Accept_Size')
+
+        expect:
+        new Path('vf:Silver$1.0.0|fo:OUHFT|dc:Ouh_Order|de:Accept_Size')
+            .matchesRelativeTo(root, selector, true, false, true)
+        !new Path('vf:Silver$1.0.0|fo:OUHFT|dc:Ouh_Order|de:Accept_SizeExtra')
+            .matchesRelativeTo(root, selector, true, false, true)
+    }
+
+    void 'whole path suffix matching remains independent from first node suffix matching'() {
+        given:
+        Path root = new Path('vf:Silver$1.0.0')
+        Path selector = new Path('dc:Order|de:Accept_Size')
+
+        expect:
+        new Path('vf:Silver$1.0.0|fo:OUHFT|dm:Warehouse|dc:Ouh_Order|de:Accept_Size')
+            .matchesRelativeTo(root, selector, true, true, true)
+        !new Path('vf:Silver$1.0.0|fo:OUHFT|dm:Warehouse|dc:Ouh_Order|de:Accept_Size')
+            .matchesRelativeTo(root, selector, true, false, true)
+    }
 }

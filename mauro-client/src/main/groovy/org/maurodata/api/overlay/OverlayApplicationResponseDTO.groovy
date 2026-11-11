@@ -11,4 +11,9 @@ class OverlayApplicationResponseDTO {
     List<UUID> overlayIds = []
     int matchedActions
     int appliedActions
+    boolean dryRun
+    int wouldApplyActions
+    int skippedActions
+    OverlayApplicationMatchSampleDTO sampleMatch
+    List<OverlayAnnotationActionResultDTO> annotationActionResults = []
 }

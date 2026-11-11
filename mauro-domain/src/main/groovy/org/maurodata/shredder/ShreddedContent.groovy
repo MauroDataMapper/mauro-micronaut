@@ -236,7 +236,7 @@ class ShreddedContent {
             if(allItems[dataElement.dataClass.id]) {
                 ((DataClass) allItems[dataElement.dataClass.id]).dataElements.add(dataElement)
             }
-            if(allItems[dataElement.dataType.id]) {
+            if(dataElement.dataType && allItems[dataElement.dataType.id]) {
                 dataElement.dataType = ((DataType) allItems[dataElement.dataType.id])
             }
         }

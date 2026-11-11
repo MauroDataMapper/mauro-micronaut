@@ -4,8 +4,11 @@ import io.micronaut.http.annotation.Body
 import io.micronaut.http.annotation.Post
 import org.maurodata.api.MauroApi
 import org.maurodata.api.Paths
+import org.maurodata.api.datamodel.DataModelOverlayRequestDTO
 import org.maurodata.api.model.ModelApi
+import org.maurodata.api.model.ModelSuccessorRequestDTO
 import org.maurodata.domain.overlay.Overlay
+import org.maurodata.domain.overlay.OverlayRule
 import org.maurodata.domain.model.version.CreateNewVersionData
 import org.maurodata.domain.model.version.FinaliseData
 import org.maurodata.api.model.PermissionsDTO
@@ -25,6 +28,12 @@ interface OverlayApi extends ModelApi<Overlay> {
 
     @Post(Paths.FOLDER_OVERLAYS_ROUTE)
     Overlay create(UUID folderId, @Body @NonNull Overlay overlay)
+
+    @Post(Paths.OVERLAY_FROM_DATA_MODEL)
+    Overlay generateOverlayFromDataModel(UUID id, @Body DataModelOverlayRequestDTO request)
+
+    @Post(Paths.OVERLAY_SUCCESSOR)
+    Overlay createSuccessor(UUID id, @Body ModelSuccessorRequestDTO request)
 
     @Put(Paths.OVERLAYS_ID_ROUTE)
     Overlay update(UUID id, @Body @NonNull Overlay overlay)
@@ -73,4 +82,22 @@ interface OverlayApi extends ModelApi<Overlay> {
 
     @Post(Paths.OVERLAYS_MATCHES)
     List<OverlayMatchResultDTO> matches(@Body OverlayMatchRequestDTO request)
+
+    @Get(Paths.OVERLAY_RULES_PAGED)
+    ListResponse<OverlayRule> listRules(UUID overlayId, @Nullable PaginationParams params)
+
+    @Get(Paths.OVERLAY_RULE)
+    OverlayRule showRule(UUID overlayId, UUID ruleId)
+
+    @Post(Paths.OVERLAY_RULES)
+    OverlayRule createRule(UUID overlayId, @Body @NonNull OverlayRule rule)
+
+    @Put(Paths.OVERLAY_RULE)
+    OverlayRule updateRule(UUID overlayId, UUID ruleId, @Body @NonNull OverlayRule rule)
+
+    @Delete(Paths.OVERLAY_RULE)
+    HttpResponse deleteRule(UUID overlayId, UUID ruleId)
+
+    @Put(Paths.OVERLAY_RULE_MOVE)
+    OverlayRule moveRule(UUID overlayId, UUID ruleId, @Body @NonNull OverlayRuleMoveDTO move)
 }

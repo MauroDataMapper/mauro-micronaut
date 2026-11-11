@@ -6,6 +6,7 @@ import org.maurodata.ErrorHandler
 import org.maurodata.api.Paths
 import org.maurodata.api.classifier.ClassificationSchemeApi
 import org.maurodata.api.model.PermissionsDTO
+import org.maurodata.api.model.ModelSuccessorRequestDTO
 import org.maurodata.audit.Audit
 import org.maurodata.controller.model.ModelController
 import org.maurodata.domain.classifier.ClassificationScheme
@@ -49,6 +50,15 @@ import org.reactivestreams.Publisher
 @CompileStatic
 @Secured(SecurityRule.IS_ANONYMOUS)
 class ClassificationSchemeController extends ModelController<ClassificationScheme> implements ClassificationSchemeApi {
+
+    @Audit
+    @Transactional
+    @Operation(operationId = 'createClassificationSchemeSuccessor', summary = 'Create a ClassificationScheme successor', description = 'Links an existing draft ClassificationScheme as a version successor.')
+    @Post(Paths.CLASSIFICATION_SCHEME_SUCCESSOR)
+    @Override
+    ClassificationScheme createSuccessor(UUID id, @Body @NonNull ModelSuccessorRequestDTO request) {
+        super.createSuccessor(id, request) as ClassificationScheme
+    }
 
     ClassificationSchemeController(ModelCacheableRepository.ClassificationSchemeCacheableRepository classificationSchemeCacheableRepository,
                                    FolderCacheableRepository folderRepository) {

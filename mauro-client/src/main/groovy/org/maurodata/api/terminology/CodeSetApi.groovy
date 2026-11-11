@@ -4,6 +4,7 @@ import org.maurodata.api.MauroApi
 import org.maurodata.api.Paths
 
 import org.maurodata.api.model.ModelApi
+import org.maurodata.api.model.ModelSuccessorRequestDTO
 import org.maurodata.domain.diff.ObjectDiff
 import org.maurodata.domain.model.version.CreateNewVersionData
 import org.maurodata.domain.model.version.FinaliseData
@@ -24,6 +25,9 @@ import io.micronaut.http.client.multipart.MultipartBody
 
 @MauroApi
 interface CodeSetApi extends ModelApi<CodeSet> {
+
+    @Post(Paths.CODE_SET_SUCCESSOR)
+    CodeSet createSuccessor(UUID id, @Body ModelSuccessorRequestDTO request)
 
     @Get(value = Paths.CODE_SET_ID)
     CodeSet show(UUID id)

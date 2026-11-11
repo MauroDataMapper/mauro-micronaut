@@ -15,7 +15,7 @@ import org.maurodata.domain.folder.Folder
 import org.maurodata.domain.model.Path
 import org.maurodata.domain.overlay.Overlay
 import org.maurodata.domain.overlay.OverlayAction
-import org.maurodata.domain.overlay.OverlayMatch
+import org.maurodata.domain.model.ModelPathMatch
 import org.maurodata.domain.overlay.OverlayRule
 import org.maurodata.domain.terminology.CodeSet
 import org.maurodata.domain.terminology.Term
@@ -64,7 +64,7 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
         folderId = folderApi.create(new Folder(label: 'Folder top level')).id
         dataModelId = dataModelApi.create(folderId, new DataModel(label: 'Test data model')).id
         Overlay createdOverlay = overlayApi.create(folderId, new Overlay(label: 'Test folder overlay', overlayRules: [
-            new OverlayRule(match: new OverlayMatch(path: new Path('dm:Test data model$main')),
+            new OverlayRule(match: new ModelPathMatch(path: new Path('dm:Test data model$main')),
                 actions: [new OverlayAction(type: 'value', field: 'description', value: 'Enriched model description', source: 'folder-import-export-test')])
             ]))
         assert createdOverlay.overlayRules[0].match.path.toString() == 'dm:Test data model$main'
@@ -264,8 +264,9 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
         importedOverlays.items.size() == 1
         importedOverlays.items[0].id != overlayId
         importedOverlays.items[0].label == 'Test folder overlay'
-        importedOverlays.items[0].overlayRules[0].match.path.toString() == 'dm:Test data model$main'
-        importedOverlays.items[0].overlayRules[0].actions[0].value == 'Enriched model description'
+        List<OverlayRule> importedOverlayRules = overlayApi.listRules(importedOverlays.items[0].id, null).items
+        importedOverlayRules[0].match.path.toString() == 'dm:Test data model$main'
+        importedOverlayRules[0].actions[0].value == 'Enriched model description'
 
         when:
         ListResponse<DataModel> importedDataModelListResponse = dataModelApi.list(importedFolderId)

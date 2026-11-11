@@ -12,7 +12,10 @@ import org.maurodata.api.overlay.OverlayApplicationResponseDTO
 import org.maurodata.api.overlay.OverlayMatchRequestDTO
 import org.maurodata.api.overlay.OverlayMatchResultDTO
 import org.maurodata.domain.datamodel.DataClass
+import org.maurodata.domain.datamodel.DataElement
 import org.maurodata.domain.datamodel.DataModel
+import org.maurodata.domain.datamodel.DataType
+import org.maurodata.domain.facet.Annotation
 import org.maurodata.domain.facet.Metadata
 import org.maurodata.domain.folder.Folder
 import org.maurodata.domain.model.Path
@@ -22,7 +25,7 @@ import org.maurodata.domain.model.version.ModelVersion
 import org.maurodata.domain.model.version.VersionChangeType
 import org.maurodata.domain.overlay.Overlay
 import org.maurodata.domain.overlay.OverlayAction
-import org.maurodata.domain.overlay.OverlayMatch
+import org.maurodata.domain.model.ModelPathMatch
 import org.maurodata.domain.overlay.OverlayRule
 import org.maurodata.persistence.ContainerizedTest
 import org.maurodata.testing.CommonDataSpec
@@ -100,12 +103,17 @@ class OverlayIntegrationSpec extends CommonDataSpec {
         Folder folder = folderApi.create(new Folder(label: 'Overlay application folder'))
         DataModel model = dataModelApi.create(folder.id, new DataModel(label: 'Customer model'))
         DataClass dataClass = dataClassApi.create(model.id, new DataClass(label: 'Customer'))
+        DataType dataType = dataTypeApi.create(model.id, dataTypesPayload())
+        DataElement dataElement = dataElementApi.create(model.id, dataClass.id, dataElementPayload('Name', dataType))
         Overlay overlay = overlayApi.create(folder.id, new Overlay(label: 'Customer enrichment', overlayRules: [
-            new OverlayRule(match: new OverlayMatch(path: new Path('dc:Customer')),
+            new OverlayRule(match: new ModelPathMatch(path: new Path('dc:Customer')),
                 actions: [
                     new OverlayAction(type: 'value', field: 'description', value: 'Customer information', source: 'business-glossary'),
-                    new OverlayAction(type: 'metadata', namespace: 'test.overlay', key: 'reviewed', value: 'true', source: 'business-glossary')
-                ])
+                    new OverlayAction(type: 'metadata', namespace: 'test.overlay', key: 'reviewed', value: 'true', source: 'business-glossary'),
+                    new OverlayAction(type: 'annotation', label: 'Glossary note', description: 'Reviewed against the customer glossary.', source: 'business-glossary')
+                ]),
+            new OverlayRule(match: new ModelPathMatch(path: new Path('dc:Customer|de:Name')),
+                actions: [new OverlayAction(type: 'annotation', label: 'Column note', description: 'The customer name column.')])
         ]))
 
         when:
@@ -117,6 +125,8 @@ class OverlayIntegrationSpec extends CommonDataSpec {
         OverlayApplicationResponseDTO reapplied = overlayApi.apply(new OverlayApplicationDTO(
             rootDomainType: 'DataModel', rootId: model.id, overlayIds: [overlay.id]))
         DataClass enriched = dataClassApi.show(model.id, dataClass.id)
+        ListResponse<Annotation> annotations = annotationApi.list('DataClass', dataClass.id)
+        ListResponse<Annotation> columnAnnotations = annotationApi.list('DataElement', dataElement.id)
 
         then:
         matches.size() == 1
@@ -125,12 +135,53 @@ class OverlayIntegrationSpec extends CommonDataSpec {
         matches[0].overlayActionIds == overlay.overlayRules[0].actions*.id
         applied.rootId == model.id
         applied.overlayIds == [overlay.id]
-        applied.matchedActions == 2
-        applied.appliedActions == 2
-        reapplied.appliedActions == 2
+        applied.matchedActions == 4
+        applied.appliedActions == 4
+        applied.sampleMatch.overlayId == overlay.id
+        applied.sampleMatch.overlayRuleId == overlay.overlayRules[0].id
+        applied.sampleMatch.itemId == dataClass.id
+        applied.sampleMatch.itemPath.endsWith('dc:Customer')
+        applied.sampleMatch.selectorPath == 'dc:Customer'
+        applied.sampleMatch.actionIds == overlay.overlayRules[0].actions*.id
+        applied.sampleMatch.actions.find { it.field == 'description' }.valuePreview == 'Customer information'
+        applied.sampleMatch.actions.find { it.key == 'reviewed' }.valuePreview == 'true'
+        applied.sampleMatch.actions.find { it.type == 'annotation' }.label == 'Glossary note'
+        applied.sampleMatch.actions.find { it.type == 'annotation' }.descriptionPreview == 'Reviewed against the customer glossary.'
+        applied.annotationActionResults.size() == 2
+        applied.annotationActionResults.find { it.label == 'Glossary note' }.matchedCount == 1
+        applied.annotationActionResults.find { it.label == 'Glossary note' }.appliedCount == 1
+        applied.annotationActionResults.find { it.label == 'Glossary note' }.matchedPaths == [dataClass.path.toString()]
+        applied.annotationActionResults.find { it.label == 'Column note' }.matchedCount == 1
+        applied.annotationActionResults.find { it.label == 'Column note' }.matchedPaths == [dataElement.path.toString()]
+        reapplied.appliedActions == 4
+        reapplied.annotationActionResults.every { it.matchedCount == 1 && it.appliedCount == 1 }
         enriched.description == 'Customer information'
         enriched.metadata.any { Metadata metadata -> metadata.namespace == 'test.overlay' && metadata.key == 'reviewed' && metadata.value == 'true' }
         enriched.metadata.count { Metadata metadata -> metadata.namespace == 'org.maurodata.overlay' && metadata.key == 'source' && metadata.value == 'business-glossary' } == 1
+        annotations.items.count { Annotation annotation -> annotation.label == 'Glossary note' && annotation.description == 'Reviewed against the customer glossary.' } == 1
+        columnAnnotations.items.count { Annotation annotation -> annotation.label == 'Column note' && annotation.description == 'The customer name column.' } == 1
+    }
+
+    void 'OverlayRules are paged by the database and can be moved before another rule'() {
+        given:
+        Folder folder = folderApi.create(new Folder(label: 'Overlay rule endpoint folder'))
+        Overlay overlay = overlayApi.create(folder.id, structuralOverlayPayload())
+        ListResponse<OverlayRule> firstPage = overlayApi.listRules(overlay.id, new PaginationParams(max: 1))
+        List<OverlayRule> allRules = overlayApi.listRules(overlay.id, new PaginationParams(max: 0)).items
+
+        when:
+        OverlayRule moved = overlayApi.moveRule(overlay.id, allRules[1].id,
+            new org.maurodata.api.overlay.OverlayRuleMoveDTO(beforeRuleId: allRules[0].id))
+        List<OverlayRule> reordered = overlayApi.listRules(overlay.id, new PaginationParams(max: 0)).items
+
+        then:
+        firstPage.count == 2
+        firstPage.items.size() == 1
+        firstPage.items[0].id == allRules[0].id
+        firstPage.items[0].order < allRules[1].order
+        moved.id == allRules[1].id
+        reordered*.id == [allRules[1].id, allRules[0].id]
+        reordered*.order == [1000L, 2000L]
     }
 
     void 'a UI can update a matching OverlayRule or add an OverlayRule for a known item path'() {
@@ -140,7 +191,7 @@ class OverlayIntegrationSpec extends CommonDataSpec {
         DataClass customer = dataClassApi.create(model.id, new DataClass(label: 'Customer'))
         DataClass supplier = dataClassApi.create(model.id, new DataClass(label: 'Supplier'))
         Overlay created = overlayApi.create(folder.id, new Overlay(label: 'Business descriptions', overlayRules: [
-            new OverlayRule(match: new OverlayMatch(path: new Path('dc:Customer')),
+            new OverlayRule(match: new ModelPathMatch(path: new Path('dc:Customer')),
                 actions: [new OverlayAction(type: 'value', field: 'description', value: 'Initial customer description', source: 'business-glossary')])
         ]))
 
@@ -170,7 +221,7 @@ class OverlayIntegrationSpec extends CommonDataSpec {
         List<OverlayMatchResultDTO> supplierMatches = overlayApi.matches(new OverlayMatchRequestDTO(
             rootDomainType: 'DataModel', rootId: model.id, itemDomainType: 'DataClass', itemId: supplier.id,
             overlayIds: [overlay.id]))
-        OverlayRule supplierOverlayRule = new OverlayRule(match: new OverlayMatch(path: new Path('dc:Supplier')),
+        OverlayRule supplierOverlayRule = new OverlayRule(match: new ModelPathMatch(path: new Path('dc:Supplier')),
             actions: [new OverlayAction(type: 'value', field: 'description', value: 'Approved supplier description', source: 'business-glossary')])
         Overlay overlayAfterSupplierOverlayRuleAddition = overlayApi.update(overlay.id, new Overlay(
             label: overlayBeforeAddingRule.label, description: overlayBeforeAddingRule.description,
@@ -261,13 +312,14 @@ class OverlayIntegrationSpec extends CommonDataSpec {
         Folder branchFolder = versionedFolderApi.createNewBranchModelVersion(finalisedFolder.id,
             new CreateNewVersionData(branchName: 'review'))
         ListResponse<Overlay> branchOverlays = overlayApi.list(branchFolder.id)
+        Overlay branchOverlay = branchOverlays.items[0]
+        branchOverlay.overlayRules = overlayApi.listRules(branchOverlay.id, new PaginationParams(max: 0)).items
 
         then: 'the folder owns the new version and its Overlay contents are independently cloned'
         finalisedFolder.finalised
         finalisedFolder.modelVersion.toString() == '1.0.0'
         branchFolder.branchName == 'review'
         branchOverlays.items.size() == 1
-        Overlay branchOverlay = branchOverlays.items[0]
         branchOverlay.id != original.id
         branchOverlay.branchName == null
         branchOverlay.modelVersion == null
@@ -285,14 +337,14 @@ class OverlayIntegrationSpec extends CommonDataSpec {
         DataModel model = dataModelApi.create(folder.id, new DataModel(label: 'Sequential model'))
         DataClass dataClass = dataClassApi.create(model.id, new DataClass(label: 'Customer'))
         Overlay first = overlayApi.create(folder.id, new Overlay(label: 'Glossary overlay', overlayRules: [
-            new OverlayRule(match: new OverlayMatch(path: new Path('dc:Customer@description')),
+            new OverlayRule(match: new ModelPathMatch(path: new Path('dc:Customer@description')),
                 actions: [
                     new OverlayAction(type: 'value', value: 'Glossary description', source: 'business-glossary'),
                     new OverlayAction(type: 'metadata', namespace: 'test.overlay', key: 'terms', value: 'customer,person', policy: 'add', source: 'business-glossary')
                 ])
         ]))
         Overlay second = overlayApi.create(folder.id, new Overlay(label: 'Curation overlay', overlayRules: [
-            new OverlayRule(match: new OverlayMatch(path: new Path('dc:Customer')),
+            new OverlayRule(match: new ModelPathMatch(path: new Path('dc:Customer')),
                 actions: [
                     new OverlayAction(type: 'value', field: 'description', value: 'Curated description', source: 'curation-team'),
                     new OverlayAction(type: 'metadata', namespace: 'test.overlay', key: 'terms', value: 'person,client', policy: 'add', source: 'curation-team')
@@ -327,7 +379,7 @@ class OverlayIntegrationSpec extends CommonDataSpec {
         DataClass dataClass = dataClassApi.create(model.id, new DataClass(label: 'Customer', description: 'Existing description', minMultiplicity: 0))
         metadataApi.create('DataClass', dataClass.id, new Metadata(namespace: 'test.overlay', key: 'status', value: 'reviewed'))
         Overlay overlay = overlayApi.create(folder.id, new Overlay(label: 'Conditional overlay', overlayRules: [
-            new OverlayRule(match: new OverlayMatch(path: new Path('dc:Customer')),
+            new OverlayRule(match: new ModelPathMatch(path: new Path('dc:Customer')),
                 actions: [
                     new OverlayAction(type: 'value', field: 'description', value: 'Replacement description', policy: 'overwriteIfEmpty', source: 'description-source'),
                     new OverlayAction(type: 'value', field: 'minMultiplicity', value: 5, policy: 'overwriteIfEmpty', source: 'multiplicity-source'),
@@ -350,16 +402,13 @@ class OverlayIntegrationSpec extends CommonDataSpec {
         !unchanged.metadata.any { it.namespace == 'org.maurodata.overlay' && it.key == 'source' }
     }
 
-    void 'a path without model identifiers errors on multiple model versions unless explicitly allowed'() {
+    void 'a path without model identifiers errors across multiple Models unless explicitly allowed'() {
         given:
         Folder folder = folderApi.create(new Folder(label: 'Overlay ambiguity folder'))
-        DataModel mainModel = dataModelApi.create(folder.id, new DataModel(label: 'Ambiguous model'))
+        DataModel mainModel = dataModelApi.create(folder.id, new DataModel(label: 'Ambiguous model one'))
         DataClass mainClass = dataClassApi.create(mainModel.id, new DataClass(label: 'Customer'))
-        DataModel finalisedModel = dataModelApi.finalise(mainModel.id,
-            new FinaliseData(version: ModelVersion.from('1.0.0')))
-        DataModel reviewModel = dataModelApi.createNewBranchModelVersion(finalisedModel.id,
-            new CreateNewVersionData(branchName: 'review'))
-        DataClass reviewClass = dataClassApi.list(reviewModel.id).items.find { it.label == 'Customer' }
+        DataModel secondModel = dataModelApi.create(folder.id, new DataModel(label: 'Ambiguous model two'))
+        DataClass secondClass = dataClassApi.create(secondModel.id, new DataClass(label: 'Customer'))
         Overlay overlay = overlayApi.create(folder.id, ambiguityOverlay(false))
 
         when:
@@ -369,9 +418,9 @@ class OverlayIntegrationSpec extends CommonDataSpec {
         HttpClientResponseException ambiguity = thrown()
         ambiguity.status == HttpStatus.CONFLICT
         dataClassApi.show(mainModel.id, mainClass.id).description == null
-        dataClassApi.show(reviewModel.id, reviewClass.id).description == null
+        dataClassApi.show(secondModel.id, secondClass.id).description == null
 
-        when: 'the match explicitly permits every matching model branch/version'
+        when: 'the match explicitly permits every matching Model'
         overlayApi.update(overlay.id, ambiguityOverlay(true))
         OverlayApplicationResponseDTO applied = overlayApi.apply(new OverlayApplicationDTO(
             rootDomainType: 'Folder', rootId: folder.id, overlayIds: [overlay.id]))
@@ -380,24 +429,103 @@ class OverlayIntegrationSpec extends CommonDataSpec {
         applied.matchedActions == 2
         applied.appliedActions == 2
         dataClassApi.show(mainModel.id, mainClass.id).description == 'Applied to every version'
-        dataClassApi.show(reviewModel.id, reviewClass.id).description == 'Applied to every version'
+        dataClassApi.show(secondModel.id, secondClass.id).description == 'Applied to every version'
+    }
+
+    void 'suffix selectors apply table and column descriptions across different models in a Folder'() {
+        given:
+        Folder folder = folderApi.create(new Folder(label: 'Cross-model Overlay folder'))
+        DataModel ouhModel = dataModelApi.create(folder.id, new DataModel(label: 'Ouh_Cerner'))
+        DataModel rbhModel = dataModelApi.create(folder.id, new DataModel(label: 'Rbhft_Cerner'))
+        DataClass ouhTable = dataClassApi.create(ouhModel.id, new DataClass(label: 'Ouh_Cerner_Order_Text'))
+        DataClass rbhTable = dataClassApi.create(rbhModel.id, new DataClass(label: 'Rbhft_Cerner_Order_Text'))
+        DataType ouhType = dataTypeApi.create(ouhModel.id, dataTypesPayload())
+        DataType rbhType = dataTypeApi.create(rbhModel.id, dataTypesPayload())
+        DataElement ouhColumn = dataElementApi.create(ouhModel.id, ouhTable.id, dataElementPayload('Catalog_Cd', ouhType))
+        DataElement rbhColumn = dataElementApi.create(rbhModel.id, rbhTable.id, dataElementPayload('Catalog_Cd', rbhType))
+        Overlay overlay = overlayApi.create(folder.id, new Overlay(label: 'Model-independent descriptions', overlayRules: [
+            new OverlayRule(match: new ModelPathMatch(path: new Path('dc:Order_Text@description'),
+                matchPathSuffix: true, matchFirstNodeIdentifierSuffix: true, allowMultipleModels: true),
+                actions: [new OverlayAction(type: 'value', field: 'description', value: 'Shared table description')]),
+            new OverlayRule(match: new ModelPathMatch(path: new Path('dc:Order_Text|de:Catalog_Cd'),
+                matchPathSuffix: true, matchFirstNodeIdentifierSuffix: true, allowMultipleModels: true),
+                actions: [new OverlayAction(type: 'value', field: 'description', value: 'Shared column description')])
+        ]))
+
+        when:
+        OverlayApplicationResponseDTO applied = overlayApi.apply(new OverlayApplicationDTO(
+            rootDomainType: 'Folder', rootId: folder.id, overlayIds: [overlay.id]))
+
+        then:
+        applied.matchedActions == 4
+        applied.appliedActions == 4
+        dataClassApi.show(ouhModel.id, ouhTable.id).description == 'Shared table description'
+        dataClassApi.show(rbhModel.id, rbhTable.id).description == 'Shared table description'
+        dataElementApi.show(ouhModel.id, ouhTable.id, ouhColumn.id).description == 'Shared column description'
+        dataElementApi.show(rbhModel.id, rbhTable.id, rbhColumn.id).description == 'Shared column description'
+    }
+
+    void 'selectors outside the model-item SQL fast path use the generic matcher'() {
+        given:
+        Folder folder = folderApi.create(new Folder(label: 'Generic Overlay matcher folder'))
+        DataModel model = dataModelApi.create(folder.id, new DataModel(label: 'Generic matcher model'))
+        DataType dataType = dataTypeApi.create(model.id, dataTypesPayload())
+        Overlay overlay = overlayApi.create(folder.id, new Overlay(label: 'Generic matcher Overlay', overlayRules: [
+            new OverlayRule(match: new ModelPathMatch(path: new Path("dt:${dataType.label}")),
+                actions: [new OverlayAction(type: 'value', field: 'description', value: 'Generic matcher result')])
+        ]))
+
+        when:
+        OverlayApplicationResponseDTO response = overlayApi.apply(new OverlayApplicationDTO(
+            rootDomainType: 'DataModel', rootId: model.id, overlayIds: [overlay.id]))
+
+        then:
+        response.matchedActions == 1
+        response.appliedActions == 1
+        dataTypeApi.show(model.id, dataType.id).description == 'Generic matcher result'
+    }
+
+    void 'applying an Overlay to a finalised VersionedFolder is denied'() {
+        given:
+        Folder parentFolder = folderApi.create(new Folder(label: 'Finalised Overlay root parent'))
+        Folder draftVersionedFolder = versionedFolderApi.create(parentFolder.id,
+            new Folder(label: 'Finalised Overlay root'))
+        DataModel model = dataModelApi.create(draftVersionedFolder.id, new DataModel(label: 'Finalised Overlay model'))
+        DataClass dataClass = dataClassApi.create(model.id, new DataClass(label: 'Customer'))
+        Overlay overlay = overlayApi.create(parentFolder.id, new Overlay(label: 'Finalised root test', overlayRules: [
+            new OverlayRule(match: new ModelPathMatch(path: new Path('dm:Finalised Overlay model|dc:Customer')),
+                actions: [new OverlayAction(type: 'value', field: 'description', value: 'Must not be applied')])
+        ]))
+        Folder finalisedFolder = versionedFolderApi.finalise(draftVersionedFolder.id,
+            new FinaliseData(version: ModelVersion.from('1.0.0'), versionChangeType: VersionChangeType.MAJOR))
+        DataModel finalisedModel = dataModelApi.list(finalisedFolder.id).items.find { it.label == model.label }
+        DataClass finalisedClass = dataClassApi.list(finalisedModel.id).items.find { it.label == dataClass.label }
+
+        when:
+        overlayApi.apply(new OverlayApplicationDTO(rootDomainType: 'VersionedFolder', rootId: finalisedFolder.id,
+            overlayIds: [overlay.id]))
+
+        then:
+        HttpClientResponseException denied = thrown()
+        denied.status == HttpStatus.UNPROCESSABLE_ENTITY
+        dataClassApi.show(finalisedModel.id, finalisedClass.id).description == null
     }
 
     private static Overlay overlay(String label) {
         new Overlay(label: label, overlayRules: [
-            new OverlayRule(match: new OverlayMatch(path: new Path('')),
+            new OverlayRule(match: new ModelPathMatch(path: new Path('')),
                 actions: [new OverlayAction(type: 'value', field: 'description', value: 'Customer information', source: 'customer-glossary')])
         ])
     }
 
     private static Overlay structuralOverlayPayload() {
         new Overlay(label: 'Structural overlay', description: 'All the OverlayRules', overlayRules: [
-            new OverlayRule(match: new OverlayMatch(path: new Path('dc:Customer@description'), allowMultipleModels: true),
+            new OverlayRule(match: new ModelPathMatch(path: new Path('dc:Customer@description'), allowMultipleModels: true),
                 actions: [
                     new OverlayAction(type: 'value', value: 'Original description', source: 'glossary', policy: 'overwriteIfEmpty'),
                     new OverlayAction(type: 'metadata', namespace: 'org.example', key: 'purpose', value: 'business terms', source: 'glossary', policy: 'add')
                 ]),
-            new OverlayRule(match: new OverlayMatch(path: new Path('dc:Customer')),
+            new OverlayRule(match: new ModelPathMatch(path: new Path('dc:Customer')),
                 actions: [new OverlayAction(type: 'metadata', namespace: 'org.example', key: 'status', value: 'reviewed', source: 'review-board')])
         ])
     }
@@ -414,7 +542,8 @@ class OverlayIntegrationSpec extends CommonDataSpec {
 
     private static Overlay ambiguityOverlay(boolean allowMultipleModels) {
         new Overlay(label: 'Ambiguous selector', overlayRules: [
-            new OverlayRule(match: new OverlayMatch(path: new Path('dm:Ambiguous model|dc:Customer'), allowMultipleModels: allowMultipleModels),
+            new OverlayRule(match: new ModelPathMatch(path: new Path('dc:Customer'), allowMultipleModels: allowMultipleModels,
+                matchPathSuffix: true),
                 actions: [new OverlayAction(type: 'value', field: 'description', value: 'Applied to every version', source: 'test-glossary')])
         ])
     }
