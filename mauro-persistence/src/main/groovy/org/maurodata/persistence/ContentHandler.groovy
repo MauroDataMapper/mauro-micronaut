@@ -18,6 +18,7 @@ import org.maurodata.domain.facet.Annotation
 import org.maurodata.domain.folder.Folder
 import org.maurodata.domain.model.Item
 import org.maurodata.domain.terminology.CodeSet
+import org.maurodata.domain.overlay.OverlayRule
 import org.maurodata.domain.terminology.Term
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository
 import org.maurodata.persistence.cache.AdministeredItemCacheableRepository.DataClassCacheableRepository
@@ -41,6 +42,7 @@ import org.maurodata.persistence.cache.ModelCacheableRepository.FolderCacheableR
 import org.maurodata.persistence.cache.ModelCacheableRepository.TerminologyCacheableRepository
 import org.maurodata.persistence.cache.ModelCacheableRepository.DataModelCacheableRepository
 import org.maurodata.persistence.datamodel.dto.DataClassExtensionDTO
+import org.maurodata.persistence.overlay.OverlayRuleRepository
 
 import java.time.Duration
 import java.time.Instant
@@ -57,6 +59,8 @@ class ContentHandler {
 
     @Inject FolderCacheableRepository folderCacheableRepository
     @Inject ModelCacheableRepository.ClassificationSchemeCacheableRepository classificationSchemeCacheableRepository
+    @Inject ModelCacheableRepository.OverlayCacheableRepository overlayCacheableRepository
+    @Inject OverlayRuleRepository overlayRuleRepository
     @Inject AdministeredItemCacheableRepository.ClassifierCacheableRepository classifierCacheableRepository
     @Inject TerminologyCacheableRepository terminologyCacheableRepository
     @Inject TermCacheableRepository termCacheableRepository
@@ -96,6 +100,18 @@ class ContentHandler {
         Instant start = Instant.now()
         saveHierarchyByBatch(shreddedContent.folders, folderCacheableRepository)
         saveAllByBatch(shreddedContent.classificationSchemes, classificationSchemeCacheableRepository)
+        saveAllByBatch(shreddedContent.overlays, overlayCacheableRepository)
+        shreddedContent.overlays.each { overlay ->
+            overlayRuleRepository.lockOverlay(overlay.id)
+            overlayRuleRepository.deleteAllForOverlay(overlay.id)
+            List<OverlayRule> rules = overlay.overlayRules ?: []
+            rules.eachWithIndex { OverlayRule rule, int index ->
+                rule.overlayId = overlay.id
+                rule.order = (index + 1L) * 1000L
+                rule.prepareForPersistence()
+            }
+            if (rules) overlayRuleRepository.saveAll(rules)
+        }
         saveAllByBatch(shreddedContent.classifiers, classifierCacheableRepository)
         saveAllByBatch(shreddedContent.terminologies, terminologyCacheableRepository)
         saveAllByBatch(shreddedContent.terms, termCacheableRepository)
@@ -199,6 +215,7 @@ class ContentHandler {
         }
         deleteAllByBatch(shreddedContent.classifiers, classifierCacheableRepository)
         deleteAllByBatch(shreddedContent.classificationSchemes, classificationSchemeCacheableRepository)
+        deleteAllByBatch(shreddedContent.overlays, overlayCacheableRepository)
         deleteHierarchyByBatch(shreddedContent.folders, folderCacheableRepository)
 
         true
@@ -227,6 +244,12 @@ class ContentHandler {
         if (foldersValuesFlatten && !foldersOnly) {
             shreddedContent.classificationSchemes = inBatchesReadSet(foldersValuesFlatten*.id) {List<UUID> batch ->
                 classificationSchemeCacheableRepository.readAllByFolderIdIn(batch)
+            }
+            shreddedContent.overlays = inBatchesReadSet(foldersValuesFlatten*.id) {List<UUID> batch ->
+                overlayCacheableRepository.readAllByFolderIdIn(batch)
+            }
+            shreddedContent.overlays.each { overlay ->
+                overlay.overlayRules = overlayRuleRepository.findAllByOverlayIdOrderByOrderAsc(overlay.id)
             }
             shreddedContent.terminologies = inBatchesReadSet(foldersValuesFlatten*.id) {List batch ->
                 terminologyCacheableRepository.readAllByFolderIdIn(batch)
@@ -262,6 +285,12 @@ class ContentHandler {
         if (foldersValuesFlatten) {
             shreddedContent.classificationSchemes = inBatchesReadSet(foldersValuesFlatten*.id) {List<UUID> batch ->
                 classificationSchemeCacheableRepository.readAllByFolderIdIn(batch)
+            }
+            shreddedContent.overlays = inBatchesReadSet(foldersValuesFlatten*.id) {List<UUID> batch ->
+                overlayCacheableRepository.readAllByFolderIdIn(batch)
+            }
+            shreddedContent.overlays.each { overlay ->
+                overlay.overlayRules = overlayRuleRepository.findAllByOverlayIdOrderByOrderAsc(overlay.id)
             }
         }
 
@@ -456,6 +485,9 @@ class ContentHandler {
             metadataCacheableRepository.readAllByMultiFacetAwareItemIdIn(batch)
         }
 
+        shreddedContent.overlays.each { overlay ->
+            overlay.overlayRules = overlayRuleRepository.findAllByOverlayIdOrderByOrderAsc(overlay.id)
+        }
         shreddedContent.reassemble()
     }
 

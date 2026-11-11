@@ -39,6 +39,29 @@ interface Paths {
     String FOLDER_CLASSIFICATION_SCHEMES_ROUTE_PAGED = '/api/folders/{folderId}/classificationSchemes{?params*}'
 
     /*
+    * OverlayApi
+    */
+    String OVERLAYS_LIST = '/api/overlays'
+    String OVERLAYS_ID_ROUTE = '/api/overlays/{id}'
+    String FOLDER_OVERLAYS_ROUTE = '/api/folders/{folderId}/overlays'
+    String OVERLAYS_LIST_PAGED = '/api/overlays{?params*}'
+    String FOLDER_OVERLAYS_ROUTE_PAGED = '/api/folders/{folderId}/overlays{?params*}'
+    String OVERLAYS_BRANCH_MODEL_VERSION = '/api/overlays/{id}/newBranchModelVersion'
+    String OVERLAYS_FINALISE = '/api/overlays/{id}/finalise'
+    String OVERLAYS_PERMISSIONS = '/api/overlays/{id}/permissions'
+    String OVERLAYS_APPLY = '/api/overlays/apply'
+    String OVERLAYS_MATCHES = '/api/overlays/matches'
+    String OVERLAYS_READ_BY_AUTHENTICATED = '/api/overlays/{id}/readByAuthenticated'
+    String OVERLAYS_READ_BY_EVERYONE = '/api/overlays/{id}/readByEveryone'
+    String OVERLAYS_MOVE = '/api/overlays/{id}/move'
+    String OVERLAY_RULES = '/api/overlays/{overlayId}/rules'
+    String OVERLAY_RULES_PAGED = '/api/overlays/{overlayId}/rules{?params*}'
+    String OVERLAY_RULE = '/api/overlays/{overlayId}/rules/{ruleId}'
+    String OVERLAY_RULE_MOVE = '/api/overlays/{overlayId}/rules/{ruleId}/move'
+    String OVERLAY_FROM_DATA_MODEL = '/api/dataModels/{id}/overlay'
+    String OVERLAY_SUCCESSOR = '/api/overlays/{id}/successor'
+
+    /*
     * ClassificationSchemeApi
     */
     String CLASSIFIERS_ROUTE_ID = '/api/classificationSchemes/{classificationSchemeId}/classifiers/{id}'
@@ -140,6 +163,13 @@ interface Paths {
     String DATA_MODEL_ROUTE_PAGED = '/api/dataModels{?params*}'
     String CREATE_DATA_MODEL = '/api/folders/{folderId}/dataModels{?defaultDataTypeProvider}'
     String DATA_MODEL_BRANCH_MODEL_VERSION = '/api/dataModels/{id}/newBranchModelVersion'
+    String DATA_MODEL_UNION = '/api/dataModels/union'
+    String DATA_MODEL_SUCCESSOR = '/api/dataModels/{id}/successor'
+    String TERMINOLOGY_SUCCESSOR = '/api/terminologies/{id}/successor'
+    String CODE_SET_SUCCESSOR = '/api/codeSets/{id}/successor'
+    String CLASSIFICATION_SCHEME_SUCCESSOR = '/api/classificationSchemes/{id}/successor'
+    String FOLDER_SUCCESSOR = '/api/folders/{id}/successor'
+    String VERSIONED_FOLDER_SUCCESSOR = '/api/versionedFolders/{id}/successor'
     String DATA_MODEL_EXPORT = '/api/dataModels/{id}/export{/namespace}{/name}{/version}'
     String DATA_MODEL_EXPORT_MANY = '/api/dataModels/export{/namespace}{/name}{/version}'
     String DATA_MODEL_IMPORT = '/api/dataModels/import/{namespace}/{name}{/version}'

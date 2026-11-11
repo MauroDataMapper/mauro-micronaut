@@ -30,6 +30,7 @@ import org.maurodata.api.model.MergeDiffDTO
 import org.maurodata.api.model.MergeFieldDiffDTO
 import org.maurodata.api.model.MergeIntoDTO
 import org.maurodata.api.model.ModelApi
+import org.maurodata.api.model.ModelSuccessorRequestDTO
 import org.maurodata.api.model.ModelVersionDTO
 import org.maurodata.api.model.ModelVersionedRefDTO
 import org.maurodata.api.model.ModelVersionedWithTargetsRefDTO
@@ -56,6 +57,7 @@ import org.maurodata.domain.model.Path
 import org.maurodata.domain.model.version.CreateNewVersionData
 import org.maurodata.domain.model.version.FinaliseData
 import org.maurodata.domain.model.version.ModelVersion
+import org.maurodata.domain.model.version.VersionChangeType
 import org.maurodata.domain.security.CatalogueUser
 import org.maurodata.domain.security.Role
 import org.maurodata.domain.security.UserGroup
@@ -77,6 +79,7 @@ import org.maurodata.plugin.importer.FolderImporterPlugin
 import org.maurodata.plugin.importer.ImportParameters
 import org.maurodata.plugin.importer.ModelImporterPlugin
 import org.maurodata.service.core.AuthorityService
+import org.maurodata.service.model.ModelMembershipService
 import org.maurodata.service.plugin.PluginService
 import org.maurodata.util.exporter.ExporterUtils
 import org.maurodata.utils.importer.ImporterUtils
@@ -334,6 +337,77 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
 
         M finalised = modelService.finaliseModel(model, parentModel, finaliseData.version, finaliseData.versionChangeType, finaliseData.versionTag)
         modelRepository.update(finalised)
+    }
+
+    M createSuccessor(UUID id, @Body @NonNull ModelSuccessorRequestDTO request) {
+        if (!request?.successorModelId) {
+            throw new HttpStatusException(HttpStatus.BAD_REQUEST, 'successorModelId is required')
+        }
+        if (id == request.successorModelId) {
+            throw new HttpStatusException(HttpStatus.BAD_REQUEST, 'A Model cannot be its own successor')
+        }
+
+        if (!modelRepository.readById(id) || !modelRepository.readById(request.successorModelId)) {
+            throw new HttpStatusException(HttpStatus.NOT_FOUND, 'Model not found')
+        }
+        M current = getExistingWithContent(id)
+        M successor = getExistingWithContent(request.successorModelId)
+        pathRepository.readParentItems(current)
+        pathRepository.readParentItems(successor)
+        if (!current.is(current.getModelWithVersion())) {
+            throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
+                'Only a Model that owns its versioning can be used as the predecessor for a successor')
+        }
+        if (!successor.is(successor.getModelWithVersion())) {
+            throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
+                'The successor Model must own its versioning')
+        }
+        if (!current.finalised && current.branchName != Model.DEFAULT_BRANCH_NAME) {
+            throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, 'Only the main branch can be versioned')
+        }
+        if (successor.finalised || successor.modelVersion != null ||
+            (successor.branchName && successor.branchName != Model.DEFAULT_BRANCH_NAME)) {
+            throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
+                'The successor must be an unfinalised draft on the main branch')
+        }
+
+        Set<VersionLink> directChildren = versionLinkRepositoryUncached.findSourceModels(current.id) ?: [] as Set<VersionLink>
+        boolean successorSlotOccupied = directChildren.any { VersionLink link ->
+            if (link.versionLinkType != VersionLink.NEW_MODEL_VERSION_OF) return false
+            M child = modelRepository.readById(link.multiFacetAwareItemId)
+            child != null && !child.finalised && child.modelVersion == null && child.branchName == Model.DEFAULT_BRANCH_NAME
+        }
+        if (successorSlotOccupied) {
+            throw new HttpStatusException(HttpStatus.CONFLICT,
+                'A draft main-branch successor already exists; delete it before replaying this operation')
+        }
+
+        boolean hasVersionPredecessor = versionLinkRepositoryUncached
+            .readAllByMultiFacetAwareItemId(successor.id)
+            .any { VersionLink link -> link.versionLinkType == VersionLink.NEW_MODEL_VERSION_OF }
+        if (hasVersionPredecessor) {
+            throw new HttpStatusException(HttpStatus.CONFLICT, 'The supplied successor Model already has a version predecessor')
+        }
+
+        FinaliseData finaliseData = request.finaliseData ?: new FinaliseData()
+        if (!finaliseData.version && !finaliseData.versionChangeType) {
+            finaliseData.versionChangeType = ModelMembershipService.changed(current, successor) ?
+                VersionChangeType.MAJOR : VersionChangeType.MINOR
+        }
+
+        if (!current.finalised) finalise(current.id, finaliseData)
+
+        successor.branchName = Model.DEFAULT_BRANCH_NAME
+        successor.finalised = false
+        successor.dateFinalised = null
+        modelRepository.update(successor)
+
+        VersionLink versionLink = new VersionLink(versionLinkType: VersionLink.NEW_MODEL_VERSION_OF)
+        versionLink.setTargetModel(current)
+        versionLink.setMultiFacetAwareItem(successor)
+        versionLinkCacheableRepository.save(versionLink)
+
+        modelRepository.readById(successor.id)
     }
 
     @Transactional

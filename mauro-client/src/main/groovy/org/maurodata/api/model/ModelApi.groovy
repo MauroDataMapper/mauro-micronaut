@@ -4,6 +4,7 @@ import org.maurodata.domain.folder.Folder
 import org.maurodata.domain.model.Model
 import org.maurodata.domain.model.version.CreateNewVersionData
 import org.maurodata.domain.model.version.FinaliseData
+import org.maurodata.api.model.ModelSuccessorRequestDTO
 import org.maurodata.web.ListResponse
 
 import groovy.transform.CompileStatic
@@ -29,6 +30,8 @@ interface ModelApi<M extends Model> extends AdministeredItemApi<M, Folder> {
     M finalise(UUID id, @Body FinaliseData finaliseData)
 
     M createNewBranchModelVersion(UUID id, @Body @Nullable CreateNewVersionData createNewVersionData)
+
+    M createSuccessor(UUID id, @Body @NonNull ModelSuccessorRequestDTO request)
 
     HttpResponse<byte[]> exportModel(UUID modelId, String namespace, String name, @Nullable String version)
 
