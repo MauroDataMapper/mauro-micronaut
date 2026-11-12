@@ -9,6 +9,7 @@ import org.maurodata.domain.facet.Rule
 import org.maurodata.domain.facet.SemanticLink
 import org.maurodata.domain.facet.SummaryMetadata
 import org.maurodata.domain.facet.VersionLink
+import org.maurodata.domain.facet.ItemLink
 import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.persistence.facet.AnnotationRepository
 import org.maurodata.persistence.facet.EditRepository
@@ -19,6 +20,8 @@ import org.maurodata.persistence.facet.SummaryMetadataRepository
 import org.maurodata.persistence.facet.VersionLinkRepository
 import org.maurodata.persistence.model.ItemRepository
 import org.maurodata.persistence.facet.SemanticLinkRepository
+import org.maurodata.persistence.facet.ItemLinkRepository
+import org.maurodata.persistence.facet.dto.ItemLinkGraphRow
 import org.maurodata.web.ListResponse
 import org.maurodata.web.PaginationParams
 
@@ -295,5 +298,47 @@ abstract class FacetCacheableRepository<F extends Facet> extends ItemCacheableRe
             ((SemanticLinkRepository) repository).deleteByMultiFacetAwareItemIdIn(itemIds)
         }
 
+    }
+
+    @Singleton
+    @CompileStatic
+    static class ItemLinkCacheableRepository extends FacetCacheableRepository<ItemLink> {
+        ItemLinkCacheableRepository(ItemLinkRepository itemLinkRepository) { super(itemLinkRepository) }
+
+        Set<ItemLink> readAllByMultiFacetAwareItemId(UUID ownerId) {
+            ((ItemLinkRepository) repository).readAllByMultiFacetAwareItemId(ownerId)
+        }
+
+        Set<ItemLink> readAllByMultiFacetAwareItemIdAndType(UUID ownerId, String type) {
+            ((ItemLinkRepository) repository).readAllByMultiFacetAwareItemIdAndType(ownerId, type)
+        }
+
+        Set<ItemLink> readAllByMultiFacetAwareItemIdInAndType(Collection<UUID> ownerIds, String type) {
+            ((ItemLinkRepository) repository).readAllByMultiFacetAwareItemIdInAndType(ownerIds, type)
+        }
+
+        List<ItemLinkGraphRow> readGraphRowsByMultiFacetAwareItemIdInAndType(Collection<UUID> ownerIds, String type) {
+            ((ItemLinkRepository) repository).readGraphRowsByMultiFacetAwareItemIdInAndType(ownerIds, type)
+        }
+
+        List<ItemLinkGraphRow> readGraphRowsOwnedByDataModelChildren(UUID dataModelId, String type) {
+            ((ItemLinkRepository) repository).readGraphRowsOwnedByDataModelChildren(dataModelId, type)
+        }
+
+        List<ItemLinkGraphRow> readGraphRowsOwnedByDataClassChildren(UUID dataClassId, String type) {
+            ((ItemLinkRepository) repository).readGraphRowsOwnedByDataClassChildren(dataClassId, type)
+        }
+
+        Set<ItemLink> readAllByTypeAndPathIn(String type, Collection<String> paths) {
+            ((ItemLinkRepository) repository).readAllByTypeAndPathIn(type, paths)
+        }
+
+        Set<ItemLink> readAllByMultiFacetAwareItemIdIn(Collection<UUID> ownerIds) {
+            ((ItemLinkRepository) repository).readAllByMultiFacetAwareItemIdIn(ownerIds)
+        }
+
+        Long deleteByMultiFacetAwareItemIdIn(List<UUID> itemIds) {
+            ((ItemLinkRepository) repository).deleteByMultiFacetAwareItemIdIn(itemIds)
+        }
     }
 }

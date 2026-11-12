@@ -7,11 +7,11 @@ import org.maurodata.domain.diff.CollectionDiff
 import org.maurodata.domain.diff.DiffableItem
 import org.maurodata.domain.facet.Annotation
 import org.maurodata.domain.facet.Edit
-import org.maurodata.domain.facet.Facet
 import org.maurodata.domain.facet.Metadata
 import org.maurodata.domain.facet.ReferenceFile
 import org.maurodata.domain.facet.Rule
 import org.maurodata.domain.facet.SemanticLink
+import org.maurodata.domain.facet.ItemLink
 import org.maurodata.domain.facet.SummaryMetadata
 import org.maurodata.domain.security.CatalogueUser
 import org.maurodata.exception.MauroInternalException
@@ -133,6 +133,9 @@ abstract class AdministeredItem extends Item implements Pathable, DiffableItem {
     @Relation(Relation.Kind.ONE_TO_MANY)
     List<SemanticLink> semanticLinks = []
 
+    @Relation(Relation.Kind.ONE_TO_MANY)
+    List<ItemLink> itemLinkSources = []
+
     @Transient
     @JsonIgnore
     void setAssociations() {
@@ -158,6 +161,7 @@ abstract class AdministeredItem extends Item implements Pathable, DiffableItem {
         intoAdministeredItem.classifiers = ItemUtils.copyItem(this.classifiers, intoAdministeredItem.classifiers)
         intoAdministeredItem.referenceFiles = ItemUtils.copyItem(this.referenceFiles, intoAdministeredItem.referenceFiles)
         intoAdministeredItem.semanticLinks = ItemUtils.copyItem(this.semanticLinks, intoAdministeredItem.semanticLinks)
+        intoAdministeredItem.itemLinkSources = ItemUtils.copyItem(this.itemLinkSources, intoAdministeredItem.itemLinkSources)
     }
 
     @Transient
@@ -174,6 +178,7 @@ abstract class AdministeredItem extends Item implements Pathable, DiffableItem {
         ItemReferencerUtils.addItems(annotations, pathsBeingReferenced)
         ItemReferencerUtils.addItems(referenceFiles, pathsBeingReferenced)
         ItemReferencerUtils.addItems(semanticLinks, pathsBeingReferenced)
+        ItemReferencerUtils.addItems(itemLinkSources, pathsBeingReferenced)
 
         return pathsBeingReferenced
     }
@@ -189,6 +194,7 @@ abstract class AdministeredItem extends Item implements Pathable, DiffableItem {
         annotations = ItemReferencerUtils.replaceItemsByIdentity(annotations, replacements, notReplaced)
         referenceFiles = ItemReferencerUtils.replaceItemsByIdentity(referenceFiles, replacements, notReplaced)
         semanticLinks = ItemReferencerUtils.replaceItemsByIdentity(semanticLinks, replacements, notReplaced)
+        itemLinkSources = ItemReferencerUtils.replaceItemsByIdentity(itemLinkSources, replacements, notReplaced)
     }
 
     /**

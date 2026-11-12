@@ -49,6 +49,9 @@ class DataModel extends Model implements ItemReferencer, DiffableItem<DataModel>
     @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'dataModel')
     List<DataClass> dataClasses = []
 
+    @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'dataModel')
+    List<DataComponent> dataComponents = []
+
     @Transient
     @JsonIgnore
     Set<DataClass> allDataClasses = []
@@ -97,7 +100,7 @@ class DataModel extends Model implements ItemReferencer, DiffableItem<DataModel>
     @Transient
     @JsonIgnore
     List<Collection<? extends ModelItem<DataModel>>> getAllAssociations() {
-        [allDataClasses, dataTypes, enumerationValues, dataElements] as List<Collection<? extends ModelItem<DataModel>>>
+        [allDataClasses, dataTypes, enumerationValues, dataElements, dataComponents] as List<Collection<? extends ModelItem<DataModel>>>
     }
 
 
@@ -142,6 +145,9 @@ class DataModel extends Model implements ItemReferencer, DiffableItem<DataModel>
             it.dataClasses = clonedChildList
         }
         cloned.dataClasses = clonedDataClasses
+        cloned.dataComponents = dataComponents.collect {
+            it.clone().tap {DataComponent clonedComponent -> clonedComponent.dataModel = cloned}
+        }
         List<DataClass> clonedChildren = clonedChildDataClassLookup.values() as List<DataClass>
         clonedChildren.addAll(clonedDataClasses)
         cloned.allDataClasses = clonedChildren as Set<DataClass>
@@ -326,6 +332,7 @@ class DataModel extends Model implements ItemReferencer, DiffableItem<DataModel>
         ItemReferencerUtils.addItems(enumerationValues, pathsBeingReferenced)
         ItemReferencerUtils.addItems(dataElements, pathsBeingReferenced)
         ItemReferencerUtils.addItems(dataClasses, pathsBeingReferenced)
+        ItemReferencerUtils.addItems(dataComponents, pathsBeingReferenced)
 
         return pathsBeingReferenced
     }
@@ -338,6 +345,7 @@ class DataModel extends Model implements ItemReferencer, DiffableItem<DataModel>
         parent = ItemReferencerUtils.replaceItemByIdentity(parent, replacements, notReplaced)
         dataTypes = ItemReferencerUtils.replaceItemsByIdentity(dataTypes, replacements, notReplaced)
         dataClasses = ItemReferencerUtils.replaceItemsByIdentity(dataClasses, replacements, notReplaced)
+        dataComponents = ItemReferencerUtils.replaceItemsByIdentity(dataComponents, replacements, notReplaced)
         dataElements = ItemReferencerUtils.replaceItemsByIdentity(dataElements, replacements, notReplaced)
         enumerationValues = ItemReferencerUtils.replaceItemsByIdentity(enumerationValues, replacements, notReplaced)
     }
@@ -349,6 +357,7 @@ class DataModel extends Model implements ItemReferencer, DiffableItem<DataModel>
         intoDataModel.dataTypes = ItemUtils.copyItems(this.dataTypes, intoDataModel.dataTypes)
         intoDataModel.enumerationValues = ItemUtils.copyItems(this.enumerationValues, intoDataModel.enumerationValues)
         intoDataModel.dataClasses = ItemUtils.copyItems(this.dataClasses, intoDataModel.dataClasses)
+        intoDataModel.dataComponents = ItemUtils.copyItems(this.dataComponents, intoDataModel.dataComponents)
         intoDataModel.dataElements = ItemUtils.copyItems(this.dataElements, intoDataModel.dataElements)
         intoDataModel.modelType = ItemUtils.copyItem(this.modelType, intoDataModel.modelType)
         intoDataModel.dataModelType = ItemUtils.copyItem(this.dataModelType, intoDataModel.dataModelType)
