@@ -463,7 +463,7 @@ abstract class ModelController<M extends Model> extends AdministeredItemControll
             if(firstParameters.organisation) {
                 imported.first().organisation = firstParameters.organisation.trim()
             }
-            if(!folder.getOwner() || imported.first().finalised || imported.first().modelVersion) { // i.e. We expect the imported model to be its own owner
+            if((!folder || !folder.getOwner()) || imported.first().finalised || imported.first().modelVersion) { // i.e. We expect the imported model to be its own owner
                 if(firstParameters.finalised) {
                     imported.first().finalised = firstParameters.finalised
                 }

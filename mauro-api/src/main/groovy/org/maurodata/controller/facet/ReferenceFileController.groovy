@@ -30,7 +30,7 @@ import org.maurodata.web.ListResponse
 
 @CompileStatic
 @Controller
-@Secured(SecurityRule.IS_AUTHENTICATED)
+@Secured(SecurityRule.IS_ANONYMOUS)
 class ReferenceFileController extends FacetController<ReferenceFile> implements ReferenceFileApi {
 
     @Inject
