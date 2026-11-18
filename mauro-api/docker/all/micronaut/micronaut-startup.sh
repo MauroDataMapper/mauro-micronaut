@@ -53,33 +53,33 @@ fi
 if [ "${PG_SHARING_HOST}" == "true" ];
 then
 declare -A java_opts=(
-    [2]="-server -Xms128M -Xmx1G -Xss1M -XX:+UseG1GC -XX:MaxGCPauseMillis=500 -XX:MetaspaceSize=64M -XX:MaxMetaspaceSize=64M -XX:CompressedClassSpaceSize=64M -XX:InitialCodeCacheSize=48M -XX:ReservedCodeCacheSize=128M -XX:MaxDirectMemorySize=64M -XX:+ExitOnOutOfMemoryError"
-    [4]="-server -Xms256M -Xmx2G -Xss1M -XX:+UseG1GC -XX:MaxGCPauseMillis=500 -XX:MetaspaceSize=128M -XX:MaxMetaspaceSize=128M -XX:CompressedClassSpaceSize=64M -XX:InitialCodeCacheSize=48M -XX:ReservedCodeCacheSize=256M -XX:MaxDirectMemorySize=256M -XX:+ExitOnOutOfMemoryError"
-    [6]="-server -Xms768M -Xmx3G -Xss1M -XX:+UseG1GC -XX:MaxGCPauseMillis=500 -XX:MetaspaceSize=256M -XX:MaxMetaspaceSize=256M -XX:CompressedClassSpaceSize=64M -XX:InitialCodeCacheSize=48M -XX:ReservedCodeCacheSize=384M -XX:MaxDirectMemorySize=512M -XX:+ExitOnOutOfMemoryError"
-    [8]="-server -Xms1G -Xmx4G -Xss1M -XX:+UseG1GC -XX:MaxGCPauseMillis=500 -XX:MetaspaceSize=256M -XX:MaxMetaspaceSize=320M -XX:CompressedClassSpaceSize=64M -XX:InitialCodeCacheSize=48M -XX:ReservedCodeCacheSize=384M -XX:MaxDirectMemorySize=512M -XX:+ExitOnOutOfMemoryError"
-    [12]="-server -Xms1536M -Xmx6G -Xss1M -XX:+UseG1GC -XX:MaxGCPauseMillis=500 -XX:MetaspaceSize=256M -XX:MaxMetaspaceSize=512M -XX:CompressedClassSpaceSize=128M -XX:InitialCodeCacheSize=48M -XX:ReservedCodeCacheSize=384M -XX:MaxDirectMemorySize=1G -XX:+ExitOnOutOfMemoryError"
-    [16]="-server -Xms2G -Xmx8G -Xss1M -XX:+UseG1GC -XX:MaxGCPauseMillis=500 -XX:MetaspaceSize=256M -XX:MaxMetaspaceSize=704M -XX:CompressedClassSpaceSize=192M -XX:InitialCodeCacheSize=48M -XX:ReservedCodeCacheSize=384M -XX:MaxDirectMemorySize=1280M -XX:+ExitOnOutOfMemoryError"
-    [24]="-server -Xms3G -Xmx12G -Xss1M -XX:+UseG1GC -XX:MaxGCPauseMillis=500 -XX:MetaspaceSize=256M -XX:MaxMetaspaceSize=1G -XX:CompressedClassSpaceSize=320M -XX:InitialCodeCacheSize=48M -XX:ReservedCodeCacheSize=512M -XX:MaxDirectMemorySize=2G -XX:+ExitOnOutOfMemoryError"
-    [32]="-server -Xms4G -Xmx16G -Xss1M -XX:+UseG1GC -XX:MaxGCPauseMillis=500 -XX:MetaspaceSize=256M -XX:MaxMetaspaceSize=1408M -XX:CompressedClassSpaceSize=384M -XX:InitialCodeCacheSize=48M -XX:ReservedCodeCacheSize=512M -XX:MaxDirectMemorySize=2816M -XX:+ExitOnOutOfMemoryError"
-    [48]="-server -Xms6400M -Xmx24G -Xss1M -XX:+UseG1GC -XX:MaxGCPauseMillis=500 -XX:MetaspaceSize=256M -XX:MaxMetaspaceSize=2112M -XX:CompressedClassSpaceSize=640M -XX:InitialCodeCacheSize=48M -XX:ReservedCodeCacheSize=512M -XX:MaxDirectMemorySize=4G -XX:+ExitOnOutOfMemoryError"
-    [64]="-server -Xms8448M -Xmx32G -Xss1M -XX:+UseG1GC -XX:MaxGCPauseMillis=500 -XX:MetaspaceSize=256M -XX:MaxMetaspaceSize=2816M -XX:CompressedClassSpaceSize=832M -XX:InitialCodeCacheSize=48M -XX:ReservedCodeCacheSize=512M -XX:MaxDirectMemorySize=5632M -XX:+ExitOnOutOfMemoryError"
-    [96]="-server -Xms13G -Xmx48G -Xss1M -XX:+UseG1GC -XX:MaxGCPauseMillis=500 -XX:MetaspaceSize=256M -XX:MaxMetaspaceSize=4G -XX:CompressedClassSpaceSize=1G -XX:InitialCodeCacheSize=48M -XX:ReservedCodeCacheSize=768M -XX:MaxDirectMemorySize=8960M -XX:+ExitOnOutOfMemoryError"
-    [128]="-server -Xms18G -Xmx64G -Xss1M -XX:+UseG1GC -XX:MaxGCPauseMillis=500 -XX:MetaspaceSize=256M -XX:MaxMetaspaceSize=4G -XX:CompressedClassSpaceSize=1G -XX:InitialCodeCacheSize=48M -XX:ReservedCodeCacheSize=768M -XX:MaxDirectMemorySize=12G -XX:+ExitOnOutOfMemoryError"
+    [2]="-Xms128M -Xmx1G -XX:MetaspaceSize=64M -XX:MaxMetaspaceSize=64M -XX:CompressedClassSpaceSize=64M -XX:ReservedCodeCacheSize=128M -XX:MaxDirectMemorySize=64M"
+    [4]="-Xms256M -Xmx2G -XX:MetaspaceSize=128M -XX:MaxMetaspaceSize=128M -XX:CompressedClassSpaceSize=64M -XX:ReservedCodeCacheSize=256M -XX:MaxDirectMemorySize=256M"
+    [6]="-Xms768M -Xmx3G -XX:MetaspaceSize=256M -XX:MaxMetaspaceSize=256M -XX:CompressedClassSpaceSize=64M -XX:ReservedCodeCacheSize=384M -XX:MaxDirectMemorySize=512M"
+    [8]="-Xms1G -Xmx4G -XX:MetaspaceSize=256M -XX:MaxMetaspaceSize=320M -XX:CompressedClassSpaceSize=64M -XX:ReservedCodeCacheSize=384M -XX:MaxDirectMemorySize=512M"
+    [12]="-Xms1536M -Xmx6G -XX:MetaspaceSize=256M -XX:MaxMetaspaceSize=512M -XX:CompressedClassSpaceSize=128M -XX:ReservedCodeCacheSize=384M -XX:MaxDirectMemorySize=1G"
+    [16]="-Xms2G -Xmx8G -XX:MetaspaceSize=256M -XX:MaxMetaspaceSize=704M -XX:CompressedClassSpaceSize=192M -XX:ReservedCodeCacheSize=384M -XX:MaxDirectMemorySize=1280M"
+    [24]="-Xms3G -Xmx12G -XX:MetaspaceSize=256M -XX:MaxMetaspaceSize=1G -XX:CompressedClassSpaceSize=320M -XX:ReservedCodeCacheSize=512M -XX:MaxDirectMemorySize=2G"
+    [32]="-Xms4G -Xmx16G -XX:MetaspaceSize=256M -XX:MaxMetaspaceSize=1408M -XX:CompressedClassSpaceSize=384M -XX:ReservedCodeCacheSize=512M -XX:MaxDirectMemorySize=2816M"
+    [48]="-Xms6400M -Xmx24G -XX:MetaspaceSize=256M -XX:MaxMetaspaceSize=2112M -XX:CompressedClassSpaceSize=640M -XX:ReservedCodeCacheSize=512M -XX:MaxDirectMemorySize=4G"
+    [64]="-Xms8448M -Xmx32G -XX:MetaspaceSize=256M -XX:MaxMetaspaceSize=2816M -XX:CompressedClassSpaceSize=832M -XX:ReservedCodeCacheSize=512M -XX:MaxDirectMemorySize=5632M"
+    [96]="-Xms13G -Xmx48G -XX:MetaspaceSize=256M -XX:MaxMetaspaceSize=4G -XX:CompressedClassSpaceSize=1G -XX:ReservedCodeCacheSize=768M -XX:MaxDirectMemorySize=8960M"
+    [128]="-Xms18G -Xmx64G -XX:MetaspaceSize=256M -XX:MaxMetaspaceSize=4G -XX:CompressedClassSpaceSize=1G -XX:ReservedCodeCacheSize=768M -XX:MaxDirectMemorySize=12G"
 )
 else
   declare -A java_opts=(
-    [2]="-server -Xms256M -Xmx2G -Xss1M -XX:+UseG1GC -XX:MaxGCPauseMillis=500 -XX:MetaspaceSize=64M -XX:MaxMetaspaceSize=64M -XX:CompressedClassSpaceSize=64M -XX:InitialCodeCacheSize=48M -XX:ReservedCodeCacheSize=128M -XX:MaxDirectMemorySize=64M -XX:+ExitOnOutOfMemoryError"
-    [4]="-server -Xms768M -Xmx4G -Xss1M -XX:+UseG1GC -XX:MaxGCPauseMillis=500 -XX:MetaspaceSize=256M -XX:MaxMetaspaceSize=256M -XX:CompressedClassSpaceSize=64M -XX:InitialCodeCacheSize=48M -XX:ReservedCodeCacheSize=384M -XX:MaxDirectMemorySize=512M -XX:+ExitOnOutOfMemoryError"
-    [6]="-server -Xms1536M -Xmx6G -Xss1M -XX:+UseG1GC -XX:MaxGCPauseMillis=500 -XX:MetaspaceSize=256M -XX:MaxMetaspaceSize=512M -XX:CompressedClassSpaceSize=128M -XX:InitialCodeCacheSize=48M -XX:ReservedCodeCacheSize=384M -XX:MaxDirectMemorySize=1G -XX:+ExitOnOutOfMemoryError"
-    [8]="-server -Xms2G -Xmx8G -Xss1M -XX:+UseG1GC -XX:MaxGCPauseMillis=500 -XX:MetaspaceSize=256M -XX:MaxMetaspaceSize=704M -XX:CompressedClassSpaceSize=192M -XX:InitialCodeCacheSize=48M -XX:ReservedCodeCacheSize=384M -XX:MaxDirectMemorySize=1280M -XX:+ExitOnOutOfMemoryError"
-    [12]="-server -Xms3G -Xmx12G -Xss1M -XX:+UseG1GC -XX:MaxGCPauseMillis=500 -XX:MetaspaceSize=256M -XX:MaxMetaspaceSize=1G -XX:CompressedClassSpaceSize=320M -XX:InitialCodeCacheSize=48M -XX:ReservedCodeCacheSize=512M -XX:MaxDirectMemorySize=2G -XX:+ExitOnOutOfMemoryError"
-    [16]="-server -Xms4G -Xmx16G -Xss1M -XX:+UseG1GC -XX:MaxGCPauseMillis=500 -XX:MetaspaceSize=256M -XX:MaxMetaspaceSize=1408M -XX:CompressedClassSpaceSize=384M -XX:InitialCodeCacheSize=48M -XX:ReservedCodeCacheSize=512M -XX:MaxDirectMemorySize=2816M -XX:+ExitOnOutOfMemoryError"
-    [24]="-server -Xms6400M -Xmx24G -Xss1M -XX:+UseG1GC -XX:MaxGCPauseMillis=500 -XX:MetaspaceSize=256M -XX:MaxMetaspaceSize=2112M -XX:CompressedClassSpaceSize=640M -XX:InitialCodeCacheSize=48M -XX:ReservedCodeCacheSize=512M -XX:MaxDirectMemorySize=4G -XX:+ExitOnOutOfMemoryError"
-    [32]="-server -Xms8448M -Xmx32G -Xss1M -XX:+UseG1GC -XX:MaxGCPauseMillis=500 -XX:MetaspaceSize=256M -XX:MaxMetaspaceSize=2816M -XX:CompressedClassSpaceSize=832M -XX:InitialCodeCacheSize=48M -XX:ReservedCodeCacheSize=512M -XX:MaxDirectMemorySize=5632M -XX:+ExitOnOutOfMemoryError"
-    [48]="-server -Xms12800M -Xmx48G -Xss1M -XX:+UseG1GC -XX:MaxGCPauseMillis=500 -XX:MetaspaceSize=256M -XX:MaxMetaspaceSize=4G -XX:CompressedClassSpaceSize=1G -XX:InitialCodeCacheSize=48M -XX:ReservedCodeCacheSize=768M -XX:MaxDirectMemorySize=8448M -XX:+ExitOnOutOfMemoryError"
-    [64]="-server -Xms17152M -Xmx64G -Xss1M -XX:+UseG1GC -XX:MaxGCPauseMillis=500 -XX:MetaspaceSize=256M -XX:MaxMetaspaceSize=4G -XX:CompressedClassSpaceSize=1G -XX:InitialCodeCacheSize=48M -XX:ReservedCodeCacheSize=768M -XX:MaxDirectMemorySize=11G -XX:+ExitOnOutOfMemoryError"
-    [96]="-server -Xms26880M -Xmx96G -Xss1M -XX:+UseG1GC -XX:MaxGCPauseMillis=500 -XX:MetaspaceSize=256M -XX:MaxMetaspaceSize=4G -XX:CompressedClassSpaceSize=1G -XX:InitialCodeCacheSize=48M -XX:ReservedCodeCacheSize=768M -XX:MaxDirectMemorySize=16G -XX:+ExitOnOutOfMemoryError"
-    [128]="-server -Xms36G -Xmx128G -Xss1M -XX:+UseG1GC -XX:MaxGCPauseMillis=500 -XX:MetaspaceSize=256M -XX:MaxMetaspaceSize=4G -XX:CompressedClassSpaceSize=1G -XX:InitialCodeCacheSize=48M -XX:ReservedCodeCacheSize=768M -XX:MaxDirectMemorySize=16G -XX:+ExitOnOutOfMemoryError"
+    [2]="-Xms256M -Xmx2G -XX:MetaspaceSize=64M -XX:MaxMetaspaceSize=64M -XX:CompressedClassSpaceSize=64M -XX:ReservedCodeCacheSize=128M -XX:MaxDirectMemorySize=64M"
+    [4]="-Xms768M -Xmx4G -XX:MetaspaceSize=256M -XX:MaxMetaspaceSize=256M -XX:CompressedClassSpaceSize=64M -XX:ReservedCodeCacheSize=384M -XX:MaxDirectMemorySize=512M"
+    [6]="-Xms1536M -Xmx6G -XX:MetaspaceSize=256M -XX:MaxMetaspaceSize=512M -XX:CompressedClassSpaceSize=128M -XX:ReservedCodeCacheSize=384M -XX:MaxDirectMemorySize=1G"
+    [8]="-Xms2G -Xmx8G -XX:MetaspaceSize=256M -XX:MaxMetaspaceSize=704M -XX:CompressedClassSpaceSize=192M -XX:ReservedCodeCacheSize=384M -XX:MaxDirectMemorySize=1280M"
+    [12]="-Xms3G -Xmx12G -XX:MetaspaceSize=256M -XX:MaxMetaspaceSize=1G -XX:CompressedClassSpaceSize=320M -XX:ReservedCodeCacheSize=512M -XX:MaxDirectMemorySize=2G"
+    [16]="-Xms4G -Xmx16G -XX:MetaspaceSize=256M -XX:MaxMetaspaceSize=1408M -XX:CompressedClassSpaceSize=384M -XX:ReservedCodeCacheSize=512M -XX:MaxDirectMemorySize=2816M"
+    [24]="-Xms6400M -Xmx24G -XX:MetaspaceSize=256M -XX:MaxMetaspaceSize=2112M -XX:CompressedClassSpaceSize=640M -XX:ReservedCodeCacheSize=512M -XX:MaxDirectMemorySize=4G"
+    [32]="-Xms8448M -Xmx32G -XX:MetaspaceSize=256M -XX:MaxMetaspaceSize=2816M -XX:CompressedClassSpaceSize=832M -XX:ReservedCodeCacheSize=512M -XX:MaxDirectMemorySize=5632M"
+    [48]="-Xms12800M -Xmx48G -XX:MetaspaceSize=256M -XX:MaxMetaspaceSize=4G -XX:CompressedClassSpaceSize=1G -XX:ReservedCodeCacheSize=768M -XX:MaxDirectMemorySize=8448M"
+    [64]="-Xms17152M -Xmx64G -XX:MetaspaceSize=256M -XX:MaxMetaspaceSize=4G -XX:CompressedClassSpaceSize=1G -XX:ReservedCodeCacheSize=768M -XX:MaxDirectMemorySize=11G"
+    [96]="-Xms26880M -Xmx96G -XX:MetaspaceSize=256M -XX:MaxMetaspaceSize=4G -XX:CompressedClassSpaceSize=1G -XX:ReservedCodeCacheSize=768M -XX:MaxDirectMemorySize=16G"
+    [128]="-Xms36G -Xmx128G -XX:MetaspaceSize=256M -XX:MaxMetaspaceSize=4G -XX:CompressedClassSpaceSize=1G -XX:ReservedCodeCacheSize=768M -XX:MaxDirectMemorySize=16G"
   )
 fi
 
@@ -93,7 +93,8 @@ for key in "${!java_opts[@]}"; do
     fi
 done
 
-export JAVA_OPTS="${chosen_opts}"
+common_java_opts="-server -Xss1M -XX:+UseG1GC -XX:MaxGCPauseMillis=500 -XX:InitialCodeCacheSize=48M -XX:+ExitOnOutOfMemoryError -XX:-UseBASE64Intrinsics"
+export JAVA_OPTS="${chosen_opts} ${common_java_opts}"
 
 # Crack open the manifest to get the main class
 
