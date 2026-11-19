@@ -31,16 +31,37 @@ class Path {
         setPathString(str)
     }
 
+    /**
+     * Create a path from a supplied string, discarding any nodes before the
+     * first node carrying a model identifier. Relative paths are unchanged.
+     */
+    static Path fromPathRootedAtFirstModelIdentifier(String pathString) {
+        List<PathNode> pathNodes = parsePathNodes(pathString)
+        if (pathNodes.size() > PATH_MAX_NODES) {
+            throw new IllegalArgumentException('Path exceeds the maximum path depth')
+        }
+        int modelIdentifierIndex = pathNodes.findIndexOf { it.modelIdentifier != null }
+        if (modelIdentifierIndex >= 0) {
+            PathNode modelRoot = pathNodes[modelIdentifierIndex]
+            if (!modelRoot.modelIdentifier || !modelRoot.canHaveModelIdentifier()) {
+                throw new IllegalArgumentException('The absolute path has an invalid modelIdentifier root')
+            }
+            pathNodes = pathNodes.drop(modelIdentifierIndex)
+        }
+        new Path(pathNodes)
+    }
+
     Path(List<PathNode> nodes) {
         setNodes(nodes)
     }
 
     void setPathString(String pathString) {
-        if(!pathString || pathString.isEmpty()) {
-            setNodes([])
-        } else {
-            setNodes(pathString?.split(/(?<!%)\|/)?.collect {PathNode.from(it)})
-        }
+        setNodes(parsePathNodes(pathString))
+    }
+
+    private static List<PathNode> parsePathNodes(String pathString) {
+        if (!pathString) return []
+        pathString.split(/(?<!%)\|/).collect { PathNode.from(it) }
     }
 
     void setNodes(List<PathNode> nodes) {
@@ -174,12 +195,17 @@ class Path {
 
     @Transient
     String getModelIdentifier() {
-        for (int p = 0, n = nodes.size(); p < n; p++) {
-            final PathNode pathNode = nodes.get(p)
-            if (!PathNode.canHaveModelIdentifier(pathNode.prefix)) {continue}
-            if (pathNode.modelIdentifier) {return pathNode.modelIdentifier}
-        }
-        return null
+        modelRootNode?.modelIdentifier
+    }
+
+    @Transient
+    PathNode getModelRootNode() {
+        nodes.find { it.modelIdentifier && it.canHaveModelIdentifier() }
+    }
+
+    @Transient
+    boolean isAbsolute() {
+        modelRootNode != null
     }
 
     void setModelIdentifier(final String modelIdentifier) {
@@ -201,6 +227,18 @@ class Path {
 
         @Transient
         Item node
+
+        boolean canHaveModelIdentifier() {
+            canHaveModelIdentifier(prefix)
+        }
+
+        boolean isSameModelRoot(PathNode other) {
+            other != null && hasSamePrefixAndIdentifier(other) && modelIdentifier == other.modelIdentifier
+        }
+
+        boolean hasSamePrefixAndIdentifier(PathNode other) {
+            other != null && prefix?.equalsIgnoreCase(other.prefix) && identifier == other.identifier
+        }
 
         @Override
         String toString() {

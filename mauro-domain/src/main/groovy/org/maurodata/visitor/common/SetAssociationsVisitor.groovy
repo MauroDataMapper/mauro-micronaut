@@ -9,6 +9,7 @@ import org.maurodata.domain.dataflow.DataElementComponent
 import org.maurodata.domain.dataflow.DataFlow
 import org.maurodata.domain.datamodel.DataClass
 import org.maurodata.domain.datamodel.DataElement
+import org.maurodata.domain.datamodel.DataComponent
 import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.datamodel.DataType
 import org.maurodata.domain.datamodel.EnumerationValue
@@ -18,6 +19,7 @@ import org.maurodata.domain.facet.Metadata
 import org.maurodata.domain.facet.ReferenceFile
 import org.maurodata.domain.facet.RuleRepresentation
 import org.maurodata.domain.facet.SemanticLink
+import org.maurodata.domain.facet.ItemLink
 import org.maurodata.domain.facet.SummaryMetadataReport
 import org.maurodata.domain.facet.VersionLink
 import org.maurodata.domain.facet.Rule
@@ -175,6 +177,9 @@ class SetAssociationsVisitor extends GenericDomainTraversalVisitor implements It
             for (DataClass dc : dataModel.dataClasses) {
                 dc.dataModel = dataModel
             }
+            for (DataComponent component : dataModel.dataComponents) {
+                component.dataModel = dataModel
+            }
         }
         if (item instanceof DataClass) {
             enterDataClass((DataClass) item)
@@ -223,6 +228,7 @@ class SetAssociationsVisitor extends GenericDomainTraversalVisitor implements It
         if (item.annotations) { for (Annotation f : item.annotations) { f.multiFacetAwareItem = item } }
         if (item.referenceFiles) { for (ReferenceFile f : item.referenceFiles) { f.multiFacetAwareItem = item } }
         if (item.semanticLinks) { for (SemanticLink f : item.semanticLinks) { f.multiFacetAwareItem = item } }
+        if (item.itemLinkSources) { for (ItemLink f : item.itemLinkSources) { f.multiFacetAwareItem = item } }
     }
 
     private static void enterFolder(Folder folder) {

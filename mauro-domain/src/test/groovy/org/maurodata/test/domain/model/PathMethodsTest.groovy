@@ -77,6 +77,46 @@ class PathMethodsTest extends Specification {
         path.toString() == 'FO:Folder|DM:Model$main|DC:Name'
     }
 
+    void 'path rooted at first model identifier discards earlier nodes and later identifiers'() {
+        when:
+        Path path = Path.fromPathRootedAtFirstModelIdentifier(
+            'fo:Ignored folder|dm:Model$1.0.0|vf:Nested version$2.0.0|dc:Class')
+
+        then:
+        path.toString() == 'dm:Model$1.0.0|vf:Nested version|dc:Class'
+        path.nodes.count { it.modelIdentifier != null } == 1
+    }
+
+    void 'relative path remains unchanged when rooted at a model identifier'() {
+        expect:
+        Path.fromPathRootedAtFirstModelIdentifier('dc:Class|de:Element').toString() == 'dc:Class|de:Element'
+    }
+
+    void 'path exposes its absolute model root and compares roots at node level'() {
+        given:
+        Path firstVersion = new Path('dm:Model$1.0.0|dc:Class')
+        Path secondVersion = new Path('DM:Model$2.0.0|dc:Class')
+        Path relative = new Path('dc:Class|de:Element')
+
+        expect:
+        firstVersion.isAbsolute()
+        firstVersion.modelRootNode.prefix == 'dm'
+        firstVersion.modelRootNode.isSameModelRoot(new Path('DM:Model$1.0.0|dc:Other').modelRootNode)
+        !firstVersion.modelRootNode.isSameModelRoot(secondVersion.modelRootNode)
+        firstVersion.modelRootNode.hasSamePrefixAndIdentifier(secondVersion.modelRootNode)
+        !relative.isAbsolute()
+        relative.modelRootNode == null
+    }
+
+    void 'path rooted at a node type that cannot carry a model identifier is rejected'() {
+        when:
+        Path.fromPathRootedAtFirstModelIdentifier('dc:Column$1.0.0|de:Element')
+
+        then:
+        IllegalArgumentException exception = thrown()
+        exception.message == 'The absolute path has an invalid modelIdentifier root'
+    }
+
     void 'test getting path from string'() {
         when:
         Path path = new Path(fullPath)

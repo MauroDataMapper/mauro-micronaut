@@ -8,6 +8,7 @@ import org.maurodata.domain.dataflow.DataElementComponent
 import org.maurodata.domain.dataflow.DataFlow
 import org.maurodata.domain.datamodel.DataClass
 import org.maurodata.domain.datamodel.DataElement
+import org.maurodata.domain.datamodel.DataComponent
 import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.datamodel.DataType
 import org.maurodata.domain.datamodel.EnumerationValue
@@ -21,6 +22,7 @@ import org.maurodata.domain.facet.SemanticLink
 import org.maurodata.domain.facet.SummaryMetadata
 import org.maurodata.domain.facet.SummaryMetadataReport
 import org.maurodata.domain.facet.VersionLink
+import org.maurodata.domain.facet.ItemLink
 import org.maurodata.domain.folder.Folder
 import org.maurodata.domain.terminology.CodeSet
 import org.maurodata.domain.terminology.Term
@@ -47,6 +49,8 @@ interface DomainVisitor<T> {
 
     T visitSemanticLink(SemanticLink semanticLink)
 
+    T visitItemLink(ItemLink itemLink)
+
     T visitSummaryMetadata(SummaryMetadata summaryMetadata)
 
     T visitSummaryMetadataReport(SummaryMetadataReport summaryMetadataReport)
@@ -64,6 +68,8 @@ interface DomainVisitor<T> {
     T visitDataClass(DataClass dataClass)
 
     T visitDataElement(DataElement dataElement)
+
+    T visitDataComponent(DataComponent dataComponent)
 
     T visitDataType(DataType dataType)
 

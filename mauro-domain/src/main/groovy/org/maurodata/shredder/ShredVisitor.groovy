@@ -8,6 +8,7 @@ import org.maurodata.domain.dataflow.DataElementComponent
 import org.maurodata.domain.dataflow.DataFlow
 import org.maurodata.domain.datamodel.DataClass
 import org.maurodata.domain.datamodel.DataElement
+import org.maurodata.domain.datamodel.DataComponent
 import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.datamodel.DataType
 import org.maurodata.domain.datamodel.EnumerationValue
@@ -21,6 +22,7 @@ import org.maurodata.domain.facet.SemanticLink
 import org.maurodata.domain.facet.SummaryMetadata
 import org.maurodata.domain.facet.SummaryMetadataReport
 import org.maurodata.domain.facet.VersionLink
+import org.maurodata.domain.facet.ItemLink
 import org.maurodata.domain.folder.Folder
 import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.domain.terminology.CodeSet
@@ -90,6 +92,9 @@ class ShredVisitor extends GenericDomainTraversalVisitor implements ItemHandler 
         if (item instanceof DataElement) {
             shreddedContent.dataElements.add((DataElement) item)
         }
+        if (item instanceof DataComponent) {
+            shreddedContent.dataComponents.add((DataComponent) item)
+        }
         if (item instanceof EnumerationValue) {
             shreddedContent.enumerationValues.add((EnumerationValue) item)
         }
@@ -132,6 +137,9 @@ class ShredVisitor extends GenericDomainTraversalVisitor implements ItemHandler 
         if (item instanceof SemanticLink) {
             shreddedContent.semanticLinks.add((SemanticLink) item)
         }
+        if (item instanceof ItemLink) {
+            shreddedContent.itemLinkSources.add((ItemLink) item)
+        }
         if (item instanceof Rule) {
             shreddedContent.rules.add((Rule) item)
         }
@@ -162,5 +170,3 @@ class ShredVisitor extends GenericDomainTraversalVisitor implements ItemHandler 
         }
     }
 }
-
-

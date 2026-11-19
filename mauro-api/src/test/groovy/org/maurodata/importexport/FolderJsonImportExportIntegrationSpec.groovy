@@ -2,6 +2,8 @@ package org.maurodata.importexport
 
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.client.exceptions.HttpClientResponseException
+import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.node.ObjectNode
 import org.maurodata.domain.classifier.ClassificationScheme
 import org.maurodata.domain.classifier.Classifier
 import org.maurodata.domain.datamodel.DataClass
@@ -217,9 +219,15 @@ class FolderJsonImportExportIntegrationSpec extends CommonDataSpec {
         exportModel.folder.setAssociations()
         exportModel.folder.removeIds()
 
+        // A pre-ItemLink export has no itemLinkSources property on administered items.
+        JsonNode legacyExport = objectMapper.readTree(objectMapper.writeValueAsBytes(exportModel))
+        legacyExport.findParents('itemLinkSources').each { JsonNode administeredItem ->
+            ((ObjectNode) administeredItem).remove('itemLinkSources')
+        }
+
         importRequest = MultipartBody.builder()
             .addPart('folderId', folderId.toString())
-            .addPart('importFile', 'file.json', MediaType.APPLICATION_JSON_TYPE, objectMapper.writeValueAsBytes(exportModel))
+            .addPart('importFile', 'file.json', MediaType.APPLICATION_JSON_TYPE, objectMapper.writeValueAsBytes(legacyExport))
             .build()
 
         ListResponse<Folder> response = folderApi.importModel(importRequest, 'org.maurodata.plugin.importer.json', 'JsonFolderImporterPlugin', '4.0.0')

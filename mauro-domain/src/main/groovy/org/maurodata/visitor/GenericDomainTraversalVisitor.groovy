@@ -8,6 +8,7 @@ import org.maurodata.domain.dataflow.DataElementComponent
 import org.maurodata.domain.dataflow.DataFlow
 import org.maurodata.domain.datamodel.DataClass
 import org.maurodata.domain.datamodel.DataElement
+import org.maurodata.domain.datamodel.DataComponent
 import org.maurodata.domain.datamodel.DataModel
 import org.maurodata.domain.datamodel.DataType
 import org.maurodata.domain.datamodel.EnumerationValue
@@ -21,6 +22,7 @@ import org.maurodata.domain.facet.SemanticLink
 import org.maurodata.domain.facet.SummaryMetadata
 import org.maurodata.domain.facet.SummaryMetadataReport
 import org.maurodata.domain.facet.VersionLink
+import org.maurodata.domain.facet.ItemLink
 import org.maurodata.domain.folder.Folder
 import org.maurodata.domain.model.AdministeredItem
 import org.maurodata.domain.model.Item
@@ -113,6 +115,7 @@ class GenericDomainTraversalVisitor implements DomainVisitor<Void> {
         traverseAll(item.annotations)
         traverseAll(item.referenceFiles)
         traverseAll(item.semanticLinks)
+        traverseAll(item.itemLinkSources)
         if (item instanceof Model) {
         traverseAll(((Model) item).versionLinks)
         }
@@ -208,6 +211,13 @@ class GenericDomainTraversalVisitor implements DomainVisitor<Void> {
     }
 
     @Override
+    final Void visitItemLink(ItemLink itemLink) {
+        applyEnter(itemLink)
+        leaveNode(itemLink)
+        return null
+    }
+
+    @Override
     final Void visitSummaryMetadata(SummaryMetadata summaryMetadata) {
         applyEnter(summaryMetadata)
         traverseAll(summaryMetadata.summaryMetadataReports)
@@ -233,6 +243,7 @@ class GenericDomainTraversalVisitor implements DomainVisitor<Void> {
     final Void visitDataModel(DataModel dataModel) {
         applyEnter(dataModel)
         traverseAll(dataModel.dataClasses)
+        traverseAll(dataModel.dataComponents)
         traverseAll(dataModel.dataTypes)
         leaveNode(dataModel)
         return null
@@ -274,6 +285,13 @@ class GenericDomainTraversalVisitor implements DomainVisitor<Void> {
     final Void visitDataElement(DataElement dataElement) {
         applyEnter(dataElement)
         leaveNode(dataElement)
+        return null
+    }
+
+    @Override
+    final Void visitDataComponent(DataComponent dataComponent) {
+        applyEnter(dataComponent)
+        leaveNode(dataComponent)
         return null
     }
 
@@ -346,5 +364,3 @@ class GenericDomainTraversalVisitor implements DomainVisitor<Void> {
         return null
     }
 }
-
-
