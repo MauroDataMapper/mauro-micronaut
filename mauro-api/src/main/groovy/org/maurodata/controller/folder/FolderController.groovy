@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import org.maurodata.ErrorHandler
 import org.maurodata.api.Paths
+import org.maurodata.api.model.ModelSuccessorRequestDTO
 import org.maurodata.api.folder.FolderApi
 import org.maurodata.api.model.PermissionsDTO
 import org.maurodata.audit.Audit
@@ -51,6 +52,15 @@ import org.reactivestreams.Publisher
 @Controller
 @Secured(SecurityRule.IS_ANONYMOUS)
 class FolderController extends ModelController<Folder> implements FolderApi {
+
+    @Audit
+    @Transactional
+    @Operation(operationId = 'createFolderSuccessor', summary = 'Create a Folder successor', description = 'Links an existing draft Folder as a version successor.')
+    @Post(Paths.FOLDER_SUCCESSOR)
+    @Override
+    Folder createSuccessor(UUID id, @Body @NonNull ModelSuccessorRequestDTO request) {
+        super.createSuccessor(id, request) as Folder
+    }
 
     FolderController(FolderCacheableRepository folderRepository) {
         super(Folder, folderRepository, folderRepository)

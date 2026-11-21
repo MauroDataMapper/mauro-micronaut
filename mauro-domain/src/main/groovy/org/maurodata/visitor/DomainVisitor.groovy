@@ -27,6 +27,7 @@ import org.maurodata.domain.terminology.Term
 import org.maurodata.domain.terminology.TermRelationship
 import org.maurodata.domain.terminology.TermRelationshipType
 import org.maurodata.domain.terminology.Terminology
+import org.maurodata.domain.overlay.Overlay
 
 @CompileStatic
 interface DomainVisitor<T> {
@@ -82,4 +83,6 @@ interface DomainVisitor<T> {
     T visitClassificationScheme(ClassificationScheme classificationScheme)
 
     T visitClassifier(Classifier classifier)
+
+    T visitOverlay(Overlay overlay)
 }

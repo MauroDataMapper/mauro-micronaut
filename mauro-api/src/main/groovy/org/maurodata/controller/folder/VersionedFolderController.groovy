@@ -27,6 +27,7 @@ import jakarta.inject.Inject
 import org.reactivestreams.Publisher
 import org.maurodata.ErrorHandler
 import org.maurodata.api.Paths
+import org.maurodata.api.model.ModelSuccessorRequestDTO
 import org.maurodata.api.folder.VersionedFolderApi
 import org.maurodata.api.model.MergeDiffDTO
 import org.maurodata.api.model.MergeIntoDTO
@@ -53,6 +54,15 @@ import org.maurodata.web.PaginationParams
 @Controller
 @Secured(SecurityRule.IS_ANONYMOUS)
 class VersionedFolderController extends ModelController<Folder> implements VersionedFolderApi {
+
+    @Audit
+    @Transactional
+    @Operation(operationId = 'createVersionedFolderSuccessor', summary = 'Create a VersionedFolder successor', description = 'Links an existing draft VersionedFolder as a version successor.')
+    @Post(Paths.VERSIONED_FOLDER_SUCCESSOR)
+    @Override
+    Folder createSuccessor(UUID id, @Body @NonNull ModelSuccessorRequestDTO request) {
+        super.createSuccessor(id, request) as Folder
+    }
 
     @Inject
     FolderService folderService

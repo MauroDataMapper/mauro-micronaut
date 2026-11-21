@@ -11,6 +11,7 @@ import io.micronaut.scheduling.annotation.ExecuteOn
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import org.maurodata.ErrorHandler
 import org.maurodata.api.Paths
+import org.maurodata.api.model.ModelSuccessorRequestDTO
 import org.maurodata.api.model.ModelVersionedRefDTO
 import org.maurodata.api.model.PermissionsDTO
 import org.maurodata.api.terminology.CodeSetApi
@@ -57,6 +58,15 @@ import jakarta.inject.Inject
 @Slf4j
 @Secured(SecurityRule.IS_ANONYMOUS)
 class CodeSetController extends ModelController<CodeSet> implements CodeSetApi {
+
+    @Audit
+    @Transactional
+    @Operation(operationId = 'createCodeSetSuccessor', summary = 'Create a CodeSet successor', description = 'Links an existing draft CodeSet as a version successor.')
+    @Post(Paths.CODE_SET_SUCCESSOR)
+    @Override
+    CodeSet createSuccessor(UUID id, @Body @NonNull ModelSuccessorRequestDTO request) {
+        super.createSuccessor(id, request) as CodeSet
+    }
 
     ModelCacheableRepository.CodeSetCacheableRepository codeSetRepository
 

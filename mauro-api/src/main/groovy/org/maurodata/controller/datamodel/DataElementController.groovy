@@ -73,7 +73,7 @@ class DataElementController extends AdministeredItemController<DataElement, Data
     DataElement show(UUID dataModelId, UUID dataClassId, UUID id) {
         log.debug("DataElementController show ${id}")
         DataElement dataElement = super.show(id) as DataElement
-        if (dataElement.dataType.isEnumerationType()) {
+        if (dataElement.dataType?.isEnumerationType()) {
             dataElement.dataType = dataTypeService.getEnumerationValues(dataElement.dataType)
         }
         log.debug("DataElementController show dataElement.availableActions ${dataElement.availableActions}")
@@ -94,7 +94,7 @@ class DataElementController extends AdministeredItemController<DataElement, Data
         createEntity(dataClass, dataElement)
 
         // Clean before output
-        if(dataElement.dataType.referenceClass) {
+        if(dataElement.dataType?.referenceClass) {
             dataElement.dataType.referenceClass.dataElements = []
             dataElement.dataType.referenceClass.dataClasses = []
         }
@@ -127,8 +127,9 @@ class DataElementController extends AdministeredItemController<DataElement, Data
         }
         boolean hasChanged = updateProperties(existing, cleanItem)
         if(dataElement.dataType) {
-            if(dataElement.dataType.id && (dataElement.dataType.id != existing.dataType.id)) {
-                existing = validateDataTypeChange(existing, cleanItem)
+            if(dataElement.dataType.id && (existing.dataType == null || dataElement.dataType.id != existing.dataType.id)) {
+                if (existing.dataType) existing = validateDataTypeChange(existing, cleanItem)
+                else existing.dataType = dataTypeRepository.readById(dataElement.dataType.id)
                 hasChanged = true
             } else if(!dataElement.dataType.id) {
                 dataElement.dataType.dataModel = dataElement.dataModel
@@ -205,7 +206,7 @@ class DataElementController extends AdministeredItemController<DataElement, Data
         }
         DataElement copied = (DataElement) dataElement.deepClone()
 
-        if(dataModelId != otherModelId) {
+        if(dataModelId != otherModelId && dataElement.dataType) {
             DataType originalDataType = dataTypeRepository.loadWithContent(dataElement.dataType.id)
             List<DataType> targetDataTypes = dataTypeRepository.readAllByDataModelIdIn([targetModel.id])
             DataType targetDataType = targetDataTypes.find {it.label == originalDataType.label}

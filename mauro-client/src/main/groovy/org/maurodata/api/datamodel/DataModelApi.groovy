@@ -1,6 +1,8 @@
 package org.maurodata.api.datamodel
 
 import org.maurodata.api.model.MergeIntoDTO
+import org.maurodata.api.datamodel.DataModelUnionRequestDTO
+import org.maurodata.api.model.ModelSuccessorRequestDTO
 
 import io.micronaut.http.annotation.QueryValue
 import org.maurodata.api.MauroApi
@@ -81,6 +83,12 @@ interface DataModelApi extends ModelApi<DataModel> {
 
     @Put(Paths.DATA_MODEL_BRANCH_MODEL_VERSION)
     DataModel createNewBranchModelVersion(UUID id, @Body @Nullable CreateNewVersionData createNewVersionData)
+
+    @Post(Paths.DATA_MODEL_UNION)
+    DataModel createUnion(@Body DataModelUnionRequestDTO request)
+
+    @Post(Paths.DATA_MODEL_SUCCESSOR)
+    DataModel createSuccessor(UUID id, @Body ModelSuccessorRequestDTO request)
 
     @Get(value = Paths.DATA_MODEL_EXPORT, produces = MediaType.ALL)
     HttpResponse<byte[]> exportModel(UUID id, @Nullable String namespace, @Nullable String name, @Nullable String version)

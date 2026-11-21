@@ -14,6 +14,7 @@ import io.micronaut.http.client.multipart.MultipartBody
 import org.maurodata.api.MauroApi
 import org.maurodata.api.Paths
 import org.maurodata.api.model.ModelApi
+import org.maurodata.api.model.ModelSuccessorRequestDTO
 import org.maurodata.domain.folder.Folder
 import org.maurodata.plugin.exporter.FolderExporterPlugin
 import org.maurodata.plugin.importer.FolderImporterPlugin
@@ -22,6 +23,9 @@ import org.maurodata.web.PaginationParams
 
 @MauroApi
 interface FolderApi extends ModelApi<Folder> {
+
+    @Post(Paths.FOLDER_SUCCESSOR)
+    Folder createSuccessor(UUID id, @Body ModelSuccessorRequestDTO request)
 
     @Get(Paths.FOLDER_ID)
     Folder show(UUID id)

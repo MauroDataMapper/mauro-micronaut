@@ -3,6 +3,7 @@ package org.maurodata.api.terminology
 import org.maurodata.api.MauroApi
 import org.maurodata.api.Paths
 import org.maurodata.api.model.ModelApi
+import org.maurodata.api.model.ModelSuccessorRequestDTO
 import org.maurodata.api.model.ModelVersionedRefDTO
 import org.maurodata.domain.diff.ObjectDiff
 import org.maurodata.domain.model.version.CreateNewVersionData
@@ -30,6 +31,9 @@ import io.micronaut.scheduling.annotation.ExecuteOn
 
 @MauroApi
 interface TerminologyApi extends ModelApi<Terminology> {
+
+    @Post(Paths.TERMINOLOGY_SUCCESSOR)
+    Terminology createSuccessor(UUID id, @Body ModelSuccessorRequestDTO request)
 
     @Get(Paths.TERMINOLOGY_ID)
     Terminology show(UUID id)

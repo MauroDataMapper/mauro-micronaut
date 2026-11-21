@@ -31,7 +31,9 @@ import jakarta.inject.Inject
 import org.reactivestreams.Publisher
 import org.maurodata.ErrorHandler
 import org.maurodata.api.Paths
+import org.maurodata.api.model.ModelSuccessorRequestDTO
 import org.maurodata.api.datamodel.DataModelApi
+import org.maurodata.api.datamodel.DataModelUnionRequestDTO
 import org.maurodata.api.model.MergeDiffDTO
 import org.maurodata.api.model.MergeIntoDTO
 import org.maurodata.api.model.ModelVersionDTO
@@ -65,6 +67,8 @@ import org.maurodata.persistence.cache.AdministeredItemCacheableRepository.DataT
 import org.maurodata.persistence.cache.ModelCacheableRepository.DataModelCacheableRepository
 import org.maurodata.persistence.cache.ModelCacheableRepository.FolderCacheableRepository
 import org.maurodata.persistence.datamodel.DataElementRepository
+import org.maurodata.service.datamodel.DataModelUnionService
+import org.maurodata.service.model.ModelMembershipService
 
 import org.maurodata.persistence.search.SearchRepository
 import org.maurodata.plugin.datatype.DefaultDataTypeProviderPlugin
@@ -80,6 +84,15 @@ import org.maurodata.web.PaginationParams
 @CompileStatic
 @Secured(SecurityRule.IS_ANONYMOUS)
 class DataModelController extends ModelController<DataModel> implements DataModelApi {
+
+    @Audit
+    @Transactional
+    @Operation(operationId = 'createDataModelSuccessor', summary = 'Create a DataModel successor', description = 'Links an existing draft DataModel as a version successor.')
+    @Post(Paths.DATA_MODEL_SUCCESSOR)
+    @Override
+    DataModel createSuccessor(UUID id, @Body @NonNull ModelSuccessorRequestDTO request) {
+        super.createSuccessor(id, request) as DataModel
+    }
 
     DataModelCacheableRepository dataModelRepository
 
@@ -100,6 +113,9 @@ class DataModelController extends ModelController<DataModel> implements DataMode
 
     @Inject
     DataElementRepository dataElementRepository
+
+    @Inject
+    DataModelUnionService dataModelUnionService
 
     DataModelController(DataModelCacheableRepository dataModelRepository, FolderCacheableRepository folderRepository,
                         DataModelService dataModelService) {
@@ -135,6 +151,28 @@ class DataModelController extends ModelController<DataModel> implements DataMode
         dataTypeCacheableRepository.saveAll(importedDataTypes)
 
         return newDataModel
+    }
+
+    @Audit
+    @Transactional
+    @Operation(operationId = 'createDataModelUnion', summary = 'Create a DataModel union', description = 'Creates a structure-only DataModel from selected visible DataModels.')
+    @Post(Paths.DATA_MODEL_UNION)
+    DataModel createUnion(@Body DataModelUnionRequestDTO request) {
+        if (!request?.folderId) throw new HttpStatusException(HttpStatus.BAD_REQUEST, 'folderId is required')
+        DataModel union = dataModelUnionService.build(request)
+        union.metadata = [ModelMembershipService.metadata(dataModelUnionService.membership(request))]
+        DataModel created = create(request.folderId, new DataModel(label: union.label))
+        union.id = created.id
+        union.version = created.version
+        union.dateCreated = created.dateCreated
+        union.lastUpdated = created.lastUpdated
+        union.catalogueUser = created.catalogueUser
+        union.folder = created.folder
+        union.authority = created.authority
+        union.branchName = created.branchName
+        union.setAssociations()
+        contentsService.saveContentOnly(union, accessControlService.getUser())
+        show(union.id)
     }
 
     @Audit

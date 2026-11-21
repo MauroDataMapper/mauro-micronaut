@@ -3,6 +3,7 @@ package org.maurodata.api.classifier
 import org.maurodata.api.MauroApi
 import org.maurodata.api.Paths
 import org.maurodata.api.model.ModelApi
+import org.maurodata.api.model.ModelSuccessorRequestDTO
 import org.maurodata.domain.classifier.ClassificationScheme
 import org.maurodata.domain.diff.ObjectDiff
 import org.maurodata.domain.model.version.CreateNewVersionData
@@ -26,6 +27,9 @@ import io.micronaut.scheduling.annotation.ExecuteOn
 @MauroApi
 
 interface ClassificationSchemeApi extends ModelApi<ClassificationScheme> {
+
+    @Post(Paths.CLASSIFICATION_SCHEME_SUCCESSOR)
+    ClassificationScheme createSuccessor(UUID id, @Body ModelSuccessorRequestDTO request)
 
     @Get(Paths.CLASSIFICATION_SCHEMES_ID_ROUTE)
     ClassificationScheme show(UUID id)

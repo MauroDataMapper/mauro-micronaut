@@ -30,6 +30,7 @@ import jakarta.inject.Inject
 import org.reactivestreams.Publisher
 import org.maurodata.ErrorHandler
 import org.maurodata.api.Paths
+import org.maurodata.api.model.ModelSuccessorRequestDTO
 import org.maurodata.api.model.ModelVersionedRefDTO
 import org.maurodata.api.model.PermissionsDTO
 import org.maurodata.api.terminology.TerminologyApi
@@ -60,6 +61,15 @@ import org.maurodata.web.PaginationParams
 @CompileStatic
 @Secured(SecurityRule.IS_ANONYMOUS)
 class TerminologyController extends ModelController<Terminology> implements TerminologyApi {
+
+    @Audit
+    @Transactional
+    @Operation(operationId = 'createTerminologySuccessor', summary = 'Create a Terminology successor', description = 'Links an existing draft Terminology as a version successor.')
+    @Post(Paths.TERMINOLOGY_SUCCESSOR)
+    @Override
+    Terminology createSuccessor(UUID id, @Body @NonNull ModelSuccessorRequestDTO request) {
+        super.createSuccessor(id, request) as Terminology
+    }
 
     TerminologyCacheableRepository terminologyRepository
 

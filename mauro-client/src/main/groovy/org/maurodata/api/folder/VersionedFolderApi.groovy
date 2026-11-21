@@ -14,6 +14,7 @@ import org.maurodata.api.MauroApi
 import org.maurodata.api.Paths
 import org.maurodata.api.model.MergeDiffDTO
 import org.maurodata.api.model.ModelApi
+import org.maurodata.api.model.ModelSuccessorRequestDTO
 import org.maurodata.api.model.ModelVersionDTO
 import org.maurodata.api.model.ModelVersionedRefDTO
 import org.maurodata.api.model.ModelVersionedWithTargetsRefDTO
@@ -25,6 +26,9 @@ import org.maurodata.web.PaginationParams
 
 @MauroApi
 interface VersionedFolderApi extends ModelApi<Folder> {
+
+    @Post(Paths.VERSIONED_FOLDER_SUCCESSOR)
+    Folder createSuccessor(UUID id, @Body ModelSuccessorRequestDTO request)
 
     @Get(Paths.VERSIONED_FOLDER_ID)
     Folder show(UUID id)

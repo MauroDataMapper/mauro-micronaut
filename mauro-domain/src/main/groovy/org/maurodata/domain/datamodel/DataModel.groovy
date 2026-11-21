@@ -153,7 +153,9 @@ class DataModel extends Model implements ItemReferencer, DiffableItem<DataModel>
                 allDataClassLookup.putAll(clonedChildDataClassLookup)
                 clonedDataElement.dataClass = allDataClassLookup[dataClass.id]
                 clonedDataElement.dataModel = cloned
-                clonedDataElement.dataType = clonedDataTypeLookup[clonedDataElement.dataType.id]
+                if (clonedDataElement.dataType) {
+                    clonedDataElement.dataType = clonedDataTypeLookup[clonedDataElement.dataType.id]
+                }
             }
         }
         cloned.allDataClasses.each {dataClass ->
@@ -227,14 +229,16 @@ class DataModel extends Model implements ItemReferencer, DiffableItem<DataModel>
             log.error("Path provided was ${path}")
             throw new IllegalArgumentException("Path must start with a DataClass node (dc) for adding a DataElement")
         }
-        DataType linkedDataType = dataTypes.find {it.label == dataElement.dataType.label || it.id == dataElement.dataType.id}
-        if(linkedDataType) {
-            dataElement.dataType.id = linkedDataType.id
-        } else {
-            dataTypes.add(dataElement.dataType)
-            dataElement.dataType.dataModel = this
-            ShredVisitor shredVisitor = new ShredVisitor(shreddedContent)
-            dataElement.dataType.accept(shredVisitor)
+        if (dataElement.dataType) {
+            DataType linkedDataType = dataTypes.find {it.label == dataElement.dataType.label || it.id == dataElement.dataType.id}
+            if(linkedDataType) {
+                dataElement.dataType.id = linkedDataType.id
+            } else {
+                dataTypes.add(dataElement.dataType)
+                dataElement.dataType.dataModel = this
+                ShredVisitor shredVisitor = new ShredVisitor(shreddedContent)
+                dataElement.dataType.accept(shredVisitor)
+            }
         }
         DataClass dataClass = dataClasses.find {it.label == path.nodes.first().identifier}
         if(!dataClass) {

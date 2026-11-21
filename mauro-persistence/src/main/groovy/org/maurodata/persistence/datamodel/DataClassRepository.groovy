@@ -33,6 +33,10 @@ abstract class DataClassRepository implements ModelItemRepository<DataClass> {
         dataClassDTORepository.findById(id) as DataClass
     }
 
+    List<DataClass> findAllByIdIn(Collection<UUID> ids) {
+        dataClassDTORepository.findAllByIdIn(ids) as List<DataClass>
+    }
+
     @Nullable
     List<DataClass> findAllByParentAndPathIdentifier(UUID item,String pathIdentifier) {
         dataClassDTORepository.findAllByParentAndPathIdentifier(item,pathIdentifier) as List<DataClass>
